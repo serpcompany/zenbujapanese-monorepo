@@ -1,4 +1,4 @@
-# Kanji Catch Em All
+# Kanji Catch Em All (mobile App)
 
 A Gamified pokemon-esque style mobile app where users take pictures of Kanji as they encounter them in the real world. 
 
