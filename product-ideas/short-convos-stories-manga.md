@@ -250,5 +250,5 @@ Useful product metrics:
 - Japanese Vocabulary Shortcut
 - Devin's “1,000 words / 20 short stories” book concept
 - Devin's “learn Japanese through simple manga” book concept
-- [Word lists](word-lists.md)
-- [Japanese/English dictionary](jp-en-dictionary.md)
+- [Word lists](./word-lists.md)
+- [Japanese/English dictionary](./jp-en-dictionary.md)

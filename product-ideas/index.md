@@ -1,6 +1,6 @@
 # Product Ideas Index
 
-- [Zenbu Mini Manga](short-convos-stories-manga.md) — funny, level-controlled
+- [Zenbu Mini Manga](./short-convos-stories-manga.md) — funny, level-controlled
   illustrated stories with interactive vocabulary and audio. Includes a working
   July 2026 POC.
 - [Japanese/English dictionary](jp-en-dictionary.md)
