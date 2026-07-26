@@ -1,0 +1,3 @@
+Take old super popular videos (ex: badger badger badger badger mushroom) and do them again but dub/subtitle/etc. the english words for japanese words...
+
+great way to learn new japanese words quick, entertaining, and viral

@@ -1,0 +1,1 @@
+the Jvs style things could be videos. the videos could have subtitles and use your extension to see the convos. with subtitles and translations or romaji or whatever the settings u select so you can just watch a playlist of videos on auto play with your settings getting reinforcement…. goes on youtube …. funnel to other shit.
