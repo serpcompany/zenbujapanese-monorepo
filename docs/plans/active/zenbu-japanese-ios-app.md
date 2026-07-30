@@ -17,3 +17,13 @@ App sections will include:
    2. Anki style spaced reptition of pre-made decks, or custom made decks, or user imported decks
 5. Capture (KanjiMon)
 6. Profile/Settings/Other
+
+
+## Preserves & Revisits
+
+- Best full-UI implementation and base 'theme/style/aesthic' we are going for that has been accomplished so far and followed: `/Users/devin/dev/repos/github@zenbujapanese/prototypes/japanese-app-v2/_archive/nextjs-app`
+- Best working reader implementation so far: <!-- TODO: add in wherever the zenbu japanese testflight app working on my phone project is -->
+  - 1. The capture-ocr-parse flow is too slow, and i think it relies on an internet connection. This should be acheivable fully offline. Otherwise, the ocr/parsing does work well.
+  - 2. The parse-translate feature could be improved: parsing and displaying translations more like migaku/asbplayer/sugoku style where words are underlined and you can toggle furigana above, individual word translations below, and click to see a dictionary box above the word (currently its a slide up screen which is actually quite disruptive).
+  - 3. The natural translation feature works great, and should be preserved.
+  - 4. This entire functionality could also probably be rolled/folded into the "Lookup" area 'capture by camera, or photo/file upload" rather than in an entirely separate section. The Reader area (now a part of 'Media' should probably be used more for uploads of entire mangas, or TV show / game scripts / etc. rather than single 'capture-lookup' flows)
