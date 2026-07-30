@@ -5,7 +5,6 @@ The purpose of this app is to give the user a utility for naturally translating 
 ## Competitor references
 
 - https://translator.owll.ai/ // https://apps.apple.com/us/app/owll-translator-ai-voice-clone/id6742527823
-- https://apps.apple.com/jp/app/timekettle/id1485347374
 - https://apps.apple.com/us/app/google-translate/id414706506
 
 
@@ -23,7 +22,3 @@ The core (MVP included) features would include similar functionality and UI of t
 - saved conversation history
 - ... other core features of the "Competitor references" that might have been left out of this initial list
 
-
-## MVP Goals
-
-A good "MVP" goal would be the 'real time conversation' UI/UX/Features of the 'https://apps.apple.com/jp/app/timekettle/id1485347374' app conversation mode.

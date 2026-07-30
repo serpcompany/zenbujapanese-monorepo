@@ -47,3 +47,7 @@ _Avoid_: Media Analysis, separate media app
 **KanjiMon**:
 The gamified Product Experience for encountering, collecting, and learning kanji in real-world context.
 _Avoid_: Capture
+
+**AI Sensei**:
+The in-app, Japanese-specialized contextual LLM chat for open-ended questions and follow-ups about material encountered across Zenbu Japanese.
+_Avoid_: Dojo, course engine, generic chatbot

@@ -1,6 +1,6 @@
 # Media Analysis
 
-Status: evolving product contract
+Status: landscape definition established; detailed result design deferred
 
 ## Role
 
