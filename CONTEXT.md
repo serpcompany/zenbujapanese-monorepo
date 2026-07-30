@@ -17,32 +17,32 @@ Behavior or data used by multiple Product Experiences without being a user-facin
 _Avoid_: Shared app, product area
 
 **Lookup Capture**:
-A single-shot image capture used to identify, look up, or translate a limited piece of Japanese content. It is transient unless the learner saves it to the Library.
+A single-shot image capture used to identify, look up, or translate a limited piece of Japanese content. It is transient unless the learner saves its result to the User Library.
 _Avoid_: Media import, Reader import
 
 **Learning Profile**:
 The connected record of a learner's saved material, encounters, activity, and progress across Product Experiences.
 _Avoid_: User area, central profile area
 
-**Media Item**:
-A larger bounded work, such as a book, manga, movie, show, song, or game script, whose Japanese content is processed and analyzed as one entity.
-_Avoid_: Lookup Capture, Reader item, watch item
+**Media Entry**:
+The durable User Library record representing one larger bounded work. It connects the work's source reference, Media Analysis, and applicable Consumption Experience without implying that Zenbu stores the original file.
+_Avoid_: Stored media file, Media Analysis
 
-**Library**:
-The learner's private, unified collection of saved Lookup Captures and Media Items. It persists on the learner's device without requiring an account.
-_Avoid_: Media Library, Reader library, capture library
+**Media Analysis**:
+The whole-work vocabulary, frequency, difficulty, coverage, and cohort analysis attached to a Media Entry.
+_Avoid_: Media Entry, personalized readiness score
 
-**Library Sync**:
-An account capability that backs up and synchronizes a learner's Library across devices.
-_Avoid_: Library access, saving
+**User Library**:
+The learner's private collection of saved Lookup Capture results and Media Entries. It persists on the learner's device without requiring an account.
+_Avoid_: Library, Media Library, public catalog
 
 **Collection**:
-A learner-created and learner-named grouping of items in their Library.
+A learner-created and learner-named grouping of records in their User Library.
 _Avoid_: System category, media type
 
-**Media Mode**:
-A way of working with a Media Item: Analyze, Read, Watch, or Listen. A Media Item can support more than one Media Mode without being duplicated.
-_Avoid_: Media app, separate media library
+**Consumption Experience**:
+The interactive Read, Watch, or Listen experience attached to a Media Entry. It reuses the same extracted and segmented Japanese as the entry's Media Analysis.
+_Avoid_: Media Analysis, separate media app
 
 **KanjiMon**:
 The gamified Product Experience for encountering, collecting, and learning kanji in real-world context.
