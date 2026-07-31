@@ -12,13 +12,3 @@ The initial working 'idea/philosphy' is to offer these tools, apps, etc. for fre
     -> [Fremium Tools, SAAS, Extensions, iOS, Courses, etc.] // For simplicity i was thinking of making these independent, but maybe just planning to connect them at some kind of "user/db" area
 ```
 
-
-<!-- TODO: What would the website monorepo structure look like for this? -->
-
-<!-- QUESTIONS:
-
-- [ ] is there a single user / user-data database?
-- [ ] is there an additional database for data source choices we store like: kanji lists, word lists, word frequency lists, japanese song lyrics with translations/explanations, manga PDFs, etc.? where does it sit?
-- [ ] are there multiple apps for the same thing (like jp_en-DICTIONARY (iOS app) + jp_en-DICTIONARY (browser extension?) or (manga reader browser extension / manga reader iOS app?))
-
- -->
