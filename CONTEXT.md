@@ -17,7 +17,7 @@ Behavior or data used by multiple Product Experiences without being a user-facin
 _Avoid_: Shared app, product area
 
 **Lookup Capture**:
-A single-shot image capture used to identify, look up, or translate a limited piece of Japanese content. It is transient unless the learner saves its result to the User Library.
+A single-shot image capture used to identify, look up, or translate a limited piece of Japanese content. It is distinct from importing a larger work into the Media Library.
 _Avoid_: Media import, Reader import
 
 **Learning Profile**:
@@ -25,19 +25,23 @@ The connected record of a learner's saved material, encounters, activity, and pr
 _Avoid_: User area, central profile area
 
 **Media Entry**:
-The durable User Library record representing one larger bounded work. It connects the work's source reference, Media Analysis, and applicable Consumption Experience without implying that Zenbu stores the original file.
+The durable Media Library record representing one larger bounded work. It connects the work's source reference, Media Analysis, and applicable Consumption Experience without implying that Zenbu stores the original file.
 _Avoid_: Stored media file, Media Analysis
 
 **Media Analysis**:
-The whole-work vocabulary, frequency, difficulty, coverage, and cohort analysis attached to a Media Entry.
+The Media Library-owned workflow and result for extracting and presenting whole-work vocabulary, frequency, difficulty, coverage, and cohort analysis attached to a Media Entry. A learner can inspect a Media Analysis without opening a Consumption Experience.
 _Avoid_: Media Entry, personalized readiness score
 
-**User Library**:
-The learner's private collection of saved Lookup Capture results and Media Entries. It persists on the learner's device without requiring an account.
-_Avoid_: Library, Media Library, public catalog
+**Media Library**:
+The Product Experience for privately browsing and managing imported media, adding media, and inspecting the Media Analysis attached to each Media Entry. It persists on the learner's device without requiring an account. A compatible Media Entry may launch a separate Consumption Experience. Lookup history and saved language items do not live in the Media Library.
+_Avoid_: User Library, universal user-content store, public catalog
+
+**Saved Language Item**:
+A word, kanji, phrase, sentence, or other language item the learner deliberately saves for later reference or study. Its final user-facing name, organization model, navigation placement, and relationship to future study experiences remain unresolved.
+_Avoid_: Media Entry, Lookup history
 
 **Collection**:
-A learner-created and learner-named grouping of records in their User Library.
+A learner-created and learner-named grouping of Media Entries in their Media Library.
 _Avoid_: System category, media type
 
 **Consumption Experience**:

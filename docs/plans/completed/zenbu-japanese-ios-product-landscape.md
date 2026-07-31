@@ -1,8 +1,14 @@
 # Zenbu Japanese iOS app plan
 
-Status: active product-landscape planning
+Status: retired product-landscape source; migrated to Wayfinder
 
-Last updated: 2026-07-31
+Last updated: 2026-08-01
+
+## Retirement notice
+
+This document is preserved only as migration evidence. Do not use it as an active plan or add decisions and implementation tasks here.
+
+[Map the Zenbu Japanese iOS project foundation](https://github.com/serpcompany/zenbujapanese-monorepo/issues/1) is the canonical planning artifact. [Verify migration coverage of the legacy iOS plan](https://github.com/serpcompany/zenbujapanese-monorepo/issues/38) records where this document's decisions, open questions, research requirements, evidence boundaries, and workflow constraints moved.
 
 This plan defines a new native iOS implementation informed by the previous [prototypes](../../../../prototypes/) without treating any one prototype as the complete product specification or target architecture.
 
