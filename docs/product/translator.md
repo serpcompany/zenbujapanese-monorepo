@@ -109,7 +109,17 @@ The live conversation experience includes:
 
 Google Translate is the current UI/UX reference for live-conversation mode selection and per-language audio routing. Current screenshots show that each language can be muted, played on the device, or sent to connected headphones. They do not establish separate left-earbud and right-earbud routing or isolated audio for two people sharing one stereo pair.
 
-Per-language headphone assignment is an MVP requirement. The exact physical behavior—including whether participants share a pair, use separate earbuds or channels, or use another supported arrangement—remains a discovery question rather than a preselected implementation. Google Translate must be tested directly, and Zenbu's routing, microphone, Bluetooth, device, accessibility, and ordinary-headphone constraints require an explicit native iOS feasibility proof.
+Per-language audio routing is an MVP requirement. Japanese and English each
+independently select mute, the iPhone speaker, or connected headphones; any
+combination is allowed, so headphones may receive neither language, one
+language, or both. Zenbu does not split a stereo pair by left and right earbud
+and does not require separate output channels for separate listeners.
+
+Google Translate must be tested directly, and Zenbu's simultaneous speaker and
+headphone routing, system-selected microphone input, Bluetooth, device,
+accessibility, and ordinary-headphone constraints require an explicit native
+iOS feasibility proof. The proof evaluates how to satisfy this settled product
+contract; it does not reopen the left/right-earbud model.
 
 ## Conversation context
 
