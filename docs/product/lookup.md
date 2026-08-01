@@ -126,6 +126,19 @@ including the ability to attach an explicitly selected or captured source
 image. A saved language item may preserve that personal context as an
 Encounter Example.
 
+## Text handoff to Translator
+
+Lookup preserves Nihongo Pro's complete search-result behavior, including its
+Best Matches, Additional Matches, and Example Sentences sections. A Contextual
+Handoff may additionally send the learner's exact typed query to Translator as
+ordinary input. It sends no Lookup matches, examples, analysis structures, or
+other Lookup-specific context and does not replace or modify the parity result.
+
+The exact action label, eligibility, placement, and navigation treatment belong
+to the Zenbu Japanese iOS App shell prototype. Offline translation, dynamic
+translation while typing, and unusual mixed-language input belong to later
+Translator research and design rather than this handoff contract.
+
 ## Deferred documentation
 
 - Produce a current, exhaustive AI-agent parity analysis and verified inventory before Lookup implementation planning.

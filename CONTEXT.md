@@ -52,6 +52,10 @@ _Avoid_: Product Experience, data owner, unified user area
 A user-facing flow that composes contracts owned by multiple Product Experiences and is coordinated by the Zenbu Japanese iOS App shell. Multiple Product Experiences may provide entry points into the same flow; leaving it restores the originating context. The shell coordinates the flow without owning its histories or durable records.
 _Avoid_: Duplicate product flow, Shared Capability, shell-owned Product Experience
 
+**Contextual Handoff**:
+An app-wide convenience that supplies selected or origin-provided content to a chosen Product Experience, which handles it as ordinary input through the Zenbu Japanese iOS App shell's normal navigation.
+_Avoid_: Cross-Product Flow, embedded Product Experience, special integration
+
 **Image Text Flow**:
 A Cross-Product Flow that turns one bounded camera, Photo Library, or image-file input into interactive recognized Japanese and, when requested or entered through Translator, a whole-content natural translation. It is distinct from importing a larger work into the Media Library.
 _Avoid_: Lookup Capture, Media import, contextual image explanation

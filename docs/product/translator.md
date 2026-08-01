@@ -67,18 +67,29 @@ or Save. An explicit save creates one Image Text Result regardless of which
 Product Experience opened the flow. Exact controls, emphasis, and navigation
 remain later UI decisions.
 
-## Sentence handoff with Lookup
+## Text handoffs with Lookup
 
 Lookup and Translator both accept sentence-shaped input, but they answer different questions:
 
 - Lookup searches dictionary entries and example sentences and helps the learner inspect the words.
 - Translator produces a natural translation of the complete sentence.
 
-Lookup retains Nihongo-style sentence and example-sentence search. When the input appears to be a sentence, Lookup offers a **Translate sentence** action regardless of whether its search finds an exact or related example sentence. Missing example data is not what determines whether translation is available.
+Lookup retains complete Nihongo-style search-result behavior. A Contextual
+Handoff may additionally send the exact typed query to Translator, where it is
+handled like ordinary pasted input. The handoff sends no Lookup matches,
+example sentences, analysis structures, or other Lookup-specific context.
 
-Translation is user-initiated rather than automatically performed for every Lookup query. Activating the action opens Translator with the original text already supplied, without a confirmation dialog or retyping.
+The same app-wide pattern may offer destinations for selected content elsewhere
+in Zenbu: **Lookup** or **Translate** in MVP, and a future **Ask Sensei** action
+when AI Sensei is scheduled. The chosen Product Experience receives the exact
+selected content and handles it normally; this does not require bespoke
+tappable-word behavior, cards, modals, or destination-specific coupling.
 
-Japanese words displayed in Translator can link back to their Lookup details. Lookup and Translator reuse the same underlying parsing, tokenization, dictionary, and translation capabilities rather than implementing separate language pipelines.
+The Zenbu Japanese iOS App shell prototype decides which actions appear in each
+context, their labels and placement, and how ordinary screen navigation behaves.
+Lookup and Translator continue to reuse the same underlying parsing,
+tokenization, dictionary, and translation capabilities rather than implementing
+separate language pipelines.
 
 ## MVP value and delivery posture
 
