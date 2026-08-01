@@ -81,6 +81,18 @@ Historical reference material exists in:
 
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/zenbu-japanese-app/docs/research/history/legacy-doc-system/parity-map.md`
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/zenbu-japanese-app/docs/research/product/reference-apps/owll/screenshots/owll-ocr-result-explainer.png`
+- `/Users/devin/dev/repos/github@zenbujapanese/prototypes/japanese-app-v2/_archive/playground/zenbu/docs/features/ocr-camera.md`
+
+The archived `japanese-app-v2` OCR Camera prototype is working evidence for the
+value and feasibility of a rich image result. Its Gemini-backed
+`/api/transcribe/ocr-explain` endpoint returned extracted text, natural
+translation, a physical-context image overview, and phrase-by-phrase learning
+explanations in one response; the corresponding UI lives at
+`mobile/src/app/kanji-ocr.tsx`, and the endpoint implementation lives at
+`backend/src/routes/transcribe.ts` within that archived prototype. This
+mixed-purpose endpoint is reference material, not the production capability
+boundary, provider selection, or an MVP commitment to contextual image
+explanation.
 
 These references preserve the earlier idea; they are not authoritative requirements for the future feature.
 

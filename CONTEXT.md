@@ -16,6 +16,34 @@ _Avoid_: App suite, bundle of apps
 Behavior or data used by multiple Product Experiences without being a user-facing destination of its own.
 _Avoid_: Shared app, product area
 
+**Language Reference Data**:
+Canonical app-owned Japanese lexical, orthographic, pronunciation, and classification facts whose source provenance is retained independently of any provider schema.
+_Avoid_: Provider data model, generated language fact
+
+**Japanese Text Analysis**:
+The Shared Capability that resolves Japanese text into app-owned segments, tokens, lemmas, language-item candidates, and occurrence mappings.
+_Avoid_: Media Analysis, translation
+
+**Image Text Recognition**:
+The Shared Capability that extracts ordered text regions from a bounded image while retaining their spatial and recognition evidence.
+_Avoid_: Lookup Capture, contextual image explanation
+
+**Natural Translation**:
+The Shared Capability that produces coherent Japanese–English meaning for bounded text or a conversation turn with explicitly supplied active-session context.
+_Avoid_: Dictionary gloss, word-for-word substitution
+
+**Language Explanation**:
+An on-demand generated interpretation of bounded Japanese text that explains grammar, omitted elements, register, nuance, and translation choices without becoming an open-ended tutoring conversation.
+_Avoid_: AI Sensei, contextual image explanation
+
+**Speech Synthesis**:
+The Shared Capability that produces spoken language from text for Product Experience-owned playback behavior.
+_Avoid_: Pronunciation recording, audio routing
+
+**Speech Transcription**:
+The Shared Capability that turns spoken audio into text or timed utterance updates without owning capture, conversation, or media workflows.
+_Avoid_: Audio routing, caption-generation workflow
+
 **More**:
 A secondary navigation entry point for utility and deferred destinations in the Zenbu Japanese iOS App. More does not own the destinations, histories, settings, or data reachable through it and is not a Product Experience.
 _Avoid_: Product Experience, data owner, unified user area

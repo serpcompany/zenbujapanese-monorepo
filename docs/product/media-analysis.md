@@ -12,13 +12,19 @@ It analyzes a work as one entity rather than handling a single-shot Lookup Captu
 
 Media Analysis MVP ends after:
 
-- importing a larger bounded work
+- importing a larger bounded work from a text-based source
 - extracting its Japanese text
 - analyzing the work as one entity
 - presenting the analysis
 - persisting the result locally in the User Library
 
 Interactive media-consumption experiences are outside this MVP.
+
+The exact initial input methods and file formats remain a later product
+decision. Text-based is the current boundary; it does not yet commit MVP to
+PDF, EPUB, subtitle, URL, image, audio, or video ingestion. Captionless video
+transcription is a feasibility candidate and possible first expansion rather
+than a shipping MVP requirement.
 
 ## Deferred related experiences
 
@@ -32,15 +38,14 @@ The single-image OCR and translation flow proven by the earlier TestFlight proto
 
 ## Inputs
 
-Potential inputs include:
+MVP accepts a larger bounded work through a text-based input. A later decision
+will select the exact input methods and formats, such as pasted text, plain-text
+files, or structured text formats. Input-specific ingestion normalizes the
+source into ordered Japanese text segments for analysis.
 
-- pasted text
-- text or subtitle files
-- PDFs
-- audio or video files
-- URLs
-
-Input-specific extraction produces Japanese text for the shared analysis pipeline.
+Image, audio, and video extraction are later input families. Supporting them
+requires their own feasibility and lifecycle decisions and is not implied by
+the shared analysis pipeline.
 
 ## MVP analysis
 
@@ -55,6 +60,14 @@ A Media Analysis can report:
 - contexts in which words occur
 
 Completed analyses persist in the device-local User Library.
+
+The analysis engine is local, offline, reproducible for the same installed
+algorithm and dataset versions, independent of its presentation UI, and does
+not require generative AI. Dashboards, charts, and other visualizations consume
+its structured result without becoming part of the engine. Statistical or
+machine-learning implementations may still be evaluated for focused operations
+such as tokenization or disambiguation, provided analysis remains local and its
+provenance is retained.
 
 ## Classification posture
 
@@ -73,6 +86,12 @@ Media Analysis does not use a learner's known, learning, or unknown vocabulary s
 
 Personalization may be layered on later through a separate Learning Profile capability without becoming part of the core Media Analysis pipeline.
 
+Media Analysis also does not provide passage-by-passage Learning
+Interpretation. In-context furigana, romaji, definitions, pitch accent,
+translations, and teaching commentary belong to the later Read, Watch, and
+Listen Consumption Experiences. Media Analysis may expose source-backed word
+details and occurrence contexts as part of inspecting its analytical result.
+
 Media Analysis is also not:
 
 - general-purpose file storage
@@ -83,6 +102,7 @@ Media Analysis is also not:
 ## Open questions
 
 - What should the whole-work result be called and which measures belong in its first Vocabulary Profile?
+- Which exact text-based input methods and file formats belong in the initial MVP?
 
 ## Historical reference
 
