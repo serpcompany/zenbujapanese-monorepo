@@ -6,7 +6,10 @@ Status: evolving product contract
 
 The Media Library is the Product Experience for privately browsing and managing media the learner has imported into Zenbu Japanese. It owns adding media, presenting each durable Media Entry, and running and revisiting the Media Analysis attached to that entry. It is a learning and analysis system, not a universal store for everything the learner has encountered and not general-purpose file storage.
 
-An uploaded file or entered URL is an input to analysis. The durable product value is the extracted Japanese, its language analysis, and the learner's activity—not a Zenbu-managed copy of the original source.
+An uploaded file or entered URL begins as a transient analysis input. After
+reviewing the result, the learner explicitly chooses whether to discard it or
+save it as a Media Entry. A saved Media Entry retains the source when Zenbu can
+own it, or a durable external reference when the source cannot be retained.
 
 Lookup history and Saved Language Items do not live in the Media Library. Lookup owns its own history. The final name, organization model, navigation placement, and cross-product use of Saved Language Items require a separate prototype decision.
 
@@ -38,14 +41,22 @@ The Media Library can retain:
 
 Larger works produce a **Media Entry** with a **Media Analysis** covering the work as one entity. Examples include a movie script, subtitle file, song, video, PDF, book, manga, or game script.
 
-Single-shot Lookup Capture behavior remains separate from larger Media Analysis, even though both can reuse the same underlying language-analysis capabilities.
+The single-image Image Text Flow remains separate from larger Media Analysis,
+even though both can reuse the same underlying language-analysis capabilities.
 
-## Original sources
+## Source retention
 
-- Original source files are temporary processing inputs or externally referenced resources.
-- Zenbu does not act as a drive or managed media-file repository.
-- Watch, Listen, or Read may use an available local file or URL.
-- If an external source becomes unavailable, the learner can relink it while preserving the existing analysis.
+- Processing alone creates no durable record. Discard removes both the
+  temporary source and its derived working analysis.
+- Save creates a Media Entry containing the analysis and the retained source
+  when Zenbu can own it. Sources that cannot be retained use a durable external
+  reference instead.
+- Zenbu does not become a general-purpose drive merely because saved Media
+  Entries retain their sources.
+- Future Watch, Listen, or Read experiences may use the retained source or an
+  available external reference.
+- Exact copy, relinking, deletion, backup, sync, storage-limit, and unavailable-
+  source behavior belongs to the durable-record and persistence decisions.
 
 ## Collections
 

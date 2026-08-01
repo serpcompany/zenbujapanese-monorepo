@@ -59,7 +59,7 @@ Current preliminary research is preserved at:
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/zenbu-japanese-app/docs/research/data-sources/source-notes/legacy-data-source-analysis.md`
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/zenbu-japanese-app/docs/research/product/reference-apps/nihongo/`
 
-## Zenbu image-lookup additions
+## Zenbu Image Text Flow additions
 
 The defined product deviation is within Nihongo Pro's Search flow for **Take Photo**, **Photo Library**, and **Files**.
 
@@ -68,6 +68,10 @@ Nihongo parity remains the baseline: the selected image is OCR-processed, recogn
 ### Required for MVP: natural English translation
 
 In addition to the Nihongo behavior, Zenbu presents a coherent, natural English translation of the Japanese content recognized in the image. This is a translation of the content as a whole, not merely a list of isolated dictionary definitions. Interactive OCR items and their Lookup behavior remain available alongside it.
+
+Lookup does not request that whole-content translation merely because it has
+recognized the image. The learner explicitly requests translation from the
+Image Text Flow. Exact presentation remains a later UI decision.
 
 The existing `japanese-app-v2` prototype is implementation reference material for this addition, but it is not the final specification.
 
@@ -105,9 +109,22 @@ They are neither comprehensive nor an authoritative inventory of Nihongo Pro. Fu
 
 Before implementation planning, an AI agent must perform and document an exhaustive, current analysis of Nihongo Pro. This must include a screen-by-screen inventory, complete feature inventory, navigation and entry paths, interaction behavior, visible states and variations, settings, data presented, relevant edge and error states, and the language-stack inventory defined above. The resulting verified parity specification—not memory or the existing prototype audit—will become the implementation reference.
 
-## Lookup Capture
+## Image Text Flow
 
-Nihongo Pro's camera, photo, and file OCR flow is part of the Lookup target. It handles single-shot or limited-content lookup rather than whole-work Media Analysis.
+Nihongo Pro's camera, photo, and file OCR behavior is part of the Lookup
+target. Zenbu exposes it through the shared Image Text Flow, which handles one
+bounded image or limited content rather than whole-work Media Analysis.
+
+The working image and derived result are transient until the learner chooses
+to save them. Discard retains neither. An explicit flow-level save creates one
+reopenable Image Text Result containing its source image, recognized Japanese
+regions, and any generated whole-content translation; it does not
+automatically save every recognized word.
+
+Nihongo-parity dictionary cards retain their save or bookmark behavior,
+including the ability to attach an explicitly selected or captured source
+image. A saved language item may preserve that personal context as an
+Encounter Example.
 
 ## Deferred documentation
 

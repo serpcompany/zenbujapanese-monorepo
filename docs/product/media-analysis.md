@@ -6,7 +6,8 @@ Status: landscape definition established; detailed result design deferred
 
 Media Analysis helps a learner evaluate the Japanese contained in a larger bounded work so they can decide what material or vocabulary cohort to focus on.
 
-It analyzes a work as one entity rather than handling a single-shot Lookup Capture.
+It analyzes a work as one entity rather than handling the single-image Image
+Text Flow.
 
 ## MVP boundary
 
@@ -16,7 +17,8 @@ Media Analysis MVP ends after:
 - extracting its Japanese text
 - analyzing the work as one entity
 - presenting the analysis
-- persisting the result locally in the User Library
+- letting the learner explicitly discard the transient work or save its source
+  and analysis as a Media Entry
 
 Interactive media-consumption experiences are outside this MVP.
 
@@ -34,7 +36,8 @@ than a shipping MVP requirement.
 
 These experiences may reuse Media Analysis data later, but they require their own product definitions and are not generalized in advance.
 
-The single-image OCR and translation flow proven by the earlier TestFlight prototype belongs conceptually to Lookup Capture, not to the future Reader.
+The single-image OCR and translation flow proven by the earlier TestFlight
+prototype belongs to the Image Text Flow, not to the future Reader.
 
 ## Inputs
 
@@ -59,7 +62,8 @@ A Media Analysis can report:
 - difficulty or coverage views derived from enabled reference datasets
 - contexts in which words occur
 
-Completed analyses persist in the device-local User Library.
+Completed analyses persist only as part of an explicitly saved, device-local
+Media Entry. Discard retains neither the transient source nor its analysis.
 
 The analysis engine is local, offline, reproducible for the same installed
 algorithm and dataset versions, independent of its presentation UI, and does

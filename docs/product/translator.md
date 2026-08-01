@@ -45,9 +45,10 @@ Relevant historical material includes:
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/japanese-app-v2/docs/reference/owll-translator-reference-stack-notes.md`
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/japanese-app-v2/docs/product/features/translate.md`
 
-## Shared image capture
+## Image Text Flow
 
-Camera, photo-library, and image-file translation use the same shared flow as Lookup Capture rather than a separate Translator-specific implementation.
+Camera, Photo Library, and image-file translation use the same Image Text Flow
+as Lookup rather than a separate Translator-specific implementation.
 
 Lookup and Translator may both provide entry points, but both open the same result experience. That experience combines:
 
@@ -55,9 +56,16 @@ Lookup and Translator may both provide entry points, but both open the same resu
 - a coherent natural translation of the recognized content as a whole
 - later, an optional AI-generated explanation using broader image context
 
-MVP must not create separate Lookup and Translator OCR pipelines, result screens, histories, or saved-record types. A saved result is one User Library record regardless of which Product Experience opened the flow.
+MVP must not create separate Lookup and Translator OCR pipelines, result
+contracts, histories, or saved-record types. Entering through Translator
+already expresses translation intent, so the flow requests whole-content
+translation automatically; entering through Lookup requires an explicit
+translation request.
 
-The current name **Lookup Capture** remains provisional. Its name does not limit the shared flow to dictionary lookup.
+The working source and result are transient until the learner chooses Discard
+or Save. An explicit save creates one Image Text Result regardless of which
+Product Experience opened the flow. Exact controls, emphasis, and navigation
+remain later UI decisions.
 
 ## Sentence handoff with Lookup
 
@@ -114,7 +122,7 @@ Translator conversation history uses durable device-local persistence for MVP. A
 
 MVP history retains the bilingual transcript and the minimal session metadata needed to identify and reopen it, such as its languages and date. Captured source audio is temporary processing input and is discarded after processing rather than saved with the conversation.
 
-The history belongs to Translator for MVP rather than expanding the User Library or Learning Profile contracts prematurely. Future account sync, backup, cross-device access, or study handoff may build on it later.
+The history belongs to Translator for MVP rather than expanding the saved-material or Learning Profile contracts prematurely. Future account sync, backup, cross-device access, or study handoff may build on it later.
 
 This product commitment does not require continuous conversation to be implemented as one undivided task. Typed translation, one recorded turn, and manual alternating turns can be used as development milestones, evaluation surfaces, and graceful fallbacks for the capabilities that live conversation depends on. Completing those milestones does not move continuous conversation out of MVP.
 
