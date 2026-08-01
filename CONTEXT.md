@@ -69,7 +69,7 @@ The connected record of a learner's saved material, encounters, activity, and pr
 _Avoid_: User area, central profile area
 
 **Media Entry**:
-The durable Media Library record representing one explicitly saved larger bounded work. It connects the retained or externally referenced source, Media Analysis, and applicable Consumption Experience.
+The durable Media Library record representing one explicitly saved larger bounded work. It contains Zenbu's app-owned source copy and its Media Analysis and may connect that work to an applicable Consumption Experience.
 _Avoid_: Transient import, Media Analysis
 
 **Media Analysis**:

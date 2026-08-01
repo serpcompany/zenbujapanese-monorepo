@@ -64,6 +64,9 @@ A Media Analysis can report:
 
 Completed analyses persist only as part of an explicitly saved, device-local
 Media Entry. Discard retains neither the transient source nor its analysis.
+MVP stores the completed result produced before Save and provides no reanalysis
+workflow or analysis-version history. Later algorithm or dataset changes do not
+silently alter a saved result.
 
 The analysis engine is local, offline, reproducible for the same installed
 algorithm and dataset versions, independent of its presentation UI, and does

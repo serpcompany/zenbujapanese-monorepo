@@ -8,8 +8,8 @@ The Media Library is the Product Experience for privately browsing and managing 
 
 An uploaded file or entered URL begins as a transient analysis input. After
 reviewing the result, the learner explicitly chooses whether to discard it or
-save it as a Media Entry. A saved Media Entry retains the source when Zenbu can
-own it, or a durable external reference when the source cannot be retained.
+save it as a Media Entry. Saving succeeds only for a supported source Zenbu can
+copy into app-owned storage; MVP does not create reference-only Media Entries.
 
 Lookup history and Saved Language Items do not live in the Media Library. Lookup owns its own history. The final name, organization model, navigation placement, and cross-product use of Saved Language Items require a separate prototype decision.
 
@@ -33,7 +33,7 @@ Read, Watch, and Listen are separate deferred Consumption Experiences with purpo
 The Media Library can retain:
 
 - the learner-provided title and source kind
-- an external URL or local-file reference when applicable
+- an app-owned copy of the imported source
 - extracted and segmented Japanese text
 - resolved dictionary words and occurrence contexts
 - JLPT, frequency, difficulty, and coverage results
@@ -48,15 +48,23 @@ even though both can reuse the same underlying language-analysis capabilities.
 
 - Processing alone creates no durable record. Discard removes both the
   temporary source and its derived working analysis.
-- Save creates a Media Entry containing the analysis and the retained source
-  when Zenbu can own it. Sources that cannot be retained use a durable external
-  reference instead.
+- Save copies the supported source into app-owned storage and creates a Media
+  Entry containing that source and its completed analysis. Moving, renaming, or
+  deleting the original has no effect on the saved entry.
+- A Media Entry's source is immutable in MVP. It cannot be replaced, relinked,
+  or deleted independently, and importing different media creates a new entry.
+- MVP stores the completed analysis produced before Save and offers no
+  reanalysis workflow or analysis-version history.
+- Deleting a Media Entry permanently deletes its app-owned source, attached
+  Media Analysis, and Collection memberships. Independently created Saved
+  Language Items and Encounter Examples remain.
+- Zenbu does not evict a saved source independently to reclaim storage. A
+  missing or corrupt app-owned source is an integrity failure: any readable
+  analysis may remain available, but MVP offers deletion rather than relinking.
 - Zenbu does not become a general-purpose drive merely because saved Media
   Entries retain their sources.
-- Future Watch, Listen, or Read experiences may use the retained source or an
-  available external reference.
-- Exact copy, relinking, deletion, backup, sync, storage-limit, and unavailable-
-  source behavior belongs to the durable-record and persistence decisions.
+- Future Watch, Listen, or Read experiences may use the app-owned source.
+- Backup, sync, and storage-limit policy belongs to later persistence decisions.
 
 ## Collections
 
