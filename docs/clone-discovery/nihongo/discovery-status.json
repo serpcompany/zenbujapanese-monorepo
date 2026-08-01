@@ -1,15 +1,24 @@
 {
   "project": "zenbu-lookup-nihongo-reference",
-  "phase": "access_proven_with_recorded_limitations",
-  "updated_at": "2026-08-01T16:50:14Z",
+  "phase": "journey_reconnaissance_complete_pending_scope_approval",
+  "updated_at": "2026-08-01T17:17:39Z",
   "active_map": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/63",
   "access_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/64",
   "access_ticket_status": "complete_with_recorded_limitations",
-  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/65",
+  "journey_mapping_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/65",
+  "journey_mapping_ticket_status": "complete",
+  "candidate_denominator": {
+    "journeys": 16,
+    "blocking_or_navigation_support_surfaces": 17,
+    "excluded_boundary_surfaces": 4
+  },
+  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/66",
   "final_disposition": null,
   "notes": [
     "Physical-iPhone runtime control and screenshot capture are proven.",
-    "Every environment fact unavailable through the proven interfaces has an owner and exact resume procedure in access-blockers.json.",
-    "App-level semantic accessibility capture is not yet available through the proven tools; the limitation and fallback are recorded in tool-access-plan.json."
+    "The Search-rooted breadth-first graph has stable journey, surface, and transition IDs.",
+    "All candidate journeys remain proposed until the stakeholder resolves issue #66.",
+    "Protected camera, Photo Library, Files, and image-result behavior require synthetic fixtures; the visible entry points are verified without exposing personal content.",
+    "App-level semantic accessibility capture remains unavailable through the proven tools; the limitation and fallback are recorded in tool-access-plan.json."
   ]
 }
