@@ -16,6 +16,14 @@ _Avoid_: App suite, bundle of apps
 Behavior or data used by multiple Product Experiences without being a user-facing destination of its own.
 _Avoid_: Shared app, product area
 
+**More**:
+A secondary navigation entry point for utility and deferred destinations in the Zenbu Japanese iOS App. More does not own the destinations, histories, settings, or data reachable through it and is not a Product Experience.
+_Avoid_: Product Experience, data owner, unified user area
+
+**Cross-Product Flow**:
+A user-facing flow that composes contracts owned by multiple Product Experiences and is coordinated by the Zenbu Japanese iOS App shell. Multiple Product Experiences may provide entry points into the same flow; leaving it restores the originating context. The shell coordinates the flow without owning its histories or durable records.
+_Avoid_: Duplicate product flow, Shared Capability, shell-owned Product Experience
+
 **Lookup Capture**:
 A single-shot image capture used to identify, look up, or translate a limited piece of Japanese content. It is distinct from importing a larger work into the Media Library.
 _Avoid_: Media import, Reader import
