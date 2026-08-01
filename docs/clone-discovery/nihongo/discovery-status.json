@@ -1,0 +1,15 @@
+{
+  "project": "zenbu-lookup-nihongo-reference",
+  "phase": "access_proven_with_recorded_limitations",
+  "updated_at": "2026-08-01T16:50:14Z",
+  "active_map": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/63",
+  "access_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/64",
+  "access_ticket_status": "complete_with_recorded_limitations",
+  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/65",
+  "final_disposition": null,
+  "notes": [
+    "Physical-iPhone runtime control and screenshot capture are proven.",
+    "Every environment fact unavailable through the proven interfaces has an owner and exact resume procedure in access-blockers.json.",
+    "App-level semantic accessibility capture is not yet available through the proven tools; the limitation and fallback are recorded in tool-access-plan.json."
+  ]
+}

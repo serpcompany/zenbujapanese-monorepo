@@ -1,0 +1,27 @@
+[
+  {
+    "target": "Nihongo 1.34.3 (9792) installed App Store app",
+    "activity": "Baseline package inspection",
+    "classification": "baseline_package_inspection",
+    "authorized": "only_from_a_lawfully_obtained_copy_without_bypass",
+    "artifact_available": false,
+    "decision": "Use CoreDevice runtime metadata to establish bundle identity, version/build, App Store runtime status, and launch behavior. Do not copy the installed bundle or app container. If an authorized IPA is later supplied, hash it and inspect only baseline headers, signing, metadata, imports/exports, limited diagnostic strings, and accessible resources without bypass.",
+    "rationale": "No separately authorized package artifact is available, and runtime observation plus public provenance research can advance the current frontier."
+  },
+  {
+    "target": "Nihongo proprietary executable",
+    "activity": "Controlled reverse engineering",
+    "classification": "controlled_reverse_engineering",
+    "authorized": false,
+    "decision": "Do not disassemble or decompile. A later exception would require explicit user authorization, lawful possession/use, jurisdiction and license basis, named blocked inventory row IDs, proof that runtime/docs/baseline inspection are insufficient, and a narrowly scoped isolated procedure.",
+    "rationale": "No blocked atomic row or necessity showing currently justifies controlled reverse engineering."
+  },
+  {
+    "target": "Nihongo App Store protection and access controls",
+    "activity": "Decryption, DRM/FairPlay bypass, anti-tamper bypass, license-check bypass, or authentication-control circumvention",
+    "classification": "circumvention",
+    "authorized": false,
+    "decision": "Prohibited unless the rights holder explicitly authorizes the precise act or counsel confirms a current legal basis for it.",
+    "rationale": "Normal-use clone discovery and device ownership do not authorize circumvention."
+  }
+]

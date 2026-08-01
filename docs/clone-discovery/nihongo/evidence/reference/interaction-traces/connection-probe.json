@@ -1,0 +1,65 @@
+{
+  "inventory_id": null,
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment": {
+    "platform": "iOS 26.5.2 (23F84)",
+    "device": "iPhone 17 Pro Max (iPhone18,2)",
+    "app": "Nihongo 1.34.3 (9792)",
+    "locale": "English app UI observed; exact device locale unavailable",
+    "appearance": "dark",
+    "orientation": "portrait",
+    "account_role": "local device user; in-app entitlement not observed",
+    "permissions": []
+  },
+  "fixture": "Nihongo already open at an empty Search root; no personal query or result visible",
+  "actions": [
+    {
+      "at": "2026-08-01T16:40:15Z",
+      "controller": "xcrun devicectl",
+      "action": "Activate com.serpentisei.studyjapanese without terminating the existing process",
+      "observed": "CoreDevice returned success and a live process identifier"
+    },
+    {
+      "at": "2026-08-01T16:42:00Z",
+      "controller": "computer-use over iPhone Mirroring",
+      "action": "Cancel an unexpected Universal Clipboard request raised during the separate Accessibility Inspector probe",
+      "observed": "The prompt was cancelled before any clipboard payload became visible; no clipboard content was retained or used"
+    },
+    {
+      "at": "2026-08-01T16:48:19Z",
+      "controller": "computer-use over iPhone Mirroring",
+      "action": "Tap the empty Search field without typing",
+      "observed": "Search entered its focused state and exposed a Cancel control. A top-region screenshot was retained; the full screen was deliberately not retained because it displayed pre-existing recent searches.",
+      "evidence": "evidence/reference/screenshots/connection-probe-search-focused-top.png"
+    },
+    {
+      "at": "2026-08-01T16:48:26Z",
+      "controller": "computer-use over iPhone Mirroring",
+      "action": "Tap Cancel",
+      "observed": "The focused Search state dismissed and the empty Search root returned.",
+      "evidence": "evidence/reference/screenshots/connection-probe-search-restored.png"
+    }
+  ],
+  "expected": [
+    "Nihongo remains launchable and controllable",
+    "Search focus can be entered and dismissed without creating durable data",
+    "The empty Search baseline is restored"
+  ],
+  "observed": [
+    "CoreDevice launch activation succeeded",
+    "iPhone Mirroring rendered the Search root",
+    "Search focus and dismissal produced distinct visual states",
+    "The final visible state returned to the empty Search root"
+  ],
+  "artifacts": [
+    "evidence/reference/screenshots/connection-probe-search-baseline.png",
+    "evidence/reference/screenshots/connection-probe-search-focused-top.png",
+    "evidence/reference/screenshots/connection-probe-search-restored.png",
+    "evidence/reference/package-reports/coredevice-connection-metadata.json",
+    "evidence/reference/semantic-snapshots/connection-probe-limitation.md"
+  ],
+  "durable_outputs": [],
+  "result": "observed_with_semantic_limitation",
+  "captured_at": "2026-08-01T16:50:14Z",
+  "notes": "No query text was entered. The focused state displayed pre-existing recent searches, so the full screenshot was not retained and no history content is quoted in the dossier. Only a privacy-safe top crop proves the focused state."
+}

@@ -1,0 +1,53 @@
+{
+  "project": "zenbu-lookup-nihongo-reference",
+  "authorization": {
+    "basis": "The device owner explicitly authorized normal-use inspection of the installed Nihongo app on the connected physical iPhone for an internal clean-room discovery dossier.",
+    "allowed": [
+      "Normal-use runtime inspection and non-destructive behavioral probes",
+      "Screenshots, interaction traces, and UI metadata",
+      "Apple CoreDevice metadata for the connected device and the exact Nihongo bundle identifier",
+      "App-specific camera and Photos permission changes that are recorded and restored",
+      "Disposable Search data created from synthetic, public, or purpose-created fixtures",
+      "Public and explicitly authorized provenance research"
+    ],
+    "prohibited": [
+      "Personal photos, files, clipboard payloads, credentials, existing history, or other private content",
+      "Proprietary executable extraction or decryption",
+      "DRM, FairPlay, authentication, anti-tamper, or other security-control circumvention",
+      "Invasive device modification or destructive testing",
+      "Copying proprietary implementation, executable code, or paid assets into the dossier"
+    ]
+  },
+  "outcome": {
+    "target": "coding_ready_fixture_driven_search_parity_dossier",
+    "productionization_in_scope": false
+  },
+  "parity_dimensions": [
+    "visual",
+    "interaction",
+    "behavior",
+    "state-data",
+    "integration",
+    "durable-output",
+    "package-platform",
+    "performance",
+    "accessibility"
+  ],
+  "blocking_journey_ids": [],
+  "navigation_support": [],
+  "proposed": [
+    "Newly discovered adjacent functionality pending stakeholder classification"
+  ],
+  "excluded": [
+    "Clippings and their settings",
+    "Flashcards and their settings",
+    "General Settings",
+    "Contents of external destinations",
+    "Alternate locales, orientations, devices, OS versions, appearances, and historical Nihongo versions"
+  ],
+  "allowed_variance": [
+    "Zenbu colors, typography, logos, and icons",
+    "Zenbu bottom-navigation structure",
+    "The settled whole-content natural-translation addition to the Image Text Flow"
+  ]
+}

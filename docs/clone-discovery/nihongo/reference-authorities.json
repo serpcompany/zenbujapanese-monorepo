@@ -1,0 +1,28 @@
+[
+  {
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "product": "Nihongo",
+    "surface": "physical-iphone-runtime",
+    "bundle_id": "com.serpentisei.studyjapanese",
+    "version": "1.34.3",
+    "build": "9792",
+    "sha256": null,
+    "source": "Authorized installed App Store runtime; CoreDevice reports builtByDeveloper=false and removable=true",
+    "captured_at": "2026-08-01T16:42:57Z",
+    "platform": "iOS 26.5.2 (23F84)",
+    "device": "iPhone 17 Pro Max (iPhone18,2)",
+    "device_identifier_sha256": "93a3d254e1fa3cda68862159a3cb9938e08497bfd45cb9945e7dcee214d29928",
+    "account_role": "Local device user; no in-app account or entitlement state was visible in the Search baseline",
+    "locale": "English app UI observed; the exact device locale is not exposed by the proven interfaces and alternate locales are out of scope",
+    "appearance": "dark",
+    "orientation": "portrait",
+    "content_size_category": "not exposed by the proven interfaces",
+    "permissions": {
+      "camera": "not yet observed",
+      "photos": "not yet observed",
+      "files": "system picker access not yet observed",
+      "clipboard": "payload deliberately not inspected"
+    },
+    "notes": "The installed App Store app is a runtime subject. No IPA, decrypted executable, app container, or proprietary resource payload was acquired."
+  }
+]

@@ -1,0 +1,75 @@
+[
+  {
+    "evidence_id": "EVIDENCE-ACCESS-COREDEVICE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "package-platform-metadata",
+    "path": "evidence/reference/package-reports/coredevice-connection-metadata.json",
+    "captures": [
+      "device model and OS",
+      "wired pairing and tunnel",
+      "orientation and display scale",
+      "Nihongo bundle ID, version, and build"
+    ],
+    "privacy": "Direct device identifiers and app-container paths are omitted; only a one-way device identifier hash is retained."
+  },
+  {
+    "evidence_id": "EVIDENCE-ACCESS-SCREENSHOT-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "screenshot",
+    "path": "evidence/reference/screenshots/connection-probe-search-baseline.png",
+    "sha256": "58f6610e9308872267ff8d0e2573cd1b92f8641574bc7a089b91a2210fb6c675",
+    "captures": [
+      "successful Search-root launch",
+      "dark appearance",
+      "portrait orientation",
+      "visible Search field and camera entry",
+      "reference bottom navigation"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-ACCESS-TRACE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "interaction-trace",
+    "path": "evidence/reference/interaction-traces/connection-probe.json",
+    "captures": [
+      "CoreDevice activation",
+      "harmless Search focus and dismissal",
+      "restoration of the baseline"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-ACCESS-SCREENSHOT-FOCUSED-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "privacy-cropped-screenshot",
+    "path": "evidence/reference/screenshots/connection-probe-search-focused-top.png",
+    "sha256": "fdc44bb9a67abdb0492da560128a9dd7414e33e704b2c095e475774ff2b9392c",
+    "captures": [
+      "Search field focused",
+      "Cancel control visible",
+      "focused-state guidance copy"
+    ],
+    "privacy": "The full focused screen was not retained because it displayed pre-existing recent searches. The top crop excludes the history list and keyboard."
+  },
+  {
+    "evidence_id": "EVIDENCE-ACCESS-SCREENSHOT-RESTORED-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "screenshot",
+    "path": "evidence/reference/screenshots/connection-probe-search-restored.png",
+    "sha256": "2395bfd3103c27fc491dbc2fda62e6241dada5ca5a97d487aa3dd921a79d3dbf",
+    "captures": [
+      "Search focus dismissed through the visible Cancel control",
+      "empty Search baseline restored"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-ACCESS-SEMANTICS-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "semantic-accessibility-limitation",
+    "path": "evidence/reference/semantic-snapshots/connection-probe-limitation.md",
+    "captures": [
+      "iPhone Mirroring shell accessibility tree",
+      "failed physical-device element selection attempt",
+      "fallback procedure"
+    ]
+  }
+]

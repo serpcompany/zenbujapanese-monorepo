@@ -1,0 +1,109 @@
+[
+  {
+    "id": "ACCESS-BLOCKER-DEVICE-LOCALE",
+    "field": "exact device locale",
+    "status": "inaccessible_from_proven_interfaces",
+    "owner": "device owner with discovery driver",
+    "affected_records": [
+      "reference-authorities.json",
+      "environment-matrix.json"
+    ],
+    "completed_independent_work": "The app visibly rendered English copy in the pinned runtime; alternate locales are outside the approved dossier scope.",
+    "fallback": "Treat the observed English app UI as the runtime language authority without asserting a device locale.",
+    "resume_procedure": [
+      "The device owner opens Settings → General → Language & Region on the physical iPhone.",
+      "The owner reports only the Language and Region values, or approves a tightly cropped screenshot containing only those values.",
+      "The discovery driver updates the authority and environment cell without retaining Apple ID, location, preferred-language history, or other settings."
+    ],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
+  },
+  {
+    "id": "ACCESS-BLOCKER-ENTITLEMENT",
+    "field": "Nihongo account/purchase entitlement state",
+    "status": "not_visible_at_search_baseline",
+    "owner": "device owner",
+    "affected_records": [
+      "reference-authorities.json",
+      "environment-matrix.json",
+      "future Search rows whose behavior differs by entitlement"
+    ],
+    "completed_independent_work": "No in-app account, sign-in state, trial banner, paywall, or entitlement badge was visible on the empty Search root. The installed app identity and build are pinned.",
+    "fallback": "Describe only the observed installed runtime and do not call it paid, Pro, trial, subscribed, or account-bound.",
+    "resume_procedure": [
+      "The device owner states whether this installation is paid/Pro, trial, free, or otherwise entitled without disclosing an Apple ID or receipt.",
+      "During Search reconnaissance, record any limit, paywall, restore-purchase control, or entitlement-dependent Search behavior if it becomes reachable.",
+      "Update the authority and every affected journey row with the confirmed state and evidence source."
+    ],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": [
+      "Any later row claiming paid/Pro-only Search behavior"
+    ]
+  },
+  {
+    "id": "ACCESS-BLOCKER-PERMISSIONS",
+    "field": "camera, Photos, Files, and clipboard permission/access states",
+    "status": "not_exposed_by_coredevice_and_not_opened_during_baseline",
+    "owner": "discovery driver with device-owner supervision",
+    "affected_records": [
+      "reference-authorities.json",
+      "environment-matrix.json",
+      "future image and input journey rows"
+    ],
+    "completed_independent_work": "The owner authorized app-specific permission testing and restoration. The baseline avoided the camera view, personal Photo Library, personal Files, and clipboard payloads.",
+    "fallback": "Keep permission-dependent journeys unknown rather than infer their state from the visible Search controls.",
+    "resume_procedure": [
+      "Prepare a non-personal camera scene, a limited Photos library containing only a synthetic fixture, a synthetic file, and a known synthetic Mac clipboard value.",
+      "Enter each approved Search path separately and record whether iOS prompts, allows, denies, or opens a picker.",
+      "Cancel before selecting unrelated content, restore each app-specific permission to its recorded starting state, and retain only synthetic evidence.",
+      "Update the relevant matrix cell and atomic rows independently for allow, deny, cancel, retry, and restoration."
+    ],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": [
+      "Future camera permission rows",
+      "Future Photos permission rows",
+      "Future Files picker rows",
+      "Future clipboard-input rows"
+    ]
+  },
+  {
+    "id": "ACCESS-BLOCKER-CONTENT-SIZE",
+    "field": "content-size category",
+    "status": "not_exposed_by_proven_interfaces",
+    "owner": "device owner with discovery driver",
+    "affected_records": [
+      "reference-authorities.json",
+      "environment-matrix.json"
+    ],
+    "completed_independent_work": "The exact screen geometry and 3× display scale are pinned in the baseline evidence.",
+    "fallback": "Describe geometry as observed without labelling the content-size category.",
+    "resume_procedure": [
+      "The device owner reports the current Settings → Display & Brightness → Text Size position and whether Accessibility Larger Text is enabled.",
+      "Record the resulting category only if iOS or an approved inspection tool exposes its canonical name; otherwise retain the observed geometry without inference."
+    ],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": [
+      "Any later row claiming Dynamic Type behavior"
+    ]
+  },
+  {
+    "id": "ACCESS-BLOCKER-APP-SEMANTICS",
+    "field": "Nihongo accessibility hierarchy",
+    "status": "unavailable_with_current_automation",
+    "owner": "discovery driver with device-owner assistance",
+    "affected_records": [
+      "future accessibility parity rows"
+    ],
+    "completed_independent_work": "iPhone Mirroring and Xcode Accessibility Inspector were both attempted against the pinned runtime; only the mirroring shell tree was returned.",
+    "fallback": "Use a device-owner-assisted VoiceOver traversal and keep screenshots classified as visual rather than semantic evidence.",
+    "resume_procedure": [
+      "Retry Accessibility Inspector with Nihongo foregrounded and iPhone Mirroring disconnected.",
+      "If elements remain unavailable, traverse each approved Search surface with VoiceOver and record labels, traits, focus order, actions, and transitions using synthetic content.",
+      "Keep each accessibility row blocked until that environment-bound evidence exists."
+    ],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": [
+      "All future accessibility rows"
+    ]
+  }
+]
