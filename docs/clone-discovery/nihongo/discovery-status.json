@@ -1,7 +1,7 @@
 {
   "project": "zenbu-lookup-nihongo-reference",
-  "phase": "word_detail_and_conjugation_inventory_executed_with_recorded_gaps",
-  "updated_at": "2026-08-04T14:50:00Z",
+  "phase": "kanji_and_stroke_order_inventory_executed_with_recorded_gaps",
+  "updated_at": "2026-08-05T00:29:00+09:00",
   "active_map": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/63",
   "access_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/64",
   "access_ticket_status": "complete_with_recorded_limitations",
@@ -9,7 +9,7 @@
   "journey_mapping_ticket_status": "complete",
   "approved_denominator": {
     "blocking_journeys": 16,
-    "blocking_surfaces": 13,
+    "blocking_surfaces": 14,
     "navigation_support_surfaces": 3,
     "conditional_proposed_surfaces": 1,
     "excluded_boundary_surfaces": 4
@@ -60,7 +60,29 @@
     "word-evidence-manifest.json",
     "evidence/reference/interaction-traces/word-detail-inventory.json"
   ],
-  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/70",
+  "kanji_inventory_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/70",
+  "kanji_inventory_ticket_status": "executed_not_complete_blocking_gaps_recorded",
+  "kanji_inventory_counts": {
+    "in_family_states": 22,
+    "actions": 28,
+    "traversed_actions": 21,
+    "same_destination_actions": 0,
+    "unavailable_under_fixture_actions": 3,
+    "blocked_by_access_actions": 4,
+    "excluded_actions": 0,
+    "fixture_runs": 4,
+    "behavior_layout_classes": 10,
+    "privacy_reviewed_screenshot_artifacts": 25,
+    "unresolved_kanji_gap_groups": 5
+  },
+  "kanji_inventory_records": [
+    "kanji-fixture-matrix.json",
+    "kanji-crawl.json",
+    "kanji-coverage-report.json",
+    "kanji-evidence-manifest.json",
+    "evidence/reference/interaction-traces/kanji-detail-inventory.json"
+  ],
+  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/71",
   "final_disposition": null,
   "notes": [
     "Physical-iPhone runtime control and screenshot capture are proven.",
@@ -73,6 +95,10 @@
     "Synthetic note text was tested through Done save, Back auto-save, navigation persistence, cold-relaunch persistence after re-query, deletion, and restoration; no synthetic note remains.",
     "All 42 retained word/detail screenshots passed a post-capture visual audit. Mid-transition frames were removed and are not registered as evidence.",
     "Blocking word/detail gaps remain for audible semantics, unavailable-audio fixtures, note software-keyboard presentation, long-press and swipe-back gestures, offline/failure/retry, and a settled linked-kanji edge recapture.",
+    "The kanji crawl indexed 22 in-family states, 28 actions, four public fixture runs, and 10 behavior/layout classes across Kanji Detail, stroke order, origin/history, Kanji Element Detail, linked-kanji cycles, and the newly observed Kanji Etymology reference surface.",
+    "One-, eight-, and 29-stroke fixtures proved initial, step, play, pause, resume, completion, close, platform-interruption, and cold-relaunch behavior. Numeric timing remains blocked because interaction-call latency is not a synchronized recording authority.",
+    "All 25 retained kanji screenshots passed a privacy review. The 一 stroke evidence was cropped above Words You've Learned; no personal rows or clipboard payload were retained.",
+    "Blocking kanji gaps remain for exhaustive visible-row action closure, missing-data fixture classes, long-press/swipe gestures, offline/failure/retry behavior, authoritative animation timing, and a retained settled terminal frame for the 29-stroke fixture.",
     "The iOS camera, Photo Library picker, and Files picker are navigation support. The unobserved image-result placeholder remains proposed until discovery establishes Nihongo's actual post-selection graph; any observed Nihongo-owned graph is blocking.",
     "Protected camera, Photo Library, Files, and image-result behavior require synthetic fixtures; the visible entry points are verified without exposing personal content.",
     "App-level semantic accessibility capture remains unavailable through the proven tools; the limitation and fallback are recorded in tool-access-plan.json."

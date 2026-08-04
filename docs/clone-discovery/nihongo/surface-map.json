@@ -3,11 +3,11 @@
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
   "scope_status": "stakeholder_approved_blocking_contract",
   "counts": {
-    "approved_blocking": 13,
+    "approved_blocking": 14,
     "approved_navigation_support": 3,
     "conditional_proposed": 1,
     "excluded_boundary": 4,
-    "total": 21
+    "total": 22
   },
   "surfaces": [
     {
@@ -194,11 +194,12 @@
       "scope_basis": "stakeholder_approved",
       "reachability_status": "reached",
       "entry_paths": ["Select linked kanji from word detail", "Select linked kanji from an element detail"],
-      "states_observed": ["history collapsed", "history expanded"],
+      "states_observed": ["complete and missing metadata", "simple and complex glyphs", "multiple readings", "multiple and historical elements", "history collapsed", "history expanded", "related-word list"],
       "controls": ["Back", "Stroke-order entry", "Reading-linked words", "Element cards", "Show History", "Related-word rows"],
       "content_sections": ["Glyph and stroke count", "grade", "JLPT", "meanings", "on and kun readings", "elements", "origin", "historical glyph progression", "related words"],
       "outgoing_surface_ids": ["LOOKUP-WORD-DETAIL", "LOOKUP-STROKE-ORDER-OVERLAY", "LOOKUP-KANJI-ELEMENT-DETAIL"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"]
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"],
+      "evidence_paths": ["kanji-crawl.json", "kanji-evidence-manifest.json"]
     },
     {
       "surface_id": "LOOKUP-STROKE-ORDER-OVERLAY",
@@ -208,10 +209,11 @@
       "scope_basis": "stakeholder_approved",
       "reachability_status": "reached",
       "entry_paths": ["Select the stroke-order entry from kanji detail"],
-      "states_observed": ["open at an individual stroke"],
-      "controls": ["Close", "Previous", "Play", "Next"],
+      "states_observed": ["initial", "animating", "individual settled step", "paused with progress retained", "completed", "one-stroke", "8-stroke", "29-stroke"],
+      "controls": ["Close", "Previous", "Play", "Pause", "Next"],
       "outgoing_surface_ids": ["LOOKUP-KANJI-DETAIL"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"]
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"],
+      "evidence_paths": ["kanji-crawl.json", "kanji-evidence-manifest.json"]
     },
     {
       "surface_id": "LOOKUP-KANJI-ELEMENT-DETAIL",
@@ -221,11 +223,26 @@
       "scope_basis": "stakeholder_approved",
       "reachability_status": "reached",
       "entry_paths": ["Select an element card from kanji detail"],
-      "states_observed": ["populated element"],
-      "controls": ["Back", "Standalone-kanji row", "Linked kanji rows by role"],
+      "states_observed": ["populated sound element", "alternative element form", "multiple contribution rows"],
+      "controls": ["Back", "Alternative glyph", "Standalone-kanji row", "Linked kanji rows by role"],
       "content_sections": ["Element glyph and explanation", "category or meaning roles", "sound roles", "standalone kanji", "kanji lists"],
       "outgoing_surface_ids": ["LOOKUP-KANJI-DETAIL"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"]
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"],
+      "evidence_paths": ["kanji-crawl.json", "kanji-evidence-manifest.json"]
+    },
+    {
+      "surface_id": "LOOKUP-KANJI-ETYMOLOGY",
+      "name": "Kanji Etymology reference",
+      "kind": "navigation_destination",
+      "scope": "blocking",
+      "scope_basis": "newly_observed_Search_rooted_destination_under_stakeholder_recursive_contract",
+      "reachability_status": "reached",
+      "entry_paths": ["Select a Kanji Detail etymology classification info control, then Learn More"],
+      "states_observed": ["top", "scrolled definitions", "terminal Radical section"],
+      "controls": ["Back", "Scroll"],
+      "content_sections": ["Pictograph", "Ideograph", "Shuowen", "Ideographic and Phonosemantic compound", "Shinjitai", "Kyujitai", "Radical"],
+      "outgoing_surface_ids": ["LOOKUP-KANJI-DETAIL"],
+      "evidence_paths": ["kanji-crawl.json", "kanji-evidence-manifest.json"]
     },
     {
       "surface_id": "LOOKUP-IMAGE-TEXT-RESULT",

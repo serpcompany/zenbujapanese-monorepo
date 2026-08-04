@@ -260,6 +260,31 @@
       "required": true,
       "status": "blocked",
       "blocked_by": "WORD-BLOCKER-OFFLINE"
+    },
+    {
+      "id": "ENV-KANJI-STROKE-CLASSES",
+      "dimension": "animation-fixture",
+      "value": "one-, eight-, and 29-stroke sequences with initial, step, pause/resume, and completion behavior",
+      "required": true,
+      "status": "observed_with_timing_and_terminal_evidence_gaps",
+      "blocked_by": ["KANJI-BLOCKER-TIMING", "KANJI-BLOCKER-TERMINAL-EVIDENCE"],
+      "evidence": ["kanji-crawl.json", "kanji-evidence-manifest.json"]
+    },
+    {
+      "id": "ENV-KANJI-COLD-RELAUNCH",
+      "dimension": "lifecycle",
+      "value": "cold process relaunch from completed 29-stroke overlay",
+      "required": true,
+      "status": "observed",
+      "evidence": ["evidence/reference/screenshots/kanji-inventory/state-kanji-cold-relaunch-search-root.png", "evidence/reference/interaction-traces/kanji-detail-inventory.json"]
+    },
+    {
+      "id": "ENV-KANJI-NETWORK-OFFLINE",
+      "dimension": "network-state",
+      "value": "offline kanji detail, element, etymology, word-link, and stroke-order failure/retry/recovery",
+      "required": true,
+      "status": "blocked",
+      "blocked_by": "KANJI-BLOCKER-OFFLINE"
     }
   ]
 }

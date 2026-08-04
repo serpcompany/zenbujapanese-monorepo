@@ -1,0 +1,38 @@
+{
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/70",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "generated_at": "2026-08-05T00:29:00+09:00",
+  "capture_family": "kanji, stroke order, origin, element, etymology, and related-entry behavior",
+  "status": "executed_not_complete_blocking_gaps_recorded",
+  "capture_complete": false,
+  "reason": "Four privacy-safe public fixture runs proved the principal observed layout and stroke-animation classes, but every visible row was not exercised and access-dependent gesture, network, timing, semantic, and terminal-evidence gaps remain.",
+  "coverage": {
+    "in_family_states": 22,
+    "actions": 28,
+    "traversed_actions": 21,
+    "same_destination_actions": 0,
+    "unavailable_under_fixture_actions": 3,
+    "blocked_by_access_actions": 4,
+    "excluded_actions": 0,
+    "fixture_runs": 4,
+    "behavior_layout_classes": 10,
+    "privacy_reviewed_screenshot_artifacts": 25,
+    "unresolved_gap_groups": 5
+  },
+  "unresolved_gaps": [
+    {"id":"KANJI-BLOCKER-ACTION-CLOSURE","blocks":["all reading, element, contribution, related-word, and origin-collapse rows","missing-data fixture classes"]},
+    {"id":"KANJI-BLOCKER-GESTURES","blocks":["long press","interactive swipe-back and cancellation"]},
+    {"id":"KANJI-BLOCKER-OFFLINE","blocks":["offline/error/retry/recovery"]},
+    {"id":"KANJI-BLOCKER-TIMING","blocks":["authoritative per-stroke and whole-animation timing","background/navigation interruption timing"]},
+    {"id":"KANJI-BLOCKER-TERMINAL-EVIDENCE","blocks":["retained settled terminal screenshot for the 29-stroke fixture"]}
+  ],
+  "privacy_review": {
+    "personal_content_retained": false,
+    "one_stroke_evidence_cropped": true,
+    "reason": "The lower One Kanji Detail screen exposed Words You've Learned, so only crops ending above that section were retained for the one-stroke overlay.",
+    "clipboard_payload_retained": false,
+    "app_specific_permissions_changed": false,
+    "network_state_changed": false
+  }
+}

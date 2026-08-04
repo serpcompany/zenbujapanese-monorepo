@@ -1,0 +1,39 @@
+{
+  "trace_id": "TRACE-KANJI-DETAIL-001",
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/70",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "captured_at": "2026-08-05T00:29:00+09:00",
+  "controller": "iPhone Mirroring through computer-use with CoreDevice --terminate-existing relaunch",
+  "starting_state": "Nihongo Search results for public query shizuka; no personal history was opened or retained",
+  "completed_observations": [
+    "Static Kanji Detail metadata, readings, elements, origin/history, and words for 静, 争, 一, and 鬱",
+    "Kanji Element Detail alternative-form and standalone-kanji navigation cycle",
+    "Kanji Etymology information popover and full reference screen through its terminal Radical section",
+    "one-, eight-, and 29-stroke initial/progress/completed behavior classes",
+    "previous, next, play, pause, resume, completion, close, nested Back, and cold-relaunch behaviors",
+    "Universal Clipboard progress interruption cancelled without exposing or retaining a payload"
+  ],
+  "settled_runtime_facts": [
+    "Stroke overlays use a gridded character, green start/progress marker, green numeric stroke counter, white completed strokes, grey remaining strokes, previous/play-or-pause/next controls, and a close control.",
+    "Pausing preserves stroke progress and resuming continues from it.",
+    "Completion restores the play icon and leaves the counter at the total stroke count with all strokes white.",
+    "Cold termination from the completed 29-stroke overlay relaunches to an empty Search root rather than restoring the nested stack."
+  ],
+  "restoration": {
+    "final_state": "empty unfocused Search root after CoreDevice cold relaunch",
+    "synthetic_notes_created": false,
+    "app_specific_permissions_changed": false,
+    "network_state_changed": false,
+    "pre_existing_history_opened_or_deleted": false,
+    "excluded_personal_content_retained": false
+  },
+  "limitations": [
+    "The missing clone-discovery skill referenced by the map was unavailable; the map's embedded clean-room, privacy, normal-use, and evidence rules controlled this run.",
+    "App-level semantic accessibility remained unavailable.",
+    "Computer-use supplied no duration-controlled long press or reliable interactive edge-swipe.",
+    "No safe network-isolation probe was performed.",
+    "Every visible reading, element, contribution, and related-word row was not separately traversed.",
+    "The 29-stroke completed state was observed but its ephemeral screenshot was not copied before cold relaunch."
+  ]
+}

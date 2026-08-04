@@ -1,0 +1,41 @@
+{
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "generated_at": "2026-08-05T00:29:00+09:00",
+  "artifact_count": 25,
+  "quality_gate": {
+    "visual_reviewed": true,
+    "personal_content_retained": false,
+    "privacy_crops": [
+      "evidence/reference/screenshots/kanji-inventory/state-stroke-order-ichi-initial-privacy-cropped.png",
+      "evidence/reference/screenshots/kanji-inventory/state-stroke-order-ichi-complete-privacy-cropped.png"
+    ],
+    "rejected_or_unregistered": ["transition frames", "Universal Clipboard progress dialog", "uncropped 一 Kanji Detail frames exposing Words You've Learned", "unretained 29-stroke terminal frame"]
+  },
+  "artifacts": [
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-classification-info-popover.png","sha256":"5c2e54eafe4622b7237753785f908fa1106f75e922c3fc6d3e536389df210e3a"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-cold-relaunch-search-root.png","sha256":"4ff3e5e770f0d63a7524aa2fc183c456e67d6ea465a0630d60d1b1baa6299726"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-bottom.png","sha256":"367eabbaec5ed7f400bbbd2acb985517eb963b2d5c1af3104fc4c9ea8949f741"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-middle.png","sha256":"69dba4d0c90a59728273a5d013e09a6e73d523390909c2c2e61967558854b76d"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-origin-and-elements.png","sha256":"c14bd2c36c221dbfa5fb148aaa9a9cf75e80059e46cba73d1d37bcaa9622585a"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-origin-collapsed.png","sha256":"8509ec968c003ab2ccec205ce585e6b2d43ee26a76867bac0327bf18183f888a"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-origin-history-expanded.png","sha256":"2281e3d17a6aef4755442584fe29b90881674fe395563264b40d3470c7ed9639"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-top.png","sha256":"7a0f62b8d3c94a00d5159350c529bf23e373d1a2b2fd435dd2dd8ed31851763c"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-words-list.png","sha256":"97812b99427dcc51d23221fa61978bd0b909d67745fd01bacc260d4cf3638590"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-detail-sou-missing-grade-jlpt-picture.png","sha256":"0735758526708d1faa6d3770ae3d8f8fa2a5bd47277dacf2cbb40b0d5105ab7d"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-detail-utsu-complex-top.png","sha256":"9b1a974a1c8d62f7a665a18cae6a97189f3fc6efb823acc581f3d771db9212a9"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-detail-utsu-elements-origin-words.png","sha256":"88a94b3195cb4bf5be0c915e6c3b449b7c7704011332f167a9b180b415b0b039"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-element-detail-alternative-sou.png","sha256":"01e756a3b113f6bd09604769a9c5c141c86123ccec34f6a73cb5d2f1737bfe1e"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-element-detail-sound-sou.png","sha256":"e00fb1e2972755d38b9e6f2827e37831da6bbf11c05f83e9c4d9c85461168d75"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-etymology-reference-bottom.png","sha256":"d374246d98029620a27382c2c72b536fa3a060fa5b285738c0ea0f4bc61fb38a"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-etymology-reference-middle.png","sha256":"ecf4da2def9f1e473b81d5f19fbf1e995248a40198bb7cadb0dcf32836041bac"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-kanji-etymology-reference-top.png","sha256":"4569164ea850d18184007287d1c0480a4a3c95049e5fccc4a49f0aa712f1591e"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-stroke-order-ichi-complete-privacy-cropped.png","sha256":"689954e24c88608da9a5b995eeea04a774dd5c14c5129a85024c612124241461"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-stroke-order-ichi-initial-privacy-cropped.png","sha256":"e8309c022282e671bcb7d690ac99b7cee69e42b7d08bfcb4188722cd453f00d9"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-stroke-order-sou-complete.png","sha256":"50762c30df2996c23bc17d4a88b912fe071f06dd3a3cc043cc1cea267ae516d9"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-stroke-order-sou-initial.png","sha256":"f2b88886fa22dd3287e3032b4c18d0eaa33c66fd3012b085c1d4ead93eac0632"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-stroke-order-sou-paused-stroke-5.png","sha256":"9076a700e2866559309362d6f9854585b7c36d19c4e5b260f894554f7d7d767b"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-stroke-order-sou-step-1.png","sha256":"aa29481a6775deec8d2f3499345940271a67a5ffb7ccf086f71c8b049b3e2d05"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-stroke-order-utsu-initial.png","sha256":"5a2bee81128e54791cd4398dfc9e523a3fdb00ada5a53fb64b191914b8ac3008"},
+    {"path":"evidence/reference/screenshots/kanji-inventory/state-stroke-order-utsu-paused-stroke-13.png","sha256":"a2b6e8f85804950f5bc575c315554634bc4a13ada35575fa30f6078a3bb5c9bd"}
+  ]
+}
