@@ -222,5 +222,31 @@
       "exact blockers for pitch matching, audio and speech source, offline behavior, and repeatability"
     ],
     "privacy": "The crosswalk indexes only previously privacy-reviewed, hash-registered product screenshots. The failed reconnect shell was not retained as product evidence."
+  },
+  {
+    "evidence_id": "EVIDENCE-PROVENANCE-TRACE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "interaction-trace",
+    "path": "evidence/reference/interaction-traces/source-provenance-capture.json",
+    "captures": [
+      "minimum Settings-boundary traversal for source provenance",
+      "pitch, etymology, OCR, and speech-source observations",
+      "starting-state restoration and excluded unrelated Settings edges"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-PROVENANCE-SCREENSET-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "privacy-reviewed-screenshot-set",
+    "root": "evidence/reference/screenshots/source-provenance/",
+    "manifest": "source-provenance-evidence-manifest.json",
+    "artifact_count": 7,
+    "captures": [
+      "CJK Dictionary Institute and UniDic pitch attribution",
+      "English Wiktionary, Japanese Wiktionary, and Shinjigen etymology attribution",
+      "Google, OCR.space, and On Device OCR options",
+      "human-recording fallback and installed system-voice configuration"
+    ],
+    "privacy": "Only app-owned Settings UI, public source/provider text, and system voice labels are retained. The unrelated entitlement surface was immediately left and not retained."
   }
 ]

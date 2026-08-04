@@ -1,0 +1,40 @@
+{
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/73",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "starting_state": "empty Search root",
+  "ending_state": "empty Search root",
+  "states": [
+    {"state_id": "PROVENANCE-STATE-001", "surface": "Settings index", "name": "source-relevant Settings entry points", "evidence": ["evidence/reference/screenshots/source-provenance/state-settings-source-entry-points.jpg"]},
+    {"state_id": "PROVENANCE-STATE-002", "surface": "Dictionary settings", "name": "pitch source attribution", "evidence": ["evidence/reference/screenshots/source-provenance/state-dictionary-pitch-attribution.jpg"]},
+    {"state_id": "PROVENANCE-STATE-003", "surface": "Kanji Etymology FAQ", "name": "source section entered", "evidence": ["evidence/reference/screenshots/source-provenance/state-kanji-etymology-sources-entry.jpg"]},
+    {"state_id": "PROVENANCE-STATE-004", "surface": "Kanji Etymology FAQ", "name": "source section fully visible", "evidence": ["evidence/reference/screenshots/source-provenance/state-kanji-etymology-sources-complete.jpg"]},
+    {"state_id": "PROVENANCE-STATE-005", "surface": "Kanji Etymology FAQ", "name": "terminal explanatory section", "evidence": ["evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg"]},
+    {"state_id": "PROVENANCE-STATE-006", "surface": "Voice settings", "name": "human-audio fallback and system-voice configuration", "evidence": ["evidence/reference/screenshots/source-provenance/state-voice-source-behavior.jpg"]},
+    {"state_id": "PROVENANCE-STATE-007", "surface": "Photo Lookup settings", "name": "OCR provider selection", "evidence": ["evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg"]}
+  ],
+  "actions": [
+    {"action_id": "PROVENANCE-ACTION-001", "source": "empty Search root", "trigger": "tap Settings tab", "result": "PROVENANCE-STATE-001", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-002", "source": "PROVENANCE-STATE-001", "trigger": "scroll Settings index to expose source-relevant entry points", "result": "same Settings index at a new scroll position", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-003", "source": "PROVENANCE-STATE-001", "trigger": "tap Dictionary", "result": "PROVENANCE-STATE-002", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-004", "source": "PROVENANCE-STATE-002", "trigger": "tap Etymology FAQ", "result": "PROVENANCE-STATE-003", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-005", "source": "PROVENANCE-STATE-003", "trigger": "scroll through source and explanatory sections", "result": "PROVENANCE-STATE-004 and PROVENANCE-STATE-005", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-006", "source": "PROVENANCE-STATE-005", "trigger": "tap Dictionary back control", "result": "PROVENANCE-STATE-002", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-007", "source": "PROVENANCE-STATE-002", "trigger": "tap Settings back control", "result": "PROVENANCE-STATE-001", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-008", "source": "PROVENANCE-STATE-001", "trigger": "tap Voice", "result": "PROVENANCE-STATE-006", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-009", "source": "PROVENANCE-STATE-006", "trigger": "tap Settings back control", "result": "PROVENANCE-STATE-001", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-010", "source": "PROVENANCE-STATE-001", "trigger": "tap Photo Lookup", "result": "PROVENANCE-STATE-007", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-011", "source": "PROVENANCE-STATE-007", "trigger": "read selected and alternate OCR options without changing selection", "result": "PROVENANCE-STATE-007 unchanged", "disposition": "same_destination_as"},
+    {"action_id": "PROVENANCE-ACTION-012", "source": "PROVENANCE-STATE-007", "trigger": "tap Settings back control", "result": "PROVENANCE-STATE-001", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-013", "source": "PROVENANCE-STATE-001", "trigger": "tap Nihongo Pro", "result": "unrelated entitlement surface; immediately dismissed and no evidence retained", "disposition": "excluded_with_reason"},
+    {"action_id": "PROVENANCE-ACTION-014", "source": "PROVENANCE-STATE-001", "trigger": "tap Search tab", "result": "empty Search root restored", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-015", "source": "PROVENANCE-STATE-001", "trigger": "open any other Settings destination", "result": "not exercised because unrelated Settings behavior is outside the approved boundary", "disposition": "excluded_with_reason"}
+  ],
+  "counts": {
+    "states": 7,
+    "actions": 15,
+    "traversed_actions": 12,
+    "same_destination_actions": 1,
+    "excluded_actions": 2,
+    "privacy_reviewed_screenshots": 7
+  }
+}

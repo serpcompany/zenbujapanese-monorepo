@@ -1,7 +1,7 @@
 {
   "project": "zenbu-lookup-nihongo-reference",
-  "phase": "language_behavior_characterization_executed_with_blocking_gaps",
-  "updated_at": "2026-08-05T01:19:00+09:00",
+  "phase": "source_provenance_capture_complete_with_named_gaps",
+  "updated_at": "2026-08-05T05:09:00+09:00",
   "active_map": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/63",
   "access_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/64",
   "access_ticket_status": "complete_with_recorded_limitations",
@@ -132,7 +132,28 @@
     "behavior-coverage-report.json",
     "evidence/reference/interaction-traces/behavior-characterization.json"
   ],
-  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/73",
+  "source_provenance_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/73",
+  "source_provenance_ticket_status": "complete_with_named_provenance_and_licensing_gaps",
+  "source_provenance_counts": {
+    "states": 7,
+    "actions": 15,
+    "privacy_reviewed_screenshot_artifacts": 7,
+    "displayed_source_provider_entries": 8,
+    "verified_named_components": 9,
+    "inferred_components": 1,
+    "historical_unconfirmed_components": 2,
+    "unknown_component_capabilities": 10,
+    "licensing_blockers": 4,
+    "unresolved_gap_groups": 15
+  },
+  "source_provenance_records": [
+    "source-provenance.json",
+    "source-provenance-crawl.json",
+    "source-provenance-evidence-manifest.json",
+    "language-stack-behavior-crosswalk.json",
+    "evidence/reference/interaction-traces/source-provenance-capture.json"
+  ],
+  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/74",
   "final_disposition": null,
   "notes": [
     "Physical-iPhone runtime control and screenshot capture are proven.",
@@ -157,6 +178,10 @@
     "A new controlled taberu baseline was attempted from empty Search, but iPhone Mirroring paused before a settled result and did not reconnect; the shell was not retained as product evidence and no runtime behavior was inferred.",
     "Camera and Photo Library source mechanics are excluded from this discovery revision under the stakeholder's explicit scope decision; the private-access Photo picker was opened and cancelled without retaining any personal content.",
     "All nine AirDropped synthetic fixture files were moved to Files Recently Deleted after capture, the failed Mac staging folder was moved to Trash, no permissions were changed, and Nihongo was restored to the empty Search root.",
-    "App-level semantic accessibility capture remains unavailable through the proven tools; the limitation and fallback are recorded in tool-access-plan.json."
+    "App-level semantic accessibility capture remains unavailable through the proven tools; the limitation and fallback are recorded in tool-access-plan.json.",
+    "The installed build directly names CJK Dictionary Institute plus UniDic for pitch accent, English Wiktionary with Japanese Wiktionary and Shinjigen for etymology, and Google plus OCR.space as online OCR choices; Google was selected during capture.",
+    "The displayed On Device OCR option remains unnamed and explicitly lacks vertical-text support. The installed Voice screen confirms human-recording fallback to configured system voices but does not identify the current human-audio providers or exact speech API.",
+    "Source provenance capture retained seven privacy-reviewed screenshots, recorded eight displayed source/provider entries, crosswalked every required capability to a verified source, inference, or stable gap, and restored Nihongo to the empty Search root.",
+    "Fifteen provenance gap groups remain, including four licensing blockers. Each has an owner, affected capability, completed independent work, and reproducible resume procedure in source-provenance.json."
   ]
 }
