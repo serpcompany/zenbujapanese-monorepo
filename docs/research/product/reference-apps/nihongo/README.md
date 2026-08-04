@@ -1,29 +1,48 @@
-# Nihongo Search reference review
+# Nihongo Search + word/detail reference review
 
 Status: **incomplete reference-app discovery — blocking gaps remain**
 
 Captured: 2026-08-04
 
+Derived review updated: 2026-08-05
+
 Reference authority: installed Nihongo 1.34.3 (9792) on a physical iPhone 17 Pro Max running iOS 26.5.2, in dark appearance and portrait orientation
 
-Discovery scope: Nihongo's Search entry, input modes, query/result variants, history, and the proven entry edges to nested Lookup surfaces
+Discovery scope: Nihongo's Search entry, input modes, query/result variants, history, Example Sentences, Word Detail, linked entries, conjugations, notes, and the proven boundary edges to Kanji Detail and Image Text Flow
 
 This is the human-review layer for the canonical dossier at [`docs/clone-discovery/nihongo/`](../../../../clone-discovery/nihongo/). It does not copy or replace the dossier's claims. Each annotation points back to stable fixture, state, or action IDs in the canonical records.
 
 ## Review status
 
-The Search capture executed all 12 required fixture categories across 16 runs and currently records:
+The completed Search and word/detail checkpoints currently record:
 
-| Measure | Recorded |
-| --- | ---: |
-| In-family states | 22 |
-| Actions | 44 |
-| Traversed actions | 27 |
-| Same-destination actions | 1 |
-| Cross-family destination proofs | 4 |
-| Distinct input/result behavior classes | 11 |
-| Privacy-reviewed screenshots displayed below | 34 |
-| Blocking or unresolved Search gaps | 9 |
+| Measure | Search | Word/detail | Combined |
+| --- | ---: | ---: | ---: |
+| Fixture runs | 16 | 10 | 26 |
+| In-family states | 22 | 23 | 45 |
+| Actions | 44 | 32 | 76 |
+| Traversed actions | 28 | 22 | 50 |
+| Same-destination actions | 1 | 1 | 2 |
+| Distinct behavior/layout classes | 11 | 12 | 23 |
+| Privacy-reviewed screenshots | 34 | 42 | 76 |
+| Blocking or unresolved gap groups | 8 | 6 | 14 |
+
+### Coverage TLDR
+
+Already inventoried:
+
+- the blocking physical-iPhone environment, high-level Search-rooted journeys, reachable surface map, and public language-resource provenance;
+- Search root, focus/cancel/history behavior, keyboard/handwriting/radical modes, 11 query/result layout classes, result navigation, app-switcher restoration, and cold launch to Search root;
+- Example Sentences, rich and sparse Word Detail layouts, recursive linked words, four verb conjugation families, two adjective conjugation families, and the full synthetic note create/save/persist/auto-save/delete lifecycle.
+
+Still required before this is a comprehensive Lookup implementation-planning dossier:
+
+- recursively capture Kanji Detail, stroke order, origins, elements, and related-entry behavior;
+- recursively capture camera, Photos, Files, permissions, OCR/Image Text Flow, and result/error/retry states;
+- characterize observable search, ranking, deinflection, language, audio, and related data behavior;
+- close installed acknowledgements and open-source licensing gaps;
+- crosswalk all surfaces/actions/fixtures/resources, build the atomic parity ledger and implementation handoff, then run the final recursive-coverage audit;
+- resolve or explicitly carry forward the eight narrow Search gaps and six word/detail gaps listed below.
 
 Canonical records:
 
@@ -31,39 +50,44 @@ Canonical records:
 - [Search crawl](../../../../clone-discovery/nihongo/search-crawl.json) — stable state and action IDs with tested dispositions.
 - [Coverage report](../../../../clone-discovery/nihongo/search-coverage-report.json) — reconciled counts and exact unresolved gaps.
 - [Evidence manifest](../../../../clone-discovery/nihongo/search-evidence-manifest.json) — SHA-256 and path for every screenshot below.
+- [Word/detail fixture matrix](../../../../clone-discovery/nihongo/word-fixture-matrix.json) — the common, uncommon, verb, adjective, linked-entry, example, and note fixtures.
+- [Word/detail crawl](../../../../clone-discovery/nihongo/word-crawl.json) — stable states and actions for Example Sentences, Word Detail, Conjugations, and Note Editing.
+- [Word/detail coverage report](../../../../clone-discovery/nihongo/word-coverage-report.json) — reconciled counts and six exact unresolved gap groups.
+- [Word/detail evidence manifest](../../../../clone-discovery/nihongo/word-evidence-manifest.json) — SHA-256 and path for all 42 post-QA settled captures.
 - [Reachability map](../../../../clone-discovery/nihongo/reachability-map.md) — the wider Search-rooted navigation graph.
 
 ## Table of contents
 
 - [tldraw interaction board](#tldraw-interaction-board) — editable screenshot nodes and observed “select this → reach this” paths.
-- [Screenshot index](#screenshot-index--all-34-retained-captures) — a jump link for every retained capture.
+- [Search screenshot index](#search-screenshot-index--all-34-retained-captures) — a jump link for every retained Search capture.
 - [Feature index](#feature-index) — the same evidence grouped by product area.
 - [Search entry, focus, and history](#search-entry-focus-and-history)
 - [Query and result classes](#query-and-result-classes)
 - [Handwriting input](#handwriting-input)
 - [Radical input](#radical-input)
 - [Proven nested destination edges](#proven-nested-destination-edges)
+- [Word/detail recursive inventory](#worddetail-recursive-inventory)
 - [Lifecycle restoration probe](#lifecycle-restoration-probe)
 - [Blocking gaps](#blocking-gaps)
 - [Privacy and interpretation rules](#privacy-and-interpretation-rules)
 
 ## tldraw interaction board
 
-[Open the editable Nihongo Search board](boards/nihongo-search-interaction-board.tldr).
+[Open the editable Nihongo Search + word/detail board](boards/nihongo-search-interaction-board.tldr).
 
-The first frame places screenshots directly on the canvas and connects them with ten labeled arrows such as “type/edit query · `SEARCH-ACTION-002`” and “select word row/glyph · `SEARCH-ACTION-007/008`.” Six additional frames display all 34 retained captures by feature area.
+The first frame places Search screenshots directly on the canvas and connects them with ten labeled arrows such as “type/edit query · `SEARCH-ACTION-002`” and “select word row/glyph · `SEARCH-ACTION-007/008`.” Six Search evidence frames and four word/detail evidence frames display all 76 retained captures by feature area.
 
 The `.tldr` file is the editable source, not a flattened export. It contains:
 
-- 34 embedded screenshot assets, so the board does not depend on local file URLs;
-- 44 image shapes: ten reused in the interaction flow and all 34 in the evidence gallery;
+- 76 embedded screenshot assets, so the board does not depend on local file URLs;
+- 86 image shapes: ten Search captures reused in the interaction flow plus all 76 captures in the evidence galleries;
 - editable screen labels and action arrows;
 - canonical annotations, source screenshot names, capture numbers, and role labels in shape metadata;
-- links from screenshot and label shapes back to the corresponding annotation in this README.
+- links from Search screenshot and label shapes to their individual README annotations, and links from word/detail shapes to the recursive-inventory section below.
 
 Agents can read, search, and update the board through the disk-backed tldraw MCP server by setting `TLDRAW_DIR` to this `boards/` directory. The Markdown screenshot index below remains the fastest non-canvas navigation path.
 
-## Screenshot index — all 34 retained captures
+## Search screenshot index — all 34 retained captures
 
 “Screen” below means one retained visual state or action-result capture. Each link jumps to the full annotation and visible screenshot later in this document.
 
@@ -112,8 +136,9 @@ Agents can read, search, and update the board through the disk-backed tldraw MCP
 | [Query and result classes](#query-and-result-classes) | `LOOKUP-RESULTS` | Japanese, kana, English, romaji, deinflection, partial, mixed, punctuation, no-match, sparse, and kanji-primary states |
 | [Handwriting](#handwriting-input) | `LOOKUP-HANDWRITING-INPUT` | Empty grid, candidates, composition, pending-stroke submission, erase ambiguity |
 | [Radicals](#radical-input) | `LOOKUP-RADICAL-INPUT` | Grouped grid, selection, filtering, removal, candidate choice, submission |
-| [Nested destinations](#proven-nested-destination-edges) | Example Sentences, Word Detail, Kanji Detail, image-source menu | Proven entry edges only; recursive behavior is owned by later capture tickets |
-| [Lifecycle](#lifecycle-restoration-probe) | Word Detail restoration | App-switcher/Spotlight round trip; not a proven cold relaunch |
+| [Nested destinations](#proven-nested-destination-edges) | Example Sentences, Word Detail, Kanji Detail, image-source menu | Proven Search entry edges; Example Sentences and Word Detail now have recursive coverage below |
+| [Word/detail inventory](#worddetail-recursive-inventory) | Example Sentences, Word Detail, Conjugations, Note Editing | 42 settled captures across linked entries, layout classes, conjugation families, and the note lifecycle |
+| [Lifecycle](#lifecycle-restoration-probe) | Search root and Word Detail | App-switcher restoration plus process-proven cold launch to Search root |
 
 ## Search entry, focus, and history
 
@@ -406,13 +431,106 @@ These images prove that the Search result controls reach the named destinations.
   </tr>
 </table>
 
+## Word/detail recursive inventory
+
+The word/detail checkpoint executed 10 fixtures across 23 states, 32 actions, and 12 materially different behavior/layout classes. Its 42 retained screenshots were captured only after the destination had settled, then reviewed as a contact sheet and hash-checked against the [word/detail evidence manifest](../../../../clone-discovery/nihongo/word-evidence-manifest.json). Ten rejected transition or redundant frames are not referenced by this README, the board, or the canonical manifest.
+
+The editable board contains all 42 captures, grouped into Word Detail (17), Conjugations (11), notes (9), and examples/nested edges (5). The representative views below summarize the behavior classes without turning this derived page into a second claim ledger.
+
+### Example lists and recursively linked words
+
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <a href="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-example-sentences-iru-top-settled.png"><img src="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-example-sentences-iru-top-settled.png" width="240" alt="Settled Example Sentences list"></a><br>
+      <strong>Example Sentences</strong><br>
+      <code>WORD-STATE-001/002</code><br>
+      A scrollable sentence list exposes furigana, linked tokens, and per-row speaker controls.
+    </td>
+    <td width="33%" valign="top">
+      <a href="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/edge-example-token-to-word-detail-choucho.png"><img src="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/edge-example-token-to-word-detail-choucho.png" width="240" alt="Nested Word Detail for choucho"></a><br>
+      <strong>Example token → Word Detail</strong><br>
+      <code>WORD-ACTION-004</code><br>
+      Selecting the linked token 蝶々 opens its uncommon multi-reading Word Detail.
+    </td>
+    <td width="33%" valign="top">
+      <a href="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/edge-word-example-token-to-word-detail-miru.png"><img src="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/edge-word-example-token-to-word-detail-miru.png" width="240" alt="Nested Word Detail for miru"></a><br>
+      <strong>Word example token → nested word</strong><br>
+      <code>WORD-ACTION-009</code><br>
+      A linked token inside Word Detail recursively opens 見る.
+    </td>
+  </tr>
+</table>
+
+### Word layouts and conjugation families
+
+<table>
+  <tr>
+    <td width="25%" valign="top">
+      <a href="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-word-detail-mondai-top.png"><img src="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-word-detail-mondai-top.png" width="210" alt="Rich noun Word Detail"></a><br>
+      <strong>Rich common noun</strong><br>
+      <code>WORD-STATE-004</code><br>
+      Multiple meanings and kanji, notes, examples, pitch, and audio controls.
+    </td>
+    <td width="25%" valign="top">
+      <a href="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-word-detail-miru-related-words.png"><img src="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-word-detail-miru-related-words.png" width="210" alt="Word Detail related words section"></a><br>
+      <strong>Related Words</strong><br>
+      <code>WORD-STATE-006</code><br>
+      Alternative kanji, examples, and linked Related Words extend the detail page.
+    </td>
+    <td width="25%" valign="top">
+      <a href="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-conjugations-kaku-polite.png"><img src="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-conjugations-kaku-polite.png" width="210" alt="Godan verb polite conjugations"></a><br>
+      <strong>Verb conjugations</strong><br>
+      <code>WORD-STATE-018–021</code><br>
+      Plain and Polite states were captured for ru, godan, suru, and kuru verbs.
+    </td>
+    <td width="25%" valign="top">
+      <a href="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-conjugations-na-adjective-shizuka.png"><img src="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-conjugations-na-adjective-shizuka.png" width="210" alt="Na-adjective conjugations"></a><br>
+      <strong>Adjective conjugations</strong><br>
+      <code>WORD-STATE-022/023</code><br>
+      i- and na-adjectives use form lists without the verb Plain/Polite tabs.
+    </td>
+  </tr>
+</table>
+
+### Note lifecycle
+
+<table>
+  <tr>
+    <td width="25%" valign="top">
+      <a href="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-note-editor-empty.png"><img src="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-note-editor-empty.png" width="210" alt="Empty note editor"></a><br>
+      <strong>Create</strong><br>
+      <code>WORD-STATE-013</code><br>
+      Add Note opens an empty editor.
+    </td>
+    <td width="25%" valign="top">
+      <a href="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-note-saved.png"><img src="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-note-saved.png" width="210" alt="Saved synthetic note"></a><br>
+      <strong>Save</strong><br>
+      <code>WORD-STATE-015</code><br>
+      Done saves, and another Add Note row remains available.
+    </td>
+    <td width="25%" valign="top">
+      <a href="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-note-confirmed-after-cold-relaunch.png"><img src="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-note-confirmed-after-cold-relaunch.png" width="210" alt="Note confirmed after cold relaunch and requery"></a><br>
+      <strong>Persist</strong><br>
+      <code>WORD-STATE-016</code><br>
+      The saved note survives navigation and a process-proven cold relaunch followed by re-query.
+    </td>
+    <td width="25%" valign="top">
+      <a href="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-note-restored-empty.png"><img src="../../../../clone-discovery/nihongo/evidence/reference/screenshots/word-inventory/state-note-restored-empty.png" width="210" alt="Word Detail after synthetic note deletion"></a><br>
+      <strong>Delete and restore</strong><br>
+      <code>WORD-STATE-017</code><br>
+      Clearing the note and selecting Done removes it. All synthetic notes were removed after capture.
+    </td>
+  </tr>
+</table>
+
 ## Lifecycle restoration probe
 
 <a id="capture-state-relaunch-restores-word-detail" href="../../../../clone-discovery/nihongo/evidence/reference/screenshots/search-inventory/state-relaunch-restores-word-detail.png"><img src="../../../../clone-discovery/nihongo/evidence/reference/screenshots/search-inventory/state-relaunch-restores-word-detail.png" width="280" alt="Word Detail restored after app switcher and Spotlight round trip"></a>
 
 **App-switcher/Spotlight restoration** — `SEARCH-ACTION-031`
 
-After an app-switcher and Spotlight round trip, Nihongo returned to the same 問題 Word Detail. This establishes state restoration across that observed interruption only. It does not prove a cold process termination and relaunch; that remains `SEARCH-GAP-COLD-RELAUNCH` and `SEARCH-ACTION-032` is `unavailable_under_fixture`.
+After an app-switcher and Spotlight round trip, Nihongo returned to the same 問題 Word Detail. A later process-proven termination and relaunch returned to the Search root rather than restoring Word Detail directly; after re-querying the saved synthetic note was still present. `SEARCH-ACTION-032` and the note-persistence portion of `WORD-STATE-016` are therefore traversed. The screenshot above proves only the app-switcher round trip; the cold-process proof lives in the word/detail interaction trace.
 
 ## Blocking gaps
 
@@ -427,14 +545,25 @@ This review must not be used to claim that Search discovery is complete. The can
 | `SEARCH-GAP-HANDWRITING-ERASE` | Exact single-stroke erase/remove semantics |
 | `SEARCH-GAP-HANDWRITING-LOW-CONFIDENCE` | Low-confidence and no-candidate handwriting behavior |
 | `SEARCH-GAP-RADICAL-ZERO-AND-LARGE-SETS` | Zero-candidate and very-large candidate-set radical behavior |
-| `SEARCH-GAP-COLD-RELAUNCH` | Process-proven cold termination and restoration |
 | `SEARCH-GAP-LOADING` | A distinguishable loading presentation |
 
-App-level semantic accessibility evidence is separately blocked by `ACCESS-BLOCKER-APP-SEMANTICS`. Camera, Photos, Files, permissions, and image-result behavior remain assigned to the image-flow capture ticket.
+The word/detail checkpoint also remains incomplete:
+
+| Gap | Missing evidence |
+| --- | --- |
+| `WORD-GAP-AUDIO-SEMANTICS` | Audible content, timing, overlap, interruption, and route behavior for visible speaker controls |
+| `WORD-GAP-AUDIO-FIXTURES` | A reproducible unavailable or disabled word/sentence audio fixture |
+| `WORD-GAP-SOFTWARE-KEYBOARD` | Standard iOS software-keyboard editing and dismissal in Note Editing |
+| `WORD-GAP-GESTURES` | Reliable long-press and swipe-back delivery and outcomes |
+| `WORD-GAP-OFFLINE-FAILURE-RETRY` | Offline, failure, retry, reconnect, and stale-state behavior |
+| `WORD-GAP-KANJI-EDGE-VISUAL` | A settled visual capture of Word Detail's linked-kanji transition; the runtime edge was observed but its transition frame failed QA and was removed |
+
+App-level semantic accessibility evidence is separately blocked by `ACCESS-BLOCKER-APP-SEMANTICS`. Kanji Detail remains assigned to its recursive inventory ticket. Camera, Photos, Files, permissions, and image-result behavior remain assigned to the image-flow capture ticket.
 
 ## Privacy and interpretation rules
 
 - Every retained full-screen image contains only synthetic queries and public dictionary content.
+- Every retained word/detail image passed post-transition visual review; rejected mid-transition frames are absent from both derived artifacts and both manifests.
 - Input-panel crops exclude the history list.
 - No pre-existing history, personal photo, file, clipboard payload, credential, or unrelated app thumbnail is retained.
 - The images establish observed Nihongo behavior only. They do not authorize inferred behavior, internal implementation claims, or unapproved Zenbu deviations.
