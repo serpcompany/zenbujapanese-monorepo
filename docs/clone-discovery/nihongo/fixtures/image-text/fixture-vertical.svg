@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
+  <rect width="1200" height="1600" fill="#f2ead7"/>
+  <rect x="80" y="70" width="1040" height="1460" rx="28" fill="#fffdf7" stroke="#2d2d2d" stroke-width="6"/>
+  <text font-family="Hiragino Mincho ProN" font-size="82" fill="#151515" text-anchor="middle">
+    <tspan x="930" y="190">春</tspan><tspan x="930" y="290">の</tspan><tspan x="930" y="390">朝</tspan><tspan x="930" y="490">、</tspan>
+    <tspan x="930" y="590">静</tspan><tspan x="930" y="690">か</tspan><tspan x="930" y="790">な</tspan><tspan x="930" y="890">庭</tspan><tspan x="930" y="990">を</tspan>
+    <tspan x="760" y="190">蝶</tspan><tspan x="760" y="290">々</tspan><tspan x="760" y="390">が</tspan><tspan x="760" y="490">飛</tspan><tspan x="760" y="590">ん</tspan><tspan x="760" y="690">で</tspan><tspan x="760" y="790">い</tspan><tspan x="760" y="890">る</tspan><tspan x="760" y="990">。</tspan>
+    <tspan x="520" y="190">日</tspan><tspan x="520" y="290">本</tspan><tspan x="520" y="390">語</tspan>
+    <tspan x="350" y="190">を</tspan><tspan x="350" y="290">読</tspan><tspan x="350" y="390">む</tspan><tspan x="350" y="490">。</tspan>
+  </text>
+  <text x="130" y="1440" font-family="Hiragino Sans" font-size="36" fill="#444444">IMG-FIXTURE-002 • synthetic vertical layout</text>
+</svg>

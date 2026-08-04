@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000" viewBox="0 0 1400 1000">
+  <rect width="1400" height="1000" fill="#f7f2e8"/>
+  <rect x="70" y="70" width="1260" height="860" rx="32" fill="#ffffff" stroke="#202020" stroke-width="6"/>
+  <text x="120" y="190" font-family="Hiragino Sans" font-size="88" font-weight="700" fill="#111111">日本語の勉強</text>
+  <line x1="120" y1="225" x2="1280" y2="225" stroke="#346751" stroke-width="8"/>
+  <text x="120" y="355" font-family="Hiragino Sans" font-size="64" fill="#111111">今日は静かな公園で蝶々を見た。</text>
+  <text x="120" y="485" font-family="Hiragino Sans" font-size="64" fill="#111111">問題を解いてから、友達と話します。</text>
+  <rect x="115" y="565" width="1170" height="150" rx="22" fill="#e8f2ed"/>
+  <text x="150" y="655" font-family="Hiragino Sans" font-size="58" fill="#111111">東京駅　12:30　Platform 4</text>
+  <text x="120" y="825" font-family="Hiragino Sans" font-size="46" fill="#333333">Synthetic fixture • IMG-FIXTURE-001</text>
+</svg>
