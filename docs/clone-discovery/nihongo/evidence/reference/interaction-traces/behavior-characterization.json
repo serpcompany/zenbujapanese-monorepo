@@ -1,0 +1,22 @@
+{
+  "trace_id": "TRACE-BEHAVIOR-CHARACTERIZATION-001",
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/72",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "captured_at": "2026-08-05T01:15:00+09:00",
+  "fixture": "Attempt to begin a controlled taberu baseline from the empty Search root",
+  "ordered_actions": [
+    "Confirmed the mirrored physical iPhone showed Nihongo at empty Search root.",
+    "Selected the Search field and attempted to enter taberu.",
+    "Observed iPhone Mirroring transition to Connection Paused before a settled product result could be captured.",
+    "Selected Resume after refreshing the shell state.",
+    "Observed the shell remain at Connecting to iPhone 17 Pro Max after a second stable read."
+  ],
+  "expected_state": "A settled taberu Search result suitable for a controlled contrast",
+  "observed_state": "No product result; iPhone Mirroring connection shell only",
+  "result": "blocked",
+  "blocker_id": "BEHAVIOR-BLOCKER-REPEATABILITY",
+  "evidence": [],
+  "privacy": "The connection shell contained no app content or personal data and was not retained as product evidence.",
+  "notes": "No claim about taberu, variability, or connection causality is derived from this attempt."
+}

@@ -374,5 +374,56 @@
     ],
     "blocks_reconnaissance": true,
     "blocks_final_rows": ["29-stroke terminal visual row"]
+  },
+  {
+    "id": "BEHAVIOR-BLOCKER-PITCH-MATCHING",
+    "field": "controlled pitch-data matching across homographs, readings, parts of speech, and proper nouns",
+    "status": "visible_pitch_contours_captured_without_matching_denominator",
+    "owner": "discovery driver on the pinned physical iPhone",
+    "affected_records": ["BEHAVIOR-OBS-009", "BEHAVIOR-QUESTION-001"],
+    "completed_independent_work": "Visible pitch contours were captured for public fixtures including 問題 and いる, and research verified CJKI as the named licensed provider while preserving the exact delivery and matching layer as unknown.",
+    "fallback": "Treat each captured contour as presentation evidence only; do not infer CJKI record identity, part-of-speech matching, proper-noun logic, transformations, or fallback.",
+    "resume_procedure": [
+      "Reconnect iPhone Mirroring or use the physical iPhone directly and restore Nihongo to empty Search.",
+      "Run purpose-created controlled fixture groups that hold reading constant while varying writing, homograph sense, part of speech, and proper-noun status.",
+      "Capture each result and Word Detail contour, absent/duplicate states, ordering, and linked state/action IDs.",
+      "Compare only observable fields; keep exact CJKI product, version, record IDs, and internal transformations unknown until separately authorized evidence identifies them."
+    ],
+    "blocks_reconnaissance": true,
+    "blocks_final_rows": ["Pitch-data selection and matching behavior"]
+  },
+  {
+    "id": "BEHAVIOR-BLOCKER-SPEECH-SOURCE",
+    "field": "recorded-pronunciation versus speech-synthesis selection and fallback",
+    "status": "speaker_controls_do_not_expose_playback_source",
+    "owner": "device owner with discovery driver and synchronized audio-capable recorder",
+    "affected_records": ["BEHAVIOR-OBS-015", "BEHAVIOR-OBS-016", "BEHAVIOR-QUESTION-002"],
+    "completed_independent_work": "Word and sentence speaker controls were visibly exercised across common and uncommon public fixtures. Research established historical human-recording and speech-synthesis features but not current clip identity, voice configuration, routing, or fallback.",
+    "fallback": "Do not label any observed speaker control as recorded audio or text-to-speech and do not claim voice, rate, cache, network, or fallback behavior.",
+    "resume_procedure": [
+      "Attach an authorized local recorder that captures device audio and screen without uploading content.",
+      "Choose public entries known or suspected to have a human recording plus deliberately rare entries and examples likely to require fallback.",
+      "Record control state, audible output, voice consistency, timing, repeated taps, interruption, backgrounding, cache behavior, and offline behavior.",
+      "Crosswalk a clip to a named public source only when stable metadata or an authorized hash proves identity; otherwise retain source as unknown."
+    ],
+    "blocks_reconnaissance": true,
+    "blocks_final_rows": ["Recorded-pronunciation selection", "Speech-synthesis selection", "Audio fallback and cache behavior"]
+  },
+  {
+    "id": "BEHAVIOR-BLOCKER-REPEATABILITY",
+    "field": "formal repeated-run variation for ranking, handwriting, radical, example, and OCR behavior",
+    "status": "no_controlled_repetition_denominator_and_physical_mirroring_reconnect_failed",
+    "owner": "discovery driver on the pinned physical iPhone",
+    "affected_records": ["BEHAVIOR-OBS-018", "BEHAVIOR-QUESTION-004", "BEHAVIOR-QUESTION-005", "BEHAVIOR-QUESTION-006"],
+    "completed_independent_work": "The 35 source fixture cases and their single formal executions were cross-indexed. A new taberu baseline was attempted from empty Search, but iPhone Mirroring paused before a settled product result and remained at Connecting to iPhone 17 Pro Max after Resume and a second stable read; no failed-run product claim or screenshot was retained.",
+    "fallback": "Treat all current output and ordering observations as one-run facts and publish no variability rate, deterministic-order claim, or boundary generalization.",
+    "resume_procedure": [
+      "Make the physical iPhone available, unlock it if required, and reconnect iPhone Mirroring; verify two stable reads of empty Nihongo Search before acting.",
+      "Repeat think, tabeta, handwriting 丁, radical 薮, example selection, and all five image fixtures at least three times from recorded restored starting states.",
+      "Add one-property handwriting contrasts for partial, reversed-order, extra-stroke, kana, and non-jōyō input, plus zero-result and large-set radical contrasts.",
+      "Record output/order deltas, run count, screenshots or synchronized traces, network state, and exact restoration between runs."
+    ],
+    "blocks_reconnaissance": true,
+    "blocks_final_rows": ["Ranking repeatability", "Handwriting candidate variability", "Radical candidate variability", "Example-selection variability", "OCR grouping variability"]
   }
 ]

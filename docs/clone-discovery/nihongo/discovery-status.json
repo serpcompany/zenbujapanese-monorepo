@@ -1,7 +1,7 @@
 {
   "project": "zenbu-lookup-nihongo-reference",
-  "phase": "uploaded_image_parsing_inventory_complete_with_observed_vertical_grouping_limitation",
-  "updated_at": "2026-08-05T01:02:00+09:00",
+  "phase": "language_behavior_characterization_executed_with_blocking_gaps",
+  "updated_at": "2026-08-05T01:19:00+09:00",
   "active_map": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/63",
   "access_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/64",
   "access_ticket_status": "complete_with_recorded_limitations",
@@ -106,7 +106,33 @@
     "image-evidence-manifest.json",
     "evidence/reference/interaction-traces/image-text-inventory.json"
   ],
-  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/72",
+  "behavior_characterization_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/72",
+  "behavior_characterization_ticket_status": "executed_not_complete_blocking_gaps_recorded",
+  "behavior_characterization_counts": {
+    "approved_behavior_classes": 19,
+    "classes_with_representative_evidence": 14,
+    "classes_blocked_without_required_runtime_evidence": 5,
+    "source_fixture_cases": 35,
+    "source_fixture_runs": 33,
+    "new_runtime_runs_completed": 0,
+    "new_runtime_runs_blocked": 1,
+    "formal_repetitions": 0,
+    "behavior_observations": 19,
+    "unique_registered_screenshot_artifacts_reused": 111,
+    "unique_observed_behavior_conflicts_or_tensions": 4,
+    "observation_level_conflict_references": 5,
+    "unresolved_gap_groups": 4
+  },
+  "behavior_characterization_records": [
+    "behavior-fixture-matrix.json",
+    "behavior-observations.jsonl",
+    "behavior-evidence-manifest.json",
+    "language-stack-behavior-crosswalk.json",
+    "behavior-open-questions.json",
+    "behavior-coverage-report.json",
+    "evidence/reference/interaction-traces/behavior-characterization.json"
+  ],
+  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/73",
   "final_disposition": null,
   "notes": [
     "Physical-iPhone runtime control and screenshot capture are proven.",
@@ -126,6 +152,9 @@
     "The Files picker and Nihongo Image Text result were executed with five deterministic synthetic fixtures across clear horizontal, vertical, noisy, sparse, empty, and multi-image behavior classes.",
     "Uploaded-image parsing is verified end to end through inline token gloss and nested Word Detail. Vertical parsing has an observed cross-column grouping limitation: selecting 読 produced 読本 by combining adjacent-column 本.",
     "No-text handling, recognition-highlight toggling, multi-image page navigation, Close/discard, and cold-relaunch discard are observed. Exact Copy Text serialization remains a nonblocking gap because the device-local clipboard payload was not exposed by the capture authority.",
+    "The behavior characterization cross-indexes all 35 source fixture cases into 19 approved classes while leaving parity-inventory.jsonl reserved for the later canonical observable-claim ledger.",
+    "Fourteen behavior classes have representative evidence. Pitch matching, audible pronunciation and speech-source behavior, controlled offline/network behavior, and formal repeatability remain blocked with exact owners and resume procedures.",
+    "A new controlled taberu baseline was attempted from empty Search, but iPhone Mirroring paused before a settled result and did not reconnect; the shell was not retained as product evidence and no runtime behavior was inferred.",
     "Camera and Photo Library source mechanics are excluded from this discovery revision under the stakeholder's explicit scope decision; the private-access Photo picker was opened and cancelled without retaining any personal content.",
     "All nine AirDropped synthetic fixture files were moved to Files Recently Deleted after capture, the failed Mac staging folder was moved to Trash, no permissions were changed, and Nihongo was restored to the empty Search root.",
     "App-level semantic accessibility capture remains unavailable through the proven tools; the limitation and fallback are recorded in tool-access-plan.json."

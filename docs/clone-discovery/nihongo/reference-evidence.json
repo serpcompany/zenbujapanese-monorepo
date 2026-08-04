@@ -208,5 +208,19 @@
       "cold-relaunch Search root"
     ],
     "privacy": "Every retained artifact contains only purpose-created fixture content or public dictionary output. Photo Library and Files picker screens containing unrelated personal items were not retained."
+  },
+  {
+    "evidence_id": "EVIDENCE-BEHAVIOR-CROSSWALK-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "cross-family-behavior-index",
+    "path": "behavior-evidence-manifest.json",
+    "captures": [
+      "19 approved Search and Japanese-language behavior classes",
+      "35 source fixture cases across Search, word, kanji, and Image Text",
+      "observable output separated from inferred or unknown mechanisms",
+      "language-stack provenance and parity-claim limits",
+      "exact blockers for pitch matching, audio and speech source, offline behavior, and repeatability"
+    ],
+    "privacy": "The crosswalk indexes only previously privacy-reviewed, hash-registered product screenshots. The failed reconnect shell was not retained as product evidence."
   }
 ]

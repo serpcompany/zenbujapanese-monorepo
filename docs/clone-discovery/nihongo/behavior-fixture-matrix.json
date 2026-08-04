@@ -1,0 +1,38 @@
+{
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/72",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "source_fixture_cases": 35,
+  "source_fixture_runs": 33,
+  "new_runtime_runs_completed": 0,
+  "new_runtime_runs_blocked": 1,
+  "formal_repetitions": 0,
+  "behavior_class_count": 19,
+  "source_matrices": [
+    {"path":"search-fixture-matrix.json","fixture_cases":16,"fixture_runs":16},
+    {"path":"word-fixture-matrix.json","fixture_cases":10,"fixture_runs":10},
+    {"path":"kanji-fixture-matrix.json","fixture_cases":4,"fixture_runs":4},
+    {"path":"image-fixture-matrix.json","fixture_cases":5,"fixture_runs":3}
+  ],
+  "behavior_classes": [
+    {"class_id":"BEHAVIOR-CLASS-001","name":"input normalization","observation_ids":["BEHAVIOR-OBS-001"],"status":"observed"},
+    {"class_id":"BEHAVIOR-CLASS-002","name":"suggestion and refinement","observation_ids":["BEHAVIOR-OBS-002"],"status":"observed"},
+    {"class_id":"BEHAVIOR-CLASS-003","name":"Japanese and kana matching","observation_ids":["BEHAVIOR-OBS-003"],"status":"observed"},
+    {"class_id":"BEHAVIOR-CLASS-004","name":"English matching","observation_ids":["BEHAVIOR-OBS-004"],"status":"observed"},
+    {"class_id":"BEHAVIOR-CLASS-005","name":"romaji matching","observation_ids":["BEHAVIOR-OBS-005"],"status":"observed"},
+    {"class_id":"BEHAVIOR-CLASS-006","name":"ranking and section ordering","observation_ids":["BEHAVIOR-OBS-006"],"status":"observed"},
+    {"class_id":"BEHAVIOR-CLASS-007","name":"deinflection","observation_ids":["BEHAVIOR-OBS-007"],"status":"observed"},
+    {"class_id":"BEHAVIOR-CLASS-008","name":"conjugation display","observation_ids":["BEHAVIOR-OBS-008"],"status":"observed"},
+    {"class_id":"BEHAVIOR-CLASS-009","name":"pitch matching","observation_ids":["BEHAVIOR-OBS-009"],"status":"blocked","blocker_ids":["BEHAVIOR-BLOCKER-PITCH-MATCHING"]},
+    {"class_id":"BEHAVIOR-CLASS-010","name":"tokenization and segmentation effects","observation_ids":["BEHAVIOR-OBS-010"],"status":"observed_with_limitation"},
+    {"class_id":"BEHAVIOR-CLASS-011","name":"example selection","observation_ids":["BEHAVIOR-OBS-011"],"status":"observed"},
+    {"class_id":"BEHAVIOR-CLASS-012","name":"handwriting recognition","observation_ids":["BEHAVIOR-OBS-012"],"status":"observed_with_boundary_gaps"},
+    {"class_id":"BEHAVIOR-CLASS-013","name":"radical composition","observation_ids":["BEHAVIOR-OBS-013"],"status":"observed_with_boundary_gaps"},
+    {"class_id":"BEHAVIOR-CLASS-014","name":"OCR grouping","observation_ids":["BEHAVIOR-OBS-014"],"status":"observed_with_limitation"},
+    {"class_id":"BEHAVIOR-CLASS-015","name":"pronunciation recordings","observation_ids":["BEHAVIOR-OBS-015"],"status":"blocked","blocker_ids":["WORD-BLOCKER-AUDIO-SEMANTICS","WORD-BLOCKER-AUDIO-FIXTURE"]},
+    {"class_id":"BEHAVIOR-CLASS-016","name":"speech synthesis and readback","observation_ids":["BEHAVIOR-OBS-016"],"status":"blocked","blocker_ids":["BEHAVIOR-BLOCKER-SPEECH-SOURCE","WORD-BLOCKER-AUDIO-SEMANTICS"]},
+    {"class_id":"BEHAVIOR-CLASS-017","name":"offline and network dependence","observation_ids":["BEHAVIOR-OBS-017"],"status":"blocked","blocker_ids":["SEARCH-BLOCKER-OFFLINE","WORD-BLOCKER-OFFLINE","KANJI-BLOCKER-OFFLINE"]},
+    {"class_id":"BEHAVIOR-CLASS-018","name":"repeatability and variability","observation_ids":["BEHAVIOR-OBS-018"],"status":"blocked","blocker_ids":["BEHAVIOR-BLOCKER-REPEATABILITY"]},
+    {"class_id":"BEHAVIOR-CLASS-019","name":"success, no-match, and error outcomes","observation_ids":["BEHAVIOR-OBS-019"],"status":"observed_with_error_gap","blocker_ids":["SEARCH-BLOCKER-OFFLINE"]}
+  ]
+}

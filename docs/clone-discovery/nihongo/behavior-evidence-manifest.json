@@ -1,0 +1,22 @@
+{
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/72",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "generated_at": "2026-08-05T01:19:00+09:00",
+  "registry_role": "Cross-family evidence index. Artifact hashes remain canonical in the four source manifests.",
+  "source_registries": [
+    {"manifest":"search-evidence-manifest.json","artifact_count":34,"observation_ids":["BEHAVIOR-OBS-001","BEHAVIOR-OBS-002","BEHAVIOR-OBS-003","BEHAVIOR-OBS-004","BEHAVIOR-OBS-005","BEHAVIOR-OBS-006","BEHAVIOR-OBS-007","BEHAVIOR-OBS-010","BEHAVIOR-OBS-012","BEHAVIOR-OBS-013","BEHAVIOR-OBS-019"]},
+    {"manifest":"word-evidence-manifest.json","artifact_count":42,"observation_ids":["BEHAVIOR-OBS-008","BEHAVIOR-OBS-009","BEHAVIOR-OBS-011","BEHAVIOR-OBS-015","BEHAVIOR-OBS-016"]},
+    {"manifest":"kanji-evidence-manifest.json","artifact_count":25,"observation_ids":["BEHAVIOR-OBS-008"]},
+    {"manifest":"image-evidence-manifest.json","artifact_count":10,"observation_ids":["BEHAVIOR-OBS-010","BEHAVIOR-OBS-014","BEHAVIOR-OBS-019"]}
+  ],
+  "interaction_traces": [
+    "evidence/reference/interaction-traces/search-input-results-inventory.json",
+    "evidence/reference/interaction-traces/word-detail-inventory.json",
+    "evidence/reference/interaction-traces/kanji-detail-inventory.json",
+    "evidence/reference/interaction-traces/image-text-inventory.json",
+    "evidence/reference/interaction-traces/behavior-characterization.json"
+  ],
+  "unique_registered_screenshot_artifacts": 111,
+  "new_screenshot_artifacts": 0,
+  "privacy_review": "Only pre-existing hash-registered, privacy-reviewed screenshots are indexed. The paused/reconnecting iPhone Mirroring shell was observed only to diagnose access and was not retained as product evidence."
+}

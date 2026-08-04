@@ -1,0 +1,38 @@
+{
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/72",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "generated_at": "2026-08-05T01:19:00+09:00",
+  "status": "NOT_COMPLETE — BLOCKING BEHAVIOR CHARACTERIZATION GAPS REMAIN",
+  "characterization_complete": false,
+  "reason": "All 19 approved behavior classes have either linked representative evidence or a precise blocker, but pitch matching, audible pronunciation and speech-source behavior, controlled offline/network behavior, and formal repeatability remain without runtime evidence.",
+  "coverage": {
+    "approved_behavior_classes": 19,
+    "classes_with_representative_evidence": 14,
+    "classes_blocked_without_required_runtime_evidence": 5,
+    "source_fixture_cases": 35,
+    "source_fixture_runs": 33,
+    "new_runtime_runs_completed": 0,
+    "new_runtime_runs_blocked": 1,
+    "formal_repetitions": 0,
+    "behavior_observations": 19,
+    "unique_registered_screenshot_artifacts_reused": 111,
+    "new_screenshot_artifacts": 0,
+    "unique_observed_behavior_conflicts_or_tensions": 4,
+    "observation_level_conflict_references": 5,
+    "unresolved_gap_groups": 4
+  },
+  "observed_conflicts_or_tensions": [
+    {"id":"BEHAVIOR-CONFLICT-001","summary":"Vertical OCR token grouping crossed authored columns: selecting 読 yielded 読本."},
+    {"id":"BEHAVIOR-CONFLICT-002","summary":"A visible speaker control does not distinguish a human recording from speech synthesis or prove audible output."},
+    {"id":"BEHAVIOR-CONFLICT-003","summary":"Public OCR provider and offline-mode disclosures do not identify the provider or network path used by the captured Image Text fixtures."},
+    {"id":"BEHAVIOR-CONFLICT-004","summary":"The visible pitch contour proves presentation but not CJKI record matching, transformation, or fallback."}
+  ],
+  "unresolved_gap_groups": [
+    {"gap_id":"BEHAVIOR-GAP-PITCH-MATCHING","blocker_ids":["BEHAVIOR-BLOCKER-PITCH-MATCHING"],"blocks":["controlled homograph, reading, part-of-speech, and proper-noun pitch matching"]},
+    {"gap_id":"BEHAVIOR-GAP-AUDIO-AND-SPEECH-SOURCE","blocker_ids":["WORD-BLOCKER-AUDIO-SEMANTICS","WORD-BLOCKER-AUDIO-FIXTURE","BEHAVIOR-BLOCKER-SPEECH-SOURCE"],"blocks":["audible content, recorded-versus-synthesized selection, timing, interruption, fallback, and unavailable states"]},
+    {"gap_id":"BEHAVIOR-GAP-OFFLINE-NETWORK","blocker_ids":["SEARCH-BLOCKER-OFFLINE","WORD-BLOCKER-OFFLINE","KANJI-BLOCKER-OFFLINE"],"blocks":["offline availability, provider dependence, loading, transport error, retry, stale data, reconnect, and recovery"]},
+    {"gap_id":"BEHAVIOR-GAP-REPEATABILITY","blocker_ids":["BEHAVIOR-BLOCKER-REPEATABILITY"],"blocks":["formal variation rates for ranking, handwriting, radical candidates, example selection, and OCR grouping"]}
+  ],
+  "privacy_review": "No new product screenshot was retained. All indexed product evidence was already privacy-reviewed and hash-registered. The reconnect failure exposed only the iPhone Mirroring connection shell and was not retained."
+}

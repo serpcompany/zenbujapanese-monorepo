@@ -1,0 +1,12 @@
+{
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/72",
+  "generated_at": "2026-08-05T01:19:00+09:00",
+  "questions": [
+    {"question_id":"BEHAVIOR-QUESTION-001","question":"How does Nihongo select and transform pitch data across homographs, readings, parts of speech, and proper-noun status?","status":"blocked","blocker_ids":["BEHAVIOR-BLOCKER-PITCH-MATCHING"]},
+    {"question_id":"BEHAVIOR-QUESTION-002","question":"Which speaker actions use human recordings versus speech synthesis, and what are their voice, fallback, cache, interruption, and replay behaviors?","status":"blocked","blocker_ids":["WORD-BLOCKER-AUDIO-SEMANTICS","WORD-BLOCKER-AUDIO-FIXTURE","BEHAVIOR-BLOCKER-SPEECH-SOURCE"]},
+    {"question_id":"BEHAVIOR-QUESTION-003","question":"Which Search-rooted capabilities remain available offline, and how do loading, error, retry, stale-data, reconnect, and provider-fallback states differ?","status":"blocked","blocker_ids":["SEARCH-BLOCKER-OFFLINE","WORD-BLOCKER-OFFLINE","KANJI-BLOCKER-OFFLINE"]},
+    {"question_id":"BEHAVIOR-QUESTION-004","question":"Are ranking, handwriting candidates, radical candidates, example selection, and OCR grouping repeatable across restored runs?","status":"blocked","blocker_ids":["BEHAVIOR-BLOCKER-REPEATABILITY"]},
+    {"question_id":"BEHAVIOR-QUESTION-005","question":"What are the controlled boundary behaviors for partial, reversed-order, extra-stroke, kana, and non-jōyō handwriting?","status":"blocked","blocker_ids":["BEHAVIOR-BLOCKER-REPEATABILITY"]},
+    {"question_id":"BEHAVIOR-QUESTION-006","question":"How do radical candidate count and order change for zero-result and large-set one-property contrasts?","status":"blocked","blocker_ids":["BEHAVIOR-BLOCKER-REPEATABILITY"]}
+  ]
+}
