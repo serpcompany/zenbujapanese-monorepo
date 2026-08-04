@@ -140,10 +140,10 @@
       "scope_basis": "stakeholder_approved",
       "reachability_status": "reached",
       "entry_paths": ["Select View Example Sentences from results"],
-      "states_observed": ["populated list"],
+      "states_observed": ["populated list at top", "scrolled populated list"],
       "controls": ["Back", "Scrollable examples", "Underlined linked Japanese tokens", "Speaker per example"],
       "outgoing_surface_ids": ["LOOKUP-RESULTS", "LOOKUP-WORD-DETAIL"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"]
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001", "EVIDENCE-WORD-SCREENSET-001", "EVIDENCE-WORD-TRACE-001"]
     },
     {
       "surface_id": "LOOKUP-WORD-DETAIL",
@@ -153,11 +153,11 @@
       "scope_basis": "stakeholder_approved",
       "reachability_status": "reached",
       "entry_paths": ["Select a result row", "Select a linked example token", "Select a linked reading or related word from kanji detail"],
-      "states_observed": ["common entry", "rare entry", "verb with conjugations", "entry with Add Note"],
-      "controls": ["Back", "Speaker", "Linked kanji", "Linked related words", "View Conjugations when applicable", "Add Note", "Top Flashcard toolbar boundary"],
+      "states_observed": ["common and uncommon frequency classes", "rich and sparse field presence", "kana-only, kanji, multiple-reading, and alternative forms", "noun, verb, adjective, interjection, suffix, and verb-ending roles", "linked-kanji and grouped Related Words sections", "nested detail reached from example token or related word", "empty, populated, persisted, and restored note states"],
+      "controls": ["Back", "Speaker", "Linked kanji", "Linked related words", "Underlined linked tokens inside examples", "Speaker per visible example", "View Conjugations when applicable", "Add Note", "Top Flashcard toolbar boundary"],
       "content_sections": ["Headword and reading", "frequency badge", "pitch-accent display", "part of speech", "meanings", "alternatives", "kanji relationships", "notes", "examples"],
       "outgoing_surface_ids": ["LOOKUP-RESULTS", "LOOKUP-EXAMPLE-SENTENCES", "LOOKUP-NOTE-EDITING", "LOOKUP-CONJUGATIONS", "LOOKUP-KANJI-DETAIL", "BOUNDARY-FLASHCARD-EDITOR"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"]
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001", "EVIDENCE-WORD-SCREENSET-001", "EVIDENCE-WORD-TRACE-001"]
     },
     {
       "surface_id": "LOOKUP-NOTE-EDITING",
@@ -165,12 +165,12 @@
       "kind": "editing_state",
       "scope": "blocking",
       "scope_basis": "stakeholder_approved",
-      "reachability_status": "reached_without_persisting_data",
+      "reachability_status": "reached_and_tested_with_removed_synthetic_data",
       "entry_paths": ["Select Add Note from word detail"],
-      "states_observed": ["empty focused editor"],
-      "controls": ["Text editor", "Done"],
+      "states_observed": ["empty focused editor", "populated focused editor", "another Add Note row after population", "saved after Done", "auto-saved after Back", "persisted after navigation", "persisted after cold relaunch plus re-query", "deleted and restored to empty"],
+      "controls": ["Text editor", "Add Note for another row", "Done"],
       "outgoing_surface_ids": ["LOOKUP-WORD-DETAIL"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"]
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001", "EVIDENCE-WORD-SCREENSET-001", "EVIDENCE-WORD-TRACE-001"]
     },
     {
       "surface_id": "LOOKUP-CONJUGATIONS",
@@ -180,11 +180,11 @@
       "scope_basis": "stakeholder_approved",
       "reachability_status": "reached",
       "entry_paths": ["Select View Conjugations from an applicable word detail"],
-      "states_observed": ["Plain selected", "Polite selected"],
-      "controls": ["Back", "Plain/Polite segmented control", "Scrollable conjugation list"],
-      "content_sections": ["Present/Future", "Past", "Negative", "Past Negative", "Te-Form", "Potential", "Passive", "Causative", "Conditional", "Volitional", "Imperative"],
+      "states_observed": ["ru-verb Plain and Polite", "godan Plain and Polite", "suru Plain and Polite", "kuru Irregular Verb Plain and Polite", "i-adjective seven-form list without segmented control", "na-adjective five-form list without segmented control"],
+      "controls": ["Back", "Plain/Polite segmented control for verbs", "Conjugation/form list"],
+      "content_sections": ["Present/Future", "Past", "Negative", "Past Negative", "Te-Form", "Potential", "Passive", "Causative", "Conditional", "Volitional", "Imperative", "Adverb", "Noun", "Standalone", "Modifying a Noun"],
       "outgoing_surface_ids": ["LOOKUP-WORD-DETAIL"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"]
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001", "EVIDENCE-WORD-SCREENSET-001", "EVIDENCE-WORD-TRACE-001"]
     },
     {
       "surface_id": "LOOKUP-KANJI-DETAIL",

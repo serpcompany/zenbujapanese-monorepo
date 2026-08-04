@@ -195,5 +195,87 @@
       "Search failure behavior",
       "Search retry and recovery"
     ]
+  },
+  {
+    "id": "WORD-BLOCKER-AUDIO-SEMANTICS",
+    "field": "audible word and sentence pronunciation behavior",
+    "status": "audio_stream_unavailable_to_current_capture_authority",
+    "owner": "device owner with a synchronized audio-capable recorder",
+    "affected_records": ["WORD-ACTION-003", "WORD-ACTION-007", "JOURNEY-PLAY-WORD-PRONUNCIATION", "JOURNEY-PLAY-EXAMPLE-AUDIO"],
+    "completed_independent_work": "Visible word and sentence speaker controls were exercised. No persistent visible playback state was established, so audible content, voice, timing, overlap, interruption, completion, and replay remain unknown.",
+    "fallback": "Keep audio claims blocked; a static speaker icon is not evidence of sound content or playback behavior.",
+    "resume_procedure": [
+      "Attach an authorized local audio recorder that captures iPhone Mirroring or physical-device output without uploading content.",
+      "Use public fixtures いる, 問題, and 蝶々 and record the settled state before each action.",
+      "Capture word and sentence playback start, duration, completion, repeated taps, overlap, interruption by navigation/backgrounding, and recovery.",
+      "Hash the trace and retain only privacy-safe derived observations in the dossier."
+    ],
+    "blocks_reconnaissance": true,
+    "blocks_final_rows": ["All word-pronunciation and example-audio rows"]
+  },
+  {
+    "id": "WORD-BLOCKER-AUDIO-FIXTURE",
+    "field": "entries with absent, unavailable, or disabled word/sentence audio",
+    "status": "no_representative_fixture_established",
+    "owner": "discovery driver with audio-capable evidence",
+    "affected_records": ["WORD-ACTION-030"],
+    "completed_independent_work": "Available-looking controls were observed across common, uncommon, verb, noun, and adjective fixtures.",
+    "fallback": "Do not claim that audio is universally available or infer disabled-state appearance.",
+    "resume_procedure": [
+      "Search deliberately rare public entries and example sets until an absent or disabled word and sentence audio class is found or a documented denominator proves none exists.",
+      "Capture the full settled state and attempt the control where present.",
+      "Record separate unavailable-word and unavailable-sentence classes."
+    ],
+    "blocks_reconnaissance": true,
+    "blocks_final_rows": ["Unavailable word audio", "Unavailable sentence audio"]
+  },
+  {
+    "id": "WORD-BLOCKER-SOFTWARE-KEYBOARD",
+    "field": "note editor software-keyboard appearance and dismissal",
+    "status": "unavailable_with_current_mirroring_external_keyboard_state",
+    "owner": "device owner with discovery driver",
+    "affected_records": ["WORD-ACTION-026", "LOOKUP-NOTE-EDITING keyboard state"],
+    "completed_independent_work": "Empty and populated focus states, external-key input, Done, Back auto-save, persistence, deletion, and restoration were captured.",
+    "fallback": "Keep keyboard geometry, input-source controls, Return behavior, and dismissal unknown.",
+    "resume_procedure": [
+      "Force the software keyboard visible on the physical iPhone without exposing private history.",
+      "Open Add Note on a public fixture and capture empty, typing, multiline, dismissal, refocus, and Done states.",
+      "Delete the synthetic note and verify restoration."
+    ],
+    "blocks_reconnaissance": true,
+    "blocks_final_rows": ["Note software-keyboard visual and interaction rows"]
+  },
+  {
+    "id": "WORD-BLOCKER-GESTURES",
+    "field": "interactive swipe-back and long-press behavior",
+    "status": "current_computer_control_could_not_deliver_verified_gestures",
+    "owner": "device owner or discovery driver with working physical-touch capture",
+    "affected_records": ["WORD-ACTION-027", "WORD-ACTION-028"],
+    "completed_independent_work": "Back controls, scrolling, taps, and nested navigation cycles were captured. A controller drag did not produce a verified swipe-back transition, and no duration-controlled long press was available.",
+    "fallback": "Do not infer gesture behavior from standard iOS conventions.",
+    "resume_procedure": [
+      "Use the physical iPhone with a synchronized screen recording and public fixtures only.",
+      "Test edge-swipe back from Example Sentences, nested Word Detail, and Conjugations, including canceling mid-gesture.",
+      "Long-press linked tokens, related rows, meaning text, and speaker controls; record any menu or no-op disposition."
+    ],
+    "blocks_reconnaissance": true,
+    "blocks_final_rows": ["Word/detail interactive gestures"]
+  },
+  {
+    "id": "WORD-BLOCKER-OFFLINE",
+    "field": "word/detail, examples, conjugations, notes, and audio offline/failure/retry behavior",
+    "status": "network_transition_not_authorized_or_safely_injected_in_this_session",
+    "owner": "device owner with discovery driver",
+    "affected_records": ["WORD-ACTION-029"],
+    "completed_independent_work": "All retained fixtures were observed in the normal connected state. No distinct loading, error, retry, or stale state was claimed.",
+    "fallback": "Do not equate locally available dictionary content with proven offline behavior.",
+    "resume_procedure": [
+      "Confirm a network-isolation method that will not strand iPhone Mirroring, or perform the probe directly on the physical iPhone.",
+      "Open cached-looking and previously unopened public word/example fixtures, isolate network access, and repeat navigation, conjugation, note, and audio actions.",
+      "Capture immediate and settled states, errors, retries, stale content, and recovery after reconnect.",
+      "Restore the recorded network state."
+    ],
+    "blocks_reconnaissance": true,
+    "blocks_final_rows": ["Word/detail offline, failure, retry, and recovery"]
   }
 ]

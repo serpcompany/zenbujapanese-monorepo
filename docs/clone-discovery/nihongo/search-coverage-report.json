@@ -9,9 +9,9 @@
     "cross_family_destination_proofs": 4,
     "actions": 44,
     "action_dispositions": {
-      "traversed": 27,
+      "traversed": 28,
       "same_destination_as": 1,
-      "unavailable_under_fixture": 4,
+      "unavailable_under_fixture": 3,
       "blocked_by_access": 8,
       "external_boundary": 0,
       "excluded_with_reason": 4
@@ -70,12 +70,6 @@
       "blocked_by": null,
       "affected_actions": ["SEARCH-ACTION-025"],
       "owner": "discovery driver"
-    },
-    {
-      "gap_id": "SEARCH-GAP-COLD-RELAUNCH",
-      "blocked_by": null,
-      "affected_actions": ["SEARCH-ACTION-032"],
-      "owner": "discovery driver with process-state proof"
     },
     {
       "gap_id": "SEARCH-GAP-LOADING",

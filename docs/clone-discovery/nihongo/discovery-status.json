@@ -1,7 +1,7 @@
 {
   "project": "zenbu-lookup-nihongo-reference",
-  "phase": "search_input_and_result_inventory_executed_with_recorded_gaps",
-  "updated_at": "2026-08-04T13:19:11Z",
+  "phase": "word_detail_and_conjugation_inventory_executed_with_recorded_gaps",
+  "updated_at": "2026-08-04T14:50:00Z",
   "active_map": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/63",
   "access_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/64",
   "access_ticket_status": "complete_with_recorded_limitations",
@@ -20,16 +20,16 @@
     "in_family_states": 22,
     "cross_family_destination_proofs": 4,
     "actions": 44,
-    "traversed_actions": 27,
+    "traversed_actions": 28,
     "same_destination_actions": 1,
-    "unavailable_under_fixture_actions": 4,
+    "unavailable_under_fixture_actions": 3,
     "blocked_by_access_actions": 8,
     "excluded_actions": 4,
     "fixture_runs": 16,
     "required_fixture_categories_executed": "12/12",
     "behavior_layout_classes": 11,
     "screenshot_artifacts": 34,
-    "unresolved_search_gaps": 9
+    "unresolved_search_gaps": 8
   },
   "search_inventory_records": [
     "search-fixture-matrix.json",
@@ -38,7 +38,29 @@
     "search-evidence-manifest.json",
     "evidence/reference/interaction-traces/search-input-results-inventory.json"
   ],
-  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/69",
+  "word_inventory_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/69",
+  "word_inventory_ticket_status": "executed_not_complete_blocking_gaps_recorded",
+  "word_inventory_counts": {
+    "in_family_states": 23,
+    "actions": 32,
+    "traversed_actions": 22,
+    "same_destination_actions": 1,
+    "unavailable_under_fixture_actions": 1,
+    "blocked_by_access_actions": 6,
+    "excluded_actions": 2,
+    "fixture_runs": 10,
+    "behavior_layout_classes": 12,
+    "privacy_reviewed_screenshot_artifacts": 42,
+    "unresolved_word_gaps": 6
+  },
+  "word_inventory_records": [
+    "word-fixture-matrix.json",
+    "word-crawl.json",
+    "word-coverage-report.json",
+    "word-evidence-manifest.json",
+    "evidence/reference/interaction-traces/word-detail-inventory.json"
+  ],
+  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/70",
   "final_disposition": null,
   "notes": [
     "Physical-iPhone runtime control and screenshot capture are proven.",
@@ -46,7 +68,11 @@
     "The stakeholder approved all 16 Search-rooted journey families as blocking, including recursive nested-state and action coverage and a query matrix based on materially distinct behavior and layout classes.",
     "The Search input/result ticket executed all 12 required fixture categories across 16 runs and indexed 11 materially distinct behavior/layout classes.",
     "The Search crawl recorded 22 in-family states, 44 actions, four cross-family destination proofs, and exact unresolved gaps; it does not claim recursive capture complete.",
-    "Blocking Search gaps remain for result scrolling, offline/failure/retry, standard software-keyboard presentation, individual disposable-history removal, handwriting erase/low-confidence behavior, radical zero/large candidate sets, confirmed cold relaunch, and a distinct loading state.",
+    "Blocking Search gaps remain for result scrolling, offline/failure/retry, standard software-keyboard presentation, individual disposable-history removal, handwriting erase/low-confidence behavior, radical zero/large candidate sets, and a distinct loading state. Cold process relaunch is now proven by the word/detail trace.",
+    "The word/detail crawl indexed 23 states, 32 actions, 10 fixture runs, and 12 behavior/layout classes across Example Sentences, Word Detail, notes, nested links, and verb/adjective conjugations.",
+    "Synthetic note text was tested through Done save, Back auto-save, navigation persistence, cold-relaunch persistence after re-query, deletion, and restoration; no synthetic note remains.",
+    "All 42 retained word/detail screenshots passed a post-capture visual audit. Mid-transition frames were removed and are not registered as evidence.",
+    "Blocking word/detail gaps remain for audible semantics, unavailable-audio fixtures, note software-keyboard presentation, long-press and swipe-back gestures, offline/failure/retry, and a settled linked-kanji edge recapture.",
     "The iOS camera, Photo Library picker, and Files picker are navigation support. The unobserved image-result placeholder remains proposed until discovery establishes Nihongo's actual post-selection graph; any observed Nihongo-owned graph is blocking.",
     "Protected camera, Photo Library, Files, and image-result behavior require synthetic fixtures; the visible entry points are verified without exposing personal content.",
     "App-level semantic accessibility capture remains unavailable through the proven tools; the limitation and fallback are recorded in tool-access-plan.json."

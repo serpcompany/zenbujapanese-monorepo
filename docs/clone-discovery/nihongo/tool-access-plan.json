@@ -50,7 +50,10 @@
       "Focusing Search can request Universal Clipboard content; do not permit the transfer unless the Mac clipboard has first been replaced with a synthetic fixture",
       "The attached external-keyboard path accepts hardware key events but selecting Nihongo's keyboard mode did not expose the standard iOS software keyboard",
       "Computer-use scrolling did not move the mirrored Search result list; a physical-device or working touch-swipe authority is required for terminal-extent coverage",
-      "The app-switcher and Spotlight round trip restored the same Word Detail, but cold process termination was not independently proven"
+    "Cold process termination is now proven: relaunch returns to Search root rather than restoring Word Detail directly",
+    "iPhone Mirroring page pushes can remain in a partially animated frame after the first screen read; evidence capture must wait, read twice, and visually verify the settled frame",
+    "When the iPhone Mirroring window occupies a secondary or partially off-screen display, coordinate input can be offset or missed; move the window fully on-screen and verify each action result before saving evidence",
+    "The current capture authority exposes no audible stream and cannot prove word or sentence pronunciation content, timing, or interruption"
     ],
     "blocker_registry": "access-blockers.json",
     "human_only_steps": [

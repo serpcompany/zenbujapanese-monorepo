@@ -236,6 +236,30 @@
       "required": true,
       "status": "blocked",
       "blocked_by": "SEARCH-BLOCKER-OFFLINE"
+    },
+    {
+      "id": "ENV-WORD-NOTE-LIFECYCLE",
+      "dimension": "state-data",
+      "value": "synthetic note save, Back auto-save, navigation persistence, cold-relaunch persistence after re-query, deletion, and restoration",
+      "required": true,
+      "status": "observed_and_restored",
+      "evidence": ["evidence/reference/interaction-traces/word-detail-inventory.json", "word-crawl.json"]
+    },
+    {
+      "id": "ENV-WORD-AUDIO-OUTPUT",
+      "dimension": "audio-output",
+      "value": "word and example pronunciation content, timing, interruption, and completion",
+      "required": true,
+      "status": "blocked",
+      "blocked_by": "WORD-BLOCKER-AUDIO-SEMANTICS"
+    },
+    {
+      "id": "ENV-WORD-NETWORK-OFFLINE",
+      "dimension": "network-state",
+      "value": "offline word/detail, example, and audio failure/retry/recovery",
+      "required": true,
+      "status": "blocked",
+      "blocked_by": "WORD-BLOCKER-OFFLINE"
     }
   ]
 }

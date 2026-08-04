@@ -1,0 +1,42 @@
+{
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/69",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "fixture_run_count": 10,
+  "behavior_layout_class_count": 12,
+  "fixtures": [
+    {"fixture_id":"WORD-FIXTURE-001","query":"いる","covers":["kana-only common verb","alternatives","verb-ending meanings","linked alternative kanji","notes","examples","ru-verb Plain/Polite"]},
+    {"fixture_id":"WORD-FIXTURE-002","query":"問題","covers":["common rich noun","multiple meanings","multiple linked kanji","note lifecycle","examples"]},
+    {"fixture_id":"WORD-FIXTURE-003","query":"蝶々","covers":["uncommon badge","multiple readings","linked example tokens","nested Word Detail"]},
+    {"fixture_id":"WORD-FIXTURE-004","query":"見る / 見える","covers":["transitive/intransitive relationship","alternative kanji","grouped Related Words","nested navigation"]},
+    {"fixture_id":"WORD-FIXTURE-005","query":"書く","covers":["godan verb","u-verb Plain/Polite forms","sparse verb detail"]},
+    {"fixture_id":"WORD-FIXTURE-006","query":"する","covers":["suru irregular","multiple part-of-speech roles","Plain/Polite forms"]},
+    {"fixture_id":"WORD-FIXTURE-007","query":"来る","covers":["kuru irregular","Irregular Verb title","Plain/Polite forms"]},
+    {"fixture_id":"WORD-FIXTURE-008","query":"とんでもない","covers":["i-adjective plus interjection","direct headword speaker","seven-form adjective list without segmented control"]},
+    {"fixture_id":"WORD-FIXTURE-009","query":"静か","covers":["na-adjective","alternatives","kanji and alternative kanji","related words","five-form adjective list"]},
+    {"fixture_id":"WORD-FIXTURE-010","query":"いる / 問題 synthetic notes","covers":["empty","populated","multiple-row affordance","Done save","Back auto-save","navigation persistence","cold-relaunch persistence","delete and restore"]}
+  ],
+  "behavior_layout_classes": [
+    "Example Sentences list with per-row speaker and underlined linked tokens",
+    "common rich Word Detail",
+    "uncommon/rare badge and sparse field presence",
+    "multiple readings and alternatives",
+    "alternative-kanji and grouped Related Words sections",
+    "ru-verb Plain/Polite conjugations",
+    "godan Plain/Polite conjugations",
+    "suru Plain/Polite conjugations",
+    "kuru Irregular Verb Plain/Polite conjugations",
+    "i-adjective form list without Plain/Polite tabs",
+    "na-adjective form list without Plain/Polite tabs",
+    "multi-row note editing and persistence lifecycle"
+  ],
+  "required_gaps": [
+    "Unavailable word-audio fixture",
+    "Unavailable sentence-audio fixture",
+    "Audible output content/timing/interruption",
+    "Software keyboard presentation and dismissal",
+    "Long-press and interactive swipe gestures",
+    "Offline/error/retry/recovery",
+    "Settled visual recapture of the linked-kanji boundary edge"
+  ]
+}

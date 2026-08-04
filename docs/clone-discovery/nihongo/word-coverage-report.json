@@ -1,0 +1,33 @@
+{
+  "generated_at": "2026-08-04T14:50:00Z",
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/69",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "capture_family": "Example Sentences, Word Detail, audio controls, Conjugations, notes, linked words, and nested states",
+  "coverage": {
+    "in_family_states": 23,
+    "actions": 32,
+    "action_dispositions": {"traversed":22,"same_destination_as":1,"unavailable_under_fixture":1,"blocked_by_access":6,"external_boundary":0,"excluded_with_reason":2},
+    "fixture_runs": 10,
+    "distinct_behavior_layout_classes": 12,
+    "privacy_reviewed_screenshot_artifacts": 42
+  },
+  "unresolved_gaps": [
+    {"gap_id":"WORD-GAP-AUDIO-SEMANTICS","blocked_by":"WORD-BLOCKER-AUDIO-SEMANTICS","affected_actions":["WORD-ACTION-003","WORD-ACTION-007"]},
+    {"gap_id":"WORD-GAP-AUDIO-FIXTURES","blocked_by":"WORD-BLOCKER-AUDIO-FIXTURE","affected_actions":["WORD-ACTION-030"]},
+    {"gap_id":"WORD-GAP-SOFTWARE-KEYBOARD","blocked_by":"WORD-BLOCKER-SOFTWARE-KEYBOARD","affected_actions":["WORD-ACTION-026"]},
+    {"gap_id":"WORD-GAP-GESTURES","blocked_by":"WORD-BLOCKER-GESTURES","affected_actions":["WORD-ACTION-027","WORD-ACTION-028"]},
+    {"gap_id":"WORD-GAP-OFFLINE-FAILURE-RETRY","blocked_by":"WORD-BLOCKER-OFFLINE","affected_actions":["WORD-ACTION-029"]},
+    {"gap_id":"WORD-GAP-KANJI-EDGE-VISUAL","blocked_by":null,"affected_actions":["WORD-ACTION-010"],"reason":"Observed runtime transition remains valid, but the captured transition frame failed visual QA and was removed."}
+  ],
+  "privacy_review": {
+    "passed": true,
+    "synthetic_notes_removed": true,
+    "personal_history_retained": false,
+    "personal_flashcard_or_clipping_content_retained": false,
+    "invalid_mid_transition_frames_retained": false
+  },
+  "capture_complete": false,
+  "status": "NOT_COMPLETE — BLOCKING WORD/DETAIL DISCOVERY GAPS REMAIN",
+  "reason": "The fixture matrix established twelve material behavior/layout classes and the note lifecycle, but audio semantics and unavailable-audio classes, software keyboard, applicable gestures, offline/failure/retry, and one settled cross-family edge capture remain unresolved."
+}

@@ -148,5 +148,34 @@
       "app-switcher/Spotlight restoration result"
     ],
     "privacy": "All retained full screens contain only synthetic queries and public dictionary content. Input-panel crops exclude the history list. No pre-existing history row, personal image, file, clipboard payload, credential, or unrelated app thumbnail is retained."
+  },
+  {
+    "evidence_id": "EVIDENCE-WORD-TRACE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "interaction-trace",
+    "path": "evidence/reference/interaction-traces/word-detail-inventory.json",
+    "captures": [
+      "Example Sentences and nested Word Detail traversal",
+      "word/detail field and layout classes",
+      "verb and adjective conjugation classes",
+      "synthetic note mutation, persistence, deletion, and restoration",
+      "evidence-quality rejection and exact unresolved gaps"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-WORD-SCREENSET-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "privacy-reviewed-screenshot-set",
+    "root": "evidence/reference/screenshots/word-inventory/",
+    "manifest": "word-evidence-manifest.json",
+    "artifact_count": 42,
+    "captures": [
+      "Example Sentences top and scrolled states",
+      "common, uncommon, rich, sparse, nested, noun, verb, adjective, and interjection Word Detail classes",
+      "ru-verb, godan, suru, kuru, i-adjective, and na-adjective conjugations",
+      "empty, populated, saved, persisted, deleted, and restored synthetic-note states"
+    ],
+    "privacy": "All retained screens contain public dictionary content and purpose-created note text only. The synthetic note was removed. No pre-existing Flashcard, Clipping, photo, file, credential, or private history content is retained.",
+    "quality": "All 42 artifacts were visually audited after capture. Mid-transition and misleading frames were removed rather than registered."
   }
 ]

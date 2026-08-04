@@ -45,6 +45,8 @@ flowchart TD
     RESULTS -->|KANJI primary row| KANJI
     RESULTS -->|View Example Sentences| EXAMPLES
     EXAMPLES -->|linked token| WORD
+    WORD -->|linked example token| WORD
+    WORD -->|Related Words row| WORD
     WORD -->|Add Note| NOTE
     WORD -->|View Conjugations| CONJ
     WORD -->|linked kanji| KANJI
@@ -72,15 +74,23 @@ Solid edges were traversed at runtime except the three excluded bottom-tab edges
 - Results expose Best Matches, Additional Matches, Discovered Words, KANJI primary rows, and a query-specific Example Sentences action. Blank no-match and example-count-only punctuation states were also observed. Cancelling a populated search can leave the result set visible after focus and query text clear.
 - Word Detail can expose reading, frequency, pitch-accent visualization, audio, parts of speech, meanings, alternatives, linked kanji and words, notes, examples, and conjugations.
 - Example Sentences show Japanese with furigana, English translation, audio, and linked Japanese tokens.
+- Word Detail layout classes were observed across common/uncommon, rich/sparse, noun, verb, adjective, interjection, multiple-reading, alternative-kanji, and grouped Related Words fixtures. Linked example tokens and Related Words push nested Word Detail screens.
+- Verb conjugations use Plain/Polite states for ru-verbs, godan verbs, `する`, and `来る`. I-adjectives instead show seven forms and na-adjectives show five forms, both without the Plain/Polite control.
+- Notes support multiple rows. Done saves; leaving with Back also auto-saves. Notes persist across navigation and cold relaunch after re-querying, and deleting all synthetic text removes the note row. All synthetic note text was removed after capture.
 - Kanji Detail exposes classifications, meanings, readings linked to words, elements, expandable origin/history, related words, and a stroke-order overlay. Element Detail links outward to kanji grouped by the element's role.
 
 ## Privacy and evidence limits
 
 - No retained screenshot contains pre-existing recent-search terms, personal photos, personal files, or clipboard data.
 - The retained handwriting and radical screenshots contain only the lower input panels.
-- Camera, Photo Library, Files, image OCR/result, audio behavior, destructive history clearing, permission variants, offline/error/retry, Search-result terminal scrolling, software-keyboard presentation, and confirmed cold-relaunch persistence remain mapped but not fully characterized.
+- Camera, Photo Library, Files, image OCR/result, audio behavior, destructive history clearing, permission variants, offline/error/retry, Search-result terminal scrolling, and software-keyboard presentation remain mapped but not fully characterized. Cold process relaunch now proves a return to Search root rather than direct detail-stack restoration.
+- Word and sentence audio content/timing, unavailable-audio fixtures, note software-keyboard presentation, long-press and interactive swipe-back gestures, word/detail offline/failure/retry, and a settled linked-kanji edge screenshot remain exact word-family gaps.
 - Zenbu's natural-translation addition belongs to the settled Image Text Flow product authority. It must not be represented as observed Nihongo behavior.
 
 The Search capture executed all 12 required fixture categories across 16 runs, indexing 22 in-family states, 44 actions, 4 cross-family destination proofs, and 11 materially distinct input/result behavior classes. It is not claimed complete: `search-coverage-report.json` names nine exact gaps and their resume procedures.
 
 Machine-readable details live in `journeys.json`, `surface-map.json`, `state-transitions.json`, `search-crawl.json`, `search-fixture-matrix.json`, and `search-coverage-report.json`.
+
+The word/detail capture executed 10 fixture runs, indexing 23 in-family states, 32 actions, 12 materially distinct behavior/layout classes, and 42 privacy-reviewed screenshots. It is not claimed complete: `word-coverage-report.json` names six exact gaps and `word-evidence-manifest.json` registers only post-audit settled frames.
+
+Word/detail machine-readable details live in `word-crawl.json`, `word-fixture-matrix.json`, `word-coverage-report.json`, and `word-evidence-manifest.json`.
