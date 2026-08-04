@@ -177,5 +177,36 @@
     ],
     "privacy": "All retained screens contain public dictionary content and purpose-created note text only. The synthetic note was removed. No pre-existing Flashcard, Clipping, photo, file, credential, or private history content is retained.",
     "quality": "All 42 artifacts were visually audited after capture. Mid-transition and misleading frames were removed rather than registered."
+  },
+  {
+    "evidence_id": "EVIDENCE-IMAGE-TRACE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "interaction-trace",
+    "path": "evidence/reference/interaction-traces/image-text-inventory.json",
+    "captures": [
+      "Files single and multiple synthetic image selection",
+      "clear, noisy, vertical, sparse, and empty recognition classes",
+      "recognized-token inline gloss and nested Word Detail",
+      "multi-image carousel and no-text recovery",
+      "dismissal and cold-relaunch behavior",
+      "vertical cross-column grouping limitation"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-IMAGE-SCREENSET-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "privacy-reviewed-screenshot-set",
+    "root": "evidence/reference/screenshots/image-text-inventory/",
+    "manifest": "image-evidence-manifest.json",
+    "artifact_count": 10,
+    "captures": [
+      "clear and noisy horizontal recognition",
+      "vertical recognition and cross-column grouping",
+      "sparse recognition and inline gloss",
+      "no-text alert",
+      "image-context Word Detail",
+      "cold-relaunch Search root"
+    ],
+    "privacy": "Every retained artifact contains only purpose-created fixture content or public dictionary output. Photo Library and Files picker screens containing unrelated personal items were not retained."
   }
 ]

@@ -47,17 +47,12 @@
     "JOURNEY-INSPECT-KANJI",
     "JOURNEY-PLAY-STROKE-ORDER",
     "JOURNEY-INSPECT-KANJI-ELEMENT",
-    "JOURNEY-IMAGE-TAKE-PHOTO",
-    "JOURNEY-IMAGE-PHOTO-LIBRARY",
     "JOURNEY-IMAGE-FILES"
   ],
   "navigation_support": [
-    "IOS-CAMERA-CAPTURE",
-    "IOS-PHOTO-LIBRARY-PICKER",
     "IOS-FILES-PICKER"
   ],
   "proposed": [
-    "LOOKUP-IMAGE-TEXT-RESULT remains a placeholder until Nihongo-owned post-selection behavior is observed; any observed Search-rooted graph is blocking",
     "Newly discovered adjacent functionality pending stakeholder classification"
   ],
   "excluded": [
@@ -65,7 +60,9 @@
     "Flashcards and their settings",
     "General Settings",
     "Contents of external destinations",
-    "Alternate locales, orientations, devices, OS versions, appearances, and historical Nihongo versions"
+    "Alternate locales, orientations, devices, OS versions, appearances, and historical Nihongo versions",
+    "Camera and Photo Library source mechanics for this discovery revision; the stakeholder accepted Files-based uploaded-image parsing as sufficient on 2026-08-05",
+    "System share-sheet contents beyond the Image Text result's app-owned Copy Text and Share Image menu"
   ],
   "allowed_variance": [
     "Zenbu colors, typography, logos, and icons",

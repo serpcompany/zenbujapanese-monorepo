@@ -115,25 +115,29 @@
       "id": "ENV-PERMISSION-CAMERA",
       "dimension": "permission",
       "value": "camera allow/deny/cancel/restoration",
-      "required": true,
-      "status": "pending_journey_capture",
-      "blocked_by": "ACCESS-BLOCKER-PERMISSIONS"
+      "required": false,
+      "status": "excluded",
+      "rationale": "The stakeholder waived Camera source mechanics and accepted uploaded-image parsing through Files as the blocking evidence path."
     },
     {
       "id": "ENV-PERMISSION-PHOTOS",
       "dimension": "permission",
       "value": "Photos allow/limited/deny/cancel/restoration",
-      "required": true,
-      "status": "pending_journey_capture",
-      "blocked_by": "ACCESS-BLOCKER-PERMISSIONS"
+      "required": false,
+      "status": "excluded_after_picker_cancel_observation",
+      "rationale": "The private-access picker opened and cancelled successfully; the stakeholder waived Photo Library source mechanics after accepting Files-based parsing evidence."
     },
     {
       "id": "ENV-PICKER-FILES",
       "dimension": "system-integration",
       "value": "Files picker open/select/cancel",
       "required": true,
-      "status": "pending_journey_capture",
-      "blocked_by": "ACCESS-BLOCKER-PERMISSIONS"
+      "status": "observed_single_and_multiple_selection",
+      "evidence": [
+        "image-crawl.json",
+        "image-fixture-matrix.json",
+        "evidence/reference/interaction-traces/image-text-inventory.json"
+      ]
     },
     {
       "id": "ENV-PERMISSION-CLIPBOARD",

@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-08-05T01:02:00+09:00",
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/71",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "capture_family": "Files-based uploaded-image OCR, recognized-token interaction, nested Lookup, multi-image handling, no-text recovery, dismissal, and relaunch",
+  "coverage": {
+    "in_family_states": 16,
+    "actions": 25,
+    "action_dispositions": {
+      "traversed": 20,
+      "same_destination_as": 0,
+      "unavailable_under_fixture": 0,
+      "blocked_by_access": 1,
+      "external_boundary": 1,
+      "excluded_with_reason": 3
+    },
+    "fixture_runs": 3,
+    "fixture_classes": 5,
+    "distinct_behavior_layout_classes": 10,
+    "privacy_reviewed_screenshot_artifacts": 10
+  },
+  "observed_limitations": [
+    {
+      "limitation_id": "IMAGE-LIMITATION-VERTICAL-CROSS-COLUMN-GROUPING",
+      "fixture_id": "IMG-FIXTURE-002",
+      "observation": "Selecting the blue 読 in the left vertical column produced the compound 読本, combining it with adjacent-column 本 rather than preserving the fixture's vertical reading order.",
+      "evidence": ["evidence/reference/screenshots/image-text-inventory/state-vertical-token-cross-column-grouping.png"]
+    }
+  ],
+  "nonblocking_gaps": [
+    {
+      "gap_id": "IMAGE-GAP-COPY-TEXT-OUTPUT",
+      "blocked_by": "IMAGE-BLOCKER-COPY-TEXT-OUTPUT",
+      "affected_actions": ["IMAGE-ACTION-012"],
+      "reason": "Copy Text visibly completed and dismissed its menu, but the current capture authority could not read the device-local clipboard payload without substituting the Mac Universal Clipboard."
+    }
+  ],
+  "privacy_review": {
+    "passed": true,
+    "personal_photo_or_file_artifacts_retained": false,
+    "picker_boundary_screenshots_retained": false,
+    "fixture_content": "purpose-created only",
+    "synthetic_device_files_removed": true,
+    "nihongo_final_state": "empty Search root",
+    "permissions_changed": false
+  },
+  "capture_complete": true,
+  "status": "COMPLETE — UPLOADED-IMAGE PARSING VERIFIED WITH AN OBSERVED VERTICAL GROUPING LIMITATION",
+  "reason": "The stakeholder explicitly waived Camera and Photo Library source mechanics and required parsing proof through an uploaded or used image. Files-based execution proved clear, noisy, vertical, sparse, empty, multi-image, interactive-token, nested Lookup, dismissal, and cold-relaunch behavior."
+}

@@ -1,18 +1,18 @@
 {
   "project": "zenbu-lookup-nihongo-reference",
-  "phase": "kanji_and_stroke_order_inventory_executed_with_recorded_gaps",
-  "updated_at": "2026-08-05T00:29:00+09:00",
+  "phase": "uploaded_image_parsing_inventory_complete_with_observed_vertical_grouping_limitation",
+  "updated_at": "2026-08-05T01:02:00+09:00",
   "active_map": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/63",
   "access_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/64",
   "access_ticket_status": "complete_with_recorded_limitations",
   "journey_mapping_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/65",
   "journey_mapping_ticket_status": "complete",
   "approved_denominator": {
-    "blocking_journeys": 16,
-    "blocking_surfaces": 14,
-    "navigation_support_surfaces": 3,
-    "conditional_proposed_surfaces": 1,
-    "excluded_boundary_surfaces": 4
+    "blocking_journeys": 14,
+    "blocking_surfaces": 15,
+    "navigation_support_surfaces": 1,
+    "conditional_proposed_surfaces": 0,
+    "excluded_boundary_surfaces": 7
   },
   "search_inventory_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/68",
   "search_inventory_ticket_status": "executed_not_complete_blocking_gaps_recorded",
@@ -82,12 +82,36 @@
     "kanji-evidence-manifest.json",
     "evidence/reference/interaction-traces/kanji-detail-inventory.json"
   ],
-  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/71",
+  "image_inventory_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/71",
+  "image_inventory_ticket_status": "complete_for_revised_uploaded_image_parsing_scope",
+  "image_inventory_counts": {
+    "in_family_states": 16,
+    "actions": 25,
+    "traversed_actions": 20,
+    "blocked_by_access_actions": 1,
+    "external_boundary_actions": 1,
+    "excluded_actions": 3,
+    "fixture_runs": 3,
+    "fixture_classes": 5,
+    "behavior_layout_classes": 10,
+    "privacy_reviewed_screenshot_artifacts": 10,
+    "observed_parsing_limitations": 1,
+    "nonblocking_gaps": 1
+  },
+  "image_inventory_records": [
+    "fixtures/image-text/manifest.json",
+    "image-fixture-matrix.json",
+    "image-crawl.json",
+    "image-coverage-report.json",
+    "image-evidence-manifest.json",
+    "evidence/reference/interaction-traces/image-text-inventory.json"
+  ],
+  "next_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/72",
   "final_disposition": null,
   "notes": [
     "Physical-iPhone runtime control and screenshot capture are proven.",
     "The Search-rooted breadth-first graph has stable journey, surface, and transition IDs.",
-    "The stakeholder approved all 16 Search-rooted journey families as blocking, including recursive nested-state and action coverage and a query matrix based on materially distinct behavior and layout classes.",
+    "The stakeholder originally approved 16 Search-rooted journey families as blocking, then explicitly waived Camera and Photo Library source mechanics on 2026-08-05 and accepted Files-based uploaded-image parsing as the blocking Image Text evidence path.",
     "The Search input/result ticket executed all 12 required fixture categories across 16 runs and indexed 11 materially distinct behavior/layout classes.",
     "The Search crawl recorded 22 in-family states, 44 actions, four cross-family destination proofs, and exact unresolved gaps; it does not claim recursive capture complete.",
     "Blocking Search gaps remain for result scrolling, offline/failure/retry, standard software-keyboard presentation, individual disposable-history removal, handwriting erase/low-confidence behavior, radical zero/large candidate sets, and a distinct loading state. Cold process relaunch is now proven by the word/detail trace.",
@@ -99,8 +123,11 @@
     "One-, eight-, and 29-stroke fixtures proved initial, step, play, pause, resume, completion, close, platform-interruption, and cold-relaunch behavior. Numeric timing remains blocked because interaction-call latency is not a synchronized recording authority.",
     "All 25 retained kanji screenshots passed a privacy review. The 一 stroke evidence was cropped above Words You've Learned; no personal rows or clipboard payload were retained.",
     "Blocking kanji gaps remain for exhaustive visible-row action closure, missing-data fixture classes, long-press/swipe gestures, offline/failure/retry behavior, authoritative animation timing, and a retained settled terminal frame for the 29-stroke fixture.",
-    "The iOS camera, Photo Library picker, and Files picker are navigation support. The unobserved image-result placeholder remains proposed until discovery establishes Nihongo's actual post-selection graph; any observed Nihongo-owned graph is blocking.",
-    "Protected camera, Photo Library, Files, and image-result behavior require synthetic fixtures; the visible entry points are verified without exposing personal content.",
+    "The Files picker and Nihongo Image Text result were executed with five deterministic synthetic fixtures across clear horizontal, vertical, noisy, sparse, empty, and multi-image behavior classes.",
+    "Uploaded-image parsing is verified end to end through inline token gloss and nested Word Detail. Vertical parsing has an observed cross-column grouping limitation: selecting 読 produced 読本 by combining adjacent-column 本.",
+    "No-text handling, recognition-highlight toggling, multi-image page navigation, Close/discard, and cold-relaunch discard are observed. Exact Copy Text serialization remains a nonblocking gap because the device-local clipboard payload was not exposed by the capture authority.",
+    "Camera and Photo Library source mechanics are excluded from this discovery revision under the stakeholder's explicit scope decision; the private-access Photo picker was opened and cancelled without retaining any personal content.",
+    "All nine AirDropped synthetic fixture files were moved to Files Recently Deleted after capture, the failed Mac staging folder was moved to Trash, no permissions were changed, and Nihongo was restored to the empty Search root.",
     "App-level semantic accessibility capture remains unavailable through the proven tools; the limitation and fallback are recorded in tool-access-plan.json."
   ]
 }

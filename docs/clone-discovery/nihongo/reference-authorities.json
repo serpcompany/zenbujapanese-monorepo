@@ -18,10 +18,10 @@
     "orientation": "portrait",
     "content_size_category": "not exposed by the proven interfaces",
     "permissions": {
-      "camera": "not yet observed",
-      "photos": "not yet observed",
-      "files": "system picker access not yet observed",
-      "clipboard": "payload deliberately not inspected"
+      "camera": "not observed; source mechanics waived by stakeholder on 2026-08-05",
+      "photos": "private-access picker open and cancel observed; item selection waived by stakeholder",
+      "files": "single and multiple synthetic selection observed",
+      "clipboard": "Image Text Copy Text selected, but device-local payload not exposed to the capture authority"
     },
     "notes": "The installed App Store app is a runtime subject. No IPA, decrypted executable, app container, or proprietary resource payload was acquired."
   }

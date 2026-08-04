@@ -43,27 +43,43 @@
   {
     "id": "ACCESS-BLOCKER-PERMISSIONS",
     "field": "camera, Photos, Files, and clipboard permission/access states",
-    "status": "not_exposed_by_coredevice_and_not_opened_during_baseline",
+    "status": "partially_superseded_by_scope_decision_and_files_observation",
     "owner": "discovery driver with device-owner supervision",
     "affected_records": [
       "reference-authorities.json",
       "environment-matrix.json",
       "future image and input journey rows"
     ],
-    "completed_independent_work": "The owner authorized app-specific permission testing and restoration. The baseline avoided the camera view, personal Photo Library, personal Files, and clipboard payloads.",
-    "fallback": "Keep permission-dependent journeys unknown rather than infer their state from the visible Search controls.",
+    "completed_independent_work": "Files single and multiple selection were observed with isolated synthetic fixtures. The private-access Photo picker opened and was cancelled without selection or retained evidence. The stakeholder then waived Camera and Photo Library source mechanics for this discovery outcome.",
+    "fallback": "Keep future clipboard-input permission claims unknown; Camera and Photos rows are excluded under the recorded stakeholder scope decision.",
     "resume_procedure": [
-      "Prepare a non-personal camera scene, a limited Photos library containing only a synthetic fixture, a synthetic file, and a known synthetic Mac clipboard value.",
-      "Enter each approved Search path separately and record whether iOS prompts, allows, denies, or opens a picker.",
-      "Cancel before selecting unrelated content, restore each app-specific permission to its recorded starting state, and retain only synthetic evidence.",
-      "Update the relevant matrix cell and atomic rows independently for allow, deny, cancel, retry, and restoration."
+      "For any future clipboard-input claim, replace the Mac clipboard with a known synthetic value before focusing Search.",
+      "Record whether iOS prompts, allows, denies, or transfers that exact synthetic value.",
+      "Restore the starting clipboard state if it can be done without reading or retaining private content."
     ],
     "blocks_reconnaissance": false,
     "blocks_final_rows": [
-      "Future camera permission rows",
-      "Future Photos permission rows",
-      "Future Files picker rows",
       "Future clipboard-input rows"
+    ]
+  },
+  {
+    "id": "IMAGE-BLOCKER-COPY-TEXT-OUTPUT",
+    "field": "device-local Copy Text payload from an Image Text result",
+    "status": "not_readable_through_current_capture_authority",
+    "owner": "discovery driver with a device-local paste target or semantic clipboard authority",
+    "affected_records": [
+      "IMAGE-ACTION-012"
+    ],
+    "completed_independent_work": "Copy Text was selected on a purpose-created result and visibly dismissed its menu. Reading the Mac clipboard returned a pre-existing Mac value, so Universal Clipboard cannot be used as evidence of Nihongo's copied payload.",
+    "fallback": "Use visible recognition overlays and token selection as parsing evidence; do not claim the exact Copy Text serialization.",
+    "resume_procedure": [
+      "Open IMG-FIXTURE-001 through Files and select Copy Text.",
+      "Paste into an isolated, empty, device-local text destination without invoking the Mac Universal Clipboard.",
+      "Capture and compare exact text, order, whitespace, punctuation, omitted non-Japanese content, and multi-image behavior, then delete the synthetic paste."
+    ],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": [
+      "Exact Image Text Copy Text serialization"
     ]
   },
   {

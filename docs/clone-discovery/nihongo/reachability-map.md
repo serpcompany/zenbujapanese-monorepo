@@ -1,6 +1,6 @@
 # Nihongo Search reachability map
 
-Authority: installed Nihongo 1.34.3 (9792) on the connected iPhone 17 Pro Max, iOS 26.5.2, dark appearance, portrait orientation. This is a reconnaissance graph, not an exhaustive state-capture claim. The stakeholder approved all 16 Search-rooted journeys as `blocking`; 13 observed Nihongo-owned surfaces are `blocking`, the 3 iOS capture/picker surfaces are `navigation_support`, and the unobserved image-result placeholder remains `proposed` until discovery establishes Nihongo's actual post-selection graph.
+Authority: installed Nihongo 1.34.3 (9792) on the connected iPhone 17 Pro Max, iOS 26.5.2, dark appearance, portrait orientation. This graph is backed by recursive family-specific records. The stakeholder originally approved 16 Search-rooted journeys as `blocking`, then waived Camera and Photo Library source mechanics on 2026-08-05 and accepted Files-based uploaded-image parsing as the blocking Image Text evidence path.
 
 ```mermaid
 flowchart TD
@@ -35,12 +35,14 @@ flowchart TD
     HAND -->|select/pending candidates and submit| RESULTS
     RAD -->|filter, choose candidate, submit| RESULTS
     ROOT -->|image-source button| MENU
-    MENU -.->|Take Photo; protected| CAMERA
-    MENU -.->|Photo Library; protected| PHOTOS
-    MENU -.->|Files; protected| FILES
-    CAMERA -.->|OCR; not observed| IMAGE
-    PHOTOS -.->|OCR; not observed| IMAGE
-    FILES -.->|OCR; not observed| IMAGE
+    MENU -.->|Take Photo; excluded source mechanics| CAMERA
+    MENU -.->|Photo Library; open/cancel then excluded| PHOTOS
+    MENU -->|Files| FILES
+    CAMERA -.->|OCR; excluded| IMAGE
+    PHOTOS -.->|selection; excluded| IMAGE
+    FILES -->|single or multiple synthetic images| IMAGE
+    IMAGE -->|recognized token and inline gloss| WORD
+    IMAGE -->|Close or cold relaunch| ROOT
     RESULTS -->|result row| WORD
     RESULTS -->|KANJI primary row| KANJI
     RESULTS -->|View Example Sentences| EXAMPLES
@@ -61,11 +63,11 @@ flowchart TD
 
     classDef protected stroke-dasharray: 5 5;
     classDef excluded fill:#3a2630,stroke:#c56,color:#fff;
-    class CAMERA,PHOTOS,FILES,IMAGE protected;
-    class CLIP,FLASH,SETTINGS,EDITOR excluded;
+    class FILES protected;
+    class CAMERA,PHOTOS,CLIP,FLASH,SETTINGS,EDITOR excluded;
 ```
 
-Solid edges were traversed at runtime except the three excluded bottom-tab edges, whose entry controls were observed but intentionally not selected. Dashed edges require synthetic fixtures or further capture. The Flashcard editor boundary was entered only far enough to identify it, then immediately exited; its contents were not catalogued.
+Solid edges were traversed at runtime except the three excluded bottom-tab edges, whose entry controls were observed but intentionally not selected. Camera and Photo Library source mechanics are dashed because the stakeholder explicitly excluded them after accepting Files-based parsing evidence. The Flashcard editor boundary was entered only far enough to identify it, then immediately exited; its contents were not catalogued.
 
 ## Reconnoitred content and controls
 
@@ -78,18 +80,24 @@ Solid edges were traversed at runtime except the three excluded bottom-tab edges
 - Verb conjugations use Plain/Polite states for ru-verbs, godan verbs, `する`, and `来る`. I-adjectives instead show seven forms and na-adjectives show five forms, both without the Plain/Polite control.
 - Notes support multiple rows. Done saves; leaving with Back also auto-saves. Notes persist across navigation and cold relaunch after re-querying, and deleting all synthetic text removes the note row. All synthetic note text was removed after capture.
 - Kanji Detail exposes classifications, meanings, readings linked to words, elements, expandable origin/history, related words, and a stroke-order overlay. Element Detail links outward to kanji grouped by the element's role.
+- Files accepts single and multiple image selection. The Image Text result highlights recognized Japanese in blue, toggles those highlights, exposes inline dictionary glosses, links into Word Detail with a Photo back route, presents multi-image page indicators, alerts on no Japanese text, and discards active image state on Close or cold relaunch.
+- Clear and noisy horizontal fixtures produced materially equivalent Japanese highlights. Sparse `静` produced an interactive `せい / stillness` gloss. Vertical text was interactive but exposed a cross-column grouping limitation: selecting `読` produced `読本` by combining adjacent-column `本`.
 
 ## Privacy and evidence limits
 
 - No retained screenshot contains pre-existing recent-search terms, personal photos, personal files, or clipboard data.
 - The retained handwriting and radical screenshots contain only the lower input panels.
-- Camera, Photo Library, Files, image OCR/result, audio behavior, destructive history clearing, permission variants, offline/error/retry, Search-result terminal scrolling, and software-keyboard presentation remain mapped but not fully characterized. Cold process relaunch now proves a return to Search root rather than direct detail-stack restoration.
+- Camera and Photo Library source mechanics are excluded under the stakeholder's 2026-08-05 decision. Files-based image parsing is characterized across clear, noisy, vertical, sparse, empty, and multi-image classes; exact Copy Text serialization remains unavailable to the current device-local clipboard authority.
 - Word and sentence audio content/timing, unavailable-audio fixtures, note software-keyboard presentation, long-press and interactive swipe-back gestures, word/detail offline/failure/retry, and a settled linked-kanji edge screenshot remain exact word-family gaps.
 - Zenbu's natural-translation addition belongs to the settled Image Text Flow product authority. It must not be represented as observed Nihongo behavior.
 
 The Search capture executed all 12 required fixture categories across 16 runs, indexing 22 in-family states, 44 actions, 4 cross-family destination proofs, and 11 materially distinct input/result behavior classes. It is not claimed complete: `search-coverage-report.json` names nine exact gaps and their resume procedures.
 
 Machine-readable details live in `journeys.json`, `surface-map.json`, `state-transitions.json`, `search-crawl.json`, `search-fixture-matrix.json`, and `search-coverage-report.json`.
+
+The Image Text capture executed five purpose-created fixtures across three runs, indexing 16 states, 25 actions, 10 behavior/layout classes, and 10 privacy-reviewed screenshots. Uploaded-image parsing is complete for the revised stakeholder scope; `image-coverage-report.json` records the observed vertical grouping limitation and the nonblocking Copy Text output gap.
+
+Image Text machine-readable details live in `image-crawl.json`, `image-fixture-matrix.json`, `image-coverage-report.json`, `image-evidence-manifest.json`, and `evidence/reference/interaction-traces/image-text-inventory.json`.
 
 The word/detail capture executed 10 fixture runs, indexing 23 in-family states, 32 actions, 12 materially distinct behavior/layout classes, and 42 privacy-reviewed screenshots. It is not claimed complete: `word-coverage-report.json` names six exact gaps and `word-evidence-manifest.json` registers only post-audit settled frames.
 
