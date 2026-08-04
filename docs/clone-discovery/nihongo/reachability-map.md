@@ -1,6 +1,6 @@
 # Nihongo Search reachability map
 
-Authority: installed Nihongo 1.34.3 (9792) on the connected iPhone 17 Pro Max, iOS 26.5.2, dark appearance, portrait orientation. This is a reconnaissance graph, not an exhaustive state-capture claim. All 16 candidate journeys and 17 candidate blocking or navigation-support surfaces remain `proposed` until issue #66 approves their classification.
+Authority: installed Nihongo 1.34.3 (9792) on the connected iPhone 17 Pro Max, iOS 26.5.2, dark appearance, portrait orientation. This is a reconnaissance graph, not an exhaustive state-capture claim. The stakeholder approved all 16 Search-rooted journeys as `blocking`; 13 observed Nihongo-owned surfaces are `blocking`, the 3 iOS capture/picker surfaces are `navigation_support`, and the unobserved image-result placeholder remains `proposed` until discovery establishes Nihongo's actual post-selection graph.
 
 ```mermaid
 flowchart TD

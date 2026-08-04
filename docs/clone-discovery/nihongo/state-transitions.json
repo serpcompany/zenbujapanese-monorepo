@@ -1,7 +1,7 @@
 {
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
-  "scope_status": "candidate_contract_pending_issue_66",
+  "scope_status": "stakeholder_approved_blocking_contract",
   "transitions": [
     {"from": "LOOKUP-SEARCH-ROOT", "trigger": "focus empty Search field", "to": "LOOKUP-SEARCH-HISTORY", "observed": true},
     {"from": "LOOKUP-SEARCH-HISTORY", "trigger": "select a recent query", "to": "LOOKUP-RESULTS", "observed": true, "privacy": "Only disposable synthetic rows may be used for later capture."},
