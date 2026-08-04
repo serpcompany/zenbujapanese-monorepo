@@ -32,8 +32,8 @@ flowchart TD
     ROOT -->|input mode| HAND
     ROOT -->|input mode| RAD
     HAND <-->|mode switch| RAD
-    HAND -.->|submit; not yet captured| RESULTS
-    RAD -.->|submit; not yet captured| RESULTS
+    HAND -->|select/pending candidates and submit| RESULTS
+    RAD -->|filter, choose candidate, submit| RESULTS
     ROOT -->|image-source button| MENU
     MENU -.->|Take Photo; protected| CAMERA
     MENU -.->|Photo Library; protected| PHOTOS
@@ -42,6 +42,7 @@ flowchart TD
     PHOTOS -.->|OCR; not observed| IMAGE
     FILES -.->|OCR; not observed| IMAGE
     RESULTS -->|result row| WORD
+    RESULTS -->|KANJI primary row| KANJI
     RESULTS -->|View Example Sentences| EXAMPLES
     EXAMPLES -->|linked token| WORD
     WORD -->|Add Note| NOTE
@@ -67,7 +68,8 @@ Solid edges were traversed at runtime except the three excluded bottom-tab edges
 ## Reconnoitred content and controls
 
 - Search supports normal keyboard input plus handwriting and radical panels. Romaji may first rank literal Latin-script matches and offer a Japanese-reading refinement.
-- Results expose Best Matches, Additional Matches, and a query-specific Example Sentences action. Cancelling a populated search can leave the result set visible after focus and query text clear.
+- Handwriting exposes an empty grid, recognition candidates, candidate composition, pending-stroke submission, erase/remove, Search, and mode switches. Radical input groups cells by stroke count, filters radicals and candidate kanji, permits deselection, and requires a candidate before Search is enabled.
+- Results expose Best Matches, Additional Matches, Discovered Words, KANJI primary rows, and a query-specific Example Sentences action. Blank no-match and example-count-only punctuation states were also observed. Cancelling a populated search can leave the result set visible after focus and query text clear.
 - Word Detail can expose reading, frequency, pitch-accent visualization, audio, parts of speech, meanings, alternatives, linked kanji and words, notes, examples, and conjugations.
 - Example Sentences show Japanese with furigana, English translation, audio, and linked Japanese tokens.
 - Kanji Detail exposes classifications, meanings, readings linked to words, elements, expandable origin/history, related words, and a stroke-order overlay. Element Detail links outward to kanji grouped by the element's role.
@@ -76,7 +78,9 @@ Solid edges were traversed at runtime except the three excluded bottom-tab edges
 
 - No retained screenshot contains pre-existing recent-search terms, personal photos, personal files, or clipboard data.
 - The retained handwriting and radical screenshots contain only the lower input panels.
-- Camera, Photo Library, Files, image OCR/result, audio behavior, destructive history clearing, permission variants, offline/error/retry paths, and relaunch persistence are mapped but not characterized.
+- Camera, Photo Library, Files, image OCR/result, audio behavior, destructive history clearing, permission variants, offline/error/retry, Search-result terminal scrolling, software-keyboard presentation, and confirmed cold-relaunch persistence remain mapped but not fully characterized.
 - Zenbu's natural-translation addition belongs to the settled Image Text Flow product authority. It must not be represented as observed Nihongo behavior.
 
-Machine-readable details live in `journeys.json`, `surface-map.json`, and `state-transitions.json`.
+The Search capture executed all 12 required fixture categories across 16 runs, indexing 22 in-family states, 44 actions, 4 cross-family destination proofs, and 11 materially distinct input/result behavior classes. It is not claimed complete: `search-coverage-report.json` names nine exact gaps and their resume procedures.
+
+Machine-readable details live in `journeys.json`, `surface-map.json`, `state-transitions.json`, `search-crawl.json`, `search-fixture-matrix.json`, and `search-coverage-report.json`.

@@ -16,9 +16,9 @@
       "surfaces": ["LOOKUP-SEARCH-ROOT", "LOOKUP-RESULTS"],
       "visible_result": "Best Matches and, when applicable, Additional Matches and an example-sentence count action.",
       "durable_output": "The query becomes a recent-search entry; no Saved Language Item is implied.",
-      "failure_and_recovery": ["No-match and offline behavior remain uncaptured", "Cancel dismisses focus while the last populated result set can remain visible"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"],
-      "reconnaissance_status": "reached"
+      "failure_and_recovery": ["No-match is a blank content state with no explicit copy or retry control", "Offline, injected failure, loading, and retry behavior remain uncaptured", "Cancel dismisses focus while the last populated result set can remain visible"],
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001", "EVIDENCE-SEARCH-SCREENSET-001", "EVIDENCE-SEARCH-TRACE-001"],
+      "reconnaissance_status": "required_fixture_matrix_executed_with_offline_loading_scroll_and_accessibility_gaps"
     },
     {
       "journey_id": "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
@@ -33,9 +33,9 @@
       "surfaces": ["LOOKUP-SEARCH-ROOT", "LOOKUP-RESULTS"],
       "visible_result": "The query is normalized to Japanese and results are reranked for that reading.",
       "durable_output": "The submitted forms can become recent-search entries.",
-      "failure_and_recovery": ["Alternative transliterations and no-refinement cases remain uncaptured"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"],
-      "reconnaissance_status": "reached"
+      "failure_and_recovery": ["nihon and mondai offered Japanese-reading refinement", "taberu and tabeta resolved directly without a refinement row", "The complete transliteration decision boundary remains owned by the language-behavior capture ticket"],
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001", "EVIDENCE-SEARCH-SCREENSET-001", "EVIDENCE-SEARCH-TRACE-001"],
+      "reconnaissance_status": "two_refinement_and_two_direct_resolution_classes_observed"
     },
     {
       "journey_id": "JOURNEY-RERUN-RECENT-SEARCH",
@@ -49,10 +49,10 @@
       "actions": ["Focus an empty Search field", "Select a recent query"],
       "surfaces": ["LOOKUP-SEARCH-ROOT", "LOOKUP-SEARCH-HISTORY", "LOOKUP-RESULTS"],
       "visible_result": "The selected query's result set is shown.",
-      "durable_output": "Search history persists locally; storage and relaunch behavior remain uncaptured.",
-      "failure_and_recovery": ["Clear All is destructive and was not exercised", "Pre-existing personal entries were neither recorded nor used"],
-      "evidence_ids": ["EVIDENCE-RECON-TRACE-001"],
-      "reconnaissance_status": "entry_and_rows_observed_privacy_limited"
+      "durable_output": "A session-created query appeared as the top recent-search row and selecting it restored the result set; storage location and cold-relaunch persistence remain uncaptured.",
+      "failure_and_recovery": ["Clear All is destructive and was not exercised", "Pre-existing personal entries were neither recorded nor used", "Individual disposable-row removal awaits action-time confirmation"],
+      "evidence_ids": ["EVIDENCE-RECON-TRACE-001", "EVIDENCE-SEARCH-SCREENSET-001", "EVIDENCE-SEARCH-TRACE-001"],
+      "reconnaissance_status": "disposable_rerun_observed_privacy_limited_removal_pending"
     },
     {
       "journey_id": "JOURNEY-SEARCH-HANDWRITING",
@@ -67,9 +67,9 @@
       "surfaces": ["LOOKUP-SEARCH-ROOT", "LOOKUP-HANDWRITING-INPUT", "LOOKUP-RESULTS"],
       "visible_result": "A handwriting panel exposes a drawing grid, erase control, and Search action.",
       "durable_output": "A submitted recognized query can enter Search history.",
-      "failure_and_recovery": ["Recognition candidates, low-confidence input, and submission results remain uncaptured"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"],
-      "reconnaissance_status": "surface_reached_submission_not_exercised"
+      "failure_and_recovery": ["Candidate generation, candidate selection, multi-character composition, single-kanji and common-kanji result submission were captured", "A pending recognized stroke is included on Search without selecting its candidate", "Exact single-stroke erase semantics and low-confidence/no-candidate behavior remain uncaptured"],
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001", "EVIDENCE-SEARCH-SCREENSET-001", "EVIDENCE-SEARCH-TRACE-001"],
+      "reconnaissance_status": "recursive_capture_complete_except_erase_and_low_confidence_gaps"
     },
     {
       "journey_id": "JOURNEY-SEARCH-RADICAL",
@@ -84,9 +84,9 @@
       "surfaces": ["LOOKUP-SEARCH-ROOT", "LOOKUP-RADICAL-INPUT", "LOOKUP-RESULTS"],
       "visible_result": "A radical grid grouped by stroke count exposes remove and Search actions.",
       "durable_output": "A submitted query can enter Search history.",
-      "failure_and_recovery": ["Filtering, multi-radical composition, empty submission, and results remain uncaptured"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"],
-      "reconnaissance_status": "surface_reached_submission_not_exercised"
+      "failure_and_recovery": ["Selection, deselection, filtering, multi-radical narrowing, candidate selection, and submission results were captured", "Search remains disabled before a candidate kanji is chosen", "Zero-candidate and very-large candidate-set behavior remain uncaptured"],
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001", "EVIDENCE-SEARCH-SCREENSET-001", "EVIDENCE-SEARCH-TRACE-001"],
+      "reconnaissance_status": "recursive_capture_complete_except_zero_candidate_and_large_set_gaps"
     },
     {
       "journey_id": "JOURNEY-INSPECT-WORD",

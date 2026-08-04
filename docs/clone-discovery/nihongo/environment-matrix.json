@@ -8,7 +8,9 @@
       "status": "observed",
       "evidence": [
         "evidence/reference/package-reports/coredevice-connection-metadata.json",
-        "evidence/reference/screenshots/connection-probe-search-baseline.png"
+        "evidence/reference/screenshots/connection-probe-search-baseline.png",
+        "evidence/reference/interaction-traces/search-input-results-inventory.json",
+        "search-evidence-manifest.json"
       ]
     },
     {
@@ -204,6 +206,36 @@
         "evidence/reference/package-reports/coredevice-connection-metadata.json",
         "tool-access-plan.json"
       ]
+    },
+    {
+      "id": "ENV-SEARCH-INPUT-EXTERNAL-KEYBOARD",
+      "dimension": "input-authority",
+      "value": "iPhone Mirroring hardware-key events plus Nihongo handwriting/radical panels",
+      "required": true,
+      "status": "observed_with_software_keyboard_gap",
+      "blocked_by": "SEARCH-BLOCKER-SOFTWARE-KEYBOARD",
+      "evidence": [
+        "evidence/reference/interaction-traces/search-input-results-inventory.json",
+        "search-fixture-matrix.json"
+      ]
+    },
+    {
+      "id": "ENV-SEARCH-NETWORK-CONNECTED",
+      "dimension": "network-state",
+      "value": "normal connected state during Search fixture execution",
+      "required": true,
+      "status": "observed",
+      "evidence": [
+        "search-fixture-matrix.json"
+      ]
+    },
+    {
+      "id": "ENV-SEARCH-NETWORK-OFFLINE",
+      "dimension": "network-state",
+      "value": "offline, transport failure, retry, and recovery",
+      "required": true,
+      "status": "blocked",
+      "blocked_by": "SEARCH-BLOCKER-OFFLINE"
     }
   ]
 }

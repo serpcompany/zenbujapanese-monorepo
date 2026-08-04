@@ -47,7 +47,10 @@
       "Xcode Accessibility Inspector detected the physical iPhone target but did not select or return a Nihongo element during the probe",
       "CoreDevice does not expose the current device locale, content-size category, or per-app TCC permission state through the commands used",
       "The physical display reports off while the mirrored display remains visible; later evidence must continue naming iPhone Mirroring as the visual authority",
-      "Focusing Search can request Universal Clipboard content; do not permit the transfer unless the Mac clipboard has first been replaced with a synthetic fixture"
+      "Focusing Search can request Universal Clipboard content; do not permit the transfer unless the Mac clipboard has first been replaced with a synthetic fixture",
+      "The attached external-keyboard path accepts hardware key events but selecting Nihongo's keyboard mode did not expose the standard iOS software keyboard",
+      "Computer-use scrolling did not move the mirrored Search result list; a physical-device or working touch-swipe authority is required for terminal-extent coverage",
+      "The app-switcher and Spotlight round trip restored the same Word Detail, but cold process termination was not independently proven"
     ],
     "blocker_registry": "access-blockers.json",
     "human_only_steps": [

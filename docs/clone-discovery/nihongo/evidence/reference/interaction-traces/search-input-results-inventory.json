@@ -1,0 +1,33 @@
+{
+  "trace_id": "TRACE-SEARCH-INPUT-RESULTS-001",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "captured_at": "2026-08-04T13:19:11Z",
+  "controller": "iPhone Mirroring through computer-use",
+  "semantic_authority": "visual runtime only; app-level accessibility hierarchy unavailable",
+  "starting_state": "Nihongo Search root, empty and unfocused, dark appearance, portrait orientation",
+  "fixtures": "../../../search-fixture-matrix.json",
+  "crawl": "../../../search-crawl.json",
+  "steps": [
+    "Captured the clean Search root.",
+    "Exercised live Latin, English, romaji, partial, whitespace, punctuation, mixed-script, no-match, deinflected, and normalized-Japanese result states.",
+    "Used handwriting recognition to create privacy-safe direct Japanese fixtures, including 丁 and 日本.",
+    "Exercised handwriting candidate selection, pending-stroke submission, input-mode switching, radical selection/removal, candidate filtering, candidate selection, and radical submission.",
+    "Proved result-page entry edges to Example Sentences, Word Detail, and Kanji Detail, then returned to results.",
+    "Proved the image-source menu edge and left its protected destinations to the image-flow capture ticket.",
+    "Selected a known session-created recent-search row without inspecting older rows and verified that it restored the expected result set.",
+    "Ran an app-switcher and Spotlight round trip; the same 問題 Word Detail returned, but cold process termination was not independently proven.",
+    "Attempted result scrolling, software-keyboard presentation, loading capture, and handwriting erase characterization; their exact limitations are recorded in search-crawl.json."
+  ],
+  "privacy": {
+    "allowed_data": "synthetic public Japanese and English queries created during this session",
+    "prohibited_data": "pre-existing history, personal photos, files, clipboard content, credentials, and unrelated app thumbnails",
+    "handling": [
+      "No pre-existing history row was selected or transcribed.",
+      "Two attempted history/panel screenshots that contained a non-session row were deleted immediately and are absent from the dossier.",
+      "Handwriting and radical screenshots captured while history was visible were cropped to the input panels before retention.",
+      "No camera, Photo Library, Files, or clipboard destination was entered."
+    ]
+  },
+  "result": "observed_with_recorded_gaps"
+}

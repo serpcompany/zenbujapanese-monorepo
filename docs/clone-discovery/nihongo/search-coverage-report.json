@@ -1,0 +1,96 @@
+{
+  "generated_at": "2026-08-04T13:19:11Z",
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/68",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "capture_family": "Search entry, input, suggestion, history, handwriting, radical, submission, and result-page graph",
+  "coverage": {
+    "in_family_states": 22,
+    "cross_family_destination_proofs": 4,
+    "actions": 44,
+    "action_dispositions": {
+      "traversed": 27,
+      "same_destination_as": 1,
+      "unavailable_under_fixture": 4,
+      "blocked_by_access": 8,
+      "external_boundary": 0,
+      "excluded_with_reason": 4
+    },
+    "required_fixture_categories": 12,
+    "required_fixture_categories_executed": 12,
+    "fixture_runs": 16,
+    "distinct_behavior_layout_classes": 11,
+    "screenshot_artifacts": 34
+  },
+  "cross_family_assignments": [
+    {"destination":"LOOKUP-EXAMPLE-SENTENCES","owner_ticket":"https://github.com/serpcompany/zenbujapanese-monorepo/issues/69"},
+    {"destination":"LOOKUP-WORD-DETAIL","owner_ticket":"https://github.com/serpcompany/zenbujapanese-monorepo/issues/69"},
+    {"destination":"LOOKUP-KANJI-DETAIL","owner_ticket":"https://github.com/serpcompany/zenbujapanese-monorepo/issues/70"},
+    {"destination":"LOOKUP-IMAGE-SOURCE-MENU and protected source destinations","owner_ticket":"https://github.com/serpcompany/zenbujapanese-monorepo/issues/71"}
+  ],
+  "unresolved_gaps": [
+    {
+      "gap_id": "SEARCH-GAP-HISTORY-REMOVE",
+      "blocked_by": "SEARCH-BLOCKER-HISTORY-DELETION",
+      "affected_actions": ["SEARCH-ACTION-027"],
+      "owner": "device owner with discovery driver"
+    },
+    {
+      "gap_id": "SEARCH-GAP-SOFTWARE-KEYBOARD",
+      "blocked_by": "SEARCH-BLOCKER-SOFTWARE-KEYBOARD",
+      "affected_actions": ["SEARCH-ACTION-029"],
+      "owner": "device owner with discovery driver"
+    },
+    {
+      "gap_id": "SEARCH-GAP-RESULT-SCROLL",
+      "blocked_by": "SEARCH-BLOCKER-RESULT-SCROLL",
+      "affected_actions": ["SEARCH-ACTION-030"],
+      "owner": "device owner or discovery driver with a working physical swipe authority"
+    },
+    {
+      "gap_id": "SEARCH-GAP-OFFLINE-FAILURE-RETRY",
+      "blocked_by": "SEARCH-BLOCKER-OFFLINE",
+      "affected_actions": ["SEARCH-ACTION-033", "SEARCH-ACTION-035"],
+      "owner": "device owner with discovery driver"
+    },
+    {
+      "gap_id": "SEARCH-GAP-HANDWRITING-ERASE",
+      "blocked_by": null,
+      "affected_actions": ["SEARCH-ACTION-015"],
+      "owner": "device owner-assisted focused trace"
+    },
+    {
+      "gap_id": "SEARCH-GAP-HANDWRITING-LOW-CONFIDENCE",
+      "blocked_by": null,
+      "affected_actions": [],
+      "owner": "discovery driver with deliberately poor synthetic drawings"
+    },
+    {
+      "gap_id": "SEARCH-GAP-RADICAL-ZERO-AND-LARGE-SETS",
+      "blocked_by": null,
+      "affected_actions": ["SEARCH-ACTION-025"],
+      "owner": "discovery driver"
+    },
+    {
+      "gap_id": "SEARCH-GAP-COLD-RELAUNCH",
+      "blocked_by": null,
+      "affected_actions": ["SEARCH-ACTION-032"],
+      "owner": "discovery driver with process-state proof"
+    },
+    {
+      "gap_id": "SEARCH-GAP-LOADING",
+      "blocked_by": "SEARCH-BLOCKER-OFFLINE",
+      "affected_actions": ["SEARCH-ACTION-034"],
+      "owner": "discovery driver with a controlled slow or offline path"
+    }
+  ],
+  "privacy_review": {
+    "passed": true,
+    "pre_existing_history_retained": false,
+    "personal_media_or_files_retained": false,
+    "credentials_retained": false
+  },
+  "capture_complete": false,
+  "status": "NOT_COMPLETE — BLOCKING SEARCH DISCOVERY GAPS REMAIN",
+  "reason": "All required fixture categories were executed, but recursive action closure is blocked by result scrolling, offline/failure/retry, software-keyboard presentation, individual history removal, and the listed narrow behavior gaps."
+}

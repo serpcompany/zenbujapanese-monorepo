@@ -18,10 +18,10 @@
       "scope_basis": "stakeholder_approved",
       "reachability_status": "reached",
       "entry_paths": ["Launch Nihongo with Search selected", "Select Search in the reference bottom navigation", "Return from an in-scope detail stack"],
-      "states_observed": ["empty unfocused", "focused", "populated", "result set retained after Cancel"],
+      "states_observed": ["empty unfocused", "focused", "populated", "result set retained after Cancel", "handwriting input active", "radical input active"],
       "controls": ["Search field: Words, Kanji, Example Sentences...", "Image-source button", "Reference bottom-navigation boundary controls"],
       "outgoing_surface_ids": ["LOOKUP-SEARCH-HISTORY", "LOOKUP-IMAGE-SOURCE-MENU", "LOOKUP-HANDWRITING-INPUT", "LOOKUP-RADICAL-INPUT", "LOOKUP-RESULTS", "BOUNDARY-CLIPPINGS", "BOUNDARY-FLASHCARDS", "BOUNDARY-SETTINGS"],
-      "evidence_ids": ["EVIDENCE-ACCESS-SCREENSHOT-001", "EVIDENCE-RECON-SCREENSET-001"]
+      "evidence_ids": ["EVIDENCE-ACCESS-SCREENSHOT-001", "EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-SEARCH-SCREENSET-001", "EVIDENCE-SEARCH-TRACE-001"]
     },
     {
       "surface_id": "LOOKUP-SEARCH-HISTORY",
@@ -29,13 +29,13 @@
       "kind": "inline_state",
       "scope": "blocking",
       "scope_basis": "stakeholder_approved",
-      "reachability_status": "observed_but_not_retained_for_privacy",
+      "reachability_status": "reached_with_disposable_rerun_and_privacy_limited_list_evidence",
       "entry_paths": ["Focus an empty Search field"],
-      "states_observed": ["populated recent searches"],
-      "controls": ["Recent-search rows", "Clear All", "Cancel"],
+      "states_observed": ["populated recent searches", "known session-created query restored"],
+      "controls": ["Recent-search rows", "Individual row-removal gesture (not exercised; confirmation required)", "Clear All", "Cancel"],
       "outgoing_surface_ids": ["LOOKUP-RESULTS", "LOOKUP-SEARCH-ROOT"],
-      "privacy": "Pre-existing personal rows were not transcribed, selected, or retained; destructive Clear All was not used.",
-      "evidence_ids": ["EVIDENCE-RECON-TRACE-001"]
+      "privacy": "Pre-existing personal rows were not transcribed, selected, or retained; a known session-created top row was selected. Destructive Clear All was not used and no list screenshot was retained.",
+      "evidence_ids": ["EVIDENCE-RECON-TRACE-001", "EVIDENCE-SEARCH-TRACE-001", "EVIDENCE-SEARCH-SCREENSET-001"]
     },
     {
       "surface_id": "LOOKUP-IMAGE-SOURCE-MENU",
@@ -43,13 +43,13 @@
       "kind": "popover",
       "scope": "blocking",
       "scope_basis": "stakeholder_approved",
-      "reachability_status": "reached",
+      "reachability_status": "entry_reverified_destination_capture_owned_by_image_ticket",
       "entry_paths": ["Select the image-source button on Search root"],
       "states_observed": ["open"],
       "controls": ["Take Photo", "Photo Library", "Files", "Dismiss"],
       "visible_copy": ["Look up Japanese words in a photo or screenshot."],
       "outgoing_surface_ids": ["IOS-CAMERA-CAPTURE", "IOS-PHOTO-LIBRARY-PICKER", "IOS-FILES-PICKER", "LOOKUP-SEARCH-ROOT"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001"]
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-SEARCH-SCREENSET-001", "EVIDENCE-SEARCH-TRACE-001"]
     },
     {
       "surface_id": "IOS-CAMERA-CAPTURE",
@@ -99,12 +99,12 @@
       "kind": "keyboard_replacement_panel",
       "scope": "blocking",
       "scope_basis": "stakeholder_approved",
-      "reachability_status": "reached",
+      "reachability_status": "recursively_inventoried_with_recorded_erase_limitation",
       "entry_paths": ["Focus Search and select the handwriting input-mode control"],
-      "states_observed": ["empty drawing grid"],
+      "states_observed": ["empty drawing grid", "drawn strokes with recognition candidates", "selected candidate with cleared grid", "selected candidate plus pending recognized stroke", "multi-character composed query"],
       "controls": ["Drawing grid", "Erase/remove", "Search", "Radical mode", "Keyboard mode"],
       "outgoing_surface_ids": ["LOOKUP-RADICAL-INPUT", "LOOKUP-RESULTS", "LOOKUP-SEARCH-ROOT"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001"]
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-SEARCH-SCREENSET-001", "EVIDENCE-SEARCH-TRACE-001"]
     },
     {
       "surface_id": "LOOKUP-RADICAL-INPUT",
@@ -112,12 +112,12 @@
       "kind": "keyboard_replacement_panel",
       "scope": "blocking",
       "scope_basis": "stakeholder_approved",
-      "reachability_status": "reached",
+      "reachability_status": "recursively_inventoried",
       "entry_paths": ["Focus Search and select the radical input-mode control"],
-      "states_observed": ["unselected radical grid grouped by stroke count"],
+      "states_observed": ["unselected radical grid grouped by stroke count", "selected radical highlighted", "filtered radical grid", "candidate-kanji strip", "candidate chosen and Search enabled"],
       "controls": ["Radical cells", "Remove", "Search", "Handwriting mode", "Keyboard mode"],
       "outgoing_surface_ids": ["LOOKUP-HANDWRITING-INPUT", "LOOKUP-RESULTS", "LOOKUP-SEARCH-ROOT"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001"]
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-SEARCH-SCREENSET-001", "EVIDENCE-SEARCH-TRACE-001"]
     },
     {
       "surface_id": "LOOKUP-RESULTS",
@@ -125,12 +125,12 @@
       "kind": "content_state",
       "scope": "blocking",
       "scope_basis": "stakeholder_approved",
-      "reachability_status": "reached",
+      "reachability_status": "recursively_inventoried_with_recorded_scroll_offline_and_loading_gaps",
       "entry_paths": ["Type or submit Search input", "Select a recent query", "Select an offered Japanese reading"],
-      "states_observed": ["romaji literal ranking", "Japanese-normalized ranking", "best and additional matches", "retained after focus cancellation"],
+      "states_observed": ["romaji literal ranking", "Japanese-normalized ranking", "best and additional matches", "retained after focus cancellation", "English ambiguous ranking", "deinflected romaji", "sparse Best Match without Additional Matches", "Discovered Words", "blank no-match", "example-count-only punctuation result", "KANJI primary row", "partial input", "trailing-whitespace normalization"],
       "controls": ["Search field", "Search for Japanese reading", "View Example Sentences", "Result rows", "Input-mode controls while focused", "Cancel"],
-      "outgoing_surface_ids": ["LOOKUP-WORD-DETAIL", "LOOKUP-EXAMPLE-SENTENCES", "LOOKUP-HANDWRITING-INPUT", "LOOKUP-RADICAL-INPUT", "LOOKUP-SEARCH-ROOT"],
-      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"]
+      "outgoing_surface_ids": ["LOOKUP-WORD-DETAIL", "LOOKUP-KANJI-DETAIL", "LOOKUP-EXAMPLE-SENTENCES", "LOOKUP-HANDWRITING-INPUT", "LOOKUP-RADICAL-INPUT", "LOOKUP-SEARCH-ROOT"],
+      "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001", "EVIDENCE-SEARCH-SCREENSET-001", "EVIDENCE-SEARCH-TRACE-001"]
     },
     {
       "surface_id": "LOOKUP-EXAMPLE-SENTENCES",
