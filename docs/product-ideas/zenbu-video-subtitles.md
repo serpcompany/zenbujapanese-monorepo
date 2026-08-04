@@ -1,10 +1,19 @@
-## 1 video subtitle overlay, translation, word lookup, etc. and more
+# Zenbu Video Subtitles Extension (Migaku type clone)
+
+
+## More Feature Ideas
+
+- [ ] secondary subtitles display: toggle on/off secondary (choose language) subtitles to display as well. both this "overlay" and the primary subtitle "overlay" should be click-to-drag-and-moveable
+- [ ] auto pause on hover option (hover over subtitle overlay = pause video)
+- [ ] display translated word under the primary subtitle (ex: japanese words show the english word underneath them)
+
+### 1 video subtitle overlay, translation, word lookup, etc. and more
 
 - Reference: /Users/devin/dev/repos/github@zenbujapanese/prototypes/zenbu-video-subtitles
 - Reference: /Users/devin/dev/repos/github@zenbujapanese/prototypes/sokutan-subtitle-reader-extension-clone-BAK
 - Reference: /Users/devin/dev/repos/github@zenbujapanese/prototypes/migaku-extension-clone
 
-## 2 captions for videos without supplied caption/subtitle information
+### 2 captions for videos without supplied caption/subtitle information
 
 
 - A: Generate captions/subtitles from local video files (so the user can have the primary/secondary captions on any local video files they may have)
