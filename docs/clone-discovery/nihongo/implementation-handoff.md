@@ -1,0 +1,37 @@
+# Lookup parity implementation handoff
+
+Status: **LEDGER_COMPLETE_NOT_CODING_READY**
+
+This is a discovery-only handoff for the approved Search-rooted Lookup graph. It contains no Zenbu implementation, scaffolding, dependency, service, or prototype work. The final recursive audit remains owned by the next Wayfinder ticket.
+
+## Canonical sources
+
+- `parity-inventory.jsonl` is the only mutable atomic observable-claim ledger.
+- `parity-coverage-report.json` is generated from the ledger and canonical crosswalk.
+- `parity-open-questions.json` is the generated blocker registry with owners and resume procedures.
+- `reference-resource-crosswalk.json`, the crawl files, fixture matrices, and evidence index are source indexes; they do not compete with the ledger for row status.
+- Regenerate and audit all four outputs with `node docs/clone-discovery/nihongo/generate-parity-ledger.mjs`.
+
+## Exact denominator
+
+The ledger has 325 atomic rows: 23 surfaces, 83 distinguishable states, 129 action edges, 35 fixture/behavior-class inputs, 19 observable language-behavior claims, 13 language-resource boundaries, 7 design-token families, and 16 asset/fixture records. All 325 rows are schema-complete; 250 are ready reference inputs, 54 are explicitly blocked, and 21 preserve approved exclusions. All clone statuses are `unknown` and all test statuses are `not_run`.
+
+## Implementation-use contract
+
+A later implementation agent must select an approved journey, locate all rows by `journey_ids`, reproduce each row from its `preconditions`, `fixture_ids`, and `action`, and implement immediate, settled, durable, failure, recovery, and relaunch behavior only to the boundary explicitly stated. It must retain app-owned Language Reference Data behind the focused Shared Capability boundaries in ADR 0001. It must add clone evidence and passed tests before changing any row from `unknown`; structural completeness is not runtime verification.
+
+Reference evidence records the observed Nihongo baseline. Zenbu colors, typography, logos, icons, and bottom navigation are approved variances. The whole-content Natural Translation is an approved Image Text Flow addition, not evidence of Nihongo behavior. No other substitution or deviation is approved.
+
+## Deterministic fixtures and fault injection
+
+Fixture rows point to exact inputs and source matrices. Purpose-created image assets carry hashes in `asset-index.json`. Future tests must restore the recorded state between runs and inject offline, denial, cancellation, interruption, retry, and recovery only where named rows require them. A neighboring environment or fixture never inherits a pass.
+
+## Blocking handoff limits
+
+32 distinct gaps block coding readiness. They include runtime action/state capture, accessibility semantics, offline/failure behavior, audio and timing evidence, quantified visual measurements, exact glyph identity/licensing, and language-source/provenance/licensing boundaries. Each blocker’s exact owner, completed independent work, affected rows, and resume procedure lives in `parity-open-questions.json`.
+
+Do not claim exact internal algorithms, provider record identity, audio source, asset identity, accessibility behavior, timing, offline behavior, or licensing beyond the recorded authority. Do not silently replace an unavailable Nihongo component and call it parity.
+
+## Handoff gate
+
+This ledger is complete as an index and **not coding-ready**. The next audit must reconcile every row, evidence path/hash, blocker, exclusion, and generated count. It may issue `READY_FOR_IMPLEMENTATION` only after the blocker list is empty; with the current ledger it must issue `NOT_READY — DISCOVERY GAPS REMAIN`.
