@@ -5,7 +5,7 @@
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
   "capture_family": "Files-based uploaded-image OCR, recognized-token interaction, nested Lookup, multi-image handling, no-text recovery, dismissal, and relaunch",
   "coverage": {
-    "in_family_states": 16,
+    "in_family_states": 17,
     "actions": 25,
     "action_dispositions": {
       "traversed": 20,

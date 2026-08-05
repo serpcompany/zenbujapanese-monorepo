@@ -19,7 +19,8 @@
     {"state_id":"IMAGE-STATE-013","surface_id":"LOOKUP-IMAGE-TEXT-RESULT","name":"noisy low-contrast horizontal recognition result","fixture":"IMG-FIXTURE-004","evidence":["evidence/reference/screenshots/image-text-inventory/state-noisy-horizontal-recognized.png"]},
     {"state_id":"IMAGE-STATE-014","surface_id":"LOOKUP-IMAGE-TEXT-RESULT","name":"sparse single-kanji recognition result","fixture":"IMG-FIXTURE-003","evidence":["evidence/reference/screenshots/image-text-inventory/state-sparse-kanji-recognized.png"]},
     {"state_id":"IMAGE-STATE-015","surface_id":"LOOKUP-IMAGE-TEXT-RESULT","name":"sparse 静 token selected with せい / stillness inline gloss","fixture":"IMG-FIXTURE-003","evidence":["evidence/reference/screenshots/image-text-inventory/state-sparse-kanji-selected.png"]},
-    {"state_id":"IMAGE-STATE-016","surface_id":"LOOKUP-SEARCH-ROOT","name":"cold relaunch discards active multi-image result and returns to Search root","evidence":["evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png"]}
+    {"state_id":"IMAGE-STATE-016","surface_id":"LOOKUP-SEARCH-ROOT","name":"cold relaunch discards active multi-image result and returns to Search root","evidence":["evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png"]},
+    {"state_id":"IMAGE-STATE-017","surface_id":"LOOKUP-IMAGE-TEXT-RESULT","name":"app-owned share menu with Copy Text and Share Image","fixture":"IMG-FIXTURE-001","evidence":["evidence/reference/interaction-traces/image-text-inventory.json"]}
   ],
   "actions": [
     {"action_id":"IMAGE-ACTION-001","source":"IMAGE-STATE-001","trigger":"select image-source button","result":"IMAGE-STATE-002","disposition":"traversed"},
@@ -32,9 +33,9 @@
     {"action_id":"IMAGE-ACTION-008","source":"IMAGE-STATE-008","trigger":"select Photo back control","result":"IMAGE-STATE-005 with no token selected","disposition":"traversed"},
     {"action_id":"IMAGE-ACTION-009","source":"IMAGE-STATE-005","trigger":"select recognition-highlight control","result":"IMAGE-STATE-006","disposition":"traversed"},
     {"action_id":"IMAGE-ACTION-010","source":"IMAGE-STATE-006","trigger":"select recognition-highlight control again","result":"IMAGE-STATE-005","disposition":"traversed"},
-    {"action_id":"IMAGE-ACTION-011","source":"IMAGE-STATE-005","trigger":"select Share","result":"menu with Copy Text and Share Image","disposition":"traversed"},
-    {"action_id":"IMAGE-ACTION-012","source":"share menu","trigger":"select Copy Text","result":"menu dismissed; device clipboard contents were not exposed to the capture authority","disposition":"blocked_by_access","blocked_by":"IMAGE-BLOCKER-COPY-TEXT-OUTPUT"},
-    {"action_id":"IMAGE-ACTION-013","source":"share menu","trigger":"select Share Image","result":"external share-sheet contents intentionally not entered","disposition":"external_boundary"},
+    {"action_id":"IMAGE-ACTION-011","source":"IMAGE-STATE-005","trigger":"select Share","result":"IMAGE-STATE-017","disposition":"traversed"},
+    {"action_id":"IMAGE-ACTION-012","source":"IMAGE-STATE-017","trigger":"select Copy Text","result":"menu dismissed; device clipboard contents were not exposed to the capture authority","disposition":"blocked_by_access","blocked_by":"IMAGE-BLOCKER-COPY-TEXT-OUTPUT"},
+    {"action_id":"IMAGE-ACTION-013","source":"IMAGE-STATE-017","trigger":"select Share Image","result":"external share-sheet contents intentionally not entered","disposition":"external_boundary"},
     {"action_id":"IMAGE-ACTION-014","source":"IMAGE-STATE-005","trigger":"select Close","result":"IMAGE-STATE-001 without a confirmation prompt or visible retained image state","disposition":"traversed"},
     {"action_id":"IMAGE-ACTION-015","source":"IMAGE-STATE-004","trigger":"select IMG-FIXTURE-002 and Open","result":"IMAGE-STATE-009","disposition":"traversed"},
     {"action_id":"IMAGE-ACTION-016","source":"IMAGE-STATE-009","trigger":"select blue 読 in the left vertical column","result":"IMAGE-STATE-010 with 読本 gloss","disposition":"traversed"},

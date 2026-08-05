@@ -2,7 +2,7 @@
 
 Status: **LEDGER_COMPLETE_NOT_CODING_READY**
 
-This is a discovery-only handoff for the approved Search-rooted Lookup graph. It contains no Zenbu implementation, scaffolding, dependency, service, or prototype work. The final recursive audit remains owned by the next Wayfinder ticket.
+This is a discovery-only handoff for the approved Search-rooted Lookup graph. It contains no Zenbu implementation, scaffolding, dependency, service, or prototype work. The final recursive audit is recorded in `final-audit-report.json` with disposition `NOT_READY — DISCOVERY GAPS REMAIN`.
 
 ## Canonical sources
 
@@ -14,7 +14,7 @@ This is a discovery-only handoff for the approved Search-rooted Lookup graph. It
 
 ## Exact denominator
 
-The ledger has 325 atomic rows: 23 surfaces, 83 distinguishable states, 129 action edges, 35 fixture/behavior-class inputs, 19 observable language-behavior claims, 13 language-resource boundaries, 7 design-token families, and 16 asset/fixture records. All 325 rows are schema-complete; 250 are ready reference inputs, 54 are explicitly blocked, and 21 preserve approved exclusions. All clone statuses are `unknown` and all test statuses are `not_run`.
+The ledger has 326 atomic rows: 23 surfaces, 84 distinguishable states, 129 action edges, 35 fixture/behavior-class inputs, 19 observable language-behavior claims, 13 language-resource boundaries, 7 design-token families, and 16 asset/fixture records. All 326 rows are schema-complete; 251 are ready reference inputs, 55 are explicitly blocked, and 20 preserve approved exclusions. All clone statuses are `unknown` and all test statuses are `not_run`.
 
 ## Implementation-use contract
 
@@ -34,4 +34,4 @@ Do not claim exact internal algorithms, provider record identity, audio source, 
 
 ## Handoff gate
 
-This ledger is complete as an index and **not coding-ready**. The next audit must reconcile every row, evidence path/hash, blocker, exclusion, and generated count. It may issue `READY_FOR_IMPLEMENTATION` only after the blocker list is empty; with the current ledger it must issue `NOT_READY — DISCOVERY GAPS REMAIN`.
+This ledger is complete as an index and **not coding-ready**. The completed audit issued `NOT_READY — DISCOVERY GAPS REMAIN`; rerun `audit-dossier.mjs` after resolving blockers. It may issue `READY_FOR_IMPLEMENTATION` only after the blocker list is empty.

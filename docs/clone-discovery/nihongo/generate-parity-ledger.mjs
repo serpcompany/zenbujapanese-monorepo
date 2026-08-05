@@ -20,6 +20,7 @@ const crosswalkReport = readJson("crosswalk-coverage-report.json");
 const designTokenIndex = readJson("design-token-index.json");
 const assetIndex = readJson("asset-index.json");
 const discoveryStatus = readJson("discovery-status.json");
+const finalAuditComplete = Boolean(discoveryStatus.final_disposition);
 
 const evidenceById = new Map(referenceEvidence.map((item) => [item.evidence_id, item.path]));
 const journeyById = new Map(journeys.map((item) => [item.journey_id, item]));
@@ -415,7 +416,9 @@ const coverageReport = {
   blocking_gap_ids: crosswalkReport.blocking_gap_ids,
   integrity,
   privacy_and_clean_room: crosswalkReport.privacy_and_clean_room,
-  next_ticket_effect: "The final recursive audit may consume this ledger mechanically. It must issue NOT_READY while any blocking gap remains and must not infer implementation readiness from structural ledger completeness.",
+  next_ticket_effect: finalAuditComplete
+    ? `The completed final recursive audit issued ${discoveryStatus.final_disposition}; rerun audit-dossier.mjs after any blocker resolution.`
+    : "The final recursive audit may consume this ledger mechanically. It must issue NOT_READY while any blocking gap remains and must not infer implementation readiness from structural ledger completeness.",
 };
 
 const openQuestions = {
@@ -446,7 +449,7 @@ const openQuestions = {
 
 const handoff = `# Lookup parity implementation handoff\n\n` +
 `Status: **${coverageReport.disposition}**\n\n` +
-`This is a discovery-only handoff for the approved Search-rooted Lookup graph. It contains no Zenbu implementation, scaffolding, dependency, service, or prototype work. The final recursive audit remains owned by the next Wayfinder ticket.\n\n` +
+`This is a discovery-only handoff for the approved Search-rooted Lookup graph. It contains no Zenbu implementation, scaffolding, dependency, service, or prototype work. ${finalAuditComplete ? `The final recursive audit is recorded in \`final-audit-report.json\` with disposition \`${discoveryStatus.final_disposition}\`.` : "The final recursive audit remains owned by the next Wayfinder ticket."}\n\n` +
 `## Canonical sources\n\n` +
 `- \`parity-inventory.jsonl\` is the only mutable atomic observable-claim ledger.\n` +
 `- \`parity-coverage-report.json\` is generated from the ledger and canonical crosswalk.\n` +
@@ -464,7 +467,7 @@ const handoff = `# Lookup parity implementation handoff\n\n` +
 `${coverageReport.ledger.distinct_blocker_ids} distinct gaps block coding readiness. They include runtime action/state capture, accessibility semantics, offline/failure behavior, audio and timing evidence, quantified visual measurements, exact glyph identity/licensing, and language-source/provenance/licensing boundaries. Each blocker’s exact owner, completed independent work, affected rows, and resume procedure lives in \`parity-open-questions.json\`.\n\n` +
 `Do not claim exact internal algorithms, provider record identity, audio source, asset identity, accessibility behavior, timing, offline behavior, or licensing beyond the recorded authority. Do not silently replace an unavailable Nihongo component and call it parity.\n\n` +
 `## Handoff gate\n\n` +
-`This ledger is complete as an index and **not coding-ready**. The next audit must reconcile every row, evidence path/hash, blocker, exclusion, and generated count. It may issue \`READY_FOR_IMPLEMENTATION\` only after the blocker list is empty; with the current ledger it must issue \`NOT_READY — DISCOVERY GAPS REMAIN\`.\n`;
+`This ledger is complete as an index and **not coding-ready**. ${finalAuditComplete ? `The completed audit issued \`${discoveryStatus.final_disposition}\`; rerun \`audit-dossier.mjs\` after resolving blockers.` : "The next audit must reconcile every row, evidence path/hash, blocker, exclusion, and generated count."} It may issue \`READY_FOR_IMPLEMENTATION\` only after the blocker list is empty.\n`;
 
 writeFileSync(join(root, "parity-inventory.jsonl"), `${rows.map((row) => JSON.stringify(row)).join("\n")}\n`);
 writeFileSync(join(root, "parity-coverage-report.json"), `${JSON.stringify(coverageReport, null, 2)}\n`);
@@ -480,7 +483,7 @@ const retainedNotes = discoveryStatus.notes.filter((note) =>
 const updatedDiscoveryStatus = {
   ...discoveryStatus,
   updated_at: generatedAt,
-  phase: "atomic_parity_ledger_complete_with_explicit_blockers",
+  phase: finalAuditComplete ? discoveryStatus.phase : "atomic_parity_ledger_complete_with_explicit_blockers",
   parity_ledger_ticket: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/75",
   parity_ledger_ticket_status: "complete_with_explicit_blockers",
   parity_ledger_records: {
@@ -491,7 +494,7 @@ const updatedDiscoveryStatus = {
     generator: "generate-parity-ledger.mjs",
   },
   parity_ledger_counts: coverageReport.ledger,
-  next_ticket: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/76",
+  next_ticket: finalAuditComplete ? null : "https://github.com/serpcompany/zenbujapanese-monorepo/issues/76",
   notes: [
     ...retainedNotes,
     ledgerNote,
