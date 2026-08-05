@@ -55,7 +55,7 @@
     {"action_id":"KANJI-ACTION-025","source":"kanji family","trigger":"isolate network and exercise error/retry/recovery","result":null,"disposition":"blocked_by_access","blocked_by":"KANJI-BLOCKER-OFFLINE"},
     {"action_id":"KANJI-ACTION-026","source":"kanji family","trigger":"measure animation timing and interruption with synchronized recording","result":null,"disposition":"blocked_by_access","blocked_by":"KANJI-BLOCKER-TIMING"},
     {"action_id":"KANJI-ACTION-027","source":"KANJI-STATE-022","trigger":"cold terminate and relaunch Nihongo","result":"LOOKUP-SEARCH-ROOT empty and unfocused; nested Kanji Detail and stroke overlay are not restored","disposition":"traversed","evidence":["evidence/reference/screenshots/kanji-inventory/state-kanji-cold-relaunch-search-root.png"]},
-    {"action_id":"KANJI-ACTION-028","source":"kanji family","trigger":"capture app-level semantic accessibility hierarchy","result":null,"disposition":"blocked_by_access","blocked_by":"ACCESS-BLOCKER-SEMANTIC-TREE"}
+    {"action_id":"KANJI-ACTION-028","source":"kanji family","trigger":"capture app-level semantic accessibility hierarchy","result":null,"disposition":"blocked_by_access","blocked_by":"ACCESS-BLOCKER-APP-SEMANTICS"}
   ],
   "cross_family_destination_proofs": [
     {"from":"LOOKUP-WORD-DETAIL","to":"LOOKUP-KANJI-DETAIL","status":"traversed"},

@@ -1,0 +1,2052 @@
+{
+  "generated_at": "2026-08-05T06:47:46.557Z",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "artifact_count": 150,
+  "hash_mismatch_count": 0,
+  "missing_referenced_path_count": 0,
+  "artifacts": [
+    {
+      "evidence_path": "behavior-evidence-manifest.json",
+      "sha256": "26ed9948965de4866b8f710884803a0177e6b06ba63c69b61f8f196e3f1d7179",
+      "media_type": "json",
+      "kind": "supporting-discovery-record",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-BEHAVIOR-CROSSWALK-001"
+      ],
+      "registered_by": "reference-evidence.json or surface-map.json",
+      "privacy_status": "structured_privacy_reviewed_record",
+      "hash_status": "computed"
+    },
+    {
+      "evidence_path": "evidence/reference/interaction-traces/behavior-characterization.json",
+      "sha256": "0c253d97fbf6dfc5846706f2840fd41fd97bb334b7938366f07a61f73a81f7dd",
+      "media_type": "json",
+      "kind": "interaction-trace",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": null,
+      "privacy_status": "contains_no_retained_private_payload",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/interaction-traces/connection-probe.json",
+      "sha256": "99e7ef2ef5648a435958f060b729e9a2a043e29c2d59c2fe2c1d89004def5191",
+      "media_type": "json",
+      "kind": "interaction-trace",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-ACCESS-TRACE-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "contains_no_retained_private_payload",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/interaction-traces/image-text-inventory.json",
+      "sha256": "894fece34c49e5d1a1d455681d875740f78363681b68c024dcdd04f4c4e0840f",
+      "media_type": "json",
+      "kind": "interaction-trace",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-IMAGE-TRACE-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "contains_no_retained_private_payload",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/interaction-traces/kanji-detail-inventory.json",
+      "sha256": "ec2ec109db5ced277e43598b60da83d1fba77bb61d528872c0055e3fe4cea203",
+      "media_type": "json",
+      "kind": "interaction-trace",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": null,
+      "privacy_status": "contains_no_retained_private_payload",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/interaction-traces/search-input-results-inventory.json",
+      "sha256": "faa6f7480c199df15ffa59251c706fd5c9a0e16708dbb2f3a6b3884d8648f307",
+      "media_type": "json",
+      "kind": "interaction-trace",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-TRACE-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "contains_no_retained_private_payload",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/interaction-traces/search-reconnaissance.json",
+      "sha256": "0acf5a8dc95434b3738fce3f8fd667154e2a3ecb88bb58eaffa9c05addb3c497",
+      "media_type": "json",
+      "kind": "interaction-trace",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-TRACE-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "contains_no_retained_private_payload",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/interaction-traces/source-provenance-capture.json",
+      "sha256": "209d8855b1bec5463cc49c02d153632e46e948aed741de2c4a638a3a68a96a1d",
+      "media_type": "json",
+      "kind": "interaction-trace",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-PROVENANCE-TRACE-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "contains_no_retained_private_payload",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/interaction-traces/word-detail-inventory.json",
+      "sha256": "d966843fa62ff9b63e6c970db556580be786eb1e69a0346e3a2bb074f0d9028b",
+      "media_type": "json",
+      "kind": "interaction-trace",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-TRACE-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "contains_no_retained_private_payload",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/package-reports/coredevice-connection-metadata.json",
+      "sha256": "4b31738288343e0907d863101c948a867a4b51bb9f95b4167731e831bf9e3c89",
+      "media_type": "json",
+      "kind": "package-platform-report",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-ACCESS-COREDEVICE-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "contains_no_retained_private_payload",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/connection-probe-search-baseline.png",
+      "sha256": "58f6610e9308872267ff8d0e2573cd1b92f8641574bc7a089b91a2210fb6c675",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-ACCESS-SCREENSHOT-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/connection-probe-search-focused-top.png",
+      "sha256": "fdc44bb9a67abdb0492da560128a9dd7414e33e704b2c095e475774ff2b9392c",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-ACCESS-SCREENSHOT-FOCUSED-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/connection-probe-search-restored.png",
+      "sha256": "2395bfd3103c27fc491dbc2fda62e6241dada5ca5a97d487aa3dd921a79d3dbf",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-ACCESS-SCREENSHOT-RESTORED-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
+      "sha256": "71e597952360abbd37052b11acc2d14b3eb3cc300e80b3a29fc62464d0a5b3da",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-IMAGE-SCREENSET-001"
+      ],
+      "registered_by": "image-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
+      "sha256": "84cf7164ec0c5e8549f202ff440724965a9ec5ea351ece4b878eb9c5048fe528",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-IMAGE-SCREENSET-001"
+      ],
+      "registered_by": "image-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png",
+      "sha256": "99c05bdb9fb2b263c9fc5e645a5b1df8e9f2287ff16d71a6d3d92d0e9906077d",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-IMAGE-SCREENSET-001"
+      ],
+      "registered_by": "image-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/image-text-inventory/state-image-word-detail-shizuka.png",
+      "sha256": "ce5e22716c18f45b0b382f6ef80cb6669f0dfba530745e0f0c4879d3286af173",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-IMAGE-SCREENSET-001"
+      ],
+      "registered_by": "image-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/image-text-inventory/state-multi-image-empty-alert.png",
+      "sha256": "7e4a724ebbabad91de27ac7354e253e3e29b95f55c380ffcedc3a7a912f7aa04",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-IMAGE-SCREENSET-001"
+      ],
+      "registered_by": "image-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/image-text-inventory/state-noisy-horizontal-recognized.png",
+      "sha256": "9099ff8d4d66f981c0452a8dad6c4191ece15af5db8d1ede61a596c7d23d9e99",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-IMAGE-SCREENSET-001"
+      ],
+      "registered_by": "image-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/image-text-inventory/state-sparse-kanji-recognized.png",
+      "sha256": "cbaaecc9934dc348f8e011cc6d580a5622b38d703b65e59fb066c827ff211cdb",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-IMAGE-SCREENSET-001"
+      ],
+      "registered_by": "image-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/image-text-inventory/state-sparse-kanji-selected.png",
+      "sha256": "f5f11491e0d127ed418e9d1013d0d0d26d874d875d183589081d2531c7bd6a87",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-IMAGE-SCREENSET-001"
+      ],
+      "registered_by": "image-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/image-text-inventory/state-vertical-recognized.png",
+      "sha256": "1441a66f92db15d38ca4a5ff473f7bb053d0940228622d8e9d0f7fdb204ad164",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-IMAGE-SCREENSET-001"
+      ],
+      "registered_by": "image-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/image-text-inventory/state-vertical-token-cross-column-grouping.png",
+      "sha256": "049f39086445db80e5fe3716b95b9d12807d11e854f9590fbb9996a8d31c8f58",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-IMAGE-SCREENSET-001"
+      ],
+      "registered_by": "image-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-classification-info-popover.png",
+      "sha256": "5c2e54eafe4622b7237753785f908fa1106f75e922c3fc6d3e536389df210e3a",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-cold-relaunch-search-root.png",
+      "sha256": "4ff3e5e770f0d63a7524aa2fc183c456e67d6ea465a0630d60d1b1baa6299726",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-bottom.png",
+      "sha256": "367eabbaec5ed7f400bbbd2acb985517eb963b2d5c1af3104fc4c9ea8949f741",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-middle.png",
+      "sha256": "69dba4d0c90a59728273a5d013e09a6e73d523390909c2c2e61967558854b76d",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-origin-and-elements.png",
+      "sha256": "c14bd2c36c221dbfa5fb148aaa9a9cf75e80059e46cba73d1d37bcaa9622585a",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-origin-collapsed.png",
+      "sha256": "8509ec968c003ab2ccec205ce585e6b2d43ee26a76867bac0327bf18183f888a",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-origin-history-expanded.png",
+      "sha256": "2281e3d17a6aef4755442584fe29b90881674fe395563264b40d3470c7ed9639",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-top.png",
+      "sha256": "7a0f62b8d3c94a00d5159350c529bf23e373d1a2b2fd435dd2dd8ed31851763c",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-words-list.png",
+      "sha256": "97812b99427dcc51d23221fa61978bd0b909d67745fd01bacc260d4cf3638590",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-detail-sou-missing-grade-jlpt-picture.png",
+      "sha256": "0735758526708d1faa6d3770ae3d8f8fa2a5bd47277dacf2cbb40b0d5105ab7d",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-detail-utsu-complex-top.png",
+      "sha256": "9b1a974a1c8d62f7a665a18cae6a97189f3fc6efb823acc581f3d771db9212a9",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-detail-utsu-elements-origin-words.png",
+      "sha256": "88a94b3195cb4bf5be0c915e6c3b449b7c7704011332f167a9b180b415b0b039",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-element-detail-alternative-sou.png",
+      "sha256": "01e756a3b113f6bd09604769a9c5c141c86123ccec34f6a73cb5d2f1737bfe1e",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-element-detail-sound-sou.png",
+      "sha256": "e00fb1e2972755d38b9e6f2827e37831da6bbf11c05f83e9c4d9c85461168d75",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-etymology-reference-bottom.png",
+      "sha256": "d374246d98029620a27382c2c72b536fa3a060fa5b285738c0ea0f4bc61fb38a",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-etymology-reference-middle.png",
+      "sha256": "ecf4da2def9f1e473b81d5f19fbf1e995248a40198bb7cadb0dcf32836041bac",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-kanji-etymology-reference-top.png",
+      "sha256": "4569164ea850d18184007287d1c0480a4a3c95049e5fccc4a49f0aa712f1591e",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-stroke-order-ichi-complete-privacy-cropped.png",
+      "sha256": "689954e24c88608da9a5b995eeea04a774dd5c14c5129a85024c612124241461",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-stroke-order-ichi-initial-privacy-cropped.png",
+      "sha256": "e8309c022282e671bcb7d690ac99b7cee69e42b7d08bfcb4188722cd453f00d9",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-stroke-order-sou-complete.png",
+      "sha256": "50762c30df2996c23bc17d4a88b912fe071f06dd3a3cc043cc1cea267ae516d9",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-stroke-order-sou-initial.png",
+      "sha256": "f2b88886fa22dd3287e3032b4c18d0eaa33c66fd3012b085c1d4ead93eac0632",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-stroke-order-sou-paused-stroke-5.png",
+      "sha256": "9076a700e2866559309362d6f9854585b7c36d19c4e5b260f894554f7d7d767b",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-stroke-order-sou-step-1.png",
+      "sha256": "aa29481a6775deec8d2f3499345940271a67a5ffb7ccf086f71c8b049b3e2d05",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-stroke-order-utsu-initial.png",
+      "sha256": "5a2bee81128e54791cd4398dfc9e523a3fdb00ada5a53fb64b191914b8ac3008",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/kanji-inventory/state-stroke-order-utsu-paused-stroke-13.png",
+      "sha256": "a2b6e8f85804950f5bc575c315554634bc4a13ada35575fa30f6078a3bb5c9bd",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "kanji-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-conjugations-plain.png",
+      "sha256": "2c7d8758b65e03573753eed9e3baef0007f91247a4d3dd45f1b8f01464eada4e",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-conjugations-polite.png",
+      "sha256": "da1791766db07d3c44c11e393a5996876ddea123eb71acb693884fbb45250fe8",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-example-sentences.png",
+      "sha256": "bcc23fac7ae0ea5903333f3ed2c1e79e20a129f3105d5e4c8e46092ed622d9ee",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-handwriting-input-crop.png",
+      "sha256": "81a2103954c9e08cc5acd41414afcbc85d0e90a5a2b5433ca2ffdc595f9e91e8",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-image-source-menu.png",
+      "sha256": "7ef2ae44afbb15c697c68a278b78f7ba313e5cfaa5383aa43ac4824d33f7e311",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-kanji-detail-mon.png",
+      "sha256": "381f7f33c5f0f4deb0a6ff1c74c21bc49909576f3a515e1d3604b8e0eacf0d90",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-kanji-element-detail.png",
+      "sha256": "08779dfe411b4f9ba0c86680ef60a3ef3e901b9bcaea60ab8987544c906754df",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-normalized-kana-results.png",
+      "sha256": "1b6a20e2ea9452035f4691677ec616728216bee308edd0d0a6fb8cef42a7bd2a",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-note-editor-empty.png",
+      "sha256": "c640e1cfa86f3e10a1b7db28fb7c02f4a4f7f411e031e3f91440b3b0c72a1f42",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-radical-input-crop.png",
+      "sha256": "dc830f19a850ce269b994fa6ebec3b6c681cff490d5abd63f98580c6c2ac094d",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-results-persist-after-cancel.png",
+      "sha256": "e7e958b34cd90c1fe493522aa1208975a8e776903fa5c34fa3ba6e6d4e46fb5a",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-romaji-ambiguity.png",
+      "sha256": "562a1bee60cf60da86e55025b5b47328402708efa700d618e8eea30cc06ad047",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-search-results-taberu.png",
+      "sha256": "cc499bf9bc5bdc1baeea111e2b17add9b72d7acdee4d9d014ab84abfba37acb4",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-stroke-order-overlay.png",
+      "sha256": "0fd07386c7e823eb58e7f2164bb990f92db4618d9e630b00e917cc91ac316710",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-word-detail-mondai.png",
+      "sha256": "c2d1c274f66decf77a8effe658e3a909067a0142e644b022ed4d5273aac6b20a",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/recon-word-detail-rare.png",
+      "sha256": "c93037e5dc65e6ffe21cae9b434ba40a73011ec658113203abede8bffa1a09d7",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-RECON-SCREENSET-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/action-cancel-preserves-results.png",
+      "sha256": "668cb93e0870234172f73a97503fc8bdf9c73c65484285534124d9fd2d908bc4",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/action-handwriting-erase.png",
+      "sha256": "b534838f08ea26ac801ea810c87045e11add2647d469c757beab9f38637cbf93",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/action-handwriting-submit-pending-stroke-discovered-words.png",
+      "sha256": "fc789c98d6f96015f79e253cb7f1d6321e1b1fa7ca6021c1cc951b398703dd7a",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/action-history-rerun-disposable-mondai.png",
+      "sha256": "a7e27cdbf4812b672818db9b735ce7f1e1a27ea87763c6d609afde2881b5afb0",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/action-radical-candidate-submit-yabu.png",
+      "sha256": "50afc2d696ca571e5c659327ca8d8a3e236702920d24c9d5b6210ab7142828d3",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/action-radical-remove.png",
+      "sha256": "7c0833296ec37f597abbf4193a05d83bc79c4e541f6394685a3e37ce9df68484",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/action-radical-search-without-candidate-returns-root.png",
+      "sha256": "2a79806bfdba3a806fc27fab7e22555f8347487dece886ea3035071a2584bfcc",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/action-result-leading-glyph-same-word-detail-settled.png",
+      "sha256": "2bfe4dbcecf76e831ccd55014ea3ee3e0b5e9731acffd82f210ec15241067b7f",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/edge-additional-result-to-word-detail-mondaika.png",
+      "sha256": "a557f8f68ab4620a9d134d2117febb11433d6c53012dfe7f016df70afaa73870",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/edge-results-to-example-sentences-settled.png",
+      "sha256": "63a911f72f02ffbf27bc28916fd0ea592bc658d831a47f787b4d1d221ddf2ee0",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/edge-results-to-kanji-detail-yabu.png",
+      "sha256": "56faff624918925f41b0a2da7ae6fafddabbc2e0b7583c1c629a7005294cef23",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/edge-results-to-word-detail-mondai-settled.png",
+      "sha256": "0125e382b6ddeecbcecc58ddce1f13b99cb3a946e8112f2d8696973f8c38686f",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/edge-search-to-image-source-menu.png",
+      "sha256": "1b6bbeedae65ee498097cca06c2515fb6175cbb867111bdbe58d67e9a0ae9f30",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-common-kanji-nihon-handwritten.png",
+      "sha256": "ad9eb5663f6fb9b040cc4197a8c9f1f1989d08db8c11ce6504f68e526961e0c4",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-english-think-live.png",
+      "sha256": "f0317694558418b2d036764722179a0e1e0b7aa93e5b7da24117bd140341dc8c",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-inflected-tabeta-live.png",
+      "sha256": "685671a3e2fe6a2f799a9b9ea9fd1e72ad9a7bdac501aad0a36e75a86d4b88b2",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-mixed-script-nihon-abc.png",
+      "sha256": "e9d1fcb3a8b431ca52c0af6e30a6db93e99ca4f8325bbab282932010ba810a3b",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-no-match-zzzxqv.png",
+      "sha256": "a64484319b8b7c72ee75ce8be2f6341a1e634f8538984377b5ed79ce1c453ad6",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-partial-tab.png",
+      "sha256": "9b7839e809ecbf0f17d35776574773bb48b60dc98cbeb46fc3d59457f696726b",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-punctuation-hello-hyphen-world.png",
+      "sha256": "b99bd74eb8e7b1266b66c0fd0c1f5f7402dc44909b25d1aa28e94500cbe3d10d",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-rich-mondai-live.png",
+      "sha256": "7c6205ffcc1d1d737b4f8e950a53e6c7cd3b635296ef095b7c7021dac6576aa6",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-rich-mondai-refined.png",
+      "sha256": "fbc95cb69563b1d314e49019c74e867f7f3a42e050ce5f682bd1df54959ff5c2",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-romaji-nihon-live.png",
+      "sha256": "8f73b3bee82ba4c88ab10e6eded1f7327766274a6279e33faf3f8393231760b1",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-romaji-nihon-refined.png",
+      "sha256": "708c733b12c6bd5dbb39145a1218c899ce8cb3d3c28c2c023e159ffeba9a9195",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-romaji-taberu-direct-deinflection.png",
+      "sha256": "c6d084e5a1e9921b35d6316fc7ee3e83e6738b09364350b2dd113b2a51d54dd9",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-single-kanji-handwritten-cho.png",
+      "sha256": "1d0bbd1df9a183882826cdadcb6ec67964608fcd43f1823b53a77c6d07f20b0e",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-sparse-tondemonai-live.png",
+      "sha256": "3812f32f50a62c1ffd8405fe9ada48951f7b6b644a751a525d999f674686e424",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/fixture-whitespace-taberu-trailing.png",
+      "sha256": "8f73f696a8796a882101a291509d92ac04254c02b80a26cea83d845601f31208",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/search-root-empty.png",
+      "sha256": "62a90fedcd1506fd29b7e345bd35e3999c188d064d9d7b83097c2ff653c94638",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/state-handwriting-drawn-candidates.png",
+      "sha256": "ee20875152f5ee3ecba8020297767914fb4cee7871a12304b7a2ebf5f5815eb3",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/state-handwriting-empty-crop.jpg",
+      "sha256": "d0cb43fdaf081c59b3a62ab85406e6b3ab5b7c919d96968ca2ab2b31209fa989",
+      "media_type": "jpg",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/state-radical-empty.png",
+      "sha256": "bf31beedb17a51e6b0201a4bc6e457c484b2865baa9b6ec85f67296cc1cee9ea",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/state-radical-selected.png",
+      "sha256": "efc666c9a22bb591908e36b1a12b6d34fd491ce786806749c9954a2a255259f1",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/search-inventory/state-relaunch-restores-word-detail.png",
+      "sha256": "c4f71120c6cf78db52dcb9912117abff03f6988a843948bcc0ff85c9eca144e6",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-SEARCH-SCREENSET-001"
+      ],
+      "registered_by": "search-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/source-provenance/state-dictionary-pitch-attribution.jpg",
+      "sha256": "39420df7369a6f788cbaebddf3698954928666b9a2e18d93e1ea029e22fcbba2",
+      "media_type": "jpg",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-PROVENANCE-SCREENSET-001"
+      ],
+      "registered_by": "source-provenance-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/source-provenance/state-kanji-etymology-sources-complete.jpg",
+      "sha256": "2b7949d35bad245d7a7353d1643cc634a244caeb13fd1e57fab002b3a27fbd2f",
+      "media_type": "jpg",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-PROVENANCE-SCREENSET-001"
+      ],
+      "registered_by": "source-provenance-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/source-provenance/state-kanji-etymology-sources-entry.jpg",
+      "sha256": "15e2b28cee3330b67573243516a74ee0de76c756d683007b0c6e9800ff862954",
+      "media_type": "jpg",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-PROVENANCE-SCREENSET-001"
+      ],
+      "registered_by": "source-provenance-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg",
+      "sha256": "065253218b58ce17eb6795635a18fee899673f0e77314c150786275bc6dec37b",
+      "media_type": "jpg",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-PROVENANCE-SCREENSET-001"
+      ],
+      "registered_by": "source-provenance-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg",
+      "sha256": "0a1ca06a8f2ded2462328391419d74750777ab501871ae5966367be353cfd5c4",
+      "media_type": "jpg",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-PROVENANCE-SCREENSET-001"
+      ],
+      "registered_by": "source-provenance-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/source-provenance/state-settings-source-entry-points.jpg",
+      "sha256": "e6393c45156a732e7a9855a90cb13ad670649ad7747ca5fd6a9c6e26f38bd70d",
+      "media_type": "jpg",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-PROVENANCE-SCREENSET-001"
+      ],
+      "registered_by": "source-provenance-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/source-provenance/state-voice-source-behavior.jpg",
+      "sha256": "5029deb2757d1a9b03edea315bf31cf4fae9b5968b317ad10d46c5ed52d5a138",
+      "media_type": "jpg",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-PROVENANCE-SCREENSET-001"
+      ],
+      "registered_by": "source-provenance-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/edge-example-token-to-word-detail-choucho.png",
+      "sha256": "258633d4e2efcb63ff0d20c96ae905cce0415987229231e04728b4e7bed1b9c5",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/edge-word-example-token-to-word-detail-miru.png",
+      "sha256": "c505dd6d657237fc21fd9547ba6ecd56886bd929dd6e242acbc288152bd563d6",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-conjugations-i-adjective-tondemonai.png",
+      "sha256": "a5f3e165b3afd429e2625bfe2b53004d4e441649f7f529a04b1690205668b7ee",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-conjugations-iru-plain.png",
+      "sha256": "c7cbd9796d247a799fc11838e26f0f231e584bfecf4f900abbc783bedf313531",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-conjugations-iru-polite.png",
+      "sha256": "0857814c9126bac95870816983a18a01eae325c6dfdb558e8f4372c4f0a8d001",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-conjugations-kaku-plain-settled.png",
+      "sha256": "a95858af87428e71e450b06227cf5e14da2401b422d6de6cc9f25b54a905c551",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-conjugations-kaku-polite.png",
+      "sha256": "c36978130f7ea306b44b06afa797b24a4e078da6f585e55335cb4b9c9c61a525",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-conjugations-kuru-plain.png",
+      "sha256": "483e17d374b4cd77a7cb9cdbc005c71bc66d7d6af0b15edff2103ee30b263231",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-conjugations-kuru-polite.png",
+      "sha256": "b4bf0cd842291c8386f2b4fae6950958760ccbea69f0ee6b79c4685ad8795cef",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-conjugations-mieru-plain-settled.png",
+      "sha256": "350b5bae612855b1c22642dc380dca2104a34619eb38c1fe623cec546652a311",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-conjugations-na-adjective-shizuka.png",
+      "sha256": "02e4f9412f23b008f4acc1cbae2c349103f4a64e7d7acdb7e08ad50f23d74f26",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-conjugations-suru-plain.png",
+      "sha256": "65aaaa317522ce6f976eb3b78c7de8afb474b1ca0f3546bc05990ef03f878aca",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-conjugations-suru-polite.png",
+      "sha256": "3a2d666290d90b31ec38d053dbb7c262b32143c178d47134aef87806ac81e10a",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-example-audio-after-settle.png",
+      "sha256": "c42d730a5ceef0ff7c8e67e7ce9305f37c922bd5d8f942d329a3e39243ae376b",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-example-sentences-iru-scrolled.png",
+      "sha256": "1458b0e5f8d63d2902f6d744e4e48f6b3380d250d60ca44dfb8ab388eb98d2dd",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-example-sentences-iru-top-settled.png",
+      "sha256": "46d1985100336ec558b78c6a6b91023ad018413d18b287cd02091ed11ac4ad78",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-note-back-navigation-outcome.png",
+      "sha256": "4300b06d4f58acf27a0b7392a7cb86352a24497b02575ec6d05916d0d9c6e8d1",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-note-cancel-probe-entered.png",
+      "sha256": "de581a8b676b541c9e02a9269b1ccb6b0fd4cd165cf29482801a6aba93c26005",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-note-cancel-probe-restored-empty.png",
+      "sha256": "8bf9b18566e677ae5df3697cb4eca71b992f85da2a52a32d6b40ca4bf6b0b68b",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-note-confirmed-after-cold-relaunch.png",
+      "sha256": "1520fa57dba6fc7749824e3f4872db54799c38479e96f69f2b00257b6003ac93",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-note-editor-empty.png",
+      "sha256": "755c8fb7beb06132faa907b067f801d2dd37f497381caf607f186332f5bb4f09",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-note-editor-populated.png",
+      "sha256": "fe19386197dd5a913f5eff505ce04cb86d7b9c22d994ba95f176796546e30781",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-note-persisted-navigation.png",
+      "sha256": "3bb7e645d0598c8c91608477ec0eed36a012a7f7f00a071f1c3899654fba811e",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-note-restored-empty.png",
+      "sha256": "147a11be33514f5d4e614214e07b898858ff46f18eb60611baaa49408a922d7d",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-note-saved.png",
+      "sha256": "089b2d3490d8afb5084447c905c2274fd5ee8f617e416d86abcb27bcbc1e7653",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-choucho-top.png",
+      "sha256": "ae876bf41a42e0be392c0bf915dc85a76bc20e628a81b0c1f00cc8e486c0bedb",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-iru-examples.png",
+      "sha256": "13d12c9116241231eae261374f4e43db4a7a3f49dcf36d495ef77f1bba89ce80",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-iru-middle.png",
+      "sha256": "5060d14c788f51bba9aeeb528abb1b9ab56fac06ad10016c79ee40b32fa74af7",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-iru-top.png",
+      "sha256": "f32f0cc42d6763c1155bcf5598065ce4ab2f55144bd11edda2edf3cb35d6c0fa",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-kaku-top.png",
+      "sha256": "f25805278cf15d39809e1d569c131faae2da3625d0cd0354b4d4deb08cf85d90",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-kuru-top.png",
+      "sha256": "97124c3ce6e32de87225b1c933b3c424ae711bee3a127d03be486fcfe55b613f",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-mieru-top.png",
+      "sha256": "a447ee958a2a85e882f9f5d4eb0b6b723ab12f12a2473a3bfc50df43690c4353",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-miru-links.png",
+      "sha256": "d4c739adccab0f03d62422d9a515140e712ca5f4b495f7712ec621e8623ab609",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-miru-lower.png",
+      "sha256": "1ef995cfa263d2d6d35f0fee9ccf2a8d0139bec667c4cd6aa1efd60f741f4dd3",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-miru-middle.png",
+      "sha256": "b4ade3557211d8073af83e92790cbc0cec84c4ecc6a766eac00461996d5b18c3",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-miru-related-words.png",
+      "sha256": "10c3111b010476d518a99ac713fa9dd439a06a59bd94c8eb4440c0dd83baab32",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-miru-top.png",
+      "sha256": "182107db3ad977c735111047cc3cf7ef337dd1d85aeae52daf476e2b0e6aca16",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-mondai-examples.png",
+      "sha256": "9a86e11b4be225b95b00452c3eece363a4b722edba12fadf8927aa300184c9ed",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-mondai-top.png",
+      "sha256": "a8453f4a05771acf265b2ccf30f41b24c843813eca62c59d9eb31396d242eccc",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-shizuka.png",
+      "sha256": "4f317db44813f009783d2d4224a07964897ec204bb3d26fa4637b002647e300d",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-suru-top.png",
+      "sha256": "eb32fccf05c8d57c20a4f0c119ecab6a35b8e36afc3362ed254e4f2007584f34",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/screenshots/word-inventory/state-word-detail-tondemonai.png",
+      "sha256": "142483a57c9bf7f2d0710a6e050de4ba368bdb7269a3e486572e5037f3237a63",
+      "media_type": "png",
+      "kind": "privacy-reviewed-runtime-screenshot",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-WORD-SCREENSET-001"
+      ],
+      "registered_by": "word-evidence-manifest.json",
+      "privacy_status": "privacy_reviewed",
+      "hash_status": "matches_manifest"
+    },
+    {
+      "evidence_path": "evidence/reference/semantic-snapshots/connection-probe-limitation.md",
+      "sha256": "c20783fad6c5fd18d5746315cebe6a59f1c17b082e6c4f0da5e81b683c58a9ef",
+      "media_type": "md",
+      "kind": "semantic-limitation-record",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [
+        "EVIDENCE-ACCESS-SEMANTICS-001"
+      ],
+      "registered_by": "reference-evidence.json",
+      "privacy_status": "contains_no_retained_private_payload",
+      "hash_status": "computed_not_previously_manifested"
+    },
+    {
+      "evidence_path": "kanji-crawl.json",
+      "sha256": "58b7b7cf1bc4bcaae43a11c0bc13cd66f664357f266a085671feebf626562b6e",
+      "media_type": "json",
+      "kind": "supporting-discovery-record",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "reference-evidence.json or surface-map.json",
+      "privacy_status": "structured_privacy_reviewed_record",
+      "hash_status": "computed"
+    },
+    {
+      "evidence_path": "kanji-evidence-manifest.json",
+      "sha256": "74e0b81340be8375e4c0e10d06723c69cc53195b49abc3bd8c3296e43d1ad113",
+      "media_type": "json",
+      "kind": "supporting-discovery-record",
+      "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+      "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+      "registry_ids": [],
+      "registered_by": "reference-evidence.json or surface-map.json",
+      "privacy_status": "structured_privacy_reviewed_record",
+      "hash_status": "computed"
+    }
+  ]
+}
