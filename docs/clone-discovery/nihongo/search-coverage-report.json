@@ -9,18 +9,18 @@
     "cross_family_destination_proofs": 4,
     "actions": 44,
     "action_dispositions": {
-      "traversed": 28,
+      "traversed": 30,
       "same_destination_as": 1,
       "unavailable_under_fixture": 3,
-      "blocked_by_access": 8,
+      "blocked_by_access": 1,
       "external_boundary": 0,
-      "excluded_with_reason": 4
+      "excluded_with_reason": 9
     },
     "required_fixture_categories": 12,
     "required_fixture_categories_executed": 12,
     "fixture_runs": 16,
     "distinct_behavior_layout_classes": 11,
-    "screenshot_artifacts": 34
+    "screenshot_artifacts": 38
   },
   "cross_family_assignments": [
     {"destination":"LOOKUP-EXAMPLE-SENTENCES","owner_ticket":"https://github.com/serpcompany/zenbujapanese-monorepo/issues/69"},
@@ -33,24 +33,6 @@
       "gap_id": "SEARCH-GAP-HISTORY-REMOVE",
       "blocked_by": "SEARCH-BLOCKER-HISTORY-DELETION",
       "affected_actions": ["SEARCH-ACTION-027"],
-      "owner": "device owner with discovery driver"
-    },
-    {
-      "gap_id": "SEARCH-GAP-SOFTWARE-KEYBOARD",
-      "blocked_by": "SEARCH-BLOCKER-SOFTWARE-KEYBOARD",
-      "affected_actions": ["SEARCH-ACTION-029"],
-      "owner": "device owner with discovery driver"
-    },
-    {
-      "gap_id": "SEARCH-GAP-RESULT-SCROLL",
-      "blocked_by": "SEARCH-BLOCKER-RESULT-SCROLL",
-      "affected_actions": ["SEARCH-ACTION-030"],
-      "owner": "device owner or discovery driver with a working physical swipe authority"
-    },
-    {
-      "gap_id": "SEARCH-GAP-OFFLINE-FAILURE-RETRY",
-      "blocked_by": "SEARCH-BLOCKER-OFFLINE",
-      "affected_actions": ["SEARCH-ACTION-033", "SEARCH-ACTION-035"],
       "owner": "device owner with discovery driver"
     },
     {
@@ -73,7 +55,7 @@
     },
     {
       "gap_id": "SEARCH-GAP-LOADING",
-      "blocked_by": "SEARCH-BLOCKER-OFFLINE",
+      "blocked_by": null,
       "affected_actions": ["SEARCH-ACTION-034"],
       "owner": "discovery driver with a controlled slow or offline path"
     }
@@ -86,5 +68,5 @@
   },
   "capture_complete": false,
   "status": "NOT_COMPLETE — BLOCKING SEARCH DISCOVERY GAPS REMAIN",
-  "reason": "All required fixture categories were executed, but recursive action closure is blocked by result scrolling, offline/failure/retry, software-keyboard presentation, individual history removal, and the listed narrow behavior gaps."
+  "reason": "All required fixture categories and bounded long-result scrolling/restoration were executed. Standard keyboard presentation and exact offline/failure/retry parity are approved platform/product boundaries; individual disposable-history removal and the listed nonblocking narrow behavior gaps remain."
 }

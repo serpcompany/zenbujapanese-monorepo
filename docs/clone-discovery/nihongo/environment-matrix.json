@@ -96,9 +96,9 @@
       "id": "ENV-ACCESSIBILITY-SEMANTICS",
       "dimension": "accessibility",
       "value": "app-level hierarchy for the physical iPhone runtime",
-      "required": true,
-      "status": "blocked",
-      "blocked_by": "ACCESS-BLOCKER-APP-SEMANTICS",
+      "required": false,
+      "status": "observed_unavailable_nonblocking_approved_variance",
+      "decision": "Exact Nihongo semantics are not a parity requirement; Zenbu must provide its own accessible semantics.",
       "evidence": [
         "evidence/reference/semantic-snapshots/connection-probe-limitation.md"
       ]

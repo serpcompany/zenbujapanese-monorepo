@@ -14,13 +14,13 @@ This is a discovery-only handoff for the approved Search-rooted Lookup graph. It
 
 ## Exact denominator
 
-The ledger has 326 atomic rows: 23 surfaces, 84 distinguishable states, 129 action edges, 35 fixture/behavior-class inputs, 19 observable language-behavior claims, 13 language-resource boundaries, 7 design-token families, and 16 asset/fixture records. All 326 rows are schema-complete; 251 are ready reference inputs, 55 are explicitly blocked, and 20 preserve approved exclusions. All clone statuses are `unknown` and all test statuses are `not_run`.
+The ledger has 329 atomic rows: 23 surfaces, 84 distinguishable states, 129 action edges, 35 fixture/behavior-class inputs, 19 observable language-behavior claims, 16 language-resource boundaries, 7 design-token families, and 16 asset/fixture records. All 329 rows are schema-complete; 280 are ready reference inputs, 9 are explicitly blocked, and 40 preserve approved exclusions. All clone statuses are `unknown` and all test statuses are `not_run`.
 
 ## Implementation-use contract
 
 A later implementation agent must select an approved journey, locate all rows by `journey_ids`, reproduce each row from its `preconditions`, `fixture_ids`, and `action`, and implement immediate, settled, durable, failure, recovery, and relaunch behavior only to the boundary explicitly stated. It must retain app-owned Language Reference Data behind the focused Shared Capability boundaries in ADR 0001. It must add clone evidence and passed tests before changing any row from `unknown`; structural completeness is not runtime verification.
 
-Reference evidence records the observed Nihongo baseline. Zenbu colors, typography, logos, icons, and bottom navigation are approved variances. The whole-content Natural Translation is an approved Image Text Flow addition, not evidence of Nihongo behavior. No other substitution or deviation is approved.
+Reference evidence records the observed Nihongo baseline. The approved variances and nonblocking boundaries are canonical in `scope.json`; they include Zenbu-owned visual measurements, glyphs, accessible semantics, exact pitch-record matching, per-control pronunciation-source routing, and repeatability behavior. The whole-content Natural Translation is an approved Image Text Flow addition, not evidence of Nihongo behavior.
 
 ## Deterministic fixtures and fault injection
 
@@ -28,9 +28,9 @@ Fixture rows point to exact inputs and source matrices. Purpose-created image as
 
 ## Blocking handoff limits
 
-32 distinct gaps block coding readiness. They include runtime action/state capture, accessibility semantics, offline/failure behavior, audio and timing evidence, quantified visual measurements, exact glyph identity/licensing, and language-source/provenance/licensing boundaries. Each blocker’s exact owner, completed independent work, affected rows, and resume procedure lives in `parity-open-questions.json`.
+6 distinct gaps block coding readiness. They include remaining runtime action/state capture, offline/failure behavior, audible audio and timing evidence, and language-source/provenance/licensing boundaries. Each blocker’s exact owner, completed independent work, affected rows, and resume procedure lives in `parity-open-questions.json`.
 
-Do not claim exact internal algorithms, provider record identity, audio source, asset identity, accessibility behavior, timing, offline behavior, or licensing beyond the recorded authority. Do not silently replace an unavailable Nihongo component and call it parity.
+Do not claim exact internal algorithms, provider record identity, clip routing, reference asset identity, reference accessibility behavior, timing, offline behavior, or licensing beyond the recorded authority. Apply the approved Zenbu-owned substitutes and nonblocking boundaries from `scope.json` without describing them as exact Nihongo parity.
 
 ## Handoff gate
 

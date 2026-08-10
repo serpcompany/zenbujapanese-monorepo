@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-08-05T09:56:43.960Z",
+  "generated_at": "2026-08-10T07:05:22.982Z",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
-  "status": "OBSERVED ROLE INDEX — QUANTIFIED VISUAL VALUES REMAIN BLOCKED",
-  "allowed_variance": "Zenbu colors, typography, logos, and icons replace Nihongo branding; layout, information hierarchy, and interaction remain parity targets unless separately approved.",
+  "status": "OBSERVED REFERENCE ROLE INDEX — EXACT NIHONGO VISUAL MEASUREMENTS ARE NONBLOCKING",
+  "allowed_variance": "Zenbu colors, typography, logos, icons, layout, spacing, geometry, and accessible semantics are authoritative; preserve the evidenced information hierarchy and interaction contract without claiming pixel-identical parity.",
   "tokens": [
     {
       "token_id": "DESIGN-TOKEN-COLOR-ROLES",
@@ -27,13 +27,21 @@
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-STROKE-ORDER",
         "LOOKUP-KANJI-ELEMENT-DETAIL",
-        "LOOKUP-KANJI-ETYMOLOGY",
         "LOOKUP-IMAGE-TEXT-RESULT"
       ],
       "evidence_paths": [
         "evidence/reference/screenshots/connection-probe-search-baseline.png",
         "evidence/reference/screenshots/connection-probe-search-focused-top.png",
         "evidence/reference/screenshots/connection-probe-search-restored.png",
+        "evidence/reference/screenshots/device-input-gesture-evidence/accessibility-inspector-no-selection.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-clear-horizontal-recognized.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/word-swipe-back-no-transition.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png",
@@ -125,6 +133,7 @@
         "evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg",
         "evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg",
         "evidence/reference/screenshots/source-provenance/state-settings-source-entry-points.jpg",
+        "evidence/reference/screenshots/source-provenance/state-settings-voice-audio-attribution.jpg",
         "evidence/reference/screenshots/source-provenance/state-voice-source-behavior.jpg",
         "evidence/reference/screenshots/word-inventory/edge-example-token-to-word-detail-choucho.png",
         "evidence/reference/screenshots/word-inventory/edge-word-example-token-to-word-detail-miru.png",
@@ -170,9 +179,7 @@
         "evidence/reference/screenshots/word-inventory/state-word-detail-tondemonai.png"
       ],
       "legal_use": "Observable role may be specified; Zenbu uses its approved visual identity and must not copy paid or proprietary assets.",
-      "blocker_ids": [
-        "CROSSWALK-GAP-DESIGN-MEASUREMENTS"
-      ]
+      "blocker_ids": []
     },
     {
       "token_id": "DESIGN-TOKEN-TYPOGRAPHY-ROLES",
@@ -196,13 +203,21 @@
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-STROKE-ORDER",
         "LOOKUP-KANJI-ELEMENT-DETAIL",
-        "LOOKUP-KANJI-ETYMOLOGY",
         "LOOKUP-IMAGE-TEXT-RESULT"
       ],
       "evidence_paths": [
         "evidence/reference/screenshots/connection-probe-search-baseline.png",
         "evidence/reference/screenshots/connection-probe-search-focused-top.png",
         "evidence/reference/screenshots/connection-probe-search-restored.png",
+        "evidence/reference/screenshots/device-input-gesture-evidence/accessibility-inspector-no-selection.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-clear-horizontal-recognized.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/word-swipe-back-no-transition.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png",
@@ -294,6 +309,7 @@
         "evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg",
         "evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg",
         "evidence/reference/screenshots/source-provenance/state-settings-source-entry-points.jpg",
+        "evidence/reference/screenshots/source-provenance/state-settings-voice-audio-attribution.jpg",
         "evidence/reference/screenshots/source-provenance/state-voice-source-behavior.jpg",
         "evidence/reference/screenshots/word-inventory/edge-example-token-to-word-detail-choucho.png",
         "evidence/reference/screenshots/word-inventory/edge-word-example-token-to-word-detail-miru.png",
@@ -339,9 +355,7 @@
         "evidence/reference/screenshots/word-inventory/state-word-detail-tondemonai.png"
       ],
       "legal_use": "Observable role may be specified; Zenbu uses its approved visual identity and must not copy paid or proprietary assets.",
-      "blocker_ids": [
-        "CROSSWALK-GAP-DESIGN-MEASUREMENTS"
-      ]
+      "blocker_ids": []
     },
     {
       "token_id": "DESIGN-TOKEN-SPACING-RHYTHM",
@@ -365,13 +379,21 @@
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-STROKE-ORDER",
         "LOOKUP-KANJI-ELEMENT-DETAIL",
-        "LOOKUP-KANJI-ETYMOLOGY",
         "LOOKUP-IMAGE-TEXT-RESULT"
       ],
       "evidence_paths": [
         "evidence/reference/screenshots/connection-probe-search-baseline.png",
         "evidence/reference/screenshots/connection-probe-search-focused-top.png",
         "evidence/reference/screenshots/connection-probe-search-restored.png",
+        "evidence/reference/screenshots/device-input-gesture-evidence/accessibility-inspector-no-selection.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-clear-horizontal-recognized.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/word-swipe-back-no-transition.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png",
@@ -463,6 +485,7 @@
         "evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg",
         "evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg",
         "evidence/reference/screenshots/source-provenance/state-settings-source-entry-points.jpg",
+        "evidence/reference/screenshots/source-provenance/state-settings-voice-audio-attribution.jpg",
         "evidence/reference/screenshots/source-provenance/state-voice-source-behavior.jpg",
         "evidence/reference/screenshots/word-inventory/edge-example-token-to-word-detail-choucho.png",
         "evidence/reference/screenshots/word-inventory/edge-word-example-token-to-word-detail-miru.png",
@@ -508,9 +531,7 @@
         "evidence/reference/screenshots/word-inventory/state-word-detail-tondemonai.png"
       ],
       "legal_use": "Observable role may be specified; Zenbu uses its approved visual identity and must not copy paid or proprietary assets.",
-      "blocker_ids": [
-        "CROSSWALK-GAP-DESIGN-MEASUREMENTS"
-      ]
+      "blocker_ids": []
     },
     {
       "token_id": "DESIGN-TOKEN-LAYOUT-GEOMETRY",
@@ -534,13 +555,21 @@
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-STROKE-ORDER",
         "LOOKUP-KANJI-ELEMENT-DETAIL",
-        "LOOKUP-KANJI-ETYMOLOGY",
         "LOOKUP-IMAGE-TEXT-RESULT"
       ],
       "evidence_paths": [
         "evidence/reference/screenshots/connection-probe-search-baseline.png",
         "evidence/reference/screenshots/connection-probe-search-focused-top.png",
         "evidence/reference/screenshots/connection-probe-search-restored.png",
+        "evidence/reference/screenshots/device-input-gesture-evidence/accessibility-inspector-no-selection.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-clear-horizontal-recognized.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/word-swipe-back-no-transition.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png",
@@ -632,6 +661,7 @@
         "evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg",
         "evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg",
         "evidence/reference/screenshots/source-provenance/state-settings-source-entry-points.jpg",
+        "evidence/reference/screenshots/source-provenance/state-settings-voice-audio-attribution.jpg",
         "evidence/reference/screenshots/source-provenance/state-voice-source-behavior.jpg",
         "evidence/reference/screenshots/word-inventory/edge-example-token-to-word-detail-choucho.png",
         "evidence/reference/screenshots/word-inventory/edge-word-example-token-to-word-detail-miru.png",
@@ -677,9 +707,7 @@
         "evidence/reference/screenshots/word-inventory/state-word-detail-tondemonai.png"
       ],
       "legal_use": "Observable role may be specified; Zenbu uses its approved visual identity and must not copy paid or proprietary assets.",
-      "blocker_ids": [
-        "CROSSWALK-GAP-DESIGN-MEASUREMENTS"
-      ]
+      "blocker_ids": []
     },
     {
       "token_id": "DESIGN-TOKEN-ICONOGRAPHY",
@@ -703,13 +731,21 @@
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-STROKE-ORDER",
         "LOOKUP-KANJI-ELEMENT-DETAIL",
-        "LOOKUP-KANJI-ETYMOLOGY",
         "LOOKUP-IMAGE-TEXT-RESULT"
       ],
       "evidence_paths": [
         "evidence/reference/screenshots/connection-probe-search-baseline.png",
         "evidence/reference/screenshots/connection-probe-search-focused-top.png",
         "evidence/reference/screenshots/connection-probe-search-restored.png",
+        "evidence/reference/screenshots/device-input-gesture-evidence/accessibility-inspector-no-selection.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-clear-horizontal-recognized.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/word-swipe-back-no-transition.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png",
@@ -801,6 +837,7 @@
         "evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg",
         "evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg",
         "evidence/reference/screenshots/source-provenance/state-settings-source-entry-points.jpg",
+        "evidence/reference/screenshots/source-provenance/state-settings-voice-audio-attribution.jpg",
         "evidence/reference/screenshots/source-provenance/state-voice-source-behavior.jpg",
         "evidence/reference/screenshots/word-inventory/edge-example-token-to-word-detail-choucho.png",
         "evidence/reference/screenshots/word-inventory/edge-word-example-token-to-word-detail-miru.png",
@@ -846,9 +883,7 @@
         "evidence/reference/screenshots/word-inventory/state-word-detail-tondemonai.png"
       ],
       "legal_use": "Observable role may be specified; Zenbu uses its approved visual identity and must not copy paid or proprietary assets.",
-      "blocker_ids": [
-        "CROSSWALK-GAP-DESIGN-MEASUREMENTS"
-      ]
+      "blocker_ids": []
     },
     {
       "token_id": "DESIGN-TOKEN-MOTION-STATE",
@@ -872,13 +907,21 @@
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-STROKE-ORDER",
         "LOOKUP-KANJI-ELEMENT-DETAIL",
-        "LOOKUP-KANJI-ETYMOLOGY",
         "LOOKUP-IMAGE-TEXT-RESULT"
       ],
       "evidence_paths": [
         "evidence/reference/screenshots/connection-probe-search-baseline.png",
         "evidence/reference/screenshots/connection-probe-search-focused-top.png",
         "evidence/reference/screenshots/connection-probe-search-restored.png",
+        "evidence/reference/screenshots/device-input-gesture-evidence/accessibility-inspector-no-selection.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-clear-horizontal-recognized.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/word-swipe-back-no-transition.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png",
@@ -970,6 +1013,7 @@
         "evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg",
         "evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg",
         "evidence/reference/screenshots/source-provenance/state-settings-source-entry-points.jpg",
+        "evidence/reference/screenshots/source-provenance/state-settings-voice-audio-attribution.jpg",
         "evidence/reference/screenshots/source-provenance/state-voice-source-behavior.jpg",
         "evidence/reference/screenshots/word-inventory/edge-example-token-to-word-detail-choucho.png",
         "evidence/reference/screenshots/word-inventory/edge-word-example-token-to-word-detail-miru.png",
@@ -1041,13 +1085,21 @@
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-STROKE-ORDER",
         "LOOKUP-KANJI-ELEMENT-DETAIL",
-        "LOOKUP-KANJI-ETYMOLOGY",
         "LOOKUP-IMAGE-TEXT-RESULT"
       ],
       "evidence_paths": [
         "evidence/reference/screenshots/connection-probe-search-baseline.png",
         "evidence/reference/screenshots/connection-probe-search-focused-top.png",
         "evidence/reference/screenshots/connection-probe-search-restored.png",
+        "evidence/reference/screenshots/device-input-gesture-evidence/accessibility-inspector-no-selection.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-clear-horizontal-recognized.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/word-swipe-back-no-transition.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png",
@@ -1139,6 +1191,7 @@
         "evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg",
         "evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg",
         "evidence/reference/screenshots/source-provenance/state-settings-source-entry-points.jpg",
+        "evidence/reference/screenshots/source-provenance/state-settings-voice-audio-attribution.jpg",
         "evidence/reference/screenshots/source-provenance/state-voice-source-behavior.jpg",
         "evidence/reference/screenshots/word-inventory/edge-example-token-to-word-detail-choucho.png",
         "evidence/reference/screenshots/word-inventory/edge-word-example-token-to-word-detail-miru.png",

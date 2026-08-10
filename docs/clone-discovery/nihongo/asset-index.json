@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-05T09:56:43.960Z",
+  "generated_at": "2026-08-10T07:05:22.982Z",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
   "status": "REFERENCE ASSET FAMILIES CLASSIFIED; NO PROPRIETARY OR PAID ASSET COPIED",
@@ -149,8 +149,8 @@
       "kind": "reference-visible-iconography",
       "path": null,
       "sha256": null,
-      "status": "observable_not_acquired",
-      "legal_use": "Record roles and behavior only; use Zenbu-original or licensed icons.",
+      "status": "reference_role_only_zenbu_substitute_approved",
+      "legal_use": "Record roles and behavior only; use Zenbu-original or licensed icons. Exact Nihongo glyph identity and bounds are not parity requirements.",
       "applicable_surface_ids": [
         "LOOKUP-SEARCH-ROOT",
         "LOOKUP-SEARCH-HISTORY",
@@ -166,7 +166,6 @@
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-STROKE-ORDER",
         "LOOKUP-KANJI-ELEMENT-DETAIL",
-        "LOOKUP-KANJI-ETYMOLOGY",
         "LOOKUP-IMAGE-TEXT-RESULT"
       ],
       "fixture_ids": [],
@@ -174,6 +173,14 @@
         "evidence/reference/screenshots/connection-probe-search-baseline.png",
         "evidence/reference/screenshots/connection-probe-search-focused-top.png",
         "evidence/reference/screenshots/connection-probe-search-restored.png",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-clear-horizontal-recognized.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/word-swipe-back-no-transition.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png",
@@ -303,17 +310,15 @@
         "evidence/reference/screenshots/word-inventory/state-word-detail-suru-top.png",
         "evidence/reference/screenshots/word-inventory/state-word-detail-tondemonai.png"
       ],
-      "blocker_ids": [
-        "CROSSWALK-GAP-ASSET-MEASUREMENTS"
-      ]
+      "blocker_ids": []
     },
     {
       "asset_id": "ASSET-FAMILY-KANJI-STROKE-DIAGRAMS",
       "kind": "reference-rendered-language-visual",
       "path": null,
       "sha256": null,
-      "status": "observable_source_unknown",
-      "legal_use": "Do not copy rendered diagrams; identify and license an upstream or create an original renderer behind Language Reference Data.",
+      "status": "selected_pinned_kanjivg_zenbu_original_renderer",
+      "legal_use": "Use KanjiVG r20250816 ordered paths under CC BY-SA 3.0 with source and modification provenance; generate diagrams and timing with Zenbu-owned code and review final share-alike asset packaging.",
       "applicable_surface_ids": [
         "LOOKUP-KANJI-STROKE-ORDER"
       ],
@@ -355,17 +360,15 @@
         "evidence/reference/screenshots/source-provenance/state-kanji-etymology-sources-entry.jpg",
         "evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg"
       ],
-      "blocker_ids": [
-        "PROVENANCE-GAP-KANJI-RADICAL-STROKE-SOURCES"
-      ]
+      "blocker_ids": []
     },
     {
       "asset_id": "ASSET-FAMILY-KANJI-ETYMOLOGY-IMAGERY",
       "kind": "reference-rendered-language-visual",
       "path": null,
       "sha256": null,
-      "status": "observable_rights_unknown",
-      "legal_use": "Do not copy Nihongo's authored compilation or imagery; retain revision-level provenance for independently usable sources.",
+      "status": "excluded_from_mvp_deferred_to_issue_91",
+      "legal_use": "Do not copy Nihongo or Shinjigen imagery. Etymology, Origin/history content, historical glyph presentation, and source selection are deferred until post-MVP issue #91.",
       "applicable_surface_ids": [
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-ETYMOLOGY"
@@ -408,23 +411,22 @@
         "evidence/reference/screenshots/source-provenance/state-kanji-etymology-sources-entry.jpg",
         "evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg"
       ],
-      "blocker_ids": [
-        "PROVENANCE-GAP-ETYMOLOGY-REVISION-RIGHTS"
-      ]
+      "blocker_ids": []
     },
     {
       "asset_id": "ASSET-FAMILY-HUMAN-PRONUNCIATION",
       "kind": "reference-audio",
       "path": null,
       "sha256": null,
-      "status": "provider_and_rights_unknown",
-      "legal_use": "Do not copy clips until identity and reuse rights are proven.",
+      "status": "selected_pinned_open_provider_releases",
+      "legal_use": "Use only clips from the pinned Tofugu/WaniKani CC BY-SA 4.0 and Kanji Alive CC BY 4.0 releases with per-file provenance and attribution.",
       "applicable_surface_ids": [
         "LOOKUP-WORD-DETAIL",
         "LOOKUP-EXAMPLE-SENTENCES"
       ],
       "fixture_ids": [],
       "evidence_paths": [
+        "evidence/reference/screenshots/device-input-gesture-evidence/word-swipe-back-no-transition.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/screenshots/image-text-inventory/state-image-word-detail-shizuka.png",
         "evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-words-list.png",
@@ -481,24 +483,22 @@
         "evidence/reference/screenshots/word-inventory/state-word-detail-suru-top.png",
         "evidence/reference/screenshots/word-inventory/state-word-detail-tondemonai.png"
       ],
-      "blocker_ids": [
-        "PROVENANCE-GAP-HUMAN-AUDIO-SOURCE-RIGHTS",
-        "WORD-BLOCKER-AUDIO-SEMANTICS"
-      ]
+      "blocker_ids": []
     },
     {
       "asset_id": "ASSET-FAMILY-SYSTEM-SPEECH-VOICES",
       "kind": "platform-provided-audio",
       "path": null,
       "sha256": null,
-      "status": "inferred_component_configuration_unknown",
-      "legal_use": "Use platform speech interfaces only after behavior/configuration is specified; never redistribute system voices.",
+      "status": "selected_platform_fallback",
+      "legal_use": "Use AVSpeechSynthesizer with an available Japanese voice as app-owned fallback; never redistribute system voices or claim exact Nihongo routing.",
       "applicable_surface_ids": [
         "LOOKUP-WORD-DETAIL",
         "LOOKUP-EXAMPLE-SENTENCES"
       ],
       "fixture_ids": [],
       "evidence_paths": [
+        "evidence/reference/screenshots/device-input-gesture-evidence/word-swipe-back-no-transition.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/screenshots/image-text-inventory/state-image-word-detail-shizuka.png",
         "evidence/reference/screenshots/kanji-inventory/state-kanji-detail-shizu-words-list.png",
@@ -555,10 +555,7 @@
         "evidence/reference/screenshots/word-inventory/state-word-detail-suru-top.png",
         "evidence/reference/screenshots/word-inventory/state-word-detail-tondemonai.png"
       ],
-      "blocker_ids": [
-        "PROVENANCE-GAP-SPEECH-SYNTHESIS-IMPLEMENTATION",
-        "BEHAVIOR-BLOCKER-SPEECH-SOURCE"
-      ]
+      "blocker_ids": []
     },
     {
       "asset_id": "ASSET-FAMILY-NIHONGO-BRANDING",
@@ -597,6 +594,14 @@
         "evidence/reference/screenshots/connection-probe-search-baseline.png",
         "evidence/reference/screenshots/connection-probe-search-focused-top.png",
         "evidence/reference/screenshots/connection-probe-search-restored.png",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-clear-horizontal-recognized.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/word-swipe-back-no-transition.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png",

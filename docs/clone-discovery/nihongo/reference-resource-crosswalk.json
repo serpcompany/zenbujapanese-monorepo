@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-05T09:56:43.960Z",
+  "generated_at": "2026-08-10T07:05:22.982Z",
   "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/74",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
@@ -8,7 +8,7 @@
   "source_records": [
     {
       "path": "scope.json",
-      "sha256": "924b46895bc4eedecc5e80dba612a4c5caacdadf72a64a103d23d3e47b293173"
+      "sha256": "c37b66eabd7ecd017ca3233b793521693f061a218cea1e31fa7ecc82b1dbae95"
     },
     {
       "path": "reference-authorities.json",
@@ -16,11 +16,11 @@
     },
     {
       "path": "journeys.json",
-      "sha256": "802e4002c221a4de0f548dd589cf251623f198d88e9eee3512029c3ad6dec96c"
+      "sha256": "54e0c41e7718bb394e31c2631cfd3f9d50a5915ef54f58d933ebd42ae02a97e0"
     },
     {
       "path": "surface-map.json",
-      "sha256": "bb3a0b9c633fd75d56a93a4d72f24a87235c824bd68a013a4a903fe32aa0528b"
+      "sha256": "5c098368df4029fec7523c8a18d5f220e2e14535a0cb0c069cef13f073716e96"
     },
     {
       "path": "state-transitions.json",
@@ -28,27 +28,27 @@
     },
     {
       "path": "reference-evidence.json",
-      "sha256": "c0c7d5e3c8bcb4260772ba134fe1650493bc5580ecdb3be456c44157bfaf891e"
+      "sha256": "8c7ca3b68f11c8378cf73ea1f612471af79110cbae7309bdc3edce048af77648"
     },
     {
       "path": "access-blockers.json",
-      "sha256": "ef37474a7e5f58e77150ec10d30a013a2ca412b438ea1776974d9aed016352f9"
+      "sha256": "9aa9f3be504f65d16fe58c185301d89e9aba3b3ad6990c151871e003a249c12a"
     },
     {
       "path": "search-crawl.json",
-      "sha256": "0d2bfb4d21b97c1c63c7daeb8327875a54ea60ecd5908d825bbdc1f7c460438f"
+      "sha256": "f62e44d7fe404db4d74297491f5a56e326828be752a3140db8572af50c77fa81"
     },
     {
       "path": "word-crawl.json",
-      "sha256": "de35f94f85ef49bda63606c5007ccc237f2d1e8d0bd364db4cf028270c160c14"
+      "sha256": "f7eef937a39c3e1f66041ed1071921497434bc48c876b400a5238c1f66631c27"
     },
     {
       "path": "kanji-crawl.json",
-      "sha256": "58b7b7cf1bc4bcaae43a11c0bc13cd66f664357f266a085671feebf626562b6e"
+      "sha256": "bac7111025dbb6c59b63a8da4706b8f0dd57979cde11656c3981af8276346a97"
     },
     {
       "path": "image-crawl.json",
-      "sha256": "071c3d11755172bd7dd5e31ddfb296f872f97eea252d34399c339000009c52fd"
+      "sha256": "a9f257c35f68c8f510b8e1f9c286a0b2f9e34dde22dbef364dfd67b512ce100d"
     },
     {
       "path": "search-fixture-matrix.json",
@@ -68,19 +68,19 @@
     },
     {
       "path": "behavior-fixture-matrix.json",
-      "sha256": "6f09a8d2895f8084a06e9d83dad165b9a97ec93b9b701b2806bd59161765d592"
+      "sha256": "069c801148a9369aaac40e9beb1e7721076b312bba51c840880d468629c42ee9"
     },
     {
       "path": "behavior-observations.jsonl",
-      "sha256": "fe602790f2cc4da7887b4b8a076f250a818ba10d817e5c2af1beba9751c5b0dd"
+      "sha256": "ce4f212bfcf346f78b9f7b8f151d831cab9acf1c7573f27b9f49c40aac49d04f"
     },
     {
       "path": "language-stack-behavior-crosswalk.json",
-      "sha256": "9e7140e7ee00d48b95226e4911a9f396fb158afadcb2e02090c87e35102a1e4e"
+      "sha256": "52cd3e255e5fe01023449ce4d4a78e4ffb4ad78864c49ee311062013b37297f3"
     },
     {
       "path": "source-provenance.json",
-      "sha256": "07f98f4ce338bf68277f397ba0631485599dc1ea2db4b3d23fb208f387410fec"
+      "sha256": "172d87453b35423cd3fd9a6e967f1cb3ad5f3b4a3df79c9d6431d7f796528727"
     }
   ],
   "counts": {
@@ -94,25 +94,25 @@
     "crosswalk_actions": 129,
     "crosswalk_fixtures": 35,
     "crosswalk_behavior_claims": 19,
-    "nodes_ready": 82,
+    "nodes_ready": 79,
     "nodes_blocked": 1,
-    "nodes_excluded": 1,
-    "actions_ready": 94,
-    "actions_blocked": 24,
-    "actions_excluded": 11,
+    "nodes_excluded": 4,
+    "actions_ready": 95,
+    "actions_blocked": 7,
+    "actions_excluded": 27,
     "fixtures_ready": 35,
     "fixtures_blocked": 0,
-    "behavior_claims_ready": 13,
-    "behavior_claims_blocked": 6,
-    "evidence_artifacts": 150,
+    "behavior_claims_ready": 19,
+    "behavior_claims_blocked": 0,
+    "evidence_artifacts": 161,
     "design_token_families": 7,
     "asset_records": 16,
-    "language_resource_records": 13,
+    "language_resource_records": 16,
     "observed_conflicts_or_tensions": 4,
-    "crosswalk_gap_groups": 2,
+    "crosswalk_gap_groups": 0,
     "inherited_access_blockers": 23,
-    "inherited_provenance_gaps": 15,
-    "distinct_blocking_gap_ids": 32
+    "inherited_provenance_gaps": 5,
+    "distinct_blocking_gap_ids": 6
   },
   "node_crosswalk": [
     {
@@ -3249,7 +3249,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows",
         "Glyph and stroke count",
         "grade",
@@ -3257,8 +3256,6 @@
         "meanings",
         "on and kun readings",
         "elements",
-        "origin",
-        "historical glyph progression",
         "related words"
       ],
       "design_token_ids": [
@@ -3322,7 +3319,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows",
         "Glyph and stroke count",
         "grade",
@@ -3330,8 +3326,6 @@
         "meanings",
         "on and kun readings",
         "elements",
-        "origin",
-        "historical glyph progression",
         "related words"
       ],
       "design_token_ids": [
@@ -3394,7 +3388,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows",
         "Glyph and stroke count",
         "grade",
@@ -3402,8 +3395,6 @@
         "meanings",
         "on and kun readings",
         "elements",
-        "origin",
-        "historical glyph progression",
         "related words"
       ],
       "design_token_ids": [
@@ -3466,7 +3457,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows",
         "Glyph and stroke count",
         "grade",
@@ -3474,8 +3464,6 @@
         "meanings",
         "on and kun readings",
         "elements",
-        "origin",
-        "historical glyph progression",
         "related words"
       ],
       "design_token_ids": [
@@ -3539,7 +3527,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows",
         "Glyph and stroke count",
         "grade",
@@ -3547,8 +3534,6 @@
         "meanings",
         "on and kun readings",
         "elements",
-        "origin",
-        "historical glyph progression",
         "related words"
       ],
       "design_token_ids": [
@@ -3728,7 +3713,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows",
         "Glyph and stroke count",
         "grade",
@@ -3736,8 +3720,6 @@
         "meanings",
         "on and kun readings",
         "elements",
-        "origin",
-        "historical glyph progression",
         "related words"
       ],
       "design_token_ids": [
@@ -3798,7 +3780,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows",
         "Glyph and stroke count",
         "grade",
@@ -3806,8 +3787,6 @@
         "meanings",
         "on and kun readings",
         "elements",
-        "origin",
-        "historical glyph progression",
         "related words"
       ],
       "design_token_ids": [
@@ -3843,10 +3822,8 @@
       "kind": "state-node",
       "name": "Kanji Etymology reference top",
       "surface_id": "LOOKUP-KANJI-ETYMOLOGY",
-      "journey_ids": [
-        "JOURNEY-INSPECT-KANJI"
-      ],
-      "scope": "blocking",
+      "journey_ids": [],
+      "scope": "excluded",
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
@@ -3880,7 +3857,6 @@
         "DESIGN-TOKEN-CONTROL-STATES"
       ],
       "asset_ids": [
-        "ASSET-FAMILY-REFERENCE-UI-GLYPHS",
         "ASSET-FAMILY-KANJI-ETYMOLOGY-IMAGERY",
         "ASSET-FAMILY-NIHONGO-BRANDING"
       ],
@@ -3891,8 +3867,8 @@
       "confidence": "high_for_observed_presentation",
       "conflict_ids": [],
       "blocker_ids": [],
-      "exclusion": null,
-      "atomic_parity_input": "ready_for_atomic_ledger"
+      "exclusion": "Approved boundary or waived platform-source mechanics; only the boundary edge is retained.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-NODE-KANJI-STATE-011",
@@ -3901,10 +3877,8 @@
       "kind": "state-node",
       "name": "Kanji Etymology reference middle",
       "surface_id": "LOOKUP-KANJI-ETYMOLOGY",
-      "journey_ids": [
-        "JOURNEY-INSPECT-KANJI"
-      ],
-      "scope": "blocking",
+      "journey_ids": [],
+      "scope": "excluded",
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
@@ -3938,7 +3912,6 @@
         "DESIGN-TOKEN-CONTROL-STATES"
       ],
       "asset_ids": [
-        "ASSET-FAMILY-REFERENCE-UI-GLYPHS",
         "ASSET-FAMILY-KANJI-ETYMOLOGY-IMAGERY",
         "ASSET-FAMILY-NIHONGO-BRANDING"
       ],
@@ -3949,8 +3922,8 @@
       "confidence": "high_for_observed_presentation",
       "conflict_ids": [],
       "blocker_ids": [],
-      "exclusion": null,
-      "atomic_parity_input": "ready_for_atomic_ledger"
+      "exclusion": "Approved boundary or waived platform-source mechanics; only the boundary edge is retained.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-NODE-KANJI-STATE-012",
@@ -3959,10 +3932,8 @@
       "kind": "state-node",
       "name": "Kanji Etymology reference bottom through Radical",
       "surface_id": "LOOKUP-KANJI-ETYMOLOGY",
-      "journey_ids": [
-        "JOURNEY-INSPECT-KANJI"
-      ],
-      "scope": "blocking",
+      "journey_ids": [],
+      "scope": "excluded",
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
@@ -3996,7 +3967,6 @@
         "DESIGN-TOKEN-CONTROL-STATES"
       ],
       "asset_ids": [
-        "ASSET-FAMILY-REFERENCE-UI-GLYPHS",
         "ASSET-FAMILY-KANJI-ETYMOLOGY-IMAGERY",
         "ASSET-FAMILY-NIHONGO-BRANDING"
       ],
@@ -4007,8 +3977,8 @@
       "confidence": "high_for_observed_presentation",
       "conflict_ids": [],
       "blocker_ids": [],
-      "exclusion": null,
-      "atomic_parity_input": "ready_for_atomic_ledger"
+      "exclusion": "Approved boundary or waived platform-source mechanics; only the boundary edge is retained.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-NODE-KANJI-STATE-013",
@@ -4381,7 +4351,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows",
         "Glyph and stroke count",
         "grade",
@@ -4389,8 +4358,6 @@
         "meanings",
         "on and kun readings",
         "elements",
-        "origin",
-        "historical glyph progression",
         "related words"
       ],
       "design_token_ids": [
@@ -7638,8 +7605,8 @@
       "kind": "action-edge",
       "source": "SEARCH-STATE-002",
       "trigger": "select keyboard mode",
-      "observed_result": "standard software keyboard not exposed",
-      "disposition": "blocked_by_access",
+      "observed_result": "the standard iOS software keyboard follows the user's device keyboard settings",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-SEARCH-ROOT",
       "surface_ids": [
         "LOOKUP-SEARCH-ROOT"
@@ -7694,11 +7661,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "SEARCH-BLOCKER-SOFTWARE-KEYBOARD"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "exclusion": "This is a platform-owned standard keyboard, not a Nihongo-specific parity surface.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-SEARCH-ACTION-030",
@@ -7707,8 +7672,8 @@
       "kind": "action-edge",
       "source": "LOOKUP-RESULTS",
       "trigger": "scroll a long result list",
-      "observed_result": "not reliably exercised",
-      "disposition": "blocked_by_access",
+      "observed_result": "the public tab result set reached a stable terminal viewport ending with tabbed browsing; opening that terminal row and selecting Back restored the same terminal viewport and scrollbar position",
+      "disposition": "traversed",
       "surface_id": "LOOKUP-RESULTS",
       "surface_ids": [
         "LOOKUP-RESULTS"
@@ -7724,13 +7689,19 @@
       ],
       "scope": "blocking",
       "fixture_binding": {
-        "status": "bound_to_source_precondition",
-        "fixture_ids": [],
-        "precondition": "Recreate source LOOKUP-RESULTS; then scroll a long result list"
+        "status": "bound_to_fixture_ids",
+        "fixture_ids": [
+          "SEARCH-FIXTURE-009"
+        ]
       },
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
       "evidence_paths": [
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg",
         "evidence/reference/interaction-traces/search-reconnaissance.json",
         "evidence/reference/interaction-traces/search-input-results-inventory.json"
       ],
@@ -7763,11 +7734,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "SEARCH-BLOCKER-RESULT-SCROLL"
-      ],
+      "blocker_ids": [],
       "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-SEARCH-ACTION-031",
@@ -7926,8 +7895,8 @@
       "kind": "action-edge",
       "source": "LOOKUP-RESULTS",
       "trigger": "repeat a query offline",
-      "observed_result": "not exercised",
-      "disposition": "blocked_by_access",
+      "observed_result": "stakeholder-confirmed offline capability requirement",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-RESULTS",
       "surface_ids": [
         "LOOKUP-RESULTS"
@@ -7981,14 +7950,10 @@
       ],
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
-      "conflict_ids": [
-        "Visibly local dictionary content and public claims of offline OCR do not prove offline behavior for any executed fixture."
-      ],
-      "blocker_ids": [
-        "SEARCH-BLOCKER-OFFLINE"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "conflict_ids": [],
+      "blocker_ids": [],
+      "exclusion": "Zenbu Search must work offline; exact Nihongo offline-state presentation is not a parity requirement.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-SEARCH-ACTION-034",
@@ -8054,11 +8019,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "SEARCH-BLOCKER-OFFLINE"
-      ],
+      "blocker_ids": [],
       "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-SEARCH-ACTION-035",
@@ -8067,8 +8030,8 @@
       "kind": "action-edge",
       "source": "LOOKUP-RESULTS",
       "trigger": "retry after Search failure",
-      "observed_result": "not exercised",
-      "disposition": "blocked_by_access",
+      "observed_result": "not required for reference parity",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-RESULTS",
       "surface_ids": [
         "LOOKUP-RESULTS"
@@ -8122,14 +8085,10 @@
       ],
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
-      "conflict_ids": [
-        "Visibly local dictionary content and public claims of offline OCR do not prove offline behavior for any executed fixture."
-      ],
-      "blocker_ids": [
-        "SEARCH-BLOCKER-OFFLINE"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "conflict_ids": [],
+      "blocker_ids": [],
+      "exclusion": "Zenbu Search uses app-owned offline behavior and failure handling rather than exact Nihongo retry presentation.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-SEARCH-ACTION-036",
@@ -8303,7 +8262,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -8537,8 +8495,8 @@
       "kind": "action-edge",
       "source": "LOOKUP-IMAGE-SOURCE-MENU",
       "trigger": "select Take Photo",
-      "observed_result": "IOS-CAMERA-CAPTURE",
-      "disposition": "blocked_by_access",
+      "observed_result": "not exercised after the stakeholder waived Camera source mechanics",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-IMAGE-SOURCE-MENU",
       "surface_ids": [
         "LOOKUP-IMAGE-SOURCE-MENU"
@@ -8587,11 +8545,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "ACCESS-BLOCKER-PERMISSIONS"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "exclusion": "Camera source mechanics are outside the revised uploaded-image parsing destination.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-SEARCH-ACTION-043",
@@ -8600,8 +8556,8 @@
       "kind": "action-edge",
       "source": "LOOKUP-IMAGE-SOURCE-MENU",
       "trigger": "select Photo Library",
-      "observed_result": "IOS-PHOTO-LIBRARY-PICKER",
-      "disposition": "blocked_by_access",
+      "observed_result": "the private-access picker boundary was opened and cancelled without selection before the stakeholder waived Photo Library mechanics",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-IMAGE-SOURCE-MENU",
       "surface_ids": [
         "LOOKUP-IMAGE-SOURCE-MENU"
@@ -8650,11 +8606,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "ACCESS-BLOCKER-PERMISSIONS"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "exclusion": "Photo Library source mechanics are outside the revised uploaded-image parsing destination; no personal photo was selected or retained.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-SEARCH-ACTION-044",
@@ -8663,8 +8617,8 @@
       "kind": "action-edge",
       "source": "LOOKUP-IMAGE-SOURCE-MENU",
       "trigger": "select Files",
-      "observed_result": "IOS-FILES-PICKER",
-      "disposition": "blocked_by_access",
+      "observed_result": "IOS-FILES-PICKER opened and purpose-created On My iPhone fixture IMG-FIXTURE-001 was selected and parsed",
+      "disposition": "traversed",
       "surface_id": "LOOKUP-IMAGE-SOURCE-MENU",
       "surface_ids": [
         "LOOKUP-IMAGE-SOURCE-MENU"
@@ -8683,6 +8637,8 @@
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
       "evidence_paths": [
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-clear-horizontal-recognized.jpeg",
         "evidence/reference/interaction-traces/search-input-results-inventory.json"
       ],
       "visible_text": [
@@ -8713,11 +8669,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "ACCESS-BLOCKER-PERMISSIONS"
-      ],
+      "blocker_ids": [],
       "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-WORD-ACTION-001",
@@ -8871,8 +8825,8 @@
       "kind": "action-edge",
       "source": "WORD-STATE-002",
       "trigger": "select a sentence speaker",
-      "observed_result": "no persistent visible change; audible output unavailable to the capture authority",
-      "disposition": "blocked_by_access",
+      "observed_result": "audible sentence pronunciation plays; no persistent visual change is required",
+      "disposition": "traversed",
       "surface_id": "LOOKUP-EXAMPLE-SENTENCES",
       "surface_ids": [
         "LOOKUP-EXAMPLE-SENTENCES"
@@ -8929,15 +8883,10 @@
       ],
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
-      "conflict_ids": [
-        "Public history says human recordings exist, but the exact clip source, output, and fallback were not observable through the capture authority.",
-        "The same visible control family may route to human recordings or text-to-speech; no source indicator was captured."
-      ],
-      "blocker_ids": [
-        "WORD-BLOCKER-AUDIO-SEMANTICS"
-      ],
+      "conflict_ids": [],
+      "blocker_ids": [],
       "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-WORD-ACTION-004",
@@ -9165,8 +9114,8 @@
       "kind": "action-edge",
       "source": "LOOKUP-WORD-DETAIL",
       "trigger": "select headword speaker",
-      "observed_result": "no persistent visible change; audible content and timing unavailable to the capture authority",
-      "disposition": "blocked_by_access",
+      "observed_result": "audible headword pronunciation plays; no persistent visual change is required",
+      "disposition": "traversed",
       "surface_id": "LOOKUP-WORD-DETAIL",
       "surface_ids": [
         "LOOKUP-WORD-DETAIL"
@@ -9233,15 +9182,10 @@
       ],
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
-      "conflict_ids": [
-        "Public history says human recordings exist, but the exact clip source, output, and fallback were not observable through the capture authority.",
-        "The same visible control family may route to human recordings or text-to-speech; no source indicator was captured."
-      ],
-      "blocker_ids": [
-        "WORD-BLOCKER-AUDIO-SEMANTICS"
-      ],
+      "conflict_ids": [],
+      "blocker_ids": [],
       "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-WORD-ACTION-008",
@@ -10545,8 +10489,8 @@
       "kind": "action-edge",
       "source": "LOOKUP-NOTE-EDITING",
       "trigger": "show and dismiss the standard software keyboard",
-      "observed_result": null,
-      "disposition": "blocked_by_access",
+      "observed_result": "the standard iOS software keyboard follows the user's device keyboard settings",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-NOTE-EDITING",
       "surface_ids": [
         "LOOKUP-NOTE-EDITING"
@@ -10594,11 +10538,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "WORD-BLOCKER-SOFTWARE-KEYBOARD"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "exclusion": "This is a platform-owned standard keyboard, not a Nihongo-specific parity surface.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-WORD-ACTION-027",
@@ -10747,8 +10689,8 @@
       "kind": "action-edge",
       "source": "word/detail family",
       "trigger": "isolate network, repeat entry/audio actions, then reconnect",
-      "observed_result": null,
-      "disposition": "blocked_by_access",
+      "observed_result": "stakeholder-confirmed offline capability requirement",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-EXAMPLE-SENTENCES",
       "surface_ids": [
         "LOOKUP-EXAMPLE-SENTENCES",
@@ -10808,14 +10750,10 @@
       ],
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
-      "conflict_ids": [
-        "Visibly local dictionary content and public claims of offline OCR do not prove offline behavior for any executed fixture."
-      ],
-      "blocker_ids": [
-        "WORD-BLOCKER-OFFLINE"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "conflict_ids": [],
+      "blocker_ids": [],
+      "exclusion": "Zenbu word/detail functionality must work offline; exact Nihongo failure/retry presentation is not a parity requirement.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-WORD-ACTION-030",
@@ -10824,8 +10762,8 @@
       "kind": "action-edge",
       "source": "word/detail family",
       "trigger": "exercise unavailable word and sentence audio fixtures",
-      "observed_result": null,
-      "disposition": "unavailable_under_fixture",
+      "observed_result": "not required by the approved universal playback contract",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-EXAMPLE-SENTENCES",
       "surface_ids": [
         "LOOKUP-EXAMPLE-SENTENCES",
@@ -10886,11 +10824,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "WORD-BLOCKER-AUDIO-FIXTURE"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "exclusion": "Selecting Play must produce pronunciation; use licensed audio or Speech Synthesis fallback rather than reproduce an unavailable state.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-WORD-ACTION-031",
@@ -11159,7 +11095,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -11196,7 +11131,7 @@
       "source": "KANJI-STATE-003",
       "trigger": "select Show History",
       "observed_result": "KANJI-STATE-004",
-      "disposition": "traversed",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-KANJI-DETAIL",
       "surface_ids": [
         "LOOKUP-KANJI-DETAIL"
@@ -11229,7 +11164,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -11255,8 +11189,8 @@
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
       "blocker_ids": [],
-      "exclusion": null,
-      "atomic_parity_input": "ready_for_atomic_ledger"
+      "exclusion": "Observed reference behavior retained, but Origin/history is deferred to post-MVP issue #91.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-KANJI-ACTION-004",
@@ -11266,7 +11200,7 @@
       "source": "KANJI-STATE-004",
       "trigger": "collapse expanded history",
       "observed_result": null,
-      "disposition": "unavailable_under_fixture",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-KANJI-DETAIL",
       "surface_ids": [
         "LOOKUP-KANJI-DETAIL"
@@ -11298,7 +11232,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -11323,11 +11256,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "KANJI-BLOCKER-ACTION-CLOSURE"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "exclusion": "Origin/history interaction closure is deferred to post-MVP issue #91 and does not block MVP.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-KANJI-ACTION-005",
@@ -11371,7 +11302,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -11593,7 +11523,7 @@
       "source": "KANJI-STATE-008",
       "trigger": "select picture classification info",
       "observed_result": "KANJI-STATE-009",
-      "disposition": "traversed",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-KANJI-DETAIL",
       "surface_ids": [
         "LOOKUP-KANJI-DETAIL"
@@ -11624,7 +11554,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -11650,8 +11579,8 @@
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
       "blocker_ids": [],
-      "exclusion": null,
-      "atomic_parity_input": "ready_for_atomic_ledger"
+      "exclusion": "Observed reference behavior retained, but etymology classification explanations are deferred to post-MVP issue #91.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-KANJI-ACTION-010",
@@ -11661,7 +11590,7 @@
       "source": "KANJI-STATE-009",
       "trigger": "select Learn More",
       "observed_result": "KANJI-STATE-010",
-      "disposition": "traversed",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-KANJI-DETAIL",
       "surface_ids": [
         "LOOKUP-KANJI-DETAIL"
@@ -11692,7 +11621,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -11718,8 +11646,8 @@
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
       "blocker_ids": [],
-      "exclusion": null,
-      "atomic_parity_input": "ready_for_atomic_ledger"
+      "exclusion": "Observed reference behavior retained, but the Kanji Etymology reference is deferred to post-MVP issue #91.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-KANJI-ACTION-011",
@@ -11729,15 +11657,13 @@
       "source": "LOOKUP-KANJI-ETYMOLOGY",
       "trigger": "scroll to terminal extent",
       "observed_result": "KANJI-STATE-011 and KANJI-STATE-012",
-      "disposition": "traversed",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-KANJI-ETYMOLOGY",
       "surface_ids": [
         "LOOKUP-KANJI-ETYMOLOGY"
       ],
-      "journey_ids": [
-        "JOURNEY-INSPECT-KANJI"
-      ],
-      "scope": "blocking",
+      "journey_ids": [],
+      "scope": "excluded",
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
@@ -11764,7 +11690,6 @@
         "DESIGN-TOKEN-CONTROL-STATES"
       ],
       "asset_ids": [
-        "ASSET-FAMILY-REFERENCE-UI-GLYPHS",
         "ASSET-FAMILY-KANJI-ETYMOLOGY-IMAGERY",
         "ASSET-FAMILY-NIHONGO-BRANDING"
       ],
@@ -11775,8 +11700,8 @@
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
       "blocker_ids": [],
-      "exclusion": null,
-      "atomic_parity_input": "ready_for_atomic_ledger"
+      "exclusion": "Observed reference behavior retained for post-MVP issue #91; excluded from MVP.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-KANJI-ACTION-012",
@@ -11786,15 +11711,13 @@
       "source": "LOOKUP-KANJI-ETYMOLOGY",
       "trigger": "select Back",
       "observed_result": "KANJI-STATE-008",
-      "disposition": "traversed",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-KANJI-ETYMOLOGY",
       "surface_ids": [
         "LOOKUP-KANJI-ETYMOLOGY"
       ],
-      "journey_ids": [
-        "JOURNEY-INSPECT-KANJI"
-      ],
-      "scope": "blocking",
+      "journey_ids": [],
+      "scope": "excluded",
       "fixture_binding": {
         "status": "bound_to_fixture_ids",
         "fixture_ids": [
@@ -11822,7 +11745,6 @@
         "DESIGN-TOKEN-CONTROL-STATES"
       ],
       "asset_ids": [
-        "ASSET-FAMILY-REFERENCE-UI-GLYPHS",
         "ASSET-FAMILY-KANJI-ETYMOLOGY-IMAGERY",
         "ASSET-FAMILY-NIHONGO-BRANDING"
       ],
@@ -11833,8 +11755,8 @@
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
       "blocker_ids": [],
-      "exclusion": null,
-      "atomic_parity_input": "ready_for_atomic_ledger"
+      "exclusion": "Observed reference behavior retained for post-MVP issue #91; excluded from MVP.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-KANJI-ACTION-013",
@@ -11872,7 +11794,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -12486,7 +12407,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -12530,8 +12450,7 @@
       "surface_ids": [
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-STROKE-ORDER",
-        "LOOKUP-KANJI-ELEMENT-DETAIL",
-        "LOOKUP-KANJI-ETYMOLOGY"
+        "LOOKUP-KANJI-ELEMENT-DETAIL"
       ],
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
@@ -12556,7 +12475,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -12595,14 +12513,13 @@
       "kind": "action-edge",
       "source": "kanji family",
       "trigger": "isolate network and exercise error/retry/recovery",
-      "observed_result": null,
-      "disposition": "blocked_by_access",
+      "observed_result": "stakeholder-confirmed offline capability requirement",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-KANJI-DETAIL",
       "surface_ids": [
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-STROKE-ORDER",
-        "LOOKUP-KANJI-ELEMENT-DETAIL",
-        "LOOKUP-KANJI-ETYMOLOGY"
+        "LOOKUP-KANJI-ELEMENT-DETAIL"
       ],
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
@@ -12627,7 +12544,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -12652,14 +12568,10 @@
       ],
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
-      "conflict_ids": [
-        "Visibly local dictionary content and public claims of offline OCR do not prove offline behavior for any executed fixture."
-      ],
-      "blocker_ids": [
-        "KANJI-BLOCKER-OFFLINE"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "conflict_ids": [],
+      "blocker_ids": [],
+      "exclusion": "Zenbu kanji functionality must work offline; exact Nihongo failure/retry presentation is not a parity requirement.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-KANJI-ACTION-026",
@@ -12674,8 +12586,7 @@
       "surface_ids": [
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-STROKE-ORDER",
-        "LOOKUP-KANJI-ELEMENT-DETAIL",
-        "LOOKUP-KANJI-ETYMOLOGY"
+        "LOOKUP-KANJI-ELEMENT-DETAIL"
       ],
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
@@ -12700,7 +12611,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -12802,13 +12712,12 @@
       "source": "kanji family",
       "trigger": "capture app-level semantic accessibility hierarchy",
       "observed_result": null,
-      "disposition": "blocked_by_access",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-KANJI-DETAIL",
       "surface_ids": [
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-STROKE-ORDER",
-        "LOOKUP-KANJI-ELEMENT-DETAIL",
-        "LOOKUP-KANJI-ETYMOLOGY"
+        "LOOKUP-KANJI-ELEMENT-DETAIL"
       ],
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
@@ -12833,7 +12742,6 @@
         "Stroke-order entry",
         "Reading-linked words",
         "Element cards",
-        "Show History",
         "Related-word rows"
       ],
       "design_token_ids": [
@@ -12859,11 +12767,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "ACCESS-BLOCKER-APP-SEMANTICS"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "exclusion": "Exact Nihongo accessibility semantics are not a parity requirement; Zenbu owns and must verify its own accessible semantics.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-IMAGE-ACTION-001",
@@ -13709,8 +13615,8 @@
       "kind": "action-edge",
       "source": "IMAGE-STATE-017",
       "trigger": "select Copy Text",
-      "observed_result": "menu dismissed; device clipboard contents were not exposed to the capture authority",
-      "disposition": "blocked_by_access",
+      "observed_result": "five device-local lines: 日本語の勉強; 今日は静かな公園で蝶々を見た。; 問題を解いてから、友達と話します。; 東京駅12:30Platform4; SyntheticfixtureIMG-FIXTURE-001",
+      "disposition": "traversed",
       "surface_id": "LOOKUP-IMAGE-TEXT-RESULT",
       "surface_ids": [
         "LOOKUP-IMAGE-TEXT-RESULT"
@@ -13724,12 +13630,22 @@
       "fixture_binding": {
         "status": "bound_to_fixture_ids",
         "fixture_ids": [
-          "IMG-FIXTURE-001"
+          "IMG-FIXTURE-001",
+          "SEARCH-FIXTURE-001",
+          "WORD-FIXTURE-002",
+          "WORD-FIXTURE-003",
+          "WORD-FIXTURE-009",
+          "WORD-FIXTURE-010",
+          "KANJI-FIXTURE-001",
+          "KANJI-FIXTURE-002"
         ]
       },
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
       "evidence_paths": [
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
         "evidence/reference/interaction-traces/image-text-inventory.json"
       ],
       "visible_text": [
@@ -13772,11 +13688,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "IMAGE-BLOCKER-COPY-TEXT-OUTPUT"
-      ],
+      "blocker_ids": [],
       "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-IMAGE-ACTION-013",
@@ -14773,7 +14687,8 @@
         "SEARCH-ACTION-016",
         "SEARCH-ACTION-017",
         "SEARCH-ACTION-019",
-        "SEARCH-ACTION-026"
+        "SEARCH-ACTION-026",
+        "IMAGE-ACTION-012"
       ],
       "linked_observation_ids": [
         "BEHAVIOR-OBS-003",
@@ -14817,7 +14732,11 @@
         "evidence/reference/screenshots/image-text-inventory/state-multi-image-empty-alert.png",
         "evidence/reference/screenshots/connection-probe-search-baseline.png",
         "evidence/reference/screenshots/search-inventory/fixture-rich-mondai-live.png",
-        "evidence/reference/screenshots/search-inventory/action-handwriting-submit-pending-stroke-discovered-words.png"
+        "evidence/reference/screenshots/search-inventory/action-handwriting-submit-pending-stroke-discovered-words.png",
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/interaction-traces/image-text-inventory.json"
       ],
       "asset_ids": [],
       "source_legal_status": "synthetic_or_public_text_fixture",
@@ -15398,6 +15317,7 @@
         "SEARCH-ACTION-004",
         "SEARCH-ACTION-012",
         "SEARCH-ACTION-029",
+        "SEARCH-ACTION-030",
         "SEARCH-ACTION-034",
         "SEARCH-ACTION-039",
         "SEARCH-ACTION-040",
@@ -15445,6 +15365,11 @@
         "evidence/reference/screenshots/image-text-inventory/state-multi-image-empty-alert.png",
         "evidence/reference/screenshots/search-inventory/action-cancel-preserves-results.png",
         "evidence/reference/screenshots/search-inventory/state-handwriting-empty-crop.jpg",
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg",
         "evidence/reference/screenshots/word-inventory/state-conjugations-iru-plain.png",
         "evidence/reference/screenshots/word-inventory/state-conjugations-kaku-polite.png",
         "evidence/reference/screenshots/word-inventory/state-conjugations-suru-plain.png",
@@ -16147,7 +16072,8 @@
         "WORD-ACTION-020",
         "WORD-ACTION-021",
         "WORD-ACTION-022",
-        "WORD-ACTION-024"
+        "WORD-ACTION-024",
+        "IMAGE-ACTION-012"
       ],
       "linked_observation_ids": [
         "BEHAVIOR-OBS-009",
@@ -16167,7 +16093,10 @@
         "JOURNEY-INSPECT-CONJUGATIONS",
         "JOURNEY-EDIT-NOTE",
         "JOURNEY-INSPECT-KANJI",
-        "JOURNEY-EDIT-FLASHCARD"
+        "JOURNEY-EDIT-FLASHCARD",
+        "JOURNEY-IMAGE-TAKE-PHOTO",
+        "JOURNEY-IMAGE-PHOTO-LIBRARY",
+        "JOURNEY-IMAGE-FILES"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -16195,7 +16124,11 @@
         "evidence/reference/screenshots/word-inventory/edge-word-example-token-to-word-detail-miru.png",
         "evidence/reference/screenshots/word-inventory/state-word-detail-miru-top.png",
         "evidence/reference/screenshots/word-inventory/state-word-detail-miru-links.png",
-        "evidence/reference/screenshots/word-inventory/state-word-detail-miru-related-words.png"
+        "evidence/reference/screenshots/word-inventory/state-word-detail-miru-related-words.png",
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/interaction-traces/image-text-inventory.json"
       ],
       "asset_ids": [],
       "source_legal_status": "synthetic_or_public_text_fixture",
@@ -16241,7 +16174,8 @@
         "WORD-ACTION-007",
         "WORD-ACTION-008",
         "WORD-ACTION-009",
-        "WORD-ACTION-010"
+        "WORD-ACTION-010",
+        "IMAGE-ACTION-012"
       ],
       "linked_observation_ids": [
         "BEHAVIOR-OBS-011",
@@ -16259,7 +16193,10 @@
         "JOURNEY-INSPECT-CONJUGATIONS",
         "JOURNEY-EDIT-NOTE",
         "JOURNEY-INSPECT-KANJI",
-        "JOURNEY-EDIT-FLASHCARD"
+        "JOURNEY-EDIT-FLASHCARD",
+        "JOURNEY-IMAGE-TAKE-PHOTO",
+        "JOURNEY-IMAGE-PHOTO-LIBRARY",
+        "JOURNEY-IMAGE-FILES"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -16280,7 +16217,11 @@
         "evidence/reference/screenshots/word-inventory/edge-word-example-token-to-word-detail-miru.png",
         "evidence/reference/screenshots/word-inventory/state-word-detail-miru-top.png",
         "evidence/reference/screenshots/word-inventory/state-word-detail-miru-links.png",
-        "evidence/reference/screenshots/word-inventory/state-word-detail-miru-related-words.png"
+        "evidence/reference/screenshots/word-inventory/state-word-detail-miru-related-words.png",
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/interaction-traces/image-text-inventory.json"
       ],
       "asset_ids": [],
       "source_legal_status": "synthetic_or_public_text_fixture",
@@ -16663,7 +16604,8 @@
         "KANJI-ACTION-003",
         "KANJI-ACTION-004",
         "KANJI-ACTION-005",
-        "IMAGE-ACTION-006"
+        "IMAGE-ACTION-006",
+        "IMAGE-ACTION-012"
       ],
       "linked_observation_ids": [
         "BEHAVIOR-OBS-008"
@@ -16710,7 +16652,10 @@
         "evidence/reference/screenshots/kanji-inventory/state-kanji-element-detail-sound-sou.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
-        "evidence/reference/interaction-traces/image-text-inventory.json"
+        "evidence/reference/interaction-traces/image-text-inventory.json",
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg"
       ],
       "asset_ids": [],
       "source_legal_status": "synthetic_or_public_text_fixture",
@@ -16767,7 +16712,8 @@
         "WORD-ACTION-020",
         "WORD-ACTION-021",
         "WORD-ACTION-022",
-        "WORD-ACTION-024"
+        "WORD-ACTION-024",
+        "IMAGE-ACTION-012"
       ],
       "linked_observation_ids": [],
       "journey_ids": [
@@ -16777,7 +16723,10 @@
         "JOURNEY-INSPECT-CONJUGATIONS",
         "JOURNEY-EDIT-NOTE",
         "JOURNEY-INSPECT-KANJI",
-        "JOURNEY-EDIT-FLASHCARD"
+        "JOURNEY-EDIT-FLASHCARD",
+        "JOURNEY-IMAGE-TAKE-PHOTO",
+        "JOURNEY-IMAGE-PHOTO-LIBRARY",
+        "JOURNEY-IMAGE-FILES"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -16797,7 +16746,11 @@
         "evidence/reference/screenshots/word-inventory/state-note-restored-empty.png",
         "evidence/reference/screenshots/word-inventory/state-note-cancel-probe-restored-empty.png",
         "evidence/reference/screenshots/word-inventory/state-conjugations-iru-plain.png",
-        "evidence/reference/screenshots/word-inventory/state-conjugations-iru-polite.png"
+        "evidence/reference/screenshots/word-inventory/state-conjugations-iru-polite.png",
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
+        "evidence/reference/interaction-traces/image-text-inventory.json"
       ],
       "asset_ids": [],
       "source_legal_status": "synthetic_or_public_text_fixture",
@@ -16844,6 +16797,7 @@
         "KANJI-ACTION-004",
         "KANJI-ACTION-005",
         "IMAGE-ACTION-006",
+        "IMAGE-ACTION-012",
         "IMAGE-ACTION-021"
       ],
       "linked_observation_ids": [],
@@ -16881,6 +16835,9 @@
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/interaction-traces/image-text-inventory.json",
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-sparse-kanji-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-sparse-kanji-selected.png"
       ],
@@ -16944,6 +16901,7 @@
         "KANJI-ACTION-015",
         "KANJI-ACTION-017",
         "IMAGE-ACTION-006",
+        "IMAGE-ACTION-012",
         "IMAGE-ACTION-021"
       ],
       "linked_observation_ids": [],
@@ -16987,6 +16945,9 @@
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png",
         "evidence/reference/interaction-traces/image-text-inventory.json",
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
         "evidence/reference/screenshots/image-text-inventory/state-sparse-kanji-recognized.png",
         "evidence/reference/screenshots/image-text-inventory/state-sparse-kanji-selected.png"
       ],
@@ -17185,6 +17146,9 @@
         "evidence/reference/screenshots/search-inventory/fixture-mixed-script-nihon-abc.png",
         "evidence/reference/screenshots/search-inventory/fixture-punctuation-hello-hyphen-world.png",
         "evidence/reference/interaction-traces/search-input-results-inventory.json",
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg",
         "evidence/reference/screenshots/search-inventory/fixture-english-think-live.png",
         "evidence/reference/screenshots/search-inventory/fixture-no-match-zzzxqv.png",
         "evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png"
@@ -17763,7 +17727,7 @@
         "evidence/reference/screenshots/search-inventory/fixture-romaji-nihon-refined.png"
       ],
       "language_capability": "dictionary entries",
-      "provenance_status": "verified_named_upstream",
+      "provenance_status": "selected_pinned_official_export",
       "resource_ids": [
         "SOURCE-COMPONENT-JMDICT"
       ],
@@ -17810,7 +17774,7 @@
         "evidence/reference/screenshots/search-inventory/fixture-english-think-live.png"
       ],
       "language_capability": "dictionary entries",
-      "provenance_status": "verified_named_upstream",
+      "provenance_status": "selected_pinned_official_export",
       "resource_ids": [
         "SOURCE-COMPONENT-JMDICT",
         "SOURCE-COMPONENT-TATOEBA"
@@ -17863,7 +17827,7 @@
         "evidence/reference/screenshots/search-inventory/fixture-inflected-tabeta-live.png"
       ],
       "language_capability": "dictionary entries",
-      "provenance_status": "verified_named_upstream",
+      "provenance_status": "selected_pinned_official_export",
       "resource_ids": [
         "SOURCE-COMPONENT-JMDICT"
       ],
@@ -17918,7 +17882,7 @@
         "evidence/reference/screenshots/search-inventory/fixture-sparse-tondemonai-live.png"
       ],
       "language_capability": "dictionary entries",
-      "provenance_status": "verified_named_upstream",
+      "provenance_status": "selected_pinned_official_export",
       "resource_ids": [
         "SOURCE-COMPONENT-JMDICT"
       ],
@@ -18070,24 +18034,22 @@
         "問題",
         "いる"
       ],
-      "observed_output": "Word Detail visibly displays red pitch contours beside readings for 問題 and いる.",
+      "observed_output": "Word Detail visibly displays red pitch contours beside readings for 問題 and いる. Nihongo Settings attributes pitch-accent data to the CJK Dictionary Institute, supplemented by the UniDic project.",
       "evidence_paths": [
         "evidence/reference/screenshots/word-inventory/state-word-detail-mondai-top.png",
         "evidence/reference/screenshots/word-inventory/state-word-detail-iru-top.png"
       ],
       "language_capability": "pitch accent",
-      "provenance_status": "verified_installed_named_sources_exact_delivery_unknown",
+      "provenance_status": "selected_unidic_3_1_0_new_bsd",
       "resource_ids": [
         "SOURCE-COMPONENT-CJKI",
         "SOURCE-COMPONENT-UNIDIC"
       ],
       "source_legal_status": "observable_output_only; named upstreams remain governed by resource rows",
-      "confidence": "high_for_visible_contour_low_for_matching",
+      "confidence": "high_for_visible_contour_and_stakeholder_reported_settings_attribution",
       "conflict_ids": [],
-      "blocker_ids": [
-        "BEHAVIOR-BLOCKER-PITCH-MATCHING"
-      ],
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-CLAIM-BEHAVIOR-OBS-010",
@@ -18203,7 +18165,7 @@
         "evidence/reference/screenshots/word-inventory/edge-example-token-to-word-detail-choucho.png"
       ],
       "language_capability": "example sentences",
-      "provenance_status": "verified_named_upstream",
+      "provenance_status": "selected_pinned_text_only_exports",
       "resource_ids": [
         "SOURCE-COMPONENT-TATOEBA"
       ],
@@ -18319,8 +18281,11 @@
         "evidence/reference/screenshots/search-inventory/action-radical-candidate-submit-yabu.png"
       ],
       "language_capability": "radical composition",
-      "provenance_status": "unknown_internal",
-      "resource_ids": [],
+      "provenance_status": "selected_pinned_edrdg_and_kanjivg_sources",
+      "resource_ids": [
+        "SOURCE-COMPONENT-EDRDG-RADICALS",
+        "SOURCE-COMPONENT-KANJIVG"
+      ],
       "source_legal_status": "observable_output_only; named upstreams remain governed by resource rows",
       "confidence": "high_for_one_composition",
       "conflict_ids": [],
@@ -18382,7 +18347,7 @@
         "evidence/reference/screenshots/image-text-inventory/state-vertical-token-cross-column-grouping.png"
       ],
       "language_capability": "online OCR",
-      "provenance_status": "verified_installed_named_providers_current_selection_google",
+      "provenance_status": "reference_providers_known_excluded_from_offline_baseline",
       "resource_ids": [
         "SOURCE-COMPONENT-GOOGLE-OCR",
         "SOURCE-COMPONENT-OCR-SPACE",
@@ -18438,27 +18403,22 @@
         "問題",
         "蝶々 and their examples"
       ],
-      "observed_output": "Visible word and sentence speaker controls accepted taps without a persistent visible playback state.",
+      "observed_output": "Visible word and sentence speaker controls accept taps and play audible pronunciation. No persistent visual playback state is required.",
       "evidence_paths": [
         "evidence/reference/screenshots/word-inventory/state-word-detail-mondai-top.png",
         "evidence/reference/screenshots/word-inventory/state-example-sentences-iru-top-settled.png"
       ],
       "language_capability": "human pronunciation recordings",
-      "provenance_status": "feature_verified_providers_historical_not_current_pinned",
+      "provenance_status": "selected_pinned_open_releases",
       "resource_ids": [
         "SOURCE-COMPONENT-WANIKANI-TOFUGU-AUDIO",
         "SOURCE-COMPONENT-KANJI-ALIVE-AUDIO"
       ],
       "source_legal_status": "observable_output_only; named upstreams remain governed by resource rows",
-      "confidence": "high_for_control_presence_low_for_audio",
-      "conflict_ids": [
-        "Public history says human recordings exist, but the exact clip source, output, and fallback were not observable through the capture authority."
-      ],
-      "blocker_ids": [
-        "WORD-BLOCKER-AUDIO-SEMANTICS",
-        "WORD-BLOCKER-AUDIO-FIXTURE"
-      ],
-      "atomic_parity_input": "blocked"
+      "confidence": "high_for_control_presence_and_stakeholder_confirmed_playback_contract",
+      "conflict_ids": [],
+      "blocker_ids": [],
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-CLAIM-BEHAVIOR-OBS-016",
@@ -18498,26 +18458,21 @@
         "いる",
         "問題"
       ],
-      "observed_output": "The runtime exposes speaker controls, but the capture does not distinguish system speech synthesis from prerecorded playback or identify voice/rate/fallback behavior.",
+      "observed_output": "The runtime exposes speaker controls. Nihongo Settings visibly attributes recordings to WaniKani, Tofugu, and Kanji Alive and offers a selected system voice for fallback; exact per-control routing is not required.",
       "evidence_paths": [
         "evidence/reference/screenshots/word-inventory/state-word-detail-iru-top.png",
         "evidence/reference/screenshots/word-inventory/state-word-detail-mondai-top.png"
       ],
       "language_capability": "speech synthesis",
-      "provenance_status": "inferred_platform_component_exact_api_unknown",
+      "provenance_status": "selected_apple_platform_fallback",
       "resource_ids": [
         "SOURCE-COMPONENT-SYSTEM-SPEECH"
       ],
       "source_legal_status": "observable_output_only; named upstreams remain governed by resource rows",
-      "confidence": "low",
-      "conflict_ids": [
-        "The same visible control family may route to human recordings or text-to-speech; no source indicator was captured."
-      ],
-      "blocker_ids": [
-        "BEHAVIOR-BLOCKER-SPEECH-SOURCE",
-        "WORD-BLOCKER-AUDIO-SEMANTICS"
-      ],
-      "atomic_parity_input": "blocked"
+      "confidence": "high_for_settings_provider_boundary_and_approved_playback_contract",
+      "conflict_ids": [],
+      "blocker_ids": [],
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-CLAIM-BEHAVIOR-OBS-017",
@@ -18562,26 +18517,20 @@
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
       "exact_inputs": [
-        "cached-looking and previously unopened Search, word, kanji, image, and audio fixtures under network isolation"
+        "Search, word, example, conjugation, note, kanji, stroke-order, image-text, and pronunciation capabilities"
       ],
-      "observed_output": "All retained observations were made in the normal connected state. No offline, transport-error, retry, stale-data, or reconnect behavior was safely exercised.",
+      "observed_output": "The stakeholder confirmed that Nihongo functionality works offline. Zenbu therefore requires offline-capable Lookup behavior; exact Nihongo transport-error, stale, retry, and reconnect presentation is not a parity requirement.",
       "evidence_paths": [],
       "language_capability": "offline OCR",
-      "provenance_status": "verified_installed_option_exact_component_unknown",
+      "provenance_status": "selected_apple_vision_substitute",
       "resource_ids": [
         "SOURCE-COMPONENT-ON-DEVICE-OCR"
       ],
       "source_legal_status": "observable_output_only; named upstreams remain governed by resource rows",
-      "confidence": "high_for_gap",
-      "conflict_ids": [
-        "Visibly local dictionary content and public claims of offline OCR do not prove offline behavior for any executed fixture."
-      ],
-      "blocker_ids": [
-        "SEARCH-BLOCKER-OFFLINE",
-        "WORD-BLOCKER-OFFLINE",
-        "KANJI-BLOCKER-OFFLINE"
-      ],
-      "atomic_parity_input": "blocked"
+      "confidence": "stakeholder_authoritative_product_contract",
+      "conflict_ids": [],
+      "blocker_ids": [],
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-CLAIM-BEHAVIOR-OBS-018",
@@ -18613,9 +18562,9 @@
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
       "exact_inputs": [
-        "repeat think, tabeta, handwriting 丁, radical 薮, and all five image fixtures three times from restored starting states"
+        "existing one-run public and purpose-created fixture observations"
       ],
-      "observed_output": "The source inventories record one formal execution per text/word/kanji fixture and one execution per image fixture class; no controlled repeated-run denominator was recorded. The attempted new run was blocked when iPhone Mirroring paused and did not reconnect.",
+      "observed_output": "The source inventories record one formal execution per text/word/kanji fixture and one execution per image fixture class; no controlled repeated-run denominator was recorded. This is retained as a nonblocking limitation because exact Nihongo variability is not a parity requirement.",
       "evidence_paths": [
         "evidence/reference/interaction-traces/search-input-results-inventory.json",
         "evidence/reference/interaction-traces/image-text-inventory.json"
@@ -18624,12 +18573,10 @@
       "provenance_status": "not_separately_bound",
       "resource_ids": [],
       "source_legal_status": "observable_output_only; named upstreams remain governed by resource rows",
-      "confidence": "high_for_gap",
+      "confidence": "high_for_documented_limitation",
       "conflict_ids": [],
-      "blocker_ids": [
-        "BEHAVIOR-BLOCKER-REPEATABILITY"
-      ],
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-CLAIM-BEHAVIOR-OBS-019",
@@ -18681,7 +18628,7 @@
         "hello-world",
         "no-text image"
       ],
-      "observed_output": "Observed materially distinct outcomes include ranked Best/Additional results, Discovered Words, a blank no-match body with the query retained, an example-only result, and a No Text Found alert with recovery. No network error/retry class was captured.",
+      "observed_output": "Observed materially distinct outcomes include ranked Best/Additional results, Discovered Words, a blank no-match body with the query retained, an example-only result, and a No Text Found alert with recovery.",
       "evidence_paths": [
         "evidence/reference/screenshots/search-inventory/fixture-english-think-live.png",
         "evidence/reference/screenshots/search-inventory/fixture-mixed-script-nihon-abc.png",
@@ -18690,10 +18637,11 @@
         "evidence/reference/screenshots/image-text-inventory/state-multi-image-empty-alert.png"
       ],
       "language_capability": "dictionary entries",
-      "provenance_status": "verified_named_upstream",
+      "provenance_status": "selected_pinned_official_export",
       "resource_ids": [
         "SOURCE-COMPONENT-JMDICT",
         "SOURCE-COMPONENT-TATOEBA",
+        "SOURCE-COMPONENT-KANJIVG",
         "SOURCE-COMPONENT-EN-WIKTIONARY",
         "SOURCE-COMPONENT-JA-WIKTIONARY",
         "SOURCE-COMPONENT-SHINJIGEN"
@@ -18701,10 +18649,8 @@
       "source_legal_status": "observable_output_only; named upstreams remain governed by resource rows",
       "confidence": "high_for_observed_classes",
       "conflict_ids": [],
-      "blocker_ids": [
-        "SEARCH-BLOCKER-OFFLINE"
-      ],
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "atomic_parity_input": "ready_for_atomic_ledger"
     }
   ],
   "resource_crosswalk": [
@@ -18712,7 +18658,7 @@
       "resource_id": "SOURCE-COMPONENT-JMDICT",
       "kind": "language-stack-component",
       "identity": "JMdict",
-      "status": "verified_current_first_party_public_evidence",
+      "status": "selected_pinned_official_export",
       "capabilities": [
         "dictionary entries"
       ],
@@ -18732,20 +18678,18 @@
         "LOOKUP-WORD-DETAIL",
         "LOOKUP-NOTE-EDITING"
       ],
-      "source_legal_status": "usable_from a pinned upstream snapshot with retained Language Reference Data provenance and current EDRDG obligations",
-      "confidence": "verified_for_named_identity_at_stated_boundary",
+      "source_legal_status": "pin official JMdict_e.gz with fetch metadata, SHA-256, DTD revision, ent_seq provenance, documented Zenbu transforms, Sources attribution, and at-least-monthly upstream checks under EDRDG CC BY-SA 4.0",
+      "confidence": "historical_or_unknown",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-JMDICT-SNAPSHOT"
-      ],
+      "gap_ids": [],
       "classification": "published_or_inferred_supporting-resource",
-      "atomic_parity_input": "blocked_resource_input"
+      "atomic_parity_input": "ready_resource_input"
     },
     {
       "resource_id": "SOURCE-COMPONENT-TATOEBA",
       "kind": "language-stack-component",
       "identity": "Tatoeba",
-      "status": "verified_current_first_party_public_evidence",
+      "status": "selected_pinned_text_only_exports",
       "capabilities": [
         "example sentences"
       ],
@@ -18759,20 +18703,82 @@
         "LOOKUP-WORD-DETAIL",
         "LOOKUP-NOTE-EDITING"
       ],
-      "source_legal_status": "usable from pinned exports with sentence, contributor, and per-item license provenance; audio is not reusable by default",
-      "confidence": "verified_for_named_identity_at_stated_boundary",
+      "source_legal_status": "pin official Japanese/English detailed-text, direct-link, and Japanese-index exports; retain sentence IDs, contributors, licenses, deterministic Zenbu filtering/order, and exclude Tatoeba audio",
+      "confidence": "historical_or_unknown",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-TATOEBA-SELECTION"
-      ],
+      "gap_ids": [],
       "classification": "published_or_inferred_supporting-resource",
-      "atomic_parity_input": "blocked_resource_input"
+      "atomic_parity_input": "ready_resource_input"
+    },
+    {
+      "resource_id": "SOURCE-COMPONENT-KANJIDIC2",
+      "kind": "language-stack-component",
+      "identity": "EDRDG KANJIDIC2",
+      "status": "selected_pinned_official_export",
+      "capabilities": [
+        "kanji classification and metadata"
+      ],
+      "observed_claim_ids": [],
+      "applicable_surface_ids": [],
+      "source_legal_status": "pin official kanjidic2.xml.gz under EDRDG CC BY-SA 4.0, omit commercial-incompatible SKIP fields, retain field-level provenance, and apply app-owned overrides separately",
+      "confidence": "historical_or_unknown",
+      "conflict_ids": [],
+      "gap_ids": [],
+      "classification": "published_or_inferred_supporting-resource",
+      "atomic_parity_input": "ready_resource_input"
+    },
+    {
+      "resource_id": "SOURCE-COMPONENT-EDRDG-RADICALS",
+      "kind": "language-stack-component",
+      "identity": "EDRDG KRADFILE and RADKFILE",
+      "status": "selected_pinned_official_exports",
+      "capabilities": [
+        "radical composition"
+      ],
+      "observed_claim_ids": [
+        "BEHAVIOR-OBS-013"
+      ],
+      "applicable_surface_ids": [
+        "LOOKUP-KANJI-DETAIL",
+        "LOOKUP-KANJI-ELEMENT-DETAIL"
+      ],
+      "source_legal_status": "pin kradfile.gz and radkfile.gz under EDRDG CC BY-SA 4.0, preserve visible-component semantics, and generate the app picker index deterministically",
+      "confidence": "historical_or_unknown",
+      "conflict_ids": [],
+      "gap_ids": [],
+      "classification": "published_or_inferred_supporting-resource",
+      "atomic_parity_input": "ready_resource_input"
+    },
+    {
+      "resource_id": "SOURCE-COMPONENT-KANJIVG",
+      "kind": "language-stack-component",
+      "identity": "KanjiVG",
+      "status": "selected_pinned_stable_release",
+      "capabilities": [
+        "stroke-order data",
+        "component group hierarchy"
+      ],
+      "observed_claim_ids": [
+        "BEHAVIOR-OBS-019",
+        "BEHAVIOR-OBS-013"
+      ],
+      "applicable_surface_ids": [
+        "LOOKUP-KANJI-DETAIL",
+        "LOOKUP-KANJI-STROKE-ORDER",
+        "LOOKUP-KANJI-ELEMENT-DETAIL"
+      ],
+      "source_legal_status": "pin stable release r20250816 at bd13ffbcc9d85cb86ae98bbbf001d9069220b901 under CC BY-SA 3.0; retain source/modified-asset provenance and render diagrams and timing with Zenbu-owned code",
+      "confidence": "historical_or_unknown",
+      "conflict_ids": [],
+      "gap_ids": [],
+      "classification": "published_or_inferred_supporting-resource",
+      "atomic_parity_input": "ready_resource_input"
     },
     {
       "resource_id": "SOURCE-COMPONENT-CJKI",
       "kind": "language-stack-component",
       "identity": "CJK Dictionary Institute",
-      "status": "verified_installed_build",
+      "status": "verified_optional_commercial_source_not_selected",
       "capabilities": [
         "pitch accent"
       ],
@@ -18783,20 +18789,18 @@
         "LOOKUP-WORD-DETAIL",
         "LOOKUP-NOTE-EDITING"
       ],
-      "source_legal_status": "requires confirmation of the exact delivery and a negotiated license",
+      "source_legal_status": "not selected for the initial Zenbu implementation; CJKI JPD is quote-only and becomes a procurement task only if broader future coverage is approved",
       "confidence": "verified_for_named_identity_at_stated_boundary",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-CJKI-DELIVERY-LICENSE"
-      ],
+      "gap_ids": [],
       "classification": "reachable_or_settings-published_supporting-resource",
-      "atomic_parity_input": "blocked_resource_input"
+      "atomic_parity_input": "ready_resource_input"
     },
     {
       "resource_id": "SOURCE-COMPONENT-UNIDIC",
       "kind": "language-stack-component",
       "identity": "UniDic project",
-      "status": "verified_installed_build",
+      "status": "selected_initial_zenbu_source",
       "capabilities": [
         "pitch accent"
       ],
@@ -18807,20 +18811,18 @@
         "LOOKUP-WORD-DETAIL",
         "LOOKUP-NOTE-EDITING"
       ],
-      "source_legal_status": "potentially reusable after pinning the version, role, and deliberate GPL/LGPL/New BSD license path",
-      "confidence": "verified_for_named_identity_at_stated_boundary",
+      "source_legal_status": "pin UniDic for Contemporary Written Japanese 3.1.0 under New BSD; retain BSD and AUTHORS files and normalize aType, aModType, and aConType behind Language Reference Data",
+      "confidence": "historical_or_unknown",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-UNIDIC-VERSION-ROLE"
-      ],
+      "gap_ids": [],
       "classification": "reachable_or_settings-published_supporting-resource",
-      "atomic_parity_input": "blocked_resource_input"
+      "atomic_parity_input": "ready_resource_input"
     },
     {
       "resource_id": "SOURCE-COMPONENT-EN-WIKTIONARY",
       "kind": "language-stack-component",
       "identity": "English Wiktionary",
-      "status": "verified_installed_build",
+      "status": "verified_reference_source_deferred_post_mvp",
       "capabilities": [
         "kanji etymology and Origin text"
       ],
@@ -18831,20 +18833,18 @@
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-ETYMOLOGY"
       ],
-      "source_legal_status": "underlying revisions can be independently reused with applicable attribution/share-alike obligations; Nihongo's selected expression is not itself a reusable upstream",
+      "source_legal_status": "not selected for MVP; retain as a post-MVP candidate requiring revision-level provenance, attribution/share-alike handling, and original Zenbu expression",
       "confidence": "verified_for_named_identity_at_stated_boundary",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-ETYMOLOGY-REVISION-RIGHTS"
-      ],
+      "gap_ids": [],
       "classification": "reachable_or_settings-published_supporting-resource",
-      "atomic_parity_input": "blocked_resource_input"
+      "atomic_parity_input": "ready_resource_input"
     },
     {
       "resource_id": "SOURCE-COMPONENT-JA-WIKTIONARY",
       "kind": "language-stack-component",
       "identity": "Japanese Wiktionary",
-      "status": "verified_installed_build",
+      "status": "verified_reference_source_deferred_post_mvp",
       "capabilities": [
         "consulted kanji etymology"
       ],
@@ -18855,20 +18855,18 @@
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-ETYMOLOGY"
       ],
-      "source_legal_status": "independent source use requires revision-level provenance and applicable Wikimedia obligations",
+      "source_legal_status": "not selected for MVP; retain as a post-MVP candidate with revision-level provenance and separate review of any non-text media",
       "confidence": "verified_for_named_identity_at_stated_boundary",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-ETYMOLOGY-REVISION-RIGHTS"
-      ],
+      "gap_ids": [],
       "classification": "reachable_or_settings-published_supporting-resource",
-      "atomic_parity_input": "blocked_resource_input"
+      "atomic_parity_input": "ready_resource_input"
     },
     {
       "resource_id": "SOURCE-COMPONENT-SHINJIGEN",
       "kind": "language-stack-component",
       "identity": "Shinjigen",
-      "status": "verified_installed_build",
+      "status": "verified_reference_source_excluded_from_mvp_and_reuse",
       "capabilities": [
         "consulted kanji etymology"
       ],
@@ -18879,20 +18877,18 @@
         "LOOKUP-KANJI-DETAIL",
         "LOOKUP-KANJI-ETYMOLOGY"
       ],
-      "source_legal_status": "unavailable for direct reuse absent permission or a clean-room fact-only derivation",
+      "source_legal_status": "excluded from MVP and from reuse; post-MVP issue #91 may evaluate whether to seek permission, but Zenbu must not reproduce or adapt Shinjigen text or images without it",
       "confidence": "verified_for_named_identity_at_stated_boundary",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-ETYMOLOGY-REVISION-RIGHTS"
-      ],
+      "gap_ids": [],
       "classification": "reachable_or_settings-published_supporting-resource",
-      "atomic_parity_input": "blocked_resource_input"
+      "atomic_parity_input": "ready_resource_input"
     },
     {
       "resource_id": "SOURCE-COMPONENT-GOOGLE-OCR",
       "kind": "language-stack-component",
       "identity": "Google; public Nihongo evidence identifies Google Cloud Vision",
-      "status": "verified_installed_build_selected_provider",
+      "status": "verified_reference_provider_excluded_from_offline_zenbu_baseline",
       "capabilities": [
         "online Image Text Recognition"
       ],
@@ -18906,20 +18902,18 @@
         "IOS-FILES-PICKER",
         "LOOKUP-IMAGE-TEXT-RESULT"
       ],
-      "source_legal_status": "available as a contracted API with explicit network and image-upload privacy behavior",
+      "source_legal_status": "not selected; Zenbu's approved baseline uses on-device Image Text Recognition",
       "confidence": "verified_for_named_identity_at_stated_boundary",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-ONLINE-OCR-CONFIG"
-      ],
+      "gap_ids": [],
       "classification": "reachable_or_settings-published_supporting-resource",
-      "atomic_parity_input": "blocked_resource_input"
+      "atomic_parity_input": "ready_resource_input"
     },
     {
       "resource_id": "SOURCE-COMPONENT-OCR-SPACE",
       "kind": "language-stack-component",
       "identity": "OCR.space",
-      "status": "verified_installed_build_alternate_provider",
+      "status": "verified_reference_provider_excluded_from_offline_zenbu_baseline",
       "capabilities": [
         "online Image Text Recognition"
       ],
@@ -18933,20 +18927,18 @@
         "IOS-FILES-PICKER",
         "LOOKUP-IMAGE-TEXT-RESULT"
       ],
-      "source_legal_status": "available under the selected service plan and terms with explicit network and image-upload privacy behavior",
+      "source_legal_status": "not selected; Zenbu's approved baseline uses on-device Image Text Recognition",
       "confidence": "verified_for_named_identity_at_stated_boundary",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-ONLINE-OCR-CONFIG"
-      ],
+      "gap_ids": [],
       "classification": "reachable_or_settings-published_supporting-resource",
-      "atomic_parity_input": "blocked_resource_input"
+      "atomic_parity_input": "ready_resource_input"
     },
     {
       "resource_id": "SOURCE-COMPONENT-ON-DEVICE-OCR",
       "kind": "language-stack-component",
-      "identity": "On Device",
-      "status": "verified_feature_exact_component_unknown",
+      "identity": "Apple Vision",
+      "status": "selected_zenbu_substitute_reference_component_unknown_nonblocking",
       "capabilities": [
         "offline Image Text Recognition"
       ],
@@ -18961,20 +18953,18 @@
         "IOS-FILES-PICKER",
         "LOOKUP-IMAGE-TEXT-RESULT"
       ],
-      "source_legal_status": "unknown until the implementation is identified; Apple Vision remains only a candidate",
-      "confidence": "verified_for_named_identity_at_stated_boundary",
+      "source_legal_status": "use Apple Vision behind the Image Text Recognition boundary and verify supported revisions, languages, and deterministic fixtures independently",
+      "confidence": "historical_or_unknown",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-OFFLINE-OCR-COMPONENT"
-      ],
+      "gap_ids": [],
       "classification": "reachable_or_settings-published_supporting-resource",
-      "atomic_parity_input": "blocked_resource_input"
+      "atomic_parity_input": "ready_resource_input"
     },
     {
       "resource_id": "SOURCE-COMPONENT-SYSTEM-SPEECH",
       "kind": "language-stack-component",
       "identity": "Apple system speech stack",
-      "status": "inferred_not_named_by_nihongo",
+      "status": "selected_zenbu_platform_substitute_reference_api_unknown_nonblocking",
       "capabilities": [
         "Speech Synthesis"
       ],
@@ -18986,20 +18976,18 @@
         "LOOKUP-WORD-DETAIL",
         "LOOKUP-NOTE-EDITING"
       ],
-      "source_legal_status": "platform APIs are available, but equivalence is unproved",
-      "confidence": "inferred",
+      "source_legal_status": "use AVSpeechSynthesizer with an available Japanese system voice as the app-owned fallback; exact Nihongo equivalence is not claimed",
+      "confidence": "historical_or_unknown",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-SPEECH-SYNTHESIS-IMPLEMENTATION"
-      ],
+      "gap_ids": [],
       "classification": "published_or_inferred_supporting-resource",
-      "atomic_parity_input": "blocked_resource_input"
+      "atomic_parity_input": "ready_resource_input"
     },
     {
       "resource_id": "SOURCE-COMPONENT-WANIKANI-TOFUGU-AUDIO",
       "kind": "language-stack-component",
       "identity": "WaniKani / Tofugu pronunciation audio",
-      "status": "historical_observation_not_currently_reconfirmed",
+      "status": "verified_settings_attribution_and_selected_pinned_open_release",
       "capabilities": [
         "human pronunciation recordings"
       ],
@@ -19011,20 +18999,18 @@
         "LOOKUP-WORD-DETAIL",
         "LOOKUP-NOTE-EDITING"
       ],
-      "source_legal_status": "do not claim or reuse exact clips until current attribution, clip identity, and rights are proven",
-      "confidence": "historical_or_unknown",
+      "source_legal_status": "CC BY-SA 4.0; retain per-file provenance, attribute both Tofugu and WaniKani, ship license text, identify modifications, and keep assets separable",
+      "confidence": "verified_for_named_identity_at_stated_boundary",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-HUMAN-AUDIO-SOURCE-RIGHTS"
-      ],
-      "classification": "historical_unconfirmed",
-      "atomic_parity_input": "blocked_resource_input"
+      "gap_ids": [],
+      "classification": "reachable_or_settings-published_supporting-resource",
+      "atomic_parity_input": "ready_resource_input"
     },
     {
       "resource_id": "SOURCE-COMPONENT-KANJI-ALIVE-AUDIO",
       "kind": "language-stack-component",
       "identity": "Kanji Alive audio",
-      "status": "historical_observation_not_currently_reconfirmed",
+      "status": "verified_settings_attribution_and_selected_pinned_open_release",
       "capabilities": [
         "human pronunciation recordings"
       ],
@@ -19036,14 +19022,12 @@
         "LOOKUP-WORD-DETAIL",
         "LOOKUP-NOTE-EDITING"
       ],
-      "source_legal_status": "do not claim or reuse exact clips until current attribution, clip identity, exceptions, and rights are proven",
-      "confidence": "historical_or_unknown",
+      "source_legal_status": "CC BY 4.0; retain per-file provenance, attribution, license text, and modification records",
+      "confidence": "verified_for_named_identity_at_stated_boundary",
       "conflict_ids": [],
-      "gap_ids": [
-        "PROVENANCE-GAP-HUMAN-AUDIO-SOURCE-RIGHTS"
-      ],
-      "classification": "historical_unconfirmed",
-      "atomic_parity_input": "blocked_resource_input"
+      "gap_ids": [],
+      "classification": "reachable_or_settings-published_supporting-resource",
+      "atomic_parity_input": "ready_resource_input"
     }
   ],
   "design_token_index": "design-token-index.json",

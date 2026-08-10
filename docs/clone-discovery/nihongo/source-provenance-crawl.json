@@ -10,7 +10,8 @@
     {"state_id": "PROVENANCE-STATE-004", "surface": "Kanji Etymology FAQ", "name": "source section fully visible", "evidence": ["evidence/reference/screenshots/source-provenance/state-kanji-etymology-sources-complete.jpg"]},
     {"state_id": "PROVENANCE-STATE-005", "surface": "Kanji Etymology FAQ", "name": "terminal explanatory section", "evidence": ["evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg"]},
     {"state_id": "PROVENANCE-STATE-006", "surface": "Voice settings", "name": "human-audio fallback and system-voice configuration", "evidence": ["evidence/reference/screenshots/source-provenance/state-voice-source-behavior.jpg"]},
-    {"state_id": "PROVENANCE-STATE-007", "surface": "Photo Lookup settings", "name": "OCR provider selection", "evidence": ["evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg"]}
+    {"state_id": "PROVENANCE-STATE-007", "surface": "Photo Lookup settings", "name": "OCR provider selection", "evidence": ["evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg"]},
+    {"state_id": "PROVENANCE-STATE-008", "surface": "Voice settings", "name": "WaniKani, Tofugu, and Kanji Alive audio attribution", "evidence": ["evidence/reference/screenshots/source-provenance/state-settings-voice-audio-attribution.jpg"]}
   ],
   "actions": [
     {"action_id": "PROVENANCE-ACTION-001", "source": "empty Search root", "trigger": "tap Settings tab", "result": "PROVENANCE-STATE-001", "disposition": "traversed"},
@@ -25,16 +26,17 @@
     {"action_id": "PROVENANCE-ACTION-010", "source": "PROVENANCE-STATE-001", "trigger": "tap Photo Lookup", "result": "PROVENANCE-STATE-007", "disposition": "traversed"},
     {"action_id": "PROVENANCE-ACTION-011", "source": "PROVENANCE-STATE-007", "trigger": "read selected and alternate OCR options without changing selection", "result": "PROVENANCE-STATE-007 unchanged", "disposition": "same_destination_as"},
     {"action_id": "PROVENANCE-ACTION-012", "source": "PROVENANCE-STATE-007", "trigger": "tap Settings back control", "result": "PROVENANCE-STATE-001", "disposition": "traversed"},
+    {"action_id": "PROVENANCE-ACTION-016", "source": "PROVENANCE-STATE-006", "trigger": "scroll to the terminal Voice Settings section", "result": "PROVENANCE-STATE-008", "disposition": "traversed"},
     {"action_id": "PROVENANCE-ACTION-013", "source": "PROVENANCE-STATE-001", "trigger": "tap Nihongo Pro", "result": "unrelated entitlement surface; immediately dismissed and no evidence retained", "disposition": "excluded_with_reason"},
     {"action_id": "PROVENANCE-ACTION-014", "source": "PROVENANCE-STATE-001", "trigger": "tap Search tab", "result": "empty Search root restored", "disposition": "traversed"},
     {"action_id": "PROVENANCE-ACTION-015", "source": "PROVENANCE-STATE-001", "trigger": "open any other Settings destination", "result": "not exercised because unrelated Settings behavior is outside the approved boundary", "disposition": "excluded_with_reason"}
   ],
   "counts": {
-    "states": 7,
-    "actions": 15,
-    "traversed_actions": 12,
+    "states": 8,
+    "actions": 16,
+    "traversed_actions": 13,
     "same_destination_actions": 1,
     "excluded_actions": 2,
-    "privacy_reviewed_screenshots": 7
+    "privacy_reviewed_screenshots": 8
   }
 }

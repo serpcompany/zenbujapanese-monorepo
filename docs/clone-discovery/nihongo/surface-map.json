@@ -3,9 +3,9 @@
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
   "scope_status": "stakeholder_approved_blocking_contract",
   "counts": {
-    "blocking": 15,
+    "blocking": 14,
     "navigation_support": 1,
-    "excluded": 7,
+    "excluded": 8,
     "total": 23
   },
   "surfaces": [
@@ -193,10 +193,11 @@
       "scope_basis": "stakeholder_approved",
       "reachability_status": "reached",
       "entry_paths": ["Select linked kanji from word detail", "Select linked kanji from an element detail"],
-      "states_observed": ["complete and missing metadata", "simple and complex glyphs", "multiple readings", "multiple and historical elements", "history collapsed", "history expanded", "related-word list"],
-      "controls": ["Back", "Stroke-order entry", "Reading-linked words", "Element cards", "Show History", "Related-word rows"],
-      "content_sections": ["Glyph and stroke count", "grade", "JLPT", "meanings", "on and kun readings", "elements", "origin", "historical glyph progression", "related words"],
-      "outgoing_surface_ids": ["LOOKUP-WORD-DETAIL", "LOOKUP-KANJI-STROKE-ORDER", "LOOKUP-KANJI-ELEMENT-DETAIL", "LOOKUP-KANJI-ETYMOLOGY"],
+      "states_observed": ["complete and missing metadata", "simple and complex glyphs", "multiple readings", "multiple elements", "related-word list"],
+      "controls": ["Back", "Stroke-order entry", "Reading-linked words", "Element cards", "Related-word rows"],
+      "content_sections": ["Glyph and stroke count", "grade", "JLPT", "meanings", "on and kun readings", "elements", "related words"],
+      "outgoing_surface_ids": ["LOOKUP-WORD-DETAIL", "LOOKUP-KANJI-STROKE-ORDER", "LOOKUP-KANJI-ELEMENT-DETAIL"],
+      "post_mvp_content": {"tracking_issue":"https://github.com/serpcompany/zenbujapanese-monorepo/issues/91","controls":["Show History","Etymology classification explanation and Learn More"],"sections":["Origin","historical glyph progression"],"disposition":"excluded from the MVP contract while retained as observed reference evidence"},
       "evidence_ids": ["EVIDENCE-RECON-SCREENSET-001", "EVIDENCE-RECON-TRACE-001"],
       "evidence_paths": ["kanji-crawl.json", "kanji-evidence-manifest.json"]
     },
@@ -233,14 +234,15 @@
       "surface_id": "LOOKUP-KANJI-ETYMOLOGY",
       "name": "Kanji Etymology reference",
       "kind": "navigation_destination",
-      "scope": "blocking",
-      "scope_basis": "newly_observed_Search_rooted_destination_under_stakeholder_recursive_contract",
+      "scope": "excluded",
+      "scope_basis": "stakeholder_deferred_etymology_and_origin_content_to_post_mvp_issue_91_on_2026_08_10",
       "reachability_status": "reached",
       "entry_paths": ["Select a Kanji Detail etymology classification info control, then Learn More"],
       "states_observed": ["top", "scrolled definitions", "terminal Radical section"],
       "controls": ["Back", "Scroll"],
       "content_sections": ["Pictograph", "Ideograph", "Shuowen", "Ideographic and Phonosemantic compound", "Shinjitai", "Kyujitai", "Radical"],
       "outgoing_surface_ids": ["LOOKUP-KANJI-DETAIL"],
+      "post_mvp_tracking_issue": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/91",
       "evidence_paths": ["kanji-crawl.json", "kanji-evidence-manifest.json"]
     },
     {

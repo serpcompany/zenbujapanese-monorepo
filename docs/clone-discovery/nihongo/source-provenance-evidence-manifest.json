@@ -9,8 +9,9 @@
     {"path": "evidence/reference/screenshots/source-provenance/state-kanji-etymology-terminal.jpg", "sha256": "065253218b58ce17eb6795635a18fee899673f0e77314c150786275bc6dec37b"},
     {"path": "evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg", "sha256": "0a1ca06a8f2ded2462328391419d74750777ab501871ae5966367be353cfd5c4"},
     {"path": "evidence/reference/screenshots/source-provenance/state-settings-source-entry-points.jpg", "sha256": "e6393c45156a732e7a9855a90cb13ad670649ad7747ca5fd6a9c6e26f38bd70d"},
-    {"path": "evidence/reference/screenshots/source-provenance/state-voice-source-behavior.jpg", "sha256": "5029deb2757d1a9b03edea315bf31cf4fae9b5968b317ad10d46c5ed52d5a138"}
+    {"path": "evidence/reference/screenshots/source-provenance/state-voice-source-behavior.jpg", "sha256": "5029deb2757d1a9b03edea315bf31cf4fae9b5968b317ad10d46c5ed52d5a138"},
+    {"path": "evidence/reference/screenshots/source-provenance/state-settings-voice-audio-attribution.jpg", "sha256": "4b0e9a29b688726e4bc1ab4c433421df309d91c51691e2718b53a71e711778fc"}
   ],
-  "artifact_count": 7,
+  "artifact_count": 8,
   "privacy": "Every retained screenshot contains only app-owned Settings UI, public source/provider text, or system voice labels. The unrelated entitlement surface was not retained. No account identity, receipt, credential, personal history, photo, file, or clipboard payload is present."
 }

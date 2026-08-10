@@ -23,16 +23,16 @@
     {"class_id":"BEHAVIOR-CLASS-006","name":"ranking and section ordering","observation_ids":["BEHAVIOR-OBS-006"],"status":"observed"},
     {"class_id":"BEHAVIOR-CLASS-007","name":"deinflection","observation_ids":["BEHAVIOR-OBS-007"],"status":"observed"},
     {"class_id":"BEHAVIOR-CLASS-008","name":"conjugation display","observation_ids":["BEHAVIOR-OBS-008"],"status":"observed"},
-    {"class_id":"BEHAVIOR-CLASS-009","name":"pitch matching","observation_ids":["BEHAVIOR-OBS-009"],"status":"blocked","blocker_ids":["BEHAVIOR-BLOCKER-PITCH-MATCHING"]},
+    {"class_id":"BEHAVIOR-CLASS-009","name":"pitch presentation","observation_ids":["BEHAVIOR-OBS-009"],"status":"observed_at_approved_source_boundary"},
     {"class_id":"BEHAVIOR-CLASS-010","name":"tokenization and segmentation effects","observation_ids":["BEHAVIOR-OBS-010"],"status":"observed_with_limitation"},
     {"class_id":"BEHAVIOR-CLASS-011","name":"example selection","observation_ids":["BEHAVIOR-OBS-011"],"status":"observed"},
     {"class_id":"BEHAVIOR-CLASS-012","name":"handwriting recognition","observation_ids":["BEHAVIOR-OBS-012"],"status":"observed_with_boundary_gaps"},
     {"class_id":"BEHAVIOR-CLASS-013","name":"radical composition","observation_ids":["BEHAVIOR-OBS-013"],"status":"observed_with_boundary_gaps"},
     {"class_id":"BEHAVIOR-CLASS-014","name":"OCR grouping","observation_ids":["BEHAVIOR-OBS-014"],"status":"observed_with_limitation"},
-    {"class_id":"BEHAVIOR-CLASS-015","name":"pronunciation recordings","observation_ids":["BEHAVIOR-OBS-015"],"status":"blocked","blocker_ids":["WORD-BLOCKER-AUDIO-SEMANTICS","WORD-BLOCKER-AUDIO-FIXTURE"]},
-    {"class_id":"BEHAVIOR-CLASS-016","name":"speech synthesis and readback","observation_ids":["BEHAVIOR-OBS-016"],"status":"blocked","blocker_ids":["BEHAVIOR-BLOCKER-SPEECH-SOURCE","WORD-BLOCKER-AUDIO-SEMANTICS"]},
-    {"class_id":"BEHAVIOR-CLASS-017","name":"offline and network dependence","observation_ids":["BEHAVIOR-OBS-017"],"status":"blocked","blocker_ids":["SEARCH-BLOCKER-OFFLINE","WORD-BLOCKER-OFFLINE","KANJI-BLOCKER-OFFLINE"]},
-    {"class_id":"BEHAVIOR-CLASS-018","name":"repeatability and variability","observation_ids":["BEHAVIOR-OBS-018"],"status":"blocked","blocker_ids":["BEHAVIOR-BLOCKER-REPEATABILITY"]},
+    {"class_id":"BEHAVIOR-CLASS-015","name":"pronunciation playback","observation_ids":["BEHAVIOR-OBS-015"],"status":"observed_at_approved_simple_playback_boundary"},
+    {"class_id":"BEHAVIOR-CLASS-016","name":"pronunciation source boundary and readback","observation_ids":["BEHAVIOR-OBS-016"],"status":"observed_at_approved_simple_playback_boundary"},
+    {"class_id":"BEHAVIOR-CLASS-017","name":"offline capability","observation_ids":["BEHAVIOR-OBS-017"],"status":"approved_product_contract"},
+    {"class_id":"BEHAVIOR-CLASS-018","name":"repeatability and variability","observation_ids":["BEHAVIOR-OBS-018"],"status":"documented_nonblocking_limitation"},
     {"class_id":"BEHAVIOR-CLASS-019","name":"success, no-match, and error outcomes","observation_ids":["BEHAVIOR-OBS-019"],"status":"observed_with_error_gap","blocker_ids":["SEARCH-BLOCKER-OFFLINE"]}
   ]
 }

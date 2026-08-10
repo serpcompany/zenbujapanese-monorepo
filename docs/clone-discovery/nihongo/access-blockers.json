@@ -43,14 +43,14 @@
   {
     "id": "ACCESS-BLOCKER-PERMISSIONS",
     "field": "camera, Photos, Files, and clipboard permission/access states",
-    "status": "partially_superseded_by_scope_decision_and_files_observation",
+    "status": "reclassified_not_blocking_current_destination",
     "owner": "discovery driver with device-owner supervision",
     "affected_records": [
       "reference-authorities.json",
       "environment-matrix.json",
       "future image and input journey rows"
     ],
-    "completed_independent_work": "Files single and multiple selection were observed with isolated synthetic fixtures. The private-access Photo picker opened and was cancelled without selection or retained evidence. The stakeholder then waived Camera and Photo Library source mechanics for this discovery outcome.",
+    "completed_independent_work": "Files single and multiple selection were observed with isolated synthetic fixtures, and IMG-FIXTURE-001 was opened again from On My iPhone during issue 87. The private-access Photo picker opened and was cancelled without selection or retained evidence. The stakeholder waived Camera and Photo Library source mechanics; no current clipboard-input claim exists, and Copy Text output was proved without inspecting a personal clipboard.",
     "fallback": "Keep future clipboard-input permission claims unknown; Camera and Photos rows are excluded under the recorded stakeholder scope decision.",
     "resume_procedure": [
       "For any future clipboard-input claim, replace the Mac clipboard with a known synthetic value before focusing Search.",
@@ -65,22 +65,20 @@
   {
     "id": "IMAGE-BLOCKER-COPY-TEXT-OUTPUT",
     "field": "device-local Copy Text payload from an Image Text result",
-    "status": "not_readable_through_current_capture_authority",
+    "status": "resolved_by_device_local_paste_evidence",
     "owner": "discovery driver with a device-local paste target or semantic clipboard authority",
     "affected_records": [
       "IMAGE-ACTION-012"
     ],
-    "completed_independent_work": "Copy Text was selected on a purpose-created result and visibly dismissed its menu. Reading the Mac clipboard returned a pre-existing Mac value, so Universal Clipboard cannot be used as evidence of Nihongo's copied payload.",
-    "fallback": "Use visible recognition overlays and token selection as parsing evidence; do not claim the exact Copy Text serialization.",
+    "completed_independent_work": "Copy Text was selected for IMG-FIXTURE-001 and pasted once into a new device-local note. The five-line payload, order, whitespace removal, punctuation, English-region inclusion, and hyphen preservation are recorded in device-input-gesture-evidence.json. The disposable note was deleted.",
+    "fallback": "None for IMG-FIXTURE-001; exact multi-image concatenation remains a separate future claim if required.",
     "resume_procedure": [
       "Open IMG-FIXTURE-001 through Files and select Copy Text.",
       "Paste into an isolated, empty, device-local text destination without invoking the Mac Universal Clipboard.",
       "Capture and compare exact text, order, whitespace, punctuation, omitted non-Japanese content, and multi-image behavior, then delete the synthetic paste."
     ],
     "blocks_reconnaissance": false,
-    "blocks_final_rows": [
-      "Exact Image Text Copy Text serialization"
-    ]
+    "blocks_final_rows": []
   },
   {
     "id": "ACCESS-BLOCKER-CONTENT-SIZE",
@@ -105,22 +103,14 @@
   {
     "id": "ACCESS-BLOCKER-APP-SEMANTICS",
     "field": "Nihongo accessibility hierarchy",
-    "status": "unavailable_with_current_automation",
-    "owner": "discovery driver with device-owner assistance",
-    "affected_records": [
-      "future accessibility parity rows"
-    ],
-    "completed_independent_work": "iPhone Mirroring and Xcode Accessibility Inspector were both attempted against the pinned runtime; only the mirroring shell tree was returned.",
-    "fallback": "Use a device-owner-assisted VoiceOver traversal and keep screenshots classified as visual rather than semantic evidence.",
-    "resume_procedure": [
-      "Retry Accessibility Inspector with Nihongo foregrounded and iPhone Mirroring disconnected.",
-      "If elements remain unavailable, traverse each approved Search surface with VoiceOver and record labels, traits, focus order, actions, and transitions using synthetic content.",
-      "Keep each accessibility row blocked until that environment-bound evidence exists."
-    ],
+    "status": "resolved_nonblocking_by_stakeholder_scope_decision",
+    "owner": "product stakeholder",
+    "affected_records": [],
+    "completed_independent_work": "iPhone Mirroring and Xcode Accessibility Inspector were attempted again while the pinned physical runtime was paired, available, and Nihongo had been foregrounded. Mirroring still returned only its macOS shell tree, and Accessibility Inspector still selected no Nihongo element.",
+    "fallback": "Use Zenbu-owned accessible semantics and verify those semantics directly; do not copy or claim Nihongo's unknown hierarchy.",
+    "resume_procedure": [],
     "blocks_reconnaissance": false,
-    "blocks_final_rows": [
-      "All future accessibility rows"
-    ]
+    "blocks_final_rows": []
   },
   {
     "id": "SEARCH-BLOCKER-HISTORY-DELETION",
@@ -131,7 +121,7 @@
       "SEARCH-ACTION-027",
       "JOURNEY-RERUN-RECENT-SEARCH"
     ],
-    "completed_independent_work": "A known session-created もんだい row was rerun without inspecting older history. Clear All was ruled out because it would delete pre-existing data.",
+    "completed_independent_work": "A known session-created もんだい row was rerun without opening older history, and issue 87 created the disposable tab row as the newest entry. Clear All remains ruled out because it would delete pre-existing data. Action-time confirmation for the single disposable row has been requested.",
     "fallback": "Retain the exact row-removal action as untested; do not infer swipe affordance or persistence.",
     "resume_procedure": [
       "Create or identify the current top session-created Search row without opening any older row.",
@@ -146,128 +136,89 @@
   {
     "id": "SEARCH-BLOCKER-SOFTWARE-KEYBOARD",
     "field": "standard iOS software-keyboard appearance and dismissal",
-    "status": "unavailable_with_current_mirroring_external_keyboard_state",
-    "owner": "device owner with discovery driver",
-    "affected_records": [
-      "SEARCH-ACTION-029",
-      "future keyboard visual and accessibility rows"
-    ],
-    "completed_independent_work": "Focus, Cancel, clear, hardware-key input, handwriting, radical, and input-mode accessory behavior were captured. Selecting keyboard mode hid the custom panel but did not expose a software keyboard in the mirrored runtime.",
-    "fallback": "Treat typed-input behavior as observed but keep software-keyboard geometry, keys, input source, and dismissal unknown.",
-    "resume_procedure": [
-      "Disconnect any external keyboard path from iPhone Mirroring or use the physical iPhone with the software keyboard forced visible.",
-      "With only a synthetic query visible, capture appearance, input-source switching, dismissal, Return/Search, and focus restoration.",
-      "Use a privacy crop if recent history is visible above the keyboard."
-    ],
+    "status": "resolved_platform_owned_standard_iphone_keyboard",
+    "owner": "product stakeholder",
+    "affected_records": [],
+    "completed_independent_work": "The standard software keyboard was visible during the 2026-08-06 Search-history probe. The stakeholder clarified that it is the ordinary system iPhone keyboard governed by the user's iPhone settings, not a Nihongo-specific parity surface.",
+    "fallback": "Use the standard iOS keyboard and honor the user's platform keyboard settings.",
+    "resume_procedure": [],
     "blocks_reconnaissance": false,
-    "blocks_final_rows": [
-      "Future standard software-keyboard visual and interaction rows"
-    ]
+    "blocks_final_rows": []
   },
   {
     "id": "SEARCH-BLOCKER-RESULT-SCROLL",
     "field": "long Search-result list scrolling and terminal extent",
-    "status": "current_computer_control_could_not_deliver_a_verified_scroll",
+    "status": "resolved_by_bounded_terminal_scroll_and_restoration_evidence",
     "owner": "device owner or discovery driver with a working physical swipe authority",
     "affected_records": [
       "SEARCH-ACTION-030",
       "LOOKUP-RESULTS recursive action closure"
     ],
-    "completed_independent_work": "Long result classes were captured at the top, and visible rows were inventoried. The available scroll command did not move the mirrored list; a coordinate attempt activated an Additional Match and proved its Word Detail edge instead.",
-    "fallback": "Do not claim terminal-row, pagination, lazy-load, or scroll-restoration behavior.",
+    "completed_independent_work": "The public tab result list scrolled after its Additional Matches area was explicitly focused. Repeated scrolls reached a stable terminal viewport ending in tabbed browsing. Opening that terminal row and selecting Back restored the same terminal viewport and scrollbar position.",
+    "fallback": "None for bounded tab-result scrolling, terminal extent, and restoration; no claim is made that every possible query has the same denominator.",
     "resume_procedure": [
       "Open the synthetic もんだい or think result set on the physical iPhone.",
       "Swipe the results list to its terminal extent without selecting a row, capturing each newly revealed layout or control.",
       "Return from one newly revealed result, record scroll-position restoration, and repeat until no new rows or controls appear."
     ],
-    "blocks_reconnaissance": true,
-    "blocks_final_rows": [
-      "Search-result scrolling",
-      "Search-result terminal extent",
-      "Search-result scroll restoration"
-    ]
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
   },
   {
     "id": "SEARCH-BLOCKER-OFFLINE",
     "field": "Search offline, failure, and retry states",
-    "status": "network_transition_not_authorized_or_safely_injected_in_this_session",
-    "owner": "device owner with discovery driver",
-    "affected_records": [
-      "SEARCH-ACTION-033",
-      "SEARCH-ACTION-035",
-      "JOURNEY-SEARCH-TEXT failure and recovery"
-    ],
+    "status": "resolved_by_stakeholder_offline_contract",
+    "owner": "product stakeholder",
+    "affected_records": [],
     "completed_independent_work": "A deterministic no-match state and all required online fixture classes were captured. No distinct loading state persisted long enough to capture.",
-    "fallback": "Keep offline, transport failure, stale data, and retry behavior unknown; do not equate the blank no-match state with a network error.",
-    "resume_procedure": [
-      "Confirm a network-isolation method that will not strand iPhone Mirroring, or perform the probe directly on the physical iPhone.",
-      "Record the connected starting state, run one cached-looking and one uncached synthetic query, isolate network access, and repeat them.",
-      "Capture immediate and settled states, any error copy or retry control, restoration after reconnect, and whether earlier results persist.",
-      "Restore the recorded network state before ending the session."
-    ],
-    "blocks_reconnaissance": true,
-    "blocks_final_rows": [
-      "Search offline behavior",
-      "Search failure behavior",
-      "Search retry and recovery"
-    ]
+    "fallback": "Zenbu Search is offline-capable. Exact Nihongo transport-failure, stale, and retry presentation is not a parity requirement.",
+    "resume_procedure": [],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
   },
   {
     "id": "WORD-BLOCKER-AUDIO-SEMANTICS",
     "field": "audible word and sentence pronunciation behavior",
-    "status": "audio_stream_unavailable_to_current_capture_authority",
-    "owner": "device owner with a synchronized audio-capable recorder",
-    "affected_records": ["WORD-ACTION-003", "WORD-ACTION-007", "JOURNEY-PLAY-WORD-PRONUNCIATION", "JOURNEY-PLAY-EXAMPLE-AUDIO"],
-    "completed_independent_work": "Visible word and sentence speaker controls were exercised. No persistent visible playback state was established, so audible content, voice, timing, overlap, interruption, completion, and replay remain unknown.",
-    "fallback": "Keep audio claims blocked; a static speaker icon is not evidence of sound content or playback behavior.",
-    "resume_procedure": [
-      "Attach an authorized local audio recorder that captures iPhone Mirroring or physical-device output without uploading content.",
-      "Use public fixtures いる, 問題, and 蝶々 and record the settled state before each action.",
-      "Capture word and sentence playback start, duration, completion, repeated taps, overlap, interruption by navigation/backgrounding, and recovery.",
-      "Hash the trace and retain only privacy-safe derived observations in the dossier."
-    ],
-    "blocks_reconnaissance": true,
-    "blocks_final_rows": ["All word-pronunciation and example-audio rows"]
+    "status": "resolved_by_simple_playback_contract",
+    "owner": "product stakeholder",
+    "affected_records": [],
+    "completed_independent_work": "Visible word and sentence speaker controls were exercised. The stakeholder defined the required contract as: select Play and hear pronunciation; exact timing, overlap, interruption, routing, and visual playback state are not reference-parity requirements.",
+    "fallback": "Use a licensed recording when available and platform Speech Synthesis as a simple audible fallback.",
+    "resume_procedure": [],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
   },
   {
     "id": "WORD-BLOCKER-AUDIO-FIXTURE",
     "field": "entries with absent, unavailable, or disabled word/sentence audio",
-    "status": "no_representative_fixture_established",
-    "owner": "discovery driver with audio-capable evidence",
-    "affected_records": ["WORD-ACTION-030"],
+    "status": "resolved_by_universal_simple_playback_contract",
+    "owner": "product stakeholder",
+    "affected_records": [],
     "completed_independent_work": "Available-looking controls were observed across common, uncommon, verb, noun, and adjective fixtures.",
-    "fallback": "Do not claim that audio is universally available or infer disabled-state appearance.",
-    "resume_procedure": [
-      "Search deliberately rare public entries and example sets until an absent or disabled word and sentence audio class is found or a documented denominator proves none exists.",
-      "Capture the full settled state and attempt the control where present.",
-      "Record separate unavailable-word and unavailable-sentence classes."
-    ],
-    "blocks_reconnaissance": true,
-    "blocks_final_rows": ["Unavailable word audio", "Unavailable sentence audio"]
+    "fallback": "Where a licensed recording is unavailable, synthesize the displayed Japanese so selecting Play still produces pronunciation.",
+    "resume_procedure": [],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
   },
   {
     "id": "WORD-BLOCKER-SOFTWARE-KEYBOARD",
     "field": "note editor software-keyboard appearance and dismissal",
-    "status": "unavailable_with_current_mirroring_external_keyboard_state",
-    "owner": "device owner with discovery driver",
-    "affected_records": ["WORD-ACTION-026", "LOOKUP-NOTE-EDITING keyboard state"],
-    "completed_independent_work": "Empty and populated focus states, external-key input, Done, Back auto-save, persistence, deletion, and restoration were captured.",
-    "fallback": "Keep keyboard geometry, input-source controls, Return behavior, and dismissal unknown.",
-    "resume_procedure": [
-      "Force the software keyboard visible on the physical iPhone without exposing private history.",
-      "Open Add Note on a public fixture and capture empty, typing, multiline, dismissal, refocus, and Done states.",
-      "Delete the synthetic note and verify restoration."
-    ],
-    "blocks_reconnaissance": true,
-    "blocks_final_rows": ["Note software-keyboard visual and interaction rows"]
+    "status": "resolved_platform_owned_standard_iphone_keyboard",
+    "owner": "product stakeholder",
+    "affected_records": [],
+    "completed_independent_work": "Empty and populated focus states, external-key input, Done, Back auto-save, persistence, deletion, and restoration were captured. Issue 87 revalidated that the restored mirroring route still suppresses the standard software keyboard at the environment level; another note mutation would not change that authority limitation.",
+    "fallback": "Use the standard iOS keyboard and honor the user's platform keyboard settings.",
+    "resume_procedure": [],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
   },
   {
     "id": "WORD-BLOCKER-GESTURES",
     "field": "interactive swipe-back and long-press behavior",
-    "status": "current_computer_control_could_not_deliver_verified_gestures",
+    "status": "minimal_external_dependency_direct_touch_gesture_trace",
     "owner": "device owner or discovery driver with working physical-touch capture",
     "affected_records": ["WORD-ACTION-027", "WORD-ACTION-028"],
-    "completed_independent_work": "Back controls, scrolling, taps, and nested navigation cycles were captured. A controller drag did not produce a verified swipe-back transition, and no duration-controlled long press was available.",
+    "completed_independent_work": "Back controls, scrolling, taps, and nested navigation cycles were captured. Issue 87 sent two additional left-edge controller drags from a public Word Detail state; neither produced a verified transition. The available controller still exposes no duration-controlled long press.",
     "fallback": "Do not infer gesture behavior from standard iOS conventions.",
     "resume_procedure": [
       "Use the physical iPhone with a synchronized screen recording and public fixtures only.",
@@ -280,32 +231,27 @@
   {
     "id": "WORD-BLOCKER-OFFLINE",
     "field": "word/detail, examples, conjugations, notes, and audio offline/failure/retry behavior",
-    "status": "network_transition_not_authorized_or_safely_injected_in_this_session",
-    "owner": "device owner with discovery driver",
-    "affected_records": ["WORD-ACTION-029"],
+    "status": "resolved_by_stakeholder_offline_contract",
+    "owner": "product stakeholder",
+    "affected_records": [],
     "completed_independent_work": "All retained fixtures were observed in the normal connected state. No distinct loading, error, retry, or stale state was claimed.",
-    "fallback": "Do not equate locally available dictionary content with proven offline behavior.",
-    "resume_procedure": [
-      "Confirm a network-isolation method that will not strand iPhone Mirroring, or perform the probe directly on the physical iPhone.",
-      "Open cached-looking and previously unopened public word/example fixtures, isolate network access, and repeat navigation, conjugation, note, and audio actions.",
-      "Capture immediate and settled states, errors, retries, stale content, and recovery after reconnect.",
-      "Restore the recorded network state."
-    ],
-    "blocks_reconnaissance": true,
-    "blocks_final_rows": ["Word/detail offline, failure, retry, and recovery"]
+    "fallback": "Zenbu word details, examples, conjugations, notes, and pronunciation are offline-capable. Exact Nihongo failure/retry presentation is not a parity requirement.",
+    "resume_procedure": [],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
   },
   {
     "id": "KANJI-BLOCKER-ACTION-CLOSURE",
-    "field": "exhaustive reading, element, contribution, related-word, origin-collapse, and missing-data fixture closure",
+    "field": "exhaustive reading, element, contribution, related-word, and MVP missing-data fixture closure",
     "status": "fixture_run_ended_before_every_visible_action_and_conditional_class_was_exercised",
     "owner": "discovery driver on the pinned physical iPhone",
     "affected_records": ["KANJI-ACTION-004", "KANJI-ACTION-008", "KANJI-ACTION-023", "LOOKUP-KANJI-DETAIL", "LOOKUP-KANJI-ELEMENT-DETAIL"],
-    "completed_independent_work": "Four public fixture runs covered complete and missing metadata, simple/medium/complex stroke sequences, multiple and historical elements, origin expansion, element alternatives, linked-kanji cycles, related-word lists, and etymology help.",
-    "fallback": "Do not infer untraversed rows from visually similar rows or claim that missing meaning, reading, origin, or stroke-order classes do not exist.",
+    "completed_independent_work": "Four public fixture runs covered complete and missing metadata, simple/medium/complex stroke sequences, multiple elements, element alternatives, linked-kanji cycles, and related-word lists. Origin/history and etymology evidence is retained but deferred to post-MVP issue #91.",
+    "fallback": "Do not infer untraversed MVP rows from visually similar rows or claim that missing meaning, reading, or stroke-order classes do not exist.",
     "resume_procedure": [
       "Reopen the exact fixtures 静, 争, 一, and 鬱 from the empty Search root and use kanji-crawl.json as the tested baseline.",
-      "Exercise each reading row, meaning/sound element row, alternative glyph, contribution row, related-word row, and history collapse separately, recording its settled destination and Back restoration.",
-      "Search rare public kanji until absent meaning, reading, origin, and stroke-order classes are each found or a documented denominator proves a class unavailable.",
+      "Exercise each reading row, meaning/sound element row, alternative glyph, contribution row, and related-word row separately, recording its settled destination and Back restoration.",
+      "Search rare public kanji until absent meaning, reading, and stroke-order classes are each found or a documented denominator proves a class unavailable.",
       "Add every new node and action with stable IDs, privacy-safe evidence, and a terminal disposition."
     ],
     "blocks_reconnaissance": true,
@@ -314,34 +260,30 @@
   {
     "id": "KANJI-BLOCKER-GESTURES",
     "field": "Kanji-family long press and interactive swipe-back behavior",
-    "status": "current_computer_control_could_not_deliver_verified_duration_or_edge_gestures",
+    "status": "minimal_external_dependency_direct_touch_gesture_trace",
     "owner": "device owner or discovery driver with synchronized physical-touch capture",
     "affected_records": ["KANJI-ACTION-024"],
-    "completed_independent_work": "Back controls, scrolling, taps, inline expansion, overlay controls, nested navigation cycles, and cold relaunch were captured.",
+    "completed_independent_work": "Back controls, scrolling, taps, inline expansion, overlay controls, nested navigation cycles, and cold relaunch were captured. Issue 87 revalidated the same controller gesture authority against public Word Detail before duplicating it across Kanji surfaces; it still could not deliver an edge swipe and exposes no duration-controlled long press.",
     "fallback": "Do not infer gesture behavior from standard iOS conventions.",
     "resume_procedure": [
       "Use the physical iPhone with a synchronized privacy-safe screen recording and public fixtures only.",
-      "Long-press the glyph, readings, element rows, origin text, word rows, and stroke controls.",
-      "Test edge-swipe back and mid-gesture cancellation from Kanji Detail, Kanji Element Detail, Kanji Etymology, and the stroke overlay."
+      "Long-press the glyph, readings, element rows, word rows, and stroke controls.",
+      "Test edge-swipe back and mid-gesture cancellation from Kanji Detail, Kanji Element Detail, and the stroke overlay."
     ],
     "blocks_reconnaissance": true,
     "blocks_final_rows": ["Kanji-family interactive gestures"]
   },
   {
     "id": "KANJI-BLOCKER-OFFLINE",
-    "field": "Kanji detail, element, origin, etymology, word-link, and stroke-order offline/failure/retry behavior",
-    "status": "network_transition_not_authorized_or_safely_injected_in_this_session",
-    "owner": "device owner with discovery driver",
-    "affected_records": ["KANJI-ACTION-025"],
+    "field": "MVP Kanji detail, element, word-link, and stroke-order offline/failure/retry behavior",
+    "status": "resolved_by_stakeholder_offline_contract",
+    "owner": "product stakeholder",
+    "affected_records": [],
     "completed_independent_work": "All retained fixtures were observed in the normal connected state; a deterministic cold relaunch was captured separately.",
-    "fallback": "Do not equate visibly local dictionary or animation content with proven offline behavior.",
-    "resume_procedure": [
-      "Confirm a network-isolation method that will not strand iPhone Mirroring, or perform the probe directly on the physical iPhone.",
-      "Record one previously opened and one new public kanji fixture, isolate network access, and repeat detail, element, etymology, word-link, and stroke actions.",
-      "Capture immediate/settled error, stale, retry, and recovery states, then restore the recorded network state."
-    ],
-    "blocks_reconnaissance": true,
-    "blocks_final_rows": ["Kanji-family offline, failure, retry, and recovery"]
+    "fallback": "Zenbu MVP kanji details, elements, word links, and stroke order are offline-capable. Etymology and Origin/history are deferred to post-MVP issue #91. Exact Nihongo failure/retry presentation is not a parity requirement.",
+    "resume_procedure": [],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
   },
   {
     "id": "KANJI-BLOCKER-TIMING",
@@ -378,52 +320,37 @@
   {
     "id": "BEHAVIOR-BLOCKER-PITCH-MATCHING",
     "field": "controlled pitch-data matching across homographs, readings, parts of speech, and proper nouns",
-    "status": "visible_pitch_contours_captured_without_matching_denominator",
-    "owner": "discovery driver on the pinned physical iPhone",
-    "affected_records": ["BEHAVIOR-OBS-009", "BEHAVIOR-QUESTION-001"],
-    "completed_independent_work": "Visible pitch contours were captured for public fixtures including 問題 and いる, and research verified CJKI as the named licensed provider while preserving the exact delivery and matching layer as unknown.",
-    "fallback": "Treat each captured contour as presentation evidence only; do not infer CJKI record identity, part-of-speech matching, proper-noun logic, transformations, or fallback.",
-    "resume_procedure": [
-      "Reconnect iPhone Mirroring or use the physical iPhone directly and restore Nihongo to empty Search.",
-      "Run purpose-created controlled fixture groups that hold reading constant while varying writing, homograph sense, part of speech, and proper-noun status.",
-      "Capture each result and Word Detail contour, absent/duplicate states, ordering, and linked state/action IDs.",
-      "Compare only observable fields; keep exact CJKI product, version, record IDs, and internal transformations unknown until separately authorized evidence identifies them."
-    ],
-    "blocks_reconnaissance": true,
-    "blocks_final_rows": ["Pitch-data selection and matching behavior"]
+    "status": "resolved_nonblocking_by_stakeholder_source_boundary",
+    "owner": "product stakeholder",
+    "affected_records": [],
+    "completed_independent_work": "Visible pitch contours were captured for public fixtures including 問題 and いる. Nihongo Settings attributes pitch-accent data to the CJK Dictionary Institute, supplemented by the UniDic project.",
+    "fallback": "Normalize licensed CJKI and UniDic inputs behind app-owned Language Reference Data. Exact Nihongo record matching and transformation remain unknown and are not parity claims.",
+    "resume_procedure": [],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
   },
   {
     "id": "BEHAVIOR-BLOCKER-SPEECH-SOURCE",
     "field": "recorded-pronunciation versus speech-synthesis selection and fallback",
-    "status": "speaker_controls_do_not_expose_playback_source",
-    "owner": "device owner with discovery driver and synchronized audio-capable recorder",
-    "affected_records": ["BEHAVIOR-OBS-015", "BEHAVIOR-OBS-016", "BEHAVIOR-QUESTION-002"],
-    "completed_independent_work": "Word and sentence speaker controls were visibly exercised across common and uncommon public fixtures. Research established historical human-recording and speech-synthesis features but not current clip identity, voice configuration, routing, or fallback.",
-    "fallback": "Do not label any observed speaker control as recorded audio or text-to-speech and do not claim voice, rate, cache, network, or fallback behavior.",
-    "resume_procedure": [
-      "Attach an authorized local recorder that captures device audio and screen without uploading content.",
-      "Choose public entries known or suspected to have a human recording plus deliberately rare entries and examples likely to require fallback.",
-      "Record control state, audible output, voice consistency, timing, repeated taps, interruption, backgrounding, cache behavior, and offline behavior.",
-      "Crosswalk a clip to a named public source only when stable metadata or an authorized hash proves identity; otherwise retain source as unknown."
-    ],
-    "blocks_reconnaissance": true,
-    "blocks_final_rows": ["Recorded-pronunciation selection", "Speech-synthesis selection", "Audio fallback and cache behavior"]
+    "status": "resolved_nonblocking_by_stakeholder_settings_attribution",
+    "owner": "product stakeholder",
+    "affected_records": [],
+    "completed_independent_work": "Word and sentence speaker controls were visibly exercised across public fixtures. Nihongo Settings attributes audio recordings to WaniKani, Tofugu, and Kanji Alive.",
+    "fallback": "Treat those providers as the recording-source boundary without claiming exact clip routing. Audible behavior, unavailable states, synthesis configuration, and reuse rights remain governed by their separate blockers.",
+    "resume_procedure": [],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
   },
   {
     "id": "BEHAVIOR-BLOCKER-REPEATABILITY",
     "field": "formal repeated-run variation for ranking, handwriting, radical, example, and OCR behavior",
-    "status": "no_controlled_repetition_denominator_and_physical_mirroring_reconnect_failed",
-    "owner": "discovery driver on the pinned physical iPhone",
-    "affected_records": ["BEHAVIOR-OBS-018", "BEHAVIOR-QUESTION-004", "BEHAVIOR-QUESTION-005", "BEHAVIOR-QUESTION-006"],
+    "status": "resolved_nonblocking_by_stakeholder_scope_decision",
+    "owner": "product stakeholder",
+    "affected_records": [],
     "completed_independent_work": "The 35 source fixture cases and their single formal executions were cross-indexed. A new taberu baseline was attempted from empty Search, but iPhone Mirroring paused before a settled product result and remained at Connecting to iPhone 17 Pro Max after Resume and a second stable read; no failed-run product claim or screenshot was retained.",
-    "fallback": "Treat all current output and ordering observations as one-run facts and publish no variability rate, deterministic-order claim, or boundary generalization.",
-    "resume_procedure": [
-      "Make the physical iPhone available, unlock it if required, and reconnect iPhone Mirroring; verify two stable reads of empty Nihongo Search before acting.",
-      "Repeat think, tabeta, handwriting 丁, radical 薮, example selection, and all five image fixtures at least three times from recorded restored starting states.",
-      "Add one-property handwriting contrasts for partial, reversed-order, extra-stroke, kana, and non-jōyō input, plus zero-result and large-set radical contrasts.",
-      "Record output/order deltas, run count, screenshots or synchronized traces, network state, and exact restoration between runs."
-    ],
-    "blocks_reconnaissance": true,
-    "blocks_final_rows": ["Ranking repeatability", "Handwriting candidate variability", "Radical candidate variability", "Example-selection variability", "OCR grouping variability"]
+    "fallback": "Retain existing outputs as observed one-run reference facts. Zenbu verification uses deterministic acceptance fixtures and makes no Nihongo variability-rate claim.",
+    "resume_procedure": [],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
   }
 ]

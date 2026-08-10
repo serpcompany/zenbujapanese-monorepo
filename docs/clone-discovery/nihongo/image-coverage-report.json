@@ -8,17 +8,17 @@
     "in_family_states": 17,
     "actions": 25,
     "action_dispositions": {
-      "traversed": 20,
+      "traversed": 21,
       "same_destination_as": 0,
       "unavailable_under_fixture": 0,
-      "blocked_by_access": 1,
+      "blocked_by_access": 0,
       "external_boundary": 1,
       "excluded_with_reason": 3
     },
     "fixture_runs": 3,
     "fixture_classes": 5,
     "distinct_behavior_layout_classes": 10,
-    "privacy_reviewed_screenshot_artifacts": 10
+    "privacy_reviewed_screenshot_artifacts": 13
   },
   "observed_limitations": [
     {
@@ -28,24 +28,18 @@
       "evidence": ["evidence/reference/screenshots/image-text-inventory/state-vertical-token-cross-column-grouping.png"]
     }
   ],
-  "nonblocking_gaps": [
-    {
-      "gap_id": "IMAGE-GAP-COPY-TEXT-OUTPUT",
-      "blocked_by": "IMAGE-BLOCKER-COPY-TEXT-OUTPUT",
-      "affected_actions": ["IMAGE-ACTION-012"],
-      "reason": "Copy Text visibly completed and dismissed its menu, but the current capture authority could not read the device-local clipboard payload without substituting the Mac Universal Clipboard."
-    }
-  ],
+  "nonblocking_gaps": [],
   "privacy_review": {
     "passed": true,
     "personal_photo_or_file_artifacts_retained": false,
     "picker_boundary_screenshots_retained": false,
     "fixture_content": "purpose-created only",
-    "synthetic_device_files_removed": true,
+    "synthetic_device_files_removed": false,
+    "synthetic_device_file_status": "The public IMG-FIXTURE-001 remains in On My iPhone as a reusable isolated fixture; the disposable paste note was deleted.",
     "nihongo_final_state": "empty Search root",
     "permissions_changed": false
   },
   "capture_complete": true,
   "status": "COMPLETE — UPLOADED-IMAGE PARSING VERIFIED WITH AN OBSERVED VERTICAL GROUPING LIMITATION",
-  "reason": "The stakeholder explicitly waived Camera and Photo Library source mechanics and required parsing proof through an uploaded or used image. Files-based execution proved clear, noisy, vertical, sparse, empty, multi-image, interactive-token, nested Lookup, dismissal, and cold-relaunch behavior."
+  "reason": "The stakeholder explicitly waived Camera and Photo Library source mechanics and required parsing proof through an uploaded or used image. Files-based execution proved clear, noisy, vertical, sparse, empty, multi-image, interactive-token, nested Lookup, exact Copy Text serialization, dismissal, and cold-relaunch behavior."
 }

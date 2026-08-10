@@ -14,9 +14,9 @@
   ],
   "expected_state": "A settled taberu Search result suitable for a controlled contrast",
   "observed_state": "No product result; iPhone Mirroring connection shell only",
-  "result": "blocked",
+  "result": "attempt_failed_reference_limitation_now_nonblocking",
   "blocker_id": "BEHAVIOR-BLOCKER-REPEATABILITY",
   "evidence": [],
   "privacy": "The connection shell contained no app content or personal data and was not retained as product evidence.",
-  "notes": "No claim about taberu, variability, or connection causality is derived from this attempt."
+  "notes": "No claim about taberu, variability, or connection causality is derived from this attempt. On 2026-08-06 the product stakeholder decided that exact Nihongo repeatability is not a parity requirement; Zenbu uses deterministic acceptance fixtures."
 }

@@ -223,7 +223,7 @@ const designTokens = [
   applicable_surface_ids: surfaceMap.surfaces.filter((surface) => surface.scope !== "excluded").map((surface) => surface.surface_id),
   evidence_paths: evidenceArtifacts.filter((artifact) => artifact.kind === "privacy-reviewed-runtime-screenshot").map((artifact) => artifact.evidence_path),
   legal_use: "Observable role may be specified; Zenbu uses its approved visual identity and must not copy paid or proprietary assets.",
-  blocker_ids: token.status === "observed" ? [] : token.category === "motion" ? ["KANJI-BLOCKER-TIMING"] : ["CROSSWALK-GAP-DESIGN-MEASUREMENTS"]
+  blocker_ids: token.category === "motion" ? ["KANJI-BLOCKER-TIMING"] : []
 }));
 
 const originalFixtureAssets = walk(join(root, "fixtures")).filter((path) => statSync(path).isFile() && basename(path) !== ".DS_Store").map((path) => ({
@@ -239,11 +239,11 @@ const originalFixtureAssets = walk(join(root, "fixtures")).filter((path) => stat
 }));
 
 const referenceAssetFamilies = [
-  { asset_id: "ASSET-FAMILY-REFERENCE-UI-GLYPHS", kind: "reference-visible-iconography", status: "observable_not_acquired", legal_use: "Record roles and behavior only; use Zenbu-original or licensed icons.", surfaces: surfaceMap.surfaces.filter((surface) => surface.scope !== "excluded").map((surface) => surface.surface_id), blockers: ["CROSSWALK-GAP-ASSET-MEASUREMENTS"] },
-  { asset_id: "ASSET-FAMILY-KANJI-STROKE-DIAGRAMS", kind: "reference-rendered-language-visual", status: "observable_source_unknown", legal_use: "Do not copy rendered diagrams; identify and license an upstream or create an original renderer behind Language Reference Data.", surfaces: ["LOOKUP-KANJI-STROKE-ORDER"], blockers: ["PROVENANCE-GAP-KANJI-RADICAL-STROKE-SOURCES"] },
-  { asset_id: "ASSET-FAMILY-KANJI-ETYMOLOGY-IMAGERY", kind: "reference-rendered-language-visual", status: "observable_rights_unknown", legal_use: "Do not copy Nihongo's authored compilation or imagery; retain revision-level provenance for independently usable sources.", surfaces: ["LOOKUP-KANJI-DETAIL", "LOOKUP-KANJI-ETYMOLOGY"], blockers: ["PROVENANCE-GAP-ETYMOLOGY-REVISION-RIGHTS"] },
-  { asset_id: "ASSET-FAMILY-HUMAN-PRONUNCIATION", kind: "reference-audio", status: "provider_and_rights_unknown", legal_use: "Do not copy clips until identity and reuse rights are proven.", surfaces: ["LOOKUP-WORD-DETAIL", "LOOKUP-EXAMPLE-SENTENCES"], blockers: ["PROVENANCE-GAP-HUMAN-AUDIO-SOURCE-RIGHTS", "WORD-BLOCKER-AUDIO-SEMANTICS"] },
-  { asset_id: "ASSET-FAMILY-SYSTEM-SPEECH-VOICES", kind: "platform-provided-audio", status: "inferred_component_configuration_unknown", legal_use: "Use platform speech interfaces only after behavior/configuration is specified; never redistribute system voices.", surfaces: ["LOOKUP-WORD-DETAIL", "LOOKUP-EXAMPLE-SENTENCES"], blockers: ["PROVENANCE-GAP-SPEECH-SYNTHESIS-IMPLEMENTATION", "BEHAVIOR-BLOCKER-SPEECH-SOURCE"] },
+  { asset_id: "ASSET-FAMILY-REFERENCE-UI-GLYPHS", kind: "reference-visible-iconography", status: "reference_role_only_zenbu_substitute_approved", legal_use: "Record roles and behavior only; use Zenbu-original or licensed icons. Exact Nihongo glyph identity and bounds are not parity requirements.", surfaces: surfaceMap.surfaces.filter((surface) => surface.scope !== "excluded").map((surface) => surface.surface_id), blockers: [] },
+  { asset_id: "ASSET-FAMILY-KANJI-STROKE-DIAGRAMS", kind: "reference-rendered-language-visual", status: "selected_pinned_kanjivg_zenbu_original_renderer", legal_use: "Use KanjiVG r20250816 ordered paths under CC BY-SA 3.0 with source and modification provenance; generate diagrams and timing with Zenbu-owned code and review final share-alike asset packaging.", surfaces: ["LOOKUP-KANJI-STROKE-ORDER"], blockers: [] },
+  { asset_id: "ASSET-FAMILY-KANJI-ETYMOLOGY-IMAGERY", kind: "reference-rendered-language-visual", status: "excluded_from_mvp_deferred_to_issue_91", legal_use: "Do not copy Nihongo or Shinjigen imagery. Etymology, Origin/history content, historical glyph presentation, and source selection are deferred until post-MVP issue #91.", surfaces: ["LOOKUP-KANJI-DETAIL", "LOOKUP-KANJI-ETYMOLOGY"], blockers: [] },
+  { asset_id: "ASSET-FAMILY-HUMAN-PRONUNCIATION", kind: "reference-audio", status: "selected_pinned_open_provider_releases", legal_use: "Use only clips from the pinned Tofugu/WaniKani CC BY-SA 4.0 and Kanji Alive CC BY 4.0 releases with per-file provenance and attribution.", surfaces: ["LOOKUP-WORD-DETAIL", "LOOKUP-EXAMPLE-SENTENCES"], blockers: [] },
+  { asset_id: "ASSET-FAMILY-SYSTEM-SPEECH-VOICES", kind: "platform-provided-audio", status: "selected_platform_fallback", legal_use: "Use AVSpeechSynthesizer with an available Japanese voice as app-owned fallback; never redistribute system voices or claim exact Nihongo routing.", surfaces: ["LOOKUP-WORD-DETAIL", "LOOKUP-EXAMPLE-SENTENCES"], blockers: [] },
   { asset_id: "ASSET-FAMILY-NIHONGO-BRANDING", kind: "reference-branding", status: "excluded_approved_variance", legal_use: "Excluded from parity; Zenbu colors, typography, logos, and icons are authoritative.", surfaces: surfaceMap.surfaces.map((surface) => surface.surface_id), blockers: [] }
 ].map((asset) => ({
   asset_id: asset.asset_id,
@@ -461,14 +461,12 @@ const observationRows = observations.map((observation) => {
 });
 
 const genericGaps = [
-  { gap_id: "CROSSWALK-GAP-DESIGN-MEASUREMENTS", category: "design-token", owner: "future parity specification owner", affected_ids: designTokens.filter((token) => token.blocker_ids.includes("CROSSWALK-GAP-DESIGN-MEASUREMENTS")).map((token) => token.token_id), missing: "Quantified color, typography, spacing, geometry, and icon metrics are not present in the retained crawl.", completed_independent_work: "Every retained state screenshot is hash-indexed and mapped to token roles.", resume_procedure: "Measure the pinned screenshots or repeat privacy-safe capture with calibrated pixel/semantic geometry; append measurements without changing the observed baseline." },
-  { gap_id: "CROSSWALK-GAP-ASSET-MEASUREMENTS", category: "asset", owner: "future visual-parity owner", affected_ids: ["ASSET-FAMILY-REFERENCE-UI-GLYPHS"], missing: "Exact visible glyph identities, vector bounds, and licensing are not established.", completed_independent_work: "Visible icon roles are mapped to surfaces and evidence; Zenbu branding is an approved variance.", resume_procedure: "Inventory each glyph role from the pinned screenshots, select original or licensed Zenbu assets, and record prohibited exact-parity claims." },
   { gap_id: "CROSSWALK-GAP-NODE-EVIDENCE", category: "evidence", owner: "discovery driver", affected_ids: nodeRows.filter((row) => row.blocker_ids.includes("CROSSWALK-GAP-NODE-EVIDENCE")).map((row) => row.source_id), missing: "One or more observed state nodes lack retained direct or aggregate evidence.", completed_independent_work: "All available direct, screenset, trace, and supporting-record evidence was resolved and hash-indexed.", resume_procedure: "Use the state ID and source crawl to recreate the exact precondition, capture a settled privacy-safe frame or trace, register its hash, and rerun this generator." },
   { gap_id: "CROSSWALK-GAP-ACTION-EVIDENCE", category: "evidence", owner: "discovery driver", affected_ids: actionRows.filter((row) => row.blocker_ids.includes("CROSSWALK-GAP-ACTION-EVIDENCE")).map((row) => row.source_id), missing: "One or more non-excluded action edges lack direct, endpoint, observation, or aggregate evidence.", completed_independent_work: "All available action, endpoint-state, behavior-observation, and surface evidence was inherited explicitly.", resume_procedure: "Replay the affected action from its fixture binding, retain the immediate and settled result, register evidence and hash, then rerun this generator." },
   { gap_id: "CROSSWALK-GAP-SURFACE-BINDING", category: "referential-integrity", owner: "discovery dossier owner", affected_ids: actionRows.filter((row) => row.blocker_ids.includes("CROSSWALK-GAP-SURFACE-BINDING")).map((row) => row.source_id), missing: "One or more action descriptions cannot be resolved to a canonical surface ID.", completed_independent_work: "Exact state IDs, embedded state IDs, and canonical surface IDs were resolved mechanically.", resume_procedure: "Replace the descriptive source/result with stable state or surface IDs and rerun this generator." },
-  { gap_id: "CROSSWALK-GAP-JOURNEY-BINDING", category: "scope", owner: "product owner with discovery driver", affected_ids: [...nodeRows, ...actionRows].filter((row) => row.blocker_ids.includes("CROSSWALK-GAP-JOURNEY-BINDING")).map((row) => row.source_id), missing: "One or more non-excluded states/actions do not bind to an approved journey.", completed_independent_work: "Journey membership was derived from canonical surface IDs after adding the observed Kanji Etymology destination to the approved Inspect Kanji journey.", resume_procedure: "Approve a journey binding or exclusion for each affected ID, update journeys.json, and rerun this generator." },
+  { gap_id: "CROSSWALK-GAP-JOURNEY-BINDING", category: "scope", owner: "product owner with discovery driver", affected_ids: [...nodeRows, ...actionRows].filter((row) => row.blocker_ids.includes("CROSSWALK-GAP-JOURNEY-BINDING")).map((row) => row.source_id), missing: "One or more non-excluded states/actions do not bind to an approved journey.", completed_independent_work: "Journey membership was derived from canonical surface IDs; Kanji Etymology and Origin/history content were retained as reference evidence but excluded from MVP under issue #91.", resume_procedure: "Approve a journey binding or exclusion for each affected ID, update journeys.json, and rerun this generator." },
   { gap_id: "CROSSWALK-GAP-FIXTURE-BINDING", category: "fixture", owner: "discovery driver", affected_ids: fixtureRows.filter((row) => row.blocker_ids.includes("CROSSWALK-GAP-FIXTURE-BINDING")).map((row) => row.source_id), missing: "One or more declared fixture classes do not bind to a state, action, or behavior observation.", completed_independent_work: "Direct IDs, query/input strings, source-state fixtures, evidence paths, and observation links were reconciled.", resume_procedure: "Add stable fixture IDs to the affected crawl states/actions or behavior observations and rerun this generator." }
-].filter((gap) => gap.affected_ids.length || ["CROSSWALK-GAP-DESIGN-MEASUREMENTS", "CROSSWALK-GAP-ASSET-MEASUREMENTS"].includes(gap.gap_id));
+].filter((gap) => gap.affected_ids.length);
 
 const manifestMismatches = evidenceArtifacts.filter((artifact) => artifact.hash_status === "MANIFEST_MISMATCH");
 const missingEvidencePaths = uniq([
@@ -575,8 +573,8 @@ const report = {
   integrity,
   reconciled_source_repairs: [
     "Canonicalized the preliminary LOOKUP-STROKE-ORDER-OVERLAY identifier to the recursive-crawl ID LOOKUP-KANJI-STROKE-ORDER across the surface map, journey, transition table, and reachability map.",
-    "Recomputed surface-map scope counts after Image Text scope decisions and discovery of Kanji Etymology: 15 blocking, 1 navigation-support, 7 excluded, 23 total.",
-    "Added the recursively discovered LOOKUP-KANJI-ETYMOLOGY surface to the approved Inspect Kanji journey and Kanji Detail outgoing graph."
+    "Recomputed surface-map scope counts after the post-MVP etymology decision: 14 blocking, 1 navigation-support, 8 excluded, 23 total.",
+    "Retained LOOKUP-KANJI-ETYMOLOGY reference evidence while excluding its surface and Kanji Detail Origin/history content from the MVP contract under issue #91."
   ],
   conflicts: readJson("behavior-coverage-report.json").observed_conflicts_or_tensions,
   crosswalk_gaps: genericGaps,
@@ -597,8 +595,8 @@ output("design-token-index.json", {
   generated_at: generatedAt,
   authority_id: authorityId,
   environment_id: environmentId,
-  status: "OBSERVED ROLE INDEX — QUANTIFIED VISUAL VALUES REMAIN BLOCKED",
-  allowed_variance: "Zenbu colors, typography, logos, and icons replace Nihongo branding; layout, information hierarchy, and interaction remain parity targets unless separately approved.",
+  status: "OBSERVED REFERENCE ROLE INDEX — EXACT NIHONGO VISUAL MEASUREMENTS ARE NONBLOCKING",
+  allowed_variance: "Zenbu colors, typography, logos, icons, layout, spacing, geometry, and accessible semantics are authoritative; preserve the evidenced information hierarchy and interaction contract without claiming pixel-identical parity.",
   tokens: designTokens
 });
 
