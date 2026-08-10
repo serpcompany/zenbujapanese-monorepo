@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-08-10T07:14:09.737Z",
+  "generated_at": "2026-08-10T07:28:03.144Z",
   "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/74",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
-  "disposition": "CROSSWALK_COMPLETE_WITH_EXPLICIT_BLOCKERS",
+  "disposition": "CROSSWALK_COMPLETE",
   "count_definitions": {
     "ready": "A crosswalk row resolves to scope, journey or approved exclusion, fixture/precondition, authority, environment, and retained evidence without a row-level blocker.",
     "blocked": "The item is present and mapped, but one or more explicit blocker IDs prevent coding-ready atomic parity input.",
@@ -25,8 +25,8 @@
     "nodes_blocked": 0,
     "nodes_excluded": 4,
     "actions_ready": 97,
-    "actions_blocked": 4,
-    "actions_excluded": 28,
+    "actions_blocked": 0,
+    "actions_excluded": 32,
     "fixtures_ready": 35,
     "fixtures_blocked": 0,
     "behavior_claims_ready": 19,
@@ -39,7 +39,7 @@
     "crosswalk_gap_groups": 0,
     "inherited_access_blockers": 23,
     "inherited_provenance_gaps": 5,
-    "distinct_blocking_gap_ids": 3
+    "distinct_blocking_gap_ids": 0
   },
   "integrity": {
     "duplicate_surface_ids": [],
@@ -60,7 +60,8 @@
   "reconciled_source_repairs": [
     "Canonicalized the preliminary LOOKUP-STROKE-ORDER-OVERLAY identifier to the recursive-crawl ID LOOKUP-KANJI-STROKE-ORDER across the surface map, journey, transition table, and reachability map.",
     "Recomputed surface-map scope counts after the post-MVP etymology decision: 14 blocking, 1 navigation-support, 8 excluded, 23 total.",
-    "Retained LOOKUP-KANJI-ETYMOLOGY reference evidence while excluding its surface and Kanji Detail Origin/history content from the MVP contract under issue #91."
+    "Retained LOOKUP-KANJI-ETYMOLOGY reference evidence while excluding its surface and Kanji Detail Origin/history content from the MVP contract under issue #91.",
+    "Applied the issue #89 stakeholder boundary: standard iOS edge-swipe/Back behavior, app-owned long press, and per-row history deletion replace unknown exact Nihongo gesture and deletion parity."
   ],
   "conflicts": [
     {
@@ -198,23 +199,14 @@
     {
       "id": "SEARCH-BLOCKER-HISTORY-DELETION",
       "field": "individual removal of a session-created recent-search row",
-      "status": "awaiting_action_time_confirmation",
-      "owner": "device owner with discovery driver",
-      "affected_records": [
-        "SEARCH-ACTION-027",
-        "JOURNEY-RERUN-RECENT-SEARCH"
-      ],
-      "completed_independent_work": "A known session-created もんだい row was rerun without opening older history, and issue 87 created the disposable tab row as the newest entry. Clear All remains ruled out because it would delete pre-existing data. Action-time confirmation for the single disposable row has been requested.",
-      "fallback": "Retain the exact row-removal action as untested; do not infer swipe affordance or persistence.",
-      "resume_procedure": [
-        "Create or identify the current top session-created Search row without opening any older row.",
-        "At action time, obtain confirmation to permanently remove that one disposable row.",
-        "Swipe only that row, record the exposed control and settled result without retaining older history, and verify the query no longer reruns from that row."
-      ],
+      "status": "resolved_nonblocking_by_approved_app_owned_history_deletion_contract",
+      "owner": "product stakeholder",
+      "affected_records": [],
+      "completed_independent_work": "A known session-created もんだい row was rerun without opening older history, and issue 87 created the disposable tab row as the newest entry. The available controller could not expose a per-row delete action and no reference row was deleted. Clear All remains ruled out because it would delete pre-existing data.",
+      "fallback": "Zenbu exposes an app-owned swipe action for an individual recent-search row. Confirming it removes only that row and persists the deletion. Exact Nihongo gesture, control, animation, and persistence parity is prohibited rather than inferred.",
+      "resume_procedure": [],
       "blocks_reconnaissance": false,
-      "blocks_final_rows": [
-        "Future individual Search-history removal row"
-      ]
+      "blocks_final_rows": []
     },
     {
       "id": "SEARCH-BLOCKER-SOFTWARE-KEYBOARD",
@@ -298,23 +290,14 @@
     {
       "id": "WORD-BLOCKER-GESTURES",
       "field": "interactive swipe-back and long-press behavior",
-      "status": "minimal_external_dependency_direct_touch_gesture_trace",
-      "owner": "device owner or discovery driver with working physical-touch capture",
-      "affected_records": [
-        "WORD-ACTION-027",
-        "WORD-ACTION-028"
-      ],
+      "status": "resolved_nonblocking_by_approved_app_owned_gesture_contract",
+      "owner": "product stakeholder",
+      "affected_records": [],
       "completed_independent_work": "Back controls, scrolling, taps, and nested navigation cycles were captured. Issue 87 sent two additional left-edge controller drags from a public Word Detail state; neither produced a verified transition. The available controller still exposes no duration-controlled long press.",
-      "fallback": "Do not infer gesture behavior from standard iOS conventions.",
-      "resume_procedure": [
-        "Use the physical iPhone with a synchronized screen recording and public fixtures only.",
-        "Test edge-swipe back from Example Sentences, nested Word Detail, and Conjugations, including canceling mid-gesture.",
-        "Long-press linked tokens, related rows, meaning text, and speaker controls; record any menu or no-op disposition."
-      ],
-      "blocks_reconnaissance": true,
-      "blocks_final_rows": [
-        "Word/detail interactive gestures"
-      ]
+      "fallback": "Zenbu uses standard iOS interactive edge-swipe and Back behavior; canceling preserves the current screen and state. Long press is a no-op unless Zenbu intentionally provides a documented context menu. Exact Nihongo gesture behavior, animation, timing, menus, and no-ops are prohibited parity claims.",
+      "resume_procedure": [],
+      "blocks_reconnaissance": false,
+      "blocks_final_rows": []
     },
     {
       "id": "WORD-BLOCKER-OFFLINE",
@@ -343,22 +326,14 @@
     {
       "id": "KANJI-BLOCKER-GESTURES",
       "field": "Kanji-family long press and interactive swipe-back behavior",
-      "status": "minimal_external_dependency_direct_touch_gesture_trace",
-      "owner": "device owner or discovery driver with synchronized physical-touch capture",
-      "affected_records": [
-        "KANJI-ACTION-024"
-      ],
+      "status": "resolved_nonblocking_by_approved_app_owned_gesture_contract",
+      "owner": "product stakeholder",
+      "affected_records": [],
       "completed_independent_work": "Back controls, scrolling, taps, inline expansion, overlay controls, nested navigation cycles, and cold relaunch were captured. Issue 87 revalidated the same controller gesture authority against public Word Detail before duplicating it across Kanji surfaces; it still could not deliver an edge swipe and exposes no duration-controlled long press.",
-      "fallback": "Do not infer gesture behavior from standard iOS conventions.",
-      "resume_procedure": [
-        "Use the physical iPhone with a synchronized privacy-safe screen recording and public fixtures only.",
-        "Long-press the glyph, readings, element rows, word rows, and stroke controls.",
-        "Test edge-swipe back and mid-gesture cancellation from Kanji Detail, Kanji Element Detail, and the stroke overlay."
-      ],
-      "blocks_reconnaissance": true,
-      "blocks_final_rows": [
-        "Kanji-family interactive gestures"
-      ]
+      "fallback": "Zenbu uses standard iOS interactive edge-swipe and Back behavior; canceling preserves the current screen and state. Long press is a no-op unless Zenbu intentionally provides a documented context menu. Exact Nihongo gesture behavior, animation, timing, menus, and no-ops are prohibited parity claims.",
+      "resume_procedure": [],
+      "blocks_reconnaissance": false,
+      "blocks_final_rows": []
     },
     {
       "id": "KANJI-BLOCKER-OFFLINE",
@@ -490,11 +465,7 @@
       "resume_procedure": "Compare provider geometry with deterministic horizontal, vertical, noisy, sparse, and multi-image fixtures, then specify the independent grouping algorithm from observed behavior rather than provider identity."
     }
   ],
-  "blocking_gap_ids": [
-    "SEARCH-BLOCKER-HISTORY-DELETION",
-    "WORD-BLOCKER-GESTURES",
-    "KANJI-BLOCKER-GESTURES"
-  ],
+  "blocking_gap_ids": [],
   "privacy_and_clean_room": {
     "private_material_included": false,
     "reference_source_or_executable_copied": false,
@@ -502,5 +473,5 @@
     "paid_or_proprietary_assets_copied": false,
     "evidence_basis": "Only previously privacy-reviewed runtime evidence, structured discovery records, and purpose-created fixtures were indexed."
   },
-  "next_ticket_effect": "The atomic parity ledger can consume every row, but blocked rows and resources must remain blocked/unknown; no coding-ready disposition is permitted while blocking_gap_ids is non-empty."
+  "next_ticket_effect": "The atomic parity ledger can consume every row as a coding-ready discovery input; clone and test statuses remain unknown/not_run until implementation evidence exists."
 }

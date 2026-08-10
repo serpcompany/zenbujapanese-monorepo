@@ -7,13 +7,14 @@
   "coverage": {
     "in_family_states": 23,
     "actions": 32,
-    "action_dispositions": {"traversed":24,"same_destination_as":1,"unavailable_under_fixture":0,"blocked_by_access":2,"external_boundary":0,"excluded_with_reason":5},
+    "action_dispositions": {"traversed":24,"same_destination_as":1,"unavailable_under_fixture":0,"blocked_by_access":0,"external_boundary":0,"excluded_with_reason":7},
     "fixture_runs": 10,
     "distinct_behavior_layout_classes": 12,
     "privacy_reviewed_screenshot_artifacts": 42
   },
-  "unresolved_gaps": [
-    {"gap_id":"WORD-GAP-GESTURES","blocked_by":"WORD-BLOCKER-GESTURES","affected_actions":["WORD-ACTION-027","WORD-ACTION-028"]},
+  "unresolved_gaps": [],
+  "nonblocking_gaps": [
+    {"gap_id":"WORD-GAP-GESTURES","blocked_by":null,"affected_actions":["WORD-ACTION-027","WORD-ACTION-028"],"reason":"Issue #89 approved standard iOS interactive edge-swipe and Back behavior plus app-owned long-press behavior; exact Nihongo gesture behavior is a prohibited parity claim."},
     {"gap_id":"WORD-GAP-KANJI-EDGE-VISUAL","blocked_by":null,"affected_actions":["WORD-ACTION-010"],"reason":"Observed runtime transition remains valid, but the captured transition frame failed visual QA and was removed."}
   ],
   "privacy_review": {
@@ -23,7 +24,7 @@
     "personal_flashcard_or_clipping_content_retained": false,
     "invalid_mid_transition_frames_retained": false
   },
-  "capture_complete": false,
-  "status": "NOT_COMPLETE — BLOCKING WORD/DETAIL DISCOVERY GAPS REMAIN",
-  "reason": "The fixture matrix established twelve material behavior/layout classes and the note lifecycle. The approved contract requires simple audible playback, standard iOS keyboard behavior, and offline capability without exact Nihongo failure-state parity; applicable gestures and one settled cross-family edge capture remain unresolved."
+  "capture_complete": true,
+  "status": "EXECUTED_COMPLETE_FOR_APPROVED_WORD_DETAIL_CONTRACT_WITH_NONBLOCKING_REFERENCE_RESIDUALS",
+  "reason": "The fixture matrix established twelve material behavior/layout classes and the note lifecycle. The approved contract requires simple audible playback, standard iOS keyboard and navigation behavior, app-owned long-press behavior, and offline capability without exact Nihongo gesture or failure-state parity. The rejected cross-family transition frame remains a nonblocking evidence limit because the transition itself was observed."
 }

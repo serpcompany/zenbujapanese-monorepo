@@ -389,12 +389,16 @@ if (!integrity.passed) {
 
 const countBy = (field, value) => rows.filter((row) => row[field] === value).length;
 const blockedRowIds = rows.filter((row) => row.discovery_status === "blocked").map((row) => row.id);
+const hasBlockers = crosswalkReport.blocking_gap_ids.length > 0;
+const effectiveAuditDisposition = hasBlockers
+  ? (discoveryStatus.final_disposition ?? "NOT_READY — DISCOVERY GAPS REMAIN")
+  : "READY_FOR_IMPLEMENTATION";
 const coverageReport = {
   generated_at: generatedAt,
   ticket: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/75",
   authority_id: crosswalk.authority_id,
   environment_id: crosswalk.environment_id,
-  disposition: crosswalkReport.blocking_gap_ids.length ? "LEDGER_COMPLETE_NOT_CODING_READY" : "LEDGER_COMPLETE_CODING_READY_INPUT",
+  disposition: hasBlockers ? "LEDGER_COMPLETE_NOT_CODING_READY" : "LEDGER_COMPLETE_CODING_READY_INPUT",
   count_definitions: {
     schema_complete: "Every row contains the required atomic claim, reproduction, result, authority, evidence, parity, status, and future-verification fields.",
     ready_input: "The observed reference input has no recorded discovery blocker; clone/test statuses remain unknown/not_run.",
@@ -419,14 +423,14 @@ const coverageReport = {
   integrity,
   privacy_and_clean_room: crosswalkReport.privacy_and_clean_room,
   next_ticket_effect: finalAuditComplete
-    ? `The completed final recursive audit issued ${discoveryStatus.final_disposition}; rerun audit-dossier.mjs after any blocker resolution.`
+    ? `The final recursive audit disposition is ${effectiveAuditDisposition}; rerun audit-dossier.mjs after any canonical discovery change.`
     : "The final recursive audit may consume this ledger mechanically. It must issue NOT_READY while any blocking gap remains and must not infer implementation readiness from structural ledger completeness.",
 };
 
 const openQuestions = {
   generated_at: generatedAt,
   ticket: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/75",
-  disposition: "OPEN_BLOCKERS_PREVENT_CODING_READY_HANDOFF",
+  disposition: hasBlockers ? "OPEN_BLOCKERS_PREVENT_CODING_READY_HANDOFF" : "NO_OPEN_BLOCKERS",
   blocking_question_count: crosswalkReport.blocking_gap_ids.length,
   questions: crosswalkReport.blocking_gap_ids.map((blockerId) => {
     const blocker = blockerById.get(blockerId);
@@ -451,7 +455,7 @@ const openQuestions = {
 
 const handoff = `# Lookup parity implementation handoff\n\n` +
 `Status: **${coverageReport.disposition}**\n\n` +
-`This is a discovery-only handoff for the approved Search-rooted Lookup graph. It contains no Zenbu implementation, scaffolding, dependency, service, or prototype work. ${finalAuditComplete ? `The final recursive audit is recorded in \`final-audit-report.json\` with disposition \`${discoveryStatus.final_disposition}\`.` : "The final recursive audit remains owned by the next Wayfinder ticket."}\n\n` +
+`This is a discovery-only handoff for the approved Search-rooted Lookup graph. It contains no Zenbu implementation, scaffolding, dependency, service, or prototype work. ${finalAuditComplete ? `The final recursive audit is recorded in \`final-audit-report.json\` with disposition \`${effectiveAuditDisposition}\`.` : "The final recursive audit remains owned by the next Wayfinder ticket."}\n\n` +
 `## Canonical sources\n\n` +
 `- \`parity-inventory.jsonl\` is the only mutable atomic observable-claim ledger.\n` +
 `- \`parity-coverage-report.json\` is generated from the ledger and canonical crosswalk.\n` +
@@ -462,14 +466,18 @@ const handoff = `# Lookup parity implementation handoff\n\n` +
 `The ledger has ${rows.length} atomic rows: ${sourceCoverage.surfaces} surfaces, ${sourceCoverage.nodes} distinguishable states, ${sourceCoverage.actions} action edges, ${sourceCoverage.fixtures} fixture/behavior-class inputs, ${sourceCoverage.behavior_claims} observable language-behavior claims, ${sourceCoverage.language_resources} language-resource boundaries, ${sourceCoverage.design_token_families} design-token families, and ${sourceCoverage.assets} asset/fixture records. All ${rows.length} rows are schema-complete; ${coverageReport.ledger.ready_input_rows} are ready reference inputs, ${coverageReport.ledger.blocked_rows} are explicitly blocked, and ${coverageReport.ledger.excluded_rows} preserve approved exclusions. All clone statuses are \`unknown\` and all test statuses are \`not_run\`.\n\n` +
 `## Implementation-use contract\n\n` +
 `A later implementation agent must select an approved journey, locate all rows by \`journey_ids\`, reproduce each row from its \`preconditions\`, \`fixture_ids\`, and \`action\`, and implement immediate, settled, durable, failure, recovery, and relaunch behavior only to the boundary explicitly stated. It must retain app-owned Language Reference Data behind the focused Shared Capability boundaries in ADR 0001. It must add clone evidence and passed tests before changing any row from \`unknown\`; structural completeness is not runtime verification.\n\n` +
-`Reference evidence records the observed Nihongo baseline. The approved variances and nonblocking boundaries are canonical in \`scope.json\`; they include Zenbu-owned visual measurements, glyphs, accessible semantics, exact pitch-record matching, per-control pronunciation-source routing, and repeatability behavior. The whole-content Natural Translation is an approved Image Text Flow addition, not evidence of Nihongo behavior.\n\n` +
+`Reference evidence records the observed Nihongo baseline. The approved variances and nonblocking boundaries are canonical in \`scope.json\`; they include Zenbu-owned visual measurements, glyphs, accessible semantics, pitch-record selection, pronunciation-source routing, repeatability, navigation gestures, long press, and individual history-row deletion. The whole-content Natural Translation is an approved Image Text Flow addition, not evidence of Nihongo behavior.\n\n` +
 `## Deterministic fixtures and fault injection\n\n` +
 `Fixture rows point to exact inputs and source matrices. Purpose-created image assets carry hashes in \`asset-index.json\`. Future tests must restore the recorded state between runs and inject offline, denial, cancellation, interruption, retry, and recovery only where named rows require them. A neighboring environment or fixture never inherits a pass.\n\n` +
 `## Blocking handoff limits\n\n` +
-`${coverageReport.ledger.distinct_blocker_ids} distinct gaps block coding readiness. They include remaining runtime action/state capture, offline/failure behavior, audible audio and timing evidence, and language-source/provenance/licensing boundaries. Each blocker’s exact owner, completed independent work, affected rows, and resume procedure lives in \`parity-open-questions.json\`.\n\n` +
+`${hasBlockers
+  ? `${coverageReport.ledger.distinct_blocker_ids} distinct gaps block coding readiness. Each blocker’s exact owner, completed independent work, affected rows, and resume procedure lives in \`parity-open-questions.json\`.`
+  : "No discovery blocker remains. The zero-question registry in `parity-open-questions.json` is the canonical confirmation that no external action or decision gates implementation."}\n\n` +
 `Do not claim exact internal algorithms, provider record identity, clip routing, reference asset identity, reference accessibility behavior, timing, offline behavior, or licensing beyond the recorded authority. Apply the approved Zenbu-owned substitutes and nonblocking boundaries from \`scope.json\` without describing them as exact Nihongo parity.\n\n` +
 `## Handoff gate\n\n` +
-`This ledger is complete as an index and **not coding-ready**. ${finalAuditComplete ? `The completed audit issued \`${discoveryStatus.final_disposition}\`; rerun \`audit-dossier.mjs\` after resolving blockers.` : "The next audit must reconcile every row, evidence path/hash, blocker, exclusion, and generated count."} It may issue \`READY_FOR_IMPLEMENTATION\` only after the blocker list is empty.\n`;
+`${hasBlockers
+  ? `This ledger is complete as an index and **not coding-ready**. ${finalAuditComplete ? `The completed audit issued \`${effectiveAuditDisposition}\`; rerun \`audit-dossier.mjs\` after resolving blockers.` : "The next audit must reconcile every row, evidence path/hash, blocker, exclusion, and generated count."}`
+  : `This ledger is complete as a **coding-ready discovery input**. The blocker list is empty and the audited disposition is \`${effectiveAuditDisposition}\`; implementation must still add clone evidence and passed tests before changing any row from \`unknown\`.`}\n`;
 
 writeFileSync(join(root, "parity-inventory.jsonl"), `${rows.map((row) => JSON.stringify(row)).join("\n")}\n`);
 writeFileSync(join(root, "parity-coverage-report.json"), `${JSON.stringify(coverageReport, null, 2)}\n`);
@@ -477,17 +485,20 @@ writeFileSync(join(root, "parity-open-questions.json"), `${JSON.stringify(openQu
 writeFileSync(join(root, "implementation-handoff.md"), handoff);
 
 const ledgerNote = `The canonical parity ledger contains ${rows.length} schema-complete atomic rows derived from explicit source IDs; clone_status remains unknown and test_status remains not_run for every row.`;
-const blockerNote = `${coverageReport.ledger.distinct_blocker_ids} distinct blockers affect ${coverageReport.ledger.blocked_rows} ledger rows; the generated handoff is structurally complete but not coding-ready.`;
+const blockerNote = hasBlockers
+  ? `${coverageReport.ledger.distinct_blocker_ids} distinct blockers affect ${coverageReport.ledger.blocked_rows} ledger rows; the generated handoff is structurally complete but not coding-ready.`
+  : "No discovery blockers affect the ledger; the generated handoff is a coding-ready discovery input, while clone and test statuses remain intentionally unknown/not_run.";
 const retainedNotes = discoveryStatus.notes.filter((note) =>
   !note.startsWith("The canonical parity ledger contains ") &&
-  !/^\d+ distinct blockers affect \d+ ledger rows;/.test(note),
+  !/^\d+ distinct blockers affect \d+ ledger rows;/.test(note) &&
+  !note.startsWith("No discovery blockers affect the ledger;"),
 );
 const updatedDiscoveryStatus = {
   ...discoveryStatus,
   updated_at: generatedAt,
-  phase: finalAuditComplete ? discoveryStatus.phase : "atomic_parity_ledger_complete_with_explicit_blockers",
+  phase: finalAuditComplete ? discoveryStatus.phase : hasBlockers ? "atomic_parity_ledger_complete_with_explicit_blockers" : "atomic_parity_ledger_complete_coding_ready_input",
   parity_ledger_ticket: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/75",
-  parity_ledger_ticket_status: "complete_with_explicit_blockers",
+  parity_ledger_ticket_status: hasBlockers ? "complete_with_explicit_blockers" : "complete_coding_ready_input",
   parity_ledger_records: {
     inventory: "parity-inventory.jsonl",
     coverage_report: "parity-coverage-report.json",

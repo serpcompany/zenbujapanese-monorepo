@@ -1,8 +1,8 @@
 # Lookup parity implementation handoff
 
-Status: **LEDGER_COMPLETE_NOT_CODING_READY**
+Status: **LEDGER_COMPLETE_CODING_READY_INPUT**
 
-This is a discovery-only handoff for the approved Search-rooted Lookup graph. It contains no Zenbu implementation, scaffolding, dependency, service, or prototype work. The final recursive audit is recorded in `final-audit-report.json` with disposition `NOT_READY — DISCOVERY GAPS REMAIN`.
+This is a discovery-only handoff for the approved Search-rooted Lookup graph. It contains no Zenbu implementation, scaffolding, dependency, service, or prototype work. The final recursive audit is recorded in `final-audit-report.json` with disposition `READY_FOR_IMPLEMENTATION`.
 
 ## Canonical sources
 
@@ -14,13 +14,13 @@ This is a discovery-only handoff for the approved Search-rooted Lookup graph. It
 
 ## Exact denominator
 
-The ledger has 329 atomic rows: 23 surfaces, 84 distinguishable states, 129 action edges, 35 fixture/behavior-class inputs, 19 observable language-behavior claims, 16 language-resource boundaries, 7 design-token families, and 16 asset/fixture records. All 329 rows are schema-complete; 284 are ready reference inputs, 4 are explicitly blocked, and 41 preserve approved exclusions. All clone statuses are `unknown` and all test statuses are `not_run`.
+The ledger has 329 atomic rows: 23 surfaces, 84 distinguishable states, 129 action edges, 35 fixture/behavior-class inputs, 19 observable language-behavior claims, 16 language-resource boundaries, 7 design-token families, and 16 asset/fixture records. All 329 rows are schema-complete; 284 are ready reference inputs, 0 are explicitly blocked, and 45 preserve approved exclusions. All clone statuses are `unknown` and all test statuses are `not_run`.
 
 ## Implementation-use contract
 
 A later implementation agent must select an approved journey, locate all rows by `journey_ids`, reproduce each row from its `preconditions`, `fixture_ids`, and `action`, and implement immediate, settled, durable, failure, recovery, and relaunch behavior only to the boundary explicitly stated. It must retain app-owned Language Reference Data behind the focused Shared Capability boundaries in ADR 0001. It must add clone evidence and passed tests before changing any row from `unknown`; structural completeness is not runtime verification.
 
-Reference evidence records the observed Nihongo baseline. The approved variances and nonblocking boundaries are canonical in `scope.json`; they include Zenbu-owned visual measurements, glyphs, accessible semantics, exact pitch-record matching, per-control pronunciation-source routing, and repeatability behavior. The whole-content Natural Translation is an approved Image Text Flow addition, not evidence of Nihongo behavior.
+Reference evidence records the observed Nihongo baseline. The approved variances and nonblocking boundaries are canonical in `scope.json`; they include Zenbu-owned visual measurements, glyphs, accessible semantics, pitch-record selection, pronunciation-source routing, repeatability, navigation gestures, long press, and individual history-row deletion. The whole-content Natural Translation is an approved Image Text Flow addition, not evidence of Nihongo behavior.
 
 ## Deterministic fixtures and fault injection
 
@@ -28,10 +28,10 @@ Fixture rows point to exact inputs and source matrices. Purpose-created image as
 
 ## Blocking handoff limits
 
-3 distinct gaps block coding readiness. They include remaining runtime action/state capture, offline/failure behavior, audible audio and timing evidence, and language-source/provenance/licensing boundaries. Each blocker’s exact owner, completed independent work, affected rows, and resume procedure lives in `parity-open-questions.json`.
+No discovery blocker remains. The zero-question registry in `parity-open-questions.json` is the canonical confirmation that no external action or decision gates implementation.
 
 Do not claim exact internal algorithms, provider record identity, clip routing, reference asset identity, reference accessibility behavior, timing, offline behavior, or licensing beyond the recorded authority. Apply the approved Zenbu-owned substitutes and nonblocking boundaries from `scope.json` without describing them as exact Nihongo parity.
 
 ## Handoff gate
 
-This ledger is complete as an index and **not coding-ready**. The completed audit issued `NOT_READY — DISCOVERY GAPS REMAIN`; rerun `audit-dossier.mjs` after resolving blockers. It may issue `READY_FOR_IMPLEMENTATION` only after the blocker list is empty.
+This ledger is complete as a **coding-ready discovery input**. The blocker list is empty and the audited disposition is `READY_FOR_IMPLEMENTATION`; implementation must still add clone evidence and passed tests before changing any row from `unknown`.

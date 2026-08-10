@@ -8,6 +8,11 @@
     "LOOKUP-NOTE-EDITING",
     "LOOKUP-CONJUGATIONS"
   ],
+  "implementation_contract": {
+    "back_gesture": "Use standard iOS interactive edge-swipe and Back behavior. Completing the gesture returns to the prior screen; canceling it preserves the current screen and state.",
+    "long_press": "Long press is a no-op unless Zenbu intentionally provides a documented context menu for that control.",
+    "reference_limit": "Exact Nihongo edge-swipe, cancellation, long-press menus, no-op behavior, animation, and timing were not observed and are not parity requirements."
+  },
   "states": [
     {"state_id":"WORD-STATE-001","surface_id":"LOOKUP-EXAMPLE-SENTENCES","name":"populated example list at top","evidence":["evidence/reference/screenshots/word-inventory/state-example-sentences-iru-top-settled.png"]},
     {"state_id":"WORD-STATE-002","surface_id":"LOOKUP-EXAMPLE-SENTENCES","name":"scrolled example list with linked tokens and sentence speakers","evidence":["evidence/reference/screenshots/word-inventory/state-example-sentences-iru-scrolled.png"]},
@@ -60,8 +65,8 @@
     {"action_id":"WORD-ACTION-024","source":"LOOKUP-NOTE-EDITING","trigger":"select Done after clearing text","result":"WORD-STATE-017","disposition":"traversed"},
     {"action_id":"WORD-ACTION-025","source":"LOOKUP-NOTE-EDITING","trigger":"select Back with populated synthetic text without selecting Done","result":"Search results; text was auto-saved and visible after reopening","disposition":"traversed"},
     {"action_id":"WORD-ACTION-026","source":"LOOKUP-NOTE-EDITING","trigger":"show and dismiss the standard software keyboard","result":"the standard iOS software keyboard follows the user's device keyboard settings","disposition":"excluded_with_reason","reason":"This is a platform-owned standard keyboard, not a Nihongo-specific parity surface."},
-    {"action_id":"WORD-ACTION-027","source":"LOOKUP-WORD-DETAIL","trigger":"interactive swipe-back gesture","result":null,"disposition":"blocked_by_access","blocked_by":"WORD-BLOCKER-GESTURES"},
-    {"action_id":"WORD-ACTION-028","source":"LOOKUP-WORD-DETAIL and LOOKUP-EXAMPLE-SENTENCES","trigger":"long press a linked token or row","result":null,"disposition":"blocked_by_access","blocked_by":"WORD-BLOCKER-GESTURES"},
+    {"action_id":"WORD-ACTION-027","source":"LOOKUP-WORD-DETAIL","trigger":"exercise the exact Nihongo interactive swipe-back and cancellation behavior","result":"not required; Zenbu uses standard iOS interactive edge-swipe and Back behavior, and cancellation preserves the current screen and state","disposition":"excluded_with_reason","reason":"The product stakeholder approved the app-owned gesture boundary in issue #89. Exact Nihongo gesture animation, timing, and cancellation parity are prohibited claims."},
+    {"action_id":"WORD-ACTION-028","source":"LOOKUP-WORD-DETAIL and LOOKUP-EXAMPLE-SENTENCES","trigger":"exercise exact Nihongo long-press behavior on linked tokens, rows, text, and controls","result":"not required; Zenbu long press is a no-op unless an intentional documented context menu is provided","disposition":"excluded_with_reason","reason":"The product stakeholder approved the app-owned long-press boundary in issue #89. Exact Nihongo context-menu or no-op parity is prohibited rather than inferred."},
     {"action_id":"WORD-ACTION-029","source":"word/detail family","trigger":"isolate network, repeat entry/audio actions, then reconnect","result":"stakeholder-confirmed offline capability requirement","disposition":"excluded_with_reason","reason":"Zenbu word/detail functionality must work offline; exact Nihongo failure/retry presentation is not a parity requirement."},
     {"action_id":"WORD-ACTION-030","source":"word/detail family","trigger":"exercise unavailable word and sentence audio fixtures","result":"not required by the approved universal playback contract","disposition":"excluded_with_reason","reason":"Selecting Play must produce pronunciation; use licensed audio or Speech Synthesis fallback rather than reproduce an unavailable state."},
     {"action_id":"WORD-ACTION-031","source":"LOOKUP-WORD-DETAIL","trigger":"enter the previously identified Flashcard editor toolbar boundary","result":"BOUNDARY-FLASHCARD-EDITOR","disposition":"excluded_with_reason","reason":"Flashcards and personal content are outside the approved destination."},

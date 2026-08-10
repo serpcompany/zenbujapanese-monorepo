@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-08-10T07:14:09.912Z",
+  "generated_at": "2026-08-10T07:28:03.336Z",
   "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/76",
   "map": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/77",
-  "disposition": "NOT_READY — DISCOVERY GAPS REMAIN",
-  "disposition_basis": "3 exact blockers affect 4 atomic claims. Structural completeness does not satisfy the coding-ready gate.",
+  "disposition": "READY_FOR_IMPLEMENTATION",
+  "disposition_basis": "Every blocking invariant passes and no blocking gap remains.",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
   "denominator": {
@@ -17,9 +17,9 @@
       "traversed": 93,
       "same_destination_as": 2,
       "unavailable_under_fixture": 3,
-      "blocked_by_access": 4,
+      "blocked_by_access": 0,
       "external_boundary": 1,
-      "excluded_with_reason": 26
+      "excluded_with_reason": 30
     },
     "fixture_classes": 35,
     "search_required_categories_executed": "12/12",
@@ -32,9 +32,9 @@
     "asset_records": 16,
     "atomic_rows": 329,
     "ready_input_rows": 284,
-    "blocked_rows": 4,
-    "excluded_rows": 41,
-    "distinct_blocking_ids": 3
+    "blocked_rows": 0,
+    "excluded_rows": 45,
+    "distinct_blocking_ids": 0
   },
   "family_coverage": {
     "search": {
@@ -43,8 +43,8 @@
       "fixture_runs": 16,
       "fixture_classes": 16,
       "behavior_layout_classes": 11,
-      "capture_complete": false,
-      "status": "NOT_COMPLETE — BLOCKING SEARCH DISCOVERY GAPS REMAIN"
+      "capture_complete": true,
+      "status": "EXECUTED_COMPLETE_FOR_APPROVED_SEARCH_CONTRACT_WITH_NONBLOCKING_REFERENCE_RESIDUALS"
     },
     "word": {
       "states": 23,
@@ -52,8 +52,8 @@
       "fixture_runs": 10,
       "fixture_classes": 10,
       "behavior_layout_classes": 12,
-      "capture_complete": false,
-      "status": "NOT_COMPLETE — BLOCKING WORD/DETAIL DISCOVERY GAPS REMAIN"
+      "capture_complete": true,
+      "status": "EXECUTED_COMPLETE_FOR_APPROVED_WORD_DETAIL_CONTRACT_WITH_NONBLOCKING_REFERENCE_RESIDUALS"
     },
     "kanji": {
       "states": 22,
@@ -61,8 +61,8 @@
       "fixture_runs": 4,
       "fixture_classes": 4,
       "behavior_layout_classes": 10,
-      "capture_complete": false,
-      "status": "executed_complete_for_owned_mvp_rows_with_external_gesture_gap"
+      "capture_complete": true,
+      "status": "executed_complete_for_approved_mvp_contract"
     },
     "image": {
       "states": 17,
@@ -90,13 +90,9 @@
     {
       "id": "AUDIT-CHECK-GRAPH-CLOSURE",
       "subject": "recursive action and destination closure",
-      "result": "blocked",
-      "blocking_ids": [
-        "KANJI-BLOCKER-GESTURES",
-        "SEARCH-BLOCKER-HISTORY-DELETION",
-        "WORD-BLOCKER-GESTURES"
-      ],
-      "basis": "Recorded nodes and edges are structurally complete as an index, but named runtime-access gaps prevent a coding-ready closure claim."
+      "result": "pass",
+      "blocking_ids": [],
+      "basis": "Every indexed action is observed, covered by an approved app-owned contract, or explicitly excluded; no runtime-access gap blocks implementation readiness."
     },
     {
       "id": "AUDIT-CHECK-FIXTURES",
@@ -114,31 +110,28 @@
       "id": "AUDIT-CHECK-LEDGER",
       "subject": "atomic ledger schema and referential integrity",
       "result": "pass",
-      "basis": "329 unique atomic rows are schema-complete; 284 ready inputs, 4 blocked rows, and 41 exclusions reconcile."
+      "basis": "329 unique atomic rows are schema-complete; 284 ready inputs, 0 blocked rows, and 45 exclusions reconcile."
     },
     {
       "id": "AUDIT-CHECK-FAILURE-RECOVERY",
-      "subject": "failure, recovery, persistence, offline, timing, audio, and accessibility evidence",
-      "result": "blocked",
-      "blocking_ids": [
-        "KANJI-BLOCKER-GESTURES",
-        "WORD-BLOCKER-GESTURES"
-      ],
-      "basis": "Observed persistence and recovery claims are retained, but the listed environment-bound behaviors remain unproved."
+      "subject": "failure, recovery, persistence, offline, timing, audio, accessibility, and interaction boundaries",
+      "result": "pass",
+      "blocking_ids": [],
+      "basis": "Observed claims and approved platform or app-owned boundaries cover persistence, recovery, offline behavior, timing, audio, accessibility, gestures, and individual history-row deletion without inferring unknown Nihongo behavior."
     },
     {
       "id": "AUDIT-CHECK-PROVENANCE",
       "subject": "source provenance and licensing",
       "result": "pass",
       "blocking_ids": [],
-      "basis": "Named public upstreams remain bounded by exact snapshot, transformation, provider, and licensing gaps."
+      "basis": "Selected pinned public sources, app-owned normalization boundaries, license constraints, and prohibited exact-reference claims are recorded without an unresolved provenance blocker."
     },
     {
       "id": "AUDIT-CHECK-VISUAL",
-      "subject": "quantified visual and asset specification",
+      "subject": "visual and asset specification",
       "result": "pass",
       "blocking_ids": [],
-      "basis": "Observed visual roles are indexed, but quantified measurements and exact glyph identity/licensing remain open."
+      "basis": "Observed information hierarchy and control roles are indexed; Zenbu-owned measurements and original or licensed glyphs are approved, and exact Nihongo pixels or asset identity are prohibited claims."
     },
     {
       "id": "AUDIT-CHECK-VARIANCE",
@@ -178,95 +171,11 @@
     "Shinjigen text and images are excluded from reuse; kanji etymology and Origin/history content are deferred to post-MVP issue #91, where reusable sources and original Zenbu presentation may be evaluated",
     "CJKI is an optional future commercial coverage upgrade; initial pitch data uses pinned UniDic 3.1.0 under New BSD",
     "Exact Nihongo dictionary and example-sentence snapshots, filters, edits, and ordering are not parity requirements; Zenbu uses pinned official JMdict and text-only Tatoeba exports with app-owned, documented transforms",
-    "Exact Nihongo kanji metadata, source-dependent row denominators and missing-data classes, component ontology, stroke paths, terminal pixels, diagrams, and timing are not parity requirements; Zenbu uses pinned KANJIDIC2, KRADFILE/RADKFILE, and KanjiVG sources with app-owned linked-row behavior, missing-data presentation, renderer timing, and source-separated overrides"
+    "Exact Nihongo kanji metadata, source-dependent row denominators and missing-data classes, component ontology, stroke paths, terminal pixels, diagrams, and timing are not parity requirements; Zenbu uses pinned KANJIDIC2, KRADFILE/RADKFILE, and KanjiVG sources with app-owned linked-row behavior, missing-data presentation, renderer timing, and source-separated overrides",
+    "Exact Nihongo interactive edge-swipe, cancellation, long-press menus or no-ops, gesture animation, and timing are not parity requirements; Zenbu uses standard iOS interactive edge-swipe and Back behavior, preserves the current screen and state on cancellation, and treats long press as a no-op unless an intentional documented context menu is provided",
+    "Exact Nihongo recent-search row deletion gesture, control presentation, animation, and persistence mechanics are not parity requirements; Zenbu provides an app-owned per-row swipe action that removes only the selected row and persists the deletion"
   ],
-  "blocking_records": [
-    {
-      "blocker_id": "KANJI-BLOCKER-GESTURES",
-      "category": "runtime-access",
-      "status": "minimal_external_dependency_direct_touch_gesture_trace",
-      "owner": "device owner or discovery driver with synchronized physical-touch capture",
-      "missing_authority_access_or_evidence": "Kanji-family long press and interactive swipe-back behavior",
-      "affected_journey_ids": [
-        "JOURNEY-INSPECT-KANJI",
-        "JOURNEY-INSPECT-KANJI-ELEMENT",
-        "JOURNEY-PLAY-STROKE-ORDER"
-      ],
-      "affected_blocking_journey_ids": [
-        "JOURNEY-INSPECT-KANJI",
-        "JOURNEY-INSPECT-KANJI-ELEMENT",
-        "JOURNEY-PLAY-STROKE-ORDER"
-      ],
-      "affected_claim_ids": [
-        "PARITY-ACTION-KANJI-ACTION-024"
-      ],
-      "completed_independent_work": "Back controls, scrolling, taps, inline expansion, overlay controls, nested navigation cycles, and cold relaunch were captured. Issue 87 revalidated the same controller gesture authority against public Word Detail before duplicating it across Kanji surfaces; it still could not deliver an edge swipe and exposes no duration-controlled long press.",
-      "fallback": "Do not infer gesture behavior from standard iOS conventions.",
-      "resume_procedure": [
-        "Use the physical iPhone with a synchronized privacy-safe screen recording and public fixtures only.",
-        "Long-press the glyph, readings, element rows, word rows, and stroke controls.",
-        "Test edge-swipe back and mid-gesture cancellation from Kanji Detail, Kanji Element Detail, and the stroke overlay."
-      ]
-    },
-    {
-      "blocker_id": "SEARCH-BLOCKER-HISTORY-DELETION",
-      "category": "runtime-access",
-      "status": "awaiting_action_time_confirmation",
-      "owner": "device owner with discovery driver",
-      "missing_authority_access_or_evidence": "individual removal of a session-created recent-search row",
-      "affected_journey_ids": [
-        "JOURNEY-RERUN-RECENT-SEARCH"
-      ],
-      "affected_blocking_journey_ids": [
-        "JOURNEY-RERUN-RECENT-SEARCH"
-      ],
-      "affected_claim_ids": [
-        "PARITY-ACTION-SEARCH-ACTION-027"
-      ],
-      "completed_independent_work": "A known session-created もんだい row was rerun without opening older history, and issue 87 created the disposable tab row as the newest entry. Clear All remains ruled out because it would delete pre-existing data. Action-time confirmation for the single disposable row has been requested.",
-      "fallback": "Retain the exact row-removal action as untested; do not infer swipe affordance or persistence.",
-      "resume_procedure": [
-        "Create or identify the current top session-created Search row without opening any older row.",
-        "At action time, obtain confirmation to permanently remove that one disposable row.",
-        "Swipe only that row, record the exposed control and settled result without retaining older history, and verify the query no longer reruns from that row."
-      ]
-    },
-    {
-      "blocker_id": "WORD-BLOCKER-GESTURES",
-      "category": "runtime-access",
-      "status": "minimal_external_dependency_direct_touch_gesture_trace",
-      "owner": "device owner or discovery driver with working physical-touch capture",
-      "missing_authority_access_or_evidence": "interactive swipe-back and long-press behavior",
-      "affected_journey_ids": [
-        "JOURNEY-EDIT-FLASHCARD",
-        "JOURNEY-EDIT-NOTE",
-        "JOURNEY-HEAR-PRONUNCIATION",
-        "JOURNEY-INSPECT-CONJUGATIONS",
-        "JOURNEY-INSPECT-KANJI",
-        "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
-      ],
-      "affected_blocking_journey_ids": [
-        "JOURNEY-EDIT-NOTE",
-        "JOURNEY-HEAR-PRONUNCIATION",
-        "JOURNEY-INSPECT-CONJUGATIONS",
-        "JOURNEY-INSPECT-KANJI",
-        "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
-      ],
-      "affected_claim_ids": [
-        "PARITY-ACTION-WORD-ACTION-027",
-        "PARITY-ACTION-WORD-ACTION-028"
-      ],
-      "completed_independent_work": "Back controls, scrolling, taps, and nested navigation cycles were captured. Issue 87 sent two additional left-edge controller drags from a public Word Detail state; neither produced a verified transition. The available controller still exposes no duration-controlled long press.",
-      "fallback": "Do not infer gesture behavior from standard iOS conventions.",
-      "resume_procedure": [
-        "Use the physical iPhone with a synchronized screen recording and public fixtures only.",
-        "Test edge-swipe back from Example Sentences, nested Word Detail, and Conjugations, including canceling mid-gesture.",
-        "Long-press linked tokens, related rows, meaning text, and speaker controls; record any menu or no-op disposition."
-      ]
-    }
-  ],
+  "blocking_records": [],
   "nonblocking_environment_limitations": [
     {
       "environment_cell_id": "ENV-LOCALE-CURRENT",
@@ -364,5 +273,5 @@
       "resume_procedure": []
     }
   ],
-  "resume_contract": "Resolve blocker records against the pinned authority and environment, add privacy-safe evidence and canonical ledger links, regenerate the crosswalk and ledger, then rerun `node docs/clone-discovery/nihongo/audit-dossier.mjs`. READY_FOR_IMPLEMENTATION is permitted only when blocking_records is empty and every audit check passes."
+  "resume_contract": "No discovery blocker remains. Preserve the approved variances and prohibited parity claims during implementation; rerun the crosswalk, ledger, and dossier audit after any canonical discovery change."
 }

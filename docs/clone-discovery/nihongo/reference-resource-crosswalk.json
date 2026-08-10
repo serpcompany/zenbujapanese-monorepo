@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-10T07:14:09.737Z",
+  "generated_at": "2026-08-10T07:28:03.144Z",
   "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/74",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
@@ -8,7 +8,7 @@
   "source_records": [
     {
       "path": "scope.json",
-      "sha256": "00ab025dbf404c2266d49f7619e0cddc359c05c9acf4a3fa03e5930468fe01f5"
+      "sha256": "df116459aa535457589094db68fc2333811028ea246a342bcadd16a07a21a7f9"
     },
     {
       "path": "reference-authorities.json",
@@ -32,19 +32,19 @@
     },
     {
       "path": "access-blockers.json",
-      "sha256": "5ded3190eb685b3d0b7cfe1ffe2741304a7b45c70db8fd7e9027ac958c7bfeb3"
+      "sha256": "28c5851e705005fe1a7706b1ca1acff2e51dedc95f8fa386c13c5092bee3dcb6"
     },
     {
       "path": "search-crawl.json",
-      "sha256": "f62e44d7fe404db4d74297491f5a56e326828be752a3140db8572af50c77fa81"
+      "sha256": "5e56018035efeb5e0e02117876ff0b30782493c9ce68b27153bda1c93e6aa9fb"
     },
     {
       "path": "word-crawl.json",
-      "sha256": "f7eef937a39c3e1f66041ed1071921497434bc48c876b400a5238c1f66631c27"
+      "sha256": "ef19bb1c87f42133d1bf904f5e81b661625a228fd2c6cd4f8ba93a761b88f198"
     },
     {
       "path": "kanji-crawl.json",
-      "sha256": "e0f336f52abb87b0f51559a43cdad54ed616d79feb18cd6e5209a4b0ea5119c7"
+      "sha256": "b20e2a1b0cff7343b1bf51c2a2b15e544153ecfea0f61990d123df6e5accb0fc"
     },
     {
       "path": "image-crawl.json",
@@ -98,8 +98,8 @@
     "nodes_blocked": 0,
     "nodes_excluded": 4,
     "actions_ready": 97,
-    "actions_blocked": 4,
-    "actions_excluded": 28,
+    "actions_blocked": 0,
+    "actions_excluded": 32,
     "fixtures_ready": 35,
     "fixtures_blocked": 0,
     "behavior_claims_ready": 19,
@@ -112,7 +112,7 @@
     "crosswalk_gap_groups": 0,
     "inherited_access_blockers": 23,
     "inherited_provenance_gaps": 5,
-    "distinct_blocking_gap_ids": 3
+    "distinct_blocking_gap_ids": 0
   },
   "node_crosswalk": [
     {
@@ -7482,9 +7482,9 @@
       "source_record": "search-crawl.json",
       "kind": "action-edge",
       "source": "SEARCH-STATE-003",
-      "trigger": "swipe to remove a session-created history row",
-      "observed_result": "not exercised",
-      "disposition": "blocked_by_access",
+      "trigger": "exercise the exact Nihongo swipe-to-delete affordance on a session-created history row",
+      "observed_result": "not required; Zenbu provides an app-owned per-row swipe action that removes only the selected row and persists the deletion",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-SEARCH-HISTORY",
       "surface_ids": [
         "LOOKUP-SEARCH-HISTORY"
@@ -7496,7 +7496,7 @@
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
-        "precondition": "Recreate source SEARCH-STATE-003; then swipe to remove a session-created history row"
+        "precondition": "Recreate source SEARCH-STATE-003; then exercise the exact Nihongo swipe-to-delete affordance on a session-created history row"
       },
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -7531,11 +7531,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "SEARCH-BLOCKER-HISTORY-DELETION"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "exclusion": "The product stakeholder approved the Zenbu-owned deletion contract in issue #89. Exact Nihongo gesture, control, animation, and persistence parity is prohibited rather than inferred from an unperformed destructive reference action.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-SEARCH-ACTION-028",
@@ -10546,9 +10544,9 @@
       "source_record": "word-crawl.json",
       "kind": "action-edge",
       "source": "LOOKUP-WORD-DETAIL",
-      "trigger": "interactive swipe-back gesture",
-      "observed_result": null,
-      "disposition": "blocked_by_access",
+      "trigger": "exercise the exact Nihongo interactive swipe-back and cancellation behavior",
+      "observed_result": "not required; Zenbu uses standard iOS interactive edge-swipe and Back behavior, and cancellation preserves the current screen and state",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-WORD-DETAIL",
       "surface_ids": [
         "LOOKUP-WORD-DETAIL"
@@ -10566,7 +10564,7 @@
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
-        "precondition": "Recreate source LOOKUP-WORD-DETAIL; then interactive swipe-back gesture"
+        "precondition": "Recreate source LOOKUP-WORD-DETAIL; then exercise the exact Nihongo interactive swipe-back and cancellation behavior"
       },
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -10610,11 +10608,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "WORD-BLOCKER-GESTURES"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "exclusion": "The product stakeholder approved the app-owned gesture boundary in issue #89. Exact Nihongo gesture animation, timing, and cancellation parity are prohibited claims.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-WORD-ACTION-028",
@@ -10622,9 +10618,9 @@
       "source_record": "word-crawl.json",
       "kind": "action-edge",
       "source": "LOOKUP-WORD-DETAIL and LOOKUP-EXAMPLE-SENTENCES",
-      "trigger": "long press a linked token or row",
-      "observed_result": null,
-      "disposition": "blocked_by_access",
+      "trigger": "exercise exact Nihongo long-press behavior on linked tokens, rows, text, and controls",
+      "observed_result": "not required; Zenbu long press is a no-op unless an intentional documented context menu is provided",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-EXAMPLE-SENTENCES",
       "surface_ids": [
         "LOOKUP-EXAMPLE-SENTENCES"
@@ -10637,7 +10633,7 @@
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
-        "precondition": "Recreate source LOOKUP-WORD-DETAIL and LOOKUP-EXAMPLE-SENTENCES; then long press a linked token or row"
+        "precondition": "Recreate source LOOKUP-WORD-DETAIL and LOOKUP-EXAMPLE-SENTENCES; then exercise exact Nihongo long-press behavior on linked tokens, rows, text, and controls"
       },
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -10674,11 +10670,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "WORD-BLOCKER-GESTURES"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "exclusion": "The product stakeholder approved the app-owned long-press boundary in issue #89. Exact Nihongo context-menu or no-op parity is prohibited rather than inferred.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-WORD-ACTION-029",
@@ -12437,9 +12431,9 @@
       "source_record": "kanji-crawl.json",
       "kind": "action-edge",
       "source": "kanji family",
-      "trigger": "interactive swipe-back and long press visible glyphs, rows, and controls",
-      "observed_result": null,
-      "disposition": "blocked_by_access",
+      "trigger": "exercise exact Nihongo interactive swipe-back, cancellation, and long-press behavior on visible glyphs, rows, and controls",
+      "observed_result": "not required; Zenbu uses standard iOS interactive edge-swipe and Back behavior, cancellation preserves the current screen and state, and long press is a no-op unless an intentional documented context menu is provided",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-KANJI-DETAIL",
       "surface_ids": [
         "LOOKUP-KANJI-DETAIL",
@@ -12455,7 +12449,7 @@
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
-        "precondition": "Recreate source kanji family; then interactive swipe-back and long press visible glyphs, rows, and controls"
+        "precondition": "Recreate source kanji family; then exercise exact Nihongo interactive swipe-back, cancellation, and long-press behavior on visible glyphs, rows, and controls"
       },
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -12494,11 +12488,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "KANJI-BLOCKER-GESTURES"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "exclusion": "The product stakeholder approved the app-owned gesture boundary in issue #89. Exact Nihongo gesture, context-menu, no-op, animation, and timing parity are prohibited claims.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-KANJI-ACTION-025",

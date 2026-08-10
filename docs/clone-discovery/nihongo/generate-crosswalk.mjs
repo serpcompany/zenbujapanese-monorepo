@@ -574,7 +574,8 @@ const report = {
   reconciled_source_repairs: [
     "Canonicalized the preliminary LOOKUP-STROKE-ORDER-OVERLAY identifier to the recursive-crawl ID LOOKUP-KANJI-STROKE-ORDER across the surface map, journey, transition table, and reachability map.",
     "Recomputed surface-map scope counts after the post-MVP etymology decision: 14 blocking, 1 navigation-support, 8 excluded, 23 total.",
-    "Retained LOOKUP-KANJI-ETYMOLOGY reference evidence while excluding its surface and Kanji Detail Origin/history content from the MVP contract under issue #91."
+    "Retained LOOKUP-KANJI-ETYMOLOGY reference evidence while excluding its surface and Kanji Detail Origin/history content from the MVP contract under issue #91.",
+    "Applied the issue #89 stakeholder boundary: standard iOS edge-swipe/Back behavior, app-owned long press, and per-row history deletion replace unknown exact Nihongo gesture and deletion parity."
   ],
   conflicts: readJson("behavior-coverage-report.json").observed_conflicts_or_tensions,
   crosswalk_gaps: genericGaps,
@@ -588,7 +589,9 @@ const report = {
     paid_or_proprietary_assets_copied: false,
     evidence_basis: "Only previously privacy-reviewed runtime evidence, structured discovery records, and purpose-created fixtures were indexed."
   },
-  next_ticket_effect: "The atomic parity ledger can consume every row, but blocked rows and resources must remain blocked/unknown; no coding-ready disposition is permitted while blocking_gap_ids is non-empty."
+  next_ticket_effect: blockingGapIds.length
+    ? "The atomic parity ledger can consume every row, but blocked rows and resources must remain blocked/unknown; no coding-ready disposition is permitted while blocking_gap_ids is non-empty."
+    : "The atomic parity ledger can consume every row as a coding-ready discovery input; clone and test statuses remain unknown/not_run until implementation evidence exists."
 };
 
 output("design-token-index.json", {

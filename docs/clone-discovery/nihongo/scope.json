@@ -79,7 +79,9 @@
     "Shinjigen text and images are excluded from reuse; kanji etymology and Origin/history content are deferred to post-MVP issue #91, where reusable sources and original Zenbu presentation may be evaluated",
     "CJKI is an optional future commercial coverage upgrade; initial pitch data uses pinned UniDic 3.1.0 under New BSD",
     "Exact Nihongo dictionary and example-sentence snapshots, filters, edits, and ordering are not parity requirements; Zenbu uses pinned official JMdict and text-only Tatoeba exports with app-owned, documented transforms",
-    "Exact Nihongo kanji metadata, source-dependent row denominators and missing-data classes, component ontology, stroke paths, terminal pixels, diagrams, and timing are not parity requirements; Zenbu uses pinned KANJIDIC2, KRADFILE/RADKFILE, and KanjiVG sources with app-owned linked-row behavior, missing-data presentation, renderer timing, and source-separated overrides"
+    "Exact Nihongo kanji metadata, source-dependent row denominators and missing-data classes, component ontology, stroke paths, terminal pixels, diagrams, and timing are not parity requirements; Zenbu uses pinned KANJIDIC2, KRADFILE/RADKFILE, and KanjiVG sources with app-owned linked-row behavior, missing-data presentation, renderer timing, and source-separated overrides",
+    "Exact Nihongo interactive edge-swipe, cancellation, long-press menus or no-ops, gesture animation, and timing are not parity requirements; Zenbu uses standard iOS interactive edge-swipe and Back behavior, preserves the current screen and state on cancellation, and treats long press as a no-op unless an intentional documented context menu is provided",
+    "Exact Nihongo recent-search row deletion gesture, control presentation, animation, and persistence mechanics are not parity requirements; Zenbu provides an app-owned per-row swipe action that removes only the selected row and persists the deletion"
   ],
   "stakeholder_decisions": [
     {
@@ -141,6 +143,16 @@
         "KANJI-BLOCKER-TERMINAL-EVIDENCE"
       ],
       "decision": "The retained representative navigation and qualitative animation evidence is sufficient to specify the MVP contract. Zenbu renders and links only app-owned Language Reference Data, omits unsupported source fields or sections, and supplies deterministic stroke animation with its app-owned KanjiVG renderer. Exact Nihongo row denominators, missing-data classes, terminal pixels, paths, and timing remain prohibited parity claims rather than implementation blockers."
+    },
+    {
+      "date": "2026-08-10",
+      "authority": "product stakeholder approval on Wayfinder ticket #89",
+      "resolved_as_nonblocking": [
+        "SEARCH-BLOCKER-HISTORY-DELETION",
+        "WORD-BLOCKER-GESTURES",
+        "KANJI-BLOCKER-GESTURES"
+      ],
+      "decision": "Zenbu uses standard iOS interactive edge-swipe and Back behavior, preserves the current screen and state when an interactive swipe is canceled, and treats long press as a no-op unless an intentional documented context menu is provided. An app-owned per-row swipe action removes only the selected recent-search row and persists the deletion. Exact Nihongo gesture, context-menu, no-op, deletion-control, animation, timing, and persistence parity are prohibited claims, so direct physical reference checks are unnecessary for implementation readiness."
     }
   ]
 }

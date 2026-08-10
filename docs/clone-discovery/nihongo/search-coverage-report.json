@@ -12,9 +12,9 @@
       "traversed": 30,
       "same_destination_as": 1,
       "unavailable_under_fixture": 3,
-      "blocked_by_access": 1,
+      "blocked_by_access": 0,
       "external_boundary": 0,
-      "excluded_with_reason": 9
+      "excluded_with_reason": 10
     },
     "required_fixture_categories": 12,
     "required_fixture_categories_executed": 12,
@@ -28,12 +28,14 @@
     {"destination":"LOOKUP-KANJI-DETAIL","owner_ticket":"https://github.com/serpcompany/zenbujapanese-monorepo/issues/70"},
     {"destination":"LOOKUP-IMAGE-SOURCE-MENU and protected source destinations","owner_ticket":"https://github.com/serpcompany/zenbujapanese-monorepo/issues/71"}
   ],
-  "unresolved_gaps": [
+  "unresolved_gaps": [],
+  "nonblocking_gaps": [
     {
       "gap_id": "SEARCH-GAP-HISTORY-REMOVE",
-      "blocked_by": "SEARCH-BLOCKER-HISTORY-DELETION",
+      "blocked_by": null,
       "affected_actions": ["SEARCH-ACTION-027"],
-      "owner": "device owner with discovery driver"
+      "owner": "product stakeholder",
+      "reason": "The exact Nihongo affordance remains unobserved, but issue #89 approved an app-owned per-row deletion contract and prohibited exact gesture, control, animation, and persistence parity claims."
     },
     {
       "gap_id": "SEARCH-GAP-HANDWRITING-ERASE",
@@ -66,7 +68,7 @@
     "personal_media_or_files_retained": false,
     "credentials_retained": false
   },
-  "capture_complete": false,
-  "status": "NOT_COMPLETE — BLOCKING SEARCH DISCOVERY GAPS REMAIN",
-  "reason": "All required fixture categories and bounded long-result scrolling/restoration were executed. Standard keyboard presentation and exact offline/failure/retry parity are approved platform/product boundaries; individual disposable-history removal and the listed nonblocking narrow behavior gaps remain."
+  "capture_complete": true,
+  "status": "EXECUTED_COMPLETE_FOR_APPROVED_SEARCH_CONTRACT_WITH_NONBLOCKING_REFERENCE_RESIDUALS",
+  "reason": "All required fixture categories and bounded long-result scrolling/restoration were executed. Standard keyboard behavior, offline/failure handling, and individual history-row deletion have approved platform or app-owned contracts. The listed narrow exact-reference residuals are nonblocking and must not be presented as observed Nihongo behavior."
 }

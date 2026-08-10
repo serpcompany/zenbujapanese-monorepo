@@ -115,23 +115,14 @@
   {
     "id": "SEARCH-BLOCKER-HISTORY-DELETION",
     "field": "individual removal of a session-created recent-search row",
-    "status": "awaiting_action_time_confirmation",
-    "owner": "device owner with discovery driver",
-    "affected_records": [
-      "SEARCH-ACTION-027",
-      "JOURNEY-RERUN-RECENT-SEARCH"
-    ],
-    "completed_independent_work": "A known session-created もんだい row was rerun without opening older history, and issue 87 created the disposable tab row as the newest entry. Clear All remains ruled out because it would delete pre-existing data. Action-time confirmation for the single disposable row has been requested.",
-    "fallback": "Retain the exact row-removal action as untested; do not infer swipe affordance or persistence.",
-    "resume_procedure": [
-      "Create or identify the current top session-created Search row without opening any older row.",
-      "At action time, obtain confirmation to permanently remove that one disposable row.",
-      "Swipe only that row, record the exposed control and settled result without retaining older history, and verify the query no longer reruns from that row."
-    ],
+    "status": "resolved_nonblocking_by_approved_app_owned_history_deletion_contract",
+    "owner": "product stakeholder",
+    "affected_records": [],
+    "completed_independent_work": "A known session-created もんだい row was rerun without opening older history, and issue 87 created the disposable tab row as the newest entry. The available controller could not expose a per-row delete action and no reference row was deleted. Clear All remains ruled out because it would delete pre-existing data.",
+    "fallback": "Zenbu exposes an app-owned swipe action for an individual recent-search row. Confirming it removes only that row and persists the deletion. Exact Nihongo gesture, control, animation, and persistence parity is prohibited rather than inferred.",
+    "resume_procedure": [],
     "blocks_reconnaissance": false,
-    "blocks_final_rows": [
-      "Future individual Search-history removal row"
-    ]
+    "blocks_final_rows": []
   },
   {
     "id": "SEARCH-BLOCKER-SOFTWARE-KEYBOARD",
@@ -215,18 +206,14 @@
   {
     "id": "WORD-BLOCKER-GESTURES",
     "field": "interactive swipe-back and long-press behavior",
-    "status": "minimal_external_dependency_direct_touch_gesture_trace",
-    "owner": "device owner or discovery driver with working physical-touch capture",
-    "affected_records": ["WORD-ACTION-027", "WORD-ACTION-028"],
+    "status": "resolved_nonblocking_by_approved_app_owned_gesture_contract",
+    "owner": "product stakeholder",
+    "affected_records": [],
     "completed_independent_work": "Back controls, scrolling, taps, and nested navigation cycles were captured. Issue 87 sent two additional left-edge controller drags from a public Word Detail state; neither produced a verified transition. The available controller still exposes no duration-controlled long press.",
-    "fallback": "Do not infer gesture behavior from standard iOS conventions.",
-    "resume_procedure": [
-      "Use the physical iPhone with a synchronized screen recording and public fixtures only.",
-      "Test edge-swipe back from Example Sentences, nested Word Detail, and Conjugations, including canceling mid-gesture.",
-      "Long-press linked tokens, related rows, meaning text, and speaker controls; record any menu or no-op disposition."
-    ],
-    "blocks_reconnaissance": true,
-    "blocks_final_rows": ["Word/detail interactive gestures"]
+    "fallback": "Zenbu uses standard iOS interactive edge-swipe and Back behavior; canceling preserves the current screen and state. Long press is a no-op unless Zenbu intentionally provides a documented context menu. Exact Nihongo gesture behavior, animation, timing, menus, and no-ops are prohibited parity claims.",
+    "resume_procedure": [],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
   },
   {
     "id": "WORD-BLOCKER-OFFLINE",
@@ -255,18 +242,14 @@
   {
     "id": "KANJI-BLOCKER-GESTURES",
     "field": "Kanji-family long press and interactive swipe-back behavior",
-    "status": "minimal_external_dependency_direct_touch_gesture_trace",
-    "owner": "device owner or discovery driver with synchronized physical-touch capture",
-    "affected_records": ["KANJI-ACTION-024"],
+    "status": "resolved_nonblocking_by_approved_app_owned_gesture_contract",
+    "owner": "product stakeholder",
+    "affected_records": [],
     "completed_independent_work": "Back controls, scrolling, taps, inline expansion, overlay controls, nested navigation cycles, and cold relaunch were captured. Issue 87 revalidated the same controller gesture authority against public Word Detail before duplicating it across Kanji surfaces; it still could not deliver an edge swipe and exposes no duration-controlled long press.",
-    "fallback": "Do not infer gesture behavior from standard iOS conventions.",
-    "resume_procedure": [
-      "Use the physical iPhone with a synchronized privacy-safe screen recording and public fixtures only.",
-      "Long-press the glyph, readings, element rows, word rows, and stroke controls.",
-      "Test edge-swipe back and mid-gesture cancellation from Kanji Detail, Kanji Element Detail, and the stroke overlay."
-    ],
-    "blocks_reconnaissance": true,
-    "blocks_final_rows": ["Kanji-family interactive gestures"]
+    "fallback": "Zenbu uses standard iOS interactive edge-swipe and Back behavior; canceling preserves the current screen and state. Long press is a no-op unless Zenbu intentionally provides a documented context menu. Exact Nihongo gesture behavior, animation, timing, menus, and no-ops are prohibited parity claims.",
+    "resume_procedure": [],
+    "blocks_reconnaissance": false,
+    "blocks_final_rows": []
   },
   {
     "id": "KANJI-BLOCKER-OFFLINE",

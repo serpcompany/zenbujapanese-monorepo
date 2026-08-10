@@ -1,71 +1,7 @@
 {
-  "generated_at": "2026-08-10T07:14:09.837Z",
+  "generated_at": "2026-08-10T07:28:03.251Z",
   "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/75",
-  "disposition": "OPEN_BLOCKERS_PREVENT_CODING_READY_HANDOFF",
-  "blocking_question_count": 3,
-  "questions": [
-    {
-      "blocker_id": "SEARCH-BLOCKER-HISTORY-DELETION",
-      "category": "runtime-access",
-      "owner": "device owner with discovery driver",
-      "missing": "individual removal of a session-created recent-search row",
-      "status": "awaiting_action_time_confirmation",
-      "affected_source_ids": [
-        "SEARCH-ACTION-027",
-        "JOURNEY-RERUN-RECENT-SEARCH"
-      ],
-      "affected_ledger_row_ids": [
-        "PARITY-ACTION-SEARCH-ACTION-027"
-      ],
-      "completed_independent_work": "A known session-created もんだい row was rerun without opening older history, and issue 87 created the disposable tab row as the newest entry. Clear All remains ruled out because it would delete pre-existing data. Action-time confirmation for the single disposable row has been requested.",
-      "fallback": "Retain the exact row-removal action as untested; do not infer swipe affordance or persistence.",
-      "resume_procedure": [
-        "Create or identify the current top session-created Search row without opening any older row.",
-        "At action time, obtain confirmation to permanently remove that one disposable row.",
-        "Swipe only that row, record the exposed control and settled result without retaining older history, and verify the query no longer reruns from that row."
-      ]
-    },
-    {
-      "blocker_id": "WORD-BLOCKER-GESTURES",
-      "category": "runtime-access",
-      "owner": "device owner or discovery driver with working physical-touch capture",
-      "missing": "interactive swipe-back and long-press behavior",
-      "status": "minimal_external_dependency_direct_touch_gesture_trace",
-      "affected_source_ids": [
-        "WORD-ACTION-027",
-        "WORD-ACTION-028"
-      ],
-      "affected_ledger_row_ids": [
-        "PARITY-ACTION-WORD-ACTION-027",
-        "PARITY-ACTION-WORD-ACTION-028"
-      ],
-      "completed_independent_work": "Back controls, scrolling, taps, and nested navigation cycles were captured. Issue 87 sent two additional left-edge controller drags from a public Word Detail state; neither produced a verified transition. The available controller still exposes no duration-controlled long press.",
-      "fallback": "Do not infer gesture behavior from standard iOS conventions.",
-      "resume_procedure": [
-        "Use the physical iPhone with a synchronized screen recording and public fixtures only.",
-        "Test edge-swipe back from Example Sentences, nested Word Detail, and Conjugations, including canceling mid-gesture.",
-        "Long-press linked tokens, related rows, meaning text, and speaker controls; record any menu or no-op disposition."
-      ]
-    },
-    {
-      "blocker_id": "KANJI-BLOCKER-GESTURES",
-      "category": "runtime-access",
-      "owner": "device owner or discovery driver with synchronized physical-touch capture",
-      "missing": "Kanji-family long press and interactive swipe-back behavior",
-      "status": "minimal_external_dependency_direct_touch_gesture_trace",
-      "affected_source_ids": [
-        "KANJI-ACTION-024"
-      ],
-      "affected_ledger_row_ids": [
-        "PARITY-ACTION-KANJI-ACTION-024"
-      ],
-      "completed_independent_work": "Back controls, scrolling, taps, inline expansion, overlay controls, nested navigation cycles, and cold relaunch were captured. Issue 87 revalidated the same controller gesture authority against public Word Detail before duplicating it across Kanji surfaces; it still could not deliver an edge swipe and exposes no duration-controlled long press.",
-      "fallback": "Do not infer gesture behavior from standard iOS conventions.",
-      "resume_procedure": [
-        "Use the physical iPhone with a synchronized privacy-safe screen recording and public fixtures only.",
-        "Long-press the glyph, readings, element rows, word rows, and stroke controls.",
-        "Test edge-swipe back and mid-gesture cancellation from Kanji Detail, Kanji Element Detail, and the stroke overlay."
-      ]
-    }
-  ]
+  "disposition": "NO_OPEN_BLOCKERS",
+  "blocking_question_count": 0,
+  "questions": []
 }

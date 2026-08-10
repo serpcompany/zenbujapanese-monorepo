@@ -9,6 +9,10 @@
     "LOOKUP-RADICAL-INPUT",
     "LOOKUP-RESULTS"
   ],
+  "implementation_contract": {
+    "history_row_deletion": "Expose an app-owned swipe action for an individual recent-search row. Confirming that action removes only the selected row, persists the deletion, and does not affect any other history row.",
+    "reference_limit": "The exact Nihongo swipe affordance, control presentation, animation, and persistence mechanics were not observed and are not parity requirements. Clear All remains outside the authorized evidence boundary because it would affect pre-existing history."
+  },
   "states": [
     {"state_id":"SEARCH-STATE-001","surface_id":"LOOKUP-SEARCH-ROOT","name":"empty unfocused root","evidence":["evidence/reference/screenshots/search-inventory/search-root-empty.png"]},
     {"state_id":"SEARCH-STATE-002","surface_id":"LOOKUP-SEARCH-ROOT","name":"focused field with input-mode controls","evidence":["evidence/reference/screenshots/search-inventory/fixture-partial-tab.png"]},
@@ -66,7 +70,7 @@
     {"action_id":"SEARCH-ACTION-024","source":"SEARCH-STATE-018","trigger":"select Search after choosing a candidate","result":"SEARCH-STATE-019","disposition":"traversed"},
     {"action_id":"SEARCH-ACTION-025","source":"SEARCH-STATE-018","trigger":"select Search without choosing a candidate","result":"disabled Search control","disposition":"unavailable_under_fixture","reason":"The control remained disabled; no transition exists in this fixture state."},
     {"action_id":"SEARCH-ACTION-026","source":"SEARCH-STATE-003","trigger":"select the known top session-created もんだい history row","result":"SEARCH-STATE-005","disposition":"traversed"},
-    {"action_id":"SEARCH-ACTION-027","source":"SEARCH-STATE-003","trigger":"swipe to remove a session-created history row","result":"not exercised","disposition":"blocked_by_access","blocked_by":"SEARCH-BLOCKER-HISTORY-DELETION"},
+    {"action_id":"SEARCH-ACTION-027","source":"SEARCH-STATE-003","trigger":"exercise the exact Nihongo swipe-to-delete affordance on a session-created history row","result":"not required; Zenbu provides an app-owned per-row swipe action that removes only the selected row and persists the deletion","disposition":"excluded_with_reason","reason":"The product stakeholder approved the Zenbu-owned deletion contract in issue #89. Exact Nihongo gesture, control, animation, and persistence parity is prohibited rather than inferred from an unperformed destructive reference action."},
     {"action_id":"SEARCH-ACTION-028","source":"SEARCH-STATE-003","trigger":"select Clear All","result":"not exercised","disposition":"excluded_with_reason","reason":"It would destroy pre-existing history outside the authorized synthetic fixture scope."},
     {"action_id":"SEARCH-ACTION-029","source":"SEARCH-STATE-002","trigger":"select keyboard mode","result":"the standard iOS software keyboard follows the user's device keyboard settings","disposition":"excluded_with_reason","reason":"This is a platform-owned standard keyboard, not a Nihongo-specific parity surface."},
     {"action_id":"SEARCH-ACTION-030","source":"LOOKUP-RESULTS","trigger":"scroll a long result list","result":"the public tab result set reached a stable terminal viewport ending with tabbed browsing; opening that terminal row and selecting Back restored the same terminal viewport and scrollbar position","disposition":"traversed","evidence":["evidence/reference/interaction-traces/device-input-gesture-evidence.json","evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg","evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg","evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg","evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg"]},
