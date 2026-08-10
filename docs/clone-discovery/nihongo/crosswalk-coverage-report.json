@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-10T07:05:22.982Z",
+  "generated_at": "2026-08-10T07:14:09.737Z",
   "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/74",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
@@ -21,12 +21,12 @@
     "crosswalk_actions": 129,
     "crosswalk_fixtures": 35,
     "crosswalk_behavior_claims": 19,
-    "nodes_ready": 79,
-    "nodes_blocked": 1,
+    "nodes_ready": 80,
+    "nodes_blocked": 0,
     "nodes_excluded": 4,
-    "actions_ready": 95,
-    "actions_blocked": 7,
-    "actions_excluded": 27,
+    "actions_ready": 97,
+    "actions_blocked": 4,
+    "actions_excluded": 28,
     "fixtures_ready": 35,
     "fixtures_blocked": 0,
     "behavior_claims_ready": 19,
@@ -39,7 +39,7 @@
     "crosswalk_gap_groups": 0,
     "inherited_access_blockers": 23,
     "inherited_provenance_gaps": 5,
-    "distinct_blocking_gap_ids": 6
+    "distinct_blocking_gap_ids": 3
   },
   "integrity": {
     "duplicate_surface_ids": [],
@@ -331,28 +331,14 @@
     {
       "id": "KANJI-BLOCKER-ACTION-CLOSURE",
       "field": "exhaustive reading, element, contribution, related-word, and MVP missing-data fixture closure",
-      "status": "fixture_run_ended_before_every_visible_action_and_conditional_class_was_exercised",
-      "owner": "discovery driver on the pinned physical iPhone",
-      "affected_records": [
-        "KANJI-ACTION-004",
-        "KANJI-ACTION-008",
-        "KANJI-ACTION-023",
-        "LOOKUP-KANJI-DETAIL",
-        "LOOKUP-KANJI-ELEMENT-DETAIL"
-      ],
+      "status": "resolved_nonblocking_by_approved_language_reference_data_boundary",
+      "owner": "product stakeholder",
+      "affected_records": [],
       "completed_independent_work": "Four public fixture runs covered complete and missing metadata, simple/medium/complex stroke sequences, multiple elements, element alternatives, linked-kanji cycles, and related-word lists. Origin/history and etymology evidence is retained but deferred to post-MVP issue #91.",
-      "fallback": "Do not infer untraversed MVP rows from visually similar rows or claim that missing meaning, reading, or stroke-order classes do not exist.",
-      "resume_procedure": [
-        "Reopen the exact fixtures 静, 争, 一, and 鬱 from the empty Search root and use kanji-crawl.json as the tested baseline.",
-        "Exercise each reading row, meaning/sound element row, alternative glyph, contribution row, and related-word row separately, recording its settled destination and Back restoration.",
-        "Search rare public kanji until absent meaning, reading, and stroke-order classes are each found or a documented denominator proves a class unavailable.",
-        "Add every new node and action with stable IDs, privacy-safe evidence, and a terminal disposition."
-      ],
-      "blocks_reconnaissance": true,
-      "blocks_final_rows": [
-        "Kanji action-edge closure",
-        "Kanji conditional missing-data classes"
-      ]
+      "fallback": "Use the observed representative navigation cycles as the reference contract. Zenbu renders only rows supported by its Language Reference Data; every rendered reading, element, contribution, and related-word link must open the corresponding app-owned detail and Back must restore the source position. Missing source facts omit the field or section. Exact Nihongo row denominators, record selection, and missing-data classes are not parity claims.",
+      "resume_procedure": [],
+      "blocks_reconnaissance": false,
+      "blocks_final_rows": []
     },
     {
       "id": "KANJI-BLOCKER-GESTURES",
@@ -389,43 +375,26 @@
     {
       "id": "KANJI-BLOCKER-TIMING",
       "field": "authoritative stroke-animation duration, per-stroke timing, and interruption timing",
-      "status": "interaction_call_latency_is_not_a_synchronized_timing_authority",
-      "owner": "discovery driver with synchronized local screen recording",
-      "affected_records": [
-        "KANJI-ACTION-026"
-      ],
+      "status": "resolved_nonblocking_by_approved_app_owned_renderer",
+      "owner": "product stakeholder",
+      "affected_records": [],
       "completed_independent_work": "One-, eight-, and 29-stroke animations were visibly run; pause/resume, stepping, completion, close, platform interruption, and cold relaunch were observed.",
-      "fallback": "Retain qualitative animation behavior only; do not publish numeric timing from tool-call wall time.",
-      "resume_procedure": [
-        "Record the one-, eight-, and 29-stroke overlays locally at a known frame rate.",
-        "Measure open, per-stroke, inter-stroke, pause, resume, completion, and close intervals from frames.",
-        "Repeat interruption by navigation and backgrounding, hash the trace, and retain privacy-safe derived measurements."
-      ],
-      "blocks_reconnaissance": true,
-      "blocks_final_rows": [
-        "Stroke-order animation timing"
-      ]
+      "fallback": "Retain the observed qualitative state machine and do not publish numeric Nihongo timing. Zenbu generates animation timing with app-owned code over pinned KanjiVG paths and verifies deterministic one-, eight-, and 29-stroke fixtures without claiming exact timing parity.",
+      "resume_procedure": [],
+      "blocks_reconnaissance": false,
+      "blocks_final_rows": []
     },
     {
       "id": "KANJI-BLOCKER-TERMINAL-EVIDENCE",
       "field": "retained settled terminal screenshot for the 29-stroke 鬱 animation",
-      "status": "observed_but_ephemeral_frame_not_copied_before_cold_relaunch",
-      "owner": "discovery driver",
-      "affected_records": [
-        "KANJI-STATE-022",
-        "KANJI-ACTION-019"
-      ],
+      "status": "resolved_nonblocking_by_observed_behavior_and_approved_visual_boundary",
+      "owner": "product stakeholder",
+      "affected_records": [],
       "completed_independent_work": "The settled terminal frame was visually observed with counter 29, all strokes white, and the play control restored; initial and paused-at-13 evidence is retained.",
-      "fallback": "Keep the observation as an uncaptured runtime fact and do not treat it as screenshot-backed evidence.",
-      "resume_procedure": [
-        "Search depression, open 憂鬱, select 鬱, and open its stroke overlay.",
-        "Play to completion without other clipboard or navigation actions, verify two stable reads, and copy the settled frame before relaunch.",
-        "Hash and add the frame to kanji-evidence-manifest.json."
-      ],
-      "blocks_reconnaissance": true,
-      "blocks_final_rows": [
-        "29-stroke terminal visual row"
-      ]
+      "fallback": "Retain the terminal state as a qualitative structured observation, not screenshot-backed pixel evidence. Zenbu must visibly show all strokes complete, terminal progress, and the restored Play control, using its own renderer and visual design; exact Nihongo pixels are not a parity claim.",
+      "resume_procedure": [],
+      "blocks_reconnaissance": false,
+      "blocks_final_rows": []
     },
     {
       "id": "BEHAVIOR-BLOCKER-PITCH-MATCHING",
@@ -522,12 +491,9 @@
     }
   ],
   "blocking_gap_ids": [
-    "KANJI-BLOCKER-TERMINAL-EVIDENCE",
     "SEARCH-BLOCKER-HISTORY-DELETION",
     "WORD-BLOCKER-GESTURES",
-    "KANJI-BLOCKER-ACTION-CLOSURE",
-    "KANJI-BLOCKER-GESTURES",
-    "KANJI-BLOCKER-TIMING"
+    "KANJI-BLOCKER-GESTURES"
   ],
   "privacy_and_clean_room": {
     "private_material_included": false,

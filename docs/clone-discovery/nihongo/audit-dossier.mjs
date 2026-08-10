@@ -256,7 +256,7 @@ const nonblockingEnvironmentLimitations = unresolvedRequiredEnvironmentCells
 const report = {
   generated_at: generatedAt,
   ticket: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/76",
-  map: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/63",
+  map: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/77",
   disposition,
   disposition_basis: blockerIds.size
     ? `${blockerIds.size} exact blockers affect ${parityReport.ledger.blocked_rows} atomic claims. Structural completeness does not satisfy the coding-ready gate.`

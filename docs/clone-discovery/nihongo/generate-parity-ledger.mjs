@@ -44,10 +44,12 @@ const visualVariances = scope.allowed_variance.filter((item) =>
   /colors|typography|logos|icons|bottom-navigation/i.test(item),
 );
 const imageAddition = scope.allowed_variance.find((item) => /natural-translation/i.test(item));
+const kanjiSourceVariance = scope.allowed_variance.find((item) => /source-dependent row denominators/i.test(item));
 
 const allowedVarianceFor = (dimensions, surfaceIds = []) => unique([
   ...(dimensions.includes("visual") ? visualVariances : []),
   ...(surfaceIds.some((id) => id === "LOOKUP-IMAGE-TEXT-RESULT") && imageAddition ? [imageAddition] : []),
+  ...(surfaceIds.some((id) => id.startsWith("LOOKUP-KANJI-")) && kanjiSourceVariance ? [kanjiSourceVariance] : []),
 ]);
 
 const entryPointForJourneys = (journeyIds) => {

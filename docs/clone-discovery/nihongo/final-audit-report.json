@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-08-10T07:05:23.168Z",
+  "generated_at": "2026-08-10T07:14:09.912Z",
   "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/76",
-  "map": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/63",
+  "map": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/77",
   "disposition": "NOT_READY — DISCOVERY GAPS REMAIN",
-  "disposition_basis": "6 exact blockers affect 9 atomic claims. Structural completeness does not satisfy the coding-ready gate.",
+  "disposition_basis": "3 exact blockers affect 4 atomic claims. Structural completeness does not satisfy the coding-ready gate.",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
   "denominator": {
@@ -14,12 +14,12 @@
     "state_nodes": 84,
     "action_edges": 129,
     "action_dispositions": {
-      "traversed": 91,
+      "traversed": 93,
       "same_destination_as": 2,
-      "unavailable_under_fixture": 5,
-      "blocked_by_access": 5,
+      "unavailable_under_fixture": 3,
+      "blocked_by_access": 4,
       "external_boundary": 1,
-      "excluded_with_reason": 25
+      "excluded_with_reason": 26
     },
     "fixture_classes": 35,
     "search_required_categories_executed": "12/12",
@@ -31,10 +31,10 @@
     "design_token_families": 7,
     "asset_records": 16,
     "atomic_rows": 329,
-    "ready_input_rows": 280,
-    "blocked_rows": 9,
-    "excluded_rows": 40,
-    "distinct_blocking_ids": 6
+    "ready_input_rows": 284,
+    "blocked_rows": 4,
+    "excluded_rows": 41,
+    "distinct_blocking_ids": 3
   },
   "family_coverage": {
     "search": {
@@ -62,7 +62,7 @@
       "fixture_classes": 4,
       "behavior_layout_classes": 10,
       "capture_complete": false,
-      "status": "executed_not_complete_blocking_gaps_recorded"
+      "status": "executed_complete_for_owned_mvp_rows_with_external_gesture_gap"
     },
     "image": {
       "states": 17,
@@ -92,10 +92,7 @@
       "subject": "recursive action and destination closure",
       "result": "blocked",
       "blocking_ids": [
-        "KANJI-BLOCKER-ACTION-CLOSURE",
         "KANJI-BLOCKER-GESTURES",
-        "KANJI-BLOCKER-TERMINAL-EVIDENCE",
-        "KANJI-BLOCKER-TIMING",
         "SEARCH-BLOCKER-HISTORY-DELETION",
         "WORD-BLOCKER-GESTURES"
       ],
@@ -117,7 +114,7 @@
       "id": "AUDIT-CHECK-LEDGER",
       "subject": "atomic ledger schema and referential integrity",
       "result": "pass",
-      "basis": "329 unique atomic rows are schema-complete; 280 ready inputs, 9 blocked rows, and 40 exclusions reconcile."
+      "basis": "329 unique atomic rows are schema-complete; 284 ready inputs, 4 blocked rows, and 41 exclusions reconcile."
     },
     {
       "id": "AUDIT-CHECK-FAILURE-RECOVERY",
@@ -125,7 +122,6 @@
       "result": "blocked",
       "blocking_ids": [
         "KANJI-BLOCKER-GESTURES",
-        "KANJI-BLOCKER-TIMING",
         "WORD-BLOCKER-GESTURES"
       ],
       "basis": "Observed persistence and recovery claims are retained, but the listed environment-bound behaviors remain unproved."
@@ -182,38 +178,9 @@
     "Shinjigen text and images are excluded from reuse; kanji etymology and Origin/history content are deferred to post-MVP issue #91, where reusable sources and original Zenbu presentation may be evaluated",
     "CJKI is an optional future commercial coverage upgrade; initial pitch data uses pinned UniDic 3.1.0 under New BSD",
     "Exact Nihongo dictionary and example-sentence snapshots, filters, edits, and ordering are not parity requirements; Zenbu uses pinned official JMdict and text-only Tatoeba exports with app-owned, documented transforms",
-    "Exact Nihongo kanji metadata, component ontology, stroke paths, diagrams, and timing are not parity requirements; Zenbu uses pinned KANJIDIC2, KRADFILE/RADKFILE, and KanjiVG sources with an app-owned renderer and source-separated overrides"
+    "Exact Nihongo kanji metadata, source-dependent row denominators and missing-data classes, component ontology, stroke paths, terminal pixels, diagrams, and timing are not parity requirements; Zenbu uses pinned KANJIDIC2, KRADFILE/RADKFILE, and KanjiVG sources with app-owned linked-row behavior, missing-data presentation, renderer timing, and source-separated overrides"
   ],
   "blocking_records": [
-    {
-      "blocker_id": "KANJI-BLOCKER-ACTION-CLOSURE",
-      "category": "runtime-access",
-      "status": "fixture_run_ended_before_every_visible_action_and_conditional_class_was_exercised",
-      "owner": "discovery driver on the pinned physical iPhone",
-      "missing_authority_access_or_evidence": "exhaustive reading, element, contribution, related-word, and MVP missing-data fixture closure",
-      "affected_journey_ids": [
-        "JOURNEY-INSPECT-KANJI",
-        "JOURNEY-INSPECT-KANJI-ELEMENT",
-        "JOURNEY-PLAY-STROKE-ORDER"
-      ],
-      "affected_blocking_journey_ids": [
-        "JOURNEY-INSPECT-KANJI",
-        "JOURNEY-INSPECT-KANJI-ELEMENT",
-        "JOURNEY-PLAY-STROKE-ORDER"
-      ],
-      "affected_claim_ids": [
-        "PARITY-ACTION-KANJI-ACTION-008",
-        "PARITY-ACTION-KANJI-ACTION-023"
-      ],
-      "completed_independent_work": "Four public fixture runs covered complete and missing metadata, simple/medium/complex stroke sequences, multiple elements, element alternatives, linked-kanji cycles, and related-word lists. Origin/history and etymology evidence is retained but deferred to post-MVP issue #91.",
-      "fallback": "Do not infer untraversed MVP rows from visually similar rows or claim that missing meaning, reading, or stroke-order classes do not exist.",
-      "resume_procedure": [
-        "Reopen the exact fixtures 静, 争, 一, and 鬱 from the empty Search root and use kanji-crawl.json as the tested baseline.",
-        "Exercise each reading row, meaning/sound element row, alternative glyph, contribution row, and related-word row separately, recording its settled destination and Back restoration.",
-        "Search rare public kanji until absent meaning, reading, and stroke-order classes are each found or a documented denominator proves a class unavailable.",
-        "Add every new node and action with stable IDs, privacy-safe evidence, and a terminal disposition."
-      ]
-    },
     {
       "blocker_id": "KANJI-BLOCKER-GESTURES",
       "category": "runtime-access",
@@ -239,82 +206,6 @@
         "Use the physical iPhone with a synchronized privacy-safe screen recording and public fixtures only.",
         "Long-press the glyph, readings, element rows, word rows, and stroke controls.",
         "Test edge-swipe back and mid-gesture cancellation from Kanji Detail, Kanji Element Detail, and the stroke overlay."
-      ]
-    },
-    {
-      "blocker_id": "KANJI-BLOCKER-TERMINAL-EVIDENCE",
-      "category": "runtime-access",
-      "status": "observed_but_ephemeral_frame_not_copied_before_cold_relaunch",
-      "owner": "discovery driver",
-      "missing_authority_access_or_evidence": "retained settled terminal screenshot for the 29-stroke 鬱 animation",
-      "affected_journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
-      ],
-      "affected_blocking_journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
-      ],
-      "affected_claim_ids": [
-        "PARITY-STATE-KANJI-STATE-022"
-      ],
-      "completed_independent_work": "The settled terminal frame was visually observed with counter 29, all strokes white, and the play control restored; initial and paused-at-13 evidence is retained.",
-      "fallback": "Keep the observation as an uncaptured runtime fact and do not treat it as screenshot-backed evidence.",
-      "resume_procedure": [
-        "Search depression, open 憂鬱, select 鬱, and open its stroke overlay.",
-        "Play to completion without other clipboard or navigation actions, verify two stable reads, and copy the settled frame before relaunch.",
-        "Hash and add the frame to kanji-evidence-manifest.json."
-      ]
-    },
-    {
-      "blocker_id": "KANJI-BLOCKER-TIMING",
-      "category": "runtime-access",
-      "status": "interaction_call_latency_is_not_a_synchronized_timing_authority",
-      "owner": "discovery driver with synchronized local screen recording",
-      "missing_authority_access_or_evidence": "authoritative stroke-animation duration, per-stroke timing, and interruption timing",
-      "affected_journey_ids": [
-        "JOURNEY-EDIT-FLASHCARD",
-        "JOURNEY-EDIT-NOTE",
-        "JOURNEY-HEAR-PRONUNCIATION",
-        "JOURNEY-IMAGE-FILES",
-        "JOURNEY-IMAGE-PHOTO-LIBRARY",
-        "JOURNEY-IMAGE-TAKE-PHOTO",
-        "JOURNEY-INSPECT-CONJUGATIONS",
-        "JOURNEY-INSPECT-KANJI",
-        "JOURNEY-INSPECT-KANJI-ELEMENT",
-        "JOURNEY-INSPECT-WORD",
-        "JOURNEY-PLAY-STROKE-ORDER",
-        "JOURNEY-READ-EXAMPLES",
-        "JOURNEY-RERUN-RECENT-SEARCH",
-        "JOURNEY-SEARCH-HANDWRITING",
-        "JOURNEY-SEARCH-RADICAL",
-        "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
-        "JOURNEY-SEARCH-TEXT"
-      ],
-      "affected_blocking_journey_ids": [
-        "JOURNEY-EDIT-NOTE",
-        "JOURNEY-HEAR-PRONUNCIATION",
-        "JOURNEY-IMAGE-FILES",
-        "JOURNEY-INSPECT-CONJUGATIONS",
-        "JOURNEY-INSPECT-KANJI",
-        "JOURNEY-INSPECT-KANJI-ELEMENT",
-        "JOURNEY-INSPECT-WORD",
-        "JOURNEY-PLAY-STROKE-ORDER",
-        "JOURNEY-READ-EXAMPLES",
-        "JOURNEY-RERUN-RECENT-SEARCH",
-        "JOURNEY-SEARCH-HANDWRITING",
-        "JOURNEY-SEARCH-RADICAL",
-        "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
-        "JOURNEY-SEARCH-TEXT"
-      ],
-      "affected_claim_ids": [
-        "PARITY-ACTION-KANJI-ACTION-026",
-        "PARITY-DESIGN-DESIGN-TOKEN-MOTION-STATE"
-      ],
-      "completed_independent_work": "One-, eight-, and 29-stroke animations were visibly run; pause/resume, stepping, completion, close, platform interruption, and cold relaunch were observed.",
-      "fallback": "Retain qualitative animation behavior only; do not publish numeric timing from tool-call wall time.",
-      "resume_procedure": [
-        "Record the one-, eight-, and 29-stroke overlays locally at a known frame rate.",
-        "Measure open, per-stroke, inter-stroke, pause, resume, completion, and close intervals from frames.",
-        "Repeat interruption by navigation and backgrounding, hash the trace, and retain privacy-safe derived measurements."
       ]
     },
     {

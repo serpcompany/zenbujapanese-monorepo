@@ -14,7 +14,7 @@ This is a discovery-only handoff for the approved Search-rooted Lookup graph. It
 
 ## Exact denominator
 
-The ledger has 329 atomic rows: 23 surfaces, 84 distinguishable states, 129 action edges, 35 fixture/behavior-class inputs, 19 observable language-behavior claims, 16 language-resource boundaries, 7 design-token families, and 16 asset/fixture records. All 329 rows are schema-complete; 280 are ready reference inputs, 9 are explicitly blocked, and 40 preserve approved exclusions. All clone statuses are `unknown` and all test statuses are `not_run`.
+The ledger has 329 atomic rows: 23 surfaces, 84 distinguishable states, 129 action edges, 35 fixture/behavior-class inputs, 19 observable language-behavior claims, 16 language-resource boundaries, 7 design-token families, and 16 asset/fixture records. All 329 rows are schema-complete; 284 are ready reference inputs, 4 are explicitly blocked, and 41 preserve approved exclusions. All clone statuses are `unknown` and all test statuses are `not_run`.
 
 ## Implementation-use contract
 
@@ -28,7 +28,7 @@ Fixture rows point to exact inputs and source matrices. Purpose-created image as
 
 ## Blocking handoff limits
 
-6 distinct gaps block coding readiness. They include remaining runtime action/state capture, offline/failure behavior, audible audio and timing evidence, and language-source/provenance/licensing boundaries. Each blocker’s exact owner, completed independent work, affected rows, and resume procedure lives in `parity-open-questions.json`.
+3 distinct gaps block coding readiness. They include remaining runtime action/state capture, offline/failure behavior, audible audio and timing evidence, and language-source/provenance/licensing boundaries. Each blocker’s exact owner, completed independent work, affected rows, and resume procedure lives in `parity-open-questions.json`.
 
 Do not claim exact internal algorithms, provider record identity, clip routing, reference asset identity, reference accessibility behavior, timing, offline behavior, or licensing beyond the recorded authority. Apply the approved Zenbu-owned substitutes and nonblocking boundaries from `scope.json` without describing them as exact Nihongo parity.
 

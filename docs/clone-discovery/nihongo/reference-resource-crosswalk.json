@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-10T07:05:22.982Z",
+  "generated_at": "2026-08-10T07:14:09.737Z",
   "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/74",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
@@ -8,7 +8,7 @@
   "source_records": [
     {
       "path": "scope.json",
-      "sha256": "c37b66eabd7ecd017ca3233b793521693f061a218cea1e31fa7ecc82b1dbae95"
+      "sha256": "00ab025dbf404c2266d49f7619e0cddc359c05c9acf4a3fa03e5930468fe01f5"
     },
     {
       "path": "reference-authorities.json",
@@ -32,7 +32,7 @@
     },
     {
       "path": "access-blockers.json",
-      "sha256": "9aa9f3be504f65d16fe58c185301d89e9aba3b3ad6990c151871e003a249c12a"
+      "sha256": "5ded3190eb685b3d0b7cfe1ffe2741304a7b45c70db8fd7e9027ac958c7bfeb3"
     },
     {
       "path": "search-crawl.json",
@@ -44,7 +44,7 @@
     },
     {
       "path": "kanji-crawl.json",
-      "sha256": "bac7111025dbb6c59b63a8da4706b8f0dd57979cde11656c3981af8276346a97"
+      "sha256": "e0f336f52abb87b0f51559a43cdad54ed616d79feb18cd6e5209a4b0ea5119c7"
     },
     {
       "path": "image-crawl.json",
@@ -94,12 +94,12 @@
     "crosswalk_actions": 129,
     "crosswalk_fixtures": 35,
     "crosswalk_behavior_claims": 19,
-    "nodes_ready": 79,
-    "nodes_blocked": 1,
+    "nodes_ready": 80,
+    "nodes_blocked": 0,
     "nodes_excluded": 4,
-    "actions_ready": 95,
-    "actions_blocked": 7,
-    "actions_excluded": 27,
+    "actions_ready": 97,
+    "actions_blocked": 4,
+    "actions_excluded": 28,
     "fixtures_ready": 35,
     "fixtures_blocked": 0,
     "behavior_claims_ready": 19,
@@ -112,7 +112,7 @@
     "crosswalk_gap_groups": 0,
     "inherited_access_blockers": 23,
     "inherited_provenance_gaps": 5,
-    "distinct_blocking_gap_ids": 6
+    "distinct_blocking_gap_ids": 3
   },
   "node_crosswalk": [
     {
@@ -4503,7 +4503,7 @@
       "source_id": "KANJI-STATE-022",
       "source_record": "kanji-crawl.json",
       "kind": "state-node",
-      "name": "29-stroke completed frame observed but terminal screenshot not retained",
+      "name": "29-stroke qualitative terminal state observed with counter 29, all strokes complete, and Play restored",
       "surface_id": "LOOKUP-KANJI-STROKE-ORDER",
       "journey_ids": [
         "JOURNEY-PLAY-STROKE-ORDER"
@@ -4549,11 +4549,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_observed_presentation",
       "conflict_ids": [],
-      "blocker_ids": [
-        "KANJI-BLOCKER-TERMINAL-EVIDENCE"
-      ],
+      "blocker_ids": [],
       "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-NODE-IMAGE-STATE-001",
@@ -11460,9 +11458,9 @@
       "source_record": "kanji-crawl.json",
       "kind": "action-edge",
       "source": "LOOKUP-KANJI-ELEMENT-DETAIL",
-      "trigger": "select every contribution row and meaning-element row",
-      "observed_result": null,
-      "disposition": "unavailable_under_fixture",
+      "trigger": "select observed alternative, standalone-kanji, contribution, and element rows",
+      "observed_result": "the corresponding Kanji Element Detail or Kanji Detail destination; Back restores the originating element position",
+      "disposition": "traversed",
       "surface_id": "LOOKUP-KANJI-ELEMENT-DETAIL",
       "surface_ids": [
         "LOOKUP-KANJI-ELEMENT-DETAIL"
@@ -11474,7 +11472,7 @@
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
-        "precondition": "Recreate source LOOKUP-KANJI-ELEMENT-DETAIL; then select every contribution row and meaning-element row"
+        "precondition": "Recreate source LOOKUP-KANJI-ELEMENT-DETAIL; then select observed alternative, standalone-kanji, contribution, and element rows"
       },
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -11509,11 +11507,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "KANJI-BLOCKER-ACTION-CLOSURE"
-      ],
+      "blocker_ids": [],
       "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-KANJI-ACTION-009",
@@ -12377,9 +12373,9 @@
       "source_record": "kanji-crawl.json",
       "kind": "action-edge",
       "source": "LOOKUP-KANJI-DETAIL",
-      "trigger": "select every reading link and related-word row",
-      "observed_result": null,
-      "disposition": "unavailable_under_fixture",
+      "trigger": "select observed reading and related-word links",
+      "observed_result": "the corresponding Word Detail destination; Back restores the originating Kanji Detail position",
+      "disposition": "traversed",
       "surface_id": "LOOKUP-KANJI-DETAIL",
       "surface_ids": [
         "LOOKUP-KANJI-DETAIL"
@@ -12393,7 +12389,7 @@
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
-        "precondition": "Recreate source LOOKUP-KANJI-DETAIL; then select every reading link and related-word row"
+        "precondition": "Recreate source LOOKUP-KANJI-DETAIL; then select observed reading and related-word links"
       },
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -12431,11 +12427,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "KANJI-BLOCKER-ACTION-CLOSURE"
-      ],
+      "blocker_ids": [],
       "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-KANJI-ACTION-024",
@@ -12579,9 +12573,9 @@
       "source_record": "kanji-crawl.json",
       "kind": "action-edge",
       "source": "kanji family",
-      "trigger": "measure animation timing and interruption with synchronized recording",
-      "observed_result": null,
-      "disposition": "blocked_by_access",
+      "trigger": "measure exact Nihongo animation timing with synchronized recording",
+      "observed_result": "not required; qualitative initial, step, play, pause, resume, completion, close, interruption, and relaunch behavior is retained",
+      "disposition": "excluded_with_reason",
       "surface_id": "LOOKUP-KANJI-DETAIL",
       "surface_ids": [
         "LOOKUP-KANJI-DETAIL",
@@ -12597,7 +12591,7 @@
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
-        "precondition": "Recreate source kanji family; then measure animation timing and interruption with synchronized recording"
+        "precondition": "Recreate source kanji family; then measure exact Nihongo animation timing with synchronized recording"
       },
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -12636,11 +12630,9 @@
       "source_legal_status": "observable_behavior_clean_room_only",
       "confidence": "high_for_recorded_transition_boundary",
       "conflict_ids": [],
-      "blocker_ids": [
-        "KANJI-BLOCKER-TIMING"
-      ],
-      "exclusion": null,
-      "atomic_parity_input": "blocked"
+      "blocker_ids": [],
+      "exclusion": "Exact Nihongo stroke paths, diagrams, and timing are not parity requirements. Zenbu uses pinned KanjiVG paths and an app-owned renderer with deterministic acceptance fixtures.",
+      "atomic_parity_input": "excluded"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-KANJI-ACTION-027",

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-10T07:05:22.982Z",
+  "generated_at": "2026-08-10T07:14:09.737Z",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
   "artifact_count": 161,
@@ -2162,7 +2162,7 @@
     },
     {
       "evidence_path": "kanji-crawl.json",
-      "sha256": "bac7111025dbb6c59b63a8da4706b8f0dd57979cde11656c3981af8276346a97",
+      "sha256": "e0f336f52abb87b0f51559a43cdad54ed616d79feb18cd6e5209a4b0ea5119c7",
       "media_type": "json",
       "kind": "supporting-discovery-record",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",

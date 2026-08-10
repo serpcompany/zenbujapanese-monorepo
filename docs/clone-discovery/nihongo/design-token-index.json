@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-10T07:05:22.982Z",
+  "generated_at": "2026-08-10T07:14:09.737Z",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
   "status": "OBSERVED REFERENCE ROLE INDEX — EXACT NIHONGO VISUAL MEASUREMENTS ARE NONBLOCKING",
@@ -888,8 +888,8 @@
     {
       "token_id": "DESIGN-TOKEN-MOTION-STATE",
       "category": "motion",
-      "observed": "Navigation settling and stroke-order play/pause/progress states are observed; authoritative timing remains blocked.",
-      "status": "partially_observed",
+      "observed": "Navigation settling and stroke-order initial, step, play, pause, resume, progress, and completion states are observed; exact Nihongo timing is nonblocking and Zenbu renderer timing is app-owned.",
+      "status": "qualitative_contract_observed_exact_timing_nonblocking",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "applicable_surface_ids": [
@@ -1059,9 +1059,7 @@
         "evidence/reference/screenshots/word-inventory/state-word-detail-tondemonai.png"
       ],
       "legal_use": "Observable role may be specified; Zenbu uses its approved visual identity and must not copy paid or proprietary assets.",
-      "blocker_ids": [
-        "KANJI-BLOCKER-TIMING"
-      ]
+      "blocker_ids": []
     },
     {
       "token_id": "DESIGN-TOKEN-CONTROL-STATES",

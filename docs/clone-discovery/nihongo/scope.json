@@ -79,7 +79,7 @@
     "Shinjigen text and images are excluded from reuse; kanji etymology and Origin/history content are deferred to post-MVP issue #91, where reusable sources and original Zenbu presentation may be evaluated",
     "CJKI is an optional future commercial coverage upgrade; initial pitch data uses pinned UniDic 3.1.0 under New BSD",
     "Exact Nihongo dictionary and example-sentence snapshots, filters, edits, and ordering are not parity requirements; Zenbu uses pinned official JMdict and text-only Tatoeba exports with app-owned, documented transforms",
-    "Exact Nihongo kanji metadata, component ontology, stroke paths, diagrams, and timing are not parity requirements; Zenbu uses pinned KANJIDIC2, KRADFILE/RADKFILE, and KanjiVG sources with an app-owned renderer and source-separated overrides"
+    "Exact Nihongo kanji metadata, source-dependent row denominators and missing-data classes, component ontology, stroke paths, terminal pixels, diagrams, and timing are not parity requirements; Zenbu uses pinned KANJIDIC2, KRADFILE/RADKFILE, and KanjiVG sources with app-owned linked-row behavior, missing-data presentation, renderer timing, and source-separated overrides"
   ],
   "stakeholder_decisions": [
     {
@@ -131,6 +131,16 @@
       ],
       "tracking_issue": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/91",
       "decision": "Exclude the complete etymology and Origin/history content family from the Lookup MVP. Preserve the reference research and evidence for later product work, do not reuse Shinjigen or Nihongo expression, and do not let source selection or exact reference parity block MVP readiness."
+    },
+    {
+      "date": "2026-08-10",
+      "authority": "application of stakeholder decisions from issues #78, #79, and #81 to Wayfinder ticket #88",
+      "resolved_as_nonblocking": [
+        "KANJI-BLOCKER-ACTION-CLOSURE",
+        "KANJI-BLOCKER-TIMING",
+        "KANJI-BLOCKER-TERMINAL-EVIDENCE"
+      ],
+      "decision": "The retained representative navigation and qualitative animation evidence is sufficient to specify the MVP contract. Zenbu renders and links only app-owned Language Reference Data, omits unsupported source fields or sections, and supplies deterministic stroke animation with its app-owned KanjiVG renderer. Exact Nihongo row denominators, missing-data classes, terminal pixels, paths, and timing remain prohibited parity claims rather than implementation blockers."
     }
   ]
 }

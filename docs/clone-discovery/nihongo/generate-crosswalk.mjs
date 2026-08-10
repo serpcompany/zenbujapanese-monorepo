@@ -214,7 +214,7 @@ const designTokens = [
   { token_id: "DESIGN-TOKEN-SPACING-RHYTHM", category: "spacing", observed: "List insets, card padding, section gaps, row spacing, and safe-area offsets are visible.", status: "observed_not_measured" },
   { token_id: "DESIGN-TOKEN-LAYOUT-GEOMETRY", category: "layout", observed: "Search, result, detail, sheet, popover, overlay, and image-result geometries are evidenced in the pinned portrait environment.", status: "observed_not_measured" },
   { token_id: "DESIGN-TOKEN-ICONOGRAPHY", category: "iconography", observed: "Search-source, audio, navigation, disclosure, note, stroke-playback, share, and selection glyph roles are visible.", status: "observed_not_acquired" },
-  { token_id: "DESIGN-TOKEN-MOTION-STATE", category: "motion", observed: "Navigation settling and stroke-order play/pause/progress states are observed; authoritative timing remains blocked.", status: "partially_observed" },
+  { token_id: "DESIGN-TOKEN-MOTION-STATE", category: "motion", observed: "Navigation settling and stroke-order initial, step, play, pause, resume, progress, and completion states are observed; exact Nihongo timing is nonblocking and Zenbu renderer timing is app-owned.", status: "qualitative_contract_observed_exact_timing_nonblocking" },
   { token_id: "DESIGN-TOKEN-CONTROL-STATES", category: "controls", observed: "Focused, populated, selected, disabled/unavailable, empty, modal, and persisted states are represented.", status: "observed" }
 ].map((token) => ({
   ...token,
@@ -223,7 +223,7 @@ const designTokens = [
   applicable_surface_ids: surfaceMap.surfaces.filter((surface) => surface.scope !== "excluded").map((surface) => surface.surface_id),
   evidence_paths: evidenceArtifacts.filter((artifact) => artifact.kind === "privacy-reviewed-runtime-screenshot").map((artifact) => artifact.evidence_path),
   legal_use: "Observable role may be specified; Zenbu uses its approved visual identity and must not copy paid or proprietary assets.",
-  blocker_ids: token.category === "motion" ? ["KANJI-BLOCKER-TIMING"] : []
+  blocker_ids: []
 }));
 
 const originalFixtureAssets = walk(join(root, "fixtures")).filter((path) => statSync(path).isFile() && basename(path) !== ".DS_Store").map((path) => ({
@@ -307,7 +307,7 @@ const nodeRows = allStates.map((state) => {
   const surface = surfaceById.get(state.surface_id);
   const fixtureIds = fixtureIdsForState(state);
   const blockers = [];
-  if (state.evidence_gap) blockers.push(state.state_id === "KANJI-STATE-022" ? "KANJI-BLOCKER-TERMINAL-EVIDENCE" : "CROSSWALK-GAP-NODE-EVIDENCE");
+  if (state.evidence_gap) blockers.push("CROSSWALK-GAP-NODE-EVIDENCE");
   const evidence = uniq([state.evidence ?? [], crosswalkEvidenceForSurface(state.surface_id)]).filter((path) => evidencePaths.has(path));
   if (!evidence.length && surface?.scope !== "excluded") blockers.push("CROSSWALK-GAP-NODE-EVIDENCE");
   const journeyIds = journeysBySurface.get(state.surface_id) ?? [];
