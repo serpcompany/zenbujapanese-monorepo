@@ -64,7 +64,7 @@ even though both can reuse the same underlying language-analysis capabilities.
 - Zenbu does not become a general-purpose drive merely because saved Media
   Entries retain their sources.
 - Future Watch, Listen, or Read experiences may use the app-owned source.
-- Backup, sync, and storage-limit policy belongs to later persistence decisions.
+- Durable records and non-recreatable app-owned sources participate in the iPhone's normal system-managed backup. Custom sync, backup controls, and storage-limit policy remain later decisions.
 
 ## Collections
 
@@ -79,7 +79,7 @@ even though both can reuse the same underlying language-analysis capabilities.
 - Analysis records are private by default.
 - MVP does not require account sync, a public catalog, community publishing, or Zenbu-curated content.
 
-Sync, backup, publishing, and shared catalogs are deferred possibilities rather than MVP requirements.
+Custom sync, user-facing backup controls, publishing, and shared catalogs are deferred possibilities rather than MVP requirements; normal system-managed device backup remains required.
 
 ## Historical reference
 

@@ -6,9 +6,12 @@ const root = dirname(fileURLToPath(import.meta.url));
 const readJson = (name) => JSON.parse(readFileSync(join(root, name), "utf8"));
 const unique = (values) => [...new Set((values ?? []).filter(Boolean))];
 const asArray = (value) => value == null ? [] : Array.isArray(value) ? value : [value];
-const generatedAt = new Date().toISOString();
 
 const scope = readJson("scope.json");
+const generatedAt = scope.dossier_revision_at;
+if (!generatedAt || Number.isNaN(Date.parse(generatedAt))) {
+  throw new Error("scope.json must contain an ISO-8601 dossier_revision_at value.");
+}
 const authorities = readJson("reference-authorities.json");
 const authority = authorities[0];
 const journeysDocument = readJson("journeys.json");
@@ -247,27 +250,34 @@ const behaviorRows = crosswalk.language_behavior_claim_crosswalk.map((behavior) 
   verificationProcedure: `Run ${behavior.source_id} with the exact inputs and linked fixtures in behavior-observations.jsonl; capture output/order deltas and compare only the stated observable fields.`,
 }));
 
-const resourceRows = crosswalk.resource_crosswalk.map((resource) => baseRow({
-  id: `PARITY-RESOURCE-${resource.resource_id}`,
-  sourceIds: [resource.resource_id, ...resource.observed_claim_ids],
-  sourceRecord: "reference-resource-crosswalk.json",
-  kind: "language-resource",
-  claim: `${resource.identity} is classified as ${resource.status} for ${resource.capabilities.join("; ")}; legal boundary: ${resource.source_legal_status}.`,
-  journeyIds: unique(resource.applicable_surface_ids.flatMap((surfaceId) => journeys.filter((journey) => journey.surfaces.includes(surfaceId)).map((journey) => journey.journey_id))),
-  surfaceIds: resource.applicable_surface_ids,
-  preconditions: ["Use separately acquired, legally available source/provider evidence; do not inspect or copy the proprietary runtime payload."],
-  action: ["Resolve the named provenance gaps, then compare independently acquired source records with linked observable claims."],
-  immediateResult: `Identity boundary remains ${resource.status}.`,
-  settledResult: `Only ${resource.identity} at the recorded confidence boundary may be asserted.`,
-  durableResult: "Retain app-owned Language Reference Data provenance independently of any provider schema.",
-  evidencePaths: [],
-  dimensions: ["state-data", "integration", "package-platform"],
-  blockerIds: resource.gap_ids,
-  conflicts: resource.conflict_ids,
-  capabilityClass: "supporting-internal",
-  resourceIds: [resource.resource_id],
-  verificationProcedure: `Follow every resume procedure for ${resource.gap_ids.join(", ")}; bind independently acquired evidence to the linked observation IDs and preserve prohibited parity claims.`,
-}));
+const resourceRows = crosswalk.resource_crosswalk.map((resource) => {
+  const hasOpenGaps = resource.gap_ids.length > 0;
+  return baseRow({
+    id: `PARITY-RESOURCE-${resource.resource_id}`,
+    sourceIds: [resource.resource_id, ...resource.observed_claim_ids],
+    sourceRecord: "reference-resource-crosswalk.json",
+    kind: "language-resource",
+    claim: `${resource.identity} is classified as ${resource.status} for ${resource.capabilities.join("; ")}; legal boundary: ${resource.source_legal_status}.`,
+    journeyIds: unique(resource.applicable_surface_ids.flatMap((surfaceId) => journeys.filter((journey) => journey.surfaces.includes(surfaceId)).map((journey) => journey.journey_id))),
+    surfaceIds: resource.applicable_surface_ids,
+    preconditions: ["Use separately acquired, legally available source/provider evidence; do not inspect or copy the proprietary runtime payload."],
+    action: [hasOpenGaps
+      ? "Resolve the named provenance gaps, then compare independently acquired source records with linked observable claims."
+      : "Reacquire the approved source or provider evidence independently, then verify its identity, provenance, legal boundary, and linked observable claims."],
+    immediateResult: `Identity boundary remains ${resource.status}.`,
+    settledResult: `Only ${resource.identity} at the recorded confidence boundary may be asserted.`,
+    durableResult: "Retain app-owned Language Reference Data provenance independently of any provider schema.",
+    evidencePaths: [],
+    dimensions: ["state-data", "integration", "package-platform"],
+    blockerIds: resource.gap_ids,
+    conflicts: resource.conflict_ids,
+    capabilityClass: "supporting-internal",
+    resourceIds: [resource.resource_id],
+    verificationProcedure: hasOpenGaps
+      ? `Follow every resume procedure for ${resource.gap_ids.join(", ")}; bind independently acquired evidence to the linked observation IDs and preserve prohibited parity claims.`
+      : `Reacquire ${resource.identity} from its approved source; verify the recorded identity, license and provenance, supported capabilities, linked observation IDs, and prohibited parity claims without relying on Nihongo internals.`,
+  });
+});
 
 const designRows = designTokenIndex.tokens.map((token) => baseRow({
   id: `PARITY-DESIGN-${token.token_id}`,

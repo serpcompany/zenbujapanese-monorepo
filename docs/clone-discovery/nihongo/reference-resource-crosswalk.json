@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-10T07:38:56.706Z",
+  "generated_at": "2026-08-10T07:56:07Z",
   "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/74",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
@@ -8,7 +8,7 @@
   "source_records": [
     {
       "path": "scope.json",
-      "sha256": "df116459aa535457589094db68fc2333811028ea246a342bcadd16a07a21a7f9"
+      "sha256": "b2916dd144296baae2f0a813cb4cd84ebd4764868a839581b9e752d1784d32e0"
     },
     {
       "path": "reference-authorities.json",

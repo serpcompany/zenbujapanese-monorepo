@@ -14,9 +14,12 @@ const unique = (values) => [...new Set(values.filter(Boolean))];
 const sorted = (values) => [...values].sort();
 const sameSet = (left, right) => JSON.stringify(sorted(unique(left))) === JSON.stringify(sorted(unique(right)));
 const duplicateIds = (values) => values.filter((value, index) => values.indexOf(value) !== index);
-const generatedAt = new Date().toISOString();
 
 const scope = readJson("scope.json");
+const generatedAt = scope.dossier_revision_at;
+if (!generatedAt || Number.isNaN(Date.parse(generatedAt))) {
+  throw new Error("scope.json must contain an ISO-8601 dossier_revision_at value.");
+}
 const authorities = readJson("reference-authorities.json");
 const journeysDocument = readJson("journeys.json");
 const journeys = journeysDocument.journeys;
@@ -153,6 +156,16 @@ for (const row of ledger) {
   expect(row.discovery_status === "excluded" || row.capability_class !== "user-visible" || (row.journey_ids ?? []).length > 0, "USER-VISIBLE-ROW-WITHOUT-JOURNEY", row.id);
   expect(row.substitute == null, "UNAPPROVED-SUBSTITUTE", row.id);
   expect(row.allowed_variance.every((variance) => scope.allowed_variance.includes(variance)), "UNAPPROVED-VARIANCE", row.id);
+  if (row.kind === "language-resource") {
+    const resourceInstructions = `${row.action.join(" ")} ${row.verification_procedure}`;
+    if (row.blocked_by.length === 0) {
+      expect(!/named provenance gaps|resume procedure/i.test(resourceInstructions), "RESOLVED-RESOURCE-WITH-GAP-INSTRUCTIONS", row.id);
+    } else {
+      for (const blockerId of row.blocked_by) {
+        expect(row.verification_procedure.includes(blockerId), "RESOURCE-PROCEDURE-MISSING-BLOCKER", { row_id: row.id, blocker_id: blockerId });
+      }
+    }
+  }
 }
 expect(ledger.length === parityReport.ledger.atomic_rows, "LEDGER-COUNT", "Ledger row count differs from parity report.");
 expect(sameSet(ledger.filter((row) => row.discovery_status === "blocked").map((row) => row.id), parityReport.blocked_row_ids), "BLOCKED-ROW-COUNT", "Blocked ledger row IDs differ from the parity report.");

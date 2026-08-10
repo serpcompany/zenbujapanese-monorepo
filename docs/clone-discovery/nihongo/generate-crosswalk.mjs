@@ -4,7 +4,6 @@ import { basename, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("./", import.meta.url));
-const generatedAt = new Date().toISOString();
 const authorityId = "nihongo-ios-1.34.3-9792-runtime";
 const environmentId = "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001";
 
@@ -15,6 +14,12 @@ const array = (value) => value === null || value === undefined ? [] : Array.isAr
 const sha256 = (path) => createHash("sha256").update(readFileSync(path)).digest("hex");
 const output = (name, value) => writeFileSync(join(root, name), `${JSON.stringify(value, null, 2)}\n`);
 const rel = (path) => relative(root, path).split("\\").join("/");
+const scope = readJson("scope.json");
+const generatedAt = scope.dossier_revision_at;
+
+if (!generatedAt || Number.isNaN(Date.parse(generatedAt))) {
+  throw new Error("scope.json must contain an ISO-8601 dossier_revision_at value.");
+}
 
 function walk(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {

@@ -1,5 +1,6 @@
 {
   "project": "zenbu-lookup-nihongo-reference",
+  "dossier_revision_at": "2026-08-10T07:56:07Z",
   "authorization": {
     "basis": "The device owner explicitly authorized normal-use inspection of the installed Nihongo app on the connected physical iPhone for an internal clean-room discovery dossier.",
     "allowed": [
