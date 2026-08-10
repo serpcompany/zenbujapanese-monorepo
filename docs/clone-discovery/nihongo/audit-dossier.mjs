@@ -35,6 +35,7 @@ const assetIndex = readJson("asset-index.json");
 const designTokenIndex = readJson("design-token-index.json");
 const ledger = readJsonl("parity-inventory.jsonl");
 const behaviorObservations = readJsonl("behavior-observations.jsonl");
+const originalBlockerResolutionIndex = readJson("original-blocker-resolutions.json");
 
 const familyNames = ["search", "word", "kanji", "image"];
 const crawls = Object.fromEntries(familyNames.map((name) => [name, readJson(`${name}-crawl.json`)]));
@@ -186,11 +187,30 @@ expect(implementationOutputs.length === 0, "IMPLEMENTATION-OUTPUT-IN-DOSSIER", i
 expect(evidenceIndex.artifacts.every((item) => Boolean(item.privacy_status)), "EVIDENCE-WITHOUT-PRIVACY-STATUS", "Every indexed evidence artifact must carry a privacy status.");
 expect(assetIndex.assets.every((item) => Boolean(item.legal_use)), "ASSET-WITHOUT-LEGAL-BOUNDARY", "Every asset must carry a legal-use boundary.");
 
+const originalBlockerIds = originalBlockerResolutionIndex.baseline.blocker_ids;
+const originalBlockerResolutions = originalBlockerResolutionIndex.resolutions;
+const originalResolutionIds = originalBlockerResolutions.map((item) => item.blocker_id);
+const allowedOriginalBlockerDispositions = new Set(Object.keys(originalBlockerResolutionIndex.disposition_definitions));
+expect(originalBlockerResolutionIndex.baseline.original_blocker_count === 32, "ORIGINAL-BLOCKER-DENOMINATOR", "The source final audit had exactly 32 blocker records.");
+expect(originalBlockerIds.length === originalBlockerResolutionIndex.baseline.original_blocker_count, "ORIGINAL-BLOCKER-ID-COUNT", "The original blocker ID count differs from its declared denominator.");
+expect(duplicateIds(originalBlockerIds).length === 0, "DUPLICATE-ORIGINAL-BLOCKER-ID", duplicateIds(originalBlockerIds));
+expect(originalBlockerResolutions.length === originalBlockerResolutionIndex.baseline.original_blocker_count, "ORIGINAL-BLOCKER-RESOLUTION-COUNT", "Every original blocker must have exactly one resolution.");
+expect(duplicateIds(originalResolutionIds).length === 0, "DUPLICATE-ORIGINAL-BLOCKER-RESOLUTION", duplicateIds(originalResolutionIds));
+expect(sameSet(originalBlockerIds, originalResolutionIds), "ORIGINAL-BLOCKER-RESOLUTION-COVERAGE", "Original blocker IDs and resolution IDs differ.");
+for (const resolution of originalBlockerResolutions) {
+  expect(allowedOriginalBlockerDispositions.has(resolution.disposition), "INVALID-ORIGINAL-BLOCKER-DISPOSITION", `${resolution.blocker_id} uses ${resolution.disposition}.`);
+  expect(Boolean(resolution.resolution), "ORIGINAL-BLOCKER-WITHOUT-RESOLUTION", resolution.blocker_id);
+  expect((resolution.authority ?? []).length > 0, "ORIGINAL-BLOCKER-WITHOUT-AUTHORITY", resolution.blocker_id);
+  expect(resolution.authority.every((item) => item.title && /^https:\/\/github\.com\/serpcompany\/zenbujapanese-monorepo\/issues\/\d+$/.test(item.url)), "INVALID-ORIGINAL-BLOCKER-AUTHORITY", resolution.blocker_id);
+  expect((resolution.dossier_evidence ?? []).length > 0, "ORIGINAL-BLOCKER-WITHOUT-DOSSIER-EVIDENCE", resolution.blocker_id);
+  for (const path of resolution.dossier_evidence ?? []) expect(existsSync(join(root, path)), "MISSING-ORIGINAL-BLOCKER-EVIDENCE", `${resolution.blocker_id} references ${path}.`);
+}
 if (errors.length) {
   throw new Error(`Final dossier structural audit failed:\n${JSON.stringify(errors, null, 2)}`);
 }
 
 const disposition = blockerIds.size > 0 ? "NOT_READY — DISCOVERY GAPS REMAIN" : "READY_FOR_IMPLEMENTATION";
+const originalBlockerOutcomeCounts = Object.fromEntries([...allowedOriginalBlockerDispositions].map((value) => [value, originalBlockerResolutions.filter((item) => item.disposition === value).length]));
 const dispositionChecks = [
   { id: "AUDIT-CHECK-DENOMINATOR", subject: "approved journeys and surfaces", result: "pass", basis: `${scope.blocking_journey_ids.length} blocking journeys, ${surfaceMap.counts.blocking} blocking surfaces, ${surfaceMap.counts.navigation_support} navigation-support surface, and ${surfaceMap.counts.excluded} excluded boundary surfaces reconcile.` },
   { id: "AUDIT-CHECK-GRAPH-INDEX", subject: "recursive UI graph indexing", result: "pass", basis: `${allStates.length} stable state nodes and ${allActions.length} action edges are represented exactly once in the crosswalk and ledger.` },
@@ -203,6 +223,7 @@ const dispositionChecks = [
   { id: "AUDIT-CHECK-VISUAL", subject: "visual and asset specification", result: [...blockerIds].some((id) => id.startsWith("CROSSWALK-GAP-")) ? "blocked" : "pass", blocking_ids: sorted([...blockerIds].filter((id) => id.startsWith("CROSSWALK-GAP-"))), basis: [...blockerIds].some((id) => id.startsWith("CROSSWALK-GAP-")) ? "One or more visual or asset crosswalk gaps remain unresolved." : "Observed information hierarchy and control roles are indexed; Zenbu-owned measurements and original or licensed glyphs are approved, and exact Nihongo pixels or asset identity are prohibited claims." },
   { id: "AUDIT-CHECK-VARIANCE", subject: "approved Zenbu variances and substitutions", result: "pass", basis: "Every row uses only scope-approved variances; there are zero substitute rows and no silent substitutions." },
   { id: "AUDIT-CHECK-CLEAN-ROOM", subject: "privacy, clean-room, and implementation boundary", result: "pass", basis: `${evidenceIndex.artifact_count} artifacts carry privacy classifications, ${assetIndex.assets.length} assets carry legal-use boundaries, and no implementation output type exists under the dossier root.` },
+  { id: "AUDIT-CHECK-ORIGINAL-BLOCKERS", subject: "original blocker resolution denominator", result: "pass", basis: `All ${originalBlockerResolutions.length} original blocker IDs appear exactly once with a named decision authority, dossier evidence, and audited disposition.` },
 ];
 
 const actionDispositionCounts = Object.fromEntries([...allowedDispositions].map((disposition) => [disposition, allActions.filter((item) => item.disposition === disposition).length]));
@@ -255,7 +276,7 @@ const nonblockingEnvironmentLimitations = unresolvedRequiredEnvironmentCells
 
 const report = {
   generated_at: generatedAt,
-  ticket: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/76",
+  ticket: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/80",
   map: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/77",
   disposition,
   disposition_basis: blockerIds.size
@@ -285,6 +306,8 @@ const report = {
     blocked_rows: parityReport.ledger.blocked_rows,
     excluded_rows: parityReport.ledger.excluded_rows,
     distinct_blocking_ids: blockerIds.size,
+    original_blocker_resolutions: originalBlockerResolutions.length,
+    original_blocker_outcomes: originalBlockerOutcomeCounts,
   },
   family_coverage: familyCoverage,
   checks: dispositionChecks,
@@ -297,9 +320,11 @@ const report = {
     count_drift: 0,
     silent_substitutions: 0,
     unexplained_exclusions: 0,
+    original_blocker_resolution_coverage: `${originalBlockerResolutions.length}/${originalBlockerIds.length}`,
     implementation_outputs: implementationOutputs,
   },
   approved_variances: scope.allowed_variance,
+  original_blocker_resolutions: originalBlockerResolutions,
   blocking_records: blockingRecords,
   nonblocking_environment_limitations: nonblockingEnvironmentLimitations,
   resume_contract: blockerIds.size
@@ -320,13 +345,14 @@ const updatedDiscoveryStatus = {
   phase: blockerIds.size ? "final_discovery_audit_complete_not_coding_ready" : "final_discovery_audit_complete_ready_for_implementation",
   updated_at: generatedAt,
   next_ticket: null,
-  final_audit_ticket: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/76",
+  final_audit_ticket: "https://github.com/serpcompany/zenbujapanese-monorepo/issues/80",
   final_audit_ticket_status: "complete",
   final_audit_records: {
     audit_generator: "audit-dossier.mjs",
     audit_report: "final-audit-report.json",
     canonical_ledger: "parity-inventory.jsonl",
     blocker_registry: "parity-open-questions.json",
+    original_blocker_resolution_index: "original-blocker-resolutions.json",
   },
   final_audit_counts: report.denominator,
   final_disposition: disposition,
@@ -334,7 +360,7 @@ const updatedDiscoveryStatus = {
     ...retainedNotes,
     `The reference-resource crosswalk represents all ${allStates.length} recursive state nodes, ${allActions.length} action edges, ${allFixtures.length} fixture classes, and ${behaviorObservations.length} language-behavior claims exactly once and binds them to the pinned authority, environment, scope, journeys, fixtures or preconditions, evidence, resource provenance, and atomic-ledger disposition.`,
     "The final audit normalized the already-observed Image Text share menu into stable node IMAGE-STATE-017, binding its Copy Text and Share Image actions to the approved Image Text journey before regenerating the crosswalk and ledger.",
-    `The final dossier audit reconciled ${ledger.length} atomic claims against ${allStates.length} states, ${allActions.length} actions, ${allFixtures.length} fixture classes, ${evidenceIndex.artifact_count} evidence artifacts, and every registered blocker with zero structural integrity errors.`,
+    `The final dossier audit reconciled ${ledger.length} atomic claims against ${allStates.length} states, ${allActions.length} actions, ${allFixtures.length} fixture classes, ${evidenceIndex.artifact_count} evidence artifacts, and all ${originalBlockerResolutions.length} original blocker IDs exactly once with zero structural integrity errors.`,
     `Final disposition: ${disposition}; ${blockerIds.size} exact blocking IDs affect ${parityReport.ledger.blocked_rows} atomic claims, while ${nonblockingEnvironmentLimitations.length} environment limitations remain explicit but do not affect any current claim.`,
   ],
 };

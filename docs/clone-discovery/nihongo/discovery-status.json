@@ -1,7 +1,7 @@
 {
   "project": "zenbu-lookup-nihongo-reference",
   "phase": "final_discovery_audit_complete_ready_for_implementation",
-  "updated_at": "2026-08-10T07:28:03.336Z",
+  "updated_at": "2026-08-10T07:38:56.880Z",
   "active_map": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/77",
   "access_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/64",
   "access_ticket_status": "complete_with_recorded_limitations",
@@ -218,7 +218,7 @@
     "No discovery blockers affect the ledger; the generated handoff is a coding-ready discovery input, while clone and test statuses remain intentionally unknown/not_run.",
     "The reference-resource crosswalk represents all 84 recursive state nodes, 129 action edges, 35 fixture classes, and 19 language-behavior claims exactly once and binds them to the pinned authority, environment, scope, journeys, fixtures or preconditions, evidence, resource provenance, and atomic-ledger disposition.",
     "The final audit normalized the already-observed Image Text share menu into stable node IMAGE-STATE-017, binding its Copy Text and Share Image actions to the approved Image Text journey before regenerating the crosswalk and ledger.",
-    "The final dossier audit reconciled 329 atomic claims against 84 states, 129 actions, 35 fixture classes, 161 evidence artifacts, and every registered blocker with zero structural integrity errors.",
+    "The final dossier audit reconciled 329 atomic claims against 84 states, 129 actions, 35 fixture classes, 161 evidence artifacts, and all 32 original blocker IDs exactly once with zero structural integrity errors.",
     "Final disposition: READY_FOR_IMPLEMENTATION; 0 exact blocking IDs affect 0 atomic claims, while 8 environment limitations remain explicit but do not affect any current claim."
   ],
   "parity_ledger_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/75",
@@ -241,13 +241,14 @@
     "test_not_run_rows": 329,
     "distinct_blocker_ids": 0
   },
-  "final_audit_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/76",
+  "final_audit_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/80",
   "final_audit_ticket_status": "complete",
   "final_audit_records": {
     "audit_generator": "audit-dossier.mjs",
     "audit_report": "final-audit-report.json",
     "canonical_ledger": "parity-inventory.jsonl",
-    "blocker_registry": "parity-open-questions.json"
+    "blocker_registry": "parity-open-questions.json",
+    "original_blocker_resolution_index": "original-blocker-resolutions.json"
   },
   "final_audit_counts": {
     "blocking_journeys": 14,
@@ -277,6 +278,13 @@
     "ready_input_rows": 284,
     "blocked_rows": 0,
     "excluded_rows": 45,
-    "distinct_blocking_ids": 0
+    "distinct_blocking_ids": 0,
+    "original_blocker_resolutions": 32,
+    "original_blocker_outcomes": {
+      "resolved_by_evidence": 2,
+      "downgraded_nonblocking": 19,
+      "approved_substitute": 10,
+      "excluded_from_mvp": 1
+    }
   }
 }

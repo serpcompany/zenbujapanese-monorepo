@@ -507,7 +507,7 @@ const updatedDiscoveryStatus = {
     generator: "generate-parity-ledger.mjs",
   },
   parity_ledger_counts: coverageReport.ledger,
-  next_ticket: finalAuditComplete ? null : "https://github.com/serpcompany/zenbujapanese-monorepo/issues/76",
+  next_ticket: finalAuditComplete ? null : "https://github.com/serpcompany/zenbujapanese-monorepo/issues/80",
   notes: [
     ...retainedNotes,
     ledgerNote,
