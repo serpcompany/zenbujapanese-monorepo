@@ -45,9 +45,10 @@ Relevant historical material includes:
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/japanese-app-v2/docs/reference/owll-translator-reference-stack-notes.md`
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/japanese-app-v2/docs/product/features/translate.md`
 
-## Shared image capture
+## Image Text Flow
 
-Camera, photo-library, and image-file translation use the same shared flow as Lookup Capture rather than a separate Translator-specific implementation.
+Camera, Photo Library, and image-file translation use the same Image Text Flow
+as Lookup rather than a separate Translator-specific implementation.
 
 Lookup and Translator may both provide entry points, but both open the same result experience. That experience combines:
 
@@ -55,22 +56,40 @@ Lookup and Translator may both provide entry points, but both open the same resu
 - a coherent natural translation of the recognized content as a whole
 - later, an optional AI-generated explanation using broader image context
 
-MVP must not create separate Lookup and Translator OCR pipelines, result screens, histories, or saved-record types. A saved result is one User Library record regardless of which Product Experience opened the flow.
+MVP must not create separate Lookup and Translator OCR pipelines, result
+contracts, histories, or saved-record types. Entering through Translator
+already expresses translation intent, so the flow requests whole-content
+translation automatically; entering through Lookup requires an explicit
+translation request.
 
-The current name **Lookup Capture** remains provisional. Its name does not limit the shared flow to dictionary lookup.
+The working source and result are transient until the learner chooses Discard
+or Save. An explicit save creates one Image Text Result regardless of which
+Product Experience opened the flow. Exact controls, emphasis, and navigation
+remain later UI decisions.
 
-## Sentence handoff with Lookup
+## Text handoffs with Lookup
 
 Lookup and Translator both accept sentence-shaped input, but they answer different questions:
 
 - Lookup searches dictionary entries and example sentences and helps the learner inspect the words.
 - Translator produces a natural translation of the complete sentence.
 
-Lookup retains Nihongo-style sentence and example-sentence search. When the input appears to be a sentence, Lookup offers a **Translate sentence** action regardless of whether its search finds an exact or related example sentence. Missing example data is not what determines whether translation is available.
+Lookup retains complete Nihongo-style search-result behavior. A Contextual
+Handoff may additionally send the exact typed query to Translator, where it is
+handled like ordinary pasted input. The handoff sends no Lookup matches,
+example sentences, analysis structures, or other Lookup-specific context.
 
-Translation is user-initiated rather than automatically performed for every Lookup query. Activating the action opens Translator with the original text already supplied, without a confirmation dialog or retyping.
+The same app-wide pattern may offer destinations for selected content elsewhere
+in Zenbu: **Lookup** or **Translate** in MVP, and a future **Ask Sensei** action
+when AI Sensei is scheduled. The chosen Product Experience receives the exact
+selected content and handles it normally; this does not require bespoke
+tappable-word behavior, cards, modals, or destination-specific coupling.
 
-Japanese words displayed in Translator can link back to their Lookup details. Lookup and Translator reuse the same underlying parsing, tokenization, dictionary, and translation capabilities rather than implementing separate language pipelines.
+The Zenbu Japanese iOS App shell prototype decides which actions appear in each
+context, their labels and placement, and how ordinary screen navigation behaves.
+Lookup and Translator continue to reuse the same underlying parsing,
+tokenization, dictionary, and translation capabilities rather than implementing
+separate language pipelines.
 
 ## MVP value and delivery posture
 
@@ -90,7 +109,17 @@ The live conversation experience includes:
 
 Google Translate is the current UI/UX reference for live-conversation mode selection and per-language audio routing. Current screenshots show that each language can be muted, played on the device, or sent to connected headphones. They do not establish separate left-earbud and right-earbud routing or isolated audio for two people sharing one stereo pair.
 
-Per-language headphone assignment is an MVP requirement. The exact physical behavior—including whether participants share a pair, use separate earbuds or channels, or use another supported arrangement—remains a discovery question rather than a preselected implementation. Google Translate must be tested directly, and Zenbu's routing, microphone, Bluetooth, device, accessibility, and ordinary-headphone constraints require an explicit native iOS feasibility proof.
+Per-language audio routing is an MVP requirement. Japanese and English each
+independently select mute, the iPhone speaker, or connected headphones; any
+combination is allowed, so headphones may receive neither language, one
+language, or both. Zenbu does not split a stereo pair by left and right earbud
+and does not require separate output channels for separate listeners.
+
+Google Translate must be tested directly, and Zenbu's simultaneous speaker and
+headphone routing, system-selected microphone input, Bluetooth, device,
+accessibility, and ordinary-headphone constraints require an explicit native
+iOS feasibility proof. The proof evaluates how to satisfy this settled product
+contract; it does not reopen the left/right-earbud model.
 
 ## Conversation context
 
@@ -114,7 +143,7 @@ Translator conversation history uses durable device-local persistence for MVP. A
 
 MVP history retains the bilingual transcript and the minimal session metadata needed to identify and reopen it, such as its languages and date. Captured source audio is temporary processing input and is discarded after processing rather than saved with the conversation.
 
-The history belongs to Translator for MVP rather than expanding the User Library or Learning Profile contracts prematurely. Future account sync, backup, cross-device access, or study handoff may build on it later.
+The history belongs to Translator for MVP rather than expanding the saved-material or Learning Profile contracts prematurely. Future account sync, backup, cross-device access, or study handoff may build on it later.
 
 This product commitment does not require continuous conversation to be implemented as one undivided task. Typed translation, one recorded turn, and manual alternating turns can be used as development milestones, evaluation surfaces, and graceful fallbacks for the capabilities that live conversation depends on. Completing those milestones does not move continuous conversation out of MVP.
 

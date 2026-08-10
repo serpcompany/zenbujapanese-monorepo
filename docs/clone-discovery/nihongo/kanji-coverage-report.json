@@ -1,0 +1,41 @@
+{
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/70",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "generated_at": "2026-08-05T00:29:00+09:00",
+  "capture_family": "MVP kanji, stroke order, element, and related-entry behavior; observed Origin/history and etymology evidence is retained for post-MVP issue #91",
+  "status": "executed_complete_for_approved_mvp_contract",
+  "capture_complete": true,
+  "reason": "Four privacy-safe public fixture runs proved the principal observed layout, representative linked-row navigation, and qualitative stroke-animation state machine. Exact Nihongo source-dependent rows, missing-data classes, terminal pixels, timing, and direct-touch gesture behavior are nonblocking under the approved Language Reference Data, visual, renderer, and standard iOS interaction boundaries.",
+  "coverage": {
+    "in_family_states": 22,
+    "actions": 28,
+    "traversed_actions": 18,
+    "same_destination_actions": 0,
+    "unavailable_under_fixture_actions": 0,
+    "blocked_by_access_actions": 0,
+    "excluded_actions": 10,
+    "fixture_runs": 4,
+    "behavior_layout_classes": 10,
+    "privacy_reviewed_screenshot_artifacts": 25,
+    "unresolved_gap_groups": 0
+  },
+  "unresolved_gaps": [],
+  "nonblocking_gaps": [
+    {"id":"KANJI-BLOCKER-GESTURES","reason":"Issue #89 approved standard iOS interactive edge-swipe and Back behavior plus app-owned long-press behavior; exact Nihongo gesture behavior is a prohibited parity claim."}
+  ],
+  "resolved_nonblocking_boundaries": [
+    {"id":"KANJI-BLOCKER-ACTION-CLOSURE","authority":"issues #79 and #81 plus scope.json","resolution":"Representative linked-row navigation is the observable contract; exact row denominators and missing-data classes follow Zenbu Language Reference Data and are not exact Nihongo parity claims."},
+    {"id":"KANJI-BLOCKER-TIMING","authority":"issue #79 and scope.json","resolution":"The qualitative state machine remains required; exact Nihongo numeric timing is replaced by deterministic app-owned renderer timing."},
+    {"id":"KANJI-BLOCKER-TERMINAL-EVIDENCE","authority":"issues #78 and #79 plus scope.json","resolution":"The observed qualitative completed state remains required; an exact Nihongo terminal screenshot and pixels are not implementation-readiness requirements."},
+    {"id":"KANJI-BLOCKER-GESTURES","authority":"issue #89 plus scope.json","resolution":"Standard iOS interactive edge-swipe and Back behavior plus app-owned long-press behavior define the Zenbu contract; exact Nihongo gesture behavior is not an implementation-readiness requirement."}
+  ],
+  "privacy_review": {
+    "personal_content_retained": false,
+    "one_stroke_evidence_cropped": true,
+    "reason": "The lower One Kanji Detail screen exposed Words You've Learned, so only crops ending above that section were retained for the one-stroke overlay.",
+    "clipboard_payload_retained": false,
+    "app_specific_permissions_changed": false,
+    "network_state_changed": false
+  }
+}

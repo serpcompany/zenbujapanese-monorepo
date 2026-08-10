@@ -1,0 +1,143 @@
+{
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "generated_at": "2026-08-04T13:19:11Z",
+  "artifact_count": 34,
+  "artifacts": [
+    {
+      "sha256": "668cb93e0870234172f73a97503fc8bdf9c73c65484285534124d9fd2d908bc4",
+      "path": "evidence/reference/screenshots/search-inventory/action-cancel-preserves-results.png"
+    },
+    {
+      "sha256": "b534838f08ea26ac801ea810c87045e11add2647d469c757beab9f38637cbf93",
+      "path": "evidence/reference/screenshots/search-inventory/action-handwriting-erase.png"
+    },
+    {
+      "sha256": "fc789c98d6f96015f79e253cb7f1d6321e1b1fa7ca6021c1cc951b398703dd7a",
+      "path": "evidence/reference/screenshots/search-inventory/action-handwriting-submit-pending-stroke-discovered-words.png"
+    },
+    {
+      "sha256": "a7e27cdbf4812b672818db9b735ce7f1e1a27ea87763c6d609afde2881b5afb0",
+      "path": "evidence/reference/screenshots/search-inventory/action-history-rerun-disposable-mondai.png"
+    },
+    {
+      "sha256": "50afc2d696ca571e5c659327ca8d8a3e236702920d24c9d5b6210ab7142828d3",
+      "path": "evidence/reference/screenshots/search-inventory/action-radical-candidate-submit-yabu.png"
+    },
+    {
+      "sha256": "7c0833296ec37f597abbf4193a05d83bc79c4e541f6394685a3e37ce9df68484",
+      "path": "evidence/reference/screenshots/search-inventory/action-radical-remove.png"
+    },
+    {
+      "sha256": "2a79806bfdba3a806fc27fab7e22555f8347487dece886ea3035071a2584bfcc",
+      "path": "evidence/reference/screenshots/search-inventory/action-radical-search-without-candidate-returns-root.png"
+    },
+    {
+      "sha256": "2bfe4dbcecf76e831ccd55014ea3ee3e0b5e9731acffd82f210ec15241067b7f",
+      "path": "evidence/reference/screenshots/search-inventory/action-result-leading-glyph-same-word-detail-settled.png"
+    },
+    {
+      "sha256": "a557f8f68ab4620a9d134d2117febb11433d6c53012dfe7f016df70afaa73870",
+      "path": "evidence/reference/screenshots/search-inventory/edge-additional-result-to-word-detail-mondaika.png"
+    },
+    {
+      "sha256": "63a911f72f02ffbf27bc28916fd0ea592bc658d831a47f787b4d1d221ddf2ee0",
+      "path": "evidence/reference/screenshots/search-inventory/edge-results-to-example-sentences-settled.png"
+    },
+    {
+      "sha256": "56faff624918925f41b0a2da7ae6fafddabbc2e0b7583c1c629a7005294cef23",
+      "path": "evidence/reference/screenshots/search-inventory/edge-results-to-kanji-detail-yabu.png"
+    },
+    {
+      "sha256": "0125e382b6ddeecbcecc58ddce1f13b99cb3a946e8112f2d8696973f8c38686f",
+      "path": "evidence/reference/screenshots/search-inventory/edge-results-to-word-detail-mondai-settled.png"
+    },
+    {
+      "sha256": "1b6bbeedae65ee498097cca06c2515fb6175cbb867111bdbe58d67e9a0ae9f30",
+      "path": "evidence/reference/screenshots/search-inventory/edge-search-to-image-source-menu.png"
+    },
+    {
+      "sha256": "ad9eb5663f6fb9b040cc4197a8c9f1f1989d08db8c11ce6504f68e526961e0c4",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-common-kanji-nihon-handwritten.png"
+    },
+    {
+      "sha256": "f0317694558418b2d036764722179a0e1e0b7aa93e5b7da24117bd140341dc8c",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-english-think-live.png"
+    },
+    {
+      "sha256": "685671a3e2fe6a2f799a9b9ea9fd1e72ad9a7bdac501aad0a36e75a86d4b88b2",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-inflected-tabeta-live.png"
+    },
+    {
+      "sha256": "e9d1fcb3a8b431ca52c0af6e30a6db93e99ca4f8325bbab282932010ba810a3b",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-mixed-script-nihon-abc.png"
+    },
+    {
+      "sha256": "a64484319b8b7c72ee75ce8be2f6341a1e634f8538984377b5ed79ce1c453ad6",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-no-match-zzzxqv.png"
+    },
+    {
+      "sha256": "9b7839e809ecbf0f17d35776574773bb48b60dc98cbeb46fc3d59457f696726b",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-partial-tab.png"
+    },
+    {
+      "sha256": "b99bd74eb8e7b1266b66c0fd0c1f5f7402dc44909b25d1aa28e94500cbe3d10d",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-punctuation-hello-hyphen-world.png"
+    },
+    {
+      "sha256": "7c6205ffcc1d1d737b4f8e950a53e6c7cd3b635296ef095b7c7021dac6576aa6",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-rich-mondai-live.png"
+    },
+    {
+      "sha256": "fbc95cb69563b1d314e49019c74e867f7f3a42e050ce5f682bd1df54959ff5c2",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-rich-mondai-refined.png"
+    },
+    {
+      "sha256": "8f73b3bee82ba4c88ab10e6eded1f7327766274a6279e33faf3f8393231760b1",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-romaji-nihon-live.png"
+    },
+    {
+      "sha256": "708c733b12c6bd5dbb39145a1218c899ce8cb3d3c28c2c023e159ffeba9a9195",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-romaji-nihon-refined.png"
+    },
+    {
+      "sha256": "c6d084e5a1e9921b35d6316fc7ee3e83e6738b09364350b2dd113b2a51d54dd9",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-romaji-taberu-direct-deinflection.png"
+    },
+    {
+      "sha256": "1d0bbd1df9a183882826cdadcb6ec67964608fcd43f1823b53a77c6d07f20b0e",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-single-kanji-handwritten-cho.png"
+    },
+    {
+      "sha256": "3812f32f50a62c1ffd8405fe9ada48951f7b6b644a751a525d999f674686e424",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-sparse-tondemonai-live.png"
+    },
+    {
+      "sha256": "8f73f696a8796a882101a291509d92ac04254c02b80a26cea83d845601f31208",
+      "path": "evidence/reference/screenshots/search-inventory/fixture-whitespace-taberu-trailing.png"
+    },
+    {
+      "sha256": "62a90fedcd1506fd29b7e345bd35e3999c188d064d9d7b83097c2ff653c94638",
+      "path": "evidence/reference/screenshots/search-inventory/search-root-empty.png"
+    },
+    {
+      "sha256": "ee20875152f5ee3ecba8020297767914fb4cee7871a12304b7a2ebf5f5815eb3",
+      "path": "evidence/reference/screenshots/search-inventory/state-handwriting-drawn-candidates.png"
+    },
+    {
+      "sha256": "d0cb43fdaf081c59b3a62ab85406e6b3ab5b7c919d96968ca2ab2b31209fa989",
+      "path": "evidence/reference/screenshots/search-inventory/state-handwriting-empty-crop.jpg"
+    },
+    {
+      "sha256": "bf31beedb17a51e6b0201a4bc6e457c484b2865baa9b6ec85f67296cc1cee9ea",
+      "path": "evidence/reference/screenshots/search-inventory/state-radical-empty.png"
+    },
+    {
+      "sha256": "efc666c9a22bb591908e36b1a12b6d34fd491ce786806749c9954a2a255259f1",
+      "path": "evidence/reference/screenshots/search-inventory/state-radical-selected.png"
+    },
+    {
+      "sha256": "c4f71120c6cf78db52dcb9912117abff03f6988a843948bcc0ff85c9eca144e6",
+      "path": "evidence/reference/screenshots/search-inventory/state-relaunch-restores-word-detail.png"
+    }
+  ]
+}

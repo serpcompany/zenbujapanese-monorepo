@@ -1,0 +1,293 @@
+{
+  "cells": [
+    {
+      "id": "ENV-PHYSICAL-IPHONE-CURRENT",
+      "dimension": "device-form-factor",
+      "value": "physical iPhone 17 Pro Max (iPhone18,2)",
+      "required": true,
+      "status": "observed",
+      "evidence": [
+        "evidence/reference/package-reports/coredevice-connection-metadata.json",
+        "evidence/reference/screenshots/connection-probe-search-baseline.png",
+        "evidence/reference/interaction-traces/search-input-results-inventory.json",
+        "search-evidence-manifest.json"
+      ]
+    },
+    {
+      "id": "ENV-SIMULATOR",
+      "dimension": "runtime-authority",
+      "value": "iOS Simulator",
+      "required": false,
+      "status": "excluded",
+      "rationale": "The authorized reference is an installed physical-device App Store runtime; Simulator behavior is not reference authority."
+    },
+    {
+      "id": "ENV-IPAD",
+      "dimension": "device-form-factor",
+      "value": "iPad",
+      "required": false,
+      "status": "excluded",
+      "rationale": "The approved dossier targets the connected iPhone only."
+    },
+    {
+      "id": "ENV-APPEARANCE-DARK",
+      "dimension": "appearance",
+      "value": "dark",
+      "required": true,
+      "status": "observed",
+      "evidence": [
+        "evidence/reference/screenshots/connection-probe-search-baseline.png"
+      ]
+    },
+    {
+      "id": "ENV-APPEARANCE-LIGHT",
+      "dimension": "appearance",
+      "value": "light",
+      "required": false,
+      "status": "excluded",
+      "rationale": "The stakeholder selected the phone's normal dark appearance as the sole blocking appearance."
+    },
+    {
+      "id": "ENV-ORIENTATION-PORTRAIT",
+      "dimension": "orientation",
+      "value": "portrait",
+      "required": true,
+      "status": "observed",
+      "evidence": [
+        "evidence/reference/package-reports/coredevice-connection-metadata.json",
+        "evidence/reference/screenshots/connection-probe-search-baseline.png"
+      ]
+    },
+    {
+      "id": "ENV-ORIENTATION-LANDSCAPE",
+      "dimension": "orientation",
+      "value": "landscape",
+      "required": false,
+      "status": "excluded",
+      "rationale": "The stakeholder selected portrait as the sole blocking orientation."
+    },
+    {
+      "id": "ENV-IOS-CURRENT",
+      "dimension": "os-version",
+      "value": "iOS 26.5.2 (23F84)",
+      "required": true,
+      "status": "observed",
+      "evidence": [
+        "evidence/reference/package-reports/coredevice-connection-metadata.json"
+      ]
+    },
+    {
+      "id": "ENV-IOS-ALTERNATE",
+      "dimension": "os-version",
+      "value": "alternate or historical iOS versions",
+      "required": false,
+      "status": "excluded",
+      "rationale": "The stakeholder selected one current device and OS version."
+    },
+    {
+      "id": "ENV-LOCALE-CURRENT",
+      "dimension": "locale",
+      "value": "English app UI observed; exact device locale unknown",
+      "required": true,
+      "status": "blocked_noncritical",
+      "blocked_by": "ACCESS-BLOCKER-DEVICE-LOCALE"
+    },
+    {
+      "id": "ENV-ACCESSIBILITY-SEMANTICS",
+      "dimension": "accessibility",
+      "value": "app-level hierarchy for the physical iPhone runtime",
+      "required": false,
+      "status": "observed_unavailable_nonblocking_approved_variance",
+      "decision": "Exact Nihongo semantics are not a parity requirement; Zenbu must provide its own accessible semantics.",
+      "evidence": [
+        "evidence/reference/semantic-snapshots/connection-probe-limitation.md"
+      ]
+    },
+    {
+      "id": "ENV-CONTENT-SIZE-CURRENT",
+      "dimension": "accessibility-content-size",
+      "value": "current device content-size category",
+      "required": true,
+      "status": "blocked_noncritical",
+      "blocked_by": "ACCESS-BLOCKER-CONTENT-SIZE"
+    },
+    {
+      "id": "ENV-PERMISSION-CAMERA",
+      "dimension": "permission",
+      "value": "camera allow/deny/cancel/restoration",
+      "required": false,
+      "status": "excluded",
+      "rationale": "The stakeholder waived Camera source mechanics and accepted uploaded-image parsing through Files as the blocking evidence path."
+    },
+    {
+      "id": "ENV-PERMISSION-PHOTOS",
+      "dimension": "permission",
+      "value": "Photos allow/limited/deny/cancel/restoration",
+      "required": false,
+      "status": "excluded_after_picker_cancel_observation",
+      "rationale": "The private-access picker opened and cancelled successfully; the stakeholder waived Photo Library source mechanics after accepting Files-based parsing evidence."
+    },
+    {
+      "id": "ENV-PICKER-FILES",
+      "dimension": "system-integration",
+      "value": "Files picker open/select/cancel",
+      "required": true,
+      "status": "observed_single_and_multiple_selection",
+      "evidence": [
+        "image-crawl.json",
+        "image-fixture-matrix.json",
+        "evidence/reference/interaction-traces/image-text-inventory.json"
+      ]
+    },
+    {
+      "id": "ENV-PERMISSION-CLIPBOARD",
+      "dimension": "permission",
+      "value": "synthetic clipboard input and paste privacy prompt",
+      "required": true,
+      "status": "pending_safe_fixture",
+      "blocked_by": "ACCESS-BLOCKER-PERMISSIONS"
+    },
+    {
+      "id": "ENV-STOREKIT-ENTITLEMENT",
+      "dimension": "entitlement",
+      "value": "installed Nihongo purchase/Pro/trial state",
+      "required": true,
+      "status": "blocked_noncritical",
+      "blocked_by": "ACCESS-BLOCKER-ENTITLEMENT"
+    },
+    {
+      "id": "ENV-PERMISSION-MICROPHONE",
+      "dimension": "permission",
+      "value": "microphone",
+      "required": false,
+      "status": "excluded_unless_reconnaissance_finds_a_Search_entry",
+      "rationale": "No microphone entry is visible on the Search baseline."
+    },
+    {
+      "id": "ENV-PERMISSION-PUSH",
+      "dimension": "permission",
+      "value": "push notifications",
+      "required": false,
+      "status": "excluded",
+      "rationale": "Push is outside the approved Search-rooted discovery boundary unless reconnaissance establishes a reachable dependency."
+    },
+    {
+      "id": "ENV-INTEGRATION-ICLOUD",
+      "dimension": "integration",
+      "value": "iCloud",
+      "required": false,
+      "status": "excluded_unless_reconnaissance_finds_a_Search_dependency"
+    },
+    {
+      "id": "ENV-INTEGRATION-ASSOCIATED-DOMAINS",
+      "dimension": "integration",
+      "value": "associated domains and universal links",
+      "required": false,
+      "status": "pending_reconnaissance_classification"
+    },
+    {
+      "id": "ENV-PERMISSION-BIOMETRICS",
+      "dimension": "permission",
+      "value": "biometrics",
+      "required": false,
+      "status": "excluded_unless_reconnaissance_finds_a_Search_dependency"
+    },
+    {
+      "id": "ENV-INTEGRATION-SHARE-EXTENSION",
+      "dimension": "integration",
+      "value": "share extension or external share-sheet entry",
+      "required": false,
+      "status": "excluded",
+      "rationale": "The blocking graph is rooted inside Search; external entry points are outside the approved dossier."
+    },
+    {
+      "id": "ENV-DEVICE-SPECIFIC-MIRRORING",
+      "dimension": "device-specific-behavior",
+      "value": "physical display off while iPhone Mirroring is the visual authority",
+      "required": true,
+      "status": "observed",
+      "evidence": [
+        "evidence/reference/package-reports/coredevice-connection-metadata.json",
+        "tool-access-plan.json"
+      ]
+    },
+    {
+      "id": "ENV-SEARCH-INPUT-EXTERNAL-KEYBOARD",
+      "dimension": "input-authority",
+      "value": "iPhone Mirroring hardware-key events plus Nihongo handwriting/radical panels",
+      "required": true,
+      "status": "observed_with_software_keyboard_gap",
+      "blocked_by": "SEARCH-BLOCKER-SOFTWARE-KEYBOARD",
+      "evidence": [
+        "evidence/reference/interaction-traces/search-input-results-inventory.json",
+        "search-fixture-matrix.json"
+      ]
+    },
+    {
+      "id": "ENV-SEARCH-NETWORK-CONNECTED",
+      "dimension": "network-state",
+      "value": "normal connected state during Search fixture execution",
+      "required": true,
+      "status": "observed",
+      "evidence": [
+        "search-fixture-matrix.json"
+      ]
+    },
+    {
+      "id": "ENV-SEARCH-NETWORK-OFFLINE",
+      "dimension": "network-state",
+      "value": "offline, transport failure, retry, and recovery",
+      "required": true,
+      "status": "blocked",
+      "blocked_by": "SEARCH-BLOCKER-OFFLINE"
+    },
+    {
+      "id": "ENV-WORD-NOTE-LIFECYCLE",
+      "dimension": "state-data",
+      "value": "synthetic note save, Back auto-save, navigation persistence, cold-relaunch persistence after re-query, deletion, and restoration",
+      "required": true,
+      "status": "observed_and_restored",
+      "evidence": ["evidence/reference/interaction-traces/word-detail-inventory.json", "word-crawl.json"]
+    },
+    {
+      "id": "ENV-WORD-AUDIO-OUTPUT",
+      "dimension": "audio-output",
+      "value": "word and example pronunciation content, timing, interruption, and completion",
+      "required": true,
+      "status": "blocked",
+      "blocked_by": "WORD-BLOCKER-AUDIO-SEMANTICS"
+    },
+    {
+      "id": "ENV-WORD-NETWORK-OFFLINE",
+      "dimension": "network-state",
+      "value": "offline word/detail, example, and audio failure/retry/recovery",
+      "required": true,
+      "status": "blocked",
+      "blocked_by": "WORD-BLOCKER-OFFLINE"
+    },
+    {
+      "id": "ENV-KANJI-STROKE-CLASSES",
+      "dimension": "animation-fixture",
+      "value": "one-, eight-, and 29-stroke sequences with initial, step, pause/resume, and completion behavior",
+      "required": true,
+      "status": "observed_qualitative_contract_exact_reference_timing_and_pixels_nonblocking",
+      "evidence": ["kanji-crawl.json", "kanji-evidence-manifest.json"]
+    },
+    {
+      "id": "ENV-KANJI-COLD-RELAUNCH",
+      "dimension": "lifecycle",
+      "value": "cold process relaunch from completed 29-stroke overlay",
+      "required": true,
+      "status": "observed",
+      "evidence": ["evidence/reference/screenshots/kanji-inventory/state-kanji-cold-relaunch-search-root.png", "evidence/reference/interaction-traces/kanji-detail-inventory.json"]
+    },
+    {
+      "id": "ENV-KANJI-NETWORK-OFFLINE",
+      "dimension": "network-state",
+      "value": "offline kanji detail, element, etymology, word-link, and stroke-order failure/retry/recovery",
+      "required": true,
+      "status": "blocked",
+      "blocked_by": "KANJI-BLOCKER-OFFLINE"
+    }
+  ]
+}

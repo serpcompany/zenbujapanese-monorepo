@@ -1,0 +1,216 @@
+{
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/68",
+  "required_category_count": 12,
+  "required_categories_executed": 12,
+  "fixture_run_count": 16,
+  "behavior_layout_class_count": 11,
+  "behavior_layout_classes": [
+    "RESULT-ROMAJI-REFINEMENT",
+    "RESULT-STANDARD-RANKED",
+    "RESULT-ENGLISH-AMBIGUOUS",
+    "RESULT-DEINFLECTED-ROMAJI",
+    "RESULT-SPARSE",
+    "RESULT-DISCOVERED-WORDS",
+    "RESULT-NO-MATCH-BLANK",
+    "RESULT-EXAMPLE-ONLY",
+    "RESULT-KANJI-PRIMARY",
+    "INPUT-HANDWRITING-CANDIDATES",
+    "INPUT-RADICAL-FILTER-CANDIDATES"
+  ],
+  "fixtures": [
+    {
+      "fixture_id": "SEARCH-FIXTURE-001",
+      "purpose": "Common Japanese entered as kanji",
+      "input": "日本",
+      "input_method": "handwriting candidates, then cursor deletion of a preceding disposable synthetic prefix",
+      "required_categories": ["common Japanese in kanji"],
+      "observed_classes": ["RESULT-STANDARD-RANKED"],
+      "observed": "View 50+ Example Sentences, Best Matches headed by 日本, and Additional Matches.",
+      "evidence": ["evidence/reference/screenshots/search-inventory/fixture-common-kanji-nihon-handwritten.png"],
+      "status": "executed"
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-002",
+      "purpose": "Comparable kana reading",
+      "input": "にほん",
+      "input_method": "select Search for 「にほん」 from the romaji result state",
+      "required_categories": ["comparable kana input"],
+      "observed_classes": ["RESULT-STANDARD-RANKED"],
+      "observed": "The field changed to にほん and ranking changed to Japan-related Best and Additional Matches.",
+      "evidence": ["evidence/reference/screenshots/search-inventory/fixture-romaji-nihon-refined.png"],
+      "status": "executed",
+      "limitation": "Direct software-keyboard kana entry was not available through iPhone Mirroring with the attached external keyboard; the exact kana field state and results were observed through Nihongo's own refinement action."
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-003",
+      "purpose": "English input with multiple plausible matches and multiple match classes",
+      "input": "think",
+      "input_method": "hardware-key event input through iPhone Mirroring",
+      "required_categories": ["English with multiple plausible matches", "ambiguous input producing multiple match classes"],
+      "observed_classes": ["RESULT-ENGLISH-AMBIGUOUS", "RESULT-STANDARD-RANKED"],
+      "observed": "View 50+ Example Sentences, three Best Matches, and a long Additional Matches section spanning verbs, expressions, particles, and auxiliaries.",
+      "evidence": ["evidence/reference/screenshots/search-inventory/fixture-english-think-live.png"],
+      "status": "executed"
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-004",
+      "purpose": "Romaji requiring suggested-reading refinement",
+      "input": "nihon",
+      "input_method": "hardware-key event input through iPhone Mirroring",
+      "required_categories": ["romaji refinement"],
+      "observed_classes": ["RESULT-ROMAJI-REFINEMENT", "RESULT-STANDARD-RANKED"],
+      "observed": "Literal romaji ranking exposed Search for 「にほん」; selecting it replaced the field with にほん and reranked results.",
+      "evidence": [
+        "evidence/reference/screenshots/search-inventory/fixture-romaji-nihon-live.png",
+        "evidence/reference/screenshots/search-inventory/fixture-romaji-nihon-refined.png"
+      ],
+      "status": "executed"
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-005",
+      "purpose": "Inflected input requiring deinflection",
+      "input": "tabeta",
+      "input_method": "hardware-key event input through iPhone Mirroring",
+      "required_categories": ["inflected verb or adjective requiring deinflection"],
+      "observed_classes": ["RESULT-DEINFLECTED-ROMAJI"],
+      "observed": "Best Match was 食べる (to eat), with three example sentences; ベタベタ appeared as an Additional Match.",
+      "evidence": ["evidence/reference/screenshots/search-inventory/fixture-inflected-tabeta-live.png"],
+      "status": "executed"
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-006",
+      "purpose": "Single-kanji input and kanji-primary result class",
+      "input": "丁",
+      "input_method": "handwriting candidate selection",
+      "required_categories": ["single kanji"],
+      "observed_classes": ["INPUT-HANDWRITING-CANDIDATES", "RESULT-KANJI-PRIMARY", "RESULT-STANDARD-RANKED"],
+      "observed": "The candidate strip offered 丁, 几, and イ; selecting 丁 populated Search with a KANJI primary row, word Best Matches, Additional Matches, and View 50+ Example Sentences.",
+      "evidence": [
+        "evidence/reference/screenshots/search-inventory/state-handwriting-drawn-candidates.png",
+        "evidence/reference/screenshots/search-inventory/fixture-single-kanji-handwritten-cho.png"
+      ],
+      "status": "executed"
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-007",
+      "purpose": "Rich result with examples and a detail destination containing pitch-accent and audio controls",
+      "input": "mondai → もんだい",
+      "input_method": "romaji entry followed by Nihongo's Japanese-reading refinement",
+      "required_categories": ["rich result with examples, pitch accent, and audio where available"],
+      "observed_classes": ["RESULT-ROMAJI-REFINEMENT", "RESULT-STANDARD-RANKED"],
+      "observed": "The refined result exposed a dense Best/Additional result set; selecting 問題 reached a common Word Detail with pitch display and speaker controls. Detailed audio/pitch behavior remains owned by the Word behavior capture ticket.",
+      "evidence": [
+        "evidence/reference/screenshots/search-inventory/fixture-rich-mondai-live.png",
+        "evidence/reference/screenshots/search-inventory/fixture-rich-mondai-refined.png",
+        "evidence/reference/screenshots/search-inventory/edge-results-to-word-detail-mondai-settled.png"
+      ],
+      "status": "executed"
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-008",
+      "purpose": "Sparse result layout",
+      "input": "tondemonai",
+      "input_method": "hardware-key event input through iPhone Mirroring",
+      "required_categories": ["sparse or rare entry lacking optional fields"],
+      "observed_classes": ["RESULT-SPARSE"],
+      "observed": "One Best Match and View 29 Example Sentences were present; Additional Matches was absent.",
+      "evidence": ["evidence/reference/screenshots/search-inventory/fixture-sparse-tondemonai-live.png"],
+      "status": "executed",
+      "limitation": "Optional-field absence inside the Word Detail is owned by the Word behavior capture ticket; this ticket establishes the sparse result-page class."
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-009",
+      "purpose": "Partial Latin input",
+      "input": "tab",
+      "input_method": "hardware-key event input through iPhone Mirroring",
+      "required_categories": ["partial input"],
+      "observed_classes": ["RESULT-STANDARD-RANKED"],
+      "observed": "View 4 Example Sentences, a Best Match, and a long Additional Matches list updated live before submission.",
+      "evidence": ["evidence/reference/screenshots/search-inventory/fixture-partial-tab.png"],
+      "status": "executed"
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-010",
+      "purpose": "Trailing-whitespace normalization",
+      "input": "taberu ",
+      "input_method": "hardware-key event input through iPhone Mirroring",
+      "required_categories": ["whitespace input"],
+      "observed_classes": ["RESULT-DEINFLECTED-ROMAJI"],
+      "observed": "Trailing whitespace was not visibly retained and the result set matched the taberu behavior class.",
+      "evidence": ["evidence/reference/screenshots/search-inventory/fixture-whitespace-taberu-trailing.png"],
+      "status": "executed"
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-011",
+      "purpose": "Mixed kana and Latin script",
+      "input": "にほんabc",
+      "input_method": "Nihongo kana refinement followed by hardware-key event input",
+      "required_categories": ["mixed-script input"],
+      "observed_classes": ["RESULT-DISCOVERED-WORDS"],
+      "observed": "The usual Best/Additional headings were replaced by Discovered Words containing 本.",
+      "evidence": ["evidence/reference/screenshots/search-inventory/fixture-mixed-script-nihon-abc.png"],
+      "status": "executed"
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-012",
+      "purpose": "No-match input",
+      "input": "zzzxqv",
+      "input_method": "hardware-key event input through iPhone Mirroring",
+      "required_categories": ["no-match input"],
+      "observed_classes": ["RESULT-NO-MATCH-BLANK"],
+      "observed": "The populated Search field remained visible over a blank content area with no explicit empty-state copy or retry control.",
+      "evidence": ["evidence/reference/screenshots/search-inventory/fixture-no-match-zzzxqv.png"],
+      "status": "executed"
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-013",
+      "purpose": "Disposable recent Search history",
+      "input": "もんだい",
+      "input_method": "session-created refinement, then select the known top disposable row without inspecting older rows",
+      "required_categories": ["disposable recent history"],
+      "observed_classes": ["RESULT-STANDARD-RANKED"],
+      "observed": "Selecting the disposable recent query restored the same もんだい Best and Additional result set.",
+      "evidence": ["evidence/reference/screenshots/search-inventory/action-history-rerun-disposable-mondai.png"],
+      "status": "executed",
+      "privacy": "No history-list screenshot was retained; two attempted captures containing non-session rows were immediately deleted."
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-014",
+      "purpose": "Punctuation behavior",
+      "input": "hello-world",
+      "input_method": "hardware-key event input through iPhone Mirroring",
+      "required_categories": ["partial, whitespace/punctuation, or mixed-script input"],
+      "observed_classes": ["RESULT-EXAMPLE-ONLY"],
+      "observed": "View 1 Example Sentence appeared with no Best Matches, Additional Matches, Discovered Words, or explicit no-match copy.",
+      "evidence": ["evidence/reference/screenshots/search-inventory/fixture-punctuation-hello-hyphen-world.png"],
+      "status": "executed"
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-015",
+      "purpose": "Handwriting pending-stroke submission behavior",
+      "input": "丁 plus a pending recognized 一 stroke",
+      "input_method": "select 丁, draw another stroke, then select Search",
+      "required_categories": [],
+      "observed_classes": ["INPUT-HANDWRITING-CANDIDATES", "RESULT-DISCOVERED-WORDS"],
+      "observed": "Search submitted 丁一, proving that a pending recognized stroke is included without first selecting its candidate; the result used Discovered Words.",
+      "evidence": ["evidence/reference/screenshots/search-inventory/action-handwriting-submit-pending-stroke-discovered-words.png"],
+      "status": "executed"
+    },
+    {
+      "fixture_id": "SEARCH-FIXTURE-016",
+      "purpose": "Radical filtering, candidate selection, and submission",
+      "input": "薮",
+      "input_method": "select radicals, choose the remaining candidate kanji, then Search",
+      "required_categories": [],
+      "observed_classes": ["INPUT-RADICAL-FILTER-CANDIDATES", "RESULT-KANJI-PRIMARY", "RESULT-SPARSE"],
+      "observed": "Radical selection filtered the grid and candidate strip; choosing 薮 enabled submission and produced a KANJI row plus one word row.",
+      "evidence": [
+        "evidence/reference/screenshots/search-inventory/state-radical-selected.png",
+        "evidence/reference/screenshots/search-inventory/action-radical-candidate-submit-yabu.png"
+      ],
+      "status": "executed"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-08-05T01:02:00+09:00",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "artifact_count": 10,
+  "quality_gate": "Every retained image contains only purpose-created fixtures or public dictionary output and was visually reviewed after capture. Photo Library and Files screenshots containing unrelated personal items were not retained.",
+  "artifacts": [
+    {"path":"evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-recognized.png","sha256":"71e597952360abbd37052b11acc2d14b3eb3cc300e80b3a29fc62464d0a5b3da"},
+    {"path":"evidence/reference/screenshots/image-text-inventory/state-clear-horizontal-word-selected.png","sha256":"84cf7164ec0c5e8549f202ff440724965a9ec5ea351ece4b878eb9c5048fe528"},
+    {"path":"evidence/reference/screenshots/image-text-inventory/state-image-cold-relaunch-search-root.png","sha256":"99c05bdb9fb2b263c9fc5e645a5b1df8e9f2287ff16d71a6d3d92d0e9906077d"},
+    {"path":"evidence/reference/screenshots/image-text-inventory/state-image-word-detail-shizuka.png","sha256":"ce5e22716c18f45b0b382f6ef80cb6669f0dfba530745e0f0c4879d3286af173"},
+    {"path":"evidence/reference/screenshots/image-text-inventory/state-multi-image-empty-alert.png","sha256":"7e4a724ebbabad91de27ac7354e253e3e29b95f55c380ffcedc3a7a912f7aa04"},
+    {"path":"evidence/reference/screenshots/image-text-inventory/state-noisy-horizontal-recognized.png","sha256":"9099ff8d4d66f981c0452a8dad6c4191ece15af5db8d1ede61a596c7d23d9e99"},
+    {"path":"evidence/reference/screenshots/image-text-inventory/state-sparse-kanji-recognized.png","sha256":"cbaaecc9934dc348f8e011cc6d580a5622b38d703b65e59fb066c827ff211cdb"},
+    {"path":"evidence/reference/screenshots/image-text-inventory/state-sparse-kanji-selected.png","sha256":"f5f11491e0d127ed418e9d1013d0d0d26d874d875d183589081d2531c7bd6a87"},
+    {"path":"evidence/reference/screenshots/image-text-inventory/state-vertical-recognized.png","sha256":"1441a66f92db15d38ca4a5ff473f7bb053d0940228622d8e9d0f7fdb204ad164"},
+    {"path":"evidence/reference/screenshots/image-text-inventory/state-vertical-token-cross-column-grouping.png","sha256":"049f39086445db80e5fe3716b95b9d12807d11e854f9590fbb9996a8d31c8f58"}
+  ]
+}

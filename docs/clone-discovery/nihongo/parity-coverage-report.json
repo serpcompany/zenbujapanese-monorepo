@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-08-10T07:56:07Z",
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/75",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "disposition": "LEDGER_COMPLETE_CODING_READY_INPUT",
+  "count_definitions": {
+    "schema_complete": "Every row contains the required atomic claim, reproduction, result, authority, evidence, parity, status, and future-verification fields.",
+    "ready_input": "The observed reference input has no recorded discovery blocker; clone/test statuses remain unknown/not_run.",
+    "blocked": "The row is indexed but one or more named gaps prevent a coding-ready parity claim.",
+    "excluded": "The row preserves an approved scope or branding boundary and is not implementation scope."
+  },
+  "source_coverage": {
+    "surfaces": 23,
+    "nodes": 84,
+    "actions": 129,
+    "fixtures": 35,
+    "behavior_claims": 19,
+    "language_resources": 16,
+    "design_token_families": 7,
+    "assets": 16
+  },
+  "expected_source_coverage": {
+    "surfaces": 23,
+    "nodes": 84,
+    "actions": 129,
+    "fixtures": 35,
+    "behavior_claims": 19,
+    "language_resources": 16,
+    "design_token_families": 7,
+    "assets": 16
+  },
+  "ledger": {
+    "atomic_rows": 329,
+    "schema_complete_rows": 329,
+    "schema_incomplete_rows": 0,
+    "ready_input_rows": 284,
+    "blocked_rows": 0,
+    "excluded_rows": 45,
+    "clone_unknown_rows": 329,
+    "test_not_run_rows": 329,
+    "distinct_blocker_ids": 0
+  },
+  "blocked_row_ids": [],
+  "blocking_gap_ids": [],
+  "integrity": {
+    "duplicate_row_ids": [],
+    "missing_required_fields": [],
+    "unknown_row_blocker_ids": [],
+    "missing_registry_blocker_ids": [],
+    "missing_evidence_paths": [],
+    "invalid_discovery_status_rows": [],
+    "invalid_clone_or_test_status_rows": [],
+    "count_drift": [],
+    "passed": true
+  },
+  "privacy_and_clean_room": {
+    "private_material_included": false,
+    "reference_source_or_executable_copied": false,
+    "personal_media_or_clipboard_payload_retained": false,
+    "paid_or_proprietary_assets_copied": false,
+    "evidence_basis": "Only previously privacy-reviewed runtime evidence, structured discovery records, and purpose-created fixtures were indexed."
+  },
+  "next_ticket_effect": "The final recursive audit disposition is READY_FOR_IMPLEMENTATION; rerun audit-dossier.mjs after any canonical discovery change."
+}

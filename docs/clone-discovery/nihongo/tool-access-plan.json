@@ -1,0 +1,66 @@
+[
+  {
+    "surface": "nihongo-physical-iphone-runtime",
+    "target_type": "physical-iphone-app-store-app",
+    "environment": {
+      "device": "iPhone 17 Pro Max (iPhone18,2)",
+      "os": "iOS 26.5.2 (23F84)",
+      "app": "Nihongo 1.34.3 (9792)",
+      "bundle_id": "com.serpentisei.studyjapanese",
+      "appearance": "dark",
+      "orientation": "portrait",
+      "locale": "English app UI observed; exact device locale unavailable",
+      "connection": "paired wired CoreDevice connection with an active tunnel"
+    },
+    "preferred_authority": {
+      "runtime_control": "iPhone Mirroring controlled through computer-use",
+      "device_and_app_metadata": "Apple CoreDevice through xcrun devicectl",
+      "screenshots": "iPhone Mirroring window capture",
+      "semantics": "Xcode Accessibility Inspector when it can select a remote app element"
+    },
+    "fallback": "User-assisted physical-device screenshots, screen recordings, VoiceOver traces, and permission interactions, with only redacted or synthetic fixtures retained",
+    "connection_procedure": [
+      "Connect and unlock the authorized iPhone; keep Nihongo on its Search root",
+      "Run `xcrun devicectl list devices` and confirm the expected iPhone is available and paired",
+      "Query CoreDevice details, lock state, display state, and the exact Nihongo bundle identifier only",
+      "Open iPhone Mirroring; the device owner must perform any Mac-login credential entry",
+      "Activate `com.serpentisei.studyjapanese` with CoreDevice without terminating the existing process",
+      "Capture the clean Search baseline before any interaction",
+      "Use synthetic fixtures and avoid triggering Universal Clipboard until its host payload is explicitly controlled"
+    ],
+    "required_permissions": [
+      "Existing device pairing and trust",
+      "Device unlocked since boot",
+      "Mac login entered by the device owner when iPhone Mirroring locks",
+      "Camera and Photos permission decisions only when their Search journeys are captured"
+    ],
+    "expected_evidence_outputs": [
+      "Sanitized CoreDevice device/app report",
+      "Launch trace",
+      "Full Search-screen screenshot",
+      "App-level semantic snapshot when available",
+      "Named human-only procedure when semantics or protected system UI is unavailable"
+    ],
+    "connection_probe": "passed_with_semantic_limitation",
+    "known_limitations": [
+      "iPhone Mirroring exposes only its macOS shell in the computer-use accessibility tree, not Nihongo's element hierarchy",
+      "Xcode Accessibility Inspector detected the physical iPhone target but did not select or return a Nihongo element during the probe",
+      "CoreDevice does not expose the current device locale, content-size category, or per-app TCC permission state through the commands used",
+      "The physical display reports off while the mirrored display remains visible; later evidence must continue naming iPhone Mirroring as the visual authority",
+      "Focusing Search can request Universal Clipboard content; do not permit the transfer unless the Mac clipboard has first been replaced with a synthetic fixture",
+      "The attached external-keyboard path accepts hardware key events but selecting Nihongo's keyboard mode did not expose the standard iOS software keyboard",
+      "Computer-use scrolling moves the mirrored Search result list only after the list itself is explicitly focused; the bounded tab fixture reached a stable terminal viewport and restored that viewport after a detail round trip",
+      "Copy Text can be verified without Universal Clipboard by pasting into a new device-local note and deleting the note; IMG-FIXTURE-001 produced the five-line payload recorded in device-input-gesture-evidence.json",
+    "Cold process termination is now proven: relaunch returns to Search root rather than restoring Word Detail directly",
+    "iPhone Mirroring page pushes can remain in a partially animated frame after the first screen read; evidence capture must wait, read twice, and visually verify the settled frame",
+    "When the iPhone Mirroring window occupies a secondary or partially off-screen display, coordinate input can be offset or missed; move the window fully on-screen and verify each action result before saving evidence",
+    "The current capture authority exposes no audible stream and cannot prove word or sentence pronunciation content, timing, or interruption"
+    ],
+    "blocker_registry": "access-blockers.json",
+    "human_only_steps": [
+      "Enter the Mac login locally when iPhone Mirroring requests it; never disclose it to the agent",
+      "Perform or supervise any VoiceOver trace needed when app-level semantics remain inaccessible",
+      "Position the camera at a non-personal synthetic fixture before camera-permission or capture tests"
+    ]
+  }
+]

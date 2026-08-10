@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <rect width="1200" height="1200" fill="#ffffff"/>
+  <circle cx="600" cy="600" r="360" fill="#f5f5f5" stroke="#d7d7d7" stroke-width="5"/>
+  <text x="600" y="760" text-anchor="middle" font-family="Hiragino Mincho ProN" font-size="500" fill="#111111">静</text>
+  <text x="600" y="1090" text-anchor="middle" font-family="Hiragino Sans" font-size="34" fill="#555555">IMG-FIXTURE-003</text>
+</svg>

@@ -1,0 +1,12 @@
+{
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/72",
+  "generated_at": "2026-08-05T01:19:00+09:00",
+  "questions": [
+    {"question_id":"BEHAVIOR-QUESTION-001","question":"How does Nihongo select and transform pitch data across homographs, readings, parts of speech, and proper-noun status?","status":"closed_nonblocking_by_stakeholder_source_boundary","answer":"Nihongo Settings attributes pitch-accent data to CJK Dictionary Institute, supplemented by UniDic. Exact Nihongo matching is not a parity requirement; Settings capture is tracked by issue #90."},
+    {"question_id":"BEHAVIOR-QUESTION-002","question":"Which speaker actions use human recordings versus speech synthesis, and what are their voice, fallback, cache, interruption, and replay behaviors?","status":"closed_by_simple_playback_contract","answer":"Selecting Play must produce audible pronunciation. Use a pinned licensed recording when available and Japanese platform Speech Synthesis otherwise; exact Nihongo routing, timing, and interruption behavior are not parity requirements."},
+    {"question_id":"BEHAVIOR-QUESTION-003","question":"Which Search-rooted capabilities remain available offline, and how do loading, error, retry, stale-data, reconnect, and provider-fallback states differ?","status":"closed_by_stakeholder_offline_contract","answer":"Lookup must work offline. Exact Nihongo network-failure, stale, retry, and reconnect presentation is not a parity requirement."},
+    {"question_id":"BEHAVIOR-QUESTION-004","question":"Are ranking, handwriting candidates, radical candidates, example selection, and OCR grouping repeatable across restored runs?","status":"closed_nonblocking_by_stakeholder_scope_decision","answer":"Exact Nihongo run-to-run variability is not a parity requirement; retain observed runs as reference facts and verify Zenbu with deterministic fixtures."},
+    {"question_id":"BEHAVIOR-QUESTION-005","question":"What are the controlled boundary behaviors for partial, reversed-order, extra-stroke, kana, and non-jōyō handwriting?","status":"deferred_nonblocking_boundary_coverage","answer":"These extra contrasts may improve future coverage but do not gate the current implementation handoff."},
+    {"question_id":"BEHAVIOR-QUESTION-006","question":"How do radical candidate count and order change for zero-result and large-set one-property contrasts?","status":"deferred_nonblocking_boundary_coverage","answer":"These extra contrasts may improve future coverage but do not gate the current implementation handoff."}
+  ]
+}

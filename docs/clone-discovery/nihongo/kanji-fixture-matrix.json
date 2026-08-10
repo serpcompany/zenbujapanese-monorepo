@@ -1,0 +1,51 @@
+{
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/70",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "fixture_run_count": 4,
+  "behavior_layout_class_count": 10,
+  "fixtures": [
+    {
+      "fixture_id": "KANJI-FIXTURE-001",
+      "query": "静か → 静",
+      "covers": ["complete stroke/grade/JLPT metadata", "multiple readings and linked words", "meaning and sound elements", "origin/history expansion", "related words"]
+    },
+    {
+      "fixture_id": "KANJI-FIXTURE-002",
+      "query": "静 → sound element 争/爭 → standalone 争",
+      "covers": ["Kanji Element Detail", "alternative element form", "linked-kanji cycle", "missing grade/JLPT", "picture etymology classification", "Kanji Etymology reference"]
+    },
+    {
+      "fixture_id": "KANJI-FIXTURE-003",
+      "query": "いち → 一",
+      "covers": ["one-stroke sequence", "simple completed animation", "privacy-cropped evidence where Words You've Learned was visible"]
+    },
+    {
+      "fixture_id": "KANJI-FIXTURE-004",
+      "query": "depression → 憂鬱 → 鬱",
+      "covers": ["29-stroke sequence", "multiple and historical elements", "missing JLPT", "complex origin", "pause/resume", "platform interruption"]
+    }
+  ],
+  "behavior_layout_classes": [
+    "Kanji Detail with readings, complete metadata, elements, origin, and words",
+    "Kanji Detail with absent grade/JLPT and picture classification",
+    "Kanji Detail with many historical/meaning elements and 29 strokes",
+    "collapsed and expanded origin history",
+    "Kanji Element Detail with alternative glyph and standalone/contribution links",
+    "Kanji Etymology explanatory reference",
+    "one-stroke animation",
+    "multi-stroke animation with previous/next stepping",
+    "complex 29-stroke animation with pause/resume",
+    "cold relaunch from a nested stroke overlay to Search root"
+  ],
+  "required_gaps": [
+    "Kanji fixtures with absent meaning, reading, origin, and stroke-order data",
+    "Every visible reading, element, contribution, and related-word row disposition",
+    "Origin collapse after expansion across multiple origin classes",
+    "Long-press and interactive swipe-back gestures",
+    "Offline/error/retry/recovery",
+    "A retained settled terminal screenshot for the 29-stroke animation",
+    "Animation timing measured with a synchronized recorder rather than interaction-call latency",
+    "App-level semantic accessibility evidence"
+  ]
+}

@@ -13,7 +13,7 @@ Its central idea is that photographing kanji encountered in the world can feel l
 - KanjiMon is not part of the initial MVP.
 - It remains part of the long-term Zenbu Japanese product landscape.
 - It belongs in the primary Zenbu Japanese iOS app for the current plan, while preserving the possibility of a separately distributed app later.
-- It should reuse Lookup Capture, shared kanji and frequency data, and shared saved-item capabilities rather than build a duplicate OCR, dictionary, or learner identity system.
+- It should reuse the Image Text Flow, shared kanji and frequency data, and shared saved-item capabilities rather than build a duplicate OCR, dictionary, or learner identity system.
 - Its game rules, capture requirements, drills, rarity model, progression, location behavior, social map, privacy model, and distribution strategy require a dedicated later feature/sprint planning session.
 
 ## Historical evidence

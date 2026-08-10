@@ -1,0 +1,267 @@
+[
+  {
+    "evidence_id": "EVIDENCE-ACCESS-COREDEVICE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "package-platform-metadata",
+    "path": "evidence/reference/package-reports/coredevice-connection-metadata.json",
+    "captures": [
+      "device model and OS",
+      "wired pairing and tunnel",
+      "orientation and display scale",
+      "Nihongo bundle ID, version, and build"
+    ],
+    "privacy": "Direct device identifiers and app-container paths are omitted; only a one-way device identifier hash is retained."
+  },
+  {
+    "evidence_id": "EVIDENCE-ACCESS-SCREENSHOT-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "screenshot",
+    "path": "evidence/reference/screenshots/connection-probe-search-baseline.png",
+    "sha256": "58f6610e9308872267ff8d0e2573cd1b92f8641574bc7a089b91a2210fb6c675",
+    "captures": [
+      "successful Search-root launch",
+      "dark appearance",
+      "portrait orientation",
+      "visible Search field and camera entry",
+      "reference bottom navigation"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-ACCESS-TRACE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "interaction-trace",
+    "path": "evidence/reference/interaction-traces/connection-probe.json",
+    "captures": [
+      "CoreDevice activation",
+      "harmless Search focus and dismissal",
+      "restoration of the baseline"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-ACCESS-SCREENSHOT-FOCUSED-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "privacy-cropped-screenshot",
+    "path": "evidence/reference/screenshots/connection-probe-search-focused-top.png",
+    "sha256": "fdc44bb9a67abdb0492da560128a9dd7414e33e704b2c095e475774ff2b9392c",
+    "captures": [
+      "Search field focused",
+      "Cancel control visible",
+      "focused-state guidance copy"
+    ],
+    "privacy": "The full focused screen was not retained because it displayed pre-existing recent searches. The top crop excludes the history list and keyboard."
+  },
+  {
+    "evidence_id": "EVIDENCE-ACCESS-SCREENSHOT-RESTORED-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "screenshot",
+    "path": "evidence/reference/screenshots/connection-probe-search-restored.png",
+    "sha256": "2395bfd3103c27fc491dbc2fda62e6241dada5ca5a97d487aa3dd921a79d3dbf",
+    "captures": [
+      "Search focus dismissed through the visible Cancel control",
+      "empty Search baseline restored"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-ACCESS-SEMANTICS-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "semantic-accessibility-limitation",
+    "path": "evidence/reference/semantic-snapshots/connection-probe-limitation.md",
+    "captures": [
+      "iPhone Mirroring shell accessibility tree",
+      "failed physical-device element selection attempt",
+      "fallback procedure"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-RECON-TRACE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "interaction-trace",
+    "path": "evidence/reference/interaction-traces/search-reconnaissance.json",
+    "captures": [
+      "Search-rooted breadth-first navigation",
+      "synthetic fixtures and observed transitions",
+      "protected and deferred actions",
+      "privacy handling and excluded boundaries"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-RECON-SCREENSET-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "privacy-reviewed-screenshot-set",
+    "artifacts": [
+      {"path": "evidence/reference/screenshots/recon-image-source-menu.png", "sha256": "7ef2ae44afbb15c697c68a278b78f7ba313e5cfaa5383aa43ac4824d33f7e311"},
+      {"path": "evidence/reference/screenshots/recon-search-results-taberu.png", "sha256": "cc499bf9bc5bdc1baeea111e2b17add9b72d7acdee4d9d014ab84abfba37acb4"},
+      {"path": "evidence/reference/screenshots/recon-example-sentences.png", "sha256": "bcc23fac7ae0ea5903333f3ed2c1e79e20a129f3105d5e4c8e46092ed622d9ee"},
+      {"path": "evidence/reference/screenshots/recon-word-detail-mondai.png", "sha256": "c2d1c274f66decf77a8effe658e3a909067a0142e644b022ed4d5273aac6b20a"},
+      {"path": "evidence/reference/screenshots/recon-kanji-detail-mon.png", "sha256": "381f7f33c5f0f4deb0a6ff1c74c21bc49909576f3a515e1d3604b8e0eacf0d90"},
+      {"path": "evidence/reference/screenshots/recon-stroke-order-overlay.png", "sha256": "0fd07386c7e823eb58e7f2164bb990f92db4618d9e630b00e917cc91ac316710"},
+      {"path": "evidence/reference/screenshots/recon-kanji-element-detail.png", "sha256": "08779dfe411b4f9ba0c86680ef60a3ef3e901b9bcaea60ab8987544c906754df"},
+      {"path": "evidence/reference/screenshots/recon-conjugations-plain.png", "sha256": "2c7d8758b65e03573753eed9e3baef0007f91247a4d3dd45f1b8f01464eada4e"},
+      {"path": "evidence/reference/screenshots/recon-conjugations-polite.png", "sha256": "da1791766db07d3c44c11e393a5996876ddea123eb71acb693884fbb45250fe8"},
+      {"path": "evidence/reference/screenshots/recon-word-detail-rare.png", "sha256": "c93037e5dc65e6ffe21cae9b434ba40a73011ec658113203abede8bffa1a09d7"},
+      {"path": "evidence/reference/screenshots/recon-note-editor-empty.png", "sha256": "c640e1cfa86f3e10a1b7db28fb7c02f4a4f7f411e031e3f91440b3b0c72a1f42"},
+      {"path": "evidence/reference/screenshots/recon-romaji-ambiguity.png", "sha256": "562a1bee60cf60da86e55025b5b47328402708efa700d618e8eea30cc06ad047"},
+      {"path": "evidence/reference/screenshots/recon-normalized-kana-results.png", "sha256": "1b6a20e2ea9452035f4691677ec616728216bee308edd0d0a6fb8cef42a7bd2a"},
+      {"path": "evidence/reference/screenshots/recon-results-persist-after-cancel.png", "sha256": "e7e958b34cd90c1fe493522aa1208975a8e776903fa5c34fa3ba6e6d4e46fb5a"},
+      {"path": "evidence/reference/screenshots/recon-handwriting-input-crop.png", "sha256": "81a2103954c9e08cc5acd41414afcbc85d0e90a5a2b5433ca2ffdc595f9e91e8"},
+      {"path": "evidence/reference/screenshots/recon-radical-input-crop.png", "sha256": "dc830f19a850ce269b994fa6ebec3b6c681cff490d5abd63f98580c6c2ac094d"}
+    ],
+    "captures": [
+      "image-source menu",
+      "text and romaji Search result states",
+      "Example Sentences",
+      "Word Detail and empty note editing",
+      "plain and polite Conjugations",
+      "Kanji Detail, stroke-order overlay, and Kanji Element Detail",
+      "handwriting and radical input panels"
+    ],
+    "privacy": "Every artifact was reviewed. Full screens that exposed recent-search terms or a pre-existing personal image were not retained; handwriting and radical captures are cropped to the input panels. No personal photo, file, clipboard payload, or history term is present."
+  },
+  {
+    "evidence_id": "EVIDENCE-SEARCH-TRACE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "interaction-trace",
+    "path": "evidence/reference/interaction-traces/search-input-results-inventory.json",
+    "captures": [
+      "privacy-safe fixture execution",
+      "Search input and result-state traversal",
+      "handwriting and radical behavior",
+      "cross-family destination proofs",
+      "lifecycle restoration probe",
+      "exact limitations and resume procedures"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-SEARCH-SCREENSET-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "privacy-reviewed-screenshot-set",
+    "root": "evidence/reference/screenshots/search-inventory/",
+    "manifest": "search-evidence-manifest.json",
+    "artifact_count": 34,
+    "captures": [
+      "empty Search root",
+      "required Search fixture matrix",
+      "eleven materially distinct input and result classes",
+      "Cancel and recent-search rerun behavior",
+      "handwriting and radical panels, candidates, and submission",
+      "Example Sentences, Word Detail, Kanji Detail, and image-source-menu entry edges",
+      "app-switcher/Spotlight restoration result"
+    ],
+    "privacy": "All retained full screens contain only synthetic queries and public dictionary content. Input-panel crops exclude the history list. No pre-existing history row, personal image, file, clipboard payload, credential, or unrelated app thumbnail is retained."
+  },
+  {
+    "evidence_id": "EVIDENCE-WORD-TRACE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "interaction-trace",
+    "path": "evidence/reference/interaction-traces/word-detail-inventory.json",
+    "captures": [
+      "Example Sentences and nested Word Detail traversal",
+      "word/detail field and layout classes",
+      "verb and adjective conjugation classes",
+      "synthetic note mutation, persistence, deletion, and restoration",
+      "evidence-quality rejection and exact unresolved gaps"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-WORD-SCREENSET-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "privacy-reviewed-screenshot-set",
+    "root": "evidence/reference/screenshots/word-inventory/",
+    "manifest": "word-evidence-manifest.json",
+    "artifact_count": 42,
+    "captures": [
+      "Example Sentences top and scrolled states",
+      "common, uncommon, rich, sparse, nested, noun, verb, adjective, and interjection Word Detail classes",
+      "ru-verb, godan, suru, kuru, i-adjective, and na-adjective conjugations",
+      "empty, populated, saved, persisted, deleted, and restored synthetic-note states"
+    ],
+    "privacy": "All retained screens contain public dictionary content and purpose-created note text only. The synthetic note was removed. No pre-existing Flashcard, Clipping, photo, file, credential, or private history content is retained.",
+    "quality": "All 42 artifacts were visually audited after capture. Mid-transition and misleading frames were removed rather than registered."
+  },
+  {
+    "evidence_id": "EVIDENCE-IMAGE-TRACE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "interaction-trace",
+    "path": "evidence/reference/interaction-traces/image-text-inventory.json",
+    "captures": [
+      "Files single and multiple synthetic image selection",
+      "clear, noisy, vertical, sparse, and empty recognition classes",
+      "recognized-token inline gloss and nested Word Detail",
+      "multi-image carousel and no-text recovery",
+      "dismissal and cold-relaunch behavior",
+      "vertical cross-column grouping limitation"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-IMAGE-SCREENSET-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "privacy-reviewed-screenshot-set",
+    "root": "evidence/reference/screenshots/image-text-inventory/",
+    "manifest": "image-evidence-manifest.json",
+    "artifact_count": 10,
+    "captures": [
+      "clear and noisy horizontal recognition",
+      "vertical recognition and cross-column grouping",
+      "sparse recognition and inline gloss",
+      "no-text alert",
+      "image-context Word Detail",
+      "cold-relaunch Search root"
+    ],
+    "privacy": "Every retained artifact contains only purpose-created fixture content or public dictionary output. Photo Library and Files picker screens containing unrelated personal items were not retained."
+  },
+  {
+    "evidence_id": "EVIDENCE-BEHAVIOR-CROSSWALK-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "cross-family-behavior-index",
+    "path": "behavior-evidence-manifest.json",
+    "captures": [
+      "19 approved Search and Japanese-language behavior classes",
+      "35 source fixture cases across Search, word, kanji, and Image Text",
+      "observable output separated from inferred or unknown mechanisms",
+      "language-stack provenance and parity-claim limits",
+      "exact blockers for pitch matching, audio and speech source, offline behavior, and repeatability"
+    ],
+    "privacy": "The crosswalk indexes only previously privacy-reviewed, hash-registered product screenshots. The failed reconnect shell was not retained as product evidence."
+  },
+  {
+    "evidence_id": "EVIDENCE-PROVENANCE-TRACE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "interaction-trace",
+    "path": "evidence/reference/interaction-traces/source-provenance-capture.json",
+    "captures": [
+      "minimum Settings-boundary traversal for source provenance",
+      "pitch, etymology, OCR, and speech-source observations",
+      "starting-state restoration and excluded unrelated Settings edges"
+    ]
+  },
+  {
+    "evidence_id": "EVIDENCE-PROVENANCE-SCREENSET-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "privacy-reviewed-screenshot-set",
+    "root": "evidence/reference/screenshots/source-provenance/",
+    "manifest": "source-provenance-evidence-manifest.json",
+    "artifact_count": 8,
+    "captures": [
+      "CJK Dictionary Institute and UniDic pitch attribution",
+      "English Wiktionary, Japanese Wiktionary, and Shinjigen etymology attribution",
+      "Google, OCR.space, and On Device OCR options",
+      "human-recording fallback and installed system-voice configuration",
+      "visible WaniKani, Tofugu, and Kanji Alive recording attribution"
+    ],
+    "privacy": "Only app-owned Settings UI, public source/provider text, and system voice labels are retained. The unrelated entitlement surface was immediately left and not retained."
+  },
+  {
+    "evidence_id": "EVIDENCE-DEVICE-INPUT-GESTURE-TRACE-001",
+    "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+    "kind": "interaction-trace",
+    "path": "evidence/reference/interaction-traces/device-input-gesture-evidence.json",
+    "captures": [
+      "bounded Search result terminal extent and scroll restoration",
+      "IMG-FIXTURE-001 device-local Copy Text serialization",
+      "permission and scope reconciliation",
+      "repeated software-keyboard, app-semantics, and controller-gesture limitations",
+      "minimal exact direct-physical-device resume procedures"
+    ],
+    "privacy": "Retained frames contain only public dictionary content, the purpose-created image fixture, its disposable pasted payload, or an empty Accessibility Inspector. Picker frames and the pre-existing note briefly exposed during navigation were not retained."
+  }
+]

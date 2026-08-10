@@ -1,0 +1,138 @@
+{
+  "captured_at": "2026-08-06T11:57:00+09:00",
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/87",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "capture_authorities": [
+    "iPhone Mirroring controlled through computer-use",
+    "Apple CoreDevice through xcrun devicectl",
+    "Xcode Accessibility Inspector retry against the connected physical iPhone"
+  ],
+  "privacy_boundary": {
+    "fixtures": [
+      "public partial query tab",
+      "purpose-created IMG-FIXTURE-001",
+      "one disposable device-local note"
+    ],
+    "pre_existing_search_history_opened": false,
+    "personal_clipboard_read": false,
+    "personal_photo_or_file_retained": false,
+    "synthetic_note_deleted": true,
+    "notes": "System pickers briefly rendered unrelated entries while navigating to the exact fixture. No picker frame or unrelated item was retained as evidence."
+  },
+  "results": [
+    {
+      "blocker_id": "SEARCH-BLOCKER-RESULT-SCROLL",
+      "outcome": "resolved",
+      "procedure": [
+        "Enter the public partial query tab.",
+        "Focus the Additional Matches list before sending mirrored scroll events.",
+        "Scroll until repeated attempts produce the same terminal viewport.",
+        "Open the newly revealed terminal row tabbed browsing, wait for Word Detail to settle, and select Back."
+      ],
+      "observed": "The list scrolled after it was explicitly focused. The stable terminal viewport ended with tabbed browsing. Returning from that row restored the same terminal viewport and scrollbar position.",
+      "evidence": [
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-top.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-detail.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/search-tab-terminal-restored.jpeg"
+      ]
+    },
+    {
+      "blocker_id": "IMAGE-BLOCKER-COPY-TEXT-OUTPUT",
+      "outcome": "resolved",
+      "procedure": [
+        "Serve the repository-owned IMG-FIXTURE-001 over the local LAN and save it to On My iPhone.",
+        "Open only that fixture through Nihongo Files, select the result Share control, and select Copy Text.",
+        "Create a new device-local note, paste once, record the synthetic payload, and delete the note."
+      ],
+      "observed_lines": [
+        "日本語の勉強",
+        "今日は静かな公園で蝶々を見た。",
+        "問題を解いてから、友達と話します。",
+        "東京駅12:30Platform4",
+        "SyntheticfixtureIMG-FIXTURE-001"
+      ],
+      "serialization": "Copy Text preserved five visual regions as five lines. It removed spaces inside each region, preserved Japanese punctuation, the 12:30 colon, and the IMG-FIXTURE-001 hyphens, and included the English regions.",
+      "evidence": [
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-clear-horizontal-recognized.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-menu.jpeg",
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-copy-text-device-local-paste.jpeg"
+      ]
+    },
+    {
+      "blocker_id": "ACCESS-BLOCKER-PERMISSIONS",
+      "outcome": "reclassified_not_blocking_current_destination",
+      "observed": "Files access succeeded again with a purpose-created On My iPhone fixture. Camera and Photo Library mechanics remain excluded by the recorded stakeholder scope decision. No current clipboard-input claim exists; Copy Text output was proved without reading a personal clipboard.",
+      "evidence": [
+        "evidence/reference/screenshots/device-input-gesture-evidence/image-clear-horizontal-recognized.jpeg"
+      ]
+    },
+    {
+      "blocker_id": "ACCESS-BLOCKER-APP-SEMANTICS",
+      "outcome": "observed_limitation_resolved_nonblocking_by_stakeholder_scope_decision",
+      "completed_attempts": [
+        "iPhone Mirroring returned only its macOS shell accessibility tree.",
+        "Accessibility Inspector was reopened while Nihongo was foregrounded and the physical iPhone remained paired and available.",
+        "The inspector still exposed no selected Nihongo element or app hierarchy."
+      ],
+      "missing": "The exact Nihongo hierarchy remains unavailable, but it is not a parity requirement. Zenbu owns and must directly verify its own accessible semantics.",
+      "evidence": [
+        "evidence/reference/screenshots/device-input-gesture-evidence/accessibility-inspector-no-selection.jpeg"
+      ]
+    },
+    {
+      "blocker_id": "SEARCH-BLOCKER-SOFTWARE-KEYBOARD",
+      "outcome": "retained_minimal_external_dependency",
+      "completed_attempts": [
+        "Focus Search with a public query.",
+        "Select Nihongo's keyboard mode control after the phone and mirroring connection were restored.",
+        "Retry with iPhone Mirroring set to authenticate automatically."
+      ],
+      "observed": "The custom input panel hid, but the standard iOS software keyboard did not appear because the active mirroring route remained an external-keyboard authority.",
+      "missing": "One direct physical-iPhone capture with the software keyboard forced visible."
+    },
+    {
+      "blocker_id": "WORD-BLOCKER-SOFTWARE-KEYBOARD",
+      "outcome": "retained_minimal_external_dependency",
+      "completed_attempts": [
+        "Confirmed the same restored iPhone Mirroring route still suppresses the standard iOS software keyboard.",
+        "Did not mutate another Nihongo note because Search had already proved the environment-level keyboard limitation and the prior Word crawl covers external-key typing and note cleanup."
+      ],
+      "missing": "One direct physical-iPhone Add Note capture with the software keyboard forced visible."
+    },
+    {
+      "blocker_id": "WORD-BLOCKER-GESTURES",
+      "outcome": "retained_minimal_external_dependency",
+      "completed_attempts": [
+        "Open a public terminal Search result in Word Detail.",
+        "Send two left-edge-to-right controller drags from distinct vertical positions.",
+        "Verify the settled Word Detail frame after each attempt."
+      ],
+      "observed": "Neither controller drag produced a verified interactive swipe-back transition. The available computer-use interface exposes no duration-controlled long press.",
+      "missing": "A synchronized direct-touch trace for edge-swipe completion, mid-gesture cancellation, and long press on approved public Word surfaces.",
+      "evidence": [
+        "evidence/reference/screenshots/device-input-gesture-evidence/word-swipe-back-no-transition.jpeg"
+      ]
+    },
+    {
+      "blocker_id": "KANJI-BLOCKER-GESTURES",
+      "outcome": "retained_minimal_external_dependency",
+      "completed_attempts": [
+        "Revalidated the same controller gesture authority against public Word Detail before duplicating the attempt across Kanji surfaces.",
+        "The authority still could not deliver a verified edge swipe and exposes no duration-controlled long press."
+      ],
+      "missing": "A synchronized direct-touch trace for edge-swipe completion, cancellation, and long press across the already-approved public Kanji fixtures."
+    },
+    {
+      "blocker_id": "SEARCH-BLOCKER-HISTORY-DELETION",
+      "outcome": "retained_minimal_external_dependency",
+      "completed_attempts": [
+        "Created the disposable tab query as the newest recent-search row.",
+        "Avoided opening or retaining any older history row."
+      ],
+      "missing": "Action-time confirmation to permanently remove only the disposable tab row.",
+      "owner_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/89"
+    }
+  ]
+}

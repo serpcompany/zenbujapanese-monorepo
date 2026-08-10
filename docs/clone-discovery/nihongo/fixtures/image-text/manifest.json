@@ -1,0 +1,52 @@
+{
+  "fixture_set_id": "NIHONGO-IMAGE-TEXT-FIXTURES-001",
+  "purpose": "Privacy-safe deterministic inputs for authorized Nihongo Image Text discovery on the pinned physical iPhone.",
+  "privacy": "All text and graphics are purpose-created; no personal or reference-app data is embedded.",
+  "generation": {
+    "svg_rasterizer": "rsvg-convert",
+    "noisy_fixture_transform": "ImageMagick blur 0x1.2, brightness/contrast 8x-28, Gaussian noise attenuation 0.20, seed 71004",
+    "review": "All five raster artifacts were visually inspected in a generated contact sheet before device staging."
+  },
+  "fixtures": [
+    {
+      "id": "IMG-FIXTURE-001",
+      "source": "fixture-clear-horizontal.svg",
+      "artifact": "fixture-clear-horizontal.png",
+      "sha256": "f7eaa0d29ea9074aebada7e06c6d43de0a8f3e6ac62570e706c1d71c1f3eabf4",
+      "classes": ["clear-text", "horizontal-japanese", "multiple-regions", "multiple-selectable-items", "mixed-content"],
+      "expected_visible_text": ["日本語の勉強", "今日は静かな公園で蝶々を見た。", "問題を解いてから、友達と話します。", "東京駅", "12:30", "Platform 4"]
+    },
+    {
+      "id": "IMG-FIXTURE-002",
+      "source": "fixture-vertical.svg",
+      "artifact": "fixture-vertical.png",
+      "sha256": "ff2a1f79d147f15d787bc2216f9932f3e6e1989f0350536d983942746ab97882",
+      "classes": ["clear-text", "vertical-japanese", "multiple-regions"],
+      "expected_visible_text": ["春の朝、静かな庭を", "蝶々が飛んでいる。", "日本語", "を読む。"]
+    },
+    {
+      "id": "IMG-FIXTURE-003",
+      "source": "fixture-sparse.svg",
+      "artifact": "fixture-sparse.png",
+      "sha256": "9dd00bca62095b2058dbe05caa5a327103d1ababbcbdd7ed6a0535f53f2e092b",
+      "classes": ["sparse-recognition", "single-kanji", "single-selectable-item"],
+      "expected_visible_text": ["静"]
+    },
+    {
+      "id": "IMG-FIXTURE-004",
+      "source": "fixture-clear-horizontal.svg",
+      "artifact": "fixture-noisy-horizontal.png",
+      "sha256": "a66f0d6140d0c0a3c66352516b6581e5325e6275f605ef6ad58ba6f6998281b8",
+      "classes": ["noisy-text", "low-contrast", "horizontal-japanese", "multiple-regions", "mixed-content"],
+      "derivation": "IMG-FIXTURE-001 with deterministic blur, contrast reduction, and seeded Gaussian noise."
+    },
+    {
+      "id": "IMG-FIXTURE-005",
+      "source": "fixture-empty.svg",
+      "artifact": "fixture-empty.png",
+      "sha256": "a39925808f8783e82e7702df843c1ec65f80d1534181fd5483867b35f9b33d0b",
+      "classes": ["empty-recognition", "non-text-graphics"],
+      "expected_visible_text": []
+    }
+  ]
+}

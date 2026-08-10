@@ -1,0 +1,58 @@
+{
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/71",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "fixture_run_count": 3,
+  "fixtures": [
+    {
+      "fixture_id": "IMG-FIXTURE-001",
+      "artifact": "fixtures/image-text/fixture-clear-horizontal.png",
+      "source": "Files",
+      "selection_mode": "single",
+      "covers": ["clear horizontal Japanese", "multiple text regions", "mixed Japanese, English, and digits", "recognized-token selection", "nested Word Detail"]
+    },
+    {
+      "fixture_id": "IMG-FIXTURE-002",
+      "artifact": "fixtures/image-text/fixture-vertical.png",
+      "source": "Files",
+      "selection_mode": "single",
+      "covers": ["vertical Japanese", "multiple columns", "recognized-token selection", "cross-column grouping behavior"]
+    },
+    {
+      "fixture_id": "IMG-FIXTURE-003",
+      "artifact": "fixtures/image-text/fixture-sparse.png",
+      "source": "Files",
+      "selection_mode": "multiple-with-IMG-FIXTURE-004-and-IMG-FIXTURE-005",
+      "covers": ["single kanji", "sparse recognition", "single recognized-token selection"]
+    },
+    {
+      "fixture_id": "IMG-FIXTURE-004",
+      "artifact": "fixtures/image-text/fixture-noisy-horizontal.png",
+      "source": "Files",
+      "selection_mode": "multiple-with-IMG-FIXTURE-003-and-IMG-FIXTURE-005",
+      "covers": ["deterministic noise", "reduced contrast", "multiple text regions", "mixed Japanese, English, and digits"]
+    },
+    {
+      "fixture_id": "IMG-FIXTURE-005",
+      "artifact": "fixtures/image-text/fixture-empty.png",
+      "source": "Files",
+      "selection_mode": "multiple-with-IMG-FIXTURE-003-and-IMG-FIXTURE-004",
+      "covers": ["no Japanese text", "empty recognition alert", "multi-image carousel recovery"]
+    }
+  ],
+  "behavior_layout_class_count": 10,
+  "behavior_layout_classes": [
+    "single-file clear horizontal recognition",
+    "vertical recognition",
+    "vertical cross-column grouping limitation",
+    "noisy low-contrast recognition",
+    "sparse single-kanji recognition",
+    "no-text alert and recovery",
+    "multi-file carousel",
+    "recognition-highlight toggle",
+    "inline recognized-token gloss",
+    "image-context Word Detail"
+  ],
+  "stakeholder_scope_decision": "Camera and Photo Library source mechanics are not required; uploaded-image parsing through Files is the blocking discovery outcome.",
+  "required_gaps": []
+}

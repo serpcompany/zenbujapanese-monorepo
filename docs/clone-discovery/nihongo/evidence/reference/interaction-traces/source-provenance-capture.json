@@ -1,0 +1,40 @@
+{
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment": {
+    "platform": "iOS 26.5.2 (23F84)",
+    "device": "iPhone 17 Pro Max (iPhone18,2)",
+    "app": "Nihongo 1.34.3 (9792)",
+    "appearance": "dark",
+    "orientation": "portrait",
+    "controller": "iPhone Mirroring through computer-use"
+  },
+  "fixture": "Nihongo began and ended at the empty Search root; no personal query, image, file, note, or history content was opened.",
+  "actions": [
+    "Open Settings from the Search tab bar.",
+    "Use only the minimum scrolling necessary to locate Voice, Dictionary, and Photo Lookup.",
+    "Open Dictionary and capture the displayed CJK Dictionary Institute and UniDic pitch attribution.",
+    "Open Etymology FAQ, scroll its source section and terminal explanatory section, then return through Dictionary.",
+    "Open Voice and capture the human-recording fallback statement, regular/enhanced system voice labels, iOS Settings download path, Siri-voice exclusion, and speed control without changing any value.",
+    "Open Photo Lookup and capture Google selected plus OCR.space and On Device alternatives without changing the selection.",
+    "Immediately leave an unrelated Nihongo Pro surface and retain no screenshot because it displayed entitlement information.",
+    "Return to the empty Search root."
+  ],
+  "observed": [
+    "Pitch accent data is displayed as provided by the CJK Dictionary Institute and supplemented by the UniDic project.",
+    "English Wiktionary is displayed as the primary etymological source and source of all Origin text; Japanese Wiktionary and Shinjigen are displayed as consulted sources.",
+    "The developer states that conflicting etymological sources are resolved using personal judgment for memorable element breakdowns and pictographic explanations.",
+    "Google was the selected OCR service; OCR.space and On Device were available alternatives; On Device was displayed as not supporting vertical text.",
+    "The configured synthetic voice is used when human audio is unavailable. Kyoko, O-ren, and Otoya regular/enhanced voice labels were visible, unavailable voices are downloaded through iOS Settings, and Siri voices are not supported.",
+    "No current installed-build attribution for the human pronunciation recordings was found on the source-relevant Settings paths exercised."
+  ],
+  "artifacts": [
+    "source-provenance-crawl.json",
+    "source-provenance.json",
+    "source-provenance-evidence-manifest.json",
+    "evidence/reference/screenshots/source-provenance/"
+  ],
+  "mutations": [],
+  "restoration": "No setting was changed. Nihongo was restored to the empty Search root.",
+  "result": "completed_with_named_provenance_and_licensing_gaps",
+  "captured_at": "2026-08-05T05:04:00+09:00"
+}

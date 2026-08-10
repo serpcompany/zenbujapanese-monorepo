@@ -1,0 +1,40 @@
+{
+  "trace_id": "TRACE-WORD-DETAIL-001",
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/69",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "captured_at": "2026-08-04T14:50:00Z",
+  "controller": "iPhone Mirroring through computer-use with CoreDevice process termination/launch for cold lifecycle probes",
+  "starting_state": "Nihongo Search with public dictionary fixtures; note fields empty on いる and 問題",
+  "completed_observations": [
+    "Example Sentences top and scrolled lists, linked tokens, and visible speaker controls",
+    "Word Detail field-presence classes across common, uncommon, rich, sparse, verb, noun, adjective, and interjection entries",
+    "nested Word Detail navigation from example tokens and Related Words",
+    "ru-verb, godan, suru, kuru, i-adjective, and na-adjective conjugation layouts",
+    "synthetic note creation, another-note affordance, Done save, Back auto-save, navigation persistence, cold-relaunch persistence after re-query, deletion, and restoration",
+    "linked-kanji transition into the Kanji family and excluded Flashcard boundary identity"
+  ],
+  "lifecycle_correction": "Cold process termination returns Nihongo to the Search root. It does not restore Word Detail directly. A saved note remained after re-querying and reopening the entry.",
+  "evidence_quality": {
+    "settle_rule": "Only frames captured after an explicit delay and two stable screen reads may be registered.",
+    "visual_audit": "All 42 retained word-inventory screenshots were reviewed as one contact sheet after capture.",
+    "rejected_frames": "Ten invalid, redundant, or misleading files were quarantined; no mid-transition frame remains in the retained set.",
+    "missing_visual_edges": ["linked alternative kanji to Kanji Detail", "Related Words row to nested Word Detail"],
+    "note": "Both missing edges were observed at runtime; their screenshots were rejected rather than used as evidence."
+  },
+  "restoration": {
+    "synthetic_note_text_removed": true,
+    "app_specific_permissions_changed": false,
+    "network_state_changed": false,
+    "pre_existing_history_deleted": false,
+    "excluded_personal_content_retained": false
+  },
+  "limitations": [
+    "The capture authority exposes no audible stream, so sound content, duration, overlap, interruption, and completion cannot be claimed.",
+    "No fixture with an absent or disabled word/sentence audio control was established.",
+    "The standard iOS software keyboard remained unavailable while iPhone Mirroring supplied external-keyboard input.",
+    "Long press and interactive swipe-back could not be delivered reliably.",
+    "Network isolation was not authorized or safely injected.",
+    "App-level semantic accessibility remains unavailable."
+  ]
+}

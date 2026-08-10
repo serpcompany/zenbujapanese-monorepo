@@ -1,0 +1,48 @@
+{
+  "captured_at": "2026-08-01T16:42:57Z",
+  "tool": "Apple CoreDevice devicectl 477.30 via Xcode 26.0 (17A324)",
+  "device": {
+    "identifier_sha256": "93a3d254e1fa3cda68862159a3cb9938e08497bfd45cb9945e7dcee214d29928",
+    "model": "iPhone 17 Pro Max",
+    "product_type": "iPhone18,2",
+    "platform": "iOS",
+    "os_version": "26.5.2",
+    "os_build": "23F84",
+    "boot_state": "booted",
+    "developer_mode": "enabled",
+    "developer_disk_image_services": true,
+    "pairing_state": "paired",
+    "transport": "wired",
+    "tunnel_state": "connected",
+    "unlocked_since_boot": true,
+    "passcode_required_at_probe": false
+  },
+  "display": {
+    "orientation": "portrait",
+    "orientation_locked": false,
+    "native_size_pixels": [
+      1320,
+      2868
+    ],
+    "point_scale": 3,
+    "physical_backlight_state_during_mirroring": "off",
+    "visual_authority": "iPhone Mirroring"
+  },
+  "app": {
+    "name": "Nihongo",
+    "bundle_id": "com.serpentisei.studyjapanese",
+    "version": "1.34.3",
+    "build": "9792",
+    "built_by_developer": false,
+    "default_app": false,
+    "removable": true
+  },
+  "redactions": [
+    "device UUID/UDID",
+    "serial number",
+    "ECID",
+    "hostnames and tunnel address",
+    "remote app-container URL",
+    "process audit token"
+  ]
+}

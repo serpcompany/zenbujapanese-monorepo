@@ -1,0 +1,836 @@
+{
+  "generated_at": "2026-08-10T07:56:07Z",
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/80",
+  "map": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/77",
+  "disposition": "READY_FOR_IMPLEMENTATION",
+  "disposition_basis": "Every blocking invariant passes and no blocking gap remains.",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
+  "denominator": {
+    "blocking_journeys": 14,
+    "blocking_surfaces": 14,
+    "navigation_support_surfaces": 1,
+    "excluded_boundary_surfaces": 8,
+    "state_nodes": 84,
+    "action_edges": 129,
+    "action_dispositions": {
+      "traversed": 93,
+      "same_destination_as": 2,
+      "unavailable_under_fixture": 3,
+      "blocked_by_access": 0,
+      "external_boundary": 1,
+      "excluded_with_reason": 30
+    },
+    "fixture_classes": 35,
+    "search_required_categories_executed": "12/12",
+    "language_behavior_classes": 19,
+    "language_behavior_observations": 19,
+    "evidence_artifacts": 161,
+    "environment_cells": 33,
+    "language_resources": 16,
+    "design_token_families": 7,
+    "asset_records": 16,
+    "atomic_rows": 329,
+    "ready_input_rows": 284,
+    "blocked_rows": 0,
+    "excluded_rows": 45,
+    "distinct_blocking_ids": 0,
+    "original_blocker_resolutions": 32,
+    "original_blocker_outcomes": {
+      "resolved_by_evidence": 2,
+      "downgraded_nonblocking": 19,
+      "approved_substitute": 10,
+      "excluded_from_mvp": 1
+    }
+  },
+  "family_coverage": {
+    "search": {
+      "states": 22,
+      "actions": 44,
+      "fixture_runs": 16,
+      "fixture_classes": 16,
+      "behavior_layout_classes": 11,
+      "capture_complete": true,
+      "status": "EXECUTED_COMPLETE_FOR_APPROVED_SEARCH_CONTRACT_WITH_NONBLOCKING_REFERENCE_RESIDUALS"
+    },
+    "word": {
+      "states": 23,
+      "actions": 32,
+      "fixture_runs": 10,
+      "fixture_classes": 10,
+      "behavior_layout_classes": 12,
+      "capture_complete": true,
+      "status": "EXECUTED_COMPLETE_FOR_APPROVED_WORD_DETAIL_CONTRACT_WITH_NONBLOCKING_REFERENCE_RESIDUALS"
+    },
+    "kanji": {
+      "states": 22,
+      "actions": 28,
+      "fixture_runs": 4,
+      "fixture_classes": 4,
+      "behavior_layout_classes": 10,
+      "capture_complete": true,
+      "status": "executed_complete_for_approved_mvp_contract"
+    },
+    "image": {
+      "states": 17,
+      "actions": 25,
+      "fixture_runs": 3,
+      "fixture_classes": 5,
+      "behavior_layout_classes": 10,
+      "capture_complete": true,
+      "status": "COMPLETE — UPLOADED-IMAGE PARSING VERIFIED WITH AN OBSERVED VERTICAL GROUPING LIMITATION"
+    }
+  },
+  "checks": [
+    {
+      "id": "AUDIT-CHECK-DENOMINATOR",
+      "subject": "approved journeys and surfaces",
+      "result": "pass",
+      "basis": "14 blocking journeys, 14 blocking surfaces, 1 navigation-support surface, and 8 excluded boundary surfaces reconcile."
+    },
+    {
+      "id": "AUDIT-CHECK-GRAPH-INDEX",
+      "subject": "recursive UI graph indexing",
+      "result": "pass",
+      "basis": "84 stable state nodes and 129 action edges are represented exactly once in the crosswalk and ledger."
+    },
+    {
+      "id": "AUDIT-CHECK-GRAPH-CLOSURE",
+      "subject": "recursive action and destination closure",
+      "result": "pass",
+      "blocking_ids": [],
+      "basis": "Every indexed action is observed, covered by an approved app-owned contract, or explicitly excluded; no runtime-access gap blocks implementation readiness."
+    },
+    {
+      "id": "AUDIT-CHECK-FIXTURES",
+      "subject": "query and fixture denominator",
+      "result": "pass",
+      "basis": "12/12 required Search categories executed; 35 fixture classes and 19 language-behavior classes are crosswalked."
+    },
+    {
+      "id": "AUDIT-CHECK-EVIDENCE",
+      "subject": "evidence paths and hashes",
+      "result": "pass",
+      "basis": "161 indexed artifacts exist and match their SHA-256 values; all crosswalk and ledger evidence paths resolve."
+    },
+    {
+      "id": "AUDIT-CHECK-LEDGER",
+      "subject": "atomic ledger schema and referential integrity",
+      "result": "pass",
+      "basis": "329 unique atomic rows are schema-complete; 284 ready inputs, 0 blocked rows, and 45 exclusions reconcile."
+    },
+    {
+      "id": "AUDIT-CHECK-FAILURE-RECOVERY",
+      "subject": "failure, recovery, persistence, offline, timing, audio, accessibility, and interaction boundaries",
+      "result": "pass",
+      "blocking_ids": [],
+      "basis": "Observed claims and approved platform or app-owned boundaries cover persistence, recovery, offline behavior, timing, audio, accessibility, gestures, and individual history-row deletion without inferring unknown Nihongo behavior."
+    },
+    {
+      "id": "AUDIT-CHECK-PROVENANCE",
+      "subject": "source provenance and licensing",
+      "result": "pass",
+      "blocking_ids": [],
+      "basis": "Selected pinned public sources, app-owned normalization boundaries, license constraints, and prohibited exact-reference claims are recorded without an unresolved provenance blocker."
+    },
+    {
+      "id": "AUDIT-CHECK-VISUAL",
+      "subject": "visual and asset specification",
+      "result": "pass",
+      "blocking_ids": [],
+      "basis": "Observed information hierarchy and control roles are indexed; Zenbu-owned measurements and original or licensed glyphs are approved, and exact Nihongo pixels or asset identity are prohibited claims."
+    },
+    {
+      "id": "AUDIT-CHECK-VARIANCE",
+      "subject": "approved Zenbu variances and substitutions",
+      "result": "pass",
+      "basis": "Every row uses only scope-approved variances; there are zero substitute rows and no silent substitutions."
+    },
+    {
+      "id": "AUDIT-CHECK-CLEAN-ROOM",
+      "subject": "privacy, clean-room, and implementation boundary",
+      "result": "pass",
+      "basis": "161 artifacts carry privacy classifications, 16 assets carry legal-use boundaries, and no implementation output type exists under the dossier root."
+    },
+    {
+      "id": "AUDIT-CHECK-ORIGINAL-BLOCKERS",
+      "subject": "original blocker resolution denominator",
+      "result": "pass",
+      "basis": "All 32 original blocker IDs appear exactly once with a named decision authority, dossier evidence, and audited disposition."
+    }
+  ],
+  "structural_integrity": {
+    "passed": true,
+    "duplicate_ids": 0,
+    "unresolved_references": 0,
+    "missing_evidence_paths": 0,
+    "evidence_hash_mismatches": 0,
+    "count_drift": 0,
+    "silent_substitutions": 0,
+    "unexplained_exclusions": 0,
+    "original_blocker_resolution_coverage": "32/32",
+    "implementation_outputs": []
+  },
+  "approved_variances": [
+    "Zenbu colors, typography, logos, and icons",
+    "Zenbu-owned layout, spacing, geometry, and accessible semantics; exact Nihongo measurements and accessibility hierarchy are not parity requirements",
+    "Zenbu bottom-navigation structure",
+    "The settled whole-content natural-translation addition to the Image Text Flow",
+    "Exact Nihongo pitch-record matching and repeated-run variability are not parity requirements; Zenbu uses app-owned Language Reference Data and deterministic acceptance fixtures",
+    "Exact per-control pronunciation-provider routing is not a parity requirement; Settings attribution establishes WaniKani, Tofugu, and Kanji Alive as the recording-source boundary",
+    "The standard iOS software keyboard is platform-owned and follows the user's device settings",
+    "Exact Nihongo network-error, stale, retry, and reconnect presentation is not required; Zenbu Lookup must provide app-owned offline behavior",
+    "Pronunciation uses a simple contract: selecting Play produces audible pronunciation from a licensed local recording or Japanese platform Speech Synthesis fallback",
+    "Online OCR providers are not required for the offline Lookup baseline; Zenbu uses Apple Vision behind its Image Text Recognition boundary",
+    "Shinjigen text and images are excluded from reuse; kanji etymology and Origin/history content are deferred to post-MVP issue #91, where reusable sources and original Zenbu presentation may be evaluated",
+    "CJKI is an optional future commercial coverage upgrade; initial pitch data uses pinned UniDic 3.1.0 under New BSD",
+    "Exact Nihongo dictionary and example-sentence snapshots, filters, edits, and ordering are not parity requirements; Zenbu uses pinned official JMdict and text-only Tatoeba exports with app-owned, documented transforms",
+    "Exact Nihongo kanji metadata, source-dependent row denominators and missing-data classes, component ontology, stroke paths, terminal pixels, diagrams, and timing are not parity requirements; Zenbu uses pinned KANJIDIC2, KRADFILE/RADKFILE, and KanjiVG sources with app-owned linked-row behavior, missing-data presentation, renderer timing, and source-separated overrides",
+    "Exact Nihongo interactive edge-swipe, cancellation, long-press menus or no-ops, gesture animation, and timing are not parity requirements; Zenbu uses standard iOS interactive edge-swipe and Back behavior, preserves the current screen and state on cancellation, and treats long press as a no-op unless an intentional documented context menu is provided",
+    "Exact Nihongo recent-search row deletion gesture, control presentation, animation, and persistence mechanics are not parity requirements; Zenbu provides an app-owned per-row swipe action that removes only the selected row and persists the deletion"
+  ],
+  "original_blocker_resolutions": [
+    {
+      "blocker_id": "ACCESS-BLOCKER-APP-SEMANTICS",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Complete the residual direct-device input and gesture checks",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/89"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "scope.json"
+      ],
+      "resolution": "Zenbu owns and directly verifies its accessible semantics; the unavailable Nihongo accessibility hierarchy is not an exact-parity requirement."
+    },
+    {
+      "blocker_id": "ACCESS-BLOCKER-PERMISSIONS",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Complete device environment, accessibility, input, and gesture evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/87"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json"
+      ],
+      "resolution": "Files access was reproved with an isolated fixture; Camera and Photo Library mechanics are excluded, and no current claim depends on clipboard input."
+    },
+    {
+      "blocker_id": "BEHAVIOR-BLOCKER-PITCH-MATCHING",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Complete controlled pitch-matching and repeatability evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/82"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "behavior-coverage-report.json",
+        "scope.json"
+      ],
+      "resolution": "Settings attribution defines the source boundary; exact Nihongo record matching is a prohibited parity claim."
+    },
+    {
+      "blocker_id": "BEHAVIOR-BLOCKER-REPEATABILITY",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Complete controlled pitch-matching and repeatability evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/82"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "behavior-coverage-report.json",
+        "scope.json"
+      ],
+      "resolution": "Retained runs remain reference facts; Zenbu uses deterministic acceptance fixtures without claiming Nihongo variability rates."
+    },
+    {
+      "blocker_id": "BEHAVIOR-BLOCKER-SPEECH-SOURCE",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Complete pronunciation, speech-source, and unavailable-audio evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/86"
+        },
+        {
+          "title": "Map Lookup-relevant Settings and source attributions",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/90"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "source-provenance.json",
+        "scope.json"
+      ],
+      "resolution": "Installed Settings attribute recordings to WaniKani, Tofugu, and Kanji Alive; exact per-control routing is not required."
+    },
+    {
+      "blocker_id": "CROSSWALK-GAP-ASSET-MEASUREMENTS",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Quantify the observable visual specification and asset boundaries",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/78"
+        }
+      ],
+      "dossier_evidence": [
+        "asset-index.json",
+        "scope.json"
+      ],
+      "resolution": "Zenbu uses original or licensed glyphs and assets; exact Nihongo identity and vector bounds are prohibited parity claims."
+    },
+    {
+      "blocker_id": "CROSSWALK-GAP-DESIGN-MEASUREMENTS",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Quantify the observable visual specification and asset boundaries",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/78"
+        }
+      ],
+      "dossier_evidence": [
+        "design-token-index.json",
+        "scope.json"
+      ],
+      "resolution": "Observed hierarchy and roles remain reference evidence while Zenbu owns layout, spacing, geometry, typography, and color measurements."
+    },
+    {
+      "blocker_id": "IMAGE-BLOCKER-COPY-TEXT-OUTPUT",
+      "disposition": "resolved_by_evidence",
+      "authority": [
+        {
+          "title": "Complete device environment, accessibility, input, and gesture evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/87"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json"
+      ],
+      "resolution": "A purpose-created image fixture was copied and pasted into a disposable device-local note, proving the exact five-line output without exposing private clipboard data."
+    },
+    {
+      "blocker_id": "KANJI-BLOCKER-ACTION-CLOSURE",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Close kanji action coverage and animation evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/88"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "kanji-coverage-report.json",
+        "scope.json"
+      ],
+      "resolution": "Representative linked-row navigation defines the contract; exact source-dependent row denominators and missing-data classes do not."
+    },
+    {
+      "blocker_id": "KANJI-BLOCKER-GESTURES",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Complete the residual direct-device input and gesture checks",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/89"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "kanji-coverage-report.json",
+        "scope.json"
+      ],
+      "resolution": "Standard iOS interactive navigation and an app-owned long-press contract replace unknown exact Nihongo gestures."
+    },
+    {
+      "blocker_id": "KANJI-BLOCKER-OFFLINE",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Complete offline, failure, retry, and recovery evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/85"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "behavior-coverage-report.json",
+        "scope.json"
+      ],
+      "resolution": "Kanji journeys must work offline with Zenbu-owned failure and recovery behavior; exact Nihongo network presentation is not required."
+    },
+    {
+      "blocker_id": "KANJI-BLOCKER-TERMINAL-EVIDENCE",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Close kanji action coverage and animation evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/88"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "kanji-coverage-report.json",
+        "scope.json"
+      ],
+      "resolution": "The recorded qualitative completed state is sufficient; an exact terminal screenshot and exact Nihongo pixels are not implementation-readiness requirements."
+    },
+    {
+      "blocker_id": "KANJI-BLOCKER-TIMING",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Close kanji action coverage and animation evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/88"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "kanji-coverage-report.json",
+        "scope.json"
+      ],
+      "resolution": "The observed qualitative state machine remains required while Zenbu supplies deterministic app-owned renderer timing."
+    },
+    {
+      "blocker_id": "PROVENANCE-GAP-CJKI-DELIVERY-LICENSE",
+      "disposition": "approved_substitute",
+      "authority": [
+        {
+          "title": "Research licensed lexical, example, and pitch-data options",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/84"
+        },
+        {
+          "title": "Approve Zenbu substitutes and prohibited parity claims",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/81"
+        }
+      ],
+      "dossier_evidence": [
+        "source-provenance.json",
+        "research/lookup-provider-rights-and-source-options.md",
+        "scope.json"
+      ],
+      "resolution": "CJKI is an optional quote-only future coverage upgrade; pinned UniDic 3.1.0 under New BSD is the approved initial source."
+    },
+    {
+      "blocker_id": "PROVENANCE-GAP-ETYMOLOGY-REVISION-RIGHTS",
+      "disposition": "excluded_from_mvp",
+      "authority": [
+        {
+          "title": "Research licensed kanji, radical, stroke, and etymology options",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/79"
+        },
+        {
+          "title": "Define the post-MVP kanji etymology and origin experience",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/91"
+        }
+      ],
+      "dossier_evidence": [
+        "source-provenance.json",
+        "scope.json"
+      ],
+      "resolution": "The complete etymology and Origin/history family is outside MVP; Shinjigen text and images remain prohibited from reuse without permission."
+    },
+    {
+      "blocker_id": "PROVENANCE-GAP-HUMAN-AUDIO-SOURCE-RIGHTS",
+      "disposition": "approved_substitute",
+      "authority": [
+        {
+          "title": "Research pronunciation, speech, and OCR provider options",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/83"
+        },
+        {
+          "title": "Approve Zenbu substitutes and prohibited parity claims",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/81"
+        }
+      ],
+      "dossier_evidence": [
+        "source-provenance.json",
+        "research/lookup-provider-rights-and-source-options.md",
+        "scope.json"
+      ],
+      "resolution": "Pinned open Tofugu/WaniKani and Kanji Alive releases are approved with per-file provenance and platform Speech Synthesis fallback."
+    },
+    {
+      "blocker_id": "PROVENANCE-GAP-JMDICT-SNAPSHOT",
+      "disposition": "approved_substitute",
+      "authority": [
+        {
+          "title": "Research licensed lexical, example, and pitch-data options",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/84"
+        },
+        {
+          "title": "Approve Zenbu substitutes and prohibited parity claims",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/81"
+        }
+      ],
+      "dossier_evidence": [
+        "source-provenance.json",
+        "research/lookup-provider-rights-and-source-options.md",
+        "scope.json"
+      ],
+      "resolution": "Zenbu uses a pinned official JMdict export with immutable fetch/hash provenance and app-owned transforms, without claiming Nihongo snapshot equivalence."
+    },
+    {
+      "blocker_id": "PROVENANCE-GAP-KANJI-RADICAL-STROKE-SOURCES",
+      "disposition": "approved_substitute",
+      "authority": [
+        {
+          "title": "Research licensed kanji, radical, stroke, and etymology options",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/79"
+        },
+        {
+          "title": "Approve Zenbu substitutes and prohibited parity claims",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/81"
+        }
+      ],
+      "dossier_evidence": [
+        "source-provenance.json",
+        "research/lookup-provider-rights-and-source-options.md",
+        "scope.json"
+      ],
+      "resolution": "Pinned KANJIDIC2, KRADFILE/RADKFILE, and KanjiVG sources sit behind Language Reference Data with source-separated overrides and app-owned rendering."
+    },
+    {
+      "blocker_id": "PROVENANCE-GAP-OFFLINE-OCR-COMPONENT",
+      "disposition": "approved_substitute",
+      "authority": [
+        {
+          "title": "Research pronunciation, speech, and OCR provider options",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/83"
+        },
+        {
+          "title": "Approve Zenbu substitutes and prohibited parity claims",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/81"
+        }
+      ],
+      "dossier_evidence": [
+        "source-provenance.json",
+        "scope.json"
+      ],
+      "resolution": "Apple Vision is the approved on-device Image Text Recognition implementation; no claim is made that Nihongo uses it."
+    },
+    {
+      "blocker_id": "PROVENANCE-GAP-ONLINE-OCR-CONFIG",
+      "disposition": "approved_substitute",
+      "authority": [
+        {
+          "title": "Research pronunciation, speech, and OCR provider options",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/83"
+        },
+        {
+          "title": "Approve Zenbu substitutes and prohibited parity claims",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/81"
+        }
+      ],
+      "dossier_evidence": [
+        "source-provenance.json",
+        "scope.json"
+      ],
+      "resolution": "Online OCR providers are excluded from the approved offline baseline, so their private configuration does not gate implementation."
+    },
+    {
+      "blocker_id": "PROVENANCE-GAP-SPEECH-SYNTHESIS-IMPLEMENTATION",
+      "disposition": "approved_substitute",
+      "authority": [
+        {
+          "title": "Research pronunciation, speech, and OCR provider options",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/83"
+        },
+        {
+          "title": "Approve Zenbu substitutes and prohibited parity claims",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/81"
+        }
+      ],
+      "dossier_evidence": [
+        "source-provenance.json",
+        "scope.json"
+      ],
+      "resolution": "Zenbu uses Japanese platform Speech Synthesis as an app-owned fallback and does not claim exact Nihongo API, voice, or preprocessing equivalence."
+    },
+    {
+      "blocker_id": "PROVENANCE-GAP-TATOEBA-SELECTION",
+      "disposition": "approved_substitute",
+      "authority": [
+        {
+          "title": "Research licensed lexical, example, and pitch-data options",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/84"
+        },
+        {
+          "title": "Approve Zenbu substitutes and prohibited parity claims",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/81"
+        }
+      ],
+      "dossier_evidence": [
+        "source-provenance.json",
+        "research/lookup-provider-rights-and-source-options.md",
+        "scope.json"
+      ],
+      "resolution": "Zenbu uses pinned text-only Tatoeba exports with retained provenance and deterministic app-owned filtering and order; Tatoeba audio is excluded."
+    },
+    {
+      "blocker_id": "PROVENANCE-GAP-UNIDIC-VERSION-ROLE",
+      "disposition": "approved_substitute",
+      "authority": [
+        {
+          "title": "Research licensed lexical, example, and pitch-data options",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/84"
+        },
+        {
+          "title": "Approve Zenbu substitutes and prohibited parity claims",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/81"
+        }
+      ],
+      "dossier_evidence": [
+        "source-provenance.json",
+        "research/lookup-provider-rights-and-source-options.md",
+        "scope.json"
+      ],
+      "resolution": "UniDic for Contemporary Written Japanese 3.1.0 under New BSD is the approved initial pitch source behind Language Reference Data."
+    },
+    {
+      "blocker_id": "SEARCH-BLOCKER-HISTORY-DELETION",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Complete the residual direct-device input and gesture checks",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/89"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "scope.json"
+      ],
+      "resolution": "An app-owned per-row swipe action removes only the selected recent-search row and persists deletion; exact Nihongo mechanics are prohibited parity claims."
+    },
+    {
+      "blocker_id": "SEARCH-BLOCKER-OFFLINE",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Complete offline, failure, retry, and recovery evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/85"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "behavior-coverage-report.json",
+        "scope.json"
+      ],
+      "resolution": "Search must work offline with Zenbu-owned failure and recovery behavior; exact Nihongo network presentation is not required."
+    },
+    {
+      "blocker_id": "SEARCH-BLOCKER-RESULT-SCROLL",
+      "disposition": "resolved_by_evidence",
+      "authority": [
+        {
+          "title": "Complete device environment, accessibility, input, and gesture evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/87"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "evidence/reference/interaction-traces/device-input-gesture-evidence.json"
+      ],
+      "resolution": "A public result list was scrolled to a stable terminal viewport, opened, and restored to the same terminal position on Back."
+    },
+    {
+      "blocker_id": "SEARCH-BLOCKER-SOFTWARE-KEYBOARD",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Approve Zenbu substitutes and prohibited parity claims",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/81"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "scope.json"
+      ],
+      "resolution": "The standard iOS software keyboard is platform-owned and follows the learner's device settings; exact Nihongo presentation is not required."
+    },
+    {
+      "blocker_id": "WORD-BLOCKER-AUDIO-FIXTURE",
+      "disposition": "approved_substitute",
+      "authority": [
+        {
+          "title": "Complete pronunciation, speech-source, and unavailable-audio evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/86"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "behavior-coverage-report.json",
+        "scope.json"
+      ],
+      "resolution": "Licensed local pronunciation uses Japanese platform Speech Synthesis fallback, so unavailable-reference-audio states are not reproduced."
+    },
+    {
+      "blocker_id": "WORD-BLOCKER-AUDIO-SEMANTICS",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Complete pronunciation, speech-source, and unavailable-audio evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/86"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "behavior-coverage-report.json",
+        "scope.json"
+      ],
+      "resolution": "The required contract is that selecting Play produces audible pronunciation; exact Nihongo timing, interruption, state, and routing are not required."
+    },
+    {
+      "blocker_id": "WORD-BLOCKER-GESTURES",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Complete the residual direct-device input and gesture checks",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/89"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "word-coverage-report.json",
+        "scope.json"
+      ],
+      "resolution": "Standard iOS interactive navigation and an app-owned long-press contract replace unknown exact Nihongo gestures."
+    },
+    {
+      "blocker_id": "WORD-BLOCKER-OFFLINE",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Complete offline, failure, retry, and recovery evidence",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/85"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "behavior-coverage-report.json",
+        "scope.json"
+      ],
+      "resolution": "Word/detail journeys must work offline with Zenbu-owned failure and recovery behavior; exact Nihongo network presentation is not required."
+    },
+    {
+      "blocker_id": "WORD-BLOCKER-SOFTWARE-KEYBOARD",
+      "disposition": "downgraded_nonblocking",
+      "authority": [
+        {
+          "title": "Approve Zenbu substitutes and prohibited parity claims",
+          "url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/81"
+        }
+      ],
+      "dossier_evidence": [
+        "access-blockers.json",
+        "scope.json"
+      ],
+      "resolution": "The standard iOS software keyboard is platform-owned and follows the learner's device settings; exact Nihongo presentation is not required."
+    }
+  ],
+  "blocking_records": [],
+  "nonblocking_environment_limitations": [
+    {
+      "environment_cell_id": "ENV-LOCALE-CURRENT",
+      "blocker_id": "ACCESS-BLOCKER-DEVICE-LOCALE",
+      "status": "blocked_noncritical",
+      "reason_nonblocking": "No current atomic claim depends on the unavailable fact; the observed runtime boundary is retained without inference.",
+      "owner": "device owner with discovery driver",
+      "missing": "exact device locale",
+      "completed_independent_work": "The app visibly rendered English copy in the pinned runtime; alternate locales are outside the approved dossier scope.",
+      "resume_procedure": [
+        "The device owner opens Settings → General → Language & Region on the physical iPhone.",
+        "The owner reports only the Language and Region values, or approves a tightly cropped screenshot containing only those values.",
+        "The discovery driver updates the authority and environment cell without retaining Apple ID, location, preferred-language history, or other settings."
+      ]
+    },
+    {
+      "environment_cell_id": "ENV-CONTENT-SIZE-CURRENT",
+      "blocker_id": "ACCESS-BLOCKER-CONTENT-SIZE",
+      "status": "blocked_noncritical",
+      "reason_nonblocking": "Only future claims matching Any later row claiming Dynamic Type behavior would be blocked; no current ledger row makes that claim.",
+      "owner": "device owner with discovery driver",
+      "missing": "content-size category",
+      "completed_independent_work": "The exact screen geometry and 3× display scale are pinned in the baseline evidence.",
+      "resume_procedure": [
+        "The device owner reports the current Settings → Display & Brightness → Text Size position and whether Accessibility Larger Text is enabled.",
+        "Record the resulting category only if iOS or an approved inspection tool exposes its canonical name; otherwise retain the observed geometry without inference."
+      ]
+    },
+    {
+      "environment_cell_id": "ENV-PERMISSION-CLIPBOARD",
+      "blocker_id": "ACCESS-BLOCKER-PERMISSIONS",
+      "status": "pending_safe_fixture",
+      "reason_nonblocking": "Only future claims matching Future clipboard-input rows would be blocked; no current ledger row makes that claim.",
+      "owner": "discovery driver with device-owner supervision",
+      "missing": "camera, Photos, Files, and clipboard permission/access states",
+      "completed_independent_work": "Files single and multiple selection were observed with isolated synthetic fixtures, and IMG-FIXTURE-001 was opened again from On My iPhone during issue 87. The private-access Photo picker opened and was cancelled without selection or retained evidence. The stakeholder waived Camera and Photo Library source mechanics; no current clipboard-input claim exists, and Copy Text output was proved without inspecting a personal clipboard.",
+      "resume_procedure": [
+        "For any future clipboard-input claim, replace the Mac clipboard with a known synthetic value before focusing Search.",
+        "Record whether iOS prompts, allows, denies, or transfers that exact synthetic value.",
+        "Restore the starting clipboard state if it can be done without reading or retaining private content."
+      ]
+    },
+    {
+      "environment_cell_id": "ENV-STOREKIT-ENTITLEMENT",
+      "blocker_id": "ACCESS-BLOCKER-ENTITLEMENT",
+      "status": "blocked_noncritical",
+      "reason_nonblocking": "Only future claims matching Any later row claiming paid/Pro-only Search behavior would be blocked; no current ledger row makes that claim.",
+      "owner": "device owner",
+      "missing": "Nihongo account/purchase entitlement state",
+      "completed_independent_work": "No in-app account, sign-in state, trial banner, paywall, or entitlement badge was visible on the empty Search root. The installed app identity and build are pinned.",
+      "resume_procedure": [
+        "The device owner states whether this installation is paid/Pro, trial, free, or otherwise entitled without disclosing an Apple ID or receipt.",
+        "During Search reconnaissance, record any limit, paywall, restore-purchase control, or entitlement-dependent Search behavior if it becomes reachable.",
+        "Update the authority and every affected journey row with the confirmed state and evidence source."
+      ]
+    },
+    {
+      "environment_cell_id": "ENV-SEARCH-NETWORK-OFFLINE",
+      "blocker_id": "SEARCH-BLOCKER-OFFLINE",
+      "status": "blocked",
+      "reason_nonblocking": "No current atomic claim depends on the unavailable fact; the observed runtime boundary is retained without inference.",
+      "owner": "product stakeholder",
+      "missing": "Search offline, failure, and retry states",
+      "completed_independent_work": "A deterministic no-match state and all required online fixture classes were captured. No distinct loading state persisted long enough to capture.",
+      "resume_procedure": []
+    },
+    {
+      "environment_cell_id": "ENV-WORD-AUDIO-OUTPUT",
+      "blocker_id": "WORD-BLOCKER-AUDIO-SEMANTICS",
+      "status": "blocked",
+      "reason_nonblocking": "No current atomic claim depends on the unavailable fact; the observed runtime boundary is retained without inference.",
+      "owner": "product stakeholder",
+      "missing": "audible word and sentence pronunciation behavior",
+      "completed_independent_work": "Visible word and sentence speaker controls were exercised. The stakeholder defined the required contract as: select Play and hear pronunciation; exact timing, overlap, interruption, routing, and visual playback state are not reference-parity requirements.",
+      "resume_procedure": []
+    },
+    {
+      "environment_cell_id": "ENV-WORD-NETWORK-OFFLINE",
+      "blocker_id": "WORD-BLOCKER-OFFLINE",
+      "status": "blocked",
+      "reason_nonblocking": "No current atomic claim depends on the unavailable fact; the observed runtime boundary is retained without inference.",
+      "owner": "product stakeholder",
+      "missing": "word/detail, examples, conjugations, notes, and audio offline/failure/retry behavior",
+      "completed_independent_work": "All retained fixtures were observed in the normal connected state. No distinct loading, error, retry, or stale state was claimed.",
+      "resume_procedure": []
+    },
+    {
+      "environment_cell_id": "ENV-KANJI-NETWORK-OFFLINE",
+      "blocker_id": "KANJI-BLOCKER-OFFLINE",
+      "status": "blocked",
+      "reason_nonblocking": "No current atomic claim depends on the unavailable fact; the observed runtime boundary is retained without inference.",
+      "owner": "product stakeholder",
+      "missing": "MVP Kanji detail, element, word-link, and stroke-order offline/failure/retry behavior",
+      "completed_independent_work": "All retained fixtures were observed in the normal connected state; a deterministic cold relaunch was captured separately.",
+      "resume_procedure": []
+    }
+  ],
+  "resume_contract": "No discovery blocker remains. Preserve the approved variances and prohibited parity claims during implementation; rerun the crosswalk, ledger, and dossier audit after any canonical discovery change."
+}

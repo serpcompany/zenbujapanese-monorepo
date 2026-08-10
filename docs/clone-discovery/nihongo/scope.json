@@ -1,0 +1,159 @@
+{
+  "project": "zenbu-lookup-nihongo-reference",
+  "dossier_revision_at": "2026-08-10T07:56:07Z",
+  "authorization": {
+    "basis": "The device owner explicitly authorized normal-use inspection of the installed Nihongo app on the connected physical iPhone for an internal clean-room discovery dossier.",
+    "allowed": [
+      "Normal-use runtime inspection and non-destructive behavioral probes",
+      "Screenshots, interaction traces, and UI metadata",
+      "Apple CoreDevice metadata for the connected device and the exact Nihongo bundle identifier",
+      "App-specific camera and Photos permission changes that are recorded and restored",
+      "Disposable Search data created from synthetic, public, or purpose-created fixtures",
+      "Public and explicitly authorized provenance research"
+    ],
+    "prohibited": [
+      "Personal photos, files, clipboard payloads, credentials, existing history, or other private content",
+      "Proprietary executable extraction or decryption",
+      "DRM, FairPlay, authentication, anti-tamper, or other security-control circumvention",
+      "Invasive device modification or destructive testing",
+      "Copying proprietary implementation, executable code, or paid assets into the dossier"
+    ]
+  },
+  "outcome": {
+    "target": "coding_ready_fixture_driven_search_parity_dossier",
+    "productionization_in_scope": false
+  },
+  "parity_dimensions": [
+    "visual",
+    "interaction",
+    "behavior",
+    "state-data",
+    "integration",
+    "durable-output",
+    "package-platform",
+    "performance",
+    "accessibility"
+  ],
+  "blocking_journey_ids": [
+    "JOURNEY-SEARCH-TEXT",
+    "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
+    "JOURNEY-RERUN-RECENT-SEARCH",
+    "JOURNEY-SEARCH-HANDWRITING",
+    "JOURNEY-SEARCH-RADICAL",
+    "JOURNEY-INSPECT-WORD",
+    "JOURNEY-READ-EXAMPLES",
+    "JOURNEY-HEAR-PRONUNCIATION",
+    "JOURNEY-INSPECT-CONJUGATIONS",
+    "JOURNEY-EDIT-NOTE",
+    "JOURNEY-INSPECT-KANJI",
+    "JOURNEY-PLAY-STROKE-ORDER",
+    "JOURNEY-INSPECT-KANJI-ELEMENT",
+    "JOURNEY-IMAGE-FILES"
+  ],
+  "navigation_support": [
+    "IOS-FILES-PICKER"
+  ],
+  "proposed": [
+    "Newly discovered adjacent functionality pending stakeholder classification"
+  ],
+  "excluded": [
+    "Clippings and their settings",
+    "Flashcards and their settings",
+    "General Settings",
+    "Contents of external destinations",
+    "Alternate locales, orientations, devices, OS versions, appearances, and historical Nihongo versions",
+    "Camera and Photo Library source mechanics for this discovery revision; the stakeholder accepted Files-based uploaded-image parsing as sufficient on 2026-08-05",
+    "System share-sheet contents beyond the Image Text result's app-owned Copy Text and Share Image menu",
+    "Kanji etymology and Origin/history content for the MVP, including historical glyph presentation, classification explanations, imagery, and the dedicated Kanji Etymology reference surface; deferred to post-MVP issue #91"
+  ],
+  "allowed_variance": [
+    "Zenbu colors, typography, logos, and icons",
+    "Zenbu-owned layout, spacing, geometry, and accessible semantics; exact Nihongo measurements and accessibility hierarchy are not parity requirements",
+    "Zenbu bottom-navigation structure",
+    "The settled whole-content natural-translation addition to the Image Text Flow",
+    "Exact Nihongo pitch-record matching and repeated-run variability are not parity requirements; Zenbu uses app-owned Language Reference Data and deterministic acceptance fixtures",
+    "Exact per-control pronunciation-provider routing is not a parity requirement; Settings attribution establishes WaniKani, Tofugu, and Kanji Alive as the recording-source boundary",
+    "The standard iOS software keyboard is platform-owned and follows the user's device settings",
+    "Exact Nihongo network-error, stale, retry, and reconnect presentation is not required; Zenbu Lookup must provide app-owned offline behavior",
+    "Pronunciation uses a simple contract: selecting Play produces audible pronunciation from a licensed local recording or Japanese platform Speech Synthesis fallback",
+    "Online OCR providers are not required for the offline Lookup baseline; Zenbu uses Apple Vision behind its Image Text Recognition boundary",
+    "Shinjigen text and images are excluded from reuse; kanji etymology and Origin/history content are deferred to post-MVP issue #91, where reusable sources and original Zenbu presentation may be evaluated",
+    "CJKI is an optional future commercial coverage upgrade; initial pitch data uses pinned UniDic 3.1.0 under New BSD",
+    "Exact Nihongo dictionary and example-sentence snapshots, filters, edits, and ordering are not parity requirements; Zenbu uses pinned official JMdict and text-only Tatoeba exports with app-owned, documented transforms",
+    "Exact Nihongo kanji metadata, source-dependent row denominators and missing-data classes, component ontology, stroke paths, terminal pixels, diagrams, and timing are not parity requirements; Zenbu uses pinned KANJIDIC2, KRADFILE/RADKFILE, and KanjiVG sources with app-owned linked-row behavior, missing-data presentation, renderer timing, and source-separated overrides",
+    "Exact Nihongo interactive edge-swipe, cancellation, long-press menus or no-ops, gesture animation, and timing are not parity requirements; Zenbu uses standard iOS interactive edge-swipe and Back behavior, preserves the current screen and state on cancellation, and treats long press as a no-op unless an intentional documented context menu is provided",
+    "Exact Nihongo recent-search row deletion gesture, control presentation, animation, and persistence mechanics are not parity requirements; Zenbu provides an app-owned per-row swipe action that removes only the selected row and persists the deletion"
+  ],
+  "stakeholder_decisions": [
+    {
+      "date": "2026-08-06",
+      "authority": "product stakeholder feedback on Wayfinder map #77",
+      "resolved_as_nonblocking": [
+        "ACCESS-BLOCKER-APP-SEMANTICS",
+        "BEHAVIOR-BLOCKER-PITCH-MATCHING",
+        "BEHAVIOR-BLOCKER-REPEATABILITY",
+        "BEHAVIOR-BLOCKER-SPEECH-SOURCE",
+        "CROSSWALK-GAP-ASSET-MEASUREMENTS",
+        "CROSSWALK-GAP-DESIGN-MEASUREMENTS"
+      ],
+      "decision": "These six reference-internal or exact-fidelity questions do not gate Zenbu implementation. Preserve observed presentation and interaction evidence, use Zenbu-owned visual and accessibility semantics, normalize named language sources behind app-owned boundaries, and do not claim unknown internal matching, exact clip routing, or repeatability characteristics."
+    },
+    {
+      "date": "2026-08-06",
+      "authority": "product stakeholder feedback on Wayfinder map #77 plus primary-source provider research",
+      "resolved_as_nonblocking": [
+        "SEARCH-BLOCKER-SOFTWARE-KEYBOARD",
+        "WORD-BLOCKER-SOFTWARE-KEYBOARD",
+        "SEARCH-BLOCKER-OFFLINE",
+        "WORD-BLOCKER-OFFLINE",
+        "KANJI-BLOCKER-OFFLINE",
+        "WORD-BLOCKER-AUDIO-SEMANTICS",
+        "WORD-BLOCKER-AUDIO-FIXTURE",
+        "PROVENANCE-GAP-CJKI-DELIVERY-LICENSE",
+        "PROVENANCE-GAP-UNIDIC-VERSION-ROLE",
+        "PROVENANCE-GAP-ETYMOLOGY-REVISION-RIGHTS",
+        "PROVENANCE-GAP-ONLINE-OCR-CONFIG",
+        "PROVENANCE-GAP-OFFLINE-OCR-COMPONENT",
+        "PROVENANCE-GAP-HUMAN-AUDIO-SOURCE-RIGHTS",
+        "PROVENANCE-GAP-SPEECH-SYNTHESIS-IMPLEMENTATION",
+        "PROVENANCE-GAP-JMDICT-SNAPSHOT",
+        "PROVENANCE-GAP-TATOEBA-SELECTION",
+        "PROVENANCE-GAP-KANJI-RADICAL-STROKE-SOURCES"
+      ],
+      "decision": "Use standard platform keyboard behavior, app-owned offline behavior, Apple Vision for offline Image Text Recognition, UniDic for initial pitch data, pinned open pronunciation releases with Japanese system-speech fallback, pinned official JMdict and text-only Tatoeba exports, and pinned EDRDG/KanjiVG kanji sources. The etymology portion of this decision was superseded on 2026-08-10 by deferral of the complete content family to post-MVP issue #91. Exact Nihongo internals and optional commercial providers do not gate implementation."
+    },
+    {
+      "date": "2026-08-10",
+      "authority": "product stakeholder feedback on Wayfinder map #77",
+      "deferred_to_post_mvp": [
+        "kanji etymology",
+        "Origin/history content",
+        "historical glyph presentation",
+        "etymology classification explanations and reference surface",
+        "etymology imagery"
+      ],
+      "tracking_issue": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/91",
+      "decision": "Exclude the complete etymology and Origin/history content family from the Lookup MVP. Preserve the reference research and evidence for later product work, do not reuse Shinjigen or Nihongo expression, and do not let source selection or exact reference parity block MVP readiness."
+    },
+    {
+      "date": "2026-08-10",
+      "authority": "application of stakeholder decisions from issues #78, #79, and #81 to Wayfinder ticket #88",
+      "resolved_as_nonblocking": [
+        "KANJI-BLOCKER-ACTION-CLOSURE",
+        "KANJI-BLOCKER-TIMING",
+        "KANJI-BLOCKER-TERMINAL-EVIDENCE"
+      ],
+      "decision": "The retained representative navigation and qualitative animation evidence is sufficient to specify the MVP contract. Zenbu renders and links only app-owned Language Reference Data, omits unsupported source fields or sections, and supplies deterministic stroke animation with its app-owned KanjiVG renderer. Exact Nihongo row denominators, missing-data classes, terminal pixels, paths, and timing remain prohibited parity claims rather than implementation blockers."
+    },
+    {
+      "date": "2026-08-10",
+      "authority": "product stakeholder approval on Wayfinder ticket #89",
+      "resolved_as_nonblocking": [
+        "SEARCH-BLOCKER-HISTORY-DELETION",
+        "WORD-BLOCKER-GESTURES",
+        "KANJI-BLOCKER-GESTURES"
+      ],
+      "decision": "Zenbu uses standard iOS interactive edge-swipe and Back behavior, preserves the current screen and state when an interactive swipe is canceled, and treats long press as a no-op unless an intentional documented context menu is provided. An app-owned per-row swipe action removes only the selected recent-search row and persists the deletion. Exact Nihongo gesture, context-menu, no-op, deletion-control, animation, timing, and persistence parity are prohibited claims, so direct physical reference checks are unnecessary for implementation readiness."
+    }
+  ]
+}

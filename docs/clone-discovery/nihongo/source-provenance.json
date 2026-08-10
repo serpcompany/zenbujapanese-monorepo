@@ -1,0 +1,402 @@
+{
+  "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/73",
+  "research_context": "https://github.com/serpcompany/zenbujapanese-monorepo/blob/research/nihongo-language-stack/docs/clone-discovery/nihongo/language-stack-and-resource-provenance.md",
+  "authority_id": "nihongo-ios-1.34.3-9792-runtime",
+  "captured_at": "2026-08-05T05:04:00+09:00",
+  "environment": {
+    "app": "Nihongo 1.34.3 (9792)",
+    "bundle_id": "com.serpentisei.studyjapanese",
+    "device": "iPhone 17 Pro Max (iPhone18,2)",
+    "os": "iOS 26.5.2 (23F84)",
+    "appearance": "dark",
+    "orientation": "portrait",
+    "runtime_controller": "iPhone Mirroring through computer-use"
+  },
+  "count_definitions": {
+    "displayed_source_provider_entries": "Distinct source/provider labels displayed in the installed-build evidence; On Device is counted as a displayed option even though it does not identify a component.",
+    "verified_named_components": "Distinct named sources or providers supported by current installed-build or current first-party public evidence.",
+    "inferred_components": "Implementation identities inferred from platform-facing UI but not named by Nihongo.",
+    "historical_unconfirmed_components": "Named providers found only in historical local observations and not recaptured from the installed build.",
+    "unknown_component_capabilities": "Capability rows for which no exact implementation or complete source stack is identified.",
+    "licensing_blockers": "Gap groups requiring a contract, permission, license-path decision, or clip-level rights proof before exact reuse.",
+    "unresolved_gaps": "Stable gap groups below; a group may affect more than one claim."
+  },
+  "counts": {
+    "privacy_reviewed_screenshots": 8,
+    "displayed_source_provider_entries": 8,
+    "verified_named_components": 16,
+    "inferred_components": 1,
+    "historical_unconfirmed_components": 0,
+    "unknown_component_capabilities": 5,
+    "licensing_blockers": 0,
+    "unresolved_gaps": 5
+  },
+  "installed_displayed_entries": [
+    {
+      "entry_id": "SOURCE-ENTRY-CJKI",
+      "displayed_identity": "CJK Dictionary Institute",
+      "role": "primary pitch-accent data provider",
+      "version": null,
+      "evidence": ["evidence/reference/screenshots/source-provenance/state-dictionary-pitch-attribution.jpg"]
+    },
+    {
+      "entry_id": "SOURCE-ENTRY-UNIDIC",
+      "displayed_identity": "UniDic project",
+      "role": "supplementary pitch-accent data source",
+      "version": null,
+      "evidence": ["evidence/reference/screenshots/source-provenance/state-dictionary-pitch-attribution.jpg"]
+    },
+    {
+      "entry_id": "SOURCE-ENTRY-EN-WIKTIONARY",
+      "displayed_identity": "English Wiktionary",
+      "role": "primary etymological data source and source of all displayed Origin text",
+      "version": null,
+      "evidence": ["evidence/reference/screenshots/source-provenance/state-kanji-etymology-sources-complete.jpg"]
+    },
+    {
+      "entry_id": "SOURCE-ENTRY-JA-WIKTIONARY",
+      "displayed_identity": "Japanese Wiktionary",
+      "role": "consulted etymological source",
+      "version": null,
+      "evidence": ["evidence/reference/screenshots/source-provenance/state-kanji-etymology-sources-complete.jpg"]
+    },
+    {
+      "entry_id": "SOURCE-ENTRY-SHINJIGEN",
+      "displayed_identity": "Shinjigen",
+      "role": "consulted etymological source",
+      "version": null,
+      "evidence": ["evidence/reference/screenshots/source-provenance/state-kanji-etymology-sources-complete.jpg"]
+    },
+    {
+      "entry_id": "SOURCE-ENTRY-GOOGLE-OCR",
+      "displayed_identity": "Google (Recommended)",
+      "role": "selected online OCR service",
+      "version": null,
+      "evidence": ["evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg"]
+    },
+    {
+      "entry_id": "SOURCE-ENTRY-OCR-SPACE",
+      "displayed_identity": "OCR.space",
+      "role": "alternate online OCR service",
+      "version": null,
+      "evidence": ["evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg"]
+    },
+    {
+      "entry_id": "SOURCE-ENTRY-ON-DEVICE-OCR",
+      "displayed_identity": "On Device",
+      "role": "unnamed offline OCR option; displayed as not supporting vertical text",
+      "version": null,
+      "evidence": ["evidence/reference/screenshots/source-provenance/state-photo-lookup-provider-selection.jpg"]
+    }
+  ],
+  "component_ledger": [
+    {
+      "component_id": "SOURCE-COMPONENT-JMDICT",
+      "identity": "JMdict",
+      "status": "selected_pinned_official_export",
+      "capabilities": ["dictionary entries"],
+      "installed_build_displayed": false,
+      "exact_reuse_posture": "pin official JMdict_e.gz with fetch metadata, SHA-256, DTD revision, ent_seq provenance, documented Zenbu transforms, Sources attribution, and at-least-monthly upstream checks under EDRDG CC BY-SA 4.0",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-TATOEBA",
+      "identity": "Tatoeba",
+      "status": "selected_pinned_text_only_exports",
+      "capabilities": ["example sentences"],
+      "installed_build_displayed": false,
+      "exact_reuse_posture": "pin official Japanese/English detailed-text, direct-link, and Japanese-index exports; retain sentence IDs, contributors, licenses, deterministic Zenbu filtering/order, and exclude Tatoeba audio",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-KANJIDIC2",
+      "identity": "EDRDG KANJIDIC2",
+      "status": "selected_pinned_official_export",
+      "capabilities": ["kanji classification and metadata"],
+      "installed_build_displayed": false,
+      "exact_reuse_posture": "pin official kanjidic2.xml.gz under EDRDG CC BY-SA 4.0, omit commercial-incompatible SKIP fields, retain field-level provenance, and apply app-owned overrides separately",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-EDRDG-RADICALS",
+      "identity": "EDRDG KRADFILE and RADKFILE",
+      "status": "selected_pinned_official_exports",
+      "capabilities": ["radical composition"],
+      "installed_build_displayed": false,
+      "exact_reuse_posture": "pin kradfile.gz and radkfile.gz under EDRDG CC BY-SA 4.0, preserve visible-component semantics, and generate the app picker index deterministically",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-KANJIVG",
+      "identity": "KanjiVG",
+      "status": "selected_pinned_stable_release",
+      "capabilities": ["stroke-order data", "component group hierarchy"],
+      "installed_build_displayed": false,
+      "exact_reuse_posture": "pin stable release r20250816 at bd13ffbcc9d85cb86ae98bbbf001d9069220b901 under CC BY-SA 3.0; retain source/modified-asset provenance and render diagrams and timing with Zenbu-owned code",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-CJKI",
+      "identity": "CJK Dictionary Institute",
+      "status": "verified_optional_commercial_source_not_selected",
+      "capabilities": ["pitch accent"],
+      "installed_build_displayed": true,
+      "exact_reuse_posture": "not selected for the initial Zenbu implementation; CJKI JPD is quote-only and becomes a procurement task only if broader future coverage is approved",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-UNIDIC",
+      "identity": "UniDic project",
+      "status": "selected_initial_zenbu_source",
+      "capabilities": ["pitch accent"],
+      "installed_build_displayed": true,
+      "exact_reuse_posture": "pin UniDic for Contemporary Written Japanese 3.1.0 under New BSD; retain BSD and AUTHORS files and normalize aType, aModType, and aConType behind Language Reference Data",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-EN-WIKTIONARY",
+      "identity": "English Wiktionary",
+      "status": "verified_reference_source_deferred_post_mvp",
+      "capabilities": ["kanji etymology and Origin text"],
+      "installed_build_displayed": true,
+      "exact_reuse_posture": "not selected for MVP; retain as a post-MVP candidate requiring revision-level provenance, attribution/share-alike handling, and original Zenbu expression",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-JA-WIKTIONARY",
+      "identity": "Japanese Wiktionary",
+      "status": "verified_reference_source_deferred_post_mvp",
+      "capabilities": ["consulted kanji etymology"],
+      "installed_build_displayed": true,
+      "exact_reuse_posture": "not selected for MVP; retain as a post-MVP candidate with revision-level provenance and separate review of any non-text media",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-SHINJIGEN",
+      "identity": "Shinjigen",
+      "status": "verified_reference_source_excluded_from_mvp_and_reuse",
+      "capabilities": ["consulted kanji etymology"],
+      "installed_build_displayed": true,
+      "exact_reuse_posture": "excluded from MVP and from reuse; post-MVP issue #91 may evaluate whether to seek permission, but Zenbu must not reproduce or adapt Shinjigen text or images without it",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-GOOGLE-OCR",
+      "identity": "Google; public Nihongo evidence identifies Google Cloud Vision",
+      "status": "verified_reference_provider_excluded_from_offline_zenbu_baseline",
+      "capabilities": ["online Image Text Recognition"],
+      "installed_build_displayed": true,
+      "exact_reuse_posture": "not selected; Zenbu's approved baseline uses on-device Image Text Recognition",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-OCR-SPACE",
+      "identity": "OCR.space",
+      "status": "verified_reference_provider_excluded_from_offline_zenbu_baseline",
+      "capabilities": ["online Image Text Recognition"],
+      "installed_build_displayed": true,
+      "exact_reuse_posture": "not selected; Zenbu's approved baseline uses on-device Image Text Recognition",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-ON-DEVICE-OCR",
+      "identity": "Apple Vision",
+      "displayed_label": "On Device",
+      "status": "selected_zenbu_substitute_reference_component_unknown_nonblocking",
+      "capabilities": ["offline Image Text Recognition"],
+      "installed_build_displayed": true,
+      "exact_reuse_posture": "use Apple Vision behind the Image Text Recognition boundary and verify supported revisions, languages, and deterministic fixtures independently",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-SYSTEM-SPEECH",
+      "identity": "Apple system speech stack",
+      "status": "selected_zenbu_platform_substitute_reference_api_unknown_nonblocking",
+      "capabilities": ["Speech Synthesis"],
+      "installed_build_displayed": false,
+      "evidence_note": "Nihongo lists installed Japanese system voice names, directs unavailable-voice downloads through iOS Settings, excludes Siri voices, and uses the configured synthetic voice when human audio is unavailable. This does not prove AVSpeechSynthesizer or exact configuration.",
+      "exact_reuse_posture": "use AVSpeechSynthesizer with an available Japanese system voice as the app-owned fallback; exact Nihongo equivalence is not claimed",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-WANIKANI-TOFUGU-AUDIO",
+      "identity": "WaniKani / Tofugu pronunciation audio",
+      "status": "verified_settings_attribution_and_selected_pinned_open_release",
+      "capabilities": ["human pronunciation recordings"],
+      "installed_build_displayed": true,
+      "evidence_note": "The installed Voice Settings screen visibly attributes recordings to WaniKani and Tofugu. Use only clips from pinned open repository commit 9725e0e7d628ab616e8b14e126d3daa33eba8d36, not presumed current/private WaniKani clips.",
+      "exact_reuse_posture": "CC BY-SA 4.0; retain per-file provenance, attribute both Tofugu and WaniKani, ship license text, identify modifications, and keep assets separable",
+      "gap_ids": []
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-KANJI-ALIVE-AUDIO",
+      "identity": "Kanji Alive audio",
+      "status": "verified_settings_attribution_and_selected_pinned_open_release",
+      "capabilities": ["human pronunciation recordings"],
+      "installed_build_displayed": true,
+      "evidence_note": "The installed Voice Settings screen visibly attributes recordings to Kanji Alive. Use only audio from pinned repository commit 2d2a4931eec6e0cb532d5102766273c2323f96db and exclude the provider's separately listed non-audio exceptions.",
+      "exact_reuse_posture": "CC BY 4.0; retain per-file provenance, attribution, license text, and modification records",
+      "gap_ids": []
+    }
+  ],
+  "component_constraints": [
+    {
+      "component_id": "SOURCE-COMPONENT-JMDICT",
+      "version": null,
+      "license_and_attribution": "EDRDG's current terms use CC BY-SA 4.0 and require source/license acknowledgement, links, and a regular update procedure.",
+      "redistribution_and_use": "Commercial local/offline use is possible from a pinned upstream snapshot while preserving provenance and share-alike obligations.",
+      "network_privacy_offline": "Public downloadable data can be used locally; no runtime network or personal-data transfer is inherent.",
+      "can_zenbu_use_exact": "yes_upstream_not_nihongo_transform"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-TATOEBA",
+      "version": "weekly export pinned by timestamp and SHA-256",
+      "license_and_attribution": "General text exports are CC BY 2.0 FR with a CC0 subset; sentence, contributor, and license attribution must be retained. Audio rights are per contributor and an empty audio-license field forbids outside reuse.",
+      "redistribution_and_use": "Use pinned Japanese/English detailed text, direct links, and Japanese indices with deterministic review/filter/deduplication/ranking; exclude Tatoeba audio.",
+      "network_privacy_offline": "Public text exports support local/offline use; no runtime network or personal-data transfer is inherent.",
+      "can_zenbu_use_exact": "yes_upstream_text_after_pin_and_selection_audit"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-KANJIDIC2",
+      "version": "official export pinned by fetch metadata and SHA-256",
+      "license_and_attribution": "EDRDG CC BY-SA 4.0 with reachable Sources attribution and a regular update procedure; omit SKIP fields governed by CC BY-NC-SA 4.0 from the commercial build.",
+      "redistribution_and_use": "Bundle the retained metadata fields as a source-identifiable Language Reference Data artifact with documented transforms and app-owned overrides.",
+      "network_privacy_offline": "Public downloadable data supports local/offline use with no runtime provider dependency.",
+      "can_zenbu_use_exact": "yes_selected_upstream_not_nihongo_transform"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-EDRDG-RADICALS",
+      "version": "official KRADFILE/RADKFILE exports pinned by fetch metadata and SHA-256",
+      "license_and_attribution": "EDRDG CC BY-SA 4.0 with reachable Sources attribution and a regular update procedure.",
+      "redistribution_and_use": "Use KRADFILE visible-component membership as canonical input, generate the picker inversion, and compare it with RADKFILE as an integrity check.",
+      "network_privacy_offline": "Public downloadable data supports local/offline use with no runtime provider dependency.",
+      "can_zenbu_use_exact": "yes_selected_upstream_with_zenbu_ontology"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-KANJIVG",
+      "version": "r20250816 / bd13ffbcc9d85cb86ae98bbbf001d9069220b901",
+      "license_and_attribution": "CC BY-SA 3.0; retain attribution, license notice, modification status, source file and code point, and keep derived assets separable.",
+      "redistribution_and_use": "Use ordered SVG paths and documented component groups; generate diagram appearance and animation timing with Zenbu-owned code and review final App Store packaging of derived share-alike assets.",
+      "network_privacy_offline": "Pinned SVG/path assets are bundled locally for offline use.",
+      "can_zenbu_use_exact": "yes_selected_upstream_not_nihongo_renderer_or_timing"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-CJKI",
+      "version": null,
+      "license_and_attribution": "CJKI's Japanese Phonetic Database is available only through a case-by-case quote and contract; no public fixed price or redistribution grant exists.",
+      "redistribution_and_use": "Not selected for the initial Zenbu implementation; reconsider only as an optional future commercial coverage upgrade.",
+      "network_privacy_offline": "No Zenbu runtime dependency because CJKI is not selected.",
+      "can_zenbu_use_exact": "optional_future_procurement_not_blocking"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-UNIDIC",
+      "version": "3.1.0",
+      "license_and_attribution": "Selected New BSD option; retain the release BSD and AUTHORS files and identify NINJAL/UniDic attribution in Settings.",
+      "redistribution_and_use": "Bundle a pinned, checksummed subset of aType, aModType, and aConType-derived app-owned pitch data.",
+      "network_privacy_offline": "Local/offline Language Reference Data with no runtime provider dependency.",
+      "can_zenbu_use_exact": "yes_selected_upstream_not_nihongo_matching"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-EN-WIKTIONARY",
+      "version": null,
+      "license_and_attribution": "English Wiktionary text is available under CC BY-SA 4.0/GFDL subject to revision-level attribution; embedded media and quotations can differ.",
+      "redistribution_and_use": "Not selected for MVP. Post-MVP issue #91 may evaluate an independent derivative from cited upstream revisions, but Zenbu cannot copy Nihongo's authored selection or expression.",
+      "network_privacy_offline": "A pinned, provenance-preserving derivative can be local/offline; live access is not required.",
+      "can_zenbu_use_exact": "yes_upstream_revisions_not_nihongo_expression"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-JA-WIKTIONARY",
+      "version": null,
+      "license_and_attribution": "Revision-level Wikimedia licensing and attribution apply; the installed build does not identify revisions or copied fields.",
+      "redistribution_and_use": "Not selected for MVP. Independent post-MVP use is possible after revision pinning and attribution review, without copying Nihongo's synthesis.",
+      "network_privacy_offline": "A pinned derivative can be local/offline; live access is not required.",
+      "can_zenbu_use_exact": "potentially_after_revision_and_derivation_audit"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-SHINJIGEN",
+      "version": null,
+      "license_and_attribution": "No reusable license or permission was established for the consulted Shinjigen material.",
+      "redistribution_and_use": "Excluded from MVP and reuse: do not reproduce or adapt Shinjigen text or images. Any post-MVP permission or alternative-source decision belongs to issue #91.",
+      "network_privacy_offline": "No runtime service dependency is established.",
+      "can_zenbu_use_exact": "excluded_no_permission_needed"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-GOOGLE-OCR",
+      "version": null,
+      "license_and_attribution": "Google Cloud Vision is a commercial API governed by Google Cloud terms, not a redistributable component.",
+      "redistribution_and_use": "Zenbu can contract with the service but must not represent access as ownership or redistribution.",
+      "network_privacy_offline": "Network and selected-image transmission are required for this mode; public provider documentation says request content is not used to train Cloud Vision and images are normally deleted after processing with a short failsafe retention path.",
+      "can_zenbu_use_exact": "not_selected_for_offline_baseline"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-OCR-SPACE",
+      "version": null,
+      "license_and_attribution": "OCR.space offers API plans under its service terms; limits and commercial posture depend on the selected plan.",
+      "redistribution_and_use": "Zenbu can call the service under an appropriate plan but cannot redistribute the provider itself.",
+      "network_privacy_offline": "Network and selected-image transmission are required; public provider documentation says uploads are deleted after processing, searchable PDFs after 60 minutes, and API IP logs after one month.",
+      "can_zenbu_use_exact": "not_selected_for_offline_baseline"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-ON-DEVICE-OCR",
+      "version": "platform-provided",
+      "license_and_attribution": "Apple Vision is selected as Zenbu's independent on-device implementation; no claim is made that Nihongo uses it.",
+      "redistribution_and_use": "Use supported Apple Vision APIs behind the Image Text Recognition boundary and verify revision/language support at runtime.",
+      "network_privacy_offline": "On-device baseline; no selected-image upload is required.",
+      "can_zenbu_use_exact": "yes_as_independent_platform_substitute"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-SYSTEM-SPEECH",
+      "version": null,
+      "license_and_attribution": "Platform API and voice usage would follow Apple's terms; Nihongo does not name the API.",
+      "redistribution_and_use": "Use AVSpeechSynthesizer for app-owned Japanese fallback; do not redistribute system voice assets or claim exact Nihongo equivalence.",
+      "network_privacy_offline": "Use an installed Japanese voice and test availability before showing Play.",
+      "can_zenbu_use_exact": "yes_as_independent_platform_substitute"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-WANIKANI-TOFUGU-AUDIO",
+      "version": "9725e0e7d628ab616e8b14e126d3daa33eba8d36",
+      "license_and_attribution": "Pinned Tofugu/WaniKani open repository under CC BY-SA 4.0; attribute both providers, link the source/license, and identify modifications.",
+      "redistribution_and_use": "Use only files in the pinned open release with a per-file manifest; keep the licensed assets separable and review final App Store packaging.",
+      "network_privacy_offline": "Selected clips are bundled locally for offline playback.",
+      "can_zenbu_use_exact": "yes_pinned_open_release_not_nihongo_clip_identity"
+    },
+    {
+      "component_id": "SOURCE-COMPONENT-KANJI-ALIVE-AUDIO",
+      "version": "2d2a4931eec6e0cb532d5102766273c2323f96db",
+      "license_and_attribution": "Pinned Kanji Alive media repository under CC BY 4.0; pronunciation audio is not among the provider's four excluded content categories.",
+      "redistribution_and_use": "Use the pinned AAC archive and ka_data.csv mapping with per-file provenance, attribution, and modification records.",
+      "network_privacy_offline": "Selected clips are bundled locally for offline playback.",
+      "can_zenbu_use_exact": "yes_pinned_open_release_not_nihongo_clip_identity"
+    }
+  ],
+  "capability_crosswalk": [
+    {"capability": "dictionary entries", "status": "selected_pinned_official_jmdict_export_with_app_owned_transforms", "components": ["SOURCE-COMPONENT-JMDICT"], "gap_ids": []},
+    {"capability": "example sentences", "status": "selected_pinned_text_only_tatoeba_exports_with_deterministic_zenbu_selection", "components": ["SOURCE-COMPONENT-TATOEBA"], "gap_ids": []},
+    {"capability": "search normalization and ranking", "status": "unknown_internal", "components": [], "gap_ids": ["PROVENANCE-GAP-SEARCH-RANKING"]},
+    {"capability": "Japanese Text Analysis and deinflection", "status": "unknown_internal", "components": [], "gap_ids": ["PROVENANCE-GAP-TEXT-ANALYSIS"]},
+    {"capability": "conjugation", "status": "unknown_internal", "components": [], "gap_ids": ["PROVENANCE-GAP-CONJUGATION-RULES"]},
+    {"capability": "pitch accent", "status": "selected_unidic_3_1_0_new_bsd_cjki_optional", "components": ["SOURCE-COMPONENT-CJKI", "SOURCE-COMPONENT-UNIDIC"], "gap_ids": []},
+    {"capability": "kanji classification and metadata", "status": "selected_pinned_kanjidic2_without_skip_fields", "components": ["SOURCE-COMPONENT-KANJIDIC2"], "gap_ids": []},
+    {"capability": "kanji etymology and visual histories", "status": "deferred_post_mvp_issue_91_no_mvp_source_selected", "components": ["SOURCE-COMPONENT-EN-WIKTIONARY", "SOURCE-COMPONENT-JA-WIKTIONARY", "SOURCE-COMPONENT-SHINJIGEN"], "gap_ids": []},
+    {"capability": "stroke-order data", "status": "selected_pinned_kanjivg_with_zenbu_renderer", "components": ["SOURCE-COMPONENT-KANJIVG"], "gap_ids": []},
+    {"capability": "handwriting recognition", "status": "unknown_internal", "components": [], "gap_ids": ["PROVENANCE-GAP-HANDWRITING-RECOGNIZER"]},
+    {"capability": "radical composition", "status": "selected_pinned_kradfile_radkfile_with_source_separated_ontology", "components": ["SOURCE-COMPONENT-EDRDG-RADICALS", "SOURCE-COMPONENT-KANJIVG"], "gap_ids": []},
+    {"capability": "online Image Text Recognition", "status": "reference_providers_known_excluded_from_zenbu_offline_baseline", "components": ["SOURCE-COMPONENT-GOOGLE-OCR", "SOURCE-COMPONENT-OCR-SPACE"], "gap_ids": []},
+    {"capability": "offline Image Text Recognition", "status": "selected_apple_vision_substitute", "components": ["SOURCE-COMPONENT-ON-DEVICE-OCR"], "gap_ids": []},
+    {"capability": "recognized-text grouping", "status": "unknown_internal", "components": [], "gap_ids": ["PROVENANCE-GAP-RECOGNIZED-TEXT-GROUPING"]},
+    {"capability": "human pronunciation recordings", "status": "selected_pinned_open_releases_with_per_file_provenance", "components": ["SOURCE-COMPONENT-WANIKANI-TOFUGU-AUDIO", "SOURCE-COMPONENT-KANJI-ALIVE-AUDIO"], "gap_ids": []},
+    {"capability": "Speech Synthesis", "status": "selected_apple_platform_fallback", "components": ["SOURCE-COMPONENT-SYSTEM-SPEECH"], "gap_ids": []}
+  ],
+  "gaps": [
+    {"gap_id": "PROVENANCE-GAP-SEARCH-RANKING", "category": "technical", "owner": "Lookup search owner", "affected_capabilities": ["search normalization and ranking"], "missing": "Index, corpora, weights, normalization, prefix/fuzzy rules, tie-breaks, and commonality transforms", "completed_independent_work": "Observable fixture outputs and current public inputs are cross-indexed.", "resume_procedure": "Use the existing behavior matrix to compare candidate index/ranking implementations without naming one as Nihongo's internal implementation."},
+    {"gap_id": "PROVENANCE-GAP-TEXT-ANALYSIS", "category": "technical", "owner": "Japanese Text Analysis owner", "affected_capabilities": ["Japanese Text Analysis and deinflection"], "missing": "Analyzer, lexicon, versions, token boundaries, lattice/ranking rules, lemma resolution, and deinflection integration", "completed_independent_work": "Lemma and boundary outputs are observed across Search and Image Text fixtures.", "resume_procedure": "Run isolating synthetic token/deinflection fixtures against candidate analyzers and preserve every mismatch; do not infer the internal engine from similar output."},
+    {"gap_id": "PROVENANCE-GAP-CONJUGATION-RULES", "category": "technical", "owner": "Lookup language owner", "affected_capabilities": ["conjugation"], "missing": "Generation rules, labels, ordering, irregular coverage, and relationship to reverse deinflection", "completed_independent_work": "Representative installed conjugation tables are captured.", "resume_procedure": "Complete the representative class denominator and compare every displayed form plus reverse-search behavior against an independently authored ruleset."},
+    {"gap_id": "PROVENANCE-GAP-HANDWRITING-RECOGNIZER", "category": "technical", "owner": "Lookup input owner", "affected_capabilities": ["handwriting recognition"], "missing": "Recognizer, model/version, training data, normalization, supported set, stroke-order sensitivity, candidate ranking, and offline behavior", "completed_independent_work": "Installed handwriting input and candidate behavior is captured for limited fixtures.", "resume_procedure": "Execute controlled stroke-order, reversal, partial, kana, non-jōyō, extra-stroke, erase, and cancel fixtures; treat candidate engines as substitutes until independently identified."},
+    {"gap_id": "PROVENANCE-GAP-RECOGNIZED-TEXT-GROUPING", "category": "technical", "owner": "Image Text Recognition and Japanese Text Analysis owners", "affected_capabilities": ["recognized-text grouping"], "missing": "How OCR geometry becomes tappable Japanese groups, including overlap, punctuation, reading selection, furigana, and anchoring", "completed_independent_work": "Observable grouping is captured, including a vertical cross-column limitation.", "resume_procedure": "Compare provider geometry with deterministic horizontal, vertical, noisy, sparse, and multi-image fixtures, then specify the independent grouping algorithm from observed behavior rather than provider identity."}
+  ],
+  "privacy_and_scope": {
+    "retained_content": "Only app-owned settings, public source/provider labels, public explanatory text, and system voice labels are retained.",
+    "not_retained": "The Nihongo Pro screen exposed unrelated entitlement information and was immediately left without saving an artifact. No account identity, receipt, credential, personal history, photo, file, or clipboard payload was captured.",
+    "settings_boundary": "Only the Settings index and Voice, Dictionary, Kanji Etymology, and Photo Lookup paths needed for source provenance were inventoried. All other Settings destinations remain excluded."
+  }
+}
