@@ -450,6 +450,19 @@ function signingMetadata(appPath) {
   };
 }
 
+export function validateBuildConfiguration(run, buildRequest) {
+  const capturedConfiguration = buildRequest.parameters?.configurationName;
+  const sdkSuffix = run.environment_id === "signed_physical_device" ? "iphoneos" : "iphonesimulator";
+  const productSegment = `/${capturedConfiguration}-${sdkSuffix}/`;
+  if (capturedConfiguration !== run.configuration || !run.artifact?.path.includes(productSegment)) {
+    return [{
+      code: "BUILD_CONFIGURATION_MISMATCH",
+      message: `Run ${run.run_id} configuration does not match its hashed Xcode build request and product path.`,
+    }];
+  }
+  return [];
+}
+
 export function validateEvidenceRun(run, {
   expectedCommit,
   runRoot,
@@ -482,6 +495,9 @@ export function validateEvidenceRun(run, {
         && run.toolchain?.xcode_version
         && run.toolchain?.build_version],
     ];
+    if (run.environment_id === "signed_physical_device") {
+      requiredRecords.push(["build_request", run.build_request?.path && run.build_request?.sha256]);
+    }
     for (const [field, value] of requiredRecords) {
       if (!value) {
         errors.push({
@@ -604,6 +620,7 @@ export function validateEvidenceRun(run, {
       ["xcresult", run.xcresult],
       ["test summary", run.test_summary],
       ["test tree", run.test_tree],
+      ["build request", run.build_request],
     ]) {
       errors.push(...validateEvidenceRecord(kind, record, runRoot));
     }
@@ -632,6 +649,17 @@ export function validateEvidenceRun(run, {
         errors.push({
           code: "INVALID_TEST_TREE",
           message: `test tree ${run.test_tree.path} cannot be reconciled: ${error.message}`,
+        });
+      }
+    }
+    if (strict && run.build_request?.path && existsSync(join(runRoot, run.build_request.path))) {
+      try {
+        const buildRequest = readJson(join(runRoot, run.build_request.path));
+        errors.push(...validateBuildConfiguration(run, buildRequest));
+      } catch (error) {
+        errors.push({
+          code: "INVALID_BUILD_REQUEST",
+          message: `Run ${run.run_id} build request cannot be reconciled: ${error.message}`,
         });
       }
     }
@@ -925,6 +953,16 @@ function crawlCommand(arguments_) {
   const testTreeText = execFileSync("xcrun", ["xcresulttool", "get", "test-results", "tests", "--path", resultBundlePath, "--compact"], { encoding: "utf8" });
   writeFileSync(testTreePath, `${testTreeText.trim()}\n`);
   const tests = testsFromTree(readJson(testTreePath));
+  const buildRequestCandidates = filesBelow(join(derivedDataPath, "Build", "Intermediates.noindex", "XCBuildData"))
+    .filter((path) => path.endsWith("build-request.json"));
+  if (buildRequestCandidates.length !== 1) {
+    throw new Error(`Expected one Xcode build request, found: ${buildRequestCandidates.join(", ") || "none"}.`);
+  }
+  const [buildRequestPath] = buildRequestCandidates;
+  const capturedConfiguration = readJson(buildRequestPath).parameters?.configurationName;
+  if (capturedConfiguration !== configuration) {
+    throw new Error(`Xcode built ${capturedConfiguration}, not requested configuration ${configuration}.`);
+  }
   const attachmentDirectory = join(runDirectory, "Attachments");
   runChecked("xcrun", ["xcresulttool", "export", "attachments", "--path", resultBundlePath, "--output-path", attachmentDirectory]);
 
@@ -952,6 +990,7 @@ function crawlCommand(arguments_) {
     xcresult: { path: relative(runDirectory, resultBundlePath), sha256: sha256Path(resultBundlePath) },
     test_summary: { path: relative(runDirectory, summaryPath), sha256: sha256Path(summaryPath) },
     test_tree: { path: relative(runDirectory, testTreePath), sha256: sha256Path(testTreePath) },
+    build_request: { path: relative(runDirectory, buildRequestPath), sha256: sha256Path(buildRequestPath) },
     environment_id: environmentId,
     configuration,
     ...(signing ? { signing } : {}),

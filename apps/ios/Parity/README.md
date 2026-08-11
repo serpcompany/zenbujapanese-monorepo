@@ -15,8 +15,8 @@ node apps/ios/Tools/parity-ledger.mjs crawl \
   --stage-photo docs/clone-discovery/nihongo/fixtures/image-text/fixture-clear-horizontal.png
 ```
 
-The crawler retains the built app, xcresult, machine-readable test summary, and
-every exported attachment. `run.json` records deterministic SHA-256 values for
+The crawler retains the built app, xcresult, Xcode build request,
+machine-readable test summary, and every exported attachment. `run.json` records deterministic SHA-256 values for
 the complete app and xcresult directories and for each attachment. The command
 refuses to reuse an existing run directory.
 
@@ -88,7 +88,8 @@ release-smoke requirements. It also requires the plan's two complete passing
 runs to be the latest consecutive captures, and requires the signed-device run
 to use a verified Release code signature for `com.zenbujapanese.dictionary` and
 contain observations for every blocking journey and parity row. Recorded test IDs and outcomes are reconciled with
-the hashed xcresult test tree, and visual results are recomputed from the
+the hashed xcresult test tree, while configuration is reconciled with the
+hashed Xcode build request and product path. Visual results are recomputed from the
 registered source images rather than trusted from edited JSON.
 
 ## Regeneration

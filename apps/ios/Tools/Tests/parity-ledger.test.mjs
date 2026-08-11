@@ -7,11 +7,26 @@ import test from "node:test";
 import {
   compileLedger,
   testsFromTree,
+  validateBuildConfiguration,
   validateEvidenceRun,
   validateExecutionPlan,
   validateObservation,
   validateRecordedTests,
 } from "../parity-ledger.mjs";
+
+test("build configuration is derived from the hashed Xcode request and product path", () => {
+  assert.deepEqual(validateBuildConfiguration({
+    run_id: "RUN-RELABELED",
+    environment_id: "signed_physical_device",
+    configuration: "Release",
+    artifact: { path: "DerivedData/Build/Products/Debug-iphoneos/Zenbu Japanese.app" },
+  }, {
+    parameters: { configurationName: "Debug" },
+  }), [{
+    code: "BUILD_CONFIGURATION_MISMATCH",
+    message: "Run RUN-RELABELED configuration does not match its hashed Xcode build request and product path.",
+  }]);
+});
 
 test("evidence validation rejects a run captured from a different commit", () => {
   const run = {
@@ -775,6 +790,7 @@ test("strict evidence validation rejects unverified physical-device claims", () 
     xcresult: { path: "Results/Parity.xcresult", sha256: "b".repeat(64) },
     test_summary: { path: "Results/test-summary.json", sha256: "c".repeat(64) },
     test_tree: { path: "Results/test-tree.json", sha256: "d".repeat(64) },
+    build_request: { path: "DerivedData/build-request.json", sha256: "e".repeat(64) },
     device: {
       platform: "iOS",
       name: "iPhone",
