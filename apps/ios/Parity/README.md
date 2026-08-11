@@ -1,7 +1,7 @@
 # Search and dictionary differential parity
 
 `search-dictionary-plan.json` is the executable 18-journey denominator for issue
-#111. The canonical atomic denominator remains
+#110. The canonical atomic denominator remains
 `docs/clone-discovery/nihongo/parity-inventory.jsonl`.
 
 ## Commands
@@ -102,7 +102,10 @@ to use a verified Release code signature for `com.zenbujapanese.dictionary` and
 contain observations for every blocking journey and parity row. Recorded test IDs and outcomes are reconciled with
 the hashed xcresult test tree, while configuration is reconciled with the
 hashed Xcode build request and product path. Visual results are recomputed from the
-registered source images rather than trusted from edited JSON.
+registered source images rather than trusted from edited JSON. The execution
+plan also binds required signed-device screenshot name prefixes to the XCTest
+that must retain them, so Camera, Photos, Files, and their resulting Image Text
+screens cannot pass the crawl while silently omitting visual evidence.
 
 ## Regeneration
 

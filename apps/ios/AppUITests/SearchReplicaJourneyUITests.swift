@@ -48,16 +48,19 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(files.waitForExistence(timeout: 2))
     XCTAssertTrue(app.buttons["image-source.camera"].exists)
     XCTAssertTrue(app.buttons["image-source.photo-library"].exists)
+    recordSettledScreenshot(named: "production-image-source-menu-files", app: app)
 
     app.buttons.matching(identifier: "image-source.files").firstMatch.tap()
     let fixture = app.staticTexts["fixture-clear-horizontal"]
     XCTAssertTrue(fixture.waitForExistence(timeout: 5))
+    recordSettledScreenshot(named: "production-files-picker-clear-horizontal", app: app)
     fixture.tap()
     if app.buttons["Open"].waitForExistence(timeout: 1) { app.buttons["Open"].tap() }
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
     let recognized = app.staticTexts["image-text.raw-text"]
     XCTAssertTrue(recognized.waitForExistence(timeout: 10))
     XCTAssertTrue(recognized.label.contains("日本語"))
+    recordSettledScreenshot(named: "production-image-text-files-recognized", app: app)
   }
 
   @MainActor
@@ -80,6 +83,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     app.buttons["search.image-source"].tap()
     app.buttons.matching(identifier: "image-source.photo-library").firstMatch.tap()
     XCTAssertTrue(app.navigationBars["Photos"].waitForExistence(timeout: 5))
+    recordSettledScreenshot(named: "production-photo-library-picker", app: app)
 
     let firstPhoto = app.images.matching(identifier: "PXGGridLayout-Info").firstMatch
     XCTAssertTrue(firstPhoto.waitForExistence(timeout: 5))
@@ -89,6 +93,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let recognized = app.staticTexts["image-text.raw-text"]
     XCTAssertTrue(recognized.waitForExistence(timeout: 20))
     XCTAssertTrue(containsJapaneseText(recognized.label), recognized.label)
+    recordSettledScreenshot(named: "production-image-text-photo-recognized", app: app)
   }
 
   @MainActor
@@ -167,6 +172,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
       ["Take Picture", "Shutter"]
     )).firstMatch
     XCTAssertTrue(shutter.waitForExistence(timeout: 10))
+    recordSettledScreenshot(named: "production-camera-preview", app: app)
     shutter.tap()
     let usePhoto = app.buttons["Use Photo"]
     XCTAssertTrue(usePhoto.waitForExistence(timeout: 10))
@@ -176,6 +182,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let recognized = app.staticTexts["image-text.raw-text"]
     XCTAssertTrue(recognized.waitForExistence(timeout: 30))
     XCTAssertTrue(containsJapaneseText(recognized.label), recognized.label)
+    recordSettledScreenshot(named: "production-image-text-camera-recognized", app: app)
     #endif
   }
 

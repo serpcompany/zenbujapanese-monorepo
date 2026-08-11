@@ -84,6 +84,22 @@ export function validateRecordedTests(recordedTests, actualTests) {
   return errors;
 }
 
+export function validateRequiredAttachmentCaptures(plan, run, attachmentManifest) {
+  const requirements = plan?.required_attachment_captures_by_environment?.[run.environment_id] ?? [];
+  const attachmentsByTest = new Map((attachmentManifest ?? []).map((record) => [
+    record.testIdentifier,
+    (record.attachments ?? []).map((attachment) => attachment.suggestedHumanReadableName ?? ""),
+  ]));
+  return requirements.flatMap((requirement) => {
+    const retainedNames = attachmentsByTest.get(requirement.test_id) ?? [];
+    if (retainedNames.some((name) => name.startsWith(requirement.name_prefix))) return [];
+    return [{
+      code: "MISSING_REQUIRED_TEST_ATTACHMENT",
+      message: `Run ${run.run_id} is missing ${requirement.name_prefix} from ${requirement.test_id}.`,
+    }];
+  });
+}
+
 export function validateExecutionPlan(
   plan,
   requiredJourneyIds,
@@ -132,6 +148,31 @@ export function validateExecutionPlan(
         errors.push({
           code: "UNKNOWN_ENVIRONMENT_TEST_ID",
           message: `Execution environment ${environmentId} names unplanned test ${testId}.`,
+        });
+      }
+    }
+  }
+  for (const [environmentId, requirements] of Object.entries(
+    plan.required_attachment_captures_by_environment ?? {},
+  )) {
+    if (!declaredEnvironmentIds.has(environmentId)) {
+      errors.push({
+        code: "UNDECLARED_CAPTURE_ENVIRONMENT",
+        message: `Attachment capture contract names undeclared environment ${environmentId}.`,
+      });
+      continue;
+    }
+    const environmentTestIds = new Set(plan.environment_test_ids?.[environmentId] ?? []);
+    for (const requirement of requirements) {
+      if (!requirement.test_id || !requirement.name_prefix) {
+        errors.push({
+          code: "INVALID_ATTACHMENT_CAPTURE_CONTRACT",
+          message: `Attachment capture contract for ${environmentId} must name a test_id and name_prefix.`,
+        });
+      } else if (!environmentTestIds.has(requirement.test_id)) {
+        errors.push({
+          code: "CAPTURE_TEST_NOT_IN_ENVIRONMENT",
+          message: `${requirement.test_id} captures ${requirement.name_prefix} but is not required in ${environmentId}.`,
         });
       }
     }
@@ -529,6 +570,12 @@ export function validateEvidenceRun(run, {
     new Set(journey.test_ids ?? []),
   ]));
   const motionRowIds = new Set(plan?.motion_row_ids ?? []);
+
+  if (runRoot && plan?.required_attachment_captures_by_environment?.[run.environment_id]?.length) {
+    const manifestPath = join(runRoot, run.attachment_root ?? "Attachments", "manifest.json");
+    const attachmentManifest = existsSync(manifestPath) ? readJson(manifestPath) : [];
+    errors.push(...validateRequiredAttachmentCaptures(plan, run, attachmentManifest));
+  }
 
   if (strict) {
     const requiredRecords = [

@@ -12,6 +12,7 @@ import {
   validateEvidenceRun,
   validateExecutionPlan,
   validateObservation,
+  validateRequiredAttachmentCaptures,
   validateRecordedTests,
 } from "../parity-ledger.mjs";
 
@@ -122,6 +123,30 @@ test("evidence validation rejects frames that are not registered in the run", ()
       message: "Attachments/rogue.png exists below Attachments but is not registered by RUN-003.",
     },
   ]);
+});
+
+test("required signed-device captures are bound to their XCTest and retained name", () => {
+  const plan = {
+    required_attachment_captures_by_environment: {
+      signed_physical_device: [{
+        test_id: "Suite/testCamera()",
+        name_prefix: "production-camera-preview",
+      }],
+    },
+  };
+  const run = { run_id: "RUN-CAMERA", environment_id: "signed_physical_device" };
+  const manifest = [{
+    testIdentifier: "Suite/testCamera()",
+    attachments: [{
+      suggestedHumanReadableName: "production-camera-preview_0_1234.png",
+    }],
+  }];
+
+  assert.deepEqual(validateRequiredAttachmentCaptures(plan, run, manifest), []);
+  assert.deepEqual(validateRequiredAttachmentCaptures(plan, run, []), [{
+    code: "MISSING_REQUIRED_TEST_ATTACHMENT",
+    message: "Run RUN-CAMERA is missing production-camera-preview from Suite/testCamera().",
+  }]);
 });
 
 test("ledger compilation records exact clone evidence and XCTest IDs on covered rows", () => {

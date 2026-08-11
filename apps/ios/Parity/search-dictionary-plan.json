@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "issue": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/111",
+  "issue": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/110",
   "expected_bundle_identifier": "com.zenbujapanese.dictionary",
   "ledger": "docs/clone-discovery/nihongo/parity-inventory.jsonl",
   "required_journeys": "docs/clone-discovery/nihongo/scope.json#blocking_journey_ids",
@@ -100,6 +100,38 @@
       "SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()",
       "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
       "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()"
+    ]
+  },
+  "required_attachment_captures_by_environment": {
+    "signed_physical_device": [
+      {
+        "test_id": "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()",
+        "name_prefix": "production-image-source-menu-files"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()",
+        "name_prefix": "production-files-picker-clear-horizontal"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()",
+        "name_prefix": "production-image-text-files-recognized"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
+        "name_prefix": "production-photo-library-picker"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
+        "name_prefix": "production-image-text-photo-recognized"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()",
+        "name_prefix": "production-camera-preview"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()",
+        "name_prefix": "production-image-text-camera-recognized"
+      }
     ]
   },
   "evidence_required_environments": [
