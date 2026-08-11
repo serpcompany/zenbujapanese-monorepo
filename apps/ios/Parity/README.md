@@ -61,6 +61,7 @@ Validate evidence without changing the ledger:
 node apps/ios/Tools/parity-ledger.mjs validate \
   --run /tmp/zenbu-parity-run/run.json \
   --ledger docs/clone-discovery/nihongo/parity-inventory.jsonl \
+  --plan apps/ios/Parity/search-dictionary-plan.json \
   --expected-commit HEAD
 ```
 
@@ -84,7 +85,8 @@ contains ready-to-file issue input rather than creating GitHub issues
 automatically. Compilation with a plan also requires evidence runs for every
 declared environment; a simulator-only run cannot satisfy the signed-device or
 release-smoke requirements. It also requires the plan's two complete passing
-runs before it can close the parity denominator. Recorded test IDs and outcomes are reconciled with
+runs to be the latest consecutive captures, and requires the signed-device run
+to contain observations for every blocking journey. Recorded test IDs and outcomes are reconciled with
 the hashed xcresult test tree, and visual results are recomputed from the
 registered source images rather than trusted from edited JSON.
 

@@ -139,15 +139,36 @@ export function validateExecutionPlan(
   }
   if (executionRuns && Number.isInteger(plan.minimum_complete_runs) && plan.minimum_complete_runs > 0) {
     const plannedTestIds = unique((plan.journeys ?? []).flatMap((journey) => journey.test_ids ?? []));
-    const completeRuns = executionRuns.filter((run) => {
+    const isComplete = (run) => {
       const results = new Map((run.tests ?? []).map((test) => [test.test_id, test.result]));
       return plannedTestIds.every((testId) => results.get(testId) === "passed");
-    });
-    if (completeRuns.length < plan.minimum_complete_runs) {
+    };
+    const orderedRuns = [...executionRuns].sort((left, right) =>
+      String(left.captured_at).localeCompare(String(right.captured_at))
+    );
+    let trailingCompleteRuns = 0;
+    for (const run of orderedRuns.toReversed()) {
+      if (!isComplete(run)) break;
+      trailingCompleteRuns += 1;
+    }
+    if (trailingCompleteRuns < plan.minimum_complete_runs) {
       errors.push({
         code: "INSUFFICIENT_COMPLETE_RUNS",
-        message: `Execution plan requires ${plan.minimum_complete_runs} complete passing runs, but ${completeRuns.length} were supplied.`,
+        message: `Execution plan requires ${plan.minimum_complete_runs} consecutive complete passing runs, but the supplied sequence ends with ${trailingCompleteRuns}.`,
       });
+    }
+    for (const environmentId of plan.evidence_required_environments ?? []) {
+      const hasCompleteEvidenceRun = orderedRuns.some((run) => {
+        if (run.environment_id !== environmentId || !isComplete(run)) return false;
+        const observedJourneys = new Set((run.observations ?? []).flatMap((item) => item.journey_ids ?? []));
+        return requiredJourneyIds.every((journeyId) => observedJourneys.has(journeyId));
+      });
+      if (!hasCompleteEvidenceRun) {
+        errors.push({
+          code: "MISSING_COMPLETE_ENVIRONMENT_EVIDENCE",
+          message: `${environmentId} requires a complete passing run with observations for every blocking journey.`,
+        });
+      }
     }
   }
   return errors;
@@ -155,7 +176,15 @@ export function validateExecutionPlan(
 
 export function validateObservation(
   observation,
-  { rowById, executedTestIds, executedTestResults = new Map(), registeredPaths = new Set() },
+  {
+    rowById,
+    executedTestIds,
+    executedTestResults = new Map(),
+    registeredPaths = new Set(),
+    registeredMediaTypes = new Map(),
+    testIdsByJourney = new Map(),
+    motionRowIds = new Set(),
+  },
 ) {
   const errors = [];
   for (const rowId of observation.row_ids ?? []) {
@@ -196,6 +225,23 @@ export function validateObservation(
     });
   }
   const knownRows = (observation.row_ids ?? []).map((rowId) => rowById.get(rowId)).filter(Boolean);
+  for (const row of knownRows) {
+    if ((row.journey_ids ?? []).length
+      && !(observation.journey_ids ?? []).some((journeyId) => row.journey_ids.includes(journeyId))) {
+      errors.push({
+        code: "ROW_JOURNEY_MISMATCH",
+        message: `${observation.observation_id} does not name a journey associated with parity row ${row.id}.`,
+      });
+    }
+  }
+  for (const journeyId of observation.journey_ids ?? []) {
+    if (testIdsByJourney.size && !testIdsByJourney.get(journeyId)?.has(observation.test_id)) {
+      errors.push({
+        code: "TEST_JOURNEY_MISMATCH",
+        message: `${observation.observation_id} uses ${observation.test_id}, which is not planned for ${journeyId}.`,
+      });
+    }
+  }
   const canonicalReferencePaths = new Set(knownRows.flatMap((row) => row.reference_evidence ?? []));
   for (const path of observation.reference_evidence ?? []) {
     if (knownRows.length
@@ -217,6 +263,16 @@ export function validateObservation(
       errors.push({
         code: "UNREGISTERED_CLONE_EVIDENCE",
         message: `${observation.observation_id} references ${path}, which is not a registered run attachment.`,
+      });
+    }
+  }
+  if ((observation.row_ids ?? []).some((rowId) => motionRowIds.has(rowId))) {
+    const hasVideo = (observation.clone_evidence ?? [])
+      .some((path) => registeredMediaTypes.get(path)?.startsWith("video/"));
+    if (!hasVideo) {
+      errors.push({
+        code: "MISSING_MOTION_EVIDENCE",
+        message: `${observation.observation_id} covers a motion row without registered video evidence.`,
       });
     }
   }
@@ -334,10 +390,38 @@ export function compileLedger(ledger, runs, { requiredJourneyIds = [] } = {}) {
   };
 }
 
-export function validateEvidenceRun(run, { expectedCommit, runRoot, ledger = [], strict = false } = {}) {
+function validateEvidenceRecord(kind, record, runRoot) {
+  if (!record) return [];
+  const path = join(runRoot, record.path);
+  if (!existsSync(path)) {
+    return [{ code: "MISSING_EVIDENCE", message: `${kind} ${record.path} does not exist.` }];
+  }
+  const actual = sha256Path(path);
+  if (actual !== record.sha256) {
+    return [{
+      code: "HASH_MISMATCH",
+      message: `${kind} ${record.path} has SHA-256 ${actual}, not ${record.sha256}.`,
+    }];
+  }
+  return [];
+}
+
+export function validateEvidenceRun(run, {
+  expectedCommit,
+  runRoot,
+  ledger = [],
+  plan,
+  strict = false,
+} = {}) {
   const errors = [];
   const rowById = new Map(ledger.map((row) => [row.id, row]));
   const registeredPaths = new Set((run.attachments ?? []).map((item) => item.path));
+  const registeredMediaTypes = new Map((run.attachments ?? []).map((item) => [item.path, item.media_type]));
+  const testIdsByJourney = new Map((plan?.journeys ?? []).map((journey) => [
+    journey.journey_id,
+    new Set(journey.test_ids ?? []),
+  ]));
+  const motionRowIds = new Set(plan?.motion_row_ids ?? []);
 
   if (strict) {
     const requiredRecords = [
@@ -380,6 +464,9 @@ export function validateEvidenceRun(run, { expectedCommit, runRoot, ledger = [],
         executedTestIds,
         executedTestResults,
         registeredPaths,
+        registeredMediaTypes,
+        testIdsByJourney,
+        motionRowIds,
       }));
     }
   }
@@ -432,8 +519,11 @@ export function validateEvidenceRun(run, { expectedCommit, runRoot, ledger = [],
             masks: comparison.masks,
             tolerance: comparison.tolerance,
           });
+          const recomputedDiffHash = sha256Path(join(temporaryDirectory, "diff.png"));
+          const registeredDiffHash = sha256Path(join(runRoot, comparison.diff_path));
           if (recomputed.passed !== comparison.result.passed
-            || Math.abs(recomputed.changed_pixel_ratio - comparison.result.changed_pixel_ratio) > Number.EPSILON) {
+            || Math.abs(recomputed.changed_pixel_ratio - comparison.result.changed_pixel_ratio) > Number.EPSILON
+            || recomputedDiffHash !== registeredDiffHash) {
             errors.push({
               code: "VISUAL_RESULT_MISMATCH",
               message: `${observation.observation_id} recorded a visual result that does not match a fresh comparison of its registered images.`,
@@ -453,19 +543,7 @@ export function validateEvidenceRun(run, { expectedCommit, runRoot, ledger = [],
       ["test summary", run.test_summary],
       ["test tree", run.test_tree],
     ]) {
-      if (!record) continue;
-      const path = join(runRoot, record.path);
-      if (!existsSync(path)) {
-        errors.push({ code: "MISSING_EVIDENCE", message: `${kind} ${record.path} does not exist.` });
-        continue;
-      }
-      const actual = sha256Path(path);
-      if (actual !== record.sha256) {
-        errors.push({
-          code: "HASH_MISMATCH",
-          message: `${kind} ${record.path} has SHA-256 ${actual}, not ${record.sha256}.`,
-        });
-      }
+      errors.push(...validateEvidenceRecord(kind, record, runRoot));
     }
 
     const attachmentRoot = join(runRoot, run.attachment_root);
@@ -482,21 +560,7 @@ export function validateEvidenceRun(run, { expectedCommit, runRoot, ledger = [],
     }
 
     for (const attachment of run.attachments ?? []) {
-      const path = join(runRoot, attachment.path);
-      if (!existsSync(path)) {
-        errors.push({
-          code: "MISSING_EVIDENCE",
-          message: `attachment ${attachment.path} does not exist.`,
-        });
-        continue;
-      }
-      const actual = sha256Path(path);
-      if (actual !== attachment.sha256) {
-        errors.push({
-          code: "HASH_MISMATCH",
-          message: `attachment ${attachment.path} has SHA-256 ${actual}, not ${attachment.sha256}.`,
-        });
-      }
+      errors.push(...validateEvidenceRecord("attachment", attachment, runRoot));
     }
 
     if (strict && run.test_tree?.path && existsSync(join(runRoot, run.test_tree.path))) {
@@ -570,12 +634,13 @@ function compileCommand(arguments_) {
   const ledger = readJsonl(ledgerPath);
   const requiredJourneyIds = loadRequiredJourneyIds(requiredJourneysPath);
   const planPath = optionValue(arguments_, "--plan");
+  const plan = planPath ? readJson(resolve(planPath)) : undefined;
   const runs = runPaths.map(readJson);
-  if (planPath) {
+  if (plan) {
     const executedTestIds = unique(runs.flatMap((run) => (run.tests ?? []).map((test) => test.test_id)));
     const executedEnvironmentIds = unique(runs.map((run) => run.environment_id));
     const planErrors = validateExecutionPlan(
-      readJson(resolve(planPath)),
+      plan,
       requiredJourneyIds,
       executedTestIds,
       executedEnvironmentIds,
@@ -588,6 +653,7 @@ function compileCommand(arguments_) {
     expectedCommit: commit,
     runRoot: dirname(runPaths[index]),
     ledger,
+    plan,
     strict: true,
   }));
   if (validationErrors.length) {
@@ -619,10 +685,12 @@ function validateCommand(arguments_) {
   const runPath = resolve(requireOption(arguments_, "--run"));
   const ledgerPath = resolve(requireOption(arguments_, "--ledger"));
   const run = readJson(runPath);
+  const planPath = optionValue(arguments_, "--plan");
   const errors = validateEvidenceRun(run, {
     expectedCommit: expectedCommit(optionValue(arguments_, "--expected-commit"), process.cwd()),
     runRoot: dirname(runPath),
     ledger: readJsonl(ledgerPath),
+    plan: planPath ? readJson(resolve(planPath)) : undefined,
     strict: true,
   });
   if (errors.length) throw new Error(`Evidence validation failed:\n${JSON.stringify(errors, null, 2)}`);

@@ -573,8 +573,112 @@ test("execution-plan validation requires consecutive complete passing runs", () 
     runs,
   ), [{
     code: "INSUFFICIENT_COMPLETE_RUNS",
-    message: "Execution plan requires 2 complete passing runs, but 1 were supplied.",
+    message: "Execution plan requires 2 consecutive complete passing runs, but the supplied sequence ends with 1.",
   }]);
+});
+
+test("execution-plan validation does not count passing runs separated by a failure", () => {
+  const plan = {
+    minimum_complete_runs: 2,
+    journeys: [{ journey_id: "JOURNEY-A", test_ids: ["Suite/testA()"] }],
+  };
+  const result = (captured_at, testResult) => ({
+    captured_at,
+    tests: [{ test_id: "Suite/testA()", result: testResult }],
+  });
+
+  const errors = validateExecutionPlan(plan, ["JOURNEY-A"], ["Suite/testA()"], [], [
+    result("2026-08-11T00:00:00Z", "passed"),
+    result("2026-08-11T01:00:00Z", "failed"),
+    result("2026-08-11T02:00:00Z", "passed"),
+  ]);
+
+  assert.equal(errors[0].code, "INSUFFICIENT_COMPLETE_RUNS");
+  assert.match(errors[0].message, /sequence ends with 1/);
+});
+
+test("execution-plan validation requires full signed-device journey evidence", () => {
+  const plan = {
+    minimum_complete_runs: 1,
+    evidence_required_environments: ["signed_physical_device"],
+    journeys: [{ journey_id: "JOURNEY-A", test_ids: ["Suite/testA()"] }],
+  };
+  const runs = [{
+    captured_at: "2026-08-11T00:00:00Z",
+    environment_id: "signed_physical_device",
+    tests: [{ test_id: "Suite/testA()", result: "passed" }],
+    observations: [],
+  }];
+
+  const errors = validateExecutionPlan(
+    plan,
+    ["JOURNEY-A"],
+    ["Suite/testA()"],
+    ["signed_physical_device"],
+    runs,
+  );
+
+  assert.equal(errors[0].code, "MISSING_COMPLETE_ENVIRONMENT_EVIDENCE");
+});
+
+test("strict observation validation binds rows, journeys, and planned tests", () => {
+  const observation = {
+    observation_id: "OBS-RELATION",
+    row_ids: ["PARITY-CAMERA"],
+    journey_ids: ["JOURNEY-CAMERA"],
+    test_id: "Suite/testUnrelated()",
+    classification: "exact",
+    test_status: "passed",
+    reference_evidence: ["reference/camera.json"],
+    clone_evidence: ["Attachments/camera.png"],
+    destination_state: { surface_id: "camera", state: "open", output: "preview" },
+    semantic_observation: "Camera preview is visible.",
+    action_observation: "Selecting Take Photo opens Camera.",
+    expected: "Camera opens.",
+    actual: "Camera opens.",
+  };
+  const errors = validateObservation(observation, {
+    rowById: new Map([["PARITY-CAMERA", {
+      id: "PARITY-CAMERA",
+      journey_ids: ["JOURNEY-CAMERA"],
+      reference_evidence: ["reference/camera.json"],
+    }]]),
+    executedTestIds: new Set(["Suite/testUnrelated()"]),
+    registeredPaths: new Set(["Attachments/camera.png"]),
+    testIdsByJourney: new Map([["JOURNEY-CAMERA", new Set(["Suite/testCamera()"])]]),
+  });
+
+  assert.deepEqual(errors.map((error) => error.code), ["TEST_JOURNEY_MISMATCH"]);
+});
+
+test("strict observation validation requires video for planned motion rows", () => {
+  const errors = validateObservation({
+    observation_id: "OBS-MOTION",
+    row_ids: ["PARITY-MOTION"],
+    journey_ids: ["JOURNEY-STROKE"],
+    test_id: "Suite/testStroke()",
+    classification: "exact",
+    test_status: "passed",
+    reference_evidence: ["reference/stroke.json"],
+    clone_evidence: ["Attachments/stroke.png"],
+    destination_state: { surface_id: "stroke", state: "playing", output: "progress" },
+    semantic_observation: "Stroke playback advances.",
+    action_observation: "Tapping Play starts playback.",
+    expected: "Playback advances.",
+    actual: "Playback advances.",
+  }, {
+    rowById: new Map([["PARITY-MOTION", {
+      id: "PARITY-MOTION",
+      journey_ids: ["JOURNEY-STROKE"],
+      reference_evidence: ["reference/stroke.json"],
+    }]]),
+    executedTestIds: new Set(["Suite/testStroke()"]),
+    registeredPaths: new Set(["Attachments/stroke.png"]),
+    registeredMediaTypes: new Map([["Attachments/stroke.png", "image/png"]]),
+    motionRowIds: new Set(["PARITY-MOTION"]),
+  });
+
+  assert.equal(errors.at(-1).code, "MISSING_MOTION_EVIDENCE");
 });
 
 test("strict observation validation binds status and evidence to captured results", () => {

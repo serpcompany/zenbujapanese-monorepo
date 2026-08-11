@@ -9,6 +9,12 @@
     "signed_physical_device"
   ],
   "minimum_complete_runs": 2,
+  "evidence_required_environments": [
+    "signed_physical_device"
+  ],
+  "motion_row_ids": [
+    "PARITY-DESIGN-DESIGN-TOKEN-MOTION-STATE"
+  ],
   "journeys": [
     {
       "journey_id": "JOURNEY-SEARCH-TEXT",
