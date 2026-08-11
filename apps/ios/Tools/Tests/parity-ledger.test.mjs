@@ -712,6 +712,94 @@ test("strict observation validation binds status and evidence to captured result
   ]);
 });
 
+test("strict observation validation rejects rowless and unsupported classifications", () => {
+  const errors = validateObservation({
+    observation_id: "OBS-INVALID",
+    row_ids: [],
+    journey_ids: ["JOURNEY-A"],
+    test_id: "Suite/testA()",
+    classification: "looks_close",
+    test_status: "passed",
+    reference_evidence: ["reference/a.json"],
+    clone_evidence: ["Attachments/a.png"],
+    destination_state: { surface_id: "search", state: "loaded", output: "results" },
+    semantic_observation: "Results are visible.",
+    action_observation: "Search was submitted.",
+    expected: "Reference results.",
+    actual: "Zenbu results.",
+  }, {
+    rowById: new Map(),
+    executedTestIds: new Set(["Suite/testA()"]),
+    registeredPaths: new Set(["Attachments/a.png"]),
+  });
+
+  assert.deepEqual(errors.map((error) => error.code), [
+    "MISSING_ROW_IDS",
+    "INVALID_CLASSIFICATION",
+  ]);
+});
+
+test("ledger compilation keeps unsupported outcomes blocking", () => {
+  const result = compileLedger([{
+    id: "PARITY-A",
+    journey_ids: ["JOURNEY-A"],
+    discovery_status: "ready_input",
+    clone_status: "unknown",
+    test_status: "not_run",
+  }], [{
+    run_id: "RUN-INVALID",
+    observations: [{
+      observation_id: "OBS-INVALID",
+      row_ids: ["PARITY-A"],
+      journey_ids: ["JOURNEY-A"],
+      classification: "looks_close",
+      test_status: "probably_passed",
+    }],
+  }], { requiredJourneyIds: ["JOURNEY-A"] });
+
+  assert.equal(result.rows[0].clone_status, "unknown");
+  assert.equal(result.rows[0].test_status, "not_run");
+  assert.equal(result.report.blocking.unknown, 1);
+  assert.equal(result.report.blocking.not_run, 1);
+});
+
+test("strict evidence validation rejects unverified physical-device claims", () => {
+  const run = {
+    schema_version: 1,
+    run_id: "RUN-SIGNED",
+    captured_at: "2026-08-11T00:00:00Z",
+    source_commit: "current-commit",
+    environment_id: "signed_physical_device",
+    configuration: "Debug",
+    artifact: { path: "Build/App.app", sha256: "a".repeat(64) },
+    xcresult: { path: "Results/Parity.xcresult", sha256: "b".repeat(64) },
+    test_summary: { path: "Results/test-summary.json", sha256: "c".repeat(64) },
+    test_tree: { path: "Results/test-tree.json", sha256: "d".repeat(64) },
+    device: {
+      platform: "iOS",
+      name: "iPhone",
+      identifier: "DEVICE-001",
+      os_version: "26.0",
+      runtime_identifier: "com.apple.platform.iphoneos",
+    },
+    toolchain: { xcode_version: "26.0", build_version: "17A000" },
+    attachments: [],
+    tests: [],
+    observations: [],
+  };
+
+  const errors = validateEvidenceRun(run, {
+    expectedCommit: "current-commit",
+    plan: { expected_bundle_identifier: "com.zenbujapanese.dictionary" },
+    strict: true,
+  });
+
+  assert.deepEqual(errors.map((error) => error.code), [
+    "INVALID_SIGNED_ARTIFACT",
+    "UNEXPECTED_BUNDLE_IDENTIFIER",
+  ]);
+});
+
 test("strict observation validation requires differential evidence and state", () => {
   assert.deepEqual(validateObservation({
     observation_id: "OBS-012",

@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "issue": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/111",
+  "expected_bundle_identifier": "com.zenbujapanese.dictionary",
   "ledger": "docs/clone-discovery/nihongo/parity-inventory.jsonl",
   "required_journeys": "docs/clone-discovery/nihongo/scope.json#blocking_journey_ids",
   "environments": [

@@ -90,6 +90,7 @@ export function validateExecutionPlan(
   executedTestIds = undefined,
   executedEnvironmentIds = undefined,
   executionRuns = undefined,
+  requiredRowIds = [],
 ) {
   const errors = [];
   const planJourneyIds = (plan.journeys ?? []).map((journey) => journey.journey_id);
@@ -161,12 +162,14 @@ export function validateExecutionPlan(
       const hasCompleteEvidenceRun = orderedRuns.some((run) => {
         if (run.environment_id !== environmentId || !isComplete(run)) return false;
         const observedJourneys = new Set((run.observations ?? []).flatMap((item) => item.journey_ids ?? []));
-        return requiredJourneyIds.every((journeyId) => observedJourneys.has(journeyId));
+        const observedRows = new Set((run.observations ?? []).flatMap((item) => item.row_ids ?? []));
+        return requiredJourneyIds.every((journeyId) => observedJourneys.has(journeyId))
+          && requiredRowIds.every((rowId) => observedRows.has(rowId));
       });
       if (!hasCompleteEvidenceRun) {
         errors.push({
           code: "MISSING_COMPLETE_ENVIRONMENT_EVIDENCE",
-          message: `${environmentId} requires a complete passing run with observations for every blocking journey.`,
+          message: `${environmentId} requires a complete passing run with observations for every blocking journey and parity row.`,
         });
       }
     }
@@ -187,6 +190,33 @@ export function validateObservation(
   },
 ) {
   const errors = [];
+  if (!observation.observation_id) {
+    errors.push({ code: "MISSING_OBSERVATION_ID", message: "A strict observation has no observation_id." });
+  }
+  if (!(observation.row_ids ?? []).length) {
+    errors.push({
+      code: "MISSING_ROW_IDS",
+      message: `${observation.observation_id} does not cover any parity rows.`,
+    });
+  }
+  if (!(observation.journey_ids ?? []).length) {
+    errors.push({
+      code: "MISSING_JOURNEY_IDS",
+      message: `${observation.observation_id} does not identify a parity journey.`,
+    });
+  }
+  if (!["exact", "approved_variance", "defect", "access_blocker"].includes(observation.classification)) {
+    errors.push({
+      code: "INVALID_CLASSIFICATION",
+      message: `${observation.observation_id} has unsupported classification ${observation.classification}.`,
+    });
+  }
+  if (!["passed", "failed", "blocked"].includes(observation.test_status)) {
+    errors.push({
+      code: "INVALID_TEST_STATUS",
+      message: `${observation.observation_id} has unsupported test status ${observation.test_status}.`,
+    });
+  }
   for (const rowId of observation.row_ids ?? []) {
     if (!rowById.has(rowId)) {
       errors.push({
@@ -336,8 +366,8 @@ export function compileLedger(ledger, runs, { requiredJourneyIds = [] } = {}) {
     if (variances.length) cloneEvidence.variance = variances;
     return {
       ...row,
-      clone_status: cloneStatus,
-      test_status: testStatus,
+      clone_status: cloneStatus ?? "unknown",
+      test_status: testStatus ?? "not_run",
       clone_evidence: cloneEvidence,
     };
   });
@@ -406,6 +436,20 @@ function validateEvidenceRecord(kind, record, runRoot) {
   return [];
 }
 
+function signingMetadata(appPath) {
+  execFileSync("codesign", ["--verify", "--strict", appPath], { stdio: "pipe" });
+  const result = spawnSync("codesign", ["-dv", "--verbose=4", appPath], { encoding: "utf8" });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error((result.stderr || result.stdout).trim());
+  const details = result.stderr;
+  const value = (name) => details.match(new RegExp(`^${name}=(.+)$`, "m"))?.[1];
+  return {
+    verified: true,
+    identifier: value("Identifier"),
+    team_identifier: value("TeamIdentifier"),
+  };
+}
+
 export function validateEvidenceRun(run, {
   expectedCommit,
   runRoot,
@@ -443,6 +487,24 @@ export function validateEvidenceRun(run, {
         errors.push({
           code: "MISSING_CAPTURE_METADATA",
           message: `Run ${run.run_id} is missing required ${field} provenance.`,
+        });
+      }
+    }
+    if (run.environment_id === "signed_physical_device") {
+      if (run.configuration !== "Release"
+        || run.signing?.verified !== true
+        || !run.signing?.identifier
+        || !run.signing?.team_identifier) {
+        errors.push({
+          code: "INVALID_SIGNED_ARTIFACT",
+          message: `Run ${run.run_id} does not contain verified Release physical-device signing provenance.`,
+        });
+      }
+      const expectedIdentifier = plan?.expected_bundle_identifier;
+      if (expectedIdentifier && run.signing?.identifier !== expectedIdentifier) {
+        errors.push({
+          code: "UNEXPECTED_BUNDLE_IDENTIFIER",
+          message: `Run ${run.run_id} is signed as ${run.signing?.identifier}, not ${expectedIdentifier}.`,
         });
       }
     }
@@ -573,6 +635,24 @@ export function validateEvidenceRun(run, {
         });
       }
     }
+    if (strict && run.environment_id === "signed_physical_device" && run.artifact?.path
+      && existsSync(join(runRoot, run.artifact.path))) {
+      try {
+        const actualSigning = signingMetadata(join(runRoot, run.artifact.path));
+        if (actualSigning.identifier !== run.signing?.identifier
+          || actualSigning.team_identifier !== run.signing?.team_identifier) {
+          errors.push({
+            code: "SIGNING_METADATA_MISMATCH",
+            message: `Run ${run.run_id} signing metadata does not match its hashed app artifact.`,
+          });
+        }
+      } catch (error) {
+        errors.push({
+          code: "SIGNATURE_VERIFICATION_FAILED",
+          message: `Run ${run.run_id} app signature cannot be verified: ${error.message}`,
+        });
+      }
+    }
   }
 
   return errors;
@@ -633,6 +713,10 @@ function compileCommand(arguments_) {
   if (!runPaths.length) throw new Error("At least one --run is required.");
   const ledger = readJsonl(ledgerPath);
   const requiredJourneyIds = loadRequiredJourneyIds(requiredJourneysPath);
+  const requiredJourneySet = new Set(requiredJourneyIds);
+  const requiredRowIds = ledger.filter((row) => row.discovery_status !== "excluded"
+    && row.journey_ids?.some((journeyId) => requiredJourneySet.has(journeyId)))
+    .map((row) => row.id);
   const planPath = optionValue(arguments_, "--plan");
   const plan = planPath ? readJson(resolve(planPath)) : undefined;
   const runs = runPaths.map(readJson);
@@ -645,6 +729,7 @@ function compileCommand(arguments_) {
       executedTestIds,
       executedEnvironmentIds,
       runs,
+      requiredRowIds,
     );
     if (planErrors.length) throw new Error(`Execution-plan validation failed:\n${JSON.stringify(planErrors, null, 2)}`);
   }
@@ -794,6 +879,12 @@ function crawlCommand(arguments_) {
   if (existsSync(runDirectory)) throw new Error(`Run directory already exists: ${runDirectory}`);
   mkdirSync(runDirectory, { recursive: true });
   const environment = captureEnvironment(destination);
+  const environmentId = destination.includes("Simulator")
+    ? (configuration === "Release" ? "release_simulator_smoke" : "debug_simulator")
+    : "signed_physical_device";
+  if (environmentId === "signed_physical_device" && configuration !== "Release") {
+    throw new Error("Physical-device parity crawls must use the Release configuration.");
+  }
   const stagedMedia = optionValues(arguments_, "--stage-photo").map((path) => resolve(path));
   if (stagedMedia.length) {
     if (!destination.includes("Simulator")) throw new Error("--stage-photo is supported only for simulator crawls.");
@@ -846,6 +937,11 @@ function crawlCommand(arguments_) {
     throw new Error(`Expected one built app below ${productDirectory}, found: ${appCandidates.join(", ") || "none"}.`);
   }
   const [appPath] = appCandidates;
+  const signing = environmentId === "signed_physical_device" ? signingMetadata(appPath) : undefined;
+  const expectedBundleIdentifier = optionValue(arguments_, "--bundle-id", "com.zenbujapanese.dictionary");
+  if (signing && signing.identifier !== expectedBundleIdentifier) {
+    throw new Error(`Built app is signed as ${signing.identifier}, not ${expectedBundleIdentifier}.`);
+  }
   const attachmentFiles = filesBelow(attachmentDirectory);
   const run = {
     schema_version: 1,
@@ -856,9 +952,9 @@ function crawlCommand(arguments_) {
     xcresult: { path: relative(runDirectory, resultBundlePath), sha256: sha256Path(resultBundlePath) },
     test_summary: { path: relative(runDirectory, summaryPath), sha256: sha256Path(summaryPath) },
     test_tree: { path: relative(runDirectory, testTreePath), sha256: sha256Path(testTreePath) },
-    environment_id: destination.includes("Simulator")
-      ? (configuration === "Release" ? "release_simulator_smoke" : "debug_simulator")
-      : "signed_physical_device",
+    environment_id: environmentId,
+    configuration,
+    ...(signing ? { signing } : {}),
     ...environment,
     staged_media: stagedMedia.map((path) => ({ source_path: path, sha256: sha256Path(path) })),
     attachment_root: "Attachments",

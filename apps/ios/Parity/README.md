@@ -86,7 +86,8 @@ automatically. Compilation with a plan also requires evidence runs for every
 declared environment; a simulator-only run cannot satisfy the signed-device or
 release-smoke requirements. It also requires the plan's two complete passing
 runs to be the latest consecutive captures, and requires the signed-device run
-to contain observations for every blocking journey. Recorded test IDs and outcomes are reconciled with
+to use a verified Release code signature for `com.zenbujapanese.dictionary` and
+contain observations for every blocking journey and parity row. Recorded test IDs and outcomes are reconciled with
 the hashed xcresult test tree, and visual results are recomputed from the
 registered source images rather than trusted from edited JSON.
 
