@@ -6,6 +6,7 @@ struct SearchView: View {
   let lookupClient: LookupClient
   let recentSearchStore: RecentSearchStore
   let handwritingRecognitionClient: HandwritingRecognitionClient
+  let cameraAuthorizationClient: CameraAuthorizationClient
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
   let openResult: (DictionaryEntry) -> Void
@@ -22,7 +23,7 @@ struct SearchView: View {
   @State private var exampleCount = 0
   @State private var showsImageSources = false
   @State private var presentedImageSource: ImageSourceSheet?
-  @State private var imageImportFailure: String?
+  @State private var imageImportAlert: ImageImportAlert?
   @State private var imageImportTask: Task<Void, Never>?
   @FocusState private var isSearchFocused: Bool
 
@@ -158,13 +159,21 @@ struct SearchView: View {
         .ignoresSafeArea()
       }
     }
-    .alert("Unable to Import Images", isPresented: Binding(
-      get: { imageImportFailure != nil },
-      set: { if !$0 { imageImportFailure = nil } }
-    )) {
-      Button("OK") { imageImportFailure = nil }
-    } message: {
-      Text(imageImportFailure ?? "Choose supported image files and try again.")
+    .alert(item: $imageImportAlert) { alert in
+      if alert.offersSettings {
+        Alert(
+          title: Text(alert.title),
+          message: Text(alert.message),
+          primaryButton: .default(Text("Open Settings"), action: cameraAuthorizationClient.openSettings),
+          secondaryButton: .cancel()
+        )
+      } else {
+        Alert(
+          title: Text(alert.title),
+          message: Text(alert.message),
+          dismissButton: .default(Text("OK"))
+        )
+      }
     }
     .onDisappear {
       imageImportTask?.cancel()
@@ -229,7 +238,7 @@ struct SearchView: View {
 
   private func importImages(_ result: Result<[URL], Error>) {
     guard case .success(let urls) = result else {
-      imageImportFailure = "The Files selection could not be read."
+      imageImportAlert = .importFailure("The Files selection could not be read.")
       return
     }
     imageImportTask?.cancel()
@@ -245,7 +254,7 @@ struct SearchView: View {
       }
       guard !Task.isCancelled else { return }
       guard !assets.isEmpty else {
-        imageImportFailure = "The selected files are not supported images."
+        imageImportAlert = .importFailure("The selected files are not supported images.")
         return
       }
       openImageText(assets)
@@ -254,11 +263,33 @@ struct SearchView: View {
   }
 
   private func presentCamera() {
-    guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-      imageImportFailure = "Camera capture requires a physical device with an available camera."
-      return
+    imageImportTask?.cancel()
+    imageImportTask = Task { @MainActor in
+      await Task.yield()
+      guard !Task.isCancelled else { return }
+      guard cameraAuthorizationClient.isCameraAvailable() else {
+        imageImportAlert = .cameraUnavailable
+        imageImportTask = nil
+        return
+      }
+      switch cameraAuthorizationClient.state() {
+      case .authorized:
+        presentedImageSource = .camera
+      case .notDetermined:
+        let granted = await cameraAuthorizationClient.requestAccess()
+        guard !Task.isCancelled else { return }
+        if granted {
+          presentedImageSource = .camera
+        } else {
+          imageImportAlert = .cameraDenied
+        }
+      case .denied:
+        imageImportAlert = .cameraDenied
+      case .restricted:
+        imageImportAlert = .cameraRestricted
+      }
+      imageImportTask = nil
     }
-    presentedImageSource = .camera
   }
 
   private func importCameraImage(_ result: Result<ImageTextAsset?, Error>) {
@@ -266,7 +297,7 @@ struct SearchView: View {
     case .success(let asset):
       if let asset { openImageText([asset]) }
     case .failure:
-      imageImportFailure = "The captured image could not be read."
+      imageImportAlert = .importFailure("The captured image could not be read.")
     }
   }
 
@@ -275,8 +306,47 @@ struct SearchView: View {
     case .success(let assets):
       if !assets.isEmpty { openImageText(assets) }
     case .failure:
-      imageImportFailure = "The selected photos could not be read."
+      imageImportAlert = .importFailure("The selected photos could not be read.")
     }
+  }
+}
+
+private enum ImageImportAlert: Identifiable {
+  case importFailure(String)
+  case cameraUnavailable
+  case cameraDenied
+  case cameraRestricted
+
+  var id: String {
+    switch self {
+    case .importFailure(let message): "import-\(message)"
+    case .cameraUnavailable: "camera-unavailable"
+    case .cameraDenied: "camera-denied"
+    case .cameraRestricted: "camera-restricted"
+    }
+  }
+
+  var title: String {
+    switch self {
+    case .importFailure: "Unable to Import Images"
+    case .cameraUnavailable: "Camera Unavailable"
+    case .cameraDenied: "Camera Access Denied"
+    case .cameraRestricted: "Camera Access Restricted"
+    }
+  }
+
+  var message: String {
+    switch self {
+    case .importFailure(let message): message
+    case .cameraUnavailable: "Camera capture requires a physical device with an available camera."
+    case .cameraDenied: "Allow Camera access in Settings to capture Japanese text."
+    case .cameraRestricted: "Camera access is restricted on this device."
+    }
+  }
+
+  var offersSettings: Bool {
+    if case .cameraDenied = self { return true }
+    return false
   }
 }
 

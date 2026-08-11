@@ -89,6 +89,79 @@ final class SearchReplicaJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testCameraUnavailableOnSimulatorReportsHardwareBoundary() throws {
+    let app = launchApp(additionalArguments: ["-CameraUnavailable"])
+    app.buttons["search.image-source"].tap()
+    app.buttons.matching(identifier: "image-source.camera").firstMatch.tap()
+
+    let alert = app.alerts["Camera Unavailable"]
+    XCTAssertTrue(alert.waitForExistence(timeout: 3))
+    XCTAssertTrue(alert.staticTexts["Camera capture requires a physical device with an available camera."].exists)
+    alert.buttons["OK"].tap()
+    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  func testCameraDeniedPermissionOffersSettingsRecovery() throws {
+    let app = launchApp(additionalArguments: ["-CameraAuthorizationDenied"])
+    app.buttons["search.image-source"].tap()
+    app.buttons.matching(identifier: "image-source.camera").firstMatch.tap()
+
+    let alert = app.alerts["Camera Access Denied"]
+    XCTAssertTrue(alert.waitForExistence(timeout: 3))
+    XCTAssertTrue(alert.staticTexts["Allow Camera access in Settings to capture Japanese text."].exists)
+    XCTAssertTrue(alert.buttons["Open Settings"].exists)
+    alert.buttons["Cancel"].tap()
+    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  func testCameraRestrictedPermissionExplainsManagedBoundary() throws {
+    let app = launchApp(additionalArguments: ["-CameraAuthorizationRestricted"])
+    app.buttons["search.image-source"].tap()
+    app.buttons.matching(identifier: "image-source.camera").firstMatch.tap()
+
+    let alert = app.alerts["Camera Access Restricted"]
+    XCTAssertTrue(alert.waitForExistence(timeout: 3))
+    XCTAssertTrue(alert.staticTexts["Camera access is restricted on this device."].exists)
+    XCTAssertFalse(alert.buttons["Open Settings"].exists)
+    alert.buttons["OK"].tap()
+    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  func testCameraCaptureStartsImageTextFlow() throws {
+    #if targetEnvironment(simulator)
+    throw XCTSkip("Camera capture acceptance requires the signed physical-device fixture rig.")
+    #else
+    let app = launchApp()
+    addUIInterruptionMonitor(withDescription: "Camera permission") { alert in
+      if alert.buttons["Allow"].exists {
+        alert.buttons["Allow"].tap()
+        return true
+      }
+      return false
+    }
+    app.buttons["search.image-source"].tap()
+    app.buttons.matching(identifier: "image-source.camera").firstMatch.tap()
+    app.tap()
+
+    let shutter = app.buttons.matching(NSPredicate(
+      format: "label IN %@",
+      ["Take Picture", "Shutter"]
+    )).firstMatch
+    XCTAssertTrue(shutter.waitForExistence(timeout: 10))
+    shutter.tap()
+    let usePhoto = app.buttons["Use Photo"]
+    XCTAssertTrue(usePhoto.waitForExistence(timeout: 10))
+    usePhoto.tap()
+
+    XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 30))
+    XCTAssertTrue(app.staticTexts["image-text.raw-text"].waitForExistence(timeout: 30))
+    #endif
+  }
+
+  @MainActor
   func testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose() throws {
     let app = launchImageTextFixtures(["fixture-clear-horizontal.png"])
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))

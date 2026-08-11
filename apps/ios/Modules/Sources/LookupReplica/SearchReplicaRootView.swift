@@ -15,6 +15,7 @@ public struct SearchReplicaRootView: View {
   private let lookupClient = LookupClient.live
   private let recentSearchStore = RecentSearchStore.live
   private let handwritingRecognitionClient: HandwritingRecognitionClient
+  private let cameraAuthorizationClient: CameraAuthorizationClient
   private let speechSynthesisClient: SpeechSynthesisClient
   private let kanjiStrokeOrderClient: KanjiStrokeOrderClient
   private let kanjiElementLookupClient: KanjiElementLookupClient
@@ -27,6 +28,7 @@ public struct SearchReplicaRootView: View {
   public init() {
     #if DEBUG
     handwritingRecognitionClient = HandwritingRecognitionFixture.clientFromProcessArguments() ?? .live
+    cameraAuthorizationClient = CameraAuthorizationClient.clientFromProcessArguments() ?? .live
     speechSynthesisClient = SpeechSynthesisClient.clientFromProcessArguments() ?? .live
     kanjiStrokeOrderClient = KanjiStrokeOrderClient.clientFromProcessArguments() ?? .live
     kanjiElementLookupClient = KanjiElementLookupClient.clientFromProcessArguments() ?? .live
@@ -41,6 +43,7 @@ public struct SearchReplicaRootView: View {
     }
     #else
     handwritingRecognitionClient = .live
+    cameraAuthorizationClient = .live
     speechSynthesisClient = .live
     kanjiStrokeOrderClient = .live
     kanjiElementLookupClient = .live
@@ -58,6 +61,7 @@ public struct SearchReplicaRootView: View {
         lookupClient: lookupClient,
         recentSearchStore: recentSearchStore,
         handwritingRecognitionClient: handwritingRecognitionClient,
+        cameraAuthorizationClient: cameraAuthorizationClient,
         radicalLookupClient: .live,
         exampleSentenceClient: .live,
         openResult: { entry in path.append(.word(entry, "Search", nil)) },
