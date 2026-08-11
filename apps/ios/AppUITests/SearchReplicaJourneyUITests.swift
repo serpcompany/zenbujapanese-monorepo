@@ -380,9 +380,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let app = launchApp()
     let kanjiDetail = openKanjiDetail(for: "静", in: app)
     let soundElement = app.buttons["kanji-detail.element.争"]
-    for _ in 0..<6 where !soundElement.isHittable { kanjiDetail.swipeUp() }
-    XCTAssertTrue(soundElement.isHittable)
-    let soundElementFrame = soundElement.frame
+    scrollElementIntoSafeTapRegion(soundElement, in: kanjiDetail, app: app)
     recordSettledScreenshot(named: "kanji-element-shizu-entry", app: app)
     soundElement.tap()
 
@@ -428,7 +426,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 2))
     XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "静")
     XCTAssertTrue(soundElement.isHittable)
-    XCTAssertEqual(soundElement.frame.minY, soundElementFrame.minY, accuracy: 8)
+    XCTAssertLessThan(soundElement.frame.maxY, app.frame.maxY - 120)
     recordSettledScreenshot(named: "kanji-element-back-restores-shizu", app: app)
   }
 
@@ -713,16 +711,14 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let wordDetail = app.scrollViews["word-detail.screen"]
     XCTAssertTrue(wordDetail.waitForExistence(timeout: 2))
     let linkedKanji = app.buttons["word-detail.kanji.静"]
-    for _ in 0..<5 where !linkedKanji.exists { wordDetail.swipeUp() }
-    XCTAssertTrue(linkedKanji.exists)
+    scrollElementIntoSafeTapRegion(linkedKanji, in: wordDetail, app: app)
     linkedKanji.tap()
 
     let kanjiDetail = app.scrollViews["kanji-detail.screen"]
     XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 2))
-    let elements = app.staticTexts["kanji-detail.elements"]
-    for _ in 0..<5 where !elements.exists { kanjiDetail.swipeUp() }
-    XCTAssertTrue(elements.exists)
-    XCTAssertEqual(elements.label, "月 · 青 · 土 · 亅 · 亠 · 勹 · ヨ · 二")
+    XCTAssertFalse(app.staticTexts["kanji-detail.elements"].exists)
+    XCTAssertTrue(app.buttons["kanji-detail.element.争"].exists)
+    XCTAssertTrue(app.buttons["kanji-detail.element.青"].exists)
 
     let relatedQuiet = app.buttons.matching(
       NSPredicate(
@@ -730,8 +726,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
         "kanji-detail.word.", "静寂, せいじゃく"
       )
     ).firstMatch
-    for _ in 0..<6 where !relatedQuiet.isHittable { kanjiDetail.swipeUp() }
-    XCTAssertTrue(relatedQuiet.isHittable)
+    scrollElementIntoSafeTapRegion(relatedQuiet, in: kanjiDetail, app: app)
     recordScreenshot(named: "kanji-shizu-elements-and-related-words", app: app)
 
     relatedQuiet.tap()
@@ -1389,8 +1384,11 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["Dictionary Sources"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.staticTexts["JMdict"].exists)
     XCTAssertTrue(app.staticTexts["KANJIDIC2"].exists)
-    XCTAssertTrue(app.staticTexts["KRADFILE / RADKFILE"].exists)
     XCTAssertTrue(app.staticTexts["CC BY-SA 4.0"].exists)
+
+    let kradfile = app.staticTexts["KRADFILE / RADKFILE"]
+    for _ in 0..<4 where !kradfile.isHittable { app.collectionViews.firstMatch.swipeUp() }
+    XCTAssertTrue(kradfile.isHittable)
     recordScreenshot(named: "dictionary-source-attribution", app: app)
 
     let kanjiVG = app.staticTexts["KanjiVG"]
@@ -1633,8 +1631,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(detail.waitForExistence(timeout: 2))
 
     let addNote = app.buttons["word-detail.add-note"]
-    for _ in 0..<8 where !addNote.exists { detail.swipeUp() }
-    XCTAssertTrue(addNote.exists)
+    scrollWordDetailElementIntoView(addNote, in: detail, app: app)
     addNote.tap()
 
     let editor = app.textFields["word-note.editor"]
@@ -1770,7 +1767,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
 
     var detail = app.scrollViews["word-detail.screen"]
     var addNote = app.buttons["word-detail.add-note"]
-    for _ in 0..<8 where !addNote.exists { detail.swipeUp() }
+    scrollWordDetailElementIntoView(addNote, in: detail, app: app)
     addNote.tap()
     var editor = app.textFields["word-note.editor"]
     XCTAssertTrue(editor.waitForExistence(timeout: 2))
@@ -1792,7 +1789,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     problem.tap()
     detail = app.scrollViews["word-detail.screen"]
     let restoredNote = app.buttons["word-detail.note"]
-    for _ in 0..<8 where !restoredNote.exists { detail.swipeUp() }
+    scrollWordDetailElementIntoView(restoredNote, in: detail, app: app)
     XCTAssertEqual(restoredNote.label, "Back autosave probe")
     recordScreenshot(named: "word-note-back-autosaved", app: app)
 
@@ -2438,20 +2435,43 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     in detail: XCUIElement,
     app: XCUIApplication
   ) {
-    for _ in 0..<8 {
+    scrollElementIntoSafeTapRegion(element, in: detail, app: app)
+  }
+
+  @MainActor
+  private func scrollElementIntoSafeTapRegion(
+    _ element: XCUIElement,
+    in scrollView: XCUIElement,
+    app: XCUIApplication
+  ) {
+    for _ in 0..<16 {
       let lowerBoundary = app.keyboards.firstMatch.exists
         ? app.keyboards.firstMatch.frame.minY
         : app.frame.maxY - 120
       if element.exists,
          element.isHittable,
-         element.frame.minY >= detail.frame.minY + 8,
+         element.frame.minY >= scrollView.frame.minY + 8,
          element.frame.maxY <= lowerBoundary - 8
       {
         break
       }
-      detail.swipeUp()
+      if element.exists, element.frame.maxY < scrollView.frame.minY + 8 {
+        scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+          .press(
+            forDuration: 0.05,
+            thenDragTo: scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65))
+          )
+      } else {
+        scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65))
+          .press(
+            forDuration: 0.05,
+            thenDragTo: scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+          )
+      }
     }
     XCTAssertTrue(element.exists)
+    XCTAssertTrue(element.isHittable)
+    XCTAssertLessThanOrEqual(element.frame.maxY, app.frame.maxY - 128)
     Thread.sleep(forTimeInterval: 1)
   }
 

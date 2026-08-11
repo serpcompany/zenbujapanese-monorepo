@@ -11,6 +11,8 @@ struct KanjiDetailView: View {
   let openElement: (KanjiElementID) -> Void
   let preservedWordID: LanguageReferenceID?
   let preserveWordID: (LanguageReferenceID) -> Void
+  let preservedElementID: KanjiElementID?
+  let preserveElementID: (KanjiElementID) -> Void
 
   @State private var loadState = KanjiDetailLoadState.loading
   @State private var retryID = 0
@@ -76,7 +78,10 @@ struct KanjiDetailView: View {
               }
             }
             if !elements.isEmpty {
-              KanjiElementsSection(elements: elements, openElement: openElement)
+              KanjiElementsSection(elements: elements) { selectedElement in
+                preserveElementID(selectedElement)
+                openElement(selectedElement)
+              }
             }
             if !relatedWords.isEmpty {
               KanjiWordsSection(entries: orderedRelatedWords) { selectedEntry in
@@ -85,14 +90,19 @@ struct KanjiDetailView: View {
               }
             }
           }
+          .padding(.bottom, 24)
           .scrollTargetLayout()
         }
         .accessibilityIdentifier("kanji-detail.screen")
         .onAppear {
           restorePreservedWordPosition(with: proxy, in: relatedWords)
+          restorePreservedElementPosition(with: proxy, in: elements)
         }
         .onChange(of: relatedWords.map(\.id)) {
           restorePreservedWordPosition(with: proxy, in: relatedWords)
+        }
+        .onChange(of: elements.map(\.id)) {
+          restorePreservedElementPosition(with: proxy, in: elements)
         }
       }
     }
@@ -165,6 +175,15 @@ struct KanjiDetailView: View {
     guard let preservedWordID,
           loadedWords.contains(where: { $0.id == preservedWordID }) else { return }
     proxy.scrollTo(preservedWordID, anchor: .center)
+  }
+
+  private func restorePreservedElementPosition(
+    with proxy: ScrollViewProxy,
+    in loadedElements: [KanjiElementSummary]
+  ) {
+    guard let preservedElementID,
+          loadedElements.contains(where: { $0.id == preservedElementID }) else { return }
+    proxy.scrollTo(preservedElementID, anchor: .center)
   }
 
   private var reference: KanjiReferenceEntry? {
@@ -472,6 +491,7 @@ private struct KanjiElementsSection: View {
             + element.meanings.prefix(3).joined(separator: ", ")
         )
         .accessibilityIdentifier("kanji-detail.element.\(element.id.rawValue)")
+        .id(element.id)
         Divider().overlay(ReplicaPalette.divider)
       }
       .background(ReplicaPalette.row)

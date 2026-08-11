@@ -8,6 +8,7 @@ public struct SearchReplicaRootView: View {
   @State private var exportsImageFixtures = false
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
+  @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
   #if DEBUG
   @State private var lastStartedSpeech: SpeechPlaybackVerificationEvent?
   @State private var lastFinishedSpeech: SpeechPlaybackVerificationEvent?
@@ -102,7 +103,15 @@ public struct SearchReplicaRootView: View {
             openWord: { entry in path.append(.word(entry, "Search", nil)) },
             openElement: { id in path.append(.kanjiElement(id)) },
             preservedWordID: kanjiScrollWordIDs[character],
-            preserveWordID: { kanjiScrollWordIDs[character] = $0 }
+            preserveWordID: {
+              kanjiScrollWordIDs[character] = $0
+              kanjiScrollElementIDs[character] = nil
+            },
+            preservedElementID: kanjiScrollElementIDs[character],
+            preserveElementID: {
+              kanjiScrollElementIDs[character] = $0
+              kanjiScrollWordIDs[character] = nil
+            }
           )
         case .kanjiElement(let id):
           KanjiElementDetailView(
