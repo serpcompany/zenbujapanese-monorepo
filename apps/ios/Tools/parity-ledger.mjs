@@ -422,6 +422,16 @@ function runChecked(command, arguments_, options = {}) {
   if (result.status !== 0) throw new Error(`${command} exited with status ${result.status}.`);
 }
 
+function bootSimulator(identifier) {
+  const boot = spawnSync("xcrun", ["simctl", "boot", identifier], { encoding: "utf8" });
+  const bootOutput = `${boot.stdout ?? ""}\n${boot.stderr ?? ""}`;
+  if (boot.error) throw boot.error;
+  if (boot.status !== 0 && !bootOutput.includes("current state: Booted")) {
+    throw new Error(`Could not boot simulator ${identifier}: ${bootOutput.trim()}`);
+  }
+  runChecked("xcrun", ["simctl", "bootstatus", identifier, "-b"]);
+}
+
 function destinationValue(destination, key) {
   return destination.split(",").map((part) => part.trim().split("="))
     .find(([candidate]) => candidate === key)?.slice(1).join("=");
@@ -509,6 +519,7 @@ function crawlCommand(arguments_) {
     for (const path of stagedMedia) {
       if (!existsSync(path)) throw new Error(`Staged photo does not exist: ${path}`);
     }
+    bootSimulator(environment.device.identifier);
     runChecked("xcrun", ["simctl", "addmedia", environment.device.identifier, ...stagedMedia]);
   }
 
