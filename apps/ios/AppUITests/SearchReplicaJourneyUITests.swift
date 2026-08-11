@@ -1482,6 +1482,20 @@ final class SearchReplicaJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testInflectedRomajiTeFormFindsDictionaryForm() throws {
+    let app = launchApp()
+
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+    searchField.typeText("makasete")
+
+    XCTAssertTrue(app.staticTexts["任せる"].waitForExistence(timeout: 3))
+    XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
+    recordScreenshot(named: "search-results-deinflected-makasete", app: app)
+  }
+
+  @MainActor
   func testMixedScriptShowsDiscoveredWords() throws {
     let app = launchApp()
 

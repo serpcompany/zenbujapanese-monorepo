@@ -92,9 +92,18 @@ private actor LanguageReferenceData {
         }
       }
     }
+    var deinflectedEntries: [DictionaryEntry] = []
     for candidate in query.deinflectedCandidates {
       let results = try searchOnce(candidate)
-      if !results.isEmpty { return results }
+      deinflectedEntries.append(contentsOf: results.best)
+      deinflectedEntries.append(contentsOf: results.additional)
+    }
+    let uniqueDeinflectedEntries = Self.uniqued(deinflectedEntries)
+    if !uniqueDeinflectedEntries.isEmpty {
+      return LookupSearchResults(
+        best: Array(uniqueDeinflectedEntries.prefix(3)),
+        additional: Array(uniqueDeinflectedEntries.dropFirst(3))
+      )
     }
     return .empty
   }

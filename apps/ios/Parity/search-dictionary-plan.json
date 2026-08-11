@@ -42,6 +42,7 @@
       "SearchReplicaJourneyUITests/testImageTextMultipleFilesRecoverFromEmptyAndRemainTransient()",
       "SearchReplicaJourneyUITests/testImageTextVerticalFileProducesSelectableJapaneseRegions()",
       "SearchReplicaJourneyUITests/testInflectedRomajiFindsDictionaryForm()",
+      "SearchReplicaJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm()",
       "SearchReplicaJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()",
       "SearchReplicaJourneyUITests/testKanjiDetailRelatedWordOpensWordDetailAndBackRestoresPosition()",
       "SearchReplicaJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings()",
@@ -77,6 +78,7 @@
     ],
     "release_simulator_smoke": [
       "SearchReplicaJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults()",
+      "SearchReplicaJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm()",
       "SearchReplicaJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()",
       "SearchReplicaJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings()",
       "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()",
@@ -84,6 +86,7 @@
     ],
     "signed_physical_device": [
       "SearchReplicaJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults()",
+      "SearchReplicaJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm()",
       "SearchReplicaJourneyUITests/testNihonOffersJapaneseReadingRefinement()",
       "SearchReplicaJourneyUITests/testNewestRecentSearchRerunsItsResultSet()",
       "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
@@ -104,6 +107,10 @@
   },
   "required_attachment_captures_by_environment": {
     "signed_physical_device": [
+      {
+        "test_id": "SearchReplicaJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm()",
+        "name_prefix": "search-results-deinflected-makasete"
+      },
       {
         "test_id": "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()",
         "name_prefix": "production-image-source-menu-files"
@@ -151,6 +158,7 @@
         "SearchReplicaJourneyUITests/testNoMatchKeepsQueryAboveBlankResultsState()",
         "SearchReplicaJourneyUITests/testLookupFailureIsNotPresentedAsNoMatchAndRetryRecovers()",
         "SearchReplicaJourneyUITests/testInflectedRomajiFindsDictionaryForm()",
+        "SearchReplicaJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm()",
         "SearchReplicaJourneyUITests/testMixedScriptShowsDiscoveredWords()"
       ]
     },
