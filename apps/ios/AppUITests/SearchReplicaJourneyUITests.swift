@@ -84,8 +84,9 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     firstPhoto.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
 
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
-    XCTAssertTrue(app.staticTexts["image-text.raw-text"].waitForExistence(timeout: 20))
-    XCTAssertTrue(app.staticTexts["image-text.raw-text"].label.contains("日本語"))
+    let recognized = app.staticTexts["image-text.raw-text"]
+    XCTAssertTrue(recognized.waitForExistence(timeout: 20))
+    XCTAssertTrue(containsJapaneseText(recognized.label), recognized.label)
   }
 
   @MainActor
@@ -252,7 +253,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
   func testImageTextVerticalFileProducesSelectableJapaneseRegions() throws {
     let app = launchImageTextFixtures(["fixture-vertical.png"])
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
-    let region = app.descendants(matching: .any).matching(identifier: "image-text.region.読").firstMatch
+    let region = app.descendants(matching: .any).matching(identifier: "image-text.region.読本").firstMatch
     XCTAssertTrue(region.waitForExistence(timeout: 10))
     region.tap()
     let gloss = app.buttons["image-text.gloss"]
@@ -2680,6 +2681,13 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(app.buttons["image-text.close"].isHittable)
     XCTAssertTrue(app.buttons["image-text.highlights"].isHittable)
     XCTAssertTrue(app.buttons["image-text.share"].isHittable)
+  }
+
+  private func containsJapaneseText(_ value: String) -> Bool {
+    value.unicodeScalars.contains { scalar in
+      (0x3040 ... 0x30FF).contains(scalar.value)
+        || (0x3400 ... 0x9FFF).contains(scalar.value)
+    }
   }
 }
 

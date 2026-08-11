@@ -42,6 +42,7 @@ struct ImageTextFlowView: View {
         alignment: .top
       )
     }
+    .accessibilityHidden(sharedAsset != nil)
     .background(.black)
     .toolbar(.hidden, for: .navigationBar)
     .task { await model.load() }
@@ -55,7 +56,7 @@ struct ImageTextFlowView: View {
     } message: {
       Text("Japanese text was not found in this image.")
     }
-    .sheet(item: $sharedAsset) { asset in
+    .sheet(item: $sharedAsset, onDismiss: { sharedAsset = nil }) { asset in
       ImageActivityView(asset: asset)
         .ignoresSafeArea()
     }

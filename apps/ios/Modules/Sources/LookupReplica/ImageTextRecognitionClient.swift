@@ -8,6 +8,21 @@ struct RecognizedImageTextObservation: Hashable, Identifiable, Sendable {
   let text: String
   let boundingBox: CGRect
   let confidence: Float
+  let characterBoxes: [CGRect]
+
+  init(
+    id: Int,
+    text: String,
+    boundingBox: CGRect,
+    confidence: Float,
+    characterBoxes: [CGRect] = []
+  ) {
+    self.id = id
+    self.text = text
+    self.boundingBox = boundingBox
+    self.confidence = confidence
+    self.characterBoxes = characterBoxes
+  }
 }
 
 struct ImageTextRecognitionClient: Sendable {
@@ -49,12 +64,13 @@ private final class VisionTextRecognitionOperation: @unchecked Sendable {
     else {
       throw ImageTextRecognitionError.invalidImage
     }
+    let orientation = imageOrientation(source)
 
     let primary = request(languages: ["ja-JP", "en-US"], languageCorrection: true)
-    var results = try perform(primary, image: image)
+    var results = try perform(primary, image: image, orientation: orientation)
     if !results.containsJapaneseText {
       let japaneseOnly = request(languages: ["ja-JP"], languageCorrection: false)
-      let fallback = try perform(japaneseOnly, image: image)
+      let fallback = try perform(japaneseOnly, image: image, orientation: orientation)
       if !fallback.isEmpty { results = fallback }
     }
     try checkCancellation()
@@ -64,9 +80,28 @@ private final class VisionTextRecognitionOperation: @unchecked Sendable {
         id: index,
         text: candidate.string,
         boundingBox: observation.boundingBox,
-        confidence: candidate.confidence
+        confidence: candidate.confidence,
+        characterBoxes: characterBoxes(candidate)
       )
     }
+  }
+
+  private func imageOrientation(_ source: CGImageSource) -> CGImagePropertyOrientation {
+    let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+    let rawValue = (properties?[kCGImagePropertyOrientation] as? NSNumber)?.uint32Value ?? 1
+    return CGImagePropertyOrientation(rawValue: rawValue) ?? .up
+  }
+
+  private func characterBoxes(_ candidate: VNRecognizedText) -> [CGRect] {
+    var boxes: [CGRect] = []
+    var start = candidate.string.startIndex
+    while start < candidate.string.endIndex {
+      let end = candidate.string.index(after: start)
+      let rectangle = try? candidate.boundingBox(for: start ..< end)
+      boxes.append(rectangle?.boundingBox ?? .null)
+      start = end
+    }
+    return boxes
   }
 
   private func request(languages: [String], languageCorrection: Bool) -> VNRecognizeTextRequest {
@@ -80,14 +115,15 @@ private final class VisionTextRecognitionOperation: @unchecked Sendable {
 
   private func perform(
     _ request: VNRecognizeTextRequest,
-    image: CGImage
+    image: CGImage,
+    orientation: CGImagePropertyOrientation
   ) throws -> [VNRecognizedTextObservation] {
     try lock.withLock {
       guard !isCancelled else { throw CancellationError() }
       activeRequest = request
     }
     defer { lock.withLock { activeRequest = nil } }
-    try VNImageRequestHandler(cgImage: image).perform([request])
+    try VNImageRequestHandler(cgImage: image, orientation: orientation).perform([request])
     try checkCancellation()
     return request.results ?? []
   }
