@@ -8,6 +8,7 @@
     "release_simulator_smoke",
     "signed_physical_device"
   ],
+  "minimum_complete_runs": 2,
   "journeys": [
     {
       "journey_id": "JOURNEY-SEARCH-TEXT",

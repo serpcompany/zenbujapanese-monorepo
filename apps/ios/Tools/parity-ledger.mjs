@@ -1,8 +1,11 @@
 import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+
+import { compareImages } from "./parity-image-diff.mjs";
 
 function filesBelow(directory) {
   const files = [];
@@ -36,7 +39,58 @@ export function sha256Path(path) {
 
 const unique = (values) => [...new Set(values.filter(Boolean))];
 
-export function validateExecutionPlan(plan, requiredJourneyIds, executedTestIds = undefined) {
+export function testsFromTree(document) {
+  const tests = [];
+  const visit = (node, suiteName = null) => {
+    const currentSuite = node.nodeType === "Test Suite" ? node.name : suiteName;
+    if (node.nodeType === "Test Case" && currentSuite) {
+      tests.push({
+        test_id: `${currentSuite}/${node.name}`,
+        result: node.result?.toLowerCase() ?? "unknown",
+      });
+    }
+    for (const child of node.children ?? []) visit(child, currentSuite);
+  };
+  for (const node of document.testNodes ?? []) visit(node);
+  return tests;
+}
+
+export function validateRecordedTests(recordedTests, actualTests) {
+  const errors = [];
+  const recordedById = new Map(recordedTests.map((test) => [test.test_id, test]));
+  const actualById = new Map(actualTests.map((test) => [test.test_id, test]));
+  for (const recorded of recordedTests) {
+    const actual = actualById.get(recorded.test_id);
+    if (!actual) {
+      errors.push({
+        code: "RECORDED_TEST_NOT_IN_TREE",
+        message: `Recorded test ${recorded.test_id} is absent from the hashed xcresult test tree.`,
+      });
+    } else if (recorded.result !== actual.result) {
+      errors.push({
+        code: "TEST_TREE_MISMATCH",
+        message: `Recorded test ${recorded.test_id} is ${recorded.result}, but the hashed xcresult tree says ${actual.result}.`,
+      });
+    }
+  }
+  for (const actual of actualTests) {
+    if (!recordedById.has(actual.test_id)) {
+      errors.push({
+        code: "TEST_NOT_RECORDED",
+        message: `Hashed xcresult test ${actual.test_id} is absent from the run's recorded tests.`,
+      });
+    }
+  }
+  return errors;
+}
+
+export function validateExecutionPlan(
+  plan,
+  requiredJourneyIds,
+  executedTestIds = undefined,
+  executedEnvironmentIds = undefined,
+  executionRuns = undefined,
+) {
   const errors = [];
   const planJourneyIds = (plan.journeys ?? []).map((journey) => journey.journey_id);
   for (const journeyId of requiredJourneyIds) {
@@ -71,6 +125,126 @@ export function validateExecutionPlan(plan, requiredJourneyIds, executedTestIds 
         });
       }
     }
+  }
+  if (executedEnvironmentIds) {
+    const executed = new Set(executedEnvironmentIds);
+    for (const environmentId of plan.environments ?? []) {
+      if (!executed.has(environmentId)) {
+        errors.push({
+          code: "MISSING_EXECUTION_ENVIRONMENT",
+          message: `Execution plan requires ${environmentId}, but no supplied run used it.`,
+        });
+      }
+    }
+  }
+  if (executionRuns && Number.isInteger(plan.minimum_complete_runs) && plan.minimum_complete_runs > 0) {
+    const plannedTestIds = unique((plan.journeys ?? []).flatMap((journey) => journey.test_ids ?? []));
+    const completeRuns = executionRuns.filter((run) => {
+      const results = new Map((run.tests ?? []).map((test) => [test.test_id, test.result]));
+      return plannedTestIds.every((testId) => results.get(testId) === "passed");
+    });
+    if (completeRuns.length < plan.minimum_complete_runs) {
+      errors.push({
+        code: "INSUFFICIENT_COMPLETE_RUNS",
+        message: `Execution plan requires ${plan.minimum_complete_runs} complete passing runs, but ${completeRuns.length} were supplied.`,
+      });
+    }
+  }
+  return errors;
+}
+
+export function validateObservation(
+  observation,
+  { rowById, executedTestIds, executedTestResults = new Map(), registeredPaths = new Set() },
+) {
+  const errors = [];
+  for (const rowId of observation.row_ids ?? []) {
+    if (!rowById.has(rowId)) {
+      errors.push({
+        code: "UNKNOWN_ROW_ID",
+        message: `${observation.observation_id} references unknown parity row ${rowId}.`,
+      });
+    }
+  }
+  if (!executedTestIds.has(observation.test_id)) {
+    errors.push({
+      code: "TEST_NOT_IN_XCRESULT",
+      message: `${observation.observation_id} references ${observation.test_id}, which is absent from the run test tree.`,
+    });
+  } else if (executedTestResults.has(observation.test_id)) {
+    const testResult = executedTestResults.get(observation.test_id);
+    const compatibleStatuses = testResult === "passed" ? ["passed"]
+      : testResult === "failed" ? ["failed"]
+        : ["blocked"];
+    if (!compatibleStatuses.includes(observation.test_status)) {
+      errors.push({
+        code: "TEST_STATUS_MISMATCH",
+        message: `${observation.observation_id} records ${observation.test_status}, but ${observation.test_id} is ${testResult} in the hashed xcresult test tree.`,
+      });
+    }
+  }
+  if (!(observation.reference_evidence ?? []).length) {
+    errors.push({
+      code: "MISSING_REFERENCE_EVIDENCE",
+      message: `${observation.observation_id} has no reference-app evidence.`,
+    });
+  }
+  if (!(observation.clone_evidence ?? []).length) {
+    errors.push({
+      code: "MISSING_CLONE_EVIDENCE",
+      message: `${observation.observation_id} has no Zenbu evidence.`,
+    });
+  }
+  const knownRows = (observation.row_ids ?? []).map((rowId) => rowById.get(rowId)).filter(Boolean);
+  const canonicalReferencePaths = new Set(knownRows.flatMap((row) => row.reference_evidence ?? []));
+  for (const path of observation.reference_evidence ?? []) {
+    if (knownRows.length
+      && path !== observation.visual_comparison?.reference_path
+      && !canonicalReferencePaths.has(path)
+      && !registeredPaths.has(path)) {
+      errors.push({
+        code: "UNBOUND_REFERENCE_EVIDENCE",
+        message: `${observation.observation_id} references ${path}, which is neither canonical row evidence nor a registered attachment.`,
+      });
+    }
+  }
+  const visualPaths = new Set([
+    observation.visual_comparison?.clone_path,
+    observation.visual_comparison?.diff_path,
+  ].filter(Boolean));
+  for (const path of observation.clone_evidence ?? []) {
+    if (!registeredPaths.has(path) && !visualPaths.has(path)) {
+      errors.push({
+        code: "UNREGISTERED_CLONE_EVIDENCE",
+        message: `${observation.observation_id} references ${path}, which is not a registered run attachment.`,
+      });
+    }
+  }
+  if (!observation.destination_state?.surface_id
+    || !observation.destination_state?.state
+    || !observation.destination_state?.output) {
+    errors.push({
+      code: "MISSING_DESTINATION_STATE",
+      message: `${observation.observation_id} does not identify the reached surface, state, and output.`,
+    });
+  }
+  if (!observation.semantic_observation) {
+    errors.push({
+      code: "MISSING_SEMANTIC_OBSERVATION",
+      message: `${observation.observation_id} has no semantic observation.`,
+    });
+  }
+  if (!observation.action_observation) {
+    errors.push({
+      code: "MISSING_ACTION_OBSERVATION",
+      message: `${observation.observation_id} has no action observation.`,
+    });
+  }
+  if (!observation.expected || !observation.actual) {
+    errors.push({
+      code: "MISSING_EXPECTED_ACTUAL",
+      message: `${observation.observation_id} must record expected and actual behavior.`,
+    });
   }
   return errors;
 }
@@ -117,13 +291,18 @@ export function compileLedger(ledger, runs, { requiredJourneyIds = [] } = {}) {
     && row.journey_ids.some((journeyId) => requiredJourneys.has(journeyId))
   );
   const count = (field, value) => blockingRows.filter((row) => row[field] === value).length;
-  const defects = observations.filter((observation) => observation.classification === "defect");
-  const defectJourneyIds = unique(defects.flatMap((observation) => observation.journey_ids ?? []));
-  const corrections = defectJourneyIds.map((journeyId) => {
-    const journeyDefects = defects.filter((observation) => observation.journey_ids?.includes(journeyId));
+  const correctionInputs = observations.filter((observation) =>
+    observation.classification === "defect"
+    || observation.classification === "access_blocker"
+    || observation.test_status === "failed"
+    || observation.test_status === "blocked"
+  );
+  const correctionJourneyIds = unique(correctionInputs.flatMap((observation) => observation.journey_ids ?? []));
+  const corrections = correctionJourneyIds.map((journeyId) => {
+    const journeyDefects = correctionInputs.filter((observation) => observation.journey_ids?.includes(journeyId));
     return {
       journey_id: journeyId,
-      title: `[Parity] ${journeyDefects[0].summary}`,
+      title: `[Parity] ${journeyDefects[0].summary ?? `${journeyDefects[0].classification} in ${journeyId}`}`,
       row_ids: unique(journeyDefects.flatMap((item) => item.row_ids ?? [])),
       observation_ids: unique(journeyDefects.map((item) => item.observation_id)),
       test_ids: unique(journeyDefects.map((item) => item.test_id)),
@@ -194,21 +373,14 @@ export function validateEvidenceRun(run, { expectedCommit, runRoot, ledger = [],
 
   if (strict) {
     const executedTestIds = new Set((run.tests ?? []).map((test) => test.test_id));
+    const executedTestResults = new Map((run.tests ?? []).map((test) => [test.test_id, test.result]));
     for (const observation of run.observations ?? []) {
-      for (const rowId of observation.row_ids ?? []) {
-        if (!rowById.has(rowId)) {
-          errors.push({
-            code: "UNKNOWN_ROW_ID",
-            message: `${observation.observation_id} references unknown parity row ${rowId}.`,
-          });
-        }
-      }
-      if (!executedTestIds.has(observation.test_id)) {
-        errors.push({
-          code: "TEST_NOT_IN_XCRESULT",
-          message: `${observation.observation_id} references ${observation.test_id}, which is absent from the run test tree.`,
-        });
-      }
+      errors.push(...validateObservation(observation, {
+        rowById,
+        executedTestIds,
+        executedTestResults,
+        registeredPaths,
+      }));
     }
   }
 
@@ -247,6 +419,29 @@ export function validateEvidenceRun(run, { expectedCommit, runRoot, ledger = [],
           code: "VISUAL_COMPARISON_FAILED",
           message: `${observation.observation_id} is classified ${observation.classification} even though its visual comparison failed.`,
         });
+      }
+
+      const comparisonPaths = [comparison.reference_path, comparison.clone_path, comparison.diff_path];
+      if (runRoot && comparisonPaths.every((path) => registeredPaths.has(path) && existsSync(join(runRoot, path)))) {
+        const temporaryDirectory = mkdtempSync(join(tmpdir(), "parity-validate-"));
+        try {
+          const recomputed = compareImages({
+            referencePath: join(runRoot, comparison.reference_path),
+            clonePath: join(runRoot, comparison.clone_path),
+            diffPath: join(temporaryDirectory, "diff.png"),
+            masks: comparison.masks,
+            tolerance: comparison.tolerance,
+          });
+          if (recomputed.passed !== comparison.result.passed
+            || Math.abs(recomputed.changed_pixel_ratio - comparison.result.changed_pixel_ratio) > Number.EPSILON) {
+            errors.push({
+              code: "VISUAL_RESULT_MISMATCH",
+              message: `${observation.observation_id} recorded a visual result that does not match a fresh comparison of its registered images.`,
+            });
+          }
+        } finally {
+          rmSync(temporaryDirectory, { recursive: true, force: true });
+        }
       }
     }
   }
@@ -300,6 +495,17 @@ export function validateEvidenceRun(run, { expectedCommit, runRoot, ledger = [],
         errors.push({
           code: "HASH_MISMATCH",
           message: `attachment ${attachment.path} has SHA-256 ${actual}, not ${attachment.sha256}.`,
+        });
+      }
+    }
+
+    if (strict && run.test_tree?.path && existsSync(join(runRoot, run.test_tree.path))) {
+      try {
+        errors.push(...validateRecordedTests(run.tests ?? [], testsFromTree(readJson(join(runRoot, run.test_tree.path)))));
+      } catch (error) {
+        errors.push({
+          code: "INVALID_TEST_TREE",
+          message: `test tree ${run.test_tree.path} cannot be reconciled: ${error.message}`,
         });
       }
     }
@@ -367,7 +573,14 @@ function compileCommand(arguments_) {
   const runs = runPaths.map(readJson);
   if (planPath) {
     const executedTestIds = unique(runs.flatMap((run) => (run.tests ?? []).map((test) => test.test_id)));
-    const planErrors = validateExecutionPlan(readJson(resolve(planPath)), requiredJourneyIds, executedTestIds);
+    const executedEnvironmentIds = unique(runs.map((run) => run.environment_id));
+    const planErrors = validateExecutionPlan(
+      readJson(resolve(planPath)),
+      requiredJourneyIds,
+      executedTestIds,
+      executedEnvironmentIds,
+      runs,
+    );
     if (planErrors.length) throw new Error(`Execution-plan validation failed:\n${JSON.stringify(planErrors, null, 2)}`);
   }
   const commit = expectedCommit(optionValue(arguments_, "--expected-commit"), process.cwd());
@@ -552,21 +765,19 @@ function crawlCommand(arguments_) {
   const testTreePath = join(runDirectory, "test-tree.json");
   const testTreeText = execFileSync("xcrun", ["xcresulttool", "get", "test-results", "tests", "--path", resultBundlePath, "--compact"], { encoding: "utf8" });
   writeFileSync(testTreePath, `${testTreeText.trim()}\n`);
-  const tests = [];
-  const visitTestNode = (node, suiteName = null) => {
-    const currentSuite = node.nodeType === "Test Suite" ? node.name : suiteName;
-    if (node.nodeType === "Test Case" && currentSuite) {
-      tests.push({ test_id: `${currentSuite}/${node.name}`, result: node.result?.toLowerCase() ?? "unknown" });
-    }
-    for (const child of node.children ?? []) visitTestNode(child, currentSuite);
-  };
-  for (const node of readJson(testTreePath).testNodes ?? []) visitTestNode(node);
+  const tests = testsFromTree(readJson(testTreePath));
   const attachmentDirectory = join(runDirectory, "Attachments");
   runChecked("xcrun", ["xcresulttool", "export", "attachments", "--path", resultBundlePath, "--output-path", attachmentDirectory]);
 
   const sdkSuffix = destination.includes("Simulator") ? "iphonesimulator" : "iphoneos";
-  const appPath = join(derivedDataPath, "Build", "Products", `${configuration}-${sdkSuffix}`, `${scheme}.app`);
-  if (!existsSync(appPath)) throw new Error(`Built app was not found at ${appPath}.`);
+  const productDirectory = join(derivedDataPath, "Build", "Products", `${configuration}-${sdkSuffix}`);
+  const appCandidates = readdirSync(productDirectory, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name.endsWith(".app") && !entry.name.endsWith("UITests-Runner.app"))
+    .map((entry) => join(productDirectory, entry.name));
+  if (appCandidates.length !== 1) {
+    throw new Error(`Expected one built app below ${productDirectory}, found: ${appCandidates.join(", ") || "none"}.`);
+  }
+  const [appPath] = appCandidates;
   const attachmentFiles = filesBelow(attachmentDirectory);
   const run = {
     schema_version: 1,

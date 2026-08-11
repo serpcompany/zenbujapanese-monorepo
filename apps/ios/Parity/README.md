@@ -35,6 +35,7 @@ to `run.json`. This prevents a passing test bundle or screenshot count from
 becoming a parity claim by itself. Each observation names:
 
 - exact parity row, journey, and XCTest IDs;
+- `destination_state` with the reached `surface_id`, `state`, and `output`;
 - semantic and action observations, expected and actual behavior;
 - paired reference and Zenbu evidence;
 - `exact`, `approved_variance`, `defect`, or `access_blocker` classification;
@@ -80,7 +81,12 @@ Replace `compile` with `gate` for CI or delegated QC. The gate fails when any
 blocking row is unknown, not run, defective, access-blocked, failed, or covered
 only by an unexplained variance. Correction output is grouped by journey and
 contains ready-to-file issue input rather than creating GitHub issues
-automatically.
+automatically. Compilation with a plan also requires evidence runs for every
+declared environment; a simulator-only run cannot satisfy the signed-device or
+release-smoke requirements. It also requires the plan's two complete passing
+runs before it can close the parity denominator. Recorded test IDs and outcomes are reconciled with
+the hashed xcresult test tree, and visual results are recomputed from the
+registered source images rather than trusted from edited JSON.
 
 ## Regeneration
 

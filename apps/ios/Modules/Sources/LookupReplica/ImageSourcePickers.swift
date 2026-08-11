@@ -76,55 +76,23 @@ struct ImagePhotoLibraryPicker: UIViewControllerRepresentable {
     }
 
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-      guard !results.isEmpty else {
+      guard let result = results.first else {
         completion(.success([]))
         return
       }
-      let accumulator = PhotoSelectionAccumulator(count: results.count, completion: completion)
-      for (index, result) in results.enumerated() {
-        let suggestedName = result.itemProvider.suggestedName ?? "Photo \(index + 1)"
-        result.itemProvider.loadDataRepresentation(forTypeIdentifier: UTType.image.identifier) {
-          data, error in
-          let asset = data.flatMap { data in
-            UIImage(data: data).flatMap { ImageTextAsset(photoLibraryImage: $0, name: suggestedName) }
-          }
-          accumulator.finish(index: index, asset: asset, error: error)
+      let suggestedName = result.itemProvider.suggestedName ?? "Photo"
+      result.itemProvider.loadDataRepresentation(forTypeIdentifier: UTType.image.identifier) {
+        data, error in
+        let asset = data.flatMap { data in
+          UIImage(data: data).flatMap { ImageTextAsset(photoLibraryImage: $0, name: suggestedName) }
         }
-      }
-    }
-  }
-}
-
-private final class PhotoSelectionAccumulator: @unchecked Sendable {
-  private let lock = NSLock()
-  private var assets: [ImageTextAsset?]
-  private var completed = 0
-  private var failed = false
-  private let completion: @MainActor @Sendable (Result<[ImageTextAsset], Error>) -> Void
-
-  init(
-    count: Int,
-    completion: @escaping @MainActor @Sendable (Result<[ImageTextAsset], Error>) -> Void
-  ) {
-    assets = Array(repeating: nil, count: count)
-    self.completion = completion
-  }
-
-  func finish(index: Int, asset: ImageTextAsset?, error: Error?) {
-    lock.lock()
-    assets[index] = asset
-    failed = failed || error != nil || asset == nil
-    completed += 1
-    let isComplete = completed == assets.count
-    let selectedAssets = assets.compactMap { $0 }
-    let didFail = failed
-    lock.unlock()
-    guard isComplete else { return }
-    Task { @MainActor [completion] in
-      if didFail || selectedAssets.isEmpty {
-        completion(.failure(ImageSourcePickerError.unreadableImage))
-      } else {
-        completion(.success(selectedAssets))
+        Task { @MainActor [completion = self.completion] in
+          if error != nil || asset == nil {
+            completion(.failure(ImageSourcePickerError.unreadableImage))
+          } else {
+            completion(.success([asset].compactMap { $0 }))
+          }
+        }
       }
     }
   }

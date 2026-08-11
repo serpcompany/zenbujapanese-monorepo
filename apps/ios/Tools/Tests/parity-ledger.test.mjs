@@ -4,7 +4,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { compileLedger, validateEvidenceRun, validateExecutionPlan } from "../parity-ledger.mjs";
+import {
+  compileLedger,
+  testsFromTree,
+  validateEvidenceRun,
+  validateExecutionPlan,
+  validateObservation,
+  validateRecordedTests,
+} from "../parity-ledger.mjs";
 
 test("evidence validation rejects a run captured from a different commit", () => {
   const run = {
@@ -325,6 +332,13 @@ test("strict evidence validation rejects visual paths outside the attachment reg
         test_id: "Suite/testResults()",
         classification: "exact",
         test_status: "passed",
+        reference_evidence: ["Attachments/reference.png"],
+        clone_evidence: ["Attachments/clone.png", "Attachments/diff.png"],
+        destination_state: { surface_id: "search-results", state: "loaded", output: "results" },
+        semantic_observation: "The result state matches the reference.",
+        action_observation: "Submitting the query reaches results.",
+        expected: "Reference results are visible.",
+        actual: "Zenbu results are visible.",
         visual_comparison: {
           reference_path: "Attachments/reference.png",
           clone_path: "Attachments/clone.png",
@@ -409,7 +423,11 @@ test("strict evidence validation rejects unknown rows and tests", () => {
     },
     toolchain: { xcode_version: "26.0", build_version: "17A000" },
     attachment_root: "Attachments",
-    attachments: [],
+    attachments: [{
+      path: "Attachments/unknown-row.png",
+      sha256: "e".repeat(64),
+      media_type: "image/png",
+    }],
     tests: [{ test_id: "Suite/testKnown()", result: "passed" }],
     observations: [{
       observation_id: "OBS-010",
@@ -418,6 +436,13 @@ test("strict evidence validation rejects unknown rows and tests", () => {
       test_id: "Suite/testMissing()",
       classification: "exact",
       test_status: "passed",
+      reference_evidence: ["reference/unknown-row.md"],
+      clone_evidence: ["Attachments/unknown-row.png"],
+      destination_state: { surface_id: "search", state: "loaded", output: "result" },
+      semantic_observation: "A result is visible.",
+      action_observation: "The query was submitted.",
+      expected: "A result is visible.",
+      actual: "A result is visible.",
     }],
   };
 
@@ -466,6 +491,13 @@ test("strict evidence validation rejects a failed visual comparison classified a
       test_id: "Suite/testVisual()",
       classification: "exact",
       test_status: "passed",
+      reference_evidence: [paths[0]],
+      clone_evidence: [paths[1], paths[2]],
+      destination_state: { surface_id: "search-results", state: "loaded", output: "results" },
+      semantic_observation: "The result state matches the reference.",
+      action_observation: "Submitting the query reaches results.",
+      expected: "The images match within tolerance.",
+      actual: "The changed-pixel ratio exceeds tolerance.",
       visual_comparison: {
         reference_path: paths[0],
         clone_path: paths[1],
@@ -485,4 +517,144 @@ test("strict evidence validation rejects a failed visual comparison classified a
     code: "VISUAL_COMPARISON_FAILED",
     message: "OBS-011 is classified exact even though its visual comparison failed.",
   }]);
+});
+
+test("xcresult test-tree reconciliation rejects an edited recorded result", () => {
+  const actual = testsFromTree({
+    testNodes: [{
+      nodeType: "Test Suite",
+      name: "All tests",
+      children: [{
+        nodeType: "Test Suite",
+        name: "SearchReplicaJourneyUITests",
+        children: [{ nodeType: "Test Case", name: "testPhoto()", result: "Failed" }],
+      }],
+    }],
+  });
+
+  assert.deepEqual(validateRecordedTests(
+    [{ test_id: "SearchReplicaJourneyUITests/testPhoto()", result: "passed" }],
+    actual,
+  ), [{
+    code: "TEST_TREE_MISMATCH",
+    message: "Recorded test SearchReplicaJourneyUITests/testPhoto() is passed, but the hashed xcresult tree says failed.",
+  }]);
+});
+
+test("execution-plan validation requires every declared environment", () => {
+  const plan = {
+    environments: ["debug_simulator", "signed_physical_device"],
+    journeys: [{ journey_id: "JOURNEY-A", test_ids: ["Suite/testA()"] }],
+  };
+
+  assert.deepEqual(validateExecutionPlan(
+    plan,
+    ["JOURNEY-A"],
+    ["Suite/testA()"],
+    ["debug_simulator"],
+  ), [{
+    code: "MISSING_EXECUTION_ENVIRONMENT",
+    message: "Execution plan requires signed_physical_device, but no supplied run used it.",
+  }]);
+});
+
+test("execution-plan validation requires consecutive complete passing runs", () => {
+  const plan = {
+    minimum_complete_runs: 2,
+    journeys: [{ journey_id: "JOURNEY-A", test_ids: ["Suite/testA()"] }],
+  };
+  const runs = [{ tests: [{ test_id: "Suite/testA()", result: "passed" }] }];
+
+  assert.deepEqual(validateExecutionPlan(
+    plan,
+    ["JOURNEY-A"],
+    ["Suite/testA()"],
+    [],
+    runs,
+  ), [{
+    code: "INSUFFICIENT_COMPLETE_RUNS",
+    message: "Execution plan requires 2 complete passing runs, but 1 were supplied.",
+  }]);
+});
+
+test("strict observation validation binds status and evidence to captured results", () => {
+  const errors = validateObservation({
+    observation_id: "OBS-BOUND",
+    row_ids: ["PARITY-KNOWN"],
+    journey_ids: ["JOURNEY-A"],
+    test_id: "Suite/testA()",
+    classification: "exact",
+    test_status: "passed",
+    reference_evidence: ["reference/known.json"],
+    clone_evidence: ["Attachments/unregistered.png"],
+    destination_state: { surface_id: "search", state: "loaded", output: "results" },
+    semantic_observation: "The same results are shown.",
+    action_observation: "Submitting the query opens results.",
+    expected: "Reference results.",
+    actual: "Zenbu results.",
+  }, {
+    rowById: new Map([["PARITY-KNOWN", {
+      id: "PARITY-KNOWN",
+      reference_evidence: ["reference/known.json"],
+    }]]),
+    executedTestIds: new Set(["Suite/testA()"]),
+    executedTestResults: new Map([["Suite/testA()", "failed"]]),
+    registeredPaths: new Set(),
+  });
+
+  assert.deepEqual(errors.map((error) => error.code), [
+    "TEST_STATUS_MISMATCH",
+    "UNREGISTERED_CLONE_EVIDENCE",
+  ]);
+});
+
+test("strict observation validation requires differential evidence and state", () => {
+  assert.deepEqual(validateObservation({
+    observation_id: "OBS-012",
+    row_ids: ["PARITY-KNOWN"],
+    journey_ids: ["JOURNEY-A"],
+    test_id: "Suite/testA()",
+    classification: "exact",
+    test_status: "passed",
+  }, {
+    rowById: new Map([["PARITY-KNOWN", {
+      id: "PARITY-KNOWN",
+      journey_ids: ["JOURNEY-A"],
+      parity_dimensions: ["interaction"],
+    }]]),
+    executedTestIds: new Set(["Suite/testA()"]),
+    registeredPaths: new Set(),
+  }).map((error) => error.code), [
+    "MISSING_REFERENCE_EVIDENCE",
+    "MISSING_CLONE_EVIDENCE",
+    "MISSING_DESTINATION_STATE",
+    "MISSING_SEMANTIC_OBSERVATION",
+    "MISSING_ACTION_OBSERVATION",
+    "MISSING_EXPECTED_ACTUAL",
+  ]);
+});
+
+test("correction output includes access blockers and blocked tests", () => {
+  const ledger = [{
+    id: "PARITY-CAMERA",
+    journey_ids: ["JOURNEY-CAMERA"],
+    discovery_status: "ready_input",
+    clone_status: "unknown",
+    test_status: "not_run",
+  }];
+  const result = compileLedger(ledger, [{
+    run_id: "RUN-013",
+    observations: [{
+      observation_id: "OBS-013",
+      row_ids: ["PARITY-CAMERA"],
+      journey_ids: ["JOURNEY-CAMERA"],
+      test_id: "Suite/testCamera()",
+      classification: "access_blocker",
+      test_status: "blocked",
+      summary: "Camera permission cannot be granted",
+    }],
+  }], { requiredJourneyIds: ["JOURNEY-CAMERA"] });
+
+  assert.equal(result.corrections.length, 1);
+  assert.equal(result.corrections[0].journey_id, "JOURNEY-CAMERA");
 });
