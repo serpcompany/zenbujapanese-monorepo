@@ -1,0 +1,28 @@
+[
+  {
+    "testIdentifier": "SearchReplicaJourneyUITests/testReplicaTabBarRestoresSearchAndNamesExcludedDestinations()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testReplicaTabBarRestoresSearchAndNamesExcludedDestinations",
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "6AE7BC74-2ECB-448B-9298-19F6F3A05801.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "acceptance-search-tab-restored",
+        "timestamp": 1786429708.156,
+        "sha256": "f28e97232b3a8bc16e4e844d7da5421dea45de4c0ff3ca04a12d6340da8c7a04"
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "998B4E72-B620-4585-918F-C8BFF64EF185.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "acceptance-excluded-tab-boundary",
+        "timestamp": 1786429697.738,
+        "sha256": "6007079497dd23a8e245fd1ad93800babeed491aba27e9227566a98619241e04"
+      }
+    ]
+  }
+]

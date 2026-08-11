@@ -1,0 +1,461 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0739C012E20A0C475890D563 /* SearchReplicaJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2D0ECA911F40E070D8F4FD /* SearchReplicaJourneyUITests.swift */; };
+		E1FD0205CD84132DCB314678 /* LookupReplica in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* LookupReplica */; };
+		EE0568414863DA5F77D21D34 /* ZenbuJapaneseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F4546BE4A238535E6E3823A6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DE54BDCD4DF440D8324A14C7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5CD4552D207F8AC0D2D15CD6;
+			remoteInfo = ZenbuJapanese;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		05C3FD9ADDFFACDD673A50B8 /* Modules */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Modules; path = Modules; sourceTree = SOURCE_ROOT; };
+		0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ZenbuJapanese.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6E2D0ECA911F40E070D8F4FD /* SearchReplicaJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchReplicaJourneyUITests.swift; sourceTree = "<group>"; };
+		A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenbuJapaneseApp.swift; sourceTree = "<group>"; };
+		DF09FB39B581100E5F9B6C10 /* ZenbuJapaneseUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ZenbuJapaneseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F38B6861CA6A9754CF93F50B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1FD0205CD84132DCB314678 /* LookupReplica in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		063413ACDB21B263873C40C6 /* AppUITests */ = {
+			isa = PBXGroup;
+			children = (
+				6E2D0ECA911F40E070D8F4FD /* SearchReplicaJourneyUITests.swift */,
+			);
+			path = AppUITests;
+			sourceTree = "<group>";
+		};
+		0D9EF723FB60C0407E450D3E /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				05C3FD9ADDFFACDD673A50B8 /* Modules */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		4A0C8C2271C037859685316D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */,
+				DF09FB39B581100E5F9B6C10 /* ZenbuJapaneseUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7DD9FC8FE5293C0ABF2B6A9E = {
+			isa = PBXGroup;
+			children = (
+				9DF55C21A8674721DB56F09F /* App */,
+				063413ACDB21B263873C40C6 /* AppUITests */,
+				0D9EF723FB60C0407E450D3E /* Packages */,
+				4A0C8C2271C037859685316D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9DF55C21A8674721DB56F09F /* App */ = {
+			isa = PBXGroup;
+			children = (
+				A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 376F81E60ED620D541A9BF80 /* Build configuration list for PBXNativeTarget "ZenbuJapanese" */;
+			buildPhases = (
+				E0343DFD8725F6F5A7D4FFEB /* Sources */,
+				A108F17A14E04A2AA1B1C108 /* Copy canonical Image Text fixtures for Debug */,
+				F38B6861CA6A9754CF93F50B /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ZenbuJapanese;
+			packageProductDependencies = (
+				71B99CFA03F259B063FB7CC8 /* LookupReplica */,
+			);
+			productName = ZenbuJapanese;
+			productReference = 0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */;
+			productType = "com.apple.product-type.application";
+		};
+		74E6EB6E486E0D87C41A29EF /* ZenbuJapaneseUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EDBC69958BCF045E2538AB1C /* Build configuration list for PBXNativeTarget "ZenbuJapaneseUITests" */;
+			buildPhases = (
+				BE6C879A06C68F6BA68D11EC /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				558FCB24A873D7915BDC7939 /* PBXTargetDependency */,
+			);
+			name = ZenbuJapaneseUITests;
+			packageProductDependencies = (
+			);
+			productName = ZenbuJapaneseUITests;
+			productReference = DF09FB39B581100E5F9B6C10 /* ZenbuJapaneseUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DE54BDCD4DF440D8324A14C7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					74E6EB6E486E0D87C41A29EF = {
+						TestTargetID = 5CD4552D207F8AC0D2D15CD6;
+					};
+				};
+			};
+			buildConfigurationList = 97B2AC49734AFE2BBEF5FB5F /* Build configuration list for PBXProject "ZenbuJapanese" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7DD9FC8FE5293C0ABF2B6A9E;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F698BDE3E0CBD1F06DBBB2DD /* XCLocalSwiftPackageReference "Modules" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */,
+				74E6EB6E486E0D87C41A29EF /* ZenbuJapaneseUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		A108F17A14E04A2AA1B1C108 /* Copy canonical Image Text fixtures for Debug */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/../../docs/clone-discovery/nihongo/fixtures/image-text/fixture-clear-horizontal.png",
+				"$(SRCROOT)/../../docs/clone-discovery/nihongo/fixtures/image-text/fixture-vertical.png",
+				"$(SRCROOT)/../../docs/clone-discovery/nihongo/fixtures/image-text/fixture-sparse.png",
+				"$(SRCROOT)/../../docs/clone-discovery/nihongo/fixtures/image-text/fixture-noisy-horizontal.png",
+				"$(SRCROOT)/../../docs/clone-discovery/nihongo/fixtures/image-text/fixture-empty.png",
+			);
+			name = "Copy canonical Image Text fixtures for Debug";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/canonical-image-text-fixtures.stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  fixture_source=\"$SRCROOT/../../docs/clone-discovery/nihongo/fixtures/image-text\"\n  fixture_target=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/ImageTextFixtures\"\n  mkdir -p \"$fixture_target\"\n  for fixture in fixture-clear-horizontal.png fixture-vertical.png fixture-sparse.png fixture-noisy-horizontal.png fixture-empty.png; do\n    /bin/cp \"$fixture_source/$fixture\" \"$fixture_target/$fixture\"\n  done\nfi\n/usr/bin/touch \"$DERIVED_FILE_DIR/canonical-image-text-fixtures.stamp\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BE6C879A06C68F6BA68D11EC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0739C012E20A0C475890D563 /* SearchReplicaJourneyUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E0343DFD8725F6F5A7D4FFEB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EE0568414863DA5F77D21D34 /* ZenbuJapaneseApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		558FCB24A873D7915BDC7939 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */;
+			targetProxy = F4546BE4A238535E6E3823A6 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		25190180A86666276E995B60 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.replica;
+				PRODUCT_NAME = "Zenbu Japanese";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		31FFACF69CF88F89569076F1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		55E42747FECDFDE4DF085291 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.replica.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ZenbuJapanese;
+			};
+			name = Release;
+		};
+		60C92A3537177945EB0DABD3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.replica.uitests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ZenbuJapanese;
+			};
+			name = Debug;
+		};
+		90793D271909E1FB3A90A7FC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.replica;
+				PRODUCT_NAME = "Zenbu Japanese";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		F965802A2122DF568F3563A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		376F81E60ED620D541A9BF80 /* Build configuration list for PBXNativeTarget "ZenbuJapanese" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				90793D271909E1FB3A90A7FC /* Debug */,
+				25190180A86666276E995B60 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		97B2AC49734AFE2BBEF5FB5F /* Build configuration list for PBXProject "ZenbuJapanese" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F965802A2122DF568F3563A7 /* Debug */,
+				31FFACF69CF88F89569076F1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		EDBC69958BCF045E2538AB1C /* Build configuration list for PBXNativeTarget "ZenbuJapaneseUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				60C92A3537177945EB0DABD3 /* Debug */,
+				55E42747FECDFDE4DF085291 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		F698BDE3E0CBD1F06DBBB2DD /* XCLocalSwiftPackageReference "Modules" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Modules;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		71B99CFA03F259B063FB7CC8 /* LookupReplica */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LookupReplica;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = DE54BDCD4DF440D8324A14C7 /* Project object */;
+}

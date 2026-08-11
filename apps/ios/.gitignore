@@ -1,0 +1,11 @@
+.derivedData/
+Modules/.build/
+Modules/.swiftpm/
+xcuserdata/
+
+# Reproducible pinned upstream snapshots. Source metadata, checksums, importers,
+# generated manifests, and distributable license texts remain versioned.
+LanguageData/Sources/*.gz
+LanguageData/Sources/*.bz2
+LanguageData/Sources/*.zip
+LanguageData/Sources/*.sqlite

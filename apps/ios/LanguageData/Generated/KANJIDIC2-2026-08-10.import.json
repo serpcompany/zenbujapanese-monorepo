@@ -1,0 +1,54 @@
+{
+  "source": {
+    "resource_id": "SOURCE-COMPONENT-KANJIDIC2",
+    "identity": "EDRDG KANJIDIC2",
+    "snapshot": "2026-08-10",
+    "download_url": "https://www.edrdg.org/pub/Nihongo/kanjidic2.xml.gz",
+    "fetched_at_utc": "2026-08-10T21:02:53Z",
+    "http_last_modified": "Mon, 10 Aug 2026 03:30:34 GMT",
+    "http_etag": "\"16b6b3-658a8fa24822b\"",
+    "compressed_bytes": 1488563,
+    "sha256": "0801e3e8f2f5ab23cd428840bbc6508445087a42a187781891b6c4d7e98e05d8",
+    "file_version": "4",
+    "database_version": "2026-222",
+    "license": "EDRDG general dictionary licence (CC BY-SA 4.0)",
+    "license_url": "https://www.edrdg.org/edrdg/licence.html",
+    "documentation_url": "https://www.edrdg.org/wiki/index.php/KANJIDIC_Project"
+  },
+  "transform": {
+    "identity": "edrdg-kanjidic2-radicals-to-zenbu-kanji-reference-data-v1",
+    "header": {
+      "fileVersion": "4",
+      "databaseVersion": "2026-222",
+      "dateOfCreation": "2026-08-10"
+    },
+    "entry_count": 13108,
+    "entries_with_meanings": 10384,
+    "entries_with_readings": 12357,
+    "entries_with_components": 6355,
+    "retained_fields": [
+      "literal",
+      "radical/rad_value[@rad_type='classical']",
+      "misc/grade",
+      "misc/stroke_count",
+      "misc/freq",
+      "misc/jlpt",
+      "reading_meaning/rmgroup/reading[@r_type='ja_on' or @r_type='ja_kun']",
+      "reading_meaning/rmgroup/meaning[not(@m_lang) or @m_lang='en']",
+      "reading_meaning/nanori"
+    ],
+    "excluded_fields": [
+      "reading status attributes",
+      "query_code (including commercial-incompatible SKIP fields)",
+      "non-English meanings",
+      "non-Japanese readings",
+      "dictionary-reference identifiers"
+    ],
+    "metadata_source_sha256": "0801e3e8f2f5ab23cd428840bbc6508445087a42a187781891b6c4d7e98e05d8",
+    "component_artifact_sha256": "f7c9eed0f56739c79e7970af916567fbe9d7c04ab084dbc24fac4bd0a6bd2a3c",
+    "import_tool_sha256": "96cebe8826933e9b6841a7230bfe234c227da4e5e414dcde9c9f367cfc017af9",
+    "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
+    "artifact_sha256": "425d44716b5429a423d97f0e70ff7bf8f7465c65fa5ebdd58c28020155816845",
+    "artifact_bytes": 4045598
+  }
+}

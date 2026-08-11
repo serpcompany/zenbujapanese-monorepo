@@ -1,0 +1,22 @@
+{
+  "resource_id": "zenbu-word-relationships-v1",
+  "identity": "zenbu.editorial.word-relationships.v1",
+  "version": 1,
+  "description": "Human-reviewed app-owned lexical relationships. Each directional fact is reviewed before promotion; no relationship is inferred at import or runtime.",
+  "facts": [
+    {
+      "source": "見る",
+      "sourceRecordID": "1259290",
+      "target": "見える",
+      "targetRecordID": "1259140",
+      "relation": "Related intransitive verb"
+    },
+    {
+      "source": "見える",
+      "sourceRecordID": "1259140",
+      "target": "見る",
+      "targetRecordID": "1259290",
+      "relation": "Related transitive verb"
+    }
+  ]
+}

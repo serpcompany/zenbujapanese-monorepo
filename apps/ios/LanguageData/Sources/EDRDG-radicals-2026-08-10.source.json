@@ -1,0 +1,31 @@
+{
+  "resource_id": "SOURCE-COMPONENT-EDRDG-RADICALS",
+  "snapshot": "2026-08-10",
+  "fetched_at_utc": "2026-08-10T13:45:50Z",
+  "sources": [
+    {
+      "identity": "EDRDG KRADFILE",
+      "role": "canonical visible-component membership",
+      "download_url": "https://www.edrdg.org/pub/Nihongo/kradfile.gz",
+      "encoding": "EUC-JP",
+      "http_last_modified": "Mon, 10 Aug 2026 03:30:03 GMT",
+      "http_etag": "\"b8c5-658a8f8461be5\"",
+      "compressed_bytes": 47301,
+      "sha256": "0c5487c1de77e36ffb5bde652f469f2de9c52efc8320137c115506f3500e9c5f"
+    },
+    {
+      "identity": "EDRDG RADKFILE",
+      "role": "stroke-count metadata and inversion integrity check",
+      "download_url": "https://www.edrdg.org/pub/Nihongo/radkfile.gz",
+      "encoding": "EUC-JP",
+      "http_last_modified": "Mon, 10 Aug 2026 03:30:03 GMT",
+      "http_etag": "\"9fb7-658a8f8460c45\"",
+      "compressed_bytes": 40887,
+      "sha256": "20baf276a98173466c29c373668e044719809f510487695fe40abfd0269a004e"
+    }
+  ],
+  "license": "EDRDG general dictionary licence (CC BY-SA 4.0)",
+  "license_url": "https://www.edrdg.org/edrdg/licence.html",
+  "documentation_url": "https://www.edrdg.org/krad/kradinf.html",
+  "upstream_snapshot_marker": "kraddate: 2026-08-10"
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "captureMethod": "settled-frame simctl capture during the focused public UI test after the complete-suite gate",
+        "deviceId": "D6AF102E-0CF9-4DA8-8E7D-1AA7B67B723A",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "052BC3DA-7D88-4248-8F69-CEA7B0C6B9CD.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "word-detail-note-restored-after-navigation_settled.png",
+        "timestamp": 1786394879.0
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testEditedWordNotePersistsWhenTheEntryIsReopened()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testEditedWordNotePersistsWhenTheEntryIsReopened"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "6E13A08D-3D53-4A51-91BC-114435CC3E20.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "word-note-back-autosaved_0_B8B05784-EC94-4FFA-877C-2CC0DAC4C82B.png",
+        "timestamp": 1786393414.321
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testEmptyWordNoteDoneIsANoOpAndBackAutosavesPopulatedText()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testEmptyWordNoteDoneIsANoOpAndBackAutosavesPopulatedText"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "captureMethod": "settled-frame simctl capture during the focused public UI test after the complete-suite gate",
+        "exportedFileName": "89C6A5B5-5071-4075-A71A-7AB2E86DFCBA.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "word-note-restored-empty_settled.png",
+        "timestamp": 1786395230.0
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "96A7F606-9CB2-4BA9-8DAC-8D390EE4E632.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "word-note-cold-relaunch-persisted_0_9A2F845F-40BC-40E1-A2E1-50621606E73F.png",
+        "timestamp": 1786394161.809
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "1961DD4C-BE6B-4618-B88F-9FFD6712540E.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "word-note-saved_0_C17A8902-F016-4C72-A808-3050DD7BF5F2.png",
+        "timestamp": 1786394144.67
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "captureMethod": "settled-frame simctl capture during the focused public UI test after the complete-suite gate",
+        "deviceId": "D6AF102E-0CF9-4DA8-8E7D-1AA7B67B723A",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "2368CF22-C64D-4765-9601-EFCB46315222.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "word-note-editor-populated_settled.png",
+        "timestamp": 1786394740.0
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "30826A77-925C-4548-B564-ADD8C6CA9E1F.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "word-note-editor-empty_0_6D015534-6DEE-4D0A-AEB8-42DA90BDE80E.png",
+        "timestamp": 1786394134.028
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted"
+  }
+]

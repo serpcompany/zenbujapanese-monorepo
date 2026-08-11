@@ -1,0 +1,26 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName" : "iPhone 17 Pro Max",
+        "exportedFileName" : "3C528D73-EDA2-4547-9D78-4DE1168F5AED.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "pronunciation-example-after-settle_0_546B4BCC-F2AD-42AB-B008-536A897A11C3.png",
+        "timestamp" : 1786386601.808
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName" : "iPhone 17 Pro Max",
+        "exportedFileName" : "059E20B4-EE4B-42E6-B0B4-C68C4C15AE91.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "pronunciation-word-after-settle_0_D1CAB9E1-3705-4280-9AAD-149F119CE917.png",
+        "timestamp" : 1786386588.063
+      }
+    ],
+    "testIdentifier" : "SearchReplicaJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()",
+    "testIdentifierURL" : "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech"
+  }
+]

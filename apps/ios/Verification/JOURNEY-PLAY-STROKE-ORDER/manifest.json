@@ -1,0 +1,89 @@
+[
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "C27F204E-4A91-49E0-BFBA-D09EBEFEAC79.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "stroke-order-source-recovered_0_29F45CDD-7BC7-4F37-8632-F1998EE0E5CA.png",
+        "timestamp": 1786405560.876
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "C24658FD-0E97-4A9D-BA17-72C7763E7216.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "stroke-order-source-failure-retry_0_19631B2D-8707-4826-9D94-F2397464C730.png",
+        "timestamp": 1786405553.945
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testKanjiStrokeOrderFailureOffersRetryAndRecovers()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testKanjiStrokeOrderFailureOffersRetryAndRecovers"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "E58112AD-9D3C-4EA9-9CA6-0A8D0A0BCD04.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "stroke-order-cold-relaunch-search-root_0_0AFBA461-9CD3-41F5-8998-38DE9D2EF904.png",
+        "timestamp": 1786404402.409
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "3D1BA180-3509-44A0-B3C8-377028C24A46.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "stroke-order-ichi-complete_0_E2125A3E-1451-4975-AA58-EC0E4BA9ECB6.png",
+        "timestamp": 1786405129.137
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testKanjiStrokeOrderOneStrokeCompletesAndColdRelaunchReturnsToSearch()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testKanjiStrokeOrderOneStrokeCompletesAndColdRelaunchReturnsToSearch"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "E43A3D2F-7CB9-4CD2-82D0-79B5E3AF72A3.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "stroke-order-utsu-complete_0_769380B3-8624-4430-9A8A-57E025365709.png",
+        "timestamp": 1786405173.525
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "D840B9E6-32EA-4770-865B-9EBACDC3ABA4.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "stroke-order-utsu-paused_0_0A064313-8A1C-478C-B758-546AEF3D2A59.png",
+        "timestamp": 1786404424.043
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testKanjiStrokeOrderPlayPausesResumesAndCompletesLongDiagram()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testKanjiStrokeOrderPlayPausesResumesAndCompletesLongDiagram"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "FF700FE6-8F4B-4F08-80A3-BBE0DFC1DEE5.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "stroke-order-sou-initial-after-step-back_0_F2916A9D-B88E-4E5A-846C-9355E98F288B.png",
+        "timestamp": 1786404324.638
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testKanjiStrokeOrderStepsForwardAndBackThenClosesToKanjiDetail()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testKanjiStrokeOrderStepsForwardAndBackThenClosesToKanjiDetail"
+  }
+]

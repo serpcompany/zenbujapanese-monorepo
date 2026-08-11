@@ -1,0 +1,65 @@
+[
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "036A60F7-222A-4770-96E0-689E3F5151EB.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "kanji-element-role-linked-back-restored",
+        "timestamp": 1786413603.48
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testEveryRenderedKanjiElementRoleRowUsesPublicKanjiNavigation()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testEveryRenderedKanjiElementRoleRowUsesPublicKanjiNavigation"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "408AB578-5263-48FE-B368-A75C9BA14C12.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "kanji-element-back-restores-shizu",
+        "timestamp": 1786413911.04
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "D4C04F4F-F1BA-418E-A118-0784B9141097.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "kanji-element-traditional-sou-scrolled",
+        "timestamp": 1786413296.67
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "A8073CF6-0151-477F-8914-0005936DC9D8.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "kanji-element-shizu-entry",
+        "timestamp": 1786413879.413
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testKanjiElementAlternativeStandaloneAndNestedBackRestoreEveryPriorState()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testKanjiElementAlternativeStandaloneAndNestedBackRestoreEveryPriorState"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "3B6E5D69-27D5-4782-90FD-B4C9186AF8B6.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "kanji-element-source-recovered",
+        "timestamp": 1786413333.873
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testKanjiElementFailureOffersRetryAndRecoversFromTheLiveSource()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testKanjiElementFailureOffersRetryAndRecoversFromTheLiveSource"
+  }
+]

@@ -1,0 +1,46 @@
+name: Language data upstream check
+
+on:
+  schedule:
+    - cron: "0 0 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare-pinned-snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Compare official JMdict export with the pinned snapshot
+        run: >-
+          python3 apps/ios/Tools/check_language_data_update.py
+          apps/ios/LanguageData/Sources/JMdict_e-2026-08-10.source.json
+      - name: Compare official KANJIDIC2 export with the pinned snapshot
+        run: >-
+          python3 apps/ios/Tools/check_language_data_update.py
+          apps/ios/LanguageData/Sources/KANJIDIC2-2026-08-10.source.json
+      - name: Compare official radical exports with the pinned snapshot
+        run: >-
+          python3 apps/ios/Tools/check_language_data_update.py
+          apps/ios/LanguageData/Sources/EDRDG-radicals-2026-08-10.source.json
+      - name: Compare official KanjiVG release with the pinned snapshot
+        run: >-
+          python3 apps/ios/Tools/check_language_data_update.py
+          apps/ios/LanguageData/Sources/KanjiVG-2025-08-16.source.json
+      - name: Compare Kanjium with the pinned snapshot
+        run: >-
+          python3 apps/ios/Tools/check_language_data_update.py
+          apps/ios/LanguageData/Sources/Kanjium-8a0cdaa.source.json
+      - name: Compare official UniDic archive with the pinned snapshot
+        run: >-
+          python3 apps/ios/Tools/check_language_data_update.py
+          apps/ios/LanguageData/Sources/UniDic-CWJ-3.1.0.source.json
+      - name: Compare official Tatoeba exports with the pinned snapshot
+        run: >-
+          python3 apps/ios/Tools/check_language_data_update.py
+          apps/ios/LanguageData/Sources/Tatoeba-2026-08-08.source.json

@@ -1,0 +1,17 @@
+{
+  "resource_id": "SOURCE-KANJI-ELEMENT-KANJIUM",
+  "identity": "Kanjium",
+  "snapshot": "8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6",
+  "download_url": "https://raw.githubusercontent.com/mifunetoshiro/kanjium/8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6/data/kanjidb.sqlite",
+  "latest_snapshot_url": "https://api.github.com/repos/mifunetoshiro/kanjium/commits?per_page=1",
+  "commit_url": "https://github.com/mifunetoshiro/kanjium/commit/8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6",
+  "committed_at_utc": "2024-06-16T18:45:56Z",
+  "fetched_at_utc": "2026-08-11T00:36:00Z",
+  "bytes": 37519360,
+  "sha256": "793a4e80fd1da3155a2ec9cf69db7376f46283ece5cb877a65f5d02557ed3613",
+  "license": "CC BY-SA 4.0",
+  "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "license_file": "KANJIUM-CC-BY-SA-4.0.txt",
+  "license_sha256": "638cc6f2d958b1add3883e8d5d73e32ae999ecdc0a4b4d1a83994b3d5b8e69e9",
+  "attribution": "Kanjium additions and modifications by Uros O.; EDRDG-derived fields retain EDRDG attribution."
+}

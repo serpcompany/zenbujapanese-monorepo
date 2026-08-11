@@ -1,0 +1,53 @@
+{
+  "source": {
+    "resource_id": "SOURCE-COMPONENT-KANJIVG",
+    "identity": "KanjiVG",
+    "snapshot": "r20250816",
+    "download_url": "https://github.com/KanjiVG/kanjivg/releases/download/r20250816/kanjivg-20250816.xml.gz",
+    "release_url": "https://github.com/KanjiVG/kanjivg/releases/tag/r20250816",
+    "released_at_utc": "2025-08-16T07:56:32Z",
+    "fetched_at_utc": "2026-08-10T23:02:41Z",
+    "compressed_bytes": 3608178,
+    "sha256": "b36579789775ea912d5e98356bf243f54fb953fa3b58a16c2d6995f252e2a3e2",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "license_file": "KANJIVG-CC-BY-SA-3.0.txt",
+    "license_sha256": "d255e07978fd16ddfec38bc59dc9d857b885dd44ddbf4e79baf207d30746bdcc",
+    "copyright": "Copyright (C) 2009-2013 Ulrich Apel",
+    "attribution": "Uses KanjiVG by Ulrich Apel",
+    "documentation_url": "https://kanjivg.tagaini.net/"
+  },
+  "transform": {
+    "identity": "kanjivg-to-zenbu-stroke-diagrams-v1",
+    "artifact_schema": "zenbu.kanji-stroke-diagrams.v1",
+    "entry_count": 6430,
+    "stroke_count": 79180,
+    "viewport_size": 109,
+    "fixture_stroke_counts": {
+      "一": 1,
+      "争": 6,
+      "鬱": 29
+    },
+    "retained_fields": [
+      "kanji scalar identity",
+      "ordered path geometry"
+    ],
+    "excluded_fields": [
+      "KanjiVG component grouping and element labels",
+      "stroke type labels",
+      "radical annotations",
+      "variant SVG files"
+    ],
+    "modifications": [
+      "filtered the legacy combined release to Unicode ideographs",
+      "normalized relative and smooth SVG path commands to absolute cubic geometry",
+      "encoded geometry in the app-owned ordered-stroke SQLite schema"
+    ],
+    "source_sha256": "b36579789775ea912d5e98356bf243f54fb953fa3b58a16c2d6995f252e2a3e2",
+    "license_sha256": "d255e07978fd16ddfec38bc59dc9d857b885dd44ddbf4e79baf207d30746bdcc",
+    "import_tool_sha256": "972488db7feb47b95b5450e1d3d3c687a7c9c6e2dce46fbbfd512b778a35574a",
+    "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
+    "artifact_sha256": "1b9bcd2546759e09e6dd9d9f461fd2e2a89ca739032aac3ebb06e3fde6566f76",
+    "artifact_bytes": 21921792
+  }
+}

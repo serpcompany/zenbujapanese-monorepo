@@ -1,0 +1,16 @@
+{
+  "resource_id": "SOURCE-COMPONENT-UNIDIC",
+  "identity": "UniDic for Contemporary Written Japanese 3.1.0",
+  "version": "3.1.0",
+  "download_url": "https://clrd.ninjal.ac.jp/unidic_archive/cwj/3.1.0/unidic-cwj-3.1.0.zip",
+  "fetched_at_utc": "2026-08-10T14:40:09Z",
+  "http_last_modified": "Mon, 05 Apr 2021 07:19:48 GMT",
+  "http_etag": "\"210e8dd4-5bf3485d3ad00\"",
+  "compressed_bytes": 554601940,
+  "lexicon_bytes": 233538541,
+  "sha256": "340651aa78cc02caf690f94de8809d41c4acda694226517884ecad81c51523fc",
+  "license": "New BSD",
+  "license_file": "UNIDIC-NEW-BSD.txt",
+  "documentation_url": "https://clrd.ninjal.ac.jp/unidic_archive/cwj/3.1.0/",
+  "license_url": "https://clrd.ninjal.ac.jp/unidic_archive/cwj/back_number_en.html"
+}

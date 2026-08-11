@@ -1,0 +1,18 @@
+{
+  "resource_id": "SOURCE-COMPONENT-KANJIVG",
+  "identity": "KanjiVG",
+  "snapshot": "r20250816",
+  "download_url": "https://github.com/KanjiVG/kanjivg/releases/download/r20250816/kanjivg-20250816.xml.gz",
+  "release_url": "https://github.com/KanjiVG/kanjivg/releases/tag/r20250816",
+  "released_at_utc": "2025-08-16T07:56:32Z",
+  "fetched_at_utc": "2026-08-10T23:02:41Z",
+  "compressed_bytes": 3608178,
+  "sha256": "b36579789775ea912d5e98356bf243f54fb953fa3b58a16c2d6995f252e2a3e2",
+  "license": "CC BY-SA 3.0",
+  "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "license_file": "KANJIVG-CC-BY-SA-3.0.txt",
+  "license_sha256": "d255e07978fd16ddfec38bc59dc9d857b885dd44ddbf4e79baf207d30746bdcc",
+  "copyright": "Copyright (C) 2009-2013 Ulrich Apel",
+  "attribution": "Uses KanjiVG by Ulrich Apel",
+  "documentation_url": "https://kanjivg.tagaini.net/"
+}

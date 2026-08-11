@@ -1,0 +1,59 @@
+[
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "89B838DA-7AA4-41AD-9768-63BA158F275E.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "kanji-related-word-back-restores-position_0_8659FD10-900F-43E6-B85B-AA8C02155AAD.png",
+        "timestamp": 1786400587.389
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "838DF519-0F33-46FA-B48A-73DF3897CF12.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "kanji-shizu-elements-and-related-words_0_AF5D6FAC-C7F7-4971-8002-50ADEC586A14.png",
+        "timestamp": 1786400580.679
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "5FE16ACA-7078-4C5B-9B35-DBD870CD7131.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "kanji-related-word-seijaku-detail_0_3173EF77-9251-4B0B-ABFC-CE3BAFF508D9.png",
+        "timestamp": 1786401026.345
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testKanjiDetailRelatedWordOpensWordDetailAndBackRestoresPosition()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testKanjiDetailRelatedWordOpensWordDetailAndBackRestoresPosition"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "C8C0540E-54E7-4EEF-B0B3-1FF75A4449D3.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "kanji-back-restores-shizuka-word-detail_0_5C23A27B-A835-4A0E-9171-2DCCF92103F8.png",
+        "timestamp": 1786400603.972
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "7522DACE-55A4-4AE1-8785-E412267452E4.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "kanji-shizu-source-backed-top_0_3DC5E8A8-B840-4BC3-8FB4-F0AB03C1C86B.png",
+        "timestamp": 1786400599.942
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings"
+  }
+]

@@ -1,0 +1,40 @@
+{
+  "resource_id": "SOURCE-COMPONENT-TATOEBA",
+  "identity": "Tatoeba Japanese-English weekly export 2026-08-08",
+  "snapshot_date": "2026-08-08",
+  "fetched_at_utc": "2026-08-10T14:55:03Z",
+  "license": "CC BY 2.0 FR",
+  "license_url": "https://creativecommons.org/licenses/by/2.0/fr/",
+  "documentation_url": "https://tatoeba.org/en/downloads",
+  "aggregate_sha256": "2799d411d99bd023044303fd3b2554a9e391401a04492e508ad1cd53c0304961",
+  "aggregate_method": "SHA-256 of the three ordered source SHA-256 values, each followed by LF",
+  "sources": [
+    {
+      "role": "japanese_sentences",
+      "identity": "Tatoeba Japanese sentences",
+      "download_url": "https://downloads.tatoeba.org/exports/per_language/jpn/jpn_sentences.tsv.bz2",
+      "http_last_modified": "Sat, 08 Aug 2026 06:29:57 GMT",
+      "http_etag": "\"6a76cce5-3422f7\"",
+      "compressed_bytes": 3416823,
+      "sha256": "62c2ba106de8de3d9b8968156de28fbfd993de6e65772a44e586b5e872f0634a"
+    },
+    {
+      "role": "english_sentences",
+      "identity": "Tatoeba English sentences",
+      "download_url": "https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences.tsv.bz2",
+      "http_last_modified": "Sat, 08 Aug 2026 06:29:57 GMT",
+      "http_etag": "\"6a76cce5-17aa06f\"",
+      "compressed_bytes": 24813679,
+      "sha256": "34fc76cc177ca65b56cb3b966a2b8f33efd8a1b0551eb855f31b5ab940d05e60"
+    },
+    {
+      "role": "japanese_english_links",
+      "identity": "Tatoeba Japanese-English links",
+      "download_url": "https://downloads.tatoeba.org/exports/per_language/jpn/jpn-eng_links.tsv.bz2",
+      "http_last_modified": "Sat, 08 Aug 2026 06:39:45 GMT",
+      "http_etag": "\"6a76cf31-163125\"",
+      "compressed_bytes": 1454373,
+      "sha256": "176eaaa0cb44006af0c99823e4e110c10568aa35bd4cb6f87dd5826d3e3bbca4"
+    }
+  ]
+}

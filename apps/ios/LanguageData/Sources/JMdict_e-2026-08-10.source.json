@@ -1,0 +1,15 @@
+{
+  "resource_id": "SOURCE-COMPONENT-JMDICT",
+  "identity": "JMdict English export",
+  "download_url": "https://www.edrdg.org/pub/Nihongo/JMdict_e.gz",
+  "fetched_at_utc": "2026-08-10T10:55:52Z",
+  "http_last_modified": "Mon, 10 Aug 2026 03:30:21 GMT",
+  "http_etag": "\"a0ddb6-658a8f95eb0e9\"",
+  "compressed_bytes": 10542518,
+  "sha256": "54a6ecce385de30776e842b18ca62da7a60dfd923dc5b1f8101ce37f528e1d5e",
+  "dtd_revision": "1.09",
+  "included_gloss_languages": ["eng"],
+  "license": "EDRDG general dictionary licence (CC BY-SA 4.0)",
+  "license_url": "https://www.edrdg.org/edrdg/licence.html",
+  "documentation_url": "https://www.edrdg.org/jmdict/j_jmdict.html"
+}

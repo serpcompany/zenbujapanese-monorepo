@@ -1,0 +1,119 @@
+[
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "1CE6EE47-63F9-4DA1-9241-058A669B4245.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "handwriting-common-kanji-results_0_8F03DB46-E8B6-48D4-8FC3-5D1CB9CAFD25.png",
+        "timestamp": 1786368903.07
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "9FC1D8AA-BB88-474F-A808-AC7CF6865C2D.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "handwriting-candidates-first-character_0_BEE964FE-D0DC-4DE5-8CE6-D81E90C3B2B0.png",
+        "timestamp": 1786368895.607
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testHandwritingCandidatesComposeCommonKanjiAndEnterHistory()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testHandwritingCandidatesComposeCommonKanjiAndEnterHistory"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "A50CAB14-D320-4384-84E7-BB34751F645F.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "radical-grouped-grid-from-handwriting_0_B172275E-48F9-4409-8B52-52FE606FB554.png",
+        "timestamp": 1786368917.653
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "1D8D25D8-1136-4F65-A0F4-6718AF080814.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "handwriting-erased-app-owned-drawing_0_1F8DC4AD-0446-48F9-91CB-1A1E9E0BC8F7.png",
+        "timestamp": 1786368914.64
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testHandwritingEraseClearsPendingDrawingAndModeControlsNavigate()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testHandwritingEraseClearsPendingDrawingAndModeControlsNavigate"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "64379A26-4DE4-4358-AFDD-3B46E535A0F4.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "handwriting-no-candidates-app-owned-state_0_5068979B-F271-4AD8-9520-E9F33F94F79F.png",
+        "timestamp": 1786368929.837
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testHandwritingNoCandidateStateRecoversAfterEraseAndRedraw()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testHandwritingNoCandidateStateRecoversAfterEraseAndRedraw"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "B0C3E6D5-93ED-4BAB-ADCA-EA4AD64E7391.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "handwriting-pending-stroke-discovered-words_0_507DD568-6AA7-43C1-9D01-A2FF5911F1FF.png",
+        "timestamp": 1786368945.315
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testHandwritingSearchIncludesPendingRecognizedStroke()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testHandwritingSearchIncludesPendingRecognizedStroke"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "1B8843E7-4AF8-4B65-B125-D00E32AAE4FB.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "handwriting-live-offline-candidate_0_029D57F4-CA6E-4056-BCCD-31D5239BC70B.png",
+        "timestamp": 1786368975.173
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testLiveHandwritingRecognitionProducesCandidatesForSyntheticKanji()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testLiveHandwritingRecognitionProducesCandidatesForSyntheticKanji"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "D0BBDF4D-42B5-456E-B46A-9DDAD858F9DA.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "handwriting-single-kanji-detail_0_926978A1-AB8E-407A-BCF9-C1657F9D7045.png",
+        "timestamp": 1786369055.666
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "2BB02C0D-BD47-4105-B774-9F4D98F299E9.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "handwriting-single-kanji-results_0_54FD3704-579A-43CB-B67F-C04448C1D454.png",
+        "timestamp": 1786369053.764
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testSelectedHandwritingCandidateSubmitsSingleKanji()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testSelectedHandwritingCandidateSubmitsSingleKanji"
+  }
+]

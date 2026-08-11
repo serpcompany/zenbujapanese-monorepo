@@ -1,0 +1,46 @@
+{
+  "source": {
+    "resource_id": "SOURCE-KANJI-ELEMENT-KANJIUM",
+    "identity": "Kanjium",
+    "snapshot": "8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6",
+    "download_url": "https://raw.githubusercontent.com/mifunetoshiro/kanjium/8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6/data/kanjidb.sqlite",
+    "latest_snapshot_url": "https://api.github.com/repos/mifunetoshiro/kanjium/commits?per_page=1",
+    "commit_url": "https://github.com/mifunetoshiro/kanjium/commit/8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6",
+    "committed_at_utc": "2024-06-16T18:45:56Z",
+    "fetched_at_utc": "2026-08-11T00:36:00Z",
+    "bytes": 37519360,
+    "sha256": "793a4e80fd1da3155a2ec9cf69db7376f46283ece5cb877a65f5d02557ed3613",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "license_file": "KANJIUM-CC-BY-SA-4.0.txt",
+    "license_sha256": "638cc6f2d958b1add3883e8d5d73e32ae999ecdc0a4b4d1a83994b3d5b8e69e9",
+    "attribution": "Kanjium additions and modifications by Uros O.; EDRDG-derived fields retain EDRDG attribution."
+  },
+  "transform": {
+    "identity": "kanjium-and-kanji-reference-to-zenbu-elements-v1",
+    "artifactSchema": "zenbu.kanji-elements.v1",
+    "elementCount": 1698,
+    "kanjiWithElements": 6656,
+    "relationshipCount": 14874,
+    "alternativeRelationshipCount": 1238,
+    "kanjiumSourceSha256": "793a4e80fd1da3155a2ec9cf69db7376f46283ece5cb877a65f5d02557ed3613",
+    "kanjiReferenceSha256": "425d44716b5429a423d97f0e70ff7bf8f7465c65fa5ebdd58c28020155816845",
+    "kanjiReferenceManifestSha256": "7799d9489d8430e53946e61263d1801c3e8e756ccac90175f4e719d56daf30d6",
+    "kanjiReferenceArtifactSha256": "425d44716b5429a423d97f0e70ff7bf8f7465c65fa5ebdd58c28020155816845",
+    "importToolSha256": "ffdafb5a06398809206926495f478ea6a8976f8b310faf70599c98b6f96c2bd9",
+    "sharedToolingSha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
+    "artifactSha256": "ec160ef29ddd5bd4a81835605a8d240af31140cc695a05eaace83a79a8e8a423",
+    "artifactBytes": 1561664,
+    "retainedFields": [
+      "normalized top-level element membership",
+      "element variant relationships",
+      "explicit phonetic-element annotation",
+      "app-owned kanji meaning and on-reading summaries"
+    ],
+    "excludedFields": [
+      "Kanjium pitch accent and lexical tables",
+      "provider-specific element lookup encoding",
+      "mnemonics and proprietary etymology explanations"
+    ]
+  }
+}

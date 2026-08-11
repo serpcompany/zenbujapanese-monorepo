@@ -1,0 +1,89 @@
+[
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "D5AB8EB4-AEF3-4BDF-A7B1-AD9F4E107C03.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "radical-unselected-stroke-groups.png",
+        "timestamp": 1786371572.327
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "BE02536A-8871-4B32-B5A3-D167F404A3D1.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "radical-single-selection-broad-candidates.png",
+        "timestamp": 1786371576.908
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "1743DCEB-CDCF-4673-AA7F-6673ABB72AE4.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "radical-multiple-selection-narrow-candidates.png",
+        "timestamp": 1786371577.78
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testRadicalSelectionNarrowsAndRemovalBroadensRealCandidates()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testRadicalSelectionNarrowsAndRemovalBroadensRealCandidates"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "77895FFB-B38F-4A9B-8E3C-CC54C0C5852A.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "radical-yabu-candidate-selected.png",
+        "timestamp": 1786371551.603
+      },
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "BE9FF2AC-4EAC-451F-B7BA-C5562ABFA61A.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "radical-yabu-kanji-primary-results.png",
+        "timestamp": 1786371553.193
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testRadicalCandidateSubmitsKanjiResultAndEntersHistory()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testRadicalCandidateSubmitsKanjiResultAndEntersHistory"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "576D452B-C817-4F68-A2A8-CE7967D76F68.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "radical-populated-query-still-requires-candidate.png",
+        "timestamp": 1786371562.352
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testRadicalSearchRequiresCandidateWhenEnteringWithPopulatedQuery()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testRadicalSearchRequiresCandidateWhenEnteringWithPopulatedQuery"
+  },
+  {
+    "attachments": [
+      {
+        "configurationName": "Test Scheme Action",
+        "deviceId": "D6C3072F-1C9B-43A4-9C7D-77F8F19A9CA5",
+        "deviceName": "iPhone 17 Pro Max",
+        "exportedFileName": "955BA20E-5709-4271-8BD8-37735951ADD5.png",
+        "isAssociatedWithFailure": false,
+        "suggestedHumanReadableName": "radical-kanji-primary-without-dictionary-row.png",
+        "timestamp": 1786371595.732
+      }
+    ],
+    "testIdentifier": "SearchReplicaJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult()",
+    "testIdentifierURL": "test://com.apple.xcode/ZenbuJapanese/ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult"
+  }
+]
