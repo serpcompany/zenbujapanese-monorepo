@@ -12,7 +12,7 @@ struct SearchView: View {
   let openSources: () -> Void
   let openResult: (DictionaryEntry) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
-  let openExamples: (SearchQuery, DictionaryEntry?) -> Void
+  let openExamples: (SearchQuery, DictionaryEntry?, Bool) -> Void
   let openImageText: ([ImageTextAsset]) -> Void
   let imageImportInitialDirectory: URL?
   @State private var results = LookupSearchResults.empty
@@ -57,7 +57,13 @@ struct SearchView: View {
           selectRefinement: selectRefinement,
           openResult: openResult,
           openKanji: openKanji,
-          openExamples: { openExamples(searchQuery, results.primaryEntry(for: searchQuery)) }
+          openExamples: {
+            openExamples(
+              searchQuery,
+              results.primaryEntry(for: searchQuery),
+              results.usesPrimaryEntryExamples
+            )
+          }
         )
       } else if searchFailed {
         LookupFailureView {
@@ -118,8 +124,16 @@ struct SearchView: View {
         }
         async let searchedResults = lookupClient.search(searchQuery)
         async let searchedExampleCount = exampleSentenceClient.count(searchQuery)
-        results = try await searchedResults
-        exampleCount = (try? await searchedExampleCount) ?? 0
+        let foundResults = try await searchedResults
+        let directExampleCount = (try? await searchedExampleCount) ?? 0
+        results = foundResults
+        if foundResults.usesPrimaryEntryExamples,
+          let entry = foundResults.primaryEntry(for: searchQuery)
+        {
+          exampleCount = (try? await exampleSentenceClient.examples(entry).count) ?? 0
+        } else {
+          exampleCount = directExampleCount
+        }
         hasCompletedSearch = true
       } catch is CancellationError {
         return
@@ -491,74 +505,84 @@ private struct SearchResultsView: View {
   let openExamples: () -> Void
 
   var body: some View {
-    ScrollView {
-      LazyVStack(spacing: 0, pinnedViews: []) {
-        if exampleCount > 0 {
-          Button(action: openExamples) {
-            HStack {
-              Text(exampleActionTitle)
-                .frame(maxWidth: .infinity, alignment: .center)
-              Image(systemName: "chevron.right")
-                .foregroundStyle(.white.opacity(0.3))
-            }
-            .font(.system(size: 18))
-            .foregroundStyle(ReplicaPalette.selectedTab)
-            .padding(.horizontal, 18)
-            .frame(height: 52)
-            .contentShape(Rectangle())
+    VStack(spacing: 0) {
+      if exampleCount > 0 {
+        Button(action: openExamples) {
+          HStack {
+            Text(exampleActionTitle)
+              .frame(maxWidth: .infinity, alignment: .center)
+            Image(systemName: "chevron.right")
+              .foregroundStyle(.white.opacity(0.3))
           }
-          .buttonStyle(.plain)
-          .accessibilityIdentifier("search.examples")
+          .font(.system(size: 18))
+          .foregroundStyle(ReplicaPalette.selectedTab)
+          .padding(.horizontal, 18)
+          .frame(height: 52)
+          .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("search.examples")
+      }
 
-        if let refinement = results.readingRefinement {
-          Button {
-            selectRefinement(refinement)
-          } label: {
-            HStack {
-              Text("Search for「\(refinement.query.value)」")
-                .frame(maxWidth: .infinity, alignment: .center)
-              Image(systemName: "chevron.right")
-                .foregroundStyle(.white.opacity(0.3))
+      ScrollView {
+        LazyVStack(spacing: 0, pinnedViews: []) {
+          if let refinement = results.readingRefinement {
+            Button {
+              selectRefinement(refinement)
+            } label: {
+              HStack {
+                Text("Search for「\(refinement.query.value)」")
+                  .frame(maxWidth: .infinity, alignment: .center)
+                Image(systemName: "chevron.right")
+                  .foregroundStyle(.white.opacity(0.3))
+              }
+              .font(.system(size: 18))
+              .foregroundStyle(ReplicaPalette.selectedTab)
+              .padding(.horizontal, 18)
+              .frame(height: 52)
+              .contentShape(Rectangle())
             }
-            .font(.system(size: 18))
-            .foregroundStyle(ReplicaPalette.selectedTab)
-            .padding(.horizontal, 18)
-            .frame(height: 52)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel("Search for Japanese reading \(refinement.query.value)")
+            .accessibilityIdentifier("search.reading-refinement")
           }
-          .buttonStyle(.plain)
-          .accessibilityLabel("Search for Japanese reading \(refinement.query.value)")
-          .accessibilityIdentifier("search.reading-refinement")
-        }
 
-        if results.presentation == .discoveredWords {
-          ResultSectionHeader(title: "Discovered Words")
-          ForEach(Array((results.best + results.additional).prefix(12).enumerated()), id: \.offset) { index, entry in
-            ResultRow(entry: entry, marker: .additional, rank: .discovered(index + 1)) { openResult(entry) }
-          }
-        } else if query.isSingleKanji || !results.best.isEmpty {
-          ResultSectionHeader(title: "Best Matches")
-          if let character = KanjiCharacter(query.value) {
-            KanjiPrimaryRow(character: character.rawValue, entry: primaryKanjiEntry) {
-              openKanji(character, primaryKanjiEntry)
+          if results.presentation == .discoveredWords {
+            ResultSectionHeader(title: "Discovered Words")
+            ForEach(Array((results.best + results.additional).prefix(12).enumerated()), id: \.offset) {
+              index, entry in
+              ResultRow(entry: entry, marker: .additional, rank: .discovered(index + 1)) {
+                openResult(entry)
+              }
+            }
+          } else if query.isSingleKanji || !results.best.isEmpty {
+            ResultSectionHeader(title: "Best Matches")
+            if let character = KanjiCharacter(query.value) {
+              KanjiPrimaryRow(character: character.rawValue, entry: primaryKanjiEntry) {
+                openKanji(character, primaryKanjiEntry)
+              }
+            }
+            ForEach(Array(results.best.enumerated()), id: \.element.id) { index, entry in
+              ResultRow(entry: entry, marker: .best, rank: .best(index + (query.isSingleKanji ? 2 : 1))) {
+                openResult(entry)
+              }
             }
           }
-          ForEach(Array(results.best.enumerated()), id: \.element.id) { index, entry in
-            ResultRow(entry: entry, marker: .best, rank: .best(index + (query.isSingleKanji ? 2 : 1))) { openResult(entry) }
-          }
-        }
 
-        if showsAdditionalMatches, results.presentation == .ranked, !results.additional.isEmpty {
-          ResultSectionHeader(title: "Additional Matches")
-          ForEach(Array(results.additional.enumerated()), id: \.element.id) { index, entry in
-            ResultRow(entry: entry, marker: .additional, rank: .additional(index + 1)) { openResult(entry) }
+          if showsAdditionalMatches, results.presentation == .ranked, !results.additional.isEmpty {
+            ResultSectionHeader(title: "Additional Matches")
+            ForEach(Array(results.additional.enumerated()), id: \.element.id) { index, entry in
+              ResultRow(entry: entry, marker: .additional, rank: .additional(index + 1)) {
+                openResult(entry)
+              }
+            }
           }
         }
       }
+      .id(query)
+      .scrollIndicators(.hidden)
     }
     .background(.black)
-    .scrollIndicators(.hidden)
   }
 
   private var primaryKanjiEntry: DictionaryEntry? {

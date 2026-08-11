@@ -68,7 +68,9 @@ public struct SearchReplicaRootView: View {
         openSources: { presentedSheet = .sources },
         openResult: { entry in path.append(.word(entry, "Search", nil)) },
         openKanji: openKanji,
-        openExamples: { query, entry in path.append(.examples(query, entry)) },
+        openExamples: { query, entry, usesEntryExamples in
+          path.append(.examples(query, entry, usesEntryExamples))
+        },
         openImageText: { assets in
           let session = ImageTextSession(assets: assets)
           imageTextSessionStore.insert(session)
@@ -120,10 +122,11 @@ public struct SearchReplicaRootView: View {
             openAlternative: { alternative in path.append(.kanjiElement(alternative)) },
             openKanji: { character in openKanji(character, entry: nil) }
           )
-        case .examples(let query, let highlightedEntry):
+        case .examples(let query, let highlightedEntry, let usesEntryExamples):
           ExampleSentencesView(
             query: query,
             highlightedEntry: highlightedEntry,
+            usesHighlightedEntryExamples: usesEntryExamples,
             exampleSentenceClient: .live,
             japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
             speechSynthesisClient: speechSynthesisClient,
@@ -287,7 +290,7 @@ private enum ReplicaRoute: Hashable {
   case word(DictionaryEntry, String, ImageWordContext?)
   case kanji(KanjiCharacter, DictionaryEntry?)
   case kanjiElement(KanjiElementID)
-  case examples(SearchQuery, DictionaryEntry?)
+  case examples(SearchQuery, DictionaryEntry?, Bool)
   case conjugations(DictionaryEntry, ConjugationTable)
   case image(UUID)
 }

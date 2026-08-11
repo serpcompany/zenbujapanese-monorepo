@@ -67,13 +67,36 @@ private actor LanguageReferenceData {
     }
 
     let directResults = try searchOnce(query)
+    if !directResults.hasExactOrPrefixMatch, !query.deinflectedCandidates.isEmpty {
+      var deinflectedBest: [DictionaryEntry] = []
+      for candidate in query.deinflectedCandidates {
+        deinflectedBest.append(contentsOf: try searchOnce(candidate).best)
+      }
+      let uniqueDeinflectedBest = Self.uniqued(deinflectedBest)
+      if !uniqueDeinflectedBest.isEmpty {
+        let directMatches = Self.uniqued(directResults.best + directResults.additional)
+        let bestIDs = Set(uniqueDeinflectedBest.map(\.id))
+        return LookupSearchResults(
+          best: uniqueDeinflectedBest,
+          additional: directMatches.filter { !bestIDs.contains($0.id) },
+          usesPrimaryEntryExamples: true
+        )
+      }
+    }
+    if query.isASCII,
+      !directResults.isEmpty,
+      let exactFormEntry = try entry(matchingForm: query.value),
+      (directResults.best + directResults.additional).contains(where: { $0.id == exactFormEntry.id })
+    {
+      return directResults.usingPrimaryEntryExamples()
+    }
     guard directResults.isEmpty else { return directResults }
     let analyzedResults = try japaneseTextAnalysis.lookupSegments(query).compactMap { segment in
       let segmentResults = try searchOnce(segment)
       return (segmentResults.best + segmentResults.additional).first { $0.headword == segment.value }
         ?? segmentResults.best.first
     }
-    if analyzedResults.count > 1 {
+    if analyzedResults.count > 1 || (query.isMixedScript && !analyzedResults.isEmpty) {
       return LookupSearchResults(
         best: Array(Self.uniqued(analyzedResults)),
         additional: [],
@@ -91,19 +114,6 @@ private actor LanguageReferenceData {
           )
         }
       }
-    }
-    var deinflectedEntries: [DictionaryEntry] = []
-    for candidate in query.deinflectedCandidates {
-      let results = try searchOnce(candidate)
-      deinflectedEntries.append(contentsOf: results.best)
-      deinflectedEntries.append(contentsOf: results.additional)
-    }
-    let uniqueDeinflectedEntries = Self.uniqued(deinflectedEntries)
-    if !uniqueDeinflectedEntries.isEmpty {
-      return LookupSearchResults(
-        best: Array(uniqueDeinflectedEntries.prefix(3)),
-        additional: Array(uniqueDeinflectedEntries.dropFirst(3))
-      )
     }
     return .empty
   }
@@ -170,7 +180,7 @@ private actor LanguageReferenceData {
     if query.isASCII {
       bind(query.value, at: 1, to: statement)
       bind("\(query.value)%", at: 2, to: statement)
-      bind("\(query.value)%", at: 3, to: statement)
+      bind("%\(query.value)%", at: 3, to: statement)
       bindEnglishRanking(query, startingAt: 4, to: statement)
     } else {
       bind(query.value, at: 1, to: statement)
@@ -180,10 +190,14 @@ private actor LanguageReferenceData {
 
     var best: [DictionaryEntry] = []
     var additional: [DictionaryEntry] = []
+    var hasExactOrPrefixMatch = false
+    let bestLimit = query.isASCII ? 3 : 1
     while try checkedSQLiteStep(statement) == .row {
       let entry = try decodeEntry(from: statement)
-      let tier = MatchTier(rawValue: sqlite3_column_int(statement, 17)) ?? .additional
-      if tier == .best, best.count < 3 {
+      let rawTier = sqlite3_column_int(statement, 17)
+      hasExactOrPrefixMatch = hasExactOrPrefixMatch || rawTier <= MatchTier.additional.rawValue
+      let tier = MatchTier(rawValue: rawTier) ?? .additional
+      if tier == .best, best.count < bestLimit {
         best.append(entry)
       } else {
         additional.append(entry)
@@ -194,7 +208,11 @@ private actor LanguageReferenceData {
       best = [first]
       additional.removeFirst()
     }
-    return LookupSearchResults(best: best, additional: additional)
+    return LookupSearchResults(
+      best: best,
+      additional: additional,
+      hasExactOrPrefixMatch: hasExactOrPrefixMatch
+    )
   }
 
   private func prepare(_ sql: String) throws -> OpaquePointer {

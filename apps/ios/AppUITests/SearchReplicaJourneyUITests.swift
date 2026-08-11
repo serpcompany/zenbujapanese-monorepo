@@ -1269,6 +1269,13 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let refinedLeader = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1")).firstMatch
     XCTAssertTrue(refinedLeader.waitForExistence(timeout: 3))
     XCTAssertTrue(refinedLeader.label.contains("日本"))
+    let bestMatches = app.buttons.matching(NSPredicate(format: "value BEGINSWITH %@", "Best match"))
+    XCTAssertEqual(bestMatches.count, 1)
+    let additionalLeader = app.buttons.matching(
+      NSPredicate(format: "value == %@", "Additional match 1")
+    ).firstMatch
+    XCTAssertTrue(additionalLeader.waitForExistence(timeout: 3))
+    XCTAssertTrue(additionalLeader.label.hasPrefix("二本, にほん,"))
     recordScreenshot(named: "search-results-refined-japanese-nihon", app: app)
   }
 
@@ -1372,6 +1379,10 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     )
     XCTAssertEqual(XCTWaiter.wait(for: [normalized], timeout: 3), .completed)
     XCTAssertTrue(app.staticTexts["食べる"].waitForExistence(timeout: 3))
+    let examples = app.buttons["search.examples"]
+    XCTAssertTrue(examples.waitForExistence(timeout: 3))
+    XCTAssertEqual(examples.label, "View 3 Example Sentences")
+    XCTAssertTrue(examples.isHittable)
     XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
     recordScreenshot(named: "search-results-whitespace-normalized-taberu", app: app)
   }
@@ -1489,9 +1500,30 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     searchField.tap()
     searchField.typeText("tabeta")
 
-    XCTAssertTrue(app.staticTexts["食べる"].waitForExistence(timeout: 3))
-    XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
+    let examples = app.buttons["search.examples"]
+    XCTAssertTrue(examples.waitForExistence(timeout: 3))
+    XCTAssertEqual(examples.label, "View 3 Example Sentences")
+    XCTAssertTrue(examples.isHittable)
+    let bestMatchesHeader = app.staticTexts["Best Matches"]
+    XCTAssertTrue(bestMatchesHeader.exists)
+    XCTAssertLessThan(examples.frame.minY, bestMatchesHeader.frame.minY)
     recordScreenshot(named: "search-results-deinflected-tabeta", app: app)
+
+    let bestMatches = app.buttons.matching(NSPredicate(format: "value BEGINSWITH %@", "Best match"))
+    XCTAssertEqual(bestMatches.count, 1)
+    XCTAssertTrue(bestMatches.firstMatch.label.hasPrefix("食べる, たべる,"))
+
+    let additionalLeader = app.buttons.matching(
+      NSPredicate(format: "value == %@", "Additional match 1")
+    ).firstMatch
+    XCTAssertTrue(additionalLeader.waitForExistence(timeout: 3))
+    XCTAssertTrue(additionalLeader.label.hasPrefix("ベタベタ,"))
+    XCTAssertFalse(app.staticTexts["食べるラー油"].exists)
+    XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
+
+    examples.tap()
+    XCTAssertTrue(app.scrollViews["example-list.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.descendants(matching: .any)["example.row.0"].exists)
   }
 
   @MainActor
@@ -1518,7 +1550,12 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     searchField.typeText("にほんabc")
 
     XCTAssertTrue(app.staticTexts["Discovered Words"].waitForExistence(timeout: 3))
-    XCTAssertTrue(app.staticTexts["日本"].exists)
+    let discoveredWords = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Discovered word")
+    )
+    XCTAssertEqual(discoveredWords.count, 1)
+    XCTAssertTrue(discoveredWords.firstMatch.label.hasPrefix("本, ほん,"))
+    XCTAssertFalse(app.staticTexts["日本"].exists)
     XCTAssertFalse(app.staticTexts["Best Matches"].exists)
     XCTAssertFalse(app.staticTexts["Additional Matches"].exists)
     recordScreenshot(named: "search-results-mixed-script-discovered-words", app: app)

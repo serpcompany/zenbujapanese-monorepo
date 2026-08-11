@@ -21,6 +21,15 @@ struct JapaneseTextAnalysisClient: Sendable {
 
   static let characterFallback = JapaneseTextAnalysisClient(
     lookupSegments: { query in
+      if query.isMixedScript {
+        let leadingParticles = ["には", "では", "に", "で", "を", "が", "は", "へ", "と", "も"]
+        return query.japaneseSegments.compactMap { segment in
+          let particle = leadingParticles.first { prefix in
+            segment.value.hasPrefix(prefix) && segment.value.count > prefix.count
+          }
+          return SearchQuery(particle.map { String(segment.value.dropFirst($0.count)) } ?? segment.value)
+        }
+      }
       guard query.value.count > 1 else { return [] }
       let segments = query.value.map { SearchQuery(String($0)) }
       guard segments.allSatisfy({ $0.japaneseSegments == [$0] }) else { return [] }
