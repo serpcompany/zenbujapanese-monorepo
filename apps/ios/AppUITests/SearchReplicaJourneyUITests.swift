@@ -35,7 +35,9 @@ final class SearchReplicaJourneyUITests: XCTestCase {
 
   @MainActor
   func testImageTextFilesSourceOpensThePublicMultipleSelectionPicker() throws {
+    #if DEBUG
     stageImageTextFixtures(["fixture-clear-horizontal.png"])
+    #endif
 
     let app = launchApp()
     let imageSource = app.buttons["search.image-source"]
@@ -171,7 +173,9 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     usePhoto.tap()
 
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 30))
-    XCTAssertTrue(app.staticTexts["image-text.raw-text"].waitForExistence(timeout: 30))
+    let recognized = app.staticTexts["image-text.raw-text"]
+    XCTAssertTrue(recognized.waitForExistence(timeout: 30))
+    XCTAssertTrue(containsJapaneseText(recognized.label), recognized.label)
     #endif
   }
 
@@ -1962,6 +1966,76 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     linkedWorld.tap()
     XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["the world, society, the universe"].exists)
+  }
+
+  @MainActor
+  func testProductionExamplesOpenScrollAndLinkedWordRemainOperable() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    submitSearch("いる", in: app, searchField: searchField)
+
+    let openExamples = app.buttons["search.examples"]
+    XCTAssertTrue(openExamples.waitForExistence(timeout: 4))
+    openExamples.tap()
+
+    let examples = app.scrollViews["example-list.screen"]
+    XCTAssertTrue(examples.waitForExistence(timeout: 4))
+    let linkedKey = app.buttons["example.token.1.0.鍵"]
+    for _ in 0..<4 where !linkedKey.isHittable { examples.swipeUp() }
+    XCTAssertTrue(linkedKey.isHittable)
+    recordSettledScreenshot(named: "production-examples-linked-key", app: app)
+
+    linkedKey.tap()
+    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["鍵"].exists)
+    app.buttons["word-detail.back"].tap()
+    XCTAssertTrue(examples.waitForExistence(timeout: 2))
+    app.buttons["example-list.back"].tap()
+    XCTAssertTrue(openExamples.waitForExistence(timeout: 2))
+  }
+
+  @MainActor
+  func testProductionSpeechControlsRemainOperableAcrossWordAndExamples() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    submitSearch("いる", in: app, searchField: searchField)
+
+    let primaryResult = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1")).firstMatch
+    XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
+    primaryResult.tap()
+    let detail = app.scrollViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+
+    let wordSpeaker = app.buttons["word-detail.pronounce"]
+    XCTAssertTrue(wordSpeaker.isHittable)
+    wordSpeaker.tap()
+    Thread.sleep(forTimeInterval: 2)
+    XCTAssertTrue(wordSpeaker.isHittable)
+
+    let inlineExampleSpeaker = app.buttons["word-detail.example-speaker.1"]
+    for _ in 0..<8 where inlineExampleSpeaker.frame.maxY > app.frame.maxY - 120 {
+      detail.swipeUp()
+    }
+    XCTAssertTrue(inlineExampleSpeaker.isHittable)
+    inlineExampleSpeaker.tap()
+    Thread.sleep(forTimeInterval: 2)
+    XCTAssertTrue(inlineExampleSpeaker.isHittable)
+    recordSettledScreenshot(named: "production-speech-word-and-example", app: app)
+
+    app.buttons["word-detail.back"].tap()
+    XCTAssertTrue(searchField.waitForExistence(timeout: 2))
+    let openExamples = app.buttons["search.examples"]
+    XCTAssertTrue(openExamples.waitForExistence(timeout: 4))
+    openExamples.tap()
+    XCTAssertTrue(app.scrollViews["example-list.screen"].waitForExistence(timeout: 4))
+    let exampleSpeaker = app.buttons["example.speaker.0"]
+    XCTAssertTrue(exampleSpeaker.isHittable)
+    exampleSpeaker.tap()
+    Thread.sleep(forTimeInterval: 2)
+    XCTAssertTrue(exampleSpeaker.isHittable)
+    recordSettledScreenshot(named: "production-speech-example-list", app: app)
   }
 
   @MainActor

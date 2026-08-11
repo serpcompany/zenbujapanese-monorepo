@@ -116,6 +116,37 @@ export function validateExecutionPlan(
       message: `Journey ${journeyId} appears more than once in the execution plan.`,
     });
   }
+  const plannedTestIds = unique((plan.journeys ?? []).flatMap((journey) => journey.test_ids ?? []));
+  const plannedTestIdSet = new Set(plannedTestIds);
+  const declaredEnvironmentIds = new Set(plan.environments ?? []);
+  for (const [environmentId, testIds] of Object.entries(plan.environment_test_ids ?? {})) {
+    if (!declaredEnvironmentIds.has(environmentId)) {
+      errors.push({
+        code: "UNDECLARED_EXECUTION_ENVIRONMENT",
+        message: `Execution plan maps tests for undeclared environment ${environmentId}.`,
+      });
+      continue;
+    }
+    for (const testId of testIds) {
+      if (!plannedTestIdSet.has(testId)) {
+        errors.push({
+          code: "UNKNOWN_ENVIRONMENT_TEST_ID",
+          message: `Execution environment ${environmentId} names unplanned test ${testId}.`,
+        });
+      }
+    }
+  }
+  for (const environmentId of plan.evidence_required_environments ?? []) {
+    const environmentTestIds = new Set(plan.environment_test_ids?.[environmentId] ?? plannedTestIds);
+    for (const journey of plan.journeys ?? []) {
+      if (!(journey.test_ids ?? []).some((testId) => environmentTestIds.has(testId))) {
+        errors.push({
+          code: "MISSING_ENVIRONMENT_JOURNEY_TEST",
+          message: `Evidence-required environment ${environmentId} has no declared test for ${journey.journey_id}.`,
+        });
+      }
+    }
+  }
   if (executedTestIds) {
     const executed = new Set(executedTestIds);
     for (const testId of unique((plan.journeys ?? []).flatMap((journey) => journey.test_ids ?? []))) {
@@ -138,12 +169,12 @@ export function validateExecutionPlan(
       }
     }
   }
+  const isComplete = (run) => {
+    const results = new Map((run.tests ?? []).map((test) => [test.test_id, test.result]));
+    const requiredTestIds = plan.environment_test_ids?.[run.environment_id] ?? plannedTestIds;
+    return requiredTestIds.every((testId) => results.get(testId) === "passed");
+  };
   if (executionRuns && Number.isInteger(plan.minimum_complete_runs) && plan.minimum_complete_runs > 0) {
-    const plannedTestIds = unique((plan.journeys ?? []).flatMap((journey) => journey.test_ids ?? []));
-    const isComplete = (run) => {
-      const results = new Map((run.tests ?? []).map((test) => [test.test_id, test.result]));
-      return plannedTestIds.every((testId) => results.get(testId) === "passed");
-    };
     const orderedRuns = [...executionRuns].sort((left, right) =>
       String(left.captured_at).localeCompare(String(right.captured_at))
     );
@@ -170,6 +201,25 @@ export function validateExecutionPlan(
         errors.push({
           code: "MISSING_COMPLETE_ENVIRONMENT_EVIDENCE",
           message: `${environmentId} requires a complete passing run with observations for every blocking journey and parity row.`,
+        });
+      }
+    }
+  }
+  if (executionRuns && plan.minimum_complete_runs_by_environment) {
+    for (const [environmentId, minimumRuns] of Object.entries(plan.minimum_complete_runs_by_environment)) {
+      if (!Number.isInteger(minimumRuns) || minimumRuns <= 0) continue;
+      const environmentRuns = executionRuns
+        .filter((run) => run.environment_id === environmentId)
+        .sort((left, right) => String(left.captured_at).localeCompare(String(right.captured_at)));
+      let trailingCompleteRuns = 0;
+      for (const run of environmentRuns.toReversed()) {
+        if (!isComplete(run)) break;
+        trailingCompleteRuns += 1;
+      }
+      if (trailingCompleteRuns < minimumRuns) {
+        errors.push({
+          code: "INSUFFICIENT_COMPLETE_ENVIRONMENT_RUNS",
+          message: `Execution plan requires ${minimumRuns} consecutive complete ${environmentId} runs, but the supplied sequence for that environment ends with ${trailingCompleteRuns}.`,
         });
       }
     }
@@ -718,6 +768,14 @@ function requireOption(arguments_, name) {
   return value;
 }
 
+export function xcodeSigningBuildSettings(arguments_, environmentId) {
+  if (environmentId !== "signed_physical_device") return [];
+  return [
+    `DEVELOPMENT_TEAM=${requireOption(arguments_, "--development-team")}`,
+    `CODE_SIGN_STYLE=${optionValue(arguments_, "--code-sign-style", "Automatic")}`,
+  ];
+}
+
 function expectedCommit(value, cwd) {
   if (value && value !== "HEAD") return value;
   return execFileSync("git", ["rev-parse", value ?? "HEAD"], { cwd, encoding: "utf8" }).trim();
@@ -933,6 +991,7 @@ function crawlCommand(arguments_) {
     "-destination", destination,
     "-derivedDataPath", derivedDataPath,
     "-resultBundlePath", resultBundlePath,
+    ...xcodeSigningBuildSettings(arguments_, environmentId),
   ];
   for (const testId of optionValues(arguments_, "--only-testing")) {
     testArguments.push("-only-testing", testId);

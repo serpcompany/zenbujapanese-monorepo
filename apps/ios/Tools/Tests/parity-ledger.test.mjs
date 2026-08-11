@@ -6,6 +6,7 @@ import test from "node:test";
 
 import {
   compileLedger,
+  xcodeSigningBuildSettings,
   testsFromTree,
   validateBuildConfiguration,
   validateEvidenceRun,
@@ -13,6 +14,18 @@ import {
   validateObservation,
   validateRecordedTests,
 } from "../parity-ledger.mjs";
+
+test("signed-device crawls pass explicit Xcode signing settings", () => {
+  const arguments_ = [
+    "--development-team", "847HR8U8D9",
+    "--code-sign-style", "Automatic",
+  ];
+  assert.deepEqual(xcodeSigningBuildSettings(arguments_, "signed_physical_device"), [
+    "DEVELOPMENT_TEAM=847HR8U8D9",
+    "CODE_SIGN_STYLE=Automatic",
+  ]);
+  assert.deepEqual(xcodeSigningBuildSettings(arguments_, "debug_simulator"), []);
+});
 
 test("build configuration is derived from the hashed Xcode request and product path", () => {
   assert.deepEqual(validateBuildConfiguration({
@@ -610,6 +623,103 @@ test("execution-plan validation does not count passing runs separated by a failu
 
   assert.equal(errors[0].code, "INSUFFICIENT_COMPLETE_RUNS");
   assert.match(errors[0].message, /sequence ends with 1/);
+});
+
+test("execution-plan completeness uses each run environment's declared XCTest set", () => {
+  const plan = {
+    minimum_complete_runs: 1,
+    environments: ["debug_simulator", "signed_physical_device"],
+    environment_test_ids: {
+      debug_simulator: ["Suite/testDebugRegression()"],
+      signed_physical_device: ["Suite/testProductionDevice()"],
+    },
+    journeys: [{
+      journey_id: "JOURNEY-A",
+      test_ids: ["Suite/testDebugRegression()", "Suite/testProductionDevice()"],
+    }],
+  };
+  const runs = [{
+    captured_at: "2026-08-11T00:00:00Z",
+    environment_id: "debug_simulator",
+    tests: [{ test_id: "Suite/testDebugRegression()", result: "passed" }],
+  }, {
+    captured_at: "2026-08-11T01:00:00Z",
+    environment_id: "signed_physical_device",
+    tests: [{ test_id: "Suite/testProductionDevice()", result: "passed" }],
+  }];
+
+  assert.deepEqual(validateExecutionPlan(
+    plan,
+    ["JOURNEY-A"],
+    undefined,
+    ["debug_simulator", "signed_physical_device"],
+    runs,
+  ), []);
+});
+
+test("execution-plan validation requires consecutive complete runs per environment", () => {
+  const plan = {
+    minimum_complete_runs: 0,
+    environments: ["debug_simulator", "signed_physical_device"],
+    minimum_complete_runs_by_environment: {
+      debug_simulator: 2,
+      signed_physical_device: 2,
+    },
+    environment_test_ids: {
+      debug_simulator: ["Suite/testDebugRegression()"],
+      signed_physical_device: ["Suite/testProductionDevice()"],
+    },
+    journeys: [{
+      journey_id: "JOURNEY-A",
+      test_ids: ["Suite/testDebugRegression()", "Suite/testProductionDevice()"],
+    }],
+  };
+  const passingRun = (capturedAt, environmentId, testId) => ({
+    captured_at: capturedAt,
+    environment_id: environmentId,
+    tests: [{ test_id: testId, result: "passed" }],
+  });
+  const runs = [
+    passingRun("2026-08-11T00:00:00Z", "debug_simulator", "Suite/testDebugRegression()"),
+    passingRun("2026-08-11T01:00:00Z", "debug_simulator", "Suite/testDebugRegression()"),
+    passingRun("2026-08-11T02:00:00Z", "signed_physical_device", "Suite/testProductionDevice()"),
+  ];
+
+  assert.deepEqual(validateExecutionPlan(plan, ["JOURNEY-A"], undefined, undefined, runs), [{
+    code: "INSUFFICIENT_COMPLETE_ENVIRONMENT_RUNS",
+    message: "Execution plan requires 2 consecutive complete signed_physical_device runs, but the supplied sequence for that environment ends with 1.",
+  }]);
+});
+
+test("execution-plan validation rejects invalid environment XCTest mappings", () => {
+  const plan = {
+    minimum_complete_runs: 0,
+    environments: ["debug_simulator", "signed_physical_device"],
+    evidence_required_environments: ["signed_physical_device"],
+    environment_test_ids: {
+      debug_simulator: ["Suite/testUnknown()"],
+      signed_physical_device: ["Suite/testJourneyA()"],
+      undeclared_environment: ["Suite/testJourneyA()"],
+    },
+    journeys: [{
+      journey_id: "JOURNEY-A",
+      test_ids: ["Suite/testJourneyA()"],
+    }, {
+      journey_id: "JOURNEY-B",
+      test_ids: ["Suite/testJourneyB()"],
+    }],
+  };
+
+  assert.deepEqual(validateExecutionPlan(plan, ["JOURNEY-A", "JOURNEY-B"]), [{
+    code: "UNKNOWN_ENVIRONMENT_TEST_ID",
+    message: "Execution environment debug_simulator names unplanned test Suite/testUnknown().",
+  }, {
+    code: "UNDECLARED_EXECUTION_ENVIRONMENT",
+    message: "Execution plan maps tests for undeclared environment undeclared_environment.",
+  }, {
+    code: "MISSING_ENVIRONMENT_JOURNEY_TEST",
+    message: "Evidence-required environment signed_physical_device has no declared test for JOURNEY-B.",
+  }]);
 });
 
 test("execution-plan validation requires full signed-device journey evidence", () => {

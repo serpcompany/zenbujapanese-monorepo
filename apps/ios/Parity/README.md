@@ -15,6 +15,18 @@ node apps/ios/Tools/parity-ledger.mjs crawl \
   --stage-photo docs/clone-discovery/nihongo/fixtures/image-text/fixture-clear-horizontal.png
 ```
 
+For a signed physical-device Release crawl, provide the Apple development team
+explicitly so the captured Xcode request is reproducible:
+
+```sh
+node apps/ios/Tools/parity-ledger.mjs crawl \
+  --run-dir /tmp/zenbu-parity-device \
+  --configuration Release \
+  --destination 'platform=iOS,id=DEVICE_UDID' \
+  --development-team APPLE_TEAM_ID \
+  --code-sign-style Automatic
+```
+
 The crawler retains the built app, xcresult, Xcode build request,
 machine-readable test summary, and every exported attachment. `run.json` records deterministic SHA-256 values for
 the complete app and xcresult directories and for each attachment. The command

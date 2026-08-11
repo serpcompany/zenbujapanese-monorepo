@@ -10,6 +10,98 @@
     "signed_physical_device"
   ],
   "minimum_complete_runs": 2,
+  "minimum_complete_runs_by_environment": {
+    "debug_simulator": 2,
+    "release_simulator_smoke": 2,
+    "signed_physical_device": 2
+  },
+  "environment_test_ids": {
+    "debug_simulator": [
+      "SearchReplicaJourneyUITests/testAmbiguousRomajiCanRefineToJapaneseReading()",
+      "SearchReplicaJourneyUITests/testCapturedAdjectiveFormListsDoNotExposeVerbModeControls()",
+      "SearchReplicaJourneyUITests/testCapturedSuruAndKuruIrregularConjugationsArePubliclyReachable()",
+      "SearchReplicaJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation()",
+      "SearchReplicaJourneyUITests/testDictionarySourceAttributionIsReachableFromSearch()",
+      "SearchReplicaJourneyUITests/testDisposableHistoryClearAllConfirmsAndCancelLeavesSearchRoot()",
+      "SearchReplicaJourneyUITests/testDisposableRecentSearchCanBeRemovedWithoutAffectingAnotherRow()",
+      "SearchReplicaJourneyUITests/testEditedWordNotePersistsWhenTheEntryIsReopened()",
+      "SearchReplicaJourneyUITests/testEmptyWordNoteDoneIsANoOpAndBackAutosavesPopulatedText()",
+      "SearchReplicaJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults()",
+      "SearchReplicaJourneyUITests/testEveryRenderedKanjiElementRoleRowUsesPublicKanjiNavigation()",
+      "SearchReplicaJourneyUITests/testExampleOnlyPunctuationQueryOpensItsSourceBackedSentence()",
+      "SearchReplicaJourneyUITests/testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed()",
+      "SearchReplicaJourneyUITests/testGodanConjugationsExposeCapturedPlainAndPoliteForms()",
+      "SearchReplicaJourneyUITests/testHandwritingCandidatesComposeCommonKanjiAndEnterHistory()",
+      "SearchReplicaJourneyUITests/testHandwritingEraseClearsPendingDrawingAndModeControlsNavigate()",
+      "SearchReplicaJourneyUITests/testHandwritingNoCandidateStateRecoversAfterEraseAndRedraw()",
+      "SearchReplicaJourneyUITests/testHandwritingSearchIncludesPendingRecognizedStroke()",
+      "SearchReplicaJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail()",
+      "SearchReplicaJourneyUITests/testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose()",
+      "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()",
+      "SearchReplicaJourneyUITests/testImageTextJapaneseWithoutDictionaryMatchIsNotReportedAsNoText()",
+      "SearchReplicaJourneyUITests/testImageTextMultipleFilesRecoverFromEmptyAndRemainTransient()",
+      "SearchReplicaJourneyUITests/testImageTextVerticalFileProducesSelectableJapaneseRegions()",
+      "SearchReplicaJourneyUITests/testInflectedRomajiFindsDictionaryForm()",
+      "SearchReplicaJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()",
+      "SearchReplicaJourneyUITests/testKanjiDetailRelatedWordOpensWordDetailAndBackRestoresPosition()",
+      "SearchReplicaJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings()",
+      "SearchReplicaJourneyUITests/testKanjiElementAlternativeStandaloneAndNestedBackRestoreEveryPriorState()",
+      "SearchReplicaJourneyUITests/testKanjiElementFailureOffersRetryAndRecoversFromTheLiveSource()",
+      "SearchReplicaJourneyUITests/testKanjiStrokeOrderFailureOffersRetryAndRecovers()",
+      "SearchReplicaJourneyUITests/testKanjiStrokeOrderOneStrokeCompletesAndColdRelaunchReturnsToSearch()",
+      "SearchReplicaJourneyUITests/testKanjiStrokeOrderPlayPausesResumesAndCompletesLongDiagram()",
+      "SearchReplicaJourneyUITests/testKanjiStrokeOrderStepsForwardAndBackThenClosesToKanjiDetail()",
+      "SearchReplicaJourneyUITests/testLiveHandwritingRecognitionProducesCandidatesForSyntheticKanji()",
+      "SearchReplicaJourneyUITests/testLookupFailureIsNotPresentedAsNoMatchAndRetryRecovers()",
+      "SearchReplicaJourneyUITests/testMixedScriptShowsDiscoveredWords()",
+      "SearchReplicaJourneyUITests/testMultipleReadingUncommonAndLinkedAlternativeKanjiClassesArePubliclyOperable()",
+      "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
+      "SearchReplicaJourneyUITests/testNewestRecentSearchRerunsItsResultSet()",
+      "SearchReplicaJourneyUITests/testNihonOffersJapaneseReadingRefinement()",
+      "SearchReplicaJourneyUITests/testNoMatchKeepsQueryAboveBlankResultsState()",
+      "SearchReplicaJourneyUITests/testOrdinaryJapaneseResultOpensItsOwnLanguageReferenceData()",
+      "SearchReplicaJourneyUITests/testPartialEnglishQueryUpdatesLiveResults()",
+      "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
+      "SearchReplicaJourneyUITests/testProductionExamplesOpenScrollAndLinkedWordRemainOperable()",
+      "SearchReplicaJourneyUITests/testProductionSpeechControlsRemainOperableAcrossWordAndExamples()",
+      "SearchReplicaJourneyUITests/testRadicalCandidateSubmitsKanjiResultAndEntersHistory()",
+      "SearchReplicaJourneyUITests/testRadicalSearchRequiresCandidateWhenEnteringWithPopulatedQuery()",
+      "SearchReplicaJourneyUITests/testRadicalSelectionNarrowsAndRemovalBroadensRealCandidates()",
+      "SearchReplicaJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult()",
+      "SearchReplicaJourneyUITests/testSelectedHandwritingCandidateSubmitsSingleKanji()",
+      "SearchReplicaJourneyUITests/testUncapturedRomajiDoesNotInventARefinementAction()",
+      "SearchReplicaJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()",
+      "SearchReplicaJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted()",
+      "SearchReplicaJourneyUITests/testWordNotesRemainIsolatedAcrossSameSpellingHomographs()",
+      "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()"
+    ],
+    "release_simulator_smoke": [
+      "SearchReplicaJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults()",
+      "SearchReplicaJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()",
+      "SearchReplicaJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings()",
+      "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()",
+      "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()"
+    ],
+    "signed_physical_device": [
+      "SearchReplicaJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults()",
+      "SearchReplicaJourneyUITests/testNihonOffersJapaneseReadingRefinement()",
+      "SearchReplicaJourneyUITests/testNewestRecentSearchRerunsItsResultSet()",
+      "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
+      "SearchReplicaJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult()",
+      "SearchReplicaJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation()",
+      "SearchReplicaJourneyUITests/testProductionExamplesOpenScrollAndLinkedWordRemainOperable()",
+      "SearchReplicaJourneyUITests/testProductionSpeechControlsRemainOperableAcrossWordAndExamples()",
+      "SearchReplicaJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail()",
+      "SearchReplicaJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted()",
+      "SearchReplicaJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings()",
+      "SearchReplicaJourneyUITests/testKanjiStrokeOrderStepsForwardAndBackThenClosesToKanjiDetail()",
+      "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()",
+      "SearchReplicaJourneyUITests/testKanjiElementAlternativeStandaloneAndNestedBackRestoreEveryPriorState()",
+      "SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()",
+      "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
+      "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()"
+    ]
+  },
   "evidence_required_environments": [
     "signed_physical_device"
   ],
@@ -54,7 +146,8 @@
         "SearchReplicaJourneyUITests/testSelectedHandwritingCandidateSubmitsSingleKanji()",
         "SearchReplicaJourneyUITests/testHandwritingSearchIncludesPendingRecognizedStroke()",
         "SearchReplicaJourneyUITests/testHandwritingNoCandidateStateRecoversAfterEraseAndRedraw()",
-        "SearchReplicaJourneyUITests/testLiveHandwritingRecognitionProducesCandidatesForSyntheticKanji()"
+        "SearchReplicaJourneyUITests/testLiveHandwritingRecognitionProducesCandidatesForSyntheticKanji()",
+        "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()"
       ]
     },
     {
@@ -85,13 +178,15 @@
       "journey_id": "JOURNEY-READ-EXAMPLES",
       "test_ids": [
         "SearchReplicaJourneyUITests/testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed()",
-        "SearchReplicaJourneyUITests/testExampleOnlyPunctuationQueryOpensItsSourceBackedSentence()"
+        "SearchReplicaJourneyUITests/testExampleOnlyPunctuationQueryOpensItsSourceBackedSentence()",
+        "SearchReplicaJourneyUITests/testProductionExamplesOpenScrollAndLinkedWordRemainOperable()"
       ]
     },
     {
       "journey_id": "JOURNEY-HEAR-PRONUNCIATION",
       "test_ids": [
-        "SearchReplicaJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()"
+        "SearchReplicaJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()",
+        "SearchReplicaJourneyUITests/testProductionSpeechControlsRemainOperableAcrossWordAndExamples()"
       ]
     },
     {
