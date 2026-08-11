@@ -219,10 +219,13 @@ private actor LanguageReferenceData {
   }
 
   private func bindEnglishRanking(_ query: SearchQuery, startingAt index: Int32, to statement: OpaquePointer) {
-    bind(query.value, at: index, to: statement)
-    bind("to \(query.value)", at: index + 1, to: statement)
-    bind("to \(query.value)%", at: index + 2, to: statement)
-    bind("%\(query.value)%", at: index + 3, to: statement)
+    for offset in 0 ... 4 {
+      bind(query.value, at: index + Int32(offset), to: statement)
+    }
+    bind(query.value, at: index + 5, to: statement)
+    bind("to \(query.value)", at: index + 6, to: statement)
+    bind("to \(query.value)%", at: index + 7, to: statement)
+    bind("%\(query.value)%", at: index + 8, to: statement)
   }
 
   private func decodeEntry(from statement: OpaquePointer) throws -> DictionaryEntry {
@@ -277,7 +280,14 @@ private actor LanguageReferenceData {
 
   private static let englishMatchTierSQL = """
     CASE
-      WHEN lower(e.summary) = ? OR lower(e.summary) = ? THEN 0
+      WHEN e.is_common = 1 AND (
+        lower(e.summary) = 'to ' || ?
+        OR lower(e.summary) LIKE 'to ' || ? || ',%'
+        OR lower(e.summary) LIKE 'to ' || ? || ' (%'
+        OR lower(e.summary) LIKE 'to ' || ? || ' of%'
+        OR lower(e.summary) LIKE '%, to ' || ?
+      ) THEN 0
+      WHEN lower(e.summary) = ? OR lower(e.summary) = ? THEN 1
       WHEN lower(e.summary) LIKE ? THEN 1
       ELSE 2
     END

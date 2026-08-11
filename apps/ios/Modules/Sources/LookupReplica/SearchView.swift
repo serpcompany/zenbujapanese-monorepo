@@ -9,6 +9,7 @@ struct SearchView: View {
   let cameraAuthorizationClient: CameraAuthorizationClient
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
+  let openSources: () -> Void
   let openResult: (DictionaryEntry) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
   let openExamples: (SearchQuery, DictionaryEntry?) -> Void
@@ -35,6 +36,7 @@ struct SearchView: View {
         isInputActive: inputMode != .inactive,
         activateKeyboard: { inputMode = .keyboard },
         openImageSource: { showsImageSources = true },
+        openSources: openSources,
         cancel: deactivateInput
       ) { submittedQuery in
         sparseRadicalQuery = nil
@@ -98,8 +100,7 @@ struct SearchView: View {
       }
     }
     .background(.black)
-    .navigationTitle("Search")
-    .navigationBarTitleDisplayMode(.inline)
+    .toolbar(.hidden, for: .navigationBar)
     .task(id: SearchTaskID(query: query, retryID: retryID)) {
       hasCompletedSearch = false
       searchFailed = false
@@ -217,12 +218,18 @@ struct SearchView: View {
 
   private func submitComposedQuery(_ submittedQuery: SearchQuery) {
     sparseRadicalQuery = nil
-    completeSubmission(submittedQuery)
+    query = submittedQuery.value
+    recordRecentSearch(submittedQuery)
+    isSearchFocused = false
+    inputMode = .handwriting
   }
 
   private func submitRadicalQuery(_ submittedQuery: SearchQuery) {
     sparseRadicalQuery = submittedQuery
-    completeSubmission(submittedQuery)
+    query = submittedQuery.value
+    recordRecentSearch(submittedQuery)
+    isSearchFocused = false
+    inputMode = .radicals
   }
 
   private func completeSubmission(_ submittedQuery: SearchQuery) {
@@ -402,6 +409,7 @@ private struct SearchBar: View {
   let isInputActive: Bool
   let activateKeyboard: () -> Void
   let openImageSource: () -> Void
+  let openSources: () -> Void
   let cancel: () -> Void
   let submitQuery: (SearchQuery) -> Void
 
@@ -445,6 +453,14 @@ private struct SearchBar: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Image Search")
         .accessibilityIdentifier("search.image-source")
+
+        Button(action: openSources) {
+          Image(systemName: "info.circle")
+            .foregroundStyle(ReplicaPalette.selectedTab)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Dictionary Sources")
+        .accessibilityIdentifier("search.sources")
       }
       .font(.system(size: 17))
       .padding(.horizontal, 10)

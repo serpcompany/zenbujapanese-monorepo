@@ -899,6 +899,8 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(submit.isEnabled)
     submit.tap()
     XCTAssertTrue(app.buttons["result.japan"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.otherElements["handwriting.canvas"].exists)
+    XCTAssertTrue(app.buttons["handwriting.erase"].exists)
     recordScreenshot(named: "handwriting-common-kanji-results", app: app)
 
     showRecentSearches(in: app, searchField: searchField)
@@ -1270,7 +1272,12 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     searchField.typeText("think")
 
     XCTAssertTrue(app.staticTexts["Best Matches"].waitForExistence(timeout: 3))
-    XCTAssertTrue(app.staticTexts["思う"].waitForExistence(timeout: 3))
+    let bestMatches = app.buttons.matching(NSPredicate(format: "value BEGINSWITH %@", "Best match"))
+    XCTAssertEqual(bestMatches.count, 3)
+    XCTAssertTrue(bestMatches.element(boundBy: 0).label.contains("がる"))
+    XCTAssertTrue(bestMatches.element(boundBy: 1).label.contains("思う"))
+    XCTAssertTrue(bestMatches.element(boundBy: 2).label.contains("考える"))
+    XCTAssertTrue(app.staticTexts["Additional Matches"].exists)
     recordScreenshot(named: "search-results-english-think", app: app)
   }
 

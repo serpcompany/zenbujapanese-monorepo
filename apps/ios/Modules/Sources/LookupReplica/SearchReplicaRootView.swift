@@ -64,6 +64,7 @@ public struct SearchReplicaRootView: View {
         cameraAuthorizationClient: cameraAuthorizationClient,
         radicalLookupClient: .live,
         exampleSentenceClient: .live,
+        openSources: { presentedSheet = .sources },
         openResult: { entry in path.append(.word(entry, "Search", nil)) },
         openKanji: openKanji,
         openExamples: { query, entry in path.append(.examples(query, entry)) },
@@ -74,17 +75,6 @@ public struct SearchReplicaRootView: View {
         },
         imageImportInitialDirectory: imageImportInitialDirectory
       )
-      .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
-          Button {
-            presentedSheet = .sources
-          } label: {
-            Image(systemName: "info.circle")
-          }
-          .accessibilityLabel("Dictionary Sources")
-          .accessibilityIdentifier("search.sources")
-        }
-      }
       .navigationDestination(for: ReplicaRoute.self) { route in
         switch route {
         case .word(let entry, let backTitle, let imageContext):

@@ -25,7 +25,9 @@ struct HandwritingInputView: View {
 
       HStack(spacing: 0) {
         HandwritingCanvas(strokes: $model.strokes, completedStroke: model.recognize)
-          .padding(12)
+          .frame(width: 180, height: 180)
+          .frame(maxWidth: .infinity)
+          .padding(8)
 
         VStack(spacing: 0) {
           Button {
@@ -50,9 +52,9 @@ struct HandwritingInputView: View {
           .disabled(!canSubmit)
           .accessibilityIdentifier("handwriting.search")
         }
-        .frame(width: 90)
+        .frame(width: 64)
       }
-      .frame(height: 218)
+      .frame(height: 196)
     }
     .background(ReplicaPalette.row)
     .overlay(alignment: .top) {
@@ -89,7 +91,7 @@ struct HandwritingInputView: View {
           ForEach(Array(model.candidates.enumerated()), id: \.element.id) { index, candidate in
             Button(candidate.value) {
               query.append(candidate.value)
-              model.eraseDrawing()
+              model.acceptCandidate()
             }
             .font(.system(size: 27))
             .foregroundStyle(.white)
