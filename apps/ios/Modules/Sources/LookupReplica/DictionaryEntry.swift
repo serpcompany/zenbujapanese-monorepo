@@ -37,6 +37,19 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
     }
   }
 
+  var alternativeKanji: [String] {
+    let primary = Set(primaryKanji)
+    var seen = Set<String>()
+    return writtenForms
+      .filter { $0.value != headword }
+      .flatMap { form in form.value.map(String.init) }
+      .filter { character in
+        character.first?.isCJKUnifiedIdeograph == true
+          && !primary.contains(character)
+          && seen.insert(character).inserted
+      }
+  }
+
   var displayPartOfSpeech: String {
     partsOfSpeech.map(\.rawValue).joined(separator: " · ")
   }

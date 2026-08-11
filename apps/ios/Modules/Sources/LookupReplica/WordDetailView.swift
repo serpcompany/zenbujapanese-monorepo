@@ -16,6 +16,7 @@ struct WordDetailView: View {
   @State private var examples: [ExampleSentence] = []
   @State private var isLoadingExamples = true
   @State private var lastSpeechRequest: String?
+  @State private var boundaryAlert: WordDetailBoundary?
 
   let entry: DictionaryEntry
   let backTitle: String
@@ -36,7 +37,9 @@ struct WordDetailView: View {
         backTitle: backTitle,
         isEditingNote: editingNoteID != nil,
         goBack: goBack,
-        finishEditingNote: finishEditingNote
+        finishEditingNote: finishEditingNote,
+        addNote: beginAddingNote,
+        showBoundary: { boundaryAlert = $0 }
       )
 
       ScrollViewReader { proxy in
@@ -54,6 +57,12 @@ struct WordDetailView: View {
             conjugationTable: conjugationTable,
             openConjugations: openConjugations
           )
+
+          if !entry.alternativeForms.isEmpty {
+            SectionLabel("ALTERNATIVES")
+            AlternativeFormsSection(forms: entry.alternativeForms, openKanji: openKanji)
+          }
+
           SectionLabel("MEANING")
           MeaningSection(senses: entry.senses)
 
@@ -62,9 +71,9 @@ struct WordDetailView: View {
             PrimaryKanjiSection(characters: entry.primaryKanji, entry: entry, openKanji: openKanji)
           }
 
-          if !entry.alternativeForms.isEmpty {
-            SectionLabel("ALTERNATIVES")
-            AlternativeFormsSection(forms: entry.alternativeForms, openKanji: openKanji)
+          if !entry.alternativeKanji.isEmpty {
+            SectionLabel("ALTERNATIVE KANJI")
+            AlternativeKanjiSection(characters: entry.alternativeKanji, openKanji: openKanji)
           }
 
           if !entry.relationships.isEmpty {
@@ -109,6 +118,13 @@ struct WordDetailView: View {
     }
     .background(.black)
     .toolbar(.hidden, for: .navigationBar)
+    .alert(item: $boundaryAlert) { boundary in
+      Alert(
+        title: Text(boundary.title),
+        message: Text(boundary.message),
+        dismissButton: .default(Text("OK"))
+      )
+    }
     .overlay(alignment: .topLeading) {
       if let lastSpeechRequest {
         Color.clear
@@ -211,6 +227,29 @@ struct WordDetailView: View {
   }
 }
 
+private enum WordDetailBoundary: String, Identifiable {
+  case flashcards
+  case imageAttachment
+
+  var id: String { rawValue }
+
+  var title: String {
+    switch self {
+    case .flashcards: "Flashcards"
+    case .imageAttachment: "Image Attachment"
+    }
+  }
+
+  var message: String {
+    switch self {
+    case .flashcards:
+      "Personal flashcard libraries are outside the Search and dictionary scope."
+    case .imageAttachment:
+      "Open a word from Search using Camera or Photos to keep its source image attached."
+    }
+  }
+}
+
 private struct PrimaryKanjiSection: View {
   let characters: [String]
   let entry: DictionaryEntry
@@ -244,11 +283,43 @@ private struct PrimaryKanjiSection: View {
   }
 }
 
+private struct AlternativeKanjiSection: View {
+  let characters: [String]
+  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
+
+  var body: some View {
+    VStack(spacing: 0) {
+      ForEach(characters, id: \.self) { character in
+        if let kanji = KanjiCharacter(character) {
+          Button { openKanji(kanji, nil) } label: {
+            HStack {
+              Text(character)
+                .font(.system(size: 25, weight: .semibold))
+              Spacer()
+              Image(systemName: "chevron.right")
+                .foregroundStyle(.white.opacity(0.38))
+            }
+            .padding(.horizontal, 28)
+            .frame(minHeight: 50)
+            .contentShape(Rectangle())
+          }
+          .buttonStyle(.plain)
+          .accessibilityLabel("Alternative kanji \(character)")
+          .accessibilityIdentifier("word-detail.alternative-kanji.\(character)")
+        }
+      }
+    }
+    .background(ReplicaPalette.row)
+  }
+}
+
 private struct DetailToolbar: View {
   let backTitle: String
   let isEditingNote: Bool
   let goBack: () -> Void
   let finishEditingNote: () -> Void
+  let addNote: () -> Void
+  let showBoundary: (WordDetailBoundary) -> Void
 
   var body: some View {
     HStack(spacing: 20) {
@@ -267,9 +338,25 @@ private struct DetailToolbar: View {
           .buttonStyle(.plain)
           .font(.system(size: 17, weight: .semibold))
           .accessibilityIdentifier("word-note.done")
+      } else {
+        Button(action: addNote) {
+          Image(systemName: "square.and.pencil")
+        }
+        .accessibilityLabel("Add note")
+        .accessibilityIdentifier("word-detail.toolbar-note")
+        Button { showBoundary(.flashcards) } label: {
+          Image(systemName: "rectangle.stack.badge.plus")
+        }
+        .accessibilityLabel("Add to flashcards")
+        .accessibilityIdentifier("word-detail.toolbar-flashcards")
+        Button { showBoundary(.imageAttachment) } label: {
+          Image(systemName: "camera.badge.ellipsis")
+        }
+        .accessibilityLabel("Attach image")
+        .accessibilityIdentifier("word-detail.toolbar-image")
       }
     }
-    .font(.system(size: 23))
+    .font(.system(size: 21))
     .padding(.horizontal, 16)
     .frame(height: 49)
     .background(ReplicaPalette.chrome.ignoresSafeArea(edges: .top))
@@ -315,7 +402,7 @@ private struct WordHeader: View {
 
       HStack(spacing: 18) {
         if let pitch = entry.pitchAccent {
-          PitchAccentView(pitch: pitch)
+          PitchAccentView(reading: entry.reading, pitch: pitch)
         }
         Spacer()
         Button(action: pronounce) {
@@ -331,8 +418,8 @@ private struct WordHeader: View {
       }
     }
     .padding(.horizontal, 28)
-    .padding(.top, 8)
-    .padding(.bottom, 12)
+    .padding(.top, 6)
+    .padding(.bottom, 9)
     .background(ReplicaPalette.row)
     .sheet(isPresented: $showsAttachment) {
       if let imageAttachment, let image = UIImage(data: imageAttachment.data) {
@@ -373,19 +460,60 @@ private struct FrequencyBadge: View {
 }
 
 private struct PitchAccentView: View {
+  let reading: String
   let pitch: PitchAccent
 
   var body: some View {
-    HStack(spacing: 7) {
-      Image(systemName: "waveform.path")
-      Text(pitch.downstep == 0 ? "Flat" : "Downstep \(pitch.downstep)")
-      Text("· \(pitch.moraCount) mora")
-        .foregroundStyle(.white.opacity(0.55))
+    HStack(spacing: 8) {
+      Image(systemName: "ear.badge.waveform")
+      Text(reading.katakana)
+        .font(.system(size: 17, weight: .medium))
+        .padding(.bottom, 4)
+        .overlay(alignment: .bottom) {
+          PitchContour(downstep: pitch.downstep, moraCount: pitch.moraCount)
+            .stroke(.red, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+            .frame(height: 7)
+        }
     }
-    .font(.system(size: 14, weight: .medium))
+    .padding(.horizontal, 12)
+    .frame(height: 34)
+    .background(.white.opacity(0.08), in: Capsule())
     .accessibilityElement(children: .combine)
-    .accessibilityLabel("Pitch accent, downstep \(pitch.downstep), \(pitch.moraCount) mora")
+    .accessibilityLabel(
+      "Pitch accent for \(reading), downstep \(pitch.downstep), \(pitch.moraCount) mora"
+    )
     .accessibilityIdentifier("word-detail.pitch")
+  }
+}
+
+private struct PitchContour: Shape {
+  let downstep: Int
+  let moraCount: Int
+
+  func path(in rect: CGRect) -> Path {
+    var path = Path()
+    let count = max(moraCount, 1)
+    let drop = downstep == 0 ? count : min(max(downstep, 1), count)
+    let dropX = rect.minX + rect.width * CGFloat(drop) / CGFloat(count)
+    path.move(to: CGPoint(x: rect.minX, y: rect.minY + 1))
+    path.addLine(to: CGPoint(x: dropX, y: rect.minY + 1))
+    if downstep > 0 {
+      path.addLine(to: CGPoint(x: min(rect.maxX, dropX + 5), y: rect.maxY - 1))
+      path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - 1))
+    }
+    return path
+  }
+}
+
+private extension String {
+  var katakana: String {
+    String(unicodeScalars.map { scalar in
+      let value = scalar.value
+      if (0x3041 ... 0x3096).contains(value), let converted = UnicodeScalar(value + 0x60) {
+        return Character(String(converted))
+      }
+      return Character(String(scalar))
+    })
   }
 }
 
@@ -405,7 +533,7 @@ private struct PartOfSpeechRow: View {
           Image(systemName: "chevron.right")
             .foregroundStyle(.white.opacity(0.38))
         }
-        .font(.system(size: 18))
+        .font(.system(size: 17))
         .contentShape(Rectangle())
       }
       .buttonStyle(.plain)
@@ -423,7 +551,7 @@ private struct PartOfSpeechRow: View {
 private extension View {
   var rowChrome: some View {
     padding(.horizontal, 28)
-      .padding(.vertical, 13)
+      .padding(.vertical, 11)
       .background(ReplicaPalette.row)
       .overlay(alignment: .top) { Rectangle().fill(ReplicaPalette.divider).frame(height: 0.5) }
   }
@@ -449,7 +577,7 @@ private struct MeaningSection: View {
   let senses: [DictionarySense]
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 18) {
+    VStack(alignment: .leading, spacing: 13) {
       ForEach(Array(senses.enumerated()), id: \.offset) { index, sense in
         VStack(alignment: .leading, spacing: 6) {
           HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -467,7 +595,7 @@ private struct MeaningSection: View {
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding(.horizontal, 32)
-    .padding(.vertical, 20)
+    .padding(.vertical, 15)
     .background(ReplicaPalette.row)
   }
 }
@@ -477,51 +605,60 @@ private struct AlternativeFormsSection: View {
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
-    VStack(spacing: 0) {
-      ForEach(forms, id: \.value) { form in
-        if let character = form.value.first(where: { $0.isKanji }) {
-          if let kanji = KanjiCharacter(String(character)) {
-            Button {
-              openKanji(kanji, nil)
-            } label: {
-            AlternativeFormRow(form: form, showsDisclosure: true)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("word-detail.alternative.\(form.value)")
+    VStack(alignment: .leading, spacing: 7) {
+      if !writtenForms.isEmpty {
+        AlternativeFormLine(forms: writtenForms, openKanji: openKanji)
+      }
+      if !readingForms.isEmpty {
+        AlternativeFormLine(forms: readingForms, openKanji: openKanji)
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 28)
+    .padding(.vertical, 9)
+    .background(ReplicaPalette.row)
+  }
+
+  private var writtenForms: [DictionaryForm] { forms.filter { $0.kind == .written } }
+  private var readingForms: [DictionaryForm] { forms.filter { $0.kind == .reading } }
+}
+
+private struct AlternativeFormLine: View {
+  let forms: [DictionaryForm]
+  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
+
+  var body: some View {
+    ViewThatFits(in: .horizontal) {
+      HStack(spacing: 7) { tokens }
+      VStack(alignment: .leading, spacing: 5) { tokens }
+    }
+  }
+
+  @ViewBuilder
+  private var tokens: some View {
+    ForEach(Array(forms.enumerated()), id: \.element.value) { index, form in
+      HStack(spacing: 2) {
+        if index > 0 { Text(",") }
+        if let character = form.value.first(where: { $0.isKanji }),
+           let kanji = KanjiCharacter(String(character)) {
+          Button { openKanji(kanji, nil) } label: {
+            formLabel(form)
           }
+          .buttonStyle(.plain)
+          .accessibilityIdentifier("word-detail.alternative.\(form.value)")
         } else {
-          AlternativeFormRow(form: form, showsDisclosure: false)
+          formLabel(form)
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("word-detail.alternative.\(form.value)")
         }
       }
     }
-    .background(ReplicaPalette.row)
   }
-}
 
-private struct AlternativeFormRow: View {
-  let form: DictionaryForm
-  let showsDisclosure: Bool
-
-  var body: some View {
-    HStack {
-      VStack(alignment: .leading, spacing: 3) {
-        Text(form.value).font(.system(size: 20, weight: .semibold))
-        if !form.labels.isEmpty {
-          Text(form.labels.joined(separator: " · "))
-            .font(.system(size: 13))
-            .foregroundStyle(ReplicaPalette.secondaryText)
-        }
-      }
-      Spacer()
-      if showsDisclosure {
-        Image(systemName: "chevron.right").foregroundStyle(.white.opacity(0.38))
-      }
-    }
-    .padding(.horizontal, 28)
-    .frame(minHeight: 56)
-    .contentShape(Rectangle())
+  private func formLabel(_ form: DictionaryForm) -> some View {
+    Text(form.value + (form.labels.isEmpty ? "" : " (\(form.labels.joined(separator: ", ")))") )
+      .font(.system(size: 15))
+      .foregroundStyle(form.labels.isEmpty ? Color.primary : ReplicaPalette.secondaryText)
   }
 }
 

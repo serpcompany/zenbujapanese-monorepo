@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct KanjiStrokeOrderView: View {
-  @Environment(\.dismiss) private var dismiss
   let diagram: KanjiStrokeDiagram
+  let close: () -> Void
 
   @State private var completedStrokeCount = 0
   @State private var activeStrokeProgress = 0.0
@@ -10,36 +10,8 @@ struct KanjiStrokeOrderView: View {
   @State private var playbackTask: Task<Void, Never>?
 
   var body: some View {
-    VStack(spacing: 18) {
-      HStack {
-        Button {
-          pause()
-          dismiss()
-        } label: {
-          Image(systemName: "xmark.circle.fill")
-            .font(.title2)
-        }
-        .accessibilityLabel("Close stroke order")
-        .accessibilityIdentifier("stroke-order.close")
-        Spacer()
-        Text("Stroke Order")
-          .font(.headline)
-        Spacer()
-        Color.clear.frame(width: 28, height: 28)
-      }
-
-      HStack(alignment: .firstTextBaseline) {
-        Text(diagram.character.rawValue)
-          .font(.system(size: 42, weight: .light))
-        Spacer()
-        Text("Stroke \(visibleStrokeIndex) of \(diagram.strokes.count)")
-          .font(.headline.monospacedDigit())
-          .accessibilityValue(
-            "\(completedStrokeCount) of \(diagram.strokes.count) complete"
-          )
-          .accessibilityIdentifier("stroke-order.progress")
-      }
-
+    ZStack(alignment: .topLeading) {
+      VStack(spacing: 16) {
       StrokeDrawingGrid(
         diagram: diagram,
         completedStrokeCount: completedStrokeCount,
@@ -51,7 +23,7 @@ struct KanjiStrokeOrderView: View {
       .accessibilityValue(gridAccessibilityValue)
       .accessibilityIdentifier("stroke-order.grid")
 
-      HStack(spacing: 56) {
+      HStack(spacing: 54) {
         Button {
           stepPrevious()
         } label: {
@@ -84,16 +56,37 @@ struct KanjiStrokeOrderView: View {
       .buttonStyle(.plain)
       .foregroundStyle(.blue)
       .frame(maxWidth: .infinity)
+
+        Text("Stroke \(visibleStrokeIndex) of \(diagram.strokes.count)")
+          .font(.caption.monospacedDigit())
+          .foregroundStyle(ReplicaPalette.secondaryText)
+          .accessibilityValue(
+            "\(completedStrokeCount) of \(diagram.strokes.count) complete"
+          )
+          .accessibilityIdentifier("stroke-order.progress")
+      }
+      .padding(16)
+
+      Button {
+        pause()
+        close()
+      } label: {
+        Image(systemName: "xmark.circle.fill")
+          .symbolRenderingMode(.palette)
+          .foregroundStyle(.white, .black)
+          .font(.system(size: 28, weight: .bold))
+      }
+      .buttonStyle(.plain)
+      .offset(x: -10, y: -10)
+      .accessibilityLabel("Close stroke order")
+      .accessibilityIdentifier("stroke-order.close")
     }
-    .padding(20)
     .background(ReplicaPalette.row)
+    .clipShape(RoundedRectangle(cornerRadius: 5))
+    .shadow(color: .black.opacity(0.65), radius: 24, y: 10)
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier("stroke-order.overlay")
     .onDisappear { pause() }
-    .interactiveDismissDisabled()
-    .presentationDragIndicator(.hidden)
-    .presentationDetents([.height(620)])
-    .presentationBackground(ReplicaPalette.row)
   }
 
   private var visibleStrokeIndex: Int {

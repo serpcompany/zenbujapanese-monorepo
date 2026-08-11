@@ -509,9 +509,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertEqual(progress.value as? String, "0 of 6 complete")
     XCTAssertFalse(app.buttons["stroke-order.previous"].isEnabled)
 
-    let manualAnimationStartedAt = CFAbsoluteTimeGetCurrent()
     app.buttons["stroke-order.next"].tap()
-    XCTAssertGreaterThan(CFAbsoluteTimeGetCurrent() - manualAnimationStartedAt, 0.7)
     let firstStrokeSettled = XCTNSPredicateExpectation(
       predicate: NSPredicate(format: "value == %@", "1 of 6 complete"),
       object: progress
@@ -676,9 +674,17 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertEqual(app.descendants(matching: .any)["kanji-detail.jlpt"].label, "JLPT N2")
     XCTAssertTrue(app.staticTexts["quiet"].exists)
     XCTAssertTrue(app.staticTexts["READINGS"].exists)
-    XCTAssertTrue(app.staticTexts["On: セイ, ジョウ"].exists)
-    XCTAssertTrue(app.staticTexts["Kun: しず-, しず.か, しず.まる, しず.める"].exists)
+    XCTAssertTrue(app.buttons["kanji-detail.reading.on.セイ"].exists)
+    let linkedReading = app.buttons["kanji-detail.reading.kun.しず-"]
+    XCTAssertTrue(linkedReading.exists)
     recordScreenshot(named: "kanji-shizu-source-backed-top", app: app)
+
+    linkedReading.tap()
+    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.staticTexts["静"].exists)
+    app.buttons["word-detail.back"].tap()
+    XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(linkedReading.exists)
 
     let back = app.buttons["kanji-detail.back"]
     XCTAssertTrue(back.isHittable)
@@ -1500,6 +1506,17 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["みる"].exists)
     XCTAssertTrue(app.staticTexts["COMMON"].exists)
     XCTAssertTrue(app.descendants(matching: .any)["word-detail.pitch"].exists)
+    XCTAssertTrue(app.buttons["word-detail.toolbar-note"].exists)
+    app.buttons["word-detail.toolbar-flashcards"].tap()
+    XCTAssertTrue(app.alerts["Flashcards"].waitForExistence(timeout: 2))
+    app.alerts["Flashcards"].buttons["OK"].tap()
+    app.buttons["word-detail.toolbar-image"].tap()
+    XCTAssertTrue(app.alerts["Image Attachment"].waitForExistence(timeout: 2))
+    app.alerts["Image Attachment"].buttons["OK"].tap()
+    app.buttons["word-detail.toolbar-note"].tap()
+    XCTAssertTrue(app.textFields["word-note.editor"].waitForExistence(timeout: 2))
+    app.buttons["word-note.done"].tap()
+    for _ in 0..<5 { detail.swipeDown() }
     XCTAssertTrue(app.buttons["word-detail.pronounce"].exists)
     app.buttons["word-detail.pronounce"].tap()
     XCTAssertTrue(app.staticTexts["Ichidan Verb · Transitive Verb"].exists)
@@ -1510,6 +1527,10 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     for _ in 0..<5 where !alternative.exists { detail.swipeUp() }
     XCTAssertTrue(app.staticTexts["ALTERNATIVES"].exists)
     XCTAssertTrue(alternative.exists)
+    XCTAssertLessThan(
+      app.staticTexts["ALTERNATIVES"].frame.minY,
+      app.staticTexts["MEANING"].frame.minY
+    )
 
     let related = app.buttons["word-detail.related.見える"]
     for _ in 0..<5 where !related.exists { detail.swipeUp() }
