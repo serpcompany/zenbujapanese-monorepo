@@ -1,4 +1,5 @@
 @preconcurrency import PhotosUI
+import ImageIO
 import SwiftUI
 import UniformTypeIdentifiers
 import UIKit
@@ -81,10 +82,10 @@ struct ImagePhotoLibraryPicker: UIViewControllerRepresentable {
         return
       }
       let suggestedName = result.itemProvider.suggestedName ?? "Photo"
-      result.itemProvider.loadDataRepresentation(forTypeIdentifier: UTType.image.identifier) {
-        data, error in
-        let asset = data.flatMap { data in
-          UIImage(data: data).flatMap { ImageTextAsset(photoLibraryImage: $0, name: suggestedName) }
+      result.itemProvider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) {
+        url, error in
+        let asset = url.flatMap {
+          ImageTextAsset(photoLibraryImageAt: $0, name: suggestedName)
         }
         Task { @MainActor [completion = self.completion] in
           if error != nil || asset == nil {
@@ -104,8 +105,19 @@ private extension ImageTextAsset {
     self.init(name: "Camera Capture.jpg", data: data)
   }
 
-  init?(photoLibraryImage: UIImage, name: String) {
-    guard let data = photoLibraryImage.imageTextData else { return nil }
+  init?(photoLibraryImageAt url: URL, name: String) {
+    guard
+      let source = CGImageSourceCreateWithURL(url as CFURL, [
+        kCGImageSourceShouldCache: false,
+      ] as CFDictionary),
+      let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+        kCGImageSourceCreateThumbnailFromImageAlways: true,
+        kCGImageSourceCreateThumbnailWithTransform: true,
+        kCGImageSourceThumbnailMaxPixelSize: 4_096,
+        kCGImageSourceShouldCacheImmediately: true,
+      ] as CFDictionary),
+      let data = UIImage(cgImage: image).jpegData(compressionQuality: 0.9)
+    else { return nil }
     self.init(name: name, data: data)
   }
 }

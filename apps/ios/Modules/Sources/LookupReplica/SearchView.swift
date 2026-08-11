@@ -131,7 +131,7 @@ struct SearchView: View {
     .confirmationDialog("Image Search", isPresented: $showsImageSources) {
       Button("Take Photo") { presentCamera() }
         .accessibilityIdentifier("image-source.camera")
-      Button("Photo Library") { presentedImageSource = .photoLibrary }
+      Button("Photo Library") { presentPhotoLibrary() }
         .accessibilityIdentifier("image-source.photo-library")
       Button("Files") { presentedImageSource = .files }
         .accessibilityIdentifier("image-source.files")
@@ -290,6 +290,19 @@ struct SearchView: View {
       }
       imageImportTask = nil
     }
+  }
+
+  private func presentPhotoLibrary() {
+    #if DEBUG
+    if ProcessInfo.processInfo.arguments.contains("-PhotoLibraryProviderFailure") {
+      Task { @MainActor in
+        await Task.yield()
+        imageImportAlert = .importFailure("The selected photos could not be read.")
+      }
+      return
+    }
+    #endif
+    presentedImageSource = .photoLibrary
   }
 
   private func importCameraImage(_ result: Result<ImageTextAsset?, Error>) {

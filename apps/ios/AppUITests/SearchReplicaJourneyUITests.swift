@@ -89,6 +89,19 @@ final class SearchReplicaJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testPhotoLibraryProviderFailureReportsAndRecovers() throws {
+    let app = launchApp(additionalArguments: ["-PhotoLibraryProviderFailure"])
+    app.buttons["search.image-source"].tap()
+    app.buttons.matching(identifier: "image-source.photo-library").firstMatch.tap()
+
+    let alert = app.alerts["Unable to Import Images"]
+    XCTAssertTrue(alert.waitForExistence(timeout: 3))
+    XCTAssertTrue(alert.staticTexts["The selected photos could not be read."].exists)
+    alert.buttons["OK"].tap()
+    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+  }
+
+  @MainActor
   func testCameraUnavailableOnSimulatorReportsHardwareBoundary() throws {
     let app = launchApp(additionalArguments: ["-CameraUnavailable"])
     app.buttons["search.image-source"].tap()
