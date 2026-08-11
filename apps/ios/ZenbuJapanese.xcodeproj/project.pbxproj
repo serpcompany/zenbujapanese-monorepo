@@ -242,7 +242,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.replica;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary;
 				PRODUCT_NAME = "Zenbu Japanese";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
@@ -316,7 +316,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.replica.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary.uitests;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -334,7 +334,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.replica.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary.uitests;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -355,7 +355,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.replica;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary;
 				PRODUCT_NAME = "Zenbu Japanese";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
