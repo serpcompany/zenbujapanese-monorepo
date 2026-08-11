@@ -2680,11 +2680,17 @@ final class SearchReplicaJourneyUITests: XCTestCase {
 
   @MainActor
   private func radicalButton(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-    let button = app.buttons[identifier]
     let grid = app.scrollViews["radical.grid"]
-    for _ in 0..<10 where !button.exists {
-      grid.swipeUp()
+    for _ in 0..<16 {
+      let button = app.buttons[identifier]
+      if button.exists { return button }
+      grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.72))
+        .press(
+          forDuration: 0.05,
+          thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.48))
+        )
     }
+    let button = app.buttons[identifier]
     XCTAssertTrue(button.exists, "Missing radical button \(identifier)")
     return button
   }
