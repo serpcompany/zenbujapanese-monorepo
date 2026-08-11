@@ -1407,14 +1407,16 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["JMdict"].exists)
     XCTAssertTrue(app.staticTexts["KANJIDIC2"].exists)
     XCTAssertTrue(app.staticTexts["CC BY-SA 4.0"].exists)
+    let sourceList = app.descendants(matching: .any)["dictionary-sources.list"]
+    XCTAssertTrue(sourceList.waitForExistence(timeout: 2))
 
     let kradfile = app.staticTexts["KRADFILE / RADKFILE"]
-    for _ in 0..<4 where !kradfile.isHittable { app.collectionViews.firstMatch.swipeUp() }
+    for _ in 0..<4 where !kradfile.isHittable { sourceList.swipeUp() }
     XCTAssertTrue(kradfile.isHittable)
     recordScreenshot(named: "dictionary-source-attribution", app: app)
 
     let kanjiVG = app.staticTexts["KanjiVG"]
-    for _ in 0..<4 where !kanjiVG.isHittable { app.collectionViews.firstMatch.swipeUp() }
+    for _ in 0..<4 where !kanjiVG.isHittable { sourceList.swipeUp() }
     XCTAssertTrue(kanjiVG.isHittable)
     XCTAssertTrue(app.staticTexts.matching(
       NSPredicate(format: "label CONTAINS %@", "KanjiVG by Ulrich Apel")
@@ -1430,22 +1432,22 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     app.navigationBars["KanjiVG CC BY-SA 3.0 License"].buttons["Dictionary Sources"].tap()
 
     let unidic = app.staticTexts["UniDic"]
-    for _ in 0..<4 where !unidic.isHittable { app.collectionViews.firstMatch.swipeUp() }
+    for _ in 0..<4 where !unidic.isHittable { sourceList.swipeUp() }
     XCTAssertTrue(unidic.isHittable)
     let unidicLicenseName = app.staticTexts["New BSD"]
-    for _ in 0..<2 where !unidicLicenseName.isHittable { app.collectionViews.firstMatch.swipeUp() }
+    for _ in 0..<2 where !unidicLicenseName.isHittable { sourceList.swipeUp() }
     XCTAssertTrue(unidicLicenseName.isHittable)
 
     let tatoeba = app.staticTexts["Tatoeba"]
-    for _ in 0..<4 where !tatoeba.isHittable { app.collectionViews.firstMatch.swipeUp() }
+    for _ in 0..<4 where !tatoeba.isHittable { sourceList.swipeUp() }
     XCTAssertTrue(tatoeba.isHittable)
     let tatoebaLicense = app.staticTexts["CC BY 2.0 FR"]
-    for _ in 0..<2 where !tatoebaLicense.isHittable { app.collectionViews.firstMatch.swipeUp() }
+    for _ in 0..<2 where !tatoebaLicense.isHittable { sourceList.swipeUp() }
     XCTAssertTrue(tatoebaLicense.isHittable)
     recordScreenshot(named: "dictionary-source-word-data-attribution", app: app)
 
     let bundledLicense = app.buttons["dictionary-sources.unidic-license"]
-    for _ in 0..<4 where !bundledLicense.isHittable { app.collectionViews.firstMatch.swipeDown() }
+    for _ in 0..<4 where !bundledLicense.isHittable { sourceList.swipeDown() }
     XCTAssertTrue(bundledLicense.isHittable)
     bundledLicense.tap()
     XCTAssertTrue(app.staticTexts["UniDic New BSD License"].waitForExistence(timeout: 2))
