@@ -226,14 +226,14 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     app.buttons["image-text.share"].tap()
     XCTAssertTrue(app.buttons.matching(identifier: "image-text.copy-text").firstMatch.waitForExistence(timeout: 2))
     XCTAssertTrue(app.buttons.matching(identifier: "image-text.share-image").firstMatch.exists)
-    app.buttons.matching(identifier: "image-text.copy-text").firstMatch.tap()
-
-    app.buttons["image-text.share"].tap()
     app.buttons.matching(identifier: "image-text.share-image").firstMatch.tap()
     let activityClose = app.buttons["header.closeButton"]
     XCTAssertTrue(activityClose.waitForExistence(timeout: 3))
     activityClose.tap()
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
+
+    app.buttons["image-text.share"].tap()
+    app.buttons.matching(identifier: "image-text.copy-text").firstMatch.tap()
 
     app.buttons["image-text.close"].tap()
     let searchField = app.textFields["search.field"]
