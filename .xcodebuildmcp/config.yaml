@@ -1,0 +1,9 @@
+schemaVersion: 1
+sessionDefaults:
+  projectPath: apps/ios/ZenbuJapanese.xcodeproj
+  scheme: ZenbuJapanese
+  configuration: Release
+  simulatorName: iPhone 17 Pro Max
+  simulatorPlatform: iOS Simulator
+  useLatestOS: true
+  bundleId: com.zenbujapanese.dictionary
