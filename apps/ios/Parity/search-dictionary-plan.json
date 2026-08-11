@@ -97,6 +97,8 @@
       "SearchReplicaJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail()",
       "SearchReplicaJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted()",
       "SearchReplicaJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings()",
+      "SearchReplicaJourneyUITests/testKanjiStrokeOrderOneStrokeCompletesAndColdRelaunchReturnsToSearch()",
+      "SearchReplicaJourneyUITests/testKanjiStrokeOrderPlayPausesResumesAndCompletesLongDiagram()",
       "SearchReplicaJourneyUITests/testKanjiStrokeOrderStepsForwardAndBackThenClosesToKanjiDetail()",
       "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()",
       "SearchReplicaJourneyUITests/testKanjiElementAlternativeStandaloneAndNestedBackRestoreEveryPriorState()",
@@ -110,6 +112,62 @@
       {
         "test_id": "SearchReplicaJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm()",
         "name_prefix": "search-results-deinflected-makasete"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
+        "name_prefix": "handwriting-natural-yama-empty"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
+        "name_prefix": "handwriting-natural-yama-candidates"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
+        "name_prefix": "handwriting-natural-yama-results"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult()",
+        "name_prefix": "radical-production-empty"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult()",
+        "name_prefix": "radical-production-selected"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult()",
+        "name_prefix": "radical-kanji-primary-without-dictionary-row"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testKanjiStrokeOrderStepsForwardAndBackThenClosesToKanjiDetail()",
+        "name_prefix": "stroke-order-sou-initial"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testKanjiStrokeOrderStepsForwardAndBackThenClosesToKanjiDetail()",
+        "name_prefix": "stroke-order-sou-step-one"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testKanjiStrokeOrderPlayPausesResumesAndCompletesLongDiagram()",
+        "name_prefix": "stroke-order-utsu-paused"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testKanjiStrokeOrderPlayPausesResumesAndCompletesLongDiagram()",
+        "name_prefix": "stroke-order-utsu-complete"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testKanjiStrokeOrderOneStrokeCompletesAndColdRelaunchReturnsToSearch()",
+        "name_prefix": "stroke-order-ichi-complete"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()",
+        "name_prefix": "yama-yama-kanji-detail"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()",
+        "name_prefix": "yama-yama-stroke-order-initial"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()",
+        "name_prefix": "yama-yama-stroke-order-complete"
       },
       {
         "test_id": "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()",

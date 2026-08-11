@@ -518,6 +518,8 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let progress = app.descendants(matching: .any)["stroke-order.progress"]
     XCTAssertEqual(progress.value as? String, "0 of 6 complete")
     XCTAssertFalse(app.buttons["stroke-order.previous"].isEnabled)
+    waitForStrokeOrderCaptureToSettle(in: app)
+    recordSettledScreenshot(named: "stroke-order-sou-initial", app: app)
 
     app.buttons["stroke-order.next"].tap()
     let firstStrokeSettled = XCTNSPredicateExpectation(
@@ -526,6 +528,8 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     )
     XCTAssertEqual(XCTWaiter.wait(for: [firstStrokeSettled], timeout: 3), .completed)
     XCTAssertTrue(app.buttons["stroke-order.previous"].isEnabled)
+    waitForStrokeOrderCaptureToSettle(in: app)
+    recordSettledScreenshot(named: "stroke-order-sou-step-one", app: app)
 
     app.buttons["stroke-order.previous"].tap()
     XCTAssertEqual(progress.value as? String, "0 of 6 complete")
@@ -639,11 +643,14 @@ final class SearchReplicaJourneyUITests: XCTestCase {
 
       XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 3))
       XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "山")
+      recordSettledScreenshot(named: "yama-\(query)-kanji-detail", app: app)
       let strokeOrder = app.buttons["kanji-detail.stroke-order"]
       XCTAssertTrue(strokeOrder.waitForExistence(timeout: 3))
       strokeOrder.tap()
       let progress = app.descendants(matching: .any)["stroke-order.progress"]
       XCTAssertEqual(progress.value as? String, "0 of 3 complete")
+      waitForStrokeOrderCaptureToSettle(in: app)
+      recordSettledScreenshot(named: "yama-\(query)-stroke-order-initial", app: app)
       app.buttons["stroke-order.play"].tap()
       let completed = XCTNSPredicateExpectation(
         predicate: NSPredicate(format: "value == %@", "3 of 3 complete"),
@@ -858,10 +865,12 @@ final class SearchReplicaJourneyUITests: XCTestCase {
   func testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult() throws {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
     let surface = openRadicals(in: app)
+    recordSettledScreenshot(named: "radical-production-empty", app: app)
     radicalButton("radical.丶", in: app).tap()
 
     let candidate = app.buttons["radical.candidate.丶"]
     XCTAssertTrue(candidate.waitForExistence(timeout: 2))
+    recordSettledScreenshot(named: "radical-production-selected", app: app)
     candidate.tap()
     app.buttons["radical.search"].tap()
 
@@ -1059,6 +1068,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
     let surface = openHandwriting(in: app)
     let canvas = surface.canvas
+    recordSettledScreenshot(named: "handwriting-natural-yama-empty", app: app)
     drawSyntheticStroke(
       in: canvas,
       from: CGVector(dx: 0.5, dy: 0.2),
@@ -1078,6 +1088,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let candidate = app.buttons["handwriting.candidate.山"]
     XCTAssertTrue(candidate.waitForExistence(timeout: 10))
     XCTAssertEqual(candidate.value as? String, "Candidate rank 1")
+    recordSettledScreenshot(named: "handwriting-natural-yama-candidates", app: app)
     candidate.tap()
     XCTAssertEqual(surface.searchField.value as? String, "山")
     app.buttons["handwriting.search"].tap()
