@@ -1,6 +1,6 @@
 {
   "project": "zenbu-lookup-nihongo-reference",
-  "dossier_revision_at": "2026-08-10T07:56:07Z",
+  "dossier_revision_at": "2026-08-11T08:28:04Z",
   "authorization": {
     "basis": "The device owner explicitly authorized normal-use inspection of the installed Nihongo app on the connected physical iPhone for an internal clean-room discovery dossier.",
     "allowed": [
@@ -39,6 +39,7 @@
     "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
     "JOURNEY-RERUN-RECENT-SEARCH",
     "JOURNEY-SEARCH-HANDWRITING",
+    "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
     "JOURNEY-SEARCH-RADICAL",
     "JOURNEY-INSPECT-WORD",
     "JOURNEY-READ-EXAMPLES",
@@ -47,10 +48,15 @@
     "JOURNEY-EDIT-NOTE",
     "JOURNEY-INSPECT-KANJI",
     "JOURNEY-PLAY-STROKE-ORDER",
+    "JOURNEY-YAMA-STROKE-ORDER",
     "JOURNEY-INSPECT-KANJI-ELEMENT",
+    "JOURNEY-IMAGE-TAKE-PHOTO",
+    "JOURNEY-IMAGE-PHOTO-LIBRARY",
     "JOURNEY-IMAGE-FILES"
   ],
   "navigation_support": [
+    "IOS-CAMERA-CAPTURE",
+    "IOS-PHOTO-LIBRARY-PICKER",
     "IOS-FILES-PICKER"
   ],
   "proposed": [
@@ -62,7 +68,6 @@
     "General Settings",
     "Contents of external destinations",
     "Alternate locales, orientations, devices, OS versions, appearances, and historical Nihongo versions",
-    "Camera and Photo Library source mechanics for this discovery revision; the stakeholder accepted Files-based uploaded-image parsing as sufficient on 2026-08-05",
     "System share-sheet contents beyond the Image Text result's app-owned Copy Text and Share Image menu",
     "Kanji etymology and Origin/history content for the MVP, including historical glyph presentation, classification explanations, imagery, and the dedicated Kanji Etymology reference surface; deferred to post-MVP issue #91"
   ],
@@ -85,6 +90,18 @@
     "Exact Nihongo recent-search row deletion gesture, control presentation, animation, and persistence mechanics are not parity requirements; Zenbu provides an app-owned per-row swipe action that removes only the selected row and persists the deletion"
   ],
   "stakeholder_decisions": [
+    {
+      "date": "2026-08-11",
+      "authority": "expanded Search and dictionary parity map #110",
+      "supersedes": "2026-08-05 Camera and Photo Library source-mechanics waiver",
+      "promoted_to_blocking": [
+        "JOURNEY-IMAGE-TAKE-PHOTO",
+        "JOURNEY-IMAGE-PHOTO-LIBRARY",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
+        "JOURNEY-YAMA-STROKE-ORDER"
+      ],
+      "decision": "Camera capture, Photo Library selection, natural handwritten 山, and yama / やま / 山 through visible stroke playback are canonical production acceptance journeys. A visible unavailable control or fixture-only adapter cannot satisfy them."
+    },
     {
       "date": "2026-08-06",
       "authority": "product stakeholder feedback on Wayfinder map #77",

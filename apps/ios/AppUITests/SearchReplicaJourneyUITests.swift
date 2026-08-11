@@ -47,14 +47,6 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(app.buttons["image-source.camera"].exists)
     XCTAssertTrue(app.buttons["image-source.photo-library"].exists)
 
-    app.buttons.matching(identifier: "image-source.camera").firstMatch.tap()
-    XCTAssertTrue(app.alerts["Camera unavailable"].waitForExistence(timeout: 2))
-    app.alerts["Camera unavailable"].buttons["OK"].firstMatch.tap()
-    imageSource.tap()
-    app.buttons.matching(identifier: "image-source.photo-library").firstMatch.tap()
-    XCTAssertTrue(app.alerts["Photo Library unavailable"].waitForExistence(timeout: 2))
-    app.alerts["Photo Library unavailable"].buttons["OK"].firstMatch.tap()
-    imageSource.tap()
     app.buttons.matching(identifier: "image-source.files").firstMatch.tap()
     let fixture = app.staticTexts["fixture-clear-horizontal"]
     XCTAssertTrue(fixture.waitForExistence(timeout: 5))
@@ -64,6 +56,36 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let recognized = app.staticTexts["image-text.raw-text"]
     XCTAssertTrue(recognized.waitForExistence(timeout: 10))
     XCTAssertTrue(recognized.label.contains("日本語"))
+  }
+
+  @MainActor
+  func testPhotoLibrarySourceOpensSystemPickerAndCancels() throws {
+    let app = launchApp()
+    app.buttons["search.image-source"].tap()
+    app.buttons.matching(identifier: "image-source.photo-library").firstMatch.tap()
+
+    let photosNavigation = app.navigationBars["Photos"]
+    XCTAssertTrue(photosNavigation.waitForExistence(timeout: 5))
+    let cancel = app.buttons["Cancel"]
+    XCTAssertTrue(cancel.waitForExistence(timeout: 2))
+    cancel.tap()
+    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  func testPhotoLibrarySelectionStartsImageTextFlow() throws {
+    let app = launchApp()
+    app.buttons["search.image-source"].tap()
+    app.buttons.matching(identifier: "image-source.photo-library").firstMatch.tap()
+    XCTAssertTrue(app.navigationBars["Photos"].waitForExistence(timeout: 5))
+
+    let firstPhoto = app.images.matching(identifier: "PXGGridLayout-Info").firstMatch
+    XCTAssertTrue(firstPhoto.waitForExistence(timeout: 5))
+    firstPhoto.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+
+    XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
+    XCTAssertTrue(app.staticTexts["image-text.raw-text"].waitForExistence(timeout: 20))
+    XCTAssertTrue(app.staticTexts["image-text.raw-text"].label.contains("日本語"))
   }
 
   @MainActor
@@ -499,6 +521,47 @@ final class SearchReplicaJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testYamaInputsReachKanjiDetailAndPlayStrokeOrder() throws {
+    for query in ["yama", "やま", "山"] {
+      let app = launchApp()
+      let searchField = app.textFields["search.field"]
+      XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+      submitSearch(query, in: app, searchField: searchField)
+
+      if query == "山" {
+        let kanji = app.buttons["result.kanji-primary.山"]
+        XCTAssertTrue(kanji.waitForExistence(timeout: 3))
+        kanji.tap()
+      } else {
+        let mountain = app.buttons.matching(
+          NSPredicate(format: "label BEGINSWITH %@", "山, やま,")
+        ).firstMatch
+        XCTAssertTrue(mountain.waitForExistence(timeout: 3))
+        mountain.tap()
+        let linkedKanji = app.buttons["word-detail.kanji.山"]
+        XCTAssertTrue(linkedKanji.waitForExistence(timeout: 3))
+        linkedKanji.tap()
+      }
+
+      XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 3))
+      XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "山")
+      let strokeOrder = app.buttons["kanji-detail.stroke-order"]
+      XCTAssertTrue(strokeOrder.waitForExistence(timeout: 3))
+      strokeOrder.tap()
+      let progress = app.descendants(matching: .any)["stroke-order.progress"]
+      XCTAssertEqual(progress.value as? String, "0 of 3 complete")
+      app.buttons["stroke-order.play"].tap()
+      let completed = XCTNSPredicateExpectation(
+        predicate: NSPredicate(format: "value == %@", "3 of 3 complete"),
+        object: progress
+      )
+      XCTAssertEqual(XCTWaiter.wait(for: [completed], timeout: 8), .completed)
+      recordScreenshot(named: "yama-\(query)-stroke-order-complete", app: app)
+      app.terminate()
+    }
+  }
+
+  @MainActor
   func testKanjiDetailShowsSourceBackedClassificationAndReadings() throws {
     let app = launchApp()
     let searchField = app.textFields["search.field"]
@@ -888,6 +951,37 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(candidate.waitForExistence(timeout: 10))
     XCTAssertEqual(candidate.label, "Use handwriting candidate 丁")
     recordScreenshot(named: "handwriting-live-offline-candidate", app: app)
+  }
+
+  @MainActor
+  func testNaturalHandwritingRecognizesYamaWithoutFixture() throws {
+    let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
+    let surface = openHandwriting(in: app)
+    let canvas = surface.canvas
+    drawSyntheticStroke(
+      in: canvas,
+      from: CGVector(dx: 0.5, dy: 0.2),
+      to: CGVector(dx: 0.5, dy: 0.78)
+    )
+    drawSyntheticStroke(
+      in: canvas,
+      from: CGVector(dx: 0.18, dy: 0.42),
+      to: CGVector(dx: 0.5, dy: 0.78)
+    )
+    drawSyntheticStroke(
+      in: canvas,
+      from: CGVector(dx: 0.82, dy: 0.38),
+      to: CGVector(dx: 0.82, dy: 0.78)
+    )
+
+    let candidate = app.buttons["handwriting.candidate.山"]
+    XCTAssertTrue(candidate.waitForExistence(timeout: 10))
+    XCTAssertEqual(candidate.value as? String, "Candidate rank 1")
+    candidate.tap()
+    XCTAssertEqual(surface.searchField.value as? String, "山")
+    app.buttons["handwriting.search"].tap()
+    XCTAssertTrue(app.buttons["result.kanji-primary.山"].waitForExistence(timeout: 3))
+    recordScreenshot(named: "handwriting-natural-yama-results", app: app)
   }
 
   @MainActor

@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "issue": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/111",
+  "ledger": "docs/clone-discovery/nihongo/parity-inventory.jsonl",
+  "required_journeys": "docs/clone-discovery/nihongo/scope.json#blocking_journey_ids",
+  "environments": [
+    "debug_simulator",
+    "release_simulator_smoke",
+    "signed_physical_device"
+  ],
+  "journeys": [
+    {
+      "journey_id": "JOURNEY-SEARCH-TEXT",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults()",
+        "SearchReplicaJourneyUITests/testPartialEnglishQueryUpdatesLiveResults()",
+        "SearchReplicaJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()",
+        "SearchReplicaJourneyUITests/testOrdinaryJapaneseResultOpensItsOwnLanguageReferenceData()",
+        "SearchReplicaJourneyUITests/testNoMatchKeepsQueryAboveBlankResultsState()",
+        "SearchReplicaJourneyUITests/testLookupFailureIsNotPresentedAsNoMatchAndRetryRecovers()",
+        "SearchReplicaJourneyUITests/testInflectedRomajiFindsDictionaryForm()",
+        "SearchReplicaJourneyUITests/testMixedScriptShowsDiscoveredWords()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testAmbiguousRomajiCanRefineToJapaneseReading()",
+        "SearchReplicaJourneyUITests/testNihonOffersJapaneseReadingRefinement()",
+        "SearchReplicaJourneyUITests/testUncapturedRomajiDoesNotInventARefinementAction()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-RERUN-RECENT-SEARCH",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testNewestRecentSearchRerunsItsResultSet()",
+        "SearchReplicaJourneyUITests/testDisposableRecentSearchCanBeRemovedWithoutAffectingAnotherRow()",
+        "SearchReplicaJourneyUITests/testDisposableHistoryClearAllConfirmsAndCancelLeavesSearchRoot()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-SEARCH-HANDWRITING",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testHandwritingCandidatesComposeCommonKanjiAndEnterHistory()",
+        "SearchReplicaJourneyUITests/testHandwritingEraseClearsPendingDrawingAndModeControlsNavigate()",
+        "SearchReplicaJourneyUITests/testSelectedHandwritingCandidateSubmitsSingleKanji()",
+        "SearchReplicaJourneyUITests/testHandwritingSearchIncludesPendingRecognizedStroke()",
+        "SearchReplicaJourneyUITests/testHandwritingNoCandidateStateRecoversAfterEraseAndRedraw()",
+        "SearchReplicaJourneyUITests/testLiveHandwritingRecognitionProducesCandidatesForSyntheticKanji()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-SEARCH-RADICAL",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testRadicalSelectionNarrowsAndRemovalBroadensRealCandidates()",
+        "SearchReplicaJourneyUITests/testRadicalCandidateSubmitsKanjiResultAndEntersHistory()",
+        "SearchReplicaJourneyUITests/testRadicalSearchRequiresCandidateWhenEnteringWithPopulatedQuery()",
+        "SearchReplicaJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-INSPECT-WORD",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation()",
+        "SearchReplicaJourneyUITests/testMultipleReadingUncommonAndLinkedAlternativeKanjiClassesArePubliclyOperable()",
+        "SearchReplicaJourneyUITests/testWordNotesRemainIsolatedAcrossSameSpellingHomographs()",
+        "SearchReplicaJourneyUITests/testDictionarySourceAttributionIsReachableFromSearch()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-READ-EXAMPLES",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed()",
+        "SearchReplicaJourneyUITests/testExampleOnlyPunctuationQueryOpensItsSourceBackedSentence()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-HEAR-PRONUNCIATION",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-INSPECT-CONJUGATIONS",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail()",
+        "SearchReplicaJourneyUITests/testGodanConjugationsExposeCapturedPlainAndPoliteForms()",
+        "SearchReplicaJourneyUITests/testCapturedSuruAndKuruIrregularConjugationsArePubliclyReachable()",
+        "SearchReplicaJourneyUITests/testCapturedAdjectiveFormListsDoNotExposeVerbModeControls()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-EDIT-NOTE",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testEditedWordNotePersistsWhenTheEntryIsReopened()",
+        "SearchReplicaJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted()",
+        "SearchReplicaJourneyUITests/testEmptyWordNoteDoneIsANoOpAndBackAutosavesPopulatedText()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-INSPECT-KANJI",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings()",
+        "SearchReplicaJourneyUITests/testKanjiDetailRelatedWordOpensWordDetailAndBackRestoresPosition()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-PLAY-STROKE-ORDER",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testKanjiStrokeOrderFailureOffersRetryAndRecovers()",
+        "SearchReplicaJourneyUITests/testKanjiStrokeOrderStepsForwardAndBackThenClosesToKanjiDetail()",
+        "SearchReplicaJourneyUITests/testKanjiStrokeOrderPlayPausesResumesAndCompletesLongDiagram()",
+        "SearchReplicaJourneyUITests/testKanjiStrokeOrderOneStrokeCompletesAndColdRelaunchReturnsToSearch()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-YAMA-STROKE-ORDER",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-INSPECT-KANJI-ELEMENT",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testKanjiElementFailureOffersRetryAndRecoversFromTheLiveSource()",
+        "SearchReplicaJourneyUITests/testKanjiElementAlternativeStandaloneAndNestedBackRestoreEveryPriorState()",
+        "SearchReplicaJourneyUITests/testEveryRenderedKanjiElementRoleRowUsesPublicKanjiNavigation()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-IMAGE-TAKE-PHOTO",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-IMAGE-PHOTO-LIBRARY",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()"
+      ]
+    },
+    {
+      "journey_id": "JOURNEY-IMAGE-FILES",
+      "test_ids": [
+        "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()",
+        "SearchReplicaJourneyUITests/testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose()",
+        "SearchReplicaJourneyUITests/testImageTextVerticalFileProducesSelectableJapaneseRegions()",
+        "SearchReplicaJourneyUITests/testImageTextMultipleFilesRecoverFromEmptyAndRemainTransient()",
+        "SearchReplicaJourneyUITests/testImageTextJapaneseWithoutDictionaryMatchIsNotReportedAsNoText()"
+      ]
+    }
+  ]
+}

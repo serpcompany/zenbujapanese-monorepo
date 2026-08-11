@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct SearchView: View {
   @Binding var query: String
@@ -20,8 +21,7 @@ struct SearchView: View {
   @State private var sparseRadicalQuery: SearchQuery?
   @State private var exampleCount = 0
   @State private var showsImageSources = false
-  @State private var importsImages = false
-  @State private var unavailableImageSource: String?
+  @State private var presentedImageSource: ImageSourceSheet?
   @State private var imageImportFailure: String?
   @State private var imageImportTask: Task<Void, Never>?
   @FocusState private var isSearchFocused: Bool
@@ -128,28 +128,35 @@ struct SearchView: View {
       }
     }
     .confirmationDialog("Image Search", isPresented: $showsImageSources) {
-      Button("Take Photo") { unavailableImageSource = "Camera" }
+      Button("Take Photo") { presentCamera() }
         .accessibilityIdentifier("image-source.camera")
-      Button("Photo Library") { unavailableImageSource = "Photo Library" }
+      Button("Photo Library") { presentedImageSource = .photoLibrary }
         .accessibilityIdentifier("image-source.photo-library")
-      Button("Files") { importsImages = true }
+      Button("Files") { presentedImageSource = .files }
         .accessibilityIdentifier("image-source.files")
       Button("Cancel", role: .cancel) {}
     }
-    .sheet(isPresented: $importsImages) {
-      ImageFilePicker(initialDirectory: imageImportInitialDirectory) { result in
-        importsImages = false
-        importImages(result)
+    .sheet(item: $presentedImageSource) { source in
+      switch source {
+      case .camera:
+        ImageCameraPicker { result in
+          presentedImageSource = nil
+          importCameraImage(result)
+        }
+        .ignoresSafeArea()
+      case .photoLibrary:
+        ImagePhotoLibraryPicker { result in
+          presentedImageSource = nil
+          importPhotoLibraryImages(result)
+        }
+        .ignoresSafeArea()
+      case .files:
+        ImageFilePicker(initialDirectory: imageImportInitialDirectory) { result in
+          presentedImageSource = nil
+          importImages(result)
+        }
+        .ignoresSafeArea()
       }
-      .ignoresSafeArea()
-    }
-    .alert("\(unavailableImageSource ?? "Image source") unavailable", isPresented: Binding(
-      get: { unavailableImageSource != nil },
-      set: { if !$0 { unavailableImageSource = nil } }
-    )) {
-      Button("OK") { unavailableImageSource = nil }
-    } message: {
-      Text("Use Files to start Image Text on this replica surface.")
     }
     .alert("Unable to Import Images", isPresented: Binding(
       get: { imageImportFailure != nil },
@@ -245,6 +252,40 @@ struct SearchView: View {
       imageImportTask = nil
     }
   }
+
+  private func presentCamera() {
+    guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+      imageImportFailure = "Camera capture requires a physical device with an available camera."
+      return
+    }
+    presentedImageSource = .camera
+  }
+
+  private func importCameraImage(_ result: Result<ImageTextAsset?, Error>) {
+    switch result {
+    case .success(let asset):
+      if let asset { openImageText([asset]) }
+    case .failure:
+      imageImportFailure = "The captured image could not be read."
+    }
+  }
+
+  private func importPhotoLibraryImages(_ result: Result<[ImageTextAsset], Error>) {
+    switch result {
+    case .success(let assets):
+      if !assets.isEmpty { openImageText(assets) }
+    case .failure:
+      imageImportFailure = "The selected photos could not be read."
+    }
+  }
+}
+
+private enum ImageSourceSheet: String, Identifiable {
+  case camera
+  case photoLibrary
+  case files
+
+  var id: String { rawValue }
 }
 
 private struct SearchTaskID: Hashable {

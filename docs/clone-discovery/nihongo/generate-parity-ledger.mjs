@@ -4,8 +4,12 @@ import { fileURLToPath } from "node:url";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const readJson = (name) => JSON.parse(readFileSync(join(root, name), "utf8"));
+const readJsonl = (name) => readFileSync(join(root, name), "utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line));
 const unique = (values) => [...new Set((values ?? []).filter(Boolean))];
 const asArray = (value) => value == null ? [] : Array.isArray(value) ? value : [value];
+const existingLedgerById = existsSync(join(root, "parity-inventory.jsonl"))
+  ? new Map(readJsonl("parity-inventory.jsonl").map((row) => [row.id, row]))
+  : new Map();
 
 const scope = readJson("scope.json");
 const generatedAt = scope.dossier_revision_at;
@@ -89,7 +93,8 @@ const baseRow = ({
   conflicts = [],
   sourceRecord,
   verificationProcedure,
-}) => ({
+}) => {
+  const row = {
   id,
   source_ids: unique(sourceIds),
   source_record: sourceRecord,
@@ -124,7 +129,16 @@ const baseRow = ({
   substitute: null,
   exclusion,
   notes: "Discovery-only reference claim. No Zenbu implementation or verification status is asserted.",
-});
+  };
+  const existing = existingLedgerById.get(id);
+  if (!existing) return row;
+  return {
+    ...row,
+    clone_status: existing.clone_status,
+    test_status: existing.test_status,
+    ...(existing.clone_evidence ? { clone_evidence: existing.clone_evidence } : {}),
+  };
+};
 
 const surfaceRows = surfaceMap.surfaces.map((surface) => {
   const journeyIds = journeys.filter((journey) => journey.surfaces.includes(surface.surface_id)).map((journey) => journey.journey_id);
@@ -354,7 +368,11 @@ const unknownBlockerIds = unique(rows.flatMap((row) => row.blocked_by)).filter((
 const missingEvidencePaths = unique(rows.flatMap((row) => row.reference_evidence))
   .filter((path) => !existsSync(join(root, path)));
 const invalidDiscoveryStatuses = rows.filter((row) => !["ready_input", "blocked", "excluded"].includes(row.discovery_status)).map((row) => row.id);
-const invalidCloneStatuses = rows.filter((row) => row.clone_status !== "unknown" || row.test_status !== "not_run").map((row) => row.id);
+const allowedCloneStatuses = new Set(["unknown", "exact", "approved_variance", "defect", "access_blocker", "excluded"]);
+const allowedTestStatuses = new Set(["not_run", "passed", "failed", "blocked", "not_applicable"]);
+const invalidCloneStatuses = rows
+  .filter((row) => !allowedCloneStatuses.has(row.clone_status) || !allowedTestStatuses.has(row.test_status))
+  .map((row) => row.id);
 
 const sourceCoverage = {
   surfaces: surfaceRows.length,
@@ -425,7 +443,16 @@ const coverageReport = {
     blocked_rows: blockedRowIds.length,
     excluded_rows: countBy("discovery_status", "excluded"),
     clone_unknown_rows: countBy("clone_status", "unknown"),
+    clone_exact_rows: countBy("clone_status", "exact"),
+    clone_approved_variance_rows: countBy("clone_status", "approved_variance"),
+    clone_defect_rows: countBy("clone_status", "defect"),
+    clone_access_blocker_rows: countBy("clone_status", "access_blocker"),
+    clone_excluded_rows: countBy("clone_status", "excluded"),
     test_not_run_rows: countBy("test_status", "not_run"),
+    test_passed_rows: countBy("test_status", "passed"),
+    test_failed_rows: countBy("test_status", "failed"),
+    test_blocked_rows: countBy("test_status", "blocked"),
+    test_not_applicable_rows: countBy("test_status", "not_applicable"),
     distinct_blocker_ids: crosswalkReport.blocking_gap_ids.length,
   },
   blocked_row_ids: blockedRowIds,
@@ -473,7 +500,7 @@ const handoff = `# Lookup parity implementation handoff\n\n` +
 `- \`reference-resource-crosswalk.json\`, the crawl files, fixture matrices, and evidence index are source indexes; they do not compete with the ledger for row status.\n` +
 `- Regenerate and audit all four outputs with \`node docs/clone-discovery/nihongo/generate-parity-ledger.mjs\`.\n\n` +
 `## Exact denominator\n\n` +
-`The ledger has ${rows.length} atomic rows: ${sourceCoverage.surfaces} surfaces, ${sourceCoverage.nodes} distinguishable states, ${sourceCoverage.actions} action edges, ${sourceCoverage.fixtures} fixture/behavior-class inputs, ${sourceCoverage.behavior_claims} observable language-behavior claims, ${sourceCoverage.language_resources} language-resource boundaries, ${sourceCoverage.design_token_families} design-token families, and ${sourceCoverage.assets} asset/fixture records. All ${rows.length} rows are schema-complete; ${coverageReport.ledger.ready_input_rows} are ready reference inputs, ${coverageReport.ledger.blocked_rows} are explicitly blocked, and ${coverageReport.ledger.excluded_rows} preserve approved exclusions. All clone statuses are \`unknown\` and all test statuses are \`not_run\`.\n\n` +
+`The ledger has ${rows.length} atomic rows: ${sourceCoverage.surfaces} surfaces, ${sourceCoverage.nodes} distinguishable states, ${sourceCoverage.actions} action edges, ${sourceCoverage.fixtures} fixture/behavior-class inputs, ${sourceCoverage.behavior_claims} observable language-behavior claims, ${sourceCoverage.language_resources} language-resource boundaries, ${sourceCoverage.design_token_families} design-token families, and ${sourceCoverage.assets} asset/fixture records. All ${rows.length} rows are schema-complete; ${coverageReport.ledger.ready_input_rows} are ready reference inputs, ${coverageReport.ledger.blocked_rows} are explicitly blocked, and ${coverageReport.ledger.excluded_rows} preserve approved exclusions. Runtime verification currently records ${coverageReport.ledger.clone_exact_rows} exact rows, ${coverageReport.ledger.clone_approved_variance_rows} approved variances, ${coverageReport.ledger.clone_defect_rows} defects, ${coverageReport.ledger.clone_access_blocker_rows} access blockers, and ${coverageReport.ledger.clone_unknown_rows} unknown rows; ${coverageReport.ledger.test_passed_rows} rows passed tests and ${coverageReport.ledger.test_not_run_rows} remain not run.\n\n` +
 `## Implementation-use contract\n\n` +
 `A later implementation agent must select an approved journey, locate all rows by \`journey_ids\`, reproduce each row from its \`preconditions\`, \`fixture_ids\`, and \`action\`, and implement immediate, settled, durable, failure, recovery, and relaunch behavior only to the boundary explicitly stated. It must retain app-owned Language Reference Data behind the focused Shared Capability boundaries in ADR 0001. It must add clone evidence and passed tests before changing any row from \`unknown\`; structural completeness is not runtime verification.\n\n` +
 `Reference evidence records the observed Nihongo baseline. The approved variances and nonblocking boundaries are canonical in \`scope.json\`; they include Zenbu-owned visual measurements, glyphs, accessible semantics, pitch-record selection, pronunciation-source routing, repeatability, navigation gestures, long press, and individual history-row deletion. The whole-content Natural Translation is an approved Image Text Flow addition, not evidence of Nihongo behavior.\n\n` +
@@ -494,10 +521,10 @@ writeFileSync(join(root, "parity-coverage-report.json"), `${JSON.stringify(cover
 writeFileSync(join(root, "parity-open-questions.json"), `${JSON.stringify(openQuestions, null, 2)}\n`);
 writeFileSync(join(root, "implementation-handoff.md"), handoff);
 
-const ledgerNote = `The canonical parity ledger contains ${rows.length} schema-complete atomic rows derived from explicit source IDs; clone_status remains unknown and test_status remains not_run for every row.`;
+const ledgerNote = `The canonical parity ledger contains ${rows.length} schema-complete atomic rows derived from explicit source IDs; ${coverageReport.ledger.clone_unknown_rows} clone statuses remain unknown and ${coverageReport.ledger.test_not_run_rows} test statuses remain not run.`;
 const blockerNote = hasBlockers
   ? `${coverageReport.ledger.distinct_blocker_ids} distinct blockers affect ${coverageReport.ledger.blocked_rows} ledger rows; the generated handoff is structurally complete but not coding-ready.`
-  : "No discovery blockers affect the ledger; the generated handoff is a coding-ready discovery input, while clone and test statuses remain intentionally unknown/not_run.";
+  : "No discovery blockers affect the ledger; the generated handoff is a coding-ready discovery input, while runtime clone and test evidence remains independently gated.";
 const retainedNotes = discoveryStatus.notes.filter((note) =>
   !note.startsWith("The canonical parity ledger contains ") &&
   !/^\d+ distinct blockers affect \d+ ledger rows;/.test(note) &&
