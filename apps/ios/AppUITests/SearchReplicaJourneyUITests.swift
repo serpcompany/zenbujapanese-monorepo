@@ -71,10 +71,15 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     recordSettledScreenshot(named: "production-image-source-menu-files", app: app)
 
     app.buttons.matching(identifier: "image-source.files").firstMatch.tap()
-    let picker = waitForSystemDocumentPicker(in: app)
+    _ = waitForSystemDocumentPicker(in: app)
     recordSettledScreenshot(named: "production-files-picker-clear-horizontal", app: app)
-    picker.coordinate(withNormalizedOffset: CGVector(dx: 0.17, dy: 0.29)).tap()
-    picker.coordinate(withNormalizedOffset: CGVector(dx: 0.86, dy: 0.12)).tap()
+    let fixture = app.staticTexts.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "fixture-clear-horizontal")
+    ).firstMatch
+    XCTAssertTrue(fixture.waitForExistence(timeout: 3))
+    fixture.tap()
+    XCTAssertTrue(app.buttons["Open"].isEnabled)
+    app.buttons["Open"].tap()
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
     let recognized = app.staticTexts["image-text.raw-text"]
     XCTAssertTrue(recognized.waitForExistence(timeout: 10))
