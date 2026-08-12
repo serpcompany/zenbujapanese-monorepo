@@ -51,16 +51,22 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     recordSettledScreenshot(named: "production-image-source-menu-files", app: app)
 
     app.buttons.matching(identifier: "image-source.files").firstMatch.tap()
-    let fixture = app.staticTexts["fixture-clear-horizontal"]
-    XCTAssertTrue(fixture.waitForExistence(timeout: 5))
+    let picker = waitForSystemDocumentPicker(in: app)
     recordSettledScreenshot(named: "production-files-picker-clear-horizontal", app: app)
-    fixture.tap()
-    if app.buttons["Open"].waitForExistence(timeout: 1) { app.buttons["Open"].tap() }
+    picker.coordinate(withNormalizedOffset: CGVector(dx: 0.17, dy: 0.29)).tap()
+    picker.coordinate(withNormalizedOffset: CGVector(dx: 0.86, dy: 0.12)).tap()
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
     let recognized = app.staticTexts["image-text.raw-text"]
     XCTAssertTrue(recognized.waitForExistence(timeout: 10))
     XCTAssertTrue(recognized.label.contains("日本語"))
     recordSettledScreenshot(named: "production-image-text-files-recognized", app: app)
+  }
+
+  @MainActor
+  private func waitForSystemDocumentPicker(in app: XCUIApplication) -> XCUIElement {
+    let picker = app.windows.element(boundBy: 1)
+    XCTAssertTrue(picker.waitForExistence(timeout: 5))
+    return picker
   }
 
   @MainActor
