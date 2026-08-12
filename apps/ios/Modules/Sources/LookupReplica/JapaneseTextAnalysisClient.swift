@@ -148,7 +148,9 @@ private actor JapaneseTextAnalyzer {
 
 private extension Character {
   var isJapaneseLanguageItemStart: Bool {
-    isKanjiOrIterationMark || unicodeScalars.allSatisfy { (0x30A0...0x30FF).contains(Int($0.value)) }
+    isKanjiOrIterationMark || unicodeScalars.allSatisfy {
+      (0x3040...0x30FF).contains(Int($0.value))
+    }
   }
 
   var isJapaneseLanguageItem: Bool {

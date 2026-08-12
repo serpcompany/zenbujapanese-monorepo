@@ -34,7 +34,7 @@
     "normalized_relationships": 36668,
     "note_identity_duplicate_groups": 3,
     "note_identity_disambiguated_entries": 6,
-    "pitch_entries": 59357,
+    "pitch_entries": 79830,
     "example_sentences": 232703,
     "rejection_reasons": {
       "missing_ent_seq_reading_or_english_gloss": 0
@@ -68,7 +68,7 @@
       "provider part-of-speech taxonomy normalized to app-owned classification labels",
       "app-owned commonness marker derived from priority on the selected display form",
       "deterministic app-owned rank score derived from documented JMdict priority tags",
-      "UniDic aType normalized to deterministic downstep and mora-count facts by exact base-form and reading match",
+      "UniDic aType normalized to deterministic downstep and pronunciation-mora-count facts by exact base-form and pronunciation-or-lexical-reading match",
       "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence"
     ],
     "pitch_source_resource_id": "SOURCE-COMPONENT-UNIDIC",
@@ -77,11 +77,11 @@
     "example_source_sha256": "2799d411d99bd023044303fd3b2554a9e391401a04492e508ad1cd53c0304961",
     "relationship_source_resource_id": "zenbu-word-relationships-v1",
     "relationship_source_sha256": "2c483c933f5a42baad194db9a45c1d6251e09ebcb2a40c6475ca3d984ea2dd38",
-    "import_tool_sha256": "779b9086da7d9f84021c8b07f4eb16ef3bbe8c2e66ae94d3eea2fd1b8281014d",
+    "import_tool_sha256": "936cc79fea9ddc355972b14b84e7af94b99e72a20ac05206cf8b2ffd776a1c35",
     "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
-    "unidic_adapter_sha256": "1dca10179af888f8aaa8eaa7b7a757616fad83258d26faf8971ed04193df42d8",
+    "unidic_adapter_sha256": "f616738d7f45e3c75ece903d62ce2092923a6e68cf0925dafe030563c753985a",
     "tatoeba_adapter_sha256": "fae8c063bbf42b01174aa94af21511f801b8b97fbfcf106e0bd23d548f378093",
-    "database_sha256": "b3a7f4964f9f924700fa669d7a7e43ca983f1a7eb1616dbac37927f1336a3f96",
-    "database_bytes": 285290496
+    "database_sha256": "c5076ad2ae06ba4ca0c2976a00dfaad06af827d6ef0aac0424158d0b4dbe3cac",
+    "database_bytes": 287490048
   }
 }

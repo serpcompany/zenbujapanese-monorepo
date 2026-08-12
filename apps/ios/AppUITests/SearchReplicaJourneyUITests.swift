@@ -2,10 +2,33 @@ import XCTest
 
 final class SearchReplicaJourneyUITests: XCTestCase {
   @MainActor
+  func testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToSettings() throws {
+    let app = launchApp()
+
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    let imageSearch = app.buttons["search.image-source"]
+    XCTAssertTrue(imageSearch.exists)
+    XCTAssertGreaterThanOrEqual(imageSearch.frame.minX, searchField.frame.maxX)
+    XCTAssertFalse(app.buttons["search.sources"].exists)
+
+    app.buttons["replica-tab.settings"].tap()
+    XCTAssertTrue(app.staticTexts["Dictionary Sources"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.staticTexts["JMdict"].exists)
+  }
+
+  @MainActor
   func testReplicaTabBarRestoresSearchAndNamesExcludedDestinations() throws {
     let app = launchApp()
 
-    for tab in ["clippings", "flashcards", "settings"] {
+    for tab in ["search", "clippings", "flashcards", "settings"] {
+      let button = app.buttons["replica-tab.\(tab)"]
+      XCTAssertTrue(button.waitForExistence(timeout: 3))
+      XCTAssertGreaterThanOrEqual(button.frame.height, 44)
+      XCTAssertLessThanOrEqual(button.frame.maxY, app.windows.firstMatch.frame.maxY)
+    }
+
+    for tab in ["clippings", "flashcards"] {
       let button = app.buttons["replica-tab.\(tab)"]
       XCTAssertTrue(button.waitForExistence(timeout: 3))
       button.tap()
@@ -13,9 +36,6 @@ final class SearchReplicaJourneyUITests: XCTestCase {
       let boundary = app.alerts["\(title) is outside this replica"]
       XCTAssertTrue(boundary.waitForExistence(timeout: 2))
       XCTAssertTrue(boundary.staticTexts["This acceptance replica is limited to Search and dictionary journeys."].exists)
-      if tab == "settings" {
-        recordSettledScreenshot(named: "acceptance-excluded-tab-boundary", app: app)
-      }
       boundary.buttons["OK"].tap()
     }
 
@@ -275,6 +295,11 @@ final class SearchReplicaJourneyUITests: XCTestCase {
   func testImageTextVerticalFileProducesSelectableJapaneseRegions() throws {
     let app = launchImageTextFixtures(["fixture-vertical.png"])
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
+    XCTAssertTrue(
+      app.descendants(matching: .any)
+        .matching(identifier: "image-text.region.いる")
+        .firstMatch.waitForExistence(timeout: 10)
+    )
     let region = app.descendants(matching: .any).matching(identifier: "image-text.region.読本").firstMatch
     XCTAssertTrue(region.waitForExistence(timeout: 10))
     region.tap()
@@ -1123,6 +1148,33 @@ final class SearchReplicaJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testObservedLeftToRightYamaGestureIncludesYamaCandidate() throws {
+    let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
+    let surface = openHandwriting(in: app)
+    let canvas = surface.canvas
+
+    drawSyntheticStroke(
+      in: canvas,
+      from: CGVector(dx: 0.22, dy: 0.2),
+      to: CGVector(dx: 0.48, dy: 0.76)
+    )
+    drawSyntheticStroke(
+      in: canvas,
+      from: CGVector(dx: 0.52, dy: 0.18),
+      to: CGVector(dx: 0.52, dy: 0.78)
+    )
+    drawSyntheticStroke(
+      in: canvas,
+      from: CGVector(dx: 0.82, dy: 0.2),
+      to: CGVector(dx: 0.66, dy: 0.76)
+    )
+
+    let candidate = app.buttons["handwriting.candidate.山"]
+    XCTAssertTrue(candidate.waitForExistence(timeout: 10))
+    XCTAssertLessThanOrEqual(canvas.frame.maxY, app.buttons["replica-tab.search"].frame.minY)
+  }
+
+  @MainActor
   func testNewestRecentSearchRerunsItsResultSet() throws {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
 
@@ -1212,6 +1264,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(recentSearch.waitForExistence(timeout: 3))
     let clearAll = app.buttons["recent-search.clear-all"]
     XCTAssertTrue(clearAll.exists)
+
     clearAll.tap()
 
     let alert = app.alerts["Clear Recent Searches?"]
@@ -1336,6 +1389,52 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(bestMatches.element(boundBy: 2).label.contains("考える"))
     XCTAssertTrue(app.staticTexts["Additional Matches"].exists)
     recordScreenshot(named: "search-results-english-think", app: app)
+  }
+
+  @MainActor
+  func testHelloRanksTheJapaneseGreetingAheadOfTheLoanwordAndSubstringNoise() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+    searchField.typeText("hello")
+
+    let first = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1")).firstMatch
+    XCTAssertTrue(first.waitForExistence(timeout: 3))
+    XCTAssertTrue(first.label.hasPrefix("今日は, こんにちは,"), first.label)
+    XCTAssertTrue(app.staticTexts["ハロー"].exists)
+    XCTAssertFalse(app.staticTexts["石"].exists)
+    XCTAssertFalse(app.staticTexts["ウイング"].exists)
+    XCTAssertFalse(app.staticTexts["ボックス"].exists)
+  }
+
+  @MainActor
+  func testGreetingWordDetailShowsCleanAlternativesPitchAndLearnerFacingExamples() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+    searchField.typeText("hello")
+
+    let greeting = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1")).firstMatch
+    XCTAssertTrue(greeting.waitForExistence(timeout: 3))
+    greeting.tap()
+
+    let detail = app.scrollViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    XCTAssertTrue(app.descendants(matching: .any)["word-detail.pitch"].exists)
+    XCTAssertTrue(app.descendants(matching: .any)["word-detail.alternative.こんにちわ"].exists)
+    XCTAssertFalse(app.descendants(matching: .any)["word-detail.alternative.今日わ"].exists)
+    XCTAssertFalse(app.descendants(matching: .any)["word-detail.alternative.こにちわ"].exists)
+    XCTAssertFalse(app.descendants(matching: .any)["word-detail.alternative.こにちは"].exists)
+    XCTAssertEqual(
+      app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Search only")).count,
+      0
+    )
+    XCTAssertEqual(
+      app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Tatoeba sentence")).count,
+      0
+    )
   }
 
   @MainActor
@@ -1561,7 +1660,11 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     searchField.tap()
     searchField.typeText("makasete")
 
-    XCTAssertTrue(app.staticTexts["任せる"].waitForExistence(timeout: 3))
+    let entrust = app.staticTexts["任せる"]
+    XCTAssertTrue(entrust.waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["任す"].exists)
+    XCTAssertTrue(app.staticTexts["負かす"].exists)
+    XCTAssertTrue(app.staticTexts["to defeat"].exists)
     XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
     recordScreenshot(named: "search-results-deinflected-makasete", app: app)
   }

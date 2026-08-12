@@ -65,7 +65,6 @@ public struct SearchReplicaRootView: View {
         cameraAuthorizationClient: cameraAuthorizationClient,
         radicalLookupClient: .live,
         exampleSentenceClient: .live,
-        openSources: { presentedSheet = .sources },
         openResult: { entry in path.append(.word(entry, "Search", nil)) },
         openKanji: openKanji,
         openExamples: { query, entry, usesEntryExamples in
@@ -211,9 +210,12 @@ public struct SearchReplicaRootView: View {
   }
 
   private func selectTab(_ tab: ReplicaTab) {
-    if tab == .search {
+    switch tab {
+    case .search:
       path.removeAll()
-    } else {
+    case .settings:
+      presentedSheet = .sources
+    case .clippings, .flashcards:
       unavailableTab = ReplicaUnavailableTab(tab: tab)
     }
   }

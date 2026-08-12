@@ -66,6 +66,10 @@ struct SearchQuery: Hashable, Sendable {
     replaceSuffix("ite", with: ["ku"])
     replaceSuffix("ida", with: ["gu"])
     replaceSuffix("ide", with: ["gu"])
+    // A heard or typed -sete form has a high-confidence ichidan base in -seru.
+    // Keep the neighboring -su lexical family as additional dictionary results:
+    // makasete resolves to 任せる while still exposing distinct 任す / 負かす.
+    replaceSuffix("sete", with: ["seru", "su"])
     replaceSuffix("ta", with: ["ru"])
     replaceSuffix("te", with: ["ru"])
     return candidates

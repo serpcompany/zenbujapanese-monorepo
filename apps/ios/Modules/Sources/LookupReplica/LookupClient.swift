@@ -246,13 +246,9 @@ private actor LanguageReferenceData {
   }
 
   private func bindEnglishRanking(_ query: SearchQuery, startingAt index: Int32, to statement: OpaquePointer) {
-    for offset in 0 ... 4 {
+    for offset in 0 ... 8 {
       bind(query.value, at: index + Int32(offset), to: statement)
     }
-    bind(query.value, at: index + 5, to: statement)
-    bind("to \(query.value)", at: index + 6, to: statement)
-    bind("to \(query.value)%", at: index + 7, to: statement)
-    bind("%\(query.value)%", at: index + 8, to: statement)
   }
 
   private func decodeEntry(from statement: OpaquePointer) throws -> DictionaryEntry {
@@ -314,8 +310,10 @@ private actor LanguageReferenceData {
         OR lower(e.summary) LIKE 'to ' || ? || ' of%'
         OR lower(e.summary) LIKE '%, to ' || ?
       ) THEN 0
-      WHEN lower(e.summary) = ? OR lower(e.summary) = ? THEN 1
-      WHEN lower(e.summary) LIKE ? THEN 1
+      WHEN lower(e.summary) = ?
+        OR lower(e.summary) = 'to ' || ?
+        OR lower(e.summary) LIKE ? || ',%'
+      THEN 1
       ELSE 2
     END
     """
@@ -360,7 +358,8 @@ private actor LanguageReferenceData {
       SELECT e.id AS entry_id,
         \(englishMatchTierSQL) AS match_tier
       FROM entries e
-      WHERE e.gloss_search LIKE ?
+      WHERE (' ' || lower(e.gloss_search) || ' ')
+        GLOB ('*[^a-z]' || ? || '[^a-z]*')
     )
     SELECT \(selectedColumns), MIN(c.match_tier) AS match_tier
     FROM candidates c
@@ -387,7 +386,8 @@ private actor LanguageReferenceData {
   private static let englishLiteralSQL = """
     SELECT \(selectedColumns), \(englishMatchTierSQL) AS match_tier
     FROM entries e
-    WHERE e.gloss_search LIKE ?
+    WHERE (' ' || lower(e.gloss_search) || ' ')
+      GLOB ('*[^a-z]' || ? || '[^a-z]*')
     ORDER BY match_tier, e.rank_score DESC, e.is_common DESC, length(e.headword) DESC, e.id
     LIMIT 60
     """

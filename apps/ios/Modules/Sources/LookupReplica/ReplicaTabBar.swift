@@ -14,8 +14,8 @@ struct ReplicaTabBar: View {
       TabItem(tab: .settings, symbol: "gearshape", selected: false, select: select)
     }
     .padding(.horizontal, 42)
-    .padding(.top, 7)
-    .frame(height: 58, alignment: .top)
+    .padding(.vertical, 7)
+    .frame(minHeight: 62)
     .background(ReplicaPalette.row.ignoresSafeArea())
     .overlay(alignment: .top) {
       Rectangle().fill(.white.opacity(0.08)).frame(height: 0.5)
@@ -48,6 +48,8 @@ private struct TabItem: View {
       .frame(minWidth: 52)
     }
     .buttonStyle(.plain)
+    .frame(minWidth: 52, minHeight: 48)
+    .contentShape(Rectangle())
     .accessibilityLabel(tab.rawValue)
     .accessibilityIdentifier("replica-tab.\(tab.rawValue.lowercased())")
     .accessibilityAddTraits(selected ? .isSelected : [])
