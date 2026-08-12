@@ -31,7 +31,7 @@ struct KanjiElementDetailView: View {
       .background(ReplicaPalette.chrome.ignoresSafeArea(edges: .top))
 
       ScrollView {
-        LazyVStack(spacing: 0) {
+        VStack(spacing: 0) {
           header
           switch loadState {
           case .loading:
