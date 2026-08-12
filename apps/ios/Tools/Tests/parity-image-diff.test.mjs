@@ -41,8 +41,10 @@ test("image comparison emits byte-stable diffs without timestamp metadata", () =
   const clonePath = join(directory, "clone.png");
   const firstDiffPath = join(directory, "first.png");
   const secondDiffPath = join(directory, "second.png");
-  execFileSync("magick", ["-size", "4x4", "xc:black", referencePath]);
-  execFileSync("magick", ["-size", "4x4", "xc:white", clonePath]);
+  // High-color compare output exercises ImageMagick's PNG tIME behavior; a
+  // two-color fixture is optimized to a palette and does not reproduce it.
+  execFileSync("magick", ["-size", "64x64", "plasma:fractal", `PNG32:${referencePath}`]);
+  execFileSync("magick", ["-size", "64x64", "plasma:fractal", `PNG32:${clonePath}`]);
 
   const options = {
     referencePath,

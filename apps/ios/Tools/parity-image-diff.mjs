@@ -67,7 +67,7 @@ export function compareImages({ referencePath, clonePath, diffPath, masks, toler
       maskedClone,
       rawDiff,
     ], { acceptedStatuses: [0, 1] });
-    runMagick([rawDiff, "-strip", diffPath]);
+    runMagick([rawDiff, "-strip", "-define", "png:exclude-chunk=time", diffPath]);
     const changedPixels = Number.parseInt(comparison.stderr.trim().split(/\s+/)[0], 10);
     if (!Number.isFinite(changedPixels)) {
       throw new Error(`Could not parse ImageMagick changed-pixel count: ${comparison.stderr.trim()}`);
