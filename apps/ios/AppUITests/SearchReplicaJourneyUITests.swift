@@ -69,11 +69,8 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     app.buttons["search.image-source"].tap()
     app.buttons.matching(identifier: "image-source.photo-library").firstMatch.tap()
 
-    let photosNavigation = app.navigationBars["Photos"]
-    XCTAssertTrue(photosNavigation.waitForExistence(timeout: 5))
-    let cancel = app.buttons["Cancel"]
-    XCTAssertTrue(cancel.waitForExistence(timeout: 2))
-    cancel.tap()
+    let picker = waitForSystemPhotoPicker(in: app)
+    picker.coordinate(withNormalizedOffset: CGVector(dx: 0.10, dy: 0.12)).tap()
     XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
   }
 
@@ -82,18 +79,23 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let app = launchApp()
     app.buttons["search.image-source"].tap()
     app.buttons.matching(identifier: "image-source.photo-library").firstMatch.tap()
-    XCTAssertTrue(app.navigationBars["Photos"].waitForExistence(timeout: 5))
+    let picker = waitForSystemPhotoPicker(in: app)
     recordSettledScreenshot(named: "production-photo-library-picker", app: app)
 
-    let firstPhoto = app.images.matching(identifier: "PXGGridLayout-Info").firstMatch
-    XCTAssertTrue(firstPhoto.waitForExistence(timeout: 5))
-    firstPhoto.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    picker.coordinate(withNormalizedOffset: CGVector(dx: 0.16, dy: 0.42)).tap()
 
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
     let recognized = app.staticTexts["image-text.raw-text"]
     XCTAssertTrue(recognized.waitForExistence(timeout: 20))
     XCTAssertTrue(containsJapaneseText(recognized.label), recognized.label)
     recordSettledScreenshot(named: "production-image-text-photo-recognized", app: app)
+  }
+
+  @MainActor
+  private func waitForSystemPhotoPicker(in app: XCUIApplication) -> XCUIElement {
+    let picker = app.windows.element(boundBy: 1)
+    XCTAssertTrue(picker.waitForExistence(timeout: 5))
+    return picker
   }
 
   @MainActor
