@@ -439,16 +439,18 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     app.buttons["kanji-detail.back"].tap()
     XCTAssertTrue(elementScreen.waitForExistence(timeout: 2))
     XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "爭")
-    XCTAssertTrue(standalone.isHittable)
+    let restoredStandalone = app.buttons["kanji-element.standalone.争"]
+    XCTAssertTrue(restoredStandalone.isHittable)
     // A physical-device return may settle anywhere within the same 29 pt row;
     // the contract is row identity and visibility, not a sub-row pixel offset.
-    XCTAssertEqual(standalone.frame.minY, standaloneFrame.minY, accuracy: 29)
+    XCTAssertEqual(restoredStandalone.frame.minY, standaloneFrame.minY, accuracy: 29)
 
     app.buttons["kanji-element.back"].tap()
     XCTAssertTrue(elementScreen.waitForExistence(timeout: 2))
     XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "争")
-    XCTAssertTrue(traditional.isHittable)
-    XCTAssertEqual(traditional.frame.minY, traditionalFrame.minY, accuracy: 8)
+    let restoredTraditional = app.buttons["kanji-element.alternative.爭"]
+    XCTAssertTrue(restoredTraditional.isHittable)
+    XCTAssertEqual(restoredTraditional.frame.minY, traditionalFrame.minY, accuracy: 8)
     app.buttons["kanji-element.back"].tap()
     XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 2))
     XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "静")
