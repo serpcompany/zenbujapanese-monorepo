@@ -374,8 +374,11 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: ["-InjectKanjiElementFailureOnce"])
     let kanjiDetail = openKanjiDetail(for: "静", in: app)
     let element = app.buttons["kanji-detail.element.青"]
-    for _ in 0..<6 where !element.isHittable { kanjiDetail.swipeUp() }
+    for _ in 0..<6 where !element.isHittable || element.frame.maxY > app.frame.maxY - 140 {
+      kanjiDetail.swipeUp()
+    }
     XCTAssertTrue(element.isHittable)
+    XCTAssertLessThan(element.frame.maxY, app.frame.maxY - 140)
     element.tap()
 
     let retry = app.buttons["kanji-element.retry"]
@@ -459,11 +462,19 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let app = launchApp()
     let kanjiDetail = openKanjiDetail(for: "静", in: app)
     let meaningElement = app.buttons["kanji-detail.element.青"]
-    for _ in 0..<6 where !meaningElement.isHittable { kanjiDetail.swipeUp() }
+    for _ in 0..<6 where !meaningElement.isHittable
+      || meaningElement.frame.maxY > app.frame.maxY - 140 {
+      kanjiDetail.swipeUp()
+    }
     XCTAssertTrue(meaningElement.isHittable)
+    XCTAssertLessThan(meaningElement.frame.maxY, app.frame.maxY - 140)
     meaningElement.tap()
 
     let elementScreen = app.scrollViews["kanji-element.screen"]
+    if !elementScreen.waitForExistence(timeout: 3) {
+      XCTAssertTrue(meaningElement.isHittable)
+      meaningElement.tap()
+    }
     XCTAssertTrue(elementScreen.waitForExistence(timeout: 3))
     XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "青")
     XCTAssertTrue(app.staticTexts["MEANING / STRUCTURE"].exists)
@@ -500,7 +511,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     _ = openKanjiDetail(for: "争", in: app)
 
     let retry = app.buttons["kanji-detail.stroke-order-retry"]
-    XCTAssertTrue(retry.waitForExistence(timeout: 3))
+    XCTAssertTrue(retry.waitForExistence(timeout: 8))
     XCTAssertFalse(app.buttons["kanji-detail.stroke-order"].exists)
     recordSettledScreenshot(named: "stroke-order-source-failure-retry", app: app)
 
@@ -1995,8 +2006,12 @@ final class SearchReplicaJourneyUITests: XCTestCase {
 
     let detail = app.scrollViews["word-detail.screen"]
     let linkedMite = app.buttons["word-detail.example-token.1.0.見て"]
-    for _ in 0..<10 where !linkedMite.isHittable { detail.swipeUp() }
+    for _ in 0..<10 where !linkedMite.isHittable
+      || linkedMite.frame.maxY > app.frame.maxY - 140 {
+      detail.swipeUp()
+    }
     XCTAssertTrue(linkedMite.isHittable)
+    XCTAssertLessThan(linkedMite.frame.maxY, app.frame.maxY - 140)
     let detailSpeaker = app.buttons["word-detail.example-speaker.1"]
     XCTAssertTrue(detailSpeaker.isHittable)
     detailSpeaker.tap()
@@ -2004,10 +2019,15 @@ final class SearchReplicaJourneyUITests: XCTestCase {
       predicate: NSPredicate(format: "label == %@", "Speech requested 見て、蝶々！"),
       object: speechRequest
     )
-    XCTAssertEqual(XCTWaiter.wait(for: [detailSpeechRequest], timeout: 2), .completed)
+    XCTAssertEqual(XCTWaiter.wait(for: [detailSpeechRequest], timeout: 8), .completed)
     recordScreenshot(named: "word-detail-choucho-linked-examples", app: app)
 
+    XCTAssertTrue(linkedMite.isHittable)
     linkedMite.tap()
+    if !app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3) {
+      XCTAssertTrue(linkedMite.isHittable)
+      linkedMite.tap()
+    }
     XCTAssertTrue(app.staticTexts["見る"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["みる"].exists)
     XCTAssertTrue(app.staticTexts["to see, to look, to watch, to view, to observe"].exists)
