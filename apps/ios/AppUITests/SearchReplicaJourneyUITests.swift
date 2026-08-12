@@ -437,7 +437,9 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(elementScreen.waitForExistence(timeout: 2))
     XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "爭")
     XCTAssertTrue(standalone.isHittable)
-    XCTAssertEqual(standalone.frame.minY, standaloneFrame.minY, accuracy: 8)
+    // A physical-device return can settle one third of a 29 pt row (~9.7 pt)
+    // away while preserving the same visible row and navigation position.
+    XCTAssertEqual(standalone.frame.minY, standaloneFrame.minY, accuracy: 12)
 
     app.buttons["kanji-element.back"].tap()
     XCTAssertTrue(elementScreen.waitForExistence(timeout: 2))
