@@ -55,6 +55,7 @@ struct KanjiElementDetailView: View {
             content(entry)
           }
         }
+        .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
       }
       .accessibilityIdentifier("kanji-element.screen")
     }

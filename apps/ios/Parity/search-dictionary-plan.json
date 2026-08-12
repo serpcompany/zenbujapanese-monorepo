@@ -39,6 +39,7 @@
       "SearchReplicaJourneyUITests/testHandwritingEraseClearsPendingDrawingAndModeControlsNavigate()",
       "SearchReplicaJourneyUITests/testHandwritingNoCandidateStateRecoversAfterEraseAndRedraw()",
       "SearchReplicaJourneyUITests/testHandwritingSearchIncludesPendingRecognizedStroke()",
+      "SearchReplicaJourneyUITests/testHandwritingCanvasProvidesUncrampedPhysicalPhoneDrawingArea()",
       "SearchReplicaJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail()",
       "SearchReplicaJourneyUITests/testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose()",
       "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()",
@@ -61,6 +62,7 @@
       "SearchReplicaJourneyUITests/testMixedScriptShowsDiscoveredWords()",
       "SearchReplicaJourneyUITests/testMultipleReadingUncommonAndLinkedAlternativeKanjiClassesArePubliclyOperable()",
       "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
+      "SearchReplicaJourneyUITests/testRecordedPhysicalPhoneYamaGestureIncludesYamaCandidate()",
       "SearchReplicaJourneyUITests/testNewestRecentSearchRerunsItsResultSet()",
       "SearchReplicaJourneyUITests/testNihonOffersJapaneseReadingRefinement()",
       "SearchReplicaJourneyUITests/testNoMatchKeepsQueryAboveBlankResultsState()",
@@ -78,12 +80,14 @@
       "SearchReplicaJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()",
       "SearchReplicaJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted()",
       "SearchReplicaJourneyUITests/testWordNotesRemainIsolatedAcrossSameSpellingHomographs()",
+      "SearchReplicaJourneyUITests/testWordDetailFinalContentClearsBottomNavigation()",
       "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()"
     ],
     "release_simulator_smoke": [
       "SearchReplicaJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults()",
       "SearchReplicaJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm()",
       "SearchReplicaJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()",
+      "SearchReplicaJourneyUITests/testWordDetailFinalContentClearsBottomNavigation()",
       "SearchReplicaJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings()",
       "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()",
       "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()"
@@ -94,6 +98,8 @@
       "SearchReplicaJourneyUITests/testNihonOffersJapaneseReadingRefinement()",
       "SearchReplicaJourneyUITests/testNewestRecentSearchRerunsItsResultSet()",
       "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
+      "SearchReplicaJourneyUITests/testRecordedPhysicalPhoneYamaGestureIncludesYamaCandidate()",
+      "SearchReplicaJourneyUITests/testHandwritingCanvasProvidesUncrampedPhysicalPhoneDrawingArea()",
       "SearchReplicaJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult()",
       "SearchReplicaJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation()",
       "SearchReplicaJourneyUITests/testProductionExamplesOpenScrollAndLinkedWordRemainOperable()",
@@ -107,7 +113,8 @@
       "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()",
       "SearchReplicaJourneyUITests/testKanjiElementAlternativeStandaloneAndNestedBackRestoreEveryPriorState()",
       "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
-      "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()"
+      "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()",
+      "SearchReplicaJourneyUITests/testWordDetailFinalContentClearsBottomNavigation()"
     ]
   },
   "required_attachment_captures_by_environment": {
@@ -127,6 +134,18 @@
       {
         "test_id": "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
         "name_prefix": "handwriting-natural-yama-results"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testRecordedPhysicalPhoneYamaGestureIncludesYamaCandidate()",
+        "name_prefix": "handwriting-recorded-yama-candidate"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testHandwritingCanvasProvidesUncrampedPhysicalPhoneDrawingArea()",
+        "name_prefix": "handwriting-uncramped-canvas"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testWordDetailFinalContentClearsBottomNavigation()",
+        "name_prefix": "word-detail-bottom-navigation-clearance"
       },
       {
         "test_id": "SearchReplicaJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult()",
@@ -240,13 +259,16 @@
         "SearchReplicaJourneyUITests/testHandwritingSearchIncludesPendingRecognizedStroke()",
         "SearchReplicaJourneyUITests/testHandwritingNoCandidateStateRecoversAfterEraseAndRedraw()",
         "SearchReplicaJourneyUITests/testLiveHandwritingRecognitionProducesCandidatesForSyntheticKanji()",
-        "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()"
+        "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
+        "SearchReplicaJourneyUITests/testRecordedPhysicalPhoneYamaGestureIncludesYamaCandidate()",
+        "SearchReplicaJourneyUITests/testHandwritingCanvasProvidesUncrampedPhysicalPhoneDrawingArea()"
       ]
     },
     {
       "journey_id": "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
       "test_ids": [
-        "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()"
+        "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
+        "SearchReplicaJourneyUITests/testRecordedPhysicalPhoneYamaGestureIncludesYamaCandidate()"
       ]
     },
     {
@@ -264,7 +286,8 @@
         "SearchReplicaJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation()",
         "SearchReplicaJourneyUITests/testMultipleReadingUncommonAndLinkedAlternativeKanjiClassesArePubliclyOperable()",
         "SearchReplicaJourneyUITests/testWordNotesRemainIsolatedAcrossSameSpellingHomographs()",
-        "SearchReplicaJourneyUITests/testDictionarySourceAttributionIsReachableFromSearch()"
+        "SearchReplicaJourneyUITests/testDictionarySourceAttributionIsReachableFromSearch()",
+        "SearchReplicaJourneyUITests/testWordDetailFinalContentClearsBottomNavigation()"
       ]
     },
     {

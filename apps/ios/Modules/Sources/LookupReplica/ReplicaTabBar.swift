@@ -1,5 +1,9 @@
 import SwiftUI
 
+enum ReplicaLayout {
+  static let bottomNavigationContentClearance: CGFloat = 64
+}
+
 struct ReplicaTabBar: View {
   let select: (ReplicaTab) -> Void
 

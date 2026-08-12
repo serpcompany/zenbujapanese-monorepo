@@ -1147,7 +1147,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  func testObservedLeftToRightYamaGestureIncludesYamaCandidate() throws {
+  func testRecordedPhysicalPhoneYamaGestureIncludesYamaCandidate() throws {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
     let surface = openHandwriting(in: app)
     let canvas = surface.canvas
@@ -1165,12 +1165,24 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     drawSyntheticStroke(
       in: canvas,
       from: CGVector(dx: 0.82, dy: 0.2),
-      to: CGVector(dx: 0.66, dy: 0.76)
+      to: CGVector(dx: 0.82, dy: 0.76)
     )
 
     let candidate = app.buttons["handwriting.candidate.山"]
     XCTAssertTrue(candidate.waitForExistence(timeout: 10))
     XCTAssertLessThanOrEqual(canvas.frame.maxY, app.buttons["replica-tab.search"].frame.minY)
+    recordSettledScreenshot(named: "handwriting-recorded-yama-candidate", app: app)
+  }
+
+  @MainActor
+  func testHandwritingCanvasProvidesUncrampedPhysicalPhoneDrawingArea() throws {
+    let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
+    let canvas = openHandwriting(in: app).canvas
+
+    XCTAssertGreaterThanOrEqual(canvas.frame.width, 240)
+    XCTAssertGreaterThanOrEqual(canvas.frame.height, 240)
+    XCTAssertLessThanOrEqual(canvas.frame.maxY, app.buttons["replica-tab.search"].frame.minY)
+    recordSettledScreenshot(named: "handwriting-uncramped-canvas", app: app)
   }
 
   @MainActor
@@ -1437,6 +1449,29 @@ final class SearchReplicaJourneyUITests: XCTestCase {
       app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Tatoeba sentence")).count,
       0
     )
+  }
+
+  @MainActor
+  func testWordDetailFinalContentClearsBottomNavigation() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+    searchField.typeText("hello")
+    app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1")).firstMatch.tap()
+
+    let detail = app.scrollViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    let finalExample = app.descendants(matching: .any)["word-detail.example.2"]
+    XCTAssertTrue(finalExample.waitForExistence(timeout: 3))
+    let tabBarTop = app.buttons["replica-tab.search"].frame.minY
+    for _ in 0..<8 where !finalExample.isHittable || finalExample.frame.maxY > tabBarTop - 24 {
+      detail.swipeUp()
+    }
+
+    XCTAssertTrue(finalExample.isHittable)
+    XCTAssertLessThanOrEqual(finalExample.frame.maxY, tabBarTop - 24)
+    recordSettledScreenshot(named: "word-detail-bottom-navigation-clearance", app: app)
   }
 
   @MainActor

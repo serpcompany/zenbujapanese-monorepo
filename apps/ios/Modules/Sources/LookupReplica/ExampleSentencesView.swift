@@ -36,6 +36,7 @@ struct ExampleSentencesView: View {
               )
             }
           }
+          .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
         }
         .scrollIndicators(.visible)
         .accessibilityIdentifier("example-list.screen")

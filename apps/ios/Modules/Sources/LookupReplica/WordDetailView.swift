@@ -102,6 +102,7 @@ struct WordDetailView: View {
             openWord: openWord
           )
           }
+          .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
         }
         .background(.black)
         .scrollIndicators(.hidden)

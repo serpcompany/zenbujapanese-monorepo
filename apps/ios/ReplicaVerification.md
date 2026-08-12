@@ -1,5 +1,10 @@
 # Search replica verification
 
+The durable user-facing regression checklist is maintained in
+[`Verification/PHYSICAL-DEVICE-QA/README.md`](Verification/PHYSICAL-DEVICE-QA/README.md).
+It maps each physical-device complaint to its exact automated public seam and
+the remaining manual TestFlight check.
+
 ## Public journey seam
 
 `SearchReplicaJourneyUITests.testJapaneseQueryOpensWordDetailAndBackPreservesResults`

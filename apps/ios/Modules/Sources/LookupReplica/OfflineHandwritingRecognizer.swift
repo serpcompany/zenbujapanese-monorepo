@@ -26,10 +26,16 @@ enum OfflineHandwritingRecognizer {
         && strokes[1].endY > 0.65
         && strokes[2].startX > 0.65 && strokes[2].endY > 0.65:
       values = ["山", "凵", "出"]
+    case [.diagonalDownRight, .vertical, .vertical]
+      where strokes[0].startX < 0.35 && strokes[0].endY > 0.65
+        && strokes[1].centerX > 0.35 && strokes[1].centerX < 0.65
+        && strokes[1].endY > 0.65
+        && strokes[2].centerX > 0.65 && strokes[2].endY > 0.65:
+      values = ["山", "凵", "出"]
     case [.vertical, .vertical, .vertical]
       where strokes[0].startX < 0.35 && strokes[0].endX > strokes[0].startX
         && strokes[1].centerX > 0.35 && strokes[1].centerX < 0.65
-        && strokes[2].startX > 0.65 && strokes[2].endX < strokes[2].startX
+        && strokes[2].centerX > 0.65
         && strokes.allSatisfy({ $0.endY > 0.65 }):
       values = ["山", "凵", "出"]
     default:
