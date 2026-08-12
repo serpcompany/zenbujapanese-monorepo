@@ -102,7 +102,6 @@
       "SearchReplicaJourneyUITests/testKanjiStrokeOrderStepsForwardAndBackThenClosesToKanjiDetail()",
       "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()",
       "SearchReplicaJourneyUITests/testKanjiElementAlternativeStandaloneAndNestedBackRestoreEveryPriorState()",
-      "SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()",
       "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
       "SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()"
     ]
@@ -188,14 +187,6 @@
       {
         "test_id": "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
         "name_prefix": "production-image-text-photo-recognized"
-      },
-      {
-        "test_id": "SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()",
-        "name_prefix": "production-camera-preview"
-      },
-      {
-        "test_id": "SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()",
-        "name_prefix": "production-image-text-camera-recognized"
       }
     ]
   },
@@ -332,12 +323,6 @@
         "SearchReplicaJourneyUITests/testKanjiElementFailureOffersRetryAndRecoversFromTheLiveSource()",
         "SearchReplicaJourneyUITests/testKanjiElementAlternativeStandaloneAndNestedBackRestoreEveryPriorState()",
         "SearchReplicaJourneyUITests/testEveryRenderedKanjiElementRoleRowUsesPublicKanjiNavigation()"
-      ]
-    },
-    {
-      "journey_id": "JOURNEY-IMAGE-TAKE-PHOTO",
-      "test_ids": [
-        "SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()"
       ]
     },
     {

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -15,6 +15,17 @@ import {
   validateRequiredAttachmentCaptures,
   validateRecordedTests,
 } from "../parity-ledger.mjs";
+
+test("signed-device blocking plan verifies image ingestion without requiring camera capture", () => {
+  const plan = JSON.parse(readFileSync("apps/ios/Parity/search-dictionary-plan.json", "utf8"));
+  const scope = JSON.parse(readFileSync("docs/clone-discovery/nihongo/scope.json", "utf8"));
+  const physicalTests = plan.environment_test_ids.signed_physical_device;
+
+  assert.ok(physicalTests.includes("SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()"));
+  assert.ok(physicalTests.includes("SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()"));
+  assert.ok(!physicalTests.includes("SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()"));
+  assert.ok(!scope.blocking_journey_ids.includes("JOURNEY-IMAGE-TAKE-PHOTO"));
+});
 
 test("signed-device crawls pass explicit Xcode signing settings", () => {
   const arguments_ = [

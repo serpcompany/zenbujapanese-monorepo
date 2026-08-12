@@ -1,6 +1,6 @@
 # Search and dictionary differential parity
 
-`search-dictionary-plan.json` is the executable 18-journey denominator for issue
+`search-dictionary-plan.json` is the executable 17-journey denominator for issue
 #110. The canonical atomic denominator remains
 `docs/clone-discovery/nihongo/parity-inventory.jsonl`.
 
@@ -104,8 +104,10 @@ the hashed xcresult test tree, while configuration is reconciled with the
 hashed Xcode build request and product path. Visual results are recomputed from the
 registered source images rather than trusted from edited JSON. The execution
 plan also binds required signed-device screenshot name prefixes to the XCTest
-that must retain them, so Camera, Photos, Files, and their resulting Image Text
-screens cannot pass the crawl while silently omitting visual evidence.
+that must retain them, so Photos, Files, and their resulting Image Text screens
+cannot pass the crawl while silently omitting visual evidence. Camera launch and
+capture remain non-blocking smoke coverage because both public import paths
+independently verify the shared app-owned image ingestion and OCR seam.
 
 ## Regeneration
 

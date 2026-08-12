@@ -50,7 +50,6 @@
     "JOURNEY-PLAY-STROKE-ORDER",
     "JOURNEY-YAMA-STROKE-ORDER",
     "JOURNEY-INSPECT-KANJI-ELEMENT",
-    "JOURNEY-IMAGE-TAKE-PHOTO",
     "JOURNEY-IMAGE-PHOTO-LIBRARY",
     "JOURNEY-IMAGE-FILES"
   ],
@@ -90,6 +89,14 @@
     "Exact Nihongo recent-search row deletion gesture, control presentation, animation, and persistence mechanics are not parity requirements; Zenbu provides an app-owned per-row swipe action that removes only the selected row and persists the deletion"
   ],
   "stakeholder_decisions": [
+    {
+      "date": "2026-08-12",
+      "authority": "product stakeholder feedback during physical acceptance for #110",
+      "resolved_as_nonblocking": [
+        "JOURNEY-IMAGE-TAKE-PHOTO"
+      ],
+      "decision": "System camera capture is non-blocking for Search and dictionary parity. The blocking app-owned image-ingestion seam is proven independently through public Files and Photo Library selection followed by Japanese OCR and Image Text results; camera launch and capture remain implemented as smoke coverage."
+    },
     {
       "date": "2026-08-11",
       "authority": "expanded Search and dictionary parity map #110",
