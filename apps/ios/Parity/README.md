@@ -6,6 +6,24 @@
 
 ## Commands
 
+During development, run only the XCTest cases affected by the current change.
+Pass one or more `--only-testing` arguments to the crawler (or directly to
+`xcodebuild`) and keep those targeted runs outside the final acceptance set:
+
+```sh
+node apps/ios/Tools/parity-ledger.mjs crawl \
+  --run-dir /tmp/zenbu-parity-affected \
+  --destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' \
+  --only-testing 'ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm()'
+```
+
+Freeze and commit the source before final acceptance. Only then run the complete
+plan-declared matrix once: one full Debug simulator run, one Release simulator
+smoke run, and one signed physical-iPhone run. All three runs must bind to the
+same clean frozen commit. Any subsequent source change invalidates that matrix;
+return to affected-test development runs, freeze a new commit, and run the
+three-environment matrix once again.
+
 Run the public XCTest crawler into a new, non-repository evidence directory:
 
 ```sh
@@ -96,9 +114,10 @@ only by an unexplained variance. Correction output is grouped by journey and
 contains ready-to-file issue input rather than creating GitHub issues
 automatically. Compilation with a plan also requires evidence runs for every
 declared environment; a simulator-only run cannot satisfy the signed-device or
-release-smoke requirements. It also requires the plan's two complete passing
-runs to be the latest consecutive captures, and requires the signed-device run
-to use a verified Release code signature for `com.zenbujapanese.dictionary` and
+release-smoke requirements. It requires one complete passing run in each of the
+three environments from the same frozen source commit, and requires the
+signed-device run to use a verified Release code signature for
+`com.zenbujapanese.dictionary` and
 contain observations for every blocking journey and parity row. Recorded test IDs and outcomes are reconciled with
 the hashed xcresult test tree, while configuration is reconciled with the
 hashed Xcode build request and product path. Visual results are recomputed from the

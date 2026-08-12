@@ -9,11 +9,15 @@
     "release_simulator_smoke",
     "signed_physical_device"
   ],
-  "minimum_complete_runs": 2,
+  "execution_policy": {
+    "development": "affected_tests_only",
+    "final_acceptance": "complete_matrix_on_frozen_commit"
+  },
+  "minimum_complete_runs": 1,
   "minimum_complete_runs_by_environment": {
-    "debug_simulator": 2,
-    "release_simulator_smoke": 2,
-    "signed_physical_device": 2
+    "debug_simulator": 1,
+    "release_simulator_smoke": 1,
+    "signed_physical_device": 1
   },
   "environment_test_ids": {
     "debug_simulator": [

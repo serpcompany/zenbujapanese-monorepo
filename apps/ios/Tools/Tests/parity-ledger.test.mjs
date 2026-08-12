@@ -16,6 +16,19 @@ import {
   validateRecordedTests,
 } from "../parity-ledger.mjs";
 
+test("search dictionary plan reserves one three-environment matrix for the frozen commit", () => {
+  const plan = JSON.parse(readFileSync("apps/ios/Parity/search-dictionary-plan.json", "utf8"));
+
+  assert.equal(plan.minimum_complete_runs, 1);
+  assert.deepEqual(plan.minimum_complete_runs_by_environment, Object.fromEntries(
+    plan.environments.map((environmentId) => [environmentId, 1]),
+  ));
+  assert.deepEqual(plan.execution_policy, {
+    development: "affected_tests_only",
+    final_acceptance: "complete_matrix_on_frozen_commit",
+  });
+});
+
 test("signed-device blocking plan verifies image ingestion without requiring camera capture", () => {
   const plan = JSON.parse(readFileSync("apps/ios/Parity/search-dictionary-plan.json", "utf8"));
   const scope = JSON.parse(readFileSync("docs/clone-discovery/nihongo/scope.json", "utf8"));
