@@ -54,6 +54,7 @@ export function compareImages({ referencePath, clonePath, diffPath, masks, toler
   try {
     const maskedReference = join(temporaryDirectory, "reference.png");
     const maskedClone = join(temporaryDirectory, "clone.png");
+    const rawDiff = join(temporaryDirectory, "diff-with-metadata.png");
     maskedCopy(referencePath, maskedReference, masks);
     maskedCopy(clonePath, maskedClone, masks);
     mkdirSync(dirname(diffPath), { recursive: true });
@@ -64,8 +65,9 @@ export function compareImages({ referencePath, clonePath, diffPath, masks, toler
       "-fuzz", `${fuzzPercent}%`,
       maskedReference,
       maskedClone,
-      diffPath,
+      rawDiff,
     ], { acceptedStatuses: [0, 1] });
+    runMagick([rawDiff, "-strip", diffPath]);
     const changedPixels = Number.parseInt(comparison.stderr.trim().split(/\s+/)[0], 10);
     if (!Number.isFinite(changedPixels)) {
       throw new Error(`Could not parse ImageMagick changed-pixel count: ${comparison.stderr.trim()}`);
