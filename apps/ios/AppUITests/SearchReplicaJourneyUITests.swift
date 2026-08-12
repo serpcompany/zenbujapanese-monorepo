@@ -1348,8 +1348,11 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let refinedLeader = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1")).firstMatch
     XCTAssertTrue(refinedLeader.waitForExistence(timeout: 3))
     XCTAssertTrue(refinedLeader.label.contains("日本"))
-    let bestMatches = app.buttons.matching(NSPredicate(format: "value BEGINSWITH %@", "Best match"))
-    XCTAssertEqual(bestMatches.count, 1)
+    let japan = app.buttons["result.japan"]
+    XCTAssertEqual(japan.value as? String, "Best match 1")
+    XCTAssertFalse(
+      app.buttons.matching(NSPredicate(format: "value == %@", "Best match 2")).firstMatch.exists
+    )
     let additionalLeader = app.buttons.matching(
       NSPredicate(format: "value == %@", "Additional match 1")
     ).firstMatch
@@ -1535,7 +1538,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
   func testDictionarySourceAttributionIsReachableFromSearch() throws {
     let app = launchApp()
 
-    let sources = app.buttons["search.sources"]
+    let sources = app.buttons["replica-tab.settings"]
     XCTAssertTrue(sources.waitForExistence(timeout: 3))
     sources.tap()
 
