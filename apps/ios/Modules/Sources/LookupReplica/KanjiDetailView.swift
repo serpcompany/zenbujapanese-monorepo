@@ -11,6 +11,8 @@ struct KanjiDetailView: View {
   let openElement: (KanjiElementID) -> Void
   let preservedWordID: LanguageReferenceID?
   let preserveWordID: (LanguageReferenceID) -> Void
+  let preservedElementID: KanjiElementID?
+  let preserveElementID: (KanjiElementID) -> Void
 
   @State private var loadState = KanjiDetailLoadState.loading
   @State private var retryID = 0
@@ -66,13 +68,20 @@ struct KanjiDetailView: View {
               .background(ReplicaPalette.row)
             }
             if let reference {
-              KanjiReadingsSection(reference: reference)
-              if !reference.components.isEmpty {
+              KanjiReadingsSection(
+                reference: reference,
+                relatedWords: relatedWords,
+                openWord: openWord
+              )
+              if elements.isEmpty, !reference.components.isEmpty {
                 KanjiComponentsSummarySection(components: reference.components)
               }
             }
             if !elements.isEmpty {
-              KanjiElementsSection(elements: elements, openElement: openElement)
+              KanjiElementsSection(elements: elements) { selectedElement in
+                preserveElementID(selectedElement)
+                openElement(selectedElement)
+              }
             }
             if !relatedWords.isEmpty {
               KanjiWordsSection(entries: orderedRelatedWords) { selectedEntry in
@@ -81,22 +90,40 @@ struct KanjiDetailView: View {
               }
             }
           }
+          .padding(.bottom, 24)
           .scrollTargetLayout()
         }
         .accessibilityIdentifier("kanji-detail.screen")
         .onAppear {
           restorePreservedWordPosition(with: proxy, in: relatedWords)
+          restorePreservedElementPosition(with: proxy, in: elements)
         }
         .onChange(of: relatedWords.map(\.id)) {
           restorePreservedWordPosition(with: proxy, in: relatedWords)
+        }
+        .onChange(of: elements.map(\.id)) {
+          restorePreservedElementPosition(with: proxy, in: elements)
         }
       }
     }
     .background(.black)
     .toolbar(.hidden, for: .navigationBar)
-    .sheet(item: $presentedStrokeDiagram) { diagram in
-      KanjiStrokeOrderView(diagram: diagram)
+    .overlay {
+      if let diagram = presentedStrokeDiagram {
+        ZStack {
+          Color.black.opacity(0.72)
+            .ignoresSafeArea()
+          KanjiStrokeOrderView(
+            diagram: diagram,
+            close: { presentedStrokeDiagram = nil }
+          )
+          .frame(maxWidth: 356)
+          .padding(.horizontal, 28)
+        }
+        .transition(.opacity.combined(with: .scale(scale: 0.96)))
+      }
     }
+    .animation(.easeOut(duration: 0.18), value: presentedStrokeDiagram != nil)
     .task(id: KanjiStrokeDiagramLoadRequest(character: character, retryID: strokeRetryID)) {
       strokeDiagramLoadState = .loading
       do {
@@ -148,6 +175,15 @@ struct KanjiDetailView: View {
     guard let preservedWordID,
           loadedWords.contains(where: { $0.id == preservedWordID }) else { return }
     proxy.scrollTo(preservedWordID, anchor: .center)
+  }
+
+  private func restorePreservedElementPosition(
+    with proxy: ScrollViewProxy,
+    in loadedElements: [KanjiElementSummary]
+  ) {
+    guard let preservedElementID,
+          loadedElements.contains(where: { $0.id == preservedElementID }) else { return }
+    proxy.scrollTo(preservedElementID, anchor: .center)
   }
 
   private var reference: KanjiReferenceEntry? {
@@ -228,10 +264,14 @@ private struct KanjiOverview: View {
             .font(.system(size: 104, weight: .light))
             .accessibilityIdentifier("kanji-detail.glyph")
           if case .available(let strokeDiagram) = strokeDiagramLoadState {
-            Button("Stroke order") {
+            Button {
               openStrokeOrder(strokeDiagram)
+            } label: {
+              Image(systemName: "arrow.down.right.and.arrow.up.left")
+                .font(.caption.weight(.bold))
+                .frame(width: 28, height: 28)
+                .background(.white.opacity(0.1), in: Circle())
             }
-            .font(.caption)
             .accessibilityLabel("Show stroke order for \(character)")
             .accessibilityIdentifier("kanji-detail.stroke-order")
           } else if strokeDiagramLoadState == .failed {
@@ -309,26 +349,104 @@ private struct KanjiMetric: View {
 
 private struct KanjiReadingsSection: View {
   let reference: KanjiReferenceEntry
+  let relatedWords: [DictionaryEntry]
+  let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
     VStack(spacing: 0) {
       KanjiSectionHeader(title: "READINGS")
-      VStack(alignment: .leading, spacing: 14) {
-        if !reference.onReadings.isEmpty {
-          Text("On: \(reference.onReadings.joined(separator: ", "))")
-        }
-        if !reference.kunReadings.isEmpty {
-          Text("Kun: \(reference.kunReadings.joined(separator: ", "))")
-        }
-        if !reference.nameReadings.isEmpty {
-          Text("Names: \(reference.nameReadings.joined(separator: ", "))")
+      VStack(spacing: 0) {
+        ForEach(reference.readings, id: \.self) { reading in
+          let matches = words(matching: reading)
+          if let destination = matches.first {
+            Button { openWord(destination) } label: {
+              KanjiReadingRow(reading: reading, words: matches)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(
+              "\(reading.kind.label) reading \(reading.value), \(destination.headword), \(destination.summary)"
+            )
+            .accessibilityIdentifier("kanji-detail.reading.\(reading.kind.rawValue).\(reading.value)")
+          } else {
+            KanjiReadingRow(reading: reading, words: [])
+              .accessibilityElement(children: .combine)
+              .accessibilityIdentifier("kanji-detail.reading.\(reading.kind.rawValue).\(reading.value)")
+          }
         }
       }
-      .font(.body)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(20)
       .background(ReplicaPalette.row)
     }
+  }
+
+  private func words(matching reading: KanjiReading) -> [DictionaryEntry] {
+    let stem = reading.value
+      .replacingOccurrences(of: ".", with: "")
+      .replacingOccurrences(of: "-", with: "")
+      .hiragana
+    guard !stem.isEmpty else { return [] }
+    return Array(relatedWords.filter { entry in
+      let candidate = entry.reading.hiragana
+      return candidate == stem || candidate.hasPrefix(stem)
+    }.prefix(3))
+  }
+}
+
+private struct KanjiReadingRow: View {
+  let reading: KanjiReading
+  let words: [DictionaryEntry]
+
+  var body: some View {
+    HStack(alignment: .top, spacing: 14) {
+      Text(reading.kind.label)
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(ReplicaPalette.secondaryText)
+        .frame(width: 48, alignment: .leading)
+      VStack(alignment: .leading, spacing: 5) {
+        Text(reading.value)
+          .font(.system(size: 18, weight: .semibold))
+          .foregroundStyle(words.isEmpty ? Color.primary : Color.blue)
+        if !words.isEmpty {
+          Text(words.map { "\($0.headword) · \($0.summary)" }.joined(separator: "   "))
+            .font(.caption)
+            .foregroundStyle(ReplicaPalette.secondaryText)
+            .lineLimit(2)
+        }
+      }
+      Spacer(minLength: 8)
+      if !words.isEmpty {
+        Image(systemName: "chevron.right")
+          .foregroundStyle(.secondary)
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 20)
+    .padding(.vertical, 9)
+    .contentShape(Rectangle())
+    .overlay(alignment: .bottom) {
+      Rectangle().fill(ReplicaPalette.divider).frame(height: 0.5)
+    }
+  }
+}
+
+private extension KanjiReading.Kind {
+  var label: String {
+    switch self {
+    case .on: "On"
+    case .kun: "Kun"
+    case .name: "Name"
+    }
+  }
+}
+
+private extension String {
+  var hiragana: String {
+    String(unicodeScalars.map { scalar in
+      let value = scalar.value
+      if (0x30A1 ... 0x30F6).contains(value), let converted = UnicodeScalar(value - 0x60) {
+        return Character(String(converted))
+      }
+      return Character(String(scalar))
+    })
   }
 }
 
@@ -373,6 +491,7 @@ private struct KanjiElementsSection: View {
             + element.meanings.prefix(3).joined(separator: ", ")
         )
         .accessibilityIdentifier("kanji-detail.element.\(element.id.rawValue)")
+        .id(element.id)
         Divider().overlay(ReplicaPalette.divider)
       }
       .background(ReplicaPalette.row)

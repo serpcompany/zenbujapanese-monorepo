@@ -1,15 +1,18 @@
 import SwiftUI
+import UIKit
 
 struct SearchView: View {
   @Binding var query: String
   let lookupClient: LookupClient
   let recentSearchStore: RecentSearchStore
   let handwritingRecognitionClient: HandwritingRecognitionClient
+  let cameraAuthorizationClient: CameraAuthorizationClient
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
+  let openSources: () -> Void
   let openResult: (DictionaryEntry) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
-  let openExamples: (SearchQuery, DictionaryEntry?) -> Void
+  let openExamples: (SearchQuery, DictionaryEntry?, Bool) -> Void
   let openImageText: ([ImageTextAsset]) -> Void
   let imageImportInitialDirectory: URL?
   @State private var results = LookupSearchResults.empty
@@ -20,9 +23,8 @@ struct SearchView: View {
   @State private var sparseRadicalQuery: SearchQuery?
   @State private var exampleCount = 0
   @State private var showsImageSources = false
-  @State private var importsImages = false
-  @State private var unavailableImageSource: String?
-  @State private var imageImportFailure: String?
+  @State private var presentedImageSource: ImageSourceSheet?
+  @State private var imageImportAlert: ImageImportAlert?
   @State private var imageImportTask: Task<Void, Never>?
   @FocusState private var isSearchFocused: Bool
 
@@ -34,6 +36,7 @@ struct SearchView: View {
         isInputActive: inputMode != .inactive,
         activateKeyboard: { inputMode = .keyboard },
         openImageSource: { showsImageSources = true },
+        openSources: openSources,
         cancel: deactivateInput
       ) { submittedQuery in
         sparseRadicalQuery = nil
@@ -54,7 +57,13 @@ struct SearchView: View {
           selectRefinement: selectRefinement,
           openResult: openResult,
           openKanji: openKanji,
-          openExamples: { openExamples(searchQuery, results.primaryEntry(for: searchQuery)) }
+          openExamples: {
+            openExamples(
+              searchQuery,
+              results.primaryEntry(for: searchQuery),
+              results.usesPrimaryEntryExamples
+            )
+          }
         )
       } else if searchFailed {
         LookupFailureView {
@@ -97,8 +106,7 @@ struct SearchView: View {
       }
     }
     .background(.black)
-    .navigationTitle("Search")
-    .navigationBarTitleDisplayMode(.inline)
+    .toolbar(.hidden, for: .navigationBar)
     .task(id: SearchTaskID(query: query, retryID: retryID)) {
       hasCompletedSearch = false
       searchFailed = false
@@ -116,8 +124,16 @@ struct SearchView: View {
         }
         async let searchedResults = lookupClient.search(searchQuery)
         async let searchedExampleCount = exampleSentenceClient.count(searchQuery)
-        results = try await searchedResults
-        exampleCount = (try? await searchedExampleCount) ?? 0
+        let foundResults = try await searchedResults
+        let directExampleCount = (try? await searchedExampleCount) ?? 0
+        results = foundResults
+        if foundResults.usesPrimaryEntryExamples,
+          let entry = foundResults.primaryEntry(for: searchQuery)
+        {
+          exampleCount = (try? await exampleSentenceClient.examples(entry).count) ?? 0
+        } else {
+          exampleCount = directExampleCount
+        }
         hasCompletedSearch = true
       } catch is CancellationError {
         return
@@ -128,36 +144,51 @@ struct SearchView: View {
       }
     }
     .confirmationDialog("Image Search", isPresented: $showsImageSources) {
-      Button("Take Photo") { unavailableImageSource = "Camera" }
+      Button("Take Photo") { presentCamera() }
         .accessibilityIdentifier("image-source.camera")
-      Button("Photo Library") { unavailableImageSource = "Photo Library" }
+      Button("Photo Library") { presentPhotoLibrary() }
         .accessibilityIdentifier("image-source.photo-library")
-      Button("Files") { importsImages = true }
+      Button("Files") { presentedImageSource = .files }
         .accessibilityIdentifier("image-source.files")
       Button("Cancel", role: .cancel) {}
     }
-    .sheet(isPresented: $importsImages) {
-      ImageFilePicker(initialDirectory: imageImportInitialDirectory) { result in
-        importsImages = false
-        importImages(result)
+    .sheet(item: $presentedImageSource) { source in
+      switch source {
+      case .camera:
+        ImageCameraPicker { result in
+          presentedImageSource = nil
+          importCameraImage(result)
+        }
+        .ignoresSafeArea()
+      case .photoLibrary:
+        ImagePhotoLibraryPicker { result in
+          presentedImageSource = nil
+          importPhotoLibraryImages(result)
+        }
+        .ignoresSafeArea()
+      case .files:
+        ImageFilePicker(initialDirectory: imageImportInitialDirectory) { result in
+          presentedImageSource = nil
+          importImages(result)
+        }
+        .ignoresSafeArea()
       }
-      .ignoresSafeArea()
     }
-    .alert("\(unavailableImageSource ?? "Image source") unavailable", isPresented: Binding(
-      get: { unavailableImageSource != nil },
-      set: { if !$0 { unavailableImageSource = nil } }
-    )) {
-      Button("OK") { unavailableImageSource = nil }
-    } message: {
-      Text("Use Files to start Image Text on this replica surface.")
-    }
-    .alert("Unable to Import Images", isPresented: Binding(
-      get: { imageImportFailure != nil },
-      set: { if !$0 { imageImportFailure = nil } }
-    )) {
-      Button("OK") { imageImportFailure = nil }
-    } message: {
-      Text(imageImportFailure ?? "Choose supported image files and try again.")
+    .alert(item: $imageImportAlert) { alert in
+      if alert.offersSettings {
+        Alert(
+          title: Text(alert.title),
+          message: Text(alert.message),
+          primaryButton: .default(Text("Open Settings"), action: cameraAuthorizationClient.openSettings),
+          secondaryButton: .cancel()
+        )
+      } else {
+        Alert(
+          title: Text(alert.title),
+          message: Text(alert.message),
+          dismissButton: .default(Text("OK"))
+        )
+      }
     }
     .onDisappear {
       imageImportTask?.cancel()
@@ -201,12 +232,18 @@ struct SearchView: View {
 
   private func submitComposedQuery(_ submittedQuery: SearchQuery) {
     sparseRadicalQuery = nil
-    completeSubmission(submittedQuery)
+    query = submittedQuery.value
+    recordRecentSearch(submittedQuery)
+    isSearchFocused = false
+    inputMode = .handwriting
   }
 
   private func submitRadicalQuery(_ submittedQuery: SearchQuery) {
     sparseRadicalQuery = submittedQuery
-    completeSubmission(submittedQuery)
+    query = submittedQuery.value
+    recordRecentSearch(submittedQuery)
+    isSearchFocused = false
+    inputMode = .radicals
   }
 
   private func completeSubmission(_ submittedQuery: SearchQuery) {
@@ -222,7 +259,7 @@ struct SearchView: View {
 
   private func importImages(_ result: Result<[URL], Error>) {
     guard case .success(let urls) = result else {
-      imageImportFailure = "The Files selection could not be read."
+      imageImportAlert = .importFailure("The Files selection could not be read.")
       return
     }
     imageImportTask?.cancel()
@@ -238,13 +275,121 @@ struct SearchView: View {
       }
       guard !Task.isCancelled else { return }
       guard !assets.isEmpty else {
-        imageImportFailure = "The selected files are not supported images."
+        imageImportAlert = .importFailure("The selected files are not supported images.")
         return
       }
       openImageText(assets)
       imageImportTask = nil
     }
   }
+
+  private func presentCamera() {
+    imageImportTask?.cancel()
+    imageImportTask = Task { @MainActor in
+      await Task.yield()
+      guard !Task.isCancelled else { return }
+      guard cameraAuthorizationClient.isCameraAvailable() else {
+        imageImportAlert = .cameraUnavailable
+        imageImportTask = nil
+        return
+      }
+      switch cameraAuthorizationClient.state() {
+      case .authorized:
+        presentedImageSource = .camera
+      case .notDetermined:
+        let granted = await cameraAuthorizationClient.requestAccess()
+        guard !Task.isCancelled else { return }
+        if granted {
+          presentedImageSource = .camera
+        } else {
+          imageImportAlert = .cameraDenied
+        }
+      case .denied:
+        imageImportAlert = .cameraDenied
+      case .restricted:
+        imageImportAlert = .cameraRestricted
+      }
+      imageImportTask = nil
+    }
+  }
+
+  private func presentPhotoLibrary() {
+    #if DEBUG
+    if ProcessInfo.processInfo.arguments.contains("-PhotoLibraryProviderFailure") {
+      Task { @MainActor in
+        await Task.yield()
+        imageImportAlert = .importFailure("The selected photos could not be read.")
+      }
+      return
+    }
+    #endif
+    presentedImageSource = .photoLibrary
+  }
+
+  private func importCameraImage(_ result: Result<ImageTextAsset?, Error>) {
+    switch result {
+    case .success(let asset):
+      if let asset { openImageText([asset]) }
+    case .failure:
+      imageImportAlert = .importFailure("The captured image could not be read.")
+    }
+  }
+
+  private func importPhotoLibraryImages(_ result: Result<[ImageTextAsset], Error>) {
+    switch result {
+    case .success(let assets):
+      if !assets.isEmpty { openImageText(assets) }
+    case .failure:
+      imageImportAlert = .importFailure("The selected photos could not be read.")
+    }
+  }
+}
+
+private enum ImageImportAlert: Identifiable {
+  case importFailure(String)
+  case cameraUnavailable
+  case cameraDenied
+  case cameraRestricted
+
+  var id: String {
+    switch self {
+    case .importFailure(let message): "import-\(message)"
+    case .cameraUnavailable: "camera-unavailable"
+    case .cameraDenied: "camera-denied"
+    case .cameraRestricted: "camera-restricted"
+    }
+  }
+
+  var title: String {
+    switch self {
+    case .importFailure: "Unable to Import Images"
+    case .cameraUnavailable: "Camera Unavailable"
+    case .cameraDenied: "Camera Access Denied"
+    case .cameraRestricted: "Camera Access Restricted"
+    }
+  }
+
+  var message: String {
+    switch self {
+    case .importFailure(let message): message
+    case .cameraUnavailable: "Camera capture requires a physical device with an available camera."
+    case .cameraDenied: "Allow Camera access in Settings to capture Japanese text."
+    case .cameraRestricted: "Camera access is restricted on this device."
+    }
+  }
+
+  var offersSettings: Bool {
+    if case .cameraDenied = self { return true }
+    return false
+  }
+}
+
+private enum ImageSourceSheet: String, Identifiable {
+  case camera
+  case photoLibrary
+  case files
+
+  var id: String { rawValue }
 }
 
 private struct SearchTaskID: Hashable {
@@ -278,6 +423,7 @@ private struct SearchBar: View {
   let isInputActive: Bool
   let activateKeyboard: () -> Void
   let openImageSource: () -> Void
+  let openSources: () -> Void
   let cancel: () -> Void
   let submitQuery: (SearchQuery) -> Void
 
@@ -321,6 +467,14 @@ private struct SearchBar: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Image Search")
         .accessibilityIdentifier("search.image-source")
+
+        Button(action: openSources) {
+          Image(systemName: "info.circle")
+            .foregroundStyle(ReplicaPalette.selectedTab)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Dictionary Sources")
+        .accessibilityIdentifier("search.sources")
       }
       .font(.system(size: 17))
       .padding(.horizontal, 10)
@@ -351,74 +505,84 @@ private struct SearchResultsView: View {
   let openExamples: () -> Void
 
   var body: some View {
-    ScrollView {
-      LazyVStack(spacing: 0, pinnedViews: []) {
-        if exampleCount > 0 {
-          Button(action: openExamples) {
-            HStack {
-              Text(exampleActionTitle)
-                .frame(maxWidth: .infinity, alignment: .center)
-              Image(systemName: "chevron.right")
-                .foregroundStyle(.white.opacity(0.3))
-            }
-            .font(.system(size: 18))
-            .foregroundStyle(ReplicaPalette.selectedTab)
-            .padding(.horizontal, 18)
-            .frame(height: 52)
-            .contentShape(Rectangle())
+    VStack(spacing: 0) {
+      if exampleCount > 0 {
+        Button(action: openExamples) {
+          HStack {
+            Text(exampleActionTitle)
+              .frame(maxWidth: .infinity, alignment: .center)
+            Image(systemName: "chevron.right")
+              .foregroundStyle(.white.opacity(0.3))
           }
-          .buttonStyle(.plain)
-          .accessibilityIdentifier("search.examples")
+          .font(.system(size: 18))
+          .foregroundStyle(ReplicaPalette.selectedTab)
+          .padding(.horizontal, 18)
+          .frame(height: 52)
+          .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("search.examples")
+      }
 
-        if let refinement = results.readingRefinement {
-          Button {
-            selectRefinement(refinement)
-          } label: {
-            HStack {
-              Text("Search for「\(refinement.query.value)」")
-                .frame(maxWidth: .infinity, alignment: .center)
-              Image(systemName: "chevron.right")
-                .foregroundStyle(.white.opacity(0.3))
+      ScrollView {
+        LazyVStack(spacing: 0, pinnedViews: []) {
+          if let refinement = results.readingRefinement {
+            Button {
+              selectRefinement(refinement)
+            } label: {
+              HStack {
+                Text("Search for「\(refinement.query.value)」")
+                  .frame(maxWidth: .infinity, alignment: .center)
+                Image(systemName: "chevron.right")
+                  .foregroundStyle(.white.opacity(0.3))
+              }
+              .font(.system(size: 18))
+              .foregroundStyle(ReplicaPalette.selectedTab)
+              .padding(.horizontal, 18)
+              .frame(height: 52)
+              .contentShape(Rectangle())
             }
-            .font(.system(size: 18))
-            .foregroundStyle(ReplicaPalette.selectedTab)
-            .padding(.horizontal, 18)
-            .frame(height: 52)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel("Search for Japanese reading \(refinement.query.value)")
+            .accessibilityIdentifier("search.reading-refinement")
           }
-          .buttonStyle(.plain)
-          .accessibilityLabel("Search for Japanese reading \(refinement.query.value)")
-          .accessibilityIdentifier("search.reading-refinement")
-        }
 
-        if results.presentation == .discoveredWords {
-          ResultSectionHeader(title: "Discovered Words")
-          ForEach(Array((results.best + results.additional).prefix(12).enumerated()), id: \.offset) { index, entry in
-            ResultRow(entry: entry, marker: .additional, rank: .discovered(index + 1)) { openResult(entry) }
-          }
-        } else if query.isSingleKanji || !results.best.isEmpty {
-          ResultSectionHeader(title: "Best Matches")
-          if let character = KanjiCharacter(query.value) {
-            KanjiPrimaryRow(character: character.rawValue, entry: primaryKanjiEntry) {
-              openKanji(character, primaryKanjiEntry)
+          if results.presentation == .discoveredWords {
+            ResultSectionHeader(title: "Discovered Words")
+            ForEach(Array((results.best + results.additional).prefix(12).enumerated()), id: \.offset) {
+              index, entry in
+              ResultRow(entry: entry, marker: .additional, rank: .discovered(index + 1)) {
+                openResult(entry)
+              }
+            }
+          } else if query.isSingleKanji || !results.best.isEmpty {
+            ResultSectionHeader(title: "Best Matches")
+            if let character = KanjiCharacter(query.value) {
+              KanjiPrimaryRow(character: character.rawValue, entry: primaryKanjiEntry) {
+                openKanji(character, primaryKanjiEntry)
+              }
+            }
+            ForEach(Array(results.best.enumerated()), id: \.element.id) { index, entry in
+              ResultRow(entry: entry, marker: .best, rank: .best(index + (query.isSingleKanji ? 2 : 1))) {
+                openResult(entry)
+              }
             }
           }
-          ForEach(Array(results.best.enumerated()), id: \.element.id) { index, entry in
-            ResultRow(entry: entry, marker: .best, rank: .best(index + (query.isSingleKanji ? 2 : 1))) { openResult(entry) }
-          }
-        }
 
-        if showsAdditionalMatches, results.presentation == .ranked, !results.additional.isEmpty {
-          ResultSectionHeader(title: "Additional Matches")
-          ForEach(Array(results.additional.enumerated()), id: \.element.id) { index, entry in
-            ResultRow(entry: entry, marker: .additional, rank: .additional(index + 1)) { openResult(entry) }
+          if showsAdditionalMatches, results.presentation == .ranked, !results.additional.isEmpty {
+            ResultSectionHeader(title: "Additional Matches")
+            ForEach(Array(results.additional.enumerated()), id: \.element.id) { index, entry in
+              ResultRow(entry: entry, marker: .additional, rank: .additional(index + 1)) {
+                openResult(entry)
+              }
+            }
           }
         }
       }
+      .id(query)
+      .scrollIndicators(.hidden)
     }
     .background(.black)
-    .scrollIndicators(.hidden)
   }
 
   private var primaryKanjiEntry: DictionaryEntry? {

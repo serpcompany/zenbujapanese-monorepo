@@ -37,6 +37,19 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
     }
   }
 
+  var alternativeKanji: [String] {
+    let primary = Set(primaryKanji)
+    var seen = Set<String>()
+    return writtenForms
+      .filter { $0.value != headword }
+      .flatMap { form in form.value.map(String.init) }
+      .filter { character in
+        character.first?.isCJKUnifiedIdeograph == true
+          && !primary.contains(character)
+          && seen.insert(character).inserted
+      }
+  }
+
   var displayPartOfSpeech: String {
     partsOfSpeech.map(\.rawValue).joined(separator: " · ")
   }
@@ -127,20 +140,26 @@ struct LookupSearchResults: Sendable {
   let additional: [DictionaryEntry]
   let presentation: Presentation
   let readingRefinement: SearchRefinement?
+  let usesPrimaryEntryExamples: Bool
+  let hasExactOrPrefixMatch: Bool
 
   init(
     best: [DictionaryEntry],
     additional: [DictionaryEntry],
     presentation: Presentation = .ranked,
-    readingRefinement: SearchRefinement? = nil
+    readingRefinement: SearchRefinement? = nil,
+    usesPrimaryEntryExamples: Bool = false,
+    hasExactOrPrefixMatch: Bool = true
   ) {
     self.best = best
     self.additional = additional
     self.presentation = presentation
     self.readingRefinement = readingRefinement
+    self.usesPrimaryEntryExamples = usesPrimaryEntryExamples
+    self.hasExactOrPrefixMatch = hasExactOrPrefixMatch
   }
 
-  static let empty = LookupSearchResults(best: [], additional: [])
+  static let empty = LookupSearchResults(best: [], additional: [], hasExactOrPrefixMatch: false)
 
   var isEmpty: Bool {
     best.isEmpty && additional.isEmpty
@@ -150,6 +169,17 @@ struct LookupSearchResults: Sendable {
     (best + additional).first { $0.headword == query.value }
       ?? best.first
       ?? additional.first
+  }
+
+  func usingPrimaryEntryExamples() -> LookupSearchResults {
+    LookupSearchResults(
+      best: best,
+      additional: additional,
+      presentation: presentation,
+      readingRefinement: readingRefinement,
+      usesPrimaryEntryExamples: true,
+      hasExactOrPrefixMatch: hasExactOrPrefixMatch
+    )
   }
 
   enum Presentation: Sendable {

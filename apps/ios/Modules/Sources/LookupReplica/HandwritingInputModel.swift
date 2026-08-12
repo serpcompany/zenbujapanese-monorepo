@@ -55,6 +55,14 @@ final class HandwritingInputModel {
     recognitionState = .idle
   }
 
+  func acceptCandidate() {
+    recognitionTask?.cancel()
+    recognitionTask = nil
+    recognitionRevision += 1
+    strokes = []
+    recognitionState = .idle
+  }
+
   func cancelRecognition() {
     recognitionTask?.cancel()
     recognitionTask = nil

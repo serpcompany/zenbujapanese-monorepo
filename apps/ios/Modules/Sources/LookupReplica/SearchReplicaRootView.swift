@@ -8,6 +8,7 @@ public struct SearchReplicaRootView: View {
   @State private var exportsImageFixtures = false
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
+  @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
   #if DEBUG
   @State private var lastStartedSpeech: SpeechPlaybackVerificationEvent?
   @State private var lastFinishedSpeech: SpeechPlaybackVerificationEvent?
@@ -15,6 +16,7 @@ public struct SearchReplicaRootView: View {
   private let lookupClient = LookupClient.live
   private let recentSearchStore = RecentSearchStore.live
   private let handwritingRecognitionClient: HandwritingRecognitionClient
+  private let cameraAuthorizationClient: CameraAuthorizationClient
   private let speechSynthesisClient: SpeechSynthesisClient
   private let kanjiStrokeOrderClient: KanjiStrokeOrderClient
   private let kanjiElementLookupClient: KanjiElementLookupClient
@@ -27,6 +29,7 @@ public struct SearchReplicaRootView: View {
   public init() {
     #if DEBUG
     handwritingRecognitionClient = HandwritingRecognitionFixture.clientFromProcessArguments() ?? .live
+    cameraAuthorizationClient = CameraAuthorizationClient.clientFromProcessArguments() ?? .live
     speechSynthesisClient = SpeechSynthesisClient.clientFromProcessArguments() ?? .live
     kanjiStrokeOrderClient = KanjiStrokeOrderClient.clientFromProcessArguments() ?? .live
     kanjiElementLookupClient = KanjiElementLookupClient.clientFromProcessArguments() ?? .live
@@ -41,6 +44,7 @@ public struct SearchReplicaRootView: View {
     }
     #else
     handwritingRecognitionClient = .live
+    cameraAuthorizationClient = .live
     speechSynthesisClient = .live
     kanjiStrokeOrderClient = .live
     kanjiElementLookupClient = .live
@@ -58,11 +62,15 @@ public struct SearchReplicaRootView: View {
         lookupClient: lookupClient,
         recentSearchStore: recentSearchStore,
         handwritingRecognitionClient: handwritingRecognitionClient,
+        cameraAuthorizationClient: cameraAuthorizationClient,
         radicalLookupClient: .live,
         exampleSentenceClient: .live,
+        openSources: { presentedSheet = .sources },
         openResult: { entry in path.append(.word(entry, "Search", nil)) },
         openKanji: openKanji,
-        openExamples: { query, entry in path.append(.examples(query, entry)) },
+        openExamples: { query, entry, usesEntryExamples in
+          path.append(.examples(query, entry, usesEntryExamples))
+        },
         openImageText: { assets in
           let session = ImageTextSession(assets: assets)
           imageTextSessionStore.insert(session)
@@ -70,17 +78,6 @@ public struct SearchReplicaRootView: View {
         },
         imageImportInitialDirectory: imageImportInitialDirectory
       )
-      .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
-          Button {
-            presentedSheet = .sources
-          } label: {
-            Image(systemName: "info.circle")
-          }
-          .accessibilityLabel("Dictionary Sources")
-          .accessibilityIdentifier("search.sources")
-        }
-      }
       .navigationDestination(for: ReplicaRoute.self) { route in
         switch route {
         case .word(let entry, let backTitle, let imageContext):
@@ -108,7 +105,15 @@ public struct SearchReplicaRootView: View {
             openWord: { entry in path.append(.word(entry, "Search", nil)) },
             openElement: { id in path.append(.kanjiElement(id)) },
             preservedWordID: kanjiScrollWordIDs[character],
-            preserveWordID: { kanjiScrollWordIDs[character] = $0 }
+            preserveWordID: {
+              kanjiScrollWordIDs[character] = $0
+              kanjiScrollElementIDs[character] = nil
+            },
+            preservedElementID: kanjiScrollElementIDs[character],
+            preserveElementID: {
+              kanjiScrollElementIDs[character] = $0
+              kanjiScrollWordIDs[character] = nil
+            }
           )
         case .kanjiElement(let id):
           KanjiElementDetailView(
@@ -117,10 +122,11 @@ public struct SearchReplicaRootView: View {
             openAlternative: { alternative in path.append(.kanjiElement(alternative)) },
             openKanji: { character in openKanji(character, entry: nil) }
           )
-        case .examples(let query, let highlightedEntry):
+        case .examples(let query, let highlightedEntry, let usesEntryExamples):
           ExampleSentencesView(
             query: query,
             highlightedEntry: highlightedEntry,
+            usesHighlightedEntryExamples: usesEntryExamples,
             exampleSentenceClient: .live,
             japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
             speechSynthesisClient: speechSynthesisClient,
@@ -284,7 +290,7 @@ private enum ReplicaRoute: Hashable {
   case word(DictionaryEntry, String, ImageWordContext?)
   case kanji(KanjiCharacter, DictionaryEntry?)
   case kanjiElement(KanjiElementID)
-  case examples(SearchQuery, DictionaryEntry?)
+  case examples(SearchQuery, DictionaryEntry?, Bool)
   case conjugations(DictionaryEntry, ConjugationTable)
   case image(UUID)
 }

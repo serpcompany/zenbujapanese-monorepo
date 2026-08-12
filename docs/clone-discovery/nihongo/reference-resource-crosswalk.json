@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-10T07:56:07Z",
+  "generated_at": "2026-08-11T08:28:04Z",
   "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/74",
   "authority_id": "nihongo-ios-1.34.3-9792-runtime",
   "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
@@ -8,7 +8,7 @@
   "source_records": [
     {
       "path": "scope.json",
-      "sha256": "b2916dd144296baae2f0a813cb4cd84ebd4764868a839581b9e752d1784d32e0"
+      "sha256": "945c4c4dd39a5259bdd8f56e606cdaaaa33045acef15b822e700a8475fdced4d"
     },
     {
       "path": "reference-authorities.json",
@@ -16,11 +16,11 @@
     },
     {
       "path": "journeys.json",
-      "sha256": "54e0c41e7718bb394e31c2631cfd3f9d50a5915ef54f58d933ebd42ae02a97e0"
+      "sha256": "4457e632210e90e0582f25ee0dc5ae2a80a03e57659a0f880e618c681140dd8b"
     },
     {
       "path": "surface-map.json",
-      "sha256": "5c098368df4029fec7523c8a18d5f220e2e14535a0cb0c069cef13f073716e96"
+      "sha256": "c996c9a6d65e0e241ad96ebe9249bcd1f44e82e52cf25c6bb1db889e77120911"
     },
     {
       "path": "state-transitions.json",
@@ -94,12 +94,12 @@
     "crosswalk_actions": 129,
     "crosswalk_fixtures": 35,
     "crosswalk_behavior_claims": 19,
-    "nodes_ready": 80,
+    "nodes_ready": 81,
     "nodes_blocked": 0,
-    "nodes_excluded": 4,
-    "actions_ready": 97,
+    "nodes_excluded": 3,
+    "actions_ready": 98,
     "actions_blocked": 0,
-    "actions_excluded": 32,
+    "actions_excluded": 31,
     "fixtures_ready": 35,
     "fixtures_blocked": 0,
     "behavior_claims_ready": 19,
@@ -127,7 +127,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -187,7 +189,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -301,9 +305,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -366,9 +372,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -434,9 +442,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -506,9 +516,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -572,9 +584,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -638,9 +652,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -709,9 +725,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -778,9 +796,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -846,9 +866,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -907,7 +929,8 @@
       "name": "empty handwriting grid",
       "surface_id": "LOOKUP-HANDWRITING-INPUT",
       "journey_ids": [
-        "JOURNEY-SEARCH-HANDWRITING"
+        "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -964,7 +987,8 @@
       "name": "drawn strokes with candidate strip",
       "surface_id": "LOOKUP-HANDWRITING-INPUT",
       "journey_ids": [
-        "JOURNEY-SEARCH-HANDWRITING"
+        "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -1021,7 +1045,8 @@
       "name": "selected candidate with cleared grid",
       "surface_id": "LOOKUP-HANDWRITING-INPUT",
       "journey_ids": [
-        "JOURNEY-SEARCH-HANDWRITING"
+        "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -1078,7 +1103,8 @@
       "name": "selected candidate plus pending recognized stroke",
       "surface_id": "LOOKUP-HANDWRITING-INPUT",
       "journey_ids": [
-        "JOURNEY-SEARCH-HANDWRITING"
+        "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -1249,9 +1275,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -1312,9 +1340,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -1374,9 +1404,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -1437,9 +1469,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -3225,6 +3259,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -3294,6 +3329,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -3364,6 +3400,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -3433,6 +3470,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -3502,6 +3540,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -3691,6 +3730,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -3758,6 +3798,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -3988,7 +4029,8 @@
       "name": "one-stroke initial frame",
       "surface_id": "LOOKUP-KANJI-STROKE-ORDER",
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -4045,7 +4087,8 @@
       "name": "one-stroke completed frame",
       "surface_id": "LOOKUP-KANJI-STROKE-ORDER",
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -4102,7 +4145,8 @@
       "name": "8-stroke initial frame",
       "surface_id": "LOOKUP-KANJI-STROKE-ORDER",
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -4158,7 +4202,8 @@
       "name": "8-stroke settled step 1",
       "surface_id": "LOOKUP-KANJI-STROKE-ORDER",
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -4214,7 +4259,8 @@
       "name": "8-stroke paused at stroke 5",
       "surface_id": "LOOKUP-KANJI-STROKE-ORDER",
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -4270,7 +4316,8 @@
       "name": "8-stroke completed frame",
       "surface_id": "LOOKUP-KANJI-STROKE-ORDER",
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -4328,6 +4375,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -4394,7 +4442,8 @@
       "name": "29-stroke initial frame",
       "surface_id": "LOOKUP-KANJI-STROKE-ORDER",
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -4450,7 +4499,8 @@
       "name": "29-stroke paused at stroke 13",
       "surface_id": "LOOKUP-KANJI-STROKE-ORDER",
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -4506,7 +4556,8 @@
       "name": "29-stroke qualitative terminal state observed with counter 29, all strokes complete, and Play restored",
       "surface_id": "LOOKUP-KANJI-STROKE-ORDER",
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -4565,7 +4616,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -4677,7 +4730,7 @@
       "journey_ids": [
         "JOURNEY-IMAGE-PHOTO-LIBRARY"
       ],
-      "scope": "excluded",
+      "scope": "navigation_support",
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
@@ -4702,6 +4755,7 @@
         "DESIGN-TOKEN-CONTROL-STATES"
       ],
       "asset_ids": [
+        "ASSET-FAMILY-REFERENCE-UI-GLYPHS",
         "ASSET-FAMILY-NIHONGO-BRANDING"
       ],
       "language_capabilities": [
@@ -4713,8 +4767,8 @@
       "confidence": "high_for_observed_presentation",
       "conflict_ids": [],
       "blocker_ids": [],
-      "exclusion": "Approved boundary or waived platform-source mechanics; only the boundary edge is retained.",
-      "atomic_parity_input": "excluded"
+      "exclusion": null,
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-NODE-IMAGE-STATE-004",
@@ -5593,7 +5647,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -5729,7 +5785,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -5795,7 +5853,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -5891,7 +5951,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -5958,7 +6020,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -6026,9 +6090,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -6106,9 +6172,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -6181,9 +6249,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -6253,9 +6323,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -6320,9 +6392,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -6391,9 +6465,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -6519,7 +6595,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -6586,7 +6664,8 @@
         "LOOKUP-HANDWRITING-INPUT"
       ],
       "journey_ids": [
-        "JOURNEY-SEARCH-HANDWRITING"
+        "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -6652,7 +6731,8 @@
         "LOOKUP-HANDWRITING-INPUT"
       ],
       "journey_ids": [
-        "JOURNEY-SEARCH-HANDWRITING"
+        "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -6717,7 +6797,8 @@
         "LOOKUP-HANDWRITING-INPUT"
       ],
       "journey_ids": [
-        "JOURNEY-SEARCH-HANDWRITING"
+        "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -6780,7 +6861,8 @@
         "LOOKUP-HANDWRITING-INPUT"
       ],
       "journey_ids": [
-        "JOURNEY-SEARCH-HANDWRITING"
+        "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -6845,7 +6927,8 @@
         "LOOKUP-HANDWRITING-INPUT"
       ],
       "journey_ids": [
-        "JOURNEY-SEARCH-HANDWRITING"
+        "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -6918,7 +7001,8 @@
         "LOOKUP-HANDWRITING-INPUT"
       ],
       "journey_ids": [
-        "JOURNEY-SEARCH-HANDWRITING"
+        "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -7612,7 +7696,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -7679,9 +7765,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -7902,9 +7990,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -7969,9 +8059,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -8037,9 +8129,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -8238,6 +8332,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -8304,7 +8399,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -8370,7 +8467,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -8436,7 +8535,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -8687,9 +8788,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -11062,6 +11165,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -11131,6 +11235,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -11200,6 +11305,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -11268,6 +11374,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -11521,6 +11628,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -11588,6 +11696,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -11764,6 +11873,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -11826,7 +11936,8 @@
         "LOOKUP-KANJI-STROKE-ORDER"
       ],
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -11889,7 +12000,8 @@
         "LOOKUP-KANJI-STROKE-ORDER"
       ],
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -11951,7 +12063,8 @@
         "LOOKUP-KANJI-STROKE-ORDER"
       ],
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -12011,7 +12124,8 @@
         "LOOKUP-KANJI-STROKE-ORDER"
       ],
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -12073,7 +12187,8 @@
         "LOOKUP-KANJI-STROKE-ORDER"
       ],
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -12133,7 +12248,8 @@
         "LOOKUP-KANJI-STROKE-ORDER"
       ],
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -12196,7 +12312,8 @@
         "LOOKUP-KANJI-STROKE-ORDER"
       ],
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -12256,7 +12373,8 @@
         "LOOKUP-KANJI-STROKE-ORDER"
       ],
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -12377,6 +12495,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -12443,6 +12562,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -12510,6 +12630,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -12577,6 +12698,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -12640,7 +12762,8 @@
         "LOOKUP-KANJI-STROKE-ORDER"
       ],
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "scope": "blocking",
       "fixture_binding": {
@@ -12706,6 +12829,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "scope": "blocking",
@@ -12773,7 +12897,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -12897,7 +13023,7 @@
       "journey_ids": [
         "JOURNEY-IMAGE-PHOTO-LIBRARY"
       ],
-      "scope": "excluded",
+      "scope": "navigation_support",
       "fixture_binding": {
         "status": "bound_to_fixture_ids",
         "fixture_ids": [
@@ -12932,6 +13058,7 @@
         "DESIGN-TOKEN-CONTROL-STATES"
       ],
       "asset_ids": [
+        "ASSET-FAMILY-REFERENCE-UI-GLYPHS",
         "ASSET-FAMILY-NIHONGO-BRANDING"
       ],
       "language_capabilities": [
@@ -12945,8 +13072,8 @@
         "Vertical cross-column grouping does not preserve the fixture's intended reading order."
       ],
       "blocker_ids": [],
-      "exclusion": "Approved external or excluded boundary.",
-      "atomic_parity_input": "excluded"
+      "exclusion": null,
+      "atomic_parity_input": "ready_for_atomic_ledger"
     },
     {
       "crosswalk_id": "CROSSWALK-ACTION-IMAGE-ACTION-004",
@@ -14556,7 +14683,7 @@
       "journey_ids": [
         "JOURNEY-IMAGE-PHOTO-LIBRARY"
       ],
-      "scope": "excluded",
+      "scope": "navigation_support",
       "fixture_binding": {
         "status": "bound_to_source_precondition",
         "fixture_ids": [],
@@ -14581,6 +14708,7 @@
         "DESIGN-TOKEN-CONTROL-STATES"
       ],
       "asset_ids": [
+        "ASSET-FAMILY-REFERENCE-UI-GLYPHS",
         "ASSET-FAMILY-NIHONGO-BRANDING"
       ],
       "language_capabilities": [
@@ -14683,9 +14811,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -14761,9 +14891,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -14852,9 +14984,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-HEAR-PRONUNCIATION",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
@@ -14940,9 +15074,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -15011,9 +15147,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -15090,9 +15228,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -15158,9 +15298,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-HEAR-PRONUNCIATION",
         "JOURNEY-INSPECT-CONJUGATIONS",
         "JOURNEY-EDIT-NOTE",
@@ -15240,9 +15382,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -15314,7 +15458,9 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES",
@@ -15399,9 +15545,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -15480,9 +15628,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -15564,9 +15714,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -15691,9 +15843,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -15778,9 +15932,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-PLAY-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
@@ -15848,8 +16004,10 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -15948,9 +16106,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-HEAR-PRONUNCIATION",
         "JOURNEY-INSPECT-CONJUGATIONS",
         "JOURNEY-EDIT-NOTE",
@@ -16070,9 +16230,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-HEAR-PRONUNCIATION",
         "JOURNEY-INSPECT-CONJUGATIONS",
         "JOURNEY-EDIT-NOTE",
@@ -16170,9 +16332,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-HEAR-PRONUNCIATION",
         "JOURNEY-INSPECT-CONJUGATIONS",
         "JOURNEY-EDIT-NOTE",
@@ -16603,6 +16767,7 @@
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-EDIT-FLASHCARD",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
@@ -16794,6 +16959,7 @@
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-EDIT-FLASHCARD",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
@@ -16892,6 +17058,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
@@ -16969,7 +17136,8 @@
       ],
       "linked_observation_ids": [],
       "journey_ids": [
-        "JOURNEY-PLAY-STROKE-ORDER"
+        "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -17024,6 +17192,7 @@
       "journey_ids": [
         "JOURNEY-INSPECT-KANJI",
         "JOURNEY-PLAY-STROKE-ORDER",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-INSPECT-KANJI-ELEMENT"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
@@ -17210,9 +17379,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES",
@@ -17510,9 +17681,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES",
@@ -17593,9 +17766,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -17643,9 +17818,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -17695,9 +17872,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -17744,9 +17923,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -17795,9 +17976,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -17848,9 +18031,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -17899,9 +18084,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -18065,9 +18252,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -18128,9 +18317,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-HEAR-PRONUNCIATION"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
@@ -18189,12 +18380,14 @@
       ],
       "journey_ids": [
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-TEXT",
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -18249,8 +18442,10 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-INSPECT-WORD",
-        "JOURNEY-READ-EXAMPLES"
+        "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER"
       ],
       "environment_id": "ENV-IOS-PHYSICAL-DARK-PORTRAIT-001",
       "authority_id": "nihongo-ios-1.34.3-9792-runtime",
@@ -18484,9 +18679,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-HEAR-PRONUNCIATION",
         "JOURNEY-INSPECT-CONJUGATIONS",
         "JOURNEY-EDIT-NOTE",
@@ -18536,9 +18733,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"
@@ -18596,9 +18795,11 @@
         "JOURNEY-SEARCH-ROMAJI-REFINEMENT",
         "JOURNEY-RERUN-RECENT-SEARCH",
         "JOURNEY-SEARCH-HANDWRITING",
+        "JOURNEY-SEARCH-HANDWRITING-NATURAL-YAMA",
         "JOURNEY-SEARCH-RADICAL",
         "JOURNEY-INSPECT-WORD",
         "JOURNEY-READ-EXAMPLES",
+        "JOURNEY-YAMA-STROKE-ORDER",
         "JOURNEY-IMAGE-TAKE-PHOTO",
         "JOURNEY-IMAGE-PHOTO-LIBRARY",
         "JOURNEY-IMAGE-FILES"

@@ -142,18 +142,15 @@ final class ImageTextFlowModel {
     var regions: [ImageTextRegion] = []
     let ideographs = observations.flatMap(ideographUnits)
     var groupedUnitIDs = Set<String>()
-    for unit in ideographs {
-      let candidates = ideographs.filter {
-        $0.id != unit.id && $0.observationID != unit.observationID
-          && $0.boundingBox.minX >= unit.boundingBox.maxX
-          && abs($0.boundingBox.midY - unit.boundingBox.midY)
-            <= max($0.boundingBox.height, unit.boundingBox.height) * 0.55
-          && $0.boundingBox.minX - unit.boundingBox.maxX <= 0.25
+    for unit in ideographs where !groupedUnitIDs.contains(unit.id) {
+      let candidates = ideographs.compactMap { candidate -> (ImageTextIdeographUnit, CGFloat)? in
+        guard candidate.id != unit.id,
+              candidate.observationID != unit.observationID,
+              !groupedUnitIDs.contains(candidate.id),
+              let score = adjacencyScore(from: unit, to: candidate) else { return nil }
+        return (candidate, score)
       }
-      guard let neighbor = candidates.min(by: {
-        $0.boundingBox.minX - unit.boundingBox.maxX
-          < $1.boundingBox.minX - unit.boundingBox.maxX
-      }) else { continue }
+      guard let neighbor = candidates.min(by: { $0.1 < $1.1 })?.0 else { continue }
       let combined = unit.surface + neighbor.surface
       let linked = await textAnalysisClient.linkedTokens(combined, SearchQuery(""), nil)
       guard let token = linked.first(where: {
@@ -161,35 +158,25 @@ final class ImageTextFlowModel {
       }), let entry = token.entry else { continue }
       regions.append(ImageTextRegion(
         id: "grouped.\(unit.id).\(neighbor.id)",
-        surface: unit.surface,
-        boundingBox: unit.boundingBox,
+        surface: combined,
+        boundingBox: unit.boundingBox.union(neighbor.boundingBox),
         entry: entry
       ))
       groupedUnitIDs.insert(unit.id)
+      groupedUnitIDs.insert(neighbor.id)
     }
     for observation in observations {
       let tokens = await textAnalysisClient.linkedTokens(observation.text, SearchQuery(""), nil)
-      let characterCount = max(observation.text.count, 1)
       var offset = 0
       for token in tokens {
-        defer { offset += token.surface.count }
+        let range = tokenRange(
+          for: token.surface,
+          in: observation.text,
+          startingAt: offset
+        )
+        offset = range.upperBound
         guard let entry = token.entry else { continue }
-        let isVertical = observation.boundingBox.height > observation.boundingBox.width * 1.5
-        let start = CGFloat(offset) / CGFloat(characterCount)
-        let span = max(CGFloat(token.surface.count) / CGFloat(characterCount), 0.05)
-        let box = isVertical
-          ? CGRect(
-            x: observation.boundingBox.minX,
-            y: observation.boundingBox.maxY - observation.boundingBox.height * (start + span),
-            width: observation.boundingBox.width,
-            height: observation.boundingBox.height * span
-          )
-          : CGRect(
-            x: observation.boundingBox.minX + observation.boundingBox.width * start,
-            y: observation.boundingBox.minY,
-            width: min(observation.boundingBox.width * span, 1 - observation.boundingBox.minX),
-            height: observation.boundingBox.height
-          )
+        let box = boundingBox(for: range, in: observation)
         let tokenUnitIDs = ideographs.filter {
           $0.observationID == observation.id && token.surface.contains($0.surface)
         }.map(\.id)
@@ -205,6 +192,74 @@ final class ImageTextFlowModel {
     return ImageTextPage(asset: asset, observations: observations, regions: regions)
   }
 
+  private static func tokenRange(
+    for surface: String,
+    in text: String,
+    startingAt offset: Int
+  ) -> Range<Int> {
+    let characterCount = text.count
+    let lower = min(offset, characterCount)
+    let start = text.index(text.startIndex, offsetBy: lower)
+    if let found = text.range(of: surface, range: start ..< text.endIndex) {
+      return text.distance(from: text.startIndex, to: found.lowerBound)
+        ..< text.distance(from: text.startIndex, to: found.upperBound)
+    }
+    return lower ..< min(lower + surface.count, characterCount)
+  }
+
+  private static func boundingBox(
+    for range: Range<Int>,
+    in observation: RecognizedImageTextObservation
+  ) -> CGRect {
+    if observation.characterBoxes.count == observation.text.count {
+      let boxes = observation.characterBoxes[range]
+        .filter { !$0.isNull && !$0.isEmpty }
+      if let first = boxes.first {
+        return boxes.dropFirst().reduce(first) { $0.union($1) }
+      }
+    }
+
+    let characterCount = max(observation.text.count, 1)
+    let start = CGFloat(range.lowerBound) / CGFloat(characterCount)
+    let span = max(CGFloat(range.count) / CGFloat(characterCount), 0.05)
+    let isVertical = observation.boundingBox.height > observation.boundingBox.width * 1.5
+    if isVertical {
+      return CGRect(
+        x: observation.boundingBox.minX,
+        y: observation.boundingBox.maxY - observation.boundingBox.height * (start + span),
+        width: observation.boundingBox.width,
+        height: observation.boundingBox.height * span
+      )
+    }
+    return CGRect(
+      x: observation.boundingBox.minX + observation.boundingBox.width * start,
+      y: observation.boundingBox.minY,
+      width: min(observation.boundingBox.width * span, 1 - observation.boundingBox.minX),
+      height: observation.boundingBox.height
+    )
+  }
+
+  private static func adjacencyScore(
+    from unit: ImageTextIdeographUnit,
+    to candidate: ImageTextIdeographUnit
+  ) -> CGFloat? {
+    let height = max(unit.boundingBox.height, candidate.boundingBox.height)
+    let width = max(unit.boundingBox.width, candidate.boundingBox.width)
+
+    let horizontalGap = candidate.boundingBox.minX - unit.boundingBox.maxX
+    let horizontallyAligned = abs(candidate.boundingBox.midY - unit.boundingBox.midY) <= height * 0.6
+    if horizontalGap >= 0, horizontalGap <= 0.25, horizontallyAligned {
+      return horizontalGap / max(width, 0.001)
+    }
+
+    let verticalGap = unit.boundingBox.minY - candidate.boundingBox.maxY
+    let verticallyAligned = abs(candidate.boundingBox.midX - unit.boundingBox.midX) <= width * 0.6
+    if verticalGap >= 0, verticalGap <= 0.25, verticallyAligned {
+      return verticalGap / max(height, 0.001)
+    }
+    return nil
+  }
+
   private static func ideographUnits(
     _ observation: RecognizedImageTextObservation
   ) -> [ImageTextIdeographUnit] {
@@ -216,19 +271,26 @@ final class ImageTextFlowModel {
       guard surface.isSingleIdeograph else { return nil }
       let fraction = CGFloat(index) / CGFloat(characters.count)
       let span = 1 / CGFloat(characters.count)
-      let box = vertical
-        ? CGRect(
+      let proportionalBox: CGRect
+      if vertical {
+        proportionalBox = CGRect(
           x: observation.boundingBox.minX,
           y: observation.boundingBox.maxY - observation.boundingBox.height * (fraction + span),
           width: observation.boundingBox.width,
           height: observation.boundingBox.height * span
         )
-        : CGRect(
+      } else {
+        proportionalBox = CGRect(
           x: observation.boundingBox.minX + observation.boundingBox.width * fraction,
           y: observation.boundingBox.minY,
           width: observation.boundingBox.width * span,
           height: observation.boundingBox.height
         )
+      }
+      let box = observation.characterBoxes.count == characters.count
+        && !observation.characterBoxes[index].isNull
+        ? observation.characterBoxes[index]
+        : proportionalBox
       return ImageTextIdeographUnit(
         id: "\(observation.id).\(index)",
         observationID: observation.id,

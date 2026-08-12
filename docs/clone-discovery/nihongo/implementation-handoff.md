@@ -14,7 +14,7 @@ This is a discovery-only handoff for the approved Search-rooted Lookup graph. It
 
 ## Exact denominator
 
-The ledger has 329 atomic rows: 23 surfaces, 84 distinguishable states, 129 action edges, 35 fixture/behavior-class inputs, 19 observable language-behavior claims, 16 language-resource boundaries, 7 design-token families, and 16 asset/fixture records. All 329 rows are schema-complete; 284 are ready reference inputs, 0 are explicitly blocked, and 45 preserve approved exclusions. All clone statuses are `unknown` and all test statuses are `not_run`.
+The ledger has 329 atomic rows: 23 surfaces, 84 distinguishable states, 129 action edges, 35 fixture/behavior-class inputs, 19 observable language-behavior claims, 16 language-resource boundaries, 7 design-token families, and 16 asset/fixture records. All 329 rows are schema-complete; 288 are ready reference inputs, 0 are explicitly blocked, and 41 preserve approved exclusions. Runtime verification currently records 0 exact rows, 0 approved variances, 0 defects, 0 access blockers, and 329 unknown rows; 0 rows passed tests and 329 remain not run.
 
 ## Implementation-use contract
 

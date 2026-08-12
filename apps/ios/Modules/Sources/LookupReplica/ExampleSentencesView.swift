@@ -8,6 +8,7 @@ struct ExampleSentencesView: View {
 
   let query: SearchQuery
   let highlightedEntry: DictionaryEntry?
+  let usesHighlightedEntryExamples: Bool
   let exampleSentenceClient: ExampleSentenceClient
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let speechSynthesisClient: SpeechSynthesisClient
@@ -56,7 +57,11 @@ struct ExampleSentencesView: View {
     }
     .task(id: query) {
       isLoading = true
-      examples = (try? await exampleSentenceClient.search(query)) ?? []
+      if usesHighlightedEntryExamples, let highlightedEntry {
+        examples = (try? await exampleSentenceClient.examples(highlightedEntry)) ?? []
+      } else {
+        examples = (try? await exampleSentenceClient.search(query)) ?? []
+      }
       isLoading = false
     }
   }

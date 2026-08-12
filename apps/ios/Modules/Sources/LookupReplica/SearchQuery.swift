@@ -35,10 +35,40 @@ struct SearchQuery: Hashable, Sendable {
 
   var deinflectedCandidates: [SearchQuery] {
     guard isASCII else { return [] }
-    if value == "shita" { return [SearchQuery("suru")] }
-    if value == "kita" { return [SearchQuery("kuru")] }
-    guard value.hasSuffix("ta"), value.count > 3 else { return [] }
-    return [SearchQuery(String(value.dropLast(2)) + "ru")]
+    var candidates: [SearchQuery] = []
+    func append(_ candidate: String) {
+      let query = SearchQuery(candidate)
+      guard query != self, !candidates.contains(query) else { return }
+      candidates.append(query)
+    }
+    func replaceSuffix(_ suffix: String, with endings: [String]) {
+      guard value.hasSuffix(suffix), value.count > suffix.count else { return }
+      let stem = String(value.dropLast(suffix.count))
+      endings.forEach { append(stem + $0) }
+    }
+
+    // Irregulars remain first because their regular-looking alternatives are
+    // valid words too (for example, kita can also be the past of kiru).
+    if value == "shita" || value == "shite" { append("suru") }
+    if value == "kita" || value == "kite" { append("kuru") }
+    if value == "itta" || value == "itte" { append("iku") }
+
+    // Romaji does not retain enough information to identify one base verb for
+    // every godan sound change, so return each legitimate dictionary-form
+    // candidate. Lookup combines and de-duplicates the forms that exist.
+    replaceSuffix("shita", with: ["su"])
+    replaceSuffix("shite", with: ["su"])
+    replaceSuffix("tta", with: ["u", "tsu", "ru"])
+    replaceSuffix("tte", with: ["u", "tsu", "ru"])
+    replaceSuffix("nda", with: ["mu", "bu", "nu"])
+    replaceSuffix("nde", with: ["mu", "bu", "nu"])
+    replaceSuffix("ita", with: ["ku"])
+    replaceSuffix("ite", with: ["ku"])
+    replaceSuffix("ida", with: ["gu"])
+    replaceSuffix("ide", with: ["gu"])
+    replaceSuffix("ta", with: ["ru"])
+    replaceSuffix("te", with: ["ru"])
+    return candidates
   }
 
   private static func isJapanese(_ scalar: Unicode.Scalar) -> Bool {

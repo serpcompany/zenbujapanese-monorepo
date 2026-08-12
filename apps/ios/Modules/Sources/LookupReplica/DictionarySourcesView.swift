@@ -110,6 +110,7 @@ struct DictionarySourcesView: View {
           )
         }
       }
+      .accessibilityIdentifier("dictionary-sources.list")
       .navigationTitle("Dictionary Sources")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
