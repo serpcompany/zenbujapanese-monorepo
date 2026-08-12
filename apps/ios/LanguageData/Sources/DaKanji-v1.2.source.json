@@ -1,0 +1,21 @@
+{
+  "resource_id": "SOURCE-HANDWRITING-DAKANJI",
+  "identity": "DaKanji Single Kanji Recognition",
+  "snapshot": "v1.2",
+  "project_url": "https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition",
+  "source_format": "TensorFlow SavedModel",
+  "runtime_format": "Core ML mlprogram, Float16",
+  "runtime_input": "64x64 one-channel grayscale image, white strokes on black background",
+  "label_count": 6507,
+  "package_manifest_sha256": "4055191ef99612e4553b6fe14e271bfefbdb7335477024c09ed876cfc7f0195f",
+  "model_sha256": "55566de99a0b5e9ec589c881b24a598cbb84d571ede2971b4393590fbf55e61e",
+  "weights_sha256": "67194af64129b148d7c06652b84b1af7546573a0d247fb56d63d169eceac6723",
+  "license": "MIT",
+  "license_url": "https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition/blob/master/LICENSE",
+  "license_file": "DAKANJI-MIT.txt",
+  "license_sha256": "7d1e84def59e1bedb1c3a8c3038d77cf33027be52d2b64f0811571ce58e5be11",
+  "copyright": "Copyright (c) 2021 CaptainDario",
+  "attribution": "DaKanji Single Kanji Recognition by Dario Radmann and contributors; Core ML conversion by Zenbu Japanese",
+  "provenance_note": "Carried forward byte-for-byte from the verified prototypes/nihongo-app-clone Core ML conversion of the official v1.2 SavedModel.",
+  "nihongo_engine_status": "unknown_private; this is a documented licensed behavioral substitute"
+}

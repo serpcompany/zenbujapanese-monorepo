@@ -123,7 +123,9 @@ The [journey evidence record](Verification/JOURNEY-RERUN-RECENT-SEARCH/README.md
 
 Search now exposes a user-operable handwriting canvas with live offline recognition, ranked candidate selection, multi-character composition, pending-character submission, erase/recovery, Search, and durable recent-history output. Exact single-kanji input adds the observed KANJI-primary result row and traverses to Kanji detail.
 
-The public tests exercise handwritten `日本`, single `丁`, `丁` plus pending `一`, live recognition without fixture arguments, and a deterministic no-candidate recovery seam. The [journey evidence record](Verification/JOURNEY-SEARCH-HANDWRITING-v2/README.md) retains nine settled screenshots and names the environment, recognizer, erase, no-candidate, Radical-ownership, and asset boundaries.
+Production recognition rasterizes only the completed drawing and classifies that image with the bundled DaKanji Single Kanji Recognition v1.2 model converted to Core ML. Stroke order, stroke direction, and gesture count are not classifier inputs. The exact private Nihongo recognizer remains undisclosed; this is the documented MIT-licensed substitute matching Nihongo's observed rough-shape lookup behavior.
+
+The public tests exercise handwritten `日本`, single `丁`, `丁` plus pending `一`, live recognition without fixture arguments, the same `山` shape drawn in canonical and deliberately noncanonical stroke sequences, and a deterministic no-candidate recovery seam. The [journey evidence record](Verification/JOURNEY-SEARCH-HANDWRITING-v2/README.md) retains nine settled screenshots and names the environment, recognizer, erase, no-candidate, Radical-ownership, and asset boundaries. The current TestFlight QC matrix additionally requires physical-device evidence for the recorded and noncanonical-order `山` gestures.
 
 ## App-owned radical Search
 

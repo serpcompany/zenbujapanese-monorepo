@@ -63,6 +63,7 @@
       "SearchReplicaJourneyUITests/testMultipleReadingUncommonAndLinkedAlternativeKanjiClassesArePubliclyOperable()",
       "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
       "SearchReplicaJourneyUITests/testRecordedPhysicalPhoneYamaGestureIncludesYamaCandidate()",
+      "SearchReplicaJourneyUITests/testSameYamaShapeRecognizesAcrossNoncanonicalStrokeOrder()",
       "SearchReplicaJourneyUITests/testNewestRecentSearchRerunsItsResultSet()",
       "SearchReplicaJourneyUITests/testNihonOffersJapaneseReadingRefinement()",
       "SearchReplicaJourneyUITests/testNoMatchKeepsQueryAboveBlankResultsState()",
@@ -90,7 +91,8 @@
       "SearchReplicaJourneyUITests/testWordDetailFinalContentClearsBottomNavigation()",
       "SearchReplicaJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings()",
       "SearchReplicaJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder()",
-      "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()"
+      "SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
+      "SearchReplicaJourneyUITests/testSameYamaShapeRecognizesAcrossNoncanonicalStrokeOrder()"
     ],
     "signed_physical_device": [
       "SearchReplicaJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults()",
@@ -99,6 +101,7 @@
       "SearchReplicaJourneyUITests/testNewestRecentSearchRerunsItsResultSet()",
       "SearchReplicaJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
       "SearchReplicaJourneyUITests/testRecordedPhysicalPhoneYamaGestureIncludesYamaCandidate()",
+      "SearchReplicaJourneyUITests/testSameYamaShapeRecognizesAcrossNoncanonicalStrokeOrder()",
       "SearchReplicaJourneyUITests/testHandwritingCanvasProvidesUncrampedPhysicalPhoneDrawingArea()",
       "SearchReplicaJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult()",
       "SearchReplicaJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation()",
@@ -138,6 +141,10 @@
       {
         "test_id": "SearchReplicaJourneyUITests/testRecordedPhysicalPhoneYamaGestureIncludesYamaCandidate()",
         "name_prefix": "handwriting-recorded-yama-candidate"
+      },
+      {
+        "test_id": "SearchReplicaJourneyUITests/testSameYamaShapeRecognizesAcrossNoncanonicalStrokeOrder()",
+        "name_prefix": "handwriting-yama-noncanonical-order"
       },
       {
         "test_id": "SearchReplicaJourneyUITests/testHandwritingCanvasProvidesUncrampedPhysicalPhoneDrawingArea()",

@@ -104,6 +104,24 @@ struct DictionarySourcesView: View {
           Link("License terms", destination: URL(string: "https://creativecommons.org/licenses/by/2.0/fr/")!)
         }
 
+        Section("DaKanji handwriting recognition") {
+          Text("Offline single-character handwriting recognition by Dario Radmann and DaKanji contributors, converted to Core ML by Zenbu Japanese.")
+          HStack {
+            Text("License")
+            Spacer()
+            Text("MIT")
+          }
+          LabeledContent("Model", value: "Single Kanji Recognition v1.2")
+          NavigationLink("Bundled license text") {
+            BundledLicenseTextView(
+              title: "DaKanji MIT License",
+              resource: "DAKANJI-MIT"
+            )
+          }
+          .accessibilityIdentifier("dictionary-sources.dakanji-license")
+          Link("Project and model source", destination: URL(string: "https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition")!)
+        }
+
         Section("Zenbu transforms") {
           Text(
             "Zenbu retains each JMdict ent_seq source identifier and normalizes written forms, readings, English glosses, priority markers, and searchable romaji behind app-owned Language Reference Data. KANJIDIC2 classifications, English meanings, and Japanese readings are combined with KRADFILE visible-component membership behind a focused app-owned Kanji Reference capability. Kanjium structures and variants are normalized to top-level elements and combined with app-owned KANJIDIC reading summaries; no provider schema or proprietary etymology explanation reaches the product experience. KanjiVG paths are filtered to ideographs, normalized from SVG commands to absolute cubic geometry, and packaged in an app-owned ordered-stroke schema for Zenbu's renderer. Exact UniDic base-form and reading matches add app-owned pitch downstep facts. Tatoeba translation links become offline app-owned example pairs. Radical Search verifies KRADFILE membership against RADKFILE's stroke counts and inverted membership."

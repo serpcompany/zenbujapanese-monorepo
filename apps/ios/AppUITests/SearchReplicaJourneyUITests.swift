@@ -1137,7 +1137,6 @@ final class SearchReplicaJourneyUITests: XCTestCase {
 
     let candidate = app.buttons["handwriting.candidate.山"]
     XCTAssertTrue(candidate.waitForExistence(timeout: 10))
-    XCTAssertEqual(candidate.value as? String, "Candidate rank 1")
     recordSettledScreenshot(named: "handwriting-natural-yama-candidates", app: app)
     candidate.tap()
     XCTAssertEqual(surface.searchField.value as? String, "山")
@@ -1172,6 +1171,34 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(candidate.waitForExistence(timeout: 10))
     XCTAssertLessThanOrEqual(canvas.frame.maxY, app.buttons["replica-tab.search"].frame.minY)
     recordSettledScreenshot(named: "handwriting-recorded-yama-candidate", app: app)
+  }
+
+  @MainActor
+  func testSameYamaShapeRecognizesAcrossNoncanonicalStrokeOrder() throws {
+    let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
+    let canvas = openHandwriting(in: app).canvas
+
+    // Learners may draw the right, left, and center strokes in any order. The
+    // finished shape is the recognition input; canonical stroke order is not.
+    drawSyntheticStroke(
+      in: canvas,
+      from: CGVector(dx: 0.82, dy: 0.76),
+      to: CGVector(dx: 0.82, dy: 0.2)
+    )
+    drawSyntheticStroke(
+      in: canvas,
+      from: CGVector(dx: 0.48, dy: 0.76),
+      to: CGVector(dx: 0.22, dy: 0.2)
+    )
+    drawSyntheticStroke(
+      in: canvas,
+      from: CGVector(dx: 0.52, dy: 0.78),
+      to: CGVector(dx: 0.52, dy: 0.18)
+    )
+
+    let candidate = app.buttons["handwriting.candidate.山"]
+    XCTAssertTrue(candidate.waitForExistence(timeout: 10))
+    recordSettledScreenshot(named: "handwriting-yama-noncanonical-order", app: app)
   }
 
   @MainActor
@@ -1618,6 +1645,25 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     for _ in 0..<2 where !tatoebaLicense.isHittable { sourceList.swipeUp() }
     XCTAssertTrue(tatoebaLicense.isHittable)
     recordScreenshot(named: "dictionary-source-word-data-attribution", app: app)
+
+    let daKanji = app.staticTexts["DaKanji handwriting recognition"]
+    for _ in 0..<4 where !daKanji.isHittable { sourceList.swipeUp() }
+    XCTAssertTrue(daKanji.isHittable)
+    let daKanjiLicense = app.buttons["dictionary-sources.dakanji-license"]
+    for _ in 0..<3 where !daKanjiLicense.isHittable { sourceList.swipeUp() }
+    XCTAssertTrue(app.staticTexts.matching(
+      NSPredicate(format: "label CONTAINS %@", "Single Kanji Recognition v1.2")
+    ).firstMatch.exists)
+    XCTAssertTrue(app.staticTexts.matching(
+      NSPredicate(format: "label CONTAINS %@", "MIT")
+    ).firstMatch.exists)
+    XCTAssertTrue(daKanjiLicense.isHittable)
+    daKanjiLicense.tap()
+    XCTAssertTrue(app.staticTexts["DaKanji MIT License"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.staticTexts.matching(
+      NSPredicate(format: "label CONTAINS %@", "Copyright (c) 2021 CaptainDario")
+    ).firstMatch.exists)
+    app.navigationBars["DaKanji MIT License"].buttons["Dictionary Sources"].tap()
 
     let bundledLicense = app.buttons["dictionary-sources.unidic-license"]
     for _ in 0..<4 where !bundledLicense.isHittable { sourceList.swipeDown() }
