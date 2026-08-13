@@ -24,7 +24,10 @@ same clean frozen commit. Any subsequent source change invalidates that matrix;
 return to affected-test development runs, freeze a new commit, and run the
 three-environment matrix once again.
 
-Run the public XCTest crawler into a new, non-repository evidence directory:
+Run the public XCTest crawler into a new, non-repository evidence directory.
+When `--only-testing` is omitted, the crawler automatically selects exactly the
+tests declared for the inferred environment in `search-dictionary-plan.json`
+(currently 62 Debug simulator, 8 Release simulator, or 23 signed iPhone tests):
 
 ```sh
 node apps/ios/Tools/parity-ledger.mjs crawl \
