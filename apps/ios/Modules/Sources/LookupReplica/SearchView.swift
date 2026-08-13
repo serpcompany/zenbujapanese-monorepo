@@ -120,10 +120,6 @@ struct SearchView: View {
       do {
         try await Task.sleep(for: .milliseconds(100))
         guard !Task.isCancelled else { return }
-        if query != searchQuery.value {
-          query = searchQuery.value
-          return
-        }
         async let searchedResults = lookupClient.search(searchQuery)
         async let searchedExampleCount = exampleSentenceClient.count(searchQuery)
         let foundResults = try await searchedResults

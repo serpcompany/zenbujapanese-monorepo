@@ -225,6 +225,12 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
     let quiet = app.descendants(matching: .any).matching(identifier: "image-text.region.静か").firstMatch
     XCTAssertTrue(quiet.waitForExistence(timeout: 10))
+    let recognizedText = app.staticTexts["image-text.raw-text"]
+    XCTAssertTrue(recognizedText.waitForExistence(timeout: 10))
+    let expectedCopiedText = recognizedText.label
+      .replacingOccurrences(of: "Recognized text ", with: "")
+      .split(whereSeparator: \.isWhitespace)
+      .joined(separator: " ")
     recordSettledScreenshot(named: "image-text-clear-recognized", app: app)
 
     let translate = app.buttons["image-text.translate"]
@@ -290,10 +296,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(app.menuItems["Paste"].waitForExistence(timeout: 2))
     app.menuItems["Paste"].tap()
     let pasted = searchField.value as? String
-    XCTAssertEqual(
-      pasted,
-      "日本語の勉強 今日は静かな公園で蝶々を見た。 問題を解いてから、友達と話します。 東京駅 12:30 platform 4 synthetic fixture・img-fixture-001"
-    )
+    XCTAssertEqual(pasted, expectedCopiedText)
   }
 
   @MainActor
@@ -1562,11 +1565,11 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     searchField.tap()
     searchField.typeText("taberu ")
 
-    let normalized = XCTNSPredicateExpectation(
-      predicate: NSPredicate(format: "value == %@", "taberu"),
+    let editableDraft = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "taberu "),
       object: searchField
     )
-    XCTAssertEqual(XCTWaiter.wait(for: [normalized], timeout: 3), .completed)
+    XCTAssertEqual(XCTWaiter.wait(for: [editableDraft], timeout: 3), .completed)
     XCTAssertTrue(app.staticTexts["食べる"].waitForExistence(timeout: 3))
     let examples = app.buttons["search.examples"]
     XCTAssertTrue(examples.waitForExistence(timeout: 3))
@@ -1574,6 +1577,21 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(examples.isHittable)
     XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
     recordScreenshot(named: "search-results-whitespace-normalized-taberu", app: app)
+  }
+
+  @MainActor
+  func testMultiWordSearchPreservesSpaceAsItIsTyped() throws {
+    let app = launchApp()
+
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+    searchField.typeText("hello ")
+
+    XCTAssertTrue(app.staticTexts["Best Matches"].waitForExistence(timeout: 3))
+
+    searchField.typeText("world")
+    XCTAssertEqual(searchField.value as? String, "hello world")
   }
 
   @MainActor
