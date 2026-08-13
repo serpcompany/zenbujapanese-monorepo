@@ -2,9 +2,10 @@ import SwiftUI
 
 struct RecentSearchHistoryView: View {
   let recentSearchStore: RecentSearchStore
+  let refreshID: Int
+  let requestClearAll: () -> Void
   let selectSearch: (SearchQuery) -> Void
   @State private var searches: [SearchQuery] = []
-  @State private var isConfirmingClearAll = false
 
   var body: some View {
     List {
@@ -43,9 +44,7 @@ struct RecentSearchHistoryView: View {
           HStack {
             Text("Recent Searches")
             Spacer()
-            Button("Clear All") {
-              isConfirmingClearAll = true
-            }
+            Button("Clear All", action: requestClearAll)
             .accessibilityIdentifier("recent-search.clear-all")
           }
           .font(.system(size: 16, weight: .semibold))
@@ -57,29 +56,14 @@ struct RecentSearchHistoryView: View {
     .listStyle(.plain)
     .scrollContentBackground(.hidden)
     .background(.black)
-    .task {
+    .task(id: refreshID) {
       await reload()
-    }
-    .alert("Clear Recent Searches?", isPresented: $isConfirmingClearAll) {
-      Button("Cancel", role: .cancel) {}
-      Button("Clear All", role: .destructive) {
-        clearAll()
-      }
-    } message: {
-      Text("This removes every recent Search query from this device.")
     }
   }
 
   private func remove(_ search: SearchQuery) {
     Task {
       await recentSearchStore.remove(search)
-      await reload()
-    }
-  }
-
-  private func clearAll() {
-    Task {
-      await recentSearchStore.removeAll()
       await reload()
     }
   }

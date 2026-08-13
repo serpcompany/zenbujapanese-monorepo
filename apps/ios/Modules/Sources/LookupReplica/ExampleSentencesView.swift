@@ -36,6 +36,7 @@ struct ExampleSentencesView: View {
               )
             }
           }
+          .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
         }
         .scrollIndicators(.visible)
         .accessibilityIdentifier("example-list.screen")
@@ -128,10 +129,6 @@ private struct ExampleSentenceRow: View {
         .font(.system(size: 16))
         .foregroundStyle(ReplicaPalette.secondaryText)
         .frame(maxWidth: .infinity, alignment: .leading)
-
-      Text("Tatoeba sentence \(example.sourceProvenance.sourceRecordID)")
-        .font(.system(size: 11))
-        .foregroundStyle(.white.opacity(0.38))
     }
     .padding(.horizontal, 18)
     .padding(.vertical, 14)

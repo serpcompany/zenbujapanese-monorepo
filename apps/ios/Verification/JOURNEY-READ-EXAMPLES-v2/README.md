@@ -4,7 +4,7 @@ Exported from the complete passing `ZenbuJapaneseUITests` result bundle on iPhon
 
 ## Public journeys
 
-`testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed` submits `いる`, selects **View 50+ Example Sentences**, and traverses the fixed source-backed chain: scrolled `蝶々` token → canonical `蝶々` Word Detail → its linked `見て` example token → canonical `見る` Word Detail. It verifies exact speech requests for `あ、蝶々がいる。` and `見て、蝶々！`, then exercises both nested returns and the return to Search.
+`testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed` submits `いる`, selects **View 50+ Example Sentences**, and traverses the fixed source-backed chain: scrolled `蝶々` token → canonical `蝶々` Word Detail → its linked `見て` example token → canonical `見る` Word Detail. It exercises both nested returns and the return to Search. Speaker controls and exact Japanese speech completion are covered by the dedicated live playback journeys.
 
 `testExampleOnlyPunctuationQueryOpensItsSourceBackedSentence` submits `hello-world`, observes an example-only result without dictionary headings, opens the retained `世界、こんにちは。` / `Hello world.` pair, verifies its speech request, and follows `世界` to canonical Word Detail.
 

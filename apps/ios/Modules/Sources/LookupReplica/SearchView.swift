@@ -9,7 +9,6 @@ struct SearchView: View {
   let cameraAuthorizationClient: CameraAuthorizationClient
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
-  let openSources: () -> Void
   let openResult: (DictionaryEntry) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
   let openExamples: (SearchQuery, DictionaryEntry?, Bool) -> Void
@@ -26,6 +25,8 @@ struct SearchView: View {
   @State private var presentedImageSource: ImageSourceSheet?
   @State private var imageImportAlert: ImageImportAlert?
   @State private var imageImportTask: Task<Void, Never>?
+  @State private var isConfirmingClearAll = false
+  @State private var recentSearchRefreshID = 0
   @FocusState private var isSearchFocused: Bool
 
   var body: some View {
@@ -36,7 +37,6 @@ struct SearchView: View {
         isInputActive: inputMode != .inactive,
         activateKeyboard: { inputMode = .keyboard },
         openImageSource: { showsImageSources = true },
-        openSources: openSources,
         cancel: deactivateInput
       ) { submittedQuery in
         sparseRadicalQuery = nil
@@ -46,6 +46,8 @@ struct SearchView: View {
       if showsRecentSearches {
         RecentSearchHistoryView(
           recentSearchStore: recentSearchStore,
+          refreshID: recentSearchRefreshID,
+          requestClearAll: { isConfirmingClearAll = true },
           selectSearch: selectRecentSearch
         )
       } else if !results.isEmpty || exampleCount > 0 || (hasCompletedSearch && searchQuery.isSingleKanji) {
@@ -84,7 +86,7 @@ struct SearchView: View {
           selectedMode: .keyboard,
           selectMode: selectInputMode
         )
-        .padding(.bottom, 58)
+        .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
       case .handwriting:
         HandwritingInputView(
           query: $query,
@@ -92,7 +94,7 @@ struct SearchView: View {
           selectMode: selectInputMode,
           submit: submitComposedQuery
         )
-        .padding(.bottom, 58)
+        .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
       case .radicals:
         RadicalInputView(
           query: $query,
@@ -100,7 +102,7 @@ struct SearchView: View {
           selectMode: selectInputMode,
           submit: submitRadicalQuery
         )
-        .padding(.bottom, 58)
+        .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
       default:
         EmptyView()
       }
@@ -190,6 +192,14 @@ struct SearchView: View {
         )
       }
     }
+    .alert("Clear Recent Searches?", isPresented: $isConfirmingClearAll) {
+      Button("Cancel", role: .cancel) {}
+      Button("Clear All", role: .destructive) {
+        clearRecentSearches()
+      }
+    } message: {
+      Text("This removes every recent Search query from this device.")
+    }
     .onDisappear {
       imageImportTask?.cancel()
       imageImportTask = nil
@@ -201,7 +211,14 @@ struct SearchView: View {
   }
 
   private var showsRecentSearches: Bool {
-    isSearchFocused && searchQuery.isEmpty
+    inputMode == .keyboard && searchQuery.isEmpty
+  }
+
+  private func clearRecentSearches() {
+    Task {
+      await recentSearchStore.removeAll()
+      recentSearchRefreshID += 1
+    }
   }
 
   private func selectRefinement(_ refinement: SearchRefinement) {
@@ -423,7 +440,6 @@ private struct SearchBar: View {
   let isInputActive: Bool
   let activateKeyboard: () -> Void
   let openImageSource: () -> Void
-  let openSources: () -> Void
   let cancel: () -> Void
   let submitQuery: (SearchQuery) -> Void
 
@@ -460,26 +476,21 @@ private struct SearchBar: View {
           .accessibilityLabel("Clear text")
         }
 
-        Button(action: openImageSource) {
-          Image(systemName: "camera")
-            .foregroundStyle(ReplicaPalette.selectedTab)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Image Search")
-        .accessibilityIdentifier("search.image-source")
-
-        Button(action: openSources) {
-          Image(systemName: "info.circle")
-            .foregroundStyle(ReplicaPalette.selectedTab)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Dictionary Sources")
-        .accessibilityIdentifier("search.sources")
       }
       .font(.system(size: 17))
       .padding(.horizontal, 10)
       .frame(height: 38)
       .background(ReplicaPalette.searchField, in: RoundedRectangle(cornerRadius: 9))
+
+      Button(action: openImageSource) {
+        Image(systemName: "camera")
+          .font(.system(size: 21))
+          .foregroundStyle(.white)
+          .frame(width: 38, height: 38)
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel("Image Search")
+      .accessibilityIdentifier("search.image-source")
 
       if isInputActive {
         Button("Cancel", action: cancel)
@@ -578,6 +589,7 @@ private struct SearchResultsView: View {
             }
           }
         }
+        .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
       }
       .id(query)
       .scrollIndicators(.hidden)

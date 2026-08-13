@@ -16,13 +16,15 @@ The derived database is produced by `apps/ios/Tools/import_jmdict.py`. Zenbu ret
 
 `unidic-cwj-3.1.0.zip` is the pinned official UniDic for Contemporary Written Japanese 3.1.0 archive from the National Institute for Japanese Language and Linguistics. Its immutable HTTP metadata and checksum are in `UniDic-CWJ-3.1.0.source.json`; the archive's New BSD terms are retained in `UNIDIC-NEW-BSD.txt`.
 
-The JMdict importer joins UniDic accent type (`aType`) only on an exact normalized base form and reading, then stores app-owned downstep and mora-count facts with source provenance. Entries without an exact source match retain no inferred pitch fact.
+The JMdict importer joins UniDic accent type (`aType`) only on an exact normalized base form and either its pronunciation or lexical reading, then stores app-owned downstep and pronunciation-mora-count facts with source provenance. The lexical-reading fallback covers orthographic readings whose spoken form differs, such as `こんにちは` / `こんにちわ`. Entries without an exact source match retain no inferred pitch fact.
 
 The full New BSD notice is also mirrored into the Swift package resources and exposed from Dictionary Sources so binary distributions reproduce the required copyright, conditions, and disclaimer.
 
 ## KanjiVG
 
 `KanjiVG-2025-08-16.xml.gz` is the pinned official KanjiVG `r20250816` combined release by Ulrich Apel. Its release identity, published timestamp, copyright, required attribution, immutable GitHub release checksum, and license metadata are in `KanjiVG-2025-08-16.source.json`. The complete CC BY-SA 3.0 terms are retained in `KANJIVG-CC-BY-SA-3.0.txt`, mirrored into the Swift package resources, and exposed from Dictionary Sources.
+
+`DaKanji-v1.2.source.json` records the offline handwriting model carried forward from the verified Nihongo clone prototype. The official DaKanji v1.2 SavedModel was converted to a 64 × 64 grayscale Core ML classifier with 6,507 Japanese character labels. Runtime code supplies only the normalized finished image, making recognition independent of stroke sequence. The MIT terms are mirrored as `DAKANJI-MIT.txt` and exposed from Dictionary Sources. Nihongo's private recognizer is not identified; DaKanji is an explicit licensed behavioral substitute, not a claim about Nihongo's internals.
 
 `apps/ios/Tools/import_kanjivg.py` filters the release to Unicode ideographs and normalizes ordered relative/smooth SVG paths into absolute cubic geometry in the app-owned `zenbu.kanji-stroke-diagrams.v1` SQLite schema. Product Experience code receives typed `KanjiStrokeDiagram` values through the focused `KanjiStrokeOrderClient`; it never consumes KanjiVG XML or SVG commands. Component grouping, element labels, stroke labels, radical annotations, and variant SVG files remain excluded so this source is not silently merged with the separately normalized KRADFILE/RADKFILE component ontology.
 
@@ -40,7 +42,7 @@ Dictionary Sources identifies the source, attribution, modifications, snapshot, 
 
 The three `*-2026-08-08.tsv.bz2` files are pinned official Tatoeba weekly exports for Japanese sentences, English sentences, and their translation links. Immutable HTTP metadata and checksums are in `Tatoeba-2026-08-08.source.json`. The importer retains one deterministic English translation for each linked Japanese sentence as app-owned offline example data, while preserving the Japanese sentence ID for attribution.
 
-Tatoeba publishes these exports under CC BY 2.0 FR. The app links to the project and license and renders each retained Japanese sentence ID beside its translation.
+Tatoeba publishes these exports under CC BY 2.0 FR. The app links to the project and license from Dictionary Sources; provider record IDs remain retained provenance and are not rendered in learner-facing example rows.
 
 ## App-owned word relationships
 

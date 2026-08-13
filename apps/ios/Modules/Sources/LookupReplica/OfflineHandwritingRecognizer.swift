@@ -1,69 +1,149 @@
+import CoreGraphics
+import CoreML
+import CoreVideo
 import Foundation
 
-enum OfflineHandwritingRecognizer {
-  static func candidates(for sample: HandwritingSample) -> [HandwritingCandidate] {
-    let strokes = sample.strokes.compactMap(StrokeFeatures.init)
-    let values: [String]
-    switch strokes.map(\.direction) {
-    case [.horizontal]:
-      values = ["一", "二", "十"]
-    case [.horizontal, .vertical]
-      where strokes[0].centerY < 0.42 && abs(strokes[1].startY - strokes[0].centerY) < 0.2:
-      values = ["丁", "下", "十"]
-    case [.vertical, .horizontal, .vertical, .horizontal, .horizontal]:
-      values = ["日", "目", "田"]
-    case [.horizontal, .vertical, .diagonalDownLeft, .diagonalDownRight, .horizontal]:
-      values = ["本", "木", "未"]
-    case [.vertical, .diagonalDownRight, .vertical]
-      where strokes[0].centerX > 0.35 && strokes[0].centerX < 0.65
-        && strokes[1].startX < 0.35 && strokes[1].endX > 0.35
-        && strokes[2].centerX > 0.65
-        && strokes.allSatisfy({ $0.endY > 0.65 }):
-      values = ["山", "凵", "出"]
-    default:
-      values = []
-    }
-    return values.map(HandwritingCandidate.init(value:))
-  }
-}
+/// Image-based recognition of a completed character drawing.
+///
+/// DaKanji receives only the rasterized final shape. Stroke order, stroke
+/// direction, and the number of gestures used to construct the shape are not
+/// model inputs.
+actor OfflineHandwritingRecognizer {
+  static let shared = OfflineHandwritingRecognizer()
 
-private struct StrokeFeatures {
-  enum Direction {
-    case horizontal
-    case vertical
-    case diagonalDownLeft
-    case diagonalDownRight
-    case other
+  enum RecognitionError: Error {
+    case modelUnavailable
+    case drawingBufferUnavailable
+    case probabilitiesUnavailable
   }
 
-  let direction: Direction
-  let startX: Double
-  let startY: Double
-  let endX: Double
-  let endY: Double
-  let centerX: Double
-  let centerY: Double
+  private var cachedModel: MLModel?
 
-  init?(_ points: [HandwritingPoint]) {
-    guard let first = points.first, let last = points.last else { return nil }
-    let deltaX = last.x - first.x
-    let deltaY = last.y - first.y
-    startX = first.x
-    startY = first.y
-    endX = last.x
-    endY = last.y
-    centerX = (first.x + last.x) / 2
-    centerY = (first.y + last.y) / 2
-    if abs(deltaX) > abs(deltaY) * 1.8 {
-      direction = .horizontal
-    } else if abs(deltaY) > abs(deltaX) * 1.8 {
-      direction = .vertical
-    } else if deltaX < 0, deltaY > 0 {
-      direction = .diagonalDownLeft
-    } else if deltaX > 0, deltaY > 0 {
-      direction = .diagonalDownRight
-    } else {
-      direction = .other
+  func candidates(
+    for sample: HandwritingSample,
+    limit: Int = 20
+  ) throws -> [HandwritingCandidate] {
+    guard !sample.strokes.isEmpty else { return [] }
+
+    let model = try loadModel()
+    let pixelBuffer = try Self.makePixelBuffer(for: sample)
+    let input = try MLDictionaryFeatureProvider(
+      dictionary: ["input_4": MLFeatureValue(pixelBuffer: pixelBuffer)]
+    )
+    let output = try model.prediction(from: input)
+    guard let probabilities = output
+      .featureValue(for: "classLabel_probs")?
+      .dictionaryValue as? [String: NSNumber] else {
+      throw RecognitionError.probabilitiesUnavailable
     }
+
+    return probabilities
+      .sorted { $0.value.doubleValue > $1.value.doubleValue }
+      .prefix(limit)
+      .map { HandwritingCandidate(value: $0.key) }
+  }
+
+  private func loadModel() throws -> MLModel {
+    if let cachedModel { return cachedModel }
+    guard let url = Bundle.module.url(
+      forResource: "DaKanji",
+      withExtension: "mlmodelc"
+    ) else {
+      throw RecognitionError.modelUnavailable
+    }
+
+    let configuration = MLModelConfiguration()
+    configuration.computeUnits = .all
+    let model = try MLModel(contentsOf: url, configuration: configuration)
+    cachedModel = model
+    return model
+  }
+
+  private static func makePixelBuffer(for sample: HandwritingSample) throws -> CVPixelBuffer {
+    let dimension = 64
+    var optionalBuffer: CVPixelBuffer?
+    let attributes: [CFString: Any] = [
+      kCVPixelBufferCGImageCompatibilityKey: true,
+      kCVPixelBufferCGBitmapContextCompatibilityKey: true
+    ]
+    let status = CVPixelBufferCreate(
+      kCFAllocatorDefault,
+      dimension,
+      dimension,
+      kCVPixelFormatType_OneComponent8,
+      attributes as CFDictionary,
+      &optionalBuffer
+    )
+    guard status == kCVReturnSuccess, let pixelBuffer = optionalBuffer else {
+      throw RecognitionError.drawingBufferUnavailable
+    }
+
+    CVPixelBufferLockBaseAddress(pixelBuffer, [])
+    defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, []) }
+    guard
+      let baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer),
+      let context = CGContext(
+        data: baseAddress,
+        width: dimension,
+        height: dimension,
+        bitsPerComponent: 8,
+        bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer),
+        space: CGColorSpaceCreateDeviceGray(),
+        bitmapInfo: CGImageAlphaInfo.none.rawValue
+      )
+    else {
+      throw RecognitionError.drawingBufferUnavailable
+    }
+
+    context.setFillColor(gray: 0, alpha: 1)
+    context.fill(CGRect(x: 0, y: 0, width: dimension, height: dimension))
+    context.translateBy(x: 0, y: CGFloat(dimension))
+    context.scaleBy(x: 1, y: -1)
+    context.setStrokeColor(gray: 1, alpha: 1)
+    context.setLineCap(.round)
+    context.setLineJoin(.round)
+    context.setLineWidth(4.5)
+
+    let strokes = sample.strokes.map { stroke in
+      stroke.map { CGPoint(x: $0.x, y: $0.y) }
+    }
+    let points = strokes.flatMap { $0 }
+    guard let first = points.first else { return pixelBuffer }
+    let bounds = points.dropFirst().reduce(
+      CGRect(origin: first, size: .zero)
+    ) { partial, point in
+      partial.union(CGRect(origin: point, size: .zero))
+    }
+    let contentWidth = max(bounds.width, 0.001)
+    let contentHeight = max(bounds.height, 0.001)
+    let scale = min(52 / contentWidth, 52 / contentHeight)
+    let xOffset = (CGFloat(dimension) - contentWidth * scale) / 2 - bounds.minX * scale
+    let yOffset = (CGFloat(dimension) - contentHeight * scale) / 2 - bounds.minY * scale
+
+    for stroke in strokes where !stroke.isEmpty {
+      let path = CGMutablePath()
+      let start = stroke[0]
+      path.move(to: CGPoint(
+        x: start.x * scale + xOffset,
+        y: start.y * scale + yOffset
+      ))
+      if stroke.count == 1 {
+        path.addLine(to: CGPoint(
+          x: start.x * scale + xOffset + 0.01,
+          y: start.y * scale + yOffset + 0.01
+        ))
+      } else {
+        for point in stroke.dropFirst() {
+          path.addLine(to: CGPoint(
+            x: point.x * scale + xOffset,
+            y: point.y * scale + yOffset
+          ))
+        }
+      }
+      context.addPath(path)
+      context.strokePath()
+    }
+
+    return pixelBuffer
   }
 }

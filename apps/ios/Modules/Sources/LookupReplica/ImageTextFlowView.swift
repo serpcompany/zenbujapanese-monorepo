@@ -31,9 +31,13 @@ struct ImageTextFlowView: View {
         toolbar
         if model.canRequestTranslation { translation }
         page
+          .padding(
+            .bottom,
+            model.pages.count > 1 ? 0 : ReplicaLayout.bottomNavigationContentClearance
+          )
         if model.pages.count > 1 {
           pageIndicators
-            .padding(.bottom, 58)
+            .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
         }
       }
       .frame(

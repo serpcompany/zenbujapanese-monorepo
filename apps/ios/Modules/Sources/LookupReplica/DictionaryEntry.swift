@@ -26,7 +26,13 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
   }
 
   var alternativeForms: [DictionaryForm] {
-    (writtenForms + readingForms).filter { $0.value != headword && $0.value != reading }
+    var seen = Set<String>()
+    return (writtenForms + readingForms).filter {
+      $0.value != headword
+        && $0.value != reading
+        && !$0.labels.contains("Search only")
+        && seen.insert($0.value).inserted
+    }
   }
 
   var primaryKanji: [String] {

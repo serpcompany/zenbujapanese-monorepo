@@ -102,6 +102,7 @@ struct WordDetailView: View {
             openWord: openWord
           )
           }
+          .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
         }
         .background(.black)
         .scrollIndicators(.hidden)
@@ -789,9 +790,6 @@ private struct EntryExamplesSection: View {
             Text(example.english)
               .font(.system(size: 15))
               .foregroundStyle(ReplicaPalette.secondaryText)
-            Text("Tatoeba sentence \(example.sourceProvenance.sourceRecordID)")
-              .font(.system(size: 11))
-              .foregroundStyle(.white.opacity(0.38))
           }
           .accessibilityElement(children: .contain)
           .accessibilityIdentifier("word-detail.example.\(index)")

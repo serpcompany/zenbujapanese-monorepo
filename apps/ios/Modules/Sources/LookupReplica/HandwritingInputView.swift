@@ -25,8 +25,8 @@ struct HandwritingInputView: View {
 
       HStack(spacing: 0) {
         HandwritingCanvas(strokes: $model.strokes, completedStroke: model.recognize)
-          .frame(width: 180, height: 180)
-          .frame(maxWidth: .infinity)
+          .aspectRatio(1, contentMode: .fit)
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
           .padding(8)
 
         VStack(spacing: 0) {
@@ -54,7 +54,7 @@ struct HandwritingInputView: View {
         }
         .frame(width: 64)
       }
-      .frame(height: 196)
+      .frame(height: 264)
     }
     .background(ReplicaPalette.row)
     .overlay(alignment: .top) {

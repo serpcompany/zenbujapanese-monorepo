@@ -614,7 +614,7 @@ def import_snapshot(
                 "provider part-of-speech taxonomy normalized to app-owned classification labels",
                 "app-owned commonness marker derived from priority on the selected display form",
                 "deterministic app-owned rank score derived from documented JMdict priority tags",
-                "UniDic aType normalized to deterministic downstep and mora-count facts by exact base-form and reading match",
+                "UniDic aType normalized to deterministic downstep and pronunciation-mora-count facts by exact base-form and pronunciation-or-lexical-reading match",
                 "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence",
             ],
             "pitch_source_resource_id": unidic_metadata["resource_id"],

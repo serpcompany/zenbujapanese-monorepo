@@ -823,6 +823,19 @@ export function xcodeSigningBuildSettings(arguments_, environmentId) {
   ];
 }
 
+export function testSelectionForEnvironment(plan, environmentId, explicitTestIds = []) {
+  if (explicitTestIds.length) return unique(explicitTestIds);
+  const plannedTestIds = plan.environment_test_ids?.[environmentId] ?? [];
+  if (!plannedTestIds.length) {
+    throw new Error(`Execution plan has no tests for environment ${environmentId}.`);
+  }
+  return unique(plannedTestIds);
+}
+
+export function xcodeOnlyTestingIdentifier(testId) {
+  return testId.startsWith("ZenbuJapaneseUITests/") ? testId : `ZenbuJapaneseUITests/${testId}`;
+}
+
 function expectedCommit(value, cwd) {
   if (value && value !== "HEAD") return value;
   return execFileSync("git", ["rev-parse", value ?? "HEAD"], { cwd, encoding: "utf8" }).trim();
@@ -1030,6 +1043,13 @@ function crawlCommand(arguments_) {
 
   const resultBundlePath = join(runDirectory, "Parity.xcresult");
   const derivedDataPath = join(runDirectory, "DerivedData");
+  const planPath = resolve(optionValue(arguments_, "--plan", "apps/ios/Parity/search-dictionary-plan.json"));
+  const plan = JSON.parse(readFileSync(planPath, "utf8"));
+  const selectedTestIds = testSelectionForEnvironment(
+    plan,
+    environmentId,
+    optionValues(arguments_, "--only-testing"),
+  );
   const testArguments = [
     "test",
     "-project", project,
@@ -1040,8 +1060,8 @@ function crawlCommand(arguments_) {
     "-resultBundlePath", resultBundlePath,
     ...xcodeSigningBuildSettings(arguments_, environmentId),
   ];
-  for (const testId of optionValues(arguments_, "--only-testing")) {
-    testArguments.push("-only-testing", testId);
+  for (const testId of selectedTestIds) {
+    testArguments.push("-only-testing", xcodeOnlyTestingIdentifier(testId));
   }
   runChecked("xcodebuild", testArguments);
   const finalCommit = expectedCommit("HEAD", process.cwd());

@@ -51,9 +51,14 @@ def apply_unidic_pitch(
                     downstep = int(row[28].split(",", maxsplit=1)[0])
                 except ValueError:
                     continue
-                reading = hiragana(row[15])
-                entry_ids = entry_ids_by_key.get((normalize(row[14]), normalize(reading)), [])
-                accent = (downstep, mora_count(reading))
+                pronunciation = hiragana(row[15])
+                lexical_reading = hiragana(row[10])
+                entry_ids: list[object] = []
+                for reading in (pronunciation, lexical_reading):
+                    for entry_id in entry_ids_by_key.get((normalize(row[14]), normalize(reading)), []):
+                        if entry_id not in entry_ids:
+                            entry_ids.append(entry_id)
+                accent = (downstep, mora_count(pronunciation))
                 for entry_id in entry_ids:
                     accents_by_entry_id.setdefault(entry_id, set()).add(accent)
 

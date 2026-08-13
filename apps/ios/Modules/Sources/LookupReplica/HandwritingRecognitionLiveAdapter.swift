@@ -4,8 +4,10 @@ import Vision
 
 extension HandwritingRecognitionClient {
   static let live = HandwritingRecognitionClient { sample in
-    let offlineCandidates = OfflineHandwritingRecognizer.candidates(for: sample)
-    if !offlineCandidates.isEmpty { return offlineCandidates }
+    if let offlineCandidates = try? await OfflineHandwritingRecognizer.shared.candidates(for: sample),
+       !offlineCandidates.isEmpty {
+      return offlineCandidates
+    }
 
     let operation = VisionHandwritingRecognitionOperation(sample: sample)
     let task = Task.detached(priority: .userInitiated) { try operation.run() }

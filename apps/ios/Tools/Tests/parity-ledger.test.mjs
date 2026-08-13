@@ -6,6 +6,8 @@ import test from "node:test";
 
 import {
   compileLedger,
+  testSelectionForEnvironment,
+  xcodeOnlyTestingIdentifier,
   xcodeSigningBuildSettings,
   testsFromTree,
   validateBuildConfiguration,
@@ -15,6 +17,30 @@ import {
   validateRequiredAttachmentCaptures,
   validateRecordedTests,
 } from "../parity-ledger.mjs";
+
+test("crawler defaults to the plan-declared tests for its environment", () => {
+  const plan = JSON.parse(readFileSync("apps/ios/Parity/search-dictionary-plan.json", "utf8"));
+
+  assert.deepEqual(
+    testSelectionForEnvironment(plan, "release_simulator_smoke"),
+    plan.environment_test_ids.release_simulator_smoke,
+  );
+  assert.deepEqual(
+    testSelectionForEnvironment(plan, "debug_simulator", ["Suite/testAffected()"]),
+    ["Suite/testAffected()"],
+  );
+});
+
+test("crawler accepts both plan and fully qualified XCTest identifiers", () => {
+  assert.equal(
+    xcodeOnlyTestingIdentifier("SearchReplicaJourneyUITests/testAffected()"),
+    "ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testAffected()",
+  );
+  assert.equal(
+    xcodeOnlyTestingIdentifier("ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testAffected()"),
+    "ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testAffected()",
+  );
+});
 
 test("search dictionary plan reserves one three-environment matrix for the frozen commit", () => {
   const plan = JSON.parse(readFileSync("apps/ios/Parity/search-dictionary-plan.json", "utf8"));
