@@ -28,14 +28,26 @@ Version 1.0 has no account, cloud sync, analytics, advertising, third-party cras
 Run the source audit:
 
 ```sh
-apps/ios/Tools/audit_release_privacy.sh
+apps/ios/Tools/audit_release_privacy.sh source
 ```
 
-Run the frozen-archive audit:
+Run an explicitly unsigned Release archive preflight while iterating locally:
 
 ```sh
-apps/ios/Tools/audit_release_privacy.sh /absolute/path/to/ZenbuJapanese.xcarchive
+apps/ios/Tools/audit_release_privacy.sh unsigned-preflight /absolute/path/to/ZenbuJapanese.xcarchive
 ```
+
+This mode proves packaging, dependency, URL, DEBUG-resource, private-evidence, credential-pattern, manifest, and canonical-hash checks. It deliberately rejects signed archives and cannot be cited as frozen signed-candidate evidence.
+
+Run the exact frozen signed-candidate audit:
+
+```sh
+apps/ios/Tools/audit_release_privacy.sh signed-candidate /absolute/path/to/ZenbuJapanese.xcarchive
+```
+
+Signed-candidate mode fails unless the archive records a signing identity, embeds a provisioning profile, passes strict code-signature verification, and exposes a valid entitlement plist. The audit never suppresses signing, dependency-inspection, or scan execution failures. Credential denylist output reports only a category and packaged relative filename; it never prints matched contents.
+
+Both archive modes inspect the resolved Mach-O dependency inventory, direct network-client symbols, embedded frameworks, reviewed public URL hosts, local/private URLs, DEBUG and test markers, non-Release resources, fixtures, private evidence markers, and credential-shaped material. `ARTIFACT_SHA256` is derived from sorted packaged relative paths and file contents, so moving the same `.app` does not change its identity.
 
 ## Final candidate evidence
 
@@ -43,8 +55,8 @@ The Gate 3 owner must attach these results to issue #143 for the exact candidate
 
 - Source audit output and dependency inventory.
 - Release runtime network observation, with the test device, OS, duration, flows exercised, and observed destinations reported separately.
-- Archive audit output, application hash, privacy manifest, linked libraries, and signed entitlements.
-- Physical-iPhone Camera first-use, denied, restricted, and unavailable results. Simulator injection may supplement but cannot replace the physical check.
+- Signed-candidate archive audit output, canonical application hash, privacy manifest, resolved libraries, signature verification, and signed entitlements. Unsigned preflight output is not a substitute.
+- Physical-iPhone Camera first-use, denied, restricted, and unavailable results on the authorized iPhone 14 Pro Max, UDID `00008120-00040469019B401E`. Simulator injection may supplement but cannot replace the physical check.
 - HTTPS 200 checks and screenshots for `https://zenbujapanese.com/support` and `https://zenbujapanese.com/privacy`.
 - Secret-scan tool/version, commit, findings count, and disposition. Do not publish secret values.
 - App Store Connect App Privacy read-back and publication screenshot after the final binary is frozen.
