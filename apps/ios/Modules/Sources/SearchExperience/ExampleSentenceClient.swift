@@ -1,8 +1,37 @@
 import Foundation
 import SQLite3
 
+struct ExampleSentenceID: RawRepresentable, Hashable, Comparable, Sendable {
+  static let prefix = "esp1_"
+  static let encodedByteCount = 16
+
+  let rawValue: String
+
+  init?(rawValue: String) {
+    guard rawValue.count == Self.prefix.count + (Self.encodedByteCount * 2),
+      rawValue.hasPrefix(Self.prefix),
+      rawValue.dropFirst(Self.prefix.count).allSatisfy({ Self.isLowercaseASCIIHexDigit($0) })
+    else { return nil }
+    self.rawValue = rawValue
+  }
+
+  init?(bytes: UnsafeRawBufferPointer) {
+    guard bytes.count == Self.encodedByteCount else { return nil }
+    let hex = bytes.map { String(format: "%02x", $0) }.joined()
+    self.init(rawValue: Self.prefix + hex)
+  }
+
+  static func < (left: Self, right: Self) -> Bool {
+    left.rawValue < right.rawValue
+  }
+
+  private static func isLowercaseASCIIHexDigit(_ character: Character) -> Bool {
+    ("0"..."9").contains(character) || ("a"..."f").contains(character)
+  }
+}
+
 struct ExampleSentence: Hashable, Identifiable, Sendable {
-  let id: String
+  let id: ExampleSentenceID
   let japanese: String
   let english: String
 }
@@ -53,11 +82,11 @@ struct ExampleSentenceRankInputs: Hashable, Sendable {
   let matchPosition: Int
   let englishTermCount: Int
   let japaneseGraphemeCount: Int
-  let pairID: String
+  let pairID: ExampleSentenceID
 }
 
 struct ExampleSentenceMatch: Hashable, Identifiable, Sendable {
-  var id: String { sentence.id }
+  var id: ExampleSentenceID { sentence.id }
   let sentence: ExampleSentence
   let route: ExampleSentenceRetrievalRoute
   let lexicalRelation: ExampleSentenceLexicalRelation
@@ -190,7 +219,7 @@ private actor ExampleSentenceData {
     let exactRanges = try exactEnglishRanges(matchExpression: matchExpression)
     let statement = try prepare(
       """
-      SELECT 'esp1_' || lower(hex(e.id)), e.japanese, e.english,
+      SELECT e.id, e.japanese, e.english,
              offsets(\(Self.porterTable)), matchinfo(\(Self.porterTable), 'l')
       FROM \(Self.porterTable) p
       JOIN \(Self.mapTable) m ON m.fts_rowid = p.docid
@@ -201,9 +230,9 @@ private actor ExampleSentenceData {
     defer { sqlite3_finalize(statement) }
     bind(matchExpression, at: 1, to: statement)
 
-    var candidatesByID: [String: ExampleSentenceMatch] = [:]
+    var candidatesByID: [ExampleSentenceID: ExampleSentenceMatch] = [:]
     while try checkedSQLiteStep(statement) == .row {
-      let sentence = example(from: statement)
+      let sentence = try example(from: statement)
       guard candidatesByID[sentence.id] == nil else {
         throw unavailable(.invalidIndexMetadata)
       }
@@ -243,7 +272,7 @@ private actor ExampleSentenceData {
 
     let statement = try prepare(
       """
-      SELECT 'esp1_' || lower(hex(id)), japanese, english
+      SELECT id, japanese, english
       FROM example_sentences
       WHERE instr(japanese, ?) > 0
       """
@@ -251,9 +280,9 @@ private actor ExampleSentenceData {
     defer { sqlite3_finalize(statement) }
     bind(query.value, at: 1, to: statement)
 
-    var matchesByID: [String: ExampleSentenceMatch] = [:]
+    var matchesByID: [ExampleSentenceID: ExampleSentenceMatch] = [:]
     while try checkedSQLiteStep(statement) == .row {
-      let sentence = example(from: statement)
+      let sentence = try example(from: statement)
       guard let range = graphemeRange(of: query.value, in: sentence.japanese) else { continue }
       let relation: ExampleSentenceLexicalRelation = sentence.japanese == query.value
         ? .entireJapaneseSentence : .containedJapaneseSurface
@@ -306,7 +335,7 @@ private actor ExampleSentenceData {
       .joined(separator: " OR ")
     let statement = try prepare(
       """
-      SELECT 'esp1_' || lower(hex(id)), japanese, english
+      SELECT id, japanese, english
       FROM example_sentences
       WHERE \(predicates)
       """
@@ -316,9 +345,9 @@ private actor ExampleSentenceData {
       bind(term, at: Int32(index + 1), to: statement)
     }
 
-    var matchesByID: [String: ExampleSentenceMatch] = [:]
+    var matchesByID: [ExampleSentenceID: ExampleSentenceMatch] = [:]
     while try checkedSQLiteStep(statement) == .row {
-      let sentence = example(from: statement)
+      let sentence = try example(from: statement)
       let evidenceMatches: [(ExampleSentenceLexicalRelation, ExampleSentenceMatchedRange)] =
         [(selectedForm, ExampleSentenceLexicalRelation.selectedWrittenForm)]
           .compactMap { term, relation in
@@ -367,10 +396,10 @@ private actor ExampleSentenceData {
 
   private func exactEnglishRanges(
     matchExpression: String
-  ) throws -> [String: ExampleSentenceMatchedRange] {
+  ) throws -> [ExampleSentenceID: ExampleSentenceMatchedRange] {
     let statement = try prepare(
       """
-      SELECT 'esp1_' || lower(hex(m.pair_id)), e.english, offsets(\(Self.exactTable))
+      SELECT m.pair_id, e.english, offsets(\(Self.exactTable))
       FROM \(Self.exactTable) x
       JOIN \(Self.mapTable) m ON m.fts_rowid = x.docid
       JOIN example_sentences e ON e.id = m.pair_id
@@ -379,9 +408,9 @@ private actor ExampleSentenceData {
     )
     defer { sqlite3_finalize(statement) }
     bind(matchExpression, at: 1, to: statement)
-    var ranges: [String: ExampleSentenceMatchedRange] = [:]
+    var ranges: [ExampleSentenceID: ExampleSentenceMatchedRange] = [:]
     while try checkedSQLiteStep(statement) == .row {
-      let id = Self.string(column: 0, statement: statement)
+      let id = try exampleSentenceID(column: 0, statement: statement)
       let english = Self.string(column: 1, statement: statement)
       if let range = phraseRange(in: english, offsets: try offsets(column: 2, statement: statement)) {
         ranges[id] = range
@@ -682,12 +711,29 @@ private actor ExampleSentenceData {
     )
   }
 
-  private func example(from statement: OpaquePointer) -> ExampleSentence {
+  private func example(from statement: OpaquePointer) throws -> ExampleSentence {
     ExampleSentence(
-      id: Self.string(column: 0, statement: statement),
+      id: try exampleSentenceID(column: 0, statement: statement),
       japanese: Self.string(column: 1, statement: statement),
       english: Self.string(column: 2, statement: statement)
     )
+  }
+
+  private func exampleSentenceID(
+    column: Int32,
+    statement: OpaquePointer
+  ) throws -> ExampleSentenceID {
+    guard sqlite3_column_type(statement, column) == SQLITE_BLOB,
+      sqlite3_column_bytes(statement, column) == ExampleSentenceID.encodedByteCount,
+      let bytes = sqlite3_column_blob(statement, column),
+      let id = ExampleSentenceID(
+        bytes: UnsafeRawBufferPointer(
+          start: bytes,
+          count: ExampleSentenceID.encodedByteCount
+        )
+      )
+    else { throw unavailable(.invalidBaseCorpus) }
+    return id
   }
 
   private func metadataValue(_ key: String) throws -> String {
@@ -795,7 +841,7 @@ private struct RankTuple: Comparable {
   let matchPosition: Int
   let englishTermCount: Int
   let japaneseGraphemeCount: Int
-  let pairID: String
+  let pairID: ExampleSentenceID
 
   static func < (left: RankTuple, right: RankTuple) -> Bool {
     if left.lexicalRelation != right.lexicalRelation {

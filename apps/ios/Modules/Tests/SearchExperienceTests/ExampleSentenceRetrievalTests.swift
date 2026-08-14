@@ -5,6 +5,10 @@ import XCTest
 
 final class ExampleSentenceRetrievalTests: XCTestCase {
   func testRuntimeSQLiteCapabilityEvidence() async throws {
+    let validID = "esp1_" + String(repeating: "0", count: 32)
+    XCTAssertEqual(ExampleSentenceID(rawValue: validID)?.rawValue, validID)
+    XCTAssertNil(ExampleSentenceID(rawValue: "tatoeba:1:2"))
+    XCTAssertNil(ExampleSentenceID(rawValue: "esp1_ABCDEF"))
     let version = String(cString: sqlite3_libversion())
     XCTAssertFalse(version.isEmpty)
     let result = try await ExampleSentenceClient.live.retrieve(
@@ -118,7 +122,10 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
 
     let japanese = try await client.retrieve(.directJapanese(SearchQuery("猫")))
     XCTAssertEqual(japanese.count, .exact(1))
-    XCTAssertEqual(japanese.matches.first?.id, "esp1_" + String(repeating: "0", count: 32))
+    XCTAssertEqual(
+      japanese.matches.first?.id,
+      ExampleSentenceID(rawValue: "esp1_" + String(repeating: "0", count: 32))
+    )
   }
 
   func testFrozenV1DiscoveryFixturesReplayThroughPublicBoundary() async throws {
@@ -162,7 +169,7 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
             String(match.rankInputs.matchPosition),
             String(match.rankInputs.englishTermCount),
             String(match.rankInputs.japaneseGraphemeCount),
-            match.rankInputs.pairID,
+            match.rankInputs.pairID.rawValue,
           ].joined(separator: "|"),
           expectedRow.rankTuple,
           expected.contextID
@@ -257,6 +264,14 @@ private enum FixtureDecodeError: Error {
   case invalidInteger(field: String, line: Int)
   case invalidBoolean(field: String, line: Int)
   case invalidCountKind(String, line: Int)
+  case invalidPairID(String, line: Int)
+}
+
+private func fixtureInteger(_ value: String, field: String, line: Int) throws -> Int {
+  guard let result = Int(value) else {
+    throw FixtureDecodeError.invalidInteger(field: field, line: line)
+  }
+  return result
 }
 
 private struct RetrievalSummaryFixture: TSVFixture {
@@ -282,24 +297,17 @@ private struct RetrievalSummaryFixture: TSVFixture {
     contextID = fields[0]
     query = fields[1]
     route = fields[2]
-    completeMatchCount = try Self.integer(fields[3], field: "complete_match_count", line: line)
-    let countValue = try Self.integer(fields[5], field: "count_value", line: line)
+    completeMatchCount = try fixtureInteger(fields[3], field: "complete_match_count", line: line)
+    let countValue = try fixtureInteger(fields[5], field: "count_value", line: line)
     switch fields[4] {
     case "exact": resultCount = .exact(countValue)
     case "more-than-50": resultCount = .moreThan50
     default: throw FixtureDecodeError.invalidCountKind(fields[4], line: line)
     }
     isTruncated = try Self.boolean(fields[6], field: "truncated", line: line)
-    visibleCount = try Self.integer(fields[7], field: "visible_count", line: line)
+    visibleCount = try fixtureInteger(fields[7], field: "visible_count", line: line)
     completeRankedSHA256 = fields[8]
     visibleRankedSHA256 = fields[9]
-  }
-
-  private static func integer(_ value: String, field: String, line: Int) throws -> Int {
-    guard let result = Int(value) else {
-      throw FixtureDecodeError.invalidInteger(field: field, line: line)
-    }
-    return result
   }
 
   private static func boolean(_ value: String, field: String, line: Int) throws -> Bool {
@@ -322,7 +330,7 @@ private struct RetrievalRowFixture: TSVFixture {
   let query: String
   let route: String
   let resultRank: Int
-  let pairID: String
+  let pairID: ExampleSentenceID
   let lexicalRelation: String
   let matchLocation: Int
   let matchLength: Int
@@ -337,22 +345,18 @@ private struct RetrievalRowFixture: TSVFixture {
     contextID = fields[0]
     query = fields[1]
     route = fields[2]
-    resultRank = try Self.integer(fields[3], field: "result_rank", line: line)
-    pairID = fields[4]
+    resultRank = try fixtureInteger(fields[3], field: "result_rank", line: line)
+    guard let pairID = ExampleSentenceID(rawValue: fields[4]) else {
+      throw FixtureDecodeError.invalidPairID(fields[4], line: line)
+    }
+    self.pairID = pairID
     lexicalRelation = fields[5]
-    matchLocation = try Self.integer(fields[6], field: "match_location", line: line)
-    matchLength = try Self.integer(fields[7], field: "match_length", line: line)
-    englishTermCount = try Self.integer(fields[8], field: "english_term_count", line: line)
-    japaneseGraphemeCount = try Self.integer(
+    matchLocation = try fixtureInteger(fields[6], field: "match_location", line: line)
+    matchLength = try fixtureInteger(fields[7], field: "match_length", line: line)
+    englishTermCount = try fixtureInteger(fields[8], field: "english_term_count", line: line)
+    japaneseGraphemeCount = try fixtureInteger(
       fields[9], field: "japanese_grapheme_count", line: line
     )
     rankTuple = fields[10]
-  }
-
-  private static func integer(_ value: String, field: String, line: Int) throws -> Int {
-    guard let result = Int(value) else {
-      throw FixtureDecodeError.invalidInteger(field: field, line: line)
-    }
-    return result
   }
 }
