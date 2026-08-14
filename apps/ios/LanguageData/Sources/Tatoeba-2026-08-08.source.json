@@ -9,6 +9,21 @@
   "cc0_license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
   "documentation_url": "https://tatoeba.org/en/downloads",
   "attribution_policy": "Retain both sentence IDs, the contributor usernames supplied by the detailed exports, explicit not-supplied status when the official username field is null, and the CC0 membership of each side. Credit named contributors in-app without adding attribution clutter to learner-facing rows.",
+  "reference_sample": {
+    "path": "docs/research/tatoeba-nihongo-sample-2026-08-14.tsv",
+    "sha256": "824fb7cc704e822e57678e23bcbbb5f37ab61a69b0f75991cb0076cc9bf91619",
+    "pair_count": 35,
+    "query_counts": {"cave": 7, "cat": 7, "eat": 7, "beautiful": 7, "thank you": 7},
+    "capture_method": "Installed Nihongo inspected through the already-available iPhone Mirroring session to an iPhone 17; reference inspection only, not Zenbu QA.",
+    "private_evidence_policy": "The TSV retains only public Tatoeba facts plus internal pointer names and screenshot SHA-256 values; private reference-app captures are not distributed.",
+    "classification_inputs": {
+      "japanese_indices_url": "https://downloads.tatoeba.org/exports/jpn_indices.tar.bz2",
+      "japanese_indices_http_last_modified": "Sat, 08 Aug 2026 06:26:21 GMT",
+      "japanese_indices_http_etag": "\"6a76cc0d-2ba276\"",
+      "japanese_indices_archive_sha256": "375e13617e970ff54b1f1417b48493887ecbef48e6779cbdb8f774224baae84f",
+      "japanese_indices_extracted_sha256": "d8cb7180e157e9983639f5733f6d53066a61cc802ef29501bf940aea2865774f"
+    }
+  },
   "aggregate_sha256": "2d262f6686050315b842b84d0e60b6d9613f6b42e431ea94d3fbe45b8e6b830e",
   "aggregate_method": "SHA-256 of the seven ordered source SHA-256 values, each followed by LF",
   "sources": [

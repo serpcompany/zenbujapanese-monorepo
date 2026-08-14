@@ -148,13 +148,14 @@
         "sha256": "6ab169264a28008c25bf63042bf7535fc63137c9d7e09b7b8bd7812d10117d1b"
       }
     ],
+    "example_transform_sha256": "431cfdeacc678e7708675a50c51bae43be6e1f28fbec9b8757b8c952ecc5674c",
     "relationship_source_resource_id": "zenbu-word-relationships-v1",
     "relationship_source_sha256": "2c483c933f5a42baad194db9a45c1d6251e09ebcb2a40c6475ca3d984ea2dd38",
-    "import_tool_sha256": "3ba071e28ba5be54db91ba9de5ee751dd64493de03ab4fe9e093922c7481ecbc",
+    "import_tool_sha256": "c10184376fb4280d1abdbd1b848d0f9ada5b3a7397fe730b9fa667a56c4b3012",
     "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
     "unidic_adapter_sha256": "f616738d7f45e3c75ece903d62ce2092923a6e68cf0925dafe030563c753985a",
-    "tatoeba_adapter_sha256": "106cfef49de0ca3988b7cca1177df04b5c1d535a0fe31f1eab89e372b26be347",
-    "database_sha256": "7c37597d8b65123912b8a5b546dd11b215868ffc9dc399f6db7d8ce22f069681",
+    "tatoeba_adapter_sha256": "6c8051bfcbad1d188ea3281a2efe457aaa9de835a3f7923dc40e1d4f2b7f737b",
+    "database_sha256": "26bb8838413d150752910251da7ed7bc49a72aee6e08655c96e2a912fb9b635c",
     "database_bytes": 328654848
   }
 }

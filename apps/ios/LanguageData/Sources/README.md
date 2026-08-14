@@ -44,7 +44,9 @@ Seven `*-2026-08-08.tsv.bz2` files are pinned official Tatoeba weekly exports: J
 
 The general exports are published under CC BY 2.0 FR; CC0 membership is established only through the corresponding official CC0 exports. Named contributors are generated into the bundled database and exposed from Dictionary Sources without adding attribution clutter to learner-facing rows. The bundled notice identifies the source, licenses, and Zenbu's selection/indexing modifications. No contributor identity is inferred for a `\\N` detailed-export username.
 
-`verify_tatoeba_provenance.py` is a Release build gate: it rejects any shipped pair with missing/inconsistent IDs, contributor status, license class, snapshot identity, or contributor-credit counts.
+`verify_tatoeba_provenance.py` is a Release build gate: it validates the exact generated database hash, importer/adapter/transform hashes, all seven pinned input hashes, the durable 35-pair reference-sample hash, IDs, contributor status, license class, snapshot identity, and contributor-credit counts. Release mode also rejects every `not-supplied` contributor side, so the current full corpus intentionally leaves Release red until an explicit cleared-corpus decision is implemented. `--inspection` reports the unresolved corpus for investigation but must never be used by a Release build.
+
+The public-safe reference record is `docs/research/tatoeba-nihongo-sample-2026-08-14.tsv`. It records exact public sentence facts, observed context/rank/timestamp, both Tatoeba IDs, classifications, and internal evidence pointer names plus SHA-256 values. It does not contain or distribute private reference-app screenshots.
 
 ## App-owned word relationships
 

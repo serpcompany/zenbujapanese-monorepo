@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from language_data_tools import file_sha256
-from tatoeba_adapter import import_tatoeba_examples
+from tatoeba_adapter import TatoebaSnapshotInputs, import_tatoeba_examples
 from unidic_adapter import apply_unidic_pitch
 
 
@@ -301,13 +301,7 @@ def import_snapshot(
     source_metadata: dict[str, object],
     unidic_source: Path,
     unidic_metadata: dict[str, object],
-    tatoeba_japanese_source: Path,
-    tatoeba_english_source: Path,
-    tatoeba_links_source: Path,
-    tatoeba_japanese_detailed_source: Path,
-    tatoeba_english_detailed_source: Path,
-    tatoeba_japanese_cc0_source: Path,
-    tatoeba_english_cc0_source: Path,
+    tatoeba_snapshot: TatoebaSnapshotInputs,
     tatoeba_metadata: dict[str, object],
     relationship_source: Path,
     relationship_metadata: dict[str, object],
@@ -506,15 +500,7 @@ def import_snapshot(
         )
         example_sentence_import = import_tatoeba_examples(
             database,
-            tatoeba_japanese_source,
-            tatoeba_english_source,
-            tatoeba_links_source,
-            tatoeba_japanese_detailed_source,
-            tatoeba_english_detailed_source,
-            tatoeba_japanese_cc0_source,
-            tatoeba_english_cc0_source,
-            str(tatoeba_metadata["snapshot_date"]),
-            str(tatoeba_metadata["aggregate_sha256"]),
+            tatoeba_snapshot,
         )
 
         records_by_id = {record["id"]: record for record in entry_records}
@@ -594,6 +580,11 @@ def import_snapshot(
                 (json.dumps(related, ensure_ascii=False, separators=(",", ":")), record["id"]),
             )
 
+        import_tool_sha256 = file_sha256(Path(__file__))
+        tatoeba_adapter_sha256 = file_sha256(Path(__file__).with_name("tatoeba_adapter.py"))
+        example_transform_sha256 = hashlib.sha256(
+            f"{import_tool_sha256}\n{tatoeba_adapter_sha256}\n".encode()
+        ).hexdigest()
         transform = {
             "transform": "jmdict-to-zenbu-language-reference-data-v1",
             "source_resource_id": source_metadata["resource_id"],
@@ -654,12 +645,13 @@ def import_snapshot(
             "example_source_resource_id": tatoeba_metadata["resource_id"],
             "example_source_sha256": tatoeba_metadata["aggregate_sha256"],
             "example_source_inputs": tatoeba_metadata["sources"],
+            "example_transform_sha256": example_transform_sha256,
             "relationship_source_resource_id": relationship_metadata["resource_id"],
             "relationship_source_sha256": file_sha256(relationship_source),
-            "import_tool_sha256": file_sha256(Path(__file__)),
+            "import_tool_sha256": import_tool_sha256,
             "shared_tooling_sha256": file_sha256(Path(__file__).with_name("language_data_tools.py")),
             "unidic_adapter_sha256": file_sha256(Path(__file__).with_name("unidic_adapter.py")),
-            "tatoeba_adapter_sha256": file_sha256(Path(__file__).with_name("tatoeba_adapter.py")),
+            "tatoeba_adapter_sha256": tatoeba_adapter_sha256,
         }
         database.executemany(
             "INSERT INTO metadata(key, value) VALUES (?, ?)",
@@ -723,6 +715,18 @@ def main() -> None:
                 f"Tatoeba {pinned['role']} checksum mismatch: expected {pinned['sha256']}, got {actual}"
             )
 
+    tatoeba_snapshot = TatoebaSnapshotInputs(
+        japanese_sentences=arguments.tatoeba_japanese_source,
+        english_sentences=arguments.tatoeba_english_source,
+        japanese_english_links=arguments.tatoeba_links_source,
+        japanese_detailed_sentences=arguments.tatoeba_japanese_detailed_source,
+        english_detailed_sentences=arguments.tatoeba_english_detailed_source,
+        japanese_cc0_sentences=arguments.tatoeba_japanese_cc0_source,
+        english_cc0_sentences=arguments.tatoeba_english_cc0_source,
+        snapshot_date=str(tatoeba_metadata["snapshot_date"]),
+        aggregate_sha256=str(tatoeba_metadata["aggregate_sha256"]),
+    )
+
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     transform = import_snapshot(
         arguments.source,
@@ -730,13 +734,7 @@ def main() -> None:
         source_metadata,
         arguments.unidic_source,
         unidic_metadata,
-        arguments.tatoeba_japanese_source,
-        arguments.tatoeba_english_source,
-        arguments.tatoeba_links_source,
-        arguments.tatoeba_japanese_detailed_source,
-        arguments.tatoeba_english_detailed_source,
-        arguments.tatoeba_japanese_cc0_source,
-        arguments.tatoeba_english_cc0_source,
+        tatoeba_snapshot,
         tatoeba_metadata,
         arguments.relationship_source,
         relationship_metadata,

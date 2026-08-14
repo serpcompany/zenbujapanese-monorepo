@@ -188,8 +188,18 @@
 			inputPaths = (
 				"$(SRCROOT)/Tools/verify_tatoeba_provenance.py",
 				"$(SRCROOT)/Tools/tatoeba_adapter.py",
+				"$(SRCROOT)/Tools/import_jmdict.py",
 				"$(SRCROOT)/LanguageData/Sources/Tatoeba-2026-08-08.source.json",
+				"$(SRCROOT)/LanguageData/Generated/JMdict_e-2026-08-10.import.json",
 				"$(SRCROOT)/Modules/Sources/LookupReplica/Resources/LanguageReferenceData.sqlite3",
+				"$(SRCROOT)/../../docs/research/tatoeba-nihongo-sample-2026-08-14.tsv",
+				"$(SRCROOT)/LanguageData/Sources/jpn_sentences-2026-08-08.tsv.bz2",
+				"$(SRCROOT)/LanguageData/Sources/eng_sentences-2026-08-08.tsv.bz2",
+				"$(SRCROOT)/LanguageData/Sources/jpn-eng_links-2026-08-08.tsv.bz2",
+				"$(SRCROOT)/LanguageData/Sources/jpn_sentences_detailed-2026-08-08.tsv.bz2",
+				"$(SRCROOT)/LanguageData/Sources/eng_sentences_detailed-2026-08-08.tsv.bz2",
+				"$(SRCROOT)/LanguageData/Sources/jpn_sentences_CC0-2026-08-08.tsv.bz2",
+				"$(SRCROOT)/LanguageData/Sources/eng_sentences_CC0-2026-08-08.tsv.bz2",
 			);
 			name = "Verify Tatoeba provenance for Release";
 			outputPaths = (
@@ -197,7 +207,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n  /usr/bin/python3 \"$SRCROOT/Tools/verify_tatoeba_provenance.py\" \\\n    \"$SRCROOT/Modules/Sources/LookupReplica/Resources/LanguageReferenceData.sqlite3\" \\\n    \"$SRCROOT/LanguageData/Sources/Tatoeba-2026-08-08.source.json\"\nfi\n/usr/bin/touch \"$DERIVED_FILE_DIR/tatoeba-provenance-verified.stamp\"\n";
+			shellScript = "set -e\nif [ \"$CONFIGURATION\" = \"Release\" ]; then\n  /usr/bin/python3 \"$SRCROOT/Tools/verify_tatoeba_provenance.py\" \\\n    \"$SRCROOT/Modules/Sources/LookupReplica/Resources/LanguageReferenceData.sqlite3\" \\\n    \"$SRCROOT/LanguageData/Sources/Tatoeba-2026-08-08.source.json\" \\\n    \"$SRCROOT/LanguageData/Generated/JMdict_e-2026-08-10.import.json\" \\\n    \"$SRCROOT/Tools/import_jmdict.py\" \\\n    \"$SRCROOT/Tools/tatoeba_adapter.py\" \\\n    \"$SRCROOT/../../docs/research/tatoeba-nihongo-sample-2026-08-14.tsv\" \\\n    \"$SRCROOT/LanguageData/Sources\"\nfi\n/usr/bin/touch \"$DERIVED_FILE_DIR/tatoeba-provenance-verified.stamp\"\n";
 		};
 		A108F17A14E04A2AA1B1C108 /* Copy canonical Image Text fixtures for Debug */ = {
 			isa = PBXShellScriptBuildPhase;
