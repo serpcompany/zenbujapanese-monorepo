@@ -1,9 +1,9 @@
 import SwiftUI
 
-public struct LookupRootView: View {
-  @State private var path: [LookupRoute] = []
+public struct SearchExperienceRootView: View {
+  @State private var path: [SearchExperienceRoute] = []
   @State private var query = ""
-  @State private var presentedSheet: LookupSheet?
+  @State private var presentedSheet: SearchExperienceSheet?
   #if DEBUG
     @State private var exportsImageFixtures = false
   #endif
@@ -84,7 +84,7 @@ public struct LookupRootView: View {
         },
         imageImportInitialDirectory: imageImportInitialDirectory
       )
-      .navigationDestination(for: LookupRoute.self) { route in
+      .navigationDestination(for: SearchExperienceRoute.self) { route in
         switch route {
         case .word(let entry, let backTitle, let imageContext):
           WordDetailView(
@@ -165,7 +165,7 @@ public struct LookupRootView: View {
     .toolbarBackground(.visible, for: .navigationBar)
     .toolbarColorScheme(.dark, for: .navigationBar)
     .safeAreaInset(edge: .bottom, spacing: 0) {
-      LookupTabBar(select: selectTab)
+      SearchExperienceTabBar(select: selectTab)
     }
     .foregroundStyle(ZenbuTheme.foreground)
     .background(ZenbuTheme.background)
@@ -212,7 +212,7 @@ public struct LookupRootView: View {
     path.append(.kanji(character, entry))
   }
 
-  private func selectTab(_ tab: LookupTab) {
+  private func selectTab(_ tab: SearchExperienceTab) {
     switch tab {
     case .search:
       path.removeAll()
@@ -290,7 +290,7 @@ private struct ImageWordContext: Hashable {
   let assetID: UUID
 }
 
-private enum LookupRoute: Hashable {
+private enum SearchExperienceRoute: Hashable {
   case word(DictionaryEntry, String, ImageWordContext?)
   case kanji(KanjiCharacter, DictionaryEntry?)
   case kanjiElement(KanjiElementID)
@@ -299,7 +299,7 @@ private enum LookupRoute: Hashable {
   case image(UUID)
 }
 
-private enum LookupSheet: String, Identifiable {
+private enum SearchExperienceSheet: String, Identifiable {
   case sources
 
   var id: String { rawValue }

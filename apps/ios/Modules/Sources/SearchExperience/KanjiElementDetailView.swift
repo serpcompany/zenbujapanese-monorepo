@@ -57,7 +57,7 @@ struct KanjiElementDetailView: View {
             content(entry)
           }
         }
-        .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
+        .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
       }
       .accessibilityIdentifier("kanji-element.screen")
     }

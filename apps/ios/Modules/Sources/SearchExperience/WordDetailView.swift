@@ -103,7 +103,7 @@ struct WordDetailView: View {
               openWord: openWord
             )
           }
-          .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
+          .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
         }
         .background(ZenbuTheme.background)
         .scrollIndicators(.hidden)

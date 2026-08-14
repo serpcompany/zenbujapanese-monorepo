@@ -6,11 +6,11 @@ let package = Package(
   name: "ZenbuJapaneseModules",
   platforms: [.iOS(.v26)],
   products: [
-    .library(name: "LookupFeature", targets: ["LookupFeature"])
+    .library(name: "SearchExperience", targets: ["SearchExperience"])
   ],
   targets: [
     .target(
-      name: "LookupFeature",
+      name: "SearchExperience",
       resources: [.process("Resources")],
       linkerSettings: [.linkedLibrary("sqlite3")]
     )

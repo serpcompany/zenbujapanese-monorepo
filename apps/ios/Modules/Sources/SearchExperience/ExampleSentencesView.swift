@@ -36,7 +36,7 @@ struct ExampleSentencesView: View {
               )
             }
           }
-          .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
+          .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
         }
         .scrollIndicators(.visible)
         .accessibilityIdentifier("example-list.screen")

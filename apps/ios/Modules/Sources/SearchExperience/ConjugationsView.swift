@@ -35,7 +35,7 @@ struct ConjugationsView: View {
         }
         .padding(.horizontal, 28)
         .padding(.top, 30)
-        .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
+        .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
       }
       .accessibilityIdentifier("conjugations.screen")
     }

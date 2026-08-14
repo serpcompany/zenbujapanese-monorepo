@@ -1,11 +1,11 @@
 import SwiftUI
 
-enum LookupLayout {
+enum SearchExperienceLayout {
   static let bottomNavigationContentClearance: CGFloat = 64
 }
 
-struct LookupTabBar: View {
-  let select: (LookupTab) -> Void
+struct SearchExperienceTabBar: View {
+  let select: (SearchExperienceTab) -> Void
 
   var body: some View {
     HStack {
@@ -23,16 +23,16 @@ struct LookupTabBar: View {
   }
 }
 
-enum LookupTab: String, CaseIterable {
+enum SearchExperienceTab: String, CaseIterable {
   case search = "Search"
   case settings = "Settings"
 }
 
 private struct TabItem: View {
-  let tab: LookupTab
+  let tab: SearchExperienceTab
   let symbol: String
   let selected: Bool
-  let select: (LookupTab) -> Void
+  let select: (SearchExperienceTab) -> Void
 
   var body: some View {
     Button {
@@ -51,7 +51,7 @@ private struct TabItem: View {
     .frame(minWidth: 52, minHeight: 48)
     .contentShape(Rectangle())
     .accessibilityLabel(tab.rawValue)
-    .accessibilityIdentifier("lookup-tab.\(tab.rawValue.lowercased())")
+    .accessibilityIdentifier("search-experience-tab.\(tab.rawValue.lowercased())")
     .accessibilityAddTraits(selected ? .isSelected : [])
   }
 }

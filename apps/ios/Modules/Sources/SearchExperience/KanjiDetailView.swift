@@ -90,7 +90,7 @@ struct KanjiDetailView: View {
               }
             }
           }
-          .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
+          .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
           .scrollTargetLayout()
         }
         .accessibilityIdentifier("kanji-detail.screen")

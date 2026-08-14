@@ -1,6 +1,6 @@
 import XCTest
 
-final class SearchReplicaJourneyUITests: XCTestCase {
+final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToSettings() throws {
     let app = launchApp()
@@ -12,7 +12,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertGreaterThanOrEqual(imageSearch.frame.minX, searchField.frame.maxX)
     XCTAssertFalse(app.buttons["search.sources"].exists)
 
-    app.buttons["lookup-tab.settings"].tap()
+    app.buttons["search-experience-tab.settings"].tap()
     XCTAssertTrue(app.staticTexts["Dictionary Sources"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.staticTexts["JMdict"].exists)
   }
@@ -22,14 +22,14 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     let app = launchApp()
 
     for tab in ["search", "settings"] {
-      let button = app.buttons["lookup-tab.\(tab)"]
+      let button = app.buttons["search-experience-tab.\(tab)"]
       XCTAssertTrue(button.waitForExistence(timeout: 3))
       XCTAssertGreaterThanOrEqual(button.frame.height, 44)
       XCTAssertLessThanOrEqual(button.frame.maxY, app.windows.firstMatch.frame.maxY)
     }
 
-    XCTAssertFalse(app.buttons["lookup-tab.clippings"].exists)
-    XCTAssertFalse(app.buttons["lookup-tab.flashcards"].exists)
+    XCTAssertFalse(app.buttons["search-experience-tab.clippings"].exists)
+    XCTAssertFalse(app.buttons["search-experience-tab.flashcards"].exists)
 
     let searchField = app.textFields["search.field"]
     searchField.tap()
@@ -39,7 +39,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     japan.tap()
     XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
 
-    app.buttons["lookup-tab.search"].tap()
+    app.buttons["search-experience-tab.search"].tap()
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     XCTAssertFalse(app.scrollViews["word-detail.screen"].exists)
     recordSettledScreenshot(named: "acceptance-search-tab-restored", app: app)
@@ -1187,7 +1187,8 @@ final class SearchReplicaJourneyUITests: XCTestCase {
 
     let candidate = app.buttons["handwriting.candidate.山"]
     XCTAssertTrue(candidate.waitForExistence(timeout: 10))
-    XCTAssertLessThanOrEqual(canvas.frame.maxY, app.buttons["lookup-tab.search"].frame.minY)
+    XCTAssertLessThanOrEqual(
+      canvas.frame.maxY, app.buttons["search-experience-tab.search"].frame.minY)
     recordSettledScreenshot(named: "handwriting-recorded-yama-candidate", app: app)
   }
 
@@ -1226,7 +1227,8 @@ final class SearchReplicaJourneyUITests: XCTestCase {
 
     XCTAssertGreaterThanOrEqual(canvas.frame.width, 240)
     XCTAssertGreaterThanOrEqual(canvas.frame.height, 240)
-    XCTAssertLessThanOrEqual(canvas.frame.maxY, app.buttons["lookup-tab.search"].frame.minY)
+    XCTAssertLessThanOrEqual(
+      canvas.frame.maxY, app.buttons["search-experience-tab.search"].frame.minY)
     recordSettledScreenshot(named: "handwriting-uncramped-canvas", app: app)
   }
 
@@ -1515,7 +1517,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
     let finalExample = app.descendants(matching: .any)["word-detail.example.2"]
     XCTAssertTrue(finalExample.waitForExistence(timeout: 3))
-    let tabBarTop = app.buttons["lookup-tab.search"].frame.minY
+    let tabBarTop = app.buttons["search-experience-tab.search"].frame.minY
     for _ in 0..<8 where !finalExample.isHittable || finalExample.frame.maxY > tabBarTop - 24 {
       detail.swipeUp()
     }
@@ -1638,7 +1640,7 @@ final class SearchReplicaJourneyUITests: XCTestCase {
   func testDictionarySourceAttributionIsReachableFromSearch() throws {
     let app = launchApp()
 
-    let sources = app.buttons["lookup-tab.settings"]
+    let sources = app.buttons["search-experience-tab.settings"]
     XCTAssertTrue(sources.waitForExistence(timeout: 3))
     sources.tap()
 

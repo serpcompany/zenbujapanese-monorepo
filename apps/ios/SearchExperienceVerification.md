@@ -1,4 +1,4 @@
-# Search replica verification
+# Search experience verification
 
 The durable user-facing regression checklist is maintained in
 [`Verification/PHYSICAL-DEVICE-QA/README.md`](Verification/PHYSICAL-DEVICE-QA/README.md).
@@ -7,7 +7,7 @@ the remaining manual TestFlight check.
 
 ## Public journey seam
 
-`SearchReplicaJourneyUITests.testJapaneseQueryOpensWordDetailAndBackPreservesResults`
+`SearchExperienceJourneyUITests.testJapaneseQueryOpensWordDetailAndBackPreservesResults`
 launches into Search, enters the synthetic Japanese query `問題`, observes the Best Matches hierarchy, opens the primary Word Detail destination, navigates back, and verifies that the query and result state remain visible.
 
 The independent reference evidence is:
@@ -29,7 +29,7 @@ The independent reference evidence is:
 - `ENVIRONMENT-DIFFERENCE-001`: The available simulator runtime is iOS 26.0.1; the fixed reference authority is physical iPhone 17 Pro Max on iOS 26.5.2. Any observable difference must be classified before acceptance.
 - `ASSET-SUBSTITUTE-001`: Toolbar, tab, search, badge, and pitch-display glyphs use SF Symbols and SwiftUI drawing. They are clean-room substitutes under the dossier's approved icon/asset variance, not copied Nihongo assets.
 
-No unresolved replica defect or exact-fidelity blocker remains for this bounded journey.
+No unresolved parity defect or exact-fidelity blocker remains for this bounded journey.
 
 ## App-owned Language Reference Data Search
 

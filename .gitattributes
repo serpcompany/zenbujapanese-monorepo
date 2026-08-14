@@ -1,1 +1,1 @@
-apps/ios/Modules/Sources/LookupFeature/Resources/*.sqlite3 filter=lfs diff=lfs merge=lfs -text
+apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3 filter=lfs diff=lfs merge=lfs -text

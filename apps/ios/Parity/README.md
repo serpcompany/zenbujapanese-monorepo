@@ -14,7 +14,7 @@ Pass one or more `--only-testing` arguments to the crawler (or directly to
 node apps/ios/Tools/parity-ledger.mjs crawl \
   --run-dir /tmp/zenbu-parity-affected \
   --destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' \
-  --only-testing 'ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm()'
+  --only-testing 'ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm()'
 ```
 
 Freeze and commit the source before final acceptance. Only then run the complete

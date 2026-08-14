@@ -88,7 +88,7 @@ struct SearchView: View {
           selectedMode: .keyboard,
           selectMode: selectInputMode
         )
-        .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
+        .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
       case .handwriting:
         HandwritingInputView(
           query: $query,
@@ -96,7 +96,7 @@ struct SearchView: View {
           selectMode: selectInputMode,
           submit: submitComposedQuery
         )
-        .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
+        .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
       case .radicals:
         RadicalInputView(
           query: $query,
@@ -104,7 +104,7 @@ struct SearchView: View {
           selectMode: selectInputMode,
           submit: submitRadicalQuery
         )
-        .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
+        .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
       default:
         EmptyView()
       }
@@ -592,7 +592,7 @@ private struct SearchResultsView: View {
             }
           }
         }
-        .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
+        .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
       }
       .id(query)
       .scrollIndicators(.hidden)

@@ -34,11 +34,11 @@ struct ImageTextFlowView: View {
         page
           .padding(
             .bottom,
-            model.pages.count > 1 ? 0 : LookupLayout.bottomNavigationContentClearance
+            model.pages.count > 1 ? 0 : SearchExperienceLayout.bottomNavigationContentClearance
           )
         if model.pages.count > 1 {
           pageIndicators
-            .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
+            .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
         }
       }
       .frame(
