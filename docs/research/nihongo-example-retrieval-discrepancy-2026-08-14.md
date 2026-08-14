@@ -4,12 +4,12 @@ Issue: #148. Parent research: #147. This is an evidence-only record; it does not
 
 ## Boundaries and environments
 
-- Nihongo was inspected only through the accepted iPhone 17 Pro Max reference. CoreDevice independently reported Nihongo `1.34.3` (`9792`), bundle `com.serpentisei.studyjapanese`, on iOS `26.6` (`23G71`). The device identifier is represented only by SHA-256 `93a3d254e1fa3cda68862159a3cb9938e08497bfd45cb9945e7dcee214d29928`.
-- Zenbu was built from exact commit `140b194b2f70458886b2f5569ceb41957e62448f` and run on the `Zenbu Issue 141 iPhone 16e` simulator, iOS `26.0.1`, UDID `08C18111-0DEA-43B4-9590-0991BD6426F5`. Its bundle identifier was `com.zenbujapanese.dictionary`. This baseline did not emit `CFBundleShortVersionString` or `CFBundleVersion`, so the commit is the version authority.
+- Nihongo was inspected only through the accepted iPhone 17 Pro Max reference. CoreDevice independently reported Nihongo `1.34.3` (`9792`), bundle `com.serpentisei.studyjapanese`, on iOS `26.6` (`23G71`). Device identifiers remain in local private evidence only.
+- Zenbu was built from exact commit `140b194b2f70458886b2f5569ceb41957e62448f` and run on the `Zenbu Issue 141 iPhone 16e` simulator, iOS `26.0.1`. Its bundle identifier was `com.zenbujapanese.dictionary`. This baseline did not emit `CFBundleShortVersionString` or `CFBundleVersion`, so the commit is the version authority.
 - Zenbu executable SHA-256: `1e309599bf4677b90dcb874713e5fdb45e7480b56508725f334ab9b8d33fecb9`.
 - Zenbu corpus SHA-256: `c5076ad2ae06ba4ca0c2976a00dfaad06af827d6ef0aac0424158d0b4dbe3cac`.
 - Zenbu retrieval source SHA-256: `a281e45959f4fed52a139d61db10708d4966679e0ab4db36db092dfa5348b060`.
-- Captures were made from 2026-08-14T12:21:34Z through 2026-08-14T12:29:55Z. Private screenshots remain under `/tmp/issue-148-private/` and are not committed.
+- Captures were made from 2026-08-14T12:21:34Z through 2026-08-14T12:29:55Z. The 18 issue/probe screenshots, one search-root baseline, and private CoreDevice metadata are retained outside git under `/Users/devin/dev/private-evidence/zenbujapanese/issue-148/`. The directory is mode `0700`; every evidence file and its local checksum manifest is mode `0600`.
 
 Search results and Example Sentence rows are recorded separately below. A dictionary result count excludes the Example Sentence affordance.
 
@@ -40,6 +40,8 @@ All four exact Nihongo pairs already exist in the Zenbu Example Sentence Corpus.
 ### `startled you`
 
 Both ordered lists are empty. There is no current eligibility, ranking, duplicate, or English-link discrepancy to classify for this exact query. This zero-row observation is retained as a frozen control instead of being rewritten into a bug claim.
+
+Across the two reported exact queries, **4/4 unique visible Nihongo pairs** were traced to public Tatoeba IDs; all four came from `scared you`, because `startled you` was empty. Across the reported queries and all discriminating probes, **7/7 unique visible Nihongo pairs** were traced.
 
 ## Discriminating probes
 
@@ -87,4 +89,4 @@ The observations do **not** identify Nihongo's private tokenizer, lemmatizer, in
 | `zenbu-red-you-search.png` | 2026-08-14T12:29:43Z | `e3e65452651fc5b5c72b5a4bc8d80eb9f17e03b9c57193ea32c1db81a1c00288` |
 | `zenbu-startled-me-search.png` | 2026-08-14T12:29:55Z | `3fdb0fc909f2ad67dce07599866cbb803e562742a53ecd6fcc37ca1d3603f198` |
 
-CoreDevice metadata was retained privately at `/tmp/issue-148-iphone17-nihongo.json`, SHA-256 `a58aa8d74edcf20e28d55c79290a94700be02464397bcee15b1f509718abe670`. No private screenshot, UI asset, app binary, or container is committed.
+CoreDevice metadata and the screenshot files are retained in the durable local-only evidence directory above and verified by its local `CHECKSUMS.sha256` manifest. No private screenshot, device identifier, UI asset, app binary, or container is committed.
