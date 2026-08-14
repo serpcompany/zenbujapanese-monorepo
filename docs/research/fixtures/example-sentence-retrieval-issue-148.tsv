@@ -1,0 +1,13 @@
+query	probe_role	app	dictionary_result_count	example_count	ordered_example_tatoeba_pair_ids	classification
+scared you	reported-exact	nihongo-1.34.3-9792	0	4	108058:295628,12574578:12373614,2409471:2396319,472836:473875	exact-surface-first-then-scare-inflection-rows
+scared you	reported-exact	zenbu-140b194	0	1	108058:295628	missing-three-inflection-related-example-matches
+startled you	reported-exact	nihongo-1.34.3-9792	0	0		empty-control-no-current-discrepancy
+startled you	reported-exact	zenbu-140b194	0	0		empty-control-no-current-discrepancy
+scare you	inflection-and-rank-control	nihongo-1.34.3-9792	0	4	12574578:12373614,2409471:2396319,472836:473875,108058:295628	exact-scare-rows-before-scared-row
+scare you	inflection-and-rank-control	zenbu-140b194	0	4	12574578:12373614,12003639:5992837,2409471:2396319,472836:473875	literal-substring-set-and-length-id-order
+red you	substring-only-negative	nihongo-1.34.3-9792	0	0		no-match
+red you	substring-only-negative	zenbu-140b194	0	20	104537:299153,230573:67939,178613:17465,83909:319807,74273:329447,9180386:70880,98230:305472,226666:64010,233510:70880,2393569:2392592,2960686:1725439,347211:416843,10022403:6118385,233244:70615,108058:295628,199497:36699,199496:36696,199494:36696,183050:20172,3308156:9992443	substring-only-false-positives
+startle you	lemma-neighbor-control	nihongo-1.34.3-9792	1	1	1804152:1804150	parity
+startle you	lemma-neighbor-control	zenbu-140b194	1	1	1804152:1804150	parity
+startled me	pronoun-substitution-control	nihongo-1.34.3-9792	0	2	180017:18876,201898:39109	parity
+startled me	pronoun-substitution-control	zenbu-140b194	0	2	180017:18876,201898:39109	parity
