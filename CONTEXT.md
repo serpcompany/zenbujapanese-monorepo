@@ -33,7 +33,7 @@ The canonical app-owned collection of source-backed Japanese–English example p
 _Avoid_: Tatoeba database, Nihongo sentences, retrieval results
 
 **Example Sentence Retrieval**:
-The Shared Capability that determines which Example Sentence Corpus records are relevant to a Search query or dictionary entry and the order in which they appear.
+The Shared Capability that accepts a Search query or dictionary entry, analyzes its language forms, establishes Example Sentence Matches, and applies Example Sentence Ranking to produce relevant ordered corpus records. It owns the retrieval policy while delegating language analysis to replaceable Language Technology.
 _Avoid_: Data source, corpus, provider search, matching technology
 
 **Example Sentence Match**:
