@@ -1659,12 +1659,17 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let kanjiVG = app.staticTexts["KanjiVG"]
     for _ in 0..<4 where !kanjiVG.isHittable { sourceList.swipeUp() }
     XCTAssertTrue(kanjiVG.isHittable)
-    XCTAssertTrue(
-      app.staticTexts.matching(
-        NSPredicate(format: "label CONTAINS %@", "KanjiVG by Ulrich Apel")
-      ).firstMatch.exists)
-    XCTAssertTrue(app.staticTexts["CC BY-SA 3.0"].exists)
+    let kanjiVGDescription = app.staticTexts.matching(
+      NSPredicate(format: "label CONTAINS %@", "KanjiVG by Ulrich Apel")
+    ).firstMatch
+    for _ in 0..<3 where !kanjiVGDescription.exists { sourceList.swipeUp() }
+    XCTAssertTrue(kanjiVGDescription.waitForExistence(timeout: 2))
+    let kanjiVGLicenseName = app.staticTexts["CC BY-SA 3.0"]
+    for _ in 0..<2 where !kanjiVGLicenseName.exists { sourceList.swipeUp() }
+    XCTAssertTrue(kanjiVGLicenseName.waitForExistence(timeout: 2))
     let kanjiVGLicense = app.buttons["dictionary-sources.kanjivg-license"]
+    for _ in 0..<3 where !kanjiVGLicense.isHittable { sourceList.swipeUp() }
+    XCTAssertTrue(kanjiVGLicense.waitForExistence(timeout: 2))
     XCTAssertTrue(kanjiVGLicense.isHittable)
     kanjiVGLicense.tap()
     XCTAssertTrue(app.staticTexts["KanjiVG CC BY-SA 3.0 License"].waitForExistence(timeout: 2))
@@ -1721,6 +1726,22 @@ final class SearchExperienceJourneyUITests: XCTestCase {
         NSPredicate(format: "label CONTAINS %@", "Copyright (c) 2011-2021, The UniDic Consortium")
       ).firstMatch.exists)
     recordScreenshot(named: "dictionary-source-unidic-bundled-license", app: app)
+  }
+
+  @MainActor
+  func testPrivacyAndSupportAreReachableFromSettings() throws {
+    let app = launchApp()
+
+    let settings = app.buttons["search-experience-tab.settings"]
+    XCTAssertTrue(settings.waitForExistence(timeout: 3))
+    settings.tap()
+
+    XCTAssertTrue(app.staticTexts["Zenbu Japanese"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.staticTexts.matching(
+      NSPredicate(format: "label CONTAINS %@", "Searches and notes stay on this device")
+    ).firstMatch.exists)
+    XCTAssertTrue(app.descendants(matching: .any)["settings.privacy-policy"].exists)
+    XCTAssertTrue(app.descendants(matching: .any)["settings.support"].exists)
   }
 
   @MainActor

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0739C012E20A0C475890D563 /* SearchExperienceJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2D0ECA911F40E070D8F4FD /* SearchExperienceJourneyUITests.swift */; };
+		48A12CB415EF48F78F16871A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */; };
 		A1C04F09D3A74D8B82D3C6E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */; };
 		E1FD0205CD84132DCB314678 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
 		EE0568414863DA5F77D21D34 /* ZenbuJapaneseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */; };
@@ -25,6 +26,7 @@
 
 /* Begin PBXFileReference section */
 		05C3FD9ADDFFACDD673A50B8 /* Modules */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Modules; path = Modules; sourceTree = SOURCE_ROOT; };
+		48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ZenbuJapanese.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6E2D0ECA911F40E070D8F4FD /* SearchExperienceJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchExperienceJourneyUITests.swift; sourceTree = "<group>"; };
 		A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenbuJapaneseApp.swift; sourceTree = "<group>"; };
@@ -83,6 +85,7 @@
 			isa = PBXGroup;
 			children = (
 				B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */,
+				48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */,
 				A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */,
 			);
 			path = App;
@@ -173,6 +176,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1C04F09D3A74D8B82D3C6E1 /* Assets.xcassets in Resources */,
+				48A12CB415EF48F78F16871A /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

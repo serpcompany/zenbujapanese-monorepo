@@ -6,6 +6,14 @@ struct DictionarySourcesView: View {
   var body: some View {
     NavigationStack {
       List {
+        Section("Zenbu Japanese") {
+          Text("Searches and notes stay on this device. Images are processed for the current Image Text session and are discarded when you close it.")
+          Link("Privacy Policy", destination: URL(string: "https://zenbujapanese.com/privacy")!)
+            .accessibilityIdentifier("settings.privacy-policy")
+          Link("Support", destination: URL(string: "https://zenbujapanese.com/support")!)
+            .accessibilityIdentifier("settings.support")
+        }
+
         Section("JMdict") {
           Text("Dictionary data from the Electronic Dictionary Research and Development Group.")
           HStack {
