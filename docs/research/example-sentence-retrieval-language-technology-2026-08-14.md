@@ -4,25 +4,31 @@ Issue: #147. Corpus and provenance authority: #140. Frozen discrepancy evidence:
 
 ## Executive finding
 
-The evidence supports an app-owned retrieval seam with two established platform/library components:
+The completed discovery evidence supports an app-owned retrieval seam with three established platform/library components:
 
-1. Apple Natural Language for English word boundaries and lemmas.
-2. Lindera 5.1.0 with an exactly pinned Japanese dictionary for Japanese surfaces, base forms, and readings, provided an implementation spike closes the remaining on-device dictionary-load, memory, license-manifest, and packaging checks.
+1. Apple Natural Language for English word boundaries and retained surface ranges.
+2. Snowball English Porter2 3.1.1 for a deterministic English stem tier broad enough to relate `education`, `educate`, `educating`, and `educated` without substring leakage.
+3. Lindera 5.1.0 with an exactly pinned Japanese dictionary for Japanese surfaces, base forms, and readings, provided an implementation spike closes the remaining on-device dictionary-load, memory, license-manifest, and packaging checks.
 
-This is a compatibility recommendation, not a claim that Nihongo uses either technology. Public Nihongo materials and the inspected Settings surface did not identify its tokenizer, lemmatizer, morphological analyzer, index, or database query.
+This is a compatibility recommendation, not a claim that Nihongo uses any of these technologies. Public Nihongo materials and the inspected Settings surface did not identify its tokenizer, lemmatizer, morphological analyzer, index, or database query.
 
-The recommendation is not yet implementation-ready. Twelve of twenty discovery contexts have valid reference evidence; the remaining eight are blocked by unstable iPhone Mirroring window/input scaling. The original ten planned holdouts were retired after candidate-only tokenization contaminated their seal. A separate custodian owns ten replacement holdouts and will not reveal them until the retrieval contract is frozen.
+All twenty discovery contexts now have valid reference evidence. The recommendation and contract in this report are frozen for blind evaluation; they must not be tuned after a separate custodian reveals results for the ten replacement holdouts. The original ten planned holdouts were retired after candidate-only tokenization contaminated their seal and are not acceptance evidence.
 
 ## Evidence boundary
 
 The planned matrix is [`fixtures/example-sentence-retrieval-issue-147-contexts.tsv`](fixtures/example-sentence-retrieval-issue-147-contexts.tsv). Its pre-observation SHA-256 was `fe2103c65c2283c64f8c73c654f31068c2f9fbdc1af4bf1863a7cb8e3b64b931`. The original H-prefixed rows are retained for audit history but are retired from acceptance.
 
+The frozen public observation fixture SHA-256 is `0502089d95e6a60c4c003267d1deed3691399b67b52863415193475730edab91`; the frozen candidate-output fixture SHA-256 is `8fa3caee4d4ee00187aaee91074cb6341288d277893c266fd3584fafb566da3b`.
+
 The public-safe observations are in [`fixtures/example-sentence-retrieval-issue-147-observations.tsv`](fixtures/example-sentence-retrieval-issue-147-observations.tsv):
 
 - D01-D05 reuse #140's 35 traced Tatoeba pairs across five dictionary-entry contexts.
 - D06-D11 reuse the merged #148 discrepancy fixture and all seven traced unique Nihongo pairs.
-- D12 records a new `scatter` reference count of 21; private screenshots are outside Git and public pair tracing is pending.
-- D13-D20 are not counted because ambiguous or malformed Mirroring inputs were excluded.
+- D12 records `scatter` count 21 and the traced top six rows.
+- D13-D19 record exact reference counts plus bounded, ordered, traced top sequences. A displayed `50+` is a cap, not an inferred exact total; these rows are explicitly non-exhaustive.
+- D20 records all nine ordered `ねこ` rows and public Tatoeba pair IDs.
+
+Across D12-D20, 80 captured ordered rows were transcribed and resolved to 80 Tatoeba pair IDs in the repo corpus. The screenshots remain private; the public fixture contains only queries, displayed counts, boundedness, and public sentence-pair identifiers.
 
 Nihongo evidence is from the accepted iPhone reference running 1.34.3 (`9792`). The public App Store listing now describes 1.34.4 and documents multi-word search plus fixes involving conjugated and search-only Japanese forms, but it does not disclose the underlying Language Technology.[^nihongo-store]
 
@@ -32,15 +38,15 @@ Nihongo evidence is from the accepted iPhone reference running 1.34.3 (`9792`). 
 |---|---|---|
 | Normalized literal substring | Falsified as a compatibility rule | `red you` returns zero in Nihongo but 20 unrelated Zenbu substring rows. |
 | Unicode word/phrase boundary | Supported, not sufficient alone | It explains rejection of `red you`; it cannot explain `scared` matching `scare`. |
-| English token/lemma phrase | Strongly supported | `scared you` includes exact `scared you` first, then three `scare you` rows; `scare you` reverses those tiers. |
-| Exact surface before lemma-equivalent phrase | Strongly supported | The `scared you` and `scare you` orderings change with the exact inflection. |
-| Japanese token/base/written-form/reading | Not yet reference-proven | Candidate outputs are available, but D18-D20 reference capture is blocked. |
-| Dictionary-entry headword/reading relation | Partially supported | #140 shows plural and inflected English examples under singular/base entries; Japanese entry probes remain blocked. |
+| English token/stem phrase | Strongly supported | `scared you` includes exact `scared you` first, then three `scare you` rows; `scatter` includes exact, past, and progressive forms; `education` later reaches `educate`, `educating`, and `educated`. |
+| Exact surface before stem-equivalent phrase | Strongly supported | The `scared you` and `scare you` orderings change with the exact inflection, and the `education` top sequence places exact-family rows before verb forms. |
+| Japanese token/base/written-form/reading | Supported for the captured contrasts | `食べる` and `食べた` both resolve to dictionary headword `食べる` but produce different surface-specific top sequences; `ねこ` resolves to dictionary headword `猫`. This does not identify the reference analyzer. |
+| Dictionary-entry headword/reading relation | Supported | #140 shows plural and inflected English examples under singular/base entries; D18-D20 add Japanese base-form and reading-to-written-form behavior. |
 | Japanese-indices as an eligibility filter | Falsified as a universal rule | #140 contains visible rows outside Japanese-indices while all 35 are in official general/direct-link data. |
 | Sentence length then record ID | Falsified as Nihongo parity | #148 shows different sets and ordering from Zenbu's current length/ID policy. |
 | Stable public source order or ID | Unresolved | Available observations do not isolate this factor from lexical tiering. |
 
-The supported English behavior is therefore a contiguous, boundary-aware lemma phrase match with a separate exact-surface ranking tier. It is not bag-of-words search and not a substring predicate.
+The supported English behavior is therefore a contiguous, boundary-aware stem phrase match with a separate exact-surface ranking tier. It is not bag-of-words search and not a substring predicate. D17 `cat!` reproduces D02 `cat`'s same first seven pair IDs, while `great` and `neat` remain distinct from `eat`; punctuation is ignored at token boundaries without enabling internal substrings.
 
 ## Candidate benchmark
 
@@ -50,9 +56,17 @@ Raw discovery-only outputs are in [`fixtures/example-sentence-retrieval-issue-14
 
 Apple documents word tokenization, lexical tagging, and lemmatization in the on-device Natural Language framework.[^apple-nl] Its lemma scheme returns a stem form when known, including Apple's documented `reading` to `read` example.[^apple-lemma]
 
-On this machine, English outputs match every discriminating discovery surface: `scared→scare`, `startled→startle`, and punctuation is excluded from `cat!`. The query `startled me` also normalizes `me→I`, so the app contract must retain both surface and lemma evidence rather than replacing the surface blindly.
+On this machine, English outputs match the inflectional discovery surfaces: `scared→scare`, `startled→startle`, and punctuation is excluded from `cat!`. The query `startled me` also normalizes `me→I`, while `education` remains `education`; Apple lemma output is therefore neither safe as a surface replacement nor broad enough for all observed eligibility.
 
-On the same runtime, `NLTagger.availableTagSchemes(for: .word, language: .japanese)` exposes Language, Script, and TokenType, but not Lemma or LexicalClass. Apple Natural Language therefore passes English analysis and fails as the sole Japanese analyzer. Because it is an Apple platform framework, it adds no separately bundled model in this experiment, but output remains OS-version dependent and must be regression-fixtured on the supported iOS matrix.
+On the same runtime, `NLTagger.availableTagSchemes(for: .word, language: .japanese)` exposes Language, Script, and TokenType, but not Lemma or LexicalClass. Apple Natural Language therefore passes English boundary/range analysis and fails as the sole English normalizer or Japanese analyzer. Because it is an Apple platform framework, it adds no separately bundled model in this experiment, but output remains OS-version dependent and must be regression-fixtured on the supported iOS matrix.
+
+### Snowball English Porter2
+
+Snowball is the reference project for generated stemming algorithms; its recommended English algorithm is Porter2 and is designed to map related forms to a common search stem.[^snowball-english] Exact release 3.1.1, commit `cd195b51e948a902a4312f023f4a14392516a543`, is BSD-3-Clause licensed.[^snowball-license]
+
+The pinned C implementation maps the discovery families as required: `education`, `educate`, `educating`, and `educated` all become `educ`; `scared` and `scare` become `scare`; `startled` and `startle` become `startl`; `scatter`, `scattered`, and `scattering` become `scatter`; and `great`, `neat`, and `eat` remain distinct. It preserves `me` rather than Apple's lemma normalization to `I`.
+
+An English-only build of the generated runtime compiled as a 25 KB arm64 iOS 17 static archive. A 10,000-token warm Mac CLI run rounded below 0.01 seconds. This proves deterministic compile/link feasibility, not signed-device runtime. The app should pin the generated English sources and license, expose stems only behind the provider-independent analysis seam, and fixture every supported query; it should not implement or modify stemming rules by hand.
 
 ### ICU
 
@@ -103,17 +117,17 @@ Do not use Lindera's `embed-ipadic` feature as an unreviewed network build step.
 
 The research wrapper's generated Cargo lock contains 110 packages across all targets. That is a feasibility graph, not a production SBOM: the implementation must minimize features, lock the iOS target closure, preserve every transitive license text, and review the one `NOASSERTION` package before adoption.
 
-## Recommended retrieval contract to freeze after remaining discovery
+## Frozen discovery-supported retrieval contract
 
 The app-owned boundary should return provider-independent evidence, not Lindera or Tatoeba schemas:
 
 ```text
 analyze(text, language) -> ordered tokens {
-  surface, normalizedSurface, lemmaOrBase, reading?, byteRange
+  surface, normalizedSurface, englishStem?, japaneseBase?, reading?, byteRange
 }
 
 match(queryAnalysis, sentenceAnalysis, entryForms?) -> {
-  eligible, relation, matchedRanges, exactSurfaceCoverage, lemmaCoverage
+  eligible, relation, matchedRanges, exactSurfaceCoverage, normalizedCoverage
 }
 ```
 
@@ -121,24 +135,25 @@ The evidence-supported English policy is:
 
 1. Match only a contiguous token sequence; reject substring-only fragments.
 2. Preserve punctuation-insensitive word boundaries through the platform tokenizer.
-3. Accept an exact normalized-surface phrase or a same-length contiguous lemma phrase.
-4. Rank exact normalized-surface phrases before lemma-equivalent phrases.
+3. Accept an exact normalized-surface phrase or a same-length contiguous Snowball-stem phrase.
+4. Rank exact normalized-surface phrases before stem-equivalent phrases.
 5. Never expose provider token tags or database columns to UI/domain callers.
 
-The proposed Japanese extension is the analogous contiguous comparison over surface, base form, and normalized reading, with dictionary-entry written forms/readings supplied as entry evidence. It remains proposed—not proven—until D18-D20 reference captures are valid.
+The Japanese extension is an analogous contiguous comparison over surface, base form, and normalized reading, with dictionary-entry written forms/readings supplied as entry evidence. D18-D20 support these evidence fields, but do not prove which internal analyzer or tie-break Nihongo uses.
 
 No evidence yet supports the final tie-break inside a lexical tier. Do not invent a sentence-length, record-ID, or popularity tie-break. Preserve the corpus's stable source sequence until another discovery probe proves a different observable rule, and treat any mismatch as a visible blocker.
 
-## Blockers and next work
+## Remaining implementation and acceptance gates
 
-- Restore deterministic iPhone Mirroring and capture D13-D20 with all visible rows/ranks and public Tatoeba tracing.
-- Freeze the complete discovery-supported Japanese and tie-break rules before the replacement holdout custodian reveals any context.
+- Have the independent custodian evaluate the already-frozen replacement holdouts without revealing them for tuning; record pass/fail separately from this discovery report.
 - Run the Lindera wrapper on the USB iPhone 14 Pro Max with the exact bundled dictionary; measure cold/warm latency, RSS, archive/IPA delta, and concurrency.
 - Resolve the `lindera-ipadic` notice/build-script naming mismatch (`20070801` notice versus `20250920` build input) with an upstream-primary provenance statement before adoption.
-- Produce the production target-specific SBOM and notices manifest; then write the ADR in the later implementation phase.
+- Reproduce the Snowball and Lindera compile/link spikes in the app's actual Xcode build, produce the production target-specific SBOM and notices manifest, and then write the ADR in the later implementation phase.
 
 [^apple-nl]: [Apple Natural Language framework documentation](https://developer.apple.com/documentation/naturallanguage)
 [^apple-lemma]: [Apple `NLTagScheme.lemma` documentation](https://developer.apple.com/documentation/naturallanguage/nltagscheme/lemma)
+[^snowball-english]: [Snowball English Porter2 algorithm](https://snowballstem.org/algorithms/english/stemmer.html)
+[^snowball-license]: [Snowball 3.1.1 license](https://github.com/snowballstem/snowball/blob/v3.1.1/COPYING)
 [^icu-boundary]: [ICU Boundary Analysis documentation](https://unicode-org.github.io/icu/userguide/boundaryanalysis/)
 [^mecab]: [Official MeCab repository](https://github.com/taku910/mecab)
 [^sudachi]: [Official Sudachi repository](https://github.com/WorksApplications/Sudachi)
