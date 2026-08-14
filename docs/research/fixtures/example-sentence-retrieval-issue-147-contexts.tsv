@@ -1,31 +1,31 @@
-context_id	phase	context_type	query_or_entry	category	probe_intent
-D01	discovery	dictionary-entry	cave	english-noun	baseline exact headword and source ordering
-D02	discovery	dictionary-entry	cat	english-noun	exact token and morphological plural
-D03	discovery	dictionary-entry	eat	english-verb	lemma and English inflection
-D04	discovery	dictionary-entry	beautiful	english-adjective	adjective and derived-form behavior
-D05	discovery	dictionary-entry	thank you	english-phrase	multi-word exact phrase and variants
-D06	discovery	direct-search	scared you	english-phrase	partial phrase and inflected verb discrepancy
-D07	discovery	direct-search	startled you	english-phrase	negative inflected phrase control
-D08	discovery	direct-search	scare you	english-phrase	base-form phrase control
-D09	discovery	direct-search	red you	english-phrase	substring-only negative control
-D10	discovery	direct-search	startle you	english-phrase	base-form phrase control
-D11	discovery	direct-search	startled me	english-phrase	inflected positive control
-D12	discovery	direct-search	scatter	english-verb	cat substring negative control
-D13	discovery	direct-search	education	english-noun	cat substring negative control
-D14	discovery	direct-search	great	english-adjective	eat substring negative control
-D15	discovery	direct-search	neat	english-adjective	eat substring negative control
-D16	discovery	direct-search	quickly	english-adverb	adverb token behavior
-D17	discovery	direct-search	cat!	punctuation	punctuation and token boundary normalization
-D18	discovery	direct-search	食べる	japanese-dictionary-form	Japanese token and lemma baseline
-D19	discovery	direct-search	食べた	japanese-inflected-form	Japanese conjugated-form behavior
-D20	discovery	direct-search	ねこ	japanese-kana	kana variant of a kanji headword
-H01	retired-contaminated	direct-search	dog	english-noun	original holdout retired; never use for acceptance
-H02	retired-contaminated	direct-search	concatenate	english-verb	original holdout retired; never use for acceptance
-H03	retired-contaminated	direct-search	eating	english-inflected-form	original holdout retired; never use for acceptance
-H04	retired-contaminated	direct-search	greater	english-comparative	original holdout retired; never use for acceptance
-H05	retired-contaminated	direct-search	frightened you	english-phrase	original holdout retired; never use for acceptance
-H06	retired-contaminated	direct-search	surprised me	english-phrase	original holdout retired; never use for acceptance
-H07	retired-contaminated	direct-search	ありがとう	japanese-surface-form	original holdout retired; never use for acceptance
-H08	retired-contaminated	direct-search	きれい	japanese-kana	original holdout retired; never use for acceptance
-H09	retired-contaminated	dictionary-entry	猫	japanese-kanji-entry	original holdout retired; never use for acceptance
-H10	retired-contaminated	dictionary-entry	食べる	japanese-verb-entry	original holdout retired; never use for acceptance
+context_id	phase	planned_context_type	observed_context_type	route_correction	query_or_entry	category	probe_intent
+D01	discovery	dictionary-entry	direct-search	observed via Search results; dictionary-entry route moved to D21-D22	cave	english-noun	baseline exact headword and source ordering
+D02	discovery	dictionary-entry	direct-search	observed via Search results; dictionary-entry route moved to D21-D22	cat	english-noun	exact token and morphological plural
+D03	discovery	dictionary-entry	direct-search	observed via Search results; dictionary-entry route moved to D21-D22	eat	english-verb	lemma and English inflection
+D04	discovery	dictionary-entry	direct-search	observed via Search results; dictionary-entry route moved to D21-D22	beautiful	english-adjective	adjective and derived-form behavior
+D05	discovery	dictionary-entry	direct-search	observed via Search results; dictionary-entry route moved to D21-D22	thank you	english-phrase	multi-word exact phrase and variants
+D06	discovery	direct-search	direct-search		scared you	english-phrase	partial phrase and inflected verb discrepancy
+D07	discovery	direct-search	direct-search		startled you	english-phrase	negative inflected phrase control
+D08	discovery	direct-search	direct-search		scare you	english-phrase	base-form phrase control
+D09	discovery	direct-search	direct-search		red you	english-phrase	substring-only negative control
+D10	discovery	direct-search	direct-search		startle you	english-phrase	base-form phrase control
+D11	discovery	direct-search	direct-search		startled me	english-phrase	inflected positive control
+D12	discovery	direct-search	direct-search		scatter	english-verb	cat substring negative control
+D13	discovery	direct-search	direct-search		education	english-noun	cat substring negative control
+D14	discovery	direct-search	direct-search		great	english-adjective	eat substring negative control
+D15	discovery	direct-search	direct-search		neat	english-adjective	eat substring negative control
+D16	discovery	direct-search	direct-search		quickly	english-adverb	adverb token behavior
+D17	discovery	direct-search	direct-search		cat!	punctuation	punctuation and token boundary normalization
+D18	discovery	direct-search	direct-search		食べる	japanese-dictionary-form	Japanese token and lemma baseline
+D19	discovery	direct-search	direct-search		食べた	japanese-inflected-form	Japanese conjugated-form behavior
+D20	discovery	direct-search	direct-search		ねこ	japanese-kana	kana variant of a kanji headword
+H01	retired-contaminated	direct-search	not-observed	retired-contaminated; never use for acceptance	dog	english-noun	original holdout retired; never use for acceptance
+H02	retired-contaminated	direct-search	not-observed	retired-contaminated; never use for acceptance	concatenate	english-verb	original holdout retired; never use for acceptance
+H03	retired-contaminated	direct-search	not-observed	retired-contaminated; never use for acceptance	eating	english-inflected-form	original holdout retired; never use for acceptance
+H04	retired-contaminated	direct-search	not-observed	retired-contaminated; never use for acceptance	greater	english-comparative	original holdout retired; never use for acceptance
+H05	retired-contaminated	direct-search	not-observed	retired-contaminated; never use for acceptance	frightened you	english-phrase	original holdout retired; never use for acceptance
+H06	retired-contaminated	direct-search	not-observed	retired-contaminated; never use for acceptance	surprised me	english-phrase	original holdout retired; never use for acceptance
+H07	retired-contaminated	direct-search	not-observed	retired-contaminated; never use for acceptance	ありがとう	japanese-surface-form	original holdout retired; never use for acceptance
+H08	retired-contaminated	direct-search	not-observed	retired-contaminated; never use for acceptance	きれい	japanese-kana	original holdout retired; never use for acceptance
+H09	retired-contaminated	dictionary-entry	not-observed	retired-contaminated; never use for acceptance	猫	japanese-kanji-entry	original holdout retired; never use for acceptance
+H10	retired-contaminated	dictionary-entry	not-observed	retired-contaminated; never use for acceptance	食べる	japanese-verb-entry	original holdout retired; never use for acceptance

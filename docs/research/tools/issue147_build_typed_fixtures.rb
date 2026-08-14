@@ -6,12 +6,12 @@ require "digest"
 require "sqlite3"
 require "time"
 
-abort <<~USAGE unless ARGV.length == 8
-  usage: #{$PROGRAM_NAME} ISSUE140_TSV CONSOLIDATED_TSV CORPUS_DB JPN_INDICES_CSV \
+abort <<~USAGE unless ARGV.length == 7
+  usage: #{$PROGRAM_NAME} CONSOLIDATED_TSV CORPUS_DB JPN_INDICES_CSV \
     ISSUE147_EVIDENCE_DIR ISSUE148_EVIDENCE_DIR CONTEXTS_OUTPUT ROWS_OUTPUT
 USAGE
 
-source140_path, consolidated_path, corpus_path, indices_path, evidence147,
+consolidated_path, corpus_path, indices_path, evidence147,
   evidence148, contexts_output, rows_output = ARGV
 
 db = SQLite3::Database.new(corpus_path)
@@ -21,27 +21,41 @@ indices = File.foreach(indices_path, chomp: true).each_with_object({}) do |line,
   result[japanese_id] = true
 end
 
+Context = Struct.new(:observed_type, :query, :language, :count_value, :count_kind, :exhaustive, keyword_init: true)
+Observation = Struct.new(
+  :context_id, :rank, :captured_at, :environment, :pointer, :sha256, :japanese, :english,
+  :japanese_id, :english_id, :zenbu_present, :zenbu_rank, :lexical_relation,
+  :general_japanese, :general_english, :direct_link, :japanese_indices,
+  :duplicate_group, :duplicate_group_size, :observation_source,
+  keyword_init: true
+)
+
+def context(query, language, count_value, count_kind, exhaustive, observed_type: "direct-search")
+  Context.new(observed_type: observed_type, query: query, language: language,
+              count_value: count_value, count_kind: count_kind, exhaustive: exhaustive)
+end
+
 CONTEXT = {
-  "D01" => ["direct-search", "cave", "en", 32, "exact", false],
-  "D02" => ["direct-search", "cat", "en", 50, "capped-lower-bound", false],
-  "D03" => ["direct-search", "eat", "en", 50, "capped-lower-bound", false],
-  "D04" => ["direct-search", "beautiful", "en", 50, "capped-lower-bound", false],
-  "D05" => ["direct-search", "thank you", "en", 50, "capped-lower-bound", false],
-  "D06" => ["direct-search", "scared you", "en", 4, "exact", true],
-  "D07" => ["direct-search", "startled you", "en", 0, "exact", true],
-  "D08" => ["direct-search", "scare you", "en", 4, "exact", true],
-  "D09" => ["direct-search", "red you", "en", 0, "exact", true],
-  "D10" => ["direct-search", "startle you", "en", 1, "exact", true],
-  "D11" => ["direct-search", "startled me", "en", 2, "exact", true],
-  "D12" => ["direct-search", "scatter", "en", 21, "exact", false],
-  "D13" => ["direct-search", "education", "en", 50, "capped-lower-bound", false],
-  "D14" => ["direct-search", "great", "en", 50, "capped-lower-bound", false],
-  "D15" => ["direct-search", "neat", "en", 19, "exact", true],
-  "D16" => ["direct-search", "quickly", "en", 50, "capped-lower-bound", false],
-  "D17" => ["direct-search", "cat!", "en", 50, "capped-lower-bound", false],
-  "D18" => ["direct-search", "食べる", "ja", 50, "capped-lower-bound", false],
-  "D19" => ["direct-search", "食べた", "ja", 50, "capped-lower-bound", false],
-  "D20" => ["direct-search", "ねこ", "ja", 9, "exact", true]
+  "D01" => context("cave", "en", 32, "exact", false),
+  "D02" => context("cat", "en", 50, "capped-lower-bound", false),
+  "D03" => context("eat", "en", 50, "capped-lower-bound", false),
+  "D04" => context("beautiful", "en", 50, "capped-lower-bound", false),
+  "D05" => context("thank you", "en", 50, "capped-lower-bound", false),
+  "D06" => context("scared you", "en", 4, "exact", true),
+  "D07" => context("startled you", "en", 0, "exact", true),
+  "D08" => context("scare you", "en", 4, "exact", true),
+  "D09" => context("red you", "en", 0, "exact", true),
+  "D10" => context("startle you", "en", 1, "exact", true),
+  "D11" => context("startled me", "en", 2, "exact", true),
+  "D12" => context("scatter", "en", 21, "exact", false),
+  "D13" => context("education", "en", 50, "capped-lower-bound", false),
+  "D14" => context("great", "en", 50, "capped-lower-bound", false),
+  "D15" => context("neat", "en", 19, "exact", true),
+  "D16" => context("quickly", "en", 50, "capped-lower-bound", false),
+  "D17" => context("cat!", "en", 50, "capped-lower-bound", false),
+  "D18" => context("食べる", "ja", 50, "capped-lower-bound", false),
+  "D19" => context("食べた", "ja", 50, "capped-lower-bound", false),
+  "D20" => context("ねこ", "ja", 9, "exact", true)
 }.freeze
 
 MANUAL_DIRECT_PAIRS = {
@@ -79,11 +93,11 @@ MANUAL_DIRECT_PAIRS = {
 }.freeze
 
 MANUAL_FRAME_RANGES = {
-  "D01" => [[1, 7, 1], [8, 13, 2], [14, 17, 3], [18, 20, 4]],
-  "D02" => [[1, 7, 1], [8, 14, 2], [15, 19, 3], [20, 20, 4]],
-  "D03" => [[1, 7, 1], [8, 13, 2], [14, 18, 3], [19, 20, 4]],
-  "D04" => [[1, 7, 1], [8, 12, 2], [13, 17, 3], [18, 20, 4]],
-  "D05" => [[1, 7, 1], [8, 14, 2], [15, 15, "overlap"], [16, 20, 3]]
+  "D01" => [{ ranks: 1..7, frame: 1 }, { ranks: 8..13, frame: 2 }, { ranks: 14..17, frame: 3 }, { ranks: 18..20, frame: 4 }],
+  "D02" => [{ ranks: 1..7, frame: 1 }, { ranks: 8..14, frame: 2 }, { ranks: 15..19, frame: 3 }, { ranks: 20..20, frame: 4 }],
+  "D03" => [{ ranks: 1..7, frame: 1 }, { ranks: 8..13, frame: 2 }, { ranks: 14..18, frame: 3 }, { ranks: 19..20, frame: 4 }],
+  "D04" => [{ ranks: 1..7, frame: 1 }, { ranks: 8..12, frame: 2 }, { ranks: 13..17, frame: 3 }, { ranks: 18..20, frame: 4 }],
+  "D05" => [{ ranks: 1..7, frame: 1 }, { ranks: 8..14, frame: 2 }, { ranks: 15..15, frame: "overlap" }, { ranks: 16..20, frame: 3 }]
 }.freeze
 
 MANUAL_FILE_STEMS = {
@@ -184,12 +198,31 @@ def lexical_relation(query, language, japanese, english)
   end
 end
 
+def build_observation(context_id:, rank:, evidence:, corpus:, context:, ranks:, indices:,
+                      english_group_sizes:, observation_source:)
+  pair_id = corpus.fetch("id")
+  japanese_id, english_id = pair_id.split(":", 3).drop(1)
+  Observation.new(
+    context_id: context_id, rank: rank, captured_at: evidence.fetch(:captured_at),
+    environment: "Nihongo-1.34.3-9792-iPhone17ProMax-iOS26.6",
+    pointer: evidence.fetch(:pointer), sha256: evidence.fetch(:sha256),
+    japanese: corpus.fetch("japanese"), english: corpus.fetch("english"),
+    japanese_id: japanese_id, english_id: english_id,
+    zenbu_present: ranks.key?(pair_id).to_s, zenbu_rank: ranks[pair_id] || "",
+    lexical_relation: lexical_relation(context.query, context.language, corpus.fetch("japanese"), corpus.fetch("english")),
+    general_japanese: "true", general_english: "true", direct_link: "true",
+    japanese_indices: indices.key?(japanese_id).to_s,
+    duplicate_group: "english:#{english_id}", duplicate_group_size: english_group_sizes.fetch(english_id),
+    observation_source: observation_source
+  )
+end
+
 corpus_rows = db.execute("SELECT id, japanese, english FROM example_sentences").to_h { |row| [row.fetch("id"), row] }
 english_group_sizes = corpus_rows.keys.each_with_object(Hash.new(0)) do |id, counts|
   counts[id.split(":", 3).fetch(2)] += 1
 end
-direct_rank_maps = CONTEXT.to_h do |context_id, (_type, query, language, _count, _kind, _exhaustive)|
-  [context_id, direct_ranks(db, query, language)]
+direct_rank_maps = CONTEXT.to_h do |context_id, context_record|
+  [context_id, direct_ranks(db, context_record.query, context_record.language)]
 end
 
 row_records = []
@@ -200,29 +233,18 @@ MANUAL_DIRECT_PAIRS.each do |context_id, pairs|
   pairs.each_with_index do |pair_id, index|
     rank = index + 1
     corpus = corpus_rows.fetch(pair_id)
-    japanese_id, english_id = pair_id.split(":", 3).drop(1)
-    frame = MANUAL_FRAME_RANGES.fetch(context_id).find { |start_rank, end_rank, _frame| (start_rank..end_rank).cover?(rank) }.fetch(2)
+    frame = MANUAL_FRAME_RANGES.fetch(context_id).find { |item| item.fetch(:ranks).cover?(rank) }.fetch(:frame)
     filename = if frame == "overlap"
                  "D05-thank-you-rank14-16-overlap.png"
                else
                  format("%s-%02d.png", MANUAL_FILE_STEMS.fetch(context_id), frame)
                end
     evidence = file_fact(evidence147, filename, "issue-147")
-    row_records << {
-      context_id: context_id,
-      rank: rank,
-      captured_at: evidence[:captured_at],
-      environment: "Nihongo-1.34.3-9792-iPhone17ProMax-iOS26.6",
-      pointer: evidence[:pointer], sha256: evidence[:sha256],
-      japanese: corpus.fetch("japanese"), english: corpus.fetch("english"),
-      japanese_id: japanese_id, english_id: english_id,
-      zenbu_present: ranks.key?(pair_id).to_s, zenbu_rank: ranks[pair_id] || "",
-      lexical_relation: lexical_relation(meta[1], meta[2], corpus.fetch("japanese"), corpus.fetch("english")),
-      general_japanese: "true", general_english: "true", direct_link: "true",
-      japanese_indices: indices.key?(japanese_id).to_s,
-      duplicate_group: "english:#{english_id}", duplicate_group_size: english_group_sizes.fetch(english_id),
+    row_records << build_observation(
+      context_id: context_id, rank: rank, evidence: evidence, corpus: corpus, context: meta,
+      ranks: ranks, indices: indices, english_group_sizes: english_group_sizes,
       observation_source: "issue-147-direct-transcription"
-    }
+    )
   end
 end
 
@@ -232,20 +254,11 @@ ISSUE148_PAIRS.each do |context_id, pairs|
   ranks = direct_rank_maps.fetch(context_id)
   pairs.each_with_index do |pair_id, index|
     corpus = corpus_rows.fetch(pair_id)
-    japanese_id, english_id = pair_id.split(":", 3).drop(1)
-    row_records << {
-      context_id: context_id, rank: index + 1, captured_at: evidence[:captured_at],
-      environment: "Nihongo-1.34.3-9792-iPhone17ProMax-iOS26.6",
-      pointer: evidence[:pointer], sha256: evidence[:sha256],
-      japanese: corpus.fetch("japanese"), english: corpus.fetch("english"),
-      japanese_id: japanese_id, english_id: english_id,
-      zenbu_present: ranks.key?(pair_id).to_s, zenbu_rank: ranks[pair_id] || "",
-      lexical_relation: lexical_relation(meta[1], meta[2], corpus.fetch("japanese"), corpus.fetch("english")),
-      general_japanese: "true", general_english: "true", direct_link: "true",
-      japanese_indices: indices.key?(japanese_id).to_s,
-      duplicate_group: "english:#{english_id}", duplicate_group_size: english_group_sizes.fetch(english_id),
+    row_records << build_observation(
+      context_id: context_id, rank: index + 1, evidence: evidence, corpus: corpus, context: meta,
+      ranks: ranks, indices: indices, english_group_sizes: english_group_sizes,
       observation_source: "issue-148-de8164e"
-    }
+    )
   end
 end
 
@@ -258,41 +271,24 @@ consolidated.each do |row|
   filename = context_id == "D12" ? format("D12-examples-%02d.jpeg", page) : format("%s-exhaustive-page-%03d.jpeg", context_id, page)
   evidence = file_fact(evidence147, filename, "issue-147")
   pair_id = row.fetch("pair_id")
-  japanese_id, english_id = pair_id.split(":", 3).drop(1)
   ranks = direct_rank_maps.fetch(context_id)
-  row_records << {
-    context_id: context_id, rank: row.fetch("rank"), captured_at: evidence[:captured_at],
-    environment: "Nihongo-1.34.3-9792-iPhone17ProMax-iOS26.6",
-    pointer: evidence[:pointer], sha256: evidence[:sha256],
-    japanese: row.fetch("japanese"), english: row.fetch("english"),
-    japanese_id: japanese_id, english_id: english_id,
-    zenbu_present: ranks.key?(pair_id).to_s, zenbu_rank: ranks[pair_id] || "",
-    lexical_relation: lexical_relation(meta[1], meta[2], row.fetch("japanese"), row.fetch("english")),
-    general_japanese: "true", general_english: "true", direct_link: "true",
-    japanese_indices: indices.key?(japanese_id).to_s,
-    duplicate_group: "english:#{english_id}", duplicate_group_size: english_group_sizes.fetch(english_id),
+  corpus = corpus_rows.fetch(pair_id)
+  row_records << build_observation(
+    context_id: context_id, rank: row.fetch("rank"), evidence: evidence, corpus: corpus, context: meta,
+    ranks: ranks, indices: indices, english_group_sizes: english_group_sizes,
     observation_source: "issue-147-capture-ocr-#{row.fetch('confidence')}-#{row.fetch('match_score')}"
-  }
+  )
 end
 
 D20_PAIRS.each_with_index do |pair_id, index|
   evidence = file_fact(evidence147, format("D20-examples-%02d-valid.jpeg", index), "issue-147")
   corpus = corpus_rows.fetch(pair_id)
-  japanese_id, english_id = pair_id.split(":", 3).drop(1)
   ranks = direct_rank_maps.fetch("D20")
-  row_records << {
-    context_id: "D20", rank: index + 1, captured_at: evidence[:captured_at],
-    environment: "Nihongo-1.34.3-9792-iPhone17ProMax-iOS26.6",
-    pointer: evidence[:pointer], sha256: evidence[:sha256],
-    japanese: corpus.fetch("japanese"), english: corpus.fetch("english"),
-    japanese_id: japanese_id, english_id: english_id,
-    zenbu_present: ranks.key?(pair_id).to_s, zenbu_rank: ranks[pair_id] || "",
-    lexical_relation: lexical_relation("ねこ", "ja", corpus.fetch("japanese"), corpus.fetch("english")),
-    general_japanese: "true", general_english: "true", direct_link: "true",
-    japanese_indices: indices.key?(japanese_id).to_s,
-    duplicate_group: "english:#{english_id}", duplicate_group_size: english_group_sizes.fetch(english_id),
+  row_records << build_observation(
+    context_id: "D20", rank: index + 1, evidence: evidence, corpus: corpus, context: CONTEXT.fetch("D20"),
+    ranks: ranks, indices: indices, english_group_sizes: english_group_sizes,
     observation_source: "issue-147-direct-transcription"
-  }
+  )
 end
 
 row_records.sort_by! { |row| [row[:context_id], row[:rank].to_i] }
@@ -300,7 +296,7 @@ row_counts = row_records.group_by { |row| row[:context_id] }.transform_values(&:
 
 CSV.open(contexts_output, "w", col_sep: "\t", row_sep: "\n", force_quotes: false) do |csv|
   csv << %w[context_id phase context_type query_or_entry language reference_version environment captured_at_start captured_at_end private_evidence_start_pointer private_evidence_start_sha256 private_evidence_terminal_pointer private_evidence_terminal_sha256 count_value count_kind captured_row_count exhaustive terminal_evidence zenbu_baseline]
-  CONTEXT.each do |context_id, (type, query, language, count_value, count_kind, exhaustive)|
+  CONTEXT.each do |context_id, context_record|
     if context_id <= "D05"
       start_fact = file_fact(evidence147, ROOT_FILES.fetch(context_id), "issue-147")
       end_fact = file_fact(evidence147, TERMINAL_FILES.fetch(context_id), "issue-147")
@@ -308,16 +304,16 @@ CSV.open(contexts_output, "w", col_sep: "\t", row_sep: "\n", force_quotes: false
     elsif context_id <= "D11"
       fact = file_fact(evidence148, ISSUE148_FILES.fetch(context_id), "issue-148")
       start_fact = end_fact = fact
-      terminal = exhaustive ? "exact-count-screen" : "not-proven"
+      terminal = context_record.exhaustive ? "exact-count-screen" : "not-proven"
     else
       start_fact = file_fact(evidence147, ROOT_FILES.fetch(context_id), "issue-147")
       end_fact = file_fact(evidence147, TERMINAL_FILES.fetch(context_id), "issue-147")
-      terminal = exhaustive ? "exact-count-plus-all-rows" : "displayed-count-plus-ordered-top-20"
+      terminal = context_record.exhaustive ? "exact-count-plus-all-rows" : "displayed-count-plus-ordered-top-20"
     end
-    csv << [context_id, "discovery", type, query, language, "Nihongo-1.34.3-9792", "iPhone17ProMax-iOS26.6",
+    csv << [context_id, "discovery", context_record.observed_type, context_record.query, context_record.language, "Nihongo-1.34.3-9792", "iPhone17ProMax-iOS26.6",
             start_fact[:captured_at], end_fact[:captured_at], start_fact[:pointer], start_fact[:sha256],
-            end_fact[:pointer], end_fact[:sha256], count_value, count_kind, row_counts.fetch(context_id, 0),
-            exhaustive, terminal, "Zenbu-140b194"]
+            end_fact[:pointer], end_fact[:sha256], context_record.count_value, context_record.count_kind,
+            row_counts.fetch(context_id, 0), context_record.exhaustive, terminal, "Zenbu-140b194"]
   end
 end
 

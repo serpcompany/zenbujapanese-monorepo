@@ -14,12 +14,15 @@ The original H-prefixed holdout set was contaminated and permanently retired. A 
 
 ## Evidence boundary and typed fixtures
 
-The frozen plan is [`fixtures/example-sentence-retrieval-issue-147-contexts.tsv`](fixtures/example-sentence-retrieval-issue-147-contexts.tsv). Public-safe observations are split into typed tables:
+The pre-observation plan was frozen at SHA-256 `fe2103c65c2283c64f8c73c654f31068c2f9fbdc1af4bf1863a7cb8e3b64b931`. Its D01-D05 rows said `dictionary-entry`, but the actual accepted captures were made through direct Search. The current [`fixtures/example-sentence-retrieval-issue-147-contexts.tsv`](fixtures/example-sentence-retrieval-issue-147-contexts.tsv) preserves both facts in separate `planned_context_type` and `observed_context_type` fields and documents the route correction; D21-D22 are the actual dictionary-entry probes. The retired original holdout plan is likewise retained as provenance but marked `not-observed` and must not be used for acceptance.
+
+Public-safe observations are split into typed tables:
 
 - [`fixtures/example-sentence-retrieval-issue-147-observation-contexts.tsv`](fixtures/example-sentence-retrieval-issue-147-observation-contexts.tsv) records environment, timestamps, private evidence pointers/hashes, count value, count kind, captured-row count, exhaustiveness, and terminal proof.
 - [`fixtures/example-sentence-retrieval-issue-147-observation-rows.tsv`](fixtures/example-sentence-retrieval-issue-147-observation-rows.tsv) records every transcribed visible rank with Japanese/English text, public pair IDs, Zenbu pre-change presence/rank, lexical relation, general/Japanese-index membership, and duplicate/one-to-many grouping.
-- [`fixtures/example-sentence-retrieval-issue-147-retrieval-benchmark.tsv`](fixtures/example-sentence-retrieval-issue-147-retrieval-benchmark.tsv) records candidate set size, visible-set overlap/recall, shared-pair order agreement, missing IDs, and candidate prefixes.
-- [`fixtures/example-sentence-retrieval-issue-147-runtime-probe.tsv`](fixtures/example-sentence-retrieval-issue-147-runtime-probe.tsv) records the signed USB iPhone 14 baseline and three separate system-SQLite FTS4 runs without exposing the device identifier.
+- [`fixtures/example-sentence-retrieval-issue-147-retrieval-benchmark.tsv`](fixtures/example-sentence-retrieval-issue-147-retrieval-benchmark.tsv) records complete eligible-set counts and hashes, visible-set overlap/recall, mutual-set sizes, exclusive-set sizes, and mutual rank/order deltas for both engines in every discovery context.
+- [`fixtures/example-sentence-retrieval-issue-147-retrieval-candidate-rows.tsv`](fixtures/example-sentence-retrieval-issue-147-retrieval-candidate-rows.tsv) records every eligible candidate in engine rank order with other-engine membership, rank, and rank delta. The validator reconstructs and replays both full sets from the pinned corpus.
+- [`fixtures/example-sentence-retrieval-issue-147-runtime-probe.tsv`](fixtures/example-sentence-retrieval-issue-147-runtime-probe.tsv) records comparable signed USB iPhone 14 baseline and system-SQLite FTS4 workloads without exposing the device identifier.
 
 There are 279 accepted ranked rows across D01-D20. The corrected manual-evidence rule is applied uniformly: lists displaying at most 20 rows are transcribed completely; larger numeric or `50+` lists record the displayed count/cap and exact ordered top 20. D15 and D20 are exhaustive at 19 and 9 rows; D06-D11 are exhaustive at their displayed counts; D01-D05, D12-D14, and D16-D19 are explicitly non-exhaustive ordered top-20 observations. Retained deeper captures are supporting private evidence only, not additional accepted fixture ranks. Deterministic corpus tooling, rather than unbounded manual scrolling, owns exhaustive candidate comparison.
 
@@ -72,7 +75,9 @@ The benchmark builds a temporary FTS4 table over the pinned Zenbu Example Senten
 
 D01-D05 direct-search top-20 observations are also in the raw benchmark: both mechanisms contain all 100 accepted pairs, but neither default order reproduces the reference.
 
-The raw benchmark deliberately labels FTS `rowid` order as a diagnostic. No report statement treats it as a recommended ranking. The candidate prefix is retained so future work can measure a proposed app-owned filter/ranker without rewriting this discovery record.
+The aggregate fixture covers 40 context-engine combinations. The candidate-row fixture contains 21,013 rows: every ranked candidate returned by each applicable engine for D01-D20. Each aggregate row includes a SHA-256 of its complete ranked ID sequence; mutual membership and rank deltas are duplicated only as typed comparison evidence and are replayed by the validator. FTS4 Porter is explicitly `not-applicable` for D18-D20 because this English tokenizer is not a Japanese retrieval candidate. The historical 1.33.1 Japanese `character` tokenizer fingerprint does not by itself supply a callable built-in iOS candidate or a current Japanese contract.
+
+The raw benchmark deliberately labels FTS `rowid` order as a diagnostic. No report statement treats it as a recommended ranking. Complete ordered sets are retained so future work can measure a proposed app-owned filter/ranker without rewriting this discovery record.
 
 ## Technology evaluation
 
@@ -82,7 +87,13 @@ The raw benchmark deliberately labels FTS `rowid` order as a diagnostic. No repo
 
 Open risks are version continuity, exact query escaping/joining, filters, cap, duplicate policy, index migration/size, and app-owned ranking. FTS5 is not a drop-in claim: the fingerprint is FTS4 and behavioral equivalence must be measured before substituting another module.
 
-The temp-only signed Release probe passed on the designated USB iPhone 14 Pro Max and was uninstalled afterward. Building a complete Porter index over the 287,490,048-byte pinned corpus database took 2,708.45–3,237.49 ms across three fresh runs and produced a 322,945,024-byte database, a 35,454,976-byte runtime index delta. A six-query batch measured 3.681–3.705 ms warm p50 and 3.760–3.777 ms warm p95. RSS was 105.05–105.35 MB versus a 65.09 MB otherwise-identical baseline. Eight concurrent read-only workers produced the same deterministic result SHA-256 in all three runs. Because SQLite is supplied by the platform, the signed executable delta was 40,688 bytes and the bundle file-sum delta was 40,682 bytes; those deltas exclude the separately measured runtime index. This establishes physical-device feasibility, not an accepted startup/index-migration strategy.
+The earlier USB RSS comparison is superseded because its baseline did not perform a comparable corpus-open/query workload. The corrected [`tools/issue147_runtime_probe.swift`](tools/issue147_runtime_probe.swift) source is compiled as two signed Release targets, with only the FTS target defining `FTS_PROBE`. Both processes copy and open the same corpus, run the same six queries for one warm-up, 100 sequential batches, and eight concurrent read-only workers, and incrementally hash and discard candidate IDs. FTS alone adds the separately timed/index-sized Porter-index preparation. `steady_query_rss_bytes` is the median of nine samples after the common workload with the database still open; `peak_sampled_rss_bytes` is the largest 10 ms sample from before corpus copy/open through the steady sample. The sampled peak can miss transients shorter than 10 ms, and any observed RSS difference is an end-to-end harness difference that includes database, index, cache, and process effects—not memory attributable to the tokenizer alone.
+
+The corrected harness passed three fresh-install runs per target on the designated USB iPhone 14 Pro Max running iOS 26.6; both temporary apps were removed afterward. The literal-substring baseline's steady RSS was 89,800,704–89,833,472 bytes and sampled peak was 93,618,176–93,700,096 bytes. FTS steady RSS was 96,092,160–96,157,696 bytes and sampled peak was 117,063,680–117,161,984 bytes. Thus the observed steady end-to-end harness difference was about 6.26–6.36 MB; the roughly 23.4 MB sampled-peak difference additionally includes FTS index construction and must not be attributed to the tokenizer alone.
+
+The baseline copy/open preparation took 714.96–732.05 ms; FTS copy/open/index/VACUUM preparation took 3,606.14–3,939.34 ms. The FTS database was 322,945,024 bytes versus the 287,490,048-byte source, a 35,454,976-byte runtime index delta. Over the common six-query batch, the literal-substring baseline measured 232.843–238.320 ms warm p50 and 236.362–249.544 ms p95; FTS measured 4.069–4.156 ms p50 and 4.158–4.406 ms p95. Different eligible counts (243 baseline, 1,023 FTS) are part of the measured engine behavior, not equal-result work. All 100 sequential batches and all eight concurrent workers matched the per-engine deterministic hash in every run.
+
+SQLite remains platform supplied: both signed bundles packaged the same 287,490,048-byte corpus resource and no extra NLP library or dictionary. The two optimized executables were 182,384 bytes (baseline) and 182,080 bytes (FTS); bundle file sums were 287,687,999 and 287,687,689 bytes. These tiny reversed build differences are recorded, not interpreted as a technology size delta. `devicectl` did not expose an installed-byte metric for these developer apps, so this report does not relabel bundle file sums as installed size.
 
 ### Apple Natural Language and standalone Snowball
 
@@ -121,10 +132,11 @@ The correction run used Tesseract 5.5.1, Ruby 2.6.10, and sqlite3 3.51.0. The of
 ```sh
 tesseract PRIVATE_CAPTURE.jpeg OCR_PREFIX -l jpn+eng --psm 6
 ruby docs/research/tools/issue147_match_capture_ocr.rb OCR_DIR CORPUS_DB RAW_MATCHES_TSV CONSOLIDATED_TSV docs/research/fixtures/example-sentence-retrieval-issue-147-ocr-corrections.tsv
-ruby docs/research/tools/issue147_build_typed_fixtures.rb ISSUE140_TSV CONSOLIDATED_TSV CORPUS_DB JPN_INDICES_CSV ISSUE147_EVIDENCE_DIR ISSUE148_EVIDENCE_DIR CONTEXTS_TSV ROWS_TSV
+ruby docs/research/tools/issue147_build_typed_fixtures.rb CONSOLIDATED_TSV CORPUS_DB JPN_INDICES_CSV ISSUE147_EVIDENCE_DIR ISSUE148_EVIDENCE_DIR CONTEXTS_TSV ROWS_TSV
 ruby docs/research/tools/issue147_build_entry_route_fixture.rb CORPUS_DB ISSUE147_EVIDENCE_DIR ENTRY_ROUTES_TSV
-ruby docs/research/tools/issue147_fts4_retrieval_benchmark.rb CONTEXTS_TSV ROWS_TSV CORPUS_DB BENCHMARK_TSV
-ruby docs/research/tools/issue147_validate_fixtures.rb CONTEXTS_TSV ROWS_TSV ENTRY_ROUTES_TSV BENCHMARK_TSV RUNTIME_TSV CORPUS_DB ISSUE147_EVIDENCE_DIR ISSUE148_EVIDENCE_DIR JPN_INDICES_CSV
+ruby docs/research/tools/issue147_fts4_retrieval_benchmark.rb CONTEXTS_TSV ROWS_TSV CORPUS_DB BENCHMARK_TSV CANDIDATE_ROWS_TSV
+ruby docs/research/tools/issue147_build_runtime_fixture.rb BASELINE_APP FTS_APP DEVICE_CLASS OS_VERSION RUNTIME_TSV BASELINE_RUN_1_JSON BASELINE_RUN_2_JSON BASELINE_RUN_3_JSON FTS_RUN_1_JSON FTS_RUN_2_JSON FTS_RUN_3_JSON
+ruby docs/research/tools/issue147_validate_fixtures.rb PLAN_TSV CONTEXTS_TSV ROWS_TSV ENTRY_ROUTES_TSV BENCHMARK_TSV CANDIDATE_ROWS_TSV RUNTIME_TSV CORPUS_DB ISSUE147_EVIDENCE_DIR ISSUE148_EVIDENCE_DIR JPN_INDICES_CSV
 ```
 
 The validator reads private evidence only to recompute the public SHA pointers. It emits no screenshot bytes, device identifiers, or private paths into the committed fixtures.
