@@ -1,165 +1,143 @@
 # Example Sentence Retrieval discovery and Language Technology evaluation
 
-Issue: #147. Corpus and provenance authority: #140. Frozen discrepancy evidence: #148. This report is research-only: it does not implement retrieval, select a corpus, write an ADR, or identify Nihongo's private implementation.
+Issue: #147. Corpus and provenance authority: #140. Behavioral discrepancy evidence: #148. Shipped-artifact fingerprint: #149. This report is research-only: it does not implement retrieval, select a final product architecture, write an ADR, or authorize a release.
 
 ## Executive finding
 
-The completed discovery evidence supports an app-owned retrieval seam with three established platform/library components:
+SQLite FTS4 with its built-in `porter` tokenizer is now the strongest English eligibility candidate. This is not an inference from similar output: the independently reviewed #149 audit found an FTS4 Porter example-target index in a lawfully accessible shipped Nihongo 1.33.1 artifact. SQLite's primary documentation says this tokenizer uses the Porter stemming algorithm.[^sqlite-fts]
 
-1. Apple Natural Language for English word boundaries and retained surface ranges.
-2. Snowball English Porter2 3.1.1 for a deterministic English stem tier broad enough to relate `education`, `educate`, `educating`, and `educated` without substring leakage.
-3. Lindera 5.1.0 with an exactly pinned Japanese dictionary for Japanese surfaces, base forms, and readings, provided an implementation spike closes the remaining on-device dictionary-load, memory, license-manifest, and packaging checks.
+The discovery-only end-to-end benchmark strengthens that candidate without overstating it. Across the 130 accepted visible rows in D06-D17, a quoted FTS4 Porter phrase retrieved all 130. Zenbu's current literal-substring baseline retrieved 106. FTS4 also rejected `red you` and admitted all observed `scared you`/`scare you` rows. However, FTS4 returned one row for the empty `startled you` control, exposed substantially larger candidate sets for common words, and its default row order disagreed with the reference. Eligibility, post-filters, limits, duplicate handling, and ranking therefore remain app-owned work.
 
-This is a compatibility recommendation, not a claim that Nihongo uses any of these technologies. Public Nihongo materials and the inspected Settings surface did not identify its tokenizer, lemmatizer, morphological analyzer, index, or database query.
+The artifact is Nihongo 1.33.1 while the accepted behavioral reference is 1.34.3. The fingerprint does not prove version continuity or reveal final SQL/ranking. It also identifies a historical character tokenizer for parsed Japanese example text, but the available evidence does not establish a current Japanese morphology contract. Lindera remains a mature, license-audited comparator, but is not selected or recommended: the discovery evidence does not justify adding its dictionary footprint to solve an unproven requirement.
 
-All twenty discovery contexts now have valid reference evidence. The recommendation and contract in this report are frozen for blind evaluation; they must not be tuned after a separate custodian reveals results for the ten replacement holdouts. The original ten planned holdouts were retired after candidate-only tokenization contaminated their seal and are not acceptance evidence.
+The original H-prefixed holdout set was contaminated and permanently retired. A separate custodian owns ten sealed replacements. No replacement query or result was inspected while producing this report.
 
-## Evidence boundary
+## Evidence boundary and typed fixtures
 
-The planned matrix is [`fixtures/example-sentence-retrieval-issue-147-contexts.tsv`](fixtures/example-sentence-retrieval-issue-147-contexts.tsv). Its pre-observation SHA-256 was `fe2103c65c2283c64f8c73c654f31068c2f9fbdc1af4bf1863a7cb8e3b64b931`. The original H-prefixed rows are retained for audit history but are retired from acceptance.
+The frozen plan is [`fixtures/example-sentence-retrieval-issue-147-contexts.tsv`](fixtures/example-sentence-retrieval-issue-147-contexts.tsv). Public-safe observations are split into typed tables:
 
-The frozen public observation fixture SHA-256 is `0502089d95e6a60c4c003267d1deed3691399b67b52863415193475730edab91`; the frozen candidate-output fixture SHA-256 is `8fa3caee4d4ee00187aaee91074cb6341288d277893c266fd3584fafb566da3b`.
+- [`fixtures/example-sentence-retrieval-issue-147-observation-contexts.tsv`](fixtures/example-sentence-retrieval-issue-147-observation-contexts.tsv) records environment, timestamps, private evidence pointers/hashes, count value, count kind, captured-row count, exhaustiveness, and terminal proof.
+- [`fixtures/example-sentence-retrieval-issue-147-observation-rows.tsv`](fixtures/example-sentence-retrieval-issue-147-observation-rows.tsv) records every transcribed visible rank with Japanese/English text, public pair IDs, Zenbu pre-change presence/rank, lexical relation, general/Japanese-index membership, and duplicate/one-to-many grouping.
+- [`fixtures/example-sentence-retrieval-issue-147-retrieval-benchmark.tsv`](fixtures/example-sentence-retrieval-issue-147-retrieval-benchmark.tsv) records candidate set size, visible-set overlap/recall, shared-pair order agreement, missing IDs, and candidate prefixes.
+- [`fixtures/example-sentence-retrieval-issue-147-runtime-probe.tsv`](fixtures/example-sentence-retrieval-issue-147-runtime-probe.tsv) records the signed USB iPhone 14 baseline and three separate system-SQLite FTS4 runs without exposing the device identifier.
 
-The public-safe observations are in [`fixtures/example-sentence-retrieval-issue-147-observations.tsv`](fixtures/example-sentence-retrieval-issue-147-observations.tsv):
+There are 279 accepted ranked rows across D01-D20. The corrected manual-evidence rule is applied uniformly: lists displaying at most 20 rows are transcribed completely; larger numeric or `50+` lists record the displayed count/cap and exact ordered top 20. D15 and D20 are exhaustive at 19 and 9 rows; D06-D11 are exhaustive at their displayed counts; D01-D05, D12-D14, and D16-D19 are explicitly non-exhaustive ordered top-20 observations. Retained deeper captures are supporting private evidence only, not additional accepted fixture ranks. Deterministic corpus tooling, rather than unbounded manual scrolling, owns exhaustive candidate comparison.
 
-- D01-D05 reuse #140's 35 traced Tatoeba pairs across five dictionary-entry contexts.
-- D06-D11 reuse the merged #148 discrepancy fixture and all seven traced unique Nihongo pairs.
-- D12 records `scatter` count 21 and the traced top six rows.
-- D13-D19 record exact reference counts plus bounded, ordered, traced top sequences. A displayed `50+` is a cap, not an inferred exact total; these rows are explicitly non-exhaustive.
-- D20 records all nine ordered `ねこ` rows and public Tatoeba pair IDs.
+Private screenshots remain outside git. Each public row points to one private capture and SHA-256. The OCR matcher is candidate-restricted, deterministic, and public-safe. It requires whole normalized English OCR segments rather than accepting candidate substrings anywhere in a frame. Seventeen clipped, header-derived, neighboring-row, or false duplicate-link candidates are recorded as removals in [`fixtures/example-sentence-retrieval-issue-147-ocr-corrections.tsv`](fixtures/example-sentence-retrieval-issue-147-ocr-corrections.tsv). Every selected duplicate-English group was visually audited; links are retained only when their corresponding Japanese rows are separately visible. The lowest remaining segment score, D19 `I ate caviar.`, was visually rechecked in its cited frame.
 
-Across D12-D20, 80 captured ordered rows were transcribed and resolved to 80 Tatoeba pair IDs in the repo corpus. The screenshots remain private; the public fixture contains only queries, displayed counts, boundedness, and public sentence-pair identifiers.
+Nihongo evidence is from the accepted iPhone reference running 1.34.3 (`9792`). #149 separately fingerprints 1.33.1 (`9587`); claims below keep those versions distinct.
 
-Nihongo evidence is from the accepted iPhone reference running 1.34.3 (`9792`). The public App Store listing now describes 1.34.4 and documents multi-word search plus fixes involving conjugated and search-only Japanese forms, but it does not disclose the underlying Language Technology.[^nihongo-store]
+## Actual dictionary-entry route probes
 
-## What the observations prove
+Direct Japanese search cannot establish dictionary-entry behavior, so two separate entry routes were captured:
 
-| Hypothesis | Result | Evidence |
-|---|---|---|
-| Normalized literal substring | Falsified as a compatibility rule | `red you` returns zero in Nihongo but 20 unrelated Zenbu substring rows. |
-| Unicode word/phrase boundary | Supported, not sufficient alone | It explains rejection of `red you`; it cannot explain `scared` matching `scare`. |
-| English token/stem phrase | Strongly supported | `scared you` includes exact `scared you` first, then three `scare you` rows; `scatter` includes exact, past, and progressive forms; `education` later reaches `educate`, `educating`, and `educated`. |
-| Exact surface before stem-equivalent phrase | Strongly supported | The `scared you` and `scare you` orderings change with the exact inflection, and the `education` top sequence places exact-family rows before verb forms. |
-| Japanese token/base/written-form/reading | Supported for the captured contrasts | `食べる` and `食べた` both resolve to dictionary headword `食べる` but produce different surface-specific top sequences; `ねこ` resolves to dictionary headword `猫`. This does not identify the reference analyzer. |
-| Dictionary-entry headword/reading relation | Supported | #140 shows plural and inflected English examples under singular/base entries; D18-D20 add Japanese base-form and reading-to-written-form behavior. |
-| Japanese-indices as an eligibility filter | Falsified as a universal rule | #140 contains visible rows outside Japanese-indices while all 35 are in official general/direct-link data. |
-| Sentence length then record ID | Falsified as Nihongo parity | #148 shows different sets and ordering from Zenbu's current length/ID policy. |
-| Stable public source order or ID | Unresolved | Available observations do not isolate this factor from lexical tiering. |
+- D21: search `食べた`, open Best Match `食べる` (`たべる`), then traverse the entry's inline `EXAMPLES` section. The route starts after meaning, kanji, related-word, and notes sections; it is not the direct-search `View 50+ Example Sentences` list. Preserved top rows include `食べた。` / “I ate.” and additional conjugated `食べる` examples.
+- D22: search `ねこ`, open Best Match `猫` (`ねこ`), then traverse the entry's inline `EXAMPLES` section. Preserved top rows include `猫だ！` / “It's a cat.” and other entry-associated `猫` examples.
 
-The supported English behavior is therefore a contiguous, boundary-aware stem phrase match with a separate exact-surface ranking tier. It is not bag-of-words search and not a substring predicate. D17 `cat!` reproduces D02 `cat`'s same first seven pair IDs, while `great` and `neat` remain distinct from `eat`; punctuation is ignored at token boundaries without enabling internal substrings.
+These probes prove route separation and entry-associated example behavior. They do not prove that direct-search eligibility, entry association, or final ranking share one implementation. The large D21 and D22 inline lists expose no numeric count. Under the corrected manual-evidence rule, each remains a non-exhaustive ordered top-20 structural probe and is not included in the D01-D20 typed-row count.
 
-## Candidate benchmark
+The typed top-20 evidence is in [`fixtures/example-sentence-retrieval-issue-147-entry-route-probes.tsv`](fixtures/example-sentence-retrieval-issue-147-entry-route-probes.tsv). Thirty-nine of forty rows resolve to the pinned corpus. D22 rank 1 (`猫だ！` / “It's a cat.”) is explicitly marked absent from that snapshot rather than being assigned a guessed public ID.
 
-Raw discovery-only outputs are in [`fixtures/example-sentence-retrieval-issue-147-language-technology.tsv`](fixtures/example-sentence-retrieval-issue-147-language-technology.tsv).
+## Hypothesis map
 
-### Apple Natural Language
+| Hypothesis | Explaining probes | Falsifying or limiting probes | Status |
+|---|---|---|---|
+| Normalized literal substring is sufficient | Zenbu baseline and many exact rows | D09 `red you` is 0 in Nihongo/20 in Zenbu; D06 misses three; D17 `cat!` displays `50+` while literal punctuation search finds none of the accepted top 20 | Falsified |
+| Quoted FTS4 Porter phrase is an English eligibility primitive | D06/D08 admit all scared/scare rows; D09 rejects internal substring; D12-D17 retrieve every visible row | D07 `startled you` is 0 in UI but 1 in FTS; candidate sets exceed exposed lists; default order differs | Strong candidate, incomplete contract |
+| Exact surface is ranked before Porter-equivalent surface | D06 ranks `scared you` first; D08 moves exact `scare you` rows ahead of the scared row | FTS default order does not reproduce either list; no general tie-break is isolated | Supported lexical tier only |
+| Japanese direct search is only literal surface matching | D18/D19 preserve different inflected top sequences | D20 `ねこ` resolves to written entry `猫`; D21/D22 entry routes add written-form/entry association; historical character index alone cannot explain all entry resolution | Falsified as complete rule |
+| Japanese-indices is a universal eligibility filter | Rows inside Japanese indices remain eligible | #140 visible rows outside Japanese indices are still present in general/direct-link data | Falsified |
+| English-ID deduplication removes one-to-many links | A deduplicated product could show one translation | D03 visibly includes Japanese IDs `77970` and `77975` linked to English ID `62636`; D05 includes `81557` and `4971` linked to English ID `1564` | Falsified |
+| Source row order, sentence length, or ID is the final tie-break | Some Zenbu baseline lists have high pairwise agreement | D06/D08 reorder the same shared family; FTS row order agreements range from 0.000 to 0.674 in discriminating contexts | Unresolved; do not freeze |
 
-Apple documents word tokenization, lexical tagging, and lemmatization in the on-device Natural Language framework.[^apple-nl] Its lemma scheme returns a stem form when known, including Apple's documented `reading` to `read` example.[^apple-lemma]
+Duplicate groups and full corpus group sizes are explicit in the row fixture. This separates “the reference displayed two linked Japanese rows” from the broader corpus fact that more links may exist.
 
-On this machine, English outputs match the inflectional discovery surfaces: `scared→scare`, `startled→startle`, and punctuation is excluded from `cat!`. The query `startled me` also normalizes `me→I`, while `education` remains `education`; Apple lemma output is therefore neither safe as a surface replacement nor broad enough for all observed eligibility.
+## End-to-end candidate benchmark
 
-On the same runtime, `NLTagger.availableTagSchemes(for: .word, language: .japanese)` exposes Language, Script, and TokenType, but not Lemma or LexicalClass. Apple Natural Language therefore passes English boundary/range analysis and fails as the sole English normalizer or Japanese analyzer. Because it is an Apple platform framework, it adds no separately bundled model in this experiment, but output remains OS-version dependent and must be regression-fixtured on the supported iOS matrix.
+The benchmark builds a temporary FTS4 table over the pinned Zenbu Example Sentence Corpus and executes the full quoted phrase through SQLite. It does not hand-tokenize, stem, lemmatize, or implement a search engine.
 
-### Snowball English Porter2
+| Context | Visible rows | FTS4 Porter recall | Literal-substring recall | Key result |
+|---|---:|---:|---:|---|
+| D06 `scared you` | 4 | 4/4 | 1/4 | Porter closes the reported eligibility gap |
+| D07 `startled you` | 0 | one extra candidate | 0 | proves FTS alone is over-inclusive |
+| D08 `scare you` | 4 | 4/4 | 3/4 | Porter set matches visible family; order does not |
+| D09 `red you` | 0 | 0 | 20 extra candidates | phrase boundaries remove substring leakage |
+| D10-D11 controls | 3 | 3/3 | 3/3 | both candidates retain existing controls |
+| D12 `scatter` | top 20 of 21 | 20/20 | 20/20 | accepted set parity; FTS row order agreement 0.495 |
+| D13 `education` | top 20 of 50+ | 20/20 | 20/20 | both broad sets require a separate limiter/ranker |
+| D14 `great` | top 20 of 50+ | 20/20 | 20/20 | both broad sets require a separate limiter/ranker |
+| D15 `neat` | 19 | 19/19 | 19/19 | FTS candidate set is exactly 19, but order agreement is 0.269 |
+| D16 `quickly` | top 20 of 50+ | 20/20 | 20/20 | both candidates contain the accepted prefix; neither order matches reference |
+| D17 `cat!` | top 20 of 50+ | 20/20 | 0/20 | FTS punctuation handling matches exposed eligibility |
 
-Snowball is the reference project for generated stemming algorithms; its recommended English algorithm is Porter2 and is designed to map related forms to a common search stem.[^snowball-english] Exact release 3.1.1, commit `cd195b51e948a902a4312f023f4a14392516a543`, is BSD-3-Clause licensed.[^snowball-license]
+D01-D05 direct-search top-20 observations are also in the raw benchmark: both mechanisms contain all 100 accepted pairs, but neither default order reproduces the reference.
 
-The pinned C implementation maps the discovery families as required: `education`, `educate`, `educating`, and `educated` all become `educ`; `scared` and `scare` become `scare`; `startled` and `startle` become `startl`; `scatter`, `scattered`, and `scattering` become `scatter`; and `great`, `neat`, and `eat` remain distinct. It preserves `me` rather than Apple's lemma normalization to `I`.
+The raw benchmark deliberately labels FTS `rowid` order as a diagnostic. No report statement treats it as a recommended ranking. The candidate prefix is retained so future work can measure a proposed app-owned filter/ranker without rewriting this discovery record.
 
-An English-only build of the generated runtime compiled as a 25 KB arm64 iOS 17 static archive. A 10,000-token warm Mac CLI run rounded below 0.01 seconds. This proves deterministic compile/link feasibility, not signed-device runtime. The app should pin the generated English sources and license, expose stems only behind the provider-independent analysis seam, and fixture every supported query; it should not implement or modify stemming rules by hand.
+## Technology evaluation
 
-### ICU
+### SQLite FTS4 Porter
 
-ICU BreakIterator provides Unicode word boundaries and automatically uses dictionaries for Japanese word breaking.[^icu-boundary] It does not provide the base-form/readings required by the Japanese contract. The iPhoneOS 26 SDK contains `libicucore.tbd` but no public `unicode/ubrk.h` headers in the SDK. Bundling ICU would duplicate boundary functionality and still require morphology; linking Apple's non-public ICU surface is not acceptable. ICU is eliminated as the app's analyzer, while its Unicode boundary semantics remain useful conceptual evidence.
+#149 is the primary fingerprint authority. The 1.33.1 store has one English/example target FTS row per target row, uses built-in FTS4 `porter`, and has no persisted final ranking score. Read-only probes show equal `scared you`/`scare you` sets and reject `red you`; the current corpus benchmark reproduces those useful properties. SQLite is already an iOS platform dependency and the candidate adds an index, not a separately bundled NLP runtime.[^sqlite-fts]
 
-### MeCab with IPADIC
+Open risks are version continuity, exact query escaping/joining, filters, cap, duplicate policy, index migration/size, and app-owned ranking. FTS5 is not a drop-in claim: the fingerprint is FTS4 and behavioral equivalence must be measured before substituting another module.
 
-MeCab 0.996 with IPADIC 2.7.0-20070801 returns the needed Japanese base form and reading (`食べた` as `食べ` + `た`, base `食べる` + `た`).[^mecab] The locally installed engine is about 3.5 MB and IPADIC about 51 MB unpacked; a warm 10,000-line CLI run took about 0.03 seconds on this Mac. It is native C++, but the upstream release line is old and an app integration would inherit a separate wrapper/build system. It remains a behavior-capable fallback, not the lead.
+The temp-only signed Release probe passed on the designated USB iPhone 14 Pro Max and was uninstalled afterward. Building a complete Porter index over the 287,490,048-byte pinned corpus database took 2,708.45–3,237.49 ms across three fresh runs and produced a 322,945,024-byte database, a 35,454,976-byte runtime index delta. A six-query batch measured 3.681–3.705 ms warm p50 and 3.760–3.777 ms warm p95. RSS was 105.05–105.35 MB versus a 65.09 MB otherwise-identical baseline. Eight concurrent read-only workers produced the same deterministic result SHA-256 in all three runs. Because SQLite is supplied by the platform, the signed executable delta was 40,688 bytes and the bundle file-sum delta was 40,682 bytes; those deltas exclude the separately measured runtime index. This establishes physical-device feasibility, not an accepted startup/index-migration strategy.
 
-### Sudachi
+### Apple Natural Language and standalone Snowball
 
-Sudachi supplies segmentation, part of speech, normalization, dictionary forms, readings, and multiple split modes.[^sudachi] Version 0.8.0 is current in the Java repository; sudachi.rs 0.6.11 is the current Rust release. SudachiDict has small/core/full editions and Apache-2.0 licensing, while its notice chain includes UniDic and other upstream data.[^sudachi-dict]
+Apple Natural Language remains useful for platform word ranges, but its lemma output does not cover the `education` family and its Japanese schemes on the tested runtime do not expose the required lemma/readings contract.[^apple-nl] Standalone Snowball Porter2 remains a deterministic comparator and compiled into a 25 KB arm64 iOS archive, but #149 found no Snowball package fingerprint. Neither remains the lead English retrieval candidate.
 
-SudachiPy 0.6.11 with SudachiDict-small 20260723 produced the richest discovery output: `食べた→食べる`, `ねこ→猫`, and readings. A warm 10,000-line CLI run took about 0.07 seconds. The small dictionary is approximately 117 MB unpacked (the release wheel is about 42 MB). No official Swift/iOS integration is documented, and the footprint is the largest candidate. It is the quality comparator, not the current mobile lead.
+### Lindera (evaluated, not selected)
 
-### Lindera
+Lindera 5.1.0 is an actively maintained Rust analyzer under MIT and produced Japanese base forms/readings needed for later experiments.[^lindera] The pinned IPADIC asset is 15,879,934 bytes compressed and 57,902,918 bytes by file sum; the release SHA-256 is `ed10ce59ff1b1315b780a3984cfd10e31b9e658e58a1706328eb343aaa6927c6`. Its notice attributes `mecab-ipadic-2.7.0-20070801` and requires the NAIST/ICOT terms to accompany redistribution.[^lindera-notice]
 
-Lindera is an actively maintained Rust morphological-analysis library; its official README documents 5.x, external prebuilt dictionaries, and an MIT license.[^lindera] Exact release 5.1.0 was published 2026-08-10. The official IPADIC asset is 15,879,934 bytes compressed and 57,902,918 bytes by file sum (55,560 KiB allocated/unpacked). Its release digest and independently verified SHA-256 are both `ed10ce59ff1b1315b780a3984cfd10e31b9e658e58a1706328eb343aaa6927c6`.
+A research C-ABI wrapper at tag `v5.1.0`, commit `1bcb0e28fcd90f34b2bcf12f55a25008d791f62c`, compiled for `aarch64-apple-ios`. The unstripped static archive was 26 MB and the linked research executable 7.0 MB. This proves compile/link feasibility only. The accepted discovery probes do not establish a Japanese morphology requirement that warrants the 57,902,918-byte extracted dictionary, so Lindera is not a recommended component and no signed-device claim is made for it.
 
-Lindera 5.1.0/IPADIC matches MeCab's discovery base forms/readings. A warm 10,000-line CLI run took about 0.01 seconds on this Mac. The official macOS CLI is 4.8 MB unpacked, but that is not an iOS app delta.
+### MeCab, Sudachi, and ICU
 
-## Lindera iOS feasibility spike
+MeCab/IPADIC and Sudachi remain behavior-capable comparators. MeCab's upstream release line and wrapper burden are less attractive; SudachiDict-small was about 117 MB unpacked and lacks an official Swift/iOS path.[^mecab][^sudachi] ICU provides Unicode boundaries but not the required base forms/readings, and the iOS SDK does not expose public ICU headers for direct app integration.[^icu]
 
-The research spike used exact tag `v5.1.0`, commit `1bcb0e28fcd90f34b2bcf12f55a25008d791f62c`, Rust 1.91.1, and target `aarch64-apple-ios`:
+## Candidate contract for the later implementation phase
 
-- A minimal C-ABI wrapper around `TokenizerBuilder` compiled as a release static library in 18.69 seconds wall time.
-- The unstripped static archive is 26 MB and exports `issue147_lindera_token_count`.
-- A C caller and a Swift caller through a bridging header both linked against iPhoneOS 26.
-- The linked research executable is 7.0 MB, Mach-O arm64, platform iOS, minimum iOS 17.0, SDK 26.0.
-- Dynamic dependencies are limited to Security, SystemConfiguration, libSystem, and Swift core.
-
-This proves the compile/link seam only. It does not prove signed-device execution, runtime dictionary loading from an app bundle, peak RSS, first-query latency, concurrency safety, or final stripped IPA delta.
-
-Apple's `nm` reports unknown LLVM-21 attributes for some Rust standard-library objects while still locating the exported symbol; clang and Swift link successfully. This tool-version diagnostic must be reproduced in the actual Xcode build before acceptance.
-
-## License, notices, deterministic data, and SBOM
-
-The engine is MIT at tag 5.1.0.[^lindera-license] The tag's `lindera-ipadic/NOTICE.txt` says the data derives from `mecab-ipadic-2.7.0-20070801` and requires the NAIST/ICOT no-warranty and redistribution provisions to accompany distribution.[^lindera-ipadic-notice] The binary release ZIP itself contains only dictionary data and `metadata.json`; it does not contain the required notice. Any app packaging must therefore bundle both Lindera's MIT license and the full pinned IPADIC notice in its acknowledgements/notices surface.
-
-Do not use Lindera's `embed-ipadic` feature as an unreviewed network build step. At v5.1.0 its build script downloads a dated archive from `Lindera.dev`, checks MD5, rebuilds data, and embeds generated bytes.[^lindera-ipadic-build] That is less auditable than vendoring the exact GitHub release asset by SHA-256. The recommended deterministic path is:
-
-1. Pin engine tag and commit.
-2. Pin the official `lindera-ipadic-5.1.0.zip` URL, byte length, and SHA-256.
-3. Extract its eight files in a controlled build step and verify each file hash before packaging.
-4. Bundle those bytes as app resources, not as a mutable build-time download.
-5. Bundle the tag's MIT license and IPADIC notice.
-6. Generate a target-specific CycloneDX/SPDX SBOM from the locked Cargo graph plus a separate data component for IPADIC.
-
-The research wrapper's generated Cargo lock contains 110 packages across all targets. That is a feasibility graph, not a production SBOM: the implementation must minimize features, lock the iOS target closure, preserve every transitive license text, and review the one `NOASSERTION` package before adoption.
-
-## Frozen discovery-supported retrieval contract
-
-The app-owned boundary should return provider-independent evidence, not Lindera or Tatoeba schemas:
+The discovery evidence supports a provider-independent seam, not a final ranking algorithm:
 
 ```text
-analyze(text, language) -> ordered tokens {
-  surface, normalizedSurface, englishStem?, japaneseBase?, reading?, byteRange
+retrieveCandidates(query, language, entryEvidence?) -> ordered/unordered candidates {
+  pairID, lexicalRelation, matchedRanges, sourceSequence, duplicateGroup
 }
 
-match(queryAnalysis, sentenceAnalysis, entryForms?) -> {
-  eligible, relation, matchedRanges, exactSurfaceCoverage, normalizedCoverage
-}
+rank(candidates, observedPolicyVersion) -> ranked candidates + rankEvidence
 ```
 
-The evidence-supported English policy is:
+For English direct search, the next implementation experiment should use a quoted SQLite FTS4 Porter phrase for candidate eligibility, preserve exact-surface evidence as a separate rank feature, and apply an explicit app-owned filter/limit. It must not rely on default FTS row order. Japanese direct search and dictionary-entry association remain separate routes until further evidence proves a shared contract.
 
-1. Match only a contiguous token sequence; reject substring-only fragments.
-2. Preserve punctuation-insensitive word boundaries through the platform tokenizer.
-3. Accept an exact normalized-surface phrase or a same-length contiguous Snowball-stem phrase.
-4. Rank exact normalized-surface phrases before stem-equivalent phrases.
-5. Never expose provider token tags or database columns to UI/domain callers.
+No final tie-break is frozen. Sentence length, row ID, source sequence, BM25/matchinfo, or popularity must each be proposed and tested explicitly against discovery plus the sealed replacement holdout; none may be inferred into the ADR from this report.
 
-The Japanese extension is an analogous contiguous comparison over surface, base form, and normalized reading, with dictionary-entry written forms/readings supplied as entry evidence. D18-D20 support these evidence fields, but do not prove which internal analyzer or tie-break Nihongo uses.
+## Reproduction
 
-No evidence yet supports the final tie-break inside a lexical tier. Do not invent a sentence-length, record-ID, or popularity tie-break. Preserve the corpus's stable source sequence until another discovery probe proves a different observable rule, and treat any mismatch as a visible blocker.
+The correction run used Tesseract 5.5.1, Ruby 2.6.10, and sqlite3 3.51.0. The official Tatoeba `jpn_indices.csv` archive SHA-256 was `375e13617e970ff54b1f1417b48493887ecbef48e6779cbdb8f774224baae84f`.
 
-## Remaining implementation and acceptance gates
+```sh
+tesseract PRIVATE_CAPTURE.jpeg OCR_PREFIX -l jpn+eng --psm 6
+ruby docs/research/tools/issue147_match_capture_ocr.rb OCR_DIR CORPUS_DB RAW_MATCHES_TSV CONSOLIDATED_TSV docs/research/fixtures/example-sentence-retrieval-issue-147-ocr-corrections.tsv
+ruby docs/research/tools/issue147_build_typed_fixtures.rb ISSUE140_TSV CONSOLIDATED_TSV CORPUS_DB JPN_INDICES_CSV ISSUE147_EVIDENCE_DIR ISSUE148_EVIDENCE_DIR CONTEXTS_TSV ROWS_TSV
+ruby docs/research/tools/issue147_build_entry_route_fixture.rb CORPUS_DB ISSUE147_EVIDENCE_DIR ENTRY_ROUTES_TSV
+ruby docs/research/tools/issue147_fts4_retrieval_benchmark.rb CONTEXTS_TSV ROWS_TSV CORPUS_DB BENCHMARK_TSV
+ruby docs/research/tools/issue147_validate_fixtures.rb CONTEXTS_TSV ROWS_TSV ENTRY_ROUTES_TSV BENCHMARK_TSV RUNTIME_TSV CORPUS_DB ISSUE147_EVIDENCE_DIR ISSUE148_EVIDENCE_DIR JPN_INDICES_CSV
+```
 
-- Have the independent custodian evaluate the already-frozen replacement holdouts without revealing them for tuning; record pass/fail separately from this discovery report.
-- Run the Lindera wrapper on the USB iPhone 14 Pro Max with the exact bundled dictionary; measure cold/warm latency, RSS, archive/IPA delta, and concurrency.
-- Resolve the `lindera-ipadic` notice/build-script naming mismatch (`20070801` notice versus `20250920` build input) with an upstream-primary provenance statement before adoption.
-- Reproduce the Snowball and Lindera compile/link spikes in the app's actual Xcode build, produce the production target-specific SBOM and notices manifest, and then write the ADR in the later implementation phase.
+The validator reads private evidence only to recompute the public SHA pointers. It emits no screenshot bytes, device identifiers, or private paths into the committed fixtures.
 
+## Remaining gates
+
+- Freeze any proposed filter/ranker before the separate custodian evaluates the ten sealed replacement holdouts. Do not tune after reveal.
+- Produce implementation-target notices/SBOM and an ADR only after candidate/runtime acceptance. No production behavior is changed by this research branch.
+
+[^sqlite-fts]: [SQLite FTS3 and FTS4 extension documentation](https://www.sqlite.org/fts3.html)
 [^apple-nl]: [Apple Natural Language framework documentation](https://developer.apple.com/documentation/naturallanguage)
-[^apple-lemma]: [Apple `NLTagScheme.lemma` documentation](https://developer.apple.com/documentation/naturallanguage/nltagscheme/lemma)
-[^snowball-english]: [Snowball English Porter2 algorithm](https://snowballstem.org/algorithms/english/stemmer.html)
-[^snowball-license]: [Snowball 3.1.1 license](https://github.com/snowballstem/snowball/blob/v3.1.1/COPYING)
-[^icu-boundary]: [ICU Boundary Analysis documentation](https://unicode-org.github.io/icu/userguide/boundaryanalysis/)
+[^lindera]: [Lindera v5.1.0 repository](https://github.com/lindera/lindera/tree/v5.1.0)
+[^lindera-notice]: [Lindera v5.1.0 IPADIC notice](https://github.com/lindera/lindera/blob/v5.1.0/lindera-ipadic/NOTICE.txt)
 [^mecab]: [Official MeCab repository](https://github.com/taku910/mecab)
 [^sudachi]: [Official Sudachi repository](https://github.com/WorksApplications/Sudachi)
-[^sudachi-dict]: [Official SudachiDict repository](https://github.com/WorksApplications/SudachiDict)
-[^lindera]: [Official Lindera repository](https://github.com/lindera/lindera/tree/v5.1.0)
-[^lindera-license]: [Lindera 5.1.0 MIT license](https://github.com/lindera/lindera/blob/v5.1.0/LICENSE)
-[^lindera-ipadic-notice]: [Lindera 5.1.0 IPADIC notice](https://github.com/lindera/lindera/blob/v5.1.0/lindera-ipadic/NOTICE.txt)
-[^lindera-ipadic-build]: [Lindera 5.1.0 IPADIC build script](https://github.com/lindera/lindera/blob/v5.1.0/lindera-ipadic/build.rs)
-[^nihongo-store]: [Nihongo official App Store listing](https://apps.apple.com/us/app/nihongo-japanese-dictionary/id881697245)
+[^icu]: [ICU Boundary Analysis documentation](https://unicode-org.github.io/icu/userguide/boundaryanalysis/)

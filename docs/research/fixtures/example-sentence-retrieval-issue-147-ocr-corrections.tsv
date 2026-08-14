@@ -1,0 +1,18 @@
+action	context_id	pair_id	replacement_pair_id	first_page	first_position	reason
+remove	D13	tatoeba:180352:19129				visual review of pages 019-023 shows the good-education value row already captured separately; clipped OCR selected a different education sentence
+remove	D13	tatoeba:1184790:302483				visual review of pages 000-001 shows only the 晩学 Japanese row for He acquired education late in his life
+remove	D13	tatoeba:144809:269755				visual traversal shows the two 両親 variants for Parents are responsible, but not this 親 Japanese row
+remove	D13	tatoeba:10624241:315498				visual review of pages 046-051 shows only 彼女は祖父に教育された for She was educated by her grandfather
+remove	D13	tatoeba:237051:19122				visual review of pages 004-005 and full OCR transcript shows no Education starts at home row; low-confidence segment match came from surrounding education text
+remove	D14	tatoeba:121631:282374				visual review of pages 021-022 shows a Great Britain horse-riding row, not Riding a horse is great fun
+remove	D14	tatoeba:227191:395934				visual review of page 035 shows no Great! row; the query-title text caused the low-confidence segment match
+remove	D14	tatoeba:221186:58509				visual review of pages 071-073 shows Goods are the great travelers, not These goods are in great demand
+remove	D14	tatoeba:214810:52104				visual review of pages 041-046 shows only the 優れた書物 and １度 Japanese variant for the great-books translation
+remove	D16	tatoeba:10906697:10906698				visual review of pages 014-015 shows a clipped preceding sentence ending in quickly, not Enter quickly
+remove	D16	tatoeba:202314:39526				visual review of pages 058-067 shows the residence-report sentence ending in as quickly as possible, not Please come home quickly
+remove	D18	tatoeba:2516655:324631				visual review of pages 000-001 shows only the 夕食 Japanese variant for the dinner-at-home translation
+remove	D18	tatoeba:123760:280235				visual review of pages 040-044 shows only the 肉を食べる動物もいる Japanese variant for the lions translation
+remove	D18	tatoeba:11212024:329580				visual review of pages 055-059 shows only the comma-after-パックマン Japanese variant for the Pac-Man translation
+remove	D18	tatoeba:9472839:277811				visual review of pages 022-036 and full OCR transcript shows breakfast rows but no I skipped my breakfast row
+remove	D19	tatoeba:126378:64175				visual review of pages 018-019 and full OCR transcript shows neighboring lunch rows but no Let's have lunch row
+remove	D19	tatoeba:200458:37659				visual review of pages 035-036 and full OCR transcript shows neighboring eating rows but no Eat and drink row

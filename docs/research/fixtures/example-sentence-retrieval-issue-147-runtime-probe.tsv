@@ -1,0 +1,5 @@
+component	run	device_class	os_version	configuration	signed	executable_bytes	bundle_file_bytes	source_database_bytes	runtime_database_bytes	cold_index_ms	warm_six_query_p50_ms	warm_six_query_p95_ms	rss_bytes	baseline_rss_bytes	concurrent_workers	concurrent_hashes_equal	deterministic_hash	status
+baseline	1	iPhone14ProMax	iOS26.6	Release	true	136784	287642399	287490048					65093632	65093632				pass
+sqlite-fts4-porter	1	iPhone14ProMax	iOS26.6	Release	true	177472	287683081	287490048	322945024	3237.492083	3.681292	3.774000	105054208	65093632	8	true	f6b28b5a2738451b23594c4911e7a3d1abd59e24127dd0664a82a772adc5ca63	pass
+sqlite-fts4-porter	2	iPhone14ProMax	iOS26.6	Release	true	177472	287683081	287490048	322945024	2779.570958	3.683833	3.759708	105119744	65093632	8	true	f6b28b5a2738451b23594c4911e7a3d1abd59e24127dd0664a82a772adc5ca63	pass
+sqlite-fts4-porter	3	iPhone14ProMax	iOS26.6	Release	true	177472	287683081	287490048	322945024	2708.449958	3.704583	3.776875	105349120	65093632	8	true	f6b28b5a2738451b23594c4911e7a3d1abd59e24127dd0664a82a772adc5ca63	pass

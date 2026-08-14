@@ -19,13 +19,13 @@ D17	discovery	direct-search	cat!	punctuation	punctuation and token boundary norm
 D18	discovery	direct-search	食べる	japanese-dictionary-form	Japanese token and lemma baseline
 D19	discovery	direct-search	食べた	japanese-inflected-form	Japanese conjugated-form behavior
 D20	discovery	direct-search	ねこ	japanese-kana	kana variant of a kanji headword
-H01	holdout	direct-search	dog	english-noun	unseen exact token and plural behavior
-H02	holdout	direct-search	concatenate	english-verb	cat substring negative control
-H03	holdout	direct-search	eating	english-inflected-form	unseen English inflection
-H04	holdout	direct-search	greater	english-comparative	great and eat overlap control
-H05	holdout	direct-search	frightened you	english-phrase	unseen inflected multi-word phrase
-H06	holdout	direct-search	surprised me	english-phrase	unseen inflected multi-word phrase
-H07	holdout	direct-search	ありがとう	japanese-surface-form	Japanese direct exact surface form
-H08	holdout	direct-search	きれい	japanese-kana	Japanese kana and ambiguous lexical form
-H09	holdout	dictionary-entry	猫	japanese-kanji-entry	Japanese written-form entry relationship
-H10	holdout	dictionary-entry	食べる	japanese-verb-entry	Japanese lemma entry and inflected examples
+H01	retired-contaminated	direct-search	dog	english-noun	original holdout retired; never use for acceptance
+H02	retired-contaminated	direct-search	concatenate	english-verb	original holdout retired; never use for acceptance
+H03	retired-contaminated	direct-search	eating	english-inflected-form	original holdout retired; never use for acceptance
+H04	retired-contaminated	direct-search	greater	english-comparative	original holdout retired; never use for acceptance
+H05	retired-contaminated	direct-search	frightened you	english-phrase	original holdout retired; never use for acceptance
+H06	retired-contaminated	direct-search	surprised me	english-phrase	original holdout retired; never use for acceptance
+H07	retired-contaminated	direct-search	ありがとう	japanese-surface-form	original holdout retired; never use for acceptance
+H08	retired-contaminated	direct-search	きれい	japanese-kana	original holdout retired; never use for acceptance
+H09	retired-contaminated	dictionary-entry	猫	japanese-kanji-entry	original holdout retired; never use for acceptance
+H10	retired-contaminated	dictionary-entry	食べる	japanese-verb-entry	original holdout retired; never use for acceptance
