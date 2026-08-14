@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "issue": 149,
+  "captured_at": "2026-08-14",
+  "finish_line_status": "fingerprint_only",
+  "delivery_surfaces": [
+    {"surface": "public_app_store_metadata", "status": "accessible"},
+    {"surface": "exact_reference_installed_app_metadata", "status": "accessible"},
+    {"surface": "exact_reference_installed_bundle", "status": "unavailable_via_supported_coredevice"},
+    {"surface": "exact_reference_app_data_container", "status": "container_lookup_failed_before_transfer"},
+    {"surface": "owned_ipa", "status": "not_found"},
+    {"surface": "mobile_applications_cache", "status": "not_found"},
+    {"surface": "apple_configurator_cache", "status": "not_found"},
+    {"surface": "ios_on_mac_installation", "status": "accessible_and_preserved"}
+  ],
+  "reference": {
+    "bundle_identifier": "com.serpentisei.studyjapanese",
+    "version": "1.34.3",
+    "build": "9792",
+    "bundle_bytes_available_via_supported_coredevice": false,
+    "app_data_container_probe": {
+      "copied_bytes": false,
+      "result": "failed_before_transfer",
+      "error_domain": "ContainerLookupErrorDomain",
+      "error_code": 3
+    }
+  },
+  "artifact": {
+    "surface": "os_exposed_app_store_ios_on_mac_installation",
+    "version": "1.33.1",
+    "build": "9587",
+    "preserved_at": "2026-08-14T14:25:40Z",
+    "regular_file_count": 1175,
+    "allocated_kib": 458348,
+    "tree_sha256": "1232990d6ed3eea92b5901bc95675745f223351353aac694413ee6360edfb212",
+    "main": {
+      "architecture": "arm64",
+      "size_bytes": 8691376,
+      "sha256": "266e4276f4c756479745264f6e12118dcee79ca1b189690d5bd03cd2ee97a150",
+      "fairplay_scheme": "v2",
+      "cryptid": 1,
+      "encrypted_region_bytes": 4096,
+      "stripped_status": "not_claimed_due_to_encryption_boundary"
+    },
+    "counts": {
+      "embedded_frameworks": 45,
+      "app_extensions": 3,
+      "compiled_coreml_models": 2,
+      "url_types": 1,
+      "url_schemes": 1,
+      "entitlement_keys": 11
+    },
+    "build_markers": {
+      "sdk": "iphoneos26.1",
+      "minimum_os": "18.0",
+      "nihongo_database_version": "1.33"
+    },
+    "embedded_framework_names": [
+      "AMPopTip", "ARChromeActivity", "ASATools", "Algorithms",
+      "AnimationSequence", "CHCSVParser", "CocoaLumberjack", "Collections",
+      "ConfigCat", "DeviceKit", "DictionaryFramework", "DownloadButton",
+      "Ensembles", "FBLPromises", "FMDB", "FirebaseABTesting",
+      "FirebaseCore", "FirebaseCoreInternal", "FirebaseInAppMessaging",
+      "FirebaseInstallations", "FirebaseRemoteConfig",
+      "FirebaseRemoteConfigInterop", "FirebaseSharedSwift", "GoogleUtilities",
+      "InAppSettingsKit", "KINWebBrowser", "MLPAutoCompleteTextField",
+      "MZAppearance", "MZFormSheetPresentationController", "PocketSVG",
+      "RealModule", "RevenueCat", "SSZipArchive", "SVGView", "Sentry",
+      "SwiftUIIntrospect", "SwifterSwift", "TTTAttributedLabel",
+      "TUSafariActivity", "TelemetryDeck", "Tokenizer", "UIColor_Utilities",
+      "WrappingHStack", "_NumericsShims", "nanopb"
+    ],
+    "app_extension_names": ["AddFurigana", "AddRomaji", "NihongoShareExtension"],
+    "compiled_coreml_model_names": ["DaKanji", "JapaneseTagger"],
+    "sensitive_values_committed": false,
+    "private_evidence_pointer": "private-evidence/zenbujapanese/issue-149"
+  },
+  "deterministic_findings": [
+    {
+      "capability": "example_sentence_target_match_index",
+      "identity": "SQLite FTS4 built-in Porter tokenizer",
+      "artifact_sql": "CREATE VIRTUAL TABLE ExampleSentenceTarget_text_FTS USING fts4( content=\"ZEXAMPLESENTENCETARGET\", ZTEXT, tokenize=porter )",
+      "artifact": "Frameworks/DictionaryFramework.framework/Dictionary.sqlite",
+      "artifact_size_bytes": 332681216,
+      "artifact_sha256": "374ca944196e84031cbb65b98943b71f62a182fd601ac6433edde535ba3ec993",
+      "semantic_runtime_version": null,
+      "continuity_to_reference_version": "unproven"
+    },
+    {
+      "capability": "parsed_japanese_example_text_index",
+      "identity": "SQLite FTS4 character tokenizer",
+      "artifact_sql": "CREATE VIRTUAL TABLE ParsedExampleText_text_FTS USING fts4( content=\"\", ZTEXT, tokenize=character )"
+    },
+    {
+      "capability": "japanese_tokenization_and_deconjugation",
+      "identity": "first-party Tokenizer.framework with Apple NaturalLanguage and CoreML",
+      "bundle_identifier": "com.serpentisei.Tokenizer",
+      "version": "1.0",
+      "build": "1",
+      "cryptid": 0,
+      "example_retrieval_role": "not_established"
+    },
+    {
+      "capability": "sqlite_wrapper",
+      "identity": "FMDB",
+      "bundle_identifier": "org.cocoapods.FMDB",
+      "version": "2.7.5",
+      "build": "1",
+      "cryptid": 0,
+      "example_retrieval_role": "not_established"
+    }
+  ],
+  "store": {
+    "example_sentence_rows": 205886,
+    "example_sentence_target_rows": 202079,
+    "example_sentence_target_fts_rows": 202079,
+    "case_folded_duplicate_target_text_groups": 20435,
+    "duplicate_target_rows_beyond_first": 25296,
+    "persisted_ranking_score_found": false,
+    "final_duplicate_policy_found": false
+  },
+  "quoted_fts_phrase_probes": [
+    {"query": "scared you", "candidate_count": 3},
+    {"query": "scare you", "candidate_count": 3},
+    {"query": "red you", "candidate_count": 0},
+    {"query": "startle you", "candidate_count": 1},
+    {"query": "startled you", "candidate_count": 1}
+  ],
+  "candidate_packages": {
+    "snowball": "not_identified; corpus word hits only; SQLite Porter is built-in",
+    "lindera": "not_identified; dictionary word hits only",
+    "mecab_ipadic": "not_identified",
+    "sudachi_sudachidict": "not_identified; dictionary word hits only",
+    "kuromoji": "not_identified",
+    "unidic": "pitch_accent_source_only; no example retrieval role"
+  },
+  "unresolved": [
+    "exact SQLite semantic runtime version",
+    "schema continuity from 1.33.1 to 1.34.3",
+    "final MATCH expression and escaping",
+    "eligibility filters and fallback paths",
+    "link and duplicate handling",
+    "result limit",
+    "ranking weights and tie-breakers"
+  ],
+  "prohibited_actions_performed": []
+}
