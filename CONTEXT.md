@@ -20,6 +20,30 @@ _Avoid_: Shared app, product area
 Canonical app-owned Japanese lexical, orthographic, pronunciation, and classification facts whose source provenance is retained independently of any provider schema.
 _Avoid_: Provider data model, generated language fact
 
+**Language Data Source**:
+An external, versioned collection used to construct Language Reference Data or an Example Sentence Corpus while retaining its identity, license, and provenance.
+_Avoid_: Provider schema, retrieval behavior, matching technology
+
+**Language Technology**:
+A replaceable established library, model, or system component used to implement language analysis without owning the app's product contract or language data.
+_Avoid_: Language Data Source, corpus, Product Experience, retrieval policy
+
+**Example Sentence Corpus**:
+The canonical app-owned collection of source-backed Japanese–English example pairs and their retained provenance.
+_Avoid_: Tatoeba database, Nihongo sentences, retrieval results
+
+**Example Sentence Retrieval**:
+The Shared Capability that determines which Example Sentence Corpus records are relevant to a Search query or dictionary entry and the order in which they appear.
+_Avoid_: Data source, corpus, provider search, matching technology
+
+**Example Sentence Match**:
+An evidence-backed relationship establishing that an Example Sentence Corpus record is relevant to a Search query or dictionary entry.
+_Avoid_: Substring hit, ranking score, source membership
+
+**Example Sentence Ranking**:
+The ordering of eligible Example Sentence Matches for presentation to the learner.
+_Avoid_: Corpus order, source order, match eligibility
+
 **Japanese Text Analysis**:
 The Shared Capability that resolves Japanese text into app-owned segments, tokens, lemmas, language-item candidates, and occurrence mappings.
 _Avoid_: Media Analysis, translation
