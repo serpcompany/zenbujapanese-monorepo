@@ -40,9 +40,11 @@ Dictionary Sources identifies the source, attribution, modifications, snapshot, 
 
 ## Tatoeba
 
-The three `*-2026-08-08.tsv.bz2` files are pinned official Tatoeba weekly exports for Japanese sentences, English sentences, and their translation links. Immutable HTTP metadata and checksums are in `Tatoeba-2026-08-08.source.json`. The importer retains one deterministic English translation for each linked Japanese sentence as app-owned offline example data, while preserving the Japanese sentence ID for attribution.
+Seven `*-2026-08-08.tsv.bz2` files are pinned official Tatoeba weekly exports: Japanese and English general sentences, their direct links, Japanese and English detailed sentences, and the Japanese and English CC0 subsets. Immutable HTTP metadata and checksums are in `Tatoeba-2026-08-08.source.json`. The importer retains the lowest-ID direct English translation for each Japanese sentence, validates general text against the detailed export, and records both sentence IDs, supplied contributor usernames, an explicit `not-supplied` status when the official username field is null, each side's license class, and the complete snapshot identity.
 
-Tatoeba publishes these exports under CC BY 2.0 FR. The app links to the project and license from Dictionary Sources; provider record IDs remain retained provenance and are not rendered in learner-facing example rows.
+The general exports are published under CC BY 2.0 FR; CC0 membership is established only through the corresponding official CC0 exports. Named contributors are generated into the bundled database and exposed from Dictionary Sources without adding attribution clutter to learner-facing rows. The bundled notice identifies the source, licenses, and Zenbu's selection/indexing modifications. No contributor identity is inferred for a `\\N` detailed-export username.
+
+`verify_tatoeba_provenance.py` is a Release build gate: it rejects any shipped pair with missing/inconsistent IDs, contributor status, license class, snapshot identity, or contributor-credit counts.
 
 ## App-owned word relationships
 

@@ -268,9 +268,29 @@ def create_schema(database: sqlite3.Connection) -> None:
           id TEXT PRIMARY KEY,
           source_identity TEXT NOT NULL,
           source_record_id TEXT NOT NULL,
+          japanese_source_record_id INTEGER NOT NULL,
+          english_source_record_id INTEGER NOT NULL,
+          japanese_contributor TEXT,
+          english_contributor TEXT,
+          japanese_contributor_status TEXT NOT NULL,
+          english_contributor_status TEXT NOT NULL,
+          japanese_license TEXT NOT NULL,
+          english_license TEXT NOT NULL,
+          pair_license TEXT NOT NULL,
+          source_snapshot_date TEXT NOT NULL,
+          source_snapshot_sha256 TEXT NOT NULL,
           japanese TEXT NOT NULL,
           english TEXT NOT NULL
         );
+
+        CREATE UNIQUE INDEX example_sentences_source_pair_index
+          ON example_sentences(japanese_source_record_id, english_source_record_id);
+
+        CREATE TABLE example_sentence_contributors (
+          username TEXT PRIMARY KEY,
+          sentence_side_count INTEGER NOT NULL
+        );
+
         """
     )
 
@@ -284,6 +304,10 @@ def import_snapshot(
     tatoeba_japanese_source: Path,
     tatoeba_english_source: Path,
     tatoeba_links_source: Path,
+    tatoeba_japanese_detailed_source: Path,
+    tatoeba_english_detailed_source: Path,
+    tatoeba_japanese_cc0_source: Path,
+    tatoeba_english_cc0_source: Path,
     tatoeba_metadata: dict[str, object],
     relationship_source: Path,
     relationship_metadata: dict[str, object],
@@ -480,11 +504,17 @@ def import_snapshot(
         pitch_entry_count = apply_unidic_pitch(
             database, entry_records, unidic_source, unidic_metadata, normalized_text
         )
-        example_sentence_count = import_tatoeba_examples(
+        example_sentence_import = import_tatoeba_examples(
             database,
             tatoeba_japanese_source,
             tatoeba_english_source,
             tatoeba_links_source,
+            tatoeba_japanese_detailed_source,
+            tatoeba_english_detailed_source,
+            tatoeba_japanese_cc0_source,
+            tatoeba_english_cc0_source,
+            str(tatoeba_metadata["snapshot_date"]),
+            str(tatoeba_metadata["aggregate_sha256"]),
         )
 
         records_by_id = {record["id"]: record for record in entry_records}
@@ -583,7 +613,8 @@ def import_snapshot(
             "note_identity_duplicate_groups": note_identity_duplicate_groups,
             "note_identity_disambiguated_entries": note_identity_disambiguated_entries,
             "pitch_entries": pitch_entry_count,
-            "example_sentences": example_sentence_count,
+            "example_sentences": example_sentence_import["retained_pairs"],
+            "example_sentence_provenance": example_sentence_import,
             "rejection_reasons": {"missing_ent_seq_reading_or_english_gloss": rejected},
             "retained_fields": [
                 "ent_seq",
@@ -616,11 +647,13 @@ def import_snapshot(
                 "deterministic app-owned rank score derived from documented JMdict priority tags",
                 "UniDic aType normalized to deterministic downstep and pronunciation-mora-count facts by exact base-form and pronunciation-or-lexical-reading match",
                 "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence",
+                "both Tatoeba sentence IDs, supplied contributor usernames, per-record license class, snapshot identity, and source hashes retained",
             ],
             "pitch_source_resource_id": unidic_metadata["resource_id"],
             "pitch_source_sha256": unidic_metadata["sha256"],
             "example_source_resource_id": tatoeba_metadata["resource_id"],
             "example_source_sha256": tatoeba_metadata["aggregate_sha256"],
+            "example_source_inputs": tatoeba_metadata["sources"],
             "relationship_source_resource_id": relationship_metadata["resource_id"],
             "relationship_source_sha256": file_sha256(relationship_source),
             "import_tool_sha256": file_sha256(Path(__file__)),
@@ -654,6 +687,10 @@ def main() -> None:
     parser.add_argument("--tatoeba-japanese-source", type=Path, required=True)
     parser.add_argument("--tatoeba-english-source", type=Path, required=True)
     parser.add_argument("--tatoeba-links-source", type=Path, required=True)
+    parser.add_argument("--tatoeba-japanese-detailed-source", type=Path, required=True)
+    parser.add_argument("--tatoeba-english-detailed-source", type=Path, required=True)
+    parser.add_argument("--tatoeba-japanese-cc0-source", type=Path, required=True)
+    parser.add_argument("--tatoeba-english-cc0-source", type=Path, required=True)
     parser.add_argument("--tatoeba-metadata", type=Path, required=True)
     parser.add_argument("--relationship-source", type=Path, required=True)
     arguments = parser.parse_args()
@@ -674,6 +711,10 @@ def main() -> None:
         "japanese_sentences": arguments.tatoeba_japanese_source,
         "english_sentences": arguments.tatoeba_english_source,
         "japanese_english_links": arguments.tatoeba_links_source,
+        "japanese_detailed_sentences": arguments.tatoeba_japanese_detailed_source,
+        "english_detailed_sentences": arguments.tatoeba_english_detailed_source,
+        "japanese_cc0_sentences": arguments.tatoeba_japanese_cc0_source,
+        "english_cc0_sentences": arguments.tatoeba_english_cc0_source,
     }
     for pinned in tatoeba_metadata["sources"]:
         actual = file_sha256(tatoeba_paths[pinned["role"]])
@@ -692,6 +733,10 @@ def main() -> None:
         arguments.tatoeba_japanese_source,
         arguments.tatoeba_english_source,
         arguments.tatoeba_links_source,
+        arguments.tatoeba_japanese_detailed_source,
+        arguments.tatoeba_english_detailed_source,
+        arguments.tatoeba_japanese_cc0_source,
+        arguments.tatoeba_english_cc0_source,
         tatoeba_metadata,
         arguments.relationship_source,
         relationship_metadata,

@@ -93,13 +93,24 @@ struct DictionarySourcesView: View {
         }
 
         Section("Tatoeba") {
-          Text("Offline Japanese–English example sentences from Tatoeba's official weekly export.")
+          Text("Offline Japanese–English example sentences from Tatoeba's official weekly export. Zenbu retains both sentence IDs, supplied contributor usernames, per-record license class, and the exact source snapshot.")
           HStack {
             Text("License")
             Spacer()
             Text("CC BY 2.0 FR")
           }
           LabeledContent("Snapshot", value: "2026-08-08")
+          NavigationLink("Contributor credits") {
+            TatoebaContributorCreditsView()
+          }
+          .accessibilityIdentifier("dictionary-sources.tatoeba-contributors")
+          NavigationLink("Bundled attribution notice") {
+            BundledLicenseTextView(
+              title: "Tatoeba Attribution Notice",
+              resource: "TATOEBA-NOTICE"
+            )
+          }
+          .accessibilityIdentifier("dictionary-sources.tatoeba-notice")
           Link("Project and downloads", destination: URL(string: "https://tatoeba.org/en/downloads")!)
           Link("License terms", destination: URL(string: "https://creativecommons.org/licenses/by/2.0/fr/")!)
         }
@@ -136,6 +147,29 @@ struct DictionarySourcesView: View {
           Button("Done") { dismiss() }
         }
       }
+    }
+  }
+}
+
+private struct TatoebaContributorCreditsView: View {
+  @State private var credits: [TatoebaContributorCredit] = []
+
+  var body: some View {
+    List {
+      Section {
+        Text("Named contributors supplied by Tatoeba's detailed 2026-08-08 exports. Each shipped pair also retains both Tatoeba record IDs. Records for which the official export supplies no username are marked not-supplied and attributed to Tatoeba contributors; Zenbu does not invent an author identity.")
+      }
+      Section("Named contributors (\(credits.count))") {
+        ForEach(credits) { credit in
+          LabeledContent(credit.username, value: "\(credit.sentenceSideCount)")
+        }
+      }
+    }
+    .navigationTitle("Tatoeba Contributors")
+    .navigationBarTitleDisplayMode(.inline)
+    .task {
+      guard credits.isEmpty else { return }
+      credits = TatoebaAttributionClient.contributorCredits()
     }
   }
 }

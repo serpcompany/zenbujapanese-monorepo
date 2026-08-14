@@ -36,6 +36,13 @@
     "note_identity_disambiguated_entries": 6,
     "pitch_entries": 79830,
     "example_sentences": 232703,
+    "example_sentence_provenance": {
+      "retained_pairs": 232703,
+      "cc0_pairs": 2,
+      "attributed_pairs": 232701,
+      "named_contributors": 3180,
+      "unassigned_sentence_sides": 131445
+    },
     "rejection_reasons": {
       "missing_ent_seq_reading_or_english_gloss": 0
     },
@@ -69,19 +76,85 @@
       "app-owned commonness marker derived from priority on the selected display form",
       "deterministic app-owned rank score derived from documented JMdict priority tags",
       "UniDic aType normalized to deterministic downstep and pronunciation-mora-count facts by exact base-form and pronunciation-or-lexical-reading match",
-      "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence"
+      "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence",
+      "both Tatoeba sentence IDs, supplied contributor usernames, per-record license class, snapshot identity, and source hashes retained"
     ],
     "pitch_source_resource_id": "SOURCE-COMPONENT-UNIDIC",
     "pitch_source_sha256": "340651aa78cc02caf690f94de8809d41c4acda694226517884ecad81c51523fc",
     "example_source_resource_id": "SOURCE-COMPONENT-TATOEBA",
-    "example_source_sha256": "2799d411d99bd023044303fd3b2554a9e391401a04492e508ad1cd53c0304961",
+    "example_source_sha256": "2d262f6686050315b842b84d0e60b6d9613f6b42e431ea94d3fbe45b8e6b830e",
+    "example_source_inputs": [
+      {
+        "role": "japanese_sentences",
+        "identity": "Tatoeba Japanese sentences",
+        "download_url": "https://downloads.tatoeba.org/exports/per_language/jpn/jpn_sentences.tsv.bz2",
+        "http_last_modified": "Sat, 08 Aug 2026 06:29:57 GMT",
+        "http_etag": "\"6a76cce5-3422f7\"",
+        "compressed_bytes": 3416823,
+        "sha256": "62c2ba106de8de3d9b8968156de28fbfd993de6e65772a44e586b5e872f0634a"
+      },
+      {
+        "role": "english_sentences",
+        "identity": "Tatoeba English sentences",
+        "download_url": "https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences.tsv.bz2",
+        "http_last_modified": "Sat, 08 Aug 2026 06:29:57 GMT",
+        "http_etag": "\"6a76cce5-17aa06f\"",
+        "compressed_bytes": 24813679,
+        "sha256": "34fc76cc177ca65b56cb3b966a2b8f33efd8a1b0551eb855f31b5ab940d05e60"
+      },
+      {
+        "role": "japanese_english_links",
+        "identity": "Tatoeba Japanese-English links",
+        "download_url": "https://downloads.tatoeba.org/exports/per_language/jpn/jpn-eng_links.tsv.bz2",
+        "http_last_modified": "Sat, 08 Aug 2026 06:39:45 GMT",
+        "http_etag": "\"6a76cf31-163125\"",
+        "compressed_bytes": 1454373,
+        "sha256": "176eaaa0cb44006af0c99823e4e110c10568aa35bd4cb6f87dd5826d3e3bbca4"
+      },
+      {
+        "role": "japanese_detailed_sentences",
+        "identity": "Tatoeba Japanese detailed sentences with supplied contributor usernames",
+        "download_url": "https://downloads.tatoeba.org/exports/per_language/jpn/jpn_sentences_detailed.tsv.bz2",
+        "http_last_modified": "Sat, 08 Aug 2026 06:28:41 GMT",
+        "http_etag": "\"6a76cc99-440c84\"",
+        "compressed_bytes": 4459652,
+        "sha256": "ec113c38e4fa8bff8c1ed44b2786345084f1766780b86ef9bc754450ca21f0ac"
+      },
+      {
+        "role": "english_detailed_sentences",
+        "identity": "Tatoeba English detailed sentences with supplied contributor usernames",
+        "download_url": "https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences_detailed.tsv.bz2",
+        "http_last_modified": "Sat, 08 Aug 2026 06:28:41 GMT",
+        "http_etag": "\"6a76cc99-2130645\"",
+        "compressed_bytes": 34801221,
+        "sha256": "2080a8720ab4f5d7475dff0b49f40a37871f42ac29432ceb2084fe405f31cc02"
+      },
+      {
+        "role": "japanese_cc0_sentences",
+        "identity": "Tatoeba Japanese CC0 sentences",
+        "download_url": "https://downloads.tatoeba.org/exports/per_language/jpn/jpn_sentences_CC0.tsv.bz2",
+        "http_last_modified": "Sat, 08 Aug 2026 06:29:58 GMT",
+        "http_etag": "\"6a76cce6-e4\"",
+        "compressed_bytes": 228,
+        "sha256": "39e6768de61f901a0904d9e74e554772d4e12286121ec3e2c6bd5307ce543465"
+      },
+      {
+        "role": "english_cc0_sentences",
+        "identity": "Tatoeba English CC0 sentences",
+        "download_url": "https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences_CC0.tsv.bz2",
+        "http_last_modified": "Sat, 08 Aug 2026 06:29:58 GMT",
+        "http_etag": "\"6a76cce6-13a94c\"",
+        "compressed_bytes": 1288524,
+        "sha256": "6ab169264a28008c25bf63042bf7535fc63137c9d7e09b7b8bd7812d10117d1b"
+      }
+    ],
     "relationship_source_resource_id": "zenbu-word-relationships-v1",
     "relationship_source_sha256": "2c483c933f5a42baad194db9a45c1d6251e09ebcb2a40c6475ca3d984ea2dd38",
-    "import_tool_sha256": "936cc79fea9ddc355972b14b84e7af94b99e72a20ac05206cf8b2ffd776a1c35",
+    "import_tool_sha256": "3ba071e28ba5be54db91ba9de5ee751dd64493de03ab4fe9e093922c7481ecbc",
     "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
     "unidic_adapter_sha256": "f616738d7f45e3c75ece903d62ce2092923a6e68cf0925dafe030563c753985a",
-    "tatoeba_adapter_sha256": "fae8c063bbf42b01174aa94af21511f801b8b97fbfcf106e0bd23d548f378093",
-    "database_sha256": "c5076ad2ae06ba4ca0c2976a00dfaad06af827d6ef0aac0424158d0b4dbe3cac",
-    "database_bytes": 287490048
+    "tatoeba_adapter_sha256": "106cfef49de0ca3988b7cca1177df04b5c1d535a0fe31f1eab89e372b26be347",
+    "database_sha256": "7c37597d8b65123912b8a5b546dd11b215868ffc9dc399f6db7d8ce22f069681",
+    "database_bytes": 328654848
   }
 }

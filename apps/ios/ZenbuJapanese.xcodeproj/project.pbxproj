@@ -95,6 +95,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 376F81E60ED620D541A9BF80 /* Build configuration list for PBXNativeTarget "ZenbuJapanese" */;
 			buildPhases = (
+				8A1400000000000000000001 /* Verify Tatoeba provenance for Release */,
 				E0343DFD8725F6F5A7D4FFEB /* Sources */,
 				A108F17A14E04A2AA1B1C108 /* Copy canonical Image Text fixtures for Debug */,
 				F38B6861CA6A9754CF93F50B /* Frameworks */,
@@ -179,6 +180,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		8A1400000000000000000001 /* Verify Tatoeba provenance for Release */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Tools/verify_tatoeba_provenance.py",
+				"$(SRCROOT)/Tools/tatoeba_adapter.py",
+				"$(SRCROOT)/LanguageData/Sources/Tatoeba-2026-08-08.source.json",
+				"$(SRCROOT)/Modules/Sources/LookupReplica/Resources/LanguageReferenceData.sqlite3",
+			);
+			name = "Verify Tatoeba provenance for Release";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/tatoeba-provenance-verified.stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n  /usr/bin/python3 \"$SRCROOT/Tools/verify_tatoeba_provenance.py\" \\\n    \"$SRCROOT/Modules/Sources/LookupReplica/Resources/LanguageReferenceData.sqlite3\" \\\n    \"$SRCROOT/LanguageData/Sources/Tatoeba-2026-08-08.source.json\"\nfi\n/usr/bin/touch \"$DERIVED_FILE_DIR/tatoeba-provenance-verified.stamp\"\n";
+		};
 		A108F17A14E04A2AA1B1C108 /* Copy canonical Image Text fixtures for Debug */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;

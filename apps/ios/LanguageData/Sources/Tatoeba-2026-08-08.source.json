@@ -2,12 +2,15 @@
   "resource_id": "SOURCE-COMPONENT-TATOEBA",
   "identity": "Tatoeba Japanese-English weekly export 2026-08-08",
   "snapshot_date": "2026-08-08",
-  "fetched_at_utc": "2026-08-10T14:55:03Z",
+  "fetched_at_utc": "2026-08-14T08:52:00Z",
   "license": "CC BY 2.0 FR",
   "license_url": "https://creativecommons.org/licenses/by/2.0/fr/",
+  "cc0_license": "CC0 1.0",
+  "cc0_license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
   "documentation_url": "https://tatoeba.org/en/downloads",
-  "aggregate_sha256": "2799d411d99bd023044303fd3b2554a9e391401a04492e508ad1cd53c0304961",
-  "aggregate_method": "SHA-256 of the three ordered source SHA-256 values, each followed by LF",
+  "attribution_policy": "Retain both sentence IDs, the contributor usernames supplied by the detailed exports, explicit not-supplied status when the official username field is null, and the CC0 membership of each side. Credit named contributors in-app without adding attribution clutter to learner-facing rows.",
+  "aggregate_sha256": "2d262f6686050315b842b84d0e60b6d9613f6b42e431ea94d3fbe45b8e6b830e",
+  "aggregate_method": "SHA-256 of the seven ordered source SHA-256 values, each followed by LF",
   "sources": [
     {
       "role": "japanese_sentences",
@@ -35,6 +38,42 @@
       "http_etag": "\"6a76cf31-163125\"",
       "compressed_bytes": 1454373,
       "sha256": "176eaaa0cb44006af0c99823e4e110c10568aa35bd4cb6f87dd5826d3e3bbca4"
+    },
+    {
+      "role": "japanese_detailed_sentences",
+      "identity": "Tatoeba Japanese detailed sentences with supplied contributor usernames",
+      "download_url": "https://downloads.tatoeba.org/exports/per_language/jpn/jpn_sentences_detailed.tsv.bz2",
+      "http_last_modified": "Sat, 08 Aug 2026 06:28:41 GMT",
+      "http_etag": "\"6a76cc99-440c84\"",
+      "compressed_bytes": 4459652,
+      "sha256": "ec113c38e4fa8bff8c1ed44b2786345084f1766780b86ef9bc754450ca21f0ac"
+    },
+    {
+      "role": "english_detailed_sentences",
+      "identity": "Tatoeba English detailed sentences with supplied contributor usernames",
+      "download_url": "https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences_detailed.tsv.bz2",
+      "http_last_modified": "Sat, 08 Aug 2026 06:28:41 GMT",
+      "http_etag": "\"6a76cc99-2130645\"",
+      "compressed_bytes": 34801221,
+      "sha256": "2080a8720ab4f5d7475dff0b49f40a37871f42ac29432ceb2084fe405f31cc02"
+    },
+    {
+      "role": "japanese_cc0_sentences",
+      "identity": "Tatoeba Japanese CC0 sentences",
+      "download_url": "https://downloads.tatoeba.org/exports/per_language/jpn/jpn_sentences_CC0.tsv.bz2",
+      "http_last_modified": "Sat, 08 Aug 2026 06:29:58 GMT",
+      "http_etag": "\"6a76cce6-e4\"",
+      "compressed_bytes": 228,
+      "sha256": "39e6768de61f901a0904d9e74e554772d4e12286121ec3e2c6bd5307ce543465"
+    },
+    {
+      "role": "english_cc0_sentences",
+      "identity": "Tatoeba English CC0 sentences",
+      "download_url": "https://downloads.tatoeba.org/exports/per_language/eng/eng_sentences_CC0.tsv.bz2",
+      "http_last_modified": "Sat, 08 Aug 2026 06:29:58 GMT",
+      "http_etag": "\"6a76cce6-13a94c\"",
+      "compressed_bytes": 1288524,
+      "sha256": "6ab169264a28008c25bf63042bf7535fc63137c9d7e09b7b8bd7812d10117d1b"
     }
   ]
 }
