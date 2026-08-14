@@ -15,6 +15,7 @@ from pathlib import Path
 
 from language_data_tools import file_sha256
 from tatoeba_adapter import import_tatoeba_examples
+from example_sentence_retrieval_index import build_indexes
 from unidic_adapter import apply_unidic_pitch
 
 
@@ -486,6 +487,7 @@ def import_snapshot(
             tatoeba_english_source,
             tatoeba_links_source,
         )
+        retrieval_metadata = build_indexes(database)
 
         records_by_id = {record["id"]: record for record in entry_records}
         records_by_source_id = {str(record["source_record_id"]): record for record in entry_records}
@@ -584,6 +586,7 @@ def import_snapshot(
             "note_identity_disambiguated_entries": note_identity_disambiguated_entries,
             "pitch_entries": pitch_entry_count,
             "example_sentences": example_sentence_count,
+            "example_sentence_retrieval": retrieval_metadata,
             "rejection_reasons": {"missing_ent_seq_reading_or_english_gloss": rejected},
             "retained_fields": [
                 "ent_seq",

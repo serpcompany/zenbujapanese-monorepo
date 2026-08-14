@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		151000000000000000000001 /* ExampleSentenceRetrievalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 151000000000000000000004 /* ExampleSentenceRetrievalTests.swift */; };
+		151000000000000000000002 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
+		15100000000000000000000E /* ExampleSentenceRetrieval-v1-summary.tsv in Resources */ = {isa = PBXBuildFile; fileRef = 151000000000000000000010 /* ExampleSentenceRetrieval-v1-summary.tsv */; };
+		15100000000000000000000F /* ExampleSentenceRetrieval-v1-rows.tsv in Resources */ = {isa = PBXBuildFile; fileRef = 151000000000000000000011 /* ExampleSentenceRetrieval-v1-rows.tsv */; };
 		0739C012E20A0C475890D563 /* SearchExperienceJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2D0ECA911F40E070D8F4FD /* SearchExperienceJourneyUITests.swift */; };
 		48A12CB415EF48F78F16871A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */; };
 		A1C04F09D3A74D8B82D3C6E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */; };
@@ -15,6 +19,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		151000000000000000000003 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DE54BDCD4DF440D8324A14C7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5CD4552D207F8AC0D2D15CD6;
+			remoteInfo = ZenbuJapanese;
+		};
 		F4546BE4A238535E6E3823A6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = DE54BDCD4DF440D8324A14C7 /* Project object */;
@@ -25,6 +36,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		151000000000000000000004 /* ExampleSentenceRetrievalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleSentenceRetrievalTests.swift; sourceTree = "<group>"; };
+		151000000000000000000005 /* ZenbuJapaneseTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ZenbuJapaneseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		151000000000000000000010 /* ExampleSentenceRetrieval-v1-summary.tsv */ = {isa = PBXFileReference; lastKnownFileType = text; path = "ExampleSentenceRetrieval-v1-summary.tsv"; sourceTree = "<group>"; };
+		151000000000000000000011 /* ExampleSentenceRetrieval-v1-rows.tsv */ = {isa = PBXFileReference; lastKnownFileType = text; path = "ExampleSentenceRetrieval-v1-rows.tsv"; sourceTree = "<group>"; };
 		05C3FD9ADDFFACDD673A50B8 /* Modules */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Modules; path = Modules; sourceTree = SOURCE_ROOT; };
 		48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ZenbuJapanese.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -35,6 +50,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		151000000000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				151000000000000000000002 /* SearchExperience in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F38B6861CA6A9754CF93F50B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -46,6 +69,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		151000000000000000000007 /* AppTests */ = {
+			isa = PBXGroup;
+			children = (
+				151000000000000000000004 /* ExampleSentenceRetrievalTests.swift */,
+			);
+			path = Modules/Tests/SearchExperienceTests;
+			sourceTree = SOURCE_ROOT;
+		};
+		151000000000000000000013 /* RetrievalFixtures */ = {
+			isa = PBXGroup;
+			children = (
+				151000000000000000000010 /* ExampleSentenceRetrieval-v1-summary.tsv */,
+				151000000000000000000011 /* ExampleSentenceRetrieval-v1-rows.tsv */,
+			);
+			path = LanguageData/Generated;
+			sourceTree = SOURCE_ROOT;
+		};
 		063413ACDB21B263873C40C6 /* AppUITests */ = {
 			isa = PBXGroup;
 			children = (
@@ -66,6 +106,7 @@
 			isa = PBXGroup;
 			children = (
 				0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */,
+				151000000000000000000005 /* ZenbuJapaneseTests.xctest */,
 				DF09FB39B581100E5F9B6C10 /* ZenbuJapaneseUITests.xctest */,
 			);
 			name = Products;
@@ -75,6 +116,8 @@
 			isa = PBXGroup;
 			children = (
 				9DF55C21A8674721DB56F09F /* App */,
+				151000000000000000000007 /* AppTests */,
+				151000000000000000000013 /* RetrievalFixtures */,
 				063413ACDB21B263873C40C6 /* AppUITests */,
 				0D9EF723FB60C0407E450D3E /* Packages */,
 				4A0C8C2271C037859685316D /* Products */,
@@ -94,6 +137,27 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		151000000000000000000008 /* ZenbuJapaneseTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 15100000000000000000000D /* Build configuration list for PBXNativeTarget "ZenbuJapaneseTests" */;
+			buildPhases = (
+				151000000000000000000009 /* Sources */,
+				151000000000000000000006 /* Frameworks */,
+				151000000000000000000012 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				15100000000000000000000A /* PBXTargetDependency */,
+			);
+			name = ZenbuJapaneseTests;
+			packageProductDependencies = (
+				71B99CFA03F259B063FB7CC8 /* SearchExperience */,
+			);
+			productName = ZenbuJapaneseTests;
+			productReference = 151000000000000000000005 /* ZenbuJapaneseTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 376F81E60ED620D541A9BF80 /* Build configuration list for PBXNativeTarget "ZenbuJapanese" */;
@@ -142,6 +206,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					151000000000000000000008 = {
+						TestTargetID = 5CD4552D207F8AC0D2D15CD6;
+					};
 					74E6EB6E486E0D87C41A29EF = {
 						TestTargetID = 5CD4552D207F8AC0D2D15CD6;
 					};
@@ -165,12 +232,22 @@
 			projectRoot = "";
 			targets = (
 				5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */,
+				151000000000000000000008 /* ZenbuJapaneseTests */,
 				74E6EB6E486E0D87C41A29EF /* ZenbuJapaneseUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		151000000000000000000012 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				15100000000000000000000E /* ExampleSentenceRetrieval-v1-summary.tsv in Resources */,
+				15100000000000000000000F /* ExampleSentenceRetrieval-v1-rows.tsv in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C3E26B21F5C96FAD04F5E803 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -206,6 +283,14 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		151000000000000000000009 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				151000000000000000000001 /* ExampleSentenceRetrievalTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BE6C879A06C68F6BA68D11EC /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -225,6 +310,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		15100000000000000000000A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */;
+			targetProxy = 151000000000000000000003 /* PBXContainerItemProxy */;
+		};
 		558FCB24A873D7915BDC7939 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */;
@@ -233,6 +323,42 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		15100000000000000000000B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary.tests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Zenbu Japanese.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Zenbu Japanese";
+			};
+			name = Debug;
+		};
+		15100000000000000000000C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary.tests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Zenbu Japanese.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Zenbu Japanese";
+			};
+			name = Release;
+		};
 		25190180A86666276E995B60 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -435,6 +561,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		15100000000000000000000D /* Build configuration list for PBXNativeTarget "ZenbuJapaneseTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				15100000000000000000000B /* Debug */,
+				15100000000000000000000C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		376F81E60ED620D541A9BF80 /* Build configuration list for PBXNativeTarget "ZenbuJapanese" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

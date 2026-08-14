@@ -1,0 +1,1096 @@
+context_id	query	route	result_rank	pair_id	lexical_relation	match_location	match_length	english_term_count	japanese_grapheme_count	rank_tuple
+D01	cave	direct-english	1	tatoeba:484243:483985	exact-surface-phrase	0	4	2	6	0|0|2|6|tatoeba:484243:483985
+D01	cave	direct-english	2	tatoeba:8823605:1294352	exact-surface-phrase	4	4	6	11	0|4|6|11|tatoeba:8823605:1294352
+D01	cave	direct-english	3	tatoeba:207433:44686	exact-surface-phrase	4	4	6	12	0|4|6|12|tatoeba:207433:44686
+D01	cave	direct-english	4	tatoeba:207438:44691	exact-surface-phrase	4	4	7	17	0|4|7|17|tatoeba:207438:44691
+D01	cave	direct-english	5	tatoeba:207436:44687	exact-surface-phrase	4	4	12	26	0|4|12|26|tatoeba:207436:44687
+D01	cave	direct-english	6	tatoeba:207434:44687	exact-surface-phrase	4	4	12	33	0|4|12|33|tatoeba:207434:44687
+D01	cave	direct-english	7	tatoeba:11052134:3536229	exact-surface-phrase	5	4	6	20	0|5|6|20|tatoeba:11052134:3536229
+D01	cave	direct-english	8	tatoeba:207435:44688	exact-surface-phrase	8	4	7	25	0|8|7|25|tatoeba:207435:44688
+D01	cave	direct-english	9	tatoeba:2804141:2804142	exact-surface-phrase	10	4	4	8	0|10|4|8|tatoeba:2804141:2804142
+D01	cave	direct-english	10	tatoeba:9106984:9106983	exact-surface-phrase	16	4	4	11	0|16|4|11|tatoeba:9106984:9106983
+D01	cave	direct-english	11	tatoeba:12068436:9015131	exact-surface-phrase	17	4	5	13	0|17|5|13|tatoeba:12068436:9015131
+D01	cave	direct-english	12	tatoeba:8967909:8967901	exact-surface-phrase	19	4	6	21	0|19|6|21|tatoeba:8967909:8967901
+D01	cave	direct-english	13	tatoeba:11345330:3431160	exact-surface-phrase	20	4	6	15	0|20|6|15|tatoeba:11345330:3431160
+D01	cave	direct-english	14	tatoeba:481010:481011	exact-surface-phrase	20	4	12	28	0|20|12|28|tatoeba:481010:481011
+D01	cave	direct-english	15	tatoeba:8621723:7732995	exact-surface-phrase	22	4	6	14	0|22|6|14|tatoeba:8621723:7732995
+D01	cave	direct-english	16	tatoeba:203119:40355	exact-surface-phrase	22	4	6	20	0|22|6|20|tatoeba:203119:40355
+D01	cave	direct-english	17	tatoeba:11488359:3962620	exact-surface-phrase	23	4	6	23	0|23|6|23|tatoeba:11488359:3962620
+D01	cave	direct-english	18	tatoeba:4917:1508	exact-surface-phrase	24	4	14	39	0|24|14|39|tatoeba:4917:1508
+D01	cave	direct-english	19	tatoeba:11195158:11085878	exact-surface-phrase	25	4	7	10	0|25|7|10|tatoeba:11195158:11085878
+D01	cave	direct-english	20	tatoeba:11195160:11085878	exact-surface-phrase	25	4	7	13	0|25|7|13|tatoeba:11195160:11085878
+D01	cave	direct-english	21	tatoeba:218337:55648	exact-surface-phrase	28	4	8	19	0|28|8|19|tatoeba:218337:55648
+D01	cave	direct-english	22	tatoeba:11458067:9512474	exact-surface-phrase	30	4	7	12	0|30|7|12|tatoeba:11458067:9512474
+D01	cave	direct-english	23	tatoeba:123630:280367	exact-surface-phrase	32	4	14	30	0|32|14|30|tatoeba:123630:280367
+D01	cave	direct-english	24	tatoeba:9944502:3422210	exact-surface-phrase	35	4	8	19	0|35|8|19|tatoeba:9944502:3422210
+D01	cave	direct-english	25	tatoeba:8930319:7958294	exact-surface-phrase	38	4	9	21	0|38|9|21|tatoeba:8930319:7958294
+D01	cave	direct-english	26	tatoeba:207437:44690	exact-surface-phrase	38	4	9	23	0|38|9|23|tatoeba:207437:44690
+D01	cave	direct-english	27	tatoeba:123631:280366	exact-surface-phrase	39	4	8	19	0|39|8|19|tatoeba:123631:280366
+D01	cave	direct-english	28	tatoeba:127385:276708	exact-surface-phrase	43	4	8	18	0|43|8|18|tatoeba:127385:276708
+D01	cave	direct-english	29	tatoeba:145731:268831	exact-surface-phrase	46	4	10	27	0|46|10|27|tatoeba:145731:268831
+D01	cave	direct-english	30	tatoeba:11491039:3008736	porter-equivalent-phrase	0	5	3	6	1|0|3|6|tatoeba:11491039:3008736
+D01	cave	direct-english	31	tatoeba:212864:50149	porter-equivalent-phrase	11	5	11	19	1|11|11|19|tatoeba:212864:50149
+D01	cave	direct-english	32	tatoeba:106544:297142	porter-equivalent-phrase	23	5	10	18	1|23|10|18|tatoeba:106544:297142
+D02	cat	direct-english	1	tatoeba:10135625:6576755	exact-surface-phrase	0	3	3	7	0|0|3|7|tatoeba:10135625:6576755
+D02	cat	direct-english	2	tatoeba:10135633:6584724	exact-surface-phrase	0	3	3	8	0|0|3|8|tatoeba:10135633:6584724
+D02	cat	direct-english	3	tatoeba:6828218:8092953	exact-surface-phrase	2	3	3	5	0|2|3|5|tatoeba:6828218:8092953
+D02	cat	direct-english	4	tatoeba:121984:282019	exact-surface-phrase	2	3	5	7	0|2|5|7|tatoeba:121984:282019
+D02	cat	direct-english	5	tatoeba:515194:515178	exact-surface-phrase	2	3	5	9	0|2|5|9|tatoeba:515194:515178
+D02	cat	direct-english	6	tatoeba:1632389:1277087	exact-surface-phrase	2	3	5	10	0|2|5|10|tatoeba:1632389:1277087
+D02	cat	direct-english	7	tatoeba:574909:574907	exact-surface-phrase	2	3	5	11	0|2|5|11|tatoeba:574909:574907
+D02	cat	direct-english	8	tatoeba:1047593:1052795	exact-surface-phrase	2	3	6	9	0|2|6|9|tatoeba:1047593:1052795
+D02	cat	direct-english	9	tatoeba:122008:281995	exact-surface-phrase	2	3	6	12	0|2|6|12|tatoeba:122008:281995
+D02	cat	direct-english	10	tatoeba:190081:27237	exact-surface-phrase	2	3	6	13	0|2|6|13|tatoeba:190081:27237
+D02	cat	direct-english	11	tatoeba:121954:282049	exact-surface-phrase	2	3	7	10	0|2|7|10|tatoeba:121954:282049
+D02	cat	direct-english	12	tatoeba:121990:282013	exact-surface-phrase	2	3	7	11	0|2|7|11|tatoeba:121990:282013
+D02	cat	direct-english	13	tatoeba:175333:239133	exact-surface-phrase	2	3	7	11	0|2|7|11|tatoeba:175333:239133
+D02	cat	direct-english	14	tatoeba:121988:282014	exact-surface-phrase	2	3	7	12	0|2|7|12|tatoeba:121988:282014
+D02	cat	direct-english	15	tatoeba:183466:20589	exact-surface-phrase	2	3	7	12	0|2|7|12|tatoeba:183466:20589
+D02	cat	direct-english	16	tatoeba:198629:35822	exact-surface-phrase	2	3	7	12	0|2|7|12|tatoeba:198629:35822
+D02	cat	direct-english	17	tatoeba:639683:10550266	exact-surface-phrase	2	3	7	12	0|2|7|12|tatoeba:639683:10550266
+D02	cat	direct-english	18	tatoeba:10550271:10550266	exact-surface-phrase	2	3	7	13	0|2|7|13|tatoeba:10550271:10550266
+D02	cat	direct-english	19	tatoeba:467397:35822	exact-surface-phrase	2	3	7	13	0|2|7|13|tatoeba:467397:35822
+D02	cat	direct-english	20	tatoeba:122009:281994	exact-surface-phrase	2	3	7	14	0|2|7|14|tatoeba:122009:281994
+D02	cat	direct-english	21	tatoeba:235659:73040	exact-surface-phrase	2	3	7	17	0|2|7|17|tatoeba:235659:73040
+D02	cat	direct-english	22	tatoeba:198625:35818	exact-surface-phrase	2	3	8	13	0|2|8|13|tatoeba:198625:35818
+D02	cat	direct-english	23	tatoeba:121927:282076	exact-surface-phrase	2	3	8	17	0|2|8|17|tatoeba:121927:282076
+D02	cat	direct-english	24	tatoeba:121991:282012	exact-surface-phrase	2	3	9	13	0|2|9|13|tatoeba:121991:282012
+D02	cat	direct-english	25	tatoeba:122002:282001	exact-surface-phrase	2	3	9	18	0|2|9|18|tatoeba:122002:282001
+D02	cat	direct-english	26	tatoeba:121953:282050	exact-surface-phrase	2	3	9	22	0|2|9|22|tatoeba:121953:282050
+D02	cat	direct-english	27	tatoeba:390036:390037	exact-surface-phrase	2	3	25	29	0|2|25|29|tatoeba:390036:390037
+D02	cat	direct-english	28	tatoeba:10212644:1118673	exact-surface-phrase	3	3	3	14	0|3|3|14|tatoeba:10212644:1118673
+D02	cat	direct-english	29	tatoeba:12351453:2195401	exact-surface-phrase	3	3	4	9	0|3|4|9|tatoeba:12351453:2195401
+D02	cat	direct-english	30	tatoeba:1681190:1333956	exact-surface-phrase	3	3	4	9	0|3|4|9|tatoeba:1681190:1333956
+D02	cat	direct-english	31	tatoeba:11058412:7844818	exact-surface-phrase	3	3	4	10	0|3|4|10|tatoeba:11058412:7844818
+D02	cat	direct-english	32	tatoeba:1107947:1107946	exact-surface-phrase	3	3	4	10	0|3|4|10|tatoeba:1107947:1107946
+D02	cat	direct-english	33	tatoeba:13089108:13000231	exact-surface-phrase	3	3	4	10	0|3|4|10|tatoeba:13089108:13000231
+D02	cat	direct-english	34	tatoeba:5988010:5988007	exact-surface-phrase	3	3	4	12	0|3|4|12|tatoeba:5988010:5988007
+D02	cat	direct-english	35	tatoeba:9738192:3820840	exact-surface-phrase	3	3	4	13	0|3|4|13|tatoeba:9738192:3820840
+D02	cat	direct-english	36	tatoeba:4402279:4317674	exact-surface-phrase	3	3	4	15	0|3|4|15|tatoeba:4402279:4317674
+D02	cat	direct-english	37	tatoeba:8635741:1806274	exact-surface-phrase	3	3	4	15	0|3|4|15|tatoeba:8635741:1806274
+D02	cat	direct-english	38	tatoeba:1683418:1682261	exact-surface-phrase	3	3	5	12	0|3|5|12|tatoeba:1683418:1682261
+D02	cat	direct-english	39	tatoeba:9062738:7748607	exact-surface-phrase	3	3	5	17	0|3|5|17|tatoeba:9062738:7748607
+D02	cat	direct-english	40	tatoeba:13697783:10314793	exact-surface-phrase	3	3	5	24	0|3|5|24|tatoeba:13697783:10314793
+D02	cat	direct-english	41	tatoeba:13089107:12403391	exact-surface-phrase	3	3	6	14	0|3|6|14|tatoeba:13089107:12403391
+D02	cat	direct-english	42	tatoeba:794253:793644	exact-surface-phrase	3	3	6	15	0|3|6|15|tatoeba:794253:793644
+D02	cat	direct-english	43	tatoeba:228210:65565	exact-surface-phrase	3	3	6	16	0|3|6|16|tatoeba:228210:65565
+D02	cat	direct-english	44	tatoeba:162951:251562	exact-surface-phrase	3	3	7	12	0|3|7|12|tatoeba:162951:251562
+D02	cat	direct-english	45	tatoeba:5185654:1415972	exact-surface-phrase	3	3	8	15	0|3|8|15|tatoeba:5185654:1415972
+D02	cat	direct-english	46	tatoeba:11577121:1570654	exact-surface-phrase	3	3	8	19	0|3|8|19|tatoeba:11577121:1570654
+D02	cat	direct-english	47	tatoeba:162952:251561	exact-surface-phrase	3	3	8	21	0|3|8|21|tatoeba:162952:251561
+D02	cat	direct-english	48	tatoeba:162954:251559	exact-surface-phrase	3	3	9	17	0|3|9|17|tatoeba:162954:251559
+D02	cat	direct-english	49	tatoeba:10791855:9736542	exact-surface-phrase	3	3	10	23	0|3|10|23|tatoeba:10791855:9736542
+D02	cat	direct-english	50	tatoeba:121925:282078	exact-surface-phrase	3	3	12	19	0|3|12|19|tatoeba:121925:282078
+D02	cat	direct-english	51	tatoeba:228163:65517	exact-surface-phrase	3	3	13	29	0|3|13|29|tatoeba:228163:65517
+D02	cat	direct-english	52	tatoeba:11264676:9964865	exact-surface-phrase	4	3	3	7	0|4|3|7|tatoeba:11264676:9964865
+D02	cat	direct-english	53	tatoeba:1780171:1780076	exact-surface-phrase	4	3	4	6	0|4|4|6|tatoeba:1780171:1780076
+D02	cat	direct-english	54	tatoeba:10482009:663719	exact-surface-phrase	4	3	4	7	0|4|4|7|tatoeba:10482009:663719
+D02	cat	direct-english	55	tatoeba:1172570:1107280	exact-surface-phrase	4	3	4	7	0|4|4|7|tatoeba:1172570:1107280
+D02	cat	direct-english	56	tatoeba:10458205:10457588	exact-surface-phrase	4	3	4	8	0|4|4|8|tatoeba:10458205:10457588
+D02	cat	direct-english	57	tatoeba:122006:12231408	exact-surface-phrase	4	3	4	8	0|4|4|8|tatoeba:122006:12231408
+D02	cat	direct-english	58	tatoeba:13069530:8958418	exact-surface-phrase	4	3	4	8	0|4|4|8|tatoeba:13069530:8958418
+D02	cat	direct-english	59	tatoeba:9032775:6953029	exact-surface-phrase	4	3	4	8	0|4|4|8|tatoeba:9032775:6953029
+D02	cat	direct-english	60	tatoeba:10482023:7356774	exact-surface-phrase	4	3	4	9	0|4|4|9|tatoeba:10482023:7356774
+D02	cat	direct-english	61	tatoeba:6458286:6475180	exact-surface-phrase	4	3	4	9	0|4|4|9|tatoeba:6458286:6475180
+D02	cat	direct-english	62	tatoeba:1795640:487303	exact-surface-phrase	4	3	4	10	0|4|4|10|tatoeba:1795640:487303
+D02	cat	direct-english	63	tatoeba:11101908:2839724	exact-surface-phrase	4	3	4	11	0|4|4|11|tatoeba:11101908:2839724
+D02	cat	direct-english	64	tatoeba:11160507:11160432	exact-surface-phrase	4	3	4	11	0|4|4|11|tatoeba:11160507:11160432
+D02	cat	direct-english	65	tatoeba:207309:44560	exact-surface-phrase	4	3	4	11	0|4|4|11|tatoeba:207309:44560
+D02	cat	direct-english	66	tatoeba:207313:44564	exact-surface-phrase	4	3	4	11	0|4|4|11|tatoeba:207313:44564
+D02	cat	direct-english	67	tatoeba:9032774:6953029	exact-surface-phrase	4	3	4	11	0|4|4|11|tatoeba:9032774:6953029
+D02	cat	direct-english	68	tatoeba:8981689:6663671	exact-surface-phrase	4	3	4	14	0|4|4|14|tatoeba:8981689:6663671
+D02	cat	direct-english	69	tatoeba:12957380:10116614	exact-surface-phrase	4	3	4	15	0|4|4|15|tatoeba:12957380:10116614
+D02	cat	direct-english	70	tatoeba:6828215:8804660	exact-surface-phrase	4	3	5	6	0|4|5|6|tatoeba:6828215:8804660
+D02	cat	direct-english	71	tatoeba:10695665:282069	exact-surface-phrase	4	3	5	9	0|4|5|9|tatoeba:10695665:282069
+D02	cat	direct-english	72	tatoeba:1585523:1194882	exact-surface-phrase	4	3	5	9	0|4|5|9|tatoeba:1585523:1194882
+D02	cat	direct-english	73	tatoeba:121972:282031	exact-surface-phrase	4	3	5	11	0|4|5|11|tatoeba:121972:282031
+D02	cat	direct-english	74	tatoeba:9171254:8804660	exact-surface-phrase	4	3	5	11	0|4|5|11|tatoeba:9171254:8804660
+D02	cat	direct-english	75	tatoeba:9171258:8804660	exact-surface-phrase	4	3	5	11	0|4|5|11|tatoeba:9171258:8804660
+D02	cat	direct-english	76	tatoeba:121934:282069	exact-surface-phrase	4	3	5	12	0|4|5|12|tatoeba:121934:282069
+D02	cat	direct-english	77	tatoeba:121947:282056	exact-surface-phrase	4	3	5	12	0|4|5|12|tatoeba:121947:282056
+D02	cat	direct-english	78	tatoeba:121949:282054	exact-surface-phrase	4	3	5	12	0|4|5|12|tatoeba:121949:282054
+D02	cat	direct-english	79	tatoeba:207315:44566	exact-surface-phrase	4	3	5	12	0|4|5|12|tatoeba:207315:44566
+D02	cat	direct-english	80	tatoeba:121961:282041	exact-surface-phrase	4	3	5	13	0|4|5|13|tatoeba:121961:282041
+D02	cat	direct-english	81	tatoeba:121967:282036	exact-surface-phrase	4	3	5	15	0|4|5|15|tatoeba:121967:282036
+D02	cat	direct-english	82	tatoeba:11331283:10734356	exact-surface-phrase	4	3	6	9	0|4|6|9|tatoeba:11331283:10734356
+D02	cat	direct-english	83	tatoeba:12698551:1837850	exact-surface-phrase	4	3	6	9	0|4|6|9|tatoeba:12698551:1837850
+D02	cat	direct-english	84	tatoeba:121928:282075	exact-surface-phrase	4	3	6	10	0|4|6|10|tatoeba:121928:282075
+D02	cat	direct-english	85	tatoeba:121948:282055	exact-surface-phrase	4	3	6	10	0|4|6|10|tatoeba:121948:282055
+D02	cat	direct-english	86	tatoeba:121975:282029	exact-surface-phrase	4	3	6	10	0|4|6|10|tatoeba:121975:282029
+D02	cat	direct-english	87	tatoeba:121944:282059	exact-surface-phrase	4	3	6	11	0|4|6|11|tatoeba:121944:282059
+D02	cat	direct-english	88	tatoeba:1087640:779445	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:1087640:779445
+D02	cat	direct-english	89	tatoeba:121942:282062	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:121942:282062
+D02	cat	direct-english	90	tatoeba:121943:282063	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:121943:282063
+D02	cat	direct-english	91	tatoeba:121964:282039	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:121964:282039
+D02	cat	direct-english	92	tatoeba:122000:282003	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:122000:282003
+D02	cat	direct-english	93	tatoeba:198622:35815	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:198622:35815
+D02	cat	direct-english	94	tatoeba:228162:65516	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:228162:65516
+D02	cat	direct-english	95	tatoeba:6850787:3387119	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:6850787:3387119
+D02	cat	direct-english	96	tatoeba:121939:282065	exact-surface-phrase	4	3	6	13	0|4|6|13|tatoeba:121939:282065
+D02	cat	direct-english	97	tatoeba:121971:282032	exact-surface-phrase	4	3	6	13	0|4|6|13|tatoeba:121971:282032
+D02	cat	direct-english	98	tatoeba:971346:882772	exact-surface-phrase	4	3	6	14	0|4|6|14|tatoeba:971346:882772
+D02	cat	direct-english	99	tatoeba:207314:44565	exact-surface-phrase	4	3	6	15	0|4|6|15|tatoeba:207314:44565
+D02	cat	direct-english	100	tatoeba:8615935:44562	exact-surface-phrase	4	3	6	16	0|4|6|16|tatoeba:8615935:44562
+D03	eat	direct-english	1	tatoeba:4770397:3628784	exact-surface-phrase	0	3	1	6	0|0|1|6|tatoeba:4770397:3628784
+D03	eat	direct-english	2	tatoeba:13168046:9767398	exact-surface-phrase	0	3	2	6	0|0|2|6|tatoeba:13168046:9767398
+D03	eat	direct-english	3	tatoeba:7551813:2052041	exact-surface-phrase	0	3	2	6	0|0|2|6|tatoeba:7551813:2052041
+D03	eat	direct-english	4	tatoeba:140745:273828	exact-surface-phrase	0	3	2	8	0|0|2|8|tatoeba:140745:273828
+D03	eat	direct-english	5	tatoeba:5241324:1495917	exact-surface-phrase	0	3	2	8	0|0|2|8|tatoeba:5241324:1495917
+D03	eat	direct-english	6	tatoeba:11199169:9564875	exact-surface-phrase	0	3	2	10	0|0|2|10|tatoeba:11199169:9564875
+D03	eat	direct-english	7	tatoeba:1991994:1908457	exact-surface-phrase	0	3	3	9	0|0|3|9|tatoeba:1991994:1908457
+D03	eat	direct-english	8	tatoeba:8764248:8762785	exact-surface-phrase	0	3	3	10	0|0|3|10|tatoeba:8764248:8762785
+D03	eat	direct-english	9	tatoeba:10937141:10903751	exact-surface-phrase	0	3	3	12	0|0|3|12|tatoeba:10937141:10903751
+D03	eat	direct-english	10	tatoeba:4629043:4630811	exact-surface-phrase	0	3	3	13	0|0|3|13|tatoeba:4629043:4630811
+D03	eat	direct-english	11	tatoeba:200458:37659	exact-surface-phrase	0	3	3	18	0|0|3|18|tatoeba:200458:37659
+D03	eat	direct-english	12	tatoeba:10484034:245188	exact-surface-phrase	0	3	4	9	0|0|4|9|tatoeba:10484034:245188
+D03	eat	direct-english	13	tatoeba:8532574:7781943	exact-surface-phrase	0	3	4	10	0|0|4|10|tatoeba:8532574:7781943
+D03	eat	direct-english	14	tatoeba:169298:245188	exact-surface-phrase	0	3	4	12	0|0|4|12|tatoeba:169298:245188
+D03	eat	direct-english	15	tatoeba:8532646:24983	exact-surface-phrase	0	3	4	12	0|0|4|12|tatoeba:8532646:24983
+D03	eat	direct-english	16	tatoeba:9028995:24983	exact-surface-phrase	0	3	4	12	0|0|4|12|tatoeba:9028995:24983
+D03	eat	direct-english	17	tatoeba:8532647:2741784	exact-surface-phrase	0	3	4	13	0|0|4|13|tatoeba:8532647:2741784
+D03	eat	direct-english	18	tatoeba:173794:24983	exact-surface-phrase	0	3	4	14	0|0|4|14|tatoeba:173794:24983
+D03	eat	direct-english	19	tatoeba:8532575:7781943	exact-surface-phrase	0	3	4	14	0|0|4|14|tatoeba:8532575:7781943
+D03	eat	direct-english	20	tatoeba:193261:30426	exact-surface-phrase	0	3	4	15	0|0|4|15|tatoeba:193261:30426
+D03	eat	direct-english	21	tatoeba:2159448:1234986	exact-surface-phrase	0	3	4	15	0|0|4|15|tatoeba:2159448:1234986
+D03	eat	direct-english	22	tatoeba:187843:24983	exact-surface-phrase	0	3	4	16	0|0|4|16|tatoeba:187843:24983
+D03	eat	direct-english	23	tatoeba:10671714:37984	exact-surface-phrase	0	3	5	10	0|0|5|10|tatoeba:10671714:37984
+D03	eat	direct-english	24	tatoeba:10555622:10553018	exact-surface-phrase	0	3	5	13	0|0|5|13|tatoeba:10555622:10553018
+D03	eat	direct-english	25	tatoeba:79599:324120	exact-surface-phrase	0	3	5	13	0|0|5|13|tatoeba:79599:324120
+D03	eat	direct-english	26	tatoeba:10553025:10553018	exact-surface-phrase	0	3	5	15	0|0|5|15|tatoeba:10553025:10553018
+D03	eat	direct-english	27	tatoeba:10555600:10553018	exact-surface-phrase	0	3	5	15	0|0|5|15|tatoeba:10555600:10553018
+D03	eat	direct-english	28	tatoeba:173781:240689	exact-surface-phrase	0	3	5	16	0|0|5|16|tatoeba:173781:240689
+D03	eat	direct-english	29	tatoeba:200782:37984	exact-surface-phrase	0	3	5	16	0|0|5|16|tatoeba:200782:37984
+D03	eat	direct-english	30	tatoeba:76443:327277	exact-surface-phrase	0	3	5	17	0|0|5|17|tatoeba:76443:327277
+D03	eat	direct-english	31	tatoeba:10555623:10553018	exact-surface-phrase	0	3	5	21	0|0|5|21|tatoeba:10555623:10553018
+D03	eat	direct-english	32	tatoeba:145932:268630	exact-surface-phrase	0	3	5	21	0|0|5|21|tatoeba:145932:268630
+D03	eat	direct-english	33	tatoeba:10843997:7367088	exact-surface-phrase	0	3	6	12	0|0|6|12|tatoeba:10843997:7367088
+D03	eat	direct-english	34	tatoeba:145936:268626	exact-surface-phrase	0	3	6	12	0|0|6|12|tatoeba:145936:268626
+D03	eat	direct-english	35	tatoeba:10844000:7367088	exact-surface-phrase	0	3	6	13	0|0|6|13|tatoeba:10844000:7367088
+D03	eat	direct-english	36	tatoeba:11041749:9492841	exact-surface-phrase	0	3	6	13	0|0|6|13|tatoeba:11041749:9492841
+D03	eat	direct-english	37	tatoeba:8868464:3525909	exact-surface-phrase	0	3	7	13	0|0|7|13|tatoeba:8868464:3525909
+D03	eat	direct-english	38	tatoeba:182118:19364	exact-surface-phrase	0	3	7	15	0|0|7|15|tatoeba:182118:19364
+D03	eat	direct-english	39	tatoeba:215034:52330	exact-surface-phrase	0	3	7	15	0|0|7|15|tatoeba:215034:52330
+D03	eat	direct-english	40	tatoeba:1071235:1071653	exact-surface-phrase	0	3	7	16	0|0|7|16|tatoeba:1071235:1071653
+D03	eat	direct-english	41	tatoeba:215035:52330	exact-surface-phrase	0	3	7	19	0|0|7|19|tatoeba:215035:52330
+D03	eat	direct-english	42	tatoeba:10125841:2016597	exact-surface-phrase	0	3	8	13	0|0|8|13|tatoeba:10125841:2016597
+D03	eat	direct-english	43	tatoeba:193262:30427	exact-surface-phrase	0	3	8	18	0|0|8|18|tatoeba:193262:30427
+D03	eat	direct-english	44	tatoeba:202563:39797	exact-surface-phrase	0	3	9	22	0|0|9|22|tatoeba:202563:39797
+D03	eat	direct-english	45	tatoeba:147828:266732	exact-surface-phrase	0	3	11	30	0|0|11|30|tatoeba:147828:266732
+D03	eat	direct-english	46	tatoeba:214615:51908	exact-surface-phrase	0	3	11	35	0|0|11|35|tatoeba:214615:51908
+D03	eat	direct-english	47	tatoeba:227129:64478	exact-surface-phrase	0	3	12	26	0|0|12|26|tatoeba:227129:64478
+D03	eat	direct-english	48	tatoeba:137754:275482	exact-surface-phrase	0	3	14	22	0|0|14|22|tatoeba:137754:275482
+D03	eat	direct-english	49	tatoeba:6828205:7730719	exact-surface-phrase	2	3	3	6	0|2|3|6|tatoeba:6828205:7730719
+D03	eat	direct-english	50	tatoeba:1357247:1370868	exact-surface-phrase	2	3	3	8	0|2|3|8|tatoeba:1357247:1370868
+D03	eat	direct-english	51	tatoeba:3655437:2100009	exact-surface-phrase	2	3	3	8	0|2|3|8|tatoeba:3655437:2100009
+D03	eat	direct-english	52	tatoeba:8534154:1370868	exact-surface-phrase	2	3	3	8	0|2|3|8|tatoeba:8534154:1370868
+D03	eat	direct-english	53	tatoeba:546095:449105	exact-surface-phrase	2	3	3	10	0|2|3|10|tatoeba:546095:449105
+D03	eat	direct-english	54	tatoeba:349880:349838	exact-surface-phrase	2	3	3	12	0|2|3|12|tatoeba:349880:349838
+D03	eat	direct-english	55	tatoeba:1001619:1001617	exact-surface-phrase	2	3	4	11	0|2|4|11|tatoeba:1001619:1001617
+D03	eat	direct-english	56	tatoeba:6850113:6849841	exact-surface-phrase	2	3	4	13	0|2|4|13|tatoeba:6850113:6849841
+D03	eat	direct-english	57	tatoeba:4650387:4866968	exact-surface-phrase	2	3	4	18	0|2|4|18|tatoeba:4650387:4866968
+D03	eat	direct-english	58	tatoeba:9816978:1131189	exact-surface-phrase	2	3	5	7	0|2|5|7|tatoeba:9816978:1131189
+D03	eat	direct-english	59	tatoeba:180183:500368	exact-surface-phrase	2	3	5	8	0|2|5|8|tatoeba:180183:500368
+D03	eat	direct-english	60	tatoeba:7928629:2325156	exact-surface-phrase	2	3	5	9	0|2|5|9|tatoeba:7928629:2325156
+D03	eat	direct-english	61	tatoeba:11031371:9509918	exact-surface-phrase	2	3	5	10	0|2|5|10|tatoeba:11031371:9509918
+D03	eat	direct-english	62	tatoeba:11594632:7114552	exact-surface-phrase	2	3	5	10	0|2|5|10|tatoeba:11594632:7114552
+D03	eat	direct-english	63	tatoeba:6828188:10208947	exact-surface-phrase	2	3	5	10	0|2|5|10|tatoeba:6828188:10208947
+D03	eat	direct-english	64	tatoeba:10903701:953449	exact-surface-phrase	2	3	5	12	0|2|5|12|tatoeba:10903701:953449
+D03	eat	direct-english	65	tatoeba:13542270:13700965	exact-surface-phrase	2	3	5	12	0|2|5|12|tatoeba:13542270:13700965
+D03	eat	direct-english	66	tatoeba:4650361:4694141	exact-surface-phrase	2	3	5	12	0|2|5|12|tatoeba:4650361:4694141
+D03	eat	direct-english	67	tatoeba:11041851:1009202	exact-surface-phrase	2	3	5	13	0|2|5|13|tatoeba:11041851:1009202
+D03	eat	direct-english	68	tatoeba:11497670:7114552	exact-surface-phrase	2	3	5	13	0|2|5|13|tatoeba:11497670:7114552
+D03	eat	direct-english	69	tatoeba:4641696:6465961	exact-surface-phrase	2	3	5	13	0|2|5|13|tatoeba:4641696:6465961
+D03	eat	direct-english	70	tatoeba:11260458:10919087	exact-surface-phrase	2	3	5	14	0|2|5|14|tatoeba:11260458:10919087
+D03	eat	direct-english	71	tatoeba:4647974:6470273	exact-surface-phrase	2	3	5	14	0|2|5|14|tatoeba:4647974:6470273
+D03	eat	direct-english	72	tatoeba:9528850:1298733	exact-surface-phrase	2	3	5	17	0|2|5|17|tatoeba:9528850:1298733
+D03	eat	direct-english	73	tatoeba:993622:1556869	exact-surface-phrase	2	3	5	20	0|2|5|20|tatoeba:993622:1556869
+D03	eat	direct-english	74	tatoeba:10903691:10903692	exact-surface-phrase	2	3	6	11	0|2|6|11|tatoeba:10903691:10903692
+D03	eat	direct-english	75	tatoeba:7947512:7937848	exact-surface-phrase	2	3	6	12	0|2|6|12|tatoeba:7947512:7937848
+D03	eat	direct-english	76	tatoeba:6828186:7835014	exact-surface-phrase	2	3	6	13	0|2|6|13|tatoeba:6828186:7835014
+D03	eat	direct-english	77	tatoeba:4641695:6465963	exact-surface-phrase	2	3	6	14	0|2|6|14|tatoeba:4641695:6465963
+D03	eat	direct-english	78	tatoeba:12041751:5170140	exact-surface-phrase	2	3	7	11	0|2|7|11|tatoeba:12041751:5170140
+D03	eat	direct-english	79	tatoeba:12346227:10794652	exact-surface-phrase	2	3	7	11	0|2|7|11|tatoeba:12346227:10794652
+D03	eat	direct-english	80	tatoeba:11045107:11772345	exact-surface-phrase	2	3	7	13	0|2|7|13|tatoeba:11045107:11772345
+D03	eat	direct-english	81	tatoeba:11634488:11373147	exact-surface-phrase	2	3	7	13	0|2|7|13|tatoeba:11634488:11373147
+D03	eat	direct-english	82	tatoeba:12041752:5170140	exact-surface-phrase	2	3	7	13	0|2|7|13|tatoeba:12041752:5170140
+D03	eat	direct-english	83	tatoeba:1483518:953450	exact-surface-phrase	2	3	7	14	0|2|7|14|tatoeba:1483518:953450
+D03	eat	direct-english	84	tatoeba:10903708:10903709	exact-surface-phrase	2	3	7	15	0|2|7|15|tatoeba:10903708:10903709
+D03	eat	direct-english	85	tatoeba:11582728:5726463	exact-surface-phrase	2	3	7	15	0|2|7|15|tatoeba:11582728:5726463
+D03	eat	direct-english	86	tatoeba:2904761:10074792	exact-surface-phrase	2	3	8	21	0|2|8|21|tatoeba:2904761:10074792
+D03	eat	direct-english	87	tatoeba:8663717:913459	exact-surface-phrase	2	3	9	12	0|2|9|12|tatoeba:8663717:913459
+D03	eat	direct-english	88	tatoeba:8663718:913459	exact-surface-phrase	2	3	9	15	0|2|9|15|tatoeba:8663718:913459
+D03	eat	direct-english	89	tatoeba:6588567:6591970	exact-surface-phrase	2	3	11	18	0|2|11|18|tatoeba:6588567:6591970
+D03	eat	direct-english	90	tatoeba:546092:561094	exact-surface-phrase	3	3	3	11	0|3|3|11|tatoeba:546092:561094
+D03	eat	direct-english	91	tatoeba:7461990:7418631	exact-surface-phrase	3	3	4	10	0|3|4|10|tatoeba:7461990:7418631
+D03	eat	direct-english	92	tatoeba:185915:23047	exact-surface-phrase	3	3	4	11	0|3|4|11|tatoeba:185915:23047
+D03	eat	direct-english	93	tatoeba:10515783:10607856	exact-surface-phrase	3	3	4	12	0|3|4|12|tatoeba:10515783:10607856
+D03	eat	direct-english	94	tatoeba:151545:263011	exact-surface-phrase	3	3	5	9	0|3|5|9|tatoeba:151545:263011
+D03	eat	direct-english	95	tatoeba:151908:262646	exact-surface-phrase	3	3	5	18	0|3|5|18|tatoeba:151908:262646
+D03	eat	direct-english	96	tatoeba:185728:22860	exact-surface-phrase	3	3	6	13	0|3|6|13|tatoeba:185728:22860
+D03	eat	direct-english	97	tatoeba:10621099:247989	exact-surface-phrase	3	3	6	14	0|3|6|14|tatoeba:10621099:247989
+D03	eat	direct-english	98	tatoeba:166513:247989	exact-surface-phrase	3	3	6	14	0|3|6|14|tatoeba:166513:247989
+D03	eat	direct-english	99	tatoeba:10617682:2845864	exact-surface-phrase	3	3	6	15	0|3|6|15|tatoeba:10617682:2845864
+D03	eat	direct-english	100	tatoeba:8596455:8596452	exact-surface-phrase	3	3	6	15	0|3|6|15|tatoeba:8596455:8596452
+D04	beautiful	direct-english	1	tatoeba:370874:535796	exact-surface-phrase	0	9	4	11	0|0|4|11|tatoeba:370874:535796
+D04	beautiful	direct-english	2	tatoeba:10287613:3414032	exact-surface-phrase	0	9	5	7	0|0|5|7|tatoeba:10287613:3414032
+D04	beautiful	direct-english	3	tatoeba:214552:51844	exact-surface-phrase	0	9	5	11	0|0|5|11|tatoeba:214552:51844
+D04	beautiful	direct-english	4	tatoeba:85535:318178	exact-surface-phrase	0	9	21	32	0|0|21|32|tatoeba:85535:318178
+D04	beautiful	direct-english	5	tatoeba:182749:19871	exact-surface-phrase	2	9	7	13	0|2|7|13|tatoeba:182749:19871
+D04	beautiful	direct-english	6	tatoeba:179447:18305	exact-surface-phrase	2	9	7	14	0|2|7|14|tatoeba:179447:18305
+D04	beautiful	direct-english	7	tatoeba:182760:19880	exact-surface-phrase	2	9	7	15	0|2|7|15|tatoeba:182760:19880
+D04	beautiful	direct-english	8	tatoeba:85565:318148	exact-surface-phrase	2	9	7	15	0|2|7|15|tatoeba:85565:318148
+D04	beautiful	direct-english	9	tatoeba:145091:269472	exact-surface-phrase	2	9	8	17	0|2|8|17|tatoeba:145091:269472
+D04	beautiful	direct-english	10	tatoeba:230543:67910	exact-surface-phrase	2	9	9	19	0|2|9|19|tatoeba:230543:67910
+D04	beautiful	direct-english	11	tatoeba:234718:72094	exact-surface-phrase	2	9	9	26	0|2|9|26|tatoeba:234718:72094
+D04	beautiful	direct-english	12	tatoeba:85564:318149	exact-surface-phrase	2	9	11	18	0|2|11|18|tatoeba:85564:318149
+D04	beautiful	direct-english	13	tatoeba:2152613:1913083	exact-surface-phrase	4	9	2	10	0|4|2|10|tatoeba:2152613:1913083
+D04	beautiful	direct-english	14	tatoeba:2556133:716120	exact-surface-phrase	4	9	3	6	0|4|3|6|tatoeba:2556133:716120
+D04	beautiful	direct-english	15	tatoeba:198808:36004	exact-surface-phrase	4	9	4	11	0|4|4|11|tatoeba:198808:36004
+D04	beautiful	direct-english	16	tatoeba:198866:36004	exact-surface-phrase	4	9	4	12	0|4|4|12|tatoeba:198866:36004
+D04	beautiful	direct-english	17	tatoeba:90931:311886	exact-surface-phrase	4	9	4	12	0|4|4|12|tatoeba:90931:311886
+D04	beautiful	direct-english	18	tatoeba:232236:2446	exact-surface-phrase	4	9	4	15	0|4|4|15|tatoeba:232236:2446
+D04	beautiful	direct-english	19	tatoeba:91826:311886	exact-surface-phrase	4	9	4	15	0|4|4|15|tatoeba:91826:311886
+D04	beautiful	direct-english	20	tatoeba:5347:2446	exact-surface-phrase	4	9	4	19	0|4|4|19|tatoeba:5347:2446
+D04	beautiful	direct-english	21	tatoeba:198806:36002	exact-surface-phrase	4	9	5	14	0|4|5|14|tatoeba:198806:36002
+D04	beautiful	direct-english	22	tatoeba:207090:44340	exact-surface-phrase	4	9	5	14	0|4|5|14|tatoeba:207090:44340
+D04	beautiful	direct-english	23	tatoeba:222731:60061	exact-surface-phrase	4	9	5	15	0|4|5|15|tatoeba:222731:60061
+D04	beautiful	direct-english	24	tatoeba:231154:68520	exact-surface-phrase	4	9	5	15	0|4|5|15|tatoeba:231154:68520
+D04	beautiful	direct-english	25	tatoeba:222738:60068	exact-surface-phrase	4	9	5	16	0|4|5|16|tatoeba:222738:60068
+D04	beautiful	direct-english	26	tatoeba:222739:60061	exact-surface-phrase	4	9	5	16	0|4|5|16|tatoeba:222739:60061
+D04	beautiful	direct-english	27	tatoeba:85539:318175	exact-surface-phrase	4	9	6	11	0|4|6|11|tatoeba:85539:318175
+D04	beautiful	direct-english	28	tatoeba:126154:268124	exact-surface-phrase	4	9	6	14	0|4|6|14|tatoeba:126154:268124
+D04	beautiful	direct-english	29	tatoeba:146438:268124	exact-surface-phrase	4	9	6	15	0|4|6|15|tatoeba:146438:268124
+D04	beautiful	direct-english	30	tatoeba:94048:309658	exact-surface-phrase	4	9	6	17	0|4|6|17|tatoeba:94048:309658
+D04	beautiful	direct-english	31	tatoeba:207091:44341	exact-surface-phrase	4	9	6	20	0|4|6|20|tatoeba:207091:44341
+D04	beautiful	direct-english	32	tatoeba:230478:67846	exact-surface-phrase	4	9	7	15	0|4|7|15|tatoeba:230478:67846
+D04	beautiful	direct-english	33	tatoeba:214551:51843	exact-surface-phrase	4	9	7	19	0|4|7|19|tatoeba:214551:51843
+D04	beautiful	direct-english	34	tatoeba:210617:47887	exact-surface-phrase	4	9	8	22	0|4|8|22|tatoeba:210617:47887
+D04	beautiful	direct-english	35	tatoeba:207092:44342	exact-surface-phrase	4	9	9	19	0|4|9|19|tatoeba:207092:44342
+D04	beautiful	direct-english	36	tatoeba:668081:671572	exact-surface-phrase	4	9	10	19	0|4|10|19|tatoeba:668081:671572
+D04	beautiful	direct-english	37	tatoeba:85576:318137	exact-surface-phrase	4	9	10	22	0|4|10|22|tatoeba:85576:318137
+D04	beautiful	direct-english	38	tatoeba:207088:44338	exact-surface-phrase	4	9	12	24	0|4|12|24|tatoeba:207088:44338
+D04	beautiful	direct-english	39	tatoeba:125553:278439	exact-surface-phrase	4	9	13	35	0|4|13|35|tatoeba:125553:278439
+D04	beautiful	direct-english	40	tatoeba:189639:26792	exact-surface-phrase	4	9	16	28	0|4|16|28|tatoeba:189639:26792
+D04	beautiful	direct-english	41	tatoeba:203758:40999	exact-surface-phrase	5	9	6	15	0|5|6|15|tatoeba:203758:40999
+D04	beautiful	direct-english	42	tatoeba:147630:40999	exact-surface-phrase	5	9	6	16	0|5|6|16|tatoeba:147630:40999
+D04	beautiful	direct-english	43	tatoeba:220131:57450	exact-surface-phrase	5	9	7	17	0|5|7|17|tatoeba:220131:57450
+D04	beautiful	direct-english	44	tatoeba:220458:57781	exact-surface-phrase	5	9	10	20	0|5|10|20|tatoeba:220458:57781
+D04	beautiful	direct-english	45	tatoeba:220129:57448	exact-surface-phrase	5	9	12	18	0|5|12|18|tatoeba:220129:57448
+D04	beautiful	direct-english	46	tatoeba:223462:60797	exact-surface-phrase	5	9	14	36	0|5|14|36|tatoeba:223462:60797
+D04	beautiful	direct-english	47	tatoeba:2092155:2092154	exact-surface-phrase	6	9	4	8	0|6|4|8|tatoeba:2092155:2092154
+D04	beautiful	direct-english	48	tatoeba:13231300:410244	exact-surface-phrase	7	9	3	5	0|7|3|5|tatoeba:13231300:410244
+D04	beautiful	direct-english	49	tatoeba:13231285:410244	exact-surface-phrase	7	9	3	6	0|7|3|6|tatoeba:13231285:410244
+D04	beautiful	direct-english	50	tatoeba:85541:410244	exact-surface-phrase	7	9	3	6	0|7|3|6|tatoeba:85541:410244
+D04	beautiful	direct-english	51	tatoeba:13231307:410244	exact-surface-phrase	7	9	3	7	0|7|3|7|tatoeba:13231307:410244
+D04	beautiful	direct-english	52	tatoeba:13231281:410244	exact-surface-phrase	7	9	3	8	0|7|3|8|tatoeba:13231281:410244
+D04	beautiful	direct-english	53	tatoeba:13231279:410244	exact-surface-phrase	7	9	3	9	0|7|3|9|tatoeba:13231279:410244
+D04	beautiful	direct-english	54	tatoeba:13879628:1300117	exact-surface-phrase	7	9	4	7	0|7|4|7|tatoeba:13879628:1300117
+D04	beautiful	direct-english	55	tatoeba:1202322:36133	exact-surface-phrase	7	9	4	9	0|7|4|9|tatoeba:1202322:36133
+D04	beautiful	direct-english	56	tatoeba:12167819:7802864	exact-surface-phrase	7	9	4	9	0|7|4|9|tatoeba:12167819:7802864
+D04	beautiful	direct-english	57	tatoeba:9553176:36003	exact-surface-phrase	7	9	4	9	0|7|4|9|tatoeba:9553176:36003
+D04	beautiful	direct-english	58	tatoeba:187737:24877	exact-surface-phrase	7	9	4	10	0|7|4|10|tatoeba:187737:24877
+D04	beautiful	direct-english	59	tatoeba:198940:36037	exact-surface-phrase	7	9	4	10	0|7|4|10|tatoeba:198940:36037
+D04	beautiful	direct-english	60	tatoeba:9065868:2045745	exact-surface-phrase	7	9	4	10	0|7|4|10|tatoeba:9065868:2045745
+D04	beautiful	direct-english	61	tatoeba:9969641:36133	exact-surface-phrase	7	9	4	10	0|7|4|10|tatoeba:9969641:36133
+D04	beautiful	direct-english	62	tatoeba:10657876:36037	exact-surface-phrase	7	9	4	11	0|7|4|11|tatoeba:10657876:36037
+D04	beautiful	direct-english	63	tatoeba:1510482:36135	exact-surface-phrase	7	9	4	11	0|7|4|11|tatoeba:1510482:36135
+D04	beautiful	direct-english	64	tatoeba:198807:36003	exact-surface-phrase	7	9	4	11	0|7|4|11|tatoeba:198807:36003
+D04	beautiful	direct-english	65	tatoeba:187739:36037	exact-surface-phrase	7	9	4	12	0|7|4|12|tatoeba:187739:36037
+D04	beautiful	direct-english	66	tatoeba:198938:36135	exact-surface-phrase	7	9	4	12	0|7|4|12|tatoeba:198938:36135
+D04	beautiful	direct-english	67	tatoeba:214612:51905	exact-surface-phrase	7	9	4	12	0|7|4|12|tatoeba:214612:51905
+D04	beautiful	direct-english	68	tatoeba:352718:416541	exact-surface-phrase	7	9	4	12	0|7|4|12|tatoeba:352718:416541
+D04	beautiful	direct-english	69	tatoeba:1237001:1300117	exact-surface-phrase	7	9	4	13	0|7|4|13|tatoeba:1237001:1300117
+D04	beautiful	direct-english	70	tatoeba:1510481:36135	exact-surface-phrase	7	9	4	13	0|7|4|13|tatoeba:1510481:36135
+D04	beautiful	direct-english	71	tatoeba:198865:36062	exact-surface-phrase	7	9	4	13	0|7|4|13|tatoeba:198865:36062
+D04	beautiful	direct-english	72	tatoeba:2152609:36136	exact-surface-phrase	7	9	4	13	0|7|4|13|tatoeba:2152609:36136
+D04	beautiful	direct-english	73	tatoeba:463481:36037	exact-surface-phrase	7	9	4	13	0|7|4|13|tatoeba:463481:36037
+D04	beautiful	direct-english	74	tatoeba:1510484:36135	exact-surface-phrase	7	9	4	14	0|7|4|14|tatoeba:1510484:36135
+D04	beautiful	direct-english	75	tatoeba:198936:36133	exact-surface-phrase	7	9	4	14	0|7|4|14|tatoeba:198936:36133
+D04	beautiful	direct-english	76	tatoeba:545116:36003	exact-surface-phrase	7	9	4	14	0|7|4|14|tatoeba:545116:36003
+D04	beautiful	direct-english	77	tatoeba:10933313:1108267	exact-surface-phrase	7	9	4	15	0|7|4|15|tatoeba:10933313:1108267
+D04	beautiful	direct-english	78	tatoeba:198841:36037	exact-surface-phrase	7	9	4	15	0|7|4|15|tatoeba:198841:36037
+D04	beautiful	direct-english	79	tatoeba:198935:416541	exact-surface-phrase	7	9	4	16	0|7|4|16|tatoeba:198935:416541
+D04	beautiful	direct-english	80	tatoeba:198939:36136	exact-surface-phrase	7	9	4	16	0|7|4|16|tatoeba:198939:36136
+D04	beautiful	direct-english	81	tatoeba:12020410:3820404	exact-surface-phrase	7	9	5	7	0|7|5|7|tatoeba:12020410:3820404
+D04	beautiful	direct-english	82	tatoeba:2213972:318150	exact-surface-phrase	7	9	5	7	0|7|5|7|tatoeba:2213972:318150
+D04	beautiful	direct-english	83	tatoeba:85563:318150	exact-surface-phrase	7	9	5	7	0|7|5|7|tatoeba:85563:318150
+D04	beautiful	direct-english	84	tatoeba:229331:29248	exact-surface-phrase	7	9	5	8	0|7|5|8|tatoeba:229331:29248
+D04	beautiful	direct-english	85	tatoeba:11320543:6076365	exact-surface-phrase	7	9	5	9	0|7|5|9|tatoeba:11320543:6076365
+D04	beautiful	direct-english	86	tatoeba:2213971:318150	exact-surface-phrase	7	9	5	9	0|7|5|9|tatoeba:2213971:318150
+D04	beautiful	direct-english	87	tatoeba:11741590:11406461	exact-surface-phrase	7	9	5	10	0|7|5|10|tatoeba:11741590:11406461
+D04	beautiful	direct-english	88	tatoeba:200557:37758	exact-surface-phrase	7	9	5	10	0|7|5|10|tatoeba:200557:37758
+D04	beautiful	direct-english	89	tatoeba:192086:29248	exact-surface-phrase	7	9	5	11	0|7|5|11|tatoeba:192086:29248
+D04	beautiful	direct-english	90	tatoeba:11741587:11406461	exact-surface-phrase	7	9	5	13	0|7|5|13|tatoeba:11741587:11406461
+D04	beautiful	direct-english	91	tatoeba:95744:307961	exact-surface-phrase	7	9	5	16	0|7|5|16|tatoeba:95744:307961
+D04	beautiful	direct-english	92	tatoeba:198937:36134	exact-surface-phrase	7	9	6	14	0|7|6|14|tatoeba:198937:36134
+D04	beautiful	direct-english	93	tatoeba:205316:42559	exact-surface-phrase	7	9	6	14	0|7|6|14|tatoeba:205316:42559
+D04	beautiful	direct-english	94	tatoeba:218484:55796	exact-surface-phrase	7	9	6	14	0|7|6|14|tatoeba:218484:55796
+D04	beautiful	direct-english	95	tatoeba:91819:311893	exact-surface-phrase	7	9	6	14	0|7|6|14|tatoeba:91819:311893
+D04	beautiful	direct-english	96	tatoeba:198805:36001	exact-surface-phrase	7	9	6	15	0|7|6|15|tatoeba:198805:36001
+D04	beautiful	direct-english	97	tatoeba:218544:55857	exact-surface-phrase	7	9	6	15	0|7|6|15|tatoeba:218544:55857
+D04	beautiful	direct-english	98	tatoeba:91818:311894	exact-surface-phrase	7	9	6	15	0|7|6|15|tatoeba:91818:311894
+D04	beautiful	direct-english	99	tatoeba:97481:306221	exact-surface-phrase	7	9	6	18	0|7|6|18|tatoeba:97481:306221
+D04	beautiful	direct-english	100	tatoeba:232433:69803	exact-surface-phrase	7	9	6	23	0|7|6|23|tatoeba:232433:69803
+D05	thank you	direct-english	1	tatoeba:9462381:374827	exact-surface-phrase	0	9	2	5	0|0|2|5|tatoeba:9462381:374827
+D05	thank you	direct-english	2	tatoeba:9462391:374827	exact-surface-phrase	0	9	2	5	0|0|2|5|tatoeba:9462391:374827
+D05	thank you	direct-english	3	tatoeba:1531875:374827	exact-surface-phrase	0	9	2	6	0|0|2|6|tatoeba:1531875:374827
+D05	thank you	direct-english	4	tatoeba:1532832:374827	exact-surface-phrase	0	9	2	6	0|0|2|6|tatoeba:1532832:374827
+D05	thank you	direct-english	5	tatoeba:1063557:374827	exact-surface-phrase	0	9	2	9	0|0|2|9|tatoeba:1063557:374827
+D05	thank you	direct-english	6	tatoeba:9559301:1876041	exact-surface-phrase	0	9	2	11	0|0|2|11|tatoeba:9559301:1876041
+D05	thank you	direct-english	7	tatoeba:10704609:7733948	exact-surface-phrase	0	9	3	9	0|0|3|9|tatoeba:10704609:7733948
+D05	thank you	direct-english	8	tatoeba:141799:272771	exact-surface-phrase	0	9	3	9	0|0|3|9|tatoeba:141799:272771
+D05	thank you	direct-english	9	tatoeba:229996:67361	exact-surface-phrase	0	9	3	10	0|0|3|10|tatoeba:229996:67361
+D05	thank you	direct-english	10	tatoeba:141797:272771	exact-surface-phrase	0	9	3	18	0|0|3|18|tatoeba:141797:272771
+D05	thank you	direct-english	11	tatoeba:9526069:3775038	exact-surface-phrase	0	9	3	21	0|0|3|21|tatoeba:9526069:3775038
+D05	thank you	direct-english	12	tatoeba:10837245:29863	exact-surface-phrase	0	9	4	6	0|0|4|6|tatoeba:10837245:29863
+D05	thank you	direct-english	13	tatoeba:3401026:64155	exact-surface-phrase	0	9	4	8	0|0|4|8|tatoeba:3401026:64155
+D05	thank you	direct-english	14	tatoeba:81557:1564	exact-surface-phrase	0	9	4	9	0|0|4|9|tatoeba:81557:1564
+D05	thank you	direct-english	15	tatoeba:873964:1564	exact-surface-phrase	0	9	4	9	0|0|4|9|tatoeba:873964:1564
+D05	thank you	direct-english	16	tatoeba:227187:64536	exact-surface-phrase	0	9	4	10	0|0|4|10|tatoeba:227187:64536
+D05	thank you	direct-english	17	tatoeba:4971:1564	exact-surface-phrase	0	9	4	11	0|0|4|11|tatoeba:4971:1564
+D05	thank you	direct-english	18	tatoeba:78721:64536	exact-surface-phrase	0	9	4	11	0|0|4|11|tatoeba:78721:64536
+D05	thank you	direct-english	19	tatoeba:806267:29863	exact-surface-phrase	0	9	4	11	0|0|4|11|tatoeba:806267:29863
+D05	thank you	direct-english	20	tatoeba:10355885:954311	exact-surface-phrase	0	9	4	12	0|0|4|12|tatoeba:10355885:954311
+D05	thank you	direct-english	21	tatoeba:124756:64155	exact-surface-phrase	0	9	4	12	0|0|4|12|tatoeba:124756:64155
+D05	thank you	direct-english	22	tatoeba:171751:242724	exact-surface-phrase	0	9	4	12	0|0|4|12|tatoeba:171751:242724
+D05	thank you	direct-english	23	tatoeba:10021481:2646534	exact-surface-phrase	0	9	4	13	0|0|4|13|tatoeba:10021481:2646534
+D05	thank you	direct-english	24	tatoeba:124725:64155	exact-surface-phrase	0	9	4	13	0|0|4|13|tatoeba:124725:64155
+D05	thank you	direct-english	25	tatoeba:227080:64428	exact-surface-phrase	0	9	4	13	0|0|4|13|tatoeba:227080:64428
+D05	thank you	direct-english	26	tatoeba:348664:29863	exact-surface-phrase	0	9	4	13	0|0|4|13|tatoeba:348664:29863
+D05	thank you	direct-english	27	tatoeba:79266:324451	exact-surface-phrase	0	9	4	13	0|0|4|13|tatoeba:79266:324451
+D05	thank you	direct-english	28	tatoeba:9734109:2648441	exact-surface-phrase	0	9	4	13	0|0|4|13|tatoeba:9734109:2648441
+D05	thank you	direct-english	29	tatoeba:1136595:1564	exact-surface-phrase	0	9	4	14	0|0|4|14|tatoeba:1136595:1564
+D05	thank you	direct-english	30	tatoeba:11831589:1839560	exact-surface-phrase	0	9	4	14	0|0|4|14|tatoeba:11831589:1839560
+D05	thank you	direct-english	31	tatoeba:8244338:64536	exact-surface-phrase	0	9	4	14	0|0|4|14|tatoeba:8244338:64536
+D05	thank you	direct-english	32	tatoeba:10899748:1839560	exact-surface-phrase	0	9	4	15	0|0|4|15|tatoeba:10899748:1839560
+D05	thank you	direct-english	33	tatoeba:1485893:954311	exact-surface-phrase	0	9	4	15	0|0|4|15|tatoeba:1485893:954311
+D05	thank you	direct-english	34	tatoeba:226807:64155	exact-surface-phrase	0	9	4	15	0|0|4|15|tatoeba:226807:64155
+D05	thank you	direct-english	35	tatoeba:3360040:5758531	exact-surface-phrase	0	9	4	15	0|0|4|15|tatoeba:3360040:5758531
+D05	thank you	direct-english	36	tatoeba:5348452:2648040	exact-surface-phrase	0	9	4	15	0|0|4|15|tatoeba:5348452:2648040
+D05	thank you	direct-english	37	tatoeba:9540626:242724	exact-surface-phrase	0	9	4	15	0|0|4|15|tatoeba:9540626:242724
+D05	thank you	direct-english	38	tatoeba:10982436:2107842	exact-surface-phrase	0	9	4	16	0|0|4|16|tatoeba:10982436:2107842
+D05	thank you	direct-english	39	tatoeba:78725:64536	exact-surface-phrase	0	9	4	16	0|0|4|16|tatoeba:78725:64536
+D05	thank you	direct-english	40	tatoeba:10508886:4502589	exact-surface-phrase	0	9	4	17	0|0|4|17|tatoeba:10508886:4502589
+D05	thank you	direct-english	41	tatoeba:11298308:64536	exact-surface-phrase	0	9	4	18	0|0|4|18|tatoeba:11298308:64536
+D05	thank you	direct-english	42	tatoeba:78724:64536	exact-surface-phrase	0	9	4	18	0|0|4|18|tatoeba:78724:64536
+D05	thank you	direct-english	43	tatoeba:10984256:462516	exact-surface-phrase	0	9	5	7	0|0|5|7|tatoeba:10984256:462516
+D05	thank you	direct-english	44	tatoeba:146350:268212	exact-surface-phrase	0	9	5	8	0|0|5|8|tatoeba:146350:268212
+D05	thank you	direct-english	45	tatoeba:176298:238166	exact-surface-phrase	0	9	5	8	0|0|5|8|tatoeba:176298:238166
+D05	thank you	direct-english	46	tatoeba:200437:37638	exact-surface-phrase	0	9	5	8	0|0|5|8|tatoeba:200437:37638
+D05	thank you	direct-english	47	tatoeba:217173:54481	exact-surface-phrase	0	9	5	8	0|0|5|8|tatoeba:217173:54481
+D05	thank you	direct-english	48	tatoeba:9943125:2645464	exact-surface-phrase	0	9	5	8	0|0|5|8|tatoeba:9943125:2645464
+D05	thank you	direct-english	49	tatoeba:217119:54426	exact-surface-phrase	0	9	5	9	0|0|5|9|tatoeba:217119:54426
+D05	thank you	direct-english	50	tatoeba:10117499:2644507	exact-surface-phrase	0	9	5	10	0|0|5|10|tatoeba:10117499:2644507
+D05	thank you	direct-english	51	tatoeba:10650456:2644069	exact-surface-phrase	0	9	5	10	0|0|5|10|tatoeba:10650456:2644069
+D05	thank you	direct-english	52	tatoeba:140220:274353	exact-surface-phrase	0	9	5	10	0|0|5|10|tatoeba:140220:274353
+D05	thank you	direct-english	53	tatoeba:12523328:954312	exact-surface-phrase	0	9	5	11	0|0|5|11|tatoeba:12523328:954312
+D05	thank you	direct-english	54	tatoeba:187633:24771	exact-surface-phrase	0	9	5	11	0|0|5|11|tatoeba:187633:24771
+D05	thank you	direct-english	55	tatoeba:8591444:1731494	exact-surface-phrase	0	9	5	11	0|0|5|11|tatoeba:8591444:1731494
+D05	thank you	direct-english	56	tatoeba:9689439:64254	exact-surface-phrase	0	9	5	11	0|0|5|11|tatoeba:9689439:64254
+D05	thank you	direct-english	57	tatoeba:10704614:5013001	exact-surface-phrase	0	9	5	12	0|0|5|12|tatoeba:10704614:5013001
+D05	thank you	direct-english	58	tatoeba:10704947:54488	exact-surface-phrase	0	9	5	12	0|0|5|12|tatoeba:10704947:54488
+D05	thank you	direct-english	59	tatoeba:147378:462516	exact-surface-phrase	0	9	5	12	0|0|5|12|tatoeba:147378:462516
+D05	thank you	direct-english	60	tatoeba:187694:24771	exact-surface-phrase	0	9	5	12	0|0|5|12|tatoeba:187694:24771
+D05	thank you	direct-english	61	tatoeba:196918:34097	exact-surface-phrase	0	9	5	12	0|0|5|12|tatoeba:196918:34097
+D05	thank you	direct-english	62	tatoeba:227065:54481	exact-surface-phrase	0	9	5	12	0|0|5|12|tatoeba:227065:54481
+D05	thank you	direct-english	63	tatoeba:227081:54481	exact-surface-phrase	0	9	5	12	0|0|5|12|tatoeba:227081:54481
+D05	thank you	direct-english	64	tatoeba:227141:54481	exact-surface-phrase	0	9	5	12	0|0|5|12|tatoeba:227141:54481
+D05	thank you	direct-english	65	tatoeba:146447:54430	exact-surface-phrase	0	9	5	13	0|0|5|13|tatoeba:146447:54430
+D05	thank you	direct-english	66	tatoeba:217113:54420	exact-surface-phrase	0	9	5	13	0|0|5|13|tatoeba:217113:54420
+D05	thank you	direct-english	67	tatoeba:4478287:64407	exact-surface-phrase	0	9	5	13	0|0|5|13|tatoeba:4478287:64407
+D05	thank you	direct-english	68	tatoeba:10191413:2646009	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:10191413:2646009
+D05	thank you	direct-english	69	tatoeba:11900654:11915784	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:11900654:11915784
+D05	thank you	direct-english	70	tatoeba:137276:275960	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:137276:275960
+D05	thank you	direct-english	71	tatoeba:144789:54403	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:144789:54403
+D05	thank you	direct-english	72	tatoeba:146045:19143	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:146045:19143
+D05	thank you	direct-english	73	tatoeba:147759:266801	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:147759:266801
+D05	thank you	direct-english	74	tatoeba:180371:19143	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:180371:19143
+D05	thank you	direct-english	75	tatoeba:217181:54488	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:217181:54488
+D05	thank you	direct-english	76	tatoeba:227059:64407	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:227059:64407
+D05	thank you	direct-english	77	tatoeba:227079:64429	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:227079:64429
+D05	thank you	direct-english	78	tatoeba:227084:64433	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:227084:64433
+D05	thank you	direct-english	79	tatoeba:228449:54403	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:228449:54403
+D05	thank you	direct-english	80	tatoeba:3432685:2645019	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:3432685:2645019
+D05	thank you	direct-english	81	tatoeba:4478289:64407	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:4478289:64407
+D05	thank you	direct-english	82	tatoeba:4478292:54426	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:4478292:54426
+D05	thank you	direct-english	83	tatoeba:522350:268110	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:522350:268110
+D05	thank you	direct-english	84	tatoeba:8604868:2644510	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:8604868:2644510
+D05	thank you	direct-english	85	tatoeba:8619684:3096376	exact-surface-phrase	0	9	5	14	0|0|5|14|tatoeba:8619684:3096376
+D05	thank you	direct-english	86	tatoeba:10156656:2645021	exact-surface-phrase	0	9	5	15	0|0|5|15|tatoeba:10156656:2645021
+D05	thank you	direct-english	87	tatoeba:10177245:54426	exact-surface-phrase	0	9	5	15	0|0|5|15|tatoeba:10177245:54426
+D05	thank you	direct-english	88	tatoeba:10181522:10181521	exact-surface-phrase	0	9	5	15	0|0|5|15|tatoeba:10181522:10181521
+D05	thank you	direct-english	89	tatoeba:146452:268110	exact-surface-phrase	0	9	5	15	0|0|5|15|tatoeba:146452:268110
+D05	thank you	direct-english	90	tatoeba:3483634:9843773	exact-surface-phrase	0	9	5	15	0|0|5|15|tatoeba:3483634:9843773
+D05	thank you	direct-english	91	tatoeba:3484353:4474852	exact-surface-phrase	0	9	5	15	0|0|5|15|tatoeba:3484353:4474852
+D05	thank you	direct-english	92	tatoeba:4478293:54426	exact-surface-phrase	0	9	5	15	0|0|5|15|tatoeba:4478293:54426
+D05	thank you	direct-english	93	tatoeba:9042368:4968246	exact-surface-phrase	0	9	5	15	0|0|5|15|tatoeba:9042368:4968246
+D05	thank you	direct-english	94	tatoeba:9843772:9843773	exact-surface-phrase	0	9	5	15	0|0|5|15|tatoeba:9843772:9843773
+D05	thank you	direct-english	95	tatoeba:10520537:64429	exact-surface-phrase	0	9	5	16	0|0|5|16|tatoeba:10520537:64429
+D05	thank you	direct-english	96	tatoeba:11093652:9802627	exact-surface-phrase	0	9	5	16	0|0|5|16|tatoeba:11093652:9802627
+D05	thank you	direct-english	97	tatoeba:148504:462516	exact-surface-phrase	0	9	5	16	0|0|5|16|tatoeba:148504:462516
+D05	thank you	direct-english	98	tatoeba:217095:54403	exact-surface-phrase	0	9	5	16	0|0|5|16|tatoeba:217095:54403
+D05	thank you	direct-english	99	tatoeba:234301:71676	exact-surface-phrase	0	9	5	16	0|0|5|16|tatoeba:234301:71676
+D05	thank you	direct-english	100	tatoeba:4765310:3767377	exact-surface-phrase	0	9	5	16	0|0|5|16|tatoeba:4765310:3767377
+D06	scared you	direct-english	1	tatoeba:108058:295628	exact-surface-phrase	7	10	7	24	0|7|7|24|tatoeba:108058:295628
+D06	scared you	direct-english	2	tatoeba:472836:473875	porter-equivalent-phrase	15	9	20	38	1|15|20|38|tatoeba:472836:473875
+D06	scared you	direct-english	3	tatoeba:12574578:12373614	porter-equivalent-phrase	24	9	8	20	1|24|8|20|tatoeba:12574578:12373614
+D06	scared you	direct-english	4	tatoeba:2409471:2396319	porter-equivalent-phrase	24	9	8	21	1|24|8|21|tatoeba:2409471:2396319
+D06	scared you	direct-english	5	tatoeba:12003639:5992837	porter-equivalent-phrase	28	9	10	21	1|28|10|21|tatoeba:12003639:5992837
+D08	scare you	direct-english	1	tatoeba:472836:473875	exact-surface-phrase	15	9	20	38	0|15|20|38|tatoeba:472836:473875
+D08	scare you	direct-english	2	tatoeba:12574578:12373614	exact-surface-phrase	24	9	8	20	0|24|8|20|tatoeba:12574578:12373614
+D08	scare you	direct-english	3	tatoeba:2409471:2396319	exact-surface-phrase	24	9	8	21	0|24|8|21|tatoeba:2409471:2396319
+D08	scare you	direct-english	4	tatoeba:12003639:5992837	exact-surface-phrase	28	9	10	21	0|28|10|21|tatoeba:12003639:5992837
+D08	scare you	direct-english	5	tatoeba:108058:295628	porter-equivalent-phrase	7	10	7	24	1|7|7|24|tatoeba:108058:295628
+D10	startle you	direct-english	1	tatoeba:1804152:1804150	exact-surface-phrase	17	11	7	17	0|17|7|17|tatoeba:1804152:1804150
+D11	startled me	direct-english	1	tatoeba:180017:18876	exact-surface-phrase	4	11	3	11	0|4|3|11|tatoeba:180017:18876
+D11	startled me	direct-english	2	tatoeba:201898:39109	exact-surface-phrase	39	11	8	24	0|39|8|24|tatoeba:201898:39109
+D12	scatter	direct-english	1	tatoeba:13082684:12506664	exact-surface-phrase	0	7	1	3	0|0|1|3|tatoeba:13082684:12506664
+D12	scatter	direct-english	2	tatoeba:226945:64293	exact-surface-phrase	6	7	6	16	0|6|6|16|tatoeba:226945:64293
+D12	scatter	direct-english	3	tatoeba:1614578:11752225	porter-equivalent-phrase	0	9	5	18	1|0|5|18|tatoeba:1614578:11752225
+D12	scatter	direct-english	4	tatoeba:165344:249161	porter-equivalent-phrase	3	9	7	14	1|3|7|14|tatoeba:165344:249161
+D12	scatter	direct-english	5	tatoeba:77979:325739	porter-equivalent-phrase	3	9	12	18	1|3|12|18|tatoeba:77979:325739
+D12	scatter	direct-english	6	tatoeba:11014090:12415051	porter-equivalent-phrase	4	9	15	49	1|4|15|49|tatoeba:11014090:12415051
+D12	scatter	direct-english	7	tatoeba:75858:327860	porter-equivalent-phrase	7	9	16	25	1|7|16|25|tatoeba:75858:327860
+D12	scatter	direct-english	8	tatoeba:84034:319682	porter-equivalent-phrase	9	9	6	11	1|9|6|11|tatoeba:84034:319682
+D12	scatter	direct-english	9	tatoeba:97080:306624	porter-equivalent-phrase	10	9	6	14	1|10|6|14|tatoeba:97080:306624
+D12	scatter	direct-english	10	tatoeba:121680:282324	porter-equivalent-phrase	12	9	7	12	1|12|7|12|tatoeba:121680:282324
+D12	scatter	direct-english	11	tatoeba:3960200:3957785	porter-equivalent-phrase	13	9	12	30	1|13|12|30|tatoeba:3960200:3957785
+D12	scatter	direct-english	12	tatoeba:121693:282312	porter-equivalent-phrase	14	10	8	13	1|14|8|13|tatoeba:121693:282312
+D12	scatter	direct-english	13	tatoeba:146462:268100	porter-equivalent-phrase	15	9	7	18	1|15|7|18|tatoeba:146462:268100
+D12	scatter	direct-english	14	tatoeba:179478:18336	porter-equivalent-phrase	16	9	7	22	1|16|7|22|tatoeba:179478:18336
+D12	scatter	direct-english	15	tatoeba:123319:280679	porter-equivalent-phrase	17	9	6	21	1|17|6|21|tatoeba:123319:280679
+D12	scatter	direct-english	16	tatoeba:191751:28913	porter-equivalent-phrase	17	9	8	21	1|17|8|21|tatoeba:191751:28913
+D12	scatter	direct-english	17	tatoeba:180065:18925	porter-equivalent-phrase	29	9	9	14	1|29|9|14|tatoeba:180065:18925
+D12	scatter	direct-english	18	tatoeba:183814:20939	porter-equivalent-phrase	30	9	6	17	1|30|6|17|tatoeba:183814:20939
+D12	scatter	direct-english	19	tatoeba:228751:66109	porter-equivalent-phrase	31	10	9	26	1|31|9|26|tatoeba:228751:66109
+D12	scatter	direct-english	20	tatoeba:75380:328339	porter-equivalent-phrase	40	9	9	21	1|40|9|21|tatoeba:75380:328339
+D12	scatter	direct-english	21	tatoeba:9145798:10070105	porter-equivalent-phrase	49	9	20	49	1|49|20|49|tatoeba:9145798:10070105
+D13	education	direct-english	1	tatoeba:237051:19122	exact-surface-phrase	0	9	4	10	0|0|4|10|tatoeba:237051:19122
+D13	education	direct-english	2	tatoeba:180341:19118	exact-surface-phrase	0	9	5	12	0|0|5|12|tatoeba:180341:19118
+D13	education	direct-english	3	tatoeba:180343:19118	exact-surface-phrase	0	9	5	12	0|0|5|12|tatoeba:180343:19118
+D13	education	direct-english	4	tatoeba:180340:19116	exact-surface-phrase	0	9	5	13	0|0|5|13|tatoeba:180340:19116
+D13	education	direct-english	5	tatoeba:180342:19118	exact-surface-phrase	0	9	5	15	0|0|5|15|tatoeba:180342:19118
+D13	education	direct-english	6	tatoeba:1620947:19118	exact-surface-phrase	0	9	5	16	0|0|5|16|tatoeba:1620947:19118
+D13	education	direct-english	7	tatoeba:180339:19117	exact-surface-phrase	0	9	6	13	0|0|6|13|tatoeba:180339:19117
+D13	education	direct-english	8	tatoeba:4720:1294	exact-surface-phrase	0	9	6	19	0|0|6|19|tatoeba:4720:1294
+D13	education	direct-english	9	tatoeba:180338:19115	exact-surface-phrase	0	9	6	20	0|0|6|20|tatoeba:180338:19115
+D13	education	direct-english	10	tatoeba:11189209:19115	exact-surface-phrase	0	9	6	24	0|0|6|24|tatoeba:11189209:19115
+D13	education	direct-english	11	tatoeba:180321:19112	exact-surface-phrase	0	9	7	13	0|0|7|13|tatoeba:180321:19112
+D13	education	direct-english	12	tatoeba:180361:19135	exact-surface-phrase	0	9	8	30	0|0|8|30|tatoeba:180361:19135
+D13	education	direct-english	13	tatoeba:180347:19125	exact-surface-phrase	0	9	9	16	0|0|9|16|tatoeba:180347:19125
+D13	education	direct-english	14	tatoeba:78068:325650	exact-surface-phrase	0	9	9	19	0|0|9|19|tatoeba:78068:325650
+D13	education	direct-english	15	tatoeba:180345:19123	exact-surface-phrase	0	9	9	23	0|0|9|23|tatoeba:180345:19123
+D13	education	direct-english	16	tatoeba:180320:19111	exact-surface-phrase	0	9	10	23	0|0|10|23|tatoeba:180320:19111
+D13	education	direct-english	17	tatoeba:180360:19134	exact-surface-phrase	0	9	10	24	0|0|10|24|tatoeba:180360:19134
+D13	education	direct-english	18	tatoeba:774593:1008024	exact-surface-phrase	0	9	10	28	0|0|10|28|tatoeba:774593:1008024
+D13	education	direct-english	19	tatoeba:169316:245170	exact-surface-phrase	0	9	11	24	0|0|11|24|tatoeba:169316:245170
+D13	education	direct-english	20	tatoeba:180322:19113	exact-surface-phrase	0	9	11	24	0|0|11|24|tatoeba:180322:19113
+D13	education	direct-english	21	tatoeba:180337:19113	exact-surface-phrase	0	9	11	24	0|0|11|24|tatoeba:180337:19113
+D13	education	direct-english	22	tatoeba:180362:19136	exact-surface-phrase	0	9	15	27	0|0|15|27|tatoeba:180362:19136
+D13	education	direct-english	23	tatoeba:180344:19121	exact-surface-phrase	0	9	19	49	0|0|19|49|tatoeba:180344:19121
+D13	education	direct-english	24	tatoeba:180353:19130	exact-surface-phrase	3	9	8	19	0|3|8|19|tatoeba:180353:19130
+D13	education	direct-english	25	tatoeba:193318:30483	exact-surface-phrase	4	9	8	16	0|4|8|16|tatoeba:193318:30483
+D13	education	direct-english	26	tatoeba:144845:269719	exact-surface-phrase	4	9	12	24	0|4|12|24|tatoeba:144845:269719
+D13	education	direct-english	27	tatoeba:168604:245888	exact-surface-phrase	6	9	8	19	0|6|8|19|tatoeba:168604:245888
+D13	education	direct-english	28	tatoeba:143236:271332	exact-surface-phrase	6	9	9	16	0|6|9|16|tatoeba:143236:271332
+D13	education	direct-english	29	tatoeba:122789:281213	exact-surface-phrase	8	9	5	15	0|8|5|15|tatoeba:122789:281213
+D13	education	direct-english	30	tatoeba:142807:271762	exact-surface-phrase	9	9	5	19	0|9|5|19|tatoeba:142807:271762
+D13	education	direct-english	31	tatoeba:108346:295340	exact-surface-phrase	9	9	6	15	0|9|6|15|tatoeba:108346:295340
+D13	education	direct-english	32	tatoeba:126442:277548	exact-surface-phrase	10	9	5	14	0|10|5|14|tatoeba:126442:277548
+D13	education	direct-english	33	tatoeba:173965:240506	exact-surface-phrase	10	9	8	19	0|10|8|19|tatoeba:173965:240506
+D13	education	direct-english	34	tatoeba:168624:245867	exact-surface-phrase	10	9	10	13	0|10|10|13|tatoeba:168624:245867
+D13	education	direct-english	35	tatoeba:193290:30455	exact-surface-phrase	10	9	10	33	0|10|10|33|tatoeba:193290:30455
+D13	education	direct-english	36	tatoeba:137617:275619	exact-surface-phrase	11	9	8	18	0|11|8|18|tatoeba:137617:275619
+D13	education	direct-english	37	tatoeba:137995:275240	exact-surface-phrase	12	9	6	11	0|12|6|11|tatoeba:137995:275240
+D13	education	direct-english	38	tatoeba:101213:302483	exact-surface-phrase	12	9	7	6	0|12|7|6|tatoeba:101213:302483
+D13	education	direct-english	39	tatoeba:1184790:302483	exact-surface-phrase	12	9	7	16	0|12|7|16|tatoeba:1184790:302483
+D13	education	direct-english	40	tatoeba:180348:19124	exact-surface-phrase	12	9	12	24	0|12|12|24|tatoeba:180348:19124
+D13	education	direct-english	41	tatoeba:148238:266322	exact-surface-phrase	12	9	18	43	0|12|18|43|tatoeba:148238:266322
+D13	education	direct-english	42	tatoeba:180319:19110	exact-surface-phrase	13	9	7	16	0|13|7|16|tatoeba:180319:19110
+D13	education	direct-english	43	tatoeba:180352:19129	exact-surface-phrase	13	9	7	24	0|13|7|24|tatoeba:180352:19129
+D13	education	direct-english	44	tatoeba:94516:309190	exact-surface-phrase	13	9	9	23	0|13|9|23|tatoeba:94516:309190
+D13	education	direct-english	45	tatoeba:108353:295333	exact-surface-phrase	15	9	6	10	0|15|6|10|tatoeba:108353:295333
+D13	education	direct-english	46	tatoeba:12917188:12599058	exact-surface-phrase	15	9	7	18	0|15|7|18|tatoeba:12917188:12599058
+D13	education	direct-english	47	tatoeba:180355:19132	exact-surface-phrase	15	9	8	29	0|15|8|29|tatoeba:180355:19132
+D13	education	direct-english	48	tatoeba:168449:246043	exact-surface-phrase	15	9	10	19	0|15|10|19|tatoeba:168449:246043
+D13	education	direct-english	49	tatoeba:123544:280453	exact-surface-phrase	16	9	6	13	0|16|6|13|tatoeba:123544:280453
+D13	education	direct-english	50	tatoeba:174806:239662	exact-surface-phrase	16	9	15	29	0|16|15|29|tatoeba:174806:239662
+D13	education	direct-english	51	tatoeba:108819:294869	exact-surface-phrase	17	9	5	13	0|17|5|13|tatoeba:108819:294869
+D13	education	direct-english	52	tatoeba:157607:256924	exact-surface-phrase	17	9	8	18	0|17|8|18|tatoeba:157607:256924
+D13	education	direct-english	53	tatoeba:99030:304669	exact-surface-phrase	19	9	5	12	0|19|5|12|tatoeba:99030:304669
+D13	education	direct-english	54	tatoeba:12068427:1404508	exact-surface-phrase	19	9	5	13	0|19|5|13|tatoeba:12068427:1404508
+D13	education	direct-english	55	tatoeba:114856:288815	exact-surface-phrase	19	9	6	15	0|19|6|15|tatoeba:114856:288815
+D13	education	direct-english	56	tatoeba:225224:62560	exact-surface-phrase	19	9	7	17	0|19|7|17|tatoeba:225224:62560
+D13	education	direct-english	57	tatoeba:114357:289315	exact-surface-phrase	19	9	7	19	0|19|7|19|tatoeba:114357:289315
+D13	education	direct-english	58	tatoeba:2852991:2853036	exact-surface-phrase	20	9	6	16	0|20|6|16|tatoeba:2852991:2853036
+D13	education	direct-english	59	tatoeba:79423:324294	exact-surface-phrase	20	9	13	19	0|20|13|19|tatoeba:79423:324294
+D13	education	direct-english	60	tatoeba:74442:329277	exact-surface-phrase	21	9	5	18	0|21|5|18|tatoeba:74442:329277
+D13	education	direct-english	61	tatoeba:109951:293738	exact-surface-phrase	23	9	6	12	0|23|6|12|tatoeba:109951:293738
+D13	education	direct-english	62	tatoeba:172053:242406	exact-surface-phrase	23	9	9	23	0|23|9|23|tatoeba:172053:242406
+D13	education	direct-english	63	tatoeba:86304:317407	exact-surface-phrase	24	9	6	13	0|24|6|13|tatoeba:86304:317407
+D13	education	direct-english	64	tatoeba:91148:312566	exact-surface-phrase	24	9	6	13	0|24|6|13|tatoeba:91148:312566
+D13	education	direct-english	65	tatoeba:866762:803074	exact-surface-phrase	24	9	6	28	0|24|6|28|tatoeba:866762:803074
+D13	education	direct-english	66	tatoeba:140813:273759	exact-surface-phrase	24	9	23	60	0|24|23|60|tatoeba:140813:273759
+D13	education	direct-english	67	tatoeba:167737:246762	exact-surface-phrase	25	9	8	18	0|25|8|18|tatoeba:167737:246762
+D13	education	direct-english	68	tatoeba:75908:327810	exact-surface-phrase	25	9	12	42	0|25|12|42|tatoeba:75908:327810
+D13	education	direct-english	69	tatoeba:167705:246795	exact-surface-phrase	25	9	13	16	0|25|13|16|tatoeba:167705:246795
+D13	education	direct-english	70	tatoeba:79833:323884	exact-surface-phrase	25	9	16	26	0|25|16|26|tatoeba:79833:323884
+D13	education	direct-english	71	tatoeba:5017:1611	exact-surface-phrase	26	9	6	17	0|26|6|17|tatoeba:5017:1611
+D13	education	direct-english	72	tatoeba:85203:318510	exact-surface-phrase	28	9	6	24	0|28|6|24|tatoeba:85203:318510
+D13	education	direct-english	73	tatoeba:10089808:318510	exact-surface-phrase	28	9	6	27	0|28|6|27|tatoeba:10089808:318510
+D13	education	direct-english	74	tatoeba:106559:297126	exact-surface-phrase	28	9	7	18	0|28|7|18|tatoeba:106559:297126
+D13	education	direct-english	75	tatoeba:106560:297126	exact-surface-phrase	28	9	7	19	0|28|7|19|tatoeba:106560:297126
+D13	education	direct-english	76	tatoeba:155655:258883	exact-surface-phrase	28	9	8	13	0|28|8|13|tatoeba:155655:258883
+D13	education	direct-english	77	tatoeba:8878728:10121934	exact-surface-phrase	28	9	8	20	0|28|8|20|tatoeba:8878728:10121934
+D13	education	direct-english	78	tatoeba:214703:51997	exact-surface-phrase	29	9	6	19	0|29|6|19|tatoeba:214703:51997
+D13	education	direct-english	79	tatoeba:107547:296139	exact-surface-phrase	29	9	8	14	0|29|8|14|tatoeba:107547:296139
+D13	education	direct-english	80	tatoeba:108347:295339	exact-surface-phrase	29	9	9	16	0|29|9|16|tatoeba:108347:295339
+D13	education	direct-english	81	tatoeba:168664:245827	exact-surface-phrase	29	9	10	27	0|29|10|27|tatoeba:168664:245827
+D13	education	direct-english	82	tatoeba:77885:325833	exact-surface-phrase	30	9	7	14	0|30|7|14|tatoeba:77885:325833
+D13	education	direct-english	83	tatoeba:196162:33338	exact-surface-phrase	30	9	10	21	0|30|10|21|tatoeba:196162:33338
+D13	education	direct-english	84	tatoeba:108348:295338	exact-surface-phrase	31	9	7	20	0|31|7|20|tatoeba:108348:295338
+D13	education	direct-english	85	tatoeba:99029:304670	exact-surface-phrase	31	9	8	20	0|31|8|20|tatoeba:99029:304670
+D13	education	direct-english	86	tatoeba:222915:60246	exact-surface-phrase	31	9	9	17	0|31|9|17|tatoeba:222915:60246
+D13	education	direct-english	87	tatoeba:108350:295336	exact-surface-phrase	32	9	7	13	0|32|7|13|tatoeba:108350:295336
+D13	education	direct-english	88	tatoeba:180350:19127	exact-surface-phrase	32	9	7	16	0|32|7|16|tatoeba:180350:19127
+D13	education	direct-english	89	tatoeba:90195:313518	exact-surface-phrase	32	9	8	15	0|32|8|15|tatoeba:90195:313518
+D13	education	direct-english	90	tatoeba:114374:287979	exact-surface-phrase	32	9	8	27	0|32|8|27|tatoeba:114374:287979
+D13	education	direct-english	91	tatoeba:144606:269958	exact-surface-phrase	32	9	12	38	0|32|12|38|tatoeba:144606:269958
+D13	education	direct-english	92	tatoeba:90461:313252	exact-surface-phrase	33	9	6	15	0|33|6|15|tatoeba:90461:313252
+D13	education	direct-english	93	tatoeba:178672:17524	exact-surface-phrase	33	9	8	22	0|33|8|22|tatoeba:178672:17524
+D13	education	direct-english	94	tatoeba:233740:17524	exact-surface-phrase	33	9	8	23	0|33|8|23|tatoeba:233740:17524
+D13	education	direct-english	95	tatoeba:143106:271461	exact-surface-phrase	34	9	6	13	0|34|6|13|tatoeba:143106:271461
+D13	education	direct-english	96	tatoeba:102432:301262	exact-surface-phrase	34	9	6	17	0|34|6|17|tatoeba:102432:301262
+D13	education	direct-english	97	tatoeba:172055:242420	exact-surface-phrase	34	9	6	19	0|34|6|19|tatoeba:172055:242420
+D13	education	direct-english	98	tatoeba:180356:19133	exact-surface-phrase	34	9	7	22	0|34|7|22|tatoeba:180356:19133
+D13	education	direct-english	99	tatoeba:117766:285898	exact-surface-phrase	34	9	8	20	0|34|8|20|tatoeba:117766:285898
+D13	education	direct-english	100	tatoeba:180317:19108	exact-surface-phrase	34	9	14	20	0|34|14|20|tatoeba:180317:19108
+D14	great	direct-english	1	tatoeba:8533911:395934	exact-surface-phrase	0	5	1	3	0|0|1|3|tatoeba:8533911:395934
+D14	great	direct-english	2	tatoeba:8533912:395934	exact-surface-phrase	0	5	1	3	0|0|1|3|tatoeba:8533912:395934
+D14	great	direct-english	3	tatoeba:227191:395934	exact-surface-phrase	0	5	1	4	0|0|1|4|tatoeba:227191:395934
+D14	great	direct-english	4	tatoeba:8533915:395934	exact-surface-phrase	0	5	1	4	0|0|1|4|tatoeba:8533915:395934
+D14	great	direct-english	5	tatoeba:8533917:395934	exact-surface-phrase	0	5	1	5	0|0|1|5|tatoeba:8533917:395934
+D14	great	direct-english	6	tatoeba:8533919:395934	exact-surface-phrase	0	5	1	5	0|0|1|5|tatoeba:8533919:395934
+D14	great	direct-english	7	tatoeba:175080:239386	exact-surface-phrase	0	5	4	16	0|0|4|16|tatoeba:175080:239386
+D14	great	direct-english	8	tatoeba:173903:240567	exact-surface-phrase	0	5	5	9	0|0|5|9|tatoeba:173903:240567
+D14	great	direct-english	9	tatoeba:137570:240567	exact-surface-phrase	0	5	5	12	0|0|5|12|tatoeba:137570:240567
+D14	great	direct-english	10	tatoeba:389694:369558	exact-surface-phrase	0	5	6	11	0|0|6|11|tatoeba:389694:369558
+D14	great	direct-english	11	tatoeba:11298145:52026	exact-surface-phrase	0	5	6	12	0|0|6|12|tatoeba:11298145:52026
+D14	great	direct-english	12	tatoeba:172950:241523	exact-surface-phrase	0	5	6	12	0|0|6|12|tatoeba:172950:241523
+D14	great	direct-english	13	tatoeba:992044:879639	exact-surface-phrase	0	5	6	13	0|0|6|13|tatoeba:992044:879639
+D14	great	direct-english	14	tatoeba:11298144:52026	exact-surface-phrase	0	5	6	16	0|0|6|16|tatoeba:11298144:52026
+D14	great	direct-english	15	tatoeba:191129:28289	exact-surface-phrase	0	5	6	16	0|0|6|16|tatoeba:191129:28289
+D14	great	direct-english	16	tatoeba:191137:28297	exact-surface-phrase	0	5	6	16	0|0|6|16|tatoeba:191137:28297
+D14	great	direct-english	17	tatoeba:214732:52026	exact-surface-phrase	0	5	6	18	0|0|6|18|tatoeba:214732:52026
+D14	great	direct-english	18	tatoeba:226413:63757	exact-surface-phrase	0	5	6	18	0|0|6|18|tatoeba:226413:63757
+D14	great	direct-english	19	tatoeba:191136:28296	exact-surface-phrase	0	5	6	19	0|0|6|19|tatoeba:191136:28296
+D14	great	direct-english	20	tatoeba:3886922:3930160	exact-surface-phrase	0	5	7	16	0|0|7|16|tatoeba:3886922:3930160
+D14	great	direct-english	21	tatoeba:93853:309854	exact-surface-phrase	0	5	7	16	0|0|7|16|tatoeba:93853:309854
+D14	great	direct-english	22	tatoeba:78036:325682	exact-surface-phrase	0	5	7	17	0|0|7|17|tatoeba:78036:325682
+D14	great	direct-english	23	tatoeba:126012:277980	exact-surface-phrase	0	5	8	15	0|0|8|15|tatoeba:126012:277980
+D14	great	direct-english	24	tatoeba:137262:275974	exact-surface-phrase	0	5	8	18	0|0|8|18|tatoeba:137262:275974
+D14	great	direct-english	25	tatoeba:137970:275265	exact-surface-phrase	0	5	8	26	0|0|8|26|tatoeba:137970:275265
+D14	great	direct-english	26	tatoeba:95651:308054	exact-surface-phrase	0	5	9	22	0|0|9|22|tatoeba:95651:308054
+D14	great	direct-english	27	tatoeba:210036:47299	exact-surface-phrase	0	5	9	23	0|0|9|23|tatoeba:210036:47299
+D14	great	direct-english	28	tatoeba:208218:45475	exact-surface-phrase	0	5	9	25	0|0|9|25|tatoeba:208218:45475
+D14	great	direct-english	29	tatoeba:208219:45475	exact-surface-phrase	0	5	9	25	0|0|9|25|tatoeba:208219:45475
+D14	great	direct-english	30	tatoeba:74824:328895	exact-surface-phrase	0	5	10	19	0|0|10|19|tatoeba:74824:328895
+D14	great	direct-english	31	tatoeba:189001:26148	exact-surface-phrase	0	5	10	20	0|0|10|20|tatoeba:189001:26148
+D14	great	direct-english	32	tatoeba:137518:275718	exact-surface-phrase	0	5	10	23	0|0|10|23|tatoeba:137518:275718
+D14	great	direct-english	33	tatoeba:140197:274377	exact-surface-phrase	0	5	10	27	0|0|10|27|tatoeba:140197:274377
+D14	great	direct-english	34	tatoeba:191133:28293	exact-surface-phrase	0	5	11	22	0|0|11|22|tatoeba:191133:28293
+D14	great	direct-english	35	tatoeba:170383:244100	exact-surface-phrase	0	5	11	28	0|0|11|28|tatoeba:170383:244100
+D14	great	direct-english	36	tatoeba:214568:51860	exact-surface-phrase	2	5	5	19	0|2|5|19|tatoeba:214568:51860
+D14	great	direct-english	37	tatoeba:94178:309527	exact-surface-phrase	2	5	6	20	0|2|6|20|tatoeba:94178:309527
+D14	great	direct-english	38	tatoeba:116642:287026	exact-surface-phrase	2	5	7	13	0|2|7|13|tatoeba:116642:287026
+D14	great	direct-english	39	tatoeba:116628:287040	exact-surface-phrase	2	5	7	16	0|2|7|16|tatoeba:116628:287040
+D14	great	direct-english	40	tatoeba:171378:243097	exact-surface-phrase	2	5	7	18	0|2|7|18|tatoeba:171378:243097
+D14	great	direct-english	41	tatoeba:117657:286007	exact-surface-phrase	2	5	7	19	0|2|7|19|tatoeba:117657:286007
+D14	great	direct-english	42	tatoeba:80816:322899	exact-surface-phrase	2	5	8	10	0|2|8|10|tatoeba:80816:322899
+D14	great	direct-english	43	tatoeba:137459:275777	exact-surface-phrase	2	5	8	14	0|2|8|14|tatoeba:137459:275777
+D14	great	direct-english	44	tatoeba:81246:322469	exact-surface-phrase	2	5	8	15	0|2|8|15|tatoeba:81246:322469
+D14	great	direct-english	45	tatoeba:8902481:12977922	exact-surface-phrase	2	5	8	19	0|2|8|19|tatoeba:8902481:12977922
+D14	great	direct-english	46	tatoeba:147627:266933	exact-surface-phrase	2	5	8	20	0|2|8|20|tatoeba:147627:266933
+D14	great	direct-english	47	tatoeba:186860:23997	exact-surface-phrase	2	5	8	20	0|2|8|20|tatoeba:186860:23997
+D14	great	direct-english	48	tatoeba:141327:273244	exact-surface-phrase	2	5	9	12	0|2|9|12|tatoeba:141327:273244
+D14	great	direct-english	49	tatoeba:138393:274842	exact-surface-phrase	2	5	9	14	0|2|9|14|tatoeba:138393:274842
+D14	great	direct-english	50	tatoeba:191138:28298	exact-surface-phrase	2	5	9	14	0|2|9|14|tatoeba:191138:28298
+D14	great	direct-english	51	tatoeba:143317:271250	exact-surface-phrase	2	5	9	17	0|2|9|17|tatoeba:143317:271250
+D14	great	direct-english	52	tatoeba:81235:322480	exact-surface-phrase	2	5	9	18	0|2|9|18|tatoeba:81235:322480
+D14	great	direct-english	53	tatoeba:174463:240006	exact-surface-phrase	2	5	9	20	0|2|9|20|tatoeba:174463:240006
+D14	great	direct-english	54	tatoeba:220587:57909	exact-surface-phrase	2	5	9	20	0|2|9|20|tatoeba:220587:57909
+D14	great	direct-english	55	tatoeba:191134:28294	exact-surface-phrase	2	5	9	24	0|2|9|24|tatoeba:191134:28294
+D14	great	direct-english	56	tatoeba:138331:274904	exact-surface-phrase	2	5	10	17	0|2|10|17|tatoeba:138331:274904
+D14	great	direct-english	57	tatoeba:138423:274812	exact-surface-phrase	2	5	10	21	0|2|10|21|tatoeba:138423:274812
+D14	great	direct-english	58	tatoeba:175005:239462	exact-surface-phrase	2	5	11	24	0|2|11|24|tatoeba:175005:239462
+D14	great	direct-english	59	tatoeba:203770:41010	exact-surface-phrase	2	5	13	25	0|2|13|25|tatoeba:203770:41010
+D14	great	direct-english	60	tatoeba:11030979:8391973	exact-surface-phrase	3	5	7	9	0|3|7|9|tatoeba:11030979:8391973
+D14	great	direct-english	61	tatoeba:11412556:8397879	exact-surface-phrase	3	5	8	25	0|3|8|25|tatoeba:11412556:8397879
+D14	great	direct-english	62	tatoeba:11848318:10116047	exact-surface-phrase	3	5	9	19	0|3|9|19|tatoeba:11848318:10116047
+D14	great	direct-english	63	tatoeba:94535:309171	exact-surface-phrase	3	5	9	29	0|3|9|29|tatoeba:94535:309171
+D14	great	direct-english	64	tatoeba:189016:26163	exact-surface-phrase	3	5	10	20	0|3|10|20|tatoeba:189016:26163
+D14	great	direct-english	65	tatoeba:189018:26163	exact-surface-phrase	3	5	10	20	0|3|10|20|tatoeba:189018:26163
+D14	great	direct-english	66	tatoeba:110139:293550	exact-surface-phrase	3	5	11	17	0|3|11|17|tatoeba:110139:293550
+D14	great	direct-english	67	tatoeba:11030985:9022830	exact-surface-phrase	3	5	11	33	0|3|11|33|tatoeba:11030985:9022830
+D14	great	direct-english	68	tatoeba:117859:21037	exact-surface-phrase	3	5	12	25	0|3|12|25|tatoeba:117859:21037
+D14	great	direct-english	69	tatoeba:183911:21037	exact-surface-phrase	3	5	12	25	0|3|12|25|tatoeba:183911:21037
+D14	great	direct-english	70	tatoeba:118307:285356	exact-surface-phrase	4	5	5	19	0|4|5|19|tatoeba:118307:285356
+D14	great	direct-english	71	tatoeba:137575:275661	exact-surface-phrase	4	5	6	9	0|4|6|9|tatoeba:137575:275661
+D14	great	direct-english	72	tatoeba:174428:240041	exact-surface-phrase	4	5	6	13	0|4|6|13|tatoeba:174428:240041
+D14	great	direct-english	73	tatoeba:123047:280953	exact-surface-phrase	4	5	7	15	0|4|7|15|tatoeba:123047:280953
+D14	great	direct-english	74	tatoeba:137289:275947	exact-surface-phrase	4	5	7	18	0|4|7|18|tatoeba:137289:275947
+D14	great	direct-english	75	tatoeba:212384:49666	exact-surface-phrase	4	5	7	23	0|4|7|23|tatoeba:212384:49666
+D14	great	direct-english	76	tatoeba:118181:285483	exact-surface-phrase	4	5	8	17	0|4|8|17|tatoeba:118181:285483
+D14	great	direct-english	77	tatoeba:115889:287780	exact-surface-phrase	4	5	8	19	0|4|8|19|tatoeba:115889:287780
+D14	great	direct-english	78	tatoeba:191130:28290	exact-surface-phrase	4	5	8	25	0|4|8|25|tatoeba:191130:28290
+D14	great	direct-english	79	tatoeba:226248:63588	exact-surface-phrase	4	5	8	32	0|4|8|32|tatoeba:226248:63588
+D14	great	direct-english	80	tatoeba:2485680:63588	exact-surface-phrase	4	5	8	33	0|4|8|33|tatoeba:2485680:63588
+D14	great	direct-english	81	tatoeba:191126:28286	exact-surface-phrase	4	5	9	20	0|4|9|20|tatoeba:191126:28286
+D14	great	direct-english	82	tatoeba:2578067:2578072	exact-surface-phrase	4	5	9	20	0|4|9|20|tatoeba:2578067:2578072
+D14	great	direct-english	83	tatoeba:118180:285484	exact-surface-phrase	4	5	9	22	0|4|9|22|tatoeba:118180:285484
+D14	great	direct-english	84	tatoeba:191127:28287	exact-surface-phrase	4	5	9	28	0|4|9|28|tatoeba:191127:28287
+D14	great	direct-english	85	tatoeba:211613:48890	exact-surface-phrase	4	5	10	15	0|4|10|15|tatoeba:211613:48890
+D14	great	direct-english	86	tatoeba:144011:270556	exact-surface-phrase	4	5	10	37	0|4|10|37|tatoeba:144011:270556
+D14	great	direct-english	87	tatoeba:1789327:682355	exact-surface-phrase	4	5	12	24	0|4|12|24|tatoeba:1789327:682355
+D14	great	direct-english	88	tatoeba:144026:270540	exact-surface-phrase	4	5	13	37	0|4|13|37|tatoeba:144026:270540
+D14	great	direct-english	89	tatoeba:233709:71081	exact-surface-phrase	5	5	6	15	0|5|6|15|tatoeba:233709:71081
+D14	great	direct-english	90	tatoeba:186956:24093	exact-surface-phrase	5	5	7	17	0|5|7|17|tatoeba:186956:24093
+D14	great	direct-english	91	tatoeba:146432:268130	exact-surface-phrase	5	5	8	13	0|5|8|13|tatoeba:146432:268130
+D14	great	direct-english	92	tatoeba:190551:27711	exact-surface-phrase	5	5	8	18	0|5|8|18|tatoeba:190551:27711
+D14	great	direct-english	93	tatoeba:3567559:12597758	exact-surface-phrase	5	5	9	13	0|5|9|13|tatoeba:3567559:12597758
+D14	great	direct-english	94	tatoeba:191135:28295	exact-surface-phrase	5	5	9	21	0|5|9|21|tatoeba:191135:28295
+D14	great	direct-english	95	tatoeba:190418:27575	exact-surface-phrase	5	5	9	25	0|5|9|25|tatoeba:190418:27575
+D14	great	direct-english	96	tatoeba:152020:262533	exact-surface-phrase	5	5	10	27	0|5|10|27|tatoeba:152020:262533
+D14	great	direct-english	97	tatoeba:145394:269169	exact-surface-phrase	5	5	12	24	0|5|12|24|tatoeba:145394:269169
+D14	great	direct-english	98	tatoeba:943488:847235	exact-surface-phrase	5	5	12	29	0|5|12|29|tatoeba:943488:847235
+D14	great	direct-english	99	tatoeba:2357358:2457518	exact-surface-phrase	5	5	12	32	0|5|12|32|tatoeba:2357358:2457518
+D14	great	direct-english	100	tatoeba:76349:327371	exact-surface-phrase	5	5	17	22	0|5|17|22|tatoeba:76349:327371
+D15	neat	direct-english	1	tatoeba:13080161:10976470	exact-surface-phrase	0	4	1	4	0|0|1|4|tatoeba:13080161:10976470
+D15	neat	direct-english	2	tatoeba:84189:319526	exact-surface-phrase	12	4	13	21	0|12|13|21|tatoeba:84189:319526
+D15	neat	direct-english	3	tatoeba:89186:314520	exact-surface-phrase	13	4	5	13	0|13|5|13|tatoeba:89186:314520
+D15	neat	direct-english	4	tatoeba:88369:315338	exact-surface-phrase	14	4	6	15	0|14|6|15|tatoeba:88369:315338
+D15	neat	direct-english	5	tatoeba:149774:264784	exact-surface-phrase	15	4	6	20	0|15|6|20|tatoeba:149774:264784
+D15	neat	direct-english	6	tatoeba:116188:287481	exact-surface-phrase	15	4	15	31	0|15|15|31|tatoeba:116188:287481
+D15	neat	direct-english	7	tatoeba:94064:309642	exact-surface-phrase	17	4	6	18	0|17|6|18|tatoeba:94064:309642
+D15	neat	direct-english	8	tatoeba:1189189:264786	exact-surface-phrase	18	4	8	23	0|18|8|23|tatoeba:1189189:264786
+D15	neat	direct-english	9	tatoeba:149772:264786	exact-surface-phrase	18	4	8	23	0|18|8|23|tatoeba:149772:264786
+D15	neat	direct-english	10	tatoeba:3576156:3575411	exact-surface-phrase	19	4	5	14	0|19|5|14|tatoeba:3576156:3575411
+D15	neat	direct-english	11	tatoeba:116204:287459	exact-surface-phrase	25	4	6	17	0|25|6|17|tatoeba:116204:287459
+D15	neat	direct-english	12	tatoeba:116207:287459	exact-surface-phrase	25	4	6	18	0|25|6|18|tatoeba:116207:287459
+D15	neat	direct-english	13	tatoeba:86871:316839	exact-surface-phrase	26	4	8	18	0|26|8|18|tatoeba:86871:316839
+D15	neat	direct-english	14	tatoeba:149773:264785	exact-surface-phrase	26	4	10	22	0|26|10|22|tatoeba:149773:264785
+D15	neat	direct-english	15	tatoeba:143490:271077	exact-surface-phrase	27	4	6	21	0|27|6|21|tatoeba:143490:271077
+D15	neat	direct-english	16	tatoeba:114346:289326	exact-surface-phrase	27	4	7	14	0|27|7|14|tatoeba:114346:289326
+D15	neat	direct-english	17	tatoeba:114463:289208	exact-surface-phrase	28	4	10	19	0|28|10|19|tatoeba:114463:289208
+D15	neat	direct-english	18	tatoeba:98208:305494	exact-surface-phrase	29	4	7	18	0|29|7|18|tatoeba:98208:305494
+D15	neat	direct-english	19	tatoeba:226050:63390	exact-surface-phrase	46	4	12	28	0|46|12|28|tatoeba:226050:63390
+D16	quickly	direct-english	1	tatoeba:1180855:8602015	exact-surface-phrase	0	7	5	15	0|0|5|15|tatoeba:1180855:8602015
+D16	quickly	direct-english	2	tatoeba:214572:51863	exact-surface-phrase	0	7	5	16	0|0|5|16|tatoeba:214572:51863
+D16	quickly	direct-english	3	tatoeba:2171800:2172035	exact-surface-phrase	0	7	5	16	0|0|5|16|tatoeba:2171800:2172035
+D16	quickly	direct-english	4	tatoeba:214573:51865	exact-surface-phrase	0	7	6	13	0|0|6|13|tatoeba:214573:51865
+D16	quickly	direct-english	5	tatoeba:125401:278592	exact-surface-phrase	0	7	11	31	0|0|11|31|tatoeba:125401:278592
+D16	quickly	direct-english	6	tatoeba:76236:327482	exact-surface-phrase	0	7	18	30	0|0|18|30|tatoeba:76236:327482
+D16	quickly	direct-english	7	tatoeba:11013766:11014450	exact-surface-phrase	2	7	7	14	0|2|7|14|tatoeba:11013766:11014450
+D16	quickly	direct-english	8	tatoeba:159011:255514	exact-surface-phrase	2	7	8	17	0|2|8|17|tatoeba:159011:255514
+D16	quickly	direct-english	9	tatoeba:160540:253981	exact-surface-phrase	2	7	8	17	0|2|8|17|tatoeba:160540:253981
+D16	quickly	direct-english	10	tatoeba:11013852:11014504	exact-surface-phrase	2	7	9	16	0|2|9|16|tatoeba:11013852:11014504
+D16	quickly	direct-english	11	tatoeba:182385:19563	exact-surface-phrase	2	7	11	36	0|2|11|36|tatoeba:182385:19563
+D16	quickly	direct-english	12	tatoeba:10932513:13663800	exact-surface-phrase	3	7	5	10	0|3|5|10|tatoeba:10932513:13663800
+D16	quickly	direct-english	13	tatoeba:113361:290312	exact-surface-phrase	3	7	7	15	0|3|7|15|tatoeba:113361:290312
+D16	quickly	direct-english	14	tatoeba:103825:299867	exact-surface-phrase	3	7	8	16	0|3|8|16|tatoeba:103825:299867
+D16	quickly	direct-english	15	tatoeba:9595385:9602168	exact-surface-phrase	3	7	8	20	0|3|8|20|tatoeba:9595385:9602168
+D16	quickly	direct-english	16	tatoeba:112977:290698	exact-surface-phrase	3	7	11	23	0|3|11|23|tatoeba:112977:290698
+D16	quickly	direct-english	17	tatoeba:10574113:5289835	exact-surface-phrase	4	7	4	11	0|4|4|11|tatoeba:10574113:5289835
+D16	quickly	direct-english	18	tatoeba:7834219:7834022	exact-surface-phrase	4	7	5	14	0|4|5|14|tatoeba:7834219:7834022
+D16	quickly	direct-english	19	tatoeba:4562245:4828730	exact-surface-phrase	4	7	6	13	0|4|6|13|tatoeba:4562245:4828730
+D16	quickly	direct-english	20	tatoeba:8880552:8438254	exact-surface-phrase	4	7	6	14	0|4|6|14|tatoeba:8880552:8438254
+D16	quickly	direct-english	21	tatoeba:90532:313180	exact-surface-phrase	4	7	6	17	0|4|6|17|tatoeba:90532:313180
+D16	quickly	direct-english	22	tatoeba:221466:58790	exact-surface-phrase	4	7	7	19	0|4|7|19|tatoeba:221466:58790
+D16	quickly	direct-english	23	tatoeba:92691:311018	exact-surface-phrase	4	7	8	20	0|4|8|20|tatoeba:92691:311018
+D16	quickly	direct-english	24	tatoeba:90237:313477	exact-surface-phrase	4	7	8	22	0|4|8|22|tatoeba:90237:313477
+D16	quickly	direct-english	25	tatoeba:11345631:2957801	exact-surface-phrase	4	7	10	22	0|4|10|22|tatoeba:11345631:2957801
+D16	quickly	direct-english	26	tatoeba:10906697:10906698	exact-surface-phrase	6	7	2	6	0|6|2|6|tatoeba:10906697:10906698
+D16	quickly	direct-english	27	tatoeba:10651827:1860738	exact-surface-phrase	6	7	3	5	0|6|3|5|tatoeba:10651827:1860738
+D16	quickly	direct-english	28	tatoeba:10651826:1860738	exact-surface-phrase	6	7	3	7	0|6|3|7|tatoeba:10651826:1860738
+D16	quickly	direct-english	29	tatoeba:2305006:1860738	exact-surface-phrase	6	7	3	10	0|6|3|10|tatoeba:2305006:1860738
+D16	quickly	direct-english	30	tatoeba:1057299:1057302	exact-surface-phrase	6	7	13	25	0|6|13|25|tatoeba:1057299:1057302
+D16	quickly	direct-english	31	tatoeba:4260177:6561678	exact-surface-phrase	7	7	5	11	0|7|5|11|tatoeba:4260177:6561678
+D16	quickly	direct-english	32	tatoeba:113438:290235	exact-surface-phrase	7	7	7	12	0|7|7|12|tatoeba:113438:290235
+D16	quickly	direct-english	33	tatoeba:76780:326940	exact-surface-phrase	7	7	11	35	0|7|11|35|tatoeba:76780:326940
+D16	quickly	direct-english	34	tatoeba:140559:274014	exact-surface-phrase	8	7	3	7	0|8|3|7|tatoeba:140559:274014
+D16	quickly	direct-english	35	tatoeba:115417:288254	exact-surface-phrase	8	7	3	9	0|8|3|9|tatoeba:115417:288254
+D16	quickly	direct-english	36	tatoeba:2186085:274014	exact-surface-phrase	8	7	3	10	0|8|3|10|tatoeba:2186085:274014
+D16	quickly	direct-english	37	tatoeba:10569747:9623254	exact-surface-phrase	8	7	6	16	0|8|6|16|tatoeba:10569747:9623254
+D16	quickly	direct-english	38	tatoeba:12135548:12135544	exact-surface-phrase	9	7	3	6	0|9|3|6|tatoeba:12135548:12135544
+D16	quickly	direct-english	39	tatoeba:2354060:302031	exact-surface-phrase	9	7	3	6	0|9|3|6|tatoeba:2354060:302031
+D16	quickly	direct-english	40	tatoeba:101661:302031	exact-surface-phrase	9	7	3	12	0|9|3|12|tatoeba:101661:302031
+D16	quickly	direct-english	41	tatoeba:74754:328965	exact-surface-phrase	9	7	3	13	0|9|3|13|tatoeba:74754:328965
+D16	quickly	direct-english	42	tatoeba:198757:35952	exact-surface-phrase	9	7	4	13	0|9|4|13|tatoeba:198757:35952
+D16	quickly	direct-english	43	tatoeba:207965:35952	exact-surface-phrase	9	7	4	15	0|9|4|15|tatoeba:207965:35952
+D16	quickly	direct-english	44	tatoeba:202306:39518	exact-surface-phrase	9	7	7	11	0|9|7|11|tatoeba:202306:39518
+D16	quickly	direct-english	45	tatoeba:1186963:295088	exact-surface-phrase	9	7	8	14	0|9|8|14|tatoeba:1186963:295088
+D16	quickly	direct-english	46	tatoeba:108598:295088	exact-surface-phrase	9	7	8	17	0|9|8|17|tatoeba:108598:295088
+D16	quickly	direct-english	47	tatoeba:168760:245731	exact-surface-phrase	9	7	8	19	0|9|8|19|tatoeba:168760:245731
+D16	quickly	direct-english	48	tatoeba:138004:275231	exact-surface-phrase	9	7	9	17	0|9|9|17|tatoeba:138004:275231
+D16	quickly	direct-english	49	tatoeba:145447:269116	exact-surface-phrase	9	7	9	20	0|9|9|20|tatoeba:145447:269116
+D16	quickly	direct-english	50	tatoeba:190084:27240	exact-surface-phrase	9	7	11	18	0|9|11|18|tatoeba:190084:27240
+D16	quickly	direct-english	51	tatoeba:140537:274036	exact-surface-phrase	10	7	3	7	0|10|3|7|tatoeba:140537:274036
+D16	quickly	direct-english	52	tatoeba:898045:434454	exact-surface-phrase	10	7	3	10	0|10|3|10|tatoeba:898045:434454
+D16	quickly	direct-english	53	tatoeba:150628:263929	exact-surface-phrase	10	7	3	11	0|10|3|11|tatoeba:150628:263929
+D16	quickly	direct-english	54	tatoeba:10224927:4502264	exact-surface-phrase	10	7	4	11	0|10|4|11|tatoeba:10224927:4502264
+D16	quickly	direct-english	55	tatoeba:12524646:11912335	exact-surface-phrase	10	7	4	12	0|10|4|12|tatoeba:12524646:11912335
+D16	quickly	direct-english	56	tatoeba:3138110:6404581	exact-surface-phrase	10	7	8	17	0|10|8|17|tatoeba:3138110:6404581
+D16	quickly	direct-english	57	tatoeba:140481:274092	exact-surface-phrase	10	7	11	32	0|10|11|32|tatoeba:140481:274092
+D16	quickly	direct-english	58	tatoeba:102888:300806	exact-surface-phrase	10	7	15	33	0|10|15|33|tatoeba:102888:300806
+D16	quickly	direct-english	59	tatoeba:11524627:2996368	exact-surface-phrase	11	7	3	9	0|11|3|9|tatoeba:11524627:2996368
+D16	quickly	direct-english	60	tatoeba:11071214:3085636	exact-surface-phrase	11	7	3	10	0|11|3|10|tatoeba:11071214:3085636
+D16	quickly	direct-english	61	tatoeba:11071213:3085636	exact-surface-phrase	11	7	3	11	0|11|3|11|tatoeba:11071213:3085636
+D16	quickly	direct-english	62	tatoeba:11071215:3085636	exact-surface-phrase	11	7	3	11	0|11|3|11|tatoeba:11071215:3085636
+D16	quickly	direct-english	63	tatoeba:10904988:11009261	exact-surface-phrase	11	7	4	5	0|11|4|5|tatoeba:10904988:11009261
+D16	quickly	direct-english	64	tatoeba:176213:238252	exact-surface-phrase	11	7	10	21	0|11|10|21|tatoeba:176213:238252
+D16	quickly	direct-english	65	tatoeba:11001416:13976527	exact-surface-phrase	11	7	14	18	0|11|14|18|tatoeba:11001416:13976527
+D16	quickly	direct-english	66	tatoeba:150689:263868	exact-surface-phrase	12	7	3	9	0|12|3|9|tatoeba:150689:263868
+D16	quickly	direct-english	67	tatoeba:151208:263348	exact-surface-phrase	12	7	3	9	0|12|3|9|tatoeba:151208:263348
+D16	quickly	direct-english	68	tatoeba:10345067:263348	exact-surface-phrase	12	7	3	10	0|12|3|10|tatoeba:10345067:263348
+D16	quickly	direct-english	69	tatoeba:12037543:263868	exact-surface-phrase	12	7	3	10	0|12|3|10|tatoeba:12037543:263868
+D16	quickly	direct-english	70	tatoeba:151207:263348	exact-surface-phrase	12	7	3	11	0|12|3|11|tatoeba:151207:263348
+D16	quickly	direct-english	71	tatoeba:12037544:263868	exact-surface-phrase	12	7	3	14	0|12|3|14|tatoeba:12037544:263868
+D16	quickly	direct-english	72	tatoeba:189788:26943	exact-surface-phrase	12	7	5	17	0|12|5|17|tatoeba:189788:26943
+D16	quickly	direct-english	73	tatoeba:125152:278841	exact-surface-phrase	12	7	6	15	0|12|6|15|tatoeba:125152:278841
+D16	quickly	direct-english	74	tatoeba:145892:268670	exact-surface-phrase	12	7	6	15	0|12|6|15|tatoeba:145892:268670
+D16	quickly	direct-english	75	tatoeba:146404:268158	exact-surface-phrase	12	7	6	17	0|12|6|17|tatoeba:146404:268158
+D16	quickly	direct-english	76	tatoeba:230354:67720	exact-surface-phrase	12	7	8	32	0|12|8|32|tatoeba:230354:67720
+D16	quickly	direct-english	77	tatoeba:173815:240655	exact-surface-phrase	12	7	10	20	0|12|10|20|tatoeba:173815:240655
+D16	quickly	direct-english	78	tatoeba:121618:282387	exact-surface-phrase	13	7	4	9	0|13|4|9|tatoeba:121618:282387
+D16	quickly	direct-english	79	tatoeba:10798113:38491	exact-surface-phrase	13	7	4	10	0|13|4|10|tatoeba:10798113:38491
+D16	quickly	direct-english	80	tatoeba:169100:245387	exact-surface-phrase	13	7	4	11	0|13|4|11|tatoeba:169100:245387
+D16	quickly	direct-english	81	tatoeba:150653:263904	exact-surface-phrase	13	7	4	12	0|13|4|12|tatoeba:150653:263904
+D16	quickly	direct-english	82	tatoeba:201284:38491	exact-surface-phrase	13	7	4	14	0|13|4|14|tatoeba:201284:38491
+D16	quickly	direct-english	83	tatoeba:11998856:9078923	exact-surface-phrase	13	7	7	17	0|13|7|17|tatoeba:11998856:9078923
+D16	quickly	direct-english	84	tatoeba:210916:48187	exact-surface-phrase	13	7	7	22	0|13|7|22|tatoeba:210916:48187
+D16	quickly	direct-english	85	tatoeba:184144:21273	exact-surface-phrase	13	7	9	19	0|13|9|19|tatoeba:184144:21273
+D16	quickly	direct-english	86	tatoeba:228275:65630	exact-surface-phrase	14	7	3	10	0|14|3|10|tatoeba:228275:65630
+D16	quickly	direct-english	87	tatoeba:13681761:3410849	exact-surface-phrase	14	7	4	9	0|14|4|9|tatoeba:13681761:3410849
+D16	quickly	direct-english	88	tatoeba:183215:20337	exact-surface-phrase	14	7	4	12	0|14|4|12|tatoeba:183215:20337
+D16	quickly	direct-english	89	tatoeba:90521:313191	exact-surface-phrase	14	7	4	13	0|14|4|13|tatoeba:90521:313191
+D16	quickly	direct-english	90	tatoeba:3367134:1134987	exact-surface-phrase	14	7	4	15	0|14|4|15|tatoeba:3367134:1134987
+D16	quickly	direct-english	91	tatoeba:12143031:9965759	exact-surface-phrase	14	7	5	8	0|14|5|8|tatoeba:12143031:9965759
+D16	quickly	direct-english	92	tatoeba:147479:267081	exact-surface-phrase	14	7	7	12	0|14|7|12|tatoeba:147479:267081
+D16	quickly	direct-english	93	tatoeba:153368:261177	exact-surface-phrase	14	7	8	24	0|14|8|24|tatoeba:153368:261177
+D16	quickly	direct-english	94	tatoeba:196450:33629	exact-surface-phrase	14	7	9	18	0|14|9|18|tatoeba:196450:33629
+D16	quickly	direct-english	95	tatoeba:95721:307984	exact-surface-phrase	14	7	9	26	0|14|9|26|tatoeba:95721:307984
+D16	quickly	direct-english	96	tatoeba:2783302:2786842	exact-surface-phrase	14	7	10	19	0|14|10|19|tatoeba:2783302:2786842
+D16	quickly	direct-english	97	tatoeba:150664:263893	exact-surface-phrase	15	7	4	11	0|15|4|11|tatoeba:150664:263893
+D16	quickly	direct-english	98	tatoeba:206310:43558	exact-surface-phrase	15	7	4	11	0|15|4|11|tatoeba:206310:43558
+D16	quickly	direct-english	99	tatoeba:184056:21184	exact-surface-phrase	15	7	4	12	0|15|4|12|tatoeba:184056:21184
+D16	quickly	direct-english	100	tatoeba:164123:250387	exact-surface-phrase	15	7	4	13	0|15|4|13|tatoeba:164123:250387
+D17	cat!	direct-english	1	tatoeba:10135625:6576755	exact-surface-phrase	0	3	3	7	0|0|3|7|tatoeba:10135625:6576755
+D17	cat!	direct-english	2	tatoeba:10135633:6584724	exact-surface-phrase	0	3	3	8	0|0|3|8|tatoeba:10135633:6584724
+D17	cat!	direct-english	3	tatoeba:6828218:8092953	exact-surface-phrase	2	3	3	5	0|2|3|5|tatoeba:6828218:8092953
+D17	cat!	direct-english	4	tatoeba:121984:282019	exact-surface-phrase	2	3	5	7	0|2|5|7|tatoeba:121984:282019
+D17	cat!	direct-english	5	tatoeba:515194:515178	exact-surface-phrase	2	3	5	9	0|2|5|9|tatoeba:515194:515178
+D17	cat!	direct-english	6	tatoeba:1632389:1277087	exact-surface-phrase	2	3	5	10	0|2|5|10|tatoeba:1632389:1277087
+D17	cat!	direct-english	7	tatoeba:574909:574907	exact-surface-phrase	2	3	5	11	0|2|5|11|tatoeba:574909:574907
+D17	cat!	direct-english	8	tatoeba:1047593:1052795	exact-surface-phrase	2	3	6	9	0|2|6|9|tatoeba:1047593:1052795
+D17	cat!	direct-english	9	tatoeba:122008:281995	exact-surface-phrase	2	3	6	12	0|2|6|12|tatoeba:122008:281995
+D17	cat!	direct-english	10	tatoeba:190081:27237	exact-surface-phrase	2	3	6	13	0|2|6|13|tatoeba:190081:27237
+D17	cat!	direct-english	11	tatoeba:121954:282049	exact-surface-phrase	2	3	7	10	0|2|7|10|tatoeba:121954:282049
+D17	cat!	direct-english	12	tatoeba:121990:282013	exact-surface-phrase	2	3	7	11	0|2|7|11|tatoeba:121990:282013
+D17	cat!	direct-english	13	tatoeba:175333:239133	exact-surface-phrase	2	3	7	11	0|2|7|11|tatoeba:175333:239133
+D17	cat!	direct-english	14	tatoeba:121988:282014	exact-surface-phrase	2	3	7	12	0|2|7|12|tatoeba:121988:282014
+D17	cat!	direct-english	15	tatoeba:183466:20589	exact-surface-phrase	2	3	7	12	0|2|7|12|tatoeba:183466:20589
+D17	cat!	direct-english	16	tatoeba:198629:35822	exact-surface-phrase	2	3	7	12	0|2|7|12|tatoeba:198629:35822
+D17	cat!	direct-english	17	tatoeba:639683:10550266	exact-surface-phrase	2	3	7	12	0|2|7|12|tatoeba:639683:10550266
+D17	cat!	direct-english	18	tatoeba:10550271:10550266	exact-surface-phrase	2	3	7	13	0|2|7|13|tatoeba:10550271:10550266
+D17	cat!	direct-english	19	tatoeba:467397:35822	exact-surface-phrase	2	3	7	13	0|2|7|13|tatoeba:467397:35822
+D17	cat!	direct-english	20	tatoeba:122009:281994	exact-surface-phrase	2	3	7	14	0|2|7|14|tatoeba:122009:281994
+D17	cat!	direct-english	21	tatoeba:235659:73040	exact-surface-phrase	2	3	7	17	0|2|7|17|tatoeba:235659:73040
+D17	cat!	direct-english	22	tatoeba:198625:35818	exact-surface-phrase	2	3	8	13	0|2|8|13|tatoeba:198625:35818
+D17	cat!	direct-english	23	tatoeba:121927:282076	exact-surface-phrase	2	3	8	17	0|2|8|17|tatoeba:121927:282076
+D17	cat!	direct-english	24	tatoeba:121991:282012	exact-surface-phrase	2	3	9	13	0|2|9|13|tatoeba:121991:282012
+D17	cat!	direct-english	25	tatoeba:122002:282001	exact-surface-phrase	2	3	9	18	0|2|9|18|tatoeba:122002:282001
+D17	cat!	direct-english	26	tatoeba:121953:282050	exact-surface-phrase	2	3	9	22	0|2|9|22|tatoeba:121953:282050
+D17	cat!	direct-english	27	tatoeba:390036:390037	exact-surface-phrase	2	3	25	29	0|2|25|29|tatoeba:390036:390037
+D17	cat!	direct-english	28	tatoeba:10212644:1118673	exact-surface-phrase	3	3	3	14	0|3|3|14|tatoeba:10212644:1118673
+D17	cat!	direct-english	29	tatoeba:12351453:2195401	exact-surface-phrase	3	3	4	9	0|3|4|9|tatoeba:12351453:2195401
+D17	cat!	direct-english	30	tatoeba:1681190:1333956	exact-surface-phrase	3	3	4	9	0|3|4|9|tatoeba:1681190:1333956
+D17	cat!	direct-english	31	tatoeba:11058412:7844818	exact-surface-phrase	3	3	4	10	0|3|4|10|tatoeba:11058412:7844818
+D17	cat!	direct-english	32	tatoeba:1107947:1107946	exact-surface-phrase	3	3	4	10	0|3|4|10|tatoeba:1107947:1107946
+D17	cat!	direct-english	33	tatoeba:13089108:13000231	exact-surface-phrase	3	3	4	10	0|3|4|10|tatoeba:13089108:13000231
+D17	cat!	direct-english	34	tatoeba:5988010:5988007	exact-surface-phrase	3	3	4	12	0|3|4|12|tatoeba:5988010:5988007
+D17	cat!	direct-english	35	tatoeba:9738192:3820840	exact-surface-phrase	3	3	4	13	0|3|4|13|tatoeba:9738192:3820840
+D17	cat!	direct-english	36	tatoeba:4402279:4317674	exact-surface-phrase	3	3	4	15	0|3|4|15|tatoeba:4402279:4317674
+D17	cat!	direct-english	37	tatoeba:8635741:1806274	exact-surface-phrase	3	3	4	15	0|3|4|15|tatoeba:8635741:1806274
+D17	cat!	direct-english	38	tatoeba:1683418:1682261	exact-surface-phrase	3	3	5	12	0|3|5|12|tatoeba:1683418:1682261
+D17	cat!	direct-english	39	tatoeba:9062738:7748607	exact-surface-phrase	3	3	5	17	0|3|5|17|tatoeba:9062738:7748607
+D17	cat!	direct-english	40	tatoeba:13697783:10314793	exact-surface-phrase	3	3	5	24	0|3|5|24|tatoeba:13697783:10314793
+D17	cat!	direct-english	41	tatoeba:13089107:12403391	exact-surface-phrase	3	3	6	14	0|3|6|14|tatoeba:13089107:12403391
+D17	cat!	direct-english	42	tatoeba:794253:793644	exact-surface-phrase	3	3	6	15	0|3|6|15|tatoeba:794253:793644
+D17	cat!	direct-english	43	tatoeba:228210:65565	exact-surface-phrase	3	3	6	16	0|3|6|16|tatoeba:228210:65565
+D17	cat!	direct-english	44	tatoeba:162951:251562	exact-surface-phrase	3	3	7	12	0|3|7|12|tatoeba:162951:251562
+D17	cat!	direct-english	45	tatoeba:5185654:1415972	exact-surface-phrase	3	3	8	15	0|3|8|15|tatoeba:5185654:1415972
+D17	cat!	direct-english	46	tatoeba:11577121:1570654	exact-surface-phrase	3	3	8	19	0|3|8|19|tatoeba:11577121:1570654
+D17	cat!	direct-english	47	tatoeba:162952:251561	exact-surface-phrase	3	3	8	21	0|3|8|21|tatoeba:162952:251561
+D17	cat!	direct-english	48	tatoeba:162954:251559	exact-surface-phrase	3	3	9	17	0|3|9|17|tatoeba:162954:251559
+D17	cat!	direct-english	49	tatoeba:10791855:9736542	exact-surface-phrase	3	3	10	23	0|3|10|23|tatoeba:10791855:9736542
+D17	cat!	direct-english	50	tatoeba:121925:282078	exact-surface-phrase	3	3	12	19	0|3|12|19|tatoeba:121925:282078
+D17	cat!	direct-english	51	tatoeba:228163:65517	exact-surface-phrase	3	3	13	29	0|3|13|29|tatoeba:228163:65517
+D17	cat!	direct-english	52	tatoeba:11264676:9964865	exact-surface-phrase	4	3	3	7	0|4|3|7|tatoeba:11264676:9964865
+D17	cat!	direct-english	53	tatoeba:1780171:1780076	exact-surface-phrase	4	3	4	6	0|4|4|6|tatoeba:1780171:1780076
+D17	cat!	direct-english	54	tatoeba:10482009:663719	exact-surface-phrase	4	3	4	7	0|4|4|7|tatoeba:10482009:663719
+D17	cat!	direct-english	55	tatoeba:1172570:1107280	exact-surface-phrase	4	3	4	7	0|4|4|7|tatoeba:1172570:1107280
+D17	cat!	direct-english	56	tatoeba:10458205:10457588	exact-surface-phrase	4	3	4	8	0|4|4|8|tatoeba:10458205:10457588
+D17	cat!	direct-english	57	tatoeba:122006:12231408	exact-surface-phrase	4	3	4	8	0|4|4|8|tatoeba:122006:12231408
+D17	cat!	direct-english	58	tatoeba:13069530:8958418	exact-surface-phrase	4	3	4	8	0|4|4|8|tatoeba:13069530:8958418
+D17	cat!	direct-english	59	tatoeba:9032775:6953029	exact-surface-phrase	4	3	4	8	0|4|4|8|tatoeba:9032775:6953029
+D17	cat!	direct-english	60	tatoeba:10482023:7356774	exact-surface-phrase	4	3	4	9	0|4|4|9|tatoeba:10482023:7356774
+D17	cat!	direct-english	61	tatoeba:6458286:6475180	exact-surface-phrase	4	3	4	9	0|4|4|9|tatoeba:6458286:6475180
+D17	cat!	direct-english	62	tatoeba:1795640:487303	exact-surface-phrase	4	3	4	10	0|4|4|10|tatoeba:1795640:487303
+D17	cat!	direct-english	63	tatoeba:11101908:2839724	exact-surface-phrase	4	3	4	11	0|4|4|11|tatoeba:11101908:2839724
+D17	cat!	direct-english	64	tatoeba:11160507:11160432	exact-surface-phrase	4	3	4	11	0|4|4|11|tatoeba:11160507:11160432
+D17	cat!	direct-english	65	tatoeba:207309:44560	exact-surface-phrase	4	3	4	11	0|4|4|11|tatoeba:207309:44560
+D17	cat!	direct-english	66	tatoeba:207313:44564	exact-surface-phrase	4	3	4	11	0|4|4|11|tatoeba:207313:44564
+D17	cat!	direct-english	67	tatoeba:9032774:6953029	exact-surface-phrase	4	3	4	11	0|4|4|11|tatoeba:9032774:6953029
+D17	cat!	direct-english	68	tatoeba:8981689:6663671	exact-surface-phrase	4	3	4	14	0|4|4|14|tatoeba:8981689:6663671
+D17	cat!	direct-english	69	tatoeba:12957380:10116614	exact-surface-phrase	4	3	4	15	0|4|4|15|tatoeba:12957380:10116614
+D17	cat!	direct-english	70	tatoeba:6828215:8804660	exact-surface-phrase	4	3	5	6	0|4|5|6|tatoeba:6828215:8804660
+D17	cat!	direct-english	71	tatoeba:10695665:282069	exact-surface-phrase	4	3	5	9	0|4|5|9|tatoeba:10695665:282069
+D17	cat!	direct-english	72	tatoeba:1585523:1194882	exact-surface-phrase	4	3	5	9	0|4|5|9|tatoeba:1585523:1194882
+D17	cat!	direct-english	73	tatoeba:121972:282031	exact-surface-phrase	4	3	5	11	0|4|5|11|tatoeba:121972:282031
+D17	cat!	direct-english	74	tatoeba:9171254:8804660	exact-surface-phrase	4	3	5	11	0|4|5|11|tatoeba:9171254:8804660
+D17	cat!	direct-english	75	tatoeba:9171258:8804660	exact-surface-phrase	4	3	5	11	0|4|5|11|tatoeba:9171258:8804660
+D17	cat!	direct-english	76	tatoeba:121934:282069	exact-surface-phrase	4	3	5	12	0|4|5|12|tatoeba:121934:282069
+D17	cat!	direct-english	77	tatoeba:121947:282056	exact-surface-phrase	4	3	5	12	0|4|5|12|tatoeba:121947:282056
+D17	cat!	direct-english	78	tatoeba:121949:282054	exact-surface-phrase	4	3	5	12	0|4|5|12|tatoeba:121949:282054
+D17	cat!	direct-english	79	tatoeba:207315:44566	exact-surface-phrase	4	3	5	12	0|4|5|12|tatoeba:207315:44566
+D17	cat!	direct-english	80	tatoeba:121961:282041	exact-surface-phrase	4	3	5	13	0|4|5|13|tatoeba:121961:282041
+D17	cat!	direct-english	81	tatoeba:121967:282036	exact-surface-phrase	4	3	5	15	0|4|5|15|tatoeba:121967:282036
+D17	cat!	direct-english	82	tatoeba:11331283:10734356	exact-surface-phrase	4	3	6	9	0|4|6|9|tatoeba:11331283:10734356
+D17	cat!	direct-english	83	tatoeba:12698551:1837850	exact-surface-phrase	4	3	6	9	0|4|6|9|tatoeba:12698551:1837850
+D17	cat!	direct-english	84	tatoeba:121928:282075	exact-surface-phrase	4	3	6	10	0|4|6|10|tatoeba:121928:282075
+D17	cat!	direct-english	85	tatoeba:121948:282055	exact-surface-phrase	4	3	6	10	0|4|6|10|tatoeba:121948:282055
+D17	cat!	direct-english	86	tatoeba:121975:282029	exact-surface-phrase	4	3	6	10	0|4|6|10|tatoeba:121975:282029
+D17	cat!	direct-english	87	tatoeba:121944:282059	exact-surface-phrase	4	3	6	11	0|4|6|11|tatoeba:121944:282059
+D17	cat!	direct-english	88	tatoeba:1087640:779445	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:1087640:779445
+D17	cat!	direct-english	89	tatoeba:121942:282062	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:121942:282062
+D17	cat!	direct-english	90	tatoeba:121943:282063	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:121943:282063
+D17	cat!	direct-english	91	tatoeba:121964:282039	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:121964:282039
+D17	cat!	direct-english	92	tatoeba:122000:282003	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:122000:282003
+D17	cat!	direct-english	93	tatoeba:198622:35815	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:198622:35815
+D17	cat!	direct-english	94	tatoeba:228162:65516	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:228162:65516
+D17	cat!	direct-english	95	tatoeba:6850787:3387119	exact-surface-phrase	4	3	6	12	0|4|6|12|tatoeba:6850787:3387119
+D17	cat!	direct-english	96	tatoeba:121939:282065	exact-surface-phrase	4	3	6	13	0|4|6|13|tatoeba:121939:282065
+D17	cat!	direct-english	97	tatoeba:121971:282032	exact-surface-phrase	4	3	6	13	0|4|6|13|tatoeba:121971:282032
+D17	cat!	direct-english	98	tatoeba:971346:882772	exact-surface-phrase	4	3	6	14	0|4|6|14|tatoeba:971346:882772
+D17	cat!	direct-english	99	tatoeba:207314:44565	exact-surface-phrase	4	3	6	15	0|4|6|15|tatoeba:207314:44565
+D17	cat!	direct-english	100	tatoeba:8615935:44562	exact-surface-phrase	4	3	6	16	0|4|6|16|tatoeba:8615935:44562
+D18	食べる	direct-japanese	1	tatoeba:12824508:773323	contained-japanese-surface	0	3	0	4	3|0|0|4|tatoeba:12824508:773323
+D18	食べる	direct-japanese	2	tatoeba:5254850:1098495	contained-japanese-surface	0	3	0	4	3|0|0|4|tatoeba:5254850:1098495
+D18	食べる	direct-japanese	3	tatoeba:5072721:5072694	contained-japanese-surface	0	3	0	5	3|0|0|5|tatoeba:5072721:5072694
+D18	食べる	direct-japanese	4	tatoeba:8725533:1977250	contained-japanese-surface	0	3	0	7	3|0|0|7|tatoeba:8725533:1977250
+D18	食べる	direct-japanese	5	tatoeba:11030909:13045143	contained-japanese-surface	0	3	0	10	3|0|0|10|tatoeba:11030909:13045143
+D18	食べる	direct-japanese	6	tatoeba:10087643:249928	contained-japanese-surface	0	3	0	11	3|0|0|11|tatoeba:10087643:249928
+D18	食べる	direct-japanese	7	tatoeba:12689079:12689082	contained-japanese-surface	0	3	0	11	3|0|0|11|tatoeba:12689079:12689082
+D18	食べる	direct-japanese	8	tatoeba:391954:533950	contained-japanese-surface	0	3	0	11	3|0|0|11|tatoeba:391954:533950
+D18	食べる	direct-japanese	9	tatoeba:10087642:249928	contained-japanese-surface	0	3	0	12	3|0|0|12|tatoeba:10087642:249928
+D18	食べる	direct-japanese	10	tatoeba:145927:54335	contained-japanese-surface	0	3	0	13	3|0|0|13|tatoeba:145927:54335
+D18	食べる	direct-japanese	11	tatoeba:10965341:12018717	contained-japanese-surface	0	3	0	14	3|0|0|14|tatoeba:10965341:12018717
+D18	食べる	direct-japanese	12	tatoeba:8878337:7114453	contained-japanese-surface	0	3	0	14	3|0|0|14|tatoeba:8878337:7114453
+D18	食べる	direct-japanese	13	tatoeba:8596842:1657658	contained-japanese-surface	0	3	0	15	3|0|0|15|tatoeba:8596842:1657658
+D18	食べる	direct-japanese	14	tatoeba:145929:268633	contained-japanese-surface	0	3	0	16	3|0|0|16|tatoeba:145929:268633
+D18	食べる	direct-japanese	15	tatoeba:11213957:4871462	contained-japanese-surface	0	3	0	17	3|0|0|17|tatoeba:11213957:4871462
+D18	食べる	direct-japanese	16	tatoeba:1254673:908416	contained-japanese-surface	0	3	0	17	3|0|0|17|tatoeba:1254673:908416
+D18	食べる	direct-japanese	17	tatoeba:9938061:10119876	contained-japanese-surface	0	3	0	17	3|0|0|17|tatoeba:9938061:10119876
+D18	食べる	direct-japanese	18	tatoeba:9135973:254774	contained-japanese-surface	0	3	0	20	3|0|0|20|tatoeba:9135973:254774
+D18	食べる	direct-japanese	19	tatoeba:145930:268632	contained-japanese-surface	0	3	0	22	3|0|0|22|tatoeba:145930:268632
+D18	食べる	direct-japanese	20	tatoeba:145931:268631	contained-japanese-surface	0	3	0	23	3|0|0|23|tatoeba:145931:268631
+D18	食べる	direct-japanese	21	tatoeba:11052378:1225285	contained-japanese-surface	0	3	0	29	3|0|0|29|tatoeba:11052378:1225285
+D18	食べる	direct-japanese	22	tatoeba:12206268:3154896	contained-japanese-surface	2	3	0	6	3|2|0|6|tatoeba:12206268:3154896
+D18	食べる	direct-japanese	23	tatoeba:6828205:7730719	contained-japanese-surface	2	3	0	6	3|2|0|6|tatoeba:6828205:7730719
+D18	食べる	direct-japanese	24	tatoeba:6828206:8092960	contained-japanese-surface	2	3	0	6	3|2|0|6|tatoeba:6828206:8092960
+D18	食べる	direct-japanese	25	tatoeba:8596646:5460868	contained-japanese-surface	2	3	0	7	3|2|0|7|tatoeba:8596646:5460868
+D18	食べる	direct-japanese	26	tatoeba:9816978:1131189	contained-japanese-surface	2	3	0	7	3|2|0|7|tatoeba:9816978:1131189
+D18	食べる	direct-japanese	27	tatoeba:8730507:1841746	contained-japanese-surface	2	3	0	9	3|2|0|9|tatoeba:8730507:1841746
+D18	食べる	direct-japanese	28	tatoeba:11867198:11136700	contained-japanese-surface	2	3	0	10	3|2|0|10|tatoeba:11867198:11136700
+D18	食べる	direct-japanese	29	tatoeba:8730599:25073	contained-japanese-surface	2	3	0	10	3|2|0|10|tatoeba:8730599:25073
+D18	食べる	direct-japanese	30	tatoeba:11883176:9413364	contained-japanese-surface	2	3	0	11	3|2|0|11|tatoeba:11883176:9413364
+D18	食べる	direct-japanese	31	tatoeba:8648353:2786574	contained-japanese-surface	2	3	0	11	3|2|0|11|tatoeba:8648353:2786574
+D18	食べる	direct-japanese	32	tatoeba:8804694:3154896	contained-japanese-surface	2	3	0	11	3|2|0|11|tatoeba:8804694:3154896
+D18	食べる	direct-japanese	33	tatoeba:103924:299768	contained-japanese-surface	2	3	0	12	3|2|0|12|tatoeba:103924:299768
+D18	食べる	direct-japanese	34	tatoeba:11395147:953794	contained-japanese-surface	2	3	0	12	3|2|0|12|tatoeba:11395147:953794
+D18	食べる	direct-japanese	35	tatoeba:187939:25072	contained-japanese-surface	2	3	0	12	3|2|0|12|tatoeba:187939:25072
+D18	食べる	direct-japanese	36	tatoeba:10624222:5858221	contained-japanese-surface	2	3	0	13	3|2|0|13|tatoeba:10624222:5858221
+D18	食べる	direct-japanese	37	tatoeba:172638:241836	contained-japanese-surface	2	3	0	13	3|2|0|13|tatoeba:172638:241836
+D18	食べる	direct-japanese	38	tatoeba:182091:19341	contained-japanese-surface	2	3	0	13	3|2|0|13|tatoeba:182091:19341
+D18	食べる	direct-japanese	39	tatoeba:187936:25075	contained-japanese-surface	2	3	0	13	3|2|0|13|tatoeba:187936:25075
+D18	食べる	direct-japanese	40	tatoeba:2177581:2176383	contained-japanese-surface	2	3	0	13	3|2|0|13|tatoeba:2177581:2176383
+D18	食べる	direct-japanese	41	tatoeba:116881:286787	contained-japanese-surface	2	3	0	14	3|2|0|14|tatoeba:116881:286787
+D18	食べる	direct-japanese	42	tatoeba:158128:256401	contained-japanese-surface	2	3	0	14	3|2|0|14|tatoeba:158128:256401
+D18	食べる	direct-japanese	43	tatoeba:10178546:19708	contained-japanese-surface	2	3	0	15	3|2|0|15|tatoeba:10178546:19708
+D18	食べる	direct-japanese	44	tatoeba:103922:299769	contained-japanese-surface	2	3	0	15	3|2|0|15|tatoeba:103922:299769
+D18	食べる	direct-japanese	45	tatoeba:187934:25073	contained-japanese-surface	2	3	0	15	3|2|0|15|tatoeba:187934:25073
+D18	食べる	direct-japanese	46	tatoeba:187938:25078	contained-japanese-surface	2	3	0	16	3|2|0|16|tatoeba:187938:25078
+D18	食べる	direct-japanese	47	tatoeba:78471:325245	contained-japanese-surface	2	3	0	16	3|2|0|16|tatoeba:78471:325245
+D18	食べる	direct-japanese	48	tatoeba:122983:281019	contained-japanese-surface	2	3	0	17	3|2|0|17|tatoeba:122983:281019
+D18	食べる	direct-japanese	49	tatoeba:187935:25074	contained-japanese-surface	2	3	0	17	3|2|0|17|tatoeba:187935:25074
+D18	食べる	direct-japanese	50	tatoeba:12599048:7735954	contained-japanese-surface	2	3	0	18	3|2|0|18|tatoeba:12599048:7735954
+D18	食べる	direct-japanese	51	tatoeba:2121414:1886280	contained-japanese-surface	2	3	0	18	3|2|0|18|tatoeba:2121414:1886280
+D18	食べる	direct-japanese	52	tatoeba:103923:299770	contained-japanese-surface	2	3	0	24	3|2|0|24|tatoeba:103923:299770
+D18	食べる	direct-japanese	53	tatoeba:187937:25076	contained-japanese-surface	2	3	0	26	3|2|0|26|tatoeba:187937:25076
+D18	食べる	direct-japanese	54	tatoeba:688525:1544439	contained-japanese-surface	2	3	0	29	3|2|0|29|tatoeba:688525:1544439
+D18	食べる	direct-japanese	55	tatoeba:12047446:12047440	contained-japanese-surface	3	3	0	7	3|3|0|7|tatoeba:12047446:12047440
+D18	食べる	direct-japanese	56	tatoeba:3699447:3424156	contained-japanese-surface	3	3	0	7	3|3|0|7|tatoeba:3699447:3424156
+D18	食べる	direct-japanese	57	tatoeba:180183:500368	contained-japanese-surface	3	3	0	8	3|3|0|8|tatoeba:180183:500368
+D18	食べる	direct-japanese	58	tatoeba:3655437:2100009	contained-japanese-surface	3	3	0	8	3|3|0|8|tatoeba:3655437:2100009
+D18	食べる	direct-japanese	59	tatoeba:500369:19044	contained-japanese-surface	3	3	0	8	3|3|0|8|tatoeba:500369:19044
+D18	食べる	direct-japanese	60	tatoeba:11563420:1517566	contained-japanese-surface	3	3	0	10	3|3|0|10|tatoeba:11563420:1517566
+D18	食べる	direct-japanese	61	tatoeba:126183:277809	contained-japanese-surface	3	3	0	12	3|3|0|12|tatoeba:126183:277809
+D18	食べる	direct-japanese	62	tatoeba:148356:266203	contained-japanese-surface	3	3	0	12	3|3|0|12|tatoeba:148356:266203
+D18	食べる	direct-japanese	63	tatoeba:157016:241836	contained-japanese-surface	3	3	0	12	3|3|0|12|tatoeba:157016:241836
+D18	食べる	direct-japanese	64	tatoeba:157015:241836	contained-japanese-surface	3	3	0	13	3|3|0|13|tatoeba:157015:241836
+D18	食べる	direct-japanese	65	tatoeba:11099309:8351334	contained-japanese-surface	3	3	0	14	3|3|0|14|tatoeba:11099309:8351334
+D18	食べる	direct-japanese	66	tatoeba:164579:249928	contained-japanese-surface	3	3	0	14	3|3|0|14|tatoeba:164579:249928
+D18	食べる	direct-japanese	67	tatoeba:228511:65869	contained-japanese-surface	3	3	0	14	3|3|0|14|tatoeba:228511:65869
+D18	食べる	direct-japanese	68	tatoeba:8817382:953999	contained-japanese-surface	3	3	0	14	3|3|0|14|tatoeba:8817382:953999
+D18	食べる	direct-japanese	69	tatoeba:10496097:10496199	contained-japanese-surface	3	3	0	15	3|3|0|15|tatoeba:10496097:10496199
+D18	食べる	direct-japanese	70	tatoeba:11643179:4572173	contained-japanese-surface	3	3	0	15	3|3|0|15|tatoeba:11643179:4572173
+D18	食べる	direct-japanese	71	tatoeba:12934042:10794693	contained-japanese-surface	3	3	0	15	3|3|0|15|tatoeba:12934042:10794693
+D18	食べる	direct-japanese	72	tatoeba:375054:509619	contained-japanese-surface	3	3	0	15	3|3|0|15|tatoeba:375054:509619
+D18	食べる	direct-japanese	73	tatoeba:8775094:7580529	contained-japanese-surface	3	3	0	15	3|3|0|15|tatoeba:8775094:7580529
+D18	食べる	direct-japanese	74	tatoeba:217028:54335	contained-japanese-surface	3	3	0	16	3|3|0|16|tatoeba:217028:54335
+D18	食べる	direct-japanese	75	tatoeba:9634580:10237107	contained-japanese-surface	3	3	0	16	3|3|0|16|tatoeba:9634580:10237107
+D18	食べる	direct-japanese	76	tatoeba:123187:280813	contained-japanese-surface	3	3	0	17	3|3|0|17|tatoeba:123187:280813
+D18	食べる	direct-japanese	77	tatoeba:8655615:7954928	contained-japanese-surface	3	3	0	17	3|3|0|17|tatoeba:8655615:7954928
+D18	食べる	direct-japanese	78	tatoeba:10616159:10616160	contained-japanese-surface	3	3	0	20	3|3|0|20|tatoeba:10616159:10616160
+D18	食べる	direct-japanese	79	tatoeba:1321328:1025553	contained-japanese-surface	3	3	0	20	3|3|0|20|tatoeba:1321328:1025553
+D18	食べる	direct-japanese	80	tatoeba:11790987:11790985	contained-japanese-surface	3	3	0	26	3|3|0|26|tatoeba:11790987:11790985
+D18	食べる	direct-japanese	81	tatoeba:2657024:1847827	contained-japanese-surface	3	3	0	28	3|3|0|28|tatoeba:2657024:1847827
+D18	食べる	direct-japanese	82	tatoeba:1131390:2674353	contained-japanese-surface	3	3	0	37	3|3|0|37|tatoeba:1131390:2674353
+D18	食べる	direct-japanese	83	tatoeba:10336922:5251706	contained-japanese-surface	4	3	0	8	3|4|0|8|tatoeba:10336922:5251706
+D18	食べる	direct-japanese	84	tatoeba:10458205:10457588	contained-japanese-surface	4	3	0	8	3|4|0|8|tatoeba:10458205:10457588
+D18	食べる	direct-japanese	85	tatoeba:10674544:5251706	contained-japanese-surface	4	3	0	8	3|4|0|8|tatoeba:10674544:5251706
+D18	食べる	direct-japanese	86	tatoeba:11128698:11128699	contained-japanese-surface	4	3	0	8	3|4|0|8|tatoeba:11128698:11128699
+D18	食べる	direct-japanese	87	tatoeba:1357247:1370868	contained-japanese-surface	4	3	0	8	3|4|0|8|tatoeba:1357247:1370868
+D18	食べる	direct-japanese	88	tatoeba:13684045:9366061	contained-japanese-surface	4	3	0	8	3|4|0|8|tatoeba:13684045:9366061
+D18	食べる	direct-japanese	89	tatoeba:13885204:11387179	contained-japanese-surface	4	3	0	8	3|4|0|8|tatoeba:13885204:11387179
+D18	食べる	direct-japanese	90	tatoeba:2354089:1830623	contained-japanese-surface	4	3	0	8	3|4|0|8|tatoeba:2354089:1830623
+D18	食べる	direct-japanese	91	tatoeba:672255:684708	contained-japanese-surface	4	3	0	8	3|4|0|8|tatoeba:672255:684708
+D18	食べる	direct-japanese	92	tatoeba:78845:324871	contained-japanese-surface	4	3	0	8	3|4|0|8|tatoeba:78845:324871
+D18	食べる	direct-japanese	93	tatoeba:8579807:8499285	contained-japanese-surface	4	3	0	8	3|4|0|8|tatoeba:8579807:8499285
+D18	食べる	direct-japanese	94	tatoeba:1160378:25275	contained-japanese-surface	4	3	0	12	3|4|0|12|tatoeba:1160378:25275
+D18	食べる	direct-japanese	95	tatoeba:867807:888674	contained-japanese-surface	4	3	0	12	3|4|0|12|tatoeba:867807:888674
+D18	食べる	direct-japanese	96	tatoeba:8742130:4995155	contained-japanese-surface	4	3	0	12	3|4|0|12|tatoeba:8742130:4995155
+D18	食べる	direct-japanese	97	tatoeba:154754:1293302	contained-japanese-surface	4	3	0	13	3|4|0|13|tatoeba:154754:1293302
+D18	食べる	direct-japanese	98	tatoeba:164460:25075	contained-japanese-surface	4	3	0	13	3|4|0|13|tatoeba:164460:25075
+D18	食べる	direct-japanese	99	tatoeba:204265:41507	contained-japanese-surface	4	3	0	13	3|4|0|13|tatoeba:204265:41507
+D18	食べる	direct-japanese	100	tatoeba:81825:321890	contained-japanese-surface	4	3	0	13	3|4|0|13|tatoeba:81825:321890
+D19	食べた	direct-japanese	1	tatoeba:11604006:953286	contained-japanese-surface	0	3	0	4	3|0|0|4|tatoeba:11604006:953286
+D19	食べた	direct-japanese	2	tatoeba:5254848:1098492	contained-japanese-surface	0	3	0	4	3|0|0|4|tatoeba:5254848:1098492
+D19	食べた	direct-japanese	3	tatoeba:12824509:773323	contained-japanese-surface	0	3	0	5	3|0|0|5|tatoeba:12824509:773323
+D19	食べた	direct-japanese	4	tatoeba:1430239:953286	contained-japanese-surface	0	3	0	5	3|0|0|5|tatoeba:1430239:953286
+D19	食べた	direct-japanese	5	tatoeba:4772252:3825001	contained-japanese-surface	0	3	0	7	3|0|0|7|tatoeba:4772252:3825001
+D19	食べた	direct-japanese	6	tatoeba:1430236:12528011	contained-japanese-surface	0	3	0	9	3|0|0|9|tatoeba:1430236:12528011
+D19	食べた	direct-japanese	7	tatoeba:4843029:1847748	contained-japanese-surface	0	3	0	9	3|0|0|9|tatoeba:4843029:1847748
+D19	食べた	direct-japanese	8	tatoeba:8838289:8838131	contained-japanese-surface	0	3	0	11	3|0|0|11|tatoeba:8838289:8838131
+D19	食べた	direct-japanese	9	tatoeba:11195673:8876108	contained-japanese-surface	0	3	0	12	3|0|0|12|tatoeba:11195673:8876108
+D19	食べた	direct-japanese	10	tatoeba:145936:268626	contained-japanese-surface	0	3	0	12	3|0|0|12|tatoeba:145936:268626
+D19	食べた	direct-japanese	11	tatoeba:8532647:2741784	contained-japanese-surface	0	3	0	13	3|0|0|13|tatoeba:8532647:2741784
+D19	食べた	direct-japanese	12	tatoeba:9444871:9198190	contained-japanese-surface	0	3	0	13	3|0|0|13|tatoeba:9444871:9198190
+D19	食べた	direct-japanese	13	tatoeba:11834164:9945496	contained-japanese-surface	0	3	0	14	3|0|0|14|tatoeba:11834164:9945496
+D19	食べた	direct-japanese	14	tatoeba:9478041:9466452	contained-japanese-surface	0	3	0	16	3|0|0|16|tatoeba:9478041:9466452
+D19	食べた	direct-japanese	15	tatoeba:11809252:10608749	contained-japanese-surface	0	3	0	23	3|0|0|23|tatoeba:11809252:10608749
+D19	食べた	direct-japanese	16	tatoeba:3607522:9990794	contained-japanese-surface	0	3	0	24	3|0|0|24|tatoeba:3607522:9990794
+D19	食べた	direct-japanese	17	tatoeba:2505736:36600	contained-japanese-surface	1	3	0	6	3|1|0|6|tatoeba:2505736:36600
+D19	食べた	direct-japanese	18	tatoeba:3466602:372015	contained-japanese-surface	1	3	0	6	3|1|0|6|tatoeba:3466602:372015
+D19	食べた	direct-japanese	19	tatoeba:6827431:2783477	contained-japanese-surface	1	3	0	8	3|1|0|8|tatoeba:6827431:2783477
+D19	食べた	direct-japanese	20	tatoeba:13513550:1830499	contained-japanese-surface	2	3	0	6	3|2|0|6|tatoeba:13513550:1830499
+D19	食べた	direct-japanese	21	tatoeba:13563699:1098492	contained-japanese-surface	2	3	0	6	3|2|0|6|tatoeba:13563699:1098492
+D19	食べた	direct-japanese	22	tatoeba:2969826:1847831	contained-japanese-surface	2	3	0	6	3|2|0|6|tatoeba:2969826:1847831
+D19	食べた	direct-japanese	23	tatoeba:1036819:25229	contained-japanese-surface	2	3	0	7	3|2|0|7|tatoeba:1036819:25229
+D19	食べた	direct-japanese	24	tatoeba:12206269:3154872	contained-japanese-surface	2	3	0	7	3|2|0|7|tatoeba:12206269:3154872
+D19	食べた	direct-japanese	25	tatoeba:12218067:12218060	contained-japanese-surface	2	3	0	7	3|2|0|7|tatoeba:12218067:12218060
+D19	食べた	direct-japanese	26	tatoeba:3635195:25072	contained-japanese-surface	2	3	0	7	3|2|0|7|tatoeba:3635195:25072
+D19	食べた	direct-japanese	27	tatoeba:3635285:3777902	contained-japanese-surface	2	3	0	7	3|2|0|7|tatoeba:3635285:3777902
+D19	食べた	direct-japanese	28	tatoeba:8646285:8715999	contained-japanese-surface	2	3	0	7	3|2|0|7|tatoeba:8646285:8715999
+D19	食べた	direct-japanese	29	tatoeba:10583616:372015	contained-japanese-surface	2	3	0	8	3|2|0|8|tatoeba:10583616:372015
+D19	食べた	direct-japanese	30	tatoeba:10880255:953763	contained-japanese-surface	2	3	0	8	3|2|0|8|tatoeba:10880255:953763
+D19	食べた	direct-japanese	31	tatoeba:1708867:25078	contained-japanese-surface	2	3	0	8	3|2|0|8|tatoeba:1708867:25078
+D19	食べた	direct-japanese	32	tatoeba:9162491:9162488	contained-japanese-surface	2	3	0	8	3|2|0|8|tatoeba:9162491:9162488
+D19	食べた	direct-japanese	33	tatoeba:158129:256401	contained-japanese-surface	2	3	0	9	3|2|0|9|tatoeba:158129:256401
+D19	食べた	direct-japanese	34	tatoeba:2637431:255783	contained-japanese-surface	2	3	0	9	3|2|0|9|tatoeba:2637431:255783
+D19	食べた	direct-japanese	35	tatoeba:1667724:400191	contained-japanese-surface	2	3	0	10	3|2|0|10|tatoeba:1667724:400191
+D19	食べた	direct-japanese	36	tatoeba:187942:372015	contained-japanese-surface	2	3	0	10	3|2|0|10|tatoeba:187942:372015
+D19	食べた	direct-japanese	37	tatoeba:8575505:330623	contained-japanese-surface	2	3	0	10	3|2|0|10|tatoeba:8575505:330623
+D19	食べた	direct-japanese	38	tatoeba:9162470:255783	contained-japanese-surface	2	3	0	10	3|2|0|10|tatoeba:9162470:255783
+D19	食べた	direct-japanese	39	tatoeba:9888790:24687	contained-japanese-surface	2	3	0	10	3|2|0|10|tatoeba:9888790:24687
+D19	食べた	direct-japanese	40	tatoeba:10045027:25063	contained-japanese-surface	2	3	0	11	3|2|0|11|tatoeba:10045027:25063
+D19	食べた	direct-japanese	41	tatoeba:3631723:69619	contained-japanese-surface	2	3	0	11	3|2|0|11|tatoeba:3631723:69619
+D19	食べた	direct-japanese	42	tatoeba:4843037:2062509	contained-japanese-surface	2	3	0	11	3|2|0|11|tatoeba:4843037:2062509
+D19	食べた	direct-japanese	43	tatoeba:8505146:256363	contained-japanese-surface	2	3	0	11	3|2|0|11|tatoeba:8505146:256363
+D19	食べた	direct-japanese	44	tatoeba:8603580:1830531	contained-japanese-surface	2	3	0	11	3|2|0|11|tatoeba:8603580:1830531
+D19	食べた	direct-japanese	45	tatoeba:9014100:321890	contained-japanese-surface	2	3	0	11	3|2|0|11|tatoeba:9014100:321890
+D19	食べた	direct-japanese	46	tatoeba:172639:241836	contained-japanese-surface	2	3	0	12	3|2|0|12|tatoeba:172639:241836
+D19	食べた	direct-japanese	47	tatoeba:187548:24687	contained-japanese-surface	2	3	0	12	3|2|0|12|tatoeba:187548:24687
+D19	食べた	direct-japanese	48	tatoeba:2518669:1830599	contained-japanese-surface	2	3	0	12	3|2|0|12|tatoeba:2518669:1830599
+D19	食べた	direct-japanese	49	tatoeba:8838287:8838131	contained-japanese-surface	2	3	0	12	3|2|0|12|tatoeba:8838287:8838131
+D19	食べた	direct-japanese	50	tatoeba:10990608:13875176	contained-japanese-surface	2	3	0	13	3|2|0|13|tatoeba:10990608:13875176
+D19	食べた	direct-japanese	51	tatoeba:169867:244619	contained-japanese-surface	2	3	0	13	3|2|0|13|tatoeba:169867:244619
+D19	食べた	direct-japanese	52	tatoeba:8984705:6995633	contained-japanese-surface	2	3	0	13	3|2|0|13|tatoeba:8984705:6995633
+D19	食べた	direct-japanese	53	tatoeba:158167:256363	contained-japanese-surface	2	3	0	14	3|2|0|14|tatoeba:158167:256363
+D19	食べた	direct-japanese	54	tatoeba:11065807:3272308	contained-japanese-surface	2	3	0	15	3|2|0|15|tatoeba:11065807:3272308
+D19	食べた	direct-japanese	55	tatoeba:169723:244763	contained-japanese-surface	2	3	0	17	3|2|0|17|tatoeba:169723:244763
+D19	食べた	direct-japanese	56	tatoeba:169866:244620	contained-japanese-surface	2	3	0	18	3|2|0|18|tatoeba:169866:244620
+D19	食べた	direct-japanese	57	tatoeba:672220:684709	contained-japanese-surface	2	3	0	18	3|2|0|18|tatoeba:672220:684709
+D19	食べた	direct-japanese	58	tatoeba:10910096:10919502	contained-japanese-surface	2	3	0	33	3|2|0|33|tatoeba:10910096:10919502
+D19	食べた	direct-japanese	59	tatoeba:10910097:11364599	contained-japanese-surface	2	3	0	35	3|2|0|35|tatoeba:10910097:11364599
+D19	食べた	direct-japanese	60	tatoeba:167660:246840	contained-japanese-surface	2	3	0	35	3|2|0|35|tatoeba:167660:246840
+D19	食べた	direct-japanese	61	tatoeba:11257980:9606050	contained-japanese-surface	3	3	0	7	3|3|0|7|tatoeba:11257980:9606050
+D19	食べた	direct-japanese	62	tatoeba:11532841:12586362	contained-japanese-surface	3	3	0	7	3|3|0|7|tatoeba:11532841:12586362
+D19	食べた	direct-japanese	63	tatoeba:4321465:2203599	contained-japanese-surface	3	3	0	7	3|3|0|7|tatoeba:4321465:2203599
+D19	食べた	direct-japanese	64	tatoeba:2043889:1886618	contained-japanese-surface	3	3	0	8	3|3|0|8|tatoeba:2043889:1886618
+D19	食べた	direct-japanese	65	tatoeba:2654861:1370839	contained-japanese-surface	3	3	0	8	3|3|0|8|tatoeba:2654861:1370839
+D19	食べた	direct-japanese	66	tatoeba:4804851:4134968	contained-japanese-surface	3	3	0	8	3|3|0|8|tatoeba:4804851:4134968
+D19	食べた	direct-japanese	67	tatoeba:5160:2765281	contained-japanese-surface	3	3	0	8	3|3|0|8|tatoeba:5160:2765281
+D19	食べた	direct-japanese	68	tatoeba:979752:382317	contained-japanese-surface	3	3	0	8	3|3|0|8|tatoeba:979752:382317
+D19	食べた	direct-japanese	69	tatoeba:10807020:6269198	contained-japanese-surface	3	3	0	9	3|3|0|9|tatoeba:10807020:6269198
+D19	食べた	direct-japanese	70	tatoeba:4609614:4612089	contained-japanese-surface	3	3	0	9	3|3|0|9|tatoeba:4609614:4612089
+D19	食べた	direct-japanese	71	tatoeba:8861339:8543455	contained-japanese-surface	3	3	0	9	3|3|0|9|tatoeba:8861339:8543455
+D19	食べた	direct-japanese	72	tatoeba:8928598:1370839	contained-japanese-surface	3	3	0	9	3|3|0|9|tatoeba:8928598:1370839
+D19	食べた	direct-japanese	73	tatoeba:7546015:1830598	contained-japanese-surface	3	3	0	10	3|3|0|10|tatoeba:7546015:1830598
+D19	食べた	direct-japanese	74	tatoeba:7810771:9982959	contained-japanese-surface	3	3	0	10	3|3|0|10|tatoeba:7810771:9982959
+D19	食べた	direct-japanese	75	tatoeba:8075139:8071454	contained-japanese-surface	3	3	0	10	3|3|0|10|tatoeba:8075139:8071454
+D19	食べた	direct-japanese	76	tatoeba:10278489:9821445	contained-japanese-surface	3	3	0	11	3|3|0|11|tatoeba:10278489:9821445
+D19	食べた	direct-japanese	77	tatoeba:3554329:326508	contained-japanese-surface	3	3	0	11	3|3|0|11|tatoeba:3554329:326508
+D19	食べた	direct-japanese	78	tatoeba:941436:941437	contained-japanese-surface	3	3	0	11	3|3|0|11|tatoeba:941436:941437
+D19	食べた	direct-japanese	79	tatoeba:9711775:9711774	contained-japanese-surface	3	3	0	11	3|3|0|11|tatoeba:9711775:9711774
+D19	食べた	direct-japanese	80	tatoeba:10680346:3154639	contained-japanese-surface	3	3	0	12	3|3|0|12|tatoeba:10680346:3154639
+D19	食べた	direct-japanese	81	tatoeba:12593170:11736177	contained-japanese-surface	3	3	0	12	3|3|0|12|tatoeba:12593170:11736177
+D19	食べた	direct-japanese	82	tatoeba:186531:23667	contained-japanese-surface	3	3	0	12	3|3|0|12|tatoeba:186531:23667
+D19	食べた	direct-japanese	83	tatoeba:226652:63996	contained-japanese-surface	3	3	0	12	3|3|0|12|tatoeba:226652:63996
+D19	食べた	direct-japanese	84	tatoeba:4843038:1096294	contained-japanese-surface	3	3	0	12	3|3|0|12|tatoeba:4843038:1096294
+D19	食べた	direct-japanese	85	tatoeba:9477462:2237752	contained-japanese-surface	3	3	0	12	3|3|0|12|tatoeba:9477462:2237752
+D19	食べた	direct-japanese	86	tatoeba:10125841:2016597	contained-japanese-surface	3	3	0	13	3|3|0|13|tatoeba:10125841:2016597
+D19	食べた	direct-japanese	87	tatoeba:7546019:1830598	contained-japanese-surface	3	3	0	13	3|3|0|13|tatoeba:7546019:1830598
+D19	食べた	direct-japanese	88	tatoeba:8999172:324636	contained-japanese-surface	3	3	0	13	3|3|0|13|tatoeba:8999172:324636
+D19	食べた	direct-japanese	89	tatoeba:185033:22164	contained-japanese-surface	3	3	0	14	3|3|0|14|tatoeba:185033:22164
+D19	食べた	direct-japanese	90	tatoeba:4058144:2661475	contained-japanese-surface	3	3	0	14	3|3|0|14|tatoeba:4058144:2661475
+D19	食べた	direct-japanese	91	tatoeba:12144406:11736180	contained-japanese-surface	3	3	0	15	3|3|0|15|tatoeba:12144406:11736180
+D19	食べた	direct-japanese	92	tatoeba:4436759:4515066	contained-japanese-surface	3	3	0	15	3|3|0|15|tatoeba:4436759:4515066
+D19	食べた	direct-japanese	93	tatoeba:77211:326508	contained-japanese-surface	3	3	0	15	3|3|0|15|tatoeba:77211:326508
+D19	食べた	direct-japanese	94	tatoeba:9511412:3459914	contained-japanese-surface	3	3	0	16	3|3|0|16|tatoeba:9511412:3459914
+D19	食べた	direct-japanese	95	tatoeba:11605505:636356	contained-japanese-surface	3	3	0	17	3|3|0|17|tatoeba:11605505:636356
+D19	食べた	direct-japanese	96	tatoeba:12047473:2537792	contained-japanese-surface	3	3	0	17	3|3|0|17|tatoeba:12047473:2537792
+D19	食べた	direct-japanese	97	tatoeba:9735088:9726379	contained-japanese-surface	3	3	0	17	3|3|0|17|tatoeba:9735088:9726379
+D19	食べた	direct-japanese	98	tatoeba:13155628:13155627	contained-japanese-surface	3	3	0	19	3|3|0|19|tatoeba:13155628:13155627
+D19	食べた	direct-japanese	99	tatoeba:9933897:9933893	contained-japanese-surface	3	3	0	20	3|3|0|20|tatoeba:9933897:9933893
+D19	食べた	direct-japanese	100	tatoeba:220761:58083	contained-japanese-surface	3	3	0	21	3|3|0|21|tatoeba:220761:58083
+D20	ねこ	direct-japanese	1	tatoeba:9065865:2936461	contained-japanese-surface	0	2	0	7	3|0|0|7|tatoeba:9065865:2936461
+D20	ねこ	direct-japanese	2	tatoeba:198626:35819	contained-japanese-surface	0	2	0	16	3|0|0|16|tatoeba:198626:35819
+D20	ねこ	direct-japanese	3	tatoeba:77011:326708	contained-japanese-surface	1	2	0	41	3|1|0|41|tatoeba:77011:326708
+D20	ねこ	direct-japanese	4	tatoeba:187012:24149	contained-japanese-surface	2	2	0	26	3|2|0|26|tatoeba:187012:24149
+D20	ねこ	direct-japanese	5	tatoeba:1518071:1557001	contained-japanese-surface	3	2	0	17	3|3|0|17|tatoeba:1518071:1557001
+D20	ねこ	direct-japanese	6	tatoeba:229125:66484	contained-japanese-surface	5	2	0	12	3|5|0|12|tatoeba:229125:66484
+D20	ねこ	direct-japanese	7	tatoeba:172958:241515	contained-japanese-surface	12	2	0	18	3|12|0|18|tatoeba:172958:241515
+D20	ねこ	direct-japanese	8	tatoeba:227532:64885	contained-japanese-surface	12	2	0	58	3|12|0|58|tatoeba:227532:64885
+D20	ねこ	direct-japanese	9	tatoeba:218366:55677	contained-japanese-surface	18	2	0	23	3|18|0|23|tatoeba:218366:55677
+D20	ねこ	direct-japanese	10	tatoeba:205933:43179	contained-japanese-surface	21	2	0	69	3|21|0|69|tatoeba:205933:43179

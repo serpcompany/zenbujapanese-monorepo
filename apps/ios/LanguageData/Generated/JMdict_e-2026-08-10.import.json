@@ -36,6 +36,17 @@
     "note_identity_disambiguated_entries": 6,
     "pitch_entries": 79830,
     "example_sentences": 232703,
+    "example_sentence_retrieval": {
+      "retrieval_index_schema_version": "zenbu.example-sentence-retrieval-index.v1",
+      "retrieval_policy_version": "ExampleSentenceRetrievalPolicy/v1",
+      "retrieval_corpus_sha256": "2d5a4ec50bab77f8114a26a2eeec28cd20656aa0dcec4ea8946fc29cb70a32a2",
+      "retrieval_index_mapping_sha256": "de780d0507a11474cad6c89ab6feee971459d3585c0c319389d0728be3cfbf7c",
+      "retrieval_importer_sha256": "c8fde316c727ee832cb83b28165c17f9daf905785bcdd08b27cc657c3cebb285",
+      "retrieval_index_row_count": "232703",
+      "retrieval_exact_index_row_count": "232703",
+      "retrieval_porter_tokenizer": "fts4/porter",
+      "retrieval_exact_tokenizer": "fts4/simple"
+    },
     "rejection_reasons": {
       "missing_ent_seq_reading_or_english_gloss": 0
     },
@@ -69,7 +80,8 @@
       "app-owned commonness marker derived from priority on the selected display form",
       "deterministic app-owned rank score derived from documented JMdict priority tags",
       "UniDic aType normalized to deterministic downstep and pronunciation-mora-count facts by exact base-form and pronunciation-or-lexical-reading match",
-      "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence"
+      "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence",
+      "deterministic app-owned pair-ID mapping with complete SQLite FTS4 Porter eligibility and simple-token exact-evidence indexes"
     ],
     "pitch_source_resource_id": "SOURCE-COMPONENT-UNIDIC",
     "pitch_source_sha256": "340651aa78cc02caf690f94de8809d41c4acda694226517884ecad81c51523fc",
@@ -77,11 +89,11 @@
     "example_source_sha256": "2799d411d99bd023044303fd3b2554a9e391401a04492e508ad1cd53c0304961",
     "relationship_source_resource_id": "zenbu-word-relationships-v1",
     "relationship_source_sha256": "2c483c933f5a42baad194db9a45c1d6251e09ebcb2a40c6475ca3d984ea2dd38",
-    "import_tool_sha256": "936cc79fea9ddc355972b14b84e7af94b99e72a20ac05206cf8b2ffd776a1c35",
+    "import_tool_sha256": "e83d35d4cfa38b733733314f3e764f16a6ad093b37d172cf67d28bc63557498d",
     "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
     "unidic_adapter_sha256": "f616738d7f45e3c75ece903d62ce2092923a6e68cf0925dafe030563c753985a",
     "tatoeba_adapter_sha256": "fae8c063bbf42b01174aa94af21511f801b8b97fbfcf106e0bd23d548f378093",
-    "database_sha256": "c5076ad2ae06ba4ca0c2976a00dfaad06af827d6ef0aac0424158d0b4dbe3cac",
-    "database_bytes": 287490048
+    "database_sha256": "b4ed0019d970870797873d64c184e5d348525ceabe4da7abf8cb616dea6214e8",
+    "database_bytes": 342462464
   }
 }

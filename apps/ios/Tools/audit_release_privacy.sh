@@ -7,6 +7,13 @@ ios_dir="$(cd "${tool_dir}/.." && pwd)"
 manifest="${ios_dir}/App/PrivacyInfo.xcprivacy"
 project="${ios_dir}/ZenbuJapanese.xcodeproj/project.pbxproj"
 package_manifest="${ios_dir}/Modules/Package.swift"
+language_database="${ios_dir}/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3"
+language_import_manifest="${ios_dir}/LanguageData/Generated/JMdict_e-2026-08-10.import.json"
+retrieval_validator="${tool_dir}/example_sentence_retrieval_index.py"
+retrieval_fixture_validator="${tool_dir}/validate_example_sentence_retrieval_fixtures.rb"
+retrieval_contexts="${ios_dir}/../../docs/research/fixtures/example-sentence-retrieval-issue-147-observation-contexts.tsv"
+retrieval_summary="${ios_dir}/LanguageData/Generated/ExampleSentenceRetrieval-v1-summary.tsv"
+retrieval_rows="${ios_dir}/LanguageData/Generated/ExampleSentenceRetrieval-v1-rows.tsv"
 mode="${1:-}"
 archive_path="${2:-}"
 scratch_dir="$(mktemp -d)"
@@ -104,6 +111,8 @@ generated_denylist_scan() {
 
 require_command rg
 require_command plutil
+require_command python3
+require_command ruby
 require_command shasum
 [[ "$mode" == "source" || "$mode" == "unsigned-preflight" || "$mode" == "signed-candidate" ]] || usage
 if [[ "$mode" == "source" ]]; then
@@ -131,6 +140,16 @@ require_rg_match "in-app privacy link is missing" 'https://zenbujapanese\.com/pr
 require_rg_match "in-app support link is missing" 'https://zenbujapanese\.com/support' "$settings_source"
 pass "source privacy boundary, Camera copy, dependency declarations, and public links match the release contract"
 
+[[ -f "$language_database" ]] || fail "bundled Language Reference Data is missing"
+[[ -f "$language_import_manifest" ]] || fail "generated Language Reference Data manifest is missing"
+python3 "$retrieval_validator" "$language_database" --manifest "$language_import_manifest" \
+  >"${scratch_dir}/retrieval-validation" \
+  || fail "bundled Example Sentence Retrieval index validation failed"
+ruby "$retrieval_fixture_validator" "$language_database" "$retrieval_contexts" \
+  "$retrieval_summary" "$retrieval_rows" >"${scratch_dir}/retrieval-fixture-validation" \
+  || fail "bundled Example Sentence Retrieval regression fixture replay failed"
+pass "bundled Example Sentence Retrieval index, manifest, and regression fixtures match"
+
 if [[ "$mode" == "source" ]]; then
   echo "INFO: source audit complete; this is not archive or signed-candidate evidence"
   exit 0
@@ -155,6 +174,16 @@ cmp -s "$manifest" "$archive_manifest" || fail "archive privacy manifest differs
 [[ "$(plist_value CFBundleIdentifier "$archive_app_info")" == "com.zenbujapanese.dictionary" ]] || fail "archive bundle identifier is unexpected"
 [[ "$(plist_value NSCameraUsageDescription "$archive_app_info")" == "Zenbu uses the camera to recognize Japanese text in a photo you choose to capture." ]] || fail "archive Camera usage description is missing or changed"
 pass "archive identity, privacy manifest, and Camera copy match the reviewed source"
+
+archive_language_database="$(find "$app_path" -type f -name 'LanguageReferenceData.sqlite3' -print -quit)"
+[[ -n "$archive_language_database" ]] || fail "archive application is missing LanguageReferenceData.sqlite3"
+python3 "$retrieval_validator" "$archive_language_database" --manifest "$language_import_manifest" \
+  >"${scratch_dir}/archive-retrieval-validation" \
+  || fail "archive Example Sentence Retrieval index validation failed"
+ruby "$retrieval_fixture_validator" "$archive_language_database" "$retrieval_contexts" \
+  "$retrieval_summary" "$retrieval_rows" >"${scratch_dir}/archive-retrieval-fixture-validation" \
+  || fail "archive Example Sentence Retrieval regression fixture replay failed"
+pass "archive Example Sentence Retrieval index, manifest, and regression fixtures match"
 
 signing_identity="$(plist_value ApplicationProperties:SigningIdentity "$archive_info" || true)"
 if [[ "$mode" == "signed-candidate" ]]; then
@@ -212,16 +241,18 @@ pass "resolved dependencies contain no embedded SDK or direct network-client ind
 
 url_results="${scratch_dir}/urls"
 set +e
-rg -a -o --no-filename 'https?://[^[:space:]"<>]+' "$app_path" >"$url_results" 2>/dev/null
+rg -a -o --no-filename 'https?://[^[:space:][:cntrl:]"<>]+' "$app_path" >"$url_results" 2>/dev/null
 url_scan_status=$?
 set -e
 case "$url_scan_status" in
   0|1) ;;
   *) fail "scanner error while inventorying packaged URLs" ;;
 esac
+# A few corpus sentences run a sentence number directly into the terminal URL
+# period (for example, `example.com.5`); an all-numeric DNS suffix is not a host.
 sed -E 's#^[Hh][Tt][Tt][Pp][Ss]?://([^/:?#]+).*#\1#' "$url_results" \
   | tr '[:upper:]' '[:lower:]' \
-  | sed -E 's/[^a-z0-9.-].*$//; s/\.$//' \
+  | sed -E 's/[^a-z0-9.-].*$//; s/\.[0-9]+$//; s/\.$//' \
   | sed '/^$/d' \
   | LC_ALL=C sort -u >"${scratch_dir}/url-hosts"
 allowed_url_hosts='^(clrd\.ninjal\.ac\.jp|creativecommons\.org|github\.com|kanjivg\.tagaini\.net|tatoeba\.org|www\.apple\.com|www\.edrdg\.org|www\.example\.com|www\.jpgarden\.com|zenbujapanese\.com)$'

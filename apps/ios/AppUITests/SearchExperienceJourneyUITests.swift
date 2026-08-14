@@ -1596,7 +1596,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["食べる"].waitForExistence(timeout: 3))
     let examples = app.buttons["search.examples"]
     XCTAssertTrue(examples.waitForExistence(timeout: 3))
-    XCTAssertEqual(examples.label, "View 3 Example Sentences")
+    XCTAssertEqual(examples.label, "View 50+ Example Sentences")
     XCTAssertTrue(examples.isHittable)
     XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
     recordScreenshot(named: "search-results-whitespace-normalized-taberu", app: app)
@@ -1778,7 +1778,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let examples = app.buttons["search.examples"]
     XCTAssertTrue(examples.waitForExistence(timeout: 3))
-    XCTAssertEqual(examples.label, "View 3 Example Sentences")
+    XCTAssertEqual(examples.label, "View 50+ Example Sentences")
     XCTAssertTrue(examples.isHittable)
     let bestMatchesHeader = app.staticTexts["Best Matches"]
     XCTAssertTrue(bestMatchesHeader.exists)
@@ -2242,50 +2242,32 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.descendants(matching: .any)["example.row.0"].exists)
     recordScreenshot(named: "example-sentences-iru-top", app: app)
 
-    let linkedButterfly = app.buttons["example.token.75.2.蝶々"]
+    let linkedMite = app.buttons["example.token.24.0.見て"]
     for _ in 0..<30
-    where !linkedButterfly.isHittable
-      || linkedButterfly.frame.maxY > app.frame.maxY - 200
+    where !linkedMite.isHittable
+      || linkedMite.frame.maxY > app.frame.maxY - 200
     {
       examples.swipeUp()
     }
     Thread.sleep(forTimeInterval: 2)
-    XCTAssertTrue(linkedButterfly.isHittable)
-    XCTAssertLessThan(linkedButterfly.frame.maxY, app.frame.maxY - 200)
+    XCTAssertTrue(linkedMite.isHittable)
+    XCTAssertLessThan(linkedMite.frame.maxY, app.frame.maxY - 200)
     recordScreenshot(named: "example-sentences-iru-scrolled", app: app)
 
-    linkedButterfly.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
-    XCTAssertTrue(app.staticTexts["蝶々"].exists)
-    XCTAssertTrue(app.staticTexts["ちょうちょう"].exists)
-    XCTAssertTrue(app.staticTexts["butterfly"].exists)
-    recordScreenshot(named: "example-linked-token-word-detail", app: app)
-
-    let detail = app.scrollViews["word-detail.screen"]
-    let linkedMite = app.buttons["word-detail.example-token.1.0.見て"]
-    for _ in 0..<10
-    where !linkedMite.isHittable
-      || linkedMite.frame.maxY > app.frame.maxY - 140
-    {
-      detail.swipeUp()
-    }
-    XCTAssertTrue(linkedMite.isHittable)
-    XCTAssertLessThan(linkedMite.frame.maxY, app.frame.maxY - 140)
-    recordScreenshot(named: "word-detail-choucho-linked-examples", app: app)
+    let speaker = app.buttons["example.speaker.24"]
+    XCTAssertTrue(speaker.isHittable)
+    speaker.tap()
+    let speechRequest = app.descendants(matching: .any)["speech.request"]
+    XCTAssertTrue(speechRequest.waitForExistence(timeout: 2))
+    XCTAssertEqual(speechRequest.label, "Speech requested 見ているだけだ。")
 
     XCTAssertTrue(linkedMite.isHittable)
     linkedMite.tap()
-    if !app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3) {
-      XCTAssertTrue(linkedMite.isHittable)
-      linkedMite.tap()
-    }
     XCTAssertTrue(app.staticTexts["見る"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["みる"].exists)
     XCTAssertTrue(app.staticTexts["to see, to look, to watch, to view, to observe"].exists)
     recordScreenshot(named: "word-detail-example-token-miru", app: app)
 
-    app.buttons["word-detail.back"].tap()
-    XCTAssertTrue(app.staticTexts["蝶々"].waitForExistence(timeout: 2))
     app.buttons["word-detail.back"].tap()
     XCTAssertTrue(examples.waitForExistence(timeout: 2))
     app.buttons["example-list.back"].tap()
@@ -2301,13 +2283,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let openExamples = app.buttons["search.examples"]
     XCTAssertTrue(openExamples.waitForExistence(timeout: 4))
-    XCTAssertEqual(openExamples.label, "View 1 Example Sentence")
+    XCTAssertEqual(openExamples.label, "View 2 Example Sentences")
     XCTAssertFalse(app.staticTexts["Best Matches"].exists)
     XCTAssertFalse(app.staticTexts["Additional Matches"].exists)
     openExamples.tap()
 
     XCTAssertTrue(app.descendants(matching: .any)["example.row.0"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.descendants(matching: .any)["example.row.1"].exists)
     XCTAssertTrue(app.staticTexts["Hello world."].exists)
+    XCTAssertTrue(app.staticTexts["Hello, world!"].exists)
     let linkedWorld = app.buttons["example.token.0.0.世界"]
     XCTAssertTrue(linkedWorld.waitForExistence(timeout: 2))
     let speaker = app.buttons["example.speaker.0"]
@@ -2336,9 +2320,14 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let examples = app.scrollViews["example-list.screen"]
     XCTAssertTrue(examples.waitForExistence(timeout: 4))
-    let linkedKey = app.buttons["example.token.1.0.鍵"]
-    for _ in 0..<4 where !linkedKey.isHittable { examples.swipeUp() }
+    let linkedKey = app.buttons["example.token.8.0.鍵"]
+    for _ in 0..<8
+    where !linkedKey.isHittable || linkedKey.frame.maxY > app.frame.maxY - 200
+    {
+      examples.swipeUp()
+    }
     XCTAssertTrue(linkedKey.isHittable)
+    XCTAssertLessThan(linkedKey.frame.maxY, app.frame.maxY - 200)
     recordSettledScreenshot(named: "production-examples-linked-key", app: app)
 
     linkedKey.tap()
