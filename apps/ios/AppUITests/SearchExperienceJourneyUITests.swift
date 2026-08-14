@@ -2242,7 +2242,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.descendants(matching: .any)["example.row.0"].exists)
     recordScreenshot(named: "example-sentences-iru-top", app: app)
 
-    let linkedMite = app.buttons["example.token.24.0.見て"]
+    let linkedMite = app.buttons["example.token.23.0.見て"]
     for _ in 0..<30
     where !linkedMite.isHittable
       || linkedMite.frame.maxY > app.frame.maxY - 200
@@ -2254,7 +2254,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertLessThan(linkedMite.frame.maxY, app.frame.maxY - 200)
     recordScreenshot(named: "example-sentences-iru-scrolled", app: app)
 
-    let speaker = app.buttons["example.speaker.24"]
+    let speaker = app.buttons["example.speaker.23"]
     XCTAssertTrue(speaker.isHittable)
     speaker.tap()
     let speechRequest = app.descendants(matching: .any)["speech.request"]
@@ -2299,7 +2299,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     speaker.tap()
     let speechRequest = app.descendants(matching: .any)["speech.request"]
     XCTAssertTrue(speechRequest.waitForExistence(timeout: 2))
-    XCTAssertEqual(speechRequest.label, "Speech requested 世界、こんにちは。")
+    XCTAssertEqual(speechRequest.label, "Speech requested 世界、こんにちは！")
     recordScreenshot(named: "example-only-hello-world", app: app)
 
     linkedWorld.tap()
@@ -2320,7 +2320,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let examples = app.scrollViews["example-list.screen"]
     XCTAssertTrue(examples.waitForExistence(timeout: 4))
-    let linkedKey = app.buttons["example.token.8.0.鍵"]
+    let linkedKey = app.buttons["example.token.9.0.鍵"]
     for _ in 0..<8
     where !linkedKey.isHittable || linkedKey.frame.maxY > app.frame.maxY - 200
     {
@@ -2417,7 +2417,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(inlineExampleSpeaker.isHittable)
     inlineExampleSpeaker.tap()
     previousSpeechInvocation = assertSpeechCompletes(
-      "両方要るよ。",
+      "車が要るの？",
       after: previousSpeechInvocation,
       in: app
     )

@@ -118,38 +118,44 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
 
     let japanese = try await client.retrieve(.directJapanese(SearchQuery("猫")))
     XCTAssertEqual(japanese.count, .exact(1))
-    XCTAssertEqual(japanese.matches.first?.id, "pair-1")
+    XCTAssertEqual(japanese.matches.first?.id, "esp1_" + String(repeating: "0", count: 32))
   }
 
   func testFrozenV1DiscoveryFixturesReplayThroughPublicBoundary() async throws {
-    let summary = try fixture(named: "ExampleSentenceRetrieval-v1-summary")
-    let rows = try fixture(named: "ExampleSentenceRetrieval-v1-rows")
-    let rowsByContext = Dictionary(grouping: rows, by: { $0["context_id"]! })
+    let summary: [RetrievalSummaryFixture] = try fixtures(
+      named: "ExampleSentenceRetrieval-v1-summary"
+    )
+    let rows: [RetrievalRowFixture] = try fixtures(named: "ExampleSentenceRetrieval-v1-rows")
+    let rowsByContext = Dictionary(grouping: rows, by: \.contextID)
 
     for expected in summary {
-      let contextID = try XCTUnwrap(expected["context_id"])
-      let query = SearchQuery(try XCTUnwrap(expected["query"]))
-      let route = try XCTUnwrap(expected["route"])
-      let request: ExampleSentenceRetrievalRequest = route == "direct-english"
-        ? .directEnglish(query) : .directJapanese(query)
+      let request: ExampleSentenceRetrievalRequest = expected.route == "direct-english"
+        ? .directEnglish(SearchQuery(expected.query))
+        : .directJapanese(SearchQuery(expected.query))
       let result = try await ExampleSentenceClient.live.retrieve(request)
 
-      let expectedCount: ExampleSentenceResultCount = expected["count_kind"] == "exact"
-        ? .exact(Int(try XCTUnwrap(expected["count_value"]))!) : .moreThan50
-      XCTAssertEqual(result.count, expectedCount, contextID)
-      XCTAssertEqual(result.isTruncated, expected["truncated"] == "true", contextID)
+      XCTAssertEqual(result.count, expected.resultCount, expected.contextID)
+      XCTAssertEqual(result.isTruncated, expected.isTruncated, expected.contextID)
 
-      let expectedRows = (rowsByContext[contextID] ?? []).sorted {
-        Int($0["result_rank"]!)! < Int($1["result_rank"]!)!
+      let expectedRows = (rowsByContext[expected.contextID] ?? []).sorted {
+        $0.resultRank < $1.resultRank
       }
-      XCTAssertEqual(result.matches.count, expectedRows.count, contextID)
+      XCTAssertEqual(result.matches.count, expectedRows.count, expected.contextID)
       for (match, expectedRow) in zip(result.matches, expectedRows) {
-        XCTAssertEqual(match.id, expectedRow["pair_id"], contextID)
-        XCTAssertEqual(relationName(match.lexicalRelation), expectedRow["lexical_relation"], contextID)
-        XCTAssertEqual(match.matchedRange.location, Int(expectedRow["match_location"]!)!, contextID)
-        XCTAssertEqual(match.matchedRange.length, Int(expectedRow["match_length"]!)!, contextID)
-        XCTAssertEqual(match.rankInputs.englishTermCount, Int(expectedRow["english_term_count"]!)!, contextID)
-        XCTAssertEqual(match.rankInputs.japaneseGraphemeCount, Int(expectedRow["japanese_grapheme_count"]!)!, contextID)
+        XCTAssertEqual(match.id, expectedRow.pairID, expected.contextID)
+        XCTAssertEqual(
+          relationName(match.lexicalRelation), expectedRow.lexicalRelation, expected.contextID
+        )
+        XCTAssertEqual(match.matchedRange.location, expectedRow.matchLocation, expected.contextID)
+        XCTAssertEqual(match.matchedRange.length, expectedRow.matchLength, expected.contextID)
+        XCTAssertEqual(
+          match.rankInputs.englishTermCount, expectedRow.englishTermCount, expected.contextID
+        )
+        XCTAssertEqual(
+          match.rankInputs.japaneseGraphemeCount,
+          expectedRow.japaneseGraphemeCount,
+          expected.contextID
+        )
         XCTAssertEqual(
           [
             String(match.rankInputs.lexicalRelation.rawValue),
@@ -158,8 +164,8 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
             String(match.rankInputs.japaneseGraphemeCount),
             match.rankInputs.pairID,
           ].joined(separator: "|"),
-          expectedRow["rank_tuple"],
-          contextID
+          expectedRow.rankTuple,
+          expected.contextID
         )
       }
     }
@@ -189,13 +195,24 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
       CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       INSERT INTO metadata VALUES ('example_sentences', '1');
       CREATE TABLE example_sentences (
-        id TEXT PRIMARY KEY,
-        source_identity TEXT NOT NULL,
-        source_record_id TEXT NOT NULL,
+        id BLOB PRIMARY KEY,
         japanese TEXT NOT NULL,
         english TEXT NOT NULL
       );
-      INSERT INTO example_sentences VALUES ('pair-1', 'fixture', '1', '猫です。', 'It is a cat.');
+      CREATE TABLE example_sentence_provenance (
+        pair_id BLOB NOT NULL REFERENCES example_sentences(id),
+        source_identity TEXT NOT NULL,
+        source_japanese_record_id INTEGER NOT NULL,
+        source_english_record_id INTEGER NOT NULL,
+        PRIMARY KEY(pair_id, source_identity, source_japanese_record_id, source_english_record_id)
+      );
+      INSERT INTO example_sentences VALUES (
+        X'00000000000000000000000000000000',
+        '猫です。', 'It is a cat.'
+      );
+      INSERT INTO example_sentence_provenance VALUES (
+        X'00000000000000000000000000000000', 'fixture', 1, 2
+      );
       """
     guard sqlite3_exec(database, sql, nil, nil, nil) == SQLITE_OK else {
       throw CocoaError(.fileWriteUnknown)
@@ -203,13 +220,15 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
     return url
   }
 
-  private func fixture(named name: String) throws -> [[String: String]] {
+  private func fixtures<Fixture: TSVFixture>(named name: String) throws -> [Fixture] {
     let url = try XCTUnwrap(Bundle(for: Self.self).url(forResource: name, withExtension: "tsv"))
     let lines = try String(contentsOf: url, encoding: .utf8).split(separator: "\n")
-    let headers = lines[0].split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
-    return lines.dropFirst().map { line in
-      let values = line.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
-      return Dictionary(uniqueKeysWithValues: zip(headers, values))
+    guard let header = lines.first else { throw FixtureDecodeError.emptyFile(name) }
+    let actualHeader = header.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
+    guard actualHeader == Fixture.header else { throw FixtureDecodeError.invalidHeader(name) }
+    return try lines.dropFirst().enumerated().map { index, line in
+      let fields = line.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
+      return try Fixture(fields: fields, line: index + 2)
     }
   }
 
@@ -223,5 +242,117 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
     case .alternateWrittenForm: "alternate-written-form"
     case .reading: "reading"
     }
+  }
+}
+
+private protocol TSVFixture {
+  static var header: [String] { get }
+  init(fields: [String], line: Int) throws
+}
+
+private enum FixtureDecodeError: Error {
+  case emptyFile(String)
+  case invalidHeader(String)
+  case invalidFieldCount(line: Int)
+  case invalidInteger(field: String, line: Int)
+  case invalidBoolean(field: String, line: Int)
+  case invalidCountKind(String, line: Int)
+}
+
+private struct RetrievalSummaryFixture: TSVFixture {
+  static let header = [
+    "context_id", "query", "route", "complete_match_count", "count_kind", "count_value",
+    "truncated", "visible_count", "complete_ranked_sha256", "visible_ranked_sha256",
+  ]
+
+  let contextID: String
+  let query: String
+  let route: String
+  let completeMatchCount: Int
+  let resultCount: ExampleSentenceResultCount
+  let isTruncated: Bool
+  let visibleCount: Int
+  let completeRankedSHA256: String
+  let visibleRankedSHA256: String
+
+  init(fields: [String], line: Int) throws {
+    guard fields.count == Self.header.count else {
+      throw FixtureDecodeError.invalidFieldCount(line: line)
+    }
+    contextID = fields[0]
+    query = fields[1]
+    route = fields[2]
+    completeMatchCount = try Self.integer(fields[3], field: "complete_match_count", line: line)
+    let countValue = try Self.integer(fields[5], field: "count_value", line: line)
+    switch fields[4] {
+    case "exact": resultCount = .exact(countValue)
+    case "more-than-50": resultCount = .moreThan50
+    default: throw FixtureDecodeError.invalidCountKind(fields[4], line: line)
+    }
+    isTruncated = try Self.boolean(fields[6], field: "truncated", line: line)
+    visibleCount = try Self.integer(fields[7], field: "visible_count", line: line)
+    completeRankedSHA256 = fields[8]
+    visibleRankedSHA256 = fields[9]
+  }
+
+  private static func integer(_ value: String, field: String, line: Int) throws -> Int {
+    guard let result = Int(value) else {
+      throw FixtureDecodeError.invalidInteger(field: field, line: line)
+    }
+    return result
+  }
+
+  private static func boolean(_ value: String, field: String, line: Int) throws -> Bool {
+    switch value {
+    case "true": true
+    case "false": false
+    default: throw FixtureDecodeError.invalidBoolean(field: field, line: line)
+    }
+  }
+}
+
+private struct RetrievalRowFixture: TSVFixture {
+  static let header = [
+    "context_id", "query", "route", "result_rank", "pair_id", "lexical_relation",
+    "match_location", "match_length", "english_term_count", "japanese_grapheme_count",
+    "rank_tuple",
+  ]
+
+  let contextID: String
+  let query: String
+  let route: String
+  let resultRank: Int
+  let pairID: String
+  let lexicalRelation: String
+  let matchLocation: Int
+  let matchLength: Int
+  let englishTermCount: Int
+  let japaneseGraphemeCount: Int
+  let rankTuple: String
+
+  init(fields: [String], line: Int) throws {
+    guard fields.count == Self.header.count else {
+      throw FixtureDecodeError.invalidFieldCount(line: line)
+    }
+    contextID = fields[0]
+    query = fields[1]
+    route = fields[2]
+    resultRank = try Self.integer(fields[3], field: "result_rank", line: line)
+    pairID = fields[4]
+    lexicalRelation = fields[5]
+    matchLocation = try Self.integer(fields[6], field: "match_location", line: line)
+    matchLength = try Self.integer(fields[7], field: "match_length", line: line)
+    englishTermCount = try Self.integer(fields[8], field: "english_term_count", line: line)
+    japaneseGraphemeCount = try Self.integer(
+      fields[9], field: "japanese_grapheme_count", line: line
+    )
+    rankTuple = fields[10]
+  }
+
+  private static func integer(_ value: String, field: String, line: Int) throws -> Int {
+    guard let result = Int(value) else {
+      throw FixtureDecodeError.invalidInteger(field: field, line: line)
+    }
+    return result
   }
 }

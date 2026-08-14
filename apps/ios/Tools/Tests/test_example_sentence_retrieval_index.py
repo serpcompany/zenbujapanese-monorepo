@@ -23,34 +23,46 @@ from example_sentence_retrieval_index import (  # noqa: E402
     validate_indexes,
     validate_manifest,
 )
+from tatoeba_adapter import app_owned_example_pair_storage_id  # noqa: E402
 
 
 ROWS = [
-    ("pair-c", "怖がらせた？", "Did I scare you?"),
-    ("pair-a", "怖かった？", "Did I scared you?"),
-    ("pair-b", "驚かせた？", "Did I startle you?"),
-    ("pair-d", "赤い", "I colored your red book."),
+    (app_owned_example_pair_storage_id("怖がらせた？", "Did I scare you?"), "怖がらせた？", "Did I scare you?"),
+    (app_owned_example_pair_storage_id("怖かった？", "Did I scared you?"), "怖かった？", "Did I scared you?"),
+    (app_owned_example_pair_storage_id("驚かせた？", "Did I startle you?"), "驚かせた？", "Did I startle you?"),
+    (app_owned_example_pair_storage_id("赤い", "I colored your red book."), "赤い", "I colored your red book."),
 ]
 
 
-def database_with(rows: list[tuple[str, str, str]]) -> sqlite3.Connection:
+def database_with(rows: list[tuple[bytes, str, str]]) -> sqlite3.Connection:
     database = sqlite3.connect(":memory:")
     database.executescript(
         """
         PRAGMA foreign_keys = ON;
         CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
         CREATE TABLE example_sentences (
-          id TEXT PRIMARY KEY,
-          source_identity TEXT NOT NULL,
-          source_record_id TEXT NOT NULL,
+          id BLOB PRIMARY KEY,
           japanese TEXT NOT NULL,
           english TEXT NOT NULL
         );
+        CREATE TABLE example_sentence_provenance (
+          pair_id BLOB NOT NULL REFERENCES example_sentences(id),
+          source_identity TEXT NOT NULL,
+          source_japanese_record_id INTEGER NOT NULL,
+          source_english_record_id INTEGER NOT NULL,
+          PRIMARY KEY(pair_id, source_identity, source_japanese_record_id, source_english_record_id)
+        ) WITHOUT ROWID;
         """
     )
     database.executemany(
-        "INSERT INTO example_sentences VALUES (?, 'fixture', ?, ?, ?)",
-        [(pair_id, pair_id, japanese, english) for pair_id, japanese, english in rows],
+        "INSERT INTO example_sentences VALUES (?, ?, ?)", rows,
+    )
+    database.executemany(
+        "INSERT INTO example_sentence_provenance VALUES (?, 'fixture', ?, ?)",
+        [
+            (pair_id, index, index + 100)
+            for index, pair_id in enumerate(sorted(row[0] for row in rows))
+        ],
     )
     return database
 
@@ -63,7 +75,7 @@ class ExampleSentenceRetrievalIndexTests(unittest.TestCase):
         right_metadata = build_indexes(right)
 
         self.assertEqual(left_metadata, right_metadata)
-        expected_mapping = [(1, "pair-a"), (2, "pair-b"), (3, "pair-c"), (4, "pair-d")]
+        expected_mapping = list(enumerate(sorted(pair_id for pair_id, _, _ in ROWS), start=1))
         self.assertEqual(left.execute(f"SELECT * FROM {MAP_TABLE} ORDER BY fts_rowid").fetchall(), expected_mapping)
         self.assertEqual(right.execute(f"SELECT * FROM {MAP_TABLE} ORDER BY fts_rowid").fetchall(), expected_mapping)
 
@@ -82,20 +94,31 @@ class ExampleSentenceRetrievalIndexTests(unittest.TestCase):
                 )
             ]
 
-        self.assertEqual(ids(PORTER_TABLE, "scared you"), ["pair-a", "pair-c"])
-        self.assertEqual(ids(EXACT_TABLE, "scared you"), ["pair-a"])
+        scared = app_owned_example_pair_storage_id("怖かった？", "Did I scared you?")
+        scare = app_owned_example_pair_storage_id("怖がらせた？", "Did I scare you?")
+        self.assertEqual(ids(PORTER_TABLE, "scared you"), sorted([scared, scare]))
+        self.assertEqual(ids(EXACT_TABLE, "scared you"), [scared])
         self.assertEqual(ids(PORTER_TABLE, "red you"), [])
 
     def test_validation_fails_closed_on_incomplete_mapping_or_metadata(self) -> None:
-        for mutation in ("mapping", "metadata"):
+        for mutation in ("mapping", "metadata", "identity"):
             with self.subTest(mutation=mutation):
                 database = database_with(ROWS)
                 build_indexes(database)
                 if mutation == "mapping":
                     database.execute(f"DELETE FROM {MAP_TABLE} WHERE fts_rowid = 1")
-                else:
+                elif mutation == "metadata":
                     database.execute(
                         "UPDATE metadata SET value = 'wrong' WHERE key = 'retrieval_policy_version'"
+                    )
+                else:
+                    pair_id = database.execute(
+                        "SELECT id FROM example_sentences ORDER BY id LIMIT 1"
+                    ).fetchone()[0]
+                    database.execute("PRAGMA foreign_keys = OFF")
+                    database.execute(
+                        "UPDATE example_sentences SET id = 'tatoeba:1:2' WHERE id = ?",
+                        (pair_id,),
                     )
                 with self.assertRaises(ValueError):
                     validate_indexes(database)
@@ -108,17 +131,28 @@ class ExampleSentenceRetrievalIndexTests(unittest.TestCase):
                 """
                 CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
                 CREATE TABLE example_sentences (
-                  id TEXT PRIMARY KEY,
-                  source_identity TEXT NOT NULL,
-                  source_record_id TEXT NOT NULL,
+                  id BLOB PRIMARY KEY,
                   japanese TEXT NOT NULL,
                   english TEXT NOT NULL
                 );
+                CREATE TABLE example_sentence_provenance (
+                  pair_id BLOB NOT NULL REFERENCES example_sentences(id),
+                  source_identity TEXT NOT NULL,
+                  source_japanese_record_id INTEGER NOT NULL,
+                  source_english_record_id INTEGER NOT NULL,
+                  PRIMARY KEY(pair_id, source_identity, source_japanese_record_id, source_english_record_id)
+                ) WITHOUT ROWID;
                 """
             )
             database.executemany(
-                "INSERT INTO example_sentences VALUES (?, 'fixture', ?, ?, ?)",
-                [(pair_id, pair_id, japanese, english) for pair_id, japanese, english in ROWS],
+                "INSERT INTO example_sentences VALUES (?, ?, ?)", ROWS,
+            )
+            database.executemany(
+                "INSERT INTO example_sentence_provenance VALUES (?, 'fixture', ?, ?)",
+                [
+                    (pair_id, index, index + 100)
+                    for index, pair_id in enumerate(sorted(row[0] for row in ROWS))
+                ],
             )
             database.commit()
             database.close()

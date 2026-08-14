@@ -12,7 +12,9 @@ the iPhone 17 reference device is outside this QA scope.
 ## Preconditions
 
 - [ ] Record the exact Git commit and confirm the worktree is clean.
-- [ ] Run the bundled-database validator and frozen v1 fixture replay.
+- [ ] Run the bundled-database validator and frozen v1 fixture replay. Confirm
+      the visible fixture reports 1,095 rows and the complete baseline-v1
+      comparison reports 15,249 union rows across all 20 discovery contexts.
 - [ ] Run the complete Debug simulator test suite and a Release simulator build.
 - [ ] Build and install the same commit on the USB iPhone 14 Pro Max.
 - [ ] Record the device model, iOS build, `sqlite3_libversion()`, app version, and build number.

@@ -14,6 +14,9 @@ retrieval_fixture_validator="${tool_dir}/validate_example_sentence_retrieval_fix
 retrieval_contexts="${ios_dir}/../../docs/research/fixtures/example-sentence-retrieval-issue-147-observation-contexts.tsv"
 retrieval_summary="${ios_dir}/LanguageData/Generated/ExampleSentenceRetrieval-v1-summary.tsv"
 retrieval_rows="${ios_dir}/LanguageData/Generated/ExampleSentenceRetrieval-v1-rows.tsv"
+retrieval_baseline_candidates="${ios_dir}/../../docs/research/fixtures/example-sentence-retrieval-issue-147-retrieval-candidate-rows.tsv"
+retrieval_comparison_summary="${ios_dir}/LanguageData/Generated/ExampleSentenceRetrieval-v1-comparison-summary.tsv"
+retrieval_comparison_rows="${ios_dir}/LanguageData/Generated/ExampleSentenceRetrieval-v1-comparison-rows.tsv"
 mode="${1:-}"
 archive_path="${2:-}"
 scratch_dir="$(mktemp -d)"
@@ -114,6 +117,7 @@ require_command plutil
 require_command python3
 require_command ruby
 require_command shasum
+require_command sqlite3
 [[ "$mode" == "source" || "$mode" == "unsigned-preflight" || "$mode" == "signed-candidate" ]] || usage
 if [[ "$mode" == "source" ]]; then
   [[ $# -eq 1 ]] || usage
@@ -146,7 +150,9 @@ python3 "$retrieval_validator" "$language_database" --manifest "$language_import
   >"${scratch_dir}/retrieval-validation" \
   || fail "bundled Example Sentence Retrieval index validation failed"
 ruby "$retrieval_fixture_validator" "$language_database" "$retrieval_contexts" \
-  "$retrieval_summary" "$retrieval_rows" >"${scratch_dir}/retrieval-fixture-validation" \
+  "$retrieval_summary" "$retrieval_rows" "$retrieval_baseline_candidates" \
+  "$retrieval_comparison_summary" "$retrieval_comparison_rows" \
+  >"${scratch_dir}/retrieval-fixture-validation" \
   || fail "bundled Example Sentence Retrieval regression fixture replay failed"
 pass "bundled Example Sentence Retrieval index, manifest, and regression fixtures match"
 
@@ -181,7 +187,9 @@ python3 "$retrieval_validator" "$archive_language_database" --manifest "$languag
   >"${scratch_dir}/archive-retrieval-validation" \
   || fail "archive Example Sentence Retrieval index validation failed"
 ruby "$retrieval_fixture_validator" "$archive_language_database" "$retrieval_contexts" \
-  "$retrieval_summary" "$retrieval_rows" >"${scratch_dir}/archive-retrieval-fixture-validation" \
+  "$retrieval_summary" "$retrieval_rows" "$retrieval_baseline_candidates" \
+  "$retrieval_comparison_summary" "$retrieval_comparison_rows" \
+  >"${scratch_dir}/archive-retrieval-fixture-validation" \
   || fail "archive Example Sentence Retrieval regression fixture replay failed"
 pass "archive Example Sentence Retrieval index, manifest, and regression fixtures match"
 
@@ -241,13 +249,28 @@ pass "resolved dependencies contain no embedded SDK or direct network-client ind
 
 url_results="${scratch_dir}/urls"
 set +e
-rg -a -o --no-filename 'https?://[^[:space:][:cntrl:]"<>]+' "$app_path" >"$url_results" 2>/dev/null
+rg -a -o --no-filename --glob '!*.sqlite3' 'https?://[^[:space:][:cntrl:]"<>]+' \
+  "$app_path" >"$url_results" 2>/dev/null
 url_scan_status=$?
 set -e
 case "$url_scan_status" in
   0|1) ;;
   *) fail "scanner error while inventorying packaged URLs" ;;
 esac
+# Scan SQLite values through SQLite rather than across raw database pages. Raw
+# page bytes can concatenate the end of one URL with the beginning of the next
+# record and invent a host that is not present in any packaged value.
+while IFS= read -r -d '' packaged_database; do
+  set +e
+  sqlite3 -readonly "$packaged_database" .dump 2>/dev/null \
+    | rg -o --no-filename 'https?://[^[:space:][:cntrl:]"<>]+' >>"$url_results"
+  database_url_scan_status=${PIPESTATUS[1]}
+  set -e
+  case "$database_url_scan_status" in
+    0|1) ;;
+    *) fail "scanner error while inventorying packaged SQLite URLs" ;;
+  esac
+done < <(find "$app_path" -type f -name '*.sqlite3' -print0)
 # A few corpus sentences run a sentence number directly into the terminal URL
 # period (for example, `example.com.5`); an all-numeric DNS suffix is not a host.
 sed -E 's#^[Hh][Tt][Tt][Pp][Ss]?://([^/:?#]+).*#\1#' "$url_results" \

@@ -3,8 +3,35 @@
 from __future__ import annotations
 
 import bz2
+import hashlib
 import sqlite3
+import struct
+import unicodedata
 from pathlib import Path
+
+
+EXAMPLE_PAIR_ID_SCHEME = "esp1-sha256-128-nfc-length-prefixed"
+EXAMPLE_PAIR_ID_PREFIX = "esp1_"
+
+
+def _canonical_pair(japanese: str, english: str) -> tuple[str, str]:
+    return unicodedata.normalize("NFC", japanese), unicodedata.normalize("NFC", english)
+
+
+def app_owned_example_pair_storage_id(japanese: str, english: str) -> bytes:
+    """Return the compact opaque identity stored behind the corpus boundary."""
+    digest = hashlib.sha256()
+    digest.update(b"zenbu.example-sentence-pair.v1\0")
+    for value in _canonical_pair(japanese, english):
+        encoded = value.encode("utf-8")
+        digest.update(struct.pack(">Q", len(encoded)))
+        digest.update(encoded)
+    return digest.digest()[:16]
+
+
+def app_owned_example_pair_id(japanese: str, english: str) -> str:
+    """Return the public encoding of the app-owned semantic-pair identity."""
+    return EXAMPLE_PAIR_ID_PREFIX + app_owned_example_pair_storage_id(japanese, english).hex()
 
 
 def import_tatoeba_examples(
@@ -35,8 +62,8 @@ def import_tatoeba_examples(
         if japanese_id in japanese_by_id:
             japanese_ids_by_english_id.setdefault(english_id, []).append(japanese_id)
 
-    retained = 0
-    pending: list[tuple[str, str, str, str, str]] = []
+    pairs_by_id: dict[bytes, tuple[str, str]] = {}
+    provenance: set[tuple[bytes, str, int, int]] = set()
     with bz2.open(english_source, mode="rt", encoding="utf-8") as sentences:
         for line in sentences:
             sentence_id_text, language, sentence = line.rstrip("\n").split("\t", maxsplit=2)
@@ -44,13 +71,34 @@ def import_tatoeba_examples(
             if language != "eng":
                 continue
             for japanese_id in japanese_ids_by_english_id.get(english_id, []):
-                pending.append((f"tatoeba:{japanese_id}:{english_id}", "tatoeba.weekly-export",
-                                str(japanese_id), japanese_by_id[japanese_id], sentence))
-            if len(pending) >= 5_000:
-                database.executemany("INSERT INTO example_sentences VALUES (?, ?, ?, ?, ?)", pending)
-                retained += len(pending)
-                pending.clear()
-    if pending:
-        database.executemany("INSERT INTO example_sentences VALUES (?, ?, ?, ?, ?)", pending)
-        retained += len(pending)
-    return retained
+                japanese, english = _canonical_pair(japanese_by_id[japanese_id], sentence)
+                pair_id = app_owned_example_pair_storage_id(japanese, english)
+                pair = (japanese, english)
+                existing = pairs_by_id.get(pair_id)
+                if existing is not None and existing != pair:
+                    raise ValueError(
+                        "opaque Example Sentence pair ID collision between distinct normalized pairs"
+                    )
+                pairs_by_id[pair_id] = pair
+                provenance.add(
+                    (
+                        pair_id,
+                        "tatoeba.weekly-export",
+                        japanese_id,
+                        english_id,
+                    )
+                )
+
+    database.executemany(
+        "INSERT INTO example_sentences(id, japanese, english) VALUES (?, ?, ?)",
+        ((pair_id, *pairs_by_id[pair_id]) for pair_id in sorted(pairs_by_id)),
+    )
+    database.executemany(
+        """
+        INSERT INTO example_sentence_provenance(
+          pair_id, source_identity, source_japanese_record_id, source_english_record_id
+        ) VALUES (?, ?, ?, ?)
+        """,
+        sorted(provenance),
+    )
+    return len(pairs_by_id)

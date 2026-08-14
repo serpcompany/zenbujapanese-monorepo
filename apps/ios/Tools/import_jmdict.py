@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from language_data_tools import file_sha256
-from tatoeba_adapter import import_tatoeba_examples
+from tatoeba_adapter import EXAMPLE_PAIR_ID_SCHEME, import_tatoeba_examples
 from example_sentence_retrieval_index import build_indexes
 from unidic_adapter import apply_unidic_pitch
 
@@ -266,12 +266,20 @@ def create_schema(database: sqlite3.Connection) -> None:
         CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 
         CREATE TABLE example_sentences (
-          id TEXT PRIMARY KEY,
-          source_identity TEXT NOT NULL,
-          source_record_id TEXT NOT NULL,
+          id BLOB PRIMARY KEY,
           japanese TEXT NOT NULL,
           english TEXT NOT NULL
         );
+
+        CREATE TABLE example_sentence_provenance (
+          pair_id BLOB NOT NULL REFERENCES example_sentences(id),
+          source_identity TEXT NOT NULL,
+          source_japanese_record_id INTEGER NOT NULL,
+          source_english_record_id INTEGER NOT NULL,
+          PRIMARY KEY(
+            pair_id, source_identity, source_japanese_record_id, source_english_record_id
+          )
+        ) WITHOUT ROWID;
         """
     )
 
@@ -586,6 +594,7 @@ def import_snapshot(
             "note_identity_disambiguated_entries": note_identity_disambiguated_entries,
             "pitch_entries": pitch_entry_count,
             "example_sentences": example_sentence_count,
+            "example_sentence_pair_id_scheme": EXAMPLE_PAIR_ID_SCHEME,
             "example_sentence_retrieval": retrieval_metadata,
             "rejection_reasons": {"missing_ent_seq_reading_or_english_gloss": rejected},
             "retained_fields": [
@@ -613,6 +622,8 @@ def import_snapshot(
                 "JMdict cross-reference form, reading, and target-sense qualifiers preserved; supplied readings require an exact target reading",
                 "human-reviewed app-owned word relationships resolved from a versioned editorial fact source",
                 "stable 128-bit app-owned Language Reference ID derived from SHA-256 of source identity and source record ID",
+                "opaque app-owned Example Sentence pair ID derived only from the NFC normalized Japanese-English semantic pair",
+                "Tatoeba Japanese and English record IDs retained only in the Example Sentence provenance table",
                 "collision-free durable-note identity derived from an app-owned semantic lexical signature with deterministic exact-duplicate disambiguation",
                 "provider part-of-speech taxonomy normalized to app-owned classification labels",
                 "app-owned commonness marker derived from priority on the selected display form",

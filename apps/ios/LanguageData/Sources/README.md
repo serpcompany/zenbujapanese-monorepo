@@ -40,7 +40,7 @@ Dictionary Sources identifies the source, attribution, modifications, snapshot, 
 
 ## Tatoeba
 
-The three `*-2026-08-08.tsv.bz2` files are pinned official Tatoeba weekly exports for Japanese sentences, English sentences, and their translation links. Immutable HTTP metadata and checksums are in `Tatoeba-2026-08-08.source.json`. The importer retains one deterministic English translation for each linked Japanese sentence as app-owned offline example data, while preserving the Japanese sentence ID for attribution.
+The three `*-2026-08-08.tsv.bz2` files are pinned official Tatoeba weekly exports for Japanese sentences, English sentences, and their translation links. Immutable HTTP metadata and checksums are in `Tatoeba-2026-08-08.source.json`. The importer retains one deterministic English translation for each linked Japanese sentence as app-owned offline example data, while preserving both provider sentence IDs for attribution in the explicit provenance table.
 
 Tatoeba publishes these exports under CC BY 2.0 FR. The app links to the project and license from Dictionary Sources; provider record IDs remain retained provenance and are not rendered in learner-facing example rows.
 
@@ -48,7 +48,7 @@ Tatoeba publishes these exports under CC BY 2.0 FR. The app links to the project
 
 `Zenbu-Word-Relationships-v1.json` contains versioned, human-reviewed lexical relationships. The importer resolves these explicit facts and authoritative JMdict cross-references; it does not generate relationships from spelling, kanji, reading distance, or part-of-speech similarity.
 
-JMdict assembly, UniDic adaptation, and Tatoeba adaptation are independently implemented in `import_jmdict.py`, `unidic_adapter.py`, and `tatoeba_adapter.py`. Their checksums are recorded in the import manifest. Entry identity is a stable app-owned 128-bit SHA-256-derived identifier from immutable source provenance, so snapshot row ordering cannot change entry identity.
+JMdict assembly, UniDic adaptation, and Tatoeba adaptation are independently implemented in `import_jmdict.py`, `unidic_adapter.py`, and `tatoeba_adapter.py`. Their checksums are recorded in the import manifest. Entry identity is a stable app-owned 128-bit SHA-256-derived identifier from immutable source provenance, so snapshot row ordering cannot change entry identity. Example Sentence pair identity is separately derived from a domain-separated, length-prefixed NFC Japanese-English semantic pair and stored as a compact 128-bit value. Its public `esp1_` encoding never contains provider coordinates; import fails closed if two distinct normalized pairs ever produce the same identifier.
 
 Durable notes use the separately app-owned `WordNoteID`: a versioned hash of the normalized app-owned lexical signature (display form, reading, written/reading forms, senses, and classification), intentionally independent of provider identity and record IDs. Exact duplicate signatures receive deterministic disambiguators and a database uniqueness constraint, so unrelated homographs never share notes. A source promotion must emit and review an explicit old-key-to-new-key identity map before changing any canonical signature or duplicate assignment; the storage namespace is bumped only with that migration. Provider coordinates remain provenance and are never the durable note key. The pre-release v1-v3 verification namespaces were never promoted to production data and are intentionally not migrated into the v4 multi-note store.
 

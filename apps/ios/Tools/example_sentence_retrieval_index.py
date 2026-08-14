@@ -13,8 +13,10 @@ import struct
 import tempfile
 from pathlib import Path
 
+from tatoeba_adapter import EXAMPLE_PAIR_ID_SCHEME
 
-INDEX_SCHEMA_VERSION = "zenbu.example-sentence-retrieval-index.v1"
+
+INDEX_SCHEMA_VERSION = "zenbu.example-sentence-retrieval-index.v2"
 POLICY_VERSION = "ExampleSentenceRetrievalPolicy/v1"
 PORTER_TABLE = "example_sentence_english_porter_fts"
 EXACT_TABLE = "example_sentence_english_exact_fts"
@@ -25,8 +27,8 @@ METADATA_KEYS = {
 }
 
 
-def _update_length_prefixed(digest: "hashlib._Hash", value: str) -> None:
-    encoded = value.encode("utf-8")
+def _update_length_prefixed(digest: "hashlib._Hash", value: str | bytes) -> None:
+    encoded = value if isinstance(value, bytes) else str(value).encode("utf-8")
     digest.update(struct.pack(">Q", len(encoded)))
     digest.update(encoded)
 
@@ -38,7 +40,7 @@ def corpus_checksum(database: sqlite3.Connection) -> str:
         "SELECT id, japanese, english FROM example_sentences ORDER BY id"
     ):
         for value in row:
-            _update_length_prefixed(digest, str(value))
+            _update_length_prefixed(digest, value)
     return digest.hexdigest()
 
 
@@ -56,7 +58,21 @@ def mapping_checksum(database: sqlite3.Connection) -> str:
         f"SELECT fts_rowid, pair_id FROM {MAP_TABLE} ORDER BY fts_rowid"
     ):
         digest.update(struct.pack(">Q", int(rowid)))
-        _update_length_prefixed(digest, str(pair_id))
+        _update_length_prefixed(digest, pair_id)
+    return digest.hexdigest()
+
+
+def provenance_checksum(database: sqlite3.Connection) -> str:
+    digest = hashlib.sha256()
+    for row in database.execute(
+        """
+        SELECT pair_id, source_identity, source_japanese_record_id, source_english_record_id
+        FROM example_sentence_provenance
+        ORDER BY pair_id, source_identity, source_japanese_record_id, source_english_record_id
+        """
+    ):
+        for value in row:
+            _update_length_prefixed(digest, value)
     return digest.hexdigest()
 
 
@@ -75,7 +91,7 @@ def build_indexes(database: sqlite3.Connection, importer_path: Path | None = Non
             f"""
             CREATE TABLE {MAP_TABLE} (
               fts_rowid INTEGER PRIMARY KEY,
-              pair_id TEXT NOT NULL UNIQUE REFERENCES example_sentences(id)
+              pair_id BLOB NOT NULL UNIQUE REFERENCES example_sentences(id)
             )
             """
         )
@@ -91,7 +107,7 @@ def build_indexes(database: sqlite3.Connection, importer_path: Path | None = Non
             f"INSERT INTO {MAP_TABLE}(fts_rowid, pair_id) VALUES (?, ?)",
             enumerate(
                 (
-                    str(row[0])
+                    row[0]
                     for row in database.execute("SELECT id FROM example_sentences ORDER BY id")
                 ),
                 start=1,
@@ -114,11 +130,16 @@ def build_indexes(database: sqlite3.Connection, importer_path: Path | None = Non
             **METADATA_KEYS,
             "retrieval_corpus_sha256": source_checksum,
             "retrieval_index_mapping_sha256": mapping_checksum(database),
+            "retrieval_provenance_sha256": provenance_checksum(database),
             "retrieval_importer_sha256": importer_checksum,
             "retrieval_index_row_count": str(source_count),
             "retrieval_exact_index_row_count": str(source_count),
             "retrieval_porter_tokenizer": "fts4/porter",
             "retrieval_exact_tokenizer": "fts4/simple",
+            "retrieval_pair_id_scheme": EXAMPLE_PAIR_ID_SCHEME,
+            "retrieval_provenance_row_count": str(
+                int(database.execute("SELECT count(*) FROM example_sentence_provenance").fetchone()[0])
+            ),
         }
         database.executemany(
             "INSERT OR REPLACE INTO metadata(key, value) VALUES (?, ?)",
@@ -145,6 +166,34 @@ def validate_indexes(
     if integrity != "ok":
         raise ValueError(f"SQLite integrity_check failed: {integrity}")
 
+    corpus_columns = [
+        (row[1], row[2].upper(), row[3], row[5])
+        for row in database.execute("PRAGMA table_info(example_sentences)")
+    ]
+    if corpus_columns != [
+        ("id", "BLOB", 0, 1),
+        ("japanese", "TEXT", 1, 0),
+        ("english", "TEXT", 1, 0),
+    ]:
+        raise ValueError("Example Sentence corpus schema exposes or omits non-canonical fields")
+    provenance_columns = [
+        (row[1], row[2].upper(), row[3])
+        for row in database.execute("PRAGMA table_info(example_sentence_provenance)")
+    ]
+    if provenance_columns != [
+        ("pair_id", "BLOB", 1),
+        ("source_identity", "TEXT", 1),
+        ("source_japanese_record_id", "INTEGER", 1),
+        ("source_english_record_id", "INTEGER", 1),
+    ]:
+        raise ValueError("Example Sentence provenance schema mismatch")
+    provenance_row = database.execute(
+        "SELECT sql FROM sqlite_schema WHERE type = 'table' "
+        "AND name = 'example_sentence_provenance'"
+    ).fetchone()
+    if not provenance_row or "WITHOUT ROWID" not in str(provenance_row[0]).upper():
+        raise ValueError("Example Sentence provenance must use compact WITHOUT ROWID storage")
+
     metadata = _metadata(database)
     for key, expected in METADATA_KEYS.items():
         if metadata.get(key) != expected:
@@ -154,6 +203,7 @@ def validate_indexes(
     for key in (
         "retrieval_corpus_sha256",
         "retrieval_index_mapping_sha256",
+        "retrieval_provenance_sha256",
         "retrieval_importer_sha256",
     ):
         value = metadata.get(key, "")
@@ -161,6 +211,46 @@ def validate_indexes(
             raise ValueError(f"{key} is not a lowercase SHA-256")
 
     corpus_count = int(database.execute("SELECT count(*) FROM example_sentences").fetchone()[0])
+    invalid_pair_id_count = int(
+        database.execute(
+            """
+            SELECT count(*) FROM example_sentences
+            WHERE typeof(id) != 'blob' OR length(id) != 16
+            """
+        ).fetchone()[0]
+    )
+    if invalid_pair_id_count:
+        raise ValueError("Example Sentence corpus contains a non-opaque or malformed pair ID")
+    if metadata.get("retrieval_pair_id_scheme") != EXAMPLE_PAIR_ID_SCHEME:
+        raise ValueError("retrieval pair ID scheme mismatch")
+    provenance_count = int(
+        database.execute("SELECT count(*) FROM example_sentence_provenance").fetchone()[0]
+    )
+    recorded_provenance = int(metadata.get("retrieval_provenance_row_count", "-1"))
+    if provenance_count < corpus_count or recorded_provenance != provenance_count:
+        raise ValueError("Example Sentence provenance is incomplete")
+    if metadata.get("retrieval_provenance_sha256") != provenance_checksum(database):
+        raise ValueError("retrieval provenance checksum mismatch")
+    missing_provenance = database.execute(
+        """
+        SELECT e.id FROM example_sentences e
+        LEFT JOIN example_sentence_provenance p ON p.pair_id = e.id
+        WHERE p.pair_id IS NULL LIMIT 1
+        """
+    ).fetchone()
+    if missing_provenance:
+        raise ValueError(f"app-owned pair lacks retained provenance {missing_provenance[0]}")
+    ambiguous_provenance = database.execute(
+        """
+        SELECT source_identity, source_japanese_record_id, source_english_record_id
+        FROM example_sentence_provenance
+        GROUP BY source_identity, source_japanese_record_id, source_english_record_id
+        HAVING count(DISTINCT pair_id) != 1
+        LIMIT 1
+        """
+    ).fetchone()
+    if ambiguous_provenance:
+        raise ValueError("one provider coordinate maps to multiple app-owned pairs")
     mapping_count = int(database.execute(f"SELECT count(*) FROM {MAP_TABLE}").fetchone()[0])
     porter_count = int(database.execute(f"SELECT count(*) FROM {PORTER_TABLE}").fetchone()[0])
     exact_count = int(database.execute(f"SELECT count(*) FROM {EXACT_TABLE}").fetchone()[0])

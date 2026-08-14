@@ -5,7 +5,6 @@ struct ExampleSentence: Hashable, Identifiable, Sendable {
   let id: String
   let japanese: String
   let english: String
-  let sourceProvenance: LanguageReferenceProvenance
 }
 
 enum ExampleSentenceRetrievalRequest: Hashable, Sendable {
@@ -138,7 +137,8 @@ struct ExampleSentenceClient: Sendable {
 
 private actor ExampleSentenceData {
   static let policyVersion = "ExampleSentenceRetrievalPolicy/v1"
-  static let indexSchemaVersion = "zenbu.example-sentence-retrieval-index.v1"
+  static let indexSchemaVersion = "zenbu.example-sentence-retrieval-index.v2"
+  static let pairIDScheme = "esp1-sha256-128-nfc-length-prefixed"
   static let porterTable = "example_sentence_english_porter_fts"
   static let exactTable = "example_sentence_english_exact_fts"
   static let mapTable = "example_sentence_fts_map"
@@ -190,7 +190,7 @@ private actor ExampleSentenceData {
     let exactRanges = try exactEnglishRanges(matchExpression: matchExpression)
     let statement = try prepare(
       """
-      SELECT e.id, e.source_identity, e.source_record_id, e.japanese, e.english,
+      SELECT 'esp1_' || lower(hex(e.id)), e.japanese, e.english,
              offsets(\(Self.porterTable)), matchinfo(\(Self.porterTable), 'l')
       FROM \(Self.porterTable) p
       JOIN \(Self.mapTable) m ON m.fts_rowid = p.docid
@@ -207,7 +207,7 @@ private actor ExampleSentenceData {
       guard candidatesByID[sentence.id] == nil else {
         throw unavailable(.invalidIndexMetadata)
       }
-      let porterOffsets = try offsets(column: 5, statement: statement)
+      let porterOffsets = try offsets(column: 3, statement: statement)
       guard let porterRange = phraseRange(in: sentence.english, offsets: porterOffsets) else {
         continue
       }
@@ -224,7 +224,7 @@ private actor ExampleSentenceData {
         rankInputs: ExampleSentenceRankInputs(
           lexicalRelation: relation,
           matchPosition: range.location,
-          englishTermCount: try documentTermCount(column: 6, statement: statement),
+          englishTermCount: try documentTermCount(column: 4, statement: statement),
           japaneseGraphemeCount: sentence.japanese.count,
           pairID: sentence.id
         )
@@ -233,7 +233,7 @@ private actor ExampleSentenceData {
 
     let candidates = Array(candidatesByID.values)
     guard candidates.contains(where: \.exactSurface) else { return result(matches: []) }
-    return result(matches: candidates.sorted(by: englishRanksBefore))
+    return result(matches: candidates.sorted(by: ranksBefore))
   }
 
   private func retrieveJapanese(_ query: SearchQuery) throws -> ExampleSentenceRetrievalResult {
@@ -243,7 +243,7 @@ private actor ExampleSentenceData {
 
     let statement = try prepare(
       """
-      SELECT id, source_identity, source_record_id, japanese, english
+      SELECT 'esp1_' || lower(hex(id)), japanese, english
       FROM example_sentences
       WHERE instr(japanese, ?) > 0
       """
@@ -275,7 +275,7 @@ private actor ExampleSentenceData {
         throw unavailable(.invalidBaseCorpus)
       }
     }
-    return result(matches: matchesByID.values.sorted(by: japaneseRanksBefore))
+    return result(matches: matchesByID.values.sorted(by: ranksBefore))
   }
 
   private func retrieveEntry(
@@ -306,7 +306,7 @@ private actor ExampleSentenceData {
       .joined(separator: " OR ")
     let statement = try prepare(
       """
-      SELECT id, source_identity, source_record_id, japanese, english
+      SELECT 'esp1_' || lower(hex(id)), japanese, english
       FROM example_sentences
       WHERE \(predicates)
       """
@@ -348,12 +348,12 @@ private actor ExampleSentenceData {
         )
       )
       if let existing = matchesByID[sentence.id] {
-        matchesByID[sentence.id] = entryRanksBefore(match, existing) ? match : existing
+        matchesByID[sentence.id] = ranksBefore(match, existing) ? match : existing
       } else {
         matchesByID[sentence.id] = match
       }
     }
-    return result(matches: matchesByID.values.sorted(by: entryRanksBefore))
+    return result(matches: matchesByID.values.sorted(by: ranksBefore))
   }
 
   private func result(matches: [ExampleSentenceMatch]) -> ExampleSentenceRetrievalResult {
@@ -370,7 +370,7 @@ private actor ExampleSentenceData {
   ) throws -> [String: ExampleSentenceMatchedRange] {
     let statement = try prepare(
       """
-      SELECT m.pair_id, e.english, offsets(\(Self.exactTable))
+      SELECT 'esp1_' || lower(hex(m.pair_id)), e.english, offsets(\(Self.exactTable))
       FROM \(Self.exactTable) x
       JOIN \(Self.mapTable) m ON m.fts_rowid = x.docid
       JOIN example_sentences e ON e.id = m.pair_id
@@ -424,6 +424,23 @@ private actor ExampleSentenceData {
       "SELECT CAST(value AS INTEGER) FROM metadata WHERE key = 'example_sentences'"
     )
     guard corpusCount == recordedCount else { throw unavailable(.invalidBaseCorpus) }
+    let invalidPairIDs = try scalarInt(
+      """
+      SELECT count(*) FROM example_sentences
+      WHERE typeof(id) != 'blob' OR length(id) != 16
+      """
+    )
+    guard invalidPairIDs == 0 else { throw unavailable(.invalidBaseCorpus) }
+    let missingProvenance = try scalarInt(
+      """
+      SELECT count(*) FROM (
+        SELECT e.id FROM example_sentences e
+        LEFT JOIN example_sentence_provenance p ON p.pair_id = e.id
+        WHERE p.pair_id IS NULL LIMIT 1
+      )
+      """
+    )
+    guard missingProvenance == 0 else { throw unavailable(.invalidBaseCorpus) }
     guard sqlite3_db_readonly(database, "main") == 1 else {
       throw unavailable(.invalidBaseCorpus)
     }
@@ -438,6 +455,7 @@ private actor ExampleSentenceData {
       "retrieval_policy_version": Self.policyVersion,
       "retrieval_porter_tokenizer": "fts4/porter",
       "retrieval_exact_tokenizer": "fts4/simple",
+      "retrieval_pair_id_scheme": Self.pairIDScheme,
     ]
     for (key, expected) in expectedMetadata {
       guard try metadataValue(key) == expected else {
@@ -446,7 +464,7 @@ private actor ExampleSentenceData {
     }
     for key in [
       "retrieval_corpus_sha256", "retrieval_index_mapping_sha256",
-      "retrieval_importer_sha256",
+      "retrieval_importer_sha256", "retrieval_provenance_sha256",
     ] {
       let value = try metadataValue(key)
       guard value.count == 64, value.allSatisfy({ $0.isHexDigit && !$0.isUppercase }) else {
@@ -454,6 +472,14 @@ private actor ExampleSentenceData {
       }
     }
     let corpusCount = try scalarInt("SELECT count(*) FROM example_sentences")
+    let provenanceCount = try scalarInt("SELECT count(*) FROM example_sentence_provenance")
+    let recordedProvenanceCount = try scalarInt(
+      "SELECT CAST(value AS INTEGER) FROM metadata "
+        + "WHERE key = 'retrieval_provenance_row_count'"
+    )
+    guard provenanceCount >= corpusCount, provenanceCount == recordedProvenanceCount else {
+      throw unavailable(.invalidIndexMetadata)
+    }
     let counts = try [
       scalarInt("SELECT count(*) FROM \(Self.mapTable)"),
       scalarInt("SELECT count(*) FROM \(Self.porterTable)"),
@@ -632,21 +658,7 @@ private actor ExampleSentenceData {
     return String(text[lowerIndex..<upperIndex])
   }
 
-  private func englishRanksBefore(
-    _ left: ExampleSentenceMatch,
-    _ right: ExampleSentenceMatch
-  ) -> Bool {
-    rankTuple(left) < rankTuple(right)
-  }
-
-  private func japaneseRanksBefore(
-    _ left: ExampleSentenceMatch,
-    _ right: ExampleSentenceMatch
-  ) -> Bool {
-    rankTuple(left) < rankTuple(right)
-  }
-
-  private func entryRanksBefore(
+  private func ranksBefore(
     _ left: ExampleSentenceMatch,
     _ right: ExampleSentenceMatch
   ) -> Bool {
@@ -673,12 +685,8 @@ private actor ExampleSentenceData {
   private func example(from statement: OpaquePointer) -> ExampleSentence {
     ExampleSentence(
       id: Self.string(column: 0, statement: statement),
-      japanese: Self.string(column: 3, statement: statement),
-      english: Self.string(column: 4, statement: statement),
-      sourceProvenance: LanguageReferenceProvenance(
-        sourceIdentity: Self.string(column: 1, statement: statement),
-        sourceRecordID: Self.string(column: 2, statement: statement)
-      )
+      japanese: Self.string(column: 1, statement: statement),
+      english: Self.string(column: 2, statement: statement)
     )
   }
 
