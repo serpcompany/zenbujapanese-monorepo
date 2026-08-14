@@ -1,6 +1,6 @@
 # Hear pronunciation journey evidence
 
-`SearchReplicaJourneyUITests.testWordAndExampleSpeakersCompleteLiveJapaneseSpeech`
+`SearchExperienceJourneyUITests.testWordAndExampleSpeakersCompleteLiveJapaneseSpeech`
 exercises the public Word Detail headword speaker, a source-backed inline example
 speaker, and the dedicated Example Sentences speaker. Each tap is correlated to a
 fresh live `AVSpeechSynthesizer` invocation and must report both `didStart` and

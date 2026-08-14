@@ -33,12 +33,12 @@ test("crawler defaults to the plan-declared tests for its environment", () => {
 
 test("crawler accepts both plan and fully qualified XCTest identifiers", () => {
   assert.equal(
-    xcodeOnlyTestingIdentifier("SearchReplicaJourneyUITests/testAffected()"),
-    "ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testAffected()",
+    xcodeOnlyTestingIdentifier("SearchExperienceJourneyUITests/testAffected()"),
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testAffected()",
   );
   assert.equal(
-    xcodeOnlyTestingIdentifier("ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testAffected()"),
-    "ZenbuJapaneseUITests/SearchReplicaJourneyUITests/testAffected()",
+    xcodeOnlyTestingIdentifier("ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testAffected()"),
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testAffected()",
   );
 });
 
@@ -60,9 +60,9 @@ test("signed-device blocking plan verifies image ingestion without requiring cam
   const scope = JSON.parse(readFileSync("docs/clone-discovery/nihongo/scope.json", "utf8"));
   const physicalTests = plan.environment_test_ids.signed_physical_device;
 
-  assert.ok(physicalTests.includes("SearchReplicaJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()"));
-  assert.ok(physicalTests.includes("SearchReplicaJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()"));
-  assert.ok(!physicalTests.includes("SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()"));
+  assert.ok(physicalTests.includes("SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()"));
+  assert.ok(physicalTests.includes("SearchExperienceJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker()"));
+  assert.ok(!physicalTests.includes("SearchExperienceJourneyUITests/testCameraCaptureStartsImageTextFlow()"));
   assert.ok(!scope.blocking_journey_ids.includes("JOURNEY-IMAGE-TAKE-PHOTO"));
 });
 
@@ -224,7 +224,7 @@ test("ledger compilation records exact clone evidence and XCTest IDs on covered 
       {
         observation_id: "OBS-SEARCH-001",
         row_ids: ["PARITY-ACTION-SEARCH-001"],
-        test_id: "SearchReplicaJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()",
+        test_id: "SearchExperienceJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()",
         classification: "exact",
         test_status: "passed",
         reference_evidence: ["reference/search-results.png"],
@@ -244,7 +244,7 @@ test("ledger compilation records exact clone evidence and XCTest IDs on covered 
   assert.deepEqual(result.rows[0].clone_evidence, {
     run_ids: ["RUN-004"],
     observation_ids: ["OBS-SEARCH-001"],
-    test_ids: ["SearchReplicaJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()"],
+    test_ids: ["SearchExperienceJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()"],
     reference_evidence: ["reference/search-results.png"],
     clone_evidence: ["Attachments/search-results.png"],
   });
@@ -277,7 +277,7 @@ test("evidence validation rejects visual observations without a comparison contr
       {
         observation_id: "OBS-VISUAL-001",
         row_ids: ["PARITY-STATE-RESULTS"],
-        test_id: "SearchReplicaJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()",
+        test_id: "SearchExperienceJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()",
         classification: "exact",
         test_status: "passed",
         reference_evidence: ["reference/results.png"],
@@ -319,7 +319,7 @@ test("ledger compilation emits journey-sized correction input for a defect", () 
         observation_id: "OBS-CAMERA-001",
         row_ids: ["PARITY-ACTION-CAMERA-001"],
         journey_ids: ["JOURNEY-IMAGE-TAKE-PHOTO"],
-        test_id: "SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()",
+        test_id: "SearchExperienceJourneyUITests/testCameraCaptureStartsImageTextFlow()",
         classification: "defect",
         test_status: "failed",
         summary: "Take Photo reports Camera unavailable",
@@ -342,7 +342,7 @@ test("ledger compilation emits journey-sized correction input for a defect", () 
       title: "[Parity] Take Photo reports Camera unavailable",
       row_ids: ["PARITY-ACTION-CAMERA-001"],
       observation_ids: ["OBS-CAMERA-001"],
-      test_ids: ["SearchReplicaJourneyUITests/testCameraCaptureStartsImageTextFlow()"],
+      test_ids: ["SearchExperienceJourneyUITests/testCameraCaptureStartsImageTextFlow()"],
       reproduction: ["Open Search", "Open image sources", "Select Take Photo"],
       expected: ["The system camera opens."],
       actual: ["An unavailable alert appears."],
@@ -629,18 +629,18 @@ test("xcresult test-tree reconciliation rejects an edited recorded result", () =
       name: "All tests",
       children: [{
         nodeType: "Test Suite",
-        name: "SearchReplicaJourneyUITests",
+        name: "SearchExperienceJourneyUITests",
         children: [{ nodeType: "Test Case", name: "testPhoto()", result: "Failed" }],
       }],
     }],
   });
 
   assert.deepEqual(validateRecordedTests(
-    [{ test_id: "SearchReplicaJourneyUITests/testPhoto()", result: "passed" }],
+    [{ test_id: "SearchExperienceJourneyUITests/testPhoto()", result: "passed" }],
     actual,
   ), [{
     code: "TEST_TREE_MISMATCH",
-    message: "Recorded test SearchReplicaJourneyUITests/testPhoto() is passed, but the hashed xcresult tree says failed.",
+    message: "Recorded test SearchExperienceJourneyUITests/testPhoto() is passed, but the hashed xcresult tree says failed.",
   }]);
 });
 

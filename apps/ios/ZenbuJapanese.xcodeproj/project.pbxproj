@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0739C012E20A0C475890D563 /* SearchReplicaJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2D0ECA911F40E070D8F4FD /* SearchReplicaJourneyUITests.swift */; };
+		0739C012E20A0C475890D563 /* SearchExperienceJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2D0ECA911F40E070D8F4FD /* SearchExperienceJourneyUITests.swift */; };
 		A1C04F09D3A74D8B82D3C6E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */; };
-		E1FD0205CD84132DCB314678 /* LookupReplica in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* LookupReplica */; };
+		E1FD0205CD84132DCB314678 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
 		EE0568414863DA5F77D21D34 /* ZenbuJapaneseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */; };
 /* End PBXBuildFile section */
 
@@ -26,7 +26,7 @@
 /* Begin PBXFileReference section */
 		05C3FD9ADDFFACDD673A50B8 /* Modules */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Modules; path = Modules; sourceTree = SOURCE_ROOT; };
 		0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ZenbuJapanese.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		6E2D0ECA911F40E070D8F4FD /* SearchReplicaJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchReplicaJourneyUITests.swift; sourceTree = "<group>"; };
+		6E2D0ECA911F40E070D8F4FD /* SearchExperienceJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchExperienceJourneyUITests.swift; sourceTree = "<group>"; };
 		A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenbuJapaneseApp.swift; sourceTree = "<group>"; };
 		B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DF09FB39B581100E5F9B6C10 /* ZenbuJapaneseUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ZenbuJapaneseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E1FD0205CD84132DCB314678 /* LookupReplica in Frameworks */,
+				E1FD0205CD84132DCB314678 /* SearchExperience in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -47,7 +47,7 @@
 		063413ACDB21B263873C40C6 /* AppUITests */ = {
 			isa = PBXGroup;
 			children = (
-				6E2D0ECA911F40E070D8F4FD /* SearchReplicaJourneyUITests.swift */,
+				6E2D0ECA911F40E070D8F4FD /* SearchExperienceJourneyUITests.swift */,
 			);
 			path = AppUITests;
 			sourceTree = "<group>";
@@ -106,7 +106,7 @@
 			);
 			name = ZenbuJapanese;
 			packageProductDependencies = (
-				71B99CFA03F259B063FB7CC8 /* LookupReplica */,
+				71B99CFA03F259B063FB7CC8 /* SearchExperience */,
 			);
 			productName = ZenbuJapanese;
 			productReference = 0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */;
@@ -206,7 +206,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0739C012E20A0C475890D563 /* SearchReplicaJourneyUITests.swift in Sources */,
+				0739C012E20A0C475890D563 /* SearchExperienceJourneyUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -235,10 +235,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Zenbu Japanese";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text in a photo you choose to capture.";
-				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -349,10 +349,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Zenbu Japanese";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text in a photo you choose to capture.";
-				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -468,9 +468,9 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		71B99CFA03F259B063FB7CC8 /* LookupReplica */ = {
+		71B99CFA03F259B063FB7CC8 /* SearchExperience */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = LookupReplica;
+			productName = SearchExperience;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
