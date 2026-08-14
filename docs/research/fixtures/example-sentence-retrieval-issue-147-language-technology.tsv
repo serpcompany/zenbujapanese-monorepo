@@ -1,0 +1,30 @@
+context_id	phase	technology	version_or_runtime	language	input	tokens	lemmas_or_base_forms	result
+D01	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	cave	cave	cave	pass
+D02	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	cat	cat	cat	pass
+D03	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	eat	eat	eat	pass
+D04	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	beautiful	beautiful	beautiful	pass
+D05	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	thank you	thank|you	thank|you	pass
+D06	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	scared you	scared|you	scare|you	pass
+D07	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	startled you	startled|you	startle|you	pass
+D08	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	scare you	scare|you	scare|you	pass
+D09	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	red you	red|you	red|you	pass
+D10	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	startle you	startle|you	startle|you	pass
+D11	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	startled me	startled|me	startle|I	pass-with-pronoun-normalization
+D12	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	scatter	scatter	scatter	pass
+D13	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	education	education	education	pass
+D14	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	great	great	great	pass
+D15	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	neat	neat	neat	pass
+D16	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	quickly	quickly	quickly	pass
+D17	discovery	Apple-Natural-Language	macOS-26.6-current-device	en	cat!	cat	cat	pass-punctuation-omitted
+D18	discovery	Apple-Natural-Language	macOS-26.6-current-device	ja	食べる	食べる		fail-no-japanese-lemma-scheme
+D19	discovery	Apple-Natural-Language	macOS-26.6-current-device	ja	食べた	食べ|た		fail-no-japanese-lemma-scheme
+D20	discovery	Apple-Natural-Language	macOS-26.6-current-device	ja	ねこ	ねこ		fail-no-japanese-lemma-scheme
+D18	discovery	MeCab-IPADIC	0.996-2.7.0-20070801	ja	食べる	食べる	食べる	pass
+D19	discovery	MeCab-IPADIC	0.996-2.7.0-20070801	ja	食べた	食べ|た	食べる|た	pass
+D20	discovery	MeCab-IPADIC	0.996-2.7.0-20070801	ja	ねこ	ねこ	ねこ	pass-reading-neko
+D18	discovery	Lindera-IPADIC	5.1.0-release-asset	ja	食べる	食べる	食べる	pass
+D19	discovery	Lindera-IPADIC	5.1.0-release-asset	ja	食べた	食べ|た	食べる|た	pass
+D20	discovery	Lindera-IPADIC	5.1.0-release-asset	ja	ねこ	ねこ	ねこ	pass-reading-neko
+D18	discovery	SudachiPy-SudachiDict-small	0.6.11-20260723	ja	食べる	食べる	食べる	pass
+D19	discovery	SudachiPy-SudachiDict-small	0.6.11-20260723	ja	食べた	食べ|た	食べる|た	pass
+D20	discovery	SudachiPy-SudachiDict-small	0.6.11-20260723	ja	ねこ	ねこ	猫	pass-normalized-kanji

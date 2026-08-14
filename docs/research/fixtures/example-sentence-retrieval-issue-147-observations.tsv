@@ -1,0 +1,13 @@
+context_id	phase	context_type	query_or_entry	reference_version	reference_example_count	ordered_tatoeba_pair_ids	capture_status	evidence_source
+D01	discovery	dictionary-entry	cave	Nihongo-1.34.3-9792	7	484243:483985,11491039:3008736,2804141:2804142,11195158:11085878,8823605:1294352,9106984:9106983,207433:44686	verified-public-pairs	issue-140-a60d6f2
+D02	discovery	dictionary-entry	cat	Nihongo-1.34.3-9792	7	85345:269036,101396:302300,91803:311909,91804:311908,97661:306043,101398:302298,78908:324808	verified-public-pairs	issue-140-a60d6f2
+D03	discovery	dictionary-entry	eat	Nihongo-1.34.3-9792	7	77229:34326,5160:2765281,5222:1881,78956:324760,77970:62636,75107:328612,77975:62636	verified-public-pairs	issue-140-a60d6f2
+D04	discovery	dictionary-entry	beautiful	Nihongo-1.34.3-9792	7	85541:410244,5196:1829,85563:318150,4894:1480,84940:2617277,4796:1375,5062:1658	verified-public-pairs	issue-140-a60d6f2
+D05	discovery	dictionary-entry	thank you	Nihongo-1.34.3-9792	7	81557:1564,141799:272771,145585:268952,140220:274353,4971:1564,78721:64536,124756:64155	verified-public-pairs	issue-140-a60d6f2
+D06	discovery	direct-search	scared you	Nihongo-1.34.3-9792	4	108058:295628,12574578:12373614,2409471:2396319,472836:473875	verified-public-pairs	issue-148-de8164e
+D07	discovery	direct-search	startled you	Nihongo-1.34.3-9792	0		verified-empty	issue-148-de8164e
+D08	discovery	direct-search	scare you	Nihongo-1.34.3-9792	4	12574578:12373614,2409471:2396319,472836:473875,108058:295628	verified-public-pairs	issue-148-de8164e
+D09	discovery	direct-search	red you	Nihongo-1.34.3-9792	0		verified-empty	issue-148-de8164e
+D10	discovery	direct-search	startle you	Nihongo-1.34.3-9792	1	1804152:1804150	verified-public-pair	issue-148-de8164e
+D11	discovery	direct-search	startled me	Nihongo-1.34.3-9792	2	180017:18876,201898:39109	verified-public-pairs	issue-148-de8164e
+D12	discovery	direct-search	scatter	Nihongo-1.34.3-9792	21		private-capture-pending-public-pair-trace	private://issue-147/D12-scatter
