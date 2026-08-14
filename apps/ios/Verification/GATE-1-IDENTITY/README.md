@@ -8,11 +8,12 @@ rename does not add a new architecture layer or change product behavior.
 
 ## Screen-by-screen de-branding review
 
-Every material Release surface was inspected in both approved appearances.
-All captures are app-owned 1170 by 2532 simulator screenshots; private
-reference captures are not included. The review found only Zenbu identity,
-Search and Settings navigation, the approved red/neutral colors, and existing
-typography and geometry.
+The matrix below records the material Release surfaces reviewed for issue
+#141; it does not claim coverage beyond the listed rows. All captures are
+app-owned 1170 by 2532 simulator screenshots; private reference captures are
+not included. The review found only Zenbu identity, Search and Settings
+navigation, the approved red/neutral colors, and existing typography and
+geometry on these surfaces.
 
 | Material surface | Light evidence | Dark evidence | Result |
 | --- | --- | --- | --- |
@@ -27,13 +28,30 @@ typography and geometry.
 | Radical input | `radical-input-light.png` | `radical-input-dark.png` | Clear |
 | Handwriting input | `handwriting-input-light.png` | `handwriting-input-dark.png` | Clear |
 | Image Text entry menu | `image-text-light.png` | `image-text-dark.png` | Clear |
+| Image Text result | `image-text-result-light.png` | `image-text-result-dark.png` | Clear |
+| Recent Searches | `recent-searches-light.png` | `recent-searches-dark.png` | Clear |
+| Dictionary source notice | `source-notice-light.png` | `source-notice-dark.png` | Clear |
+| Bundled license notice | `bundled-license-light.png` | `bundled-license-dark.png` | Clear |
 
 The clean light suite result is
 `/tmp/ZenbuJapanese-issue-141-clean-full-v2.xcresult`. Corrected dark coverage
 used `/tmp/ZenbuJapanese-issue-141-dark-coverage-isolated.xcresult`,
 `/tmp/ZenbuJapanese-issue-141-common-isolated.xcresult`, and the focused clean
 Image Text menu result
-`/tmp/ZenbuJapanese-issue-141-dark-image-menu.xcresult`.
+`/tmp/ZenbuJapanese-issue-141-dark-image-menu.xcresult`. Focused, source-unchanged
+evidence additions used
+`/tmp/ZenbuJapanese-issue-141-dark-recent.xcresult`,
+`/tmp/ZenbuJapanese-issue-141-light-image-result.xcresult`, and
+`/tmp/ZenbuJapanese-issue-141-dark-image-result.xcresult`; all three selected
+tests passed with zero failures. The Image Text result captures use an
+app-owned Zenbu screenshot as the photo input rather than prototype or fixture
+media.
+
+The two active prose references left behind by the production/test rename were
+updated to `SearchExperienceJourneyUITests` and
+`SearchExperienceVerification.md`. A Markdown scan under `apps/ios` found no
+other active stale prose references from those renames; historical
+machine-generated evidence identifiers were intentionally left unchanged.
 
 ## Complete simulator suite
 
