@@ -50,7 +50,9 @@ struct SearchView: View {
           requestClearAll: { isConfirmingClearAll = true },
           selectSearch: selectRecentSearch
         )
-      } else if !results.isEmpty || exampleCount > 0 || (hasCompletedSearch && searchQuery.isSingleKanji) {
+      } else if !results.isEmpty || exampleCount > 0
+        || (hasCompletedSearch && searchQuery.isSingleKanji)
+      {
         SearchResultsView(
           query: searchQuery,
           results: results,
@@ -72,12 +74,12 @@ struct SearchView: View {
           retryID += 1
         }
       } else if hasCompletedSearch && !searchQuery.isEmpty {
-        Color.black
+        ZenbuTheme.background
           .accessibilityElement()
           .accessibilityLabel("No dictionary matches")
           .accessibilityIdentifier("search.no-results")
       } else {
-        Color.black
+        ZenbuTheme.background
       }
 
       switch inputMode {
@@ -86,7 +88,7 @@ struct SearchView: View {
           selectedMode: .keyboard,
           selectMode: selectInputMode
         )
-        .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
+        .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
       case .handwriting:
         HandwritingInputView(
           query: $query,
@@ -94,7 +96,7 @@ struct SearchView: View {
           selectMode: selectInputMode,
           submit: submitComposedQuery
         )
-        .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
+        .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
       case .radicals:
         RadicalInputView(
           query: $query,
@@ -102,12 +104,12 @@ struct SearchView: View {
           selectMode: selectInputMode,
           submit: submitRadicalQuery
         )
-        .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
+        .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
       default:
         EmptyView()
       }
     }
-    .background(.black)
+    .background(ZenbuTheme.background)
     .toolbar(.hidden, for: .navigationBar)
     .task(id: SearchTaskID(query: query, retryID: retryID)) {
       hasCompletedSearch = false
@@ -177,7 +179,8 @@ struct SearchView: View {
         Alert(
           title: Text(alert.title),
           message: Text(alert.message),
-          primaryButton: .default(Text("Open Settings"), action: cameraAuthorizationClient.openSettings),
+          primaryButton: .default(
+            Text("Open Settings"), action: cameraAuthorizationClient.openSettings),
           secondaryButton: .cancel()
         )
       } else {
@@ -328,13 +331,13 @@ struct SearchView: View {
 
   private func presentPhotoLibrary() {
     #if DEBUG
-    if ProcessInfo.processInfo.arguments.contains("-PhotoLibraryProviderFailure") {
-      Task { @MainActor in
-        await Task.yield()
-        imageImportAlert = .importFailure("The selected photos could not be read.")
+      if ProcessInfo.processInfo.arguments.contains("-PhotoLibraryProviderFailure") {
+        Task { @MainActor in
+          await Task.yield()
+          imageImportAlert = .importFailure("The selected photos could not be read.")
+        }
+        return
       }
-      return
-    }
     #endif
     presentedImageSource = .photoLibrary
   }
@@ -419,14 +422,14 @@ private struct LookupFailureView: View {
         .font(.headline)
       Text("Zenbu couldn't open its offline Language Reference Data.")
         .font(.subheadline)
-        .foregroundStyle(ReplicaPalette.secondaryText)
+        .foregroundStyle(ZenbuTheme.secondaryText)
         .multilineTextAlignment(.center)
       Button("Retry", action: retry)
         .buttonStyle(.borderedProminent)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .padding(32)
-    .background(.black)
+    .background(ZenbuTheme.background)
   }
 }
 
@@ -443,7 +446,7 @@ private struct SearchBar: View {
     HStack(spacing: 12) {
       HStack(spacing: 8) {
         Image(systemName: "magnifyingglass")
-          .foregroundStyle(.secondary)
+          .foregroundStyle(ZenbuTheme.mutedForeground)
 
         TextField("Words, Kanji, Example Sentences...", text: $query)
           .textInputAutocapitalization(.never)
@@ -466,7 +469,7 @@ private struct SearchBar: View {
             query = ""
           } label: {
             Image(systemName: "xmark.circle.fill")
-              .foregroundStyle(.secondary)
+              .foregroundStyle(ZenbuTheme.mutedForeground)
           }
           .buttonStyle(.plain)
           .accessibilityLabel("Clear text")
@@ -476,12 +479,12 @@ private struct SearchBar: View {
       .font(.system(size: 17))
       .padding(.horizontal, 10)
       .frame(height: 38)
-      .background(ReplicaPalette.searchField, in: RoundedRectangle(cornerRadius: 9))
+      .background(ZenbuTheme.searchField, in: RoundedRectangle(cornerRadius: 9))
 
       Button(action: openImageSource) {
         Image(systemName: "camera")
           .font(.system(size: 21))
-          .foregroundStyle(.white)
+          .foregroundStyle(ZenbuTheme.primaryForeground)
           .frame(width: 38, height: 38)
       }
       .buttonStyle(.plain)
@@ -490,14 +493,14 @@ private struct SearchBar: View {
 
       if isInputActive {
         Button("Cancel", action: cancel)
-        .buttonStyle(.plain)
-        .foregroundStyle(.white)
-        .accessibilityIdentifier("search.cancel")
+          .buttonStyle(.plain)
+          .foregroundStyle(ZenbuTheme.primaryForeground)
+          .accessibilityIdentifier("search.cancel")
       }
     }
     .padding(.horizontal, 16)
     .padding(.bottom, 10)
-    .background(ReplicaPalette.chrome)
+    .background(ZenbuTheme.chrome)
   }
 }
 
@@ -519,10 +522,10 @@ private struct SearchResultsView: View {
             Text(exampleActionTitle)
               .frame(maxWidth: .infinity, alignment: .center)
             Image(systemName: "chevron.right")
-              .foregroundStyle(.white.opacity(0.3))
+              .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.3))
           }
           .font(.system(size: 18))
-          .foregroundStyle(ReplicaPalette.selectedTab)
+          .foregroundStyle(ZenbuTheme.selectedTab)
           .padding(.horizontal, 18)
           .frame(height: 52)
           .contentShape(Rectangle())
@@ -541,10 +544,10 @@ private struct SearchResultsView: View {
                 Text("Search for「\(refinement.query.value)」")
                   .frame(maxWidth: .infinity, alignment: .center)
                 Image(systemName: "chevron.right")
-                  .foregroundStyle(.white.opacity(0.3))
+                  .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.3))
               }
               .font(.system(size: 18))
-              .foregroundStyle(ReplicaPalette.selectedTab)
+              .foregroundStyle(ZenbuTheme.selectedTab)
               .padding(.horizontal, 18)
               .frame(height: 52)
               .contentShape(Rectangle())
@@ -556,7 +559,9 @@ private struct SearchResultsView: View {
 
           if results.presentation == .discoveredWords {
             ResultSectionHeader(title: "Discovered Words")
-            ForEach(Array((results.best + results.additional).prefix(12).enumerated()), id: \.offset) {
+            ForEach(
+              Array((results.best + results.additional).prefix(12).enumerated()), id: \.offset
+            ) {
               index, entry in
               ResultRow(entry: entry, marker: .additional, rank: .discovered(index + 1)) {
                 openResult(entry)
@@ -570,7 +575,9 @@ private struct SearchResultsView: View {
               }
             }
             ForEach(Array(results.best.enumerated()), id: \.element.id) { index, entry in
-              ResultRow(entry: entry, marker: .best, rank: .best(index + (query.isSingleKanji ? 2 : 1))) {
+              ResultRow(
+                entry: entry, marker: .best, rank: .best(index + (query.isSingleKanji ? 2 : 1))
+              ) {
                 openResult(entry)
               }
             }
@@ -585,12 +592,12 @@ private struct SearchResultsView: View {
             }
           }
         }
-        .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
+        .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
       }
       .id(query)
       .scrollIndicators(.hidden)
     }
-    .background(.black)
+    .background(ZenbuTheme.background)
   }
 
   private var primaryKanjiEntry: DictionaryEntry? {
@@ -615,19 +622,19 @@ private struct KanjiPrimaryRow: View {
           .font(.system(size: 29, weight: .light))
         Text("KANJI")
           .font(.caption2.weight(.bold))
-          .foregroundStyle(ReplicaPalette.secondaryText)
+          .foregroundStyle(ZenbuTheme.secondaryText)
         Text(entry?.summary ?? "Kanji detail")
           .lineLimit(1)
-          .foregroundStyle(ReplicaPalette.secondaryText)
+          .foregroundStyle(ZenbuTheme.secondaryText)
           .frame(maxWidth: .infinity, alignment: .trailing)
         Image(systemName: "chevron.right")
-          .foregroundStyle(.white.opacity(0.25))
+          .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.25))
       }
       .padding(.horizontal, 15)
       .frame(height: 54)
       .contentShape(Rectangle())
       .overlay(alignment: .bottom) {
-        Rectangle().fill(ReplicaPalette.divider).frame(height: 0.5)
+        Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
       }
     }
     .buttonStyle(.plain)
@@ -643,13 +650,13 @@ private struct ResultSectionHeader: View {
   var body: some View {
     Text(title)
       .font(.system(size: 16, weight: .semibold))
-      .foregroundStyle(ReplicaPalette.secondaryText)
+      .foregroundStyle(ZenbuTheme.secondaryText)
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding(.horizontal, 53)
       .frame(height: 43, alignment: .bottom)
       .padding(.bottom, 7)
       .overlay(alignment: .bottom) {
-        Rectangle().fill(ReplicaPalette.divider).frame(height: 0.5)
+        Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
       }
   }
 }
@@ -678,24 +685,24 @@ private struct ResultRow: View {
             .lineLimit(1)
             .minimumScaleFactor(0.8)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(ZenbuTheme.foreground)
         .frame(width: 92, alignment: .leading)
 
         Text(entry.summary)
           .font(.system(size: 16))
-          .foregroundStyle(ReplicaPalette.secondaryText)
+          .foregroundStyle(ZenbuTheme.secondaryText)
           .lineLimit(1)
           .frame(maxWidth: .infinity, alignment: .trailing)
 
         Image(systemName: "chevron.right")
           .font(.system(size: 18, weight: .semibold))
-          .foregroundStyle(.white.opacity(0.25))
+          .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.25))
       }
       .padding(.horizontal, 15)
       .frame(height: 54)
       .contentShape(Rectangle())
       .overlay(alignment: .bottom) {
-        Rectangle().fill(ReplicaPalette.divider).frame(height: 0.5)
+        Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
       }
     }
     .buttonStyle(.plain)
@@ -717,11 +724,11 @@ private struct ResultRow: View {
     switch marker {
     case .best:
       Circle()
-        .stroke(.white.opacity(0.55), lineWidth: 1.2)
+        .stroke(ZenbuTheme.mutedForeground.opacity(0.55), lineWidth: 1.2)
         .frame(width: 17, height: 17)
     case .additional:
       Rectangle()
-        .stroke(.white.opacity(0.55), lineWidth: 1.2)
+        .stroke(ZenbuTheme.mutedForeground.opacity(0.55), lineWidth: 1.2)
         .frame(width: 13, height: 13)
         .rotationEffect(.degrees(45))
     }

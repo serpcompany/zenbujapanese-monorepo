@@ -44,7 +44,9 @@ private struct LinkedTokenView: View {
 
   var body: some View {
     if let entry = token.entry {
-      Button { openWord(entry) } label: {
+      Button {
+        openWord(entry)
+      } label: {
         VStack(spacing: 0) {
           if token.showsReading {
             Text(entry.reading)
@@ -54,7 +56,7 @@ private struct LinkedTokenView: View {
             .font(.system(size: 20))
             .underline()
         }
-        .foregroundStyle(ReplicaPalette.selectedTab)
+        .foregroundStyle(ZenbuTheme.selectedTab)
       }
       .buttonStyle(.plain)
       .accessibilityLabel("\(token.surface), \(entry.reading), \(entry.summary)")

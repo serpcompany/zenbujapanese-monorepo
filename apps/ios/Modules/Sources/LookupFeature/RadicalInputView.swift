@@ -18,14 +18,16 @@ struct RadicalInputView: View {
       HStack(spacing: 0) {
         ScrollView {
           if loadFailed {
-            ContentUnavailableView("Radical data unavailable", systemImage: "exclamationmark.triangle")
-              .accessibilityIdentifier("radical.load-failure")
+            ContentUnavailableView(
+              "Radical data unavailable", systemImage: "exclamationmark.triangle"
+            )
+            .accessibilityIdentifier("radical.load-failure")
           } else {
             LazyVStack(alignment: .leading, spacing: 8) {
               ForEach(groups, id: \.strokeCount) { group in
                 Text(group.strokeCount == 1 ? "1 Stroke" : "\(group.strokeCount) Strokes")
                   .font(.caption.weight(.semibold))
-                  .foregroundStyle(ReplicaPalette.secondaryText)
+                  .foregroundStyle(ZenbuTheme.secondaryText)
                 LazyVGrid(
                   columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 8),
                   spacing: 4
@@ -36,8 +38,8 @@ struct RadicalInputView: View {
                       .frame(maxWidth: .infinity, minHeight: 34)
                       .background(
                         selectedRadicals.contains(radical.id)
-                          ? ReplicaPalette.selectedTab
-                          : .white.opacity(0.08),
+                          ? ZenbuTheme.selectedTab
+                          : ZenbuTheme.accent,
                         in: RoundedRectangle(cornerRadius: 5)
                       )
                       .accessibilityLabel("Radical \(radical.glyph)")
@@ -73,7 +75,13 @@ struct RadicalInputView: View {
           }
           .font(.system(size: 17, weight: .semibold))
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .background(selectedCandidate == nil ? Color.white.opacity(0.08) : ReplicaPalette.selectedTab)
+          .background(
+            selectedCandidate == nil
+              ? ZenbuTheme.mutedForeground.opacity(0.08) : ZenbuTheme.selectedTab
+          )
+          .foregroundStyle(
+            selectedCandidate == nil ? ZenbuTheme.mutedForeground : ZenbuTheme.primaryForeground
+          )
           .disabled(selectedCandidate == nil)
           .accessibilityIdentifier("radical.search")
         }
@@ -81,7 +89,7 @@ struct RadicalInputView: View {
       }
       .frame(height: 258)
     }
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
     .task {
       guard catalog == nil else { return }
       do {
@@ -100,7 +108,7 @@ struct RadicalInputView: View {
         Spacer()
       }
       .font(.system(size: 14))
-      .foregroundStyle(ReplicaPalette.secondaryText)
+      .foregroundStyle(ZenbuTheme.secondaryText)
       .padding(.horizontal, 14)
       .frame(height: 46)
     } else {
@@ -111,12 +119,18 @@ struct RadicalInputView: View {
               selectedCandidate = SearchQuery(candidate.value)
               query = candidate.value
             }
-              .font(.system(size: 27))
-              .foregroundStyle(.white)
-              .frame(minWidth: 54, minHeight: 46)
-              .background(selectedCandidate?.value == candidate.value ? ReplicaPalette.selectedTab : .clear)
-              .accessibilityLabel("Use radical candidate \(candidate.value)")
-              .accessibilityIdentifier("radical.candidate.\(candidate.value)")
+            .font(.system(size: 27))
+            .foregroundStyle(
+              selectedCandidate?.value == candidate.value
+                ? ZenbuTheme.primaryForeground
+                : ZenbuTheme.foreground
+            )
+            .frame(minWidth: 54, minHeight: 46)
+            .background(
+              selectedCandidate?.value == candidate.value ? ZenbuTheme.selectedTab : .clear
+            )
+            .accessibilityLabel("Use radical candidate \(candidate.value)")
+            .accessibilityIdentifier("radical.candidate.\(candidate.value)")
           }
         }
       }
@@ -149,8 +163,8 @@ struct RadicalInputView: View {
   }
 }
 
-private extension RadicalComponent {
-  var accessibilityIdentifier: String {
+extension RadicalComponent {
+  fileprivate var accessibilityIdentifier: String {
     switch id {
     case "一": "radical.one"
     case "艾": "radical.grass"

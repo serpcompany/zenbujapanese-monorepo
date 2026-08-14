@@ -1,17 +1,18 @@
 import SwiftUI
 
-public struct SearchReplicaRootView: View {
-  @State private var path: [ReplicaRoute] = []
+public struct LookupRootView: View {
+  @State private var path: [LookupRoute] = []
   @State private var query = ""
-  @State private var presentedSheet: ReplicaSheet?
-  @State private var unavailableTab: ReplicaUnavailableTab?
-  @State private var exportsImageFixtures = false
+  @State private var presentedSheet: LookupSheet?
+  #if DEBUG
+    @State private var exportsImageFixtures = false
+  #endif
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
   #if DEBUG
-  @State private var lastStartedSpeech: SpeechPlaybackVerificationEvent?
-  @State private var lastFinishedSpeech: SpeechPlaybackVerificationEvent?
+    @State private var lastStartedSpeech: SpeechPlaybackVerificationEvent?
+    @State private var lastFinishedSpeech: SpeechPlaybackVerificationEvent?
   #endif
   private let lookupClient = LookupClient.live
   private let recentSearchStore = RecentSearchStore.live
@@ -24,34 +25,40 @@ public struct SearchReplicaRootView: View {
   private let imageImportInitialDirectory: URL?
   private let imageTextRecognitionClient: ImageTextRecognitionClient
   private let naturalTranslationClient: NaturalTranslationClient
-  private let imageFixtureExportURLs: [URL]
+  #if DEBUG
+    private let imageFixtureExportURLs: [URL]
+  #endif
 
   public init() {
     #if DEBUG
-    handwritingRecognitionClient = HandwritingRecognitionFixture.clientFromProcessArguments() ?? .live
-    cameraAuthorizationClient = CameraAuthorizationClient.clientFromProcessArguments() ?? .live
-    speechSynthesisClient = SpeechSynthesisClient.clientFromProcessArguments() ?? .live
-    kanjiStrokeOrderClient = KanjiStrokeOrderClient.clientFromProcessArguments() ?? .live
-    kanjiElementLookupClient = KanjiElementLookupClient.clientFromProcessArguments() ?? .live
-    imageImportInitialDirectory = ImageTextTestFixtures.prepareIfRequested()
-    imageTextRecognitionClient = ImageTextRecognitionFixture.clientFromProcessArguments(live: .live) ?? .live
-    naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live
-    imageFixtureExportURLs = ImageTextTestFixtures.exportURLsFromProcessArguments(in: imageImportInitialDirectory)
-    _exportsImageFixtures = State(initialValue: !imageFixtureExportURLs.isEmpty)
-    if let session = ImageTextTestFixtures.sessionFromProcessArguments(in: imageImportInitialDirectory) {
-      _imageTextSessionStore = State(initialValue: ImageTextSessionStore(session: session))
-      _path = State(initialValue: [.image(session.id)])
-    }
+      handwritingRecognitionClient =
+        HandwritingRecognitionFixture.clientFromProcessArguments() ?? .live
+      cameraAuthorizationClient = CameraAuthorizationClient.clientFromProcessArguments() ?? .live
+      speechSynthesisClient = SpeechSynthesisClient.clientFromProcessArguments() ?? .live
+      kanjiStrokeOrderClient = KanjiStrokeOrderClient.clientFromProcessArguments() ?? .live
+      kanjiElementLookupClient = KanjiElementLookupClient.clientFromProcessArguments() ?? .live
+      imageImportInitialDirectory = ImageTextTestFixtures.prepareIfRequested()
+      imageTextRecognitionClient =
+        ImageTextRecognitionFixture.clientFromProcessArguments(live: .live) ?? .live
+      naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live
+      imageFixtureExportURLs = ImageTextTestFixtures.exportURLsFromProcessArguments(
+        in: imageImportInitialDirectory)
+      _exportsImageFixtures = State(initialValue: !imageFixtureExportURLs.isEmpty)
+      if let session = ImageTextTestFixtures.sessionFromProcessArguments(
+        in: imageImportInitialDirectory)
+      {
+        _imageTextSessionStore = State(initialValue: ImageTextSessionStore(session: session))
+        _path = State(initialValue: [.image(session.id)])
+      }
     #else
-    handwritingRecognitionClient = .live
-    cameraAuthorizationClient = .live
-    speechSynthesisClient = .live
-    kanjiStrokeOrderClient = .live
-    kanjiElementLookupClient = .live
-    imageImportInitialDirectory = nil
-    imageTextRecognitionClient = .live
-    naturalTranslationClient = .live
-    imageFixtureExportURLs = []
+      handwritingRecognitionClient = .live
+      cameraAuthorizationClient = .live
+      speechSynthesisClient = .live
+      kanjiStrokeOrderClient = .live
+      kanjiElementLookupClient = .live
+      imageImportInitialDirectory = nil
+      imageTextRecognitionClient = .live
+      naturalTranslationClient = .live
     #endif
   }
 
@@ -77,7 +84,7 @@ public struct SearchReplicaRootView: View {
         },
         imageImportInitialDirectory: imageImportInitialDirectory
       )
-      .navigationDestination(for: ReplicaRoute.self) { route in
+      .navigationDestination(for: LookupRoute.self) { route in
         switch route {
         case .word(let entry, let backTitle, let imageContext):
           WordDetailView(
@@ -136,71 +143,67 @@ public struct SearchReplicaRootView: View {
         case .image(let sessionID):
           if let session = imageTextSessionStore.session(sessionID) {
             ImageTextFlowView(
-            session: session,
-            recognitionClient: imageTextRecognitionClient,
-            textAnalysisClient: .live(lookupClient: lookupClient),
-            translationClient: naturalTranslationClient,
-            close: {
-              if path.last == .image(sessionID) { path.removeLast() }
-              imageTextSessionStore.remove(sessionID)
-            },
-            openWord: { entry, asset in
-              path.append(.word(entry, "Photo", ImageWordContext(sessionID: sessionID, assetID: asset.id)))
-            }
+              session: session,
+              recognitionClient: imageTextRecognitionClient,
+              textAnalysisClient: .live(lookupClient: lookupClient),
+              translationClient: naturalTranslationClient,
+              close: {
+                if path.last == .image(sessionID) { path.removeLast() }
+                imageTextSessionStore.remove(sessionID)
+              },
+              openWord: { entry, asset in
+                path.append(
+                  .word(entry, "Photo", ImageWordContext(sessionID: sessionID, assetID: asset.id)))
+              }
             )
           }
         }
       }
     }
-    .tint(.white)
-    .toolbarBackground(ReplicaPalette.chrome, for: .navigationBar)
+    .tint(ZenbuTheme.primaryForeground)
+    .toolbarBackground(ZenbuTheme.primary, for: .navigationBar)
     .toolbarBackground(.visible, for: .navigationBar)
     .toolbarColorScheme(.dark, for: .navigationBar)
     .safeAreaInset(edge: .bottom, spacing: 0) {
-      ReplicaTabBar(select: selectTab)
+      LookupTabBar(select: selectTab)
     }
-    .background(.black)
+    .foregroundStyle(ZenbuTheme.foreground)
+    .background(ZenbuTheme.background)
     .sheet(item: $presentedSheet) { sheet in
       switch sheet {
       case .sources:
         DictionarySourcesView()
       }
     }
-    .alert(item: $unavailableTab) { unavailable in
-      Alert(
-        title: Text("\(unavailable.tab.rawValue) is outside this replica"),
-        message: Text("This acceptance replica is limited to Search and dictionary journeys."),
-        dismissButton: .default(Text("OK"))
-      )
-    }
     #if DEBUG
-    .sheet(isPresented: $exportsImageFixtures) {
-      ImageFileExporter(urls: imageFixtureExportURLs) {
-        exportsImageFixtures = false
+      .sheet(isPresented: $exportsImageFixtures) {
+        ImageFileExporter(urls: imageFixtureExportURLs) {
+          exportsImageFixtures = false
+        }
+        .ignoresSafeArea()
       }
-      .ignoresSafeArea()
-    }
     #endif
     .overlay(alignment: .topLeading) {
       #if DEBUG
-      SpeechPlaybackVerificationOverlay(
-        started: lastStartedSpeech,
-        finished: lastFinishedSpeech
-      )
+        SpeechPlaybackVerificationOverlay(
+          started: lastStartedSpeech,
+          finished: lastFinishedSpeech
+        )
       #endif
     }
     #if DEBUG
-    .onReceive(NotificationCenter.default.publisher(for: SpeechPlaybackVerification.notification)) {
-      notification in
-      guard let event = notification.object as? SpeechPlaybackVerificationEvent else { return }
-      switch event.phase {
-      case .started:
-        lastStartedSpeech = event
-        lastFinishedSpeech = nil
-      case .finished:
-        lastFinishedSpeech = event
+      .onReceive(NotificationCenter.default.publisher(for: SpeechPlaybackVerification.notification))
+      {
+        notification in
+        guard let event = notification.object as? SpeechPlaybackVerificationEvent else { return }
+        switch event.phase {
+        case .started:
+          lastStartedSpeech = event
+          lastFinishedSpeech = nil
+        case .finished:
+          lastFinishedSpeech = event
+        }
       }
-    }
     #endif
   }
 
@@ -209,14 +212,12 @@ public struct SearchReplicaRootView: View {
     path.append(.kanji(character, entry))
   }
 
-  private func selectTab(_ tab: ReplicaTab) {
+  private func selectTab(_ tab: LookupTab) {
     switch tab {
     case .search:
       path.removeAll()
     case .settings:
       presentedSheet = .sources
-    case .clippings, .flashcards:
-      unavailableTab = ReplicaUnavailableTab(tab: tab)
     }
   }
 
@@ -228,59 +229,60 @@ public struct SearchReplicaRootView: View {
         }
         return
       }
-      guard let results = try? await lookupClient.search(SearchQuery(relationship.query)) else { return }
-      let entry = (results.best + results.additional).first {
-        $0.headword == relationship.headword && $0.reading == relationship.reading
-      } ?? results.best.first ?? results.additional.first
+      guard let results = try? await lookupClient.search(SearchQuery(relationship.query)) else {
+        return
+      }
+      let entry =
+        (results.best + results.additional).first {
+          $0.headword == relationship.headword && $0.reading == relationship.reading
+        } ?? results.best.first ?? results.additional.first
       if let entry { path.append(.word(entry, "Search", nil)) }
     }
   }
 
   private func imageAttachment(for context: ImageWordContext?) -> ImageWordAttachment? {
     guard let context,
-      let asset = imageTextSessionStore.session(context.sessionID)?.assets.first(where: { $0.id == context.assetID })
+      let asset = imageTextSessionStore.session(context.sessionID)?.assets.first(where: {
+        $0.id == context.assetID
+      })
     else { return nil }
     return ImageWordAttachment(name: asset.name, data: asset.data)
   }
 }
 
-private struct ReplicaUnavailableTab: Identifiable {
-  let tab: ReplicaTab
-  var id: ReplicaTab { tab }
-}
-
 #if DEBUG
-private struct SpeechPlaybackVerificationOverlay: View {
-  let started: SpeechPlaybackVerificationEvent?
-  let finished: SpeechPlaybackVerificationEvent?
+  private struct SpeechPlaybackVerificationOverlay: View {
+    let started: SpeechPlaybackVerificationEvent?
+    let finished: SpeechPlaybackVerificationEvent?
 
-  var body: some View {
-    if SpeechPlaybackVerification.isEnabled {
-      VStack(spacing: 0) {
-        verificationElement(started, phaseLabel: "started", identifier: "speech.playback.started")
-        verificationElement(finished, phaseLabel: "finished", identifier: "speech.playback.finished")
+    var body: some View {
+      if SpeechPlaybackVerification.isEnabled {
+        VStack(spacing: 0) {
+          verificationElement(started, phaseLabel: "started", identifier: "speech.playback.started")
+          verificationElement(
+            finished, phaseLabel: "finished", identifier: "speech.playback.finished")
+        }
+      }
+    }
+
+    @ViewBuilder
+    private func verificationElement(
+      _ event: SpeechPlaybackVerificationEvent?,
+      phaseLabel: String,
+      identifier: String
+    ) -> some View {
+      if let event {
+        Color.clear
+          .frame(width: 1, height: 1)
+          .accessibilityElement()
+          .accessibilityLabel("Speech \(phaseLabel) \(event.text)")
+          .accessibilityValue(
+            "\(event.invocationID.uuidString)|\(event.voiceLanguage ?? "unresolved")"
+          )
+          .accessibilityIdentifier(identifier)
       }
     }
   }
-
-  @ViewBuilder
-  private func verificationElement(
-    _ event: SpeechPlaybackVerificationEvent?,
-    phaseLabel: String,
-    identifier: String
-  ) -> some View {
-    if let event {
-      Color.clear
-        .frame(width: 1, height: 1)
-        .accessibilityElement()
-        .accessibilityLabel("Speech \(phaseLabel) \(event.text)")
-        .accessibilityValue(
-          "\(event.invocationID.uuidString)|\(event.voiceLanguage ?? "unresolved")"
-        )
-        .accessibilityIdentifier(identifier)
-    }
-  }
-}
 #endif
 
 private struct ImageWordContext: Hashable {
@@ -288,7 +290,7 @@ private struct ImageWordContext: Hashable {
   let assetID: UUID
 }
 
-private enum ReplicaRoute: Hashable {
+private enum LookupRoute: Hashable {
   case word(DictionaryEntry, String, ImageWordContext?)
   case kanji(KanjiCharacter, DictionaryEntry?)
   case kanjiElement(KanjiElementID)
@@ -297,17 +299,8 @@ private enum ReplicaRoute: Hashable {
   case image(UUID)
 }
 
-private enum ReplicaSheet: String, Identifiable {
+private enum LookupSheet: String, Identifiable {
   case sources
 
   var id: String { rawValue }
-}
-
-enum ReplicaPalette {
-  static let chrome = Color(red: 0, green: 0.56, blue: 0.07)
-  static let row = Color(red: 0.105, green: 0.105, blue: 0.115)
-  static let searchField = Color(red: 0.12, green: 0.12, blue: 0.14)
-  static let secondaryText = Color(red: 0.67, green: 0.66, blue: 0.76)
-  static let divider = Color.white.opacity(0.09)
-  static let selectedTab = Color(red: 0.05, green: 0.48, blue: 1)
 }

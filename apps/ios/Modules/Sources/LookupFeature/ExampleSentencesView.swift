@@ -36,13 +36,13 @@ struct ExampleSentencesView: View {
               )
             }
           }
-          .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
+          .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
         }
         .scrollIndicators(.visible)
         .accessibilityIdentifier("example-list.screen")
       }
     }
-    .background(.black)
+    .background(ZenbuTheme.background)
     .toolbar(.hidden, for: .navigationBar)
     .overlay(alignment: .topLeading) {
       if let lastSpeechRequest {
@@ -53,7 +53,8 @@ struct ExampleSentencesView: View {
           .accessibilityIdentifier("speech.request")
       }
     }
-    .onReceive(NotificationCenter.default.publisher(for: .speechSynthesisRequested)) { notification in
+    .onReceive(NotificationCenter.default.publisher(for: .speechSynthesisRequested)) {
+      notification in
       lastSpeechRequest = notification.object as? String
     }
     .task(id: query) {
@@ -88,7 +89,7 @@ private struct ExampleListToolbar: View {
     }
     .padding(.horizontal, 12)
     .frame(height: 44)
-    .background(ReplicaPalette.chrome)
+    .background(ZenbuTheme.chrome)
   }
 }
 
@@ -127,13 +128,13 @@ private struct ExampleSentenceRow: View {
 
       Text(example.english)
         .font(.system(size: 16))
-        .foregroundStyle(ReplicaPalette.secondaryText)
+        .foregroundStyle(ZenbuTheme.secondaryText)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     .padding(.horizontal, 18)
     .padding(.vertical, 14)
     .overlay(alignment: .bottom) {
-      Rectangle().fill(ReplicaPalette.divider).frame(height: 0.5)
+      Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
     }
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier("example.row.\(index)")

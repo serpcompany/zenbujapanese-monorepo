@@ -17,12 +17,12 @@ struct RecentSearchHistoryView: View {
             } label: {
               HStack {
                 Image(systemName: "clock.arrow.circlepath")
-                  .foregroundStyle(ReplicaPalette.secondaryText)
+                  .foregroundStyle(ZenbuTheme.secondaryText)
                 Text(search.value)
-                  .foregroundStyle(.white)
+                  .foregroundStyle(ZenbuTheme.foreground)
                   .frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "chevron.right")
-                  .foregroundStyle(.white.opacity(0.25))
+                  .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.25))
               }
               .padding(.horizontal, 18)
               .frame(height: 52)
@@ -37,25 +37,25 @@ struct RecentSearchHistoryView: View {
                 remove(search)
               }
             }
-            .listRowBackground(Color.black)
-            .listRowSeparatorTint(ReplicaPalette.divider)
+            .listRowBackground(ZenbuTheme.background)
+            .listRowSeparatorTint(ZenbuTheme.divider)
           }
         } header: {
           HStack {
             Text("Recent Searches")
             Spacer()
             Button("Clear All", action: requestClearAll)
-            .accessibilityIdentifier("recent-search.clear-all")
+              .accessibilityIdentifier("recent-search.clear-all")
           }
           .font(.system(size: 16, weight: .semibold))
-          .foregroundStyle(ReplicaPalette.secondaryText)
+          .foregroundStyle(ZenbuTheme.secondaryText)
           .textCase(nil)
         }
       }
     }
     .listStyle(.plain)
     .scrollContentBackground(.hidden)
-    .background(.black)
+    .background(ZenbuTheme.background)
     .task(id: refreshID) {
       await reload()
     }

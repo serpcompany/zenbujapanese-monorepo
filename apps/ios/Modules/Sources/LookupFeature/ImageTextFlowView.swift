@@ -15,12 +15,13 @@ struct ImageTextFlowView: View {
     close: @escaping () -> Void,
     openWord: @escaping (DictionaryEntry, ImageTextAsset) -> Void
   ) {
-    _model = State(initialValue: ImageTextFlowModel(
-      assets: session.assets,
-      recognitionClient: recognitionClient,
-      textAnalysisClient: textAnalysisClient,
-      translationClient: translationClient
-    ))
+    _model = State(
+      initialValue: ImageTextFlowModel(
+        assets: session.assets,
+        recognitionClient: recognitionClient,
+        textAnalysisClient: textAnalysisClient,
+        translationClient: translationClient
+      ))
     self.close = close
     self.openWord = openWord
   }
@@ -33,11 +34,11 @@ struct ImageTextFlowView: View {
         page
           .padding(
             .bottom,
-            model.pages.count > 1 ? 0 : ReplicaLayout.bottomNavigationContentClearance
+            model.pages.count > 1 ? 0 : LookupLayout.bottomNavigationContentClearance
           )
         if model.pages.count > 1 {
           pageIndicators
-            .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
+            .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
         }
       }
       .frame(
@@ -47,14 +48,17 @@ struct ImageTextFlowView: View {
       )
     }
     .accessibilityHidden(sharedAsset != nil)
-    .background(.black)
+    .background(ZenbuTheme.background)
     .toolbar(.hidden, for: .navigationBar)
     .task { await model.load() }
     .onDisappear { model.suspendTranslation() }
-    .alert("No Text Found", isPresented: Binding(
-      get: { model.noTextAlertPage != nil },
-      set: { if !$0 { model.noTextAlertPage = nil } }
-    )) {
+    .alert(
+      "No Text Found",
+      isPresented: Binding(
+        get: { model.noTextAlertPage != nil },
+        set: { if !$0 { model.noTextAlertPage = nil } }
+      )
+    ) {
       Button("OK") { model.noTextAlertPage = nil }
         .accessibilityIdentifier("image-text.no-text-ok")
     } message: {
@@ -74,8 +78,8 @@ struct ImageTextFlowView: View {
         model.requestTranslation()
       }
       .buttonStyle(.borderedProminent)
-      .tint(ReplicaPalette.selectedTab)
-      .foregroundStyle(.white)
+      .tint(ZenbuTheme.selectedTab)
+      .foregroundStyle(ZenbuTheme.primaryForeground)
       .padding(.vertical, 8)
       .accessibilityIdentifier("image-text.translate")
     case .translating:
@@ -86,18 +90,18 @@ struct ImageTextFlowView: View {
       VStack(alignment: .leading, spacing: 4) {
         Text("NATURAL TRANSLATION")
           .font(.caption.bold())
-          .foregroundStyle(ReplicaPalette.secondaryText)
+          .foregroundStyle(ZenbuTheme.secondaryText)
         Text(value)
           .frame(maxWidth: .infinity, alignment: .leading)
           .accessibilityIdentifier("image-text.translation")
       }
       .padding(.horizontal, 16)
       .padding(.vertical, 8)
-      .background(ReplicaPalette.row)
+      .background(ZenbuTheme.row)
     case .failed:
       Text("Translation unavailable")
         .accessibilityIdentifier("image-text.translation-unavailable")
-      .padding(.vertical, 8)
+        .padding(.vertical, 8)
     }
   }
 
@@ -114,16 +118,18 @@ struct ImageTextFlowView: View {
       } label: {
         Image(systemName: model.showsHighlights ? "viewfinder" : "viewfinder.circle")
       }
-      .accessibilityLabel(model.showsHighlights ? "Hide recognition highlights" : "Show recognition highlights")
+      .accessibilityLabel(
+        model.showsHighlights ? "Hide recognition highlights" : "Show recognition highlights"
+      )
       .accessibilityIdentifier("image-text.highlights")
       shareMenu
     }
     .buttonStyle(.plain)
     .font(.system(size: 23))
-    .foregroundStyle(ReplicaPalette.selectedTab)
+    .foregroundStyle(ZenbuTheme.selectedTab)
     .padding(.horizontal, 16)
     .frame(height: 49)
-    .background(Color(red: 0.04, green: 0.04, blue: 0.045))
+    .background(ZenbuTheme.card)
   }
 
   @ViewBuilder
@@ -138,7 +144,9 @@ struct ImageTextFlowView: View {
 
       if model.pages.indices.contains(model.selectedPage) {
         let asset = model.pages[model.selectedPage].asset
-        Button { sharedAsset = asset } label: {
+        Button {
+          sharedAsset = asset
+        } label: {
           Label("Share Image", systemImage: "photo")
         }
         .accessibilityIdentifier("image-text.share-image")
@@ -162,7 +170,7 @@ struct ImageTextFlowView: View {
         VStack(spacing: 14) {
           Text("Image text unavailable")
           Text("Close and choose the file again.")
-            .foregroundStyle(ReplicaPalette.secondaryText)
+            .foregroundStyle(ZenbuTheme.secondaryText)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
       case .loaded(let page):
@@ -183,9 +191,14 @@ struct ImageTextFlowView: View {
   private var pageIndicators: some View {
     HStack(spacing: 12) {
       ForEach(model.pages.indices, id: \.self) { index in
-        Button { model.selectPage(index) } label: {
+        Button {
+          model.selectPage(index)
+        } label: {
           Circle()
-            .fill(index == model.selectedPage ? Color.white : Color.white.opacity(0.3))
+            .fill(
+              index == model.selectedPage
+                ? ZenbuTheme.foreground : ZenbuTheme.mutedForeground.opacity(0.3)
+            )
             .frame(width: 10, height: 10)
             .frame(width: 36, height: 36)
             .contentShape(Rectangle())
@@ -231,10 +244,12 @@ private struct ImageTextCanvas: View {
           if showsHighlights {
             ForEach(page.regions) { region in
               let rect = displayRect(region.boundingBox, in: imageRect)
-              Button { selectRegion(region) } label: {
+              Button {
+                selectRegion(region)
+              } label: {
                 Rectangle()
-                  .fill(ReplicaPalette.selectedTab.opacity(0.32))
-                  .overlay(Rectangle().stroke(ReplicaPalette.selectedTab, lineWidth: 1))
+                  .fill(ZenbuTheme.selectedTab.opacity(0.32))
+                  .overlay(Rectangle().stroke(ZenbuTheme.selectedTab, lineWidth: 1))
               }
               .buttonStyle(.plain)
               .frame(width: max(rect.width, 28), height: max(rect.height, 28))
@@ -245,7 +260,9 @@ private struct ImageTextCanvas: View {
           }
 
           if let selectedRegion {
-            Button { openWord(selectedRegion.entry) } label: {
+            Button {
+              openWord(selectedRegion.entry)
+            } label: {
               HStack(spacing: 7) {
                 VStack(alignment: .leading, spacing: 1) {
                   Text(selectedRegion.entry.reading).font(.caption2)
@@ -257,19 +274,23 @@ private struct ImageTextCanvas: View {
               }
               .padding(.horizontal, 12)
               .padding(.vertical, 8)
-              .background(ReplicaPalette.row, in: RoundedRectangle(cornerRadius: 12))
+              .background(ZenbuTheme.row, in: RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
-            .foregroundStyle(.white)
+            .foregroundStyle(ZenbuTheme.foreground)
             .padding(20)
-            .accessibilityLabel("\(selectedRegion.entry.headword), \(selectedRegion.entry.reading), \(selectedRegion.entry.summary)")
+            .accessibilityLabel(
+              "\(selectedRegion.entry.headword), \(selectedRegion.entry.reading), \(selectedRegion.entry.summary)"
+            )
             .accessibilityIdentifier("image-text.gloss")
           }
 
           Text(page.observations.map(\.text).joined(separator: "\n"))
             .frame(width: 1, height: 1)
             .opacity(0.01)
-            .accessibilityLabel("Recognized text \(page.observations.map(\.text).joined(separator: " "))")
+            .accessibilityLabel(
+              "Recognized text \(page.observations.map(\.text).joined(separator: " "))"
+            )
             .accessibilityIdentifier("image-text.raw-text")
 
           Text(page.asset.name)
@@ -281,7 +302,7 @@ private struct ImageTextCanvas: View {
         .accessibilityLabel("Imported image \(page.asset.name)")
       }
     }
-    .background(.black)
+    .background(ZenbuTheme.background)
   }
 
   private func aspectFitRect(imageSize: CGSize, container: CGSize) -> CGRect {

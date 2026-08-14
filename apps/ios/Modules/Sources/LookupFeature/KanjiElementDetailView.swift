@@ -13,7 +13,9 @@ struct KanjiElementDetailView: View {
   var body: some View {
     VStack(spacing: 0) {
       HStack {
-        Button { dismiss() } label: {
+        Button {
+          dismiss()
+        } label: {
           HStack(spacing: 4) {
             Image(systemName: "chevron.left")
             Text("Kanji")
@@ -28,7 +30,7 @@ struct KanjiElementDetailView: View {
       .font(.system(size: 17))
       .padding(.horizontal, 16)
       .frame(height: 49)
-      .background(ReplicaPalette.chrome.ignoresSafeArea(edges: .top))
+      .background(ZenbuTheme.chrome.ignoresSafeArea(edges: .top))
 
       ScrollView {
         VStack(spacing: 0) {
@@ -40,7 +42,7 @@ struct KanjiElementDetailView: View {
               .padding(24)
           case .missing:
             Text("No element reference is available.")
-              .foregroundStyle(ReplicaPalette.secondaryText)
+              .foregroundStyle(ZenbuTheme.secondaryText)
               .frame(maxWidth: .infinity, alignment: .leading)
               .padding(24)
           case .failed:
@@ -55,11 +57,11 @@ struct KanjiElementDetailView: View {
             content(entry)
           }
         }
-        .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
+        .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
       }
       .accessibilityIdentifier("kanji-element.screen")
     }
-    .background(.black)
+    .background(ZenbuTheme.background)
     .toolbar(.hidden, for: .navigationBar)
     .task(id: KanjiElementDetailLoadRequest(id: elementID, retryID: retryID)) {
       loadState = .loading
@@ -95,7 +97,7 @@ struct KanjiElementDetailView: View {
           HStack(spacing: 10) {
             Text("Alternative")
               .font(.caption)
-              .foregroundStyle(ReplicaPalette.secondaryText)
+              .foregroundStyle(ZenbuTheme.secondaryText)
             ForEach(entry.alternatives, id: \.self) { alternative in
               Button(alternative.rawValue) { openAlternative(alternative) }
                 .font(.title3)
@@ -107,7 +109,7 @@ struct KanjiElementDetailView: View {
     }
     .frame(maxWidth: .infinity)
     .padding(24)
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
   }
 
   @ViewBuilder
@@ -115,7 +117,8 @@ struct KanjiElementDetailView: View {
     if !entry.meanings.isEmpty {
       roleSection(
         title: "MEANING / STRUCTURE",
-        text: "This element contributes forms associated with \(entry.meanings.joined(separator: ", "))."
+        text:
+          "This element contributes forms associated with \(entry.meanings.joined(separator: ", "))."
       )
     }
     if !entry.commonLinkedOnReadings.isEmpty {
@@ -132,18 +135,22 @@ struct KanjiElementDetailView: View {
       KanjiSectionHeader(title: "KANJI CONTAINING THIS ELEMENT")
       ForEach(entry.containingKanji) { contribution in
         contributionRow(contribution, identifierPrefix: "kanji-element.contribution")
-        Divider().overlay(ReplicaPalette.divider)
+        Divider().overlay(ZenbuTheme.divider)
       }
     }
     VStack(alignment: .leading, spacing: 4) {
       Text("Source")
         .font(.caption.weight(.semibold))
-      Text("Structure: \(entry.structureProvenance.sourceIdentity) \(entry.structureProvenance.sourceSnapshot)")
-        .accessibilityIdentifier("kanji-element.structure-source")
-      Text("Meanings and readings: \(entry.metadataProvenance.sourceIdentity) \(entry.metadataProvenance.sourceSnapshot)")
-        .accessibilityIdentifier("kanji-element.metadata-source")
+      Text(
+        "Structure: \(entry.structureProvenance.sourceIdentity) \(entry.structureProvenance.sourceSnapshot)"
+      )
+      .accessibilityIdentifier("kanji-element.structure-source")
+      Text(
+        "Meanings and readings: \(entry.metadataProvenance.sourceIdentity) \(entry.metadataProvenance.sourceSnapshot)"
+      )
+      .accessibilityIdentifier("kanji-element.metadata-source")
       Text("Both sources are independently normalized into Zenbu Japanese Language Reference Data.")
-        .foregroundStyle(ReplicaPalette.secondaryText)
+        .foregroundStyle(ZenbuTheme.secondaryText)
     }
     .font(.caption)
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -156,7 +163,7 @@ struct KanjiElementDetailView: View {
       Text(text)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .background(ReplicaPalette.row)
+        .background(ZenbuTheme.row)
     }
   }
 
@@ -164,7 +171,9 @@ struct KanjiElementDetailView: View {
     _ contribution: KanjiElementContribution,
     identifierPrefix: String
   ) -> some View {
-    Button { openKanji(contribution.character) } label: {
+    Button {
+      openKanji(contribution.character)
+    } label: {
       HStack(spacing: 18) {
         Text(contribution.character.rawValue)
           .font(.system(size: 48, weight: .light))
@@ -177,12 +186,12 @@ struct KanjiElementDetailView: View {
           if !contribution.onReadings.isEmpty {
             Text(contribution.onReadings.joined(separator: ", "))
               .font(.caption)
-              .foregroundStyle(ReplicaPalette.secondaryText)
+              .foregroundStyle(ZenbuTheme.secondaryText)
           }
         }
         Spacer()
         Image(systemName: "chevron.right")
-          .foregroundStyle(.secondary)
+          .foregroundStyle(ZenbuTheme.mutedForeground)
       }
       .padding(.horizontal, 20)
       .padding(.vertical, 12)

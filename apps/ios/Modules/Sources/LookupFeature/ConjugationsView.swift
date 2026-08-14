@@ -31,15 +31,15 @@ struct ConjugationsView: View {
               ConjugationRow(form: form, isLast: index == forms.count - 1)
             }
           }
-          .background(ReplicaPalette.row, in: RoundedRectangle(cornerRadius: 10))
+          .background(ZenbuTheme.row, in: RoundedRectangle(cornerRadius: 10))
         }
         .padding(.horizontal, 28)
         .padding(.top, 30)
-        .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
+        .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
       }
       .accessibilityIdentifier("conjugations.screen")
     }
-    .background(.black)
+    .background(ZenbuTheme.background)
     .toolbar(.hidden, for: .navigationBar)
   }
 
@@ -62,7 +62,7 @@ struct ConjugationsView: View {
     }
     .padding(.horizontal, 16)
     .frame(height: 49)
-    .background(ReplicaPalette.chrome.ignoresSafeArea(edges: .top))
+    .background(ZenbuTheme.chrome.ignoresSafeArea(edges: .top))
   }
 }
 
@@ -84,7 +84,7 @@ private struct ConjugationRow: View {
     .frame(minHeight: 50)
     .overlay(alignment: .bottom) {
       if !isLast {
-        Rectangle().fill(ReplicaPalette.divider).frame(height: 0.5)
+        Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
       }
     }
     .accessibilityElement(children: .ignore)

@@ -20,26 +20,32 @@ struct SearchInputModeBar: View {
     }
     .padding(.horizontal, 12)
     .frame(height: 44)
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
   }
 
   private func modeButton(_ label: String, symbol: String, mode: SearchInputMode) -> some View {
-    Button { selectMode(mode) } label: {
+    Button {
+      selectMode(mode)
+    } label: {
       Image(systemName: symbol)
         .font(.system(size: 21))
         .frame(width: 42, height: 36)
-        .background(selectedMode == mode ? ReplicaPalette.selectedTab : Color.clear, in: RoundedRectangle(cornerRadius: 7))
+        .background(
+          selectedMode == mode ? ZenbuTheme.selectedTab : Color.clear,
+          in: RoundedRectangle(cornerRadius: 7))
     }
     .buttonStyle(.plain)
-    .foregroundStyle(.white)
+    .foregroundStyle(
+      selectedMode == mode ? ZenbuTheme.primaryForeground : ZenbuTheme.foreground
+    )
     .accessibilityLabel(label)
     .accessibilityAddTraits(selectedMode == mode ? .isSelected : [])
     .accessibilityIdentifier("search.input.\(mode.accessibilityName)")
   }
 }
 
-private extension SearchInputMode {
-  var accessibilityName: String {
+extension SearchInputMode {
+  fileprivate var accessibilityName: String {
     switch self {
     case .inactive: "inactive"
     case .keyboard: "keyboard"

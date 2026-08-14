@@ -12,54 +12,54 @@ struct KanjiStrokeOrderView: View {
   var body: some View {
     ZStack(alignment: .topLeading) {
       VStack(spacing: 16) {
-      StrokeDrawingGrid(
-        diagram: diagram,
-        completedStrokeCount: completedStrokeCount,
-        activeStrokeProgress: activeStrokeProgress
-      )
-      .aspectRatio(1, contentMode: .fit)
-      .accessibilityElement(children: .ignore)
-      .accessibilityLabel("Stroke drawing grid for \(diagram.character.rawValue)")
-      .accessibilityValue(gridAccessibilityValue)
-      .accessibilityIdentifier("stroke-order.grid")
+        StrokeDrawingGrid(
+          diagram: diagram,
+          completedStrokeCount: completedStrokeCount,
+          activeStrokeProgress: activeStrokeProgress
+        )
+        .aspectRatio(1, contentMode: .fit)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Stroke drawing grid for \(diagram.character.rawValue)")
+        .accessibilityValue(gridAccessibilityValue)
+        .accessibilityIdentifier("stroke-order.grid")
 
-      HStack(spacing: 54) {
-        Button {
-          stepPrevious()
-        } label: {
-          Image(systemName: "backward.end.fill")
-        }
-        .disabled(completedStrokeCount == 0 && activeStrokeProgress == 0)
-        .accessibilityLabel("Previous stroke")
-        .accessibilityIdentifier("stroke-order.previous")
+        HStack(spacing: 54) {
+          Button {
+            stepPrevious()
+          } label: {
+            Image(systemName: "backward.end.fill")
+          }
+          .disabled(completedStrokeCount == 0 && activeStrokeProgress == 0)
+          .accessibilityLabel("Previous stroke")
+          .accessibilityIdentifier("stroke-order.previous")
 
-        Button {
-          isPlaying ? pause() : play()
-        } label: {
-          Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-            .frame(width: 36)
-        }
-        .disabled(diagram.strokes.isEmpty)
-        .accessibilityLabel(isPlaying ? "Pause stroke order" : "Play stroke order")
-        .accessibilityIdentifier(isPlaying ? "stroke-order.pause" : "stroke-order.play")
+          Button {
+            isPlaying ? pause() : play()
+          } label: {
+            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+              .frame(width: 36)
+          }
+          .disabled(diagram.strokes.isEmpty)
+          .accessibilityLabel(isPlaying ? "Pause stroke order" : "Play stroke order")
+          .accessibilityIdentifier(isPlaying ? "stroke-order.pause" : "stroke-order.play")
 
-        Button {
-          stepNext()
-        } label: {
-          Image(systemName: "forward.end.fill")
+          Button {
+            stepNext()
+          } label: {
+            Image(systemName: "forward.end.fill")
+          }
+          .disabled(completedStrokeCount == diagram.strokes.count)
+          .accessibilityLabel("Next stroke")
+          .accessibilityIdentifier("stroke-order.next")
         }
-        .disabled(completedStrokeCount == diagram.strokes.count)
-        .accessibilityLabel("Next stroke")
-        .accessibilityIdentifier("stroke-order.next")
-      }
-      .font(.system(size: 28))
-      .buttonStyle(.plain)
-      .foregroundStyle(.blue)
-      .frame(maxWidth: .infinity)
+        .font(.system(size: 28))
+        .buttonStyle(.plain)
+        .foregroundStyle(ZenbuTheme.primary)
+        .frame(maxWidth: .infinity)
 
         Text("Stroke \(visibleStrokeIndex) of \(diagram.strokes.count)")
           .font(.caption.monospacedDigit())
-          .foregroundStyle(ReplicaPalette.secondaryText)
+          .foregroundStyle(ZenbuTheme.secondaryText)
           .accessibilityValue(
             "\(completedStrokeCount) of \(diagram.strokes.count) complete"
           )
@@ -73,7 +73,7 @@ struct KanjiStrokeOrderView: View {
       } label: {
         Image(systemName: "xmark.circle.fill")
           .symbolRenderingMode(.palette)
-          .foregroundStyle(.white, .black)
+          .foregroundStyle(ZenbuTheme.primaryForeground, ZenbuTheme.background)
           .font(.system(size: 28, weight: .bold))
       }
       .buttonStyle(.plain)
@@ -81,9 +81,9 @@ struct KanjiStrokeOrderView: View {
       .accessibilityLabel("Close stroke order")
       .accessibilityIdentifier("stroke-order.close")
     }
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
     .clipShape(RoundedRectangle(cornerRadius: 5))
-    .shadow(color: .black.opacity(0.65), radius: 24, y: 10)
+    .shadow(color: ZenbuTheme.background.opacity(0.65), radius: 24, y: 10)
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier("stroke-order.overlay")
     .onDisappear { pause() }
@@ -174,8 +174,8 @@ struct KanjiStrokeOrderView: View {
   }
 }
 
-private extension Duration {
-  var timeInterval: TimeInterval {
+extension Duration {
+  fileprivate var timeInterval: TimeInterval {
     let parts = components
     return TimeInterval(parts.seconds) + TimeInterval(parts.attoseconds) / 1e18
   }
@@ -189,34 +189,35 @@ private struct StrokeDrawingGrid: View {
   var body: some View {
     GeometryReader { geometry in
       ZStack {
-        Color.black.opacity(0.28)
+        ZenbuTheme.background.opacity(0.28)
         StrokeGridLines()
           .stroke(
-            Color.white.opacity(0.42),
+            ZenbuTheme.mutedForeground.opacity(0.42),
             style: StrokeStyle(lineWidth: 1, dash: [5, 4])
           )
 
         ForEach(Array(diagram.strokes.enumerated()), id: \.offset) { index, stroke in
           KanjiStrokeShape(stroke: stroke, viewportSize: diagram.viewportSize)
             .stroke(
-              Color.white.opacity(index < completedStrokeCount ? 1 : 0.14),
+              ZenbuTheme.mutedForeground.opacity(index < completedStrokeCount ? 1 : 0.14),
               style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round)
             )
           if index == completedStrokeCount, activeStrokeProgress > 0 {
             KanjiStrokeShape(stroke: stroke, viewportSize: diagram.viewportSize)
               .trim(from: 0, to: activeStrokeProgress)
               .stroke(
-                ReplicaPalette.chrome,
+                ZenbuTheme.chrome,
                 style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round)
               )
           }
         }
 
         if completedStrokeCount < diagram.strokes.count,
-           activeStrokeProgress == 0,
-           let start = diagram.strokes[completedStrokeCount].startPoint {
+          activeStrokeProgress == 0,
+          let start = diagram.strokes[completedStrokeCount].startPoint
+        {
           Circle()
-            .fill(ReplicaPalette.chrome)
+            .fill(ZenbuTheme.chrome)
             .frame(width: 14, height: 14)
             .position(
               x: geometry.size.width * CGFloat(start.x / diagram.viewportSize),
@@ -268,8 +269,8 @@ private struct KanjiStrokeShape: Shape {
   }
 }
 
-private extension KanjiStroke {
-  var startPoint: KanjiStrokePoint? {
+extension KanjiStroke {
+  fileprivate var startPoint: KanjiStrokePoint? {
     guard let first = commands.first, case .move(let point) = first else { return nil }
     return point
   }

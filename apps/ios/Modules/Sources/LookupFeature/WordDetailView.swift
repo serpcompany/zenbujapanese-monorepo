@@ -45,43 +45,44 @@ struct WordDetailView: View {
       ScrollViewReader { proxy in
         ScrollView {
           VStack(spacing: 0) {
-          WordHeader(
-            entry: entry,
-            imageAttachment: imageAttachment,
-            pronounce: { speechSynthesisClient.speak(entry.reading) }
-          )
-          PartOfSpeechRow(
-            title: (entry.senses.first?.partsOfSpeech ?? entry.partsOfSpeech)
-              .map(\.rawValue)
-              .joined(separator: " · "),
-            conjugationTable: conjugationTable,
-            openConjugations: openConjugations
-          )
+            WordHeader(
+              entry: entry,
+              imageAttachment: imageAttachment,
+              pronounce: { speechSynthesisClient.speak(entry.reading) }
+            )
+            PartOfSpeechRow(
+              title: (entry.senses.first?.partsOfSpeech ?? entry.partsOfSpeech)
+                .map(\.rawValue)
+                .joined(separator: " · "),
+              conjugationTable: conjugationTable,
+              openConjugations: openConjugations
+            )
 
-          if !entry.alternativeForms.isEmpty {
-            SectionLabel("ALTERNATIVES")
-            AlternativeFormsSection(forms: entry.alternativeForms, openKanji: openKanji)
-          }
+            if !entry.alternativeForms.isEmpty {
+              SectionLabel("ALTERNATIVES")
+              AlternativeFormsSection(forms: entry.alternativeForms, openKanji: openKanji)
+            }
 
-          SectionLabel("MEANING")
-          MeaningSection(senses: entry.senses)
+            SectionLabel("MEANING")
+            MeaningSection(senses: entry.senses)
 
-          if !entry.primaryKanji.isEmpty {
-            SectionLabel("KANJI")
-            PrimaryKanjiSection(characters: entry.primaryKanji, entry: entry, openKanji: openKanji)
-          }
+            if !entry.primaryKanji.isEmpty {
+              SectionLabel("KANJI")
+              PrimaryKanjiSection(
+                characters: entry.primaryKanji, entry: entry, openKanji: openKanji)
+            }
 
-          if !entry.alternativeKanji.isEmpty {
-            SectionLabel("ALTERNATIVE KANJI")
-            AlternativeKanjiSection(characters: entry.alternativeKanji, openKanji: openKanji)
-          }
+            if !entry.alternativeKanji.isEmpty {
+              SectionLabel("ALTERNATIVE KANJI")
+              AlternativeKanjiSection(characters: entry.alternativeKanji, openKanji: openKanji)
+            }
 
-          if !entry.relationships.isEmpty {
-            SectionLabel("RELATED WORDS")
-            RelationshipsSection(relationships: entry.relationships, openRelated: openRelated)
-          }
+            if !entry.relationships.isEmpty {
+              SectionLabel("RELATED WORDS")
+              RelationshipsSection(relationships: entry.relationships, openRelated: openRelated)
+            }
 
-          SectionLabel("NOTES")
+            SectionLabel("NOTES")
             NotesSection(
               notes: notes,
               editingNoteID: editingNoteID,
@@ -92,19 +93,19 @@ struct WordDetailView: View {
             )
             .id("word-note.section")
 
-          SectionLabel("EXAMPLES")
-          EntryExamplesSection(
-            entry: entry,
-            examples: examples,
-            isLoading: isLoadingExamples,
-            speechSynthesisClient: speechSynthesisClient,
-            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-            openWord: openWord
-          )
+            SectionLabel("EXAMPLES")
+            EntryExamplesSection(
+              entry: entry,
+              examples: examples,
+              isLoading: isLoadingExamples,
+              speechSynthesisClient: speechSynthesisClient,
+              japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+              openWord: openWord
+            )
           }
-          .padding(.bottom, ReplicaLayout.bottomNavigationContentClearance)
+          .padding(.bottom, LookupLayout.bottomNavigationContentClearance)
         }
-        .background(.black)
+        .background(ZenbuTheme.background)
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.immediately)
         .accessibilityIdentifier("word-detail.screen")
@@ -117,7 +118,7 @@ struct WordDetailView: View {
         }
       }
     }
-    .background(.black)
+    .background(ZenbuTheme.background)
     .toolbar(.hidden, for: .navigationBar)
     .alert(item: $boundaryAlert) { boundary in
       Alert(
@@ -135,7 +136,8 @@ struct WordDetailView: View {
           .accessibilityIdentifier("speech.request")
       }
     }
-    .onReceive(NotificationCenter.default.publisher(for: .speechSynthesisRequested)) { notification in
+    .onReceive(NotificationCenter.default.publisher(for: .speechSynthesisRequested)) {
+      notification in
       lastSpeechRequest = notification.object as? String
     }
     .task(id: entry.id) {
@@ -229,22 +231,18 @@ struct WordDetailView: View {
 }
 
 private enum WordDetailBoundary: String, Identifiable {
-  case flashcards
   case imageAttachment
 
   var id: String { rawValue }
 
   var title: String {
     switch self {
-    case .flashcards: "Flashcards"
     case .imageAttachment: "Image Attachment"
     }
   }
 
   var message: String {
     switch self {
-    case .flashcards:
-      "Personal flashcard libraries are outside the Search and dictionary scope."
     case .imageAttachment:
       "Open a word from Search using Camera or Photos to keep its source image attached."
     }
@@ -260,27 +258,30 @@ private struct PrimaryKanjiSection: View {
     VStack(spacing: 0) {
       ForEach(characters, id: \.self) { character in
         if let kanji = KanjiCharacter(character) {
-          Button { openKanji(kanji, entry) } label: {
-          HStack {
-            Text(character)
-              .font(.system(size: 25, weight: .semibold))
-            Text("Kanji in \(entry.headword)")
-              .font(.system(size: 15))
-              .foregroundStyle(ReplicaPalette.secondaryText)
-            Spacer()
-            Image(systemName: "chevron.right").foregroundStyle(.white.opacity(0.38))
+          Button {
+            openKanji(kanji, entry)
+          } label: {
+            HStack {
+              Text(character)
+                .font(.system(size: 25, weight: .semibold))
+              Text("Kanji in \(entry.headword)")
+                .font(.system(size: 15))
+                .foregroundStyle(ZenbuTheme.secondaryText)
+              Spacer()
+              Image(systemName: "chevron.right").foregroundStyle(
+                ZenbuTheme.mutedForeground.opacity(0.38))
+            }
+            .padding(.horizontal, 28)
+            .frame(minHeight: 58)
+            .contentShape(Rectangle())
           }
-          .padding(.horizontal, 28)
-          .frame(minHeight: 58)
-          .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(character), Kanji in \(entry.headword)")
-        .accessibilityIdentifier("word-detail.kanji.\(character)")
+          .buttonStyle(.plain)
+          .accessibilityLabel("\(character), Kanji in \(entry.headword)")
+          .accessibilityIdentifier("word-detail.kanji.\(character)")
         }
       }
     }
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
   }
 }
 
@@ -292,13 +293,15 @@ private struct AlternativeKanjiSection: View {
     VStack(spacing: 0) {
       ForEach(characters, id: \.self) { character in
         if let kanji = KanjiCharacter(character) {
-          Button { openKanji(kanji, nil) } label: {
+          Button {
+            openKanji(kanji, nil)
+          } label: {
             HStack {
               Text(character)
                 .font(.system(size: 25, weight: .semibold))
               Spacer()
               Image(systemName: "chevron.right")
-                .foregroundStyle(.white.opacity(0.38))
+                .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.38))
             }
             .padding(.horizontal, 28)
             .frame(minHeight: 50)
@@ -310,7 +313,7 @@ private struct AlternativeKanjiSection: View {
         }
       }
     }
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
   }
 }
 
@@ -345,12 +348,9 @@ private struct DetailToolbar: View {
         }
         .accessibilityLabel("Add note")
         .accessibilityIdentifier("word-detail.toolbar-note")
-        Button { showBoundary(.flashcards) } label: {
-          Image(systemName: "rectangle.stack.badge.plus")
-        }
-        .accessibilityLabel("Add to flashcards")
-        .accessibilityIdentifier("word-detail.toolbar-flashcards")
-        Button { showBoundary(.imageAttachment) } label: {
+        Button {
+          showBoundary(.imageAttachment)
+        } label: {
           Image(systemName: "camera.badge.ellipsis")
         }
         .accessibilityLabel("Attach image")
@@ -360,7 +360,7 @@ private struct DetailToolbar: View {
     .font(.system(size: 21))
     .padding(.horizontal, 16)
     .frame(height: 49)
-    .background(ReplicaPalette.chrome.ignoresSafeArea(edges: .top))
+    .background(ZenbuTheme.chrome.ignoresSafeArea(edges: .top))
   }
 }
 
@@ -381,7 +381,9 @@ private struct WordHeader: View {
         }
         Spacer()
         if let imageAttachment, let image = UIImage(data: imageAttachment.data) {
-          Button { showsAttachment = true } label: {
+          Button {
+            showsAttachment = true
+          } label: {
             VStack(spacing: 3) {
               Image(uiImage: image)
                 .resizable()
@@ -411,7 +413,7 @@ private struct WordHeader: View {
             .labelStyle(.iconOnly)
             .font(.system(size: 22))
             .frame(width: 46, height: 38)
-            .background(.white.opacity(0.08), in: Capsule())
+            .background(ZenbuTheme.accent, in: Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Pronounce \(entry.reading)")
@@ -421,7 +423,7 @@ private struct WordHeader: View {
     .padding(.horizontal, 28)
     .padding(.top, 6)
     .padding(.bottom, 9)
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
     .sheet(isPresented: $showsAttachment) {
       if let imageAttachment, let image = UIImage(data: imageAttachment.data) {
         VStack(spacing: 16) {
@@ -434,10 +436,10 @@ private struct WordHeader: View {
             .resizable()
             .scaledToFit()
           Text(imageAttachment.name)
-            .foregroundStyle(ReplicaPalette.secondaryText)
+            .foregroundStyle(ZenbuTheme.secondaryText)
         }
         .padding()
-        .background(.black)
+        .background(ZenbuTheme.background)
       }
     }
   }
@@ -448,7 +450,7 @@ private struct FrequencyBadge: View {
 
   var body: some View {
     ZStack {
-      Circle().stroke(.white.opacity(0.18), lineWidth: 6)
+      Circle().stroke(ZenbuTheme.mutedForeground.opacity(0.18), lineWidth: 6)
       Text(frequency.rawValue)
         .font(.system(size: 11, weight: .bold, design: .rounded))
         .lineLimit(1)
@@ -472,13 +474,13 @@ private struct PitchAccentView: View {
         .padding(.bottom, 4)
         .overlay(alignment: .bottom) {
           PitchContour(downstep: pitch.downstep, moraCount: pitch.moraCount)
-            .stroke(.red, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+            .stroke(ZenbuTheme.destructive, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
             .frame(height: 7)
         }
     }
     .padding(.horizontal, 12)
     .frame(height: 34)
-    .background(.white.opacity(0.08), in: Capsule())
+    .background(ZenbuTheme.accent, in: Capsule())
     .accessibilityElement(children: .combine)
     .accessibilityLabel(
       "Pitch accent for \(reading), downstep \(pitch.downstep), \(pitch.moraCount) mora"
@@ -506,15 +508,16 @@ private struct PitchContour: Shape {
   }
 }
 
-private extension String {
-  var katakana: String {
-    String(unicodeScalars.map { scalar in
-      let value = scalar.value
-      if (0x3041 ... 0x3096).contains(value), let converted = UnicodeScalar(value + 0x60) {
-        return Character(String(converted))
-      }
-      return Character(String(scalar))
-    })
+extension String {
+  fileprivate var katakana: String {
+    String(
+      unicodeScalars.map { scalar in
+        let value = scalar.value
+        if (0x3041...0x3096).contains(value), let converted = UnicodeScalar(value + 0x60) {
+          return Character(String(converted))
+        }
+        return Character(String(scalar))
+      })
   }
 }
 
@@ -525,14 +528,16 @@ private struct PartOfSpeechRow: View {
 
   var body: some View {
     if let conjugationTable {
-      Button { openConjugations(conjugationTable) } label: {
+      Button {
+        openConjugations(conjugationTable)
+      } label: {
         HStack {
           Text(title.isEmpty ? "Dictionary entry" : title)
           Spacer()
           Text("View Conjugations")
-            .foregroundStyle(ReplicaPalette.secondaryText)
+            .foregroundStyle(ZenbuTheme.secondaryText)
           Image(systemName: "chevron.right")
-            .foregroundStyle(.white.opacity(0.38))
+            .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.38))
         }
         .font(.system(size: 17))
         .contentShape(Rectangle())
@@ -549,12 +554,12 @@ private struct PartOfSpeechRow: View {
   }
 }
 
-private extension View {
-  var rowChrome: some View {
+extension View {
+  fileprivate var rowChrome: some View {
     padding(.horizontal, 28)
       .padding(.vertical, 11)
-      .background(ReplicaPalette.row)
-      .overlay(alignment: .top) { Rectangle().fill(ReplicaPalette.divider).frame(height: 0.5) }
+      .background(ZenbuTheme.row)
+      .overlay(alignment: .top) { Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5) }
   }
 }
 
@@ -565,12 +570,12 @@ private struct SectionLabel: View {
   var body: some View {
     Text(title)
       .font(.system(size: 13, weight: .medium))
-      .foregroundStyle(.white.opacity(0.48))
+      .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.48))
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding(.horizontal, 28)
       .frame(height: 45, alignment: .bottom)
       .padding(.bottom, 8)
-      .background(.black)
+      .background(ZenbuTheme.background)
   }
 }
 
@@ -589,7 +594,7 @@ private struct MeaningSection: View {
           if !sense.notes.isEmpty {
             Text(sense.notes.joined(separator: " · "))
               .font(.system(size: 14))
-              .foregroundStyle(ReplicaPalette.secondaryText)
+              .foregroundStyle(ZenbuTheme.secondaryText)
           }
         }
       }
@@ -597,7 +602,7 @@ private struct MeaningSection: View {
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding(.horizontal, 32)
     .padding(.vertical, 15)
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
   }
 }
 
@@ -617,7 +622,7 @@ private struct AlternativeFormsSection: View {
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding(.horizontal, 28)
     .padding(.vertical, 9)
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
   }
 
   private var writtenForms: [DictionaryForm] { forms.filter { $0.kind == .written } }
@@ -641,8 +646,11 @@ private struct AlternativeFormLine: View {
       HStack(spacing: 2) {
         if index > 0 { Text(",") }
         if let character = form.value.first(where: { $0.isKanji }),
-           let kanji = KanjiCharacter(String(character)) {
-          Button { openKanji(kanji, nil) } label: {
+          let kanji = KanjiCharacter(String(character))
+        {
+          Button {
+            openKanji(kanji, nil)
+          } label: {
             formLabel(form)
           }
           .buttonStyle(.plain)
@@ -657,9 +665,9 @@ private struct AlternativeFormLine: View {
   }
 
   private func formLabel(_ form: DictionaryForm) -> some View {
-    Text(form.value + (form.labels.isEmpty ? "" : " (\(form.labels.joined(separator: ", ")))") )
+    Text(form.value + (form.labels.isEmpty ? "" : " (\(form.labels.joined(separator: ", ")))"))
       .font(.system(size: 15))
-      .foregroundStyle(form.labels.isEmpty ? Color.primary : ReplicaPalette.secondaryText)
+      .foregroundStyle(form.labels.isEmpty ? ZenbuTheme.foreground : ZenbuTheme.secondaryText)
   }
 }
 
@@ -670,18 +678,21 @@ private struct RelationshipsSection: View {
   var body: some View {
     VStack(spacing: 0) {
       ForEach(relationships, id: \.self) { relationship in
-        Button { openRelated(relationship) } label: {
+        Button {
+          openRelated(relationship)
+        } label: {
           HStack {
             VStack(alignment: .leading, spacing: 3) {
               Text("\(relationship.headword)  \(relationship.reading)")
                 .font(.system(size: 18, weight: .semibold))
               Text("\(relationship.relation) · \(relationship.summary)")
                 .font(.system(size: 13))
-                .foregroundStyle(ReplicaPalette.secondaryText)
+                .foregroundStyle(ZenbuTheme.secondaryText)
                 .lineLimit(2)
             }
             Spacer()
-            Image(systemName: "chevron.right").foregroundStyle(.white.opacity(0.38))
+            Image(systemName: "chevron.right").foregroundStyle(
+              ZenbuTheme.mutedForeground.opacity(0.38))
           }
           .padding(.horizontal, 28)
           .padding(.vertical, 11)
@@ -691,7 +702,7 @@ private struct RelationshipsSection: View {
         .accessibilityIdentifier("word-detail.related.\(relationship.headword)")
       }
     }
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
   }
 }
 
@@ -709,7 +720,9 @@ private struct NotesSection: View {
         if editingNoteID == note.id {
           noteEditor
         } else {
-          Button { editNote(note) } label: {
+          Button {
+            editNote(note)
+          } label: {
             Text(note.text)
               .italic()
               .frame(maxWidth: .infinity, alignment: .leading)
@@ -726,11 +739,12 @@ private struct NotesSection: View {
         noteEditor
       }
 
-      if editingNoteID == nil || !noteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      if editingNoteID == nil || !noteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      {
         Button("Add Note", action: addNote)
           .buttonStyle(.plain)
           .italic()
-          .foregroundStyle(ReplicaPalette.secondaryText)
+          .foregroundStyle(ZenbuTheme.secondaryText)
           .frame(maxWidth: .infinity, alignment: .leading)
           .padding(.horizontal, 28)
           .padding(.vertical, 11)
@@ -738,7 +752,7 @@ private struct NotesSection: View {
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
   }
 
   private var noteEditor: some View {
@@ -765,7 +779,7 @@ private struct EntryExamplesSection: View {
         ProgressView("Loading examples")
       } else if examples.isEmpty {
         Text("No source-matched examples")
-          .foregroundStyle(ReplicaPalette.secondaryText)
+          .foregroundStyle(ZenbuTheme.secondaryText)
       } else {
         ForEach(Array(examples.enumerated()), id: \.element.id) { index, example in
           VStack(alignment: .leading, spacing: 6) {
@@ -780,7 +794,9 @@ private struct EntryExamplesSection: View {
               )
               .frame(maxWidth: .infinity, alignment: .leading)
 
-              Button { speechSynthesisClient.speak(example.japanese) } label: {
+              Button {
+                speechSynthesisClient.speak(example.japanese)
+              } label: {
                 Image(systemName: "speaker.wave.2")
                   .frame(width: 34, height: 34)
               }
@@ -789,7 +805,7 @@ private struct EntryExamplesSection: View {
             }
             Text(example.english)
               .font(.system(size: 15))
-              .foregroundStyle(ReplicaPalette.secondaryText)
+              .foregroundStyle(ZenbuTheme.secondaryText)
           }
           .accessibilityElement(children: .contain)
           .accessibilityIdentifier("word-detail.example.\(index)")
@@ -799,12 +815,12 @@ private struct EntryExamplesSection: View {
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding(.horizontal, 28)
     .padding(.vertical, 20)
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
   }
 }
 
-private extension Character {
-  var isKanji: Bool {
+extension Character {
+  fileprivate var isKanji: Bool {
     unicodeScalars.contains { (0x3400...0x9FFF).contains(Int($0.value)) }
   }
 }

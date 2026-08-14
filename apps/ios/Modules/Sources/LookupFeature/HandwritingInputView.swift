@@ -48,7 +48,8 @@ struct HandwritingInputView: View {
           }
           .font(.system(size: 17, weight: .semibold))
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .background(canSubmit ? ReplicaPalette.selectedTab : Color.white.opacity(0.08))
+          .background(canSubmit ? ZenbuTheme.selectedTab : ZenbuTheme.mutedForeground.opacity(0.08))
+          .foregroundStyle(canSubmit ? ZenbuTheme.primaryForeground : ZenbuTheme.mutedForeground)
           .disabled(!canSubmit)
           .accessibilityIdentifier("handwriting.search")
         }
@@ -56,9 +57,9 @@ struct HandwritingInputView: View {
       }
       .frame(height: 264)
     }
-    .background(ReplicaPalette.row)
+    .background(ZenbuTheme.row)
     .overlay(alignment: .top) {
-      Rectangle().fill(.white.opacity(0.1)).frame(height: 0.5)
+      Rectangle().fill(ZenbuTheme.mutedForeground.opacity(0.1)).frame(height: 0.5)
     }
     .onDisappear { model.cancelRecognition() }
   }
@@ -82,7 +83,7 @@ struct HandwritingInputView: View {
         Spacer()
       }
       .font(.system(size: 14))
-      .foregroundStyle(ReplicaPalette.secondaryText)
+      .foregroundStyle(ZenbuTheme.secondaryText)
       .padding(.horizontal, 14)
       .frame(height: 46)
     } else {
@@ -94,7 +95,7 @@ struct HandwritingInputView: View {
               model.acceptCandidate()
             }
             .font(.system(size: 27))
-            .foregroundStyle(.white)
+            .foregroundStyle(ZenbuTheme.foreground)
             .frame(minWidth: 54, minHeight: 46)
             .accessibilityLabel("Use handwriting candidate \(candidate.value)")
             .accessibilityValue("Candidate rank \(index + 1)")
