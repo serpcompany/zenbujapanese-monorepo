@@ -6,12 +6,8 @@ Issue: #149. Parent research: #147. Behavioral evidence: #148.
 
 A lawfully accessible shipped Nihongo `1.33.1` (`9587`) artifact deterministically
 identifies **SQLite FTS4 with the built-in Porter tokenizer** as the index
-technology for `ExampleSentenceTarget` text:
-
-```sql
-CREATE VIRTUAL TABLE ExampleSentenceTarget_text_FTS
-USING fts4(content="ZEXAMPLESENTENCETARGET", ZTEXT, tokenize=porter)
-```
+technology for example-sentence target text. The public record intentionally
+normalizes that schema fact instead of reproducing shipped SQL bytes.
 
 This is a direct artifact fact, not a behavioral inference. SQLite documents
 that its FTS3/4 `porter` tokenizer applies the Porter stemming algorithm so
@@ -86,11 +82,26 @@ but does not identify retrieval libraries or algorithms.
   and package/build markers were inventoried. Private entitlement values and
   identifiers are excluded from Git.
 
+### Sanitized category inventory
+
+| Required category | Public-safe result |
+|---|---|
+| `Info.plist` | Bundle ID/version/build, iPhoneOS platform, SDK `iphoneos26.1`, minimum OS `18.0`, database marker `1.33`, FairPlay scheme `v2`, and one URL type/one scheme were recorded. The scheme value is private. |
+| Entitlements | Eleven standard entitlement keys were inventoried: application identity, push environment, associated domains, iCloud services/containers, ubiquity containers/key-value store, application groups, team identity, and keychain groups. All values are redacted. |
+| Embedded frameworks | All 45 names, bundle IDs, versions/builds, and encryption states are in the machine inventory. Every embedded framework executable reports `cryptid 0`; the encrypted main is tracked separately. |
+| Dylib load commands | Main: 121 dependencies; Tokenizer: 18; DictionaryFramework: 17; FMDB: 6. Relevant normalized edges are main to OS SQLite/FMDB/DictionaryFramework/Tokenizer/NaturalLanguage/CoreML; Tokenizer to NaturalLanguage/CoreML; and FMDB to OS SQLite. |
+| Swift/Objective-C metadata | The unencrypted Tokenizer exports seven Swift nominal descriptors and two Objective-C classes; DictionaryFramework exports one of each; FMDB exports six Objective-C classes and no Swift nominal descriptor. Names are summarized by capability rather than copied wholesale. |
+| Symbols, strings, sections | Main has 59 Mach-O sections but protected implementation symbols/strings were not interpreted. Tokenizer has 33 sections/180 exported symbols; DictionaryFramework 22/14; FMDB 23/20. Targeted strings/symbols support the normalized capability findings below; no final query/rank expression was found. |
+| Resources/models/dictionaries | Inner bundle: 1,173 files, 116 plists, three JSON files, two SQLite stores, four Core Data model bundles containing 151 compiled models, 19 compiled storyboards, 434 localization string files, and two compiled Core ML models. Only hashes/counts and relevant metadata are public. |
+| Licenses/notices/manifests | Two acknowledgement plists contain 43 and 49 title entries. No standalone `LICENSE`, `NOTICE`, `COPYING`, `Package.resolved`, `Podfile.lock`, or `Cartfile.resolved` file was present. |
+| URL schemes | One URL type with one scheme; the private value is redacted. |
+| Build markers | Xcode/SDK/platform/minimum-OS and framework version/build markers were recorded; private signing/team values are excluded. |
+
 ### Focused modules
 
 | Module | Artifact facts | Retrieval-role conclusion |
 |---|---|---|
-| `DictionaryFramework.framework` `1.0` (`1`) | First-party bundle `com.serpentisei.DictionaryFramework`; arm64; `cryptid 0`; embeds `Dictionary.sqlite`; does not dynamically link `Tokenizer.framework`. | Its signed resource contains the direct Example Sentence FTS schema. The framework's exported surface does not reveal the final query/rank path. |
+| `DictionaryFramework.framework` `1.0` (`1`) | First-party bundle `com.serpentisei.DictionaryFramework`; arm64; `cryptid 0`; embeds `Dictionary.sqlite`; does not dynamically link `Tokenizer.framework`. | Its signed resource proves an FTS4 Porter target-text index. The framework's exported surface does not reveal the final query/rank path. |
 | `Tokenizer.framework` `1.0` (`1`) | First-party bundle `com.serpentisei.Tokenizer`; arm64; `cryptid 0`; links Apple NaturalLanguage and CoreML. Exported Swift metadata names Japanese tokenization, JMdict POS conversion, dictionary-backed lattice/path-cost tokenization, and deconjugation. | Deterministically a Japanese parsing technology. No accessible dependency edge ties it to English Example Sentence Match or Ranking. |
 | `FMDB.framework` `2.7.5` | Bundle `org.cocoapods.FMDB`; arm64; `cryptid 0`; links OS `libsqlite3.dylib`. The encrypted main links FMDB, DictionaryFramework, Tokenizer, and OS SQLite. | Exact bundled database-wrapper identity, but no accessible evidence proves which final retrieval query it executes. |
 
@@ -112,17 +123,17 @@ The database has one FTS row per target row:
 
 | Store fact | Value |
 |---|---:|
-| `ZEXAMPLESENTENCE` rows | 205,886 |
-| `ZEXAMPLESENTENCETARGET` rows | 202,079 |
-| `ExampleSentenceTarget_text_FTS` rows | 202,079 |
+| Example-sentence rows | 205,886 |
+| Example-sentence target rows | 202,079 |
+| Example-target FTS rows | 202,079 |
 | Case-folded duplicate target-text groups | 20,435 |
 | Duplicate target rows beyond the first | 25,296 |
 
-`ZEXAMPLESENTENCETARGET` links a target string and language discriminator to an
-example row. `ZEXAMPLESENTENCE` retains the Tatoeba identifier and Japanese-text
-length; word associations are stored separately. There is no unique constraint
-on normalized target text, so the store itself does not prove UI duplicate
-handling.
+The normalized schema shows that a target string and language discriminator
+link to an example row. Example metadata retains a Tatoeba identifier and
+Japanese-text length; word associations are stored separately. There is no
+unique constraint on normalized target text, so the store itself does not prove
+UI duplicate handling.
 
 Related schema facts:
 
@@ -213,11 +224,9 @@ otool -L Nihongo
 otool -L Frameworks/Tokenizer.framework/Tokenizer
 nm -gU Frameworks/Tokenizer.framework/Tokenizer | xcrun swift-demangle
 plutil -p Frameworks/Tokenizer.framework/JapaneseTagger.mlmodelc/metadata.json
-sqlite3 -readonly Frameworks/DictionaryFramework.framework/Dictionary.sqlite \
-  "SELECT name,sql FROM sqlite_master WHERE name LIKE '%_FTS' ORDER BY name;"
-sqlite3 -readonly Frameworks/DictionaryFramework.framework/Dictionary.sqlite \
-  "SELECT count(*) FROM ExampleSentenceTarget_text_FTS WHERE ZTEXT MATCH '\"scared you\"';"
+sqlite3 -readonly Frameworks/DictionaryFramework.framework/Dictionary.sqlite ".tables"
 ```
 
 Paths above are artifact-relative. Private command JSON/logs, device identifiers,
-app bytes, database bytes, and model bytes remain outside Git.
+app bytes, database bytes, model bytes, raw schema output, and probe SQL remain
+outside Git.
