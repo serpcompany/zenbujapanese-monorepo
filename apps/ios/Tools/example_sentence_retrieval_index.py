@@ -185,6 +185,15 @@ def validate_indexes(
         ("source_identity", "TEXT", 1),
         ("source_japanese_record_id", "INTEGER", 1),
         ("source_english_record_id", "INTEGER", 1),
+        ("japanese_contributor", "TEXT", 0),
+        ("english_contributor", "TEXT", 0),
+        ("japanese_contributor_status", "TEXT", 1),
+        ("english_contributor_status", "TEXT", 1),
+        ("japanese_license", "TEXT", 1),
+        ("english_license", "TEXT", 1),
+        ("pair_license", "TEXT", 1),
+        ("source_snapshot_date", "TEXT", 1),
+        ("source_snapshot_sha256", "TEXT", 1),
     ]:
         raise ValueError("Example Sentence provenance schema mismatch")
     provenance_row = database.execute(

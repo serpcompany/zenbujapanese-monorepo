@@ -44,9 +44,13 @@ Dictionary Sources identifies the source, attribution, modifications, snapshot, 
 
 ## Tatoeba
 
-The three `*-2026-08-08.tsv.bz2` files are pinned official Tatoeba weekly exports for Japanese sentences, English sentences, and their translation links. Immutable HTTP metadata and checksums are in `Tatoeba-2026-08-08.source.json`. The importer retains one deterministic English translation for each linked Japanese sentence as app-owned offline example data, while preserving both provider sentence IDs for attribution in the explicit provenance table.
+Seven `*-2026-08-08.tsv.bz2` files are pinned official Tatoeba weekly exports: Japanese and English general sentences, their direct links, Japanese and English detailed sentences, and the Japanese and English CC0 subsets. Immutable HTTP metadata and checksums are in `Tatoeba-2026-08-08.source.json`. The importer retains the lowest-ID direct English translation for each Japanese sentence, validates general text against the detailed export, and records both sentence IDs, supplied contributor usernames, an explicit `not-supplied` status when the official username field is null, each side's license class, and the complete snapshot identity.
 
-Tatoeba publishes these exports under CC BY 2.0 FR. The app links to the project and license from Dictionary Sources; provider record IDs remain retained provenance and are not rendered in learner-facing example rows.
+The general exports are published under CC BY 2.0 FR; CC0 membership is established only through the corresponding official CC0 exports. Named contributors are generated into the bundled database and exposed from Dictionary Sources without adding attribution clutter to learner-facing rows. The bundled notice identifies the source, licenses, and Zenbu's selection/indexing modifications. No contributor identity is inferred for a `\\N` detailed-export username.
+
+`verify_tatoeba_provenance.py` is a Release build gate. It validates the generated database, importer/adapter/transform identities, all seven pinned input hashes, the durable 35-pair public reference sample, retained provider IDs, contributor status, license class, snapshot identity, and contributor-credit counts. The v1.0 release posture is recorded in `Tatoeba-2026-08-08.source.json`: preserve the full 232,703-pair corpus, disclose the supplied and `not-supplied` attribution states, and treat the unresolved attribution uncertainty as an explicit owner-accepted known risk rather than as independently cleared legal advice. `--inspection` remains available for investigation but is not the Release build mode.
+
+The public-safe reference record is `docs/research/tatoeba-nihongo-sample-2026-08-14.tsv`. It records exact public sentence facts, observed context/rank/timestamp, both Tatoeba IDs, classifications, and internal evidence pointer names plus SHA-256 values. It does not contain or distribute private reference-app screenshots.
 
 ## App-owned word relationships
 

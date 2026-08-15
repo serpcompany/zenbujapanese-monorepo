@@ -1,0 +1,18 @@
+Tatoeba example-sentence attribution
+
+Zenbu Japanese includes modified Japanese-English example-sentence data from
+Tatoeba's official 2026-08-08 weekly exports.
+
+Source and downloads: https://tatoeba.org/en/downloads
+CC BY 2.0 FR: https://creativecommons.org/licenses/by/2.0/fr/
+CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/
+
+Zenbu's modifications select the lowest-ID directly linked English translation
+for each Japanese sentence, normalize the data into an app-owned SQLite schema,
+and add deterministic search indexes. Both Tatoeba sentence IDs, contributor
+usernames supplied by the official detailed exports, explicit not-supplied
+status where those exports contain no username, and the license class of each
+side are retained in the bundled database. Named contributors are listed in
+Dictionary Sources > Tatoeba > Contributor credits.
+
+Tatoeba and its contributors do not endorse Zenbu Japanese.

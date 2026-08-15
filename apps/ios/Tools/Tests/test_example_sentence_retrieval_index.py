@@ -50,6 +50,15 @@ def database_with(rows: list[tuple[bytes, str, str]]) -> sqlite3.Connection:
           source_identity TEXT NOT NULL,
           source_japanese_record_id INTEGER NOT NULL,
           source_english_record_id INTEGER NOT NULL,
+          japanese_contributor TEXT,
+          english_contributor TEXT,
+          japanese_contributor_status TEXT NOT NULL,
+          english_contributor_status TEXT NOT NULL,
+          japanese_license TEXT NOT NULL,
+          english_license TEXT NOT NULL,
+          pair_license TEXT NOT NULL,
+          source_snapshot_date TEXT NOT NULL,
+          source_snapshot_sha256 TEXT NOT NULL,
           PRIMARY KEY(pair_id, source_identity, source_japanese_record_id, source_english_record_id)
         ) WITHOUT ROWID;
         """
@@ -58,9 +67,12 @@ def database_with(rows: list[tuple[bytes, str, str]]) -> sqlite3.Connection:
         "INSERT INTO example_sentences VALUES (?, ?, ?)", rows,
     )
     database.executemany(
-        "INSERT INTO example_sentence_provenance VALUES (?, 'fixture', ?, ?)",
+        """INSERT INTO example_sentence_provenance VALUES (
+          ?, 'fixture', ?, ?, 'fixture-ja', 'fixture-en', 'named', 'named',
+          'CC BY 2.0 FR', 'CC BY 2.0 FR', 'CC BY 2.0 FR', '2026-08-08', ?
+        )""",
         [
-            (pair_id, index, index + 100)
+            (pair_id, index, index + 100, "a" * 64)
             for index, pair_id in enumerate(sorted(row[0] for row in rows))
         ],
     )
@@ -140,6 +152,15 @@ class ExampleSentenceRetrievalIndexTests(unittest.TestCase):
                   source_identity TEXT NOT NULL,
                   source_japanese_record_id INTEGER NOT NULL,
                   source_english_record_id INTEGER NOT NULL,
+                  japanese_contributor TEXT,
+                  english_contributor TEXT,
+                  japanese_contributor_status TEXT NOT NULL,
+                  english_contributor_status TEXT NOT NULL,
+                  japanese_license TEXT NOT NULL,
+                  english_license TEXT NOT NULL,
+                  pair_license TEXT NOT NULL,
+                  source_snapshot_date TEXT NOT NULL,
+                  source_snapshot_sha256 TEXT NOT NULL,
                   PRIMARY KEY(pair_id, source_identity, source_japanese_record_id, source_english_record_id)
                 ) WITHOUT ROWID;
                 """
@@ -148,9 +169,12 @@ class ExampleSentenceRetrievalIndexTests(unittest.TestCase):
                 "INSERT INTO example_sentences VALUES (?, ?, ?)", ROWS,
             )
             database.executemany(
-                "INSERT INTO example_sentence_provenance VALUES (?, 'fixture', ?, ?)",
+                """INSERT INTO example_sentence_provenance VALUES (
+                  ?, 'fixture', ?, ?, 'fixture-ja', 'fixture-en', 'named', 'named',
+                  'CC BY 2.0 FR', 'CC BY 2.0 FR', 'CC BY 2.0 FR', '2026-08-08', ?
+                )""",
                 [
-                    (pair_id, index, index + 100)
+                    (pair_id, index, index + 100, "a" * 64)
                     for index, pair_id in enumerate(sorted(row[0] for row in ROWS))
                 ],
             )

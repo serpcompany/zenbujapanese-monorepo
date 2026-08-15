@@ -2,6 +2,7 @@
 Modules/.build/
 Modules/.swiftpm/
 xcuserdata/
+Tools/**/__pycache__/
 
 # Reproducible pinned upstream snapshots. Source metadata, checksums, importers,
 # generated manifests, and distributable license texts remain versioned.
