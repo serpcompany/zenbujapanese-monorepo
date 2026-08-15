@@ -1,12 +1,12 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Keep Example Sentence Retrieval app-owned and use system FTS4 Porter only for English eligibility
 
-> Evaluation note: the compatibility evidence named by this proposed ADR is
-> genuine Nihongo 1.34.3 historical evidence. Its current-version acceptance
-> implication is provisional pending #168's 1.34.4 replay; see the
+> Acceptance note: #168 replayed the disclosed anchors against genuine Nihongo
+> 1.34.4. The owner accepts Zenbu's deterministic version-1.0 behavior where
+> unsupported count or ordering differences remain; see the
 > [reference-authority boundary](../clone-discovery/nihongo/REFERENCE-AUTHORITY.md).
 
 Zenbu will implement direct English Example Sentence Retrieval with the SQLite FTS4 module and its built-in `porter` tokenizer supplied by Apple's iOS `libsqlite3`. FTS supplies only an unordered set of English eligibility candidates. An app-owned, provider-independent policy establishes Example Sentence Matches, filters them, and applies Example Sentence Ranking. Japanese direct retrieval and dictionary-entry association remain separate routes. This follows [ADR 0001](0001-language-capability-boundaries.md), the accepted [retrieval research](../research/example-sentence-retrieval-language-technology-2026-08-14.md), and the bounded [Nihongo artifact audit](../research/nihongo-example-retrieval-artifact-audit-2026-08-14.md).
@@ -43,7 +43,7 @@ Every eligible candidate is materialized before Ranking; no default FTS row orde
 
 Exact-surface evidence compares the original query and candidate English text using the FTS4 `simple` token-boundary rules documented by SQLite: contiguous alphanumeric or non-ASCII runs, ASCII case folded, with other characters acting as separators. It requires the query terms to occur adjacently and in order without Porter reduction. This evidence is computed independently from Porter eligibility and remains visible to Ranking. It explains the accepted `scared you` versus `startled you` discovery behavior without treating a stem-equivalent hit as exact.
 
-The live-record check is a structural invariant. The terminal-punctuation and exact-surface-anchor filters are proposed Zenbu v1 approximations motivated by D06-D08: raw Porter crosses a sentence boundary in one extra D06 candidate and produces the unsupported D07 family. Neither filter is claimed as recovered Nihongo logic.
+The live-record check is a structural invariant. The terminal-punctuation and exact-surface-anchor filters are accepted Zenbu v1 approximations motivated by D06-D08: raw Porter crosses a sentence boundary in one extra D06 candidate and produces the unsupported D07 family. Neither filter is claimed as recovered Nihongo logic.
 
 ## App-owned Ranking
 
@@ -59,15 +59,17 @@ Only after that sort does the adapter return the first 100. The count is compute
 
 Discovery supports only the first lexical tier: D06 and D08 move the exact surface ahead of its Porter-relative form. The remaining position, term-count, length, and stable-ID tie-breaks are deliberately simple Zenbu v1 approximations selected to make ordering total, inspectable, and provider-independent; the accepted evidence does not attribute them to Nihongo.
 
-This is a frozen Zenbu v1 proposal to test, not a claim that Nihongo uses these filters or tie-breaks. Discovery already shows that raw FTS order is wrong and that some final reference filtering remains unknown. Any policy change prompted by implementation evidence or the sealed holdout requires a new policy version and an ADR update; it must not be tuned invisibly to holdout rows.
+This is the accepted Zenbu v1 policy, not a claim that Nihongo uses these filters or tie-breaks. Exact Nihongo sentence count and ordering parity are not version-1.0 requirements where no evidence-backed general rule exists. Any later policy change requires a new policy version and an ADR update; it must not be tuned invisibly to holdout rows.
 
-On the accepted discrepancy probes, this policy admits all four observed `scared you` and `scare you` rows, rejects `red you`, and turns the unsupported Porter-only `startled you` family into zero results. It intentionally retains one additional valid corpus pair in each scared/scare family because no accepted evidence justifies source-specific or fuzzy duplicate removal. That bounded difference is an explicit evaluation target, not a hidden claim of parity.
+On the accepted discrepancy probes, this policy admits all four observed `scared you` and `scare you` rows, rejects `red you`, and turns the unsupported Porter-only `startled you` family into zero results. It intentionally retains one additional valid corpus pair in each scared/scare family because no accepted evidence justifies source-specific or fuzzy duplicate removal. That bounded difference is an accepted version-1.0 divergence, not a hidden claim of parity.
 
 ## Separate Japanese and dictionary-entry routes
 
 Direct Japanese retrieval does not use the English FTS table. Version 1 preserves normalized literal Japanese surface containment as eligibility and records the exact matched Japanese range. It ranks an entire-sentence match before a contained match, then the earlier match position, shorter Japanese grapheme count, and app-owned pair ID. No historical `character`-tokenizer fingerprint is promoted into a current Japanese contract.
 
 Dictionary-entry association also bypasses English FTS. It may Match only through app-owned `LanguageReferenceID` and entry-form evidence created during corpus normalization. A form-derived association is retained only when the selected written form plus reading identifies one Language Reference Data entry; ambiguous homographs produce no association. Selected written-form evidence ranks before alternate written-form evidence, which ranks before reading evidence; ties use earlier Japanese match position, shorter Japanese grapheme count, then app-owned pair ID. Provider coordinates cannot join an entry to a sentence. No direct-search candidate is silently substituted when entry association is absent.
+
+Version 1 deliberately fails closed when several dictionary entries remain plausible, even when that produces fewer examples than Nihongo. The source-declared JMdict example and build-time Sudachi association proof of concept researched in #169 is deferred beyond version 1.0; adopting it requires a separately versioned association contract and ADR review.
 
 These Japanese and entry-route tie-breaks are also explicit Zenbu v1 approximations. The research proves that direct search and entry association are distinct and that the historical character index does not establish a current Japanese contract; it does not recover Nihongo's Japanese or entry Ranking.
 
