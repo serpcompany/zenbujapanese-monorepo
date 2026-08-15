@@ -4,6 +4,11 @@ status: proposed
 
 # Keep Dictionary Best Match evidence typed and app-owned
 
+> Evaluation note: the revealed compatibility fixtures named by this proposed
+> ADR are genuine Nihongo 1.34.3 historical evidence. Current-version parity
+> and implementation acceptance are provisional pending #168's 1.34.4 replay;
+> see the [reference-authority boundary](../clone-discovery/nihongo/REFERENCE-AUTHORITY.md).
+
 Zenbu will make Dictionary Matches, Dictionary Ranking, Dictionary Best Matches, and Primary Dictionary Entry selection app-owned contracts. Written-form, reading, romaji, and English-gloss evidence remain distinct and may corroborate one another. Provider entry/export/result order, database row order, provider identifiers, provider ranking, and query-specific exceptions are not Ranking inputs. This extends [ADR 0001](0001-language-capability-boundaries.md) without changing the separate Example Sentence Retrieval contract in [ADR 0002](0002-example-sentence-retrieval-contract.md).
 
 The proposed v1 comparator is direction-specific. English input compares applicable semantic-gloss evidence, corroborating romaji evidence, exact/prefix/contains specificity within the romaji-only lane, Canonical Sense and Gloss Order, normalized priority evidence, and a provenance-free semantic tie-break. Each Dictionary Sense retains normalized POS and source-declared written/reading applicability; a restricted sense contributes Match evidence only when the actual displayed written/reading pair satisfies it, never because an alternate entry form would satisfy it. Romaji specificity is neutral outside the romaji-only lane. Canonical Sense and Gloss Order is source-derived lexical evidence normalized into the app-owned model: JMdict gloss sequence carries documented editorial commonness, while sense sequence is used only as an explicit Zenbu structural tie-break and is not treated as frequency or importance. Japanese input compares exact or partial written/reading evidence, the matched form's normalized priority profile, and a narrow lexical-breadth tie-break for otherwise indistinguishable reading homographs. A Primary Dictionary Entry is selected only after eligibility and total ordering; Dictionary Best Matches may still contain several entries.

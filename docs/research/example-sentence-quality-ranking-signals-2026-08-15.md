@@ -1,5 +1,11 @@
 # Example Sentence quality and Ranking signals
 
+> **Authority status:** The revealed regressions came from genuine Nihongo
+> 1.34.3. The negative signal measurements remain reproducible, but their
+> current-version parity consequence is provisional pending #168's 1.34.4
+> replay. See
+> [Nihongo reference authority](../clone-discovery/nihongo/REFERENCE-AUTHORITY.md).
+
 Issue: #163. Parent research: #147. Implementation contract: #151. Revealed regressions: #153–#155.
 
 ## Outcome: no safe general signal is currently available

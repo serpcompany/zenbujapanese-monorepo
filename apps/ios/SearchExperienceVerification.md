@@ -1,5 +1,11 @@
 # Search experience verification
 
+> **Reference reset:** The fixed screenshots below are genuine Nihongo 1.34.3
+> evidence, but current-version parity is provisional pending the bounded
+> Nihongo 1.34.4 replay in #168. See the canonical
+> [reference-authority boundary](../../docs/clone-discovery/nihongo/REFERENCE-AUTHORITY.md).
+> Do not use this record alone to merge or close current parity work.
+
 The durable user-facing regression checklist is maintained in
 [`Verification/PHYSICAL-DEVICE-QA/README.md`](Verification/PHYSICAL-DEVICE-QA/README.md).
 It maps each physical-device complaint to its exact automated public seam and
@@ -105,7 +111,7 @@ Search now counts source-backed matches and opens a dedicated scrollable Example
 
 The [journey evidence record](Verification/JOURNEY-READ-EXAMPLES-v2/README.md) retains six populated, scrolled, nested, and example-only states. A DEBUG-only composition-root recorder verifies the exact Japanese speech requests while production continues to use offline system synthesis. The record also names the deterministic Tatoeba selection difference, synthesized-speech substitution, unified link color, and the uncaptured no-example, pagination, and speech-failure boundaries.
 
-The fixed reference remains Nihongo 1.34.3 (9792) on physical iPhone 17 Pro Max iOS 26.5.2. `ENVIRONMENT-DIFFERENCE-001` therefore remains the named environment difference. Search result ordering and content are derived from Zenbu's pinned official JMdict snapshot and documented ranking transform rather than Nihongo's unavailable private snapshot or proprietary ranking.
+The historical fixed reference is Nihongo 1.34.3 (9792) on physical iPhone 17 Pro Max iOS 26.5.2. It remains the authority only for the captures already made; #168 owns current Nihongo 1.34.4 revalidation. `ENVIRONMENT-DIFFERENCE-001` remains the named environment difference for the historical run. Search result ordering and content are derived from Zenbu's pinned official JMdict snapshot and documented ranking transform rather than Nihongo's unavailable private snapshot or proprietary ranking.
 
 ## App-owned Japanese pronunciation
 
