@@ -34,7 +34,11 @@ _Avoid_: Result row, provider hit, source membership
 
 **Dictionary Ranking**:
 The app-owned ordering of eligible Dictionary Matches for presentation and downstream entry selection.
-_Avoid_: Source order, provider rank, match eligibility
+_Avoid_: Provider entry order, provider result order, database row order, provider rank, match eligibility
+
+**Canonical Sense and Gloss Order**:
+The app-owned preservation of a Language Data Source's authorial sense sequence and the documented editorial sequence of glosses within each sense as typed lexical evidence. It is distinct from provider entry, export, result, or database row order and from provider identifiers.
+_Avoid_: Provider result order, insertion order, record ID order
 
 **Dictionary Best Matches**:
 The highest-evidence group produced by Dictionary Ranking for presentation in Lookup. The group may contain more than one entry.

@@ -16,6 +16,7 @@ import sqlite3
 import unicodedata
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, replace
+from enum import IntEnum
 from pathlib import Path
 
 
@@ -82,12 +83,263 @@ def deinflected_candidates(value: str) -> list[str]:
 class RawEntry:
     written_priorities: dict[str, tuple[str, ...]]
     reading_priorities: dict[str, tuple[str, ...]]
-    glosses: tuple[tuple[int, int, str], ...]
+    glosses: tuple["CanonicalGlossAtom", ...]
+
+
+@dataclass(frozen=True)
+class CanonicalGlossAtom:
+    sense_order: int
+    gloss_order: int
+    text: str
+
+
+class EvidenceLane(IntEnum):
+    STRONG_GLOSS = 0
+    TOKEN_GLOSS = 1
+    ROMAJI_ONLY = 2
+
+
+class EnglishRelation(IntEnum):
+    EXACT_GLOSS = 0
+    QUALIFIED_GLOSS = 1
+    EXACT_INFINITIVE = 2
+    QUALIFIED_INFINITIVE = 3
+    GLOSS_TOKEN = 4
+    ROMAJI_EXACT = 5
+    ROMAJI_PREFIX = 6
+    ROMAJI_CONTAINS = 7
+
+
+class FormRelation(IntEnum):
+    WRITTEN_EXACT = 0
+    READING_EXACT = 1
+    WRITTEN_PREFIX = 2
+    READING_PREFIX = 3
+    WRITTEN_CONTAINS = 4
+    READING_CONTAINS = 5
+
+
+class RomajiSpecificity(IntEnum):
+    EXACT = 0
+    PREFIX = 1
+    CONTAINS = 2
+
+
+class PriorityCategory(IntEnum):
+    SPECIAL_PRIMARY = 0
+    LEARNER_PRIMARY = 1
+    NEWS_PRIMARY = 2
+    LOANWORD_PRIMARY_OR_SPECIAL_SECONDARY = 3
+    LEARNER_OR_NEWS_SECONDARY = 4
+    LOANWORD_SECONDARY = 5
+    UNMARKED = 9
+
+
+@dataclass(frozen=True, order=True)
+class PriorityProfile:
+    category: PriorityCategory
+    news_frequency_band: int
+    primary_marker_breadth_rank: int
+
+    @property
+    def is_marked(self) -> bool:
+        return self.category is not PriorityCategory.UNMARKED
+
+
+@dataclass(frozen=True)
+class EnglishEvidence:
+    gloss_matches: tuple["GlossMatch", ...]
+    romaji_relations: tuple[EnglishRelation, ...]
+    priority_profiles: tuple[PriorityProfile, ...]
+
+    @property
+    def selected_gloss(self) -> "GlossMatch | None":
+        return min(self.gloss_matches, key=lambda match: match.key, default=None)
+
+    @property
+    def lane(self) -> EvidenceLane:
+        if self.selected_gloss is None:
+            return EvidenceLane.ROMAJI_ONLY
+        return self.selected_gloss.key.lane
+
+    @property
+    def relation(self) -> EnglishRelation:
+        if self.selected_gloss is not None:
+            return self.selected_gloss.relation
+        return min(self.romaji_relations)
+
+    @property
+    def corroborated(self) -> bool:
+        return (
+            self.lane is EvidenceLane.STRONG_GLOSS
+            and bool(
+                {EnglishRelation.ROMAJI_EXACT, EnglishRelation.ROMAJI_PREFIX}
+                & set(self.romaji_relations)
+            )
+        )
+
+    @property
+    def romaji_specificity(self) -> RomajiSpecificity | None:
+        for relation, specificity in (
+            (EnglishRelation.ROMAJI_EXACT, RomajiSpecificity.EXACT),
+            (EnglishRelation.ROMAJI_PREFIX, RomajiSpecificity.PREFIX),
+            (EnglishRelation.ROMAJI_CONTAINS, RomajiSpecificity.CONTAINS),
+        ):
+            if relation in self.romaji_relations:
+                return specificity
+        return None
+
+    @property
+    def priority_profile(self) -> PriorityProfile:
+        return min(self.priority_profiles)
+
+    @property
+    def sense_order(self) -> int:
+        return self.selected_gloss.sense_order if self.selected_gloss else 0
+
+    @property
+    def gloss_order(self) -> int:
+        return self.selected_gloss.gloss_order if self.selected_gloss else 0
+
+
+@dataclass(frozen=True, order=True)
+class GlossMatchKey:
+    lane: EvidenceLane
+    sense_order: int
+    relation: EnglishRelation
+    gloss_order: int
+
+
+@dataclass(frozen=True)
+class GlossMatch:
+    key: GlossMatchKey
+    relation: EnglishRelation
+    sense_order: int
+    gloss_order: int
+
+
+@dataclass(frozen=True, order=True)
+class EnglishRankKey:
+    """English Ranking order; dataclass field order is the executable policy."""
+
+    lane: EvidenceLane
+    corroboration_rank: int
+    romaji_specificity_rank: int
+    sense_order: int
+    priority_presence_rank: int
+    relation: EnglishRelation
+    priority_profile: PriorityProfile
+    gloss_order: int
+    headword_length: int
+    semantic_fingerprint: str
+
+
+@dataclass(frozen=True, order=True)
+class JapaneseRankKey:
+    """Japanese Ranking order; dataclass field order is the executable policy."""
+
+    relation: FormRelation
+    priority_profile: PriorityProfile
+    sense_breadth_rank: int
+    headword_length: int
+    semantic_fingerprint: str
+
+
+@dataclass(frozen=True)
+class RankedEnglishCandidate:
+    rank: EnglishRankKey
+    candidate: "Candidate"
+    evidence: EnglishEvidence
+
+
+@dataclass(frozen=True, order=True)
+class FormMatchKey:
+    relation: FormRelation
+    priority_profile: PriorityProfile
+    normalized_form: str
+
+
+@dataclass(frozen=True)
+class FormMatch:
+    key: FormMatchKey
+    relation: FormRelation
+    priority_profile: PriorityProfile
+
+
+@dataclass(frozen=True)
+class JapaneseEvidence:
+    form_matches: tuple[FormMatch, ...]
+
+    @property
+    def selected_form(self) -> FormMatch:
+        return min(self.form_matches, key=lambda match: match.key)
+
+
+@dataclass(frozen=True)
+class RankedJapaneseCandidate:
+    rank: JapaneseRankKey
+    candidate: "Candidate"
+    evidence: JapaneseEvidence
+
+
+@dataclass(frozen=True)
+class SelectionEvidence:
+    english: EnglishEvidence | None = None
+    japanese: JapaneseEvidence | None = None
+    deinflected_query: str | None = None
+
+    def as_json(self) -> dict[str, object]:
+        if self.english is not None:
+            return {
+                "route": "english",
+                "deinflectedQuery": self.deinflected_query,
+                "glossMatches": [
+                    {
+                        "relation": match.relation.name,
+                        "senseOrder": match.sense_order,
+                        "glossOrder": match.gloss_order,
+                    }
+                    for match in self.english.gloss_matches
+                ],
+                "romajiRelations": [
+                    relation.name for relation in self.english.romaji_relations
+                ],
+                "priorityProfiles": [
+                    {
+                        "category": profile.category.name,
+                        "newsFrequencyBand": profile.news_frequency_band,
+                        "primaryMarkerBreadthRank": profile.primary_marker_breadth_rank,
+                    }
+                    for profile in self.english.priority_profiles
+                ],
+            }
+        return {
+            "route": "japanese",
+            "formMatches": [
+                {
+                    "relation": match.relation.name,
+                    "priorityProfile": {
+                        "category": match.priority_profile.category.name,
+                        "newsFrequencyBand": match.priority_profile.news_frequency_band,
+                        "primaryMarkerBreadthRank": (
+                            match.priority_profile.primary_marker_breadth_rank
+                        ),
+                    },
+                }
+                for match in self.japanese.form_matches
+            ] if self.japanese is not None else [],
+        }
+
+
+@dataclass(frozen=True)
+class Selection:
+    candidate: "Candidate"
+    evidence: SelectionEvidence
 
 
 @dataclass(frozen=True)
 class Candidate:
-    source_record_id: int
+    source_record_id: int | None
     headword: str
     reading: str
     meanings_json: str
@@ -118,37 +370,39 @@ class Candidate:
         return hashlib.sha256(payload.encode()).hexdigest()
 
 
-def priority_profile(tags: tuple[str, ...]) -> tuple[int, int, int]:
+def priority_profile(tags: tuple[str, ...]) -> PriorityProfile:
     """Make current recognized tiers explicit, then add gai2, nf band, and breadth."""
     values = set(tags)
-    marker_strength = min(
-        0 if "spec1" in values else 9,
-        1 if "ichi1" in values else 9,
-        2 if "news1" in values else 9,
-        3 if {"gai1", "spec2"} & values else 9,
-        4 if {"ichi2", "news2"} & values else 9,
-        5 if "gai2" in values else 9,
+    category = min(
+        PriorityCategory.SPECIAL_PRIMARY if "spec1" in values else PriorityCategory.UNMARKED,
+        PriorityCategory.LEARNER_PRIMARY if "ichi1" in values else PriorityCategory.UNMARKED,
+        PriorityCategory.NEWS_PRIMARY if "news1" in values else PriorityCategory.UNMARKED,
+        PriorityCategory.LOANWORD_PRIMARY_OR_SPECIAL_SECONDARY
+        if {"gai1", "spec2"} & values else PriorityCategory.UNMARKED,
+        PriorityCategory.LEARNER_OR_NEWS_SECONDARY
+        if {"ichi2", "news2"} & values else PriorityCategory.UNMARKED,
+        PriorityCategory.LOANWORD_SECONDARY if "gai2" in values else PriorityCategory.UNMARKED,
     )
     bands = [int(tag[2:]) for tag in values if re.fullmatch(r"nf\d\d", tag)]
     band = min(bands, default=99)
     primary_breadth = -sum(
         marker in values for marker in ("spec1", "ichi1", "news1", "gai1")
     )
-    return marker_strength, band, primary_breadth
+    return PriorityProfile(category, band, primary_breadth)
 
 
-def english_relation(query: str, gloss: str) -> tuple[int, str] | None:
+def english_relation(query: str, gloss: str) -> EnglishRelation | None:
     value = normalized(gloss)
     if value == query:
-        return 0, "exactGloss"
+        return EnglishRelation.EXACT_GLOSS
     if value.startswith(query + " ("):
-        return 1, "qualifiedGloss"
+        return EnglishRelation.QUALIFIED_GLOSS
     if value == "to " + query:
-        return 2, "exactInfinitive"
+        return EnglishRelation.EXACT_INFINITIVE
     if value.startswith("to " + query + " ("):
-        return 3, "qualifiedInfinitive"
+        return EnglishRelation.QUALIFIED_INFINITIVE
     if re.search(r"(?:^|[^a-z])" + re.escape(query) + r"(?:$|[^a-z])", value):
-        return 4, "glossToken"
+        return EnglishRelation.GLOSS_TOKEN
     return None
 
 
@@ -249,14 +503,22 @@ def load_raw_entries(path: Path, identifiers: set[int]) -> dict[int, RawEntry]:
                     )
                     for node in entry.findall("r_ele")
                 }
-                glosses: list[tuple[int, int, str]] = []
+                glosses: list[CanonicalGlossAtom] = []
                 for sense_index, sense in enumerate(entry.findall("sense")):
-                    for gloss_index, gloss in enumerate(sense.findall("gloss")):
+                    english_gloss_order = 0
+                    for gloss in sense.findall("gloss"):
                         language = gloss.attrib.get(
                             "{http://www.w3.org/XML/1998/namespace}lang", "eng"
                         )
                         if language == "eng":
-                            glosses.append((sense_index, gloss_index, gloss.text or ""))
+                            glosses.append(
+                                CanonicalGlossAtom(
+                                    sense_order=sense_index,
+                                    gloss_order=english_gloss_order,
+                                    text=gloss.text or "",
+                                )
+                            )
+                            english_gloss_order += 1
                 records[source_record_id] = RawEntry(written, readings, tuple(glosses))
             entry.clear()
     missing = identifiers - records.keys()
@@ -272,73 +534,130 @@ def displayed_priority(candidate: Candidate, raw: RawEntry) -> tuple[str, ...]:
     return raw.reading_priorities.get(headword, ())
 
 
+def romaji_relations(candidate: Candidate) -> tuple[EnglishRelation, ...]:
+    relations: list[EnglishRelation] = []
+    if candidate.romaji_exact:
+        relations.append(EnglishRelation.ROMAJI_EXACT)
+    if candidate.romaji_prefix:
+        relations.append(EnglishRelation.ROMAJI_PREFIX)
+    if candidate.romaji_contains:
+        relations.append(EnglishRelation.ROMAJI_CONTAINS)
+    return tuple(relations)
+
+
+def gloss_matches(query: str, raw: RawEntry) -> tuple[GlossMatch, ...]:
+    matches: list[GlossMatch] = []
+    for atom in raw.glosses:
+        relation = english_relation(query, atom.text)
+        if relation is None:
+            continue
+        lane = (
+            EvidenceLane.STRONG_GLOSS
+            if relation is not EnglishRelation.GLOSS_TOKEN
+            else EvidenceLane.TOKEN_GLOSS
+        )
+        matches.append(
+            GlossMatch(
+                key=GlossMatchKey(
+                    lane=lane,
+                    sense_order=atom.sense_order,
+                    relation=relation,
+                    gloss_order=atom.gloss_order,
+                ),
+                relation=relation,
+                sense_order=atom.sense_order,
+                gloss_order=atom.gloss_order,
+            )
+        )
+    return tuple(sorted(matches, key=lambda match: match.key))
+
+
+def english_rank_key(candidate: Candidate, evidence: EnglishEvidence) -> EnglishRankKey:
+    profile = evidence.priority_profile
+    return EnglishRankKey(
+        lane=evidence.lane,
+        corroboration_rank=(
+            int(not evidence.corroborated)
+            if evidence.lane is not EvidenceLane.ROMAJI_ONLY else 0
+        ),
+        romaji_specificity_rank=(
+            int(evidence.romaji_specificity)
+            if evidence.romaji_specificity is not None else 0
+        ),
+        sense_order=evidence.sense_order,
+        priority_presence_rank=int(not profile.is_marked),
+        relation=evidence.relation,
+        priority_profile=profile,
+        gloss_order=evidence.gloss_order,
+        headword_length=len(candidate.headword),
+        semantic_fingerprint=candidate.semantic_key,
+    )
+
+
 def rank_ascii(
     query: str, candidates: dict[int, Candidate], raw_entries: dict[int, RawEntry]
-) -> list[tuple[tuple[object, ...], Candidate, str]]:
-    ranked: list[tuple[tuple[object, ...], Candidate, str]] = []
+) -> list[RankedEnglishCandidate]:
+    ranked: list[RankedEnglishCandidate] = []
     for identifier, candidate in candidates.items():
         raw = raw_entries[identifier]
-        relations = []
-        for sense_index, gloss_index, gloss in raw.glosses:
-            relation = english_relation(query, gloss)
-            if relation:
-                relations.append((relation[0], sense_index, gloss_index, relation[1]))
-        if relations:
-            relation, sense_index, gloss_index, label = min(
-                relations,
-                key=lambda value: (
-                    0 if value[0] <= 3 else 1,
-                    value[1],
-                    value[0],
-                    value[2],
-                ),
-            )
-            strength = 0 if relation <= 3 else 1
-            corroborated = -int(
-                strength == 0 and (candidate.romaji_exact or candidate.romaji_prefix)
-            )
-            evidence = (strength, corroborated, sense_index, relation, gloss_index)
-        elif candidate.romaji_exact:
-            label = "romajiExact"
-            evidence = (2, 0, 0, 0, 0)
-        elif candidate.romaji_prefix:
-            label = "romajiPrefix"
-            evidence = (2, 1, 0, 0, 0)
-        else:
-            label = "romajiContains"
-            evidence = (2, 2, 0, 0, 0)
         profile = priority_profile(displayed_priority(candidate, raw))
-        unmarked = int(profile == (9, 99, 0))
-        key = (
-            evidence[:3],
-            unmarked,
-            evidence[3],
-            profile,
-            evidence[4],
-            len(candidate.headword),
-            candidate.semantic_key,
+        evidence = EnglishEvidence(
+            gloss_matches=gloss_matches(query, raw),
+            romaji_relations=romaji_relations(candidate),
+            priority_profiles=(profile,),
         )
-        ranked.append((key, candidate, label))
-    grouped: dict[str, list[tuple[tuple[object, ...], Candidate, str]]] = {}
+        rank = english_rank_key(candidate, evidence)
+        ranked.append(RankedEnglishCandidate(rank, candidate, evidence))
+    grouped: dict[str, list[RankedEnglishCandidate]] = {}
     for result in ranked:
-        grouped.setdefault(result[1].semantic_key, []).append(result)
-    best_by_semantic_key = {}
+        grouped.setdefault(result.candidate.semantic_key, []).append(result)
+    best_by_semantic_key: dict[str, RankedEnglishCandidate] = {}
     for semantic_key, equivalent in grouped.items():
-        key, representative, label = min(equivalent, key=lambda result: result[0])
+        selected = min(equivalent, key=lambda result: result.rank)
         representative = replace(
-            representative,
-            source_record_id=0,
-            romaji_exact=any(result[1].romaji_exact for result in equivalent),
-            romaji_prefix=any(result[1].romaji_prefix for result in equivalent),
-            romaji_contains=any(result[1].romaji_contains for result in equivalent),
+            selected.candidate,
+            source_record_id=None,
+            romaji_exact=any(result.candidate.romaji_exact for result in equivalent),
+            romaji_prefix=any(result.candidate.romaji_prefix for result in equivalent),
+            romaji_contains=any(result.candidate.romaji_contains for result in equivalent),
         )
-        best_by_semantic_key[semantic_key] = (key, representative, label)
-    return sorted(best_by_semantic_key.values(), key=lambda result: result[0])
+        merged_evidence = EnglishEvidence(
+            gloss_matches=tuple(
+                sorted(
+                    {match for result in equivalent for match in result.evidence.gloss_matches},
+                    key=lambda match: match.key,
+                )
+            ),
+            romaji_relations=tuple(
+                sorted(
+                    {
+                        relation
+                        for result in equivalent
+                        for relation in result.evidence.romaji_relations
+                    }
+                )
+            ),
+            priority_profiles=tuple(
+                sorted(
+                    {
+                        profile
+                        for result in equivalent
+                        for profile in result.evidence.priority_profiles
+                    }
+                )
+            ),
+        )
+        best_by_semantic_key[semantic_key] = RankedEnglishCandidate(
+            english_rank_key(representative, merged_evidence),
+            representative,
+            merged_evidence,
+        )
+    return sorted(best_by_semantic_key.values(), key=lambda result: result.rank)
 
 
 def rank_japanese(
     database: sqlite3.Connection, query: str, raw_entries: dict[int, RawEntry]
-) -> list[tuple[tuple[object, ...], Candidate, str]]:
+) -> list[RankedJapaneseCandidate]:
     rows = database.execute(
         """
         SELECT e.source_record_id, e.headword, e.reading, e.meanings_json,
@@ -349,15 +668,17 @@ def rank_japanese(
         """,
         ("%" + query + "%",),
     )
-    best_by_entry: dict[int, tuple[tuple[object, ...], Candidate, str]] = {}
+    candidates_by_entry: dict[int, Candidate] = {}
+    matches_by_entry: dict[int, list[FormMatch]] = {}
     for row in rows:
         candidate = candidate_from_row(row)
+        identifier = row["source_record_id"]
+        candidates_by_entry[identifier] = candidate
         exact = row["form"] == query
         prefix = row["form"].startswith(query)
         kind = row["kind"]
-        relation = (0 if kind == 0 else 1) + (0 if exact else 2 if prefix else 4)
-        label = ("written" if kind == 0 else "reading") + (
-            "Exact" if exact else "Prefix" if prefix else "Contains"
+        relation = FormRelation(
+            (0 if kind == 0 else 1) + (0 if exact else 2 if prefix else 4)
         )
         raw = raw_entries[row["source_record_id"]]
         tags = (
@@ -365,51 +686,99 @@ def rank_japanese(
             if kind == 0
             else raw.reading_priorities.get(normalized(row["form"]), ())
         )
-        sense_breadth = len(json.loads(candidate.senses_json))
-        key = (
-            relation,
-            priority_profile(tags),
-            -sense_breadth,
-            len(candidate.headword),
-            candidate.semantic_key,
+        profile = priority_profile(tags)
+        matches_by_entry.setdefault(identifier, []).append(
+            FormMatch(
+                FormMatchKey(relation, profile, normalized(row["form"])),
+                relation,
+                profile,
+            )
         )
-        result = (key, candidate, label)
-        if row["source_record_id"] not in best_by_entry or key < best_by_entry[row["source_record_id"]][0]:
-            best_by_entry[row["source_record_id"]] = result
-    best_by_semantic_key: dict[
-        str, tuple[tuple[object, ...], Candidate, str]
-    ] = {}
+    best_by_entry: dict[int, RankedJapaneseCandidate] = {}
+    for identifier, matches in matches_by_entry.items():
+        candidate = candidates_by_entry[identifier]
+        evidence = JapaneseEvidence(tuple(sorted(set(matches), key=lambda match: match.key)))
+        selected_form = evidence.selected_form
+        best_by_entry[identifier] = RankedJapaneseCandidate(
+            JapaneseRankKey(
+                relation=selected_form.relation,
+                priority_profile=selected_form.priority_profile,
+                sense_breadth_rank=-len(json.loads(candidate.senses_json)),
+                headword_length=len(candidate.headword),
+                semantic_fingerprint=candidate.semantic_key,
+            ),
+            candidate,
+            evidence,
+        )
+    best_by_semantic_key: dict[str, RankedJapaneseCandidate] = {}
     for result in best_by_entry.values():
-        semantic_key = result[1].semantic_key
+        semantic_key = result.candidate.semantic_key
         current = best_by_semantic_key.get(semantic_key)
-        if current is None or result[0] < current[0]:
+        if current is None:
             best_by_semantic_key[semantic_key] = result
-    return sorted(best_by_semantic_key.values(), key=lambda result: result[0])
+            continue
+        merged_evidence = JapaneseEvidence(
+            tuple(
+                sorted(
+                    set(current.evidence.form_matches + result.evidence.form_matches),
+                    key=lambda match: match.key,
+                )
+            )
+        )
+        selected = min((current, result), key=lambda value: value.rank)
+        selected_form = merged_evidence.selected_form
+        candidate = replace(selected.candidate, source_record_id=None)
+        best_by_semantic_key[semantic_key] = RankedJapaneseCandidate(
+            JapaneseRankKey(
+                relation=selected_form.relation,
+                priority_profile=selected_form.priority_profile,
+                sense_breadth_rank=-len(json.loads(candidate.senses_json)),
+                headword_length=len(candidate.headword),
+                semantic_fingerprint=candidate.semantic_key,
+            ),
+            candidate,
+            merged_evidence,
+        )
+    return sorted(best_by_semantic_key.values(), key=lambda result: result.rank)
 
 
 def select_ascii(
     database: sqlite3.Connection, query: str, raw_entries: dict[int, RawEntry]
-) -> tuple[Candidate, str]:
+) -> Selection:
     direct = rank_ascii(query, ascii_candidates(database, query), raw_entries)
     has_direct_exact_or_prefix = any(
-        candidate.romaji_exact or candidate.romaji_prefix or key[0][0] == 0
-        for key, candidate, _ in direct
+        result.candidate.romaji_exact
+        or result.candidate.romaji_prefix
+        or result.evidence.lane is EvidenceLane.STRONG_GLOSS
+        for result in direct
     )
     if not has_direct_exact_or_prefix:
-        deinflected: list[tuple[Candidate, str]] = []
+        deinflected: list[Selection] = []
         seen: set[str] = set()
         for derived in deinflected_candidates(query):
             ranked = rank_ascii(derived, ascii_candidates(database, derived), raw_entries)
-            for _, candidate, label in ranked[:3]:
+            for result in ranked[:3]:
+                candidate = result.candidate
                 if candidate.semantic_key not in seen:
                     seen.add(candidate.semantic_key)
-                    deinflected.append((candidate, f"deinflected:{derived}:{label}"))
+                    deinflected.append(
+                        Selection(
+                            candidate,
+                            SelectionEvidence(
+                                english=result.evidence,
+                                deinflected_query=derived,
+                            ),
+                        )
+                    )
         if deinflected:
             return deinflected[0]
     if not direct:
         raise RuntimeError(f"no candidates for {query}")
-    _, candidate, label = direct[0]
-    return candidate, label
+    selected = direct[0]
+    return Selection(
+        selected.candidate,
+        SelectionEvidence(english=selected.evidence),
+    )
 
 
 def main() -> None:
@@ -438,14 +807,18 @@ def main() -> None:
 
     rows = []
     for query, expected in ASCII_FIXTURES.items():
-        selected, evidence = select_ascii(database, query, raw_entries)
+        selection = select_ascii(database, query, raw_entries)
+        selected = selection.candidate
+        evidence = selection.evidence
         actual = (selected.headword, selected.reading)
         rows.append((query, expected, actual, evidence))
     for query, expected in JAPANESE_FIXTURES.items():
         ranked = rank_japanese(database, query, raw_entries)
         if not ranked:
             raise RuntimeError(f"no candidates for {query}")
-        _, selected, evidence = ranked[0]
+        selected_result = ranked[0]
+        selected = selected_result.candidate
+        evidence = SelectionEvidence(japanese=selected_result.evidence)
         actual = (selected.headword, selected.reading)
         rows.append((query, expected, actual, evidence))
 
@@ -460,7 +833,7 @@ def main() -> None:
                     "query": query,
                     "expected": {"headword": expected[0], "reading": expected[1]},
                     "actual": {"headword": actual[0], "reading": actual[1]},
-                    "evidence": evidence,
+                    "evidence": evidence.as_json(),
                 },
                 ensure_ascii=False,
                 sort_keys=True,
