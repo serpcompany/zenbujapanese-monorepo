@@ -322,7 +322,7 @@ sed -E 's#^[Hh][Tt][Tt][Pp][Ss]?://([^/:?#]+).*#\1#' "$url_results" \
   | sed -E 's/[^a-z0-9.-].*$//; s/\.[0-9]+$//; s/\.$//' \
   | sed '/^$/d' \
   | LC_ALL=C sort -u >"${scratch_dir}/url-hosts"
-allowed_url_hosts='^(clrd\.ninjal\.ac\.jp|creativecommons\.org|github\.com|kanjivg\.tagaini\.net|tatoeba\.org|www\.apple\.com|www\.edrdg\.org|www\.example\.com|www\.jpgarden\.com|zenbujapanese\.com)$'
+allowed_url_hosts='^(clrd\.ninjal\.ac\.jp|creativecommons\.org|downloads\.tatoeba\.org|github\.com|kanjivg\.tagaini\.net|tatoeba\.org|www\.apple\.com|www\.edrdg\.org|www\.example\.com|www\.jpgarden\.com|zenbujapanese\.com)$'
 set +e
 rg -v -- "$allowed_url_hosts" "${scratch_dir}/url-hosts" >"${scratch_dir}/unexpected-url-hosts"
 host_scan_status=$?
