@@ -84,6 +84,26 @@ def validate(
         }
         if transform.get("semantic_equivalence") != actual_semantic_equivalence:
             failures.append("semantic equivalence normalization")
+        expected_search_index = {
+            "schema": "zenbu.dictionary-search-index.v1",
+            "technology": "sqlite-fts4",
+            "gloss_rows": EXPECTED_COUNTS["gloss_atoms"],
+            "form_rows": transform.get("normalized_forms"),
+        }
+        if transform.get("dictionary_search_index") != expected_search_index:
+            failures.append("manifest dictionary search index")
+        search_tables = {
+            row[0]: row[1]
+            for row in database.execute(
+                "SELECT name, sql FROM sqlite_master WHERE name IN ('dictionary_gloss_fts', 'dictionary_form_fts')"
+            )
+        }
+        if set(search_tables) != {"dictionary_gloss_fts", "dictionary_form_fts"}:
+            failures.append("dictionary search FTS tables")
+        if "tokenize=porter" not in (search_tables.get("dictionary_gloss_fts") or ""):
+            failures.append("dictionary gloss FTS tokenizer")
+        if "tokenize=simple" not in (search_tables.get("dictionary_form_fts") or ""):
+            failures.append("dictionary form FTS tokenizer")
         metadata = dict(database.execute("SELECT key, value FROM metadata"))
         if json.loads(metadata.get("dictionary_ranking_policy", "null")) != "dictionary-best-match-v1":
             failures.append("database policy metadata")
@@ -93,6 +113,8 @@ def validate(
             failures.append("database evidence metadata")
         if json.loads(metadata.get("dictionary_ranking_mapping_sha256", "null")) != expected_mapping:
             failures.append("dictionary ranking mapping database metadata")
+        if json.loads(metadata.get("dictionary_search_index", "null")) != expected_search_index:
+            failures.append("dictionary search index database metadata")
         for key in TOOL_FILES:
             if json.loads(metadata.get(key, "null")) != transform.get(key):
                 failures.append(f"{key} database metadata")

@@ -4,6 +4,19 @@ import XCTest
 @testable import SearchExperience
 
 final class ExampleSentenceRetrievalTests: XCTestCase {
+  func testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus() async throws {
+    let client = LookupClient.freshBundledDatabase()
+    let clock = ContinuousClock()
+    let start = clock.now
+
+    let results = try await client.search(SearchQuery("the"))
+    let elapsed = start.duration(to: clock.now)
+
+    XCTAssertFalse(results.isEmpty)
+    print("COMMON_ENGLISH_LOOKUP_LATENCY \(elapsed)")
+    XCTAssertLessThan(elapsed, .seconds(2))
+  }
+
   func testASCIIEntryMatchingFormDoesNotUseGlossOnlyDictionaryRanking() async throws {
     let glossOnly = try await LookupClient.live.entryMatchingForm("light")
     XCTAssertNil(glossOnly)

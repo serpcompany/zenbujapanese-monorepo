@@ -8,6 +8,7 @@ struct DictionaryRankingArtifactContract: Decodable, Equatable {
   let mappingSHA256: String
   let evidenceCounts: EvidenceCounts
   let semanticEquivalence: SemanticEquivalence
+  let searchIndex: SearchIndex
   let toolSHA256: ToolSHA256
 
   struct EvidenceCounts: Decodable, Equatable {
@@ -45,6 +46,20 @@ struct DictionaryRankingArtifactContract: Decodable, Equatable {
       case normalization
       case duplicateGroups = "duplicate_groups"
       case sourceRows = "source_rows"
+    }
+  }
+
+  struct SearchIndex: Decodable, Equatable {
+    let schema: String
+    let technology: String
+    let glossRows: Int
+    let formRows: Int
+
+    enum CodingKeys: String, CodingKey {
+      case schema
+      case technology
+      case glossRows = "gloss_rows"
+      case formRows = "form_rows"
     }
   }
 

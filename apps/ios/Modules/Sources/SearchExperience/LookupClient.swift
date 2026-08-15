@@ -1,4 +1,3 @@
-import CryptoKit
 import Foundation
 import SQLite3
 
@@ -234,14 +233,19 @@ private actor LanguageReferenceData {
     _ query: SearchQuery,
     exactFormOnly: Bool = false
   ) throws -> [RankedDictionaryEntry] {
+    guard exactFormOnly || Self.hasSearchTerms(query.value) else { return [] }
     let glossMatches = exactFormOnly
-      ? [:] : try glossEvidence(query: query, restrictions: try senseRestrictions())
+      ? [:] : try glossEvidence(
+        query: query,
+        matchExpression: Self.ftsPhrase(query.value),
+        restrictions: try senseRestrictions()
+      )
     let romajiMatches = try romajiEvidence(query: query, exactFormOnly: exactFormOnly)
     let statement = try prepare(exactFormOnly ? Self.exactASCIICandidateSQL : Self.asciiCandidateSQL)
     defer { sqlite3_finalize(statement) }
-    bind(query.value, at: 1, to: statement)
+    bind(exactFormOnly ? query.value : Self.ftsPhrase(query.value), at: 1, to: statement)
     if !exactFormOnly {
-      bind(query.value, at: 2, to: statement)
+      bind(Self.ftsPrefix(query.value), at: 2, to: statement)
     }
 
     var ranked: [(RankedDictionaryEntry, EnglishDictionaryRank)] = []
@@ -307,11 +311,12 @@ private actor LanguageReferenceData {
 
   private func glossEvidence(
     query: SearchQuery,
+    matchExpression: String,
     restrictions: [SenseRestrictionKey: Set<String>]
   ) throws -> [LanguageReferenceID: [DictionaryMatch.GlossEvidence]] {
     let glossStatement = try prepare(Self.glossEvidenceSQL)
     defer { sqlite3_finalize(glossStatement) }
-    bind(query.value, at: 1, to: glossStatement)
+    bind(matchExpression, at: 1, to: glossStatement)
     var result: [LanguageReferenceID: [DictionaryMatch.GlossEvidence]] = [:]
     while try checkedSQLiteStep(glossStatement) == .row {
       let entryID = LanguageReferenceID(rawValue: Self.string(column: 0, statement: glossStatement))
@@ -351,7 +356,11 @@ private actor LanguageReferenceData {
       exactFormOnly ? Self.exactRomajiEvidenceSQL : Self.romajiEvidenceSQL
     )
     defer { sqlite3_finalize(romajiStatement) }
-    bind(query.value, at: 1, to: romajiStatement)
+    bind(
+      exactFormOnly ? query.value : Self.ftsPrefix(query.value),
+      at: 1,
+      to: romajiStatement
+    )
     var result: [LanguageReferenceID: Set<DictionaryMatch.RomajiRelation>] = [:]
     while try checkedSQLiteStep(romajiStatement) == .row {
       let entryID = LanguageReferenceID(rawValue: Self.string(column: 0, statement: romajiStatement))
@@ -500,8 +509,7 @@ private actor LanguageReferenceData {
     databaseURL: URL
   ) throws {
     let contract = try DictionaryRankingArtifactContract.bundled()
-    guard try fileSHA256(databaseURL) == contract.databaseSHA256,
-      (try FileManager.default.attributesOfItem(atPath: databaseURL.path)[.size] as? NSNumber)?.intValue
+    guard (try FileManager.default.attributesOfItem(atPath: databaseURL.path)[.size] as? NSNumber)?.intValue
         == contract.databaseBytes
     else {
       throw LookupDatabaseError.invalidDictionaryRankingMetadata
@@ -529,6 +537,13 @@ private actor LanguageReferenceData {
         key: "dictionary_ranking_evidence",
         from: actual
       ) == contract.evidenceCounts,
+      try decodedMetadata(
+        DictionaryRankingArtifactContract.SearchIndex.self,
+        key: "dictionary_search_index",
+        from: actual
+      ) == contract.searchIndex,
+      contract.searchIndex.schema == "zenbu.dictionary-search-index.v1",
+      contract.searchIndex.technology == "sqlite-fts4",
       contract.semanticEquivalence.normalization == "opaque-app-id-lexicographic-min-v1",
       contract.toolSHA256.metadata.allSatisfy({ key, expected in
         (try? decodedMetadataString(key, from: actual)) == expected
@@ -568,6 +583,25 @@ private actor LanguageReferenceData {
         throw LookupDatabaseError.invalidDictionaryRankingMetadata
       }
     }
+    for (table, expectedCount) in [
+      ("dictionary_gloss_fts", contract.searchIndex.glossRows),
+      ("dictionary_form_fts", contract.searchIndex.formRows),
+    ] {
+      var countStatement: OpaquePointer?
+      guard sqlite3_prepare_v2(database, "SELECT count(*) FROM \(table)", -1, &countStatement, nil)
+        == SQLITE_OK,
+        let countStatement
+      else {
+        throw LookupDatabaseError.invalidDictionaryRankingMetadata
+      }
+      defer { sqlite3_finalize(countStatement) }
+      guard sqlite3_step(countStatement) == SQLITE_ROW,
+        sqlite3_column_int64(countStatement, 0) == Int64(expectedCount),
+        sqlite3_step(countStatement) == SQLITE_DONE
+      else {
+        throw LookupDatabaseError.invalidDictionaryRankingMetadata
+      }
+    }
   }
 
   private static func decodedMetadataString(
@@ -586,16 +620,6 @@ private actor LanguageReferenceData {
       throw LookupDatabaseError.invalidDictionaryRankingMetadata
     }
     return try JSONDecoder().decode(type, from: Data(value.utf8))
-  }
-
-  private static func fileSHA256(_ url: URL) throws -> String {
-    let file = try FileHandle(forReadingFrom: url)
-    defer { try? file.close() }
-    var digest = SHA256()
-    while let chunk = try file.read(upToCount: 1_048_576), !chunk.isEmpty {
-      digest.update(data: chunk)
-    }
-    return digest.finalize().map { String(format: "%02x", $0) }.joined()
   }
 
   private func bind(_ value: String, at index: Int32, to statement: OpaquePointer) {
@@ -667,6 +691,21 @@ private actor LanguageReferenceData {
       return .glossToken
     }
     return nil
+  }
+
+  private static func hasSearchTerms(_ value: String) -> Bool {
+    value.unicodeScalars.contains { CharacterSet.alphanumerics.contains($0) }
+  }
+
+  private static func ftsPhrase(_ value: String) -> String {
+    "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
+  }
+
+  private static func ftsPrefix(_ value: String) -> String {
+    guard value.unicodeScalars.allSatisfy({ CharacterSet.alphanumerics.contains($0) }) else {
+      return ftsPhrase(value)
+    }
+    return value + "*"
   }
 
   private static func glossEvidencePrecedes(
@@ -746,11 +785,15 @@ private actor LanguageReferenceData {
 
   private static let asciiCandidateSQL = """
     WITH candidates AS (
-      SELECT entry_id FROM gloss_atoms
-      WHERE instr(normalized_text, ?) > 0
+      SELECT g.entry_id
+      FROM dictionary_gloss_fts x
+      JOIN gloss_atoms g ON g.rowid = x.docid
+      WHERE dictionary_gloss_fts MATCH ?
       UNION
-      SELECT entry_id FROM forms
-      WHERE kind = \(SearchFormKind.romaji.rawValue) AND instr(form, ?) > 0
+      SELECT f.entry_id
+      FROM dictionary_form_fts x
+      JOIN forms f ON f.rowid = x.docid
+      WHERE dictionary_form_fts MATCH ? AND f.kind = \(SearchFormKind.romaji.rawValue)
     )
     SELECT \(selectedColumns), p.primary_mask, p.secondary_mask, p.news_frequency_band
     FROM candidates c
@@ -823,15 +866,18 @@ private actor LanguageReferenceData {
   private static let glossEvidenceSQL = """
     SELECT lower(hex(g.entry_id)), g.sense_order, g.gloss_order, g.text,
       s.parts_of_speech_json, e.headword, e.reading
-    FROM gloss_atoms g
+    FROM dictionary_gloss_fts x
+    JOIN gloss_atoms g ON g.rowid = x.docid
     JOIN canonical_senses s ON s.entry_id = g.entry_id AND s.sense_order = g.sense_order
     JOIN entries e ON e.id = g.entry_id
-    WHERE instr(g.normalized_text, ?) > 0
+    WHERE dictionary_gloss_fts MATCH ?
     """
 
   private static let romajiEvidenceSQL = """
-    SELECT lower(hex(entry_id)), form FROM forms
-    WHERE kind = \(SearchFormKind.romaji.rawValue) AND instr(form, ?) > 0
+    SELECT lower(hex(f.entry_id)), f.form
+    FROM dictionary_form_fts x
+    JOIN forms f ON f.rowid = x.docid
+    WHERE dictionary_form_fts MATCH ? AND f.kind = \(SearchFormKind.romaji.rawValue)
     """
 
   private static let exactRomajiEvidenceSQL = """

@@ -119,6 +119,12 @@ struct SearchView: View {
     }
     .background(ZenbuTheme.background)
     .toolbar(.hidden, for: .navigationBar)
+    .onChange(of: query) { _, _ in
+      results = .empty
+      exampleCount = 0
+      hasCompletedSearch = false
+      searchFailed = false
+    }
     .task(id: SearchTaskID(query: query, retryID: retryID)) {
       hasCompletedSearch = false
       searchFailed = false
@@ -130,11 +136,15 @@ struct SearchView: View {
       do {
         try await Task.sleep(for: .milliseconds(100))
         guard !Task.isCancelled else { return }
+        results = .empty
+        exampleCount = 0
         async let searchedResults = lookupClient.search(searchQuery)
         async let searchedExampleCount = exampleSentenceClient.count(searchQuery)
         let foundResults = try await searchedResults
+        try Task.checkCancellation()
         results = foundResults
         let directExampleCount = (try? await searchedExampleCount) ?? 0
+        try Task.checkCancellation()
         if foundResults.usesPrimaryEntryExamples,
           let entry = foundResults.primaryEntry(for: searchQuery)
         {
@@ -142,6 +152,7 @@ struct SearchView: View {
         } else {
           exampleCount = directExampleCount
         }
+        try Task.checkCancellation()
         hasCompletedSearch = true
       } catch is CancellationError {
         return

@@ -198,6 +198,8 @@ private actor ExampleSentenceData {
           reading: reading
         )
       }
+    } catch is CancellationError {
+      throw CancellationError()
     } catch let error as ExampleSentenceRetrievalError {
       throw error
     } catch {
@@ -446,32 +448,46 @@ private actor ExampleSentenceData {
   private func validateBaseCorpus() throws {
     guard !baseIsValidated else { return }
     let database = try openDatabase()
-    let integrity = try scalarString("PRAGMA integrity_check(example_sentences)")
-    guard integrity == "ok" else { throw unavailable(.invalidBaseCorpus) }
-    let corpusCount = try scalarInt("SELECT count(*) FROM example_sentences")
-    let recordedCount = try scalarInt(
-      "SELECT CAST(value AS INTEGER) FROM metadata WHERE key = 'example_sentences'"
-    )
-    guard corpusCount == recordedCount else { throw unavailable(.invalidBaseCorpus) }
-    let invalidPairIDs = try scalarInt(
-      """
-      SELECT count(*) FROM example_sentences
-      WHERE typeof(id) != 'blob' OR length(id) != 16
-      """
-    )
-    guard invalidPairIDs == 0 else { throw unavailable(.invalidBaseCorpus) }
-    let missingProvenance = try scalarInt(
-      """
-      SELECT count(*) FROM (
-        SELECT e.id FROM example_sentences e
-        LEFT JOIN example_sentence_provenance p ON p.pair_id = e.id
-        WHERE p.pair_id IS NULL LIMIT 1
-      )
-      """
-    )
-    guard missingProvenance == 0 else { throw unavailable(.invalidBaseCorpus) }
     guard sqlite3_db_readonly(database, "main") == 1 else {
       throw unavailable(.invalidBaseCorpus)
+    }
+    if databaseURL == nil {
+      guard Int(try metadataValue("example_sentences")) ?? 0 > 0 else {
+        throw unavailable(.invalidBaseCorpus)
+      }
+      let identityProbe = try prepare(
+        "SELECT typeof(id), length(id) FROM example_sentences LIMIT 1"
+      )
+      defer { sqlite3_finalize(identityProbe) }
+      guard try checkedSQLiteStep(identityProbe) == .row,
+        Self.string(column: 0, statement: identityProbe) == "blob",
+        sqlite3_column_int(identityProbe, 1) == ExampleSentenceID.encodedByteCount
+      else { throw unavailable(.invalidBaseCorpus) }
+    } else {
+      let integrity = try scalarString("PRAGMA integrity_check(example_sentences)")
+      guard integrity == "ok" else { throw unavailable(.invalidBaseCorpus) }
+      let corpusCount = try scalarInt("SELECT count(*) FROM example_sentences")
+      let recordedCount = try scalarInt(
+        "SELECT CAST(value AS INTEGER) FROM metadata WHERE key = 'example_sentences'"
+      )
+      guard corpusCount == recordedCount else { throw unavailable(.invalidBaseCorpus) }
+      let invalidPairIDs = try scalarInt(
+        """
+        SELECT count(*) FROM example_sentences
+        WHERE typeof(id) != 'blob' OR length(id) != 16
+        """
+      )
+      guard invalidPairIDs == 0 else { throw unavailable(.invalidBaseCorpus) }
+      let missingProvenance = try scalarInt(
+        """
+        SELECT count(*) FROM (
+          SELECT e.id FROM example_sentences e
+          LEFT JOIN example_sentence_provenance p ON p.pair_id = e.id
+          WHERE p.pair_id IS NULL LIMIT 1
+        )
+        """
+      )
+      guard missingProvenance == 0 else { throw unavailable(.invalidBaseCorpus) }
     }
     baseIsValidated = true
   }
@@ -500,42 +516,47 @@ private actor ExampleSentenceData {
         throw unavailable(.invalidIndexMetadata)
       }
     }
-    let corpusCount = try scalarInt("SELECT count(*) FROM example_sentences")
-    let provenanceCount = try scalarInt("SELECT count(*) FROM example_sentence_provenance")
+    let recordedCorpusCount = Int(try metadataValue("example_sentences")) ?? 0
     let recordedProvenanceCount = try scalarInt(
       "SELECT CAST(value AS INTEGER) FROM metadata "
         + "WHERE key = 'retrieval_provenance_row_count'"
     )
-    guard provenanceCount >= corpusCount, provenanceCount == recordedProvenanceCount else {
+    guard recordedCorpusCount > 0, recordedProvenanceCount >= recordedCorpusCount else {
       throw unavailable(.invalidIndexMetadata)
     }
-    let counts = try [
-      scalarInt("SELECT count(*) FROM \(Self.mapTable)"),
-      scalarInt("SELECT count(*) FROM \(Self.porterTable)"),
-      scalarInt("SELECT count(*) FROM \(Self.exactTable)"),
-      scalarInt(
-        "SELECT CAST(value AS INTEGER) FROM metadata WHERE key = 'retrieval_index_row_count'"
-      ),
-      scalarInt(
-        "SELECT CAST(value AS INTEGER) FROM metadata WHERE key = 'retrieval_exact_index_row_count'"
-      ),
+    let recordedIndexCounts = [
+      Int(try metadataValue("retrieval_index_row_count")) ?? 0,
+      Int(try metadataValue("retrieval_exact_index_row_count")) ?? 0,
     ]
-    guard counts.allSatisfy({ $0 == corpusCount }) else {
+    guard recordedIndexCounts.allSatisfy({ $0 == recordedCorpusCount }) else {
       throw unavailable(.invalidIndexMetadata)
     }
-    let missing = try scalarInt(
-      """
-      SELECT count(*) FROM (
-        SELECT e.id FROM example_sentences e
-        LEFT JOIN \(Self.mapTable) m ON m.pair_id = e.id
-        LEFT JOIN \(Self.porterTable) p ON p.docid = m.fts_rowid
-        LEFT JOIN \(Self.exactTable) x ON x.docid = m.fts_rowid
-        WHERE m.pair_id IS NULL OR p.docid IS NULL OR x.docid IS NULL
-        LIMIT 1
+    if databaseURL != nil {
+      let corpusCount = try scalarInt("SELECT count(*) FROM example_sentences")
+      let provenanceCount = try scalarInt("SELECT count(*) FROM example_sentence_provenance")
+      let counts = try [
+        scalarInt("SELECT count(*) FROM \(Self.mapTable)"),
+        scalarInt("SELECT count(*) FROM \(Self.porterTable)"),
+        scalarInt("SELECT count(*) FROM \(Self.exactTable)"),
+      ]
+      guard corpusCount == recordedCorpusCount,
+        provenanceCount == recordedProvenanceCount,
+        counts.allSatisfy({ $0 == corpusCount })
+      else { throw unavailable(.invalidIndexMetadata) }
+      let missing = try scalarInt(
+        """
+        SELECT count(*) FROM (
+          SELECT e.id FROM example_sentences e
+          LEFT JOIN \(Self.mapTable) m ON m.pair_id = e.id
+          LEFT JOIN \(Self.porterTable) p ON p.docid = m.fts_rowid
+          LEFT JOIN \(Self.exactTable) x ON x.docid = m.fts_rowid
+          WHERE m.pair_id IS NULL OR p.docid IS NULL OR x.docid IS NULL
+          LIMIT 1
+        )
+        """
       )
-      """
-    )
-    guard missing == 0 else { throw unavailable(.invalidIndexMetadata) }
+      guard missing == 0 else { throw unavailable(.invalidIndexMetadata) }
+    }
     englishIndexIsValidated = true
   }
 

@@ -1642,6 +1642,39 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testHumanPacedMultiWordSearchReturnsFrozenSentenceResultsWithoutQueuedDelay() throws {
+    let app = launchApp()
+
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+
+    searchField.typeText("set")
+    XCTAssertTrue(app.staticTexts["セット"].waitForExistence(timeout: 3))
+    searchField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 3))
+
+    for character in "scared you" {
+      searchField.typeText(String(character))
+      usleep(150_000)
+    }
+    XCTAssertEqual(searchField.value as? String, "scared you")
+    let start = ContinuousClock.now
+
+    let examples = app.buttons["search.examples"]
+    let expectedResult = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "label == %@", "View 5 Example Sentences"),
+      object: examples
+    )
+    let appeared = XCTWaiter.wait(for: [expectedResult], timeout: 15) == .completed
+    let elapsed = start.duration(to: .now)
+    print("HUMAN_PACED_MULTI_WORD_FINAL_LATENCY \(elapsed)")
+    XCTAssertTrue(appeared)
+    XCTAssertEqual(examples.label, "View 5 Example Sentences")
+    XCTAssertLessThan(elapsed, .seconds(2))
+    XCTAssertFalse(app.buttons["result.e31152bffef387608184ec15e5ed6416"].isHittable)
+  }
+
+  @MainActor
   func testOrdinaryJapaneseResultOpensItsOwnLanguageReferenceData() throws {
     let app = launchApp()
 

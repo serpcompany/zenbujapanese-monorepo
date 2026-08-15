@@ -1,6 +1,6 @@
 {
-  "databaseBytes": 436514816,
-  "databaseSHA256": "b373cb0011b3877310642909849dbeb32983179bef47b63810bdb88574e50f4f",
+  "databaseBytes": 480985088,
+  "databaseSHA256": "f69d66155955e4b88f8b7501965dc05665bf5bd21a0199f02cb12467c3d0d092",
   "evidenceCounts": {
     "canonical_senses": 253020,
     "form_priority_profiles": 56127,
@@ -11,6 +11,12 @@
   "mappingSHA256": "3b4b6bacff31b3e68ed9990af073ff8303405de82addbfbd8c652726052923fd",
   "policy": "dictionary-best-match-v1",
   "schemaVersion": "zenbu.dictionary-ranking.v1",
+  "searchIndex": {
+    "form_rows": 752077,
+    "gloss_rows": 441826,
+    "schema": "zenbu.dictionary-search-index.v1",
+    "technology": "sqlite-fts4"
+  },
   "semanticEquivalence": {
     "duplicate_groups": 3,
     "normalization": "opaque-app-id-lexicographic-min-v1",
@@ -18,8 +24,8 @@
   },
   "toolSHA256": {
     "dictionary_ranking_adapter_sha256": "a6ec035fcb4188eb8a3668f19dffd1ffee37c6a3d478def8f883a6981140a3a8",
-    "dictionary_ranking_contract_sha256": "427b53137e72372a1fd5c54438ffc867f7f82e8c827baf0703bfce6cd6307795",
-    "import_tool_sha256": "4bbf12617f65dc78170a178b5032dd382f90d34f1cd358983ba19d55022e2889",
+    "dictionary_ranking_contract_sha256": "9d6777997e9b935562ae9c2b18e6d4e4ba58f056a0c07be6b0017032ec065596",
+    "import_tool_sha256": "0c132b722b4fabec46031bbad2559d7eb18a0c816d3ddb2efc69a1833c30f7f5",
     "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
     "tatoeba_adapter_sha256": "e04cf72c85a25a23b50bd893a370e53ee3a6c930536265d43ed6c881d331634e",
     "unidic_adapter_sha256": "f616738d7f45e3c75ece903d62ce2092923a6e68cf0925dafe030563c753985a"

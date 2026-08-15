@@ -27,6 +27,7 @@ def runtime_contract(transform: dict[str, Any]) -> dict[str, Any]:
         "mappingSHA256": transform["dictionary_ranking_mapping_sha256"],
         "evidenceCounts": transform["dictionary_ranking_evidence"],
         "semanticEquivalence": transform["semantic_equivalence"],
+        "searchIndex": transform["dictionary_search_index"],
         "toolSHA256": {key: transform[key] for key in TOOL_CHECKSUM_KEYS},
     }
 

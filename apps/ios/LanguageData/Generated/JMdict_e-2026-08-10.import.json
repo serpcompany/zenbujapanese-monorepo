@@ -41,6 +41,12 @@
       "reading_form_restrictions": 6201
     },
     "dictionary_ranking_mapping_sha256": "3b4b6bacff31b3e68ed9990af073ff8303405de82addbfbd8c652726052923fd",
+    "dictionary_search_index": {
+      "schema": "zenbu.dictionary-search-index.v1",
+      "technology": "sqlite-fts4",
+      "gloss_rows": 441826,
+      "form_rows": 752077
+    },
     "semantic_equivalence": {
       "normalization": "opaque-app-id-lexicographic-min-v1",
       "duplicate_groups": 3,
@@ -101,6 +107,7 @@
       "English-only gloss retention",
       "same-sense English gloss grouping with source sense order retained",
       "individual English gloss atoms retained with canonical sense and gloss order",
+      "SQLite FTS4 selects normalized gloss and romaji-form candidates before app-owned evidence validation and ranking",
       "sense POS and displayed written/reading applicability retained as typed app-owned evidence",
       "complete form-scoped priority profiles normalized to app-owned masks and optional news-frequency band",
       "provenance-free semantic fingerprint includes all display forms, meanings, senses, applicability, and gloss atom boundaries",
@@ -197,16 +204,16 @@
       "decision_comment_url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/140#issuecomment-5303558635",
       "statement": "Preserve the full current example-sentence experience for version 1.0, retain all available attribution and not-supplied evidence, disclose the known uncertainty, and do not represent this owner decision as independent legal advice."
     },
-    "example_transform_sha256": "f1c8c5918d27efbacfab94308c32186e456c7dc3a8121ab650bd06ec228a4d64",
+    "example_transform_sha256": "a0619cd60f043bd1abfc6ca36015d572974d77ba4c3f6b301d45a9b16fb52234",
     "relationship_source_resource_id": "zenbu-word-relationships-v1",
     "relationship_source_sha256": "2c483c933f5a42baad194db9a45c1d6251e09ebcb2a40c6475ca3d984ea2dd38",
-    "import_tool_sha256": "4bbf12617f65dc78170a178b5032dd382f90d34f1cd358983ba19d55022e2889",
+    "import_tool_sha256": "0c132b722b4fabec46031bbad2559d7eb18a0c816d3ddb2efc69a1833c30f7f5",
     "dictionary_ranking_adapter_sha256": "a6ec035fcb4188eb8a3668f19dffd1ffee37c6a3d478def8f883a6981140a3a8",
-    "dictionary_ranking_contract_sha256": "427b53137e72372a1fd5c54438ffc867f7f82e8c827baf0703bfce6cd6307795",
+    "dictionary_ranking_contract_sha256": "9d6777997e9b935562ae9c2b18e6d4e4ba58f056a0c07be6b0017032ec065596",
     "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
     "unidic_adapter_sha256": "f616738d7f45e3c75ece903d62ce2092923a6e68cf0925dafe030563c753985a",
     "tatoeba_adapter_sha256": "e04cf72c85a25a23b50bd893a370e53ee3a6c930536265d43ed6c881d331634e",
-    "database_sha256": "b373cb0011b3877310642909849dbeb32983179bef47b63810bdb88574e50f4f",
-    "database_bytes": 436514816
+    "database_sha256": "f69d66155955e4b88f8b7501965dc05665bf5bd21a0199f02cb12467c3d0d092",
+    "database_bytes": 480985088
   }
 }

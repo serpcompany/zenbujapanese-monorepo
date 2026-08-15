@@ -348,7 +348,7 @@ def create_schema(database: sqlite3.Connection) -> None:
           text TEXT NOT NULL,
           normalized_text TEXT NOT NULL,
           PRIMARY KEY(entry_id, sense_order, gloss_order)
-        ) WITHOUT ROWID;
+        );
         CREATE TABLE reading_form_restrictions (
           entry_id BLOB NOT NULL REFERENCES entries(id),
           reading TEXT NOT NULL,
@@ -731,6 +731,32 @@ def import_snapshot(
         if actual_counts != expected_counts:
             raise ValueError(f"dictionary ranking evidence count mismatch: {actual_counts}")
 
+        database.executescript(
+            """
+            CREATE VIRTUAL TABLE dictionary_gloss_fts USING fts4(
+              normalized_text,
+              content='gloss_atoms',
+              tokenize=porter
+            );
+            INSERT INTO dictionary_gloss_fts(docid, normalized_text)
+            SELECT rowid, normalized_text FROM gloss_atoms ORDER BY rowid;
+
+            CREATE VIRTUAL TABLE dictionary_form_fts USING fts4(
+              form,
+              content='forms',
+              tokenize=simple
+            );
+            INSERT INTO dictionary_form_fts(docid, form)
+            SELECT rowid, form FROM forms ORDER BY rowid;
+            """
+        )
+        dictionary_search_index = {
+            "schema": "zenbu.dictionary-search-index.v1",
+            "technology": "sqlite-fts4",
+            "gloss_rows": gloss_atom_count,
+            "form_rows": form_count,
+        }
+
         note_identity_groups: dict[str, list[dict[str, object]]] = {}
         for record in entry_records:
             note_identity_groups.setdefault(word_note_identity(record), []).append(record)
@@ -878,6 +904,7 @@ def import_snapshot(
             "dictionary_ranking_schema_version": "zenbu.dictionary-ranking.v1",
             "dictionary_ranking_evidence": actual_counts,
             "dictionary_ranking_mapping_sha256": dictionary_ranking_mapping,
+            "dictionary_search_index": dictionary_search_index,
             "semantic_equivalence": {
                 "normalization": "opaque-app-id-lexicographic-min-v1",
                 "duplicate_groups": len(semantic_equivalence_group_sizes),
@@ -916,6 +943,7 @@ def import_snapshot(
                 "English-only gloss retention",
                 "same-sense English gloss grouping with source sense order retained",
                 "individual English gloss atoms retained with canonical sense and gloss order",
+                "SQLite FTS4 selects normalized gloss and romaji-form candidates before app-owned evidence validation and ranking",
                 "sense POS and displayed written/reading applicability retained as typed app-owned evidence",
                 "complete form-scoped priority profiles normalized to app-owned masks and optional news-frequency band",
                 "provenance-free semantic fingerprint includes all display forms, meanings, senses, applicability, and gloss atom boundaries",
