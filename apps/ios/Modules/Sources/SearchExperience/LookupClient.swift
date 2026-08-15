@@ -74,7 +74,7 @@ private actor LanguageReferenceData {
   private var searchCacheOrder: [SearchQuery] = []
   private let databaseURL: URL?
   private let validatesBundledArtifact: Bool
-  private let romajiRefinementPolicy = RomajiRefinementPolicy.captured
+  private let literalSearchQueryPolicy = LiteralSearchQueryPolicy.referenceCompatible
   private let japaneseTextAnalysis = JapaneseTextAnalysisClient.characterFallback
 
   init(databaseURL: URL? = nil, validatesBundledArtifact: Bool = true) {
@@ -100,15 +100,22 @@ private actor LanguageReferenceData {
   }
 
   private func searchUncached(_ query: SearchQuery) throws -> LookupSearchResults {
-    if let refinement = romajiRefinementPolicy.refinement(for: query) {
-      let refinedResults = try searchOnce(refinement.japaneseReading)
-      let literalResults = try searchLiteralEnglish(refinement.literalEnglishQuery)
+    if query.isASCII,
+      let japaneseReading = try rankedEnglish(query, exactFormOnly: true).first?.entry.reading
+    {
+      let refinement = SearchQuery(japaneseReading)
+      let refinedResults = try searchOnce(refinement)
+      let literalQuery = literalSearchQueryPolicy.literalQuery(for: query)
+      var literalResults = try searchLiteralEnglish(literalQuery)
       if !refinedResults.isEmpty, !literalResults.isEmpty {
-        return LookupSearchResults(
-          best: literalResults.best,
-          additional: literalResults.additional,
-          readingRefinement: SearchRefinement(query: refinement.japaneseReading)
-        )
+        if let exactFormEntry = try entry(matchingForm: query.value),
+          (literalResults.best + literalResults.additional).contains(where: {
+            $0.id == exactFormEntry.id
+          })
+        {
+          literalResults = literalResults.usingPrimaryEntryExamples()
+        }
+        return literalResults.offeringReadingRefinement(refinement)
       }
     }
 

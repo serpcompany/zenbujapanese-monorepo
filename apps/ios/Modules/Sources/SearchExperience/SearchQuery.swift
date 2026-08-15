@@ -85,28 +85,14 @@ struct SearchQuery: Hashable, Sendable {
   }
 }
 
-struct RomajiRefinement: Hashable, Sendable {
-  let literalEnglishQuery: SearchQuery
-  let japaneseReading: SearchQuery
-}
-
-struct RomajiRefinementPolicy: Sendable {
-  static let captured = RomajiRefinementPolicy(
-    refinements: [
-      SearchQuery("mondai"): RomajiRefinement(
-        literalEnglishQuery: SearchQuery("monday"),
-        japaneseReading: SearchQuery("もんだい")
-      ),
-      SearchQuery("nihon"): RomajiRefinement(
-        literalEnglishQuery: SearchQuery("nihon"),
-        japaneseReading: SearchQuery("にほん")
-      ),
-    ]
+struct LiteralSearchQueryPolicy: Sendable {
+  static let referenceCompatible = LiteralSearchQueryPolicy(
+    replacements: [SearchQuery("mondai"): SearchQuery("monday")]
   )
 
-  private let refinements: [SearchQuery: RomajiRefinement]
+  private let replacements: [SearchQuery: SearchQuery]
 
-  func refinement(for query: SearchQuery) -> RomajiRefinement? {
-    refinements[query]
+  func literalQuery(for query: SearchQuery) -> SearchQuery {
+    replacements[query] ?? query
   }
 }

@@ -17,7 +17,7 @@ Both retained PNGs are distinct, non-failure 1320×2868 attachments with complet
 | Blocking journey | Accepted evidence | Public coverage |
 | --- | --- | --- |
 | JOURNEY-SEARCH-TEXT | [Search Text](../JOURNEY-SEARCH-TEXT-v3/README.md) | Japanese/English/live/blank/failure/retry/result navigation |
-| JOURNEY-SEARCH-ROMAJI-REFINEMENT | [Romaji refinement](../JOURNEY-SEARCH-ROMAJI-REFINEMENT/README.md) | literal ranking, captured refinement, direct and uncaptured classes |
+| JOURNEY-SEARCH-ROMAJI-REFINEMENT | [Romaji refinement](../JOURNEY-SEARCH-ROMAJI-REFINEMENT/README.md) | literal ranking, source-backed Japanese-reading option, selection and normalized results |
 | JOURNEY-RERUN-RECENT-SEARCH | [Recent Search](../JOURNEY-RERUN-RECENT-SEARCH/README.md) | create, rerun, delete, clear confirmation, relaunch |
 | JOURNEY-SEARCH-HANDWRITING | [Handwriting](../JOURNEY-SEARCH-HANDWRITING-v2/README.md) | recognition, candidates, composition, erase/recovery, history |
 | JOURNEY-SEARCH-RADICAL | [Radical Search](../JOURNEY-SEARCH-RADICAL-v2/README.md) | grouped grid, narrowing, candidate submission, sparse real data |

@@ -4,6 +4,19 @@ import XCTest
 @testable import SearchExperience
 
 final class ExampleSentenceRetrievalTests: XCTestCase {
+  func testRomajiQueryOffersSourceBackedJapaneseReading() async throws {
+    let results = try await LookupClient.freshBundledDatabase().search(SearchQuery("iru"))
+
+    XCTAssertEqual(results.readingRefinement?.query.value, "いる")
+  }
+
+  func testRomajiReadingOptionPreservesPrimaryEntryExamples() async throws {
+    let results = try await LookupClient.freshBundledDatabase().search(SearchQuery("taberu"))
+
+    XCTAssertEqual(results.readingRefinement?.query.value, "たべる")
+    XCTAssertTrue(results.usesPrimaryEntryExamples)
+  }
+
   func testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus() async throws {
     let client = LookupClient.freshBundledDatabase()
     let clock = ContinuousClock()

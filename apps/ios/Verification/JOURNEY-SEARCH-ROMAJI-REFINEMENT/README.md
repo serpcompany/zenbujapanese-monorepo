@@ -1,5 +1,7 @@
 # Romaji refinement journey evidence
 
+The current public regression boundary also covers source-backed `iru` → `いる`, `sushi` → `すし`, and `taberu` → `たべる` reading options. These are derived from exact normalized romaji forms in Language Reference Data rather than a query-specific reading list; `taberu` retains its Example Sentences action, and inflected forms without an exact reading continue through deinflection. The table below is the earlier retained screenshot set for the original two captured examples.
+
 Exported from the final passing `ZenbuJapaneseUITests` result bundle on the iPhone 17 Pro Max iOS 26.0.1 simulator. The complete suite passed 14 tests with 0 failures and 0 skips. `manifest.json` retains the test identifiers, device identifier, timestamps, and original attachment names for this journey.
 
 | Public seam | Settled screenshot |

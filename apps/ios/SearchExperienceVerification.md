@@ -99,11 +99,11 @@ retains eight settled screenshots from the exact 38/38 passing result bundle and
 names the private-algorithm provenance gap, environment/asset differences, and
 the uncaptured morphology boundary.
 
-## App-owned romaji refinement
+## Source-backed romaji refinement
 
-The dossier-captured ambiguity boundary is represented by an app-owned `RomajiRefinementPolicy`, separate from the SQLite adapter. It offers the observed `mondai` → `もんだい` and `nihon` → `にほん` actions, preserves literal Latin-script rankings until selection, then normalizes the public query and reranks against Language Reference Data. It does not claim a general transliteration boundary: `taberu` and `tabeta` continue to resolve directly, while an uncaptured query such as `sushi` receives no invented refinement action.
+An exact romaji form in Language Reference Data now offers its Dictionary-Ranked Japanese reading without a query-specific reading list. Literal Latin-script results remain visible until the learner selects the option; selection normalizes the public query and reranks it as Japanese. Public tests cover `iru` → `いる` and `sushi` → `すし` beyond the original `mondai` → `もんだい` and `nihon` → `にほん` captures. Exact `taberu` also offers `たべる` without losing its Example Sentences action, while inflected `tabeta` and `makasete` continue through deinflection.
 
-The public tests assert section-aware leading ranks (`月曜日`, then `問題` after selection; `日本` for the second captured class), rather than only checking that those rows exist somewhere. The [journey evidence record](Verification/JOURNEY-SEARCH-ROMAJI-REFINEMENT/README.md) names the simulator/reference difference and approved asset substitution. The separately owned Example Sentences control is now operable and verified below.
+The public tests assert the option, normalized query, Japanese result, section-aware rankings, and preserved downstream actions rather than merely checking that rows exist. The [journey evidence record](Verification/JOURNEY-SEARCH-ROMAJI-REFINEMENT/README.md) names the simulator/reference difference and approved asset substitution. The separately owned Example Sentences control is operable and verified below.
 
 ## App-owned Example Sentences
 

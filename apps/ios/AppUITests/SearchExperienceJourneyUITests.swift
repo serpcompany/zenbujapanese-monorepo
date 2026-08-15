@@ -1441,7 +1441,32 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  func testUncapturedRomajiDoesNotInventARefinementAction() throws {
+  func testIruOffersJapaneseReadingRefinement() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+    searchField.typeText("iru")
+
+    let refinement = app.buttons["search.reading-refinement"]
+    XCTAssertTrue(refinement.waitForExistence(timeout: 3))
+    XCTAssertEqual(refinement.label, "Search for Japanese reading いる")
+    refinement.tap()
+
+    let normalized = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "いる"),
+      object: searchField
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [normalized], timeout: 3), .completed)
+    XCTAssertFalse(refinement.exists)
+    let kanaVerb = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "いる, いる")
+    ).firstMatch
+    XCTAssertTrue(kanaVerb.waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  func testSourceBackedRomajiOffersJapaneseReadingBeyondCapturedExamples() throws {
     let app = launchApp()
 
     let searchField = app.textFields["search.field"]
@@ -1450,7 +1475,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     searchField.typeText("sushi")
 
     XCTAssertTrue(app.staticTexts["寿司"].waitForExistence(timeout: 3))
-    XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
+    let refinement = app.buttons["search.reading-refinement"]
+    XCTAssertTrue(refinement.waitForExistence(timeout: 3))
+    XCTAssertEqual(refinement.label, "Search for Japanese reading すし")
   }
 
   @MainActor
@@ -1622,7 +1649,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(examples.waitForExistence(timeout: 3))
     XCTAssertEqual(examples.label, "View 50+ Example Sentences")
     XCTAssertTrue(examples.isHittable)
-    XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
+    let refinement = app.buttons["search.reading-refinement"]
+    XCTAssertTrue(refinement.waitForExistence(timeout: 3))
+    XCTAssertEqual(refinement.label, "Search for Japanese reading たべる")
     recordScreenshot(named: "search-results-whitespace-normalized-taberu", app: app)
   }
 

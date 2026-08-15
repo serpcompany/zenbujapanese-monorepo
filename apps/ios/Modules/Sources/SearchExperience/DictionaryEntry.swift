@@ -244,6 +244,17 @@ struct LookupSearchResults: Sendable {
     )
   }
 
+  func offeringReadingRefinement(_ query: SearchQuery) -> LookupSearchResults {
+    LookupSearchResults(
+      best: best,
+      additional: additional,
+      presentation: presentation,
+      readingRefinement: SearchRefinement(query: query),
+      usesPrimaryEntryExamples: usesPrimaryEntryExamples,
+      hasExactOrPrefixMatch: hasExactOrPrefixMatch
+    )
+  }
+
   enum Presentation: Equatable, Sendable {
     case ranked
     case discoveredWords

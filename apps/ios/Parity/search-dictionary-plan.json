@@ -66,6 +66,7 @@
       "SearchExperienceJourneyUITests/testSameYamaShapeRecognizesAcrossNoncanonicalStrokeOrder()",
       "SearchExperienceJourneyUITests/testNewestRecentSearchRerunsItsResultSet()",
       "SearchExperienceJourneyUITests/testNihonOffersJapaneseReadingRefinement()",
+      "SearchExperienceJourneyUITests/testIruOffersJapaneseReadingRefinement()",
       "SearchExperienceJourneyUITests/testNoMatchKeepsQueryAboveBlankResultsState()",
       "SearchExperienceJourneyUITests/testOrdinaryJapaneseResultOpensItsOwnLanguageReferenceData()",
       "SearchExperienceJourneyUITests/testPartialEnglishQueryUpdatesLiveResults()",
@@ -77,7 +78,7 @@
       "SearchExperienceJourneyUITests/testRadicalSelectionNarrowsAndRemovalBroadensRealCandidates()",
       "SearchExperienceJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult()",
       "SearchExperienceJourneyUITests/testSelectedHandwritingCandidateSubmitsSingleKanji()",
-      "SearchExperienceJourneyUITests/testUncapturedRomajiDoesNotInventARefinementAction()",
+      "SearchExperienceJourneyUITests/testSourceBackedRomajiOffersJapaneseReadingBeyondCapturedExamples()",
       "SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()",
       "SearchExperienceJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted()",
       "SearchExperienceJourneyUITests/testWordNotesRemainIsolatedAcrossSameSpellingHomographs()",
@@ -87,6 +88,7 @@
     "release_simulator_smoke": [
       "SearchExperienceJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults()",
       "SearchExperienceJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm()",
+      "SearchExperienceJourneyUITests/testIruOffersJapaneseReadingRefinement()",
       "SearchExperienceJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults()",
       "SearchExperienceJourneyUITests/testWordDetailFinalContentClearsBottomNavigation()",
       "SearchExperienceJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings()",
@@ -97,6 +99,7 @@
     "signed_physical_device": [
       "SearchExperienceJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults()",
       "SearchExperienceJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm()",
+      "SearchExperienceJourneyUITests/testIruOffersJapaneseReadingRefinement()",
       "SearchExperienceJourneyUITests/testNihonOffersJapaneseReadingRefinement()",
       "SearchExperienceJourneyUITests/testNewestRecentSearchRerunsItsResultSet()",
       "SearchExperienceJourneyUITests/testNaturalHandwritingRecognizesYamaWithoutFixture()",
@@ -246,7 +249,8 @@
       "test_ids": [
         "SearchExperienceJourneyUITests/testAmbiguousRomajiCanRefineToJapaneseReading()",
         "SearchExperienceJourneyUITests/testNihonOffersJapaneseReadingRefinement()",
-        "SearchExperienceJourneyUITests/testUncapturedRomajiDoesNotInventARefinementAction()"
+        "SearchExperienceJourneyUITests/testIruOffersJapaneseReadingRefinement()",
+        "SearchExperienceJourneyUITests/testSourceBackedRomajiOffersJapaneseReadingBeyondCapturedExamples()"
       ]
     },
     {
