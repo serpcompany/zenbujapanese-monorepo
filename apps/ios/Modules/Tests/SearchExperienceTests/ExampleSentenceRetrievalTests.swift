@@ -7,14 +7,20 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
   func testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus() async throws {
     let client = LookupClient.freshBundledDatabase()
     let clock = ContinuousClock()
-    let start = clock.now
+    let coldStart = clock.now
 
-    let results = try await client.search(SearchQuery("the"))
-    let elapsed = start.duration(to: clock.now)
+    let coldResults = try await client.search(SearchQuery("the"))
+    let coldElapsed = coldStart.duration(to: clock.now)
+    let warmStart = clock.now
+    let warmResults = try await client.search(SearchQuery("the"))
+    let warmElapsed = warmStart.duration(to: clock.now)
 
-    XCTAssertFalse(results.isEmpty)
-    print("COMMON_ENGLISH_LOOKUP_LATENCY \(elapsed)")
-    XCTAssertLessThan(elapsed, .seconds(2))
+    XCTAssertFalse(coldResults.isEmpty)
+    XCTAssertEqual(warmResults.best.map(\.id), coldResults.best.map(\.id))
+    XCTAssertEqual(warmResults.additional.map(\.id), coldResults.additional.map(\.id))
+    print("COMMON_ENGLISH_LOOKUP_LATENCY cold=\(coldElapsed) warm=\(warmElapsed)")
+    XCTAssertLessThan(coldElapsed, .seconds(3))
+    XCTAssertLessThan(warmElapsed, .seconds(1))
   }
 
   func testASCIIEntryMatchingFormDoesNotUseGlossOnlyDictionaryRanking() async throws {

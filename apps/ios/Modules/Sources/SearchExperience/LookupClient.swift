@@ -70,6 +70,8 @@ private actor LanguageReferenceData {
 
   private var connection: SQLiteConnection?
   private var senseRestrictionCache: [SenseRestrictionKey: Set<String>]?
+  private var searchResultCache: [SearchQuery: LookupSearchResults] = [:]
+  private var searchCacheOrder: [SearchQuery] = []
   private let databaseURL: URL?
   private let validatesBundledArtifact: Bool
   private let romajiRefinementPolicy = RomajiRefinementPolicy.captured
@@ -81,6 +83,23 @@ private actor LanguageReferenceData {
   }
 
   func search(_ query: SearchQuery) throws -> LookupSearchResults {
+    try Task<Never, Never>.checkCancellation()
+    if let cached = searchResultCache[query] {
+      searchCacheOrder.removeAll { $0 == query }
+      searchCacheOrder.append(query)
+      return cached
+    }
+
+    let results = try searchUncached(query)
+    searchResultCache[query] = results
+    searchCacheOrder.append(query)
+    if searchCacheOrder.count > Self.searchCacheCapacity {
+      searchResultCache[searchCacheOrder.removeFirst()] = nil
+    }
+    return results
+  }
+
+  private func searchUncached(_ query: SearchQuery) throws -> LookupSearchResults {
     if let refinement = romajiRefinementPolicy.refinement(for: query) {
       let refinedResults = try searchOnce(refinement.japaneseReading)
       let literalResults = try searchLiteralEnglish(refinement.literalEnglishQuery)
@@ -679,6 +698,7 @@ private actor LanguageReferenceData {
   }
 
   private static let transientDestructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+  private static let searchCacheCapacity = 32
 
   private static func glossRelation(query: String, gloss: String) -> DictionaryMatch.GlossRelation? {
     let value = SearchQuery(gloss).value
