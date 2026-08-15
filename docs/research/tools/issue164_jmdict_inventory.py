@@ -20,6 +20,13 @@ SECONDARY_MASK = {"spec2": 1, "ichi2": 2, "news2": 4, "gai2": 8}
 KNOWN_MARKERS = set(PRIMARY_MASK) | set(SECONDARY_MASK) | {
     f"nf{band:02d}" for band in range(1, 49)
 }
+PINNED_JMDICT_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "apps/ios/LanguageData/Sources/JMdict_e-2026-08-10.gz"
+)
+PINNED_JMDICT_SHA256 = (
+    "54a6ecce385de30776e842b18ca62da7a60dfd923dc5b1f8101ce37f528e1d5e"
+)
 
 
 def entry_id(source_record_id: str) -> bytes:
@@ -53,15 +60,14 @@ def marker_profile(markers: list[str]) -> tuple[int, int, int | None]:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--jmdict", required=True, type=Path)
-    parser.add_argument("--expected-jmdict-sha256", required=True)
+    parser.add_argument("--jmdict", default=PINNED_JMDICT_PATH, type=Path)
     parser.add_argument("--baseline-bytes", required=True, type=int)
     arguments = parser.parse_args()
     actual_sha256 = file_sha256(arguments.jmdict)
-    if actual_sha256 != arguments.expected_jmdict_sha256:
+    if actual_sha256 != PINNED_JMDICT_SHA256:
         raise SystemExit(
             "JMdict checksum mismatch: "
-            f"expected {arguments.expected_jmdict_sha256}, got {actual_sha256}"
+            f"expected {PINNED_JMDICT_SHA256}, got {actual_sha256}"
         )
 
     with tempfile.TemporaryDirectory(prefix="issue164-jmdict-inventory-") as directory:
@@ -86,6 +92,19 @@ def main() -> None:
               gloss TEXT NOT NULL,
               PRIMARY KEY(entry_id, sense_index, gloss_index)
             ) WITHOUT ROWID;
+            CREATE TABLE english_sense_evidence(
+              entry_id BLOB NOT NULL,
+              sense_index INTEGER NOT NULL,
+              parts_of_speech_json TEXT NOT NULL,
+              PRIMARY KEY(entry_id, sense_index)
+            ) WITHOUT ROWID;
+            CREATE TABLE sense_form_restrictions(
+              entry_id BLOB NOT NULL,
+              sense_index INTEGER NOT NULL,
+              kind INTEGER NOT NULL,
+              form TEXT NOT NULL,
+              PRIMARY KEY(entry_id, sense_index, kind, form)
+            ) WITHOUT ROWID;
             CREATE TABLE reading_restrictions(
               entry_id BLOB NOT NULL,
               reading_form TEXT NOT NULL,
@@ -100,6 +119,10 @@ def main() -> None:
         tagged_forms = 0
         priority_facts = 0
         gloss_atoms = 0
+        sense_count = 0
+        part_of_speech_facts = 0
+        restriction_facts = 0
+        restricted_senses = 0
         reading_restrictions = 0
         with gzip.open(arguments.jmdict, "rb") as source:
             for _, entry in ET.iterparse(source, events=("end",)):
@@ -108,6 +131,14 @@ def main() -> None:
                 entry_count += 1
                 source_record_id = (entry.findtext("ent_seq") or "").strip()
                 opaque_entry_id = entry_id(source_record_id)
+                written_forms = {
+                    normalized(node.findtext("keb") or "")
+                    for node in entry.findall("k_ele")
+                }
+                reading_forms = {
+                    normalized(node.findtext("reb") or "")
+                    for node in entry.findall("r_ele")
+                }
                 entry_has_priority = False
                 for kind, path, value_tag, priority_tag in (
                     (0, "k_ele", "keb", "ke_pri"),
@@ -146,6 +177,44 @@ def main() -> None:
                         reading_restrictions += 1
                 tagged_entries += entry_has_priority
                 for sense_index, sense in enumerate(entry.findall("sense")):
+                    parts_of_speech = tuple(
+                        node.text or "" for node in sense.findall("pos")
+                    )
+                    database.execute(
+                        "INSERT INTO english_sense_evidence VALUES (?, ?, ?)",
+                        (
+                            opaque_entry_id,
+                            sense_index,
+                            json.dumps(
+                                parts_of_speech,
+                                ensure_ascii=False,
+                                separators=(",", ":"),
+                            ),
+                        ),
+                    )
+                    sense_count += 1
+                    part_of_speech_facts += len(parts_of_speech)
+                    sense_restriction_count = 0
+                    for kind, tag in ((0, "stagk"), (1, "stagr")):
+                        for restriction in sense.findall(tag):
+                            form = normalized(restriction.text or "")
+                            valid_forms = written_forms if kind == 0 else reading_forms
+                            if form not in valid_forms:
+                                raise RuntimeError(
+                                    "sense restriction does not reference an entry form"
+                                )
+                            database.execute(
+                                "INSERT INTO sense_form_restrictions VALUES (?, ?, ?, ?)",
+                                (
+                                    opaque_entry_id,
+                                    sense_index,
+                                    kind,
+                                    form,
+                                ),
+                            )
+                            restriction_facts += 1
+                            sense_restriction_count += 1
+                    restricted_senses += sense_restriction_count > 0
                     gloss_index = 0
                     for gloss in sense.findall("gloss"):
                         language = gloss.attrib.get(
@@ -171,6 +240,8 @@ def main() -> None:
         tables = (
             "form_priority_profiles",
             "english_gloss_atoms",
+            "english_sense_evidence",
+            "sense_form_restrictions",
             "reading_restrictions",
         )
         for retained in tables:
@@ -193,9 +264,15 @@ def main() -> None:
                     "taggedFormCount": tagged_forms,
                     "priorityFactCount": priority_facts,
                     "englishGlossAtomCount": gloss_atoms,
+                    "senseCount": sense_count,
+                    "partOfSpeechFactCount": part_of_speech_facts,
+                    "senseFormRestrictionFactCount": restriction_facts,
+                    "restrictedSenseCount": restricted_senses,
                     "readingRestrictionCount": reading_restrictions,
                     "formPriorityProfileBytes": table_bytes["form_priority_profiles"],
                     "englishGlossAtomBytes": table_bytes["english_gloss_atoms"],
+                    "englishSenseEvidenceBytes": table_bytes["english_sense_evidence"],
+                    "senseFormRestrictionBytes": table_bytes["sense_form_restrictions"],
                     "readingRestrictionBytes": table_bytes["reading_restrictions"],
                     "combinedBytes": combined_bytes,
                     "baselineBytes": arguments.baseline_bytes,

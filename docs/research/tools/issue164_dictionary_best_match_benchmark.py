@@ -33,6 +33,13 @@ JAPANESE_FIXTURES = {
     "問題": ("問題", "もんだい"),
     "ねこ": ("猫", "ねこ"),
 }
+PINNED_JMDICT_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "apps/ios/LanguageData/Sources/JMdict_e-2026-08-10.gz"
+)
+PINNED_JMDICT_SHA256 = (
+    "54a6ecce385de30776e842b18ca62da7a60dfd923dc5b1f8101ce37f528e1d5e"
+)
 
 
 def normalized(value: str) -> str:
@@ -88,9 +95,17 @@ class RawEntry:
 
 @dataclass(frozen=True)
 class CanonicalGlossAtom:
-    sense_order: int
+    sense: "CanonicalSenseEvidence"
     gloss_order: int
     text: str
+
+
+@dataclass(frozen=True)
+class CanonicalSenseEvidence:
+    sense_order: int
+    parts_of_speech: tuple[str, ...]
+    restricted_written_forms: tuple[str, ...]
+    restricted_reading_forms: tuple[str, ...]
 
 
 class EvidenceLane(IntEnum):
@@ -216,6 +231,9 @@ class GlossMatch:
     relation: EnglishRelation
     sense_order: int
     gloss_order: int
+    parts_of_speech: tuple[str, ...]
+    restricted_written_forms: tuple[str, ...]
+    restricted_reading_forms: tuple[str, ...]
 
 
 @dataclass(frozen=True, order=True)
@@ -298,6 +316,13 @@ class SelectionEvidence:
                         "relation": match.relation.name,
                         "senseOrder": match.sense_order,
                         "glossOrder": match.gloss_order,
+                        "partsOfSpeech": list(match.parts_of_speech),
+                        "restrictedWrittenForms": list(
+                            match.restricted_written_forms
+                        ),
+                        "restrictedReadingForms": list(
+                            match.restricted_reading_forms
+                        ),
                     }
                     for match in self.english.gloss_matches
                 ],
@@ -505,6 +530,28 @@ def load_raw_entries(path: Path, identifiers: set[int]) -> dict[int, RawEntry]:
                 }
                 glosses: list[CanonicalGlossAtom] = []
                 for sense_index, sense in enumerate(entry.findall("sense")):
+                    sense_evidence = CanonicalSenseEvidence(
+                        sense_order=sense_index,
+                        parts_of_speech=tuple(
+                            node.text or "" for node in sense.findall("pos")
+                        ),
+                        restricted_written_forms=tuple(
+                            normalized(node.text or "")
+                            for node in sense.findall("stagk")
+                        ),
+                        restricted_reading_forms=tuple(
+                            normalized(node.text or "")
+                            for node in sense.findall("stagr")
+                        ),
+                    )
+                    if not set(sense_evidence.restricted_written_forms) <= set(written):
+                        raise RuntimeError(
+                            "sense written-form restriction is not an entry form"
+                        )
+                    if not set(sense_evidence.restricted_reading_forms) <= set(readings):
+                        raise RuntimeError(
+                            "sense reading-form restriction is not an entry form"
+                        )
                     english_gloss_order = 0
                     for gloss in sense.findall("gloss"):
                         language = gloss.attrib.get(
@@ -513,7 +560,7 @@ def load_raw_entries(path: Path, identifiers: set[int]) -> dict[int, RawEntry]:
                         if language == "eng":
                             glosses.append(
                                 CanonicalGlossAtom(
-                                    sense_order=sense_index,
+                                    sense=sense_evidence,
                                     gloss_order=english_gloss_order,
                                     text=gloss.text or "",
                                 )
@@ -545,9 +592,35 @@ def romaji_relations(candidate: Candidate) -> tuple[EnglishRelation, ...]:
     return tuple(relations)
 
 
-def gloss_matches(query: str, raw: RawEntry) -> tuple[GlossMatch, ...]:
+def normalized_form_values(forms_json: str) -> set[str]:
+    return {
+        normalized(form["value"])
+        for form in json.loads(forms_json)
+        if isinstance(form, dict) and isinstance(form.get("value"), str)
+    }
+
+
+def sense_applies(candidate: Candidate, sense: CanonicalSenseEvidence) -> bool:
+    written_forms = normalized_form_values(candidate.written_forms_json)
+    reading_forms = normalized_form_values(candidate.reading_forms_json)
+    written_forms.add(normalized(candidate.headword))
+    reading_forms.update((normalized(candidate.headword), normalized(candidate.reading)))
+    return (
+        not sense.restricted_written_forms
+        or bool(written_forms & set(sense.restricted_written_forms))
+    ) and (
+        not sense.restricted_reading_forms
+        or bool(reading_forms & set(sense.restricted_reading_forms))
+    )
+
+
+def gloss_matches(
+    query: str, candidate: Candidate, raw: RawEntry
+) -> tuple[GlossMatch, ...]:
     matches: list[GlossMatch] = []
     for atom in raw.glosses:
+        if not sense_applies(candidate, atom.sense):
+            continue
         relation = english_relation(query, atom.text)
         if relation is None:
             continue
@@ -560,13 +633,16 @@ def gloss_matches(query: str, raw: RawEntry) -> tuple[GlossMatch, ...]:
             GlossMatch(
                 key=GlossMatchKey(
                     lane=lane,
-                    sense_order=atom.sense_order,
+                    sense_order=atom.sense.sense_order,
                     relation=relation,
                     gloss_order=atom.gloss_order,
                 ),
                 relation=relation,
-                sense_order=atom.sense_order,
+                sense_order=atom.sense.sense_order,
                 gloss_order=atom.gloss_order,
+                parts_of_speech=atom.sense.parts_of_speech,
+                restricted_written_forms=atom.sense.restricted_written_forms,
+                restricted_reading_forms=atom.sense.restricted_reading_forms,
             )
         )
     return tuple(sorted(matches, key=lambda match: match.key))
@@ -582,7 +658,9 @@ def english_rank_key(candidate: Candidate, evidence: EnglishEvidence) -> English
         ),
         romaji_specificity_rank=(
             int(evidence.romaji_specificity)
-            if evidence.romaji_specificity is not None else 0
+            if evidence.lane is EvidenceLane.ROMAJI_ONLY
+            and evidence.romaji_specificity is not None
+            else 0
         ),
         sense_order=evidence.sense_order,
         priority_presence_rank=int(not profile.is_marked),
@@ -602,7 +680,7 @@ def rank_ascii(
         raw = raw_entries[identifier]
         profile = priority_profile(displayed_priority(candidate, raw))
         evidence = EnglishEvidence(
-            gloss_matches=gloss_matches(query, raw),
+            gloss_matches=gloss_matches(query, candidate, raw),
             romaji_relations=romaji_relations(candidate),
             priority_profiles=(profile,),
         )
@@ -784,15 +862,14 @@ def select_ascii(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--database", required=True, type=Path)
-    parser.add_argument("--jmdict", required=True, type=Path)
-    parser.add_argument("--expected-jmdict-sha256", required=True)
+    parser.add_argument("--jmdict", default=PINNED_JMDICT_PATH, type=Path)
     args = parser.parse_args()
 
     actual_sha256 = file_sha256(args.jmdict)
-    if actual_sha256 != args.expected_jmdict_sha256:
+    if actual_sha256 != PINNED_JMDICT_SHA256:
         raise SystemExit(
             "JMdict checksum mismatch: "
-            f"expected {args.expected_jmdict_sha256}, got {actual_sha256}"
+            f"expected {PINNED_JMDICT_SHA256}, got {actual_sha256}"
         )
 
     database = sqlite3.connect(args.database)

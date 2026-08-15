@@ -40,6 +40,10 @@ _Avoid_: Provider entry order, provider result order, database row order, provid
 The app-owned preservation of a Language Data Source's authorial sense sequence and the documented editorial sequence of glosses within each sense as typed lexical evidence. It is distinct from provider entry, export, result, or database row order and from provider identifiers.
 _Avoid_: Provider result order, insertion order, record ID order
 
+**Dictionary Sense**:
+A distinct meaning within Language Reference Data that retains its part of speech, Canonical Sense and Gloss Order, and any written-form or reading-form applicability. A Dictionary Sense contributes Match evidence only for forms to which it applies.
+_Avoid_: Flat gloss, provider sense row, unrestricted meaning
+
 **Dictionary Best Matches**:
 The highest-evidence group produced by Dictionary Ranking for presentation in Lookup. The group may contain more than one entry.
 _Avoid_: Primary Dictionary Entry, all dictionary results
