@@ -41,7 +41,7 @@ The app-owned preservation of a Language Data Source's authorial sense sequence 
 _Avoid_: Provider result order, insertion order, record ID order
 
 **Dictionary Sense**:
-A distinct meaning within Language Reference Data that retains its part of speech, Canonical Sense and Gloss Order, and any written-form or reading-form applicability. A Dictionary Sense contributes Match evidence only for forms to which it applies.
+A distinct meaning within Language Reference Data that retains its part of speech, Canonical Sense and Gloss Order, and any written-form or reading-form applicability. A Dictionary Sense contributes Match evidence only when the displayed written/reading pair satisfies that applicability.
 _Avoid_: Flat gloss, provider sense row, unrestricted meaning
 
 **Dictionary Best Matches**:

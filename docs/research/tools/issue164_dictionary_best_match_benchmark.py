@@ -40,6 +40,9 @@ PINNED_JMDICT_PATH = (
 PINNED_JMDICT_SHA256 = (
     "54a6ecce385de30776e842b18ca62da7a60dfd923dc5b1f8101ce37f528e1d5e"
 )
+PINNED_BENCHMARK_STDOUT_SHA256 = (
+    "5bcc57e3da274109d2b13f9a4f9795d3b9a371aedd51e6f22788439bbdc348e6"
+)
 
 
 def normalized(value: str) -> str:
@@ -90,6 +93,7 @@ def deinflected_candidates(value: str) -> list[str]:
 class RawEntry:
     written_priorities: dict[str, tuple[str, ...]]
     reading_priorities: dict[str, tuple[str, ...]]
+    senses: tuple["CanonicalSenseEvidence", ...]
     glosses: tuple["CanonicalGlossAtom", ...]
 
 
@@ -376,23 +380,40 @@ class Candidate:
     romaji_prefix: bool = False
     romaji_contains: bool = False
 
-    @property
-    def semantic_key(self) -> str:
-        payload = json.dumps(
-            {
-                "headword": self.headword,
-                "reading": self.reading,
-                "meanings": json.loads(self.meanings_json),
-                "partsOfSpeech": json.loads(self.parts_of_speech_json),
-                "writtenForms": json.loads(self.written_forms_json),
-                "readingForms": json.loads(self.reading_forms_json),
-                "senses": json.loads(self.senses_json),
-            },
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        )
-        return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def semantic_fingerprint(candidate: Candidate, raw: RawEntry) -> str:
+    payload = json.dumps(
+        {
+            "headword": candidate.headword,
+            "reading": candidate.reading,
+            "meanings": json.loads(candidate.meanings_json),
+            "partsOfSpeech": json.loads(candidate.parts_of_speech_json),
+            "writtenForms": json.loads(candidate.written_forms_json),
+            "readingForms": json.loads(candidate.reading_forms_json),
+            "senses": [
+                {
+                    "senseOrder": sense.sense_order,
+                    "partsOfSpeech": sense.parts_of_speech,
+                    "restrictedWrittenForms": sense.restricted_written_forms,
+                    "restrictedReadingForms": sense.restricted_reading_forms,
+                }
+                for sense in raw.senses
+            ],
+            "glossAtoms": [
+                {
+                    "senseOrder": atom.sense.sense_order,
+                    "glossOrder": atom.gloss_order,
+                    "text": atom.text,
+                }
+                for atom in raw.glosses
+            ],
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode()).hexdigest()
 
 
 def priority_profile(tags: tuple[str, ...]) -> PriorityProfile:
@@ -528,6 +549,7 @@ def load_raw_entries(path: Path, identifiers: set[int]) -> dict[int, RawEntry]:
                     )
                     for node in entry.findall("r_ele")
                 }
+                senses: list[CanonicalSenseEvidence] = []
                 glosses: list[CanonicalGlossAtom] = []
                 for sense_index, sense in enumerate(entry.findall("sense")):
                     sense_evidence = CanonicalSenseEvidence(
@@ -552,6 +574,7 @@ def load_raw_entries(path: Path, identifiers: set[int]) -> dict[int, RawEntry]:
                         raise RuntimeError(
                             "sense reading-form restriction is not an entry form"
                         )
+                    senses.append(sense_evidence)
                     english_gloss_order = 0
                     for gloss in sense.findall("gloss"):
                         language = gloss.attrib.get(
@@ -566,7 +589,9 @@ def load_raw_entries(path: Path, identifiers: set[int]) -> dict[int, RawEntry]:
                                 )
                             )
                             english_gloss_order += 1
-                records[source_record_id] = RawEntry(written, readings, tuple(glosses))
+                records[source_record_id] = RawEntry(
+                    written, readings, tuple(senses), tuple(glosses)
+                )
             entry.clear()
     missing = identifiers - records.keys()
     if missing:
@@ -592,25 +617,15 @@ def romaji_relations(candidate: Candidate) -> tuple[EnglishRelation, ...]:
     return tuple(relations)
 
 
-def normalized_form_values(forms_json: str) -> set[str]:
-    return {
-        normalized(form["value"])
-        for form in json.loads(forms_json)
-        if isinstance(form, dict) and isinstance(form.get("value"), str)
-    }
-
-
 def sense_applies(candidate: Candidate, sense: CanonicalSenseEvidence) -> bool:
-    written_forms = normalized_form_values(candidate.written_forms_json)
-    reading_forms = normalized_form_values(candidate.reading_forms_json)
-    written_forms.add(normalized(candidate.headword))
-    reading_forms.update((normalized(candidate.headword), normalized(candidate.reading)))
+    displayed_written_form = normalized(candidate.headword)
+    displayed_reading_form = normalized(candidate.reading)
     return (
         not sense.restricted_written_forms
-        or bool(written_forms & set(sense.restricted_written_forms))
+        or displayed_written_form in sense.restricted_written_forms
     ) and (
         not sense.restricted_reading_forms
-        or bool(reading_forms & set(sense.restricted_reading_forms))
+        or displayed_reading_form in sense.restricted_reading_forms
     )
 
 
@@ -648,7 +663,9 @@ def gloss_matches(
     return tuple(sorted(matches, key=lambda match: match.key))
 
 
-def english_rank_key(candidate: Candidate, evidence: EnglishEvidence) -> EnglishRankKey:
+def english_rank_key(
+    candidate: Candidate, evidence: EnglishEvidence, fingerprint: str
+) -> EnglishRankKey:
     profile = evidence.priority_profile
     return EnglishRankKey(
         lane=evidence.lane,
@@ -668,7 +685,7 @@ def english_rank_key(candidate: Candidate, evidence: EnglishEvidence) -> English
         priority_profile=profile,
         gloss_order=evidence.gloss_order,
         headword_length=len(candidate.headword),
-        semantic_fingerprint=candidate.semantic_key,
+        semantic_fingerprint=fingerprint,
     )
 
 
@@ -684,11 +701,13 @@ def rank_ascii(
             romaji_relations=romaji_relations(candidate),
             priority_profiles=(profile,),
         )
-        rank = english_rank_key(candidate, evidence)
+        if not evidence.gloss_matches and not evidence.romaji_relations:
+            continue
+        rank = english_rank_key(candidate, evidence, semantic_fingerprint(candidate, raw))
         ranked.append(RankedEnglishCandidate(rank, candidate, evidence))
     grouped: dict[str, list[RankedEnglishCandidate]] = {}
     for result in ranked:
-        grouped.setdefault(result.candidate.semantic_key, []).append(result)
+        grouped.setdefault(result.rank.semantic_fingerprint, []).append(result)
     best_by_semantic_key: dict[str, RankedEnglishCandidate] = {}
     for semantic_key, equivalent in grouped.items():
         selected = min(equivalent, key=lambda result: result.rank)
@@ -726,7 +745,7 @@ def rank_ascii(
             ),
         )
         best_by_semantic_key[semantic_key] = RankedEnglishCandidate(
-            english_rank_key(representative, merged_evidence),
+            english_rank_key(representative, merged_evidence, semantic_key),
             representative,
             merged_evidence,
         )
@@ -775,6 +794,7 @@ def rank_japanese(
     best_by_entry: dict[int, RankedJapaneseCandidate] = {}
     for identifier, matches in matches_by_entry.items():
         candidate = candidates_by_entry[identifier]
+        fingerprint = semantic_fingerprint(candidate, raw_entries[identifier])
         evidence = JapaneseEvidence(tuple(sorted(set(matches), key=lambda match: match.key)))
         selected_form = evidence.selected_form
         best_by_entry[identifier] = RankedJapaneseCandidate(
@@ -783,14 +803,14 @@ def rank_japanese(
                 priority_profile=selected_form.priority_profile,
                 sense_breadth_rank=-len(json.loads(candidate.senses_json)),
                 headword_length=len(candidate.headword),
-                semantic_fingerprint=candidate.semantic_key,
+                semantic_fingerprint=fingerprint,
             ),
             candidate,
             evidence,
         )
     best_by_semantic_key: dict[str, RankedJapaneseCandidate] = {}
     for result in best_by_entry.values():
-        semantic_key = result.candidate.semantic_key
+        semantic_key = result.rank.semantic_fingerprint
         current = best_by_semantic_key.get(semantic_key)
         if current is None:
             best_by_semantic_key[semantic_key] = result
@@ -812,7 +832,7 @@ def rank_japanese(
                 priority_profile=selected_form.priority_profile,
                 sense_breadth_rank=-len(json.loads(candidate.senses_json)),
                 headword_length=len(candidate.headword),
-                semantic_fingerprint=candidate.semantic_key,
+                semantic_fingerprint=semantic_key,
             ),
             candidate,
             merged_evidence,
@@ -837,8 +857,9 @@ def select_ascii(
             ranked = rank_ascii(derived, ascii_candidates(database, derived), raw_entries)
             for result in ranked[:3]:
                 candidate = result.candidate
-                if candidate.semantic_key not in seen:
-                    seen.add(candidate.semantic_key)
+                fingerprint = result.rank.semantic_fingerprint
+                if fingerprint not in seen:
+                    seen.add(fingerprint)
                     deinflected.append(
                         Selection(
                             candidate,
@@ -857,6 +878,82 @@ def select_ascii(
         selected.candidate,
         SelectionEvidence(english=selected.evidence),
     )
+
+
+def validate_displayed_pair_applicability(
+    database: sqlite3.Connection, raw_entries: dict[int, RawEntry]
+) -> None:
+    identifier = 1_004_690
+    row = database.execute(
+        """
+        SELECT source_record_id, headword, reading, meanings_json,
+          parts_of_speech_json, written_forms_json, reading_forms_json, senses_json
+        FROM entries WHERE source_record_id = ?
+        """,
+        (identifier,),
+    ).fetchone()
+    if row is None:
+        raise RuntimeError("displayed-pair applicability fixture entry is missing")
+    candidate = candidate_from_row(row)
+    raw = raw_entries[identifier]
+    restricted_sense = next(
+        sense
+        for sense in raw.senses
+        if sense.restricted_reading_forms == (normalized("このかん"),)
+    )
+    if sense_applies(candidate, restricted_sense):
+        raise RuntimeError("alternate-reading restriction leaked into displayed pair")
+    if gloss_matches("meanwhile", candidate, raw):
+        raise RuntimeError("restricted gloss matched displayed この間 / このあいだ")
+    alternate = replace(candidate, reading="このかん")
+    if not sense_applies(alternate, restricted_sense):
+        raise RuntimeError("exact displayed reading did not satisfy sense restriction")
+    if not gloss_matches("meanwhile", alternate, raw):
+        raise RuntimeError("applicable restricted gloss was not retained")
+
+
+def validate_semantic_non_equivalence() -> None:
+    candidate = Candidate(
+        source_record_id=None,
+        headword="例",
+        reading="れい",
+        meanings_json='["example"]',
+        parts_of_speech_json='["Noun"]',
+        written_forms_json='[{"value":"例"}]',
+        reading_forms_json='[{"value":"れい"}]',
+        senses_json='[{"meaning":"example","partsOfSpeech":["Noun"]}]',
+    )
+    unrestricted = CanonicalSenseEvidence(0, ("Noun",), (), ())
+    restricted = CanonicalSenseEvidence(0, ("Noun",), (), ("れい",))
+    unrestricted_raw = RawEntry(
+        {}, {}, (unrestricted,), (CanonicalGlossAtom(unrestricted, 0, "example"),)
+    )
+    restricted_raw = RawEntry(
+        {}, {}, (restricted,), (CanonicalGlossAtom(restricted, 0, "example"),)
+    )
+    split_gloss_raw = RawEntry(
+        {},
+        {},
+        (unrestricted,),
+        (
+            CanonicalGlossAtom(unrestricted, 0, "example"),
+            CanonicalGlossAtom(unrestricted, 1, "instance"),
+        ),
+    )
+    joined_gloss_raw = RawEntry(
+        {},
+        {},
+        (unrestricted,),
+        (CanonicalGlossAtom(unrestricted, 0, "example, instance"),),
+    )
+    if semantic_fingerprint(candidate, unrestricted_raw) == semantic_fingerprint(
+        candidate, restricted_raw
+    ):
+        raise RuntimeError("sense applicability collapsed semantic equivalence")
+    if semantic_fingerprint(candidate, split_gloss_raw) == semantic_fingerprint(
+        candidate, joined_gloss_raw
+    ):
+        raise RuntimeError("gloss-atom boundaries collapsed semantic equivalence")
 
 
 def main() -> None:
@@ -880,7 +977,10 @@ def main() -> None:
     source_ids = source_ids_for_queries(
         database, all_ascii_queries | set(JAPANESE_FIXTURES)
     )
+    source_ids.add(1_004_690)
     raw_entries = load_raw_entries(args.jmdict, source_ids)
+    validate_displayed_pair_applicability(database, raw_entries)
+    validate_semantic_non_equivalence()
 
     rows = []
     for query, expected in ASCII_FIXTURES.items():
@@ -900,10 +1000,11 @@ def main() -> None:
         rows.append((query, expected, actual, evidence))
 
     failures = 0
+    output_lines: list[str] = []
     for query, expected, actual, evidence in rows:
         status = "PASS" if expected == actual else "FAIL"
         failures += status == "FAIL"
-        print(
+        output_lines.append(
             json.dumps(
                 {
                     "status": status,
@@ -917,8 +1018,17 @@ def main() -> None:
             )
         )
     if failures:
+        print("\n".join(output_lines))
         raise SystemExit(f"FAIL {failures}/{len(rows)} fixtures")
-    print(f"PASS {len(rows)}/{len(rows)} dictionary-ranking fixtures")
+    output_lines.append(f"PASS {len(rows)}/{len(rows)} dictionary-ranking fixtures")
+    output = "\n".join(output_lines) + "\n"
+    output_sha256 = hashlib.sha256(output.encode()).hexdigest()
+    if output_sha256 != PINNED_BENCHMARK_STDOUT_SHA256:
+        raise RuntimeError(
+            "benchmark output drift: "
+            f"expected {PINNED_BENCHMARK_STDOUT_SHA256}, got {output_sha256}"
+        )
+    print(output, end="")
 
 
 if __name__ == "__main__":

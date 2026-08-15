@@ -74,7 +74,7 @@ These are normalized capability types. Canonical Sense and Gloss Order preserves
 
 ### Eligibility
 
-- ASCII input admits an entry when at least one applicable individual English gloss atom contains the normalized query as a token or a normalized romaji form contains it. A sense restricted by `stagk` or `stagr` supplies gloss evidence only when the candidate's normalized written or reading forms satisfy the corresponding restriction. Existing general deinflection runs only when direct strong-gloss and exact/prefix-romaji evidence are absent.
+- ASCII input admits an entry when at least one applicable individual English gloss atom contains the normalized query as a token or a normalized romaji form contains it. A sense restricted by `stagk` or `stagr` supplies gloss evidence only when the actual displayed written/reading pair satisfies the corresponding restriction; an alternate form elsewhere on the entry cannot make the sense applicable. Existing general deinflection runs only when direct strong-gloss and exact/prefix-romaji evidence are absent.
 - Japanese input admits an entry when a normalized written or reading form contains the query. Exact/prefix/contains and written/reading remain distinct.
 - Empty input remains ineligible. Example Sentence eligibility, source membership alone, provider IDs, and query-specific maps never create a Dictionary Match.
 
@@ -102,7 +102,7 @@ Japanese input uses:
 
 Sense breadth is deliberately narrow. It is not a frequency claim and is never applied globally or to English ranking. Here it separates `端` from the otherwise tied `橋`; broader homograph review is required before accepting the ADR.
 
-Dictionary Best Matches are the leading presentation group before the total-order-only steps. A downstream route obtains the Primary Dictionary Entry from the first total-ordered member. Entries with identical canonical headword, reading, written/reading forms, meanings, POS, and senses form one presentation equivalence class before sorting; retained source provenance may be plural, but it cannot affect visible order. This prohibition covers provider entry sequence, export sequence, query/result order, database row/insertion order, and identifiers—not normalized lexical evidence whose source semantics and adapter contract are explicit.
+Dictionary Best Matches are the leading presentation group before the total-order-only steps. A downstream route obtains the Primary Dictionary Entry from the first total-ordered member. Entries form one presentation equivalence class only when canonical headword, reading, written/reading forms, meanings, every Dictionary Sense's POS/applicability/order, and every individual gloss atom boundary/order/text are identical. The benchmark verifies that otherwise identical entries with different restrictions or split-versus-joined gloss atoms remain non-equivalent. Retained source provenance may be plural, but it cannot affect visible order. This prohibition covers provider entry sequence, export sequence, query/result order, database row/insertion order, and identifiers—not normalized lexical evidence whose source semantics and adapter contract are explicit.
 
 ## Benchmark
 
@@ -123,7 +123,7 @@ python3 docs/research/tools/issue164_dictionary_best_match_benchmark.py \
   --database apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3
 ```
 
-The exact 10,542,518-byte [JMdict archive](../../apps/ios/LanguageData/Sources/JMdict_e-2026-08-10.gz) is committed through Git LFS under the existing [EDRDG attribution](../../apps/ios/LanguageData/Sources/EDRDG-ATTRIBUTION.md). Both tools resolve that stable repository path and enforce the hard-coded SHA-256; the rolling upstream URL is provenance, not restoration. Two final complete runs were byte-identical: benchmark stdout SHA-256 `c845f0ca9d0486393f310ebe86aed8bb82a148a38359aa2dca362a93f5b6b663` with `PASS 9/9`, and inventory stdout SHA-256 `0bacf41c741d382045b45f43cbf8b989e062d49bb3197b3ea3fc00f1ba56bdec`. The fixture is intentionally revealed regression evidence, not a replacement sealed holdout. Independent review and a broader public homograph set remain gates before production.
+The exact 10,542,518-byte [JMdict archive](../../apps/ios/LanguageData/Sources/JMdict_e-2026-08-10.gz) is committed through Git LFS under the existing [EDRDG attribution](../../apps/ios/LanguageData/Sources/EDRDG-ATTRIBUTION.md). Both tools resolve that stable repository path and enforce the hard-coded SHA-256; the rolling upstream URL is provenance, not restoration. Two complete runs with `PYTHONHASHSEED=1` and `PYTHONHASHSEED=8675309` were byte-identical: benchmark stdout SHA-256 `5bcc57e3da274109d2b13f9a4f9795d3b9a371aedd51e6f22788439bbdc348e6` with `PASS 9/9`, and inventory stdout SHA-256 `a9611ab34c3897beb89a2da1bfbdf947b89ebe0fec955a8787dd6b5195724ca4`. Each tool embeds its expected stdout digest and fails on drift; the inventory also fails unless all 1,929 restriction facts and 1,667 restricted senses are retained. The benchmark additionally asserts that displayed `この間 / このあいだ` excludes the `このかん`-restricted “meanwhile” sense while the displayed `この間 / このかん` pair admits it. The fixture is intentionally revealed regression evidence, not a replacement sealed holdout. Independent review and a broader public homograph set remain gates before production.
 
 ## Migration, size, provenance, and failure behavior
 
@@ -134,7 +134,7 @@ Production work should rebuild the complete bundled artifact offline under a new
 - canonical sense order and within-sense English-gloss order on each retained gloss atom;
 - one typed sense-evidence row retaining normalized POS, plus written/reading applicability rows for every normalized `stagk`/`stagr` fact;
 - profile/gloss row counts, schema and policy versions, source/importer checksums, and deterministic mapping checksums to metadata; and
-- import failures for an unknown priority marker, out-of-range `nf` band, missing source-to-entry mapping, duplicate form profile, lost gloss atom, or semantic-fingerprint collision between unequal lexical payloads.
+- import failures for an unknown priority marker, out-of-range `nf` band, missing source-to-entry mapping, duplicate form profile, lost sense/gloss/restriction evidence, or semantic-fingerprint collision between unequal lexical payloads including sense applicability and gloss-atom boundaries.
 
 The committed [inventory and size probe](tools/issue164_jmdict_inventory.py) verifies the same pinned checksum, streams the complete source, and builds disposable `WITHOUT ROWID` tables:
 

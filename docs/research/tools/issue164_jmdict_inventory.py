@@ -27,6 +27,11 @@ PINNED_JMDICT_PATH = (
 PINNED_JMDICT_SHA256 = (
     "54a6ecce385de30776e842b18ca62da7a60dfd923dc5b1f8101ce37f528e1d5e"
 )
+PINNED_RESTRICTION_FACT_COUNT = 1_929
+PINNED_RESTRICTED_SENSE_COUNT = 1_667
+PINNED_INVENTORY_STDOUT_SHA256 = (
+    "a9611ab34c3897beb89a2da1bfbdf947b89ebe0fec955a8787dd6b5195724ca4"
+)
 
 
 def entry_id(source_record_id: str) -> bytes:
@@ -232,6 +237,16 @@ def main() -> None:
                     database.commit()
                 entry.clear()
         database.commit()
+        if restriction_facts != PINNED_RESTRICTION_FACT_COUNT:
+            raise RuntimeError(
+                "sense restriction fact count drift: "
+                f"expected {PINNED_RESTRICTION_FACT_COUNT}, got {restriction_facts}"
+            )
+        if restricted_senses != PINNED_RESTRICTED_SENSE_COUNT:
+            raise RuntimeError(
+                "restricted sense count drift: "
+                f"expected {PINNED_RESTRICTED_SENSE_COUNT}, got {restricted_senses}"
+            )
         database.execute("VACUUM")
         database.commit()
         page_size = database.execute("PRAGMA page_size").fetchone()[0]
@@ -256,7 +271,7 @@ def main() -> None:
             table_bytes[retained] = os.path.getsize(isolated_path) - page_size
         database.close()
 
-        print(
+        output = (
             json.dumps(
                 {
                     "entryCount": entry_count,
@@ -282,7 +297,15 @@ def main() -> None:
                 },
                 sort_keys=True,
             )
+            + "\n"
         )
+        output_sha256 = hashlib.sha256(output.encode()).hexdigest()
+        if output_sha256 != PINNED_INVENTORY_STDOUT_SHA256:
+            raise RuntimeError(
+                "inventory output drift: "
+                f"expected {PINNED_INVENTORY_STDOUT_SHA256}, got {output_sha256}"
+            )
+        print(output, end="")
 
 
 if __name__ == "__main__":
