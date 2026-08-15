@@ -74,7 +74,7 @@ Therefore:
 
 | Candidate | Exact evaluated version | Offline iOS feasibility | Runtime size/RSS/latency evidence | Determinism and disposition |
 |---|---|---|---|---|
-| Apple Natural Language | macOS 26.5.2 / Xcode 26.0 platform framework | system supplied | no bundled bytes; 2,000-tokenization host probe 0.72–1.17 s and 13.2–13.5 MB max RSS | Japanese lemma unavailable; reject. |
+| Apple Natural Language | macOS 26.5.2 / Xcode 26.0 platform framework | system supplied | no bundled bytes; 2,000-tokenization host probe 0.70–1.18 s and 13.68–13.70 MB max RSS | Japanese lemma unavailable; reject. |
 | Lindera + IPADIC/UniDic | 5.1.0 / bundled 5.1.0 dictionaries | compiled and linked arm64 iOS smoke | measured below; no signed-device runtime | probe output hash stable 3/3; capable but not selected. |
 | Sudachi.rs + small | 0.6.11 / 20260723 | arm64 iOS library compiled; no Swift bridge | measured below; selected boundary ships neither component | probe output hash stable 3/3; select for build-time experiment. |
 | Vibrato + IPADIC | 0.5.2 / last asset at 0.5.0 | arm64 iOS library compiled | engine `rlib` and archive size only; no runtime benchmark | behavior not qualified; reject for this decision. |
@@ -90,20 +90,20 @@ Apple documents `NLTagger`, language-specific available schemes, tokenization, a
 
 Lindera is an MIT-licensed Rust morphological analyzer with separately downloaded dictionaries.[^lindera] The exact evaluated tag is `v5.1.0` (`1bcb0e28…`); upstream published `v5.2.0` on 2026-08-14, establishing current maintenance but not behavioral equivalence.[^lindera-release]
 
-An existing C-ABI research wrapper compiled and linked for `aarch64-apple-ios`: unstripped static archive 27,085,752 bytes (SHA-256 `137607b7…`), linked smoke executable 7,349,504 bytes (`3b747ab7…`). Its generated runtime inventory contains 96 Rust packages and must be regenerated as a release SBOM if ever selected.
+The complete C-ABI research wrapper below compiled and linked for `aarch64-apple-ios`: unstripped static archive 27,150,296 bytes (SHA-256 `b57d0fe4…`), linked smoke executable 7,362,448 bytes (`4486507d…`). Its pinned runtime inventory contains 110 Rust packages and must be regenerated as a release SBOM if ever selected.
 
 | Dictionary | Release bytes | Extracted file sum | Host 2,000-sentence wall time | Host maximum RSS |
 |---|---:|---:|---:|---:|
-| Lindera IPADIC 5.1.0 | 15,879,934 (`ed10ce59…`) | 57,902,918 | 0.05 s (3/3) | 43,728,896–43,745,280 B |
-| Lindera UniDic 5.1.0 | 54,469,218 (`321f9c9d…`) | 213,887,364 | 0.05–0.06 s | 150,781,952–150,847,488 B |
+| Lindera IPADIC 5.1.0 | 15,879,934 (`ed10ce59…`) | 57,902,918 | 0.04–0.06 s | 43,663,360–43,696,128 B |
+| Lindera UniDic 5.1.0 | 54,469,218 (`321f9c9d…`) | 213,887,364 | 0.04–0.05 s | 150,749,184–150,781,952 B |
 
-These are optimized arm64 macOS CLI comparisons, not iOS installed-size or signed-device claims. The four-sentence morphology probe produced the same SHA-256 `f495eeee…` in three fresh processes. IPADIC redistribution must retain the NAIST/ICOT terms; Lindera's UniDic package identifies UniDic 2.1.2 and requires its three-clause notice.[^lindera-ipadic-notice][^lindera-unidic-notice] Behavior is adequate for ordinary inflection but not the ambiguous RH09 commands. Not selected because Sudachi's official Rust implementation, current first-party dictionary release, and normalized-form API make the build-time replacement boundary more direct; this is not a runtime-performance conclusion.
+These are optimized arm64 macOS CLI comparisons, not iOS installed-size or signed-device claims. The complete four-sentence morphology probe produced the same SHA-256 `8a34eccf…` in three fresh processes. IPADIC redistribution must retain the NAIST/ICOT terms; Lindera's UniDic package identifies UniDic 2.1.2 and requires its three-clause notice.[^lindera-ipadic-notice][^lindera-unidic-notice] Behavior is adequate for ordinary inflection but not the ambiguous RH09 commands. Not selected because Sudachi's official Rust implementation, current first-party dictionary release, and normalized-form API make the build-time replacement boundary more direct; this is not a runtime-performance conclusion.
 
 ### Sudachi.rs 0.6.11 plus SudachiDict-small 20260723 — selected for build-time evaluation
 
 Sudachi.rs is the official Rust implementation of Sudachi, exposes dictionary form, normalized form, reading, POS, multiple segmentation modes, and requires a separate dictionary.[^sudachi] Exact `v0.6.11` (`90fd6068…`, released 2026-04-13) compiled as an `aarch64-apple-ios` Rust library without source changes; the resulting `rlib` was 4,145,200 bytes. This proves compile feasibility, not a final Swift bridge or signed runtime.
 
-The exact SudachiDict-small release is `v20260723` (`4813c1cd…`, released 2026-07-24). Its official wheel is 41,770,618 bytes with release SHA-256 `c10c7541…`; the extracted `system.dic` measured 122,953,610 bytes (`f872a878…`).[^sudachi-dict-release] A local Python binding comparison processed the same 2,000 sentences in 0.03 s (3/3) with 38,764,544–39,059,456 bytes maximum RSS. The four-sentence morphology output SHA-256 was `dc517cc7…` in three fresh processes. These are host comparisons, not iOS claims.
+The exact SudachiDict-small release is `v20260723` (`4813c1cd…`, released 2026-07-24). Its official wheel is 41,770,618 bytes with release SHA-256 `c10c7541…`; the extracted `system.dic` measured 122,953,610 bytes (`f872a878…`).[^sudachi-dict-release] A local Python binding comparison processed the same 2,000 sentences in 0.03–0.16 s with 38,436,864–38,731,776 bytes maximum RSS; the first process includes dictionary/page-cache startup. The complete four-sentence morphology output SHA-256 was `82243372…` in three fresh processes. These are host comparisons, not iOS claims.
 
 The analyzer and dictionary are Apache-2.0; SudachiDict's `LEGAL` additionally carries the UniDic notice and, for core/full data, NEologd/source notices.[^sudachi-license][^sudachi-dict-legal] Small is sufficient for these probes. The proposed boundary is build-time only:
 
@@ -174,8 +174,8 @@ This appendix authenticates the empirical claims and gives a clean-room replay f
 | revealed-holdout public matrix (selection: RH06/RH08/RH09 metadata) | 8,445 | `77b6d0705d2d69125163c91fcf6f0e704e91a4abad5677b89e5bfe204d4ddd68` |
 | Lindera macOS CLI archive / executable | 2,104,174 / 4,992,192 | `cf60c9f6be16d0b620f70f30ce811670ac4a9b44220151ec47750fdd4c295a27` / `d0d10be332cce379d3872b5c25886a047ba18f94d2609016cc780167d54a151a` |
 | Lindera IPADIC / UniDic archives | 15,879,934 / 54,469,218 | `ed10ce59ff1b1315b780a3984cfd10e31b9e658e58a1706328eb343aaa6927c6` / `321f9c9d26ae08138d9ee635592cf4eb19f6833d8ed3a959508d89c5229f860f` |
-| Lindera source / generated `Cargo.lock` | — | `1bcb0e28fcd90f34b2bcf12f55a25008d791f62c` / `41642d86375024c03924030b57195b268bcbd8329fb74920a3161834ba10f0ec` |
-| Lindera iOS static library / Swift-linked smoke | 27,085,752 / 7,349,504 | `137607b73a05751560846c0f337f8d2c931d27f08ad9948239772356036f77b5` / `3b747ab73ac626d2f8ca8d0230cada370cdbda72fc49847d0aadc8fa7f914e01` |
+| Lindera source / replay `Cargo.lock` | — | `1bcb0e28fcd90f34b2bcf12f55a25008d791f62c` / `a15aa9fea7bdfb278b0081b7b20a54a654a591344db1facf003cf50529e1463a` |
+| Lindera iOS static library / Swift-linked smoke | 27,150,296 / 7,362,448 | `b57d0fe4ca28cdb64ec14a3200439c7310c65240128ddb2c286388e41c8062e4` / `4486507d34fc0d023ee4dee731c1b32851670a93ea4eaa4ba5a7c3085c39cc06` |
 | Sudachi.rs source / `Cargo.lock` / iOS `rlib` | 4,145,200 (`rlib`) | `90fd6068c80c2fc3b63e0dbab0e341475bad4d8f` / `f847ceb0e9a6c91f97825b04267f21b6f3294f1ebe92a57a99bb1aebb48331ee` / `b3d8fcc2afbfabd55d116361105cf3ce68accc40efced9ae20cbdb37b5e43dd1` |
 | SudachiDict-small wheel / extracted `system.dic` | 41,770,618 / 122,953,610 | `c10c7541795c4cf501ddd15f456409d0b75b84339c5961dd045fa922378b687a` / `f872a878c3c5e8a0df4ae8c548e1d7a754f58cdb37eb660ba22f6514457ad8cc` |
 | Vibrato source / `Cargo.lock` / iOS `rlib` | 1,824,432 (`rlib`) | `7462fa07a60a176e8d9ef3cb287c7973290a0f9d` / `811a1afa0592ddfae1dc8a858afe78cf5bc873e792c7654fc79675e2eecc4778` / `b5d6b0c43d7116179169e3608b4505308e03e48a4dd30b68c61409b1c6da41d3` |
@@ -195,8 +195,8 @@ scratch=$(mktemp -d)
 curl -L -o "$scratch/lindera-cli.zip" https://github.com/lindera/lindera/releases/download/v5.1.0/lindera-aarch64-apple-darwin-v5.1.0.zip
 curl -L -o "$scratch/ipadic.zip" https://github.com/lindera/lindera/releases/download/v5.1.0/lindera-ipadic-5.1.0.zip
 curl -L -o "$scratch/unidic.zip" https://github.com/lindera/lindera/releases/download/v5.1.0/lindera-unidic-5.1.0.zip
-curl -L -o "$scratch/sudachi-small.whl" https://github.com/WorksApplications/SudachiDict/releases/download/v20260723/sudachidict_small-20260723-py3-none-any.whl
-shasum -a 256 "$scratch"/{lindera-cli.zip,ipadic.zip,unidic.zip,sudachi-small.whl}
+curl -L -o "$scratch/sudachidict_small-20260723-py3-none-any.whl" https://github.com/WorksApplications/SudachiDict/releases/download/v20260723/sudachidict_small-20260723-py3-none-any.whl
+shasum -a 256 "$scratch"/{lindera-cli.zip,ipadic.zip,unidic.zip,sudachidict_small-20260723-py3-none-any.whl}
 unzip -q "$scratch/lindera-cli.zip" -d "$scratch/lindera-cli"
 unzip -q "$scratch/ipadic.zip" -d "$scratch/ipadic"
 
@@ -210,7 +210,7 @@ git -C "$scratch/vibrato" checkout 7462fa07a60a176e8d9ef3cb287c7973290a0f9d
 cargo build --manifest-path "$scratch/vibrato/Cargo.toml" --locked --release --target aarch64-apple-ios -p vibrato
 
 python3 -m venv "$scratch/venv"
-"$scratch/venv/bin/pip" install 'sudachipy==0.6.11' "$scratch/sudachi-small.whl"
+"$scratch/venv/bin/pip" install 'sudachipy==0.6.11' "$scratch/sudachidict_small-20260723-py3-none-any.whl"
 ```
 
 The Lindera iOS probe was a `staticlib` crate depending on exact-checkout `lindera-analysis` with `default-features = false`. Save the following blocks as `lindera-ios/Cargo.toml` and `lindera-ios/src/lib.rs` beside `lindera-src`; this is its complete public-safe source:
@@ -221,8 +221,10 @@ name = "issue147-lindera-ios"
 version = "0.0.0"
 edition = "2021"
 publish = false
+
 [lib]
 crate-type = ["staticlib"]
+
 [dependencies]
 lindera-analysis = { path = "../lindera-src/lindera-analysis", default-features = false }
 ```
@@ -259,7 +261,141 @@ pub unsafe extern "C" fn issue147_lindera_token_count(
 }
 ```
 
-Build with `cargo build --locked --release --target aarch64-apple-ios`; link the archive with `xcrun --sdk iphoneos swiftc -target arm64-apple-ios26.0 -import-objc-header bridge.h smoke.swift target/aarch64-apple-ios/release/libissue147_lindera_ios.a -o lindera-swift-smoke`. `bridge.h` declares the function above and `smoke.swift` asserts that a missing dictionary returns `-5`. Source SHA-256 values were `2f56c282e8f832dda54aff98e0d012fb67f3cebb616c1eb27136245fbc9003aa` (Rust), `ab82ac93dc3b7f1934e59265025a4aa3a399ecb85be4c66b8f58bdb3b66f715e` (header), and `f404b994f57d17c55ead8c63b7702812178b0737ab1b629aef5d4b852e20edb0` (Swift). Mach-O UUID/path metadata can change the linked-file digest on replay; successful arm64 linkage and `otool -L` showing only `libSystem` and `libswiftCore` are the deterministic checks.
+Save this complete header as `lindera-ios/bridge.h`:
+
+```c
+#include <stdint.h>
+
+int32_t issue147_lindera_token_count(
+    const char *dictionary_path,
+    const char *input
+);
+```
+
+Save this complete smoke source as `lindera-ios/smoke.swift`:
+
+```swift
+let result = "/definitely/missing/dictionary".withCString { dictionaryPath in
+    "テスト".withCString { input in
+        issue147_lindera_token_count(dictionaryPath, input)
+    }
+}
+precondition(result == -5)
+```
+
+The custom probe's exact dependency graph is included here because a lockfile hash alone cannot reconstruct a registry resolution later. Decode it after saving the manifest and Rust source:
+
+<details><summary>gzip-compressed `Cargo.lock` replay payload</summary>
+
+```text
+H4sIAAAAAAACA71cXW9cOY59z68IMo/bTkuiPhdYYIF92vd9GzQCiiKT6tiudFU5M55fv0dlO7Hrw066r2cwM7aryo5IkYfnUNT9
+29v/+7TavrXVpb7FV77Zra94txK+vLx9+98f9Vo3vNPxtt++/R/efFy/f/O3t/+7mx+9XuPL9U6vB9629ebtFV/f8OVbHavd6vrj
++zdfdbNdra/f/tfb+ObN3//+heUzf9TffntzzVeKV9/xp/WFrDe8Xcnnd48+/s6/9+/juzfb9c1G9p/c6MfVdre5/Y9Pu92X7X/+
++uvH1e7TTX8v66tfNzfb3cUlX3/8VeZSt+9X64sVFvXPd2/kk8rn7c3V/BNjDPLsycVQJJTk67CQc4vEiVzV0cKIPYQskqlZ4mre
+uVB99iWS8+/eDP0yjb2WlW7xF//+5u27K72ST5t3v7z57YyF17ef1v84sM29925p64gcJx2uGKeosbggbWSJWLuVCJNNnFrW4GPv
+I5fCmvAbrrUWMz7+7vT6+2pnl/xxe2ABvQ8Lr7+rUR0x+UwSzI+hrkUuwwaRiKWWpIXmklSrFm0Its9l695RKb7yufXfXH3hy/WT
+5WPxbvH1pxFcqa1mrK4734MFYRXEkUR1wVOPXkkTNgZe96mM3BoredERTPq59d/udP/PPLHAva+LG+CEmYgDwmQIu+jb8ImlBBpm
+jsy3lK20Uim0DlN6ssHMSJtBwrWfTI9vy/8wdLP6qkiUt+++7DYfrnTH+x82fA0E2H+7XV2Nm53V89l09Ode2ym1UU1aQ0/D1+BH
+CL6p664lNbhKvIWYpVtrrjqjrjGz55rEDQKctJNO+bJZy8UVy2Yd9nb/cbPe3Xlme3v9Nkx48OV5J6w3cMBBTqb3bmHrvQ1nIdXo
+Y7ZsQS1WV5NLrtbMYpRgsVkhl7QPz5pbck4Br7lYjs/F9CGgePx36dVribUQ9SJdSqvqI8WOdacQzWHrLHCPCGoNyEfnNcdWBMYW
+jiZEZ1Yv9vFiZUeIvjSeNwC6VcCIeTKKKboeowKrgZPJe0RjKqF0YCZRqHgV0ONjyD754OusVqdXv1lvt1356mLoHzfHCVSWhkVf
+vbqhpWev3RHjR4oAvzEqwKSztsEJ8VVc6cm7UjSM4mcNEyd6GlW+G6Ff1vJpnzrfX7vZrS6359Pn8JefeqChNizsggCk9xGAilSK
+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
+KIT/D34D0OuwYwAA
+```
+
+</details>
+
+```bash
+cd "$scratch"
+base64 -D < cargo-lock.txt | gunzip > lindera-ios/Cargo.lock
+test "$(shasum -a 256 lindera-ios/Cargo.lock | cut -d' ' -f1)" = a15aa9fea7bdfb278b0081b7b20a54a654a591344db1facf003cf50529e1463a
+cargo build --manifest-path lindera-ios/Cargo.toml --locked --release --target aarch64-apple-ios
+xcrun --sdk iphoneos swiftc \
+  -target arm64-apple-ios26.0 \
+  -import-objc-header lindera-ios/bridge.h \
+  lindera-ios/smoke.swift \
+  lindera-ios/target/aarch64-apple-ios/release/libissue147_lindera_ios.a \
+  -o lindera-swift-smoke
+file lindera-ios/target/aarch64-apple-ios/release/libissue147_lindera_ios.a lindera-swift-smoke
+otool -L lindera-swift-smoke
+```
+
+The payload block must be saved without its Markdown fence as `cargo-lock.txt`. Exact source SHA-256 values are `7cc7a4218a0bbee108484915e4804380ee023b50647e37436d4754aac2dc5aed` (manifest), `2f56c282e8f832dda54aff98e0d012fb67f3cebb616c1eb27136245fbc9003aa` (Rust), `275ce1071f4ba3a3b099043afe6ad5ce440d1eb54bac0e3cb729e735d2724bd7` (header), and `d9355b26a29654e7c79a58bf29aac165c679e3dc5e09e84050004b18315e857f` (Swift). The rerun produced the archive and linked-smoke sizes/hashes in the identity table. Mach-O UUID/path metadata can change the linked-file digest on another checkout; successful arm64 linkage and `otool -L` showing only `libSystem` and `libswiftCore` are the portable checks.
 
 ### Analyzer and Ranking replay
 
@@ -289,44 +425,187 @@ The Ranking replay selects exactly D18-D20 and D21-D22, resolves app-owned pair 
 <details><summary>Ruby Ranking probe</summary>
 
 ```ruby
-require "csv"; require "digest"; require "json"; require "open3"; require "sqlite3"
-root,lindera,ipadic=ARGV
-db=SQLite3::Database.new(root+"/apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3")
-ids={}; db.execute("select p.source_japanese_record_id,p.source_english_record_id,'esp1_'||lower(hex(e.id)) from example_sentences e join example_sentence_provenance p on p.pair_id=e.id"){|j,e,id|ids[[j,e]]=id}
-rows={}
-CSV.foreach(root+"/docs/research/fixtures/example-sentence-retrieval-issue-147-observation-rows.tsv",headers:true,col_sep:"\t"){|r|(rows[r["context_id"]]||=[])<<r if %w[D18 D19 D20].include?(r["context_id"])}
-CSV.foreach(root+"/docs/research/fixtures/example-sentence-retrieval-issue-147-entry-route-probes.tsv",headers:true,col_sep:"\t"){|r|(rows[r["probe_id"]]||=[])<<r if %w[D21 D22].include?(r["probe_id"])}
-def agree(a); n=d=0;a.combination(2){|x,y|n+=1;d+=1 if yield(x)>yield(y)};[n-d,n] end
-signals={app_id:->r{r[:id]},japanese_lexical:->r{r[:ja]},english_length:->r{r[:en].each_grapheme_cluster.count},english_lexical:->r{r[:en]},content_sha256:->r{Digest::SHA256.hexdigest(r[:ja]+"\0"+r[:en])}}
-agg=Hash.new{|h,k|h[k]=[0,0,0,0]}
-rows.each do |ctx,raw|
-  ranked=raw.sort_by{|r|r["rank"].to_i}.map{|r|out,_=Open3.capture2(lindera,"tokenize","--dict",ipadic,"--output","json",stdin_data:r["japanese"]+"\n");{ja:r["japanese"],en:r["english"],len:r["japanese"].each_grapheme_cluster.count,id:ids[[r["japanese_id"].to_i,r["english_id"].to_i]],tokens:JSON.parse(out).count{|t|t["part_of_speech"]!="記号"}}}.select{|r|r[:id]}
-  signals.merge(token_count:->r{r[:tokens]}).each do |name,fn|
-    pred=ranked.sort_by{|r|[r[:len],fn.call(r)]}; exact=ranked.zip(pred).count{|x,y|x[:id]==y[:id]}; concord=pairs=0
-    ranked.group_by{|r|r[:len]}.each_value{|g|c,p=agree(g,&fn);concord+=c;pairs+=p}; puts [ctx,name,"exact=#{exact}/#{ranked.length}","tie_pair_agree=#{concord}/#{pairs}"].join("\t"); x=agg[name];x[0]+=exact;x[1]+=ranked.length;x[2]+=concord;x[3]+=pairs
+require "csv"
+require "digest"
+require "json"
+require "open3"
+require "sqlite3"
+
+repository_root, lindera_cli, ipadic_directory = ARGV
+database = SQLite3::Database.new(repository_root + "/apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3")
+pair_ids_by_provider_coordinate = {}
+database.execute("select p.source_japanese_record_id,p.source_english_record_id,'esp1_'||lower(hex(e.id)) from example_sentences e join example_sentence_provenance p on p.pair_id=e.id") do |japanese_id, english_id, app_pair_id|
+  pair_ids_by_provider_coordinate[[japanese_id, english_id]] = app_pair_id
+end
+rows_by_context = Hash.new { |contexts, context_id| contexts[context_id] = [] }
+CSV.foreach(repository_root + "/docs/research/fixtures/example-sentence-retrieval-issue-147-observation-rows.tsv", headers: true, col_sep: "\t") do |row|
+  rows_by_context[row["context_id"]] << row if %w[D18 D19 D20].include?(row["context_id"])
+end
+CSV.foreach(repository_root + "/docs/research/fixtures/example-sentence-retrieval-issue-147-entry-route-probes.tsv", headers: true, col_sep: "\t") do |row|
+  rows_by_context[row["probe_id"]] << row if %w[D21 D22].include?(row["probe_id"])
+end
+
+def agreement_counts(reference_rows, &signal)
+  total_pairs = 0
+  discordant_pairs = 0
+  reference_rows.combination(2) do |left, right|
+    total_pairs += 1
+    discordant_pairs += 1 if signal.call(left) > signal.call(right)
+  end
+  [total_pairs - discordant_pairs, total_pairs]
+end
+
+signals = {
+  app_id: ->(row) { row[:app_pair_id] },
+  japanese_lexical: ->(row) { row[:japanese] },
+  english_length: ->(row) { row[:english].each_grapheme_cluster.count },
+  english_lexical: ->(row) { row[:english] },
+  content_sha256: ->(row) { Digest::SHA256.hexdigest(row[:japanese] + "\0" + row[:english]) }
+}
+aggregates = Hash.new { |all, name| all[name] = [0, 0, 0, 0] }
+rows_by_context.each do |context_id, raw_rows|
+  reference_rows = raw_rows.sort_by { |row| row["rank"].to_i }.map do |row|
+    analyzer_json, = Open3.capture2(lindera_cli, "tokenize", "--dict", ipadic_directory, "--output", "json", stdin_data: row["japanese"] + "\n")
+    {
+      japanese: row["japanese"],
+      english: row["english"],
+      japanese_length: row["japanese"].each_grapheme_cluster.count,
+      app_pair_id: pair_ids_by_provider_coordinate[[row["japanese_id"].to_i, row["english_id"].to_i]],
+      token_count: JSON.parse(analyzer_json).count { |token| token["part_of_speech"] != "記号" }
+    }
+  end.select { |row| row[:app_pair_id] }
+
+  signals.merge(token_count: ->(row) { row[:token_count] }).each do |signal_name, signal|
+    predicted_rows = reference_rows.sort_by { |row| [row[:japanese_length], signal.call(row)] }
+    exact_positions = reference_rows.zip(predicted_rows).count { |reference, predicted| reference[:app_pair_id] == predicted[:app_pair_id] }
+    concordant_pairs = 0
+    total_pairs = 0
+    reference_rows.group_by { |row| row[:japanese_length] }.each_value do |equal_length_rows|
+      group_concordant, group_total = agreement_counts(equal_length_rows, &signal)
+      concordant_pairs += group_concordant
+      total_pairs += group_total
+    end
+    puts [context_id, signal_name, "exact=#{exact_positions}/#{reference_rows.length}", "tie_pair_agree=#{concordant_pairs}/#{total_pairs}"].join("\t")
+    aggregate = aggregates[signal_name]
+    aggregate[0] += exact_positions
+    aggregate[1] += reference_rows.length
+    aggregate[2] += concordant_pairs
+    aggregate[3] += total_pairs
   end
 end
-puts "AGG";agg.each{|n,x|puts [n,"exact=#{x[0]}/#{x[1]}","tie_pair_agree=#{x[2]}/#{x[3]}"].join("\t")}
+puts "AGG"
+aggregates.each do |signal_name, aggregate|
+  puts [signal_name, "exact=#{aggregate[0]}/#{aggregate[1]}", "tie_pair_agree=#{aggregate[2]}/#{aggregate[3]}"].join("\t")
+end
 ```
 
 </details>
 
-Run `ruby rank_probe.rb "$repo" "$scratch/lindera-cli/lindera" "$scratch/ipadic/lindera-ipadic" > ranking.tsv`. The complete 37-line result is authenticated by SHA-256 `114be3178f6b77e86dd43f2b79873fdce601526ffd8854e822eee213d02187ec`; its six aggregate rows are the Ranking table above.
+Run `ruby rank_probe.rb "$repo" "$scratch/lindera-cli/lindera" "$scratch/ipadic/lindera-ipadic" > ranking.tsv`. The descriptive source SHA-256 is `fce7591e7d536047ac3e9996a4c53434ba1711beb38d6c1bf52e760fa5ef27af`. The complete 37-line result is authenticated by SHA-256 `114be3178f6b77e86dd43f2b79873fdce601526ffd8854e822eee213d02187ec`; its six aggregate rows are the Ranking table above.
 
 ### Raw timing and determinism evidence
 
-The timed inputs are exactly 1,000 repetitions each of `彼は少し飲んだ。` and `始めました。` (2,000 sentences). Lindera used `lindera tokenize --output wakati --dict DICTIONARY`; Sudachi constructed one small-dictionary tokenizer then called `tokenize`; Apple constructed one Japanese lemma `NLTagger` per sentence. Each command was wrapped in `/usr/bin/time -lp` and run three times with stdout discarded. Raw observations, in run order:
+The timed inputs are exactly 1,000 repetitions each of `彼は少し飲んだ。` and `始めました。` (2,000 sentences). Each executable was wrapped in `/usr/bin/time -lp`, run three times, and had stdout discarded. The rerun used these exact commands for Lindera IPADIC, then the same command with `unidic/lindera-unidic`:
+
+```bash
+for run in 1 2 3; do
+  ruby -e '1000.times { puts "彼は少し飲んだ。"; puts "始めました。" }' |
+    /usr/bin/time -lp "$scratch/lindera-cli/lindera" tokenize \
+      --dict "$scratch/ipadic/lindera-ipadic" --output wakati >/dev/null
+done
+```
+
+Save this complete source as `sudachi_perf.py` and run it three times with `/usr/bin/time -lp "$scratch/venv/bin/python" sudachi_perf.py >/dev/null`:
+
+```python
+from sudachipy import dictionary
+
+tokenizer = dictionary.Dictionary(dict="small").create()
+sentences = ("彼は少し飲んだ。", "始めました。") * 1000
+for sentence in sentences:
+    tokenizer.tokenize(sentence)
+```
+
+Save this complete source as `nl_perf.swift`, compile with `xcrun swiftc -O nl_perf.swift -o nl_perf`, and run `nl_perf` three times through `/usr/bin/time -lp`:
+
+```swift
+import NaturalLanguage
+
+let sentences = Array(repeating: ["彼は少し飲んだ。", "始めました。"], count: 1000).flatMap { $0 }
+for sentence in sentences {
+    let tagger = NLTagger(tagSchemes: [.lemma])
+    tagger.string = sentence
+    tagger.enumerateTags(
+        in: sentence.startIndex..<sentence.endIndex,
+        unit: .word,
+        scheme: .lemma,
+        options: [.omitWhitespace, .omitPunctuation]
+    ) { _, _ in true }
+}
+```
+
+Raw verification observations, in run order:
 
 | Probe | Wall seconds | Maximum RSS bytes |
 |---|---|---|
-| Lindera IPADIC | `0.05, 0.05, 0.05` | `43728896, 43745280, 43728896` |
-| Lindera UniDic | `0.05, 0.06, 0.05` | `150847488, 150798336, 150781952` |
-| SudachiDict-small | `0.03, 0.03, 0.03` | `38764544, 38977536, 39059456` |
-| Apple Natural Language | `1.17, 0.72, 0.74` | `13467648, 13238272, 13484032` |
+| Lindera IPADIC | `0.06, 0.04, 0.04` | `43663360, 43696128, 43679744` |
+| Lindera UniDic | `0.05, 0.05, 0.04` | `150781952, 150781952, 150749184` |
+| SudachiDict-small | `0.16, 0.03, 0.03` | `38731776, 38436864, 38436864` |
+| Apple Natural Language | `1.18, 0.70, 0.70` | `13697024, 13680640, 13680640` |
 
-Canonical TSV (header `probe,run,wall_seconds,max_rss_bytes`, tab-separated, LF) SHA-256 is `704b78b753997bdf6661640b5a62fe0133b403d0b12601a04bb8b67f276fc0ba`. Sudachi's 250-byte timing source is `tokenizer=dictionary.Dictionary(dict='small').create();` followed by the nested 1,000 × two-sentence loop; SHA-256 `a464b9e7be32911db4aa13034d1d347d430abf22d7f3d65869029aef9be990a8`. Apple's equivalent 531-byte Swift source SHA-256 is `9c59ee24a664800cdc0e0fcc2ebf6d2d9e4c2dd154a574bf21a740c8b767fdc6`; compile with `xcrun swiftc -O nl_perf.swift -o nl_perf`.
+Canonical TSV (tab-separated header `probe<TAB>run<TAB>wall_seconds<TAB>max_rss_bytes`, LF) SHA-256 is `21a14355de92622cabab3b11b6380d7d1e232311a8409443ae398daecfab815c`. Source SHA-256 values are `c0b7ea675ceebdcad5c4bfef2ac1313f5b96425a97514f42c633ed9da341fd20` for `sudachi_perf.py` and `e1be27416d0ce1a1a85c0e64980dd6a715e6913b4535b6c981a4e4adde0c00be` for `nl_perf.swift`. The first-process Sudachi timing includes dictionary/page-cache startup; timing remains descriptive host evidence.
 
-Fresh processes analyzing the same fixed four-sentence probe produced identical normalized output 3/3: Lindera SHA-256 `f495eeee8071648c2af1c16b3a6279c22f072adf4ccad55da8de6c63fa46b4cc`, Sudachi SHA-256 `dc517cc74661c7de3b9deb61185c4a3e2993bcf48e7dfeca57f786bac7639f41`. The Apple scheme/lemma probe source SHA-256 is `8078f73fdc17a0d520422e0be032cfcbe328c6fb5f6027baf91c54ec55dfe6ef`; its normalized output (schemes plus token-to-lemma rows) is `96f0bc25005f129e79de7c40b090a23825fb546d7f0da00be9f4340ac9ad22ee`, confirming only `Language`, `Script`, `TokenType` and `nil` Japanese lemmas.
+The determinism input is the following exact LF-terminated four-line sequence (SHA-256 `f7e13631e4b2b52271a89dd9138f16540c7dca0b1cf3bdf2556bbb0c578eab99`): `彼は少し飲んだ。`, `始めました。`, `始め！`, `演技はじめ！`. Lindera was replayed three times with:
+
+```bash
+for run in 1 2 3; do
+  printf '彼は少し飲んだ。\n始めました。\n始め！\n演技はじめ！\n' |
+    "$scratch/lindera-cli/lindera" tokenize \
+      --dict "$scratch/ipadic/lindera-ipadic" --output json |
+    shasum -a 256
+done
+```
+
+Save this complete Sudachi source as `sudachi_determinism.py` and run `for run in 1 2 3; do "$scratch/venv/bin/python" sudachi_determinism.py | shasum -a 256; done`:
+
+```python
+from sudachipy import dictionary
+
+tokenizer = dictionary.Dictionary(dict="small").create()
+sentences = ("彼は少し飲んだ。", "始めました。", "始め！", "演技はじめ！")
+for sentence in sentences:
+    print(f"SENTENCE\t{sentence}")
+    for morpheme in tokenizer.tokenize(sentence):
+        print("\t".join((morpheme.surface(), morpheme.dictionary_form(), morpheme.reading_form(), ",".join(morpheme.part_of_speech()))))
+```
+
+Save this complete Apple source as `nl_determinism.swift` and run `for run in 1 2 3; do xcrun swift nl_determinism.swift | shasum -a 256; done`:
+
+```swift
+import NaturalLanguage
+
+let sentences = ["彼は少し飲んだ。", "始めました。", "始め！", "演技はじめ！"]
+let schemes = NLTagger.availableTagSchemes(for: .word, language: .japanese)
+    .map(\.rawValue)
+    .sorted()
+print("SCHEMES\t\(schemes.joined(separator: ","))")
+for sentence in sentences {
+    print("SENTENCE\t\(sentence)")
+    let tagger = NLTagger(tagSchemes: [.lemma])
+    tagger.string = sentence
+    tagger.enumerateTags(
+        in: sentence.startIndex..<sentence.endIndex,
+        unit: .word,
+        scheme: .lemma,
+        options: [.omitWhitespace, .omitPunctuation]
+    ) { tag, range in
+        print("\(sentence[range])\t\(tag?.rawValue ?? "nil")")
+        return true
+    }
+}
+```
+
+Fresh processes produced identical normalized output 3/3: Lindera `8a34eccf7caf00b48295e517fed6d0d82b9df8cdbd4e68e3a26d2b9b0e1e04db`, Sudachi `8224337282f972ee464e3918a6e9465fc1988e1049d29e2357075c88f43a87c5`, and Apple `2119ba767cf3b600d7550873bc64357fac7bfd74434fc51382917eec90dcfa56`. Complete source hashes are `22bd4c4c15b849f045a544cc2e9c2e315500e12be8ef4a0f2a5ae3b4da2ace3c` for Sudachi and `f6c305d323c48d624586d3792361cc8ac96c659e5d48017be1f0cbe76f47e9ad` for Apple. The Apple output confirms only `Language`, `Script`, `TokenType` and `nil` Japanese lemmas.
 
 [^apple-nl]: [Apple Natural Language framework](https://developer.apple.com/documentation/naturallanguage)
 [^apple-schemes]: [Apple `NLTagger`](https://developer.apple.com/documentation/naturallanguage/nltagger)
