@@ -15,7 +15,7 @@ The nine mismatches are native blockers [#153](https://github.com/serpcompany/ze
 - The reference freeze contains 58 private PNG captures and has SHA-256 `fd6468ecde53046454839354ca95eb6b6ed241ac2fb830cd2360fe94abb445c1`.
 - The candidate result was exported from the passing hosted simulator test as JSON with SHA-256 `94a38c5694a389295c86f1e4a15c46355ff91c5afba8ddc17cae10dee6654254`.
 - The private comparison record has SHA-256 `4b7d74109deb007800bf6dde2e6e3c56a34b54deba79e8f576b2d3adf967d293`.
-- Screenshots, device identifiers, full private sequences, and private JSON remain outside Git. The committed [machine-readable matrix](../../../../docs/research/fixtures/example-sentence-retrieval-issue-152-holdout-matrix.json) retains only opaque/public IDs, counts, classifications, hashes, and `private://` pointers.
+- Screenshots, device identifiers, full private sequences, and private JSON remain outside Git. The committed [machine-readable matrix](../../../../docs/research/fixtures/example-sentence-retrieval-issue-152-holdout-matrix.json) retains only app-owned pair/entry IDs, provider coordinates, counts, classifications, hashes, and `private://` pointers.
 
 The ten inputs are now disclosed in their blocker issues and are permanently retired as blind validation. They may be used only as deterministic regression evidence.
 
