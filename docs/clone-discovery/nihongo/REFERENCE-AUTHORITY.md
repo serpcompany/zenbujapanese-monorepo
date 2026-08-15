@@ -2,7 +2,9 @@
 
 Status: **reset in progress under [#168](https://github.com/serpcompany/zenbujapanese-monorepo/issues/168)**.
 
-No current-version parity acceptance exists at this point.
+Current-version authority is restored only for the bounded anchors replayed in
+the [Nihongo 1.34.4 report](../../research/nihongo-reference-authority-1.34.4-2026-08-16.md).
+Complete deeper-row and replacement-holdout acceptance does not yet exist.
 
 ## Historical authority
 

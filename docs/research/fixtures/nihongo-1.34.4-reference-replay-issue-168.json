@@ -1,0 +1,40 @@
+{
+  "schema": "zenbu.issue168.public-comparison.v1",
+  "reference": {
+    "bundle_identifier": "com.serpentisei.studyjapanese",
+    "version": "1.34.4",
+    "device_class": "iPhone 14 Pro Max",
+    "os": "iOS 26.6",
+    "private_freeze_sha256": "df09f5e9bbc2f289ab07569f06d758c4cb953f390f93e082c4ae2495abb4c4ca"
+  },
+  "candidate": {
+    "bundle_identifier": "com.zenbujapanese.dictionary",
+    "source_commit": "7a9fde4a48aedbdb1ed6fcd113a13aac6b1358ae",
+    "configuration": "Release",
+    "private_comparison_sha256": "e9591abf9241a43080fee1844d962d752f3219dae5fb00d28bd1418a81858808"
+  },
+  "reference_replay": {
+    "total": 10,
+    "stable_against_disclosed_1_34_3_anchor": 10,
+    "changed": 0,
+    "scope": "disclosed count, primary-entry, first-row, and exact-five-row anchors; not a claim of complete top-20 stability"
+  },
+  "candidate_summary": {
+    "total": 10,
+    "pass": 2,
+    "mismatch": 8,
+    "skip": 0
+  },
+  "contexts": [
+    {"id":"RH01","route":"direct-search","reference_1_34_4":"stable","candidate":"mismatch","first_divergence":"example rank 1","blocker":153},
+    {"id":"RH02","route":"direct-search","reference_1_34_4":"stable","candidate":"mismatch","first_divergence":"example rank 1","blocker":154},
+    {"id":"RH03","route":"direct-search","reference_1_34_4":"stable","candidate":"mismatch","first_divergence":"example rank 1","blocker":155},
+    {"id":"RH04","route":"dictionary-entry","reference_1_34_4":"stable","candidate":"mismatch","first_divergence":"primary entry matches; candidate has no source-matched examples","blocker":156},
+    {"id":"RH05","route":"dictionary-entry","reference_1_34_4":"stable","candidate":"pass","first_divergence":null,"blocker":157,"limitation":"complete downstream top-20 sequence not replayed"},
+    {"id":"RH06","route":"direct-search","reference_1_34_4":"stable","candidate":"mismatch","first_divergence":"example rank 1","blocker":158},
+    {"id":"RH07","route":"direct-search","reference_1_34_4":"stable","candidate":"pass","first_divergence":null,"blocker":null},
+    {"id":"RH08","route":"direct-search","reference_1_34_4":"stable","candidate":"mismatch","first_divergence":"same five-row set; rank 2 differs","blocker":159},
+    {"id":"RH09","route":"dictionary-entry","reference_1_34_4":"stable","candidate":"mismatch","first_divergence":"primary entry matches; example rank 1 differs","blocker":160},
+    {"id":"RH10","route":"dictionary-entry","reference_1_34_4":"stable","candidate":"mismatch","first_divergence":"primary entry matches; example rank 1 differs","blocker":161}
+  ]
+}
