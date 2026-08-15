@@ -160,6 +160,174 @@ RH08 has a general evidence-backed policy fix: Japanese length before match posi
 
 No provider-independent feature tested reproduces equal-length reference order. The honest product choice is a declared app-owned total order with measured parity differences, not laundering Tatoeba coordinates or source order into Ranking.
 
+## Reproduction appendix
+
+This appendix authenticates the empirical claims and gives a clean-room replay from the fixed product point. Commands were run on arm64 macOS 26.5.2 (`25F84`) with Xcode 26.0 (`17A324`), iPhoneOS 26.0 SDK, Swift 6.2, Rust/Cargo 1.91.1, Python 3.10.0, and system Ruby 2.6.10. No signed device was used. Timing is descriptive: repeat counts, input, raw observations, and maximum RSS are fixed below, but wall time and RSS are expected to vary by host.
+
+### Inputs and artifact identity
+
+| Input/artifact | Bytes | SHA-256 / exact revision |
+|---|---:|---|
+| D01-D20 observation TSV (selection: D18-D20) | 109,630 | `ffbad9f0a93843507058045f0820dec6f242c6041db224b0ec8e79574c5c7dbc` |
+| D21-D22 entry-probe TSV (all rows) | 18,273 | `c4db9dadba2720c9d47b72a72f9a085d23a5104235b63d596007d3a938e0ab9e` |
+| pinned Language Reference Data SQLite | 342,433,792 | `248f9308662374c00dc597731ef085ee5ed87d9b703ec356be93ee9be8f03d4f` |
+| revealed-holdout public matrix (selection: RH06/RH08/RH09 metadata) | 8,445 | `77b6d0705d2d69125163c91fcf6f0e704e91a4abad5677b89e5bfe204d4ddd68` |
+| Lindera macOS CLI archive / executable | 2,104,174 / 4,992,192 | `cf60c9f6be16d0b620f70f30ce811670ac4a9b44220151ec47750fdd4c295a27` / `d0d10be332cce379d3872b5c25886a047ba18f94d2609016cc780167d54a151a` |
+| Lindera IPADIC / UniDic archives | 15,879,934 / 54,469,218 | `ed10ce59ff1b1315b780a3984cfd10e31b9e658e58a1706328eb343aaa6927c6` / `321f9c9d26ae08138d9ee635592cf4eb19f6833d8ed3a959508d89c5229f860f` |
+| Lindera source / generated `Cargo.lock` | — | `1bcb0e28fcd90f34b2bcf12f55a25008d791f62c` / `41642d86375024c03924030b57195b268bcbd8329fb74920a3161834ba10f0ec` |
+| Lindera iOS static library / Swift-linked smoke | 27,085,752 / 7,349,504 | `137607b73a05751560846c0f337f8d2c931d27f08ad9948239772356036f77b5` / `3b747ab73ac626d2f8ca8d0230cada370cdbda72fc49847d0aadc8fa7f914e01` |
+| Sudachi.rs source / `Cargo.lock` / iOS `rlib` | 4,145,200 (`rlib`) | `90fd6068c80c2fc3b63e0dbab0e341475bad4d8f` / `f847ceb0e9a6c91f97825b04267f21b6f3294f1ebe92a57a99bb1aebb48331ee` / `b3d8fcc2afbfabd55d116361105cf3ce68accc40efced9ae20cbdb37b5e43dd1` |
+| SudachiDict-small wheel / extracted `system.dic` | 41,770,618 / 122,953,610 | `c10c7541795c4cf501ddd15f456409d0b75b84339c5961dd045fa922378b687a` / `f872a878c3c5e8a0df4ae8c548e1d7a754f58cdb37eb660ba22f6514457ad8cc` |
+| Vibrato source / `Cargo.lock` / iOS `rlib` | 1,824,432 (`rlib`) | `7462fa07a60a176e8d9ef3cb287c7973290a0f9d` / `811a1afa0592ddfae1dc8a858afe78cf5bc873e792c7654fc79675e2eecc4778` / `b5d6b0c43d7116179169e3608b4505308e03e48a4dd30b68c61409b1c6da41d3` |
+
+RH09's full top-20 transcription remains private. Its public matrix, issue #160 evidence hashes, and canonical aggregate line `RH09<TAB>literal=1/20<TAB>dictionary_form=17/20<TAB>misses=3<LF>` (49 bytes, SHA-256 `d374f350984f9f99cf8da9790bbd7bdbc97fcc00cec4d3ebac574a2088fc3470`) authenticate the retained run but deliberately do not republish private screenshot content. Thus D18-D22 are independently replayable from Git; RH09 is independently replayable only by the evidence custodian. No replacement holdout was opened.
+
+### Acquisition and compile replay
+
+Run from a clean checkout. `--locked` fixes each Rust dependency graph; the target and release profile are the compiler configuration used.
+
+```bash
+set -euo pipefail
+repo=$(git rev-parse --show-toplevel)
+test "$(git -C "$repo" rev-parse HEAD)" = 917cbb7153457a79db117b5d536bbf60a7dfe519
+scratch=$(mktemp -d)
+
+curl -L -o "$scratch/lindera-cli.zip" https://github.com/lindera/lindera/releases/download/v5.1.0/lindera-aarch64-apple-darwin-v5.1.0.zip
+curl -L -o "$scratch/ipadic.zip" https://github.com/lindera/lindera/releases/download/v5.1.0/lindera-ipadic-5.1.0.zip
+curl -L -o "$scratch/unidic.zip" https://github.com/lindera/lindera/releases/download/v5.1.0/lindera-unidic-5.1.0.zip
+curl -L -o "$scratch/sudachi-small.whl" https://github.com/WorksApplications/SudachiDict/releases/download/v20260723/sudachidict_small-20260723-py3-none-any.whl
+shasum -a 256 "$scratch"/{lindera-cli.zip,ipadic.zip,unidic.zip,sudachi-small.whl}
+unzip -q "$scratch/lindera-cli.zip" -d "$scratch/lindera-cli"
+unzip -q "$scratch/ipadic.zip" -d "$scratch/ipadic"
+
+git clone --filter=blob:none https://github.com/lindera/lindera.git "$scratch/lindera-src"
+git -C "$scratch/lindera-src" checkout 1bcb0e28fcd90f34b2bcf12f55a25008d791f62c
+git clone --filter=blob:none https://github.com/WorksApplications/sudachi.rs.git "$scratch/sudachi-rs"
+git -C "$scratch/sudachi-rs" checkout 90fd6068c80c2fc3b63e0dbab0e341475bad4d8f
+cargo build --manifest-path "$scratch/sudachi-rs/Cargo.toml" --locked --release --target aarch64-apple-ios -p sudachi
+git clone --filter=blob:none https://github.com/daac-tools/vibrato.git "$scratch/vibrato"
+git -C "$scratch/vibrato" checkout 7462fa07a60a176e8d9ef3cb287c7973290a0f9d
+cargo build --manifest-path "$scratch/vibrato/Cargo.toml" --locked --release --target aarch64-apple-ios -p vibrato
+
+python3 -m venv "$scratch/venv"
+"$scratch/venv/bin/pip" install 'sudachipy==0.6.11' "$scratch/sudachi-small.whl"
+```
+
+The Lindera iOS probe was a `staticlib` crate depending on exact-checkout `lindera-analysis` with `default-features = false`. Save the following blocks as `lindera-ios/Cargo.toml` and `lindera-ios/src/lib.rs` beside `lindera-src`; this is its complete public-safe source:
+
+```toml
+[package]
+name = "issue147-lindera-ios"
+version = "0.0.0"
+edition = "2021"
+publish = false
+[lib]
+crate-type = ["staticlib"]
+[dependencies]
+lindera-analysis = { path = "../lindera-src/lindera-analysis", default-features = false }
+```
+
+```rust
+use lindera_analysis::tokenizer::TokenizerBuilder;
+use std::ffi::{c_char, CStr};
+
+#[no_mangle]
+pub unsafe extern "C" fn issue147_lindera_token_count(
+    dictionary_path: *const c_char,
+    input: *const c_char,
+) -> i32 {
+    if dictionary_path.is_null() || input.is_null() {
+        return -1;
+    }
+    let Ok(dictionary_path) = CStr::from_ptr(dictionary_path).to_str() else {
+        return -2;
+    };
+    let Ok(input) = CStr::from_ptr(input).to_str() else {
+        return -3;
+    };
+    let Ok(mut builder) = TokenizerBuilder::new() else {
+        return -4;
+    };
+    builder.set_segmenter_dictionary(dictionary_path);
+    let Ok(tokenizer) = builder.build() else {
+        return -5;
+    };
+    match tokenizer.tokenize(input) {
+        Ok(tokens) => i32::try_from(tokens.len()).unwrap_or(-6),
+        Err(_) => -7,
+    }
+}
+```
+
+Build with `cargo build --locked --release --target aarch64-apple-ios`; link the archive with `xcrun --sdk iphoneos swiftc -target arm64-apple-ios26.0 -import-objc-header bridge.h smoke.swift target/aarch64-apple-ios/release/libissue147_lindera_ios.a -o lindera-swift-smoke`. `bridge.h` declares the function above and `smoke.swift` asserts that a missing dictionary returns `-5`. Source SHA-256 values were `2f56c282e8f832dda54aff98e0d012fb67f3cebb616c1eb27136245fbc9003aa` (Rust), `ab82ac93dc3b7f1934e59265025a4aa3a399ecb85be4c66b8f58bdb3b66f715e` (header), and `f404b994f57d17c55ead8c63b7702812178b0737ab1b629aef5d4b852e20edb0` (Swift). Mach-O UUID/path metadata can change the linked-file digest on replay; successful arm64 linkage and `otool -L` showing only `libSystem` and `libswiftCore` are the deterministic checks.
+
+### Analyzer and Ranking replay
+
+The following public fixture probe produces the five Direct/entry rows below. Save it as `analyzer_probe.py` and run `venv/bin/python analyzer_probe.py "$repo"`.
+
+```python
+import csv,sys
+from sudachipy import dictionary
+root=sys.argv[1]; tokenizer=dictionary.Dictionary(dict="small").create()
+obs=list(csv.DictReader(open(root+"/docs/research/fixtures/example-sentence-retrieval-issue-147-observation-rows.tsv"),delimiter="\t"))
+for context,query in (("D18","食べる"),("D19","食べた"),("D20","ねこ")):
+    rows=[r for r in obs if r["context_id"]==context]
+    print(f"{context}\tliteral={sum(query in r['japanese'] for r in rows)}/{len(rows)}")
+entries=list(csv.DictReader(open(root+"/docs/research/fixtures/example-sentence-retrieval-issue-147-entry-route-probes.tsv"),delimiter="\t"))
+for context in ("D21","D22"):
+    rows=[r for r in entries if r["probe_id"]==context]; head,reading=rows[0]["entry_headword"],rows[0]["entry_reading"]
+    kata="".join(chr(ord(c)+0x60) if "ぁ"<=c<="ゖ" else c for c in reading)
+    literal=sum(any(x in r["japanese"] for x in (head,reading,kata)) for r in rows)
+    evidence=sum(any((m.dictionary_form()==head) if context=="D21" else (m.reading_form()=="ネコ") for m in tokenizer.tokenize(r["japanese"])) for r in rows)
+    print(f"{context}\tliteral_or_reading={literal}/{len(rows)}\t{'dictionary_form' if context=='D21' else 'exact_token_reading'}={evidence}/{len(rows)}")
+```
+
+Normalized output is `D18 20/20`, `D19 20/20`, `D20 9/9`, `D21 literal 6/20 and dictionary form 20/20`, `D22 literal/reading 20/20 and exact token reading 19/20`; canonical TSV SHA-256 is `7e7cbe3b6ff7ae646e2c1fea335f44ab5870a6bff820a56f70de7ff188df5e79`.
+
+The Ranking replay selects exactly D18-D20 and D21-D22, resolves app-owned pair IDs from the pinned SQLite database, sorts first by Ruby grapheme count and then each declared signal, and computes exact positions plus concordant pairs inside equal-length groups. The executable source is preserved inline to avoid an extra repository artifact:
+
+<details><summary>Ruby Ranking probe</summary>
+
+```ruby
+require "csv"; require "digest"; require "json"; require "open3"; require "sqlite3"
+root,lindera,ipadic=ARGV
+db=SQLite3::Database.new(root+"/apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3")
+ids={}; db.execute("select p.source_japanese_record_id,p.source_english_record_id,'esp1_'||lower(hex(e.id)) from example_sentences e join example_sentence_provenance p on p.pair_id=e.id"){|j,e,id|ids[[j,e]]=id}
+rows={}
+CSV.foreach(root+"/docs/research/fixtures/example-sentence-retrieval-issue-147-observation-rows.tsv",headers:true,col_sep:"\t"){|r|(rows[r["context_id"]]||=[])<<r if %w[D18 D19 D20].include?(r["context_id"])}
+CSV.foreach(root+"/docs/research/fixtures/example-sentence-retrieval-issue-147-entry-route-probes.tsv",headers:true,col_sep:"\t"){|r|(rows[r["probe_id"]]||=[])<<r if %w[D21 D22].include?(r["probe_id"])}
+def agree(a); n=d=0;a.combination(2){|x,y|n+=1;d+=1 if yield(x)>yield(y)};[n-d,n] end
+signals={app_id:->r{r[:id]},japanese_lexical:->r{r[:ja]},english_length:->r{r[:en].each_grapheme_cluster.count},english_lexical:->r{r[:en]},content_sha256:->r{Digest::SHA256.hexdigest(r[:ja]+"\0"+r[:en])}}
+agg=Hash.new{|h,k|h[k]=[0,0,0,0]}
+rows.each do |ctx,raw|
+  ranked=raw.sort_by{|r|r["rank"].to_i}.map{|r|out,_=Open3.capture2(lindera,"tokenize","--dict",ipadic,"--output","json",stdin_data:r["japanese"]+"\n");{ja:r["japanese"],en:r["english"],len:r["japanese"].each_grapheme_cluster.count,id:ids[[r["japanese_id"].to_i,r["english_id"].to_i]],tokens:JSON.parse(out).count{|t|t["part_of_speech"]!="記号"}}}.select{|r|r[:id]}
+  signals.merge(token_count:->r{r[:tokens]}).each do |name,fn|
+    pred=ranked.sort_by{|r|[r[:len],fn.call(r)]}; exact=ranked.zip(pred).count{|x,y|x[:id]==y[:id]}; concord=pairs=0
+    ranked.group_by{|r|r[:len]}.each_value{|g|c,p=agree(g,&fn);concord+=c;pairs+=p}; puts [ctx,name,"exact=#{exact}/#{ranked.length}","tie_pair_agree=#{concord}/#{pairs}"].join("\t"); x=agg[name];x[0]+=exact;x[1]+=ranked.length;x[2]+=concord;x[3]+=pairs
+  end
+end
+puts "AGG";agg.each{|n,x|puts [n,"exact=#{x[0]}/#{x[1]}","tie_pair_agree=#{x[2]}/#{x[3]}"].join("\t")}
+```
+
+</details>
+
+Run `ruby rank_probe.rb "$repo" "$scratch/lindera-cli/lindera" "$scratch/ipadic/lindera-ipadic" > ranking.tsv`. The complete 37-line result is authenticated by SHA-256 `114be3178f6b77e86dd43f2b79873fdce601526ffd8854e822eee213d02187ec`; its six aggregate rows are the Ranking table above.
+
+### Raw timing and determinism evidence
+
+The timed inputs are exactly 1,000 repetitions each of `彼は少し飲んだ。` and `始めました。` (2,000 sentences). Lindera used `lindera tokenize --output wakati --dict DICTIONARY`; Sudachi constructed one small-dictionary tokenizer then called `tokenize`; Apple constructed one Japanese lemma `NLTagger` per sentence. Each command was wrapped in `/usr/bin/time -lp` and run three times with stdout discarded. Raw observations, in run order:
+
+| Probe | Wall seconds | Maximum RSS bytes |
+|---|---|---|
+| Lindera IPADIC | `0.05, 0.05, 0.05` | `43728896, 43745280, 43728896` |
+| Lindera UniDic | `0.05, 0.06, 0.05` | `150847488, 150798336, 150781952` |
+| SudachiDict-small | `0.03, 0.03, 0.03` | `38764544, 38977536, 39059456` |
+| Apple Natural Language | `1.17, 0.72, 0.74` | `13467648, 13238272, 13484032` |
+
+Canonical TSV (header `probe,run,wall_seconds,max_rss_bytes`, tab-separated, LF) SHA-256 is `704b78b753997bdf6661640b5a62fe0133b403d0b12601a04bb8b67f276fc0ba`. Sudachi's 250-byte timing source is `tokenizer=dictionary.Dictionary(dict='small').create();` followed by the nested 1,000 × two-sentence loop; SHA-256 `a464b9e7be32911db4aa13034d1d347d430abf22d7f3d65869029aef9be990a8`. Apple's equivalent 531-byte Swift source SHA-256 is `9c59ee24a664800cdc0e0fcc2ebf6d2d9e4c2dd154a574bf21a740c8b767fdc6`; compile with `xcrun swiftc -O nl_perf.swift -o nl_perf`.
+
+Fresh processes analyzing the same fixed four-sentence probe produced identical normalized output 3/3: Lindera SHA-256 `f495eeee8071648c2af1c16b3a6279c22f072adf4ccad55da8de6c63fa46b4cc`, Sudachi SHA-256 `dc517cc74661c7de3b9deb61185c4a3e2993bcf48e7dfeca57f786bac7639f41`. The Apple scheme/lemma probe source SHA-256 is `8078f73fdc17a0d520422e0be032cfcbe328c6fb5f6027baf91c54ec55dfe6ef`; its normalized output (schemes plus token-to-lemma rows) is `96f0bc25005f129e79de7c40b090a23825fb546d7f0da00be9f4340ac9ad22ee`, confirming only `Language`, `Script`, `TokenType` and `nil` Japanese lemmas.
+
 [^apple-nl]: [Apple Natural Language framework](https://developer.apple.com/documentation/naturallanguage)
 [^apple-schemes]: [Apple `NLTagger`](https://developer.apple.com/documentation/naturallanguage/nltagger)
 [^lindera]: [Lindera repository and MIT license](https://github.com/lindera/lindera/tree/v5.1.0)
