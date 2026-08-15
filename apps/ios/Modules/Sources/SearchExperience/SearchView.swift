@@ -69,6 +69,14 @@ struct SearchView: View {
             )
           }
         )
+        .id(
+          SearchResultsIdentity(
+            query: searchQuery,
+            best: results.best.map(\.id),
+            additional: results.additional.map(\.id),
+            refinement: results.readingRefinement?.query
+          )
+        )
       } else if searchFailed {
         LookupFailureView {
           retryID += 1
@@ -125,8 +133,8 @@ struct SearchView: View {
         async let searchedResults = lookupClient.search(searchQuery)
         async let searchedExampleCount = exampleSentenceClient.count(searchQuery)
         let foundResults = try await searchedResults
-        let directExampleCount = (try? await searchedExampleCount) ?? 0
         results = foundResults
+        let directExampleCount = (try? await searchedExampleCount) ?? 0
         if foundResults.usesPrimaryEntryExamples,
           let entry = foundResults.primaryEntry(for: searchQuery)
         {
@@ -411,6 +419,13 @@ private enum ImageSourceSheet: String, Identifiable {
 private struct SearchTaskID: Hashable {
   let query: String
   let retryID: Int
+}
+
+private struct SearchResultsIdentity: Hashable {
+  let query: SearchQuery
+  let best: [LanguageReferenceID]
+  let additional: [LanguageReferenceID]
+  let refinement: SearchQuery?
 }
 
 private struct LookupFailureView: View {

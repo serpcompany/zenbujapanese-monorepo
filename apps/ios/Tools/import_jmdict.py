@@ -14,6 +14,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from language_data_tools import file_sha256
+from dictionary_ranking_adapter import dictionary_ranking_mapping_sha256
+from dictionary_ranking_contract import write_runtime_contract
 from tatoeba_adapter import EXAMPLE_PAIR_ID_SCHEME, import_tatoeba_examples
 from example_sentence_retrieval_index import build_indexes
 from unidic_adapter import apply_unidic_pitch
@@ -23,6 +25,13 @@ WORD_RE = re.compile(r"[a-z0-9]+(?:['-][a-z0-9]+)*")
 FORM_KIND_WRITTEN = 0
 FORM_KIND_READING = 1
 FORM_KIND_ROMAJI = 2
+PRIORITY_PRIMARY_BITS = {"spec1": 1, "ichi1": 2, "news1": 4, "gai1": 8}
+PRIORITY_SECONDARY_BITS = {"spec2": 1, "ichi2": 2, "news2": 4, "gai2": 8}
+EXPECTED_PRIORITY_PROFILE_COUNT = 56_127
+EXPECTED_GLOSS_ATOM_COUNT = 441_826
+EXPECTED_SENSE_COUNT = 253_020
+EXPECTED_SENSE_RESTRICTION_COUNT = 1_929
+EXPECTED_READING_RESTRICTION_COUNT = 6_201
 
 KANA_ROMAJI = {
     "あ": "a", "い": "i", "う": "u", "え": "e", "お": "o",
@@ -224,6 +233,44 @@ def priority_score(elements: list[ET.Element]) -> int:
     return score
 
 
+def normalized_priority_profile(provider_tags: list[str]) -> tuple[int, int, int | None]:
+    primary_mask = 0
+    secondary_mask = 0
+    news_frequency_band: int | None = None
+    for tag in provider_tags:
+        if tag in PRIORITY_PRIMARY_BITS:
+            primary_mask |= PRIORITY_PRIMARY_BITS[tag]
+        elif tag in PRIORITY_SECONDARY_BITS:
+            secondary_mask |= PRIORITY_SECONDARY_BITS[tag]
+        elif re.fullmatch(r"nf\d\d", tag):
+            band = int(tag[2:])
+            if not 1 <= band <= 48:
+                raise ValueError(f"out-of-range JMdict news-frequency band: {tag}")
+            news_frequency_band = min(news_frequency_band or band, band)
+        else:
+            raise ValueError(f"unknown JMdict priority marker: {tag}")
+    return primary_mask, secondary_mask, news_frequency_band
+
+
+def semantic_fingerprint(record: dict[str, object]) -> bytes:
+    payload = json.dumps(
+        {
+            "headword": record["headword"],
+            "reading": record["reading"],
+            "meanings": record["meanings"],
+            "partsOfSpeech": record["parts_of_speech"],
+            "writtenForms": record["written_forms"],
+            "readingForms": record["reading_forms"],
+            "senses": record["canonical_senses"],
+            "glossAtoms": record["gloss_atoms"],
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode()).digest()
+
+
 def create_schema(database: sqlite3.Connection) -> None:
     database.executescript(
         """
@@ -249,11 +296,12 @@ def create_schema(database: sqlite3.Connection) -> None:
           pitch_accent_json TEXT,
           gloss_search TEXT NOT NULL,
           is_common INTEGER NOT NULL,
-          rank_score INTEGER NOT NULL
+          rank_score INTEGER NOT NULL,
+          semantic_fingerprint BLOB NOT NULL
         );
 
         CREATE TABLE forms (
-          entry_id TEXT NOT NULL,
+          entry_id BLOB NOT NULL,
           form TEXT NOT NULL,
           kind INTEGER NOT NULL,
           FOREIGN KEY(entry_id) REFERENCES entries(id)
@@ -262,6 +310,47 @@ def create_schema(database: sqlite3.Connection) -> None:
         CREATE INDEX forms_form_index ON forms(form, entry_id);
         CREATE UNIQUE INDEX entries_source_provenance_index ON entries(source_identity, source_record_id);
         CREATE INDEX entries_common_index ON entries(is_common DESC, id);
+        CREATE INDEX entries_semantic_fingerprint_index ON entries(semantic_fingerprint, id);
+
+        CREATE TABLE form_priority_profiles (
+          entry_id BLOB NOT NULL REFERENCES entries(id),
+          form TEXT NOT NULL,
+          kind INTEGER NOT NULL,
+          primary_mask INTEGER NOT NULL,
+          secondary_mask INTEGER NOT NULL,
+          news_frequency_band INTEGER,
+          PRIMARY KEY(entry_id, form, kind)
+        ) WITHOUT ROWID;
+
+        CREATE TABLE canonical_senses (
+          entry_id BLOB NOT NULL REFERENCES entries(id),
+          sense_order INTEGER NOT NULL,
+          parts_of_speech_json TEXT NOT NULL,
+          PRIMARY KEY(entry_id, sense_order)
+        ) WITHOUT ROWID;
+
+        CREATE TABLE sense_form_restrictions (
+          entry_id BLOB NOT NULL REFERENCES entries(id),
+          sense_order INTEGER NOT NULL,
+          kind INTEGER NOT NULL,
+          form TEXT NOT NULL,
+          PRIMARY KEY(entry_id, sense_order, kind, form)
+        ) WITHOUT ROWID;
+
+        CREATE TABLE gloss_atoms (
+          entry_id BLOB NOT NULL REFERENCES entries(id),
+          sense_order INTEGER NOT NULL,
+          gloss_order INTEGER NOT NULL,
+          text TEXT NOT NULL,
+          normalized_text TEXT NOT NULL,
+          PRIMARY KEY(entry_id, sense_order, gloss_order)
+        ) WITHOUT ROWID;
+        CREATE TABLE reading_form_restrictions (
+          entry_id BLOB NOT NULL REFERENCES entries(id),
+          reading TEXT NOT NULL,
+          written_form TEXT NOT NULL,
+          PRIMARY KEY(entry_id, reading, written_form)
+        ) WITHOUT ROWID;
 
         CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 
@@ -306,10 +395,16 @@ def import_snapshot(
     retained = 0
     rejected = 0
     form_count = 0
+    priority_profile_count = 0
+    canonical_sense_count = 0
+    gloss_atom_count = 0
+    sense_restriction_count = 0
+    reading_restriction_count = 0
     relationship_count = 0
     retained_source_ids = hashlib.sha256()
     entry_records: list[dict[str, object]] = []
     form_to_entry_ids: dict[str, list[bytes]] = {}
+    lexical_payload_by_fingerprint: dict[bytes, str] = {}
     try:
         with gzip.open(source, "rb") as xml_source:
             for _, entry in ET.iterparse(xml_source, events=("end",)):
@@ -363,6 +458,16 @@ def import_snapshot(
                     kana_preferred and "Rare" in primary_written_labels
                 ):
                     headword = primary_reading
+                if headword != primary_reading:
+                    compatible_readings = [
+                        element
+                        for element in readings
+                        if not text_values(element, "re_restr")
+                        or headword in text_values(element, "re_restr")
+                    ]
+                    if not compatible_readings:
+                        raise ValueError("displayed written form has no applicable reading")
+                    primary_reading, reading_common = choose_primary(compatible_readings, "reb")
                 display_common = reading_common if headword == primary_reading else written_common
                 normalized_written_forms = [
                     {
@@ -383,8 +488,37 @@ def import_snapshot(
                     if (element.findtext("reb") or "").strip()
                 ]
                 normalized_senses = []
+                canonical_senses: list[dict[str, object]] = []
+                gloss_atoms: list[dict[str, object]] = []
                 cross_references: list[dict[str, object]] = []
-                for sense, meaning_group in zip(senses, sense_glosses):
+                for sense_order, (sense, meaning_group) in enumerate(zip(senses, sense_glosses)):
+                    sense_parts_of_speech = normalize_parts_of_speech(text_values(sense, "pos"))
+                    restricted_written_forms = [
+                        normalized_text(value) for value in text_values(sense, "stagk")
+                    ]
+                    restricted_reading_forms = [
+                        normalized_text(value) for value in text_values(sense, "stagr")
+                    ]
+                    if not set(restricted_written_forms) <= {
+                        normalized_text(value) for value in written_values
+                    }:
+                        raise ValueError("sense written-form restriction is not an entry form")
+                    if not set(restricted_reading_forms) <= {
+                        normalized_text(value) for value in reading_values
+                    }:
+                        raise ValueError("sense reading-form restriction is not an entry form")
+                    canonical_senses.append(
+                        {
+                            "senseOrder": sense_order,
+                            "partsOfSpeech": sense_parts_of_speech,
+                            "restrictedWrittenForms": restricted_written_forms,
+                            "restrictedReadingForms": restricted_reading_forms,
+                        }
+                    )
+                    for gloss_order, gloss in enumerate(meaning_group):
+                        gloss_atoms.append(
+                            {"senseOrder": sense_order, "glossOrder": gloss_order, "text": gloss}
+                        )
                     if not meaning_group:
                         continue
                     notes = normalize_usage_notes(text_values(sense, "misc"))
@@ -393,7 +527,7 @@ def import_snapshot(
                         {
                             "meaning": ", ".join(meaning_group),
                             "notes": notes,
-                            "partsOfSpeech": normalize_parts_of_speech(text_values(sense, "pos")),
+                            "partsOfSpeech": sense_parts_of_speech,
                         }
                     )
                     for reference in text_values(sense, "xref"):
@@ -411,8 +545,46 @@ def import_snapshot(
                     )
                 )
 
+                priority_records = []
+                for element, form_tag, priority_tag, kind in (
+                    *((element, "keb", "ke_pri", FORM_KIND_WRITTEN) for element in written_forms),
+                    *((element, "reb", "re_pri", FORM_KIND_READING) for element in readings),
+                ):
+                    form = normalized_text((element.findtext(form_tag) or "").strip())
+                    tags = text_values(element, priority_tag)
+                    if not form or not tags:
+                        continue
+                    primary_mask, secondary_mask, band = normalized_priority_profile(tags)
+                    priority_records.append((entry_id, form, kind, primary_mask, secondary_mask, band))
+
+                reading_restrictions = [
+                    (entry_id, normalized_text((element.findtext("reb") or "").strip()), normalized_text(value))
+                    for element in readings
+                    for value in text_values(element, "re_restr")
+                ]
+                fingerprint_record = {
+                    "headword": headword,
+                    "reading": primary_reading,
+                    "meanings": meaning_groups,
+                    "parts_of_speech": parts_of_speech,
+                    "written_forms": normalized_written_forms,
+                    "reading_forms": normalized_reading_forms,
+                    "canonical_senses": canonical_senses,
+                    "gloss_atoms": gloss_atoms,
+                }
+                fingerprint = semantic_fingerprint(fingerprint_record)
+                canonical_payload = json.dumps(
+                    fingerprint_record,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                prior_payload = lexical_payload_by_fingerprint.setdefault(fingerprint, canonical_payload)
+                if prior_payload != canonical_payload:
+                    raise ValueError("semantic fingerprint collision between unequal lexical payloads")
+
                 database.execute(
-                    "INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         entry_id,
                         "edrdg.jmdict",
@@ -432,6 +604,7 @@ def import_snapshot(
                         normalized_text(" | ".join(glosses)),
                         int(display_common),
                         priority_score(written_forms + readings),
+                        fingerprint,
                     ),
                 )
                 database.executemany(
@@ -440,6 +613,50 @@ def import_snapshot(
                         (entry_id, form, kind)
                         for form, kind in form_records
                     ],
+                )
+                database.executemany(
+                    "INSERT INTO form_priority_profiles VALUES (?, ?, ?, ?, ?, ?)",
+                    priority_records,
+                )
+                database.executemany(
+                    "INSERT INTO canonical_senses VALUES (?, ?, ?)",
+                    [
+                        (
+                            entry_id,
+                            sense["senseOrder"],
+                            json.dumps(sense["partsOfSpeech"], ensure_ascii=False, separators=(",", ":")),
+                        )
+                        for sense in canonical_senses
+                    ],
+                )
+                database.executemany(
+                    "INSERT INTO sense_form_restrictions VALUES (?, ?, ?, ?)",
+                    [
+                        (entry_id, sense["senseOrder"], kind, form)
+                        for sense in canonical_senses
+                        for kind, key in (
+                            (FORM_KIND_WRITTEN, "restrictedWrittenForms"),
+                            (FORM_KIND_READING, "restrictedReadingForms"),
+                        )
+                        for form in sense[key]
+                    ],
+                )
+                database.executemany(
+                    "INSERT INTO gloss_atoms VALUES (?, ?, ?, ?, ?)",
+                    [
+                        (
+                            entry_id,
+                            atom["senseOrder"],
+                            atom["glossOrder"],
+                            atom["text"],
+                            normalized_text(str(atom["text"])),
+                        )
+                        for atom in gloss_atoms
+                    ],
+                )
+                database.executemany(
+                    "INSERT INTO reading_form_restrictions VALUES (?, ?, ?)",
+                    reading_restrictions,
                 )
                 for form, _ in form_records:
                     form_to_entry_ids.setdefault(form, []).append(entry_id)
@@ -463,9 +680,34 @@ def import_snapshot(
                 retained += 1
                 retained_source_ids.update(f"{source_record_id}\n".encode())
                 form_count += len(form_records)
+                priority_profile_count += len(priority_records)
+                canonical_sense_count += len(canonical_senses)
+                gloss_atom_count += len(gloss_atoms)
+                sense_restriction_count += sum(
+                    len(sense["restrictedWrittenForms"]) + len(sense["restrictedReadingForms"])
+                    for sense in canonical_senses
+                )
+                reading_restriction_count += len(reading_restrictions)
                 if retained % 5_000 == 0:
                     database.commit()
                 entry.clear()
+
+        actual_counts = {
+            "form_priority_profiles": priority_profile_count,
+            "canonical_senses": canonical_sense_count,
+            "gloss_atoms": gloss_atom_count,
+            "sense_form_restrictions": sense_restriction_count,
+            "reading_form_restrictions": reading_restriction_count,
+        }
+        expected_counts = {
+            "form_priority_profiles": EXPECTED_PRIORITY_PROFILE_COUNT,
+            "canonical_senses": EXPECTED_SENSE_COUNT,
+            "gloss_atoms": EXPECTED_GLOSS_ATOM_COUNT,
+            "sense_form_restrictions": EXPECTED_SENSE_RESTRICTION_COUNT,
+            "reading_form_restrictions": EXPECTED_READING_RESTRICTION_COUNT,
+        }
+        if actual_counts != expected_counts:
+            raise ValueError(f"dictionary ranking evidence count mismatch: {actual_counts}")
 
         note_identity_groups: dict[str, list[dict[str, object]]] = {}
         for record in entry_records:
@@ -574,8 +816,15 @@ def import_snapshot(
                 (json.dumps(related, ensure_ascii=False, separators=(",", ":")), record["id"]),
             )
 
+        dictionary_ranking_mapping = dictionary_ranking_mapping_sha256(database)
+        semantic_equivalence_group_sizes = [
+            row[0]
+            for row in database.execute(
+                "SELECT count(*) FROM entries GROUP BY semantic_fingerprint HAVING count(*) > 1"
+            )
+        ]
         transform = {
-            "transform": "jmdict-to-zenbu-language-reference-data-v1",
+            "transform": "jmdict-to-zenbu-language-reference-data-v2",
             "source_resource_id": source_metadata["resource_id"],
             "source_sha256": source_metadata["sha256"],
             "source_entries_retained": retained,
@@ -589,6 +838,15 @@ def import_snapshot(
                 "added_source_record_ids_sha256": retained_source_ids.hexdigest(),
             },
             "normalized_forms": form_count,
+            "dictionary_ranking_policy": "dictionary-best-match-v1",
+            "dictionary_ranking_schema_version": "zenbu.dictionary-ranking.v1",
+            "dictionary_ranking_evidence": actual_counts,
+            "dictionary_ranking_mapping_sha256": dictionary_ranking_mapping,
+            "semantic_equivalence": {
+                "normalization": "opaque-app-id-lexicographic-min-v1",
+                "duplicate_groups": len(semantic_equivalence_group_sizes),
+                "source_rows": sum(semantic_equivalence_group_sizes),
+            },
             "normalized_relationships": relationship_count,
             "note_identity_duplicate_groups": note_identity_duplicate_groups,
             "note_identity_disambiguated_entries": note_identity_disambiguated_entries,
@@ -604,6 +862,9 @@ def import_snapshot(
                 "r_ele/reb",
                 "r_ele/re_pri",
                 "sense/pos",
+                "sense/stagk",
+                "sense/stagr",
+                "r_ele/re_restr",
                 "k_ele/ke_inf",
                 "r_ele/re_inf",
                 "sense/misc",
@@ -617,6 +878,11 @@ def import_snapshot(
                 "stable first-priority written form and reading display selection",
                 "English-only gloss retention",
                 "same-sense English gloss grouping with source sense order retained",
+                "individual English gloss atoms retained with canonical sense and gloss order",
+                "sense POS and displayed written/reading applicability retained as typed app-owned evidence",
+                "complete form-scoped priority profiles normalized to app-owned masks and optional news-frequency band",
+                "provenance-free semantic fingerprint includes all display forms, meanings, senses, applicability, and gloss atom boundaries",
+                "semantically equivalent rows normalize to the lexicographically smallest opaque app-owned identity while retaining every sorted unique source provenance; ranking evidence remains unchanged",
                 "provider form and usage labels normalized to an app-owned presentation vocabulary",
                 "cross-references resolved to app-owned linked entries",
                 "JMdict cross-reference form, reading, and target-sense qualifiers preserved; supplied readings require an exact target reading",
@@ -638,6 +904,12 @@ def import_snapshot(
             "relationship_source_resource_id": relationship_metadata["resource_id"],
             "relationship_source_sha256": file_sha256(relationship_source),
             "import_tool_sha256": file_sha256(Path(__file__)),
+            "dictionary_ranking_adapter_sha256": file_sha256(
+                Path(__file__).with_name("dictionary_ranking_adapter.py")
+            ),
+            "dictionary_ranking_contract_sha256": file_sha256(
+                Path(__file__).with_name("dictionary_ranking_contract.py")
+            ),
             "shared_tooling_sha256": file_sha256(Path(__file__).with_name("language_data_tools.py")),
             "unidic_adapter_sha256": file_sha256(Path(__file__).with_name("unidic_adapter.py")),
             "tatoeba_adapter_sha256": file_sha256(Path(__file__).with_name("tatoeba_adapter.py")),
@@ -670,6 +942,7 @@ def main() -> None:
     parser.add_argument("--tatoeba-links-source", type=Path, required=True)
     parser.add_argument("--tatoeba-metadata", type=Path, required=True)
     parser.add_argument("--relationship-source", type=Path, required=True)
+    parser.add_argument("--ranking-contract", type=Path)
     arguments = parser.parse_args()
 
     source_metadata = json.loads(arguments.source_metadata.read_text())
@@ -713,6 +986,8 @@ def main() -> None:
     arguments.manifest.write_text(
         json.dumps({"source": source_metadata, "transform": transform}, ensure_ascii=False, indent=2) + "\n"
     )
+    if arguments.ranking_contract:
+        write_runtime_contract(arguments.ranking_contract, transform)
     print(json.dumps(transform, ensure_ascii=False, indent=2))
 
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1
 
 tool_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ios_dir="$(cd "${tool_dir}/.." && pwd)"
@@ -10,6 +11,9 @@ package_manifest="${ios_dir}/Modules/Package.swift"
 language_database="${ios_dir}/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3"
 language_import_manifest="${ios_dir}/LanguageData/Generated/JMdict_e-2026-08-10.import.json"
 retrieval_validator="${tool_dir}/example_sentence_retrieval_index.py"
+dictionary_ranking_validator="${tool_dir}/validate_dictionary_ranking_data.py"
+dictionary_ranking_contract="${ios_dir}/Modules/Sources/SearchExperience/Resources/DictionaryRankingArtifactContract.json"
+dictionary_source="${ios_dir}/LanguageData/Sources/JMdict_e-2026-08-10.gz"
 retrieval_fixture_validator="${tool_dir}/validate_example_sentence_retrieval_fixtures.rb"
 retrieval_contexts="${ios_dir}/../../docs/research/fixtures/example-sentence-retrieval-issue-147-observation-contexts.tsv"
 retrieval_summary="${ios_dir}/LanguageData/Generated/ExampleSentenceRetrieval-v1-summary.tsv"
@@ -146,6 +150,10 @@ pass "source privacy boundary, Camera copy, dependency declarations, and public 
 
 [[ -f "$language_database" ]] || fail "bundled Language Reference Data is missing"
 [[ -f "$language_import_manifest" ]] || fail "generated Language Reference Data manifest is missing"
+python3 "$dictionary_ranking_validator" "$language_database" "$language_import_manifest" \
+  "$dictionary_source" --contract "$dictionary_ranking_contract" \
+  >"${scratch_dir}/dictionary-ranking-validation" \
+  || fail "bundled Dictionary Ranking artifact validation failed"
 python3 "$retrieval_validator" "$language_database" --manifest "$language_import_manifest" \
   >"${scratch_dir}/retrieval-validation" \
   || fail "bundled Example Sentence Retrieval index validation failed"
@@ -154,7 +162,7 @@ ruby "$retrieval_fixture_validator" "$language_database" "$retrieval_contexts" \
   "$retrieval_comparison_summary" "$retrieval_comparison_rows" \
   >"${scratch_dir}/retrieval-fixture-validation" \
   || fail "bundled Example Sentence Retrieval regression fixture replay failed"
-pass "bundled Example Sentence Retrieval index, manifest, and regression fixtures match"
+pass "bundled Dictionary Ranking and Example Sentence Retrieval artifacts, manifests, and regression fixtures match"
 
 if [[ "$mode" == "source" ]]; then
   echo "INFO: source audit complete; this is not archive or signed-candidate evidence"
@@ -183,6 +191,15 @@ pass "archive identity, privacy manifest, and Camera copy match the reviewed sou
 
 archive_language_database="$(find "$app_path" -type f -name 'LanguageReferenceData.sqlite3' -print -quit)"
 [[ -n "$archive_language_database" ]] || fail "archive application is missing LanguageReferenceData.sqlite3"
+archive_dictionary_ranking_contract="$(find "$app_path" -type f -name 'DictionaryRankingArtifactContract.json' -print -quit)"
+[[ -n "$archive_dictionary_ranking_contract" ]] \
+  || fail "archive application is missing DictionaryRankingArtifactContract.json"
+cmp -s "$dictionary_ranking_contract" "$archive_dictionary_ranking_contract" \
+  || fail "embedded Dictionary Ranking contract differs from reviewed source contract"
+python3 "$dictionary_ranking_validator" "$archive_language_database" "$language_import_manifest" \
+  "$dictionary_source" --contract "$archive_dictionary_ranking_contract" \
+  >"${scratch_dir}/archive-dictionary-ranking-validation" \
+  || fail "archive Dictionary Ranking artifact validation failed"
 python3 "$retrieval_validator" "$archive_language_database" --manifest "$language_import_manifest" \
   >"${scratch_dir}/archive-retrieval-validation" \
   || fail "archive Example Sentence Retrieval index validation failed"
@@ -191,7 +208,7 @@ ruby "$retrieval_fixture_validator" "$archive_language_database" "$retrieval_con
   "$retrieval_comparison_summary" "$retrieval_comparison_rows" \
   >"${scratch_dir}/archive-retrieval-fixture-validation" \
   || fail "archive Example Sentence Retrieval regression fixture replay failed"
-pass "archive Example Sentence Retrieval index, manifest, and regression fixtures match"
+pass "archive Dictionary Ranking and Example Sentence Retrieval artifacts, manifests, and regression fixtures match"
 
 signing_identity="$(plist_value ApplicationProperties:SigningIdentity "$archive_info" || true)"
 if [[ "$mode" == "signed-candidate" ]]; then
@@ -248,15 +265,42 @@ tail -n +2 "${scratch_dir}/dependencies" | sed -E 's/^[[:space:]]+([^[:space:]]+
 pass "resolved dependencies contain no embedded SDK or direct network-client indicator"
 
 url_results="${scratch_dir}/urls"
-set +e
-rg -a -o --no-filename --glob '!*.sqlite3' 'https?://[^[:space:][:cntrl:]"<>]+' \
-  "$app_path" >"$url_results" 2>/dev/null
-url_scan_status=$?
-set -e
-case "$url_scan_status" in
-  0|1) ;;
-  *) fail "scanner error while inventorying packaged URLs" ;;
-esac
+url_scan_executable="$executable"
+if [[ "$mode" == "signed-candidate" ]]; then
+  # Apple code signatures and provisioning profiles carry certificate-status
+  # URLs (for example, OCSP and CRL endpoints). They are signing metadata, not
+  # product network destinations. Scan a signature-stripped executable copy so
+  # compiled product URLs remain covered without inventorying the certificate
+  # chain embedded in LC_CODE_SIGNATURE.
+  url_scan_executable="${scratch_dir}/unsigned-executable-for-url-scan"
+  cp "$executable" "$url_scan_executable" || fail "failed to copy the signed executable for URL inspection"
+  codesign --remove-signature "$url_scan_executable" >/dev/null 2>&1 \
+    || fail "failed to remove signing metadata from the executable URL-scan copy"
+fi
+: >"$url_results"
+scan_packaged_url_file() {
+  local packaged_file="$1"
+  local packaged_url_scan_status
+  set +e
+  rg -a -o --no-filename 'https?://[^[:space:][:cntrl:]"<>]+' \
+    "$packaged_file" >>"$url_results" 2>/dev/null
+  packaged_url_scan_status=$?
+  set -e
+  case "$packaged_url_scan_status" in
+    0|1) ;;
+    *) fail "scanner error while inventorying packaged URLs" ;;
+  esac
+}
+url_scan_files="${scratch_dir}/url-scan-files"
+find "$app_path" -type f ! -name '*.sqlite3' \
+  ! -path "$executable" \
+  ! -path "${app_path}/embedded.mobileprovision" \
+  ! -path "${app_path}/_CodeSignature/*" -print0 >"$url_scan_files" \
+  || fail "failed to enumerate packaged files for URL inspection"
+while IFS= read -r -d '' packaged_url_file; do
+  scan_packaged_url_file "$packaged_url_file"
+done <"$url_scan_files"
+scan_packaged_url_file "$url_scan_executable"
 # Scan SQLite values through SQLite rather than across raw database pages. Raw
 # page bytes can concatenate the end of one URL with the beginning of the next
 # record and invent a host that is not present in any packaged value.

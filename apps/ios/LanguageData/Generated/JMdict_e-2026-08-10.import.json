@@ -17,7 +17,7 @@
     "documentation_url": "https://www.edrdg.org/jmdict/j_jmdict.html"
   },
   "transform": {
-    "transform": "jmdict-to-zenbu-language-reference-data-v1",
+    "transform": "jmdict-to-zenbu-language-reference-data-v2",
     "source_resource_id": "SOURCE-COMPONENT-JMDICT",
     "source_sha256": "54a6ecce385de30776e842b18ca62da7a60dfd923dc5b1f8101ce37f528e1d5e",
     "source_entries_retained": 218382,
@@ -31,6 +31,16 @@
       "added_source_record_ids_sha256": "fd10301e6cd9660c8103007cc6b474f2c16f103e72a4e4970f6a4fd1d825e7ca"
     },
     "normalized_forms": 752077,
+    "dictionary_ranking_policy": "dictionary-best-match-v1",
+    "dictionary_ranking_schema_version": "zenbu.dictionary-ranking.v1",
+    "dictionary_ranking_evidence": {
+      "form_priority_profiles": 56127,
+      "canonical_senses": 253020,
+      "gloss_atoms": 441826,
+      "sense_form_restrictions": 1929,
+      "reading_form_restrictions": 6201
+    },
+    "dictionary_ranking_mapping_sha256": "3b4b6bacff31b3e68ed9990af073ff8303405de82addbfbd8c652726052923fd",
     "normalized_relationships": 36668,
     "note_identity_duplicate_groups": 3,
     "note_identity_disambiguated_entries": 6,
@@ -43,7 +53,7 @@
       "retrieval_corpus_sha256": "f829495f46c2bd2f102784f58ddf74cdf0f20869c363c15ed0548a3c72178a90",
       "retrieval_index_mapping_sha256": "cb172ed6db2288ff4b79ced46cab900a1442dd521b7ce93045339d3b1759c5a5",
       "retrieval_provenance_sha256": "ca6663e0dfb5286d3fc539f91d36c79662f3f1ed7f41ef581bde59a9b3daa9fa",
-      "retrieval_importer_sha256": "42f9a34841e8ff2aa4d453c9af7d1e433dafbf3c28defe9f449f46cc4e4575f1",
+      "retrieval_importer_sha256": "a4189b41c97bcdb5b266862c1a884244f76878f3e91c9a7b5ee423d680f6cca8",
       "retrieval_index_row_count": "232703",
       "retrieval_exact_index_row_count": "232703",
       "retrieval_porter_tokenizer": "fts4/porter",
@@ -61,6 +71,9 @@
       "r_ele/reb",
       "r_ele/re_pri",
       "sense/pos",
+      "sense/stagk",
+      "sense/stagr",
+      "r_ele/re_restr",
       "k_ele/ke_inf",
       "r_ele/re_inf",
       "sense/misc",
@@ -74,6 +87,10 @@
       "stable first-priority written form and reading display selection",
       "English-only gloss retention",
       "same-sense English gloss grouping with source sense order retained",
+      "individual English gloss atoms retained with canonical sense and gloss order",
+      "sense POS and displayed written/reading applicability retained as typed app-owned evidence",
+      "complete form-scoped priority profiles normalized to app-owned masks and optional news-frequency band",
+      "provenance-free semantic fingerprint includes all display forms, meanings, senses, applicability, and gloss atom boundaries",
       "provider form and usage labels normalized to an app-owned presentation vocabulary",
       "cross-references resolved to app-owned linked entries",
       "JMdict cross-reference form, reading, and target-sense qualifiers preserved; supplied readings require an exact target reading",
@@ -86,7 +103,8 @@
       "app-owned commonness marker derived from priority on the selected display form",
       "deterministic app-owned rank score derived from documented JMdict priority tags",
       "UniDic aType normalized to deterministic downstep and pronunciation-mora-count facts by exact base-form and pronunciation-or-lexical-reading match",
-      "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence"
+      "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence",
+      "semantically equivalent rows normalize to the lexicographically smallest opaque app-owned identity while retaining every sorted unique source provenance; ranking evidence remains unchanged"
     ],
     "pitch_source_resource_id": "SOURCE-COMPONENT-UNIDIC",
     "pitch_source_sha256": "340651aa78cc02caf690f94de8809d41c4acda694226517884ecad81c51523fc",
@@ -94,11 +112,18 @@
     "example_source_sha256": "2799d411d99bd023044303fd3b2554a9e391401a04492e508ad1cd53c0304961",
     "relationship_source_resource_id": "zenbu-word-relationships-v1",
     "relationship_source_sha256": "2c483c933f5a42baad194db9a45c1d6251e09ebcb2a40c6475ca3d984ea2dd38",
-    "import_tool_sha256": "64290d11891592c795b34ad7d738577184243892dbc2b1c6ae2e443898f6284a",
+    "import_tool_sha256": "7979708463f993c4cc8b323e879ca396b760798f4114e024334fbffc6b431d7b",
+    "dictionary_ranking_adapter_sha256": "a6ec035fcb4188eb8a3668f19dffd1ffee37c6a3d478def8f883a6981140a3a8",
     "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
     "unidic_adapter_sha256": "f616738d7f45e3c75ece903d62ce2092923a6e68cf0925dafe030563c753985a",
     "tatoeba_adapter_sha256": "07cada81e87d1329e176d1920cf99b93e73c913dd39590b511b9b7188f577570",
-    "database_sha256": "248f9308662374c00dc597731ef085ee5ed87d9b703ec356be93ee9be8f03d4f",
-    "database_bytes": 342433792
+    "database_sha256": "c709a1e9af705eb12f38e6947f1cf33d48f327a2c1919a676be78c24c74ec3fb",
+    "database_bytes": 403542016,
+    "dictionary_ranking_contract_sha256": "427b53137e72372a1fd5c54438ffc867f7f82e8c827baf0703bfce6cd6307795",
+    "semantic_equivalence": {
+      "normalization": "opaque-app-id-lexicographic-min-v1",
+      "duplicate_groups": 3,
+      "source_rows": 6
+    }
   }
 }

@@ -3,7 +3,7 @@ import Foundation
 struct DictionaryEntry: Hashable, Identifiable, Sendable {
   let id: LanguageReferenceID
   let noteID: WordNoteID
-  let sourceProvenance: LanguageReferenceProvenance
+  let sourceProvenances: [LanguageReferenceProvenance]
   let reading: String
   let headword: String
   let summary: String
@@ -15,6 +15,30 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
   let relationships: [DictionaryRelationship]
   let pitchAccent: PitchAccent?
   let isCommon: Bool
+
+  var sourceProvenance: LanguageReferenceProvenance { sourceProvenances[0] }
+
+  func normalizingIdentity(
+    to canonical: DictionaryEntry,
+    provenances: [LanguageReferenceProvenance]
+  ) -> DictionaryEntry {
+    DictionaryEntry(
+      id: canonical.id,
+      noteID: canonical.noteID,
+      sourceProvenances: LanguageReferenceIdentity.sortedProvenances(provenances),
+      reading: reading,
+      headword: headword,
+      summary: summary,
+      meanings: meanings,
+      partsOfSpeech: partsOfSpeech,
+      writtenForms: writtenForms,
+      readingForms: readingForms,
+      senses: senses,
+      relationships: relationships,
+      pitchAccent: pitchAccent,
+      isCommon: isCommon
+    )
+  }
 
   var frequency: Frequency {
     isCommon ? .common : .unmarked
@@ -141,6 +165,38 @@ struct LanguageReferenceProvenance: Hashable, Sendable {
   let sourceRecordID: String
 }
 
+enum LanguageReferenceIdentity {
+  static func canonicalID(_ ids: [LanguageReferenceID]) -> LanguageReferenceID? {
+    ids.min { $0.rawValue < $1.rawValue }
+  }
+
+  static func canonicalEntry(_ entries: [DictionaryEntry]) -> DictionaryEntry? {
+    guard let id = canonicalID(entries.map(\.id)) else { return nil }
+    return entries.first { $0.id == id }
+  }
+
+  static func normalizedEntry(
+    _ entries: [DictionaryEntry],
+    preserving preferred: DictionaryEntry? = nil
+  ) -> DictionaryEntry? {
+    guard let canonical = canonicalEntry(entries) else { return nil }
+    let presentation = preferred ?? canonical
+    return presentation.normalizingIdentity(
+      to: canonical,
+      provenances: entries.flatMap(\.sourceProvenances)
+    )
+  }
+
+  static func sortedProvenances(
+    _ provenances: [LanguageReferenceProvenance]
+  ) -> [LanguageReferenceProvenance] {
+    Array(Set(provenances)).sorted {
+      if $0.sourceIdentity != $1.sourceIdentity { return $0.sourceIdentity < $1.sourceIdentity }
+      return $0.sourceRecordID < $1.sourceRecordID
+    }
+  }
+}
+
 struct LookupSearchResults: Sendable {
   let best: [DictionaryEntry]
   let additional: [DictionaryEntry]
@@ -188,7 +244,7 @@ struct LookupSearchResults: Sendable {
     )
   }
 
-  enum Presentation: Sendable {
+  enum Presentation: Equatable, Sendable {
     case ranked
     case discoveredWords
   }

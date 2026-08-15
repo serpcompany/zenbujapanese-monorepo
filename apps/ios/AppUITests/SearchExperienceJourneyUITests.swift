@@ -1360,10 +1360,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertEqual(refinement.label, "Search for Japanese reading もんだい")
     XCTAssertEqual(searchField.value as? String, "mondai")
     XCTAssertTrue(app.staticTexts["Best Matches"].exists)
-    let literalLeader = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
-      .firstMatch
+    let literalLeader = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@ AND label BEGINSWITH %@", "Best match", "月曜, げつよう,")
+    ).firstMatch
     XCTAssertTrue(literalLeader.waitForExistence(timeout: 2))
-    XCTAssertTrue(literalLeader.label.contains("月曜日"))
+    let literalMonday = app.buttons.matching(
+      NSPredicate(
+        format: "value BEGINSWITH %@ AND label BEGINSWITH %@",
+        "Additional match",
+        "月曜日, げつようび,"
+      )
+    ).firstMatch
+    XCTAssertTrue(literalMonday.waitForExistence(timeout: 2))
     recordScreenshot(named: "search-results-literal-romaji-mondai", app: app)
 
     refinement.tap()
@@ -1412,14 +1420,17 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(refinedLeader.label.contains("日本"))
     let japan = app.buttons["result.japan"]
     XCTAssertEqual(japan.value as? String, "Best match 1")
+    let additionalLeader = app.buttons.matching(
+      NSPredicate(
+        format: "value == %@ AND label BEGINSWITH %@", "Additional match 1", "二本, にほん,"
+      )
+    ).firstMatch
+    XCTAssertTrue(additionalLeader.waitForExistence(timeout: 5))
+    XCTAssertTrue(additionalLeader.label.hasPrefix("二本, にほん,"))
     XCTAssertFalse(
       app.buttons.matching(NSPredicate(format: "value == %@", "Best match 2")).firstMatch.exists
     )
-    let additionalLeader = app.buttons.matching(
-      NSPredicate(format: "value == %@", "Additional match 1")
-    ).firstMatch
-    XCTAssertTrue(additionalLeader.waitForExistence(timeout: 3))
-    XCTAssertTrue(additionalLeader.label.hasPrefix("二本, にほん,"))
+    XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
     recordScreenshot(named: "search-results-refined-japanese-nihon", app: app)
   }
 
@@ -1448,11 +1459,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     XCTAssertTrue(app.staticTexts["Best Matches"].waitForExistence(timeout: 3))
     let bestMatches = app.buttons.matching(NSPredicate(format: "value BEGINSWITH %@", "Best match"))
-    XCTAssertEqual(bestMatches.count, 3)
+    XCTAssertEqual(bestMatches.count, 1)
     XCTAssertTrue(bestMatches.element(boundBy: 0).label.contains("がる"))
-    XCTAssertTrue(bestMatches.element(boundBy: 1).label.contains("思う"))
-    XCTAssertTrue(bestMatches.element(boundBy: 2).label.contains("考える"))
     XCTAssertTrue(app.staticTexts["Additional Matches"].exists)
+    let additionalMatches = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Additional match")
+    )
+    XCTAssertTrue(
+      additionalMatches.matching(NSPredicate(format: "label BEGINSWITH %@", "思う, おもう,")).firstMatch.exists
+    )
+    XCTAssertTrue(
+      additionalMatches.matching(NSPredicate(format: "label BEGINSWITH %@", "考える, かんがえる,")).firstMatch.exists
+    )
     recordScreenshot(named: "search-results-english-think", app: app)
   }
 
