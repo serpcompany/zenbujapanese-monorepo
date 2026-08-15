@@ -125,7 +125,7 @@ Only normalized association evidence ships. Consequently the intended iOS runtim
 
 ### Vibrato 0.5.2 and upstream MeCab 0.996
 
-Vibrato is an Apache-2.0 Rust Viterbi tokenizer compatible with MeCab dictionaries; its own documentation warns that default output can differ from MeCab and says compressed models must be decompressed outside its API.[^vibrato] Exact `v0.5.2` (`7462fa07…`) compiled for `aarch64-apple-ios`; the `rlib` was 1,824,432 bytes. The latest release has no dictionary assets; the last official IPADIC asset is the 7,704,680-byte `v0.5.0` archive.[^vibrato-models] It was not behavior-qualified separately, so its smaller engine/archive numbers do not justify selection.
+Vibrato is an Apache-2.0 Rust Viterbi tokenizer compatible with MeCab dictionaries; its own documentation warns that default output can differ from MeCab and says compressed models must be decompressed outside its API.[^vibrato] Exact `v0.5.2` (`7462fa07…`) compiled for `aarch64-apple-ios`; this checkout's fresh `rlib` was 1,826,136 bytes. Rust archive metadata can vary with checkout path, so the portable result is successful locked target compilation, not cross-checkout byte identity. The latest release has no dictionary assets; the last official IPADIC asset is the 7,704,680-byte `v0.5.0` archive.[^vibrato-models] It was not behavior-qualified separately, so its smaller engine/archive numbers do not justify selection.
 
 MeCab's official latest release is 0.996 from 2013. It supplies C/C++ APIs, requires a separate dictionary, and permits GPL, LGPL, or BSD use.[^mecab] IPADIC behavior is represented by the Lindera comparator, while the old upstream release and additional native-wrapper ownership make MeCab a weaker maintained choice. Not selected.
 
@@ -172,6 +172,8 @@ This appendix authenticates the empirical claims and gives a clean-room replay f
 | D21-D22 entry-probe TSV (all rows) | 18,273 | `c4db9dadba2720c9d47b72a72f9a085d23a5104235b63d596007d3a938e0ab9e` |
 | pinned Language Reference Data SQLite | 342,433,792 | `248f9308662374c00dc597731ef085ee5ed87d9b703ec356be93ee9be8f03d4f` |
 | revealed-holdout public matrix (selection: RH06/RH08/RH09 metadata) | 8,445 | `77b6d0705d2d69125163c91fcf6f0e704e91a4abad5677b89e5bfe204d4ddd68` |
+| Tatoeba `jpn_indices` 2026-08-08 archive / CSV | 2,859,638 / 17,427,725 | `375e13617e970ff54b1f1417b48493887ecbef48e6779cbdb8f774224baae84f` / `d8cb7180e157e9983639f5733f6d53066a61cc802ef29501bf940aea2865774f` |
+| Restorable D18-D22 `jpn_indices` coverage slice | 5,155 (49 lines) | `a1478617d42960059f3ecb18248b3eba168e1ed65c39d3924cf33ef77be32256` |
 | Lindera macOS CLI archive / executable | 2,104,174 / 4,992,192 | `cf60c9f6be16d0b620f70f30ce811670ac4a9b44220151ec47750fdd4c295a27` / `d0d10be332cce379d3872b5c25886a047ba18f94d2609016cc780167d54a151a` |
 | Lindera IPADIC / UniDic archives | 15,879,934 / 54,469,218 | `ed10ce59ff1b1315b780a3984cfd10e31b9e658e58a1706328eb343aaa6927c6` / `321f9c9d26ae08138d9ee635592cf4eb19f6833d8ed3a959508d89c5229f860f` |
 | Lindera source / replay `Cargo.lock` | — | `1bcb0e28fcd90f34b2bcf12f55a25008d791f62c` / `a15aa9fea7bdfb278b0081b7b20a54a654a591344db1facf003cf50529e1463a` |
@@ -179,9 +181,19 @@ This appendix authenticates the empirical claims and gives a clean-room replay f
 | Sudachi.rs source / `Cargo.lock` / iOS `rlib` | 4,145,200 (`rlib`) | `90fd6068c80c2fc3b63e0dbab0e341475bad4d8f` / `f847ceb0e9a6c91f97825b04267f21b6f3294f1ebe92a57a99bb1aebb48331ee` / `b3d8fcc2afbfabd55d116361105cf3ce68accc40efced9ae20cbdb37b5e43dd1` |
 | SudachiPy cp310 macOS arm64 analyzer wheel | 1,462,309 | `ec915f0784d4ee1bf2ea58e50ee7193a4336b6cf9ee1103782771684a3967081` |
 | SudachiDict-small wheel / extracted `system.dic` | 41,770,618 / 122,953,610 | `c10c7541795c4cf501ddd15f456409d0b75b84339c5961dd045fa922378b687a` / `f872a878c3c5e8a0df4ae8c548e1d7a754f58cdb37eb660ba22f6514457ad8cc` |
-| Vibrato source / `Cargo.lock` / iOS `rlib` | 1,824,432 (`rlib`) | `7462fa07a60a176e8d9ef3cb287c7973290a0f9d` / `811a1afa0592ddfae1dc8a858afe78cf5bc873e792c7654fc79675e2eecc4778` / `b5d6b0c43d7116179169e3608b4505308e03e48a4dd30b68c61409b1c6da41d3` |
+| Vibrato source / `Cargo.lock` / iOS `rlib` | 1,826,136 (`rlib`) | `7462fa07a60a176e8d9ef3cb287c7973290a0f9d` / `811a1afa0592ddfae1dc8a858afe78cf5bc873e792c7654fc79675e2eecc4778` / `6022c894e922a1cffbf23c176133b1000f5567869e35356e8f8e5afb4dabf508` |
 
 RH09's full top-20 transcription remains private. Its public matrix, issue #160 evidence hashes, and canonical aggregate line `RH09<TAB>literal=1/20<TAB>dictionary_form=17/20<TAB>misses=3<LF>` (49 bytes, SHA-256 `d374f350984f9f99cf8da9790bbd7bdbc97fcc00cec4d3ebac574a2088fc3470`) authenticate the retained run but deliberately do not republish private screenshot content. Thus D18-D22 are independently replayable from Git; RH09 is independently replayable only by the evidence custodian. No replacement holdout was opened.
+
+The canonical Tatoeba locator is `https://downloads.tatoeba.org/exports/jpn_indices.tar.bz2`. It is a rolling export, so acquisition fails closed unless it returns the pinned archive last modified `2026-08-08T06:26:21Z`, identified above by both archive and extracted-member hashes. To keep the public 49/89 coverage replay restorable after that rolling URL advances, the exact 49 matching source lines are also preserved below as a deterministic gzip (`gzip -n`) payload. This slice contains only public Tatoeba export rows selected by the public D18-D22 provider-coordinate pairs; it contains no RH09 rows.
+
+<details><summary>gzip-compressed D18-D22 `jpn_indices` coverage slice</summary>
+
+```text
+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
+```
+
+</details>
 
 ### Acquisition and compile replay
 
@@ -196,6 +208,7 @@ scratch=$(mktemp -d)
 curl -fL -o "$scratch/lindera-cli.zip" https://github.com/lindera/lindera/releases/download/v5.1.0/lindera-aarch64-apple-darwin-v5.1.0.zip
 curl -fL -o "$scratch/ipadic.zip" https://github.com/lindera/lindera/releases/download/v5.1.0/lindera-ipadic-5.1.0.zip
 curl -fL -o "$scratch/unidic.zip" https://github.com/lindera/lindera/releases/download/v5.1.0/lindera-unidic-5.1.0.zip
+curl -fL -o "$scratch/jpn_indices.tar.bz2" https://downloads.tatoeba.org/exports/jpn_indices.tar.bz2
 curl -fL -o "$scratch/sudachipy-0.6.11-cp310-cp310-macosx_11_0_arm64.whl" https://files.pythonhosted.org/packages/e5/7a/54b541e6c0a30e3dbca68fac6c2eaf4aa55a970b363f494db0dbed3e5ac6/sudachipy-0.6.11-cp310-cp310-macosx_11_0_arm64.whl
 curl -fL -o "$scratch/sudachidict_small-20260723-py3-none-any.whl" https://github.com/WorksApplications/SudachiDict/releases/download/v20260723/sudachidict_small-20260723-py3-none-any.whl
 (
@@ -204,6 +217,7 @@ curl -fL -o "$scratch/sudachidict_small-20260723-py3-none-any.whl" https://githu
 cf60c9f6be16d0b620f70f30ce811670ac4a9b44220151ec47750fdd4c295a27  lindera-cli.zip
 ed10ce59ff1b1315b780a3984cfd10e31b9e658e58a1706328eb343aaa6927c6  ipadic.zip
 321f9c9d26ae08138d9ee635592cf4eb19f6833d8ed3a959508d89c5229f860f  unidic.zip
+375e13617e970ff54b1f1417b48493887ecbef48e6779cbdb8f774224baae84f  jpn_indices.tar.bz2
 ec915f0784d4ee1bf2ea58e50ee7193a4336b6cf9ee1103782771684a3967081  sudachipy-0.6.11-cp310-cp310-macosx_11_0_arm64.whl
 c10c7541795c4cf501ddd15f456409d0b75b84339c5961dd045fa922378b687a  sudachidict_small-20260723-py3-none-any.whl
 SHA256
@@ -211,6 +225,8 @@ SHA256
 unzip -q "$scratch/lindera-cli.zip" -d "$scratch/lindera-cli"
 unzip -q "$scratch/ipadic.zip" -d "$scratch/ipadic"
 unzip -q "$scratch/unidic.zip" -d "$scratch/unidic"
+tar -xjf "$scratch/jpn_indices.tar.bz2" -C "$scratch"
+test "$(shasum -a 256 "$scratch/jpn_indices.csv" | cut -d' ' -f1)" = d8cb7180e157e9983639f5733f6d53066a61cc802ef29501bf940aea2865774f
 
 git clone --filter=blob:none https://github.com/lindera/lindera.git "$scratch/lindera-src"
 git -C "$scratch/lindera-src" checkout 1bcb0e28fcd90f34b2bcf12f55a25008d791f62c
@@ -219,7 +235,6 @@ git -C "$scratch/sudachi-rs" checkout 90fd6068c80c2fc3b63e0dbab0e341475bad4d8f
 cargo build --manifest-path "$scratch/sudachi-rs/Cargo.toml" --locked --release --target aarch64-apple-ios -p sudachi
 git clone --filter=blob:none https://github.com/daac-tools/vibrato.git "$scratch/vibrato"
 git -C "$scratch/vibrato" checkout 7462fa07a60a176e8d9ef3cb287c7973290a0f9d
-cargo build --manifest-path "$scratch/vibrato/Cargo.toml" --locked --release --target aarch64-apple-ios -p vibrato
 
 python3 -m venv "$scratch/venv"
 "$scratch/venv/bin/pip" install \
@@ -418,6 +433,25 @@ otool -L lindera-swift-smoke
 
 The payload block must be saved without its Markdown fence as `cargo-lock.txt`. Exact source SHA-256 values are `7cc7a4218a0bbee108484915e4804380ee023b50647e37436d4754aac2dc5aed` (manifest), `2f56c282e8f832dda54aff98e0d012fb67f3cebb616c1eb27136245fbc9003aa` (Rust), `275ce1071f4ba3a3b099043afe6ad5ce440d1eb54bac0e3cb729e735d2724bd7` (header), and `d9355b26a29654e7c79a58bf29aac165c679e3dc5e09e84050004b18315e857f` (Swift). The rerun produced the archive and linked-smoke sizes/hashes in the identity table. Mach-O UUID/path metadata can change the linked-file digest on another checkout; successful arm64 linkage and `otool -L` showing only `libSystem` and `libswiftCore` are the portable checks.
 
+Vibrato `v0.5.2` does not commit a workspace lockfile. The exact Cargo 1.91.1-generated lock used by this report is therefore preserved as a second deterministic gzip payload:
+
+<details><summary>gzip-compressed Vibrato `Cargo.lock` replay payload</summary>
+
+```text
+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
+```
+
+</details>
+
+Save that payload as `vibrato-cargo-lock.txt`, restore it before the Vibrato build, and fail closed on its exact 29,951-byte lockfile:
+
+```bash
+base64 -D < vibrato-cargo-lock.txt | gunzip > "$scratch/vibrato/Cargo.lock"
+test "$(stat -f '%z' "$scratch/vibrato/Cargo.lock")" = 29951
+test "$(shasum -a 256 "$scratch/vibrato/Cargo.lock" | cut -d' ' -f1)" = 811a1afa0592ddfae1dc8a858afe78cf5bc873e792c7654fc79675e2eecc4778
+cargo build --manifest-path "$scratch/vibrato/Cargo.toml" --locked --release --target aarch64-apple-ios -p vibrato
+```
+
 ### Analyzer and Ranking replay
 
 The following public fixture probe produces the five Direct/entry rows below. Save it as `analyzer_probe.py` and run `venv/bin/python analyzer_probe.py "$repo"`.
@@ -459,6 +493,78 @@ for context_id in ("D21", "D22"):
 ```
 
 Normalized output is `D18 20/20`, `D19 20/20`, `D20 9/9`, `D21 literal 6/20 and dictionary form 20/20`, `D22 literal/reading 20/20 and exact token reading 19/20`; analyzer source SHA-256 is `637dd9cbf16a8a680642a256192ff8ed75c460564451361f66b1c774a89a083a` and canonical TSV SHA-256 is `7e7cbe3b6ff7ae646e2c1fea335f44ab5870a6bff820a56f70de7ff188df5e79`.
+
+Save the earlier `jpn_indices` payload as `jpn-indices-slice.txt`, then restore and authenticate the exact public slice:
+
+```bash
+base64 -D < jpn-indices-slice.txt | gunzip > "$scratch/jpn_indices-d18-d22-slice.tsv"
+test "$(stat -f '%z' "$scratch/jpn_indices-d18-d22-slice.tsv")" = 5155
+test "$(shasum -a 256 "$scratch/jpn_indices-d18-d22-slice.tsv" | cut -d' ' -f1)" = a1478617d42960059f3ecb18248b3eba168e1ed65c39d3924cf33ef77be32256
+```
+
+Save this complete public coverage audit as `jpn_indices_coverage.py`:
+
+```python
+import csv
+import sys
+from pathlib import Path
+
+repository_root = Path(sys.argv[1])
+indices_path = Path(sys.argv[2])
+generated_slice_path = Path(sys.argv[3]) if len(sys.argv) == 4 else None
+
+def read_fixture(relative_path, context_field, context_ids):
+    with (repository_root / relative_path).open(newline="", encoding="utf-8") as fixture_file:
+        return [row for row in csv.DictReader(fixture_file, delimiter="\t") if row[context_field] in context_ids]
+
+contexts = {
+    "D18": read_fixture("docs/research/fixtures/example-sentence-retrieval-issue-147-observation-rows.tsv", "context_id", {"D18"}),
+    "D19": read_fixture("docs/research/fixtures/example-sentence-retrieval-issue-147-observation-rows.tsv", "context_id", {"D19"}),
+    "D20": read_fixture("docs/research/fixtures/example-sentence-retrieval-issue-147-observation-rows.tsv", "context_id", {"D20"}),
+    "D21": read_fixture("docs/research/fixtures/example-sentence-retrieval-issue-147-entry-route-probes.tsv", "probe_id", {"D21"}),
+    "D22": read_fixture("docs/research/fixtures/example-sentence-retrieval-issue-147-entry-route-probes.tsv", "probe_id", {"D22"}),
+}
+fixture_pairs = {
+    (row["japanese_id"], row["english_id"])
+    for context_rows in contexts.values()
+    for row in context_rows
+    if row["japanese_id"] and row["english_id"]
+}
+
+source_lines = indices_path.read_bytes().splitlines(keepends=True)
+source_pairs = set()
+matching_lines = []
+for source_line in source_lines:
+    fields = source_line.decode("utf-8").rstrip("\n").split("\t", 2)
+    source_pair = (fields[0], fields[1])
+    source_pairs.add(source_pair)
+    if source_pair in fixture_pairs:
+        matching_lines.append(source_line)
+
+if generated_slice_path is not None:
+    generated_slice_path.write_bytes(b"".join(matching_lines))
+
+covered_total = 0
+row_total = 0
+for context_id, context_rows in contexts.items():
+    covered_count = sum((row["japanese_id"], row["english_id"]) in source_pairs for row in context_rows)
+    covered_total += covered_count
+    row_total += len(context_rows)
+    print(f"{context_id}\tcovered={covered_count}/{len(context_rows)}")
+print(f"ALL\tcovered={covered_total}/{row_total}")
+```
+
+Run the audit once against the authenticated full snapshot to regenerate the slice, and once against the embedded slice. Both outputs must be identical:
+
+```bash
+python3 jpn_indices_coverage.py "$repo" "$scratch/jpn_indices.csv" "$scratch/generated-jpn-indices-slice.tsv" > full-coverage.tsv
+test "$(shasum -a 256 "$scratch/generated-jpn-indices-slice.tsv" | cut -d' ' -f1)" = a1478617d42960059f3ecb18248b3eba168e1ed65c39d3924cf33ef77be32256
+python3 jpn_indices_coverage.py "$repo" "$scratch/jpn_indices-d18-d22-slice.tsv" > slice-coverage.tsv
+cmp full-coverage.tsv slice-coverage.tsv
+test "$(shasum -a 256 full-coverage.tsv | cut -d' ' -f1)" = 01808d86ef6848066fab3c32fb112a1deb2aa101f456115876c41dd25856fbfe
+```
+
+The six output rows are D18 `19/20`, D19 `18/20`, D20 `7/9`, D21 `0/20`, D22 `5/20`, and aggregate `49/89`. Coverage-audit source SHA-256 is `eb94d127c9473759b1fdd387c86ce121244658ecfd7d8d0c95e6ee86adfff731`; complete output SHA-256 is `01808d86ef6848066fab3c32fb112a1deb2aa101f456115876c41dd25856fbfe`. RH09's `10/20` remains custodian-only evidence and is intentionally excluded from this public replay.
 
 The Ranking replay selects exactly D18-D20 and D21-D22, resolves app-owned pair IDs from the pinned SQLite database, and sorts by Ruby grapheme count, the declared secondary comparison, then app-owned pair ID. It asserts that reversing the input cannot change the ordered IDs, rejects duplicate output IDs, and reports concordant, discordant, and tied relations separately inside equal-length groups. The executable source is preserved inline to avoid an extra repository artifact:
 
@@ -550,6 +656,32 @@ end
 </details>
 
 Run `ruby rank_probe.rb "$repo" "$scratch/lindera-cli/lindera" "$scratch/ipadic/lindera-ipadic" > ranking.tsv`. Source SHA-256 is `a77f860b935596b615caaf48f033f08ff8dc82a89501479a840f8bed262ec691`; the complete 37-line output SHA-256 is `761c5d3027d677602c7acac4f46e821a4e25a480ac4354da0a3d8b62f70a80e2`. Its six aggregate rows are the Ranking table above. Reversing every context's input before sorting produces identical app-owned ID sequences; every aggregate relation partition sums to exactly `180`.
+
+### Public RH09 ambiguity replay
+
+The only RH09 sentence text published here is the three already disclosed misses: exact LF-terminated input `始め！`, `よし始め。`, `演技はじめ！` (45 bytes, SHA-256 `8e34189ad39a78039066d4fbaf289262ec4d63fd6218c5104576574310e71d67`). Run the IPADIC replay independently:
+
+```bash
+for run in 1 2 3; do
+  printf '始め！\nよし始め。\n演技はじめ！\n' |
+    "$scratch/lindera-cli/lindera" tokenize \
+      --dict "$scratch/ipadic/lindera-ipadic" --output json |
+    shasum -a 256
+done
+```
+
+Then run the separate UniDic replay:
+
+```bash
+for run in 1 2 3; do
+  printf '始め！\nよし始め。\n演技はじめ！\n' |
+    "$scratch/lindera-cli/lindera" tokenize \
+      --dict "$scratch/unidic/lindera-unidic" --output json |
+    shasum -a 256
+done
+```
+
+All three fresh IPADIC processes produced SHA-256 `8fb3103b3eb2bfd41457d37c980977049c00356585db5443513780c92fa60971`; all three UniDic processes produced `37cdeccf1a7445bcec846f54e89f50fa681b0923d0db77c36f59430ea187c622`. In every sentence, IPADIC reports the relevant `始め`/`はじめ` token as `名詞` with base form `始め`/`はじめ`; UniDic reports `名詞`, `普通名詞`, `副詞可能`, with lexeme `始め`. This replay proves only analyzer classification of the three public misses; the private RH09 top-20 aggregate remains custodian-only.
 
 ### Raw timing and determinism evidence
 
