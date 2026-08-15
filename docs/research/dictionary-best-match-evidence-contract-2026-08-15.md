@@ -1,5 +1,11 @@
 # Dictionary Best Match evidence contract research
 
+> **Authority status:** The revealed compatibility fixtures came from genuine
+> Nihongo 1.34.3 and remain historical evidence. Their current-version parity
+> meaning and the resulting implementation handoff are provisional pending
+> #168's 1.34.4 replay. See
+> [Nihongo reference authority](../clone-discovery/nihongo/REFERENCE-AUTHORITY.md).
+
 Date: 2026-08-15
 Issue: [#164](https://github.com/serpcompany/zenbujapanese-monorepo/issues/164)
 Status: proposed contract; no production implementation

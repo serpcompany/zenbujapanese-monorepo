@@ -1,5 +1,11 @@
 # Issue 152 sealed-holdout and device verification
 
+> **Historical, not current acceptance:** This record truthfully reports a
+> retired holdout against genuine Nihongo 1.34.3. Nihongo 1.34.4 was already
+> current when the discovery work began, so every current-version conclusion
+> below is provisional pending #168. See the canonical
+> [reference-authority boundary](../../../../docs/clone-discovery/nihongo/REFERENCE-AUTHORITY.md).
+
 Issue: [#152](https://github.com/serpcompany/zenbujapanese-monorepo/issues/152). Parent retrieval gate: [#147](https://github.com/serpcompany/zenbujapanese-monorepo/issues/147).
 
 ## Verdict

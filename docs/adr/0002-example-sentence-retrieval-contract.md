@@ -4,6 +4,11 @@ status: proposed
 
 # Keep Example Sentence Retrieval app-owned and use system FTS4 Porter only for English eligibility
 
+> Evaluation note: the compatibility evidence named by this proposed ADR is
+> genuine Nihongo 1.34.3 historical evidence. Its current-version acceptance
+> implication is provisional pending #168's 1.34.4 replay; see the
+> [reference-authority boundary](../clone-discovery/nihongo/REFERENCE-AUTHORITY.md).
+
 Zenbu will implement direct English Example Sentence Retrieval with the SQLite FTS4 module and its built-in `porter` tokenizer supplied by Apple's iOS `libsqlite3`. FTS supplies only an unordered set of English eligibility candidates. An app-owned, provider-independent policy establishes Example Sentence Matches, filters them, and applies Example Sentence Ranking. Japanese direct retrieval and dictionary-entry association remain separate routes. This follows [ADR 0001](0001-language-capability-boundaries.md), the accepted [retrieval research](../research/example-sentence-retrieval-language-technology-2026-08-14.md), and the bounded [Nihongo artifact audit](../research/nihongo-example-retrieval-artifact-audit-2026-08-14.md).
 
 The historical evidence is deliberately narrow: a lawfully accessible Nihongo 1.33.1 artifact proves that build indexed English example targets with FTS4 Porter. It does not prove continuity in Nihongo 1.34.3 or reveal that version's final query, filter, limit, duplicate, or ranking behavior. Zenbu adopts a measured compatibility primitive, not Nihongo's private implementation.

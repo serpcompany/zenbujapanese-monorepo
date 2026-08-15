@@ -1,5 +1,10 @@
 # Japanese Example Sentence signals and Language Technology
 
+> **Authority status:** The accepted reference rows came from genuine Nihongo
+> 1.34.3. Preserve them as historical research, but do not treat their parity
+> conclusions as current until #168 completes the 1.34.4 replay. See
+> [Nihongo reference authority](../clone-discovery/nihongo/REFERENCE-AUTHORITY.md).
+
 Date: 2026-08-15
 
 Issue: [#165](https://github.com/serpcompany/zenbujapanese-monorepo/issues/165)

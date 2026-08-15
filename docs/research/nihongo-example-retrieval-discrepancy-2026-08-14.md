@@ -1,5 +1,10 @@
 # `scared you` / `startled you` retrieval discrepancy
 
+> **Authority status:** This is genuine Nihongo 1.34.3 historical evidence,
+> not current 1.34.4 acceptance. Its current-version behavior must be replayed
+> under #168. See
+> [Nihongo reference authority](../clone-discovery/nihongo/REFERENCE-AUTHORITY.md).
+
 Issue: #148. Parent research: #147. This is an evidence-only record; it does not select or implement an Example Sentence Retrieval technology.
 
 ## Boundaries and environments

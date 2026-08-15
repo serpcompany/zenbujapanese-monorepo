@@ -1,5 +1,10 @@
 # Example Sentence Retrieval discovery and Language Technology evaluation
 
+> **Authority status:** This research uses genuine Nihongo 1.34.3 behavior as
+> historical discovery evidence. Its current-version parity implications are
+> provisional pending #168's 1.34.4 replay. See
+> [Nihongo reference authority](../clone-discovery/nihongo/REFERENCE-AUTHORITY.md).
+
 Issue: #147. Corpus and provenance authority: #140. Behavioral discrepancy evidence: #148. Shipped-artifact fingerprint: #149. This report is research-only: it does not implement retrieval, select a final product architecture, write an ADR, or authorize a release.
 
 ## Executive finding
@@ -8,7 +13,7 @@ SQLite FTS4 with its built-in `porter` tokenizer is now the strongest English el
 
 The discovery-only end-to-end benchmark strengthens that candidate without overstating it. Across the 130 accepted visible rows in D06-D17, a quoted FTS4 Porter phrase retrieved all 130. Zenbu's current literal-substring baseline retrieved 106. FTS4 also rejected `red you` and admitted all observed `scared you`/`scare you` rows. However, FTS4 returned one row for the empty `startled you` control, exposed substantially larger candidate sets for common words, and its default row order disagreed with the reference. Eligibility, post-filters, limits, duplicate handling, and ranking therefore remain app-owned work.
 
-The artifact is Nihongo 1.33.1 while the accepted behavioral reference is 1.34.3. The fingerprint does not prove version continuity or reveal final SQL/ranking. It also identifies a historical character tokenizer for parsed Japanese example text, but the available evidence does not establish a current Japanese morphology contract. Lindera remains a mature, license-audited comparator, but is not selected or recommended: the discovery evidence does not justify adding its dictionary footprint to solve an unproven requirement.
+The artifact is Nihongo 1.33.1 while the historically accepted behavioral reference is 1.34.3. The fingerprint does not prove version continuity or reveal final SQL/ranking. It also identifies a historical character tokenizer for parsed Japanese example text, but the available evidence does not establish a current Japanese morphology contract. Lindera remains a mature, license-audited comparator, but is not selected or recommended: the discovery evidence does not justify adding its dictionary footprint to solve an unproven requirement.
 
 The original H-prefixed holdout set was contaminated and permanently retired. A separate custodian owns ten sealed replacements. No replacement query or result was inspected while producing this report.
 
@@ -28,7 +33,7 @@ There are 279 accepted ranked rows across D01-D20. The corrected manual-evidence
 
 Private screenshots remain outside git. Each public row points to one private capture and SHA-256. The OCR matcher is candidate-restricted, deterministic, and public-safe. It requires whole normalized English OCR segments rather than accepting candidate substrings anywhere in a frame. Seventeen clipped, header-derived, neighboring-row, or false duplicate-link candidates are recorded as removals in [`fixtures/example-sentence-retrieval-issue-147-ocr-corrections.tsv`](fixtures/example-sentence-retrieval-issue-147-ocr-corrections.tsv). Every selected duplicate-English group was visually audited; links are retained only when their corresponding Japanese rows are separately visible. The lowest remaining segment score, D19 `I ate caviar.`, was visually rechecked in its cited frame.
 
-Nihongo evidence is from the accepted iPhone reference running 1.34.3 (`9792`). #149 separately fingerprints 1.33.1 (`9587`); claims below keep those versions distinct.
+Nihongo evidence is from the historical iPhone reference running 1.34.3 (`9792`). #149 separately fingerprints 1.33.1 (`9587`); claims below keep those versions distinct. #168 must revalidate any current-version parity consequence against 1.34.4.
 
 ## Actual dictionary-entry route probes
 
