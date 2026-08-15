@@ -10,6 +10,8 @@ package_manifest="${ios_dir}/Modules/Package.swift"
 language_database="${ios_dir}/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3"
 language_import_manifest="${ios_dir}/LanguageData/Generated/JMdict_e-2026-08-10.import.json"
 retrieval_validator="${tool_dir}/example_sentence_retrieval_index.py"
+dictionary_ranking_validator="${tool_dir}/validate_dictionary_ranking_data.py"
+dictionary_source="${ios_dir}/LanguageData/Sources/JMdict_e-2026-08-10.gz"
 retrieval_fixture_validator="${tool_dir}/validate_example_sentence_retrieval_fixtures.rb"
 retrieval_contexts="${ios_dir}/../../docs/research/fixtures/example-sentence-retrieval-issue-147-observation-contexts.tsv"
 retrieval_summary="${ios_dir}/LanguageData/Generated/ExampleSentenceRetrieval-v1-summary.tsv"
@@ -146,6 +148,9 @@ pass "source privacy boundary, Camera copy, dependency declarations, and public 
 
 [[ -f "$language_database" ]] || fail "bundled Language Reference Data is missing"
 [[ -f "$language_import_manifest" ]] || fail "generated Language Reference Data manifest is missing"
+python3 "$dictionary_ranking_validator" "$language_database" "$language_import_manifest" \
+  "$dictionary_source" >"${scratch_dir}/dictionary-ranking-validation" \
+  || fail "bundled Dictionary Ranking artifact validation failed"
 python3 "$retrieval_validator" "$language_database" --manifest "$language_import_manifest" \
   >"${scratch_dir}/retrieval-validation" \
   || fail "bundled Example Sentence Retrieval index validation failed"
@@ -154,7 +159,7 @@ ruby "$retrieval_fixture_validator" "$language_database" "$retrieval_contexts" \
   "$retrieval_comparison_summary" "$retrieval_comparison_rows" \
   >"${scratch_dir}/retrieval-fixture-validation" \
   || fail "bundled Example Sentence Retrieval regression fixture replay failed"
-pass "bundled Example Sentence Retrieval index, manifest, and regression fixtures match"
+pass "bundled Dictionary Ranking and Example Sentence Retrieval artifacts, manifests, and regression fixtures match"
 
 if [[ "$mode" == "source" ]]; then
   echo "INFO: source audit complete; this is not archive or signed-candidate evidence"
@@ -183,6 +188,9 @@ pass "archive identity, privacy manifest, and Camera copy match the reviewed sou
 
 archive_language_database="$(find "$app_path" -type f -name 'LanguageReferenceData.sqlite3' -print -quit)"
 [[ -n "$archive_language_database" ]] || fail "archive application is missing LanguageReferenceData.sqlite3"
+python3 "$dictionary_ranking_validator" "$archive_language_database" "$language_import_manifest" \
+  "$dictionary_source" >"${scratch_dir}/archive-dictionary-ranking-validation" \
+  || fail "archive Dictionary Ranking artifact validation failed"
 python3 "$retrieval_validator" "$archive_language_database" --manifest "$language_import_manifest" \
   >"${scratch_dir}/archive-retrieval-validation" \
   || fail "archive Example Sentence Retrieval index validation failed"
@@ -191,7 +199,7 @@ ruby "$retrieval_fixture_validator" "$archive_language_database" "$retrieval_con
   "$retrieval_comparison_summary" "$retrieval_comparison_rows" \
   >"${scratch_dir}/archive-retrieval-fixture-validation" \
   || fail "archive Example Sentence Retrieval regression fixture replay failed"
-pass "archive Example Sentence Retrieval index, manifest, and regression fixtures match"
+pass "archive Dictionary Ranking and Example Sentence Retrieval artifacts, manifests, and regression fixtures match"
 
 signing_identity="$(plist_value ApplicationProperties:SigningIdentity "$archive_info" || true)"
 if [[ "$mode" == "signed-candidate" ]]; then

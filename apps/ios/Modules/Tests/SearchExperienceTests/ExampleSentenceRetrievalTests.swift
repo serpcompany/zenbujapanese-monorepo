@@ -4,6 +4,54 @@ import XCTest
 @testable import SearchExperience
 
 final class ExampleSentenceRetrievalTests: XCTestCase {
+  func testSetSelectsLoanwordWithApplicableQualifiedGlossAndCorroboratingRomaji() async throws {
+    let query = SearchQuery("set")
+    let result = try await LookupClient.live.search(query)
+
+    let primary = try XCTUnwrap(result.primaryEntry(for: query))
+    XCTAssertEqual(primary.headword, "セット")
+    XCTAssertEqual(primary.reading, "セット")
+    XCTAssertEqual(primary.id.rawValue, "e31152bffef387608184ec15e5ed6416")
+  }
+
+  func testLightSelectsExactNounGlossBeforeQualifiedInfinitive() async throws {
+    let query = SearchQuery("light")
+    let results = try await LookupClient.live.search(query)
+    let primary = try XCTUnwrap(results.primaryEntry(for: query))
+
+    XCTAssertEqual(primary.headword, "光")
+    XCTAssertEqual(primary.reading, "ひかり")
+    XCTAssertEqual(primary.id.rawValue, "07bdd5c3915e39200eee9c4f7a3e1b9b")
+  }
+
+  func testHashiSelectsEdgeUsingMatchedReadingPriorityAndNarrowSenseBreadthTieBreak() async throws {
+    let query = SearchQuery("はし")
+    let results = try await LookupClient.live.search(query)
+    let primary = try XCTUnwrap(results.primaryEntry(for: query))
+
+    XCTAssertEqual(primary.headword, "端")
+    XCTAssertEqual(primary.reading, "はし")
+    XCTAssertEqual(primary.id.rawValue, "8784500933ea7b27b14398efa769d7b8")
+  }
+
+  func testDictionaryRankingProtectedJourneysRemainStable() async throws {
+    let expectations = [
+      ("think", "がる", "がる"),
+      ("hello", "今日は", "こんにちは"),
+      ("tabeta", "食べる", "たべる"),
+      ("makasete", "任せる", "まかせる"),
+      ("問題", "問題", "もんだい"),
+      ("ねこ", "猫", "ねこ"),
+    ]
+    for (rawQuery, expectedHeadword, expectedReading) in expectations {
+      let query = SearchQuery(rawQuery)
+      let results = try await LookupClient.live.search(query)
+      let primary = try XCTUnwrap(results.primaryEntry(for: query), rawQuery)
+      XCTAssertEqual(primary.headword, expectedHeadword, rawQuery)
+      XCTAssertEqual(primary.reading, expectedReading, rawQuery)
+    }
+  }
+
   func testRuntimeSQLiteCapabilityEvidence() async throws {
     let validID = "esp1_" + String(repeating: "0", count: 32)
     XCTAssertEqual(ExampleSentenceID(rawValue: validID)?.rawValue, validID)

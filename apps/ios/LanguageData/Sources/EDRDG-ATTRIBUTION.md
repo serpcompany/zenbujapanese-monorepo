@@ -11,4 +11,4 @@ This product uses material from the JMdict and KANJIDIC2 dictionary files and th
 - Radical-project documentation: https://www.edrdg.org/krad/kradinf.html
 - Radical snapshot metadata: `EDRDG-radicals-2026-08-10.source.json`
 
-The normalized Language Reference Data derived from this snapshot remains separately identifiable from Zenbu's application code and ranking behavior.
+The normalized Language Reference Data derived from this snapshot remains separately identifiable from Zenbu's application code and ranking behavior. Zenbu's modifications retain ordered English gloss atoms, sense POS and form applicability, reading restrictions, and complete form-scoped priority profiles in an app-owned schema for deterministic Dictionary Match and Ranking.

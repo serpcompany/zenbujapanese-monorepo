@@ -50,6 +50,7 @@ private actor LanguageReferenceData {
   static let shared = LanguageReferenceData()
 
   private var connection: SQLiteConnection?
+  private var rankingEvidenceCache: DictionaryRankingEvidenceCache?
   private let romajiRefinementPolicy = RomajiRefinementPolicy.captured
   private let japaneseTextAnalysis = JapaneseTextAnalysisClient.characterFallback
 
@@ -129,15 +130,11 @@ private actor LanguageReferenceData {
   }
 
   func entry(matchingForm form: String) throws -> DictionaryEntry? {
-    let statement = try prepare(Self.entryByFormSQL)
-    defer { sqlite3_finalize(statement) }
-    bind(form, at: 1, to: statement)
-    bind(form, at: 2, to: statement)
-    bind(form, at: 3, to: statement)
-    switch try checkedSQLiteStep(statement) {
-    case .row: return try decodeEntry(from: statement)
-    case .done: return nil
-    }
+    let query = SearchQuery(form)
+    let results = try searchOnce(query)
+    return (results.best + results.additional).first {
+      $0.headword == query.value || $0.reading == query.value
+    } ?? results.primaryEntry(for: query)
   }
 
   func entries(containingKanji character: String) throws -> [DictionaryEntry] {
@@ -158,61 +155,228 @@ private actor LanguageReferenceData {
   }
 
   private func searchLiteralEnglish(_ query: SearchQuery) throws -> LookupSearchResults {
-    let statement = try prepare(Self.englishLiteralSQL)
-    defer { sqlite3_finalize(statement) }
-
-    bindEnglishRanking(query, startingAt: 1, to: statement)
-
-    var entries: [DictionaryEntry] = []
-    while try checkedSQLiteStep(statement) == .row {
-      entries.append(try decodeEntry(from: statement))
-    }
-    guard let first = entries.first else { return .empty }
-    return LookupSearchResults(best: [first], additional: Array(entries.dropFirst()))
+    try searchOnce(query)
   }
 
   private func searchOnce(_ query: SearchQuery) throws -> LookupSearchResults {
     guard !query.isEmpty else { return .empty }
 
-    let statement = try prepare(query.isASCII ? Self.asciiSQL : Self.japaneseSQL)
-    defer { sqlite3_finalize(statement) }
-
-    if query.isASCII {
-      bind(query.value, at: 1, to: statement)
-      bind("\(query.value)%", at: 2, to: statement)
-      bind("%\(query.value)%", at: 3, to: statement)
-      bindEnglishRanking(query, startingAt: 4, to: statement)
-    } else {
-      bind(query.value, at: 1, to: statement)
-      bind("\(query.value)%", at: 2, to: statement)
-      bind("%\(query.value)%", at: 3, to: statement)
-    }
-
-    var best: [DictionaryEntry] = []
-    var additional: [DictionaryEntry] = []
-    var hasExactOrPrefixMatch = false
+    let ranked = query.isASCII ? try rankedEnglish(query) : try rankedJapanese(query)
+    guard !ranked.isEmpty else { return .empty }
     let bestLimit = query.isASCII ? 3 : 1
+    return LookupSearchResults(
+      best: Array(ranked.map(\.entry).prefix(bestLimit)),
+      additional: Array(ranked.map(\.entry).dropFirst(bestLimit).prefix(60 - bestLimit)),
+      hasExactOrPrefixMatch: ranked.contains { $0.hasExactOrPrefixMatch }
+    )
+  }
+
+  private func rankedEnglish(_ query: SearchQuery) throws -> [RankedDictionaryEntry] {
+    let cache = try rankingEvidence()
+    let glossMatches = try glossEvidence(query: query, restrictions: cache.senseRestrictions)
+    let romajiMatches = try romajiEvidence(query: query)
+    let statement = try prepare(Self.asciiCandidateSQL)
+    defer { sqlite3_finalize(statement) }
+    bind(query.value, at: 1, to: statement)
+    bind("%\(query.value)%", at: 2, to: statement)
+
+    var ranked: [(RankedDictionaryEntry, EnglishDictionaryRank)] = []
     while try checkedSQLiteStep(statement) == .row {
       let entry = try decodeEntry(from: statement)
-      let rawTier = sqlite3_column_int(statement, 17)
-      hasExactOrPrefixMatch = hasExactOrPrefixMatch || rawTier <= MatchTier.additional.rawValue
-      let tier = MatchTier(rawValue: rawTier) ?? .additional
-      if tier == .best, best.count < bestLimit {
-        best.append(entry)
-      } else {
-        additional.append(entry)
+      let fingerprint = Self.string(column: 17, statement: statement)
+      let match = DictionaryMatch(
+        glossEvidence: glossMatches[entry.id] ?? [],
+        romajiEvidence: romajiMatches[entry.id] ?? [],
+        formEvidence: [],
+        displayedFormPriority: cache.priorityProfiles[
+          PriorityProfileKey(
+            entryID: entry.id,
+            form: SearchQuery(entry.headword).value,
+            kind: entry.headword == entry.reading
+              ? SearchFormKind.reading.rawValue : SearchFormKind.written.rawValue
+          )
+        ] ?? .unmarked
+      )
+      guard let selectedGloss = match.glossEvidence.min(by: Self.glossEvidencePrecedes),
+        !match.romajiEvidence.isEmpty || !match.glossEvidence.isEmpty
+      else {
+        if let romaji = match.romajiEvidence.min() {
+          let rank = EnglishDictionaryRank(
+            lane: .romajiOnly,
+            corroborationRank: 0,
+            romajiSpecificityRank: romaji.rawValue,
+            senseOrder: 0,
+            priorityPresenceRank: match.displayedFormPriority.isMarked ? 0 : 1,
+            relation: .glossToken,
+            priorityProfile: match.displayedFormPriority,
+            glossOrder: 0,
+            headwordLength: entry.headword.count,
+            semanticFingerprint: fingerprint
+          )
+          ranked.append((RankedDictionaryEntry(entry: entry, hasExactOrPrefixMatch: romaji != .contains, semanticFingerprint: fingerprint), rank))
+        }
+        continue
       }
+      let lane: DictionaryMatch.EvidenceLane = selectedGloss.relation == .glossToken
+        ? .tokenGloss : .strongGloss
+      let corroborated = lane == .strongGloss
+        && match.romajiEvidence.contains(where: { $0 == .exact || $0 == .prefix })
+      let rank = EnglishDictionaryRank(
+        lane: lane,
+        corroborationRank: corroborated ? 0 : 1,
+        romajiSpecificityRank: 0,
+        senseOrder: selectedGloss.senseOrder,
+        priorityPresenceRank: match.displayedFormPriority.isMarked ? 0 : 1,
+        relation: selectedGloss.relation,
+        priorityProfile: match.displayedFormPriority,
+        glossOrder: selectedGloss.glossOrder,
+        headwordLength: entry.headword.count,
+        semanticFingerprint: fingerprint
+      )
+      ranked.append((RankedDictionaryEntry(entry: entry, hasExactOrPrefixMatch: lane == .strongGloss || corroborated, semanticFingerprint: fingerprint), rank))
+    }
+    return Self.deduplicated(ranked.sorted { $0.1 < $1.1 }.map(\.0))
+  }
+
+  private func glossEvidence(
+    query: SearchQuery,
+    restrictions: [SenseRestrictionKey: Set<String>]
+  ) throws -> [LanguageReferenceID: [DictionaryMatch.GlossEvidence]] {
+    let glossStatement = try prepare(Self.glossEvidenceSQL)
+    defer { sqlite3_finalize(glossStatement) }
+    bind(query.value, at: 1, to: glossStatement)
+    var result: [LanguageReferenceID: [DictionaryMatch.GlossEvidence]] = [:]
+    while try checkedSQLiteStep(glossStatement) == .row {
+      let entryID = LanguageReferenceID(rawValue: Self.string(column: 0, statement: glossStatement))
+      let senseOrder = Int(sqlite3_column_int(glossStatement, 1))
+      let written = restrictions[
+        SenseRestrictionKey(entryID: entryID, senseOrder: senseOrder, kind: SearchFormKind.written.rawValue)
+      ] ?? []
+      let reading = restrictions[
+        SenseRestrictionKey(entryID: entryID, senseOrder: senseOrder, kind: SearchFormKind.reading.rawValue)
+      ] ?? []
+      let displayedHeadword = SearchQuery(Self.string(column: 5, statement: glossStatement)).value
+      let displayedReading = SearchQuery(Self.string(column: 6, statement: glossStatement)).value
+      guard (written.isEmpty || written.contains(displayedHeadword)),
+        (reading.isEmpty || reading.contains(displayedReading)),
+        let relation = Self.glossRelation(query: query.value, gloss: Self.string(column: 3, statement: glossStatement))
+      else { continue }
+      let parts: [PartOfSpeech] = try Self.decode(column: 4, statement: glossStatement)
+      result[entryID, default: []].append(
+        DictionaryMatch.GlossEvidence(
+          relation: relation,
+          senseOrder: senseOrder,
+          glossOrder: Int(sqlite3_column_int(glossStatement, 2)),
+          partsOfSpeech: parts,
+          restrictedWrittenForms: written.sorted(),
+          restrictedReadingForms: reading.sorted()
+        )
+      )
+    }
+    return result
+  }
+
+  private func romajiEvidence(
+    query: SearchQuery
+  ) throws -> [LanguageReferenceID: [DictionaryMatch.RomajiRelation]] {
+    let romajiStatement = try prepare(Self.romajiEvidenceSQL)
+    defer { sqlite3_finalize(romajiStatement) }
+    bind("%\(query.value)%", at: 1, to: romajiStatement)
+    var result: [LanguageReferenceID: Set<DictionaryMatch.RomajiRelation>] = [:]
+    while try checkedSQLiteStep(romajiStatement) == .row {
+      let entryID = LanguageReferenceID(rawValue: Self.string(column: 0, statement: romajiStatement))
+      let form = Self.string(column: 1, statement: romajiStatement)
+      result[entryID, default: []].insert(
+        form == query.value ? .exact : form.hasPrefix(query.value) ? .prefix : .contains
+      )
+    }
+    return result.mapValues { $0.sorted() }
+  }
+
+  private func rankedJapanese(_ query: SearchQuery) throws -> [RankedDictionaryEntry] {
+    let cache = try rankingEvidence()
+    let statement = try prepare(Self.japaneseCandidateSQL)
+    defer { sqlite3_finalize(statement) }
+    bind("%\(query.value)%", at: 1, to: statement)
+    var entries: [LanguageReferenceID: DictionaryEntry] = [:]
+    var fingerprints: [LanguageReferenceID: String] = [:]
+    var senseCounts: [LanguageReferenceID: Int] = [:]
+    var evidence: [LanguageReferenceID: Set<DictionaryMatch.FormEvidence>] = [:]
+    while try checkedSQLiteStep(statement) == .row {
+      let entry = try decodeEntry(from: statement)
+      let form = Self.string(column: 18, statement: statement)
+      let kind = Int(sqlite3_column_int(statement, 19))
+      let exact = form == query.value
+      let prefix = form.hasPrefix(query.value)
+      let relation = DictionaryMatch.FormRelation(
+        rawValue: (kind == SearchFormKind.written.rawValue ? 0 : 1) + (exact ? 0 : prefix ? 2 : 4)
+      )!
+      let profile = cache.priorityProfiles[
+        PriorityProfileKey(entryID: entry.id, form: form, kind: kind)
+      ] ?? .unmarked
+      entries[entry.id] = entry
+      fingerprints[entry.id] = Self.string(column: 17, statement: statement)
+      senseCounts[entry.id] = Int(sqlite3_column_int(statement, 20))
+      evidence[entry.id, default: []].insert(
+        DictionaryMatch.FormEvidence(relation: relation, normalizedForm: form, priorityProfile: profile)
+      )
+    }
+    let ranked = entries.compactMap { id, entry -> (RankedDictionaryEntry, JapaneseDictionaryRank)? in
+      guard let selected = evidence[id]?.min(by: Self.formEvidencePrecedes),
+        let fingerprint = fingerprints[id]
+      else { return nil }
+      let breadth = senseCounts[id] ?? 0
+      let rank = JapaneseDictionaryRank(
+        relation: selected.relation,
+        priorityProfile: selected.priorityProfile,
+        senseBreadthRank: -breadth,
+        headwordLength: entry.headword.count,
+        semanticFingerprint: fingerprint
+      )
+      return (
+        RankedDictionaryEntry(entry: entry, hasExactOrPrefixMatch: selected.relation.rawValue < 4, semanticFingerprint: fingerprint),
+        rank
+      )
+    }.sorted { $0.1 < $1.1 }
+    return Self.deduplicated(ranked.map(\.0))
+  }
+
+  private func rankingEvidence() throws -> DictionaryRankingEvidenceCache {
+    if let rankingEvidenceCache { return rankingEvidenceCache }
+    let priorityStatement = try prepare(Self.allPriorityProfilesSQL)
+    defer { sqlite3_finalize(priorityStatement) }
+    var profiles: [PriorityProfileKey: LanguageReferencePriorityProfile] = [:]
+    while try checkedSQLiteStep(priorityStatement) == .row {
+      let id = LanguageReferenceID(rawValue: Self.string(column: 0, statement: priorityStatement))
+      let form = Self.string(column: 1, statement: priorityStatement)
+      let kind = Int(sqlite3_column_int(priorityStatement, 2))
+      let profile = LanguageReferencePriorityProfile(
+        primaryMask: Int(sqlite3_column_int(priorityStatement, 3)),
+        secondaryMask: Int(sqlite3_column_int(priorityStatement, 4)),
+        newsFrequencyBand: sqlite3_column_type(priorityStatement, 5) == SQLITE_NULL
+          ? nil : Int(sqlite3_column_int(priorityStatement, 5))
+      )
+      profiles[PriorityProfileKey(entryID: id, form: form, kind: kind)] = profile
     }
 
-    if best.isEmpty, let first = additional.first {
-      best = [first]
-      additional.removeFirst()
+    let restrictionStatement = try prepare(Self.allSenseRestrictionsSQL)
+    defer { sqlite3_finalize(restrictionStatement) }
+    var restrictions: [SenseRestrictionKey: Set<String>] = [:]
+    while try checkedSQLiteStep(restrictionStatement) == .row {
+      let key = SenseRestrictionKey(
+        entryID: LanguageReferenceID(rawValue: Self.string(column: 0, statement: restrictionStatement)),
+        senseOrder: Int(sqlite3_column_int(restrictionStatement, 1)),
+        kind: Int(sqlite3_column_int(restrictionStatement, 2))
+      )
+      restrictions[key, default: []].insert(Self.string(column: 3, statement: restrictionStatement))
     }
-    return LookupSearchResults(
-      best: best,
-      additional: additional,
-      hasExactOrPrefixMatch: hasExactOrPrefixMatch
+
+    let cache = DictionaryRankingEvidenceCache(
+      priorityProfiles: profiles,
+      senseRestrictions: restrictions
     )
+    rankingEvidenceCache = cache
+    return cache
   }
 
   private func prepare(_ sql: String) throws -> OpaquePointer {
@@ -237,18 +401,42 @@ private actor LanguageReferenceData {
       defer { sqlite3_close(opened) }
       throw LookupDatabaseError.sqlite(message: opened.map { String(cString: sqlite3_errmsg($0)) } ?? "open failed")
     }
+    do {
+      try Self.validateDictionaryRankingMetadata(opened)
+    } catch {
+      sqlite3_close(opened)
+      throw error
+    }
     connection = SQLiteConnection(pointer: opened)
     return opened
   }
 
-  private func bind(_ value: String, at index: Int32, to statement: OpaquePointer) {
-    sqlite3_bind_text(statement, index, value, -1, Self.transientDestructor)
+  private static func validateDictionaryRankingMetadata(_ database: OpaquePointer) throws {
+    let expected = [
+      "dictionary_ranking_policy": "\"dictionary-best-match-v1\"",
+      "dictionary_ranking_schema_version": "\"zenbu.dictionary-ranking.v1\"",
+      "dictionary_ranking_evidence": "{\"form_priority_profiles\":56127,\"canonical_senses\":253020,\"gloss_atoms\":441826,\"sense_form_restrictions\":1929,\"reading_form_restrictions\":6201}",
+    ]
+    var statement: OpaquePointer?
+    guard sqlite3_prepare_v2(
+      database,
+      "SELECT key, value FROM metadata WHERE key LIKE 'dictionary_ranking_%'",
+      -1,
+      &statement,
+      nil
+    ) == SQLITE_OK, let statement else {
+      throw LookupDatabaseError.invalidDictionaryRankingMetadata
+    }
+    defer { sqlite3_finalize(statement) }
+    var actual: [String: String] = [:]
+    while sqlite3_step(statement) == SQLITE_ROW {
+      actual[string(column: 0, statement: statement)] = string(column: 1, statement: statement)
+    }
+    guard actual == expected else { throw LookupDatabaseError.invalidDictionaryRankingMetadata }
   }
 
-  private func bindEnglishRanking(_ query: SearchQuery, startingAt index: Int32, to statement: OpaquePointer) {
-    for offset in 0 ... 8 {
-      bind(query.value, at: index + Int32(offset), to: statement)
-    }
+  private func bind(_ value: String, at index: Int32, to statement: OpaquePointer) {
+    sqlite3_bind_text(statement, index, value, -1, Self.transientDestructor)
   }
 
   private func decodeEntry(from statement: OpaquePointer) throws -> DictionaryEntry {
@@ -294,45 +482,57 @@ private actor LanguageReferenceData {
 
   private static let transientDestructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
+  private static func glossRelation(query: String, gloss: String) -> DictionaryMatch.GlossRelation? {
+    let value = SearchQuery(gloss).value
+    if value == query { return .exactGloss }
+    if value.hasPrefix("\(query) (") { return .qualifiedGloss }
+    if value == "to \(query)" { return .exactInfinitive }
+    if value.hasPrefix("to \(query) (") { return .qualifiedInfinitive }
+    let escaped = NSRegularExpression.escapedPattern(for: query)
+    if value.range(of: "(?:^|[^a-z])\(escaped)(?:$|[^a-z])", options: .regularExpression) != nil {
+      return .glossToken
+    }
+    return nil
+  }
+
+  private static func glossEvidencePrecedes(
+    _ lhs: DictionaryMatch.GlossEvidence,
+    _ rhs: DictionaryMatch.GlossEvidence
+  ) -> Bool {
+    let lhsLane = lhs.relation == .glossToken ? 1 : 0
+    let rhsLane = rhs.relation == .glossToken ? 1 : 0
+    if lhsLane != rhsLane { return lhsLane < rhsLane }
+    if lhs.senseOrder != rhs.senseOrder { return lhs.senseOrder < rhs.senseOrder }
+    if lhs.relation != rhs.relation { return lhs.relation < rhs.relation }
+    return lhs.glossOrder < rhs.glossOrder
+  }
+
+  private static func formEvidencePrecedes(
+    _ lhs: DictionaryMatch.FormEvidence,
+    _ rhs: DictionaryMatch.FormEvidence
+  ) -> Bool {
+    if lhs.relation != rhs.relation { return lhs.relation < rhs.relation }
+    if lhs.priorityProfile < rhs.priorityProfile { return true }
+    if rhs.priorityProfile < lhs.priorityProfile { return false }
+    return lhs.normalizedForm < rhs.normalizedForm
+  }
+
+  private static func deduplicated(_ entries: [RankedDictionaryEntry]) -> [RankedDictionaryEntry] {
+    var fingerprints = Set<String>()
+    return entries.filter { fingerprints.insert($0.semanticFingerprint).inserted }
+  }
+
   private static let selectedColumns = """
     lower(hex(e.id)), e.note_identity, e.source_identity, CAST(e.source_record_id AS TEXT), e.headword, e.reading, e.summary,
     e.meanings_json, e.parts_of_speech_json, e.written_forms_json, e.reading_forms_json,
     e.senses_json, e.relationships_json, e.pitch_accent_json,
-    e.is_common, e.rank_score, length(e.headword)
-    """
-
-  private static let englishMatchTierSQL = """
-    CASE
-      WHEN e.is_common = 1 AND (
-        lower(e.summary) = 'to ' || ?
-        OR lower(e.summary) LIKE 'to ' || ? || ',%'
-        OR lower(e.summary) LIKE 'to ' || ? || ' (%'
-        OR lower(e.summary) LIKE 'to ' || ? || ' of%'
-        OR lower(e.summary) LIKE '%, to ' || ?
-      ) THEN 0
-      WHEN lower(e.summary) = ?
-        OR lower(e.summary) = 'to ' || ?
-        OR lower(e.summary) LIKE ? || ',%'
-      THEN 1
-      ELSE 2
-    END
+    e.is_common, e.rank_score, length(e.headword), lower(hex(e.semantic_fingerprint))
     """
 
   private static let entryByIDSQL = """
     SELECT \(selectedColumns)
     FROM entries e
     WHERE lower(hex(e.id)) = ?
-    LIMIT 1
-    """
-
-  private static let entryByFormSQL = """
-    SELECT \(selectedColumns)
-    FROM forms f
-    JOIN entries e ON e.id = f.entry_id
-    WHERE f.form = ?
-    ORDER BY
-      CASE WHEN e.headword = ? THEN 0 WHEN e.reading = ? THEN 1 ELSE 2 END,
-      e.is_common DESC, e.rank_score DESC, length(e.headword), e.id
     LIMIT 1
     """
 
@@ -344,53 +544,56 @@ private actor LanguageReferenceData {
     GROUP BY e.id
     ORDER BY
       CASE WHEN e.headword LIKE ? THEN 0 ELSE 1 END,
-      length(e.headword), e.is_common DESC, e.rank_score DESC, e.id
+      length(e.headword), e.is_common DESC, e.rank_score DESC, e.semantic_fingerprint
     LIMIT 24
     """
 
-  private static let asciiSQL = """
+  private static let asciiCandidateSQL = """
     WITH candidates AS (
-      SELECT f.entry_id,
-        CASE WHEN f.form = ? THEN 0 WHEN f.form LIKE ? THEN 1 ELSE 2 END AS match_tier
-      FROM forms f
-      WHERE f.kind = \(SearchFormKind.romaji.rawValue) AND f.form LIKE ?
-      UNION ALL
-      SELECT e.id AS entry_id,
-        \(englishMatchTierSQL) AS match_tier
-      FROM entries e
-      WHERE (' ' || lower(e.gloss_search) || ' ')
-        GLOB ('*[^a-z]' || ? || '[^a-z]*')
+      SELECT entry_id FROM gloss_atoms
+      WHERE (' ' || normalized_text || ' ') GLOB ('*[^a-z]' || ? || '[^a-z]*')
+      UNION
+      SELECT entry_id FROM forms
+      WHERE kind = \(SearchFormKind.romaji.rawValue) AND form LIKE ?
     )
-    SELECT \(selectedColumns), MIN(c.match_tier) AS match_tier
+    SELECT \(selectedColumns)
     FROM candidates c
     JOIN entries e ON e.id = c.entry_id
-    GROUP BY e.id
-    ORDER BY match_tier, e.rank_score DESC, e.is_common DESC, length(e.headword), e.id
-    LIMIT 60
     """
 
-  private static let japaneseSQL = """
-    SELECT DISTINCT \(selectedColumns),
-      CASE
-        WHEN f.form = ? THEN 0
-        WHEN f.form LIKE ? THEN 1
-        ELSE 2
-      END AS match_tier
+  private static let japaneseCandidateSQL = """
+    SELECT \(selectedColumns), f.form, f.kind,
+      (SELECT count(*) FROM canonical_senses s WHERE s.entry_id = e.id)
     FROM forms f
     JOIN entries e ON e.id = f.entry_id
-    WHERE f.form LIKE ?
-    ORDER BY match_tier, e.rank_score DESC, e.is_common DESC, length(e.headword), e.id
-    LIMIT 60
+    WHERE f.kind IN (\(SearchFormKind.written.rawValue), \(SearchFormKind.reading.rawValue))
+      AND f.form LIKE ?
     """
 
-  private static let englishLiteralSQL = """
-    SELECT \(selectedColumns), \(englishMatchTierSQL) AS match_tier
-    FROM entries e
-    WHERE (' ' || lower(e.gloss_search) || ' ')
+  private static let glossEvidenceSQL = """
+    SELECT lower(hex(g.entry_id)), g.sense_order, g.gloss_order, g.text,
+      s.parts_of_speech_json, e.headword, e.reading
+    FROM gloss_atoms g
+    JOIN canonical_senses s ON s.entry_id = g.entry_id AND s.sense_order = g.sense_order
+    JOIN entries e ON e.id = g.entry_id
+    WHERE (' ' || g.normalized_text || ' ')
       GLOB ('*[^a-z]' || ? || '[^a-z]*')
-    ORDER BY match_tier, e.rank_score DESC, e.is_common DESC, length(e.headword) DESC, e.id
-    LIMIT 60
     """
+
+  private static let romajiEvidenceSQL = """
+    SELECT lower(hex(entry_id)), form FROM forms
+    WHERE kind = \(SearchFormKind.romaji.rawValue) AND form LIKE ?
+    """
+
+  private static let allPriorityProfilesSQL = """
+    SELECT lower(hex(entry_id)), form, kind, primary_mask, secondary_mask, news_frequency_band
+    FROM form_priority_profiles
+    """
+
+  private static let allSenseRestrictionsSQL = """
+    SELECT lower(hex(entry_id)), sense_order, kind, form FROM sense_form_restrictions
+    """
+
 }
 
 private enum SearchFormKind: Int {
@@ -399,9 +602,27 @@ private enum SearchFormKind: Int {
   case romaji = 2
 }
 
-private enum MatchTier: Int32 {
-  case best = 0
-  case additional = 1
+private struct RankedDictionaryEntry {
+  let entry: DictionaryEntry
+  let hasExactOrPrefixMatch: Bool
+  let semanticFingerprint: String
+}
+
+private struct PriorityProfileKey: Hashable {
+  let entryID: LanguageReferenceID
+  let form: String
+  let kind: Int
+}
+
+private struct SenseRestrictionKey: Hashable {
+  let entryID: LanguageReferenceID
+  let senseOrder: Int
+  let kind: Int
+}
+
+private struct DictionaryRankingEvidenceCache {
+  let priorityProfiles: [PriorityProfileKey: LanguageReferencePriorityProfile]
+  let senseRestrictions: [SenseRestrictionKey: Set<String>]
 }
 
 private final class SQLiteConnection: @unchecked Sendable {
@@ -418,5 +639,6 @@ private final class SQLiteConnection: @unchecked Sendable {
 
 private enum LookupDatabaseError: Error {
   case missingBundledData
+  case invalidDictionaryRankingMetadata
   case sqlite(message: String)
 }
