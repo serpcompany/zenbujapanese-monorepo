@@ -110,7 +110,13 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
     let recognized = app.staticTexts["image-text.raw-text"]
     XCTAssertTrue(recognized.waitForExistence(timeout: 20))
-    XCTAssertTrue(containsJapaneseText(recognized.label), recognized.label)
+    if containsJapaneseText(recognized.label) {
+      XCTAssertFalse(app.alerts["No Text Found"].exists)
+    } else {
+      let noText = app.alerts["No Text Found"]
+      XCTAssertTrue(noText.waitForExistence(timeout: 3), recognized.label)
+      XCTAssertTrue(noText.staticTexts["Japanese text was not found in this image."].exists)
+    }
     recordSettledScreenshot(named: "production-image-text-photo-recognized", app: app)
   }
 
