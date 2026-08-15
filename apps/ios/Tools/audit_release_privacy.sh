@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1
 
 tool_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ios_dir="$(cd "${tool_dir}/.." && pwd)"
@@ -190,8 +191,13 @@ pass "archive identity, privacy manifest, and Camera copy match the reviewed sou
 
 archive_language_database="$(find "$app_path" -type f -name 'LanguageReferenceData.sqlite3' -print -quit)"
 [[ -n "$archive_language_database" ]] || fail "archive application is missing LanguageReferenceData.sqlite3"
+archive_dictionary_ranking_contract="$(find "$app_path" -type f -name 'DictionaryRankingArtifactContract.json' -print -quit)"
+[[ -n "$archive_dictionary_ranking_contract" ]] \
+  || fail "archive application is missing DictionaryRankingArtifactContract.json"
+cmp -s "$dictionary_ranking_contract" "$archive_dictionary_ranking_contract" \
+  || fail "embedded Dictionary Ranking contract differs from reviewed source contract"
 python3 "$dictionary_ranking_validator" "$archive_language_database" "$language_import_manifest" \
-  "$dictionary_source" --contract "$dictionary_ranking_contract" \
+  "$dictionary_source" --contract "$archive_dictionary_ranking_contract" \
   >"${scratch_dir}/archive-dictionary-ranking-validation" \
   || fail "archive Dictionary Ranking artifact validation failed"
 python3 "$retrieval_validator" "$archive_language_database" --manifest "$language_import_manifest" \

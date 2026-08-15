@@ -175,6 +175,18 @@ enum LanguageReferenceIdentity {
     return entries.first { $0.id == id }
   }
 
+  static func normalizedEntry(
+    _ entries: [DictionaryEntry],
+    preserving preferred: DictionaryEntry? = nil
+  ) -> DictionaryEntry? {
+    guard let canonical = canonicalEntry(entries) else { return nil }
+    let presentation = preferred ?? canonical
+    return presentation.normalizingIdentity(
+      to: canonical,
+      provenances: entries.flatMap(\.sourceProvenances)
+    )
+  }
+
   static func sortedProvenances(
     _ provenances: [LanguageReferenceProvenance]
   ) -> [LanguageReferenceProvenance] {

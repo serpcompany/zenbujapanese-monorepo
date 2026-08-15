@@ -92,6 +92,27 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
     )
   }
 
+  func testEquivalentRawIDsResolveThroughOneCanonicalPublicIdentityBoundary() async throws {
+    let rawIDs = [
+      "845d27d83eebdadc22af4e2de4231d68",
+      "fb215bdf8afa937de7e1b20e2a15a5fa",
+    ]
+    for rawID in rawIDs {
+      let resolved = try await LookupClient.live.entry(LanguageReferenceID(rawValue: rawID))
+      let entry = try XCTUnwrap(resolved)
+      XCTAssertEqual(entry.id.rawValue, "845d27d83eebdadc22af4e2de4231d68")
+      XCTAssertEqual(entry.sourceProvenances.map(\.sourceRecordID), ["2854192", "5743924"])
+    }
+  }
+
+  func testKanjiLookupNormalizesEquivalentEntriesBeforeReturningPublicResults() async throws {
+    let entries = try await LookupClient.live.entriesContainingKanji("閻")
+    let enma = entries.filter { $0.headword == "閻魔" }
+    XCTAssertEqual(enma.count, 1)
+    XCTAssertEqual(enma.first?.id.rawValue, "176f4e451cc248ec386ac35f98801f36")
+    XCTAssertEqual(enma.first?.sourceProvenances.map(\.sourceRecordID), ["1573970", "5737655"])
+  }
+
   func testJapaneseReadingCandidateMustApplyToDisplayedWrittenForm() async throws {
     let results = try await LookupClient.live.search(SearchQuery("あいき"))
     XCTAssertFalse(

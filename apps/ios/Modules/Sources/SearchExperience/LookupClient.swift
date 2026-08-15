@@ -125,13 +125,14 @@ private actor LanguageReferenceData {
   }
 
   func entry(_ id: LanguageReferenceID) throws -> DictionaryEntry? {
-    let statement = try prepare(Self.entryByIDSQL)
+    let statement = try prepare(Self.equivalentEntriesByIDSQL)
     defer { sqlite3_finalize(statement) }
     bind(id.rawValue, at: 1, to: statement)
-    switch try checkedSQLiteStep(statement) {
-    case .row: return try decodeEntry(from: statement)
-    case .done: return nil
+    var entries: [DictionaryEntry] = []
+    while try checkedSQLiteStep(statement) == .row {
+      entries.append(try decodeEntry(from: statement))
     }
+    return LanguageReferenceIdentity.normalizedEntry(entries)
   }
 
   func entry(matchingForm form: String) throws -> DictionaryEntry? {
@@ -148,11 +149,17 @@ private actor LanguageReferenceData {
     defer { sqlite3_finalize(statement) }
     bind(character, at: 1, to: statement)
     bind("\(character)%", at: 2, to: statement)
-    var entries: [DictionaryEntry] = []
+    var groups: [String: [DictionaryEntry]] = [:]
+    var orderedFingerprints: [String] = []
     while try checkedSQLiteStep(statement) == .row {
-      entries.append(try decodeEntry(from: statement))
+      let entry = try decodeEntry(from: statement)
+      let fingerprint = Self.string(column: 17, statement: statement)
+      if groups[fingerprint] == nil { orderedFingerprints.append(fingerprint) }
+      groups[fingerprint, default: []].append(entry)
     }
-    return entries
+    return orderedFingerprints.compactMap { fingerprint in
+      LanguageReferenceIdentity.normalizedEntry(groups[fingerprint] ?? [])
+    }
   }
 
   private static func uniqued(_ entries: [DictionaryEntry]) -> [DictionaryEntry] {
@@ -637,12 +644,11 @@ private actor LanguageReferenceData {
     }
     return orderedFingerprints.compactMap { fingerprint in
       guard let group = groups[fingerprint], let leading = group.first,
-        let canonical = LanguageReferenceIdentity.canonicalEntry(group.map(\.entry))
+        let normalized = LanguageReferenceIdentity.normalizedEntry(
+          group.map(\.entry),
+          preserving: leading.entry
+        )
       else { return nil }
-      let normalized = leading.entry.normalizingIdentity(
-        to: canonical,
-        provenances: group.flatMap(\.entry.sourceProvenances)
-      )
       return RankedDictionaryEntry(
         entry: normalized,
         presentationRank: leading.presentationRank,
@@ -659,11 +665,13 @@ private actor LanguageReferenceData {
     e.is_common, e.rank_score, length(e.headword), lower(hex(e.semantic_fingerprint))
     """
 
-  private static let entryByIDSQL = """
+  private static let equivalentEntriesByIDSQL = """
     SELECT \(selectedColumns)
     FROM entries e
-    WHERE lower(hex(e.id)) = ?
-    LIMIT 1
+    WHERE e.semantic_fingerprint = (
+      SELECT semantic_fingerprint FROM entries WHERE lower(hex(id)) = ?
+    )
+    ORDER BY lower(hex(e.id))
     """
 
   private static let entriesContainingKanjiSQL = """
