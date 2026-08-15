@@ -9,10 +9,9 @@ import { spawnSync } from "node:child_process";
 const expected = Object.freeze({
   referenceBundle: "com.serpentisei.studyjapanese",
   referenceVersion: "1.34.4",
-  referenceProductType: "iPhone18,2",
   candidateBundle: "com.zenbujapanese.dictionary",
   candidateDisplayName: "Zenbu Japanese",
-  candidateProductType: "iPhone15,3",
+  hilProductType: "iPhone15,3",
   simulatorDestination: "Zenbu Issue 141 iPhone 16e",
 });
 
@@ -30,18 +29,13 @@ function problem(code, message) {
   return { code, message };
 }
 
-function appsWithBundlePrefix(apps, prefix) {
-  return apps.filter(({ bundleIdentifier = "" }) => bundleIdentifier === prefix || bundleIdentifier.startsWith(`${prefix}.`));
-}
-
 function cloneApps(apps) {
   return apps.filter(({ bundleIdentifier = "" }) => disallowedCloneBundles.includes(bundleIdentifier));
 }
 
 export function validateHilIdentity(inventory) {
   const problems = [];
-  const reference = inventory.reference ?? { apps: [] };
-  const candidate = inventory.candidate ?? { apps: [] };
+  const hilDevice = inventory.hilDevice ?? { apps: [] };
   const artifact = inventory.candidateArtifact ?? {};
 
   if (inventory.includesAllApps !== true) {
@@ -51,40 +45,26 @@ export function validateHilIdentity(inventory) {
     ));
   }
 
-  if (!reference.identifier || reference.identifier === candidate.identifier) {
-    problems.push(problem("DEVICE_ROLE_OVERLAP", "Reference and candidate must resolve to two distinct physical devices."));
-  }
-  if (reference.productType !== expected.referenceProductType) {
-    problems.push(problem("WRONG_REFERENCE_DEVICE", `Reference must be ${expected.referenceProductType}.`));
-  }
-  if (candidate.productType !== expected.candidateProductType) {
-    problems.push(problem("WRONG_CANDIDATE_DEVICE", `Candidate must be ${expected.candidateProductType}.`));
+  if (!hilDevice.identifier || hilDevice.productType !== expected.hilProductType) {
+    problems.push(problem("WRONG_HIL_DEVICE", `HIL must use the physical ${expected.hilProductType} iPhone 14 Pro Max.`));
   }
 
-  const referenceApps = reference.apps ?? [];
-  const candidateApps = candidate.apps ?? [];
-  const exactReferences = referenceApps.filter(({ bundleIdentifier }) => bundleIdentifier === expected.referenceBundle);
+  const apps = hilDevice.apps ?? [];
+  const exactReferences = apps.filter(({ bundleIdentifier }) => bundleIdentifier === expected.referenceBundle);
   if (exactReferences.length !== 1) {
-    problems.push(problem("MISSING_OR_AMBIGUOUS_REFERENCE_APP", "Reference device must contain exactly one real Nihongo app."));
+    problems.push(problem("MISSING_OR_AMBIGUOUS_REFERENCE_APP", "HIL phone must contain exactly one real Nihongo app."));
   } else if (exactReferences[0].version !== expected.referenceVersion) {
     problems.push(problem(
       "STALE_REFERENCE_VERSION",
       `Reference Nihongo must be ${expected.referenceVersion}, not ${exactReferences[0].version ?? "unknown"}.`,
     ));
   }
-  if (appsWithBundlePrefix(referenceApps, "com.zenbujapanese").length > 0 || cloneApps(referenceApps).length > 0) {
-    problems.push(problem("REFERENCE_DEVICE_HAS_CANDIDATE", "Reference device contains a Zenbu or clone build."));
-  }
-
-  const exactCandidates = candidateApps.filter(({ bundleIdentifier }) => bundleIdentifier === expected.candidateBundle);
+  const exactCandidates = apps.filter(({ bundleIdentifier }) => bundleIdentifier === expected.candidateBundle);
   if (exactCandidates.length !== 1) {
-    problems.push(problem("MISSING_OR_AMBIGUOUS_CANDIDATE_APP", "Candidate device must contain exactly one Zenbu candidate app."));
+    problems.push(problem("MISSING_OR_AMBIGUOUS_CANDIDATE_APP", "HIL phone must contain exactly one Zenbu candidate app."));
   }
-  if (candidateApps.some(({ bundleIdentifier }) => bundleIdentifier === expected.referenceBundle)) {
-    problems.push(problem("CANDIDATE_DEVICE_HAS_REFERENCE", "Candidate device contains the Nihongo reference app."));
-  }
-  if (cloneApps(candidateApps).length > 0) {
-    problems.push(problem("CANDIDATE_DEVICE_HAS_CLONE", "Candidate device contains an obsolete clone or replica app."));
+  if (cloneApps(apps).length > 0) {
+    problems.push(problem("HIL_DEVICE_HAS_CLONE", "HIL phone contains an obsolete clone or replica app."));
   }
 
   if (artifact.count !== 1) {
@@ -143,8 +123,7 @@ function plistValue(infoPlist, key) {
 }
 
 export function collectLiveInventory(arguments_) {
-  const referenceDevice = requiredOption(arguments_, "--reference-device");
-  const candidateDevice = requiredOption(arguments_, "--candidate-device");
+  const hilDeviceIdentifier = requiredOption(arguments_, "--hil-device");
   const expectedCommit = requiredOption(arguments_, "--expected-commit");
   const candidateArtifacts = optionValues(arguments_, "--candidate-artifact").map((path) => resolve(path));
   const simulatorDestination = requiredOption(arguments_, "--simulator-destination");
@@ -164,15 +143,10 @@ export function collectLiveInventory(arguments_) {
 
     return {
       includesAllApps: true,
-      reference: {
-        identifier: referenceDevice,
-        productType: device(referenceDevice).hardwareProperties?.productType,
-        apps: apps(referenceDevice, "reference-apps.json"),
-      },
-      candidate: {
-        identifier: candidateDevice,
-        productType: device(candidateDevice).hardwareProperties?.productType,
-        apps: apps(candidateDevice, "candidate-apps.json"),
+      hilDevice: {
+        identifier: hilDeviceIdentifier,
+        productType: device(hilDeviceIdentifier).hardwareProperties?.productType,
+        apps: apps(hilDeviceIdentifier, "hil-apps.json"),
       },
       candidateArtifact: {
         count: candidateArtifacts.length,

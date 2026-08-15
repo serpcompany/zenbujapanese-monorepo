@@ -17,15 +17,10 @@ const candidateApp = {
 function cleanInventory() {
   return {
     includesAllApps: true,
-    reference: {
-      identifier: "REFERENCE-DEVICE",
-      productType: "iPhone18,2",
-      apps: [referenceApp],
-    },
-    candidate: {
-      identifier: "CANDIDATE-DEVICE",
+    hilDevice: {
+      identifier: "HIL-DEVICE",
       productType: "iPhone15,3",
-      apps: [candidateApp],
+      apps: [referenceApp, candidateApp],
     },
     candidateArtifact: {
       count: 1,
@@ -50,16 +45,18 @@ test("rejects the developer-app-only inventory that hid App Store Nihongo", () =
   assert.ok(validateHilIdentity(inventory).some(({ code }) => code === "INCOMPLETE_APP_INVENTORY"));
 });
 
-test("rejects mixed-role phones and a stale reference version", () => {
+test("accepts exact reference and candidate apps coexisting on the HIL phone", () => {
+  assert.deepEqual(validateHilIdentity(cleanInventory()), []);
+});
+
+test("rejects a stale reference version and obsolete clone", () => {
   const inventory = cleanInventory();
-  inventory.reference.apps.push(candidateApp);
-  inventory.candidate.apps.push(referenceApp);
-  inventory.reference.apps[0] = { ...referenceApp, version: "1.34.3" };
+  inventory.hilDevice.apps[0] = { ...referenceApp, version: "1.34.3" };
+  inventory.hilDevice.apps.push({ bundleIdentifier: "com.example.nihongoclone" });
 
   const codes = validateHilIdentity(inventory).map(({ code }) => code);
   assert.ok(codes.includes("STALE_REFERENCE_VERSION"));
-  assert.ok(codes.includes("REFERENCE_DEVICE_HAS_CANDIDATE"));
-  assert.ok(codes.includes("CANDIDATE_DEVICE_HAS_REFERENCE"));
+  assert.ok(codes.includes("HIL_DEVICE_HAS_CLONE"));
 });
 
 test("rejects ambiguous artifacts, stale commits, and generic simulator destinations", () => {

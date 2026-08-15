@@ -39,20 +39,24 @@ close #152–#166.
 
 ## Required preflight
 
-Before any new reference or side-by-side capture:
+Before any new reference or side-by-side capture, use the physical iPhone 14
+Pro Max as the single HIL phone:
 
 1. Inventory every physical target with `devicectl device info apps
    --include-all-apps`; the default command lists only developer apps and is
    insufficient.
-2. Resolve the reference by exact bundle identifier, version, device model,
-   and visible identity. Launch it by exact bundle identifier.
-3. Resolve the candidate by exact source commit, built artifact, bundle
-   identifier, device model, and visible identity. Launch it by exact bundle
-   identifier.
-4. Reject a clean reference run when a Zenbu/clone build is installed on the
-   reference device. Reject a clean candidate run when a Nihongo/clone build
-   is installed on the candidate device. A deliberately mixed phone may be
-   used for informal human browsing only and must be named as such.
+2. Require exactly one genuine Nihongo 1.34.4 installation and exactly one
+   Zenbu candidate installation on that phone. Reject obsolete clone/replica
+   bundles.
+3. Resolve the reference by exact bundle identifier, version, device model,
+   and visible identity. Launch `com.serpentisei.studyjapanese` explicitly,
+   complete the frozen reference phase, and seal that evidence before
+   observing the candidate for the same contexts.
+4. Resolve the candidate by exact source commit, built artifact, bundle
+   identifier, device model, and visible identity. Launch
+   `com.zenbujapanese.dictionary` explicitly for the candidate phase. The two
+   applications may coexist because their exact bundle identities and the
+   reference-first phase boundary are enforced.
 5. Reject ambiguous archives, generic simulator destinations, booted
    simulator contamination, and stale temporary build selection.
 6. Keep invalid or mixed-role captures outside Git under an explicit
@@ -68,14 +72,14 @@ values:
 
 ```sh
 node /absolute/path/to/apps/ios/Tools/hil-identity-preflight.mjs \
-  --reference-device "$REFERENCE_DEVICE" \
-  --candidate-device "$CANDIDATE_DEVICE" \
+  --hil-device "$HIL_DEVICE" \
   --candidate-artifact "/absolute/path/to/Zenbu Japanese.app" \
   --expected-commit "$(git rev-parse HEAD)" \
   --simulator-destination "Zenbu Issue 141 iPhone 16e"
 ```
 
-The guard performs its own `--include-all-apps` inventories and exits nonzero
-for stale reference versions, role overlap, mixed-role app installs, ambiguous
-artifacts, stale source commits, generic simulator names, or any booted
-simulator. A failed guard is an informal-browsing state at most, never HIL.
+The guard performs its own `--include-all-apps` inventory and exits nonzero for
+a stale reference version, missing or ambiguous exact apps, obsolete clone
+installs, ambiguous artifacts, stale source commits, generic simulator names,
+or any booted simulator. A failed guard is an informal-browsing state at most,
+never HIL.
