@@ -11,6 +11,7 @@ language_database="${ios_dir}/Modules/Sources/SearchExperience/Resources/Languag
 language_import_manifest="${ios_dir}/LanguageData/Generated/JMdict_e-2026-08-10.import.json"
 retrieval_validator="${tool_dir}/example_sentence_retrieval_index.py"
 dictionary_ranking_validator="${tool_dir}/validate_dictionary_ranking_data.py"
+dictionary_ranking_contract="${ios_dir}/Modules/Sources/SearchExperience/Resources/DictionaryRankingArtifactContract.json"
 dictionary_source="${ios_dir}/LanguageData/Sources/JMdict_e-2026-08-10.gz"
 retrieval_fixture_validator="${tool_dir}/validate_example_sentence_retrieval_fixtures.rb"
 retrieval_contexts="${ios_dir}/../../docs/research/fixtures/example-sentence-retrieval-issue-147-observation-contexts.tsv"
@@ -149,7 +150,8 @@ pass "source privacy boundary, Camera copy, dependency declarations, and public 
 [[ -f "$language_database" ]] || fail "bundled Language Reference Data is missing"
 [[ -f "$language_import_manifest" ]] || fail "generated Language Reference Data manifest is missing"
 python3 "$dictionary_ranking_validator" "$language_database" "$language_import_manifest" \
-  "$dictionary_source" >"${scratch_dir}/dictionary-ranking-validation" \
+  "$dictionary_source" --contract "$dictionary_ranking_contract" \
+  >"${scratch_dir}/dictionary-ranking-validation" \
   || fail "bundled Dictionary Ranking artifact validation failed"
 python3 "$retrieval_validator" "$language_database" --manifest "$language_import_manifest" \
   >"${scratch_dir}/retrieval-validation" \
@@ -189,7 +191,8 @@ pass "archive identity, privacy manifest, and Camera copy match the reviewed sou
 archive_language_database="$(find "$app_path" -type f -name 'LanguageReferenceData.sqlite3' -print -quit)"
 [[ -n "$archive_language_database" ]] || fail "archive application is missing LanguageReferenceData.sqlite3"
 python3 "$dictionary_ranking_validator" "$archive_language_database" "$language_import_manifest" \
-  "$dictionary_source" >"${scratch_dir}/archive-dictionary-ranking-validation" \
+  "$dictionary_source" --contract "$dictionary_ranking_contract" \
+  >"${scratch_dir}/archive-dictionary-ranking-validation" \
   || fail "archive Dictionary Ranking artifact validation failed"
 python3 "$retrieval_validator" "$archive_language_database" --manifest "$language_import_manifest" \
   >"${scratch_dir}/archive-retrieval-validation" \

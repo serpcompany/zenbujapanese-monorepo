@@ -9,6 +9,7 @@ import sqlite3
 from pathlib import Path
 
 from dictionary_ranking_adapter import dictionary_ranking_mapping_sha256
+from dictionary_ranking_contract import runtime_contract
 from language_data_tools import file_sha256
 
 
@@ -23,13 +24,19 @@ EXPECTED_COUNTS = {
 TOOL_FILES = {
     "import_tool_sha256": "import_jmdict.py",
     "dictionary_ranking_adapter_sha256": "dictionary_ranking_adapter.py",
+    "dictionary_ranking_contract_sha256": "dictionary_ranking_contract.py",
     "shared_tooling_sha256": "language_data_tools.py",
     "unidic_adapter_sha256": "unidic_adapter.py",
     "tatoeba_adapter_sha256": "tatoeba_adapter.py",
 }
 
 
-def validate(database_path: Path, manifest_path: Path, source_path: Path) -> dict[str, object]:
+def validate(
+    database_path: Path,
+    manifest_path: Path,
+    source_path: Path,
+    contract_path: Path | None = None,
+) -> dict[str, object]:
     manifest = json.loads(manifest_path.read_text())
     transform = manifest["transform"]
     failures: list[str] = []
@@ -48,6 +55,9 @@ def validate(database_path: Path, manifest_path: Path, source_path: Path) -> dic
     for key, filename in TOOL_FILES.items():
         if transform.get(key) != file_sha256(Path(__file__).with_name(filename)):
             failures.append(f"{key} current file checksum")
+    if contract_path is not None:
+        if json.loads(contract_path.read_text()) != runtime_contract(transform):
+            failures.append("bundled runtime contract")
 
     database = sqlite3.connect(f"file:{database_path}?mode=ro", uri=True)
     try:
@@ -61,6 +71,19 @@ def validate(database_path: Path, manifest_path: Path, source_path: Path) -> dic
         expected_mapping = transform.get("dictionary_ranking_mapping_sha256")
         if actual_mapping != expected_mapping:
             failures.append("dictionary ranking mapping checksum")
+        semantic_group_sizes = [
+            row[0]
+            for row in database.execute(
+                "SELECT count(*) FROM entries GROUP BY semantic_fingerprint HAVING count(*) > 1"
+            )
+        ]
+        actual_semantic_equivalence = {
+            "normalization": "opaque-app-id-lexicographic-min-v1",
+            "duplicate_groups": len(semantic_group_sizes),
+            "source_rows": sum(semantic_group_sizes),
+        }
+        if transform.get("semantic_equivalence") != actual_semantic_equivalence:
+            failures.append("semantic equivalence normalization")
         metadata = dict(database.execute("SELECT key, value FROM metadata"))
         if json.loads(metadata.get("dictionary_ranking_policy", "null")) != "dictionary-best-match-v1":
             failures.append("database policy metadata")
@@ -100,8 +123,14 @@ def main() -> None:
     parser.add_argument("database", type=Path)
     parser.add_argument("manifest", type=Path)
     parser.add_argument("source", type=Path)
+    parser.add_argument("--contract", type=Path)
     arguments = parser.parse_args()
-    print(json.dumps(validate(arguments.database, arguments.manifest, arguments.source), sort_keys=True))
+    print(
+        json.dumps(
+            validate(arguments.database, arguments.manifest, arguments.source, arguments.contract),
+            sort_keys=True,
+        )
+    )
 
 
 if __name__ == "__main__":

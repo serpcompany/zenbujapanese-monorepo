@@ -82,7 +82,7 @@ private actor LanguageReferenceData {
         ).filter { !bestIDs.contains($0.id) }
         return LookupSearchResults(
           best: deinflectedBest,
-          additional: Array(displacedMatches.prefix(60 - deinflectedBest.count)),
+          additional: Array(displacedMatches.prefix(max(0, 60 - deinflectedBest.count))),
           usesPrimaryEntryExamples: true
         )
       }
@@ -104,7 +104,8 @@ private actor LanguageReferenceData {
       return LookupSearchResults(
         best: Array(Self.uniqued(analyzedResults)),
         additional: [],
-        presentation: .discoveredWords
+        presentation: .discoveredWords,
+        hasExactOrPrefixMatch: false
       )
     }
     if query.isMixedScript {
@@ -114,7 +115,8 @@ private actor LanguageReferenceData {
           return LookupSearchResults(
             best: results.best,
             additional: results.additional,
-            presentation: .discoveredWords
+            presentation: .discoveredWords,
+            hasExactOrPrefixMatch: false
           )
         }
       }
@@ -169,7 +171,8 @@ private actor LanguageReferenceData {
     guard !ranked.isEmpty else { return .empty }
     let leadingPresentationRank = ranked[0].presentationRank
     let best = ranked.prefix { $0.presentationRank == leadingPresentationRank }.map(\.entry)
-    let additional = ranked.dropFirst(best.count).prefix(60 - best.count).map(\.entry)
+    let additionalAllowance = max(0, 60 - best.count)
+    let additional = ranked.dropFirst(best.count).prefix(additionalAllowance).map(\.entry)
     return LookupSearchResults(
       best: Array(best),
       additional: Array(additional),
@@ -318,7 +321,7 @@ private actor LanguageReferenceData {
       exactFormOnly ? Self.exactJapaneseCandidateSQL : Self.japaneseCandidateSQL
     )
     defer { sqlite3_finalize(statement) }
-    bind(exactFormOnly ? query.value : "%\(query.value)%", at: 1, to: statement)
+    bind(query.value, at: 1, to: statement)
     var entries: [LanguageReferenceID: DictionaryEntry] = [:]
     var fingerprints: [LanguageReferenceID: String] = [:]
     var senseCounts: [LanguageReferenceID: Int] = [:]
@@ -442,28 +445,17 @@ private actor LanguageReferenceData {
     _ database: OpaquePointer,
     databaseURL: URL
   ) throws {
-    let evidenceCounts = [
-      "form_priority_profiles": 56_127,
-      "canonical_senses": 253_020,
-      "gloss_atoms": 441_826,
-      "sense_form_restrictions": 1_929,
-      "reading_form_restrictions": 6_201,
-    ]
-    let expected = [
-      "dictionary_ranking_policy": "\"dictionary-best-match-v1\"",
-      "dictionary_ranking_schema_version": "\"zenbu.dictionary-ranking.v1\"",
-      "dictionary_ranking_evidence": "{\"form_priority_profiles\":56127,\"canonical_senses\":253020,\"gloss_atoms\":441826,\"sense_form_restrictions\":1929,\"reading_form_restrictions\":6201}",
-      "dictionary_ranking_mapping_sha256": "\"3b4b6bacff31b3e68ed9990af073ff8303405de82addbfbd8c652726052923fd\"",
-      "dictionary_ranking_adapter_sha256": "\"a6ec035fcb4188eb8a3668f19dffd1ffee37c6a3d478def8f883a6981140a3a8\"",
-    ]
-    guard try fileSHA256(databaseURL) == "5897ed9a3647739049d32f7df0ca9322f6358689490903c854cb23ab193ef0e2"
+    let contract = try DictionaryRankingArtifactContract.bundled()
+    guard try fileSHA256(databaseURL) == contract.databaseSHA256,
+      (try FileManager.default.attributesOfItem(atPath: databaseURL.path)[.size] as? NSNumber)?.intValue
+        == contract.databaseBytes
     else {
       throw LookupDatabaseError.invalidDictionaryRankingMetadata
     }
     var statement: OpaquePointer?
     guard sqlite3_prepare_v2(
       database,
-      "SELECT key, value FROM metadata WHERE key LIKE 'dictionary_ranking_%'",
+      "SELECT key, value FROM metadata",
       -1,
       &statement,
       nil
@@ -475,9 +467,38 @@ private actor LanguageReferenceData {
     while sqlite3_step(statement) == SQLITE_ROW {
       actual[string(column: 0, statement: statement)] = string(column: 1, statement: statement)
     }
-    guard actual == expected else { throw LookupDatabaseError.invalidDictionaryRankingMetadata }
+    guard try decodedMetadataString("dictionary_ranking_policy", from: actual) == contract.policy,
+      try decodedMetadataString("dictionary_ranking_schema_version", from: actual) == contract.schemaVersion,
+      try decodedMetadataString("dictionary_ranking_mapping_sha256", from: actual) == contract.mappingSHA256,
+      try decodedMetadata(
+        DictionaryRankingArtifactContract.EvidenceCounts.self,
+        key: "dictionary_ranking_evidence",
+        from: actual
+      ) == contract.evidenceCounts,
+      contract.semanticEquivalence.normalization == "opaque-app-id-lexicographic-min-v1",
+      contract.toolSHA256.metadata.allSatisfy({ key, expected in
+        (try? decodedMetadataString(key, from: actual)) == expected
+      })
+    else { throw LookupDatabaseError.invalidDictionaryRankingMetadata }
 
-    for (table, expectedCount) in evidenceCounts {
+    var equivalenceStatement: OpaquePointer?
+    guard sqlite3_prepare_v2(
+      database,
+      "SELECT count(*), total(group_size) FROM (SELECT count(*) AS group_size FROM entries GROUP BY semantic_fingerprint HAVING count(*) > 1)",
+      -1,
+      &equivalenceStatement,
+      nil
+    ) == SQLITE_OK, let equivalenceStatement else {
+      throw LookupDatabaseError.invalidDictionaryRankingMetadata
+    }
+    defer { sqlite3_finalize(equivalenceStatement) }
+    guard sqlite3_step(equivalenceStatement) == SQLITE_ROW,
+      sqlite3_column_int(equivalenceStatement, 0) == contract.semanticEquivalence.duplicateGroups,
+      sqlite3_column_int(equivalenceStatement, 1) == contract.semanticEquivalence.sourceRows,
+      sqlite3_step(equivalenceStatement) == SQLITE_DONE
+    else { throw LookupDatabaseError.invalidDictionaryRankingMetadata }
+
+    for (table, expectedCount) in contract.evidenceCounts.tableCounts {
       var countStatement: OpaquePointer?
       guard sqlite3_prepare_v2(database, "SELECT count(*) FROM \(table)", -1, &countStatement, nil)
         == SQLITE_OK,
@@ -493,6 +514,24 @@ private actor LanguageReferenceData {
         throw LookupDatabaseError.invalidDictionaryRankingMetadata
       }
     }
+  }
+
+  private static func decodedMetadataString(
+    _ key: String,
+    from metadata: [String: String]
+  ) throws -> String {
+    try decodedMetadata(String.self, key: key, from: metadata)
+  }
+
+  private static func decodedMetadata<Value: Decodable>(
+    _ type: Value.Type,
+    key: String,
+    from metadata: [String: String]
+  ) throws -> Value {
+    guard let value = metadata[key] else {
+      throw LookupDatabaseError.invalidDictionaryRankingMetadata
+    }
+    return try JSONDecoder().decode(type, from: Data(value.utf8))
   }
 
   private static func fileSHA256(_ url: URL) throws -> String {
@@ -522,10 +561,10 @@ private actor LanguageReferenceData {
     return DictionaryEntry(
       id: LanguageReferenceID(rawValue: Self.string(column: 0, statement: statement)),
       noteID: WordNoteID(rawValue: Self.string(column: 1, statement: statement)),
-      sourceProvenance: LanguageReferenceProvenance(
+      sourceProvenances: [LanguageReferenceProvenance(
         sourceIdentity: Self.string(column: 2, statement: statement),
         sourceRecordID: Self.string(column: 3, statement: statement)
-      ),
+      )],
       reading: Self.string(column: 5, statement: statement),
       headword: Self.string(column: 4, statement: statement),
       summary: Self.string(column: 6, statement: statement),
@@ -588,8 +627,29 @@ private actor LanguageReferenceData {
   }
 
   private static func deduplicated(_ entries: [RankedDictionaryEntry]) -> [RankedDictionaryEntry] {
-    var fingerprints = Set<String>()
-    return entries.filter { fingerprints.insert($0.semanticFingerprint).inserted }
+    var groups: [String: [RankedDictionaryEntry]] = [:]
+    var orderedFingerprints: [String] = []
+    for entry in entries {
+      if groups[entry.semanticFingerprint] == nil {
+        orderedFingerprints.append(entry.semanticFingerprint)
+      }
+      groups[entry.semanticFingerprint, default: []].append(entry)
+    }
+    return orderedFingerprints.compactMap { fingerprint in
+      guard let group = groups[fingerprint], let leading = group.first,
+        let canonical = LanguageReferenceIdentity.canonicalEntry(group.map(\.entry))
+      else { return nil }
+      let normalized = leading.entry.normalizingIdentity(
+        to: canonical,
+        provenances: group.flatMap(\.entry.sourceProvenances)
+      )
+      return RankedDictionaryEntry(
+        entry: normalized,
+        presentationRank: leading.presentationRank,
+        hasExactOrPrefixMatch: group.contains(where: \.hasExactOrPrefixMatch),
+        semanticFingerprint: fingerprint
+      )
+    }
   }
 
   private static let selectedColumns = """
@@ -621,7 +681,7 @@ private actor LanguageReferenceData {
   private static let asciiCandidateSQL = """
     WITH candidates AS (
       SELECT entry_id FROM gloss_atoms
-      WHERE (' ' || normalized_text || ' ') GLOB ('*[^a-z]' || ? || '[^a-z]*')
+      WHERE instr(normalized_text, ?) > 0
       UNION
       SELECT entry_id FROM forms
       WHERE kind = \(SearchFormKind.romaji.rawValue) AND instr(form, ?) > 0
@@ -655,7 +715,7 @@ private actor LanguageReferenceData {
     LEFT JOIN form_priority_profiles p
       ON p.entry_id = f.entry_id AND p.form = f.form AND p.kind = f.kind
     WHERE f.kind IN (\(SearchFormKind.written.rawValue), \(SearchFormKind.reading.rawValue))
-      AND f.form LIKE ?
+      AND instr(f.form, ?) > 0
       AND (
         f.kind != \(SearchFormKind.reading.rawValue)
         OR NOT EXISTS (
@@ -700,8 +760,7 @@ private actor LanguageReferenceData {
     FROM gloss_atoms g
     JOIN canonical_senses s ON s.entry_id = g.entry_id AND s.sense_order = g.sense_order
     JOIN entries e ON e.id = g.entry_id
-    WHERE (' ' || g.normalized_text || ' ')
-      GLOB ('*[^a-z]' || ? || '[^a-z]*')
+    WHERE instr(g.normalized_text, ?) > 0
     """
 
   private static let romajiEvidenceSQL = """
@@ -751,7 +810,7 @@ private final class SQLiteConnection: @unchecked Sendable {
   }
 }
 
-private enum LookupDatabaseError: Error {
+enum LookupDatabaseError: Error {
   case missingBundledData
   case invalidDictionaryRankingMetadata
   case sqlite(message: String)

@@ -15,7 +15,7 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
   }
 
   func testASCIILikeMetacharactersRemainLiteralThroughDictionarySearch() async throws {
-    for rawQuery in ["%", "_", "\\"] {
+    for rawQuery in ["*", "%", "_", "\\"] {
       let results = try await LookupClient.live.search(SearchQuery(rawQuery))
       let entries = results.best + results.additional
       XCTAssertLessThan(entries.count, 60, rawQuery)
@@ -26,6 +26,70 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
         rawQuery
       )
     }
+
+    let japaneseMixed = try await LookupClient.live.search(SearchQuery("猫_"))
+    XCTAssertTrue(japaneseMixed.isEmpty)
+    XCTAssertFalse(japaneseMixed.hasExactOrPrefixMatch)
+  }
+
+  func testBestMatchesIncludesUncappedLeadingPresentationGroup() async throws {
+    let results = try await LookupClient.live.search(SearchQuery("ル"))
+    XCTAssertEqual(results.best.count, 64)
+    XCTAssertTrue(results.additional.isEmpty)
+  }
+
+  func testEquivalentEntriesUseStablePublicIdentityAndMergeProvenance() async throws {
+    let cases = [
+      (
+        query: "中越地震",
+        canonicalID: "845d27d83eebdadc22af4e2de4231d68",
+        sourceRecordIDs: ["2854192", "5743924"]
+      ),
+      (
+        query: "閻魔",
+        canonicalID: "176f4e451cc248ec386ac35f98801f36",
+        sourceRecordIDs: ["1573970", "5737655"]
+      ),
+      (
+        query: "欧州経済領域",
+        canonicalID: "4e9c02a00a028f7ea45ab9cc687ec4cf",
+        sourceRecordIDs: ["2872301", "5149361"]
+      ),
+    ]
+    for duplicate in cases {
+      let query = SearchQuery(duplicate.query)
+      let results = try await LookupClient.live.search(query)
+      let entry = try XCTUnwrap(results.primaryEntry(for: query))
+      XCTAssertEqual(entry.id.rawValue, duplicate.canonicalID, duplicate.query)
+      XCTAssertEqual(
+        entry.sourceProvenances.map(\.sourceRecordID),
+        duplicate.sourceRecordIDs,
+        duplicate.query
+      )
+    }
+  }
+
+  func testEquivalentIdentityNormalizationIsIndependentOfInputOrder() {
+    let canonical = LanguageReferenceID(rawValue: "845d27d83eebdadc22af4e2de4231d68")
+    let duplicate = LanguageReferenceID(rawValue: "fb215bdf8afa937de7e1b20e2a15a5fa")
+    XCTAssertEqual(
+      LanguageReferenceIdentity.canonicalID([duplicate, canonical]),
+      LanguageReferenceIdentity.canonicalID([canonical, duplicate])
+    )
+    XCTAssertEqual(LanguageReferenceIdentity.canonicalID([duplicate, canonical]), canonical)
+
+    let first = LanguageReferenceProvenance(
+      sourceIdentity: "edrdg.jmdict",
+      sourceRecordID: "2854192"
+    )
+    let second = LanguageReferenceProvenance(
+      sourceIdentity: "edrdg.jmdict",
+      sourceRecordID: "5743924"
+    )
+    XCTAssertEqual(
+      LanguageReferenceIdentity.sortedProvenances([second, first]),
+      LanguageReferenceIdentity.sortedProvenances([first, second])
+    )
   }
 
   func testJapaneseReadingCandidateMustApplyToDisplayedWrittenForm() async throws {

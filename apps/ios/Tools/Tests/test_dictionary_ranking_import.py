@@ -19,6 +19,36 @@ import validate_dictionary_ranking_data  # noqa: E402
 
 
 class DictionaryRankingImportTests(unittest.TestCase):
+    def test_generated_runtime_contract_binds_manifest_artifact_and_current_tools(self) -> None:
+        ios = TOOLS.parent
+        manifest = json.loads(
+            (ios / "LanguageData/Generated/JMdict_e-2026-08-10.import.json").read_text()
+        )["transform"]
+        contract_path = (
+            ios
+            / "Modules/Sources/SearchExperience/Resources/DictionaryRankingArtifactContract.json"
+        )
+        self.assertTrue(contract_path.exists())
+        contract = json.loads(contract_path.read_text())
+        self.assertEqual(contract["databaseSHA256"], manifest["database_sha256"])
+        self.assertEqual(
+            contract["mappingSHA256"], manifest["dictionary_ranking_mapping_sha256"]
+        )
+        self.assertEqual(contract["evidenceCounts"], manifest["dictionary_ranking_evidence"])
+        self.assertEqual(contract["semanticEquivalence"], manifest["semantic_equivalence"])
+        self.assertEqual(
+            contract["toolSHA256"],
+            {
+                key: manifest[key]
+                for key in validate_dictionary_ranking_data.TOOL_FILES
+            },
+        )
+        lookup_source = (
+            ios / "Modules/Sources/SearchExperience/LookupClient.swift"
+        ).read_text()
+        self.assertNotIn(manifest["database_sha256"], lookup_source)
+        self.assertNotIn(manifest["dictionary_ranking_mapping_sha256"], lookup_source)
+
     def test_release_validator_rejects_count_preserving_ranking_evidence_drift(self) -> None:
         ios = TOOLS.parent
         database = ios / "Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3"
@@ -65,6 +95,7 @@ class DictionaryRankingImportTests(unittest.TestCase):
         for key in (
             "import_tool_sha256",
             "dictionary_ranking_adapter_sha256",
+            "dictionary_ranking_contract_sha256",
             "shared_tooling_sha256",
             "unidic_adapter_sha256",
             "tatoeba_adapter_sha256",
