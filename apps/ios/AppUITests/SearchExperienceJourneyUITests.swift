@@ -1360,10 +1360,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertEqual(refinement.label, "Search for Japanese reading もんだい")
     XCTAssertEqual(searchField.value as? String, "mondai")
     XCTAssertTrue(app.staticTexts["Best Matches"].exists)
-    let literalLeader = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
-      .firstMatch
-    XCTAssertTrue(literalLeader.waitForExistence(timeout: 2))
-    XCTAssertTrue(literalLeader.label.contains("月曜日"))
+    let literalMonday = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@ AND label CONTAINS %@", "Best match", "月曜日")
+    ).firstMatch
+    XCTAssertTrue(literalMonday.waitForExistence(timeout: 2))
     recordScreenshot(named: "search-results-literal-romaji-mondai", app: app)
 
     refinement.tap()
@@ -1412,14 +1412,17 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(refinedLeader.label.contains("日本"))
     let japan = app.buttons["result.japan"]
     XCTAssertEqual(japan.value as? String, "Best match 1")
+    let additionalLeader = app.buttons.matching(
+      NSPredicate(
+        format: "value == %@ AND label BEGINSWITH %@", "Additional match 1", "二本, にほん,"
+      )
+    ).firstMatch
+    XCTAssertTrue(additionalLeader.waitForExistence(timeout: 5))
+    XCTAssertTrue(additionalLeader.label.hasPrefix("二本, にほん,"))
     XCTAssertFalse(
       app.buttons.matching(NSPredicate(format: "value == %@", "Best match 2")).firstMatch.exists
     )
-    let additionalLeader = app.buttons.matching(
-      NSPredicate(format: "value == %@", "Additional match 1")
-    ).firstMatch
-    XCTAssertTrue(additionalLeader.waitForExistence(timeout: 3))
-    XCTAssertTrue(additionalLeader.label.hasPrefix("二本, にほん,"))
+    XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
     recordScreenshot(named: "search-results-refined-japanese-nihon", app: app)
   }
 

@@ -49,7 +49,20 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
       let primary = try XCTUnwrap(results.primaryEntry(for: query), rawQuery)
       XCTAssertEqual(primary.headword, expectedHeadword, rawQuery)
       XCTAssertEqual(primary.reading, expectedReading, rawQuery)
+      if rawQuery == "tabeta" {
+        XCTAssertEqual(results.best.map(\.headword), ["食べる"], rawQuery)
+        XCTAssertFalse(results.additional.contains { $0.headword == "食べるラー油" }, rawQuery)
+      }
     }
+
+    let nihonResults = try await LookupClient.live.search(SearchQuery("にほん"))
+    XCTAssertEqual(nihonResults.best.map(\.headword), ["日本"])
+    XCTAssertEqual(nihonResults.additional.first?.headword, "二本")
+    XCTAssertNil(nihonResults.readingRefinement)
+
+    let taberu = try await LookupClient.live.entryMatchingForm("taberu")
+    XCTAssertEqual(taberu?.headword, "食べる")
+    XCTAssertEqual(SearchQuery("taberu ").value, "taberu")
   }
 
   func testRuntimeSQLiteCapabilityEvidence() async throws {
