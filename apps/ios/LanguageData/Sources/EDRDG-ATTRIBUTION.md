@@ -5,6 +5,7 @@ This product uses material from the JMdict and KANJIDIC2 dictionary files and th
 - Project documentation: https://www.edrdg.org/jmdict/j_jmdict.html
 - Licence: https://www.edrdg.org/edrdg/licence.html
 - Snapshot metadata: `JMdict_e-2026-08-10.source.json`
+- Exact redistributable snapshot: `JMdict_e-2026-08-10.gz` (Git LFS)
 - KANJIDIC project documentation: https://www.edrdg.org/wiki/index.php/KANJIDIC_Project
 - KANJIDIC2 snapshot metadata: `KANJIDIC2-2026-08-10.source.json`
 - Radical-project documentation: https://www.edrdg.org/krad/kradinf.html

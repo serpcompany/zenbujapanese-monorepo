@@ -6,6 +6,7 @@ xcuserdata/
 # Reproducible pinned upstream snapshots. Source metadata, checksums, importers,
 # generated manifests, and distributable license texts remain versioned.
 LanguageData/Sources/*.gz
+!LanguageData/Sources/JMdict_e-2026-08-10.gz
 LanguageData/Sources/*.bz2
 LanguageData/Sources/*.zip
 LanguageData/Sources/*.sqlite

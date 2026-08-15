@@ -28,6 +28,30 @@ _Avoid_: Provider schema, retrieval behavior, matching technology
 A replaceable established library, model, or system component used to implement language analysis without owning the app's product contract or language data.
 _Avoid_: Language Data Source, corpus, Product Experience, retrieval policy
 
+**Dictionary Match**:
+An evidence-backed relationship establishing that a Language Reference Data entry is relevant to a Search query.
+_Avoid_: Result row, provider hit, source membership
+
+**Dictionary Ranking**:
+The app-owned ordering of eligible Dictionary Matches for presentation and downstream entry selection.
+_Avoid_: Provider entry order, provider result order, database row order, provider rank, match eligibility
+
+**Canonical Sense and Gloss Order**:
+The app-owned preservation of a Language Data Source's authorial sense sequence and the documented editorial sequence of glosses within each sense as typed lexical evidence. It is distinct from provider entry, export, result, or database row order and from provider identifiers.
+_Avoid_: Provider result order, insertion order, record ID order
+
+**Dictionary Sense**:
+A distinct meaning within Language Reference Data that retains its part of speech, Canonical Sense and Gloss Order, and any written-form or reading-form applicability. A Dictionary Sense contributes Match evidence only when the displayed written/reading pair satisfies that applicability.
+_Avoid_: Flat gloss, provider sense row, unrestricted meaning
+
+**Dictionary Best Matches**:
+The highest-evidence group produced by Dictionary Ranking for presentation in Lookup. The group may contain more than one entry.
+_Avoid_: Primary Dictionary Entry, all dictionary results
+
+**Primary Dictionary Entry**:
+The first ordered Dictionary Match when a downstream flow requires one Language Reference Data entry.
+_Avoid_: First provider row, Dictionary Best Matches
+
 **Example Sentence Corpus**:
 The canonical app-owned collection of source-backed Japanese–English example pairs and their retained provenance.
 _Avoid_: Tatoeba database, Nihongo sentences, retrieval results

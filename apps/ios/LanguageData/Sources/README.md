@@ -2,7 +2,7 @@
 
 ## JMdict
 
-`JMdict_e-2026-08-10.gz` is the pinned official English JMdict export downloaded directly from EDRDG. Its immutable HTTP metadata and checksum are in `JMdict_e-2026-08-10.source.json`.
+`JMdict_e-2026-08-10.gz` is the pinned official English JMdict export downloaded directly from EDRDG. Its immutable HTTP metadata and checksum are in `JMdict_e-2026-08-10.source.json`. The exact 10,542,518-byte archive is versioned through Git LFS under EDRDG's CC BY-SA 4.0 terms, so `git lfs pull --include='apps/ios/LanguageData/Sources/JMdict_e-2026-08-10.gz'` restores the benchmark source without relying on the rolling upstream URL. The repository attribution is in `EDRDG-ATTRIBUTION.md`.
 
 The derived database is produced by `apps/ios/Tools/import_jmdict.py`. Zenbu retains JMdict `ent_seq` values as source record identifiers, normalizes written forms, readings, English glosses, part-of-speech labels, and priority markers into app-owned Language Reference Data, and records import counts plus both input and output checksums.
 
