@@ -4,6 +4,47 @@ import XCTest
 @testable import SearchExperience
 
 final class ExampleSentenceRetrievalTests: XCTestCase {
+  func testASCIIEntryMatchingFormDoesNotUseGlossOnlyDictionaryRanking() async throws {
+    let glossOnly = try await LookupClient.live.entryMatchingForm("light")
+    XCTAssertNil(glossOnly)
+
+    let matchedRomaji = try await LookupClient.live.entryMatchingForm("taberu")
+    let exactRomaji = try XCTUnwrap(matchedRomaji)
+    XCTAssertEqual(exactRomaji.headword, "食べる")
+    XCTAssertEqual(exactRomaji.reading, "たべる")
+  }
+
+  func testASCIILikeMetacharactersRemainLiteralThroughDictionarySearch() async throws {
+    for rawQuery in ["%", "_", "\\"] {
+      let results = try await LookupClient.live.search(SearchQuery(rawQuery))
+      let entries = results.best + results.additional
+      XCTAssertLessThan(entries.count, 60, rawQuery)
+      XCTAssertTrue(
+        entries.allSatisfy { entry in
+          entry.meanings.contains { $0.contains(rawQuery) }
+        },
+        rawQuery
+      )
+    }
+  }
+
+  func testJapaneseReadingCandidateMustApplyToDisplayedWrittenForm() async throws {
+    let results = try await LookupClient.live.search(SearchQuery("あいき"))
+    XCTAssertFalse(
+      (results.best + results.additional).contains {
+        $0.id.rawValue == "5aaeffda24e078061fe11696c04199c2"
+      }
+    )
+  }
+
+  func testBestMatchesIncludesCompleteLeadingPresentationEquivalenceGroup() async throws {
+    let results = try await LookupClient.live.search(SearchQuery("かすい"))
+    XCTAssertEqual(
+      results.best.map(\.headword),
+      ["河水", "花穂", "禾穂", "火水", "過水", "加水", "仮睡", "下垂"]
+    )
+  }
+
   func testSetSelectsLoanwordWithApplicableQualifiedGlossAndCorroboratingRomaji() async throws {
     let query = SearchQuery("set")
     let result = try await LookupClient.live.search(query)
@@ -52,6 +93,11 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
       if rawQuery == "tabeta" {
         XCTAssertEqual(results.best.map(\.headword), ["食べる"], rawQuery)
         XCTAssertFalse(results.additional.contains { $0.headword == "食べるラー油" }, rawQuery)
+      }
+      if rawQuery == "makasete" {
+        XCTAssertEqual(results.best.map(\.headword), ["任せる"], rawQuery)
+        XCTAssertTrue(results.additional.contains { $0.headword == "任す" }, rawQuery)
+        XCTAssertTrue(results.additional.contains { $0.headword == "負かす" }, rawQuery)
       }
     }
 

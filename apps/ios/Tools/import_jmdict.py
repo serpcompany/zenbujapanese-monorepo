@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from language_data_tools import file_sha256
+from dictionary_ranking_adapter import dictionary_ranking_mapping_sha256
 from tatoeba_adapter import EXAMPLE_PAIR_ID_SCHEME, import_tatoeba_examples
 from example_sentence_retrieval_index import build_indexes
 from unidic_adapter import apply_unidic_pitch
@@ -813,6 +814,7 @@ def import_snapshot(
                 (json.dumps(related, ensure_ascii=False, separators=(",", ":")), record["id"]),
             )
 
+        dictionary_ranking_mapping = dictionary_ranking_mapping_sha256(database)
         transform = {
             "transform": "jmdict-to-zenbu-language-reference-data-v2",
             "source_resource_id": source_metadata["resource_id"],
@@ -831,6 +833,7 @@ def import_snapshot(
             "dictionary_ranking_policy": "dictionary-best-match-v1",
             "dictionary_ranking_schema_version": "zenbu.dictionary-ranking.v1",
             "dictionary_ranking_evidence": actual_counts,
+            "dictionary_ranking_mapping_sha256": dictionary_ranking_mapping,
             "normalized_relationships": relationship_count,
             "note_identity_duplicate_groups": note_identity_duplicate_groups,
             "note_identity_disambiguated_entries": note_identity_disambiguated_entries,
@@ -887,6 +890,9 @@ def import_snapshot(
             "relationship_source_resource_id": relationship_metadata["resource_id"],
             "relationship_source_sha256": file_sha256(relationship_source),
             "import_tool_sha256": file_sha256(Path(__file__)),
+            "dictionary_ranking_adapter_sha256": file_sha256(
+                Path(__file__).with_name("dictionary_ranking_adapter.py")
+            ),
             "shared_tooling_sha256": file_sha256(Path(__file__).with_name("language_data_tools.py")),
             "unidic_adapter_sha256": file_sha256(Path(__file__).with_name("unidic_adapter.py")),
             "tatoeba_adapter_sha256": file_sha256(Path(__file__).with_name("tatoeba_adapter.py")),

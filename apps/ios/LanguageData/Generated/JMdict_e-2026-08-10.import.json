@@ -40,6 +40,7 @@
       "sense_form_restrictions": 1929,
       "reading_form_restrictions": 6201
     },
+    "dictionary_ranking_mapping_sha256": "3b4b6bacff31b3e68ed9990af073ff8303405de82addbfbd8c652726052923fd",
     "normalized_relationships": 36668,
     "note_identity_duplicate_groups": 3,
     "note_identity_disambiguated_entries": 6,
@@ -110,11 +111,12 @@
     "example_source_sha256": "2799d411d99bd023044303fd3b2554a9e391401a04492e508ad1cd53c0304961",
     "relationship_source_resource_id": "zenbu-word-relationships-v1",
     "relationship_source_sha256": "2c483c933f5a42baad194db9a45c1d6251e09ebcb2a40c6475ca3d984ea2dd38",
-    "import_tool_sha256": "e83d17c274eb1a9338430557ee5c38c094c3dac22955e5a3686873848d73e135",
+    "import_tool_sha256": "de1e1237196fd86dea0601eeeeeb719a876c70aba066a3559aff2c06f4635a9a",
+    "dictionary_ranking_adapter_sha256": "a6ec035fcb4188eb8a3668f19dffd1ffee37c6a3d478def8f883a6981140a3a8",
     "shared_tooling_sha256": "7a348e2ad80858dd6e0f47921e0f62c5e076048d0c03ede96e03747416e9faf0",
     "unidic_adapter_sha256": "f616738d7f45e3c75ece903d62ce2092923a6e68cf0925dafe030563c753985a",
     "tatoeba_adapter_sha256": "07cada81e87d1329e176d1920cf99b93e73c913dd39590b511b9b7188f577570",
-    "database_sha256": "45613404d40b3984cb42af1df40f2fcd99a099c9ed8499cbfe52dd7c0d895a3d",
+    "database_sha256": "5897ed9a3647739049d32f7df0ca9322f6358689490903c854cb23ab193ef0e2",
     "database_bytes": 389603328
   }
 }

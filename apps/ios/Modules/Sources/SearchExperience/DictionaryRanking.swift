@@ -1,28 +1,48 @@
 import Foundation
 
+struct PrimaryPriorityMarkers: OptionSet, Hashable, Sendable {
+  let rawValue: Int
+
+  static let special = Self(rawValue: 1 << 0)
+  static let learner = Self(rawValue: 1 << 1)
+  static let news = Self(rawValue: 1 << 2)
+  static let loanword = Self(rawValue: 1 << 3)
+}
+
+struct SecondaryPriorityMarkers: OptionSet, Hashable, Sendable {
+  let rawValue: Int
+
+  static let special = Self(rawValue: 1 << 0)
+  static let learner = Self(rawValue: 1 << 1)
+  static let news = Self(rawValue: 1 << 2)
+  static let loanword = Self(rawValue: 1 << 3)
+}
+
 struct LanguageReferencePriorityProfile: Hashable, Sendable, Comparable {
-  let primaryMask: Int
-  let secondaryMask: Int
+  let primaryMarkers: PrimaryPriorityMarkers
+  let secondaryMarkers: SecondaryPriorityMarkers
   let newsFrequencyBand: Int?
 
-  static let unmarked = Self(primaryMask: 0, secondaryMask: 0, newsFrequencyBand: nil)
+  static let unmarked = Self(
+    primaryMarkers: [], secondaryMarkers: [], newsFrequencyBand: nil
+  )
 
   var isMarked: Bool {
-    primaryMask != 0 || secondaryMask != 0 || newsFrequencyBand != nil
+    !primaryMarkers.isEmpty || !secondaryMarkers.isEmpty || newsFrequencyBand != nil
   }
 
   private var category: Int {
-    if primaryMask & 0b0001 != 0 { return 0 }
-    if primaryMask & 0b0010 != 0 { return 1 }
-    if primaryMask & 0b0100 != 0 { return 2 }
-    if primaryMask & 0b1000 != 0 || secondaryMask & 0b0001 != 0 { return 3 }
-    if secondaryMask & 0b0110 != 0 { return 4 }
-    if secondaryMask & 0b1000 != 0 { return 5 }
+    if primaryMarkers.contains(.special) { return 0 }
+    if primaryMarkers.contains(.learner) { return 1 }
+    if primaryMarkers.contains(.news) { return 2 }
+    if primaryMarkers.contains(.loanword) || secondaryMarkers.contains(.special) { return 3 }
+    if !secondaryMarkers.intersection([.learner, .news]).isEmpty { return 4 }
+    if secondaryMarkers.contains(.loanword) { return 5 }
     return 9
   }
 
   private var primaryBreadthRank: Int {
-    -primaryMask.nonzeroBitCount
+    -primaryMarkers.rawValue.nonzeroBitCount
   }
 
   static func < (lhs: Self, rhs: Self) -> Bool {
@@ -105,6 +125,21 @@ struct EnglishDictionaryRank: Comparable, Sendable {
   let headwordLength: Int
   let semanticFingerprint: String
 
+  var presentationRank: DictionaryPresentationRank {
+    .english(
+      EnglishDictionaryPresentationRank(
+        lane: lane,
+        corroborationRank: corroborationRank,
+        romajiSpecificityRank: romajiSpecificityRank,
+        senseOrder: senseOrder,
+        priorityPresenceRank: priorityPresenceRank,
+        relation: relation,
+        priorityProfile: priorityProfile,
+        glossOrder: glossOrder
+      )
+    )
+  }
+
   static func < (lhs: Self, rhs: Self) -> Bool {
     if lhs.lane != rhs.lane { return lhs.lane < rhs.lane }
     if lhs.corroborationRank != rhs.corroborationRank {
@@ -133,6 +168,16 @@ struct JapaneseDictionaryRank: Comparable, Sendable {
   let headwordLength: Int
   let semanticFingerprint: String
 
+  var presentationRank: DictionaryPresentationRank {
+    .japanese(
+      JapaneseDictionaryPresentationRank(
+        relation: relation,
+        priorityProfile: priorityProfile,
+        senseBreadthRank: senseBreadthRank
+      )
+    )
+  }
+
   static func < (lhs: Self, rhs: Self) -> Bool {
     if lhs.relation != rhs.relation { return lhs.relation < rhs.relation }
     if lhs.priorityProfile < rhs.priorityProfile { return true }
@@ -143,4 +188,26 @@ struct JapaneseDictionaryRank: Comparable, Sendable {
     if lhs.headwordLength != rhs.headwordLength { return lhs.headwordLength < rhs.headwordLength }
     return lhs.semanticFingerprint < rhs.semanticFingerprint
   }
+}
+
+enum DictionaryPresentationRank: Equatable, Sendable {
+  case english(EnglishDictionaryPresentationRank)
+  case japanese(JapaneseDictionaryPresentationRank)
+}
+
+struct EnglishDictionaryPresentationRank: Equatable, Sendable {
+  let lane: DictionaryMatch.EvidenceLane
+  let corroborationRank: Int
+  let romajiSpecificityRank: Int
+  let senseOrder: Int
+  let priorityPresenceRank: Int
+  let relation: DictionaryMatch.GlossRelation
+  let priorityProfile: LanguageReferencePriorityProfile
+  let glossOrder: Int
+}
+
+struct JapaneseDictionaryPresentationRank: Equatable, Sendable {
+  let relation: DictionaryMatch.FormRelation
+  let priorityProfile: LanguageReferencePriorityProfile
+  let senseBreadthRank: Int
 }

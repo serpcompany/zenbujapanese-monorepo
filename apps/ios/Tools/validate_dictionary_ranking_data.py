@@ -8,6 +8,7 @@ import json
 import sqlite3
 from pathlib import Path
 
+from dictionary_ranking_adapter import dictionary_ranking_mapping_sha256
 from language_data_tools import file_sha256
 
 
@@ -17,6 +18,14 @@ EXPECTED_COUNTS = {
     "gloss_atoms": 441_826,
     "sense_form_restrictions": 1_929,
     "reading_form_restrictions": 6_201,
+}
+
+TOOL_FILES = {
+    "import_tool_sha256": "import_jmdict.py",
+    "dictionary_ranking_adapter_sha256": "dictionary_ranking_adapter.py",
+    "shared_tooling_sha256": "language_data_tools.py",
+    "unidic_adapter_sha256": "unidic_adapter.py",
+    "tatoeba_adapter_sha256": "tatoeba_adapter.py",
 }
 
 
@@ -36,6 +45,9 @@ def validate(database_path: Path, manifest_path: Path, source_path: Path) -> dic
         failures.append("dictionary ranking schema")
     if transform.get("dictionary_ranking_evidence") != EXPECTED_COUNTS:
         failures.append("manifest evidence counts")
+    for key, filename in TOOL_FILES.items():
+        if transform.get(key) != file_sha256(Path(__file__).with_name(filename)):
+            failures.append(f"{key} current file checksum")
 
     database = sqlite3.connect(f"file:{database_path}?mode=ro", uri=True)
     try:
@@ -45,6 +57,10 @@ def validate(database_path: Path, manifest_path: Path, source_path: Path) -> dic
         }
         if actual_counts != EXPECTED_COUNTS:
             failures.append(f"database evidence counts: {actual_counts}")
+        actual_mapping = dictionary_ranking_mapping_sha256(database)
+        expected_mapping = transform.get("dictionary_ranking_mapping_sha256")
+        if actual_mapping != expected_mapping:
+            failures.append("dictionary ranking mapping checksum")
         metadata = dict(database.execute("SELECT key, value FROM metadata"))
         if json.loads(metadata.get("dictionary_ranking_policy", "null")) != "dictionary-best-match-v1":
             failures.append("database policy metadata")
@@ -52,6 +68,11 @@ def validate(database_path: Path, manifest_path: Path, source_path: Path) -> dic
             failures.append("database schema metadata")
         if json.loads(metadata.get("dictionary_ranking_evidence", "null")) != EXPECTED_COUNTS:
             failures.append("database evidence metadata")
+        if json.loads(metadata.get("dictionary_ranking_mapping_sha256", "null")) != expected_mapping:
+            failures.append("dictionary ranking mapping database metadata")
+        for key in TOOL_FILES:
+            if json.loads(metadata.get(key, "null")) != transform.get(key):
+                failures.append(f"{key} database metadata")
         invalid_fingerprints = database.execute(
             "SELECT count(*) FROM entries WHERE length(semantic_fingerprint) != 32"
         ).fetchone()[0]
@@ -70,6 +91,7 @@ def validate(database_path: Path, manifest_path: Path, source_path: Path) -> dic
         "database_sha256": transform["database_sha256"],
         "database_bytes": transform["database_bytes"],
         "evidence_counts": EXPECTED_COUNTS,
+        "mapping_sha256": transform["dictionary_ranking_mapping_sha256"],
     }
 
 

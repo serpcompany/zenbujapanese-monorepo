@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import json
+import shutil
+import sqlite3
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -15,6 +19,64 @@ import validate_dictionary_ranking_data  # noqa: E402
 
 
 class DictionaryRankingImportTests(unittest.TestCase):
+    def test_release_validator_rejects_count_preserving_ranking_evidence_drift(self) -> None:
+        ios = TOOLS.parent
+        database = ios / "Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3"
+        source = ios / "LanguageData/Sources/JMdict_e-2026-08-10.gz"
+        manifest = json.loads(
+            (ios / "LanguageData/Generated/JMdict_e-2026-08-10.import.json").read_text()
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            changed_database = Path(temporary) / "LanguageReferenceData.sqlite3"
+            shutil.copyfile(database, changed_database)
+            connection = sqlite3.connect(changed_database)
+            try:
+                entry_id, sense_order, gloss_order, text = connection.execute(
+                    "SELECT entry_id, sense_order, gloss_order, text FROM gloss_atoms "
+                    "ORDER BY entry_id, sense_order, gloss_order LIMIT 1"
+                ).fetchone()
+                connection.execute(
+                    "UPDATE gloss_atoms SET text = ? "
+                    "WHERE entry_id = ? AND sense_order = ? AND gloss_order = ?",
+                    (text + " drift", entry_id, sense_order, gloss_order),
+                )
+                connection.commit()
+            finally:
+                connection.close()
+            manifest["transform"]["database_sha256"] = (
+                validate_dictionary_ranking_data.file_sha256(changed_database)
+            )
+            manifest["transform"]["database_bytes"] = changed_database.stat().st_size
+            changed_manifest = Path(temporary) / "manifest.json"
+            changed_manifest.write_text(json.dumps(manifest))
+
+            with self.assertRaisesRegex(RuntimeError, "mapping"):
+                validate_dictionary_ranking_data.validate(
+                    changed_database, changed_manifest, source
+                )
+
+    def test_release_validator_binds_current_importer_and_adapter_checksums(self) -> None:
+        ios = TOOLS.parent
+        database = ios / "Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3"
+        source = ios / "LanguageData/Sources/JMdict_e-2026-08-10.gz"
+        manifest = json.loads(
+            (ios / "LanguageData/Generated/JMdict_e-2026-08-10.import.json").read_text()
+        )
+        for key in (
+            "import_tool_sha256",
+            "dictionary_ranking_adapter_sha256",
+            "shared_tooling_sha256",
+            "unidic_adapter_sha256",
+            "tatoeba_adapter_sha256",
+        ):
+            changed = json.loads(json.dumps(manifest))
+            changed["transform"][key] = "0" * 64
+            with self.subTest(key=key), tempfile.TemporaryDirectory() as temporary:
+                changed_path = Path(temporary) / "manifest.json"
+                changed_path.write_text(json.dumps(changed))
+                with self.assertRaisesRegex(RuntimeError, key):
+                    validate_dictionary_ranking_data.validate(database, changed_path, source)
+
     def test_validator_count_contract_matches_importer_fail_closed_contract(self) -> None:
         self.assertEqual(
             validate_dictionary_ranking_data.EXPECTED_COUNTS,
