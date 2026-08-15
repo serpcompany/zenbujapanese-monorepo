@@ -108,6 +108,34 @@ class DictionaryRankingImportTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, key):
                     validate_dictionary_ranking_data.validate(database, changed_path, source)
 
+    def test_release_validator_requires_semantic_fingerprint_lookup_index(self) -> None:
+        ios = TOOLS.parent
+        database = ios / "Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3"
+        source = ios / "LanguageData/Sources/JMdict_e-2026-08-10.gz"
+        manifest = json.loads(
+            (ios / "LanguageData/Generated/JMdict_e-2026-08-10.import.json").read_text()
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            changed_database = Path(temporary) / "LanguageReferenceData.sqlite3"
+            shutil.copyfile(database, changed_database)
+            connection = sqlite3.connect(changed_database)
+            try:
+                connection.execute("DROP INDEX entries_semantic_fingerprint_index")
+                connection.commit()
+            finally:
+                connection.close()
+            manifest["transform"]["database_sha256"] = (
+                validate_dictionary_ranking_data.file_sha256(changed_database)
+            )
+            manifest["transform"]["database_bytes"] = changed_database.stat().st_size
+            changed_manifest = Path(temporary) / "manifest.json"
+            changed_manifest.write_text(json.dumps(manifest))
+
+            with self.assertRaisesRegex(RuntimeError, "semantic fingerprint lookup index"):
+                validate_dictionary_ranking_data.validate(
+                    changed_database, changed_manifest, source
+                )
+
     def test_validator_count_contract_matches_importer_fail_closed_contract(self) -> None:
         self.assertEqual(
             validate_dictionary_ranking_data.EXPECTED_COUNTS,

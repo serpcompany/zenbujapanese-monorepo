@@ -101,6 +101,12 @@ def validate(
         ).fetchone()[0]
         if invalid_fingerprints:
             failures.append(f"invalid semantic fingerprints: {invalid_fingerprints}")
+        fingerprint_index_columns = [
+            row[2]
+            for row in database.execute("PRAGMA index_info(entries_semantic_fingerprint_index)")
+        ]
+        if fingerprint_index_columns != ["semantic_fingerprint", "id"]:
+            failures.append("semantic fingerprint lookup index")
         integrity = database.execute("PRAGMA integrity_check").fetchone()[0]
         if integrity != "ok":
             failures.append(f"SQLite integrity: {integrity}")

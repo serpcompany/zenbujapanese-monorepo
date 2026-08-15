@@ -113,6 +113,82 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
     XCTAssertEqual(enma.first?.sourceProvenances.map(\.sourceRecordID), ["1573970", "5737655"])
   }
 
+  func testKanjiLookupCapsCanonicalGroupsAndLoadsCutoffGroupProvenance() async throws {
+    let clock = ContinuousClock()
+    let freshClient = LookupClient.freshBundledDatabase()
+    let coldStart = clock.now
+    let coldEntries = try await freshClient.entriesContainingKanji("日")
+    let coldDuration = coldStart.duration(to: clock.now)
+    let warmStart = clock.now
+    let warmEntries = try await freshClient.entriesContainingKanji("日")
+    let warmDuration = warmStart.duration(to: clock.now)
+    XCTAssertEqual(coldEntries.count, 24)
+    XCTAssertEqual(warmEntries.count, 24)
+    print("KANJI_GROUPED_LOOKUP_LATENCY cold=\(coldDuration) warm=\(warmDuration)")
+
+    let fixtureURL = try makeKanjiCutoffDatabase()
+    defer { try? FileManager.default.removeItem(at: fixtureURL) }
+    let entries = try await LookupClient.databaseFixture(fixtureURL).entriesContainingKanji("試")
+
+    XCTAssertEqual(entries.count, 24)
+    XCTAssertEqual(entries.filter { $0.sourceProvenances.count == 2 }.count, 2)
+    let cutoffGroup = try XCTUnwrap(
+      entries.first { $0.headword == String(repeating: "試", count: 23) }
+    )
+    XCTAssertEqual(cutoffGroup.sourceProvenances.map(\.sourceRecordID), ["9101", "9102"])
+  }
+
+  private func makeKanjiCutoffDatabase() throws -> URL {
+    let url = FileManager.default.temporaryDirectory
+      .appendingPathComponent("kanji-cutoff-\(UUID().uuidString).sqlite3")
+    var database: OpaquePointer?
+    guard sqlite3_open(url.path, &database) == SQLITE_OK, let database else {
+      throw NSError(domain: "KanjiCutoffFixture", code: 1)
+    }
+    defer { sqlite3_close(database) }
+    func execute(_ sql: String) throws {
+      guard sqlite3_exec(database, sql, nil, nil, nil) == SQLITE_OK else {
+        throw NSError(
+          domain: "KanjiCutoffFixture",
+          code: 2,
+          userInfo: [NSLocalizedDescriptionKey: String(cString: sqlite3_errmsg(database))]
+        )
+      }
+    }
+    try execute("""
+      CREATE TABLE entries(
+        id BLOB PRIMARY KEY, note_identity TEXT, source_identity TEXT, source_record_id INTEGER,
+        headword TEXT, reading TEXT, summary TEXT, meanings_json TEXT, parts_of_speech_json TEXT,
+        written_forms_json TEXT, reading_forms_json TEXT, senses_json TEXT, relationships_json TEXT,
+        pitch_accent_json TEXT, is_common INTEGER, rank_score INTEGER, semantic_fingerprint BLOB
+      );
+      CREATE TABLE forms(entry_id BLOB, form TEXT, kind INTEGER);
+      """)
+    var ordinal = 1
+    func insertGroup(length: Int, memberCount: Int, sourceRecordStart: Int) throws {
+      let headword = String(repeating: "試", count: length)
+      let fingerprint = String(format: "%064x", length)
+      for member in 0..<memberCount {
+        let id = String(format: "%032x", ordinal)
+        let sourceRecordID = sourceRecordStart + member
+        try execute("""
+          INSERT INTO entries VALUES(
+            X'\(id)', 'fixture-\(ordinal)', 'fixture.dictionary', \(sourceRecordID),
+            '\(headword)', '\(headword)', 'meaning', '["meaning"]', '[]', '[]', '[]', '[]', '[]',
+            NULL, 0, 0, X'\(fingerprint)'
+          );
+          INSERT INTO forms VALUES(X'\(id)', '\(headword)', 0);
+          """)
+        ordinal += 1
+      }
+    }
+    for length in 1...21 { try insertGroup(length: length, memberCount: 1, sourceRecordStart: length) }
+    try insertGroup(length: 22, memberCount: 2, sourceRecordStart: 9001)
+    try insertGroup(length: 23, memberCount: 2, sourceRecordStart: 9101)
+    try insertGroup(length: 24, memberCount: 1, sourceRecordStart: 9201)
+    return url
+  }
+
   func testJapaneseReadingCandidateMustApplyToDisplayedWrittenForm() async throws {
     let results = try await LookupClient.live.search(SearchQuery("あいき"))
     XCTAssertFalse(

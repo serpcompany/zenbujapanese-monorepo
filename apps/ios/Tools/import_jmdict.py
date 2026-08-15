@@ -310,6 +310,7 @@ def create_schema(database: sqlite3.Connection) -> None:
         CREATE INDEX forms_form_index ON forms(form, entry_id);
         CREATE UNIQUE INDEX entries_source_provenance_index ON entries(source_identity, source_record_id);
         CREATE INDEX entries_common_index ON entries(is_common DESC, id);
+        CREATE INDEX entries_semantic_fingerprint_index ON entries(semantic_fingerprint, id);
 
         CREATE TABLE form_priority_profiles (
           entry_id BLOB NOT NULL REFERENCES entries(id),

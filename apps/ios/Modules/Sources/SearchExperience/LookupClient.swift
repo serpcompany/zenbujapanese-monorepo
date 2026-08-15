@@ -28,6 +28,25 @@ struct LookupClient: Sendable {
       try await LanguageReferenceData.shared.entries(containingKanji: character)
     }
   )
+
+  #if DEBUG
+  static func freshBundledDatabase() -> LookupClient {
+    fixtureClient(LanguageReferenceData())
+  }
+
+  static func databaseFixture(_ databaseURL: URL) -> LookupClient {
+    fixtureClient(LanguageReferenceData(databaseURL: databaseURL, validatesBundledArtifact: false))
+  }
+
+  private static func fixtureClient(_ data: LanguageReferenceData) -> LookupClient {
+    return LookupClient(
+      search: { query in try await data.search(query) },
+      entry: { id in try await data.entry(id) },
+      entryMatchingForm: { form in try await data.entry(matchingForm: form) },
+      entriesContainingKanji: { character in try await data.entries(containingKanji: character) }
+    )
+  }
+  #endif
 }
 
 #if DEBUG
@@ -52,8 +71,15 @@ private actor LanguageReferenceData {
 
   private var connection: SQLiteConnection?
   private var senseRestrictionCache: [SenseRestrictionKey: Set<String>]?
+  private let databaseURL: URL?
+  private let validatesBundledArtifact: Bool
   private let romajiRefinementPolicy = RomajiRefinementPolicy.captured
   private let japaneseTextAnalysis = JapaneseTextAnalysisClient.characterFallback
+
+  init(databaseURL: URL? = nil, validatesBundledArtifact: Bool = true) {
+    self.databaseURL = databaseURL
+    self.validatesBundledArtifact = validatesBundledArtifact
+  }
 
   func search(_ query: SearchQuery) throws -> LookupSearchResults {
     if let refinement = romajiRefinementPolicy.refinement(for: query) {
@@ -145,20 +171,37 @@ private actor LanguageReferenceData {
   }
 
   func entries(containingKanji character: String) throws -> [DictionaryEntry] {
-    let statement = try prepare(Self.entriesContainingKanjiSQL)
+    let candidateStatement = try prepare(Self.kanjiCandidateRowsSQL)
+    defer { sqlite3_finalize(candidateStatement) }
+    bind(character, at: 1, to: candidateStatement)
+    bind(character, at: 2, to: candidateStatement)
+    var orderedFingerprints: [Data] = []
+    sqlite3_bind_int(candidateStatement, 3, 24)
+    while try checkedSQLiteStep(candidateStatement) == .row {
+      orderedFingerprints.append(Self.data(column: 0, statement: candidateStatement))
+    }
+    guard !orderedFingerprints.isEmpty else { return [] }
+
+    let placeholders = Array(repeating: "?", count: orderedFingerprints.count).joined(separator: ",")
+    let statement = try prepare("""
+      SELECT \(Self.selectedColumns)
+      FROM entries e
+      WHERE e.semantic_fingerprint IN (\(placeholders))
+      ORDER BY lower(hex(e.id))
+      """)
     defer { sqlite3_finalize(statement) }
-    bind(character, at: 1, to: statement)
-    bind("\(character)%", at: 2, to: statement)
+    for (offset, fingerprint) in orderedFingerprints.enumerated() {
+      bind(fingerprint, at: Int32(offset + 1), to: statement)
+    }
     var groups: [String: [DictionaryEntry]] = [:]
-    var orderedFingerprints: [String] = []
     while try checkedSQLiteStep(statement) == .row {
       let entry = try decodeEntry(from: statement)
       let fingerprint = Self.string(column: 17, statement: statement)
-      if groups[fingerprint] == nil { orderedFingerprints.append(fingerprint) }
       groups[fingerprint, default: []].append(entry)
     }
     return orderedFingerprints.compactMap { fingerprint in
-      LanguageReferenceIdentity.normalizedEntry(groups[fingerprint] ?? [])
+      let fingerprintHex = fingerprint.map { String(format: "%02x", $0) }.joined()
+      return LanguageReferenceIdentity.normalizedEntry(groups[fingerprintHex] ?? [])
     }
   }
 
@@ -427,7 +470,9 @@ private actor LanguageReferenceData {
 
   private func openDatabase() throws -> OpaquePointer {
     if let connection { return connection.pointer }
-    guard let url = Bundle.module.url(forResource: "LanguageReferenceData", withExtension: "sqlite3") else {
+    guard let url = databaseURL
+      ?? Bundle.module.url(forResource: "LanguageReferenceData", withExtension: "sqlite3")
+    else {
       throw LookupDatabaseError.missingBundledData
     }
 
@@ -438,11 +483,13 @@ private actor LanguageReferenceData {
       defer { sqlite3_close(opened) }
       throw LookupDatabaseError.sqlite(message: opened.map { String(cString: sqlite3_errmsg($0)) } ?? "open failed")
     }
-    do {
-      try Self.validateDictionaryRankingMetadata(opened, databaseURL: url)
-    } catch {
-      sqlite3_close(opened)
-      throw error
+    if validatesBundledArtifact {
+      do {
+        try Self.validateDictionaryRankingMetadata(opened, databaseURL: url)
+      } catch {
+        sqlite3_close(opened)
+        throw error
+      }
     }
     connection = SQLiteConnection(pointer: opened)
     return opened
@@ -555,6 +602,12 @@ private actor LanguageReferenceData {
     sqlite3_bind_text(statement, index, value, -1, Self.transientDestructor)
   }
 
+  private func bind(_ value: Data, at index: Int32, to statement: OpaquePointer) {
+    _ = value.withUnsafeBytes { bytes in
+      sqlite3_bind_blob(statement, index, bytes.baseAddress, Int32(bytes.count), Self.transientDestructor)
+    }
+  }
+
   private func decodeEntry(from statement: OpaquePointer) throws -> DictionaryEntry {
     let meanings: [String] = try Self.decode(column: 7, statement: statement)
     let partsOfSpeech: [PartOfSpeech] = try Self.decode(column: 8, statement: statement)
@@ -589,6 +642,11 @@ private actor LanguageReferenceData {
   private static func string(column: Int32, statement: OpaquePointer) -> String {
     guard let text = sqlite3_column_text(statement, column) else { return "" }
     return String(cString: text)
+  }
+
+  private static func data(column: Int32, statement: OpaquePointer) -> Data {
+    guard let bytes = sqlite3_column_blob(statement, column) else { return Data() }
+    return Data(bytes: bytes, count: Int(sqlite3_column_bytes(statement, column)))
   }
 
   private static func decode<Value: Decodable>(column: Int32, statement: OpaquePointer) throws -> Value {
@@ -674,16 +732,16 @@ private actor LanguageReferenceData {
     ORDER BY lower(hex(e.id))
     """
 
-  private static let entriesContainingKanjiSQL = """
-    SELECT \(selectedColumns)
+  private static let kanjiCandidateRowsSQL = """
+    SELECT e.semantic_fingerprint AS fingerprint
     FROM forms f
     JOIN entries e ON e.id = f.entry_id
     WHERE f.kind = \(SearchFormKind.written.rawValue) AND instr(f.form, ?) > 0
-    GROUP BY e.id
+    GROUP BY e.semantic_fingerprint
     ORDER BY
-      CASE WHEN e.headword LIKE ? THEN 0 ELSE 1 END,
-      length(e.headword), e.is_common DESC, e.rank_score DESC, e.semantic_fingerprint
-    LIMIT 24
+      MIN(CASE WHEN instr(e.headword, ?) = 1 THEN 0 ELSE 1 END),
+      MIN(length(e.headword)), MAX(e.is_common) DESC, MAX(e.rank_score) DESC, e.semantic_fingerprint
+    LIMIT ?
     """
 
   private static let asciiCandidateSQL = """
