@@ -1846,11 +1846,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertEqual(bestMatches.count, 1)
     XCTAssertTrue(bestMatches.firstMatch.label.hasPrefix("食べる, たべる,"))
 
-    let additionalLeader = app.buttons.matching(
-      NSPredicate(format: "value == %@", "Additional match 1")
-    ).firstMatch
-    XCTAssertTrue(additionalLeader.waitForExistence(timeout: 3))
-    XCTAssertTrue(additionalLeader.label.hasPrefix("ベタベタ,"))
+    XCTAssertFalse(app.staticTexts["ベタベタ"].exists)
     XCTAssertFalse(app.staticTexts["食べるラー油"].exists)
     XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
 

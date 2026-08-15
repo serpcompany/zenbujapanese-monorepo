@@ -267,6 +267,7 @@ final class ExampleSentenceRetrievalTests: XCTestCase {
       if rawQuery == "tabeta" {
         XCTAssertEqual(results.best.map(\.headword), ["食べる"], rawQuery)
         XCTAssertFalse(results.additional.contains { $0.headword == "食べるラー油" }, rawQuery)
+        XCTAssertFalse(results.additional.contains { $0.headword == "ベタベタ" }, rawQuery)
       }
       if rawQuery == "makasete" {
         XCTAssertEqual(results.best.map(\.headword), ["任せる"], rawQuery)
