@@ -4,7 +4,7 @@ Issue: #163. Parent research: #147. Implementation contract: #151. Revealed regr
 
 ## Outcome: no safe general signal is currently available
 
-No evaluated public, redistributable signal explains the three revealed direct-English Example Sentence Ranking regressions without damaging the accepted discovery behavior. The official Tatoeba review, tag, list, audio, original/translation, CC0, contributor-language, and Japanese-index metadata all fix **0/3** revealed rank-1 results. The strongest mature external comparator, `wordfreq` 3.0.2 whole-phrase Zipf frequency, fixes only RH02 and preserves only `30/1,095` frozen v1 positions.
+No evaluated public, redistributable signal explains the three revealed direct-English Example Sentence Ranking regressions without damaging the accepted discovery behavior. The official Tatoeba review, tag, list, audio, original/translation, CC0, contributor-language, Japanese-index, creation-date, and modification-date metadata all fix **0/3** revealed rank-1 results. The strongest mature external comparator, `wordfreq` 3.0.2 whole-phrase Zipf frequency, fixes only RH02 and preserves only `30/1,095` frozen v1 positions.
 
 Zenbu should not change Example Sentence Ranking from this evidence. In particular, it should not use source record IDs/order, contributor identity, query-specific maps, or a guessed combination of individually failing signals. A later implementation proposal needs a newly identified provider-independent signal, a versioned app-owned normalization boundary, and a new ADR before a replacement sealed holdout is selected or inspected.
 
@@ -12,7 +12,7 @@ This is a negative research result, not an assertion that the reference has no p
 
 ## Scope and evidence boundary
 
-The benchmark used exact `main` `917cbb7153457a79db117b5d536bbf60a7dfe519` and bundled database SHA-256 `248f9308662374c00dc597731ef085ee5ed87d9b703ec356be93ee9be8f03d4f`. It replays:
+The benchmark used exact `main` `917cbb7153457a79db117b5d536bbf60a7dfe519` and bundled database SHA-256 `248f9308662374c00dc597731ef085ee5ed87d9b703ec356be93ee9be8f03d4f`. Its committed, candidate-restricted snapshot contains exactly `9,479` app-owned pair IDs and no provider coordinates. It replays:
 
 - RH01 `book`, RH02 `notebook`, and RH03 `looked after`, which are revealed regression evidence and no longer blind holdouts;
 - all 20 accepted D01–D20 discovery contexts, including both empty contexts;
@@ -27,6 +27,8 @@ The lawfully accessible #149 evidence remains bounded. It identifies a historica
 ## Primary-source inventory
 
 Tatoeba publishes the relevant files as weekly exports updated Saturdays at 06:30 UTC. Its own download page defines the detailed-sentence owner/date fields, original/translation base field, tags, user lists and membership, Japanese indices, audio metadata, self-reported language levels, and experimental `-1/0/1` user reviews. It also states that the files are CC BY 2.0 FR, that a subset of sentences is CC0, and that audio licenses are contributor-specific ([Tatoeba downloads](https://tatoeba.org/en/downloads)).
+
+The official export SQL emits `sentences.created` and `sentences.modified` directly, without a link date, fallback, or normalization ([Tatoeba weekly-export SQL](https://github.com/Tatoeba/tatoeba2/blob/0fbb4506ce071827f85375bd4c8c8f9c7cf23d41/docs/database/scripts/weekly_exports.sql#L18-L22)). Both are nullable sentence-row `DATETIME` fields ([Tatoeba sentence schema](https://github.com/Tatoeba/tatoeba2/blob/0fbb4506ce071827f85375bd4c8c8f9c7cf23d41/docs/database/tables/sentences.sql#L4-L25)). Tatoeba attaches CakePHP's timestamp behavior to the sentence table, so `modified` records a sentence-row save, not necessarily a text correction ([Tatoeba sentence model](https://github.com/Tatoeba/tatoeba2/blob/0fbb4506ce071827f85375bd4c8c8f9c7cf23d41/src/Model/Table/SentencesTable.php#L102-L119), [CakePHP timestamp behavior](https://book.cakephp.org/4/en/orm/behaviors/timestamp.html)). The export strings have no timezone marker, and Tatoeba's UTC application default is environment-overridable, so this benchmark preserves and orders the strings without labeling them UTC ([Tatoeba timezone configuration](https://github.com/Tatoeba/tatoeba2/blob/0fbb4506ce071827f85375bd4c8c8f9c7cf23d41/config/app.php#L44-L49)).
 
 The benchmark pins the export generation served with HTTP `Last-Modified: Sat, 08 Aug 2026`, matching the already accepted #140/#147 corpus snapshot:
 
@@ -46,7 +48,9 @@ Public lists are user-created collections, not a universal quality taxonomy. The
 
 ## Deterministic differential method
 
-The temporary read-only harness reconstructs the exact FTS4 Porter/terminal-boundary/exact-surface red loop for RH01–RH03, reads the committed complete v1 ranks for D01–D20, joins app-owned pair IDs to the pinned exports through retained provenance, and applies exactly one signal before the unchanged v1 order. A filter variant is evaluated only where the metadata could plausibly express exclusion.
+The committed read-only harness reconstructs the exact FTS4 Porter/terminal-boundary/exact-surface red loop for RH01–RH03, reads the committed complete v1 ranks for D01–D20, resolves public observation coordinates through retained database provenance, and applies exactly one normalized signal before the unchanged v1 order. A filter variant is evaluated only where the metadata could plausibly express exclusion. `Policy`, `RankTerm`, and `FilterTerm` records define every direction, missing-value rule, and predicate in executable form.
+
+The committed normalized snapshot contains the `9,479` relevant app-owned pair IDs and only the fields required by these policies. It records the source snapshot, upstream input hashes, normalization meaning for each field, normalized-row hash, and quantized `wordfreq` scores; it contains no provider coordinates, text, contributor names, or private observations. The harness fails closed unless the production database, four accepted fixture inputs, snapshot file, normalized-row hash, row count, unique ID set, ID format, and timestamp format all match their pins.
 
 Every policy is compared using the same measures:
 
@@ -54,19 +58,21 @@ Every policy is compared using the same measures:
 - exact same-position agreement over all `279` accepted public rows;
 - rank-1 agreement over the `18` non-empty contexts;
 - exact observed prefixes over all `20` contexts;
-- frozen-v1 same-position and exact-sequence preservation; and
-- complete-set removal count for filters.
+- frozen-v1 same-position and exact-sequence preservation;
+- complete-set removal count for filters; and
+- per-context candidate/result/reference counts plus reference-prefix, frozen-prefix, and complete-sequence SHA-256 values.
 
-Two complete runs were byte-identical. Each run took about 14 seconds with `wordfreq` enabled. The final temporary harness SHA-256 was `debb007b468c8c100140d2cbd7b142ca40cef37a3b2477f7c88a9a2bbb02c1c7`; its JSON result SHA-256 was `ee2edb4f99e3e213a5ff58279215731d3c64539ec7eb508db94dfa692349591e`.
+Two complete committed-harness runs were byte-identical. Each took under one second because the lawful upstream inputs and `wordfreq` output are already normalized. Harness SHA-256 is `44818bbaf9d460989e7335c1b0808b117e55eebc5f1fa9f4dfcdd954b2959580`; snapshot SHA-256 is `b311fadd833e3d57d9de65e2969f5fd17b4f5f6188634bb299898435016b9920`; normalized rows SHA-256 is `6131e8f29d8b15f90b8be30e8d525299decd857c72a612e4b7224616b63a74d5`; and result SHA-256 is `56f3326f605c34f9bd79e9fbfbc6121200e20ba2bc07ca632a6b00df72aa8741`.
 
 ```sh
-python3 -m venv /tmp/issue163-wordfreq-venv
-/tmp/issue163-wordfreq-venv/bin/pip install wordfreq==3.0.2
-/tmp/issue163-wordfreq-venv/bin/python /tmp/issue163_signal_benchmark.py \
-  REPO PINNED_SIGNAL_EXPORT_DIR PINNED_CORPUS_EXPORT_DIR > /tmp/issue163-signal-results.json
+python3 docs/research/tools/issue163_signal_benchmark.py > /tmp/issue163-a.json
+python3 docs/research/tools/issue163_signal_benchmark.py > /tmp/issue163-b.json
+cmp /tmp/issue163-a.json /tmp/issue163-b.json
+cmp /tmp/issue163-a.json \
+  docs/research/fixtures/example-sentence-quality-ranking-issue-163-results.json
 ```
 
-The harness and downloaded data remain temporary because the issue authorizes one Markdown research artifact, not new product tooling or redistribution of upstream exports. The hashes, typed policy definitions below, and committed v1 fixtures make the experiment auditable without placing provider datasets in Git.
+The complete provider exports remain uncommitted. The candidate-restricted normalized snapshot is sufficient to replay every evaluated policy without redistributing the full exports or installing `wordfreq`.
 
 ## Revealed-case membership
 
@@ -88,10 +94,13 @@ Coverage is measured on the complete D01–D20 candidate occurrences and distinc
 |---|---:|---:|---|
 | any user review | 5,232/7,871 | 4,216/6,439 | broad, but Tatoeba labels reviews experimental |
 | positive review | 5,175/7,871 | 4,168/6,439 | broad enough to reorder heavily; not selective enough |
+| pair row-update proxy | 5,155/7,871 | 4,051/6,439 | nullable sentence-row save metadata; not pair/link age |
 | negative review | 45/7,871 | 35/6,439 | useful exclusion candidate, but fixes no revealed rank |
 | list 907 | 4,581/7,871 | 3,685/6,439 | broad curated subset; not a final order |
 | any audio | 4,121/7,871 | 3,260/6,439 | moderate coverage; licenses apply to audio bytes, which Zenbu does not need |
+| Japanese sentence in `jpn_indices` | 3,961/7,871 | 3,411/6,439 | lexical annotation membership; not a pair-quality rating |
 | owner skill known for both sides | 3,879/7,871 | 3,035/6,439 | self-reported, contributor-linked, and incomplete |
+| pair creation proxy | 3,452/7,871 | 2,653/6,439 | maximum of both valid sentence creation values; not link age |
 | either sentence marked original | 2,423/7,871 | 1,878/6,439 | provenance class, not quality |
 | “GoodExample” public list | 1,281/7,871 | 1,036/6,439 | independent user curation; no revealed fix |
 | NGSL level-1 list | 486/7,871 | 380/6,439 | learning-vocabulary subset; no revealed fix |
@@ -125,9 +134,15 @@ Ranks are RH01/RH02/RH03. “Positions” means exact same-position agreement wi
 | either original first | 781/22/12 | 0/3 | 9/279 | 5/18 | 37/1,095 | 0 |
 | both CC0 first | 432/10/5 | 0/3 | 11/279 | 7/18 | 1,095/1,095 | 0 |
 | owner language-skill first | 1,339/40/34 | 0/3 | 9/279 | 4/18 | 28/1,095 | 0 |
+| `jpn_indices` membership first | 2,113/6/4 | 0/3 | 12/279 | 3/18 | 14/1,095 | 0 |
+| filter to `jpn_indices` membership | filtered/6/4 | 0/3 | 10/279 | 2/18 | 8/1,095 | 3,815 |
 | `wordfreq` whole-phrase Zipf first | 1,088/**1**/37 | 1/3 | 11/279 | 4/18 | 30/1,095 | 0 |
+| pair creation proxy, oldest first | 1,027/28/17 | 0/3 | 9/279 | 2/18 | 22/1,095 | 0 |
+| pair creation proxy, newest first | 1,027/28/17 | 0/3 | **13/279** | 6/18 | 27/1,095 | 0 |
+| pair row-update proxy, oldest first | 100/49/3 | 0/3 | 5/279 | 2/18 | 17/1,095 | 0 |
+| pair row-update proxy, newest first | 1,456/49/47 | 0/3 | 10/279 | 6/18 | 17/1,095 | 0 |
 
-The only public-position improvement is negative-list-last (`13/279` versus `11/279`), but it fixes no revealed context, reduces top-1 agreement, and moves 1,059 of 1,095 frozen rows. That is not evidence for adoption. It is a classic trade of one weak aggregate for broad unexplained churn.
+The largest public-position improvements are negative-list-last and pair-creation-newest-first (`13/279` versus `11/279`), but both fix no revealed context and cause broad unexplained churn. The date policy preserves only `27/1,095` frozen positions. Neither is evidence for adoption.
 
 ## Candidate disposition
 
@@ -136,6 +151,12 @@ The only public-position improvement is negative-list-last (`13/279` versus `11/
 Reviews are the most direct official quality field, but Tatoeba itself calls the export experimental and defines only per-user OK/unsure/not-OK values ([Tatoeba downloads](https://tatoeba.org/en/downloads)). Positive-count and net-score order fix none of the regressions and destroy discovery/frozen agreement. Negative-review exclusion has a defensible meaning, but its 45 removals fix no revealed rank; it may be reconsidered as an independently justified corpus-quality gate, not as the answer to #153–#155.
 
 Tags and lists are useful annotations, but their names and owners show heterogeneous purposes. List 907 is genuine public curation; it is not selective enough to rank RH02/RH03, and filtering to it removes 3,290 of 7,871 candidate occurrences. Treating arbitrary list count as popularity is worse: list construction and bulk-generated collections dominate that count.
+
+### Creation and modification dates: reject as age/quality proxies
+
+The benchmark tests four bounded sensitivity arms inside the unchanged v1-eligible candidate sets. `pair_created_at` is the later of the two sentence creation strings when both are valid: it is a lower-bound proxy for when both sentence rows existed, not when their translation link was created. `pair_modified_at` is likewise the later row-update string, not a text-quality or link-age value. Missing, `\\N`, all-zero, and malformed values are normalized to missing and sort last; ties retain v1 order.
+
+Creation is known for only `3,452/7,871` discovery occurrences, while row-update time is known for `5,155/7,871`. Oldest/newest creation and row-update ordering each fix `0/3`. Creation-newest reaches `13/279` public positions but preserves only `27/1,095` frozen positions; the other three preserve `17–22/1,095`. The timestamps therefore neither explain the reference nor justify the churn.
 
 ### Audio, original/translation, CC0, and contributor skill: reject as quality proxies
 
@@ -155,20 +176,7 @@ Those costs might be warranted if behavior were strong. It is not: the comparato
 
 ## Licensing, attribution, maintenance, and offline integration
 
-No candidate is selected, so this issue adds no SBOM component or app notice. If later evidence supports a Tatoeba metadata signal, the minimum integration boundary is:
-
-```text
-ExampleSentenceQualitySnapshot {
-  appOwnedPairID,
-  normalizedSignalKind,
-  normalizedValue,
-  sourceIdentity,
-  sourceSnapshotSHA256,
-  normalizationVersion
-}
-```
-
-Provider sentence/list/user IDs remain provenance used by the offline importer only. Runtime Ranking consumes the app-owned pair ID plus typed normalized value. The importer must collision-check pairs, reject missing/malformed metadata deterministically, and record coverage. The bundled database must record signal version, source hashes, normalized row count, and importer hash; release validation must replay complete-set ranks and fail closed on mismatch.
+No candidate is selected, so this issue adds no SBOM component or app notice. If later evidence supports a Tatoeba metadata signal, provider sentence/list/user IDs must remain offline-import provenance only. Runtime Ranking must consume app-owned pair identity and a typed, normalized value. The importer must collision-check pairs, reject missing or malformed metadata deterministically, and record coverage. The bundled database must record signal version, source hashes, normalized row count, and importer hash; release validation must replay complete-set ranks and fail closed on mismatch.
 
 For Tatoeba data, the notices plan must preserve Tatoeba attribution and the applicable CC BY 2.0 FR terms; the existing corpus attribution cannot silently be assumed to cover a newly bundled metadata export. CC0 membership must remain a per-sentence license fact, not a replacement license for the pair. Audio bytes must remain excluded unless each recording's separate license and attribution are accepted. The [official Tatoeba download page](https://tatoeba.org/en/downloads) is the primary authority for those distinctions.
 
