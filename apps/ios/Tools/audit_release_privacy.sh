@@ -265,15 +265,42 @@ tail -n +2 "${scratch_dir}/dependencies" | sed -E 's/^[[:space:]]+([^[:space:]]+
 pass "resolved dependencies contain no embedded SDK or direct network-client indicator"
 
 url_results="${scratch_dir}/urls"
-set +e
-rg -a -o --no-filename --glob '!*.sqlite3' 'https?://[^[:space:][:cntrl:]"<>]+' \
-  "$app_path" >"$url_results" 2>/dev/null
-url_scan_status=$?
-set -e
-case "$url_scan_status" in
-  0|1) ;;
-  *) fail "scanner error while inventorying packaged URLs" ;;
-esac
+url_scan_executable="$executable"
+if [[ "$mode" == "signed-candidate" ]]; then
+  # Apple code signatures and provisioning profiles carry certificate-status
+  # URLs (for example, OCSP and CRL endpoints). They are signing metadata, not
+  # product network destinations. Scan a signature-stripped executable copy so
+  # compiled product URLs remain covered without inventorying the certificate
+  # chain embedded in LC_CODE_SIGNATURE.
+  url_scan_executable="${scratch_dir}/unsigned-executable-for-url-scan"
+  cp "$executable" "$url_scan_executable" || fail "failed to copy the signed executable for URL inspection"
+  codesign --remove-signature "$url_scan_executable" >/dev/null 2>&1 \
+    || fail "failed to remove signing metadata from the executable URL-scan copy"
+fi
+: >"$url_results"
+scan_packaged_url_file() {
+  local packaged_file="$1"
+  local packaged_url_scan_status
+  set +e
+  rg -a -o --no-filename 'https?://[^[:space:][:cntrl:]"<>]+' \
+    "$packaged_file" >>"$url_results" 2>/dev/null
+  packaged_url_scan_status=$?
+  set -e
+  case "$packaged_url_scan_status" in
+    0|1) ;;
+    *) fail "scanner error while inventorying packaged URLs" ;;
+  esac
+}
+url_scan_files="${scratch_dir}/url-scan-files"
+find "$app_path" -type f ! -name '*.sqlite3' \
+  ! -path "$executable" \
+  ! -path "${app_path}/embedded.mobileprovision" \
+  ! -path "${app_path}/_CodeSignature/*" -print0 >"$url_scan_files" \
+  || fail "failed to enumerate packaged files for URL inspection"
+while IFS= read -r -d '' packaged_url_file; do
+  scan_packaged_url_file "$packaged_url_file"
+done <"$url_scan_files"
+scan_packaged_url_file "$url_scan_executable"
 # Scan SQLite values through SQLite rather than across raw database pages. Raw
 # page bytes can concatenate the end of one URL with the beginning of the next
 # record and invent a host that is not present in any packaged value.

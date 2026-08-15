@@ -49,6 +49,8 @@ Signed-candidate mode fails unless the archive records a signing identity, embed
 
 Both archive modes inspect the resolved Mach-O dependency inventory, direct network-client symbols, embedded frameworks, reviewed public URL hosts, local/private URLs, DEBUG and test markers, non-Release resources, fixtures, private evidence markers, and credential-shaped material. `ARTIFACT_SHA256` is derived from sorted packaged relative paths and file contents, so moving the same `.app` does not change its identity.
 
+For a signed candidate, URL inventory strips `LC_CODE_SIGNATURE` from a scratch copy of the executable and excludes `_CodeSignature` plus `embedded.mobileprovision`. Those Apple-owned signing containers include certificate, OCSP, and revocation-list URLs that are not product network destinations. The original signed app is still verified strictly before the copy is made, and every ordinary packaged resource, compiled executable URL, and logical SQLite value remains in the product URL scan.
+
 ## Final candidate evidence
 
 The Gate 3 owner must attach these results to issue #143 for the exact candidate commit and archive:

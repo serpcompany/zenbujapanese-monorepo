@@ -60,6 +60,33 @@ if [[ -n "${ZENBU_UNSIGNED_ARCHIVE:-}" ]]; then
   fi
   rg -q 'embedded Dictionary Ranking contract differs' "${scratch_dir}/stale-contract.log" \
     || fail "stale embedded contract was not reported"
+
+  unreviewed_url_archive="${scratch_dir}/unreviewed-url.xcarchive"
+  cp -R "$ZENBU_UNSIGNED_ARCHIVE" "$unreviewed_url_archive"
+  unreviewed_url_app="$(find "$unreviewed_url_archive/Products/Applications" -maxdepth 1 -type d -name '*.app' -print -quit)"
+  [[ -n "$unreviewed_url_app" ]] || fail "test archive did not contain an application bundle"
+  unreviewed_url_executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "${unreviewed_url_app}/Info.plist")"
+  mkdir "${unreviewed_url_app}/NestedResource"
+  printf '%s\n' 'https://unreviewed.invalid' >"${unreviewed_url_app}/NestedResource/${unreviewed_url_executable}"
+  if "$audit" unsigned-preflight "$unreviewed_url_archive" >"${scratch_dir}/unreviewed-url.log" 2>&1; then
+    fail "archive with an unreviewed product URL unexpectedly passed"
+  fi
+  rg -q 'unexpected URL host' "${scratch_dir}/unreviewed-url.log" \
+    || fail "unreviewed product URL was not reported"
+
+  url_find_error_bin="${test_dir}/Fixtures/url-find-error-bin"
+  if PATH="${url_find_error_bin}:$PATH" "$audit" unsigned-preflight "$ZENBU_UNSIGNED_ARCHIVE" \
+    >"${scratch_dir}/url-find-error.log" 2>&1; then
+    fail "packaged URL file-enumeration error unexpectedly succeeded"
+  fi
+  rg -q 'failed to enumerate packaged files for URL inspection' "${scratch_dir}/url-find-error.log" \
+    || fail "packaged URL file-enumeration error was not reported"
+fi
+
+if [[ -n "${ZENBU_SIGNED_ARCHIVE:-}" ]]; then
+  "$audit" signed-candidate "$ZENBU_SIGNED_ARCHIVE" >"${scratch_dir}/signed-candidate.log"
+  rg -q 'frozen signed-candidate privacy audit complete' "${scratch_dir}/signed-candidate.log" \
+    || fail "signed candidate did not complete the frozen privacy audit"
 fi
 
 echo "PASS: release privacy audit mode, scanner failure, and optional archive identity tests"

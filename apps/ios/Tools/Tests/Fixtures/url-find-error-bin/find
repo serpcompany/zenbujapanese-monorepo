@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+arguments=("$@")
+for ((index = 0; index + 2 < ${#arguments[@]}; index += 1)); do
+  if [[ "${arguments[index]}" == "!" \
+    && "${arguments[index + 1]}" == "-name" \
+    && "${arguments[index + 2]}" == "*.sqlite3" ]]; then
+    exit 2
+  fi
+done
+
+exec /usr/bin/find "$@"
