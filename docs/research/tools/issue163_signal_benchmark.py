@@ -59,7 +59,6 @@ class RankTerm:
 @dataclass(frozen=True)
 class FilterTerm:
     field: str
-    operator: Literal["equals"]
     value: bool | int
 
 
@@ -75,11 +74,11 @@ POLICIES = (
     Policy("positive-review-count-first", (RankTerm("positive_reviews", "descending"), RankTerm("negative_reviews", "ascending"))),
     Policy("review-score-first", (RankTerm("review_score", "descending"), RankTerm("positive_reviews", "descending"))),
     Policy("negative-review-last", (RankTerm("negative_reviews", "ascending"),)),
-    Policy("negative-review-filter", filter_term=FilterTerm("negative_reviews", "equals", 0)),
+    Policy("negative-review-filter", filter_term=FilterTerm("negative_reviews", 0)),
     Policy("positive-tag-first", (RankTerm("positive_tag", "descending"),)),
     Policy("negative-tag-last", (RankTerm("negative_tag", "ascending"),)),
     Policy("proofread-list-first", (RankTerm("proofread_list", "descending"),)),
-    Policy("proofread-list-filter", filter_term=FilterTerm("proofread_list", "equals", True)),
+    Policy("proofread-list-filter", filter_term=FilterTerm("proofread_list", True)),
     Policy("public-list-count-first", (RankTerm("list_count", "descending"),)),
     Policy("beginner-list-first", (RankTerm("beginner_list", "descending"),)),
     Policy("ngsl-level1-list-first", (RankTerm("ngsl_level1_list", "descending"),)),
@@ -92,7 +91,7 @@ POLICIES = (
     Policy("cc0-both-first", (RankTerm("cc0_both", "descending"),)),
     Policy("owner-skill-first", (RankTerm("owner_skill", "descending"),)),
     Policy("jpn-indices-first", (RankTerm("jpn_indexed", "descending"),)),
-    Policy("jpn-indices-filter", filter_term=FilterTerm("jpn_indexed", "equals", True)),
+    Policy("jpn-indices-filter", filter_term=FilterTerm("jpn_indexed", True)),
     Policy("wordfreq-whole-phrase-first", (RankTerm("wordfreq_zipf_milli", "descending"),)),
     Policy("pair-created-oldest-first", (RankTerm("pair_created_at", "ascending"),)),
     Policy("pair-created-newest-first", (RankTerm("pair_created_at", "descending"),)),

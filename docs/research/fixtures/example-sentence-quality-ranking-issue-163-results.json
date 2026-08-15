@@ -1989,7 +1989,6 @@
       "policy": {
         "filter_term": {
           "field": "negative_reviews",
-          "operator": "equals",
           "value": 0
         },
         "name": "negative-review-filter",
@@ -3475,7 +3474,6 @@
       "policy": {
         "filter_term": {
           "field": "proofread_list",
-          "operator": "equals",
           "value": true
         },
         "name": "proofread-list-filter",
@@ -8309,7 +8307,6 @@
       "policy": {
         "filter_term": {
           "field": "jpn_indexed",
-          "operator": "equals",
           "value": true
         },
         "name": "jpn-indices-filter",

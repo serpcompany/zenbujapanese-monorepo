@@ -50,7 +50,7 @@ Public lists are user-created collections, not a universal quality taxonomy. The
 
 The committed read-only harness reconstructs the exact FTS4 Porter/terminal-boundary/exact-surface red loop for RH01–RH03, reads the committed complete v1 ranks for D01–D20, resolves public observation coordinates through retained database provenance, and applies exactly one normalized signal before the unchanged v1 order. A filter variant is evaluated only where the metadata could plausibly express exclusion. `Policy`, `RankTerm`, and `FilterTerm` records define every direction, missing-value rule, and predicate in executable form.
 
-The committed normalized snapshot contains the `9,479` relevant app-owned pair IDs and only the fields required by these policies. It records the source snapshot, upstream input hashes, normalization meaning for each field, normalized-row hash, and quantized `wordfreq` scores; it contains no provider coordinates, text, contributor names, or private observations. The harness fails closed unless the production database, four accepted fixture inputs, snapshot file, normalized-row hash, row count, unique ID set, ID format, and timestamp format all match their pins.
+The committed normalized snapshot contains the `9,479` relevant app-owned pair IDs and only the fields required by these policies. It records the source snapshot, upstream input hashes, normalization meaning for each field, normalized-row hash, and quantized `wordfreq` scores; it contains no provider coordinates, text, contributor names, or private observations. The committed builder validates the production database, four fixtures, 12 exact official export artifacts, `wordfreq==3.0.2`, the English word-frequency asset, archive members, row schemas, candidate count, and normalized-row hash before writing. The benchmark harness separately fails closed unless the database, fixtures, snapshot file, normalized-row hash, row count, unique ID set, ID format, and timestamp format all match their pins.
 
 Every policy is compared using the same measures:
 
@@ -62,9 +62,19 @@ Every policy is compared using the same measures:
 - complete-set removal count for filters; and
 - per-context candidate/result/reference counts plus reference-prefix, frozen-prefix, and complete-sequence SHA-256 values.
 
-Two complete committed-harness runs were byte-identical. Each took under one second because the lawful upstream inputs and `wordfreq` output are already normalized. Harness SHA-256 is `44818bbaf9d460989e7335c1b0808b117e55eebc5f1fa9f4dfcdd954b2959580`; snapshot SHA-256 is `b311fadd833e3d57d9de65e2969f5fd17b4f5f6188634bb299898435016b9920`; normalized rows SHA-256 is `6131e8f29d8b15f90b8be30e8d525299decd857c72a612e4b7224616b63a74d5`; and result SHA-256 is `56f3326f605c34f9bd79e9fbfbc6121200e20ba2bc07ca632a6b00df72aa8741`.
+Two complete builder runs were byte-identical and exactly reproduced the committed snapshot. Two complete harness runs were also byte-identical. Builder SHA-256 is `4cb444cb71a3601e282cbe88bb82c93d68f3e71ee8862da8187352698389b814`; harness SHA-256 is `eb4e6ac3881375abe199a009f6fa688a70d5184441f2cbe696a754b97e3a6ca1`; snapshot SHA-256 is `b311fadd833e3d57d9de65e2969f5fd17b4f5f6188634bb299898435016b9920`; normalized rows SHA-256 is `6131e8f29d8b15f90b8be30e8d525299decd857c72a612e4b7224616b63a74d5`; and result SHA-256 is `e7617ba533fab90c1dba0aff2d9013c93bc16ceeb5e2440aee248f674d23ada2`.
 
 ```sh
+/tmp/issue163-wordfreq-venv/bin/python \
+  docs/research/tools/issue163_build_signal_snapshot.py \
+  --signal-dir /tmp/issue163-signals.liBJLq \
+  --corpus-dir /tmp/issue-140-tatoeba-public \
+  --wordfreq-asset \
+    /tmp/issue163-wordfreq-venv/lib/python3.10/site-packages/wordfreq/data/large_en.msgpack.gz \
+  --output /tmp/issue163-snapshot.json
+cmp /tmp/issue163-snapshot.json \
+  docs/research/fixtures/example-sentence-quality-signals-issue-163.json
+
 python3 docs/research/tools/issue163_signal_benchmark.py > /tmp/issue163-a.json
 python3 docs/research/tools/issue163_signal_benchmark.py > /tmp/issue163-b.json
 cmp /tmp/issue163-a.json /tmp/issue163-b.json
@@ -98,7 +108,7 @@ Coverage is measured on the complete D01–D20 candidate occurrences and distinc
 | negative review | 45/7,871 | 35/6,439 | useful exclusion candidate, but fixes no revealed rank |
 | list 907 | 4,581/7,871 | 3,685/6,439 | broad curated subset; not a final order |
 | any audio | 4,121/7,871 | 3,260/6,439 | moderate coverage; licenses apply to audio bytes, which Zenbu does not need |
-| Japanese sentence in `jpn_indices` | 3,961/7,871 | 3,411/6,439 | lexical annotation membership; not a pair-quality rating |
+| Japanese sentence in `jpn_indices` | 4,056/7,871 | 3,486/6,439 | lexical annotation membership; not a pair-quality rating |
 | owner skill known for both sides | 3,879/7,871 | 3,035/6,439 | self-reported, contributor-linked, and incomplete |
 | pair creation proxy | 3,452/7,871 | 2,653/6,439 | maximum of both valid sentence creation values; not link age |
 | either sentence marked original | 2,423/7,871 | 1,878/6,439 | provenance class, not quality |
