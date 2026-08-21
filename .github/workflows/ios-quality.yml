@@ -64,11 +64,11 @@ jobs:
           echo 'Intentional repo-contracts failure proof'
           exit 1
 
-  ios-pr:
-    name: ios-pr / ZenbuPR
+  ios-unit:
+    name: ios-pr / Unit
     if: ${{ github.event_name != 'workflow_dispatch' || !inputs.prove_failure }}
     runs-on: macos-26
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - name: Check out exact source and LFS data
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -81,25 +81,84 @@ jobs:
           sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
           xcodebuild -version
 
-      - name: Run complete PR plan
+      - name: Run hosted PR tests
         run: |
           apps/ios/Tools/run_ci_test_plan.sh \
             ZenbuPR \
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
-            "$RUNNER_TEMP/ZenbuPR.xcresult"
+            "$RUNNER_TEMP/ZenbuPR-Unit.xcresult" \
+            -only-testing:ZenbuJapaneseTests
 
       - name: Package test evidence
         if: always()
         run: |
-          if [[ -d "$RUNNER_TEMP/ZenbuPR.xcresult" ]]; then
-            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuPR.xcresult" "$RUNNER_TEMP/ZenbuPR.xcresult.zip"
+          if [[ -d "$RUNNER_TEMP/ZenbuPR-Unit.xcresult" ]]; then
+            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuPR-Unit.xcresult" "$RUNNER_TEMP/ZenbuPR-Unit.xcresult.zip"
           fi
 
       - name: Retain test evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ZenbuPR-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ZenbuPR.xcresult.zip
+          name: ZenbuPR-Unit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ZenbuPR-Unit.xcresult.zip
           if-no-files-found: warn
           retention-days: 30
+
+  ios-ui:
+    name: ios-pr / UI
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.prove_failure }}
+    runs-on: macos-26
+    timeout-minutes: 75
+    steps:
+      - name: Check out exact source and LFS data
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Select pinned Xcode
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Run complete UI PR plan
+        run: |
+          apps/ios/Tools/run_ci_test_plan.sh \
+            ZenbuPR \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
+            "$RUNNER_TEMP/ZenbuPR-UI.xcresult" \
+            -only-testing:ZenbuJapaneseUITests
+
+      - name: Package test evidence
+        if: always()
+        run: |
+          if [[ -d "$RUNNER_TEMP/ZenbuPR-UI.xcresult" ]]; then
+            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuPR-UI.xcresult" "$RUNNER_TEMP/ZenbuPR-UI.xcresult.zip"
+          fi
+
+      - name: Retain test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuPR-UI-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ZenbuPR-UI.xcresult.zip
+          if-no-files-found: warn
+          retention-days: 30
+
+  ios-pr:
+    name: ios-pr / ZenbuPR
+    if: >-
+      ${{ always() &&
+          (github.event_name != 'workflow_dispatch' || !inputs.prove_failure) }}
+    needs: [ios-unit, ios-ui]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require both hosted test partitions
+        env:
+          UNIT_RESULT: ${{ needs.ios-unit.result }}
+          UI_RESULT: ${{ needs.ios-ui.result }}
+        run: |
+          set -euo pipefail
+          printf 'Unit partition: %s\nUI partition: %s\n' "$UNIT_RESULT" "$UI_RESULT"
+          [[ "$UNIT_RESULT" == success && "$UI_RESULT" == success ]]
