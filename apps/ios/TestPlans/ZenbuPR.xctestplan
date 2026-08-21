@@ -1,0 +1,44 @@
+{
+  "configurations" : [
+    {
+      "id" : "5F41F38F-AEE3-42A6-BE48-4EEB8D402001",
+      "name" : "English (US)",
+      "options" : {
+        "language" : "en",
+        "region" : "US"
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : true,
+    "defaultTestExecutionTimeAllowance" : 300,
+    "maximumTestExecutionTimeAllowance" : 900,
+    "testTimeoutsEnabled" : true,
+    "uiTestingScreenshotsLifetime" : "keepAlways",
+    "userAttachmentLifetime" : "keepAlways",
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:ZenbuJapanese.xcodeproj",
+      "identifier" : "5CD4552D207F8AC0D2D15CD6",
+      "name" : "ZenbuJapanese"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:ZenbuJapanese.xcodeproj",
+        "identifier" : "151000000000000000000008",
+        "name" : "ZenbuJapaneseTests"
+      }
+    },
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:ZenbuJapanese.xcodeproj",
+        "identifier" : "74E6EB6E486E0D87C41A29EF",
+        "name" : "ZenbuJapaneseUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

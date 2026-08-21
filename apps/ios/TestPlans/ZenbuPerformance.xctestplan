@@ -1,0 +1,50 @@
+{
+  "configurations" : [
+    {
+      "id" : "81EE6C6A-7CC5-4FF7-8DD3-E4B239E62001",
+      "name" : "Release-like",
+      "options" : {
+        "language" : "en",
+        "region" : "US"
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "defaultTestExecutionTimeAllowance" : 300,
+    "maximumTestExecutionTimeAllowance" : 900,
+    "testTimeoutsEnabled" : true,
+    "uiTestingScreenshotsLifetime" : "keepAlways",
+    "userAttachmentLifetime" : "keepAlways",
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:ZenbuJapanese.xcodeproj",
+      "identifier" : "5CD4552D207F8AC0D2D15CD6",
+      "name" : "ZenbuJapanese"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "selectedTests" : [
+        "ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus()"
+      ],
+      "target" : {
+        "containerPath" : "container:ZenbuJapanese.xcodeproj",
+        "identifier" : "151000000000000000000008",
+        "name" : "ZenbuJapaneseTests"
+      }
+    },
+    {
+      "parallelizable" : false,
+      "selectedTests" : [
+        "SearchExperienceJourneyUITests/testHumanPacedMultiWordSearchReturnsFrozenSentenceResultsWithoutQueuedDelay()"
+      ],
+      "target" : {
+        "containerPath" : "container:ZenbuJapanese.xcodeproj",
+        "identifier" : "74E6EB6E486E0D87C41A29EF",
+        "name" : "ZenbuJapaneseUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
