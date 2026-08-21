@@ -52,7 +52,7 @@ struct KanjiStrokeOrderView: View {
           .accessibilityLabel("Next stroke")
           .accessibilityIdentifier("stroke-order.next")
         }
-        .font(.system(size: 28))
+        .font(.title)
         .buttonStyle(.plain)
         .foregroundStyle(ZenbuTheme.interactiveForeground)
         .frame(maxWidth: .infinity)
@@ -74,7 +74,7 @@ struct KanjiStrokeOrderView: View {
         Image(systemName: "xmark.circle.fill")
           .symbolRenderingMode(.palette)
           .foregroundStyle(ZenbuTheme.primaryForeground, ZenbuTheme.background)
-          .font(.system(size: 28, weight: .bold))
+          .font(.title.weight(.bold))
       }
       .buttonStyle(.plain)
       .offset(x: -10, y: -10)
@@ -192,14 +192,14 @@ private struct StrokeDrawingGrid: View {
         ZenbuTheme.background.opacity(0.28)
         StrokeGridLines()
           .stroke(
-            ZenbuTheme.mutedForeground.opacity(0.42),
+            ZenbuTheme.secondaryText,
             style: StrokeStyle(lineWidth: 1, dash: [5, 4])
           )
 
         ForEach(Array(diagram.strokes.enumerated()), id: \.offset) { index, stroke in
           KanjiStrokeShape(stroke: stroke, viewportSize: diagram.viewportSize)
             .stroke(
-              ZenbuTheme.mutedForeground.opacity(index < completedStrokeCount ? 1 : 0.14),
+              index < completedStrokeCount ? ZenbuTheme.foreground : ZenbuTheme.secondaryText,
               style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round)
             )
           if index == completedStrokeCount, activeStrokeProgress > 0 {

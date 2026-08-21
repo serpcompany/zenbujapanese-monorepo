@@ -34,7 +34,9 @@ jobs:
           lfs: true
 
       - name: Install audit tooling
-        run: brew install ripgrep
+        run: |
+          brew install ripgrep
+          gem install sqlite3 --version 2.9.6 --no-document
 
       - name: Verify committed test plans
         run: |

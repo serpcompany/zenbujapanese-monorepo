@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import XCTest
+
 @testable import SearchExperience
 
 final class ZenbuThemeAccessibilityTests: XCTestCase {
@@ -10,9 +11,21 @@ final class ZenbuThemeAccessibilityTests: XCTestCase {
 
     XCTAssertGreaterThanOrEqual(
       contrastRatio(foreground, background),
-      4.5,
-      "Dark-mode brand text must remain readable at normal text sizes."
+      8.0,
+      "Dark-mode brand text must remain readable even at small linked-text sizes."
     )
+  }
+
+  func testBrandChromeTextHasContrastMarginForSmallAntialiasedLabels() throws {
+    for style in [UIUserInterfaceStyle.light, .dark] {
+      let foreground = try resolvedRGB(ZenbuTheme.primaryForeground, style: style)
+      let background = try resolvedRGB(ZenbuTheme.chrome, style: style)
+      XCTAssertGreaterThanOrEqual(
+        contrastRatio(foreground, background),
+        6.0,
+        "Small labels on brand chrome need margin beyond the minimum ratio, \(style)."
+      )
+    }
   }
 
   func testNormalTextThemePairsMeetContrastInBothAppearances() throws {

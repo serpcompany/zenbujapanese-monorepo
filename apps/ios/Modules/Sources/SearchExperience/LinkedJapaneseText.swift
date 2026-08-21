@@ -1,7 +1,7 @@
-import Foundation
 import SwiftUI
 
 struct LinkedJapaneseText: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @State private var tokens: [JapaneseTextToken] = []
 
   let text: String
@@ -16,8 +16,18 @@ struct LinkedJapaneseText: View {
       if tokens.isEmpty {
         Text(text)
           .font(.title3)
+      } else if dynamicTypeSize.isAccessibilitySize {
+        VStack(alignment: .leading, spacing: 6) {
+          ForEach(tokens) { token in
+            LinkedTokenView(
+              token: token,
+              identifier: "\(identifierPrefix).\(token.id).\(token.surface)",
+              openWord: openWord
+            )
+          }
+        }
       } else {
-        LinkedTokenLayout(spacing: 3) {
+        LinkedTokenLayout(spacing: 3, dynamicTypeSize: dynamicTypeSize) {
           ForEach(tokens) { token in
             LinkedTokenView(
               token: token,
@@ -28,6 +38,7 @@ struct LinkedJapaneseText: View {
         }
       }
     }
+    .accessibilityElement(children: .contain)
     .task(id: highlightedEntry?.id) {
       tokens = await japaneseTextAnalysisClient.linkedTokens(
         text,
@@ -52,12 +63,10 @@ private struct LinkedTokenView: View {
           if token.showsReading {
             Text(entry.reading)
               .font(.body.weight(.semibold))
-              .accessibilityHidden(true)
           }
           Text(token.surface)
-            .font(.title3)
+            .font(.body)
             .underline()
-            .accessibilityHidden(true)
         }
         .foregroundStyle(ZenbuTheme.interactiveForeground)
       }
@@ -68,18 +77,14 @@ private struct LinkedTokenView: View {
       .accessibilityIdentifier(identifier)
     } else {
       Text(token.surface)
-        .font(.title3)
-        .accessibilityHidden(isPunctuationOnly)
+        .font(.body)
     }
-  }
-
-  private var isPunctuationOnly: Bool {
-    token.surface.rangeOfCharacter(from: .alphanumerics) == nil
   }
 }
 
 private struct LinkedTokenLayout: Layout {
   let spacing: CGFloat
+  let dynamicTypeSize: DynamicTypeSize
 
   func sizeThatFits(
     proposal: ProposedViewSize,

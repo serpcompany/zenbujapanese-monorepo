@@ -269,8 +269,9 @@ private struct PrimaryKanjiSection: View {
                 .foregroundStyle(ZenbuTheme.secondaryText)
               Spacer()
               Image(systemName: "chevron.right").foregroundStyle(
-                ZenbuTheme.secondaryText)
-                .accessibilityHidden(true)
+                ZenbuTheme.secondaryText
+              )
+              .accessibilityHidden(true)
             }
             .padding(.horizontal, 28)
             .frame(minHeight: 58)
@@ -701,8 +702,9 @@ private struct RelationshipsSection: View {
             }
             Spacer()
             Image(systemName: "chevron.right").foregroundStyle(
-              ZenbuTheme.secondaryText)
-              .accessibilityHidden(true)
+              ZenbuTheme.secondaryText
+            )
+            .accessibilityHidden(true)
           }
           .padding(.horizontal, 28)
           .padding(.vertical, 11)
@@ -808,7 +810,7 @@ private struct EntryExamplesSection: View {
                 speechSynthesisClient.speak(example.japanese)
               } label: {
                 Image(systemName: "speaker.wave.2")
-                  .frame(width: 34, height: 34)
+                  .frame(width: 44, height: 44)
               }
               .accessibilityLabel("Speak Word Detail example \(index + 1)")
               .accessibilityIdentifier("word-detail.example-speaker.\(index)")
@@ -816,8 +818,10 @@ private struct EntryExamplesSection: View {
             Text(example.english)
               .font(.subheadline)
               .foregroundStyle(ZenbuTheme.secondaryText)
+              .accessibilityHidden(true)
           }
           .accessibilityElement(children: .contain)
+          .accessibilityLabel("\(example.japanese), \(example.english)")
           .accessibilityIdentifier("word-detail.example.\(index)")
         }
       }

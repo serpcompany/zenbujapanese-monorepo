@@ -52,33 +52,44 @@ struct ConjugationsView: View {
         }
       }
       .buttonStyle(.plain)
+      .frame(minHeight: 44)
       .accessibilityIdentifier("conjugations.back")
 
       Spacer()
       Text(table.title)
         .font(.headline)
       Spacer()
-      Color.clear.frame(width: 72, height: 1)
+      Color.clear.frame(width: 72, height: 1).accessibilityHidden(true)
     }
     .padding(.horizontal, 16)
-    .frame(height: 49)
+    .foregroundStyle(ZenbuTheme.primaryForeground)
+    .frame(minHeight: 49)
     .background(ZenbuTheme.chrome.ignoresSafeArea(edges: .top))
   }
 }
 
 private struct ConjugationRow: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let form: ConjugatedForm
   let isLast: Bool
 
   var body: some View {
-    HStack(spacing: 16) {
-      ConjugatedSurface(form: form)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .layoutPriority(1)
-      Text(form.id.title)
-        .font(.callout)
-        .fixedSize(horizontal: true, vertical: false)
-        .frame(maxWidth: .infinity, alignment: .trailing)
+    Group {
+      if dynamicTypeSize >= .xxLarge {
+        VStack(alignment: .leading, spacing: 6) {
+          ConjugatedSurface(form: form)
+          Text(form.id.title).font(.body).foregroundStyle(ZenbuTheme.secondaryText)
+        }
+      } else {
+        HStack(spacing: 16) {
+          ConjugatedSurface(form: form)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
+          Text(form.id.title)
+            .font(.callout)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+      }
     }
     .padding(.horizontal, 20)
     .frame(minHeight: 50)
@@ -102,20 +113,18 @@ private struct ConjugatedSurface: View {
       HStack(alignment: .bottom, spacing: 0) {
         VStack(spacing: -2) {
           Text(annotation.readingPrefix)
-            .font(.caption2)
+            .font(.body)
           Text(annotation.surfacePrefix)
             .font(.title3)
         }
         Text(annotation.sharedSuffix)
           .font(.title3)
       }
-      .lineLimit(1)
-      .minimumScaleFactor(0.72)
+      .fixedSize(horizontal: false, vertical: true)
     } else {
       Text(form.surface)
         .font(.title3)
-        .lineLimit(1)
-        .minimumScaleFactor(0.72)
+        .fixedSize(horizontal: false, vertical: true)
     }
   }
 }

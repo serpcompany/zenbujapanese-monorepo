@@ -150,3 +150,56 @@ jobs:
           path: ${{ runner.temp }}/Zenbu-${{ matrix.artifact_name }}.xcresult.zip
           if-no-files-found: warn
           retention-days: 90
+
+  report-nightly-failure:
+    name: report nightly failure
+    if: >-
+      ${{ always() &&
+          (needs.accessibility.result == 'failure' ||
+           needs.reliability.result == 'failure' ||
+           needs.sanitizers.result == 'failure') }}
+    needs: [accessibility, reliability, sanitizers]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Create or update the visible nightly incident
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACCESSIBILITY_RESULT: ${{ needs.accessibility.result }}
+          RELIABILITY_RESULT: ${{ needs.reliability.result }}
+          SANITIZERS_RESULT: ${{ needs.sanitizers.result }}
+        run: |
+          set -euo pipefail
+          title='[CI] iOS nightly quality failure'
+          body_file="$RUNNER_TEMP/nightly-failure.md"
+          # Single-quoted format strings keep Markdown literal.
+          # shellcheck disable=SC2016
+          {
+            printf 'Automated nightly quality gate failed.\n\n'
+            printf -- '- Run: %s\n' "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            printf -- '- Source SHA: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Accessibility matrix: `%s`\n' "$ACCESSIBILITY_RESULT"
+            printf -- '- Reliability repetitions: `%s`\n' "$RELIABILITY_RESULT"
+            printf -- '- Sanitizers: `%s`\n\n' "$SANITIZERS_RESULT"
+            printf 'The retained result bundles are the evidence source. Classify each failing test as product or infrastructure; a passing rerun does not close this incident without diagnosis.\n'
+          } > "$body_file"
+
+          issue_number="$(
+            gh issue list \
+              --repo "$GITHUB_REPOSITORY" \
+              --state open \
+              --limit 100 \
+              --json number,title \
+              --jq 'map(select(.title == "[CI] iOS nightly quality failure")) | first | .number // empty'
+          )"
+          if [[ -n "$issue_number" ]]; then
+            gh issue comment "$issue_number" --repo "$GITHUB_REPOSITORY" --body-file "$body_file"
+          else
+            gh issue create \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$title" \
+              --label needs-triage \
+              --body-file "$body_file"
+          fi

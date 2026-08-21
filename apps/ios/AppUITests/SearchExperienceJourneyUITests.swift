@@ -73,7 +73,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.buttons["Open"].isEnabled)
     app.buttons["Open"].tap()
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
-    let recognized = app.staticTexts["image-text.raw-text"]
+    let recognized = app.descendants(matching: .any)["image-text.raw-text"]
     XCTAssertTrue(recognized.waitForExistence(timeout: 10))
     XCTAssertTrue(recognized.label.contains("日本語"))
     recordSettledScreenshot(named: "production-image-text-files-recognized", app: app)
@@ -108,7 +108,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     picker.coordinate(withNormalizedOffset: CGVector(dx: 0.16, dy: 0.42)).tap()
 
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
-    let recognized = app.staticTexts["image-text.raw-text"]
+    let recognized = app.descendants(matching: .any)["image-text.raw-text"]
     XCTAssertTrue(recognized.waitForExistence(timeout: 20))
     if containsJapaneseText(recognized.label) {
       XCTAssertFalse(app.alerts["No Text Found"].exists)
@@ -215,7 +215,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       usePhoto.tap()
 
       XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 30))
-      let recognized = app.staticTexts["image-text.raw-text"]
+      let recognized = app.descendants(matching: .any)["image-text.raw-text"]
       XCTAssertTrue(recognized.waitForExistence(timeout: 30))
       XCTAssertTrue(containsJapaneseText(recognized.label), recognized.label)
       recordSettledScreenshot(named: "production-image-text-camera-recognized", app: app)
@@ -229,7 +229,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let quiet = app.descendants(matching: .any).matching(identifier: "image-text.region.静か")
       .firstMatch
     XCTAssertTrue(quiet.waitForExistence(timeout: 10))
-    let recognizedText = app.staticTexts["image-text.raw-text"]
+    let recognizedText = app.descendants(matching: .any)["image-text.raw-text"]
     XCTAssertTrue(recognizedText.waitForExistence(timeout: 10))
     let expectedCopiedText = recognizedText.label
       .replacingOccurrences(of: "Recognized text ", with: "")
@@ -356,7 +356,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(
       selectImageTextPage(named: "fixture-noisy-horizontal", pageCount: names.count, in: app))
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
-    let noisyText = app.staticTexts["image-text.raw-text"]
+    let noisyText = app.descendants(matching: .any)["image-text.raw-text"]
     XCTAssertTrue(noisyText.waitForExistence(timeout: 20))
     XCTAssertTrue(noisyText.label.contains("日本語"))
     XCTAssertTrue(
@@ -397,7 +397,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       "-InjectUnlinkedImageTextRecognition",
     ])
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 10))
-    let rawText = app.staticTexts["image-text.raw-text"]
+    let rawText = app.descendants(matching: .any)["image-text.raw-text"]
     XCTAssertTrue(rawText.waitForExistence(timeout: 5))
     XCTAssertTrue(rawText.label.contains("龘龘"))
     XCTAssertFalse(app.alerts["No Text Found"].exists)
@@ -538,6 +538,17 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons["kanji-detail.back"].tap()
     XCTAssertTrue(elementScreen.waitForExistence(timeout: 2))
     XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "青")
+    let restoredPosition = XCTNSPredicateExpectation(
+      predicate: NSPredicate { object, _ in
+        guard let element = object as? XCUIElement, element.exists, element.isHittable else {
+          return false
+        }
+        return element.frame.maxY < app.frame.maxY - 140
+          && abs(element.frame.minY - linkedKanjiFrame.minY) <= 8
+      },
+      object: linkedKanji
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [restoredPosition], timeout: 4), .completed)
     XCTAssertTrue(linkedKanji.isHittable)
     XCTAssertLessThan(linkedKanji.frame.maxY, app.frame.maxY - 140)
     XCTAssertEqual(linkedKanji.frame.minY, linkedKanjiFrame.minY, accuracy: 8)
@@ -675,7 +686,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.launch()
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
-    XCTAssertEqual(searchField.value as? String, "Words, Kanji, Example Sentences...")
+    XCTAssertEqual(searchField.value as? String, "Search Japanese or English")
     XCTAssertFalse(app.otherElements["stroke-order.overlay"].exists)
     XCTAssertFalse(app.scrollViews["kanji-detail.screen"].exists)
     recordScreenshot(named: "stroke-order-cold-relaunch-search-root", app: app)
@@ -855,8 +866,17 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(search.isEnabled)
     recordScreenshot(named: "radical-multiple-selection-narrow-candidates", app: app)
 
-    strike.tap()
-    XCTAssertEqual(strike.value as? String, "Not selected")
+    radicalButton("radical.strike", in: app).tap()
+    let strikeRemoved = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "Not selected"),
+      object: app.buttons["radical.strike"]
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [strikeRemoved], timeout: 3), .completed)
+    let broadCandidatesRestored = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "\(broadCount) candidates"),
+      object: candidateStrip
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [broadCandidatesRestored], timeout: 3), .completed)
     XCTAssertEqual(candidateCount(in: candidateStrip), broadCount)
 
     app.buttons["radical.remove"].tap()
@@ -870,7 +890,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     _ = radicalButton("radical.grass", in: app)
     app.buttons["search.input.keyboard"].tap()
     XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2))
-    XCTAssertEqual(surface.searchField.value as? String, "Words, Kanji, Example Sentences...")
+    XCTAssertEqual(surface.searchField.value as? String, "Search Japanese or English")
   }
 
   @MainActor
@@ -1349,7 +1369,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(cancel.exists)
     cancel.tap()
     XCTAssertFalse(app.keyboards.firstMatch.exists)
-    XCTAssertEqual(searchField.value as? String, "Words, Kanji, Example Sentences...")
+    XCTAssertEqual(searchField.value as? String, "Search Japanese or English")
   }
 
   @MainActor
@@ -1499,10 +1519,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       NSPredicate(format: "value BEGINSWITH %@", "Additional match")
     )
     XCTAssertTrue(
-      additionalMatches.matching(NSPredicate(format: "label BEGINSWITH %@", "思う, おもう,")).firstMatch.exists
+      additionalMatches.matching(NSPredicate(format: "label BEGINSWITH %@", "思う, おもう,")).firstMatch
+        .exists
     )
     XCTAssertTrue(
-      additionalMatches.matching(NSPredicate(format: "label BEGINSWITH %@", "考える, かんがえる,")).firstMatch.exists
+      additionalMatches.matching(NSPredicate(format: "label BEGINSWITH %@", "考える, かんがえる,"))
+        .firstMatch.exists
     )
     recordScreenshot(named: "search-results-english-think", app: app)
   }
@@ -1823,9 +1845,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     settings.tap()
 
     XCTAssertTrue(app.staticTexts["Zenbu Japanese"].waitForExistence(timeout: 2))
-    XCTAssertTrue(app.staticTexts.matching(
-      NSPredicate(format: "label CONTAINS %@", "Searches and notes stay on this device")
-    ).firstMatch.exists)
+    XCTAssertTrue(
+      app.staticTexts.matching(
+        NSPredicate(format: "label CONTAINS %@", "Searches and notes stay on this device")
+      ).firstMatch.exists)
     XCTAssertTrue(app.descendants(matching: .any)["settings.privacy-policy"].exists)
     XCTAssertTrue(app.descendants(matching: .any)["settings.support"].exists)
   }
@@ -2404,8 +2427,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(examples.waitForExistence(timeout: 4))
     let linkedKey = app.buttons["example.token.9.0.鍵"]
     for _ in 0..<8
-    where !linkedKey.isHittable || linkedKey.frame.maxY > app.frame.maxY - 200
-    {
+    where !linkedKey.isHittable || linkedKey.frame.maxY > app.frame.maxY - 200 {
       examples.swipeUp()
     }
     XCTAssertTrue(linkedKey.isHittable)
@@ -3082,7 +3104,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let grid = app.scrollViews["radical.grid"]
     for _ in 0..<16 {
       let button = app.buttons[identifier]
-      if button.exists { return button }
+      if button.exists, button.isHittable,
+        button.frame.minY >= grid.frame.minY,
+        button.frame.maxY <= grid.frame.maxY
+      {
+        return button
+      }
       grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.72))
         .press(
           forDuration: 0.05,
@@ -3090,7 +3117,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
         )
     }
     let button = app.buttons[identifier]
-    XCTAssertTrue(button.exists, "Missing radical button \(identifier)")
+    XCTAssertTrue(
+      button.exists && button.isHittable, "Missing hittable radical button \(identifier)")
     return button
   }
 
@@ -3176,7 +3204,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     pageCount: Int,
     in app: XCUIApplication
   ) -> Bool {
-    let currentPage = app.staticTexts["image-text.current-page"]
+    let currentPage = app.descendants(matching: .any)["image-text.current-page"]
     for index in 1...pageCount {
       let page = app.buttons["image-text.page.\(index)"]
       guard page.waitForExistence(timeout: 5) else { continue }

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HandwritingInputView: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Binding var query: String
   let selectMode: (SearchInputMode) -> Void
   let submit: (SearchQuery) -> Void
@@ -34,7 +35,7 @@ struct HandwritingInputView: View {
             model.eraseDrawing()
           } label: {
             Image(systemName: "eraser")
-              .font(.system(size: 24))
+              .font(.title2)
               .frame(maxWidth: .infinity, maxHeight: .infinity)
           }
           .disabled(model.strokes.isEmpty)
@@ -46,16 +47,17 @@ struct HandwritingInputView: View {
             query = normalized.value
             submit(normalized)
           }
-          .font(.system(size: 17, weight: .semibold))
+          .font(.body.weight(.semibold))
           .frame(maxWidth: .infinity, maxHeight: .infinity)
           .background(canSubmit ? ZenbuTheme.selectedTab : ZenbuTheme.mutedForeground.opacity(0.08))
-          .foregroundStyle(canSubmit ? ZenbuTheme.primaryForeground : ZenbuTheme.mutedForeground)
+          .foregroundStyle(canSubmit ? ZenbuTheme.primaryForeground : ZenbuTheme.foreground)
+          .buttonStyle(UndimmedPlainButtonStyle())
           .disabled(!canSubmit)
           .accessibilityIdentifier("handwriting.search")
         }
-        .frame(width: 64)
+        .frame(width: dynamicTypeSize >= .xxLarge ? 110 : 64)
       }
-      .frame(height: 264)
+      .frame(minHeight: dynamicTypeSize >= .xxLarge ? 340 : 264)
     }
     .background(ZenbuTheme.row)
     .overlay(alignment: .top) {
@@ -82,10 +84,12 @@ struct HandwritingInputView: View {
         }
         Spacer()
       }
-      .font(.system(size: 14))
+      .font(.body)
       .foregroundStyle(ZenbuTheme.secondaryText)
+      .fixedSize(horizontal: false, vertical: true)
       .padding(.horizontal, 14)
-      .frame(height: 46)
+      .padding(.vertical, 6)
+      .frame(minHeight: 46)
     } else {
       ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 0) {
@@ -94,7 +98,7 @@ struct HandwritingInputView: View {
               query.append(candidate.value)
               model.acceptCandidate()
             }
-            .font(.system(size: 27))
+            .font(.title)
             .foregroundStyle(ZenbuTheme.foreground)
             .frame(minWidth: 54, minHeight: 46)
             .accessibilityLabel("Use handwriting candidate \(candidate.value)")
@@ -103,7 +107,7 @@ struct HandwritingInputView: View {
           }
         }
       }
-      .frame(height: 46)
+      .frame(minHeight: 46)
     }
   }
 

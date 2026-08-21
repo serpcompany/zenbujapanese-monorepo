@@ -29,6 +29,7 @@ struct KanjiDetailView: View {
           HStack(spacing: 4) {
             Image(systemName: "chevron.left")
             Text(entry?.headword ?? "Search")
+              .accessibilityIdentifier("kanji-detail.back-label")
           }
         }
         .buttonStyle(.plain)
@@ -36,11 +37,14 @@ struct KanjiDetailView: View {
         Spacer()
         Text(character.rawValue)
           .font(.headline)
+          .accessibilityIdentifier("kanji-detail.title")
       }
-      .font(.system(size: 17))
+      .font(.title3.weight(.bold))
+      .foregroundStyle(ZenbuTheme.primaryForeground)
       .padding(.horizontal, 16)
-      .frame(height: 49)
+      .frame(minHeight: 49)
       .background(ZenbuTheme.chrome.ignoresSafeArea(edges: .top))
+      .accessibilityHidden(presentedStrokeDiagram != nil)
 
       ScrollViewReader { proxy in
         ScrollView {
@@ -106,8 +110,10 @@ struct KanjiDetailView: View {
         }
       }
     }
+    .foregroundStyle(ZenbuTheme.foreground)
     .background(ZenbuTheme.background)
     .toolbar(.hidden, for: .navigationBar)
+    .accessibilityHidden(presentedStrokeDiagram != nil)
     .overlay {
       if let diagram = presentedStrokeDiagram {
         ZStack {
@@ -252,6 +258,7 @@ private enum KanjiDetailLoadState: Equatable {
 }
 
 private struct KanjiOverview: View {
+  @ScaledMetric(relativeTo: .largeTitle) private var glyphSize = 104.0
   let character: String
   let reference: KanjiReferenceEntry?
   let strokeDiagramLoadState: KanjiStrokeDiagramLoadState
@@ -263,7 +270,7 @@ private struct KanjiOverview: View {
       HStack(alignment: .center, spacing: 24) {
         VStack(spacing: 4) {
           Text(character)
-            .font(.system(size: 104, weight: .light))
+            .font(.system(size: glyphSize, weight: .light))
             .accessibilityIdentifier("kanji-detail.glyph")
           if case .available(let strokeDiagram) = strokeDiagramLoadState {
             Button {
@@ -271,7 +278,7 @@ private struct KanjiOverview: View {
             } label: {
               Image(systemName: "arrow.down.right.and.arrow.up.left")
                 .font(.caption.weight(.bold))
-                .frame(width: 28, height: 28)
+                .frame(width: 44, height: 44)
                 .background(ZenbuTheme.accent, in: Circle())
             }
             .accessibilityLabel("Show stroke order for \(character)")
@@ -285,7 +292,7 @@ private struct KanjiOverview: View {
           } else {
             Text("Kanji \(character)")
               .font(.caption)
-              .foregroundStyle(ZenbuTheme.secondaryText)
+              .foregroundStyle(ZenbuTheme.foreground)
           }
         }
         if let reference {
@@ -341,8 +348,8 @@ private struct KanjiMetric: View {
       Text(value)
         .font(.title2.weight(.bold))
       Text(caption.uppercased())
-        .font(.caption2)
-        .foregroundStyle(ZenbuTheme.secondaryText)
+        .font(.body)
+        .foregroundStyle(ZenbuTheme.foreground)
     }
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(accessibilityLabel)
@@ -406,26 +413,27 @@ private struct KanjiReadingRow: View {
   var body: some View {
     HStack(alignment: .top, spacing: 14) {
       Text(reading.kind.label)
-        .font(.caption.weight(.semibold))
-        .foregroundStyle(ZenbuTheme.secondaryText)
-        .frame(width: 48, alignment: .leading)
+        .font(.body.weight(.semibold))
+        .foregroundStyle(ZenbuTheme.foreground)
+        .frame(minWidth: 48, alignment: .leading)
       VStack(alignment: .leading, spacing: 5) {
         Text(reading.value)
-          .font(.system(size: 18, weight: .semibold))
+          .font(.headline)
           .foregroundStyle(
             words.isEmpty ? ZenbuTheme.foreground : ZenbuTheme.interactiveForeground
           )
         if !words.isEmpty {
           Text(words.map { "\($0.headword) · \($0.summary)" }.joined(separator: "   "))
-            .font(.caption)
-            .foregroundStyle(ZenbuTheme.secondaryText)
-            .lineLimit(2)
+            .font(.body)
+            .foregroundStyle(ZenbuTheme.foreground)
+            .fixedSize(horizontal: false, vertical: true)
         }
       }
       Spacer(minLength: 8)
       if !words.isEmpty {
         Image(systemName: "chevron.right")
-          .foregroundStyle(ZenbuTheme.mutedForeground)
+          .foregroundStyle(ZenbuTheme.foreground)
+          .accessibilityHidden(true)
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -462,6 +470,7 @@ extension String {
 }
 
 private struct KanjiElementsSection: View {
+  @ScaledMetric(relativeTo: .largeTitle) private var elementGlyphSize = 52.0
   let elements: [KanjiElementSummary]
   let openElement: (KanjiElementID) -> Void
 
@@ -474,26 +483,27 @@ private struct KanjiElementsSection: View {
         } label: {
           HStack(spacing: 18) {
             Text(element.id.rawValue)
-              .font(.system(size: 52, weight: .light))
-              .frame(width: 72, height: 72)
+              .font(.system(size: elementGlyphSize, weight: .light))
+              .frame(minWidth: 72, minHeight: 72)
               .background(ZenbuTheme.accent.opacity(0.35))
             VStack(alignment: .leading, spacing: 6) {
               Text(element.role.label)
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(ZenbuTheme.secondaryText)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(ZenbuTheme.foreground)
               if !element.meanings.isEmpty {
                 Text(element.meanings.prefix(3).joined(separator: ", "))
-                  .lineLimit(2)
+                  .fixedSize(horizontal: false, vertical: true)
               } else if !element.commonLinkedOnReadings.isEmpty {
                 Text(
                   "Linked on-readings: \(element.commonLinkedOnReadings.joined(separator: ", "))"
                 )
-                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
               }
             }
             Spacer()
             Image(systemName: "chevron.right")
-              .foregroundStyle(ZenbuTheme.mutedForeground)
+              .foregroundStyle(ZenbuTheme.foreground)
+              .accessibilityHidden(true)
           }
           .frame(maxWidth: .infinity, alignment: .leading)
           .padding(.horizontal, 20)
@@ -544,18 +554,19 @@ private struct KanjiWordsSection: View {
           HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 3) {
               Text(entry.reading)
-                .font(.caption)
-                .foregroundStyle(ZenbuTheme.secondaryText)
+                .font(.body)
+                .foregroundStyle(ZenbuTheme.foreground)
               Text(entry.headword)
                 .font(.title3)
             }
             Spacer()
             Text(entry.summary)
-              .foregroundStyle(ZenbuTheme.secondaryText)
-              .lineLimit(2)
+              .foregroundStyle(ZenbuTheme.foreground)
+              .fixedSize(horizontal: false, vertical: true)
               .multilineTextAlignment(.trailing)
             Image(systemName: "chevron.right")
-              .foregroundStyle(ZenbuTheme.mutedForeground)
+              .foregroundStyle(ZenbuTheme.foreground)
+              .accessibilityHidden(true)
           }
           .padding(.horizontal, 20)
           .padding(.vertical, 12)
@@ -576,8 +587,8 @@ struct KanjiSectionHeader: View {
 
   var body: some View {
     Text(title)
-      .font(.caption)
-      .foregroundStyle(ZenbuTheme.mutedForeground)
+      .font(.body.weight(.semibold))
+      .foregroundStyle(ZenbuTheme.foreground)
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding(.horizontal, 20)
       .padding(.top, 22)
