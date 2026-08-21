@@ -98,7 +98,12 @@ struct KanjiElementDetailView: View {
     guard let preservedContribution, containingCharacters.contains(preservedContribution) else {
       return
     }
-    scrollPosition = preservedContribution
+    scrollPosition = nil
+    Task { @MainActor in
+      await Task.yield()
+      guard containingCharacters.contains(preservedContribution) else { return }
+      scrollPosition = preservedContribution
+    }
   }
 
   private var header: some View {

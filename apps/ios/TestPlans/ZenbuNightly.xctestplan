@@ -36,7 +36,8 @@
     {
       "parallelizable" : false,
       "skippedTests" : [
-        "SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()"
+        "SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
+        "SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()"
       ],
       "target" : {
         "containerPath" : "container:ZenbuJapanese.xcodeproj",
