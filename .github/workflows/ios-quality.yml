@@ -106,7 +106,7 @@ jobs:
           retention-days: 30
 
   ios-ui:
-    name: ios-pr / UI
+    name: ios-pr / UI journeys
     if: ${{ github.event_name != 'workflow_dispatch' || !inputs.prove_failure }}
     runs-on: macos-26
     timeout-minutes: 75
@@ -128,7 +128,8 @@ jobs:
             ZenbuPR \
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
             "$RUNNER_TEMP/ZenbuPR-UI.xcresult" \
-            -only-testing:ZenbuJapaneseUITests
+            -only-testing:ZenbuJapaneseUITests \
+            -skip-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests
 
       - name: Package test evidence
         if: always()
@@ -146,19 +147,61 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+  ios-accessibility:
+    name: ios-pr / Accessibility
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.prove_failure }}
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact source and LFS data
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Select pinned Xcode
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Run complete accessibility PR plan
+        run: |
+          apps/ios/Tools/run_ci_test_plan.sh \
+            ZenbuAccessibility \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
+            "$RUNNER_TEMP/ZenbuPR-Accessibility.xcresult"
+
+      - name: Package test evidence
+        if: always()
+        run: |
+          if [[ -d "$RUNNER_TEMP/ZenbuPR-Accessibility.xcresult" ]]; then
+            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuPR-Accessibility.xcresult" "$RUNNER_TEMP/ZenbuPR-Accessibility.xcresult.zip"
+          fi
+
+      - name: Retain test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuPR-Accessibility-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ZenbuPR-Accessibility.xcresult.zip
+          if-no-files-found: warn
+          retention-days: 30
+
   ios-pr:
     name: ios-pr / ZenbuPR
     if: >-
       ${{ always() &&
           (github.event_name != 'workflow_dispatch' || !inputs.prove_failure) }}
-    needs: [ios-unit, ios-ui]
+    needs: [ios-unit, ios-ui, ios-accessibility]
     runs-on: ubuntu-24.04
     steps:
-      - name: Require both hosted test partitions
+      - name: Require every hosted test partition
         env:
           UNIT_RESULT: ${{ needs.ios-unit.result }}
           UI_RESULT: ${{ needs.ios-ui.result }}
+          ACCESSIBILITY_RESULT: ${{ needs.ios-accessibility.result }}
         run: |
           set -euo pipefail
-          printf 'Unit partition: %s\nUI partition: %s\n' "$UNIT_RESULT" "$UI_RESULT"
-          [[ "$UNIT_RESULT" == success && "$UI_RESULT" == success ]]
+          printf 'Unit partition: %s\nUI partition: %s\nAccessibility partition: %s\n' \
+            "$UNIT_RESULT" "$UI_RESULT" "$ACCESSIBILITY_RESULT"
+          [[ "$UNIT_RESULT" == success && "$UI_RESULT" == success && "$ACCESSIBILITY_RESULT" == success ]]
