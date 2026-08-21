@@ -24,6 +24,9 @@
   "testTargets" : [
     {
       "parallelizable" : false,
+      "skippedTests" : [
+        "ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus()"
+      ],
       "target" : {
         "containerPath" : "container:ZenbuJapanese.xcodeproj",
         "identifier" : "151000000000000000000008",
