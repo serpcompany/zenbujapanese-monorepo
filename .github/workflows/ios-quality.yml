@@ -35,9 +35,9 @@ jobs:
 
       - name: Install audit tooling
         run: |
-          brew install ripgrep sqlite
+          brew install ripgrep
           gem install sqlite3 --version 2.9.6 --platform ruby --no-document -- \
-            --with-sqlite3-dir="$(brew --prefix sqlite)"
+            --enable-system-libraries
           ruby -e 'require "sqlite3"; abort "FTS4 unavailable" unless SQLite3::Database.new(":memory:").execute("PRAGMA compile_options").flatten.include?("ENABLE_FTS4")'
 
       - name: Verify committed test plans
