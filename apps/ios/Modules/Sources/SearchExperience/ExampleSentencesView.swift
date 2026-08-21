@@ -119,15 +119,15 @@ private struct ExampleSentenceRow: View {
 
         Button(action: speak) {
           Image(systemName: "speaker.wave.2")
-            .font(.system(size: 18))
-            .frame(width: 34, height: 34)
+            .font(.headline)
+            .frame(minWidth: 44, minHeight: 44)
         }
         .accessibilityLabel("Speak example \(index + 1)")
         .accessibilityIdentifier("example.speaker.\(index)")
       }
 
       Text(example.english)
-        .font(.system(size: 16))
+        .font(.callout)
         .foregroundStyle(ZenbuTheme.secondaryText)
         .frame(maxWidth: .infinity, alignment: .leading)
     }

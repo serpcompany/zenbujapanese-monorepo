@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 struct LinkedJapaneseText: View {
@@ -14,7 +15,7 @@ struct LinkedJapaneseText: View {
     Group {
       if tokens.isEmpty {
         Text(text)
-          .font(.system(size: 20))
+          .font(.title3)
       } else {
         LinkedTokenLayout(spacing: 3) {
           ForEach(tokens) { token in
@@ -50,21 +51,30 @@ private struct LinkedTokenView: View {
         VStack(spacing: 0) {
           if token.showsReading {
             Text(entry.reading)
-              .font(.caption2.weight(.semibold))
+              .font(.body.weight(.semibold))
+              .accessibilityHidden(true)
           }
           Text(token.surface)
             .font(.title3)
             .underline()
+            .accessibilityHidden(true)
         }
         .foregroundStyle(ZenbuTheme.interactiveForeground)
       }
       .buttonStyle(.plain)
+      .frame(minWidth: 44, minHeight: 44)
+      .contentShape(Rectangle())
       .accessibilityLabel("\(token.surface), \(entry.reading), \(entry.summary)")
       .accessibilityIdentifier(identifier)
     } else {
       Text(token.surface)
         .font(.title3)
+        .accessibilityHidden(isPunctuationOnly)
     }
+  }
+
+  private var isPunctuationOnly: Bool {
+    token.surface.rangeOfCharacter(from: .alphanumerics) == nil
   }
 }
 

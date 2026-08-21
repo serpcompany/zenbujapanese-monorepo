@@ -76,7 +76,7 @@ private struct ConjugationRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .layoutPriority(1)
       Text(form.id.title)
-        .font(.system(size: 16))
+        .font(.callout)
         .fixedSize(horizontal: true, vertical: false)
         .frame(maxWidth: .infinity, alignment: .trailing)
     }

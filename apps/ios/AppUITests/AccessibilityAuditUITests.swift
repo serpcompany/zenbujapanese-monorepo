@@ -22,7 +22,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
     try XCTContext.runActivity(named: "Search root") { _ in
-      try app.performAccessibilityAudit(for: auditTypes)
+      try performAudit(in: app)
     }
 
     searchField.tap()
@@ -30,16 +30,17 @@ final class AccessibilityAuditUITests: XCTestCase {
     let japan = app.buttons["result.japan"]
     XCTAssertTrue(japan.waitForExistence(timeout: 5))
     app.keyboards.buttons["Search"].tap()
+    XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 3))
 
     try XCTContext.runActivity(named: "Search results") { _ in
-      try app.performAccessibilityAudit(for: auditTypes)
+      try performAudit(in: app)
     }
 
     japan.tap()
     XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 5))
 
     try XCTContext.runActivity(named: "Word Detail") { _ in
-      try app.performAccessibilityAudit(for: auditTypes)
+      try performAudit(in: app)
     }
 
     let screenshot = XCTAttachment(screenshot: app.screenshot())
@@ -50,7 +51,16 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   private var auditTypes: XCUIAccessibilityAuditType {
-    .contrast
+    .all
+  }
+
+  @MainActor
+  private func performAudit(in app: XCUIApplication) throws {
+    try app.performAccessibilityAudit(for: auditTypes) { issue in
+      // Xcode 26 can report frameless SwiftUI bookkeeping nodes as clipped.
+      // A real element, including one with an empty label, is never ignored.
+      issue.auditType == .textClipped && issue.element == nil
+    }
   }
 
   @MainActor
