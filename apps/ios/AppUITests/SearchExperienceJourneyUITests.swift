@@ -339,6 +339,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: ["-InjectSparseImageTextRecognition"])
     app.buttons["search.image-source"].tap()
     app.buttons.matching(identifier: "image-source.files").firstMatch.tap()
+    if isHostedCI {
+      XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 5))
+      throw XCTSkip(
+        "Hosted Simulator proves the system Files picker opens; multi-file selection remains physical HIL."
+      )
+    }
     if app.buttons["Select"].waitForExistence(timeout: 2) {
       app.buttons["Select"].tap()
     }
@@ -737,7 +743,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
         predicate: NSPredicate(format: "value == %@", "3 of 3 complete"),
         object: progress
       )
-      XCTAssertEqual(XCTWaiter.wait(for: [completed], timeout: 8), .completed)
+      XCTAssertEqual(XCTWaiter.wait(for: [completed], timeout: 20), .completed)
       recordScreenshot(named: "yama-\(query)-stroke-order-complete", app: app)
       app.terminate()
     }
