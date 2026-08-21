@@ -1,0 +1,152 @@
+name: iOS nightly quality
+
+on:
+  schedule:
+    - cron: "17 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  accessibility:
+    name: accessibility / ${{ matrix.device_name }}
+    runs-on: macos-26
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - device_name: iPhone 17 Pro Max
+            device_type: com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max
+            artifact_name: iphone-17-pro-max
+          - device_name: iPhone SE (3rd generation)
+            device_type: com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation
+            artifact_name: iphone-se-3
+    steps:
+      - name: Check out exact source and LFS data
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Select pinned Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+
+      - name: Run accessibility plan
+        run: |
+          apps/ios/Tools/run_ci_test_plan.sh \
+            ZenbuAccessibility \
+            "${{ matrix.device_type }}" \
+            "$RUNNER_TEMP/ZenbuAccessibility.xcresult"
+
+      - name: Package test evidence
+        if: always()
+        run: |
+          if [[ -d "$RUNNER_TEMP/ZenbuAccessibility.xcresult" ]]; then
+            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuAccessibility.xcresult" "$RUNNER_TEMP/ZenbuAccessibility.xcresult.zip"
+          fi
+
+      - name: Retain test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuAccessibility-${{ matrix.artifact_name }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/ZenbuAccessibility.xcresult.zip
+          if-no-files-found: warn
+          retention-days: 90
+
+  reliability:
+    name: reliability / three fresh repetitions
+    runs-on: macos-26
+    timeout-minutes: 180
+    steps:
+      - name: Check out exact source and LFS data
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Select pinned Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+
+      - name: Run complete nightly plan three times
+        run: |
+          apps/ios/Tools/run_ci_test_plan.sh \
+            ZenbuNightly \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
+            "$RUNNER_TEMP/ZenbuNightly.xcresult" \
+            -test-iterations 3 \
+            -test-repetition-relaunch-enabled YES
+
+      - name: Package test evidence
+        if: always()
+        run: |
+          if [[ -d "$RUNNER_TEMP/ZenbuNightly.xcresult" ]]; then
+            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuNightly.xcresult" "$RUNNER_TEMP/ZenbuNightly.xcresult.zip"
+          fi
+
+      - name: Retain test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuNightly-${{ github.run_id }}
+          path: ${{ runner.temp }}/ZenbuNightly.xcresult.zip
+          if-no-files-found: warn
+          retention-days: 90
+
+  sanitizers:
+    name: sanitizer / ${{ matrix.name }}
+    runs-on: macos-26
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Address Sanitizer
+            flag: -enableAddressSanitizer
+            value: YES
+            artifact_name: asan
+          - name: Thread Sanitizer
+            flag: -enableThreadSanitizer
+            value: YES
+            artifact_name: tsan
+    steps:
+      - name: Check out exact source and LFS data
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Select pinned Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+
+      - name: Run hosted tests with sanitizer
+        run: |
+          apps/ios/Tools/run_ci_test_plan.sh \
+            ZenbuNightly \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
+            "$RUNNER_TEMP/Zenbu-${{ matrix.artifact_name }}.xcresult" \
+            -only-testing:ZenbuJapaneseTests \
+            "${{ matrix.flag }}" "${{ matrix.value }}"
+
+      - name: Package test evidence
+        if: always()
+        run: |
+          result="$RUNNER_TEMP/Zenbu-${{ matrix.artifact_name }}.xcresult"
+          if [[ -d "$result" ]]; then
+            ditto -c -k --keepParent "$result" "$result.zip"
+          fi
+
+      - name: Retain test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: Zenbu-${{ matrix.artifact_name }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/Zenbu-${{ matrix.artifact_name }}.xcresult.zip
+          if-no-files-found: warn
+          retention-days: 90
