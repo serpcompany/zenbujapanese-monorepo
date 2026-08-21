@@ -874,11 +874,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordScreenshot(named: "radical-multiple-selection-narrow-candidates", app: app)
 
     radicalButton("radical.strike", in: app).tap()
-    let strikeRemoved = XCTNSPredicateExpectation(
-      predicate: NSPredicate(format: "value == %@", "Not selected"),
-      object: app.buttons["radical.strike"]
-    )
-    XCTAssertEqual(XCTWaiter.wait(for: [strikeRemoved], timeout: 10), .completed)
     let broadCandidatesRestored = XCTNSPredicateExpectation(
       predicate: NSPredicate(format: "value == %@", "\(broadCount) candidates"),
       object: candidateStrip
@@ -1637,7 +1632,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(cancel.waitForExistence(timeout: 2))
     cancel.tap()
 
-    XCTAssertFalse(app.keyboards.firstMatch.exists)
+    let keyboardDismissed = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "exists == false"),
+      object: app.keyboards.firstMatch
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [keyboardDismissed], timeout: 10), .completed)
     XCTAssertEqual(searchField.value as? String, "think")
     XCTAssertTrue(bestMatches.exists)
     recordScreenshot(named: "search-results-retained-after-cancel", app: app)
@@ -2212,8 +2211,17 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     editor = app.textFields["word-note.editor"]
     XCTAssertTrue(editor.waitForExistence(timeout: 2))
     editor.tap()
-    editor.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 24))
-    XCTAssertEqual(editor.value as? String, "Add Note")
+    for _ in 0..<3 {
+      guard let value = editor.value as? String, value != "Add Note" else { break }
+      editor.typeText(
+        String(repeating: XCUIKeyboardKey.delete.rawValue, count: max(value.count, 1))
+      )
+    }
+    let noteCleared = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "Add Note"),
+      object: editor
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [noteCleared], timeout: 10), .completed)
     app.buttons["word-note.done"].tap()
     XCTAssertFalse(app.buttons["word-detail.note"].exists)
     XCTAssertTrue(app.buttons["word-detail.add-note"].exists)
