@@ -78,33 +78,10 @@ jobs:
 
       - name: Run complete PR plan
         run: |
-          set -euo pipefail
-          runtime_id="$({ xcrun simctl list runtimes --json; } | jq -r '
-            [.runtimes[]
-              | select(.isAvailable == true)
-              | select(.platform == "iOS")
-              | select(.version | startswith("26."))]
-            | sort_by(.version)
-            | last
-            | .identifier
-          ')"
-          test -n "$runtime_id" && test "$runtime_id" != null
-          device_type='com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max'
-          simulator_id="$(xcrun simctl create 'Zenbu CI iPhone 17 Pro Max' "$device_type" "$runtime_id")"
-          cleanup() {
-            xcrun simctl shutdown "$simulator_id" >/dev/null 2>&1 || true
-            xcrun simctl delete "$simulator_id" >/dev/null 2>&1 || true
-          }
-          trap cleanup EXIT
-          xcrun simctl boot "$simulator_id"
-          xcrun simctl bootstatus "$simulator_id" -b
-          xcodebuild test \
-            -project apps/ios/ZenbuJapanese.xcodeproj \
-            -scheme ZenbuJapanese \
-            -testPlan ZenbuPR \
-            -destination "platform=iOS Simulator,id=$simulator_id" \
-            -parallel-testing-enabled NO \
-            -resultBundlePath "$RUNNER_TEMP/ZenbuPR.xcresult"
+          apps/ios/Tools/run_ci_test_plan.sh \
+            ZenbuPR \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
+            "$RUNNER_TEMP/ZenbuPR.xcresult"
 
       - name: Package test evidence
         if: always()
