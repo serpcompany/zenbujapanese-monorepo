@@ -1,0 +1,120 @@
+name: iOS quality
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      prove_failure:
+        description: Deliberately fail repo-contracts to verify enforcement
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  repo-contracts:
+    name: repo-contracts
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact source and LFS data
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Verify committed test plans
+        run: |
+          set -euo pipefail
+          for plan in apps/ios/TestPlans/*.xctestplan; do
+            jq empty "$plan"
+          done
+          xmllint --noout apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme
+          rg -q 'ZenbuPR.xctestplan' apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme
+
+      - name: Run importer and validator tests
+        run: python3 -m unittest discover apps/ios/Tools/Tests -p 'test_*.py'
+
+      - name: Run release-audit harness
+        run: bash apps/ios/Tools/Tests/audit-release-privacy.test.sh
+
+      - name: Run source privacy and bundled-data audit
+        run: bash apps/ios/Tools/audit_release_privacy.sh source
+
+      - name: Prove required-check failure path
+        if: ${{ inputs.prove_failure }}
+        run: |
+          echo 'Intentional repo-contracts failure proof'
+          exit 1
+
+  ios-pr:
+    name: ios-pr / ZenbuPR
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - name: Check out exact source and LFS data
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Select pinned Xcode
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Run complete PR plan
+        run: |
+          set -euo pipefail
+          runtime_id="$({ xcrun simctl list runtimes --json; } | jq -r '
+            [.runtimes[]
+              | select(.isAvailable == true)
+              | select(.platform == "iOS")
+              | select(.version | startswith("26."))]
+            | sort_by(.version)
+            | last
+            | .identifier
+          ')"
+          test -n "$runtime_id" && test "$runtime_id" != null
+          device_type='com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max'
+          simulator_id="$(xcrun simctl create 'Zenbu CI iPhone 17 Pro Max' "$device_type" "$runtime_id")"
+          cleanup() {
+            xcrun simctl shutdown "$simulator_id" >/dev/null 2>&1 || true
+            xcrun simctl delete "$simulator_id" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          xcrun simctl boot "$simulator_id"
+          xcrun simctl bootstatus "$simulator_id" -b
+          xcodebuild test \
+            -project apps/ios/ZenbuJapanese.xcodeproj \
+            -scheme ZenbuJapanese \
+            -testPlan ZenbuPR \
+            -destination "platform=iOS Simulator,id=$simulator_id" \
+            -parallel-testing-enabled NO \
+            -resultBundlePath "$RUNNER_TEMP/ZenbuPR.xcresult"
+
+      - name: Package test evidence
+        if: always()
+        run: |
+          if [[ -d "$RUNNER_TEMP/ZenbuPR.xcresult" ]]; then
+            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuPR.xcresult" "$RUNNER_TEMP/ZenbuPR.xcresult.zip"
+          fi
+
+      - name: Retain test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ZenbuPR-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ZenbuPR.xcresult.zip
+          if-no-files-found: warn
+          retention-days: 30
