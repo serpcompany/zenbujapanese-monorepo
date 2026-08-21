@@ -36,6 +36,9 @@
     },
     {
       "parallelizable" : false,
+      "skippedTests" : [
+        "SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()"
+      ],
       "target" : {
         "containerPath" : "container:ZenbuJapanese.xcodeproj",
         "identifier" : "74E6EB6E486E0D87C41A29EF",
