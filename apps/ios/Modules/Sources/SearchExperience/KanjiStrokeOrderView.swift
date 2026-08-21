@@ -54,7 +54,7 @@ struct KanjiStrokeOrderView: View {
         }
         .font(.system(size: 28))
         .buttonStyle(.plain)
-        .foregroundStyle(ZenbuTheme.primary)
+        .foregroundStyle(ZenbuTheme.interactiveForeground)
         .frame(maxWidth: .infinity)
 
         Text("Stroke \(visibleStrokeIndex) of \(diagram.strokes.count)")

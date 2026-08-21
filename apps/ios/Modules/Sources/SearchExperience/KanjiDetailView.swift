@@ -412,7 +412,9 @@ private struct KanjiReadingRow: View {
       VStack(alignment: .leading, spacing: 5) {
         Text(reading.value)
           .font(.system(size: 18, weight: .semibold))
-          .foregroundStyle(words.isEmpty ? ZenbuTheme.foreground : ZenbuTheme.primary)
+          .foregroundStyle(
+            words.isEmpty ? ZenbuTheme.foreground : ZenbuTheme.interactiveForeground
+          )
         if !words.isEmpty {
           Text(words.map { "\($0.headword) · \($0.summary)" }.joined(separator: "   "))
             .font(.caption)

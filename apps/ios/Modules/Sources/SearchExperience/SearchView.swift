@@ -551,7 +551,7 @@ private struct SearchResultsView: View {
               .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.3))
           }
           .font(.system(size: 18))
-          .foregroundStyle(ZenbuTheme.selectedTab)
+          .foregroundStyle(ZenbuTheme.interactiveForeground)
           .padding(.horizontal, 18)
           .frame(height: 52)
           .contentShape(Rectangle())
@@ -573,7 +573,7 @@ private struct SearchResultsView: View {
                   .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.3))
               }
               .font(.system(size: 18))
-              .foregroundStyle(ZenbuTheme.selectedTab)
+              .foregroundStyle(ZenbuTheme.interactiveForeground)
               .padding(.horizontal, 18)
               .frame(height: 52)
               .contentShape(Rectangle())
@@ -705,7 +705,7 @@ private struct ResultRow: View {
 
         VStack(alignment: .leading, spacing: -2) {
           Text(entry.reading)
-            .font(.system(size: 12, weight: .semibold))
+            .font(.caption.weight(.semibold))
           Text(entry.headword)
             .font(.system(size: 23, weight: .regular))
             .lineLimit(1)

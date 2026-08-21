@@ -42,9 +42,11 @@ private struct TabItem: View {
         Image(systemName: symbol)
           .font(.system(size: 23, weight: .regular))
         Text(tab.rawValue)
-          .font(.system(size: 10))
+          .font(.caption2)
       }
-      .foregroundStyle(selected ? ZenbuTheme.primary : ZenbuTheme.mutedForeground)
+      .foregroundStyle(
+        selected ? ZenbuTheme.interactiveForeground : ZenbuTheme.mutedForeground
+      )
       .frame(minWidth: 52)
     }
     .buttonStyle(.plain)

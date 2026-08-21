@@ -50,20 +50,20 @@ private struct LinkedTokenView: View {
         VStack(spacing: 0) {
           if token.showsReading {
             Text(entry.reading)
-              .font(.system(size: 10, weight: .semibold))
+              .font(.caption2.weight(.semibold))
           }
           Text(token.surface)
-            .font(.system(size: 20))
+            .font(.title3)
             .underline()
         }
-        .foregroundStyle(ZenbuTheme.selectedTab)
+        .foregroundStyle(ZenbuTheme.interactiveForeground)
       }
       .buttonStyle(.plain)
       .accessibilityLabel("\(token.surface), \(entry.reading), \(entry.summary)")
       .accessibilityIdentifier(identifier)
     } else {
       Text(token.surface)
-        .font(.system(size: 20))
+        .font(.title3)
     }
   }
 }

@@ -126,7 +126,7 @@ struct ImageTextFlowView: View {
     }
     .buttonStyle(.plain)
     .font(.system(size: 23))
-    .foregroundStyle(ZenbuTheme.selectedTab)
+    .foregroundStyle(ZenbuTheme.interactiveForeground)
     .padding(.horizontal, 16)
     .frame(height: 49)
     .background(ZenbuTheme.card)

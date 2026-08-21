@@ -358,6 +358,7 @@ private struct DetailToolbar: View {
       }
     }
     .font(.system(size: 21))
+    .foregroundStyle(ZenbuTheme.primaryForeground)
     .padding(.horizontal, 16)
     .frame(height: 49)
     .background(ZenbuTheme.chrome.ignoresSafeArea(edges: .top))
@@ -452,9 +453,8 @@ private struct FrequencyBadge: View {
     ZStack {
       Circle().stroke(ZenbuTheme.mutedForeground.opacity(0.18), lineWidth: 6)
       Text(frequency.rawValue)
-        .font(.system(size: 11, weight: .bold, design: .rounded))
+        .font(.system(.caption2, design: .rounded, weight: .bold))
         .lineLimit(1)
-        .minimumScaleFactor(0.7)
         .padding(2)
     }
     .frame(width: 66, height: 66)
@@ -569,8 +569,8 @@ private struct SectionLabel: View {
 
   var body: some View {
     Text(title)
-      .font(.system(size: 13, weight: .medium))
-      .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.48))
+      .font(.footnote.weight(.medium))
+      .foregroundStyle(ZenbuTheme.secondaryText)
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding(.horizontal, 28)
       .frame(height: 45, alignment: .bottom)

@@ -102,18 +102,18 @@ private struct ConjugatedSurface: View {
       HStack(alignment: .bottom, spacing: 0) {
         VStack(spacing: -2) {
           Text(annotation.readingPrefix)
-            .font(.system(size: 10))
+            .font(.caption2)
           Text(annotation.surfacePrefix)
-            .font(.system(size: 19))
+            .font(.title3)
         }
         Text(annotation.sharedSuffix)
-          .font(.system(size: 19))
+          .font(.title3)
       }
       .lineLimit(1)
       .minimumScaleFactor(0.72)
     } else {
       Text(form.surface)
-        .font(.system(size: 19))
+        .font(.title3)
         .lineLimit(1)
         .minimumScaleFactor(0.72)
     }

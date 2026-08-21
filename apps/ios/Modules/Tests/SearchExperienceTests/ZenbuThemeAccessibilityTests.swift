@@ -1,0 +1,79 @@
+import SwiftUI
+import UIKit
+import XCTest
+@testable import SearchExperience
+
+final class ZenbuThemeAccessibilityTests: XCTestCase {
+  func testDarkModeBrandTextMeetsNormalTextContrast() throws {
+    let foreground = try resolvedRGB(ZenbuTheme.interactiveForeground, style: .dark)
+    let background = try resolvedRGB(ZenbuTheme.background, style: .dark)
+
+    XCTAssertGreaterThanOrEqual(
+      contrastRatio(foreground, background),
+      4.5,
+      "Dark-mode brand text must remain readable at normal text sizes."
+    )
+  }
+
+  func testNormalTextThemePairsMeetContrastInBothAppearances() throws {
+    let pairs: [(name: String, foreground: Color, background: Color)] = [
+      ("body on page", ZenbuTheme.foreground, ZenbuTheme.background),
+      ("secondary text on page", ZenbuTheme.secondaryText, ZenbuTheme.background),
+      ("interactive text on page", ZenbuTheme.interactiveForeground, ZenbuTheme.background),
+      ("body on card", ZenbuTheme.foreground, ZenbuTheme.card),
+      ("secondary text on card", ZenbuTheme.secondaryText, ZenbuTheme.card),
+      ("interactive text on card", ZenbuTheme.interactiveForeground, ZenbuTheme.card),
+      ("text on brand chrome", ZenbuTheme.primaryForeground, ZenbuTheme.chrome),
+    ]
+
+    for style in [UIUserInterfaceStyle.light, .dark] {
+      for pair in pairs {
+        let ratio = contrastRatio(
+          try resolvedRGB(pair.foreground, style: style),
+          try resolvedRGB(pair.background, style: style)
+        )
+        XCTAssertGreaterThanOrEqual(ratio, 4.5, "\(pair.name), \(style)")
+      }
+    }
+  }
+
+  private func resolvedRGB(
+    _ color: Color,
+    style: UIUserInterfaceStyle
+  ) throws -> (red: CGFloat, green: CGFloat, blue: CGFloat) {
+    let resolved = UIColor(color).resolvedColor(
+      with: UITraitCollection(userInterfaceStyle: style)
+    )
+    var red: CGFloat = 0
+    var green: CGFloat = 0
+    var blue: CGFloat = 0
+    var alpha: CGFloat = 0
+    XCTAssertTrue(resolved.getRed(&red, green: &green, blue: &blue, alpha: &alpha))
+    XCTAssertEqual(alpha, 1, accuracy: 0.001)
+    return (red, green, blue)
+  }
+
+  private func contrastRatio(
+    _ first: (red: CGFloat, green: CGFloat, blue: CGFloat),
+    _ second: (red: CGFloat, green: CGFloat, blue: CGFloat)
+  ) -> CGFloat {
+    let lighter = max(relativeLuminance(first), relativeLuminance(second))
+    let darker = min(relativeLuminance(first), relativeLuminance(second))
+    return (lighter + 0.05) / (darker + 0.05)
+  }
+
+  private func relativeLuminance(
+    _ color: (red: CGFloat, green: CGFloat, blue: CGFloat)
+  ) -> CGFloat {
+    // Display P3 relative-luminance coefficients with the sRGB transfer function.
+    (0.228974564 * linearized(color.red))
+      + (0.691738522 * linearized(color.green))
+      + (0.079286914 * linearized(color.blue))
+  }
+
+  private func linearized(_ component: CGFloat) -> CGFloat {
+    component <= 0.04045
+      ? component / 12.92
+      : pow((component + 0.055) / 1.055, 2.4)
+  }
+}
