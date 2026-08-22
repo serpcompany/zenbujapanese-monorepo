@@ -6,9 +6,12 @@ struct KanjiElementDetailView: View {
   let lookupClient: KanjiElementLookupClient
   let openAlternative: (KanjiElementID) -> Void
   let openKanji: (KanjiCharacter) -> Void
+  let preservedContribution: KanjiCharacter?
+  let preserveContribution: (KanjiCharacter) -> Void
 
   @State private var loadState = KanjiElementDetailLoadState.loading
   @State private var retryID = 0
+  @State private var scrollPosition: KanjiCharacter?
 
   var body: some View {
     VStack(spacing: 0) {
@@ -58,8 +61,12 @@ struct KanjiElementDetailView: View {
           }
         }
         .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
+        .scrollTargetLayout()
       }
+      .scrollPosition(id: $scrollPosition, anchor: .center)
       .accessibilityIdentifier("kanji-element.screen")
+      .onAppear { restorePreservedContribution() }
+      .onChange(of: containingCharacters) { restorePreservedContribution() }
     }
     .background(ZenbuTheme.background)
     .toolbar(.hidden, for: .navigationBar)
@@ -79,6 +86,23 @@ struct KanjiElementDetailView: View {
         guard !Task.isCancelled else { return }
         loadState = .failed
       }
+    }
+  }
+
+  private var containingCharacters: [KanjiCharacter] {
+    guard case .loaded(let entry) = loadState else { return [] }
+    return entry.containingKanji.map(\.character)
+  }
+
+  private func restorePreservedContribution() {
+    guard let preservedContribution, containingCharacters.contains(preservedContribution) else {
+      return
+    }
+    scrollPosition = nil
+    Task { @MainActor in
+      await Task.yield()
+      guard containingCharacters.contains(preservedContribution) else { return }
+      scrollPosition = preservedContribution
     }
   }
 
@@ -172,6 +196,7 @@ struct KanjiElementDetailView: View {
     identifierPrefix: String
   ) -> some View {
     Button {
+      preserveContribution(contribution.character)
       openKanji(contribution.character)
     } label: {
       HStack(spacing: 18) {
@@ -203,6 +228,7 @@ struct KanjiElementDetailView: View {
         .joined(separator: ", ")
     )
     .accessibilityIdentifier("\(identifierPrefix).\(contribution.character.rawValue)")
+    .id(contribution.character)
   }
 }
 

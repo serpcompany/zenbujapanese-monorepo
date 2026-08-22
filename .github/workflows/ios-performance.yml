@@ -1,0 +1,51 @@
+name: iOS performance trend
+
+on:
+  schedule:
+    - cron: "41 18 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  simulator-performance:
+    name: simulator performance baseline
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - name: Check out exact source and LFS data
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Select pinned Xcode
+        run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+
+      - name: Run performance plan
+        run: |
+          apps/ios/Tools/run_ci_test_plan.sh \
+            ZenbuPerformance \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
+            "$RUNNER_TEMP/ZenbuPerformance.xcresult"
+
+      - name: Package test evidence
+        if: always()
+        run: |
+          if [[ -d "$RUNNER_TEMP/ZenbuPerformance.xcresult" ]]; then
+            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuPerformance.xcresult" "$RUNNER_TEMP/ZenbuPerformance.xcresult.zip"
+          fi
+
+      - name: Retain performance evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuPerformance-${{ github.run_id }}
+          path: ${{ runner.temp }}/ZenbuPerformance.xcresult.zip
+          if-no-files-found: warn
+          retention-days: 90

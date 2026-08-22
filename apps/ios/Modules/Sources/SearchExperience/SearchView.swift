@@ -460,6 +460,7 @@ private struct LookupFailureView: View {
 }
 
 private struct SearchBar: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Binding var query: String
   var isFocused: FocusState<Bool>.Binding
   let isInputActive: Bool
@@ -474,7 +475,7 @@ private struct SearchBar: View {
         Image(systemName: "magnifyingglass")
           .foregroundStyle(ZenbuTheme.mutedForeground)
 
-        TextField("Words, Kanji, Example Sentences...", text: $query)
+        searchTextField
           .textInputAutocapitalization(.never)
           .autocorrectionDisabled()
           .submitLabel(.search)
@@ -496,22 +497,25 @@ private struct SearchBar: View {
           } label: {
             Image(systemName: "xmark.circle.fill")
               .foregroundStyle(ZenbuTheme.mutedForeground)
+              .frame(width: 44, height: 44)
+              .contentShape(Rectangle())
           }
           .buttonStyle(.plain)
           .accessibilityLabel("Clear text")
         }
 
       }
-      .font(.system(size: 17))
+      .font(.body)
       .padding(.horizontal, 10)
-      .frame(height: 38)
+      .frame(minHeight: 44)
       .background(ZenbuTheme.searchField, in: RoundedRectangle(cornerRadius: 9))
 
       Button(action: openImageSource) {
         Image(systemName: "camera")
-          .font(.system(size: 21))
+          .font(.title3)
           .foregroundStyle(ZenbuTheme.primaryForeground)
-          .frame(width: 38, height: 38)
+          .frame(width: 44, height: 44)
+          .contentShape(Rectangle())
       }
       .buttonStyle(.plain)
       .accessibilityLabel("Image Search")
@@ -527,6 +531,16 @@ private struct SearchBar: View {
     .padding(.horizontal, 16)
     .padding(.bottom, 10)
     .background(ZenbuTheme.chrome)
+  }
+
+  @ViewBuilder
+  private var searchTextField: some View {
+    if dynamicTypeSize >= .xxLarge {
+      TextField("Search", text: $query, axis: .vertical)
+        .lineLimit(1...2)
+    } else {
+      TextField("Search Japanese or English", text: $query)
+    }
   }
 }
 
@@ -547,13 +561,15 @@ private struct SearchResultsView: View {
           HStack {
             Text(exampleActionTitle)
               .frame(maxWidth: .infinity, alignment: .center)
+              .fixedSize(horizontal: false, vertical: true)
             Image(systemName: "chevron.right")
-              .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.3))
+              .foregroundStyle(ZenbuTheme.secondaryText)
+              .accessibilityHidden(true)
           }
-          .font(.system(size: 18))
-          .foregroundStyle(ZenbuTheme.selectedTab)
+          .font(.headline)
+          .foregroundStyle(ZenbuTheme.interactiveForeground)
           .padding(.horizontal, 18)
-          .frame(height: 52)
+          .frame(minHeight: 52)
           .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -569,13 +585,15 @@ private struct SearchResultsView: View {
               HStack {
                 Text("Search for「\(refinement.query.value)」")
                   .frame(maxWidth: .infinity, alignment: .center)
+                  .fixedSize(horizontal: false, vertical: true)
                 Image(systemName: "chevron.right")
-                  .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.3))
+                  .foregroundStyle(ZenbuTheme.secondaryText)
+                  .accessibilityHidden(true)
               }
-              .font(.system(size: 18))
-              .foregroundStyle(ZenbuTheme.selectedTab)
+              .font(.headline)
+              .foregroundStyle(ZenbuTheme.interactiveForeground)
               .padding(.horizontal, 18)
-              .frame(height: 52)
+              .frame(minHeight: 52)
               .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -645,7 +663,7 @@ private struct KanjiPrimaryRow: View {
     Button(action: action) {
       HStack(spacing: 10) {
         Text(character)
-          .font(.system(size: 29, weight: .light))
+          .font(.title.weight(.light))
         Text("KANJI")
           .font(.caption2.weight(.bold))
           .foregroundStyle(ZenbuTheme.secondaryText)
@@ -654,10 +672,11 @@ private struct KanjiPrimaryRow: View {
           .foregroundStyle(ZenbuTheme.secondaryText)
           .frame(maxWidth: .infinity, alignment: .trailing)
         Image(systemName: "chevron.right")
-          .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.25))
+          .foregroundStyle(ZenbuTheme.secondaryText)
+          .accessibilityHidden(true)
       }
       .padding(.horizontal, 15)
-      .frame(height: 54)
+      .frame(minHeight: 54)
       .contentShape(Rectangle())
       .overlay(alignment: .bottom) {
         Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
@@ -675,11 +694,11 @@ private struct ResultSectionHeader: View {
 
   var body: some View {
     Text(title)
-      .font(.system(size: 16, weight: .semibold))
+      .font(.callout.weight(.semibold))
       .foregroundStyle(ZenbuTheme.secondaryText)
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding(.horizontal, 53)
-      .frame(height: 43, alignment: .bottom)
+      .frame(minHeight: 43, alignment: .bottom)
       .padding(.bottom, 7)
       .overlay(alignment: .bottom) {
         Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
@@ -693,6 +712,7 @@ private struct ResultRow: View {
     case additional
   }
 
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let entry: DictionaryEntry
   let marker: Marker
   let rank: ResultRank
@@ -700,32 +720,37 @@ private struct ResultRow: View {
 
   var body: some View {
     Button(action: action) {
-      HStack(spacing: 9) {
-        markerView.frame(width: 24)
-
-        VStack(alignment: .leading, spacing: -2) {
-          Text(entry.reading)
-            .font(.system(size: 12, weight: .semibold))
-          Text(entry.headword)
-            .font(.system(size: 23, weight: .regular))
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
+      Group {
+        if usesExpandedLayout {
+          VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 9) {
+              markerView.frame(width: 24)
+              titleBlock
+              Spacer(minLength: 8)
+              chevron
+            }
+            Text(entry.summary)
+              .font(.body)
+              .foregroundStyle(ZenbuTheme.secondaryText)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+        } else {
+          HStack(spacing: 9) {
+            markerView.frame(width: 24)
+            titleBlock
+              .frame(width: 92, alignment: .leading)
+            Text(entry.summary)
+              .font(.callout)
+              .foregroundStyle(ZenbuTheme.secondaryText)
+              .lineLimit(1)
+              .frame(maxWidth: .infinity, alignment: .trailing)
+            chevron
+          }
         }
-        .foregroundStyle(ZenbuTheme.foreground)
-        .frame(width: 92, alignment: .leading)
-
-        Text(entry.summary)
-          .font(.system(size: 16))
-          .foregroundStyle(ZenbuTheme.secondaryText)
-          .lineLimit(1)
-          .frame(maxWidth: .infinity, alignment: .trailing)
-
-        Image(systemName: "chevron.right")
-          .font(.system(size: 18, weight: .semibold))
-          .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.25))
       }
       .padding(.horizontal, 15)
-      .frame(height: 54)
+      .padding(.vertical, usesExpandedLayout ? 10 : 0)
+      .frame(minHeight: 54)
       .contentShape(Rectangle())
       .overlay(alignment: .bottom) {
         Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
@@ -735,6 +760,28 @@ private struct ResultRow: View {
     .accessibilityLabel("\(entry.headword), \(entry.reading), \(entry.summary)")
     .accessibilityValue(rank.accessibilityValue)
     .accessibilityIdentifier(resultIdentifier)
+  }
+
+  private var titleBlock: some View {
+    VStack(alignment: .leading, spacing: -2) {
+      Text(entry.reading)
+        .font(usesExpandedLayout ? .body.weight(.semibold) : .caption.weight(.semibold))
+      Text(entry.headword)
+        .font(usesExpandedLayout ? .title3 : .title2)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .foregroundStyle(ZenbuTheme.foreground)
+  }
+
+  private var chevron: some View {
+    Image(systemName: "chevron.right")
+      .font(.headline)
+      .foregroundStyle(ZenbuTheme.secondaryText)
+      .accessibilityHidden(true)
+  }
+
+  private var usesExpandedLayout: Bool {
+    dynamicTypeSize >= .xxLarge
   }
 
   private var resultIdentifier: String {
@@ -750,13 +797,15 @@ private struct ResultRow: View {
     switch marker {
     case .best:
       Circle()
-        .stroke(ZenbuTheme.mutedForeground.opacity(0.55), lineWidth: 1.2)
+        .stroke(ZenbuTheme.secondaryText, lineWidth: 1.2)
         .frame(width: 17, height: 17)
+        .accessibilityHidden(true)
     case .additional:
       Rectangle()
-        .stroke(ZenbuTheme.mutedForeground.opacity(0.55), lineWidth: 1.2)
+        .stroke(ZenbuTheme.secondaryText, lineWidth: 1.2)
         .frame(width: 13, height: 13)
         .rotationEffect(.degrees(45))
+        .accessibilityHidden(true)
     }
   }
 }

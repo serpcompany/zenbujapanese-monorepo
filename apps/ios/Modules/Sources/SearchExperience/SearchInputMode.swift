@@ -1,5 +1,11 @@
 import SwiftUI
 
+struct UndimmedPlainButtonStyle: ButtonStyle {
+  func makeBody(configuration: Configuration) -> some View {
+    configuration.label.opacity(configuration.isPressed ? 0.7 : 1)
+  }
+}
+
 enum SearchInputMode: Equatable {
   case inactive
   case keyboard
@@ -19,7 +25,7 @@ struct SearchInputModeBar: View {
       modeButton("Keyboard", symbol: "keyboard", mode: .keyboard)
     }
     .padding(.horizontal, 12)
-    .frame(height: 44)
+    .frame(minHeight: 44)
     .background(ZenbuTheme.row)
   }
 
@@ -28,8 +34,9 @@ struct SearchInputModeBar: View {
       selectMode(mode)
     } label: {
       Image(systemName: symbol)
-        .font(.system(size: 21))
-        .frame(width: 42, height: 36)
+        .font(.title3)
+        .frame(width: 44, height: 44)
+        .contentShape(Rectangle())
         .background(
           selectedMode == mode ? ZenbuTheme.selectedTab : Color.clear,
           in: RoundedRectangle(cornerRadius: 7))

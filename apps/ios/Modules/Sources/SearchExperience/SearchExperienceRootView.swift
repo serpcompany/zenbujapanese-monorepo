@@ -10,6 +10,7 @@ public struct SearchExperienceRootView: View {
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
+  @State private var kanjiElementScrollContributionIDs: [KanjiElementID: KanjiCharacter] = [:]
   #if DEBUG
     @State private var lastStartedSpeech: SpeechPlaybackVerificationEvent?
     @State private var lastFinishedSpeech: SpeechPlaybackVerificationEvent?
@@ -126,7 +127,9 @@ public struct SearchExperienceRootView: View {
             elementID: id,
             lookupClient: kanjiElementLookupClient,
             openAlternative: { alternative in path.append(.kanjiElement(alternative)) },
-            openKanji: { character in openKanji(character, entry: nil) }
+            openKanji: { character in openKanji(character, entry: nil) },
+            preservedContribution: kanjiElementScrollContributionIDs[id],
+            preserveContribution: { kanjiElementScrollContributionIDs[id] = $0 }
           )
         case .examples(let query, let highlightedEntry, let usesEntryExamples):
           ExampleSentencesView(

@@ -263,13 +263,15 @@ private struct PrimaryKanjiSection: View {
           } label: {
             HStack {
               Text(character)
-                .font(.system(size: 25, weight: .semibold))
+                .font(.title2.weight(.semibold))
               Text("Kanji in \(entry.headword)")
-                .font(.system(size: 15))
+                .font(.subheadline)
                 .foregroundStyle(ZenbuTheme.secondaryText)
               Spacer()
               Image(systemName: "chevron.right").foregroundStyle(
-                ZenbuTheme.mutedForeground.opacity(0.38))
+                ZenbuTheme.secondaryText
+              )
+              .accessibilityHidden(true)
             }
             .padding(.horizontal, 28)
             .frame(minHeight: 58)
@@ -298,10 +300,11 @@ private struct AlternativeKanjiSection: View {
           } label: {
             HStack {
               Text(character)
-                .font(.system(size: 25, weight: .semibold))
+                .font(.title2.weight(.semibold))
               Spacer()
               Image(systemName: "chevron.right")
-                .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.38))
+                .foregroundStyle(ZenbuTheme.secondaryText)
+                .accessibilityHidden(true)
             }
             .padding(.horizontal, 28)
             .frame(minHeight: 50)
@@ -332,20 +335,23 @@ private struct DetailToolbar: View {
           Image(systemName: "chevron.left")
           Text(backTitle)
         }
-        .font(.system(size: 17))
+        .font(.body)
       }
       .buttonStyle(.plain)
+      .frame(minHeight: 44)
       .accessibilityIdentifier("word-detail.back")
       Spacer()
       if isEditingNote {
         Button("Done", action: finishEditingNote)
           .buttonStyle(.plain)
-          .font(.system(size: 17, weight: .semibold))
+          .font(.body.weight(.semibold))
+          .frame(minWidth: 44, minHeight: 44)
           .accessibilityIdentifier("word-note.done")
       } else {
         Button(action: addNote) {
           Image(systemName: "square.and.pencil")
         }
+        .frame(minWidth: 44, minHeight: 44)
         .accessibilityLabel("Add note")
         .accessibilityIdentifier("word-detail.toolbar-note")
         Button {
@@ -353,13 +359,15 @@ private struct DetailToolbar: View {
         } label: {
           Image(systemName: "camera.badge.ellipsis")
         }
+        .frame(minWidth: 44, minHeight: 44)
         .accessibilityLabel("Attach image")
         .accessibilityIdentifier("word-detail.toolbar-image")
       }
     }
-    .font(.system(size: 21))
+    .font(.title3)
+    .foregroundStyle(ZenbuTheme.primaryForeground)
     .padding(.horizontal, 16)
-    .frame(height: 49)
+    .frame(minHeight: 49)
     .background(ZenbuTheme.chrome.ignoresSafeArea(edges: .top))
   }
 }
@@ -375,9 +383,9 @@ private struct WordHeader: View {
       HStack(alignment: .top, spacing: 12) {
         VStack(alignment: .leading, spacing: -4) {
           Text(entry.reading)
-            .font(.system(size: 19, weight: .semibold))
+            .font(.title3.weight(.semibold))
           Text(entry.headword)
-            .font(.system(size: 37, weight: .light))
+            .font(.largeTitle.weight(.light))
         }
         Spacer()
         if let imageAttachment, let image = UIImage(data: imageAttachment.data) {
@@ -411,8 +419,8 @@ private struct WordHeader: View {
         Button(action: pronounce) {
           Label("Pronounce \(entry.reading)", systemImage: "speaker.wave.2.fill")
             .labelStyle(.iconOnly)
-            .font(.system(size: 22))
-            .frame(width: 46, height: 38)
+            .font(.title2)
+            .frame(minWidth: 46, minHeight: 44)
             .background(ZenbuTheme.accent, in: Capsule())
         }
         .buttonStyle(.plain)
@@ -446,18 +454,19 @@ private struct WordHeader: View {
 }
 
 private struct FrequencyBadge: View {
+  @ScaledMetric(relativeTo: .body) private var badgeSize = 66.0
   let frequency: DictionaryEntry.Frequency
 
   var body: some View {
     ZStack {
       Circle().stroke(ZenbuTheme.mutedForeground.opacity(0.18), lineWidth: 6)
       Text(frequency.rawValue)
-        .font(.system(size: 11, weight: .bold, design: .rounded))
-        .lineLimit(1)
-        .minimumScaleFactor(0.7)
+        .font(.body.bold())
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
         .padding(2)
     }
-    .frame(width: 66, height: 66)
+    .frame(width: badgeSize, height: badgeSize)
     .padding(.top, 3)
   }
 }
@@ -470,7 +479,7 @@ private struct PitchAccentView: View {
     HStack(spacing: 8) {
       Image(systemName: "ear.badge.waveform")
       Text(reading.katakana)
-        .font(.system(size: 17, weight: .medium))
+        .font(.body.weight(.medium))
         .padding(.bottom, 4)
         .overlay(alignment: .bottom) {
           PitchContour(downstep: pitch.downstep, moraCount: pitch.moraCount)
@@ -479,7 +488,7 @@ private struct PitchAccentView: View {
         }
     }
     .padding(.horizontal, 12)
-    .frame(height: 34)
+    .frame(minHeight: 34)
     .background(ZenbuTheme.accent, in: Capsule())
     .accessibilityElement(children: .combine)
     .accessibilityLabel(
@@ -537,9 +546,10 @@ private struct PartOfSpeechRow: View {
           Text("View Conjugations")
             .foregroundStyle(ZenbuTheme.secondaryText)
           Image(systemName: "chevron.right")
-            .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.38))
+            .foregroundStyle(ZenbuTheme.secondaryText)
+            .accessibilityHidden(true)
         }
-        .font(.system(size: 17))
+        .font(.body)
         .contentShape(Rectangle())
       }
       .buttonStyle(.plain)
@@ -547,7 +557,7 @@ private struct PartOfSpeechRow: View {
       .rowChrome
     } else {
       Text(title.isEmpty ? "Dictionary entry" : title)
-        .font(.system(size: 18))
+        .font(.headline)
         .frame(maxWidth: .infinity, alignment: .leading)
         .rowChrome
     }
@@ -569,11 +579,11 @@ private struct SectionLabel: View {
 
   var body: some View {
     Text(title)
-      .font(.system(size: 13, weight: .medium))
-      .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.48))
+      .font(.footnote.weight(.medium))
+      .foregroundStyle(ZenbuTheme.secondaryText)
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding(.horizontal, 28)
-      .frame(height: 45, alignment: .bottom)
+      .frame(minHeight: 45, alignment: .bottom)
       .padding(.bottom, 8)
       .background(ZenbuTheme.background)
   }
@@ -590,10 +600,10 @@ private struct MeaningSection: View {
             Text("\(index + 1).")
             Text(sense.meaning)
           }
-          .font(.system(size: 17, weight: .semibold))
+          .font(.body.weight(.semibold))
           if !sense.notes.isEmpty {
             Text(sense.notes.joined(separator: " · "))
-              .font(.system(size: 14))
+              .font(.footnote)
               .foregroundStyle(ZenbuTheme.secondaryText)
           }
         }
@@ -666,7 +676,7 @@ private struct AlternativeFormLine: View {
 
   private func formLabel(_ form: DictionaryForm) -> some View {
     Text(form.value + (form.labels.isEmpty ? "" : " (\(form.labels.joined(separator: ", ")))"))
-      .font(.system(size: 15))
+      .font(.body)
       .foregroundStyle(form.labels.isEmpty ? ZenbuTheme.foreground : ZenbuTheme.secondaryText)
   }
 }
@@ -684,15 +694,17 @@ private struct RelationshipsSection: View {
           HStack {
             VStack(alignment: .leading, spacing: 3) {
               Text("\(relationship.headword)  \(relationship.reading)")
-                .font(.system(size: 18, weight: .semibold))
+                .font(.headline)
               Text("\(relationship.relation) · \(relationship.summary)")
-                .font(.system(size: 13))
+                .font(.footnote)
                 .foregroundStyle(ZenbuTheme.secondaryText)
                 .lineLimit(2)
             }
             Spacer()
             Image(systemName: "chevron.right").foregroundStyle(
-              ZenbuTheme.mutedForeground.opacity(0.38))
+              ZenbuTheme.secondaryText
+            )
+            .accessibilityHidden(true)
           }
           .padding(.horizontal, 28)
           .padding(.vertical, 11)
@@ -798,16 +810,18 @@ private struct EntryExamplesSection: View {
                 speechSynthesisClient.speak(example.japanese)
               } label: {
                 Image(systemName: "speaker.wave.2")
-                  .frame(width: 34, height: 34)
+                  .frame(width: 44, height: 44)
               }
               .accessibilityLabel("Speak Word Detail example \(index + 1)")
               .accessibilityIdentifier("word-detail.example-speaker.\(index)")
             }
             Text(example.english)
-              .font(.system(size: 15))
+              .font(.subheadline)
               .foregroundStyle(ZenbuTheme.secondaryText)
+              .accessibilityHidden(true)
           }
           .accessibilityElement(children: .contain)
+          .accessibilityLabel("\(example.japanese), \(example.english)")
           .accessibilityIdentifier("word-detail.example.\(index)")
         }
       }

@@ -108,8 +108,10 @@ struct ImageTextFlowView: View {
   private var toolbar: some View {
     HStack(spacing: 22) {
       Button(action: close) {
-        Image(systemName: "xmark")
+        Image(systemName: "xmark").frame(width: 44, height: 44)
       }
+      .frame(width: 44, height: 44)
+      .contentShape(Rectangle())
       .accessibilityLabel("Close")
       .accessibilityIdentifier("image-text.close")
       Spacer()
@@ -117,7 +119,10 @@ struct ImageTextFlowView: View {
         model.showsHighlights.toggle()
       } label: {
         Image(systemName: model.showsHighlights ? "viewfinder" : "viewfinder.circle")
+          .frame(width: 44, height: 44)
       }
+      .frame(width: 44, height: 44)
+      .contentShape(Rectangle())
       .accessibilityLabel(
         model.showsHighlights ? "Hide recognition highlights" : "Show recognition highlights"
       )
@@ -125,10 +130,10 @@ struct ImageTextFlowView: View {
       shareMenu
     }
     .buttonStyle(.plain)
-    .font(.system(size: 23))
-    .foregroundStyle(ZenbuTheme.selectedTab)
+    .font(.title3)
+    .foregroundStyle(ZenbuTheme.interactiveForeground)
     .padding(.horizontal, 16)
-    .frame(height: 49)
+    .frame(minHeight: 49)
     .background(ZenbuTheme.card)
   }
 
@@ -265,11 +270,11 @@ private struct ImageTextCanvas: View {
             } label: {
               HStack(spacing: 7) {
                 VStack(alignment: .leading, spacing: 1) {
-                  Text(selectedRegion.entry.reading).font(.caption2)
+                  Text(selectedRegion.entry.reading).font(.body)
                   Text(selectedRegion.entry.headword).font(.headline)
                 }
                 Text(selectedRegion.entry.summary)
-                  .lineLimit(1)
+                  .fixedSize(horizontal: false, vertical: true)
                 Image(systemName: "chevron.right")
               }
               .padding(.horizontal, 12)
@@ -285,17 +290,18 @@ private struct ImageTextCanvas: View {
             .accessibilityIdentifier("image-text.gloss")
           }
 
-          Text(page.observations.map(\.text).joined(separator: "\n"))
+          Text("")
             .frame(width: 1, height: 1)
-            .opacity(0.01)
+            .accessibilityElement()
             .accessibilityLabel(
               "Recognized text \(page.observations.map(\.text).joined(separator: " "))"
             )
             .accessibilityIdentifier("image-text.raw-text")
 
-          Text(page.asset.name)
+          Text("")
             .frame(width: 1, height: 1)
-            .opacity(0.01)
+            .accessibilityElement()
+            .accessibilityLabel(page.asset.name)
             .accessibilityIdentifier("image-text.current-page")
         }
         .accessibilityElement(children: .contain)

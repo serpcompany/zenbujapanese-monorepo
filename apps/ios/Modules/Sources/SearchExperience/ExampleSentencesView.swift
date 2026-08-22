@@ -59,13 +59,32 @@ struct ExampleSentencesView: View {
     }
     .task(id: query) {
       isLoading = true
+      let loadedExamples: [ExampleSentence]
       if usesHighlightedEntryExamples, let highlightedEntry {
-        examples = (try? await exampleSentenceClient.examples(highlightedEntry)) ?? []
+        loadedExamples = (try? await exampleSentenceClient.examples(highlightedEntry)) ?? []
       } else {
-        examples = (try? await exampleSentenceClient.search(query)) ?? []
+        loadedExamples = (try? await exampleSentenceClient.search(query)) ?? []
       }
+      examples = accessibilityFixtureExamples(from: loadedExamples)
       isLoading = false
     }
+  }
+
+  private func accessibilityFixtureExamples(
+    from loadedExamples: [ExampleSentence]
+  ) -> [ExampleSentence] {
+    #if DEBUG
+      let arguments = ProcessInfo.processInfo.arguments
+      guard
+        let marker = arguments.firstIndex(of: "-ExampleSentenceAccessibilityFixtureLimit"),
+        arguments.indices.contains(marker + 1),
+        let limit = Int(arguments[marker + 1]),
+        limit >= 0
+      else { return loadedExamples }
+      return Array(loadedExamples.prefix(limit))
+    #else
+      return loadedExamples
+    #endif
   }
 }
 
@@ -88,12 +107,14 @@ private struct ExampleListToolbar: View {
       }
     }
     .padding(.horizontal, 12)
-    .frame(height: 44)
+    .frame(minHeight: 44)
+    .foregroundStyle(ZenbuTheme.primaryForeground)
     .background(ZenbuTheme.chrome)
   }
 }
 
 private struct ExampleSentenceRow: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let index: Int
   let example: ExampleSentence
   let highlightedQuery: String
@@ -104,7 +125,11 @@ private struct ExampleSentenceRow: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      HStack(alignment: .center, spacing: 10) {
+      let headerLayout =
+        dynamicTypeSize.isAccessibilitySize
+        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+        : AnyLayout(HStackLayout(alignment: .center, spacing: 10))
+      headerLayout {
         Group {
           LinkedJapaneseText(
             text: example.japanese,
@@ -119,15 +144,15 @@ private struct ExampleSentenceRow: View {
 
         Button(action: speak) {
           Image(systemName: "speaker.wave.2")
-            .font(.system(size: 18))
-            .frame(width: 34, height: 34)
+            .font(.headline)
+            .frame(minWidth: 44, minHeight: 44)
         }
         .accessibilityLabel("Speak example \(index + 1)")
         .accessibilityIdentifier("example.speaker.\(index)")
       }
 
       Text(example.english)
-        .font(.system(size: 16))
+        .font(.body)
         .foregroundStyle(ZenbuTheme.secondaryText)
         .frame(maxWidth: .infinity, alignment: .leading)
     }

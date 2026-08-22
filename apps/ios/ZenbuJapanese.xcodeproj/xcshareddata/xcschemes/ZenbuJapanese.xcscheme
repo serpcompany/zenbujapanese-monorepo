@@ -66,30 +66,21 @@
             ReferencedContainer = "container:ZenbuJapanese.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
-      <Testables>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "151000000000000000000008"
-               BuildableName = "ZenbuJapaneseTests.xctest"
-               BlueprintName = "ZenbuJapaneseTests"
-               ReferencedContainer = "container:ZenbuJapanese.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "74E6EB6E486E0D87C41A29EF"
-               BuildableName = "ZenbuJapaneseUITests.xctest"
-               BlueprintName = "ZenbuJapaneseUITests"
-               ReferencedContainer = "container:ZenbuJapanese.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-      </Testables>
+      <TestPlans>
+         <TestPlanReference
+            reference = "container:TestPlans/ZenbuPR.xctestplan"
+            default = "YES">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:TestPlans/ZenbuAccessibility.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:TestPlans/ZenbuNightly.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:TestPlans/ZenbuPerformance.xctestplan">
+         </TestPlanReference>
+      </TestPlans>
       <CommandLineArguments>
       </CommandLineArguments>
    </TestAction>

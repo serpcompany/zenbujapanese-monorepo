@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct RadicalInputView: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Binding var query: String
   let lookupClient: RadicalLookupClient
   let selectMode: (SearchInputMode) -> Void
@@ -29,13 +30,16 @@ struct RadicalInputView: View {
                   .font(.caption.weight(.semibold))
                   .foregroundStyle(ZenbuTheme.secondaryText)
                 LazyVGrid(
-                  columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 8),
+                  columns: Array(
+                    repeating: GridItem(.flexible(), spacing: 4),
+                    count: dynamicTypeSize >= .xxLarge ? 4 : 8
+                  ),
                   spacing: 4
                 ) {
                   ForEach(group.values) { radical in
                     Button(radical.glyph) { toggle(radical.id) }
-                      .font(.system(size: 20))
-                      .frame(maxWidth: .infinity, minHeight: 34)
+                      .font(.title3)
+                      .frame(maxWidth: .infinity, minHeight: 44)
                       .background(
                         selectedRadicals.contains(radical.id)
                           ? ZenbuTheme.selectedTab
@@ -63,7 +67,7 @@ struct RadicalInputView: View {
             query = ""
           } label: {
             Image(systemName: "delete.left")
-              .font(.system(size: 22))
+              .font(.title2)
               .frame(maxWidth: .infinity, maxHeight: .infinity)
           }
           .disabled(selectedRadicals.isEmpty && SearchQuery(query).isEmpty)
@@ -73,21 +77,22 @@ struct RadicalInputView: View {
           Button("Search") {
             if let selectedCandidate { submit(selectedCandidate) }
           }
-          .font(.system(size: 17, weight: .semibold))
+          .font(.body.weight(.semibold))
           .frame(maxWidth: .infinity, maxHeight: .infinity)
           .background(
             selectedCandidate == nil
               ? ZenbuTheme.mutedForeground.opacity(0.08) : ZenbuTheme.selectedTab
           )
           .foregroundStyle(
-            selectedCandidate == nil ? ZenbuTheme.mutedForeground : ZenbuTheme.primaryForeground
+            selectedCandidate == nil ? ZenbuTheme.foreground : ZenbuTheme.primaryForeground
           )
+          .buttonStyle(UndimmedPlainButtonStyle())
           .disabled(selectedCandidate == nil)
           .accessibilityIdentifier("radical.search")
         }
         .frame(width: 90)
       }
-      .frame(height: 258)
+      .frame(minHeight: dynamicTypeSize >= .xxLarge ? 360 : 258)
     }
     .background(ZenbuTheme.row)
     .task {
@@ -107,10 +112,12 @@ struct RadicalInputView: View {
         Text("Select one or more radicals")
         Spacer()
       }
-      .font(.system(size: 14))
+      .font(.body)
       .foregroundStyle(ZenbuTheme.secondaryText)
+      .fixedSize(horizontal: false, vertical: true)
       .padding(.horizontal, 14)
-      .frame(height: 46)
+      .padding(.vertical, 6)
+      .frame(minHeight: 46)
     } else {
       ScrollView(.horizontal, showsIndicators: false) {
         LazyHStack(spacing: 0) {
@@ -119,7 +126,7 @@ struct RadicalInputView: View {
               selectedCandidate = SearchQuery(candidate.value)
               query = candidate.value
             }
-            .font(.system(size: 27))
+            .font(.title)
             .foregroundStyle(
               selectedCandidate?.value == candidate.value
                 ? ZenbuTheme.primaryForeground
@@ -134,7 +141,7 @@ struct RadicalInputView: View {
           }
         }
       }
-      .frame(height: 46)
+      .frame(minHeight: 46)
       .accessibilityIdentifier("radical.candidate-strip")
       .accessibilityValue("\(radicalCandidates.count) candidates")
     }

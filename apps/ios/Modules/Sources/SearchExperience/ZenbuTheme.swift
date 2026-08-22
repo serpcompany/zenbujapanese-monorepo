@@ -21,9 +21,15 @@ enum ZenbuTheme {
     light: p3(0.692737, 0.116232, 0.104679),  // oklch(0.505 0.213 27.518)
     dark: p3(0.569606, 0.121069, 0.108493)  // oklch(0.444 0.177 26.899)
   )
+  /// Brand-colored foreground for links, selected labels, and meaningful icons.
+  /// Dark mode uses a lighter coral so normal-size text remains readable on page surfaces.
+  static let interactiveForeground = dynamic(
+    light: p3(0.692737, 0.116232, 0.104679),  // oklch(0.505 0.213 27.518)
+    dark: p3(0.980000, 0.550000, 0.540000)  // contrast-adjusted brand coral
+  )
   static let primaryForeground = dynamic(
-    light: p3(0.988669, 0.951204, 0.950419),  // oklch(0.971 0.013 17.38)
-    dark: p3(0.988669, 0.951204, 0.950419)  // oklch(0.971 0.013 17.38)
+    light: p3(1.000000, 1.000000, 1.000000),  // accessibility-adjusted chrome text
+    dark: p3(1.000000, 1.000000, 1.000000)  // accessibility-adjusted chrome text
   )
   static let secondary = dynamic(
     light: p3(0.956385, 0.956385, 0.959079),  // oklch(0.967 0.001 286.375)

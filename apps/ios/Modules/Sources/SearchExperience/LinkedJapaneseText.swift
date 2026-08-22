@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct LinkedJapaneseText: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @State private var tokens: [JapaneseTextToken] = []
 
   let text: String
@@ -14,9 +15,19 @@ struct LinkedJapaneseText: View {
     Group {
       if tokens.isEmpty {
         Text(text)
-          .font(.system(size: 20))
+          .font(.title3)
+      } else if dynamicTypeSize.isAccessibilitySize {
+        VStack(alignment: .leading, spacing: 6) {
+          ForEach(tokens) { token in
+            LinkedTokenView(
+              token: token,
+              identifier: "\(identifierPrefix).\(token.id).\(token.surface)",
+              openWord: openWord
+            )
+          }
+        }
       } else {
-        LinkedTokenLayout(spacing: 3) {
+        LinkedTokenLayout(spacing: 3, dynamicTypeSize: dynamicTypeSize) {
           ForEach(tokens) { token in
             LinkedTokenView(
               token: token,
@@ -27,6 +38,7 @@ struct LinkedJapaneseText: View {
         }
       }
     }
+    .accessibilityElement(children: .contain)
     .task(id: highlightedEntry?.id) {
       tokens = await japaneseTextAnalysisClient.linkedTokens(
         text,
@@ -50,26 +62,29 @@ private struct LinkedTokenView: View {
         VStack(spacing: 0) {
           if token.showsReading {
             Text(entry.reading)
-              .font(.system(size: 10, weight: .semibold))
+              .font(.body.weight(.semibold))
           }
           Text(token.surface)
-            .font(.system(size: 20))
+            .font(.body)
             .underline()
         }
-        .foregroundStyle(ZenbuTheme.selectedTab)
+        .foregroundStyle(ZenbuTheme.interactiveForeground)
       }
       .buttonStyle(.plain)
+      .frame(minWidth: 44, minHeight: 44)
+      .contentShape(Rectangle())
       .accessibilityLabel("\(token.surface), \(entry.reading), \(entry.summary)")
       .accessibilityIdentifier(identifier)
     } else {
       Text(token.surface)
-        .font(.system(size: 20))
+        .font(.body)
     }
   }
 }
 
 private struct LinkedTokenLayout: Layout {
   let spacing: CGFloat
+  let dynamicTypeSize: DynamicTypeSize
 
   func sizeThatFits(
     proposal: ProposedViewSize,
