@@ -112,6 +112,10 @@ _Avoid_: Lookup Capture, Media import, contextual image explanation
 A learner-saved result from an Image Text Flow that retains its explicitly saved source image, recognized Japanese regions, and any generated whole-content translation. Saving it does not automatically save every recognized language item.
 _Avoid_: Saved Language Item, Media Entry, automatic image history
 
+**Word Image Attachment**:
+The latest source image copied into app-owned storage and linked to a Language Reference Data entry when the learner opens that word from an Image Text Flow. It persists locally until replaced or explicitly removed from Word Detail. It does not save unopened recognized words or create an Image Text Result, Saved Language Item, or Encounter Example.
+_Avoid_: Temporary navigation image, Image Text Result, automatic vocabulary save, canonical dictionary image
+
 **Learning Profile**:
 The connected record of a learner's saved material, encounters, activity, and progress across Product Experiences.
 _Avoid_: User area, central profile area

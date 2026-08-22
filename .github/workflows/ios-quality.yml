@@ -132,6 +132,7 @@ jobs:
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBottomNavigationContainsOnlyReleaseDestinationsAndRestoresSearch \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCameraUnavailableOnSimulatorReportsHardwareBoundary \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextWordAttachmentPersistsIntoLaterSearch \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextVerticalFileProducesSelectableJapaneseRegions \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHandwritingCandidatesComposeCommonKanjiAndEnterHistory \

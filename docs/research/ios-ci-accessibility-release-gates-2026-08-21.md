@@ -9,15 +9,15 @@ Status: recommendation only; this report does not implement or enable CI
 The implementation deliberately differs from the original recommendation below:
 
 - Public pull requests use isolated GitHub-hosted macOS runners for repository contracts,
-  unit tests, the complete accessibility plan, and 20 stable critical UI journeys.
+  unit tests, the complete accessibility plan, and 21 stable critical UI journeys.
 - The complete UI/reliability matrix is **manual-only**, not daily. It remains available
   through `ios-nightly.yml` and as a local release gate.
 - Trusted manual nightly/performance jobs target self-hosted macOS through #176,
   but execution is blocked until a runner is configured or shared with this repository.
   Public pull-request code must not execute on a self-hosted Mac.
-- Builds 9 and 10 were uploaded before every inherited system-control state was audited.
-  Build 11 supersedes them for App Review and must include the camera-source plus light/dark
-  recent-search Delete-action regressions.
+- Builds 9–11 were uploaded before all owner release feedback was complete.
+  Build 12 supersedes them for App Review and includes the system-control contrast fixes,
+  persistent removable Word Image Attachments, and mixed-script furigana alignment.
 
 The historical research and cited recommendations remain below as decision evidence; this
 update is the current operating policy.
@@ -280,7 +280,7 @@ The installed iOS debugging skill reinforces the identity rule: discover the exa
 
 ## Implementation plan
 
-### Tier 0 — before build 11 resubmission
+### Tier 0 — before build 12 resubmission
 
 1. Commit the four test plans and make `ZenbuPR` the scheme default.
 2. Expand the current audit beyond `.contrast` to `.all`, adding stable issue handling only for individually documented false positives.
@@ -288,7 +288,7 @@ The installed iOS debugging skill reinforces the identity rule: discover the exa
 4. Run `ZenbuPR` locally on iPhone 17 Pro Max and retain the `.xcresult`.
 5. Run the physical iPhone 14 release checklist including VoiceOver.
 6. Audit camera-source actions and the revealed recent-search Delete action in light mode.
-7. Only then archive/upload build 11 and resubmit.
+7. Only then archive/upload build 12 and resubmit.
 
 ### Tier 1 — immediately after the rejection repair
 

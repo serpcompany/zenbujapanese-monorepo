@@ -24,7 +24,7 @@ struct DictionarySourcesView: View {
         List {
           Section("Zenbu Japanese") {
             Text(
-              "Searches and notes stay on this device. Images are processed for the current Image Text session and are discarded when you close it."
+              "Searches and notes stay on this device. Image Text processing stays on device. When you open a recognized word, Zenbu saves that source image as the word's latest image context until you replace it or choose Remove from Word."
             )
             Link("Privacy Policy", destination: URL(string: "https://zenbujapanese.com/privacy")!)
               .accessibilityIdentifier("settings.privacy-policy")

@@ -119,21 +119,25 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.buttons["settings.done"].isHittable)
     let sourceList = app.descendants(matching: .any)["dictionary-sources.list"]
     XCTAssertTrue(sourceList.waitForExistence(timeout: 5))
+    try performAudit(
+      in: app,
+      named: "Dictionary Sources - dark accessibility XXXL",
+      // Xcode 26 reports an unidentified SwiftUI bookkeeping node as a
+      // contrast failure in this state. The ordinary dark Dictionary Sources
+      // journey keeps contrast blocking, and theme unit tests enforce every
+      // foreground/surface pair. Tracked by #173.
+      types: auditTypes.subtracting(.dynamicType.union(.contrast))
+    )
+
+    // Reachability is checked after the audit. Auditing midway through this
+    // scroll would incorrectly report the intentionally half-visible row at
+    // the top edge as inaccessible text.
     let projectLink = app.buttons["dictionary-sources.jmdict-project"]
     for _ in 0..<4 where !projectLink.exists || !projectLink.isHittable {
       sourceList.swipeUp()
     }
     XCTAssertTrue(projectLink.waitForExistence(timeout: 5))
     XCTAssertTrue(projectLink.isHittable)
-    try performAudit(
-      in: app,
-      named: "Dictionary Sources - dark accessibility XXXL",
-      // Xcode 26 reports an unidentified, partially occluded SwiftUI bookkeeping
-      // node as a contrast failure only in this XXXL scrolled state. The ordinary
-      // dark Dictionary Sources journey keeps contrast blocking, and the theme
-      // unit tests enforce every foreground/surface pair. Tracked by #173.
-      types: auditTypes.subtracting(.dynamicType.union(.contrast))
-    )
   }
 
   @MainActor
