@@ -163,7 +163,7 @@ public struct SearchExperienceRootView: View {
         }
       }
     }
-    .tint(ZenbuTheme.primaryForeground)
+    .tint(ZenbuTheme.systemControlTint)
     .toolbarBackground(ZenbuTheme.primary, for: .navigationBar)
     .toolbarBackground(.visible, for: .navigationBar)
     .toolbarColorScheme(.dark, for: .navigationBar)

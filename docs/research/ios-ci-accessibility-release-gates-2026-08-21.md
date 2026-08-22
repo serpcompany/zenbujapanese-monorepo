@@ -4,6 +4,24 @@ Date: 2026-08-21
 Scope: Zenbu Japanese iOS app (`com.zenbujapanese.dictionary`)  
 Status: recommendation only; this report does not implement or enable CI
 
+## Implementation update — 2026-08-22
+
+The implementation deliberately differs from the original recommendation below:
+
+- Public pull requests use isolated GitHub-hosted macOS runners for repository contracts,
+  unit tests, the complete accessibility plan, and 21 critical UI journeys.
+- The complete UI/reliability matrix is **manual-only**, not daily. It remains available
+  through `ios-nightly.yml` and as a local release gate.
+- Trusted manual nightly/performance jobs are proposed for self-hosted macOS in #176,
+  but that migration is blocked until a runner is configured or shared with this repository.
+  Public pull-request code must not execute on a self-hosted Mac.
+- Build 9 was uploaded before two additional light-mode system-control states were audited.
+  Build 10 supersedes it for App Review and must include the camera-source and recent-search
+  Delete-action regressions.
+
+The historical research and cited recommendations remain below as decision evidence; this
+update is the current operating policy.
+
 ## Executive decision
 
 Zenbu should not choose between automated testing and manual testing. It needs both, with different jobs:
@@ -262,14 +280,15 @@ The installed iOS debugging skill reinforces the identity rule: discover the exa
 
 ## Implementation plan
 
-### Tier 0 — before build 9 resubmission
+### Tier 0 — before build 10 resubmission
 
 1. Commit the four test plans and make `ZenbuPR` the scheme default.
 2. Expand the current audit beyond `.contrast` to `.all`, adding stable issue handling only for individually documented false positives.
 3. Cover the complete reviewer-reachable path in both appearances and add the screens directly implicated by the color-token change.
 4. Run `ZenbuPR` locally on iPhone 17 Pro Max and retain the `.xcresult`.
 5. Run the physical iPhone 14 release checklist including VoiceOver.
-6. Only then archive/upload build 9 and resubmit.
+6. Audit camera-source actions and the revealed recent-search Delete action in light mode.
+7. Only then archive/upload build 10 and resubmit.
 
 ### Tier 1 — immediately after the rejection repair
 
