@@ -33,9 +33,11 @@ final class ZenbuThemeAccessibilityTests: XCTestCase {
       ("body on page", ZenbuTheme.foreground, ZenbuTheme.background),
       ("secondary text on page", ZenbuTheme.secondaryText, ZenbuTheme.background),
       ("interactive text on page", ZenbuTheme.interactiveForeground, ZenbuTheme.background),
+      ("system control tint on page", ZenbuTheme.systemControlTint, ZenbuTheme.background),
       ("body on card", ZenbuTheme.foreground, ZenbuTheme.card),
       ("secondary text on card", ZenbuTheme.secondaryText, ZenbuTheme.card),
       ("interactive text on card", ZenbuTheme.interactiveForeground, ZenbuTheme.card),
+      ("system control tint on card", ZenbuTheme.systemControlTint, ZenbuTheme.card),
       ("text on brand chrome", ZenbuTheme.primaryForeground, ZenbuTheme.chrome),
     ]
 
