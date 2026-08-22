@@ -72,7 +72,10 @@ private struct LinkedTokenView: View {
             LinkedRubySegmentView(segment: segment)
           }
         }
-        .foregroundStyle(ZenbuTheme.interactiveForeground)
+        // Underlining carries the interactive affordance. Ruby uses the normal
+        // text foreground because the smaller caption glyphs need more
+        // antialiasing contrast margin than the brand red provides.
+        .foregroundStyle(ZenbuTheme.foreground)
       }
       .buttonStyle(.plain)
       .frame(minWidth: 44, minHeight: 44)
