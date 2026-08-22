@@ -15,7 +15,7 @@ concurrency:
 jobs:
   simulator-performance:
     name: simulator performance baseline
-    runs-on: macos-26
+    runs-on: [self-hosted, macOS]
     timeout-minutes: 60
     steps:
       - name: Check out exact source and LFS data
