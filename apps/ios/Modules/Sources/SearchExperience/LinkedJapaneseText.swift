@@ -59,14 +59,18 @@ private struct LinkedTokenView: View {
       Button {
         openWord(entry)
       } label: {
-        VStack(spacing: 0) {
-          if token.showsReading {
-            Text(entry.reading)
-              .font(.body.weight(.semibold))
+        HStack(alignment: .bottom, spacing: 0) {
+          ForEach(
+            Array(
+              JapaneseRubyAnnotation.segments(
+                surface: token.surface,
+                reading: entry.reading
+              ).enumerated()
+            ),
+            id: \.offset
+          ) { _, segment in
+            LinkedRubySegmentView(segment: segment)
           }
-          Text(token.surface)
-            .font(.body)
-            .underline()
         }
         .foregroundStyle(ZenbuTheme.interactiveForeground)
       }
@@ -79,6 +83,28 @@ private struct LinkedTokenView: View {
       Text(token.surface)
         .font(.body)
     }
+  }
+}
+
+private struct LinkedRubySegmentView: View {
+  let segment: JapaneseRubySegment
+
+  var body: some View {
+    if let reading = segment.reading {
+      VStack(spacing: 0) {
+        Text(reading)
+          .font(.caption.weight(.semibold))
+        base
+      }
+    } else {
+      base
+    }
+  }
+
+  private var base: some View {
+    Text(segment.base)
+      .font(.body)
+      .underline()
   }
 }
 

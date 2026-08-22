@@ -309,6 +309,66 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testImageTextWordAttachmentPersistsIntoLaterSearch() throws {
+    var app = launchApp(additionalArguments: [
+      "-StartImageTextFixtures", "fixture-clear-horizontal.png",
+      "-InjectImageTextTranslation",
+      "-ResetWordImageAttachments",
+    ])
+    XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
+    let quiet = app.descendants(matching: .any).matching(identifier: "image-text.region.静か")
+      .firstMatch
+    XCTAssertTrue(quiet.waitForExistence(timeout: 10))
+    quiet.tap()
+    let gloss = app.buttons["image-text.gloss"]
+    XCTAssertTrue(gloss.waitForExistence(timeout: 3))
+    gloss.tap()
+
+    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.buttons["word-detail.image-attachment"].waitForExistence(timeout: 3))
+    app.buttons["word-detail.back"].tap()
+    XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
+    app.buttons["image-text.close"].tap()
+
+    app.terminate()
+    app = launchApp()
+
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    submitSearch("静か", in: app, searchField: searchField)
+    let result = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "静か, しずか")
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 3))
+    result.tap()
+    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    let savedAttachment = app.buttons["word-detail.image-attachment"]
+    XCTAssertTrue(
+      savedAttachment.waitForExistence(timeout: 3),
+      "Image Text word context must survive an ordinary Search route."
+    )
+    XCTAssertTrue(savedAttachment.label.contains("Saved image context"))
+    savedAttachment.tap()
+    let remove = app.buttons["word-detail.image-attachment-remove"]
+    XCTAssertTrue(remove.waitForExistence(timeout: 3))
+    remove.tap()
+    XCTAssertTrue(savedAttachment.waitForNonExistence(timeout: 3))
+
+    app.terminate()
+    app = launchApp()
+    let relaunchedSearchField = app.textFields["search.field"]
+    XCTAssertTrue(relaunchedSearchField.waitForExistence(timeout: 3))
+    submitSearch("静か", in: app, searchField: relaunchedSearchField)
+    let relaunchedResult = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "静か, しずか")
+    ).firstMatch
+    XCTAssertTrue(relaunchedResult.waitForExistence(timeout: 3))
+    relaunchedResult.tap()
+    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertFalse(app.buttons["word-detail.image-attachment"].exists)
+  }
+
+  @MainActor
   func testImageTextVerticalFileProducesSelectableJapaneseRegions() throws {
     let app = launchImageTextFixtures(["fixture-vertical.png"])
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))

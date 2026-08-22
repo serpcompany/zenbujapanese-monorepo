@@ -17,6 +17,7 @@ public struct SearchExperienceRootView: View {
   #endif
   private let lookupClient = LookupClient.live
   private let recentSearchStore = RecentSearchStore.live
+  private let wordImageAttachmentStore = WordImageAttachmentStore.live
   private let handwritingRecognitionClient: HandwritingRecognitionClient
   private let cameraAuthorizationClient: CameraAuthorizationClient
   private let speechSynthesisClient: SpeechSynthesisClient
@@ -91,11 +92,12 @@ public struct SearchExperienceRootView: View {
           WordDetailView(
             entry: entry,
             backTitle: backTitle,
-            imageAttachment: imageAttachment(for: imageContext),
+            initialImageAttachment: imageAttachment(for: imageContext),
             speechSynthesisClient: speechSynthesisClient,
             exampleSentenceClient: .live,
             japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
             wordNoteStore: .live,
+            wordImageAttachmentStore: wordImageAttachmentStore,
             conjugationTable: japaneseConjugationClient.table(entry),
             openRelated: openRelated,
             openKanji: openKanji,
@@ -243,13 +245,13 @@ public struct SearchExperienceRootView: View {
     }
   }
 
-  private func imageAttachment(for context: ImageWordContext?) -> ImageWordAttachment? {
+  private func imageAttachment(for context: ImageWordContext?) -> WordImageAttachment? {
     guard let context,
       let asset = imageTextSessionStore.session(context.sessionID)?.assets.first(where: {
         $0.id == context.assetID
       })
     else { return nil }
-    return ImageWordAttachment(name: asset.name, data: asset.data)
+    return WordImageAttachment(name: asset.name, data: asset.data)
   }
 }
 

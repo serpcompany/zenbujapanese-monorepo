@@ -62,10 +62,12 @@ already expresses translation intent, so the flow requests whole-content
 translation automatically; entering through Lookup requires an explicit
 translation request.
 
-The working source and result are transient until the learner chooses Discard
-or Save. An explicit save creates one Image Text Result regardless of which
-Product Experience opened the flow. Exact controls, emphasis, and navigation
-remain later UI decisions.
+The working source and result are transient at flow level until the learner
+chooses Discard or Save. Opening a recognized word is the narrow exception: it
+creates or replaces that entry's local Word Image Attachment, without retaining
+the OCR regions or whole-content translation. An explicit flow-level save
+creates one Image Text Result regardless of which Product Experience opened the
+flow. Exact controls, emphasis, and navigation remain later UI decisions.
 
 ## Text handoffs with Lookup
 

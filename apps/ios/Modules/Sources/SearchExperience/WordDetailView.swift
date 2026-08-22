@@ -1,11 +1,6 @@
 import SwiftUI
 import UIKit
 
-struct ImageWordAttachment {
-  let name: String
-  let data: Data
-}
-
 struct WordDetailView: View {
   @Environment(\.dismiss) private var dismiss
   @FocusState private var noteEditorFocused: Bool
@@ -17,14 +12,17 @@ struct WordDetailView: View {
   @State private var isLoadingExamples = true
   @State private var lastSpeechRequest: String?
   @State private var boundaryAlert: WordDetailBoundary?
+  @State private var storedImageAttachment: WordImageAttachment?
+  @State private var didResolveImageAttachment = false
 
   let entry: DictionaryEntry
   let backTitle: String
-  let imageAttachment: ImageWordAttachment?
+  let initialImageAttachment: WordImageAttachment?
   let speechSynthesisClient: SpeechSynthesisClient
   let exampleSentenceClient: ExampleSentenceClient
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let wordNoteStore: WordNoteStore
+  let wordImageAttachmentStore: WordImageAttachmentStore
   let conjugationTable: ConjugationTable?
   let openRelated: (DictionaryRelationship) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
@@ -48,7 +46,8 @@ struct WordDetailView: View {
             WordHeader(
               entry: entry,
               imageAttachment: imageAttachment,
-              pronounce: { speechSynthesisClient.speak(entry.reading) }
+              pronounce: { speechSynthesisClient.speak(entry.reading) },
+              removeImageAttachment: removeImageAttachment
             )
             PartOfSpeechRow(
               title: (entry.senses.first?.partsOfSpeech ?? entry.partsOfSpeech)
@@ -142,11 +141,34 @@ struct WordDetailView: View {
     }
     .task(id: entry.id) {
       isLoadingExamples = true
+      didResolveImageAttachment = false
+      storedImageAttachment = initialImageAttachment
+      if let initialImageAttachment {
+        await wordImageAttachmentStore.save(initialImageAttachment, entry.noteID)
+      } else {
+        let attachment = await wordImageAttachmentStore.load(entry.noteID)
+        guard !Task.isCancelled else { return }
+        storedImageAttachment = attachment
+      }
+      guard !Task.isCancelled else { return }
+      didResolveImageAttachment = true
       examples = (try? await exampleSentenceClient.examples(entry)) ?? []
       notes = await wordNoteStore.load(entry.noteID)
       editingNoteID = nil
       noteDraft = ""
       isLoadingExamples = false
+    }
+  }
+
+  private var imageAttachment: WordImageAttachment? {
+    didResolveImageAttachment ? storedImageAttachment : (storedImageAttachment ?? initialImageAttachment)
+  }
+
+  private func removeImageAttachment() {
+    Task { @MainActor in
+      await wordImageAttachmentStore.remove(entry.noteID)
+      storedImageAttachment = nil
+      didResolveImageAttachment = true
     }
   }
 
@@ -374,8 +396,9 @@ private struct DetailToolbar: View {
 
 private struct WordHeader: View {
   let entry: DictionaryEntry
-  let imageAttachment: ImageWordAttachment?
+  let imageAttachment: WordImageAttachment?
   let pronounce: () -> Void
+  let removeImageAttachment: () -> Void
   @State private var showsAttachment = false
 
   var body: some View {
@@ -399,12 +422,12 @@ private struct WordHeader: View {
                 .frame(width: 66, height: 52)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 5))
-              Text("Attach Photo")
+              Text("Saved Image")
                 .font(.caption2)
             }
           }
           .buttonStyle(.plain)
-          .accessibilityLabel("Image attachment (imageAttachment.name), Attach Photo")
+          .accessibilityLabel("Saved image context, \(imageAttachment.name)")
           .accessibilityIdentifier("word-detail.image-attachment")
         } else {
           FrequencyBadge(frequency: entry.frequency)
@@ -436,6 +459,11 @@ private struct WordHeader: View {
       if let imageAttachment, let image = UIImage(data: imageAttachment.data) {
         VStack(spacing: 16) {
           HStack {
+            Button("Remove from Word", role: .destructive) {
+              showsAttachment = false
+              removeImageAttachment()
+            }
+            .accessibilityIdentifier("word-detail.image-attachment-remove")
             Spacer()
             Button("Done") { showsAttachment = false }
               .accessibilityIdentifier("word-detail.image-attachment-done")
@@ -445,6 +473,10 @@ private struct WordHeader: View {
             .scaledToFit()
           Text(imageAttachment.name)
             .foregroundStyle(ZenbuTheme.secondaryText)
+          Text("Saved automatically when you opened this word from Image Text.")
+            .font(.footnote)
+            .foregroundStyle(ZenbuTheme.secondaryText)
+            .multilineTextAlignment(.center)
         }
         .padding()
         .background(ZenbuTheme.background)

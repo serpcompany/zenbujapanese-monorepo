@@ -124,16 +124,33 @@ Nihongo Pro's camera, photo, and file OCR behavior is part of the Lookup
 target. Zenbu exposes it through the shared Image Text Flow, which handles one
 bounded image or limited content rather than whole-work Media Analysis.
 
-The working image and derived result are transient until the learner chooses
-to save them. Discard retains neither. An explicit flow-level save creates one
+The working image and derived result remain transient at flow level until the
+learner chooses to save them. Opening a recognized word is the narrow exception:
+it creates or replaces that entry's local Word Image Attachment so the same
+source context remains visible from later ordinary Search. Unopened recognized
+words are not saved. The attachment viewer explains the automatic save and
+offers Remove from Word. An explicit flow-level save separately creates one
 reopenable Image Text Result containing its source image, recognized Japanese
-regions, and any generated whole-content translation; it does not
-automatically save every recognized word.
+regions, and any generated whole-content translation.
 
 Nihongo-parity dictionary cards retain their save or bookmark behavior,
 including the ability to attach an explicitly selected or captured source
 image. A saved language item may preserve that personal context as an
 Encounter Example.
+
+Word Image Attachments use the app-owned dictionary-entry identity, retain the
+most recently opened image per entry, and deduplicate identical image bytes in
+local storage. They do not upload images or become source-backed dictionary data.
+
+## Furigana rendering
+
+Interactive Japanese text aligns readings to kanji-bearing spans rather than
+placing a dictionary entry's complete reading above a mixed kanji/kana word.
+Visible kana acts as the alignment anchor: `女らしい / おんならしい` renders
+`おんな` above `女` and leaves `らしい` unannotated. All-kanji words may use
+their complete reading. When a mixed-script reading cannot be aligned
+deterministically, Zenbu omits ruby instead of displaying a confidently wrong
+whole-word annotation.
 
 ## Text handoff to Translator
 

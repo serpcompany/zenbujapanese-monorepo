@@ -4,10 +4,102 @@ struct JapaneseTextToken: Identifiable, Sendable {
   let id: Int
   let surface: String
   let entry: DictionaryEntry?
+}
 
-  var showsReading: Bool {
-    guard let entry, entry.reading != surface else { return false }
-    return surface.contains(where: \.isKanjiOrIterationMark)
+struct JapaneseRubySegment: Hashable, Sendable {
+  let base: String
+  let reading: String?
+}
+
+enum JapaneseRubyAnnotation {
+  static func segments(surface: String, reading: String) -> [JapaneseRubySegment] {
+    guard surface.contains(where: \.isKanjiOrIterationMark), surface != reading else {
+      return [JapaneseRubySegment(base: surface, reading: nil)]
+    }
+    let runs = surfaceRuns(surface)
+    guard runs.contains(where: \.isKanji), runs.contains(where: { !$0.isKanji }) else {
+      return [JapaneseRubySegment(base: surface, reading: reading)]
+    }
+    return alignedSegments(runs: runs, reading: reading)
+      ?? runs.map { JapaneseRubySegment(base: $0.base, reading: nil) }
+  }
+
+  private struct SurfaceRun {
+    var base: String
+    let isKanji: Bool
+  }
+
+  private static func surfaceRuns(_ surface: String) -> [SurfaceRun] {
+    var runs: [SurfaceRun] = []
+    for character in surface {
+      let isKanji = character.isKanjiOrIterationMark
+      if runs.last?.isKanji == isKanji {
+        runs[runs.count - 1].base.append(character)
+      } else {
+        runs.append(SurfaceRun(base: String(character), isKanji: isKanji))
+      }
+    }
+    return runs
+  }
+
+  private static func alignedSegments(
+    runs: [SurfaceRun],
+    reading: String
+  ) -> [JapaneseRubySegment]? {
+    let originalReading = Array(reading)
+    let normalizedReading = normalizedKana(reading)
+    var cursor = 0
+    var segments: [JapaneseRubySegment] = []
+
+    for (index, run) in runs.enumerated() {
+      if run.isKanji {
+        if let nextKana = runs[(index + 1)...].first(where: { !$0.isKanji }) {
+          let anchor = normalizedKana(nextKana.base)
+          guard let anchorStart = firstIndex(
+            of: anchor,
+            in: normalizedReading,
+            startingAt: cursor + 1
+          ) else { return nil }
+          let ruby = String(originalReading[cursor..<anchorStart])
+          guard !ruby.isEmpty else { return nil }
+          segments.append(JapaneseRubySegment(base: run.base, reading: ruby))
+          cursor = anchorStart
+        } else {
+          guard cursor < originalReading.count else { return nil }
+          segments.append(
+            JapaneseRubySegment(
+              base: run.base,
+              reading: String(originalReading[cursor...])
+            )
+          )
+          cursor = originalReading.count
+        }
+      } else {
+        let anchor = normalizedKana(run.base)
+        guard cursor + anchor.count <= normalizedReading.count,
+          Array(normalizedReading[cursor..<(cursor + anchor.count)]) == anchor
+        else { return nil }
+        segments.append(JapaneseRubySegment(base: run.base, reading: nil))
+        cursor += anchor.count
+      }
+    }
+    return cursor == originalReading.count ? segments : nil
+  }
+
+  private static func normalizedKana(_ value: String) -> [Character] {
+    Array(value.applyingTransform(.hiraganaToKatakana, reverse: true) ?? value)
+  }
+
+  private static func firstIndex(
+    of needle: [Character],
+    in haystack: [Character],
+    startingAt start: Int
+  ) -> Int? {
+    guard !needle.isEmpty, start >= 0, start + needle.count <= haystack.count else { return nil }
+    for index in start...(haystack.count - needle.count) {
+      if Array(haystack[index..<(index + needle.count)]) == needle { return index }
+    }
+    return nil
   }
 }
 
