@@ -292,10 +292,16 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let activityClose = app.buttons["header.closeButton"]
     XCTAssertTrue(activityClose.waitForExistence(timeout: 3))
     activityClose.tap()
+    XCTAssertTrue(activityClose.waitForNonExistence(timeout: 3))
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
+    assertImageTextToolbarIsHittable(in: app)
 
     app.buttons["image-text.share"].tap()
-    copyText.tap()
+    let reopenedCopyText = app.descendants(matching: .any)
+      .matching(identifier: "image-text.copy-text")
+      .firstMatch
+    XCTAssertTrue(reopenedCopyText.waitForExistence(timeout: 3))
+    reopenedCopyText.tap()
 
     app.buttons["image-text.close"].tap()
     let searchField = app.textFields["search.field"]
@@ -3345,9 +3351,21 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func assertImageTextToolbarIsHittable(in app: XCUIApplication) {
-    XCTAssertTrue(app.buttons["image-text.close"].isHittable)
-    XCTAssertTrue(app.buttons["image-text.highlights"].isHittable)
-    XCTAssertTrue(app.buttons["image-text.share"].isHittable)
+    for identifier in ["image-text.close", "image-text.highlights", "image-text.share"] {
+      let button = app.buttons[identifier]
+      var becameHittable = false
+      for _ in 0..<50 {
+        if button.exists {
+          let frame = button.frame
+          if frame.width > 0, frame.height > 0, frame.intersects(app.frame), button.isHittable {
+            becameHittable = true
+            break
+          }
+        }
+        Thread.sleep(forTimeInterval: 0.1)
+      }
+      XCTAssertTrue(becameHittable, "Image Text toolbar button did not settle: \(identifier)")
+    }
   }
 
   private func containsJapaneseText(_ value: String) -> Bool {
