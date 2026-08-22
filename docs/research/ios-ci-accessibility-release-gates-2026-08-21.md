@@ -12,8 +12,8 @@ The implementation deliberately differs from the original recommendation below:
   unit tests, the complete accessibility plan, and 20 stable critical UI journeys.
 - The complete UI/reliability matrix is **manual-only**, not daily. It remains available
   through `ios-nightly.yml` and as a local release gate.
-- Trusted manual nightly/performance jobs are proposed for self-hosted macOS in #176,
-  but that migration is blocked until a runner is configured or shared with this repository.
+- Trusted manual nightly/performance jobs target self-hosted macOS through #176,
+  but execution is blocked until a runner is configured or shared with this repository.
   Public pull-request code must not execute on a self-hosted Mac.
 - Build 9 was uploaded before two additional light-mode system-control states were audited.
   Build 10 supersedes it for App Review and must include the camera-source and recent-search

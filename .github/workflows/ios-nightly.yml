@@ -1,8 +1,6 @@
 name: iOS nightly quality
 
 on:
-  schedule:
-    - cron: "17 18 * * *"
   workflow_dispatch:
 
 permissions:
@@ -15,7 +13,7 @@ concurrency:
 jobs:
   accessibility:
     name: accessibility / ${{ matrix.device_name }}
-    runs-on: macos-26
+    runs-on: [self-hosted, macOS]
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -62,7 +60,7 @@ jobs:
 
   reliability:
     name: reliability / three fresh repetitions
-    runs-on: macos-26
+    runs-on: [self-hosted, macOS]
     timeout-minutes: 180
     steps:
       - name: Check out exact source and LFS data
@@ -101,7 +99,7 @@ jobs:
 
   sanitizers:
     name: sanitizer / ${{ matrix.name }}
-    runs-on: macos-26
+    runs-on: [self-hosted, macOS]
     timeout-minutes: 60
     strategy:
       fail-fast: false
