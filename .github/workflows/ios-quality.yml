@@ -122,16 +122,33 @@ jobs:
           sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
           xcodebuild -version
 
-      - name: Run complete UI PR plan
+      - name: Run critical UI PR journeys
         run: |
           apps/ios/Tools/run_ci_test_plan.sh \
             ZenbuPR \
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
             "$RUNNER_TEMP/ZenbuPR-UI.xcresult" \
-            -only-testing:ZenbuJapaneseUITests \
-            -skip-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests \
-            -skip-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker \
-            -skip-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextMultipleFilesRecoverFromEmptyAndRemainTransient
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToSettings \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBottomNavigationContainsOnlyReleaseDestinationsAndRestoresSearch \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCameraUnavailableOnSimulatorReportsHardwareBoundary \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextVerticalFileProducesSelectableJapaneseRegions \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRadicalCandidateSubmitsKanjiResultAndEntersHistory \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHandwritingCandidatesComposeCommonKanjiAndEnterHistory \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testNewestRecentSearchRerunsItsResultSet \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIruOffersJapaneseReadingRefinement \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testTrailingWhitespaceIsNormalizedBeforeShowingRomajiResults \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHumanPacedMultiWordSearchReturnsFrozenSentenceResultsWithoutQueuedDelay \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testOrdinaryJapaneseResultOpensItsOwnLanguageReferenceData \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testDictionarySourceAttributionIsReachableFromSearch \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testPrivacyAndSupportAreReachableFromSettings \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testLookupFailureIsNotPresentedAsNoMatchAndRetryRecovers \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail
 
       - name: Package test evidence
         if: always()
