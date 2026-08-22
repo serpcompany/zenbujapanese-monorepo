@@ -75,6 +75,7 @@ enum ZenbuTheme {
   // Compatibility aliases for existing view roles. They preserve geometry and
   // keep this identity-only pass from becoming a layout or typography rewrite.
   static let chrome = primary
+  static let systemControlTint = foreground
   static let row = card
   static let searchField = input
   static let secondaryText = mutedForeground

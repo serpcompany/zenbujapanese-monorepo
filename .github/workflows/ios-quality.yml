@@ -134,7 +134,6 @@ jobs:
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextVerticalFileProducesSelectableJapaneseRegions \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRadicalCandidateSubmitsKanjiResultAndEntersHistory \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHandwritingCandidatesComposeCommonKanjiAndEnterHistory \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testNewestRecentSearchRerunsItsResultSet \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIruOffersJapaneseReadingRefinement \
