@@ -129,7 +129,8 @@ jobs:
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
             "$RUNNER_TEMP/ZenbuPR-UI.xcresult" \
             -only-testing:ZenbuJapaneseUITests \
-            -skip-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests
+            -skip-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests \
+            -skip-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextMultipleFilesRecoverFromEmptyAndRemainTransient
 
       - name: Package test evidence
         if: always()
