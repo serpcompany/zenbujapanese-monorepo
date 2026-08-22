@@ -10,6 +10,9 @@ The implementation deliberately differs from the original recommendation below:
 
 - Public pull requests use isolated GitHub-hosted macOS runners for repository contracts,
   unit tests, the complete accessibility plan, and 21 stable critical UI journeys.
+- Merge-queue and pull-request checks are the automatic merge gates. A merge to `main`
+  does not rerun the same expensive suite a second time; maintainers can still start it
+  explicitly through `workflow_dispatch`.
 - The complete UI/reliability matrix is **manual-only**, not daily. It remains available
   through `ios-nightly.yml` and as a local release gate.
 - Trusted manual nightly/performance jobs target self-hosted macOS through #176,
