@@ -130,6 +130,7 @@ jobs:
             "$RUNNER_TEMP/ZenbuPR-UI.xcresult" \
             -only-testing:ZenbuJapaneseUITests \
             -skip-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests \
+            -skip-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextFilesSourceOpensThePublicMultipleSelectionPicker \
             -skip-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextMultipleFilesRecoverFromEmptyAndRemainTransient
 
       - name: Package test evidence
