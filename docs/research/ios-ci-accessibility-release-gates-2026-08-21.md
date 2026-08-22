@@ -9,7 +9,7 @@ Status: recommendation only; this report does not implement or enable CI
 The implementation deliberately differs from the original recommendation below:
 
 - Public pull requests use isolated GitHub-hosted macOS runners for repository contracts,
-  unit tests, the complete accessibility plan, and 20 stable critical UI journeys.
+  unit tests, the complete accessibility plan, and 21 stable critical UI journeys.
 - The complete UI/reliability matrix is **manual-only**, not daily. It remains available
   through `ios-nightly.yml` and as a local release gate.
 - Trusted manual nightly/performance jobs target self-hosted macOS through #176,
