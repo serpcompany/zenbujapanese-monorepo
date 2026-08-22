@@ -76,6 +76,7 @@ enum ZenbuTheme {
   // keep this identity-only pass from becoming a layout or typography rewrite.
   static let chrome = primary
   static let systemControlTint = foreground
+  static let destructiveActionTint = primary
   static let row = card
   static let searchField = input
   static let secondaryText = mutedForeground

@@ -39,6 +39,7 @@ final class ZenbuThemeAccessibilityTests: XCTestCase {
       ("interactive text on card", ZenbuTheme.interactiveForeground, ZenbuTheme.card),
       ("system control tint on card", ZenbuTheme.systemControlTint, ZenbuTheme.card),
       ("text on brand chrome", ZenbuTheme.primaryForeground, ZenbuTheme.chrome),
+      ("destructive action text on fill", ZenbuTheme.primaryForeground, ZenbuTheme.destructiveActionTint),
     ]
 
     for style in [UIUserInterfaceStyle.light, .dark] {
