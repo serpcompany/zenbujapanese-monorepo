@@ -23,11 +23,21 @@ final class AccessibilityAuditUITests: XCTestCase {
 
   @MainActor
   func testLightRecentSearchDeleteActionHasReadableSystemContrast() throws {
+    try auditRecentSearchDeleteAction(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkRecentSearchDeleteActionHasReadableSystemContrast() throws {
+    try auditRecentSearchDeleteAction(appearance: .dark)
+  }
+
+  @MainActor
+  private func auditRecentSearchDeleteAction(appearance: XCUIDevice.Appearance) throws {
     let originalAppearance = XCUIDevice.shared.appearance
-    XCUIDevice.shared.appearance = .light
+    XCUIDevice.shared.appearance = appearance
     defer { XCUIDevice.shared.appearance = originalAppearance }
 
-    let app = launchApp(appearance: .light, additionalArguments: ["-ResetRecentSearches"])
+    let app = launchApp(appearance: appearance, additionalArguments: ["-ResetRecentSearches"])
     try submitSearch("hello", in: app)
     app.buttons["Clear text"].tap()
     app.textFields["search.field"].tap()
@@ -37,7 +47,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.buttons["Delete"].waitForExistence(timeout: 3))
     try performAudit(
       in: app,
-      named: "Recent search delete - light appearance",
+      named: "Recent search delete - \(appearance == .dark ? "dark" : "light") appearance",
       types: .contrast
     )
   }

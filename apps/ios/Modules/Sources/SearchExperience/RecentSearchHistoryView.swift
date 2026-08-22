@@ -36,6 +36,7 @@ struct RecentSearchHistoryView: View {
               Button("Delete", role: .destructive) {
                 remove(search)
               }
+              .tint(ZenbuTheme.destructiveActionTint)
             }
             .listRowBackground(ZenbuTheme.background)
             .listRowSeparatorTint(ZenbuTheme.divider)
