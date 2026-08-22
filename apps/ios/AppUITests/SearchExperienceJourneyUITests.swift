@@ -3126,6 +3126,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   private func radicalButton(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
     let grid = app.scrollViews["radical.grid"]
+    if identifier == "radical.grass" {
+      for _ in 0..<16 where !app.staticTexts["1 Stroke"].exists {
+        grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+          .press(
+            forDuration: 0.05,
+            thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
+          )
+      }
+    }
     for _ in 0..<16 {
       let button = app.buttons[identifier]
       if button.exists, button.isHittable,
