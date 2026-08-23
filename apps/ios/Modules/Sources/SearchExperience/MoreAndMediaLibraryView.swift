@@ -11,17 +11,29 @@ struct MoreView: View {
         NavigationLink {
           MediaLibraryView(store: store)
         } label: {
-          Label("Media Library", systemImage: "photo.on.rectangle.angled")
-            .font(.body)
+          HStack {
+            Label("Media Library", systemImage: "photo.on.rectangle.angled")
+              .font(.body)
+            Spacer(minLength: 8)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .accessibilityHidden(true)
         }
+        .accessibilityLabel("Media Library")
         .accessibilityIdentifier("more.media-library")
 
         NavigationLink {
           DictionarySourcesView()
         } label: {
-          Label("Credits & Attributions", systemImage: "info.circle")
-            .font(.body)
+          HStack {
+            Label("Credits & Attributions", systemImage: "info.circle")
+              .font(.body)
+            Spacer(minLength: 8)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .accessibilityHidden(true)
         }
+        .accessibilityLabel("Credits & Attributions")
         .accessibilityIdentifier("more.credits")
       }
       .navigationTitle("More")

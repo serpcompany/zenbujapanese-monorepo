@@ -44,7 +44,7 @@ enum ZenbuTheme {
     dark: p3(0.149382, 0.149382, 0.149382)  // oklch(0.269 0 0)
   )
   static let mutedForeground = dynamic(
-    light: p3(0.451519, 0.451519, 0.451519),  // oklch(0.556 0 0)
+    light: p3(0.380000, 0.380000, 0.380000),  // hosted-antialiasing contrast margin
     dark: p3(0.630163, 0.630163, 0.630163)  // oklch(0.708 0 0)
   )
   static let accent = dynamic(

@@ -14,6 +14,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.buttons["search-experience-tab.settings"].tap()
     XCTAssertTrue(app.staticTexts["More"].waitForExistence(timeout: 2))
+    XCTAssertEqual(app.buttons["more.media-library"].label, "Media Library")
+    XCTAssertEqual(app.buttons["more.credits"].label, "Credits & Attributions")
     app.buttons["more.credits"].tap()
     XCTAssertTrue(app.staticTexts["Dictionary Sources"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.staticTexts["JMdict"].exists)
