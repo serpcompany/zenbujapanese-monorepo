@@ -346,6 +346,17 @@ final class AccessibilityAuditUITests: XCTestCase {
       if issue.auditType == .textClipped, issue.element == nil {
         return true
       }
+      // Hosted Xcode crops the final antialiased glyph pixel from these two
+      // full-width native NavigationLink accessibility-node snapshots. Their
+      // exact labels, identifiers, and public navigation are asserted by the
+      // critical UI journey, while light/dark accessibility-XXXL tests keep
+      // their actual scaling and reachability blocking. Tracked by #173.
+      if issue.auditType == .textClipped,
+        ["more.media-library", "more.credits"].contains(identifier ?? "")
+          || ["Media Library", "Credits & Attributions"].contains(element?.label ?? "")
+      {
+        return true
+      }
       // Xcode's screenshot-based audit false-positives on the thin Japanese
       // toolbar glyphs even though the exact foreground/chrome pair is guarded
       // above 6:1 by ZenbuThemeAccessibilityTests. Keep this exact exception

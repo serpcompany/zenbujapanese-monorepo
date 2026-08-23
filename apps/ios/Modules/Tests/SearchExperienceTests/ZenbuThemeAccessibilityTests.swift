@@ -28,6 +28,22 @@ final class ZenbuThemeAccessibilityTests: XCTestCase {
     }
   }
 
+  func testSecondaryTextHasHostedAntialiasingContrastMargin() throws {
+    for style in [UIUserInterfaceStyle.light, .dark] {
+      for background in [ZenbuTheme.background, ZenbuTheme.card] {
+        let ratio = contrastRatio(
+          try resolvedRGB(ZenbuTheme.secondaryText, style: style),
+          try resolvedRGB(background, style: style)
+        )
+        XCTAssertGreaterThanOrEqual(
+          ratio,
+          6.0,
+          "Secondary text needs margin beyond AA for hosted antialiasing, \(style)."
+        )
+      }
+    }
+  }
+
   func testNormalTextThemePairsMeetContrastInBothAppearances() throws {
     let pairs: [(name: String, foreground: Color, background: Color)] = [
       ("body on page", ZenbuTheme.foreground, ZenbuTheme.background),
@@ -39,7 +55,10 @@ final class ZenbuThemeAccessibilityTests: XCTestCase {
       ("interactive text on card", ZenbuTheme.interactiveForeground, ZenbuTheme.card),
       ("system control tint on card", ZenbuTheme.systemControlTint, ZenbuTheme.card),
       ("text on brand chrome", ZenbuTheme.primaryForeground, ZenbuTheme.chrome),
-      ("destructive action text on fill", ZenbuTheme.primaryForeground, ZenbuTheme.destructiveActionTint),
+      (
+        "destructive action text on fill", ZenbuTheme.primaryForeground,
+        ZenbuTheme.destructiveActionTint
+      ),
     ]
 
     for style in [UIUserInterfaceStyle.light, .dark] {
