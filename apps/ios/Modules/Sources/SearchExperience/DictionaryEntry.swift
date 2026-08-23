@@ -156,7 +156,7 @@ struct LanguageReferenceID: Hashable, Sendable {
   let rawValue: String
 }
 
-struct WordNoteID: Hashable, Sendable {
+struct WordNoteID: Codable, Hashable, Sendable {
   let rawValue: String
 }
 

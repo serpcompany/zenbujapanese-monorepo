@@ -59,19 +59,12 @@ private struct LinkedTokenView: View {
       Button {
         openWord(entry)
       } label: {
-        HStack(alignment: .bottom, spacing: 0) {
-          ForEach(
-            Array(
-              JapaneseRubyAnnotation.segments(
-                surface: token.surface,
-                reading: entry.reading
-              ).enumerated()
-            ),
-            id: \.offset
-          ) { _, segment in
-            LinkedRubySegmentView(segment: segment)
-          }
-        }
+        JapaneseRubyText(
+          surface: token.surface,
+          reading: entry.reading,
+          underlined: true,
+          exposesAccessibility: false
+        )
         // Underlining carries the interactive affordance. Ruby uses the normal
         // text foreground because the smaller caption glyphs need more
         // antialiasing contrast margin than the brand red provides.
@@ -86,28 +79,6 @@ private struct LinkedTokenView: View {
       Text(token.surface)
         .font(.body)
     }
-  }
-}
-
-private struct LinkedRubySegmentView: View {
-  let segment: JapaneseRubySegment
-
-  var body: some View {
-    if let reading = segment.reading {
-      VStack(spacing: 0) {
-        Text(reading)
-          .font(.caption.weight(.semibold))
-        base
-      }
-    } else {
-      base
-    }
-  }
-
-  private var base: some View {
-    Text(segment.base)
-      .font(.body)
-      .underline()
   }
 }
 

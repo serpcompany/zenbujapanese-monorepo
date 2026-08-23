@@ -130,12 +130,13 @@ jobs:
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBottomNavigationContainsOnlyReleaseDestinationsAndRestoresSearch \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCameraUnavailableOnSimulatorReportsHardwareBoundary \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextWordAttachmentPersistsIntoLaterSearch \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextEncounterMediaPersistsIntoLaterSearchAndAppearsInMediaLibrary \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextVerticalFileProducesSelectableJapaneseRegions \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHandwritingCandidatesComposeCommonKanjiAndEnterHistory \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testNewestRecentSearchRerunsItsResultSet \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIruOffersJapaneseReadingRefinement \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testMixedScriptWordDetailPlacesRubyOnlyAboveKanji \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testTrailingWhitespaceIsNormalizedBeforeShowingRomajiResults \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHumanPacedMultiWordSearchReturnsFrozenSentenceResultsWithoutQueuedDelay \

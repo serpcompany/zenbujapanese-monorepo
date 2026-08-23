@@ -269,10 +269,12 @@ private struct ImageTextCanvas: View {
               openWord(selectedRegion.entry)
             } label: {
               HStack(spacing: 7) {
-                VStack(alignment: .leading, spacing: 1) {
-                  Text(selectedRegion.entry.reading).font(.body)
-                  Text(selectedRegion.entry.headword).font(.headline)
-                }
+                JapaneseRubyText(
+                  surface: selectedRegion.entry.headword,
+                  reading: selectedRegion.entry.reading,
+                  baseFont: .headline,
+                  rubyFont: .body
+                )
                 Text(selectedRegion.entry.summary)
                   .fixedSize(horizontal: false, vertical: true)
                 Image(systemName: "chevron.right")

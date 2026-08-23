@@ -17,7 +17,7 @@ public struct SearchExperienceRootView: View {
   #endif
   private let lookupClient = LookupClient.live
   private let recentSearchStore = RecentSearchStore.live
-  private let wordImageAttachmentStore = WordImageAttachmentStore.live
+  private let encounterMediaStore = EncounterMediaStore.live
   private let handwritingRecognitionClient: HandwritingRecognitionClient
   private let cameraAuthorizationClient: CameraAuthorizationClient
   private let speechSynthesisClient: SpeechSynthesisClient
@@ -97,7 +97,7 @@ public struct SearchExperienceRootView: View {
             exampleSentenceClient: .live,
             japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
             wordNoteStore: .live,
-            wordImageAttachmentStore: wordImageAttachmentStore,
+            encounterMediaStore: encounterMediaStore,
             conjugationTable: japaneseConjugationClient.table(entry),
             openRelated: openRelated,
             openKanji: openKanji,
@@ -176,8 +176,8 @@ public struct SearchExperienceRootView: View {
     .background(ZenbuTheme.background)
     .sheet(item: $presentedSheet) { sheet in
       switch sheet {
-      case .sources:
-        DictionarySourcesView()
+      case .more:
+        MoreView(store: encounterMediaStore)
       }
     }
     #if DEBUG
@@ -222,7 +222,7 @@ public struct SearchExperienceRootView: View {
     case .search:
       path.removeAll()
     case .settings:
-      presentedSheet = .sources
+      presentedSheet = .more
     }
   }
 
@@ -305,7 +305,7 @@ private enum SearchExperienceRoute: Hashable {
 }
 
 private enum SearchExperienceSheet: String, Identifiable {
-  case sources
+  case more
 
   var id: String { rawValue }
 }
