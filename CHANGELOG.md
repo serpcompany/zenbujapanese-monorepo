@@ -11,8 +11,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - Kanji lookup with readings, meanings, components, classifications, related words, and animated stroke order.
 - Handwriting recognition for finding kanji that are difficult to type.
 - Image Text for recognizing selectable Japanese from the camera, photo library, or imported files, with on-device translation using Apple system features.
-- Persistent, removable source-image context for words opened from Image Text.
-- Kanji-aligned furigana for mixed kanji/kana words such as `女らしい`.
+- Multiple persistent, removable Encounter Media images for words opened from Image Text.
+- A lightweight Media Library for browsing retained images and their associated words.
+- Kanji-aligned furigana across Search, Word Detail, Kanji, Image Text, and example-sentence word links for mixed kanji/kana words such as `女らしい`.
 - Private word notes and recent-search history stored on the device.
 
 ### Quality and privacy

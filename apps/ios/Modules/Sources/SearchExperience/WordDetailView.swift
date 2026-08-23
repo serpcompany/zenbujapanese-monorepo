@@ -11,9 +11,9 @@ struct WordDetailView: View {
   @State private var examples: [ExampleSentence] = []
   @State private var isLoadingExamples = true
   @State private var lastSpeechRequest: String?
-  @State private var boundaryAlert: WordDetailBoundary?
-  @State private var storedImageAttachment: WordImageAttachment?
-  @State private var didResolveImageAttachment = false
+  @State private var encounterMedia: [EncounterMedia] = []
+  @State private var showsEncounterMediaPicker = false
+  @State private var encounterMediaImportFailed = false
 
   let entry: DictionaryEntry
   let backTitle: String
@@ -22,7 +22,7 @@ struct WordDetailView: View {
   let exampleSentenceClient: ExampleSentenceClient
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let wordNoteStore: WordNoteStore
-  let wordImageAttachmentStore: WordImageAttachmentStore
+  let encounterMediaStore: EncounterMediaStore
   let conjugationTable: ConjugationTable?
   let openRelated: (DictionaryRelationship) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
@@ -37,7 +37,7 @@ struct WordDetailView: View {
         goBack: goBack,
         finishEditingNote: finishEditingNote,
         addNote: beginAddingNote,
-        showBoundary: { boundaryAlert = $0 }
+        addEncounterMedia: { showsEncounterMediaPicker = true }
       )
 
       ScrollViewReader { proxy in
@@ -45,9 +45,9 @@ struct WordDetailView: View {
           VStack(spacing: 0) {
             WordHeader(
               entry: entry,
-              imageAttachment: imageAttachment,
+              encounterMedia: encounterMedia,
               pronounce: { speechSynthesisClient.speak(entry.reading) },
-              removeImageAttachment: removeImageAttachment
+              removeEncounterMedia: removeEncounterMedia
             )
             PartOfSpeechRow(
               title: (entry.senses.first?.partsOfSpeech ?? entry.partsOfSpeech)
@@ -119,12 +119,16 @@ struct WordDetailView: View {
     }
     .background(ZenbuTheme.background)
     .toolbar(.hidden, for: .navigationBar)
-    .alert(item: $boundaryAlert) { boundary in
-      Alert(
-        title: Text(boundary.title),
-        message: Text(boundary.message),
-        dismissButton: .default(Text("OK"))
-      )
+    .sheet(isPresented: $showsEncounterMediaPicker) {
+      ImagePhotoLibraryPicker { result in
+        showsEncounterMediaPicker = false
+        handleEncounterMediaSelection(result)
+      }
+    }
+    .alert("Unable to Save Image", isPresented: $encounterMediaImportFailed) {
+      Button("OK", role: .cancel) {}
+    } message: {
+      Text("The selected image could not be read.")
     }
     .overlay(alignment: .topLeading) {
       if let lastSpeechRequest {
@@ -141,17 +145,14 @@ struct WordDetailView: View {
     }
     .task(id: entry.id) {
       isLoadingExamples = true
-      didResolveImageAttachment = false
-      storedImageAttachment = initialImageAttachment
+      encounterMedia = []
+      let word = entry.encounterWordReference
       if let initialImageAttachment {
-        await wordImageAttachmentStore.save(initialImageAttachment, entry.noteID)
-      } else {
-        let attachment = await wordImageAttachmentStore.load(entry.noteID)
-        guard !Task.isCancelled else { return }
-        storedImageAttachment = attachment
+        await encounterMediaStore.save(initialImageAttachment, word)
       }
+      let storedMedia = await encounterMediaStore.encounters(word)
       guard !Task.isCancelled else { return }
-      didResolveImageAttachment = true
+      encounterMedia = storedMedia
       examples = (try? await exampleSentenceClient.examples(entry)) ?? []
       notes = await wordNoteStore.load(entry.noteID)
       editingNoteID = nil
@@ -160,15 +161,25 @@ struct WordDetailView: View {
     }
   }
 
-  private var imageAttachment: WordImageAttachment? {
-    didResolveImageAttachment ? storedImageAttachment : (storedImageAttachment ?? initialImageAttachment)
+  private func removeEncounterMedia(_ mediaID: String) {
+    Task { @MainActor in
+      let word = entry.encounterWordReference
+      await encounterMediaStore.remove(word, mediaID)
+      encounterMedia = await encounterMediaStore.encounters(word)
+    }
   }
 
-  private func removeImageAttachment() {
+  private func handleEncounterMediaSelection(_ result: Result<[ImageTextAsset], Error>) {
+    guard case .success(let assets) = result else {
+      encounterMediaImportFailed = true
+      return
+    }
+    guard let asset = assets.first else { return }
     Task { @MainActor in
-      await wordImageAttachmentStore.remove(entry.noteID)
-      storedImageAttachment = nil
-      didResolveImageAttachment = true
+      let word = entry.encounterWordReference
+      await encounterMediaStore.save(
+        WordImageAttachment(name: asset.name, data: asset.data), word)
+      encounterMedia = await encounterMediaStore.encounters(word)
     }
   }
 
@@ -252,25 +263,6 @@ struct WordDetailView: View {
   }
 }
 
-private enum WordDetailBoundary: String, Identifiable {
-  case imageAttachment
-
-  var id: String { rawValue }
-
-  var title: String {
-    switch self {
-    case .imageAttachment: "Image Attachment"
-    }
-  }
-
-  var message: String {
-    switch self {
-    case .imageAttachment:
-      "Open a word from Search using Camera or Photos to keep its source image attached."
-    }
-  }
-}
-
 private struct PrimaryKanjiSection: View {
   let characters: [String]
   let entry: DictionaryEntry
@@ -348,7 +340,7 @@ private struct DetailToolbar: View {
   let goBack: () -> Void
   let finishEditingNote: () -> Void
   let addNote: () -> Void
-  let showBoundary: (WordDetailBoundary) -> Void
+  let addEncounterMedia: () -> Void
 
   var body: some View {
     HStack(spacing: 20) {
@@ -376,13 +368,11 @@ private struct DetailToolbar: View {
         .frame(minWidth: 44, minHeight: 44)
         .accessibilityLabel("Add note")
         .accessibilityIdentifier("word-detail.toolbar-note")
-        Button {
-          showBoundary(.imageAttachment)
-        } label: {
+        Button(action: addEncounterMedia) {
           Image(systemName: "camera.badge.ellipsis")
         }
         .frame(minWidth: 44, minHeight: 44)
-        .accessibilityLabel("Attach image")
+        .accessibilityLabel("Add encounter image")
         .accessibilityIdentifier("word-detail.toolbar-image")
       }
     }
@@ -396,23 +386,25 @@ private struct DetailToolbar: View {
 
 private struct WordHeader: View {
   let entry: DictionaryEntry
-  let imageAttachment: WordImageAttachment?
+  let encounterMedia: [EncounterMedia]
   let pronounce: () -> Void
-  let removeImageAttachment: () -> Void
+  let removeEncounterMedia: (String) -> Void
   @State private var showsAttachment = false
+  @State private var selectedMediaID: String?
 
   var body: some View {
     VStack(spacing: 12) {
       HStack(alignment: .top, spacing: 12) {
-        VStack(alignment: .leading, spacing: -4) {
-          Text(entry.reading)
-            .font(.title3.weight(.semibold))
-          Text(entry.headword)
-            .font(.largeTitle.weight(.light))
-        }
+        JapaneseRubyText(
+          surface: entry.headword,
+          reading: entry.reading,
+          baseFont: .largeTitle.weight(.light),
+          rubyFont: .title3.weight(.semibold)
+        )
         Spacer()
-        if let imageAttachment, let image = UIImage(data: imageAttachment.data) {
+        if let latest = encounterMedia.first, let image = UIImage(data: latest.data) {
           Button {
+            selectedMediaID = latest.id
             showsAttachment = true
           } label: {
             VStack(spacing: 3) {
@@ -422,12 +414,12 @@ private struct WordHeader: View {
                 .frame(width: 66, height: 52)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 5))
-              Text("Saved Image")
+              Text(encounterMedia.count == 1 ? "Saved Image" : "\(encounterMedia.count) Images")
                 .font(.caption2)
             }
           }
           .buttonStyle(.plain)
-          .accessibilityLabel("Saved image context, \(imageAttachment.name)")
+          .accessibilityLabel("Saved encounter images, \(encounterMedia.count)")
           .accessibilityIdentifier("word-detail.image-attachment")
         } else {
           FrequencyBadge(frequency: entry.frequency)
@@ -456,32 +448,47 @@ private struct WordHeader: View {
     .padding(.bottom, 9)
     .background(ZenbuTheme.row)
     .sheet(isPresented: $showsAttachment) {
-      if let imageAttachment, let image = UIImage(data: imageAttachment.data) {
-        VStack(spacing: 16) {
-          HStack {
-            Button("Remove from Word", role: .destructive) {
-              showsAttachment = false
-              removeImageAttachment()
+      NavigationStack {
+        TabView(selection: $selectedMediaID) {
+          ForEach(encounterMedia) { media in
+            VStack(spacing: 12) {
+              if let image = UIImage(data: media.data) {
+                Image(uiImage: image).resizable().scaledToFit()
+              }
+              Text(media.name).foregroundStyle(ZenbuTheme.secondaryText)
+              Text("Saved with this word.")
+                .font(.footnote)
+                .foregroundStyle(ZenbuTheme.secondaryText)
             }
-            .accessibilityIdentifier("word-detail.image-attachment-remove")
-            Spacer()
+            .padding()
+            .tag(Optional(media.id))
+          }
+        }
+        .tabViewStyle(.page(indexDisplayMode: .automatic))
+        .navigationTitle("Encounter Images")
+        .toolbar {
+          ToolbarItem(placement: .cancellationAction) {
             Button("Done") { showsAttachment = false }
               .accessibilityIdentifier("word-detail.image-attachment-done")
           }
-          Image(uiImage: image)
-            .resizable()
-            .scaledToFit()
-          Text(imageAttachment.name)
-            .foregroundStyle(ZenbuTheme.secondaryText)
-          Text("Saved automatically when you opened this word from Image Text.")
-            .font(.footnote)
-            .foregroundStyle(ZenbuTheme.secondaryText)
-            .multilineTextAlignment(.center)
+          ToolbarItem(placement: .destructiveAction) {
+            Button("Remove from Word", role: .destructive) {
+              guard let selectedMediaID else { return }
+              removeEncounterMedia(selectedMediaID)
+              self.selectedMediaID = encounterMedia.first(where: { $0.id != selectedMediaID })?.id
+              if encounterMedia.count <= 1 { showsAttachment = false }
+            }
+            .accessibilityIdentifier("word-detail.image-attachment-remove")
+          }
         }
-        .padding()
-        .background(ZenbuTheme.background)
       }
     }
+  }
+}
+
+extension DictionaryEntry {
+  fileprivate var encounterWordReference: EncounterWordReference {
+    EncounterWordReference(id: noteID, headword: headword, reading: reading)
   }
 }
 

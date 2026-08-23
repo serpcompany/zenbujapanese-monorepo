@@ -4,19 +4,22 @@ Status: evolving product contract
 
 ## Role
 
-The Media Library is the Product Experience for privately browsing and managing media the learner has imported into Zenbu Japanese. It owns adding media, presenting each durable Media Entry, and running and revisiting the Media Analysis attached to that entry. It is a learning and analysis system, not a universal store for everything the learner has encountered and not general-purpose file storage.
+The Media Library is the Product Experience for privately browsing and managing media the learner has retained in Zenbu Japanese. Its first lightweight surface presents Encounter Media saved while learning words. Larger imported works remain distinct Media Entries with attached Media Analysis. It is not general-purpose file storage.
 
 An uploaded file or entered URL begins as a transient analysis input. After
 reviewing the result, the learner explicitly chooses whether to discard it or
 save it as a Media Entry. Saving succeeds only for a supported source Zenbu can
 copy into app-owned storage; MVP does not create reference-only Media Entries.
 
-Lookup history and Saved Language Items do not live in the Media Library. Lookup owns its own history. The final name, organization model, navigation placement, and cross-product use of Saved Language Items require a separate prototype decision.
+Lookup history and Saved Language Items do not live in the Media Library. Lookup owns its own history. Encounter Media appears here because the library owns the retained image once, while Lookup owns the word association represented by each Encounter Example.
 
 ## User-facing boundary
 
 The Media Library lets a learner:
 
+- browse Encounter Media and see every associated word
+- open an Encounter Media image at useful size
+- delete Encounter Media and all of its word associations
 - browse and manage previously imported media
 - add supported media for analysis
 - open a Media Entry
@@ -24,7 +27,7 @@ The Media Library lets a learner:
 - inspect analysis results without consuming the media inside Zenbu
 - launch an applicable deferred Consumption Experience when one exists
 
-Media Analysis is a Media Library-owned workflow and result, not a separate Product Experience. The detailed import types, Library layout, Media Entry screens, analysis presentation, and handoffs require later specification and prototypes.
+The version 1 implementation is intentionally light: a native list, image detail, associated words, and deletion for Encounter Media. It does not implement larger-work import or Media Analysis. Media Analysis is a Media Library-owned workflow and result, not a separate Product Experience; its detailed import types, Media Entry screens, analysis presentation, and handoffs require later specification and prototypes.
 
 Read, Watch, and Listen are separate deferred Consumption Experiences with purpose-built interfaces. A compatible Media Entry may launch one of them, but the Media Library remains useful without them.
 
@@ -32,6 +35,7 @@ Read, Watch, and Listen are separate deferred Consumption Experiences with purpo
 
 The Media Library can retain:
 
+- Encounter Media, stored once even when associated with several words
 - the learner-provided title and source kind
 - an app-owned copy of the imported source
 - extracted and segmented Japanese text
@@ -43,6 +47,16 @@ Larger works produce a **Media Entry** with a **Media Analysis** covering the wo
 
 The single-image Image Text Flow remains separate from larger Media Analysis,
 even though both can reuse the same underlying language-analysis capabilities.
+
+## Encounter Media retention
+
+- Opening a recognized word from Image Text creates an Encounter Example and retains its source image as Encounter Media.
+- Adding an image from Word Detail creates the same association without running Image Text recognition.
+- Reopening the same word from the same image is idempotent.
+- The same word may accumulate many images, and the same image may be associated with many words.
+- Remove from Word deletes only the selected association. It deletes the media bytes only when no other association remains.
+- Delete in Media Library removes the Encounter Media, every association, and its app-owned bytes.
+- Encounter Media participates in normal system-managed device backup and is never uploaded by this capability.
 
 ## Source retention
 

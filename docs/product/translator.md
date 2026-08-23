@@ -64,8 +64,8 @@ translation request.
 
 The working source and result are transient at flow level until the learner
 chooses Discard or Save. Opening a recognized word is the narrow exception: it
-creates or replaces that entry's local Word Image Attachment, without retaining
-the OCR regions or whole-content translation. An explicit flow-level save
+creates an Encounter Example associating that entry with retained Encounter
+Media, without retaining the OCR regions or whole-content translation. An explicit flow-level save
 creates one Image Text Result regardless of which Product Experience opened the
 flow. Exact controls, emphasis, and navigation remain later UI decisions.
 

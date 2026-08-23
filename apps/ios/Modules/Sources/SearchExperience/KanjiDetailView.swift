@@ -552,13 +552,13 @@ private struct KanjiWordsSection: View {
           openWord(entry)
         } label: {
           HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 3) {
-              Text(entry.reading)
-                .font(.body)
-                .foregroundStyle(ZenbuTheme.foreground)
-              Text(entry.headword)
-                .font(.title3)
-            }
+            JapaneseRubyText(
+              surface: entry.headword,
+              reading: entry.reading,
+              baseFont: .title3,
+              rubyFont: .body
+            )
+            .foregroundStyle(ZenbuTheme.foreground)
             Spacer()
             Text(entry.summary)
               .foregroundStyle(ZenbuTheme.foreground)

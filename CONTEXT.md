@@ -112,9 +112,9 @@ _Avoid_: Lookup Capture, Media import, contextual image explanation
 A learner-saved result from an Image Text Flow that retains its explicitly saved source image, recognized Japanese regions, and any generated whole-content translation. Saving it does not automatically save every recognized language item.
 _Avoid_: Saved Language Item, Media Entry, automatic image history
 
-**Word Image Attachment**:
-The latest source image copied into app-owned storage and linked to a Language Reference Data entry when the learner opens that word from an Image Text Flow. It persists locally until replaced or explicitly removed from Word Detail. It does not save unopened recognized words or create an Image Text Result, Saved Language Item, or Encounter Example.
-_Avoid_: Temporary navigation image, Image Text Result, automatic vocabulary save, canonical dictionary image
+**Encounter Media**:
+A learner-retained image or other bounded source asset associated with one or more Encounter Examples. Zenbu stores identical media once, can associate it with several language items, and presents it once in the Media Library with those associations. Removing an association from one word does not delete shared media; deleting Encounter Media from the Media Library removes all of its associations.
+_Avoid_: Word Image Attachment, temporary navigation image, Image Text Result, Media Entry, canonical dictionary image
 
 **Learning Profile**:
 The connected record of a learner's saved material, encounters, activity, and progress across Product Experiences.
@@ -129,7 +129,7 @@ The Media Library-owned workflow and result for extracting and presenting whole-
 _Avoid_: Media Entry, personalized readiness score
 
 **Media Library**:
-The Product Experience for privately browsing and managing explicitly saved larger works, adding and analyzing media, and inspecting the Media Analysis attached to each Media Entry. It persists on the learner's device without requiring an account. A compatible Media Entry may launch a separate Consumption Experience. Lookup history, Image Text Results, and Saved Language Items do not live in the Media Library.
+The Product Experience for privately browsing and managing retained media. It presents lightweight Encounter Media separately from larger Media Entries and their Media Analysis. It persists on the learner's device without requiring an account. A compatible Media Entry may launch a separate Consumption Experience. Lookup history and Saved Language Items do not live in the Media Library.
 _Avoid_: User Library, universal user-content store, public catalog
 
 **Saved Language Item**:
@@ -137,7 +137,7 @@ A word, kanji, phrase, sentence, or other language item the learner deliberately
 _Avoid_: Media Entry, Lookup history
 
 **Encounter Example**:
-A learner-preserved occurrence of a Saved Language Item in personally encountered context, optionally including surrounding text, a translation, and an explicitly retained source image. It remains distinct from provider-supplied example-sentence data.
+A learner-preserved occurrence of a Language Reference Data entry or Saved Language Item in personally encountered context, optionally including surrounding text, a translation, and associated Encounter Media. One language item may have many Encounter Examples, and one Encounter Media record may support examples for several language items. It remains distinct from provider-supplied example-sentence data.
 _Avoid_: Canonical example sentence, Image Text history
 
 **Collection**:

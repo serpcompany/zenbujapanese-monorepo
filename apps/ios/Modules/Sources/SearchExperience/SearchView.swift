@@ -536,8 +536,7 @@ private struct SearchBar: View {
   @ViewBuilder
   private var searchTextField: some View {
     if dynamicTypeSize >= .xxLarge {
-      TextField("Search", text: $query, axis: .vertical)
-        .lineLimit(1...2)
+      TextField("Search", text: $query)
     } else {
       TextField("Search Japanese or English", text: $query)
     }
@@ -763,13 +762,13 @@ private struct ResultRow: View {
   }
 
   private var titleBlock: some View {
-    VStack(alignment: .leading, spacing: -2) {
-      Text(entry.reading)
-        .font(usesExpandedLayout ? .body.weight(.semibold) : .caption.weight(.semibold))
-      Text(entry.headword)
-        .font(usesExpandedLayout ? .title3 : .title2)
-        .fixedSize(horizontal: false, vertical: true)
-    }
+    JapaneseRubyText(
+      surface: entry.headword,
+      reading: entry.reading,
+      baseFont: usesExpandedLayout ? .title3 : .title2,
+      rubyFont: usesExpandedLayout ? .body.weight(.semibold) : .caption.weight(.semibold)
+    )
+    .fixedSize(horizontal: false, vertical: true)
     .foregroundStyle(ZenbuTheme.foreground)
   }
 

@@ -126,21 +126,27 @@ bounded image or limited content rather than whole-work Media Analysis.
 
 The working image and derived result remain transient at flow level until the
 learner chooses to save them. Opening a recognized word is the narrow exception:
-it creates or replaces that entry's local Word Image Attachment so the same
-source context remains visible from later ordinary Search. Unopened recognized
-words are not saved. The attachment viewer explains the automatic save and
-offers Remove from Word. An explicit flow-level save separately creates one
+it creates an Encounter Example associating that entry with retained Encounter
+Media, so every distinct source context remains visible from later ordinary
+Search. Unopened recognized words are not saved. The paged viewer explains the
+automatic save and offers Remove from Word for one association. An explicit
+flow-level save separately creates one
 reopenable Image Text Result containing its source image, recognized Japanese
 regions, and any generated whole-content translation.
+
+Word Detail also lets the learner add another image through Apple's native Photo
+Library picker. Adding a photo creates another Encounter Example association and
+does not run OCR or create an Image Text Result.
 
 Nihongo-parity dictionary cards retain their save or bookmark behavior,
 including the ability to attach an explicitly selected or captured source
 image. A saved language item may preserve that personal context as an
 Encounter Example.
 
-Word Image Attachments use the app-owned dictionary-entry identity, retain the
-most recently opened image per entry, and deduplicate identical image bytes in
-local storage. They do not upload images or become source-backed dictionary data.
+Encounter Examples use the app-owned dictionary-entry identity and deduplicate
+identical Encounter Media bytes in local storage. One word may retain many images,
+and one image may be associated with many words. They do not upload images or
+become source-backed dictionary data.
 
 ## Furigana rendering
 
