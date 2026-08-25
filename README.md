@@ -1,14 +1,42 @@
-# README
+# Zenbu Japanese
 
-This project is for the main `zenbujapanese.com` website monorepo.
+Zenbu Japanese is a connected set of Japanese-learning experiences organized
+around one learning journey. The repository's implemented and released product
+surface is currently the [Zenbu Japanese iOS App](apps/ios/), which provides
+offline Lookup and related learning flows.
 
-The `zenbujapanese.com` website idea/goals/plan is to generate organic (SEO) traffic with the intention of driving leads/users/sales of various PRODUCTS (apps, extensions, SAAS, tools, etc.) for learning/consuming japanese (for english speakers/learners) and/or english (for japanese speakers/learners).
+The longer-term product direction includes additional Product Experiences and
+Shared Capabilities that can work together across Zenbu. Those surfaces are
+described here as product intent; their presence in documentation does not mean
+that a website, browser extension, account system, sync service, or additional
+client has been implemented in this repository.
 
-The initial working 'idea/philosphy' is to offer these tools, apps, etc. for free (freemium model) with premium upgrades, namely being the ability to create a user profile and save your data, progress, bookmarks, etc. 
+## Repository guide
 
-```
-[Website (SEO)] 
-  -> [Users] 
-    -> [Fremium Tools, SAAS, Extensions, iOS, Courses, etc.] // For simplicity i was thinking of making these independent, but maybe just planning to connect them at some kind of "user/db" area
-```
+- [Domain language](CONTEXT.md) defines the shared product and engineering
+  vocabulary.
+- [Architecture decisions](docs/adr/) record settled technical and product
+  boundaries.
+- [Release records](docs/releases/) contain version history, release artifacts,
+  and verification evidence.
+- [Product documentation](docs/product/) describes established Product
+  Experiences and Shared Capabilities.
+- [Product ideas](docs/product-ideas/) are exploratory and do not establish an
+  implementation commitment.
+- [Research](docs/research/) preserves source-backed investigations and
+  technical findings.
+- [Agent documentation](AGENTS.md) provides the entry point for repository
+  workflows, with supporting instructions under [`docs/agents/`](docs/agents/).
 
+Completed migration evidence under `docs/plans/completed/` is historical and
+does not override the domain model, ADRs, or current GitHub issues.
+
+## iOS development
+
+Open [`apps/ios/ZenbuJapanese.xcodeproj`](apps/ios/ZenbuJapanese.xcodeproj) in
+Xcode. The application target, UI tests, test plans, tools, language-data
+provenance, and verification records all live under [`apps/ios/`](apps/ios/).
+
+Release history and the release evidence index begin at
+[`docs/releases/1.0.0.md`](docs/releases/1.0.0.md). Work requests and product
+decisions are tracked in [GitHub Issues](https://github.com/serpcompany/zenbujapanese-monorepo/issues).
