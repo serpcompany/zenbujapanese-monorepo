@@ -27,6 +27,8 @@ client has been implemented in this repository.
   technical findings.
 - [Agent documentation](AGENTS.md) provides the entry point for repository
   workflows, with supporting instructions under [`docs/agents/`](docs/agents/).
+- [Project-wide assets](assets/) contain reusable source assets and provenance;
+  compiled client assets remain with their client.
 
 Completed migration evidence under `docs/plans/completed/` is historical and
 does not override the domain model, ADRs, or current GitHub issues.

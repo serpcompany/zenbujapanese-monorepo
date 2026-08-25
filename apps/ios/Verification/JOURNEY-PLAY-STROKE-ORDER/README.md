@@ -12,7 +12,7 @@ The manifest retains seven unique, non-failure 1320 × 2868 screenshots on iPhon
 - `C24658FD-0E97-4A9D-BA17-72C7763E7216.png`: an injected source failure is distinct from missing source coverage and exposes Retry.
 - `C27F204E-4A91-49E0-BFBA-D09EBEFEAC79.png`: Retry recovers the real six-stroke `争` diagram and opens its initialized overlay.
 
-The public stroke-order tests pass individually and in focused runs. They prove that manual Next spends time drawing one stroke before it settles, and that terminal Play begins a fresh sequence. Simulator frames that initially caught incomplete chrome were replaced through passing focused reruns of the same public tests after repeated warm-up snapshots; the retained files show complete relevant controls and chrome. The complete-suite and Release-build results are recorded in `SearchExperienceVerification.md`.
+The public stroke-order tests pass individually and in focused runs. They prove that manual Next spends time drawing one stroke before it settles, and that terminal Play begins a fresh sequence. Simulator frames that initially caught incomplete chrome were replaced through passing focused reruns of the same public tests after repeated warm-up snapshots; the retained files show complete relevant controls and chrome. The complete-suite and Release-build results are recorded in the [Search experience verification record](../../../../docs/releases/1.0.0/verification/search-experience.md).
 
 ## Source and transform
 

@@ -6,8 +6,8 @@ affirmed unrestricted commercial distribution rights for SERP/Zenbu.
 
 The archive is retained byte-for-byte as the release provenance source. Its
 embedded `zenbu-icon-pack/SHA256SUMS.txt` verifies every source and export in
-the pack. The iOS asset catalog uses the archive's opaque
-`ios/AppIcon.appiconset/icon-1024.png` export.
+the pack. The [iOS asset catalog](../../../apps/ios/App/Assets.xcassets/AppIcon.appiconset/)
+uses the archive's opaque `ios/AppIcon.appiconset/icon-1024.png` export.
 
 ## SHA-256
 
