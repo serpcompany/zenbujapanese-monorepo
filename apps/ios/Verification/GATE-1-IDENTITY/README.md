@@ -106,8 +106,10 @@ and dSYM.
 - Source AppIcon: 1024 by 1024 and opaque (`hasAlpha: no`).
 - Compiled 120 by 120 and 152 by 152 icon PNGs are opaque.
 - The compiled asset catalog contains two phone AppIcon renditions.
-- `shasum -a 256 -c SHA256SUMS.txt` passed for both the retained complete owner
-  pack and installed AppIcon.
+- The unpacked project-wide library passes
+  `shasum -a 256 -c ORIGINAL-ASSET-SHA256SUMS.txt`; its original owner ZIP
+  remains on `v1.0.0`, and the app-local AppIcon matches the verified opaque
+  iOS export.
 
 ## USB physical-device status
 
