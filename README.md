@@ -27,6 +27,9 @@ client has been implemented in this repository.
   technical findings.
 - [Agent documentation](AGENTS.md) provides the entry point for repository
   workflows, with supporting instructions under [`docs/agents/`](docs/agents/).
+- [App Store metadata](metadata/) contains reviewed canonical `asc metadata`
+  synchronization inputs; it is not disposable generated output or frozen
+  release evidence.
 - [Project-wide assets](assets/) contain reusable source assets and provenance;
   compiled client assets remain with their client.
 

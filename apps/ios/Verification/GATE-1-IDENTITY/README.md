@@ -49,7 +49,7 @@ media.
 
 The two active prose references left behind by the production/test rename were
 updated to `SearchExperienceJourneyUITests` and the
-[Search experience verification record](../../../../docs/releases/1.0.0/verification/search-experience.md).
+[Search acceptance record](../../../../docs/releases/1.0.0/verification/search-acceptance.md).
 A Markdown scan under `apps/ios` found no
 other active stale prose references from those renames; historical
 machine-generated evidence identifiers were intentionally left unchanged.
