@@ -94,7 +94,7 @@ Validate evidence without changing the ledger:
 node apps/ios/Tools/parity-ledger.mjs validate \
   --run /tmp/zenbu-parity-run/run.json \
   --ledger docs/clone-discovery/nihongo/parity-inventory.jsonl \
-  --plan apps/ios/Parity/search-dictionary-plan.json \
+  --plan apps/ios/Verification/search-dictionary-parity/search-dictionary-plan.json \
   --expected-commit HEAD
 ```
 
@@ -105,7 +105,7 @@ node apps/ios/Tools/parity-ledger.mjs compile \
   --run /tmp/zenbu-parity-run/run.json \
   --ledger docs/clone-discovery/nihongo/parity-inventory.jsonl \
   --required-journeys docs/clone-discovery/nihongo/scope.json \
-  --plan apps/ios/Parity/search-dictionary-plan.json \
+  --plan apps/ios/Verification/search-dictionary-parity/search-dictionary-plan.json \
   --output-ledger /tmp/zenbu-parity-ledger.jsonl \
   --output-report /tmp/zenbu-parity-coverage.json \
   --output-corrections /tmp/zenbu-parity-corrections.json
