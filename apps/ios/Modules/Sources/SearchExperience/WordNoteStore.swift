@@ -2,11 +2,11 @@ import Foundation
 
 struct WordNoteStore: Sendable {
   var load: @Sendable (WordNoteID) async -> [LearnerWordNote]
-  var save: @Sendable ([LearnerWordNote], WordNoteID) async -> Void
+  var save: @Sendable ([LearnerWordNote], WordNoteID) -> Void
 
   static let live = WordNoteStore(
-    load: { id in await WordNoteStorage.shared.load(id) },
-    save: { notes, id in await WordNoteStorage.shared.save(notes, for: id) }
+    load: { id in WordNoteStorage.shared.load(id) },
+    save: { notes, id in WordNoteStorage.shared.save(notes, for: id) }
   )
 }
 
@@ -20,30 +20,36 @@ struct LearnerWordNote: Codable, Hashable, Identifiable, Sendable {
   }
 }
 
-private actor WordNoteStorage {
+private final class WordNoteStorage: @unchecked Sendable {
   static let shared = WordNoteStorage()
+
+  private let lock = NSLock()
   private let defaults = UserDefaults.standard
   private let storageKey = "lookup.word-notes.v4"
   private var didPrepare = false
 
   func load(_ id: WordNoteID) -> [LearnerWordNote] {
-    resetForUITestingIfRequested()
-    return notes()[id.rawValue] ?? []
+    lock.withLock {
+      resetForUITestingIfRequested()
+      return notes()[id.rawValue] ?? []
+    }
   }
 
   func save(_ incomingNotes: [LearnerWordNote], for id: WordNoteID) {
-    resetForUITestingIfRequested()
-    var stored = notes()
-    let normalized = incomingNotes.compactMap { note -> LearnerWordNote? in
-      let text = note.text.trimmingCharacters(in: .whitespacesAndNewlines)
-      return text.isEmpty ? nil : LearnerWordNote(id: note.id, text: text)
+    lock.withLock {
+      resetForUITestingIfRequested()
+      var stored = notes()
+      let normalized = incomingNotes.compactMap { note -> LearnerWordNote? in
+        let text = note.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return text.isEmpty ? nil : LearnerWordNote(id: note.id, text: text)
+      }
+      if normalized.isEmpty {
+        stored.removeValue(forKey: id.rawValue)
+      } else {
+        stored[id.rawValue] = normalized
+      }
+      write(stored)
     }
-    if normalized.isEmpty {
-      stored.removeValue(forKey: id.rawValue)
-    } else {
-      stored[id.rawValue] = normalized
-    }
-    write(stored)
   }
 
   private func notes() -> [String: [LearnerWordNote]] {
@@ -60,9 +66,9 @@ private actor WordNoteStorage {
     guard !didPrepare else { return }
     didPrepare = true
     #if DEBUG
-    if ProcessInfo.processInfo.arguments.contains("-ResetWordNotes") {
-      defaults.removeObject(forKey: storageKey)
-    }
+      if ProcessInfo.processInfo.arguments.contains("-ResetWordNotes") {
+        defaults.removeObject(forKey: storageKey)
+      }
     #endif
   }
 }

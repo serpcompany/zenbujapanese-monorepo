@@ -2,49 +2,39 @@ import SwiftUI
 import UIKit
 
 struct MoreView: View {
-  @Environment(\.dismiss) private var dismiss
   let store: EncounterMediaStore
 
   var body: some View {
-    NavigationStack {
-      List {
-        NavigationLink {
-          MediaLibraryView(store: store)
-        } label: {
-          HStack {
-            Label("Media Library", systemImage: "photo.on.rectangle.angled")
-              .font(.body)
-            Spacer(minLength: 8)
-          }
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .accessibilityHidden(true)
-        }
-        .accessibilityLabel("Media Library")
-        .accessibilityIdentifier("more.media-library")
-
-        NavigationLink {
-          DictionarySourcesView()
-        } label: {
-          HStack {
-            Label("Credits & Attributions", systemImage: "info.circle")
-              .font(.body)
-            Spacer(minLength: 8)
-          }
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .accessibilityHidden(true)
-        }
-        .accessibilityLabel("Credits & Attributions")
-        .accessibilityIdentifier("more.credits")
-      }
-      .navigationTitle("More")
-      .toolbar {
-        ToolbarItem(placement: .confirmationAction) {
-          Button("Done") { dismiss() }
+    List {
+      NavigationLink {
+        MediaLibraryView(store: store)
+      } label: {
+        HStack {
+          Label("Media Library", systemImage: "photo.on.rectangle.angled")
             .font(.body)
-            .accessibilityIdentifier("more.done")
+          Spacer(minLength: 8)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityHidden(true)
       }
+      .accessibilityLabel("Media Library")
+      .accessibilityIdentifier("more.media-library")
+
+      NavigationLink {
+        DictionarySourcesView()
+      } label: {
+        HStack {
+          Label("Credits & Attributions", systemImage: "info.circle")
+            .font(.body)
+          Spacer(minLength: 8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityHidden(true)
+      }
+      .accessibilityLabel("Credits & Attributions")
+      .accessibilityIdentifier("more.credits")
     }
+    .navigationTitle("More")
   }
 }
 

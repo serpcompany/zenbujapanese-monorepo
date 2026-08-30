@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct KanjiDetailView: View {
-  @Environment(\.dismiss) private var dismiss
   let character: KanjiCharacter
   let entry: DictionaryEntry?
   let kanjiLookupClient: KanjiLookupClient
@@ -21,98 +20,72 @@ struct KanjiDetailView: View {
   @State private var presentedStrokeDiagram: KanjiStrokeDiagram?
 
   var body: some View {
-    VStack(spacing: 0) {
-      HStack {
-        Button {
-          dismiss()
-        } label: {
-          HStack(spacing: 4) {
-            Image(systemName: "chevron.left")
-            Text(entry?.headword ?? "Search")
-              .accessibilityIdentifier("kanji-detail.back-label")
-          }
-        }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("kanji-detail.back")
-        Spacer()
-        Text(character.rawValue)
-          .font(.headline)
-          .accessibilityIdentifier("kanji-detail.title")
-      }
-      .font(.title3.weight(.bold))
-      .foregroundStyle(ZenbuTheme.primaryForeground)
-      .padding(.horizontal, 16)
-      .frame(minHeight: 49)
-      .background(ZenbuTheme.chrome.ignoresSafeArea(edges: .top))
-      .accessibilityHidden(presentedStrokeDiagram != nil)
-
-      ScrollViewReader { proxy in
-        ScrollView {
-          VStack(spacing: 0) {
-            KanjiOverview(
-              character: character.rawValue,
-              reference: reference,
-              strokeDiagramLoadState: strokeDiagramLoadState,
-              retryStrokeOrder: { strokeRetryID += 1 },
-              openStrokeOrder: { presentedStrokeDiagram = $0 }
-            )
-            if loadState == .loading {
-              ProgressView("Loading kanji reference…")
-                .frame(maxWidth: .infinity)
-                .padding(24)
-            }
-            if loadFailed {
-              VStack(spacing: 12) {
-                Text("Kanji reference unavailable")
-                Button("Retry") { retryID += 1 }
-                  .accessibilityIdentifier("kanji-detail.retry")
-              }
+    ScrollViewReader { proxy in
+      ScrollView {
+        VStack(spacing: 0) {
+          KanjiOverview(
+            character: character.rawValue,
+            reference: reference,
+            strokeDiagramLoadState: strokeDiagramLoadState,
+            retryStrokeOrder: { strokeRetryID += 1 },
+            openStrokeOrder: { presentedStrokeDiagram = $0 }
+          )
+          if loadState == .loading {
+            ProgressView("Loading kanji reference…")
               .frame(maxWidth: .infinity)
               .padding(24)
-              .background(ZenbuTheme.row)
+          }
+          if loadFailed {
+            VStack(spacing: 12) {
+              Text("Kanji reference unavailable")
+              Button("Retry") { retryID += 1 }
+                .accessibilityIdentifier("kanji-detail.retry")
             }
-            if let reference {
-              KanjiReadingsSection(
-                reference: reference,
-                relatedWords: relatedWords,
-                openWord: openWord
-              )
-              if elements.isEmpty, !reference.components.isEmpty {
-                KanjiComponentsSummarySection(components: reference.components)
-              }
-            }
-            if !elements.isEmpty {
-              KanjiElementsSection(elements: elements) { selectedElement in
-                preserveElementID(selectedElement)
-                openElement(selectedElement)
-              }
-            }
-            if !relatedWords.isEmpty {
-              KanjiWordsSection(entries: orderedRelatedWords) { selectedEntry in
-                preserveWordID(selectedEntry.id)
-                openWord(selectedEntry)
-              }
+            .frame(maxWidth: .infinity)
+            .padding(24)
+            .background(ZenbuTheme.row)
+          }
+          if let reference {
+            KanjiReadingsSection(
+              reference: reference,
+              relatedWords: relatedWords,
+              openWord: openWord
+            )
+            if elements.isEmpty, !reference.components.isEmpty {
+              KanjiComponentsSummarySection(components: reference.components)
             }
           }
-          .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
-          .scrollTargetLayout()
+          if !elements.isEmpty {
+            KanjiElementsSection(elements: elements) { selectedElement in
+              preserveElementID(selectedElement)
+              openElement(selectedElement)
+            }
+          }
+          if !relatedWords.isEmpty {
+            KanjiWordsSection(entries: orderedRelatedWords) { selectedEntry in
+              preserveWordID(selectedEntry.id)
+              openWord(selectedEntry)
+            }
+          }
         }
-        .accessibilityIdentifier("kanji-detail.screen")
-        .onAppear {
-          restorePreservedWordPosition(with: proxy, in: relatedWords)
-          restorePreservedElementPosition(with: proxy, in: elements)
-        }
-        .onChange(of: relatedWords.map(\.id)) {
-          restorePreservedWordPosition(with: proxy, in: relatedWords)
-        }
-        .onChange(of: elements.map(\.id)) {
-          restorePreservedElementPosition(with: proxy, in: elements)
-        }
+        .scrollTargetLayout()
+      }
+      .accessibilityIdentifier("kanji-detail.screen")
+      .onAppear {
+        restorePreservedWordPosition(with: proxy, in: relatedWords)
+        restorePreservedElementPosition(with: proxy, in: elements)
+      }
+      .onChange(of: relatedWords.map(\.id)) {
+        restorePreservedWordPosition(with: proxy, in: relatedWords)
+      }
+      .onChange(of: elements.map(\.id)) {
+        restorePreservedElementPosition(with: proxy, in: elements)
       }
     }
     .foregroundStyle(ZenbuTheme.foreground)
     .background(ZenbuTheme.background)
-    .toolbar(.hidden, for: .navigationBar)
+    .navigationTitle(character.rawValue)
+    .navigationBarTitleDisplayMode(.inline)
     .accessibilityHidden(presentedStrokeDiagram != nil)
     .overlay {
       if let diagram = presentedStrokeDiagram {

@@ -60,6 +60,7 @@ final class HandwritingInputModel {
     recognitionTask = nil
     recognitionRevision += 1
     strokes = []
+    candidates = []
     recognitionState = .idle
   }
 
@@ -72,7 +73,7 @@ final class HandwritingInputModel {
 
   func submittedQuery(appendingTo existingQuery: String) -> SearchQuery {
     var submitted = existingQuery
-    if !strokes.isEmpty, let pendingCandidate = candidates.first {
+    if let pendingCandidate = candidates.first {
       submitted.append(pendingCandidate.value)
     }
     return SearchQuery(submitted)

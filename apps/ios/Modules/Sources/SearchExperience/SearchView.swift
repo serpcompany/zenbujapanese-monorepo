@@ -96,7 +96,6 @@ struct SearchView: View {
           selectedMode: .keyboard,
           selectMode: selectInputMode
         )
-        .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
       case .handwriting:
         HandwritingInputView(
           query: $query,
@@ -104,7 +103,7 @@ struct SearchView: View {
           selectMode: selectInputMode,
           submit: submitComposedQuery
         )
-        .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
+        .padding(.bottom, 64)
       case .radicals:
         RadicalInputView(
           query: $query,
@@ -112,13 +111,13 @@ struct SearchView: View {
           selectMode: selectInputMode,
           submit: submitRadicalQuery
         )
-        .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
+        .padding(.bottom, 64)
       default:
         EmptyView()
       }
     }
     .background(ZenbuTheme.background)
-    .toolbar(.hidden, for: .navigationBar)
+    .navigationTitle("Search")
     .onChange(of: query) { _, _ in
       results = .empty
       exampleCount = 0
@@ -254,9 +253,8 @@ struct SearchView: View {
   }
 
   private func recordRecentSearch(_ recentSearch: SearchQuery) {
-    Task {
-      await recentSearchStore.record(recentSearch)
-    }
+    recentSearchStore.record(recentSearch)
+    recentSearchRefreshID += 1
   }
 
   private func selectInputMode(_ mode: SearchInputMode) {
@@ -513,7 +511,7 @@ private struct SearchBar: View {
       Button(action: openImageSource) {
         Image(systemName: "camera")
           .font(.title3)
-          .foregroundStyle(ZenbuTheme.primaryForeground)
+          .foregroundStyle(ZenbuTheme.interactiveForeground)
           .frame(width: 44, height: 44)
           .contentShape(Rectangle())
       }
@@ -524,13 +522,14 @@ private struct SearchBar: View {
       if isInputActive {
         Button("Cancel", action: cancel)
           .buttonStyle(.plain)
-          .foregroundStyle(ZenbuTheme.primaryForeground)
+          .foregroundStyle(ZenbuTheme.interactiveForeground)
+          .frame(minHeight: 44)
           .accessibilityIdentifier("search.cancel")
       }
     }
     .padding(.horizontal, 16)
     .padding(.bottom, 10)
-    .background(ZenbuTheme.chrome)
+    .background(ZenbuTheme.background)
   }
 
   @ViewBuilder
@@ -635,7 +634,6 @@ private struct SearchResultsView: View {
             }
           }
         }
-        .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
       }
       .id(query)
       .scrollIndicators(.hidden)

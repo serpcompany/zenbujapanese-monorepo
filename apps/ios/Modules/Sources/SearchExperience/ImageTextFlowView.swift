@@ -29,16 +29,12 @@ struct ImageTextFlowView: View {
   var body: some View {
     GeometryReader { geometry in
       VStack(spacing: 0) {
-        toolbar
-        if model.canRequestTranslation { translation }
+        if model.canRequestTranslation {
+          translation
+        }
         page
-          .padding(
-            .bottom,
-            model.pages.count > 1 ? 0 : SearchExperienceLayout.bottomNavigationContentClearance
-          )
         if model.pages.count > 1 {
           pageIndicators
-            .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
         }
       }
       .frame(
@@ -49,7 +45,32 @@ struct ImageTextFlowView: View {
     }
     .accessibilityHidden(sharedAsset != nil)
     .background(ZenbuTheme.background)
-    .toolbar(.hidden, for: .navigationBar)
+    .navigationTitle("Photo")
+    .navigationBarTitleDisplayMode(.inline)
+    .navigationBarBackButtonHidden(true)
+    .toolbar {
+      ToolbarItem(placement: .cancellationAction) {
+        Button(action: close) {
+          Image(systemName: "xmark")
+        }
+        .accessibilityLabel("Close")
+        .accessibilityIdentifier("image-text.close")
+      }
+
+      ToolbarItemGroup(placement: .topBarTrailing) {
+        Button {
+          model.showsHighlights.toggle()
+        } label: {
+          Image(systemName: model.showsHighlights ? "viewfinder" : "viewfinder.circle")
+        }
+        .accessibilityLabel(
+          model.showsHighlights ? "Hide recognition highlights" : "Show recognition highlights"
+        )
+        .accessibilityIdentifier("image-text.highlights")
+
+        shareMenu
+      }
+    }
     .task { await model.load() }
     .onDisappear { model.suspendTranslation() }
     .alert(
@@ -64,10 +85,14 @@ struct ImageTextFlowView: View {
     } message: {
       Text("Japanese text was not found in this image.")
     }
-    .sheet(item: $sharedAsset, onDismiss: { sharedAsset = nil }) { asset in
-      ImageActivityView(asset: asset)
-        .ignoresSafeArea()
-    }
+    .sheet(
+      item: $sharedAsset,
+      onDismiss: { sharedAsset = nil },
+      content: { asset in
+        ImageActivityView(asset: asset)
+          .ignoresSafeArea()
+      }
+    )
   }
 
   @ViewBuilder
@@ -103,38 +128,6 @@ struct ImageTextFlowView: View {
         .accessibilityIdentifier("image-text.translation-unavailable")
         .padding(.vertical, 8)
     }
-  }
-
-  private var toolbar: some View {
-    HStack(spacing: 22) {
-      Button(action: close) {
-        Image(systemName: "xmark").frame(width: 44, height: 44)
-      }
-      .frame(width: 44, height: 44)
-      .contentShape(Rectangle())
-      .accessibilityLabel("Close")
-      .accessibilityIdentifier("image-text.close")
-      Spacer()
-      Button {
-        model.showsHighlights.toggle()
-      } label: {
-        Image(systemName: model.showsHighlights ? "viewfinder" : "viewfinder.circle")
-          .frame(width: 44, height: 44)
-      }
-      .frame(width: 44, height: 44)
-      .contentShape(Rectangle())
-      .accessibilityLabel(
-        model.showsHighlights ? "Hide recognition highlights" : "Show recognition highlights"
-      )
-      .accessibilityIdentifier("image-text.highlights")
-      shareMenu
-    }
-    .buttonStyle(.plain)
-    .font(.title3)
-    .foregroundStyle(ZenbuTheme.interactiveForeground)
-    .padding(.horizontal, 16)
-    .frame(minHeight: 49)
-    .background(ZenbuTheme.card)
   }
 
   @ViewBuilder
