@@ -50,9 +50,9 @@ private actor RecentSearchHistory {
     guard !didPrepare else { return }
     didPrepare = true
     #if DEBUG
-    if ProcessInfo.processInfo.arguments.contains("-ResetRecentSearches") {
-      defaults.removeObject(forKey: storageKey)
-    }
+      if ProcessInfo.processInfo.arguments.contains("-ResetRecentSearches") {
+        defaults.removeObject(forKey: storageKey)
+      }
     #endif
   }
 }

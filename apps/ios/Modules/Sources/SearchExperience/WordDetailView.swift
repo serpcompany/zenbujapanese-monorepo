@@ -2,7 +2,6 @@ import SwiftUI
 import UIKit
 
 struct WordDetailView: View {
-  @Environment(\.dismiss) private var dismiss
   @FocusState private var noteEditorFocused: Bool
   @State private var editingNoteID: String?
   @State private var noteDraft = ""
@@ -16,7 +15,6 @@ struct WordDetailView: View {
   @State private var encounterMediaImportFailed = false
 
   let entry: DictionaryEntry
-  let backTitle: String
   let initialImageAttachment: WordImageAttachment?
   let speechSynthesisClient: SpeechSynthesisClient
   let exampleSentenceClient: ExampleSentenceClient
@@ -30,95 +28,105 @@ struct WordDetailView: View {
   let openConjugations: (ConjugationTable) -> Void
 
   var body: some View {
-    VStack(spacing: 0) {
-      DetailToolbar(
-        backTitle: backTitle,
-        isEditingNote: editingNoteID != nil,
-        goBack: goBack,
-        finishEditingNote: finishEditingNote,
-        addNote: beginAddingNote,
-        addEncounterMedia: { showsEncounterMediaPicker = true }
-      )
+    ScrollViewReader { proxy in
+      ScrollView {
+        VStack(spacing: 0) {
+          WordHeader(
+            entry: entry,
+            encounterMedia: encounterMedia,
+            pronounce: { speechSynthesisClient.speak(entry.reading) },
+            removeEncounterMedia: removeEncounterMedia
+          )
+          PartOfSpeechRow(
+            title: (entry.senses.first?.partsOfSpeech ?? entry.partsOfSpeech)
+              .map(\.rawValue)
+              .joined(separator: " · "),
+            conjugationTable: conjugationTable,
+            openConjugations: openConjugations
+          )
 
-      ScrollViewReader { proxy in
-        ScrollView {
-          VStack(spacing: 0) {
-            WordHeader(
-              entry: entry,
-              encounterMedia: encounterMedia,
-              pronounce: { speechSynthesisClient.speak(entry.reading) },
-              removeEncounterMedia: removeEncounterMedia
-            )
-            PartOfSpeechRow(
-              title: (entry.senses.first?.partsOfSpeech ?? entry.partsOfSpeech)
-                .map(\.rawValue)
-                .joined(separator: " · "),
-              conjugationTable: conjugationTable,
-              openConjugations: openConjugations
-            )
-
-            if !entry.alternativeForms.isEmpty {
-              SectionLabel("ALTERNATIVES")
-              AlternativeFormsSection(forms: entry.alternativeForms, openKanji: openKanji)
-            }
-
-            SectionLabel("MEANING")
-            MeaningSection(senses: entry.senses)
-
-            if !entry.primaryKanji.isEmpty {
-              SectionLabel("KANJI")
-              PrimaryKanjiSection(
-                characters: entry.primaryKanji, entry: entry, openKanji: openKanji)
-            }
-
-            if !entry.alternativeKanji.isEmpty {
-              SectionLabel("ALTERNATIVE KANJI")
-              AlternativeKanjiSection(characters: entry.alternativeKanji, openKanji: openKanji)
-            }
-
-            if !entry.relationships.isEmpty {
-              SectionLabel("RELATED WORDS")
-              RelationshipsSection(relationships: entry.relationships, openRelated: openRelated)
-            }
-
-            SectionLabel("NOTES")
-            NotesSection(
-              notes: notes,
-              editingNoteID: editingNoteID,
-              noteDraft: $noteDraft,
-              editorFocused: $noteEditorFocused,
-              editNote: beginEditingNote,
-              addNote: beginAddingNote
-            )
-            .id("word-note.section")
-
-            SectionLabel("EXAMPLES")
-            EntryExamplesSection(
-              entry: entry,
-              examples: examples,
-              isLoading: isLoadingExamples,
-              speechSynthesisClient: speechSynthesisClient,
-              japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-              openWord: openWord
-            )
+          if !entry.alternativeForms.isEmpty {
+            SectionLabel("ALTERNATIVES")
+            AlternativeFormsSection(forms: entry.alternativeForms, openKanji: openKanji)
           }
-          .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
+
+          SectionLabel("MEANING")
+          MeaningSection(senses: entry.senses)
+
+          if !entry.primaryKanji.isEmpty {
+            SectionLabel("KANJI")
+            PrimaryKanjiSection(
+              characters: entry.primaryKanji, entry: entry, openKanji: openKanji)
+          }
+
+          if !entry.alternativeKanji.isEmpty {
+            SectionLabel("ALTERNATIVE KANJI")
+            AlternativeKanjiSection(characters: entry.alternativeKanji, openKanji: openKanji)
+          }
+
+          if !entry.relationships.isEmpty {
+            SectionLabel("RELATED WORDS")
+            RelationshipsSection(relationships: entry.relationships, openRelated: openRelated)
+          }
+
+          SectionLabel("NOTES")
+          NotesSection(
+            notes: notes,
+            editingNoteID: editingNoteID,
+            noteDraft: $noteDraft,
+            editorFocused: $noteEditorFocused,
+            editNote: beginEditingNote,
+            addNote: beginAddingNote
+          )
+          .id("word-note.section")
+
+          SectionLabel("EXAMPLES")
+          EntryExamplesSection(
+            entry: entry,
+            examples: examples,
+            isLoading: isLoadingExamples,
+            speechSynthesisClient: speechSynthesisClient,
+            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+            openWord: openWord
+          )
         }
-        .background(ZenbuTheme.background)
-        .scrollIndicators(.hidden)
-        .scrollDismissesKeyboard(.immediately)
-        .accessibilityIdentifier("word-detail.screen")
-        .onChange(of: editingNoteID) { _, noteID in
-          guard noteID != nil else { return }
-          Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(350))
-            proxy.scrollTo("word-note.section", anchor: .center)
-          }
+      }
+      .background(ZenbuTheme.background)
+      .scrollIndicators(.hidden)
+      .scrollDismissesKeyboard(.immediately)
+      .accessibilityIdentifier("word-detail.screen")
+      .onChange(of: editingNoteID) { _, noteID in
+        guard noteID != nil else { return }
+        Task { @MainActor in
+          try? await Task.sleep(for: .milliseconds(350))
+          proxy.scrollTo("word-note.section", anchor: .center)
         }
       }
     }
     .background(ZenbuTheme.background)
-    .toolbar(.hidden, for: .navigationBar)
+    .navigationTitle(entry.headword)
+    .navigationBarTitleDisplayMode(.inline)
+    .toolbar {
+      ToolbarItemGroup(placement: .topBarTrailing) {
+        if editingNoteID != nil {
+          Button("Done", action: finishEditingNote)
+            .font(.body.weight(.semibold))
+            .accessibilityIdentifier("word-note.done")
+        } else {
+          Button(action: beginAddingNote) {
+            Image(systemName: "square.and.pencil")
+          }
+          .accessibilityLabel("Add note")
+          .accessibilityIdentifier("word-detail.toolbar-note")
+
+          Button(action: { showsEncounterMediaPicker = true }) {
+            Image(systemName: "photo.badge.plus")
+          }
+          .accessibilityLabel("Add encounter image")
+          .accessibilityIdentifier("word-detail.toolbar-image")
+        }
+      }
+    }
     .sheet(isPresented: $showsEncounterMediaPicker) {
       ImagePhotoLibraryPicker { result in
         showsEncounterMediaPicker = false
@@ -142,6 +150,10 @@ struct WordDetailView: View {
     .onReceive(NotificationCenter.default.publisher(for: .speechSynthesisRequested)) {
       notification in
       lastSpeechRequest = notification.object as? String
+    }
+    .onDisappear {
+      guard editingNoteID != nil else { return }
+      persistDraft()
     }
     .task(id: entry.id) {
       isLoadingExamples = true
@@ -202,23 +214,6 @@ struct WordDetailView: View {
 
   private func finishEditingNote() {
     persistDraft()
-  }
-
-  private func goBack() {
-    if editingNoteID == nil {
-      let pendingSave = noteSaveTask
-      Task { @MainActor in
-        await pendingSave?.value
-        dismiss()
-      }
-      return
-    }
-    let updatedNotes = applyingDraft()
-    let save = scheduleNoteSave(updatedNotes)
-    Task { @MainActor in
-      await save.value
-      dismiss()
-    }
   }
 
   private func persistDraft() {
@@ -331,56 +326,6 @@ private struct AlternativeKanjiSection: View {
       }
     }
     .background(ZenbuTheme.row)
-  }
-}
-
-private struct DetailToolbar: View {
-  let backTitle: String
-  let isEditingNote: Bool
-  let goBack: () -> Void
-  let finishEditingNote: () -> Void
-  let addNote: () -> Void
-  let addEncounterMedia: () -> Void
-
-  var body: some View {
-    HStack(spacing: 20) {
-      Button(action: goBack) {
-        HStack(spacing: 4) {
-          Image(systemName: "chevron.left")
-          Text(backTitle)
-        }
-        .font(.body)
-      }
-      .buttonStyle(.plain)
-      .frame(minHeight: 44)
-      .accessibilityIdentifier("word-detail.back")
-      Spacer()
-      if isEditingNote {
-        Button("Done", action: finishEditingNote)
-          .buttonStyle(.plain)
-          .font(.body.weight(.semibold))
-          .frame(minWidth: 44, minHeight: 44)
-          .accessibilityIdentifier("word-note.done")
-      } else {
-        Button(action: addNote) {
-          Image(systemName: "square.and.pencil")
-        }
-        .frame(minWidth: 44, minHeight: 44)
-        .accessibilityLabel("Add note")
-        .accessibilityIdentifier("word-detail.toolbar-note")
-        Button(action: addEncounterMedia) {
-          Image(systemName: "camera.badge.ellipsis")
-        }
-        .frame(minWidth: 44, minHeight: 44)
-        .accessibilityLabel("Add encounter image")
-        .accessibilityIdentifier("word-detail.toolbar-image")
-      }
-    }
-    .font(.title3)
-    .foregroundStyle(ZenbuTheme.primaryForeground)
-    .padding(.horizontal, 16)
-    .frame(minHeight: 49)
-    .background(ZenbuTheme.chrome.ignoresSafeArea(edges: .top))
   }
 }
 

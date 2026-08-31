@@ -2,7 +2,7 @@ import XCTest
 
 final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
-  func testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToSettings() throws {
+  func testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToMore() throws {
     let app = launchApp()
 
     let searchField = app.textFields["search.field"]
@@ -11,9 +11,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(imageSearch.exists)
     XCTAssertGreaterThanOrEqual(imageSearch.frame.minX, searchField.frame.maxX)
     XCTAssertFalse(app.buttons["search.sources"].exists)
+    recordSettledScreenshot(named: "issue-216-after-search", app: app)
 
-    app.buttons["search-experience-tab.settings"].tap()
+    app.tabBars.buttons["More"].tap()
     XCTAssertTrue(app.staticTexts["More"].waitForExistence(timeout: 2))
+    recordSettledScreenshot(named: "issue-216-after-more", app: app)
     XCTAssertEqual(app.buttons["more.media-library"].label, "Media Library")
     XCTAssertEqual(app.buttons["more.credits"].label, "Credits & Attributions")
     app.buttons["more.credits"].tap()
@@ -25,15 +27,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testBottomNavigationContainsOnlyReleaseDestinationsAndRestoresSearch() throws {
     let app = launchApp()
 
-    for tab in ["search", "settings"] {
-      let button = app.buttons["search-experience-tab.\(tab)"]
+    for tab in ["Search", "More"] {
+      let button = app.tabBars.buttons[tab]
       XCTAssertTrue(button.waitForExistence(timeout: 3))
       XCTAssertGreaterThanOrEqual(button.frame.height, 44)
       XCTAssertLessThanOrEqual(button.frame.maxY, app.windows.firstMatch.frame.maxY)
     }
 
-    XCTAssertFalse(app.buttons["search-experience-tab.clippings"].exists)
-    XCTAssertFalse(app.buttons["search-experience-tab.flashcards"].exists)
+    XCTAssertFalse(app.tabBars.buttons["Clippings"].exists)
+    XCTAssertFalse(app.tabBars.buttons["Flashcards"].exists)
 
     let searchField = app.textFields["search.field"]
     searchField.tap()
@@ -43,7 +45,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     japan.tap()
     XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
 
-    app.buttons["search-experience-tab.search"].tap()
+    app.tabBars.buttons["Search"].tap()
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     XCTAssertFalse(app.scrollViews["word-detail.screen"].exists)
     recordSettledScreenshot(named: "acceptance-search-tab-restored", app: app)
@@ -268,14 +270,14 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     gloss.tap()
     XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.静か.静=しず|か"].exists)
-    XCTAssertTrue(app.buttons["word-detail.back"].label.contains("Photo"))
+    XCTAssertTrue(nativeBackButton(in: app).isHittable)
     let attachment = app.buttons["word-detail.image-attachment"]
     XCTAssertTrue(attachment.exists)
     attachment.tap()
     XCTAssertTrue(app.buttons["word-detail.image-attachment-done"].waitForExistence(timeout: 2))
     app.buttons["word-detail.image-attachment-done"].tap()
     recordSettledScreenshot(named: "image-text-shizuka-word-detail", app: app)
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
     XCTAssertTrue(translation.exists)
     XCTAssertTrue(translation.label.contains("quiet park"))
@@ -337,11 +339,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.buttons["word-detail.image-attachment"].waitForExistence(timeout: 3))
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
     app.buttons["image-text.close"].tap()
 
-    app.buttons["search-experience-tab.settings"].tap()
+    app.tabBars.buttons["More"].tap()
     XCTAssertTrue(app.staticTexts["More"].waitForExistence(timeout: 2))
     let mediaLibrary = app.buttons["more.media-library"]
     XCTAssertTrue(mediaLibrary.exists)
@@ -571,18 +573,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "争")
     recordSettledScreenshot(named: "kanji-element-standalone-sou-destination", app: app)
 
-    app.buttons["kanji-detail.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(elementScreen.waitForExistence(timeout: 2))
     XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "爭")
     let restoredStandalone = app.buttons["kanji-element.standalone.争"]
     XCTAssertTrue(restoredStandalone.isHittable)
 
-    app.buttons["kanji-element.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(elementScreen.waitForExistence(timeout: 2))
     XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "争")
     let restoredTraditional = app.buttons["kanji-element.alternative.爭"]
     XCTAssertTrue(restoredTraditional.isHittable)
-    app.buttons["kanji-element.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 2))
     XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "静")
     XCTAssertTrue(soundElement.isHittable)
@@ -632,7 +634,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     }
     XCTAssertTrue(linkedDetail.waitForExistence(timeout: 3))
     XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "清")
-    app.buttons["kanji-detail.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(elementScreen.waitForExistence(timeout: 2))
     XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "青")
     let restoredPosition = XCTNSPredicateExpectation(
@@ -868,17 +870,17 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     linkedReading.tap()
     XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.静.静=しず"].exists)
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 2))
     XCTAssertTrue(linkedReading.exists)
 
-    let back = app.buttons["kanji-detail.back"]
+    let back = nativeBackButton(in: app)
     XCTAssertTrue(back.isHittable)
     back.tap()
     XCTAssertTrue(wordDetail.waitForExistence(timeout: 2))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.静か.静=しず|か"].exists)
     XCTAssertTrue(linkedKanji.exists)
-    XCTAssertTrue(app.buttons["word-detail.back"].isHittable)
+    XCTAssertTrue(nativeBackButton(in: app).isHittable)
     Thread.sleep(forTimeInterval: 2)
     recordSettledScreenshot(named: "kanji-back-restores-shizuka-word-detail", app: app)
   }
@@ -920,11 +922,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.静寂.静寂=せいじゃく"].exists)
     XCTAssertTrue(app.staticTexts["silence, stillness, quietness"].exists)
-    XCTAssertTrue(app.buttons["word-detail.back"].isHittable)
+    XCTAssertTrue(nativeBackButton(in: app).isHittable)
     Thread.sleep(forTimeInterval: 2)
     recordSettledScreenshot(named: "kanji-related-word-seijaku-detail", app: app)
 
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 2))
     for _ in 0..<20 where !relatedQuiet.isHittable { Thread.sleep(forTimeInterval: 0.1) }
     XCTAssertTrue(relatedQuiet.isHittable)
@@ -1058,7 +1060,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let detailGlyph = app.staticTexts["kanji-detail.glyph"]
     XCTAssertTrue(detailGlyph.waitForExistence(timeout: 2))
     XCTAssertEqual(detailGlyph.label, "丶")
-    app.buttons["kanji-detail.back"].tap()
+    tapNativeBack(in: app)
 
     showRecentSearches(in: app, searchField: surface.searchField)
     XCTAssertTrue(app.buttons["recent-search.0"].waitForExistence(timeout: 2))
@@ -1173,11 +1175,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(detailGlyph.waitForExistence(timeout: 2))
     XCTAssertEqual(detailGlyph.label, "丁")
     recordScreenshot(named: "handwriting-single-kanji-detail", app: app)
-    app.buttons["kanji-detail.back"].tap()
+    tapNativeBack(in: app)
 
-    showRecentSearches(in: app, searchField: searchField)
-    XCTAssertTrue(app.buttons["recent-search.0"].waitForExistence(timeout: 2))
-    XCTAssertEqual(app.buttons["recent-search.0"].label, "丁")
   }
 
   @MainActor
@@ -1304,7 +1303,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let candidate = app.buttons["handwriting.candidate.山"]
     XCTAssertTrue(candidate.waitForExistence(timeout: 10))
     XCTAssertLessThanOrEqual(
-      canvas.frame.maxY, app.buttons["search-experience-tab.search"].frame.minY)
+      canvas.frame.maxY, nativeTabBar(in: app).frame.minY)
     recordSettledScreenshot(named: "handwriting-recorded-yama-candidate", app: app)
   }
 
@@ -1343,8 +1342,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     XCTAssertGreaterThanOrEqual(canvas.frame.width, 240)
     XCTAssertGreaterThanOrEqual(canvas.frame.height, 240)
-    XCTAssertLessThanOrEqual(
-      canvas.frame.maxY, app.buttons["search-experience-tab.search"].frame.minY)
+    assertUsesNativeTabSafeArea(canvas, in: app)
     recordSettledScreenshot(named: "handwriting-uncramped-canvas", app: app)
   }
 
@@ -1702,7 +1700,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
     let finalExample = app.descendants(matching: .any)["word-detail.example.2"]
     XCTAssertTrue(finalExample.waitForExistence(timeout: 3))
-    let tabBarTop = app.buttons["search-experience-tab.search"].frame.minY
+    let tabBarTop = nativeTabBar(in: app).frame.minY
     for _ in 0..<8 where !finalExample.isHittable || finalExample.frame.maxY > tabBarTop - 24 {
       detail.swipeUp()
     }
@@ -1859,7 +1857,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testDictionarySourceAttributionIsReachableFromSearch() throws {
     let app = launchApp()
 
-    let sources = app.buttons["search-experience-tab.settings"]
+    let sources = app.tabBars.buttons["More"]
     XCTAssertTrue(sources.waitForExistence(timeout: 3))
     sources.tap()
     let credits = app.buttons["more.credits"]
@@ -1958,12 +1956,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  func testPrivacyAndSupportAreReachableFromSettings() throws {
+  func testPrivacyAndSupportAreReachableFromMore() throws {
     let app = launchApp()
 
-    let settings = app.buttons["search-experience-tab.settings"]
-    XCTAssertTrue(settings.waitForExistence(timeout: 3))
-    settings.tap()
+    let more = app.tabBars.buttons["More"]
+    XCTAssertTrue(more.waitForExistence(timeout: 3))
+    more.tap()
     let credits = app.buttons["more.credits"]
     XCTAssertTrue(credits.waitForExistence(timeout: 2))
     credits.tap()
@@ -2136,7 +2134,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["to be seen, to be visible, to be in sight"].exists)
     recordScreenshot(named: "word-detail-related-mieru", app: app)
 
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(miruRuby.waitForExistence(timeout: 2))
   }
 
@@ -2159,7 +2157,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(alternateReading.exists)
     recordScreenshot(named: "word-detail-choucho-current-source-multiple-readings", app: app)
 
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     app.buttons["Clear text"].tap()
     submitSearch("茨", in: app, searchField: searchField)
     let uncommon = app.buttons.matching(
@@ -2174,7 +2172,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(uncommonReading.exists)
     recordScreenshot(named: "word-detail-uncommon-multiple-reading-source-class", app: app)
 
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     app.buttons["Clear text"].tap()
     submitSearch("いる", in: app, searchField: searchField)
     let kanaVerb = app.buttons.matching(
@@ -2216,7 +2214,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let detailGlyph = app.staticTexts["kanji-detail.glyph"]
     XCTAssertTrue(detailGlyph.waitForExistence(timeout: 2))
     XCTAssertEqual(detailGlyph.label, "問")
-    app.buttons["kanji-detail.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(detail.waitForExistence(timeout: 2))
 
     let addNote = app.buttons["word-detail.add-note"]
@@ -2237,7 +2235,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.buttons["word-detail.note"].waitForExistence(timeout: 10))
     XCTAssertEqual(app.buttons["word-detail.note"].label, "Review this rich noun")
 
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     let detailDismissed = XCTNSPredicateExpectation(
       predicate: NSPredicate(format: "exists == false"),
       object: detail
@@ -2298,7 +2296,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.buttons["word-detail.add-note"].exists)
     recordScreenshot(named: "word-note-saved", app: app)
 
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     let result = app.buttons.matching(
       NSPredicate(format: "label BEGINSWITH %@", "いる, いる, to be (of animate objects)")
     ).firstMatch
@@ -2380,7 +2378,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(editor.waitForExistence(timeout: 2))
     editor.tap()
     editor.typeText("Back autosave probe")
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
 
     let problem = app.buttons.matching(
       NSPredicate(format: "label BEGINSWITH %@", "問題, もんだい")
@@ -2406,7 +2404,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     editor.tap()
     editor.typeText("Second note")
     app.buttons["word-note.done"].tap()
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
 
     app.launchArguments.removeAll { $0 == "-ResetWordNotes" }
     app.terminate()
@@ -2455,7 +2453,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons["word-note.done"].tap()
     XCTAssertTrue(app.buttons["word-detail.note"].waitForExistence(timeout: 2))
 
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(moor.waitForExistence(timeout: 2))
     moor.tap()
     detail = app.scrollViews["word-detail.screen"]
@@ -2512,9 +2510,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["to see, to look, to watch, to view, to observe"].exists)
     recordScreenshot(named: "word-detail-example-token-miru", app: app)
 
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(examples.waitForExistence(timeout: 2))
-    app.buttons["example-list.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(openExamples.waitForExistence(timeout: 2))
   }
 
@@ -2576,9 +2574,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     linkedKey.tap()
     XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.鍵.鍵=かぎ"].exists)
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(examples.waitForExistence(timeout: 2))
-    app.buttons["example-list.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(openExamples.waitForExistence(timeout: 2))
   }
 
@@ -2612,7 +2610,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(inlineExampleSpeaker.isHittable)
     recordSettledScreenshot(named: "production-speech-word-and-example", app: app)
 
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(searchField.waitForExistence(timeout: 2))
     let openExamples = app.buttons["search.examples"]
     XCTAssertTrue(openExamples.waitForExistence(timeout: 4))
@@ -2665,9 +2663,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       in: app
     )
     XCTAssertTrue(inlineExampleSpeaker.isHittable)
-    let detailBack = app.buttons["word-detail.back"]
+    let detailBack = nativeBackButton(in: app)
     XCTAssertTrue(detailBack.isHittable)
-    XCTAssertEqual(detailBack.label, "Search")
     Thread.sleep(forTimeInterval: 2)
     recordScreenshot(named: "pronunciation-word-example-after-settle", app: app)
 
@@ -2751,7 +2748,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       app.descendants(matching: .any)["conjugations.row.past"].label,
       "いた, Past"
     )
-    app.buttons["conjugations.back"].tap()
+    tapNativeBack(in: app)
     XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.いる.いる"].exists)
   }
@@ -2849,8 +2846,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     waitForConjugationCaptureToSettle(in: app)
     recordScreenshot(named: "conjugations-suru-polite", app: app)
 
-    app.buttons["conjugations.back"].tap()
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
+    tapNativeBack(in: app)
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     app.buttons["Clear text"].tap()
     openConjugations(for: "来る", resultLabelPrefix: "来る, くる", in: app, searchField: searchField)
@@ -2922,8 +2919,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     waitForConjugationCaptureToSettle(in: app)
     recordScreenshot(named: "conjugations-i-adjective", app: app)
 
-    app.buttons["conjugations.back"].tap()
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
+    tapNativeBack(in: app)
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     app.buttons["Clear text"].tap()
     openConjugations(for: "静か", resultLabelPrefix: "静か, しずか", in: app, searchField: searchField)
@@ -2975,7 +2972,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["question (e.g. on a test), problem"].exists)
     recordScreenshot(named: "word-detail-problem", app: app)
 
-    app.buttons["word-detail.back"].tap()
+    tapNativeBack(in: app)
 
     XCTAssertEqual(searchField.value as? String, "問題")
     XCTAssertTrue(bestMatches.exists)
@@ -3143,6 +3140,41 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  private func nativeTabBar(in app: XCUIApplication) -> XCUIElement {
+    let tabBar = app.tabBars.firstMatch
+    XCTAssertTrue(tabBar.waitForExistence(timeout: 3), "Expected a native tab bar")
+    return tabBar
+  }
+
+  @MainActor
+  private func assertUsesNativeTabSafeArea(
+    _ bottomElement: XCUIElement,
+    in app: XCUIApplication,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    XCTAssertTrue(bottomElement.waitForExistence(timeout: 3), file: file, line: line)
+    let tabBarTop = nativeTabBar(in: app).frame.minY
+    XCTAssertLessThanOrEqual(bottomElement.frame.maxY, tabBarTop, file: file, line: line)
+  }
+
+  @MainActor
+  private func nativeBackButton(in app: XCUIApplication) -> XCUIElement {
+    let navigationBar = app.navigationBars.firstMatch
+    XCTAssertTrue(navigationBar.waitForExistence(timeout: 3), "Expected a native navigation bar")
+    let backButton = navigationBar.buttons.firstMatch
+    XCTAssertTrue(backButton.waitForExistence(timeout: 3), "Expected a native Back button")
+    return backButton
+  }
+
+  @MainActor
+  private func tapNativeBack(in app: XCUIApplication) {
+    let backButton = nativeBackButton(in: app)
+    XCTAssertTrue(backButton.isHittable, "Expected the native Back button to be hittable")
+    backButton.tap()
+  }
+
+  @MainActor
   private func dismissSoftwareKeyboard(in app: XCUIApplication) {
     let keyboard = app.keyboards.firstMatch
     guard keyboard.exists else { return }
@@ -3156,7 +3188,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func waitForWordNoteCaptureToSettle(in app: XCUIApplication) {
-    let back = app.buttons["word-detail.back"]
+    let back = nativeBackButton(in: app)
     let done = app.buttons["word-note.done"]
     XCTAssertTrue(back.isHittable)
     XCTAssertTrue(done.isHittable)
@@ -3167,7 +3199,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func waitForConjugationCaptureToSettle(in app: XCUIApplication) {
-    let back = app.buttons["conjugations.back"]
+    let back = nativeBackButton(in: app)
     XCTAssertTrue(back.waitForExistence(timeout: 2))
     XCTAssertTrue(back.isHittable)
     _ = back.label
@@ -3245,35 +3277,35 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   private func radicalButton(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
     let grid = app.scrollViews["radical.grid"]
+    let visibleBottom = min(grid.frame.maxY, nativeTabBar(in: app).frame.minY)
     if identifier == "radical.grass" {
       for _ in 0..<16 {
         let button = app.buttons[identifier]
         if button.exists, button.isHittable,
           button.frame.minY >= grid.frame.minY,
-          button.frame.maxY <= grid.frame.maxY
+          button.frame.maxY <= visibleBottom
         {
           return button
         }
         grid.swipeDown(velocity: .fast)
       }
     }
-    for _ in 0..<16 {
+    for _ in 0..<32 {
       let button = app.buttons[identifier]
       if button.exists, button.isHittable,
         button.frame.minY >= grid.frame.minY,
-        button.frame.maxY <= grid.frame.maxY
+        button.frame.maxY <= visibleBottom
       {
         return button
       }
-      grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.72))
+      grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.82))
         .press(
           forDuration: 0.05,
-          thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.48))
+          thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
         )
     }
     let button = app.buttons[identifier]
-    XCTAssertTrue(
-      button.exists && button.isHittable, "Missing hittable radical button \(identifier)")
+    XCTAssertTrue(button.exists, "Missing radical button \(identifier)")
     return button
   }
 

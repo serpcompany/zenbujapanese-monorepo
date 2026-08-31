@@ -60,6 +60,7 @@ final class HandwritingInputModel {
     recognitionTask = nil
     recognitionRevision += 1
     strokes = []
+    candidates = []
     recognitionState = .idle
   }
 

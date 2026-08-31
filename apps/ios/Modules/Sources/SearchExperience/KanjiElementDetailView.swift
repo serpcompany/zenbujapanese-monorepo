@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct KanjiElementDetailView: View {
-  @Environment(\.dismiss) private var dismiss
   let elementID: KanjiElementID
   let lookupClient: KanjiElementLookupClient
   let openAlternative: (KanjiElementID) -> Void
@@ -14,62 +13,40 @@ struct KanjiElementDetailView: View {
   @State private var scrollPosition: KanjiCharacter?
 
   var body: some View {
-    VStack(spacing: 0) {
-      HStack {
-        Button {
-          dismiss()
-        } label: {
-          HStack(spacing: 4) {
-            Image(systemName: "chevron.left")
-            Text("Kanji")
-          }
-        }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("kanji-element.back")
-        Spacer()
-        Text("Element")
-          .font(.headline)
-      }
-      .font(.system(size: 17))
-      .padding(.horizontal, 16)
-      .frame(height: 49)
-      .background(ZenbuTheme.chrome.ignoresSafeArea(edges: .top))
-
-      ScrollView {
-        VStack(spacing: 0) {
-          header
-          switch loadState {
-          case .loading:
-            ProgressView("Loading element reference…")
-              .frame(maxWidth: .infinity)
-              .padding(24)
-          case .missing:
-            Text("No element reference is available.")
-              .foregroundStyle(ZenbuTheme.secondaryText)
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .padding(24)
-          case .failed:
-            VStack(spacing: 12) {
-              Text("Element reference unavailable")
-              Button("Retry") { retryID += 1 }
-                .accessibilityIdentifier("kanji-element.retry")
-            }
+    ScrollView {
+      VStack(spacing: 0) {
+        header
+        switch loadState {
+        case .loading:
+          ProgressView("Loading element reference…")
             .frame(maxWidth: .infinity)
             .padding(24)
-          case .loaded(let entry):
-            content(entry)
+        case .missing:
+          Text("No element reference is available.")
+            .foregroundStyle(ZenbuTheme.secondaryText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(24)
+        case .failed:
+          VStack(spacing: 12) {
+            Text("Element reference unavailable")
+            Button("Retry") { retryID += 1 }
+              .accessibilityIdentifier("kanji-element.retry")
           }
+          .frame(maxWidth: .infinity)
+          .padding(24)
+        case .loaded(let entry):
+          content(entry)
         }
-        .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
-        .scrollTargetLayout()
       }
-      .scrollPosition(id: $scrollPosition, anchor: .center)
-      .accessibilityIdentifier("kanji-element.screen")
-      .onAppear { restorePreservedContribution() }
-      .onChange(of: containingCharacters) { restorePreservedContribution() }
+      .scrollTargetLayout()
     }
+    .scrollPosition(id: $scrollPosition, anchor: .center)
+    .accessibilityIdentifier("kanji-element.screen")
+    .onAppear { restorePreservedContribution() }
+    .onChange(of: containingCharacters) { restorePreservedContribution() }
     .background(ZenbuTheme.background)
-    .toolbar(.hidden, for: .navigationBar)
+    .navigationTitle("Element")
+    .navigationBarTitleDisplayMode(.inline)
     .task(id: KanjiElementDetailLoadRequest(id: elementID, retryID: retryID)) {
       loadState = .loading
       do {

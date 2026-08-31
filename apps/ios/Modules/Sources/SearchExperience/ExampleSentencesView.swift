@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct ExampleSentencesView: View {
-  @Environment(\.dismiss) private var dismiss
   @State private var examples: [ExampleSentence] = []
   @State private var isLoading = true
   @State private var lastSpeechRequest: String?
@@ -15,9 +14,7 @@ struct ExampleSentencesView: View {
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
-    VStack(spacing: 0) {
-      ExampleListToolbar(title: query.value, back: { dismiss() })
-
+    Group {
       if isLoading {
         ProgressView("Loading examples")
           .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -36,14 +33,14 @@ struct ExampleSentencesView: View {
               )
             }
           }
-          .padding(.bottom, SearchExperienceLayout.bottomNavigationContentClearance)
         }
         .scrollIndicators(.visible)
         .accessibilityIdentifier("example-list.screen")
       }
     }
     .background(ZenbuTheme.background)
-    .toolbar(.hidden, for: .navigationBar)
+    .navigationTitle(query.value)
+    .navigationBarTitleDisplayMode(.inline)
     .overlay(alignment: .topLeading) {
       if let lastSpeechRequest {
         Color.clear
@@ -85,31 +82,6 @@ struct ExampleSentencesView: View {
     #else
       return loadedExamples
     #endif
-  }
-}
-
-private struct ExampleListToolbar: View {
-  let title: String
-  let back: () -> Void
-
-  var body: some View {
-    ZStack {
-      Text(title)
-        .font(.headline)
-        .lineLimit(1)
-
-      HStack {
-        Button(action: back) {
-          Label("Search", systemImage: "chevron.left")
-        }
-        .accessibilityIdentifier("example-list.back")
-        Spacer()
-      }
-    }
-    .padding(.horizontal, 12)
-    .frame(minHeight: 44)
-    .foregroundStyle(ZenbuTheme.primaryForeground)
-    .background(ZenbuTheme.chrome)
   }
 }
 

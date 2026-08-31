@@ -130,7 +130,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
-    app.buttons["search-experience-tab.settings"].tap()
+    app.tabBars.buttons["More"].tap()
     let mediaLibrary = app.buttons["more.media-library"]
     XCTAssertTrue(mediaLibrary.waitForExistence(timeout: 3))
     XCTAssertTrue(mediaLibrary.isHittable)
@@ -141,7 +141,9 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.buttons["more.credits"].waitForExistence(timeout: 3))
     app.buttons["more.credits"].tap()
     XCTAssertTrue(app.staticTexts["Dictionary Sources"].waitForExistence(timeout: 5))
-    XCTAssertTrue(app.buttons["settings.done"].isHittable)
+    let backButton = app.navigationBars["Dictionary Sources"].buttons.firstMatch
+    XCTAssertTrue(backButton.waitForExistence(timeout: 3))
+    XCTAssertTrue(backButton.isHittable)
     let sourceList = app.descendants(matching: .any)["dictionary-sources.list"]
     XCTAssertTrue(sourceList.waitForExistence(timeout: 5))
     try performAudit(
@@ -224,7 +226,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: appearance,
       additionalArguments: ["-ResetWordImageAttachments"]
     )
-    app.buttons["search-experience-tab.settings"].tap()
+    app.tabBars.buttons["More"].tap()
     XCTAssertTrue(app.staticTexts["More"].waitForExistence(timeout: 3))
     // Xcode 26 reports native NavigationLink and toolbar labels as partially
     // unsupported for Dynamic Type in both appearances. Every label uses a
@@ -357,35 +359,30 @@ final class AccessibilityAuditUITests: XCTestCase {
       {
         return true
       }
-      // Xcode's screenshot-based audit false-positives on the thin Japanese
-      // toolbar glyphs even though the exact foreground/chrome pair is guarded
-      // above 6:1 by ZenbuThemeAccessibilityTests. Keep this exact exception
-      // tracked by #173; no other contrast finding is ignored.
-      if issue.auditType == .contrast,
-        let identifier,
-        ["kanji-detail.back-label", "kanji-detail.title"].contains(identifier)
-      {
-        return true
-      }
-      // At accessibility sizes, Xcode audits a scroll row crossing beneath
-      // the opaque bottom navigation boundary as if its clipped pixels were
-      // low-contrast text. Ignore only elements that geometrically cross that
-      // boundary; content wholly above it and tab content wholly inside it
-      // remain blocking. Tracked by #173.
-      let searchTab = app.buttons["search-experience-tab.search"]
-      if issue.auditType == .contrast,
-        let element,
-        searchTab.exists,
-        element.frame.minY < searchTab.frame.minY,
-        element.frame.maxY > searchTab.frame.minY
-      {
-        return true
-      }
       // The compact-device audit flags this fully visible semantic-body link
       // even after replacing SwiftUI Link with an app-owned scalable control.
       // Keep the single exact exception tracked by #173.
       if issue.auditType == .dynamicType,
         identifier == "dictionary-sources.jmdict-project"
+      {
+        return true
+      }
+      // iOS 26 intentionally lets scroll content pass beneath the native,
+      // translucent tab bar. Xcode's screenshot audit reports the clipped
+      // pixels as low-contrast text even though the content becomes fully
+      // readable when scrolled above the bar. For concrete findings, ignore
+      // only app content whose frame intersects the system-owned bar or its
+      // measured 12-point shadow/blur boundary. Content outside that boundary
+      // and the two tab controls themselves remain blocking.
+      let tabBar = app.tabBars.firstMatch
+      if issue.auditType == .contrast,
+        let element,
+        tabBar.exists,
+        element.elementType == .staticText,
+        !element.label.isEmpty,
+        !["Search", "More"].contains(element.label),
+        !["magnifyingglass", "ellipsis"].contains(identifier ?? ""),
+        element.frame.intersects(tabBar.frame.insetBy(dx: 0, dy: -12))
       {
         return true
       }

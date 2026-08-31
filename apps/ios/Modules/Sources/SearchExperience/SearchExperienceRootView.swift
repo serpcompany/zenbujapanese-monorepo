@@ -1,9 +1,9 @@
 import SwiftUI
 
 public struct SearchExperienceRootView: View {
+  @State private var selectedTab = SearchExperienceTab.search
   @State private var path: [SearchExperienceRoute] = []
   @State private var query = ""
-  @State private var presentedSheet: SearchExperienceSheet?
   #if DEBUG
     @State private var exportsImageFixtures = false
   #endif
@@ -65,121 +65,20 @@ public struct SearchExperienceRootView: View {
   }
 
   public var body: some View {
-    NavigationStack(path: $path) {
-      SearchView(
-        query: $query,
-        lookupClient: lookupClient,
-        recentSearchStore: recentSearchStore,
-        handwritingRecognitionClient: handwritingRecognitionClient,
-        cameraAuthorizationClient: cameraAuthorizationClient,
-        radicalLookupClient: .live,
-        exampleSentenceClient: .live,
-        openResult: { entry in path.append(.word(entry, "Search", nil)) },
-        openKanji: openKanji,
-        openExamples: { query, entry, usesEntryExamples in
-          path.append(.examples(query, entry, usesEntryExamples))
-        },
-        openImageText: { assets in
-          let session = ImageTextSession(assets: assets)
-          imageTextSessionStore.insert(session)
-          path.append(.image(session.id))
-        },
-        imageImportInitialDirectory: imageImportInitialDirectory
-      )
-      .navigationDestination(for: SearchExperienceRoute.self) { route in
-        switch route {
-        case .word(let entry, let backTitle, let imageContext):
-          WordDetailView(
-            entry: entry,
-            backTitle: backTitle,
-            initialImageAttachment: imageAttachment(for: imageContext),
-            speechSynthesisClient: speechSynthesisClient,
-            exampleSentenceClient: .live,
-            japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
-            wordNoteStore: .live,
-            encounterMediaStore: encounterMediaStore,
-            conjugationTable: japaneseConjugationClient.table(entry),
-            openRelated: openRelated,
-            openKanji: openKanji,
-            openWord: { entry in path.append(.word(entry, "Search", nil)) },
-            openConjugations: { table in path.append(.conjugations(entry, table)) }
-          )
-        case .kanji(let character, let entry):
-          KanjiDetailView(
-            character: character,
-            entry: entry,
-            kanjiLookupClient: .live(lookupClient: lookupClient),
-            kanjiElementLookupClient: kanjiElementLookupClient,
-            kanjiStrokeOrderClient: kanjiStrokeOrderClient,
-            openWord: { entry in path.append(.word(entry, "Search", nil)) },
-            openElement: { id in path.append(.kanjiElement(id)) },
-            preservedWordID: kanjiScrollWordIDs[character],
-            preserveWordID: {
-              kanjiScrollWordIDs[character] = $0
-              kanjiScrollElementIDs[character] = nil
-            },
-            preservedElementID: kanjiScrollElementIDs[character],
-            preserveElementID: {
-              kanjiScrollElementIDs[character] = $0
-              kanjiScrollWordIDs[character] = nil
-            }
-          )
-        case .kanjiElement(let id):
-          KanjiElementDetailView(
-            elementID: id,
-            lookupClient: kanjiElementLookupClient,
-            openAlternative: { alternative in path.append(.kanjiElement(alternative)) },
-            openKanji: { character in openKanji(character, entry: nil) },
-            preservedContribution: kanjiElementScrollContributionIDs[id],
-            preserveContribution: { kanjiElementScrollContributionIDs[id] = $0 }
-          )
-        case .examples(let query, let highlightedEntry, let usesEntryExamples):
-          ExampleSentencesView(
-            query: query,
-            highlightedEntry: highlightedEntry,
-            usesHighlightedEntryExamples: usesEntryExamples,
-            exampleSentenceClient: .live,
-            japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
-            speechSynthesisClient: speechSynthesisClient,
-            openWord: { entry in path.append(.word(entry, "Search", nil)) }
-          )
-        case .conjugations(let entry, let table):
-          ConjugationsView(entry: entry, table: table)
-        case .image(let sessionID):
-          if let session = imageTextSessionStore.session(sessionID) {
-            ImageTextFlowView(
-              session: session,
-              recognitionClient: imageTextRecognitionClient,
-              textAnalysisClient: .live(lookupClient: lookupClient),
-              translationClient: naturalTranslationClient,
-              close: {
-                if path.last == .image(sessionID) { path.removeLast() }
-                imageTextSessionStore.remove(sessionID)
-              },
-              openWord: { entry, asset in
-                path.append(
-                  .word(entry, "Photo", ImageWordContext(sessionID: sessionID, assetID: asset.id)))
-              }
-            )
-          }
+    TabView(selection: $selectedTab) {
+      Tab("Search", systemImage: "magnifyingglass", value: SearchExperienceTab.search) {
+        searchNavigation
+      }
+
+      Tab("More", systemImage: "ellipsis", value: SearchExperienceTab.more) {
+        NavigationStack {
+          MoreView(store: encounterMediaStore)
         }
       }
     }
-    .tint(ZenbuTheme.systemControlTint)
-    .toolbarBackground(ZenbuTheme.primary, for: .navigationBar)
-    .toolbarBackground(.visible, for: .navigationBar)
-    .toolbarColorScheme(.dark, for: .navigationBar)
-    .safeAreaInset(edge: .bottom, spacing: 0) {
-      SearchExperienceTabBar(select: selectTab)
-    }
+    .tint(ZenbuTheme.interactiveForeground)
     .foregroundStyle(ZenbuTheme.foreground)
     .background(ZenbuTheme.background)
-    .sheet(item: $presentedSheet) { sheet in
-      switch sheet {
-      case .more:
-        MoreView(store: encounterMediaStore)
-      }
-    }
     #if DEBUG
       .sheet(isPresented: $exportsImageFixtures) {
         ImageFileExporter(urls: imageFixtureExportURLs) {
@@ -212,25 +111,120 @@ public struct SearchExperienceRootView: View {
     #endif
   }
 
+  private var searchNavigation: some View {
+    NavigationStack(path: $path) {
+      SearchView(
+        query: $query,
+        lookupClient: lookupClient,
+        recentSearchStore: recentSearchStore,
+        handwritingRecognitionClient: handwritingRecognitionClient,
+        cameraAuthorizationClient: cameraAuthorizationClient,
+        radicalLookupClient: .live,
+        exampleSentenceClient: .live,
+        openResult: { entry in path.append(.word(entry, nil)) },
+        openKanji: openKanji,
+        openExamples: { query, entry, usesEntryExamples in
+          path.append(.examples(query, entry, usesEntryExamples))
+        },
+        openImageText: { assets in
+          let session = ImageTextSession(assets: assets)
+          imageTextSessionStore.insert(session)
+          path.append(.image(session.id))
+        },
+        imageImportInitialDirectory: imageImportInitialDirectory
+      )
+      .navigationDestination(for: SearchExperienceRoute.self) { route in
+        switch route {
+        case .word(let entry, let imageContext):
+          WordDetailView(
+            entry: entry,
+            initialImageAttachment: imageAttachment(for: imageContext),
+            speechSynthesisClient: speechSynthesisClient,
+            exampleSentenceClient: .live,
+            japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
+            wordNoteStore: .live,
+            encounterMediaStore: encounterMediaStore,
+            conjugationTable: japaneseConjugationClient.table(entry),
+            openRelated: openRelated,
+            openKanji: openKanji,
+            openWord: { entry in path.append(.word(entry, nil)) },
+            openConjugations: { table in path.append(.conjugations(entry, table)) }
+          )
+        case .kanji(let character, let entry):
+          KanjiDetailView(
+            character: character,
+            entry: entry,
+            kanjiLookupClient: .live(lookupClient: lookupClient),
+            kanjiElementLookupClient: kanjiElementLookupClient,
+            kanjiStrokeOrderClient: kanjiStrokeOrderClient,
+            openWord: { entry in path.append(.word(entry, nil)) },
+            openElement: { id in path.append(.kanjiElement(id)) },
+            preservedWordID: kanjiScrollWordIDs[character],
+            preserveWordID: {
+              kanjiScrollWordIDs[character] = $0
+              kanjiScrollElementIDs[character] = nil
+            },
+            preservedElementID: kanjiScrollElementIDs[character],
+            preserveElementID: {
+              kanjiScrollElementIDs[character] = $0
+              kanjiScrollWordIDs[character] = nil
+            }
+          )
+        case .kanjiElement(let id):
+          KanjiElementDetailView(
+            elementID: id,
+            lookupClient: kanjiElementLookupClient,
+            openAlternative: { alternative in path.append(.kanjiElement(alternative)) },
+            openKanji: { character in openKanji(character, entry: nil) },
+            preservedContribution: kanjiElementScrollContributionIDs[id],
+            preserveContribution: { kanjiElementScrollContributionIDs[id] = $0 }
+          )
+        case .examples(let query, let highlightedEntry, let usesEntryExamples):
+          ExampleSentencesView(
+            query: query,
+            highlightedEntry: highlightedEntry,
+            usesHighlightedEntryExamples: usesEntryExamples,
+            exampleSentenceClient: .live,
+            japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
+            speechSynthesisClient: speechSynthesisClient,
+            openWord: { entry in path.append(.word(entry, nil)) }
+          )
+        case .conjugations(let entry, let table):
+          ConjugationsView(entry: entry, table: table)
+        case .image(let sessionID):
+          if let session = imageTextSessionStore.session(sessionID) {
+            ImageTextFlowView(
+              session: session,
+              recognitionClient: imageTextRecognitionClient,
+              textAnalysisClient: .live(lookupClient: lookupClient),
+              translationClient: naturalTranslationClient,
+              close: {
+                if path.last == .image(sessionID) { path.removeLast() }
+                imageTextSessionStore.remove(sessionID)
+              },
+              openWord: { entry, asset in
+                path.append(
+                  .word(entry, ImageWordContext(sessionID: sessionID, assetID: asset.id)))
+              }
+            )
+          }
+        }
+      }
+    }
+    .foregroundStyle(ZenbuTheme.foreground)
+    .background(ZenbuTheme.background)
+  }
+
   private func openKanji(_ character: KanjiCharacter, entry: DictionaryEntry?) {
     kanjiScrollWordIDs[character] = nil
     path.append(.kanji(character, entry))
-  }
-
-  private func selectTab(_ tab: SearchExperienceTab) {
-    switch tab {
-    case .search:
-      path.removeAll()
-    case .settings:
-      presentedSheet = .more
-    }
   }
 
   private func openRelated(_ relationship: DictionaryRelationship) {
     Task { @MainActor in
       if let targetID = relationship.targetID {
         if let entry = try? await lookupClient.entry(LanguageReferenceID(rawValue: targetID)) {
-          path.append(.word(entry, "Search", nil))
+          path.append(.word(entry, nil))
         }
         return
       }
@@ -241,7 +235,7 @@ public struct SearchExperienceRootView: View {
         (results.best + results.additional).first {
           $0.headword == relationship.headword && $0.reading == relationship.reading
         } ?? results.best.first ?? results.additional.first
-      if let entry { path.append(.word(entry, "Search", nil)) }
+      if let entry { path.append(.word(entry, nil)) }
     }
   }
 
@@ -296,7 +290,7 @@ private struct ImageWordContext: Hashable {
 }
 
 private enum SearchExperienceRoute: Hashable {
-  case word(DictionaryEntry, String, ImageWordContext?)
+  case word(DictionaryEntry, ImageWordContext?)
   case kanji(KanjiCharacter, DictionaryEntry?)
   case kanjiElement(KanjiElementID)
   case examples(SearchQuery, DictionaryEntry?, Bool)
@@ -304,8 +298,7 @@ private enum SearchExperienceRoute: Hashable {
   case image(UUID)
 }
 
-private enum SearchExperienceSheet: String, Identifiable {
+private enum SearchExperienceTab: Hashable {
+  case search
   case more
-
-  var id: String { rawValue }
 }
