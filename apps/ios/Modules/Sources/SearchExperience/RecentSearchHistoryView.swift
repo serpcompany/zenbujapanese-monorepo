@@ -15,17 +15,12 @@ struct RecentSearchHistoryView: View {
             Button {
               selectSearch(search)
             } label: {
-              HStack {
-                Image(systemName: "clock.arrow.circlepath")
-                  .foregroundStyle(ZenbuTheme.secondaryText)
+              Label {
                 Text(search.value)
-                  .foregroundStyle(ZenbuTheme.foreground)
-                  .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "chevron.right")
-                  .foregroundStyle(ZenbuTheme.mutedForeground.opacity(0.25))
+              } icon: {
+                Image(systemName: "clock.arrow.circlepath")
               }
-              .padding(.horizontal, 18)
-              .frame(height: 52)
+              .frame(maxWidth: .infinity, alignment: .leading)
               .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -38,8 +33,7 @@ struct RecentSearchHistoryView: View {
               }
               .tint(ZenbuTheme.destructiveActionTint)
             }
-            .listRowBackground(ZenbuTheme.background)
-            .listRowSeparatorTint(ZenbuTheme.divider)
+            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
           }
         } header: {
           HStack {
@@ -48,8 +42,6 @@ struct RecentSearchHistoryView: View {
             Button("Clear All", action: requestClearAll)
               .accessibilityIdentifier("recent-search.clear-all")
           }
-          .font(.system(size: 16, weight: .semibold))
-          .foregroundStyle(ZenbuTheme.secondaryText)
           .textCase(nil)
         }
       }

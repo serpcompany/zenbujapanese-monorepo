@@ -126,7 +126,7 @@ jobs:
             ZenbuPR \
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
             "$RUNNER_TEMP/ZenbuPR-UI.xcresult" \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToSettings \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToMore \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBottomNavigationContainsOnlyReleaseDestinationsAndRestoresSearch \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCameraUnavailableOnSimulatorReportsHardwareBoundary \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose \
@@ -135,6 +135,9 @@ jobs:
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHandwritingCandidatesComposeCommonKanjiAndEnterHistory \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testNewestRecentSearchRerunsItsResultSet \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testPersistedRecentSearchesAppearImmediatelyOnColdRelaunch \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSelectingOlderRecentSearchMovesNormalizedQueryToTopWithoutDuplication \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testEmptyHistoryShowsCleanIdleSearchSurface \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIruOffersJapaneseReadingRefinement \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testMixedScriptWordDetailPlacesRubyOnlyAboveKanji \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults \
@@ -144,6 +147,9 @@ jobs:
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testDictionarySourceAttributionIsReachableFromSearch \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testPrivacyAndSupportAreReachableFromSettings \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testLookupFailureIsNotPresentedAsNoMatchAndRetryRecovers \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSearchPresentsNativeLoadingStateBeforeDelayedResults \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testNoMatchKeepsQueryAboveNativeNoResultsState \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRapidQueryChangeCancelsStaleSearchWithoutFlashingOldResults \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed \
