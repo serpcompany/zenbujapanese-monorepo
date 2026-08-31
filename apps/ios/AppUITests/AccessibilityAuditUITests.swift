@@ -32,6 +32,99 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testDarkRecentSearchAndNoResultsRemainUsableAtLargestAccessibilityTextSize() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .dark
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: .dark,
+      additionalArguments: [
+        "-ResetRecentSearches",
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    try submitSearch("hello", in: app)
+    app.buttons["Clear text"].tap()
+
+    let recentSearch = app.buttons["recent-search.0"]
+    XCTAssertTrue(recentSearch.waitForExistence(timeout: 3))
+    XCTAssertTrue(recentSearch.isHittable)
+    XCTAssertGreaterThan(recentSearch.frame.height, 52)
+
+    let searchField = app.textFields["search.field"]
+    searchField.tap()
+    searchField.typeText("zzzzzzzzzzzz")
+    let title = app.staticTexts["No Dictionary Matches"]
+    let description = app.staticTexts["Try another Japanese or English Search query."]
+    XCTAssertTrue(title.waitForExistence(timeout: 3))
+    XCTAssertTrue(description.exists)
+    XCTAssertGreaterThan(title.frame.height, 44)
+    XCTAssertGreaterThan(description.frame.height, 44)
+    XCTAssertGreaterThanOrEqual(title.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(title.frame.maxX, app.frame.maxX)
+    XCTAssertGreaterThanOrEqual(description.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(description.frame.maxX, app.frame.maxX)
+  }
+
+  @MainActor
+  func testLightLoadingAndFailureRemainUsableAtLargestAccessibilityTextSize() throws {
+    try verifyLoadingAndFailureAtLargestAccessibilityTextSize(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkLoadingAndFailureRemainUsableAtLargestAccessibilityTextSize() throws {
+    try verifyLoadingAndFailureAtLargestAccessibilityTextSize(appearance: .dark)
+  }
+
+  @MainActor
+  private func verifyLoadingAndFailureAtLargestAccessibilityTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-InjectLookupDelay",
+        "-InjectLookupFailure",
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+    searchField.typeText("think")
+
+    let loading = app.descendants(matching: .any)["search.loading"]
+    XCTAssertTrue(loading.waitForExistence(timeout: 2))
+    XCTAssertEqual(loading.label, "Searching")
+
+    let failure = app.descendants(matching: .any)["search.failure"]
+    XCTAssertTrue(failure.waitForExistence(timeout: 6))
+    let title = app.staticTexts["Dictionary unavailable"]
+    let description = app.staticTexts["Zenbu couldn't open its offline Language Reference Data."]
+    let retry = app.buttons["Retry"]
+    XCTAssertTrue(app.keyboards.firstMatch.exists)
+    XCTAssertTrue(app.buttons["search.cancel"].exists)
+    XCTAssertTrue(title.exists)
+    XCTAssertTrue(description.exists)
+    XCTAssertTrue(retry.exists)
+    if !retry.isHittable {
+      failure.swipeUp()
+    }
+    XCTAssertTrue(retry.isHittable)
+    XCTAssertGreaterThanOrEqual(retry.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(retry.frame.height, 44)
+    XCTAssertGreaterThanOrEqual(title.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(title.frame.maxX, app.frame.maxX)
+    XCTAssertGreaterThanOrEqual(description.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(description.frame.maxX, app.frame.maxX)
+  }
+
+  @MainActor
   private func auditRecentSearchDeleteAction(appearance: XCUIDevice.Appearance) throws {
     let originalAppearance = XCUIDevice.shared.appearance
     XCUIDevice.shared.appearance = appearance

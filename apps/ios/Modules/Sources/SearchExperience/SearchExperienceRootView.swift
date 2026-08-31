@@ -15,7 +15,7 @@ public struct SearchExperienceRootView: View {
     @State private var lastStartedSpeech: SpeechPlaybackVerificationEvent?
     @State private var lastFinishedSpeech: SpeechPlaybackVerificationEvent?
   #endif
-  private let lookupClient = LookupClient.live
+  private let lookupClient: LookupClient
   private let recentSearchStore = RecentSearchStore.live
   private let encounterMediaStore = EncounterMediaStore.live
   private let handwritingRecognitionClient: HandwritingRecognitionClient
@@ -33,6 +33,7 @@ public struct SearchExperienceRootView: View {
 
   public init() {
     #if DEBUG
+      lookupClient = LookupClient.clientFromProcessArguments(live: .live) ?? .live
       handwritingRecognitionClient =
         HandwritingRecognitionFixture.clientFromProcessArguments() ?? .live
       cameraAuthorizationClient = CameraAuthorizationClient.clientFromProcessArguments() ?? .live
@@ -53,6 +54,7 @@ public struct SearchExperienceRootView: View {
         _path = State(initialValue: [.image(session.id)])
       }
     #else
+      lookupClient = .live
       handwritingRecognitionClient = .live
       cameraAuthorizationClient = .live
       speechSynthesisClient = .live

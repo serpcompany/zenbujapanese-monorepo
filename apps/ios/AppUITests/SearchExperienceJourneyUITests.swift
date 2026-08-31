@@ -1383,6 +1383,71 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testPersistedRecentSearchesAppearImmediatelyOnColdRelaunch() throws {
+    let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+
+    submitSearch("think", in: app, searchField: searchField)
+    XCTAssertTrue(resultButton(headword: "思う", in: app).waitForExistence(timeout: 3))
+
+    app.terminate()
+    app.launchArguments.removeAll { $0 == "-ResetRecentSearches" }
+    app.launch()
+
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    let recentSearch = app.buttons["recent-search.0"]
+    XCTAssertTrue(recentSearch.waitForExistence(timeout: 3))
+    XCTAssertEqual(recentSearch.label, "think")
+    XCTAssertGreaterThanOrEqual(recentSearch.frame.height, 44)
+    XCTAssertLessThanOrEqual(recentSearch.frame.height, 52)
+    XCTAssertFalse(app.keyboards.firstMatch.exists)
+    XCTAssertFalse(app.buttons["search.cancel"].exists)
+  }
+
+  @MainActor
+  func testSelectingOlderRecentSearchMovesNormalizedQueryToTopWithoutDuplication() throws {
+    let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+
+    submitSearch("think", in: app, searchField: searchField)
+    XCTAssertTrue(resultButton(headword: "思う", in: app).waitForExistence(timeout: 3))
+    showRecentSearches(in: app, searchField: searchField)
+
+    submitSearch("日本", in: app, searchField: searchField)
+    XCTAssertTrue(app.buttons["result.japan"].waitForExistence(timeout: 3))
+    showRecentSearches(in: app, searchField: searchField)
+
+    XCTAssertEqual(app.buttons["recent-search.0"].label, "日本")
+    let older = app.buttons["recent-search.1"]
+    XCTAssertTrue(older.exists)
+    XCTAssertEqual(older.label, "think")
+    older.tap()
+
+    XCTAssertTrue(resultButton(headword: "思う", in: app).waitForExistence(timeout: 3))
+    XCTAssertFalse(app.keyboards.firstMatch.exists)
+    app.buttons["Clear text"].tap()
+
+    XCTAssertTrue(app.buttons["recent-search.0"].waitForExistence(timeout: 3))
+    XCTAssertEqual(app.buttons["recent-search.0"].label, "think")
+    XCTAssertEqual(app.buttons["recent-search.1"].label, "日本")
+    XCTAssertFalse(app.buttons["recent-search.2"].exists)
+  }
+
+  @MainActor
+  func testEmptyHistoryShowsCleanIdleSearchSurface() throws {
+    let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
+    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+
+    XCTAssertFalse(app.staticTexts["Recent Searches"].exists)
+    XCTAssertFalse(app.buttons["recent-search.clear-all"].exists)
+    XCTAssertFalse(app.staticTexts["No Dictionary Matches"].exists)
+    XCTAssertFalse(app.staticTexts["Dictionary unavailable"].exists)
+    XCTAssertFalse(app.descendants(matching: .any)["search.loading"].exists)
+  }
+
+  @MainActor
   func testDisposableRecentSearchCanBeRemovedWithoutAffectingAnotherRow() throws {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
     let searchField = app.textFields["search.field"]
@@ -1458,6 +1523,14 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     cancel.tap()
     XCTAssertFalse(app.keyboards.firstMatch.exists)
     XCTAssertEqual(searchField.value as? String, "Search Japanese or English")
+
+    app.terminate()
+    app.launchArguments.removeAll { $0 == "-ResetRecentSearches" }
+    app.launch()
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    XCTAssertFalse(app.buttons["recent-search.0"].waitForExistence(timeout: 2))
+    XCTAssertFalse(app.staticTexts["Recent Searches"].exists)
+    XCTAssertFalse(app.buttons["recent-search.clear-all"].exists)
   }
 
   @MainActor
@@ -1751,7 +1824,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  func testNoMatchKeepsQueryAboveBlankResultsState() throws {
+  func testNoMatchKeepsQueryAboveNativeNoResultsState() throws {
     let app = launchApp()
 
     let searchField = app.textFields["search.field"]
@@ -1759,11 +1832,13 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     searchField.tap()
     searchField.typeText("zzzxqv")
 
-    XCTAssertTrue(app.otherElements["search.no-results"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["No Dictionary Matches"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["Try another Japanese or English Search query."].exists)
+    XCTAssertTrue(app.descendants(matching: .any)["search.no-results"].exists)
     XCTAssertEqual(searchField.value as? String, "zzzxqv")
     XCTAssertFalse(app.staticTexts["Best Matches"].exists)
     XCTAssertFalse(app.staticTexts["Additional Matches"].exists)
-    recordScreenshot(named: "search-results-no-match-blank", app: app)
+    recordScreenshot(named: "search-results-no-match-native", app: app)
   }
 
   @MainActor
@@ -1996,6 +2071,49 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(resultButton(headword: "思う", in: app).exists)
     XCTAssertFalse(app.staticTexts["Dictionary unavailable"].exists)
     recordScreenshot(named: "search-results-recovered-after-retry", app: app)
+  }
+
+  @MainActor
+  func testSearchPresentsNativeLoadingStateBeforeDelayedResults() throws {
+    let app = launchApp(additionalArguments: ["-InjectLookupDelay"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+
+    searchField.tap()
+    searchField.typeText("think")
+
+    let loading = app.descendants(matching: .any)["search.loading"]
+    XCTAssertTrue(loading.waitForExistence(timeout: 2))
+    XCTAssertEqual(loading.label, "Searching")
+
+    XCTAssertTrue(resultButton(headword: "思う", in: app).waitForExistence(timeout: 8))
+    XCTAssertFalse(loading.exists)
+  }
+
+  @MainActor
+  func testRapidQueryChangeCancelsStaleSearchWithoutFlashingOldResults() throws {
+    let app = launchApp(additionalArguments: ["-InjectLookupDelayQuery", "think"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+
+    searchField.tap()
+    searchField.typeText("think")
+    XCTAssertTrue(
+      app.descendants(matching: .any)["search.loading"].waitForExistence(timeout: 2))
+
+    app.buttons["Clear text"].tap()
+    searchField.typeText("日本")
+
+    let staleResult = resultButton(headword: "思う", in: app)
+    let staleResultAppears = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "exists == true"),
+      object: staleResult
+    )
+    staleResultAppears.isInverted = true
+    XCTAssertEqual(XCTWaiter.wait(for: [staleResultAppears], timeout: 3.5), .completed)
+    XCTAssertTrue(app.buttons["result.japan"].waitForExistence(timeout: 4))
+    XCTAssertFalse(staleResult.exists)
+    XCTAssertFalse(app.descendants(matching: .any)["search.loading"].exists)
   }
 
   @MainActor

@@ -15,8 +15,7 @@ struct SearchView: View {
   let openImageText: ([ImageTextAsset]) -> Void
   let imageImportInitialDirectory: URL?
   @State private var results = LookupSearchResults.empty
-  @State private var hasCompletedSearch = false
-  @State private var searchFailed = false
+  @State private var presentationState = SearchPresentationState.idle
   @State private var retryID = 0
   @State private var inputMode = SearchInputMode.inactive
   @State private var sparseRadicalQuery: SearchQuery?
@@ -24,6 +23,7 @@ struct SearchView: View {
   @State private var showsImageSources = false
   @State private var presentedImageSource: ImageSourceSheet?
   @State private var imageImportAlert: ImageImportAlert?
+  @State private var isShowingImageImportAlert = false
   @State private var imageImportTask: Task<Void, Never>?
   @State private var isConfirmingClearAll = false
   @State private var recentSearchRefreshID = 0
@@ -43,16 +43,21 @@ struct SearchView: View {
         completeSubmission(submittedQuery)
       }
 
-      if showsRecentSearches {
+      switch resolvedPresentationState {
+      case .idle:
         RecentSearchHistoryView(
           recentSearchStore: recentSearchStore,
           refreshID: recentSearchRefreshID,
           requestClearAll: { isConfirmingClearAll = true },
           selectSearch: selectRecentSearch
         )
-      } else if !results.isEmpty || exampleCount > 0
-        || (hasCompletedSearch && searchQuery.isSingleKanji)
-      {
+
+      case .loading:
+        ProgressView("Searching")
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .accessibilityIdentifier("search.loading")
+
+      case .results:
         SearchResultsView(
           query: searchQuery,
           results: results,
@@ -77,17 +82,33 @@ struct SearchView: View {
             refinement: results.readingRefinement?.query
           )
         )
-      } else if searchFailed {
-        LookupFailureView {
-          retryID += 1
+
+      case .failure:
+        ScrollView {
+          ContentUnavailableView {
+            Label("Dictionary unavailable", systemImage: "exclamationmark.triangle")
+          } description: {
+            Text("Zenbu couldn't open its offline Language Reference Data.")
+          } actions: {
+            Button("Retry") {
+              retryID += 1
+            }
+            .buttonStyle(.borderedProminent)
+          }
+          .padding(.vertical, 24)
         }
-      } else if hasCompletedSearch && !searchQuery.isEmpty {
-        ZenbuTheme.background
-          .accessibilityElement()
-          .accessibilityLabel("No dictionary matches")
-          .accessibilityIdentifier("search.no-results")
-      } else {
-        ZenbuTheme.background
+        .accessibilityIdentifier("search.failure")
+
+      case .noResults:
+        ContentUnavailableView {
+          Label("No Dictionary Matches", systemImage: "magnifyingglass")
+        } description: {
+          Text("Try another Japanese or English Search query.")
+        }
+        .accessibilityIdentifier("search.no-results")
+
+      case .specializedInput:
+        Color.clear
       }
 
       switch inputMode {
@@ -124,44 +145,47 @@ struct SearchView: View {
     .onChange(of: query) { _, _ in
       results = .empty
       exampleCount = 0
-      hasCompletedSearch = false
-      searchFailed = false
+      presentationState = .idle
     }
     .task(id: SearchTaskID(query: query, retryID: retryID)) {
-      hasCompletedSearch = false
-      searchFailed = false
+      presentationState = .idle
       guard !searchQuery.isEmpty else {
         results = .empty
         exampleCount = 0
         return
       }
+      presentationState = .loading
       do {
         try await Task.sleep(for: .milliseconds(100))
-        guard !Task.isCancelled else { return }
-        results = .empty
-        exampleCount = 0
+        try Task.checkCancellation()
         async let searchedResults = lookupClient.search(searchQuery)
         async let searchedExampleCount = exampleSentenceClient.count(searchQuery)
         let foundResults = try await searchedResults
         try Task.checkCancellation()
-        results = foundResults
         let directExampleCount = (try? await searchedExampleCount) ?? 0
         try Task.checkCancellation()
+        let foundExampleCount: Int
         if foundResults.usesPrimaryEntryExamples,
           let entry = foundResults.primaryEntry(for: searchQuery)
         {
-          exampleCount = (try? await exampleSentenceClient.examples(entry).count) ?? 0
+          foundExampleCount = (try? await exampleSentenceClient.examples(entry).count) ?? 0
         } else {
-          exampleCount = directExampleCount
+          foundExampleCount = directExampleCount
         }
         try Task.checkCancellation()
-        hasCompletedSearch = true
+        results = foundResults
+        exampleCount = foundExampleCount
+        if foundResults.isEmpty && foundExampleCount == 0 && !searchQuery.isSingleKanji {
+          presentationState = .noResults
+        } else {
+          presentationState = .results
+        }
       } catch is CancellationError {
         return
       } catch {
         results = .empty
         exampleCount = 0
-        searchFailed = true
+        presentationState = .failure
       }
     }
     .confirmationDialog("Image Search", isPresented: $showsImageSources) {
@@ -195,22 +219,19 @@ struct SearchView: View {
         .ignoresSafeArea()
       }
     }
-    .alert(item: $imageImportAlert) { alert in
+    .alert(
+      imageImportAlert?.title ?? "",
+      isPresented: $isShowingImageImportAlert,
+      presenting: imageImportAlert
+    ) { alert in
       if alert.offersSettings {
-        Alert(
-          title: Text(alert.title),
-          message: Text(alert.message),
-          primaryButton: .default(
-            Text("Open Settings"), action: cameraAuthorizationClient.openSettings),
-          secondaryButton: .cancel()
-        )
+        Button("Open Settings", action: cameraAuthorizationClient.openSettings)
+        Button("Cancel", role: .cancel) {}
       } else {
-        Alert(
-          title: Text(alert.title),
-          message: Text(alert.message),
-          dismissButton: .default(Text("OK"))
-        )
+        Button("OK") {}
       }
+    } message: { alert in
+      Text(alert.message)
     }
     .alert("Clear Recent Searches?", isPresented: $isConfirmingClearAll) {
       Button("Cancel", role: .cancel) {}
@@ -231,7 +252,12 @@ struct SearchView: View {
   }
 
   private var showsRecentSearches: Bool {
-    inputMode == .keyboard && searchQuery.isEmpty
+    searchQuery.isEmpty && (inputMode == .inactive || inputMode == .keyboard)
+  }
+
+  private var resolvedPresentationState: SearchPresentationState {
+    guard searchQuery.isEmpty else { return presentationState }
+    return showsRecentSearches ? .idle : .specializedInput
   }
 
   private func clearRecentSearches() {
@@ -297,7 +323,7 @@ struct SearchView: View {
 
   private func importImages(_ result: Result<[URL], Error>) {
     guard case .success(let urls) = result else {
-      imageImportAlert = .importFailure("The Files selection could not be read.")
+      presentImageImportAlert(.importFailure("The Files selection could not be read."))
       return
     }
     imageImportTask?.cancel()
@@ -313,7 +339,7 @@ struct SearchView: View {
       }
       guard !Task.isCancelled else { return }
       guard !assets.isEmpty else {
-        imageImportAlert = .importFailure("The selected files are not supported images.")
+        presentImageImportAlert(.importFailure("The selected files are not supported images."))
         return
       }
       openImageText(assets)
@@ -327,7 +353,7 @@ struct SearchView: View {
       await Task.yield()
       guard !Task.isCancelled else { return }
       guard cameraAuthorizationClient.isCameraAvailable() else {
-        imageImportAlert = .cameraUnavailable
+        presentImageImportAlert(.cameraUnavailable)
         imageImportTask = nil
         return
       }
@@ -340,12 +366,12 @@ struct SearchView: View {
         if granted {
           presentedImageSource = .camera
         } else {
-          imageImportAlert = .cameraDenied
+          presentImageImportAlert(.cameraDenied)
         }
       case .denied:
-        imageImportAlert = .cameraDenied
+        presentImageImportAlert(.cameraDenied)
       case .restricted:
-        imageImportAlert = .cameraRestricted
+        presentImageImportAlert(.cameraRestricted)
       }
       imageImportTask = nil
     }
@@ -356,7 +382,7 @@ struct SearchView: View {
       if ProcessInfo.processInfo.arguments.contains("-PhotoLibraryProviderFailure") {
         Task { @MainActor in
           await Task.yield()
-          imageImportAlert = .importFailure("The selected photos could not be read.")
+          presentImageImportAlert(.importFailure("The selected photos could not be read."))
         }
         return
       }
@@ -369,7 +395,7 @@ struct SearchView: View {
     case .success(let asset):
       if let asset { openImageText([asset]) }
     case .failure:
-      imageImportAlert = .importFailure("The captured image could not be read.")
+      presentImageImportAlert(.importFailure("The captured image could not be read."))
     }
   }
 
@@ -378,8 +404,13 @@ struct SearchView: View {
     case .success(let assets):
       if !assets.isEmpty { openImageText(assets) }
     case .failure:
-      imageImportAlert = .importFailure("The selected photos could not be read.")
+      presentImageImportAlert(.importFailure("The selected photos could not be read."))
     }
+  }
+
+  private func presentImageImportAlert(_ alert: ImageImportAlert) {
+    imageImportAlert = alert
+    isShowingImageImportAlert = true
   }
 }
 
@@ -435,31 +466,20 @@ private struct SearchTaskID: Hashable {
   let retryID: Int
 }
 
+private enum SearchPresentationState: Equatable {
+  case idle
+  case specializedInput
+  case loading
+  case results
+  case noResults
+  case failure
+}
+
 private struct SearchResultsIdentity: Hashable {
   let query: SearchQuery
   let best: [LanguageReferenceID]
   let additional: [LanguageReferenceID]
   let refinement: SearchQuery?
-}
-
-private struct LookupFailureView: View {
-  let retry: () -> Void
-
-  var body: some View {
-    VStack(spacing: 14) {
-      Text("Dictionary unavailable")
-        .font(.headline)
-      Text("Zenbu couldn't open its offline Language Reference Data.")
-        .font(.subheadline)
-        .foregroundStyle(ZenbuTheme.secondaryText)
-        .multilineTextAlignment(.center)
-      Button("Retry", action: retry)
-        .buttonStyle(.borderedProminent)
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .padding(32)
-    .background(ZenbuTheme.background)
-  }
 }
 
 private struct SearchBar: View {
