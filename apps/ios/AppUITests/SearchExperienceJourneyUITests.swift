@@ -931,6 +931,23 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     for _ in 0..<20 where !relatedQuiet.isHittable { Thread.sleep(forTimeInterval: 0.1) }
     XCTAssertTrue(relatedQuiet.isHittable)
     recordScreenshot(named: "kanji-related-word-back-restores-position", app: app)
+
+    tapNativeBack(in: app)
+    XCTAssertTrue(wordDetail.waitForExistence(timeout: 2))
+    tapNativeBack(in: app)
+    XCTAssertTrue(searchField.waitForExistence(timeout: 2))
+    app.buttons["Clear text"].tap()
+    submitSearch("静", in: app, searchField: searchField)
+    let searchResults = app.descendants(matching: .any)["search.results"]
+    let kanjiPrimary = app.buttons["result.kanji-primary.静"]
+    scrollElementIntoSafeTapRegion(kanjiPrimary, in: searchResults, app: app)
+    kanjiPrimary.tap()
+
+    XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 2))
+    let glyph = app.staticTexts["kanji-detail.glyph"]
+    XCTAssertTrue(glyph.waitForExistence(timeout: 2))
+    XCTAssertTrue(glyph.isHittable)
+    XCTAssertFalse(relatedQuiet.isHittable)
   }
 
   @MainActor
@@ -1202,11 +1219,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let bestMatches = app.staticTexts["Best Matches"]
     XCTAssertTrue(bestMatches.exists)
     XCTAssertLessThan(bestMatches.frame.minY, kanjiPrimary.frame.minY)
-    XCTAssertTrue(
-      app.buttons.matching(NSPredicate(format: "value == %@", "Best match 2")).firstMatch.exists)
-    XCTAssertTrue(app.staticTexts["Additional Matches"].exists)
+    let resultSurface = app.descendants(matching: .any)["search.results"]
+    let additionalMatches = app.staticTexts["Additional Matches"]
+    scrollElementIntoSafeTapRegion(additionalMatches, in: resultSurface, app: app, step: 0.12)
     recordScreenshot(named: "handwriting-single-kanji-results", app: app)
 
+    scrollElementIntoSafeTapRegion(
+      kanjiPrimary,
+      in: resultSurface,
+      app: app,
+      step: 0.12,
+      searchesBackwardWhenAbsent: true
+    )
     kanjiPrimary.tap()
     XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 2))
     let detailGlyph = app.staticTexts["kanji-detail.glyph"]
@@ -1731,6 +1755,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     searchField.tap()
     searchField.typeText("think")
 
+    let resultSurface = app.descendants(matching: .any)["search.results"]
+    XCTAssertTrue(resultSurface.waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["Best Matches"].waitForExistence(timeout: 3))
     let bestMatches = app.buttons.matching(NSPredicate(format: "value BEGINSWITH %@", "Best match"))
     XCTAssertEqual(bestMatches.count, 1)
@@ -1743,10 +1769,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       additionalMatches.matching(NSPredicate(format: "label BEGINSWITH %@", "思う, おもう,")).firstMatch
         .exists
     )
-    XCTAssertTrue(
-      additionalMatches.matching(NSPredicate(format: "label BEGINSWITH %@", "考える, かんがえる,"))
-        .firstMatch.exists
+    XCTAssertLessThan(
+      app.staticTexts["Best Matches"].frame.minY,
+      app.staticTexts["Additional Matches"].frame.minY
     )
+    let consider = additionalMatches.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "考える, かんがえる,")
+    )
+    .firstMatch
+    scrollElementIntoSafeTapRegion(consider, in: resultSurface, app: app, step: 0.12)
     recordScreenshot(named: "search-results-english-think", app: app)
   }
 
@@ -3261,7 +3292,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   private func scrollElementIntoSafeTapRegion(
     _ element: XCUIElement,
     in scrollView: XCUIElement,
-    app: XCUIApplication
+    app: XCUIApplication,
+    step: CGFloat = 0.25,
+    searchesBackwardWhenAbsent: Bool = false
   ) {
     for _ in 0..<16 {
       let lowerBoundary =
@@ -3275,17 +3308,23 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       {
         break
       }
-      if element.exists, element.frame.maxY < scrollView.frame.minY + 8 {
+      if (element.exists && element.frame.maxY < scrollView.frame.minY + 8)
+        || (!element.exists && searchesBackwardWhenAbsent)
+      {
         scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
           .press(
             forDuration: 0.05,
-            thenDragTo: scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65))
+            thenDragTo: scrollView.coordinate(
+              withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4 + step)
+            )
           )
       } else {
         scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65))
           .press(
             forDuration: 0.05,
-            thenDragTo: scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+            thenDragTo: scrollView.coordinate(
+              withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65 - step)
+            )
           )
       }
     }

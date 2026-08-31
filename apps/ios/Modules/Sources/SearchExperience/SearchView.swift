@@ -9,9 +9,6 @@ struct SearchView: View {
   let cameraAuthorizationClient: CameraAuthorizationClient
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
-  let openResult: (DictionaryEntry) -> Void
-  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
-  let openExamples: (SearchQuery, DictionaryEntry?, Bool) -> Void
   let openImageText: ([ImageTextAsset]) -> Void
   let imageImportInitialDirectory: URL?
   @State private var results = LookupSearchResults.empty
@@ -63,16 +60,7 @@ struct SearchView: View {
           results: results,
           exampleCount: exampleCount,
           showsAdditionalMatches: sparseRadicalQuery != searchQuery,
-          selectRefinement: selectRefinement,
-          openResult: openResult,
-          openKanji: openKanji,
-          openExamples: {
-            openExamples(
-              searchQuery,
-              results.primaryEntry(for: searchQuery),
-              results.usesPrimaryEntryExamples
-            )
-          }
+          selectRefinement: selectRefinement
         )
         .id(
           SearchResultsIdentity(
@@ -573,97 +561,72 @@ private struct SearchResultsView: View {
   let exampleCount: Int
   let showsAdditionalMatches: Bool
   let selectRefinement: (SearchRefinement) -> Void
-  let openResult: (DictionaryEntry) -> Void
-  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
-  let openExamples: () -> Void
 
   var body: some View {
-    VStack(spacing: 0) {
+    List {
       if exampleCount > 0 {
-        Button(action: openExamples) {
-          HStack {
+        Section {
+          NavigationLink(
+            value: SearchExperienceRoute.examples(
+              query,
+              results.primaryEntry(for: query),
+              results.usesPrimaryEntryExamples
+            )
+          ) {
             Text(exampleActionTitle)
-              .frame(maxWidth: .infinity, alignment: .center)
-              .fixedSize(horizontal: false, vertical: true)
-            Image(systemName: "chevron.right")
-              .foregroundStyle(ZenbuTheme.secondaryText)
-              .accessibilityHidden(true)
-          }
-          .font(.headline)
-          .foregroundStyle(ZenbuTheme.interactiveForeground)
-          .padding(.horizontal, 18)
-          .frame(minHeight: 52)
-          .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("search.examples")
-      }
-
-      ScrollView {
-        LazyVStack(spacing: 0, pinnedViews: []) {
-          if let refinement = results.readingRefinement {
-            Button {
-              selectRefinement(refinement)
-            } label: {
-              HStack {
-                Text("Search for「\(refinement.query.value)」")
-                  .frame(maxWidth: .infinity, alignment: .center)
-                  .fixedSize(horizontal: false, vertical: true)
-                Image(systemName: "chevron.right")
-                  .foregroundStyle(ZenbuTheme.secondaryText)
-                  .accessibilityHidden(true)
-              }
               .font(.headline)
               .foregroundStyle(ZenbuTheme.interactiveForeground)
-              .padding(.horizontal, 18)
-              .frame(minHeight: 52)
-              .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Search for Japanese reading \(refinement.query.value)")
-            .accessibilityIdentifier("search.reading-refinement")
           }
+          .accessibilityIdentifier("search.examples")
+        }
+      }
 
-          if results.presentation == .discoveredWords {
-            ResultSectionHeader(title: "Discovered Words")
-            ForEach(
-              Array((results.best + results.additional).prefix(12).enumerated()), id: \.offset
-            ) {
-              index, entry in
-              ResultRow(entry: entry, marker: .additional, rank: .discovered(index + 1)) {
-                openResult(entry)
-              }
-            }
-          } else if query.isSingleKanji || !results.best.isEmpty {
-            ResultSectionHeader(title: "Best Matches")
-            if let character = KanjiCharacter(query.value) {
-              KanjiPrimaryRow(character: character.rawValue, entry: primaryKanjiEntry) {
-                openKanji(character, primaryKanjiEntry)
-              }
-            }
-            ForEach(Array(results.best.enumerated()), id: \.element.id) { index, entry in
-              ResultRow(
-                entry: entry, marker: .best, rank: .best(index + (query.isSingleKanji ? 2 : 1))
-              ) {
-                openResult(entry)
-              }
-            }
+      if let refinement = results.readingRefinement {
+        Section {
+          Button {
+            selectRefinement(refinement)
+          } label: {
+            Text("Search for「\(refinement.query.value)」")
+              .font(.headline)
+              .foregroundStyle(ZenbuTheme.interactiveForeground)
           }
+          .accessibilityLabel("Search for Japanese reading \(refinement.query.value)")
+          .accessibilityIdentifier("search.reading-refinement")
+        }
+      }
 
-          if showsAdditionalMatches, results.presentation == .ranked, !results.additional.isEmpty {
-            ResultSectionHeader(title: "Additional Matches")
-            ForEach(Array(results.additional.enumerated()), id: \.element.id) { index, entry in
-              ResultRow(entry: entry, marker: .additional, rank: .additional(index + 1)) {
-                openResult(entry)
-              }
-            }
+      if results.presentation == .discoveredWords {
+        Section("Discovered Words") {
+          ForEach(
+            (results.best + results.additional).prefix(12).enumerated(), id: \.element.id
+          ) { index, entry in
+            ResultRow(entry: entry, marker: .additional, rank: .discovered(index + 1))
+          }
+        }
+      } else if query.isSingleKanji || !results.best.isEmpty {
+        Section("Best Matches") {
+          if let character = KanjiCharacter(query.value) {
+            KanjiPrimaryRow(character: character, entry: primaryKanjiEntry)
+          }
+          ForEach(results.best.enumerated(), id: \.element.id) { index, entry in
+            ResultRow(
+              entry: entry, marker: .best, rank: .best(index + (query.isSingleKanji ? 2 : 1))
+            )
           }
         }
       }
-      .id(query)
-      .scrollIndicators(.hidden)
+
+      if showsAdditionalMatches, results.presentation == .ranked, !results.additional.isEmpty {
+        Section("Additional Matches") {
+          ForEach(results.additional.enumerated(), id: \.element.id) { index, entry in
+            ResultRow(entry: entry, marker: .additional, rank: .additional(index + 1))
+          }
+        }
+      }
     }
-    .background(ZenbuTheme.background)
+    .listStyle(.plain)
+    .id(query)
+    .accessibilityIdentifier("search.results")
   }
 
   private var primaryKanjiEntry: DictionaryEntry? {
@@ -677,54 +640,29 @@ private struct SearchResultsView: View {
 }
 
 private struct KanjiPrimaryRow: View {
-  let character: String
+  let character: KanjiCharacter
   let entry: DictionaryEntry?
-  let action: () -> Void
 
   var body: some View {
-    Button(action: action) {
+    NavigationLink(value: SearchExperienceRoute.kanji(character, entry)) {
       HStack(spacing: 10) {
-        Text(character)
+        Text(character.rawValue)
           .font(.title.weight(.light))
-        Text("KANJI")
-          .font(.caption2.weight(.bold))
-          .foregroundStyle(ZenbuTheme.secondaryText)
-        Text(entry?.summary ?? "Kanji detail")
-          .lineLimit(1)
-          .foregroundStyle(ZenbuTheme.secondaryText)
-          .frame(maxWidth: .infinity, alignment: .trailing)
-        Image(systemName: "chevron.right")
-          .foregroundStyle(ZenbuTheme.secondaryText)
-          .accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: 3) {
+          Text("KANJI")
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(.primary)
+          Text(entry?.summary ?? "Kanji detail")
+            .foregroundStyle(.primary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
       }
-      .padding(.horizontal, 15)
-      .frame(minHeight: 54)
       .contentShape(Rectangle())
-      .overlay(alignment: .bottom) {
-        Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
-      }
     }
-    .buttonStyle(.plain)
-    .accessibilityLabel("\(character), KANJI, \(entry?.summary ?? "Kanji detail")")
+    .accessibilityLabel("\(character.rawValue), KANJI, \(entry?.summary ?? "Kanji detail")")
     .accessibilityValue("Best match 1, Kanji primary")
-    .accessibilityIdentifier("result.kanji-primary.\(character)")
-  }
-}
-
-private struct ResultSectionHeader: View {
-  let title: String
-
-  var body: some View {
-    Text(title)
-      .font(.callout.weight(.semibold))
-      .foregroundStyle(ZenbuTheme.secondaryText)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(.horizontal, 53)
-      .frame(minHeight: 43, alignment: .bottom)
-      .padding(.bottom, 7)
-      .overlay(alignment: .bottom) {
-        Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
-      }
+    .accessibilityIdentifier("result.kanji-primary.\(character.rawValue)")
   }
 }
 
@@ -734,51 +672,26 @@ private struct ResultRow: View {
     case additional
   }
 
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let entry: DictionaryEntry
   let marker: Marker
   let rank: ResultRank
-  let action: () -> Void
 
   var body: some View {
-    Button(action: action) {
-      Group {
-        if usesExpandedLayout {
-          VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top, spacing: 9) {
-              markerView.frame(width: 24)
-              titleBlock
-              Spacer(minLength: 8)
-              chevron
-            }
-            Text(entry.summary)
-              .font(.body)
-              .foregroundStyle(ZenbuTheme.secondaryText)
-              .fixedSize(horizontal: false, vertical: true)
-          }
-        } else {
-          HStack(spacing: 9) {
-            markerView.frame(width: 24)
-            titleBlock
-              .frame(width: 92, alignment: .leading)
-            Text(entry.summary)
-              .font(.callout)
-              .foregroundStyle(ZenbuTheme.secondaryText)
-              .lineLimit(1)
-              .frame(maxWidth: .infinity, alignment: .trailing)
-            chevron
-          }
+    NavigationLink(value: SearchExperienceRoute.word(entry, nil)) {
+      HStack(alignment: .top, spacing: 10) {
+        markerView
+          .frame(width: 24)
+        VStack(alignment: .leading, spacing: 5) {
+          titleBlock
+          Text(entry.summary)
+            .font(.body)
+            .foregroundStyle(.primary)
+            .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
       }
-      .padding(.horizontal, 15)
-      .padding(.vertical, usesExpandedLayout ? 10 : 0)
-      .frame(minHeight: 54)
       .contentShape(Rectangle())
-      .overlay(alignment: .bottom) {
-        Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
-      }
     }
-    .buttonStyle(.plain)
     .accessibilityLabel("\(entry.headword), \(entry.reading), \(entry.summary)")
     .accessibilityValue(rank.accessibilityValue)
     .accessibilityIdentifier(resultIdentifier)
@@ -788,22 +701,11 @@ private struct ResultRow: View {
     JapaneseRubyText(
       surface: entry.headword,
       reading: entry.reading,
-      baseFont: usesExpandedLayout ? .title3 : .title2,
-      rubyFont: usesExpandedLayout ? .body.weight(.semibold) : .caption.weight(.semibold)
+      baseFont: .title3,
+      rubyFont: .caption.weight(.semibold)
     )
     .fixedSize(horizontal: false, vertical: true)
     .foregroundStyle(ZenbuTheme.foreground)
-  }
-
-  private var chevron: some View {
-    Image(systemName: "chevron.right")
-      .font(.headline)
-      .foregroundStyle(ZenbuTheme.secondaryText)
-      .accessibilityHidden(true)
-  }
-
-  private var usesExpandedLayout: Bool {
-    dynamicTypeSize >= .xxLarge
   }
 
   private var resultIdentifier: String {
@@ -819,12 +721,12 @@ private struct ResultRow: View {
     switch marker {
     case .best:
       Circle()
-        .stroke(ZenbuTheme.secondaryText, lineWidth: 1.2)
+        .stroke(.primary, lineWidth: 1.2)
         .frame(width: 17, height: 17)
         .accessibilityHidden(true)
     case .additional:
       Rectangle()
-        .stroke(ZenbuTheme.secondaryText, lineWidth: 1.2)
+        .stroke(.primary, lineWidth: 1.2)
         .frame(width: 13, height: 13)
         .rotationEffect(.degrees(45))
         .accessibilityHidden(true)

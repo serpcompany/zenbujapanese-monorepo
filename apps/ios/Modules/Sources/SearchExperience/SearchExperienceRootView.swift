@@ -114,7 +114,7 @@ public struct SearchExperienceRootView: View {
   }
 
   private var searchNavigation: some View {
-    NavigationStack(path: $path) {
+    NavigationStack(path: searchPath) {
       SearchView(
         query: $query,
         lookupClient: lookupClient,
@@ -123,11 +123,6 @@ public struct SearchExperienceRootView: View {
         cameraAuthorizationClient: cameraAuthorizationClient,
         radicalLookupClient: .live,
         exampleSentenceClient: .live,
-        openResult: { entry in path.append(.word(entry, nil)) },
-        openKanji: openKanji,
-        openExamples: { query, entry, usesEntryExamples in
-          path.append(.examples(query, entry, usesEntryExamples))
-        },
         openImageText: { assets in
           let session = ImageTextSession(assets: assets)
           imageTextSessionStore.insert(session)
@@ -217,9 +212,21 @@ public struct SearchExperienceRootView: View {
     .background(ZenbuTheme.background)
   }
 
+  private var searchPath: Binding<[SearchExperienceRoute]> {
+    Binding {
+      path
+    } set: { newPath in
+      if newPath.count > path.count,
+        case .kanji(let character, _) = newPath.last
+      {
+        kanjiScrollWordIDs[character] = nil
+      }
+      path = newPath
+    }
+  }
+
   private func openKanji(_ character: KanjiCharacter, entry: DictionaryEntry?) {
-    kanjiScrollWordIDs[character] = nil
-    path.append(.kanji(character, entry))
+    searchPath.wrappedValue = path + [.kanji(character, entry)]
   }
 
   private func openRelated(_ relationship: DictionaryRelationship) {
@@ -286,12 +293,12 @@ public struct SearchExperienceRootView: View {
   }
 #endif
 
-private struct ImageWordContext: Hashable {
+struct ImageWordContext: Hashable {
   let sessionID: UUID
   let assetID: UUID
 }
 
-private enum SearchExperienceRoute: Hashable {
+enum SearchExperienceRoute: Hashable {
   case word(DictionaryEntry, ImageWordContext?)
   case kanji(KanjiCharacter, DictionaryEntry?)
   case kanjiElement(KanjiElementID)

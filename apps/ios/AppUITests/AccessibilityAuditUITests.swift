@@ -98,6 +98,51 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testLightSearchResultsRemainReadableAtLargestAccessibilityTextSize() throws {
+    try auditSearchResultsAtLargestAccessibilityTextSize(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkSearchResultsRemainReadableAtLargestAccessibilityTextSize() throws {
+    try auditSearchResultsAtLargestAccessibilityTextSize(appearance: .dark)
+  }
+
+  @MainActor
+  private func auditSearchResultsAtLargestAccessibilityTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    try submitSearch("日本", in: app)
+
+    let resultSurface = app.descendants(matching: .any)["search.results"]
+    XCTAssertTrue(resultSurface.waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["Best Matches"].waitForExistence(timeout: 3))
+    try performAudit(
+      in: app,
+      named: "Search results - \(appearance) accessibility XXXL"
+    )
+
+    let japan = app.buttons["result.japan"]
+    for _ in 0..<8 where !japan.exists || !japan.isHittable {
+      resultSurface.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(japan.waitForExistence(timeout: 3))
+    XCTAssertTrue(japan.isHittable)
+    XCTAssertEqual(japan.value as? String, "Best match 1")
+    XCTAssertGreaterThan(japan.frame.height, 52)
+    XCTAssertTrue(japan.label.hasPrefix("日本, にほん,"))
+  }
+
+  @MainActor
   private func auditSearchInputControls(appearance: XCUIDevice.Appearance) throws {
     let originalAppearance = XCUIDevice.shared.appearance
     XCUIDevice.shared.appearance = appearance
