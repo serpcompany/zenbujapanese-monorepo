@@ -1,8 +1,8 @@
-@preconcurrency import PhotosUI
 import ImageIO
+@preconcurrency import PhotosUI
 import SwiftUI
-import UniformTypeIdentifiers
 import UIKit
+import UniformTypeIdentifiers
 
 struct ImageCameraPicker: UIViewControllerRepresentable {
   let completion: @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
@@ -24,7 +24,8 @@ struct ImageCameraPicker: UIViewControllerRepresentable {
   func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 
   @MainActor
-  final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+  final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate
+  {
     let completion: @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
 
     init(completion: @escaping @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void) {
@@ -99,31 +100,37 @@ struct ImagePhotoLibraryPicker: UIViewControllerRepresentable {
   }
 }
 
-private extension ImageTextAsset {
-  init?(cameraImage: UIImage) {
+extension ImageTextAsset {
+  fileprivate init?(cameraImage: UIImage) {
     guard let data = cameraImage.imageTextData else { return nil }
     self.init(name: "Camera Capture.jpg", data: data)
   }
+}
 
+extension ImageTextAsset {
   init?(photoLibraryImageAt url: URL, name: String) {
     guard
-      let source = CGImageSourceCreateWithURL(url as CFURL, [
-        kCGImageSourceShouldCache: false,
-      ] as CFDictionary),
-      let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
-        kCGImageSourceCreateThumbnailFromImageAlways: true,
-        kCGImageSourceCreateThumbnailWithTransform: true,
-        kCGImageSourceThumbnailMaxPixelSize: 4_096,
-        kCGImageSourceShouldCacheImmediately: true,
-      ] as CFDictionary),
+      let source = CGImageSourceCreateWithURL(
+        url as CFURL,
+        [
+          kCGImageSourceShouldCache: false
+        ] as CFDictionary),
+      let image = CGImageSourceCreateThumbnailAtIndex(
+        source, 0,
+        [
+          kCGImageSourceCreateThumbnailFromImageAlways: true,
+          kCGImageSourceCreateThumbnailWithTransform: true,
+          kCGImageSourceThumbnailMaxPixelSize: 4_096,
+          kCGImageSourceShouldCacheImmediately: true,
+        ] as CFDictionary),
       let data = UIImage(cgImage: image).jpegData(compressionQuality: 0.9)
     else { return nil }
     self.init(name: name, data: data)
   }
 }
 
-private extension UIImage {
-  var imageTextData: Data? {
+extension UIImage {
+  fileprivate var imageTextData: Data? {
     let maximumDimension: CGFloat = 4_096
     let largestDimension = max(size.width, size.height)
     let scale = largestDimension > maximumDimension ? maximumDimension / largestDimension : 1

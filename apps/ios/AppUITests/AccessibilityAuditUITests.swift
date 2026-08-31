@@ -305,12 +305,34 @@ final class AccessibilityAuditUITests: XCTestCase {
 
   @MainActor
   func testDarkWordDetailRemainsUsableAtLargestAccessibilityTextSize() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightWordDetailRemainsUsableAtLargestAccessibilityTextSize() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkRichWordDetailRemainsReachableAtLargestAccessibilityTextSize() throws {
+    try verifyRichWordDetailAtLargestAccessibilityTextSize(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightRichWordDetailRemainsReachableAtLargestAccessibilityTextSize() throws {
+    try verifyRichWordDetailAtLargestAccessibilityTextSize(appearance: .light)
+  }
+
+  @MainActor
+  private func auditWordDetailAtLargestAccessibilityTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
     let originalAppearance = XCUIDevice.shared.appearance
-    XCUIDevice.shared.appearance = .dark
+    XCUIDevice.shared.appearance = appearance
     defer { XCUIDevice.shared.appearance = originalAppearance }
 
     let app = launchApp(
-      appearance: .dark,
+      appearance: appearance,
       additionalArguments: [
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
@@ -324,7 +346,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     let japan = app.buttons["result.japan"]
     XCTAssertTrue(japan.waitForExistence(timeout: 5))
     japan.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 5))
     XCTAssertTrue(app.staticTexts["MEANING"].waitForExistence(timeout: 5))
     XCTAssertTrue(
       app.descendants(matching: .any).matching(
@@ -332,9 +354,50 @@ final class AccessibilityAuditUITests: XCTestCase {
       ).firstMatch.exists)
     try performAudit(
       in: app,
-      named: "Word Detail - dark accessibility XXXL",
+      named: "Word Detail - \(appearance == .dark ? "dark" : "light") accessibility XXXL",
       types: auditTypes.subtracting(.dynamicType)
     )
+  }
+
+  @MainActor
+  private func verifyRichWordDetailAtLargestAccessibilityTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    try submitSearch("見る", in: app)
+    let result = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "見る, みる")
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 5))
+    result.tap()
+
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["ALTERNATIVES"].waitForExistence(timeout: 5))
+    let related = app.buttons["word-detail.related.見える"]
+    for _ in 0..<16 where !related.exists || !related.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(related.exists)
+    XCTAssertGreaterThanOrEqual(related.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(related.frame.maxX, app.frame.maxX)
+
+    let firstExample = app.descendants(matching: .any)["word-detail.example.0"]
+    for _ in 0..<16 where !firstExample.exists || !firstExample.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(firstExample.exists)
+    XCTAssertGreaterThanOrEqual(firstExample.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(firstExample.frame.maxX, app.frame.maxX)
   }
 
   @MainActor
@@ -428,7 +491,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     }
 
     japan.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 5))
 
     try XCTContext.runActivity(named: "Word Detail") { _ in
       // Xcode 26.5 reports every semantic Word Detail text style as partially

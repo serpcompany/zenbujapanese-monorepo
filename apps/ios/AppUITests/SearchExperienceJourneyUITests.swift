@@ -43,11 +43,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let japan = app.buttons["result.japan"]
     XCTAssertTrue(japan.waitForExistence(timeout: 3))
     japan.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
 
     app.tabBars.buttons["Search"].tap()
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
-    XCTAssertFalse(app.scrollViews["word-detail.screen"].exists)
+    XCTAssertFalse(app.collectionViews["word-detail.screen"].exists)
     recordSettledScreenshot(named: "acceptance-search-tab-restored", app: app)
   }
 
@@ -268,7 +268,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.descendants(matching: .any)["ruby.静か.静=しず|か"].exists)
     recordSettledScreenshot(named: "image-text-clear-shizuka-selected", app: app)
     gloss.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.静か.静=しず|か"].exists)
     XCTAssertTrue(nativeBackButton(in: app).isHittable)
     let attachment = app.buttons["word-detail.image-attachment"]
@@ -337,7 +337,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(gloss.waitForExistence(timeout: 3))
     gloss.tap()
 
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.buttons["word-detail.image-attachment"].waitForExistence(timeout: 3))
     tapNativeBack(in: app)
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
@@ -365,7 +365,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     ).firstMatch
     XCTAssertTrue(result.waitForExistence(timeout: 3))
     result.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
     let savedAttachment = app.buttons["word-detail.image-attachment"]
     XCTAssertTrue(
       savedAttachment.waitForExistence(timeout: 3),
@@ -388,8 +388,51 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     ).firstMatch
     XCTAssertTrue(relaunchedResult.waitForExistence(timeout: 3))
     relaunchedResult.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertFalse(app.buttons["word-detail.image-attachment"].exists)
+  }
+
+  @MainActor
+  func testWordDetailEncounterMediaViewerPagesAndRemovesOnlyTheSelectedImage() throws {
+    var app = launchApp(additionalArguments: [
+      "-StartImageTextFixtures", "fixture-clear-horizontal.png",
+      "-InjectImageTextTranslation",
+      "-ResetWordImageAttachments",
+    ])
+    let quiet = app.descendants(matching: .any).matching(identifier: "image-text.region.静か")
+      .firstMatch
+    XCTAssertTrue(quiet.waitForExistence(timeout: 10))
+    quiet.tap()
+    app.buttons["image-text.gloss"].tap()
+    XCTAssertTrue(app.buttons["word-detail.image-attachment"].waitForExistence(timeout: 3))
+    tapNativeBack(in: app)
+    app.buttons["image-text.close"].tap()
+    app.terminate()
+
+    app = launchApp(additionalArguments: [
+      "-StartImageTextFixtures", "fixture-vertical.png",
+      "-InjectVerticalImageTextRecognition",
+    ])
+    let secondQuiet = app.descendants(matching: .any).matching(identifier: "image-text.region.静か")
+      .firstMatch
+    XCTAssertTrue(secondQuiet.waitForExistence(timeout: 10))
+    secondQuiet.tap()
+    let gloss = app.buttons["image-text.gloss"]
+    XCTAssertTrue(gloss.waitForExistence(timeout: 3))
+    gloss.tap()
+
+    let attachment = app.buttons["word-detail.image-attachment"]
+    XCTAssertTrue(attachment.waitForExistence(timeout: 3))
+    XCTAssertTrue(attachment.label.contains("2"))
+    attachment.tap()
+    XCTAssertTrue(app.staticTexts["fixture-vertical.png"].waitForExistence(timeout: 3))
+    app.swipeLeft()
+    XCTAssertTrue(app.staticTexts["fixture-clear-horizontal.png"].waitForExistence(timeout: 3))
+    app.buttons["word-detail.image-attachment-remove"].tap()
+    XCTAssertTrue(app.buttons["word-detail.image-attachment-done"].waitForExistence(timeout: 3))
+    app.buttons["word-detail.image-attachment-done"].tap()
+    XCTAssertTrue(attachment.waitForExistence(timeout: 3))
+    XCTAssertTrue(attachment.label.contains("1"))
   }
 
   @MainActor
@@ -846,7 +889,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(quiet.waitForExistence(timeout: 3))
     quiet.tap()
 
-    let wordDetail = app.scrollViews["word-detail.screen"]
+    let wordDetail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(wordDetail.waitForExistence(timeout: 2))
     let linkedKanji = app.buttons["word-detail.kanji.静"]
     for _ in 0..<5 where !linkedKanji.exists { wordDetail.swipeUp() }
@@ -868,7 +911,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordScreenshot(named: "kanji-shizu-source-backed-top", app: app)
 
     linkedReading.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.静.静=しず"].exists)
     tapNativeBack(in: app)
     XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 2))
@@ -897,7 +940,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     ).firstMatch
     XCTAssertTrue(quiet.waitForExistence(timeout: 3))
     quiet.tap()
-    let wordDetail = app.scrollViews["word-detail.screen"]
+    let wordDetail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(wordDetail.waitForExistence(timeout: 2))
     let linkedKanji = app.buttons["word-detail.kanji.静"]
     scrollElementIntoSafeTapRegion(linkedKanji, in: wordDetail, app: app)
@@ -919,7 +962,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordScreenshot(named: "kanji-shizu-elements-and-related-words", app: app)
 
     relatedQuiet.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.静寂.静寂=せいじゃく"].exists)
     XCTAssertTrue(app.staticTexts["silence, stillness, quietness"].exists)
     XCTAssertTrue(nativeBackButton(in: app).isHittable)
@@ -1714,7 +1757,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(feminine.waitForExistence(timeout: 3))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.女らしい.女=おんな|らしい"].exists)
     feminine.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
 
     let ruby = app.descendants(matching: .any)["ruby.女らしい.女=おんな|らしい"]
     XCTAssertTrue(
@@ -1804,7 +1847,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(greeting.waitForExistence(timeout: 3))
     greeting.tap()
 
-    let detail = app.scrollViews["word-detail.screen"]
+    let detail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
     XCTAssertTrue(app.descendants(matching: .any)["word-detail.pitch"].exists)
     XCTAssertTrue(app.descendants(matching: .any)["word-detail.alternative.こんにちわ"].exists)
@@ -1831,10 +1874,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     searchField.typeText("hello")
     app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1")).firstMatch.tap()
 
-    let detail = app.scrollViews["word-detail.screen"]
+    let detail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
     let finalExample = app.descendants(matching: .any)["word-detail.example.2"]
-    XCTAssertTrue(finalExample.waitForExistence(timeout: 3))
+    scrollWordDetailElementIntoView(finalExample, in: detail, app: app)
+    XCTAssertTrue(finalExample.exists)
     let tabBarTop = nativeTabBar(in: app).frame.minY
     for _ in 0..<8 where !finalExample.isHittable || finalExample.frame.maxY > tabBarTop - 24 {
       detail.swipeUp()
@@ -1984,7 +2028,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(japan.waitForExistence(timeout: 3))
     japan.tap()
 
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.staticTexts["Japan"].exists)
     XCTAssertFalse(app.staticTexts["問題ない。"].exists)
     recordScreenshot(named: "word-detail-japan-language-reference-data", app: app)
@@ -2261,7 +2305,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(result.waitForExistence(timeout: 3))
     result.tap()
 
-    let detail = app.scrollViews["word-detail.screen"]
+    let detail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(detail.waitForExistence(timeout: 2))
     let miruRuby = app.descendants(matching: .any).matching(
       NSPredicate(format: "label == %@", "見る, みる")
@@ -2274,7 +2318,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons["word-detail.toolbar-image"].tap()
     let picker = waitForSystemPhotoPicker(in: app)
     picker.coordinate(withNormalizedOffset: CGVector(dx: 0.10, dy: 0.12)).tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
     app.buttons["word-detail.toolbar-note"].tap()
     XCTAssertTrue(app.textFields["word-note.editor"].waitForExistence(timeout: 2))
     app.buttons["word-note.done"].tap()
@@ -2298,14 +2342,22 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     for _ in 0..<5 where !related.exists { detail.swipeUp() }
     XCTAssertTrue(app.staticTexts["RELATED WORDS"].exists)
     XCTAssertTrue(related.exists)
+    let addNote = app.buttons["word-detail.add-note"]
+    scrollWordDetailElementIntoView(addNote, in: detail, app: app)
     XCTAssertTrue(app.staticTexts["NOTES"].exists)
-    XCTAssertTrue(app.buttons["word-detail.add-note"].exists)
+    XCTAssertTrue(addNote.exists)
+    let firstExample = app.descendants(matching: .any)["word-detail.example.0"]
+    scrollWordDetailElementIntoView(firstExample, in: detail, app: app)
     XCTAssertTrue(app.staticTexts["EXAMPLES"].exists)
-    XCTAssertTrue(
-      app.descendants(matching: .any)["word-detail.example.0"].waitForExistence(timeout: 3))
-    for _ in 0..<3 { detail.swipeUp() }
+    XCTAssertTrue(firstExample.exists)
     recordScreenshot(named: "word-detail-miru-structured-and-related", app: app)
 
+    scrollElementIntoSafeTapRegion(
+      related,
+      in: detail,
+      app: app,
+      searchesBackwardWhenAbsent: true
+    )
     related.tap()
     let mieruRuby = app.descendants(matching: .any).matching(
       NSPredicate(format: "label == %@", "見える, みえる")
@@ -2315,7 +2367,14 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordScreenshot(named: "word-detail-related-mieru", app: app)
 
     tapNativeBack(in: app)
-    XCTAssertTrue(miruRuby.waitForExistence(timeout: 2))
+    XCTAssertTrue(detail.waitForExistence(timeout: 2))
+    scrollElementIntoSafeTapRegion(
+      miruRuby,
+      in: detail,
+      app: app,
+      searchesBackwardWhenAbsent: true
+    )
+    XCTAssertTrue(miruRuby.exists)
   }
 
   @MainActor
@@ -2332,7 +2391,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     butterfly.tap()
     XCTAssertTrue(app.staticTexts["COMMON"].exists)
     let alternateReading = app.descendants(matching: .any)["word-detail.alternative.ちょうちょ"]
-    let butterflyDetail = app.scrollViews["word-detail.screen"]
+    let butterflyDetail = app.collectionViews["word-detail.screen"]
     for _ in 0..<4 where !alternateReading.exists { butterflyDetail.swipeUp() }
     XCTAssertTrue(alternateReading.exists)
     recordScreenshot(named: "word-detail-choucho-current-source-multiple-readings", app: app)
@@ -2346,7 +2405,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(uncommon.waitForExistence(timeout: 3))
     uncommon.tap()
     XCTAssertTrue(app.staticTexts["UNMARKED"].exists)
-    let uncommonDetail = app.scrollViews["word-detail.screen"]
+    let uncommonDetail = app.collectionViews["word-detail.screen"]
     let uncommonReading = app.descendants(matching: .any)["word-detail.alternative.イバラ"]
     for _ in 0..<4 where !uncommonReading.exists { uncommonDetail.swipeUp() }
     XCTAssertTrue(uncommonReading.exists)
@@ -2362,7 +2421,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     kanaVerb.tap()
 
     let linkedKanji = app.buttons["word-detail.alternative.居る"]
-    let kanaDetail = app.scrollViews["word-detail.screen"]
+    let kanaDetail = app.collectionViews["word-detail.screen"]
     for _ in 0..<4 where !linkedKanji.exists { kanaDetail.swipeUp() }
     XCTAssertTrue(linkedKanji.exists)
     linkedKanji.tap()
@@ -2383,7 +2442,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(problem.waitForExistence(timeout: 3))
     problem.tap()
 
-    let detail = app.scrollViews["word-detail.screen"]
+    let detail = app.collectionViews["word-detail.screen"]
     let problemKanji = app.buttons["word-detail.kanji.問"]
     let topicKanji = app.buttons["word-detail.kanji.題"]
     XCTAssertTrue(problemKanji.waitForExistence(timeout: 2))
@@ -2423,10 +2482,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertEqual(XCTWaiter.wait(for: [detailDismissed], timeout: 2), .completed)
     XCTAssertTrue(problem.waitForExistence(timeout: 2))
     problem.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 2))
     let restoredNote = app.buttons["word-detail.note"]
     for _ in 0..<8 where !restoredNote.isHittable {
-      app.scrollViews["word-detail.screen"].swipeUp()
+      app.collectionViews["word-detail.screen"].swipeUp()
     }
     XCTAssertTrue(restoredNote.isHittable)
     XCTAssertEqual(restoredNote.label, "Review this rich noun")
@@ -2445,7 +2504,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       searchField: searchField
     )
 
-    let detail = app.scrollViews["word-detail.screen"]
+    let detail = app.collectionViews["word-detail.screen"]
     let addNote = app.buttons["word-detail.add-note"]
     for _ in 0..<8 where !addNote.exists { detail.swipeUp() }
     XCTAssertTrue(addNote.exists)
@@ -2485,7 +2544,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     savedNote = app.buttons["word-detail.note"]
     scrollWordDetailElementIntoView(
       savedNote,
-      in: app.scrollViews["word-detail.screen"],
+      in: app.collectionViews["word-detail.screen"],
       app: app
     )
     XCTAssertEqual(savedNote.label, "Review animate existence")
@@ -2504,7 +2563,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     savedNote = app.buttons["word-detail.note"]
     scrollWordDetailElementIntoView(
       savedNote,
-      in: app.scrollViews["word-detail.screen"],
+      in: app.collectionViews["word-detail.screen"],
       app: app
     )
     XCTAssertEqual(savedNote.label, "Review animate existence")
@@ -2543,7 +2602,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       searchField: searchField
     )
 
-    var detail = app.scrollViews["word-detail.screen"]
+    var detail = app.collectionViews["word-detail.screen"]
     var addNote = app.buttons["word-detail.add-note"]
     scrollWordDetailElementIntoView(addNote, in: detail, app: app)
     addNote.tap()
@@ -2558,14 +2617,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(editor.waitForExistence(timeout: 2))
     editor.tap()
     editor.typeText("Back autosave probe")
-    tapNativeBack(in: app)
+    app.swipeRight()
 
     let problem = app.buttons.matching(
       NSPredicate(format: "label BEGINSWITH %@", "問題, もんだい")
     ).firstMatch
     XCTAssertTrue(problem.waitForExistence(timeout: 2))
+    app.tabBars.buttons["More"].tap()
+    XCTAssertTrue(app.staticTexts["More"].waitForExistence(timeout: 2))
+    app.tabBars.buttons["Search"].tap()
+    XCTAssertTrue(problem.waitForExistence(timeout: 2))
     problem.tap()
-    detail = app.scrollViews["word-detail.screen"]
+    detail = app.collectionViews["word-detail.screen"]
     let restoredNote = app.buttons["word-detail.note"]
     scrollWordDetailElementIntoView(restoredNote, in: detail, app: app)
     XCTAssertEqual(restoredNote.label, "Back autosave probe")
@@ -2597,7 +2660,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       in: app,
       searchField: relaunchedSearchField
     )
-    detail = app.scrollViews["word-detail.screen"]
+    detail = app.collectionViews["word-detail.screen"]
     let firstNote = app.buttons["word-detail.note"]
     for _ in 0..<8 where !firstNote.isHittable { detail.swipeUp() }
     XCTAssertEqual(firstNote.label, "Back autosave probe")
@@ -2621,7 +2684,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(moor.exists)
     shoppingMall.tap()
 
-    var detail = app.scrollViews["word-detail.screen"]
+    var detail = app.collectionViews["word-detail.screen"]
     var addNote = app.buttons["word-detail.add-note"]
     for _ in 0..<8 where !addNote.isHittable { detail.swipeUp() }
     XCTAssertTrue(addNote.isHittable)
@@ -2636,7 +2699,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     tapNativeBack(in: app)
     XCTAssertTrue(moor.waitForExistence(timeout: 2))
     moor.tap()
-    detail = app.scrollViews["word-detail.screen"]
+    detail = app.collectionViews["word-detail.screen"]
     addNote = app.buttons["word-detail.add-note"]
     for _ in 0..<8 where !addNote.isHittable { detail.swipeUp() }
     XCTAssertTrue(addNote.isHittable)
@@ -2725,7 +2788,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordScreenshot(named: "example-only-hello-world", app: app)
 
     linkedWorld.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["the world, society, the universe"].exists)
   }
 
@@ -2752,7 +2815,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordSettledScreenshot(named: "production-examples-linked-key", app: app)
 
     linkedKey.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.鍵.鍵=かぎ"].exists)
     tapNativeBack(in: app)
     XCTAssertTrue(examples.waitForExistence(timeout: 2))
@@ -2771,7 +2834,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       .firstMatch
     XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
     primaryResult.tap()
-    let detail = app.scrollViews["word-detail.screen"]
+    let detail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
 
     let wordSpeaker = app.buttons["word-detail.pronounce"]
@@ -2817,7 +2880,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
     XCTAssertTrue(primaryResult.label.contains("いる"))
     primaryResult.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
 
     let wordSpeaker = app.buttons["word-detail.pronounce"]
     XCTAssertTrue(wordSpeaker.isHittable)
@@ -2830,7 +2893,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(wordSpeaker.isHittable)
     recordScreenshot(named: "pronunciation-word-after-settle", app: app)
 
-    let detail = app.scrollViews["word-detail.screen"]
+    let detail = app.collectionViews["word-detail.screen"]
     let inlineExampleSpeaker = app.buttons["word-detail.example-speaker.1"]
     for _ in 0..<8 where inlineExampleSpeaker.frame.maxY > app.frame.maxY - 120 {
       detail.swipeUp()
@@ -2929,7 +2992,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       "いた, Past"
     )
     tapNativeBack(in: app)
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.いる.いる"].exists)
   }
 
@@ -3148,7 +3211,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(primaryResult.exists)
     primaryResult.tap()
 
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.staticTexts["question (e.g. on a test), problem"].exists)
     recordScreenshot(named: "word-detail-problem", app: app)
 
@@ -3256,7 +3319,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     ).firstMatch
     XCTAssertTrue(result.waitForExistence(timeout: 3))
     result.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
   }
 
   @MainActor
@@ -3366,7 +3429,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   private func dismissSoftwareKeyboard(in app: XCUIApplication) {
     let keyboard = app.keyboards.firstMatch
     guard keyboard.exists else { return }
-    app.scrollViews["word-detail.screen"].swipeDown()
+    app.collectionViews["word-detail.screen"].swipeDown()
     let dismissed = XCTNSPredicateExpectation(
       predicate: NSPredicate(format: "exists == false"),
       object: keyboard

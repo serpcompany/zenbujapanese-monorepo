@@ -144,8 +144,7 @@ public struct SearchExperienceRootView: View {
             conjugationTable: japaneseConjugationClient.table(entry),
             openRelated: openRelated,
             openKanji: openKanji,
-            openWord: { entry in path.append(.word(entry, nil)) },
-            openConjugations: { table in path.append(.conjugations(entry, table)) }
+            openWord: { entry in path.append(.word(entry, nil)) }
           )
         case .kanji(let character, let entry):
           KanjiDetailView(
