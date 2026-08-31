@@ -1,13 +1,12 @@
-name: iOS quality
+name: iOS fast quality
 
 on:
   pull_request:
     branches: [main]
-  merge_group:
   workflow_dispatch:
     inputs:
       prove_failure:
-        description: Deliberately fail repo-contracts to verify enforcement
+        description: Deliberately fail repository contracts to verify enforcement
         required: false
         type: boolean
         default: false
@@ -20,8 +19,35 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  scope:
+    name: ios-fast / Scope
+    runs-on: ubuntu-24.04
+    outputs:
+      ios_changed: ${{ steps.scope.outputs.ios_changed }}
+    steps:
+      - name: Check out enough history to classify the change
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+
+      - name: Classify iOS impact
+        id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          FORCE_IOS: ${{ github.event_name == 'workflow_dispatch' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          python3 apps/ios/Tools/ios_ci_scope.py \
+            --base "$BASE_SHA" \
+            --head "$HEAD_SHA" \
+            --force "$FORCE_IOS" \
+            --github-output "$GITHUB_OUTPUT"
+
   repo-contracts:
-    name: repo-contracts
+    name: ios-fast / Repository contracts
+    needs: scope
+    if: ${{ needs.scope.outputs.ios_changed == 'true' }}
     runs-on: macos-26
     timeout-minutes: 30
     steps:
@@ -33,19 +59,21 @@ jobs:
 
       - name: Install audit tooling
         run: |
-          brew install ripgrep
+          brew install actionlint ripgrep
           gem install sqlite3 --version 2.9.6 --platform ruby --no-document -- \
             --enable-system-libraries
           ruby -e 'require "sqlite3"; abort "FTS4 unavailable" unless SQLite3::Database.new(":memory:").execute("PRAGMA compile_options").flatten.include?("ENABLE_FTS4")'
 
-      - name: Verify committed test plans
+      - name: Verify workflow and test-plan contracts
         run: |
           set -euo pipefail
+          actionlint
           for plan in apps/ios/TestPlans/*.xctestplan; do
             jq empty "$plan"
           done
           xmllint --noout apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme
           rg -q 'ZenbuPR.xctestplan' apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme
+          python3 -m unittest apps/ios/Tools/Tests/test_ios_ci_scope.py
 
       - name: Run importer and validator tests
         run: python3 -m unittest discover apps/ios/Tools/Tests -p 'test_*.py'
@@ -58,13 +86,12 @@ jobs:
 
       - name: Prove required-check failure path
         if: ${{ inputs.prove_failure }}
-        run: |
-          echo 'Intentional repo-contracts failure proof'
-          exit 1
+        run: exit 1
 
   ios-unit:
-    name: ios-pr / Unit
-    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.prove_failure }}
+    name: ios-fast / Unit
+    needs: scope
+    if: ${{ needs.scope.outputs.ios_changed == 'true' && !inputs.prove_failure }}
     runs-on: macos-26
     timeout-minutes: 30
     steps:
@@ -79,35 +106,36 @@ jobs:
           sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
           xcodebuild -version
 
-      - name: Run hosted PR tests
+      - name: Run the complete unit target
         run: |
           apps/ios/Tools/run_ci_test_plan.sh \
             ZenbuPR \
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
-            "$RUNNER_TEMP/ZenbuPR-Unit.xcresult" \
+            "$RUNNER_TEMP/ZenbuFast-Unit.xcresult" \
             -only-testing:ZenbuJapaneseTests
 
       - name: Package test evidence
         if: always()
         run: |
-          if [[ -d "$RUNNER_TEMP/ZenbuPR-Unit.xcresult" ]]; then
-            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuPR-Unit.xcresult" "$RUNNER_TEMP/ZenbuPR-Unit.xcresult.zip"
+          if [[ -d "$RUNNER_TEMP/ZenbuFast-Unit.xcresult" ]]; then
+            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuFast-Unit.xcresult" "$RUNNER_TEMP/ZenbuFast-Unit.xcresult.zip"
           fi
 
       - name: Retain test evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ZenbuPR-Unit-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ZenbuPR-Unit.xcresult.zip
+          name: ZenbuFast-Unit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ZenbuFast-Unit.xcresult.zip
           if-no-files-found: warn
           retention-days: 30
 
   ios-ui:
-    name: ios-pr / UI journeys
-    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.prove_failure }}
+    name: ios-fast / Critical UI
+    needs: scope
+    if: ${{ needs.scope.outputs.ios_changed == 'true' && !inputs.prove_failure }}
     runs-on: macos-26
-    timeout-minutes: 75
+    timeout-minutes: 30
     steps:
       - name: Check out exact source and LFS data
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -120,37 +148,19 @@ jobs:
           sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
           xcodebuild -version
 
-      - name: Run critical UI PR journeys
+      - name: Run the bounded critical-journey set
         run: |
           apps/ios/Tools/run_ci_test_plan.sh \
             ZenbuPR \
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
-            "$RUNNER_TEMP/ZenbuPR-UI.xcresult" \
+            "$RUNNER_TEMP/ZenbuFast-UI.xcresult" \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToMore \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBottomNavigationContainsOnlyReleaseDestinationsAndRestoresSearch \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCameraUnavailableOnSimulatorReportsHardwareBoundary \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextEncounterMediaPersistsIntoLaterSearchAndAppearsInMediaLibrary \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextVerticalFileProducesSelectableJapaneseRegions \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHandwritingCandidatesComposeCommonKanjiAndEnterHistory \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testNewestRecentSearchRerunsItsResultSet \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testPersistedRecentSearchesAppearImmediatelyOnColdRelaunch \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSelectingOlderRecentSearchMovesNormalizedQueryToTopWithoutDuplication \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testEmptyHistoryShowsCleanIdleSearchSurface \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIruOffersJapaneseReadingRefinement \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testMixedScriptWordDetailPlacesRubyOnlyAboveKanji \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testTrailingWhitespaceIsNormalizedBeforeShowingRomajiResults \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHumanPacedMultiWordSearchReturnsFrozenSentenceResultsWithoutQueuedDelay \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testOrdinaryJapaneseResultOpensItsOwnLanguageReferenceData \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testDictionarySourceAttributionIsReachableFromSearch \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testPrivacyAndSupportAreReachableFromSettings \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testLookupFailureIsNotPresentedAsNoMatchAndRetryRecovers \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSearchPresentsNativeLoadingStateBeforeDelayedResults \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testNoMatchKeepsQueryAboveNativeNoResultsState \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRapidQueryChangeCancelsStaleSearchWithoutFlashingOldResults \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testInflectedRomajiTeFormFindsDictionaryForm \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail
@@ -158,24 +168,25 @@ jobs:
       - name: Package test evidence
         if: always()
         run: |
-          if [[ -d "$RUNNER_TEMP/ZenbuPR-UI.xcresult" ]]; then
-            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuPR-UI.xcresult" "$RUNNER_TEMP/ZenbuPR-UI.xcresult.zip"
+          if [[ -d "$RUNNER_TEMP/ZenbuFast-UI.xcresult" ]]; then
+            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuFast-UI.xcresult" "$RUNNER_TEMP/ZenbuFast-UI.xcresult.zip"
           fi
 
       - name: Retain test evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ZenbuPR-UI-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ZenbuPR-UI.xcresult.zip
+          name: ZenbuFast-UI-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ZenbuFast-UI.xcresult.zip
           if-no-files-found: warn
           retention-days: 30
 
   ios-accessibility:
-    name: ios-pr / Accessibility
-    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.prove_failure }}
+    name: ios-fast / Accessibility smoke
+    needs: scope
+    if: ${{ needs.scope.outputs.ios_changed == 'true' && !inputs.prove_failure }}
     runs-on: macos-26
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - name: Check out exact source and LFS data
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -188,44 +199,57 @@ jobs:
           sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
           xcodebuild -version
 
-      - name: Run complete accessibility PR plan
+      - name: Run focused accessibility coverage
         run: |
           apps/ios/Tools/run_ci_test_plan.sh \
             ZenbuAccessibility \
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
-            "$RUNNER_TEMP/ZenbuPR-Accessibility.xcresult"
+            "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult" \
+            -only-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightImageSourceActionsHaveReadableSystemContrast \
+            -only-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightRecentSearchDeleteActionHasReadableSystemContrast \
+            -only-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkRecentSearchDeleteActionHasReadableSystemContrast \
+            -only-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkRecentSearchAndNoResultsRemainUsableAtLargestAccessibilityTextSize \
+            -only-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightLoadingAndFailureRemainUsableAtLargestAccessibilityTextSize \
+            -only-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkLoadingAndFailureRemainUsableAtLargestAccessibilityTextSize
 
       - name: Package test evidence
         if: always()
         run: |
-          if [[ -d "$RUNNER_TEMP/ZenbuPR-Accessibility.xcresult" ]]; then
-            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuPR-Accessibility.xcresult" "$RUNNER_TEMP/ZenbuPR-Accessibility.xcresult.zip"
+          if [[ -d "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult" ]]; then
+            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult" "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult.zip"
           fi
 
       - name: Retain test evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ZenbuPR-Accessibility-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ZenbuPR-Accessibility.xcresult.zip
+          name: ZenbuFast-Accessibility-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ZenbuFast-Accessibility.xcresult.zip
           if-no-files-found: warn
           retention-days: 30
 
-  ios-pr:
-    name: ios-pr / ZenbuPR
-    if: >-
-      ${{ always() &&
-          (github.event_name != 'workflow_dispatch' || !inputs.prove_failure) }}
-    needs: [ios-unit, ios-ui, ios-accessibility]
+  required:
+    name: ios-fast / Required
+    if: always()
+    needs: [scope, repo-contracts, ios-unit, ios-ui, ios-accessibility]
     runs-on: ubuntu-24.04
     steps:
-      - name: Require every hosted test partition
+      - name: Require every relevant fast partition
         env:
+          IOS_CHANGED: ${{ needs.scope.outputs.ios_changed }}
+          CONTRACTS_RESULT: ${{ needs.repo-contracts.result }}
           UNIT_RESULT: ${{ needs.ios-unit.result }}
           UI_RESULT: ${{ needs.ios-ui.result }}
           ACCESSIBILITY_RESULT: ${{ needs.ios-accessibility.result }}
         run: |
           set -euo pipefail
-          printf 'Unit partition: %s\nUI partition: %s\nAccessibility partition: %s\n' \
-            "$UNIT_RESULT" "$UI_RESULT" "$ACCESSIBILITY_RESULT"
-          [[ "$UNIT_RESULT" == success && "$UI_RESULT" == success && "$ACCESSIBILITY_RESULT" == success ]]
+          if [[ "$IOS_CHANGED" != true ]]; then
+            echo 'No iOS consumer changed; the required fast gate passes without macOS work.'
+            exit 0
+          fi
+          printf 'Contracts: %s\nUnit: %s\nCritical UI: %s\nAccessibility smoke: %s\n' \
+            "$CONTRACTS_RESULT" "$UNIT_RESULT" "$UI_RESULT" "$ACCESSIBILITY_RESULT"
+          [[ "$CONTRACTS_RESULT" == success ]]
+          [[ "$UNIT_RESULT" == success ]]
+          [[ "$UI_RESULT" == success ]]
+          [[ "$ACCESSIBILITY_RESULT" == success ]]

@@ -1,0 +1,84 @@
+name: iOS pre-release validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Identify the candidate or release decision being validated
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: ios-pre-release / Complete validation
+    runs-on: macos-26
+    timeout-minutes: 120
+    steps:
+      - name: Check out exact candidate source and LFS data
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Select pinned Xcode
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Audit source privacy and bundled data
+        run: bash apps/ios/Tools/audit_release_privacy.sh source
+
+      - name: Run the complete candidate suite
+        run: |
+          apps/ios/Tools/run_ci_test_plan.sh \
+            ZenbuPR \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
+            "$RUNNER_TEMP/ZenbuPreReleaseValidation.xcresult"
+
+      - name: Build the Release simulator product
+        run: |
+          xcodebuild build \
+            -project apps/ios/ZenbuJapanese.xcodeproj \
+            -scheme ZenbuJapanese \
+            -configuration Release \
+            -destination 'generic/platform=iOS Simulator'
+
+      - name: Record exact candidate identity
+        if: always()
+        env:
+          VALIDATION_REASON: ${{ inputs.reason }}
+        run: |
+          {
+            printf 'reason=%s\n' "$VALIDATION_REASON"
+            printf 'tested_sha=%s\n' "$GITHUB_SHA"
+            printf 'ref=%s\n' "$GITHUB_REF"
+            printf 'run=%s/%s/actions/runs/%s\n' \
+              "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+          } | tee "$RUNNER_TEMP/ZenbuPreReleaseValidation-identity.txt"
+
+      - name: Package test evidence
+        if: always()
+        run: |
+          if [[ -d "$RUNNER_TEMP/ZenbuPreReleaseValidation.xcresult" ]]; then
+            ditto -c -k --keepParent \
+              "$RUNNER_TEMP/ZenbuPreReleaseValidation.xcresult" \
+              "$RUNNER_TEMP/ZenbuPreReleaseValidation.xcresult.zip"
+          fi
+
+      - name: Retain transient pre-release validation evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuPreReleaseValidation-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/ZenbuPreReleaseValidation.xcresult.zip
+            ${{ runner.temp }}/ZenbuPreReleaseValidation-identity.txt
+          if-no-files-found: warn
+          retention-days: 90

@@ -1,0 +1,129 @@
+name: iOS pre-merge
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{
+      github.event.pull_request.number || github.event.merge_group.head_sha || github.ref
+    }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  scope:
+    name: ios-premerge / Scope
+    runs-on: ubuntu-24.04
+    outputs:
+      ios_changed: ${{ steps.scope.outputs.ios_changed }}
+    steps:
+      - name: Check out enough history to classify the merge candidate
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+
+      - name: Classify iOS impact
+        id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          FORCE_IOS: ${{ github.event_name == 'workflow_dispatch' }}
+          HEAD_SHA: >-
+            ${{
+              github.event.pull_request.head.sha ||
+              github.event.merge_group.head_sha ||
+              github.sha
+            }}
+        run: |
+          set -euo pipefail
+          python3 apps/ios/Tools/ios_ci_scope.py \
+            --base "$BASE_SHA" \
+            --head "$HEAD_SHA" \
+            --force "$FORCE_IOS" \
+            --github-output "$GITHUB_OUTPUT"
+
+  complete-suite:
+    name: ios-premerge / Complete suite
+    needs: scope
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'merge_group' && needs.scope.outputs.ios_changed == 'true')
+      }}
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - name: Check out exact merge-candidate source and LFS data
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Select pinned Xcode
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Run the complete iOS suite exactly once
+        run: |
+          apps/ios/Tools/run_ci_test_plan.sh \
+            ZenbuPR \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
+            "$RUNNER_TEMP/ZenbuPreMerge.xcresult"
+
+      - name: Record exact candidate identity
+        if: always()
+        run: |
+          {
+            printf 'event=%s\n' "$GITHUB_EVENT_NAME"
+            printf 'tested_sha=%s\n' "$GITHUB_SHA"
+            printf 'repository=%s\n' "$GITHUB_REPOSITORY"
+            printf 'run=%s/%s/actions/runs/%s\n' \
+              "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+          } | tee "$RUNNER_TEMP/ZenbuPreMerge-identity.txt"
+
+      - name: Package test evidence
+        if: always()
+        run: |
+          if [[ -d "$RUNNER_TEMP/ZenbuPreMerge.xcresult" ]]; then
+            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuPreMerge.xcresult" "$RUNNER_TEMP/ZenbuPreMerge.xcresult.zip"
+          fi
+
+      - name: Retain exact merge-candidate evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuPreMerge-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/ZenbuPreMerge.xcresult.zip
+            ${{ runner.temp }}/ZenbuPreMerge-identity.txt
+          if-no-files-found: warn
+          retention-days: 30
+
+  required:
+    name: ios-premerge / Required
+    if: always()
+    needs: [scope, complete-suite]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require the complete suite only on an iOS merge candidate
+        env:
+          IOS_CHANGED: ${{ needs.scope.outputs.ios_changed }}
+          COMPLETE_RESULT: ${{ needs.complete-suite.result }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
+            echo 'The complete suite is deferred until this PR enters the merge queue.'
+            exit 0
+          fi
+          if [[ "$GITHUB_EVENT_NAME" == merge_group && "$IOS_CHANGED" != true ]]; then
+            echo 'No iOS consumer changed in this merge group.'
+            exit 0
+          fi
+          printf 'Complete-suite result: %s\n' "$COMPLETE_RESULT"
+          [[ "$COMPLETE_RESULT" == success ]]
