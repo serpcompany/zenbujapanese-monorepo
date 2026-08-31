@@ -54,8 +54,8 @@ struct RadicalInputView: View {
                   }
                 }
               }
-              .padding(10)
             }
+            .padding(10)
           }
         }
         .accessibilityIdentifier("radical.grid")
