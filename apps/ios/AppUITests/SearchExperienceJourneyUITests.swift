@@ -934,6 +934,41 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testSearchInputModesUseNativeSelectionAndHorizontalActions() throws {
+    let app = launchApp(additionalArguments: ["-HandwritingRecognitionFixture", "cho"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+
+    let modePicker = app.segmentedControls["search.input.mode"]
+    XCTAssertTrue(modePicker.waitForExistence(timeout: 2))
+    for label in ["Keyboard", "Handwriting", "Radicals"] {
+      XCTAssertTrue(modePicker.buttons[label].exists, "Missing visible \(label) input mode")
+    }
+    XCTAssertTrue(modePicker.buttons["Keyboard"].isSelected)
+
+    modePicker.buttons["Handwriting"].tap()
+    XCTAssertTrue(modePicker.buttons["Handwriting"].isSelected)
+    let erase = app.buttons["handwriting.erase"]
+    let handwritingSearch = app.buttons["handwriting.search"]
+    XCTAssertTrue(erase.exists)
+    XCTAssertTrue(handwritingSearch.exists)
+    XCTAssertLessThan(abs(erase.frame.midY - handwritingSearch.frame.midY), 2)
+    assertUsesNativeTabSafeArea(erase, in: app)
+    assertUsesNativeTabSafeArea(handwritingSearch, in: app)
+
+    modePicker.buttons["Radicals"].tap()
+    XCTAssertTrue(modePicker.buttons["Radicals"].isSelected)
+    let remove = app.buttons["radical.remove"]
+    let radicalSearch = app.buttons["radical.search"]
+    XCTAssertTrue(remove.waitForExistence(timeout: 2))
+    XCTAssertTrue(radicalSearch.exists)
+    XCTAssertLessThan(abs(remove.frame.midY - radicalSearch.frame.midY), 2)
+    assertUsesNativeTabSafeArea(remove, in: app)
+    assertUsesNativeTabSafeArea(radicalSearch, in: app)
+  }
+
+  @MainActor
   func testRadicalSelectionNarrowsAndRemovalBroadensRealCandidates() throws {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
     let surface = openRadicals(in: app)
@@ -996,6 +1031,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(candidate.waitForExistence(timeout: 3))
     candidate.tap()
     XCTAssertEqual(surface.searchField.value as? String, "薮")
+    let candidateValue = candidate.value as? String
+    XCTAssertTrue(candidateValue?.contains("Candidate rank ") == true)
+    XCTAssertTrue(candidateValue?.contains("Selected") == true)
     XCTAssertTrue(app.buttons["radical.search"].isEnabled)
     recordScreenshot(named: "radical-yabu-candidate-selected", app: app)
 
@@ -3416,10 +3454,14 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       {
         return button
       }
-      grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.82))
+      if button.exists, button.frame.minY < grid.frame.minY {
+        grid.swipeDown(velocity: .fast)
+        continue
+      }
+      grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65))
         .press(
           forDuration: 0.05,
-          thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
+          thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.48))
         )
     }
     let button = app.buttons[identifier]

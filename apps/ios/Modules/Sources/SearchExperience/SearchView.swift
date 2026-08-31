@@ -113,7 +113,7 @@ struct SearchView: View {
 
       switch inputMode {
       case .keyboard where isSearchFocused:
-        SearchInputModeBar(
+        SearchInputModePicker(
           selectedMode: .keyboard,
           selectMode: selectInputMode
         )
@@ -282,9 +282,9 @@ struct SearchView: View {
   }
 
   private func recordRecentSearch(_ recentSearch: SearchQuery) {
-    recentSearchRefreshID += 1
     Task {
       await recentSearchStore.record(recentSearch)
+      recentSearchRefreshID += 1
     }
   }
 

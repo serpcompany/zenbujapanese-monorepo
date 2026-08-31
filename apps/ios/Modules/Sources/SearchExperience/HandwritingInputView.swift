@@ -22,42 +22,43 @@ struct HandwritingInputView: View {
   var body: some View {
     VStack(spacing: 0) {
       candidateStrip
-      SearchInputModeBar(selectedMode: .handwriting, selectMode: selectMode)
+      SearchInputModePicker(selectedMode: .handwriting, selectMode: selectMode)
 
-      HStack(spacing: 0) {
-        HandwritingCanvas(strokes: $model.strokes, completedStroke: model.recognize)
-          .aspectRatio(1, contentMode: .fit)
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .padding(8)
+      HandwritingCanvas(strokes: $model.strokes, completedStroke: model.recognize)
+        .aspectRatio(1, contentMode: .fit)
+        .frame(
+          minWidth: dynamicTypeSize.isAccessibilitySize ? nil : 240,
+          maxWidth: .infinity,
+          minHeight: dynamicTypeSize.isAccessibilitySize ? nil : 240,
+          maxHeight: .infinity
+        )
+        .padding(8)
 
-        VStack(spacing: 0) {
-          Button {
-            model.eraseDrawing()
-          } label: {
-            Image(systemName: "eraser")
-              .font(.title2)
-              .frame(maxWidth: .infinity, maxHeight: .infinity)
-          }
-          .disabled(model.strokes.isEmpty)
-          .accessibilityLabel("Erase drawing")
-          .accessibilityIdentifier("handwriting.erase")
-
-          Button("Search") {
-            let normalized = model.submittedQuery(appendingTo: query)
-            query = normalized.value
-            submit(normalized)
-          }
-          .font(.body.weight(.semibold))
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .background(canSubmit ? ZenbuTheme.selectedTab : ZenbuTheme.mutedForeground.opacity(0.08))
-          .foregroundStyle(canSubmit ? ZenbuTheme.primaryForeground : ZenbuTheme.foreground)
-          .buttonStyle(UndimmedPlainButtonStyle())
-          .disabled(!canSubmit)
-          .accessibilityIdentifier("handwriting.search")
+      HStack {
+        Button {
+          model.eraseDrawing()
+        } label: {
+          Image(systemName: "eraser")
         }
-        .frame(width: dynamicTypeSize >= .xxLarge ? 110 : 64)
+        .buttonStyle(.bordered)
+        .disabled(model.strokes.isEmpty)
+        .accessibilityLabel("Erase drawing")
+        .accessibilityIdentifier("handwriting.erase")
+
+        Spacer()
+
+        Button("Search") {
+          let normalized = model.submittedQuery(appendingTo: query)
+          query = normalized.value
+          submit(normalized)
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(!canSubmit)
+        .accessibilityIdentifier("handwriting.search")
       }
-      .frame(minHeight: dynamicTypeSize >= .xxLarge ? 340 : 264)
+      .controlSize(.large)
+      .padding(.horizontal)
+      .padding(.bottom, 10)
     }
     .background(ZenbuTheme.row)
     .overlay(alignment: .top) {

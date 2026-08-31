@@ -78,6 +78,103 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testLightSearchInputControlsRemainUsableAtLargestAccessibilityTextSize() throws {
+    try verifySearchInputControlsAtLargestAccessibilityTextSize(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkSearchInputControlsRemainUsableAtLargestAccessibilityTextSize() throws {
+    try verifySearchInputControlsAtLargestAccessibilityTextSize(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightSearchInputControlsPassCompleteAudit() throws {
+    try auditSearchInputControls(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkSearchInputControlsPassCompleteAudit() throws {
+    try auditSearchInputControls(appearance: .dark)
+  }
+
+  @MainActor
+  private func auditSearchInputControls(appearance: XCUIDevice.Appearance) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(appearance: appearance)
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+    app.buttons["search.input.handwriting"].tap()
+    XCTAssertTrue(app.otherElements["handwriting.canvas"].waitForExistence(timeout: 3))
+    // #173 owns the inherited Xcode Dynamic Type diagnostic on Radical stroke-group headers.
+    // The dedicated accessibility-XXXL journeys below keep this issue's scaling and reachability
+    // blocking while these focused audits cover every other XCTest accessibility category.
+    let controlAuditTypes = auditTypes.subtracting(.dynamicType)
+    try performAudit(
+      in: app,
+      named: "Handwriting input - \(appearance)",
+      types: controlAuditTypes
+    )
+
+    app.buttons["search.input.radicals"].tap()
+    XCTAssertTrue(app.staticTexts["1 Stroke"].waitForExistence(timeout: 3))
+    try performAudit(
+      in: app,
+      named: "Radical input - \(appearance)",
+      types: controlAuditTypes
+    )
+  }
+
+  @MainActor
+  private func verifySearchInputControlsAtLargestAccessibilityTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+
+    let modePicker = app.segmentedControls["search.input.mode"]
+    XCTAssertTrue(modePicker.waitForExistence(timeout: 2))
+    for label in ["Keyboard", "Handwriting", "Radicals"] {
+      let mode = modePicker.buttons[label]
+      XCTAssertTrue(mode.exists)
+      XCTAssertTrue(mode.isHittable)
+      XCTAssertGreaterThanOrEqual(mode.frame.height, 32)
+      XCTAssertGreaterThanOrEqual(mode.frame.minX, app.frame.minX)
+      XCTAssertLessThanOrEqual(mode.frame.maxX, app.frame.maxX)
+    }
+
+    modePicker.buttons["Handwriting"].tap()
+    let erase = app.buttons["handwriting.erase"]
+    let handwritingSearch = app.buttons["handwriting.search"]
+    XCTAssertTrue(erase.waitForExistence(timeout: 2))
+    XCTAssertTrue(handwritingSearch.exists)
+    XCTAssertLessThan(abs(erase.frame.midY - handwritingSearch.frame.midY), 2)
+    XCTAssertLessThanOrEqual(handwritingSearch.frame.maxY, app.tabBars.firstMatch.frame.minY)
+
+    modePicker.buttons["Radicals"].tap()
+    let remove = app.buttons["radical.remove"]
+    let radicalSearch = app.buttons["radical.search"]
+    XCTAssertTrue(remove.waitForExistence(timeout: 2))
+    XCTAssertTrue(radicalSearch.exists)
+    XCTAssertLessThan(abs(remove.frame.midY - radicalSearch.frame.midY), 2)
+    XCTAssertLessThanOrEqual(radicalSearch.frame.maxY, app.tabBars.firstMatch.frame.minY)
+  }
+
+  @MainActor
   private func verifyLoadingAndFailureAtLargestAccessibilityTextSize(
     appearance: XCUIDevice.Appearance
   ) throws {
