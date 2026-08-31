@@ -46,15 +46,6 @@ struct HandwritingInputView: View {
         .accessibilityIdentifier("handwriting.erase")
 
         Spacer()
-
-        Button("Search") {
-          let normalized = model.submittedQuery(appendingTo: query)
-          query = normalized.value
-          submit(normalized)
-        }
-        .buttonStyle(.borderedProminent)
-        .disabled(!canSubmit)
-        .accessibilityIdentifier("handwriting.search")
       }
       .controlSize(.large)
       .padding(.horizontal)
@@ -96,8 +87,10 @@ struct HandwritingInputView: View {
         HStack(spacing: 0) {
           ForEach(Array(model.candidates.enumerated()), id: \.element.id) { index, candidate in
             Button(candidate.value) {
-              query.append(candidate.value)
+              let submittedQuery = SearchQuery(query + candidate.value)
+              query = submittedQuery.value
               model.acceptCandidate()
+              submit(submittedQuery)
             }
             .font(.title)
             .foregroundStyle(ZenbuTheme.foreground)
@@ -110,9 +103,5 @@ struct HandwritingInputView: View {
       }
       .frame(minHeight: 46)
     }
-  }
-
-  private var canSubmit: Bool {
-    !SearchQuery(query).isEmpty || (!model.strokes.isEmpty && model.candidates.first != nil)
   }
 }

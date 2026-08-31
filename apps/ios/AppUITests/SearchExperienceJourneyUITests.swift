@@ -951,7 +951,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  func testSearchInputModesUseNativeSelectionAndHorizontalActions() throws {
+  func testSearchInputModesUseNativeSelectionAndCandidateSubmissionControls() throws {
     let app = launchApp(additionalArguments: ["-HandwritingRecognitionFixture", "cho"])
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
@@ -967,22 +967,16 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     modePicker.buttons["Handwriting"].tap()
     XCTAssertTrue(modePicker.buttons["Handwriting"].isSelected)
     let erase = app.buttons["handwriting.erase"]
-    let handwritingSearch = app.buttons["handwriting.search"]
     XCTAssertTrue(erase.exists)
-    XCTAssertTrue(handwritingSearch.exists)
-    XCTAssertLessThan(abs(erase.frame.midY - handwritingSearch.frame.midY), 2)
+    XCTAssertFalse(app.buttons["handwriting.search"].exists)
     assertUsesNativeTabSafeArea(erase, in: app)
-    assertUsesNativeTabSafeArea(handwritingSearch, in: app)
 
     modePicker.buttons["Radicals"].tap()
     XCTAssertTrue(modePicker.buttons["Radicals"].isSelected)
     let remove = app.buttons["radical.remove"]
-    let radicalSearch = app.buttons["radical.search"]
     XCTAssertTrue(remove.waitForExistence(timeout: 2))
-    XCTAssertTrue(radicalSearch.exists)
-    XCTAssertLessThan(abs(remove.frame.midY - radicalSearch.frame.midY), 2)
+    XCTAssertFalse(app.buttons["radical.search"].exists)
     assertUsesNativeTabSafeArea(remove, in: app)
-    assertUsesNativeTabSafeArea(radicalSearch, in: app)
   }
 
   @MainActor
@@ -990,9 +984,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
     let surface = openRadicals(in: app)
     let candidateStrip = app.scrollViews["radical.candidate-strip"]
-    let search = app.buttons["radical.search"]
 
-    XCTAssertFalse(search.isEnabled)
+    XCTAssertFalse(app.buttons["radical.search"].exists)
     XCTAssertTrue(app.staticTexts["1 Stroke"].exists)
     XCTAssertTrue(app.staticTexts["2 Strokes"].exists)
     recordScreenshot(named: "radical-unselected-stroke-groups", app: app)
@@ -1003,7 +996,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(candidateStrip.waitForExistence(timeout: 3))
     let broadCount = candidateCount(in: candidateStrip)
     XCTAssertGreaterThan(broadCount, 1)
-    XCTAssertFalse(search.isEnabled)
     recordScreenshot(named: "radical-single-selection-broad-candidates", app: app)
 
     let strike = radicalButton("radical.strike", in: app)
@@ -1012,7 +1004,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let narrowCount = candidateCount(in: candidateStrip)
     XCTAssertLessThan(narrowCount, broadCount)
     XCTAssertTrue(app.buttons["radical.candidate.薮"].exists)
-    XCTAssertFalse(search.isEnabled)
     recordScreenshot(named: "radical-multiple-selection-narrow-candidates", app: app)
 
     radicalButton("radical.strike", in: app).tap()
@@ -1025,7 +1016,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.buttons["radical.remove"].tap()
     XCTAssertFalse(candidateStrip.exists)
-    XCTAssertFalse(search.isEnabled)
     XCTAssertTrue(app.staticTexts["Select one or more radicals"].exists)
 
     app.buttons["search.input.handwriting"].tap()
@@ -1046,15 +1036,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let candidate = app.buttons["radical.candidate.薮"]
     XCTAssertTrue(candidate.waitForExistence(timeout: 3))
-    candidate.tap()
-    XCTAssertEqual(surface.searchField.value as? String, "薮")
     let candidateValue = candidate.value as? String
     XCTAssertTrue(candidateValue?.contains("Candidate rank ") == true)
-    XCTAssertTrue(candidateValue?.contains("Selected") == true)
-    XCTAssertTrue(app.buttons["radical.search"].isEnabled)
-    recordScreenshot(named: "radical-yabu-candidate-selected", app: app)
-
-    app.buttons["radical.search"].tap()
+    candidate.tap()
+    XCTAssertEqual(surface.searchField.value as? String, "薮")
+    XCTAssertTrue(app.scrollViews["radical.grid"].waitForNonExistence(timeout: 2))
+    XCTAssertFalse(app.buttons["radical.search"].exists)
     let kanjiPrimary = app.buttons["result.kanji-primary.薮"]
     XCTAssertTrue(kanjiPrimary.waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["Best Matches"].exists)
@@ -1081,7 +1068,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.buttons["search.input.radicals"].tap()
     XCTAssertEqual(searchField.value as? String, "think")
-    XCTAssertFalse(app.buttons["radical.search"].isEnabled)
+    XCTAssertFalse(app.buttons["radical.search"].exists)
     recordScreenshot(named: "radical-populated-query-still-requires-candidate", app: app)
 
     radicalButton("radical.one", in: app).tap()
@@ -1089,7 +1076,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(candidate.waitForExistence(timeout: 2))
     candidate.tap()
     XCTAssertEqual(searchField.value as? String, "丁")
-    XCTAssertTrue(app.buttons["radical.search"].isEnabled)
+    XCTAssertTrue(app.buttons["result.kanji-primary.丁"].waitForExistence(timeout: 3))
+    XCTAssertFalse(app.scrollViews["radical.grid"].exists)
   }
 
   @MainActor
@@ -1103,7 +1091,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(candidate.waitForExistence(timeout: 2))
     recordSettledScreenshot(named: "radical-production-selected", app: app)
     candidate.tap()
-    app.buttons["radical.search"].tap()
 
     let kanjiPrimary = app.buttons["result.kanji-primary.丶"]
     XCTAssertTrue(kanjiPrimary.waitForExistence(timeout: 3))
@@ -1140,20 +1127,21 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordScreenshot(named: "handwriting-candidates-first-character", app: app)
     sunCandidate.tap()
     XCTAssertEqual(searchField.value as? String, "日")
-    XCTAssertEqual(canvas.value as? String, "Empty drawing")
+    XCTAssertTrue(canvas.waitForNonExistence(timeout: 2))
+
+    searchField.tap()
+    app.buttons["search.input.handwriting"].tap()
+    XCTAssertTrue(canvas.waitForExistence(timeout: 2))
 
     drawSyntheticOrigin(in: canvas)
     let bookCandidate = app.buttons["handwriting.candidate.本"]
     XCTAssertTrue(bookCandidate.waitForExistence(timeout: 3))
     bookCandidate.tap()
     XCTAssertEqual(searchField.value as? String, "日本")
-
-    let submit = app.buttons["handwriting.search"]
-    XCTAssertTrue(submit.isEnabled)
-    submit.tap()
     XCTAssertTrue(app.buttons["result.japan"].waitForExistence(timeout: 3))
-    XCTAssertTrue(app.otherElements["handwriting.canvas"].exists)
-    XCTAssertTrue(app.buttons["handwriting.erase"].exists)
+    XCTAssertTrue(canvas.waitForNonExistence(timeout: 2))
+    XCTAssertFalse(app.buttons["handwriting.erase"].exists)
+    XCTAssertFalse(app.segmentedControls["search.input.mode"].exists)
     recordScreenshot(named: "handwriting-common-kanji-results", app: app)
 
     showRecentSearches(in: app, searchField: searchField)
@@ -1177,7 +1165,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     erase.tap()
     XCTAssertEqual(canvas.value as? String, "Empty drawing")
     XCTAssertFalse(app.buttons["handwriting.candidate.丁"].exists)
-    XCTAssertFalse(app.buttons["handwriting.search"].isEnabled)
+    XCTAssertFalse(app.buttons["handwriting.search"].exists)
     recordScreenshot(named: "handwriting-erased-app-owned-drawing", app: app)
 
     app.buttons["search.input.radicals"].tap()
@@ -1211,8 +1199,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(candidate.waitForExistence(timeout: 3))
     candidate.tap()
     XCTAssertEqual(searchField.value as? String, "丁")
-
-    app.buttons["handwriting.search"].tap()
+    XCTAssertTrue(surface.canvas.waitForNonExistence(timeout: 2))
+    XCTAssertFalse(app.buttons["handwriting.search"].exists)
     let kanjiPrimary = app.buttons["result.kanji-primary.丁"]
     XCTAssertTrue(kanjiPrimary.waitForExistence(timeout: 3))
     XCTAssertTrue(kanjiPrimary.label.contains("丁"))
@@ -1254,12 +1242,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let selectedCandidate = app.buttons["handwriting.candidate.丁"]
     XCTAssertTrue(selectedCandidate.waitForExistence(timeout: 3))
     selectedCandidate.tap()
+    XCTAssertTrue(canvas.waitForNonExistence(timeout: 2))
+
+    searchField.tap()
+    app.buttons["search.input.handwriting"].tap()
+    XCTAssertTrue(canvas.waitForExistence(timeout: 2))
 
     drawSyntheticStroke(
       in: canvas, from: CGVector(dx: 0.2, dy: 0.55), to: CGVector(dx: 0.8, dy: 0.55))
-    XCTAssertTrue(app.buttons["handwriting.candidate.一"].waitForExistence(timeout: 3))
+    let nextCandidate = app.buttons["handwriting.candidate.一"]
+    XCTAssertTrue(nextCandidate.waitForExistence(timeout: 3))
     XCTAssertEqual(searchField.value as? String, "丁")
-    app.buttons["handwriting.search"].tap()
+    nextCandidate.tap()
 
     XCTAssertEqual(searchField.value as? String, "丁一")
     XCTAssertTrue(app.staticTexts["Discovered Words"].waitForExistence(timeout: 3))
@@ -1283,7 +1277,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     drawSyntheticStroke(
       in: canvas, from: CGVector(dx: 0.2, dy: 0.2), to: CGVector(dx: 0.35, dy: 0.25))
     XCTAssertTrue(app.staticTexts["handwriting.no-candidates"].waitForExistence(timeout: 3))
-    XCTAssertFalse(app.buttons["handwriting.search"].isEnabled)
+    XCTAssertFalse(app.buttons["handwriting.search"].exists)
     recordScreenshot(named: "handwriting-no-candidates-app-owned-state", app: app)
 
     app.buttons["handwriting.erase"].tap()
@@ -1335,7 +1329,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordSettledScreenshot(named: "handwriting-natural-yama-candidates", app: app)
     candidate.tap()
     XCTAssertEqual(surface.searchField.value as? String, "山")
-    app.buttons["handwriting.search"].tap()
     XCTAssertTrue(app.buttons["result.kanji-primary.山"].waitForExistence(timeout: 3))
     recordScreenshot(named: "handwriting-natural-yama-results", app: app)
   }

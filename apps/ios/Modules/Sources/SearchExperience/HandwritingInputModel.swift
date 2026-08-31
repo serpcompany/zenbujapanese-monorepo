@@ -70,12 +70,4 @@ final class HandwritingInputModel {
     recognitionRevision += 1
     if recognitionState == .recognizing { recognitionState = .idle }
   }
-
-  func submittedQuery(appendingTo existingQuery: String) -> SearchQuery {
-    var submitted = existingQuery
-    if !strokes.isEmpty, let pendingCandidate = candidates.first {
-      submitted.append(pendingCandidate.value)
-    }
-    return SearchQuery(submitted)
-  }
 }

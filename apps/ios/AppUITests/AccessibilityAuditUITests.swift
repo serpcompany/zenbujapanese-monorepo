@@ -204,19 +204,15 @@ final class AccessibilityAuditUITests: XCTestCase {
 
     modePicker.buttons["Handwriting"].tap()
     let erase = app.buttons["handwriting.erase"]
-    let handwritingSearch = app.buttons["handwriting.search"]
     XCTAssertTrue(erase.waitForExistence(timeout: 2))
-    XCTAssertTrue(handwritingSearch.exists)
-    XCTAssertLessThan(abs(erase.frame.midY - handwritingSearch.frame.midY), 2)
-    XCTAssertLessThanOrEqual(handwritingSearch.frame.maxY, app.tabBars.firstMatch.frame.minY)
+    XCTAssertFalse(app.buttons["handwriting.search"].exists)
+    XCTAssertLessThanOrEqual(erase.frame.maxY, app.tabBars.firstMatch.frame.minY)
 
     modePicker.buttons["Radicals"].tap()
     let remove = app.buttons["radical.remove"]
-    let radicalSearch = app.buttons["radical.search"]
     XCTAssertTrue(remove.waitForExistence(timeout: 2))
-    XCTAssertTrue(radicalSearch.exists)
-    XCTAssertLessThan(abs(remove.frame.midY - radicalSearch.frame.midY), 2)
-    XCTAssertLessThanOrEqual(radicalSearch.frame.maxY, app.tabBars.firstMatch.frame.minY)
+    XCTAssertFalse(app.buttons["radical.search"].exists)
+    XCTAssertLessThanOrEqual(remove.frame.maxY, app.tabBars.firstMatch.frame.minY)
   }
 
   @MainActor

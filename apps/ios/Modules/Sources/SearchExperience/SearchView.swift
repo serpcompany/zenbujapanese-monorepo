@@ -286,8 +286,7 @@ struct SearchView: View {
     sparseRadicalQuery = nil
     query = submittedQuery.value
     recordRecentSearch(submittedQuery)
-    isSearchFocused = false
-    inputMode = .handwriting
+    deactivateInput()
   }
 
   private func submitRadicalQuery(_ submittedQuery: SearchQuery) {

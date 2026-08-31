@@ -7,7 +7,6 @@ struct RadicalInputView: View {
   let selectMode: (SearchInputMode) -> Void
   let submit: (SearchQuery) -> Void
   @State private var selectedRadicals: Set<String> = []
-  @State private var selectedCandidate: SearchQuery?
   @State private var catalog: RadicalCatalog?
   @State private var loadFailed = false
 
@@ -63,7 +62,6 @@ struct RadicalInputView: View {
       HStack {
         Button("Remove", systemImage: "delete.left") {
           selectedRadicals.removeAll()
-          selectedCandidate = nil
           query = ""
         }
         .buttonStyle(.bordered)
@@ -72,13 +70,6 @@ struct RadicalInputView: View {
         .accessibilityIdentifier("radical.remove")
 
         Spacer()
-
-        Button("Search", systemImage: "magnifyingglass") {
-          if let selectedCandidate { submit(selectedCandidate) }
-        }
-        .buttonStyle(.borderedProminent)
-        .disabled(selectedCandidate == nil)
-        .accessibilityIdentifier("radical.search")
       }
       .controlSize(.large)
       .padding(.horizontal)
@@ -114,25 +105,15 @@ struct RadicalInputView: View {
           ForEach(Array(radicalCandidates.enumerated()), id: \.element.value) {
             index, candidate in
             Button(candidate.value) {
-              selectedCandidate = SearchQuery(candidate.value)
-              query = candidate.value
+              let submittedQuery = SearchQuery(candidate.value)
+              query = submittedQuery.value
+              submit(submittedQuery)
             }
             .font(.title)
-            .foregroundStyle(
-              selectedCandidate?.value == candidate.value
-                ? ZenbuTheme.primaryForeground
-                : ZenbuTheme.foreground
-            )
+            .foregroundStyle(ZenbuTheme.foreground)
             .frame(minWidth: 54, minHeight: 46)
-            .background(
-              selectedCandidate?.value == candidate.value ? ZenbuTheme.selectedTab : .clear
-            )
             .accessibilityLabel("Use radical candidate \(candidate.value)")
-            .accessibilityValue(
-              selectedCandidate?.value == candidate.value
-                ? "Candidate rank \(index + 1), Selected"
-                : "Candidate rank \(index + 1)"
-            )
+            .accessibilityValue("Candidate rank \(index + 1)")
             .accessibilityIdentifier("radical.candidate.\(candidate.value)")
           }
         }
@@ -156,12 +137,6 @@ struct RadicalInputView: View {
       selectedRadicals.remove(radical)
     } else {
       selectedRadicals.insert(radical)
-    }
-    if let selectedCandidate,
-      !radicalCandidates.contains(where: { $0.value == selectedCandidate.value })
-    {
-      self.selectedCandidate = nil
-      query = ""
     }
   }
 }
