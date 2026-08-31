@@ -25,6 +25,20 @@ The implementation deliberately differs from the original recommendation below:
 The historical research and cited recommendations remain below as decision evidence; this
 update is the current operating policy.
 
+## Implementation update — 2026-08-31
+
+Issue #227 supersedes the pull-request cadence above after a complete local
+`ZenbuPR` run took 2,571.374 seconds. Pull requests now receive a path-aware fast
+gate: repository contracts, all unit tests, bounded critical journeys, and
+focused accessibility coverage. The complete `ZenbuPR` plan is staged in a
+separate `merge_group` workflow so it runs once on the exact merge candidate
+after review, with manual breadth and release triggers retained.
+
+The `main` ruleset is deliberately not enabled while the complete suite has
+known inherited failures. `apps/ios/CI.md` is the current executable policy and
+records the required check names and rollout hold; this research remains the
+decision history.
+
 ## Executive decision
 
 Zenbu should not choose between automated testing and manual testing. It needs both, with different jobs:
