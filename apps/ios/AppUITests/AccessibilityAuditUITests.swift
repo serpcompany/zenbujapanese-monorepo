@@ -370,19 +370,19 @@ final class AccessibilityAuditUITests: XCTestCase {
       // iOS 26 intentionally lets scroll content pass beneath the native,
       // translucent tab bar. Xcode's screenshot audit reports the clipped
       // pixels as low-contrast text even though the content becomes fully
-      // readable when scrolled above the bar. Ignore only elements that
-      // geometrically cross that system-owned material, including its 12-point
-      // shadow/blur outside the accessibility frame. Visible content above the
-      // material and the tab controls themselves remain blocking.
+      // readable when scrolled above the bar. For concrete findings, ignore
+      // only app content whose frame intersects the system-owned bar or its
+      // measured 12-point shadow/blur boundary. Content outside that boundary
+      // and the two tab controls themselves remain blocking.
       let tabBar = app.tabBars.firstMatch
-      if issue.auditType == .contrast, issue.element == nil, tabBar.exists {
-        return true
-      }
-      let tabBarMaterialFrame = tabBar.frame.insetBy(dx: 0, dy: -12)
       if issue.auditType == .contrast,
         let element,
         tabBar.exists,
-        element.frame.intersects(tabBarMaterialFrame)
+        element.elementType == .staticText,
+        !element.label.isEmpty,
+        !["Search", "More"].contains(element.label),
+        !["magnifyingglass", "ellipsis"].contains(identifier ?? ""),
+        element.frame.intersects(tabBar.frame.insetBy(dx: 0, dy: -12))
       {
         return true
       }

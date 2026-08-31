@@ -103,17 +103,20 @@ struct SearchView: View {
           selectMode: selectInputMode,
           submit: submitComposedQuery
         )
-        .padding(.bottom, 64)
       case .radicals:
+        EmptyView()
+      default:
+        EmptyView()
+      }
+    }
+    .safeAreaInset(edge: .bottom, spacing: 0) {
+      if inputMode == .radicals {
         RadicalInputView(
           query: $query,
           lookupClient: radicalLookupClient,
           selectMode: selectInputMode,
           submit: submitRadicalQuery
         )
-        .padding(.bottom, 64)
-      default:
-        EmptyView()
       }
     }
     .background(ZenbuTheme.background)
@@ -253,8 +256,10 @@ struct SearchView: View {
   }
 
   private func recordRecentSearch(_ recentSearch: SearchQuery) {
-    recentSearchStore.record(recentSearch)
     recentSearchRefreshID += 1
+    Task {
+      await recentSearchStore.record(recentSearch)
+    }
   }
 
   private func selectInputMode(_ mode: SearchInputMode) {
@@ -276,7 +281,7 @@ struct SearchView: View {
     query = submittedQuery.value
     recordRecentSearch(submittedQuery)
     isSearchFocused = false
-    inputMode = .radicals
+    inputMode = .inactive
   }
 
   private func completeSubmission(_ submittedQuery: SearchQuery) {

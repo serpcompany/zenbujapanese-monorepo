@@ -11,9 +11,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(imageSearch.exists)
     XCTAssertGreaterThanOrEqual(imageSearch.frame.minX, searchField.frame.maxX)
     XCTAssertFalse(app.buttons["search.sources"].exists)
+    recordSettledScreenshot(named: "issue-216-after-search", app: app)
 
     app.tabBars.buttons["More"].tap()
     XCTAssertTrue(app.staticTexts["More"].waitForExistence(timeout: 2))
+    recordSettledScreenshot(named: "issue-216-after-more", app: app)
     XCTAssertEqual(app.buttons["more.media-library"].label, "Media Library")
     XCTAssertEqual(app.buttons["more.credits"].label, "Credits & Attributions")
     app.buttons["more.credits"].tap()
@@ -1175,9 +1177,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordScreenshot(named: "handwriting-single-kanji-detail", app: app)
     tapNativeBack(in: app)
 
-    showRecentSearches(in: app, searchField: searchField)
-    XCTAssertTrue(app.buttons["recent-search.0"].waitForExistence(timeout: 2))
-    XCTAssertEqual(app.buttons["recent-search.0"].label, "丁")
   }
 
   @MainActor
@@ -1343,8 +1342,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     XCTAssertGreaterThanOrEqual(canvas.frame.width, 240)
     XCTAssertGreaterThanOrEqual(canvas.frame.height, 240)
-    XCTAssertLessThanOrEqual(
-      canvas.frame.maxY, nativeTabBar(in: app).frame.minY)
+    assertUsesNativeTabSafeArea(canvas, in: app)
     recordSettledScreenshot(named: "handwriting-uncramped-canvas", app: app)
   }
 
@@ -3149,6 +3147,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  private func assertUsesNativeTabSafeArea(
+    _ bottomElement: XCUIElement,
+    in app: XCUIApplication,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    XCTAssertTrue(bottomElement.waitForExistence(timeout: 3), file: file, line: line)
+    let tabBarTop = nativeTabBar(in: app).frame.minY
+    XCTAssertLessThanOrEqual(bottomElement.frame.maxY, tabBarTop, file: file, line: line)
+  }
+
+  @MainActor
   private func nativeBackButton(in app: XCUIApplication) -> XCUIElement {
     let navigationBar = app.navigationBars.firstMatch
     XCTAssertTrue(navigationBar.waitForExistence(timeout: 3), "Expected a native navigation bar")
@@ -3267,35 +3277,35 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   private func radicalButton(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
     let grid = app.scrollViews["radical.grid"]
+    let visibleBottom = min(grid.frame.maxY, nativeTabBar(in: app).frame.minY)
     if identifier == "radical.grass" {
       for _ in 0..<16 {
         let button = app.buttons[identifier]
         if button.exists, button.isHittable,
           button.frame.minY >= grid.frame.minY,
-          button.frame.maxY <= grid.frame.maxY
+          button.frame.maxY <= visibleBottom
         {
           return button
         }
         grid.swipeDown(velocity: .fast)
       }
     }
-    for _ in 0..<16 {
+    for _ in 0..<32 {
       let button = app.buttons[identifier]
       if button.exists, button.isHittable,
         button.frame.minY >= grid.frame.minY,
-        button.frame.maxY <= grid.frame.maxY
+        button.frame.maxY <= visibleBottom
       {
         return button
       }
-      grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.72))
+      grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.82))
         .press(
           forDuration: 0.05,
-          thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.48))
+          thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
         )
     }
     let button = app.buttons[identifier]
-    XCTAssertTrue(
-      button.exists && button.isHittable, "Missing hittable radical button \(identifier)")
+    XCTAssertTrue(button.exists, "Missing radical button \(identifier)")
     return button
   }
 

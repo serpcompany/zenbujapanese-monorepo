@@ -73,7 +73,7 @@ final class HandwritingInputModel {
 
   func submittedQuery(appendingTo existingQuery: String) -> SearchQuery {
     var submitted = existingQuery
-    if let pendingCandidate = candidates.first {
+    if !strokes.isEmpty, let pendingCandidate = candidates.first {
       submitted.append(pendingCandidate.value)
     }
     return SearchQuery(submitted)

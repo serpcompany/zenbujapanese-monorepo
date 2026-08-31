@@ -27,44 +27,47 @@ struct RadicalInputView: View {
             } else {
               LazyVStack(alignment: .leading, spacing: 8) {
                 ForEach(groups, id: \.strokeCount) { group in
-                  VStack(alignment: .leading, spacing: 8) {
-                    Text(group.strokeCount == 1 ? "1 Stroke" : "\(group.strokeCount) Strokes")
-                      .font(.caption.weight(.semibold))
-                      .foregroundStyle(ZenbuTheme.secondaryText)
-                    LazyVGrid(
-                      columns: Array(
-                        repeating: GridItem(.flexible(), spacing: 4),
-                        count: dynamicTypeSize >= .xxLarge ? 4 : 8
-                      ),
-                      spacing: 4
-                    ) {
-                      ForEach(group.values) { radical in
-                        Button(radical.glyph) { toggle(radical.id) }
-                          .font(.title3)
-                          .frame(maxWidth: .infinity, minHeight: 44)
-                          .background(
-                            selectedRadicals.contains(radical.id)
-                              ? ZenbuTheme.selectedTab
-                              : ZenbuTheme.accent,
-                            in: RoundedRectangle(cornerRadius: 5)
-                          )
-                          .accessibilityLabel("Radical \(radical.glyph)")
-                          .accessibilityValue(
-                            selectedRadicals.contains(radical.id) ? "Selected" : "Not selected"
-                          )
-                          .accessibilityIdentifier(radical.accessibilityIdentifier)
-                      }
+                  Text(group.strokeCount == 1 ? "1 Stroke" : "\(group.strokeCount) Strokes")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(ZenbuTheme.secondaryText)
+                    .id(group.strokeCount)
+                  LazyVGrid(
+                    columns: Array(
+                      repeating: GridItem(.flexible(), spacing: 4),
+                      count: dynamicTypeSize >= .xxLarge ? 4 : 8
+                    ),
+                    spacing: 4
+                  ) {
+                    ForEach(group.values) { radical in
+                      Button(radical.glyph) { toggle(radical.id) }
+                        .font(.title3)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(
+                          selectedRadicals.contains(radical.id)
+                            ? ZenbuTheme.selectedTab
+                            : ZenbuTheme.accent,
+                          in: RoundedRectangle(cornerRadius: 5)
+                        )
+                        .accessibilityLabel("Radical \(radical.glyph)")
+                        .accessibilityValue(
+                          selectedRadicals.contains(radical.id) ? "Selected" : "Not selected"
+                        )
+                        .accessibilityIdentifier(radical.accessibilityIdentifier)
                     }
                   }
-                  .id(group.strokeCount)
                 }
+                .padding(10)
               }
-              .padding(10)
-              .scrollTargetLayout()
             }
           }
           .accessibilityIdentifier("radical.grid")
-          .onAppear { resetScrollPosition(using: proxy) }
+          .onChange(of: selectedRadicals) { _, _ in
+            guard let selectedStrokeCount else { return }
+            Task { @MainActor in
+              await Task.yield()
+              proxy.scrollTo(selectedStrokeCount, anchor: .top)
+            }
+          }
         }
 
         VStack(spacing: 0) {
@@ -162,6 +165,13 @@ struct RadicalInputView: View {
     catalog?.componentGroups(matching: radicalCandidates) ?? []
   }
 
+  private var selectedStrokeCount: Int? {
+    catalog?.components
+      .filter { selectedRadicals.contains($0.id) }
+      .map(\.strokeCount)
+      .max()
+  }
+
   private func toggle(_ radical: String) {
     if selectedRadicals.contains(radical) {
       selectedRadicals.remove(radical)
@@ -173,14 +183,6 @@ struct RadicalInputView: View {
     {
       self.selectedCandidate = nil
       query = ""
-    }
-  }
-
-  private func resetScrollPosition(using proxy: ScrollViewProxy) {
-    guard let firstGroup = groups.first?.strokeCount else { return }
-    Task { @MainActor in
-      await Task.yield()
-      proxy.scrollTo(firstGroup, anchor: .top)
     }
   }
 }

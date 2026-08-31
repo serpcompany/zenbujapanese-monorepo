@@ -6,6 +6,7 @@ struct WordDetailView: View {
   @State private var editingNoteID: String?
   @State private var noteDraft = ""
   @State private var notes: [LearnerWordNote] = []
+  @State private var noteSaveTask: Task<Void, Never>?
   @State private var examples: [ExampleSentence] = []
   @State private var isLoadingExamples = true
   @State private var lastSpeechRequest: String?
@@ -204,7 +205,7 @@ struct WordDetailView: View {
     if let editingNoteID {
       let updatedNotes = notesApplyingDraft(noteID: editingNoteID, draft: noteDraft)
       notes = updatedNotes
-      wordNoteStore.save(updatedNotes, entry.noteID)
+      scheduleNoteSave(updatedNotes)
     }
     editingNoteID = UUID().uuidString
     noteDraft = ""
@@ -217,7 +218,18 @@ struct WordDetailView: View {
 
   private func persistDraft() {
     let updatedNotes = applyingDraft()
-    wordNoteStore.save(updatedNotes, entry.noteID)
+    scheduleNoteSave(updatedNotes)
+  }
+
+  @discardableResult
+  private func scheduleNoteSave(_ updatedNotes: [LearnerWordNote]) -> Task<Void, Never> {
+    let precedingSave = noteSaveTask
+    let save = Task {
+      await precedingSave?.value
+      await wordNoteStore.save(updatedNotes, entry.noteID)
+    }
+    noteSaveTask = save
+    return save
   }
 
   private func applyingDraft() -> [LearnerWordNote] {
