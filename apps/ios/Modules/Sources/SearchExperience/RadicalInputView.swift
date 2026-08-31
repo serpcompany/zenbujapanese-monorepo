@@ -17,58 +17,48 @@ struct RadicalInputView: View {
       SearchInputModeBar(selectedMode: .radicals, selectMode: selectMode)
 
       HStack(spacing: 0) {
-        ScrollViewReader { proxy in
-          ScrollView {
-            if loadFailed {
-              ContentUnavailableView(
-                "Radical data unavailable", systemImage: "exclamationmark.triangle"
-              )
-              .accessibilityIdentifier("radical.load-failure")
-            } else {
-              LazyVStack(alignment: .leading, spacing: 8) {
-                ForEach(groups, id: \.strokeCount) { group in
-                  Text(group.strokeCount == 1 ? "1 Stroke" : "\(group.strokeCount) Strokes")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(ZenbuTheme.secondaryText)
-                    .id(group.strokeCount)
-                  LazyVGrid(
-                    columns: Array(
-                      repeating: GridItem(.flexible(), spacing: 4),
-                      count: dynamicTypeSize >= .xxLarge ? 4 : 8
-                    ),
-                    spacing: 4
-                  ) {
-                    ForEach(group.values) { radical in
-                      Button(radical.glyph) { toggle(radical.id) }
-                        .font(.title3)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .background(
-                          selectedRadicals.contains(radical.id)
-                            ? ZenbuTheme.selectedTab
-                            : ZenbuTheme.accent,
-                          in: RoundedRectangle(cornerRadius: 5)
-                        )
-                        .accessibilityLabel("Radical \(radical.glyph)")
-                        .accessibilityValue(
-                          selectedRadicals.contains(radical.id) ? "Selected" : "Not selected"
-                        )
-                        .accessibilityIdentifier(radical.accessibilityIdentifier)
-                    }
+        ScrollView {
+          if loadFailed {
+            ContentUnavailableView(
+              "Radical data unavailable", systemImage: "exclamationmark.triangle"
+            )
+            .accessibilityIdentifier("radical.load-failure")
+          } else {
+            LazyVStack(alignment: .leading, spacing: 8) {
+              ForEach(groups, id: \.strokeCount) { group in
+                Text(group.strokeCount == 1 ? "1 Stroke" : "\(group.strokeCount) Strokes")
+                  .font(.caption.weight(.semibold))
+                  .foregroundStyle(ZenbuTheme.secondaryText)
+                LazyVGrid(
+                  columns: Array(
+                    repeating: GridItem(.flexible(), spacing: 4),
+                    count: dynamicTypeSize >= .xxLarge ? 4 : 8
+                  ),
+                  spacing: 4
+                ) {
+                  ForEach(group.values) { radical in
+                    Button(radical.glyph) { toggle(radical.id) }
+                      .font(.title3)
+                      .frame(maxWidth: .infinity, minHeight: 44)
+                      .background(
+                        selectedRadicals.contains(radical.id)
+                          ? ZenbuTheme.selectedTab
+                          : ZenbuTheme.accent,
+                        in: RoundedRectangle(cornerRadius: 5)
+                      )
+                      .accessibilityLabel("Radical \(radical.glyph)")
+                      .accessibilityValue(
+                        selectedRadicals.contains(radical.id) ? "Selected" : "Not selected"
+                      )
+                      .accessibilityIdentifier(radical.accessibilityIdentifier)
                   }
                 }
-                .padding(10)
               }
-            }
-          }
-          .accessibilityIdentifier("radical.grid")
-          .onChange(of: selectedRadicals) { _, _ in
-            guard let selectedStrokeCount else { return }
-            Task { @MainActor in
-              await Task.yield()
-              proxy.scrollTo(selectedStrokeCount, anchor: .top)
+              .padding(10)
             }
           }
         }
+        .accessibilityIdentifier("radical.grid")
 
         VStack(spacing: 0) {
           Button {
@@ -163,13 +153,6 @@ struct RadicalInputView: View {
 
   private var groups: [(strokeCount: Int, values: [RadicalComponent])] {
     catalog?.componentGroups(matching: radicalCandidates) ?? []
-  }
-
-  private var selectedStrokeCount: Int? {
-    catalog?.components
-      .filter { selectedRadicals.contains($0.id) }
-      .map(\.strokeCount)
-      .max()
   }
 
   private func toggle(_ radical: String) {
