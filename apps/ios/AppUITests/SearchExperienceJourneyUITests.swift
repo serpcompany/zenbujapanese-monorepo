@@ -1122,17 +1122,24 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordScreenshot(named: "kanji-shizu-elements-and-related-words", app: app)
 
     relatedQuiet.tap()
-    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 2))
+    let relatedWordDetail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(relatedWordDetail.waitForExistence(timeout: 2))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.静寂.静寂=せいじゃく"].exists)
-    XCTAssertTrue(app.staticTexts["silence, stillness, quietness"].exists)
+    assertMeaningVisible(
+      "1.  silence, stillness, quietness",
+      in: relatedWordDetail,
+      app: app
+    )
     XCTAssertTrue(nativeBackButton(in: app).isHittable)
-    Thread.sleep(forTimeInterval: 2)
-    recordSettledScreenshot(named: "kanji-related-word-seijaku-detail", app: app)
+    recordScreenshot(named: "kanji-related-word-seijaku-detail", app: app)
 
     tapNativeBack(in: app)
     XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 2))
-    for _ in 0..<20 where !relatedQuiet.isHittable { Thread.sleep(forTimeInterval: 0.1) }
-    XCTAssertTrue(relatedQuiet.isHittable)
+    let restoredRelatedWord = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "isHittable == true"),
+      object: relatedQuiet
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [restoredRelatedWord], timeout: 2), .completed)
     recordScreenshot(named: "kanji-related-word-back-restores-position", app: app)
 
     tapNativeBack(in: app)
@@ -1150,7 +1157,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let glyph = app.staticTexts["kanji-detail.glyph"]
     XCTAssertTrue(glyph.waitForExistence(timeout: 2))
     XCTAssertTrue(glyph.isHittable)
-    XCTAssertFalse(relatedQuiet.exists)
+    XCTAssertEqual(glyph.label, "静")
+    XCTAssertTrue(app.descendants(matching: .any)["kanji-detail.strokes"].isHittable)
+    XCTAssertTrue(app.staticTexts["READINGS"].isHittable)
   }
 
   @MainActor
@@ -1435,7 +1444,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       in: resultSurface,
       app: app,
       step: 0.12,
-      searchesBackwardWhenAbsent: true
+      direction: .backward
     )
     kanjiPrimary.tap()
     XCTAssertTrue(app.collectionViews["kanji-detail.screen"].waitForExistence(timeout: 2))
@@ -2543,15 +2552,30 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons["word-detail.toolbar-note"].tap()
     XCTAssertTrue(app.textFields["word-note.editor"].waitForExistence(timeout: 2))
     app.buttons["word-note.done"].tap()
-    for _ in 0..<5 { detail.swipeDown() }
+    scrollElementIntoSafeTapRegion(
+      miruRuby,
+      in: detail,
+      app: app,
+      direction: .backward,
+      maximumGestureCount: 4
+    )
     XCTAssertTrue(app.buttons["word-detail.pronounce"].exists)
     app.buttons["word-detail.pronounce"].tap()
     XCTAssertTrue(app.staticTexts["Ichidan Verb · Transitive Verb"].exists)
-    XCTAssertTrue(app.staticTexts["to see, to look, to watch, to view, to observe"].exists)
+    assertMeaningVisible(
+      "1.  to see, to look, to watch, to view, to observe",
+      in: detail,
+      app: app
+    )
     recordScreenshot(named: "word-detail-miru-structured-top", app: app)
 
     let alternative = app.buttons["word-detail.alternative.観る"]
-    for _ in 0..<5 where !alternative.exists { detail.swipeUp() }
+    scrollElementIntoSafeTapRegion(
+      alternative,
+      in: detail,
+      app: app,
+      maximumGestureCount: 4
+    )
     XCTAssertTrue(app.staticTexts["ALTERNATIVES"].exists)
     XCTAssertTrue(alternative.exists)
     XCTAssertLessThan(
@@ -2560,7 +2584,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     )
 
     let related = app.buttons["word-detail.related.見える"]
-    for _ in 0..<5 where !related.exists { detail.swipeUp() }
+    scrollElementIntoSafeTapRegion(
+      related,
+      in: detail,
+      app: app,
+      maximumGestureCount: 4
+    )
     XCTAssertTrue(app.staticTexts["RELATED WORDS"].exists)
     XCTAssertTrue(related.exists)
     let addNote = app.buttons["word-detail.add-note"]
@@ -2577,14 +2606,21 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       related,
       in: detail,
       app: app,
-      searchesBackwardWhenAbsent: true
+      direction: .backward,
+      maximumGestureCount: 6
     )
     related.tap()
+    let relatedDetail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(relatedDetail.waitForExistence(timeout: 2))
     let mieruRuby = app.descendants(matching: .any).matching(
       NSPredicate(format: "label == %@", "見える, みえる")
     ).firstMatch
     XCTAssertTrue(mieruRuby.waitForExistence(timeout: 2))
-    XCTAssertTrue(app.staticTexts["to be seen, to be visible, to be in sight"].exists)
+    assertMeaningVisible(
+      "1.  to be seen, to be visible, to be in sight",
+      in: relatedDetail,
+      app: app
+    )
     recordScreenshot(named: "word-detail-related-mieru", app: app)
 
     tapNativeBack(in: app)
@@ -2593,7 +2629,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       miruRuby,
       in: detail,
       app: app,
-      searchesBackwardWhenAbsent: true
+      direction: .backward,
+      maximumGestureCount: 6
     )
     XCTAssertTrue(miruRuby.exists)
   }
@@ -3574,8 +3611,13 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(primaryResult.exists)
     primaryResult.tap()
 
-    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 2))
-    XCTAssertTrue(app.staticTexts["question (e.g. on a test), problem"].exists)
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 2))
+    assertMeaningVisible(
+      "1.  question (e.g. on a test), problem",
+      in: detail,
+      app: app
+    )
     recordScreenshot(named: "word-detail-problem", app: app)
 
     tapNativeBack(in: app)
@@ -3791,28 +3833,80 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  private func assertMeaningVisible(
+    _ exactLabel: String,
+    in list: XCUIElement,
+    app: XCUIApplication
+  ) {
+    let meaning = app.descendants(matching: .any).matching(
+      NSPredicate(format: "label == %@", exactLabel)
+    ).firstMatch
+    reachListElement(
+      meaning,
+      in: list,
+      app: app,
+      step: 0.12,
+      requiresHittable: false,
+      maximumGestureCount: 8
+    )
+    XCTAssertEqual(meaning.label, exactLabel)
+  }
+
+  private enum ListNavigationDirection {
+    case forward
+    case backward
+  }
+
+  @MainActor
   private func scrollElementIntoSafeTapRegion(
     _ element: XCUIElement,
     in scrollView: XCUIElement,
     app: XCUIApplication,
     step: CGFloat = 0.25,
-    searchesBackwardWhenAbsent: Bool = false
+    direction: ListNavigationDirection = .forward,
+    maximumGestureCount: Int = 8
   ) {
-    for _ in 0..<16 {
+    reachListElement(
+      element,
+      in: scrollView,
+      app: app,
+      step: step,
+      direction: direction,
+      requiresHittable: true,
+      maximumGestureCount: maximumGestureCount
+    )
+  }
+
+  @MainActor
+  private func reachListElement(
+    _ element: XCUIElement,
+    in scrollView: XCUIElement,
+    app: XCUIApplication,
+    step: CGFloat,
+    direction: ListNavigationDirection = .forward,
+    requiresHittable: Bool,
+    maximumGestureCount: Int
+  ) {
+    var gestureCount = 0
+    while gestureCount <= maximumGestureCount {
       let lowerBoundary =
         app.keyboards.firstMatch.exists
         ? app.keyboards.firstMatch.frame.minY
         : app.frame.maxY - 120
       if element.exists,
-        element.isHittable,
+        !requiresHittable || element.isHittable,
         element.frame.minY >= scrollView.frame.minY + 8,
         element.frame.maxY <= lowerBoundary - 8
       {
-        break
+        let reachedTarget = element.identifier.isEmpty ? element.label : element.identifier
+        XCTContext.runActivity(
+          named: "Reached \(reachedTarget) after \(gestureCount) directional gestures"
+        ) { _ in }
+        return
       }
-      if (element.exists && element.frame.maxY < scrollView.frame.minY + 8)
-        || (!element.exists && searchesBackwardWhenAbsent)
-      {
+      guard gestureCount < maximumGestureCount else { break }
+      switch direction {
+      case .backward:
         scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
           .press(
             forDuration: 0.05,
@@ -3820,7 +3914,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
               withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4 + step)
             )
           )
-      } else {
+      case .forward:
         scrollView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65))
           .press(
             forDuration: 0.05,
@@ -3829,11 +3923,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
             )
           )
       }
+      gestureCount += 1
     }
-    XCTAssertTrue(element.exists)
-    XCTAssertTrue(element.isHittable)
-    XCTAssertLessThanOrEqual(element.frame.maxY, app.frame.maxY - 128)
-    Thread.sleep(forTimeInterval: 1)
+    XCTFail(
+      "Could not reach \(element.identifier) after \(gestureCount) \(direction) gestures"
+    )
   }
 
   @MainActor
