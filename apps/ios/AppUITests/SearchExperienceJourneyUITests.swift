@@ -1195,10 +1195,25 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons["search.input.handwriting"].tap()
     XCTAssertTrue(app.otherElements["handwriting.canvas"].waitForExistence(timeout: 2))
     app.buttons["search.input.radicals"].tap()
-    _ = radicalButton("radical.grass", in: app)
+    _ = radicalButton("radical.grass", in: app, navigationStrategy: .restoreTopBeforeSearching)
     app.buttons["search.input.keyboard"].tap()
     XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2))
     XCTAssertEqual(surface.searchField.value as? String, "Search Japanese or English")
+  }
+
+  @MainActor
+  func testRadicalGridKeepsTopMiddleAndLowerComponentsReachable() throws {
+    let app = launchApp()
+    _ = openRadicals(in: app)
+
+    for identifier in ["radical.one", "radical.grass", "radical.龠"] {
+      XCTAssertTrue(radicalButton(identifier, in: app).isHittable)
+    }
+
+    XCTAssertTrue(
+      radicalButton("radical.grass", in: app, navigationStrategy: .restoreTopBeforeSearching)
+        .isHittable
+    )
   }
 
   @MainActor
@@ -3692,32 +3707,52 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     ProcessInfo.processInfo.environment["CI"] == "true"
   }
 
+  private enum RadicalGridNavigationStrategy {
+    case searchFromCurrentPosition
+    case restoreTopBeforeSearching
+  }
+
   @MainActor
-  private func radicalButton(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
+  private func radicalButton(
+    _ identifier: String,
+    in app: XCUIApplication,
+    navigationStrategy: RadicalGridNavigationStrategy = .searchFromCurrentPosition
+  ) -> XCUIElement {
     let grid = app.scrollViews["radical.grid"]
-    let visibleBottom = min(grid.frame.maxY, nativeTabBar(in: app).frame.minY)
-    if identifier == "radical.grass" {
-      for _ in 0..<16 {
-        let button = app.buttons[identifier]
-        if button.exists, button.isHittable,
-          button.frame.minY >= grid.frame.minY,
-          button.frame.maxY <= visibleBottom
-        {
-          return button
-        }
-        grid.swipeDown(velocity: .fast)
-      }
+    let tabBar = nativeTabBar(in: app)
+    let button = app.buttons[identifier]
+
+    func isFullyVisible(_ element: XCUIElement, requireHittable: Bool = true) -> Bool {
+      guard element.exists, !requireHittable || element.isHittable else { return false }
+      let visibleBottom = min(grid.frame.maxY, tabBar.frame.minY)
+      return element.frame.minY >= grid.frame.minY && element.frame.maxY <= visibleBottom
     }
-    for _ in 0..<32 {
-      let button = app.buttons[identifier]
-      if button.exists, button.isHittable,
-        button.frame.minY >= grid.frame.minY,
-        button.frame.maxY <= visibleBottom
-      {
-        return button
+
+    if isFullyVisible(button) { return button }
+
+    if navigationStrategy == .restoreTopBeforeSearching {
+      let topAnchor = app.staticTexts["1 Stroke"]
+      if !isFullyVisible(topAnchor, requireHittable: false) {
+        for _ in 0..<12 {
+          grid.swipeDown(velocity: .fast)
+          if isFullyVisible(button) { return button }
+          if isFullyVisible(topAnchor, requireHittable: false) { break }
+        }
       }
+      XCTAssertTrue(
+        isFullyVisible(topAnchor, requireHittable: false),
+        "Could not restore the radical grid to its 1 Stroke anchor"
+      )
+    }
+
+    for _ in 0..<32 {
+      if isFullyVisible(button) { return button }
       if button.exists, button.frame.minY < grid.frame.minY {
-        grid.swipeDown(velocity: .fast)
+        grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.42))
+          .press(
+            forDuration: 0.05,
+            thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.58))
+          )
         continue
       }
       grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65))
@@ -3726,7 +3761,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
           thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.48))
         )
     }
-    let button = app.buttons[identifier]
     XCTAssertTrue(button.exists, "Missing radical button \(identifier)")
     return button
   }
