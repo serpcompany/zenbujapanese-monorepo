@@ -50,7 +50,10 @@ private struct ConjugationSection: View {
   var body: some View {
     let presentation = form.id.presentation
     Section {
-      ConjugatedSurface(form: form)
+      HStack {
+        ConjugatedSurface(form: form)
+          .accessibilityHidden(true)
+      }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(form.surface), \(presentation.title)")

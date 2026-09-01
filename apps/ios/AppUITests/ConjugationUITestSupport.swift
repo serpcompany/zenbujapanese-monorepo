@@ -66,13 +66,16 @@ enum ConjugationUITestSupport {
     let title = app.staticTexts["conjugations.title.\(id)"]
     let row = app.descendants(matching: .any)["conjugations.row.\(id)"]
     let info = app.buttons["conjugations.info.\(id)"]
+    let effectiveVisibleTop =
+      visibleTop ?? max(app.navigationBars.firstMatch.frame.maxY, list.frame.minY)
+    let effectiveVisibleBottom = visibleBottom ?? app.tabBars.firstMatch.frame.minY
     for _ in 0..<8 {
       if title.exists, row.exists, info.exists {
-        if let visibleTop, title.frame.minY < visibleTop {
+        if title.frame.minY < effectiveVisibleTop {
           list.swipeDown(velocity: .slow)
           continue
         }
-        if let visibleBottom, row.frame.maxY > visibleBottom {
+        if row.frame.maxY > effectiveVisibleBottom || !info.isHittable {
           list.swipeUp(velocity: .slow)
           continue
         }

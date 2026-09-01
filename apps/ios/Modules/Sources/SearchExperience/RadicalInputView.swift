@@ -27,6 +27,7 @@ struct RadicalInputView: View {
               Text(group.strokeCount == 1 ? "1 Stroke" : "\(group.strokeCount) Strokes")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
+                .accessibilityIdentifier("radical.stroke.\(group.strokeCount)")
               LazyVGrid(
                 columns: Array(
                   repeating: GridItem(.flexible(), spacing: 4),

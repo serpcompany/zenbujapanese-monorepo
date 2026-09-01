@@ -327,6 +327,7 @@ private struct AlternativeKanjiSection: View {
 }
 
 private struct WordHeader: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let entry: DictionaryEntry
   let encounterMedia: [EncounterMedia]
   let pronounce: () -> Void
@@ -334,53 +335,7 @@ private struct WordHeader: View {
   @State private var presentedMedia: EncounterMedia?
 
   var body: some View {
-    VStack(spacing: 12) {
-      HStack(alignment: .top, spacing: 12) {
-        JapaneseRubyText(
-          surface: entry.headword,
-          reading: entry.reading,
-          baseFont: .largeTitle.weight(.light),
-          rubyFont: .title3.weight(.semibold)
-        )
-        Spacer()
-        if let latest = encounterMedia.first, let image = UIImage(data: latest.data) {
-          Button {
-            presentedMedia = latest
-          } label: {
-            VStack(spacing: 3) {
-              Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 66, height: 52)
-                .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: 5))
-              Text(encounterMedia.count == 1 ? "Saved Image" : "\(encounterMedia.count) Images")
-                .font(.caption2)
-            }
-          }
-          .buttonStyle(.plain)
-          .accessibilityLabel("Saved encounter images, \(encounterMedia.count)")
-          .accessibilityIdentifier("word-detail.image-attachment")
-        } else {
-          FrequencyBadge(frequency: entry.frequency)
-        }
-      }
-
-      HStack(spacing: 18) {
-        if let pitch = entry.pitchAccent {
-          PitchAccentView(reading: entry.reading, pitch: pitch)
-        }
-        Spacer()
-        Button(action: pronounce) {
-          Label("Pronounce \(entry.reading)", systemImage: "speaker.wave.2.fill")
-            .labelStyle(.iconOnly)
-            .font(.title2)
-        }
-        .buttonStyle(.bordered)
-        .accessibilityLabel("Pronounce \(entry.reading)")
-        .accessibilityIdentifier("word-detail.pronounce")
-      }
-    }
+    headerLayout
     .sheet(item: $presentedMedia) { media in
       EncounterMediaViewer(
         encounterMedia: encounterMedia,
@@ -388,6 +343,86 @@ private struct WordHeader: View {
         removeEncounterMedia: removeEncounterMedia
       )
     }
+  }
+
+  @ViewBuilder
+  private var headerLayout: some View {
+    if dynamicTypeSize.isAccessibilitySize {
+      VStack(alignment: .leading, spacing: 12) {
+        headword
+        headerAccessory
+          .frame(maxWidth: .infinity, alignment: .trailing)
+        pitchAccent
+          .frame(maxWidth: .infinity, alignment: .leading)
+        pronounceButton
+          .frame(maxWidth: .infinity, alignment: .trailing)
+      }
+    } else {
+      VStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 12) {
+          headword
+          Spacer()
+          headerAccessory
+        }
+        HStack(spacing: 18) {
+          pitchAccent
+          Spacer()
+          pronounceButton
+        }
+      }
+    }
+  }
+
+  private var headword: some View {
+    JapaneseRubyText(
+      surface: entry.headword,
+      reading: entry.reading,
+      baseFont: .largeTitle.weight(.light),
+      rubyFont: .title3.weight(.semibold)
+    )
+  }
+
+  @ViewBuilder
+  private var headerAccessory: some View {
+    if let latest = encounterMedia.first, let image = UIImage(data: latest.data) {
+      Button {
+        presentedMedia = latest
+      } label: {
+        VStack(spacing: 3) {
+          Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
+            .frame(width: 66, height: 52)
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 5))
+          Text(encounterMedia.count == 1 ? "Saved Image" : "\(encounterMedia.count) Images")
+            .font(.caption2)
+        }
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel("Saved encounter images, \(encounterMedia.count)")
+      .accessibilityIdentifier("word-detail.image-attachment")
+    } else {
+      FrequencyBadge(frequency: entry.frequency)
+    }
+  }
+
+  @ViewBuilder
+  private var pitchAccent: some View {
+    if let pitch = entry.pitchAccent {
+      PitchAccentView(reading: entry.reading, pitch: pitch)
+    }
+  }
+
+  private var pronounceButton: some View {
+    Button(action: pronounce) {
+      Label("Pronounce \(entry.reading)", systemImage: "speaker.wave.2.fill")
+        .labelStyle(.iconOnly)
+        .font(.title2)
+    }
+    .buttonStyle(.bordered)
+    .accessibilityLabel("Pronounce \(entry.reading)")
+    .accessibilityIdentifier("word-detail.pronounce")
   }
 }
 
@@ -466,20 +501,31 @@ extension DictionaryEntry {
 }
 
 private struct FrequencyBadge: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @ScaledMetric(relativeTo: .body) private var badgeSize = 66.0
   let frequency: DictionaryEntry.Frequency
 
   var body: some View {
-    ZStack {
-      Circle().stroke(.secondary.opacity(0.18), lineWidth: 6)
+    if dynamicTypeSize.isAccessibilitySize {
       Text(frequency.rawValue)
-        .font(.body.bold())
+        .font(.headline)
         .multilineTextAlignment(.center)
         .fixedSize(horizontal: false, vertical: true)
-        .padding(2)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(.fill.tertiary, in: Capsule())
+    } else {
+      ZStack {
+        Circle().stroke(.secondary.opacity(0.18), lineWidth: 6)
+        Text(frequency.rawValue)
+          .font(.body.bold())
+          .multilineTextAlignment(.center)
+          .fixedSize(horizontal: false, vertical: true)
+          .padding(2)
+      }
+      .frame(width: badgeSize, height: badgeSize)
+      .padding(.top, 3)
     }
-    .frame(width: badgeSize, height: badgeSize)
-    .padding(.top, 3)
   }
 }
 
@@ -582,11 +628,8 @@ private struct MeaningSection: View {
   var body: some View {
     ForEach(senses, id: \.self) { sense in
       VStack(alignment: .leading, spacing: 6) {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-          Text("\(senseNumber(for: sense)).")
-          Text(sense.meaning)
-        }
-        .font(.body.weight(.semibold))
+        Text("\(senseNumber(for: sense)).  \(sense.meaning)")
+          .font(.body.weight(.semibold))
         if !sense.notes.isEmpty {
           Text(sense.notes.joined(separator: " · "))
             .font(.footnote)

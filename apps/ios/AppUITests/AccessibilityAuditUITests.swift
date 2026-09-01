@@ -1,5 +1,25 @@
 import XCTest
 
+private struct AuditException: CustomStringConvertible {
+  let auditType: XCUIAccessibilityAuditType
+  let identifier: String
+
+  init(_ auditType: XCUIAccessibilityAuditType, identifier: String) {
+    self.auditType = auditType
+    self.identifier = identifier
+  }
+
+  @MainActor
+  func matches(_ issue: XCUIAccessibilityAuditIssue) -> Bool {
+    guard issue.auditType == auditType else { return false }
+    return issue.element?.identifier == identifier
+  }
+
+  var description: String {
+    "\(auditType.rawValue):\(identifier)"
+  }
+}
+
 final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
   func testLightRepresentativeExampleSentenceLayoutsRemainReadableAndOperable() throws {
@@ -14,13 +34,86 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testDarkRepresentativeExampleSentenceLayoutsRemainReadableAndOperableAtDefaultSize()
+    throws
+  {
+    try auditRepresentativeExampleSentences(appearance: .dark, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testLightRepresentativeExampleSentenceLayoutsRemainReadableAndOperableAtAccessibilityXXXL()
+    throws
+  {
+    try auditRepresentativeExampleSentences(appearance: .light, accessibilityXXXL: true)
+  }
+
+  @MainActor
   func testRepresentativeExampleSentenceInlineLinksExposeUnsuppressedHitRegions() throws {
+    try auditRepresentativeExampleHitRegions(appearance: .light, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testDarkDefaultRepresentativeExampleSentenceInlineLinksKeepExactHitRegions() throws {
+    try auditRepresentativeExampleHitRegions(appearance: .dark, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testLightAccessibilityXXXLRepresentativeExampleSentenceInlineLinksKeepExactHitRegions()
+    throws
+  {
+    try auditRepresentativeExampleHitRegions(appearance: .light, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  func testDarkAccessibilityXXXLRepresentativeExampleSentenceInlineLinksKeepExactHitRegions()
+    throws
+  {
+    try auditRepresentativeExampleHitRegions(appearance: .dark, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  private func auditRepresentativeExampleHitRegions(
+    appearance: XCUIDevice.Appearance,
+    accessibilityXXXL: Bool
+  ) throws {
     let app = try launchRepresentativeExampleSentences(
-      appearance: .light,
-      accessibilityXXXL: false
+      appearance: appearance,
+      accessibilityXXXL: accessibilityXXXL
     )
-    retainScreenshot(named: "Example Sentences inline links - light appearance")
-    try app.performAccessibilityAudit(for: .hitRegion)
+    retainScreenshot(
+      named:
+        "Example Sentences inline links - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")"
+    )
+    // #191/#234 proved that 44-point expansion makes compact Japanese fragment or overlap, while
+    // Apple's native attributed links remove ruby and the rich surface/reading/meaning label.
+    // Keep only the 11 default-size narrow links as explicit exceptions and fail if that
+    // inventory changes. Accessibility XXXL expands them enough to require zero exceptions.
+    let expectedCompactRubyLinkExceptions: Set<String> =
+      accessibilityXXXL
+      ? [] : [
+        "example.token.1.2.ろ",
+        "example.token.2.2.持",
+        "example.token.3.2.の",
+        "example.token.4.1.る",
+        "example.token.5.1.る",
+        "example.token.5.4.る",
+        "example.token.6.1.る",
+        "example.token.6.6.た",
+        "example.token.6.8.が",
+        "example.token.6.10.だ",
+        "example.token.6.11.よ",
+      ]
+    var observedCompactRubyLinkExceptions: Set<String> = []
+    try app.performAccessibilityAudit(for: .hitRegion) { issue in
+      guard let identifier = issue.element?.identifier,
+        expectedCompactRubyLinkExceptions.contains(identifier)
+      else {
+        return false
+      }
+      observedCompactRubyLinkExceptions.insert(identifier)
+      return true
+    }
+    XCTAssertEqual(observedCompactRubyLinkExceptions, expectedCompactRubyLinkExceptions)
   }
 
   @MainActor
@@ -158,6 +251,8 @@ final class AccessibilityAuditUITests: XCTestCase {
     let resultSurface = app.descendants(matching: .any)["search.results"]
     XCTAssertTrue(resultSurface.waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["Best Matches"].waitForExistence(timeout: 3))
+    // At AXXXL the exact `Additional Matches` header crosses native tab material. The row below
+    // remains separately scrolled into view, measured above 52 points, and asserted hittable.
     try performAudit(
       in: app,
       named: "Search results - \(appearance) accessibility XXXL"
@@ -180,28 +275,27 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCUIDevice.shared.appearance = appearance
     defer { XCUIDevice.shared.appearance = originalAppearance }
 
-    let app = launchApp(appearance: appearance)
+    let app = launchApp(appearance: appearance, additionalArguments: ["-ResetRecentSearches"])
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     app.buttons["search.input.handwriting"].tap()
     XCTAssertTrue(app.otherElements["handwriting.canvas"].waitForExistence(timeout: 3))
-    // #173 owns the inherited Xcode Dynamic Type diagnostic on Radical stroke-group headers.
-    // The dedicated accessibility-XXXL journeys below keep this issue's scaling and reachability
-    // blocking while these focused audits cover every other XCTest accessibility category.
-    let controlAuditTypes = auditTypes.subtracting(.dynamicType)
     try performAudit(
       in: app,
       named: "Handwriting input - \(appearance)",
-      types: controlAuditTypes
+      types: auditTypes
     )
 
     app.buttons["search.input.radicals"].tap()
     XCTAssertTrue(app.staticTexts["1 Stroke"].waitForExistence(timeout: 3))
+    app.buttons["radical.one"].tap()
+    XCTAssertTrue(app.buttons["radical.remove"].isEnabled)
     try performAudit(
       in: app,
       named: "Radical input - \(appearance)",
-      types: controlAuditTypes
+      types: auditTypes,
+      expectedExceptions: [AuditException(.contrast, identifier: "radical.stroke.3")]
     )
   }
 
@@ -540,7 +634,11 @@ final class AccessibilityAuditUITests: XCTestCase {
     let alternative = app.buttons["kanji-element.alternative.靑"]
     XCTAssertTrue(alternative.waitForExistence(timeout: 3))
     XCTAssertTrue(alternative.isHittable)
-    try performAudit(in: app, named: "Kanji Element Detail accessibility XXXL", types: .contrast)
+    try performAudit(
+      in: app,
+      named: "Kanji Element Detail accessibility XXXL",
+      types: .contrast
+    )
     let containingSection = app.staticTexts["KANJI CONTAINING THIS ELEMENT"]
     for _ in 0..<10 where !containingSection.exists { elementDetail.swipeUp() }
     XCTAssertTrue(containingSection.exists)
@@ -578,7 +676,10 @@ final class AccessibilityAuditUITests: XCTestCase {
     try performAudit(
       in: app,
       named: "Word Detail - \(appearance == .dark ? "dark" : "light") accessibility XXXL",
-      types: auditTypes.subtracting(.dynamicType)
+      types: auditTypes,
+      expectedExceptions: [
+        AuditException(.contrast, identifier: "word-detail.alternative.にっぽん")
+      ]
     )
   }
 
@@ -668,14 +769,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       in: app,
       named:
         "Dictionary Sources - \(appearance == .dark ? "dark" : "light") accessibility XXXL",
-      // Xcode 26 reports an unidentified SwiftUI bookkeeping node as a
-      // contrast failure only in the dark state. The ordinary dark Dictionary
-      // Sources journey keeps contrast blocking, and theme unit tests enforce
-      // every foreground/surface pair. Tracked by #173.
-      types:
-        appearance == .dark
-        ? auditTypes.subtracting(.dynamicType.union(.contrast))
-        : auditTypes.subtracting(.dynamicType)
+      types: auditTypes
     )
 
     // Reachability is checked after the audit. Auditing midway through this
@@ -695,7 +789,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCUIDevice.shared.appearance = appearance
     defer { XCUIDevice.shared.appearance = originalAppearance }
 
-    let app = launchApp(appearance: appearance)
+    let app = launchApp(appearance: appearance, additionalArguments: ["-ResetRecentSearches"])
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
@@ -711,20 +805,26 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10))
 
     try XCTContext.runActivity(named: "Search results") { _ in
+      // Xcode 26 flags final native List text beneath system tab material. Every finding remains
+      // blocking here; the AXXXL journey separately keeps those rows readable/reachable.
       try performAudit(in: app, named: "Search results")
     }
 
     japan.tap()
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 5))
+    XCTAssertTrue(
+      app.descendants(matching: .any)["word-detail.example.0"].waitForExistence(timeout: 10)
+    )
 
     try XCTContext.runActivity(named: "Word Detail") { _ in
-      // Xcode 26.5 reports every semantic Word Detail text style as partially
-      // unsupported only in dark appearance. Light Word Detail keeps the
-      // Dynamic Type audit blocking; the dedicated dark accessibility-XXXL
-      // journey above keeps scaling and clipping blocking. Tracked by #173.
-      let wordDetailAuditTypes =
-        appearance == .dark ? auditTypes.subtracting(.dynamicType) : auditTypes
-      try performAudit(in: app, named: "Word Detail", types: wordDetailAuditTypes)
+      // Every retained finding below is pinned to this exact short-entry state. The two
+      // Dynamic Type nodes use semantic fonts and are separately exercised at Accessibility
+      // XXXL. All Word Detail findings remain blocking.
+      try performAudit(
+        in: app,
+        named: "Word Detail",
+        types: auditTypes
+      )
     }
 
     let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
@@ -746,12 +846,8 @@ final class AccessibilityAuditUITests: XCTestCase {
     )
     app.tabBars.buttons["More"].tap()
     XCTAssertTrue(app.staticTexts["More"].waitForExistence(timeout: 3))
-    // Xcode 26 reports native NavigationLink and toolbar labels as partially
-    // unsupported for Dynamic Type in both appearances. Every label uses a
-    // semantic font, while the dedicated accessibility-XXXL journeys keep
-    // scaling and reachability blocking. Tracked by #173.
-    let secondaryNavigationAuditTypes = auditTypes.subtracting(.dynamicType)
-    try performAudit(in: app, named: "More", types: secondaryNavigationAuditTypes)
+    // Two frameless clipped-text findings remain blocking after native grouping/fixed-size probes.
+    try performAudit(in: app, named: "More", types: auditTypes)
     app.buttons["more.media-library"].tap()
     XCTAssertTrue(app.staticTexts["No Encounter Media"].waitForExistence(timeout: 3))
     try performAudit(in: app, named: "Empty Media Library")
@@ -759,11 +855,9 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.buttons["more.credits"].waitForExistence(timeout: 3))
     app.buttons["more.credits"].tap()
     XCTAssertTrue(app.staticTexts["Dictionary Sources"].waitForExistence(timeout: 3))
-    // Xcode 26 reports semantic Settings text as unsupported despite explicit
-    // semantic fonts. Dedicated light and dark accessibility-XXXL journeys
-    // above keep scaling, clipping, and reachability blocking. Tracked by #173.
-    let settingsAuditTypes = auditTypes.subtracting(.dynamicType)
-    try performAudit(in: app, named: "Dictionary Sources", types: settingsAuditTypes)
+    // Frameless default-size Dynamic Type/contrast findings remain blocking; the paired AXXXL
+    // Sources audit runs `.all` without exceptions.
+    try performAudit(in: app, named: "Dictionary Sources", types: auditTypes)
     app.terminate()
 
     app = launchApp(appearance: appearance)
@@ -774,7 +868,15 @@ final class AccessibilityAuditUITests: XCTestCase {
     try performAudit(in: app, named: "Handwriting input")
     app.buttons["search.input.radicals"].tap()
     XCTAssertTrue(app.staticTexts["1 Stroke"].waitForExistence(timeout: 3))
-    try performAudit(in: app, named: "Radical input")
+    app.buttons["radical.one"].tap()
+    XCTAssertTrue(app.buttons["radical.remove"].isEnabled)
+    // The enabled journey removes the disabled-control finding. Only the exact `3 Strokes`
+    // header remains where it crosses native tab material; the XXXL pair proves grid adaptation.
+    try performAudit(
+      in: app,
+      named: "Radical input",
+      expectedExceptions: [AuditException(.contrast, identifier: "radical.stroke.3")]
+    )
     app.terminate()
 
     app = launchApp(appearance: appearance)
@@ -788,11 +890,19 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["READINGS"].waitForExistence(timeout: 4))
     let strokeOrder = app.buttons["kanji-detail.stroke-order"]
     XCTAssertTrue(strokeOrder.waitForExistence(timeout: 3))
+    // Every finding remains blocking; focused Kanji journeys keep content, navigation, glyph
+    // metrics, and reachability blocking.
     try performAudit(in: app, named: "Kanji Detail")
     strokeOrder.tap()
     XCTAssertTrue(
       app.descendants(matching: .any)["stroke-order.progress"].waitForExistence(timeout: 3))
-    try performAudit(in: app, named: "Stroke Order")
+    // The exact native toolbar Close button scales and remains hittable in focused stroke tests;
+    // Xcode alone reports its semantic toolbar label as partially unsupported.
+    try performAudit(
+      in: app,
+      named: "Stroke Order",
+      expectedExceptions: [AuditException(.dynamicType, identifier: "stroke-order.close")]
+    )
     app.terminate()
 
     app = launchApp(appearance: appearance)
@@ -810,6 +920,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     element.tap()
     XCTAssertTrue(app.collectionViews["kanji-element.screen"].waitForExistence(timeout: 4))
     XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "青")
+    // Frameless Dynamic Type/contrast nodes remain blocking after native grouping/position probes.
     try performAudit(in: app, named: "Kanji Element Detail")
     app.terminate()
 
@@ -828,7 +939,12 @@ final class AccessibilityAuditUITests: XCTestCase {
         NSPredicate(format: "identifier BEGINSWITH %@", "example.token.0.")
       ).firstMatch.waitForExistence(timeout: 12)
     )
-    try performAudit(in: app, named: "Example Sentences")
+    // This two-row fixture exposes exactly one member of the reviewed #191 exception inventory.
+    try performAudit(
+      in: app,
+      named: "Example Sentences",
+      expectedExceptions: [AuditException(.hitRegion, identifier: "example.token.1.2.ろ")]
+    )
     app.terminate()
 
     app = launchApp(appearance: appearance)
@@ -987,60 +1103,26 @@ final class AccessibilityAuditUITests: XCTestCase {
   private func performAudit(
     in app: XCUIApplication,
     named stateName: String,
-    types: XCUIAccessibilityAuditType? = nil
+    types: XCUIAccessibilityAuditType? = nil,
+    expectedExceptions: [AuditException] = []
   ) throws {
     retainScreenshot(named: stateName)
+    var remainingExceptions = expectedExceptions
 
     try app.performAccessibilityAudit(for: types ?? auditTypes) { issue in
-      let element = issue.element
-      let identifier = element?.identifier
-      // Xcode 26 can report frameless SwiftUI bookkeeping nodes as clipped.
-      // A real element, including one with an empty label, is never ignored.
-      if issue.auditType == .textClipped, issue.element == nil {
-        return true
-      }
-      // Hosted Xcode crops the final antialiased glyph pixel from these two
-      // full-width native NavigationLink accessibility-node snapshots. Their
-      // exact labels, identifiers, and public navigation are asserted by the
-      // critical UI journey, while light/dark accessibility-XXXL tests keep
-      // their actual scaling and reachability blocking. Tracked by #173.
-      if issue.auditType == .textClipped,
-        ["more.media-library", "more.credits"].contains(identifier ?? "")
-          || ["Media Library", "Credits & Attributions"].contains(element?.label ?? "")
-      {
-        return true
-      }
-      // The compact-device audit flags this fully visible semantic-body link
-      // even after replacing SwiftUI Link with an app-owned scalable control.
-      // Keep the single exact exception tracked by #173.
-      if issue.auditType == .dynamicType,
-        identifier == "dictionary-sources.jmdict-project"
-      {
-        return true
-      }
-      // iOS 26 intentionally lets scroll content pass beneath the native,
-      // translucent tab bar. Xcode's screenshot audit reports the clipped
-      // pixels as low-contrast text even though the content becomes fully
-      // readable when scrolled above the bar. For concrete findings, ignore
-      // only app content whose frame intersects the system-owned bar or its
-      // measured 12-point shadow/blur boundary. Content outside that boundary
-      // and the two tab controls themselves remain blocking.
-      let tabBar = app.tabBars.firstMatch
-      if issue.auditType == .contrast,
-        let element,
-        tabBar.exists,
-        element.elementType == .staticText,
-        !element.label.isEmpty,
-        !["Search", "More"].contains(element.label),
-        !["magnifyingglass", "ellipsis"].contains(identifier ?? ""),
-        element.frame.intersects(tabBar.frame.insetBy(dx: 0, dy: -12))
-      {
+      if let index = remainingExceptions.firstIndex(where: { $0.matches(issue) }) {
+        remainingExceptions.remove(at: index)
         return true
       }
       return false
     }
+    XCTAssertTrue(
+      remainingExceptions.isEmpty,
+      "Expected exact accessibility exceptions were not observed in \(stateName): \(remainingExceptions)"
+    )
   }
 
+  @MainActor
   private func retainScreenshot(named stateName: String) {
     let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
     screenshot.name = "Accessibility state - \(stateName)"
