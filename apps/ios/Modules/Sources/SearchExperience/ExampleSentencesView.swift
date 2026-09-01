@@ -19,21 +19,20 @@ struct ExampleSentencesView: View {
         ProgressView("Loading examples")
           .frame(maxWidth: .infinity, maxHeight: .infinity)
       } else {
-        ScrollView {
-          LazyVStack(spacing: 0) {
-            ForEach(Array(examples.enumerated()), id: \.element.id) { index, example in
-              ExampleSentenceRow(
-                index: index,
-                example: example,
-                highlightedQuery: query.value,
-                highlightedEntry: highlightedEntry,
-                japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-                speak: { speechSynthesisClient.speak(example.japanese) },
-                openWord: openWord
-              )
-            }
+        List {
+          ForEach(examples.enumerated(), id: \.element.id) { index, example in
+            ExampleSentenceRow(
+              index: index,
+              example: example,
+              highlightedQuery: query.value,
+              highlightedEntry: highlightedEntry,
+              japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+              speak: { speechSynthesisClient.speak(example.japanese) },
+              openWord: openWord
+            )
           }
         }
+        .listStyle(.plain)
         .scrollIndicators(.visible)
         .accessibilityIdentifier("example-list.screen")
       }
@@ -109,6 +108,7 @@ private struct ExampleSentenceRow: View {
             highlightedEntry: highlightedEntry,
             japaneseTextAnalysisClient: japaneseTextAnalysisClient,
             identifierPrefix: "example.token.\(index)",
+            presentation: .compactNaturalFlow,
             openWord: openWord
           )
         }
@@ -117,8 +117,10 @@ private struct ExampleSentenceRow: View {
         Button(action: speak) {
           Image(systemName: "speaker.wave.2")
             .font(.headline)
-            .frame(minWidth: 44, minHeight: 44)
+            .frame(minWidth: 48, minHeight: 48)
+            .contentShape(Rectangle())
         }
+        .contentShape(Rectangle())
         .accessibilityLabel("Speak example \(index + 1)")
         .accessibilityIdentifier("example.speaker.\(index)")
       }
@@ -127,11 +129,7 @@ private struct ExampleSentenceRow: View {
         .font(.body)
         .foregroundStyle(ZenbuTheme.secondaryText)
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    .padding(.horizontal, 18)
-    .padding(.vertical, 14)
-    .overlay(alignment: .bottom) {
-      Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
+        .accessibilityIdentifier("example.english.\(index)")
     }
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier("example.row.\(index)")

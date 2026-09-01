@@ -2,6 +2,28 @@ import XCTest
 
 final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
+  func testLightRepresentativeExampleSentenceLayoutsRemainReadableAndOperable() throws {
+    try auditRepresentativeExampleSentences(appearance: .light, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testDarkRepresentativeExampleSentenceLayoutsRemainReadableAndOperableAtAccessibilityXXXL()
+    throws
+  {
+    try auditRepresentativeExampleSentences(appearance: .dark, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  func testRepresentativeExampleSentenceInlineLinksExposeUnsuppressedHitRegions() throws {
+    let app = try launchRepresentativeExampleSentences(
+      appearance: .light,
+      accessibilityXXXL: false
+    )
+    retainScreenshot(named: "Example Sentences inline links - light appearance")
+    try app.performAccessibilityAudit(for: .hitRegion)
+  }
+
+  @MainActor
   func testLightImageSourceActionsHaveReadableSystemContrast() throws {
     let originalAppearance = XCUIDevice.shared.appearance
     XCUIDevice.shared.appearance = .light
@@ -658,7 +680,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     let examples = app.buttons["search.examples"]
     XCTAssertTrue(examples.waitForExistence(timeout: 4))
     examples.tap()
-    XCTAssertTrue(app.scrollViews["example-list.screen"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.collectionViews["example-list.screen"].waitForExistence(timeout: 4))
     XCTAssertTrue(app.descendants(matching: .any)["example.row.0"].waitForExistence(timeout: 3))
     XCTAssertTrue(
       app.buttons.matching(
@@ -703,6 +725,96 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  private func auditRepresentativeExampleSentences(
+    appearance: XCUIDevice.Appearance,
+    accessibilityXXXL: Bool
+  ) throws {
+    let app = try launchRepresentativeExampleSentences(
+      appearance: appearance,
+      accessibilityXXXL: accessibilityXXXL
+    )
+    let list = app.collectionViews["example-list.screen"]
+
+    let first = RepresentativeExampleSentences.rows[0]
+    let firstRow = RepresentativeExampleSentences.reachRow(first, in: app, list: list)
+    XCTAssertTrue(firstRow.exists)
+    XCTAssertEqual(
+      RepresentativeExampleSentences.englishText(for: first, in: app).label, first.english)
+    try performAudit(
+      in: app,
+      named:
+        "Example Sentences - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")",
+      types: .dynamicType.union(.textClipped)
+    )
+
+    let rubyLinked = RepresentativeExampleSentences.rows[2]
+    let rubyLinkedRow = RepresentativeExampleSentences.reachRow(
+      rubyLinked,
+      in: app,
+      list: list
+    )
+    XCTAssertTrue(rubyLinkedRow.exists)
+    XCTAssertEqual(
+      RepresentativeExampleSentences.englishText(for: rubyLinked, in: app).label,
+      rubyLinked.english
+    )
+    XCTAssertTrue(
+      RepresentativeExampleSentences.linkedDrawToken(in: app).isHittable
+    )
+    try performAudit(
+      in: app,
+      named:
+        "Example Sentences ruby-linked row - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")",
+      types: .dynamicType.union(.textClipped)
+    )
+
+    let eighth = RepresentativeExampleSentences.rows[7]
+    let eighthRow = RepresentativeExampleSentences.reachRow(
+      eighth,
+      requiringSpeaker: true,
+      in: app,
+      list: list
+    )
+    let speaker = app.buttons["example.speaker.\(eighth.index)"]
+    XCTAssertTrue(eighthRow.isHittable)
+    XCTAssertEqual(
+      RepresentativeExampleSentences.englishText(for: eighth, in: app).label,
+      eighth.english
+    )
+    XCTAssertTrue(speaker.isHittable)
+    try performAudit(
+      in: app,
+      named:
+        "Example Sentences eighth row - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")",
+      types: .dynamicType.union(.textClipped)
+    )
+  }
+
+  @MainActor
+  private func launchRepresentativeExampleSentences(
+    appearance: XCUIDevice.Appearance,
+    accessibilityXXXL: Bool
+  ) throws -> XCUIApplication {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    addTeardownBlock { XCUIDevice.shared.appearance = originalAppearance }
+
+    var arguments = ["-ExampleSentenceAccessibilityFixtureLimit", "8"]
+    if accessibilityXXXL {
+      arguments += [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    }
+    let app = launchApp(appearance: appearance, additionalArguments: arguments)
+    try submitSearch("いる", in: app)
+    let examples = app.buttons["search.examples"]
+    XCTAssertTrue(examples.waitForExistence(timeout: 4))
+    examples.tap()
+    XCTAssertTrue(app.collectionViews["example-list.screen"].waitForExistence(timeout: 4))
+    return app
+  }
+
+  @MainActor
   private func auditImageTextNativeControls(
     appearance: XCUIDevice.Appearance
   ) throws {
@@ -736,10 +848,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     named stateName: String,
     types: XCUIAccessibilityAuditType? = nil
   ) throws {
-    let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-    screenshot.name = "Accessibility state - \(stateName)"
-    screenshot.lifetime = .keepAlways
-    add(screenshot)
+    retainScreenshot(named: stateName)
 
     try app.performAccessibilityAudit(for: types ?? auditTypes) { issue in
       let element = issue.element
@@ -789,6 +898,13 @@ final class AccessibilityAuditUITests: XCTestCase {
       }
       return false
     }
+  }
+
+  private func retainScreenshot(named stateName: String) {
+    let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+    screenshot.name = "Accessibility state - \(stateName)"
+    screenshot.lifetime = .keepAlways
+    add(screenshot)
   }
 
   @MainActor

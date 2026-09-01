@@ -1,6 +1,13 @@
 import SwiftUI
 
 struct LinkedJapaneseText: View {
+  enum Presentation {
+    case standard
+    case compactNaturalFlow
+
+    var usesMinimumHitRegion: Bool { self == .standard }
+  }
+
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @State private var tokens: [JapaneseTextToken] = []
 
@@ -9,19 +16,39 @@ struct LinkedJapaneseText: View {
   let highlightedEntry: DictionaryEntry?
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let identifierPrefix: String
+  let presentation: Presentation
   let openWord: (DictionaryEntry) -> Void
+
+  init(
+    text: String,
+    highlightedQuery: SearchQuery,
+    highlightedEntry: DictionaryEntry?,
+    japaneseTextAnalysisClient: JapaneseTextAnalysisClient,
+    identifierPrefix: String,
+    presentation: Presentation = .standard,
+    openWord: @escaping (DictionaryEntry) -> Void
+  ) {
+    self.text = text
+    self.highlightedQuery = highlightedQuery
+    self.highlightedEntry = highlightedEntry
+    self.japaneseTextAnalysisClient = japaneseTextAnalysisClient
+    self.identifierPrefix = identifierPrefix
+    self.presentation = presentation
+    self.openWord = openWord
+  }
 
   var body: some View {
     Group {
       if tokens.isEmpty {
         Text(text)
           .font(.title3)
-      } else if dynamicTypeSize.isAccessibilitySize {
+      } else if dynamicTypeSize.isAccessibilitySize, presentation == .standard {
         VStack(alignment: .leading, spacing: 6) {
           ForEach(tokens) { token in
             LinkedTokenView(
               token: token,
               identifier: "\(identifierPrefix).\(token.id).\(token.surface)",
+              presentation: presentation,
               openWord: openWord
             )
           }
@@ -32,6 +59,7 @@ struct LinkedJapaneseText: View {
             LinkedTokenView(
               token: token,
               identifier: "\(identifierPrefix).\(token.id).\(token.surface)",
+              presentation: presentation,
               openWord: openWord
             )
           }
@@ -52,6 +80,7 @@ struct LinkedJapaneseText: View {
 private struct LinkedTokenView: View {
   let token: JapaneseTextToken
   let identifier: String
+  let presentation: LinkedJapaneseText.Presentation
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
@@ -71,13 +100,17 @@ private struct LinkedTokenView: View {
         .foregroundStyle(ZenbuTheme.foreground)
       }
       .buttonStyle(.plain)
-      .frame(minWidth: 44, minHeight: 44)
+      .frame(
+        minWidth: presentation.usesMinimumHitRegion ? 44 : nil,
+        minHeight: presentation.usesMinimumHitRegion ? 44 : nil
+      )
       .contentShape(Rectangle())
       .accessibilityLabel("\(token.surface), \(entry.reading), \(entry.summary)")
       .accessibilityIdentifier(identifier)
     } else {
       Text(token.surface)
         .font(.body)
+        .accessibilityIdentifier(identifier)
     }
   }
 }

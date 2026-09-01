@@ -2431,7 +2431,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
 
     examples.tap()
-    XCTAssertTrue(app.scrollViews["example-list.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["example-list.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.descendants(matching: .any)["example.row.0"].exists)
   }
 
@@ -2892,6 +2892,93 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testDedicatedExampleTokenCompactionDoesNotChangeWordDetailTokenHitRegions() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    submitSearch("いる", in: app, searchField: searchField)
+
+    let primaryResult = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
+      .firstMatch
+    XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
+    primaryResult.tap()
+
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    let inlineToken = app.buttons.matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.")
+    ).firstMatch
+    for _ in 0..<8 where !inlineToken.exists || !inlineToken.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(inlineToken.waitForExistence(timeout: 3))
+    XCTAssertTrue(inlineToken.isHittable)
+    XCTAssertGreaterThanOrEqual(inlineToken.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(inlineToken.frame.height, 44)
+  }
+
+  @MainActor
+  func testRepresentativeExampleSentencesKeepCompactContentNavigationAndSpeech() throws {
+    let app = launchApp(
+      additionalArguments: [
+        "-ExampleSentenceAccessibilityFixtureLimit", "8",
+        "-RecordSpeechRequests",
+      ]
+    )
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    submitSearch("いる", in: app, searchField: searchField)
+
+    let openExamples = app.buttons["search.examples"]
+    XCTAssertTrue(openExamples.waitForExistence(timeout: 4))
+    XCTAssertEqual(openExamples.label, "View 50+ Example Sentences")
+    openExamples.tap()
+
+    let examples = app.collectionViews["example-list.screen"]
+    XCTAssertTrue(examples.waitForExistence(timeout: 4))
+    for expected in RepresentativeExampleSentences.rows {
+      let row = RepresentativeExampleSentences.reachRow(
+        expected,
+        requiringSpeaker: expected.index == 7,
+        in: app,
+        list: examples
+      )
+      XCTAssertTrue(row.isHittable)
+      XCTAssertEqual(
+        RepresentativeExampleSentences.japaneseText(for: expected, in: app),
+        expected.japanese
+      )
+      let english = RepresentativeExampleSentences.englishText(for: expected, in: app)
+      XCTAssertTrue(english.exists)
+      XCTAssertEqual(english.label, expected.english)
+
+      if expected.index == 2 {
+        let linkedDrawToken = RepresentativeExampleSentences.linkedDrawToken(in: app)
+        XCTAssertTrue(linkedDrawToken.waitForExistence(timeout: 3))
+        XCTAssertTrue(linkedDrawToken.isHittable)
+        XCTAssertLessThan(linkedDrawToken.frame.width, 44)
+        linkedDrawToken.tap()
+        XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["draw (in go, poetry contest, etc.), tie"].exists)
+        tapNativeBack(in: app)
+        XCTAssertTrue(examples.waitForExistence(timeout: 3))
+      }
+    }
+
+    examples.swipeUp(velocity: .slow)
+    XCTAssertFalse(app.descendants(matching: .any)["example.row.8"].exists)
+    let speaker = app.buttons["example.speaker.7"]
+    XCTAssertTrue(speaker.isHittable)
+    speaker.tap()
+    let speechRequest = app.descendants(matching: .any)["speech.request"]
+    XCTAssertTrue(speechRequest.waitForExistence(timeout: 2))
+    XCTAssertEqual(
+      speechRequest.label,
+      "Speech requested 今いる市民が逃げ出すという事態が危惧されます。"
+    )
+  }
+
+  @MainActor
   func testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed() throws {
     let app = launchApp(additionalArguments: ["-RecordSpeechRequests"])
     let searchField = app.textFields["search.field"]
@@ -2903,7 +2990,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertEqual(openExamples.label, "View 50+ Example Sentences")
     openExamples.tap()
 
-    let examples = app.scrollViews["example-list.screen"]
+    let examples = app.collectionViews["example-list.screen"]
     XCTAssertTrue(examples.waitForExistence(timeout: 4))
     XCTAssertTrue(app.staticTexts["いる"].exists)
     XCTAssertTrue(app.descendants(matching: .any)["example.row.0"].exists)
@@ -2985,7 +3072,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(openExamples.waitForExistence(timeout: 4))
     openExamples.tap()
 
-    let examples = app.scrollViews["example-list.screen"]
+    let examples = app.collectionViews["example-list.screen"]
     XCTAssertTrue(examples.waitForExistence(timeout: 4))
     let linkedKey = app.buttons["example.token.9.0.鍵"]
     for _ in 0..<8
@@ -3040,7 +3127,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let openExamples = app.buttons["search.examples"]
     XCTAssertTrue(openExamples.waitForExistence(timeout: 4))
     openExamples.tap()
-    XCTAssertTrue(app.scrollViews["example-list.screen"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.collectionViews["example-list.screen"].waitForExistence(timeout: 4))
     let exampleSpeaker = app.buttons["example.speaker.0"]
     XCTAssertTrue(exampleSpeaker.isHittable)
     exampleSpeaker.tap()
@@ -3099,7 +3186,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let openExamples = app.buttons["search.examples"]
     XCTAssertTrue(openExamples.waitForExistence(timeout: 4))
     openExamples.tap()
-    XCTAssertTrue(app.scrollViews["example-list.screen"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.collectionViews["example-list.screen"].waitForExistence(timeout: 4))
 
     let exampleSpeaker = app.buttons["example.speaker.0"]
     XCTAssertTrue(exampleSpeaker.isHittable)
@@ -3929,6 +4016,94 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       (0x3040...0x30FF).contains(scalar.value)
         || (0x3400...0x9FFF).contains(scalar.value)
     }
+  }
+}
+
+enum RepresentativeExampleSentences {
+  struct Row {
+    let index: Int
+    let japanese: String
+    let english: String
+  }
+
+  static let rows = [
+    Row(index: 0, japanese: "いる？", english: "Do you want it?"),
+    Row(index: 1, japanese: "いるんだろ？", english: "I know you're in here."),
+    Row(
+      index: 2,
+      japanese: "いるだけ持っていらっしゃい。",
+      english: "Please take with you as much as you need."
+    ),
+    Row(index: 3, japanese: "彼いるの？", english: "Do you have a boyfriend?"),
+    Row(index: 4, japanese: "今いるところにいなさい。", english: "Stay where you are."),
+    Row(
+      index: 5,
+      japanese: "今いるところにいる方がいいだろう。",
+      english: "You may as well stay where you are."
+    ),
+    Row(
+      index: 6,
+      japanese: "今いる場所にとどまった方がよさそうだよ。",
+      english: "You may as well stay where you are."
+    ),
+    Row(
+      index: 7,
+      japanese: "今いる市民が逃げ出すという事態が危惧されます。",
+      english: "It is feared that those citizens now present will run away."
+    ),
+  ]
+
+  @MainActor
+  static func reachRow(
+    _ expected: Row,
+    requiringSpeaker: Bool = false,
+    in app: XCUIApplication,
+    list: XCUIElement
+  ) -> XCUIElement {
+    let row = app.descendants(matching: .any)["example.row.\(expected.index)"]
+    let speaker = app.buttons["example.speaker.\(expected.index)"]
+    for _ in 0..<8
+    where !row.exists || !row.isHittable || (requiringSpeaker && !speaker.isHittable) {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(row.waitForExistence(timeout: 3))
+    let firstToken = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "example.token.\(expected.index).")
+    ).firstMatch
+    XCTAssertTrue(firstToken.waitForExistence(timeout: 12))
+    return row
+  }
+
+  @MainActor
+  static func japaneseText(for expected: Row, in app: XCUIApplication) -> String {
+    let prefix = "example.token.\(expected.index)."
+    let tokenElements = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", prefix)
+    ).allElementsBoundByIndex
+    var surfacesByID: [Int: String] = [:]
+    for element in tokenElements {
+      let suffix = element.identifier.dropFirst(prefix.count)
+      let components = suffix.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+      guard components.count == 2, let id = Int(components[0]) else { continue }
+      surfacesByID[id] = String(components[1])
+    }
+    return surfacesByID.sorted { $0.key < $1.key }.map(\.value).joined()
+  }
+
+  @MainActor
+  static func linkedDrawToken(in app: XCUIApplication) -> XCUIElement {
+    app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "example.token.2.",
+        "持, じ, draw (in go, poetry contest, etc.), tie"
+      )
+    ).firstMatch
+  }
+
+  @MainActor
+  static func englishText(for expected: Row, in app: XCUIApplication) -> XCUIElement {
+    app.staticTexts["example.english.\(expected.index)"]
   }
 }
 
