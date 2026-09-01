@@ -1055,16 +1055,16 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertEqual(app.state, .runningForeground)
     let restoredKanjiDetail = app.collectionViews["kanji-detail.screen"]
     XCTAssertTrue(restoredKanjiDetail.waitForExistence(timeout: 2))
-    let restoredReadingWord = app.buttons.matching(
-      NSPredicate(
-        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
-        "kanji-detail.word.", "静, しず,"
-      )
-    ).firstMatch
+    let restoredReadingWord = app.buttons[
+      "kanji-detail.word.db15f908a4dfe8a0ab6b542af20063d9"
+    ]
     XCTAssertTrue(restoredReadingWord.waitForExistence(timeout: 2))
+    XCTAssertEqual(restoredReadingWord.label, "静, しず, quiet, calm, still")
     XCTAssertTrue(restoredReadingWord.isHittable)
 
-    restoredReadingWord.tap()
+    for _ in 0..<8 where !linkedReading.isHittable { restoredKanjiDetail.swipeDown() }
+    XCTAssertTrue(linkedReading.isHittable)
+    linkedReading.tap()
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.静.静=しず"].exists)
     tapNativeBack(in: app)

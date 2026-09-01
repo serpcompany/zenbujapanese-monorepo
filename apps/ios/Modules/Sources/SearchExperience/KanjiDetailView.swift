@@ -14,6 +14,7 @@ struct KanjiDetailView: View {
   @State private var strokeDiagramLoadState = KanjiStrokeDiagramLoadState.loading
   @State private var strokeRetryID = 0
   @State private var presentedStrokeDiagram: KanjiStrokeDiagram?
+  @State private var pendingScrollTarget: KanjiDetailScrollTarget?
 
   var body: some View {
     ScrollViewReader { proxy in
@@ -76,14 +77,24 @@ struct KanjiDetailView: View {
       .listStyle(.insetGrouped)
       .accessibilityIdentifier("kanji-detail.screen")
       .onAppear {
-        restorePreservedWordPosition(with: proxy, in: relatedWords)
-        restorePreservedElementPosition(with: proxy, in: elements)
+        restorePreservedWordPosition(in: relatedWords)
+        restorePreservedElementPosition(in: elements)
       }
       .onChange(of: relatedWords.map(\.id)) {
-        restorePreservedWordPosition(with: proxy, in: relatedWords)
+        restorePreservedWordPosition(in: relatedWords)
       }
       .onChange(of: elements.map(\.id)) {
-        restorePreservedElementPosition(with: proxy, in: elements)
+        restorePreservedElementPosition(in: elements)
+      }
+      .onScrollGeometryChange(for: KanjiDetailScrollReadiness.self) { geometry in
+        KanjiDetailScrollReadiness(
+          target: pendingScrollTarget,
+          contentHeight: geometry.contentSize.height
+        )
+      } action: { _, readiness in
+        guard let target = readiness.target, readiness.contentHeight > 0 else { return }
+        proxy.scrollTo(target, anchor: .center)
+        pendingScrollTarget = nil
       }
     }
     .navigationTitle(character.rawValue)
@@ -138,32 +149,18 @@ struct KanjiDetailView: View {
     presentedStrokeDiagram = diagram
   }
 
-  private func restorePreservedWordPosition(
-    with proxy: ScrollViewProxy,
-    in loadedWords: [DictionaryEntry]
-  ) {
+  private func restorePreservedWordPosition(in loadedWords: [DictionaryEntry]) {
     guard let preservedWordID,
       loadedWords.contains(where: { $0.id == preservedWordID })
     else { return }
-    Task { @MainActor in
-      await Task.yield()
-      guard relatedWords.contains(where: { $0.id == preservedWordID }) else { return }
-      proxy.scrollTo(preservedWordID, anchor: .center)
-    }
+    pendingScrollTarget = .word(preservedWordID)
   }
 
-  private func restorePreservedElementPosition(
-    with proxy: ScrollViewProxy,
-    in loadedElements: [KanjiElementSummary]
-  ) {
+  private func restorePreservedElementPosition(in loadedElements: [KanjiElementSummary]) {
     guard let preservedElementID,
       loadedElements.contains(where: { $0.id == preservedElementID })
     else { return }
-    Task { @MainActor in
-      await Task.yield()
-      guard elements.contains(where: { $0.id == preservedElementID }) else { return }
-      proxy.scrollTo(preservedElementID, anchor: .center)
-    }
+    pendingScrollTarget = .element(preservedElementID)
   }
 
   private func loadStrokeDiagram() async {
@@ -239,6 +236,16 @@ private struct KanjiDetailLoadRequest: Hashable {
 private struct KanjiStrokeDiagramLoadRequest: Hashable {
   let character: KanjiCharacter
   let retryID: Int
+}
+
+private enum KanjiDetailScrollTarget: Hashable {
+  case word(LanguageReferenceID)
+  case element(KanjiElementID)
+}
+
+private struct KanjiDetailScrollReadiness: Equatable {
+  let target: KanjiDetailScrollTarget?
+  let contentHeight: CGFloat
 }
 
 private enum KanjiStrokeDiagramLoadState: Equatable {
@@ -484,7 +491,7 @@ private struct KanjiElementsSection: View {
             + element.meanings.prefix(3).joined(separator: ", ")
         )
         .accessibilityIdentifier("kanji-detail.element.\(element.id.rawValue)")
-        .id(element.id)
+        .id(KanjiDetailScrollTarget.element(element.id))
       }
     }
   }
@@ -512,7 +519,7 @@ private struct KanjiWordsSection: View {
         }
         .accessibilityLabel("\(entry.headword), \(entry.reading), \(entry.summary)")
         .accessibilityIdentifier("kanji-detail.word.\(entry.id.rawValue)")
-        .id(entry.id)
+        .id(KanjiDetailScrollTarget.word(entry.id))
       }
     }
   }
