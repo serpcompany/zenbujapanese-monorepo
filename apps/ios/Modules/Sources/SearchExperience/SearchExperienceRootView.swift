@@ -120,20 +120,23 @@ public struct SearchExperienceRootView: View {
 
   private var searchNavigation: some View {
     NavigationStack(path: searchPath) {
-      SearchView(
-        query: $query,
-        lookupClient: lookupClient,
-        recentSearchStore: recentSearchStore,
-        handwritingRecognitionClient: handwritingRecognitionClient,
-        cameraAuthorizationClient: cameraAuthorizationClient,
-        radicalLookupClient: .live,
-        exampleSentenceClient: .live,
-        openImageText: { assets in
-          let session = ImageTextSession(assets: assets)
-          imageTextSessionStore.insert(session)
-          path.append(.image(session.id))
-        }
-      )
+      Group {
+        #if DEBUG
+          if ProcessInfo.processInfo.arguments.contains("-PROTOTYPEIssue234TextKitRubyLinks") {
+            PROTOTYPEIssue234TextKitRubyLinks(
+              lookupClient: lookupClient,
+              exampleSentenceClient: .live,
+              japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
+              speechSynthesisClient: speechSynthesisClient,
+              openWord: { entry in path.append(.word(entry, nil)) }
+            )
+          } else {
+            productionSearch
+          }
+        #else
+          productionSearch
+        #endif
+      }
       .navigationDestination(for: SearchExperienceRoute.self) { route in
         switch route {
         case .word(let entry, let imageContext):
@@ -200,6 +203,23 @@ public struct SearchExperienceRootView: View {
     }
     .foregroundStyle(ZenbuTheme.foreground)
     .background(ZenbuTheme.background)
+  }
+
+  private var productionSearch: some View {
+    SearchView(
+      query: $query,
+      lookupClient: lookupClient,
+      recentSearchStore: recentSearchStore,
+      handwritingRecognitionClient: handwritingRecognitionClient,
+      cameraAuthorizationClient: cameraAuthorizationClient,
+      radicalLookupClient: .live,
+      exampleSentenceClient: .live,
+      openImageText: { assets in
+        let session = ImageTextSession(assets: assets)
+        imageTextSessionStore.insert(session)
+        path.append(.image(session.id))
+      }
+    )
   }
 
   private var searchPath: Binding<[SearchExperienceRoute]> {

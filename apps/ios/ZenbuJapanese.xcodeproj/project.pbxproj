@@ -16,6 +16,7 @@
 		15100000000000000000000F /* ExampleSentenceRetrieval-v1-rows.tsv in Resources */ = {isa = PBXBuildFile; fileRef = 151000000000000000000011 /* ExampleSentenceRetrieval-v1-rows.tsv */; };
 		0739C012E20A0C475890D563 /* SearchExperienceJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2D0ECA911F40E070D8F4FD /* SearchExperienceJourneyUITests.swift */; };
 		ACCE55000000000000000004 /* AccessibilityAuditUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCE55000000000000000003 /* AccessibilityAuditUITests.swift */; };
+		F02340000000000000000002 /* PROTOTYPEIssue234UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F02340000000000000000001 /* PROTOTYPEIssue234UITests.swift */; };
 		48A12CB415EF48F78F16871A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */; };
 		A1C04F09D3A74D8B82D3C6E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */; };
 		E1FD0205CD84132DCB314678 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
@@ -52,6 +53,7 @@
 		0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ZenbuJapanese.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6E2D0ECA911F40E070D8F4FD /* SearchExperienceJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchExperienceJourneyUITests.swift; sourceTree = "<group>"; };
 		ACCE55000000000000000003 /* AccessibilityAuditUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityAuditUITests.swift; sourceTree = "<group>"; };
+		F02340000000000000000001 /* PROTOTYPEIssue234UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PROTOTYPEIssue234UITests.swift; sourceTree = "<group>"; };
 		A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenbuJapaneseApp.swift; sourceTree = "<group>"; };
 		B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DF09FB39B581100E5F9B6C10 /* ZenbuJapaneseUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ZenbuJapaneseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -102,6 +104,7 @@
 			children = (
 				6E2D0ECA911F40E070D8F4FD /* SearchExperienceJourneyUITests.swift */,
 				ACCE55000000000000000003 /* AccessibilityAuditUITests.swift */,
+				F02340000000000000000001 /* PROTOTYPEIssue234UITests.swift */,
 			);
 			path = AppUITests;
 			sourceTree = "<group>";
@@ -342,6 +345,7 @@
 			files = (
 				0739C012E20A0C475890D563 /* SearchExperienceJourneyUITests.swift in Sources */,
 				ACCE55000000000000000004 /* AccessibilityAuditUITests.swift in Sources */,
+				F02340000000000000000002 /* PROTOTYPEIssue234UITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
