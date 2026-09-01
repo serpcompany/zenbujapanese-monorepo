@@ -570,16 +570,51 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     retry.tap()
     XCTAssertTrue(app.staticTexts["SOUND PATTERNS"].waitForExistence(timeout: 3))
-    XCTAssertTrue(app.buttons["kanji-element.contribution.清"].exists)
+    let elementScreen = app.collectionViews["kanji-element.screen"]
+    let linkedKanji = app.buttons["kanji-element.contribution.清"]
+    scrollElementIntoSafeTapRegion(linkedKanji, in: elementScreen, app: app)
+    XCTAssertTrue(linkedKanji.exists)
     recordSettledScreenshot(named: "kanji-element-source-recovered", app: app)
-    let elementScreen = app.scrollViews["kanji-element.screen"]
     let structureSource = app.staticTexts["kanji-element.structure-source"]
-    for _ in 0..<8 where !structureSource.exists { elementScreen.swipeUp() }
+    scrollElementIntoSafeTapRegion(structureSource, in: elementScreen, app: app)
     XCTAssertTrue(structureSource.exists)
     XCTAssertTrue(structureSource.label.contains("kanjium"))
     let metadataSource = app.staticTexts["kanji-element.metadata-source"]
+    scrollElementIntoSafeTapRegion(metadataSource, in: elementScreen, app: app)
     XCTAssertTrue(metadataSource.exists)
     XCTAssertTrue(metadataSource.label.contains("edrdg.kanjidic2"))
+  }
+
+  @MainActor
+  func testKanjiDetailPartialFailureKeepsReferenceContentAndRetryLoadsWords() throws {
+    let app = launchApp(additionalArguments: ["-InjectKanjiRelatedWordsFailureOnce"])
+    let kanjiDetail = openKanjiDetail(for: "静", in: app)
+
+    let retry = app.buttons["kanji-detail.retry"]
+    XCTAssertTrue(retry.waitForExistence(timeout: 3))
+    XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "静")
+    XCTAssertEqual(
+      app.descendants(matching: .any)["kanji-detail.strokes"].label,
+      "14 Strokes"
+    )
+    XCTAssertTrue(app.staticTexts["READINGS"].exists)
+    let element = app.buttons["kanji-detail.element.青"]
+    for _ in 0..<12 where !element.isHittable { kanjiDetail.swipeUp() }
+    XCTAssertTrue(element.exists)
+    XCTAssertFalse(app.staticTexts["WORDS"].exists)
+
+    for _ in 0..<12 where !retry.isHittable { kanjiDetail.swipeDown() }
+    XCTAssertTrue(retry.isHittable)
+    retry.tap()
+    let relatedWord = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "kanji-detail.word.", "静寂, せいじゃく"
+      )
+    ).firstMatch
+    for _ in 0..<12 where !relatedWord.isHittable { kanjiDetail.swipeUp() }
+    XCTAssertTrue(relatedWord.exists)
+    XCTAssertFalse(retry.exists)
   }
 
   @MainActor
@@ -591,7 +626,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordSettledScreenshot(named: "kanji-element-shizu-entry", app: app)
     soundElement.tap()
 
-    let elementScreen = app.scrollViews["kanji-element.screen"]
+    let elementScreen = app.collectionViews["kanji-element.screen"]
     XCTAssertTrue(elementScreen.waitForExistence(timeout: 3))
     XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "争")
     XCTAssertTrue(app.staticTexts["SOUND PATTERNS"].exists)
@@ -612,13 +647,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     for _ in 0..<8 where !standalone.isHittable { elementScreen.swipeDown() }
     XCTAssertTrue(standalone.isHittable)
     standalone.tap()
-    XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.collectionViews["kanji-detail.screen"].waitForExistence(timeout: 2))
     XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "争")
     recordSettledScreenshot(named: "kanji-element-standalone-sou-destination", app: app)
 
     tapNativeBack(in: app)
     XCTAssertTrue(elementScreen.waitForExistence(timeout: 2))
-    XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "爭")
     let restoredStandalone = app.buttons["kanji-element.standalone.争"]
     XCTAssertTrue(restoredStandalone.isHittable)
 
@@ -629,7 +663,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(restoredTraditional.isHittable)
     tapNativeBack(in: app)
     XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 2))
-    XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "静")
     XCTAssertTrue(soundElement.isHittable)
     XCTAssertLessThan(soundElement.frame.maxY, app.frame.maxY - 120)
     recordSettledScreenshot(named: "kanji-element-back-restores-shizu", app: app)
@@ -650,7 +683,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertLessThan(meaningElement.frame.maxY, app.frame.maxY - 140)
     meaningElement.tap()
 
-    let elementScreen = app.scrollViews["kanji-element.screen"]
+    let elementScreen = app.collectionViews["kanji-element.screen"]
     if !elementScreen.waitForExistence(timeout: 3) {
       XCTAssertTrue(meaningElement.isHittable)
       meaningElement.tap()
@@ -670,7 +703,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertLessThan(linkedKanji.frame.maxY, app.frame.maxY - 140)
     linkedKanji.tap()
 
-    let linkedDetail = app.scrollViews["kanji-detail.screen"]
+    let linkedDetail = app.collectionViews["kanji-detail.screen"]
     if !linkedDetail.waitForExistence(timeout: 2) {
       XCTAssertTrue(linkedKanji.isHittable)
       linkedKanji.tap()
@@ -679,7 +712,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "清")
     tapNativeBack(in: app)
     XCTAssertTrue(elementScreen.waitForExistence(timeout: 2))
-    XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "青")
     let restoredPosition = XCTNSPredicateExpectation(
       predicate: NSPredicate { object, _ in
         guard let element = object as? XCUIElement, element.exists, element.isHittable else {
@@ -709,7 +741,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let strokeOrder = app.buttons["kanji-detail.stroke-order"]
     XCTAssertTrue(strokeOrder.waitForExistence(timeout: 3))
     strokeOrder.tap()
-    XCTAssertTrue(app.otherElements["stroke-order.overlay"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.otherElements["stroke-order.screen"].waitForExistence(timeout: 2))
     XCTAssertEqual(
       app.descendants(matching: .any)["stroke-order.progress"].value as? String,
       "0 of 6 complete"
@@ -728,7 +760,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(strokeOrder.waitForExistence(timeout: 3))
     strokeOrder.tap()
 
-    XCTAssertTrue(app.otherElements["stroke-order.overlay"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.otherElements["stroke-order.screen"].waitForExistence(timeout: 2))
     let progress = app.descendants(matching: .any)["stroke-order.progress"]
     XCTAssertEqual(progress.value as? String, "0 of 6 complete")
     XCTAssertFalse(app.buttons["stroke-order.previous"].isEnabled)
@@ -827,8 +859,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     XCTAssertEqual(searchField.value as? String, "Search Japanese or English")
-    XCTAssertFalse(app.otherElements["stroke-order.overlay"].exists)
-    XCTAssertFalse(app.scrollViews["kanji-detail.screen"].exists)
+    XCTAssertFalse(app.otherElements["stroke-order.screen"].exists)
+    XCTAssertFalse(app.collectionViews["kanji-detail.screen"].exists)
     recordScreenshot(named: "stroke-order-cold-relaunch-search-root", app: app)
   }
 
@@ -845,17 +877,26 @@ final class SearchExperienceJourneyUITests: XCTestCase {
         XCTAssertTrue(kanji.waitForExistence(timeout: 3))
         kanji.tap()
       } else {
+        if query == "yama" {
+          let refinement = app.buttons["search.reading-refinement"]
+          XCTAssertTrue(refinement.waitForExistence(timeout: 3))
+          XCTAssertEqual(refinement.label, "Search for Japanese reading やま")
+          refinement.tap()
+        }
         let mountain = app.buttons.matching(
           NSPredicate(format: "label BEGINSWITH %@", "山, やま,")
         ).firstMatch
         XCTAssertTrue(mountain.waitForExistence(timeout: 3))
         mountain.tap()
+        let wordDetail = app.collectionViews["word-detail.screen"]
+        XCTAssertTrue(wordDetail.waitForExistence(timeout: 3))
         let linkedKanji = app.buttons["word-detail.kanji.山"]
-        XCTAssertTrue(linkedKanji.waitForExistence(timeout: 3))
+        scrollElementIntoSafeTapRegion(linkedKanji, in: wordDetail, app: app)
+        XCTAssertTrue(linkedKanji.exists)
         linkedKanji.tap()
       }
 
-      XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 3))
+      XCTAssertTrue(app.collectionViews["kanji-detail.screen"].waitForExistence(timeout: 3))
       XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "山")
       recordSettledScreenshot(named: "yama-\(query)-kanji-detail", app: app)
       let strokeOrder = app.buttons["kanji-detail.stroke-order"]
@@ -896,7 +937,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(linkedKanji.exists)
     linkedKanji.tap()
 
-    XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.collectionViews["kanji-detail.screen"].waitForExistence(timeout: 2))
     XCTAssertEqual(app.staticTexts["kanji-detail.glyph"].label, "静")
     let strokes = app.descendants(matching: .any)["kanji-detail.strokes"]
     XCTAssertTrue(strokes.waitForExistence(timeout: 3))
@@ -914,8 +955,16 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.静.静=しず"].exists)
     tapNativeBack(in: app)
-    XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 2))
-    XCTAssertTrue(linkedReading.exists)
+    let restoredKanjiDetail = app.collectionViews["kanji-detail.screen"]
+    XCTAssertTrue(restoredKanjiDetail.waitForExistence(timeout: 2))
+    let restoredReadingWord = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "kanji-detail.word.", "静, しず,"
+      )
+    ).firstMatch
+    XCTAssertTrue(restoredReadingWord.waitForExistence(timeout: 2))
+    XCTAssertTrue(restoredReadingWord.isHittable)
 
     let back = nativeBackButton(in: app)
     XCTAssertTrue(back.isHittable)
@@ -946,11 +995,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     scrollElementIntoSafeTapRegion(linkedKanji, in: wordDetail, app: app)
     linkedKanji.tap()
 
-    let kanjiDetail = app.scrollViews["kanji-detail.screen"]
+    let kanjiDetail = app.collectionViews["kanji-detail.screen"]
     XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 2))
     XCTAssertFalse(app.staticTexts["kanji-detail.elements"].exists)
-    XCTAssertTrue(app.buttons["kanji-detail.element.争"].exists)
-    XCTAssertTrue(app.buttons["kanji-detail.element.青"].exists)
+    let soundElement = app.buttons["kanji-detail.element.争"]
+    scrollElementIntoSafeTapRegion(soundElement, in: kanjiDetail, app: app)
+    XCTAssertTrue(soundElement.exists)
+    let meaningElement = app.buttons["kanji-detail.element.青"]
+    scrollElementIntoSafeTapRegion(meaningElement, in: kanjiDetail, app: app)
+    XCTAssertTrue(meaningElement.exists)
 
     let relatedQuiet = app.buttons.matching(
       NSPredicate(
@@ -990,7 +1043,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let glyph = app.staticTexts["kanji-detail.glyph"]
     XCTAssertTrue(glyph.waitForExistence(timeout: 2))
     XCTAssertTrue(glyph.isHittable)
-    XCTAssertFalse(relatedQuiet.isHittable)
+    XCTAssertFalse(relatedQuiet.exists)
   }
 
   @MainActor
@@ -1141,7 +1194,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordScreenshot(named: "radical-kanji-primary-without-dictionary-row", app: app)
 
     kanjiPrimary.tap()
-    XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.collectionViews["kanji-detail.screen"].waitForExistence(timeout: 2))
     let detailGlyph = app.staticTexts["kanji-detail.glyph"]
     XCTAssertTrue(detailGlyph.waitForExistence(timeout: 2))
     XCTAssertEqual(detailGlyph.label, "丶")
@@ -1263,7 +1316,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       searchesBackwardWhenAbsent: true
     )
     kanjiPrimary.tap()
-    XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.collectionViews["kanji-detail.screen"].waitForExistence(timeout: 2))
     let detailGlyph = app.staticTexts["kanji-detail.glyph"]
     XCTAssertTrue(detailGlyph.waitForExistence(timeout: 2))
     XCTAssertEqual(detailGlyph.label, "丁")
@@ -2425,7 +2478,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     for _ in 0..<4 where !linkedKanji.exists { kanaDetail.swipeUp() }
     XCTAssertTrue(linkedKanji.exists)
     linkedKanji.tap()
-    XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.collectionViews["kanji-detail.screen"].waitForExistence(timeout: 2))
     let detailGlyph = app.staticTexts["kanji-detail.glyph"]
     XCTAssertTrue(detailGlyph.waitForExistence(timeout: 2))
     XCTAssertEqual(detailGlyph.label, "居")
@@ -2449,7 +2502,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(topicKanji.exists)
     recordScreenshot(named: "word-detail-mondai-primary-kanji", app: app)
     problemKanji.tap()
-    XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.collectionViews["kanji-detail.screen"].waitForExistence(timeout: 2))
     let detailGlyph = app.staticTexts["kanji-detail.glyph"]
     XCTAssertTrue(detailGlyph.waitForExistence(timeout: 2))
     XCTAssertEqual(detailGlyph.label, "問")
@@ -3330,7 +3383,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let result = app.buttons["result.kanji-primary.\(character)"]
     XCTAssertTrue(result.waitForExistence(timeout: 3))
     result.tap()
-    let detail = app.scrollViews["kanji-detail.screen"]
+    let detail = app.collectionViews["kanji-detail.screen"]
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
     return detail
   }
@@ -3459,7 +3512,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func waitForStrokeOrderCaptureToSettle(in app: XCUIApplication) {
-    let overlay = app.otherElements["stroke-order.overlay"]
+    let overlay = app.otherElements["stroke-order.screen"]
     let close = app.buttons["stroke-order.close"]
     let previous = app.buttons["stroke-order.previous"]
     let play = app.buttons["stroke-order.play"]

@@ -324,6 +324,57 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testDarkKanjiElementDetailRemainsReachableAtLargestAccessibilityTextSize() throws {
+    try verifyKanjiElementDetailAtLargestAccessibilityTextSize(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightKanjiElementDetailRemainsReachableAtLargestAccessibilityTextSize() throws {
+    try verifyKanjiElementDetailAtLargestAccessibilityTextSize(appearance: .light)
+  }
+
+  @MainActor
+  private func verifyKanjiElementDetailAtLargestAccessibilityTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    try submitSearch("静", in: app)
+    let quiet = app.buttons["result.kanji-primary.静"]
+    XCTAssertTrue(quiet.waitForExistence(timeout: 4))
+    quiet.tap()
+    let kanjiDetail = app.collectionViews["kanji-detail.screen"]
+    XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 4))
+    let element = app.buttons["kanji-detail.element.青"]
+    for _ in 0..<10 where !element.isHittable { kanjiDetail.swipeUp() }
+    XCTAssertTrue(element.isHittable)
+    element.tap()
+
+    let elementDetail = app.collectionViews["kanji-element.screen"]
+    XCTAssertTrue(elementDetail.waitForExistence(timeout: 4))
+    let glyph = app.staticTexts["kanji-element.glyph"]
+    XCTAssertTrue(glyph.waitForExistence(timeout: 3))
+    XCTAssertGreaterThan(glyph.frame.height, 100)
+    XCTAssertGreaterThanOrEqual(glyph.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(glyph.frame.maxX, app.frame.maxX)
+    let alternative = app.buttons["kanji-element.alternative.靑"]
+    XCTAssertTrue(alternative.waitForExistence(timeout: 3))
+    XCTAssertTrue(alternative.isHittable)
+    try performAudit(in: app, named: "Kanji Element Detail accessibility XXXL", types: .contrast)
+    let containingSection = app.staticTexts["KANJI CONTAINING THIS ELEMENT"]
+    for _ in 0..<10 where !containingSection.exists { elementDetail.swipeUp() }
+    XCTAssertTrue(containingSection.exists)
+  }
+
+  @MainActor
   private func auditWordDetailAtLargestAccessibilityTextSize(
     appearance: XCUIDevice.Appearance
   ) throws {
@@ -558,7 +609,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     let mountain = app.buttons["result.kanji-primary.山"]
     XCTAssertTrue(mountain.waitForExistence(timeout: 4))
     mountain.tap()
-    XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.collectionViews["kanji-detail.screen"].waitForExistence(timeout: 4))
     XCTAssertTrue(
       app.descendants(matching: .any)["kanji-detail.strokes"].waitForExistence(timeout: 4))
     XCTAssertTrue(app.staticTexts["READINGS"].waitForExistence(timeout: 4))
@@ -569,6 +620,24 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(
       app.descendants(matching: .any)["stroke-order.progress"].waitForExistence(timeout: 3))
     try performAudit(in: app, named: "Stroke Order")
+    app.terminate()
+
+    app = launchApp(appearance: appearance)
+    try submitSearch("静", in: app)
+    let quiet = app.buttons["result.kanji-primary.静"]
+    XCTAssertTrue(quiet.waitForExistence(timeout: 4))
+    quiet.tap()
+    let kanjiDetail = app.collectionViews["kanji-detail.screen"]
+    XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 4))
+    let element = app.buttons["kanji-detail.element.青"]
+    for _ in 0..<8 where !element.exists || !element.isHittable {
+      kanjiDetail.swipeUp()
+    }
+    XCTAssertTrue(element.isHittable)
+    element.tap()
+    XCTAssertTrue(app.collectionViews["kanji-element.screen"].waitForExistence(timeout: 4))
+    XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "青")
+    try performAudit(in: app, named: "Kanji Element Detail")
     app.terminate()
 
     app = launchApp(

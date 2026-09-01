@@ -21,6 +21,7 @@ public struct SearchExperienceRootView: View {
   private let handwritingRecognitionClient: HandwritingRecognitionClient
   private let cameraAuthorizationClient: CameraAuthorizationClient
   private let speechSynthesisClient: SpeechSynthesisClient
+  private let kanjiLookupClient: KanjiLookupClient
   private let kanjiStrokeOrderClient: KanjiStrokeOrderClient
   private let kanjiElementLookupClient: KanjiElementLookupClient
   private let japaneseConjugationClient = JapaneseConjugationClient.live
@@ -33,7 +34,12 @@ public struct SearchExperienceRootView: View {
 
   public init() {
     #if DEBUG
-      lookupClient = LookupClient.clientFromProcessArguments(live: .live) ?? .live
+      let resolvedLookupClient = LookupClient.clientFromProcessArguments(live: .live) ?? .live
+      lookupClient = resolvedLookupClient
+      let liveKanjiLookupClient = KanjiLookupClient.live(lookupClient: resolvedLookupClient)
+      kanjiLookupClient =
+        KanjiLookupClient.clientFromProcessArguments(live: liveKanjiLookupClient)
+        ?? liveKanjiLookupClient
       handwritingRecognitionClient =
         HandwritingRecognitionFixture.clientFromProcessArguments() ?? .live
       cameraAuthorizationClient = CameraAuthorizationClient.clientFromProcessArguments() ?? .live
@@ -55,6 +61,7 @@ public struct SearchExperienceRootView: View {
       }
     #else
       lookupClient = .live
+      kanjiLookupClient = .live(lookupClient: .live)
       handwritingRecognitionClient = .live
       cameraAuthorizationClient = .live
       speechSynthesisClient = .live
@@ -150,30 +157,17 @@ public struct SearchExperienceRootView: View {
           KanjiDetailView(
             character: character,
             entry: entry,
-            kanjiLookupClient: .live(lookupClient: lookupClient),
+            kanjiLookupClient: kanjiLookupClient,
             kanjiElementLookupClient: kanjiElementLookupClient,
             kanjiStrokeOrderClient: kanjiStrokeOrderClient,
-            openWord: { entry in path.append(.word(entry, nil)) },
-            openElement: { id in path.append(.kanjiElement(id)) },
             preservedWordID: kanjiScrollWordIDs[character],
-            preserveWordID: {
-              kanjiScrollWordIDs[character] = $0
-              kanjiScrollElementIDs[character] = nil
-            },
-            preservedElementID: kanjiScrollElementIDs[character],
-            preserveElementID: {
-              kanjiScrollElementIDs[character] = $0
-              kanjiScrollWordIDs[character] = nil
-            }
+            preservedElementID: kanjiScrollElementIDs[character]
           )
         case .kanjiElement(let id):
           KanjiElementDetailView(
             elementID: id,
             lookupClient: kanjiElementLookupClient,
-            openAlternative: { alternative in path.append(.kanjiElement(alternative)) },
-            openKanji: { character in openKanji(character, entry: nil) },
-            preservedContribution: kanjiElementScrollContributionIDs[id],
-            preserveContribution: { kanjiElementScrollContributionIDs[id] = $0 }
+            preservedContribution: kanjiElementScrollContributionIDs[id]
           )
         case .examples(let query, let highlightedEntry, let usesEntryExamples):
           ExampleSentencesView(
@@ -215,12 +209,31 @@ public struct SearchExperienceRootView: View {
     Binding {
       path
     } set: { newPath in
-      if newPath.count > path.count,
-        case .kanji(let character, _) = newPath.last
-      {
-        kanjiScrollWordIDs[character] = nil
+      if newPath.count > path.count {
+        preserveKanjiContext(from: path.last, to: newPath.last)
+        if case .kanji(let character, _) = newPath.last {
+          kanjiScrollWordIDs[character] = nil
+        }
       }
       path = newPath
+    }
+  }
+
+  private func preserveKanjiContext(
+    from origin: SearchExperienceRoute?,
+    to destination: SearchExperienceRoute?
+  ) {
+    switch (origin, destination) {
+    case (.kanji(let character, _), .word(let entry, _)):
+      kanjiScrollWordIDs[character] = entry.id
+      kanjiScrollElementIDs[character] = nil
+    case (.kanji(let character, _), .kanjiElement(let elementID)):
+      kanjiScrollElementIDs[character] = elementID
+      kanjiScrollWordIDs[character] = nil
+    case (.kanjiElement(let elementID), .kanji(let character, _)):
+      kanjiElementScrollContributionIDs[elementID] = character
+    default:
+      break
     }
   }
 

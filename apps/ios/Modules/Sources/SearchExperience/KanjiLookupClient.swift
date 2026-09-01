@@ -16,15 +16,16 @@ struct KanjiCharacter: Codable, Hashable, Sendable {
 
   init?(_ value: String) {
     guard value.unicodeScalars.count == 1,
-          let scalar = value.unicodeScalars.first,
-          Self.isIdeograph(scalar.value) else { return nil }
+      let scalar = value.unicodeScalars.first,
+      Self.isIdeograph(scalar.value)
+    else { return nil }
     rawValue = value
   }
 
   private static func isIdeograph(_ value: UInt32) -> Bool {
     switch value {
     case 0x3400...0x4DBF, 0x4E00...0x9FFF, 0xF900...0xFAFF,
-         0x20000...0x2FA1F, 0x30000...0x323AF:
+      0x20000...0x2FA1F, 0x30000...0x323AF:
       true
     default:
       false
@@ -71,10 +72,45 @@ struct KanjiLookupClient: Sendable {
   static func live(lookupClient: LookupClient) -> KanjiLookupClient {
     KanjiLookupClient(
       entry: { character in try await KanjiReferenceData.shared.entry(character) },
-      relatedWords: { character in try await lookupClient.entriesContainingKanji(character.rawValue) }
+      relatedWords: { character in try await lookupClient.entriesContainingKanji(character.rawValue)
+      }
     )
   }
+
+  #if DEBUG
+    static func clientFromProcessArguments(live: KanjiLookupClient) -> KanjiLookupClient? {
+      guard ProcessInfo.processInfo.arguments.contains("-InjectKanjiRelatedWordsFailureOnce") else {
+        return nil
+      }
+      let fixture = KanjiRelatedWordsFailureFixture()
+      return KanjiLookupClient(
+        entry: live.entry,
+        relatedWords: { character in
+          if await fixture.consumeFailure() {
+            throw KanjiLookupFixtureError.injectedFailure
+          }
+          return try await live.relatedWords(character)
+        }
+      )
+    }
+  #endif
 }
+
+#if DEBUG
+  private actor KanjiRelatedWordsFailureFixture {
+    private var hasFailed = false
+
+    func consumeFailure() -> Bool {
+      guard !hasFailed else { return false }
+      hasFailed = true
+      return true
+    }
+  }
+
+  private enum KanjiLookupFixtureError: Error {
+    case injectedFailure
+  }
+#endif
 
 private actor KanjiReferenceData {
   static let shared = KanjiReferenceData()
@@ -83,7 +119,8 @@ private actor KanjiReferenceData {
   func entry(_ character: KanjiCharacter) throws -> KanjiReferenceEntry? {
     let scalar = character.rawValue.unicodeScalars.first!.value
     if let entriesByScalar { return entriesByScalar[scalar] }
-    guard let url = Bundle.module.url(forResource: "KanjiReferenceData", withExtension: "json") else {
+    guard let url = Bundle.module.url(forResource: "KanjiReferenceData", withExtension: "json")
+    else {
       throw KanjiReferenceDataError.missingBundledData
     }
     let catalog = try JSONDecoder().decode(KanjiReferenceCatalog.self, from: Data(contentsOf: url))
