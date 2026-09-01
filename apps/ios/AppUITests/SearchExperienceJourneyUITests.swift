@@ -1052,6 +1052,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.静.静=しず"].exists)
     tapNativeBack(in: app)
+    XCTAssertEqual(app.state, .runningForeground)
     let restoredKanjiDetail = app.collectionViews["kanji-detail.screen"]
     XCTAssertTrue(restoredKanjiDetail.waitForExistence(timeout: 2))
     let restoredReadingWord = app.buttons.matching(
@@ -1060,6 +1061,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
         "kanji-detail.word.", "静, しず,"
       )
     ).firstMatch
+    XCTAssertTrue(restoredReadingWord.waitForExistence(timeout: 2))
+    XCTAssertTrue(restoredReadingWord.isHittable)
+
+    restoredReadingWord.tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.descendants(matching: .any)["ruby.静.静=しず"].exists)
+    tapNativeBack(in: app)
+    XCTAssertEqual(app.state, .runningForeground)
+    XCTAssertTrue(restoredKanjiDetail.waitForExistence(timeout: 2))
     XCTAssertTrue(restoredReadingWord.waitForExistence(timeout: 2))
     XCTAssertTrue(restoredReadingWord.isHittable)
 

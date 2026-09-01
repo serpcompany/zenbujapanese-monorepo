@@ -145,7 +145,11 @@ struct KanjiDetailView: View {
     guard let preservedWordID,
       loadedWords.contains(where: { $0.id == preservedWordID })
     else { return }
-    proxy.scrollTo(preservedWordID, anchor: .center)
+    Task { @MainActor in
+      await Task.yield()
+      guard relatedWords.contains(where: { $0.id == preservedWordID }) else { return }
+      proxy.scrollTo(preservedWordID, anchor: .center)
+    }
   }
 
   private func restorePreservedElementPosition(
@@ -155,7 +159,11 @@ struct KanjiDetailView: View {
     guard let preservedElementID,
       loadedElements.contains(where: { $0.id == preservedElementID })
     else { return }
-    proxy.scrollTo(preservedElementID, anchor: .center)
+    Task { @MainActor in
+      await Task.yield()
+      guard elements.contains(where: { $0.id == preservedElementID }) else { return }
+      proxy.scrollTo(preservedElementID, anchor: .center)
+    }
   }
 
   private func loadStrokeDiagram() async {
