@@ -3212,7 +3212,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       searchField: searchField
     )
 
-    XCTAssertTrue(app.scrollViews["conjugations.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["conjugations.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["る Verb"].exists)
     XCTAssertTrue(app.buttons["conjugations.mode.plain"].isSelected)
     assertConjugationRows(
@@ -3312,6 +3312,61 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     )
     waitForConjugationCaptureToSettle(in: app)
     recordScreenshot(named: "conjugations-godan-polite", app: app)
+  }
+
+  @MainActor
+  func testTsubusuConjugationsKeepEveryAppOwnedFormReadableInPlainAndPoliteModes() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openConjugations(
+      for: "潰す",
+      resultLabelPrefix: ConjugationUITestSupport.tsubusuResultPrefix,
+      in: app,
+      searchField: searchField,
+      verifyEntry: { ConjugationUITestSupport.assertTsubusuEntry(in: $0) }
+    )
+
+    XCTAssertTrue(app.staticTexts["う Verb"].waitForExistence(timeout: 3))
+    assertConjugationRows(
+      [
+        ("present-future", "潰す, Present/Future"),
+        ("past", "潰した, Past"),
+        ("negative", "潰さない, Negative"),
+        ("past-negative", "潰さなかった, Past Negative"),
+        ("te-form", "潰して, Te-Form"),
+        ("potential", "潰せる, Potential"),
+        ("passive", "潰される, Passive"),
+        ("causative", "潰させる, Causative"),
+        ("conditional", "潰せば, Conditional"),
+        ("volitional", "潰そう, Volitional"),
+        ("imperative", "潰せ, Imperative"),
+      ],
+      in: app
+    )
+    assertConjugationReadings(ConjugationUITestSupport.tsubusuReadings(for: .plain), in: app)
+    assertPresentFutureExplanation(in: app)
+    recordScreenshot(named: "conjugations-tsubusu-plain", app: app)
+
+    app.buttons["conjugations.mode.polite"].tap()
+    assertConjugationRows(
+      [
+        ("present-future", "潰します, Present/Future"),
+        ("past", "潰しました, Past"),
+        ("negative", "潰しません, Negative"),
+        ("past-negative", "潰しませんでした, Past Negative"),
+        ("te-form", "潰して, Te-Form"),
+        ("potential", "潰せます, Potential"),
+        ("passive", "潰されます, Passive"),
+        ("causative", "潰させます, Causative"),
+        ("conditional", "潰せば, Conditional"),
+        ("volitional", "潰しましょう, Volitional"),
+        ("imperative", "潰しなさい, Imperative"),
+      ],
+      in: app
+    )
+    assertConjugationReadings(ConjugationUITestSupport.tsubusuReadings(for: .polite), in: app)
+    recordScreenshot(named: "conjugations-tsubusu-polite", app: app)
   }
 
   @MainActor
@@ -3549,11 +3604,92 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     file: StaticString = #filePath,
     line: UInt = #line
   ) {
+    let list = app.collectionViews["conjugations.screen"]
+    XCTAssertTrue(list.exists, file: file, line: line)
+    let modePicker = app.descendants(matching: .any)["conjugations.mode"]
+    let supportsModes = modePicker.exists
+    var rowHeights: [CGFloat] = []
     for row in expectedRows {
-      let element = app.descendants(matching: .any)["conjugations.row.\(row.id)"]
-      XCTAssertTrue(element.exists, file: file, line: line)
+      let section = ConjugationUITestSupport.reachSection(row.id, in: app, list: list)
+      let element = section.row
+      guard element.exists else {
+        XCTFail("Missing conjugation row \(row.id)", file: file, line: line)
+        return
+      }
       XCTAssertEqual(element.label, row.label, file: file, line: line)
+      ConjugationUITestSupport.assertSectionChrome(section, file: file, line: line)
+      rowHeights.append(element.frame.height)
     }
+    if let shortestRow = rowHeights.min(), let tallestRow = rowHeights.max() {
+      XCTAssertLessThanOrEqual(
+        tallestRow - shortestRow,
+        24,
+        "Conjugation rows should remain in one compact height class unless content wraps",
+        file: file,
+        line: line
+      )
+    }
+
+    guard let firstExpectedRow = expectedRows.first else { return }
+    ConjugationUITestSupport.restoreTop(
+      firstRowID: firstExpectedRow.id,
+      requiresModePicker: supportsModes,
+      in: app,
+      list: list
+    )
+    let firstRow = app.descendants(matching: .any)[
+      "conjugations.row.\(firstExpectedRow.id)"
+    ]
+    XCTAssertTrue(firstRow.exists, file: file, line: line)
+    if supportsModes {
+      for _ in 0..<4 where !modePicker.exists || !modePicker.isHittable {
+        list.swipeDown(velocity: .slow)
+      }
+      XCTAssertTrue(modePicker.isHittable, file: file, line: line)
+    }
+  }
+
+  @MainActor
+  private func assertConjugationReadings(
+    _ expectedReadings: [ConjugationUITestSupport.ExpectedReading],
+    in app: XCUIApplication,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let list = app.collectionViews["conjugations.screen"]
+    for expected in expectedReadings {
+      let row = ConjugationUITestSupport.reachRow(expected.id, in: app, list: list)
+      guard row.exists else {
+        XCTFail("Missing conjugation row \(expected.id)", file: file, line: line)
+        return
+      }
+      XCTAssertEqual(row.value as? String, expected.value, file: file, line: line)
+    }
+    ConjugationUITestSupport.restoreTop(in: app, list: list)
+  }
+
+  @MainActor
+  private func assertPresentFutureExplanation(
+    in app: XCUIApplication,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let info = app.buttons["conjugations.info.present-future"]
+    XCTAssertTrue(info.isHittable, file: file, line: line)
+    info.tap()
+
+    let explanation = app.staticTexts["conjugations.explanation.present-future"]
+    XCTAssertTrue(explanation.waitForExistence(timeout: 3), file: file, line: line)
+    XCTAssertEqual(
+      explanation.label,
+      "The non-past form. It can describe a present habit or fact, or a future action or state.",
+      file: file,
+      line: line
+    )
+    let done = app.buttons["conjugations.explanation.done"]
+    XCTAssertTrue(done.isHittable, file: file, line: line)
+    done.tap()
+    XCTAssertTrue(explanation.waitForNonExistence(timeout: 3), file: file, line: line)
   }
 
   @MainActor
@@ -3561,7 +3697,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     for query: String,
     resultLabelPrefix: String,
     in app: XCUIApplication,
-    searchField: XCUIElement
+    searchField: XCUIElement,
+    verifyEntry: ((XCUIApplication) -> Void)? = nil
   ) {
     submitSearch(query, in: app, searchField: searchField)
     let result = app.buttons.matching(
@@ -3569,10 +3706,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     ).firstMatch
     XCTAssertTrue(result.waitForExistence(timeout: 3))
     result.tap()
+    verifyEntry?(app)
     let conjugations = app.buttons["word-detail.conjugations"]
     XCTAssertTrue(conjugations.waitForExistence(timeout: 3))
     conjugations.tap()
-    XCTAssertTrue(app.scrollViews["conjugations.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["conjugations.screen"].waitForExistence(timeout: 3))
   }
 
   @MainActor

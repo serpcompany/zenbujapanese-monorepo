@@ -557,6 +557,7 @@ private struct PartOfSpeechRow: View {
             .foregroundStyle(.secondary)
         } label: {
           Text(title.isEmpty ? "Dictionary entry" : title)
+            .accessibilityIdentifier(entryVerificationIdentifier)
         }
         .font(.body)
       }
@@ -565,7 +566,12 @@ private struct PartOfSpeechRow: View {
       Text(title.isEmpty ? "Dictionary entry" : title)
         .font(.headline)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityIdentifier(entryVerificationIdentifier)
     }
+  }
+
+  private var entryVerificationIdentifier: String {
+    "word-detail.entry.\(entry.id.rawValue)"
   }
 }
 

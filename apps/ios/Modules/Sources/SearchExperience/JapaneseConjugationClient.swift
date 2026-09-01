@@ -74,26 +74,6 @@ struct ConjugatedForm: Hashable, Identifiable, Sendable {
     case modifyingANoun = "modifying-a-noun"
     case adverb
     case noun
-
-    var title: String {
-      switch self {
-      case .presentFuture: "Present/Future"
-      case .past: "Past"
-      case .negative: "Negative"
-      case .pastNegative: "Past Negative"
-      case .teForm: "Te-Form"
-      case .potential: "Potential"
-      case .passive: "Passive"
-      case .causative: "Causative"
-      case .conditional: "Conditional"
-      case .volitional: "Volitional"
-      case .imperative: "Imperative"
-      case .standalone: "Standalone"
-      case .modifyingANoun: "Modifying a Noun"
-      case .adverb: "Adverb"
-      case .noun: "Noun"
-      }
-    }
   }
 }
 

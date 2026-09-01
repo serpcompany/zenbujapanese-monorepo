@@ -366,6 +366,146 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testDarkTsubusuConjugationsRemainReadableAtLargestAccessibilityTextSize() throws {
+    try auditTsubusuConjugations(appearance: .dark, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  func testLightTsubusuConjugationsRemainReadableAtLargestAccessibilityTextSize() throws {
+    try auditTsubusuConjugations(appearance: .light, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  func testDarkTsubusuConjugationsRemainCompactAtDefaultTextSize() throws {
+    try auditTsubusuConjugations(appearance: .dark, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testLightTsubusuConjugationsRemainCompactAtDefaultTextSize() throws {
+    try auditTsubusuConjugations(appearance: .light, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  private func auditTsubusuConjugations(
+    appearance: XCUIDevice.Appearance,
+    accessibilityXXXL: Bool
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let contentSizeArguments =
+      accessibilityXXXL
+      ? ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+      : []
+    let app = launchApp(appearance: appearance, additionalArguments: contentSizeArguments)
+    try submitSearch("潰す", in: app)
+    let result = app.buttons.matching(
+      NSPredicate(
+        format: "label BEGINSWITH %@", ConjugationUITestSupport.tsubusuResultPrefix)
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 5))
+    result.tap()
+    ConjugationUITestSupport.assertTsubusuEntry(in: app)
+
+    let wordDetail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(wordDetail.waitForExistence(timeout: 5))
+    let conjugations = app.buttons["word-detail.conjugations"]
+    for _ in 0..<12 where !conjugations.exists || !conjugations.isHittable {
+      wordDetail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(conjugations.isHittable)
+    conjugations.tap()
+
+    let screen = app.descendants(matching: .any)["conjugations.screen"]
+    XCTAssertTrue(screen.waitForExistence(timeout: 5))
+    let rowIDs = ConjugationUITestSupport.verbRowIDs
+    assertAccessibleConjugationRows(
+      rowIDs,
+      in: app,
+      list: screen,
+      accessibilityXXXL: accessibilityXXXL
+    )
+    let sizeName = accessibilityXXXL ? "accessibility XXXL" : "default"
+    let focusedAuditTypes =
+      XCUIAccessibilityAuditType.dynamicType
+      .union(.textClipped)
+      .union(.hitRegion)
+    try performAudit(
+      in: app,
+      named: "潰す conjugations - \(appearance) \(sizeName)",
+      types: focusedAuditTypes
+    )
+
+    let polite = app.buttons["conjugations.mode.polite"]
+    XCTAssertTrue(polite.isHittable)
+    polite.tap()
+    assertAccessibleConjugationRows(
+      rowIDs,
+      in: app,
+      list: screen,
+      accessibilityXXXL: accessibilityXXXL
+    )
+    try performAudit(
+      in: app,
+      named: "潰す polite conjugations - \(appearance) \(sizeName)",
+      types: focusedAuditTypes
+    )
+  }
+
+  @MainActor
+  private func assertAccessibleConjugationRows(
+    _ rowIDs: [String],
+    in app: XCUIApplication,
+    list: XCUIElement,
+    accessibilityXXXL: Bool,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let visibleTop = max(app.navigationBars.firstMatch.frame.maxY, list.frame.minY)
+    let visibleBottom = app.tabBars.firstMatch.frame.minY
+    var previousRowHeight: CGFloat?
+    for id in rowIDs {
+      let section = ConjugationUITestSupport.reachSection(
+        id,
+        in: app,
+        list: list,
+        visibleTop: visibleTop,
+        visibleBottom: visibleBottom
+      )
+      let row = section.row
+      guard row.exists else {
+        XCTFail("Missing conjugation row \(id)", file: file, line: line)
+        return
+      }
+      XCTAssertGreaterThanOrEqual(row.frame.minX, app.frame.minX, file: file, line: line)
+      XCTAssertLessThanOrEqual(row.frame.maxX, app.frame.maxX, file: file, line: line)
+      XCTAssertGreaterThanOrEqual(section.title.frame.minY, visibleTop, file: file, line: line)
+      XCTAssertLessThanOrEqual(row.frame.maxY, visibleBottom, file: file, line: line)
+      XCTAssertTrue(row.isHittable, file: file, line: line)
+      let maximumHeight: CGFloat = accessibilityXXXL ? (id == "present-future" ? 150 : 190) : 100
+      XCTAssertLessThanOrEqual(row.frame.height, maximumHeight, file: file, line: line)
+      if let previousRowHeight {
+        XCTAssertLessThanOrEqual(
+          abs(row.frame.height - previousRowHeight),
+          accessibilityXXXL ? 50 : 24,
+          file: file,
+          line: line
+        )
+      }
+      previousRowHeight = row.frame.height
+      ConjugationUITestSupport.assertSectionChrome(section, file: file, line: line)
+    }
+
+    ConjugationUITestSupport.restoreTop(in: app, list: list)
+    let firstRow = app.descendants(matching: .any)["conjugations.row.present-future"]
+    let modePicker = app.descendants(matching: .any)["conjugations.mode"]
+    XCTAssertTrue(firstRow.exists, file: file, line: line)
+    XCTAssertTrue(modePicker.isHittable, file: file, line: line)
+    XCTAssertGreaterThanOrEqual(modePicker.frame.height, 35, file: file, line: line)
+  }
+
+  @MainActor
   private func verifyKanjiElementDetailAtLargestAccessibilityTextSize(
     appearance: XCUIDevice.Appearance
   ) throws {
@@ -700,7 +840,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     let conjugations = app.buttons["word-detail.conjugations"]
     XCTAssertTrue(conjugations.waitForExistence(timeout: 4))
     conjugations.tap()
-    XCTAssertTrue(app.scrollViews["conjugations.screen"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.collectionViews["conjugations.screen"].waitForExistence(timeout: 4))
     XCTAssertTrue(
       app.descendants(matching: .any)["conjugations.row.present-future"].waitForExistence(
         timeout: 3))
