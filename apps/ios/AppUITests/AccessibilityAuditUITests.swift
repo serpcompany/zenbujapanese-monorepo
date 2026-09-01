@@ -22,6 +22,16 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testLightImageTextNativeControlsRemainAccessibleAtLargestTextSize() throws {
+    try auditImageTextNativeControls(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkImageTextNativeControlsRemainAccessibleAtLargestTextSize() throws {
+    try auditImageTextNativeControls(appearance: .dark)
+  }
+
+  @MainActor
   func testLightRecentSearchDeleteActionHasReadableSystemContrast() throws {
     try auditRecentSearchDeleteAction(appearance: .light)
   }
@@ -690,6 +700,34 @@ final class AccessibilityAuditUITests: XCTestCase {
 
   private var auditTypes: XCUIAccessibilityAuditType {
     .all
+  }
+
+  @MainActor
+  private func auditImageTextNativeControls(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-StartImageTextFixtures", "fixture-clear-horizontal.png",
+        "-InjectImageTextTranslation",
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    let close = app.buttons["image-text.close"]
+    XCTAssertTrue(close.waitForExistence(timeout: 20))
+    XCTAssertTrue(
+      app.descendants(matching: .any)["image-text.raw-text"].waitForExistence(timeout: 20))
+    for identifier in ["image-text.close", "image-text.highlights", "image-text.share"] {
+      let action = app.buttons[identifier]
+      XCTAssertTrue(action.exists)
+      XCTAssertTrue(action.isHittable)
+    }
+    try performAudit(in: app, named: "Image Text native controls - \(appearance)")
   }
 
   @MainActor

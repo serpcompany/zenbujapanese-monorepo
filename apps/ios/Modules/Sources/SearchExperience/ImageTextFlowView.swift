@@ -3,7 +3,6 @@ import UIKit
 
 struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
-  @State private var sharedAsset: ImageTextAsset?
   let close: () -> Void
   let openWord: (DictionaryEntry, ImageTextAsset) -> Void
 
@@ -32,10 +31,7 @@ struct ImageTextFlowView: View {
         if model.canRequestTranslation {
           translation
         }
-        page
-        if model.pages.count > 1 {
-          pageIndicators
-        }
+        pages
       }
       .frame(
         width: geometry.size.width,
@@ -43,7 +39,6 @@ struct ImageTextFlowView: View {
         alignment: .top
       )
     }
-    .accessibilityHidden(sharedAsset != nil)
     .background(ZenbuTheme.background)
     .navigationTitle("Photo")
     .navigationBarTitleDisplayMode(.inline)
@@ -85,14 +80,6 @@ struct ImageTextFlowView: View {
     } message: {
       Text("Japanese text was not found in this image.")
     }
-    .sheet(
-      item: $sharedAsset,
-      onDismiss: { sharedAsset = nil },
-      content: { asset in
-        ImageActivityView(asset: asset)
-          .ignoresSafeArea()
-      }
-    )
   }
 
   @ViewBuilder
@@ -142,12 +129,16 @@ struct ImageTextFlowView: View {
 
       if model.pages.indices.contains(model.selectedPage) {
         let asset = model.pages[model.selectedPage].asset
-        Button {
-          sharedAsset = asset
-        } label: {
-          Label("Share Image", systemImage: "photo")
+        if let sharedImage = UIImage(data: asset.data) {
+          let image = Image(uiImage: sharedImage)
+          ShareLink(
+            item: image,
+            preview: SharePreview(asset.name, image: image)
+          ) {
+            Label("Share Image", systemImage: "photo")
+          }
+          .accessibilityIdentifier("image-text.share-image")
         }
-        .accessibilityIdentifier("image-text.share-image")
       }
     } label: {
       Image(systemName: "square.and.arrow.up")
@@ -156,69 +147,54 @@ struct ImageTextFlowView: View {
     .accessibilityIdentifier("image-text.share")
   }
 
+  private var pages: some View {
+    TabView(selection: selectedPage) {
+      ForEach(Array(model.pages.enumerated()), id: \.element.id) { index, page in
+        pageContent(page)
+          .tag(index)
+          .accessibilityHidden(index != model.selectedPage)
+      }
+    }
+    .tabViewStyle(.page(indexDisplayMode: model.pages.count > 1 ? .automatic : .never))
+    .indexViewStyle(.page(backgroundDisplayMode: .interactive))
+    .accessibilityIdentifier("image-text.pages")
+  }
+
+  private var selectedPage: Binding<Int> {
+    Binding {
+      model.selectedPage
+    } set: { index in
+      model.selectPage(index)
+    }
+  }
+
   @ViewBuilder
-  private var page: some View {
-    if model.pages.indices.contains(model.selectedPage) {
-      switch model.pages[model.selectedPage].state {
-      case .loading:
-        ProgressView("Recognizing Japanese text…")
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .accessibilityIdentifier("image-text.loading")
-      case .failed:
-        VStack(spacing: 14) {
-          Text("Image text unavailable")
-          Text("Close and choose the file again.")
-            .foregroundStyle(ZenbuTheme.secondaryText)
-        }
+  private func pageContent(_ modelPage: ImageTextFlowModel.Page) -> some View {
+    switch modelPage.state {
+    case .loading:
+      ProgressView("Recognizing Japanese text…")
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-      case .loaded(let page):
-        ImageTextCanvas(
-          page: page,
-          showsHighlights: model.showsHighlights,
-          selectedRegion: model.selectedRegion,
-          selectRegion: { model.selectedRegion = $0 },
-          openWord: {
-            model.selectedRegion = nil
-            openWord($0, page.asset)
-          }
-        )
+        .accessibilityIdentifier("image-text.loading")
+    case .failed:
+      VStack(spacing: 14) {
+        Text("Image text unavailable")
+        Text("Close and choose the file again.")
+          .foregroundStyle(ZenbuTheme.secondaryText)
       }
-    }
-  }
-
-  private var pageIndicators: some View {
-    HStack(spacing: 12) {
-      ForEach(model.pages.indices, id: \.self) { index in
-        Button {
-          model.selectPage(index)
-        } label: {
-          Circle()
-            .fill(
-              index == model.selectedPage
-                ? ZenbuTheme.foreground : ZenbuTheme.mutedForeground.opacity(0.3)
-            )
-            .frame(width: 10, height: 10)
-            .frame(width: 36, height: 36)
-            .contentShape(Rectangle())
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+    case .loaded(let page):
+      ImageTextCanvas(
+        page: page,
+        showsHighlights: model.showsHighlights,
+        selectedRegion: model.selectedRegion,
+        selectRegion: { model.selectedRegion = $0 },
+        openWord: {
+          model.selectedRegion = nil
+          openWord($0, page.asset)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Page \(index + 1) of \(model.pages.count)")
-        .accessibilityIdentifier("image-text.page.\(index + 1)")
-      }
+      )
     }
-    .frame(height: 38)
   }
-}
-
-private struct ImageActivityView: UIViewControllerRepresentable {
-  let asset: ImageTextAsset
-
-  func makeUIViewController(context: Context) -> UIActivityViewController {
-    let item: Any = UIImage(data: asset.data) ?? asset.data
-    return UIActivityViewController(activityItems: [item], applicationActivities: nil)
-  }
-
-  func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 private struct ImageTextCanvas: View {

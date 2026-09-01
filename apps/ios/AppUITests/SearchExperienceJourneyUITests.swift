@@ -91,6 +91,21 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testImageTextFilesSourceCancelsWithoutReportingAnImportFailure() throws {
+    let app = launchApp()
+    app.buttons["search.image-source"].tap()
+    app.buttons.matching(identifier: "image-source.files").firstMatch.tap()
+
+    let cancel = app.buttons["Cancel"]
+    XCTAssertTrue(cancel.waitForExistence(timeout: 5))
+    cancel.tap()
+
+    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertFalse(app.alerts["Unable to Import Images"].exists)
+    XCTAssertFalse(app.buttons["image-text.close"].exists)
+  }
+
+  @MainActor
   private func waitForSystemDocumentPicker(in app: XCUIApplication) -> XCUIElement {
     let picker = app.windows.element(boundBy: 1)
     XCTAssertTrue(picker.waitForExistence(timeout: 5))
@@ -296,10 +311,14 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(copyText.waitForExistence(timeout: 2))
     XCTAssertTrue(app.buttons.matching(identifier: "image-text.share-image").firstMatch.exists)
     app.buttons.matching(identifier: "image-text.share-image").firstMatch.tap()
-    let activityClose = app.buttons["header.closeButton"]
-    XCTAssertTrue(activityClose.waitForExistence(timeout: 3))
-    activityClose.tap()
-    XCTAssertTrue(activityClose.waitForNonExistence(timeout: 3))
+    let shareSheet = app.otherElements["ShareSheet.RemoteContainerView"]
+    XCTAssertTrue(shareSheet.waitForExistence(timeout: 3))
+    XCTAssertTrue(app.navigationBars["fixture-clear-horizontal.png"].exists)
+    XCTAssertTrue(shareSheet.images.firstMatch.exists)
+    let dismissShareSheet = app.otherElements["PopoverDismissRegion"]
+    XCTAssertTrue(dismissShareSheet.exists)
+    dismissShareSheet.tap()
+    XCTAssertTrue(shareSheet.waitForNonExistence(timeout: 3))
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
     assertImageTextToolbarIsHittable(in: app)
 
@@ -531,6 +550,65 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(relaunched.textFields["search.field"].waitForExistence(timeout: 3))
     XCTAssertFalse(relaunched.buttons["image-text.close"].exists)
     recordSettledScreenshot(named: "image-text-cold-relaunch-search", app: relaunched)
+  }
+
+  @MainActor
+  func testImageTextMultipleImagesUseNativePagingWithoutCustomPageButtons() throws {
+    let names = [
+      "fixture-clear-horizontal.png",
+      "fixture-vertical.png",
+    ]
+    let app = launchImageTextFixtures(names)
+
+    XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
+    XCTAssertTrue(
+      app.descendants(matching: .any)["image-text.current-page"].waitForExistence(timeout: 20)
+    )
+    XCTAssertFalse(app.buttons["image-text.page.1"].exists)
+    XCTAssertFalse(app.buttons["image-text.page.2"].exists)
+    XCTAssertTrue(app.pageIndicators.firstMatch.exists)
+    XCTAssertFalse(
+      app.descendants(matching: .any).matching(
+        NSPredicate(
+          format: "identifier == %@ AND label CONTAINS %@",
+          "image-text.current-page", "fixture-vertical")
+      ).firstMatch.exists
+    )
+    XCTAssertTrue(selectImageTextPage(named: "fixture-vertical", pageCount: names.count, in: app))
+    XCTAssertFalse(
+      app.descendants(matching: .any).matching(
+        NSPredicate(
+          format: "identifier == %@ AND label CONTAINS %@",
+          "image-text.current-page", "fixture-clear-horizontal")
+      ).firstMatch.exists
+    )
+    XCTAssertTrue(
+      selectImageTextPage(named: "fixture-clear-horizontal", pageCount: names.count, in: app))
+  }
+
+  @MainActor
+  func testImageTextRecognitionFailureKeepsExplicitCloseRecovery() throws {
+    let app = launchApp(additionalArguments: [
+      "-StartImageTextFixtures", "fixture-clear-horizontal.png",
+      "-InjectImageTextRecognitionFailure",
+    ])
+
+    XCTAssertTrue(app.staticTexts["Image text unavailable"].waitForExistence(timeout: 10))
+    XCTAssertTrue(app.staticTexts["Close and choose the file again."].exists)
+    XCTAssertFalse(app.descendants(matching: .any)["image-text.raw-text"].exists)
+    XCTAssertFalse(app.buttons["BackButton"].exists)
+
+    let window = app.windows.firstMatch
+    window.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+      .press(
+        forDuration: 0.1,
+        thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5))
+      )
+    XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
+    XCTAssertFalse(app.textFields["search.field"].exists)
+
+    app.buttons["image-text.close"].tap()
+    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
   }
 
   @MainActor
@@ -3707,10 +3785,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     in app: XCUIApplication
   ) -> Bool {
     let currentPage = app.descendants(matching: .any)["image-text.current-page"]
-    for index in 1...pageCount {
-      let page = app.buttons["image-text.page.\(index)"]
-      guard page.waitForExistence(timeout: 5) else { continue }
-      page.tap()
+    let pages = app.collectionViews["image-text.pages"]
+    guard currentPage.waitForExistence(timeout: 5) else { return false }
+    guard pages.waitForExistence(timeout: 5) else { return false }
+    if currentPage.label.contains(name) { return true }
+
+    for _ in 1..<pageCount {
+      pages.swipeRight()
+    }
+    if currentPage.waitForExistence(timeout: 3), currentPage.label.contains(name) { return true }
+
+    for _ in 1..<pageCount {
+      pages.swipeLeft()
       if currentPage.waitForExistence(timeout: 3), currentPage.label.contains(name) { return true }
     }
     return false

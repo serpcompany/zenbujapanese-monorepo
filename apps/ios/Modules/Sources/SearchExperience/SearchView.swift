@@ -1,5 +1,7 @@
+@preconcurrency import PhotosUI
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 struct SearchView: View {
   @Binding var query: String
@@ -10,7 +12,6 @@ struct SearchView: View {
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
   let openImageText: ([ImageTextAsset]) -> Void
-  let imageImportInitialDirectory: URL?
   @State private var results = LookupSearchResults.empty
   @State private var presentationState = SearchPresentationState.idle
   @State private var retryID = 0
@@ -19,6 +20,9 @@ struct SearchView: View {
   @State private var exampleCount = 0
   @State private var showsImageSources = false
   @State private var presentedImageSource: ImageSourceSheet?
+  @State private var showsPhotoLibrary = false
+  @State private var selectedPhotoItems: [PhotosPickerItem] = []
+  @State private var showsFileImporter = false
   @State private var imageImportAlert: ImageImportAlert?
   @State private var isShowingImageImportAlert = false
   @State private var imageImportTask: Task<Void, Never>?
@@ -181,7 +185,7 @@ struct SearchView: View {
         .accessibilityIdentifier("image-source.camera")
       Button("Photo Library") { presentPhotoLibrary() }
         .accessibilityIdentifier("image-source.photo-library")
-      Button("Files") { presentedImageSource = .files }
+      Button("Files") { showsFileImporter = true }
         .accessibilityIdentifier("image-source.files")
       Button("Cancel", role: .cancel) {}
     }
@@ -193,20 +197,24 @@ struct SearchView: View {
           importCameraImage(result)
         }
         .ignoresSafeArea()
-      case .photoLibrary:
-        ImagePhotoLibraryPicker { result in
-          presentedImageSource = nil
-          importPhotoLibraryImages(result)
-        }
-        .ignoresSafeArea()
-      case .files:
-        ImageFilePicker(initialDirectory: imageImportInitialDirectory) { result in
-          presentedImageSource = nil
-          importImages(result)
-        }
-        .ignoresSafeArea()
       }
     }
+    .photosPicker(
+      isPresented: $showsPhotoLibrary,
+      selection: $selectedPhotoItems,
+      maxSelectionCount: 1,
+      matching: .images
+    )
+    .onChange(of: selectedPhotoItems) { _, items in
+      importPhotoLibraryItems(items)
+    }
+    .fileImporter(
+      isPresented: $showsFileImporter,
+      allowedContentTypes: [.image],
+      allowsMultipleSelection: true,
+      onCompletion: importImages,
+      onCancellation: {}
+    )
     .alert(
       imageImportAlert?.title ?? "",
       isPresented: $isShowingImageImportAlert,
@@ -310,9 +318,15 @@ struct SearchView: View {
 
   private func importImages(_ result: Result<[URL], Error>) {
     guard case .success(let urls) = result else {
+      if case .failure(let error) = result,
+        error is CancellationError || (error as? CocoaError)?.code == .userCancelled
+      {
+        return
+      }
       presentImageImportAlert(.importFailure("The Files selection could not be read."))
       return
     }
+    guard !urls.isEmpty else { return }
     imageImportTask?.cancel()
     imageImportTask = Task {
       var assets: [ImageTextAsset] = []
@@ -374,7 +388,8 @@ struct SearchView: View {
         return
       }
     #endif
-    presentedImageSource = .photoLibrary
+    selectedPhotoItems = []
+    showsPhotoLibrary = true
   }
 
   private func importCameraImage(_ result: Result<ImageTextAsset?, Error>) {
@@ -386,12 +401,28 @@ struct SearchView: View {
     }
   }
 
-  private func importPhotoLibraryImages(_ result: Result<[ImageTextAsset], Error>) {
-    switch result {
-    case .success(let assets):
-      if !assets.isEmpty { openImageText(assets) }
-    case .failure:
-      presentImageImportAlert(.importFailure("The selected photos could not be read."))
+  private func importPhotoLibraryItems(_ items: [PhotosPickerItem]) {
+    guard !items.isEmpty else { return }
+    imageImportTask?.cancel()
+    imageImportTask = Task {
+      do {
+        var assets: [ImageTextAsset] = []
+        for item in items {
+          guard let selected = try await item.loadTransferable(type: SelectedImageTextPhoto.self)
+          else { continue }
+          assets.append(selected.asset)
+        }
+        guard !Task.isCancelled else { return }
+        guard !assets.isEmpty else { throw ImageSourcePickerError.unreadableImage }
+        selectedPhotoItems = []
+        openImageText(assets)
+      } catch is CancellationError {
+        return
+      } catch {
+        selectedPhotoItems = []
+        presentImageImportAlert(.importFailure("The selected photos could not be read."))
+      }
+      imageImportTask = nil
     }
   }
 
@@ -442,10 +473,25 @@ private enum ImageImportAlert: Identifiable {
 
 private enum ImageSourceSheet: String, Identifiable {
   case camera
-  case photoLibrary
-  case files
 
   var id: String { rawValue }
+}
+
+private struct SelectedImageTextPhoto: Transferable {
+  let asset: ImageTextAsset
+
+  static var transferRepresentation: some TransferRepresentation {
+    FileRepresentation(importedContentType: .image) { received in
+      guard
+        let asset = ImageTextAsset(
+          photoLibraryImageAt: received.file,
+          name: received.file.lastPathComponent)
+      else {
+        throw ImageSourcePickerError.unreadableImage
+      }
+      return SelectedImageTextPhoto(asset: asset)
+    }
+  }
 }
 
 private struct SearchTaskID: Hashable {

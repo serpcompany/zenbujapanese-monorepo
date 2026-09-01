@@ -25,7 +25,6 @@ public struct SearchExperienceRootView: View {
   private let kanjiStrokeOrderClient: KanjiStrokeOrderClient
   private let kanjiElementLookupClient: KanjiElementLookupClient
   private let japaneseConjugationClient = JapaneseConjugationClient.live
-  private let imageImportInitialDirectory: URL?
   private let imageTextRecognitionClient: ImageTextRecognitionClient
   private let naturalTranslationClient: NaturalTranslationClient
   #if DEBUG
@@ -46,7 +45,7 @@ public struct SearchExperienceRootView: View {
       speechSynthesisClient = SpeechSynthesisClient.clientFromProcessArguments() ?? .live
       kanjiStrokeOrderClient = KanjiStrokeOrderClient.clientFromProcessArguments() ?? .live
       kanjiElementLookupClient = KanjiElementLookupClient.clientFromProcessArguments() ?? .live
-      imageImportInitialDirectory = ImageTextTestFixtures.prepareIfRequested()
+      let imageImportInitialDirectory = ImageTextTestFixtures.prepareIfRequested()
       imageTextRecognitionClient =
         ImageTextRecognitionFixture.clientFromProcessArguments(live: .live) ?? .live
       naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live
@@ -67,7 +66,6 @@ public struct SearchExperienceRootView: View {
       speechSynthesisClient = .live
       kanjiStrokeOrderClient = .live
       kanjiElementLookupClient = .live
-      imageImportInitialDirectory = nil
       imageTextRecognitionClient = .live
       naturalTranslationClient = .live
     #endif
@@ -134,8 +132,7 @@ public struct SearchExperienceRootView: View {
           let session = ImageTextSession(assets: assets)
           imageTextSessionStore.insert(session)
           path.append(.image(session.id))
-        },
-        imageImportInitialDirectory: imageImportInitialDirectory
+        }
       )
       .navigationDestination(for: SearchExperienceRoute.self) { route in
         switch route {
