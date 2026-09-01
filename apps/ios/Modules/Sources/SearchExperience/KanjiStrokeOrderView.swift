@@ -25,7 +25,7 @@ struct KanjiStrokeOrderView: View {
         Button {
           stepPrevious()
         } label: {
-          Image(systemName: "backward.end.fill")
+          Image(systemName: "chevron.backward")
         }
         .disabled(completedStrokeCount == 0 && activeStrokeProgress == 0)
         .accessibilityLabel("Previous stroke")
@@ -43,7 +43,7 @@ struct KanjiStrokeOrderView: View {
         Button {
           stepNext()
         } label: {
-          Image(systemName: "forward.end.fill")
+          Image(systemName: "chevron.forward")
         }
         .disabled(completedStrokeCount == diagram.strokes.count)
         .accessibilityLabel("Next stroke")

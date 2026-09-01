@@ -5,14 +5,14 @@ import XCTest
 @testable import SearchExperience
 
 final class ZenbuThemeAccessibilityTests: XCTestCase {
-  func testBrandTintRemainsReadableOnSystemBackgrounds() throws {
+  func testRecognitionHighlightRemainsDistinctFromSystemBackgrounds() throws {
     for style in [UIUserInterfaceStyle.light, .dark] {
-      let foreground = try resolvedRGB(ZenbuTheme.interactiveTint, style: style)
+      let foreground = try resolvedRGB(ZenbuTheme.recognitionHighlight, style: style)
       let background = try resolvedRGB(Color(uiColor: .systemBackground), style: style)
       XCTAssertGreaterThanOrEqual(
         contrastRatio(foreground, background),
-        4.5,
-        "Zenbu's native-control tint must remain readable, \(style)."
+        3.0,
+        "Recognition highlight, \(style)."
       )
     }
   }
@@ -25,30 +25,23 @@ final class ZenbuThemeAccessibilityTests: XCTestCase {
     }
   }
 
-  func testSemanticActionFillsSupportSystemWhiteText() throws {
+  func testStrokeProgressRemainsDistinctFromSystemBackgrounds() throws {
     for style in [UIUserInterfaceStyle.light, .dark] {
-      let glyph = try resolvedRGB(.white, style: style)
-      let actionFill = try resolvedRGB(ZenbuTheme.prominentActionFill, style: style)
+      let foreground = try resolvedRGB(ZenbuTheme.strokeProgress, style: style)
+      let background = try resolvedRGB(Color(uiColor: .systemBackground), style: style)
       XCTAssertGreaterThanOrEqual(
-        contrastRatio(glyph, actionFill), 4.5, "Prominent action text, \(style)")
+        contrastRatio(foreground, background), 3.0, "Stroke progress, \(style)")
     }
   }
 
-  func testDomainVisualizationColorsRemainDistinctFromSystemSurfaces() throws {
+  func testPitchDownstepRemainsDistinctFromSystemBackgrounds() throws {
     for style in [UIUserInterfaceStyle.light, .dark] {
       let systemBackground = Color(uiColor: .systemBackground)
-      let pairs: [(name: String, foreground: Color, background: Color)] = [
-        ("recognition highlight", ZenbuTheme.recognitionHighlight, systemBackground),
-        ("stroke progress", ZenbuTheme.strokeProgress, systemBackground),
-        ("pitch downstep", ZenbuTheme.pitchDownstep, systemBackground),
-      ]
-      for pair in pairs {
-        let ratio = contrastRatio(
-          try resolvedRGB(pair.foreground, style: style),
-          try resolvedRGB(pair.background, style: style)
-        )
-        XCTAssertGreaterThanOrEqual(ratio, 3.0, "\(pair.name), \(style)")
-      }
+      let ratio = contrastRatio(
+        try resolvedRGB(ZenbuTheme.pitchDownstep, style: style),
+        try resolvedRGB(systemBackground, style: style)
+      )
+      XCTAssertGreaterThanOrEqual(ratio, 3.0, "Pitch downstep, \(style)")
     }
   }
 

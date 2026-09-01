@@ -89,7 +89,6 @@ struct ImageTextFlowView: View {
         model.requestTranslation()
       }
       .buttonStyle(.borderedProminent)
-      .tint(ZenbuTheme.prominentActionFill)
       .padding(.vertical, 8)
       .accessibilityIdentifier("image-text.translate")
     case .translating:
@@ -120,7 +119,7 @@ struct ImageTextFlowView: View {
       Button {
         UIPasteboard.general.string = model.copiedText
       } label: {
-        Label("Copy Text", systemImage: "doc.on.doc")
+        Label("Copy Text", systemImage: "document.on.document")
       }
       .accessibilityIdentifier("image-text.copy-text")
 

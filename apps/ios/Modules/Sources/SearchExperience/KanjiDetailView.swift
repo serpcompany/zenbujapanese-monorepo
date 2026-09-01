@@ -49,7 +49,6 @@ struct KanjiDetailView: View {
             } actions: {
               Button("Retry", action: retry)
                 .buttonStyle(.borderedProminent)
-                .tint(ZenbuTheme.prominentActionFill)
                 .accessibilityIdentifier("kanji-detail.retry")
             }
           }
@@ -334,7 +333,7 @@ private struct KanjiOverview: View {
       Button {
         openStrokeOrder(strokeDiagram)
       } label: {
-        Image(systemName: "arrow.down.right.and.arrow.up.left")
+        Image(systemName: "pencil.and.scribble")
           .font(.caption.weight(.bold))
       }
       .buttonStyle(.bordered)

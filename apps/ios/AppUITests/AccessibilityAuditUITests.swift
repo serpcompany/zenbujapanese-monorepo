@@ -1,3 +1,4 @@
+import UIKit
 import XCTest
 
 private struct AuditException: CustomStringConvertible {
@@ -21,6 +22,81 @@ private struct AuditException: CustomStringConvertible {
 }
 
 final class AccessibilityAuditUITests: XCTestCase {
+  @MainActor
+  func testOrdinaryActionsDoNotShareTheSystemDestructiveColor() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    var app = launchApp(appearance: .light, additionalArguments: ["-ResetRecentSearches"])
+    let searchTab = app.tabBars.buttons["Search"]
+    XCTAssertTrue(searchTab.waitForExistence(timeout: 3))
+    XCTAssertFalse(
+      containsRedPixels(in: searchTab.screenshot()),
+      "An ordinary selected tab must not share the system destructive color."
+    )
+
+    try submitSearch("日本", in: app)
+    app.terminate()
+    app = launchApp(appearance: .light)
+    let recentSearch = app.buttons["recent-search.0"]
+    XCTAssertTrue(recentSearch.waitForExistence(timeout: 3))
+    recentSearch.swipeLeft()
+    let delete = app.buttons["Delete"]
+    XCTAssertTrue(delete.waitForExistence(timeout: 3))
+    XCTAssertTrue(
+      containsRedPixels(in: delete.screenshot()),
+      "A destructive Delete action must retain the system destructive color."
+    )
+    app.terminate()
+
+    try stageImageTextFixture(appearance: .light)
+    app = launchApp(
+      appearance: .light,
+      additionalArguments: [
+        "-StartImageTextFixtures", "fixture-clear-horizontal.png",
+      ]
+    )
+    let translate = app.buttons["image-text.translate"]
+    XCTAssertTrue(translate.waitForExistence(timeout: 20))
+    XCTAssertFalse(
+      containsRedPixels(in: translate.screenshot()),
+      "Translate is an ordinary prominent action and must use the system accent."
+    )
+    let close = app.buttons["image-text.close"]
+    XCTAssertTrue(close.isHittable)
+    XCTAssertFalse(
+      containsRedPixels(in: close.screenshot()),
+      "Close is an ordinary cancellation action and must use the system accent."
+    )
+  }
+
+  @MainActor
+  func testStrokeOrderStepActionsUseDirectionalSymbols() throws {
+    let app = launchApp(appearance: .light)
+    try submitSearch("山", in: app)
+    let mountain = app.buttons["result.kanji-primary.山"]
+    XCTAssertTrue(mountain.waitForExistence(timeout: 4))
+    mountain.tap()
+    let strokeOrder = app.buttons["kanji-detail.stroke-order"]
+    XCTAssertTrue(strokeOrder.waitForExistence(timeout: 4))
+    strokeOrder.tap()
+
+    let next = app.buttons["stroke-order.next"]
+    XCTAssertTrue(next.waitForExistence(timeout: 3))
+    XCTAssertTrue(next.isHittable)
+    XCTAssertLessThan(
+      foregroundPixelFraction(in: next.screenshot()),
+      0.34,
+      "A one-step action needs a directional stroke symbol, not a filled skip-to-end media glyph."
+    )
+    next.tap()
+    let previous = app.buttons["stroke-order.previous"]
+    XCTAssertTrue(previous.isEnabled)
+    previous.tap()
+    XCTAssertEqual(app.descendants(matching: .any)["stroke-order.progress"].label, "Stroke 1 of 3")
+  }
+
   @MainActor
   func testLightRepresentativeExampleSentenceLayoutsRemainReadableAndOperable() throws {
     try auditRepresentativeExampleSentences(appearance: .light, accessibilityXXXL: false)
@@ -90,7 +166,8 @@ final class AccessibilityAuditUITests: XCTestCase {
     // inventory changes. Accessibility XXXL expands them enough to require zero exceptions.
     let expectedCompactRubyLinkExceptions: Set<String> =
       accessibilityXXXL
-      ? [] : [
+      ? []
+      : [
         "example.token.1.2.ろ",
         "example.token.2.2.持",
         "example.token.3.2.の",
@@ -1128,6 +1205,59 @@ final class AccessibilityAuditUITests: XCTestCase {
     screenshot.name = "Accessibility state - \(stateName)"
     screenshot.lifetime = .keepAlways
     add(screenshot)
+  }
+
+  private func containsRedPixels(in screenshot: XCUIScreenshot) -> Bool {
+    let pixels = sampledRGBAPixels(in: screenshot)
+    var redPixelCount = 0
+    for offset in stride(from: 0, to: pixels.count, by: 4) {
+      let red = Int(pixels[offset])
+      let green = Int(pixels[offset + 1])
+      let blue = Int(pixels[offset + 2])
+      if red >= 150, red >= green + 45, red >= blue + 35 {
+        redPixelCount += 1
+        if redPixelCount >= 24 { return true }
+      }
+    }
+    return false
+  }
+
+  private func foregroundPixelFraction(in screenshot: XCUIScreenshot) -> Double {
+    let pixels = sampledRGBAPixels(in: screenshot)
+    guard pixels.count >= 4 else { return 1 }
+    let background = (red: Int(pixels[0]), green: Int(pixels[1]), blue: Int(pixels[2]))
+    var foregroundCount = 0
+    for offset in stride(from: 0, to: pixels.count, by: 4) {
+      if abs(Int(pixels[offset]) - background.red)
+        + abs(Int(pixels[offset + 1]) - background.green)
+        + abs(Int(pixels[offset + 2]) - background.blue)
+        >= 80
+      {
+        foregroundCount += 1
+      }
+    }
+    return Double(foregroundCount) / Double(pixels.count / 4)
+  }
+
+  private func sampledRGBAPixels(in screenshot: XCUIScreenshot) -> [UInt8] {
+    guard let source = screenshot.image.cgImage else { return [] }
+    let scale = min(1, 256 / Double(max(source.width, source.height)))
+    let width = max(1, Int((Double(source.width) * scale).rounded()))
+    let height = max(1, Int((Double(source.height) * scale).rounded()))
+    var pixels = [UInt8](repeating: 0, count: width * height * 4)
+    guard
+      let context = CGContext(
+        data: &pixels,
+        width: width,
+        height: height,
+        bitsPerComponent: 8,
+        bytesPerRow: width * 4,
+        space: CGColorSpaceCreateDeviceRGB(),
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+      )
+    else { return [] }
+    context.draw(source, in: CGRect(x: 0, y: 0, width: width, height: height))
+    return pixels
   }
 
   @MainActor

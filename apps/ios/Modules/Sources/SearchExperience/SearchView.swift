@@ -87,7 +87,6 @@ struct SearchView: View {
               retryID += 1
             }
             .buttonStyle(.borderedProminent)
-            .tint(ZenbuTheme.prominentActionFill)
           }
           .padding(.vertical, 24)
         }

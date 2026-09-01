@@ -83,7 +83,6 @@ public struct SearchExperienceRootView: View {
         }
       }
     }
-    .tint(ZenbuTheme.interactiveTint)
     #if DEBUG
       .sheet(isPresented: $exportsImageFixtures) {
         ImageFileExporter(urls: imageFixtureExportURLs) {

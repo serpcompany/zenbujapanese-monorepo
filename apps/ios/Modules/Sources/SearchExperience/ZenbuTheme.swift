@@ -1,29 +1,26 @@
 import SwiftUI
 import UIKit
 
-/// App-owned color roles that communicate Zenbu identity or Japanese-learning evidence.
-/// Ordinary surfaces, text hierarchy, controls, and feedback deliberately use SwiftUI semantics.
+/// App-owned colors that communicate Japanese-learning evidence.
+/// Ordinary surfaces, text hierarchy, controls, and feedback use SwiftUI system semantics.
 enum ZenbuTheme {
-  /// Brand identity: the interactive tint used by the app shell and native controls.
-  static let interactiveTint = dynamic(
-    light: p3(0.692737, 0.116232, 0.104679),
-    dark: p3(0.980000, 0.550000, 0.540000)
-  )
-
-  /// Semantic action: a darker brand fill for native prominent buttons with system white text.
-  static let prominentActionFill = dynamic(
+  /// Domain visualization: selection evidence inside the purpose-specific Radical grid.
+  static let radicalSelection = dynamic(
     light: p3(0.692737, 0.116232, 0.104679),
     dark: p3(0.569606, 0.121069, 0.108493)
   )
 
-  /// Domain visualization: selection evidence inside the purpose-specific Radical grid.
-  static let radicalSelection = prominentActionFill
-
   /// Domain visualization: OCR region evidence over imported images.
-  static let recognitionHighlight = interactiveTint
+  static let recognitionHighlight = evidenceCoral
 
   /// Domain visualization: the currently animated kanji stroke and its start point.
-  static let strokeProgress = interactiveTint
+  static let strokeProgress = evidenceCoral
+
+  /// Shared rendering value for distinct red evidence roles, never ordinary control tint.
+  private static let evidenceCoral = dynamic(
+    light: p3(0.692737, 0.116232, 0.104679),
+    dark: p3(0.980000, 0.550000, 0.540000)
+  )
 
   /// Domain visualization: the downstep in a pitch-accent contour.
   static let pitchDownstep = dynamic(
