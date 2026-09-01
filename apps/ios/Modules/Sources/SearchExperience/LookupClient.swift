@@ -13,7 +13,7 @@ struct LookupClient: Sendable {
       if ProcessInfo.processInfo.arguments.contains("-InjectLookupFailure") {
         throw LookupClientError.injectedFailure
       }
-      if ProcessInfo.processInfo.arguments.contains("-InjectLookupFailureOnce"),
+      if injectedOneTimeFailureQuery() == query,
         await InjectedLookupFailure.shared.consumeFailure()
       {
         throw LookupClientError.injectedFailure
@@ -51,6 +51,17 @@ struct LookupClient: Sendable {
 #if DEBUG
 private enum LookupClientError: Error {
   case injectedFailure
+}
+
+private func injectedOneTimeFailureQuery() -> SearchQuery? {
+  let arguments = ProcessInfo.processInfo.arguments
+  guard
+    let argumentIndex = arguments.firstIndex(of: "-InjectLookupFailureOnceQuery"),
+    arguments.indices.contains(argumentIndex + 1)
+  else {
+    return nil
+  }
+  return SearchQuery(arguments[argumentIndex + 1])
 }
 
 private actor InjectedLookupFailure {

@@ -2289,7 +2289,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   func testLookupFailureIsNotPresentedAsNoMatchAndRetryRecovers() throws {
-    let app = launchApp(additionalArguments: ["-InjectLookupFailureOnce"])
+    let app = launchApp(
+      additionalArguments: ["-InjectLookupFailureOnceQuery", "think"])
 
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
@@ -2302,12 +2303,47 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(app.otherElements["search.no-results"].exists)
     recordScreenshot(named: "search-results-dictionary-failure", app: app)
 
+    app.buttons["search.cancel"].tap()
+    XCTAssertTrue(app.staticTexts["Dictionary unavailable"].waitForExistence(timeout: 2))
+    XCTAssertTrue(retry.exists)
+    XCTAssertFalse(resultButton(headword: "思う", in: app).exists)
+
     retry.tap()
 
     XCTAssertTrue(app.staticTexts["Best Matches"].waitForExistence(timeout: 3))
     XCTAssertTrue(resultButton(headword: "思う", in: app).exists)
+    XCTAssertEqual(
+      app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "思う, おもう,")).count,
+      1
+    )
     XCTAssertFalse(app.staticTexts["Dictionary unavailable"].exists)
     recordScreenshot(named: "search-results-recovered-after-retry", app: app)
+  }
+
+  @MainActor
+  func testEditingAFailedLookupReplacesTheFailureNormally() throws {
+    let app = launchApp(
+      additionalArguments: ["-InjectLookupFailureOnceQuery", "think"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+
+    searchField.tap()
+    searchField.typeText("think")
+    XCTAssertTrue(app.staticTexts["Dictionary unavailable"].waitForExistence(timeout: 3))
+
+    app.buttons["Clear text"].tap()
+    XCTAssertTrue(searchField.waitForExistence(timeout: 2))
+    XCTAssertFalse(app.staticTexts["Dictionary unavailable"].exists)
+    XCTAssertFalse(app.buttons["Retry"].exists)
+
+    searchField.typeText("日本")
+    XCTAssertTrue(app.buttons["result.japan"].waitForExistence(timeout: 3))
+    XCTAssertFalse(app.staticTexts["Dictionary unavailable"].exists)
+
+    app.buttons["Clear text"].tap()
+    searchField.typeText("think")
+    XCTAssertTrue(resultButton(headword: "思う", in: app).waitForExistence(timeout: 3))
+    XCTAssertFalse(app.buttons["Retry"].exists)
   }
 
   @MainActor

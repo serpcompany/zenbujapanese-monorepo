@@ -15,6 +15,7 @@ struct SearchView: View {
   @State private var results = LookupSearchResults.empty
   @State private var presentationState = SearchPresentationState.idle
   @State private var retryID = 0
+  @State private var settledSearchTaskID: SearchTaskID?
   @State private var inputMode = SearchInputMode.inactive
   @State private var sparseRadicalQuery: SearchQuery?
   @State private var exampleCount = 0
@@ -135,11 +136,14 @@ struct SearchView: View {
     .background(ZenbuTheme.background)
     .navigationTitle("Search")
     .onChange(of: query) { _, _ in
+      settledSearchTaskID = nil
       results = .empty
       exampleCount = 0
       presentationState = .idle
     }
-    .task(id: SearchTaskID(query: query, retryID: retryID)) {
+    .task(id: searchTaskID) {
+      let taskID = searchTaskID
+      guard settledSearchTaskID != taskID else { return }
       presentationState = .idle
       guard !searchQuery.isEmpty else {
         results = .empty
@@ -165,6 +169,8 @@ struct SearchView: View {
           foundExampleCount = directExampleCount
         }
         try Task.checkCancellation()
+        guard searchTaskID == taskID, settledSearchTaskID != taskID else { return }
+        settledSearchTaskID = taskID
         results = foundResults
         exampleCount = foundExampleCount
         if foundResults.isEmpty && foundExampleCount == 0 && !searchQuery.isSingleKanji {
@@ -175,6 +181,10 @@ struct SearchView: View {
       } catch is CancellationError {
         return
       } catch {
+        guard !Task.isCancelled, searchTaskID == taskID, settledSearchTaskID != taskID else {
+          return
+        }
+        settledSearchTaskID = taskID
         results = .empty
         exampleCount = 0
         presentationState = .failure
@@ -245,6 +255,10 @@ struct SearchView: View {
 
   private var searchQuery: SearchQuery {
     SearchQuery(query)
+  }
+
+  private var searchTaskID: SearchTaskID {
+    SearchTaskID(query: query, retryID: retryID)
   }
 
   private var showsRecentSearches: Bool {
