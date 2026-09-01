@@ -39,7 +39,6 @@ struct ImageTextFlowView: View {
         alignment: .top
       )
     }
-    .background(ZenbuTheme.background)
     .navigationTitle("Photo")
     .navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden(true)
@@ -90,8 +89,7 @@ struct ImageTextFlowView: View {
         model.requestTranslation()
       }
       .buttonStyle(.borderedProminent)
-      .tint(ZenbuTheme.selectedTab)
-      .foregroundStyle(ZenbuTheme.primaryForeground)
+      .tint(ZenbuTheme.prominentActionFill)
       .padding(.vertical, 8)
       .accessibilityIdentifier("image-text.translate")
     case .translating:
@@ -102,14 +100,13 @@ struct ImageTextFlowView: View {
       VStack(alignment: .leading, spacing: 4) {
         Text("NATURAL TRANSLATION")
           .font(.caption.bold())
-          .foregroundStyle(ZenbuTheme.secondaryText)
+          .foregroundStyle(.secondary)
         Text(value)
           .frame(maxWidth: .infinity, alignment: .leading)
           .accessibilityIdentifier("image-text.translation")
       }
       .padding(.horizontal, 16)
       .padding(.vertical, 8)
-      .background(ZenbuTheme.row)
     case .failed:
       Text("Translation unavailable")
         .accessibilityIdentifier("image-text.translation-unavailable")
@@ -176,12 +173,11 @@ struct ImageTextFlowView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityIdentifier("image-text.loading")
     case .failed:
-      VStack(spacing: 14) {
-        Text("Image text unavailable")
-        Text("Close and choose the file again.")
-          .foregroundStyle(ZenbuTheme.secondaryText)
-      }
-      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      ContentUnavailableView(
+        "Image text unavailable",
+        systemImage: "text.viewfinder",
+        description: Text("Close and choose the file again.")
+      )
     case .loaded(let page):
       ImageTextCanvas(
         page: page,
@@ -222,8 +218,8 @@ private struct ImageTextCanvas: View {
                 selectRegion(region)
               } label: {
                 Rectangle()
-                  .fill(ZenbuTheme.selectedTab.opacity(0.32))
-                  .overlay(Rectangle().stroke(ZenbuTheme.selectedTab, lineWidth: 1))
+                  .fill(ZenbuTheme.recognitionHighlight.opacity(0.32))
+                  .overlay(Rectangle().stroke(ZenbuTheme.recognitionHighlight, lineWidth: 1))
               }
               .buttonStyle(.plain)
               .frame(width: max(rect.width, 28), height: max(rect.height, 28))
@@ -246,14 +242,12 @@ private struct ImageTextCanvas: View {
                 )
                 Text(selectedRegion.entry.summary)
                   .fixedSize(horizontal: false, vertical: true)
-                Image(systemName: "chevron.right")
               }
               .padding(.horizontal, 12)
               .padding(.vertical, 8)
-              .background(ZenbuTheme.row, in: RoundedRectangle(cornerRadius: 12))
+              .background(.background, in: RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
-            .foregroundStyle(ZenbuTheme.foreground)
             .padding(20)
             .accessibilityLabel(
               "\(selectedRegion.entry.headword), \(selectedRegion.entry.reading), \(selectedRegion.entry.summary)"
@@ -279,7 +273,6 @@ private struct ImageTextCanvas: View {
         .accessibilityLabel("Imported image \(page.asset.name)")
       }
     }
-    .background(ZenbuTheme.background)
   }
 
   private func aspectFitRect(imageSize: CGSize, container: CGSize) -> CGRect {

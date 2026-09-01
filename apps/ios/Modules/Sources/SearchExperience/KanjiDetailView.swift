@@ -48,6 +48,7 @@ struct KanjiDetailView: View {
             } actions: {
               Button("Retry", action: retry)
                 .buttonStyle(.borderedProminent)
+                .tint(ZenbuTheme.prominentActionFill)
                 .accessibilityIdentifier("kanji-detail.retry")
             }
           }
@@ -320,9 +321,8 @@ private struct KanjiOverview: View {
       } label: {
         Image(systemName: "arrow.down.right.and.arrow.up.left")
           .font(.caption.weight(.bold))
-          .frame(width: 44, height: 44)
-          .background(ZenbuTheme.accent, in: Circle())
       }
+      .buttonStyle(.bordered)
       .accessibilityLabel("Show stroke order for \(character)")
       .accessibilityIdentifier("kanji-detail.stroke-order")
     case .failed:
@@ -455,7 +455,7 @@ private struct KanjiElementsSection: View {
             Text(element.id.rawValue)
               .font(.system(size: elementGlyphSize, weight: .light))
               .frame(minWidth: 72, minHeight: 72)
-              .background(ZenbuTheme.accent.opacity(0.35), in: RoundedRectangle(cornerRadius: 8))
+              .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 8))
             VStack(alignment: .leading, spacing: 6) {
               Text(element.role.label)
                 .font(.body.weight(.semibold))

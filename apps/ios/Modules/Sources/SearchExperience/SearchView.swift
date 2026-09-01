@@ -87,6 +87,7 @@ struct SearchView: View {
               retryID += 1
             }
             .buttonStyle(.borderedProminent)
+            .tint(ZenbuTheme.prominentActionFill)
           }
           .padding(.vertical, 24)
         }
@@ -133,7 +134,6 @@ struct SearchView: View {
         )
       }
     }
-    .background(ZenbuTheme.background)
     .navigationTitle("Search")
     .onChange(of: query) { _, _ in
       settledSearchTaskID = nil
@@ -543,7 +543,7 @@ private struct SearchBar: View {
     HStack(spacing: 12) {
       HStack(spacing: 8) {
         Image(systemName: "magnifyingglass")
-          .foregroundStyle(ZenbuTheme.mutedForeground)
+          .foregroundStyle(.secondary)
 
         searchTextField
           .textInputAutocapitalization(.never)
@@ -566,7 +566,7 @@ private struct SearchBar: View {
             query = ""
           } label: {
             Image(systemName: "xmark.circle.fill")
-              .foregroundStyle(ZenbuTheme.mutedForeground)
+              .foregroundStyle(.secondary)
               .frame(width: 44, height: 44)
               .contentShape(Rectangle())
           }
@@ -578,12 +578,11 @@ private struct SearchBar: View {
       .font(.body)
       .padding(.horizontal, 10)
       .frame(minHeight: 44)
-      .background(ZenbuTheme.searchField, in: RoundedRectangle(cornerRadius: 9))
+      .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 9))
 
       Button(action: openImageSource) {
         Image(systemName: "camera")
           .font(.title3)
-          .foregroundStyle(ZenbuTheme.interactiveForeground)
           .frame(width: 44, height: 44)
           .contentShape(Rectangle())
       }
@@ -594,14 +593,12 @@ private struct SearchBar: View {
       if isInputActive {
         Button("Cancel", action: cancel)
           .buttonStyle(.plain)
-          .foregroundStyle(ZenbuTheme.interactiveForeground)
           .frame(minHeight: 44)
           .accessibilityIdentifier("search.cancel")
       }
     }
     .padding(.horizontal, 16)
     .padding(.bottom, 10)
-    .background(ZenbuTheme.background)
   }
 
   @ViewBuilder
@@ -634,7 +631,6 @@ private struct SearchResultsView: View {
           ) {
             Text(exampleActionTitle)
               .font(.headline)
-              .foregroundStyle(ZenbuTheme.interactiveForeground)
           }
           .accessibilityIdentifier("search.examples")
         }
@@ -647,7 +643,6 @@ private struct SearchResultsView: View {
           } label: {
             Text("Search for「\(refinement.query.value)」")
               .font(.headline)
-              .foregroundStyle(ZenbuTheme.interactiveForeground)
           }
           .accessibilityLabel("Search for Japanese reading \(refinement.query.value)")
           .accessibilityIdentifier("search.reading-refinement")
@@ -764,7 +759,6 @@ private struct ResultRow: View {
       rubyFont: .caption.weight(.semibold)
     )
     .fixedSize(horizontal: false, vertical: true)
-    .foregroundStyle(ZenbuTheme.foreground)
   }
 
   private var resultIdentifier: String {

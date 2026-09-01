@@ -16,7 +16,7 @@ struct HandwritingCanvas: View {
         }
         context.stroke(
           grid,
-          with: .color(ZenbuTheme.mutedForeground.opacity(0.22)),
+          with: .color(.secondary.opacity(0.22)),
           style: StrokeStyle(lineWidth: 1, dash: [4, 4])
         )
         for stroke in strokes + (pendingStroke.isEmpty ? [] : [pendingStroke]) {
@@ -27,7 +27,7 @@ struct HandwritingCanvas: View {
           }
           context.stroke(
             path,
-            with: .color(ZenbuTheme.foreground),
+            with: .color(.primary),
             style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round)
           )
         }
@@ -45,7 +45,7 @@ struct HandwritingCanvas: View {
             completedStroke(HandwritingSample(strokes: strokes))
           }
       )
-      .background(ZenbuTheme.background, in: RoundedRectangle(cornerRadius: 16))
+      .background(.background, in: RoundedRectangle(cornerRadius: 16))
       .accessibilityElement()
       .accessibilityLabel("Drawing grid")
       .accessibilityValue(

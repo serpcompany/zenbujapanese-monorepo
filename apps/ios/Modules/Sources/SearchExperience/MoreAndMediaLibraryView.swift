@@ -9,31 +9,18 @@ struct MoreView: View {
       NavigationLink {
         MediaLibraryView(store: store)
       } label: {
-        HStack {
-          Label("Media Library", systemImage: "photo.on.rectangle.angled")
-            .font(.body)
-          Spacer(minLength: 8)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityHidden(true)
+        Label("Media Library", systemImage: "photo.on.rectangle.angled")
       }
-      .accessibilityLabel("Media Library")
       .accessibilityIdentifier("more.media-library")
 
       NavigationLink {
         DictionarySourcesView()
       } label: {
-        HStack {
-          Label("Credits & Attributions", systemImage: "info.circle")
-            .font(.body)
-          Spacer(minLength: 8)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityHidden(true)
+        Label("Credits & Attributions", systemImage: "info.circle")
       }
-      .accessibilityLabel("Credits & Attributions")
       .accessibilityIdentifier("more.credits")
     }
+    .accessibilityIdentifier("more.list")
     .navigationTitle("More")
   }
 }
@@ -45,19 +32,12 @@ struct MediaLibraryView: View {
   var body: some View {
     Group {
       if items.isEmpty {
-        VStack(spacing: 12) {
-          Image(systemName: "photo.on.rectangle.angled")
-            .font(.largeTitle)
-            .accessibilityHidden(true)
-          Text("No Encounter Media")
-            .font(.title3.weight(.semibold))
-          Text("Images saved with words from Image Text will appear here.")
-            .font(.body)
-            .foregroundStyle(ZenbuTheme.secondaryText)
-            .multilineTextAlignment(.center)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ContentUnavailableView(
+          "No Encounter Media",
+          systemImage: "photo.on.rectangle.angled",
+          description: Text("Images saved with words from Image Text will appear here.")
+        )
+        .accessibilityIdentifier("media-library.empty")
       } else {
         List {
           ForEach(items) { item in
@@ -108,11 +88,11 @@ private struct EncounterMediaRow: View {
         Text(item.name).font(.headline).lineLimit(1)
         Text(item.words.map(\.headword).joined(separator: " · "))
           .font(.body)
-          .foregroundStyle(ZenbuTheme.secondaryText)
+          .foregroundStyle(.secondary)
           .lineLimit(2)
         Text(item.savedAt, style: .date)
           .font(.caption)
-          .foregroundStyle(ZenbuTheme.secondaryText)
+          .foregroundStyle(.secondary)
       }
     }
     .task(id: item.id) {
@@ -127,17 +107,24 @@ private struct EncounterMediaDetail: View {
   let store: EncounterMediaStore
 
   var body: some View {
-    ScrollView {
-      VStack(alignment: .leading, spacing: 16) {
-        if let media, let image = UIImage(data: media.data) {
-          Image(uiImage: image).resizable().scaledToFit()
-        }
-        Text("Associated Words").font(.headline)
-        ForEach(item.words, id: \.id) { word in
-          JapaneseRubyText(surface: word.headword, reading: word.reading)
+    List {
+      if let media, let image = UIImage(data: media.data) {
+        Section {
+          Image(uiImage: image)
+            .resizable()
+            .scaledToFit()
         }
       }
-      .padding()
+
+      Section("Associated Words") {
+        ForEach(item.words, id: \.id) { word in
+          LabeledContent {
+            JapaneseRubyText(surface: word.headword, reading: word.reading)
+          } label: {
+            Text("Word")
+          }
+        }
+      }
     }
     .navigationTitle(item.name)
     .navigationBarTitleDisplayMode(.inline)

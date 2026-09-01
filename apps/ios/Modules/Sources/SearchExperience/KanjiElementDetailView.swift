@@ -42,6 +42,7 @@ struct KanjiElementDetailView: View {
             } actions: {
               Button("Retry", action: retry)
                 .buttonStyle(.borderedProminent)
+                .tint(ZenbuTheme.prominentActionFill)
                 .accessibilityIdentifier("kanji-element.retry")
             }
           }

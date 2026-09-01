@@ -295,7 +295,7 @@ private struct PrimaryKanjiSection: View {
         NavigationLink(value: SearchExperienceRoute.kanji(kanji, entry)) {
           LabeledContent {
             Text("Kanji in \(entry.headword)")
-              .foregroundStyle(ZenbuTheme.secondaryText)
+              .foregroundStyle(.secondary)
           } label: {
             Text(character)
               .font(.title2.weight(.semibold))
@@ -375,10 +375,8 @@ private struct WordHeader: View {
           Label("Pronounce \(entry.reading)", systemImage: "speaker.wave.2.fill")
             .labelStyle(.iconOnly)
             .font(.title2)
-            .frame(minWidth: 46, minHeight: 44)
-            .background(ZenbuTheme.accent, in: Capsule())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.bordered)
         .accessibilityLabel("Pronounce \(entry.reading)")
         .accessibilityIdentifier("word-detail.pronounce")
       }
@@ -473,7 +471,7 @@ private struct FrequencyBadge: View {
 
   var body: some View {
     ZStack {
-      Circle().stroke(ZenbuTheme.mutedForeground.opacity(0.18), lineWidth: 6)
+      Circle().stroke(.secondary.opacity(0.18), lineWidth: 6)
       Text(frequency.rawValue)
         .font(.body.bold())
         .multilineTextAlignment(.center)
@@ -497,13 +495,16 @@ private struct PitchAccentView: View {
         .padding(.bottom, 4)
         .overlay(alignment: .bottom) {
           PitchContour(downstep: pitch.downstep, moraCount: pitch.moraCount)
-            .stroke(ZenbuTheme.destructive, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+            .stroke(
+              ZenbuTheme.pitchDownstep,
+              style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
+            )
             .frame(height: 7)
         }
     }
     .padding(.horizontal, 12)
     .frame(minHeight: 34)
-    .background(ZenbuTheme.accent, in: Capsule())
+    .background(.fill.tertiary, in: Capsule())
     .accessibilityElement(children: .combine)
     .accessibilityLabel(
       "Pitch accent for \(reading), downstep \(pitch.downstep), \(pitch.moraCount) mora"
@@ -658,7 +659,7 @@ private struct AlternativeFormLine: View {
   private func formLabel(_ form: DictionaryForm) -> some View {
     Text(form.value + (form.labels.isEmpty ? "" : " (\(form.labels.joined(separator: ", ")))"))
       .font(.body)
-      .foregroundStyle(form.labels.isEmpty ? ZenbuTheme.foreground : ZenbuTheme.secondaryText)
+      .foregroundStyle(form.labels.isEmpty ? Color.primary : Color.secondary)
   }
 }
 
@@ -717,7 +718,6 @@ private struct NotesSection: View {
     if editingNoteID == nil || !noteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
       Button("Add Note", systemImage: "square.and.pencil", action: addNote)
         .font(.body)
-        .foregroundStyle(ZenbuTheme.interactiveForeground)
         .accessibilityIdentifier("word-detail.add-note")
     }
   }

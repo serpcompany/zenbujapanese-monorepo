@@ -97,7 +97,7 @@ private struct LinkedTokenView: View {
         // Underlining carries the interactive affordance. Ruby uses the normal
         // text foreground because the smaller caption glyphs need more
         // antialiasing contrast margin than the brand red provides.
-        .foregroundStyle(ZenbuTheme.foreground)
+        .foregroundStyle(.primary)
       }
       .buttonStyle(.plain)
       .frame(

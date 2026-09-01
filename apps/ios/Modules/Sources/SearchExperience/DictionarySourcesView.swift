@@ -1,8 +1,6 @@
 import SwiftUI
 
 struct DictionarySourcesView: View {
-  @Environment(\.openURL) private var openURL
-
   var body: some View {
     List {
       Section("Zenbu Japanese") {
@@ -17,21 +15,12 @@ struct DictionarySourcesView: View {
 
       Section("JMdict") {
         Text("Dictionary data from the Electronic Dictionary Research and Development Group.")
-        HStack {
-          Text("License")
-          Spacer()
-          Text("CC BY-SA 4.0")
-        }
+        LabeledContent("License", value: "CC BY-SA 4.0")
         LabeledContent("Snapshot", value: "2026-08-10")
-        Button {
-          openURL(URL(string: "https://www.edrdg.org/jmdict/j_jmdict.html")!)
-        } label: {
-          Text("Project documentation")
-            .font(.body)
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(ZenbuTheme.interactiveForeground)
-        .accessibilityAddTraits(.isLink)
+        Link(
+          "Project documentation",
+          destination: URL(string: "https://www.edrdg.org/jmdict/j_jmdict.html")!
+        )
         .accessibilityIdentifier("dictionary-sources.jmdict-project")
         Link(
           "License terms", destination: URL(string: "https://www.edrdg.org/edrdg/licence.html")!
@@ -42,11 +31,7 @@ struct DictionarySourcesView: View {
         Text(
           "Kanji classifications, meanings, and Japanese readings from the Electronic Dictionary Research and Development Group."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("CC BY-SA 4.0")
-        }
+        LabeledContent("License", value: "CC BY-SA 4.0")
         LabeledContent("Snapshot", value: "2026-08-10")
         Link(
           "Project documentation",
@@ -60,11 +45,7 @@ struct DictionarySourcesView: View {
         Text(
           "Visible kanji-component data from the Electronic Dictionary Research and Development Group."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("CC BY-SA 4.0")
-        }
+        LabeledContent("License", value: "CC BY-SA 4.0")
         LabeledContent("Snapshot", value: "2026-08-10")
         Link(
           "Project documentation",
@@ -78,11 +59,7 @@ struct DictionarySourcesView: View {
         Text(
           "Ordered kanji stroke geometry from KanjiVG by Ulrich Apel, transformed into Zenbu's app-owned drawing format."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("CC BY-SA 3.0")
-        }
+        LabeledContent("License", value: "CC BY-SA 3.0")
         LabeledContent("Release", value: "r20250816")
         NavigationLink("Bundled license text") {
           BundledLicenseTextView(
@@ -101,11 +78,7 @@ struct DictionarySourcesView: View {
         Text(
           "Kanji element structures and variants from Kanjium, including additions and modifications by Uros O. and EDRDG-derived fields."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("CC BY-SA 4.0")
-        }
+        LabeledContent("License", value: "CC BY-SA 4.0")
         LabeledContent("Snapshot", value: "8a0cdaa")
         Link(
           "Project and attribution",
@@ -119,11 +92,7 @@ struct DictionarySourcesView: View {
         Text(
           "Pitch-accent facts from UniDic for Contemporary Written Japanese 3.1.0, published by the National Institute for Japanese Language and Linguistics."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("New BSD")
-        }
+        LabeledContent("License", value: "New BSD")
         LabeledContent("Version", value: "3.1.0")
         NavigationLink("Bundled license text") {
           BundledLicenseTextView(
@@ -145,11 +114,7 @@ struct DictionarySourcesView: View {
         Text(
           "Offline Japanese–English example sentences from Tatoeba's official weekly export. Zenbu retains both sentence IDs, supplied contributor usernames, per-record license class, and the exact source snapshot."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("CC BY 2.0 FR")
-        }
+        LabeledContent("License", value: "CC BY 2.0 FR")
         LabeledContent("Snapshot", value: "2026-08-08")
         NavigationLink("Contributor credits") {
           TatoebaContributorCreditsView()
@@ -174,11 +139,7 @@ struct DictionarySourcesView: View {
         Text(
           "Offline single-character handwriting recognition by Dario Radmann and DaKanji contributors, converted to Core ML by Zenbu Japanese."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("MIT")
-        }
+        LabeledContent("License", value: "MIT")
         LabeledContent("Model", value: "Single Kanji Recognition v1.2")
         NavigationLink("Bundled license text") {
           BundledLicenseTextView(
@@ -199,11 +160,8 @@ struct DictionarySourcesView: View {
         )
       }
     }
-    .font(.body)
     .accessibilityIdentifier("dictionary-sources.list")
     .headerProminence(.increased)
-    .foregroundStyle(ZenbuTheme.foreground)
-    .tint(ZenbuTheme.interactiveForeground)
     .navigationTitle("Dictionary Sources")
     .navigationBarTitleDisplayMode(.inline)
   }
@@ -248,12 +206,12 @@ private struct BundledLicenseTextView: View {
   }
 
   var body: some View {
-    ScrollView {
-      Text(text)
-        .font(.system(.footnote, design: .monospaced))
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .accessibilityIdentifier("dictionary-sources.license-text")
+    List {
+      Section {
+        Text(text)
+          .font(.system(.footnote, design: .monospaced))
+          .accessibilityIdentifier("dictionary-sources.license-text")
+      }
     }
     .navigationTitle(title)
     .navigationBarTitleDisplayMode(.inline)

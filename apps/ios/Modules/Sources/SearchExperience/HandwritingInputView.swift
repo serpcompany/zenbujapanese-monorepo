@@ -51,10 +51,6 @@ struct HandwritingInputView: View {
       .padding(.horizontal)
       .padding(.bottom, 10)
     }
-    .background(ZenbuTheme.row)
-    .overlay(alignment: .top) {
-      Rectangle().fill(ZenbuTheme.mutedForeground.opacity(0.1)).frame(height: 0.5)
-    }
     .onDisappear { model.cancelRecognition() }
   }
 
@@ -77,7 +73,7 @@ struct HandwritingInputView: View {
         Spacer()
       }
       .font(.body)
-      .foregroundStyle(ZenbuTheme.secondaryText)
+      .foregroundStyle(.secondary)
       .fixedSize(horizontal: false, vertical: true)
       .padding(.horizontal, 14)
       .padding(.vertical, 6)
@@ -93,7 +89,6 @@ struct HandwritingInputView: View {
               submit(submittedQuery)
             }
             .font(.title)
-            .foregroundStyle(ZenbuTheme.foreground)
             .frame(minWidth: 54, minHeight: 46)
             .accessibilityLabel("Use handwriting candidate \(candidate.value)")
             .accessibilityValue("Candidate rank \(index + 1)")

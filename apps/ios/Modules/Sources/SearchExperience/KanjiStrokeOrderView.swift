@@ -35,7 +35,6 @@ struct KanjiStrokeOrderView: View {
           isPlaying ? pause() : play()
         } label: {
           Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-            .frame(width: 36)
         }
         .disabled(diagram.strokes.isEmpty)
         .accessibilityLabel(isPlaying ? "Pause stroke order" : "Play stroke order")
@@ -51,8 +50,6 @@ struct KanjiStrokeOrderView: View {
         .accessibilityIdentifier("stroke-order.next")
       }
       .font(.title)
-      .buttonStyle(.plain)
-      .foregroundStyle(ZenbuTheme.interactiveForeground)
       .frame(maxWidth: .infinity)
 
       Text("Stroke \(visibleStrokeIndex) of \(diagram.strokes.count)")
@@ -168,24 +165,24 @@ private struct StrokeDrawingGrid: View {
   var body: some View {
     GeometryReader { geometry in
       ZStack {
-        ZenbuTheme.background.opacity(0.28)
+        Color(uiColor: .systemBackground)
         StrokeGridLines()
           .stroke(
-            ZenbuTheme.secondaryText,
+            .secondary,
             style: StrokeStyle(lineWidth: 1, dash: [5, 4])
           )
 
         ForEach(Array(diagram.strokes.enumerated()), id: \.offset) { index, stroke in
           KanjiStrokeShape(stroke: stroke, viewportSize: diagram.viewportSize)
             .stroke(
-              index < completedStrokeCount ? ZenbuTheme.foreground : ZenbuTheme.secondaryText,
+              index < completedStrokeCount ? Color.primary : Color.secondary,
               style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round)
             )
           if index == completedStrokeCount, activeStrokeProgress > 0 {
             KanjiStrokeShape(stroke: stroke, viewportSize: diagram.viewportSize)
               .trim(from: 0, to: activeStrokeProgress)
               .stroke(
-                ZenbuTheme.chrome,
+                ZenbuTheme.strokeProgress,
                 style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round)
               )
           }
@@ -196,7 +193,7 @@ private struct StrokeDrawingGrid: View {
           let start = diagram.strokes[completedStrokeCount].startPoint
         {
           Circle()
-            .fill(ZenbuTheme.chrome)
+            .fill(ZenbuTheme.strokeProgress)
             .frame(width: 14, height: 14)
             .position(
               x: geometry.size.width * CGFloat(start.x / diagram.viewportSize),

@@ -644,6 +644,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     let app = launchApp(
       appearance: appearance,
       additionalArguments: [
+        "-ResetWordImageAttachments",
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )

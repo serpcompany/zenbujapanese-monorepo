@@ -37,7 +37,6 @@ struct ExampleSentencesView: View {
         .accessibilityIdentifier("example-list.screen")
       }
     }
-    .background(ZenbuTheme.background)
     .navigationTitle(query.value)
     .navigationBarTitleDisplayMode(.inline)
     .overlay(alignment: .topLeading) {
@@ -127,7 +126,7 @@ private struct ExampleSentenceRow: View {
 
       Text(example.english)
         .font(.body)
-        .foregroundStyle(ZenbuTheme.secondaryText)
+        .foregroundStyle(.secondary)
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityIdentifier("example.english.\(index)")
     }

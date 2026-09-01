@@ -83,9 +83,7 @@ public struct SearchExperienceRootView: View {
         }
       }
     }
-    .tint(ZenbuTheme.interactiveForeground)
-    .foregroundStyle(ZenbuTheme.foreground)
-    .background(ZenbuTheme.background)
+    .tint(ZenbuTheme.interactiveTint)
     #if DEBUG
       .sheet(isPresented: $exportsImageFixtures) {
         ImageFileExporter(urls: imageFixtureExportURLs) {
@@ -198,8 +196,6 @@ public struct SearchExperienceRootView: View {
         }
       }
     }
-    .foregroundStyle(ZenbuTheme.foreground)
-    .background(ZenbuTheme.background)
   }
 
   private var searchPath: Binding<[SearchExperienceRoute]> {

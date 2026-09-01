@@ -2,6 +2,25 @@ import XCTest
 
 final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
+  func testMoreUtilitiesUseNativeListsAndEmptyPresentation() throws {
+    let app = launchApp(additionalArguments: ["-ResetWordImageAttachments"])
+
+    app.tabBars.buttons["More"].tap()
+    XCTAssertTrue(app.collectionViews["more.list"].waitForExistence(timeout: 3))
+
+    let mediaLibrary = app.buttons["more.media-library"]
+    XCTAssertTrue(mediaLibrary.exists)
+    XCTAssertTrue(mediaLibrary.isHittable)
+    mediaLibrary.tap()
+
+    let emptyState = app.descendants(matching: .any)["media-library.empty"]
+    XCTAssertTrue(emptyState.waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["No Encounter Media"].exists)
+    XCTAssertTrue(
+      app.staticTexts["Images saved with words from Image Text will appear here."].exists)
+  }
+
+  @MainActor
   func testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToMore() throws {
     let app = launchApp()
 
@@ -2193,32 +2212,32 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     XCTAssertTrue(app.staticTexts["Dictionary Sources"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.staticTexts["JMdict"].exists)
-    XCTAssertTrue(app.staticTexts["CC BY-SA 4.0"].exists)
+    XCTAssertTrue(app.staticTexts["License, CC BY-SA 4.0"].exists)
     let sourceList = app.descendants(matching: .any)["dictionary-sources.list"]
     XCTAssertTrue(sourceList.waitForExistence(timeout: 2))
 
     let kanjidic = app.staticTexts["KANJIDIC2"]
-    for _ in 0..<2 where !kanjidic.exists { sourceList.swipeUp() }
+    scrollUpUntilExists(kanjidic, in: sourceList, attempts: 4)
     XCTAssertTrue(kanjidic.exists)
 
     let kradfile = app.staticTexts["KRADFILE / RADKFILE"]
-    for _ in 0..<4 where !kradfile.isHittable { sourceList.swipeUp() }
+    scrollUpUntilHittable(kradfile, in: sourceList, attempts: 6)
     XCTAssertTrue(kradfile.isHittable)
     recordScreenshot(named: "dictionary-source-attribution", app: app)
 
     let kanjiVG = app.staticTexts["KanjiVG"]
-    for _ in 0..<4 where !kanjiVG.isHittable { sourceList.swipeUp() }
+    scrollUpUntilHittable(kanjiVG, in: sourceList, attempts: 6)
     XCTAssertTrue(kanjiVG.isHittable)
     let kanjiVGDescription = app.staticTexts.matching(
       NSPredicate(format: "label CONTAINS %@", "KanjiVG by Ulrich Apel")
     ).firstMatch
-    for _ in 0..<3 where !kanjiVGDescription.exists { sourceList.swipeUp() }
+    scrollUpUntilExists(kanjiVGDescription, in: sourceList, attempts: 4)
     XCTAssertTrue(kanjiVGDescription.waitForExistence(timeout: 2))
-    let kanjiVGLicenseName = app.staticTexts["CC BY-SA 3.0"]
-    for _ in 0..<2 where !kanjiVGLicenseName.exists { sourceList.swipeUp() }
+    let kanjiVGLicenseName = app.staticTexts["License, CC BY-SA 3.0"]
+    scrollUpUntilExists(kanjiVGLicenseName, in: sourceList, attempts: 4)
     XCTAssertTrue(kanjiVGLicenseName.waitForExistence(timeout: 2))
     let kanjiVGLicense = app.buttons["dictionary-sources.kanjivg-license"]
-    for _ in 0..<3 where !kanjiVGLicense.isHittable { sourceList.swipeUp() }
+    scrollUpUntilHittable(kanjiVGLicense, in: sourceList, attempts: 4)
     XCTAssertTrue(kanjiVGLicense.waitForExistence(timeout: 2))
     XCTAssertTrue(kanjiVGLicense.isHittable)
     kanjiVGLicense.tap()
@@ -2232,25 +2251,35 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     licenseBack.tap()
 
     let unidic = app.staticTexts["UniDic"]
-    for _ in 0..<4 where !unidic.isHittable { sourceList.swipeUp() }
+    scrollUpUntilHittable(unidic, in: sourceList, attempts: 8)
     XCTAssertTrue(unidic.isHittable)
-    let unidicLicenseName = app.staticTexts["New BSD"]
-    for _ in 0..<2 where !unidicLicenseName.isHittable { sourceList.swipeUp() }
+    let unidicLicenseName = app.staticTexts["License, New BSD"]
+    scrollUpUntilHittable(unidicLicenseName, in: sourceList, attempts: 4)
     XCTAssertTrue(unidicLicenseName.isHittable)
 
     let tatoeba = app.staticTexts["Tatoeba"]
-    for _ in 0..<4 where !tatoeba.isHittable { sourceList.swipeUp() }
+    scrollUpUntilHittable(tatoeba, in: sourceList, attempts: 8)
     XCTAssertTrue(tatoeba.isHittable)
-    let tatoebaLicense = app.staticTexts["CC BY 2.0 FR"]
-    for _ in 0..<2 where !tatoebaLicense.isHittable { sourceList.swipeUp() }
+    let tatoebaLicense = app.staticTexts["License, CC BY 2.0 FR"]
+    scrollUpUntilHittable(tatoebaLicense, in: sourceList, attempts: 4)
     XCTAssertTrue(tatoebaLicense.isHittable)
     recordScreenshot(named: "dictionary-source-word-data-attribution", app: app)
 
+    let contributors = app.buttons["dictionary-sources.tatoeba-contributors"]
+    scrollUpUntilHittable(contributors, in: sourceList, attempts: 4)
+    XCTAssertTrue(contributors.isHittable)
+    contributors.tap()
+    XCTAssertTrue(app.staticTexts["Tatoeba Contributors"].waitForExistence(timeout: 2))
+    XCTAssertTrue(
+      app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Named contributors ("))
+        .firstMatch.exists)
+    app.navigationBars["Tatoeba Contributors"].buttons.firstMatch.tap()
+
     let daKanji = app.staticTexts["DaKanji handwriting recognition"]
-    for _ in 0..<4 where !daKanji.isHittable { sourceList.swipeUp() }
+    scrollUpUntilHittable(daKanji, in: sourceList, attempts: 8)
     XCTAssertTrue(daKanji.isHittable)
     let daKanjiLicense = app.buttons["dictionary-sources.dakanji-license"]
-    for _ in 0..<3 where !daKanjiLicense.isHittable { sourceList.swipeUp() }
+    scrollUpUntilHittable(daKanjiLicense, in: sourceList, attempts: 4)
     XCTAssertTrue(
       app.staticTexts.matching(
         NSPredicate(format: "label CONTAINS %@", "Single Kanji Recognition v1.2")
@@ -2271,7 +2300,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     daKanjiBack.tap()
 
     let bundledLicense = app.buttons["dictionary-sources.unidic-license"]
-    for _ in 0..<4 where !bundledLicense.isHittable { sourceList.swipeDown() }
+    scrollDownUntilHittable(bundledLicense, in: sourceList, attempts: 10)
     XCTAssertTrue(bundledLicense.isHittable)
     bundledLicense.tap()
     XCTAssertTrue(app.staticTexts["UniDic New BSD License"].waitForExistence(timeout: 2))
@@ -4111,6 +4140,39 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     }
     XCTAssertTrue(stager.textFields["search.field"].waitForExistence(timeout: 5))
     stager.terminate()
+  }
+
+  @MainActor
+  private func scrollUpUntilExists(
+    _ element: XCUIElement,
+    in container: XCUIElement,
+    attempts: Int
+  ) {
+    for _ in 0..<attempts where !element.exists {
+      container.swipeUp(velocity: .slow)
+    }
+  }
+
+  @MainActor
+  private func scrollUpUntilHittable(
+    _ element: XCUIElement,
+    in container: XCUIElement,
+    attempts: Int
+  ) {
+    for _ in 0..<attempts where !element.isHittable {
+      container.swipeUp(velocity: .slow)
+    }
+  }
+
+  @MainActor
+  private func scrollDownUntilHittable(
+    _ element: XCUIElement,
+    in container: XCUIElement,
+    attempts: Int
+  ) {
+    for _ in 0..<attempts where !element.isHittable {
+      container.swipeDown(velocity: .slow)
+    }
   }
 
   @MainActor

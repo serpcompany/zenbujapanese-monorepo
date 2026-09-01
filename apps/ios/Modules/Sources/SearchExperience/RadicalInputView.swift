@@ -26,7 +26,7 @@ struct RadicalInputView: View {
             ForEach(groups, id: \.strokeCount) { group in
               Text(group.strokeCount == 1 ? "1 Stroke" : "\(group.strokeCount) Strokes")
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(ZenbuTheme.secondaryText)
+                .foregroundStyle(.secondary)
               LazyVGrid(
                 columns: Array(
                   repeating: GridItem(.flexible(), spacing: 4),
@@ -40,9 +40,12 @@ struct RadicalInputView: View {
                     .frame(maxWidth: .infinity, minHeight: 44)
                     .background(
                       selectedRadicals.contains(radical.id)
-                        ? ZenbuTheme.selectedTab
-                        : ZenbuTheme.accent,
+                        ? ZenbuTheme.radicalSelection
+                        : Color(uiColor: .secondarySystemFill),
                       in: RoundedRectangle(cornerRadius: 5)
+                    )
+                    .foregroundStyle(
+                      selectedRadicals.contains(radical.id) ? Color.white : Color.primary
                     )
                     .accessibilityLabel("Radical \(radical.glyph)")
                     .accessibilityValue(
@@ -75,7 +78,6 @@ struct RadicalInputView: View {
       .padding(.horizontal)
       .padding(.bottom, 10)
     }
-    .background(ZenbuTheme.row)
     .task {
       guard catalog == nil else { return }
       do {
@@ -94,7 +96,7 @@ struct RadicalInputView: View {
         Spacer()
       }
       .font(.body)
-      .foregroundStyle(ZenbuTheme.secondaryText)
+      .foregroundStyle(.secondary)
       .fixedSize(horizontal: false, vertical: true)
       .padding(.horizontal, 14)
       .padding(.vertical, 6)
@@ -110,7 +112,6 @@ struct RadicalInputView: View {
               submit(submittedQuery)
             }
             .font(.title)
-            .foregroundStyle(ZenbuTheme.foreground)
             .frame(minWidth: 54, minHeight: 46)
             .accessibilityLabel("Use radical candidate \(candidate.value)")
             .accessibilityValue("Candidate rank \(index + 1)")
