@@ -37,33 +37,58 @@ struct CameraAuthorizationClient: Sendable {
   )
 
   #if DEBUG
-  static func clientFromProcessArguments() -> CameraAuthorizationClient? {
-    let arguments = ProcessInfo.processInfo.arguments
-    if arguments.contains("-CameraUnavailable") {
-      return CameraAuthorizationClient(
-        state: { .authorized },
-        requestAccess: { true },
-        isCameraAvailable: { false },
-        openSettings: {}
-      )
+    static func clientFromProcessArguments() -> CameraAuthorizationClient? {
+      let arguments = ProcessInfo.processInfo.arguments
+      if arguments.contains("-CameraUnavailable") {
+        return CameraAuthorizationClient(
+          state: { .authorized },
+          requestAccess: { true },
+          isCameraAvailable: { false },
+          openSettings: {}
+        )
+      }
+      if arguments.contains("-CameraAuthorizationDenied") {
+        return CameraAuthorizationClient(
+          state: { .denied },
+          requestAccess: { false },
+          isCameraAvailable: { true },
+          openSettings: {}
+        )
+      }
+      if arguments.contains("-CameraAuthorizationRestricted") {
+        return CameraAuthorizationClient(
+          state: { .restricted },
+          requestAccess: { false },
+          isCameraAvailable: { true },
+          openSettings: {}
+        )
+      }
+      switch WordDetailCameraFixtureScenario.current {
+      case .notDeterminedDenied:
+        return CameraAuthorizationClient(
+          state: { .notDetermined },
+          requestAccess: { false },
+          isCameraAvailable: { true },
+          openSettings: {}
+        )
+      case .notDeterminedGranted:
+        return CameraAuthorizationClient(
+          state: { .notDetermined },
+          requestAccess: { true },
+          isCameraAvailable: { true },
+          openSettings: {}
+        )
+      case .capture, .cancel, .failure:
+        return CameraAuthorizationClient(
+          state: { .authorized },
+          requestAccess: { true },
+          isCameraAvailable: { true },
+          openSettings: {}
+        )
+      case nil:
+        break
+      }
+      return nil
     }
-    if arguments.contains("-CameraAuthorizationDenied") {
-      return CameraAuthorizationClient(
-        state: { .denied },
-        requestAccess: { false },
-        isCameraAvailable: { true },
-        openSettings: {}
-      )
-    }
-    if arguments.contains("-CameraAuthorizationRestricted") {
-      return CameraAuthorizationClient(
-        state: { .restricted },
-        requestAccess: { false },
-        isCameraAvailable: { true },
-        openSettings: {}
-      )
-    }
-    return nil
-  }
   #endif
 }

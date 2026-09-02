@@ -527,6 +527,16 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testDarkWordDetailAddMenuRemainsReachableAtDefaultTextSize() throws {
+    try verifyWordDetailAddMenuAtDefaultTextSize(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightWordDetailAddMenuRemainsReachableAtDefaultTextSize() throws {
+    try verifyWordDetailAddMenuAtDefaultTextSize(appearance: .light)
+  }
+
+  @MainActor
   func testDarkKanjiElementDetailRemainsReachableAtLargestAccessibilityTextSize() throws {
     try verifyKanjiElementDetailAtLargestAccessibilityTextSize(appearance: .dark)
   }
@@ -746,6 +756,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     japan.tap()
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 5))
     XCTAssertTrue(app.staticTexts["MEANING"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons["word-detail.add-menu"].isHittable)
     XCTAssertTrue(
       app.descendants(matching: .any).matching(
         NSPredicate(format: "label == %@", "日本, にほん")
@@ -784,6 +795,18 @@ final class AccessibilityAuditUITests: XCTestCase {
     let detail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(detail.waitForExistence(timeout: 5))
     XCTAssertTrue(app.staticTexts["ALTERNATIVES"].waitForExistence(timeout: 5))
+    let add = app.buttons["word-detail.add-menu"]
+    XCTAssertTrue(add.isHittable)
+    add.tap()
+    let addNote = app.buttons["Add Note"]
+    let takePhoto = app.buttons["Take Photo"]
+    let choosePhoto = app.buttons["Choose Photo"]
+    XCTAssertTrue(addNote.waitForExistence(timeout: 3))
+    for action in [addNote, takePhoto, choosePhoto] {
+      XCTAssertGreaterThanOrEqual(action.frame.minX, app.frame.minX)
+      XCTAssertLessThanOrEqual(action.frame.maxX, app.frame.maxX)
+    }
+    app.tap()
     let related = app.buttons["word-detail.related.見える"]
     for _ in 0..<16 where !related.exists || !related.isHittable {
       detail.swipeUp(velocity: .slow)
@@ -799,6 +822,34 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(firstExample.exists)
     XCTAssertGreaterThanOrEqual(firstExample.frame.minX, app.frame.minX)
     XCTAssertLessThanOrEqual(firstExample.frame.maxX, app.frame.maxX)
+  }
+
+  @MainActor
+  private func verifyWordDetailAddMenuAtDefaultTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(appearance: appearance)
+    try submitSearch("見る", in: app)
+    let result = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "見る, みる")
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 5))
+    result.tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 5))
+
+    let add = app.buttons["word-detail.add-menu"]
+    XCTAssertTrue(add.isHittable)
+    add.tap()
+    for title in ["Add Note", "Take Photo", "Choose Photo"] {
+      let action = app.buttons[title]
+      XCTAssertTrue(action.waitForExistence(timeout: 3))
+      XCTAssertGreaterThanOrEqual(action.frame.minX, app.frame.minX)
+      XCTAssertLessThanOrEqual(action.frame.maxX, app.frame.maxX)
+    }
   }
 
   @MainActor

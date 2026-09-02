@@ -51,7 +51,7 @@ struct ImageCameraPicker: UIViewControllerRepresentable {
 }
 
 extension ImageTextAsset {
-  fileprivate init?(cameraImage: UIImage) {
+  init?(cameraImage: UIImage) {
     guard let data = cameraImage.imageTextData else { return nil }
     self.init(name: "Camera Capture.jpg", data: data)
   }
@@ -86,6 +86,7 @@ extension ImageTextAsset {
 
 extension UIImage {
   fileprivate var imageTextData: Data? {
+    guard size.width > 0, size.height > 0 else { return nil }
     let maximumDimension: CGFloat = 4_096
     let largestDimension = max(size.width, size.height)
     let scale = largestDimension > maximumDimension ? maximumDimension / largestDimension : 1

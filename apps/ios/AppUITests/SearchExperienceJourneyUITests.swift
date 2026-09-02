@@ -2523,8 +2523,251 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  func testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation() throws {
+  func testWordDetailAddMenuExposesNoteCameraAndPhotoActionsInOrder() throws {
     let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    let add = app.buttons["word-detail.add-menu"]
+    XCTAssertEqual(add.label, "Add")
+    XCTAssertTrue(add.isHittable)
+    add.tap()
+
+    let addNote = app.buttons["Add Note"]
+    let takePhoto = app.buttons["Take Photo"]
+    let choosePhoto = app.buttons["Choose Photo"]
+    XCTAssertTrue(addNote.waitForExistence(timeout: 2))
+    XCTAssertTrue(takePhoto.exists)
+    XCTAssertTrue(choosePhoto.exists)
+    XCTAssertLessThan(addNote.frame.minY, takePhoto.frame.minY)
+    XCTAssertLessThan(takePhoto.frame.minY, choosePhoto.frame.minY)
+    app.tap()
+
+    let detail = app.collectionViews["word-detail.screen"]
+    let inSectionAddNote = app.buttons["word-detail.add-note"]
+    scrollWordDetailElementIntoView(inSectionAddNote, in: detail, app: app)
+    XCTAssertTrue(inSectionAddNote.isHittable)
+  }
+
+  @MainActor
+  func testWordDetailCameraUnavailableReturnsToTheSameWordWithoutMedia() throws {
+    let app = launchApp(additionalArguments: [
+      "-CameraUnavailable", "-ResetEncounterMedia",
+    ])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    app.buttons["word-detail.add-menu"].tap()
+    app.buttons["Take Photo"].tap()
+
+    let alert = app.alerts["Camera Unavailable"]
+    XCTAssertTrue(alert.waitForExistence(timeout: 3))
+    XCTAssertTrue(
+      alert.staticTexts["Camera capture requires a physical device with an available camera."]
+        .exists)
+    alert.buttons["OK"].tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertEqual(app.navigationBars.firstMatch.identifier, "見る")
+    XCTAssertFalse(app.buttons["word-detail.image-attachment"].exists)
+  }
+
+  @MainActor
+  func testWordDetailDeniedCameraOffersNativeSettingsRecovery() throws {
+    let app = launchApp(additionalArguments: ["-CameraAuthorizationDenied"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    app.buttons["word-detail.add-menu"].tap()
+    app.buttons["Take Photo"].tap()
+
+    let alert = app.alerts["Camera Access Denied"]
+    XCTAssertTrue(alert.waitForExistence(timeout: 3))
+    XCTAssertTrue(
+      alert.staticTexts["Allow Camera access in Settings to take a photo for this word."].exists)
+    XCTAssertTrue(alert.buttons["Open Settings"].exists)
+    alert.buttons["Cancel"].tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  func testWordDetailUndeterminedCameraDenialOffersSettingsRecovery() throws {
+    let app = launchApp(additionalArguments: ["-CameraAuthorizationNotDeterminedDenied"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    app.buttons["word-detail.add-menu"].tap()
+    app.buttons["Take Photo"].tap()
+
+    let alert = app.alerts["Camera Access Denied"]
+    XCTAssertTrue(alert.waitForExistence(timeout: 3))
+    XCTAssertTrue(alert.buttons["Open Settings"].exists)
+    alert.buttons["Cancel"].tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  func testWordDetailUndeterminedCameraGrantCapturesForTheSameWord() throws {
+    let app = launchApp(additionalArguments: [
+      "-CameraAuthorizationNotDeterminedGranted",
+      "-ResetEncounterMedia",
+    ])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    app.buttons["word-detail.add-menu"].tap()
+    app.buttons["Take Photo"].tap()
+
+    XCTAssertTrue(app.buttons["word-detail.image-attachment"].waitForExistence(timeout: 3))
+    XCTAssertFalse(app.buttons["image-text.close"].exists)
+    XCTAssertEqual(app.navigationBars.firstMatch.identifier, "見る")
+  }
+
+  @MainActor
+  func testWordDetailRestrictedCameraExplainsManagedBoundary() throws {
+    let app = launchApp(additionalArguments: ["-CameraAuthorizationRestricted"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    app.buttons["word-detail.add-menu"].tap()
+    app.buttons["Take Photo"].tap()
+
+    let alert = app.alerts["Camera Access Restricted"]
+    XCTAssertTrue(alert.waitForExistence(timeout: 3))
+    XCTAssertTrue(alert.staticTexts["Camera access is restricted on this device."].exists)
+    XCTAssertFalse(alert.buttons["Open Settings"].exists)
+    alert.buttons["OK"].tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  func testWordDetailCameraFixtureSavesDirectlyAndPersistsInMediaLibrary() throws {
+    var app = launchApp(additionalArguments: [
+      "-WordDetailCameraFixtureCapture", "-ResetEncounterMedia",
+    ])
+    var searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    app.buttons["word-detail.add-menu"].tap()
+    app.buttons["Take Photo"].tap()
+
+    let attachment = app.buttons["word-detail.image-attachment"]
+    XCTAssertTrue(attachment.waitForExistence(timeout: 3))
+    XCTAssertTrue(attachment.label.contains("1"))
+    XCTAssertFalse(app.buttons["image-text.close"].exists)
+
+    app.tabBars.buttons["More"].tap()
+    app.buttons["more.media-library"].tap()
+    XCTAssertTrue(app.staticTexts["Camera Capture.jpg"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["見る"].exists)
+
+    app.terminate()
+    app = launchApp()
+    searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+    XCTAssertTrue(app.buttons["word-detail.image-attachment"].waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  func testWordDetailCameraCancelReturnsWithoutSaving() throws {
+    let app = launchApp(additionalArguments: [
+      "-WordDetailCameraFixtureCancel", "-ResetEncounterMedia",
+    ])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    app.buttons["word-detail.add-menu"].tap()
+    app.buttons["Take Photo"].tap()
+
+    let cancel = app.buttons["word-detail.camera-fixture-cancel"]
+    XCTAssertTrue(cancel.waitForExistence(timeout: 3))
+    cancel.tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertFalse(app.alerts.firstMatch.exists)
+    XCTAssertFalse(app.buttons["word-detail.image-attachment"].exists)
+  }
+
+  @MainActor
+  func testWordDetailCameraNormalizationFailureDoesNotSave() throws {
+    let app = launchApp(additionalArguments: [
+      "-WordDetailCameraFixtureFailure", "-ResetEncounterMedia",
+    ])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    app.buttons["word-detail.add-menu"].tap()
+    app.buttons["Take Photo"].tap()
+
+    let alert = app.alerts["Unable to Save Image"]
+    XCTAssertTrue(alert.waitForExistence(timeout: 3))
+    XCTAssertTrue(alert.staticTexts["The captured image could not be read."].exists)
+    alert.buttons["OK"].tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertFalse(app.buttons["word-detail.image-attachment"].exists)
+  }
+
+  @MainActor
+  func testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation() throws {
+    let app = launchApp(additionalArguments: ["-ResetEncounterMedia"])
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("見る", in: app, searchField: searchField)
@@ -2543,13 +2786,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(miruRuby.exists)
     XCTAssertTrue(app.staticTexts["COMMON"].exists)
     XCTAssertTrue(app.descendants(matching: .any)["word-detail.pitch"].exists)
-    XCTAssertTrue(app.buttons["word-detail.toolbar-note"].exists)
+    XCTAssertTrue(app.buttons["word-detail.add-menu"].exists)
     XCTAssertFalse(app.buttons["word-detail.toolbar-flashcards"].exists)
-    app.buttons["word-detail.toolbar-image"].tap()
+    app.buttons["word-detail.add-menu"].tap()
+    app.buttons["Choose Photo"].tap()
     let picker = waitForSystemPhotoPicker(in: app)
     picker.coordinate(withNormalizedOffset: CGVector(dx: 0.10, dy: 0.12)).tap()
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
-    app.buttons["word-detail.toolbar-note"].tap()
+    app.buttons["word-detail.add-menu"].tap()
+    app.buttons["Add Note"].tap()
     XCTAssertTrue(app.textFields["word-note.editor"].waitForExistence(timeout: 2))
     app.buttons["word-note.done"].tap()
     scrollElementIntoSafeTapRegion(

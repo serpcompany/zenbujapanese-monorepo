@@ -16,14 +16,17 @@ struct WordDetailView: View {
   @State private var encounterMedia: [EncounterMedia] = []
   @State private var selectedEncounterMediaItem: PhotosPickerItem?
   @State private var encounterMediaImportFailed = false
+  @State private var cameraAlert: WordDetailCameraAlert?
+  @State private var showsCamera = false
 
   let entry: DictionaryEntry
-  let initialImageAttachment: WordImageAttachment?
+  let initialEncounterMedia: EncounterMediaAttachment?
   let speechSynthesisClient: SpeechSynthesisClient
   let exampleSentenceClient: ExampleSentenceClient
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let wordNoteStore: WordNoteStore
   let encounterMediaStore: EncounterMediaStore
+  let cameraAuthorizationClient: CameraAuthorizationClient
   let conjugationTable: ConjugationTable?
   let openRelated: (DictionaryRelationship) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
@@ -120,17 +123,19 @@ struct WordDetailView: View {
             .font(.body.weight(.semibold))
             .accessibilityIdentifier("word-note.done")
         } else {
-          Button(action: beginAddingNote) {
-            Image(systemName: "square.and.pencil")
+          Menu {
+            Button("Add Note", systemImage: "square.and.pencil", action: beginAddingNote)
+            Button("Take Photo", systemImage: "camera", action: presentCamera)
+            PhotosPicker(selection: $selectedEncounterMediaItem, matching: .images) {
+              Label("Choose Photo", systemImage: "photo.on.rectangle")
+            }
+          } label: {
+            Label("Add", systemImage: "plus")
+              .labelStyle(.iconOnly)
           }
-          .accessibilityLabel("Add note")
-          .accessibilityIdentifier("word-detail.toolbar-note")
-
-          PhotosPicker(selection: $selectedEncounterMediaItem, matching: .images) {
-            Image(systemName: "photo.badge.plus")
-          }
-          .accessibilityLabel("Add encounter image")
-          .accessibilityIdentifier("word-detail.toolbar-image")
+          .menuOrder(.fixed)
+          .accessibilityLabel("Add")
+          .accessibilityIdentifier("word-detail.add-menu")
         }
       }
     }
@@ -138,6 +143,23 @@ struct WordDetailView: View {
       Button("OK", role: .cancel) {}
     } message: {
       Text("The selected image could not be read.")
+    }
+    .alert(item: $cameraAlert) { alert in
+      alert.alert(openSettings: cameraAuthorizationClient.openSettings)
+    }
+    .sheet(isPresented: $showsCamera) {
+      #if DEBUG
+        if WordDetailCameraFixtureScenario.current == .cancel {
+          WordDetailCameraCancelFixture {
+            saveCameraResult(.success(nil))
+            showsCamera = false
+          }
+        } else {
+          cameraPicker
+        }
+      #else
+        cameraPicker
+      #endif
     }
     .overlay(alignment: .topLeading) {
       if let lastSpeechRequest {
@@ -163,8 +185,8 @@ struct WordDetailView: View {
       isLoadingExamples = true
       encounterMedia = []
       let word = entry.encounterWordReference
-      if let initialImageAttachment {
-        await encounterMediaStore.save(initialImageAttachment, word)
+      if let initialEncounterMedia {
+        await encounterMediaStore.save(initialEncounterMedia, word)
       }
       let storedMedia = await encounterMediaStore.encounters(word)
       guard !Task.isCancelled else { return }
@@ -195,14 +217,71 @@ struct WordDetailView: View {
           encounterMediaImportFailed = true
           return
         }
-        let word = entry.encounterWordReference
-        await encounterMediaStore.save(
-          WordImageAttachment(name: selectedMedia.asset.name, data: selectedMedia.asset.data), word)
-        encounterMedia = await encounterMediaStore.encounters(word)
+        await saveEncounterMedia(selectedMedia.asset)
       } catch {
         encounterMediaImportFailed = true
       }
     }
+  }
+
+  private func presentCamera() {
+    guard cameraAuthorizationClient.isCameraAvailable() else {
+      cameraAlert = .unavailable
+      return
+    }
+    Task { @MainActor in
+      switch cameraAuthorizationClient.state() {
+      case .authorized:
+        openCamera()
+      case .notDetermined:
+        if await cameraAuthorizationClient.requestAccess() {
+          openCamera()
+        } else {
+          cameraAlert = .denied
+        }
+      case .denied:
+        cameraAlert = .denied
+      case .restricted:
+        cameraAlert = .restricted
+      }
+    }
+  }
+
+  private func openCamera() {
+    #if DEBUG
+      if let fixtureResult = WordDetailCameraTestFixtures.resultFromProcessArguments() {
+        saveCameraResult(fixtureResult)
+        return
+      }
+    #endif
+    showsCamera = true
+  }
+
+  private var cameraPicker: some View {
+    ImageCameraPicker { result in
+      showsCamera = false
+      saveCameraResult(result)
+    }
+    .ignoresSafeArea()
+  }
+
+  private func saveCameraResult(_ result: Result<ImageTextAsset?, Error>) {
+    switch result {
+    case .success(let asset):
+      guard let asset else { return }
+      Task { @MainActor in
+        await saveEncounterMedia(asset)
+      }
+    case .failure:
+      cameraAlert = .saveFailure
+    }
+  }
+
+  private func saveEncounterMedia(_ asset: ImageTextAsset) async {
+    let word = entry.encounterWordReference
+    await encounterMediaStore.save(
+      EncounterMediaAttachment(name: asset.name, data: asset.data), word)
+    encounterMedia = await encounterMediaStore.encounters(word)
   }
 
   private func beginEditingNote(_ note: LearnerWordNote) {
@@ -265,6 +344,64 @@ struct WordDetailView: View {
       updatedNotes.append(LearnerWordNote(id: noteID, text: normalized))
     }
     return updatedNotes
+  }
+}
+
+#if DEBUG
+  private struct WordDetailCameraCancelFixture: View {
+    let cancel: () -> Void
+
+    var body: some View {
+      NavigationStack {
+        Color.black
+          .ignoresSafeArea()
+          .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+              Button("Cancel", action: cancel)
+                .accessibilityIdentifier("word-detail.camera-fixture-cancel")
+            }
+          }
+      }
+    }
+  }
+#endif
+
+private enum WordDetailCameraAlert: String, Identifiable {
+  case unavailable
+  case denied
+  case restricted
+  case saveFailure
+
+  var id: String { rawValue }
+
+  func alert(openSettings: @escaping () -> Void) -> Alert {
+    switch self {
+    case .unavailable:
+      Alert(
+        title: Text("Camera Unavailable"),
+        message: Text("Camera capture requires a physical device with an available camera."),
+        dismissButton: .default(Text("OK"))
+      )
+    case .denied:
+      Alert(
+        title: Text("Camera Access Denied"),
+        message: Text("Allow Camera access in Settings to take a photo for this word."),
+        primaryButton: .default(Text("Open Settings"), action: openSettings),
+        secondaryButton: .cancel()
+      )
+    case .restricted:
+      Alert(
+        title: Text("Camera Access Restricted"),
+        message: Text("Camera access is restricted on this device."),
+        dismissButton: .default(Text("OK"))
+      )
+    case .saveFailure:
+      Alert(
+        title: Text("Unable to Save Image"),
+        message: Text("The captured image could not be read."),
+        dismissButton: .default(Text("OK"))
+      )
+    }
   }
 }
 
@@ -336,13 +473,13 @@ private struct WordHeader: View {
 
   var body: some View {
     headerLayout
-    .sheet(item: $presentedMedia) { media in
-      EncounterMediaViewer(
-        encounterMedia: encounterMedia,
-        initialMediaID: media.id,
-        removeEncounterMedia: removeEncounterMedia
-      )
-    }
+      .sheet(item: $presentedMedia) { media in
+        EncounterMediaViewer(
+          encounterMedia: encounterMedia,
+          initialMediaID: media.id,
+          removeEncounterMedia: removeEncounterMedia
+        )
+      }
   }
 
   @ViewBuilder

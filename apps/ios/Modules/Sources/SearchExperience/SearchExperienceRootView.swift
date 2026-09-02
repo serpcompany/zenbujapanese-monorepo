@@ -136,12 +136,13 @@ public struct SearchExperienceRootView: View {
         case .word(let entry, let imageContext):
           WordDetailView(
             entry: entry,
-            initialImageAttachment: imageAttachment(for: imageContext),
+            initialEncounterMedia: encounterMediaAttachment(for: imageContext),
             speechSynthesisClient: speechSynthesisClient,
             exampleSentenceClient: .live,
             japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
             wordNoteStore: .live,
             encounterMediaStore: encounterMediaStore,
+            cameraAuthorizationClient: cameraAuthorizationClient,
             conjugationTable: japaneseConjugationClient.table(entry),
             openRelated: openRelated,
             openKanji: openKanji,
@@ -252,13 +253,15 @@ public struct SearchExperienceRootView: View {
     }
   }
 
-  private func imageAttachment(for context: ImageWordContext?) -> WordImageAttachment? {
+  private func encounterMediaAttachment(for context: ImageWordContext?)
+    -> EncounterMediaAttachment?
+  {
     guard let context,
       let asset = imageTextSessionStore.session(context.sessionID)?.assets.first(where: {
         $0.id == context.assetID
       })
     else { return nil }
-    return WordImageAttachment(name: asset.name, data: asset.data)
+    return EncounterMediaAttachment(name: asset.name, data: asset.data)
   }
 }
 

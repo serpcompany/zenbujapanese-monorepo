@@ -1,7 +1,7 @@
 import CryptoKit
 import Foundation
 
-struct WordImageAttachment: Hashable, Sendable {
+struct EncounterMediaAttachment: Hashable, Sendable {
   let name: String
   let data: Data
 
@@ -32,7 +32,7 @@ struct EncounterMediaSummary: Identifiable, Hashable, Sendable {
 
 struct EncounterMediaStore: Sendable {
   var encounters: @Sendable (EncounterWordReference) async -> [EncounterMedia]
-  var save: @Sendable (WordImageAttachment, EncounterWordReference) async -> Void
+  var save: @Sendable (EncounterMediaAttachment, EncounterWordReference) async -> Void
   var remove: @Sendable (EncounterWordReference, String) async -> Void
   var library: @Sendable () async -> [EncounterMediaSummary]
   var media: @Sendable (String) async -> EncounterMedia?
@@ -128,7 +128,7 @@ private actor EncounterMediaStorage {
       .compactMap { loadMedia($0.mediaID, record: current.media[$0.mediaID]) }
   }
 
-  func save(_ attachment: WordImageAttachment, for word: EncounterWordReference) {
+  func save(_ attachment: EncounterMediaAttachment, for word: EncounterWordReference) {
     prepareIfNeeded()
     guard !attachment.data.isEmpty else { return }
     var current = index()
@@ -196,7 +196,9 @@ private actor EncounterMediaStorage {
     guard !didPrepare else { return }
     didPrepare = true
     #if DEBUG
-      if ProcessInfo.processInfo.arguments.contains("-ResetWordImageAttachments") {
+      if ProcessInfo.processInfo.arguments.contains("-ResetEncounterMedia")
+        || ProcessInfo.processInfo.arguments.contains("-ResetWordImageAttachments")
+      {
         try? FileManager.default.removeItem(at: directory)
         if let legacyDirectory { try? FileManager.default.removeItem(at: legacyDirectory) }
       }
