@@ -23,6 +23,36 @@ private struct AuditException: CustomStringConvertible {
 
 final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
+  func testLongWordIdentityUsesSecondaryReadingAtLargestAccessibilityTextSize() throws {
+    try verifyLongWordIdentityAtLargestAccessibilityTextSize(appearance: .light)
+  }
+
+  @MainActor
+  func testLongPartOfSpeechRemainsCompleteAtDefaultTextSize() throws {
+    let expected = "Godan Verb · Auxiliary Verb · Intransitive Verb · Transitive Verb"
+    let (app, detail) = try launchWordDetail(
+      query: "仕る",
+      resultLabelPrefix: "仕る, つかまつる",
+      appearance: .light
+    )
+    let conjugations = app.buttons["word-detail.conjugations"]
+    for _ in 0..<4 where !conjugations.exists || !conjugations.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(conjugations.isHittable)
+    let partOfSpeech = app.staticTexts[
+      "word-detail.entry.7a719ec3441746ac068296d7b42321e3"
+    ]
+    XCTAssertTrue(partOfSpeech.exists)
+    XCTAssertEqual(partOfSpeech.label, expected)
+    XCTAssertGreaterThan(partOfSpeech.frame.height, 0)
+    XCTAssertGreaterThanOrEqual(partOfSpeech.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(partOfSpeech.frame.maxX, app.frame.maxX)
+    XCTAssertTrue(app.staticTexts["View Conjugations"].exists)
+    retainElementScreenshot(conjugations, named: "Long part of speech default size")
+  }
+
+  @MainActor
   func testInlineWordDetailCurrentEntryUsesSystemAccentAndSemanticEmphasis() throws {
     try verifyInlineWordDetailCurrentEntry(
       appearance: .light,
@@ -803,13 +833,13 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
-  func testDarkRichWordDetailRemainsReachableAtLargestAccessibilityTextSize() throws {
-    try verifyRichWordDetailAtLargestAccessibilityTextSize(appearance: .dark)
+  func testDarkRichWordDetailRemainsReachableAtDefaultTextSize() throws {
+    try verifyRichWordDetailAtDefaultTextSize(appearance: .dark)
   }
 
   @MainActor
-  func testLightRichWordDetailRemainsReachableAtLargestAccessibilityTextSize() throws {
-    try verifyRichWordDetailAtLargestAccessibilityTextSize(appearance: .light)
+  func testLightRichWordDetailRemainsReachableAtDefaultTextSize() throws {
+    try verifyRichWordDetailAtDefaultTextSize(appearance: .light)
   }
 
   @MainActor
@@ -1058,19 +1088,49 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
-  private func verifyRichWordDetailAtLargestAccessibilityTextSize(
+  private func verifyLongWordIdentityAtLargestAccessibilityTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let headword = WordDetailUITestSupport.longHeadword
+    let reading = WordDetailUITestSupport.longReading
+    let (app, detail) = try launchWordDetail(
+      query: headword,
+      resultLabelPrefix: "\(headword), \(reading)",
+      appearance: appearance,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+
+    let identity = WordDetailUITestSupport.assertLongIdentityUsesSecondaryReading(in: app)
+    retainElementScreenshot(
+      identity,
+      named: "Long identity - \(appearance == .dark ? "dark" : "light") accessibility XXXL"
+    )
+
+    let pronounce = app.buttons["word-detail.pronounce"]
+    for _ in 0..<3 where !pronounce.exists || !pronounce.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(pronounce.isHittable)
+    XCTAssertGreaterThanOrEqual(pronounce.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(pronounce.frame.height, 44)
+    XCTAssertEqual(app.images.matching(identifier: "ear.badge.waveform").count, 0)
+    retainElementScreenshot(
+      detail,
+      named: "Long Word Detail - \(appearance == .dark ? "dark" : "light") accessibility XXXL"
+    )
+  }
+
+  @MainActor
+  private func verifyRichWordDetailAtDefaultTextSize(
     appearance: XCUIDevice.Appearance
   ) throws {
     let originalAppearance = XCUIDevice.shared.appearance
     XCUIDevice.shared.appearance = appearance
     defer { XCUIDevice.shared.appearance = originalAppearance }
 
-    let app = launchApp(
-      appearance: appearance,
-      additionalArguments: [
-        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
-      ]
-    )
+    let app = launchApp(appearance: appearance)
     try submitSearch("見る", in: app)
     let result = app.buttons.matching(
       NSPredicate(format: "label BEGINSWITH %@", "見る, みる")
@@ -1080,7 +1140,9 @@ final class AccessibilityAuditUITests: XCTestCase {
 
     let detail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(detail.waitForExistence(timeout: 5))
-    XCTAssertTrue(app.staticTexts["ALTERNATIVES"].waitForExistence(timeout: 5))
+    let alternatives = app.staticTexts["ALTERNATIVES"]
+    for _ in 0..<4 where !alternatives.exists { detail.swipeUp(velocity: .slow) }
+    XCTAssertTrue(alternatives.exists)
     let add = app.buttons["word-detail.add-menu"]
     XCTAssertTrue(add.isHittable)
     add.tap()

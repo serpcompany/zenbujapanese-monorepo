@@ -39,7 +39,21 @@ struct EncounterMediaStore: Sendable {
   var deleteMedia: @Sendable (String) async -> Void
 
   static let live = EncounterMediaStore(
-    encounters: { word in await EncounterMediaStorage.shared.encounters(for: word) },
+    encounters: { word in
+      #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-InjectCorruptEncounterMedia") {
+          return [
+            EncounterMedia(
+              id: "corrupt-media-fixture",
+              name: "corrupt-media.image",
+              data: Data([0x00]),
+              savedAt: .now
+            )
+          ]
+        }
+      #endif
+      return await EncounterMediaStorage.shared.encounters(for: word)
+    },
     save: { attachment, word in await EncounterMediaStorage.shared.save(attachment, for: word) },
     remove: { word, mediaID in await EncounterMediaStorage.shared.remove(word, mediaID: mediaID) },
     library: { await EncounterMediaStorage.shared.library() },

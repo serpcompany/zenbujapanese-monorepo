@@ -1079,11 +1079,20 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(back.isHittable)
     back.tap()
     XCTAssertTrue(wordDetail.waitForExistence(timeout: 2))
-    XCTAssertTrue(app.descendants(matching: .any)["ruby.静か.静=しず|か"].exists)
+    XCTAssertEqual(app.navigationBars.firstMatch.identifier, "静か")
     XCTAssertTrue(linkedKanji.exists)
     XCTAssertTrue(nativeBackButton(in: app).isHittable)
     Thread.sleep(forTimeInterval: 2)
     recordSettledScreenshot(named: "kanji-back-restores-shizuka-word-detail", app: app)
+    let restoredIdentity = app.descendants(matching: .any)["ruby.静か.静=しず|か"]
+    scrollElementIntoSafeTapRegion(
+      restoredIdentity,
+      in: wordDetail,
+      app: app,
+      direction: .backward,
+      maximumGestureCount: 6
+    )
+    XCTAssertTrue(restoredIdentity.exists)
   }
 
   @MainActor
@@ -2887,6 +2896,112 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     alert.buttons["OK"].tap()
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertFalse(app.buttons["word-detail.image-attachment"].exists)
+  }
+
+  @MainActor
+  func testWordDetailHidesCorruptEncounterMedia() throws {
+    let app = launchApp(additionalArguments: [
+      "-InjectCorruptEncounterMedia", "-ResetEncounterMedia",
+    ])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    XCTAssertFalse(app.buttons["word-detail.image-attachment"].exists)
+    XCTAssertFalse(app.staticTexts["Encounter Media"].exists)
+  }
+
+  @MainActor
+  func testWordDetailPresentsIdentityPronunciationAndMetadataInLogicalOrder() throws {
+    let app = launchApp(additionalArguments: ["-ResetEncounterMedia", "-ResetFrequencyPacks"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    let identity = app.descendants(matching: .any).matching(
+      NSPredicate(format: "label == %@", "見る, みる")
+    ).firstMatch
+    let pitch = app.descendants(matching: .any)["word-detail.pitch"]
+    let pronounce = app.buttons["word-detail.pronounce"]
+    let partOfSpeech = app.descendants(matching: .any)[
+      "word-detail.entry.7f490a9c9c0da94f4e9474f4efe74be1"
+    ]
+    let frequency = app.buttons["word-detail.frequency"]
+
+    XCTAssertTrue(app.staticTexts["WORD"].waitForExistence(timeout: 3))
+    XCTAssertTrue(identity.exists)
+    XCTAssertEqual(identity.label, "見る, みる")
+    XCTAssertTrue(pitch.exists)
+    XCTAssertTrue(pronounce.exists)
+    XCTAssertEqual(app.buttons.matching(identifier: "word-detail.pronounce").count, 1)
+    XCTAssertEqual(app.images.matching(identifier: "ear.badge.waveform").count, 0)
+    XCTAssertGreaterThanOrEqual(pronounce.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(pronounce.frame.height, 44)
+    XCTAssertTrue(app.staticTexts["ENTRY"].exists)
+    XCTAssertTrue(partOfSpeech.exists)
+    XCTAssertTrue(frequency.exists)
+
+    XCTAssertLessThan(identity.frame.minY, pitch.frame.minY)
+    XCTAssertLessThan(identity.frame.minY, pronounce.frame.minY)
+    XCTAssertLessThan(max(pitch.frame.maxY, pronounce.frame.maxY), partOfSpeech.frame.minY)
+    XCTAssertLessThan(partOfSpeech.frame.minY, frequency.frame.minY)
+    recordScreenshot(named: "word-detail-logical-header-hierarchy", app: app)
+
+    let loadedRank = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "#41"),
+      object: app.buttons["word-detail.frequency"]
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [loadedRank], timeout: 5), .completed)
+    let settledFrequency = app.buttons["word-detail.frequency"]
+    scrollElementIntoSafeTapRegion(
+      settledFrequency,
+      in: app.collectionViews["word-detail.screen"],
+      app: app,
+      maximumGestureCount: 2
+    )
+    XCTAssertTrue(settledFrequency.isHittable)
+    app.buttons["word-detail.frequency"].tap()
+    XCTAssertTrue(app.staticTexts["Frequency Details"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["TUBELEX YouTube Japanese"].exists)
+  }
+
+  @MainActor
+  func testLongMixedScriptWordDetailUsesCompleteSecondaryReadingFallback() throws {
+    let headword = WordDetailUITestSupport.longHeadword
+    let reading = WordDetailUITestSupport.longReading
+    let app = launchApp(additionalArguments: ["-ResetEncounterMedia", "-ResetFrequencyPacks"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: headword,
+      resultLabelPrefix: "\(headword), \(reading)",
+      in: app,
+      searchField: searchField
+    )
+
+    let identity = WordDetailUITestSupport.assertLongIdentityUsesSecondaryReading(in: app)
+    recordScreenshot(named: "word-detail-long-identity-secondary-reading", app: app)
+
+    let detail = app.collectionViews["word-detail.screen"]
+    let linkedKanji = app.buttons["word-detail.kanji.検"]
+    scrollWordDetailElementIntoView(linkedKanji, in: detail, app: app)
+    XCTAssertTrue(linkedKanji.isHittable)
+    linkedKanji.tap()
+    XCTAssertTrue(app.collectionViews["kanji-detail.screen"].waitForExistence(timeout: 3))
+    tapNativeBack(in: app)
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    for _ in 0..<4 where !identity.exists { detail.swipeDown() }
+    XCTAssertTrue(identity.waitForExistence(timeout: 3))
   }
 
   @MainActor

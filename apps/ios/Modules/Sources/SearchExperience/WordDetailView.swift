@@ -43,21 +43,33 @@ struct WordDetailView: View {
   var body: some View {
     ScrollViewReader { proxy in
       List {
-        Section {
-          WordHeader(
+        Section("WORD") {
+          WordIdentityView(entry: entry)
+          PronunciationRow(
             entry: entry,
-            frequency: frequency,
-            encounterMedia: encounterMedia,
-            showFrequency: { frequencyDisclosure = FrequencyDisclosureItem(result: frequency) },
-            pronounce: { speechSynthesisClient.speak(entry.reading) },
-            removeEncounterMedia: removeEncounterMedia
+            pronounce: { speechSynthesisClient.speak(entry.reading) }
           )
+          if let latestEncounterMedia = displayableEncounterMedia.first {
+            EncounterMediaRow(
+              media: latestEncounterMedia,
+              count: displayableEncounterMedia.count,
+              encounterMedia: displayableEncounterMedia,
+              removeEncounterMedia: removeEncounterMedia
+            )
+          }
+        }
+
+        Section("ENTRY") {
           PartOfSpeechRow(
             entry: entry,
             title: (entry.senses.first?.partsOfSpeech ?? entry.partsOfSpeech)
               .map(\.rawValue)
               .joined(separator: " · "),
             conjugationTable: conjugationTable
+          )
+          FrequencyRow(
+            result: frequency,
+            showDetails: { frequencyDisclosure = FrequencyDisclosureItem(result: frequency) }
           )
         }
 
@@ -223,6 +235,10 @@ struct WordDetailView: View {
       noteDraft = ""
       isLoadingExamples = false
     }
+  }
+
+  private var displayableEncounterMedia: [EncounterMedia] {
+    encounterMedia.filter { UIImage(data: $0.data) != nil }
   }
 
   private func removeEncounterMedia(_ mediaID: String) async {
@@ -489,87 +505,58 @@ private struct AlternativeKanjiSection: View {
   }
 }
 
-private struct WordHeader: View {
+private struct WordIdentityView: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let entry: DictionaryEntry
-  let frequency: FrequencyLookupResult
-  let encounterMedia: [EncounterMedia]
-  let showFrequency: () -> Void
-  let pronounce: () -> Void
-  let removeEncounterMedia: (String) async -> Void
-  @State private var presentedMedia: EncounterMedia?
 
   var body: some View {
-    headerLayout
-      .sheet(item: $presentedMedia) { media in
-        EncounterMediaViewer(
-          encounterMedia: encounterMedia,
-          initialMediaID: media.id,
-          removeEncounterMedia: removeEncounterMedia
-        )
+    ViewThatFits(in: .horizontal) {
+      JapaneseRubyText(
+        surface: entry.headword,
+        reading: entry.reading,
+        baseFont: .largeTitle.weight(.light),
+        rubyFont: .title3.weight(.semibold)
+      )
+      .fixedSize(horizontal: true, vertical: false)
+
+      VStack(alignment: .leading, spacing: 6) {
+        Text(entry.headword)
+          .font(.title2.weight(.semibold))
+          .fixedSize(horizontal: false, vertical: true)
+          .accessibilityIdentifier("word-detail.identity-surface")
+        Text(entry.reading)
+          .font(dynamicTypeSize.isAccessibilitySize ? .body : .callout)
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+          .accessibilityIdentifier("word-detail.identity-reading")
       }
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel("\(entry.headword), \(entry.reading)")
+      .accessibilityIdentifier("word-detail.identity")
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
   }
+}
+
+private struct PronunciationRow: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  let entry: DictionaryEntry
+  let pronounce: () -> Void
 
   @ViewBuilder
-  private var headerLayout: some View {
+  var body: some View {
     if dynamicTypeSize.isAccessibilitySize {
       VStack(alignment: .leading, spacing: 12) {
-        headword
-        headerAccessory
-          .frame(maxWidth: .infinity, alignment: .trailing)
         pitchAccent
-          .frame(maxWidth: .infinity, alignment: .leading)
         pronounceButton
-          .frame(maxWidth: .infinity, alignment: .trailing)
+          .frame(maxWidth: .infinity, alignment: .leading)
       }
     } else {
-      VStack(spacing: 12) {
-        HStack(alignment: .top, spacing: 12) {
-          headword
-          Spacer()
-          headerAccessory
-        }
-        HStack(spacing: 18) {
-          pitchAccent
-          Spacer()
-          pronounceButton
-        }
+      HStack(spacing: 16) {
+        pitchAccent
+        Spacer(minLength: 8)
+        pronounceButton
       }
-    }
-  }
-
-  private var headword: some View {
-    JapaneseRubyText(
-      surface: entry.headword,
-      reading: entry.reading,
-      baseFont: .largeTitle.weight(.light),
-      rubyFont: .title3.weight(.semibold)
-    )
-  }
-
-  @ViewBuilder
-  private var headerAccessory: some View {
-    VStack(alignment: .trailing, spacing: 8) {
-      if let latest = encounterMedia.first, let image = UIImage(data: latest.data) {
-        Button {
-          presentedMedia = latest
-        } label: {
-          VStack(spacing: 3) {
-            Image(uiImage: image)
-              .resizable()
-              .scaledToFill()
-              .frame(width: 66, height: 52)
-              .clipped()
-              .clipShape(RoundedRectangle(cornerRadius: 5))
-            Text(encounterMedia.count == 1 ? "Saved Image" : "\(encounterMedia.count) Images")
-              .font(.caption2)
-          }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Saved encounter images, \(encounterMedia.count)")
-        .accessibilityIdentifier("word-detail.image-attachment")
-      }
-      FrequencyBadge(result: frequency, showDetails: showFrequency)
     }
   }
 
@@ -582,13 +569,61 @@ private struct WordHeader: View {
 
   private var pronounceButton: some View {
     Button(action: pronounce) {
-      Label("Pronounce \(entry.reading)", systemImage: "speaker.wave.2.fill")
-        .labelStyle(.iconOnly)
-        .font(.title2)
+      Group {
+        if dynamicTypeSize.isAccessibilitySize {
+          Label("Play pronunciation", systemImage: "speaker.wave.2.fill")
+            .font(.body)
+        } else {
+          Label("Play pronunciation", systemImage: "speaker.wave.2.fill")
+            .labelStyle(.iconOnly)
+            .font(.title2)
+        }
+      }
+      .frame(minWidth: 44, minHeight: 44)
     }
     .buttonStyle(.bordered)
     .accessibilityLabel("Pronounce \(entry.reading)")
     .accessibilityIdentifier("word-detail.pronounce")
+  }
+}
+
+private struct EncounterMediaRow: View {
+  @State private var presentedMedia: EncounterMedia?
+  let media: EncounterMedia
+  let count: Int
+  let encounterMedia: [EncounterMedia]
+  let removeEncounterMedia: (String) async -> Void
+
+  var body: some View {
+    Button {
+      presentedMedia = media
+    } label: {
+      LabeledContent("Encounter Media") {
+        if let image = UIImage(data: media.data) {
+          HStack(spacing: 8) {
+            Text(count == 1 ? "Saved Image" : "\(count) Images")
+            Image(uiImage: image)
+              .resizable()
+              .scaledToFill()
+              .frame(width: 56, height: 44)
+              .clipped()
+              .clipShape(RoundedRectangle(cornerRadius: 5))
+          }
+        }
+      }
+      .frame(maxWidth: .infinity)
+      .contentShape(.rect)
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Saved encounter images, \(count)")
+    .accessibilityIdentifier("word-detail.image-attachment")
+    .sheet(item: $presentedMedia) { media in
+      EncounterMediaViewer(
+        encounterMedia: encounterMedia,
+        initialMediaID: media.id,
+        removeEncounterMedia: removeEncounterMedia
+      )
+    }
   }
 }
 
@@ -666,18 +701,20 @@ extension DictionaryEntry {
   }
 }
 
-private struct FrequencyBadge: View {
+private struct FrequencyRow: View {
   let result: FrequencyLookupResult
   let showDetails: () -> Void
 
   var body: some View {
     let presentation = FrequencyPresentationModel(result: result)
     Button(action: showDetails) {
-      Text(presentation.inlineText)
-        .font(.headline.monospacedDigit())
-        .frame(minWidth: 44, minHeight: 44)
-        .padding(.horizontal, 8)
-        .background(.fill.tertiary, in: .rect(cornerRadius: 10))
+      LabeledContent("Frequency") {
+        Text(presentation.inlineText)
+          .font(.headline.monospacedDigit())
+          .frame(minWidth: 44, minHeight: 44)
+      }
+      .frame(maxWidth: .infinity)
+      .contentShape(.rect)
     }
     .buttonStyle(.plain)
     .accessibilityLabel(presentation.inlineAccessibilityLabel)
@@ -744,7 +781,6 @@ private struct PitchAccentView: View {
 
   var body: some View {
     HStack(spacing: 8) {
-      Image(systemName: "ear.badge.waveform")
       Text(reading.katakana)
         .font(.body.weight(.medium))
         .padding(.bottom, 4)
@@ -809,20 +845,30 @@ private struct PartOfSpeechRow: View {
     if let conjugationTable {
       NavigationLink(value: SearchExperienceRoute.conjugations(entry, conjugationTable)) {
         LabeledContent {
-          Text("View Conjugations")
-            .foregroundStyle(.secondary)
+          VStack(alignment: .trailing, spacing: 2) {
+            Text(title.isEmpty ? "Dictionary entry" : title)
+              .multilineTextAlignment(.trailing)
+              .fixedSize(horizontal: false, vertical: true)
+              .accessibilityIdentifier(entryVerificationIdentifier)
+            Text("View Conjugations")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
         } label: {
-          Text(title.isEmpty ? "Dictionary entry" : title)
-            .accessibilityIdentifier(entryVerificationIdentifier)
+          Text("Part of speech")
         }
         .font(.body)
       }
       .accessibilityIdentifier("word-detail.conjugations")
     } else {
-      Text(title.isEmpty ? "Dictionary entry" : title)
-        .font(.headline)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityIdentifier(entryVerificationIdentifier)
+      LabeledContent {
+        Text(title.isEmpty ? "Dictionary entry" : title)
+          .multilineTextAlignment(.trailing)
+          .fixedSize(horizontal: false, vertical: true)
+          .accessibilityIdentifier(entryVerificationIdentifier)
+      } label: {
+        Text("Part of speech")
+      }
     }
   }
 

@@ -25,6 +25,11 @@ dSYMs, checksums, and candidate result bundles to the documented 400-day-or-long
 evidence store. `iOS performance trend` remains a separate weekly trend, not a
 substitute for correctness.
 
+During Apple-native refactor issue loops, adaptive-layout changes retain one
+focused maximum-size smoke for the exact surface under review. Broader functional
+journeys run at normal Dynamic Type; the existing direct accessibility audits remain
+visible under #173 and are not replaced, skipped, or treated as passing by that split.
+
 ## Path-aware execution
 
 `apps/ios/Tools/ios_ci_scope.py` is the source of truth for changes that can
