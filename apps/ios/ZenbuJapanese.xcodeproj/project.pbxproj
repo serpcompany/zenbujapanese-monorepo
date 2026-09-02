@@ -13,6 +13,7 @@
 		F0A200000000000000000002 /* EncounterMediaStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A200000000000000000001 /* EncounterMediaStoreTests.swift */; };
 		F21200000000000000000002 /* FrequencyPackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21200000000000000000001 /* FrequencyPackTests.swift */; };
 		F24200000000000000000002 /* JapaneseTextAnalysisTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F24200000000000000000001 /* JapaneseTextAnalysisTests.swift */; };
+		F23500000000000000000002 /* KanjiDetailRestorationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F23500000000000000000001 /* KanjiDetailRestorationTests.swift */; };
 		151000000000000000000002 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
 		15100000000000000000000E /* ExampleSentenceRetrieval-v1-summary.tsv in Resources */ = {isa = PBXBuildFile; fileRef = 151000000000000000000010 /* ExampleSentenceRetrieval-v1-summary.tsv */; };
 		15100000000000000000000F /* ExampleSentenceRetrieval-v1-rows.tsv in Resources */ = {isa = PBXBuildFile; fileRef = 151000000000000000000011 /* ExampleSentenceRetrieval-v1-rows.tsv */; };
@@ -49,6 +50,7 @@
 		F0A200000000000000000001 /* EncounterMediaStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncounterMediaStoreTests.swift; sourceTree = "<group>"; };
 		F21200000000000000000001 /* FrequencyPackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrequencyPackTests.swift; sourceTree = "<group>"; };
 		F24200000000000000000001 /* JapaneseTextAnalysisTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JapaneseTextAnalysisTests.swift; sourceTree = "<group>"; };
+		F23500000000000000000001 /* KanjiDetailRestorationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiDetailRestorationTests.swift; sourceTree = "<group>"; };
 		151000000000000000000005 /* ZenbuJapaneseTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ZenbuJapaneseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		151000000000000000000010 /* ExampleSentenceRetrieval-v1-summary.tsv */ = {isa = PBXFileReference; lastKnownFileType = text; path = "ExampleSentenceRetrieval-v1-summary.tsv"; sourceTree = "<group>"; };
 		151000000000000000000011 /* ExampleSentenceRetrieval-v1-rows.tsv */ = {isa = PBXFileReference; lastKnownFileType = text; path = "ExampleSentenceRetrieval-v1-rows.tsv"; sourceTree = "<group>"; };
@@ -92,6 +94,7 @@
 				F0A200000000000000000001 /* EncounterMediaStoreTests.swift */,
 				F21200000000000000000001 /* FrequencyPackTests.swift */,
 				F24200000000000000000001 /* JapaneseTextAnalysisTests.swift */,
+				F23500000000000000000001 /* KanjiDetailRestorationTests.swift */,
 			);
 			path = Modules/Tests/SearchExperienceTests;
 			sourceTree = SOURCE_ROOT;
@@ -344,6 +347,7 @@
 				F0A200000000000000000002 /* EncounterMediaStoreTests.swift in Sources */,
 				F21200000000000000000002 /* FrequencyPackTests.swift in Sources */,
 				F24200000000000000000002 /* JapaneseTextAnalysisTests.swift in Sources */,
+				F23500000000000000000002 /* KanjiDetailRestorationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

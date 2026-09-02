@@ -1061,6 +1061,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(restoredReadingWord.waitForExistence(timeout: 2))
     XCTAssertEqual(restoredReadingWord.label, "静, しず, quiet, calm, still")
     XCTAssertTrue(restoredReadingWord.isHittable)
+    XCTAssertTrue(nativeBackButton(in: app).isHittable)
 
     for _ in 0..<8 where !linkedReading.isHittable { restoredKanjiDetail.swipeDown() }
     XCTAssertTrue(linkedReading.isHittable)
@@ -1072,6 +1073,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(restoredKanjiDetail.waitForExistence(timeout: 2))
     XCTAssertTrue(restoredReadingWord.waitForExistence(timeout: 2))
     XCTAssertTrue(restoredReadingWord.isHittable)
+    XCTAssertTrue(nativeBackButton(in: app).isHittable)
 
     let back = nativeBackButton(in: app)
     XCTAssertTrue(back.isHittable)

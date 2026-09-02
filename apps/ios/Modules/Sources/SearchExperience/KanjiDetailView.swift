@@ -86,13 +86,8 @@ struct KanjiDetailView: View {
       .onChange(of: elements.map(\.id)) {
         restorePreservedElementPosition(in: elements)
       }
-      .onScrollGeometryChange(for: KanjiDetailScrollReadiness.self) { geometry in
-        KanjiDetailScrollReadiness(
-          target: pendingScrollTarget,
-          contentHeight: geometry.contentSize.height
-        )
-      } action: { _, readiness in
-        guard let target = readiness.target, readiness.contentHeight > 0 else { return }
+      .onChange(of: restorationState) { _, restorationState in
+        guard let target = restorationState.readyTarget else { return }
         proxy.scrollTo(target, anchor: .center)
         pendingScrollTarget = nil
       }
@@ -141,7 +136,17 @@ struct KanjiDetailView: View {
     return [entry] + relatedWords.filter { $0.id != entry.id }
   }
 
-  private func retry() { retryID += 1 }
+  private var restorationState: KanjiDetailRestorationState {
+    KanjiDetailRestorationState(
+      pendingTarget: pendingScrollTarget,
+      snapshot: loadState.restorationSnapshot
+    )
+  }
+
+  private func retry() {
+    loadState = .loading
+    retryID += 1
+  }
 
   private func retryStrokeOrder() { strokeRetryID += 1 }
 
@@ -179,6 +184,7 @@ struct KanjiDetailView: View {
   }
 
   private func loadDetail() async {
+    guard loadState.requiresLoad else { return }
     loadState = .loading
     var loadedReference: KanjiReferenceEntry?
     var loadedWords: [DictionaryEntry] = []
@@ -238,14 +244,27 @@ private struct KanjiStrokeDiagramLoadRequest: Hashable {
   let retryID: Int
 }
 
-private enum KanjiDetailScrollTarget: Hashable {
+enum KanjiDetailScrollTarget: Hashable {
   case word(LanguageReferenceID)
   case element(KanjiElementID)
 }
 
-private struct KanjiDetailScrollReadiness: Equatable {
-  let target: KanjiDetailScrollTarget?
-  let contentHeight: CGFloat
+struct KanjiDetailRestorationState: Equatable {
+  enum Snapshot: Equatable {
+    case loading
+    case settled(availableTargets: Set<KanjiDetailScrollTarget>)
+  }
+
+  let pendingTarget: KanjiDetailScrollTarget?
+  let snapshot: Snapshot
+
+  var readyTarget: KanjiDetailScrollTarget? {
+    guard let pendingTarget,
+      case .settled(let availableTargets) = snapshot,
+      availableTargets.contains(pendingTarget)
+    else { return nil }
+    return pendingTarget
+  }
 }
 
 private enum KanjiStrokeDiagramLoadState: Equatable {
@@ -255,7 +274,7 @@ private enum KanjiStrokeDiagramLoadState: Equatable {
   case failed
 }
 
-private enum KanjiDetailLoadState: Equatable {
+enum KanjiDetailLoadState: Equatable {
   case loading
   case loaded(
     reference: KanjiReferenceEntry?,
@@ -267,6 +286,26 @@ private enum KanjiDetailLoadState: Equatable {
     elements: [KanjiElementSummary],
     relatedWords: [DictionaryEntry]
   )
+
+  var requiresLoad: Bool {
+    if case .loading = self { return true }
+    return false
+  }
+
+  var restorationSnapshot: KanjiDetailRestorationState.Snapshot {
+    switch self {
+    case .loading:
+      .loading
+    case .loaded(_, let elements, let relatedWords),
+      .failed(_, let elements, let relatedWords):
+      .settled(
+        availableTargets: Set(
+          relatedWords.map { .word($0.id) }
+            + elements.map { .element($0.id) }
+        )
+      )
+    }
+  }
 }
 
 private struct KanjiOverview: View {
