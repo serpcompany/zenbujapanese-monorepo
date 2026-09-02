@@ -108,7 +108,6 @@ struct ImageTextFlowView: View {
       .padding(.vertical, 8)
     case .failed:
       Text("Translation unavailable")
-        .foregroundStyle(.red)
         .accessibilityIdentifier("image-text.translation-unavailable")
         .padding(.vertical, 8)
     }
@@ -173,12 +172,11 @@ struct ImageTextFlowView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityIdentifier("image-text.loading")
     case .failed:
-      ContentUnavailableView {
-        Label("Image text unavailable", systemImage: "text.viewfinder")
-          .foregroundStyle(.red)
-      } description: {
-        Text("Close and choose the file again.")
-      }
+      ContentUnavailableView(
+        "Image text unavailable",
+        systemImage: "text.viewfinder",
+        description: Text("Close and choose the file again.")
+      )
     case .loaded(let page):
       ImageTextCanvas(
         page: page,

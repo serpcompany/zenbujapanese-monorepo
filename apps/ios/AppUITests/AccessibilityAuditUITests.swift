@@ -127,7 +127,6 @@ final class AccessibilityAuditUITests: XCTestCase {
     ]
     XCTAssertEqual(installed.label, "Status, Installed")
     XCTAssertEqual(installed.value as? String, "Not selected")
-    XCTAssertTrue(verified.waitForNonExistence(timeout: 10))
 
     let use = app.buttons[
       "frequency-pack.activate.zenbu.wikipedia.written.ja.unidic-3.1"
@@ -144,6 +143,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertEqual(remove.label, "Remove Pack")
     XCTAssertTrue(containsRedPixels(in: remove.screenshot()))
     remove.tap()
+    XCTAssertTrue(verified.waitForNonExistence(timeout: 3))
 
     let available = app.descendants(matching: .any)[
       "frequency-pack.status.zenbu.wikipedia.written.ja.unidic-3.1"
@@ -1049,6 +1049,12 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(activeStatus.exists)
     XCTAssertEqual(activeStatus.label, "Status, Active")
     XCTAssertEqual(activeStatus.value as? String, "Selected frequency dictionary")
+    try performAudit(
+      in: app,
+      named:
+        "Frequency Dictionaries status - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")",
+      types: .hitRegion
+    )
     let optional = app.staticTexts["Japanese Wikipedia"]
     for _ in 0..<10 where !optional.exists { list.swipeUp() }
     XCTAssertTrue(optional.exists)
@@ -1063,6 +1069,12 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(download.exists)
     XCTAssertGreaterThanOrEqual(download.frame.minX, app.frame.minX)
     XCTAssertLessThanOrEqual(download.frame.maxX, app.frame.maxX)
+    try performAudit(
+      in: app,
+      named:
+        "Frequency Dictionaries action - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")",
+      types: .hitRegion
+    )
     let evidenceName =
       "Frequency Dictionaries - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")"
     if accessibilityXXXL {
@@ -1477,47 +1489,40 @@ final class AccessibilityAuditUITests: XCTestCase {
 
   @MainActor
   private func containsRedPixels(in screenshot: XCUIScreenshot) -> Bool {
-    let pixels = sampledRGBAPixels(in: screenshot)
-    var redPixelCount = 0
-    for offset in stride(from: 0, to: pixels.count, by: 4) {
-      let red = Int(pixels[offset])
-      let green = Int(pixels[offset + 1])
-      let blue = Int(pixels[offset + 2])
-      if red >= 150, red >= green + 45, red >= blue + 35 {
-        redPixelCount += 1
-        if redPixelCount >= 24 { return true }
-      }
+    containsPixels(in: screenshot, requiredCount: 24) { red, green, blue in
+      red >= 150 && red >= green + 45 && red >= blue + 35
     }
-    return false
   }
 
   @MainActor
   private func containsSystemBluePixels(in screenshot: XCUIScreenshot) -> Bool {
-    let pixels = sampledRGBAPixels(in: screenshot)
-    var bluePixelCount = 0
-    for offset in stride(from: 0, to: pixels.count, by: 4) {
-      let red = Int(pixels[offset])
-      let green = Int(pixels[offset + 1])
-      let blue = Int(pixels[offset + 2])
-      if blue >= 150, blue >= red + 45, blue >= green + 30 {
-        bluePixelCount += 1
-        if bluePixelCount >= 12 { return true }
-      }
+    containsPixels(in: screenshot) { red, green, blue in
+      blue >= 150 && blue >= red + 45 && blue >= green + 30
     }
-    return false
   }
 
   @MainActor
   private func containsGreenPixels(in screenshot: XCUIScreenshot) -> Bool {
+    containsPixels(in: screenshot) { red, green, blue in
+      green >= 130 && green >= red + 50 && green >= blue + 40
+    }
+  }
+
+  @MainActor
+  private func containsPixels(
+    in screenshot: XCUIScreenshot,
+    requiredCount: Int = 12,
+    matching: (_ red: Int, _ green: Int, _ blue: Int) -> Bool
+  ) -> Bool {
     let pixels = sampledRGBAPixels(in: screenshot)
-    var greenPixelCount = 0
+    var matchCount = 0
     for offset in stride(from: 0, to: pixels.count, by: 4) {
       let red = Int(pixels[offset])
       let green = Int(pixels[offset + 1])
       let blue = Int(pixels[offset + 2])
-      if green >= 130, green >= red + 50, green >= blue + 40 {
-        greenPixelCount += 1
-        if greenPixelCount >= 12 { return true }
+      if matching(red, green, blue) {
+        matchCount += 1
+        if matchCount >= requiredCount { return true }
       }
     }
     return false

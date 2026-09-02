@@ -155,6 +155,15 @@ enum FrequencyPackAction: Equatable, Sendable {
   case activate
   case update
   case remove
+
+  var label: String {
+    switch self {
+    case .download: "Download"
+    case .activate: "Use This Dictionary"
+    case .update: "Download Update"
+    case .remove: "Remove Pack"
+    }
+  }
 }
 
 struct InstalledFrequencyPackRecord: Codable, Equatable, Sendable {

@@ -122,26 +122,28 @@ struct FrequencyDictionariesView: View {
         }
       #endif
     } else if pack.availableActions.contains(.download) {
-      Button(pack.failureMessage == nil ? "Download" : "Retry") {
+      Button(pack.failureMessage == nil ? FrequencyPackAction.download.label : "Retry") {
         perform(pack.id, confirmsVerification: true) { try await client.download(pack.id) }
       }
       .accessibilityIdentifier("frequency-pack.download.\(pack.id.rawValue)")
     } else {
       if pack.availableActions.contains(.activate) {
-        Button("Use This Dictionary") {
+        Button(FrequencyPackAction.activate.label) {
           perform(pack.id) { try await client.activate(pack.id) }
         }
         .accessibilityIdentifier("frequency-pack.activate.\(pack.id.rawValue)")
       }
       if pack.availableActions.contains(.update) {
-        Button("Check for Update") {
+        Button(FrequencyPackAction.update.label) {
           perform(pack.id, confirmsVerification: true) { try await client.download(pack.id) }
         }
         .accessibilityIdentifier("frequency-pack.update.\(pack.id.rawValue)")
       }
       if pack.availableActions.contains(.remove) {
         Button(
-          pack.isActive ? "Remove Pack and Use Included Dictionary" : "Remove Pack",
+          pack.isActive
+            ? "\(FrequencyPackAction.remove.label) and Use Included Dictionary"
+            : FrequencyPackAction.remove.label,
           role: .destructive
         ) {
           perform(pack.id) { try await client.remove(pack.id) }
@@ -166,6 +168,7 @@ struct FrequencyDictionariesView: View {
     confirmsVerification: Bool = false,
     operation: @escaping @MainActor () async throws -> Void
   ) {
+    verifiedPackID = nil
     workingPackID = packID
     Task { @MainActor in
       defer { workingPackID = nil }

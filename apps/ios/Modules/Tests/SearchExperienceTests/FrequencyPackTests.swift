@@ -15,6 +15,13 @@ private let tubelexDisclosure = FrequencyPackDisclosure(
 )
 
 final class FrequencyPackTests: XCTestCase {
+  func testFrequencyPackActionLabelsDescribeTheirConsequences() {
+    XCTAssertEqual(FrequencyPackAction.download.label, "Download")
+    XCTAssertEqual(FrequencyPackAction.activate.label, "Use This Dictionary")
+    XCTAssertEqual(FrequencyPackAction.update.label, "Download Update")
+    XCTAssertEqual(FrequencyPackAction.remove.label, "Remove Pack")
+  }
+
   func testBundledTUBELEXCapabilityReturnsPinnedSourceEvidence() async throws {
     let capability = try FrequencyCapability.freshBundledTUBELEX()
 
