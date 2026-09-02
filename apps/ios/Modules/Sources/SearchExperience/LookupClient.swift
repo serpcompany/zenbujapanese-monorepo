@@ -24,7 +24,9 @@ struct LookupClient: Sendable {
     },
     entry: { id in try await LanguageReferenceData.shared.entry(id) },
     entryMatchingForm: { form in try await LanguageReferenceData.shared.entry(matchingForm: form) },
-    entriesMatchingForm: { form in try await LanguageReferenceData.shared.entries(matchingForm: form) },
+    entriesMatchingForm: { form in
+      try await LanguageReferenceData.shared.entries(matchingForm: form)
+    },
     entriesContainingKanji: { character in
       try await LanguageReferenceData.shared.entries(containingKanji: character)
     }
@@ -207,10 +209,10 @@ private actor LanguageReferenceData {
   func entries(matchingForm form: String) throws -> [DictionaryEntry] {
     let query = SearchQuery(form)
     guard !query.isEmpty else { return [] }
-    return try (query.isASCII
+    return try
+      (query.isASCII
       ? rankedEnglish(query, exactFormOnly: true)
-      : rankedJapanese(query, exactFormOnly: true)
-    ).map(\.entry)
+      : rankedJapanese(query, exactFormOnly: true)).map(\.entry)
   }
 
   func entries(containingKanji character: String) throws -> [DictionaryEntry] {

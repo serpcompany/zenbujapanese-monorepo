@@ -156,9 +156,10 @@ private actor JapaneseTextAnalyzer {
     lookupClient: LookupClient
   ) async -> [JapaneseTextToken] {
     let characters = Array(text)
-    let highlightedForms = highlightedEntry.map {
-      Self.forms(for: $0, preferred: highlightedQuery.value)
-    } ?? (highlightedQuery.isEmpty ? [] : [highlightedQuery.value])
+    let highlightedForms =
+      highlightedEntry.map {
+        Self.forms(for: $0, preferred: highlightedQuery.value)
+      } ?? (highlightedQuery.isEmpty ? [] : [highlightedQuery.value])
     var tokens: [JapaneseTextToken] = []
     var position = 0
 
@@ -198,7 +199,8 @@ private actor JapaneseTextAnalyzer {
           lookupClient: lookupClient
         )
       {
-        tokens.append(JapaneseTextToken(id: tokens.count, surface: match.surface, entry: match.entry))
+        tokens.append(
+          JapaneseTextToken(id: tokens.count, surface: match.surface, entry: match.entry))
         position += match.surface.count
       } else {
         tokens.append(
@@ -255,7 +257,8 @@ private actor JapaneseTextAnalyzer {
 
   private static func forms(for entry: DictionaryEntry, preferred: String) -> [String] {
     var seen = Set<String>()
-    return ([preferred, entry.headword, entry.reading]
+    return
+      ([preferred, entry.headword, entry.reading]
       + entry.writtenForms.map(\.value)
       + entry.readingForms.map(\.value))
       .filter { !$0.isEmpty && seen.insert($0).inserted }
