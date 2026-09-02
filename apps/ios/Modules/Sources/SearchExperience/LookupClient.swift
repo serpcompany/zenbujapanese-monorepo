@@ -5,6 +5,7 @@ struct LookupClient: Sendable {
   var search: @Sendable (SearchQuery) async throws -> LookupSearchResults
   var entry: @Sendable (LanguageReferenceID) async throws -> DictionaryEntry?
   var entryMatchingForm: @Sendable (String) async throws -> DictionaryEntry?
+  var entriesMatchingForm: @Sendable (String) async throws -> [DictionaryEntry]
   var entriesContainingKanji: @Sendable (String) async throws -> [DictionaryEntry]
 
   static let live = LookupClient(
@@ -23,6 +24,7 @@ struct LookupClient: Sendable {
     },
     entry: { id in try await LanguageReferenceData.shared.entry(id) },
     entryMatchingForm: { form in try await LanguageReferenceData.shared.entry(matchingForm: form) },
+    entriesMatchingForm: { form in try await LanguageReferenceData.shared.entries(matchingForm: form) },
     entriesContainingKanji: { character in
       try await LanguageReferenceData.shared.entries(containingKanji: character)
     }
@@ -42,6 +44,7 @@ struct LookupClient: Sendable {
       search: { query in try await data.search(query) },
       entry: { id in try await data.entry(id) },
       entryMatchingForm: { form in try await data.entry(matchingForm: form) },
+      entriesMatchingForm: { form in try await data.entries(matchingForm: form) },
       entriesContainingKanji: { character in try await data.entries(containingKanji: character) }
     )
   }
@@ -198,12 +201,16 @@ private actor LanguageReferenceData {
   }
 
   func entry(matchingForm form: String) throws -> DictionaryEntry? {
+    try entries(matchingForm: form).first
+  }
+
+  func entries(matchingForm form: String) throws -> [DictionaryEntry] {
     let query = SearchQuery(form)
-    guard !query.isEmpty else { return nil }
+    guard !query.isEmpty else { return [] }
     return try (query.isASCII
       ? rankedEnglish(query, exactFormOnly: true)
       : rankedJapanese(query, exactFormOnly: true)
-    ).first?.entry
+    ).map(\.entry)
   }
 
   func entries(containingKanji character: String) throws -> [DictionaryEntry] {

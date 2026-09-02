@@ -147,7 +147,7 @@ struct JapaneseTextAnalysisClient: Sendable {
 }
 
 private actor JapaneseTextAnalyzer {
-  private var entryCache: [String: DictionaryEntry] = [:]
+  private var entryCache: [String: [DictionaryEntry]] = [:]
 
   func tokens(
     for text: String,
@@ -156,29 +156,47 @@ private actor JapaneseTextAnalyzer {
     lookupClient: LookupClient
   ) async -> [JapaneseTextToken] {
     let characters = Array(text)
-    let highlightedCharacters = Array(highlightedQuery.value)
+    let highlightedForms = highlightedEntry.map {
+      Self.forms(for: $0, preferred: highlightedQuery.value)
+    } ?? (highlightedQuery.isEmpty ? [] : [highlightedQuery.value])
     var tokens: [JapaneseTextToken] = []
     var position = 0
 
     while position < characters.count {
-      if let highlightedEntry,
-        !highlightedCharacters.isEmpty,
-        position + highlightedCharacters.count <= characters.count,
-        Array(characters[position..<(position + highlightedCharacters.count)]) == highlightedCharacters
-      {
+      if let highlightedSurface = Self.longestForm(
+        in: characters,
+        at: position,
+        forms: highlightedForms
+      ) {
+        let entry: DictionaryEntry?
+        if let highlightedEntry {
+          entry = highlightedEntry
+        } else {
+          let candidates = await entries(for: highlightedSurface, lookupClient: lookupClient)
+          entry = candidates.count == 1 ? candidates[0] : nil
+        }
         tokens.append(
           JapaneseTextToken(
             id: tokens.count,
-            surface: highlightedQuery.value,
-            entry: highlightedEntry
+            surface: highlightedSurface,
+            entry: entry
           )
         )
-        position += highlightedCharacters.count
+        position += highlightedSurface.count
         continue
       }
 
       if characters[position].isJapaneseLanguageItemStart,
-        let match = await longestMatch(in: characters, at: position, lookupClient: lookupClient)
+        let match = await longestMatch(
+          in: characters,
+          at: position,
+          preserving: Self.nextFormRange(
+            in: characters,
+            after: position,
+            forms: highlightedForms
+          ),
+          lookupClient: lookupClient
+        )
       {
         tokens.append(JapaneseTextToken(id: tokens.count, surface: match.surface, entry: match.entry))
         position += match.surface.count
@@ -195,8 +213,9 @@ private actor JapaneseTextAnalyzer {
   private func longestMatch(
     in characters: [Character],
     at position: Int,
+    preserving reservedRange: Range<Int>?,
     lookupClient: LookupClient
-  ) async -> (surface: String, entry: DictionaryEntry)? {
+  ) async -> (surface: String, entry: DictionaryEntry?)? {
     var length = 0
     while position + length < characters.count,
       length < 8,
@@ -206,14 +225,64 @@ private actor JapaneseTextAnalyzer {
     }
 
     for candidateLength in stride(from: length, through: 1, by: -1) {
-      let surface = String(characters[position..<(position + candidateLength)])
-      if let entry = await entry(for: surface, lookupClient: lookupClient) {
-        return (surface, entry)
+      let candidateEnd = position + candidateLength
+      if let reservedRange,
+        candidateEnd > reservedRange.lowerBound,
+        candidateEnd < reservedRange.upperBound
+      {
+        continue
       }
+      let surface = String(characters[position..<(position + candidateLength)])
+      let directEntries = await entries(for: surface, lookupClient: lookupClient)
+      if !directEntries.isEmpty {
+        return (surface, directEntries.count == 1 ? directEntries[0] : nil)
+      }
+      var deinflectedEntries: [LanguageReferenceID: DictionaryEntry] = [:]
       for baseForm in deinflectedForms(for: surface) {
-        if let entry = await entry(for: baseForm, lookupClient: lookupClient) {
-          return (surface, entry)
+        for entry in await entries(for: baseForm, lookupClient: lookupClient) {
+          deinflectedEntries[entry.id] = entry
         }
+      }
+      if !deinflectedEntries.isEmpty {
+        return (
+          surface,
+          deinflectedEntries.count == 1 ? deinflectedEntries.values.first : nil
+        )
+      }
+    }
+    return nil
+  }
+
+  private static func forms(for entry: DictionaryEntry, preferred: String) -> [String] {
+    var seen = Set<String>()
+    return ([preferred, entry.headword, entry.reading]
+      + entry.writtenForms.map(\.value)
+      + entry.readingForms.map(\.value))
+      .filter { !$0.isEmpty && seen.insert($0).inserted }
+      .sorted { $0.count > $1.count }
+  }
+
+  private static func longestForm(
+    in characters: [Character],
+    at position: Int,
+    forms: [String]
+  ) -> String? {
+    forms.first { form in
+      let candidate = Array(form)
+      return position + candidate.count <= characters.count
+        && Array(characters[position..<(position + candidate.count)]) == candidate
+    }
+  }
+
+  private static func nextFormRange(
+    in characters: [Character],
+    after position: Int,
+    forms: [String]
+  ) -> Range<Int>? {
+    guard !forms.isEmpty, position + 1 < characters.count else { return nil }
+    for start in (position + 1)..<characters.count {
+      if let form = longestForm(in: characters, at: start, forms: forms) {
+        return start..<(start + form.count)
       }
     }
     return nil
@@ -226,14 +295,14 @@ private actor JapaneseTextAnalyzer {
     return [String(surface.dropLast()) + "る"]
   }
 
-  private func entry(for surface: String, lookupClient: LookupClient) async -> DictionaryEntry? {
+  private func entries(for surface: String, lookupClient: LookupClient) async -> [DictionaryEntry] {
     if let cached = entryCache[surface] { return cached }
     do {
-      guard let entry = try await lookupClient.entryMatchingForm(surface) else { return nil }
-      entryCache[surface] = entry
-      return entry
+      let entries = try await lookupClient.entriesMatchingForm(surface)
+      entryCache[surface] = entries
+      return entries
     } catch {
-      return nil
+      return []
     }
   }
 }

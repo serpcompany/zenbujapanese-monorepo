@@ -293,23 +293,14 @@ final class AccessibilityAuditUITests: XCTestCase {
     )
     // #191/#234 proved that 44-point expansion makes compact Japanese fragment or overlap, while
     // Apple's native attributed links remove ruby and the rich surface/reading/meaning label.
-    // Keep only the 11 default-size narrow links as explicit exceptions and fail if that
-    // inventory changes. Accessibility XXXL expands them enough to require zero exceptions.
+    // #242 removes ten false one-character links by preserving complete query boundaries and
+    // failing closed on unresolved homographs. Keep only the remaining source-backed narrow
+    // link as an explicit exception. Accessibility XXXL requires zero exceptions.
     let expectedCompactRubyLinkExceptions: Set<String> =
       accessibilityXXXL
       ? []
       : [
-        "example.token.1.2.ろ",
-        "example.token.2.2.持",
-        "example.token.3.2.の",
-        "example.token.4.1.る",
-        "example.token.5.1.る",
-        "example.token.5.4.る",
-        "example.token.6.1.る",
-        "example.token.6.6.た",
-        "example.token.6.8.が",
-        "example.token.6.10.だ",
-        "example.token.6.11.よ",
+        "example.token.2.2.持"
       ]
     var observedCompactRubyLinkExceptions: Set<String> = []
     try app.performAccessibilityAudit(for: .hitRegion) { issue in

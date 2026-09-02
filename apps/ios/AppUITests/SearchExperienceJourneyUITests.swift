@@ -3712,6 +3712,52 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testHighlightedIruKeepsOnePublicWordBoundaryAndOpensCanonicalDetail() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    submitSearch("いる", in: app, searchField: searchField)
+
+    let openExamples = app.buttons["search.examples"]
+    XCTAssertTrue(openExamples.waitForExistence(timeout: 4))
+    openExamples.tap()
+
+    let examples = app.collectionViews["example-list.screen"]
+    XCTAssertTrue(examples.waitForExistence(timeout: 4))
+    let row = app.descendants(matching: .any)["example.row.13"]
+    for _ in 0..<24 where !row.exists || !row.isHittable {
+      examples.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(row.waitForExistence(timeout: 3))
+
+    let predicate = NSPredicate(
+      format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
+      "example.token.13.",
+      ".いる"
+    )
+    let word = app.buttons.matching(predicate).firstMatch
+    XCTAssertTrue(word.waitForExistence(timeout: 3))
+    XCTAssertEqual(
+      word.label,
+      "いる, いる, to be (of animate objects), to exist"
+    )
+    XCTAssertEqual(app.staticTexts.matching(predicate).count, 0)
+    XCTAssertFalse(
+      app.descendants(matching: .any)["example.token.13.1.がい"].exists,
+      "The preceding particle must not merge into the complete いる boundary"
+    )
+    word.tap()
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    tapNativeBack(in: app)
+    XCTAssertTrue(examples.waitForExistence(timeout: 3))
+    for _ in 0..<16 where !row.exists || !row.isHittable {
+      examples.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(row.waitForExistence(timeout: 3))
+  }
+
+  @MainActor
   func testExampleOnlyPunctuationQueryOpensItsSourceBackedSentence() throws {
     let app = launchApp(additionalArguments: ["-RecordSpeechRequests"])
     let searchField = app.textFields["search.field"]
