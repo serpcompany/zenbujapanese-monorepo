@@ -133,6 +133,7 @@ struct ImageTextFlowView: View {
           ) {
             Label("Share Image", systemImage: "photo")
           }
+          .accessibilityLabel("Share Image, selected image \(asset.name)")
           .accessibilityIdentifier("image-text.share-image")
         }
       }

@@ -322,23 +322,26 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(quiet.exists)
     highlights.tap()
     XCTAssertTrue(quiet.waitForExistence(timeout: 2))
+    quiet.tap()
+    XCTAssertTrue(gloss.waitForExistence(timeout: 2))
+    let selectedGloss = gloss.label
 
     app.buttons["image-text.share"].tap()
     let copyText = app.descendants(matching: .any)
       .matching(identifier: "image-text.copy-text")
       .firstMatch
     XCTAssertTrue(copyText.waitForExistence(timeout: 2))
-    XCTAssertTrue(app.buttons.matching(identifier: "image-text.share-image").firstMatch.exists)
-    app.buttons.matching(identifier: "image-text.share-image").firstMatch.tap()
-    let shareSheet = app.otherElements["ShareSheet.RemoteContainerView"]
-    XCTAssertTrue(shareSheet.waitForExistence(timeout: 3))
-    XCTAssertTrue(app.navigationBars["fixture-clear-horizontal.png"].exists)
-    XCTAssertTrue(shareSheet.images.firstMatch.exists)
-    let dismissShareSheet = app.otherElements["PopoverDismissRegion"]
-    XCTAssertTrue(dismissShareSheet.exists)
-    dismissShareSheet.tap()
-    XCTAssertTrue(shareSheet.waitForNonExistence(timeout: 3))
+    let shareImage = selectedImageShareAction(
+      named: "fixture-clear-horizontal.png",
+      in: app
+    )
+    openAndDismissSelectedImageShareSheet(using: shareImage, in: app)
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
+    XCTAssertTrue(translation.exists)
+    XCTAssertTrue(translation.label.contains("quiet park"))
+    XCTAssertTrue(quiet.exists)
+    XCTAssertTrue(gloss.exists)
+    XCTAssertEqual(gloss.label, selectedGloss)
     assertImageTextToolbarIsHittable(in: app)
 
     app.buttons["image-text.share"].tap()
@@ -494,6 +497,29 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testImageTextSharePreviewIdentifiesSelectedImageAndRestoresSession() throws {
+    let app = launchImageTextFixtures(["fixture-clear-horizontal.png"])
+    let close = app.buttons["image-text.close"]
+    let recognizedText = app.descendants(matching: .any)["image-text.raw-text"]
+    XCTAssertTrue(close.waitForExistence(timeout: 20))
+    XCTAssertTrue(recognizedText.waitForExistence(timeout: 10))
+
+    app.buttons["image-text.share"].tap()
+    let shareImage = selectedImageShareAction(
+      named: "fixture-clear-horizontal.png",
+      in: app
+    )
+    openAndDismissSelectedImageShareSheet(using: shareImage, in: app)
+    XCTAssertTrue(close.waitForExistence(timeout: 3))
+    XCTAssertTrue(recognizedText.exists)
+    XCTAssertTrue(
+      app.descendants(matching: .any)["image-text.current-page"].label.contains(
+        "fixture-clear-horizontal.png"
+      )
+    )
+  }
+
+  @MainActor
   func testImageTextMultipleFilesRecoverFromEmptyAndRemainTransient() throws {
     let names = [
       "fixture-empty.png",
@@ -594,6 +620,14 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       ).firstMatch.exists
     )
     XCTAssertTrue(selectImageTextPage(named: "fixture-vertical", pageCount: names.count, in: app))
+    app.buttons["image-text.share"].tap()
+    let shareVertical = selectedImageShareAction(named: "fixture-vertical.png", in: app)
+    openAndDismissSelectedImageShareSheet(using: shareVertical, in: app)
+    XCTAssertTrue(
+      app.descendants(matching: .any)["image-text.current-page"].label.contains(
+        "fixture-vertical.png"
+      )
+    )
     XCTAssertFalse(
       app.descendants(matching: .any).matching(
         NSPredicate(
@@ -603,6 +637,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     )
     XCTAssertTrue(
       selectImageTextPage(named: "fixture-clear-horizontal", pageCount: names.count, in: app))
+    app.buttons["image-text.share"].tap()
+    _ = selectedImageShareAction(named: "fixture-clear-horizontal.png", in: app)
   }
 
   @MainActor
@@ -5130,6 +5166,32 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       arguments.append("-InjectImageTextTranslation")
     }
     return launchApp(additionalArguments: arguments)
+  }
+
+  @MainActor
+  private func selectedImageShareAction(
+    named name: String,
+    in app: XCUIApplication
+  ) -> XCUIElement {
+    let shareImage = app.buttons.matching(identifier: "image-text.share-image").firstMatch
+    XCTAssertTrue(shareImage.waitForExistence(timeout: 2))
+    XCTAssertEqual(shareImage.label, "Share Image, selected image \(name)")
+    return shareImage
+  }
+
+  @MainActor
+  private func openAndDismissSelectedImageShareSheet(
+    using shareImage: XCUIElement,
+    in app: XCUIApplication
+  ) {
+    shareImage.tap()
+    let shareSheet = app.otherElements["ShareSheet.RemoteContainerView"]
+    XCTAssertTrue(shareSheet.waitForExistence(timeout: 3))
+    XCTAssertTrue(shareSheet.images.firstMatch.exists)
+    let dismissShareSheet = app.otherElements["PopoverDismissRegion"]
+    XCTAssertTrue(dismissShareSheet.exists)
+    dismissShareSheet.tap()
+    XCTAssertTrue(shareSheet.waitForNonExistence(timeout: 3))
   }
 
   @MainActor
