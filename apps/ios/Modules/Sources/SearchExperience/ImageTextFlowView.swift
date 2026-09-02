@@ -185,7 +185,6 @@ struct ImageTextFlowView: View {
         selectedRegion: model.selectedRegion,
         selectRegion: { model.selectedRegion = $0 },
         openWord: {
-          model.selectedRegion = nil
           openWord($0, page.asset)
         }
       )

@@ -315,7 +315,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
     XCTAssertTrue(translation.exists)
     XCTAssertTrue(translation.label.contains("quiet park"))
-    XCTAssertFalse(gloss.exists)
+    XCTAssertTrue(gloss.exists)
+    XCTAssertTrue(gloss.label.contains("quiet"))
 
     let highlights = app.buttons["image-text.highlights"]
     highlights.tap()
@@ -480,20 +481,65 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testImageTextVerticalFileProducesSelectableJapaneseRegions() throws {
     let app = launchImageTextFixtures(["fixture-vertical.png"])
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
-    XCTAssertTrue(
-      app.descendants(matching: .any)
-        .matching(identifier: "image-text.region.いる")
-        .firstMatch.waitForExistence(timeout: 10)
+    let rawText = app.descendants(matching: .any)["image-text.raw-text"]
+    XCTAssertTrue(rawText.waitForExistence(timeout: 10))
+    XCTAssertEqual(
+      rawText.label,
+      "Recognized text 春の朝、静かな庭を 蝶々が飛んでいる。 日本語 を読む。"
     )
-    let region = app.descendants(matching: .any).matching(identifier: "image-text.region.読本")
-      .firstMatch
-    XCTAssertTrue(region.waitForExistence(timeout: 10))
-    region.tap()
+    XCTAssertFalse(app.descendants(matching: .any)["image-text.region.いる"].exists)
+    XCTAssertFalse(app.descendants(matching: .any)["image-text.region.読本"].exists)
+    let japanese = app.descendants(matching: .any)["image-text.region.日本語"]
+    let read = app.descendants(matching: .any)["image-text.region.読む"]
+    XCTAssertTrue(japanese.waitForExistence(timeout: 10))
+    XCTAssertTrue(read.waitForExistence(timeout: 10))
+    XCTAssertTrue(japanese.isHittable)
+    XCTAssertTrue(read.isHittable)
+    let canvas = app.otherElements["Imported image fixture-vertical.png"]
+    XCTAssertTrue(canvas.exists)
+    assertNormalizedImageRegion(
+      japanese,
+      equals: CGRect(x: 0.27, y: 0.48, width: 0.08, height: 0.30),
+      in: canvas
+    )
+    assertNormalizedImageRegion(
+      read,
+      equals: CGRect(x: 0.14, y: 0.48, width: 0.08, height: 0.20),
+      in: canvas
+    )
+    XCTAssertLessThan(read.frame.maxX, japanese.frame.minX)
+    XCTAssertFalse(read.frame.intersects(japanese.frame))
+    for unrelatedIdentifier in [
+      "image-text.region.春",
+      "image-text.region.静か",
+      "image-text.region.蝶々",
+      "image-text.region.飛んで",
+    ] {
+      let unrelated = app.descendants(matching: .any)[unrelatedIdentifier]
+      XCTAssertTrue(unrelated.exists)
+      XCTAssertFalse(read.frame.intersects(unrelated.frame))
+      XCTAssertFalse(japanese.frame.intersects(unrelated.frame))
+    }
+    read.tap()
     let gloss = app.buttons["image-text.gloss"]
     XCTAssertTrue(gloss.waitForExistence(timeout: 2))
-    XCTAssertTrue(gloss.label.contains("読本"))
-    XCTAssertTrue(gloss.label.localizedCaseInsensitiveContains("reading-book"))
+    XCTAssertTrue(gloss.label.contains("読む"))
+    XCTAssertTrue(gloss.label.localizedCaseInsensitiveContains("to read"))
     recordSettledScreenshot(named: "image-text-vertical-selected", app: app)
+    gloss.tap()
+    let wordDetail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(wordDetail.waitForExistence(timeout: 3))
+    XCTAssertTrue(
+      app.descendants(matching: .any)[
+        "word-detail.entry.132ec115831c1cda3588d31e99b30ead"
+      ].waitForExistence(timeout: 3)
+    )
+    tapNativeBack(in: app)
+    XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
+    XCTAssertEqual(rawText.label, "Recognized text 春の朝、静かな庭を 蝶々が飛んでいる。 日本語 を読む。")
+    XCTAssertTrue(read.exists)
+    XCTAssertTrue(gloss.exists)
+    XCTAssertTrue(gloss.label.localizedCaseInsensitiveContains("to read"))
   }
 
   @MainActor
@@ -573,22 +619,21 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     )
     recordSettledScreenshot(named: "image-text-multiple-noisy", app: app)
     XCTAssertTrue(selectImageTextPage(named: "fixture-sparse", pageCount: names.count, in: app))
-    let still = app.descendants(matching: .any).matching(
+    let sparseText = app.descendants(matching: .any)["image-text.raw-text"]
+    XCTAssertTrue(sparseText.waitForExistence(timeout: 20))
+    XCTAssertEqual(sparseText.label, "Recognized text 静")
+    let ambiguousRegion = app.descendants(matching: .any).matching(
       NSPredicate(format: "identifier BEGINSWITH %@", "image-text.region.")
     ).firstMatch
-    XCTAssertTrue(
-      still.waitForExistence(timeout: 20),
-      app.descendants(matching: .any)["image-text.raw-text"].label
-    )
-    XCTAssertTrue(still.label.contains("静"))
-    still.tap()
-    XCTAssertTrue(app.buttons["image-text.gloss"].label.contains("still"))
+    XCTAssertFalse(ambiguousRegion.exists)
+    XCTAssertFalse(app.buttons["image-text.gloss"].exists)
     assertImageTextToolbarIsHittable(in: app)
     let highlights = app.buttons["image-text.highlights"]
     highlights.tap()
     highlights.tap()
-    XCTAssertTrue(still.waitForExistence(timeout: 2))
-    recordSettledScreenshot(named: "image-text-multiple-sparse-selected", app: app)
+    XCTAssertFalse(ambiguousRegion.exists)
+    XCTAssertEqual(sparseText.label, "Recognized text 静")
+    recordSettledScreenshot(named: "image-text-multiple-sparse-unlinked", app: app)
 
     app.terminate()
     let relaunched = launchApp()
@@ -4909,6 +4954,29 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(bottomElement.waitForExistence(timeout: 3), file: file, line: line)
     let tabBarTop = nativeTabBar(in: app).frame.minY
     XCTAssertLessThanOrEqual(bottomElement.frame.maxY, tabBarTop, file: file, line: line)
+  }
+
+  @MainActor
+  private func assertNormalizedImageRegion(
+    _ region: XCUIElement,
+    equals expected: CGRect,
+    in canvas: XCUIElement,
+    accuracy: CGFloat = 0.015,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let canvasFrame = canvas.frame
+    let regionFrame = region.frame
+    let actual = CGRect(
+      x: (regionFrame.minX - canvasFrame.minX) / canvasFrame.width,
+      y: 1 - (regionFrame.maxY - canvasFrame.minY) / canvasFrame.height,
+      width: regionFrame.width / canvasFrame.width,
+      height: regionFrame.height / canvasFrame.height
+    )
+    XCTAssertEqual(actual.minX, expected.minX, accuracy: accuracy, file: file, line: line)
+    XCTAssertEqual(actual.minY, expected.minY, accuracy: accuracy, file: file, line: line)
+    XCTAssertEqual(actual.width, expected.width, accuracy: accuracy, file: file, line: line)
+    XCTAssertEqual(actual.height, expected.height, accuracy: accuracy, file: file, line: line)
   }
 
   @MainActor
