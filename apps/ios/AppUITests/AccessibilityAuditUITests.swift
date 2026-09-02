@@ -23,6 +23,162 @@ private struct AuditException: CustomStringConvertible {
 
 final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
+  func testInlineWordDetailCurrentEntryUsesSystemAccentAndSemanticEmphasis() throws {
+    try verifyInlineWordDetailCurrentEntry(
+      appearance: .light,
+      accessibilityXXXL: false
+    )
+  }
+
+  @MainActor
+  func testInlineWordDetailCurrentEntryAppearanceAndSizeMatrix() throws {
+    for appearance in [XCUIDevice.Appearance.light, .dark] {
+      for accessibilityXXXL in [false, true] {
+        if appearance == .light, !accessibilityXXXL { continue }
+        try verifyInlineWordDetailCurrentEntry(
+          appearance: appearance,
+          accessibilityXXXL: accessibilityXXXL
+        )
+      }
+    }
+  }
+
+  @MainActor
+  func testInlineWordDetailOtherLinkedWordRetainsPrimaryTextTreatment() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(appearance: .light)
+    try submitSearch("見る", in: app)
+    let primaryResult = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "見る, みる")
+    ).firstMatch
+    XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
+    primaryResult.tap()
+
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    let currentToken = app.buttons["word-detail.example-token.0.0.見る"]
+    for _ in 0..<12 where !currentToken.exists || !currentToken.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    let otherLinkedToken = app.buttons["word-detail.example-token.0.2.明らか"]
+    XCTAssertTrue(currentToken.waitForExistence(timeout: 3))
+    XCTAssertTrue(otherLinkedToken.waitForExistence(timeout: 3))
+    XCTAssertTrue(containsSystemBluePixels(in: currentToken.screenshot()))
+    XCTAssertFalse(containsSystemBluePixels(in: otherLinkedToken.screenshot()))
+    XCTAssertEqual(otherLinkedToken.value as? String, "")
+    XCTAssertFalse(otherLinkedToken.isSelected)
+    retainElementScreenshot(currentToken, named: "Current 見る token")
+    retainElementScreenshot(otherLinkedToken, named: "Neutral 明らか token")
+  }
+
+  @MainActor
+  func testInlineWordDetailInflectedSurfaceUsesCanonicalCurrentEntryPresentation() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "食べる",
+      resultLabelPrefix: "食べる, たべる",
+      appearance: .light
+    )
+    let inflectedToken = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "word-detail.example-token.20.",
+        "食べて, たべる"
+      )
+    ).firstMatch
+    for _ in 0..<32 where !inflectedToken.exists || !inflectedToken.isHittable {
+      detail.swipeUp(velocity: .fast)
+    }
+    XCTAssertTrue(inflectedToken.waitForExistence(timeout: 3))
+    XCTAssertEqual(inflectedToken.value as? String, "Current word")
+    XCTAssertTrue(inflectedToken.isSelected)
+    XCTAssertTrue(containsSystemBluePixels(in: inflectedToken.screenshot()))
+    XCTAssertGreaterThanOrEqual(inflectedToken.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(inflectedToken.frame.height, 44)
+    retainElementScreenshot(inflectedToken, named: "Inflected current 食べて token")
+  }
+
+  @MainActor
+  func testInlineWordDetailAlternateWrittenFormUsesCurrentEntryPresentation() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "○",
+      resultLabelPrefix: "○, まる",
+      appearance: .light
+    )
+    let alternateToken = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "word-detail.example-token.2.",
+        "〇, まる"
+      )
+    ).firstMatch
+    for _ in 0..<12 where !alternateToken.exists || !alternateToken.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(alternateToken.waitForExistence(timeout: 3))
+    XCTAssertEqual(alternateToken.value as? String, "Current word")
+    XCTAssertTrue(alternateToken.isSelected)
+    XCTAssertTrue(containsSystemBluePixels(in: alternateToken.screenshot()))
+    XCTAssertGreaterThanOrEqual(alternateToken.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(alternateToken.frame.height, 44)
+    retainElementScreenshot(alternateToken, named: "Alternate current 〇 token")
+  }
+
+  @MainActor
+  private func verifyInlineWordDetailCurrentEntry(
+    appearance: XCUIDevice.Appearance,
+    accessibilityXXXL: Bool
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: accessibilityXXXL
+        ? ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        : []
+    )
+    try submitSearch("いる", in: app)
+    let primaryResult = app.buttons.matching(
+      NSPredicate(format: "value == %@", "Best match 1")
+    ).firstMatch
+    XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
+    primaryResult.tap()
+
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    let currentToken = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "word-detail.example-token.",
+        "要る, いる"
+      )
+    ).firstMatch
+    for _ in 0..<12 where !currentToken.exists || !currentToken.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(currentToken.waitForExistence(timeout: 3))
+    XCTAssertTrue(currentToken.isHittable)
+    XCTAssertGreaterThanOrEqual(currentToken.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(currentToken.frame.height, 44)
+    XCTAssertEqual(currentToken.value as? String, "Current word")
+    XCTAssertTrue(currentToken.isSelected)
+    XCTAssertTrue(
+      containsSystemBluePixels(in: currentToken.screenshot()),
+      "Only the current app-owned entry token should use the system accent."
+    )
+    retainElementScreenshot(
+      currentToken,
+      named:
+        "Current 要る token - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")"
+    )
+
+  }
+
+  @MainActor
   func testActiveFrequencyDictionaryUsesSystemSelectionSemantics() throws {
     let originalAppearance = XCUIDevice.shared.appearance
     XCUIDevice.shared.appearance = .light
@@ -1488,6 +1644,14 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  private func retainElementScreenshot(_ element: XCUIElement, named name: String) {
+    let screenshot = XCTAttachment(screenshot: element.screenshot())
+    screenshot.name = name
+    screenshot.lifetime = .keepAlways
+    add(screenshot)
+  }
+
+  @MainActor
   private func containsRedPixels(in screenshot: XCUIScreenshot) -> Bool {
     containsPixels(in: screenshot, requiredCount: 24) { red, green, blue in
       red >= 150 && red >= green + 45 && red >= blue + 35
@@ -1582,6 +1746,25 @@ final class AccessibilityAuditUITests: XCTestCase {
     app.launchArguments += additionalArguments
     app.launch()
     return app
+  }
+
+  @MainActor
+  private func launchWordDetail(
+    query: String,
+    resultLabelPrefix: String,
+    appearance: XCUIDevice.Appearance,
+    additionalArguments: [String] = []
+  ) throws -> (app: XCUIApplication, detail: XCUIElement) {
+    let app = launchApp(appearance: appearance, additionalArguments: additionalArguments)
+    try submitSearch(query, in: app)
+    let result = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", resultLabelPrefix)
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 3))
+    result.tap()
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    return (app, detail)
   }
 
   @MainActor

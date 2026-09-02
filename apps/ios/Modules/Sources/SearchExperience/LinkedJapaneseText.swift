@@ -17,6 +17,7 @@ struct LinkedJapaneseText: View {
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let identifierPrefix: String
   let presentation: Presentation
+  let highlightsCurrentEntry: Bool
   let openWord: (DictionaryEntry) -> Void
 
   init(
@@ -26,6 +27,7 @@ struct LinkedJapaneseText: View {
     japaneseTextAnalysisClient: JapaneseTextAnalysisClient,
     identifierPrefix: String,
     presentation: Presentation = .standard,
+    highlightsCurrentEntry: Bool = false,
     openWord: @escaping (DictionaryEntry) -> Void
   ) {
     self.text = text
@@ -34,6 +36,7 @@ struct LinkedJapaneseText: View {
     self.japaneseTextAnalysisClient = japaneseTextAnalysisClient
     self.identifierPrefix = identifierPrefix
     self.presentation = presentation
+    self.highlightsCurrentEntry = highlightsCurrentEntry
     self.openWord = openWord
   }
 
@@ -49,6 +52,7 @@ struct LinkedJapaneseText: View {
               token: token,
               identifier: "\(identifierPrefix).\(token.id).\(token.surface)",
               presentation: presentation,
+              isCurrentEntry: isCurrentEntry(token),
               openWord: openWord
             )
           }
@@ -60,6 +64,7 @@ struct LinkedJapaneseText: View {
               token: token,
               identifier: "\(identifierPrefix).\(token.id).\(token.surface)",
               presentation: presentation,
+              isCurrentEntry: isCurrentEntry(token),
               openWord: openWord
             )
           }
@@ -75,12 +80,18 @@ struct LinkedJapaneseText: View {
       )
     }
   }
+
+  private func isCurrentEntry(_ token: JapaneseTextToken) -> Bool {
+    guard highlightsCurrentEntry, let highlightedEntry else { return false }
+    return token.represents(highlightedEntry)
+  }
 }
 
 private struct LinkedTokenView: View {
   let token: JapaneseTextToken
   let identifier: String
   let presentation: LinkedJapaneseText.Presentation
+  let isCurrentEntry: Bool
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
@@ -94,10 +105,10 @@ private struct LinkedTokenView: View {
           underlined: true,
           exposesAccessibility: false
         )
-        // Underlining carries the interactive affordance. Ruby uses the normal
-        // text foreground because the smaller caption glyphs need more
-        // antialiasing contrast margin than the brand red provides.
-        .foregroundStyle(.primary)
+        // Underlining carries the interactive affordance. Inline Word Detail
+        // examples additionally accent the complete current token so its ruby
+        // stays visually associated with its base text.
+        .foregroundStyle(isCurrentEntry ? Color.accentColor : Color.primary)
       }
       .buttonStyle(.plain)
       .frame(
@@ -106,6 +117,8 @@ private struct LinkedTokenView: View {
       )
       .contentShape(Rectangle())
       .accessibilityLabel("\(token.surface), \(entry.reading), \(entry.summary)")
+      .accessibilityValue(isCurrentEntry ? "Current word" : "")
+      .accessibilityAddTraits(isCurrentEntry ? .isSelected : [])
       .accessibilityIdentifier(identifier)
     } else {
       Text(token.surface)

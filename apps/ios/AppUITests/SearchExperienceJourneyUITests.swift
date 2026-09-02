@@ -3490,6 +3490,84 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testInlineWordDetailOtherLinkedWordStaysNeutralAndPreservesNavigation() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    let detail = app.collectionViews["word-detail.screen"]
+    let currentToken = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "word-detail.example-token.0.",
+        "見る, みる"
+      )
+    ).firstMatch
+    for _ in 0..<12 where !currentToken.exists || !currentToken.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(currentToken.waitForExistence(timeout: 3))
+    XCTAssertEqual(currentToken.value as? String, "Current word")
+    XCTAssertTrue(currentToken.isSelected)
+
+    let otherLinkedToken = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND NOT (label BEGINSWITH %@)",
+        "word-detail.example-token.0.",
+        "見る, みる"
+      )
+    ).firstMatch
+    XCTAssertTrue(otherLinkedToken.waitForExistence(timeout: 3))
+    XCTAssertTrue(otherLinkedToken.isHittable)
+    XCTAssertEqual(otherLinkedToken.value as? String, "")
+    XCTAssertFalse(otherLinkedToken.isSelected)
+    let otherLabel = otherLinkedToken.label
+    recordScreenshot(named: "issue-241-current-and-neutral-word-tokens", app: app)
+
+    otherLinkedToken.tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertNotEqual(app.navigationBars.firstMatch.identifier, "見る")
+    XCTAssertFalse(otherLabel.isEmpty)
+    tapNativeBack(in: app)
+    XCTAssertTrue(currentToken.waitForExistence(timeout: 3))
+    XCTAssertEqual(currentToken.value as? String, "Current word")
+  }
+
+  @MainActor
+  func testInlineWordDetailReadingFormUsesCurrentCanonicalIdentity() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "いる",
+      resultLabelPrefix: "要る, いる",
+      in: app,
+      searchField: searchField
+    )
+
+    let detail = app.collectionViews["word-detail.screen"]
+    let readingToken = app.buttons["word-detail.example-token.47.0.いる"]
+    for _ in 0..<64 where !readingToken.exists || !readingToken.isHittable {
+      detail.swipeUp(velocity: .fast)
+    }
+    XCTAssertTrue(readingToken.waitForExistence(timeout: 3))
+    XCTAssertTrue(readingToken.isHittable)
+    XCTAssertEqual(
+      readingToken.label,
+      "いる, いる, to be needed, to be necessary, to be required, to be wanted, to need, to want"
+    )
+    XCTAssertEqual(readingToken.value as? String, "Current word")
+    XCTAssertTrue(readingToken.isSelected)
+    recordScreenshot(named: "issue-241-reading-form-current-word", app: app)
+  }
+
+  @MainActor
   func testWordDetailExampleStacksJapaneseAndSpeakerAtAccessibilityXXXL() throws {
     let app = launchApp(
       additionalArguments: [
@@ -3683,6 +3761,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     }
     Thread.sleep(forTimeInterval: 2)
     XCTAssertTrue(linkedMite.isHittable)
+    XCTAssertEqual(linkedMite.value as? String, "")
+    XCTAssertFalse(linkedMite.isSelected)
     XCTAssertLessThan(linkedMite.frame.maxY, app.frame.maxY - 200)
     recordScreenshot(named: "example-sentences-iru-scrolled", app: app)
 

@@ -3,6 +3,21 @@ import XCTest
 @testable import SearchExperience
 
 final class JapaneseTextAnalysisTests: XCTestCase {
+  func testInflectedOccurrencesRepresentTheCurrentCanonicalEntry() async throws {
+    let lookup = LookupClient.freshBundledDatabase()
+    let matchedEntry = try await lookup.entryMatchingForm("見る")
+    let currentEntry = try XCTUnwrap(matchedEntry)
+    let tokens = await JapaneseTextAnalysisClient.live(lookupClient: lookup).linkedTokens(
+      "見て、見て。",
+      SearchQuery(currentEntry.headword),
+      currentEntry
+    )
+
+    let occurrences = tokens.filter { $0.surface == "見て" }
+    XCTAssertEqual(occurrences.count, 2)
+    XCTAssertTrue(occurrences.allSatisfy { $0.represents(currentEntry) })
+  }
+
   func testExplicitHighlightedEntryOwnsItsKanaReadingOccurrence() async throws {
     let lookup = LookupClient.freshBundledDatabase()
     let matchedEntry = try await lookup.entryMatchingForm("要る")

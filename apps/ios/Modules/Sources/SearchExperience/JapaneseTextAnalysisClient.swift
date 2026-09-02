@@ -4,6 +4,10 @@ struct JapaneseTextToken: Identifiable, Sendable {
   let id: Int
   let surface: String
   let entry: DictionaryEntry?
+
+  func represents(_ entry: DictionaryEntry) -> Bool {
+    self.entry?.id == entry.id
+  }
 }
 
 struct JapaneseRubySegment: Hashable, Sendable {

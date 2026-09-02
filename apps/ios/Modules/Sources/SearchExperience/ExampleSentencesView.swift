@@ -121,6 +121,7 @@ struct JapaneseExampleRowContent: View {
       let englishIdentifier: String
       let rowIdentifier: String
       let combinesRowAccessibility: Bool
+      let highlightsCurrentEntry: Bool
     }
 
     var configuration: Configuration {
@@ -133,7 +134,8 @@ struct JapaneseExampleRowContent: View {
           speakerIdentifier: "example.speaker.\(index)",
           englishIdentifier: "example.english.\(index)",
           rowIdentifier: "example.row.\(index)",
-          combinesRowAccessibility: false
+          combinesRowAccessibility: false,
+          highlightsCurrentEntry: false
         )
       case .wordDetail(let index):
         Configuration(
@@ -143,7 +145,8 @@ struct JapaneseExampleRowContent: View {
           speakerIdentifier: "word-detail.example-speaker.\(index)",
           englishIdentifier: "word-detail.example-english.\(index)",
           rowIdentifier: "word-detail.example.\(index)",
-          combinesRowAccessibility: true
+          combinesRowAccessibility: true,
+          highlightsCurrentEntry: true
         )
       }
     }
@@ -208,6 +211,7 @@ struct JapaneseExampleRowContent: View {
       japaneseTextAnalysisClient: japaneseTextAnalysisClient,
       identifierPrefix: configuration.tokenIdentifierPrefix,
       presentation: configuration.tokenPresentation,
+      highlightsCurrentEntry: configuration.highlightsCurrentEntry,
       openWord: openWord
     )
     .frame(maxWidth: .infinity, alignment: .leading)
