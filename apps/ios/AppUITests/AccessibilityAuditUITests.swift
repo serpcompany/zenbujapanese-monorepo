@@ -1116,9 +1116,22 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertGreaterThanOrEqual(pronounce.frame.width, 44)
     XCTAssertGreaterThanOrEqual(pronounce.frame.height, 44)
     XCTAssertEqual(app.images.matching(identifier: "ear.badge.waveform").count, 0)
+
+    for character in WordDetailUITestSupport.longPrimaryKanji {
+      let linkedKanji = app.buttons["word-detail.kanji.\(character)"]
+      for _ in 0..<8 where !linkedKanji.exists || !linkedKanji.isHittable {
+        detail.swipeUp(velocity: .slow)
+      }
+      XCTAssertTrue(linkedKanji.isHittable)
+      XCTAssertEqual(linkedKanji.label, "Kanji \(character)")
+      XCTAssertGreaterThan(linkedKanji.frame.height, 0)
+      XCTAssertGreaterThanOrEqual(linkedKanji.frame.minX, app.frame.minX)
+      XCTAssertLessThanOrEqual(linkedKanji.frame.maxX, app.frame.maxX)
+    }
     retainElementScreenshot(
       detail,
-      named: "Long Word Detail - \(appearance == .dark ? "dark" : "light") accessibility XXXL"
+      named:
+        "Long Word Detail Kanji rows - \(appearance == .dark ? "dark" : "light") accessibility XXXL"
     )
   }
 

@@ -471,17 +471,12 @@ private struct PrimaryKanjiSection: View {
   var body: some View {
     ForEach(characters, id: \.self) { character in
       if let kanji = KanjiCharacter(character) {
-        NavigationLink(value: SearchExperienceRoute.kanji(kanji, entry)) {
-          LabeledContent {
-            Text("Kanji in \(entry.headword)")
-              .foregroundStyle(.secondary)
-          } label: {
-            Text(character)
-              .font(.title2.weight(.semibold))
-          }
-        }
-        .accessibilityLabel("\(character), Kanji in \(entry.headword)")
-        .accessibilityIdentifier("word-detail.kanji.\(character)")
+        WordDetailKanjiLink(
+          kanji: kanji,
+          destinationEntry: entry,
+          accessibilityLabel: "Kanji \(character)",
+          accessibilityIdentifier: "word-detail.kanji.\(character)"
+        )
       }
     }
   }
@@ -493,15 +488,31 @@ private struct AlternativeKanjiSection: View {
   var body: some View {
     ForEach(characters, id: \.self) { character in
       if let kanji = KanjiCharacter(character) {
-        NavigationLink(value: SearchExperienceRoute.kanji(kanji, nil)) {
-          Text(character)
-            .font(.title2.weight(.semibold))
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .accessibilityLabel("Alternative kanji \(character)")
-        .accessibilityIdentifier("word-detail.alternative-kanji.\(character)")
+        WordDetailKanjiLink(
+          kanji: kanji,
+          destinationEntry: nil,
+          accessibilityLabel: "Alternative kanji \(character)",
+          accessibilityIdentifier: "word-detail.alternative-kanji.\(character)"
+        )
       }
     }
+  }
+}
+
+private struct WordDetailKanjiLink: View {
+  let kanji: KanjiCharacter
+  let destinationEntry: DictionaryEntry?
+  let accessibilityLabel: String
+  let accessibilityIdentifier: String
+
+  var body: some View {
+    NavigationLink(value: SearchExperienceRoute.kanji(kanji, destinationEntry)) {
+      Text(kanji.rawValue)
+        .font(.title2.weight(.semibold))
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    .accessibilityLabel(accessibilityLabel)
+    .accessibilityIdentifier(accessibilityIdentifier)
   }
 }
 

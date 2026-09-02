@@ -3,6 +3,7 @@ import XCTest
 enum WordDetailUITestSupport {
   static let longHeadword = "キャリア検知多重アクセス衝突検出ネットワーク"
   static let longReading = "キャリアけんちたじゅうアクセスしょうとつけんしゅつネットワーク"
+  static let longPrimaryKanji = ["検", "知", "多", "重", "衝", "突", "出"]
 
   @MainActor
   static func assertLongIdentityUsesSecondaryReading(

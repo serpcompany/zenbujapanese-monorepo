@@ -3005,6 +3005,57 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testLongMixedScriptWordDetailUsesConciseKanjiRows() throws {
+    let headword = WordDetailUITestSupport.longHeadword
+    let reading = WordDetailUITestSupport.longReading
+    let app = launchApp(additionalArguments: ["-ResetEncounterMedia", "-ResetFrequencyPacks"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: headword,
+      resultLabelPrefix: "\(headword), \(reading)",
+      in: app,
+      searchField: searchField
+    )
+
+    let identity = WordDetailUITestSupport.assertLongIdentityUsesSecondaryReading(in: app)
+    let detail = app.collectionViews["word-detail.screen"]
+    let firstLinkedKanji = app.buttons["word-detail.kanji.検"]
+    scrollWordDetailElementIntoView(firstLinkedKanji, in: detail, app: app)
+    recordScreenshot(named: "word-detail-long-entry-kanji-rows", app: app)
+    let hierarchy = XCTAttachment(string: app.debugDescription)
+    hierarchy.name = "word-detail-long-entry-kanji-hierarchy"
+    hierarchy.lifetime = .keepAlways
+    add(hierarchy)
+
+    for character in WordDetailUITestSupport.longPrimaryKanji {
+      let linkedKanji = app.buttons["word-detail.kanji.\(character)"]
+      scrollWordDetailElementIntoView(linkedKanji, in: detail, app: app)
+      XCTAssertTrue(linkedKanji.isHittable)
+      XCTAssertEqual(linkedKanji.label, "Kanji \(character)")
+      XCTAssertFalse(linkedKanji.label.contains(headword))
+
+      linkedKanji.tap()
+      let kanjiDetail = app.collectionViews["kanji-detail.screen"]
+      XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 3))
+      let glyph = app.staticTexts["kanji-detail.glyph"]
+      XCTAssertTrue(glyph.waitForExistence(timeout: 3))
+      XCTAssertEqual(glyph.label, character)
+      tapNativeBack(in: app)
+      XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    }
+
+    scrollElementIntoSafeTapRegion(
+      identity,
+      in: detail,
+      app: app,
+      direction: .backward,
+      maximumGestureCount: 8
+    )
+    XCTAssertTrue(identity.isHittable)
+  }
+
+  @MainActor
   func testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation() throws {
     let app = launchApp(additionalArguments: ["-ResetEncounterMedia"])
     let searchField = app.textFields["search.field"]
@@ -3317,8 +3368,22 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let problemKanji = app.buttons["word-detail.kanji.問"]
     let topicKanji = app.buttons["word-detail.kanji.題"]
     XCTAssertTrue(problemKanji.waitForExistence(timeout: 2))
-    XCTAssertTrue(topicKanji.exists)
+    XCTAssertEqual(problemKanji.label, "Kanji 問")
+    XCTAssertFalse(problemKanji.label.contains("問題"))
+
+    scrollWordDetailElementIntoView(topicKanji, in: detail, app: app)
+    XCTAssertTrue(topicKanji.isHittable)
+    XCTAssertEqual(topicKanji.label, "Kanji 題")
+    XCTAssertFalse(topicKanji.label.contains("問題"))
     recordScreenshot(named: "word-detail-mondai-primary-kanji", app: app)
+
+    scrollElementIntoSafeTapRegion(
+      problemKanji,
+      in: detail,
+      app: app,
+      direction: .backward,
+      maximumGestureCount: 3
+    )
     problemKanji.tap()
     XCTAssertTrue(app.collectionViews["kanji-detail.screen"].waitForExistence(timeout: 2))
     let detailGlyph = app.staticTexts["kanji-detail.glyph"]
