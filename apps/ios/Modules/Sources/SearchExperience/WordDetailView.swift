@@ -18,6 +18,12 @@ struct WordDetailView: View {
   @State private var encounterMediaImportFailed = false
   @State private var cameraAlert: WordDetailCameraAlert?
   @State private var showsCamera = false
+  @State private var frequencyDisclosure: FrequencyDisclosureItem?
+  @State private var frequency: FrequencyLookupResult = .unavailable(
+    FrequencyPackUnavailable(
+      pack: nil,
+      reason: "Loading frequency data")
+  )
 
   let entry: DictionaryEntry
   let initialEncounterMedia: EncounterMediaAttachment?
@@ -27,10 +33,12 @@ struct WordDetailView: View {
   let wordNoteStore: WordNoteStore
   let encounterMediaStore: EncounterMediaStore
   let cameraAuthorizationClient: CameraAuthorizationClient
+  let frequencyCapability: FrequencyCapability
   let conjugationTable: ConjugationTable?
   let openRelated: (DictionaryRelationship) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
   let openWord: (DictionaryEntry) -> Void
+  let manageFrequencyDictionaries: () -> Void
 
   var body: some View {
     ScrollViewReader { proxy in
@@ -38,7 +46,9 @@ struct WordDetailView: View {
         Section {
           WordHeader(
             entry: entry,
+            frequency: frequency,
             encounterMedia: encounterMedia,
+            showFrequency: { frequencyDisclosure = FrequencyDisclosureItem(result: frequency) },
             pronounce: { speechSynthesisClient.speak(entry.reading) },
             removeEncounterMedia: removeEncounterMedia
           )
@@ -161,6 +171,15 @@ struct WordDetailView: View {
         cameraPicker
       #endif
     }
+    .sheet(item: $frequencyDisclosure) { item in
+      FrequencyDisclosureView(
+        item: item,
+        manage: {
+          frequencyDisclosure = nil
+          manageFrequencyDictionaries()
+        }
+      )
+    }
     .overlay(alignment: .topLeading) {
       if let lastSpeechRequest {
         Color.clear
@@ -192,6 +211,13 @@ struct WordDetailView: View {
       guard !Task.isCancelled else { return }
       encounterMedia = storedMedia
       examples = (try? await exampleSentenceClient.examples(entry)) ?? []
+      frequency =
+        (try? await frequencyCapability.evidence(for: entry.id))
+        ?? .unavailable(
+          FrequencyPackUnavailable(
+            pack: nil,
+            reason: "Frequency data unavailable"
+          ))
       notes = await wordNoteStore.load(entry.noteID)
       editingNoteID = nil
       noteDraft = ""
@@ -466,7 +492,9 @@ private struct AlternativeKanjiSection: View {
 private struct WordHeader: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let entry: DictionaryEntry
+  let frequency: FrequencyLookupResult
   let encounterMedia: [EncounterMedia]
+  let showFrequency: () -> Void
   let pronounce: () -> Void
   let removeEncounterMedia: (String) async -> Void
   @State private var presentedMedia: EncounterMedia?
@@ -521,26 +549,27 @@ private struct WordHeader: View {
 
   @ViewBuilder
   private var headerAccessory: some View {
-    if let latest = encounterMedia.first, let image = UIImage(data: latest.data) {
-      Button {
-        presentedMedia = latest
-      } label: {
-        VStack(spacing: 3) {
-          Image(uiImage: image)
-            .resizable()
-            .scaledToFill()
-            .frame(width: 66, height: 52)
-            .clipped()
-            .clipShape(RoundedRectangle(cornerRadius: 5))
-          Text(encounterMedia.count == 1 ? "Saved Image" : "\(encounterMedia.count) Images")
-            .font(.caption2)
+    VStack(alignment: .trailing, spacing: 8) {
+      if let latest = encounterMedia.first, let image = UIImage(data: latest.data) {
+        Button {
+          presentedMedia = latest
+        } label: {
+          VStack(spacing: 3) {
+            Image(uiImage: image)
+              .resizable()
+              .scaledToFill()
+              .frame(width: 66, height: 52)
+              .clipped()
+              .clipShape(RoundedRectangle(cornerRadius: 5))
+            Text(encounterMedia.count == 1 ? "Saved Image" : "\(encounterMedia.count) Images")
+              .font(.caption2)
+          }
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Saved encounter images, \(encounterMedia.count)")
+        .accessibilityIdentifier("word-detail.image-attachment")
       }
-      .buttonStyle(.plain)
-      .accessibilityLabel("Saved encounter images, \(encounterMedia.count)")
-      .accessibilityIdentifier("word-detail.image-attachment")
-    } else {
-      FrequencyBadge(frequency: entry.frequency)
+      FrequencyBadge(result: frequency, showDetails: showFrequency)
     }
   }
 
@@ -638,30 +667,73 @@ extension DictionaryEntry {
 }
 
 private struct FrequencyBadge: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-  @ScaledMetric(relativeTo: .body) private var badgeSize = 66.0
-  let frequency: DictionaryEntry.Frequency
+  let result: FrequencyLookupResult
+  let showDetails: () -> Void
 
   var body: some View {
-    if dynamicTypeSize.isAccessibilitySize {
-      Text(frequency.rawValue)
-        .font(.headline)
-        .multilineTextAlignment(.center)
-        .fixedSize(horizontal: false, vertical: true)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .background(.fill.tertiary, in: Capsule())
-    } else {
-      ZStack {
-        Circle().stroke(.secondary.opacity(0.18), lineWidth: 6)
-        Text(frequency.rawValue)
-          .font(.body.bold())
-          .multilineTextAlignment(.center)
-          .fixedSize(horizontal: false, vertical: true)
-          .padding(2)
+    let presentation = FrequencyPresentationModel(result: result)
+    Button(action: showDetails) {
+      Text(presentation.inlineText)
+        .font(.headline.monospacedDigit())
+        .frame(minWidth: 44, minHeight: 44)
+        .padding(.horizontal, 8)
+        .background(.fill.tertiary, in: .rect(cornerRadius: 10))
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel(presentation.inlineAccessibilityLabel)
+    .accessibilityValue(presentation.inlineText)
+    .accessibilityIdentifier("word-detail.frequency")
+  }
+}
+
+private struct FrequencyDisclosureItem: Identifiable {
+  let result: FrequencyLookupResult
+
+  var id: String {
+    FrequencyPresentationModel(result: result).pack?.id.rawValue ?? "frequency-unavailable"
+  }
+}
+
+private struct FrequencyDisclosureView: View {
+  @Environment(\.dismiss) private var dismiss
+  let item: FrequencyDisclosureItem
+  let manage: () -> Void
+
+  var body: some View {
+    let presentation = FrequencyPresentationModel(result: item.result)
+    NavigationStack {
+      List {
+        if let pack = presentation.pack {
+          Section(pack.displayName) {
+            LabeledContent("Domain", value: pack.domain)
+            Text(pack.domainDescription)
+            LabeledContent("Version", value: pack.version)
+            LabeledContent("Source", value: pack.attribution)
+          }
+        }
+        Section("Frequency") {
+          if let rankText = presentation.rankText,
+            let percentileText = presentation.percentileText
+          {
+            LabeledContent("Rank", value: rankText)
+            LabeledContent("Percentile", value: percentileText)
+          } else if let explanation = presentation.explanation {
+            Text(explanation)
+          }
+        }
+        Section {
+          Button("Manage Frequency Dictionaries", action: manage)
+            .accessibilityIdentifier("frequency-detail.manage")
+        }
       }
-      .frame(width: badgeSize, height: badgeSize)
-      .padding(.top, 3)
+      .accessibilityIdentifier("frequency-detail.list")
+      .navigationTitle("Frequency Details")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .confirmationAction) {
+          Button("Done", action: dismiss.callAsFunction)
+        }
+      }
     }
   }
 }

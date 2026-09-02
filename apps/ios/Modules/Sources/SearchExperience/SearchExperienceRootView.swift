@@ -3,6 +3,7 @@ import SwiftUI
 public struct SearchExperienceRootView: View {
   @State private var selectedTab = SearchExperienceTab.search
   @State private var path: [SearchExperienceRoute] = []
+  @State private var morePath: [MoreRoute] = []
   @State private var query = ""
   #if DEBUG
     @State private var exportsImageFixtures = false
@@ -78,8 +79,14 @@ public struct SearchExperienceRootView: View {
       }
 
       Tab("More", systemImage: "ellipsis", value: SearchExperienceTab.more) {
-        NavigationStack {
+        NavigationStack(path: $morePath) {
           MoreView(store: encounterMediaStore)
+            .navigationDestination(for: MoreRoute.self) { route in
+              switch route {
+              case .frequencyDictionaries:
+                FrequencyDictionariesView(client: .live)
+              }
+            }
         }
       }
     }
@@ -143,10 +150,12 @@ public struct SearchExperienceRootView: View {
             wordNoteStore: .live,
             encounterMediaStore: encounterMediaStore,
             cameraAuthorizationClient: cameraAuthorizationClient,
+            frequencyCapability: .live,
             conjugationTable: japaneseConjugationClient.table(entry),
             openRelated: openRelated,
             openKanji: openKanji,
-            openWord: { entry in path.append(.word(entry, nil)) }
+            openWord: { entry in path.append(.word(entry, nil)) },
+            manageFrequencyDictionaries: openFrequencyDictionaries
           )
         case .kanji(let character, let entry):
           KanjiDetailView(
@@ -251,6 +260,11 @@ public struct SearchExperienceRootView: View {
         } ?? results.best.first ?? results.additional.first
       if let entry { path.append(.word(entry, nil)) }
     }
+  }
+
+  private func openFrequencyDictionaries() {
+    selectedTab = .more
+    morePath = [.frequencyDictionaries]
   }
 
   private func encounterMediaAttachment(for context: ImageWordContext?)

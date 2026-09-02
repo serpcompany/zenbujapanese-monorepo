@@ -139,7 +139,19 @@ plutil -lint "$manifest" >/dev/null || fail "privacy manifest is invalid"
 require_rg_match "privacy manifest is not in the app resources phase" 'PrivacyInfo\.xcprivacy in Resources' "$project"
 pass "source privacy manifest is valid and included in the app target"
 
-denylist_scan "unreviewed source network or cloud API" 'URLSession|NSURLSession|CloudKit|CKContainer|NWConnection|import[[:space:]]+Network|import[[:space:]]+WebKit' "${ios_dir}/App" "${ios_dir}/Modules/Sources"
+network_scan_paths=()
+while IFS= read -r source_file; do
+  network_scan_paths+=("$source_file")
+done < <(find "${ios_dir}/App" "${ios_dir}/Modules/Sources" -type f ! -name FrequencyPack.swift -print)
+denylist_scan "unreviewed source network or cloud API" 'URLSession|NSURLSession|CloudKit|CKContainer|NWConnection|import[[:space:]]+Network|import[[:space:]]+WebKit' \
+  "${network_scan_paths[@]}"
+frequency_download_source="${ios_dir}/Modules/Sources/SearchExperience/FrequencyPack.swift"
+[[ -f "$frequency_download_source" ]] || fail "reviewed frequency download boundary is missing"
+[[ "$(rg -c 'URLSession\.shared\.data\(from: url\)' "$frequency_download_source")" == "1" ]] \
+  || fail "frequency download boundary changed or added another network client"
+require_rg_match "frequency download must reject non-success HTTP responses" \
+  'HTTPURLResponse\)\?\.statusCode == 200' "$frequency_download_source"
+pass "only the reviewed checksum-validated Frequency Pack downloader uses URLSession"
 denylist_scan "remote package dependency" 'XCRemoteSwiftPackageReference|repositoryURL|\.package\([[:space:]]*url:' "$project" "$package_manifest"
 require_rg_match "Camera usage description is missing or changed" 'INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text and save photos with words you are learning\.";' "$project"
 settings_source="$(find "${ios_dir}/Modules/Sources" -name DictionarySourcesView.swift -type f -print -quit)"
@@ -252,7 +264,7 @@ require_rg_match "archive executable is not arm64 Mach-O" 'Mach-O 64-bit executa
 otool -L "$executable" >"${scratch_dir}/dependencies" || fail "failed to resolve linked libraries"
 nm -u "$executable" >"${scratch_dir}/undefined-symbols" || fail "failed to inspect unresolved executable symbols"
 generated_denylist_scan "direct network framework dependency" '/(CFNetwork|Network|CloudKit|WebKit)\.framework/|@rpath/' "${scratch_dir}/dependencies"
-generated_denylist_scan "direct network client symbol" 'NSURLSession|URLSession|NWConnection|CKContainer|CFNetwork|WebKit|_connect$|_socket$' "${scratch_dir}/undefined-symbols"
+generated_denylist_scan "unreviewed direct network client symbol" 'NWConnection|CKContainer|CloudKit|WebKit|_connect$|_socket$' "${scratch_dir}/undefined-symbols"
 embedded_framework_results="${scratch_dir}/embedded-frameworks"
 if [[ -d "${app_path}/Frameworks" ]]; then
   find "${app_path}/Frameworks" -mindepth 1 -print -quit >"$embedded_framework_results" || fail "failed to enumerate embedded frameworks"

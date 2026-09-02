@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "packID": "zenbu.tubelex.youtube.ja.unidic-3.1",
+  "packVersion": "2025.1",
+  "displayName": "TUBELEX YouTube Japanese",
+  "locale": "ja",
+  "domain": "spoken.youtube",
+  "domainDescription": "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+  "source": {
+    "identity": "TUBELEX Japanese",
+    "owner": "Adam Nohejl and TUBELEX contributors",
+    "snapshot": "7cb5fb36add76b83a266d1967536e1a1d3faa513",
+    "url": "https://raw.githubusercontent.com/naist-nlp/tubelex/7cb5fb36add76b83a266d1967536e1a1d3faa513/frequencies/tubelex-ja-310-lemma-pos.tsv.xz",
+    "retrievedAt": "2026-09-02",
+    "bytes": 3658276,
+    "sha256": "39d4edb2ccac4405b47d0f93e9ec7b11678b3b305d1a37c877dd76588817c8e9",
+    "totalTokens": 165721393,
+    "coveredRows": 351453,
+    "videos": 100660,
+    "channels": 30550
+  },
+  "format": {
+    "compression": "xz-lzma2",
+    "measurement": "lemma-pos occurrence count",
+    "tokenizer": "UniDic 3.1",
+    "wordColumn": "word",
+    "countColumn": "count",
+    "posColumn": "pos",
+    "totalMarker": "[TOTAL]"
+  },
+  "license": {
+    "identifier": "BSD-3-Clause",
+    "attribution": "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+    "url": "https://github.com/naist-nlp/tubelex/blob/7cb5fb36add76b83a266d1967536e1a1d3faa513/LICENSE",
+    "notice": "apps/ios/Modules/Sources/SearchExperience/Resources/TUBELEX-BSD-3-CLAUSE.txt"
+  },
+  "mappingPolicyVersion": 1,
+  "rankTiePolicy": "One-based source row ordinal after the header; equal counts retain pinned source artifact order and receive distinct ranks.",
+  "presentationPolicyVersion": 1,
+  "presentationCapabilities": ["count", "exactSourceRowRank", "numericTopPercentile"]
+}

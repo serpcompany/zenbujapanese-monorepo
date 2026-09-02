@@ -16,9 +16,10 @@ This is the durable audit contract for the exact Zenbu Japanese 1.0 release cand
 | Translation | Recognized or entered Japanese text | Apple's Translation framework uses installed Japanese-to-English language assets | Close the flow | No Zenbu-operated service |
 | Speech | User-selected Japanese text | Apple's Speech Synthesis produces playback | Stop playback or leave the screen | None |
 | Clipboard | Recognized text | Written to the system clipboard only after the user taps Copy Text | Replace or clear the clipboard using the system | None |
+| Frequency Pack download | A learner-initiated request for one Zenbu-curated public frequency artifact | `URLSession` fetches only the immutable source URL embedded in the app-signed catalog. Zenbu validates exact bytes and SHA-256, imports locally, and stores the validated pack in app-only Application Support. No query, note, image, identifier, or learner content is sent. | Do not tap Download, remove the optional pack, or uninstall | GitHub raw-content host named in the reviewed catalog; no Zenbu-operated service |
 | External links | User-initiated support, privacy, source, and license links | Opened by the operating system | Do not tap or close the browser | Normal browser behavior; no hidden app transmission |
 
-Version 1.0 has no account, cloud sync, analytics, advertising, third-party crash reporting SDK, or app-operated network client. On-device content is not data collected by Zenbu for App Store privacy-label purposes.
+Version 1.0 has no account, cloud sync, analytics, advertising, third-party crash reporting SDK, or Zenbu-operated service. Its sole app-operated network client is the learner-initiated, immutable-URL Frequency Pack downloader described above. On-device content is not data collected by Zenbu for App Store privacy-label purposes.
 
 ## Required-reason APIs
 
@@ -48,7 +49,7 @@ apps/ios/Tools/audit_release_privacy.sh signed-candidate /absolute/path/to/Zenbu
 
 Signed-candidate mode fails unless the archive records a signing identity, embeds a provisioning profile, passes strict code-signature verification, and exposes a valid entitlement plist. The audit never suppresses signing, dependency-inspection, or scan execution failures. Credential denylist output reports only a category and packaged relative filename; it never prints matched contents.
 
-Both archive modes inspect the resolved Mach-O dependency inventory, direct network-client symbols, embedded frameworks, reviewed public URL hosts, local/private URLs, DEBUG and test markers, non-Release resources, fixtures, private evidence markers, and credential-shaped material. `ARTIFACT_SHA256` is derived from sorted packaged relative paths and file contents, so moving the same `.app` does not change its identity.
+Both archive modes inspect the resolved Mach-O dependency inventory, direct network-client symbols, embedded frameworks, reviewed public URL hosts, local/private URLs, DEBUG and test markers, non-Release resources, fixtures, private evidence markers, and credential-shaped material. `URLSession` is allowed only through the source-audited Frequency Pack boundary; Network, CloudKit, WebKit, and raw socket clients remain denied. `ARTIFACT_SHA256` is derived from sorted packaged relative paths and file contents, so moving the same `.app` does not change its identity.
 
 For a signed candidate, URL inventory strips `LC_CODE_SIGNATURE` from a scratch copy of the executable and excludes `_CodeSignature` plus `embedded.mobileprovision`. Those Apple-owned signing containers include certificate, OCSP, and revocation-list URLs that are not product network destinations. The original signed app is still verified strictly before the copy is made, and every ordinary packaged resource, compiled executable URL, and logical SQLite value remains in the product URL scan.
 

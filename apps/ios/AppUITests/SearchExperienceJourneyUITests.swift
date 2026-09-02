@@ -2331,6 +2331,87 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testFrequencyDictionariesShowsIncludedOptionalAndActionableFailureStates() throws {
+    let app = launchApp(additionalArguments: [
+      "-ResetFrequencyPacks", "-FrequencyPackChecksumFailure",
+    ])
+    XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["More"].tap()
+    let frequencyDictionaries = app.buttons["more.frequency-dictionaries"]
+    XCTAssertTrue(frequencyDictionaries.waitForExistence(timeout: 2))
+    frequencyDictionaries.tap()
+
+    XCTAssertTrue(app.staticTexts["Frequency Dictionaries"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.staticTexts["TUBELEX YouTube Japanese"].exists)
+    XCTAssertTrue(app.staticTexts["Status, Active"].exists)
+    XCTAssertTrue(app.staticTexts["Source domain, YouTube / everyday media Japanese"].exists)
+    XCTAssertTrue(app.staticTexts["Version, 2025.1"].exists)
+    XCTAssertTrue(app.staticTexts["License, BSD-3-Clause"].exists)
+    XCTAssertTrue(
+      app.staticTexts["frequency-pack.included.zenbu.tubelex.youtube.ja.unidic-3.1"].exists)
+
+    let list = app.collectionViews["frequency-packs.list"]
+    let optionalHeader = app.staticTexts["Japanese Wikipedia"]
+    scrollUpUntilExists(optionalHeader, in: list, attempts: 8)
+    XCTAssertTrue(optionalHeader.exists)
+    let download = app.buttons[
+      "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    scrollUpUntilHittable(download, in: list, attempts: 6)
+    XCTAssertTrue(download.isHittable)
+    download.tap()
+
+    let failure = app.staticTexts[
+      "frequency-pack.failure.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(failure.waitForExistence(timeout: 4))
+    XCTAssertTrue(failure.label.contains("checksum validation"))
+    let retry = app.buttons[
+      "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertEqual(retry.label, "Retry")
+    let retainedActive = app.staticTexts["Status, Active"]
+    for _ in 0..<8 where !retainedActive.exists { list.swipeDown() }
+    XCTAssertTrue(retainedActive.exists)
+  }
+
+  @MainActor
+  func testFrequencyPackAttributionAndBundledLicensesAreReachableFromSources() throws {
+    let app = launchApp()
+    XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["More"].tap()
+    app.buttons["more.credits"].tap()
+    let sourceList = app.collectionViews["dictionary-sources.list"]
+    XCTAssertTrue(sourceList.waitForExistence(timeout: 2))
+
+    let tubelex = app.staticTexts["TUBELEX YouTube Japanese Frequency"]
+    scrollUpUntilExists(tubelex, in: sourceList, attempts: 14)
+    XCTAssertTrue(tubelex.exists)
+    XCTAssertTrue(
+      app.staticTexts.matching(
+        NSPredicate(format: "label CONTAINS %@", "YouTube subtitles")
+      ).firstMatch.exists)
+    let tubelexLicense = app.buttons["dictionary-sources.tubelex-license"]
+    scrollUpUntilHittable(tubelexLicense, in: sourceList, attempts: 5)
+    XCTAssertTrue(tubelexLicense.isHittable)
+    tubelexLicense.tap()
+    XCTAssertTrue(app.staticTexts["TUBELEX BSD-3-Clause License"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.staticTexts["dictionary-sources.license-text"].exists)
+    tapNativeBack(in: app)
+
+    let wikipedia = app.staticTexts["Japanese Wikipedia Frequency"]
+    scrollUpUntilExists(wikipedia, in: sourceList, attempts: 8)
+    XCTAssertTrue(wikipedia.exists)
+    let wikipediaLicense = app.buttons["dictionary-sources.wikipedia-frequency-license"]
+    scrollUpUntilHittable(wikipediaLicense, in: sourceList, attempts: 5)
+    XCTAssertTrue(wikipediaLicense.isHittable)
+    wikipediaLicense.tap()
+    XCTAssertTrue(
+      app.staticTexts["Wikipedia Frequency BSD-3-Clause License"].waitForExistence(timeout: 2))
+    XCTAssertTrue(app.staticTexts["dictionary-sources.license-text"].exists)
+  }
+
+  @MainActor
   func testPrivacyAndSupportAreReachableFromMore() throws {
     let app = launchApp()
 
@@ -2784,7 +2865,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       NSPredicate(format: "label == %@", "見る, みる")
     ).firstMatch
     XCTAssertTrue(miruRuby.exists)
-    XCTAssertTrue(app.staticTexts["COMMON"].exists)
+    let frequency = app.buttons["word-detail.frequency"]
+    XCTAssertTrue(frequency.waitForExistence(timeout: 3))
+    XCTAssertEqual(frequency.value as? String, "#41")
+    XCTAssertFalse(app.staticTexts["TUBELEX YouTube Japanese"].exists)
+    XCTAssertFalse(app.staticTexts["YouTube / everyday media Japanese"].exists)
+    XCTAssertFalse(app.staticTexts["UNMARKED"].exists)
     XCTAssertTrue(app.descendants(matching: .any)["word-detail.pitch"].exists)
     XCTAssertTrue(app.buttons["word-detail.add-menu"].exists)
     XCTAssertFalse(app.buttons["word-detail.toolbar-flashcards"].exists)
@@ -2892,7 +2978,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     ).firstMatch
     XCTAssertTrue(butterfly.waitForExistence(timeout: 3))
     butterfly.tap()
-    XCTAssertTrue(app.staticTexts["COMMON"].exists)
+    XCTAssertTrue(app.buttons["word-detail.frequency"].waitForExistence(timeout: 3))
+    XCTAssertEqual(app.buttons["word-detail.frequency"].value as? String, "#11,497")
     let alternateReading = app.descendants(matching: .any)["word-detail.alternative.ちょうちょ"]
     let butterflyDetail = app.collectionViews["word-detail.screen"]
     for _ in 0..<4 where !alternateReading.exists { butterflyDetail.swipeUp() }
@@ -2907,7 +2994,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     ).firstMatch
     XCTAssertTrue(uncommon.waitForExistence(timeout: 3))
     uncommon.tap()
-    XCTAssertTrue(app.staticTexts["UNMARKED"].exists)
+    XCTAssertTrue(app.buttons["word-detail.frequency"].waitForExistence(timeout: 3))
+    XCTAssertEqual(app.buttons["word-detail.frequency"].value as? String, "#14,728")
+    XCTAssertFalse(app.staticTexts["UNMARKED"].exists)
     let uncommonDetail = app.collectionViews["word-detail.screen"]
     let uncommonReading = app.descendants(matching: .any)["word-detail.alternative.イバラ"]
     for _ in 0..<4 where !uncommonReading.exists { uncommonDetail.swipeUp() }
@@ -2923,6 +3012,13 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(kanaVerb.waitForExistence(timeout: 3))
     kanaVerb.tap()
 
+    let missingRank = app.buttons["word-detail.frequency"]
+    XCTAssertTrue(missingRank.waitForExistence(timeout: 3))
+    XCTAssertEqual(
+      missingRank.label,
+      "The active frequency dictionary has no rank for this entry. Double tap for details.")
+    XCTAssertEqual(missingRank.value as? String, "—")
+
     let linkedKanji = app.buttons["word-detail.alternative.居る"]
     let kanaDetail = app.collectionViews["word-detail.screen"]
     for _ in 0..<4 where !linkedKanji.exists { kanaDetail.swipeUp() }
@@ -2933,6 +3029,116 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(detailGlyph.waitForExistence(timeout: 2))
     XCTAssertEqual(detailGlyph.label, "居")
     recordScreenshot(named: "word-detail-alternative-kanji-destination", app: app)
+  }
+
+  @MainActor
+  func testMissingTUBELEXEntryShowsNeutralFrequencyPlaceholder() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "どいたま",
+      resultLabelPrefix: "どいたま, どいたま",
+      in: app,
+      searchField: searchField
+    )
+
+    let frequency = app.buttons["word-detail.frequency"]
+    XCTAssertTrue(frequency.waitForExistence(timeout: 3))
+    XCTAssertEqual(
+      frequency.label,
+      "The active frequency dictionary has no rank for this entry. Double tap for details."
+    )
+    XCTAssertEqual(frequency.value as? String, "—")
+    XCTAssertFalse(app.staticTexts["No frequency data"].exists)
+    XCTAssertFalse(app.staticTexts["UNMARKED"].exists)
+    XCTAssertFalse(app.staticTexts["RARE"].exists)
+    frequency.tap()
+    XCTAssertTrue(app.staticTexts["TUBELEX YouTube Japanese"].waitForExistence(timeout: 3))
+    XCTAssertTrue(
+      app.staticTexts[
+        "TUBELEX YouTube Japanese has no mapped frequency rank for this entry."
+      ].exists)
+  }
+
+  @MainActor
+  func testFrequencyRankDisclosureShowsActiveSourceAndRoutesToManagement() throws {
+    let app = launchApp(additionalArguments: ["-ResetFrequencyPacks"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+
+    let frequency = app.buttons["word-detail.frequency"]
+    XCTAssertTrue(frequency.waitForExistence(timeout: 3))
+    XCTAssertEqual(frequency.label, "Frequency rank 41. Double tap for details.")
+    XCTAssertEqual(frequency.value as? String, "#41")
+    XCTAssertFalse(app.staticTexts["TUBELEX YouTube Japanese"].exists)
+    frequency.tap()
+
+    XCTAssertTrue(app.staticTexts["Frequency Details"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["TUBELEX YouTube Japanese"].exists)
+    XCTAssertTrue(app.staticTexts["Domain, YouTube / everyday media Japanese"].exists)
+    XCTAssertTrue(app.staticTexts["Rank, #41"].exists)
+    XCTAssertTrue(app.staticTexts["Percentile, Top 0.01%"].exists)
+    XCTAssertTrue(app.staticTexts["Version, 2025.1"].exists)
+    XCTAssertTrue(
+      app.staticTexts[
+        "Source, TUBELEX Japanese frequency lists by Adam Nohejl and contributors"
+      ].exists)
+    let manage = app.buttons["frequency-detail.manage"]
+    XCTAssertTrue(manage.isHittable)
+    manage.tap()
+
+    XCTAssertTrue(app.staticTexts["Frequency Dictionaries"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.tabBars.buttons["More"].isSelected)
+    XCTAssertTrue(app.staticTexts["Status, Active"].exists)
+  }
+
+  @MainActor
+  func testSwitchingToPinnedWikipediaKeepsInlineFrequencyProviderNeutral() throws {
+    let app = launchApp(additionalArguments: ["-ResetFrequencyPacks"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る",
+      resultLabelPrefix: "見る, みる",
+      in: app,
+      searchField: searchField
+    )
+    let frequency = app.buttons["word-detail.frequency"]
+    XCTAssertEqual(frequency.value as? String, "#41")
+    XCTAssertFalse(app.staticTexts["TUBELEX YouTube Japanese"].exists)
+
+    app.tabBars.buttons["More"].tap()
+    app.buttons["more.frequency-dictionaries"].tap()
+    let list = app.collectionViews["frequency-packs.list"]
+    let download = app.buttons[
+      "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    scrollUpUntilHittable(download, in: list, attempts: 10)
+    XCTAssertTrue(download.isHittable)
+    download.tap()
+    let activate = app.buttons[
+      "frequency-pack.activate.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(activate.waitForExistence(timeout: 180))
+    activate.tap()
+
+    app.tabBars.buttons["Search"].tap()
+    XCTAssertTrue(frequency.waitForExistence(timeout: 10))
+    XCTAssertEqual(frequency.value as? String, "#1,423")
+    XCTAssertFalse(app.staticTexts["Japanese Wikipedia"].exists)
+    frequency.tap()
+    XCTAssertTrue(app.staticTexts["Japanese Wikipedia"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["Domain, Written / encyclopedic Japanese"].exists)
+    XCTAssertTrue(app.staticTexts["Rank, #1,423"].exists)
+    XCTAssertTrue(app.staticTexts["Percentile, Top 0.25%"].exists)
+    XCTAssertTrue(app.staticTexts["Version, 2022-10-20"].exists)
   }
 
   @MainActor

@@ -13,6 +13,11 @@ struct MoreView: View {
       }
       .accessibilityIdentifier("more.media-library")
 
+      NavigationLink(value: MoreRoute.frequencyDictionaries) {
+        Label("Frequency Dictionaries", systemImage: "chart.bar.xaxis")
+      }
+      .accessibilityIdentifier("more.frequency-dictionaries")
+
       NavigationLink {
         DictionarySourcesView()
       } label: {
@@ -23,6 +28,10 @@ struct MoreView: View {
     .accessibilityIdentifier("more.list")
     .navigationTitle("More")
   }
+}
+
+enum MoreRoute: Hashable {
+  case frequencyDictionaries
 }
 
 struct MediaLibraryView: View {

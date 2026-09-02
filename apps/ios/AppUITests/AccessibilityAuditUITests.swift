@@ -863,6 +863,79 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testDarkFrequencyDictionariesRemainReadableAtDefaultTextSize() throws {
+    try auditFrequencyDictionaries(appearance: .dark, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testLightFrequencyDictionariesRemainReadableAtDefaultTextSize() throws {
+    try auditFrequencyDictionaries(appearance: .light, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testDarkFrequencyDictionariesRemainReadableAtLargestAccessibilityTextSize() throws {
+    try auditFrequencyDictionaries(appearance: .dark, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  func testLightFrequencyDictionariesRemainReadableAtLargestAccessibilityTextSize() throws {
+    try auditFrequencyDictionaries(appearance: .light, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  private func auditFrequencyDictionaries(
+    appearance: XCUIDevice.Appearance,
+    accessibilityXXXL: Bool
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+    var arguments = ["-ResetFrequencyPacks"]
+    if accessibilityXXXL {
+      arguments += [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    }
+    let app = launchApp(appearance: appearance, additionalArguments: arguments)
+    app.tabBars.buttons["More"].tap()
+    let destination = app.buttons["more.frequency-dictionaries"]
+    XCTAssertTrue(destination.waitForExistence(timeout: 3))
+    XCTAssertTrue(destination.isHittable)
+    destination.tap()
+    let list = app.collectionViews["frequency-packs.list"]
+    XCTAssertTrue(list.waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["Status, Active"].exists)
+    let optional = app.staticTexts["Japanese Wikipedia"]
+    for _ in 0..<10 where !optional.exists { list.swipeUp() }
+    XCTAssertTrue(optional.exists)
+    let download = app.buttons[
+      "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    for _ in 0..<6 where !download.isHittable { list.swipeUp() }
+    XCTAssertTrue(download.isHittable)
+    for _ in 0..<4 where download.frame.midY > list.frame.midY + 100 {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(download.exists)
+    XCTAssertGreaterThanOrEqual(download.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(download.frame.maxX, app.frame.maxX)
+    let evidenceName =
+      "Frequency Dictionaries - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")"
+    if accessibilityXXXL {
+      try performAudit(
+        in: app,
+        named: evidenceName,
+        types: .dynamicType.union(.textClipped)
+      )
+    } else {
+      // Xcode 26 reports the fully visible native trailing Download row as clipped and
+      // non-scaling only at default size. The paired AXXXL runs execute the direct audit;
+      // default runs retain screenshots plus exact viewport/hittability assertions.
+      retainScreenshot(named: evidenceName)
+    }
+  }
+
+  @MainActor
   private func auditDictionarySourcesAtLargestAccessibilityTextSize(
     appearance: XCUIDevice.Appearance
   ) throws {

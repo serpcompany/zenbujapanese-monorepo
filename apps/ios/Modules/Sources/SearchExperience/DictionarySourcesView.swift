@@ -110,6 +110,51 @@ struct DictionarySourcesView: View {
             string: "https://clrd.ninjal.ac.jp/unidic_archive/cwj/back_number_en.html")!)
       }
 
+      Section("TUBELEX YouTube Japanese Frequency") {
+        Text(
+          "The included active-by-default frequency pack measures Japanese lemmas in YouTube subtitles across everyday media categories. Its ranks describe this media corpus, not universal Japanese frequency."
+        )
+        LabeledContent("License", value: "BSD-3-Clause")
+        LabeledContent("Version", value: "2025.1 · UniDic 3.1")
+        LabeledContent("Snapshot", value: "7cb5fb36")
+        NavigationLink("Bundled license text") {
+          BundledLicenseTextView(
+            title: "TUBELEX BSD-3-Clause License",
+            resource: "TUBELEX-BSD-3-CLAUSE"
+          )
+        }
+        .accessibilityIdentifier("dictionary-sources.tubelex-license")
+        Link(
+          "Project and frequency lists",
+          destination: URL(
+            string:
+              "https://github.com/naist-nlp/tubelex/tree/7cb5fb36add76b83a266d1967536e1a1d3faa513")!
+        )
+      }
+
+      Section("Japanese Wikipedia Frequency") {
+        Text(
+          "The optional downloadable pack measures written Japanese in the 2022-10-20 Japanese Wikipedia dump using UniDic 3.1 and NFKC normalization."
+        )
+        LabeledContent("License", value: "BSD-3-Clause")
+        LabeledContent("Version", value: "2022-10-20 · UniDic 3.1")
+        LabeledContent("Snapshot", value: "8b7a2811")
+        NavigationLink("Bundled license text") {
+          BundledLicenseTextView(
+            title: "Wikipedia Frequency BSD-3-Clause License",
+            resource: "WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE"
+          )
+        }
+        .accessibilityIdentifier("dictionary-sources.wikipedia-frequency-license")
+        Link(
+          "Project and frequency lists",
+          destination: URL(
+            string:
+              "https://github.com/adno/wikipedia-word-frequency-clean/tree/8b7a28118736ef4bc9b70ebb4abc33d32b53200c"
+          )!
+        )
+      }
+
       Section("Tatoeba") {
         Text(
           "Offline Japanese–English example sentences from Tatoeba's official weekly export. Zenbu retains both sentence IDs, supplied contributor usernames, per-record license class, and the exact source snapshot."
