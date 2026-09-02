@@ -3750,6 +3750,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     word.tap()
     let detail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    assertMeaningVisible(
+      "1.  to be (of animate objects), to exist",
+      in: detail,
+      app: app
+    )
     tapNativeBack(in: app)
     XCTAssertTrue(examples.waitForExistence(timeout: 3))
     for _ in 0..<16 where !row.exists || !row.isHittable {

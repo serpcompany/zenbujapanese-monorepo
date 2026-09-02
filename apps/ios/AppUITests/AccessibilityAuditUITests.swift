@@ -1287,12 +1287,8 @@ final class AccessibilityAuditUITests: XCTestCase {
         NSPredicate(format: "identifier BEGINSWITH %@", "example.token.0.")
       ).firstMatch.waitForExistence(timeout: 12)
     )
-    // This two-row fixture exposes exactly one member of the reviewed #191 exception inventory.
-    try performAudit(
-      in: app,
-      named: "Example Sentences",
-      expectedExceptions: [AuditException(.hitRegion, identifier: "example.token.1.2.ろ")]
-    )
+    // #242's complete いる boundary removes the prior one-character exception in this fixture.
+    try performAudit(in: app, named: "Example Sentences")
     app.terminate()
 
     app = launchApp(appearance: appearance)
