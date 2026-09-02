@@ -3490,6 +3490,88 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testWordDetailExampleStacksJapaneseAndSpeakerAtAccessibilityXXXL() throws {
+    let app = launchApp(
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    submitSearch("いる", in: app, searchField: searchField)
+
+    let primaryResult = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
+      .firstMatch
+    XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
+    primaryResult.tap()
+
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    let speaker = app.buttons["word-detail.example-speaker.0"]
+    scrollElementIntoSafeTapRegion(speaker, in: detail, app: app, maximumGestureCount: 12)
+
+    let tokens = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.0.")
+    )
+    XCTAssertGreaterThan(tokens.count, 0)
+    let japaneseBottom = (0..<tokens.count).map { tokens.element(boundBy: $0).frame.maxY }.max()
+    XCTAssertNotNil(japaneseBottom)
+    XCTAssertGreaterThanOrEqual(
+      speaker.frame.minY,
+      japaneseBottom ?? speaker.frame.minY,
+      "Accessibility-size speech belongs below the complete Japanese sentence"
+    )
+    let row = app.descendants(matching: .any)["word-detail.example.0"]
+    XCTAssertTrue(row.exists)
+    XCTAssertEqual(row.label, "要る？, Want it?")
+    XCTAssertGreaterThanOrEqual(
+      row.frame.maxY - speaker.frame.maxY,
+      speaker.frame.height * 0.6,
+      "The combined public row reserves a typography-sized translation region below speech"
+    )
+    recordScreenshot(named: "issue-239-word-example-accessibility-xxxl", app: app)
+  }
+
+  @MainActor
+  func testWordDetailExampleCentersJapaneseAndSpeakerAtDefaultSize() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    submitSearch("いる", in: app, searchField: searchField)
+
+    let primaryResult = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
+      .firstMatch
+    XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
+    primaryResult.tap()
+
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    let speaker = app.buttons["word-detail.example-speaker.0"]
+    scrollElementIntoSafeTapRegion(speaker, in: detail, app: app, maximumGestureCount: 12)
+    let tokens = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.0.")
+    ).allElementsBoundByIndex
+    XCTAssertFalse(tokens.isEmpty)
+    let japaneseTop = tokens.map(\.frame.minY).min() ?? 0
+    let japaneseBottom = tokens.map(\.frame.maxY).max() ?? 0
+    XCTAssertEqual(
+      speaker.frame.midY,
+      (japaneseTop + japaneseBottom) / 2,
+      accuracy: speaker.frame.height * 0.25
+    )
+
+    let row = app.descendants(matching: .any)["word-detail.example.0"]
+    XCTAssertEqual(row.label, "要る？, Want it?")
+    let headerBottom = max(japaneseBottom, speaker.frame.maxY)
+    XCTAssertGreaterThanOrEqual(
+      row.frame.maxY - headerBottom,
+      speaker.frame.height * 0.5,
+      "The combined public row must reserve a typography-sized translation region"
+    )
+    recordScreenshot(named: "issue-239-word-example-default", app: app)
+  }
+
+  @MainActor
   func testRepresentativeExampleSentencesKeepCompactContentNavigationAndSpeech() throws {
     let app = launchApp(
       additionalArguments: [
@@ -3508,6 +3590,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let examples = app.collectionViews["example-list.screen"]
     XCTAssertTrue(examples.waitForExistence(timeout: 4))
+    var equivalentShortRowHeights: [CGFloat] = []
+    var renderedTranslationHeights: [CGFloat] = []
     for expected in RepresentativeExampleSentences.rows {
       let row = RepresentativeExampleSentences.reachRow(
         expected,
@@ -3523,19 +3607,41 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       let english = RepresentativeExampleSentences.englishText(for: expected, in: app)
       XCTAssertTrue(english.exists)
       XCTAssertEqual(english.label, expected.english)
+      RepresentativeExampleSentences.assertDefaultGeometry(for: expected, in: app)
+      if [0, 1, 3].contains(expected.index) {
+        equivalentShortRowHeights.append(row.frame.height)
+        renderedTranslationHeights.append(english.frame.height)
+      }
+      if expected.index == 2 || expected.index == 7 {
+        recordScreenshot(named: "issue-239-example-row-\(expected.index)-default", app: app)
+      }
 
       if expected.index == 2 {
+        RepresentativeExampleSentences.assertLinkedRowSemantics(for: expected, in: app)
         let linkedDrawToken = RepresentativeExampleSentences.linkedDrawToken(in: app)
         XCTAssertTrue(linkedDrawToken.waitForExistence(timeout: 3))
         XCTAssertTrue(linkedDrawToken.isHittable)
         XCTAssertLessThan(linkedDrawToken.frame.width, 44)
         linkedDrawToken.tap()
-        XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["draw (in go, poetry contest, etc.), tie"].exists)
+        let detail = app.collectionViews["word-detail.screen"]
+        XCTAssertTrue(detail.waitForExistence(timeout: 3))
+        assertMeaningVisible(
+          "1.  draw (in go, poetry contest, etc.), tie",
+          in: detail,
+          app: app
+        )
         tapNativeBack(in: app)
         XCTAssertTrue(examples.waitForExistence(timeout: 3))
       }
     }
+
+    let shortRowVariance =
+      (equivalentShortRowHeights.max() ?? 0) - (equivalentShortRowHeights.min() ?? 0)
+    XCTAssertLessThanOrEqual(
+      shortRowVariance,
+      renderedTranslationHeights.max() ?? 0,
+      "Equivalent one-line rows may vary by at most one rendered translation line"
+    )
 
     examples.swipeUp(velocity: .slow)
     XCTAssertFalse(app.descendants(matching: .any)["example.row.8"].exists)
@@ -3591,7 +3697,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     linkedMite.tap()
     XCTAssertTrue(
       app.descendants(matching: .any)["ruby.見る.見=み|る"].waitForExistence(timeout: 3))
-    XCTAssertTrue(app.staticTexts["to see, to look, to watch, to view, to observe"].exists)
+    let detail = app.collectionViews["word-detail.screen"]
+    assertMeaningVisible(
+      "1.  to see, to look, to watch, to view, to observe",
+      in: detail,
+      app: app
+    )
     recordScreenshot(named: "word-detail-example-token-miru", app: app)
 
     tapNativeBack(in: app)
@@ -3629,8 +3740,13 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordScreenshot(named: "example-only-hello-world", app: app)
 
     linkedWorld.tap()
-    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
-    XCTAssertTrue(app.staticTexts["the world, society, the universe"].exists)
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    assertMeaningVisible(
+      "1.  the world, society, the universe",
+      in: detail,
+      app: app
+    )
   }
 
   @MainActor
@@ -4904,6 +5020,127 @@ enum RepresentativeExampleSentences {
   @MainActor
   static func englishText(for expected: Row, in app: XCUIApplication) -> XCUIElement {
     app.staticTexts["example.english.\(expected.index)"]
+  }
+
+  @MainActor
+  static func assertDefaultGeometry(
+    for expected: Row,
+    in app: XCUIApplication,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let prefix = "example.token.\(expected.index)."
+    let tokenElements = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", prefix)
+    ).allElementsBoundByIndex.filter { $0.frame.width > 0 && $0.frame.height > 0 }
+    XCTAssertFalse(tokenElements.isEmpty, file: file, line: line)
+    guard !tokenElements.isEmpty else { return }
+
+    let japaneseTop = tokenElements.map(\.frame.minY).min() ?? 0
+    let japaneseBottom = tokenElements.map(\.frame.maxY).max() ?? 0
+    let speaker = app.buttons["example.speaker.\(expected.index)"]
+    let english = englishText(for: expected, in: app)
+    XCTAssertTrue(speaker.exists, file: file, line: line)
+    XCTAssertTrue(english.exists, file: file, line: line)
+
+    // Relate tolerance to the rendered translation line height so typography may scale without
+    // pinning the test to one font's absolute pixels.
+    let baselineTolerance = max(1, english.frame.height * 0.5)
+    let spacingTolerance = max(1, english.frame.height * 0.15)
+    XCTAssertEqual(
+      speaker.frame.midY,
+      (japaneseTop + japaneseBottom) / 2,
+      accuracy: baselineTolerance,
+      file: file,
+      line: line
+    )
+    XCTAssertGreaterThanOrEqual(
+      english.frame.minY,
+      max(japaneseBottom, speaker.frame.maxY) + spacingTolerance,
+      file: file,
+      line: line
+    )
+  }
+
+  @MainActor
+  static func assertAccessibilityGeometry(
+    for expected: Row,
+    in app: XCUIApplication,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let prefix = "example.token.\(expected.index)."
+    let tokenElements = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", prefix)
+    ).allElementsBoundByIndex.filter { $0.frame.width > 0 && $0.frame.height > 0 }
+    XCTAssertFalse(tokenElements.isEmpty, file: file, line: line)
+    guard !tokenElements.isEmpty else { return }
+    let japaneseBottom = tokenElements.map(\.frame.maxY).max() ?? 0
+    let speaker = app.buttons["example.speaker.\(expected.index)"]
+    let english = englishText(for: expected, in: app)
+    let typographySpacing = max(1, english.frame.height * 0.1)
+    XCTAssertGreaterThanOrEqual(
+      speaker.frame.minY,
+      japaneseBottom + typographySpacing,
+      file: file,
+      line: line
+    )
+    XCTAssertGreaterThanOrEqual(
+      english.frame.minY,
+      speaker.frame.maxY + typographySpacing,
+      file: file,
+      line: line
+    )
+  }
+
+  @MainActor
+  static func assertLinkedRowSemantics(
+    for expected: Row,
+    in app: XCUIApplication,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let prefix = "example.token.\(expected.index)."
+    let elements = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", prefix)
+    ).allElementsBoundByIndex
+    let identifiers = elements.map(\.identifier)
+    XCTAssertEqual(Set(identifiers).count, identifiers.count, file: file, line: line)
+
+    let tokenIDs = identifiers.compactMap { identifier -> Int? in
+      let suffix = identifier.dropFirst(prefix.count)
+      return Int(suffix.split(separator: ".", maxSplits: 1)[0])
+    }
+    XCTAssertEqual(tokenIDs, tokenIDs.sorted(), "VoiceOver traversal follows sentence order")
+
+    for (left, right) in zip(elements, elements.dropFirst()) {
+      XCTAssertTrue(
+        left.frame.intersection(right.frame).isNull,
+        "Adjacent token frames must remain distinct: \(left.identifier), \(right.identifier)",
+        file: file,
+        line: line
+      )
+    }
+    for button in elements where button.elementType == .button {
+      let surface =
+        button.identifier.dropFirst(prefix.count).split(separator: ".", maxSplits: 1)
+        .last.map(String.init) ?? ""
+      XCTAssertTrue(button.label.hasPrefix("\(surface), "), file: file, line: line)
+      XCTAssertGreaterThanOrEqual(
+        button.label.split(separator: ",").count, 3, file: file, line: line)
+    }
+
+    let ruby = app.buttons["example.token.2.2.持"]
+    let plain = app.staticTexts["example.token.2.5.。"]
+    let translation = englishText(for: expected, in: app)
+    XCTAssertEqual(
+      ruby.frame.maxY,
+      plain.frame.maxY,
+      accuracy: max(1, translation.frame.height * 0.15),
+      "Ruby and plain text on one visual line retain the same base-line bottom relation",
+      file: file,
+      line: line
+    )
   }
 }
 

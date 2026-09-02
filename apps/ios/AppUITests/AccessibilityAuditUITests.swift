@@ -1354,6 +1354,11 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(firstRow.exists)
     XCTAssertEqual(
       RepresentativeExampleSentences.englishText(for: first, in: app).label, first.english)
+    if !accessibilityXXXL {
+      RepresentativeExampleSentences.assertDefaultGeometry(for: first, in: app)
+    } else {
+      RepresentativeExampleSentences.assertAccessibilityGeometry(for: first, in: app)
+    }
     try performAudit(
       in: app,
       named:
@@ -1375,6 +1380,11 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(
       RepresentativeExampleSentences.linkedDrawToken(in: app).isHittable
     )
+    if !accessibilityXXXL {
+      RepresentativeExampleSentences.assertDefaultGeometry(for: rubyLinked, in: app)
+    } else {
+      RepresentativeExampleSentences.assertAccessibilityGeometry(for: rubyLinked, in: app)
+    }
     try performAudit(
       in: app,
       named:
@@ -1396,6 +1406,9 @@ final class AccessibilityAuditUITests: XCTestCase {
       eighth.english
     )
     XCTAssertTrue(speaker.isHittable)
+    if !accessibilityXXXL {
+      RepresentativeExampleSentences.assertDefaultGeometry(for: eighth, in: app)
+    }
     try performAudit(
       in: app,
       named:

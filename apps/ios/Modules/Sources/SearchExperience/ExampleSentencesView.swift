@@ -84,7 +84,6 @@ struct ExampleSentencesView: View {
 }
 
 private struct ExampleSentenceRow: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let index: Int
   let example: ExampleSentence
   let highlightedQuery: String
@@ -94,43 +93,137 @@ private struct ExampleSentenceRow: View {
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      let headerLayout =
-        dynamicTypeSize.isAccessibilitySize
-        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
-        : AnyLayout(HStackLayout(alignment: .center, spacing: 10))
-      headerLayout {
-        Group {
-          LinkedJapaneseText(
-            text: example.japanese,
-            highlightedQuery: SearchQuery(highlightedQuery),
-            highlightedEntry: highlightedEntry,
-            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-            identifierPrefix: "example.token.\(index)",
-            presentation: .compactNaturalFlow,
-            openWord: openWord
-          )
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
+    JapaneseExampleRowContent(
+      example: example,
+      highlightedQuery: SearchQuery(highlightedQuery),
+      highlightedEntry: highlightedEntry,
+      japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+      presentation: .dedicated(index: index),
+      speak: speak,
+      openWord: openWord
+    )
+  }
+}
 
-        Button(action: speak) {
-          Image(systemName: "speaker.wave.2")
-            .font(.headline)
-            .frame(minWidth: 48, minHeight: 48)
-            .contentShape(Rectangle())
+/// The shared learner-visible geometry for Japanese/translation rows with a speech action.
+/// Token target policy remains a consumer choice because dedicated inline links and Word Detail
+/// have different, evidence-backed hit-region contracts.
+struct JapaneseExampleRowContent: View {
+  enum Presentation {
+    case dedicated(index: Int)
+    case wordDetail(index: Int)
+
+    struct Configuration {
+      let tokenPresentation: LinkedJapaneseText.Presentation
+      let tokenIdentifierPrefix: String
+      let speakerLabel: String
+      let speakerIdentifier: String
+      let englishIdentifier: String
+      let rowIdentifier: String
+      let combinesRowAccessibility: Bool
+    }
+
+    var configuration: Configuration {
+      switch self {
+      case .dedicated(let index):
+        Configuration(
+          tokenPresentation: .compactNaturalFlow,
+          tokenIdentifierPrefix: "example.token.\(index)",
+          speakerLabel: "Speak example \(index + 1)",
+          speakerIdentifier: "example.speaker.\(index)",
+          englishIdentifier: "example.english.\(index)",
+          rowIdentifier: "example.row.\(index)",
+          combinesRowAccessibility: false
+        )
+      case .wordDetail(let index):
+        Configuration(
+          tokenPresentation: .standard,
+          tokenIdentifierPrefix: "word-detail.example-token.\(index)",
+          speakerLabel: "Speak Word Detail example \(index + 1)",
+          speakerIdentifier: "word-detail.example-speaker.\(index)",
+          englishIdentifier: "word-detail.example-english.\(index)",
+          rowIdentifier: "word-detail.example.\(index)",
+          combinesRowAccessibility: true
+        )
+      }
+    }
+  }
+
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @ScaledMetric(relativeTo: .body) private var contentSpacing: CGFloat = 8
+
+  let example: ExampleSentence
+  let highlightedQuery: SearchQuery
+  let highlightedEntry: DictionaryEntry?
+  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
+  let presentation: Presentation
+  let speak: () -> Void
+  let openWord: (DictionaryEntry) -> Void
+
+  @ViewBuilder
+  var body: some View {
+    if configuration.combinesRowAccessibility {
+      content
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(example.japanese), \(example.english)")
+        .accessibilityIdentifier(configuration.rowIdentifier)
+    } else {
+      content
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(configuration.rowIdentifier)
+    }
+  }
+
+  private var content: some View {
+    VStack(alignment: .leading, spacing: contentSpacing) {
+      if dynamicTypeSize.isAccessibilitySize {
+        VStack(alignment: .leading, spacing: contentSpacing) {
+          japanese
+          HStack {
+            Spacer()
+            speaker
+          }
         }
-        .contentShape(Rectangle())
-        .accessibilityLabel("Speak example \(index + 1)")
-        .accessibilityIdentifier("example.speaker.\(index)")
+      } else {
+        HStack(alignment: .center, spacing: 10) {
+          japanese
+          speaker
+        }
       }
 
       Text(example.english)
         .font(.body)
         .foregroundStyle(.secondary)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityIdentifier("example.english.\(index)")
+        .accessibilityHidden(configuration.combinesRowAccessibility)
+        .accessibilityIdentifier(configuration.englishIdentifier)
     }
-    .accessibilityElement(children: .contain)
-    .accessibilityIdentifier("example.row.\(index)")
   }
+
+  private var japanese: some View {
+    LinkedJapaneseText(
+      text: example.japanese,
+      highlightedQuery: highlightedQuery,
+      highlightedEntry: highlightedEntry,
+      japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+      identifierPrefix: configuration.tokenIdentifierPrefix,
+      presentation: configuration.tokenPresentation,
+      openWord: openWord
+    )
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+
+  private var speaker: some View {
+    Button(action: speak) {
+      Image(systemName: "speaker.wave.2")
+        .font(.headline)
+        .frame(minWidth: 48, minHeight: 48)
+        .contentShape(Rectangle())
+    }
+    .contentShape(Rectangle())
+    .accessibilityLabel(configuration.speakerLabel)
+    .accessibilityIdentifier(configuration.speakerIdentifier)
+  }
+
+  private var configuration: Presentation.Configuration { presentation.configuration }
 }

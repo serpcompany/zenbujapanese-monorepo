@@ -998,35 +998,15 @@ private struct EntryExamplesSection: View {
         .foregroundStyle(.secondary)
     } else {
       ForEach(Array(examples.enumerated()), id: \.element.id) { index, example in
-        VStack(alignment: .leading, spacing: 6) {
-          HStack(alignment: .center, spacing: 10) {
-            LinkedJapaneseText(
-              text: example.japanese,
-              highlightedQuery: SearchQuery(entry.headword),
-              highlightedEntry: entry,
-              japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-              identifierPrefix: "word-detail.example-token.\(index)",
-              openWord: openWord
-            )
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            Button {
-              speechSynthesisClient.speak(example.japanese)
-            } label: {
-              Image(systemName: "speaker.wave.2")
-                .frame(width: 44, height: 44)
-            }
-            .accessibilityLabel("Speak Word Detail example \(index + 1)")
-            .accessibilityIdentifier("word-detail.example-speaker.\(index)")
-          }
-          Text(example.english)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .accessibilityHidden(true)
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(example.japanese), \(example.english)")
-        .accessibilityIdentifier("word-detail.example.\(index)")
+        JapaneseExampleRowContent(
+          example: example,
+          highlightedQuery: SearchQuery(entry.headword),
+          highlightedEntry: entry,
+          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+          presentation: .wordDetail(index: index),
+          speak: { speechSynthesisClient.speak(example.japanese) },
+          openWord: openWord
+        )
       }
     }
   }
