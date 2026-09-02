@@ -1,6 +1,34 @@
 import Foundation
 import SQLite3
 
+#if DEBUG
+  actor FrequencyPackDebugDownloadGate {
+    static let shared = FrequencyPackDebugDownloadGate()
+
+    private var waiter: CheckedContinuation<Void, Never>?
+    private var releasedBeforeWaiting = false
+
+    func wait() async {
+      if releasedBeforeWaiting {
+        releasedBeforeWaiting = false
+        return
+      }
+      await withCheckedContinuation { continuation in
+        waiter = continuation
+      }
+    }
+
+    func release() {
+      guard let waiter else {
+        releasedBeforeWaiting = true
+        return
+      }
+      self.waiter = nil
+      waiter.resume()
+    }
+  }
+#endif
+
 struct FrequencyCapability: Sendable {
   private let lookup: @Sendable (LanguageReferenceID) async throws -> FrequencyLookupResult
 
@@ -325,6 +353,9 @@ private actor FrequencyPackStore {
       storageDirectory: storageDirectory,
       download: { url in
         #if DEBUG
+          if ProcessInfo.processInfo.arguments.contains("-FrequencyPackDownloadGate") {
+            await FrequencyPackDebugDownloadGate.shared.wait()
+          }
           if ProcessInfo.processInfo.arguments.contains("-FrequencyPackChecksumFailure") {
             return Data("invalid frequency fixture".utf8)
           }

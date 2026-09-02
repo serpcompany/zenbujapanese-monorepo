@@ -80,6 +80,7 @@ struct SearchView: View {
         ScrollView {
           ContentUnavailableView {
             Label("Dictionary unavailable", systemImage: "exclamationmark.triangle")
+              .foregroundStyle(.red)
           } description: {
             Text("Zenbu couldn't open its offline Language Reference Data.")
           } actions: {

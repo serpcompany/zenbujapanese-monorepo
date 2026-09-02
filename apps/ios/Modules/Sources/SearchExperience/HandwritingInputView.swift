@@ -68,6 +68,7 @@ struct HandwritingInputView: View {
             .accessibilityIdentifier("handwriting.no-candidates")
         case .failed:
           Text("Recognition unavailable. Erase and try again.")
+            .foregroundStyle(.red)
             .accessibilityIdentifier("handwriting.failure")
         }
         Spacer()

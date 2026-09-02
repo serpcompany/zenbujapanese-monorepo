@@ -17,9 +17,10 @@ struct RadicalInputView: View {
 
       ScrollView {
         if loadFailed {
-          ContentUnavailableView(
-            "Radical data unavailable", systemImage: "exclamationmark.triangle"
-          )
+          ContentUnavailableView {
+            Label("Radical data unavailable", systemImage: "exclamationmark.triangle")
+              .foregroundStyle(.red)
+          }
           .accessibilityIdentifier("radical.load-failure")
         } else {
           LazyVStack(alignment: .leading, spacing: 8) {

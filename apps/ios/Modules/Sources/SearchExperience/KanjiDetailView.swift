@@ -44,6 +44,7 @@ struct KanjiDetailView: View {
           Section {
             ContentUnavailableView {
               Label("Kanji reference unavailable", systemImage: "exclamationmark.triangle")
+                .foregroundStyle(.red)
             } description: {
               Text("Some source-backed kanji content could not be loaded.")
             } actions: {

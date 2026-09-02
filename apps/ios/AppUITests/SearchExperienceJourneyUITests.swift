@@ -2343,7 +2343,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     XCTAssertTrue(app.staticTexts["Frequency Dictionaries"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.staticTexts["TUBELEX YouTube Japanese"].exists)
-    XCTAssertTrue(app.staticTexts["Status, Active"].exists)
+    let activeStatus = app.descendants(matching: .any)[
+      "frequency-pack.status.zenbu.tubelex.youtube.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(activeStatus.exists)
+    XCTAssertEqual(activeStatus.label, "Status, Active")
+    XCTAssertEqual(activeStatus.value as? String, "Selected frequency dictionary")
     XCTAssertTrue(app.staticTexts["Source domain, YouTube / everyday media Japanese"].exists)
     XCTAssertTrue(app.staticTexts["Version, 2025.1"].exists)
     XCTAssertTrue(app.staticTexts["License, BSD-3-Clause"].exists)
@@ -2361,18 +2366,54 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(download.isHittable)
     download.tap()
 
-    let failure = app.staticTexts[
+    let failure = app.descendants(matching: .any)[
       "frequency-pack.failure.zenbu.wikipedia.written.ja.unidic-3.1"
     ]
     XCTAssertTrue(failure.waitForExistence(timeout: 4))
-    XCTAssertTrue(failure.label.contains("checksum validation"))
+    XCTAssertEqual(failure.label, "Download failed")
+    XCTAssertEqual(failure.value as? String, "Downloaded file failed checksum validation.")
     let retry = app.buttons[
       "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
     ]
     XCTAssertEqual(retry.label, "Retry")
-    let retainedActive = app.staticTexts["Status, Active"]
+    let retainedActive = app.descendants(matching: .any)[
+      "frequency-pack.status.zenbu.tubelex.youtube.ja.unidic-3.1"
+    ]
     for _ in 0..<8 where !retainedActive.exists { list.swipeDown() }
     XCTAssertTrue(retainedActive.exists)
+  }
+
+  @MainActor
+  func testFrequencyDictionaryDownloadCommunicatesProgressBeforeFailure() throws {
+    let app = launchApp(additionalArguments: [
+      "-ResetFrequencyPacks",
+      "-FrequencyPackDownloadGate",
+      "-FrequencyPackChecksumFailure",
+    ])
+    app.tabBars.buttons["More"].tap()
+    app.buttons["more.frequency-dictionaries"].tap()
+
+    let list = app.collectionViews["frequency-packs.list"]
+    XCTAssertTrue(list.waitForExistence(timeout: 3))
+    let download = app.buttons[
+      "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    scrollUpUntilHittable(download, in: list, attempts: 8)
+    XCTAssertTrue(download.isHittable)
+    download.tap()
+
+    let progress = app.descendants(matching: .any)[
+      "frequency-pack.progress.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(progress.waitForExistence(timeout: 2))
+    XCTAssertEqual(progress.label, "Downloading Japanese Wikipedia")
+    XCTAssertEqual(progress.value as? String, "Download and validation in progress")
+    app.buttons["frequency-pack.fixture.continue"].tap()
+    XCTAssertTrue(
+      app.descendants(matching: .any)[
+        "frequency-pack.failure.zenbu.wikipedia.written.ja.unidic-3.1"
+      ].waitForExistence(timeout: 3)
+    )
   }
 
   @MainActor
@@ -3096,7 +3137,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     XCTAssertTrue(app.staticTexts["Frequency Dictionaries"].waitForExistence(timeout: 4))
     XCTAssertTrue(app.tabBars.buttons["More"].isSelected)
-    XCTAssertTrue(app.staticTexts["Status, Active"].exists)
+    XCTAssertTrue(
+      app.descendants(matching: .any)[
+        "frequency-pack.status.zenbu.tubelex.youtube.ja.unidic-3.1"
+      ].exists
+    )
   }
 
   @MainActor

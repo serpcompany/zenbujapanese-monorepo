@@ -3,6 +3,7 @@ import SwiftUI
 struct FrequencyDictionariesView: View {
   @State private var snapshot: FrequencyPackSnapshot?
   @State private var workingPackID: FrequencyPackID?
+  @State private var verifiedPackID: FrequencyPackID?
   @State private var screenFailure: String?
   let client: FrequencyPackClient
 
@@ -18,6 +19,19 @@ struct FrequencyDictionariesView: View {
                   ? "checkmark.circle.fill"
                   : (pack.isInstalled ? "checkmark.circle" : "arrow.down.circle")
               )
+              .foregroundStyle(
+                pack.isActive ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary)
+              )
+              .accessibilityElement(children: .ignore)
+              .accessibilityLabel(
+                pack.isActive ? "Active" : (pack.isInstalled ? "Installed" : "Available")
+              )
+              .accessibilityValue(
+                pack.isActive
+                  ? "Selected frequency dictionary"
+                  : (pack.isInstalled ? "Not selected" : "Not installed")
+              )
+              .accessibilityIdentifier("frequency-pack.status.\(pack.id.rawValue)")
             }
             LabeledContent("Source domain", value: pack.manifest.domain)
             LabeledContent("Version", value: pack.manifest.packVersion)
@@ -33,8 +47,19 @@ struct FrequencyDictionariesView: View {
             storage(for: pack)
             if let failure = pack.failureMessage {
               Label(failure, systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.red)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Download failed")
+                .accessibilityValue(failure)
                 .accessibilityIdentifier("frequency-pack.failure.\(pack.id.rawValue)")
+            }
+            if verifiedPackID == pack.id {
+              Label("Verified", systemImage: "checkmark.seal.fill")
+                .foregroundStyle(.green)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Verified")
+                .accessibilityValue("Download and checksum verified")
+                .accessibilityIdentifier("frequency-pack.verified.\(pack.id.rawValue)")
             }
             actions(for: pack)
           } header: {
@@ -42,11 +67,12 @@ struct FrequencyDictionariesView: View {
           }
         }
       } else if let screenFailure {
-        ContentUnavailableView(
-          "Frequency Dictionaries Unavailable",
-          systemImage: "exclamationmark.triangle",
-          description: Text(screenFailure)
-        )
+        ContentUnavailableView {
+          Label("Frequency Dictionaries Unavailable", systemImage: "exclamationmark.triangle")
+            .foregroundStyle(.red)
+        } description: {
+          Text(screenFailure)
+        }
         Button("Retry", action: refresh)
       } else {
         ProgressView("Loading frequency dictionaries")
@@ -57,6 +83,12 @@ struct FrequencyDictionariesView: View {
     .contentMargins(.bottom, 120, for: .scrollContent)
     .accessibilityIdentifier("frequency-packs.list")
     .task { await load() }
+    .task(id: verifiedPackID) {
+      guard let verifiedPackID else { return }
+      try? await Task.sleep(for: .seconds(8))
+      guard !Task.isCancelled, self.verifiedPackID == verifiedPackID else { return }
+      self.verifiedPackID = nil
+    }
   }
 
   @ViewBuilder
@@ -78,11 +110,20 @@ struct FrequencyDictionariesView: View {
   @ViewBuilder
   private func actions(for pack: FrequencyPackState) -> some View {
     if workingPackID == pack.id {
-      ProgressView("Validating \(pack.manifest.displayName)")
+      ProgressView("Downloading \(pack.manifest.displayName)")
+        .accessibilityValue("Download and validation in progress")
         .accessibilityIdentifier("frequency-pack.progress.\(pack.id.rawValue)")
+      #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-FrequencyPackDownloadGate") {
+          Button("Continue Download Fixture") {
+            Task { await FrequencyPackDebugDownloadGate.shared.release() }
+          }
+          .accessibilityIdentifier("frequency-pack.fixture.continue")
+        }
+      #endif
     } else if pack.availableActions.contains(.download) {
       Button(pack.failureMessage == nil ? "Download" : "Retry") {
-        perform(pack.id) { try await client.download(pack.id) }
+        perform(pack.id, confirmsVerification: true) { try await client.download(pack.id) }
       }
       .accessibilityIdentifier("frequency-pack.download.\(pack.id.rawValue)")
     } else {
@@ -94,13 +135,13 @@ struct FrequencyDictionariesView: View {
       }
       if pack.availableActions.contains(.update) {
         Button("Check for Update") {
-          perform(pack.id) { try await client.download(pack.id) }
+          perform(pack.id, confirmsVerification: true) { try await client.download(pack.id) }
         }
         .accessibilityIdentifier("frequency-pack.update.\(pack.id.rawValue)")
       }
       if pack.availableActions.contains(.remove) {
         Button(
-          pack.isActive ? "Remove and Use Included Dictionary" : "Remove Download",
+          pack.isActive ? "Remove Pack and Use Included Dictionary" : "Remove Pack",
           role: .destructive
         ) {
           perform(pack.id) { try await client.remove(pack.id) }
@@ -122,6 +163,7 @@ struct FrequencyDictionariesView: View {
 
   private func perform(
     _ packID: FrequencyPackID,
+    confirmsVerification: Bool = false,
     operation: @escaping @MainActor () async throws -> Void
   ) {
     workingPackID = packID
@@ -129,6 +171,9 @@ struct FrequencyDictionariesView: View {
       defer { workingPackID = nil }
       do {
         try await operation()
+        if confirmsVerification {
+          verifiedPackID = packID
+        }
       } catch {}
       await load()
     }

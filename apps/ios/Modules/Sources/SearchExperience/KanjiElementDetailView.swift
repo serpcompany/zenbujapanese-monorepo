@@ -37,6 +37,7 @@ struct KanjiElementDetailView: View {
           Section {
             ContentUnavailableView {
               Label("Element reference unavailable", systemImage: "exclamationmark.triangle")
+                .foregroundStyle(.red)
             } description: {
               Text("Zenbu couldn't open its offline element reference.")
             } actions: {

@@ -23,6 +23,137 @@ private struct AuditException: CustomStringConvertible {
 
 final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
+  func testActiveFrequencyDictionaryUsesSystemSelectionSemantics() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: ["-ResetFrequencyPacks"]
+    )
+    XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["More"].tap()
+    app.buttons["more.frequency-dictionaries"].tap()
+
+    let activeStatus = app.descendants(matching: .any)[
+      "frequency-pack.status.zenbu.tubelex.youtube.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(activeStatus.waitForExistence(timeout: 3))
+    XCTAssertEqual(activeStatus.label, "Status, Active")
+    XCTAssertEqual(activeStatus.value as? String, "Selected frequency dictionary")
+    XCTAssertTrue(
+      containsSystemBluePixels(in: activeStatus.screenshot()),
+      "An active frequency dictionary is a current selection and must use the system accent."
+    )
+  }
+
+  @MainActor
+  func testFrequencyDownloadFailureUsesErrorSemanticsAndKeepsRetryOrdinary() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: ["-ResetFrequencyPacks", "-FrequencyPackChecksumFailure"]
+    )
+    app.tabBars.buttons["More"].tap()
+    app.buttons["more.frequency-dictionaries"].tap()
+    let list = app.collectionViews["frequency-packs.list"]
+    XCTAssertTrue(list.waitForExistence(timeout: 3))
+    let download = app.buttons[
+      "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    for _ in 0..<8 where !download.isHittable { list.swipeUp() }
+    XCTAssertTrue(download.isHittable)
+    download.tap()
+
+    let failure = app.descendants(matching: .any)[
+      "frequency-pack.failure.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(failure.waitForExistence(timeout: 4))
+    XCTAssertEqual(failure.label, "Download failed")
+    XCTAssertEqual(failure.value as? String, "Downloaded file failed checksum validation.")
+    XCTAssertTrue(
+      containsRedPixels(in: failure.screenshot()),
+      "A serious validation failure must use the system error color in addition to text and icon."
+    )
+
+    let retry = app.buttons[
+      "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertEqual(retry.label, "Retry")
+    XCTAssertFalse(
+      containsRedPixels(in: retry.screenshot()),
+      "Retry is an ordinary recovery action and must retain the system accent."
+    )
+  }
+
+  @MainActor
+  func testVerifiedFrequencyDownloadBecomesNeutralInstalledChoice() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: ["-ResetFrequencyPacks"]
+    )
+    app.tabBars.buttons["More"].tap()
+    app.buttons["more.frequency-dictionaries"].tap()
+    let list = app.collectionViews["frequency-packs.list"]
+    XCTAssertTrue(list.waitForExistence(timeout: 3))
+    let download = app.buttons[
+      "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    for _ in 0..<8 where !download.isHittable { list.swipeUp() }
+    XCTAssertTrue(download.isHittable)
+    download.tap()
+
+    let verified = app.descendants(matching: .any)[
+      "frequency-pack.verified.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(verified.waitForExistence(timeout: 90))
+    XCTAssertEqual(verified.label, "Verified")
+    XCTAssertEqual(verified.value as? String, "Download and checksum verified")
+    XCTAssertTrue(
+      containsGreenPixels(in: verified.screenshot()),
+      "Verified completion must use system green in addition to its label and symbol."
+    )
+
+    let installed = app.descendants(matching: .any)[
+      "frequency-pack.status.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertEqual(installed.label, "Status, Installed")
+    XCTAssertEqual(installed.value as? String, "Not selected")
+    XCTAssertTrue(verified.waitForNonExistence(timeout: 10))
+
+    let use = app.buttons[
+      "frequency-pack.activate.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(use.isHittable)
+    XCTAssertEqual(use.label, "Use This Dictionary")
+    XCTAssertTrue(containsSystemBluePixels(in: use.screenshot()))
+    XCTAssertFalse(containsRedPixels(in: use.screenshot()))
+
+    let remove = app.buttons[
+      "frequency-pack.remove.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(remove.isHittable)
+    XCTAssertEqual(remove.label, "Remove Pack")
+    XCTAssertTrue(containsRedPixels(in: remove.screenshot()))
+    remove.tap()
+
+    let available = app.descendants(matching: .any)[
+      "frequency-pack.status.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(available.waitForExistence(timeout: 3))
+    XCTAssertEqual(available.label, "Status, Available")
+    XCTAssertEqual(available.value as? String, "Not installed")
+  }
+
+  @MainActor
   func testOrdinaryActionsDoNotShareTheSystemDestructiveColor() throws {
     let originalAppearance = XCUIDevice.shared.appearance
     XCUIDevice.shared.appearance = .light
@@ -452,6 +583,14 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.buttons["search.cancel"].exists)
     XCTAssertTrue(title.exists)
     XCTAssertTrue(description.exists)
+    XCTAssertTrue(
+      containsRedPixels(in: title.screenshot()),
+      "A serious offline-data failure must use system red in addition to explicit text and symbol."
+    )
+    XCTAssertFalse(
+      containsRedPixels(in: retry.screenshot()),
+      "Retry is an ordinary recovery action and must retain the system accent."
+    )
     XCTAssertTrue(retry.exists)
     if !retry.isHittable {
       failure.swipeUp()
@@ -904,7 +1043,12 @@ final class AccessibilityAuditUITests: XCTestCase {
     destination.tap()
     let list = app.collectionViews["frequency-packs.list"]
     XCTAssertTrue(list.waitForExistence(timeout: 3))
-    XCTAssertTrue(app.staticTexts["Status, Active"].exists)
+    let activeStatus = app.descendants(matching: .any)[
+      "frequency-pack.status.zenbu.tubelex.youtube.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(activeStatus.exists)
+    XCTAssertEqual(activeStatus.label, "Status, Active")
+    XCTAssertEqual(activeStatus.value as? String, "Selected frequency dictionary")
     let optional = app.staticTexts["Japanese Wikipedia"]
     for _ in 0..<10 where !optional.exists { list.swipeUp() }
     XCTAssertTrue(optional.exists)
@@ -1331,6 +1475,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     add(screenshot)
   }
 
+  @MainActor
   private func containsRedPixels(in screenshot: XCUIScreenshot) -> Bool {
     let pixels = sampledRGBAPixels(in: screenshot)
     var redPixelCount = 0
@@ -1346,6 +1491,39 @@ final class AccessibilityAuditUITests: XCTestCase {
     return false
   }
 
+  @MainActor
+  private func containsSystemBluePixels(in screenshot: XCUIScreenshot) -> Bool {
+    let pixels = sampledRGBAPixels(in: screenshot)
+    var bluePixelCount = 0
+    for offset in stride(from: 0, to: pixels.count, by: 4) {
+      let red = Int(pixels[offset])
+      let green = Int(pixels[offset + 1])
+      let blue = Int(pixels[offset + 2])
+      if blue >= 150, blue >= red + 45, blue >= green + 30 {
+        bluePixelCount += 1
+        if bluePixelCount >= 12 { return true }
+      }
+    }
+    return false
+  }
+
+  @MainActor
+  private func containsGreenPixels(in screenshot: XCUIScreenshot) -> Bool {
+    let pixels = sampledRGBAPixels(in: screenshot)
+    var greenPixelCount = 0
+    for offset in stride(from: 0, to: pixels.count, by: 4) {
+      let red = Int(pixels[offset])
+      let green = Int(pixels[offset + 1])
+      let blue = Int(pixels[offset + 2])
+      if green >= 130, green >= red + 50, green >= blue + 40 {
+        greenPixelCount += 1
+        if greenPixelCount >= 12 { return true }
+      }
+    }
+    return false
+  }
+
+  @MainActor
   private func foregroundPixelFraction(in screenshot: XCUIScreenshot) -> Double {
     let pixels = sampledRGBAPixels(in: screenshot)
     guard pixels.count >= 4 else { return 1 }
@@ -1363,6 +1541,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     return Double(foregroundCount) / Double(pixels.count / 4)
   }
 
+  @MainActor
   private func sampledRGBAPixels(in screenshot: XCUIScreenshot) -> [UInt8] {
     guard let source = screenshot.image.cgImage else { return [] }
     let scale = min(1, 256 / Double(max(source.width, source.height)))
