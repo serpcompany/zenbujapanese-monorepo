@@ -52,6 +52,7 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
         $0.mappingPolicyVersion == 1 && $0.presentationPolicyVersion == 1
           && $0.runtimeInstallerVersion == 1 && !$0.offlineImporterSHA256.isEmpty
           && !$0.mappingPolicySHA256.isEmpty && !$0.languageDataSHA256.isEmpty
+          && !$0.artifactContentSHA256.isEmpty
       }),
       catalog.trustedHistoricalManifests.allSatisfy({ historical in
         !historical.bundled && catalog.packs.contains { $0.packID == historical.packID }
@@ -83,6 +84,7 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
   let unmappedRows: Int
   let duplicateMappings: Int
   let mappingSHA256: String
+  let artifactContentSHA256: String
   let mappingPolicyVersion: Int
   let mappingPolicySHA256: String
   let offlineImporterSHA256: String

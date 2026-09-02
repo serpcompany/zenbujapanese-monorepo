@@ -100,7 +100,7 @@ enum FrequencyPackInstaller {
     let eligible = try scalar(database, "SELECT COUNT(*) FROM eligible")
     guard mapped == manifest.mappedRows, ambiguous == manifest.ambiguousRows,
       unmapped == manifest.unmappedRows, eligible - mapped == manifest.duplicateMappings,
-      try mappingSHA256(database) == manifest.mappingSHA256
+      try FrequencyPackArtifactContent.mappingSHA256(database) == manifest.mappingSHA256
     else { throw FrequencyPackError.mappingMismatch }
     for (key, value) in [
       ("artifact_schema", "zenbu.frequency-pack.v1"),
@@ -142,52 +142,6 @@ enum FrequencyPackInstaller {
       artifactSHA256: artifactSHA256
     )
     return record
-  }
-
-  private static func mappingSHA256(_ database: OpaquePointer) throws -> String {
-    var statement: OpaquePointer?
-    guard
-      sqlite3_prepare_v2(
-        database,
-        "SELECT language_reference_id,rank,source_count,matched_form,mapping_relation,source_pos,source_record_digest FROM frequency_evidence ORDER BY language_reference_id",
-        -1,
-        &statement,
-        nil
-      ) == SQLITE_OK, let statement
-    else { throw sqliteError(database) }
-    defer { sqlite3_finalize(statement) }
-    var digest = SHA256()
-    while sqlite3_step(statement) == SQLITE_ROW {
-      guard let bytes = sqlite3_column_blob(statement, 0) else {
-        throw FrequencyPackError.invalidArtifact
-      }
-      digest.update(data: Data(bytes: bytes, count: Int(sqlite3_column_bytes(statement, 0))))
-      var rank = UInt64(sqlite3_column_int64(statement, 1)).bigEndian
-      var count = UInt64(sqlite3_column_int64(statement, 2)).bigEndian
-      digest.update(data: Data(bytes: &rank, count: 8))
-      digest.update(data: Data(bytes: &count, count: 8))
-      guard let form = sqlite3_column_text(statement, 3) else {
-        throw FrequencyPackError.invalidArtifact
-      }
-      digest.update(data: Data(String(cString: form).utf8))
-      for column in Int32(4)...Int32(5) {
-        digest.update(data: Data([0]))
-        guard let value = sqlite3_column_text(statement, column) else {
-          throw FrequencyPackError.invalidArtifact
-        }
-        digest.update(data: Data(String(cString: value).utf8))
-      }
-      digest.update(data: Data([0]))
-      guard let sourceDigest = sqlite3_column_blob(statement, 6) else {
-        throw FrequencyPackError.invalidArtifact
-      }
-      digest.update(
-        data: Data(
-          bytes: sourceDigest,
-          count: Int(sqlite3_column_bytes(statement, 6))
-        ))
-    }
-    return digest.finalize().map { String(format: "%02x", $0) }.joined()
   }
 
   private static func mappingSQL(

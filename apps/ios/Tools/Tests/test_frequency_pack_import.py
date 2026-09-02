@@ -14,9 +14,19 @@ from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parents[1]
 IMPORTER = TOOLS / "import_frequency_pack.py"
+RESOURCES = TOOLS.parent / "Modules/Sources/SearchExperience/Resources"
+sys.path.insert(0, str(TOOLS))
+from import_frequency_pack import artifact_content_sha256  # noqa: E402
 
 
 class FrequencyPackImportTests(unittest.TestCase):
+    def test_python_digest_matches_shared_cross_language_vector(self) -> None:
+        vector = json.loads(
+            (RESOURCES / "FrequencyPackContentDigestV1.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(vector["schema"], "zenbu.frequency-pack-content-digest-vector.v1")
+        self.assertEqual(artifact_content_sha256(vector["metadata"]), vector["sha256"])
+
     def test_curated_production_packs_match_pinned_sources_and_anchor_evidence(self) -> None:
         ios = TOOLS.parent
         resources = ios / "Modules/Sources/SearchExperience/Resources"
@@ -36,6 +46,7 @@ class FrequencyPackImportTests(unittest.TestCase):
                 "source_sha": "39d4edb2ccac4405b47d0f93e9ec7b11678b3b305d1a37c877dd76588817c8e9",
                 "artifact_bytes": 8_122_368,
                 "artifact_sha": "d4a9e84b8a2c359394015a01f82307ea68c1a61c32597b7d7cab82ee5d4a6d87",
+                "artifact_content_sha": "6bca297060aa04a90063623e21892fa7e2fd0ef6432126e4e8b0ab3979f8d52d",
                 "mapping_sha": "279354f9187441d0958ec31461fc4765b432dd46ce971c91348946b2409203e9",
                 "counts": (56_678, 4_925, 286_683, 3_167),
                 "relations": [
@@ -58,6 +69,7 @@ class FrequencyPackImportTests(unittest.TestCase):
                 "source_sha": "2524bd18fa54ac15125c60cf137fb3ea2b0473ba7f7cb95e8eff7657fdf808ca",
                 "artifact_bytes": 8_884_224,
                 "artifact_sha": "d3dba5c4902b9323799d5c0ac53af2dd84a0c1bd208d047176a4a6a703f31eea",
+                "artifact_content_sha": "113b634cd32936e069a60dce0504c8e77d64de1cc4e108393d80a20fdd63591e",
                 "mapping_sha": "d6b32880509a0a033f97f476b833846cac609190f52edcf85d68fdd91de5b24e",
                 "counts": (73_453, 9_448, 455_351, 22_569),
                 "relations": [("uniqueFormFallback", 73_453)],
@@ -80,6 +92,9 @@ class FrequencyPackImportTests(unittest.TestCase):
                 self.assertEqual(imported["languageDataSHA256"], hashlib.sha256(language_data.read_bytes()).hexdigest())
                 self.assertEqual(imported["artifactBytes"], case["artifact_bytes"])
                 self.assertEqual(imported["artifactSHA256"], case["artifact_sha"])
+                self.assertEqual(
+                    imported["artifactContentSHA256"], case["artifact_content_sha"]
+                )
                 self.assertEqual(imported["mappingSHA256"], case["mapping_sha"])
                 self.assertEqual(
                     imported["mappingPolicySHA256"],
@@ -94,18 +109,30 @@ class FrequencyPackImportTests(unittest.TestCase):
                 )
                 artifact = case.get("artifact") or Path(temporary) / "FrequencyPack.sqlite3"
                 if "artifact" not in case:
+                    output_manifest = Path(temporary) / "import.json"
                     result = subprocess.run(
                         [
                             sys.executable, str(IMPORTER), "--source", str(source),
                             "--source-manifest", str(case["source_manifest"]),
                             "--language-data", str(language_data), "--output", str(artifact),
-                            "--output-manifest", str(Path(temporary) / "import.json"),
+                            "--output-manifest", str(output_manifest),
                         ],
                         text=True, capture_output=True, check=False,
                     )
                     self.assertEqual(result.returncode, 0, result.stderr)
+                    current_import = json.loads(output_manifest.read_text())
+                    self.assertEqual(
+                        current_import["artifactContentSHA256"], case["artifact_content_sha"]
+                    )
+                    self.assertEqual(
+                        current_import["artifactSHA256"],
+                        hashlib.sha256(artifact.read_bytes()).hexdigest(),
+                    )
                 self.assertEqual(artifact.stat().st_size, case["artifact_bytes"])
-                self.assertEqual(hashlib.sha256(artifact.read_bytes()).hexdigest(), case["artifact_sha"])
+                if "artifact" in case:
+                    self.assertEqual(
+                        hashlib.sha256(artifact.read_bytes()).hexdigest(), case["artifact_sha"]
+                    )
                 with sqlite3.connect(artifact) as database:
                     actual = database.execute(
                         "SELECT lower(hex(language_reference_id)), rank, source_count, matched_form "
@@ -127,6 +154,9 @@ class FrequencyPackImportTests(unittest.TestCase):
                 catalog_pack = next(pack for pack in catalog["packs"] if pack["packID"] == case["id"])
                 self.assertEqual(catalog_pack["sourceSHA256"], case["source_sha"])
                 self.assertEqual(catalog_pack["mappingSHA256"], case["mapping_sha"])
+                self.assertEqual(
+                    catalog_pack["artifactContentSHA256"], case["artifact_content_sha"]
+                )
                 self.assertEqual(catalog_pack["mappedRows"], case["counts"][0])
                 self.assertEqual(
                     catalog_pack["mappingPolicySHA256"], imported["mappingPolicySHA256"]

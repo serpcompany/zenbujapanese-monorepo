@@ -15,6 +15,22 @@ private let tubelexDisclosure = FrequencyPackDisclosure(
 )
 
 final class FrequencyPackTests: XCTestCase {
+  func testSwiftDigestMatchesSharedCrossLanguageVector() throws {
+    let url = try XCTUnwrap(
+      Bundle.module.url(forResource: "FrequencyPackContentDigestV1", withExtension: "json"))
+    let vector = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+    XCTAssertEqual(
+      vector["schema"] as? String,
+      "zenbu.frequency-pack-content-digest-vector.v1"
+    )
+    let metadata = try XCTUnwrap(vector["metadata"] as? [String: String])
+    XCTAssertEqual(
+      FrequencyPackArtifactContent.sha256(metadata: metadata),
+      vector["sha256"] as? String
+    )
+  }
+
   func testFrequencyPackActionLabelsDescribeTheirConsequences() {
     XCTAssertEqual(FrequencyPackAction.download.label, "Download")
     XCTAssertEqual(FrequencyPackAction.activate.label, "Use This Dictionary")
@@ -78,6 +94,44 @@ final class FrequencyPackTests: XCTestCase {
     XCTAssertEqual(
       ambiguousIru,
       .noEvidence(pack: tubelexDisclosure))
+  }
+
+  func testArtifactRejectsTamperedCanonicalContentDigest() throws {
+    let fixture = try FrequencyLifecycleFixture()
+    let catalog = try fixture.catalog(
+      tamperingBundledContentDigestTo: String(repeating: "0", count: 64))
+
+    XCTAssertThrowsError(
+      try FrequencyPackManager(
+        catalog: catalog,
+        bundledArtifactURL: fixture.bundledArtifact,
+        languageDataURL: fixture.languageData,
+        storageDirectory: fixture.storageDirectory,
+        download: { _ in Data() }
+      )
+    ) { error in
+      XCTAssertEqual(error as? FrequencyPackError, .invalidArtifact)
+    }
+  }
+
+  func testArtifactRejectsTamperedEvidenceDespiteValidSQLiteIntegrity() throws {
+    for mutation in [
+      "UPDATE frequency_evidence SET source_count = source_count + 1 WHERE rank = 1",
+      "UPDATE frequency_evidence SET covered_source_rows = covered_source_rows - 1 WHERE rank = 1",
+    ] {
+      let fixture = try FrequencyLifecycleFixture()
+      var database: OpaquePointer?
+      XCTAssertEqual(sqlite3_open(fixture.bundledArtifact.path, &database), SQLITE_OK)
+      let opened = try XCTUnwrap(database)
+      XCTAssertEqual(sqlite3_exec(opened, mutation, nil, nil, nil), SQLITE_OK)
+      XCTAssertEqual(sqlite3_close(opened), SQLITE_OK)
+
+      XCTAssertThrowsError(
+        try FrequencyPackArtifact(url: fixture.bundledArtifact, manifest: fixture.catalog.packs[0])
+      ) { error in
+        XCTAssertEqual(error as? FrequencyPackError, .invalidArtifact)
+      }
+    }
   }
 
   func testNumericPercentileDoesNotInventCommonRareBands() {
@@ -477,6 +531,22 @@ private struct FrequencyLifecycleFixture {
     )
   }
 
+  func catalog(tamperingBundledContentDigestTo digest: String) throws -> FrequencyPackCatalog {
+    let data = try JSONEncoder().encode(catalog.packs[0])
+    guard var object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+      throw FrequencyPackError.invalidCatalog
+    }
+    object["artifactContentSHA256"] = digest
+    let tampered = try JSONDecoder().decode(
+      FrequencyPackManifest.self,
+      from: JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
+    )
+    return FrequencyPackCatalog(
+      schemaVersion: 1,
+      packs: [tampered, catalog.packs[1]]
+    )
+  }
+
   private static func manifest(
     id: FrequencyPackID,
     name: String,
@@ -510,6 +580,22 @@ private struct FrequencyLifecycleFixture {
       unmappedRows: 1,
       duplicateMappings: 0,
       mappingSHA256: "ac99e66f7ac01ccaf09de50e64042c02332c8d8887db659ef0b4c3646f1c85a6",
+      artifactContentSHA256: FrequencyPackArtifactContent.sha256(metadata: [
+        "artifact_schema": "zenbu.frequency-pack.v1",
+        "pack_id": id.rawValue,
+        "pack_version": "1",
+        "mapping_policy_version": "1",
+        "presentation_policy_version": "1",
+        "source_total_tokens": "100",
+        "covered_source_rows": "6",
+        "mapped_rows": "4",
+        "ambiguous_rows": "1",
+        "unmapped_rows": "1",
+        "duplicate_mappings": "0",
+        "mapping_sha256": "ac99e66f7ac01ccaf09de50e64042c02332c8d8887db659ef0b4c3646f1c85a6",
+        "mapping_policy_sha256": mappingPolicySHA256,
+        "language_data_sha256": languageDataSHA256,
+      ]),
       mappingPolicyVersion: 1,
       mappingPolicySHA256: mappingPolicySHA256,
       offlineImporterSHA256: "fixture-importer",

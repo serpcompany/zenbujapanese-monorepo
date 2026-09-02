@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import SQLite3
 
@@ -168,6 +169,71 @@ enum FrequencyPackError: Error, Equatable {
   case sqlite(String)
 }
 
+enum FrequencyPackArtifactContent {
+  /// V1 hashes its UTF-8 domain separator, then key-sorted metadata. Every UTF-8 key
+  /// and value has an unsigned 64-bit big-endian byte-length prefix. `mapping_sha256`
+  /// transitively covers every ordered evidence row, so SQLite page layout is excluded.
+  static func sha256(metadata: [String: String]) -> String {
+    var digest = SHA256()
+    digest.update(data: Data("zenbu.frequency-pack-content.v1\0".utf8))
+    for (key, value) in metadata.sorted(by: { $0.key < $1.key }) {
+      update(key, digest: &digest)
+      update(value, digest: &digest)
+    }
+    return digest.finalize().map { String(format: "%02x", $0) }.joined()
+  }
+
+  static func mappingSHA256(_ database: OpaquePointer) throws -> String {
+    var statement: OpaquePointer?
+    guard
+      sqlite3_prepare_v2(
+        database,
+        "SELECT language_reference_id,rank,source_count,matched_form,mapping_relation,source_pos,source_record_digest FROM frequency_evidence ORDER BY language_reference_id",
+        -1,
+        &statement,
+        nil
+      ) == SQLITE_OK, let statement
+    else { throw sqliteError(database) }
+    defer { sqlite3_finalize(statement) }
+    var digest = SHA256()
+    while sqlite3_step(statement) == SQLITE_ROW {
+      guard let identifier = sqlite3_column_blob(statement, 0) else {
+        throw FrequencyPackError.invalidArtifact
+      }
+      digest.update(
+        data: Data(bytes: identifier, count: Int(sqlite3_column_bytes(statement, 0))))
+      var rank = UInt64(sqlite3_column_int64(statement, 1)).bigEndian
+      var count = UInt64(sqlite3_column_int64(statement, 2)).bigEndian
+      digest.update(data: Data(bytes: &rank, count: MemoryLayout<UInt64>.size))
+      digest.update(data: Data(bytes: &count, count: MemoryLayout<UInt64>.size))
+      for column in Int32(3)...Int32(5) {
+        guard let value = sqlite3_column_text(statement, column) else {
+          throw FrequencyPackError.invalidArtifact
+        }
+        digest.update(data: Data(String(cString: value).utf8))
+        digest.update(data: Data([0]))
+      }
+      guard let sourceDigest = sqlite3_column_blob(statement, 6) else {
+        throw FrequencyPackError.invalidArtifact
+      }
+      digest.update(
+        data: Data(bytes: sourceDigest, count: Int(sqlite3_column_bytes(statement, 6))))
+    }
+    return digest.finalize().map { String(format: "%02x", $0) }.joined()
+  }
+
+  private static func update(_ value: String, digest: inout SHA256) {
+    let data = Data(value.utf8)
+    var count = UInt64(data.count).bigEndian
+    digest.update(data: Data(bytes: &count, count: MemoryLayout<UInt64>.size))
+    digest.update(data: data)
+  }
+
+  private static func sqliteError(_ database: OpaquePointer) -> FrequencyPackError {
+    .sqlite(String(cString: sqlite3_errmsg(database)))
+  }
+}
+
 struct FrequencyPackArtifact: Sendable {
   let url: URL
 
@@ -194,6 +260,7 @@ struct FrequencyPackArtifact: Sendable {
     else {
       throw FrequencyPackError.invalidArtifact
     }
+    defer { sqlite3_finalize(statement) }
     guard
       try Self.integer(
         database,
@@ -203,11 +270,12 @@ struct FrequencyPackArtifact: Sendable {
         database,
         sql: "SELECT count(*) FROM frequency_evidence "
           + "WHERE length(language_reference_id) != 16 OR length(source_record_digest) != 32 "
-          + "OR rank < 1 OR rank > covered_source_rows"
+          + "OR rank < 1 OR rank > covered_source_rows "
+          + "OR covered_source_rows != \(manifest.coveredSourceRows)"
       ) == 0,
-      try Self.text(database, sql: "PRAGMA integrity_check") == "ok"
+      try Self.text(database, sql: "PRAGMA integrity_check") == "ok",
+      try FrequencyPackArtifactContent.mappingSHA256(database) == manifest.mappingSHA256
     else { throw FrequencyPackError.invalidArtifact }
-    defer { sqlite3_finalize(statement) }
     var metadata: [String: String] = [:]
     while sqlite3_step(statement) == SQLITE_ROW {
       metadata[Self.string(statement, 0)] = Self.string(statement, 1)
@@ -225,7 +293,8 @@ struct FrequencyPackArtifact: Sendable {
       metadata["presentation_policy_version"] == String(manifest.presentationPolicyVersion),
       metadata["language_data_sha256"] == manifest.languageDataSHA256,
       metadata["source_total_tokens"] == String(manifest.sourceTotalTokens),
-      metadata["covered_source_rows"] == String(manifest.coveredSourceRows)
+      metadata["covered_source_rows"] == String(manifest.coveredSourceRows),
+      FrequencyPackArtifactContent.sha256(metadata: metadata) == manifest.artifactContentSHA256
     else {
       throw FrequencyPackError.invalidArtifact
     }

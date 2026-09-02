@@ -39,6 +39,21 @@ def normalized_form(value: str) -> str:
     return unicodedata.normalize("NFKC", value).strip()
 
 
+def artifact_content_sha256(metadata: dict[str, str]) -> str:
+    """Digest logical metadata (including mapping SHA), independent of SQLite pages.
+
+    V1 starts with its UTF-8 domain separator, then key-sorted metadata. Each UTF-8
+    key and value is prefixed by its unsigned 64-bit big-endian byte length. The
+    mapping SHA transitively covers every ordered evidence row and its typed fields.
+    """
+    digest = hashlib.sha256(b"zenbu.frequency-pack-content.v1\0")
+    for key, value in sorted(metadata.items()):
+        for item in (key.encode("utf-8"), value.encode("utf-8")):
+            digest.update(len(item).to_bytes(8, "big"))
+            digest.update(item)
+    return digest.hexdigest()
+
+
 def read_manifest(path: Path) -> dict[str, object]:
     manifest = json.loads(path.read_text(encoding="utf-8"))
     required = (
@@ -196,6 +211,7 @@ def create_artifact(
                 "mapping_policy_sha256": sha256(MAPPING_SQL),
                 "language_data_sha256": sha256(language_data),
             }
+            artifact_content_sha = artifact_content_sha256(metadata)
             database.executemany(
                 "INSERT INTO metadata VALUES (?, ?)", sorted(metadata.items())
             )
@@ -215,6 +231,7 @@ def create_artifact(
         "unmappedRows": unmapped,
         "duplicateMappings": duplicate_mappings,
         "mappingSHA256": mapping_sha256,
+        "artifactContentSHA256": artifact_content_sha,
     }
 
 
