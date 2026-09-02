@@ -46,6 +46,12 @@ final class JapaneseTextAnalysisTests: XCTestCase {
         headword: "いる"
       ),
       (
+        id: "8647047758cffbea50d72922fad277e0",
+        text: "彼が居る。",
+        surface: "居る",
+        headword: "いる"
+      ),
+      (
         id: "e85ded84cc6528b1785230911b2ab431",
         text: "いる。",
         surface: "いる",
