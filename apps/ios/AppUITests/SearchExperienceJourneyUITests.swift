@@ -3746,6 +3746,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       app.descendants(matching: .any)["example.token.13.1.がい"].exists,
       "The preceding particle must not merge into the complete いる boundary"
     )
+    recordScreenshot(named: "issue-242-iru-word-boundary", app: app)
     word.tap()
     let detail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
