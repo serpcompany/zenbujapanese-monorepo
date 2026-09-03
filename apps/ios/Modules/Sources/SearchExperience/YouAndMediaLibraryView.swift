@@ -1,43 +1,73 @@
 import SwiftUI
 import UIKit
 
-struct MoreView: View {
+struct YouNavigationView: View {
+  @Binding var path: [YouRoute]
   let store: EncounterMediaStore
 
   var body: some View {
-    List {
-      NavigationLink {
-        MediaLibraryView(store: store)
-      } label: {
-        Label("Media Library", systemImage: "photo.on.rectangle.angled")
-      }
-      .accessibilityIdentifier("more.media-library")
-
-      NavigationLink(value: MoreRoute.frequencyDictionaries) {
-        Label("Frequency Dictionaries", systemImage: "chart.bar.xaxis")
-      }
-      .accessibilityIdentifier("more.frequency-dictionaries")
-
-      NavigationLink(value: MoreRoute.languageTechnology) {
-        Label("Japanese Text Analysis", systemImage: "text.magnifyingglass")
-      }
-      .accessibilityIdentifier("more.japanese-analysis")
-
-      NavigationLink {
-        DictionarySourcesView()
-      } label: {
-        Label("Credits & Attributions", systemImage: "info.circle")
-      }
-      .accessibilityIdentifier("more.credits")
+    NavigationStack(path: $path) {
+      YouRootView()
+        .navigationDestination(for: YouRoute.self) { route in
+          switch route {
+          case .mediaLibrary:
+            MediaLibraryView(store: store)
+          case .frequencyDictionaries:
+            FrequencyDictionariesView(client: .live)
+          case .languageTechnology:
+            LanguageTechnologyPacksView(client: .live)
+          case .credits:
+            DictionarySourcesView()
+          }
+        }
     }
-    .accessibilityIdentifier("more.list")
-    .navigationTitle("More")
   }
 }
 
-enum MoreRoute: Hashable {
+struct YouRootView: View {
+  var body: some View {
+    List {
+      Section("Your Content") {
+        NavigationLink(value: YouRoute.mediaLibrary) {
+          Label("Media Library", systemImage: "photo.on.rectangle.angled")
+        }
+        .accessibilityIdentifier("you.media-library")
+      }
+
+      Section("Preferences") {
+        LabeledContent("Reading Aids", value: "Furigana · Romaji")
+          .accessibilityIdentifier("you.reading-aids")
+      }
+
+      Section("Language Resources") {
+        NavigationLink(value: YouRoute.frequencyDictionaries) {
+          Label("Frequency Dictionaries", systemImage: "chart.bar.xaxis")
+        }
+        .accessibilityIdentifier("you.frequency-dictionaries")
+
+        NavigationLink(value: YouRoute.languageTechnology) {
+          Label("Japanese Text Analysis", systemImage: "text.magnifyingglass")
+        }
+        .accessibilityIdentifier("you.japanese-analysis")
+      }
+
+      Section("About") {
+        NavigationLink(value: YouRoute.credits) {
+          Label("Credits & Attributions", systemImage: "info.circle")
+        }
+        .accessibilityIdentifier("you.credits")
+      }
+    }
+    .accessibilityIdentifier("you.list")
+    .navigationTitle("You")
+  }
+}
+
+enum YouRoute: Hashable {
+  case mediaLibrary
   case frequencyDictionaries
   case languageTechnology
+  case credits
 }
 
 struct MediaLibraryView: View {

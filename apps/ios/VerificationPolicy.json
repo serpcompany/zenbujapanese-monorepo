@@ -2,6 +2,7 @@
   "version": 1,
   "required_journeys": [
     "accessibility-adaptive-layout",
+    "you-navigation",
     "conjugations",
     "example-sentences",
     "handwriting",
@@ -28,6 +29,7 @@
   },
   "correctness_plans": ["ZenbuPR", "ZenbuSudachiIntegration"],
   "intentional_same_stage_evidence": {
+    "accessibility.you-list|ui.you-hierarchy": "The normal-size journey proves typed navigation, independent tab paths, and destination behavior; one independent maximum-size smoke proves the native You hierarchy remains reachable without duplicating those destination journeys.",
     "accessibility.japanese-text-analysis-settings|ui.japanese-text-analysis-settings": "The normal-size journey proves bundled-default semantics and no actions; the independent maximum-size smoke proves the changed native management rows remain reachable without restoring obsolete controls.",
     "ui.bundled-japanese-text-analysis|ui.image-text": "The bounded bundled-provider cold-relaunch seam proves real offline Sudachi selection; the broader Image Text fixture journey independently preserves paging, geometry, gloss, navigation, and sharing contracts.",
     "accessibility.image-translation-recovery|ui.image-text-translation-assets": "The normal-size journey proves cancellation, retry, unsupported, failure, and preserved session behavior; one independent maximum-size smoke proves the new native recovery presentation remains reachable without duplicating the full journey."
@@ -62,6 +64,12 @@
       "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBottomNavigationContainsOnlyReleaseDestinationsAndRestoresSearch",
       "traits": ["ui", "normal-dynamic-type"],
       "journeys": ["shell-navigation"]
+    },
+    "ui.you-hierarchy": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testYouUsesNativePersonalSettingsHierarchyAndSupportsIndependentHosting",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["you-navigation"]
     },
     "ui.search-input": {
       "plan": "ZenbuPR",
@@ -135,6 +143,12 @@
       "traits": ["accessibility", "normal-dynamic-type"],
       "journeys": ["image-text-accessibility"]
     },
+    "accessibility.you-list": {
+      "plan": "ZenbuAccessibility",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testYouHierarchyRemainsReachableAtLargestAccessibilityTextSize",
+      "traits": ["accessibility", "accessibility-maximum"],
+      "journeys": ["you-navigation"]
+    },
     "accessibility.image-translation-recovery": {
       "plan": "ZenbuAccessibility",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testTranslationRecoveryRemainsReachableAtLargestAccessibilityTextSize",
@@ -171,6 +185,7 @@
       "traits": ["complete-suite"],
       "journeys": [
         "accessibility-adaptive-layout",
+        "you-navigation",
         "conjugations",
         "example-sentences",
         "handwriting",
@@ -195,6 +210,7 @@
     ],
     "ui": [
       "ui.shell",
+      "ui.you-hierarchy",
       "ui.search-input",
       "ui.search-ranking",
       "ui.recent-search",
@@ -208,6 +224,7 @@
       "ui.bundled-japanese-text-analysis"
     ],
     "accessibility": [
+      "accessibility.you-list",
       "accessibility.image-actions",
       "accessibility.image-translation-recovery",
       "accessibility.search-layout",
@@ -330,11 +347,26 @@
       "paths": [
         "apps/ios/App/**",
         "apps/ios/Modules/Sources/SearchExperience/*RootView.swift",
-        "apps/ios/Modules/Sources/SearchExperience/MoreAndMediaLibraryView.swift"
+        "apps/ios/Modules/Sources/SearchExperience/*AndMediaLibraryView.swift"
       ],
-      "tdd": ["ui.shell"],
-      "issue-final": ["unit.complete", "ui.shell"],
-      "hosted-fast": ["unit.complete", "ui.shell"]
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
+        "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift"
+      ],
+      "adaptive_layout": true,
+      "tdd": ["ui.you-hierarchy"],
+      "issue-final": [
+        "unit.complete",
+        "ui.shell",
+        "ui.you-hierarchy",
+        "accessibility.you-list"
+      ],
+      "hosted-fast": [
+        "unit.complete",
+        "ui.shell",
+        "ui.you-hierarchy",
+        "accessibility.you-list"
+      ]
     },
     "search-input": {
       "paths": [

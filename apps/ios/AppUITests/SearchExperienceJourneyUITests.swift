@@ -2,13 +2,20 @@ import XCTest
 
 final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
-  func testMoreUtilitiesUseNativeListsAndEmptyPresentation() throws {
-    let app = launchApp(additionalArguments: ["-ResetWordImageAttachments"])
+  func testYouUsesNativePersonalSettingsHierarchyAndSupportsIndependentHosting() throws {
+    var app = launchApp(additionalArguments: ["-ResetWordImageAttachments"])
 
-    app.tabBars.buttons["More"].tap()
-    XCTAssertTrue(app.collectionViews["more.list"].waitForExistence(timeout: 3))
+    let youTab = app.tabBars.buttons["tab.you"]
+    XCTAssertTrue(youTab.waitForExistence(timeout: 3))
+    XCTAssertEqual(youTab.label, "You, personal content and settings")
+    youTab.tap()
+    XCTAssertTrue(app.collectionViews["you.list"].waitForExistence(timeout: 3))
+    for section in ["Your Content", "Preferences", "Language Resources", "About"] {
+      XCTAssertTrue(app.staticTexts[section].exists)
+    }
+    XCTAssertTrue(app.staticTexts["Reading Aids"].exists)
 
-    let mediaLibrary = app.buttons["more.media-library"]
+    let mediaLibrary = app.buttons["you.media-library"]
     XCTAssertTrue(mediaLibrary.exists)
     XCTAssertTrue(mediaLibrary.isHittable)
     mediaLibrary.tap()
@@ -18,10 +25,49 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["No Encounter Media"].exists)
     XCTAssertTrue(
       app.staticTexts["Images saved with words from Image Text will appear here."].exists)
+
+    app.tabBars.buttons["Search"].tap()
+    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(app.navigationBars["Media Library"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["No Encounter Media"].exists)
+
+    tapNativeBack(in: app)
+    app.buttons["you.frequency-dictionaries"].tap()
+    XCTAssertTrue(app.navigationBars["Frequency Dictionaries"].waitForExistence(timeout: 3))
+    tapNativeBack(in: app)
+
+    app.buttons["you.japanese-analysis"].tap()
+    XCTAssertTrue(app.navigationBars["Japanese Text Analysis"].waitForExistence(timeout: 3))
+    tapNativeBack(in: app)
+
+    let youList = app.collectionViews["you.list"]
+    let credits = app.buttons["you.credits"]
+    scrollUpUntilHittable(credits, in: youList, attempts: 4)
+    XCTAssertTrue(credits.isHittable)
+    credits.tap()
+    XCTAssertTrue(app.navigationBars["Dictionary Sources"].waitForExistence(timeout: 3))
+
+    app.terminate()
+    app.launch()
+    XCTAssertTrue(app.tabBars.buttons["Search"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.tabBars.buttons["Search"].isSelected)
+    XCTAssertTrue(app.textFields["search.field"].exists)
+    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
+    XCTAssertFalse(app.tabBars.buttons["More"].exists)
+
+    app.terminate()
+    app = launchApp(additionalArguments: ["-IndependentlyHostYou"])
+    XCTAssertTrue(app.collectionViews["you.list"].waitForExistence(timeout: 3))
+    XCTAssertFalse(app.tabBars.firstMatch.exists)
+    app.buttons["you.japanese-analysis"].tap()
+    XCTAssertTrue(app.navigationBars["Japanese Text Analysis"].waitForExistence(timeout: 3))
+    tapNativeBack(in: app)
+    XCTAssertTrue(app.collectionViews["you.list"].exists)
   }
 
   @MainActor
-  func testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToMore() throws {
+  func testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToYou() throws {
     let app = launchApp()
 
     let searchField = app.textFields["search.field"]
@@ -32,12 +78,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(app.buttons["search.sources"].exists)
     recordSettledScreenshot(named: "issue-216-after-search", app: app)
 
-    app.tabBars.buttons["More"].tap()
-    XCTAssertTrue(app.staticTexts["More"].waitForExistence(timeout: 2))
-    recordSettledScreenshot(named: "issue-216-after-more", app: app)
-    XCTAssertEqual(app.buttons["more.media-library"].label, "Media Library")
-    XCTAssertEqual(app.buttons["more.credits"].label, "Credits & Attributions")
-    app.buttons["more.credits"].tap()
+    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(app.staticTexts["You"].waitForExistence(timeout: 2))
+    recordSettledScreenshot(named: "issue-255-after-you", app: app)
+    XCTAssertEqual(app.buttons["you.media-library"].label, "Media Library")
+    XCTAssertEqual(app.buttons["you.credits"].label, "Credits & Attributions")
+    app.buttons["you.credits"].tap()
     XCTAssertTrue(app.staticTexts["Dictionary Sources"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.staticTexts["JMdict"].exists)
   }
@@ -46,15 +92,25 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testBottomNavigationContainsOnlyReleaseDestinationsAndRestoresSearch() throws {
     let app = launchApp()
 
-    for tab in ["Search", "More"] {
-      let button = app.tabBars.buttons[tab]
+    for tab in ["Search", "You"] {
+      let button = tab == "You" ? app.tabBars.buttons["tab.you"] : app.tabBars.buttons[tab]
       XCTAssertTrue(button.waitForExistence(timeout: 3))
       XCTAssertGreaterThanOrEqual(button.frame.height, 44)
       XCTAssertLessThanOrEqual(button.frame.maxY, app.windows.firstMatch.frame.maxY)
     }
 
+    XCTAssertFalse(app.tabBars.buttons["More"].exists)
+    XCTAssertFalse(app.tabBars.buttons["Home"].exists)
+    XCTAssertFalse(app.tabBars.buttons["Library"].exists)
     XCTAssertFalse(app.tabBars.buttons["Clippings"].exists)
     XCTAssertFalse(app.tabBars.buttons["Flashcards"].exists)
+
+    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(app.collectionViews["you.list"].waitForExistence(timeout: 3))
+    for section in ["Your Content", "Preferences", "Language Resources", "About"] {
+      XCTAssertTrue(app.staticTexts[section].exists)
+    }
+    app.tabBars.buttons["Search"].tap()
 
     let searchField = app.textFields["search.field"]
     searchField.tap()
@@ -62,6 +118,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let japan = app.buttons["result.japan"]
     XCTAssertTrue(japan.waitForExistence(timeout: 3))
     japan.tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+
+    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(app.collectionViews["you.list"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["Search"].tap()
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
 
     app.tabBars.buttons["Search"].tap()
@@ -509,9 +570,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
     app.buttons["image-text.close"].tap()
 
-    app.tabBars.buttons["More"].tap()
-    XCTAssertTrue(app.staticTexts["More"].waitForExistence(timeout: 2))
-    let mediaLibrary = app.buttons["more.media-library"]
+    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(app.staticTexts["You"].waitForExistence(timeout: 2))
+    let mediaLibrary = app.buttons["you.media-library"]
     XCTAssertTrue(mediaLibrary.exists)
     mediaLibrary.tap()
     XCTAssertTrue(app.staticTexts["Media Library"].waitForExistence(timeout: 2))
@@ -2495,10 +2556,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testDictionarySourceAttributionIsReachableFromSearch() throws {
     let app = launchApp()
 
-    let sources = app.tabBars.buttons["More"]
+    let sources = app.tabBars.buttons["tab.you"]
     XCTAssertTrue(sources.waitForExistence(timeout: 3))
     sources.tap()
-    let credits = app.buttons["more.credits"]
+    let credits = app.buttons["you.credits"]
     XCTAssertTrue(credits.waitForExistence(timeout: 2))
     credits.tap()
 
@@ -2606,9 +2667,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testJapaneseTextAnalysisShowsIncludedOfflineDefaultWithoutDownloadActions() throws {
     let app = launchApp(additionalArguments: ["-ResetLanguageTechnologyPacks"])
-    XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 3))
-    app.tabBars.buttons["More"].tap()
-    let japaneseAnalysis = app.buttons["more.japanese-analysis"]
+    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["tab.you"].tap()
+    let japaneseAnalysis = app.buttons["you.japanese-analysis"]
     XCTAssertTrue(japaneseAnalysis.waitForExistence(timeout: 2))
     japaneseAnalysis.tap()
 
@@ -2636,9 +2697,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: [
       "-ResetFrequencyPacks", "-FrequencyPackChecksumFailure",
     ])
-    XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 3))
-    app.tabBars.buttons["More"].tap()
-    let frequencyDictionaries = app.buttons["more.frequency-dictionaries"]
+    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["tab.you"].tap()
+    let frequencyDictionaries = app.buttons["you.frequency-dictionaries"]
     XCTAssertTrue(frequencyDictionaries.waitForExistence(timeout: 2))
     frequencyDictionaries.tap()
 
@@ -2691,8 +2752,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       "-FrequencyPackDownloadGate",
       "-FrequencyPackChecksumFailure",
     ])
-    app.tabBars.buttons["More"].tap()
-    app.buttons["more.frequency-dictionaries"].tap()
+    app.tabBars.buttons["tab.you"].tap()
+    app.buttons["you.frequency-dictionaries"].tap()
 
     let list = app.collectionViews["frequency-packs.list"]
     XCTAssertTrue(list.waitForExistence(timeout: 3))
@@ -2720,9 +2781,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testFrequencyPackAttributionAndBundledLicensesAreReachableFromSources() throws {
     let app = launchApp()
-    XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 3))
-    app.tabBars.buttons["More"].tap()
-    app.buttons["more.credits"].tap()
+    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["tab.you"].tap()
+    app.buttons["you.credits"].tap()
     let sourceList = app.collectionViews["dictionary-sources.list"]
     XCTAssertTrue(sourceList.waitForExistence(timeout: 2))
 
@@ -2754,13 +2815,13 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  func testPrivacyAndSupportAreReachableFromMore() throws {
+  func testPrivacyAndSupportAreReachableFromYou() throws {
     let app = launchApp()
 
-    let more = app.tabBars.buttons["More"]
-    XCTAssertTrue(more.waitForExistence(timeout: 3))
-    more.tap()
-    let credits = app.buttons["more.credits"]
+    let you = app.tabBars.buttons["tab.you"]
+    XCTAssertTrue(you.waitForExistence(timeout: 3))
+    you.tap()
+    let credits = app.buttons["you.credits"]
     XCTAssertTrue(credits.waitForExistence(timeout: 2))
     credits.tap()
 
@@ -3120,8 +3181,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(attachment.label.contains("1"))
     XCTAssertFalse(app.buttons["image-text.close"].exists)
 
-    app.tabBars.buttons["More"].tap()
-    app.buttons["more.media-library"].tap()
+    app.tabBars.buttons["tab.you"].tap()
+    app.buttons["you.media-library"].tap()
     XCTAssertTrue(app.staticTexts["Camera Capture.jpg"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["見る"].exists)
 
@@ -3594,7 +3655,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     manage.tap()
 
     XCTAssertTrue(app.staticTexts["Frequency Dictionaries"].waitForExistence(timeout: 4))
-    XCTAssertTrue(app.tabBars.buttons["More"].isSelected)
+    XCTAssertTrue(app.tabBars.buttons["tab.you"].isSelected)
     XCTAssertTrue(
       app.descendants(matching: .any)[
         "frequency-pack.status.zenbu.tubelex.youtube.ja.unidic-3.1"
@@ -3617,8 +3678,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertEqual(frequency.value as? String, "#41")
     XCTAssertFalse(app.staticTexts["TUBELEX YouTube Japanese"].exists)
 
-    app.tabBars.buttons["More"].tap()
-    app.buttons["more.frequency-dictionaries"].tap()
+    app.tabBars.buttons["tab.you"].tap()
+    app.buttons["you.frequency-dictionaries"].tap()
     let list = app.collectionViews["frequency-packs.list"]
     let download = app.buttons[
       "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
@@ -3849,8 +3910,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       NSPredicate(format: "label BEGINSWITH %@", "問題, もんだい")
     ).firstMatch
     XCTAssertTrue(problem.waitForExistence(timeout: 2))
-    app.tabBars.buttons["More"].tap()
-    XCTAssertTrue(app.staticTexts["More"].waitForExistence(timeout: 2))
+    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(app.staticTexts["You"].waitForExistence(timeout: 2))
     app.tabBars.buttons["Search"].tap()
     XCTAssertTrue(problem.waitForExistence(timeout: 2))
     problem.tap()

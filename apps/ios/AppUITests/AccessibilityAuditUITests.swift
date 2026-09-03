@@ -23,6 +23,49 @@ private struct AuditException: CustomStringConvertible {
 
 final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
+  func testYouHierarchyRemainsReachableAtLargestAccessibilityTextSize() throws {
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["tab.you"].tap()
+
+    let list = app.collectionViews["you.list"]
+    XCTAssertTrue(list.waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["Your Content"].exists)
+    XCTAssertTrue(app.staticTexts["Preferences"].exists)
+    XCTAssertTrue(app.buttons["you.media-library"].isHittable)
+    let readingAids = app.descendants(matching: .any)["you.reading-aids"]
+    XCTAssertTrue(readingAids.exists)
+    XCTAssertTrue(readingAids.label.contains("Reading Aids"))
+    XCTAssertTrue(readingAids.label.contains("Furigana"))
+    XCTAssertTrue(readingAids.label.contains("Romaji"))
+
+    let frequencyDictionaries = app.buttons["you.frequency-dictionaries"]
+    for _ in 0..<4 where !frequencyDictionaries.isHittable {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(frequencyDictionaries.isHittable)
+    let japaneseAnalysis = app.buttons["you.japanese-analysis"]
+    for _ in 0..<4 where !japaneseAnalysis.isHittable {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(japaneseAnalysis.isHittable)
+
+    let credits = app.buttons["you.credits"]
+    for _ in 0..<4 where !credits.isHittable {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(credits.isHittable)
+    XCTAssertGreaterThanOrEqual(credits.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(credits.frame.maxX, app.frame.maxX)
+    retainScreenshot(named: "You hierarchy at Accessibility XXXL")
+  }
+
+  @MainActor
   func testJapaneseTextAnalysisManagementRemainsReachableAtLargestAccessibilityTextSize() throws {
     let app = launchApp(
       appearance: .light,
@@ -30,9 +73,9 @@ final class AccessibilityAuditUITests: XCTestCase {
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
-    XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 3))
-    app.tabBars.buttons["More"].tap()
-    let destination = app.buttons["more.japanese-analysis"]
+    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["tab.you"].tap()
+    let destination = app.buttons["you.japanese-analysis"]
     XCTAssertTrue(destination.waitForExistence(timeout: 3))
     destination.tap()
     let list = app.collectionViews["language-technology-packs.list"]
@@ -517,9 +560,9 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: .light,
       additionalArguments: ["-ResetFrequencyPacks"]
     )
-    XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 3))
-    app.tabBars.buttons["More"].tap()
-    app.buttons["more.frequency-dictionaries"].tap()
+    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["tab.you"].tap()
+    app.buttons["you.frequency-dictionaries"].tap()
 
     let activeStatus = app.descendants(matching: .any)[
       "frequency-pack.status.zenbu.tubelex.youtube.ja.unidic-3.1"
@@ -543,8 +586,8 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: .light,
       additionalArguments: ["-ResetFrequencyPacks", "-FrequencyPackChecksumFailure"]
     )
-    app.tabBars.buttons["More"].tap()
-    app.buttons["more.frequency-dictionaries"].tap()
+    app.tabBars.buttons["tab.you"].tap()
+    app.buttons["you.frequency-dictionaries"].tap()
     let list = app.collectionViews["frequency-packs.list"]
     XCTAssertTrue(list.waitForExistence(timeout: 3))
     let download = app.buttons[
@@ -585,8 +628,8 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: .light,
       additionalArguments: ["-ResetFrequencyPacks"]
     )
-    app.tabBars.buttons["More"].tap()
-    app.buttons["more.frequency-dictionaries"].tap()
+    app.tabBars.buttons["tab.you"].tap()
+    app.buttons["you.frequency-dictionaries"].tap()
     let list = app.collectionViews["frequency-packs.list"]
     XCTAssertTrue(list.waitForExistence(timeout: 3))
     let download = app.buttons[
@@ -1587,8 +1630,8 @@ final class AccessibilityAuditUITests: XCTestCase {
       ]
     }
     let app = launchApp(appearance: appearance, additionalArguments: arguments)
-    app.tabBars.buttons["More"].tap()
-    let destination = app.buttons["more.frequency-dictionaries"]
+    app.tabBars.buttons["tab.you"].tap()
+    let destination = app.buttons["you.frequency-dictionaries"]
     XCTAssertTrue(destination.waitForExistence(timeout: 3))
     XCTAssertTrue(destination.isHittable)
     destination.tap()
@@ -1657,16 +1700,20 @@ final class AccessibilityAuditUITests: XCTestCase {
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
-    app.tabBars.buttons["More"].tap()
-    let mediaLibrary = app.buttons["more.media-library"]
+    app.tabBars.buttons["tab.you"].tap()
+    let mediaLibrary = app.buttons["you.media-library"]
     XCTAssertTrue(mediaLibrary.waitForExistence(timeout: 3))
     XCTAssertTrue(mediaLibrary.isHittable)
-    XCTAssertTrue(app.buttons["more.credits"].isHittable)
     mediaLibrary.tap()
     XCTAssertTrue(app.staticTexts["No Encounter Media"].waitForExistence(timeout: 3))
     app.navigationBars["Media Library"].buttons.firstMatch.tap()
-    XCTAssertTrue(app.buttons["more.credits"].waitForExistence(timeout: 3))
-    app.buttons["more.credits"].tap()
+    let youList = app.collectionViews["you.list"]
+    let credits = app.buttons["you.credits"]
+    for _ in 0..<4 where !credits.isHittable {
+      youList.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(credits.isHittable)
+    credits.tap()
     XCTAssertTrue(app.staticTexts["Dictionary Sources"].waitForExistence(timeout: 5))
     let backButton = app.navigationBars["Dictionary Sources"].buttons.firstMatch
     XCTAssertTrue(backButton.waitForExistence(timeout: 3))
@@ -1752,16 +1799,16 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: appearance,
       additionalArguments: ["-ResetWordImageAttachments"]
     )
-    app.tabBars.buttons["More"].tap()
-    XCTAssertTrue(app.staticTexts["More"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(app.staticTexts["You"].waitForExistence(timeout: 3))
     // Two frameless clipped-text findings remain blocking after native grouping/fixed-size probes.
-    try performAudit(in: app, named: "More", types: auditTypes)
-    app.buttons["more.media-library"].tap()
+    try performAudit(in: app, named: "You", types: auditTypes)
+    app.buttons["you.media-library"].tap()
     XCTAssertTrue(app.staticTexts["No Encounter Media"].waitForExistence(timeout: 3))
     try performAudit(in: app, named: "Empty Media Library")
     app.navigationBars["Media Library"].buttons.firstMatch.tap()
-    XCTAssertTrue(app.buttons["more.credits"].waitForExistence(timeout: 3))
-    app.buttons["more.credits"].tap()
+    XCTAssertTrue(app.buttons["you.credits"].waitForExistence(timeout: 3))
+    app.buttons["you.credits"].tap()
     XCTAssertTrue(app.staticTexts["Dictionary Sources"].waitForExistence(timeout: 3))
     // Frameless default-size Dynamic Type/contrast findings remain blocking; the paired AXXXL
     // Sources audit runs `.all` without exceptions.

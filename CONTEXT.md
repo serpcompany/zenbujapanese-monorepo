@@ -104,9 +104,9 @@ _Avoid_: Pronunciation recording, audio routing
 The Shared Capability that turns spoken audio into text or timed utterance updates without owning capture, conversation, or media workflows.
 _Avoid_: Audio routing, caption-generation workflow
 
-**More**:
-A secondary navigation entry point for utility and deferred destinations in the Zenbu Japanese iOS App. More does not own the destinations, histories, settings, or data reachable through it and is not a Product Experience.
-_Avoid_: Product Experience, data owner, unified user area
+**You**:
+The personal and settings entry point in the Zenbu Japanese iOS App. You does not imply authentication or own the destinations, histories, settings, or data reachable through it, and it is not a Product Experience.
+_Avoid_: More, Profile, Account, Product Experience, data owner, unified user area
 
 **Cross-Product Flow**:
 A user-facing flow that composes contracts owned by multiple Product Experiences and is coordinated by the Zenbu Japanese iOS App shell. Multiple Product Experiences may provide entry points into the same flow; leaving it restores the originating context. The shell coordinates the flow without owning its histories or durable records.

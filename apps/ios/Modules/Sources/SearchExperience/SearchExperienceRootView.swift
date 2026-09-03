@@ -3,12 +3,14 @@ import SwiftUI
 public struct SearchExperienceRootView: View {
   @State private var selectedTab = SearchExperienceTab.search
   @State private var path: [SearchExperienceRoute] = []
-  @State private var morePath: [MoreRoute] = []
+  @State private var youPath: [YouRoute] = []
   @State private var query = ""
   #if DEBUG
     @State private var exportsImageFixtures = false
     @State private var preparesJapaneseAnalysis = ProcessInfo.processInfo.arguments.contains(
       "-EnsureJapaneseAnalysis")
+    private let independentlyHostsYou = ProcessInfo.processInfo.arguments.contains(
+      "-IndependentlyHostYou")
   #endif
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
@@ -93,7 +95,9 @@ public struct SearchExperienceRootView: View {
   public var body: some View {
     Group {
       #if DEBUG
-        if preparesJapaneseAnalysis {
+        if independentlyHostsYou {
+          YouNavigationView(path: $youPath, store: encounterMediaStore)
+        } else if preparesJapaneseAnalysis {
           ProgressView("Preparing on-device Japanese Text Analysis")
             .accessibilityIdentifier("language-technology-pack.preparing")
         } else {
@@ -148,18 +152,12 @@ public struct SearchExperienceRootView: View {
         searchNavigation
       }
 
-      Tab("More", systemImage: "ellipsis", value: SearchExperienceTab.more) {
-        NavigationStack(path: $morePath) {
-          MoreView(store: encounterMediaStore)
-            .navigationDestination(for: MoreRoute.self) { route in
-              switch route {
-              case .frequencyDictionaries:
-                FrequencyDictionariesView(client: .live)
-              case .languageTechnology:
-                LanguageTechnologyPacksView(client: .live)
-              }
-            }
-        }
+      Tab(value: SearchExperienceTab.you) {
+        YouNavigationView(path: $youPath, store: encounterMediaStore)
+      } label: {
+        Label("You", systemImage: "person.crop.circle")
+          .accessibilityLabel("You, personal content and settings")
+          .accessibilityIdentifier("tab.you")
       }
     }
   }
@@ -306,8 +304,8 @@ public struct SearchExperienceRootView: View {
   }
 
   private func openFrequencyDictionaries() {
-    selectedTab = .more
-    morePath = [.frequencyDictionaries]
+    selectedTab = .you
+    youPath = [.frequencyDictionaries]
   }
 
   private func encounterMediaAttachment(for context: ImageWordContext?)
@@ -373,5 +371,5 @@ enum SearchExperienceRoute: Hashable {
 
 private enum SearchExperienceTab: Hashable {
   case search
-  case more
+  case you
 }
