@@ -39,6 +39,14 @@ fi
 rg -q 'Swift package lockfile differs from reviewed revisions' \
   "${scratch_dir}/stale-lockfile.log" || fail "stale Swift package revision was not reported"
 
+if ZENBU_XCODE_PACKAGE_RESOLVED="$stale_lockfile" "$audit" source \
+  >"${scratch_dir}/stale-xcode-lockfile.log" 2>&1; then
+  fail "stale Xcode-consumed Swift package revision unexpectedly passed"
+fi
+rg -q 'Swift package lockfile differs from reviewed revisions' \
+  "${scratch_dir}/stale-xcode-lockfile.log" \
+  || fail "stale Xcode-consumed Swift package revision was not reported"
+
 if "$audit" unsupported-mode >"${scratch_dir}/unsupported.log" 2>&1; then
   fail "unsupported mode unexpectedly succeeded"
 fi

@@ -9,6 +9,7 @@ manifest="${ios_dir}/App/PrivacyInfo.xcprivacy"
 project="${ios_dir}/ZenbuJapanese.xcodeproj/project.pbxproj"
 package_manifest="${ios_dir}/Modules/Package.swift"
 package_resolved="${ZENBU_PACKAGE_RESOLVED:-${ios_dir}/Modules/Package.resolved}"
+xcode_package_resolved="${ZENBU_XCODE_PACKAGE_RESOLVED:-${ios_dir}/ZenbuJapanese.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved}"
 release_sbom="${ZENBU_RELEASE_SBOM:-${ios_dir}/ReleaseSBOM.spdx.json}"
 language_database="${ios_dir}/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3"
 language_pack_catalog="${ios_dir}/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json"
@@ -181,13 +182,16 @@ rg -q 'exact: "0\.1\.1"' <<<"$sudachi_dependency" \
 rg -q 'exact: "0\.9\.20"' <<<"$zip_dependency" \
   || fail "ZIPFoundation must remain exact 0.9.20"
 pass "remote Swift dependencies are limited to the reviewed exact Sudachi and archive-reader pins"
-[[ -f "$package_resolved" ]] || fail "Swift package lockfile is missing"
-jq -e '
-  any(.pins[]; .identity == "sudachi-swift" and .state.version == "0.1.1" and
-    .state.revision == "92f55c556ba0e6c6f25660b049072811d40f045f") and
-  any(.pins[]; .identity == "zipfoundation" and .state.version == "0.9.20" and
-    .state.revision == "22787ffb59de99e5dc1fbfe80b19c97a904ad48d")
-' "$package_resolved" >/dev/null || fail "Swift package lockfile differs from reviewed revisions"
+for resolved in "$package_resolved" "$xcode_package_resolved"; do
+  [[ -f "$resolved" ]] || fail "Swift package lockfile is missing: $resolved"
+  jq -e '
+    any(.pins[]; .identity == "sudachi-swift" and .state.version == "0.1.1" and
+      .state.revision == "92f55c556ba0e6c6f25660b049072811d40f045f") and
+    any(.pins[]; .identity == "zipfoundation" and .state.version == "0.9.20" and
+      .state.revision == "22787ffb59de99e5dc1fbfe80b19c97a904ad48d")
+  ' "$resolved" >/dev/null || fail "Swift package lockfile differs from reviewed revisions: $resolved"
+done
+pass "SwiftPM and Xcode-consumed lockfiles match the reviewed revisions"
 [[ -f "$release_sbom" ]] || fail "release SBOM is missing"
 jq -e '
   .spdxVersion == "SPDX-2.3" and
