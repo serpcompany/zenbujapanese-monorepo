@@ -18,5 +18,21 @@ UDT contributors named by the project.
 Zenbu selected 512 records without changing their text or gold linguistic
 annotation. It added domain-separated selection metadata, explicit uncertainty,
 and benchmark schema fields. Those additions and normalized result rows are
-released under the same CC BY-SA 4.0 terms. No file in this set is shipping
-Language Reference Data or a production runtime resource.
+released under the same CC BY-SA 4.0 terms.
+
+The three Sudachi output files also contain fields emitted from Sudachi.rs
+0.6.11 and SudachiDict Core 20260723. The applicable retained notices are:
+
+- [Apache 2.0](issue251-SUDACHI-APACHE-2.0.txt)
+- [SudachiDict third-party LEGAL](issue251-SUDACHI-DICT-LEGAL.txt)
+- [sudachi-swift notice](issue251-SUDACHI-SWIFT-NOTICE.txt)
+
+The Kuromoji output contains fields emitted by `@faanau/kuromoji` 0.2.1 and its
+`mecab-ipadic-2.7.0-20070801` dictionary. The applicable Apache, Atilika,
+NAIST, and ICOT terms are retained in:
+
+- [Apache 2.0](issue251-KUROMOJI-APACHE-2.0.txt)
+- [Kuromoji/IPADIC notice](issue251-KUROMOJI-NOTICE.txt)
+
+These research artifacts preserve all applicable attribution; no file in this
+set is shipping Language Reference Data or a production runtime resource.

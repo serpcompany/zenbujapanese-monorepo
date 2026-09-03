@@ -43,7 +43,7 @@
     "selectionRule": "512 records with lexicographically lowest SHA-256(domain || UTF-8 sent_id)",
     "selectedIDsSHA256": "54ec9f1368d9d20b140dd7e13574a25448c1dc6a0eca7bea2d918839d0326964",
     "truthFile": "issue251-morphology-confirmation-holdout-v1.json",
-    "truthSHA256": "094ff6b8a8666d9b88821da9eb7159a7cf17af21924b57ad8af1e27a8b07e047",
+    "truthSHA256": "d19d00a4682b9b22cacd2efbf3aad849095db09fa5413115ac1899e5f60e0af0",
     "candidateExecution": "Exactly once after the freeze commit"
   },
   "externalDomainCheck": {

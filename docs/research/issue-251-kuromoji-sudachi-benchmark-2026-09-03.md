@@ -129,6 +129,20 @@ provider contract and can also require the committed normalized-output hash.
 Their [derived-data attribution and CC BY-SA terms](fixtures/issue251-DERIVED-DATA-ATTRIBUTION.md)
 are retained beside them.
 
+The confirmation set is entirely OCR-perfect UD news/blog text. Deterministic
+script strata preserve the same winner:
+
+| Stratum               | Records | Sudachi A boundary / lemma / reading / POS | Kuromoji boundary / lemma / reading / POS |
+| --------------------- | ------: | -----------------------------------------: | ----------------------------------------: |
+| Mixed Latin or number |     163 |      .985825 / .865507 / .918753 / .891481 |     .970180 / .722650 / .784732 / .793088 |
+| Kanji and kana        |     345 |      .992841 / .843073 / .967907 / .903339 |     .965056 / .749804 / .865354 / .764545 |
+| Kana or symbol only   |       4 |              1.0 / .678571 / 1.0 / .964286 |         1.0 / .607143 / .960000 / .750000 |
+
+The separate product-risk set supplies the OCR-clean/noisy comparison. On its
+three clean records, Sudachi A/B and Kuromoji boundary F1 were .971429 / 1.0 /
+1.0. On the deliberately noisy record they were .947368 / .947368 / .888889.
+The one-row noisy stratum is a regression probe, not a confidence estimate.
+
 ### Exploratory GSD test — 543 sentences / 13,034 tokens
 
 | Candidate                              | Boundary F1 | Exact-span F1 |       Lemma |     Reading |         POS | All-correct sentences |
@@ -223,31 +237,41 @@ not population-quality evidence.
 
 ## iPhone integration and resources
 
-All figures below are release `-Os` **exploratory Simulator** measurements on the same
+All figures below are release `-Os` **Simulator** measurements on the same
 iPhone 17 Pro / iOS 26.0.1 runtime, Xcode 26.0 (`17A324`), Apple M3 Max host.
 Both prototypes also compiled for generic arm64 iOS with signing disabled. No
 physical-iPhone timing or energy claim is made; warm differences below one tenth
 of a millisecond are not decision-relevant beside OCR and UI latency.
 
-The retained run used 10 fresh processes and 100 measured warm calls per
-process, below the later-frozen 30/200 confirmation target. It is supplementary
-feasibility evidence only and does not satisfy that operational gate. The
-quality decision does not depend on these timing differences.
+The repaired retained run used 30 fresh processes per provider. Each process
+performed 20 warmups, 200 measured calls, 10 determinism repeats, and 100
+concurrent calls. All 90 fresh launches completed without a process failure;
+each provider produced one deterministic hash. All resources were bundled and
+the harness contains no network client. The selected Sudachi path also ran a
+second 30-process validation pass: the real 217.5 MB dictionary checksum passed
+30/30, a deliberately corrupt payload was rejected 30/30, and a missing bundle
+resource follows an explicit error path.
 
 | Path                                                                                                                   | App / installed evidence                                         | Cold init p50 / p95 |   Warm p50 / p95 | Steady RSS p50 / p95 | Integration                                                                                                        |
 | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------: | ---------------: | -------------------: | ------------------------------------------------------------------------------------------------------------------ |
-| [sudachi-swift 0.1.1](https://github.com/iasnezhkov/sudachi-swift/tree/v0.1.1) + Core                                  | 220.1 MB app; 72.3 MB dictionary download; 217.5 MB dictionary   |       7.2 / 42.2 ms | .0557 / .0670 ms |     309.4 / 310.8 MB | Direct SPM/UniFFI, typed fields, mmap dictionary, explicit locking                                                 |
-| [`@faanau/kuromoji` 0.2.1](https://github.com/faanau/kuromoji-js/tree/380a8da1072691006b1a8c300885a04d582e80a1) in JSC | 100.5 MB app; 17.8 MB compressed or 100.3 MB expanded dictionary |     36.7 / 153.4 ms | .0382 / .0875 ms |     458.3 / 459.3 MB | iOS JSC lacks `fetch` and `DecompressionStream`; native loader, decompression, VM, JSON, and range bridge required |
-| [`kuromoji-ios`](https://github.com/thuongvb/kuromoji-ios/tree/c601b3bf912babf0aa94c209a5dc74a46bd225db)               | 36.5 MB app; 35.9 MB generated IPADIC                            |      16.2 / 21.6 ms | .0247 / .0358 ms |     331.5 / 337.5 MB | Pure Swift and promising, but two commits, no release, no adoption history, unpinned dictionary fetch              |
+| [sudachi-swift 0.1.1](https://github.com/iasnezhkov/sudachi-swift/tree/v0.1.1) + Core                                  | 220.1 MB app; 72.3 MB dictionary download; 217.5 MB dictionary   |      7.19 / 7.71 ms | .0550 / .0663 ms |     311.3 / 311.9 MB | Direct SPM/UniFFI, typed fields, mmap dictionary, explicit locking                                                 |
+| [`@faanau/kuromoji` 0.2.1](https://github.com/faanau/kuromoji-js/tree/380a8da1072691006b1a8c300885a04d582e80a1) in JSC | 100.5 MB app; 17.8 MB compressed or 100.3 MB expanded dictionary |      33.4 / 34.4 ms | .0341 / .0720 ms |     483.2 / 484.4 MB | iOS JSC lacks `fetch` and `DecompressionStream`; native loader, decompression, VM, JSON, and range bridge required |
+| [`kuromoji-ios`](https://github.com/thuongvb/kuromoji-ios/tree/c601b3bf912babf0aa94c209a5dc74a46bd225db)               | 36.5 MB app; 35.9 MB generated IPADIC                            |      16.0 / 17.3 ms | .0249 / .0327 ms |     331.5 / 332.1 MB | Pure Swift and promising, but two commits, no release, no adoption history, unpinned dictionary fetch              |
 
-Ten fresh processes and ten repeated calls per process produced one normalized
-hash for each measured path. Concurrent stress completed 100/100 with one hash
-for each. Sudachi uses a mutex-protected tokenizer; same-VM JavaScriptCore calls
+Thirty fresh processes and ten repeated calls per process produced one
+normalized hash for each measured path. Concurrent stress completed 100/100 in
+every process with one hash for each. Sudachi uses a mutex-protected tokenizer; same-VM JavaScriptCore calls
 serialize, while separate VMs duplicate costly state. Simulator RSS includes
 the SwiftUI/process baseline and must not be read as dictionary bytes.
 
+Mean warm throughput on the fixed four-sentence micro-corpus was approximately
+20,831 sentences/s for Sudachi, 25,739 for JavaScriptCore Kuromoji, and 43,170
+for native Swift Kuromoji. These sub-millisecond microbenchmarks are all fast
+enough relative to OCR/UI work and do not outweigh the correctness result.
+
 The three exact Xcode projects, Swift sources, JavaScriptCore loader adapter,
-resource instructions, commands, and all ten per-process scalar result rows are
+resource instructions, commands, and all 90 per-process scalar result rows plus
+the 30 selected-provider checksum-validation rows are
 retained under
 [`docs/research/tools/issue251-ios/`](tools/issue251-ios/README.md) and
 [the iOS sample artifact](fixtures/issue251-ios-measurement-samples-v1.json).
@@ -341,8 +365,9 @@ are committed under `docs/research/fixtures/`.
 - repaired one-shot confirmation providers, scoring, and bootstrap: 9 seconds;
 - final scorer/repository/license/privacy/format verification batch: 62 seconds;
 - paired exploratory bootstrap: about 18 seconds;
-- disposable iOS lane: approximately 20m41s from first checkout to final
-  retained output, including three builds and setup—not pure test execution;
+- disposable iOS setup lane: approximately 20m41s for research, initial builds,
+  and exploratory runs; the final 30×200 three-provider matrix took 92 seconds
+  and the 30-run Sudachi checksum/corruption matrix took 31 seconds;
 - no broad UI, Accessibility XXXL, or #227 43-minute suite was run.
 
 ## Recommended production boundary

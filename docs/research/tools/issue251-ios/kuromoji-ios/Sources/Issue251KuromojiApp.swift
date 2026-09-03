@@ -117,7 +117,7 @@ private final class KuromojiRun: @unchecked Sendable {
     ]
     var durations: [Double] = []
     var outputs: [String] = []
-    for index in 0..<120 {
+    for index in 0..<220 {
       let text = sentences[index % sentences.count]
       let start = ContinuousClock.now
       let result = tokenize.call(withArguments: [text])!.toString()!
@@ -155,7 +155,7 @@ private final class KuromojiRun: @unchecked Sendable {
       "dictionary_build_ms": buildMS,
       "warm_p50_ms": percentile(Array(durations.dropFirst(20)), 0.50),
       "warm_p95_ms": percentile(Array(durations.dropFirst(20)), 0.95),
-      "warm_mean_ms": Array(durations.dropFirst(20)).reduce(0, +) / 100.0,
+      "warm_mean_ms": Array(durations.dropFirst(20)).reduce(0, +) / 200.0,
       "initial_rss_bytes": initialRSS,
       "steady_rss_bytes": residentBytes(),
       "deterministic_hash_count": hashes.count,

@@ -8,9 +8,10 @@ products, and DerivedData are intentionally not committed.
 Environment used: Xcode 26.0 (`17A324`), iPhone 17 Pro Simulator
 `77E6BF80-AB37-4C1B-A8FB-F65F7E5694B5`, iOS 26.0.1, Apple M3 Max host,
 Release `-Os`. The committed sample file contains every retained scalar from
-the ten fresh-process runs. Ten cold processes and 100 measured warm calls per
-process were exploratory only; they are below the later-frozen 30/200
-confirmation threshold and cannot satisfy that gate.
+30 fresh processes per provider. Each process performed 20 warmups, 200
+measured calls, 10 deterministic repeats, and 100 concurrent calls. The
+selected Sudachi path also retained 30 checksum-validation runs and 30
+deliberately corrupt-payload rejections.
 
 ## Sudachi
 
@@ -36,6 +37,12 @@ xcodebuild -project sudachi-ios/Issue251Sudachi.xcodeproj \
 Install/launch with `xcrun simctl`, copy
 `Documents/result.json` from the app container after each fresh launch, then
 terminate/uninstall before the next cold sample.
+
+The selected harness fails explicitly when `system_core.dic` is missing or its
+SHA-256 differs. The checksum pass costs about 78–84 ms on this Simulator. Its
+mapped `Data` remains alive for the simple probe and raises that probe's steady
+RSS; production pack validation should complete atomically in the installer
+before a later analysis process maps the accepted dictionary.
 
 ## Kuromoji in JavaScriptCore
 

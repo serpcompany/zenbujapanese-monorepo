@@ -186,6 +186,44 @@ class Issue251MorphologyBenchmarkTests(unittest.TestCase):
         self.assertLess(result["boundary"]["f1"], 1)
         self.assertEqual(result["allowedBoundary"]["f1"], 1)
 
+    def test_committed_confirmation_truth_hash_matches_both_manifests(self):
+        fixtures = Path(__file__).parents[1] / "fixtures"
+        truth = fixtures / "issue251-morphology-confirmation-holdout-v1.json"
+        digest = benchmark.hashlib.sha256(truth.read_bytes()).hexdigest()
+        source = json.loads(
+            (fixtures / "issue251-morphology-benchmark-v1.source.json").read_text()
+        )
+        results = json.loads(
+            (fixtures / "issue251-morphology-results-v1.json").read_text()
+        )
+        self.assertEqual(source["confirmationHoldout"]["truthSHA256"], digest)
+        self.assertEqual(
+            results["decisionEvidence"]["confirmationHoldout"]["truthSHA256"],
+            digest,
+        )
+
+    def test_scalar_range_round_trips_to_retained_apple_character_geometry(self):
+        text = "日本語を読む"
+        boxes = [
+            {"x": 0.80, "y": 0.10, "width": 0.05, "height": 0.08},
+            {"x": 0.80, "y": 0.18, "width": 0.05, "height": 0.08},
+            {"x": 0.80, "y": 0.26, "width": 0.05, "height": 0.08},
+            {"x": 0.60, "y": 0.10, "width": 0.05, "height": 0.08},
+            {"x": 0.40, "y": 0.10, "width": 0.05, "height": 0.08},
+            {"x": 0.40, "y": 0.18, "width": 0.05, "height": 0.08},
+        ]
+        mapped = benchmark.apple_character_geometry_for_scalar_range(
+            text, 0, 3, boxes
+        )
+        self.assertEqual(mapped, boxes[0:3])
+        self.assertEqual(text[0:3], "日本語")
+
+    def test_geometry_mapping_fails_when_vision_evidence_is_not_scalar_complete(self):
+        with self.assertRaisesRegex(ValueError, "geometry count"):
+            benchmark.apple_character_geometry_for_scalar_range(
+                "日本語", 0, 3, [{"x": 0.0, "y": 0.0, "width": 1.0, "height": 1.0}]
+            )
+
     def test_reordered_candidates_score_by_id_not_file_order(self):
         second_truth = {
             "id": "second",

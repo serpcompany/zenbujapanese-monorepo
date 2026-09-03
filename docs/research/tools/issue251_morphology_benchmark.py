@@ -131,6 +131,19 @@ def provider_metadata(contract_path: Path, provider_key: str) -> dict[str, Any]:
         raise ValueError(f"unknown provider contract: {provider_key}") from error
 
 
+def apple_character_geometry_for_scalar_range(
+    text: str, start: int, end: int, character_boxes: list[dict[str, float]]
+) -> list[dict[str, float]]:
+    """Map a validated analyzer scalar range to retained Vision character geometry."""
+    if len(character_boxes) != len(text):
+        raise ValueError(
+            "Apple character geometry count does not match transcript scalars"
+        )
+    if not (0 <= start < end <= len(text)):
+        raise ValueError("analyzer scalar range is outside Apple transcript")
+    return character_boxes[start:end]
+
+
 def score_records(
     truth_records: list[dict[str, Any]], candidate_records: list[dict[str, Any]]
 ) -> dict[str, Any]:

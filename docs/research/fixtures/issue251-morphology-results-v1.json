@@ -8,7 +8,7 @@
       "protocolFreezeCommit": "6e51f8008f2a7cefe50f81314f95c28c7dc91ba5",
       "records": 512,
       "tokens": 12237,
-      "truthSHA256": "094ff6b8a8666d9b88821da9eb7159a7cf17af21924b57ad8af1e27a8b07e047",
+      "truthSHA256": "d19d00a4682b9b22cacd2efbf3aad849095db09fa5413115ac1899e5f60e0af0",
       "selectedIDsSHA256": "54ec9f1368d9d20b140dd7e13574a25448c1dc6a0eca7bea2d918839d0326964",
       "sudachiA": {
         "boundaryF1": 0.99024,
@@ -58,6 +58,54 @@
         "posAccuracy": [0.112137, 0.132765],
         "bootstrapSeed": 25120260903,
         "replicates": 10000
+      },
+      "strata": {
+        "domain": "UD GSD news/blog; 512 OCR-perfect transcripts",
+        "mixedLatinOrNumber": {
+          "records": 163,
+          "sudachiA": {
+            "boundaryF1": 0.985825,
+            "lemmaAccuracy": 0.865507,
+            "readingAccuracy": 0.918753,
+            "posAccuracy": 0.891481
+          },
+          "faanauKuromoji": {
+            "boundaryF1": 0.97018,
+            "lemmaAccuracy": 0.72265,
+            "readingAccuracy": 0.784732,
+            "posAccuracy": 0.793088
+          }
+        },
+        "kanjiKana": {
+          "records": 345,
+          "sudachiA": {
+            "boundaryF1": 0.992841,
+            "lemmaAccuracy": 0.843073,
+            "readingAccuracy": 0.967907,
+            "posAccuracy": 0.903339
+          },
+          "faanauKuromoji": {
+            "boundaryF1": 0.965056,
+            "lemmaAccuracy": 0.749804,
+            "readingAccuracy": 0.865354,
+            "posAccuracy": 0.764545
+          }
+        },
+        "kanaOrSymbolOnly": {
+          "records": 4,
+          "sudachiA": {
+            "boundaryF1": 1.0,
+            "lemmaAccuracy": 0.678571,
+            "readingAccuracy": 1.0,
+            "posAccuracy": 0.964286
+          },
+          "faanauKuromoji": {
+            "boundaryF1": 1.0,
+            "lemmaAccuracy": 0.607143,
+            "readingAccuracy": 0.96,
+            "posAccuracy": 0.75
+          }
+        }
       },
       "executionSeconds": 9
     },
@@ -145,6 +193,19 @@
         "sentencesAllCorrect": 10,
         "normalizedResolvedOutputSHA256": "6d447fbd8d7572a0bdd730a72e8ce551234440ecbc36f9277092bf55f6c9b6fe",
         "excluded": "Two same-day commits, no release, unpinned dictionary build, incomplete notices in built app"
+      },
+      "ocrStrata": {
+        "cleanRecords": 3,
+        "noisyRecords": 1,
+        "sudachiA": {
+          "cleanBoundaryF1": 0.971429,
+          "noisyBoundaryF1": 0.947368
+        },
+        "sudachiB": { "cleanBoundaryF1": 1.0, "noisyBoundaryF1": 0.947368 },
+        "faanauKuromoji": {
+          "cleanBoundaryF1": 1.0,
+          "noisyBoundaryF1": 0.888889
+        }
       },
       "luceneKuromojiSearch": {
         "boundaryF1": 0.970511,
@@ -305,43 +366,51 @@
   "simulatorFeasibility": {
     "environment": "iPhone 17 Pro Simulator; iOS 26.0.1; Xcode 26.0 17A324; Apple M3 Max host; Release -Os",
     "physicalDeviceEvidence": false,
+    "protocol": "30 fresh processes per provider; 20 warmups plus 200 measured calls; 10 deterministic repeats; 100 concurrent calls; 90/90 launches completed",
+    "executionSeconds": 92,
     "sudachi": {
       "compressedRuntimeBytes": 29519209,
       "compressedDictionaryBytes": 72276502,
       "installedDictionaryBytes": 217466039,
       "releaseAppBytes": 220103908,
-      "coldInitP50Milliseconds": 7.245,
-      "coldInitP95Milliseconds": 42.216,
-      "warmP50Milliseconds": 0.0557,
-      "warmP95Milliseconds": 0.067,
-      "steadyRSSP50Bytes": 309395456,
-      "steadyRSSP95Bytes": 310755328,
-      "concurrency": "100/100; one hash; 2.885 ms total"
+      "coldInitP50Milliseconds": 7.187167,
+      "coldInitP95Milliseconds": 7.70825,
+      "warmP50Milliseconds": 0.054958,
+      "warmP95Milliseconds": 0.06625,
+      "warmThroughputSentencesPerSecond": 20831.164,
+      "steadyRSSP50Bytes": 311328768,
+      "steadyRSSP95Bytes": 311853056,
+      "concurrency": "30x100/30x100; one hash; zero failures",
+      "checksumValidation": "30/30 real Core digests passed; 30/30 corrupt payloads rejected; missing resource has explicit error",
+      "checksumValidationP50Milliseconds": 78.120042,
+      "checksumValidationP95Milliseconds": 83.9445
     },
     "faanauKuromojiJSC": {
       "compressedDictionaryBytes": 17791956,
       "expandedDictionaryBytes": 100260388,
       "releaseAppBytes": 100484007,
-      "coldInitP50Milliseconds": 36.652,
-      "coldInitP95Milliseconds": 153.445,
-      "warmP50Milliseconds": 0.0382,
-      "warmP95Milliseconds": 0.0875,
-      "steadyRSSP50Bytes": 458342400,
-      "steadyRSSP95Bytes": 459325440,
-      "concurrency": "100/100; one hash; 5.291 ms total; same VM serializes",
+      "coldInitP50Milliseconds": 33.402,
+      "coldInitP95Milliseconds": 34.425625,
+      "warmP50Milliseconds": 0.034083,
+      "warmP95Milliseconds": 0.072,
+      "warmThroughputSentencesPerSecond": 25739.472,
+      "steadyRSSP50Bytes": 483196928,
+      "steadyRSSP95Bytes": 484392960,
+      "concurrency": "30x100/30x100; one hash; same VM serializes",
       "integrationBlocker": "iOS JavaScriptCore has neither fetch nor DecompressionStream; requires native loader/decompression/JS lifecycle bridge"
     },
     "nativeSwiftKuromoji": {
       "repositoryCommit": "c601b3bf912babf0aa94c209a5dc74a46bd225db",
       "generatedDictionaryBytes": 35895128,
       "releaseAppBytes": 36484719,
-      "coldInitP50Milliseconds": 16.19,
-      "coldInitP95Milliseconds": 21.616,
-      "warmP50Milliseconds": 0.0247,
-      "warmP95Milliseconds": 0.0358,
-      "steadyRSSP50Bytes": 331546624,
-      "steadyRSSP95Bytes": 337494016,
-      "concurrency": "100/100; one hash; 2.466 ms total",
+      "coldInitP50Milliseconds": 15.963792,
+      "coldInitP95Milliseconds": 17.339083,
+      "warmP50Milliseconds": 0.024916,
+      "warmP95Milliseconds": 0.032667,
+      "warmThroughputSentencesPerSecond": 43169.779,
+      "steadyRSSP50Bytes": 331464704,
+      "steadyRSSP95Bytes": 332103680,
+      "concurrency": "30x100/30x100; one hash",
       "excluded": "Two same-day commits, no tag/release, no published adoption history, unpinned dictionary download script"
     }
   }
