@@ -59,9 +59,14 @@ done
 printf 'source_sha=%s\nplan=%s\nselector_ids=%s\ntests=%s\n' \
   "$source_sha" "$plan" "$selectors_json" "${test_names[*]:-all}"
 
+selected_command=(
+  "$tool_dir/run_ci_test_plan.sh"
+  "$plan"
+  "$device_type"
+  "$result_bundle"
+)
+if [[ ${#selector_arguments[@]} -gt 0 ]]; then
+  selected_command+=("${selector_arguments[@]}")
+fi
 ZENBU_SELECTOR_IDS="$selectors_json" ZENBU_SOURCE_SHA="$source_sha" \
-  "$tool_dir/run_ci_test_plan.sh" \
-  "$plan" \
-  "$device_type" \
-  "$result_bundle" \
-  "${selector_arguments[@]}"
+  "${selected_command[@]}"

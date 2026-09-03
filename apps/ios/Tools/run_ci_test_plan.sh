@@ -111,7 +111,8 @@ finalize() {
       | tee "$summary_path" || true
   fi
   cleanup
-  return "$execution_exit"
+  trap - EXIT
+  exit "$execution_exit"
 }
 trap finalize EXIT
 
@@ -148,15 +149,18 @@ for argument in "$@"; do
     build_arguments+=("$argument")
   fi
 done
-fingerprints="$(
-  python3 "$tool_dir/ios_verification.py" fingerprint \
-    --repo-root "$repo_root" \
-    --plan "$plan" \
-    --device-type "$device_type" \
-    --xcode-version "$xcode_version" \
-    --runtime-id "$runtime_id" \
-    "${fingerprint_arguments[@]}"
-)"
+fingerprint_command=(
+  python3 "$tool_dir/ios_verification.py" fingerprint
+  --repo-root "$repo_root"
+  --plan "$plan"
+  --device-type "$device_type"
+  --xcode-version "$xcode_version"
+  --runtime-id "$runtime_id"
+)
+if [[ ${#fingerprint_arguments[@]} -gt 0 ]]; then
+  fingerprint_command+=("${fingerprint_arguments[@]}")
+fi
+fingerprints="$("${fingerprint_command[@]}")"
 source_fingerprint="$(printf '%s' "$fingerprints" | jq -r .source_fingerprint)"
 build_fingerprint="$(printf '%s' "$fingerprints" | jq -r .build_fingerprint)"
 marker="$derived_data/ZenbuBuildProducts.json"
@@ -172,14 +176,19 @@ if [[ -f "$marker" ]]; then
   build_mode=reused
 else
   mkdir -p "$derived_data"
-  xcodebuild build-for-testing \
-    -project "$repo_root/apps/ios/ZenbuJapanese.xcodeproj" \
-    -scheme ZenbuJapanese \
-    -testPlan "$plan" \
-    -destination "platform=iOS Simulator,id=$simulator_id" \
-    -parallel-testing-enabled NO \
-    -derivedDataPath "$derived_data" \
-    "${build_arguments[@]}"
+  build_command=(
+    xcodebuild build-for-testing
+    -project "$repo_root/apps/ios/ZenbuJapanese.xcodeproj"
+    -scheme ZenbuJapanese
+    -testPlan "$plan"
+    -destination "platform=iOS Simulator,id=$simulator_id"
+    -parallel-testing-enabled NO
+    -derivedDataPath "$derived_data"
+  )
+  if [[ ${#build_arguments[@]} -gt 0 ]]; then
+    build_command+=("${build_arguments[@]}")
+  fi
+  "${build_command[@]}"
   printf '%s\n' "$fingerprints" > "$marker"
   build_mode=fresh
 fi
