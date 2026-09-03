@@ -104,6 +104,11 @@ Failures are not blindly retried. `classify-failure` marks a rerun eligible only
 when zero tests started and the recorded category is a recognized runner,
 Simulator, or Xcode-service infrastructure loss. Any product assertion, or any
 failure after a test starts, requires diagnosis and a new candidate.
+Every hosted fast test job also writes this small identity/classification/timing
+record to its GitHub job summary and uploads it as a separate summary artifact
+before packaging the large result bundle. Triage therefore does not wait for a
+multi-hundred-megabyte screenshot/video artifact merely to learn the tested SHA,
+test count, or failure class.
 
 ## Before map and optimization decisions (#256)
 

@@ -351,6 +351,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       .firstMatch
     XCTAssertTrue(reopenedCopyText.waitForExistence(timeout: 3))
     reopenedCopyText.tap()
+    XCTAssertTrue(
+      reopenedCopyText.waitForNonExistence(timeout: 3),
+      "Copy Text must finish and dismiss its menu before leaving Image Text"
+    )
 
     app.buttons["image-text.close"].tap()
     let searchField = app.textFields["search.field"]

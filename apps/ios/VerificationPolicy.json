@@ -80,7 +80,7 @@
     },
     "ui.word-detail": {
       "plan": "ZenbuPR",
-      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted",
       "traits": ["ui", "normal-dynamic-type"],
       "journeys": ["word-detail"]
     },
@@ -327,6 +327,9 @@
       "paths": [
         "apps/ios/Modules/Sources/SearchExperience/Image*.swift",
         "docs/clone-discovery/nihongo/fixtures/image-text/**"
+      ],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift"
       ],
       "tdd": ["ui.image-text"],
       "issue-final": [

@@ -138,6 +138,24 @@ jobs:
         run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
       - name: Run selected unit coverage
         run: apps/ios/Tools/run_selected_test_plan.sh ZenbuPR com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max "$RUNNER_TEMP/ZenbuFast-Unit.xcresult" '${{ needs.scope.outputs.unit_selectors }}' '${{ needs.scope.outputs.source_sha }}'
+      - name: Publish unit identity and timing immediately
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/ZenbuFast-Unit.xcresult.timing.json" ]]; then
+            {
+              printf '### Unit verification evidence\n```json\n'
+              cat "$RUNNER_TEMP/ZenbuFast-Unit.xcresult.timing.json"
+              printf '\n```\n'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Retain tiny unit summary
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuFast-Unit-Summary-${{ needs.scope.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ZenbuFast-Unit.xcresult.timing.json
+          if-no-files-found: warn
+          retention-days: 30
       - name: Bind unit result to exact SHA
         id: identity
         run: echo "tested_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
@@ -177,6 +195,24 @@ jobs:
         run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
       - name: Run selected critical journeys
         run: apps/ios/Tools/run_selected_test_plan.sh ZenbuPR com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max "$RUNNER_TEMP/ZenbuFast-UI.xcresult" '${{ needs.scope.outputs.ui_selectors }}' '${{ needs.scope.outputs.source_sha }}'
+      - name: Publish UI identity and timing immediately
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/ZenbuFast-UI.xcresult.timing.json" ]]; then
+            {
+              printf '### Critical UI verification evidence\n```json\n'
+              cat "$RUNNER_TEMP/ZenbuFast-UI.xcresult.timing.json"
+              printf '\n```\n'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Retain tiny UI summary
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuFast-UI-Summary-${{ needs.scope.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ZenbuFast-UI.xcresult.timing.json
+          if-no-files-found: warn
+          retention-days: 30
       - name: Bind UI result to exact SHA
         id: identity
         run: echo "tested_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
@@ -216,6 +252,24 @@ jobs:
         run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
       - name: Run selected accessibility smoke
         run: apps/ios/Tools/run_selected_test_plan.sh ZenbuAccessibility com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult" '${{ needs.scope.outputs.accessibility_selectors }}' '${{ needs.scope.outputs.source_sha }}'
+      - name: Publish accessibility identity and timing immediately
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult.timing.json" ]]; then
+            {
+              printf '### Accessibility verification evidence\n```json\n'
+              cat "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult.timing.json"
+              printf '\n```\n'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Retain tiny accessibility summary
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuFast-Accessibility-Summary-${{ needs.scope.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ZenbuFast-Accessibility.xcresult.timing.json
+          if-no-files-found: warn
+          retention-days: 30
       - name: Bind accessibility result to exact SHA
         id: identity
         run: echo "tested_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"

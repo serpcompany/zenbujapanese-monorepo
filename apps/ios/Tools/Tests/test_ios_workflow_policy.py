@@ -65,6 +65,10 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("SCOPE_RESULT: ${{ needs.scope.result }}", workflow)
         self.assertIn('[[ "$SCOPE_RESULT" == success ]]', workflow)
         self.assertIn("cadence", workflow)
+        self.assertEqual(workflow.count("GITHUB_STEP_SUMMARY"), 3)
+        self.assertIn("ZenbuFast-UI-Summary-", workflow)
+        self.assertIn("ZenbuFast-Unit-Summary-", workflow)
+        self.assertIn("ZenbuFast-Accessibility-Summary-", workflow)
 
         premerge = workflow_text("ios-premerge.yml")
         self.assertIn("SCOPE_RESULT: ${{ needs.scope.result }}", premerge)
