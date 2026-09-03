@@ -19,6 +19,7 @@ public struct SearchExperienceRootView: View {
     @State private var lastFinishedSpeech: SpeechPlaybackVerificationEvent?
   #endif
   private let lookupClient: LookupClient
+  private let exampleSentenceClient: ExampleSentenceClient
   private let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   private let recentSearchStore = RecentSearchStore.live
   private let encounterMediaStore = EncounterMediaStore.live
@@ -39,6 +40,7 @@ public struct SearchExperienceRootView: View {
     #if DEBUG
       let resolvedLookupClient = LookupClient.clientFromProcessArguments(live: .live) ?? .live
       lookupClient = resolvedLookupClient
+      exampleSentenceClient = .clientFromProcessArguments(live: .live) ?? .live
       let usesReducedAnalysis = ProcessInfo.processInfo.arguments.contains(
         "-UseReducedJapaneseAnalysis")
       japaneseTextAnalysisClient = .resolving(
@@ -72,6 +74,7 @@ public struct SearchExperienceRootView: View {
       }
     #else
       lookupClient = .live
+      exampleSentenceClient = .live
       japaneseTextAnalysisClient = .live(lookupClient: .live)
       kanjiLookupClient = .live(lookupClient: .live)
       handwritingRecognitionClient = .live
@@ -167,7 +170,7 @@ public struct SearchExperienceRootView: View {
         handwritingRecognitionClient: handwritingRecognitionClient,
         cameraAuthorizationClient: cameraAuthorizationClient,
         radicalLookupClient: .live,
-        exampleSentenceClient: .live,
+        exampleSentenceClient: exampleSentenceClient,
         openImageText: { assets in
           let session = ImageTextSession(assets: assets)
           imageTextSessionStore.insert(session)
@@ -181,7 +184,7 @@ public struct SearchExperienceRootView: View {
             entry: entry,
             initialEncounterMedia: encounterMediaAttachment(for: imageContext),
             speechSynthesisClient: speechSynthesisClient,
-            exampleSentenceClient: .live,
+            exampleSentenceClient: exampleSentenceClient,
             japaneseTextAnalysisClient: japaneseTextAnalysisClient,
             wordNoteStore: .live,
             encounterMediaStore: encounterMediaStore,
@@ -214,7 +217,7 @@ public struct SearchExperienceRootView: View {
             query: query,
             highlightedEntry: highlightedEntry,
             usesHighlightedEntryExamples: usesEntryExamples,
-            exampleSentenceClient: .live,
+            exampleSentenceClient: exampleSentenceClient,
             japaneseTextAnalysisClient: japaneseTextAnalysisClient,
             speechSynthesisClient: speechSynthesisClient,
             openWord: { entry in path.append(.word(entry, nil)) }

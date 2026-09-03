@@ -164,6 +164,67 @@ struct ExampleSentenceClient: Sendable {
   }
 }
 
+#if DEBUG
+  extension ExampleSentenceClient {
+    static func clientFromProcessArguments(live: ExampleSentenceClient) -> ExampleSentenceClient? {
+      guard ProcessInfo.processInfo.arguments.contains("-Issue246WordDetailExampleFixtures") else {
+        return nil
+      }
+      return ExampleSentenceClient { request in
+        guard case .dictionaryEntry = request else { return try await live.retrieve(request) }
+        guard
+          let noCurrentID = ExampleSentenceID(
+            rawValue: "esp1_ea71ea7cd918b2d745f27ffbee917f5a"),
+          let longMixedScriptID = ExampleSentenceID(
+            rawValue: "esp1_05d9fecf64a4857657bbc5bcce0aee6f")
+        else { throw ExampleSentenceRetrievalError.retrievalUnavailable(.invalidBaseCorpus) }
+        let sentences = [
+          ExampleSentence(
+            id: noCurrentID,
+            japanese: "水は見る見るうちに橋げたのところまで達した。",
+            english: "The water came up to the bridge girder in a second."
+          ),
+          ExampleSentence(
+            id: longMixedScriptID,
+            japanese: "REM睡眠中の脳波は起きている時と同じ脳波であり、夢を見るステージです。",
+            english:
+              "The brain waves during REM sleep are the same as when awake, and it's the stage when you have dreams."
+          ),
+        ]
+        let matches = try sentences.map { sentence -> ExampleSentenceMatch in
+          guard let matchedRange = sentence.japanese.range(of: "見る") else {
+            throw ExampleSentenceRetrievalError.retrievalUnavailable(.invalidBaseCorpus)
+          }
+          let matchPosition = sentence.japanese.distance(
+            from: sentence.japanese.startIndex,
+            to: matchedRange.lowerBound
+          )
+          return ExampleSentenceMatch(
+            sentence: sentence,
+            route: .dictionaryEntry,
+            lexicalRelation: .selectedWrittenForm,
+            matchedRange: ExampleSentenceMatchedRange(location: matchPosition, length: 2),
+            exactSurface: true,
+            rankInputs: ExampleSentenceRankInputs(
+              lexicalRelation: .selectedWrittenForm,
+              matchPosition: matchPosition,
+              englishTermCount: 0,
+              japaneseGraphemeCount: sentence.japanese.count,
+              pairID: sentence.id
+            )
+          )
+        }
+        return ExampleSentenceRetrievalResult(
+          matches: matches,
+          count: .exact(matches.count),
+          isTruncated: false,
+          policyVersion: "ExampleSentenceRetrievalPolicy/v1"
+        )
+      }
+    }
+  }
+#endif
+
 private actor ExampleSentenceData {
   static let policyVersion = "ExampleSentenceRetrievalPolicy/v1"
   static let indexSchemaVersion = "zenbu.example-sentence-retrieval-index.v2"

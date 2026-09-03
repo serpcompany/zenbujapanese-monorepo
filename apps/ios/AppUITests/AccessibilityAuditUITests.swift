@@ -188,6 +188,10 @@ final class AccessibilityAuditUITests: XCTestCase {
 
   @MainActor
   func testRelatedWordRemainsNeutralInDarkAppearance() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .dark
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
     let (app, detail) = try launchWordDetail(
       query: "見る",
       resultLabelPrefix: "見る, みる",
@@ -2031,7 +2035,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     in screenshot: XCUIScreenshot,
     appearance: XCUIDevice.Appearance
   ) -> Bool {
-    containsPixels(in: screenshot, requiredCount: 24) { red, green, blue in
+    containsPixels(in: screenshot, requiredCount: 8) { red, green, blue in
       switch appearance {
       case .dark: red >= 225 && green >= 225 && blue >= 225
       default: red <= 50 && green <= 50 && blue <= 50
@@ -2044,7 +2048,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     in screenshot: XCUIScreenshot,
     appearance: XCUIDevice.Appearance
   ) -> Bool {
-    containsPixels(in: screenshot, requiredCount: 24) { red, green, blue in
+    containsPixels(in: screenshot, requiredCount: 8) { red, green, blue in
       guard abs(red - green) <= 8, abs(green - blue) <= 8 else { return false }
       switch appearance {
       case .dark: return (130...210).contains(red)

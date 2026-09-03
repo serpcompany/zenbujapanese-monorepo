@@ -232,8 +232,7 @@ struct WordDetailView: View {
       let storedMedia = await encounterMediaStore.encounters(word)
       guard !Task.isCancelled else { return }
       encounterMedia = storedMedia
-      let loadedExamples = (try? await exampleSentenceClient.examples(entry)) ?? []
-      examples = exampleSentenceTestFixtures(overriding: loadedExamples)
+      examples = (try? await exampleSentenceClient.examples(entry)) ?? []
       analysisAvailability = await japaneseTextAnalysisClient.availability()
       frequency =
         (try? await frequencyCapability.evidence(for: entry.id))
@@ -251,34 +250,6 @@ struct WordDetailView: View {
 
   private var displayableEncounterMedia: [EncounterMedia] {
     encounterMedia.filter { UIImage(data: $0.data) != nil }
-  }
-
-  private func exampleSentenceTestFixtures(overriding loadedExamples: [ExampleSentence])
-    -> [ExampleSentence]
-  {
-    #if DEBUG
-      guard ProcessInfo.processInfo.arguments.contains("-Issue246WordDetailExampleFixtures"),
-        let noCurrentID = ExampleSentenceID(
-          rawValue: "esp1_ea71ea7cd918b2d745f27ffbee917f5a"),
-        let longMixedScriptID = ExampleSentenceID(
-          rawValue: "esp1_05d9fecf64a4857657bbc5bcce0aee6f")
-      else { return loadedExamples }
-      return [
-        ExampleSentence(
-          id: noCurrentID,
-          japanese: "水は見る見るうちに橋げたのところまで達した。",
-          english: "The water came up to the bridge girder in a second."
-        ),
-        ExampleSentence(
-          id: longMixedScriptID,
-          japanese: "REM睡眠中の脳波は起きている時と同じ脳波であり、夢を見るステージです。",
-          english:
-            "The brain waves during REM sleep are the same as when awake, and it's the stage when you have dreams."
-        ),
-      ]
-    #else
-      return loadedExamples
-    #endif
   }
 
   private func removeEncounterMedia(_ mediaID: String) async {
