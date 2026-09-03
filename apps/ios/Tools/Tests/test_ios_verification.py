@@ -348,6 +348,71 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         self.assertEqual(test_only["selectors"], ["ui.search"])
         self.assertEqual(runtime["selectors"], ["unit.all", "ui.search", "ui.examples"])
 
+    def test_requested_tdd_capability_owns_the_inner_loop_while_issue_final_expands(
+        self,
+    ):
+        manifest = {
+            "version": 1,
+            "selectors": {
+                selector: {
+                    "plan": "ZenbuPR",
+                    "test": selector,
+                    "traits": [],
+                    "journeys": [selector],
+                }
+                for selector in ("ui.reading-aid", "ui.word", "ui.examples")
+            },
+            "tiers": {"ui": ["ui.reading-aid", "ui.word", "ui.examples"]},
+            "capabilities": {
+                "reading-aids": {
+                    "paths": ["apps/ios/ReadingAid*.swift"],
+                    "reviewed_override_paths": [
+                        "apps/ios/WordDetail.swift",
+                        "apps/ios/Examples.swift",
+                    ],
+                    "tdd": ["ui.reading-aid"],
+                    "issue-final": ["ui.reading-aid"],
+                },
+                "word": {
+                    "paths": ["apps/ios/WordDetail.swift"],
+                    "tdd": ["ui.word"],
+                    "issue-final": ["ui.word"],
+                },
+                "examples": {
+                    "paths": ["apps/ios/Examples.swift"],
+                    "tdd": ["ui.examples"],
+                    "issue-final": ["ui.examples"],
+                },
+            },
+            "stages": {"tdd": ["ui"], "issue-final": ["ui"]},
+        }
+        changed = ["apps/ios/WordDetail.swift", "apps/ios/Examples.swift"]
+
+        tdd = ios_verification.resolve_plan(
+            manifest,
+            changed_paths=changed,
+            stage="tdd",
+            event="local",
+            draft=True,
+            source_sha="candidate",
+            requested_capabilities=["reading-aids"],
+        )
+        issue_final = ios_verification.resolve_plan(
+            manifest,
+            changed_paths=changed,
+            stage="issue-final",
+            event="local",
+            draft=True,
+            source_sha="candidate",
+            requested_capabilities=["reading-aids"],
+        )
+
+        self.assertEqual(tdd["selectors"], ["ui.reading-aid"])
+        self.assertEqual(
+            issue_final["selectors"],
+            ["ui.reading-aid", "ui.word", "ui.examples"],
+        )
+
     def test_reused_products_with_wrong_source_fingerprint_fail_closed(self):
         marker = {
             "source_fingerprint": "old-source",

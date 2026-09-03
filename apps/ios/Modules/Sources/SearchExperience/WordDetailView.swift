@@ -551,6 +551,11 @@ private struct WordIdentityView: View {
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
           .accessibilityIdentifier("word-detail.identity-reading")
+        RomajiReadingAidText(
+          trustedReading: entry.reading,
+          font: .callout,
+          exposesAccessibility: false
+        )
       }
       .accessibilityElement(children: .ignore)
       .accessibilityLabel("\(entry.headword), \(entry.reading)")
@@ -977,9 +982,16 @@ private struct AlternativeFormLine: View {
   }
 
   private func formLabel(_ form: DictionaryForm) -> some View {
-    Text(form.value + (form.labels.isEmpty ? "" : " (\(form.labels.joined(separator: ", ")))"))
-      .font(.body)
-      .foregroundStyle(form.labels.isEmpty ? Color.primary : Color.secondary)
+    VStack(alignment: .leading, spacing: 2) {
+      Text(form.value + (form.labels.isEmpty ? "" : " (\(form.labels.joined(separator: ", ")))"))
+        .font(.body)
+        .foregroundStyle(form.labels.isEmpty ? Color.primary : Color.secondary)
+      RomajiReadingAidText(
+        trustedReading: form.value,
+        isEnabled: form.kind == .reading,
+        exposesAccessibility: false
+      )
+    }
   }
 }
 
@@ -993,10 +1005,15 @@ private struct RelationshipsSection: View {
         openRelated(relationship)
       } label: {
         VStack(alignment: .leading, spacing: 3) {
-          Text("\(relationship.headword)  \(relationship.reading)")
-            .font(.headline)
-            .foregroundStyle(.primary)
-            .accessibilityIdentifier("word-detail.related-primary.\(relationship.headword)")
+          JapaneseRubyText(
+            surface: relationship.headword,
+            reading: relationship.reading,
+            baseFont: .headline,
+            rubyFont: .caption,
+            exposesAccessibility: false
+          )
+          .foregroundStyle(.primary)
+          .accessibilityIdentifier("word-detail.related-primary.\(relationship.headword)")
           Text("\(relationship.relation) · \(relationship.summary)")
             .font(.footnote)
             .foregroundStyle(.secondary)
@@ -1005,6 +1022,9 @@ private struct RelationshipsSection: View {
         }
       }
       .tint(.primary)
+      .accessibilityLabel(
+        "\(relationship.headword), \(relationship.reading), \(relationship.relation), \(relationship.summary)"
+      )
       .accessibilityIdentifier("word-detail.related.\(relationship.headword)")
     }
   }

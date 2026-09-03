@@ -5,6 +5,7 @@
     "you-navigation",
     "conjugations",
     "example-sentences",
+    "encounter-media",
     "handwriting",
     "image-text",
     "image-text-translation-assets",
@@ -12,6 +13,10 @@
     "japanese-text-analysis-offline",
     "japanese-text-analysis-settings",
     "kanji-detail",
+    "reading-aids",
+    "reading-aid-adaptive-layout",
+    "romaji-presentation",
+    "romaji-mixed-input",
     "radical-input",
     "recent-searches",
     "search-input",
@@ -72,6 +77,36 @@
       "test": "ZenbuJapaneseTests/LanguageTechnologyPackTests/testBundledOfficialDictionaryRunsOfflineAndSurvivesRelaunch",
       "traits": ["deterministic"],
       "journeys": ["japanese-text-analysis-provider"]
+    },
+    "unit.reading-aids": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseTests/JapaneseRubyAnnotationTests/testAppleRomajiUsesTrustedReadingsAndRejectsRawKanji",
+      "traits": ["deterministic"],
+      "journeys": ["reading-aids"]
+    },
+    "unit.reading-aids-mixed-input": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseTests/JapaneseRubyAnnotationTests/testAppleRomajiPreservesExistingWhitespaceAndMixedLatinNumbers",
+      "traits": ["deterministic"],
+      "journeys": ["romaji-mixed-input"]
+    },
+    "ui.reading-aids": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testReadingAidToggleHidesOnlyFuriganaAndPersistsAcrossColdRelaunch",
+      "traits": ["ui", "normal-dynamic-type", "deterministic"],
+      "journeys": ["reading-aids"]
+    },
+    "ui.reading-aids-romaji": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRomajiPreferenceAddsSecondaryReadingToActualSearchAndWordDetail",
+      "traits": ["ui", "normal-dynamic-type", "deterministic"],
+      "journeys": ["romaji-presentation"]
+    },
+    "ui.encounter-media": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextEncounterMediaPersistsIntoLaterSearchAndAppearsInMediaLibrary",
+      "traits": ["ui", "normal-dynamic-type", "deterministic"],
+      "journeys": ["encounter-media"]
     },
     "ui.shell": {
       "plan": "ZenbuPR",
@@ -141,9 +176,13 @@
     },
     "ui.example-layout-maximum": {
       "plan": "ZenbuPR",
-      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutWrapsNaturallyAtLargestAccessibilityTextSize",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedReadingAidSentenceLayoutWrapsNaturallyAtLargestAccessibilityTextSize",
       "traits": ["ui", "accessibility", "accessibility-maximum"],
-      "journeys": ["example-sentences", "word-detail"]
+      "journeys": [
+        "example-sentences",
+        "word-detail",
+        "reading-aid-adaptive-layout"
+      ]
     },
     "ui.example-layout-hit-regions": {
       "plan": "ZenbuPR",
@@ -244,11 +283,16 @@
     "unit": [
       "unit.complete",
       "unit.japanese-text-analysis",
-      "unit.bundled-japanese-text-analysis"
+      "unit.bundled-japanese-text-analysis",
+      "unit.reading-aids",
+      "unit.reading-aids-mixed-input"
     ],
     "ui": [
       "ui.shell",
       "ui.you-hierarchy",
+      "ui.reading-aids",
+      "ui.reading-aids-romaji",
+      "ui.encounter-media",
       "ui.search-input",
       "ui.search-ranking",
       "ui.recent-search",
@@ -588,6 +632,47 @@
       "hosted-fast": ["unit.complete", "ui.image-text", "ui.examples"],
       "merge-candidate": ["integration.sudachi"],
       "release": ["integration.sudachi"]
+    },
+    "reading-aids": {
+      "adaptive_layout": true,
+      "paths": ["apps/ios/Modules/Sources/SearchExperience/*ReadingAid*.swift"],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
+        "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift",
+        "apps/ios/Modules/Sources/SearchExperience/ConjugationsView.swift",
+        "apps/ios/Modules/Sources/SearchExperience/ExampleSentencesView.swift",
+        "apps/ios/Modules/Sources/SearchExperience/ImageTextFlowView.swift",
+        "apps/ios/Modules/Sources/SearchExperience/JapaneseRubyText.swift",
+        "apps/ios/Modules/Sources/SearchExperience/KanjiDetailView.swift",
+        "apps/ios/Modules/Sources/SearchExperience/LinkedJapaneseText.swift",
+        "apps/ios/Modules/Sources/SearchExperience/SearchExperienceRootView.swift",
+        "apps/ios/Modules/Sources/SearchExperience/SearchView.swift",
+        "apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift",
+        "apps/ios/Modules/Sources/SearchExperience/YouAndMediaLibraryView.swift",
+        "apps/ios/Modules/Tests/SearchExperienceTests/JapaneseRubyAnnotationTests.swift",
+        "apps/ios/VerificationPolicy.json"
+      ],
+      "tdd": ["ui.reading-aids-romaji"],
+      "issue-final": [
+        "unit.complete",
+        "ui.you-hierarchy",
+        "ui.reading-aids",
+        "ui.reading-aids-romaji",
+        "ui.examples",
+        "ui.example-layout",
+        "ui.kanji",
+        "ui.conjugations",
+        "ui.image-text",
+        "ui.encounter-media",
+        "accessibility.you-list",
+        "ui.example-layout-maximum"
+      ],
+      "hosted-fast": [
+        "unit.complete",
+        "ui.you-hierarchy",
+        "ui.reading-aids",
+        "ui.reading-aids-romaji"
+      ]
     },
     "search-readiness-test-repair": {
       "paths": [],

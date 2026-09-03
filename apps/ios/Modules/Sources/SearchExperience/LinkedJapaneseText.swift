@@ -8,6 +8,7 @@ import SwiftUI
 #endif
 
 struct LinkedJapaneseText: View {
+  @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   private struct AnalysisIdentity: Hashable {
     let text: String
     let highlightedQuery: SearchQuery
@@ -23,6 +24,7 @@ struct LinkedJapaneseText: View {
 
   @ScaledMetric(relativeTo: .body) private var lineSpacing: CGFloat = 3
   @State private var tokens: [JapaneseTextToken] = []
+  @State private var didFinishAnalysis = false
 
   let text: String
   let highlightedQuery: SearchQuery
@@ -54,6 +56,46 @@ struct LinkedJapaneseText: View {
   }
 
   var body: some View {
+    VStack(alignment: .leading, spacing: 4) {
+      japaneseContent
+      if readingAidPreferences.showsRomaji, didFinishAnalysis {
+        if let romaji = AppleJapaneseRomanization.romanizeCompleteSentence(tokens) {
+          Text(romaji)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityLabel("Romaji, \(romaji)")
+            .accessibilityIdentifier("\(identifierPrefix).romaji")
+        } else if !text.isEmpty {
+          Text("Romaji unavailable for this text")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .accessibilityIdentifier("\(identifierPrefix).romaji-unavailable")
+        }
+      }
+    }
+    .accessibilityElement(children: .contain)
+    .task(id: analysisIdentity) {
+      didFinishAnalysis = false
+      #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-RecordJapaneseAnalysisRequests") {
+          NotificationCenter.default.post(
+            name: .linkedJapaneseTextAnalysisRequested,
+            object: identifierPrefix
+          )
+        }
+      #endif
+      tokens = await japaneseTextAnalysisClient.linkedTokens(
+        text,
+        highlightedQuery,
+        highlightedEntry
+      )
+      didFinishAnalysis = true
+    }
+  }
+
+  @ViewBuilder
+  private var japaneseContent: some View {
     Group {
       if tokens.isEmpty {
         Text(text)
@@ -79,22 +121,6 @@ struct LinkedJapaneseText: View {
           }
         }
       }
-    }
-    .accessibilityElement(children: .contain)
-    .task(id: analysisIdentity) {
-      #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-RecordJapaneseAnalysisRequests") {
-          NotificationCenter.default.post(
-            name: .linkedJapaneseTextAnalysisRequested,
-            object: identifierPrefix
-          )
-        }
-      #endif
-      tokens = await japaneseTextAnalysisClient.linkedTokens(
-        text,
-        highlightedQuery,
-        highlightedEntry
-      )
     }
   }
 
@@ -128,7 +154,8 @@ private struct LinkedTokenView: View {
           surface: token.surface,
           reading: entry.reading,
           underlined: true,
-          exposesAccessibility: false
+          exposesAccessibility: false,
+          displaysRomaji: false
         )
         // Underlining carries the interactive affordance. Inline Word Detail
         // examples additionally accent the complete current token so its ruby

@@ -10,6 +10,8 @@ struct YouNavigationView: View {
       YouRootView()
         .navigationDestination(for: YouRoute.self) { route in
           switch route {
+          case .readingAids:
+            ReadingAidSettingsView()
           case .mediaLibrary:
             MediaLibraryView(store: store)
           case .frequencyDictionaries:
@@ -35,8 +37,10 @@ struct YouRootView: View {
       }
 
       Section("Preferences") {
-        LabeledContent("Reading Aids", value: "Furigana · Romaji")
-          .accessibilityIdentifier("you.reading-aids")
+        NavigationLink(value: YouRoute.readingAids) {
+          Label("Reading Aids", systemImage: "character.book.closed")
+        }
+        .accessibilityIdentifier("you.reading-aids")
       }
 
       Section("Language Resources") {
@@ -64,10 +68,36 @@ struct YouRootView: View {
 }
 
 enum YouRoute: Hashable {
+  case readingAids
   case mediaLibrary
   case frequencyDictionaries
   case languageTechnology
   case credits
+}
+
+private struct ReadingAidSettingsView: View {
+  @Environment(ReadingAidPreferences.self) private var preferences
+
+  var body: some View {
+    @Bindable var preferences = preferences
+    Form {
+      Section {
+        Toggle("Show Furigana", isOn: $preferences.showsFurigana)
+          .accessibilityIdentifier("reading-aids.show-furigana")
+        Toggle("Show Romaji", isOn: $preferences.showsRomaji)
+          .accessibilityIdentifier("reading-aids.show-romaji")
+      } header: {
+        Text("Reading Aids")
+      } footer: {
+        Text(
+          "Furigana appears above kanji. Romaji uses Apple’s system romanization and appears below complete Japanese text."
+        )
+      }
+    }
+    .accessibilityIdentifier("reading-aids.form")
+    .navigationTitle("Reading Aids")
+    .navigationBarTitleDisplayMode(.inline)
+  }
 }
 
 struct MediaLibraryView: View {
@@ -135,6 +165,11 @@ private struct EncounterMediaRow: View {
           .font(.body)
           .foregroundStyle(.secondary)
           .lineLimit(2)
+        RomajiReadingAidText(
+          romaji: encounterRomaji,
+          lineLimit: 2,
+          accessibilityIdentifier: "media-library.romaji.\(item.id)"
+        )
         Text(item.savedAt, style: .date)
           .font(.caption)
           .foregroundStyle(.secondary)
@@ -143,6 +178,13 @@ private struct EncounterMediaRow: View {
     .task(id: item.id) {
       image = await store.media(item.id).flatMap { UIImage(data: $0.data) }
     }
+  }
+
+  private var encounterRomaji: String? {
+    let values = item.words.compactMap {
+      AppleJapaneseRomanization.romanizeTrustedReading($0.reading)
+    }
+    return values.count == item.words.count ? values.joined(separator: " · ") : nil
   }
 }
 

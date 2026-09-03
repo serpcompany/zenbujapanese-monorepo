@@ -459,6 +459,7 @@ private struct KanjiReadingRow: View {
       VStack(alignment: .trailing, spacing: 5) {
         Text(reading.value)
           .font(.headline)
+        RomajiReadingAidText(trustedReading: reading.value)
         if !words.isEmpty {
           Text(words.map { "\($0.headword) · \($0.summary)" }.joined(separator: "   "))
             .font(.body)

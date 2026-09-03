@@ -38,11 +38,10 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["Your Content"].exists)
     XCTAssertTrue(app.staticTexts["Preferences"].exists)
     XCTAssertTrue(app.buttons["you.media-library"].isHittable)
-    let readingAids = app.descendants(matching: .any)["you.reading-aids"]
+    let readingAids = app.buttons["you.reading-aids"]
     XCTAssertTrue(readingAids.exists)
+    XCTAssertTrue(readingAids.isHittable)
     XCTAssertTrue(readingAids.label.contains("Reading Aids"))
-    XCTAssertTrue(readingAids.label.contains("Furigana"))
-    XCTAssertTrue(readingAids.label.contains("Romaji"))
 
     let frequencyDictionaries = app.buttons["you.frequency-dictionaries"]
     for _ in 0..<4 where !frequencyDictionaries.isHittable {
@@ -767,17 +766,42 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
-  func testSharedFuriganaSentenceLayoutWrapsNaturallyAtLargestAccessibilityTextSize() throws {
-    let (app, detail) = try launchWordDetail(
-      query: "見る",
-      resultLabelPrefix: "見る, みる",
+  func testSharedReadingAidSentenceLayoutWrapsNaturallyAtLargestAccessibilityTextSize() throws {
+    defer {
+      let cleanup = launchApp(
+        appearance: .light,
+        additionalArguments: ["-ResetReadingAidPreferences"]
+      )
+      cleanup.terminate()
+    }
+    let app = launchApp(
       appearance: .dark,
       additionalArguments: [
+        "-ResetReadingAidPreferences",
         "-Issue246WordDetailExampleFixtures",
         "-UIPreferredContentSizeCategoryName",
         "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
+    app.tabBars.buttons["tab.you"].tap()
+    app.buttons["you.reading-aids"].tap()
+    let showRomaji = app.switches["reading-aids.show-romaji"]
+    XCTAssertTrue(showRomaji.waitForExistence(timeout: 3))
+    showRomaji.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+    let romajiEnabled = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "1"),
+      object: showRomaji
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [romajiEnabled], timeout: 2), .completed)
+    app.tabBars.buttons["Search"].tap()
+    try submitSearch("見る", in: app)
+    let result = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "見る, みる")
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 3))
+    result.tap()
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
     let prefix = "word-detail.example-token.0."
     let first = app.descendants(matching: .any).matching(
       NSPredicate(format: "identifier BEGINSWITH %@", prefix)
@@ -806,10 +830,18 @@ final class AccessibilityAuditUITests: XCTestCase {
       accuracy: 1,
       "Japanese terminal punctuation must wrap with the preceding token"
     )
+    let romaji = app.descendants(matching: .any)["word-detail.example-token.0.romaji"]
+    XCTAssertTrue(romaji.exists)
+    XCTAssertTrue(romaji.label.hasPrefix("Romaji, "))
+    let english = app.staticTexts["word-detail.example-english.0"]
+    XCTAssertTrue(english.exists)
+    XCTAssertGreaterThanOrEqual(romaji.frame.minX, detail.frame.minX)
+    XCTAssertLessThanOrEqual(romaji.frame.maxX, detail.frame.maxX)
+    XCTAssertGreaterThan(english.frame.minY, romaji.frame.maxY)
     try performAudit(
       in: app,
-      named: "Shared Furigana sentence layout - dark accessibility XXXL",
-      types: .dynamicType.union(.textClipped)
+      named: "Shared Reading Aid sentence layout - dark accessibility XXXL",
+      types: .dynamicType.union(.textClipped).union(.hitRegion)
     )
   }
 

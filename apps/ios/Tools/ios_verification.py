@@ -608,6 +608,8 @@ def resolve_plan(
     classified_paths: set[str] = set()
     requested = set(requested_capabilities or [])
     for capability, policy in manifest.get("capabilities", {}).items():
+        if stage == "tdd" and requested and capability not in requested:
+            continue
         patterns = list(policy.get("paths", []))
         if capability in requested:
             patterns.extend(policy.get("reviewed_override_paths", []))

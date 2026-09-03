@@ -1,6 +1,7 @@
 import SwiftUI
 
 public struct SearchExperienceRootView: View {
+  @State private var readingAidPreferences = ReadingAidPreferences()
   @State private var selectedTab = SearchExperienceTab.search
   @State private var path: [SearchExperienceRoute] = []
   @State private var youPath: [YouRoute] = []
@@ -130,6 +131,7 @@ public struct SearchExperienceRootView: View {
         )
       #endif
     }
+    .environment(readingAidPreferences)
     #if DEBUG
       .onReceive(NotificationCenter.default.publisher(for: SpeechPlaybackVerification.notification))
       {

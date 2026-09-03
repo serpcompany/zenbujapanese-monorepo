@@ -2,6 +2,167 @@ import XCTest
 
 final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
+  func testRomajiPreferenceAddsSecondaryReadingToActualSearchAndWordDetail() throws {
+    defer { resetReadingAidPreferences() }
+    defer { XCUIDevice.shared.appearance = .light }
+    XCUIDevice.shared.appearance = .light
+    let app = launchApp(additionalArguments: [
+      "-ResetReadingAidPreferences", "-Issue253SentenceLayoutFixtures",
+    ])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+    searchField.typeText("taberu")
+    app.keyboards.buttons["Search"].tap()
+
+    let searchRuby = app.descendants(matching: .any)["ruby.食べる.食=た|べる"]
+    XCTAssertTrue(searchRuby.waitForExistence(timeout: 3))
+    let furiganaOnlyHeight = searchRuby.frame.height
+    recordScreenshot(named: "Reading Aids - light - Furigana", app: app)
+
+    setReadingAidPreferences(furigana: true, romaji: true, in: app)
+    XCTAssertTrue(searchRuby.waitForExistence(timeout: 3))
+    XCTAssertGreaterThan(searchRuby.frame.height, furiganaOnlyHeight)
+
+    let result = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "食べる, たべる")
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 3))
+    result.tap()
+    let identityRuby = app.descendants(matching: .any)["ruby.食べる.食=た|べる"]
+    XCTAssertTrue(identityRuby.waitForExistence(timeout: 3))
+    XCTAssertGreaterThan(identityRuby.frame.height, furiganaOnlyHeight)
+
+    let detail = app.collectionViews["word-detail.screen"]
+    let exampleRomaji = app.descendants(matching: .any)["word-detail.example-token.0.romaji"]
+    scrollUpUntilExists(exampleRomaji, in: detail, attempts: 8)
+    XCTAssertTrue(exampleRomaji.waitForExistence(timeout: 3))
+    XCTAssertEqual(
+      exampleRomaji.label,
+      "Romaji, taberu tame ni iki teru n ja nai。 ikiru tame ni tabe teru n da。"
+    )
+    let semanticElements = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.0.")
+    ).allElementsBoundByIndex
+    let semanticIdentifiers = semanticElements.map(\.identifier)
+    XCTAssertEqual(
+      semanticIdentifiers.filter { $0 == "word-detail.example-token.0.romaji" }.count,
+      1
+    )
+    let tokenOrdinals = semanticIdentifiers.compactMap {
+      RepresentativeExampleSentences.tokenOrdinal(
+        $0, prefix: "word-detail.example-token.0.") == .max
+        ? nil
+        : RepresentativeExampleSentences.tokenOrdinal(
+          $0, prefix: "word-detail.example-token.0.")
+    }
+    XCTAssertEqual(tokenOrdinals, tokenOrdinals.sorted())
+    XCTAssertEqual(semanticIdentifiers.last, "word-detail.example-token.0.romaji")
+    let row = app.descendants(matching: .any)["word-detail.example.0"]
+    XCTAssertFalse(row.label.contains("Romaji"))
+    let english = app.staticTexts["word-detail.example-english.0"]
+    XCTAssertTrue(english.exists)
+    XCTAssertGreaterThan(english.frame.minY, exampleRomaji.frame.maxY)
+    recordReadingAidShortAndWrappedScreens(
+      named: "Reading Aids - light - Furigana and Romaji", in: app)
+
+    setReadingAidPreferences(furigana: false, romaji: true, in: app)
+    recordReadingAidShortAndWrappedScreens(named: "Reading Aids - light - Romaji", in: app)
+
+    setReadingAidPreferences(furigana: false, romaji: false, in: app)
+    XCTAssertFalse(app.descendants(matching: .any)["word-detail.example-token.0.romaji"].exists)
+    recordReadingAidShortAndWrappedScreens(
+      named: "Reading Aids - light - Japanese only", in: app)
+    setReadingAidPreferences(furigana: true, romaji: false, in: app)
+    recordReadingAidShortAndWrappedScreens(named: "Reading Aids - light - Furigana", in: app)
+
+    XCUIDevice.shared.appearance = .dark
+    setReadingAidPreferences(furigana: false, romaji: false, in: app)
+    recordReadingAidShortAndWrappedScreens(
+      named: "Reading Aids - dark - Japanese only", in: app)
+    setReadingAidPreferences(furigana: true, romaji: false, in: app)
+    recordReadingAidShortAndWrappedScreens(named: "Reading Aids - dark - Furigana", in: app)
+    setReadingAidPreferences(furigana: true, romaji: true, in: app)
+    recordReadingAidShortAndWrappedScreens(
+      named: "Reading Aids - dark - Furigana and Romaji", in: app)
+    setReadingAidPreferences(furigana: false, romaji: true, in: app)
+    recordReadingAidShortAndWrappedScreens(named: "Reading Aids - dark - Romaji", in: app)
+  }
+
+  @MainActor
+  func testReadingAidToggleHidesOnlyFuriganaAndPersistsAcrossColdRelaunch() throws {
+    defer { resetReadingAidPreferences() }
+    var app = launchApp(additionalArguments: ["-ResetReadingAidPreferences"])
+    var searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "食べる",
+      resultLabelPrefix: "食べる, たべる",
+      in: app,
+      searchField: searchField
+    )
+
+    let annotated = app.descendants(matching: .any)["ruby.食べる.食=た|べる"]
+    XCTAssertTrue(annotated.waitForExistence(timeout: 3))
+    let annotatedHeight = annotated.frame.height
+    XCTAssertEqual(annotated.label, "食べる, たべる")
+    let detail = app.collectionViews["word-detail.screen"]
+    let conjugations = app.buttons["word-detail.conjugations"]
+    for _ in 0..<6 where !conjugations.isHittable { detail.swipeUp(velocity: .slow) }
+    XCTAssertTrue(conjugations.isHittable)
+    conjugations.tap()
+    let annotatedConjugation = app.descendants(matching: .any)[
+      "conjugations.row.present-future"
+    ]
+    XCTAssertTrue(annotatedConjugation.waitForExistence(timeout: 3))
+    let annotatedConjugationHeight = annotatedConjugation.frame.height
+    tapNativeBack(in: app)
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+
+    app.tabBars.buttons["tab.you"].tap()
+    app.buttons["you.reading-aids"].tap()
+    let showFurigana = app.switches["reading-aids.show-furigana"]
+    XCTAssertEqual(showFurigana.value as? String, "1")
+    showFurigana.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+    let furiganaHidden = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "0"),
+      object: showFurigana
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [furiganaHidden], timeout: 2), .completed)
+    app.tabBars.buttons["Search"].tap()
+
+    let unannotated = app.descendants(matching: .any)["ruby.食べる.食=た|べる"]
+    XCTAssertTrue(unannotated.waitForExistence(timeout: 3))
+    XCTAssertEqual(unannotated.label, "食べる, たべる")
+    XCTAssertLessThan(unannotated.frame.height, annotatedHeight)
+    let unannotatedHeight = unannotated.frame.height
+    for _ in 0..<6 where !conjugations.isHittable { detail.swipeUp(velocity: .slow) }
+    XCTAssertTrue(conjugations.isHittable)
+    conjugations.tap()
+    let unannotatedConjugation = app.descendants(matching: .any)[
+      "conjugations.row.present-future"
+    ]
+    XCTAssertTrue(unannotatedConjugation.waitForExistence(timeout: 3))
+    XCTAssertLessThan(unannotatedConjugation.frame.height, annotatedConjugationHeight)
+    tapNativeBack(in: app)
+
+    app.terminate()
+    app = launchApp()
+    searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "食べる",
+      resultLabelPrefix: "食べる, たべる",
+      in: app,
+      searchField: searchField
+    )
+    let relaunched = app.descendants(matching: .any)["ruby.食べる.食=た|べる"]
+    XCTAssertTrue(relaunched.waitForExistence(timeout: 3))
+    XCTAssertEqual(relaunched.frame.height, unannotatedHeight, accuracy: 1)
+    XCTAssertEqual(relaunched.label, "食べる, たべる")
+  }
+
+  @MainActor
   func testYouUsesNativePersonalSettingsHierarchyAndSupportsIndependentHosting() throws {
     var app = launchApp(additionalArguments: ["-ResetWordImageAttachments"])
 
@@ -13,7 +174,21 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     for section in ["Your Content", "Preferences", "Language Resources", "About"] {
       XCTAssertTrue(app.staticTexts[section].exists)
     }
-    XCTAssertTrue(app.staticTexts["Reading Aids"].exists)
+    let readingAids = app.buttons["you.reading-aids"]
+    XCTAssertTrue(readingAids.exists)
+    XCTAssertTrue(readingAids.isHittable)
+    readingAids.tap()
+    XCTAssertTrue(app.navigationBars["Reading Aids"].waitForExistence(timeout: 3))
+    let showFurigana = app.switches["reading-aids.show-furigana"]
+    let showRomaji = app.switches["reading-aids.show-romaji"]
+    XCTAssertEqual(showFurigana.value as? String, "1")
+    XCTAssertEqual(showRomaji.value as? String, "0")
+    XCTAssertTrue(
+      app.staticTexts[
+        "Furigana appears above kanji. Romaji uses Apple’s system romanization and appears below complete Japanese text."
+      ].exists
+    )
+    tapNativeBack(in: app)
 
     let mediaLibrary = app.buttons["you.media-library"]
     XCTAssertTrue(mediaLibrary.exists)
@@ -550,10 +725,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   func testImageTextEncounterMediaPersistsIntoLaterSearchAndAppearsInMediaLibrary() throws {
+    defer { resetReadingAidPreferences() }
     var app = launchApp(additionalArguments: [
       "-StartImageTextFixtures", "fixture-clear-horizontal.png",
       "-InjectImageTextTranslation",
       "-ResetWordImageAttachments",
+      "-ResetReadingAidPreferences",
     ])
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
     let quiet = app.descendants(matching: .any).matching(identifier: "image-text.region.静か")
@@ -572,6 +749,16 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.tabBars.buttons["tab.you"].tap()
     XCTAssertTrue(app.staticTexts["You"].waitForExistence(timeout: 2))
+    app.buttons["you.reading-aids"].tap()
+    let showRomaji = app.switches["reading-aids.show-romaji"]
+    XCTAssertTrue(showRomaji.waitForExistence(timeout: 3))
+    showRomaji.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+    let romajiEnabled = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "1"),
+      object: showRomaji
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [romajiEnabled], timeout: 2), .completed)
+    tapNativeBack(in: app)
     let mediaLibrary = app.buttons["you.media-library"]
     XCTAssertTrue(mediaLibrary.exists)
     mediaLibrary.tap()
@@ -580,6 +767,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       app.descendants(matching: .any)["media-library.list"].waitForExistence(timeout: 2))
     XCTAssertTrue(app.staticTexts["fixture-clear-horizontal.png"].exists)
     XCTAssertTrue(app.staticTexts["静か"].exists)
+    let romaji = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "media-library.romaji.")
+    ).firstMatch
+    XCTAssertTrue(romaji.exists)
+    XCTAssertEqual(romaji.label, "Romaji, shizuka")
 
     app.terminate()
     app = launchApp()
@@ -5706,6 +5898,65 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  private func resetReadingAidPreferences() {
+    let cleanup = launchApp(additionalArguments: ["-ResetReadingAidPreferences"])
+    cleanup.terminate()
+  }
+
+  @MainActor
+  private func setReadingAidPreferences(
+    furigana: Bool,
+    romaji: Bool,
+    in app: XCUIApplication
+  ) {
+    app.tabBars.buttons["tab.you"].tap()
+    let showFurigana = app.switches["reading-aids.show-furigana"]
+    if !showFurigana.waitForExistence(timeout: 1) {
+      app.buttons["you.reading-aids"].tap()
+      XCTAssertTrue(showFurigana.waitForExistence(timeout: 3))
+    }
+    setSwitch(showFurigana, to: furigana)
+    setSwitch(app.switches["reading-aids.show-romaji"], to: romaji)
+    app.tabBars.buttons["Search"].tap()
+  }
+
+  @MainActor
+  private func setSwitch(_ toggle: XCUIElement, to expected: Bool) {
+    let expectedValue = expected ? "1" : "0"
+    if toggle.value as? String != expectedValue {
+      toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+    }
+    let updated = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", expectedValue),
+      object: toggle
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [updated], timeout: 2), .completed)
+  }
+
+  @MainActor
+  private func recordReadingAidShortAndWrappedScreens(
+    named name: String,
+    in app: XCUIApplication
+  ) {
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    let firstToken = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.0.")
+    ).firstMatch
+    RepresentativeExampleSentences.reachElement(firstToken, in: detail, app: app)
+    recordScreenshot(named: "\(name) - wrapped sentence", app: app)
+
+    tapNativeBack(in: app)
+    let result = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "食べる, たべる")
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 3))
+    recordScreenshot(named: "\(name) - short Search row", app: app)
+    result.tap()
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+  }
+
+  @MainActor
   private func assertBundledAnalysisJapaneseRegion(in app: XCUIApplication) {
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
     XCTAssertTrue(
@@ -5974,7 +6225,9 @@ enum RepresentativeExampleSentences {
       NSPredicate(format: "identifier BEGINSWITH %@", prefix)
     )
     XCTAssertTrue(query.firstMatch.waitForExistence(timeout: 12))
-    return query.allElementsBoundByIndex.sorted {
+    return query.allElementsBoundByIndex.filter {
+      tokenOrdinal($0.identifier, prefix: prefix) != .max
+    }.sorted {
       tokenOrdinal($0.identifier, prefix: prefix) < tokenOrdinal($1.identifier, prefix: prefix)
     }
   }

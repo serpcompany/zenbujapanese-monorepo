@@ -54,11 +54,11 @@ private struct ConjugationSection: View {
         ConjugatedSurface(form: form)
           .accessibilityHidden(true)
       }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(form.surface), \(presentation.title)")
-        .accessibilityValue(form.reading)
-        .accessibilityIdentifier("conjugations.row.\(form.id.rawValue)")
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel("\(form.surface), \(presentation.title)")
+      .accessibilityValue(form.reading)
+      .accessibilityIdentifier("conjugations.row.\(form.id.rawValue)")
     } header: {
       HStack(spacing: 8) {
         Text(presentation.title)
@@ -216,35 +216,16 @@ extension ConjugatedForm.Kind {
 }
 
 private struct ConjugatedSurface: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let form: ConjugatedForm
 
   var body: some View {
-    Group {
-      if dynamicTypeSize.isAccessibilitySize {
-        Text(
-          form.surface == form.reading
-            ? form.surface
-            : "\(form.surface)  \(form.reading)"
-        )
-        .font(.caption2)
-      } else if let annotation = form.readingAnnotation {
-        HStack(alignment: .bottom, spacing: 0) {
-          VStack(spacing: -2) {
-            Text(annotation.readingPrefix)
-              .font(.body)
-            Text(annotation.surfacePrefix)
-              .font(.title3)
-          }
-          Text(annotation.sharedSuffix)
-            .font(.title3)
-        }
-        .fixedSize(horizontal: false, vertical: true)
-      } else {
-        Text(form.surface)
-          .font(.title3)
-          .fixedSize(horizontal: false, vertical: true)
-      }
-    }
+    JapaneseRubyText(
+      surface: form.surface,
+      reading: form.reading,
+      baseFont: .title3,
+      rubyFont: .body,
+      exposesAccessibility: false
+    )
+    .fixedSize(horizontal: false, vertical: true)
   }
 }
