@@ -143,14 +143,16 @@ struct ExampleSentenceClient: Sendable {
   private var entryExamples: @Sendable (DictionaryEntry) async throws -> [ExampleSentence]
 
   init(
-    retrieve: @escaping @Sendable (ExampleSentenceRetrievalRequest) async throws
+    retrieve:
+      @escaping @Sendable (ExampleSentenceRetrievalRequest) async throws
       -> ExampleSentenceRetrievalResult,
     entryExamples: (@Sendable (DictionaryEntry) async throws -> [ExampleSentence])? = nil
   ) {
     self.retrieve = retrieve
-    self.entryExamples = entryExamples ?? { entry in
-      try await retrieve(.dictionaryEntry(entry)).sentences
-    }
+    self.entryExamples =
+      entryExamples ?? { entry in
+        try await retrieve(.dictionaryEntry(entry)).sentences
+      }
   }
 
   static let live = ExampleSentenceClient(
