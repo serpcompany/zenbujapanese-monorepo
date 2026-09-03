@@ -18,8 +18,15 @@ import {
   validateRecordedTests,
 } from "../parity-ledger.mjs";
 
+function readSearchDictionaryPlan() {
+  return JSON.parse(readFileSync(
+    "apps/ios/Verification/search-dictionary-parity/search-dictionary-plan.json",
+    "utf8",
+  ));
+}
+
 test("crawler defaults to the plan-declared tests for its environment", () => {
-  const plan = JSON.parse(readFileSync("apps/ios/Parity/search-dictionary-plan.json", "utf8"));
+  const plan = readSearchDictionaryPlan();
 
   assert.deepEqual(
     testSelectionForEnvironment(plan, "release_simulator_smoke"),
@@ -43,7 +50,7 @@ test("crawler accepts both plan and fully qualified XCTest identifiers", () => {
 });
 
 test("search dictionary plan reserves one three-environment matrix for the frozen commit", () => {
-  const plan = JSON.parse(readFileSync("apps/ios/Parity/search-dictionary-plan.json", "utf8"));
+  const plan = readSearchDictionaryPlan();
 
   assert.equal(plan.minimum_complete_runs, 1);
   assert.deepEqual(plan.minimum_complete_runs_by_environment, Object.fromEntries(
@@ -56,7 +63,7 @@ test("search dictionary plan reserves one three-environment matrix for the froze
 });
 
 test("signed-device blocking plan verifies image ingestion without requiring camera capture", () => {
-  const plan = JSON.parse(readFileSync("apps/ios/Parity/search-dictionary-plan.json", "utf8"));
+  const plan = readSearchDictionaryPlan();
   const scope = JSON.parse(readFileSync("docs/clone-discovery/nihongo/scope.json", "utf8"));
   const physicalTests = plan.environment_test_ids.signed_physical_device;
 

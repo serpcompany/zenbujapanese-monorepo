@@ -1043,7 +1043,7 @@ function crawlCommand(arguments_) {
 
   const resultBundlePath = join(runDirectory, "Parity.xcresult");
   const derivedDataPath = join(runDirectory, "DerivedData");
-  const planPath = resolve(optionValue(arguments_, "--plan", "apps/ios/Parity/search-dictionary-plan.json"));
+  const planPath = resolve(optionValue(arguments_, "--plan", "apps/ios/Verification/search-dictionary-parity/search-dictionary-plan.json"));
   const plan = JSON.parse(readFileSync(planPath, "utf8"));
   const selectedTestIds = testSelectionForEnvironment(
     plan,
