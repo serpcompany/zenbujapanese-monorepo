@@ -37,6 +37,22 @@ final class JapaneseTextAnalysisTests: XCTestCase {
       ambiguous.candidates.filter { $0.surface == "こと" }
         .allSatisfy { $0.dictionaryForm == "こと" && $0.partOfSpeech.first == "名詞" }
     )
+
+    let noCurrent = try await JapaneseMorphologyClient.uiTestFixture.analyze(
+      "水は見る見るうちに橋げたのところまで達した。"
+    )
+    XCTAssertEqual(noCurrent.candidates[2].surface, "見る見る")
+    XCTAssertEqual(noCurrent.candidates[2].dictionaryForm, "見る見る")
+    XCTAssertEqual(noCurrent.candidates[2].partOfSpeech.first, "副詞")
+
+    let longMixedScript = try await JapaneseMorphologyClient.uiTestFixture.analyze(
+      "REM睡眠中の脳波は起きている時と同じ脳波であり、夢を見るステージです。"
+    )
+    XCTAssertEqual(longMixedScript.candidates.map(\.surface).joined(), longMixedScript.transcript)
+    XCTAssertEqual(longMixedScript.candidates[0].surface, "REM")
+    XCTAssertEqual(longMixedScript.candidates[18].surface, "見る")
+    XCTAssertEqual(longMixedScript.candidates[18].dictionaryForm, "見る")
+    XCTAssertEqual(longMixedScript.candidates[18].partOfSpeech.first, "動詞")
   }
 
   func testProviderEvidenceSeparatesTodayFromTopicParticleWithoutGreetingLink() async throws {

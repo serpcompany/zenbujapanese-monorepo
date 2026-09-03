@@ -232,7 +232,8 @@ struct WordDetailView: View {
       let storedMedia = await encounterMediaStore.encounters(word)
       guard !Task.isCancelled else { return }
       encounterMedia = storedMedia
-      examples = (try? await exampleSentenceClient.examples(entry)) ?? []
+      let loadedExamples = (try? await exampleSentenceClient.examples(entry)) ?? []
+      examples = exampleSentenceTestFixtures(overriding: loadedExamples)
       analysisAvailability = await japaneseTextAnalysisClient.availability()
       frequency =
         (try? await frequencyCapability.evidence(for: entry.id))
@@ -250,6 +251,34 @@ struct WordDetailView: View {
 
   private var displayableEncounterMedia: [EncounterMedia] {
     encounterMedia.filter { UIImage(data: $0.data) != nil }
+  }
+
+  private func exampleSentenceTestFixtures(overriding loadedExamples: [ExampleSentence])
+    -> [ExampleSentence]
+  {
+    #if DEBUG
+      guard ProcessInfo.processInfo.arguments.contains("-Issue246WordDetailExampleFixtures"),
+        let noCurrentID = ExampleSentenceID(
+          rawValue: "esp1_ea71ea7cd918b2d745f27ffbee917f5a"),
+        let longMixedScriptID = ExampleSentenceID(
+          rawValue: "esp1_05d9fecf64a4857657bbc5bcce0aee6f")
+      else { return loadedExamples }
+      return [
+        ExampleSentence(
+          id: noCurrentID,
+          japanese: "水は見る見るうちに橋げたのところまで達した。",
+          english: "The water came up to the bridge girder in a second."
+        ),
+        ExampleSentence(
+          id: longMixedScriptID,
+          japanese: "REM睡眠中の脳波は起きている時と同じ脳波であり、夢を見るステージです。",
+          english:
+            "The brain waves during REM sleep are the same as when awake, and it's the stage when you have dreams."
+        ),
+      ]
+    #else
+      return loadedExamples
+    #endif
   }
 
   private func removeEncounterMedia(_ mediaID: String) async {
@@ -996,10 +1025,12 @@ private struct RelationshipsSection: View {
           Text("\(relationship.headword)  \(relationship.reading)")
             .font(.headline)
             .foregroundStyle(.primary)
+            .accessibilityIdentifier("word-detail.related-primary.\(relationship.headword)")
           Text("\(relationship.relation) · \(relationship.summary)")
             .font(.footnote)
             .foregroundStyle(.secondary)
             .lineLimit(2)
+            .accessibilityIdentifier("word-detail.related-support.\(relationship.headword)")
         }
       }
       .tint(.primary)

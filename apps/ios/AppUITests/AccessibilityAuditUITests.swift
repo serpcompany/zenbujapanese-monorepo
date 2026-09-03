@@ -160,6 +160,14 @@ final class AccessibilityAuditUITests: XCTestCase {
       related.label,
       "見える  みえる, Related intransitive verb · to be seen, to be visible, to be in sight"
     )
+    let primary = app.staticTexts["word-detail.related-primary.見える"]
+    let support = app.staticTexts["word-detail.related-support.見える"]
+    XCTAssertTrue(primary.exists)
+    XCTAssertTrue(support.exists)
+    XCTAssertLessThan(primary.frame.maxY, support.frame.minY)
+    XCTAssertTrue(containsSystemPrimaryTextPixels(in: primary.screenshot(), appearance: .light))
+    XCTAssertTrue(containsSystemSecondaryTextPixels(in: support.screenshot(), appearance: .light))
+    XCTAssertFalse(containsSystemPrimaryTextPixels(in: support.screenshot(), appearance: .light))
     XCTAssertFalse(
       containsSystemBluePixels(in: related.screenshot()),
       "Related Word content should use system-primary and system-secondary text, not action tint."
@@ -193,6 +201,13 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(related.waitForExistence(timeout: 3))
     XCTAssertTrue(related.isHittable)
     XCTAssertGreaterThanOrEqual(related.frame.height, 44)
+    let primary = app.staticTexts["word-detail.related-primary.見える"]
+    let support = app.staticTexts["word-detail.related-support.見える"]
+    XCTAssertTrue(primary.exists)
+    XCTAssertTrue(support.exists)
+    XCTAssertTrue(containsSystemPrimaryTextPixels(in: primary.screenshot(), appearance: .dark))
+    XCTAssertTrue(containsSystemSecondaryTextPixels(in: support.screenshot(), appearance: .dark))
+    XCTAssertFalse(containsSystemPrimaryTextPixels(in: support.screenshot(), appearance: .dark))
     XCTAssertFalse(containsSystemBluePixels(in: related.screenshot()))
     retainElementScreenshot(related, named: "Neutral Related Word row - dark")
   }
@@ -204,10 +219,16 @@ final class AccessibilityAuditUITests: XCTestCase {
       resultLabelPrefix: "見る, みる",
       appearance: .light
     )
-    let candidate = app.buttons["word-detail.example-token.2.1.こと"]
-    for _ in 0..<12 where !candidate.exists || !candidate.isHittable {
+    let row = app.descendants(matching: .any).matching(
+      NSPredicate(format: "label == %@", "見ることは信ずることなり。, Seeing is believing.")
+    ).firstMatch
+    for _ in 0..<12 where !row.exists || !row.isHittable {
       detail.swipeUp(velocity: .slow)
     }
+    XCTAssertTrue(row.waitForExistence(timeout: 3))
+    let candidate = row.descendants(matching: .button).matching(
+      NSPredicate(format: "label == %@", "こと, choose dictionary entry")
+    ).firstMatch
 
     XCTAssertTrue(candidate.waitForExistence(timeout: 3))
     XCTAssertTrue(candidate.isHittable)
@@ -239,7 +260,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       ]
     )
     let firstToken = app.descendants(matching: .any).matching(
-      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.0.")
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.")
     ).firstMatch
     for _ in 0..<12 where !firstToken.exists || !firstToken.isHittable {
       detail.swipeUp(velocity: .slow)
@@ -266,16 +287,21 @@ final class AccessibilityAuditUITests: XCTestCase {
       resultLabelPrefix: "来る, くる, to come",
       appearance: .light
     )
-    let currentOccurrences = app.buttons.matching(
-      NSPredicate(
-        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
-        "word-detail.example-token.6.",
-        "来る, くる"
-      )
-    )
-    for _ in 0..<20 where currentOccurrences.count < 2 {
+    let row = app.descendants(matching: .any).matching(
+      NSPredicate(format: "label == %@", "来る日も来る日も雨だった。, It rained day after day.")
+    ).firstMatch
+    for _ in 0..<20 where !row.exists || !row.isHittable {
       detail.swipeUp(velocity: .fast)
     }
+    XCTAssertTrue(row.waitForExistence(timeout: 3))
+    let currentOccurrences = row.descendants(matching: .button).matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@ AND value == %@",
+        "word-detail.example-token.",
+        "来る, くる",
+        "Current word"
+      )
+    )
 
     XCTAssertEqual(currentOccurrences.count, 2)
     for occurrence in currentOccurrences.allElementsBoundByIndex {
@@ -283,11 +309,11 @@ final class AccessibilityAuditUITests: XCTestCase {
       XCTAssertTrue(occurrence.isSelected)
       XCTAssertTrue(containsSystemBluePixels(in: occurrence.screenshot()))
     }
-    let otherTokens = app.descendants(matching: .any).matching(
+    let otherTokens = row.descendants(matching: .any).matching(
       NSPredicate(
-        format: "identifier BEGINSWITH %@ AND NOT (label BEGINSWITH %@)",
-        "word-detail.example-token.6.",
-        "来る, くる"
+        format: "identifier BEGINSWITH %@ AND value != %@",
+        "word-detail.example-token.",
+        "Current word"
       )
     )
     XCTAssertGreaterThan(otherTokens.count, 0)
@@ -297,9 +323,71 @@ final class AccessibilityAuditUITests: XCTestCase {
       XCTAssertFalse(containsSystemBluePixels(in: token.screenshot()))
     }
     retainElementScreenshot(
-      app.descendants(matching: .any)["word-detail.example.6"],
+      row,
       named: "Two current-word occurrences with neutral surrounding tokens"
     )
+  }
+
+  @MainActor
+  func testFullAnalysisKeepsNoCurrentAndLongMixedScriptSentencesSelective() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "見る",
+      resultLabelPrefix: "見る, みる",
+      appearance: .light,
+      additionalArguments: ["-Issue246WordDetailExampleFixtures"]
+    )
+
+    let noCurrentRow = app.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "label == %@",
+        "水は見る見るうちに橋げたのところまで達した。, The water came up to the bridge girder in a second."
+      )
+    ).firstMatch
+    for _ in 0..<12 where !noCurrentRow.exists || !noCurrentRow.isHittable {
+      detail.swipeUp(velocity: .fast)
+    }
+    XCTAssertTrue(noCurrentRow.waitForExistence(timeout: 3))
+    let noCurrentTokens = noCurrentRow.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.")
+    ).allElementsBoundByIndex
+    XCTAssertGreaterThan(noCurrentTokens.count, 1)
+    XCTAssertGreaterThan(noCurrentTokens.filter { $0.elementType == .button }.count, 0)
+    for token in noCurrentTokens {
+      XCTAssertNotEqual(token.value as? String, "Current word")
+      XCTAssertFalse(token.isSelected)
+      XCTAssertFalse(containsSystemBluePixels(in: token.screenshot()))
+    }
+    retainElementScreenshot(noCurrentRow, named: "Full-analysis sentence without current entry")
+
+    let longRow = app.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "label == %@",
+        "REM睡眠中の脳波は起きている時と同じ脳波であり、夢を見るステージです。, The brain waves during REM sleep are the same as when awake, and it's the stage when you have dreams."
+      )
+    ).firstMatch
+    for _ in 0..<4 where !longRow.exists || !longRow.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(longRow.waitForExistence(timeout: 3))
+    let longTokens = longRow.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.")
+    ).allElementsBoundByIndex
+    let current = longTokens.filter { $0.value as? String == "Current word" }
+    XCTAssertEqual(current.count, 1)
+    guard let currentToken = current.first else { return }
+    XCTAssertTrue(currentToken.isSelected)
+    XCTAssertTrue(containsSystemBluePixels(in: currentToken.screenshot()))
+    for token in longTokens where token.value as? String != "Current word" {
+      XCTAssertFalse(token.isSelected)
+      XCTAssertFalse(containsSystemBluePixels(in: token.screenshot()))
+    }
+    for token in longTokens {
+      XCTAssertGreaterThan(token.frame.width, 0)
+      XCTAssertGreaterThan(token.frame.height, 0)
+      XCTAssertGreaterThanOrEqual(token.frame.minX, app.frame.minX)
+      XCTAssertLessThanOrEqual(token.frame.maxX, app.frame.maxX)
+    }
+    retainElementScreenshot(longRow, named: "Selective current word in long mixed-script sentence")
   }
 
   @MainActor
@@ -1935,6 +2023,33 @@ final class AccessibilityAuditUITests: XCTestCase {
   private func containsSystemBluePixels(in screenshot: XCUIScreenshot) -> Bool {
     containsPixels(in: screenshot) { red, green, blue in
       blue >= 150 && blue >= red + 45 && blue >= green + 30
+    }
+  }
+
+  @MainActor
+  private func containsSystemPrimaryTextPixels(
+    in screenshot: XCUIScreenshot,
+    appearance: XCUIDevice.Appearance
+  ) -> Bool {
+    containsPixels(in: screenshot, requiredCount: 24) { red, green, blue in
+      switch appearance {
+      case .dark: red >= 225 && green >= 225 && blue >= 225
+      default: red <= 50 && green <= 50 && blue <= 50
+      }
+    }
+  }
+
+  @MainActor
+  private func containsSystemSecondaryTextPixels(
+    in screenshot: XCUIScreenshot,
+    appearance: XCUIDevice.Appearance
+  ) -> Bool {
+    containsPixels(in: screenshot, requiredCount: 24) { red, green, blue in
+      guard abs(red - green) <= 8, abs(green - blue) <= 8 else { return false }
+      switch appearance {
+      case .dark: return (130...210).contains(red)
+      default: return (100...190).contains(red)
+      }
     }
   }
 
