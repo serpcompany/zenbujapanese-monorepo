@@ -29,6 +29,20 @@
   },
   "correctness_plans": ["ZenbuPR", "ZenbuSudachiIntegration"],
   "intentional_same_stage_evidence": {
+    "ui.example-candidate-selection|ui.example-layout": "Candidate selection proves the native ambiguity Menu destination and Back restoration; the shared-layout journey independently proves reconstruction, rhythm, wrapping, ordinary linked navigation, and speech.",
+    "ui.example-candidate-selection|ui.example-layout-hit-regions": "Candidate selection proves Menu routing; the focused hit audit independently inventories compact inline target accessibility without opening destinations.",
+    "ui.example-candidate-selection|ui.example-layout-maximum": "Candidate selection runs once at normal size; the single maximum-size smoke independently proves adaptive wrapping and clipping.",
+    "ui.example-candidate-selection|ui.examples": "Candidate selection proves one ambiguity route from inline Word Detail; the production Examples journey independently preserves long-list scrolling, speech, and ordinary linked navigation.",
+    "ui.example-candidate-selection|ui.word-detail": "Candidate selection proves an inline ambiguity destination and restoration; the Word Detail journey independently preserves notes and the surrounding detail lifecycle.",
+    "ui.example-layout|ui.examples": "The shared-layout journey proves exact cross-surface Furigana rhythm and wrapping; the existing Examples journey independently preserves production scrolling, speech, linked navigation, and Back restoration.",
+    "ui.example-layout|ui.example-layout-maximum": "The normal-size shared-layout journey proves cross-surface rhythm; one separate maximum-size smoke proves the changed wrapping seam remains adaptive without duplicating the broader matrix.",
+    "ui.example-layout|ui.example-layout-hit-regions": "The normal layout journey proves visible rhythm and interaction; the focused normal-size hit audit independently inventories the compact inline target tradeoff without repeating navigation.",
+    "ui.example-layout|ui.word-detail": "The shared-layout journey proves inline sentence geometry and token interaction; the Word Detail journey independently preserves note persistence and the surrounding native detail lifecycle.",
+    "ui.example-layout-maximum|ui.examples": "The maximum-size smoke proves only the changed shared wrapping seam; the normal Examples journey independently retains production scrolling, speech, navigation, and restoration.",
+    "ui.example-layout-hit-regions|ui.example-layout-maximum": "The normal-size audit records compact inline target findings; the single maximum-size smoke independently proves adaptive wrapping and clipping without repeating a broad matrix.",
+    "ui.example-layout-hit-regions|ui.examples": "The focused hit audit inventories inline targets only; the Examples journey independently preserves production scrolling, speech, navigation, and restoration.",
+    "ui.example-layout-maximum|ui.word-detail": "The maximum-size smoke proves only adaptive sentence wrapping; the Word Detail journey independently preserves the surrounding detail lifecycle at normal size.",
+    "ui.example-layout-hit-regions|ui.word-detail": "The focused hit audit inventories inline sentence targets only; the Word Detail journey independently preserves note persistence and surrounding detail lifecycle.",
     "accessibility.you-list|ui.you-hierarchy": "The normal-size journey proves typed navigation, independent tab paths, and destination behavior; one independent maximum-size smoke proves the native You hierarchy remains reachable without duplicating those destination journeys.",
     "accessibility.japanese-text-analysis-settings|ui.japanese-text-analysis-settings": "The normal-size journey proves bundled-default semantics and no actions; the independent maximum-size smoke proves the changed native management rows remain reachable without restoring obsolete controls.",
     "ui.bundled-japanese-text-analysis|ui.image-text": "The bounded bundled-provider cold-relaunch seam proves real offline Sudachi selection; the broader Image Text fixture journey independently preserves paging, geometry, gloss, navigation, and sharing contracts.",
@@ -118,6 +132,30 @@
       "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed",
       "traits": ["ui", "normal-dynamic-type"],
       "journeys": ["example-sentences"]
+    },
+    "ui.example-layout": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSharedFuriganaSentenceLayoutPreservesSourceRhythmAcrossExamplesAndWordDetail",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["example-sentences", "word-detail"]
+    },
+    "ui.example-layout-maximum": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutWrapsNaturallyAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["example-sentences", "word-detail"]
+    },
+    "ui.example-layout-hit-regions": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutKeepsExactInlineHitRegionInventory",
+      "traits": ["ui", "accessibility", "normal-dynamic-type"],
+      "journeys": ["example-sentences", "word-detail"]
+    },
+    "ui.example-candidate-selection": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testInlineWordDetailAmbiguousCandidateRemainsNeutralAndSelectable",
+      "traits": ["ui", "accessibility", "normal-dynamic-type"],
+      "journeys": ["example-sentences", "word-detail"]
     },
     "ui.conjugations": {
       "plan": "ZenbuPR",
@@ -219,6 +257,10 @@
       "ui.kanji",
       "ui.word-detail",
       "ui.examples",
+      "ui.example-layout",
+      "ui.example-layout-maximum",
+      "ui.example-layout-hit-regions",
+      "ui.example-candidate-selection",
       "ui.conjugations",
       "ui.japanese-text-analysis-settings",
       "ui.bundled-japanese-text-analysis"
@@ -485,9 +527,24 @@
         "apps/ios/Modules/Sources/SearchExperience/LinkedJapaneseText.swift",
         "apps/ios/Modules/Sources/SearchExperience/JapaneseRubyText.swift"
       ],
-      "tdd": ["ui.examples"],
-      "issue-final": ["unit.complete", "ui.examples"],
-      "hosted-fast": ["unit.complete", "ui.examples"]
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
+        "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift",
+        "apps/ios/Modules/Tests/SearchExperienceTests/ExampleSentenceRetrievalTests.swift",
+        "apps/ios/Modules/Tests/SearchExperienceTests/JapaneseRubyAnnotationTests.swift",
+        "apps/ios/VerificationPolicy.json"
+      ],
+      "adaptive_layout": true,
+      "tdd": ["ui.example-layout"],
+      "issue-final": [
+        "unit.complete",
+        "ui.examples",
+        "ui.example-layout",
+        "ui.example-layout-maximum",
+        "ui.example-layout-hit-regions",
+        "ui.example-candidate-selection"
+      ],
+      "hosted-fast": ["unit.complete", "ui.examples", "ui.example-layout"]
     },
     "conjugations": {
       "paths": [

@@ -298,11 +298,16 @@ final class AccessibilityAuditUITests: XCTestCase {
     retainElementScreenshot(candidate, named: "Neutral ambiguous sentence token")
 
     candidate.tap()
-    XCTAssertTrue(
-      app.buttons["こと (こと) — particle indicating a command"].waitForExistence(timeout: 3)
-    )
-    app.tap()
+    let choice = app.buttons["こと (こと) — particle indicating a command"]
+    XCTAssertTrue(choice.waitForExistence(timeout: 3))
+    choice.tap()
+    XCTAssertTrue(app.descendants(matching: .any)["ruby.こと.こと"].waitForExistence(timeout: 3))
+    let back = app.navigationBars.buttons.firstMatch
+    XCTAssertTrue(back.waitForExistence(timeout: 3))
+    back.tap()
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    RepresentativeExampleSentences.reachElement(candidate, in: detail, app: app)
+    XCTAssertTrue(candidate.isHittable)
   }
 
   @MainActor
@@ -759,6 +764,72 @@ final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
   func testLightRepresentativeExampleSentenceLayoutsRemainReadableAndOperable() throws {
     try auditRepresentativeExampleSentences(appearance: .light, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testSharedFuriganaSentenceLayoutWrapsNaturallyAtLargestAccessibilityTextSize() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "見る",
+      resultLabelPrefix: "見る, みる",
+      appearance: .dark,
+      additionalArguments: [
+        "-Issue246WordDetailExampleFixtures",
+        "-UIPreferredContentSizeCategoryName",
+        "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    let prefix = "word-detail.example-token.0."
+    let first = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", prefix)
+    ).firstMatch
+    RepresentativeExampleSentences.reachElement(first, in: detail, app: app)
+    let tokens = RepresentativeExampleSentences.orderedTokens(prefix: prefix, in: app)
+    XCTAssertEqual(
+      RepresentativeExampleSentences.reconstructedSentence(from: tokens, prefix: prefix),
+      "水は見る見るうちに橋げたのところまで達した。"
+    )
+    let visualLines = Dictionary(grouping: tokens) { Int($0.frame.maxY.rounded()) }
+    XCTAssertLessThan(
+      visualLines.count,
+      tokens.count,
+      "Largest text must retain natural multi-token Japanese lines instead of one token per row"
+    )
+    for token in tokens {
+      XCTAssertGreaterThanOrEqual(token.frame.minX, detail.frame.minX)
+      XCTAssertLessThanOrEqual(token.frame.maxX, detail.frame.maxX)
+    }
+    let terminalPunctuation = try XCTUnwrap(tokens.last)
+    let precedingToken = try XCTUnwrap(tokens.dropLast().last)
+    XCTAssertEqual(
+      terminalPunctuation.frame.maxY,
+      precedingToken.frame.maxY,
+      accuracy: 1,
+      "Japanese terminal punctuation must wrap with the preceding token"
+    )
+    try performAudit(
+      in: app,
+      named: "Shared Furigana sentence layout - dark accessibility XXXL",
+      types: .dynamicType.union(.textClipped)
+    )
+  }
+
+  @MainActor
+  func testSharedFuriganaSentenceLayoutKeepsExactInlineHitRegionInventory() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "taberu",
+      resultLabelPrefix: "食べる, たべる",
+      appearance: .light,
+      additionalArguments: ["-Issue253SentenceLayoutFixtures"]
+    )
+    let firstToken = app.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@",
+        "word-detail.example-token.0."
+      )
+    ).firstMatch
+    RepresentativeExampleSentences.reachElement(firstToken, in: detail, app: app)
+    retainScreenshot(named: "Shared Furigana sentence layout - exact hit regions")
+    try app.performAccessibilityAudit(for: .hitRegion)
   }
 
   @MainActor

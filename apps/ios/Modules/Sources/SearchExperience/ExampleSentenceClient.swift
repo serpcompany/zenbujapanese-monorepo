@@ -181,10 +181,56 @@ struct ExampleSentenceClient: Sendable {
 #if DEBUG
   extension ExampleSentenceClient {
     static func clientFromProcessArguments(live: ExampleSentenceClient) -> ExampleSentenceClient? {
-      guard ProcessInfo.processInfo.arguments.contains("-Issue246WordDetailExampleFixtures") else {
-        return nil
+      if ProcessInfo.processInfo.arguments.contains("-Issue253SentenceLayoutFixtures") {
+        return issue253SentenceLayoutFixture(live: live)
       }
-      return issue246WordDetailFixture(live: live)
+      return ProcessInfo.processInfo.arguments.contains("-Issue246WordDetailExampleFixtures")
+        ? issue246WordDetailFixture(live: live) : nil
+    }
+
+    static func issue253SentenceLayoutFixture(live: ExampleSentenceClient) -> ExampleSentenceClient
+    {
+      return ExampleSentenceClient(retrieve: live.retrieve) { entry in
+        guard entry.headword == "食べる" else { return try await live.examples(entry) }
+        let rows: [(String, String, String)] = [
+          (
+            "esp1_25300000000000000000000000000001",
+            "食べるために生きてるんじゃない。生きるために食べてるんだ。",
+            "I don't live to eat. I eat to live."
+          ),
+          (
+            "esp1_25300000000000000000000000000002",
+            "たべる？",
+            "Will you eat?"
+          ),
+          (
+            "esp1_25300000000000000000000000000003",
+            "問題を解いてから、友達と話します。",
+            "After solving the problem, I will talk with my friend."
+          ),
+          (
+            "esp1_25300000000000000000000000000004",
+            "REM睡眠中の脳波は起きている時と同じ脳波であり、夢を見るステージです。",
+            "During REM sleep, brain waves resemble the waking state, and dreams occur."
+          ),
+          (
+            "esp1_25300000000000000000000000000005",
+            "見ることは信ずることなり。",
+            "Seeing is believing."
+          ),
+          (
+            "esp1_25300000000000000000000000000006",
+            "ZENBU2026SUPERCALIFRAGILISTICEXPIALIDOCIOUS。",
+            "A deliberately long out-of-vocabulary token remains readable."
+          ),
+        ]
+        return try rows.map { rawID, japanese, english in
+          guard let id = ExampleSentenceID(rawValue: rawID) else {
+            throw ExampleSentenceRetrievalError.retrievalUnavailable(.invalidBaseCorpus)
+          }
+          return ExampleSentence(id: id, japanese: japanese, english: english)
+        }
+      }
     }
 
     static func issue246WordDetailFixture(live: ExampleSentenceClient) -> ExampleSentenceClient {

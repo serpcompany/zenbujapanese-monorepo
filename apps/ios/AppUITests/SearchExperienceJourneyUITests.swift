@@ -4268,6 +4268,139 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testSharedFuriganaSentenceLayoutPreservesSourceRhythmAcrossExamplesAndWordDetail() throws {
+    let source = "食べるために生きてるんじゃない。生きるために食べてるんだ。"
+    let app = launchApp(additionalArguments: [
+      "-Issue253SentenceLayoutFixtures", "-RecordJapaneseAnalysisRequests",
+      "-RecordSpeechRequests",
+    ])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "taberu",
+      resultLabelPrefix: "食べる, たべる",
+      in: app,
+      searchField: searchField
+    )
+
+    let detail = app.collectionViews["word-detail.screen"]
+    let firstInlineToken = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.0.")
+    ).firstMatch
+    RepresentativeExampleSentences.reachElement(firstInlineToken, in: detail, app: app)
+    let inlineTokens = RepresentativeExampleSentences.orderedTokens(
+      prefix: "word-detail.example-token.0.", in: app)
+    XCTAssertEqual(RepresentativeExampleSentences.reconstructedSentence(from: inlineTokens), source)
+    assertNaturalJapaneseRhythm(
+      inlineTokens, prefix: "word-detail.example-token.0.", in: app)
+    XCTAssertEqual(inlineTokens.filter { $0.value as? String == "Current word" }.count, 2)
+    let inlineLines = RepresentativeExampleSentences.visualLineSurfaces(from: inlineTokens)
+    recordScreenshot(named: "issue-253-word-detail-furigana-layout", app: app)
+
+    let linkedLive = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
+        "word-detail.example-token.0.",
+        ".生き"
+      )
+    ).firstMatch
+    XCTAssertTrue(linkedLive.isHittable)
+    linkedLive.tap()
+    XCTAssertTrue(
+      app.descendants(matching: .any)["ruby.生きる.生=い|きる"].waitForExistence(timeout: 3)
+    )
+    tapNativeBack(in: app)
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+
+    let pureKanaPrefix = "word-detail.example-token.1."
+    let pureKanaFirst = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", pureKanaPrefix)
+    ).firstMatch
+    RepresentativeExampleSentences.reachElement(pureKanaFirst, in: detail, app: app)
+    XCTAssertEqual(
+      RepresentativeExampleSentences.reconstructedSentence(
+        from: RepresentativeExampleSentences.orderedTokens(prefix: pureKanaPrefix, in: app)
+      ),
+      "たべる？"
+    )
+
+    let candidate = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label == %@",
+        "word-detail.example-token.2.",
+        "解い, choose dictionary entry"
+      )
+    ).firstMatch
+    scrollElementIntoSafeTapRegion(candidate, in: detail, app: app)
+    XCTAssertTrue(candidate.exists)
+    XCTAssertTrue(candidate.isHittable)
+    XCTAssertEqual(candidate.value as? String, "")
+
+    tapNativeBack(in: app)
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    let examplesButton = app.buttons["search.examples"]
+    XCTAssertTrue(examplesButton.waitForExistence(timeout: 4))
+    examplesButton.tap()
+    let examples = app.collectionViews["example-list.screen"]
+    XCTAssertTrue(examples.waitForExistence(timeout: 4))
+
+    let dedicatedTokens = RepresentativeExampleSentences.orderedTokens(
+      prefix: "example.token.0.", in: app)
+    XCTAssertEqual(
+      RepresentativeExampleSentences.reconstructedSentence(from: dedicatedTokens), source)
+    assertNaturalJapaneseRhythm(dedicatedTokens, prefix: "example.token.0.", in: app)
+    XCTAssertFalse(dedicatedTokens.contains { $0.value as? String == "Current word" })
+    let dedicatedLines = RepresentativeExampleSentences.visualLineSurfaces(from: dedicatedTokens)
+    XCTAssertEqual(
+      dedicatedLines.count,
+      inlineLines.count,
+      "Native List styles may offer different row widths, but the shared policy should keep equivalent wrapping depth"
+    )
+    XCTAssertEqual(dedicatedLines.joined(), inlineLines.joined())
+    recordScreenshot(named: "issue-253-dedicated-furigana-layout", app: app)
+    let speaker = app.buttons["example.speaker.0"]
+    XCTAssertTrue(speaker.isHittable)
+    speaker.tap()
+    let speechRequest = app.descendants(matching: .any)["speech.request"]
+    XCTAssertTrue(speechRequest.waitForExistence(timeout: 2))
+    XCTAssertEqual(speechRequest.label, "Speech requested \(source)")
+
+    let longPrefix = "example.token.5."
+    let longToken = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", longPrefix)
+    ).firstMatch
+    RepresentativeExampleSentences.reachElement(longToken, in: examples, app: app)
+    let longTokens = RepresentativeExampleSentences.orderedTokens(prefix: longPrefix, in: app)
+    XCTAssertEqual(
+      RepresentativeExampleSentences.reconstructedSentence(from: longTokens, prefix: longPrefix),
+      "ZENBU2026SUPERCALIFRAGILISTICEXPIALIDOCIOUS。"
+    )
+    for token in longTokens {
+      XCTAssertGreaterThanOrEqual(token.frame.minX, examples.frame.minX)
+      XCTAssertLessThanOrEqual(token.frame.maxX, examples.frame.maxX)
+    }
+    let analysisCount = app.descendants(matching: .any)["examples.analysis-request-count"]
+    XCTAssertTrue(analysisCount.waitForExistence(timeout: 2))
+    let initialAnalysisCount = try XCTUnwrap(
+      Int(analysisCount.label.split(separator: " ").last ?? "")
+    )
+    XCTAssertGreaterThan(initialAnalysisCount, 0)
+    examples.swipeDown(velocity: .slow)
+    examples.swipeDown(velocity: .slow)
+    RepresentativeExampleSentences.reachElement(longToken, in: examples, app: app)
+    let finalAnalysisCount = try XCTUnwrap(
+      Int(analysisCount.label.split(separator: " ").last ?? "")
+    )
+    XCTAssertEqual(finalAnalysisCount, initialAnalysisCount)
+    XCTAssertLessThanOrEqual(
+      finalAnalysisCount,
+      6,
+      "Stable Example Sentence rows must start at most one analysis task per unique fixture row"
+    )
+    XCTAssertTrue(examples.exists)
+  }
+
+  @MainActor
   func testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed() throws {
     let app = launchApp(additionalArguments: ["-RecordSpeechRequests"])
     let searchField = app.textFields["search.field"]
@@ -5751,6 +5884,54 @@ final class SearchExperienceJourneyUITests: XCTestCase {
         || (0x3400...0x9FFF).contains(scalar.value)
     }
   }
+
+  @MainActor
+  private func assertNaturalJapaneseRhythm(
+    _ tokens: [XCUIElement],
+    prefix: String,
+    in app: XCUIApplication,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    XCTAssertFalse(tokens.isEmpty, file: file, line: line)
+    let pixelTolerance = 1 / max(1, app.screenshot().image.scale)
+    for (left, right) in zip(tokens, tokens.dropFirst())
+    where abs(left.frame.maxY - right.frame.maxY) <= pixelTolerance {
+      XCTAssertLessThanOrEqual(
+        right.frame.minX - left.frame.maxX,
+        pixelTolerance,
+        "Source-adjacent Japanese tokens must not gain visual whitespace: \(left.identifier), \(right.identifier)",
+        file: file,
+        line: line
+      )
+    }
+    for token in tokens where token.elementType == .button {
+      let surface = RepresentativeExampleSentences.tokenSurface(
+        from: token.identifier, prefix: prefix)
+      guard surface.count <= 2 else { continue }
+      XCTAssertLessThan(
+        token.frame.width,
+        44,
+        "A minimum hit frame must not become visible sentence spacing: \(token.identifier)",
+        file: file,
+        line: line
+      )
+    }
+    let closingPunctuation = CharacterSet(charactersIn: "。、？！…」』）］｝〉》】〕〗〙〛")
+    for index in tokens.indices.dropFirst() {
+      let surface = RepresentativeExampleSentences.tokenSurface(
+        from: tokens[index].identifier, prefix: prefix)
+      guard surface.unicodeScalars.allSatisfy(closingPunctuation.contains) else { continue }
+      XCTAssertEqual(
+        tokens[index].frame.maxY,
+        tokens[index - 1].frame.maxY,
+        accuracy: pixelTolerance,
+        "Closing Japanese punctuation must remain attached to the preceding token",
+        file: file,
+        line: line
+      )
+    }
+  }
 }
 
 enum RepresentativeExampleSentences {
@@ -5786,6 +5967,94 @@ enum RepresentativeExampleSentences {
       english: "It is feared that those citizens now present will run away."
     ),
   ]
+
+  @MainActor
+  static func orderedTokens(prefix: String, in app: XCUIApplication) -> [XCUIElement] {
+    let query = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", prefix)
+    )
+    XCTAssertTrue(query.firstMatch.waitForExistence(timeout: 12))
+    return query.allElementsBoundByIndex.sorted {
+      tokenOrdinal($0.identifier, prefix: prefix) < tokenOrdinal($1.identifier, prefix: prefix)
+    }
+  }
+
+  static func tokenOrdinal(_ identifier: String, prefix: String) -> Int {
+    let suffix = identifier.dropFirst(prefix.count)
+    return Int(suffix.split(separator: ".", maxSplits: 1)[0]) ?? .max
+  }
+
+  static func tokenSurface(from identifier: String, prefix: String) -> String {
+    let suffix = identifier.dropFirst(prefix.count)
+    guard let separator = suffix.firstIndex(of: ".") else { return "" }
+    return String(suffix[suffix.index(after: separator)...])
+  }
+
+  @MainActor
+  static func reconstructedSentence(from tokens: [XCUIElement], prefix: String? = nil) -> String {
+    guard let resolvedPrefix = prefix ?? tokenPrefix(from: tokens.first?.identifier) else {
+      return ""
+    }
+    return tokens.map { tokenSurface(from: $0.identifier, prefix: resolvedPrefix) }.joined()
+  }
+
+  @MainActor
+  static func visualLineSurfaces(from tokens: [XCUIElement], prefix: String? = nil) -> [String] {
+    guard let resolvedPrefix = prefix ?? tokenPrefix(from: tokens.first?.identifier) else {
+      return []
+    }
+    var lines: [(bottom: CGFloat, surface: String)] = []
+    for token in tokens {
+      let surface = tokenSurface(from: token.identifier, prefix: resolvedPrefix)
+      if let index = lines.firstIndex(where: { abs($0.bottom - token.frame.maxY) <= 1 }) {
+        lines[index].surface += surface
+      } else {
+        lines.append((token.frame.maxY, surface))
+      }
+    }
+    return lines.sorted { $0.bottom < $1.bottom }.map(\.surface)
+  }
+
+  @MainActor
+  static func reachElement(
+    _ element: XCUIElement,
+    in list: XCUIElement,
+    app: XCUIApplication,
+    maximumGestureCount: Int = 10
+  ) {
+    var stationaryGestures = 0
+    for gestureCount in 0...maximumGestureCount {
+      let safeBottom = app.frame.maxY - 128
+      if element.exists,
+        element.isHittable,
+        element.frame.minY >= list.frame.minY + 8,
+        element.frame.maxY <= safeBottom
+      {
+        return
+      }
+      guard gestureCount < maximumGestureCount else { break }
+      let currentFrame = element.exists ? element.frame : .null
+      list.swipeUp(velocity: .slow)
+      if !currentFrame.isNull, element.exists, element.frame == currentFrame {
+        stationaryGestures += 1
+      } else {
+        stationaryGestures = 0
+      }
+      if stationaryGestures >= 2 { break }
+    }
+    XCTFail("Could not reach \(element.identifier) without stationary gestures")
+  }
+
+  private static func tokenPrefix(from identifier: String?) -> String? {
+    guard let identifier else { return nil }
+    let components = identifier.split(separator: ".", omittingEmptySubsequences: false)
+    guard
+      let ordinalIndex = components.indices.dropFirst().first(where: {
+        Int(components[$0]) != nil
+      })
+    else { return nil }
+    return components[...ordinalIndex].map(String.init).joined(separator: ".") + "."
+  }
 
   @MainActor
   static func reachRow(

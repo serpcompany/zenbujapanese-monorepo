@@ -4,6 +4,30 @@ import XCTest
 @testable import SearchExperience
 
 final class ExampleSentenceRetrievalTests: XCTestCase {
+  func testIssue253PresentationFixturesStayOutsideExampleMatchAndRanking() async throws {
+    let live = ExampleSentenceClient.live
+    let fixture = ExampleSentenceClient.issue253SentenceLayoutFixture(live: live)
+    let lookup = LookupClient.freshBundledDatabase()
+    let matchedEntry = try await lookup.entryMatchingForm("食べる")
+    let entry = try XCTUnwrap(matchedEntry)
+    let fixtureRetrieval = try await fixture.retrieve(.dictionaryEntry(entry))
+    let liveRetrieval = try await live.retrieve(.dictionaryEntry(entry))
+    let fixtureExamples = try await fixture.examples(entry)
+
+    XCTAssertEqual(fixtureRetrieval, liveRetrieval)
+    XCTAssertEqual(
+      fixtureExamples.map(\.japanese),
+      [
+        "食べるために生きてるんじゃない。生きるために食べてるんだ。",
+        "たべる？",
+        "問題を解いてから、友達と話します。",
+        "REM睡眠中の脳波は起きている時と同じ脳波であり、夢を見るステージです。",
+        "見ることは信ずることなり。",
+        "ZENBU2026SUPERCALIFRAGILISTICEXPIALIDOCIOUS。",
+      ]
+    )
+  }
+
   func testIssue246PresentationFixtureDoesNotInventDictionaryMatchEvidence() async throws {
     let live = ExampleSentenceClient.live
     let fixture = ExampleSentenceClient.issue246WordDetailFixture(live: live)
