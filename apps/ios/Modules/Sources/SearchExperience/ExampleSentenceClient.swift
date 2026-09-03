@@ -140,6 +140,18 @@ enum ExampleSentenceRetrievalError: Error, Hashable, Sendable {
 struct ExampleSentenceClient: Sendable {
   var retrieve: @Sendable (ExampleSentenceRetrievalRequest) async throws
     -> ExampleSentenceRetrievalResult
+  private var entryExamples: @Sendable (DictionaryEntry) async throws -> [ExampleSentence]
+
+  init(
+    retrieve: @escaping @Sendable (ExampleSentenceRetrievalRequest) async throws
+      -> ExampleSentenceRetrievalResult,
+    entryExamples: (@Sendable (DictionaryEntry) async throws -> [ExampleSentence])? = nil
+  ) {
+    self.retrieve = retrieve
+    self.entryExamples = entryExamples ?? { entry in
+      try await retrieve(.dictionaryEntry(entry)).sentences
+    }
+  }
 
   static let live = ExampleSentenceClient(
     retrieve: { request in try await ExampleSentenceData.shared.retrieve(request) }
@@ -151,7 +163,7 @@ struct ExampleSentenceClient: Sendable {
   }
 
   func examples(_ entry: DictionaryEntry) async throws -> [ExampleSentence] {
-    try await retrieve(.dictionaryEntry(entry)).sentences
+    try await entryExamples(entry)
   }
 
   func count(_ query: SearchQuery) async throws -> Int {
@@ -170,15 +182,21 @@ struct ExampleSentenceClient: Sendable {
       guard ProcessInfo.processInfo.arguments.contains("-Issue246WordDetailExampleFixtures") else {
         return nil
       }
-      return ExampleSentenceClient { request in
-        guard case .dictionaryEntry = request else { return try await live.retrieve(request) }
+      return issue246WordDetailFixture(live: live)
+    }
+
+    static func issue246WordDetailFixture(live: ExampleSentenceClient) -> ExampleSentenceClient {
+      return ExampleSentenceClient(retrieve: live.retrieve) { entry in
+        guard entry.id == LanguageReferenceID(rawValue: "7f490a9c9c0da94f4e9474f4efe74be1") else {
+          return try await live.examples(entry)
+        }
         guard
           let noCurrentID = ExampleSentenceID(
             rawValue: "esp1_ea71ea7cd918b2d745f27ffbee917f5a"),
           let longMixedScriptID = ExampleSentenceID(
             rawValue: "esp1_05d9fecf64a4857657bbc5bcce0aee6f")
         else { throw ExampleSentenceRetrievalError.retrievalUnavailable(.invalidBaseCorpus) }
-        let sentences = [
+        return [
           ExampleSentence(
             id: noCurrentID,
             japanese: "水は見る見るうちに橋げたのところまで達した。",
@@ -191,35 +209,6 @@ struct ExampleSentenceClient: Sendable {
               "The brain waves during REM sleep are the same as when awake, and it's the stage when you have dreams."
           ),
         ]
-        let matches = try sentences.map { sentence -> ExampleSentenceMatch in
-          guard let matchedRange = sentence.japanese.range(of: "見る") else {
-            throw ExampleSentenceRetrievalError.retrievalUnavailable(.invalidBaseCorpus)
-          }
-          let matchPosition = sentence.japanese.distance(
-            from: sentence.japanese.startIndex,
-            to: matchedRange.lowerBound
-          )
-          return ExampleSentenceMatch(
-            sentence: sentence,
-            route: .dictionaryEntry,
-            lexicalRelation: .selectedWrittenForm,
-            matchedRange: ExampleSentenceMatchedRange(location: matchPosition, length: 2),
-            exactSurface: true,
-            rankInputs: ExampleSentenceRankInputs(
-              lexicalRelation: .selectedWrittenForm,
-              matchPosition: matchPosition,
-              englishTermCount: 0,
-              japaneseGraphemeCount: sentence.japanese.count,
-              pairID: sentence.id
-            )
-          )
-        }
-        return ExampleSentenceRetrievalResult(
-          matches: matches,
-          count: .exact(matches.count),
-          isTruncated: false,
-          policyVersion: "ExampleSentenceRetrievalPolicy/v1"
-        )
       }
     }
   }
