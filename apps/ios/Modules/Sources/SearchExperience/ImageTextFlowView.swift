@@ -123,17 +123,16 @@ struct ImageTextFlowView: View {
       }
       .accessibilityIdentifier("image-text.copy-text")
 
-      if model.pages.indices.contains(model.selectedPage) {
-        let asset = model.pages[model.selectedPage].asset
-        if let sharedImage = UIImage(data: asset.data) {
+      if let payload = model.selectedSharePayload {
+        if let sharedImage = UIImage(data: payload.data) {
           let image = Image(uiImage: sharedImage)
           ShareLink(
             item: image,
-            preview: SharePreview(asset.name, image: image)
+            preview: SharePreview(payload.name, image: image)
           ) {
             Label("Share Image", systemImage: "photo")
           }
-          .accessibilityLabel("Share Image, selected image \(asset.name)")
+          .accessibilityLabel("Share Image, selected image \(payload.name)")
           .accessibilityIdentifier("image-text.share-image")
         }
       }

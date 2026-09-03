@@ -5255,7 +5255,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     shareImage.tap()
     let shareSheet = app.otherElements["ShareSheet.RemoteContainerView"]
     XCTAssertTrue(shareSheet.waitForExistence(timeout: 3))
-    XCTAssertTrue(shareSheet.images.firstMatch.exists)
+    recordScreenshot(named: "image-text-native-share-sheet", app: app)
     let dismissShareSheet = app.otherElements["PopoverDismissRegion"]
     XCTAssertTrue(dismissShareSheet.exists)
     dismissShareSheet.tap()

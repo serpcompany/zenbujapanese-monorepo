@@ -1,10 +1,48 @@
 import CoreGraphics
+import CryptoKit
 import XCTest
 
 @testable import SearchExperience
 
 @MainActor
 final class ImageTextFlowModelTests: XCTestCase {
+  func testSelectedSharePayloadTracksTheSelectedPageNameBytesAndIdentity() throws {
+    let firstID = try XCTUnwrap(UUID(uuidString: "00000000-0000-0000-0000-000000000001"))
+    let secondID = try XCTUnwrap(UUID(uuidString: "00000000-0000-0000-0000-000000000002"))
+    let firstBytes = try imageTextFixtureData(named: "fixture-clear-horizontal.png")
+    let secondBytes = try imageTextFixtureData(named: "fixture-vertical.png")
+    XCTAssertEqual(
+      firstBytes.fixtureSHA256,
+      "f7eaa0d29ea9074aebada7e06c6d43de0a8f3e6ac62570e706c1d71c1f3eabf4"
+    )
+    XCTAssertEqual(
+      secondBytes.fixtureSHA256,
+      "ff2a1f79d147f15d787bc2216f9932f3e6e1989f0350536d983942746ab97882"
+    )
+    let model = ImageTextFlowModel(
+      assets: [
+        ImageTextAsset(id: firstID, name: "first.png", data: firstBytes),
+        ImageTextAsset(id: secondID, name: "second.png", data: secondBytes),
+      ],
+      recognitionClient: ImageTextRecognitionClient { _ in [] },
+      textAnalysisClient: .characterFallback,
+      translationClient: NaturalTranslationClient { _ in "" }
+    )
+
+    let firstPayload = try XCTUnwrap(model.selectedSharePayload)
+    XCTAssertEqual(firstPayload.id, firstID)
+    XCTAssertEqual(firstPayload.name, "first.png")
+    XCTAssertEqual(firstPayload.data, firstBytes)
+
+    model.selectPage(1)
+
+    let secondPayload = try XCTUnwrap(model.selectedSharePayload)
+    XCTAssertEqual(secondPayload.id, secondID)
+    XCTAssertEqual(secondPayload.name, "second.png")
+    XCTAssertEqual(secondPayload.data, secondBytes)
+    XCTAssertNotEqual(secondPayload.data, firstPayload.data)
+  }
+
   func testVerticalRecognitionKeepsOnlyDefensibleLinkedRegions() async throws {
     let observations = verticalObservations()
     let lookup = LookupClient.freshBundledDatabase()
@@ -107,6 +145,24 @@ final class ImageTextFlowModelTests: XCTestCase {
       ),
     ]
   }
+}
+
+extension Data {
+  fileprivate var fixtureSHA256: String {
+    SHA256.hash(data: self).map { String(format: "%02x", $0) }.joined()
+  }
+}
+
+private func imageTextFixtureData(named name: String) throws -> Data {
+  let filename = name.dropLast(4)
+  let url = try XCTUnwrap(
+    Bundle.main.url(
+      forResource: String(filename),
+      withExtension: "png",
+      subdirectory: "ImageTextFixtures"
+    )
+  )
+  return try Data(contentsOf: url)
 }
 
 private enum ImageTextFlowModelTestError: Error {

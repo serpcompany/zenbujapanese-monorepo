@@ -88,6 +88,11 @@ final class ImageTextFlowModel {
     return page.observations.map(\.text).joined(separator: "\n")
   }
 
+  var selectedSharePayload: ImageTextAsset? {
+    guard pages.indices.contains(selectedPage) else { return nil }
+    return pages[selectedPage].asset
+  }
+
   var canRequestTranslation: Bool { !copiedText.isEmpty }
 
   func requestTranslation() {
