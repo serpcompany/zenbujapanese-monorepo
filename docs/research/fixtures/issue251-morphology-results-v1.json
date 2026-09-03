@@ -3,6 +3,66 @@
   "frozenAt": "2026-09-03",
   "winner": "sudachi.rs-0.6.11+sudachidict-core-20260723",
   "recommendedBoundary": "Provider-native hierarchy: mode C learner candidate with mode A child spans; do not merge spans in Zenbu code",
+  "decisionEvidence": {
+    "confirmationHoldout": {
+      "protocolFreezeCommit": "6e51f8008f2a7cefe50f81314f95c28c7dc91ba5",
+      "records": 512,
+      "tokens": 12237,
+      "truthSHA256": "094ff6b8a8666d9b88821da9eb7159a7cf17af21924b57ad8af1e27a8b07e047",
+      "selectedIDsSHA256": "54ec9f1368d9d20b140dd7e13574a25448c1dc6a0eca7bea2d918839d0326964",
+      "sudachiA": {
+        "boundaryF1": 0.99024,
+        "tokenSpanF1": 0.976436,
+        "lemmaAccuracy": 0.851026,
+        "readingAccuracy": 0.949699,
+        "posAccuracy": 0.899077,
+        "sentencesAllCorrect": 29,
+        "fileSHA256": "738daef8ab772f96a2c62eccad291df73a5144240e226d0531377f1af5977a75",
+        "normalizedOutputSHA256": "d8d2a4a73d1e0d16f44f089bf9908f41970b9e63c14706fc77383de720186fae"
+      },
+      "sudachiB": {
+        "boundaryF1": 0.97893,
+        "tokenSpanF1": 0.944359,
+        "lemmaAccuracy": 0.807224,
+        "readingAccuracy": 0.899032,
+        "posAccuracy": 0.855765,
+        "sentencesAllCorrect": 23,
+        "fileSHA256": "0d2d4f1a41accf03b930012c9f483b759e7c0bc4d41be9620758695de984bff4",
+        "normalizedOutputSHA256": "1a3a9d25285fe90f717539b8ea7d5e3b51f6d75bdc515686aaafb740c5eb63d6"
+      },
+      "sudachiC": {
+        "boundaryF1": 0.975597,
+        "tokenSpanF1": 0.937474,
+        "lemmaAccuracy": 0.797336,
+        "readingAccuracy": 0.888077,
+        "posAccuracy": 0.845796,
+        "sentencesAllCorrect": 23,
+        "fileSHA256": "1e85310c465f62ca16c927966fe6d7c40d1bc3c8722aa098ec6a819a9525c219",
+        "normalizedOutputSHA256": "5f9b096c251edbc6164c728bc561eca0678ba8c140c86ea7b8385e2924dba2fc"
+      },
+      "faanauKuromoji": {
+        "boundaryF1": 0.967051,
+        "tokenSpanF1": 0.920382,
+        "lemmaAccuracy": 0.739397,
+        "readingAccuracy": 0.835585,
+        "posAccuracy": 0.775108,
+        "sentencesAllCorrect": 9,
+        "fileSHA256": "908bdce9e998f626ccc2e5295780e803eb5b55c52ccfdf6e12b52e1e6718e0d8",
+        "normalizedOutputSHA256": "06d0e2f7b7e2c0271b52e4ea8d148f3833d52a86f43bda0791eb95531b7f3dbe"
+      },
+      "pairedSudachiAMinusKuromoji95CI": {
+        "boundaryF1": [0.020665, 0.028109],
+        "tokenSpanF1": [0.049196, 0.065326],
+        "lemmaAccuracy": [0.10141, 0.119912],
+        "readingAccuracy": [0.102712, 0.123901],
+        "posAccuracy": [0.112137, 0.132765],
+        "bootstrapSeed": 25120260903,
+        "replicates": 10000
+      },
+      "executionSeconds": 9
+    },
+    "exploratoryEvidence": "GSD dev/test and PUD outputs preceded the complete auditable protocol/truth commit. They are corroborating only and do not decide the winner."
+  },
   "providers": {
     "sudachi": {
       "engine": "sudachi.rs",
@@ -182,33 +242,51 @@
       "tokens": 69,
       "sudachiA": {
         "boundaryF1": 0.951613,
+        "allowedBoundaryF1": 0.968254,
         "lemmaAccuracy": 0.910448,
         "readingAccuracy": 0.968254,
         "posAccuracy": 0.941176,
-        "oovAccuracy": 0.927536,
+        "oovPrecision": 1.0,
+        "oovRecall": 0.2,
+        "oovF1": 0.333333,
         "exactCandidateRecall": 0.5,
+        "exactLinkPrecision": 1.0,
+        "exactLinkRecall": 0.5,
         "abstentions": "6/6",
-        "severeWrongLinks": 0
+        "severeWrongLinks": 0,
+        "severeWrongLinkRate": 0.0
       },
       "sudachiB": {
         "boundaryF1": 0.95935,
+        "allowedBoundaryF1": 0.967742,
         "lemmaAccuracy": 0.925373,
         "readingAccuracy": 0.984127,
         "posAccuracy": 0.955882,
-        "oovAccuracy": 0.942029,
+        "oovPrecision": 1.0,
+        "oovRecall": 0.2,
+        "oovF1": 0.333333,
         "exactCandidateRecall": 1.0,
+        "exactLinkPrecision": 1.0,
+        "exactLinkRecall": 1.0,
         "abstentions": "6/6",
-        "severeWrongLinks": 0
+        "severeWrongLinks": 0,
+        "severeWrongLinkRate": 0.0
       },
       "faanauKuromoji": {
         "boundaryF1": 0.95082,
+        "allowedBoundaryF1": 0.95935,
         "lemmaAccuracy": 0.865672,
         "readingAccuracy": 0.968254,
         "posAccuracy": 0.926471,
-        "oovAccuracy": 0.956522,
+        "oovPrecision": 1.0,
+        "oovRecall": 0.6,
+        "oovF1": 0.75,
         "exactCandidateRecall": 1.0,
+        "exactLinkPrecision": 1.0,
+        "exactLinkRecall": 1.0,
         "abstentions": "6/6",
-        "severeWrongLinks": 0
+        "severeWrongLinks": 0,
+        "severeWrongLinkRate": 0.0
       },
       "nativeSwiftKuromoji": {
         "boundaryF1": 0.95082,

@@ -2,6 +2,29 @@
   "schema": "zenbu.issue251.ios-measurement-samples.v1",
   "disclosure": "Exploratory 10-process and 100-warm-call evidence; below the preregistered 30/200 confirmation threshold and therefore supplementary only.",
   "environment": "iPhone 17 Pro Simulator 77E6BF80-AB37-4C1B-A8FB-F65F7E5694B5; iOS 26.0.1; Xcode 26.0 17A324; Release -Os; Apple M3 Max host",
+  "capabilityAndConcurrency": {
+    "sudachi": {
+      "concurrent100Milliseconds": 2.884958,
+      "resultCount": 100,
+      "failureCount": 0,
+      "hashCount": 1,
+      "steadyRSSBytes": 311443456
+    },
+    "kuromojiJavaScriptCore": {
+      "fetchType": "undefined",
+      "decompressionStreamType": "undefined",
+      "concurrent100Milliseconds": 4.943125,
+      "resultCount": 100,
+      "hashCount": 1,
+      "steadyRSSBytes": 471547904
+    },
+    "kuromojiNativeSwift": {
+      "concurrent100Milliseconds": 2.663625,
+      "resultCount": 100,
+      "hashCount": 1,
+      "steadyRSSBytes": 337494016
+    }
+  },
   "sudachi": [
     {
       "dictionary_init_ms": 42.216124999999998,

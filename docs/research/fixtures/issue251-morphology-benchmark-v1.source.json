@@ -27,13 +27,24 @@
         "sha256": "18d266e29336ef619787a928d89d20f2e64188be70d5b37829e3aadc5bb6b841"
       },
       {
-        "role": "sealed-holdout",
+        "role": "exploratory candidate-output holdout; not decision evidence because the complete protocol/truth was not yet committed",
         "name": "test",
         "url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Japanese-GSD/r2.18/ja_gsd-ud-test.conllu",
         "bytes": 3111982,
         "sha256": "5f50ee6ed45c7ebda3787e593eaf5e9a225f25e53f6b4b32df778031862c843f"
       }
     ]
+  },
+  "confirmationHoldout": {
+    "protocolFreezeCommit": "6e51f8008f2a7cefe50f81314f95c28c7dc91ba5",
+    "sourceSplit": "population train",
+    "sourceSHA256": "99f67fd88257e7cfe81d81c4b8ee98aff85fc22bb525d907475a2856c8cfa9f3",
+    "selectionDomain": "zenbu.issue251.confirmation.v1\\0",
+    "selectionRule": "512 records with lexicographically lowest SHA-256(domain || UTF-8 sent_id)",
+    "selectedIDsSHA256": "54ec9f1368d9d20b140dd7e13574a25448c1dc6a0eca7bea2d918839d0326964",
+    "truthFile": "issue251-morphology-confirmation-holdout-v1.json",
+    "truthSHA256": "094ff6b8a8666d9b88821da9eb7159a7cf17af21924b57ad8af1e27a8b07e047",
+    "candidateExecution": "Exactly once after the freeze commit"
   },
   "externalDomainCheck": {
     "name": "Universal Dependencies Japanese PUD",

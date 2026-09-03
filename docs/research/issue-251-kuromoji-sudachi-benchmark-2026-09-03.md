@@ -16,8 +16,9 @@ available evidence.
 Sudachi won for two independent reasons:
 
 1. It was materially more accurate than the clean, maintained
-   `@faanau/kuromoji` candidate on the sealed 543-sentence GSD test split and
-   the separate 1,000-sentence PUD domain check. Every paired sentence-bootstrap
+   `@faanau/kuromoji` candidate on a 512-sentence / 12,237-token confirmation
+   holdout selected from previously unscored GSD train rows after the complete
+   protocol and exact truth were committed. Every paired sentence-bootstrap
    95% interval favored Sudachi mode A for boundaries, exact spans, lemmas,
    readings, and coarse POS.
 2. Its iPhone integration is a direct typed Swift/UniFFI boundary over an
@@ -55,10 +56,23 @@ product. See the reviewed [cross-repository recovery](issue-250-prior-zenbu-rese
 
 ## Preregistered evaluation
 
-The public seams, source/split selection, scoring, hard gates, tie-breakers,
-bootstrap seed, and resource protocol were frozen in
+The initial public seams, source/split selection, scoring intent, hard gates,
+tie-breakers, bootstrap seed, and resource protocol were published in
 [#251 comment 5519522906](https://github.com/serpcompany/zenbujapanese-monorepo/issues/251#issuecomment-5519522906)
-before broad provider output was generated.
+before broad provider output was generated. The first adversarial review
+correctly found that this was not a complete auditable preregistration: the
+actual hard-case truth and scorer first appeared in the same commit as the
+first results. Those original GSD dev/test and PUD numbers are therefore
+**exploratory corroboration only**, not decision evidence.
+
+The repaired scorer, exact provider versions/checksums, complete truth,
+adjudication/uncertainty, alternate boundaries, and deterministic selection
+algorithm were committed at
+`6e51f8008f2a7cefe50f81314f95c28c7dc91ba5`. Only then did the four frozen
+providers run once over the 512-record confirmation set, selected as the lowest
+SHA-256 domain-separated IDs from the never-scored 7,050-record GSD train
+split. The committed selected-ID digest is
+`54ec9f1368d9d20b140dd7e13574a25448c1dc6a0eca7bea2d918839d0326964`.
 
 The primary independent gold is
 [UD Japanese GSD 2.18](https://github.com/UniversalDependencies/UD_Japanese-GSD/tree/r2.18)
@@ -90,7 +104,32 @@ The complete machine-readable summary, source hashes, output hashes, and
 operational evidence are in
 [issue251-morphology-results-v1.json](fixtures/issue251-morphology-results-v1.json).
 
-### Sealed GSD test — 543 sentences / 13,034 tokens
+### Decisive confirmation holdout — 512 sentences / 12,237 tokens
+
+| Candidate                              | Boundary F1 | Exact-span F1 |       Lemma |     Reading |         POS | All-correct sentences |
+| -------------------------------------- | ----------: | ------------: | ----------: | ----------: | ----------: | --------------------: |
+| Sudachi Core A                         | **.990240** |   **.976436** | **.851026** | **.949699** | **.899077** |            **29/512** |
+| Sudachi Core B                         |     .978930 |       .944359 |     .807224 |     .899032 |     .855765 |                23/512 |
+| Sudachi Core C                         |     .975597 |       .937474 |     .797336 |     .888077 |     .845796 |                23/512 |
+| `@faanau/kuromoji` 0.2.1 + IPADIC 2007 |     .967051 |       .920382 |     .739397 |     .835585 |     .775108 |                 9/512 |
+
+Paired 10,000-replicate sentence bootstrap, Sudachi A minus Kuromoji:
+
+| Metric           | Observed difference |         95% interval |
+| ---------------- | ------------------: | -------------------: |
+| Boundary F1      |            +.024245 | +.020665 to +.028109 |
+| Exact-span F1    |            +.057076 | +.049196 to +.065326 |
+| Lemma accuracy   |            +.110525 | +.101410 to +.119912 |
+| Reading accuracy |            +.113047 | +.102712 to +.123901 |
+| POS accuracy     |            +.122299 | +.112137 to +.132765 |
+
+The complete truth and all four raw normalized JSONL outputs are committed, not
+represented only by summary hashes. Public validation requires the exact
+provider contract and can also require the committed normalized-output hash.
+Their [derived-data attribution and CC BY-SA terms](fixtures/issue251-DERIVED-DATA-ATTRIBUTION.md)
+are retained beside them.
+
+### Exploratory GSD test — 543 sentences / 13,034 tokens
 
 | Candidate                              | Boundary F1 | Exact-span F1 |       Lemma |     Reading |         POS | All-correct sentences |
 | -------------------------------------- | ----------: | ------------: | ----------: | ----------: | ----------: | --------------------: |
@@ -109,7 +148,8 @@ Paired 10,000-replicate sentence bootstrap, Sudachi A minus Kuromoji:
 | Reading accuracy |            +.098791 | +.089102 to +.108536 |
 | POS accuracy     |            +.136975 | +.126470 to +.147579 |
 
-All intervals exclude zero. Sudachi's lead is not a four-anchor accident.
+All intervals exclude zero and independently agree with the decisive
+confirmation. These numbers are not called preregistered.
 
 ### External PUD check — 1,000 sentences / 28,788 tokens
 
@@ -133,6 +173,15 @@ because it split `日本語`. Kuromoji retained both. Sudachi B led this small s
 on boundary, lemma, reading, and POS. The resolver admits only an exact single
 app-owned family and never chooses a ranked first homograph; it is benchmark
 evidence, not a proposed production identity policy.
+
+The repaired scorer additionally reports provider-neutral allowed-boundary F1,
+OOV precision/recall/F1, exact-link precision/recall/F1, severe wrong-link rate,
+and every authored category separately. On the small risk set, Kuromoji OOV F1
+was .750 (precision 1.0, recall .6); Sudachi A/B/C OOV F1 was .333 (precision
+1.0, recall .2). All exact-link precisions were 1.0, all 6 abstentions were
+correct, and severe wrong-link rate was zero. This OOV weakness is visible and
+must be expanded before production; it is not hidden by the population corpus,
+whose OOV truth is unspecified.
 
 The new native Swift Kuromoji port was intentionally not added after the sealed
 holdout reveal. On the pre-holdout dev set it scored .966632 boundary F1,
@@ -164,13 +213,26 @@ app-owned candidate.
   confident wrong greeting/noun links. Its greedy scan and three handwritten
   deinflection rules violate this ticket's established-technology requirement.
 
+These two controls were screened through their public iOS seams and excluded at
+the mandatory capability gate before the new confirmation holdout. They were
+not given fabricated reading/POS/OOV fields merely to fit the JSON schema, and
+were not run over 512 rows after exclusion: more rows cannot repair a public
+interface that omits required evidence or a baseline that violates the explicit
+no-custom-parser constraint. Their four disclosed anchors remain a limitation,
+not population-quality evidence.
+
 ## iPhone integration and resources
 
-All figures below are release `-Os` **Simulator** measurements on the same
+All figures below are release `-Os` **exploratory Simulator** measurements on the same
 iPhone 17 Pro / iOS 26.0.1 runtime, Xcode 26.0 (`17A324`), Apple M3 Max host.
 Both prototypes also compiled for generic arm64 iOS with signing disabled. No
 physical-iPhone timing or energy claim is made; warm differences below one tenth
 of a millisecond are not decision-relevant beside OCR and UI latency.
+
+The retained run used 10 fresh processes and 100 measured warm calls per
+process, below the later-frozen 30/200 confirmation target. It is supplementary
+feasibility evidence only and does not satisfy that operational gate. The
+quality decision does not depend on these timing differences.
 
 | Path                                                                                                                   | App / installed evidence                                         | Cold init p50 / p95 |   Warm p50 / p95 | Steady RSS p50 / p95 | Integration                                                                                                        |
 | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------: | ---------------: | -------------------: | ------------------------------------------------------------------------------------------------------------------ |
@@ -183,6 +245,12 @@ hash for each measured path. Concurrent stress completed 100/100 with one hash
 for each. Sudachi uses a mutex-protected tokenizer; same-VM JavaScriptCore calls
 serialize, while separate VMs duplicate costly state. Simulator RSS includes
 the SwiftUI/process baseline and must not be read as dictionary bytes.
+
+The three exact Xcode projects, Swift sources, JavaScriptCore loader adapter,
+resource instructions, commands, and all ten per-process scalar result rows are
+retained under
+[`docs/research/tools/issue251-ios/`](tools/issue251-ios/README.md) and
+[the iOS sample artifact](fixtures/issue251-ios-measurement-samples-v1.json).
 
 The Sudachi binding pins official
 [sudachi.rs 0.6.11](https://github.com/WorksApplications/sudachi.rs/tree/v0.6.11),
@@ -236,26 +304,46 @@ Reproduction uses the exact-version provider scripts and source manifest:
 python3 docs/research/tools/test_issue251_morphology_benchmark.py
 
 python3 docs/research/tools/issue251_sudachi_provider.py \
-  /path/to/ja_gsd-ud-dev.conllu --mode A --output /tmp/sudachi.jsonl
+  docs/research/fixtures/issue251-morphology-confirmation-holdout-v1.json \
+  --mode A \
+  --provider-contract docs/research/fixtures/issue251-morphology-provider-contract-v1.json \
+  --provider sudachi-a --output /tmp/sudachi.jsonl
 
 NODE_PATH=/path/to/node_modules node \
   docs/research/tools/issue251_kuromoji_provider.mjs \
-  --truth /path/to/ja_gsd-ud-dev.conllu \
+  --truth docs/research/fixtures/issue251-morphology-confirmation-holdout-v1.json \
   --dictionary /path/to/node_modules/@faanau/kuromoji/dict \
-  --module @faanau/kuromoji --version 0.2.1 \
+  --module @faanau/kuromoji \
+  --provider-contract docs/research/fixtures/issue251-morphology-provider-contract-v1.json \
+  --provider faanau-kuromoji \
   --output /tmp/kuromoji.jsonl
 
 python3 docs/research/tools/issue251_morphology_benchmark.py score \
-  /path/to/ja_gsd-ud-dev.conllu /tmp/sudachi.jsonl
+  docs/research/fixtures/issue251-morphology-confirmation-holdout-v1.json \
+  /tmp/sudachi.jsonl \
+  --provider-contract docs/research/fixtures/issue251-morphology-provider-contract-v1.json \
+  --provider sudachi-a \
+  --expected-output-sha256 d8d2a4a73d1e0d16f44f089bf9908f41970b9e63c14706fc77383de720186fae
 
 python3 docs/research/tools/issue251_compare_providers.py \
-  /path/to/ja_gsd-ud-dev.conllu /tmp/sudachi.jsonl /tmp/kuromoji.jsonl
+  docs/research/fixtures/issue251-morphology-confirmation-holdout-v1.json \
+  /tmp/sudachi.jsonl /tmp/kuromoji.jsonl \
+  --provider-contract docs/research/fixtures/issue251-morphology-provider-contract-v1.json \
+  --provider-a sudachi-a --provider-b faanau-kuromoji
 ```
 
-The normalized JSONL files are not duplicated in Git because dev/test/PUD
-inputs plus four configurations produce approximately 20 MB of fully derived
-rows. Their canonical hashes are committed in the result manifest; all rows are
-deterministically rebuildable from pinned licensed sources and provider assets.
+Exploratory dev/test/PUD JSONL is rebuildable from pinned sources and hashes.
+The decisive confirmation truth and all four normalized provider JSONL files
+are committed under `docs/research/fixtures/`.
+
+### Runtime cost
+
+- repaired one-shot confirmation providers, scoring, and bootstrap: 9 seconds;
+- final scorer/repository/license/privacy/format verification batch: 62 seconds;
+- paired exploratory bootstrap: about 18 seconds;
+- disposable iOS lane: approximately 20m41s from first checkout to final
+  retained output, including three builds and setup—not pure test execution;
+- no broad UI, Accessibility XXXL, or #227 43-minute suite was run.
 
 ## Recommended production boundary
 
