@@ -268,6 +268,90 @@
       "traits": ["accessibility", "accessibility-maximum"],
       "journeys": ["search-frequency-rank-adaptive"]
     },
+    "ui.search-results-maximum": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightSearchResultsRemainReadableAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-search-results-light"]
+    },
+    "ui.search-results-maximum-dark": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkSearchResultsRemainReadableAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-search-results-dark"]
+    },
+    "ui.word-detail-maximum-dark": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkWordDetailRemainsUsableAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-word-detail-dark"]
+    },
+    "ui.word-detail-maximum-light": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightWordDetailRemainsUsableAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-word-detail-light"]
+    },
+    "ui.kanji-element-maximum-dark": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkKanjiElementDetailRemainsReachableAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-kanji-element-dark"]
+    },
+    "ui.kanji-element-maximum-light": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightKanjiElementDetailRemainsReachableAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-kanji-element-light"]
+    },
+    "ui.conjugations-maximum-dark": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkTsubusuConjugationsRemainReadableAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-conjugations-dark"]
+    },
+    "ui.conjugations-maximum-light": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightTsubusuConjugationsRemainReadableAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-conjugations-light"]
+    },
+    "ui.dictionary-sources-maximum-dark": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkDictionarySourcesRemainUsableAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-dictionary-sources-dark"]
+    },
+    "ui.dictionary-sources-maximum-light": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightDictionarySourcesRemainUsableAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-dictionary-sources-light"]
+    },
+    "ui.accessibility-reviewer-dark": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerReachableSearchAndWordDetailAreReadableInDarkMode",
+      "traits": ["ui", "accessibility", "normal-dynamic-type"],
+      "journeys": ["accessibility-reviewer-dark"]
+    },
+    "ui.accessibility-reviewer-light": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerReachableSearchAndWordDetailAreReadableInLightMode",
+      "traits": ["ui", "accessibility", "normal-dynamic-type"],
+      "journeys": ["accessibility-reviewer-light"]
+    },
+    "ui.accessibility-secondary-dark": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode",
+      "traits": ["ui", "accessibility", "normal-dynamic-type"],
+      "journeys": ["accessibility-secondary-dark"]
+    },
+    "ui.accessibility-secondary-light": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode",
+      "traits": ["ui", "accessibility", "normal-dynamic-type"],
+      "journeys": ["accessibility-secondary-light"]
+    },
     "accessibility.japanese-text-analysis-settings": {
       "plan": "ZenbuAccessibility",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testJapaneseTextAnalysisManagementRemainsReachableAtLargestAccessibilityTextSize",
@@ -329,6 +413,20 @@
       "ui.search-ranking",
       "ui.search-frequency-rank",
       "ui.search-frequency-switch",
+      "ui.search-results-maximum",
+      "ui.search-results-maximum-dark",
+      "ui.word-detail-maximum-dark",
+      "ui.word-detail-maximum-light",
+      "ui.kanji-element-maximum-dark",
+      "ui.kanji-element-maximum-light",
+      "ui.conjugations-maximum-dark",
+      "ui.conjugations-maximum-light",
+      "ui.dictionary-sources-maximum-dark",
+      "ui.dictionary-sources-maximum-light",
+      "ui.accessibility-reviewer-dark",
+      "ui.accessibility-reviewer-light",
+      "ui.accessibility-secondary-dark",
+      "ui.accessibility-secondary-light",
       "ui.recent-search",
       "ui.image-text",
       "ui.image-text-translation-assets",
@@ -731,6 +829,41 @@
       "tdd": ["ui.search-ranking"],
       "issue-final": ["ui.search-ranking"],
       "hosted-fast": ["ui.search-ranking"]
+    },
+    "accessibility-closeout": {
+      "adaptive_layout": true,
+      "paths": [],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
+        "apps/ios/Modules/Sources/SearchExperience/SearchView.swift",
+        "apps/ios/VerificationPolicy.json"
+      ],
+      "tdd": ["ui.accessibility-reviewer-light"],
+      "issue-final": [
+        "contracts.repository",
+        "unit.complete",
+        "ui.shell",
+        "ui.you-hierarchy",
+        "ui.search-input",
+        "ui.search-ranking",
+        "ui.search-frequency-rank",
+        "ui.search-frequency-switch",
+        "ui.kanji",
+        "ui.word-detail",
+        "ui.examples",
+        "ui.conjugations",
+        "ui.search-results-maximum",
+        "ui.search-results-maximum-dark",
+        "ui.word-detail-maximum-dark",
+        "ui.word-detail-maximum-light",
+        "ui.kanji-element-maximum-dark",
+        "ui.kanji-element-maximum-light",
+        "ui.conjugations-maximum-dark",
+        "ui.conjugations-maximum-light",
+        "ui.dictionary-sources-maximum-dark",
+        "ui.dictionary-sources-maximum-light",
+        "ui.example-layout-maximum"
+      ]
     }
   }
 }

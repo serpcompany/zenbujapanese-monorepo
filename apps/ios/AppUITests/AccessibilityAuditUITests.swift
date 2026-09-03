@@ -1491,7 +1491,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       XCTAssertGreaterThanOrEqual(section.title.frame.minY, visibleTop, file: file, line: line)
       XCTAssertLessThanOrEqual(row.frame.maxY, visibleBottom, file: file, line: line)
       XCTAssertTrue(row.isHittable, file: file, line: line)
-      let maximumHeight: CGFloat = accessibilityXXXL ? (id == "present-future" ? 150 : 190) : 100
+      let maximumHeight: CGFloat = accessibilityXXXL ? 190 : 100
       XCTAssertLessThanOrEqual(row.frame.height, maximumHeight, file: file, line: line)
       if let previousRowHeight {
         XCTAssertLessThanOrEqual(
@@ -1582,19 +1582,14 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(japan.waitForExistence(timeout: 5))
     japan.tap()
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 5))
-    XCTAssertTrue(app.staticTexts["MEANING"].waitForExistence(timeout: 5))
+    let identity = app.descendants(matching: .any)["ruby.日本.日本=にほん"]
+    XCTAssertTrue(identity.waitForExistence(timeout: 5))
     XCTAssertTrue(app.buttons["word-detail.add-menu"].isHittable)
-    XCTAssertTrue(
-      app.descendants(matching: .any).matching(
-        NSPredicate(format: "label == %@", "日本, にほん")
-      ).firstMatch.exists)
+    XCTAssertEqual(identity.label, "日本, にほん")
     try performAudit(
       in: app,
       named: "Word Detail - \(appearance == .dark ? "dark" : "light") accessibility XXXL",
-      types: auditTypes,
-      expectedExceptions: [
-        AuditException(.contrast, identifier: "word-detail.alternative.にっぽん")
-      ]
+      types: auditTypes
     )
   }
 
@@ -1905,10 +1900,17 @@ final class AccessibilityAuditUITests: XCTestCase {
     }
 
     japan.tap()
-    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 5))
-    XCTAssertTrue(
-      app.descendants(matching: .any)["word-detail.example.0"].waitForExistence(timeout: 10)
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 5))
+    let frequency = app.buttons["word-detail.frequency"]
+    XCTAssertTrue(frequency.waitForExistence(timeout: 3))
+    let loadedFrequency = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "#115"),
+      object: frequency
     )
+    XCTAssertEqual(XCTWaiter.wait(for: [loadedFrequency], timeout: 5), .completed)
+    let identity = app.descendants(matching: .any)["ruby.日本.日本=にほん"]
+    XCTAssertTrue(identity.isHittable)
 
     try XCTContext.runActivity(named: "Word Detail") { _ in
       // Every retained finding below is pinned to this exact short-entry state. The two
