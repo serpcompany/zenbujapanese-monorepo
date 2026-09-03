@@ -12,7 +12,7 @@ struct LanguageTechnologyPacksView: View {
       if let snapshot {
         Section {
           Text(
-            "This optional on-device pack identifies Japanese word boundaries, dictionary forms, readings, and parts of speech after text recognition. Without it, recognized text stays available but word links are reduced."
+            "Zenbu includes on-device Japanese word boundaries, dictionary forms, readings, and parts of speech. The included analysis works offline."
           )
           .font(.footnote)
           .foregroundStyle(.secondary)
@@ -21,15 +21,18 @@ struct LanguageTechnologyPacksView: View {
           Section(pack.manifest.displayName) {
             LabeledContent("Status") {
               Label(
-                pack.isActive ? "Active" : "Available",
-                systemImage: pack.isActive ? "checkmark.circle.fill" : "arrow.down.circle"
+                pack.status.title,
+                systemImage: pack.status.systemImage
               )
               .accessibilityElement(children: .ignore)
-              .accessibilityLabel(pack.isActive ? "Active" : "Available")
-              .accessibilityValue(
-                pack.isActive ? "Ready for on-device analysis" : "Not installed"
-              )
+              .accessibilityLabel(pack.status.title)
+              .accessibilityValue(pack.status.accessibilityValue)
               .accessibilityIdentifier("language-technology-pack.status.\(pack.id.rawValue)")
+            }
+            if pack.isIncludedWithApp {
+              LabeledContent("Availability", value: "Included with Zenbu")
+              LabeledContent(
+                "Offline use", value: pack.worksOffline ? "Works Offline" : "Unavailable")
             }
             LabeledContent(
               "Engine", value: "\(pack.manifest.engine) \(pack.manifest.engineVersion)")
@@ -42,13 +45,21 @@ struct LanguageTechnologyPacksView: View {
             }
             LabeledContent("Analysis", value: pack.manifest.splitPolicy)
             LabeledContent("License", value: pack.manifest.licenseIdentifier)
-            LabeledContent(
-              pack.isInstalled ? "Storage" : "Download",
-              value: ByteCountFormatter.string(
-                fromByteCount: Int64(pack.installedBytes ?? pack.manifest.downloadBytes),
-                countStyle: .file)
-            )
-            if !pack.isInstalled {
+            if pack.isIncludedWithApp {
+              LabeledContent(
+                "Installed contribution",
+                value: ByteCountFormatter.string(
+                  fromByteCount: Int64(pack.manifest.installedBytes), countStyle: .file)
+              )
+            } else {
+              LabeledContent(
+                pack.isInstalled ? "Storage" : "Download",
+                value: ByteCountFormatter.string(
+                  fromByteCount: Int64(pack.installedBytes ?? pack.manifest.downloadBytes),
+                  countStyle: .file)
+              )
+            }
+            if !pack.isIncludedWithApp && !pack.isInstalled {
               LabeledContent(
                 "Installed size",
                 value: ByteCountFormatter.string(
@@ -94,11 +105,13 @@ struct LanguageTechnologyPacksView: View {
 
   @ViewBuilder
   private func actions(for pack: LanguageTechnologyPackState) -> some View {
-    if workingPackID == pack.id {
+    if pack.isIncludedWithApp {
+      EmptyView()
+    } else if workingPackID == pack.id {
       ProgressView("Downloading and verifying")
         .accessibilityValue("Download and validation in progress")
         .accessibilityIdentifier("language-technology-pack.progress.\(pack.id.rawValue)")
-    } else if !pack.isInstalled {
+    } else if pack.canDownload {
       Button(pack.failureMessage == nil ? "Download" : "Retry") {
         perform(pack.id) { try await client.download(pack.id) }
       }
@@ -110,10 +123,12 @@ struct LanguageTechnologyPacksView: View {
         }
         .accessibilityIdentifier("language-technology-pack.update.\(pack.id.rawValue)")
       }
-      Button("Remove Pack", role: .destructive) {
-        perform(pack.id) { try await client.remove(pack.id) }
+      if pack.canRemove {
+        Button("Remove Pack", role: .destructive) {
+          perform(pack.id) { try await client.remove(pack.id) }
+        }
+        .accessibilityIdentifier("language-technology-pack.remove.\(pack.id.rawValue)")
       }
-      .accessibilityIdentifier("language-technology-pack.remove.\(pack.id.rawValue)")
     }
   }
 

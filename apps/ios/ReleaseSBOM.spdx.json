@@ -60,7 +60,7 @@
       "licenseConcluded": "Apache-2.0 AND BSD-3-Clause",
       "licenseDeclared": "Apache-2.0 AND BSD-3-Clause",
       "copyrightText": "Copyright Works Applications and retained SudachiDict contributors",
-      "comment": "The extracted system.dic is 217466039 bytes with SHA-256 53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f. Runtime char.def and unk.def are pinned to sudachi.rs 0.6.11 commit 90fd6068c80c2fc3b63e0dbab0e341475bad4d8f."
+      "comment": "The official wheel is the retained source artifact. Zenbu bundles only its expanded system_core.dic: 217466039 bytes, SHA-256 53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f. Runtime char.def and unk.def are pinned to sudachi.rs 0.6.11 commit 90fd6068c80c2fc3b63e0dbab0e341475bad4d8f."
     },
     {
       "SPDXID": "SPDXRef-ZIPFoundation",
@@ -95,10 +95,10 @@
       "relatedSpdxElement": "SPDXRef-SudachiRs"
     },
     {
-      "spdxElementId": "SPDXRef-SudachiDictCore",
-      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
-      "relatedSpdxElement": "SPDXRef-ZenbuJapanese",
-      "comment": "Learner-initiated optional runtime Language Technology pack."
+      "spdxElementId": "SPDXRef-ZenbuJapanese",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-SudachiDictCore",
+      "comment": "Immutable expanded dictionary bundled with the initial app installation."
     },
     {
       "spdxElementId": "SPDXRef-ZenbuJapanese",

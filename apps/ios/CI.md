@@ -15,17 +15,36 @@ remains decision evidence, but this file owns the executable cadence.
 | Manual investigation                       | `iOS nightly quality`, started with `workflow_dispatch`                                              | Two-device accessibility breadth, repetitions, and sanitizers when investigation warrants the cost |
 | Pre-release                                | Manual `iOS pre-release validation`, then separately authorized physical-device and release checks   | Transient validation for an identified proposed candidate; never inferred from development CI      |
 
-The three network-backed Sudachi checks run through the explicit
+The three network-backed Sudachi provenance checks run through the explicit
 `ZenbuSudachiIntegration` plan. They validate the immutable official Core wheel,
 the shipped Swift adapter, and the frozen 512-sentence #251 confirmation set.
 They are intentionally excluded from `ZenbuPR` so a third-party release-host
 outage cannot make the ordinary complete unit target fail; issue implementation,
 dependency-update, merge-candidate, and pre-release evidence must run this lane
-separately. Deterministic pack lifecycle, checksum, corruption, update, fallback,
-range, and resolver tests remain in `ZenbuPR` without network access.
+separately. The required Core dictionary is staged into every app product by the
+checksum-pinned Xcode build phase and is read directly from the app bundle. The
+Xcode phase is offline-only and fails with a bootstrap instruction when its
+external checksum-keyed build cache is absent. The repository issue runner and
+hosted workflows run that explicit bootstrap before invoking Xcode. Outside the
+explicit integration plan, only the bootstrap may download the source wheel;
+ordinary Unit/UI/Accessibility tests do not independently download it. The wheel
+never enters the app, and runtime never copies or downloads the bundled
+dictionary. Hosted macOS workflows cache only the exact wheel; self-hosted
+builders retain the same external cache. The explicit `ZenbuSudachiIntegration` plan remains
+the one intentional exception: it independently fetches and validates the
+official URL inside its disposable Simulator to preserve real source/provenance
+coverage at merge-candidate and release stages. The host build cache is not
+treated as evidence for that integration contract.
+Deterministic bundle selection, pack lifecycle, checksum, corruption, update,
+fallback, range, and resolver tests remain in `ZenbuPR` without network access.
 Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
-provider. The native download journey and real provider stay in the explicit
-integration lane; the merge-candidate workflow invokes and retains both lanes.
+provider except for the bounded bundled-provider cold-relaunch journey. The
+merge-candidate workflow invokes and retains both correctness plans.
+
+After #258, the exact inventory contains 281 tests. `ZenbuPR` includes 275
+(88 Unit and 187 UI), `ZenbuSudachiIntegration` includes three network-backed
+Unit tests, and the six exact `ZenbuPR` exclusions are those three integration
+tests, one performance-only Unit test, and two physical/system HIL journeys.
 
 The complete suite is not repeated after merge when the merge-queue SHA already
 passed. The manual breadth workflow has no schedule because iOS changes are

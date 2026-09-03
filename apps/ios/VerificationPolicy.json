@@ -7,6 +7,8 @@
     "handwriting",
     "image-text",
     "japanese-text-analysis-provider",
+    "japanese-text-analysis-offline",
+    "japanese-text-analysis-settings",
     "kanji-detail",
     "radical-input",
     "recent-searches",
@@ -23,6 +25,10 @@
     "ZenbuJapaneseTests/ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus": "This benchmark belongs to the performance trend and is not a functional correctness journey."
   },
   "correctness_plans": ["ZenbuPR", "ZenbuSudachiIntegration"],
+  "intentional_same_stage_evidence": {
+    "accessibility.japanese-text-analysis-settings|ui.japanese-text-analysis-settings": "The normal-size journey proves bundled-default semantics and no actions; the independent maximum-size smoke proves the changed native management rows remain reachable without restoring obsolete controls.",
+    "ui.bundled-japanese-text-analysis|ui.image-text": "The bounded bundled-provider cold-relaunch seam proves real offline Sudachi selection; the broader Image Text fixture journey independently preserves paging, geometry, gloss, navigation, and sharing contracts."
+  },
   "selectors": {
     "contracts.repository": {
       "plan": null,
@@ -39,6 +45,12 @@
     "unit.japanese-text-analysis": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseTests/JapaneseTextAnalysisTests/testProviderDictionaryFormsResolveInflectedVerbsWithoutNounOrIteLinks",
+      "traits": ["deterministic"],
+      "journeys": ["japanese-text-analysis-provider"]
+    },
+    "unit.bundled-japanese-text-analysis": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseTests/LanguageTechnologyPackTests/testBundledOfficialDictionaryRunsOfflineAndSurvivesRelaunch",
       "traits": ["deterministic"],
       "journeys": ["japanese-text-analysis-provider"]
     },
@@ -96,6 +108,18 @@
       "traits": ["ui", "normal-dynamic-type"],
       "journeys": ["conjugations"]
     },
+    "ui.japanese-text-analysis-settings": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testJapaneseTextAnalysisShowsIncludedOfflineDefaultWithoutDownloadActions",
+      "traits": ["ui", "normal-dynamic-type", "offline"],
+      "journeys": ["japanese-text-analysis-settings"]
+    },
+    "ui.bundled-japanese-text-analysis": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBundledJapaneseAnalysisLinksImageTextAndExamplesBeforeSettingsAcrossColdRelaunch",
+      "traits": ["ui", "normal-dynamic-type", "offline"],
+      "journeys": ["image-text", "japanese-text-analysis-offline"]
+    },
     "accessibility.image-actions": {
       "plan": "ZenbuAccessibility",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightImageSourceActionsHaveReadableSystemContrast",
@@ -107,6 +131,12 @@
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightLoadingAndFailureRemainUsableAtLargestAccessibilityTextSize",
       "traits": ["accessibility", "accessibility-maximum"],
       "journeys": ["accessibility-adaptive-layout"]
+    },
+    "accessibility.japanese-text-analysis-settings": {
+      "plan": "ZenbuAccessibility",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testJapaneseTextAnalysisManagementRemainsReachableAtLargestAccessibilityTextSize",
+      "traits": ["accessibility", "accessibility-maximum"],
+      "journeys": ["japanese-text-analysis-settings"]
     },
     "integration.sudachi": {
       "plan": "ZenbuSudachiIntegration",
@@ -142,7 +172,11 @@
   },
   "tiers": {
     "contracts": ["contracts.repository"],
-    "unit": ["unit.complete", "unit.japanese-text-analysis"],
+    "unit": [
+      "unit.complete",
+      "unit.japanese-text-analysis",
+      "unit.bundled-japanese-text-analysis"
+    ],
     "ui": [
       "ui.shell",
       "ui.search-input",
@@ -152,11 +186,14 @@
       "ui.kanji",
       "ui.word-detail",
       "ui.examples",
-      "ui.conjugations"
+      "ui.conjugations",
+      "ui.japanese-text-analysis-settings",
+      "ui.bundled-japanese-text-analysis"
     ],
     "accessibility": [
       "accessibility.image-actions",
-      "accessibility.search-layout"
+      "accessibility.search-layout",
+      "accessibility.japanese-text-analysis-settings"
     ],
     "integration": ["integration.sudachi"],
     "performance": ["performance.search"],
@@ -377,18 +414,35 @@
       "hosted-fast": ["unit.complete", "ui.conjugations"]
     },
     "japanese-text-analysis": {
+      "adaptive_layout": true,
       "paths": [
+        "apps/ios/Modules/Sources/SearchExperience/JapaneseMorphologyClient.swift",
         "apps/ios/Modules/Sources/SearchExperience/JapaneseTextAnalysis*.swift",
         "apps/ios/Modules/Sources/SearchExperience/LanguageTechnology*.swift",
+        "apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json",
         "apps/ios/Modules/Tests/SearchExperienceTests/JapaneseTextAnalysis*.swift",
-        "apps/ios/Modules/Tests/SearchExperienceTests/LanguageTechnology*.swift"
+        "apps/ios/Modules/Tests/SearchExperienceTests/LanguageTechnology*.swift",
+        "apps/ios/Tools/prepare_sudachi_core.py",
+        "apps/ios/Tools/Tests/test_prepare_sudachi_core.py"
       ],
-      "tdd": ["unit.japanese-text-analysis"],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift",
+        "apps/ios/ReleasePrivacyAudit.md",
+        "apps/ios/ReleaseSBOM.spdx.json",
+        "apps/ios/TestPlans/ZenbuPR.xctestplan",
+        "apps/ios/TestPlans/ZenbuSudachiIntegration.xctestplan",
+        "apps/ios/Tools/Tests/audit-release-privacy.test.sh",
+        "apps/ios/Tools/audit_release_privacy.sh",
+        "apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj"
+      ],
+      "tdd": ["ui.bundled-japanese-text-analysis"],
       "issue-final": [
         "unit.complete",
-        "ui.image-text",
+        "ui.japanese-text-analysis-settings",
+        "ui.bundled-japanese-text-analysis",
         "ui.examples",
-        "integration.sudachi"
+        "integration.sudachi",
+        "accessibility.japanese-text-analysis-settings"
       ],
       "hosted-fast": ["unit.complete", "ui.image-text", "ui.examples"],
       "merge-candidate": ["integration.sudachi"],

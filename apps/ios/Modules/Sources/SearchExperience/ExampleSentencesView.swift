@@ -23,7 +23,7 @@ struct ExampleSentencesView: View {
         List {
           if analysisAvailability == .reduced {
             Label(
-              "Word links are reduced. Download Japanese Text Analysis in More.",
+              "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
               systemImage: "info.circle"
             )
             .font(.footnote)

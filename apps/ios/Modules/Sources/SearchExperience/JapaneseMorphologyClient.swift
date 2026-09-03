@@ -12,6 +12,10 @@ enum SudachiCoreContract {
   static let downloadBytes = 72_275_897
   static let downloadSHA256 =
     "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498"
+  static let downloadURL = URL(
+    string:
+      "https://github.com/WorksApplications/SudachiDict/releases/download/v20260723/sudachidict_core-20260723-py3-none-any.whl"
+  )!
   static let installedBytes = 217_466_039
   static let archiveEntry = "sudachidict_core/resources/system.dic"
   static let dictionarySHA256 =

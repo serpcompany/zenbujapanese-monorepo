@@ -543,6 +543,45 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testBundledJapaneseAnalysisLinksImageTextAndExamplesBeforeSettingsAcrossColdRelaunch()
+    throws
+  {
+    let arguments = [
+      "-ResetLanguageTechnologyPacks", "-StartImageTextFixtures", "fixture-vertical.png",
+      "-InjectVerticalImageTextRecognition",
+    ]
+    let app = launchApp(
+      additionalArguments: arguments,
+      usesJapaneseAnalysisFixture: false,
+      networkUnavailable: true
+    )
+    assertBundledAnalysisJapaneseRegion(in: app)
+
+    app.terminate()
+    app.launch()
+    assertBundledAnalysisJapaneseRegion(in: app)
+
+    app.buttons["image-text.close"].tap()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    submitSearch("いる", in: app, searchField: searchField)
+    let openExamples = app.buttons["search.examples"]
+    XCTAssertTrue(openExamples.waitForExistence(timeout: 4))
+    openExamples.tap()
+    let exampleList = app.collectionViews["example-list.screen"]
+    XCTAssertTrue(exampleList.waitForExistence(timeout: 4))
+    let linkedToken = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "example.token.",
+        "いる, いる")
+    ).firstMatch
+    XCTAssertTrue(linkedToken.waitForExistence(timeout: 4))
+    XCTAssertTrue(linkedToken.isHittable)
+    linkedToken.tap()
+    XCTAssertTrue(app.descendants(matching: .any)["ruby.いる.いる"].waitForExistence(timeout: 3))
+  }
+
+  @MainActor
   func testImageTextSharePreviewIdentifiesSelectedImageAndRestoresSession() throws {
     let app = launchImageTextFixtures(["fixture-clear-horizontal.png"])
     let close = app.buttons["image-text.close"]
@@ -2445,7 +2484,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  func test000JapaneseTextAnalysisPackDownloadsThroughNativeManagementSurface() throws {
+  func testJapaneseTextAnalysisShowsIncludedOfflineDefaultWithoutDownloadActions() throws {
     let app = launchApp(additionalArguments: ["-ResetLanguageTechnologyPacks"])
     XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 3))
     app.tabBars.buttons["More"].tap()
@@ -2458,34 +2497,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["Japanese Text Analysis"].exists)
     XCTAssertTrue(app.staticTexts["Engine, sudachi.rs 0.6.11"].exists)
     XCTAssertTrue(app.staticTexts["Dictionary, Core 20260723"].exists)
-    XCTAssertTrue(app.staticTexts["Download, 72.3 MB"].exists)
-
-    let download = app.buttons[
-      "language-technology-pack.download.sudachi-core-ja-20260723"
-    ]
-    scrollUpUntilHittable(download, in: list, attempts: 6)
-    XCTAssertTrue(download.isHittable)
-    XCTAssertTrue(
-      app.staticTexts.matching(
-        NSPredicate(format: "label BEGINSWITH %@", "Installed size,")
-      ).firstMatch.exists
-    )
-    download.tap()
-    let progress = app.descendants(matching: .any)[
-      "language-technology-pack.progress.sudachi-core-ja-20260723"
-    ]
-    XCTAssertTrue(progress.waitForExistence(timeout: 2))
-    let installed = app.descendants(matching: .any)[
+    XCTAssertTrue(app.staticTexts["Availability, Included with Zenbu"].exists)
+    XCTAssertTrue(app.staticTexts["Offline use, Works Offline"].exists)
+    XCTAssertTrue(app.staticTexts["Installed contribution, 217.5 MB"].exists)
+    let active = app.descendants(matching: .any)[
       "language-technology-pack.status.sudachi-core-ja-20260723"
     ]
-    let installedExpectation = XCTNSPredicateExpectation(
-      predicate: NSPredicate(format: "label == %@", "Status, Active"),
-      object: installed
-    )
-    XCTAssertEqual(XCTWaiter.wait(for: [installedExpectation], timeout: 90), .completed)
-    XCTAssertEqual(installed.label, "Status, Active")
-    XCTAssertEqual(installed.value as? String, "Ready for on-device analysis")
-    XCTAssertTrue(app.buttons["language-technology-pack.remove.sudachi-core-ja-20260723"].exists)
+    XCTAssertTrue(active.waitForExistence(timeout: 3))
+    XCTAssertEqual(active.label, "Status, Active")
+    XCTAssertEqual(active.value as? String, "Ready for on-device analysis")
+    XCTAssertFalse(app.buttons["language-technology-pack.download.sudachi-core-ja-20260723"].exists)
+    XCTAssertFalse(app.buttons["language-technology-pack.remove.sudachi-core-ja-20260723"].exists)
+    XCTAssertFalse(app.buttons["language-technology-pack.update.sudachi-core-ja-20260723"].exists)
   }
 
   @MainActor
@@ -4139,7 +4162,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     for _ in 0..<6 where !notice.exists { detail.swipeUp() }
 
     XCTAssertTrue(notice.exists)
-    XCTAssertTrue(notice.label.contains("Download Japanese Text Analysis in More"))
+    XCTAssertTrue(notice.label.contains("Reinstall or update Zenbu"))
   }
 
   @MainActor
@@ -5349,15 +5372,38 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func launchApp(
-    additionalArguments: [String] = []
+    additionalArguments: [String] = [],
+    usesJapaneseAnalysisFixture: Bool = true,
+    networkUnavailable: Bool = false
   ) -> XCUIApplication {
     let app = XCUIApplication()
-    app.launchArguments += [
-      "-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-UseJapaneseAnalysisFixture",
-    ]
+    if networkUnavailable {
+      app.launchEnvironment["HTTP_PROXY"] = "http://127.0.0.1:9"
+      app.launchEnvironment["HTTPS_PROXY"] = "http://127.0.0.1:9"
+      app.launchEnvironment["NO_PROXY"] = ""
+    }
+    app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+    if usesJapaneseAnalysisFixture {
+      app.launchArguments.append("-UseJapaneseAnalysisFixture")
+    }
     app.launchArguments += additionalArguments
     app.launch()
     return app
+  }
+
+  @MainActor
+  private func assertBundledAnalysisJapaneseRegion(in app: XCUIApplication) {
+    XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
+    XCTAssertTrue(
+      app.descendants(matching: .any)["image-text.raw-text"].waitForExistence(timeout: 10))
+    XCTAssertFalse(app.staticTexts["image-text.reduced-analysis"].exists)
+    let japanese = app.descendants(matching: .any)["image-text.region.日本語"]
+    XCTAssertTrue(japanese.waitForExistence(timeout: 10))
+    XCTAssertTrue(japanese.isHittable)
+    japanese.tap()
+    let gloss = app.buttons["image-text.gloss"]
+    XCTAssertTrue(gloss.waitForExistence(timeout: 3))
+    XCTAssertTrue(gloss.label.localizedCaseInsensitiveContains("japanese"))
   }
 
   @MainActor

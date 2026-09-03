@@ -92,6 +92,19 @@ jobs:
           sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
           xcodebuild -version
 
+      - name: Restore pinned Sudachi Core source artifact
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: ~/Library/Caches/com.zenbujapanese.build/SudachiCore/wheels/b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498.whl
+          key: sudachi-core-wheel-20260723-b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498-${{ runner.os }}
+
+      - name: Prepare verified Sudachi Core build cache
+        run: |
+          python3 apps/ios/Tools/prepare_sudachi_core.py \
+            --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
+            --cache "$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore" \
+            --cache-only
+
       - name: Run the complete iOS suite exactly once
         run: |
           apps/ios/Tools/run_selected_test_plan.sh \

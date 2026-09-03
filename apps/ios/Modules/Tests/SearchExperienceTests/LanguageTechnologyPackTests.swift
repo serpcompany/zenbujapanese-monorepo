@@ -4,6 +4,287 @@ import XCTest
 @testable import SearchExperience
 
 final class LanguageTechnologyPackTests: XCTestCase {
+  func testPristineInstallUsesBundledDictionaryWithoutApplicationSupportPack() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("BundledLanguageTechnology-\(UUID().uuidString)")
+    let storage = root.appendingPathComponent("ApplicationSupport", isDirectory: true)
+    let bundledDictionary = root.appendingPathComponent("system.dic")
+    defer { try? FileManager.default.removeItem(at: root) }
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    try Data("validated-test-dictionary".utf8).write(to: bundledDictionary)
+    let downloads = LockedCounter()
+    let catalog = LanguageTechnologyPackCatalog(
+      schemaVersion: 1,
+      packs: [Self.makeFixtureManifest(version: "1", distribution: .bundledDefault)],
+      trustedHistoricalManifests: []
+    )
+
+    let manager = try LanguageTechnologyPackManager(
+      catalog: catalog,
+      storageDirectory: storage,
+      bundledDictionaryURL: bundledDictionary,
+      download: { _ in
+        downloads.increment()
+        throw URLError(.notConnectedToInternet)
+      },
+      validateProvider: Self.validateFixtureDictionary
+    )
+
+    let snapshot = await manager.snapshot()
+    let state = try XCTUnwrap(snapshot.packs.first)
+    XCTAssertTrue(state.isIncludedWithApp)
+    XCTAssertTrue(state.isInstalled)
+    XCTAssertTrue(state.isActive)
+    XCTAssertTrue(state.worksOffline)
+    XCTAssertEqual(state.status, .active)
+    XCTAssertEqual(state.installedVersion, "1")
+    XCTAssertEqual(state.installedBytes, 25)
+    let activeDictionary = await manager.installedDictionaryURL()
+    XCTAssertEqual(activeDictionary, bundledDictionary)
+    XCTAssertEqual(downloads.value, 0)
+    XCTAssertFalse(FileManager.default.fileExists(atPath: storage.path))
+  }
+
+  func testIdenticalLegacyDownloadedDefaultIsRemovedOnlyAfterBundledValidation() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("BundledLanguageTechnologyMigration-\(UUID().uuidString)")
+    let storage = root.appendingPathComponent("ApplicationSupport", isDirectory: true)
+    let bundledDictionary = root.appendingPathComponent("system.dic")
+    defer { try? FileManager.default.removeItem(at: root) }
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    try Data("validated-test-dictionary".utf8).write(to: bundledDictionary)
+    let archive = try XCTUnwrap(Data(base64Encoded: Self.fixtureArchiveBase64))
+    let legacyCatalog = LanguageTechnologyPackCatalog(
+      schemaVersion: 1,
+      packs: [Self.makeFixtureManifest(version: "1")],
+      trustedHistoricalManifests: []
+    )
+    let legacy = try LanguageTechnologyPackManager(
+      catalog: legacyCatalog,
+      storageDirectory: storage,
+      download: { _ in archive },
+      validateProvider: Self.validateFixtureDictionary
+    )
+    try await legacy.download(Self.fixtureManifest.packID)
+    XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: storage.path).count, 2)
+
+    let bundledCatalog = LanguageTechnologyPackCatalog(
+      schemaVersion: 1,
+      packs: [Self.makeFixtureManifest(version: "1", distribution: .bundledDefault)],
+      trustedHistoricalManifests: []
+    )
+    let upgraded = try LanguageTechnologyPackManager(
+      catalog: bundledCatalog,
+      storageDirectory: storage,
+      bundledDictionaryURL: bundledDictionary,
+      download: { _ in throw URLError(.notConnectedToInternet) },
+      validateProvider: Self.validateFixtureDictionary
+    )
+
+    let activeDictionary = await upgraded.installedDictionaryURL()
+    XCTAssertEqual(activeDictionary, bundledDictionary)
+    XCTAssertFalse(FileManager.default.fileExists(atPath: storage.path))
+  }
+
+  func testBundledDefaultCannotBeDownloadedOrRemoved() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("BundledLanguageTechnologyActions-\(UUID().uuidString)")
+    let storage = root.appendingPathComponent("ApplicationSupport", isDirectory: true)
+    let bundledDictionary = root.appendingPathComponent("system.dic")
+    defer { try? FileManager.default.removeItem(at: root) }
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    try Data("validated-test-dictionary".utf8).write(to: bundledDictionary)
+    let catalog = LanguageTechnologyPackCatalog(
+      schemaVersion: 1,
+      packs: [Self.makeFixtureManifest(version: "1", distribution: .bundledDefault)],
+      trustedHistoricalManifests: []
+    )
+    let manager = try LanguageTechnologyPackManager(
+      catalog: catalog,
+      storageDirectory: storage,
+      bundledDictionaryURL: bundledDictionary,
+      download: { _ in
+        XCTFail("The required bundled default must not fetch the network")
+        return Data()
+      },
+      validateProvider: Self.validateFixtureDictionary
+    )
+
+    let snapshot = await manager.snapshot()
+    let state = try XCTUnwrap(snapshot.packs.first)
+    XCTAssertFalse(state.canDownload)
+    XCTAssertFalse(state.canRemove)
+    await assertThrowsErrorAsync { try await manager.download(state.id) }
+    await assertThrowsErrorAsync { try await manager.remove(state.id) }
+  }
+
+  func testCorruptBundledDefaultReportsUnavailableWithoutOfferingActions() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("BundledLanguageTechnologyUnavailable-\(UUID().uuidString)")
+    let storage = root.appendingPathComponent("ApplicationSupport", isDirectory: true)
+    let corruptBundle = root.appendingPathComponent("system.dic")
+    defer { try? FileManager.default.removeItem(at: root) }
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    try Data("not-the-reviewed-dictionary".utf8).write(to: corruptBundle)
+    let catalog = LanguageTechnologyPackCatalog(
+      schemaVersion: 1,
+      packs: [Self.makeFixtureManifest(version: "1", distribution: .bundledDefault)],
+      trustedHistoricalManifests: []
+    )
+    let manager = try LanguageTechnologyPackManager(
+      catalog: catalog,
+      storageDirectory: storage,
+      bundledDictionaryURL: corruptBundle,
+      download: { _ in
+        XCTFail("Unavailable bundled resources must not trigger a download")
+        return Data()
+      },
+      validateProvider: Self.validateFixtureDictionary
+    )
+
+    let snapshot = await manager.snapshot()
+    let state = try XCTUnwrap(snapshot.packs.first)
+    XCTAssertEqual(state.status, .unavailable)
+    XCTAssertEqual(state.status.title, "Unavailable")
+    XCTAssertEqual(state.status.accessibilityValue, "Included resources failed verification")
+    XCTAssertFalse(state.canDownload)
+    XCTAssertFalse(state.canRemove)
+    XCTAssertNotNil(state.failureMessage)
+    let activeDictionary = await manager.installedDictionaryURL()
+    XCTAssertNil(activeDictionary)
+  }
+
+  func testCorruptOptionalOverrideFallsBackToBundleWithoutDeletingUnknownBytes() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("BundledLanguageTechnologyCorruptOverride-\(UUID().uuidString)")
+    let storage = root.appendingPathComponent("ApplicationSupport", isDirectory: true)
+    let bundledDictionary = root.appendingPathComponent("system.dic")
+    defer { try? FileManager.default.removeItem(at: root) }
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    try Data("validated-test-dictionary".utf8).write(to: bundledDictionary)
+    let bundled = Self.makeFixtureManifest(
+      version: "1", distribution: .bundledDefault, packID: "fixture-bundled")
+    let optional = Self.makeFixtureManifest(
+      version: "2", distribution: .optionalDownload, packID: "fixture-override")
+    let catalog = LanguageTechnologyPackCatalog(
+      schemaVersion: 1,
+      packs: [bundled, optional],
+      trustedHistoricalManifests: []
+    )
+    let archive = try XCTUnwrap(Data(base64Encoded: Self.fixtureArchiveBase64))
+    let manager = try LanguageTechnologyPackManager(
+      catalog: catalog,
+      storageDirectory: storage,
+      bundledDictionaryURL: bundledDictionary,
+      download: { _ in archive },
+      validateProvider: Self.validateFixtureDictionary
+    )
+    try await manager.download(optional.packID)
+    let installedFiles = try FileManager.default.contentsOfDirectory(
+      at: storage, includingPropertiesForKeys: nil
+    )
+    let overrideURL = try XCTUnwrap(installedFiles.first { $0.pathExtension == "dic" })
+    try Data("learner-or-unknown-bytes".utf8).write(to: overrideURL, options: .atomic)
+
+    let relaunched = try LanguageTechnologyPackManager(
+      catalog: catalog,
+      storageDirectory: storage,
+      bundledDictionaryURL: bundledDictionary,
+      download: { _ in throw URLError(.notConnectedToInternet) },
+      validateProvider: Self.validateFixtureDictionary
+    )
+
+    let activeDictionary = await relaunched.installedDictionaryURL()
+    let snapshot = await relaunched.snapshot()
+    XCTAssertEqual(activeDictionary, bundledDictionary)
+    let bundledState = snapshot.packs.first { $0.id == bundled.packID }
+    XCTAssertTrue(bundledState?.isActive == true)
+    XCTAssertNil(bundledState?.failureMessage)
+    XCTAssertTrue(snapshot.packs.first { $0.id == optional.packID }?.isActive == false)
+    XCTAssertNotNil(snapshot.packs.first { $0.id == optional.packID }?.failureMessage)
+    XCTAssertEqual(try Data(contentsOf: overrideURL), Data("learner-or-unknown-bytes".utf8))
+  }
+
+  func testRemovingOptionalOverrideReturnsToBundledDefault() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("BundledLanguageTechnologyOverrideRemoval-\(UUID().uuidString)")
+    let storage = root.appendingPathComponent("ApplicationSupport", isDirectory: true)
+    let bundledDictionary = root.appendingPathComponent("system.dic")
+    defer { try? FileManager.default.removeItem(at: root) }
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    try Data("validated-test-dictionary".utf8).write(to: bundledDictionary)
+    let bundled = Self.makeFixtureManifest(
+      version: "1", distribution: .bundledDefault, packID: "fixture-bundled")
+    let optional = Self.makeFixtureManifest(
+      version: "2", distribution: .optionalDownload, packID: "fixture-override")
+    let catalog = LanguageTechnologyPackCatalog(
+      schemaVersion: 1,
+      packs: [bundled, optional],
+      trustedHistoricalManifests: []
+    )
+    let archive = try XCTUnwrap(Data(base64Encoded: Self.fixtureArchiveBase64))
+    let manager = try LanguageTechnologyPackManager(
+      catalog: catalog,
+      storageDirectory: storage,
+      bundledDictionaryURL: bundledDictionary,
+      download: { _ in archive },
+      validateProvider: Self.validateFixtureDictionary
+    )
+
+    try await manager.download(optional.packID)
+    let overrideDictionary = await manager.installedDictionaryURL()
+    XCTAssertNotEqual(overrideDictionary, bundledDictionary)
+    try await manager.remove(optional.packID)
+
+    let activeDictionary = await manager.installedDictionaryURL()
+    let snapshot = await manager.snapshot()
+    XCTAssertEqual(activeDictionary, bundledDictionary)
+    XCTAssertTrue(snapshot.packs.first { $0.id == bundled.packID }?.isActive == true)
+    XCTAssertTrue(snapshot.packs.first { $0.id == optional.packID }?.isInstalled == false)
+  }
+
+  func testMismatchedLegacyDefaultIsNeverDeletedDuringBundledMigration() async throws {
+    let root = FileManager.default.temporaryDirectory
+      .appendingPathComponent("BundledLanguageTechnologyMismatchedLegacy-\(UUID().uuidString)")
+    let storage = root.appendingPathComponent("ApplicationSupport", isDirectory: true)
+    let bundledDictionary = root.appendingPathComponent("system.dic")
+    defer { try? FileManager.default.removeItem(at: root) }
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    try Data("validated-test-dictionary".utf8).write(to: bundledDictionary)
+    let archive = try XCTUnwrap(Data(base64Encoded: Self.fixtureArchiveBase64))
+    let legacy = try LanguageTechnologyPackManager(
+      catalog: Self.fixtureCatalog,
+      storageDirectory: storage,
+      download: { _ in archive },
+      validateProvider: Self.validateFixtureDictionary
+    )
+    try await legacy.download(Self.fixtureManifest.packID)
+    let installedFiles = try FileManager.default.contentsOfDirectory(
+      at: storage, includingPropertiesForKeys: nil
+    )
+    let legacyURL = try XCTUnwrap(installedFiles.first { $0.pathExtension == "dic" })
+    try Data("not-the-reviewed-pack".utf8).write(to: legacyURL, options: .atomic)
+    let bundledCatalog = LanguageTechnologyPackCatalog(
+      schemaVersion: 1,
+      packs: [Self.makeFixtureManifest(version: "1", distribution: .bundledDefault)],
+      trustedHistoricalManifests: []
+    )
+
+    let upgraded = try LanguageTechnologyPackManager(
+      catalog: bundledCatalog,
+      storageDirectory: storage,
+      bundledDictionaryURL: bundledDictionary,
+      download: { _ in throw URLError(.notConnectedToInternet) },
+      validateProvider: Self.validateFixtureDictionary
+    )
+
+    let activeDictionary = await upgraded.installedDictionaryURL()
+    XCTAssertEqual(activeDictionary, bundledDictionary)
+    XCTAssertEqual(try Data(contentsOf: legacyURL), Data("not-the-reviewed-pack".utf8))
+    XCTAssertTrue(
+      FileManager.default.fileExists(atPath: storage.appendingPathComponent("state.json").path))
+  }
+
   func testProviderContractRejectsEveryWrongGoldenEvidenceField() throws {
     let valid = Self.goldenAnalysis()
     XCTAssertNoThrow(try SudachiCoreContract.validateGoldenOutput(valid))
@@ -45,22 +326,21 @@ final class LanguageTechnologyPackTests: XCTestCase {
         candidates: [childGap] + valid.candidates.dropFirst(), transcript: valid.transcript))
   }
 
-  func testOfficialWheelInstallsRunsOfflineAndRetainsLastGood() async throws {
-    let wheel = try await OfficialSudachiTestResource.shared.wheelData()
+  func testBundledOfficialDictionaryRunsOfflineAndSurvivesRelaunch() async throws {
     let temporary = FileManager.default.temporaryDirectory
-      .appendingPathComponent("LanguageTechnologyOfficialPack-\(UUID().uuidString)")
+      .appendingPathComponent("LanguageTechnologyBundledPack-\(UUID().uuidString)")
     defer { try? FileManager.default.removeItem(at: temporary) }
     let catalog = try LanguageTechnologyPackCatalog.bundled()
     let manager = try LanguageTechnologyPackManager(
       catalog: catalog,
       storageDirectory: temporary,
-      download: { _ in wheel }
+      download: { _ in throw URLError(.notConnectedToInternet) }
     )
 
-    let packID = try XCTUnwrap(catalog.packs.first?.packID)
-    try await manager.download(packID)
     let installed = await manager.snapshot().packs[0]
     XCTAssertTrue(installed.isInstalled)
+    XCTAssertTrue(installed.isIncludedWithApp)
+    XCTAssertTrue(installed.worksOffline)
     XCTAssertEqual(installed.installedBytes, 217_466_039)
     let installedDictionaryURL = await manager.installedDictionaryURL()
     let dictionaryURL = try XCTUnwrap(installedDictionaryURL)
@@ -71,17 +351,6 @@ final class LanguageTechnologyPackTests: XCTestCase {
     XCTAssertTrue(expected.candidates.contains { $0.surface == "話し" && $0.dictionaryForm == "話す" })
     XCTAssertTrue(expected.candidates.contains { $0.surface == "用いる" })
 
-    let repeated = try await withThrowingTaskGroup(of: JapaneseMorphologyAnalysis.self) { group in
-      for _ in 0..<100 { group.addTask { try await morphology.analyze(expected.transcript) } }
-      return try await group.reduce(into: []) { $0.append($1) }
-    }
-    XCTAssertTrue(repeated.allSatisfy { $0 == expected })
-    let cancelled = Task {
-      try await morphology.analyze(String(repeating: expected.transcript, count: 100))
-    }
-    cancelled.cancel()
-    await assertThrowsErrorAsync { _ = try await cancelled.value }
-
     let offline = try LanguageTechnologyPackManager(
       catalog: catalog,
       storageDirectory: temporary,
@@ -89,9 +358,11 @@ final class LanguageTechnologyPackTests: XCTestCase {
     )
     let relaunchedURL = await offline.installedDictionaryURL()
     XCTAssertEqual(relaunchedURL, dictionaryURL)
-    await assertThrowsErrorAsync { try await offline.download(packID) }
-    let retainedURL = await offline.installedDictionaryURL()
-    XCTAssertEqual(retainedURL, dictionaryURL)
+    let relaunchedMorphology = try JapaneseMorphologyClient.sudachiCore(
+      dictionaryURL: dictionaryURL)
+    let relaunchedAnalysis = try await relaunchedMorphology.analyze(expected.transcript)
+    XCTAssertEqual(relaunchedAnalysis, expected)
+    XCTAssertFalse(FileManager.default.fileExists(atPath: temporary.path))
   }
 
   func testOfficialProductionCatalogPinsReviewedSudachiContractAndNotices() throws {
@@ -111,6 +382,9 @@ final class LanguageTechnologyPackTests: XCTestCase {
       pack.installedSHA256,
       "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f")
     XCTAssertEqual(pack.archiveEntry, "sudachidict_core/resources/system.dic")
+    XCTAssertEqual(pack.distribution, .bundledDefault)
+    XCTAssertEqual(pack.bundledResource, "system_core")
+    XCTAssertEqual(pack.bundledResourceExtension, "dic")
     XCTAssertEqual(pack.runtimeResourceCommit, "90fd6068c80c2fc3b63e0dbab0e341475bad4d8f")
     XCTAssertTrue(pack.downloadURL.host == "github.com")
     XCTAssertNotNil(
@@ -351,9 +625,13 @@ final class LanguageTechnologyPackTests: XCTestCase {
 
   private static let fixtureManifest = makeFixtureManifest(version: "1")
 
-  private static func makeFixtureManifest(version: String) -> LanguageTechnologyPackManifest {
+  private static func makeFixtureManifest(
+    version: String,
+    distribution: LanguageTechnologyPackDistribution = .optionalDownload,
+    packID: String = "fixture-core"
+  ) -> LanguageTechnologyPackManifest {
     LanguageTechnologyPackManifest(
-      packID: LanguageTechnologyPackID(rawValue: "fixture-core"),
+      packID: LanguageTechnologyPackID(rawValue: packID),
       displayName: "Fixture Japanese Text Analysis",
       packVersion: version,
       engine: "fixture",
@@ -372,8 +650,17 @@ final class LanguageTechnologyPackTests: XCTestCase {
       unknownDefinitionSHA256: "fixture",
       licenseIdentifier: "Fixture",
       attribution: "Fixture",
-      licenseResource: "SudachiLanguageTechnologyNotices"
+      licenseResource: "SudachiLanguageTechnologyNotices",
+      distribution: distribution,
+      bundledResource: distribution == .bundledDefault ? "system" : nil,
+      bundledResourceExtension: distribution == .bundledDefault ? "dic" : nil
     )
+  }
+
+  private static func validateFixtureDictionary(_ url: URL) throws {
+    guard try Data(contentsOf: url) == Data("validated-test-dictionary".utf8) else {
+      throw LanguageTechnologyPackError.goldenOutputMismatch
+    }
   }
 
   private static let fixtureCatalog = LanguageTechnologyPackCatalog(

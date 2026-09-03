@@ -37,14 +37,23 @@ final class AccessibilityAuditUITests: XCTestCase {
     destination.tap()
     let list = app.collectionViews["language-technology-packs.list"]
     XCTAssertTrue(list.waitForExistence(timeout: 3))
-    let remove = app.buttons["language-technology-pack.remove.sudachi-core-ja-20260723"]
-    for _ in 0..<8 where !remove.exists || !remove.isHittable {
+    let availability = app.staticTexts["Availability, Included with Zenbu"]
+    for _ in 0..<8 where !availability.exists {
       list.swipeUp(velocity: .slow)
     }
-    XCTAssertTrue(remove.isHittable)
-    XCTAssertTrue(
-      app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Storage,"))
-        .firstMatch.exists)
+    XCTAssertTrue(availability.exists)
+    let offline = app.staticTexts["Offline use, Works Offline"]
+    for _ in 0..<8 where !offline.exists {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(offline.exists)
+    let contribution = app.staticTexts["Installed contribution, 217.5 MB"]
+    for _ in 0..<8 where !contribution.exists {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(contribution.exists)
+    XCTAssertFalse(app.buttons["language-technology-pack.download.sudachi-core-ja-20260723"].exists)
+    XCTAssertFalse(app.buttons["language-technology-pack.remove.sudachi-core-ja-20260723"].exists)
   }
 
   @MainActor

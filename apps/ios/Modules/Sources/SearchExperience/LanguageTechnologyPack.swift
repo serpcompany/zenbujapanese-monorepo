@@ -33,8 +33,9 @@ struct LanguageTechnologyPackCatalog: Codable, Equatable, Sendable {
         forResource: "LanguageTechnologyPackCatalog", withExtension: "json")
     else { throw LanguageTechnologyPackError.invalidCatalog }
     let catalog = try JSONDecoder().decode(Self.self, from: Data(contentsOf: url))
-    guard catalog.schemaVersion == 1, catalog.packs.count == 1,
-      let pack = catalog.packs.first,
+    let bundledDefaults = catalog.packs.filter { $0.distribution == .bundledDefault }
+    guard catalog.schemaVersion == 1, bundledDefaults.count == 1,
+      let pack = bundledDefaults.first,
       pack.packID.rawValue == "sudachi-core-ja-20260723",
       pack.engine == SudachiCoreContract.engine,
       pack.engineVersion == SudachiCoreContract.engineVersion,
@@ -43,12 +44,15 @@ struct LanguageTechnologyPackCatalog: Codable, Equatable, Sendable {
       pack.packVersion == SudachiCoreContract.dictionaryVersion,
       pack.downloadBytes == SudachiCoreContract.downloadBytes,
       pack.downloadSHA256 == SudachiCoreContract.downloadSHA256,
+      pack.downloadURL == SudachiCoreContract.downloadURL,
       pack.installedBytes == SudachiCoreContract.installedBytes,
       pack.archiveEntry == SudachiCoreContract.archiveEntry,
       pack.installedSHA256 == SudachiCoreContract.dictionarySHA256,
       pack.runtimeResourceCommit == SudachiCoreContract.runtimeResourceCommit,
       pack.characterDefinitionSHA256 == SudachiCoreContract.characterDefinitionSHA256,
       pack.unknownDefinitionSHA256 == SudachiCoreContract.unknownDefinitionSHA256,
+      pack.bundledResource == "system_core",
+      pack.bundledResourceExtension == "dic",
       Bundle.module.url(forResource: pack.licenseResource, withExtension: "txt") != nil,
       catalog.trustedHistoricalManifests.allSatisfy({ historical in
         catalog.packs.contains { $0.packID == historical.packID }
@@ -79,6 +83,14 @@ struct LanguageTechnologyPackManifest: Codable, Equatable, Sendable {
   let licenseIdentifier: String
   let attribution: String
   let licenseResource: String
+  let distribution: LanguageTechnologyPackDistribution
+  let bundledResource: String?
+  let bundledResourceExtension: String?
+}
+
+enum LanguageTechnologyPackDistribution: String, Codable, Equatable, Sendable {
+  case bundledDefault
+  case optionalDownload
 }
 
 struct LanguageTechnologyPackSnapshot: Equatable, Sendable {
@@ -94,6 +106,46 @@ struct LanguageTechnologyPackState: Equatable, Identifiable, Sendable {
   let installedBytes: Int?
   let failureMessage: String?
   let updateAvailable: Bool
+  let isIncludedWithApp: Bool
+  let worksOffline: Bool
+  let canDownload: Bool
+  let canRemove: Bool
+
+  var status: LanguageTechnologyPackStatus {
+    if isActive { return .active }
+    if isIncludedWithApp && !worksOffline { return .unavailable }
+    return .available
+  }
+}
+
+enum LanguageTechnologyPackStatus: Equatable, Sendable {
+  case active
+  case available
+  case unavailable
+
+  var title: String {
+    switch self {
+    case .active: "Active"
+    case .available: "Available"
+    case .unavailable: "Unavailable"
+    }
+  }
+
+  var systemImage: String {
+    switch self {
+    case .active: "checkmark.circle.fill"
+    case .available: "arrow.down.circle"
+    case .unavailable: "exclamationmark.triangle"
+    }
+  }
+
+  var accessibilityValue: String {
+    switch self {
+    case .active: "Ready for on-device analysis"
+    case .available: "Not installed"
+    case .unavailable: "Included resources failed verification"
+    }
+  }
 }
 
 enum LanguageTechnologyPackError: Error, Equatable {
@@ -121,12 +173,15 @@ actor LanguageTechnologyPackManager {
   private let storageDirectory: URL
   private let downloadSource: Download
   private let validateProvider: @Sendable (URL) throws -> Void
-  private var installed: InstalledLanguageTechnologyPack?
+  private let bundledDefault: (manifest: LanguageTechnologyPackManifest, url: URL)?
+  private var installedOverride: InstalledLanguageTechnologyPack?
   private var failureMessage: String?
+  private var failurePackID: LanguageTechnologyPackID?
 
   init(
     catalog: LanguageTechnologyPackCatalog,
     storageDirectory: URL,
+    bundledDictionaryURL: URL? = nil,
     download: @escaping Download,
     validateProvider: @escaping @Sendable (URL) throws -> Void =
       LanguageTechnologyPackManager.validateGoldenOutput
@@ -135,57 +190,121 @@ actor LanguageTechnologyPackManager {
     self.storageDirectory = storageDirectory
     downloadSource = download
     self.validateProvider = validateProvider
-    try FileManager.default.createDirectory(at: storageDirectory, withIntermediateDirectories: true)
-    var values = URLResourceValues()
-    values.isExcludedFromBackup = true
-    var mutableStorageDirectory = storageDirectory
-    try? mutableStorageDirectory.setResourceValues(values)
+    let bundledManifest = catalog.packs.first { $0.distribution == .bundledDefault }
+    let resolvedBundledURL =
+      bundledDictionaryURL
+      ?? bundledManifest.flatMap { manifest in
+        guard let resource = manifest.bundledResource,
+          let resourceExtension = manifest.bundledResourceExtension
+        else { return nil }
+        return Bundle.module.url(forResource: resource, withExtension: resourceExtension)
+          ?? Bundle.main.url(forResource: resource, withExtension: resourceExtension)
+      }
+    if let manifest = bundledManifest, let url = resolvedBundledURL,
+      Self.validDictionary(at: url, manifest: manifest),
+      (try? validateProvider(url)) != nil
+    {
+      bundledDefault = (manifest, url)
+    } else {
+      bundledDefault = nil
+      if bundledManifest != nil {
+        failureMessage = "The included Japanese analysis resources could not be verified."
+        failurePackID = bundledManifest?.packID
+      }
+    }
+
     let stateURL = storageDirectory.appendingPathComponent("state.json")
     if let record = try? JSONDecoder().decode(
-      InstalledLanguageTechnologyPack.self, from: Data(contentsOf: stateURL)),
-      let manifest = catalog.allTrustedManifests.first(where: {
-        $0.packID == record.packID && $0.packVersion == record.packVersion
-      }),
-      record.downloadSHA256 == manifest.downloadSHA256,
-      record.installedSHA256 == manifest.installedSHA256,
-      Self.validDictionary(
-        at: storageDirectory.appendingPathComponent(record.filename), manifest: manifest),
-      (try? validateProvider(storageDirectory.appendingPathComponent(record.filename))) != nil
+      InstalledLanguageTechnologyPack.self, from: Data(contentsOf: stateURL))
     {
-      installed = record
+      let manifest = catalog.allTrustedManifests.first {
+        $0.packID == record.packID && $0.packVersion == record.packVersion
+      }
+      let dictionaryURL = storageDirectory.appendingPathComponent(record.filename)
+      let isValid =
+        manifest.map {
+          Self.isManagedFilename(record.filename)
+            && record.downloadSHA256 == $0.downloadSHA256
+            && record.installedSHA256 == $0.installedSHA256
+            && Self.validDictionary(at: dictionaryURL, manifest: $0)
+            && (try? validateProvider(dictionaryURL)) != nil
+        } ?? false
+      if let manifest, isValid {
+        if manifest.distribution == .bundledDefault,
+          bundledDefault?.manifest.packID == manifest.packID,
+          bundledDefault?.manifest.installedSHA256 == record.installedSHA256
+        {
+          do {
+            try FileManager.default.removeItem(at: dictionaryURL)
+            try FileManager.default.removeItem(at: stateURL)
+            if try FileManager.default.contentsOfDirectory(atPath: storageDirectory.path).isEmpty {
+              try FileManager.default.removeItem(at: storageDirectory)
+            }
+          } catch {
+            failureMessage =
+              "The included Japanese analysis is active, but an older verified pack could not be removed."
+            failurePackID = manifest.packID
+          }
+        } else if manifest.distribution == .optionalDownload {
+          installedOverride = record
+        }
+      } else if manifest?.distribution == .optionalDownload {
+        failureMessage =
+          "An optional Japanese analysis pack could not be verified. Zenbu is using the included pack."
+        failurePackID = record.packID
+      }
     }
   }
 
   func snapshot() -> LanguageTechnologyPackSnapshot {
     LanguageTechnologyPackSnapshot(
       packs: catalog.packs.map { manifest in
-        LanguageTechnologyPackState(
+        let isBundled = manifest.distribution == .bundledDefault
+        let bundleAvailable = bundledDefault?.manifest.packID == manifest.packID
+        let overrideInstalled = installedOverride?.packID == manifest.packID
+        let isActive = overrideInstalled || (installedOverride == nil && bundleAvailable)
+        return LanguageTechnologyPackState(
           manifest: manifest,
-          isInstalled: installed?.packID == manifest.packID,
-          isActive: installed?.packID == manifest.packID,
-          installedVersion: installed.flatMap {
+          isInstalled: bundleAvailable || overrideInstalled,
+          isActive: isActive,
+          installedVersion: installedOverride.flatMap {
             $0.packID == manifest.packID ? $0.packVersion : nil
-          },
-          installedBytes: installed.flatMap { record in
+          } ?? (bundleAvailable ? manifest.packVersion : nil),
+          installedBytes: installedOverride.flatMap { record in
             guard record.packID == manifest.packID else { return nil }
             let url = storageDirectory.appendingPathComponent(record.filename)
             return try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
-          },
-          failureMessage: failureMessage,
-          updateAvailable: installed.map {
+          } ?? (bundleAvailable ? manifest.installedBytes : nil),
+          failureMessage: failurePackID == manifest.packID ? failureMessage : nil,
+          updateAvailable: installedOverride.map {
             $0.packID == manifest.packID && $0.packVersion != manifest.packVersion
-          } ?? false
+          } ?? false,
+          isIncludedWithApp: isBundled,
+          worksOffline: bundleAvailable || overrideInstalled,
+          canDownload: !isBundled && !overrideInstalled,
+          canRemove: !isBundled && overrideInstalled
         )
       }
     )
   }
 
   func download(_ packID: LanguageTechnologyPackID) async throws {
-    guard let manifest = catalog.packs.first(where: { $0.packID == packID }) else {
+    guard
+      let manifest = catalog.packs.first(where: {
+        $0.packID == packID && $0.distribution == .optionalDownload
+      })
+    else {
       throw LanguageTechnologyPackError.invalidPack
     }
     failureMessage = nil
+    failurePackID = nil
     do {
+      try FileManager.default.createDirectory(
+        at: storageDirectory, withIntermediateDirectories: true)
+      var values = URLResourceValues()
+      values.isExcludedFromBackup = true
+      var mutableStorageDirectory = storageDirectory
+      try? mutableStorageDirectory.setResourceValues(values)
       try Task.checkCancellation()
       let archiveData = try await downloadSource(manifest.downloadURL)
       try Task.checkCancellation()
@@ -236,8 +355,8 @@ actor LanguageTechnologyPackManager {
         try? FileManager.default.removeItem(at: destination)
         throw error
       }
-      let previous = installed
-      installed = record
+      let previous = installedOverride
+      installedOverride = record
       if let previous, previous.filename != filename {
         try? FileManager.default.removeItem(
           at: storageDirectory.appendingPathComponent(previous.filename))
@@ -246,24 +365,32 @@ actor LanguageTechnologyPackManager {
       failureMessage =
         error is CancellationError
         ? nil : "Download or validation failed. Your last verified pack was kept."
+      failurePackID = error is CancellationError ? nil : packID
       throw error
     }
   }
 
   func remove(_ packID: LanguageTechnologyPackID) throws {
-    guard let record = installed, record.packID == packID else {
+    guard let record = installedOverride, record.packID == packID else {
       throw LanguageTechnologyPackError.packNotInstalled
     }
     try FileManager.default.removeItem(at: storageDirectory.appendingPathComponent(record.filename))
     try? FileManager.default.removeItem(at: storageDirectory.appendingPathComponent("state.json"))
-    installed = nil
+    installedOverride = nil
     failureMessage = nil
+    failurePackID = nil
   }
 
   func installedDictionaryURL() -> URL? {
-    guard let record = installed else { return nil }
-    let url = storageDirectory.appendingPathComponent(record.filename)
-    return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    if let record = installedOverride {
+      let url = storageDirectory.appendingPathComponent(record.filename)
+      if FileManager.default.fileExists(atPath: url.path) { return url }
+    }
+    return bundledDefault?.url
+  }
+
+  private static func isManagedFilename(_ filename: String) -> Bool {
+    !filename.isEmpty && filename == URL(fileURLWithPath: filename).lastPathComponent
   }
 
   private static func validDictionary(

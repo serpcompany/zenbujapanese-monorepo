@@ -29,8 +29,7 @@
         "ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus()",
         "JapaneseTextAnalysisTests/testShippedSudachiAdapterMatchesFrozenProviderContract()",
         "JapaneseTextAnalysisTests/testShippedAdapterMatchesFrozenHardCaseFieldsAndAppOwnedLinkPolicy()",
-        "JapaneseTextAnalysisTests/testShippedSudachiAdapterRetainsFrozenConfirmationQuality()",
-        "LanguageTechnologyPackTests/testOfficialWheelInstallsRunsOfflineAndRetainsLastGood()"
+        "JapaneseTextAnalysisTests/testShippedSudachiAdapterRetainsFrozenConfirmationQuality()"
       ],
       "target" : {
         "containerPath" : "container:ZenbuJapanese.xcodeproj",
@@ -42,7 +41,6 @@
       "parallelizable" : false,
       "skippedTests" : [
         "SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
-        "SearchExperienceJourneyUITests/test000JapaneseTextAnalysisPackDownloadsThroughNativeManagementSurface()",
         "SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()"
       ],
       "target" : {

@@ -58,6 +58,10 @@ resolved_selector_count="$(printf '%s' "$plan_json" | jq '.selectors | length')"
 }
 
 mkdir -p "$result_dir"
+python3 "$tool_dir/prepare_sudachi_core.py" \
+  --manifest "$repo_root/apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json" \
+  --cache "${ZENBU_SUDACHI_BUILD_CACHE:-$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore}" \
+  --cache-only
 reuse_root="$(mktemp -d "${TMPDIR:-/tmp}/zenbu-issue-verification.XXXXXX")"
 cleanup_reuse_root() {
   rm -rf "$reuse_root"

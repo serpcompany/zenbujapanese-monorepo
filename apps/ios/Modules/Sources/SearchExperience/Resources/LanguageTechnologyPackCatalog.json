@@ -21,7 +21,10 @@
       "unknownDefinitionSHA256": "4e8c4c15e18af6a9fc5d636e3dc73fde55d50941b93a6c8835d4653d3f54ba79",
       "licenseIdentifier": "Apache-2.0 with retained UniDic and NEologd notices",
       "attribution": "Sudachi.rs by Works Applications; Swift binding by Ilia Snezhkov; SudachiDict includes UniDic and NEologd data.",
-      "licenseResource": "SudachiLanguageTechnologyNotices"
+      "licenseResource": "SudachiLanguageTechnologyNotices",
+      "distribution": "bundledDefault",
+      "bundledResource": "system_core",
+      "bundledResourceExtension": "dic"
     }
   ],
   "trustedHistoricalManifests": []

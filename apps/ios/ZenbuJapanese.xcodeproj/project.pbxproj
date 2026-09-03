@@ -206,6 +206,7 @@
 				A108F17A14E04A2AA1B1C108 /* Copy canonical Image Text fixtures for Debug */,
 				F38B6861CA6A9754CF93F50B /* Frameworks */,
 				C3E26B21F5C96FAD04F5E803 /* Resources */,
+				F25800000000000000000001 /* Prepare bundled Sudachi Core */,
 			);
 			buildRules = (
 			);
@@ -302,6 +303,23 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		F25800000000000000000001 /* Prepare bundled Sudachi Core */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Tools/prepare_sudachi_core.py",
+				"$(SRCROOT)/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json",
+			);
+			name = "Prepare bundled Sudachi Core";
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/system_core.dic",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\ncache_root=\"${ZENBU_SUDACHI_BUILD_CACHE:-$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore}\"\n/usr/bin/python3 \"$SRCROOT/Tools/prepare_sudachi_core.py\" \\\n  --manifest \"$SRCROOT/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json\" \\\n  --cache \"$cache_root\" \\\n  --offline \\\n  --output \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/system_core.dic\"\n";
+		};
 		8A1400000000000000000001 /* Verify Tatoeba provenance for Release */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;

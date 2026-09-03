@@ -39,6 +39,13 @@ jobs:
       - name: Select pinned Xcode
         run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
 
+      - name: Prepare verified Sudachi Core build cache
+        run: |
+          python3 apps/ios/Tools/prepare_sudachi_core.py \
+            --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
+            --cache "$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore" \
+            --cache-only
+
       - name: Run accessibility plan
         run: |
           apps/ios/Tools/run_ci_test_plan.sh \
@@ -75,6 +82,13 @@ jobs:
 
       - name: Select pinned Xcode
         run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+
+      - name: Prepare verified Sudachi Core build cache
+        run: |
+          python3 apps/ios/Tools/prepare_sudachi_core.py \
+            --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
+            --cache "$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore" \
+            --cache-only
 
       - name: Run complete nightly plan three times
         run: |
@@ -126,6 +140,13 @@ jobs:
 
       - name: Select pinned Xcode
         run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+
+      - name: Prepare verified Sudachi Core build cache
+        run: |
+          python3 apps/ios/Tools/prepare_sudachi_core.py \
+            --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
+            --cache "$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore" \
+            --cache-only
 
       - name: Run hosted tests with sanitizer
         run: |

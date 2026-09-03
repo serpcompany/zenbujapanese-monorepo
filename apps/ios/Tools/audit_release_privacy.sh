@@ -6,13 +6,16 @@ export PYTHONDONTWRITEBYTECODE=1
 tool_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ios_dir="$(cd "${tool_dir}/.." && pwd)"
 manifest="${ios_dir}/App/PrivacyInfo.xcprivacy"
-project="${ios_dir}/ZenbuJapanese.xcodeproj/project.pbxproj"
+project="${ZENBU_XCODE_PROJECT:-${ios_dir}/ZenbuJapanese.xcodeproj/project.pbxproj}"
 package_manifest="${ios_dir}/Modules/Package.swift"
 package_resolved="${ZENBU_PACKAGE_RESOLVED:-${ios_dir}/Modules/Package.resolved}"
 xcode_package_resolved="${ZENBU_XCODE_PACKAGE_RESOLVED:-${ios_dir}/ZenbuJapanese.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved}"
 release_sbom="${ZENBU_RELEASE_SBOM:-${ios_dir}/ReleaseSBOM.spdx.json}"
 language_database="${ios_dir}/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3"
-language_pack_catalog="${ios_dir}/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json"
+language_pack_catalog="${ZENBU_LANGUAGE_PACK_CATALOG:-${ios_dir}/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json}"
+language_resource_scan_root="${ZENBU_LANGUAGE_RESOURCE_SCAN_ROOT:-${ios_dir}/Modules/Sources/SearchExperience/Resources}"
+sudachi_preparation_tool="${ZENBU_SUDACHI_PREPARATION_TOOL:-${tool_dir}/prepare_sudachi_core.py}"
+sudachi_notices="${ZENBU_SUDACHI_NOTICES:-${ios_dir}/Modules/Sources/SearchExperience/Resources/SudachiLanguageTechnologyNotices.txt}"
 language_import_manifest="${ios_dir}/LanguageData/Generated/JMdict_e-2026-08-10.import.json"
 retrieval_validator="${tool_dir}/example_sentence_retrieval_index.py"
 dictionary_ranking_validator="${tool_dir}/validate_dictionary_ranking_data.py"
@@ -127,6 +130,7 @@ require_command python3
 require_command ruby
 require_command shasum
 require_command sqlite3
+require_command strings
 [[ "$mode" == "source" || "$mode" == "unsigned-preflight" || "$mode" == "signed-candidate" ]] || usage
 if [[ "$mode" == "source" ]]; then
   [[ $# -eq 1 ]] || usage
@@ -165,9 +169,28 @@ language_pack_download_source="${ios_dir}/Modules/Sources/SearchExperience/Langu
 require_rg_match "Language Technology Pack download must reject non-success HTTP responses" \
   'HTTPURLResponse\)\?\.statusCode == 200' "$language_pack_download_source"
 [[ -f "$language_pack_catalog" ]] || fail "Language Technology Pack catalog is missing"
-jq -e '.packs[0].downloadSHA256 == "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498" and .packs[0].installedSHA256 == "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f"' \
+jq -e '.schemaVersion == 1 and (.packs | length) == 1 and .packs[0].packID == "sudachi-core-ja-20260723" and .packs[0].packVersion == "20260723" and .packs[0].engine == "sudachi.rs" and .packs[0].engineVersion == "0.6.11" and .packs[0].binding == "sudachi-swift" and .packs[0].bindingVersion == "0.1.1" and .packs[0].downloadURL == "https://github.com/WorksApplications/SudachiDict/releases/download/v20260723/sudachidict_core-20260723-py3-none-any.whl" and .packs[0].downloadBytes == 72275897 and .packs[0].downloadSHA256 == "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498" and .packs[0].archiveEntry == "sudachidict_core/resources/system.dic" and .packs[0].installedBytes == 217466039 and .packs[0].installedSHA256 == "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f" and .packs[0].runtimeResourceCommit == "90fd6068c80c2fc3b63e0dbab0e341475bad4d8f" and .packs[0].characterDefinitionSHA256 == "b549ec56ad67359f535c80b7efa150538af2a78b7609d0d6bae796dd89f4f29d" and .packs[0].unknownDefinitionSHA256 == "4e8c4c15e18af6a9fc5d636e3dc73fde55d50941b93a6c8835d4653d3f54ba79" and .packs[0].distribution == "bundledDefault" and .packs[0].bundledResource == "system_core" and .packs[0].bundledResourceExtension == "dic" and .packs[0].licenseResource == "SudachiLanguageTechnologyNotices"' \
   "$language_pack_catalog" >/dev/null || fail "Language Technology Pack source or installed checksum pin is missing"
-pass "only the reviewed checksum-validated Language Technology Pack downloader uses URLSession"
+[[ -f "$sudachi_preparation_tool" ]] || fail "bundled Sudachi preparation tool is missing"
+[[ -f "$sudachi_notices" ]] || fail "bundled Sudachi notices are missing"
+app_target_block="$(awk '
+  /5CD4552D207F8AC0D2D15CD6 \/\* ZenbuJapanese \*\/ = \{/ { in_target = 1 }
+  in_target { print }
+  in_target && /^\t\t};$/ { exit }
+' "$project")"
+rg -q 'F25800000000000000000001 /\* Prepare bundled Sudachi Core \*/' \
+  <<<"$app_target_block" || fail "Sudachi preparation phase is detached from the app target"
+require_rg_match "Xcode target no longer invokes the reviewed Sudachi preparation tool" \
+  'prepare_sudachi_core\.py' "$project"
+source_sudachi_payloads="${scratch_dir}/source-sudachi-payloads"
+find "$language_resource_scan_root" -type f \( -name '*.whl' -o -name 'system_core.dic' \) \
+  -print >"$source_sudachi_payloads" \
+  || fail "failed to enumerate source resources for Sudachi payloads"
+if [[ -s "$source_sudachi_payloads" ]]; then
+  fail "Sudachi wheel and expanded dictionary must remain outside tracked source resources"
+fi
+pass "pinned Sudachi manifest, notices, deterministic preparation tool, target staging, and no-source-payload policy match"
+pass "only the reviewed checksum-validated optional Language Technology Pack boundary uses URLSession"
 denylist_scan "Xcode-project remote package dependency" 'XCRemoteSwiftPackageReference|repositoryURL' "$project"
 [[ "$(rg -c '\.package\(' "$package_manifest")" == "2" ]] \
   || fail "Swift package dependency inventory changed"
@@ -198,14 +221,15 @@ jq -e '
   any(.packages[]; .name == "sudachi-swift" and .versionInfo == "0.1.1") and
   any(.packages[]; .name == "sudachi.rs" and .versionInfo == "0.6.11") and
   any(.packages[]; .name == "SudachiDict Core" and .versionInfo == "20260723" and
-    any(.checksums[]; .checksumValue == "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498")) and
+    any(.checksums[]; .checksumValue == "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498") and
+    (.comment | contains("53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f"))) and
   any(.packages[]; .name == "ZIPFoundation" and .versionInfo == "0.9.20") and
   any(.relationships[];
-    .spdxElementId == "SPDXRef-SudachiDictCore" and
-    .relationshipType == "OPTIONAL_DEPENDENCY_OF" and
-    .relatedSpdxElement == "SPDXRef-ZenbuJapanese")
+    .spdxElementId == "SPDXRef-ZenbuJapanese" and
+    .relationshipType == "DEPENDS_ON" and
+    .relatedSpdxElement == "SPDXRef-SudachiDictCore")
 ' "$release_sbom" >/dev/null || fail "release SBOM is missing a pinned Japanese Text Analysis component"
-pass "release SBOM records the reviewed binding, engine, optional dictionary, and archive reader"
+pass "release SBOM records the reviewed binding, engine, bundled dictionary, and archive reader"
 require_rg_match "Camera usage description is missing or changed" 'INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text and save photos with words you are learning\.";' "$project"
 settings_source="$(find "${ios_dir}/Modules/Sources" -name DictionarySourcesView.swift -type f -print -quit)"
 [[ -n "$settings_source" ]] || fail "DictionarySourcesView.swift is missing"
@@ -275,6 +299,35 @@ ruby "$retrieval_fixture_validator" "$archive_language_database" "$retrieval_con
   || fail "archive Example Sentence Retrieval regression fixture replay failed"
 pass "archive Dictionary Ranking and Example Sentence Retrieval artifacts, manifests, and regression fixtures match"
 
+archive_sudachi_inventory="${scratch_dir}/archive-sudachi-inventory"
+find "$app_path" -type f -name 'system_core.dic' -print >"$archive_sudachi_inventory" \
+  || fail "failed to enumerate archive Sudachi dictionaries"
+archive_sudachi_count="$(wc -l <"$archive_sudachi_inventory" | tr -d '[:space:]')"
+[[ "$archive_sudachi_count" == "1" ]] || fail "archive must contain exactly one bundled Sudachi Core dictionary"
+archive_sudachi="$(head -n 1 "$archive_sudachi_inventory")"
+[[ "$(wc -c <"$archive_sudachi" | tr -d '[:space:]')" == "217466039" ]] \
+  || fail "archive Sudachi Core dictionary size differs from the pinned artifact"
+[[ "$(shasum -a 256 "$archive_sudachi" | awk '{print $1}')" == "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f" ]] \
+  || fail "archive Sudachi Core dictionary checksum differs from the pinned artifact"
+archive_sudachi_wheels="${scratch_dir}/archive-sudachi-wheels"
+find "$app_path" -type f -name '*.whl' -print >"$archive_sudachi_wheels" \
+  || fail "failed to enumerate archive wheel resources"
+if [[ -s "$archive_sudachi_wheels" ]]; then
+  fail "archive contains both compressed and expanded Sudachi resources"
+fi
+pass "archive contains one exact expanded Sudachi Core dictionary and no wheel duplicate"
+archive_sudachi_notice_inventory="${scratch_dir}/archive-sudachi-notice-inventory"
+find "$app_path" -type f -name 'SudachiLanguageTechnologyNotices.txt' -print \
+  >"$archive_sudachi_notice_inventory" \
+  || fail "failed to enumerate archive Sudachi notices"
+archive_sudachi_notice_count="$(wc -l <"$archive_sudachi_notice_inventory" | tr -d '[:space:]')"
+[[ "$archive_sudachi_notice_count" == "1" ]] \
+  || fail "archive must contain exactly one Sudachi notice resource"
+archive_sudachi_notice="$(head -n 1 "$archive_sudachi_notice_inventory")"
+cmp -s "$sudachi_notices" "$archive_sudachi_notice" \
+  || fail "archive Sudachi notices differ from the reviewed source"
+pass "archive contains the exact reviewed Sudachi notices"
+
 signing_identity="$(plist_value ApplicationProperties:SigningIdentity "$archive_info" || true)"
 if [[ "$mode" == "signed-candidate" ]]; then
   [[ -n "$signing_identity" ]] || fail "signed-candidate archive metadata has no signing identity"
@@ -305,13 +358,50 @@ if [[ -s "$non_release_results" ]]; then
   done <"$non_release_results"
   fail "non-Release resources were packaged"
 fi
-denylist_scan "DEBUG or test-only runtime marker" 'PrepareImageTextFixtures|StartImageTextFixtures|ExportImageTextFixtures|InjectLookupFailure|DEBUG=1|docs/clone-discovery|clipy\.online|/Users/' "$app_path"
-denylist_scan "credential-shaped material" 'gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|sk_live_[A-Za-z0-9]+|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|[A-Za-z0-9_]*(PASSWORD|TOKEN|SECRET|API_KEY)[A-Za-z0-9_]*[=:][^[:space:]]+' "$app_path"
-pass "archive contains no known non-Release resources, private evidence markers, or credential-shaped material"
-
 executable_name="$(plist_value CFBundleExecutable "$archive_app_info")"
 executable="${app_path}/${executable_name}"
 [[ -x "$executable" ]] || fail "archive executable is missing"
+denylist_scan "DEBUG or test-only runtime marker" 'PrepareImageTextFixtures|StartImageTextFixtures|ExportImageTextFixtures|InjectLookupFailure|DEBUG=1|docs/clone-discovery|clipy\.online' "$app_path"
+non_executable_product_files=()
+non_executable_product_inventory="${scratch_dir}/non-executable-product-files"
+find "$app_path" -type f ! -path "$executable" -print0 \
+  >"$non_executable_product_inventory" \
+  || fail "failed to enumerate non-executable product files"
+while IFS= read -r -d '' product_file; do
+  non_executable_product_files+=("$product_file")
+done <"$non_executable_product_inventory"
+if [[ "${#non_executable_product_files[@]}" -gt 0 ]]; then
+  denylist_scan "private build path" '/Users/' "${non_executable_product_files[@]}"
+fi
+strings "$executable" >"${scratch_dir}/executable-strings" \
+  || fail "failed to inspect executable strings for private build paths"
+set +e
+rg -o '/Users/[^[:space:][:cntrl:]]+' "${scratch_dir}/executable-strings" \
+  >"${scratch_dir}/executable-user-paths-unsorted"
+executable_user_path_scan_status=$?
+set -e
+case "$executable_user_path_scan_status" in
+  0) ;;
+  1) : >"${scratch_dir}/executable-user-paths-unsorted" ;;
+  *) fail "scanner error while inventorying executable build paths" ;;
+esac
+LC_ALL=C sort -u "${scratch_dir}/executable-user-paths-unsorted" \
+  >"${scratch_dir}/executable-user-paths" \
+  || fail "failed to sort executable build path evidence"
+set +e
+rg -v '^/Users/runner/(\.cargo/registry/src/index\.crates\.io-1949cf8c6b5b557f/|work/sudachi-swift/sudachi-swift/third_party/sudachi\.rs/)' \
+  "${scratch_dir}/executable-user-paths" >"${scratch_dir}/unexpected-executable-user-paths"
+unexpected_user_path_status=$?
+set -e
+case "$unexpected_user_path_status" in
+  0) fail "executable contains an unreviewed private build path" ;;
+  1) ;;
+  *) fail "scanner error while validating executable build paths" ;;
+esac
+pass "only exact reviewed sudachi-swift Rust build prefixes remain in the executable"
+denylist_scan "credential-shaped material" 'gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|sk_live_[A-Za-z0-9]+|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|[A-Za-z0-9_]*(PASSWORD|TOKEN|SECRET|API_KEY)[A-Za-z0-9_]*[=:][^[:space:]]+' "$app_path"
+pass "archive contains no known non-Release resources, private evidence markers, or credential-shaped material"
+
 file "$executable" >"${scratch_dir}/file-type" || fail "failed to inspect archive executable type"
 require_rg_match "archive executable is not arm64 Mach-O" 'Mach-O 64-bit executable arm64' "${scratch_dir}/file-type"
 otool -L "$executable" >"${scratch_dir}/dependencies" || fail "failed to resolve linked libraries"
@@ -359,6 +449,7 @@ scan_packaged_url_file() {
 url_scan_files="${scratch_dir}/url-scan-files"
 find "$app_path" -type f ! -name '*.sqlite3' \
   ! -path "$executable" \
+  ! -path "$archive_sudachi" \
   ! -path "${app_path}/embedded.mobileprovision" \
   ! -path "${app_path}/_CodeSignature/*" -print0 >"$url_scan_files" \
   || fail "failed to enumerate packaged files for URL inspection"
@@ -387,7 +478,7 @@ sed -E 's#^[Hh][Tt][Tt][Pp][Ss]?://([^/:?#]+).*#\1#' "$url_results" \
   | sed -E 's/[^a-z0-9.-].*$//; s/\.[0-9]+$//; s/\.$//' \
   | sed '/^$/d' \
   | LC_ALL=C sort -u >"${scratch_dir}/url-hosts"
-allowed_url_hosts='^(clrd\.ninjal\.ac\.jp|creativecommons\.org|downloads\.tatoeba\.org|github\.com|kanjivg\.tagaini\.net|tatoeba\.org|www\.apple\.com|www\.edrdg\.org|www\.example\.com|www\.jpgarden\.com|zenbujapanese\.com)$'
+allowed_url_hosts='^(chasen\.org|clrd\.ninjal\.ac\.jp|codepoints\.net|creativecommons\.org|developer\.hatena\.ne\.jp|downloads\.tatoeba\.org|en\.wikipedia\.org|github\.com|hatenacorp\.jp|kanjivg\.tagaini\.net|raw\.githubusercontent\.com|tatoeba\.org|togetter\.com|unidic\.ninjal\.ac\.jp|www\.apache\.org|www\.apple\.com|www\.edrdg\.org|www\.example\.com|www\.jpgarden\.com|www\.peakstep\.com|www\.post\.japanpost\.jp|www5a\.biglobe\.ne\.jp|zenbujapanese\.com)$'
 set +e
 rg -v -- "$allowed_url_hosts" "${scratch_dir}/url-hosts" >"${scratch_dir}/unexpected-url-hosts"
 host_scan_status=$?
