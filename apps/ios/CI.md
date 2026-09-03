@@ -14,6 +14,15 @@ remains decision evidence, but this file owns the executable cadence.
 | Manual investigation | `iOS nightly quality`, started with `workflow_dispatch` | Two-device accessibility breadth, repetitions, and sanitizers when investigation warrants the cost |
 | Pre-release | Manual `iOS pre-release validation`, then separately authorized physical-device and release checks | Transient validation for an identified proposed candidate; never inferred from development CI |
 
+The three network-backed Sudachi checks run through the explicit
+`ZenbuSudachiIntegration` plan. They validate the immutable official Core wheel,
+the shipped Swift adapter, and the frozen 512-sentence #251 confirmation set.
+They are intentionally excluded from `ZenbuPR` so a third-party release-host
+outage cannot make the ordinary complete unit target fail; issue implementation,
+dependency-update, merge-candidate, and pre-release evidence must run this lane
+separately. Deterministic pack lifecycle, checksum, corruption, update, fallback,
+range, and resolver tests remain in `ZenbuPR` without network access.
+
 The complete suite is not repeated after merge when the merge-queue SHA already
 passed. The manual breadth workflow has no schedule because iOS changes are
 currently infrequent. `iOS pre-release validation` deliberately reruns the complete

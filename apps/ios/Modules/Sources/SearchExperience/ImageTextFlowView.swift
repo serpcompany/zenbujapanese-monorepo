@@ -3,7 +3,7 @@ import UIKit
 
 struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
-  @State private var analysisAvailability = JapaneseAnalysisAvailability.full
+  @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
   let textAnalysisClient: JapaneseTextAnalysisClient
   let close: () -> Void
   let openWord: (DictionaryEntry, ImageTextAsset) -> Void
@@ -33,7 +33,7 @@ struct ImageTextFlowView: View {
       VStack(spacing: 0) {
         if analysisAvailability == .reduced {
           Label(
-            "Word links are reduced. Download Japanese Analysis in More.",
+            "Word links are reduced. Download Japanese Text Analysis in More.",
             systemImage: "info.circle"
           )
           .font(.footnote)

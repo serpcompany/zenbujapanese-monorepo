@@ -3,7 +3,7 @@
   "packs": [
     {
       "packID": "sudachi-core-ja-20260723",
-      "displayName": "Japanese Word Analysis",
+      "displayName": "Japanese Text Analysis",
       "packVersion": "20260723",
       "engine": "sudachi.rs",
       "engineVersion": "0.6.11",

@@ -2419,7 +2419,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  func test000JapaneseAnalysisPackDownloadsThroughNativeManagementSurface() throws {
+  func test000JapaneseTextAnalysisPackDownloadsThroughNativeManagementSurface() throws {
     let app = launchApp(
       additionalArguments: ["-ResetLanguageTechnologyPacks"],
       automaticallyInstallsJapaneseAnalysis: false
@@ -2432,7 +2432,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let list = app.collectionViews["language-technology-packs.list"]
     XCTAssertTrue(list.waitForExistence(timeout: 3))
-    XCTAssertTrue(app.staticTexts["Japanese Word Analysis"].exists)
+    XCTAssertTrue(app.staticTexts["Japanese Text Analysis"].exists)
     XCTAssertTrue(app.staticTexts["Engine, sudachi.rs 0.6.11"].exists)
     XCTAssertTrue(app.staticTexts["Dictionary, Core 20260723"].exists)
     XCTAssertTrue(app.staticTexts["Download, 72.3 MB"].exists)

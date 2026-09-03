@@ -78,7 +78,7 @@ public struct SearchExperienceRootView: View {
     Group {
       #if DEBUG
         if preparesJapaneseAnalysis {
-          ProgressView("Preparing on-device Japanese analysis")
+          ProgressView("Preparing on-device Japanese Text Analysis")
             .accessibilityIdentifier("language-technology-pack.preparing")
         } else {
           appTabs

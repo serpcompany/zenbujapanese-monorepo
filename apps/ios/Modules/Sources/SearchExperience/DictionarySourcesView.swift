@@ -155,7 +155,7 @@ struct DictionarySourcesView: View {
         )
       }
 
-      Section("Japanese Word Analysis") {
+      Section("Japanese Text Analysis") {
         Text(
           "Optional on-device Japanese word boundaries, dictionary forms, readings, and parts of speech from Sudachi.rs and SudachiDict Core. ZIPFoundation reads the checksum-pinned official dictionary wheel during installation."
         )
@@ -166,7 +166,7 @@ struct DictionarySourcesView: View {
         LabeledContent("License", value: "Apache-2.0 · BSD-3-Clause · MIT")
         NavigationLink("Bundled license and attribution text") {
           BundledLicenseTextView(
-            title: "Japanese Analysis Notices",
+            title: "Japanese Text Analysis Notices",
             resource: "SudachiLanguageTechnologyNotices"
           )
         }

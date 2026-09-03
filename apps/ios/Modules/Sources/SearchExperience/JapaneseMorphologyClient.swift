@@ -1,6 +1,53 @@
 import Foundation
 import Sudachi
 
+enum SudachiCoreContract {
+  static let engine = "sudachi.rs"
+  static let engineVersion = "0.6.11"
+  static let binding = "sudachi-swift"
+  static let bindingVersion = "0.1.1"
+  static let dictionary = "SudachiDict Core 20260723"
+  static let dictionaryVersion = "20260723"
+  static let downloadBytes = 72_275_897
+  static let downloadSHA256 =
+    "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498"
+  static let installedBytes = 217_466_039
+  static let archiveEntry = "sudachidict_core/resources/system.dic"
+  static let dictionarySHA256 =
+    "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f"
+  static let runtimeResourceCommit = "90fd6068c80c2fc3b63e0dbab0e341475bad4d8f"
+  static let characterDefinitionSHA256 =
+    "b549ec56ad67359f535c80b7efa150538af2a78b7609d0d6bae796dd89f4f29d"
+  static let unknownDefinitionSHA256 =
+    "4e8c4c15e18af6a9fc5d636e3dc73fde55d50941b93a6c8835d4653d3f54ba79"
+
+  static func validate(_ analysis: JapaneseMorphologyAnalysis) throws {
+    guard analysis.engine == engine,
+      analysis.engineVersion == engineVersion,
+      analysis.dictionary == dictionary,
+      analysis.dictionarySHA256 == dictionarySHA256,
+      analysis.candidates.allSatisfy({ candidate in
+        !candidate.surface.isEmpty && !candidate.dictionaryForm.isEmpty
+          && !candidate.normalizedForm.isEmpty && !candidate.reading.isEmpty
+          && !candidate.partOfSpeech.isEmpty
+      })
+    else { throw JapaneseMorphologyError.providerContractMismatch }
+    try JapaneseMorphologyProviderContract.validate(
+      candidates: analysis.candidates, transcript: analysis.transcript)
+  }
+
+  static func validateGoldenOutput(_ analysis: JapaneseMorphologyAnalysis) throws {
+    try validate(analysis)
+    guard analysis.transcript == "日本語を用いる。",
+      analysis.candidates.map(\.surface) == ["日本語", "を", "用いる", "。"],
+      analysis.candidates.map(\.dictionaryForm) == ["日本語", "を", "用いる", "。"],
+      analysis.candidates.map(\.reading) == ["ニホンゴ", "ヲ", "モチイル", "。"],
+      analysis.candidates.map { $0.partOfSpeech.first } == ["名詞", "助詞", "動詞", "補助記号"],
+      analysis.candidates.allSatisfy({ !$0.isOutOfVocabulary })
+    else { throw JapaneseMorphologyError.providerContractMismatch }
+  }
+}
+
 struct JapaneseMorphologyCandidate: Equatable, Sendable {
   let surface: String
   let scalarRange: Range<Int>
@@ -27,17 +74,17 @@ enum JapaneseMorphologyError: Error, Equatable {
   case providerContractMismatch
 }
 
-enum JapaneseAnalysisAvailability: Equatable, Sendable {
+enum JapaneseTextAnalysisAvailability: Equatable, Sendable {
   case full
   case reduced
 }
 
 struct JapaneseMorphologyClient: Sendable {
   var analyze: @Sendable (String) async throws -> JapaneseMorphologyAnalysis
-  var availability: @Sendable () async -> JapaneseAnalysisAvailability
+  var availability: @Sendable () async -> JapaneseTextAnalysisAvailability
 
   init(
-    availability: @escaping @Sendable () async -> JapaneseAnalysisAvailability = { .full },
+    availability: @escaping @Sendable () async -> JapaneseTextAnalysisAvailability = { .full },
     analyze: @escaping @Sendable (String) async throws -> JapaneseMorphologyAnalysis
   ) {
     self.analyze = analyze
@@ -87,7 +134,7 @@ actor JapaneseMorphologyStore {
   }
 }
 
-private final class SudachiJapaneseMorphologyAdapter: @unchecked Sendable {
+final class SudachiJapaneseMorphologyAdapter: @unchecked Sendable {
   private let tokenizer: SudachiTokenizer
 
   init(dictionaryURL: URL) throws {
@@ -114,15 +161,16 @@ private final class SudachiJapaneseMorphologyAdapter: @unchecked Sendable {
         children: children
       )
     }
-    try Self.validate(candidates: candidates, transcript: text)
-    return JapaneseMorphologyAnalysis(
+    let analysis = JapaneseMorphologyAnalysis(
       transcript: text,
       candidates: candidates,
-      engine: "sudachi.rs",
-      engineVersion: "0.6.11",
-      dictionary: "SudachiDict Core 20260723",
-      dictionarySHA256: "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f"
+      engine: SudachiCoreContract.engine,
+      engineVersion: SudachiCoreContract.engineVersion,
+      dictionary: SudachiCoreContract.dictionary,
+      dictionarySHA256: SudachiCoreContract.dictionarySHA256
     )
+    try SudachiCoreContract.validate(analysis)
+    return analysis
   }
 
   private static func candidate(
@@ -147,26 +195,7 @@ private final class SudachiJapaneseMorphologyAdapter: @unchecked Sendable {
     )
   }
 
-  private static func validate(
-    candidates: [JapaneseMorphologyCandidate],
-    transcript: String
-  ) throws {
-    var previousEnd = 0
-    for candidate in candidates {
-      guard candidate.scalarRange.lowerBound >= previousEnd,
-        scalarSlice(transcript, range: candidate.scalarRange) == candidate.surface
-      else { throw JapaneseMorphologyError.invalidProviderRange }
-      previousEnd = candidate.scalarRange.upperBound
-      for child in candidate.children {
-        guard candidate.scalarRange.contains(child.scalarRange.lowerBound),
-          child.scalarRange.upperBound <= candidate.scalarRange.upperBound,
-          scalarSlice(transcript, range: child.scalarRange) == child.surface
-        else { throw JapaneseMorphologyError.invalidProviderRange }
-      }
-    }
-  }
-
-  private static func scalarSlice(_ text: String, range: Range<Int>) -> String? {
+  fileprivate static func scalarSlice(_ text: String, range: Range<Int>) -> String? {
     let scalars = text.unicodeScalars
     guard
       let lower = scalars.index(
@@ -179,14 +208,44 @@ private final class SudachiJapaneseMorphologyAdapter: @unchecked Sendable {
   }
 }
 
+enum JapaneseMorphologyProviderContract {
+  static func validate(
+    candidates: [JapaneseMorphologyCandidate],
+    transcript: String
+  ) throws {
+    var previousEnd = 0
+    for candidate in candidates {
+      guard candidate.scalarRange.lowerBound == previousEnd,
+        SudachiJapaneseMorphologyAdapter.scalarSlice(
+          transcript, range: candidate.scalarRange) == candidate.surface,
+        !candidate.children.isEmpty
+      else { throw JapaneseMorphologyError.invalidProviderRange }
+      previousEnd = candidate.scalarRange.upperBound
+      var previousChildEnd = candidate.scalarRange.lowerBound
+      for child in candidate.children {
+        guard child.scalarRange.lowerBound == previousChildEnd,
+          child.scalarRange.upperBound <= candidate.scalarRange.upperBound,
+          SudachiJapaneseMorphologyAdapter.scalarSlice(
+            transcript, range: child.scalarRange) == child.surface
+        else { throw JapaneseMorphologyError.invalidProviderRange }
+        previousChildEnd = child.scalarRange.upperBound
+      }
+      guard previousChildEnd == candidate.scalarRange.upperBound else {
+        throw JapaneseMorphologyError.invalidProviderRange
+      }
+    }
+    guard previousEnd == transcript.unicodeScalars.count else {
+      throw JapaneseMorphologyError.invalidProviderRange
+    }
+  }
+}
+
 enum SudachiRuntimeResources {
   static func dictionary(at dictionaryURL: URL) throws -> SudachiDictionary {
     guard let charURL = Bundle.module.url(forResource: "char", withExtension: "def"),
       let unknownURL = Bundle.module.url(forResource: "unk", withExtension: "def"),
-      try Data(contentsOf: charURL).sha256
-        == "b549ec56ad67359f535c80b7efa150538af2a78b7609d0d6bae796dd89f4f29d",
-      try Data(contentsOf: unknownURL).sha256
-        == "4e8c4c15e18af6a9fc5d636e3dc73fde55d50941b93a6c8835d4653d3f54ba79"
+      try Data(contentsOf: charURL).sha256 == SudachiCoreContract.characterDefinitionSHA256,
+      try Data(contentsOf: unknownURL).sha256 == SudachiCoreContract.unknownDefinitionSHA256
     else { throw JapaneseMorphologyError.providerContractMismatch }
     return try SudachiDictionary(
       systemDictPath: dictionaryURL.path,

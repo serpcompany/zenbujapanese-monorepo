@@ -19,7 +19,7 @@ struct MoreView: View {
       .accessibilityIdentifier("more.frequency-dictionaries")
 
       NavigationLink(value: MoreRoute.languageTechnology) {
-        Label("Japanese Analysis", systemImage: "text.magnifyingglass")
+        Label("Japanese Text Analysis", systemImage: "text.magnifyingglass")
       }
       .accessibilityIdentifier("more.japanese-analysis")
 

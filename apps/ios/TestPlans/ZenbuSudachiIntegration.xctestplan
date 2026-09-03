@@ -1,8 +1,8 @@
 {
   "configurations" : [
     {
-      "id" : "5F41F38F-AEE3-42A6-BE48-4EEB8D402001",
-      "name" : "English (US)",
+      "id" : "F2520000-0000-4000-8000-000000000001",
+      "name" : "Pinned Core Network Integration",
       "options" : {
         "language" : "en",
         "region" : "US"
@@ -10,12 +10,10 @@
     }
   ],
   "defaultOptions" : {
-    "codeCoverage" : true,
+    "codeCoverage" : false,
     "defaultTestExecutionTimeAllowance" : 300,
     "maximumTestExecutionTimeAllowance" : 900,
     "testTimeoutsEnabled" : true,
-    "uiTestingScreenshotsLifetime" : "keepAlways",
-    "userAttachmentLifetime" : "keepAlways",
     "targetForVariableExpansion" : {
       "containerPath" : "container:ZenbuJapanese.xcodeproj",
       "identifier" : "5CD4552D207F8AC0D2D15CD6",
@@ -25,8 +23,7 @@
   "testTargets" : [
     {
       "parallelizable" : false,
-      "skippedTests" : [
-        "ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus()",
+      "selectedTests" : [
         "JapaneseTextAnalysisTests/testShippedSudachiAdapterMatchesFrozenProviderContract()",
         "JapaneseTextAnalysisTests/testShippedSudachiAdapterRetainsFrozenConfirmationQuality()",
         "LanguageTechnologyPackTests/testOfficialWheelInstallsRunsOfflineAndRetainsLastGood()"
@@ -35,18 +32,6 @@
         "containerPath" : "container:ZenbuJapanese.xcodeproj",
         "identifier" : "151000000000000000000008",
         "name" : "ZenbuJapaneseTests"
-      }
-    },
-    {
-      "parallelizable" : false,
-      "skippedTests" : [
-        "SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
-        "SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()"
-      ],
-      "target" : {
-        "containerPath" : "container:ZenbuJapanese.xcodeproj",
-        "identifier" : "74E6EB6E486E0D87C41A29EF",
-        "name" : "ZenbuJapaneseUITests"
       }
     }
   ],

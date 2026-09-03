@@ -8,7 +8,9 @@ ios_dir="$(cd "${tool_dir}/.." && pwd)"
 manifest="${ios_dir}/App/PrivacyInfo.xcprivacy"
 project="${ios_dir}/ZenbuJapanese.xcodeproj/project.pbxproj"
 package_manifest="${ios_dir}/Modules/Package.swift"
+release_sbom="${ios_dir}/ReleaseSBOM.spdx.json"
 language_database="${ios_dir}/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3"
+language_pack_catalog="${ios_dir}/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json"
 language_import_manifest="${ios_dir}/LanguageData/Generated/JMdict_e-2026-08-10.import.json"
 retrieval_validator="${tool_dir}/example_sentence_retrieval_index.py"
 dictionary_ranking_validator="${tool_dir}/validate_dictionary_ranking_data.py"
@@ -117,6 +119,7 @@ generated_denylist_scan() {
 }
 
 require_command rg
+require_command jq
 require_command plutil
 require_command python3
 require_command ruby
@@ -159,8 +162,9 @@ language_pack_download_source="${ios_dir}/Modules/Sources/SearchExperience/Langu
   || fail "Language Technology Pack download boundary changed or added another network client"
 require_rg_match "Language Technology Pack download must reject non-success HTTP responses" \
   'HTTPURLResponse\)\?\.statusCode == 200' "$language_pack_download_source"
-require_rg_match "Language Technology Pack source checksum pin is missing" \
-  'b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498' "$language_pack_download_source"
+[[ -f "$language_pack_catalog" ]] || fail "Language Technology Pack catalog is missing"
+jq -e '.packs[0].downloadSHA256 == "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498" and .packs[0].installedSHA256 == "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f"' \
+  "$language_pack_catalog" >/dev/null || fail "Language Technology Pack source or installed checksum pin is missing"
 pass "only the reviewed checksum-validated Language Technology Pack downloader uses URLSession"
 denylist_scan "Xcode-project remote package dependency" 'XCRemoteSwiftPackageReference|repositoryURL' "$project"
 [[ "$(rg -c '\.package\(' "$package_manifest")" == "2" ]] \
@@ -176,6 +180,16 @@ rg -q 'exact: "0\.1\.1"' <<<"$sudachi_dependency" \
 rg -q 'exact: "0\.9\.20"' <<<"$zip_dependency" \
   || fail "ZIPFoundation must remain exact 0.9.20"
 pass "remote Swift dependencies are limited to the reviewed exact Sudachi and archive-reader pins"
+[[ -f "$release_sbom" ]] || fail "release SBOM is missing"
+jq -e '
+  .spdxVersion == "SPDX-2.3" and
+  any(.packages[]; .name == "sudachi-swift" and .versionInfo == "0.1.1") and
+  any(.packages[]; .name == "sudachi.rs" and .versionInfo == "0.6.11") and
+  any(.packages[]; .name == "SudachiDict Core" and .versionInfo == "20260723" and
+    any(.checksums[]; .checksumValue == "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498")) and
+  any(.packages[]; .name == "ZIPFoundation" and .versionInfo == "0.9.20")
+' "$release_sbom" >/dev/null || fail "release SBOM is missing a pinned Japanese Text Analysis component"
+pass "release SBOM records the reviewed binding, engine, optional dictionary, and archive reader"
 require_rg_match "Camera usage description is missing or changed" 'INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text and save photos with words you are learning\.";' "$project"
 settings_source="$(find "${ios_dir}/Modules/Sources" -name DictionarySourcesView.swift -type f -print -quit)"
 [[ -n "$settings_source" ]] || fail "DictionarySourcesView.swift is missing"

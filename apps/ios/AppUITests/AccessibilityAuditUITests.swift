@@ -23,7 +23,7 @@ private struct AuditException: CustomStringConvertible {
 
 final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
-  func testJapaneseAnalysisManagementRemainsReachableAtLargestAccessibilityTextSize() throws {
+  func testJapaneseTextAnalysisManagementRemainsReachableAtLargestAccessibilityTextSize() throws {
     let app = launchApp(
       appearance: .light,
       additionalArguments: [

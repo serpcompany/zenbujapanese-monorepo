@@ -9,6 +9,7 @@ struct JapaneseTextToken: Identifiable, Sendable {
   let reading: String?
   let partOfSpeech: [String]
   let isOutOfVocabulary: Bool?
+  let candidateEntryIDs: [LanguageReferenceID]
 
   init(
     id: Int,
@@ -18,7 +19,8 @@ struct JapaneseTextToken: Identifiable, Sendable {
     dictionaryForm: String? = nil,
     reading: String? = nil,
     partOfSpeech: [String] = [],
-    isOutOfVocabulary: Bool? = nil
+    isOutOfVocabulary: Bool? = nil,
+    candidateEntryIDs: [LanguageReferenceID] = []
   ) {
     self.id = id
     self.surface = surface
@@ -28,6 +30,7 @@ struct JapaneseTextToken: Identifiable, Sendable {
     self.reading = reading
     self.partOfSpeech = partOfSpeech
     self.isOutOfVocabulary = isOutOfVocabulary
+    self.candidateEntryIDs = candidateEntryIDs
   }
 
   func represents(_ entry: DictionaryEntry) -> Bool {
@@ -136,7 +139,7 @@ enum JapaneseRubyAnnotation {
 
 struct JapaneseTextAnalysisClient: Sendable {
   var lookupSegments: @Sendable (SearchQuery) async -> [SearchQuery]
-  var availability: @Sendable () async -> JapaneseAnalysisAvailability
+  var availability: @Sendable () async -> JapaneseTextAnalysisAvailability
   var linkedTokens:
     @Sendable (
       _ text: String,
@@ -220,7 +223,7 @@ private actor JapaneseTextAnalyzer {
       let analysis = try await morphologyClient.analyze(text)
       var tokens: [JapaneseTextToken] = []
       for (index, candidate) in analysis.candidates.enumerated() {
-        let entry = await resolvedEntry(
+        let resolution = await resolvedEntry(
           for: candidate,
           highlightedQuery: highlightedQuery,
           highlightedEntry: highlightedEntry
@@ -229,12 +232,13 @@ private actor JapaneseTextAnalyzer {
           JapaneseTextToken(
             id: index,
             surface: candidate.surface,
-            entry: entry,
+            entry: resolution.entry,
             scalarRange: candidate.scalarRange,
             dictionaryForm: candidate.dictionaryForm,
             reading: candidate.reading,
             partOfSpeech: candidate.partOfSpeech,
-            isOutOfVocabulary: candidate.isOutOfVocabulary
+            isOutOfVocabulary: candidate.isOutOfVocabulary,
+            candidateEntryIDs: resolution.candidateIDs
           ))
       }
       return tokens
@@ -248,34 +252,64 @@ private actor JapaneseTextAnalyzer {
     for candidate: JapaneseMorphologyCandidate,
     highlightedQuery: SearchQuery,
     highlightedEntry: DictionaryEntry?
-  ) async -> DictionaryEntry? {
+  ) async -> (entry: DictionaryEntry?, candidateIDs: [LanguageReferenceID]) {
     if let highlightedEntry {
       let highlightedForms = Set(
         Self.forms(for: highlightedEntry, preferred: highlightedQuery.value))
-      let evidence =
-        [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm]
-        + candidate.children.flatMap { [$0.surface, $0.dictionaryForm, $0.normalizedForm] }
+      let evidence = [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm]
       if evidence.contains(where: { highlightedForms.contains($0) }) {
-        return highlightedEntry
+        return (highlightedEntry, [highlightedEntry.id])
       }
     }
 
     guard candidate.partOfSpeech.first.map(Self.isLinkablePartOfSpeech) == true,
       candidate.isOutOfVocabulary == false
-    else { return nil }
+    else { return (nil, []) }
 
-    let directEntries = await entries(for: candidate.surface)
+    let directEntries = filteredEntries(await entries(for: candidate.surface), candidate: candidate)
     if candidate.surface.unicodeScalars.allSatisfy(\.isKana), directEntries.count > 1 {
-      return nil
+      return (nil, directEntries.map(\.id))
     }
     let providerForms = [candidate.dictionaryForm, candidate.normalizedForm]
       .filter { !$0.isEmpty && $0 != "*" }
     for form in providerForms {
-      let candidates = await entries(for: form)
-      if candidates.count == 1 { return candidates[0] }
-      if candidates.count > 1 { return nil }
+      let candidates = filteredEntries(await entries(for: form), candidate: candidate)
+      if candidates.count == 1 { return (candidates[0], candidates.map(\.id)) }
+      if candidates.count > 1 { return (nil, candidates.map(\.id)) }
     }
-    return directEntries.count == 1 ? directEntries[0] : nil
+    return (directEntries.count == 1 ? directEntries[0] : nil, directEntries.map(\.id))
+  }
+
+  private func filteredEntries(
+    _ entries: [DictionaryEntry],
+    candidate: JapaneseMorphologyCandidate
+  ) -> [DictionaryEntry] {
+    var filtered = entries
+    if let providerPOS = candidate.partOfSpeech.first {
+      let compatible = filtered.filter { entry in
+        entry.partsOfSpeech.contains { part in Self.isCompatible(part, with: providerPOS) }
+      }
+      if !compatible.isEmpty { filtered = compatible }
+    }
+    if candidate.surface == candidate.dictionaryForm, !candidate.reading.isEmpty,
+      candidate.reading != "*"
+    {
+      let readingMatches = filtered.filter {
+        ($0.reading.applyingTransform(.hiraganaToKatakana, reverse: true) ?? $0.reading)
+          == candidate.reading
+      }
+      if !readingMatches.isEmpty { filtered = readingMatches }
+    }
+    return filtered
+  }
+
+  private static func isCompatible(_ part: PartOfSpeech, with providerPOS: String) -> Bool {
+    switch providerPOS {
+    case "動詞": part.rawValue.contains("Verb")
+    case "形容詞", "形状詞": part.rawValue.contains("Adjective")
+    case "名詞", "代名詞": part.rawValue.contains("Noun") || part.rawValue == "Pronoun"
+    default: true
+    }
   }
 
   private static func forms(for entry: DictionaryEntry, preferred: String) -> [String] {

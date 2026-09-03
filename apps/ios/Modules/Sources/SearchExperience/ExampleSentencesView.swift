@@ -3,7 +3,7 @@ import SwiftUI
 struct ExampleSentencesView: View {
   @State private var examples: [ExampleSentence] = []
   @State private var isLoading = true
-  @State private var analysisAvailability = JapaneseAnalysisAvailability.full
+  @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
   @State private var lastSpeechRequest: String?
 
   let query: SearchQuery
@@ -23,7 +23,7 @@ struct ExampleSentencesView: View {
         List {
           if analysisAvailability == .reduced {
             Label(
-              "Word links are reduced. Download Japanese Analysis in More.",
+              "Word links are reduced. Download Japanese Text Analysis in More.",
               systemImage: "info.circle"
             )
             .font(.footnote)

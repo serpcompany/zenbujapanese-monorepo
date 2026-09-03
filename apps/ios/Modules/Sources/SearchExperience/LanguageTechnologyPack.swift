@@ -36,18 +36,19 @@ struct LanguageTechnologyPackCatalog: Codable, Equatable, Sendable {
     guard catalog.schemaVersion == 1, catalog.packs.count == 1,
       let pack = catalog.packs.first,
       pack.packID.rawValue == "sudachi-core-ja-20260723",
-      pack.engine == "sudachi.rs", pack.engineVersion == "0.6.11",
-      pack.binding == "sudachi-swift", pack.bindingVersion == "0.1.1",
-      pack.packVersion == "20260723",
-      pack.downloadBytes == 72_275_897,
-      pack.downloadSHA256 == "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498",
-      pack.installedBytes == 217_466_039,
-      pack.installedSHA256 == "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f",
-      pack.runtimeResourceCommit == "90fd6068c80c2fc3b63e0dbab0e341475bad4d8f",
-      pack.characterDefinitionSHA256
-        == "b549ec56ad67359f535c80b7efa150538af2a78b7609d0d6bae796dd89f4f29d",
-      pack.unknownDefinitionSHA256
-        == "4e8c4c15e18af6a9fc5d636e3dc73fde55d50941b93a6c8835d4653d3f54ba79",
+      pack.engine == SudachiCoreContract.engine,
+      pack.engineVersion == SudachiCoreContract.engineVersion,
+      pack.binding == SudachiCoreContract.binding,
+      pack.bindingVersion == SudachiCoreContract.bindingVersion,
+      pack.packVersion == SudachiCoreContract.dictionaryVersion,
+      pack.downloadBytes == SudachiCoreContract.downloadBytes,
+      pack.downloadSHA256 == SudachiCoreContract.downloadSHA256,
+      pack.installedBytes == SudachiCoreContract.installedBytes,
+      pack.archiveEntry == SudachiCoreContract.archiveEntry,
+      pack.installedSHA256 == SudachiCoreContract.dictionarySHA256,
+      pack.runtimeResourceCommit == SudachiCoreContract.runtimeResourceCommit,
+      pack.characterDefinitionSHA256 == SudachiCoreContract.characterDefinitionSHA256,
+      pack.unknownDefinitionSHA256 == SudachiCoreContract.unknownDefinitionSHA256,
       Bundle.module.url(forResource: pack.licenseResource, withExtension: "txt") != nil,
       catalog.trustedHistoricalManifests.allSatisfy({ historical in
         catalog.packs.contains { $0.packID == historical.packID }
@@ -89,6 +90,7 @@ struct LanguageTechnologyPackState: Equatable, Identifiable, Sendable {
   let manifest: LanguageTechnologyPackManifest
   let isInstalled: Bool
   let isActive: Bool
+  let installedVersion: String?
   let installedBytes: Int?
   let failureMessage: String?
   let updateAvailable: Bool
@@ -161,6 +163,9 @@ actor LanguageTechnologyPackManager {
           manifest: manifest,
           isInstalled: installed?.packID == manifest.packID,
           isActive: installed?.packID == manifest.packID,
+          installedVersion: installed.flatMap {
+            $0.packID == manifest.packID ? $0.packVersion : nil
+          },
           installedBytes: installed.flatMap { record in
             guard record.packID == manifest.packID else { return nil }
             let url = storageDirectory.appendingPathComponent(record.filename)
@@ -185,7 +190,7 @@ actor LanguageTechnologyPackManager {
       let archiveData = try await downloadSource(manifest.downloadURL)
       try Task.checkCancellation()
       guard archiveData.count == manifest.downloadBytes,
-        archiveData.sha256 == manifest.downloadSHA256
+        try Self.cancellableSHA256(archiveData) == manifest.downloadSHA256
       else { throw LanguageTechnologyPackError.checksumMismatch }
 
       let staging = storageDirectory.appendingPathComponent("staging-\(UUID().uuidString).dic")
@@ -195,9 +200,18 @@ actor LanguageTechnologyPackManager {
         entry.type == .file,
         entry.uncompressedSize == UInt32(manifest.installedBytes)
       else { throw LanguageTechnologyPackError.invalidArchive }
-      _ = try archive.extract(entry, to: staging)
+      let extractionProgress = Progress()
+      _ = try await withTaskCancellationHandler {
+        try archive.extract(entry, to: staging, progress: extractionProgress)
+      } onCancel: {
+        extractionProgress.cancel()
+      }
       try Task.checkCancellation()
-      guard Self.validDictionary(at: staging, manifest: manifest) else {
+      guard
+        (try? staging.resourceValues(forKeys: [.fileSizeKey]).fileSize)
+          == manifest.installedBytes,
+        try Self.cancellableFileSHA256(staging) == manifest.installedSHA256
+      else {
         throw LanguageTechnologyPackError.invalidArtifact
       }
       try validateProvider(staging)
@@ -261,16 +275,40 @@ actor LanguageTechnologyPackManager {
     return data.sha256 == manifest.installedSHA256
   }
 
+  private static func cancellableSHA256(_ data: Data) throws -> String {
+    var digest = SHA256()
+    let chunkSize = 4 * 1_024 * 1_024
+    var offset = 0
+    while offset < data.count {
+      try Task.checkCancellation()
+      let end = min(offset + chunkSize, data.count)
+      digest.update(data: data[offset..<end])
+      offset = end
+    }
+    return digest.finalize().map { String(format: "%02x", $0) }.joined()
+  }
+
+  private static func cancellableFileSHA256(_ url: URL) throws -> String {
+    let handle = try FileHandle(forReadingFrom: url)
+    defer { try? handle.close() }
+    var digest = SHA256()
+    while true {
+      try Task.checkCancellation()
+      let chunk = try handle.read(upToCount: 4 * 1_024 * 1_024) ?? Data()
+      if chunk.isEmpty { break }
+      digest.update(data: chunk)
+    }
+    return digest.finalize().map { String(format: "%02x", $0) }.joined()
+  }
+
   static func validateGoldenOutput(dictionaryURL: URL) throws {
-    let dictionary = try SudachiRuntimeResources.dictionary(at: dictionaryURL)
-    let tokenizer = try SudachiTokenizer(dictionary: dictionary, mode: .c)
-    let candidates = try tokenizer.tokenize(text: "日本語を用いる。")
-    guard candidates.map(\.surface) == ["日本語", "を", "用いる", "。"],
-      candidates[0].dictionaryForm == "日本語",
-      candidates[0].readingForm == "ニホンゴ",
-      candidates[2].dictionaryForm == "用いる",
-      candidates.allSatisfy({ $0.range(in: "日本語を用いる。") != nil })
-    else { throw LanguageTechnologyPackError.goldenOutputMismatch }
+    do {
+      let analysis = try SudachiJapaneseMorphologyAdapter(dictionaryURL: dictionaryURL)
+        .analyze("日本語を用いる。")
+      try SudachiCoreContract.validateGoldenOutput(analysis)
+    } catch {
+      throw LanguageTechnologyPackError.goldenOutputMismatch
+    }
   }
 }
 

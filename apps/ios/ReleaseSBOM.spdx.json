@@ -1,0 +1,114 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "name": "Zenbu Japanese iOS release dependency inventory",
+  "documentNamespace": "https://zenbujapanese.com/sbom/ios/issue-252/2026-09-03",
+  "creationInfo": {
+    "created": "2026-09-03T00:00:00Z",
+    "creators": ["Organization: Zenbu Japanese"]
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-ZenbuJapanese",
+      "name": "Zenbu Japanese iOS App",
+      "versionInfo": "1.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-SudachiSwift",
+      "name": "sudachi-swift",
+      "versionInfo": "0.1.1",
+      "downloadLocation": "https://github.com/iasnezhkov/sudachi-swift/releases/tag/v0.1.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5f17105e7ec602413fc8c72e6a44d273758b36fa8da17edc3f6b0cc43983984e"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "Copyright 2026 Ilia Snezhkov"
+    },
+    {
+      "SPDXID": "SPDXRef-SudachiRs",
+      "name": "sudachi.rs",
+      "versionInfo": "0.6.11",
+      "downloadLocation": "https://github.com/WorksApplications/sudachi.rs/tree/v0.6.11",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "Copyright Works Applications Co., Ltd."
+    },
+    {
+      "SPDXID": "SPDXRef-SudachiDictCore",
+      "name": "SudachiDict Core",
+      "versionInfo": "20260723",
+      "downloadLocation": "https://github.com/WorksApplications/SudachiDict/releases/download/v20260723/sudachidict_core-20260723-py3-none-any.whl",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "Apache-2.0 AND BSD-3-Clause",
+      "licenseDeclared": "Apache-2.0 AND BSD-3-Clause",
+      "copyrightText": "Copyright Works Applications and retained SudachiDict contributors",
+      "comment": "The extracted system.dic is 217466039 bytes with SHA-256 53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f. Runtime char.def and unk.def are pinned to sudachi.rs 0.6.11 commit 90fd6068c80c2fc3b63e0dbab0e341475bad4d8f."
+    },
+    {
+      "SPDXID": "SPDXRef-ZIPFoundation",
+      "name": "ZIPFoundation",
+      "versionInfo": "0.9.20",
+      "downloadLocation": "https://github.com/weichsel/ZIPFoundation/tree/0.9.20",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "Copyright 2017-2025 Thomas Zoechling"
+    },
+    {
+      "SPDXID": "SPDXRef-AppleSQLite",
+      "name": "SQLite / Apple iOS system libsqlite3",
+      "versionInfo": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "LicenseRef-Public-Domain",
+      "licenseDeclared": "LicenseRef-Public-Domain",
+      "copyrightText": "Public domain"
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-ZenbuJapanese",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-SudachiSwift"
+    },
+    {
+      "spdxElementId": "SPDXRef-SudachiSwift",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-SudachiRs"
+    },
+    {
+      "spdxElementId": "SPDXRef-ZenbuJapanese",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "relatedSpdxElement": "SPDXRef-SudachiDictCore",
+      "comment": "Learner-initiated optional runtime Language Technology pack."
+    },
+    {
+      "spdxElementId": "SPDXRef-ZenbuJapanese",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-ZIPFoundation"
+    },
+    {
+      "spdxElementId": "SPDXRef-ZenbuJapanese",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-AppleSQLite"
+    }
+  ]
+}

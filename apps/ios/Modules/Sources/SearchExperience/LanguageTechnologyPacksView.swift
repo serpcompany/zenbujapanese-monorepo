@@ -4,6 +4,7 @@ struct LanguageTechnologyPacksView: View {
   @State private var snapshot: LanguageTechnologyPackSnapshot?
   @State private var workingPackID: LanguageTechnologyPackID?
   @State private var screenFailure: String?
+  @State private var operationTask: Task<Void, Never>?
   let client: LanguageTechnologyPackClient
 
   var body: some View {
@@ -32,7 +33,13 @@ struct LanguageTechnologyPacksView: View {
             }
             LabeledContent(
               "Engine", value: "\(pack.manifest.engine) \(pack.manifest.engineVersion)")
-            LabeledContent("Dictionary", value: "Core \(pack.manifest.packVersion)")
+            LabeledContent(
+              pack.updateAvailable ? "Installed dictionary" : "Dictionary",
+              value: "Core \(pack.installedVersion ?? pack.manifest.packVersion)"
+            )
+            if pack.updateAvailable {
+              LabeledContent("Available update", value: "Core \(pack.manifest.packVersion)")
+            }
             LabeledContent("Analysis", value: pack.manifest.splitPolicy)
             LabeledContent("License", value: pack.manifest.licenseIdentifier)
             LabeledContent(
@@ -66,19 +73,23 @@ struct LanguageTechnologyPacksView: View {
         }
       } else if let screenFailure {
         ContentUnavailableView {
-          Label("Japanese Analysis Unavailable", systemImage: "exclamationmark.triangle")
+          Label("Japanese Text Analysis Unavailable", systemImage: "exclamationmark.triangle")
         } description: {
           Text(screenFailure)
         }
         Button("Retry", action: refresh)
       } else {
-        ProgressView("Loading Japanese analysis")
+        ProgressView("Loading Japanese Text Analysis")
       }
     }
-    .navigationTitle("Japanese Analysis")
+    .navigationTitle("Japanese Text Analysis")
     .navigationBarTitleDisplayMode(.inline)
     .accessibilityIdentifier("language-technology-packs.list")
     .task { await load() }
+    .onDisappear {
+      operationTask?.cancel()
+      operationTask = nil
+    }
   }
 
   @ViewBuilder
@@ -125,15 +136,18 @@ struct LanguageTechnologyPacksView: View {
     operation: @escaping @Sendable () async throws -> Void
   ) {
     workingPackID = id
-    Task { @MainActor in
+    operationTask?.cancel()
+    operationTask = Task { @MainActor in
       do {
         try await operation()
       } catch is CancellationError {
         workingPackID = nil
+        operationTask = nil
         return
       } catch {}
       workingPackID = nil
       await load()
+      operationTask = nil
     }
   }
 }

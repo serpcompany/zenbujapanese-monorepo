@@ -1,3 +1,4 @@
+import Darwin.Mach
 import XCTest
 
 @testable import SearchExperience
@@ -26,6 +27,7 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     let solve = try XCTUnwrap(tokens.first { $0.surface == "解い" })
     XCTAssertEqual(solve.dictionaryForm, "解く")
     XCTAssertNil(solve.entry, "Two defensible 解く readings must remain unresolved.")
+    XCTAssertEqual(solve.candidateEntryIDs.count, 2)
     XCTAssertFalse(tokens.contains { $0.entry?.headword == "射手" })
     let speak = try XCTUnwrap(tokens.first { $0.surface == "話し" })
     XCTAssertEqual(speak.entry?.headword, "話す")
@@ -46,6 +48,61 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     XCTAssertEqual(tokens.map(\.surface), ["今日は静かな公園です。"])
     XCTAssertEqual(tokens.first?.scalarRange, 0..<11)
     XCTAssertTrue(tokens.allSatisfy { $0.entry == nil })
+  }
+
+  func testModeAChildIdentityNeverLeaksOntoItsModeCParentCandidate() async throws {
+    let lookup = LookupClient.freshBundledDatabase()
+    let matchedCommitteeMember = try await lookup.entryMatchingForm("委員")
+    let committeeMember = try XCTUnwrap(matchedCommitteeMember)
+    let child = JapaneseMorphologyCandidate(
+      surface: "委員",
+      scalarRange: 0..<2,
+      dictionaryForm: "委員",
+      normalizedForm: "委員",
+      reading: "イイン",
+      partOfSpeech: ["名詞"],
+      isOutOfVocabulary: false,
+      children: []
+    )
+    let suffix = JapaneseMorphologyCandidate(
+      surface: "会",
+      scalarRange: 2..<3,
+      dictionaryForm: "会",
+      normalizedForm: "会",
+      reading: "カイ",
+      partOfSpeech: ["接尾辞"],
+      isOutOfVocabulary: false,
+      children: []
+    )
+    let client = JapaneseTextAnalysisClient.resolving(
+      morphologyClient: JapaneseMorphologyClient { _ in
+        JapaneseMorphologyAnalysis(
+          transcript: "委員会",
+          candidates: [
+            JapaneseMorphologyCandidate(
+              surface: "委員会",
+              scalarRange: 0..<3,
+              dictionaryForm: "委員会",
+              normalizedForm: "委員会",
+              reading: "イインカイ",
+              partOfSpeech: ["名詞"],
+              isOutOfVocabulary: false,
+              children: [child, suffix]
+            )
+          ],
+          engine: "frozen-test-provider",
+          engineVersion: "1",
+          dictionary: "independent test truth",
+          dictionarySHA256: "fixture"
+        )
+      },
+      lookupClient: lookup
+    )
+
+    let linked = await client.linkedTokens("委員会", SearchQuery("委員"), committeeMember)
+    let token = try XCTUnwrap(linked.first)
+    XCTAssertNotEqual(token.entry?.id, committeeMember.id)
+    XCTAssertFalse(token.candidateEntryIDs.contains(committeeMember.id))
   }
 
   func testInflectedOccurrencesRepresentTheCurrentCanonicalEntry() async throws {
@@ -94,6 +151,7 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     XCTAssertFalse(tokens.contains { $0.surface == "がい" })
     let occurrence = try XCTUnwrap(tokens.first { $0.surface == "いる" })
     XCTAssertNil(occurrence.entry)
+    XCTAssertGreaterThan(occurrence.candidateEntryIDs.count, 1)
   }
 
   func testHighlightedEntryFormsReserveBoundariesFromParticlesAndPunctuation() async throws {
@@ -180,8 +238,11 @@ final class JapaneseTextAnalysisTests: XCTestCase {
 
   func testShippedSudachiAdapterMatchesFrozenProviderContract() async throws {
     let dictionaryURL = try await OfficialSudachiTestResource.shared.installedDictionaryURL()
+    let baselineResidentBytes = Self.residentBytes()
+    let coldStart = ContinuousClock.now
     let client = try JapaneseMorphologyClient.sudachiCore(
       dictionaryURL: dictionaryURL)
+    let coldMilliseconds = Self.milliseconds(coldStart.duration(to: .now))
     let analysis = try await client.analyze("日本語の勉強。問題を解いて話します。")
 
     XCTAssertEqual(analysis.engine, "sudachi.rs")
@@ -214,6 +275,20 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     XCTAssertEqual(tokens.first { $0.surface == "話し" }?.entry?.headword, "話す")
     XCTAssertNil(tokens.first { $0.surface == "いる" }?.entry)
     XCTAssertEqual(tokens.first { $0.surface == "用いる" }?.entry?.headword, "用いる")
+
+    var warmMilliseconds: [Double] = []
+    for index in 0..<220 {
+      let start = ContinuousClock.now
+      _ = try await client.analyze(index.isMultiple(of: 2) ? analysis.transcript : "日本語を用いる。")
+      if index >= 20 { warmMilliseconds.append(Self.milliseconds(start.duration(to: .now))) }
+    }
+    let warmP95 = warmMilliseconds.sorted()[189]
+    XCTAssertLessThan(coldMilliseconds, 1_000)
+    XCTAssertLessThan(warmP95, 100)
+    let residentBytes = Self.residentBytes()
+    XCTAssertGreaterThan(residentBytes, 0)
+    XCTAssertGreaterThanOrEqual(residentBytes, baselineResidentBytes)
+    XCTAssertLessThan(residentBytes - baselineResidentBytes, 350 * 1_024 * 1_024)
   }
 
   func testShippedSudachiAdapterRetainsFrozenConfirmationQuality() async throws {
@@ -225,6 +300,7 @@ final class JapaneseTextAnalysisTests: XCTestCase {
       ConfirmationTruth.self, from: Data(contentsOf: truthURL))
     XCTAssertEqual(truth.cases.count, 512)
     let client = try JapaneseMorphologyClient.sudachiCore(dictionaryURL: dictionaryURL)
+    let confirmationStart = ContinuousClock.now
     var predictedBoundaryCount = 0
     var goldBoundaryCount = 0
     var matchingBoundaryCount = 0
@@ -264,6 +340,7 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     XCTAssertGreaterThanOrEqual(Double(exactSpanCount) / Double(goldTokenCount), 0.976)
     XCTAssertGreaterThanOrEqual(Double(lemmaMatches) / Double(exactSpanCount), 0.850)
     XCTAssertGreaterThanOrEqual(Double(readingMatches) / Double(readingApplicable), 0.949)
+    XCTAssertLessThan(Self.milliseconds(confirmationStart.duration(to: .now)), 5_000)
   }
 
   private func analyzer(_ lookup: LookupClient) -> JapaneseTextAnalysisClient {
@@ -365,6 +442,23 @@ final class JapaneseTextAnalysisTests: XCTestCase {
       dictionary: "independent test truth",
       dictionarySHA256: "fixture"
     )
+  }
+
+  private static func milliseconds(_ duration: Duration) -> Double {
+    Double(duration.components.seconds) * 1_000
+      + Double(duration.components.attoseconds) / 1.0e15
+  }
+
+  private static func residentBytes() -> UInt64 {
+    var info = mach_task_basic_info()
+    var count = mach_msg_type_number_t(
+      MemoryLayout<mach_task_basic_info_data_t>.size / MemoryLayout<natural_t>.size)
+    let result = withUnsafeMutablePointer(to: &info) {
+      $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+        task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+      }
+    }
+    return result == KERN_SUCCESS ? UInt64(info.resident_size) : 0
   }
 }
 

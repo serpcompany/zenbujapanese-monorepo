@@ -80,6 +80,9 @@
          <TestPlanReference
             reference = "container:TestPlans/ZenbuPerformance.xctestplan">
          </TestPlanReference>
+         <TestPlanReference
+            reference = "container:TestPlans/ZenbuSudachiIntegration.xctestplan">
+         </TestPlanReference>
       </TestPlans>
       <CommandLineArguments>
       </CommandLineArguments>
