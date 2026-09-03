@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "packs": [
+    {
+      "packID": "sudachi-core-ja-20260723",
+      "displayName": "Japanese Word Analysis",
+      "packVersion": "20260723",
+      "engine": "sudachi.rs",
+      "engineVersion": "0.6.11",
+      "binding": "sudachi-swift",
+      "bindingVersion": "0.1.1",
+      "splitPolicy": "Mode C learner candidates with provider-native Mode A children",
+      "downloadURL": "https://github.com/WorksApplications/SudachiDict/releases/download/v20260723/sudachidict_core-20260723-py3-none-any.whl",
+      "downloadBytes": 72275897,
+      "downloadSHA256": "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498",
+      "archiveEntry": "sudachidict_core/resources/system.dic",
+      "installedBytes": 217466039,
+      "installedSHA256": "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f",
+      "runtimeResourceCommit": "90fd6068c80c2fc3b63e0dbab0e341475bad4d8f",
+      "characterDefinitionSHA256": "b549ec56ad67359f535c80b7efa150538af2a78b7609d0d6bae796dd89f4f29d",
+      "unknownDefinitionSHA256": "4e8c4c15e18af6a9fc5d636e3dc73fde55d50941b93a6c8835d4653d3f54ba79",
+      "licenseIdentifier": "Apache-2.0 with retained UniDic and NEologd notices",
+      "attribution": "Sudachi.rs by Works Applications; Swift binding by Ilia Snezhkov; SudachiDict includes UniDic and NEologd data.",
+      "licenseResource": "SudachiLanguageTechnologyNotices"
+    }
+  ],
+  "trustedHistoricalManifests": []
+}

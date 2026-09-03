@@ -3,6 +3,8 @@ import UIKit
 
 struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
+  @State private var analysisAvailability = JapaneseAnalysisAvailability.full
+  let textAnalysisClient: JapaneseTextAnalysisClient
   let close: () -> Void
   let openWord: (DictionaryEntry, ImageTextAsset) -> Void
 
@@ -21,6 +23,7 @@ struct ImageTextFlowView: View {
         textAnalysisClient: textAnalysisClient,
         translationClient: translationClient
       ))
+    self.textAnalysisClient = textAnalysisClient
     self.close = close
     self.openWord = openWord
   }
@@ -28,6 +31,17 @@ struct ImageTextFlowView: View {
   var body: some View {
     GeometryReader { geometry in
       VStack(spacing: 0) {
+        if analysisAvailability == .reduced {
+          Label(
+            "Word links are reduced. Download Japanese Analysis in More.",
+            systemImage: "info.circle"
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          .padding(.horizontal, 16)
+          .padding(.vertical, 8)
+          .accessibilityIdentifier("image-text.reduced-analysis")
+        }
         if model.canRequestTranslation {
           translation
         }
@@ -65,7 +79,10 @@ struct ImageTextFlowView: View {
         shareMenu
       }
     }
-    .task { await model.load() }
+    .task {
+      analysisAvailability = await textAnalysisClient.availability()
+      await model.load()
+    }
     .onDisappear { model.suspendTranslation() }
     .alert(
       "No Text Found",

@@ -18,6 +18,11 @@ struct MoreView: View {
       }
       .accessibilityIdentifier("more.frequency-dictionaries")
 
+      NavigationLink(value: MoreRoute.languageTechnology) {
+        Label("Japanese Analysis", systemImage: "text.magnifyingglass")
+      }
+      .accessibilityIdentifier("more.japanese-analysis")
+
       NavigationLink {
         DictionarySourcesView()
       } label: {
@@ -32,6 +37,7 @@ struct MoreView: View {
 
 enum MoreRoute: Hashable {
   case frequencyDictionaries
+  case languageTechnology
 }
 
 struct MediaLibraryView: View {

@@ -7,6 +7,8 @@ public struct SearchExperienceRootView: View {
   @State private var query = ""
   #if DEBUG
     @State private var exportsImageFixtures = false
+    @State private var preparesJapaneseAnalysis = ProcessInfo.processInfo.arguments.contains(
+      "-EnsureJapaneseAnalysis")
   #endif
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
@@ -73,23 +75,25 @@ public struct SearchExperienceRootView: View {
   }
 
   public var body: some View {
-    TabView(selection: $selectedTab) {
-      Tab("Search", systemImage: "magnifyingglass", value: SearchExperienceTab.search) {
-        searchNavigation
-      }
-
-      Tab("More", systemImage: "ellipsis", value: SearchExperienceTab.more) {
-        NavigationStack(path: $morePath) {
-          MoreView(store: encounterMediaStore)
-            .navigationDestination(for: MoreRoute.self) { route in
-              switch route {
-              case .frequencyDictionaries:
-                FrequencyDictionariesView(client: .live)
-              }
-            }
+    Group {
+      #if DEBUG
+        if preparesJapaneseAnalysis {
+          ProgressView("Preparing on-device Japanese analysis")
+            .accessibilityIdentifier("language-technology-pack.preparing")
+        } else {
+          appTabs
         }
-      }
+      #else
+        appTabs
+      #endif
     }
+    #if DEBUG
+      .task {
+        guard preparesJapaneseAnalysis else { return }
+        await LanguageTechnologyPackStore.shared.ensureInstalledForTesting()
+        preparesJapaneseAnalysis = false
+      }
+    #endif
     #if DEBUG
       .sheet(isPresented: $exportsImageFixtures) {
         ImageFileExporter(urls: imageFixtureExportURLs) {
@@ -120,6 +124,28 @@ public struct SearchExperienceRootView: View {
         }
       }
     #endif
+  }
+
+  private var appTabs: some View {
+    TabView(selection: $selectedTab) {
+      Tab("Search", systemImage: "magnifyingglass", value: SearchExperienceTab.search) {
+        searchNavigation
+      }
+
+      Tab("More", systemImage: "ellipsis", value: SearchExperienceTab.more) {
+        NavigationStack(path: $morePath) {
+          MoreView(store: encounterMediaStore)
+            .navigationDestination(for: MoreRoute.self) { route in
+              switch route {
+              case .frequencyDictionaries:
+                FrequencyDictionariesView(client: .live)
+              case .languageTechnology:
+                LanguageTechnologyPacksView(client: .live)
+              }
+            }
+        }
+      }
+    }
   }
 
   private var searchNavigation: some View {

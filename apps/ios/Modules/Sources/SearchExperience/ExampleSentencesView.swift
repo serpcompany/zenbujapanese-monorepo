@@ -3,6 +3,7 @@ import SwiftUI
 struct ExampleSentencesView: View {
   @State private var examples: [ExampleSentence] = []
   @State private var isLoading = true
+  @State private var analysisAvailability = JapaneseAnalysisAvailability.full
   @State private var lastSpeechRequest: String?
 
   let query: SearchQuery
@@ -20,6 +21,15 @@ struct ExampleSentencesView: View {
           .frame(maxWidth: .infinity, maxHeight: .infinity)
       } else {
         List {
+          if analysisAvailability == .reduced {
+            Label(
+              "Word links are reduced. Download Japanese Analysis in More.",
+              systemImage: "info.circle"
+            )
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .accessibilityIdentifier("examples.reduced-analysis")
+          }
           ForEach(examples.enumerated(), id: \.element.id) { index, example in
             ExampleSentenceRow(
               index: index,
@@ -54,6 +64,7 @@ struct ExampleSentencesView: View {
     }
     .task(id: query) {
       isLoading = true
+      analysisAvailability = await japaneseTextAnalysisClient.availability()
       let loadedExamples: [ExampleSentence]
       if usesHighlightedEntryExamples, let highlightedEntry {
         loadedExamples = (try? await exampleSentenceClient.examples(highlightedEntry)) ?? []

@@ -492,9 +492,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let japanese = app.descendants(matching: .any)["image-text.region.日本語"]
     let read = app.descendants(matching: .any)["image-text.region.読む"]
     XCTAssertTrue(japanese.waitForExistence(timeout: 10))
-    XCTAssertTrue(read.waitForExistence(timeout: 10))
     XCTAssertTrue(japanese.isHittable)
-    XCTAssertTrue(read.isHittable)
+    XCTAssertFalse(
+      read.exists,
+      "A partial word without provider character polygons must remain raw text."
+    )
     let canvas = app.otherElements["Imported image fixture-vertical.png"]
     XCTAssertTrue(canvas.exists)
     assertNormalizedImageRegion(
@@ -502,13 +504,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       equals: CGRect(x: 0.27, y: 0.48, width: 0.08, height: 0.30),
       in: canvas
     )
-    assertNormalizedImageRegion(
-      read,
-      equals: CGRect(x: 0.14, y: 0.48, width: 0.08, height: 0.20),
-      in: canvas
-    )
-    XCTAssertLessThan(read.frame.maxX, japanese.frame.minX)
-    XCTAssertFalse(read.frame.intersects(japanese.frame))
     for unrelatedIdentifier in [
       "image-text.region.春",
       "image-text.region.静か",
@@ -516,30 +511,31 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       "image-text.region.飛んで",
     ] {
       let unrelated = app.descendants(matching: .any)[unrelatedIdentifier]
-      XCTAssertTrue(unrelated.exists)
-      XCTAssertFalse(read.frame.intersects(unrelated.frame))
-      XCTAssertFalse(japanese.frame.intersects(unrelated.frame))
+      XCTAssertFalse(
+        unrelated.exists,
+        "Partial tokens without provider character polygons must not receive fabricated boxes."
+      )
     }
-    read.tap()
+    japanese.tap()
     let gloss = app.buttons["image-text.gloss"]
     XCTAssertTrue(gloss.waitForExistence(timeout: 2))
-    XCTAssertTrue(gloss.label.contains("読む"))
-    XCTAssertTrue(gloss.label.localizedCaseInsensitiveContains("to read"))
+    XCTAssertTrue(gloss.label.contains("日本語"))
+    XCTAssertTrue(gloss.label.localizedCaseInsensitiveContains("japanese"))
     recordSettledScreenshot(named: "image-text-vertical-selected", app: app)
     gloss.tap()
     let wordDetail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(wordDetail.waitForExistence(timeout: 3))
     XCTAssertTrue(
       app.descendants(matching: .any)[
-        "word-detail.entry.132ec115831c1cda3588d31e99b30ead"
+        "word-detail.entry.c81e1608bebbf039176be3e23f1c03bb"
       ].waitForExistence(timeout: 3)
     )
     tapNativeBack(in: app)
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
     XCTAssertEqual(rawText.label, "Recognized text 春の朝、静かな庭を 蝶々が飛んでいる。 日本語 を読む。")
-    XCTAssertTrue(read.exists)
+    XCTAssertTrue(japanese.exists)
     XCTAssertTrue(gloss.exists)
-    XCTAssertTrue(gloss.label.localizedCaseInsensitiveContains("to read"))
+    XCTAssertTrue(gloss.label.localizedCaseInsensitiveContains("japanese"))
   }
 
   @MainActor
@@ -2423,6 +2419,53 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testJapaneseAnalysisPackDownloadsThroughNativeManagementSurface() throws {
+    let app = launchApp(
+      additionalArguments: ["-ResetLanguageTechnologyPacks"],
+      automaticallyInstallsJapaneseAnalysis: false
+    )
+    XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["More"].tap()
+    let japaneseAnalysis = app.buttons["more.japanese-analysis"]
+    XCTAssertTrue(japaneseAnalysis.waitForExistence(timeout: 2))
+    japaneseAnalysis.tap()
+
+    let list = app.collectionViews["language-technology-packs.list"]
+    XCTAssertTrue(list.waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["Japanese Word Analysis"].exists)
+    XCTAssertTrue(app.staticTexts["Engine, sudachi.rs 0.6.11"].exists)
+    XCTAssertTrue(app.staticTexts["Dictionary, Core 20260723"].exists)
+    XCTAssertTrue(app.staticTexts["Download, 72.3 MB"].exists)
+
+    let download = app.buttons[
+      "language-technology-pack.download.sudachi-core-ja-20260723"
+    ]
+    scrollUpUntilHittable(download, in: list, attempts: 6)
+    XCTAssertTrue(download.isHittable)
+    XCTAssertTrue(
+      app.staticTexts.matching(
+        NSPredicate(format: "label BEGINSWITH %@", "Installed size,")
+      ).firstMatch.exists
+    )
+    download.tap()
+    let progress = app.descendants(matching: .any)[
+      "language-technology-pack.progress.sudachi-core-ja-20260723"
+    ]
+    XCTAssertTrue(progress.waitForExistence(timeout: 2))
+    let installed = app.descendants(matching: .any)[
+      "language-technology-pack.status.sudachi-core-ja-20260723"
+    ]
+    let installedExpectation = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "label == %@", "Status, Active"),
+      object: installed
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [installedExpectation], timeout: 90), .completed)
+    XCTAssertEqual(installed.label, "Status, Active")
+    XCTAssertEqual(installed.value as? String, "Ready for on-device analysis")
+    XCTAssertTrue(app.buttons["language-technology-pack.remove.sudachi-core-ja-20260723"].exists)
+  }
+
+  @MainActor
   func testFrequencyDictionariesShowsIncludedOptionalAndActionableFailureStates() throws {
     let app = launchApp(additionalArguments: [
       "-ResetFrequencyPacks", "-FrequencyPackChecksumFailure",
@@ -3967,7 +4010,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
         let detail = app.collectionViews["word-detail.screen"]
         XCTAssertTrue(detail.waitForExistence(timeout: 3))
         assertMeaningVisible(
-          "1.  draw (in go, poetry contest, etc.), tie",
+          "1.  to hold (in one's hand), to take, to carry",
           in: detail,
           app: app
         )
@@ -5210,9 +5253,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  private func launchApp(additionalArguments: [String] = []) -> XCUIApplication {
+  private func launchApp(
+    additionalArguments: [String] = [],
+    automaticallyInstallsJapaneseAnalysis: Bool = true
+  ) -> XCUIApplication {
     let app = XCUIApplication()
     app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+    if automaticallyInstallsJapaneseAnalysis {
+      app.launchArguments += ["-EnsureJapaneseAnalysis"]
+    }
     app.launchArguments += additionalArguments
     app.launch()
     return app
@@ -5456,7 +5505,7 @@ enum RepresentativeExampleSentences {
       NSPredicate(
         format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
         "example.token.2.",
-        "持, じ, draw (in go, poetry contest, etc.), tie"
+        "持っ, もつ, to hold (in one's hand), to take, to carry"
       )
     ).firstMatch
   }
@@ -5574,7 +5623,7 @@ enum RepresentativeExampleSentences {
         button.label.split(separator: ",").count, 3, file: file, line: line)
     }
 
-    let ruby = app.buttons["example.token.2.2.持"]
+    let ruby = app.buttons["example.token.2.2.持っ"]
     let plain = app.staticTexts["example.token.2.5.。"]
     let translation = englishText(for: expected, in: app)
     XCTAssertEqual(

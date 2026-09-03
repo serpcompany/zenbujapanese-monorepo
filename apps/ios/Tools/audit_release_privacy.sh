@@ -142,7 +142,8 @@ pass "source privacy manifest is valid and included in the app target"
 network_scan_paths=()
 while IFS= read -r source_file; do
   network_scan_paths+=("$source_file")
-done < <(find "${ios_dir}/App" "${ios_dir}/Modules/Sources" -type f ! -name FrequencyPack.swift -print)
+done < <(find "${ios_dir}/App" "${ios_dir}/Modules/Sources" -type f \
+  ! -name FrequencyPack.swift ! -name LanguageTechnologyPack.swift -print)
 denylist_scan "unreviewed source network or cloud API" 'URLSession|NSURLSession|CloudKit|CKContainer|NWConnection|import[[:space:]]+Network|import[[:space:]]+WebKit' \
   "${network_scan_paths[@]}"
 frequency_download_source="${ios_dir}/Modules/Sources/SearchExperience/FrequencyPack.swift"
@@ -152,7 +153,29 @@ frequency_download_source="${ios_dir}/Modules/Sources/SearchExperience/Frequency
 require_rg_match "frequency download must reject non-success HTTP responses" \
   'HTTPURLResponse\)\?\.statusCode == 200' "$frequency_download_source"
 pass "only the reviewed checksum-validated Frequency Pack downloader uses URLSession"
-denylist_scan "remote package dependency" 'XCRemoteSwiftPackageReference|repositoryURL|\.package\([[:space:]]*url:' "$project" "$package_manifest"
+language_pack_download_source="${ios_dir}/Modules/Sources/SearchExperience/LanguageTechnologyPack.swift"
+[[ -f "$language_pack_download_source" ]] || fail "reviewed Language Technology Pack download boundary is missing"
+[[ "$(rg -c 'URLSession\.shared\.data\(from: url\)' "$language_pack_download_source")" == "1" ]] \
+  || fail "Language Technology Pack download boundary changed or added another network client"
+require_rg_match "Language Technology Pack download must reject non-success HTTP responses" \
+  'HTTPURLResponse\)\?\.statusCode == 200' "$language_pack_download_source"
+require_rg_match "Language Technology Pack source checksum pin is missing" \
+  'b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498' "$language_pack_download_source"
+pass "only the reviewed checksum-validated Language Technology Pack downloader uses URLSession"
+denylist_scan "Xcode-project remote package dependency" 'XCRemoteSwiftPackageReference|repositoryURL' "$project"
+[[ "$(rg -c '\.package\(' "$package_manifest")" == "2" ]] \
+  || fail "Swift package dependency inventory changed"
+require_rg_match "pinned sudachi-swift dependency is missing" \
+  'url: "https://github\.com/iasnezhkov/sudachi-swift\.git"' "$package_manifest"
+require_rg_match "pinned ZIPFoundation dependency is missing" \
+  'url: "https://github\.com/weichsel/ZIPFoundation\.git"' "$package_manifest"
+sudachi_dependency="$(rg -A 2 'iasnezhkov/sudachi-swift' "$package_manifest")"
+zip_dependency="$(rg -A 2 'weichsel/ZIPFoundation' "$package_manifest")"
+rg -q 'exact: "0\.1\.1"' <<<"$sudachi_dependency" \
+  || fail "sudachi-swift must remain exact 0.1.1"
+rg -q 'exact: "0\.9\.20"' <<<"$zip_dependency" \
+  || fail "ZIPFoundation must remain exact 0.9.20"
+pass "remote Swift dependencies are limited to the reviewed exact Sudachi and archive-reader pins"
 require_rg_match "Camera usage description is missing or changed" 'INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text and save photos with words you are learning\.";' "$project"
 settings_source="$(find "${ios_dir}/Modules/Sources" -name DictionarySourcesView.swift -type f -print -quit)"
 [[ -n "$settings_source" ]] || fail "DictionarySourcesView.swift is missing"

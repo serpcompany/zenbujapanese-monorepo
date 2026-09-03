@@ -3,11 +3,56 @@ import XCTest
 @testable import SearchExperience
 
 final class JapaneseTextAnalysisTests: XCTestCase {
+  func testProviderEvidenceSeparatesTodayFromTopicParticleWithoutGreetingLink() async throws {
+    let lookup = LookupClient.freshBundledDatabase()
+    let tokens = await analyzer(lookup).linkedTokens(
+      "今日は静かな公園です。",
+      SearchQuery(""),
+      nil
+    )
+
+    XCTAssertEqual(tokens.map(\.surface), ["今日", "は", "静か", "な", "公園", "です", "。"])
+    XCTAssertFalse(tokens.contains { $0.entry?.headword == "こんにちは" })
+  }
+
+  func testProviderDictionaryFormsResolveInflectedVerbsWithoutNounOrIteLinks() async throws {
+    let lookup = LookupClient.freshBundledDatabase()
+    let tokens = await analyzer(lookup).linkedTokens(
+      "問題を解いて、友達と話します。",
+      SearchQuery(""),
+      nil
+    )
+
+    let solve = try XCTUnwrap(tokens.first { $0.surface == "解い" })
+    XCTAssertEqual(solve.dictionaryForm, "解く")
+    XCTAssertNil(solve.entry, "Two defensible 解く readings must remain unresolved.")
+    XCTAssertFalse(tokens.contains { $0.entry?.headword == "射手" })
+    let speak = try XCTUnwrap(tokens.first { $0.surface == "話し" })
+    XCTAssertEqual(speak.entry?.headword, "話す")
+    XCTAssertFalse(tokens.contains { $0.surface == "話し" && $0.entry?.headword == "話" })
+  }
+
+  func testUnavailablePackReturnsExactRawTextWithoutFabricatedLinks() async {
+    let lookup = LookupClient.freshBundledDatabase()
+    let client = JapaneseTextAnalysisClient.resolving(
+      morphologyClient: JapaneseMorphologyClient { _ in
+        throw JapaneseMorphologyError.packUnavailable
+      },
+      lookupClient: lookup
+    )
+
+    let tokens = await client.linkedTokens("今日は静かな公園です。", SearchQuery(""), nil)
+
+    XCTAssertEqual(tokens.map(\.surface), ["今日は静かな公園です。"])
+    XCTAssertEqual(tokens.first?.scalarRange, 0..<11)
+    XCTAssertTrue(tokens.allSatisfy { $0.entry == nil })
+  }
+
   func testInflectedOccurrencesRepresentTheCurrentCanonicalEntry() async throws {
     let lookup = LookupClient.freshBundledDatabase()
     let matchedEntry = try await lookup.entryMatchingForm("見る")
     let currentEntry = try XCTUnwrap(matchedEntry)
-    let tokens = await JapaneseTextAnalysisClient.live(lookupClient: lookup).linkedTokens(
+    let tokens = await analyzer(lookup).linkedTokens(
       "見て、見て。",
       SearchQuery(currentEntry.headword),
       currentEntry
@@ -22,7 +67,7 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     let lookup = LookupClient.freshBundledDatabase()
     let matchedEntry = try await lookup.entryMatchingForm("要る")
     let highlightedEntry = try XCTUnwrap(matchedEntry)
-    let tokens = await JapaneseTextAnalysisClient.live(lookupClient: lookup).linkedTokens(
+    let tokens = await analyzer(lookup).linkedTokens(
       "車がいるの？",
       SearchQuery(highlightedEntry.headword),
       highlightedEntry
@@ -39,7 +84,7 @@ final class JapaneseTextAnalysisTests: XCTestCase {
 
   func testAmbiguousKanaHomographKeepsWordBoundaryWithoutChoosingAnEntry() async throws {
     let lookup = LookupClient.freshBundledDatabase()
-    let tokens = await JapaneseTextAnalysisClient.live(lookupClient: lookup).linkedTokens(
+    let tokens = await analyzer(lookup).linkedTokens(
       "車がいるの？",
       SearchQuery("いる"),
       nil
@@ -83,7 +128,7 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     for example in cases {
       let matchedEntry = try await lookup.entry(LanguageReferenceID(rawValue: example.id))
       let highlightedEntry = try XCTUnwrap(matchedEntry)
-      let tokens = await JapaneseTextAnalysisClient.live(lookupClient: lookup).linkedTokens(
+      let tokens = await analyzer(lookup).linkedTokens(
         example.text,
         SearchQuery(highlightedEntry.headword),
         highlightedEntry
@@ -101,7 +146,7 @@ final class JapaneseTextAnalysisTests: XCTestCase {
 
   func testOtherVerbsRemainSeparateFromAdjacentParticles() async throws {
     let lookup = LookupClient.freshBundledDatabase()
-    let analyzer = JapaneseTextAnalysisClient.live(lookupClient: lookup)
+    let analyzer = analyzer(lookup)
     let cases = [
       (text: "猫を見る。", surface: "見る", headword: "見る"),
       (text: "ご飯を食べる。", surface: "食べる", headword: "食べる"),
@@ -121,7 +166,7 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     let matchedEntry = try await lookup.entry(
       LanguageReferenceID(rawValue: "d12d09f1107aef0f7d43b54b62f0b7e1"))
     let highlightedEntry = try XCTUnwrap(matchedEntry)
-    let tokens = await JapaneseTextAnalysisClient.live(lookupClient: lookup).linkedTokens(
+    let tokens = await analyzer(lookup).linkedTokens(
       "道具を用いる。",
       SearchQuery(highlightedEntry.headword),
       highlightedEntry
@@ -131,5 +176,258 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     XCTAssertFalse(tokens.contains { $0.surface == "いる" })
     let occurrence = try XCTUnwrap(tokens.first { $0.surface == "用いる" })
     XCTAssertEqual(occurrence.entry?.headword, "用いる")
+  }
+
+  func testShippedSudachiAdapterMatchesFrozenProviderContract() async throws {
+    let dictionaryURL = try await OfficialSudachiTestResource.shared.installedDictionaryURL()
+    let client = try JapaneseMorphologyClient.sudachiCore(
+      dictionaryURL: dictionaryURL)
+    let analysis = try await client.analyze("日本語の勉強。問題を解いて話します。")
+
+    XCTAssertEqual(analysis.engine, "sudachi.rs")
+    XCTAssertEqual(analysis.engineVersion, "0.6.11")
+    XCTAssertEqual(analysis.dictionary, "SudachiDict Core 20260723")
+    XCTAssertEqual(
+      analysis.dictionarySHA256,
+      "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f")
+    XCTAssertEqual(analysis.candidates.map(\.surface).joined(), analysis.transcript)
+    XCTAssertEqual(analysis.candidates.first?.surface, "日本語")
+    XCTAssertEqual(analysis.candidates.first?.reading, "ニホンゴ")
+    XCTAssertTrue(analysis.candidates.contains { $0.surface == "解い" && $0.dictionaryForm == "解く" })
+    XCTAssertTrue(analysis.candidates.contains { $0.surface == "話し" && $0.dictionaryForm == "話す" })
+
+    let lookup = LookupClient.freshBundledDatabase()
+    let linked = JapaneseTextAnalysisClient.resolving(
+      morphologyClient: client,
+      lookupClient: lookup
+    )
+    let tokens = await linked.linkedTokens(
+      "日本語の勉強。今日は問題を解いて話します。そこに学生がいる。用いる。",
+      SearchQuery(""),
+      nil
+    )
+    XCTAssertEqual(tokens.map(\.surface).joined(), "日本語の勉強。今日は問題を解いて話します。そこに学生がいる。用いる。")
+    XCTAssertEqual(tokens.first { $0.surface == "日本語" }?.entry?.headword, "日本語")
+    XCTAssertFalse(tokens.contains { $0.entry?.headword == "こんにちは" })
+    XCTAssertEqual(tokens.first { $0.surface == "解い" }?.dictionaryForm, "解く")
+    XCTAssertNil(tokens.first { $0.surface == "解い" }?.entry)
+    XCTAssertEqual(tokens.first { $0.surface == "話し" }?.entry?.headword, "話す")
+    XCTAssertNil(tokens.first { $0.surface == "いる" }?.entry)
+    XCTAssertEqual(tokens.first { $0.surface == "用いる" }?.entry?.headword, "用いる")
+  }
+
+  func testShippedSudachiAdapterRetainsFrozenConfirmationQuality() async throws {
+    let dictionaryURL = try await OfficialSudachiTestResource.shared.installedDictionaryURL()
+    let truthURL = try XCTUnwrap(
+      Bundle(for: JapaneseTextAnalysisTests.self).url(
+        forResource: "issue251-morphology-confirmation-holdout-v1", withExtension: "json"))
+    let truth = try JSONDecoder().decode(
+      ConfirmationTruth.self, from: Data(contentsOf: truthURL))
+    XCTAssertEqual(truth.cases.count, 512)
+    let client = try JapaneseMorphologyClient.sudachiCore(dictionaryURL: dictionaryURL)
+    var predictedBoundaryCount = 0
+    var goldBoundaryCount = 0
+    var matchingBoundaryCount = 0
+    var exactSpanCount = 0
+    var lemmaMatches = 0
+    var readingMatches = 0
+    var readingApplicable = 0
+
+    for record in truth.cases {
+      let analysis = try await client.analyze(record.text)
+      let provider = analysis.candidates.flatMap { candidate in
+        candidate.children.isEmpty ? [candidate] : candidate.children
+      }
+      let finalOffset = record.text.unicodeScalars.count
+      let predictedEdges = Set(provider.map(\.scalarRange.upperBound).filter { $0 < finalOffset })
+      let goldEdges = Set(record.tokens.map(\.end).filter { $0 < finalOffset })
+      predictedBoundaryCount += predictedEdges.count
+      goldBoundaryCount += goldEdges.count
+      matchingBoundaryCount += predictedEdges.intersection(goldEdges).count
+      let providerByRange = Dictionary(grouping: provider, by: \.scalarRange)
+      for token in record.tokens {
+        guard let candidate = providerByRange[token.start..<token.end]?.first else { continue }
+        exactSpanCount += 1
+        if candidate.dictionaryForm == token.lemma { lemmaMatches += 1 }
+        if !token.readingAlternatives.isEmpty {
+          readingApplicable += 1
+          if token.readingAlternatives.contains(candidate.reading) { readingMatches += 1 }
+        }
+      }
+    }
+
+    let boundaryPrecision = Double(matchingBoundaryCount) / Double(predictedBoundaryCount)
+    let boundaryRecall = Double(matchingBoundaryCount) / Double(goldBoundaryCount)
+    let boundaryF1 = 2 * boundaryPrecision * boundaryRecall / (boundaryPrecision + boundaryRecall)
+    let goldTokenCount = truth.cases.reduce(0) { $0 + $1.tokens.count }
+    XCTAssertGreaterThanOrEqual(boundaryF1, 0.990)
+    XCTAssertGreaterThanOrEqual(Double(exactSpanCount) / Double(goldTokenCount), 0.976)
+    XCTAssertGreaterThanOrEqual(Double(lemmaMatches) / Double(exactSpanCount), 0.850)
+    XCTAssertGreaterThanOrEqual(Double(readingMatches) / Double(readingApplicable), 0.949)
+  }
+
+  private func analyzer(_ lookup: LookupClient) -> JapaneseTextAnalysisClient {
+    JapaneseTextAnalysisClient.resolving(
+      morphologyClient: JapaneseMorphologyClient { text in
+        try Self.fixtureAnalysis(text)
+      },
+      lookupClient: lookup
+    )
+  }
+
+  private static func fixtureAnalysis(_ text: String) throws -> JapaneseMorphologyAnalysis {
+    let specifications: [(String, String, String)]
+    switch text {
+    case "今日は静かな公園です。":
+      specifications = [
+        ("今日", "今日", "名詞"), ("は", "は", "助詞"), ("静か", "静か", "形状詞"),
+        ("な", "だ", "助動詞"), ("公園", "公園", "名詞"), ("です", "です", "助動詞"),
+        ("。", "。", "補助記号"),
+      ]
+    case "問題を解いて、友達と話します。":
+      specifications = [
+        ("問題", "問題", "名詞"), ("を", "を", "助詞"), ("解い", "解く", "動詞"),
+        ("て", "て", "助詞"), ("、", "、", "補助記号"), ("友達", "友達", "名詞"),
+        ("と", "と", "助詞"), ("話し", "話す", "動詞"), ("ます", "ます", "助動詞"),
+        ("。", "。", "補助記号"),
+      ]
+    case "見て、見て。":
+      specifications = [
+        ("見て", "見る", "動詞"), ("、", "、", "補助記号"),
+        ("見て", "見る", "動詞"), ("。", "。", "補助記号"),
+      ]
+    case "車がいるの？":
+      specifications = [
+        ("車", "車", "名詞"), ("が", "が", "助詞"), ("いる", "居る", "動詞"),
+        ("の", "の", "助詞"), ("？", "？", "補助記号"),
+      ]
+    case "彼がいる？":
+      specifications = [
+        ("彼", "彼", "代名詞"), ("が", "が", "助詞"), ("いる", "居る", "動詞"),
+        ("？", "？", "補助記号"),
+      ]
+    case "彼が居る。":
+      specifications = [
+        ("彼", "彼", "代名詞"), ("が", "が", "助詞"), ("居る", "居る", "動詞"),
+        ("。", "。", "補助記号"),
+      ]
+    case "いる。":
+      specifications = [("いる", "居る", "動詞"), ("。", "。", "補助記号")]
+    case "豆を煎る。":
+      specifications = [
+        ("豆", "豆", "名詞"), ("を", "を", "助詞"), ("煎る", "煎る", "動詞"),
+        ("。", "。", "補助記号"),
+      ]
+    case "猫を見る。":
+      specifications = [
+        ("猫", "猫", "名詞"), ("を", "を", "助詞"), ("見る", "見る", "動詞"),
+        ("。", "。", "補助記号"),
+      ]
+    case "ご飯を食べる。":
+      specifications = [
+        ("ご飯", "御飯", "名詞"), ("を", "を", "助詞"), ("食べる", "食べる", "動詞"),
+        ("。", "。", "補助記号"),
+      ]
+    case "見ているだけだ。":
+      specifications = [
+        ("見て", "見る", "動詞"), ("いる", "居る", "動詞"), ("だけ", "だけ", "助詞"),
+        ("だ", "だ", "助動詞"), ("。", "。", "補助記号"),
+      ]
+    case "道具を用いる。":
+      specifications = [
+        ("道具", "道具", "名詞"), ("を", "を", "助詞"), ("用いる", "用いる", "動詞"),
+        ("。", "。", "補助記号"),
+      ]
+    default:
+      specifications = [(text, text, "未知語")]
+    }
+
+    var offset = 0
+    let candidates = specifications.map { surface, lemma, partOfSpeech in
+      let count = surface.unicodeScalars.count
+      defer { offset += count }
+      return JapaneseMorphologyCandidate(
+        surface: surface,
+        scalarRange: offset..<(offset + count),
+        dictionaryForm: lemma,
+        normalizedForm: lemma,
+        reading: "",
+        partOfSpeech: [partOfSpeech],
+        isOutOfVocabulary: partOfSpeech == "未知語",
+        children: []
+      )
+    }
+    return JapaneseMorphologyAnalysis(
+      transcript: text,
+      candidates: candidates,
+      engine: "frozen-test-provider",
+      engineVersion: "1",
+      dictionary: "independent test truth",
+      dictionarySHA256: "fixture"
+    )
+  }
+}
+
+private struct ConfirmationTruth: Decodable {
+  let cases: [ConfirmationCase]
+}
+
+private struct ConfirmationCase: Decodable {
+  let text: String
+  let tokens: [ConfirmationToken]
+}
+
+private struct ConfirmationToken: Decodable {
+  let surface: String
+  let start: Int
+  let end: Int
+  let lemma: String
+  let readingAlternatives: [String]
+}
+
+actor OfficialSudachiTestResource {
+  static let shared = OfficialSudachiTestResource()
+  private var cachedDictionaryURL: URL?
+
+  func wheelData() async throws -> Data {
+    let cache = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+      .appendingPathComponent("issue252-sudachidict-core-20260723.whl")
+    if let data = try? Data(contentsOf: cache, options: .mappedIfSafe),
+      data.count == 72_275_897,
+      data.sha256 == "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498"
+    {
+      return data
+    }
+    let source = URL(
+      string:
+        "https://github.com/WorksApplications/SudachiDict/releases/download/v20260723/sudachidict_core-20260723-py3-none-any.whl"
+    )!
+    let (data, response) = try await URLSession.shared.data(from: source)
+    guard (response as? HTTPURLResponse)?.statusCode == 200,
+      data.count == 72_275_897,
+      data.sha256 == "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498"
+    else { throw LanguageTechnologyPackError.checksumMismatch }
+    try data.write(to: cache, options: .atomic)
+    return data
+  }
+
+  func installedDictionaryURL() async throws -> URL {
+    if let cachedDictionaryURL { return cachedDictionaryURL }
+    let wheel = try await wheelData()
+    let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+      .appendingPathComponent("issue252-official-installed", isDirectory: true)
+    let manager = try LanguageTechnologyPackManager(
+      catalog: .bundled(),
+      storageDirectory: directory,
+      download: { _ in wheel }
+    )
+    if await manager.installedDictionaryURL() == nil {
+      let id = try XCTUnwrap(LanguageTechnologyPackCatalog.bundled().packs.first?.packID)
+      try await manager.download(id)
+    }
+    let installedURL = await manager.installedDictionaryURL()
+    let installed = try XCTUnwrap(installedURL)
+    cachedDictionaryURL = installed
+    return installed
   }
 }

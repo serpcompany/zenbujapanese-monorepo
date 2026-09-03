@@ -155,6 +155,29 @@ struct DictionarySourcesView: View {
         )
       }
 
+      Section("Japanese Word Analysis") {
+        Text(
+          "Optional on-device Japanese word boundaries, dictionary forms, readings, and parts of speech from Sudachi.rs and SudachiDict Core. ZIPFoundation reads the checksum-pinned official dictionary wheel during installation."
+        )
+        LabeledContent("Engine", value: "sudachi.rs 0.6.11")
+        LabeledContent("Binding", value: "sudachi-swift 0.1.1")
+        LabeledContent("Dictionary", value: "SudachiDict Core 20260723")
+        LabeledContent("Archive reader", value: "ZIPFoundation 0.9.20")
+        LabeledContent("License", value: "Apache-2.0 · BSD-3-Clause · MIT")
+        NavigationLink("Bundled license and attribution text") {
+          BundledLicenseTextView(
+            title: "Japanese Analysis Notices",
+            resource: "SudachiLanguageTechnologyNotices"
+          )
+        }
+        .accessibilityIdentifier("dictionary-sources.japanese-analysis-license")
+        Link(
+          "SudachiDict release",
+          destination: URL(
+            string: "https://github.com/WorksApplications/SudachiDict/releases/tag/v20260723")!
+        )
+      }
+
       Section("Tatoeba") {
         Text(
           "Offline Japanese–English example sentences from Tatoeba's official weekly export. Zenbu retains both sentence IDs, supplied contributor usernames, per-record license class, and the exact source snapshot."

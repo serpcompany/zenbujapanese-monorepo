@@ -55,9 +55,7 @@ final class ImageTextFlowModelTests: XCTestCase {
     let japanese = try XCTUnwrap(page.regions.first { $0.surface == "日本語" })
     XCTAssertEqual(japanese.entry.id.rawValue, "c81e1608bebbf039176be3e23f1c03bb")
     XCTAssertEqual(japanese.entry.summary, "Japanese (language)")
-    let read = try XCTUnwrap(page.regions.first { $0.surface == "読む" })
-    XCTAssertEqual(read.entry.id.rawValue, "132ec115831c1cda3588d31e99b30ead")
-    XCTAssertEqual(read.entry.summary, "to read")
+    XCTAssertFalse(page.regions.contains { $0.surface == "読む" })
     XCTAssertFalse(page.regions.contains { $0.surface == "読本" })
     XCTAssertFalse(page.regions.contains { $0.surface == "いる" })
     XCTAssertFalse(page.regions.contains { $0.entry.headword == "要る" })
@@ -85,6 +83,30 @@ final class ImageTextFlowModelTests: XCTestCase {
       id: 0,
       text: "道具を用いる。",
       boundingBox: CGRect(x: 0.2, y: 0.2, width: 0.15, height: 0.65),
+      confidence: 1,
+      characterBoxes: (0..<7).map { index in
+        CGRect(x: 0.2 + CGFloat(index) * 0.02, y: 0.2, width: 0.02, height: 0.65)
+      }
+    )
+    let lookup = LookupClient.freshBundledDatabase()
+    let model = imageTextModel(observations: [observation], lookup: lookup)
+
+    await model.load()
+
+    let page = try loadedPage(model.pages[0].state)
+    let completeForm = try XCTUnwrap(page.regions.first { $0.surface == "用いる" })
+    XCTAssertEqual(completeForm.boundingBox.minX, 0.26, accuracy: 0.000_001)
+    XCTAssertEqual(completeForm.boundingBox.minY, 0.20, accuracy: 0.000_001)
+    XCTAssertEqual(completeForm.boundingBox.width, 0.06, accuracy: 0.000_001)
+    XCTAssertEqual(completeForm.boundingBox.height, 0.65, accuracy: 0.000_001)
+    XCTAssertFalse(page.regions.contains { $0.surface == "いる" })
+  }
+
+  func testPartialTokenWithoutProviderCharacterPolygonsDoesNotFabricateABox() async throws {
+    let observation = RecognizedImageTextObservation(
+      id: 0,
+      text: "これは日本語。",
+      boundingBox: CGRect(x: 0.2, y: 0.4, width: 0.6, height: 0.1),
       confidence: 1
     )
     let lookup = LookupClient.freshBundledDatabase()
@@ -93,8 +115,7 @@ final class ImageTextFlowModelTests: XCTestCase {
     await model.load()
 
     let page = try loadedPage(model.pages[0].state)
-    XCTAssertTrue(page.regions.contains { $0.surface == "用いる" })
-    XCTAssertFalse(page.regions.contains { $0.surface == "いる" })
+    XCTAssertFalse(page.regions.contains { $0.surface == "日本語" })
   }
 
   private func imageTextModel(
@@ -104,7 +125,55 @@ final class ImageTextFlowModelTests: XCTestCase {
     ImageTextFlowModel(
       assets: [ImageTextAsset(name: "fixture.png", data: Data([0]))],
       recognitionClient: ImageTextRecognitionClient { _ in observations },
-      textAnalysisClient: .live(lookupClient: lookup),
+      textAnalysisClient: .resolving(
+        morphologyClient: JapaneseMorphologyClient { text in
+          let specifications: [(String, String, String)]
+          switch text {
+          case "日本語":
+            specifications = [("日本語", "日本語", "名詞")]
+          case "を読む。":
+            specifications = [
+              ("を", "を", "助詞"), ("読む", "読む", "動詞"), ("。", "。", "補助記号"),
+            ]
+          case "道具を用いる。":
+            specifications = [
+              ("道具", "道具", "名詞"), ("を", "を", "助詞"),
+              ("用いる", "用いる", "動詞"), ("。", "。", "補助記号"),
+            ]
+          case "これは日本語。":
+            specifications = [
+              ("これ", "此れ", "代名詞"), ("は", "は", "助詞"),
+              ("日本語", "日本語", "名詞"), ("。", "。", "補助記号"),
+            ]
+          default:
+            specifications = [(text, text, "未知語")]
+          }
+          var offset = 0
+          let candidates = specifications.map { surface, lemma, pos in
+            let count = surface.unicodeScalars.count
+            defer { offset += count }
+            return JapaneseMorphologyCandidate(
+              surface: surface,
+              scalarRange: offset..<(offset + count),
+              dictionaryForm: lemma,
+              normalizedForm: lemma,
+              reading: "",
+              partOfSpeech: [pos],
+              isOutOfVocabulary: pos == "未知語",
+              children: []
+            )
+          }
+          return JapaneseMorphologyAnalysis(
+            transcript: text,
+            candidates: candidates,
+            engine: "frozen-test-provider",
+            engineVersion: "1",
+            dictionary: "independent test truth",
+            dictionarySHA256: "fixture"
+          )
+        },
+        lookupClient: lookup
+      ),
       translationClient: NaturalTranslationClient { _ in "" }
     )
   }
