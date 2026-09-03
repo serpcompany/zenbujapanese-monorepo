@@ -67,6 +67,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("truth", type=Path)
     parser.add_argument("--mode", choices=("A", "B", "C"), required=True)
+    parser.add_argument("--provider-contract", type=Path, required=True)
+    parser.add_argument("--provider", required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     records = benchmark.load_truth(args.truth)
@@ -78,13 +80,18 @@ def main() -> None:
     dictionary_sha = sha256(dictionary_path)
     analyzer = dictionary.Dictionary(dict=str(dictionary_path)).create()
     split_mode = getattr(tokenizer.Tokenizer.SplitMode, args.mode)
-    metadata = {
+    observed_metadata = {
         "schema": benchmark.SCHEMA,
         "engine": "sudachi.rs",
         "engineVersion": importlib.metadata.version("SudachiPy"),
         "dictionary": f"SudachiDict Core {importlib.metadata.version('SudachiDict-core')} mode {args.mode}",
         "dictionarySHA256": dictionary_sha,
     }
+    metadata = benchmark.provider_metadata(args.provider_contract, args.provider)
+    if observed_metadata != metadata:
+        raise ValueError(
+            f"installed Sudachi provider drift: expected {metadata}, observed {observed_metadata}"
+        )
     with args.output.open("w", encoding="utf-8") as destination:
         for record in records:
             tokens = []

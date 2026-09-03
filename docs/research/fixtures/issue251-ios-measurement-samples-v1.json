@@ -1,0 +1,321 @@
+{
+  "schema": "zenbu.issue251.ios-measurement-samples.v1",
+  "disclosure": "Exploratory 10-process and 100-warm-call evidence; below the preregistered 30/200 confirmation threshold and therefore supplementary only.",
+  "environment": "iPhone 17 Pro Simulator 77E6BF80-AB37-4C1B-A8FB-F65F7E5694B5; iOS 26.0.1; Xcode 26.0 17A324; Release -Os; Apple M3 Max host",
+  "sudachi": [
+    {
+      "dictionary_init_ms": 42.216124999999998,
+      "tokenizer_init_ms": 0.0077079999999999996,
+      "warm_p50_ms": 0.058458000000000003,
+      "warm_p95_ms": 0.063208,
+      "initial_rss_bytes": 243302400,
+      "steady_rss_bytes": 308445184,
+      "deterministic_hash": "34e6de5f72a99833cfca2c07e95b49df2789ebb0674291393866703feacdc616",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_init_ms": 7.2878749999999997,
+      "tokenizer_init_ms": 0.0036250000000000002,
+      "warm_p50_ms": 0.054542,
+      "warm_p95_ms": 0.067000000000000004,
+      "initial_rss_bytes": 243908608,
+      "steady_rss_bytes": 309133312,
+      "deterministic_hash": "34e6de5f72a99833cfca2c07e95b49df2789ebb0674291393866703feacdc616",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_init_ms": 6.7669170000000003,
+      "tokenizer_init_ms": 0.0044169999999999999,
+      "warm_p50_ms": 0.059208999999999998,
+      "warm_p95_ms": 0.063792000000000001,
+      "initial_rss_bytes": 245465088,
+      "steady_rss_bytes": 310755328,
+      "deterministic_hash": "34e6de5f72a99833cfca2c07e95b49df2789ebb0674291393866703feacdc616",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_init_ms": 7.5804580000000001,
+      "tokenizer_init_ms": 0.0093340000000000003,
+      "warm_p50_ms": 0.057542000000000003,
+      "warm_p95_ms": 0.06225,
+      "initial_rss_bytes": 243810304,
+      "steady_rss_bytes": 309002240,
+      "deterministic_hash": "34e6de5f72a99833cfca2c07e95b49df2789ebb0674291393866703feacdc616",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_init_ms": 7.2451660000000002,
+      "tokenizer_init_ms": 0.0031250000000000002,
+      "warm_p50_ms": 0.05525,
+      "warm_p95_ms": 0.060249999999999998,
+      "initial_rss_bytes": 244023296,
+      "steady_rss_bytes": 309248000,
+      "deterministic_hash": "34e6de5f72a99833cfca2c07e95b49df2789ebb0674291393866703feacdc616",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_init_ms": 7.1797500000000003,
+      "tokenizer_init_ms": 0.0047910000000000001,
+      "warm_p50_ms": 0.055708000000000001,
+      "warm_p95_ms": 0.060290999999999997,
+      "initial_rss_bytes": 244383744,
+      "steady_rss_bytes": 309641216,
+      "deterministic_hash": "34e6de5f72a99833cfca2c07e95b49df2789ebb0674291393866703feacdc616",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_init_ms": 7.3650000000000002,
+      "tokenizer_init_ms": 0.006417,
+      "warm_p50_ms": 0.055459000000000001,
+      "warm_p95_ms": 0.059957999999999997,
+      "initial_rss_bytes": 245497856,
+      "steady_rss_bytes": 310755328,
+      "deterministic_hash": "34e6de5f72a99833cfca2c07e95b49df2789ebb0674291393866703feacdc616",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_init_ms": 7.0743749999999999,
+      "tokenizer_init_ms": 0.0029160000000000002,
+      "warm_p50_ms": 0.055625000000000001,
+      "warm_p95_ms": 0.061874999999999999,
+      "initial_rss_bytes": 244121600,
+      "steady_rss_bytes": 309411840,
+      "deterministic_hash": "34e6de5f72a99833cfca2c07e95b49df2789ebb0674291393866703feacdc616",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_init_ms": 7.2395839999999998,
+      "tokenizer_init_ms": 0.0031670000000000001,
+      "warm_p50_ms": 0.056500000000000002,
+      "warm_p95_ms": 0.061291999999999999,
+      "initial_rss_bytes": 244137984,
+      "steady_rss_bytes": 309395456,
+      "deterministic_hash": "34e6de5f72a99833cfca2c07e95b49df2789ebb0674291393866703feacdc616",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_init_ms": 6.7059579999999999,
+      "tokenizer_init_ms": 0.003875,
+      "warm_p50_ms": 0.054833,
+      "warm_p95_ms": 0.059999999999999998,
+      "initial_rss_bytes": 243810304,
+      "steady_rss_bytes": 309018624,
+      "deterministic_hash": "34e6de5f72a99833cfca2c07e95b49df2789ebb0674291393866703feacdc616",
+      "deterministic_hash_count": 1
+    }
+  ],
+  "kuromojiJavaScriptCore": [
+    {
+      "dictionary_build_ms": 153.444917,
+      "warm_p50_ms": 0.036707999999999998,
+      "warm_p95_ms": 0.082875000000000004,
+      "initial_rss_bytes": 251789312,
+      "steady_rss_bytes": 456851456,
+      "deterministic_hash": "8ec50f88c7eb9f5e3586583f73ce09edbb1cf774cffceab6e6f0d2aec2235864",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_build_ms": 36.802084000000001,
+      "warm_p50_ms": 0.040458000000000001,
+      "warm_p95_ms": 0.087457999999999994,
+      "initial_rss_bytes": 252575744,
+      "steady_rss_bytes": 457146368,
+      "deterministic_hash": "8ec50f88c7eb9f5e3586583f73ce09edbb1cf774cffceab6e6f0d2aec2235864",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_build_ms": 34.163207999999997,
+      "warm_p50_ms": 0.038917,
+      "warm_p95_ms": 0.078083,
+      "initial_rss_bytes": 252329984,
+      "steady_rss_bytes": 458342400,
+      "deterministic_hash": "8ec50f88c7eb9f5e3586583f73ce09edbb1cf774cffceab6e6f0d2aec2235864",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_build_ms": 34.574165999999998,
+      "warm_p50_ms": 0.036749999999999998,
+      "warm_p95_ms": 0.075624999999999998,
+      "initial_rss_bytes": 251740160,
+      "steady_rss_bytes": 456982528,
+      "deterministic_hash": "8ec50f88c7eb9f5e3586583f73ce09edbb1cf774cffceab6e6f0d2aec2235864",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_build_ms": 35.801333999999997,
+      "warm_p50_ms": 0.038625,
+      "warm_p95_ms": 0.078917000000000001,
+      "initial_rss_bytes": 252723200,
+      "steady_rss_bytes": 458571776,
+      "deterministic_hash": "8ec50f88c7eb9f5e3586583f73ce09edbb1cf774cffceab6e6f0d2aec2235864",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_build_ms": 36.65175,
+      "warm_p50_ms": 0.038124999999999999,
+      "warm_p95_ms": 0.080875000000000002,
+      "initial_rss_bytes": 252854272,
+      "steady_rss_bytes": 458768384,
+      "deterministic_hash": "8ec50f88c7eb9f5e3586583f73ce09edbb1cf774cffceab6e6f0d2aec2235864",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_build_ms": 34.338875000000002,
+      "warm_p50_ms": 0.036332999999999997,
+      "warm_p95_ms": 0.079083000000000001,
+      "initial_rss_bytes": 253607936,
+      "steady_rss_bytes": 459325440,
+      "deterministic_hash": "8ec50f88c7eb9f5e3586583f73ce09edbb1cf774cffceab6e6f0d2aec2235864",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_build_ms": 38.347791999999998,
+      "warm_p50_ms": 0.038457999999999999,
+      "warm_p95_ms": 0.081500000000000003,
+      "initial_rss_bytes": 252821504,
+      "steady_rss_bytes": 458457088,
+      "deterministic_hash": "8ec50f88c7eb9f5e3586583f73ce09edbb1cf774cffceab6e6f0d2aec2235864",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_build_ms": 36.693334,
+      "warm_p50_ms": 0.038167,
+      "warm_p95_ms": 0.080167000000000002,
+      "initial_rss_bytes": 252723200,
+      "steady_rss_bytes": 458342400,
+      "deterministic_hash": "8ec50f88c7eb9f5e3586583f73ce09edbb1cf774cffceab6e6f0d2aec2235864",
+      "deterministic_hash_count": 1
+    },
+    {
+      "dictionary_build_ms": 34.267375000000001,
+      "warm_p50_ms": 0.036249999999999998,
+      "warm_p95_ms": 0.075540999999999997,
+      "initial_rss_bytes": 252723200,
+      "steady_rss_bytes": 457293824,
+      "deterministic_hash": "8ec50f88c7eb9f5e3586583f73ce09edbb1cf774cffceab6e6f0d2aec2235864",
+      "deterministic_hash_count": 1
+    }
+  ],
+  "kuromojiNativeSwift": [
+    {
+      "tokenizer_init_ms": 21.616333999999998,
+      "warm_p50_ms": 0.025375000000000002,
+      "warm_p95_ms": 0.029749999999999999,
+      "initial_rss_bytes": 245645312,
+      "steady_rss_bytes": 337494016,
+      "deterministic_hash": "920eb27072c4fbaeadbb973352260fbe0fb95e3f0276a5c24aea4a6070173c0e",
+      "deterministic_hash_count": 1,
+      "concurrent_100_ms": 2.6636250000000001,
+      "concurrent_result_count": 100,
+      "concurrent_hash_count": 1
+    },
+    {
+      "tokenizer_init_ms": 16.380042,
+      "warm_p50_ms": 0.024625000000000001,
+      "warm_p95_ms": 0.030249999999999999,
+      "initial_rss_bytes": 243646464,
+      "steady_rss_bytes": 331104256,
+      "deterministic_hash": "920eb27072c4fbaeadbb973352260fbe0fb95e3f0276a5c24aea4a6070173c0e",
+      "deterministic_hash_count": 1,
+      "concurrent_100_ms": 2.4659589999999998,
+      "concurrent_result_count": 100,
+      "concurrent_hash_count": 1
+    },
+    {
+      "tokenizer_init_ms": 15.921832999999999,
+      "warm_p50_ms": 0.024500000000000001,
+      "warm_p95_ms": 0.028083,
+      "initial_rss_bytes": 244137984,
+      "steady_rss_bytes": 331546624,
+      "deterministic_hash": "920eb27072c4fbaeadbb973352260fbe0fb95e3f0276a5c24aea4a6070173c0e",
+      "deterministic_hash_count": 1,
+      "concurrent_100_ms": 2.3470840000000002,
+      "concurrent_result_count": 100,
+      "concurrent_hash_count": 1
+    },
+    {
+      "tokenizer_init_ms": 15.779291000000001,
+      "warm_p50_ms": 0.024875000000000001,
+      "warm_p95_ms": 0.035791999999999997,
+      "initial_rss_bytes": 244170752,
+      "steady_rss_bytes": 331661312,
+      "deterministic_hash": "920eb27072c4fbaeadbb973352260fbe0fb95e3f0276a5c24aea4a6070173c0e",
+      "deterministic_hash_count": 1,
+      "concurrent_100_ms": 2.4989159999999999,
+      "concurrent_result_count": 100,
+      "concurrent_hash_count": 1
+    },
+    {
+      "tokenizer_init_ms": 16.326665999999999,
+      "warm_p50_ms": 0.024458000000000001,
+      "warm_p95_ms": 0.029041000000000001,
+      "initial_rss_bytes": 243712000,
+      "steady_rss_bytes": 332759040,
+      "deterministic_hash": "920eb27072c4fbaeadbb973352260fbe0fb95e3f0276a5c24aea4a6070173c0e",
+      "deterministic_hash_count": 1,
+      "concurrent_100_ms": 2.560333,
+      "concurrent_result_count": 100,
+      "concurrent_hash_count": 1
+    },
+    {
+      "tokenizer_init_ms": 16.659417000000001,
+      "warm_p50_ms": 0.025874999999999999,
+      "warm_p95_ms": 0.029458999999999999,
+      "initial_rss_bytes": 243892224,
+      "steady_rss_bytes": 331350016,
+      "deterministic_hash": "920eb27072c4fbaeadbb973352260fbe0fb95e3f0276a5c24aea4a6070173c0e",
+      "deterministic_hash_count": 1,
+      "concurrent_100_ms": 2.5288330000000001,
+      "concurrent_result_count": 100,
+      "concurrent_hash_count": 1
+    },
+    {
+      "tokenizer_init_ms": 16.189875000000001,
+      "warm_p50_ms": 0.024458000000000001,
+      "warm_p95_ms": 0.030584,
+      "initial_rss_bytes": 244350976,
+      "steady_rss_bytes": 331563008,
+      "deterministic_hash": "920eb27072c4fbaeadbb973352260fbe0fb95e3f0276a5c24aea4a6070173c0e",
+      "deterministic_hash_count": 1,
+      "concurrent_100_ms": 2.3398330000000001,
+      "concurrent_result_count": 100,
+      "concurrent_hash_count": 1
+    },
+    {
+      "tokenizer_init_ms": 15.913458,
+      "warm_p50_ms": 0.025125000000000001,
+      "warm_p95_ms": 0.030334,
+      "initial_rss_bytes": 244088832,
+      "steady_rss_bytes": 331497472,
+      "deterministic_hash": "920eb27072c4fbaeadbb973352260fbe0fb95e3f0276a5c24aea4a6070173c0e",
+      "deterministic_hash_count": 1,
+      "concurrent_100_ms": 2.4286669999999999,
+      "concurrent_result_count": 100,
+      "concurrent_hash_count": 1
+    },
+    {
+      "tokenizer_init_ms": 15.759207999999999,
+      "warm_p50_ms": 0.024667000000000001,
+      "warm_p95_ms": 0.028000000000000001,
+      "initial_rss_bytes": 244285440,
+      "steady_rss_bytes": 331464704,
+      "deterministic_hash": "920eb27072c4fbaeadbb973352260fbe0fb95e3f0276a5c24aea4a6070173c0e",
+      "deterministic_hash_count": 1,
+      "concurrent_100_ms": 2.419708,
+      "concurrent_result_count": 100,
+      "concurrent_hash_count": 1
+    },
+    {
+      "tokenizer_init_ms": 15.833541,
+      "warm_p50_ms": 0.024459000000000002,
+      "warm_p95_ms": 0.028667000000000002,
+      "initial_rss_bytes": 244334592,
+      "steady_rss_bytes": 331317248,
+      "deterministic_hash": "920eb27072c4fbaeadbb973352260fbe0fb95e3f0276a5c24aea4a6070173c0e",
+      "deterministic_hash_count": 1,
+      "concurrent_100_ms": 2.3391250000000001,
+      "concurrent_result_count": 100,
+      "concurrent_hash_count": 1
+    }
+  ]
+}

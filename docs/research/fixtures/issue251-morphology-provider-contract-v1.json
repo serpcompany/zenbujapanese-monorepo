@@ -1,0 +1,33 @@
+{
+  "schema": "zenbu.japanese-morphology-provider-contract.v1",
+  "providers": {
+    "sudachi-a": {
+      "schema": "zenbu.japanese-text-analysis-output.v1",
+      "engine": "sudachi.rs",
+      "engineVersion": "0.6.11",
+      "dictionary": "SudachiDict Core 20260723 mode A",
+      "dictionarySHA256": "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f"
+    },
+    "sudachi-b": {
+      "schema": "zenbu.japanese-text-analysis-output.v1",
+      "engine": "sudachi.rs",
+      "engineVersion": "0.6.11",
+      "dictionary": "SudachiDict Core 20260723 mode B",
+      "dictionarySHA256": "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f"
+    },
+    "sudachi-c": {
+      "schema": "zenbu.japanese-text-analysis-output.v1",
+      "engine": "sudachi.rs",
+      "engineVersion": "0.6.11",
+      "dictionary": "SudachiDict Core 20260723 mode C",
+      "dictionarySHA256": "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f"
+    },
+    "faanau-kuromoji": {
+      "schema": "zenbu.japanese-text-analysis-output.v1",
+      "engine": "@faanau/kuromoji",
+      "engineVersion": "0.2.1",
+      "dictionary": "mecab-ipadic-2.7.0-20070801",
+      "dictionarySHA256": "484ee6b00d145650e82421d330463809e4b7b500ba0140064efd1849544adb86"
+    }
+  }
+}

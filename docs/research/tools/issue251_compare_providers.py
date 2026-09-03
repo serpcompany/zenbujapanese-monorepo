@@ -21,10 +21,25 @@ def main() -> None:
     parser.add_argument("truth", type=Path)
     parser.add_argument("candidate_a", type=Path)
     parser.add_argument("candidate_b", type=Path)
+    parser.add_argument("--provider-contract", type=Path, required=True)
+    parser.add_argument("--provider-a", required=True)
+    parser.add_argument("--provider-b", required=True)
     args = parser.parse_args()
     truth = benchmark.load_truth(args.truth)
-    candidate_a = {row["id"]: row for row in benchmark.load_jsonl(args.candidate_a)}
-    candidate_b = {row["id"]: row for row in benchmark.load_jsonl(args.candidate_b)}
+    candidate_a = {
+        row["id"]: row
+        for row in benchmark.load_jsonl(
+            args.candidate_a,
+            benchmark.provider_metadata(args.provider_contract, args.provider_a),
+        )
+    }
+    candidate_b = {
+        row["id"]: row
+        for row in benchmark.load_jsonl(
+            args.candidate_b,
+            benchmark.provider_metadata(args.provider_contract, args.provider_b),
+        )
+    }
     fields = ("boundary", "exactTokenSpan", "lemma", "reading", "pos")
     samples = {field: ([], []) for field in fields}
     for record in truth:

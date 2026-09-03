@@ -5,6 +5,14 @@
   "cases": [
     {
       "id": "zenbu-001-nihongo-compound",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": "Mode A 日本|語 is a defensible analyzer decomposition, while 日本語 is the required learner candidate and app-owned entry."
+      },
+      "allowedBoundaryEdgeSets": [
+        [3, 4],
+        [2, 3, 4]
+      ],
       "category": ["compound", "kanji-kana", "ocr-clean"],
       "text": "日本語の勉強",
       "tokens": [
@@ -43,6 +51,11 @@
     },
     {
       "id": "zenbu-002-kyou-particle",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": null
+      },
+      "allowedBoundaryEdgeSets": [[2, 3, 5, 6, 8, 10]],
       "category": ["particle", "homograph", "ocr-clean"],
       "text": "今日は静かな公園です。",
       "tokens": [
@@ -113,6 +126,11 @@
     },
     {
       "id": "zenbu-003-inflection",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": null
+      },
+      "allowedBoundaryEdgeSets": [[2, 3, 5, 6, 7, 9, 10, 12, 14]],
       "category": ["inflection", "auxiliary", "ocr-clean"],
       "text": "問題を解いて、友達と話します。",
       "tokens": [
@@ -210,6 +228,11 @@
     },
     {
       "id": "zenbu-004-existential-iru",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": "Morphology identifies existential 居る, but app-owned identity must abstain because the surface いる has several dictionary identities."
+      },
+      "allowedBoundaryEdgeSets": [[2, 3, 5, 6, 8]],
       "category": ["ambiguity", "homograph", "issue-242"],
       "text": "そこに学生がいる。",
       "tokens": [
@@ -275,6 +298,11 @@
     },
     {
       "id": "zenbu-005-longer-mochiiru",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": null
+      },
+      "allowedBoundaryEdgeSets": [[2, 4, 5, 8]],
       "category": ["longer-form", "issue-242"],
       "text": "この方法を用いる。",
       "tokens": [
@@ -331,6 +359,11 @@
     },
     {
       "id": "zenbu-006-inflected-set",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": null
+      },
+      "allowedBoundaryEdgeSets": [[2, 4, 5, 6, 8, 9, 11, 12, 14, 17, 18]],
       "category": ["inflection", "auxiliary"],
       "text": "食べました。飲んでいる。走らなかった。",
       "tokens": [
@@ -447,6 +480,11 @@
     },
     {
       "id": "zenbu-007-counter-latin",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": "Latin product name and digits are expected OOV for the Japanese dictionaries; whitespace remains outside token spans."
+      },
+      "allowedBoundaryEdgeSets": [[6, 9, 10, 11, 12, 14, 15]],
       "category": ["counter", "latin", "number"],
       "text": "iPhone 17を2台買った。",
       "tokens": [
@@ -526,6 +564,14 @@
     },
     {
       "id": "zenbu-008-oov",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": "The invented compound may defensibly split before 語; the complete span remains the learner candidate."
+      },
+      "allowedBoundaryEdgeSets": [
+        [6, 7, 9, 10],
+        [5, 6, 7, 9, 10]
+      ],
       "category": ["oov", "loanword"],
       "text": "ゼンブニャ語を試した。",
       "tokens": [
@@ -578,6 +624,11 @@
     },
     {
       "id": "zenbu-009-bare-ambiguity",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": "Readings and exact dictionary identities are deliberately unresolved without context."
+      },
+      "allowedBoundaryEdgeSets": [[1, 4]],
       "category": ["ambiguity", "homograph"],
       "text": "静 読本 いる",
       "tokens": [
@@ -618,6 +669,11 @@
     },
     {
       "id": "zenbu-010-ocr-noisy",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": "解ぃ is a synthetic OCR corruption and must remain OOV/unresolved rather than repaired by a hidden heuristic."
+      },
+      "allowedBoundaryEdgeSets": [[2, 3, 5, 6, 7, 9, 10, 12, 14]],
       "category": ["ocr-noisy", "honest-failure"],
       "text": "問題を解ぃて、友達と話します。",
       "tokens": [

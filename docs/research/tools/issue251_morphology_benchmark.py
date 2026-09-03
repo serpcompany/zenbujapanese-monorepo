@@ -123,6 +123,14 @@ def _token_edges(tokens: list[dict[str, Any]], text_length: int) -> set[int]:
     return {token["end"] for token in tokens if token["end"] != text_length}
 
 
+def provider_metadata(contract_path: Path, provider_key: str) -> dict[str, Any]:
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    try:
+        return contract["providers"][provider_key]
+    except KeyError as error:
+        raise ValueError(f"unknown provider contract: {provider_key}") from error
+
+
 def score_records(
     truth_records: list[dict[str, Any]], candidate_records: list[dict[str, Any]]
 ) -> dict[str, Any]:
@@ -131,6 +139,7 @@ def score_records(
         raise ValueError("duplicate candidate id")
     counters = {field: [0, 0] for field in ("lemma", "reading", "pos", "oov")}
     boundary_tp = boundary_predicted = boundary_expected = 0
+    allowed_boundary_tp = allowed_boundary_predicted = allowed_boundary_expected = 0
     exact_span_tp = exact_span_predicted = exact_span_expected = 0
     severe_wrong = 0
     exact_link_correct = 0
@@ -155,6 +164,20 @@ def score_records(
         boundary_tp += len(gold_edges & candidate_edges)
         boundary_predicted += len(candidate_edges)
         boundary_expected += len(gold_edges)
+        allowed_sets = [
+            set(edges) for edges in truth.get("allowedBoundaryEdgeSets", [])
+        ]
+        if not allowed_sets:
+            allowed_sets = [gold_edges]
+        allowed_gold = max(
+            allowed_sets,
+            key=lambda edges: _prf(
+                len(edges & candidate_edges), len(candidate_edges), len(edges)
+            )["f1"],
+        )
+        allowed_boundary_tp += len(allowed_gold & candidate_edges)
+        allowed_boundary_predicted += len(candidate_edges)
+        allowed_boundary_expected += len(allowed_gold)
         gold_spans = {(token["start"], token["end"]): token for token in gold_tokens}
         candidate_spans = {
             (token["start"], token["end"]): token for token in candidate_tokens
@@ -218,6 +241,11 @@ def score_records(
             "missing": missing,
         },
         "boundary": _prf(boundary_tp, boundary_predicted, boundary_expected),
+        "allowedBoundary": _prf(
+            allowed_boundary_tp,
+            allowed_boundary_predicted,
+            allowed_boundary_expected,
+        ),
         "exactTokenSpan": _prf(
             exact_span_tp, exact_span_predicted, exact_span_expected
         ),
@@ -229,6 +257,11 @@ def score_records(
             "exactCandidateRecall": _ratio(exact_link_correct, exact_link_total),
             "abstention": _ratio(abstention_correct, abstention_total),
             "severeWrong": severe_wrong,
+            "severeWrongRate": (
+                severe_wrong / (exact_link_total + abstention_total)
+                if exact_link_total + abstention_total
+                else None
+            ),
         },
         "hardGates": {
             "zeroSevereWrongLinks": severe_wrong == 0,
@@ -237,6 +270,70 @@ def score_records(
     }
     for field, (correct, total) in counters.items():
         result[field] = _ratio(correct, total)
+    oov_true_positive = oov_predicted = oov_expected = 0
+    for truth in truth_records:
+        candidate = candidate_by_id.get(truth["id"])
+        if candidate is None:
+            continue
+        observed = {
+            (token["start"], token["end"]): token for token in candidate["tokens"]
+        }
+        for gold in truth["tokens"]:
+            if "oov" not in gold:
+                continue
+            predicted = bool(observed.get((gold["start"], gold["end"]), {}).get("oov"))
+            expected = bool(gold["oov"])
+            oov_true_positive += int(predicted and expected)
+            oov_predicted += int(predicted)
+            oov_expected += int(expected)
+    result["oovDetection"] = _prf(oov_true_positive, oov_predicted, oov_expected)
+    link_true_positive = link_predicted = link_expected = 0
+    for truth in truth_records:
+        candidate = candidate_by_id.get(truth["id"])
+        if candidate is None:
+            continue
+        observed = {
+            (token["start"], token["end"]): token for token in candidate["tokens"]
+        }
+        for gold in truth["tokens"]:
+            link = gold.get("link")
+            if not link:
+                continue
+            links = set(
+                observed.get((gold["start"], gold["end"]), {}).get("linkIds", [])
+            )
+            expected = set(link.get("ids", [])) if link["kind"] == "exact" else set()
+            link_true_positive += len(links & expected)
+            link_predicted += len(links)
+            link_expected += len(expected)
+    result["links"]["exactLink"] = _prf(
+        link_true_positive, link_predicted, link_expected
+    )
+    return result
+
+
+def score_with_categories(
+    truth_records: list[dict[str, Any]], candidate_records: list[dict[str, Any]]
+) -> dict[str, Any]:
+    result = score_records(truth_records, candidate_records)
+    categories = sorted(
+        {
+            category
+            for record in truth_records
+            for category in record.get("category", [])
+        }
+    )
+    result["byCategory"] = {
+        category: score_records(
+            [
+                record
+                for record in truth_records
+                if category in record.get("category", [])
+            ],
+            candidate_records,
+        )
+        for category in categories
+    }
     return result
 
 
@@ -319,17 +416,22 @@ def load_truth(path: Path) -> list[dict[str, Any]]:
     if path.suffix == ".conllu":
         return load_conllu(path)
     payload = json.loads(path.read_text(encoding="utf-8"))
-    return payload.get("cases", payload)
+    records = payload.get("cases", payload)
+    if isinstance(payload, dict) and "cases" in payload:
+        for record in records:
+            if "adjudication" not in record or "allowedBoundaryEdgeSets" not in record:
+                raise ValueError(f"incomplete adjudication for {record.get('id')}")
+    return records
 
 
-def load_jsonl(path: Path) -> list[dict[str, Any]]:
+def load_jsonl(path: Path, expected_metadata: dict[str, Any]) -> list[dict[str, Any]]:
     rows = [
         json.loads(line)
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
     for row in rows:
-        validate_candidate(row)
+        validate_candidate(row, expected_metadata)
     return rows
 
 
@@ -338,22 +440,32 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest="command", required=True)
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("results", type=Path)
+    validate_parser.add_argument("--provider-contract", type=Path, required=True)
+    validate_parser.add_argument("--provider", required=True)
+    validate_parser.add_argument("--expected-output-sha256")
     score_parser = subparsers.add_parser("score")
     score_parser.add_argument("truth", type=Path)
     score_parser.add_argument("results", type=Path)
+    score_parser.add_argument("--provider-contract", type=Path, required=True)
+    score_parser.add_argument("--provider", required=True)
+    score_parser.add_argument("--expected-output-sha256")
     args = parser.parse_args()
-    rows = load_jsonl(args.results)
+    expected_metadata = provider_metadata(args.provider_contract, args.provider)
+    rows = load_jsonl(args.results, expected_metadata)
+    output_sha256 = normalized_output_sha256(rows)
+    if args.expected_output_sha256 and output_sha256 != args.expected_output_sha256:
+        raise ValueError("normalized output checksum drift")
     if args.command == "validate":
         print(
             json.dumps(
-                {"records": len(rows), "sha256": normalized_output_sha256(rows)},
+                {"records": len(rows), "sha256": output_sha256},
                 sort_keys=True,
             )
         )
     else:
         print(
             json.dumps(
-                score_records(load_truth(args.truth), rows),
+                score_with_categories(load_truth(args.truth), rows),
                 ensure_ascii=False,
                 indent=2,
                 sort_keys=True,

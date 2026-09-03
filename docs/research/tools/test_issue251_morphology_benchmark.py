@@ -108,6 +108,7 @@ class Issue251MorphologyBenchmarkTests(unittest.TestCase):
 
         result = self.score_one(guess)
         self.assertEqual(result["links"]["severeWrong"], 1)
+        self.assertEqual(result["links"]["exactLink"]["precision"], 0)
         self.assertFalse(result["hardGates"]["zeroSevereWrongLinks"])
 
     def test_ranges_must_round_trip_to_exact_text(self):
@@ -125,6 +126,65 @@ class Issue251MorphologyBenchmarkTests(unittest.TestCase):
                     benchmark.validate_candidate(
                         candidate, expected_metadata=self.metadata
                     )
+
+    def test_public_result_loader_rejects_mixed_provider_metadata(self):
+        second = json.loads(json.dumps(self.correct, ensure_ascii=False))
+        second["id"] = "second"
+        second["engineVersion"] = "2"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "results.jsonl"
+            path.write_text(
+                "\n".join(
+                    json.dumps(row, ensure_ascii=False)
+                    for row in (self.correct, second)
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "metadata drift"):
+                benchmark.load_jsonl(path, self.metadata)
+
+    def test_oov_precision_recall_and_f1_are_independent_from_accuracy(self):
+        truth = {
+            "id": "oov",
+            "text": "猫X",
+            "tokens": [
+                {"surface": "猫", "start": 0, "end": 1, "oov": False},
+                {"surface": "X", "start": 1, "end": 2, "oov": True},
+            ],
+        }
+        candidate = {
+            **self.metadata,
+            "id": "oov",
+            "text": "猫X",
+            "tokens": [
+                {"surface": "猫", "start": 0, "end": 1, "oov": True},
+                {"surface": "X", "start": 1, "end": 2, "oov": True},
+            ],
+        }
+        result = benchmark.score_records([truth], [candidate])
+        self.assertEqual(result["oovDetection"]["precision"], 0.5)
+        self.assertEqual(result["oovDetection"]["recall"], 1)
+
+    def test_explicit_alternate_boundaries_are_reported_separately(self):
+        truth = {
+            "id": "alternate",
+            "text": "日本語",
+            "tokens": [{"surface": "日本語", "start": 0, "end": 3}],
+            "allowedBoundaryEdgeSets": [[], [2]],
+        }
+        candidate = {
+            **self.metadata,
+            "id": "alternate",
+            "text": "日本語",
+            "tokens": [
+                {"surface": "日本", "start": 0, "end": 2},
+                {"surface": "語", "start": 2, "end": 3},
+            ],
+        }
+        result = benchmark.score_records([truth], [candidate])
+        self.assertLess(result["boundary"]["f1"], 1)
+        self.assertEqual(result["allowedBoundary"]["f1"], 1)
 
     def test_reordered_candidates_score_by_id_not_file_order(self):
         second_truth = {

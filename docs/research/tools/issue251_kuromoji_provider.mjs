@@ -21,10 +21,11 @@ function parseArguments() {
     !args.output ||
     !args.dictionary ||
     !args.module ||
-    !args.version
+    !args['provider-contract'] ||
+    !args.provider
   )
     throw new Error(
-      'usage: --truth FILE --output FILE --dictionary DIR --module PACKAGE --version VERSION',
+      'usage: --truth FILE --output FILE --dictionary DIR --module PACKAGE --provider-contract FILE --provider KEY',
     );
   return args;
 }
@@ -99,13 +100,19 @@ function buildTokenizer(dictionaryPath) {
 const args = parseArguments();
 const kuromoji = require(args.module);
 const tokenizer = await buildTokenizer(args.dictionary);
-const metadata = {
+const observedMetadata = {
   schema: 'zenbu.japanese-text-analysis-output.v1',
   engine: args.module,
-  engineVersion: args.version,
+  engineVersion: require(`${args.module}/package.json`).version,
   dictionary: 'mecab-ipadic-2.7.0-20070801',
   dictionarySHA256: dictionarySHA256(args.dictionary),
 };
+const contract = JSON.parse(fs.readFileSync(args['provider-contract'], 'utf8'));
+const metadata = contract.providers?.[args.provider];
+if (!metadata || JSON.stringify(observedMetadata) !== JSON.stringify(metadata))
+  throw new Error(
+    `installed Kuromoji provider drift: expected ${JSON.stringify(metadata)}, observed ${JSON.stringify(observedMetadata)}`,
+  );
 const rows = loadTexts(args.truth).map((record) => ({
   ...metadata,
   ...record,
