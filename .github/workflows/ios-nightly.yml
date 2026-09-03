@@ -6,6 +6,10 @@ on:
 permissions:
   contents: read
 
+env:
+  ZENBU_POLICY_AUTHORIZED: true
+  ZENBU_VERIFICATION_STAGE: manual
+
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true

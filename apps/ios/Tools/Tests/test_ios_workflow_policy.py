@@ -4,6 +4,7 @@ import unittest
 
 REPO_ROOT = Path(__file__).parents[4]
 WORKFLOWS = REPO_ROOT / ".github" / "workflows"
+TOOLS = REPO_ROOT / "apps" / "ios" / "Tools"
 
 
 def workflow_text(name: str) -> str:
@@ -19,6 +20,10 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         workflow = workflow_text("ios-quality.yml")
         triggers = trigger_section(workflow)
         self.assertIn("  pull_request:\n", triggers)
+        self.assertIn(
+            "types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]",
+            triggers,
+        )
         self.assertIn("  workflow_dispatch:\n", triggers)
         self.assertNotIn("  merge_group:\n", triggers)
         self.assertIn("    name: ios-fast / Required\n", workflow)
@@ -41,25 +46,29 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("ZenbuPR", complete_job)
         self.assertNotIn("-only-testing", complete_job)
 
-    def test_fast_ui_partition_is_bounded_and_excludes_inherited_failures(self):
+    def test_fast_partitions_are_manifest_selected_without_workflow_selectors(self):
         workflow = workflow_text("ios-quality.yml")
-        ui_job = workflow.split("  ios-ui:\n", 1)[1].split(
-            "\n  ios-accessibility:\n", 1
-        )[0]
-        selected_journeys = [
-            line
-            for line in ui_job.splitlines()
-            if "SearchExperienceJourneyUITests/" in line
-        ]
-        self.assertLessEqual(len(selected_journeys), 12)
-        for failing_test in (
-            "testHandwritingCandidatesComposeCommonKanjiAndEnterHistory",
-            "testHandwritingSearchIncludesPendingRecognizedStroke",
-            "testRadicalCandidateSubmitsKanjiResultAndEntersHistory",
-            "testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult",
-            "testLookupFailureIsNotPresentedAsNoMatchAndRetryRecovers",
-        ):
-            self.assertNotIn(failing_test, ui_job)
+        self.assertIn("apps/ios/Tools/ios_verification.py plan", workflow)
+        self.assertIn("needs.scope.outputs.run_expensive == 'true'", workflow)
+        self.assertNotIn("-only-testing:", workflow)
+
+    def test_draft_pushes_are_cheap_and_ready_heads_are_sha_bound(self):
+        workflow = workflow_text("ios-quality.yml")
+        self.assertIn("github.event.pull_request.draft", workflow)
+        self.assertIn("ready_for_review", workflow)
+        self.assertIn("converted_to_draft", workflow)
+        self.assertIn("cancel-in-progress: true", workflow)
+        self.assertIn("verify-sha", workflow)
+        self.assertIn("github.event.pull_request.head.sha", workflow)
+        self.assertIn("ref: ${{ needs.scope.outputs.source_sha }}", workflow)
+        self.assertIn("tested_sha=$(git rev-parse HEAD)", workflow)
+        self.assertIn("SCOPE_RESULT: ${{ needs.scope.result }}", workflow)
+        self.assertIn('[[ "$SCOPE_RESULT" == success ]]', workflow)
+        self.assertIn("cadence", workflow)
+
+        premerge = workflow_text("ios-premerge.yml")
+        self.assertIn("SCOPE_RESULT: ${{ needs.scope.result }}", premerge)
+        self.assertIn('[[ "$SCOPE_RESULT" == success ]]', premerge)
 
     def test_manual_breadth_workflow_has_no_schedule(self):
         triggers = trigger_section(workflow_text("ios-nightly.yml"))
@@ -75,6 +84,25 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("Run the complete candidate suite", workflow)
         self.assertIn("ZenbuPR", workflow)
         self.assertIn("-configuration Release", workflow)
+
+    def test_performance_workflow_uses_the_canonical_manifest(self):
+        workflow = workflow_text("ios-performance.yml")
+        self.assertIn("ios_verification.py plan", workflow)
+        self.assertIn("--capability full-performance", workflow)
+        self.assertIn("run_selected_test_plan.sh", workflow)
+        self.assertNotIn("run_ci_test_plan.sh", workflow)
+
+    def test_local_issue_gate_owns_selection_and_same_plan_build_reuse(self):
+        issue_runner = (TOOLS / "run_issue_verification.sh").read_text(encoding="utf-8")
+        selected_runner = (TOOLS / "run_selected_test_plan.sh").read_text(
+            encoding="utf-8"
+        )
+        xcode_runner = (TOOLS / "run_ci_test_plan.sh").read_text(encoding="utf-8")
+        self.assertIn('ios_verification.py" plan', issue_runner)
+        self.assertIn('ZENBU_DERIVED_DATA="$reuse_root/$plan"', issue_runner)
+        self.assertIn("resolved no selectors", selected_runner)
+        self.assertIn("ZENBU_POLICY_AUTHORIZED", selected_runner)
+        self.assertIn("ZENBU_POLICY_AUTHORIZED", xcode_runner)
 
 
 if __name__ == "__main__":

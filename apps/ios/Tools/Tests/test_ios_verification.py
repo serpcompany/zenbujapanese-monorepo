@@ -1,0 +1,652 @@
+import importlib.util
+import io
+import json
+from pathlib import Path
+import tempfile
+import unittest
+from contextlib import redirect_stdout
+
+
+MODULE_PATH = Path(__file__).parents[1] / "ios_verification.py"
+SPEC = importlib.util.spec_from_file_location("ios_verification", MODULE_PATH)
+assert SPEC is not None and SPEC.loader is not None
+ios_verification = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(ios_verification)
+
+
+class IOSVerificationPolicyTests(unittest.TestCase):
+    def test_network_selector_in_ordinary_unit_tier_is_rejected(self):
+        manifest = {
+            "version": 1,
+            "selectors": {
+                "network.sudachi": {
+                    "plan": "ZenbuSudachiIntegration",
+                    "test": "ZenbuJapaneseTests/JapaneseTextAnalysisTests/testNetwork",
+                    "traits": ["network", "large-resource"],
+                    "journeys": ["japanese-text-analysis-provider"],
+                }
+            },
+            "tiers": {"unit": ["network.sudachi"], "integration": []},
+            "capabilities": {},
+            "stages": {"issue-final": ["unit"]},
+        }
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ios_verification.PolicyError,
+                "network.sudachi.*network.*unit",
+            ):
+                ios_verification.load_and_validate_manifest(path)
+
+    def test_duplicate_maximum_size_journey_is_rejected_but_one_smoke_passes(self):
+        selector = {
+            "plan": "ZenbuAccessibility",
+            "traits": ["accessibility-maximum"],
+            "journeys": ["search-adaptive-layout"],
+        }
+        manifest = {
+            "version": 1,
+            "selectors": {
+                "accessibility.search.dark": {**selector, "test": "dark"},
+                "accessibility.search.light": {**selector, "test": "light"},
+            },
+            "tiers": {
+                "accessibility": [
+                    "accessibility.search.dark",
+                    "accessibility.search.light",
+                ]
+            },
+            "capabilities": {},
+            "stages": {"issue-final": ["accessibility"]},
+        }
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ios_verification.PolicyError,
+                "search-adaptive-layout.*maximum-size.*duplicate",
+            ):
+                ios_verification.load_and_validate_manifest(path)
+            manifest["tiers"]["accessibility"].pop()
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            ios_verification.load_and_validate_manifest(path)
+
+    def test_non_layout_capability_cannot_select_maximum_size_coverage(self):
+        manifest = {
+            "version": 1,
+            "selectors": {
+                "accessibility.search": {
+                    "plan": "ZenbuAccessibility",
+                    "test": "search",
+                    "traits": ["accessibility-maximum"],
+                    "journeys": ["search-layout"],
+                }
+            },
+            "tiers": {"accessibility": ["accessibility.search"]},
+            "capabilities": {
+                "lookup-runtime": {
+                    "paths": ["Lookup.swift"],
+                    "issue-final": ["accessibility.search"],
+                }
+            },
+            "stages": {"issue-final": ["accessibility"]},
+        }
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ios_verification.PolicyError,
+                "lookup-runtime.*maximum-size.*adaptive layout",
+            ):
+                ios_verification.load_and_validate_manifest(path)
+
+    def test_equivalent_normal_selectors_require_documented_independent_evidence(self):
+        manifest = {
+            "version": 1,
+            "selectors": {
+                "ui.one": {
+                    "plan": "ZenbuPR",
+                    "test": "UITests/testOne",
+                    "traits": ["ui"],
+                    "journeys": ["search"],
+                },
+                "ui.two": {
+                    "plan": "ZenbuPR",
+                    "test": "UITests/testTwo",
+                    "traits": ["ui"],
+                    "journeys": ["search"],
+                },
+            },
+            "tiers": {"ui": ["ui.one", "ui.two"]},
+            "capabilities": {
+                "search": {
+                    "paths": ["Search.swift"],
+                    "issue-final": ["ui.one", "ui.two"],
+                }
+            },
+            "stages": {"issue-final": ["ui"]},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ios_verification.PolicyError,
+                "ui.one.*ui.two.*duplicate journey search",
+            ):
+                ios_verification.load_and_validate_manifest(path)
+
+            manifest["intentional_same_stage_evidence"] = {
+                "ui.one|ui.two": "Independent light and dark appearance evidence."
+            }
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            ios_verification.load_and_validate_manifest(path)
+
+    def test_resolved_cross_capability_duplicates_require_nonempty_evidence(self):
+        manifest = {
+            "version": 1,
+            "selectors": {
+                "ui.one": {
+                    "plan": "ZenbuPR",
+                    "test": "UITests/testOne",
+                    "traits": ["ui"],
+                    "journeys": ["search"],
+                },
+                "ui.two": {
+                    "plan": "ZenbuPR",
+                    "test": "UITests/testTwo",
+                    "traits": ["ui"],
+                    "journeys": ["search"],
+                },
+            },
+            "tiers": {"ui": ["ui.one", "ui.two"]},
+            "capabilities": {
+                "one": {"paths": ["One.swift"], "issue-final": ["ui.one"]},
+                "two": {"paths": ["Two.swift"], "issue-final": ["ui.two"]},
+            },
+            "stages": {"issue-final": ["ui"]},
+        }
+        arguments = {
+            "changed_paths": ["One.swift", "Two.swift"],
+            "stage": "issue-final",
+            "event": "local",
+            "draft": True,
+            "source_sha": "candidate",
+        }
+        with self.assertRaisesRegex(
+            ios_verification.PolicyError,
+            "ui.one.*ui.two.*duplicate journey search.*resolved-candidate",
+        ):
+            ios_verification.resolve_plan(manifest, **arguments)
+
+        manifest["intentional_same_stage_evidence"] = {"ui.one|ui.two": ""}
+        with self.assertRaises(ios_verification.PolicyError):
+            ios_verification.resolve_plan(manifest, **arguments)
+
+        manifest["intentional_same_stage_evidence"][
+            "ui.one|ui.two"
+        ] = "Independent visual and semantic evidence."
+        plan = ios_verification.resolve_plan(manifest, **arguments)
+        self.assertEqual(plan["selectors"], ["ui.one", "ui.two"])
+
+    def test_complete_suite_outside_merge_manual_or_release_is_rejected(self):
+        manifest = {
+            "version": 1,
+            "selectors": {
+                "complete": {
+                    "plan": "ZenbuPR",
+                    "test": None,
+                    "traits": ["complete-suite"],
+                    "journeys": ["all-public-journeys"],
+                }
+            },
+            "tiers": {"complete": ["complete"]},
+            "capabilities": {},
+            "stages": {"issue-final": ["complete"]},
+        }
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ios_verification.PolicyError,
+                "complete-suite.*issue-final",
+            ):
+                ios_verification.load_and_validate_manifest(path)
+
+    def test_unknown_stage_tier_is_rejected_instead_of_dropping_a_partition(self):
+        manifest = {
+            "version": 1,
+            "selectors": {},
+            "tiers": {"unit": []},
+            "capabilities": {},
+            "stages": {"hosted-fast": ["unit", "uis"]},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ios_verification.PolicyError,
+                "hosted-fast.*unknown tier uis",
+            ):
+                ios_verification.load_and_validate_manifest(path)
+
+    def test_pull_request_lifecycle_defers_draft_and_runs_ready_exact_head(self):
+        manifest = {
+            "version": 1,
+            "selectors": {
+                "unit.all": {
+                    "plan": "ZenbuPR",
+                    "test": "ZenbuJapaneseTests",
+                    "traits": [],
+                    "journeys": ["unit-contracts"],
+                }
+            },
+            "tiers": {"unit": ["unit.all"]},
+            "capabilities": {
+                "ios": {
+                    "paths": ["apps/ios/**"],
+                    "hosted-fast": ["unit.all"],
+                }
+            },
+            "stages": {"hosted-fast": ["unit"]},
+        }
+
+        draft = ios_verification.resolve_plan(
+            manifest,
+            changed_paths=["apps/ios/App/App.swift"],
+            stage="hosted-fast",
+            event="synchronize",
+            draft=True,
+            source_sha="abc123",
+        )
+        ready = ios_verification.resolve_plan(
+            manifest,
+            changed_paths=["apps/ios/App/App.swift"],
+            stage="hosted-fast",
+            event="ready_for_review",
+            draft=False,
+            source_sha="abc123",
+        )
+
+        self.assertEqual(draft["cadence"], "deferred-draft")
+        self.assertEqual(draft["selectors"], [])
+        self.assertEqual(draft["source_sha"], "abc123")
+        self.assertEqual(ready["cadence"], "verify-current-head")
+        self.assertEqual(ready["selectors"], ["unit.all"])
+        self.assertEqual(ready["source_sha"], "abc123")
+
+    def test_every_pr_and_merge_queue_transition_has_one_deterministic_cadence(self):
+        cases = [
+            ("hosted-fast", "opened", True, "deferred-draft"),
+            ("hosted-fast", "synchronize", True, "deferred-draft"),
+            ("hosted-fast", "ready_for_review", False, "verify-current-head"),
+            ("hosted-fast", "synchronize", False, "verify-current-head"),
+            ("hosted-fast", "converted_to_draft", True, "deferred-draft"),
+            ("merge-candidate", "pull_request", False, "deferred-until-merge"),
+            ("merge-candidate", "merge_group", False, "verify-merge-candidate"),
+            ("performance", "schedule", False, "run-performance"),
+        ]
+        for stage, event, draft, expected in cases:
+            with self.subTest(stage=stage, event=event, draft=draft):
+                self.assertEqual(
+                    ios_verification.lifecycle_cadence(
+                        stage=stage, event=event, draft=draft
+                    ),
+                    expected,
+                )
+
+    def test_test_only_repair_stays_focused_while_shared_runtime_expands(self):
+        manifest = {
+            "version": 1,
+            "selectors": {
+                selector: {
+                    "plan": "ZenbuPR",
+                    "test": selector,
+                    "traits": [],
+                    "journeys": [selector],
+                }
+                for selector in ("ui.search", "unit.all", "ui.examples")
+            },
+            "tiers": {
+                "unit": ["unit.all"],
+                "ui": ["ui.search", "ui.examples"],
+            },
+            "capabilities": {
+                "search-test-repair": {
+                    "paths": ["apps/ios/AppUITests/SearchReadiness.swift"],
+                    "issue-final": ["ui.search"],
+                },
+                "shared-example-runtime": {
+                    "paths": ["apps/ios/Modules/Sources/SharedExamples/**"],
+                    "issue-final": ["unit.all", "ui.search", "ui.examples"],
+                },
+            },
+            "stages": {"issue-final": ["unit", "ui"]},
+        }
+
+        test_only = ios_verification.resolve_plan(
+            manifest,
+            changed_paths=["apps/ios/AppUITests/SearchReadiness.swift"],
+            stage="issue-final",
+            event="local",
+            draft=True,
+            source_sha="test-sha",
+        )
+        runtime = ios_verification.resolve_plan(
+            manifest,
+            changed_paths=["apps/ios/Modules/Sources/SharedExamples/Layout.swift"],
+            stage="issue-final",
+            event="local",
+            draft=True,
+            source_sha="runtime-sha",
+        )
+
+        self.assertEqual(test_only["selectors"], ["ui.search"])
+        self.assertEqual(runtime["selectors"], ["unit.all", "ui.search", "ui.examples"])
+
+    def test_reused_products_with_wrong_source_fingerprint_fail_closed(self):
+        marker = {
+            "source_fingerprint": "old-source",
+            "build_fingerprint": "old-build",
+        }
+        expected = {
+            "source_fingerprint": "current-source",
+            "build_fingerprint": "current-build",
+        }
+
+        with self.assertRaisesRegex(
+            ios_verification.ProductFingerprintError,
+            "source_fingerprint.*old-source.*current-source",
+        ):
+            ios_verification.require_matching_build_products(marker, expected)
+        ios_verification.require_matching_build_products(expected, expected)
+
+    def test_build_fingerprint_includes_configuration_and_sanitizer_arguments(self):
+        debug = ios_verification.build_fingerprint(
+            source="source",
+            plan="ZenbuPR",
+            device_type="phone",
+            xcode_version="Xcode 26",
+            build_arguments=["-configuration", "Debug"],
+        )
+        release = ios_verification.build_fingerprint(
+            source="source",
+            plan="ZenbuPR",
+            device_type="phone",
+            xcode_version="Xcode 26",
+            build_arguments=["-configuration", "Release"],
+        )
+        sanitized = ios_verification.build_fingerprint(
+            source="source",
+            plan="ZenbuPR",
+            device_type="phone",
+            xcode_version="Xcode 26",
+            build_arguments=[
+                "-configuration",
+                "Debug",
+                "-enableAddressSanitizer",
+                "YES",
+            ],
+        )
+
+        self.assertEqual(len({debug, release, sanitized}), 3)
+
+        first_selector = ios_verification.build_fingerprint(
+            source="source",
+            plan="ZenbuPR",
+            device_type="phone",
+            xcode_version="Xcode 26",
+            build_arguments=["-only-testing:UITests/testOne"],
+        )
+        second_selector = ios_verification.build_fingerprint(
+            source="source",
+            plan="ZenbuPR",
+            device_type="phone",
+            xcode_version="Xcode 26",
+            build_arguments=["-only-testing:UITests/testTwo"],
+        )
+        self.assertEqual(first_selector, second_selector)
+
+    def test_simulator_lease_excludes_concurrency_and_recovers_dead_owner(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lock = Path(directory) / "simulator.lease"
+            first = ios_verification.SimulatorLease.acquire(lock, owner="agent-one")
+            with self.assertRaisesRegex(
+                ios_verification.SimulatorLeaseUnavailable,
+                "agent-one",
+            ):
+                ios_verification.SimulatorLease.acquire(lock, owner="agent-two")
+            first.release()
+
+            lock.write_text(
+                json.dumps({"owner": "dead-agent", "pid": 999_999_999}),
+                encoding="utf-8",
+            )
+            recovered = ios_verification.SimulatorLease.acquire(lock, owner="agent-two")
+            self.assertEqual(recovered.owner, "agent-two")
+            recovered.release()
+            self.assertFalse(lock.exists())
+
+            lock.write_text('{"owner":"missing pid"}', encoding="utf-8")
+            with self.assertRaisesRegex(
+                ios_verification.SimulatorLeaseUnavailable,
+                "unreadable owner",
+            ):
+                ios_verification.SimulatorLease.acquire(lock, owner="agent-three")
+
+    def test_only_zero_test_infrastructure_failure_is_rerun_eligible(self):
+        infrastructure = ios_verification.classify_failure(
+            tests_started=0,
+            failure_category="simulator-unavailable",
+        )
+        assertion = ios_verification.classify_failure(
+            tests_started=9,
+            failure_category="product-assertion",
+        )
+        pretest_assertion = ios_verification.classify_failure(
+            tests_started=0,
+            failure_category="product-assertion",
+        )
+
+        self.assertEqual(
+            infrastructure,
+            {"classification": "infrastructure-zero-test", "rerun_eligible": True},
+        )
+        self.assertFalse(assertion["rerun_eligible"])
+        self.assertFalse(pretest_assertion["rerun_eligible"])
+
+    def test_runner_classifies_only_proven_zero_test_infrastructure_as_rerunnable(self):
+        infrastructure = ios_verification.classify_test_evidence(
+            tests_started=0,
+            test_status=70,
+            log_text="Unable to find a destination matching the provided specifier",
+        )
+        unknown = ios_verification.classify_test_evidence(
+            tests_started=0,
+            test_status=1,
+            log_text="unexpected runner output",
+        )
+        assertion = ios_verification.classify_test_evidence(
+            tests_started=1,
+            test_status=1,
+            log_text="Unable to find a destination matching after assertion",
+        )
+        self.assertTrue(infrastructure["rerun_eligible"])
+        self.assertEqual(unknown["classification"], "unclassified-zero-test")
+        self.assertFalse(unknown["rerun_eligible"])
+        self.assertFalse(assertion["rerun_eligible"])
+        empty_success = ios_verification.classify_test_evidence(
+            tests_started=0,
+            test_status=0,
+            log_text="Testing started",
+        )
+        self.assertEqual(empty_success["classification"], "zero-test-success")
+        self.assertFalse(empty_success["rerun_eligible"])
+
+    def test_execution_summary_binds_timing_and_result_identity(self):
+        summary = ios_verification.execution_summary(
+            source_sha="abcdef123456",
+            source_fingerprint="source-fp",
+            build_fingerprint="build-fp",
+            plan="ZenbuPR",
+            selectors=["ui.search"],
+            os_version="iOS 26.5",
+            xcode_version="Xcode 26.5",
+            attempt=2,
+            setup_seconds=4.0,
+            build_seconds=10.0,
+            test_seconds=3.5,
+        )
+
+        self.assertEqual(summary["durations_seconds"]["total"], 17.5)
+        self.assertEqual(summary["source_sha"], "abcdef123456")
+        self.assertEqual(summary["selectors"], ["ui.search"])
+        self.assertEqual(
+            summary["result_identity"],
+            "ZenbuPR-abcdef123456-ui.search-iOS_26.5-Xcode_26.5-attempt-2",
+        )
+
+    def test_required_journey_disappearing_from_every_tier_is_rejected(self):
+        manifest = {
+            "version": 1,
+            "required_journeys": ["search", "handwriting"],
+            "selectors": {
+                "ui.search": {
+                    "plan": "ZenbuPR",
+                    "test": "search",
+                    "traits": [],
+                    "journeys": ["search"],
+                }
+            },
+            "tiers": {"ui": ["ui.search"]},
+            "capabilities": {},
+            "stages": {"hosted-fast": ["ui"]},
+        }
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ios_verification.PolicyError,
+                "handwriting.*no verification tier",
+            ):
+                ios_verification.load_and_validate_manifest(path)
+
+    def test_required_gate_rejects_results_from_an_older_sha(self):
+        with self.assertRaisesRegex(
+            ios_verification.VerifiedSHAError,
+            "older-sha.*current-sha",
+        ):
+            ios_verification.require_verified_sha(
+                current_sha="current-sha",
+                partition_shas=["current-sha", "older-sha"],
+            )
+        ios_verification.require_verified_sha(
+            current_sha="current-sha",
+            partition_shas=["current-sha", "current-sha"],
+        )
+
+    def test_unclassified_ios_path_expands_instead_of_silently_skipping(self):
+        manifest = {
+            "version": 1,
+            "selectors": {
+                "unit.all": {
+                    "plan": "ZenbuPR",
+                    "test": "ZenbuJapaneseTests",
+                    "traits": [],
+                    "journeys": ["unit-contracts"],
+                }
+            },
+            "tiers": {"unit": ["unit.all"]},
+            "capabilities": {},
+            "stages": {"hosted-fast": ["unit"]},
+            "relevant_paths": ["apps/ios/**"],
+            "unclassified_fallback": {"hosted-fast": ["unit.all"]},
+        }
+
+        plan = ios_verification.resolve_plan(
+            manifest,
+            changed_paths=["apps/ios/NewArea/Unknown.swift"],
+            stage="hosted-fast",
+            event="synchronize",
+            draft=False,
+            source_sha="current",
+        )
+
+        self.assertEqual(plan["selectors"], ["unit.all"])
+        self.assertEqual(
+            plan["selection_reasons"][0]["capability"],
+            "unclassified-ios-fallback",
+        )
+
+    def test_merge_candidate_output_includes_explicit_complete_selector(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "github-output"
+            manifest = Path(__file__).parents[2] / "VerificationPolicy.json"
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(
+                    ios_verification.main(
+                        [
+                            "--manifest",
+                            str(manifest),
+                            "plan",
+                            "--stage",
+                            "merge-candidate",
+                            "--event",
+                            "merge_group",
+                            "--draft",
+                            "false",
+                            "--source-sha",
+                            "merge-sha",
+                            "--capability",
+                            "full-merge",
+                            "--github-output",
+                            str(output),
+                        ]
+                    ),
+                    0,
+                )
+            values = dict(
+                line.split("=", 1)
+                for line in output.read_text(encoding="utf-8").splitlines()
+            )
+            self.assertEqual(values["complete_selectors"], '["complete.public"]')
+
+    def test_target_selector_must_be_nonempty_in_its_declared_plan(self):
+        repo_root = Path(__file__).parents[4]
+        manifest = ios_verification.load_and_validate_manifest(
+            repo_root / "apps/ios/VerificationPolicy.json"
+        )
+        manifest["selectors"]["unit.complete"]["plan"] = "ZenbuAccessibility"
+
+        with self.assertRaisesRegex(
+            ios_verification.PolicyError,
+            "unit.complete.*ZenbuJapaneseTests.*ZenbuAccessibility.*does not include",
+        ):
+            ios_verification.validate_repository_contracts(manifest, repo_root)
+
+    def test_manual_or_performance_membership_cannot_replace_correctness_coverage(self):
+        inventory = {
+            "tests": ["UITests/JourneyTests/testSearch"],
+            "plans": {
+                "ZenbuPR": {"included_tests": []},
+                "ZenbuNightly": {"included_tests": ["UITests/JourneyTests/testSearch"]},
+            },
+        }
+        with self.assertRaisesRegex(
+            ios_verification.PolicyError,
+            "correctness plan.*testSearch",
+        ):
+            ios_verification.require_correctness_coverage(
+                inventory,
+                correctness_plans=["ZenbuPR"],
+                exact_exclusions=set(),
+            )
+
+
+if __name__ == "__main__":
+    unittest.main()

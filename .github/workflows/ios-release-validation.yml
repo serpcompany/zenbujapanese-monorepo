@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+env:
+  ZENBU_POLICY_AUTHORIZED: true
+  ZENBU_VERIFICATION_STAGE: release
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false

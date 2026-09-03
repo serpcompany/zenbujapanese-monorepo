@@ -2084,9 +2084,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     searchField.tap()
     searchField.typeText("think")
 
+    XCTAssertEqual(waitForStableSearchOutcome(in: app), .results)
     let resultSurface = app.descendants(matching: .any)["search.results"]
-    XCTAssertTrue(resultSurface.waitForExistence(timeout: 3))
-    XCTAssertTrue(app.staticTexts["Best Matches"].waitForExistence(timeout: 3))
+    XCTAssertTrue(resultSurface.exists)
+    XCTAssertTrue(app.staticTexts["Best Matches"].exists)
     let bestMatches = app.buttons.matching(NSPredicate(format: "value BEGINSWITH %@", "Best match"))
     XCTAssertEqual(bestMatches.count, 1)
     XCTAssertTrue(bestMatches.element(boundBy: 0).label.contains("がる"))
@@ -4723,6 +4724,56 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     searchField.tap()
     searchField.typeText(query)
     app.keyboards.buttons["Search"].tap()
+  }
+
+  private enum StableSearchOutcome: Equatable {
+    case results
+    case noMatches
+    case unavailable
+  }
+
+  @MainActor
+  private func waitForStableSearchOutcome(
+    in app: XCUIApplication,
+    timeout: TimeInterval = 10,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) -> StableSearchOutcome? {
+    let bestMatches = app.staticTexts["Best Matches"]
+    let noMatches = app.staticTexts["No Dictionary Matches"]
+    let unavailable = app.staticTexts["Dictionary unavailable"]
+    let startedAt = Date()
+    let terminalState = XCTNSPredicateExpectation(
+      predicate: NSPredicate { _, _ in
+        bestMatches.exists || noMatches.exists || unavailable.exists
+      },
+      object: app
+    )
+    let result = XCTWaiter.wait(for: [terminalState], timeout: timeout)
+    let latency = Date().timeIntervalSince(startedAt)
+    XCTContext.runActivity(
+      named: String(
+        format: "Search reached a stable learner-visible state in %.3f seconds", latency)
+    ) { activity in
+      activity.add(
+        XCTAttachment(
+          string: String(
+            format: "readiness_seconds=%.3f timeout_seconds=%.3f", latency, timeout
+          )
+        )
+      )
+    }
+    guard result == .completed else {
+      XCTFail(
+        "Search did not reach results, no matches, or unavailable within \(timeout) seconds",
+        file: file,
+        line: line
+      )
+      return nil
+    }
+    if bestMatches.exists { return .results }
+    if noMatches.exists { return .noMatches }
+    return .unavailable
   }
 
   @MainActor

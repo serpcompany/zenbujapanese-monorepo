@@ -1,0 +1,404 @@
+{
+  "version": 1,
+  "required_journeys": [
+    "accessibility-adaptive-layout",
+    "conjugations",
+    "example-sentences",
+    "handwriting",
+    "image-text",
+    "japanese-text-analysis-provider",
+    "kanji-detail",
+    "radical-input",
+    "recent-searches",
+    "search-input",
+    "search-ranking",
+    "shell-navigation",
+    "word-detail"
+  ],
+  "hil_exclusions": {
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow": "Physical Photos picker selection is retained in the separately recorded system HIL journey.",
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech": "Live Japanese voice completion is retained in the separately recorded physical speech HIL journey."
+  },
+  "non_correctness_exclusions": {
+    "ZenbuJapaneseTests/ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus": "This benchmark belongs to the performance trend and is not a functional correctness journey."
+  },
+  "correctness_plans": ["ZenbuPR", "ZenbuSudachiIntegration"],
+  "selectors": {
+    "contracts.repository": {
+      "plan": null,
+      "test": null,
+      "traits": ["static"],
+      "journeys": ["verification-policy"]
+    },
+    "unit.complete": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseTests",
+      "traits": ["deterministic"],
+      "journeys": ["unit-contracts"]
+    },
+    "unit.japanese-text-analysis": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseTests/JapaneseTextAnalysisTests/testProviderDictionaryFormsResolveInflectedVerbsWithoutNounOrIteLinks",
+      "traits": ["deterministic"],
+      "journeys": ["japanese-text-analysis-provider"]
+    },
+    "ui.shell": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBottomNavigationContainsOnlyReleaseDestinationsAndRestoresSearch",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["shell-navigation"]
+    },
+    "ui.search-input": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSearchInputModesUseNativeSelectionAndCandidateSubmissionControls",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["search-input", "handwriting", "radical-input"]
+    },
+    "ui.search-ranking": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["search-ranking"]
+    },
+    "ui.recent-search": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testNewestRecentSearchRerunsItsResultSet",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["recent-searches"]
+    },
+    "ui.image-text": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["image-text"]
+    },
+    "ui.kanji": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["kanji-detail"]
+    },
+    "ui.word-detail": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["word-detail"]
+    },
+    "ui.examples": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["example-sentences"]
+    },
+    "ui.conjugations": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["conjugations"]
+    },
+    "accessibility.image-actions": {
+      "plan": "ZenbuAccessibility",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightImageSourceActionsHaveReadableSystemContrast",
+      "traits": ["accessibility", "normal-dynamic-type"],
+      "journeys": ["image-text-accessibility"]
+    },
+    "accessibility.search-layout": {
+      "plan": "ZenbuAccessibility",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightLoadingAndFailureRemainUsableAtLargestAccessibilityTextSize",
+      "traits": ["accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-adaptive-layout"]
+    },
+    "integration.sudachi": {
+      "plan": "ZenbuSudachiIntegration",
+      "test": null,
+      "traits": ["network", "large-resource", "integration"],
+      "journeys": ["japanese-text-analysis-provider"]
+    },
+    "performance.search": {
+      "plan": "ZenbuPerformance",
+      "test": null,
+      "traits": ["performance"],
+      "journeys": ["search-performance"]
+    },
+    "complete.public": {
+      "plan": "ZenbuPR",
+      "test": null,
+      "traits": ["complete-suite"],
+      "journeys": [
+        "accessibility-adaptive-layout",
+        "conjugations",
+        "example-sentences",
+        "handwriting",
+        "image-text",
+        "kanji-detail",
+        "radical-input",
+        "recent-searches",
+        "search-input",
+        "search-ranking",
+        "shell-navigation",
+        "word-detail"
+      ]
+    }
+  },
+  "tiers": {
+    "contracts": ["contracts.repository"],
+    "unit": ["unit.complete", "unit.japanese-text-analysis"],
+    "ui": [
+      "ui.shell",
+      "ui.search-input",
+      "ui.search-ranking",
+      "ui.recent-search",
+      "ui.image-text",
+      "ui.kanji",
+      "ui.word-detail",
+      "ui.examples",
+      "ui.conjugations"
+    ],
+    "accessibility": [
+      "accessibility.image-actions",
+      "accessibility.search-layout"
+    ],
+    "integration": ["integration.sudachi"],
+    "performance": ["performance.search"],
+    "complete": ["complete.public"]
+  },
+  "stages": {
+    "tdd": ["unit", "ui"],
+    "issue-final": ["contracts", "unit", "ui", "accessibility", "integration"],
+    "hosted-fast": ["contracts", "unit", "ui", "accessibility"],
+    "merge-candidate": ["contracts", "complete", "integration"],
+    "manual": ["contracts", "complete", "integration"],
+    "release": ["contracts", "complete", "integration"],
+    "performance": ["performance"]
+  },
+  "required_stage_selectors": {
+    "hosted-fast": ["contracts.repository"]
+  },
+  "relevant_paths": [
+    "apps/ios/**",
+    ".github/workflows/ios-*.yml",
+    "docs/clone-discovery/nihongo/fixtures/image-text/**",
+    "docs/research/fixtures/example-sentence-retrieval-*",
+    "docs/research/tatoeba-nihongo-sample-2026-08-14.tsv"
+  ],
+  "unclassified_fallback": {
+    "issue-final": [
+      "contracts.repository",
+      "unit.complete",
+      "ui.shell",
+      "ui.search-input",
+      "ui.search-ranking",
+      "ui.recent-search",
+      "ui.image-text",
+      "ui.kanji",
+      "ui.word-detail",
+      "ui.examples",
+      "ui.conjugations",
+      "accessibility.image-actions",
+      "accessibility.search-layout"
+    ],
+    "hosted-fast": [
+      "contracts.repository",
+      "unit.complete",
+      "ui.shell",
+      "ui.search-input",
+      "ui.search-ranking",
+      "ui.recent-search",
+      "ui.image-text",
+      "ui.kanji",
+      "ui.word-detail",
+      "ui.examples",
+      "ui.conjugations",
+      "accessibility.image-actions",
+      "accessibility.search-layout"
+    ]
+  },
+  "capabilities": {
+    "full-fast": {
+      "paths": [],
+      "adaptive_layout": true,
+      "hosted-fast": [
+        "contracts.repository",
+        "unit.complete",
+        "ui.shell",
+        "ui.search-input",
+        "ui.search-ranking",
+        "ui.recent-search",
+        "ui.image-text",
+        "ui.kanji",
+        "ui.word-detail",
+        "ui.examples",
+        "ui.conjugations",
+        "accessibility.image-actions",
+        "accessibility.search-layout"
+      ]
+    },
+    "full-merge": {
+      "paths": [],
+      "merge-candidate": [
+        "contracts.repository",
+        "complete.public",
+        "integration.sudachi"
+      ],
+      "manual": [
+        "contracts.repository",
+        "complete.public",
+        "integration.sudachi"
+      ],
+      "release": [
+        "contracts.repository",
+        "complete.public",
+        "integration.sudachi"
+      ]
+    },
+    "full-performance": {
+      "paths": [],
+      "performance": ["performance.search"]
+    },
+    "verification-workflow": {
+      "paths": [
+        ".github/workflows/ios-*.yml",
+        "apps/ios/CI.md",
+        "apps/ios/Tools/ios_ci_scope.py",
+        "apps/ios/Tools/ios_verification.py",
+        "apps/ios/Tools/run_ci_test_plan.sh",
+        "apps/ios/Tools/run_issue_verification.sh",
+        "apps/ios/Tools/run_selected_test_plan.sh",
+        "apps/ios/Tools/run_sudachi_integration.sh",
+        "apps/ios/Tools/Tests/test_ios_*.py",
+        "apps/ios/VerificationPolicy.json"
+      ],
+      "issue-final": ["contracts.repository"],
+      "hosted-fast": ["contracts.repository"]
+    },
+    "app-shell": {
+      "paths": [
+        "apps/ios/App/**",
+        "apps/ios/Modules/Sources/SearchExperience/*RootView.swift",
+        "apps/ios/Modules/Sources/SearchExperience/MoreAndMediaLibraryView.swift"
+      ],
+      "tdd": ["ui.shell"],
+      "issue-final": ["unit.complete", "ui.shell"],
+      "hosted-fast": ["unit.complete", "ui.shell"]
+    },
+    "search-input": {
+      "paths": [
+        "apps/ios/Modules/Sources/SearchExperience/*Input*.swift",
+        "apps/ios/Modules/Sources/SearchExperience/Radical*.swift",
+        "apps/ios/Modules/Sources/SearchExperience/Handwriting*.swift"
+      ],
+      "tdd": ["ui.search-input"],
+      "issue-final": ["unit.complete", "ui.search-input"],
+      "hosted-fast": ["unit.complete", "ui.search-input"]
+    },
+    "search-presentation": {
+      "paths": ["apps/ios/Modules/Sources/SearchExperience/SearchView.swift"],
+      "adaptive_layout": true,
+      "tdd": ["ui.search-ranking"],
+      "issue-final": [
+        "unit.complete",
+        "ui.search-ranking",
+        "accessibility.search-layout"
+      ],
+      "hosted-fast": [
+        "unit.complete",
+        "ui.search-ranking",
+        "accessibility.search-layout"
+      ]
+    },
+    "lookup-runtime": {
+      "paths": [
+        "apps/ios/Modules/Sources/SearchExperience/LookupClient*.swift",
+        "apps/ios/LanguageData/**"
+      ],
+      "tdd": ["ui.search-ranking"],
+      "issue-final": ["unit.complete", "ui.search-ranking"],
+      "hosted-fast": ["unit.complete", "ui.search-ranking"]
+    },
+    "recent-searches": {
+      "paths": [
+        "apps/ios/Modules/Sources/SearchExperience/RecentSearch*.swift"
+      ],
+      "tdd": ["ui.recent-search"],
+      "issue-final": ["unit.complete", "ui.recent-search"],
+      "hosted-fast": ["unit.complete", "ui.recent-search"]
+    },
+    "image-text": {
+      "paths": [
+        "apps/ios/Modules/Sources/SearchExperience/Image*.swift",
+        "docs/clone-discovery/nihongo/fixtures/image-text/**"
+      ],
+      "tdd": ["ui.image-text"],
+      "issue-final": [
+        "unit.complete",
+        "ui.image-text",
+        "accessibility.image-actions"
+      ],
+      "hosted-fast": [
+        "unit.complete",
+        "ui.image-text",
+        "accessibility.image-actions"
+      ]
+    },
+    "kanji": {
+      "paths": ["apps/ios/Modules/Sources/SearchExperience/Kanji*.swift"],
+      "tdd": ["ui.kanji"],
+      "issue-final": ["unit.complete", "ui.kanji"],
+      "hosted-fast": ["unit.complete", "ui.kanji"]
+    },
+    "word-detail": {
+      "paths": [
+        "apps/ios/Modules/Sources/SearchExperience/WordDetail*.swift",
+        "apps/ios/Modules/Sources/SearchExperience/EncounterMedia*.swift"
+      ],
+      "tdd": ["ui.word-detail"],
+      "issue-final": ["unit.complete", "ui.word-detail"],
+      "hosted-fast": ["unit.complete", "ui.word-detail"]
+    },
+    "example-sentences": {
+      "paths": [
+        "apps/ios/Modules/Sources/SearchExperience/*Example*.swift",
+        "apps/ios/Modules/Sources/SearchExperience/LinkedJapaneseText.swift",
+        "apps/ios/Modules/Sources/SearchExperience/JapaneseRubyText.swift"
+      ],
+      "tdd": ["ui.examples"],
+      "issue-final": ["unit.complete", "ui.examples"],
+      "hosted-fast": ["unit.complete", "ui.examples"]
+    },
+    "conjugations": {
+      "paths": [
+        "apps/ios/Modules/Sources/SearchExperience/*Conjugation*.swift"
+      ],
+      "tdd": ["ui.conjugations"],
+      "issue-final": ["unit.complete", "ui.conjugations"],
+      "hosted-fast": ["unit.complete", "ui.conjugations"]
+    },
+    "japanese-text-analysis": {
+      "paths": [
+        "apps/ios/Modules/Sources/SearchExperience/JapaneseTextAnalysis*.swift",
+        "apps/ios/Modules/Sources/SearchExperience/LanguageTechnology*.swift",
+        "apps/ios/Modules/Tests/SearchExperienceTests/JapaneseTextAnalysis*.swift",
+        "apps/ios/Modules/Tests/SearchExperienceTests/LanguageTechnology*.swift"
+      ],
+      "tdd": ["unit.japanese-text-analysis"],
+      "issue-final": [
+        "unit.complete",
+        "ui.image-text",
+        "ui.examples",
+        "integration.sudachi"
+      ],
+      "hosted-fast": ["unit.complete", "ui.image-text", "ui.examples"],
+      "merge-candidate": ["integration.sudachi"],
+      "release": ["integration.sudachi"]
+    },
+    "search-readiness-test-repair": {
+      "paths": [],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift"
+      ],
+      "tdd": ["ui.search-ranking"],
+      "issue-final": ["ui.search-ranking"],
+      "hosted-fast": ["ui.search-ranking"]
+    }
+  }
+}

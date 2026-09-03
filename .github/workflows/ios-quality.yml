@@ -3,6 +3,7 @@ name: iOS fast quality
 on:
   pull_request:
     branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
   workflow_dispatch:
     inputs:
       prove_failure:
@@ -14,18 +15,29 @@ on:
 permissions:
   contents: read
 
+env:
+  ZENBU_POLICY_AUTHORIZED: true
+  ZENBU_VERIFICATION_STAGE: hosted-fast
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 jobs:
   scope:
-    name: ios-fast / Scope
+    name: ios-fast / Scope and policy
     runs-on: ubuntu-24.04
     outputs:
       ios_changed: ${{ steps.scope.outputs.ios_changed }}
+      cadence: ${{ steps.plan.outputs.cadence }}
+      source_sha: ${{ steps.plan.outputs.source_sha }}
+      run_expensive: ${{ steps.plan.outputs.run_expensive }}
+      contracts_selectors: ${{ steps.plan.outputs.contracts_selectors }}
+      unit_selectors: ${{ steps.plan.outputs.unit_selectors }}
+      ui_selectors: ${{ steps.plan.outputs.ui_selectors }}
+      accessibility_selectors: ${{ steps.plan.outputs.accessibility_selectors }}
     steps:
-      - name: Check out enough history to classify the change
+      - name: Check out enough history to classify the exact change
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           fetch-depth: 0
@@ -35,7 +47,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           FORCE_IOS: ${{ github.event_name == 'workflow_dispatch' }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
           python3 apps/ios/Tools/ios_ci_scope.py \
@@ -44,187 +56,181 @@ jobs:
             --force "$FORCE_IOS" \
             --github-output "$GITHUB_OUTPUT"
 
+      - name: Validate repository-owned verification policy
+        run: python3 apps/ios/Tools/ios_verification.py validate
+
+      - name: Resolve exact candidate verification plan
+        id: plan
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          IS_DRAFT: ${{ github.event.pull_request.draft || false }}
+          PR_ACTION: ${{ github.event.action || 'workflow_dispatch' }}
+        run: |
+          set -euo pipefail
+          args=(
+            --stage hosted-fast
+            --event "$PR_ACTION"
+            --draft "$IS_DRAFT"
+            --source-sha "$HEAD_SHA"
+            --github-output "$GITHUB_OUTPUT"
+          )
+          if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
+            args+=(--base "$BASE_SHA" --head "$HEAD_SHA")
+          else
+            args+=(--capability full-fast)
+          fi
+          python3 apps/ios/Tools/ios_verification.py plan "${args[@]}"
+
   repo-contracts:
     name: ios-fast / Repository contracts
     needs: scope
-    if: ${{ needs.scope.outputs.ios_changed == 'true' }}
+    if: ${{ needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.contracts_selectors != '[]' && !inputs.prove_failure }}
     runs-on: macos-26
     timeout-minutes: 30
+    outputs:
+      tested_sha: ${{ steps.identity.outputs.tested_sha }}
     steps:
       - name: Check out exact source and LFS data
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           fetch-depth: 0
           lfs: true
-
+          ref: ${{ needs.scope.outputs.source_sha }}
       - name: Install audit tooling
         run: |
           brew install actionlint ripgrep
           gem install sqlite3 --version 2.9.6 --platform ruby --no-document -- \
             --enable-system-libraries
           ruby -e 'require "sqlite3"; abort "FTS4 unavailable" unless SQLite3::Database.new(":memory:").execute("PRAGMA compile_options").flatten.include?("ENABLE_FTS4")'
-
-      - name: Verify workflow and test-plan contracts
+      - name: Verify repository contracts
         run: |
           set -euo pipefail
           actionlint
-          for plan in apps/ios/TestPlans/*.xctestplan; do
-            jq empty "$plan"
-          done
+          for plan in apps/ios/TestPlans/*.xctestplan; do jq empty "$plan"; done
           xmllint --noout apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme
           rg -q 'ZenbuPR.xctestplan' apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme
-          python3 -m unittest apps/ios/Tools/Tests/test_ios_ci_scope.py
-
-      - name: Run importer and validator tests
-        run: python3 -m unittest discover apps/ios/Tools/Tests -p 'test_*.py'
-
-      - name: Run release-audit harness
-        run: bash apps/ios/Tools/Tests/audit-release-privacy.test.sh
-
-      - name: Run source privacy and bundled-data audit
-        run: bash apps/ios/Tools/audit_release_privacy.sh source
-
-      - name: Prove required-check failure path
-        if: ${{ inputs.prove_failure }}
-        run: exit 1
+          python3 -m unittest discover apps/ios/Tools/Tests -p 'test_*.py'
+          bash apps/ios/Tools/Tests/audit-release-privacy.test.sh
+          bash apps/ios/Tools/audit_release_privacy.sh source
+      - name: Bind contracts to exact SHA
+        id: identity
+        run: echo "tested_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   ios-unit:
     name: ios-fast / Unit
     needs: scope
-    if: ${{ needs.scope.outputs.ios_changed == 'true' && !inputs.prove_failure }}
+    if: ${{ needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.unit_selectors != '[]' && !inputs.prove_failure }}
     runs-on: macos-26
     timeout-minutes: 30
+    outputs:
+      tested_sha: ${{ steps.identity.outputs.tested_sha }}
     steps:
       - name: Check out exact source and LFS data
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          fetch-depth: 0
-          lfs: true
-
+          {
+            fetch-depth: 0,
+            lfs: true,
+            ref: '${{ needs.scope.outputs.source_sha }}',
+          }
       - name: Select pinned Xcode
-        run: |
-          sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
-          xcodebuild -version
-
-      - name: Run the complete unit target
-        run: |
-          apps/ios/Tools/run_ci_test_plan.sh \
-            ZenbuPR \
-            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
-            "$RUNNER_TEMP/ZenbuFast-Unit.xcresult" \
-            -only-testing:ZenbuJapaneseTests
-
+        run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+      - name: Run selected unit coverage
+        run: apps/ios/Tools/run_selected_test_plan.sh ZenbuPR com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max "$RUNNER_TEMP/ZenbuFast-Unit.xcresult" '${{ needs.scope.outputs.unit_selectors }}' '${{ needs.scope.outputs.source_sha }}'
+      - name: Bind unit result to exact SHA
+        id: identity
+        run: echo "tested_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Package test evidence
         if: always()
-        run: |
-          if [[ -d "$RUNNER_TEMP/ZenbuFast-Unit.xcresult" ]]; then
-            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuFast-Unit.xcresult" "$RUNNER_TEMP/ZenbuFast-Unit.xcresult.zip"
-          fi
-
+        run: if [[ -d "$RUNNER_TEMP/ZenbuFast-Unit.xcresult" ]]; then ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuFast-Unit.xcresult" "$RUNNER_TEMP/ZenbuFast-Unit.xcresult.zip"; fi
       - name: Retain test evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ZenbuFast-Unit-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ZenbuFast-Unit.xcresult.zip
+          name: ZenbuFast-Unit-${{ needs.scope.outputs.source_sha }}-Xcode-26.5-iOS-26-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/ZenbuFast-Unit.xcresult.zip
+            ${{ runner.temp }}/ZenbuFast-Unit.xcresult.timing.json
+            ${{ runner.temp }}/ZenbuFast-Unit.xcresult.xcodebuild.log
           if-no-files-found: warn
           retention-days: 30
 
   ios-ui:
     name: ios-fast / Critical UI
     needs: scope
-    if: ${{ needs.scope.outputs.ios_changed == 'true' && !inputs.prove_failure }}
+    if: ${{ needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.ui_selectors != '[]' && !inputs.prove_failure }}
     runs-on: macos-26
     timeout-minutes: 30
+    outputs:
+      tested_sha: ${{ steps.identity.outputs.tested_sha }}
     steps:
       - name: Check out exact source and LFS data
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          fetch-depth: 0
-          lfs: true
-
+          {
+            fetch-depth: 0,
+            lfs: true,
+            ref: '${{ needs.scope.outputs.source_sha }}',
+          }
       - name: Select pinned Xcode
-        run: |
-          sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
-          xcodebuild -version
-
-      - name: Run the bounded critical-journey set
-        run: |
-          apps/ios/Tools/run_ci_test_plan.sh \
-            ZenbuPR \
-            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
-            "$RUNNER_TEMP/ZenbuFast-UI.xcresult" \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToMore \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBottomNavigationContainsOnlyReleaseDestinationsAndRestoresSearch \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCameraUnavailableOnSimulatorReportsHardwareBoundary \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testNewestRecentSearchRerunsItsResultSet \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed \
-            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail
-
+        run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+      - name: Run selected critical journeys
+        run: apps/ios/Tools/run_selected_test_plan.sh ZenbuPR com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max "$RUNNER_TEMP/ZenbuFast-UI.xcresult" '${{ needs.scope.outputs.ui_selectors }}' '${{ needs.scope.outputs.source_sha }}'
+      - name: Bind UI result to exact SHA
+        id: identity
+        run: echo "tested_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Package test evidence
         if: always()
-        run: |
-          if [[ -d "$RUNNER_TEMP/ZenbuFast-UI.xcresult" ]]; then
-            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuFast-UI.xcresult" "$RUNNER_TEMP/ZenbuFast-UI.xcresult.zip"
-          fi
-
+        run: if [[ -d "$RUNNER_TEMP/ZenbuFast-UI.xcresult" ]]; then ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuFast-UI.xcresult" "$RUNNER_TEMP/ZenbuFast-UI.xcresult.zip"; fi
       - name: Retain test evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ZenbuFast-UI-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ZenbuFast-UI.xcresult.zip
+          name: ZenbuFast-UI-${{ needs.scope.outputs.source_sha }}-Xcode-26.5-iOS-26-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/ZenbuFast-UI.xcresult.zip
+            ${{ runner.temp }}/ZenbuFast-UI.xcresult.timing.json
+            ${{ runner.temp }}/ZenbuFast-UI.xcresult.xcodebuild.log
           if-no-files-found: warn
           retention-days: 30
 
   ios-accessibility:
     name: ios-fast / Accessibility smoke
     needs: scope
-    if: ${{ needs.scope.outputs.ios_changed == 'true' && !inputs.prove_failure }}
+    if: ${{ needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.accessibility_selectors != '[]' && !inputs.prove_failure }}
     runs-on: macos-26
     timeout-minutes: 20
+    outputs:
+      tested_sha: ${{ steps.identity.outputs.tested_sha }}
     steps:
       - name: Check out exact source and LFS data
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          fetch-depth: 0
-          lfs: true
-
+          {
+            fetch-depth: 0,
+            lfs: true,
+            ref: '${{ needs.scope.outputs.source_sha }}',
+          }
       - name: Select pinned Xcode
-        run: |
-          sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
-          xcodebuild -version
-
-      - name: Run focused accessibility coverage
-        run: |
-          apps/ios/Tools/run_ci_test_plan.sh \
-            ZenbuAccessibility \
-            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
-            "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult" \
-            -only-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightImageSourceActionsHaveReadableSystemContrast \
-            -only-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightRecentSearchDeleteActionHasReadableSystemContrast \
-            -only-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkRecentSearchDeleteActionHasReadableSystemContrast \
-            -only-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkRecentSearchAndNoResultsRemainUsableAtLargestAccessibilityTextSize \
-            -only-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightLoadingAndFailureRemainUsableAtLargestAccessibilityTextSize \
-            -only-testing:ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkLoadingAndFailureRemainUsableAtLargestAccessibilityTextSize
-
+        run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+      - name: Run selected accessibility smoke
+        run: apps/ios/Tools/run_selected_test_plan.sh ZenbuAccessibility com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult" '${{ needs.scope.outputs.accessibility_selectors }}' '${{ needs.scope.outputs.source_sha }}'
+      - name: Bind accessibility result to exact SHA
+        id: identity
+        run: echo "tested_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Package test evidence
         if: always()
-        run: |
-          if [[ -d "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult" ]]; then
-            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult" "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult.zip"
-          fi
-
+        run: if [[ -d "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult" ]]; then ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult" "$RUNNER_TEMP/ZenbuFast-Accessibility.xcresult.zip"; fi
       - name: Retain test evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ZenbuFast-Accessibility-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ZenbuFast-Accessibility.xcresult.zip
+          name: ZenbuFast-Accessibility-${{ needs.scope.outputs.source_sha }}-Xcode-26.5-iOS-26-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/ZenbuFast-Accessibility.xcresult.zip
+            ${{ runner.temp }}/ZenbuFast-Accessibility.xcresult.timing.json
+            ${{ runner.temp }}/ZenbuFast-Accessibility.xcresult.xcodebuild.log
           if-no-files-found: warn
           retention-days: 30
 
@@ -234,22 +240,52 @@ jobs:
     needs: [scope, repo-contracts, ios-unit, ios-ui, ios-accessibility]
     runs-on: ubuntu-24.04
     steps:
-      - name: Require every relevant fast partition
+      - name: Check out exact policy adapter
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ needs.scope.outputs.source_sha }}
+      - name: Require current candidate's selected partitions
         env:
-          IOS_CHANGED: ${{ needs.scope.outputs.ios_changed }}
-          CONTRACTS_RESULT: ${{ needs.repo-contracts.result }}
-          UNIT_RESULT: ${{ needs.ios-unit.result }}
-          UI_RESULT: ${{ needs.ios-ui.result }}
           ACCESSIBILITY_RESULT: ${{ needs.ios-accessibility.result }}
+          ACCESSIBILITY_SELECTORS: ${{ needs.scope.outputs.accessibility_selectors }}
+          ACCESSIBILITY_SHA: ${{ needs.ios-accessibility.outputs.tested_sha }}
+          CADENCE: ${{ needs.scope.outputs.cadence }}
+          CONTRACTS_RESULT: ${{ needs.repo-contracts.result }}
+          CONTRACTS_SELECTORS: ${{ needs.scope.outputs.contracts_selectors }}
+          CONTRACTS_SHA: ${{ needs.repo-contracts.outputs.tested_sha }}
+          CURRENT_SHA: ${{ needs.scope.outputs.source_sha }}
+          IOS_CHANGED: ${{ needs.scope.outputs.ios_changed }}
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          UNIT_RESULT: ${{ needs.ios-unit.result }}
+          UNIT_SELECTORS: ${{ needs.scope.outputs.unit_selectors }}
+          UNIT_SHA: ${{ needs.ios-unit.outputs.tested_sha }}
+          UI_RESULT: ${{ needs.ios-ui.result }}
+          UI_SELECTORS: ${{ needs.scope.outputs.ui_selectors }}
+          UI_SHA: ${{ needs.ios-ui.outputs.tested_sha }}
         run: |
           set -euo pipefail
+          [[ "$SCOPE_RESULT" == success ]]
+          [[ "$IOS_CHANGED" == true || "$IOS_CHANGED" == false ]]
+          [[ -n "$CURRENT_SHA" && -n "$CADENCE" ]]
+          printf 'cadence=%s source_sha=%s\n' "$CADENCE" "$CURRENT_SHA"
           if [[ "$IOS_CHANGED" != true ]]; then
-            echo 'No iOS consumer changed; the required fast gate passes without macOS work.'
+            echo 'No iOS consumer changed; no macOS verification was selected.'
             exit 0
           fi
-          printf 'Contracts: %s\nUnit: %s\nCritical UI: %s\nAccessibility smoke: %s\n' \
-            "$CONTRACTS_RESULT" "$UNIT_RESULT" "$UI_RESULT" "$ACCESSIBILITY_RESULT"
-          [[ "$CONTRACTS_RESULT" == success ]]
-          [[ "$UNIT_RESULT" == success ]]
-          [[ "$UI_RESULT" == success ]]
-          [[ "$ACCESSIBILITY_RESULT" == success ]]
+          if [[ "$CADENCE" == deferred-draft ]]; then
+            [[ '${{ github.event.pull_request.draft }}' == true ]]
+            echo 'Deferred while draft; this current-head status is not verification.'
+            exit 0
+          fi
+          tested_shas=()
+          require_partition() {
+            local selectors="$1" result="$2" tested_sha="$3"
+            [[ "$selectors" == '[]' ]] && return
+            [[ "$result" == success ]]
+            tested_shas+=(--tested "$tested_sha")
+          }
+          require_partition "$CONTRACTS_SELECTORS" "$CONTRACTS_RESULT" "$CONTRACTS_SHA"
+          require_partition "$UNIT_SELECTORS" "$UNIT_RESULT" "$UNIT_SHA"
+          require_partition "$UI_SELECTORS" "$UI_RESULT" "$UI_SHA"
+          require_partition "$ACCESSIBILITY_SELECTORS" "$ACCESSIBILITY_RESULT" "$ACCESSIBILITY_SHA"
+          python3 apps/ios/Tools/ios_verification.py verify-sha --current "$CURRENT_SHA" "${tested_shas[@]}"
