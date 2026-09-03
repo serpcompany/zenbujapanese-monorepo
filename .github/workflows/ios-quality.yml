@@ -96,7 +96,7 @@ jobs:
         with:
           fetch-depth: 0
           lfs: true
-          ref: ${{ needs.scope.outputs.source_sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Install audit tooling
         run: |
           brew install actionlint ripgrep
@@ -132,7 +132,7 @@ jobs:
           {
             fetch-depth: 0,
             lfs: true,
-            ref: '${{ needs.scope.outputs.source_sha }}',
+            ref: '${{ github.event.pull_request.head.sha || github.sha }}',
           }
       - name: Select pinned Xcode
         run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
@@ -189,7 +189,7 @@ jobs:
           {
             fetch-depth: 0,
             lfs: true,
-            ref: '${{ needs.scope.outputs.source_sha }}',
+            ref: '${{ github.event.pull_request.head.sha || github.sha }}',
           }
       - name: Select pinned Xcode
         run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
@@ -246,7 +246,7 @@ jobs:
           {
             fetch-depth: 0,
             lfs: true,
-            ref: '${{ needs.scope.outputs.source_sha }}',
+            ref: '${{ github.event.pull_request.head.sha || github.sha }}',
           }
       - name: Select pinned Xcode
         run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
@@ -297,7 +297,7 @@ jobs:
       - name: Check out exact policy adapter
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: ${{ needs.scope.outputs.source_sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Require current candidate's selected partitions
         env:
           ACCESSIBILITY_RESULT: ${{ needs.ios-accessibility.result }}

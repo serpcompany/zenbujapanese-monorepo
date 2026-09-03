@@ -60,7 +60,10 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("cancel-in-progress: true", workflow)
         self.assertIn("verify-sha", workflow)
         self.assertIn("github.event.pull_request.head.sha", workflow)
-        self.assertIn("ref: ${{ needs.scope.outputs.source_sha }}", workflow)
+        self.assertIn(
+            "ref: ${{ github.event.pull_request.head.sha || github.sha }}", workflow
+        )
+        self.assertNotIn("ref: ${{ needs.scope.outputs.source_sha }}", workflow)
         self.assertIn("tested_sha=$(git rev-parse HEAD)", workflow)
         self.assertIn("SCOPE_RESULT: ${{ needs.scope.result }}", workflow)
         self.assertIn('[[ "$SCOPE_RESULT" == success ]]', workflow)
