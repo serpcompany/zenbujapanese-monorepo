@@ -1,0 +1,61 @@
+{
+  "schema": "zenbu.japanese-morphology-benchmark-source.v1",
+  "frozenAt": "2026-09-03",
+  "unicodeRangeUnit": "unicode-scalar",
+  "population": {
+    "name": "Universal Dependencies Japanese GSD",
+    "release": "2.18",
+    "repository": "https://github.com/UniversalDependencies/UD_Japanese-GSD",
+    "tag": "r2.18",
+    "tagCommit": "33e7310b58308e85fd2b33a2fc3ef3e434f821c7",
+    "license": "CC-BY-SA-4.0",
+    "licenseURL": "https://github.com/UniversalDependencies/UD_Japanese-GSD/blob/r2.18/LICENSE.txt",
+    "annotationCaveat": "GSD retains contributed manual annotations, while its current short-unit word conversion and some UD fields are converted from the Japanese source annotation. UniDicInfo is independent corpus evidence but shares UniDic lineage with SudachiDict, so engine-specific error review accompanies aggregate scores.",
+    "splits": [
+      {
+        "role": "development",
+        "name": "train",
+        "url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Japanese-GSD/r2.18/ja_gsd-ud-train.conllu",
+        "bytes": 40583344,
+        "sha256": "99f67fd88257e7cfe81d81c4b8ee98aff85fc22bb525d907475a2856c8cfa9f3"
+      },
+      {
+        "role": "evaluation",
+        "name": "dev",
+        "url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Japanese-GSD/r2.18/ja_gsd-ud-dev.conllu",
+        "bytes": 2961591,
+        "sha256": "18d266e29336ef619787a928d89d20f2e64188be70d5b37829e3aadc5bb6b841"
+      },
+      {
+        "role": "sealed-holdout",
+        "name": "test",
+        "url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Japanese-GSD/r2.18/ja_gsd-ud-test.conllu",
+        "bytes": 3111982,
+        "sha256": "5f50ee6ed45c7ebda3787e593eaf5e9a225f25e53f6b4b32df778031862c843f"
+      }
+    ]
+  },
+  "externalDomainCheck": {
+    "name": "Universal Dependencies Japanese PUD",
+    "release": "2.18",
+    "repository": "https://github.com/UniversalDependencies/UD_Japanese-PUD",
+    "tag": "r2.18",
+    "tagCommit": "4abd575c57bfa125dd4bc564f2ceb8973bbbf422",
+    "license": "CC-BY-SA-3.0",
+    "licenseURL": "https://github.com/UniversalDependencies/UD_Japanese-PUD/blob/r2.18/LICENSE.txt",
+    "url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Japanese-PUD/r2.18/ja_pud-ud-test.conllu",
+    "bytes": 6995202,
+    "sha256": "7ac51383189bdf5513102f9f8ac7ee1b967d5449f8c2dc1a9108fa21a8f1a688",
+    "role": "external-domain surprise check; never adapter tuning"
+  },
+  "scoring": {
+    "primarySegmentation": "UD Japanese GSD short-unit word spans",
+    "allowedAlternatives": "Only alternatives explicitly authored in the Zenbu hard-case manifest before provider execution",
+    "boundaryEdges": "Token end offsets excluding transcript start and end",
+    "fieldEligibility": "Lemma, reading, and coarse POS are scored on exact gold spans and also end-to-end with boundary failures counted wrong",
+    "readingAgreement": "A provider reading agrees when it equals either the independently retained UniDic lexeme reading or surface pronunciation; both literals are frozen before holdout so orthographic long-vowel and phonetic long-mark forms are not mistaken for analyzer errors",
+    "bootstrapSeed": 25120260903,
+    "bootstrapReplicates": 10000,
+    "hardGateSevereWrongLinks": 0
+  }
+}
