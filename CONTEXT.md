@@ -72,6 +72,18 @@ _Avoid_: Corpus order, source order, match eligibility
 The Shared Capability that resolves Japanese text into app-owned segments, tokens, lemmas, language-item candidates, and occurrence mappings.
 _Avoid_: Media Analysis, translation
 
+**Reading Aid**:
+An optional learner-facing representation that supports pronunciation of Japanese text. Furigana and Romaji are distinct Reading Aid types with independent display preferences.
+_Avoid_: Ruby setting, pronunciation mode
+
+**Furigana**:
+A Reading Aid that presents a kana reading with its associated Japanese surface text. Showing or hiding Furigana does not change the underlying reading evidence or the Romaji preference.
+_Avoid_: Ruby, Romaji, phonetic spelling
+
+**Romaji**:
+A Reading Aid that presents a Japanese reading in Latin script. Showing or hiding Romaji is independent of Furigana and does not replace the Japanese surface text.
+_Avoid_: Furigana, Ruby, English translation
+
 **Image Text Recognition**:
 The Shared Capability that extracts ordered text regions from a bounded image while retaining their spatial and recognition evidence.
 _Avoid_: Lookup Capture, contextual image explanation
