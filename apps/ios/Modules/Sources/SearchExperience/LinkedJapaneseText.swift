@@ -120,6 +120,29 @@ private struct LinkedTokenView: View {
       .accessibilityValue(isCurrentEntry ? "Current word" : "")
       .accessibilityAddTraits(isCurrentEntry ? .isSelected : [])
       .accessibilityIdentifier(identifier)
+    } else if !token.candidateEntries.isEmpty {
+      Menu {
+        ForEach(token.candidateEntries) { candidate in
+          Button {
+            openWord(candidate)
+          } label: {
+            Text("\(candidate.headword) (\(candidate.reading)) — \(candidate.summary)")
+          }
+        }
+      } label: {
+        Text(token.surface)
+          .font(.body)
+          .underline()
+      }
+      .buttonStyle(.plain)
+      .frame(
+        minWidth: presentation.usesMinimumHitRegion ? 44 : nil,
+        minHeight: presentation.usesMinimumHitRegion ? 44 : nil
+      )
+      .contentShape(Rectangle())
+      .accessibilityLabel("\(token.surface), choose dictionary entry")
+      .accessibilityHint("Shows \(token.candidateEntries.count) possible dictionary entries")
+      .accessibilityIdentifier(identifier)
     } else {
       Text(token.surface)
         .font(.body)

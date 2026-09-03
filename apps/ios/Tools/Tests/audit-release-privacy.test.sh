@@ -20,6 +20,25 @@ fail() {
 "$audit" source >"${scratch_dir}/source.log"
 rg -q 'source audit complete; this is not archive or signed-candidate evidence' "${scratch_dir}/source.log" || fail "source mode did not identify its evidence boundary"
 
+reversed_sbom="${scratch_dir}/reversed-sbom.json"
+jq '(.relationships[] | select(.relationshipType == "OPTIONAL_DEPENDENCY_OF")) |=
+  (.spdxElementId = "SPDXRef-ZenbuJapanese" | .relatedSpdxElement = "SPDXRef-SudachiDictCore")' \
+  "${ios_dir}/ReleaseSBOM.spdx.json" >"$reversed_sbom"
+if ZENBU_RELEASE_SBOM="$reversed_sbom" "$audit" source >"${scratch_dir}/reversed-sbom.log" 2>&1; then
+  fail "SBOM with reversed optional dependency unexpectedly passed"
+fi
+rg -q 'release SBOM is missing a pinned Japanese Text Analysis component' \
+  "${scratch_dir}/reversed-sbom.log" || fail "reversed SBOM relationship was not reported"
+
+stale_lockfile="${scratch_dir}/stale-Package.resolved"
+jq '(.pins[] | select(.identity == "sudachi-swift").state.revision) = "stale"' \
+  "${ios_dir}/Modules/Package.resolved" >"$stale_lockfile"
+if ZENBU_PACKAGE_RESOLVED="$stale_lockfile" "$audit" source >"${scratch_dir}/stale-lockfile.log" 2>&1; then
+  fail "stale Swift package revision unexpectedly passed"
+fi
+rg -q 'Swift package lockfile differs from reviewed revisions' \
+  "${scratch_dir}/stale-lockfile.log" || fail "stale Swift package revision was not reported"
+
 if "$audit" unsupported-mode >"${scratch_dir}/unsupported.log" 2>&1; then
   fail "unsupported mode unexpectedly succeeded"
 fi

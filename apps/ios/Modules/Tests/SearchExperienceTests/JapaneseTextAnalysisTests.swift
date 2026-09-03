@@ -14,6 +14,7 @@ final class JapaneseTextAnalysisTests: XCTestCase {
 
     XCTAssertEqual(tokens.map(\.surface), ["今日", "は", "静か", "な", "公園", "です", "。"])
     XCTAssertFalse(tokens.contains { $0.entry?.headword == "こんにちは" })
+    XCTAssertEqual(tokens.first { $0.surface == "静か" }?.entry?.headword, "静か")
   }
 
   func testProviderDictionaryFormsResolveInflectedVerbsWithoutNounOrIteLinks() async throws {
@@ -28,10 +29,94 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     XCTAssertEqual(solve.dictionaryForm, "解く")
     XCTAssertNil(solve.entry, "Two defensible 解く readings must remain unresolved.")
     XCTAssertEqual(solve.candidateEntryIDs.count, 2)
+    XCTAssertEqual(solve.candidateEntries.map(\.id), solve.candidateEntryIDs)
     XCTAssertFalse(tokens.contains { $0.entry?.headword == "射手" })
     let speak = try XCTUnwrap(tokens.first { $0.surface == "話し" })
     XCTAssertEqual(speak.entry?.headword, "話す")
     XCTAssertFalse(tokens.contains { $0.surface == "話し" && $0.entry?.headword == "話" })
+  }
+
+  func testContradictoryProviderPartOfSpeechFailsClosedInsteadOfLinkingAUniqueEntry() async throws {
+    let lookup = LookupClient.freshBundledDatabase()
+    let client = JapaneseTextAnalysisClient.resolving(
+      morphologyClient: JapaneseMorphologyClient { _ in
+        JapaneseMorphologyAnalysis(
+          transcript: "日本語",
+          candidates: [
+            JapaneseMorphologyCandidate(
+              surface: "日本語",
+              scalarRange: 0..<3,
+              dictionaryForm: "日本語",
+              normalizedForm: "日本語",
+              reading: "ニホンゴ",
+              partOfSpeech: ["動詞"],
+              isOutOfVocabulary: false,
+              children: []
+            )
+          ],
+          engine: "frozen-test-provider",
+          engineVersion: "1",
+          dictionary: "independent test truth",
+          dictionarySHA256: "fixture"
+        )
+      },
+      lookupClient: lookup
+    )
+
+    let linkedTokens = await client.linkedTokens("日本語", SearchQuery(""), nil)
+    let token = try XCTUnwrap(linkedTokens.first)
+
+    XCTAssertNil(token.entry)
+    XCTAssertTrue(token.candidateEntries.isEmpty)
+  }
+
+  func testProviderKatakanaReadingMatchesTheAppOwnedHiraganaEntry() async throws {
+    let lookup = LookupClient.freshBundledDatabase()
+    let client = JapaneseTextAnalysisClient.resolving(
+      morphologyClient: .uiTestFixture,
+      lookupClient: lookup
+    )
+
+    let tokens = await client.linkedTokens("日本語の勉強", SearchQuery(""), nil)
+
+    let japanese = try XCTUnwrap(tokens.first { $0.surface == "日本語" })
+    XCTAssertEqual(japanese.entry?.id.rawValue, "c81e1608bebbf039176be3e23f1c03bb")
+  }
+
+  func testBareWrittenHomographsRemainASelectableFamilyInsteadOfAutoLinking() async throws {
+    let lookup = LookupClient.freshBundledDatabase()
+    let morphology = JapaneseMorphologyClient { text in
+      JapaneseMorphologyAnalysis(
+        transcript: text,
+        candidates: [
+          JapaneseMorphologyCandidate(
+            surface: text,
+            scalarRange: 0..<text.unicodeScalars.count,
+            dictionaryForm: text,
+            normalizedForm: text,
+            reading: text == "静" ? "セイ" : "トクホン",
+            partOfSpeech: ["名詞"],
+            isOutOfVocabulary: false,
+            children: []
+          )
+        ],
+        engine: "frozen-test-provider",
+        engineVersion: "1",
+        dictionary: "independent test truth",
+        dictionarySHA256: "fixture"
+      )
+    }
+    let client = JapaneseTextAnalysisClient.resolving(
+      morphologyClient: morphology,
+      lookupClient: lookup
+    )
+
+    for surface in ["静", "読本"] {
+      let tokens = await client.linkedTokens(surface, SearchQuery(""), nil)
+      let token = try XCTUnwrap(tokens.first)
+      XCTAssertNil(token.entry, surface)
+      XCTAssertGreaterThan(token.candidateEntries.count, 1, surface)
+    }
   }
 
   func testUnavailablePackReturnsExactRawTextWithoutFabricatedLinks() async {
@@ -343,6 +428,111 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     XCTAssertLessThan(Self.milliseconds(confirmationStart.duration(to: .now)), 5_000)
   }
 
+  func testShippedAdapterMatchesFrozenHardCaseFieldsAndAppOwnedLinkPolicy() async throws {
+    let dictionaryURL = try await OfficialSudachiTestResource.shared.installedDictionaryURL()
+    let truthURL = try XCTUnwrap(
+      Bundle(for: JapaneseTextAnalysisTests.self).url(
+        forResource: "issue251-morphology-hard-cases-v1", withExtension: "json"))
+    let truth = try JSONDecoder().decode(HardCaseTruth.self, from: Data(contentsOf: truthURL))
+    XCTAssertEqual(truth.cases.count, 10)
+    let morphology = try JapaneseMorphologyClient.sudachiCore(dictionaryURL: dictionaryURL)
+    let linked = JapaneseTextAnalysisClient.resolving(
+      morphologyClient: morphology,
+      lookupClient: .freshBundledDatabase()
+    )
+    var allowedBoundaryMatches = 0
+    var allowedBoundaryPredicted = 0
+    var allowedBoundaryExpected = 0
+    var lemma = (matches: 0, total: 0)
+    var reading = (matches: 0, total: 0)
+    var partOfSpeech = (matches: 0, total: 0)
+    var oov = (truePositive: 0, predicted: 0, expected: 0)
+    var exactLinks = (matches: 0, total: 0)
+    var abstentions = (matches: 0, total: 0)
+    var severeWrongLinks = 0
+
+    for record in truth.cases {
+      let analysis = try await morphology.analyze(record.text)
+      XCTAssertEqual(analysis.engine, SudachiCoreContract.engine)
+      XCTAssertEqual(analysis.engineVersion, SudachiCoreContract.engineVersion)
+      XCTAssertEqual(analysis.dictionary, SudachiCoreContract.dictionary)
+      XCTAssertEqual(analysis.dictionarySHA256, SudachiCoreContract.dictionarySHA256)
+      let candidates = analysis.candidates.flatMap(\.children)
+      let finalOffset = record.text.unicodeScalars.count
+      let edges = Set(
+        candidates.map(\.scalarRange.upperBound).filter { $0 < finalOffset })
+      let bestAllowed =
+        record.allowedBoundaryEdgeSets.max { lhs, rhs in
+          Self.f1(
+            matches: edges.intersection(lhs).count, predicted: edges.count, expected: lhs.count)
+            < Self.f1(
+              matches: edges.intersection(rhs).count, predicted: edges.count, expected: rhs.count)
+        } ?? []
+      allowedBoundaryMatches += edges.intersection(bestAllowed).count
+      allowedBoundaryPredicted += edges.count
+      allowedBoundaryExpected += bestAllowed.count
+      let byRange = Dictionary(grouping: candidates, by: \.scalarRange)
+
+      for expected in record.tokens {
+        let candidate = byRange[expected.start..<expected.end]?.first
+        if let expectedLemma = expected.lemma {
+          lemma.total += 1
+          lemma.matches += candidate?.dictionaryForm == expectedLemma ? 1 : 0
+        }
+        if let expectedReading = expected.reading {
+          reading.total += 1
+          reading.matches += candidate?.reading == expectedReading ? 1 : 0
+        }
+        if let expectedPartOfSpeech = expected.partOfSpeech {
+          partOfSpeech.total += 1
+          partOfSpeech.matches += candidate?.coarsePartOfSpeech == expectedPartOfSpeech ? 1 : 0
+        }
+        let predictedOOV = candidate?.isOutOfVocabulary == true
+        oov.truePositive += predictedOOV && expected.isOutOfVocabulary ? 1 : 0
+        oov.predicted += predictedOOV ? 1 : 0
+        oov.expected += expected.isOutOfVocabulary ? 1 : 0
+      }
+
+      let tokens = await linked.linkedTokens(record.text, SearchQuery(""), nil)
+      for expected in record.tokens where expected.link != nil {
+        let token = tokens.first { $0.scalarRange == expected.start..<expected.end }
+        let linkedIDs = Set(
+          (token?.candidateEntryIDs.map(\.rawValue) ?? [])
+            + [token?.entry?.id.rawValue].compactMap { $0 })
+        switch expected.link?.kind {
+        case "exact":
+          let allowed = Set(expected.link?.ids ?? [])
+          exactLinks.total += 1
+          exactLinks.matches += !linkedIDs.intersection(allowed).isEmpty ? 1 : 0
+          if let chosen = token?.entry?.id.rawValue, !allowed.contains(chosen) {
+            severeWrongLinks += 1
+          }
+        case "abstain":
+          abstentions.total += 1
+          abstentions.matches += token?.entry == nil ? 1 : 0
+          severeWrongLinks += token?.entry == nil ? 0 : 1
+        default:
+          XCTFail("\(record.id): unsupported frozen link policy")
+        }
+      }
+    }
+
+    XCTAssertGreaterThanOrEqual(
+      Self.f1(
+        matches: allowedBoundaryMatches,
+        predicted: allowedBoundaryPredicted,
+        expected: allowedBoundaryExpected),
+      0.968)
+    XCTAssertGreaterThanOrEqual(Double(lemma.matches) / Double(lemma.total), 0.90)
+    XCTAssertGreaterThanOrEqual(Double(reading.matches) / Double(reading.total), 0.96)
+    XCTAssertGreaterThanOrEqual(Double(partOfSpeech.matches) / Double(partOfSpeech.total), 0.94)
+    XCTAssertEqual(Double(oov.truePositive) / Double(oov.predicted), 1.0)
+    XCTAssertGreaterThanOrEqual(Double(oov.truePositive) / Double(oov.expected), 0.20)
+    XCTAssertEqual(exactLinks.matches, exactLinks.total)
+    XCTAssertEqual(abstentions.matches, abstentions.total)
+    XCTAssertEqual(severeWrongLinks, 0)
+  }
+
   private func analyzer(_ lookup: LookupClient) -> JapaneseTextAnalysisClient {
     JapaneseTextAnalysisClient.resolving(
       morphologyClient: JapaneseMorphologyClient { text in
@@ -449,6 +639,13 @@ final class JapaneseTextAnalysisTests: XCTestCase {
       + Double(duration.components.attoseconds) / 1.0e15
   }
 
+  private static func f1(matches: Int, predicted: Int, expected: Int) -> Double {
+    let precision =
+      predicted == 0 ? (expected == 0 ? 1.0 : 0.0) : Double(matches) / Double(predicted)
+    let recall = expected == 0 ? 1.0 : Double(matches) / Double(expected)
+    return precision + recall == 0 ? 0 : 2 * precision * recall / (precision + recall)
+  }
+
   private static func residentBytes() -> UInt64 {
     var info = mach_task_basic_info()
     var count = mach_msg_type_number_t(
@@ -477,6 +674,47 @@ private struct ConfirmationToken: Decodable {
   let end: Int
   let lemma: String
   let readingAlternatives: [String]
+}
+
+private struct HardCaseTruth: Decodable {
+  let cases: [HardCase]
+}
+
+private struct HardCase: Decodable {
+  let id: String
+  let text: String
+  let allowedBoundaryEdgeSets: [Set<Int>]
+  let tokens: [HardCaseToken]
+}
+
+private struct HardCaseToken: Decodable {
+  let surface: String
+  let start: Int
+  let end: Int
+  let lemma: String?
+  let reading: String?
+  let partOfSpeech: String?
+  let isOutOfVocabulary: Bool
+  let link: HardCaseLink?
+
+  enum CodingKeys: String, CodingKey {
+    case surface, start, end, lemma, reading, link
+    case partOfSpeech = "pos"
+    case isOutOfVocabulary = "oov"
+  }
+}
+
+private struct HardCaseLink: Decodable {
+  let kind: String
+  let ids: [String]
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    kind = try container.decode(String.self, forKey: .kind)
+    ids = try container.decodeIfPresent([String].self, forKey: .ids) ?? []
+  }
+
+  enum CodingKeys: String, CodingKey { case kind, ids }
 }
 
 actor OfficialSudachiTestResource {

@@ -28,6 +28,7 @@
       "skippedTests" : [
         "ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus()",
         "JapaneseTextAnalysisTests/testShippedSudachiAdapterMatchesFrozenProviderContract()",
+        "JapaneseTextAnalysisTests/testShippedAdapterMatchesFrozenHardCaseFieldsAndAppOwnedLinkPolicy()",
         "JapaneseTextAnalysisTests/testShippedSudachiAdapterRetainsFrozenConfirmationQuality()",
         "LanguageTechnologyPackTests/testOfficialWheelInstallsRunsOfflineAndRetainsLastGood()"
       ],
@@ -41,6 +42,7 @@
       "parallelizable" : false,
       "skippedTests" : [
         "SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
+        "SearchExperienceJourneyUITests/test000JapaneseTextAnalysisPackDownloadsThroughNativeManagementSurface()",
         "SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()"
       ],
       "target" : {

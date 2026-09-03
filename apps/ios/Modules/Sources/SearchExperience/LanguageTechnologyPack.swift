@@ -215,6 +215,7 @@ actor LanguageTechnologyPackManager {
         throw LanguageTechnologyPackError.invalidArtifact
       }
       try validateProvider(staging)
+      try Task.checkCancellation()
 
       let filename =
         "\(manifest.packID.rawValue)-\(manifest.packVersion)-\(UUID().uuidString).dic"
@@ -228,6 +229,7 @@ actor LanguageTechnologyPackManager {
         filename: filename
       )
       do {
+        try Task.checkCancellation()
         try JSONEncoder().encode(record).write(
           to: storageDirectory.appendingPathComponent("state.json"), options: .atomic)
       } catch {

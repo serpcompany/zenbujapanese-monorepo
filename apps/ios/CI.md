@@ -22,6 +22,9 @@ outage cannot make the ordinary complete unit target fail; issue implementation,
 dependency-update, merge-candidate, and pre-release evidence must run this lane
 separately. Deterministic pack lifecycle, checksum, corruption, update, fallback,
 range, and resolver tests remain in `ZenbuPR` without network access.
+Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
+provider. The native download journey and real provider stay in the explicit
+integration lane; the merge-candidate workflow invokes and retains both lanes.
 
 The complete suite is not repeated after merge when the merge-queue SHA already
 passed. The manual breadth workflow has no schedule because iOS changes are

@@ -8,7 +8,8 @@ ios_dir="$(cd "${tool_dir}/.." && pwd)"
 manifest="${ios_dir}/App/PrivacyInfo.xcprivacy"
 project="${ios_dir}/ZenbuJapanese.xcodeproj/project.pbxproj"
 package_manifest="${ios_dir}/Modules/Package.swift"
-release_sbom="${ios_dir}/ReleaseSBOM.spdx.json"
+package_resolved="${ZENBU_PACKAGE_RESOLVED:-${ios_dir}/Modules/Package.resolved}"
+release_sbom="${ZENBU_RELEASE_SBOM:-${ios_dir}/ReleaseSBOM.spdx.json}"
 language_database="${ios_dir}/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3"
 language_pack_catalog="${ios_dir}/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json"
 language_import_manifest="${ios_dir}/LanguageData/Generated/JMdict_e-2026-08-10.import.json"
@@ -180,6 +181,13 @@ rg -q 'exact: "0\.1\.1"' <<<"$sudachi_dependency" \
 rg -q 'exact: "0\.9\.20"' <<<"$zip_dependency" \
   || fail "ZIPFoundation must remain exact 0.9.20"
 pass "remote Swift dependencies are limited to the reviewed exact Sudachi and archive-reader pins"
+[[ -f "$package_resolved" ]] || fail "Swift package lockfile is missing"
+jq -e '
+  any(.pins[]; .identity == "sudachi-swift" and .state.version == "0.1.1" and
+    .state.revision == "92f55c556ba0e6c6f25660b049072811d40f045f") and
+  any(.pins[]; .identity == "zipfoundation" and .state.version == "0.9.20" and
+    .state.revision == "22787ffb59de99e5dc1fbfe80b19c97a904ad48d")
+' "$package_resolved" >/dev/null || fail "Swift package lockfile differs from reviewed revisions"
 [[ -f "$release_sbom" ]] || fail "release SBOM is missing"
 jq -e '
   .spdxVersion == "SPDX-2.3" and
@@ -187,7 +195,11 @@ jq -e '
   any(.packages[]; .name == "sudachi.rs" and .versionInfo == "0.6.11") and
   any(.packages[]; .name == "SudachiDict Core" and .versionInfo == "20260723" and
     any(.checksums[]; .checksumValue == "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498")) and
-  any(.packages[]; .name == "ZIPFoundation" and .versionInfo == "0.9.20")
+  any(.packages[]; .name == "ZIPFoundation" and .versionInfo == "0.9.20") and
+  any(.relationships[];
+    .spdxElementId == "SPDXRef-SudachiDictCore" and
+    .relationshipType == "OPTIONAL_DEPENDENCY_OF" and
+    .relatedSpdxElement == "SPDXRef-ZenbuJapanese")
 ' "$release_sbom" >/dev/null || fail "release SBOM is missing a pinned Japanese Text Analysis component"
 pass "release SBOM records the reviewed binding, engine, optional dictionary, and archive reader"
 require_rg_match "Camera usage description is missing or changed" 'INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text and save photos with words you are learning\.";' "$project"

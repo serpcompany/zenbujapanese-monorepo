@@ -76,6 +76,9 @@ jobs:
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
             "$RUNNER_TEMP/ZenbuPreMerge.xcresult"
 
+      - name: Run the pinned Japanese Text Analysis integration lane
+        run: apps/ios/Tools/run_sudachi_integration.sh "$RUNNER_TEMP/ZenbuSudachiIntegration.xcresult"
+
       - name: Record exact candidate identity
         if: always()
         run: |
@@ -93,6 +96,9 @@ jobs:
           if [[ -d "$RUNNER_TEMP/ZenbuPreMerge.xcresult" ]]; then
             ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuPreMerge.xcresult" "$RUNNER_TEMP/ZenbuPreMerge.xcresult.zip"
           fi
+          if [[ -d "$RUNNER_TEMP/ZenbuSudachiIntegration.xcresult" ]]; then
+            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuSudachiIntegration.xcresult" "$RUNNER_TEMP/ZenbuSudachiIntegration.xcresult.zip"
+          fi
 
       - name: Retain exact merge-candidate evidence
         if: always()
@@ -101,6 +107,7 @@ jobs:
           name: ZenbuPreMerge-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/ZenbuPreMerge.xcresult.zip
+            ${{ runner.temp }}/ZenbuSudachiIntegration.xcresult.zip
             ${{ runner.temp }}/ZenbuPreMerge-identity.txt
           if-no-files-found: warn
           retention-days: 30

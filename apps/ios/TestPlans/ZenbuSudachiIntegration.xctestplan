@@ -25,6 +25,7 @@
       "parallelizable" : false,
       "selectedTests" : [
         "JapaneseTextAnalysisTests/testShippedSudachiAdapterMatchesFrozenProviderContract()",
+        "JapaneseTextAnalysisTests/testShippedAdapterMatchesFrozenHardCaseFieldsAndAppOwnedLinkPolicy()",
         "JapaneseTextAnalysisTests/testShippedSudachiAdapterRetainsFrozenConfirmationQuality()",
         "LanguageTechnologyPackTests/testOfficialWheelInstallsRunsOfflineAndRetainsLastGood()"
       ],
@@ -32,6 +33,17 @@
         "containerPath" : "container:ZenbuJapanese.xcodeproj",
         "identifier" : "151000000000000000000008",
         "name" : "ZenbuJapaneseTests"
+      }
+    },
+    {
+      "parallelizable" : false,
+      "selectedTests" : [
+        "SearchExperienceJourneyUITests/test000JapaneseTextAnalysisPackDownloadsThroughNativeManagementSurface"
+      ],
+      "target" : {
+        "containerPath" : "container:ZenbuJapanese.xcodeproj",
+        "identifier" : "74E6EB6E486E0D87C41A29EF",
+        "name" : "ZenbuJapaneseUITests"
       }
     }
   ],

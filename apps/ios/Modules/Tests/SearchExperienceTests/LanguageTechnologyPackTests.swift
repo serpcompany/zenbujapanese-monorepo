@@ -223,6 +223,29 @@ final class LanguageTechnologyPackTests: XCTestCase {
     XCTAssertEqual(validation.value, 0)
   }
 
+  func testCancellationRaisedByFinalProviderValidationCannotCommitThePack() async throws {
+    let temporary = FileManager.default.temporaryDirectory
+      .appendingPathComponent("LanguageTechnologyPostValidationCancellation-\(UUID().uuidString)")
+    defer { try? FileManager.default.removeItem(at: temporary) }
+    let archive = try XCTUnwrap(Data(base64Encoded: Self.fixtureArchiveBase64))
+    let manager = try LanguageTechnologyPackManager(
+      catalog: Self.fixtureCatalog,
+      storageDirectory: temporary,
+      download: { _ in archive },
+      validateProvider: { _ in withUnsafeCurrentTask { $0?.cancel() } }
+    )
+
+    await assertThrowsErrorAsync {
+      try await manager.download(Self.fixtureManifest.packID)
+    }
+
+    let state = await manager.snapshot().packs[0]
+    XCTAssertFalse(state.isInstalled)
+    XCTAssertNil(state.failureMessage)
+    let installedURL = await manager.installedDictionaryURL()
+    XCTAssertNil(installedURL)
+  }
+
   func testTrustedInstalledVersionOffersAndAtomicallyAppliesCatalogUpdate() async throws {
     let temporary = FileManager.default.temporaryDirectory
       .appendingPathComponent("LanguageTechnologyPackUpdateTests-\(UUID().uuidString)")

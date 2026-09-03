@@ -1,4 +1,5 @@
 import Foundation
+import NaturalLanguage
 import Sudachi
 
 enum SudachiCoreContract {
@@ -57,6 +58,34 @@ struct JapaneseMorphologyCandidate: Equatable, Sendable {
   let partOfSpeech: [String]
   let isOutOfVocabulary: Bool
   let children: [JapaneseMorphologyCandidate]
+
+  var coarsePartOfSpeech: String? {
+    guard let primary = partOfSpeech.first else { return nil }
+    let secondary = partOfSpeech.dropFirst().first
+    switch primary {
+    case "名詞":
+      if secondary == "固有名詞" { return "PROPN" }
+      if secondary == "数詞" { return "NUM" }
+      if secondary == "助動詞語幹" { return "AUX" }
+      return "NOUN"
+    case "代名詞": return "PRON"
+    case "動詞": return "VERB"
+    case "形容詞", "形状詞": return "ADJ"
+    case "連体詞": return "DET"
+    case "副詞": return "ADV"
+    case "助動詞": return "AUX"
+    case "接続詞": return "CCONJ"
+    case "感動詞": return "INTJ"
+    case "補助記号": return secondary == "一般" ? "SYM" : "PUNCT"
+    case "記号", "接頭辞", "接尾辞": return "NOUN"
+    case "空白": return "SPACE"
+    case "助詞":
+      if secondary == "接続助詞" || secondary == "準体助詞" { return "SCONJ" }
+      if secondary == "終助詞" { return "PART" }
+      return "ADP"
+    default: return nil
+    }
+  }
 }
 
 struct JapaneseMorphologyAnalysis: Equatable, Sendable {
@@ -107,6 +136,127 @@ struct JapaneseMorphologyClient: Sendable {
       return analysis
     }
   }
+
+  #if DEBUG
+    /// Deterministic UI-test provider. Real adapter and pack coverage lives in
+    /// ZenbuSudachiIntegration; ordinary UI jobs must never depend on a network download.
+    static let uiTestFixture = JapaneseMorphologyClient { text in
+      let annotated: [(surface: String, lemma: String, reading: String, partOfSpeech: String)]?
+      switch text {
+      case "今日は静かな公園です。":
+        annotated = [
+          ("今日", "今日", "キョウ", "名詞"), ("は", "は", "ハ", "助詞"),
+          ("静か", "静か", "シズカ", "形状詞"), ("な", "だ", "ナ", "助動詞"),
+          ("公園", "公園", "コウエン", "名詞"), ("です", "です", "デス", "助動詞"),
+          ("。", "。", "。", "補助記号"),
+        ]
+      case "日本語の勉強":
+        annotated = [
+          ("日本語", "日本語", "ニホンゴ", "名詞"), ("の", "の", "ノ", "助詞"),
+          ("勉強", "勉強", "ベンキョウ", "名詞"),
+        ]
+      case "今日は静かな公園で蝶々を見た。":
+        annotated = [
+          ("今日", "今日", "キョウ", "名詞"), ("は", "は", "ハ", "助詞"),
+          ("静か", "静か", "シズカ", "形状詞"), ("な", "だ", "ナ", "助動詞"),
+          ("公園", "公園", "コウエン", "名詞"), ("で", "で", "デ", "助詞"),
+          ("蝶々", "蝶々", "チョウチョウ", "名詞"), ("を", "を", "ヲ", "助詞"),
+          ("見", "見る", "ミ", "動詞"), ("た", "た", "タ", "助動詞"),
+          ("。", "。", "。", "補助記号"),
+        ]
+      case "問題を解いてから、友達と話します。":
+        annotated = [
+          ("問題", "問題", "モンダイ", "名詞"), ("を", "を", "ヲ", "助詞"),
+          ("解い", "解く", "トイ", "動詞"), ("て", "て", "テ", "助詞"),
+          ("から", "から", "カラ", "助詞"), ("、", "、", "、", "補助記号"),
+          ("友達", "友達", "トモダチ", "名詞"), ("と", "と", "ト", "助詞"),
+          ("話し", "話す", "ハナシ", "動詞"), ("ます", "ます", "マス", "助動詞"),
+          ("。", "。", "。", "補助記号"),
+        ]
+      case "見ているだけだ。":
+        annotated = [
+          ("見て", "見る", "ミテ", "動詞"), ("いる", "居る", "イル", "動詞"),
+          ("だけ", "だけ", "ダケ", "助詞"), ("だ", "だ", "ダ", "助動詞"),
+          ("。", "。", "。", "補助記号"),
+        ]
+      default:
+        annotated = nil
+      }
+
+      var candidates: [JapaneseMorphologyCandidate] = []
+      if let annotated {
+        var offset = 0
+        for item in annotated {
+          let length = item.surface.unicodeScalars.count
+          candidates.append(
+            JapaneseMorphologyCandidate(
+              surface: item.surface,
+              scalarRange: offset..<(offset + length),
+              dictionaryForm: item.lemma,
+              normalizedForm: item.lemma,
+              reading: item.reading,
+              partOfSpeech: [item.partOfSpeech],
+              isOutOfVocabulary: false,
+              children: []
+            ))
+          offset += length
+        }
+      } else {
+        let tokenizer = NLTokenizer(unit: .word)
+        tokenizer.string = text
+        var previousEnd = text.startIndex
+        tokenizer.enumerateTokens(in: text.startIndex..<text.endIndex) { range, _ in
+          let ranges =
+            previousEnd < range.lowerBound ? [previousEnd..<range.lowerBound, range] : [range]
+          for tokenRange in ranges {
+            let surface = String(text[tokenRange])
+            let lowerScalar = tokenRange.lowerBound.samePosition(in: text.unicodeScalars)!
+            let scalarStart = text.unicodeScalars.distance(
+              from: text.unicodeScalars.startIndex, to: lowerScalar)
+            let length = surface.unicodeScalars.count
+            candidates.append(
+              JapaneseMorphologyCandidate(
+                surface: surface,
+                scalarRange: scalarStart..<(scalarStart + length),
+                dictionaryForm: surface,
+                normalizedForm: surface,
+                reading: surface,
+                partOfSpeech: ["名詞"],
+                isOutOfVocabulary: false,
+                children: []
+              ))
+          }
+          previousEnd = range.upperBound
+          return true
+        }
+        if previousEnd < text.endIndex {
+          let surface = String(text[previousEnd...])
+          let lowerScalar = previousEnd.samePosition(in: text.unicodeScalars)!
+          let scalarStart = text.unicodeScalars.distance(
+            from: text.unicodeScalars.startIndex, to: lowerScalar)
+          candidates.append(
+            JapaneseMorphologyCandidate(
+              surface: surface,
+              scalarRange: scalarStart..<text.unicodeScalars.count,
+              dictionaryForm: surface,
+              normalizedForm: surface,
+              reading: surface,
+              partOfSpeech: ["補助記号"],
+              isOutOfVocabulary: false,
+              children: []
+            ))
+        }
+      }
+      return JapaneseMorphologyAnalysis(
+        transcript: text,
+        candidates: candidates,
+        engine: "ui-test-fixture",
+        engineVersion: "1",
+        dictionary: "authored deterministic UI fixture",
+        dictionarySHA256: "not-a-release-provider"
+      )
+    }
+  #endif
 }
 
 actor JapaneseMorphologyStore {

@@ -1839,17 +1839,13 @@ final class AccessibilityAuditUITests: XCTestCase {
   ) -> XCUIApplication {
     let app = XCUIApplication()
     app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-    app.launchArguments += ["-EnsureJapaneseAnalysis"]
+    app.launchArguments += ["-UseJapaneseAnalysisFixture"]
     app.launchArguments += [
       "-AppleInterfaceStyle", appearance == .dark ? "Dark" : "Light",
       "-AppleInterfaceStyleSwitchesAutomatically", "NO",
     ]
     app.launchArguments += additionalArguments
     app.launch()
-    let preparation = app.progressIndicators["language-technology-pack.preparing"]
-    if preparation.waitForExistence(timeout: 2) {
-      XCTAssertTrue(preparation.waitForNonExistence(timeout: 90))
-    }
     return app
   }
 

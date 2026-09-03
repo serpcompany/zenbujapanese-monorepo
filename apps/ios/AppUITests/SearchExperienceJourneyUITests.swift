@@ -2420,10 +2420,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   func test000JapaneseTextAnalysisPackDownloadsThroughNativeManagementSurface() throws {
-    let app = launchApp(
-      additionalArguments: ["-ResetLanguageTechnologyPacks"],
-      automaticallyInstallsJapaneseAnalysis: false
-    )
+    let app = launchApp(additionalArguments: ["-ResetLanguageTechnologyPacks"])
     XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 3))
     app.tabBars.buttons["More"].tap()
     let japaneseAnalysis = app.buttons["more.japanese-analysis"]
@@ -5254,22 +5251,14 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func launchApp(
-    additionalArguments: [String] = [],
-    automaticallyInstallsJapaneseAnalysis: Bool = true
+    additionalArguments: [String] = []
   ) -> XCUIApplication {
     let app = XCUIApplication()
-    app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-    if automaticallyInstallsJapaneseAnalysis {
-      app.launchArguments += ["-EnsureJapaneseAnalysis"]
-    }
+    app.launchArguments += [
+      "-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-UseJapaneseAnalysisFixture",
+    ]
     app.launchArguments += additionalArguments
     app.launch()
-    if automaticallyInstallsJapaneseAnalysis {
-      let preparation = app.progressIndicators["language-technology-pack.preparing"]
-      if preparation.waitForExistence(timeout: 2) {
-        XCTAssertTrue(preparation.waitForNonExistence(timeout: 90))
-      }
-    }
     return app
   }
 

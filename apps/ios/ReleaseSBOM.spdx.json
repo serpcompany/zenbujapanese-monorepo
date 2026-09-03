@@ -95,9 +95,9 @@
       "relatedSpdxElement": "SPDXRef-SudachiRs"
     },
     {
-      "spdxElementId": "SPDXRef-ZenbuJapanese",
+      "spdxElementId": "SPDXRef-SudachiDictCore",
       "relationshipType": "OPTIONAL_DEPENDENCY_OF",
-      "relatedSpdxElement": "SPDXRef-SudachiDictCore",
+      "relatedSpdxElement": "SPDXRef-ZenbuJapanese",
       "comment": "Learner-initiated optional runtime Language Technology pack."
     },
     {

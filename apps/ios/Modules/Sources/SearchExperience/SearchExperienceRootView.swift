@@ -19,6 +19,7 @@ public struct SearchExperienceRootView: View {
     @State private var lastFinishedSpeech: SpeechPlaybackVerificationEvent?
   #endif
   private let lookupClient: LookupClient
+  private let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   private let recentSearchStore = RecentSearchStore.live
   private let encounterMediaStore = EncounterMediaStore.live
   private let handwritingRecognitionClient: HandwritingRecognitionClient
@@ -38,6 +39,11 @@ public struct SearchExperienceRootView: View {
     #if DEBUG
       let resolvedLookupClient = LookupClient.clientFromProcessArguments(live: .live) ?? .live
       lookupClient = resolvedLookupClient
+      japaneseTextAnalysisClient = .resolving(
+        morphologyClient: ProcessInfo.processInfo.arguments.contains("-UseJapaneseAnalysisFixture")
+          ? .uiTestFixture : .live,
+        lookupClient: resolvedLookupClient
+      )
       let liveKanjiLookupClient = KanjiLookupClient.live(lookupClient: resolvedLookupClient)
       kanjiLookupClient =
         KanjiLookupClient.clientFromProcessArguments(live: liveKanjiLookupClient)
@@ -63,6 +69,7 @@ public struct SearchExperienceRootView: View {
       }
     #else
       lookupClient = .live
+      japaneseTextAnalysisClient = .live(lookupClient: .live)
       kanjiLookupClient = .live(lookupClient: .live)
       handwritingRecognitionClient = .live
       cameraAuthorizationClient = .live
@@ -172,7 +179,7 @@ public struct SearchExperienceRootView: View {
             initialEncounterMedia: encounterMediaAttachment(for: imageContext),
             speechSynthesisClient: speechSynthesisClient,
             exampleSentenceClient: .live,
-            japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
+            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
             wordNoteStore: .live,
             encounterMediaStore: encounterMediaStore,
             cameraAuthorizationClient: cameraAuthorizationClient,
@@ -205,7 +212,7 @@ public struct SearchExperienceRootView: View {
             highlightedEntry: highlightedEntry,
             usesHighlightedEntryExamples: usesEntryExamples,
             exampleSentenceClient: .live,
-            japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
+            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
             speechSynthesisClient: speechSynthesisClient,
             openWord: { entry in path.append(.word(entry, nil)) }
           )
@@ -216,7 +223,7 @@ public struct SearchExperienceRootView: View {
             ImageTextFlowView(
               session: session,
               recognitionClient: imageTextRecognitionClient,
-              textAnalysisClient: .live(lookupClient: lookupClient),
+              textAnalysisClient: japaneseTextAnalysisClient,
               translationClient: naturalTranslationClient,
               close: {
                 if path.last == .image(sessionID) { path.removeLast() }

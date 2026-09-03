@@ -15,6 +15,7 @@
 		F24200000000000000000002 /* JapaneseTextAnalysisTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F24200000000000000000001 /* JapaneseTextAnalysisTests.swift */; };
 		F24900000000000000000002 /* ImageTextFlowModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F24900000000000000000001 /* ImageTextFlowModelTests.swift */; };
 		F25200000000000000000002 /* issue251-morphology-confirmation-holdout-v1.json in Resources */ = {isa = PBXBuildFile; fileRef = F25200000000000000000001 /* issue251-morphology-confirmation-holdout-v1.json */; };
+		F25200000000000000000006 /* issue251-morphology-hard-cases-v1.json in Resources */ = {isa = PBXBuildFile; fileRef = F25200000000000000000005 /* issue251-morphology-hard-cases-v1.json */; };
 		F25200000000000000000004 /* LanguageTechnologyPackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F25200000000000000000003 /* LanguageTechnologyPackTests.swift */; };
 		F23500000000000000000002 /* KanjiDetailRestorationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F23500000000000000000001 /* KanjiDetailRestorationTests.swift */; };
 		151000000000000000000002 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
@@ -56,6 +57,7 @@
 		F24200000000000000000001 /* JapaneseTextAnalysisTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JapaneseTextAnalysisTests.swift; sourceTree = "<group>"; };
 		F24900000000000000000001 /* ImageTextFlowModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageTextFlowModelTests.swift; sourceTree = "<group>"; };
 		F25200000000000000000001 /* issue251-morphology-confirmation-holdout-v1.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "issue251-morphology-confirmation-holdout-v1.json"; path = "../../docs/research/fixtures/issue251-morphology-confirmation-holdout-v1.json"; sourceTree = SOURCE_ROOT; };
+		F25200000000000000000005 /* issue251-morphology-hard-cases-v1.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "issue251-morphology-hard-cases-v1.json"; path = "../../docs/research/fixtures/issue251-morphology-hard-cases-v1.json"; sourceTree = SOURCE_ROOT; };
 		F25200000000000000000003 /* LanguageTechnologyPackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageTechnologyPackTests.swift; sourceTree = "<group>"; };
 		F23500000000000000000001 /* KanjiDetailRestorationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiDetailRestorationTests.swift; sourceTree = "<group>"; };
 		151000000000000000000005 /* ZenbuJapaneseTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ZenbuJapaneseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -113,6 +115,7 @@
 			isa = PBXGroup;
 			children = (
 				F25200000000000000000001 /* issue251-morphology-confirmation-holdout-v1.json */,
+				F25200000000000000000005 /* issue251-morphology-hard-cases-v1.json */,
 				151000000000000000000010 /* ExampleSentenceRetrieval-v1-summary.tsv */,
 				151000000000000000000011 /* ExampleSentenceRetrieval-v1-rows.tsv */,
 			);
@@ -281,6 +284,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F25200000000000000000002 /* issue251-morphology-confirmation-holdout-v1.json in Resources */,
+				F25200000000000000000006 /* issue251-morphology-hard-cases-v1.json in Resources */,
 				15100000000000000000000E /* ExampleSentenceRetrieval-v1-summary.tsv in Resources */,
 				15100000000000000000000F /* ExampleSentenceRetrieval-v1-rows.tsv in Resources */,
 			);
