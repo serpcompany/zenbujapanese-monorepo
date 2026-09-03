@@ -41,10 +41,10 @@ Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
 provider except for the bounded bundled-provider cold-relaunch journey. The
 merge-candidate workflow invokes and retains both correctness plans.
 
-After #258, the exact inventory contains 281 tests. `ZenbuPR` includes 275
-(88 Unit and 187 UI), `ZenbuSudachiIntegration` includes three network-backed
-Unit tests, and the six exact `ZenbuPR` exclusions are those three integration
-tests, one performance-only Unit test, and two physical/system HIL journeys.
+After #247, the exact inventory contains 316 tests. `ZenbuPR` includes 309
+(112 Unit and 197 UI), `ZenbuSudachiIntegration` includes three network-backed
+Unit tests, and the seven exact `ZenbuPR` exclusions are those three integration
+tests, one performance-only Unit test, and three physical/system HIL journeys.
 
 The complete suite is not repeated after merge when the merge-queue SHA already
 passed. The manual breadth workflow has no schedule because iOS changes are

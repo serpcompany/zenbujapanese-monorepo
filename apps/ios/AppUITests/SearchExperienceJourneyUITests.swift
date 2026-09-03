@@ -1797,7 +1797,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let kanjiPrimary = app.buttons["result.kanji-primary.薮"]
     XCTAssertTrue(kanjiPrimary.waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["Best Matches"].exists)
-    let wordRow = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 2"))
+    let wordRow = app.buttons.matching(NSPredicate(format: "value BEGINSWITH %@", "Best match 2"))
       .firstMatch
     XCTAssertTrue(wordRow.exists)
     XCTAssertTrue(wordRow.label.contains("藪"))
@@ -2180,8 +2180,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     XCTAssertEqual(searchField.value as? String, "もんだい")
     XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10))
-    let restoredLeader = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
-      .firstMatch
+    let restoredLeader = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
+    )
+    .firstMatch
     XCTAssertTrue(restoredLeader.waitForExistence(timeout: 3))
     XCTAssertTrue(restoredLeader.label.contains("問題"))
     XCTAssertTrue(app.staticTexts["Additional Matches"].exists)
@@ -2376,8 +2378,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     )
     XCTAssertEqual(XCTWaiter.wait(for: [normalized], timeout: 3), .completed)
     XCTAssertFalse(refinement.exists)
-    let refinedLeader = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
-      .firstMatch
+    let refinedLeader = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
+    )
+    .firstMatch
     guard refinedLeader.waitForExistence(timeout: 8) else {
       XCTFail("Expected reranked Japanese results after selecting the captured refinement")
       return
@@ -2408,21 +2412,24 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       object: searchField
     )
     XCTAssertEqual(XCTWaiter.wait(for: [normalized], timeout: 3), .completed)
-    let refinedLeader = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
-      .firstMatch
+    let refinedLeader = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
+    )
+    .firstMatch
     XCTAssertTrue(refinedLeader.waitForExistence(timeout: 3))
     XCTAssertTrue(refinedLeader.label.contains("日本"))
     let japan = app.buttons["result.japan"]
-    XCTAssertEqual(japan.value as? String, "Best match 1")
+    XCTAssertTrue((japan.value as? String)?.hasPrefix("Best match 1") == true)
     let additionalLeader = app.buttons.matching(
       NSPredicate(
-        format: "value == %@ AND label BEGINSWITH %@", "Additional match 1", "二本, にほん,"
+        format: "value BEGINSWITH %@ AND label BEGINSWITH %@", "Additional match 1", "二本, にほん,"
       )
     ).firstMatch
     XCTAssertTrue(additionalLeader.waitForExistence(timeout: 5))
     XCTAssertTrue(additionalLeader.label.hasPrefix("二本, にほん,"))
     XCTAssertFalse(
-      app.buttons.matching(NSPredicate(format: "value == %@", "Best match 2")).firstMatch.exists
+      app.buttons.matching(NSPredicate(format: "value BEGINSWITH %@", "Best match 2")).firstMatch
+        .exists
     )
     XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
     recordScreenshot(named: "search-results-refined-japanese-nihon", app: app)
@@ -2528,6 +2535,45 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testSearchRowsShowExactActiveFrequencyRankAndHonestMissingState() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    for appearance in [XCUIDevice.Appearance.light, .dark] {
+      XCUIDevice.shared.appearance = appearance
+      let app = launchApp(additionalArguments: ["-ResetFrequencyPacks"])
+      let searchField = app.textFields["search.field"]
+      XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+
+      submitSearch("日本", in: app, searchField: searchField)
+
+      let best = app.buttons["result.japan"]
+      XCTAssertTrue(best.waitForExistence(timeout: 3))
+      let loadedRank = XCTNSPredicateExpectation(
+        predicate: NSPredicate(
+          format: "value == %@", "Best match 1, Frequency rank 115"),
+        object: best
+      )
+      XCTAssertEqual(XCTWaiter.wait(for: [loadedRank], timeout: 3), .completed)
+      XCTAssertFalse(best.value.debugDescription.contains("TUBELEX"))
+      XCTAssertFalse(best.value.debugDescription.contains("YouTube"))
+      XCTAssertFalse(best.value.debugDescription.contains("Tier"))
+
+      let missingRank = app.buttons.matching(
+        NSPredicate(
+          format: "value CONTAINS %@",
+          "The active frequency dictionary has no rank for this entry")
+      ).firstMatch
+      XCTAssertTrue(missingRank.exists)
+      XCTAssertTrue(app.staticTexts["Best Matches"].exists)
+      XCTAssertTrue(app.staticTexts["Additional Matches"].exists)
+      recordScreenshot(
+        named: "search-results-exact-frequency-ranks-\(appearance)", app: app)
+      app.terminate()
+    }
+  }
+
+  @MainActor
   func testHelloRanksTheJapaneseGreetingAheadOfTheLoanwordAndSubstringNoise() throws {
     let app = launchApp()
     let searchField = app.textFields["search.field"]
@@ -2535,7 +2581,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     searchField.tap()
     searchField.typeText("hello")
 
-    let first = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1")).firstMatch
+    let first = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
+    ).firstMatch
     XCTAssertTrue(first.waitForExistence(timeout: 3))
     XCTAssertTrue(first.label.hasPrefix("今日は, こんにちは,"), first.label)
     XCTAssertTrue(resultButton(headword: "ハロー", in: app).exists)
@@ -2552,8 +2600,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     searchField.tap()
     searchField.typeText("hello")
 
-    let greeting = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
-      .firstMatch
+    let greeting = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
+    )
+    .firstMatch
     XCTAssertTrue(greeting.waitForExistence(timeout: 3))
     greeting.tap()
 
@@ -2582,7 +2632,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("hello")
-    app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1")).firstMatch.tap()
+    app.buttons.matching(NSPredicate(format: "value BEGINSWITH %@", "Best match 1")).firstMatch
+      .tap()
 
     let detail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
@@ -3895,6 +3946,17 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["Rank, #1,423"].exists)
     XCTAssertTrue(app.staticTexts["Percentile, Top 0.25%"].exists)
     XCTAssertTrue(app.staticTexts["Version, 2022-10-20"].exists)
+
+    app.buttons["Done"].tap()
+    tapNativeBack(in: app)
+    let switchedSearchRow = resultButton(headword: "見る", in: app)
+    let switchedRank = XCTNSPredicateExpectation(
+      predicate: NSPredicate(
+        format: "value == %@", "Best match 1, Frequency rank 1,423"),
+      object: switchedSearchRow
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [switchedRank], timeout: 5), .completed)
+    XCTAssertFalse(switchedSearchRow.value.debugDescription.contains("Wikipedia"))
   }
 
   @MainActor
@@ -4195,8 +4257,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
-    let primaryResult = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
-      .firstMatch
+    let primaryResult = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
+    )
+    .firstMatch
     XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
     primaryResult.tap()
 
@@ -4303,8 +4367,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
-    let primaryResult = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
-      .firstMatch
+    let primaryResult = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
+    )
+    .firstMatch
     XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
     primaryResult.tap()
 
@@ -4342,8 +4408,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
-    let primaryResult = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
-      .firstMatch
+    let primaryResult = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
+    )
+    .firstMatch
     XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
     primaryResult.tap()
 
@@ -4799,8 +4867,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
-    let primaryResult = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
-      .firstMatch
+    let primaryResult = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
+    )
+    .firstMatch
     XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
     primaryResult.tap()
     let detail = app.collectionViews["word-detail.screen"]
@@ -4844,8 +4914,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
-    let primaryResult = app.buttons.matching(NSPredicate(format: "value == %@", "Best match 1"))
-      .firstMatch
+    let primaryResult = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
+    )
+    .firstMatch
     XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
     XCTAssertTrue(primaryResult.label.contains("いる"))
     primaryResult.tap()
@@ -5829,7 +5901,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   private func representativeRanking(in app: XCUIApplication) -> [String] {
     ["Best match 1", "Additional match 1", "Additional match 2"].map { rank in
-      let result = app.buttons.matching(NSPredicate(format: "value == %@", rank)).firstMatch
+      let result = app.buttons.matching(NSPredicate(format: "value BEGINSWITH %@", rank)).firstMatch
       XCTAssertTrue(result.waitForExistence(timeout: 2), "Missing representative result at \(rank)")
       return result.label
     }

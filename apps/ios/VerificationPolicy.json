@@ -90,6 +90,18 @@
       "traits": ["deterministic"],
       "journeys": ["romaji-mixed-input"]
     },
+    "unit.search-frequency-rank": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseTests/FrequencyPackTests/testSearchFrequencyRankPresentationUsesExactProviderNeutralRank",
+      "traits": ["deterministic"],
+      "journeys": ["search-frequency-rank"]
+    },
+    "unit.search-frequency-batch": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseTests/FrequencyPackTests/testSearchFrequencyCapabilityLooksUpVisibleRanksInOneBatch",
+      "traits": ["deterministic"],
+      "journeys": ["search-frequency-batch"]
+    },
     "ui.reading-aids": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testReadingAidToggleHidesOnlyFuriganaAndPersistsAcrossColdRelaunch",
@@ -131,6 +143,18 @@
       "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testEnglishQueryReturnsRankedDictionaryResults",
       "traits": ["ui", "normal-dynamic-type"],
       "journeys": ["search-ranking"]
+    },
+    "ui.search-frequency-rank": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSearchRowsShowExactActiveFrequencyRankAndHonestMissingState",
+      "traits": ["ui", "normal-dynamic-type", "deterministic"],
+      "journeys": ["search-frequency-rank"]
+    },
+    "ui.search-frequency-switch": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSwitchingToPinnedWikipediaKeepsInlineFrequencyProviderNeutral",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["frequency-pack-switch"]
     },
     "ui.recent-search": {
       "plan": "ZenbuPR",
@@ -238,6 +262,12 @@
       "traits": ["accessibility", "accessibility-maximum"],
       "journeys": ["accessibility-adaptive-layout"]
     },
+    "accessibility.search-frequency-rank": {
+      "plan": "ZenbuAccessibility",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightSearchFrequencyRankRemainsReadableAtLargestAccessibilityTextSize",
+      "traits": ["accessibility", "accessibility-maximum"],
+      "journeys": ["search-frequency-rank-adaptive"]
+    },
     "accessibility.japanese-text-analysis-settings": {
       "plan": "ZenbuAccessibility",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testJapaneseTextAnalysisManagementRemainsReachableAtLargestAccessibilityTextSize",
@@ -285,7 +315,9 @@
       "unit.japanese-text-analysis",
       "unit.bundled-japanese-text-analysis",
       "unit.reading-aids",
-      "unit.reading-aids-mixed-input"
+      "unit.reading-aids-mixed-input",
+      "unit.search-frequency-rank",
+      "unit.search-frequency-batch"
     ],
     "ui": [
       "ui.shell",
@@ -295,6 +327,8 @@
       "ui.encounter-media",
       "ui.search-input",
       "ui.search-ranking",
+      "ui.search-frequency-rank",
+      "ui.search-frequency-switch",
       "ui.recent-search",
       "ui.image-text",
       "ui.image-text-translation-assets",
@@ -314,6 +348,7 @@
       "accessibility.image-actions",
       "accessibility.image-translation-recovery",
       "accessibility.search-layout",
+      "accessibility.search-frequency-rank",
       "accessibility.japanese-text-analysis-settings"
     ],
     "integration": ["integration.sudachi"],
@@ -466,17 +501,31 @@
     },
     "search-presentation": {
       "paths": ["apps/ios/Modules/Sources/SearchExperience/SearchView.swift"],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
+        "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift",
+        "apps/ios/Modules/Sources/SearchExperience/FrequencyPack.swift",
+        "apps/ios/Modules/Sources/SearchExperience/FrequencyPackManager.swift",
+        "apps/ios/Modules/Sources/SearchExperience/SearchExperienceRootView.swift",
+        "apps/ios/Modules/Tests/SearchExperienceTests/FrequencyPackTests.swift",
+        "apps/ios/VerificationPolicy.json"
+      ],
       "adaptive_layout": true,
-      "tdd": ["ui.search-ranking"],
+      "tdd": ["ui.search-frequency-rank"],
       "issue-final": [
         "unit.complete",
+        "ui.search-input",
         "ui.search-ranking",
-        "accessibility.search-layout"
+        "ui.search-frequency-rank",
+        "ui.search-frequency-switch",
+        "accessibility.search-frequency-rank"
       ],
       "hosted-fast": [
         "unit.complete",
+        "ui.search-input",
         "ui.search-ranking",
-        "accessibility.search-layout"
+        "ui.search-frequency-rank",
+        "accessibility.search-frequency-rank"
       ]
     },
     "lookup-runtime": {

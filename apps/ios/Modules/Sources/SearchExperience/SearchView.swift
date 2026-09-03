@@ -11,6 +11,8 @@ struct SearchView: View {
   let cameraAuthorizationClient: CameraAuthorizationClient
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
+  let frequencyCapability: FrequencyCapability
+  let frequencyRefreshID: Int
   let openImageText: ([ImageTextAsset]) -> Void
   @State private var results = LookupSearchResults.empty
   @State private var presentationState = SearchPresentationState.idle
@@ -65,6 +67,8 @@ struct SearchView: View {
           results: results,
           exampleCount: exampleCount,
           showsAdditionalMatches: sparseRadicalQuery != searchQuery,
+          frequencyCapability: frequencyCapability,
+          frequencyRefreshID: frequencyRefreshID,
           selectRefinement: selectRefinement
         )
         .id(
@@ -616,7 +620,10 @@ private struct SearchResultsView: View {
   let results: LookupSearchResults
   let exampleCount: Int
   let showsAdditionalMatches: Bool
+  let frequencyCapability: FrequencyCapability
+  let frequencyRefreshID: Int
   let selectRefinement: (SearchRefinement) -> Void
+  @State private var frequencyResults: [LanguageReferenceID: FrequencyLookupResult] = [:]
 
   var body: some View {
     List {
@@ -654,7 +661,11 @@ private struct SearchResultsView: View {
           ForEach(
             (results.best + results.additional).prefix(12).enumerated(), id: \.element.id
           ) { index, entry in
-            ResultRow(entry: entry, marker: .additional, rank: .discovered(index + 1))
+            ResultRow(
+              entry: entry,
+              frequencyResult: frequencyResults[entry.id],
+              rank: .discovered(index + 1)
+            )
           }
         }
       } else if query.isSingleKanji || !results.best.isEmpty {
@@ -664,7 +675,9 @@ private struct SearchResultsView: View {
           }
           ForEach(results.best.enumerated(), id: \.element.id) { index, entry in
             ResultRow(
-              entry: entry, marker: .best, rank: .best(index + (query.isSingleKanji ? 2 : 1))
+              entry: entry,
+              frequencyResult: frequencyResults[entry.id],
+              rank: .best(index + (query.isSingleKanji ? 2 : 1))
             )
           }
         }
@@ -673,7 +686,11 @@ private struct SearchResultsView: View {
       if showsAdditionalMatches, results.presentation == .ranked, !results.additional.isEmpty {
         Section("Additional Matches") {
           ForEach(results.additional.enumerated(), id: \.element.id) { index, entry in
-            ResultRow(entry: entry, marker: .additional, rank: .additional(index + 1))
+            ResultRow(
+              entry: entry,
+              frequencyResult: frequencyResults[entry.id],
+              rank: .additional(index + 1)
+            )
           }
         }
       }
@@ -681,6 +698,19 @@ private struct SearchResultsView: View {
     .listStyle(.plain)
     .id(query)
     .accessibilityIdentifier("search.results")
+    .task(id: frequencyTaskID) {
+      frequencyResults = [:]
+      do {
+        let loaded = try await frequencyCapability.evidence(for: displayedEntryIDs)
+        try Task.checkCancellation()
+        frequencyResults = loaded
+      } catch is CancellationError {
+        return
+      } catch {
+        frequencyResults = FrequencyLookupResult.unavailableResults(
+          for: displayedEntryIDs, pack: nil, reason: "Frequency data unavailable")
+      }
+    }
   }
 
   private var primaryKanjiEntry: DictionaryEntry? {
@@ -690,6 +720,19 @@ private struct SearchResultsView: View {
   private var exampleActionTitle: String {
     if exampleCount > 50 { return "View 50+ Example Sentences" }
     return "View \(exampleCount) Example \(exampleCount == 1 ? "Sentence" : "Sentences")"
+  }
+
+  private var displayedEntryIDs: [LanguageReferenceID] {
+    let entries =
+      results.presentation == .discoveredWords
+      ? Array((results.best + results.additional).prefix(12))
+      : results.best + (showsAdditionalMatches ? results.additional : [])
+    var seen = Set<LanguageReferenceID>()
+    return entries.compactMap { seen.insert($0.id).inserted ? $0.id : nil }
+  }
+
+  private var frequencyTaskID: SearchFrequencyTaskID {
+    SearchFrequencyTaskID(entryIDs: displayedEntryIDs, refreshID: frequencyRefreshID)
   }
 }
 
@@ -721,34 +764,55 @@ private struct KanjiPrimaryRow: View {
 }
 
 private struct ResultRow: View {
-  enum Marker {
-    case best
-    case additional
-  }
-
   let entry: DictionaryEntry
-  let marker: Marker
+  let frequencyResult: FrequencyLookupResult?
   let rank: ResultRank
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
   var body: some View {
     NavigationLink(value: SearchExperienceRoute.word(entry, nil)) {
-      HStack(alignment: .top, spacing: 10) {
-        markerView
-          .frame(width: 24)
-        VStack(alignment: .leading, spacing: 5) {
-          titleBlock
-          Text(entry.summary)
-            .font(.body)
-            .foregroundStyle(.primary)
-            .fixedSize(horizontal: false, vertical: true)
+      Group {
+        if dynamicTypeSize.isAccessibilitySize {
+          VStack(alignment: .leading, spacing: 5) {
+            frequencyRank
+            entryContent
+          }
+        } else {
+          HStack(alignment: .top, spacing: 10) {
+            frequencyRank
+              .frame(minWidth: 54, alignment: .leading)
+            entryContent
+          }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
       }
       .contentShape(Rectangle())
     }
     .accessibilityLabel("\(entry.headword), \(entry.reading), \(entry.summary)")
-    .accessibilityValue(rank.accessibilityValue)
+    .accessibilityValue("\(rank.accessibilityValue), \(frequencyPresentation.accessibilityValue)")
     .accessibilityIdentifier(resultIdentifier)
+  }
+
+  private var entryContent: some View {
+    VStack(alignment: .leading, spacing: 5) {
+      titleBlock
+      Text(entry.summary)
+        .font(.body)
+        .foregroundStyle(.primary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+
+  private var frequencyRank: some View {
+    Text(frequencyPresentation.text)
+      .font(.caption.monospacedDigit())
+      .foregroundStyle(.secondary)
+      .fixedSize(horizontal: false, vertical: true)
+      .accessibilityHidden(true)
+  }
+
+  private var frequencyPresentation: SearchFrequencyRankPresentationModel {
+    SearchFrequencyRankPresentationModel(result: frequencyResult)
   }
 
   private var titleBlock: some View {
@@ -768,23 +832,11 @@ private struct ResultRow: View {
     default: "result.\(entry.id.rawValue)"
     }
   }
+}
 
-  @ViewBuilder
-  private var markerView: some View {
-    switch marker {
-    case .best:
-      Circle()
-        .stroke(.primary, lineWidth: 1.2)
-        .frame(width: 17, height: 17)
-        .accessibilityHidden(true)
-    case .additional:
-      Rectangle()
-        .stroke(.primary, lineWidth: 1.2)
-        .frame(width: 13, height: 13)
-        .rotationEffect(.degrees(45))
-        .accessibilityHidden(true)
-    }
-  }
+private struct SearchFrequencyTaskID: Hashable {
+  let entryIDs: [LanguageReferenceID]
+  let refreshID: Int
 }
 
 private enum ResultRank {

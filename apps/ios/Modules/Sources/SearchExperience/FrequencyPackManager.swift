@@ -273,6 +273,15 @@ actor FrequencyPackManager {
   }
 
   func evidence(for id: LanguageReferenceID) throws -> FrequencyLookupResult {
+    guard let result = try evidence(for: [id])[id] else {
+      throw FrequencyPackError.invalidArtifact
+    }
+    return result
+  }
+
+  func evidence(for ids: [LanguageReferenceID]) throws
+    -> [LanguageReferenceID: FrequencyLookupResult]
+  {
     guard let catalogManifest = catalog.packs.first(where: { $0.packID == activePackID }) else {
       throw FrequencyPackError.invalidCatalog
     }
@@ -280,11 +289,10 @@ actor FrequencyPackManager {
     do {
       return try FrequencyPackArtifact(
         url: artifactURL(for: manifest), manifest: manifest
-      ).evidence(for: id)
+      ).evidence(for: ids)
     } catch {
-      return .unavailable(
-        FrequencyPackUnavailable(
-          pack: manifest.disclosure, reason: "Frequency data unavailable"))
+      return FrequencyLookupResult.unavailableResults(
+        for: ids, pack: manifest.disclosure, reason: "Frequency data unavailable")
     }
   }
 

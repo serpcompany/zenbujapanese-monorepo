@@ -3,6 +3,7 @@ import SwiftUI
 public struct SearchExperienceRootView: View {
   @State private var readingAidPreferences = ReadingAidPreferences()
   @State private var selectedTab = SearchExperienceTab.search
+  @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
   @State private var youPath: [YouRoute] = []
   @State private var query = ""
@@ -162,6 +163,11 @@ public struct SearchExperienceRootView: View {
           .accessibilityIdentifier("tab.you")
       }
     }
+    .onChange(of: selectedTab) { previous, current in
+      if previous != .search, current == .search {
+        frequencyRefreshID += 1
+      }
+    }
   }
 
   private var searchNavigation: some View {
@@ -174,6 +180,8 @@ public struct SearchExperienceRootView: View {
         cameraAuthorizationClient: cameraAuthorizationClient,
         radicalLookupClient: .live,
         exampleSentenceClient: exampleSentenceClient,
+        frequencyCapability: .live,
+        frequencyRefreshID: frequencyRefreshID,
         openImageText: { assets in
           let session = ImageTextSession(assets: assets)
           imageTextSessionStore.insert(session)

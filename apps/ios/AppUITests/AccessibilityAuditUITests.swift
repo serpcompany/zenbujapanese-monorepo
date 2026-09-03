@@ -519,7 +519,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     )
     try submitSearch("いる", in: app)
     let primaryResult = app.buttons.matching(
-      NSPredicate(format: "value == %@", "Best match 1")
+      NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
     ).firstMatch
     XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
     primaryResult.tap()
@@ -1093,6 +1093,38 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testLightSearchFrequencyRankRemainsReadableAtLargestAccessibilityTextSize() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    try submitSearch("日本", in: app)
+
+    let resultSurface = app.descendants(matching: .any)["search.results"]
+    XCTAssertTrue(resultSurface.waitForExistence(timeout: 3))
+    let japan = app.buttons["result.japan"]
+    for _ in 0..<8 where !japan.exists || !japan.isHittable {
+      resultSurface.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(japan.waitForExistence(timeout: 3))
+    XCTAssertTrue(japan.isHittable)
+    let loadedRank = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "Best match 1, Frequency rank 115"),
+      object: japan
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [loadedRank], timeout: 3), .completed)
+    XCTAssertGreaterThan(japan.frame.height, 52)
+    XCTAssertTrue(japan.label.hasPrefix("日本, にほん,"))
+    retainElementScreenshot(japan, named: "Exact frequency rank at Accessibility XXXL")
+  }
+
+  @MainActor
   private func auditSearchResultsAtLargestAccessibilityTextSize(
     appearance: XCUIDevice.Appearance
   ) throws {
@@ -1124,7 +1156,11 @@ final class AccessibilityAuditUITests: XCTestCase {
     }
     XCTAssertTrue(japan.waitForExistence(timeout: 3))
     XCTAssertTrue(japan.isHittable)
-    XCTAssertEqual(japan.value as? String, "Best match 1")
+    let loadedRank = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "Best match 1, Frequency rank 115"),
+      object: japan
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [loadedRank], timeout: 3), .completed)
     XCTAssertGreaterThan(japan.frame.height, 52)
     XCTAssertTrue(japan.label.hasPrefix("日本, にほん,"))
   }

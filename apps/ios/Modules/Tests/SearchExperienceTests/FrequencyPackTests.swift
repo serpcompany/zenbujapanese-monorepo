@@ -161,6 +161,53 @@ final class FrequencyPackTests: XCTestCase {
     XCTAssertEqual(evidence.topPercentDisplay, "Top 3.27%")
   }
 
+  func testSearchFrequencyRankPresentationUsesExactProviderNeutralRank() async throws {
+    let capability = try FrequencyCapability.freshBundledTUBELEX()
+    let high = LanguageReferenceID(rawValue: "7f490a9c9c0da94f4e9474f4efe74be1")
+    let middle = LanguageReferenceID(rawValue: "c89bc8d79270f34f8646a9661817fc20")
+    let low = LanguageReferenceID(rawValue: "701c481353d7c78713fe4f9cdf86ccbc")
+    let missing = LanguageReferenceID(rawValue: "df87bd3681d3cb3d33d2aa1e2987d460")
+
+    let results = try await capability.evidence(for: [high, middle, low, missing])
+    let presentations = [high, middle, low, missing].map {
+      SearchFrequencyRankPresentationModel(result: results[$0])
+    }
+
+    XCTAssertEqual(presentations.map(\.text), ["#41", "#11,497", "#175,722", "—"])
+    XCTAssertEqual(
+      presentations.map(\.accessibilityValue),
+      [
+        "Frequency rank 41",
+        "Frequency rank 11,497",
+        "Frequency rank 175,722",
+        "The active frequency dictionary has no rank for this entry",
+      ])
+    XCTAssertFalse(presentations.map(\.accessibilityValue).joined().contains("TUBELEX"))
+    XCTAssertFalse(presentations.map(\.accessibilityValue).joined().contains("YouTube"))
+  }
+
+  func testSearchFrequencyCapabilityLooksUpVisibleRanksInOneBatch() async throws {
+    let requested = FrequencyBatchLookupProbe()
+    let first = LanguageReferenceID(rawValue: "first")
+    let second = LanguageReferenceID(rawValue: "second")
+    let capability = FrequencyCapability(batchLookup: { identifiers in
+      await requested.record(identifiers)
+      return [
+        first: .evidence(frequencyEvidence(rank: 41)),
+        second: .noEvidence(pack: tubelexDisclosure),
+      ]
+    })
+
+    let results = try await capability.evidence(for: [first, second])
+    let callCount = await requested.callCount
+    let identifiers = await requested.identifiers
+
+    XCTAssertEqual(callCount, 1)
+    XCTAssertEqual(identifiers, [first, second])
+    XCTAssertEqual(results[first]?.evidence?.rank, 41)
+    XCTAssertEqual(results[second], .noEvidence(pack: tubelexDisclosure))
+  }
+
   func testOptionalPackDownloadActivateOfflineRemoveAndRelaunch() async throws {
     let fixture = try FrequencyLifecycleFixture()
     let downloadState = FrequencyDownloadState(data: fixture.optionalSource)
@@ -700,6 +747,34 @@ private func xctAssertThrowsErrorAsync(
     try await expression()
     XCTFail("Expected error", file: file, line: line)
   } catch {}
+}
+
+private func frequencyEvidence(rank: Int) -> FrequencyEvidence {
+  FrequencyEvidence(
+    pack: tubelexDisclosure,
+    languageReferenceID: LanguageReferenceID(rawValue: "fixture"),
+    rank: rank,
+    coveredSourceRows: 351_453,
+    sourceCount: 501,
+    sourceTotalTokens: 165_721_393,
+    sourceDocuments: nil,
+    sourceVideos: 100_660,
+    sourceChannels: 30_550,
+    matchedForm: "蝶々",
+    sourcePartOfSpeech: "名詞-普通名詞-一般",
+    sourceRecordDigest: "fixture-digest",
+    mappingRelation: .uniqueFormFallback
+  )
+}
+
+private actor FrequencyBatchLookupProbe {
+  private(set) var callCount = 0
+  private(set) var identifiers: [LanguageReferenceID] = []
+
+  func record(_ identifiers: [LanguageReferenceID]) {
+    callCount += 1
+    self.identifiers = identifiers
+  }
 }
 
 extension Array {

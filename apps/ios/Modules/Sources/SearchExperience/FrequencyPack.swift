@@ -31,21 +31,37 @@ import SQLite3
 #endif
 
 struct FrequencyCapability: Sendable {
-  private let lookup: @Sendable (LanguageReferenceID) async throws -> FrequencyLookupResult
+  private let batchLookup:
+    @Sendable ([LanguageReferenceID]) async throws -> [LanguageReferenceID: FrequencyLookupResult]
 
   init(
-    lookup: @escaping @Sendable (LanguageReferenceID) async throws -> FrequencyLookupResult
+    batchLookup:
+      @escaping @Sendable ([LanguageReferenceID]) async throws
+      -> [LanguageReferenceID: FrequencyLookupResult]
   ) {
-    self.lookup = lookup
+    self.batchLookup = batchLookup
   }
 
   func evidence(for id: LanguageReferenceID) async throws -> FrequencyLookupResult {
-    try await lookup(id)
+    guard let result = try await batchLookup([id])[id] else {
+      throw FrequencyPackError.invalidArtifact
+    }
+    return result
   }
 
-  static let live = FrequencyCapability { id in
-    try await FrequencyPackStore.shared.evidence(for: id)
+  func evidence(for ids: [LanguageReferenceID]) async throws
+    -> [LanguageReferenceID: FrequencyLookupResult]
+  {
+    let results = try await batchLookup(ids)
+    guard ids.allSatisfy({ results[$0] != nil }) else {
+      throw FrequencyPackError.invalidArtifact
+    }
+    return results
   }
+
+  static let live = FrequencyCapability(batchLookup: { ids in
+    try await FrequencyPackStore.shared.evidence(for: ids)
+  })
 
   static func freshBundledTUBELEX() throws -> FrequencyCapability {
     guard
@@ -59,7 +75,7 @@ struct FrequencyCapability: Sendable {
       throw FrequencyPackError.invalidCatalog
     }
     let artifact = try FrequencyPackArtifact(url: url, manifest: manifest)
-    return FrequencyCapability { id in try artifact.evidence(for: id) }
+    return FrequencyCapability(batchLookup: { ids in try artifact.evidence(for: ids) })
   }
 }
 
@@ -81,6 +97,18 @@ enum FrequencyLookupResult: Equatable, Sendable {
   case evidence(FrequencyEvidence)
   case noEvidence(pack: FrequencyPackDisclosure)
   case unavailable(FrequencyPackUnavailable)
+
+  static func unavailableResults(
+    for ids: [LanguageReferenceID],
+    pack: FrequencyPackDisclosure?,
+    reason: String
+  ) -> [LanguageReferenceID: FrequencyLookupResult] {
+    var results: [LanguageReferenceID: FrequencyLookupResult] = [:]
+    for id in ids {
+      results[id] = .unavailable(FrequencyPackUnavailable(pack: pack, reason: reason))
+    }
+    return results
+  }
 }
 
 struct FrequencyPackUnavailable: Equatable, Sendable {
@@ -152,6 +180,29 @@ struct FrequencyPresentationModel: Equatable, Sendable {
       rankText = nil
       percentileText = nil
       explanation = unavailable.reason
+    }
+  }
+}
+
+struct SearchFrequencyRankPresentationModel: Equatable, Sendable {
+  let text: String
+  let accessibilityValue: String
+
+  init(result: FrequencyLookupResult?) {
+    switch result {
+    case nil:
+      text = "—"
+      accessibilityValue = "Frequency rank loading"
+    case .evidence(let evidence):
+      let rank = evidence.rank.formatted(.number.locale(Locale(identifier: "en_US")))
+      text = "#\(rank)"
+      accessibilityValue = "Frequency rank \(rank)"
+    case .noEvidence:
+      text = "—"
+      accessibilityValue = "The active frequency dictionary has no rank for this entry"
+    case .unavailable:
+      text = "—"
+      accessibilityValue = "Frequency rank unavailable"
     }
   }
 }
@@ -302,13 +353,23 @@ struct FrequencyPackArtifact: Sendable {
   }
 
   func evidence(for id: LanguageReferenceID) throws -> FrequencyLookupResult {
+    guard let result = try evidence(for: [id])[id] else {
+      throw FrequencyPackError.invalidArtifact
+    }
+    return result
+  }
+
+  func evidence(for ids: [LanguageReferenceID]) throws
+    -> [LanguageReferenceID: FrequencyLookupResult]
+  {
+    guard !ids.isEmpty else { return [:] }
     var database: OpaquePointer?
     guard sqlite3_open_v2(url.path, &database, SQLITE_OPEN_READONLY, nil) == SQLITE_OK,
       let database
     else {
       if let database { sqlite3_close(database) }
-      return .unavailable(
-        FrequencyPackUnavailable(pack: manifest.disclosure, reason: "Pack unavailable"))
+      return FrequencyLookupResult.unavailableResults(
+        for: ids, pack: manifest.disclosure, reason: "Pack unavailable")
     }
     defer { sqlite3_close(database) }
     var statement: OpaquePointer?
@@ -327,37 +388,43 @@ struct FrequencyPackArtifact: Sendable {
       throw FrequencyPackError.sqlite(String(cString: sqlite3_errmsg(database)))
     }
     defer { sqlite3_finalize(statement) }
-    sqlite3_bind_text(statement, 1, id.rawValue, -1, Self.transientDestructor)
-    switch sqlite3_step(statement) {
-    case SQLITE_DONE:
-      return .noEvidence(pack: manifest.disclosure)
-    case SQLITE_ROW:
-      guard
-        let relation = FrequencyEvidence.MappingRelation(
-          rawValue: Self.string(statement, 3))
-      else {
-        throw FrequencyPackError.invalidArtifact
-      }
-      return .evidence(
-        FrequencyEvidence(
-          pack: manifest.disclosure,
-          languageReferenceID: id,
-          rank: Int(sqlite3_column_int64(statement, 0)),
-          coveredSourceRows: Int(sqlite3_column_int64(statement, 2)),
-          sourceCount: Int(sqlite3_column_int64(statement, 1)),
-          sourceTotalTokens: manifest.sourceTotalTokens,
-          sourceDocuments: manifest.corpusDocuments,
-          sourceVideos: manifest.corpusVideos,
-          sourceChannels: manifest.corpusChannels,
-          matchedForm: Self.string(statement, 4),
-          sourcePartOfSpeech: Self.string(statement, 5).nilIfEmpty,
-          sourceRecordDigest: Self.string(statement, 6),
-          mappingRelation: relation
+    var results: [LanguageReferenceID: FrequencyLookupResult] = [:]
+    for id in ids {
+      sqlite3_reset(statement)
+      sqlite3_clear_bindings(statement)
+      sqlite3_bind_text(statement, 1, id.rawValue, -1, Self.transientDestructor)
+      switch sqlite3_step(statement) {
+      case SQLITE_DONE:
+        results[id] = .noEvidence(pack: manifest.disclosure)
+      case SQLITE_ROW:
+        guard
+          let relation = FrequencyEvidence.MappingRelation(
+            rawValue: Self.string(statement, 3))
+        else {
+          throw FrequencyPackError.invalidArtifact
+        }
+        results[id] = .evidence(
+          FrequencyEvidence(
+            pack: manifest.disclosure,
+            languageReferenceID: id,
+            rank: Int(sqlite3_column_int64(statement, 0)),
+            coveredSourceRows: Int(sqlite3_column_int64(statement, 2)),
+            sourceCount: Int(sqlite3_column_int64(statement, 1)),
+            sourceTotalTokens: manifest.sourceTotalTokens,
+            sourceDocuments: manifest.corpusDocuments,
+            sourceVideos: manifest.corpusVideos,
+            sourceChannels: manifest.corpusChannels,
+            matchedForm: Self.string(statement, 4),
+            sourcePartOfSpeech: Self.string(statement, 5).nilIfEmpty,
+            sourceRecordDigest: Self.string(statement, 6),
+            mappingRelation: relation
+          )
         )
-      )
-    default:
-      throw FrequencyPackError.sqlite(String(cString: sqlite3_errmsg(database)))
+      default:
+        throw FrequencyPackError.sqlite(String(cString: sqlite3_errmsg(database)))
+      }
     }
+    return results
   }
 
   private static func string(_ statement: OpaquePointer, _ column: Int32) -> String {
@@ -439,14 +506,20 @@ private actor FrequencyPackStore {
   }
 
   func evidence(for id: LanguageReferenceID) async throws -> FrequencyLookupResult {
-    guard let manager else {
-      return .unavailable(
-        FrequencyPackUnavailable(
-          pack: nil,
-          reason: "Bundled frequency data unavailable"
-        ))
+    guard let result = try await evidence(for: [id])[id] else {
+      throw FrequencyPackError.invalidArtifact
     }
-    return try await manager.evidence(for: id)
+    return result
+  }
+
+  func evidence(for ids: [LanguageReferenceID]) async throws
+    -> [LanguageReferenceID: FrequencyLookupResult]
+  {
+    guard let manager else {
+      return FrequencyLookupResult.unavailableResults(
+        for: ids, pack: nil, reason: "Bundled frequency data unavailable")
+    }
+    return try await manager.evidence(for: ids)
   }
 
   func snapshot() async throws -> FrequencyPackSnapshot {
