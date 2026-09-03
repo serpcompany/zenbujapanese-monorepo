@@ -7,8 +7,13 @@ import Observation
 final class ImageTextFlowModel {
   enum TranslationState {
     case idle
+    case checkingAvailability
+    case preparing
     case translating
     case translated(String)
+    case cancelled
+    case unsupported
+    case preparationFailed
     case failed
   }
   enum PageState {
@@ -24,6 +29,7 @@ final class ImageTextFlowModel {
   }
 
   private(set) var pages: [Page]
+  private(set) var pendingTranslationPreparation: PendingTranslationPreparation?
   var selectedPage = 0
   var selectedRegion: ImageTextRegion?
   var showsHighlights = true
@@ -99,14 +105,36 @@ final class ImageTextFlowModel {
   func requestTranslation() {
     let source = copiedText
     guard !source.isEmpty else { return }
+    guard case .idle = translationState else { return }
+    guard translationTask == nil else { return }
     let pageID = pages[selectedPage].id
     let invocationID = UUID()
-    translationTask?.cancel()
     translationInvocationID = invocationID
-    translationState = .translating
+    translationState = .checkingAvailability
     translationTask = Task { [translationClient] in
       do {
-        let translation = try await translationClient.translate(source)
+        let availability = try await translationClient.availability()
+        try Task.checkCancellation()
+        guard translationInvocationID == invocationID,
+          pages.indices.contains(selectedPage), pages[selectedPage].id == pageID
+        else { return }
+        guard availability == .installed else {
+          if availability == .downloadable {
+            translationState = .preparing
+            pendingTranslationPreparation = PendingTranslationPreparation(
+              id: invocationID,
+              source: source,
+              pageID: pageID
+            )
+          } else {
+            translationState = .unsupported
+          }
+          translationTask = nil
+          translationInvocationID = nil
+          return
+        }
+        translationState = .translating
+        let translation = try await translationClient.translateInstalled(source)
         try Task.checkCancellation()
         guard translationInvocationID == invocationID,
           pages.indices.contains(selectedPage), pages[selectedPage].id == pageID
@@ -126,10 +154,92 @@ final class ImageTextFlowModel {
     }
   }
 
+  func performPendingTranslationPreparation(
+    using client: NaturalTranslationPreparationClient
+  ) async {
+    guard let pendingTranslationPreparation = claimPendingTranslationPreparation() else { return }
+    do {
+      try await client.prepare()
+      try Task.checkCancellation()
+      guard beginPreparedTranslation(pendingTranslationPreparation) else { return }
+      let translation = try await client.translate(pendingTranslationPreparation.source)
+      try Task.checkCancellation()
+      finishPreparedTranslation(translation, for: pendingTranslationPreparation)
+    } catch is CancellationError {
+      cancelPreparedTranslation(pendingTranslationPreparation)
+    } catch {
+      failPreparedTranslation(pendingTranslationPreparation)
+    }
+  }
+
+  func claimPendingTranslationPreparation(
+    id expectedID: UUID? = nil
+  ) -> PendingTranslationPreparation? {
+    guard case .preparing = translationState,
+      let pendingTranslationPreparation,
+      expectedID == nil || pendingTranslationPreparation.id == expectedID,
+      translationInvocationID == nil
+    else { return nil }
+    translationInvocationID = pendingTranslationPreparation.id
+    return pendingTranslationPreparation
+  }
+
+  @discardableResult
+  func beginPreparedTranslation(_ request: PendingTranslationPreparation) -> Bool {
+    guard isCurrent(request) else { return false }
+    translationState = .translating
+    return true
+  }
+
+  func finishPreparedTranslation(_ translation: String, for request: PendingTranslationPreparation)
+  {
+    guard isCurrent(request) else { return }
+    translationState = .translated(translation)
+    pendingTranslationPreparation = nil
+    translationInvocationID = nil
+  }
+
+  func cancelPreparedTranslation(_ request: PendingTranslationPreparation) {
+    guard isCurrent(request) else { return }
+    translationState = .cancelled
+    pendingTranslationPreparation = nil
+    translationInvocationID = nil
+  }
+
+  func failPreparedTranslation(_ request: PendingTranslationPreparation) {
+    guard isCurrent(request) else { return }
+    translationState = .preparationFailed
+    pendingTranslationPreparation = nil
+    translationInvocationID = nil
+  }
+
+  func retryTranslation() {
+    switch translationState {
+    case .cancelled, .preparationFailed, .failed:
+      translationState = .idle
+      requestTranslation()
+    case .idle, .checkingAvailability, .preparing, .translating, .translated, .unsupported:
+      return
+    }
+  }
+
+  struct PendingTranslationPreparation: Identifiable, Equatable {
+    let id: UUID
+    let source: String
+    let pageID: UUID
+  }
+
+  private func isCurrent(_ request: PendingTranslationPreparation) -> Bool {
+    translationInvocationID == request.id
+      && pages.indices.contains(selectedPage)
+      && pages[selectedPage].id == request.pageID
+  }
+
   func cancelTranslation() {
     translationTask?.cancel()
     translationTask = nil
     translationInvocationID = nil
+    pendingTranslationPreparation = nil
     translationState = .idle
   }
 
@@ -137,7 +247,14 @@ final class ImageTextFlowModel {
     translationTask?.cancel()
     translationTask = nil
     translationInvocationID = nil
+    pendingTranslationPreparation = nil
     if case .translating = translationState {
+      translationState = .idle
+    }
+    if case .preparing = translationState {
+      translationState = .idle
+    }
+    if case .checkingAvailability = translationState {
       translationState = .idle
     }
   }

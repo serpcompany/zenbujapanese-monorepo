@@ -32,6 +32,7 @@ public struct SearchExperienceRootView: View {
   private let japaneseConjugationClient = JapaneseConjugationClient.live
   private let imageTextRecognitionClient: ImageTextRecognitionClient
   private let naturalTranslationClient: NaturalTranslationClient
+  private let imageTextClipboardClient: ImageTextClipboardClient
   #if DEBUG
     private let imageFixtureExportURLs: [URL]
   #endif
@@ -63,6 +64,7 @@ public struct SearchExperienceRootView: View {
       imageTextRecognitionClient =
         ImageTextRecognitionFixture.clientFromProcessArguments(live: .live) ?? .live
       naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live
+      imageTextClipboardClient = ImageTextClipboardClient.clientFromProcessArguments() ?? .live
       imageFixtureExportURLs = ImageTextTestFixtures.exportURLsFromProcessArguments(
         in: imageImportInitialDirectory)
       _exportsImageFixtures = State(initialValue: !imageFixtureExportURLs.isEmpty)
@@ -84,6 +86,7 @@ public struct SearchExperienceRootView: View {
       kanjiElementLookupClient = .live
       imageTextRecognitionClient = .live
       naturalTranslationClient = .live
+      imageTextClipboardClient = .live
     #endif
   }
 
@@ -231,6 +234,7 @@ public struct SearchExperienceRootView: View {
               recognitionClient: imageTextRecognitionClient,
               textAnalysisClient: japaneseTextAnalysisClient,
               translationClient: naturalTranslationClient,
+              clipboardClient: imageTextClipboardClient,
               close: {
                 if path.last == .image(sessionID) { path.removeLast() }
                 imageTextSessionStore.remove(sessionID)

@@ -831,6 +831,36 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testTranslationRecoveryRemainsReachableAtLargestAccessibilityTextSize() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: [
+        "-StartImageTextFixtures", "fixture-clear-horizontal.png",
+        "-InjectImageTextTranslationCancelled",
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    XCTAssertTrue(app.buttons["image-text.translate"].waitForExistence(timeout: 20))
+    app.buttons["image-text.translate"].tap()
+    let recovery = app.descendants(matching: .any)
+      .matching(identifier: "image-text.translation-recovery").firstMatch
+    XCTAssertTrue(recovery.waitForExistence(timeout: 3))
+    XCTAssertGreaterThanOrEqual(recovery.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(recovery.frame.maxX, app.frame.maxX)
+    XCTAssertTrue(app.buttons["Retry"].isHittable)
+    XCTAssertTrue(app.buttons["image-text.close"].isHittable)
+    try performAudit(
+      in: app,
+      named: "Image Text translation recovery - accessibility XXXL",
+      types: .dynamicType.union(.textClipped).union(.hitRegion)
+    )
+  }
+
+  @MainActor
   func testLightRecentSearchDeleteActionHasReadableSystemContrast() throws {
     try auditRecentSearchDeleteAction(appearance: .light)
   }

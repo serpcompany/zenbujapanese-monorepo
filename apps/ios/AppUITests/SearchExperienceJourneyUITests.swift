@@ -276,10 +276,21 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(quiet.waitForExistence(timeout: 10))
     let recognizedText = app.descendants(matching: .any)["image-text.raw-text"]
     XCTAssertTrue(recognizedText.waitForExistence(timeout: 10))
-    let expectedCopiedText = recognizedText.label
-      .replacingOccurrences(of: "Recognized text ", with: "")
+    let expectedCopiedText = """
+      日本語の勉強
+      今日は静かな公園で蝶々を見た。
+      問題を解いてから、友達と話します。
+      東京駅 12:30 Platform 4
+      Synthetic fixture・IMG-FIXTURE-001
+      """
+    let expectedSingleLineCopiedText =
+      expectedCopiedText
       .split(whereSeparator: \.isWhitespace)
       .joined(separator: " ")
+    XCTAssertEqual(
+      recognizedText.label.split(whereSeparator: \.isWhitespace).joined(separator: " "),
+      "Recognized text \(expectedSingleLineCopiedText)"
+    )
     recordSettledScreenshot(named: "image-text-clear-recognized", app: app)
 
     let translate = app.buttons["image-text.translate"]
@@ -355,16 +366,125 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       reopenedCopyText.waitForNonExistence(timeout: 3),
       "Copy Text must finish and dismiss its menu before leaving Image Text"
     )
+    let copyRequest = app.descendants(matching: .any)["image-text.copy-request"]
+    XCTAssertTrue(copyRequest.waitForExistence(timeout: 3))
+    XCTAssertEqual(copyRequest.label, "Copy request \(expectedCopiedText)")
+    XCTAssertEqual(
+      copyRequest.label.split(whereSeparator: \.isWhitespace).joined(separator: " "),
+      "Copy request \(expectedSingleLineCopiedText)"
+    )
 
     app.buttons["image-text.close"].tap()
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
-    searchField.tap()
-    searchField.press(forDuration: 1)
-    XCTAssertTrue(app.menuItems["Paste"].waitForExistence(timeout: 2))
-    app.menuItems["Paste"].tap()
-    let pasted = searchField.value as? String
-    XCTAssertEqual(pasted, expectedCopiedText)
+  }
+
+  @MainActor
+  func testImageTextTranslationAssetRecoveryStatesPreserveSession() throws {
+    var app = launchImageTextFixtures(
+      ["fixture-clear-horizontal.png"],
+      additionalArguments: ["-InjectImageTextTranslationPrepared"]
+    )
+    XCTAssertTrue(app.buttons["image-text.translate"].waitForExistence(timeout: 20))
+    app.buttons["image-text.translate"].tap()
+    let preparedTranslation = app.staticTexts["image-text.translation"]
+    XCTAssertTrue(preparedTranslation.waitForExistence(timeout: 3))
+    XCTAssertTrue(preparedTranslation.label.contains("quiet park"))
+    app.terminate()
+
+    app = launchImageTextFixtures(
+      ["fixture-clear-horizontal.png"],
+      additionalArguments: ["-InjectImageTextTranslationCancelled"]
+    )
+    let rawText = app.descendants(matching: .any)["image-text.raw-text"]
+    XCTAssertTrue(rawText.waitForExistence(timeout: 20))
+    let currentPage = app.descendants(matching: .any)["image-text.current-page"]
+    XCTAssertTrue(currentPage.exists)
+    XCTAssertTrue(currentPage.label.contains("fixture-clear-horizontal.png"))
+    let quiet = app.descendants(matching: .any)["image-text.region.静か"]
+    XCTAssertTrue(quiet.waitForExistence(timeout: 10))
+    app.buttons["image-text.highlights"].tap()
+    XCTAssertFalse(quiet.exists)
+
+    app.buttons["image-text.translate"].tap()
+    XCTAssertTrue(app.staticTexts["Translation download cancelled"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.buttons["Retry"].isHittable)
+    XCTAssertTrue(rawText.exists)
+    XCTAssertTrue(currentPage.exists)
+    app.buttons["image-text.highlights"].tap()
+    XCTAssertTrue(quiet.waitForExistence(timeout: 3))
+    app.buttons["Retry"].tap()
+    XCTAssertTrue(app.staticTexts["Translation download cancelled"].waitForExistence(timeout: 3))
+    app.terminate()
+
+    app = launchImageTextFixtures(
+      ["fixture-clear-horizontal.png"],
+      additionalArguments: ["-InjectImageTextTranslationUnsupported"]
+    )
+    XCTAssertTrue(app.buttons["image-text.translate"].waitForExistence(timeout: 20))
+    app.buttons["image-text.translate"].tap()
+    XCTAssertTrue(app.staticTexts["Translation not supported"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.descendants(matching: .any)["image-text.raw-text"].exists)
+    XCTAssertFalse(app.buttons["Retry"].exists)
+    app.terminate()
+
+    app = launchImageTextFixtures(
+      ["fixture-clear-horizontal.png"],
+      additionalArguments: ["-InjectImageTextTranslationPreparationFailure"]
+    )
+    XCTAssertTrue(app.buttons["image-text.translate"].waitForExistence(timeout: 20))
+    app.buttons["image-text.translate"].tap()
+    XCTAssertTrue(app.staticTexts["Translation download failed"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.buttons["Retry"].isHittable)
+    XCTAssertTrue(app.descendants(matching: .any)["image-text.raw-text"].exists)
+    app.terminate()
+
+    app = launchImageTextFixtures(
+      ["fixture-clear-horizontal.png"],
+      additionalArguments: ["-InjectImageTextTranslationPreparing"]
+    )
+    XCTAssertTrue(app.buttons["image-text.translate"].waitForExistence(timeout: 20))
+    app.buttons["image-text.translate"].tap()
+    XCTAssertTrue(
+      app.descendants(matching: .any)["image-text.translation-preparing"].waitForExistence(
+        timeout: 3))
+    app.buttons["image-text.close"].tap()
+    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.buttons["search.image-source"].isHittable)
+  }
+
+  @MainActor
+  func testImageTextAppleTranslationWorksOfflineAcrossPhysicalColdRelaunch() throws {
+    #if targetEnvironment(simulator)
+      throw XCTSkip(
+        "Apple Translation language assets do not operate in iOS Simulator; this journey requires a physical device with Japanese and English assets installed and Airplane Mode enabled."
+      )
+    #else
+      guard ProcessInfo.processInfo.environment["ZENBU_TRANSLATION_OFFLINE_HIL"] == "1" else {
+        throw XCTSkip(
+          "Set ZENBU_TRANSLATION_OFFLINE_HIL=1 only after approving Apple’s native language download and enabling Airplane Mode on the physical device."
+        )
+      }
+      let arguments = [
+        "-StartImageTextFixtures", "fixture-vertical.png",
+        "-InjectVerticalImageTextRecognition",
+      ]
+      var app = launchApp(additionalArguments: arguments, networkUnavailable: true)
+      XCTAssertTrue(app.buttons["image-text.translate"].waitForExistence(timeout: 20))
+      app.buttons["image-text.translate"].tap()
+      let firstTranslation = app.staticTexts["image-text.translation"]
+      XCTAssertTrue(firstTranslation.waitForExistence(timeout: 30))
+      XCTAssertFalse(firstTranslation.label.isEmpty)
+      let frozenTranslation = firstTranslation.label
+      app.terminate()
+
+      app = launchApp(additionalArguments: arguments, networkUnavailable: true)
+      XCTAssertTrue(app.buttons["image-text.translate"].waitForExistence(timeout: 20))
+      app.buttons["image-text.translate"].tap()
+      let relaunchedTranslation = app.staticTexts["image-text.translation"]
+      XCTAssertTrue(relaunchedTranslation.waitForExistence(timeout: 30))
+      XCTAssertEqual(relaunchedTranslation.label, frozenTranslation)
+    #endif
   }
 
   @MainActor
@@ -5407,7 +5527,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  private func launchImageTextFixtures(_ names: [String]) -> XCUIApplication {
+  private func launchImageTextFixtures(
+    _ names: [String],
+    additionalArguments: [String] = []
+  ) -> XCUIApplication {
     var arguments = [
       "-StartImageTextFixtures",
       names.joined(separator: ","),
@@ -5421,6 +5544,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     if names.contains("fixture-clear-horizontal.png") {
       arguments.append("-InjectImageTextTranslation")
     }
+    arguments.append("-RecordImageTextCopyRequests")
+    arguments += additionalArguments
     return launchApp(additionalArguments: arguments)
   }
 

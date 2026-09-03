@@ -6,6 +6,7 @@
     "example-sentences",
     "handwriting",
     "image-text",
+    "image-text-translation-assets",
     "japanese-text-analysis-provider",
     "japanese-text-analysis-offline",
     "japanese-text-analysis-settings",
@@ -18,6 +19,7 @@
     "word-detail"
   ],
   "hil_exclusions": {
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextAppleTranslationWorksOfflineAcrossPhysicalColdRelaunch": "Apple Translation asset installation and airplane-mode cold relaunch require the separately recorded physical-device HIL journey; Apple documents that Translation does not operate in iOS Simulator.",
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow": "Physical Photos picker selection is retained in the separately recorded system HIL journey.",
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech": "Live Japanese voice completion is retained in the separately recorded physical speech HIL journey."
   },
@@ -27,7 +29,8 @@
   "correctness_plans": ["ZenbuPR", "ZenbuSudachiIntegration"],
   "intentional_same_stage_evidence": {
     "accessibility.japanese-text-analysis-settings|ui.japanese-text-analysis-settings": "The normal-size journey proves bundled-default semantics and no actions; the independent maximum-size smoke proves the changed native management rows remain reachable without restoring obsolete controls.",
-    "ui.bundled-japanese-text-analysis|ui.image-text": "The bounded bundled-provider cold-relaunch seam proves real offline Sudachi selection; the broader Image Text fixture journey independently preserves paging, geometry, gloss, navigation, and sharing contracts."
+    "ui.bundled-japanese-text-analysis|ui.image-text": "The bounded bundled-provider cold-relaunch seam proves real offline Sudachi selection; the broader Image Text fixture journey independently preserves paging, geometry, gloss, navigation, and sharing contracts.",
+    "accessibility.image-translation-recovery|ui.image-text-translation-assets": "The normal-size journey proves cancellation, retry, unsupported, failure, and preserved session behavior; one independent maximum-size smoke proves the new native recovery presentation remains reachable without duplicating the full journey."
   },
   "selectors": {
     "contracts.repository": {
@@ -84,6 +87,12 @@
       "traits": ["ui", "normal-dynamic-type"],
       "journeys": ["image-text"]
     },
+    "ui.image-text-translation-assets": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextTranslationAssetRecoveryStatesPreserveSession",
+      "traits": ["ui", "normal-dynamic-type", "deterministic"],
+      "journeys": ["image-text-translation-assets"]
+    },
     "ui.kanji": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKanjiDetailShowsSourceBackedClassificationAndReadings",
@@ -126,6 +135,12 @@
       "traits": ["accessibility", "normal-dynamic-type"],
       "journeys": ["image-text-accessibility"]
     },
+    "accessibility.image-translation-recovery": {
+      "plan": "ZenbuAccessibility",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testTranslationRecoveryRemainsReachableAtLargestAccessibilityTextSize",
+      "traits": ["accessibility", "accessibility-maximum"],
+      "journeys": ["image-text-translation-assets"]
+    },
     "accessibility.search-layout": {
       "plan": "ZenbuAccessibility",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightLoadingAndFailureRemainUsableAtLargestAccessibilityTextSize",
@@ -160,6 +175,7 @@
         "example-sentences",
         "handwriting",
         "image-text",
+        "image-text-translation-assets",
         "kanji-detail",
         "radical-input",
         "recent-searches",
@@ -183,6 +199,7 @@
       "ui.search-ranking",
       "ui.recent-search",
       "ui.image-text",
+      "ui.image-text-translation-assets",
       "ui.kanji",
       "ui.word-detail",
       "ui.examples",
@@ -192,6 +209,7 @@
     ],
     "accessibility": [
       "accessibility.image-actions",
+      "accessibility.image-translation-recovery",
       "accessibility.search-layout",
       "accessibility.japanese-text-analysis-settings"
     ],
@@ -363,21 +381,55 @@
     "image-text": {
       "paths": [
         "apps/ios/Modules/Sources/SearchExperience/Image*.swift",
+        "apps/ios/Modules/Sources/SearchExperience/NaturalTranslation*.swift",
         "docs/clone-discovery/nihongo/fixtures/image-text/**"
       ],
       "reviewed_override_paths": [
         "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift"
       ],
-      "tdd": ["ui.image-text"],
+      "tdd": ["ui.image-text", "ui.image-text-translation-assets"],
       "issue-final": [
         "unit.complete",
         "ui.image-text",
+        "ui.image-text-translation-assets",
         "accessibility.image-actions"
       ],
       "hosted-fast": [
         "unit.complete",
         "ui.image-text",
+        "ui.image-text-translation-assets",
         "accessibility.image-actions"
+      ]
+    },
+    "image-text-translation-assets": {
+      "paths": [
+        "apps/ios/Modules/Sources/SearchExperience/ImageTextFlowModel.swift",
+        "apps/ios/Modules/Sources/SearchExperience/ImageTextFlowView.swift",
+        "apps/ios/Modules/Sources/SearchExperience/ImageTextClipboardClient.swift",
+        "apps/ios/Modules/Sources/SearchExperience/NaturalTranslationClient.swift"
+      ],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
+        "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift",
+        "apps/ios/Modules/Tests/SearchExperienceTests/ImageTextFlowModelTests.swift",
+        "apps/ios/TestPlans/ZenbuPR.xctestplan",
+        "apps/ios/VerificationPolicy.json"
+      ],
+      "adaptive_layout": true,
+      "tdd": ["ui.image-text-translation-assets"],
+      "issue-final": [
+        "unit.complete",
+        "ui.image-text",
+        "ui.image-text-translation-assets",
+        "accessibility.image-actions",
+        "accessibility.image-translation-recovery"
+      ],
+      "hosted-fast": [
+        "unit.complete",
+        "ui.image-text",
+        "ui.image-text-translation-assets",
+        "accessibility.image-actions",
+        "accessibility.image-translation-recovery"
       ]
     },
     "kanji": {

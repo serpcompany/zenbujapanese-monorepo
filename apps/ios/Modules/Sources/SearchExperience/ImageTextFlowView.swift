@@ -1,10 +1,14 @@
 import SwiftUI
+@preconcurrency import Translation
 import UIKit
 
 struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
+  @State private var recordedCopyRequest: String?
   let textAnalysisClient: JapaneseTextAnalysisClient
+  let translationClient: NaturalTranslationClient
+  let clipboardClient: ImageTextClipboardClient
   let close: () -> Void
   let openWord: (DictionaryEntry, ImageTextAsset) -> Void
 
@@ -13,6 +17,7 @@ struct ImageTextFlowView: View {
     recognitionClient: ImageTextRecognitionClient,
     textAnalysisClient: JapaneseTextAnalysisClient,
     translationClient: NaturalTranslationClient,
+    clipboardClient: ImageTextClipboardClient,
     close: @escaping () -> Void,
     openWord: @escaping (DictionaryEntry, ImageTextAsset) -> Void
   ) {
@@ -24,6 +29,8 @@ struct ImageTextFlowView: View {
         translationClient: translationClient
       ))
     self.textAnalysisClient = textAnalysisClient
+    self.translationClient = translationClient
+    self.clipboardClient = clipboardClient
     self.close = close
     self.openWord = openWord
   }
@@ -79,9 +86,31 @@ struct ImageTextFlowView: View {
         shareMenu
       }
     }
+    .overlay(alignment: .topLeading) {
+      if let recordedCopyRequest {
+        Text("")
+          .frame(width: 1, height: 1)
+          .accessibilityElement()
+          .accessibilityLabel("Copy request \(recordedCopyRequest)")
+          .accessibilityIdentifier("image-text.copy-request")
+      }
+    }
     .task {
       analysisAvailability = await textAnalysisClient.availability()
       await model.load()
+    }
+    .task(id: model.pendingTranslationPreparation?.id) {
+      guard model.pendingTranslationPreparation != nil else { return }
+      if let injectedClient = translationClient.preparationClient {
+        await model.performPendingTranslationPreparation(using: injectedClient)
+      }
+    }
+    .background {
+      if let request = model.pendingTranslationPreparation,
+        translationClient.preparationClient == nil
+      {
+        NativeTranslationPreparationTask(requestID: request.id, model: model)
+      }
     }
     .onDisappear { model.suspendTranslation() }
     .alert(
@@ -101,6 +130,14 @@ struct ImageTextFlowView: View {
   @ViewBuilder
   private var translation: some View {
     switch model.translationState {
+    case .checkingAvailability:
+      ProgressView("Checking translation availability…")
+        .padding(.vertical, 8)
+        .accessibilityIdentifier("image-text.translation-checking")
+    case .preparing:
+      ProgressView("Preparing offline translation…")
+        .padding(.vertical, 8)
+        .accessibilityIdentifier("image-text.translation-preparing")
     case .idle:
       Button("Translate Image Text") {
         model.requestTranslation()
@@ -123,18 +160,76 @@ struct ImageTextFlowView: View {
       }
       .padding(.horizontal, 16)
       .padding(.vertical, 8)
+    case .cancelled:
+      translationRecovery(
+        title: "Translation download cancelled",
+        message: "Your recognized text is unchanged. Try again when you’re ready."
+      )
+    case .unsupported:
+      translationStatus(
+        title: "Translation not supported",
+        message: "Japanese to English translation isn’t supported on this device.",
+        retryable: false,
+        statusIdentifier: "image-text.translation-unsupported"
+      )
+    case .preparationFailed:
+      translationRecovery(
+        title: "Translation download failed",
+        message: "Check your connection and try downloading Apple’s language resources again."
+      )
     case .failed:
-      Text("Translation unavailable")
-        .accessibilityIdentifier("image-text.translation-unavailable")
-        .padding(.vertical, 8)
+      translationRecovery(
+        title: "Translation failed",
+        message: "Your recognized text is unchanged. Try again."
+      )
     }
+  }
+
+  private func translationRecovery(
+    title: LocalizedStringKey,
+    message: LocalizedStringKey
+  ) -> some View {
+    translationStatus(
+      title: title,
+      message: message,
+      retryable: true,
+      statusIdentifier: "image-text.translation-recovery"
+    )
+  }
+
+  private func translationStatus(
+    title: LocalizedStringKey,
+    message: LocalizedStringKey,
+    retryable: Bool,
+    statusIdentifier: String
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Label(title, systemImage: "translate")
+        .font(.headline)
+        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityIdentifier(statusIdentifier)
+      Text(message)
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+      if retryable {
+        Button("Retry", systemImage: "arrow.clockwise") {
+          model.retryTranslation()
+        }
+        .accessibilityIdentifier("image-text.translation-retry")
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 16)
+    .padding(.vertical, 8)
   }
 
   @ViewBuilder
   private var shareMenu: some View {
     Menu {
       Button {
-        UIPasteboard.general.string = model.copiedText
+        let text = model.copiedText
+        recordedCopyRequest = clipboardClient.copy(text)
       } label: {
         Label("Copy Text", systemImage: "document.on.document")
       }
@@ -205,6 +300,36 @@ struct ImageTextFlowView: View {
         }
       )
     }
+  }
+}
+
+private struct NativeTranslationPreparationTask: View {
+  @State private var configuration = TranslationSession.Configuration(
+    source: Locale.Language(identifier: "ja"),
+    target: Locale.Language(identifier: "en")
+  )
+  let requestID: UUID
+  let model: ImageTextFlowModel
+
+  var body: some View {
+    Color.clear
+      .frame(width: 0, height: 0)
+      .accessibilityHidden(true)
+      .translationTask(configuration) { session in
+        guard let request = model.claimPendingTranslationPreparation(id: requestID) else { return }
+        do {
+          try await session.prepareTranslation()
+          guard model.beginPreparedTranslation(request) else { return }
+          let response = try await session.translate(request.source)
+          model.finishPreparedTranslation(response.targetText, for: request)
+        } catch is CancellationError {
+          model.cancelPreparedTranslation(request)
+        } catch  where TranslationError.alreadyCancelled ~= error {
+          model.cancelPreparedTranslation(request)
+        } catch {
+          model.failPreparedTranslation(request)
+        }
+      }
   }
 }
 

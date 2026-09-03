@@ -6,6 +6,307 @@ import XCTest
 
 @MainActor
 final class ImageTextFlowModelTests: XCTestCase {
+  func testInstalledTranslationAssetsTranslateWithoutPreparing() async throws {
+    let probe = NaturalTranslationProbe()
+    let model = ImageTextFlowModel(
+      assets: [ImageTextAsset(name: "fixture.png", data: Data([0]))],
+      recognitionClient: ImageTextRecognitionClient { _ in
+        [
+          RecognizedImageTextObservation(
+            id: 0,
+            text: "日本語",
+            boundingBox: CGRect(x: 0, y: 0, width: 1, height: 1),
+            confidence: 1
+          )
+        ]
+      },
+      textAnalysisClient: .characterFallback,
+      translationClient: NaturalTranslationClient(
+        availability: { .installed },
+        translateInstalled: { source in
+          await probe.recordTranslation(source)
+          return "Japanese"
+        }
+      )
+    )
+    await model.load()
+
+    model.requestTranslation()
+    try await waitForTranslationState(model) {
+      if case .translated("Japanese") = $0 { return true }
+      return false
+    }
+
+    let translatedSources = await probe.translatedSources()
+    XCTAssertEqual(translatedSources, ["日本語"])
+    XCTAssertNil(model.pendingTranslationPreparation)
+  }
+
+  func testDownloadableTranslationAssetsRequestNativePreparation() async throws {
+    let probe = NaturalTranslationProbe()
+    let model = translationModel(
+      client: NaturalTranslationClient(
+        availability: { .downloadable },
+        translateInstalled: { source in
+          await probe.recordTranslation(source)
+          return "unexpected"
+        }
+      )
+    )
+    await model.load()
+
+    model.requestTranslation()
+    try await waitForTranslationState(model) {
+      if case .preparing = $0 { return true }
+      return false
+    }
+
+    XCTAssertEqual(model.pendingTranslationPreparation?.source, "日本語")
+    let translatedSources = await probe.translatedSources()
+    XCTAssertTrue(translatedSources.isEmpty)
+  }
+
+  func testSuccessfulPreparationResumesTheOriginalTranslationExactlyOnce() async throws {
+    let probe = NaturalTranslationProbe()
+    let model = translationModel(
+      client: NaturalTranslationClient(
+        availability: { .downloadable },
+        translateInstalled: { _ in "unexpected installed path" }
+      )
+    )
+    await model.load()
+    model.requestTranslation()
+    try await waitForTranslationState(model) {
+      if case .preparing = $0 { return true }
+      return false
+    }
+    let session = NaturalTranslationPreparationClient(
+      prepare: { await probe.recordPreparation() },
+      translate: { source in
+        await probe.recordTranslation(source)
+        return "Japanese"
+      }
+    )
+
+    await model.performPendingTranslationPreparation(using: session)
+    await model.performPendingTranslationPreparation(using: session)
+
+    guard case .translated(let translation) = model.translationState else {
+      return XCTFail("Expected the prepared translation")
+    }
+    XCTAssertEqual(translation, "Japanese")
+    let preparationCount = await probe.preparationCount()
+    let translatedSources = await probe.translatedSources()
+    XCTAssertEqual(preparationCount, 1)
+    XCTAssertEqual(translatedSources, ["日本語"])
+  }
+
+  func testCancelledPreparationPreservesImageTextStateAndCanRetry() async throws {
+    let model = translationModel(
+      client: NaturalTranslationClient(
+        availability: { .downloadable },
+        translateInstalled: { _ in "unexpected installed path" }
+      )
+    )
+    await model.load()
+    let selectedRegion = ImageTextRegion(
+      id: "selected",
+      surface: "日本語",
+      boundingBox: CGRect(x: 0, y: 0, width: 1, height: 1),
+      entry: nil,
+      candidateEntries: []
+    )
+    model.selectedRegion = selectedRegion
+    model.showsHighlights = false
+    model.requestTranslation()
+    try await waitForTranslationState(model) {
+      if case .preparing = $0 { return true }
+      return false
+    }
+
+    await model.performPendingTranslationPreparation(
+      using: NaturalTranslationPreparationClient(
+        prepare: { throw CancellationError() },
+        translate: { _ in "unexpected" }
+      )
+    )
+
+    guard case .cancelled = model.translationState else {
+      return XCTFail("Expected a retryable cancellation state")
+    }
+    XCTAssertEqual(model.copiedText, "日本語")
+    XCTAssertEqual(model.selectedPage, 0)
+    XCTAssertFalse(model.showsHighlights)
+    XCTAssertEqual(model.selectedRegion?.id, selectedRegion.id)
+
+    model.retryTranslation()
+    try await waitForTranslationState(model) {
+      if case .preparing = $0 { return true }
+      return false
+    }
+    XCTAssertEqual(model.pendingTranslationPreparation?.source, "日本語")
+  }
+
+  func testUnsupportedLanguagePairHasItsOwnRecoveryState() async throws {
+    let model = translationModel(
+      client: NaturalTranslationClient(
+        availability: { .unsupported },
+        translateInstalled: { _ in "unexpected" }
+      )
+    )
+    await model.load()
+
+    model.requestTranslation()
+    try await waitForTranslationState(model) {
+      if case .unsupported = $0 { return true }
+      return false
+    }
+
+    XCTAssertNil(model.pendingTranslationPreparation)
+    XCTAssertEqual(model.copiedText, "日本語")
+  }
+
+  func testPreparationFailureIsDistinctFromUnsupportedLanguagePair() async throws {
+    let model = translationModel(
+      client: NaturalTranslationClient(
+        availability: { .downloadable },
+        translateInstalled: { _ in "unexpected" }
+      )
+    )
+    await model.load()
+    model.requestTranslation()
+    try await waitForTranslationState(model) {
+      if case .preparing = $0 { return true }
+      return false
+    }
+
+    await model.performPendingTranslationPreparation(
+      using: NaturalTranslationPreparationClient(
+        prepare: { throw NaturalTranslationTestError.preparationFailed },
+        translate: { _ in "unexpected" }
+      )
+    )
+
+    guard case .preparationFailed = model.translationState else {
+      return XCTFail("Expected a retryable preparation failure")
+    }
+    XCTAssertEqual(model.copiedText, "日本語")
+  }
+
+  func testRepeatedTranslationTapsCannotStartDuplicateWork() async throws {
+    let probe = NaturalTranslationProbe()
+    let model = translationModel(
+      client: NaturalTranslationClient(
+        availability: {
+          await probe.recordAvailabilityCheck()
+          try await Task.sleep(for: .milliseconds(10))
+          return .installed
+        },
+        translateInstalled: { source in
+          await probe.recordTranslation(source)
+          return "Japanese"
+        }
+      )
+    )
+    await model.load()
+
+    model.requestTranslation()
+    model.requestTranslation()
+    model.requestTranslation()
+    try await waitForTranslationState(model) {
+      if case .translated = $0 { return true }
+      return false
+    }
+
+    let availabilityChecks = await probe.availabilityCheckCount()
+    let translatedSources = await probe.translatedSources()
+    XCTAssertEqual(availabilityChecks, 1)
+    XCTAssertEqual(translatedSources, ["日本語"])
+  }
+
+  func testLeavingImageTextCancelsOwnedWorkAndKeepsRecognitionState() async throws {
+    let probe = NaturalTranslationProbe()
+    let model = translationModel(
+      client: NaturalTranslationClient(
+        availability: { .installed },
+        translateInstalled: { source in
+          await probe.recordTranslation(source)
+          try await Task.sleep(for: .seconds(30))
+          return "unexpected"
+        }
+      )
+    )
+    await model.load()
+    model.showsHighlights = false
+    model.requestTranslation()
+    try await waitForTranslationState(model) {
+      if case .translating = $0 { return true }
+      return false
+    }
+
+    model.suspendTranslation()
+
+    guard case .idle = model.translationState else {
+      return XCTFail("Leaving Image Text must clear Zenbu-owned translation work")
+    }
+    XCTAssertEqual(model.copiedText, "日本語")
+    XCTAssertFalse(model.showsHighlights)
+    XCTAssertNil(model.pendingTranslationPreparation)
+  }
+
+  func testLeavingDuringClaimedPreparationInvalidatesTheViewBoundRequest() async throws {
+    let model = translationModel(
+      client: NaturalTranslationClient(
+        availability: { .downloadable },
+        translateInstalled: { _ in "unexpected" }
+      )
+    )
+    await model.load()
+    model.requestTranslation()
+    try await waitForTranslationState(model) {
+      if case .preparing = $0 { return true }
+      return false
+    }
+    let request = try XCTUnwrap(model.claimPendingTranslationPreparation())
+
+    model.suspendTranslation()
+
+    guard case .idle = model.translationState else {
+      return XCTFail("Leaving during preparation must clear Zenbu-owned state")
+    }
+    XCTAssertNil(model.pendingTranslationPreparation)
+    XCTAssertFalse(model.beginPreparedTranslation(request))
+    model.finishPreparedTranslation("stale", for: request)
+    guard case .idle = model.translationState else {
+      return XCTFail("A stale view-bound session must not publish after navigation")
+    }
+    XCTAssertEqual(model.copiedText, "日本語")
+  }
+
+  func testInstalledAssetsTranslateAcrossFreshImageTextModelsWithoutNetworkWork() async throws {
+    let probe = NaturalTranslationProbe()
+    let client = NaturalTranslationClient(
+      availability: { .installed },
+      translateInstalled: { source in
+        await probe.recordTranslation(source)
+        return "Japanese"
+      }
+    )
+
+    for _ in 0..<2 {
+      let model = translationModel(client: client)
+      await model.load()
+      model.requestTranslation()
+      try await waitForTranslationState(model) {
+        if case .translated("Japanese") = $0 { return true }
+        return false
+      }
+    }
+
+    let translatedSources = await probe.translatedSources()
+    XCTAssertEqual(translatedSources, ["日本語", "日本語"])
+  }
+
   func testSelectedSharePayloadTracksTheSelectedPageNameBytesAndIdentity() throws {
     let firstID = try XCTUnwrap(UUID(uuidString: "00000000-0000-0000-0000-000000000001"))
     let secondID = try XCTUnwrap(UUID(uuidString: "00000000-0000-0000-0000-000000000002"))
@@ -200,6 +501,24 @@ final class ImageTextFlowModelTests: XCTestCase {
     )
   }
 
+  private func translationModel(client: NaturalTranslationClient) -> ImageTextFlowModel {
+    ImageTextFlowModel(
+      assets: [ImageTextAsset(name: "fixture.png", data: Data([0]))],
+      recognitionClient: ImageTextRecognitionClient { _ in
+        [
+          RecognizedImageTextObservation(
+            id: 0,
+            text: "日本語",
+            boundingBox: CGRect(x: 0, y: 0, width: 1, height: 1),
+            confidence: 1
+          )
+        ]
+      },
+      textAnalysisClient: .characterFallback,
+      translationClient: client
+    )
+  }
+
   private func loadedPage(_ state: ImageTextFlowModel.PageState) throws -> ImageTextPage {
     guard case .loaded(let page) = state else {
       XCTFail("Expected the recognition page to load")
@@ -238,6 +557,48 @@ final class ImageTextFlowModelTests: XCTestCase {
   }
 }
 
+private actor NaturalTranslationProbe {
+  private var sources: [String] = []
+  private var preparations = 0
+  private var availabilityChecks = 0
+
+  func recordAvailabilityCheck() {
+    availabilityChecks += 1
+  }
+
+  func availabilityCheckCount() -> Int {
+    availabilityChecks
+  }
+
+  func recordPreparation() {
+    preparations += 1
+  }
+
+  func preparationCount() -> Int {
+    preparations
+  }
+
+  func recordTranslation(_ source: String) {
+    sources.append(source)
+  }
+
+  func translatedSources() -> [String] {
+    sources
+  }
+}
+
+@MainActor
+private func waitForTranslationState(
+  _ model: ImageTextFlowModel,
+  where predicate: (ImageTextFlowModel.TranslationState) -> Bool
+) async throws {
+  for _ in 0..<500 {
+    if predicate(model.translationState) { return }
+    try await Task.sleep(for: .milliseconds(1))
+  }
+  XCTFail("Timed out waiting for translation state")
+}
+
 extension Data {
   fileprivate var fixtureSHA256: String {
     SHA256.hash(data: self).map { String(format: "%02x", $0) }.joined()
@@ -258,4 +619,8 @@ private func imageTextFixtureData(named name: String) throws -> Data {
 
 private enum ImageTextFlowModelTestError: Error {
   case pageDidNotLoad
+}
+
+private enum NaturalTranslationTestError: Error {
+  case preparationFailed
 }
