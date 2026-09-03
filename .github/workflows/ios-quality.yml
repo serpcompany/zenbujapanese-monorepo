@@ -154,6 +154,7 @@ jobs:
             ZenbuPR \
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
             "$RUNNER_TEMP/ZenbuFast-UI.xcresult" \
+            -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/test000JapaneseAnalysisPackDownloadsThroughNativeManagementSurface \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToMore \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBottomNavigationContainsOnlyReleaseDestinationsAndRestoresSearch \
             -only-testing:ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCameraUnavailableOnSimulatorReportsHardwareBoundary \

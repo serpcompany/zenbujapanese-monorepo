@@ -2419,7 +2419,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  func testJapaneseAnalysisPackDownloadsThroughNativeManagementSurface() throws {
+  func test000JapaneseAnalysisPackDownloadsThroughNativeManagementSurface() throws {
     let app = launchApp(
       additionalArguments: ["-ResetLanguageTechnologyPacks"],
       automaticallyInstallsJapaneseAnalysis: false
@@ -5264,6 +5264,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     }
     app.launchArguments += additionalArguments
     app.launch()
+    if automaticallyInstallsJapaneseAnalysis {
+      let preparation = app.progressIndicators["language-technology-pack.preparing"]
+      if preparation.waitForExistence(timeout: 2) {
+        XCTAssertTrue(preparation.waitForNonExistence(timeout: 90))
+      }
+    }
     return app
   }
 

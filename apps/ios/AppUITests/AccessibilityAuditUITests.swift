@@ -23,6 +23,31 @@ private struct AuditException: CustomStringConvertible {
 
 final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
+  func testJapaneseAnalysisManagementRemainsReachableAtLargestAccessibilityTextSize() throws {
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 3))
+    app.tabBars.buttons["More"].tap()
+    let destination = app.buttons["more.japanese-analysis"]
+    XCTAssertTrue(destination.waitForExistence(timeout: 3))
+    destination.tap()
+    let list = app.collectionViews["language-technology-packs.list"]
+    XCTAssertTrue(list.waitForExistence(timeout: 3))
+    let remove = app.buttons["language-technology-pack.remove.sudachi-core-ja-20260723"]
+    for _ in 0..<8 where !remove.exists || !remove.isHittable {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(remove.isHittable)
+    XCTAssertTrue(
+      app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Storage,"))
+        .firstMatch.exists)
+  }
+
+  @MainActor
   func testLongWordIdentityUsesSecondaryReadingAtLargestAccessibilityTextSize() throws {
     try verifyLongWordIdentityAtLargestAccessibilityTextSize(appearance: .light)
   }
@@ -1814,12 +1839,17 @@ final class AccessibilityAuditUITests: XCTestCase {
   ) -> XCUIApplication {
     let app = XCUIApplication()
     app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+    app.launchArguments += ["-EnsureJapaneseAnalysis"]
     app.launchArguments += [
       "-AppleInterfaceStyle", appearance == .dark ? "Dark" : "Light",
       "-AppleInterfaceStyleSwitchesAutomatically", "NO",
     ]
     app.launchArguments += additionalArguments
     app.launch()
+    let preparation = app.progressIndicators["language-technology-pack.preparing"]
+    if preparation.waitForExistence(timeout: 2) {
+      XCTAssertTrue(preparation.waitForNonExistence(timeout: 90))
+    }
     return app
   }
 
