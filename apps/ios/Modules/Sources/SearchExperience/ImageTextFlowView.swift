@@ -245,29 +245,42 @@ private struct ImageTextCanvas: View {
           }
 
           if let selectedRegion {
-            Button {
-              openWord(selectedRegion.entry)
-            } label: {
-              HStack(spacing: 7) {
-                JapaneseRubyText(
-                  surface: selectedRegion.entry.headword,
-                  reading: selectedRegion.entry.reading,
-                  baseFont: .headline,
-                  rubyFont: .body
+            Group {
+              if let entry = selectedRegion.entry {
+                Button {
+                  openWord(entry)
+                } label: {
+                  imageTextGloss(entry)
+                }
+                .accessibilityLabel("\(entry.headword), \(entry.reading), \(entry.summary)")
+                .accessibilityIdentifier("image-text.gloss")
+              } else {
+                Menu {
+                  ForEach(selectedRegion.candidateEntries) { candidate in
+                    Button {
+                      openWord(candidate)
+                    } label: {
+                      Text("\(candidate.headword) (\(candidate.reading)) — \(candidate.summary)")
+                    }
+                  }
+                } label: {
+                  Label(
+                    "\(selectedRegion.surface): \(selectedRegion.candidateEntries.count) dictionary entries",
+                    systemImage: "ellipsis.circle"
+                  )
+                  .padding(.horizontal, 12)
+                  .padding(.vertical, 8)
+                  .background(.background, in: RoundedRectangle(cornerRadius: 12))
+                }
+                .accessibilityLabel("\(selectedRegion.surface), choose dictionary entry")
+                .accessibilityHint(
+                  "Shows \(selectedRegion.candidateEntries.count) possible dictionary entries"
                 )
-                Text(selectedRegion.entry.summary)
-                  .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("image-text.candidates")
               }
-              .padding(.horizontal, 12)
-              .padding(.vertical, 8)
-              .background(.background, in: RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
             .padding(20)
-            .accessibilityLabel(
-              "\(selectedRegion.entry.headword), \(selectedRegion.entry.reading), \(selectedRegion.entry.summary)"
-            )
-            .accessibilityIdentifier("image-text.gloss")
           }
 
           Text("")
@@ -288,6 +301,22 @@ private struct ImageTextCanvas: View {
         .accessibilityLabel("Imported image \(page.asset.name)")
       }
     }
+  }
+
+  private func imageTextGloss(_ entry: DictionaryEntry) -> some View {
+    HStack(spacing: 7) {
+      JapaneseRubyText(
+        surface: entry.headword,
+        reading: entry.reading,
+        baseFont: .headline,
+        rubyFont: .body
+      )
+      Text(entry.summary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .padding(.horizontal, 12)
+    .padding(.vertical, 8)
+    .background(.background, in: RoundedRectangle(cornerRadius: 12))
   }
 
   private func aspectFitRect(imageSize: CGSize, container: CGSize) -> CGRect {

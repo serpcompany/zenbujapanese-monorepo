@@ -53,12 +53,32 @@ final class ImageTextFlowModelTests: XCTestCase {
     let page = try loadedPage(model.pages[0].state)
     XCTAssertEqual(page.observations.map(\.text), observations.map(\.text))
     let japanese = try XCTUnwrap(page.regions.first { $0.surface == "日本語" })
-    XCTAssertEqual(japanese.entry.id.rawValue, "c81e1608bebbf039176be3e23f1c03bb")
-    XCTAssertEqual(japanese.entry.summary, "Japanese (language)")
+    XCTAssertEqual(japanese.entry?.id.rawValue, "c81e1608bebbf039176be3e23f1c03bb")
+    XCTAssertEqual(japanese.entry?.summary, "Japanese (language)")
     XCTAssertFalse(page.regions.contains { $0.surface == "読む" })
     XCTAssertFalse(page.regions.contains { $0.surface == "読本" })
     XCTAssertFalse(page.regions.contains { $0.surface == "いる" })
-    XCTAssertFalse(page.regions.contains { $0.entry.headword == "要る" })
+    XCTAssertFalse(page.regions.contains { $0.entry?.headword == "要る" })
+  }
+
+  func testWholeObservationWithAmbiguousAppOwnedEntriesKeepsASelectableRegion() async throws {
+    let observation = RecognizedImageTextObservation(
+      id: 0,
+      text: "読本",
+      boundingBox: CGRect(x: 0.2, y: 0.3, width: 0.4, height: 0.2),
+      confidence: 1
+    )
+    let lookup = LookupClient.freshBundledDatabase()
+    let model = imageTextModel(observations: [observation], lookup: lookup)
+
+    await model.load()
+
+    let page = try loadedPage(model.pages[0].state)
+    let region = try XCTUnwrap(page.regions.first)
+    XCTAssertEqual(region.surface, "読本")
+    XCTAssertEqual(region.boundingBox, observation.boundingBox)
+    XCTAssertNil(region.entry)
+    XCTAssertEqual(Set(region.candidateEntries.map(\.reading)), ["とくほん", "よみほん"])
   }
 
   func testRecognizedTextWithoutAnExactLinkedCandidateRemainsUnlinked() async throws {
@@ -145,6 +165,8 @@ final class ImageTextFlowModelTests: XCTestCase {
               ("これ", "此れ", "代名詞"), ("は", "は", "助詞"),
               ("日本語", "日本語", "名詞"), ("。", "。", "補助記号"),
             ]
+          case "読本":
+            specifications = [("読本", "読本", "名詞")]
           default:
             specifications = [(text, text, "未知語")]
           }

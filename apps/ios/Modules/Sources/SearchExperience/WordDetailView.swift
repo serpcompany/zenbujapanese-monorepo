@@ -19,6 +19,7 @@ struct WordDetailView: View {
   @State private var cameraAlert: WordDetailCameraAlert?
   @State private var showsCamera = false
   @State private var frequencyDisclosure: FrequencyDisclosureItem?
+  @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
   @State private var frequency: FrequencyLookupResult = .unavailable(
     FrequencyPackUnavailable(
       pack: nil,
@@ -115,6 +116,15 @@ struct WordDetailView: View {
         }
 
         Section("EXAMPLES") {
+          if analysisAvailability == .reduced {
+            Label(
+              "Word links are reduced. Download Japanese Text Analysis in More.",
+              systemImage: "info.circle"
+            )
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .accessibilityIdentifier("word-detail.reduced-analysis")
+          }
           EntryExamplesSection(
             entry: entry,
             examples: examples,
@@ -223,6 +233,7 @@ struct WordDetailView: View {
       guard !Task.isCancelled else { return }
       encounterMedia = storedMedia
       examples = (try? await exampleSentenceClient.examples(entry)) ?? []
+      analysisAvailability = await japaneseTextAnalysisClient.availability()
       frequency =
         (try? await frequencyCapability.evidence(for: entry.id))
         ?? .unavailable(

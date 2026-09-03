@@ -562,6 +562,26 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testImageTextAmbiguousWholeObservationOffersNativeCandidateMenu() throws {
+    let app = launchImageTextFixtures(["fixture-sparse.png"])
+    XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
+    let region = app.descendants(matching: .any)["image-text.region.静"]
+    XCTAssertTrue(region.waitForExistence(timeout: 10))
+    region.tap()
+
+    let candidates = app.buttons["image-text.candidates"]
+    XCTAssertTrue(candidates.waitForExistence(timeout: 2))
+    XCTAssertTrue(candidates.label.contains("静, choose dictionary entry"))
+    candidates.tap()
+    XCTAssertTrue(
+      app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "静 (せい)"))
+        .firstMatch.waitForExistence(timeout: 2))
+    XCTAssertTrue(
+      app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "静 (しず)"))
+        .firstMatch.exists)
+  }
+
+  @MainActor
   func testImageTextMultipleFilesRecoverFromEmptyAndRemainTransient() throws {
     let names = [
       "fixture-empty.png",
@@ -621,15 +641,16 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let ambiguousRegion = app.descendants(matching: .any).matching(
       NSPredicate(format: "identifier BEGINSWITH %@", "image-text.region.")
     ).firstMatch
-    XCTAssertFalse(ambiguousRegion.exists)
-    XCTAssertFalse(app.buttons["image-text.gloss"].exists)
+    XCTAssertTrue(ambiguousRegion.exists)
+    ambiguousRegion.tap()
+    XCTAssertTrue(app.buttons["image-text.candidates"].waitForExistence(timeout: 2))
     assertImageTextToolbarIsHittable(in: app)
     let highlights = app.buttons["image-text.highlights"]
     highlights.tap()
     highlights.tap()
-    XCTAssertFalse(ambiguousRegion.exists)
+    XCTAssertTrue(ambiguousRegion.exists)
     XCTAssertEqual(sparseText.label, "Recognized text 静")
-    recordSettledScreenshot(named: "image-text-multiple-sparse-unlinked", app: app)
+    recordSettledScreenshot(named: "image-text-multiple-sparse-candidates", app: app)
 
     app.terminate()
     let relaunched = launchApp()
@@ -4092,6 +4113,28 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(examples.waitForExistence(timeout: 2))
     tapNativeBack(in: app)
     XCTAssertTrue(openExamples.waitForExistence(timeout: 2))
+  }
+
+  @MainActor
+  func testWordDetailDisclosesReducedInlineExampleAnalysis() throws {
+    let app = launchApp(additionalArguments: [
+      "-ResetLanguageTechnologyPacks", "-UseReducedJapaneseAnalysis",
+    ])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "問題",
+      resultLabelPrefix: "問題, もんだい",
+      in: app,
+      searchField: searchField
+    )
+
+    let detail = app.collectionViews["word-detail.screen"]
+    let notice = app.staticTexts["word-detail.reduced-analysis"]
+    for _ in 0..<6 where !notice.exists { detail.swipeUp() }
+
+    XCTAssertTrue(notice.exists)
+    XCTAssertTrue(notice.label.contains("Download Japanese Text Analysis in More"))
   }
 
   @MainActor

@@ -393,6 +393,8 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     var lemmaMatches = 0
     var readingMatches = 0
     var readingApplicable = 0
+    var partOfSpeechMatches = 0
+    var sentenceAllCorrect = 0
 
     for record in truth.cases {
       let analysis = try await client.analyze(record.text)
@@ -402,19 +404,41 @@ final class JapaneseTextAnalysisTests: XCTestCase {
       let finalOffset = record.text.unicodeScalars.count
       let predictedEdges = Set(provider.map(\.scalarRange.upperBound).filter { $0 < finalOffset })
       let goldEdges = Set(record.tokens.map(\.end).filter { $0 < finalOffset })
+      let predictedRanges = Set(
+        provider.map(\.scalarRange)
+      )
+      let goldRanges = Set(record.tokens.map { $0.start..<$0.end })
+      var recordIsCorrect = predictedEdges == goldEdges && predictedRanges == goldRanges
       predictedBoundaryCount += predictedEdges.count
       goldBoundaryCount += goldEdges.count
       matchingBoundaryCount += predictedEdges.intersection(goldEdges).count
       let providerByRange = Dictionary(grouping: provider, by: \.scalarRange)
       for token in record.tokens {
-        guard let candidate = providerByRange[token.start..<token.end]?.first else { continue }
+        guard let candidate = providerByRange[token.start..<token.end]?.first else {
+          recordIsCorrect = false
+          continue
+        }
         exactSpanCount += 1
-        if candidate.dictionaryForm == token.lemma { lemmaMatches += 1 }
+        if candidate.dictionaryForm == token.lemma {
+          lemmaMatches += 1
+        } else {
+          recordIsCorrect = false
+        }
         if !token.readingAlternatives.isEmpty {
           readingApplicable += 1
-          if token.readingAlternatives.contains(candidate.reading) { readingMatches += 1 }
+          if token.readingAlternatives.contains(candidate.reading) {
+            readingMatches += 1
+          } else {
+            recordIsCorrect = false
+          }
+        }
+        if candidate.coarsePartOfSpeech == token.partOfSpeech {
+          partOfSpeechMatches += 1
+        } else {
+          recordIsCorrect = false
         }
       }
+      sentenceAllCorrect += recordIsCorrect ? 1 : 0
     }
 
     let boundaryPrecision = Double(matchingBoundaryCount) / Double(predictedBoundaryCount)
@@ -425,6 +449,8 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     XCTAssertGreaterThanOrEqual(Double(exactSpanCount) / Double(goldTokenCount), 0.976)
     XCTAssertGreaterThanOrEqual(Double(lemmaMatches) / Double(exactSpanCount), 0.850)
     XCTAssertGreaterThanOrEqual(Double(readingMatches) / Double(readingApplicable), 0.949)
+    XCTAssertGreaterThanOrEqual(Double(partOfSpeechMatches) / Double(goldTokenCount), 0.899)
+    XCTAssertGreaterThanOrEqual(sentenceAllCorrect, 29)
     XCTAssertLessThan(Self.milliseconds(confirmationStart.duration(to: .now)), 5_000)
   }
 
@@ -673,7 +699,13 @@ private struct ConfirmationToken: Decodable {
   let start: Int
   let end: Int
   let lemma: String
+  let partOfSpeech: String
   let readingAlternatives: [String]
+
+  enum CodingKeys: String, CodingKey {
+    case surface, start, end, lemma, readingAlternatives
+    case partOfSpeech = "pos"
+  }
 }
 
 private struct HardCaseTruth: Decodable {

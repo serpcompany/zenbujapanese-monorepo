@@ -151,7 +151,8 @@ final class ImageTextFlowModel {
     for observation in observations {
       let tokens = await textAnalysisClient.linkedTokens(observation.text, SearchQuery(""), nil)
       for token in tokens {
-        guard let entry = token.entry,
+        let entries = token.entry.map { [$0] } ?? token.candidateEntries
+        guard !entries.isEmpty,
           let box = boundingBox(forScalarRange: token.scalarRange, in: observation)
         else { continue }
         regions.append(
@@ -159,7 +160,8 @@ final class ImageTextFlowModel {
             id: "\(observation.id).\(token.id)",
             surface: token.surface,
             boundingBox: box,
-            entry: entry
+            entry: token.entry,
+            candidateEntries: entries
           ))
       }
     }
@@ -221,5 +223,6 @@ struct ImageTextRegion: Identifiable {
   let id: String
   let surface: String
   let boundingBox: CGRect
-  let entry: DictionaryEntry
+  let entry: DictionaryEntry?
+  let candidateEntries: [DictionaryEntry]
 }

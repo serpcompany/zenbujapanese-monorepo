@@ -39,8 +39,11 @@ public struct SearchExperienceRootView: View {
     #if DEBUG
       let resolvedLookupClient = LookupClient.clientFromProcessArguments(live: .live) ?? .live
       lookupClient = resolvedLookupClient
+      let usesReducedAnalysis = ProcessInfo.processInfo.arguments.contains(
+        "-UseReducedJapaneseAnalysis")
       japaneseTextAnalysisClient = .resolving(
-        morphologyClient: ProcessInfo.processInfo.arguments.contains("-UseJapaneseAnalysisFixture")
+        morphologyClient: !usesReducedAnalysis
+          && ProcessInfo.processInfo.arguments.contains("-UseJapaneseAnalysisFixture")
           ? .uiTestFixture : .live,
         lookupClient: resolvedLookupClient
       )
