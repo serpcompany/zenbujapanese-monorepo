@@ -118,7 +118,13 @@ final class AccessibilityAuditUITests: XCTestCase {
     for _ in 0..<12 where !currentToken.exists || !currentToken.isHittable {
       detail.swipeUp(velocity: .slow)
     }
-    let otherLinkedToken = app.buttons["word-detail.example-token.0.2.明らか"]
+    let otherLinkedToken = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "word-detail.example-token.0.",
+        "明らか, あきらか"
+      )
+    ).firstMatch
     XCTAssertTrue(currentToken.waitForExistence(timeout: 3))
     XCTAssertTrue(otherLinkedToken.waitForExistence(timeout: 3))
     XCTAssertTrue(containsSystemBluePixels(in: currentToken.screenshot()))
@@ -127,6 +133,173 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertFalse(otherLinkedToken.isSelected)
     retainElementScreenshot(currentToken, named: "Current 見る token")
     retainElementScreenshot(otherLinkedToken, named: "Neutral 明らか token")
+  }
+
+  @MainActor
+  func testRelatedWordUsesNeutralTextAndPreservesNativeNavigation() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let (app, detail) = try launchWordDetail(
+      query: "見る",
+      resultLabelPrefix: "見る, みる",
+      appearance: .light
+    )
+    let related = app.buttons["word-detail.related.見える"]
+    for _ in 0..<12 where !related.exists || !related.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+
+    XCTAssertTrue(related.waitForExistence(timeout: 3))
+    XCTAssertTrue(related.isHittable)
+    XCTAssertGreaterThanOrEqual(related.frame.height, 44)
+    XCTAssertGreaterThanOrEqual(related.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(related.frame.maxX, app.frame.maxX)
+    XCTAssertEqual(
+      related.label,
+      "見える  みえる, Related intransitive verb · to be seen, to be visible, to be in sight"
+    )
+    XCTAssertFalse(
+      containsSystemBluePixels(in: related.screenshot()),
+      "Related Word content should use system-primary and system-secondary text, not action tint."
+    )
+    retainElementScreenshot(related, named: "Neutral Related Word row")
+
+    related.tap()
+    let relatedDetail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(relatedDetail.waitForExistence(timeout: 3))
+    let relatedNavigation = app.navigationBars["見える"]
+    guard relatedNavigation.waitForExistence(timeout: 3) else {
+      return XCTFail("Related Word should open the matching Word Detail destination.")
+    }
+    relatedNavigation.buttons.firstMatch.tap()
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    XCTAssertTrue(related.waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  func testRelatedWordRemainsNeutralInDarkAppearance() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "見る",
+      resultLabelPrefix: "見る, みる",
+      appearance: .dark
+    )
+    let related = app.buttons["word-detail.related.見える"]
+    for _ in 0..<12 where !related.exists || !related.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+
+    XCTAssertTrue(related.waitForExistence(timeout: 3))
+    XCTAssertTrue(related.isHittable)
+    XCTAssertGreaterThanOrEqual(related.frame.height, 44)
+    XCTAssertFalse(containsSystemBluePixels(in: related.screenshot()))
+    retainElementScreenshot(related, named: "Neutral Related Word row - dark")
+  }
+
+  @MainActor
+  func testInlineWordDetailAmbiguousCandidateRemainsNeutralAndSelectable() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "見る",
+      resultLabelPrefix: "見る, みる",
+      appearance: .light
+    )
+    let candidate = app.buttons["word-detail.example-token.2.1.こと"]
+    for _ in 0..<12 where !candidate.exists || !candidate.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+
+    XCTAssertTrue(candidate.waitForExistence(timeout: 3))
+    XCTAssertTrue(candidate.isHittable)
+    XCTAssertEqual(candidate.value as? String, "")
+    XCTAssertFalse(candidate.isSelected)
+    XCTAssertTrue(candidate.label.hasPrefix("こと"))
+    XCTAssertFalse(
+      containsSystemBluePixels(in: candidate.screenshot()),
+      "An unresolved candidate is sentence content, so it should stay neutral until selected."
+    )
+    retainElementScreenshot(candidate, named: "Neutral ambiguous sentence token")
+
+    candidate.tap()
+    XCTAssertTrue(
+      app.buttons["こと (こと) — particle indicating a command"].waitForExistence(timeout: 3)
+    )
+    app.tap()
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  func testReducedInlineAnalysisDoesNotAccentAnySentenceText() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "問題",
+      resultLabelPrefix: "問題, もんだい",
+      appearance: .light,
+      additionalArguments: [
+        "-ResetLanguageTechnologyPacks", "-UseReducedJapaneseAnalysis",
+      ]
+    )
+    let firstToken = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.0.")
+    ).firstMatch
+    for _ in 0..<12 where !firstToken.exists || !firstToken.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+
+    XCTAssertTrue(app.staticTexts["word-detail.reduced-analysis"].exists)
+    XCTAssertTrue(firstToken.waitForExistence(timeout: 3))
+    XCTAssertEqual(firstToken.value as? String, "")
+    XCTAssertFalse(firstToken.isSelected)
+    XCTAssertFalse(containsSystemBluePixels(in: firstToken.screenshot()))
+    XCTAssertEqual(
+      app.buttons.matching(
+        NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.")
+      ).count,
+      0
+    )
+    retainElementScreenshot(firstToken, named: "Neutral reduced-analysis sentence")
+  }
+
+  @MainActor
+  func testMultipleCurrentEntryOccurrencesAreTheOnlyAccentedSentenceTokens() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "来る",
+      resultLabelPrefix: "来る, くる, to come",
+      appearance: .light
+    )
+    let currentOccurrences = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "word-detail.example-token.6.",
+        "来る, くる"
+      )
+    )
+    for _ in 0..<20 where currentOccurrences.count < 2 {
+      detail.swipeUp(velocity: .fast)
+    }
+
+    XCTAssertEqual(currentOccurrences.count, 2)
+    for occurrence in currentOccurrences.allElementsBoundByIndex {
+      XCTAssertEqual(occurrence.value as? String, "Current word")
+      XCTAssertTrue(occurrence.isSelected)
+      XCTAssertTrue(containsSystemBluePixels(in: occurrence.screenshot()))
+    }
+    let otherTokens = app.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND NOT (label BEGINSWITH %@)",
+        "word-detail.example-token.6.",
+        "来る, くる"
+      )
+    )
+    XCTAssertGreaterThan(otherTokens.count, 0)
+    for token in otherTokens.allElementsBoundByIndex {
+      XCTAssertNotEqual(token.value as? String, "Current word")
+      XCTAssertFalse(token.isSelected)
+      XCTAssertFalse(containsSystemBluePixels(in: token.screenshot()))
+    }
+    retainElementScreenshot(
+      app.descendants(matching: .any)["word-detail.example.6"],
+      named: "Two current-word occurrences with neutral surrounding tokens"
+    )
   }
 
   @MainActor
@@ -140,7 +313,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       NSPredicate(
         format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
         "word-detail.example-token.20.",
-        "食べて, たべる"
+        "食べ, たべる"
       )
     ).firstMatch
     for _ in 0..<32 where !inflectedToken.exists || !inflectedToken.isHittable {
@@ -152,7 +325,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(containsSystemBluePixels(in: inflectedToken.screenshot()))
     XCTAssertGreaterThanOrEqual(inflectedToken.frame.width, 44)
     XCTAssertGreaterThanOrEqual(inflectedToken.frame.height, 44)
-    retainElementScreenshot(inflectedToken, named: "Inflected current 食べて token")
+    retainElementScreenshot(inflectedToken, named: "Inflected current 食べ token")
   }
 
   @MainActor

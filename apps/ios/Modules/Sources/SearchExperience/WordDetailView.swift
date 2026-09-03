@@ -995,12 +995,14 @@ private struct RelationshipsSection: View {
         VStack(alignment: .leading, spacing: 3) {
           Text("\(relationship.headword)  \(relationship.reading)")
             .font(.headline)
+            .foregroundStyle(.primary)
           Text("\(relationship.relation) · \(relationship.summary)")
             .font(.footnote)
             .foregroundStyle(.secondary)
             .lineLimit(2)
         }
       }
+      .tint(.primary)
       .accessibilityIdentifier("word-detail.related.\(relationship.headword)")
     }
   }

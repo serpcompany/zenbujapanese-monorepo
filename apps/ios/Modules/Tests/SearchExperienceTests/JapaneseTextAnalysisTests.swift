@@ -4,6 +4,41 @@ import XCTest
 @testable import SearchExperience
 
 final class JapaneseTextAnalysisTests: XCTestCase {
+  func testUITestProviderMatchesPinnedSudachiEvidenceForHighlightJourneys() async throws {
+    let neutral = try await JapaneseMorphologyClient.uiTestFixture.analyze("見るからに明らかだよ。")
+    XCTAssertEqual(neutral.candidates.map(\.surface), ["見る", "から", "に", "明らか", "だ", "よ", "。"])
+    XCTAssertEqual(neutral.candidates[3].dictionaryForm, "明らか")
+    XCTAssertEqual(neutral.candidates[3].reading, "アキラカ")
+    XCTAssertEqual(neutral.candidates[3].partOfSpeech.first, "形状詞")
+
+    let dedicated = try await JapaneseMorphologyClient.uiTestFixture.analyze(
+      "いるだけ持っていらっしゃい。"
+    )
+    XCTAssertEqual(dedicated.candidates.map(\.surface), ["いる", "だけ", "持っ", "て", "いらっしゃい", "。"])
+    XCTAssertEqual(dedicated.candidates[2].dictionaryForm, "持つ")
+    XCTAssertEqual(dedicated.candidates[2].reading, "モッ")
+    XCTAssertEqual(dedicated.candidates[2].partOfSpeech.first, "動詞")
+
+    let inflected = try await JapaneseMorphologyClient.uiTestFixture.analyze(
+      "食べるために生きてるんじゃない。生きるために食べてるんだ。"
+    )
+    XCTAssertEqual(inflected.candidates[12].surface, "食べ")
+    XCTAssertEqual(inflected.candidates[12].dictionaryForm, "食べる")
+    XCTAssertEqual(inflected.candidates[12].reading, "タベ")
+    XCTAssertEqual(inflected.candidates[12].partOfSpeech.first, "動詞")
+
+    let repeated = try await JapaneseMorphologyClient.uiTestFixture.analyze("来る日も来る日も雨だった。")
+    XCTAssertEqual(
+      repeated.candidates.filter { $0.dictionaryForm == "来る" }.map(\.surface), ["来る", "来る"])
+
+    let ambiguous = try await JapaneseMorphologyClient.uiTestFixture.analyze("見ることは信ずることなり。")
+    XCTAssertEqual(ambiguous.candidates.filter { $0.surface == "こと" }.count, 2)
+    XCTAssertTrue(
+      ambiguous.candidates.filter { $0.surface == "こと" }
+        .allSatisfy { $0.dictionaryForm == "こと" && $0.partOfSpeech.first == "名詞" }
+    )
+  }
+
   func testProviderEvidenceSeparatesTodayFromTopicParticleWithoutGreetingLink() async throws {
     let lookup = LookupClient.freshBundledDatabase()
     let tokens = await analyzer(lookup).linkedTokens(
