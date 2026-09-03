@@ -201,28 +201,57 @@ class Issue251MorphologyBenchmarkTests(unittest.TestCase):
             results["decisionEvidence"]["confirmationHoldout"]["truthSHA256"],
             digest,
         )
+        samples = fixtures / "issue251-ios-measurement-samples-v1.json"
+        self.assertEqual(
+            results["simulatorFeasibility"]["rawSamplesSHA256"],
+            benchmark.hashlib.sha256(samples.read_bytes()).hexdigest(),
+        )
+        strata = fixtures / "issue251-confirmation-strata.json"
+        self.assertEqual(
+            results["decisionEvidence"]["confirmationHoldout"]["strataSHA256"],
+            benchmark.hashlib.sha256(strata.read_bytes()).hexdigest(),
+        )
 
     def test_scalar_range_round_trips_to_retained_apple_character_geometry(self):
         text = "日本語を読む"
         boxes = [
-            {"x": 0.80, "y": 0.10, "width": 0.05, "height": 0.08},
-            {"x": 0.80, "y": 0.18, "width": 0.05, "height": 0.08},
-            {"x": 0.80, "y": 0.26, "width": 0.05, "height": 0.08},
-            {"x": 0.60, "y": 0.10, "width": 0.05, "height": 0.08},
-            {"x": 0.40, "y": 0.10, "width": 0.05, "height": 0.08},
-            {"x": 0.40, "y": 0.18, "width": 0.05, "height": 0.08},
+            {"scalarStart": 0, "scalarEnd": 1, "x": 0.80, "y": 0.10},
+            {"scalarStart": 1, "scalarEnd": 2, "x": 0.80, "y": 0.18},
+            {"scalarStart": 2, "scalarEnd": 3, "x": 0.80, "y": 0.26},
+            {"scalarStart": 3, "scalarEnd": 4, "x": 0.60, "y": 0.10},
+            {"scalarStart": 4, "scalarEnd": 5, "x": 0.40, "y": 0.10},
+            {"scalarStart": 5, "scalarEnd": 6, "x": 0.40, "y": 0.18},
         ]
-        mapped = benchmark.apple_character_geometry_for_scalar_range(
-            text, 0, 3, boxes
-        )
+        mapped = benchmark.apple_character_geometry_for_scalar_range(text, 0, 3, boxes)
         self.assertEqual(mapped, boxes[0:3])
         self.assertEqual(text[0:3], "日本語")
 
     def test_geometry_mapping_fails_when_vision_evidence_is_not_scalar_complete(self):
-        with self.assertRaisesRegex(ValueError, "geometry count"):
+        with self.assertRaisesRegex(ValueError, "does not cover"):
             benchmark.apple_character_geometry_for_scalar_range(
-                "日本語", 0, 3, [{"x": 0.0, "y": 0.0, "width": 1.0, "height": 1.0}]
+                "日本語",
+                0,
+                3,
+                [{"scalarStart": 0, "scalarEnd": 1, "x": 0.0, "y": 0.0}],
             )
+
+    def test_multi_scalar_swift_character_geometry_maps_without_one_box_per_scalar(
+        self,
+    ):
+        text = "葛󠄀を"
+        boxes = [
+            {"scalarStart": 0, "scalarEnd": 2, "x": 0.8, "y": 0.1},
+            {"scalarStart": 2, "scalarEnd": 3, "x": 0.6, "y": 0.1},
+        ]
+        self.assertEqual(
+            benchmark.apple_character_geometry_for_scalar_range(text, 0, 2, boxes),
+            [boxes[0]],
+        )
+
+    def test_script_strata_are_deterministic_from_transcript(self):
+        self.assertEqual(benchmark.script_stratum("iPhoneを2台"), "mixedLatinOrNumber")
+        self.assertEqual(benchmark.script_stratum("日本語です"), "kanjiKana")
+        self.assertEqual(benchmark.script_stratum("こんにちは。"), "kanaOrSymbolOnly")
 
     def test_reordered_candidates_score_by_id_not_file_order(self):
         second_truth = {

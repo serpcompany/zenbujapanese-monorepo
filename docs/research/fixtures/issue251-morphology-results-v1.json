@@ -107,6 +107,7 @@
           }
         }
       },
+      "strataSHA256": "e7c74123d0309fe1e74e97345d802bd24393855d3c598be490599c222f02de7c",
       "executionSeconds": 9
     },
     "exploratoryEvidence": "GSD dev/test and PUD outputs preceded the complete auditable protocol/truth commit. They are corroborating only and do not decide the winner."
@@ -366,6 +367,7 @@
   "simulatorFeasibility": {
     "environment": "iPhone 17 Pro Simulator; iOS 26.0.1; Xcode 26.0 17A324; Apple M3 Max host; Release -Os",
     "physicalDeviceEvidence": false,
+    "rawSamplesSHA256": "cac5533d4fd77b543379bfc5e976147ea19d30357d95436ff4ea99741e13d41e",
     "protocol": "30 fresh processes per provider; 20 warmups plus 200 measured calls; 10 deterministic repeats; 100 concurrent calls; 90/90 launches completed",
     "executionSeconds": 92,
     "sudachi": {

@@ -142,6 +142,9 @@ The separate product-risk set supplies the OCR-clean/noisy comparison. On its
 three clean records, Sudachi A/B and Kuromoji boundary F1 were .971429 / 1.0 /
 1.0. On the deliberately noisy record they were .947368 / .947368 / .888889.
 The one-row noisy stratum is a regression probe, not a confidence estimate.
+The exact script classifier and aggregation are retained in
+[`issue251_stratified_report.py`](tools/issue251_stratified_report.py), with its
+[normalized result](fixtures/issue251-confirmation-strata.json).
 
 ### Exploratory GSD test — 543 sentences / 13,034 tokens
 
@@ -313,6 +316,8 @@ The retained scorer tests proved red before green for:
 - wrong lemma, reading, and POS independently;
 - a guessed homograph counted as a severe wrong link;
 - a non-round-tripping source range;
+- scalar-range mapping through retained Apple character boxes, including one
+  multi-scalar Swift `Character`, with incomplete geometry rejected;
 - engine/dictionary metadata drift;
 - duplicate/order sensitivity; and
 - deterministic paired bootstrap output.

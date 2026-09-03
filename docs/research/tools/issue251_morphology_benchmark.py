@@ -132,16 +132,38 @@ def provider_metadata(contract_path: Path, provider_key: str) -> dict[str, Any]:
 
 
 def apple_character_geometry_for_scalar_range(
-    text: str, start: int, end: int, character_boxes: list[dict[str, float]]
-) -> list[dict[str, float]]:
+    text: str,
+    start: int,
+    end: int,
+    character_boxes: list[dict[str, float | int]],
+) -> list[dict[str, float | int]]:
     """Map a validated analyzer scalar range to retained Vision character geometry."""
-    if len(character_boxes) != len(text):
-        raise ValueError(
-            "Apple character geometry count does not match transcript scalars"
-        )
     if not (0 <= start < end <= len(text)):
         raise ValueError("analyzer scalar range is outside Apple transcript")
-    return character_boxes[start:end]
+    selected = []
+    cursor = start
+    for box in character_boxes:
+        box_start = int(box["scalarStart"])
+        box_end = int(box["scalarEnd"])
+        if not (0 <= box_start < box_end <= len(text)):
+            raise ValueError("Apple character geometry has an invalid scalar span")
+        if box_end <= start or box_start >= end:
+            continue
+        if box_start > cursor:
+            raise ValueError("Apple character geometry does not cover analyzer range")
+        selected.append(box)
+        cursor = max(cursor, box_end)
+    if cursor < end:
+        raise ValueError("Apple character geometry does not cover analyzer range")
+    return selected
+
+
+def script_stratum(text: str) -> str:
+    if re.search(r"[A-Za-z0-9]", text):
+        return "mixedLatinOrNumber"
+    if re.search(r"[一-龯々]", text):
+        return "kanjiKana"
+    return "kanaOrSymbolOnly"
 
 
 def score_records(

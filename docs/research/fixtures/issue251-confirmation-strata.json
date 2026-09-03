@@ -1,0 +1,57 @@
+{
+  "domain": "UD GSD news/blog",
+  "schema": "zenbu.issue251.stratified-result.v1",
+  "strata": {
+    "kanaOrSymbolOnly": {
+      "faanauKuromoji": {
+        "boundaryF1": 1.0,
+        "lemmaAccuracy": 0.6071428571428571,
+        "posAccuracy": 0.75,
+        "readingAccuracy": 0.96,
+        "tokenSpanF1": 1.0
+      },
+      "records": 4,
+      "sudachiA": {
+        "boundaryF1": 1.0,
+        "lemmaAccuracy": 0.6785714285714286,
+        "posAccuracy": 0.9642857142857143,
+        "readingAccuracy": 1.0,
+        "tokenSpanF1": 1.0
+      }
+    },
+    "kanjiKana": {
+      "faanauKuromoji": {
+        "boundaryF1": 0.9650563831268272,
+        "lemmaAccuracy": 0.7498043308113749,
+        "posAccuracy": 0.7645447430211323,
+        "readingAccuracy": 0.8653537563822028,
+        "tokenSpanF1": 0.9141870350690754
+      },
+      "records": 345,
+      "sudachiA": {
+        "boundaryF1": 0.9928410717938227,
+        "lemmaAccuracy": 0.8430733107226716,
+        "posAccuracy": 0.9033394208192017,
+        "readingAccuracy": 0.9679066374908826,
+        "tokenSpanF1": 0.980530051442339
+      }
+    },
+    "mixedLatinOrNumber": {
+      "faanauKuromoji": {
+        "boundaryF1": 0.9701803051317615,
+        "lemmaAccuracy": 0.7226502311248074,
+        "posAccuracy": 0.7930882676645389,
+        "readingAccuracy": 0.7847324496809033,
+        "tokenSpanF1": 0.9302740031187346
+      },
+      "records": 163,
+      "sudachiA": {
+        "boundaryF1": 0.9858253315043439,
+        "lemmaAccuracy": 0.8655073739819502,
+        "posAccuracy": 0.8914813999559762,
+        "readingAccuracy": 0.9187530682376043,
+        "tokenSpanF1": 0.9693630152082875
+      }
+    }
+  }
+}
