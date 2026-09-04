@@ -28,12 +28,16 @@ jobs:
       ios_changed: ${{ steps.scope.outputs.ios_changed }}
       complete_selectors: ${{ steps.plan.outputs.complete_selectors }}
       integration_selectors: ${{ steps.plan.outputs.integration_selectors }}
+      merge_candidate_matrix: ${{ steps.plan.outputs.merge_candidate_matrix }}
       source_sha: ${{ steps.plan.outputs.source_sha }}
     steps:
       - name: Check out enough history to classify the merge candidate
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           fetch-depth: 0
+
+      - name: Validate exact inventory and partition contract
+        run: python3 apps/ios/Tools/ios_verification.py validate
 
       - name: Classify iOS impact
         id: scope
@@ -71,7 +75,7 @@ jobs:
           python3 apps/ios/Tools/ios_verification.py plan "${args[@]}"
 
   complete-suite:
-    name: ios-premerge / Complete suite
+    name: ios-premerge / ${{ matrix.lane }}
     needs: scope
     if: >-
       ${{
@@ -80,12 +84,16 @@ jobs:
       }}
     runs-on: macos-26
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.scope.outputs.merge_candidate_matrix) }}
     steps:
       - name: Check out exact merge-candidate source and LFS data
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           fetch-depth: 0
           lfs: true
+          ref: ${{ github.event.merge_group.head_sha || github.sha }}
 
       - name: Select pinned Xcode
         run: |
@@ -105,22 +113,13 @@ jobs:
             --cache "$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore" \
             --cache-only
 
-      - name: Run the complete iOS suite exactly once
+      - name: Run the exact generated partition
         run: |
           apps/ios/Tools/run_selected_test_plan.sh \
-            ZenbuPR \
+            '${{ matrix.plan }}' \
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
-            "$RUNNER_TEMP/ZenbuPreMerge.xcresult" \
-            '${{ needs.scope.outputs.complete_selectors }}' \
-            '${{ needs.scope.outputs.source_sha }}'
-
-      - name: Run the pinned Japanese Text Analysis integration lane
-        run: |
-          apps/ios/Tools/run_selected_test_plan.sh \
-            ZenbuSudachiIntegration \
-            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
-            "$RUNNER_TEMP/ZenbuSudachiIntegration.xcresult" \
-            '${{ needs.scope.outputs.integration_selectors }}' \
+            "$RUNNER_TEMP/ZenbuPreMerge-${{ matrix.lane }}.xcresult" \
+            '${{ toJson(matrix.selectors) }}' \
             '${{ needs.scope.outputs.source_sha }}'
 
       - name: Record exact candidate identity
@@ -129,34 +128,44 @@ jobs:
           {
             printf 'event=%s\n' "$GITHUB_EVENT_NAME"
             printf 'tested_sha=%s\n' "$GITHUB_SHA"
+            printf 'lane=%s\n' '${{ matrix.lane }}'
+            printf 'plan=%s\n' '${{ matrix.plan }}'
+            printf 'planned_test_count=%s\n' '${{ matrix.test_count }}'
             printf 'repository=%s\n' "$GITHUB_REPOSITORY"
             printf 'run=%s/%s/actions/runs/%s\n' \
               "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
-          } | tee "$RUNNER_TEMP/ZenbuPreMerge-identity.txt"
+          } | tee "$RUNNER_TEMP/ZenbuPreMerge-${{ matrix.lane }}-identity.txt"
+
+      - name: Publish lane identity and timing immediately
+        if: always()
+        run: |
+          summary="$RUNNER_TEMP/ZenbuPreMerge-${{ matrix.lane }}.xcresult.timing.json"
+          if [[ -f "$summary" ]]; then
+            {
+              printf '### %s verification evidence\n```json\n' '${{ matrix.lane }}'
+              cat "$summary"
+              printf '\n```\n'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Package test evidence
         if: always()
         run: |
-          if [[ -d "$RUNNER_TEMP/ZenbuPreMerge.xcresult" ]]; then
-            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuPreMerge.xcresult" "$RUNNER_TEMP/ZenbuPreMerge.xcresult.zip"
-          fi
-          if [[ -d "$RUNNER_TEMP/ZenbuSudachiIntegration.xcresult" ]]; then
-            ditto -c -k --keepParent "$RUNNER_TEMP/ZenbuSudachiIntegration.xcresult" "$RUNNER_TEMP/ZenbuSudachiIntegration.xcresult.zip"
+          result="$RUNNER_TEMP/ZenbuPreMerge-${{ matrix.lane }}.xcresult"
+          if [[ -d "$result" ]]; then
+            ditto -c -k --keepParent "$result" "$result.zip"
           fi
 
       - name: Retain exact merge-candidate evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ZenbuPreMerge-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ZenbuPreMerge-${{ matrix.lane }}-${{ needs.scope.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            ${{ runner.temp }}/ZenbuPreMerge.xcresult.zip
-            ${{ runner.temp }}/ZenbuSudachiIntegration.xcresult.zip
-            ${{ runner.temp }}/ZenbuPreMerge.xcresult.timing.json
-            ${{ runner.temp }}/ZenbuSudachiIntegration.xcresult.timing.json
-            ${{ runner.temp }}/ZenbuPreMerge.xcresult.xcodebuild.log
-            ${{ runner.temp }}/ZenbuSudachiIntegration.xcresult.xcodebuild.log
-            ${{ runner.temp }}/ZenbuPreMerge-identity.txt
+            ${{ runner.temp }}/ZenbuPreMerge-${{ matrix.lane }}.xcresult.zip
+            ${{ runner.temp }}/ZenbuPreMerge-${{ matrix.lane }}.xcresult.timing.json
+            ${{ runner.temp }}/ZenbuPreMerge-${{ matrix.lane }}.xcresult.xcodebuild.log
+            ${{ runner.temp }}/ZenbuPreMerge-${{ matrix.lane }}-identity.txt
           if-no-files-found: warn
           retention-days: 30
 

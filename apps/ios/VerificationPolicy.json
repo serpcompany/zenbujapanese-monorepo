@@ -431,6 +431,7 @@
     "integration.sudachi": {
       "plan": "ZenbuSudachiIntegration",
       "test": null,
+      "partition": "sudachi-integration",
       "traits": ["network", "large-resource", "integration"],
       "journeys": ["japanese-text-analysis-provider"]
     },
@@ -460,6 +461,34 @@
         "shell-navigation",
         "word-detail"
       ]
+    },
+    "complete.merge-unit": {
+      "plan": "ZenbuPR",
+      "test": null,
+      "partition": "unit",
+      "traits": ["complete-suite", "generated-partition"],
+      "journeys": []
+    },
+    "complete.merge-accessibility": {
+      "plan": "ZenbuPR",
+      "test": null,
+      "partition": "accessibility-ui",
+      "traits": ["complete-suite", "generated-partition"],
+      "journeys": []
+    },
+    "complete.merge-ui-a": {
+      "plan": "ZenbuPR",
+      "test": null,
+      "partition": "normal-ui-a",
+      "traits": ["complete-suite", "generated-partition"],
+      "journeys": []
+    },
+    "complete.merge-ui-b": {
+      "plan": "ZenbuPR",
+      "test": null,
+      "partition": "normal-ui-b",
+      "traits": ["complete-suite", "generated-partition"],
+      "journeys": []
     }
   },
   "tiers": {
@@ -532,7 +561,13 @@
     ],
     "integration": ["integration.sudachi"],
     "performance": ["performance.search"],
-    "complete": ["complete.public"]
+    "complete": [
+      "complete.public",
+      "complete.merge-unit",
+      "complete.merge-accessibility",
+      "complete.merge-ui-a",
+      "complete.merge-ui-b"
+    ]
   },
   "stages": {
     "tdd": ["unit", "ui"],
@@ -609,12 +644,18 @@
       "paths": [],
       "merge-candidate": [
         "contracts.repository",
-        "complete.public",
+        "complete.merge-unit",
+        "complete.merge-accessibility",
+        "complete.merge-ui-a",
+        "complete.merge-ui-b",
         "integration.sudachi"
       ],
       "manual": [
         "contracts.repository",
-        "complete.public",
+        "complete.merge-unit",
+        "complete.merge-accessibility",
+        "complete.merge-ui-a",
+        "complete.merge-ui-b",
         "integration.sudachi"
       ],
       "release": [

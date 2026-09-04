@@ -16,7 +16,9 @@ def trigger_section(workflow: str) -> str:
 
 
 class IOSWorkflowPolicyTests(unittest.TestCase):
-    def test_fast_workflow_reports_required_status_on_pull_requests_and_merge_groups(self):
+    def test_fast_workflow_reports_required_status_on_pull_requests_and_merge_groups(
+        self,
+    ):
         workflow = workflow_text("ios-quality.yml")
         triggers = trigger_section(workflow)
         self.assertIn("  pull_request:\n", triggers)
@@ -40,15 +42,36 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("  workflow_dispatch:\n", triggers)
         self.assertIn("    name: ios-premerge / Required\n", workflow)
 
-    def test_complete_suite_is_deferred_to_merge_group(self):
+    def test_complete_suite_is_a_five_lane_exact_candidate_matrix(self):
         workflow = workflow_text("ios-premerge.yml")
         complete_job = workflow.split("  complete-suite:\n", 1)[1].split(
             "\n  required:\n", 1
         )[0]
         self.assertIn("github.event_name == 'merge_group'", complete_job)
         self.assertNotIn("github.event_name == 'pull_request'", complete_job)
-        self.assertIn("ZenbuPR", complete_job)
+        self.assertIn("fail-fast: false", complete_job)
+        self.assertIn(
+            "matrix: ${{ fromJson(needs.scope.outputs.merge_candidate_matrix) }}",
+            complete_job,
+        )
+        self.assertIn("name: ios-premerge / ${{ matrix.lane }}", complete_job)
+        self.assertIn("${{ matrix.plan }}", complete_job)
+        self.assertIn("${{ toJson(matrix.selectors) }}", complete_job)
+        self.assertIn("${{ matrix.test_count }}", complete_job)
+        self.assertIn(
+            "ref: ${{ github.event.merge_group.head_sha || github.sha }}",
+            complete_job,
+        )
         self.assertNotIn("-only-testing", complete_job)
+        self.assertEqual(complete_job.count("run_selected_test_plan.sh"), 1)
+
+        scope = workflow.split("  scope:\n", 1)[1].split("\n  complete-suite:\n", 1)[0]
+        self.assertIn("merge_candidate_matrix:", scope)
+        self.assertIn("ios_verification.py validate", scope)
+
+        required = workflow.split("  required:\n", 1)[1]
+        self.assertIn("needs: [scope, complete-suite]", required)
+        self.assertIn("COMPLETE_RESULT: ${{ needs.complete-suite.result }}", required)
 
     def test_fast_partitions_are_manifest_selected_without_workflow_selectors(self):
         workflow = workflow_text("ios-quality.yml")

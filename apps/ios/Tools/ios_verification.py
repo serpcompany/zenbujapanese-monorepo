@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import hashlib
 import json
 from fnmatch import fnmatch
@@ -431,6 +432,40 @@ def _validate_no_equivalent_selectors(
 
 def validate_repository_contracts(manifest: dict[str, Any], repo_root: Path) -> None:
     inventory = repository_inventory(repo_root)
+    merge_partitions = merge_candidate_partitions(inventory)
+    require_exact_merge_candidate_partitions(inventory, merge_partitions)
+    partition_selectors = {
+        selector_id: selector["partition"]
+        for selector_id, selector in manifest["selectors"].items()
+        if selector.get("partition")
+    }
+    partition_counts = Counter(partition_selectors.values())
+    missing_or_duplicate_partitions = sorted(
+        partition
+        for partition in merge_partitions
+        if partition_counts.get(partition) != 1
+    )
+    if missing_or_duplicate_partitions:
+        raise PolicyError(
+            "generated merge-candidate selectors must name each lane exactly once: "
+            + ", ".join(missing_or_duplicate_partitions)
+        )
+    full_merge_selectors = set(
+        manifest.get("capabilities", {})
+        .get("full-merge", {})
+        .get("merge-candidate", [])
+    )
+    selected_partitions = {
+        partition
+        for selector_id, partition in partition_selectors.items()
+        if selector_id in full_merge_selectors
+    }
+    if selected_partitions != set(merge_partitions):
+        missing = sorted(set(merge_partitions) - selected_partitions)
+        raise PolicyError(
+            "full-merge merge-candidate policy omits generated lanes: "
+            + ", ".join(missing)
+        )
     plan_names = set(inventory["plans"])
     all_tests = set(inventory["tests"])
     exact_exclusions = set(manifest.get("hil_exclusions", {})) | set(
@@ -446,6 +481,27 @@ def validate_repository_contracts(manifest: dict[str, Any], repo_root: Path) -> 
         if plan is not None and plan not in plan_names:
             raise PolicyError(f"selector {selector_id} references missing plan {plan}")
         test = selector.get("test")
+        partition = selector.get("partition")
+        if partition is not None:
+            if test is not None:
+                raise PolicyError(
+                    f"partition selector {selector_id} cannot also name test {test}"
+                )
+            generated = merge_partitions.get(partition)
+            if generated is None:
+                raise PolicyError(
+                    f"selector {selector_id} references unknown partition {partition}"
+                )
+            if generated["plan"] != plan:
+                raise PolicyError(
+                    f"selector {selector_id} partition {partition} belongs to "
+                    f"{generated['plan']}, not {plan}"
+                )
+            if not generated["tests"]:
+                raise PolicyError(
+                    f"selector {selector_id} references empty partition {partition}"
+                )
+            continue
         if plan is None:
             if test is not None:
                 raise PolicyError(
@@ -574,6 +630,135 @@ def repository_inventory(repo_root: Path) -> dict[str, Any]:
         "tests": sorted(all_tests),
         "plans": plans,
     }
+
+
+def merge_candidate_partitions(inventory: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Deterministically partition the exact merge-candidate correctness tests."""
+    zenbu_pr = inventory["plans"]["ZenbuPR"]["included_tests"]
+    unit = sorted(test for test in zenbu_pr if test.startswith("ZenbuJapaneseTests/"))
+    accessibility = sorted(
+        set(zenbu_pr) & set(inventory["plans"]["ZenbuAccessibility"]["included_tests"])
+    )
+    normal_ui = sorted(set(zenbu_pr) - set(unit) - set(accessibility))
+    integration = inventory["plans"]["ZenbuSudachiIntegration"]["included_tests"]
+    return {
+        "unit": {"plan": "ZenbuPR", "tests": unit},
+        "accessibility-ui": {"plan": "ZenbuPR", "tests": accessibility},
+        "normal-ui-a": {"plan": "ZenbuPR", "tests": normal_ui[::2]},
+        "normal-ui-b": {"plan": "ZenbuPR", "tests": normal_ui[1::2]},
+        "sudachi-integration": {
+            "plan": "ZenbuSudachiIntegration",
+            "tests": integration,
+        },
+    }
+
+
+def require_exact_merge_candidate_partitions(
+    inventory: dict[str, Any], partitions: dict[str, dict[str, Any]]
+) -> None:
+    required_lanes = {
+        "unit",
+        "accessibility-ui",
+        "normal-ui-a",
+        "normal-ui-b",
+        "sudachi-integration",
+    }
+    if set(partitions) != required_lanes:
+        raise PolicyError(
+            "merge-candidate lanes must be exactly: "
+            + ", ".join(sorted(required_lanes))
+        )
+
+    required_pr_tests = set(inventory["plans"]["ZenbuPR"]["included_tests"])
+    accessibility_tests = set(
+        inventory["plans"]["ZenbuAccessibility"]["included_tests"]
+    )
+    accessibility_outside_pr = sorted(accessibility_tests - required_pr_tests)
+    if accessibility_outside_pr:
+        raise PolicyError(
+            "ZenbuAccessibility contains tests not required by ZenbuPR: "
+            + ", ".join(accessibility_outside_pr)
+        )
+
+    zenbu_pr_lanes = (
+        "unit",
+        "accessibility-ui",
+        "normal-ui-a",
+        "normal-ui-b",
+    )
+    partitioned_pr_tests = [
+        test for lane in zenbu_pr_lanes for test in partitions[lane]["tests"]
+    ]
+    duplicates = sorted(
+        test for test, count in Counter(partitioned_pr_tests).items() if count != 1
+    )
+    if duplicates:
+        raise PolicyError(
+            "merge-candidate partition duplicates required ZenbuPR tests: "
+            + ", ".join(duplicates)
+        )
+    actual_pr_tests = set(partitioned_pr_tests)
+    omitted = sorted(required_pr_tests - actual_pr_tests)
+    if omitted:
+        raise PolicyError(
+            "merge-candidate partition omits required ZenbuPR tests: "
+            + ", ".join(omitted)
+        )
+    unexpected = sorted(actual_pr_tests - required_pr_tests)
+    if unexpected:
+        raise PolicyError(
+            "merge-candidate partition contains non-ZenbuPR tests: "
+            + ", ".join(unexpected)
+        )
+
+    expected = merge_candidate_partitions(inventory)
+    for lane in zenbu_pr_lanes:
+        if partitions[lane]["plan"] != "ZenbuPR":
+            raise PolicyError(f"{lane} partition must run through ZenbuPR")
+        if partitions[lane]["tests"] != expected[lane]["tests"]:
+            raise PolicyError(
+                f"{lane} partition does not match the deterministic inventory split"
+            )
+
+    integration = partitions["sudachi-integration"]
+    required_integration = set(
+        inventory["plans"]["ZenbuSudachiIntegration"]["included_tests"]
+    )
+    if (
+        integration["plan"] != "ZenbuSudachiIntegration"
+        or set(integration["tests"]) != required_integration
+    ):
+        raise PolicyError(
+            "sudachi-integration partition must equal ZenbuSudachiIntegration"
+        )
+
+
+def merge_candidate_matrix(
+    manifest: dict[str, Any],
+    selector_ids: list[str],
+    inventory: dict[str, Any],
+) -> dict[str, list[dict[str, Any]]]:
+    partitions = merge_candidate_partitions(inventory)
+    selectors_by_partition = {
+        selector.get("partition"): selector_id
+        for selector_id, selector in manifest["selectors"].items()
+        if selector.get("partition")
+    }
+    selected = set(selector_ids)
+    include: list[dict[str, Any]] = []
+    for lane, partition in partitions.items():
+        selector_id = selectors_by_partition.get(lane)
+        if selector_id not in selected:
+            continue
+        include.append(
+            {
+                "lane": lane,
+                "plan": partition["plan"],
+                "selectors": [selector_id],
+                "test_count": len(partition["tests"]),
+            }
+        )
+    return {"include": include}
 
 
 def resolve_plan(
@@ -817,6 +1002,7 @@ def parse_arguments(arguments: list[str]) -> argparse.Namespace:
     tests.add_argument("--selector", action="append", default=[])
     tests.add_argument("--plan", required=True)
     tests.add_argument("--stage", required=True)
+    tests.add_argument("--repo-root", type=Path, default=Path("."))
 
     lease = subparsers.add_parser("lease-run")
     lease.add_argument("--lock", type=Path, required=True)
@@ -892,14 +1078,17 @@ def main(arguments: list[str]) -> int:
         )
         return 0
     if options.command == "inventory":
-        print(
-            json.dumps(
-                repository_inventory(options.repo_root), indent=2, sort_keys=True
-            )
+        inventory = repository_inventory(options.repo_root)
+        inventory["merge_candidate_partitions"] = merge_candidate_partitions(inventory)
+        require_exact_merge_candidate_partitions(
+            inventory, inventory["merge_candidate_partitions"]
         )
+        print(json.dumps(inventory, indent=2, sort_keys=True))
         return 0
     if options.command == "tests":
         manifest = load_and_validate_manifest(options.manifest)
+        inventory = repository_inventory(options.repo_root)
+        merge_partitions = merge_candidate_partitions(inventory)
         if options.stage not in manifest["stages"]:
             raise PolicyError(f"unknown lifecycle stage {options.stage}")
         allowed = {
@@ -919,8 +1108,24 @@ def main(arguments: list[str]) -> int:
                 raise PolicyError(
                     f"selector {selector_id} is not allowed at {options.stage}"
                 )
-            if selector["test"]:
+            partition = selector.get("partition")
+            if partition:
+                generated = merge_partitions.get(partition)
+                if generated is None:
+                    raise PolicyError(
+                        f"selector {selector_id} references unknown partition {partition}"
+                    )
+                if generated["plan"] != options.plan:
+                    raise PolicyError(
+                        f"partition {partition} belongs to {generated['plan']}, "
+                        f"not {options.plan}"
+                    )
+                for test in generated["tests"]:
+                    print(test)
+            elif selector["test"]:
                 print(selector["test"])
+            else:
+                print("__ZENBU_FULL_PLAN__")
         return 0
     if options.command == "fingerprint":
         source = source_fingerprint(options.repo_root)
@@ -984,12 +1189,23 @@ def main(arguments: list[str]) -> int:
         requested_capabilities=options.capability,
     )
     plan["partitions"] = selector_partitions(manifest, plan["selectors"])
+    plan["merge_candidate_matrix"] = (
+        merge_candidate_matrix(
+            manifest, plan["selectors"], repository_inventory(Path.cwd())
+        )
+        if options.stage in ("merge-candidate", "manual")
+        and plan["cadence"] in ("verify-merge-candidate", "run-manual")
+        else {"include": []}
+    )
     print(json.dumps(plan, indent=2, sort_keys=True))
     if options.github_output:
         values = {
             "cadence": plan["cadence"],
             "source_sha": plan["source_sha"],
             "run_expensive": str(bool(plan["selectors"])).lower(),
+            "merge_candidate_matrix": json.dumps(
+                plan["merge_candidate_matrix"], separators=(",", ":")
+            ),
         }
         for tier in (
             "contracts",

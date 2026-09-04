@@ -660,7 +660,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             "unclassified-ios-fallback",
         )
 
-    def test_merge_candidate_output_includes_explicit_complete_selector(self):
+    def test_merge_candidate_planner_outputs_the_five_approved_parallel_lanes(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "github-output"
             manifest = Path(__file__).parents[2] / "VerificationPolicy.json"
@@ -691,7 +691,221 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 line.split("=", 1)
                 for line in output.read_text(encoding="utf-8").splitlines()
             )
-            self.assertEqual(values["complete_selectors"], '["complete.public"]')
+            matrix = json.loads(values["merge_candidate_matrix"])["include"]
+            self.assertEqual(
+                [lane["lane"] for lane in matrix],
+                [
+                    "unit",
+                    "accessibility-ui",
+                    "normal-ui-a",
+                    "normal-ui-b",
+                    "sudachi-integration",
+                ],
+            )
+            self.assertEqual(
+                [lane["plan"] for lane in matrix],
+                [
+                    "ZenbuPR",
+                    "ZenbuPR",
+                    "ZenbuPR",
+                    "ZenbuPR",
+                    "ZenbuSudachiIntegration",
+                ],
+            )
+            self.assertEqual(
+                [lane["test_count"] for lane in matrix],
+                [112, 70, 66, 65, 3],
+            )
+            self.assertEqual(
+                [lane["selectors"] for lane in matrix],
+                [
+                    ["complete.merge-unit"],
+                    ["complete.merge-accessibility"],
+                    ["complete.merge-ui-a"],
+                    ["complete.merge-ui-b"],
+                    ["integration.sudachi"],
+                ],
+            )
+            self.assertEqual(
+                json.loads(values["complete_selectors"]),
+                [
+                    "complete.merge-unit",
+                    "complete.merge-accessibility",
+                    "complete.merge-ui-a",
+                    "complete.merge-ui-b",
+                ],
+            )
+
+    def test_merge_candidate_inventory_contract_rejects_omissions_and_duplicates(self):
+        repo_root = Path(__file__).parents[4]
+        inventory = ios_verification.repository_inventory(repo_root)
+        partitions = ios_verification.merge_candidate_partitions(inventory)
+
+        ios_verification.require_exact_merge_candidate_partitions(inventory, partitions)
+        self.assertEqual(
+            [len(partitions[lane]["tests"]) for lane in partitions],
+            [112, 70, 66, 65, 3],
+        )
+        self.assertTrue(
+            all(
+                "/AccessibilityAuditUITests/" in test
+                for test in partitions["accessibility-ui"]["tests"]
+            )
+        )
+        self.assertTrue(
+            all(
+                test.startswith("ZenbuJapaneseUITests/")
+                and test not in partitions["accessibility-ui"]["tests"]
+                for lane in ("normal-ui-a", "normal-ui-b")
+                for test in partitions[lane]["tests"]
+            )
+        )
+
+        omitted = json.loads(json.dumps(partitions))
+        removed = omitted["normal-ui-a"]["tests"].pop()
+        with self.assertRaisesRegex(ios_verification.PolicyError, f"omits.*{removed}"):
+            ios_verification.require_exact_merge_candidate_partitions(
+                inventory, omitted
+            )
+
+        duplicated = json.loads(json.dumps(partitions))
+        repeated = duplicated["normal-ui-a"]["tests"][0]
+        duplicated["normal-ui-b"]["tests"].append(repeated)
+        with self.assertRaisesRegex(
+            ios_verification.PolicyError, f"duplicates.*{repeated}"
+        ):
+            ios_verification.require_exact_merge_candidate_partitions(
+                inventory, duplicated
+            )
+
+        nondeterministic = json.loads(json.dumps(partitions))
+        (
+            nondeterministic["normal-ui-a"]["tests"][0],
+            nondeterministic["normal-ui-b"]["tests"][0],
+        ) = (
+            nondeterministic["normal-ui-b"]["tests"][0],
+            nondeterministic["normal-ui-a"]["tests"][0],
+        )
+        with self.assertRaisesRegex(
+            ios_verification.PolicyError, "normal-ui-a.*deterministic"
+        ):
+            ios_verification.require_exact_merge_candidate_partitions(
+                inventory, nondeterministic
+            )
+
+        inaccessible = json.loads(json.dumps(inventory))
+        inaccessible["plans"]["ZenbuAccessibility"]["included_tests"].append(
+            "ZenbuJapaneseUITests/AccessibilityAuditUITests/testUnpartitioned"
+        )
+        with self.assertRaisesRegex(
+            ios_verification.PolicyError,
+            "ZenbuAccessibility.*not required by ZenbuPR.*testUnpartitioned",
+        ):
+            ios_verification.require_exact_merge_candidate_partitions(
+                inaccessible,
+                ios_verification.merge_candidate_partitions(inaccessible),
+            )
+
+    def test_manual_premerge_planner_preserves_the_same_five_lane_matrix(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "github-output"
+            manifest = Path(__file__).parents[2] / "VerificationPolicy.json"
+            with redirect_stdout(io.StringIO()):
+                ios_verification.main(
+                    [
+                        "--manifest",
+                        str(manifest),
+                        "plan",
+                        "--stage",
+                        "manual",
+                        "--event",
+                        "workflow_dispatch",
+                        "--draft",
+                        "false",
+                        "--source-sha",
+                        "manual-sha",
+                        "--capability",
+                        "full-merge",
+                        "--github-output",
+                        str(output),
+                    ]
+                )
+            values = dict(
+                line.split("=", 1)
+                for line in output.read_text(encoding="utf-8").splitlines()
+            )
+            self.assertEqual(
+                len(json.loads(values["merge_candidate_matrix"])["include"]), 5
+            )
+
+    def test_repository_contract_requires_one_selector_for_every_generated_lane(self):
+        repo_root = Path(__file__).parents[4]
+        manifest = ios_verification.load_and_validate_manifest(
+            repo_root / "apps/ios/VerificationPolicy.json"
+        )
+        manifest["capabilities"]["full-merge"]["merge-candidate"].remove(
+            "complete.merge-ui-b"
+        )
+        manifest["tiers"]["complete"].remove("complete.merge-ui-b")
+        del manifest["selectors"]["complete.merge-ui-b"]
+
+        with self.assertRaisesRegex(
+            ios_verification.PolicyError,
+            "generated merge-candidate selectors.*normal-ui-b",
+        ):
+            ios_verification.validate_repository_contracts(manifest, repo_root)
+
+    def test_inventory_cli_publishes_the_exact_generated_partition_membership(self):
+        repo_root = Path(__file__).parents[4]
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(
+                ios_verification.main(["inventory", "--repo-root", str(repo_root)]),
+                0,
+            )
+        inventory = json.loads(output.getvalue())
+        partitions = inventory["merge_candidate_partitions"]
+        self.assertEqual(
+            {lane: len(partition["tests"]) for lane, partition in partitions.items()},
+            {
+                "unit": 112,
+                "accessibility-ui": 70,
+                "normal-ui-a": 66,
+                "normal-ui-b": 65,
+                "sudachi-integration": 3,
+            },
+        )
+
+    def test_generated_partition_selectors_expand_to_the_inventory_tests(self):
+        repo_root = Path(__file__).parents[4]
+        expected = {
+            "complete.merge-unit": ("ZenbuPR", 112),
+            "complete.merge-accessibility": ("ZenbuPR", 70),
+            "complete.merge-ui-a": ("ZenbuPR", 66),
+            "complete.merge-ui-b": ("ZenbuPR", 65),
+            "integration.sudachi": ("ZenbuSudachiIntegration", 3),
+        }
+        for selector, (plan, count) in expected.items():
+            with self.subTest(selector=selector), redirect_stdout(
+                output := io.StringIO()
+            ):
+                self.assertEqual(
+                    ios_verification.main(
+                        [
+                            "tests",
+                            "--plan",
+                            plan,
+                            "--stage",
+                            "merge-candidate",
+                            "--repo-root",
+                            str(repo_root),
+                            "--selector",
+                            selector,
+                        ]
+                    ),
+                    0,
+                )
+            self.assertEqual(len(output.getvalue().splitlines()), count)
 
     def test_target_selector_must_be_nonempty_in_its_declared_plan(self):
         repo_root = Path(__file__).parents[4]

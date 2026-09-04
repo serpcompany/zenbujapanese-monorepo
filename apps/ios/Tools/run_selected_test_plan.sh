@@ -38,22 +38,33 @@ done < <(printf '%s' "$selectors_json" | jq -r '.[]')
 
 test_names=()
 selector_arguments=()
+full_plan_selectors=0
 for selector_id in "${selector_ids[@]}"; do
-  test_name="$(
+  resolved_tests="$(
     python3 "$tool_dir/ios_verification.py" tests \
       --plan "$plan" \
       --stage "$ZENBU_VERIFICATION_STAGE" \
+      --repo-root "$repo_root" \
       --selector "$selector_id"
   )"
-  if [[ -n "$test_name" ]]; then
-    test_names+=("$test_name")
-    selector_arguments+=("-only-testing:$test_name")
-  fi
+  while IFS= read -r test_name; do
+    [[ -z "$test_name" ]] && continue
+    if [[ "$test_name" == __ZENBU_FULL_PLAN__ ]]; then
+      full_plan_selectors=$((full_plan_selectors + 1))
+    else
+      test_names+=("$test_name")
+      selector_arguments+=("-only-testing:$test_name")
+    fi
+  done <<< "$resolved_tests"
 done
 
-[[ ${#test_names[@]} -gt 0 || ${#selector_ids[@]} -eq 1 ]] || {
-  echo "only one explicit full-plan selector may omit a test name" >&2
+[[ $full_plan_selectors -eq 0 || ($full_plan_selectors -eq 1 && ${#selector_ids[@]} -eq 1) ]] || {
+  echo "a full-plan selector cannot be combined with another selector" >&2
   exit 66
+}
+[[ ${#test_names[@]} -gt 0 || $full_plan_selectors -eq 1 ]] || {
+  echo "repository selector resolved zero tests for $plan" >&2
+  exit 67
 }
 
 printf 'source_sha=%s\nplan=%s\nselector_ids=%s\ntests=%s\n' \

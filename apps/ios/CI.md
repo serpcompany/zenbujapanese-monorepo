@@ -11,7 +11,7 @@ remains decision evidence, but this file owns the executable cadence.
 | Implementation                             | Relevant unit tests and issue-focused UI tests                                                       | Fast red-green feedback at the public seam changed by the issue                                    |
 | Draft pull request push                    | Scope, manifest validation, and a SHA-bound deferred status on Ubuntu                                | Keep WIP pushes cheap; the draft itself remains unmergeable                                        |
 | Ready pull request or later non-draft push | Manifest-selected repository contracts, units, critical journeys, and focused accessibility coverage | Automatically verify the exact current head without accepting stale green results                  |
-| Merge queue                                | Cheap required-status reporting plus the complete `ZenbuPR` plan once on the exact `merge_group` candidate | Blocking integration evidence without repeating fast macOS partitions                              |
+| Merge queue                                | Cheap required-status reporting plus five concurrent exact-candidate lanes: Unit, complete Accessibility UI, two deterministic complementary normal UI shards, and `ZenbuSudachiIntegration` | Blocking integration evidence without repeating fast macOS partitions or learner journeys |
 | Manual investigation                       | `iOS nightly quality`, started with `workflow_dispatch`                                              | Two-device accessibility breadth, repetitions, and sanitizers when investigation warrants the cost |
 | Pre-release                                | Manual `iOS pre-release validation`, then separately authorized physical-device and release checks   | Transient validation for an identified proposed candidate; never inferred from development CI      |
 
@@ -69,6 +69,17 @@ Agents do not assemble final selector lists. A newly discovered bug selector is
 added to the manifest with its capability and reason, reviewed, and then selected
 through the same interface.
 
+For the merge-candidate stage, the planner derives five lanes from the committed
+Xcode plan inventory. Every `ZenbuPR` Unit test belongs to the Unit lane, every
+test in the complete `ZenbuAccessibility` partition belongs to the Accessibility
+UI lane, and the remaining normal UI identities are sorted and assigned
+alternately to complementary shards A and B. The separate
+`ZenbuSudachiIntegration` plan is the fifth lane. Repository validation fails if
+the generated lanes omit or duplicate any required `ZenbuPR` test, drift from the
+deterministic split, or stop covering the complete Accessibility or Sudachi plan.
+The current inventory is 112 Unit, 70 Accessibility UI, 66 normal UI A, 65 normal
+UI B, and 3 Sudachi integration tests.
+
 For ordinary issue work, keep the PR draft, run the repository-selected local
 issue gate, and push the reviewed commit. Changing the PR to Ready automatically
 runs the hosted fast plan. A later non-draft source push automatically produces a
@@ -100,8 +111,9 @@ because an entire required workflow was path-filtered away.
 
 ## Runner contract
 
-`run_selected_test_plan.sh` translates only manifest selector IDs into Xcode test
-identifiers. `run_ci_test_plan.sh` owns the Simulator lifecycle, uses
+`run_selected_test_plan.sh` translates only manifest selector IDs, including the
+repository-generated merge partition selectors, into Xcode test identifiers.
+`run_ci_test_plan.sh` owns the Simulator lifecycle, uses
 `build-for-testing` followed by `test-without-building`, and records separate
 setup, build, test, and total durations. Supplying the same `ZENBU_DERIVED_DATA`
 allows sequential focused selectors to reuse products only when the source,
@@ -279,8 +291,9 @@ remaining native Accessibility XXXL tab-edge refinement is retained as
 non-blocking follow-up #269. A current-head Ready checkpoint has proved the fast
 gate names and runtime.
 
-#227 now owns the remaining rollout: activate the `main` ruleset with both
-stable required contexts and merge queue, then require one complete `ZenbuPR`
-and `ZenbuSudachiIntegration` run on the exact merge-group SHA. Never make that
-candidate green by deleting coverage, skipping a known failing journey, or
-adding a blanket accessibility exception.
+#227 now owns the remaining rollout: retain the active `main` ruleset and merge
+queue, then require the five generated lanes on one exact merge-group SHA. The
+four `ZenbuPR` lanes collectively execute its complete inventory exactly once;
+the fifth runs `ZenbuSudachiIntegration`. Never make that candidate green by
+deleting coverage, skipping a known failing journey, or adding a blanket
+accessibility exception.
