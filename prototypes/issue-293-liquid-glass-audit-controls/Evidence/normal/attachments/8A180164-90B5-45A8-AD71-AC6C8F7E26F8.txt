@@ -1,0 +1,98 @@
+type=4 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=22 | identifier=<unavailable> | label=Tab Bar | frame={{0, 873}, {440, 83}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{126, 873}, {188, 62}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{126, 873}, {94, 54}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{126, 873}, {188, 62}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{130, 877}, {94, 54}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=9 | identifier=<unavailable> | label=Controls | frame={{130, 877}, {94, 54}}
+type=9 | identifier=<unavailable> | label=About | frame={{216, 877}, {94, 54}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{130, 877}, {94, 54}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=21 | identifier=Native Controls | label=<unavailable> | frame={{0, 62}, {440, 127}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=43 | identifier=list.bullet | label=List | frame={{162, 886.33333333333337}, {29.333333333333343, 21}}
+type=43 | identifier=info.circle.fill | label=info | frame={{249, 883.33333333333337}, {27.333333333333314, 27.333333333333258}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{130, 877}, {94, 54}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{130, 877}, {94, 54}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=48 | identifier=<unavailable> | label=Native Controls | frame={{19.999999999999972, 116}, {375, 71.666666666666657}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{130, 877}, {94, 54}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{130, 877}, {94, 54}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{130, 877}, {94, 54}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{130, 877}, {94, 54}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{130, 877}, {94, 54}}
+type=32 | identifier=prototype.screen | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{-20, -1723}, {480, 2230.3333333333335}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 0}, {440, 956}}
+type=75 | identifier=<unavailable> | label=<unavailable> | frame={{20, 189}, {400, 145.33333333333337}}
+type=75 | identifier=<unavailable> | label=<unavailable> | frame={{20, 334.33333333333331}, {400, 155.33333333333337}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{-20, 507.33333333333303}, {480, 4456}}
+type=75 | identifier=<unavailable> | label=<unavailable> | frame={{20, 507.33333333333331}, {400, 207.33333333333331}}
+type=75 | identifier=<unavailable> | label=<unavailable> | frame={{20, 714.66666666666663}, {400, 195.66666666666674}}
+type=75 | identifier=<unavailable> | label=<unavailable> | frame={{20, 910.33333333333337}, {400, 195.66666666666663}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{40, 909.33333333333337}, {360, 1}}
+type=1 | identifier=<unavailable> | label=Vertical scroll bar, 5 pages | frame={{407, 116}, {30, 757}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 189}, {400, 145.33333333333337}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 189}, {400, 145.33333333333337}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 334.33333333333331}, {400, 155.33333333333337}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 334.33333333333331}, {400, 155.33333333333337}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 507.33333333333331}, {400, 207.33333333333331}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 507.33333333333331}, {400, 207.33333333333331}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 714.66666666666663}, {400, 195.66666666666674}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 714.66666666666663}, {400, 195.66666666666674}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 910.33333333333337}, {400, 195.66666666666663}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 910.33333333333337}, {400, 195.66666666666663}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{434, 863}, {3, 7}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 189}, {400, 145.33333333333331}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 334.33333333333331}, {400, 155.33333333333337}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 334.33333333333331}, {400, 155.33333333333337}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 507.33333333333331}, {400, 207.33333333333331}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 714.66666666666663}, {400, 195.66666666666674}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 714.66666666666663}, {400, 195.66666666666674}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 910.33333333333337}, {400, 195.66666666666663}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 910.33333333333337}, {400, 195.66666666666663}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{0, 873}, {440, 83}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 189}, {400, 145.33333333333331}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 334.33333333333331}, {400, 155.33333333333337}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 507.33333333333331}, {400, 207.33333333333331}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 714.66666666666663}, {400, 195.66666666666674}}
+type=1 | identifier=<unavailable> | label=<unavailable> | frame={{20, 910.33333333333337}, {400, 195.66666666666663}}
+type=48 | identifier=<unavailable> | label=Preregistered state | frame={{20, 189}, {400, 145.33333333333337}}
+type=48 | identifier=prototype.variant | label=2 — Untouched hard edge | frame={{20, 334.33333333333331}, {400, 155.33333333333337}}
+type=48 | identifier=<unavailable> | label=Native navigation links | frame={{20, 507.33333333333331}, {400, 207.33333333333331}}
+type=9 | identifier=prototype.row.1 | label=Native row 1, System secondary label | frame={{20, 714.66666666666663}, {400, 195.66666666666674}}
+type=9 | identifier=prototype.row.2 | label=Native row 2, System secondary label | frame={{20, 910.33333333333337}, {400, 195.66666666666663}}
+type=48 | identifier=<unavailable> | label=Native row 1 | frame={{40, 729.66666666666663}, {271.66666666666663, 63.333333333333371}}
+type=48 | identifier=<unavailable> | label=System secondary label | frame={{40, 793}, {288.66666666666663, 102.33333333333337}}
+type=43 | identifier=chevron.forward | label=<unavailable> | frame={{369.66666666666669, 794}, {21.666667938232422, 37.333335876464844}}
+type=48 | identifier=<unavailable> | label=Native row 2 | frame={{40, 925.33333333333337}, {278.33333333333331, 63.333333333333258}}
+type=48 | identifier=<unavailable> | label=System secondary label | frame={{40, 988.66666666666663}, {288.66666666666663, 102.33333333333337}}
+type=43 | identifier=chevron.forward | label=<unavailable> | frame={{369.66666666666669, 989.66666666666663}, {21.666667938232422, 37.333335876464957}}

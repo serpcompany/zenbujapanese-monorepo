@@ -1,0 +1,188 @@
+{
+  "devices" : [
+    {
+      "architecture" : "arm64",
+      "deviceId" : "72E8E7B4-9392-46D3-8C7B-7E684493085C",
+      "deviceName" : "iPhone 17 Pro Max",
+      "modelName" : "iPhone 17 Pro Max",
+      "osBuildNumber" : "23F77",
+      "osVersion" : "26.5",
+      "platform" : "iOS Simulator"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "children" : [
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:9: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    },
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:9: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    }
+                  ],
+                  "duration" : "18s",
+                  "durationInSeconds" : 18.93026900291443,
+                  "name" : "test01AutomaticEdgeLightAX5()",
+                  "nodeIdentifier" : "PrototypeIssue293UITests/test01AutomaticEdgeLightAX5()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/PrototypeIssue293/PrototypeIssue293UITests/PrototypeIssue293UITests/test01AutomaticEdgeLightAX5",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:16: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    },
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:16: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    }
+                  ],
+                  "duration" : "19s",
+                  "durationInSeconds" : 19.7846200466156,
+                  "name" : "test02AutomaticEdgeDarkAX5()",
+                  "nodeIdentifier" : "PrototypeIssue293UITests/test02AutomaticEdgeDarkAX5()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/PrototypeIssue293/PrototypeIssue293UITests/PrototypeIssue293UITests/test02AutomaticEdgeDarkAX5",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:23: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    },
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:23: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    }
+                  ],
+                  "duration" : "18s",
+                  "durationInSeconds" : 18.755688071250916,
+                  "name" : "test03HardEdgeLightAX5()",
+                  "nodeIdentifier" : "PrototypeIssue293UITests/test03HardEdgeLightAX5()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/PrototypeIssue293/PrototypeIssue293UITests/PrototypeIssue293UITests/test03HardEdgeLightAX5",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:30: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    },
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:30: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    }
+                  ],
+                  "duration" : "19s",
+                  "durationInSeconds" : 19.084391951560974,
+                  "name" : "test04HardEdgeDarkAX5()",
+                  "nodeIdentifier" : "PrototypeIssue293UITests/test04HardEdgeDarkAX5()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/PrototypeIssue293/PrototypeIssue293UITests/PrototypeIssue293UITests/test04HardEdgeDarkAX5",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:37: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    },
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:37: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    }
+                  ],
+                  "duration" : "15s",
+                  "durationInSeconds" : 15.76235294342041,
+                  "name" : "test05DeliberateLowContrastLightAX5()",
+                  "nodeIdentifier" : "PrototypeIssue293UITests/test05DeliberateLowContrastLightAX5()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/PrototypeIssue293/PrototypeIssue293UITests/PrototypeIssue293UITests/test05DeliberateLowContrastLightAX5",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:44: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    },
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:44: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    }
+                  ],
+                  "duration" : "15s",
+                  "durationInSeconds" : 15.838202953338623,
+                  "name" : "test06DeliberateLowContrastDarkAX5()",
+                  "nodeIdentifier" : "PrototypeIssue293UITests/test06DeliberateLowContrastDarkAX5()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/PrototypeIssue293/PrototypeIssue293UITests/PrototypeIssue293UITests/test06DeliberateLowContrastDarkAX5",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:51: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    }
+                  ],
+                  "duration" : "15s",
+                  "durationInSeconds" : 15.554606914520264,
+                  "name" : "test07SemanticRepairLightAX5()",
+                  "nodeIdentifier" : "PrototypeIssue293UITests/test07SemanticRepairLightAX5()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/PrototypeIssue293/PrototypeIssue293UITests/PrototypeIssue293UITests/test07SemanticRepairLightAX5",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "PrototypeIssue293UITests.swift:58: Contrast failed",
+                      "nodeType" : "Failure Message"
+                    }
+                  ],
+                  "duration" : "15s",
+                  "durationInSeconds" : 15.917098999023438,
+                  "name" : "test08SemanticRepairDarkAX5()",
+                  "nodeIdentifier" : "PrototypeIssue293UITests/test08SemanticRepairDarkAX5()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/PrototypeIssue293/PrototypeIssue293UITests/PrototypeIssue293UITests/test08SemanticRepairDarkAX5",
+                  "nodeType" : "Test Case",
+                  "result" : "Failed"
+                }
+              ],
+              "name" : "PrototypeIssue293UITests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/PrototypeIssue293/PrototypeIssue293UITests/PrototypeIssue293UITests",
+              "nodeType" : "Test Suite",
+              "result" : "Failed"
+            }
+          ],
+          "name" : "PrototypeIssue293UITests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/PrototypeIssue293/PrototypeIssue293UITests",
+          "nodeType" : "UI test bundle",
+          "result" : "Failed"
+        }
+      ],
+      "name" : "PrototypeIssue293IncreaseContrast",
+      "nodeType" : "Test Plan",
+      "result" : "Failed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}

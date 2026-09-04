@@ -1,0 +1,56 @@
+name: PrototypeIssue293
+options:
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGNING_ALLOWED: "NO"
+targets:
+  PrototypeIssue293:
+    type: application
+    platform: iOS
+    sources:
+      - App
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.zenbujapanese.prototype.issue293
+        PRODUCT_NAME: PrototypeIssue293
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_KEY_CFBundleDisplayName: "PROTOTYPE 293"
+        INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
+  PrototypeIssue293UITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+    dependencies:
+      - target: PrototypeIssue293
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.zenbujapanese.prototype.issue293.uitests
+        PRODUCT_NAME: PrototypeIssue293UITests
+        GENERATE_INFOPLIST_FILE: "YES"
+schemes:
+  PrototypeIssue293:
+    build:
+      targets:
+        PrototypeIssue293: all
+        PrototypeIssue293UITests: [test]
+    test:
+      environmentVariables:
+        PROTOTYPE_EXPECT_INCREASE_CONTRAST: "0"
+      targets:
+        - PrototypeIssue293UITests
+  PrototypeIssue293IncreaseContrast:
+    build:
+      targets:
+        PrototypeIssue293: all
+        PrototypeIssue293UITests: [test]
+    test:
+      environmentVariables:
+        PROTOTYPE_EXPECT_INCREASE_CONTRAST: "1"
+      targets:
+        - PrototypeIssue293UITests
