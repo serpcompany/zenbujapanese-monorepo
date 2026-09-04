@@ -726,15 +726,8 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                     ["integration.sudachi"],
                 ],
             )
-            self.assertEqual(
-                json.loads(values["complete_selectors"]),
-                [
-                    "complete.merge-unit",
-                    "complete.merge-accessibility",
-                    "complete.merge-ui-a",
-                    "complete.merge-ui-b",
-                ],
-            )
+            self.assertNotIn("complete_selectors", values)
+            self.assertNotIn("integration_selectors", values)
 
     def test_merge_candidate_inventory_contract_rejects_omissions_and_duplicates(self):
         repo_root = Path(__file__).parents[4]
@@ -905,7 +898,34 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                     ),
                     0,
                 )
-            self.assertEqual(len(output.getvalue().splitlines()), count)
+            selection = json.loads(output.getvalue())
+            self.assertEqual(selection["mode"], "selected-tests")
+            self.assertEqual(len(selection["tests"]), count)
+
+    def test_full_plan_selector_uses_an_explicit_tagged_cli_protocol(self):
+        repo_root = Path(__file__).parents[4]
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(
+                ios_verification.main(
+                    [
+                        "tests",
+                        "--plan",
+                        "ZenbuPR",
+                        "--stage",
+                        "release",
+                        "--repo-root",
+                        str(repo_root),
+                        "--selector",
+                        "complete.public",
+                    ]
+                ),
+                0,
+            )
+        self.assertEqual(
+            json.loads(output.getvalue()),
+            {"mode": "full-plan", "tests": []},
+        )
 
     def test_target_selector_must_be_nonempty_in_its_declared_plan(self):
         repo_root = Path(__file__).parents[4]

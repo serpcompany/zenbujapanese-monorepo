@@ -1096,6 +1096,8 @@ def main(arguments: list[str]) -> int:
             for tier in manifest["stages"][options.stage]
             for selector_id in manifest["tiers"][tier]
         }
+        selected_tests: list[str] = []
+        full_plan_selector_count = 0
         for selector_id in options.selector:
             selector = manifest["selectors"].get(selector_id)
             if selector is None:
@@ -1120,12 +1122,20 @@ def main(arguments: list[str]) -> int:
                         f"partition {partition} belongs to {generated['plan']}, "
                         f"not {options.plan}"
                     )
-                for test in generated["tests"]:
-                    print(test)
+                selected_tests.extend(generated["tests"])
             elif selector["test"]:
-                print(selector["test"])
+                selected_tests.append(selector["test"])
             else:
-                print("__ZENBU_FULL_PLAN__")
+                full_plan_selector_count += 1
+        if full_plan_selector_count:
+            if full_plan_selector_count != 1 or selected_tests:
+                raise PolicyError(
+                    "one full-plan selector cannot be combined with other selectors"
+                )
+            selection = {"mode": "full-plan", "tests": []}
+        else:
+            selection = {"mode": "selected-tests", "tests": selected_tests}
+        print(json.dumps(selection, separators=(",", ":")))
         return 0
     if options.command == "fingerprint":
         source = source_fingerprint(options.repo_root)
@@ -1212,8 +1222,6 @@ def main(arguments: list[str]) -> int:
             "unit",
             "ui",
             "accessibility",
-            "integration",
-            "complete",
             "performance",
         ):
             values[f"{tier}_selectors"] = json.dumps(

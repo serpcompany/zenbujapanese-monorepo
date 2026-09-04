@@ -26,8 +26,6 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       ios_changed: ${{ steps.scope.outputs.ios_changed }}
-      complete_selectors: ${{ steps.plan.outputs.complete_selectors }}
-      integration_selectors: ${{ steps.plan.outputs.integration_selectors }}
       merge_candidate_matrix: ${{ steps.plan.outputs.merge_candidate_matrix }}
       source_sha: ${{ steps.plan.outputs.source_sha }}
     steps:

@@ -113,6 +113,10 @@ because an entire required workflow was path-filtered away.
 
 `run_selected_test_plan.sh` translates only manifest selector IDs, including the
 repository-generated merge partition selectors, into Xcode test identifiers.
+The `ios_verification.py tests` adapter returns tagged JSON with either
+`selected-tests` and its exact identities or `full-plan` with an empty test list;
+the shell runner rejects unknown modes, empty selected partitions, and any
+full-plan selector combined with another selector.
 `run_ci_test_plan.sh` owns the Simulator lifecycle, uses
 `build-for-testing` followed by `test-without-building`, and records separate
 setup, build, test, and total durations. Supplying the same `ZENBU_DERIVED_DATA`

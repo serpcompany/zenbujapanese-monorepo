@@ -38,31 +38,43 @@ done < <(printf '%s' "$selectors_json" | jq -r '.[]')
 
 test_names=()
 selector_arguments=()
-full_plan_selectors=0
+full_plan_selector_count=0
 for selector_id in "${selector_ids[@]}"; do
-  resolved_tests="$(
+  resolved_selection="$(
     python3 "$tool_dir/ios_verification.py" tests \
       --plan "$plan" \
       --stage "$ZENBU_VERIFICATION_STAGE" \
       --repo-root "$repo_root" \
       --selector "$selector_id"
   )"
-  while IFS= read -r test_name; do
-    [[ -z "$test_name" ]] && continue
-    if [[ "$test_name" == __ZENBU_FULL_PLAN__ ]]; then
-      full_plan_selectors=$((full_plan_selectors + 1))
-    else
-      test_names+=("$test_name")
-      selector_arguments+=("-only-testing:$test_name")
-    fi
-  done <<< "$resolved_tests"
+  selection_mode="$(printf '%s' "$resolved_selection" | jq -er '.mode')"
+  case "$selection_mode" in
+    full-plan)
+      [[ "$(printf '%s' "$resolved_selection" | jq '.tests | length')" -eq 0 ]] || {
+        echo "full-plan selection unexpectedly contained test identities" >&2
+        exit 66
+      }
+      full_plan_selector_count=$((full_plan_selector_count + 1))
+      ;;
+    selected-tests)
+      while IFS= read -r test_name; do
+        [[ -z "$test_name" ]] && continue
+        test_names+=("$test_name")
+        selector_arguments+=("-only-testing:$test_name")
+      done < <(printf '%s' "$resolved_selection" | jq -r '.tests[]')
+      ;;
+    *)
+      echo "unknown repository test-selection mode: $selection_mode" >&2
+      exit 66
+      ;;
+  esac
 done
 
-[[ $full_plan_selectors -eq 0 || ($full_plan_selectors -eq 1 && ${#selector_ids[@]} -eq 1) ]] || {
+[[ $full_plan_selector_count -eq 0 || ($full_plan_selector_count -eq 1 && ${#selector_ids[@]} -eq 1) ]] || {
   echo "a full-plan selector cannot be combined with another selector" >&2
   exit 66
 }
-[[ ${#test_names[@]} -gt 0 || $full_plan_selectors -eq 1 ]] || {
+[[ ${#test_names[@]} -gt 0 || $full_plan_selector_count -eq 1 ]] || {
   echo "repository selector resolved zero tests for $plan" >&2
   exit 67
 }

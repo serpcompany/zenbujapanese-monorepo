@@ -68,6 +68,8 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         scope = workflow.split("  scope:\n", 1)[1].split("\n  complete-suite:\n", 1)[0]
         self.assertIn("merge_candidate_matrix:", scope)
         self.assertIn("ios_verification.py validate", scope)
+        self.assertNotIn("complete_selectors:", scope)
+        self.assertNotIn("integration_selectors:", scope)
 
         required = workflow.split("  required:\n", 1)[1]
         self.assertIn("needs: [scope, complete-suite]", required)
@@ -145,6 +147,8 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn('ZENBU_DERIVED_DATA="$reuse_root/$plan"', issue_runner)
         self.assertIn("resolved no selectors", selected_runner)
         self.assertIn("ZENBU_POLICY_AUTHORIZED", selected_runner)
+        self.assertIn("full_plan_selector_count", selected_runner)
+        self.assertNotIn("__ZENBU_FULL_PLAN__", selected_runner)
         self.assertIn("ZENBU_POLICY_AUTHORIZED", xcode_runner)
 
 
