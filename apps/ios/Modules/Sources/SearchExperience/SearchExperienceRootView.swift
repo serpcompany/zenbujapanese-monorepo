@@ -179,6 +179,7 @@ public struct SearchExperienceRootView: View {
           .accessibilityIdentifier("tab.you")
       }
     }
+    .scrollEdgeEffectStyle(.hard, for: .bottom)
     .onChange(of: selectedTab) { previous, current in
       if previous != .search, current == .search {
         frequencyRefreshID += 1

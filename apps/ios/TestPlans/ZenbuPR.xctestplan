@@ -39,6 +39,10 @@
     },
     {
       "parallelizable" : false,
+      "selectedTests" : [
+        "AccessibilityAuditUITests",
+        "SearchExperienceJourneyUITests"
+      ],
       "skippedTests" : [
         "SearchExperienceJourneyUITests/testImageTextAppleTranslationWorksOfflineAcrossPhysicalColdRelaunch()",
         "SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",

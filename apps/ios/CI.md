@@ -41,10 +41,12 @@ Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
 provider except for the bounded bundled-provider cold-relaunch journey. The
 merge-candidate workflow invokes and retains both correctness plans.
 
-After #247, the exact inventory contains 316 tests. `ZenbuPR` includes 309
-(112 Unit and 197 UI), `ZenbuSudachiIntegration` includes three network-backed
-Unit tests, and the seven exact `ZenbuPR` exclusions are those three integration
-tests, one performance-only Unit test, and three physical/system HIL journeys.
+The exact inventory contains 324 tests. `ZenbuPR` includes 313 (112 Unit and 201
+UI), and `ZenbuSudachiIntegration` includes three network-backed Unit tests. The
+eight exact tests outside those correctness plans are one performance-only Unit
+test, three physical/system HIL journeys, and #269's four deliberately red
+framework diagnostics. The diagnostics remain independently callable through
+their dedicated plan and never enter `ZenbuPR` or `ZenbuNightly`.
 
 The complete suite is not repeated after merge when the merge-queue SHA already
 passed. The manual breadth workflow has no schedule because iOS changes are
@@ -61,6 +63,15 @@ During Apple-native refactor issue loops, adaptive-layout changes retain one
 focused maximum-size smoke for the exact surface under review. Broader functional
 journeys run at normal Dynamic Type; the existing direct accessibility audits remain
 visible under #173 and are not replaced, skipped, or treated as passing by that split.
+
+#269 records one explicit framework-diagnostic disposition for native Liquid Glass
+tab-edge snapshots. Its four direct whole-window Search/Kanji contrast audits remain
+unchanged and deliberately red in `ZenbuAccessibilityDiagnostics`; they are not app
+correctness passes and never enter a required gate. `ZenbuPR` instead blocks on the
+same exact public content after it is fully unobscured, its semantic system pixels,
+AX5 geometry and navigation, plus native tab/navigation legibility. This narrow plan
+separation is not an audit handler, expected failure, skip, or permission to move any
+other #173 audit out of correctness coverage.
 
 `VerificationPolicy.json` is the canonical capability and lifecycle manifest.
 `Tools/ios_verification.py` validates it and resolves a plan from changed paths,

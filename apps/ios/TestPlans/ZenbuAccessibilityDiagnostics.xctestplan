@@ -1,8 +1,8 @@
 {
   "configurations" : [
     {
-      "id" : "F99DD9CC-3677-4A88-B739-6EF8F60C2001",
-      "name" : "Reliability",
+      "id" : "269D1A60-5D31-4E1B-99CD-9CF8D3926901",
+      "name" : "English (US)",
       "options" : {
         "language" : "en",
         "region" : "US"
@@ -11,7 +11,7 @@
   ],
   "defaultOptions" : {
     "defaultTestExecutionTimeAllowance" : 600,
-    "maximumTestExecutionTimeAllowance" : 1800,
+    "maximumTestExecutionTimeAllowance" : 1200,
     "testTimeoutsEnabled" : true,
     "uiTestingScreenshotsLifetime" : "keepAlways",
     "userAttachmentLifetime" : "keepAlways",
@@ -24,24 +24,8 @@
   "testTargets" : [
     {
       "parallelizable" : false,
-      "skippedTests" : [
-        "ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus()"
-      ],
-      "target" : {
-        "containerPath" : "container:ZenbuJapanese.xcodeproj",
-        "identifier" : "151000000000000000000008",
-        "name" : "ZenbuJapaneseTests"
-      }
-    },
-    {
-      "parallelizable" : false,
       "selectedTests" : [
-        "AccessibilityAuditUITests",
-        "SearchExperienceJourneyUITests"
-      ],
-      "skippedTests" : [
-        "SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
-        "SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()"
+        "AccessibilityFrameworkDiagnosticUITests"
       ],
       "target" : {
         "containerPath" : "container:ZenbuJapanese.xcodeproj",

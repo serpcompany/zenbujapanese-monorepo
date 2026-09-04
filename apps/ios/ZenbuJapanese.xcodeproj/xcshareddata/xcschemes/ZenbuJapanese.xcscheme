@@ -75,6 +75,9 @@
             reference = "container:TestPlans/ZenbuAccessibility.xctestplan">
          </TestPlanReference>
          <TestPlanReference
+            reference = "container:TestPlans/ZenbuAccessibilityDiagnostics.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
             reference = "container:TestPlans/ZenbuNightly.xctestplan">
          </TestPlanReference>
          <TestPlanReference

@@ -26,6 +26,96 @@ private enum RenderedAppearance {
   case dark
 }
 
+@MainActor
+private func configuredAccessibilityApp(
+  appearance: XCUIDevice.Appearance,
+  additionalArguments: [String]
+) -> XCUIApplication {
+  let app = XCUIApplication()
+  app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+  app.launchArguments += ["-UseJapaneseAnalysisFixture"]
+  app.launchArguments += [
+    appearance == .dark ? "-ForceUITestDarkAppearance" : "-ForceUITestLightAppearance"
+  ]
+  app.launchArguments += additionalArguments
+  return app
+}
+
+@MainActor
+private func sampledAccessibilityPixels(in screenshot: XCUIScreenshot) -> [UInt8] {
+  guard let source = screenshot.image.cgImage else { return [] }
+  let scale = min(1, 256 / Double(max(source.width, source.height)))
+  let width = max(1, Int((Double(source.width) * scale).rounded()))
+  let height = max(1, Int((Double(source.height) * scale).rounded()))
+  var pixels = [UInt8](repeating: 0, count: width * height * 4)
+  guard
+    let context = CGContext(
+      data: &pixels,
+      width: width,
+      height: height,
+      bitsPerComponent: 8,
+      bytesPerRow: width * 4,
+      space: CGColorSpaceCreateDeviceRGB(),
+      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    )
+  else { return [] }
+  context.draw(source, in: CGRect(x: 0, y: 0, width: width, height: height))
+  return pixels
+}
+
+@MainActor
+private func accessibilityRenderedAppearance(
+  in screenshot: XCUIScreenshot
+) -> RenderedAppearance? {
+  let pixels = sampledAccessibilityPixels(in: screenshot)
+  guard pixels.count >= 4 else { return nil }
+  var darkPixels = 0
+  var lightPixels = 0
+  for offset in stride(from: 0, to: pixels.count, by: 4) {
+    let luminance =
+      (Int(pixels[offset]) + Int(pixels[offset + 1]) + Int(pixels[offset + 2])) / 3
+    if luminance <= 90 {
+      darkPixels += 1
+    } else if luminance >= 165 {
+      lightPixels += 1
+    }
+  }
+  guard darkPixels + lightPixels >= pixels.count / 8 else { return nil }
+  if darkPixels > lightPixels { return .dark }
+  if lightPixels > darkPixels { return .light }
+  return nil
+}
+
+@MainActor
+private func submitAccessibilitySearch(
+  _ query: String,
+  in app: XCUIApplication,
+  file: StaticString = #filePath,
+  line: UInt = #line
+) {
+  let searchField = app.textFields["search.field"]
+  XCTAssertTrue(searchField.waitForExistence(timeout: 3), file: file, line: line)
+  searchField.tap()
+  searchField.typeText(query)
+  app.keyboards.buttons["Search"].tap()
+  let bestMatches = app.staticTexts["Best Matches"]
+  let noMatches = app.staticTexts["No Dictionary Matches"]
+  let unavailable = app.staticTexts["Dictionary unavailable"]
+  let stableOutcome = XCTNSPredicateExpectation(
+    predicate: NSPredicate { _, _ in
+      bestMatches.exists || noMatches.exists || unavailable.exists
+    },
+    object: app
+  )
+  XCTAssertEqual(
+    XCTWaiter.wait(for: [stableOutcome], timeout: 10),
+    .completed,
+    "Search should reach a learner-visible terminal state.",
+    file: file,
+    line: line
+  )
+}
+
 final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
   func testYouHierarchyRemainsReachableAtLargestAccessibilityTextSize() throws {
@@ -1203,16 +1293,24 @@ final class AccessibilityAuditUITests: XCTestCase {
     let resultSurface = app.descendants(matching: .any)["search.results"]
     XCTAssertTrue(resultSurface.waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["Best Matches"].waitForExistence(timeout: 3))
-    // At AXXXL the exact `Additional Matches` header crosses native tab material. The row below
-    // remains separately scrolled into view, measured above 52 points, and asserted hittable.
-    try performAudit(
-      in: app,
-      named: "Search results - \(appearance) accessibility XXXL"
+    let additionalMatches = app.staticTexts["search.additional-matches-header"]
+    bringIntoUnobscuredViewport(additionalMatches, in: resultSurface, app: app)
+    XCTAssertEqual(additionalMatches.label, "Additional Matches")
+    XCTAssertGreaterThanOrEqual(additionalMatches.frame.height, 44)
+    let headerScreenshot = additionalMatches.screenshot()
+    XCTAssertTrue(
+      containsSystemSecondaryTextPixels(in: headerScreenshot, appearance: appearance)
     )
+    XCTAssertGreaterThan(foregroundPixelFraction(in: headerScreenshot), 0.01)
+    retainElementScreenshot(
+      additionalMatches,
+      named: "Unobscured Additional Matches - \(appearance) accessibility XXXL"
+    )
+    assertNativeTabChrome(in: app, appearance: appearance)
 
     let japan = app.buttons["result.japan"]
     for _ in 0..<8 where !japan.exists || !japan.isHittable {
-      resultSurface.swipeUp(velocity: .slow)
+      resultSurface.swipeDown(velocity: .slow)
     }
     XCTAssertTrue(japan.waitForExistence(timeout: 3))
     XCTAssertTrue(japan.isHittable)
@@ -1223,6 +1321,13 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertEqual(XCTWaiter.wait(for: [loadedRank], timeout: 3), .completed)
     XCTAssertGreaterThan(japan.frame.height, 52)
     XCTAssertTrue(japan.label.hasPrefix("日本, にほん,"))
+    japan.tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 4))
+    let back = app.navigationBars.firstMatch.buttons.firstMatch
+    XCTAssertTrue(back.isHittable)
+    back.tap()
+    XCTAssertTrue(app.descendants(matching: .any)["search.results"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.buttons["result.japan"].waitForExistence(timeout: 4))
   }
 
   @MainActor
@@ -1633,20 +1738,32 @@ final class AccessibilityAuditUITests: XCTestCase {
     let alternative = app.buttons["kanji-element.alternative.靑"]
     XCTAssertTrue(alternative.waitForExistence(timeout: 3))
     XCTAssertTrue(alternative.isHittable)
-    try performAudit(
-      in: app,
-      named: "Kanji Element Detail accessibility XXXL",
-      types: .contrast
-    )
     let meaningHeader = app.staticTexts["kanji-element.meaning-header"]
     let meaningExplanation = app.staticTexts["kanji-element.meaning-explanation"]
     bringIntoUnobscuredViewport(meaningExplanation, in: elementDetail, app: app)
     XCTAssertTrue(meaningHeader.exists)
+    XCTAssertEqual(meaningHeader.label, "MEANING / STRUCTURE")
+    XCTAssertEqual(
+      meaningExplanation.label,
+      "This element contributes forms associated with blue, green."
+    )
+    XCTAssertGreaterThanOrEqual(meaningHeader.frame.height, 44)
+    XCTAssertGreaterThan(meaningExplanation.frame.height, 100)
     XCTAssertGreaterThanOrEqual(
       meaningHeader.frame.minY,
       app.navigationBars.firstMatch.frame.maxY
     )
     XCTAssertLessThanOrEqual(meaningHeader.frame.maxY, app.tabBars.firstMatch.frame.minY)
+    let headerScreenshot = meaningHeader.screenshot()
+    XCTAssertTrue(
+      containsSystemSecondaryTextPixels(in: headerScreenshot, appearance: appearance)
+    )
+    XCTAssertGreaterThan(foregroundPixelFraction(in: headerScreenshot), 0.01)
+    let explanationScreenshot = meaningExplanation.screenshot()
+    XCTAssertTrue(
+      containsSystemPrimaryTextPixels(in: explanationScreenshot, appearance: appearance)
+    )
+    XCTAssertGreaterThan(foregroundPixelFraction(in: explanationScreenshot), 0.01)
     retainElementScreenshot(
       meaningHeader,
       named: "Kanji Element meaning header - \(appearance) accessibility XXXL"
@@ -1654,6 +1771,21 @@ final class AccessibilityAuditUITests: XCTestCase {
     retainElementScreenshot(
       meaningExplanation,
       named: "Kanji Element meaning explanation - \(appearance) accessibility XXXL"
+    )
+    assertNativeTabChrome(in: app, appearance: appearance)
+    let navigationBar = app.navigationBars["Element"]
+    XCTAssertTrue(navigationBar.exists)
+    let back = navigationBar.buttons.firstMatch
+    XCTAssertTrue(back.exists)
+    XCTAssertTrue(back.isHittable)
+    XCTAssertGreaterThanOrEqual(back.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(back.frame.height, 44)
+    XCTAssertTrue(
+      containsSystemPrimaryTextPixels(in: navigationBar.screenshot(), appearance: appearance)
+    )
+    retainElementScreenshot(
+      navigationBar,
+      named: "Native Element navigation - \(appearance) accessibility XXXL"
     )
     let containingSection = app.staticTexts["KANJI CONTAINING THIS ELEMENT"]
     for _ in 0..<10 where !containingSection.exists { elementDetail.swipeUp() }
@@ -1758,6 +1890,38 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(element.isHittable, file: file, line: line)
     XCTAssertGreaterThanOrEqual(element.frame.minY, visibleTop, file: file, line: line)
     XCTAssertLessThanOrEqual(element.frame.maxY, visibleBottom, file: file, line: line)
+  }
+
+  @MainActor
+  private func assertNativeTabChrome(
+    in app: XCUIApplication,
+    appearance: XCUIDevice.Appearance,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let tabBar = app.tabBars.firstMatch
+    XCTAssertTrue(tabBar.exists, file: file, line: line)
+    let search = tabBar.buttons["Search"]
+    let you = AppNavigationUITestSupport.youTab(in: app)
+    for tab in [search, you] {
+      XCTAssertTrue(tab.exists, file: file, line: line)
+      XCTAssertTrue(tab.isHittable, file: file, line: line)
+      XCTAssertGreaterThanOrEqual(tab.frame.width, 44, file: file, line: line)
+      XCTAssertGreaterThanOrEqual(tab.frame.height, 44, file: file, line: line)
+      XCTAssertGreaterThanOrEqual(tab.frame.minX, app.frame.minX, file: file, line: line)
+      XCTAssertLessThanOrEqual(tab.frame.maxX, app.frame.maxX, file: file, line: line)
+      XCTAssertLessThanOrEqual(tab.frame.maxY, app.frame.maxY, file: file, line: line)
+    }
+    XCTAssertTrue(containsSystemBluePixels(in: search.screenshot()), file: file, line: line)
+    XCTAssertTrue(
+      containsSystemPrimaryTextPixels(in: you.screenshot(), appearance: appearance),
+      file: file,
+      line: line
+    )
+    retainElementScreenshot(
+      tabBar,
+      named: "Native tab chrome - \(appearance) accessibility XXXL"
+    )
   }
 
   @MainActor
@@ -2494,45 +2658,12 @@ final class AccessibilityAuditUITests: XCTestCase {
 
   @MainActor
   private func renderedAppearance(in screenshot: XCUIScreenshot) -> RenderedAppearance? {
-    let pixels = sampledRGBAPixels(in: screenshot)
-    guard pixels.count >= 4 else { return nil }
-    var darkPixels = 0
-    var lightPixels = 0
-    for offset in stride(from: 0, to: pixels.count, by: 4) {
-      let luminance =
-        (Int(pixels[offset]) + Int(pixels[offset + 1]) + Int(pixels[offset + 2])) / 3
-      if luminance <= 90 {
-        darkPixels += 1
-      } else if luminance >= 165 {
-        lightPixels += 1
-      }
-    }
-    guard darkPixels + lightPixels >= pixels.count / 8 else { return nil }
-    if darkPixels > lightPixels { return .dark }
-    if lightPixels > darkPixels { return .light }
-    return nil
+    accessibilityRenderedAppearance(in: screenshot)
   }
 
   @MainActor
   private func sampledRGBAPixels(in screenshot: XCUIScreenshot) -> [UInt8] {
-    guard let source = screenshot.image.cgImage else { return [] }
-    let scale = min(1, 256 / Double(max(source.width, source.height)))
-    let width = max(1, Int((Double(source.width) * scale).rounded()))
-    let height = max(1, Int((Double(source.height) * scale).rounded()))
-    var pixels = [UInt8](repeating: 0, count: width * height * 4)
-    guard
-      let context = CGContext(
-        data: &pixels,
-        width: width,
-        height: height,
-        bitsPerComponent: 8,
-        bytesPerRow: width * 4,
-        space: CGColorSpaceCreateDeviceRGB(),
-        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-      )
-    else { return [] }
-    context.draw(source, in: CGRect(x: 0, y: 0, width: width, height: height))
-    return pixels
+    sampledAccessibilityPixels(in: screenshot)
   }
 
   @MainActor
@@ -2540,13 +2671,10 @@ final class AccessibilityAuditUITests: XCTestCase {
     appearance: XCUIDevice.Appearance,
     additionalArguments: [String] = []
   ) -> XCUIApplication {
-    let app = XCUIApplication()
-    app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-    app.launchArguments += ["-UseJapaneseAnalysisFixture"]
-    app.launchArguments += [
-      appearance == .dark ? "-ForceUITestDarkAppearance" : "-ForceUITestLightAppearance"
-    ]
-    app.launchArguments += additionalArguments
+    let app = configuredAccessibilityApp(
+      appearance: appearance,
+      additionalArguments: additionalArguments
+    )
     app.launch()
     XCTAssertEqual(
       renderedAppearance(in: XCUIScreen.main.screenshot()),
@@ -2577,25 +2705,7 @@ final class AccessibilityAuditUITests: XCTestCase {
 
   @MainActor
   private func submitSearch(_ query: String, in app: XCUIApplication) throws {
-    let searchField = app.textFields["search.field"]
-    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
-    searchField.tap()
-    searchField.typeText(query)
-    app.keyboards.buttons["Search"].tap()
-    let bestMatches = app.staticTexts["Best Matches"]
-    let noMatches = app.staticTexts["No Dictionary Matches"]
-    let unavailable = app.staticTexts["Dictionary unavailable"]
-    let stableOutcome = XCTNSPredicateExpectation(
-      predicate: NSPredicate { _, _ in
-        bestMatches.exists || noMatches.exists || unavailable.exists
-      },
-      object: app
-    )
-    XCTAssertEqual(
-      XCTWaiter.wait(for: [stableOutcome], timeout: 10),
-      .completed,
-      "Search should reach a learner-visible terminal state."
-    )
+    submitAccessibilitySearch(query, in: app)
   }
 
   @MainActor
@@ -2613,5 +2723,84 @@ final class AccessibilityAuditUITests: XCTestCase {
     }
     XCTAssertTrue(stager.textFields["search.field"].waitForExistence(timeout: 5))
     stager.terminate()
+  }
+}
+
+/// Non-blocking probes for Xcode's whole-window audit of content beneath native Liquid Glass.
+/// These tests intentionally remain red and live only in ZenbuAccessibilityDiagnostics.
+final class AccessibilityFrameworkDiagnosticUITests: XCTestCase {
+  @MainActor
+  func testDarkSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize() throws {
+    try diagnoseSearchResults(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize() throws {
+    try diagnoseSearchResults(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkKanjiElementRetainsNativeTabEdgeWarningAtLargestAccessibilityTextSize() throws {
+    try diagnoseKanjiElement(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightKanjiElementRetainsNativeTabEdgeWarningAtLargestAccessibilityTextSize() throws {
+    try diagnoseKanjiElement(appearance: .light)
+  }
+
+  @MainActor
+  private func diagnoseSearchResults(appearance: XCUIDevice.Appearance) throws {
+    let app = launchDiagnosticApp(appearance: appearance)
+    try submitDiagnosticSearch("日本", in: app)
+    XCTAssertTrue(app.descendants(matching: .any)["search.results"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["search.additional-matches-header"].waitForExistence(timeout: 3))
+    try app.performAccessibilityAudit(for: .contrast)
+  }
+
+  @MainActor
+  private func diagnoseKanjiElement(appearance: XCUIDevice.Appearance) throws {
+    let app = launchDiagnosticApp(appearance: appearance)
+    try submitDiagnosticSearch("静", in: app)
+    let quiet = app.buttons["result.kanji-primary.静"]
+    XCTAssertTrue(quiet.waitForExistence(timeout: 4))
+    quiet.tap()
+    let kanjiDetail = app.collectionViews["kanji-detail.screen"]
+    XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 4))
+    let element = app.buttons["kanji-detail.element.青"]
+    for _ in 0..<10 where !element.isHittable { kanjiDetail.swipeUp() }
+    XCTAssertTrue(element.isHittable)
+    element.tap()
+    XCTAssertTrue(app.collectionViews["kanji-element.screen"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.staticTexts["kanji-element.meaning-explanation"].waitForExistence(timeout: 3))
+    try app.performAccessibilityAudit(for: .contrast)
+  }
+
+  @MainActor
+  private func launchDiagnosticApp(appearance: XCUIDevice.Appearance) -> XCUIApplication {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    addTeardownBlock { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = configuredAccessibilityApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName",
+        "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    app.launch()
+    XCTAssertEqual(XCUIDevice.shared.appearance, appearance)
+    XCTAssertEqual(
+      accessibilityRenderedAppearance(in: XCUIScreen.main.screenshot()),
+      appearance == .dark ? .dark : .light,
+      "The framework diagnostic must render the requested appearance."
+    )
+    return app
+  }
+
+  @MainActor
+  private func submitDiagnosticSearch(_ query: String, in app: XCUIApplication) throws {
+    submitAccessibilitySearch(query, in: app)
   }
 }

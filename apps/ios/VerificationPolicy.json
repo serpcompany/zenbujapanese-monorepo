@@ -33,7 +33,11 @@
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech": "Live Japanese voice completion is retained in the separately recorded physical speech HIL journey."
   },
   "non_correctness_exclusions": {
-    "ZenbuJapaneseTests/ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus": "This benchmark belongs to the performance trend and is not a functional correctness journey."
+    "ZenbuJapaneseTests/ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus": "This benchmark belongs to the performance trend and is not a functional correctness journey.",
+    "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testDarkKanjiElementRetainsNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR.",
+    "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testDarkSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR.",
+    "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testLightKanjiElementRetainsNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR.",
+    "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testLightSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR."
   },
   "correctness_plans": ["ZenbuPR", "ZenbuSudachiIntegration"],
   "intentional_same_stage_evidence": {
@@ -374,6 +378,30 @@
       "traits": ["ui", "accessibility", "accessibility-maximum"],
       "journeys": ["accessibility-kanji-element-light"]
     },
+    "diagnostic.search-results-tab-edge-dark": {
+      "plan": "ZenbuAccessibilityDiagnostics",
+      "test": "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testDarkSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum", "framework-diagnostic"],
+      "journeys": []
+    },
+    "diagnostic.search-results-tab-edge-light": {
+      "plan": "ZenbuAccessibilityDiagnostics",
+      "test": "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testLightSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum", "framework-diagnostic"],
+      "journeys": []
+    },
+    "diagnostic.kanji-element-tab-edge-dark": {
+      "plan": "ZenbuAccessibilityDiagnostics",
+      "test": "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testDarkKanjiElementRetainsNativeTabEdgeWarningAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum", "framework-diagnostic"],
+      "journeys": []
+    },
+    "diagnostic.kanji-element-tab-edge-light": {
+      "plan": "ZenbuAccessibilityDiagnostics",
+      "test": "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testLightKanjiElementRetainsNativeTabEdgeWarningAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility", "accessibility-maximum", "framework-diagnostic"],
+      "journeys": []
+    },
     "ui.conjugations-maximum-dark": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkTsubusuConjugationsRemainReadableAtLargestAccessibilityTextSize",
@@ -586,6 +614,12 @@
       "ui.japanese-text-analysis-settings",
       "ui.bundled-japanese-text-analysis"
     ],
+    "diagnostics": [
+      "diagnostic.search-results-tab-edge-dark",
+      "diagnostic.search-results-tab-edge-light",
+      "diagnostic.kanji-element-tab-edge-dark",
+      "diagnostic.kanji-element-tab-edge-light"
+    ],
     "accessibility": [
       "accessibility.you-list",
       "accessibility.image-actions",
@@ -610,7 +644,7 @@
     ]
   },
   "stages": {
-    "tdd": ["unit", "ui"],
+    "tdd": ["unit", "ui", "diagnostics"],
     "issue-final": ["contracts", "unit", "ui", "accessibility", "integration"],
     "hosted-fast": ["contracts", "unit", "ui", "accessibility"],
     "merge-candidate": ["contracts", "complete", "integration"],
@@ -1046,6 +1080,27 @@
         "ui.example-compact-hit-region",
         "ui.example-compact-hit-region-dark"
       ]
+    },
+    "accessibility-framework-diagnostics": {
+      "adaptive_layout": true,
+      "paths": [],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
+        "apps/ios/CI.md",
+        "apps/ios/TestPlans/ZenbuAccessibilityDiagnostics.xctestplan",
+        "apps/ios/TestPlans/ZenbuNightly.xctestplan",
+        "apps/ios/TestPlans/ZenbuPR.xctestplan",
+        "apps/ios/Tools/run_issue_verification.sh",
+        "apps/ios/VerificationPolicy.json",
+        "apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme"
+      ],
+      "tdd": [
+        "diagnostic.search-results-tab-edge-dark",
+        "diagnostic.search-results-tab-edge-light",
+        "diagnostic.kanji-element-tab-edge-dark",
+        "diagnostic.kanji-element-tab-edge-light"
+      ],
+      "issue-final": []
     },
     "example-sentence-word-selector": {
       "adaptive_layout": true,

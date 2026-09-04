@@ -108,5 +108,6 @@ run_partition() {
 
 run_partition unit ZenbuPR
 run_partition ui ZenbuPR
+run_partition diagnostics ZenbuAccessibilityDiagnostics
 run_partition accessibility ZenbuAccessibility
 run_partition integration ZenbuSudachiIntegration

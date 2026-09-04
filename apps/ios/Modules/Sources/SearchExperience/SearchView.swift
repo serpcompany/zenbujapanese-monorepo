@@ -684,7 +684,7 @@ private struct SearchResultsView: View {
       }
 
       if showsAdditionalMatches, results.presentation == .ranked, !results.additional.isEmpty {
-        Section("Additional Matches") {
+        Section {
           ForEach(results.additional.enumerated(), id: \.element.id) { index, entry in
             ResultRow(
               entry: entry,
@@ -692,6 +692,9 @@ private struct SearchResultsView: View {
               rank: .additional(index + 1)
             )
           }
+        } header: {
+          Text("Additional Matches")
+            .accessibilityIdentifier("search.additional-matches-header")
         }
       }
     }
