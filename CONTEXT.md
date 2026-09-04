@@ -52,6 +52,26 @@ _Avoid_: Primary Dictionary Entry, all dictionary results
 The first ordered Dictionary Match when a downstream flow requires one Language Reference Data entry.
 _Avoid_: First provider row, Dictionary Best Matches
 
+**Public Dictionary Entry**:
+The anonymous website representation of one exact Japanese Language Reference Data entry. Same-spelling entries remain separate rather than becoming one surface-form family page.
+_Avoid_: Search result page, surface-form page, dictionary row
+
+**App/Web Dictionary Parity**:
+For the same declared dictionary-data and ranking-policy version, the iPhone app and public website expose the same visible entry identities, result order, and Dictionary Best Matches versus Additional Matches grouping. Platform presentation and runtime implementation may differ.
+_Avoid_: Identical UI, shared runtime, approximate result parity
+
+**Public Dictionary Search**:
+The submit-first website flow that accepts Japanese, romaji, or the localized edition's language and presents relevant Japanese Dictionary Matches. Typing alone does not replace the submitted results page.
+_Avoid_: Live search, autocomplete, English entry lookup
+
+**Indexable Dictionary Search Results**:
+A successful Public Dictionary Search page with at least one strong approved Dictionary Match, eligible to be optimized and indexed for the submitted query. Zero-result, retrieval-failure, and weak-only pages are not indexable; the page remains results rather than editorial translation content.
+_Avoid_: Translation landing page, weak-only search page, dictionary entry
+
+**Localized Website Edition**:
+A public website presentation whose navigation and authored page copy use one supported locale. English is the unprefixed default edition; Japanese begins under `/ja`, and locale remains distinct from dictionary entry identity or search-input language.
+_Avoid_: Dictionary language, query language, IP-targeted site
+
 **Example Sentence Corpus**:
 The canonical app-owned collection of source-backed Japanese–English example pairs and their retained provenance.
 _Avoid_: Tatoeba database, Nihongo sentences, retrieval results
