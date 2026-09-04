@@ -134,6 +134,9 @@ public struct SearchExperienceRootView: View {
     }
     .environment(readingAidPreferences)
     #if DEBUG
+      .preferredColorScheme(forcedUITestColorScheme)
+    #endif
+    #if DEBUG
       .onReceive(NotificationCenter.default.publisher(for: SpeechPlaybackVerification.notification))
       {
         notification in
@@ -148,6 +151,15 @@ public struct SearchExperienceRootView: View {
       }
     #endif
   }
+
+  #if DEBUG
+    private var forcedUITestColorScheme: ColorScheme? {
+      let arguments = ProcessInfo.processInfo.arguments
+      if arguments.contains("-ForceUITestDarkAppearance") { return .dark }
+      if arguments.contains("-ForceUITestLightAppearance") { return .light }
+      return nil
+    }
+  #endif
 
   private var appTabs: some View {
     TabView(selection: $selectedTab) {

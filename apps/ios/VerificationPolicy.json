@@ -856,6 +856,7 @@
       "paths": [],
       "reviewed_override_paths": [
         "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
+        "apps/ios/Modules/Sources/SearchExperience/SearchExperienceRootView.swift",
         "apps/ios/Modules/Sources/SearchExperience/SearchView.swift",
         "apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift",
         "apps/ios/VerificationPolicy.json"

@@ -21,6 +21,11 @@ private struct AuditException: CustomStringConvertible {
   }
 }
 
+private enum RenderedAppearance {
+  case light
+  case dark
+}
+
 final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
   func testYouHierarchyRemainsReachableAtLargestAccessibilityTextSize() throws {
@@ -1606,6 +1611,10 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertLessThanOrEqual(pronunciation.frame.maxX, app.frame.maxX)
     XCTAssertGreaterThanOrEqual(pronunciation.frame.width, 44)
     XCTAssertGreaterThanOrEqual(pronunciation.frame.height, 44)
+    XCTAssertEqual(
+      renderedAppearance(in: XCUIScreen.main.screenshot()),
+      appearance == .dark ? .dark : .light
+    )
     try performAudit(
       in: app,
       named: "Word Detail - \(appearance == .dark ? "dark" : "light") accessibility XXXL",
@@ -2350,6 +2359,27 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  private func renderedAppearance(in screenshot: XCUIScreenshot) -> RenderedAppearance? {
+    let pixels = sampledRGBAPixels(in: screenshot)
+    guard pixels.count >= 4 else { return nil }
+    var darkPixels = 0
+    var lightPixels = 0
+    for offset in stride(from: 0, to: pixels.count, by: 4) {
+      let luminance =
+        (Int(pixels[offset]) + Int(pixels[offset + 1]) + Int(pixels[offset + 2])) / 3
+      if luminance <= 90 {
+        darkPixels += 1
+      } else if luminance >= 165 {
+        lightPixels += 1
+      }
+    }
+    guard darkPixels + lightPixels >= pixels.count / 8 else { return nil }
+    if darkPixels > lightPixels { return .dark }
+    if lightPixels > darkPixels { return .light }
+    return nil
+  }
+
+  @MainActor
   private func sampledRGBAPixels(in screenshot: XCUIScreenshot) -> [UInt8] {
     guard let source = screenshot.image.cgImage else { return [] }
     let scale = min(1, 256 / Double(max(source.width, source.height)))
@@ -2384,6 +2414,10 @@ final class AccessibilityAuditUITests: XCTestCase {
       app.launchArguments += [
         "-AppleInterfaceStyle", appearance == .dark ? "Dark" : "Light",
         "-AppleInterfaceStyleSwitchesAutomatically", "NO",
+      ]
+    } else {
+      app.launchArguments += [
+        appearance == .dark ? "-ForceUITestDarkAppearance" : "-ForceUITestLightAppearance"
       ]
     }
     app.launchArguments += additionalArguments
