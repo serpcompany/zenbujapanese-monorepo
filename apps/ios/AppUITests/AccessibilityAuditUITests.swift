@@ -1233,15 +1233,10 @@ final class AccessibilityAuditUITests: XCTestCase {
 
     let app = launchApp(
       appearance: appearance,
-      additionalArguments: ["-ResetRecentSearches"],
-      usesDeviceAppearance: true
+      additionalArguments: ["-ResetRecentSearches"]
     )
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
-    XCTAssertEqual(
-      renderedAppearance(in: XCUIScreen.main.screenshot()),
-      appearance == .dark ? .dark : .light
-    )
     searchField.tap()
     app.buttons["search.input.handwriting"].tap()
     XCTAssertTrue(app.otherElements["handwriting.canvas"].waitForExistence(timeout: 3))
@@ -1661,8 +1656,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: appearance,
       additionalArguments: [
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
-      ],
-      usesDeviceAppearance: true
+      ]
     )
     XCTAssertEqual(XCUIDevice.shared.appearance, appearance)
     let searchField = app.textFields["search.field"]
@@ -2484,24 +2478,21 @@ final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
   private func launchApp(
     appearance: XCUIDevice.Appearance,
-    additionalArguments: [String] = [],
-    usesDeviceAppearance: Bool = false
+    additionalArguments: [String] = []
   ) -> XCUIApplication {
     let app = XCUIApplication()
     app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
     app.launchArguments += ["-UseJapaneseAnalysisFixture"]
-    if !usesDeviceAppearance {
-      app.launchArguments += [
-        "-AppleInterfaceStyle", appearance == .dark ? "Dark" : "Light",
-        "-AppleInterfaceStyleSwitchesAutomatically", "NO",
-      ]
-    } else {
-      app.launchArguments += [
-        appearance == .dark ? "-ForceUITestDarkAppearance" : "-ForceUITestLightAppearance"
-      ]
-    }
+    app.launchArguments += [
+      appearance == .dark ? "-ForceUITestDarkAppearance" : "-ForceUITestLightAppearance"
+    ]
     app.launchArguments += additionalArguments
     app.launch()
+    XCTAssertEqual(
+      renderedAppearance(in: XCUIScreen.main.screenshot()),
+      appearance == .dark ? .dark : .light,
+      "The accessibility fixture must render the requested appearance."
+    )
     return app
   }
 
