@@ -11,7 +11,7 @@ remains decision evidence, but this file owns the executable cadence.
 | Implementation                             | Relevant unit tests and issue-focused UI tests                                                       | Fast red-green feedback at the public seam changed by the issue                                    |
 | Draft pull request push                    | Scope, manifest validation, and a SHA-bound deferred status on Ubuntu                                | Keep WIP pushes cheap; the draft itself remains unmergeable                                        |
 | Ready pull request or later non-draft push | Manifest-selected repository contracts, units, critical journeys, and focused accessibility coverage | Automatically verify the exact current head without accepting stale green results                  |
-| Merge queue                                | Cheap required-status reporting plus five concurrent exact-candidate lanes: Unit, complete Accessibility UI, two deterministic complementary normal UI shards, and `ZenbuSudachiIntegration` | Blocking integration evidence without repeating fast macOS partitions or learner journeys |
+| Merge queue                                | Cheap required-status reporting plus ten concurrent exact-candidate lanes: Unit, three complete Accessibility UI shards, five normal UI shards, and `ZenbuSudachiIntegration` | Blocking integration evidence without repeating fast macOS partitions or learner journeys |
 | Manual investigation                       | `iOS nightly quality`, started with `workflow_dispatch`                                              | Two-device accessibility breadth, repetitions, and sanitizers when investigation warrants the cost |
 | Pre-release                                | Manual `iOS pre-release validation`, then separately authorized physical-device and release checks   | Transient validation for an identified proposed candidate; never inferred from development CI      |
 
@@ -69,16 +69,33 @@ Agents do not assemble final selector lists. A newly discovered bug selector is
 added to the manifest with its capability and reason, reviewed, and then selected
 through the same interface.
 
-For the merge-candidate stage, the planner derives five lanes from the committed
-Xcode plan inventory. Every `ZenbuPR` Unit test belongs to the Unit lane, every
-test in the complete `ZenbuAccessibility` partition belongs to the Accessibility
-UI lane, and the remaining normal UI identities are sorted and assigned
-alternately to complementary shards A and B. The separate
-`ZenbuSudachiIntegration` plan is the fifth lane. Repository validation fails if
-the generated lanes omit or duplicate any required `ZenbuPR` test, drift from the
-deterministic split, or stop covering the complete Accessibility or Sudachi plan.
-The current inventory is 112 Unit, 70 Accessibility UI, 66 normal UI A, 65 normal
-UI B, and 3 Sudachi integration tests.
+For the merge-candidate stage, the planner derives ten lanes from the committed
+Xcode plan inventory and `VerificationTimingProfile.json`. Every `ZenbuPR` Unit
+test belongs to the Unit lane. The complete 70-test `ZenbuAccessibility`
+partition is split across three lanes, and the remaining 131 normal UI tests are
+split across five lanes. The separate `ZenbuSudachiIntegration` plan is the
+tenth lane. UI identities are assigned by deterministic longest-processing-time
+balancing: measured duration descending, test identity as the stable tie-breaker,
+then the lowest-load lane with lane order as its stable tie-breaker. Repository
+validation fails if the timing profile omits or invents a current UI test, if the
+generated lanes omit or duplicate any required `ZenbuPR` test, if a lane drifts
+from the deterministic split, or if the complete Accessibility or Sudachi plan
+stops being covered.
+
+The timing profile comes from workflow run `33888752432` on exact source
+`84bece9fc47e5aa0bd7420befc600a915464f5d3`. Its complete per-test log inventory
+produces measured test loads of 1,289.502, 1,288.224, and 1,287.983 seconds for
+Accessibility and 1,295.008, 1,292.152, 1,285.508, 1,285.392, and 1,285.777
+seconds for normal UI. Four normal shards would retain roughly 1,613 seconds of
+test load and predict about 37 minutes with the observed setup/build overhead;
+five predicts a conservative maximum of about 33m21s after runner and evidence
+packaging overhead. The prior three UI artifacts totaled 2,978,028,994 compressed
+bytes. All result bundles, logs, screenshots, summaries, and identity records
+remain retained for 30 days; the next authorized run must measure actual storage
+instead of reducing evidence.
+
+The current generated counts are 112 Unit; 24, 23, and 23 Accessibility UI;
+26, 26, 26, 27, and 26 normal UI; and 3 Sudachi integration tests.
 
 For ordinary issue work, keep the PR draft, run the repository-selected local
 issue gate, and push the reviewed commit. Changing the PR to Ready automatically
@@ -296,8 +313,8 @@ non-blocking follow-up #269. A current-head Ready checkpoint has proved the fast
 gate names and runtime.
 
 #227 now owns the remaining rollout: retain the active `main` ruleset and merge
-queue, then require the five generated lanes on one exact merge-group SHA. The
-four `ZenbuPR` lanes collectively execute its complete inventory exactly once;
-the fifth runs `ZenbuSudachiIntegration`. Never make that candidate green by
+queue, then require the ten generated lanes on one exact merge-group SHA. The
+nine `ZenbuPR` lanes collectively execute its complete inventory exactly once;
+the tenth runs `ZenbuSudachiIntegration`. Never make that candidate green by
 deleting coverage, skipping a known failing journey, or adding a blanket
 accessibility exception.

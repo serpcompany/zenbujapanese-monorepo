@@ -660,7 +660,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             "unclassified-ios-fallback",
         )
 
-    def test_merge_candidate_planner_outputs_the_five_approved_parallel_lanes(self):
+    def test_merge_candidate_planner_outputs_the_measured_balanced_lanes(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "github-output"
             manifest = Path(__file__).parents[2] / "VerificationPolicy.json"
@@ -696,9 +696,14 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 [lane["lane"] for lane in matrix],
                 [
                     "unit",
-                    "accessibility-ui",
+                    "accessibility-ui-a",
+                    "accessibility-ui-b",
+                    "accessibility-ui-c",
                     "normal-ui-a",
                     "normal-ui-b",
+                    "normal-ui-c",
+                    "normal-ui-d",
+                    "normal-ui-e",
                     "sudachi-integration",
                 ],
             )
@@ -709,50 +714,118 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                     "ZenbuPR",
                     "ZenbuPR",
                     "ZenbuPR",
+                    "ZenbuPR",
+                    "ZenbuPR",
+                    "ZenbuPR",
+                    "ZenbuPR",
+                    "ZenbuPR",
                     "ZenbuSudachiIntegration",
                 ],
             )
             self.assertEqual(
                 [lane["test_count"] for lane in matrix],
-                [112, 70, 66, 65, 3],
+                [112, 24, 23, 23, 26, 26, 26, 27, 26, 3],
+            )
+            self.assertEqual(
+                [lane["measured_test_seconds"] for lane in matrix],
+                [
+                    33.951,
+                    1289.502,
+                    1288.224,
+                    1287.983,
+                    1295.008,
+                    1292.152,
+                    1285.508,
+                    1285.392,
+                    1285.777,
+                    4.116,
+                ],
+            )
+            self.assertEqual(
+                {lane["timing_profile_run_id"] for lane in matrix},
+                {33888752432},
             )
             self.assertEqual(
                 [lane["selectors"] for lane in matrix],
                 [
                     ["complete.merge-unit"],
-                    ["complete.merge-accessibility"],
+                    ["complete.merge-accessibility-a"],
+                    ["complete.merge-accessibility-b"],
+                    ["complete.merge-accessibility-c"],
                     ["complete.merge-ui-a"],
                     ["complete.merge-ui-b"],
+                    ["complete.merge-ui-c"],
+                    ["complete.merge-ui-d"],
+                    ["complete.merge-ui-e"],
                     ["integration.sudachi"],
                 ],
             )
             self.assertNotIn("complete_selectors", values)
             self.assertNotIn("integration_selectors", values)
 
-    def test_merge_candidate_inventory_contract_rejects_omissions_and_duplicates(self):
+    def test_merge_candidate_inventory_uses_measured_balanced_exact_partitions(self):
         repo_root = Path(__file__).parents[4]
         inventory = ios_verification.repository_inventory(repo_root)
         partitions = ios_verification.merge_candidate_partitions(inventory)
 
         ios_verification.require_exact_merge_candidate_partitions(inventory, partitions)
         self.assertEqual(
-            [len(partitions[lane]["tests"]) for lane in partitions],
-            [112, 70, 66, 65, 3],
+            {lane: len(partition["tests"]) for lane, partition in partitions.items()},
+            {
+                "unit": 112,
+                "accessibility-ui-a": 24,
+                "accessibility-ui-b": 23,
+                "accessibility-ui-c": 23,
+                "normal-ui-a": 26,
+                "normal-ui-b": 26,
+                "normal-ui-c": 26,
+                "normal-ui-d": 27,
+                "normal-ui-e": 26,
+                "sudachi-integration": 3,
+            },
         )
+        accessibility_lanes = [
+            f"accessibility-ui-{suffix}" for suffix in ("a", "b", "c")
+        ]
+        normal_lanes = [f"normal-ui-{suffix}" for suffix in ("a", "b", "c", "d", "e")]
         self.assertTrue(
             all(
                 "/AccessibilityAuditUITests/" in test
-                for test in partitions["accessibility-ui"]["tests"]
-            )
-        )
-        self.assertTrue(
-            all(
-                test.startswith("ZenbuJapaneseUITests/")
-                and test not in partitions["accessibility-ui"]["tests"]
-                for lane in ("normal-ui-a", "normal-ui-b")
+                for lane in accessibility_lanes
                 for test in partitions[lane]["tests"]
             )
         )
+        accessibility_tests = {
+            test for lane in accessibility_lanes for test in partitions[lane]["tests"]
+        }
+        self.assertTrue(
+            all(
+                test.startswith("ZenbuJapaneseUITests/")
+                and test not in accessibility_tests
+                for lane in normal_lanes
+                for test in partitions[lane]["tests"]
+            )
+        )
+        accessibility_loads = [
+            partitions[lane]["measured_test_seconds"] for lane in accessibility_lanes
+        ]
+        normal_loads = [
+            partitions[lane]["measured_test_seconds"] for lane in normal_lanes
+        ]
+        self.assertLess(max(accessibility_loads) - min(accessibility_loads), 2)
+        self.assertLess(max(normal_loads) - min(normal_loads), 10)
+
+        unmeasured = json.loads(json.dumps(inventory))
+        missing_timing = next(
+            iter(unmeasured["merge_candidate_timing_profile"]["test_durations_seconds"])
+        )
+        del unmeasured["merge_candidate_timing_profile"]["test_durations_seconds"][
+            missing_timing
+        ]
+        with self.assertRaisesRegex(
+            ios_verification.PolicyError, f"timing profile omits.*{missing_timing}"
+        ):
+            ios_verification.merge_candidate_partitions(unmeasured)
 
         omitted = json.loads(json.dumps(partitions))
         removed = omitted["normal-ui-a"]["tests"].pop()
@@ -799,7 +872,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 ios_verification.merge_candidate_partitions(inaccessible),
             )
 
-    def test_manual_premerge_planner_preserves_the_same_five_lane_matrix(self):
+    def test_manual_premerge_planner_preserves_the_same_measured_matrix(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "github-output"
             manifest = Path(__file__).parents[2] / "VerificationPolicy.json"
@@ -828,7 +901,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 for line in output.read_text(encoding="utf-8").splitlines()
             )
             self.assertEqual(
-                len(json.loads(values["merge_candidate_matrix"])["include"]), 5
+                len(json.loads(values["merge_candidate_matrix"])["include"]), 10
             )
 
     def test_repository_contract_requires_one_selector_for_every_generated_lane(self):
@@ -859,12 +932,25 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         inventory = json.loads(output.getvalue())
         partitions = inventory["merge_candidate_partitions"]
         self.assertEqual(
+            inventory["merge_candidate_timing_profile"]["source"]["workflow_run_id"],
+            33888752432,
+        )
+        self.assertEqual(
+            inventory["merge_candidate_timing_profile"]["source"]["source_sha"],
+            "84bece9fc47e5aa0bd7420befc600a915464f5d3",
+        )
+        self.assertEqual(
             {lane: len(partition["tests"]) for lane, partition in partitions.items()},
             {
                 "unit": 112,
-                "accessibility-ui": 70,
-                "normal-ui-a": 66,
-                "normal-ui-b": 65,
+                "accessibility-ui-a": 24,
+                "accessibility-ui-b": 23,
+                "accessibility-ui-c": 23,
+                "normal-ui-a": 26,
+                "normal-ui-b": 26,
+                "normal-ui-c": 26,
+                "normal-ui-d": 27,
+                "normal-ui-e": 26,
                 "sudachi-integration": 3,
             },
         )
@@ -873,9 +959,14 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         repo_root = Path(__file__).parents[4]
         expected = {
             "complete.merge-unit": ("ZenbuPR", 112),
-            "complete.merge-accessibility": ("ZenbuPR", 70),
-            "complete.merge-ui-a": ("ZenbuPR", 66),
-            "complete.merge-ui-b": ("ZenbuPR", 65),
+            "complete.merge-accessibility-a": ("ZenbuPR", 24),
+            "complete.merge-accessibility-b": ("ZenbuPR", 23),
+            "complete.merge-accessibility-c": ("ZenbuPR", 23),
+            "complete.merge-ui-a": ("ZenbuPR", 26),
+            "complete.merge-ui-b": ("ZenbuPR", 26),
+            "complete.merge-ui-c": ("ZenbuPR", 26),
+            "complete.merge-ui-d": ("ZenbuPR", 27),
+            "complete.merge-ui-e": ("ZenbuPR", 26),
             "integration.sudachi": ("ZenbuSudachiIntegration", 3),
         }
         for selector, (plan, count) in expected.items():

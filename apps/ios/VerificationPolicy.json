@@ -469,10 +469,24 @@
       "traits": ["complete-suite", "generated-partition"],
       "journeys": []
     },
-    "complete.merge-accessibility": {
+    "complete.merge-accessibility-a": {
       "plan": "ZenbuPR",
       "test": null,
-      "partition": "accessibility-ui",
+      "partition": "accessibility-ui-a",
+      "traits": ["complete-suite", "generated-partition"],
+      "journeys": []
+    },
+    "complete.merge-accessibility-b": {
+      "plan": "ZenbuPR",
+      "test": null,
+      "partition": "accessibility-ui-b",
+      "traits": ["complete-suite", "generated-partition"],
+      "journeys": []
+    },
+    "complete.merge-accessibility-c": {
+      "plan": "ZenbuPR",
+      "test": null,
+      "partition": "accessibility-ui-c",
       "traits": ["complete-suite", "generated-partition"],
       "journeys": []
     },
@@ -487,6 +501,27 @@
       "plan": "ZenbuPR",
       "test": null,
       "partition": "normal-ui-b",
+      "traits": ["complete-suite", "generated-partition"],
+      "journeys": []
+    },
+    "complete.merge-ui-c": {
+      "plan": "ZenbuPR",
+      "test": null,
+      "partition": "normal-ui-c",
+      "traits": ["complete-suite", "generated-partition"],
+      "journeys": []
+    },
+    "complete.merge-ui-d": {
+      "plan": "ZenbuPR",
+      "test": null,
+      "partition": "normal-ui-d",
+      "traits": ["complete-suite", "generated-partition"],
+      "journeys": []
+    },
+    "complete.merge-ui-e": {
+      "plan": "ZenbuPR",
+      "test": null,
+      "partition": "normal-ui-e",
       "traits": ["complete-suite", "generated-partition"],
       "journeys": []
     }
@@ -564,9 +599,14 @@
     "complete": [
       "complete.public",
       "complete.merge-unit",
-      "complete.merge-accessibility",
+      "complete.merge-accessibility-a",
+      "complete.merge-accessibility-b",
+      "complete.merge-accessibility-c",
       "complete.merge-ui-a",
-      "complete.merge-ui-b"
+      "complete.merge-ui-b",
+      "complete.merge-ui-c",
+      "complete.merge-ui-d",
+      "complete.merge-ui-e"
     ]
   },
   "stages": {
@@ -645,17 +685,27 @@
       "merge-candidate": [
         "contracts.repository",
         "complete.merge-unit",
-        "complete.merge-accessibility",
+        "complete.merge-accessibility-a",
+        "complete.merge-accessibility-b",
+        "complete.merge-accessibility-c",
         "complete.merge-ui-a",
         "complete.merge-ui-b",
+        "complete.merge-ui-c",
+        "complete.merge-ui-d",
+        "complete.merge-ui-e",
         "integration.sudachi"
       ],
       "manual": [
         "contracts.repository",
         "complete.merge-unit",
-        "complete.merge-accessibility",
+        "complete.merge-accessibility-a",
+        "complete.merge-accessibility-b",
+        "complete.merge-accessibility-c",
         "complete.merge-ui-a",
         "complete.merge-ui-b",
+        "complete.merge-ui-c",
+        "complete.merge-ui-d",
+        "complete.merge-ui-e",
         "integration.sudachi"
       ],
       "release": [
@@ -679,7 +729,8 @@
         "apps/ios/Tools/run_selected_test_plan.sh",
         "apps/ios/Tools/run_sudachi_integration.sh",
         "apps/ios/Tools/Tests/test_ios_*.py",
-        "apps/ios/VerificationPolicy.json"
+        "apps/ios/VerificationPolicy.json",
+        "apps/ios/VerificationTimingProfile.json"
       ],
       "issue-final": ["contracts.repository"],
       "hosted-fast": ["contracts.repository"]

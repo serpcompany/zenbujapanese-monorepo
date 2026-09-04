@@ -625,10 +625,44 @@ def repository_inventory(repo_root: Path) -> dict[str, Any]:
             "targets": included_by_target,
         }
     all_tests = set().union(*tests_by_target.values())
+    timing_profile = json.loads(
+        (repo_root / "apps/ios/VerificationTimingProfile.json").read_text(
+            encoding="utf-8"
+        )
+    )
     return {
         "targets": {key: sorted(value) for key, value in tests_by_target.items()},
         "tests": sorted(all_tests),
         "plans": plans,
+        "merge_candidate_timing_profile": timing_profile,
+    }
+
+
+def _timing_balanced_partitions(
+    *,
+    tests: set[str],
+    durations: dict[str, float],
+    lane_count: int,
+    lane_prefix: str,
+) -> dict[str, dict[str, Any]]:
+    lanes: list[dict[str, Any]] = [
+        {"plan": "ZenbuPR", "tests": [], "measured_test_seconds": 0.0}
+        for _ in range(lane_count)
+    ]
+    for test in sorted(tests, key=lambda identity: (-durations[identity], identity)):
+        lane_index = min(
+            range(lane_count),
+            key=lambda index: (lanes[index]["measured_test_seconds"], index),
+        )
+        lanes[lane_index]["tests"].append(test)
+        lanes[lane_index]["measured_test_seconds"] += durations[test]
+    return {
+        f"{lane_prefix}-{chr(ord('a') + index)}": {
+            "plan": lane["plan"],
+            "tests": sorted(lane["tests"]),
+            "measured_test_seconds": round(lane["measured_test_seconds"], 3),
+        }
+        for index, lane in enumerate(lanes)
     }
 
 
@@ -636,16 +670,55 @@ def merge_candidate_partitions(inventory: dict[str, Any]) -> dict[str, dict[str,
     """Deterministically partition the exact merge-candidate correctness tests."""
     zenbu_pr = inventory["plans"]["ZenbuPR"]["included_tests"]
     unit = sorted(test for test in zenbu_pr if test.startswith("ZenbuJapaneseTests/"))
-    accessibility = sorted(
-        set(zenbu_pr) & set(inventory["plans"]["ZenbuAccessibility"]["included_tests"])
+    accessibility = set(zenbu_pr) & set(
+        inventory["plans"]["ZenbuAccessibility"]["included_tests"]
     )
-    normal_ui = sorted(set(zenbu_pr) - set(unit) - set(accessibility))
+    normal_ui = set(zenbu_pr) - set(unit) - accessibility
+    timing_profile = inventory["merge_candidate_timing_profile"]
+    durations = timing_profile["test_durations_seconds"]
+    measured_ui = set(durations)
+    required_ui = accessibility | normal_ui
+    missing_timings = sorted(required_ui - measured_ui)
+    unexpected_timings = sorted(measured_ui - required_ui)
+    if missing_timings:
+        raise PolicyError(
+            "merge-candidate timing profile omits required UI tests: "
+            + ", ".join(missing_timings)
+        )
+    if unexpected_timings:
+        raise PolicyError(
+            "merge-candidate timing profile contains unknown UI tests: "
+            + ", ".join(unexpected_timings)
+        )
+    invalid_timings = sorted(
+        test
+        for test, seconds in durations.items()
+        if not isinstance(seconds, (int, float)) or seconds <= 0
+    )
+    if invalid_timings:
+        raise PolicyError(
+            "merge-candidate timing profile has invalid durations: "
+            + ", ".join(invalid_timings)
+        )
+
+    lane_counts = timing_profile["lane_counts"]
+    accessibility_partitions = _timing_balanced_partitions(
+        tests=accessibility,
+        durations=durations,
+        lane_count=lane_counts["accessibility-ui"],
+        lane_prefix="accessibility-ui",
+    )
+    normal_partitions = _timing_balanced_partitions(
+        tests=normal_ui,
+        durations=durations,
+        lane_count=lane_counts["normal-ui"],
+        lane_prefix="normal-ui",
+    )
     integration = inventory["plans"]["ZenbuSudachiIntegration"]["included_tests"]
     return {
         "unit": {"plan": "ZenbuPR", "tests": unit},
-        "accessibility-ui": {"plan": "ZenbuPR", "tests": accessibility},
-        "normal-ui-a": {"plan": "ZenbuPR", "tests": normal_ui[::2]},
-        "normal-ui-b": {"plan": "ZenbuPR", "tests": normal_ui[1::2]},
+        **accessibility_partitions,
+        **normal_partitions,
         "sudachi-integration": {
             "plan": "ZenbuSudachiIntegration",
             "tests": integration,
@@ -656,13 +729,8 @@ def merge_candidate_partitions(inventory: dict[str, Any]) -> dict[str, dict[str,
 def require_exact_merge_candidate_partitions(
     inventory: dict[str, Any], partitions: dict[str, dict[str, Any]]
 ) -> None:
-    required_lanes = {
-        "unit",
-        "accessibility-ui",
-        "normal-ui-a",
-        "normal-ui-b",
-        "sudachi-integration",
-    }
+    expected = merge_candidate_partitions(inventory)
+    required_lanes = set(expected)
     if set(partitions) != required_lanes:
         raise PolicyError(
             "merge-candidate lanes must be exactly: "
@@ -680,11 +748,8 @@ def require_exact_merge_candidate_partitions(
             + ", ".join(accessibility_outside_pr)
         )
 
-    zenbu_pr_lanes = (
-        "unit",
-        "accessibility-ui",
-        "normal-ui-a",
-        "normal-ui-b",
+    zenbu_pr_lanes = tuple(
+        lane for lane, partition in expected.items() if partition["plan"] == "ZenbuPR"
     )
     partitioned_pr_tests = [
         test for lane in zenbu_pr_lanes for test in partitions[lane]["tests"]
@@ -711,11 +776,10 @@ def require_exact_merge_candidate_partitions(
             + ", ".join(unexpected)
         )
 
-    expected = merge_candidate_partitions(inventory)
     for lane in zenbu_pr_lanes:
         if partitions[lane]["plan"] != "ZenbuPR":
             raise PolicyError(f"{lane} partition must run through ZenbuPR")
-        if partitions[lane]["tests"] != expected[lane]["tests"]:
+        if partitions[lane] != expected[lane]:
             raise PolicyError(
                 f"{lane} partition does not match the deterministic inventory split"
             )
@@ -739,6 +803,7 @@ def merge_candidate_matrix(
     inventory: dict[str, Any],
 ) -> dict[str, list[dict[str, Any]]]:
     partitions = merge_candidate_partitions(inventory)
+    timing_profile = inventory["merge_candidate_timing_profile"]
     selectors_by_partition = {
         selector.get("partition"): selector_id
         for selector_id, selector in manifest["selectors"].items()
@@ -756,6 +821,12 @@ def merge_candidate_matrix(
                 "plan": partition["plan"],
                 "selectors": [selector_id],
                 "test_count": len(partition["tests"]),
+                "measured_test_seconds": (
+                    partition["measured_test_seconds"]
+                    if "measured_test_seconds" in partition
+                    else timing_profile["fixed_lane_test_load_seconds"][lane]
+                ),
+                "timing_profile_run_id": timing_profile["source"]["workflow_run_id"],
             }
         )
     return {"include": include}

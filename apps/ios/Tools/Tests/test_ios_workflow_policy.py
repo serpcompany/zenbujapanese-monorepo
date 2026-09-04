@@ -42,7 +42,7 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("  workflow_dispatch:\n", triggers)
         self.assertIn("    name: ios-premerge / Required\n", workflow)
 
-    def test_complete_suite_is_a_five_lane_exact_candidate_matrix(self):
+    def test_complete_suite_uses_the_measured_exact_candidate_matrix(self):
         workflow = workflow_text("ios-premerge.yml")
         complete_job = workflow.split("  complete-suite:\n", 1)[1].split(
             "\n  required:\n", 1
@@ -58,6 +58,8 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("${{ matrix.plan }}", complete_job)
         self.assertIn("${{ toJson(matrix.selectors) }}", complete_job)
         self.assertIn("${{ matrix.test_count }}", complete_job)
+        self.assertIn("${{ matrix.measured_test_seconds }}", complete_job)
+        self.assertIn("${{ matrix.timing_profile_run_id }}", complete_job)
         self.assertIn(
             "ref: ${{ github.event.merge_group.head_sha || github.sha }}",
             complete_job,
