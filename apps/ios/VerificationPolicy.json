@@ -4,6 +4,9 @@
     "accessibility-adaptive-layout",
     "you-navigation",
     "conjugations",
+    "example-sentence-word-selector",
+    "example-sentence-ambiguous-word-selector",
+    "example-sentence-word-selector-adaptive",
     "example-sentences",
     "encounter-media",
     "handwriting",
@@ -226,6 +229,48 @@
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkDefaultRepresentativeExampleSentenceInlineLinksKeepExactHitRegions",
       "traits": ["ui", "accessibility", "normal-dynamic-type"],
       "journeys": ["example-sentences-compact-hit-region"]
+    },
+    "ui.example-word-selector": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testExampleSentenceWordsMenuListsLinkedTokensAndRestoresTheSentenceAfterBack",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["example-sentence-word-selector"]
+    },
+    "ui.example-word-selector-ambiguity": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testExampleSentenceWordsMenuPreservesAmbiguousChoicesAndBackNavigation",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["example-sentence-ambiguous-word-selector"]
+    },
+    "ui.example-word-selector-maximum": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightRepresentativeExampleSentenceLayoutsRemainReadableAndOperableAtAccessibilityXXXL",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["example-sentence-word-selector-adaptive"]
+    },
+    "ui.example-representative-native-actions": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRepresentativeExampleSentencesKeepCompactContentNavigationAndSpeech",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["example-sentence-representative-layout"]
+    },
+    "ui.example-highlighted-boundary": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHighlightedIruKeepsOnePublicWordBoundaryAndOpensCanonicalDetail",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["example-sentence-word-boundary"]
+    },
+    "ui.example-punctuation-route": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testExampleOnlyPunctuationQueryOpensItsSourceBackedSentence",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["example-sentence-punctuation-query"]
+    },
+    "ui.example-production-route": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testProductionExamplesOpenScrollAndLinkedWordRemainOperable",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": ["example-sentence-production-scroll"]
     },
     "ui.example-candidate-selection": {
       "plan": "ZenbuPR",
@@ -465,6 +510,13 @@
       "ui.example-layout-hit-regions",
       "ui.example-compact-hit-region",
       "ui.example-compact-hit-region-dark",
+      "ui.example-word-selector",
+      "ui.example-word-selector-ambiguity",
+      "ui.example-word-selector-maximum",
+      "ui.example-representative-native-actions",
+      "ui.example-highlighted-boundary",
+      "ui.example-punctuation-route",
+      "ui.example-production-route",
       "ui.example-candidate-selection",
       "ui.conjugations",
       "ui.japanese-text-analysis-settings",
@@ -902,6 +954,51 @@
         "ui.example-compact-hit-region",
         "ui.example-compact-hit-region-dark"
       ]
+    },
+    "example-sentence-word-selector": {
+      "adaptive_layout": true,
+      "paths": [],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
+        "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift",
+        "apps/ios/Modules/Sources/SearchExperience/ExampleSentencesView.swift",
+        "apps/ios/Modules/Sources/SearchExperience/LinkedJapaneseText.swift",
+        "apps/ios/VerificationPolicy.json"
+      ],
+      "tdd": [
+        "ui.example-compact-hit-region",
+        "ui.example-compact-hit-region-dark",
+        "ui.example-word-selector",
+        "ui.example-word-selector-ambiguity",
+        "ui.example-word-selector-maximum",
+        "ui.examples",
+        "ui.example-layout"
+      ],
+      "issue-final": [
+        "contracts.repository",
+        "unit.complete",
+        "ui.examples",
+        "ui.example-layout",
+        "ui.example-layout-maximum",
+        "ui.example-compact-hit-region",
+        "ui.example-compact-hit-region-dark",
+        "ui.example-word-selector",
+        "ui.example-word-selector-ambiguity",
+        "ui.example-word-selector-maximum",
+        "ui.example-representative-native-actions",
+        "ui.example-highlighted-boundary",
+        "ui.example-punctuation-route",
+        "ui.example-production-route",
+        "ui.bundled-japanese-text-analysis"
+      ]
+    },
+    "example-sentence-punctuation-test-repair": {
+      "paths": [],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift"
+      ],
+      "tdd": ["ui.example-punctuation-route"],
+      "issue-final": ["ui.example-punctuation-route"]
     }
   }
 }

@@ -138,8 +138,8 @@ private struct ExampleSentenceRow: View {
 }
 
 /// The shared learner-visible geometry for Japanese/translation rows with a speech action.
-/// Token target policy remains a consumer choice because dedicated inline links and Word Detail
-/// have different, evidence-backed hit-region contracts.
+/// Dedicated Examples expose one native word-selection menu, while Word Detail retains its
+/// evidence-backed inline current-word treatment.
 struct JapaneseExampleRowContent: View {
   enum Presentation {
     case dedicated(index: Int)
@@ -148,6 +148,9 @@ struct JapaneseExampleRowContent: View {
     struct Configuration {
       let tokenPresentation: LinkedJapaneseText.Presentation
       let tokenIdentifierPrefix: String
+      let japaneseIdentifier: String?
+      let wordSelectorLabel: String?
+      let wordSelectorIdentifier: String?
       let speakerLabel: String
       let speakerIdentifier: String
       let englishIdentifier: String
@@ -162,6 +165,9 @@ struct JapaneseExampleRowContent: View {
         Configuration(
           tokenPresentation: .compactNaturalFlow,
           tokenIdentifierPrefix: "example.token.\(index)",
+          japaneseIdentifier: "example.japanese.\(index)",
+          wordSelectorLabel: "Choose a word from example \(index + 1)",
+          wordSelectorIdentifier: "example.words.\(index)",
           speakerLabel: "Speak example \(index + 1)",
           speakerIdentifier: "example.speaker.\(index)",
           englishIdentifier: "example.english.\(index)",
@@ -173,6 +179,9 @@ struct JapaneseExampleRowContent: View {
         Configuration(
           tokenPresentation: .standard,
           tokenIdentifierPrefix: "word-detail.example-token.\(index)",
+          japaneseIdentifier: nil,
+          wordSelectorLabel: nil,
+          wordSelectorIdentifier: nil,
           speakerLabel: "Speak Word Detail example \(index + 1)",
           speakerIdentifier: "word-detail.example-speaker.\(index)",
           englishIdentifier: "word-detail.example-english.\(index)",
@@ -186,6 +195,7 @@ struct JapaneseExampleRowContent: View {
 
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @ScaledMetric(relativeTo: .body) private var contentSpacing: CGFloat = 8
+  @State private var wordSelectionTokens: [JapaneseTextToken] = []
 
   let example: ExampleSentence
   let highlightedQuery: SearchQuery
@@ -211,7 +221,28 @@ struct JapaneseExampleRowContent: View {
 
   private var content: some View {
     VStack(alignment: .leading, spacing: contentSpacing) {
-      if dynamicTypeSize.isAccessibilitySize {
+      if configuration.wordSelectorIdentifier != nil {
+        if dynamicTypeSize.isAccessibilitySize {
+          VStack(alignment: .leading, spacing: contentSpacing) {
+            japanese
+            HStack(spacing: contentSpacing) {
+              Spacer()
+              if hasWordSelection {
+                wordSelector
+              }
+              speaker
+            }
+          }
+        } else {
+          HStack(alignment: .center, spacing: contentSpacing) {
+            japanese
+            if hasWordSelection {
+              wordSelector
+            }
+            speaker
+          }
+        }
+      } else if dynamicTypeSize.isAccessibilitySize {
         VStack(alignment: .leading, spacing: contentSpacing) {
           japanese
           HStack {
@@ -243,7 +274,9 @@ struct JapaneseExampleRowContent: View {
       japaneseTextAnalysisClient: japaneseTextAnalysisClient,
       identifierPrefix: configuration.tokenIdentifierPrefix,
       presentation: configuration.tokenPresentation,
+      japaneseIdentifier: configuration.japaneseIdentifier,
       highlightsCurrentEntry: configuration.highlightsCurrentEntry,
+      tokensChanged: updateWordSelectionTokens,
       openWord: openWord
     )
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -259,6 +292,63 @@ struct JapaneseExampleRowContent: View {
     .contentShape(Rectangle())
     .accessibilityLabel(configuration.speakerLabel)
     .accessibilityIdentifier(configuration.speakerIdentifier)
+  }
+
+  private var wordSelector: some View {
+    Menu {
+      wordSelectionActions
+    } label: {
+      Image(systemName: "character.book.closed")
+        .font(.headline)
+        .frame(minWidth: 48, minHeight: 48)
+        .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel(configuration.wordSelectorLabel ?? "Choose a word")
+    .accessibilityHint("Shows the dictionary words in sentence order")
+    .accessibilityIdentifier(configuration.wordSelectorIdentifier ?? "")
+  }
+
+  private var hasWordSelection: Bool { !wordSelectionTokens.isEmpty }
+
+  private func updateWordSelectionTokens(_ tokens: [JapaneseTextToken]) {
+    let selectable = tokens.filter { $0.entry != nil || !$0.candidateEntries.isEmpty }
+    guard selectable.map(\.id) != wordSelectionTokens.map(\.id) else { return }
+    wordSelectionTokens = selectable
+  }
+
+  @ViewBuilder
+  private var wordSelectionActions: some View {
+    if let identifierPrefix = configuration.wordSelectorIdentifier {
+      ForEach(wordSelectionTokens) { token in
+        if let entry = token.entry {
+          wordSelectionAction(token: token, entry: entry, identifierPrefix: identifierPrefix)
+        } else if !token.candidateEntries.isEmpty {
+          Section("\(token.surface), \(token.candidateEntries.count) possible entries") {
+            ForEach(token.candidateEntries) { candidate in
+              wordSelectionAction(
+                token: token,
+                entry: candidate,
+                identifierPrefix: identifierPrefix
+              )
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private func wordSelectionAction(
+    token: JapaneseTextToken,
+    entry: DictionaryEntry,
+    identifierPrefix: String
+  ) -> some View {
+    Button {
+      openWord(entry)
+    } label: {
+      Text("\(token.surface) (\(entry.reading)) — \(entry.summary)")
+    }
+    .accessibilityIdentifier("\(identifierPrefix).\(token.id).\(entry.id.rawValue)")
   }
 
   private var configuration: Presentation.Configuration { presentation.configuration }

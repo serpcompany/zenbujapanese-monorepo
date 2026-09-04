@@ -943,14 +943,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     openExamples.tap()
     let exampleList = app.collectionViews["example-list.screen"]
     XCTAssertTrue(exampleList.waitForExistence(timeout: 4))
-    let linkedToken = app.buttons.matching(
-      NSPredicate(
-        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "example.token.",
-        "いる, いる")
-    ).firstMatch
+    let linkedToken = app.buttons["example.words.0"]
     XCTAssertTrue(linkedToken.waitForExistence(timeout: 4))
     XCTAssertTrue(linkedToken.isHittable)
     linkedToken.tap()
+    let iruAction = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "いる (いる) —")
+    ).firstMatch
+    XCTAssertTrue(iruAction.waitForExistence(timeout: 3))
+    iruAction.tap()
     XCTAssertTrue(app.descendants(matching: .any)["ruby.いる.いる"].waitForExistence(timeout: 3))
   }
 
@@ -4489,11 +4490,16 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
       if expected.index == 2 {
         RepresentativeExampleSentences.assertLinkedRowSemantics(for: expected, in: app)
-        let linkedDrawToken = RepresentativeExampleSentences.linkedDrawToken(in: app)
-        XCTAssertTrue(linkedDrawToken.waitForExistence(timeout: 3))
-        XCTAssertTrue(linkedDrawToken.isHittable)
-        XCTAssertLessThan(linkedDrawToken.frame.width, 44)
-        linkedDrawToken.tap()
+        let words = app.buttons["example.words.2"]
+        XCTAssertTrue(words.waitForExistence(timeout: 3))
+        XCTAssertTrue(words.isHittable)
+        words.tap()
+        let draw = app.buttons.matching(
+          NSPredicate(format: "label BEGINSWITH %@", "持っ (もつ) —")
+        ).firstMatch
+        XCTAssertTrue(draw.waitForExistence(timeout: 3))
+        XCTAssertGreaterThanOrEqual(draw.frame.height, 44)
+        draw.tap()
         let detail = app.collectionViews["word-detail.screen"]
         XCTAssertTrue(detail.waitForExistence(timeout: 3))
         assertMeaningVisible(
@@ -4528,6 +4534,108 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testExampleSentenceWordsMenuListsLinkedTokensAndRestoresTheSentenceAfterBack() throws {
+    let app = launchApp(additionalArguments: [
+      "-ExampleSentenceAccessibilityFixtureLimit", "8",
+    ])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    submitSearch("いる", in: app, searchField: searchField)
+    app.buttons["search.examples"].tap()
+
+    let examples = app.collectionViews["example-list.screen"]
+    XCTAssertTrue(examples.waitForExistence(timeout: 4))
+    let sentence = app.descendants(matching: .any)["example.japanese.2"]
+    RepresentativeExampleSentences.reachElement(sentence, in: examples, app: app)
+    XCTAssertEqual(sentence.label, RepresentativeExampleSentences.rows[2].japanese)
+
+    let words = app.buttons["example.words.2"]
+    XCTAssertTrue(words.isHittable)
+    words.tap()
+
+    let actions = app.buttons.matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "example.words.2.")
+    )
+    XCTAssertTrue(actions.firstMatch.waitForExistence(timeout: 3))
+    let linkedActions = actions.allElementsBoundByIndex
+    XCTAssertEqual(linkedActions.count, 3)
+    XCTAssertEqual(
+      linkedActions.map(\.label),
+      [
+        "いる (いる) — to be (of animate objects), to exist",
+        "持っ (もつ) — to hold (in one's hand), to take, to carry",
+        "いらっしゃい (いらっしゃる) — to come, to go, to be (somewhere)",
+      ]
+    )
+    XCTAssertEqual(
+      linkedActions.map(\.frame.minY),
+      linkedActions.map(\.frame.minY).sorted(),
+      "Native menu actions must follow Japanese reading order"
+    )
+    for action in linkedActions {
+      XCTAssertGreaterThanOrEqual(action.frame.height, 44)
+    }
+
+    linkedActions[1].tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+    assertMeaningVisible(
+      "1.  to hold (in one's hand), to take, to carry",
+      in: app.collectionViews["word-detail.screen"],
+      app: app
+    )
+    tapNativeBack(in: app)
+    XCTAssertTrue(examples.waitForExistence(timeout: 3))
+    RepresentativeExampleSentences.reachElement(sentence, in: examples, app: app)
+    XCTAssertTrue(sentence.isHittable)
+    XCTAssertTrue(words.isHittable)
+  }
+
+  @MainActor
+  func testExampleSentenceWordsMenuPreservesAmbiguousChoicesAndBackNavigation() throws {
+    let app = launchApp(additionalArguments: ["-Issue253SentenceLayoutFixtures"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "taberu",
+      resultLabelPrefix: "食べる, たべる",
+      in: app,
+      searchField: searchField
+    )
+    tapNativeBack(in: app)
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    app.buttons["search.examples"].tap()
+
+    let examples = app.collectionViews["example-list.screen"]
+    XCTAssertTrue(examples.waitForExistence(timeout: 4))
+    let sentence = app.descendants(matching: .any)["example.japanese.4"]
+    RepresentativeExampleSentences.reachElement(sentence, in: examples, app: app)
+    XCTAssertEqual(sentence.label, "見ることは信ずることなり。")
+    let words = app.buttons["example.words.4"]
+    XCTAssertTrue(words.isHittable)
+    words.tap()
+
+    let choices = app.buttons.matching(
+      NSPredicate(format: "label == %@", "こと (こと) — particle indicating a command")
+    )
+    XCTAssertTrue(choices.firstMatch.waitForExistence(timeout: 3))
+    XCTAssertEqual(
+      choices.count, 2, "Both ambiguous こと occurrences remain independently selectable")
+    let firstChoice = choices.element(boundBy: 0)
+    let secondChoice = choices.element(boundBy: 1)
+    XCTAssertGreaterThanOrEqual(firstChoice.frame.height, 44)
+    XCTAssertGreaterThanOrEqual(secondChoice.frame.height, 44)
+    XCTAssertLessThan(firstChoice.frame.minY, secondChoice.frame.minY)
+
+    firstChoice.tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.descendants(matching: .any)["ruby.こと.こと"].exists)
+    tapNativeBack(in: app)
+    XCTAssertTrue(examples.waitForExistence(timeout: 3))
+    RepresentativeExampleSentences.reachElement(sentence, in: examples, app: app)
+    XCTAssertTrue(words.isHittable)
+  }
+
+  @MainActor
   func testSharedFuriganaSentenceLayoutPreservesSourceRhythmAcrossExamplesAndWordDetail() throws {
     let source = "食べるために生きてるんじゃない。生きるために食べてるんだ。"
     let app = launchApp(additionalArguments: [
@@ -4554,7 +4662,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     assertNaturalJapaneseRhythm(
       inlineTokens, prefix: "word-detail.example-token.0.", in: app)
     XCTAssertEqual(inlineTokens.filter { $0.value as? String == "Current word" }.count, 2)
-    let inlineLines = RepresentativeExampleSentences.visualLineSurfaces(from: inlineTokens)
     recordScreenshot(named: "issue-253-word-detail-furigana-layout", app: app)
 
     let linkedLive = app.buttons.matching(
@@ -4604,19 +4711,23 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let examples = app.collectionViews["example-list.screen"]
     XCTAssertTrue(examples.waitForExistence(timeout: 4))
 
-    let dedicatedTokens = RepresentativeExampleSentences.orderedTokens(
-      prefix: "example.token.0.", in: app)
-    XCTAssertEqual(
-      RepresentativeExampleSentences.reconstructedSentence(from: dedicatedTokens), source)
-    assertNaturalJapaneseRhythm(dedicatedTokens, prefix: "example.token.0.", in: app)
-    XCTAssertFalse(dedicatedTokens.contains { $0.value as? String == "Current word" })
-    let dedicatedLines = RepresentativeExampleSentences.visualLineSurfaces(from: dedicatedTokens)
-    XCTAssertEqual(
-      dedicatedLines.count,
-      inlineLines.count,
-      "Native List styles may offer different row widths, but the shared policy should keep equivalent wrapping depth"
+    let dedicatedSentence = app.descendants(matching: .any)["example.japanese.0"]
+    XCTAssertTrue(dedicatedSentence.waitForExistence(timeout: 12))
+    XCTAssertEqual(dedicatedSentence.label, source)
+    XCTAssertGreaterThanOrEqual(dedicatedSentence.frame.minX, examples.frame.minX)
+    XCTAssertLessThanOrEqual(dedicatedSentence.frame.maxX, examples.frame.maxX)
+    let dedicatedTranslation = app.staticTexts["example.english.0"]
+    XCTAssertGreaterThan(
+      dedicatedSentence.frame.height,
+      dedicatedTranslation.frame.height,
+      "The long Furigana sentence must wrap naturally instead of clipping to one line"
     )
-    XCTAssertEqual(dedicatedLines.joined(), inlineLines.joined())
+    XCTAssertEqual(
+      app.buttons.matching(
+        NSPredicate(format: "identifier BEGINSWITH %@", "example.token.0.")
+      ).count,
+      0
+    )
     recordScreenshot(named: "issue-253-dedicated-furigana-layout", app: app)
     let speaker = app.buttons["example.speaker.0"]
     XCTAssertTrue(speaker.isHittable)
@@ -4625,20 +4736,14 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(speechRequest.waitForExistence(timeout: 2))
     XCTAssertEqual(speechRequest.label, "Speech requested \(source)")
 
-    let longPrefix = "example.token.5."
-    let longToken = app.descendants(matching: .any).matching(
-      NSPredicate(format: "identifier BEGINSWITH %@", longPrefix)
-    ).firstMatch
-    RepresentativeExampleSentences.reachElement(longToken, in: examples, app: app)
-    let longTokens = RepresentativeExampleSentences.orderedTokens(prefix: longPrefix, in: app)
+    let longSentence = app.descendants(matching: .any)["example.japanese.5"]
+    RepresentativeExampleSentences.reachElement(longSentence, in: examples, app: app)
     XCTAssertEqual(
-      RepresentativeExampleSentences.reconstructedSentence(from: longTokens, prefix: longPrefix),
+      longSentence.label,
       "ZENBU2026SUPERCALIFRAGILISTICEXPIALIDOCIOUS。"
     )
-    for token in longTokens {
-      XCTAssertGreaterThanOrEqual(token.frame.minX, examples.frame.minX)
-      XCTAssertLessThanOrEqual(token.frame.maxX, examples.frame.maxX)
-    }
+    XCTAssertGreaterThanOrEqual(longSentence.frame.minX, examples.frame.minX)
+    XCTAssertLessThanOrEqual(longSentence.frame.maxX, examples.frame.maxX)
     let analysisCount = app.descendants(matching: .any)["examples.analysis-request-count"]
     XCTAssertTrue(analysisCount.waitForExistence(timeout: 2))
     let initialAnalysisCount = try XCTUnwrap(
@@ -4647,7 +4752,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertGreaterThan(initialAnalysisCount, 0)
     examples.swipeDown(velocity: .slow)
     examples.swipeDown(velocity: .slow)
-    RepresentativeExampleSentences.reachElement(longToken, in: examples, app: app)
+    RepresentativeExampleSentences.reachElement(longSentence, in: examples, app: app)
     let finalAnalysisCount = try XCTUnwrap(
       Int(analysisCount.label.split(separator: " ").last ?? "")
     )
@@ -4678,7 +4783,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.descendants(matching: .any)["example.row.0"].exists)
     recordScreenshot(named: "example-sentences-iru-top", app: app)
 
-    let linkedMite = app.buttons["example.token.23.0.見て"]
+    let linkedMite = app.buttons["example.words.23"]
     for _ in 0..<30
     where !linkedMite.isHittable
       || linkedMite.frame.maxY > app.frame.maxY - 200
@@ -4687,8 +4792,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     }
     Thread.sleep(forTimeInterval: 2)
     XCTAssertTrue(linkedMite.isHittable)
-    XCTAssertEqual(linkedMite.value as? String, "")
-    XCTAssertFalse(linkedMite.isSelected)
     XCTAssertLessThan(linkedMite.frame.maxY, app.frame.maxY - 200)
     recordScreenshot(named: "example-sentences-iru-scrolled", app: app)
 
@@ -4699,8 +4802,13 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(speechRequest.waitForExistence(timeout: 2))
     XCTAssertEqual(speechRequest.label, "Speech requested 見ているだけだ。")
 
-    XCTAssertTrue(linkedMite.isHittable)
     linkedMite.tap()
+    let miteAction = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "見て (みる) —")
+    ).firstMatch
+    XCTAssertTrue(miteAction.waitForExistence(timeout: 3))
+    XCTAssertGreaterThanOrEqual(miteAction.frame.height, 44)
+    miteAction.tap()
     XCTAssertTrue(
       app.descendants(matching: .any)["ruby.見る.見=み|る"].waitForExistence(timeout: 3))
     let detail = app.collectionViews["word-detail.screen"]
@@ -4758,21 +4866,19 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     }
     XCTAssertTrue(row.waitForExistence(timeout: 3))
 
-    let predicate = NSPredicate(
-      format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
-      "example.token.13.",
-      ".いる"
-    )
-    let word = app.buttons.matching(predicate).firstMatch
+    let words = app.buttons["example.words.13"]
+    XCTAssertTrue(words.waitForExistence(timeout: 3))
+    words.tap()
+    let word = app.buttons.matching(
+      NSPredicate(
+        format: "label == %@",
+        "いる (いる) — to be (of animate objects), to exist"
+      )
+    ).firstMatch
     XCTAssertTrue(word.waitForExistence(timeout: 3))
     XCTAssertEqual(
       word.label,
-      "いる, いる, to be (of animate objects), to exist"
-    )
-    XCTAssertEqual(app.staticTexts.matching(predicate).count, 0)
-    XCTAssertFalse(
-      app.descendants(matching: .any)["example.token.13.1.がい"].exists,
-      "The preceding particle must not merge into the complete いる boundary"
+      "いる (いる) — to be (of animate objects), to exist"
     )
     recordScreenshot(named: "issue-242-iru-word-boundary", app: app)
     word.tap()
@@ -4809,8 +4915,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.descendants(matching: .any)["example.row.1"].exists)
     XCTAssertTrue(app.staticTexts["Hello world."].exists)
     XCTAssertTrue(app.staticTexts["Hello, world!"].exists)
-    let linkedWorld = app.buttons["example.token.0.0.世界"]
-    XCTAssertTrue(linkedWorld.waitForExistence(timeout: 2))
+    let linkedWords = app.buttons["example.words.0"]
+    XCTAssertTrue(linkedWords.waitForExistence(timeout: 2))
     let speaker = app.buttons["example.speaker.0"]
     XCTAssertTrue(speaker.exists)
     speaker.tap()
@@ -4819,11 +4925,16 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertEqual(speechRequest.label, "Speech requested 世界、こんにちは！")
     recordScreenshot(named: "example-only-hello-world", app: app)
 
-    linkedWorld.tap()
+    linkedWords.tap()
+    let greetingAction = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "こんにちは (こんにちは) —")
+    ).firstMatch
+    XCTAssertTrue(greetingAction.waitForExistence(timeout: 3))
+    greetingAction.tap()
     let detail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
     assertMeaningVisible(
-      "1.  the world, society, the universe",
+      "1.  hello, good day, good afternoon",
       in: detail,
       app: app
     )
@@ -4842,7 +4953,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let examples = app.collectionViews["example-list.screen"]
     XCTAssertTrue(examples.waitForExistence(timeout: 4))
-    let linkedKey = app.buttons["example.token.9.0.鍵"]
+    let linkedKey = app.buttons["example.words.9"]
     for _ in 0..<8
     where !linkedKey.isHittable || linkedKey.frame.maxY > app.frame.maxY - 200 {
       examples.swipeUp()
@@ -4852,6 +4963,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordSettledScreenshot(named: "production-examples-linked-key", app: app)
 
     linkedKey.tap()
+    let keyAction = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "鍵 (かぎ) —")
+    ).firstMatch
+    XCTAssertTrue(keyAction.waitForExistence(timeout: 3))
+    keyAction.tap()
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.descendants(matching: .any)["ruby.鍵.鍵=かぎ"].exists)
     tapNativeBack(in: app)
@@ -6395,38 +6511,16 @@ enum RepresentativeExampleSentences {
       list.swipeUp(velocity: .slow)
     }
     XCTAssertTrue(row.waitForExistence(timeout: 3))
-    let firstToken = app.descendants(matching: .any).matching(
-      NSPredicate(format: "identifier BEGINSWITH %@", "example.token.\(expected.index).")
-    ).firstMatch
-    XCTAssertTrue(firstToken.waitForExistence(timeout: 12))
+    XCTAssertTrue(
+      app.descendants(matching: .any)["example.japanese.\(expected.index)"].waitForExistence(
+        timeout: 12)
+    )
     return row
   }
 
   @MainActor
   static func japaneseText(for expected: Row, in app: XCUIApplication) -> String {
-    let prefix = "example.token.\(expected.index)."
-    let tokenElements = app.descendants(matching: .any).matching(
-      NSPredicate(format: "identifier BEGINSWITH %@", prefix)
-    ).allElementsBoundByIndex
-    var surfacesByID: [Int: String] = [:]
-    for element in tokenElements {
-      let suffix = element.identifier.dropFirst(prefix.count)
-      let components = suffix.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
-      guard components.count == 2, let id = Int(components[0]) else { continue }
-      surfacesByID[id] = String(components[1])
-    }
-    return surfacesByID.sorted { $0.key < $1.key }.map(\.value).joined()
-  }
-
-  @MainActor
-  static func linkedDrawToken(in app: XCUIApplication) -> XCUIElement {
-    app.buttons.matching(
-      NSPredicate(
-        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
-        "example.token.2.",
-        "持っ, もつ, to hold (in one's hand), to take, to carry"
-      )
-    ).firstMatch
+    app.descendants(matching: .any)["example.japanese.\(expected.index)"].label
   }
 
   @MainActor
@@ -6441,34 +6535,32 @@ enum RepresentativeExampleSentences {
     file: StaticString = #filePath,
     line: UInt = #line
   ) {
-    let prefix = "example.token.\(expected.index)."
-    let tokenElements = app.descendants(matching: .any).matching(
-      NSPredicate(format: "identifier BEGINSWITH %@", prefix)
-    ).allElementsBoundByIndex.filter { $0.frame.width > 0 && $0.frame.height > 0 }
-    XCTAssertFalse(tokenElements.isEmpty, file: file, line: line)
-    guard !tokenElements.isEmpty else { return }
-
-    let japaneseTop = tokenElements.map(\.frame.minY).min() ?? 0
-    let japaneseBottom = tokenElements.map(\.frame.maxY).max() ?? 0
+    let japanese = app.descendants(matching: .any)["example.japanese.\(expected.index)"]
+    let words = app.buttons["example.words.\(expected.index)"]
     let speaker = app.buttons["example.speaker.\(expected.index)"]
     let english = englishText(for: expected, in: app)
+    XCTAssertTrue(japanese.exists, file: file, line: line)
+    XCTAssertTrue(words.exists, file: file, line: line)
     XCTAssertTrue(speaker.exists, file: file, line: line)
     XCTAssertTrue(english.exists, file: file, line: line)
-
-    // Relate tolerance to the rendered translation line height so typography may scale without
-    // pinning the test to one font's absolute pixels.
-    let baselineTolerance = max(1, english.frame.height * 0.5)
     let spacingTolerance = max(1, english.frame.height * 0.15)
     XCTAssertEqual(
       speaker.frame.midY,
-      (japaneseTop + japaneseBottom) / 2,
-      accuracy: baselineTolerance,
+      words.frame.midY,
+      accuracy: max(1, speaker.frame.height * 0.15),
       file: file,
       line: line
     )
     XCTAssertGreaterThanOrEqual(
       english.frame.minY,
-      max(japaneseBottom, speaker.frame.maxY) + spacingTolerance,
+      max(words.frame.maxY, speaker.frame.maxY) + spacingTolerance,
+      file: file,
+      line: line
+    )
+    XCTAssertEqual(
+      words.frame.midY,
+      japanese.frame.midY,
+      accuracy: max(1, speaker.frame.height * 0.25),
       file: file,
       line: line
     )
@@ -6481,25 +6573,29 @@ enum RepresentativeExampleSentences {
     file: StaticString = #filePath,
     line: UInt = #line
   ) {
-    let prefix = "example.token.\(expected.index)."
-    let tokenElements = app.descendants(matching: .any).matching(
-      NSPredicate(format: "identifier BEGINSWITH %@", prefix)
-    ).allElementsBoundByIndex.filter { $0.frame.width > 0 && $0.frame.height > 0 }
-    XCTAssertFalse(tokenElements.isEmpty, file: file, line: line)
-    guard !tokenElements.isEmpty else { return }
-    let japaneseBottom = tokenElements.map(\.frame.maxY).max() ?? 0
+    let japanese = app.descendants(matching: .any)["example.japanese.\(expected.index)"]
+    let words = app.buttons["example.words.\(expected.index)"]
     let speaker = app.buttons["example.speaker.\(expected.index)"]
     let english = englishText(for: expected, in: app)
     let typographySpacing = max(1, english.frame.height * 0.1)
+    XCTAssertTrue(japanese.exists, file: file, line: line)
+    XCTAssertTrue(words.exists, file: file, line: line)
     XCTAssertGreaterThanOrEqual(
-      speaker.frame.minY,
-      japaneseBottom + typographySpacing,
+      words.frame.minY,
+      japanese.frame.maxY + typographySpacing,
+      file: file,
+      line: line
+    )
+    XCTAssertEqual(
+      speaker.frame.midY,
+      words.frame.midY,
+      accuracy: max(1, speaker.frame.height * 0.15),
       file: file,
       line: line
     )
     XCTAssertGreaterThanOrEqual(
       english.frame.minY,
-      speaker.frame.maxY + typographySpacing,
+      max(words.frame.maxY, speaker.frame.maxY) + typographySpacing,
       file: file,
       line: line
     )
@@ -6512,44 +6608,19 @@ enum RepresentativeExampleSentences {
     file: StaticString = #filePath,
     line: UInt = #line
   ) {
-    let prefix = "example.token.\(expected.index)."
-    let elements = app.descendants(matching: .any).matching(
-      NSPredicate(format: "identifier BEGINSWITH %@", prefix)
-    ).allElementsBoundByIndex
-    let identifiers = elements.map(\.identifier)
-    XCTAssertEqual(Set(identifiers).count, identifiers.count, file: file, line: line)
-
-    let tokenIDs = identifiers.compactMap { identifier -> Int? in
-      let suffix = identifier.dropFirst(prefix.count)
-      return Int(suffix.split(separator: ".", maxSplits: 1)[0])
-    }
-    XCTAssertEqual(tokenIDs, tokenIDs.sorted(), "VoiceOver traversal follows sentence order")
-
-    for (left, right) in zip(elements, elements.dropFirst()) {
-      XCTAssertTrue(
-        left.frame.intersection(right.frame).isNull,
-        "Adjacent token frames must remain distinct: \(left.identifier), \(right.identifier)",
-        file: file,
-        line: line
-      )
-    }
-    for button in elements where button.elementType == .button {
-      let surface =
-        button.identifier.dropFirst(prefix.count).split(separator: ".", maxSplits: 1)
-        .last.map(String.init) ?? ""
-      XCTAssertTrue(button.label.hasPrefix("\(surface), "), file: file, line: line)
-      XCTAssertGreaterThanOrEqual(
-        button.label.split(separator: ",").count, 3, file: file, line: line)
-    }
-
-    let ruby = app.buttons["example.token.2.2.持っ"]
-    let plain = app.staticTexts["example.token.2.5.。"]
-    let translation = englishText(for: expected, in: app)
+    let sentence = app.descendants(matching: .any)["example.japanese.\(expected.index)"]
+    let words = app.buttons["example.words.\(expected.index)"]
+    XCTAssertTrue(sentence.exists, file: file, line: line)
+    XCTAssertEqual(sentence.label, expected.japanese, file: file, line: line)
+    XCTAssertTrue(words.exists, file: file, line: line)
+    XCTAssertEqual(words.label, "Choose a word from example \(expected.index + 1)")
+    XCTAssertGreaterThanOrEqual(words.frame.width, 44, file: file, line: line)
+    XCTAssertGreaterThanOrEqual(words.frame.height, 44, file: file, line: line)
     XCTAssertEqual(
-      ruby.frame.maxY,
-      plain.frame.maxY,
-      accuracy: max(1, translation.frame.height * 0.15),
-      "Ruby and plain text on one visual line retain the same base-line bottom relation",
+      app.buttons.matching(
+        NSPredicate(format: "identifier BEGINSWITH %@", "example.token.\(expected.index).")
+      ).count,
+      0,
       file: file,
       line: line
     )

@@ -32,7 +32,9 @@ struct LinkedJapaneseText: View {
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let identifierPrefix: String
   let presentation: Presentation
+  let japaneseIdentifier: String?
   let highlightsCurrentEntry: Bool
+  let tokensChanged: ([JapaneseTextToken]) -> Void
   let openWord: (DictionaryEntry) -> Void
 
   init(
@@ -42,7 +44,9 @@ struct LinkedJapaneseText: View {
     japaneseTextAnalysisClient: JapaneseTextAnalysisClient,
     identifierPrefix: String,
     presentation: Presentation = .standard,
+    japaneseIdentifier: String? = nil,
     highlightsCurrentEntry: Bool = false,
+    tokensChanged: @escaping ([JapaneseTextToken]) -> Void = { _ in },
     openWord: @escaping (DictionaryEntry) -> Void
   ) {
     self.text = text
@@ -51,13 +55,26 @@ struct LinkedJapaneseText: View {
     self.japaneseTextAnalysisClient = japaneseTextAnalysisClient
     self.identifierPrefix = identifierPrefix
     self.presentation = presentation
+    self.japaneseIdentifier = japaneseIdentifier
     self.highlightsCurrentEntry = highlightsCurrentEntry
+    self.tokensChanged = tokensChanged
     self.openWord = openWord
   }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
-      japaneseContent
+      if presentation == .compactNaturalFlow,
+        let japaneseIdentifier
+      {
+        VStack(alignment: .leading, spacing: 0) {
+          japaneseContent
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text)
+        .accessibilityIdentifier(japaneseIdentifier)
+      } else {
+        japaneseContent
+      }
       if readingAidPreferences.showsRomaji, didFinishAnalysis {
         if let romaji = AppleJapaneseRomanization.romanizeCompleteSentence(tokens) {
           Text(romaji)
@@ -85,11 +102,13 @@ struct LinkedJapaneseText: View {
           )
         }
       #endif
-      tokens = await japaneseTextAnalysisClient.linkedTokens(
+      let resolvedTokens = await japaneseTextAnalysisClient.linkedTokens(
         text,
         highlightedQuery,
         highlightedEntry
       )
+      tokens = resolvedTokens
+      tokensChanged(resolvedTokens)
       didFinishAnalysis = true
     }
   }
@@ -147,55 +166,71 @@ private struct LinkedTokenView: View {
 
   var body: some View {
     if let entry = token.entry {
-      Button {
-        openWord(entry)
-      } label: {
+      if presentation == .compactNaturalFlow {
         JapaneseRubyText(
           surface: token.surface,
           reading: entry.reading,
-          underlined: true,
+          underlined: false,
           exposesAccessibility: false,
           displaysRomaji: false
         )
-        // Underlining carries the interactive affordance. Inline Word Detail
-        // examples additionally accent the complete current token so its ruby
-        // stays visually associated with its base text.
-        .foregroundStyle(isCurrentEntry ? Color.accentColor : Color.primary)
-      }
-      .buttonStyle(.plain)
-      .frame(
-        minHeight: presentation.usesMinimumHitRegionHeight ? 44 : nil,
-        alignment: .bottom
-      )
-      .contentShape(Rectangle())
-      .accessibilityLabel("\(token.surface), \(entry.reading), \(entry.summary)")
-      .accessibilityValue(isCurrentEntry ? "Current word" : "")
-      .accessibilityAddTraits(isCurrentEntry ? .isSelected : [])
-      .accessibilityIdentifier(identifier)
-    } else if !token.candidateEntries.isEmpty {
-      Menu {
-        ForEach(token.candidateEntries) { candidate in
-          Button {
-            openWord(candidate)
-          } label: {
-            Text("\(candidate.headword) (\(candidate.reading)) — \(candidate.summary)")
-          }
+        .foregroundStyle(Color.primary)
+      } else {
+        Button {
+          openWord(entry)
+        } label: {
+          JapaneseRubyText(
+            surface: token.surface,
+            reading: entry.reading,
+            underlined: true,
+            exposesAccessibility: false,
+            displaysRomaji: false
+          )
+          // Underlining carries the interactive affordance. Inline Word Detail
+          // examples additionally accent the complete current token so its ruby
+          // stays visually associated with its base text.
+          .foregroundStyle(isCurrentEntry ? Color.accentColor : Color.primary)
         }
-      } label: {
+        .buttonStyle(.plain)
+        .frame(
+          minHeight: presentation.usesMinimumHitRegionHeight ? 44 : nil,
+          alignment: .bottom
+        )
+        .contentShape(Rectangle())
+        .accessibilityLabel("\(token.surface), \(entry.reading), \(entry.summary)")
+        .accessibilityValue(isCurrentEntry ? "Current word" : "")
+        .accessibilityAddTraits(isCurrentEntry ? .isSelected : [])
+        .accessibilityIdentifier(identifier)
+      }
+    } else if !token.candidateEntries.isEmpty {
+      if presentation == .compactNaturalFlow {
         Text(token.surface)
           .font(.body)
-          .underline()
-          .frame(
-            minHeight: presentation.usesMinimumHitRegionHeight ? 44 : nil,
-            alignment: .bottom
-          )
-          .contentShape(Rectangle())
+      } else {
+        Menu {
+          ForEach(token.candidateEntries) { candidate in
+            Button {
+              openWord(candidate)
+            } label: {
+              Text("\(candidate.headword) (\(candidate.reading)) — \(candidate.summary)")
+            }
+          }
+        } label: {
+          Text(token.surface)
+            .font(.body)
+            .underline()
+            .frame(
+              minHeight: presentation.usesMinimumHitRegionHeight ? 44 : nil,
+              alignment: .bottom
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .contentShape(Rectangle())
+        .accessibilityLabel("\(token.surface), choose dictionary entry")
+        .accessibilityHint("Shows \(token.candidateEntries.count) possible dictionary entries")
+        .accessibilityIdentifier(identifier)
       }
-      .buttonStyle(.plain)
-      .contentShape(Rectangle())
-      .accessibilityLabel("\(token.surface), choose dictionary entry")
-      .accessibilityHint("Shows \(token.candidateEntries.count) possible dictionary entries")
-      .accessibilityIdentifier(identifier)
     } else {
       Text(token.surface)
         .font(.body)

@@ -923,6 +923,22 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: appearance,
       accessibilityXXXL: accessibilityXXXL
     )
+    let sentence = app.descendants(matching: .any)["example.japanese.0"]
+    XCTAssertTrue(sentence.waitForExistence(timeout: 12))
+    XCTAssertEqual(sentence.label, RepresentativeExampleSentences.rows[0].japanese)
+    let words = app.buttons["example.words.0"]
+    XCTAssertTrue(words.exists)
+    XCTAssertTrue(words.isHittable)
+    XCTAssertEqual(words.label, "Choose a word from example 1")
+    XCTAssertGreaterThanOrEqual(words.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(words.frame.height, 44)
+    XCTAssertEqual(
+      app.buttons.matching(
+        NSPredicate(format: "identifier BEGINSWITH %@", "example.token.")
+      ).count,
+      0,
+      "Compact sentence text must not remain a collection of undersized controls"
+    )
     retainScreenshot(
       named:
         "Example Sentences inline links - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")"
@@ -2060,9 +2076,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.collectionViews["example-list.screen"].waitForExistence(timeout: 4))
     XCTAssertTrue(app.descendants(matching: .any)["example.row.0"].waitForExistence(timeout: 3))
     XCTAssertTrue(
-      app.buttons.matching(
-        NSPredicate(format: "identifier BEGINSWITH %@", "example.token.0.")
-      ).firstMatch.waitForExistence(timeout: 12)
+      app.descendants(matching: .any)["example.japanese.0"].waitForExistence(timeout: 12)
     )
     // #242's complete いる boundary removes the prior one-character exception in this fixture.
     try performAudit(in: app, named: "Example Sentences")
@@ -2141,9 +2155,10 @@ final class AccessibilityAuditUITests: XCTestCase {
       RepresentativeExampleSentences.englishText(for: rubyLinked, in: app).label,
       rubyLinked.english
     )
-    XCTAssertTrue(
-      RepresentativeExampleSentences.linkedDrawToken(in: app).isHittable
-    )
+    let wordSelector = app.buttons["example.words.\(rubyLinked.index)"]
+    XCTAssertTrue(wordSelector.exists)
+    RepresentativeExampleSentences.reachElement(wordSelector, in: list, app: app)
+    XCTAssertTrue(wordSelector.isHittable)
     if !accessibilityXXXL {
       RepresentativeExampleSentences.assertDefaultGeometry(for: rubyLinked, in: app)
     } else {
