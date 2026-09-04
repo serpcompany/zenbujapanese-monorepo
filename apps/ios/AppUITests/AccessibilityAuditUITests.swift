@@ -1335,12 +1335,34 @@ final class AccessibilityAuditUITests: XCTestCase {
 
   @MainActor
   func testDarkWordDetailRemainsUsableAtLargestAccessibilityTextSize() throws {
-    try auditWordDetailAtLargestAccessibilityTextSize(appearance: .dark)
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .dark,
+      types: auditTypes
+    )
   }
 
   @MainActor
   func testLightWordDetailRemainsUsableAtLargestAccessibilityTextSize() throws {
-    try auditWordDetailAtLargestAccessibilityTextSize(appearance: .light)
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .light,
+      types: auditTypes
+    )
+  }
+
+  @MainActor
+  func testDarkShortWordDetailSupportsDynamicTypeWithoutClipping() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .dark,
+      types: .dynamicType.union(.textClipped)
+    )
+  }
+
+  @MainActor
+  func testLightShortWordDetailSupportsDynamicTypeWithoutClipping() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .light,
+      types: .dynamicType.union(.textClipped)
+    )
   }
 
   @MainActor
@@ -1560,7 +1582,8 @@ final class AccessibilityAuditUITests: XCTestCase {
 
   @MainActor
   private func auditWordDetailAtLargestAccessibilityTextSize(
-    appearance: XCUIDevice.Appearance
+    appearance: XCUIDevice.Appearance,
+    types: XCUIAccessibilityAuditType
   ) throws {
     let originalAppearance = XCUIDevice.shared.appearance
     XCUIDevice.shared.appearance = appearance
@@ -1584,12 +1607,29 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 5))
     let identity = app.descendants(matching: .any)["ruby.日本.日本=にほん"]
     XCTAssertTrue(identity.waitForExistence(timeout: 5))
-    XCTAssertTrue(app.buttons["word-detail.add-menu"].isHittable)
     XCTAssertEqual(identity.label, "日本, にほん")
+    XCTAssertTrue(identity.isHittable)
+    XCTAssertTrue(app.buttons["word-detail.add-menu"].isHittable)
+    let frequency = app.buttons["word-detail.frequency"]
+    XCTAssertTrue(frequency.waitForExistence(timeout: 3))
+    let loadedFrequency = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "#115"),
+      object: frequency
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [loadedFrequency], timeout: 5), .completed)
+    let pronunciation = app.buttons["word-detail.pronounce"]
+    XCTAssertTrue(pronunciation.exists)
+    XCTAssertTrue(pronunciation.isHittable)
+    XCTAssertEqual(pronunciation.label, "Pronounce にほん")
+    XCTAssertGreaterThanOrEqual(pronunciation.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(pronunciation.frame.maxX, app.frame.maxX)
+    let pronunciationTitle = app.staticTexts["word-detail.pronunciation-title"]
+    XCTAssertTrue(pronunciationTitle.exists)
+    XCTAssertEqual(pronunciationTitle.label, "Pronunciation")
     try performAudit(
       in: app,
       named: "Word Detail - \(appearance == .dark ? "dark" : "light") accessibility XXXL",
-      types: auditTypes
+      types: types
     )
   }
 

@@ -566,22 +566,19 @@ private struct WordIdentityView: View {
 }
 
 private struct PronunciationRow: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let entry: DictionaryEntry
   let pronounce: () -> Void
 
   @ViewBuilder
   var body: some View {
-    if dynamicTypeSize.isAccessibilitySize {
-      VStack(alignment: .leading, spacing: 12) {
-        pitchAccent
-        pronounceButton
-          .frame(maxWidth: .infinity, alignment: .leading)
-      }
-    } else {
-      HStack(spacing: 16) {
-        pitchAccent
-        Spacer(minLength: 8)
+    VStack(alignment: .leading, spacing: 12) {
+      pitchAccent
+      HStack {
+        Text("Pronunciation")
+          .font(.body)
+          .fixedSize(horizontal: false, vertical: true)
+          .accessibilityIdentifier("word-detail.pronunciation-title")
+        Spacer()
         pronounceButton
       }
     }
@@ -596,17 +593,9 @@ private struct PronunciationRow: View {
 
   private var pronounceButton: some View {
     Button(action: pronounce) {
-      Group {
-        if dynamicTypeSize.isAccessibilitySize {
-          Label("Play pronunciation", systemImage: "speaker.wave.2.fill")
-            .font(.body)
-        } else {
-          Label("Play pronunciation", systemImage: "speaker.wave.2.fill")
-            .labelStyle(.iconOnly)
-            .font(.title2)
-        }
-      }
-      .frame(minWidth: 44, minHeight: 44)
+      Image(systemName: "speaker.wave.2.fill")
+        .font(.title2)
+        .frame(minWidth: 44, minHeight: 44)
     }
     .buttonStyle(.bordered)
     .accessibilityLabel("Pronounce \(entry.reading)")

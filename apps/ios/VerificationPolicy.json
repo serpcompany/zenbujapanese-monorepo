@@ -292,6 +292,18 @@
       "traits": ["ui", "accessibility", "accessibility-maximum"],
       "journeys": ["accessibility-word-detail-light"]
     },
+    "ui.word-detail-text-maximum-dark": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkShortWordDetailSupportsDynamicTypeWithoutClipping",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-word-detail-text-dark"]
+    },
+    "ui.word-detail-text-maximum-light": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightShortWordDetailSupportsDynamicTypeWithoutClipping",
+      "traits": ["ui", "accessibility", "accessibility-maximum"],
+      "journeys": ["accessibility-word-detail-text-light"]
+    },
     "ui.kanji-element-maximum-dark": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkKanjiElementDetailRemainsReachableAtLargestAccessibilityTextSize",
@@ -417,6 +429,8 @@
       "ui.search-results-maximum-dark",
       "ui.word-detail-maximum-dark",
       "ui.word-detail-maximum-light",
+      "ui.word-detail-text-maximum-dark",
+      "ui.word-detail-text-maximum-light",
       "ui.kanji-element-maximum-dark",
       "ui.kanji-element-maximum-light",
       "ui.conjugations-maximum-dark",
@@ -836,9 +850,13 @@
       "reviewed_override_paths": [
         "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
         "apps/ios/Modules/Sources/SearchExperience/SearchView.swift",
+        "apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift",
         "apps/ios/VerificationPolicy.json"
       ],
-      "tdd": ["ui.accessibility-reviewer-light"],
+      "tdd": [
+        "ui.word-detail-text-maximum-dark",
+        "ui.word-detail-text-maximum-light"
+      ],
       "issue-final": [
         "contracts.repository",
         "unit.complete",
