@@ -922,28 +922,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       named:
         "Example Sentences inline links - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")"
     )
-    // #191/#234 proved that 44-point expansion makes compact Japanese fragment or overlap, while
-    // Apple's native attributed links remove ruby and the rich surface/reading/meaning label.
-    // #242 removes ten false one-character links by preserving complete query boundaries and
-    // failing closed on unresolved homographs. Keep only the remaining source-backed narrow
-    // link as an explicit exception. Accessibility XXXL requires zero exceptions.
-    let expectedCompactRubyLinkExceptions: Set<String> =
-      accessibilityXXXL
-      ? []
-      : [
-        "example.token.2.2.持"
-      ]
-    var observedCompactRubyLinkExceptions: Set<String> = []
-    try app.performAccessibilityAudit(for: .hitRegion) { issue in
-      guard let identifier = issue.element?.identifier,
-        expectedCompactRubyLinkExceptions.contains(identifier)
-      else {
-        return false
-      }
-      observedCompactRubyLinkExceptions.insert(identifier)
-      return true
-    }
-    XCTAssertEqual(observedCompactRubyLinkExceptions, expectedCompactRubyLinkExceptions)
+    try app.performAccessibilityAudit(for: .hitRegion)
   }
 
   @MainActor
@@ -1593,8 +1572,10 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: appearance,
       additionalArguments: [
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
-      ]
+      ],
+      usesDeviceAppearance: true
     )
+    XCTAssertEqual(XCUIDevice.shared.appearance, appearance)
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
@@ -1623,9 +1604,8 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertEqual(pronunciation.label, "Pronounce にほん")
     XCTAssertGreaterThanOrEqual(pronunciation.frame.minX, app.frame.minX)
     XCTAssertLessThanOrEqual(pronunciation.frame.maxX, app.frame.maxX)
-    let pronunciationTitle = app.staticTexts["word-detail.pronunciation-title"]
-    XCTAssertTrue(pronunciationTitle.exists)
-    XCTAssertEqual(pronunciationTitle.label, "Pronunciation")
+    XCTAssertGreaterThanOrEqual(pronunciation.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(pronunciation.frame.height, 44)
     try performAudit(
       in: app,
       named: "Word Detail - \(appearance == .dark ? "dark" : "light") accessibility XXXL",
@@ -2394,15 +2374,18 @@ final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
   private func launchApp(
     appearance: XCUIDevice.Appearance,
-    additionalArguments: [String] = []
+    additionalArguments: [String] = [],
+    usesDeviceAppearance: Bool = false
   ) -> XCUIApplication {
     let app = XCUIApplication()
     app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
     app.launchArguments += ["-UseJapaneseAnalysisFixture"]
-    app.launchArguments += [
-      "-AppleInterfaceStyle", appearance == .dark ? "Dark" : "Light",
-      "-AppleInterfaceStyleSwitchesAutomatically", "NO",
-    ]
+    if !usesDeviceAppearance {
+      app.launchArguments += [
+        "-AppleInterfaceStyle", appearance == .dark ? "Dark" : "Light",
+        "-AppleInterfaceStyleSwitchesAutomatically", "NO",
+      ]
+    }
     app.launchArguments += additionalArguments
     app.launch()
     return app

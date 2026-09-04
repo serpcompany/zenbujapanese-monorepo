@@ -214,6 +214,12 @@
       "traits": ["ui", "accessibility", "normal-dynamic-type"],
       "journeys": ["example-sentences", "word-detail"]
     },
+    "ui.example-compact-hit-region": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testRepresentativeExampleSentenceInlineLinksExposeUnsuppressedHitRegions",
+      "traits": ["ui", "accessibility", "normal-dynamic-type"],
+      "journeys": ["example-sentences-compact-hit-region"]
+    },
     "ui.example-candidate-selection": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testInlineWordDetailAmbiguousCandidateRemainsNeutralAndSelectable",
@@ -450,6 +456,7 @@
       "ui.example-layout",
       "ui.example-layout-maximum",
       "ui.example-layout-hit-regions",
+      "ui.example-compact-hit-region",
       "ui.example-candidate-selection",
       "ui.conjugations",
       "ui.japanese-text-analysis-settings",
@@ -855,7 +862,8 @@
       ],
       "tdd": [
         "ui.word-detail-text-maximum-dark",
-        "ui.word-detail-text-maximum-light"
+        "ui.word-detail-text-maximum-light",
+        "ui.example-compact-hit-region"
       ],
       "issue-final": [
         "contracts.repository",
@@ -880,7 +888,8 @@
         "ui.conjugations-maximum-light",
         "ui.dictionary-sources-maximum-dark",
         "ui.dictionary-sources-maximum-light",
-        "ui.example-layout-maximum"
+        "ui.example-layout-maximum",
+        "ui.example-compact-hit-region"
       ]
     }
   }

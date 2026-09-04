@@ -566,19 +566,22 @@ private struct WordIdentityView: View {
 }
 
 private struct PronunciationRow: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let entry: DictionaryEntry
   let pronounce: () -> Void
 
   @ViewBuilder
   var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      pitchAccent
-      HStack {
-        Text("Pronunciation")
-          .font(.body)
-          .fixedSize(horizontal: false, vertical: true)
-          .accessibilityIdentifier("word-detail.pronunciation-title")
-        Spacer()
+    if dynamicTypeSize.isAccessibilitySize {
+      VStack(alignment: .leading, spacing: 12) {
+        pitchAccent
+        pronounceButton
+          .frame(maxWidth: .infinity, alignment: .leading)
+      }
+    } else {
+      HStack(spacing: 16) {
+        pitchAccent
+        Spacer(minLength: 8)
         pronounceButton
       }
     }
