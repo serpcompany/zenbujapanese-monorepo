@@ -52,6 +52,13 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("needs.scope.outputs.run_expensive == 'true'", workflow)
         self.assertNotIn("-only-testing:", workflow)
 
+    def test_critical_ui_budget_covers_the_measured_ready_checkpoint(self):
+        workflow = workflow_text("ios-quality.yml")
+        critical_ui = workflow.split("  ios-ui:\n", 1)[1].split(
+            "\n  ios-accessibility:\n", 1
+        )[0]
+        self.assertIn("    timeout-minutes: 45\n", critical_ui)
+
     def test_draft_pushes_are_cheap_and_ready_heads_are_sha_bound(self):
         workflow = workflow_text("ios-quality.yml")
         self.assertIn("github.event.pull_request.draft", workflow)

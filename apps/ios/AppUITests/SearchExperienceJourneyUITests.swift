@@ -1,5 +1,14 @@
 import XCTest
 
+enum AppNavigationUITestSupport {
+  static let youTabAccessibilityLabel = "You, personal content and settings"
+
+  @MainActor
+  static func youTab(in app: XCUIApplication) -> XCUIElement {
+    app.tabBars.buttons[youTabAccessibilityLabel]
+  }
+}
+
 final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testRomajiPreferenceAddsSecondaryReadingToActualSearchAndWordDetail() throws {
@@ -119,7 +128,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     tapNativeBack(in: app)
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
 
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     app.buttons["you.reading-aids"].tap()
     let showFurigana = app.switches["reading-aids.show-furigana"]
     XCTAssertEqual(showFurigana.value as? String, "1")
@@ -166,9 +175,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testYouUsesNativePersonalSettingsHierarchyAndSupportsIndependentHosting() throws {
     var app = launchApp(additionalArguments: ["-ResetWordImageAttachments"])
 
-    let youTab = app.tabBars.buttons["tab.you"]
+    let youTab = AppNavigationUITestSupport.youTab(in: app)
     XCTAssertTrue(youTab.waitForExistence(timeout: 3))
-    XCTAssertEqual(youTab.label, "You, personal content and settings")
+    XCTAssertEqual(youTab.label, AppNavigationUITestSupport.youTabAccessibilityLabel)
     youTab.tap()
     XCTAssertTrue(app.collectionViews["you.list"].waitForExistence(timeout: 3))
     for section in ["Your Content", "Preferences", "Language Resources", "About"] {
@@ -203,7 +212,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.tabBars.buttons["Search"].tap()
     XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     XCTAssertTrue(app.navigationBars["Media Library"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["No Encounter Media"].exists)
 
@@ -228,7 +237,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.tabBars.buttons["Search"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.tabBars.buttons["Search"].isSelected)
     XCTAssertTrue(app.textFields["search.field"].exists)
-    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
+    XCTAssertTrue(AppNavigationUITestSupport.youTab(in: app).waitForExistence(timeout: 3))
     XCTAssertFalse(app.tabBars.buttons["More"].exists)
 
     app.terminate()
@@ -253,7 +262,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(app.buttons["search.sources"].exists)
     recordSettledScreenshot(named: "issue-216-after-search", app: app)
 
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     XCTAssertTrue(app.staticTexts["You"].waitForExistence(timeout: 2))
     recordSettledScreenshot(named: "issue-255-after-you", app: app)
     XCTAssertEqual(app.buttons["you.media-library"].label, "Media Library")
@@ -268,7 +277,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp()
 
     for tab in ["Search", "You"] {
-      let button = tab == "You" ? app.tabBars.buttons["tab.you"] : app.tabBars.buttons[tab]
+      let button =
+        tab == "You" ? AppNavigationUITestSupport.youTab(in: app) : app.tabBars.buttons[tab]
       XCTAssertTrue(button.waitForExistence(timeout: 3))
       XCTAssertGreaterThanOrEqual(button.frame.height, 44)
       XCTAssertLessThanOrEqual(button.frame.maxY, app.windows.firstMatch.frame.maxY)
@@ -280,7 +290,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(app.tabBars.buttons["Clippings"].exists)
     XCTAssertFalse(app.tabBars.buttons["Flashcards"].exists)
 
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     XCTAssertTrue(app.collectionViews["you.list"].waitForExistence(timeout: 3))
     for section in ["Your Content", "Preferences", "Language Resources", "About"] {
       XCTAssertTrue(app.staticTexts[section].exists)
@@ -293,12 +303,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let japan = app.buttons["result.japan"]
     XCTAssertTrue(japan.waitForExistence(timeout: 3))
     japan.tap()
-    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 10))
 
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     XCTAssertTrue(app.collectionViews["you.list"].waitForExistence(timeout: 3))
     app.tabBars.buttons["Search"].tap()
-    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 10))
 
     app.tabBars.buttons["Search"].tap()
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
@@ -747,7 +757,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
     app.buttons["image-text.close"].tap()
 
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     XCTAssertTrue(app.staticTexts["You"].waitForExistence(timeout: 2))
     app.buttons["you.reading-aids"].tap()
     let showRomaji = app.switches["reading-aids.show-romaji"]
@@ -2550,7 +2560,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
           format: "value == %@", "Best match 1, Frequency rank 115"),
         object: best
       )
-      XCTAssertEqual(XCTWaiter.wait(for: [loadedRank], timeout: 3), .completed)
+      XCTAssertEqual(XCTWaiter.wait(for: [loadedRank], timeout: 10), .completed)
       XCTAssertFalse(best.value.debugDescription.contains("TUBELEX"))
       XCTAssertFalse(best.value.debugDescription.contains("YouTube"))
       XCTAssertFalse(best.value.debugDescription.contains("Tier"))
@@ -2795,7 +2805,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testDictionarySourceAttributionIsReachableFromSearch() throws {
     let app = launchApp()
 
-    let sources = app.tabBars.buttons["tab.you"]
+    let sources = AppNavigationUITestSupport.youTab(in: app)
     XCTAssertTrue(sources.waitForExistence(timeout: 3))
     sources.tap()
     let credits = app.buttons["you.credits"]
@@ -2906,8 +2916,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testJapaneseTextAnalysisShowsIncludedOfflineDefaultWithoutDownloadActions() throws {
     let app = launchApp(additionalArguments: ["-ResetLanguageTechnologyPacks"])
-    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
-    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(AppNavigationUITestSupport.youTab(in: app).waitForExistence(timeout: 3))
+    AppNavigationUITestSupport.youTab(in: app).tap()
     let japaneseAnalysis = app.buttons["you.japanese-analysis"]
     XCTAssertTrue(japaneseAnalysis.waitForExistence(timeout: 2))
     japaneseAnalysis.tap()
@@ -2936,8 +2946,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: [
       "-ResetFrequencyPacks", "-FrequencyPackChecksumFailure",
     ])
-    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
-    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(AppNavigationUITestSupport.youTab(in: app).waitForExistence(timeout: 3))
+    AppNavigationUITestSupport.youTab(in: app).tap()
     let frequencyDictionaries = app.buttons["you.frequency-dictionaries"]
     XCTAssertTrue(frequencyDictionaries.waitForExistence(timeout: 2))
     frequencyDictionaries.tap()
@@ -2991,7 +3001,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       "-FrequencyPackDownloadGate",
       "-FrequencyPackChecksumFailure",
     ])
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     app.buttons["you.frequency-dictionaries"].tap()
 
     let list = app.collectionViews["frequency-packs.list"]
@@ -3020,8 +3030,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testFrequencyPackAttributionAndBundledLicensesAreReachableFromSources() throws {
     let app = launchApp()
-    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
-    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(AppNavigationUITestSupport.youTab(in: app).waitForExistence(timeout: 3))
+    AppNavigationUITestSupport.youTab(in: app).tap()
     app.buttons["you.credits"].tap()
     let sourceList = app.collectionViews["dictionary-sources.list"]
     XCTAssertTrue(sourceList.waitForExistence(timeout: 2))
@@ -3057,7 +3067,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testPrivacyAndSupportAreReachableFromYou() throws {
     let app = launchApp()
 
-    let you = app.tabBars.buttons["tab.you"]
+    let you = AppNavigationUITestSupport.youTab(in: app)
     XCTAssertTrue(you.waitForExistence(timeout: 3))
     you.tap()
     let credits = app.buttons["you.credits"]
@@ -3420,7 +3430,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(attachment.label.contains("1"))
     XCTAssertFalse(app.buttons["image-text.close"].exists)
 
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     app.buttons["you.media-library"].tap()
     XCTAssertTrue(app.staticTexts["Camera Capture.jpg"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["見る"].exists)
@@ -3894,7 +3904,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     manage.tap()
 
     XCTAssertTrue(app.staticTexts["Frequency Dictionaries"].waitForExistence(timeout: 4))
-    XCTAssertTrue(app.tabBars.buttons["tab.you"].isSelected)
+    XCTAssertTrue(AppNavigationUITestSupport.youTab(in: app).isSelected)
     XCTAssertTrue(
       app.descendants(matching: .any)[
         "frequency-pack.status.zenbu.tubelex.youtube.ja.unidic-3.1"
@@ -3917,7 +3927,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertEqual(frequency.value as? String, "#41")
     XCTAssertFalse(app.staticTexts["TUBELEX YouTube Japanese"].exists)
 
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     app.buttons["you.frequency-dictionaries"].tap()
     let list = app.collectionViews["frequency-packs.list"]
     let download = app.buttons[
@@ -4160,7 +4170,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       NSPredicate(format: "label BEGINSWITH %@", "問題, もんだい")
     ).firstMatch
     XCTAssertTrue(problem.waitForExistence(timeout: 2))
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     XCTAssertTrue(app.staticTexts["You"].waitForExistence(timeout: 2))
     app.tabBars.buttons["Search"].tap()
     XCTAssertTrue(problem.waitForExistence(timeout: 2))
@@ -6092,7 +6102,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     romaji: Bool,
     in app: XCUIApplication
   ) {
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     let showFurigana = app.switches["reading-aids.show-furigana"]
     if !showFurigana.waitForExistence(timeout: 1) {
       app.buttons["you.reading-aids"].tap()

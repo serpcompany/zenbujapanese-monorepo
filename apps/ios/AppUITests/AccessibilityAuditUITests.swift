@@ -35,8 +35,8 @@ final class AccessibilityAuditUITests: XCTestCase {
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
-    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
-    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(AppNavigationUITestSupport.youTab(in: app).waitForExistence(timeout: 3))
+    AppNavigationUITestSupport.youTab(in: app).tap()
 
     let list = app.collectionViews["you.list"]
     XCTAssertTrue(list.waitForExistence(timeout: 3))
@@ -77,8 +77,8 @@ final class AccessibilityAuditUITests: XCTestCase {
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
-    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
-    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(AppNavigationUITestSupport.youTab(in: app).waitForExistence(timeout: 3))
+    AppNavigationUITestSupport.youTab(in: app).tap()
     let destination = app.buttons["you.japanese-analysis"]
     XCTAssertTrue(destination.waitForExistence(timeout: 3))
     destination.tap()
@@ -569,8 +569,8 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: .light,
       additionalArguments: ["-ResetFrequencyPacks"]
     )
-    XCTAssertTrue(app.tabBars.buttons["tab.you"].waitForExistence(timeout: 3))
-    app.tabBars.buttons["tab.you"].tap()
+    XCTAssertTrue(AppNavigationUITestSupport.youTab(in: app).waitForExistence(timeout: 3))
+    AppNavigationUITestSupport.youTab(in: app).tap()
     app.buttons["you.frequency-dictionaries"].tap()
 
     let activeStatus = app.descendants(matching: .any)[
@@ -595,7 +595,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: .light,
       additionalArguments: ["-ResetFrequencyPacks", "-FrequencyPackChecksumFailure"]
     )
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     app.buttons["you.frequency-dictionaries"].tap()
     let list = app.collectionViews["frequency-packs.list"]
     XCTAssertTrue(list.waitForExistence(timeout: 3))
@@ -637,7 +637,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: .light,
       additionalArguments: ["-ResetFrequencyPacks"]
     )
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     app.buttons["you.frequency-dictionaries"].tap()
     let list = app.collectionViews["frequency-packs.list"]
     XCTAssertTrue(list.waitForExistence(timeout: 3))
@@ -788,7 +788,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     app.buttons["you.reading-aids"].tap()
     let showRomaji = app.switches["reading-aids.show-romaji"]
     XCTAssertTrue(showRomaji.waitForExistence(timeout: 3))
@@ -1827,7 +1827,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       ]
     }
     let app = launchApp(appearance: appearance, additionalArguments: arguments)
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     let destination = app.buttons["you.frequency-dictionaries"]
     XCTAssertTrue(destination.waitForExistence(timeout: 3))
     XCTAssertTrue(destination.isHittable)
@@ -1897,7 +1897,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     let mediaLibrary = app.buttons["you.media-library"]
     XCTAssertTrue(mediaLibrary.waitForExistence(timeout: 3))
     XCTAssertTrue(mediaLibrary.isHittable)
@@ -2003,7 +2003,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: appearance,
       additionalArguments: ["-ResetWordImageAttachments"]
     )
-    app.tabBars.buttons["tab.you"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
     XCTAssertTrue(app.staticTexts["You"].waitForExistence(timeout: 3))
     // Two frameless clipped-text findings remain blocking after native grouping/fixed-size probes.
     try performAudit(in: app, named: "You", types: auditTypes)

@@ -190,7 +190,7 @@ jobs:
     needs: scope
     if: ${{ needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.ui_selectors != '[]' && !inputs.prove_failure }}
     runs-on: macos-26
-    timeout-minutes: 30
+    timeout-minutes: 45
     outputs:
       tested_sha: ${{ steps.identity.outputs.tested_sha }}
     steps:
