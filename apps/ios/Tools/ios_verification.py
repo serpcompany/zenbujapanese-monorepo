@@ -592,7 +592,11 @@ def resolve_plan(
     if not source_sha.strip():
         raise PolicyError("source SHA is required")
     cadence = lifecycle_cadence(stage=stage, event=event, draft=draft)
-    if cadence in ("deferred-draft", "deferred-until-merge"):
+    if cadence in (
+        "deferred-draft",
+        "deferred-merge-group",
+        "deferred-until-merge",
+    ):
         return {
             "stage": stage,
             "event": event,
@@ -697,6 +701,7 @@ def lifecycle_cadence(*, stage: str, event: str, draft: bool) -> str:
             "synchronize",
             "ready_for_review",
             "converted_to_draft",
+            "merge_group",
             "workflow_dispatch",
         }
         if event not in allowed:
@@ -705,6 +710,10 @@ def lifecycle_cadence(*, stage: str, event: str, draft: bool) -> str:
             raise PolicyError("converted_to_draft must carry draft=true")
         if event == "ready_for_review" and draft:
             raise PolicyError("ready_for_review must carry draft=false")
+        if event == "merge_group":
+            if draft:
+                raise PolicyError("merge_group must carry draft=false")
+            return "deferred-merge-group"
         return "deferred-draft" if draft else "verify-current-head"
     if stage == "merge-candidate":
         if event == "pull_request":

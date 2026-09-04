@@ -16,7 +16,7 @@ def trigger_section(workflow: str) -> str:
 
 
 class IOSWorkflowPolicyTests(unittest.TestCase):
-    def test_fast_workflow_runs_on_pull_requests_but_not_merge_groups(self):
+    def test_fast_workflow_reports_required_status_on_pull_requests_and_merge_groups(self):
         workflow = workflow_text("ios-quality.yml")
         triggers = trigger_section(workflow)
         self.assertIn("  pull_request:\n", triggers)
@@ -24,9 +24,13 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
             "types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]",
             triggers,
         )
+        self.assertIn("  merge_group:\n", triggers)
         self.assertIn("  workflow_dispatch:\n", triggers)
-        self.assertNotIn("  merge_group:\n", triggers)
         self.assertIn("    name: ios-fast / Required\n", workflow)
+        self.assertIn("deferred-merge-group", workflow)
+        self.assertIn(
+            "cancel-in-progress: ${{ github.event_name != 'merge_group' }}", workflow
+        )
 
     def test_premerge_workflow_reports_the_same_gate_on_pr_and_merge_group(self):
         workflow = workflow_text("ios-premerge.yml")
@@ -64,7 +68,9 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("github.event.pull_request.draft", workflow)
         self.assertIn("ready_for_review", workflow)
         self.assertIn("converted_to_draft", workflow)
-        self.assertIn("cancel-in-progress: true", workflow)
+        self.assertIn(
+            "cancel-in-progress: ${{ github.event_name != 'merge_group' }}", workflow
+        )
         self.assertIn("verify-sha", workflow)
         self.assertIn("github.event.pull_request.head.sha", workflow)
         self.assertIn(

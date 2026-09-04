@@ -11,7 +11,7 @@ remains decision evidence, but this file owns the executable cadence.
 | Implementation                             | Relevant unit tests and issue-focused UI tests                                                       | Fast red-green feedback at the public seam changed by the issue                                    |
 | Draft pull request push                    | Scope, manifest validation, and a SHA-bound deferred status on Ubuntu                                | Keep WIP pushes cheap; the draft itself remains unmergeable                                        |
 | Ready pull request or later non-draft push | Manifest-selected repository contracts, units, critical journeys, and focused accessibility coverage | Automatically verify the exact current head without accepting stale green results                  |
-| Merge queue                                | The complete `ZenbuPR` plan once on the exact `merge_group` candidate                                | Blocking integration evidence after review and after GitHub combines the PR with current `main`    |
+| Merge queue                                | Cheap required-status reporting plus the complete `ZenbuPR` plan once on the exact `merge_group` candidate | Blocking integration evidence without repeating fast macOS partitions                              |
 | Manual investigation                       | `iOS nightly quality`, started with `workflow_dispatch`                                              | Two-device accessibility breadth, repetitions, and sanitizers when investigation warrants the cost |
 | Pre-release                                | Manual `iOS pre-release validation`, then separately authorized physical-device and release checks   | Transient validation for an identified proposed candidate; never inferred from development CI      |
 
@@ -75,6 +75,12 @@ runs the hosted fast plan. A later non-draft source push automatically produces 
 new run on the new head. Changing it back to Draft cancels an in-progress fast run;
 subsequent draft pushes remain cheap. Manual dispatch is investigation/recovery,
 not normal cadence.
+
+Both stable contexts are required on the merge-group SHA. `ios-quality.yml`
+therefore reports `ios-fast / Required` for `merge_group`, but its merge-group
+cadence is status-only: the fast macOS partitions already passed on the PR head,
+while `ios-premerge.yml` owns the complete and integration plans on the merge
+candidate. Merge-group workflow concurrency does not cancel an active candidate.
 
 ## Path-aware execution
 
@@ -167,7 +173,7 @@ network integration separation is complete.
 
 | Repository interface         | Trigger and ownership                                                                     |
 | ---------------------------- | ----------------------------------------------------------------------------------------- |
-| `ios-quality.yml`            | Draft/Ready/non-draft PR state machine; manifest-selected fast partitions                 |
+| `ios-quality.yml`            | Draft/Ready/non-draft PR state machine; fast partitions; status-only merge-group report   |
 | `ios-premerge.yml`           | PR deferral plus exact `merge_group` complete and integration plans                       |
 | `ios-nightly.yml`            | Manual two-device audit, repetition, and sanitizer investigation                          |
 | `ios-performance.yml`        | Scheduled/manual manifest-selected performance plan                                       |
@@ -266,19 +272,15 @@ then runs and requires the complete suite on the merge-group SHA.
 Do not enable the ruleset while either required context is permanently red.
 GitHub had no `main` branch protection when #227 began.
 
-## Current rollout hold
+## Current rollout state
 
-The workflow split can merge before enforcement, but the required ruleset must
-wait for the complete suite to become reliable:
+The #225, #230, and app-controlled #173 failures have reviewed corrections. The
+remaining native Accessibility XXXL tab-edge refinement is retained as
+non-blocking follow-up #269. A current-head Ready checkpoint has proved the fast
+gate names and runtime.
 
-- four specialized Handwriting/Radical journey failures reproduce on the
-  reviewed #216 baseline and are routed to #225;
-- the remaining full Accessibility findings stay visible under #173; and
-- the hosted lookup failure/retry race discovered by controlled PR #229 stays
-  visible in the complete suite and #230; and
-- a controlled PR must prove the fast gate names and runtime before they are
-  added to branch protection.
-
-Until those prerequisites are resolved, `ios-premerge / Required` is staged but
-not a live branch rule. Never make it green by deleting coverage, skipping a
-known failing journey, or adding a blanket accessibility exception.
+#227 now owns the remaining rollout: activate the `main` ruleset with both
+stable required contexts and merge queue, then require one complete `ZenbuPR`
+and `ZenbuSudachiIntegration` run on the exact merge-group SHA. Never make that
+candidate green by deleting coverage, skipping a known failing journey, or
+adding a blanket accessibility exception.

@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [main]
     types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+  merge_group:
   workflow_dispatch:
     inputs:
       prove_failure:
@@ -21,7 +22,7 @@ env:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'merge_group' }}
 
 jobs:
   scope:
@@ -45,9 +46,9 @@ jobs:
       - name: Classify iOS impact
         id: scope
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.sha }}
           FORCE_IOS: ${{ github.event_name == 'workflow_dispatch' }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
         run: |
           set -euo pipefail
           python3 apps/ios/Tools/ios_ci_scope.py \
@@ -63,9 +64,9 @@ jobs:
         id: plan
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
           IS_DRAFT: ${{ github.event.pull_request.draft || false }}
-          PR_ACTION: ${{ github.event.action || 'workflow_dispatch' }}
+          PR_ACTION: ${{ github.event_name == 'merge_group' && 'merge_group' || github.event.action || 'workflow_dispatch' }}
         run: |
           set -euo pipefail
           args=(
@@ -96,7 +97,7 @@ jobs:
         with:
           fetch-depth: 0
           lfs: true
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
       - name: Install audit tooling
         run: |
           brew install actionlint ripgrep
@@ -362,6 +363,11 @@ jobs:
           if [[ "$CADENCE" == deferred-draft ]]; then
             [[ '${{ github.event.pull_request.draft }}' == true ]]
             echo 'Deferred while draft; this current-head status is not verification.'
+            exit 0
+          fi
+          if [[ "$CADENCE" == deferred-merge-group ]]; then
+            [[ "$GITHUB_EVENT_NAME" == merge_group ]]
+            echo 'Fast macOS partitions already passed on the PR head; merge-group breadth belongs to ios-premerge.'
             exit 0
           fi
           tested_shas=()

@@ -271,6 +271,14 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             draft=False,
             source_sha="abc123",
         )
+        merge_group = ios_verification.resolve_plan(
+            manifest,
+            changed_paths=["apps/ios/App/App.swift"],
+            stage="hosted-fast",
+            event="merge_group",
+            draft=False,
+            source_sha="merge123",
+        )
 
         self.assertEqual(draft["cadence"], "deferred-draft")
         self.assertEqual(draft["selectors"], [])
@@ -278,6 +286,9 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         self.assertEqual(ready["cadence"], "verify-current-head")
         self.assertEqual(ready["selectors"], ["unit.all"])
         self.assertEqual(ready["source_sha"], "abc123")
+        self.assertEqual(merge_group["cadence"], "deferred-merge-group")
+        self.assertEqual(merge_group["selectors"], [])
+        self.assertEqual(merge_group["source_sha"], "merge123")
 
     def test_every_pr_and_merge_queue_transition_has_one_deterministic_cadence(self):
         cases = [
@@ -286,6 +297,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             ("hosted-fast", "ready_for_review", False, "verify-current-head"),
             ("hosted-fast", "synchronize", False, "verify-current-head"),
             ("hosted-fast", "converted_to_draft", True, "deferred-draft"),
+            ("hosted-fast", "merge_group", False, "deferred-merge-group"),
             ("merge-candidate", "pull_request", False, "deferred-until-merge"),
             ("merge-candidate", "merge_group", False, "verify-merge-candidate"),
             ("performance", "schedule", False, "run-performance"),
