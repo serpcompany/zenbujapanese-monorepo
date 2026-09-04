@@ -220,13 +220,13 @@
     },
     "ui.example-compact-hit-region": {
       "plan": "ZenbuPR",
-      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testRepresentativeExampleSentenceInlineLinksExposeUnsuppressedHitRegions",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testRepresentativeExampleSentenceWordMenuPassesHitRegionAudit",
       "traits": ["ui", "accessibility", "normal-dynamic-type"],
       "journeys": ["example-sentences-compact-hit-region"]
     },
     "ui.example-compact-hit-region-dark": {
       "plan": "ZenbuPR",
-      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkDefaultRepresentativeExampleSentenceInlineLinksKeepExactHitRegions",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkRepresentativeExampleSentenceWordMenuPassesHitRegionAudit",
       "traits": ["ui", "accessibility", "normal-dynamic-type"],
       "journeys": ["example-sentences-compact-hit-region"]
     },
@@ -999,6 +999,34 @@
       ],
       "tdd": ["ui.example-punctuation-route"],
       "issue-final": ["ui.example-punctuation-route"]
+    },
+    "example-sentence-layout-review-repair": {
+      "paths": [],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift",
+        "apps/ios/Modules/Sources/SearchExperience/LinkedJapaneseText.swift"
+      ],
+      "tdd": ["ui.example-layout"],
+      "issue-final": ["ui.example-layout"]
+    },
+    "example-sentence-accessibility-review-repair": {
+      "adaptive_layout": true,
+      "paths": [],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
+        "apps/ios/Modules/Sources/SearchExperience/ExampleSentencesView.swift",
+        "apps/ios/Modules/Sources/SearchExperience/LinkedJapaneseText.swift"
+      ],
+      "tdd": [
+        "ui.example-compact-hit-region",
+        "ui.example-compact-hit-region-dark",
+        "ui.example-word-selector-maximum"
+      ],
+      "issue-final": [
+        "ui.example-compact-hit-region",
+        "ui.example-compact-hit-region-dark",
+        "ui.example-word-selector-maximum"
+      ]
     }
   }
 }

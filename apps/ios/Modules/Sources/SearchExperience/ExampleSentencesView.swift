@@ -145,12 +145,16 @@ struct JapaneseExampleRowContent: View {
     case dedicated(index: Int)
     case wordDetail(index: Int)
 
+    struct WordSelectorConfiguration {
+      let label: String
+      let identifier: String
+    }
+
     struct Configuration {
       let tokenPresentation: LinkedJapaneseText.Presentation
       let tokenIdentifierPrefix: String
       let japaneseIdentifier: String?
-      let wordSelectorLabel: String?
-      let wordSelectorIdentifier: String?
+      let wordSelector: WordSelectorConfiguration?
       let speakerLabel: String
       let speakerIdentifier: String
       let englishIdentifier: String
@@ -166,8 +170,10 @@ struct JapaneseExampleRowContent: View {
           tokenPresentation: .compactNaturalFlow,
           tokenIdentifierPrefix: "example.token.\(index)",
           japaneseIdentifier: "example.japanese.\(index)",
-          wordSelectorLabel: "Choose a word from example \(index + 1)",
-          wordSelectorIdentifier: "example.words.\(index)",
+          wordSelector: WordSelectorConfiguration(
+            label: "Choose a word from example \(index + 1)",
+            identifier: "example.words.\(index)"
+          ),
           speakerLabel: "Speak example \(index + 1)",
           speakerIdentifier: "example.speaker.\(index)",
           englishIdentifier: "example.english.\(index)",
@@ -180,8 +186,7 @@ struct JapaneseExampleRowContent: View {
           tokenPresentation: .standard,
           tokenIdentifierPrefix: "word-detail.example-token.\(index)",
           japaneseIdentifier: nil,
-          wordSelectorLabel: nil,
-          wordSelectorIdentifier: nil,
+          wordSelector: nil,
           speakerLabel: "Speak Word Detail example \(index + 1)",
           speakerIdentifier: "word-detail.example-speaker.\(index)",
           englishIdentifier: "word-detail.example-english.\(index)",
@@ -221,7 +226,7 @@ struct JapaneseExampleRowContent: View {
 
   private var content: some View {
     VStack(alignment: .leading, spacing: contentSpacing) {
-      if configuration.wordSelectorIdentifier != nil {
+      if configuration.wordSelector != nil {
         if dynamicTypeSize.isAccessibilitySize {
           VStack(alignment: .leading, spacing: contentSpacing) {
             japanese
@@ -294,19 +299,23 @@ struct JapaneseExampleRowContent: View {
     .accessibilityIdentifier(configuration.speakerIdentifier)
   }
 
+  @ViewBuilder
   private var wordSelector: some View {
-    Menu {
-      wordSelectionActions
-    } label: {
-      Image(systemName: "character.book.closed")
-        .font(.headline)
-        .frame(minWidth: 48, minHeight: 48)
-        .contentShape(Rectangle())
+    if let configuration = configuration.wordSelector {
+      Menu {
+        wordSelectionActions(configuration: configuration)
+      } label: {
+        Text("Words")
+          .font(.headline)
+          .frame(minWidth: 48)
+          .frame(minHeight: 48)
+          .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel(configuration.label)
+      .accessibilityHint("Shows the dictionary words in sentence order")
+      .accessibilityIdentifier(configuration.identifier)
     }
-    .buttonStyle(.plain)
-    .accessibilityLabel(configuration.wordSelectorLabel ?? "Choose a word")
-    .accessibilityHint("Shows the dictionary words in sentence order")
-    .accessibilityIdentifier(configuration.wordSelectorIdentifier ?? "")
   }
 
   private var hasWordSelection: Bool { !wordSelectionTokens.isEmpty }
@@ -318,20 +327,20 @@ struct JapaneseExampleRowContent: View {
   }
 
   @ViewBuilder
-  private var wordSelectionActions: some View {
-    if let identifierPrefix = configuration.wordSelectorIdentifier {
-      ForEach(wordSelectionTokens) { token in
-        if let entry = token.entry {
-          wordSelectionAction(token: token, entry: entry, identifierPrefix: identifierPrefix)
-        } else if !token.candidateEntries.isEmpty {
-          Section("\(token.surface), \(token.candidateEntries.count) possible entries") {
-            ForEach(token.candidateEntries) { candidate in
-              wordSelectionAction(
-                token: token,
-                entry: candidate,
-                identifierPrefix: identifierPrefix
-              )
-            }
+  private func wordSelectionActions(
+    configuration: Presentation.WordSelectorConfiguration
+  ) -> some View {
+    ForEach(wordSelectionTokens) { token in
+      if let entry = token.entry {
+        wordSelectionAction(token: token, entry: entry, identifierPrefix: configuration.identifier)
+      } else if !token.candidateEntries.isEmpty {
+        Section("\(token.surface), \(token.candidateEntries.count) possible entries") {
+          ForEach(token.candidateEntries) { candidate in
+            wordSelectionAction(
+              token: token,
+              entry: candidate,
+              identifierPrefix: configuration.identifier
+            )
           }
         }
       }

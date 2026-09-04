@@ -891,12 +891,12 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
-  func testRepresentativeExampleSentenceInlineLinksExposeUnsuppressedHitRegions() throws {
+  func testRepresentativeExampleSentenceWordMenuPassesHitRegionAudit() throws {
     try auditRepresentativeExampleHitRegions(appearance: .light, accessibilityXXXL: false)
   }
 
   @MainActor
-  func testDarkDefaultRepresentativeExampleSentenceInlineLinksKeepExactHitRegions() throws {
+  func testDarkRepresentativeExampleSentenceWordMenuPassesHitRegionAudit() throws {
     try auditRepresentativeExampleHitRegions(appearance: .dark, accessibilityXXXL: false)
   }
 
@@ -939,9 +939,27 @@ final class AccessibilityAuditUITests: XCTestCase {
       0,
       "Compact sentence text must not remain a collection of undersized controls"
     )
+    let thirdWords = app.buttons["example.words.2"]
+    RepresentativeExampleSentences.reachElement(
+      thirdWords,
+      in: app.collectionViews["example-list.screen"],
+      app: app
+    )
+    XCTAssertTrue(thirdWords.isHittable)
+    thirdWords.tap()
+    let wordActions = app.buttons.matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "example.words.2.")
+    )
+    XCTAssertTrue(wordActions.firstMatch.waitForExistence(timeout: 3))
+    XCTAssertEqual(wordActions.count, 3)
+    for action in wordActions.allElementsBoundByIndex {
+      XCTAssertGreaterThanOrEqual(action.frame.width, 44)
+      XCTAssertGreaterThanOrEqual(action.frame.height, 44)
+      XCTAssertTrue(action.label.contains(" — "))
+    }
     retainScreenshot(
       named:
-        "Example Sentences inline links - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")"
+        "Example Sentences word menu - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")"
     )
     try app.performAccessibilityAudit(for: .hitRegion)
   }

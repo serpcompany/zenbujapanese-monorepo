@@ -19,7 +19,8 @@ struct LinkedJapaneseText: View {
     case standard
     case compactNaturalFlow
 
-    var usesMinimumHitRegionHeight: Bool { self == .standard }
+    var usesDedicatedWordSelector: Bool { self == .compactNaturalFlow }
+    var usesMinimumHitRegionHeight: Bool { !usesDedicatedWordSelector }
   }
 
   @ScaledMetric(relativeTo: .body) private var lineSpacing: CGFloat = 3
@@ -63,7 +64,7 @@ struct LinkedJapaneseText: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
-      if presentation == .compactNaturalFlow,
+      if presentation.usesDedicatedWordSelector,
         let japaneseIdentifier
       {
         VStack(alignment: .leading, spacing: 0) {
@@ -166,7 +167,7 @@ private struct LinkedTokenView: View {
 
   var body: some View {
     if let entry = token.entry {
-      if presentation == .compactNaturalFlow {
+      if presentation.usesDedicatedWordSelector {
         JapaneseRubyText(
           surface: token.surface,
           reading: entry.reading,
@@ -175,6 +176,9 @@ private struct LinkedTokenView: View {
           displaysRomaji: false
         )
         .foregroundStyle(Color.primary)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(token.surface)
+        .accessibilityIdentifier(identifier)
       } else {
         Button {
           openWord(entry)
@@ -203,9 +207,10 @@ private struct LinkedTokenView: View {
         .accessibilityIdentifier(identifier)
       }
     } else if !token.candidateEntries.isEmpty {
-      if presentation == .compactNaturalFlow {
+      if presentation.usesDedicatedWordSelector {
         Text(token.surface)
           .font(.body)
+          .accessibilityIdentifier(identifier)
       } else {
         Menu {
           ForEach(token.candidateEntries) { candidate in
