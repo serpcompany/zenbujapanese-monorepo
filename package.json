@@ -1,0 +1,11 @@
+{
+  "name": "zenbujapanese-monorepo",
+  "private": true,
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "prototype:web": "pnpm --dir apps/web dev",
+    "prototype:web:build": "pnpm --dir apps/web build",
+    "prototype:web:lint": "pnpm --dir apps/web lint",
+    "prototype:web:typecheck": "pnpm --dir apps/web typecheck"
+  }
+}
