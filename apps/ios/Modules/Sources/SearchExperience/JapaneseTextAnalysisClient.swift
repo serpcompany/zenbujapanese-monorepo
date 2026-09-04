@@ -185,6 +185,7 @@ struct JapaneseTextAnalysisClient: Sendable {
         else { return [] }
         return analysis.candidates.compactMap { candidate in
           guard
+            SearchQuery(candidate.surface).isJapaneseOnly,
             candidate.partOfSpeech.first.map(JapaneseTextAnalyzer.isLinkablePartOfSpeech)
               == true,
             candidate.isOutOfVocabulary == false

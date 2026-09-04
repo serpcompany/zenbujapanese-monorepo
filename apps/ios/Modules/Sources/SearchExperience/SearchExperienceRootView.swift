@@ -48,12 +48,16 @@ public struct SearchExperienceRootView: View {
       exampleSentenceClient = .clientFromProcessArguments(live: .live) ?? .live
       let usesReducedAnalysis = ProcessInfo.processInfo.arguments.contains(
         "-UseReducedJapaneseAnalysis")
-      japaneseTextAnalysisClient = .resolving(
-        morphologyClient: !usesReducedAnalysis
-          && ProcessInfo.processInfo.arguments.contains("-UseJapaneseAnalysisFixture")
-          ? .uiTestFixture : .live,
-        lookupClient: resolvedLookupClient
-      )
+      if usesReducedAnalysis {
+        japaneseTextAnalysisClient = .characterFallback
+      } else {
+        japaneseTextAnalysisClient = .resolving(
+          morphologyClient: ProcessInfo.processInfo.arguments.contains(
+            "-UseJapaneseAnalysisFixture")
+            ? .uiTestFixture : .live,
+          lookupClient: resolvedLookupClient
+        )
+      }
       let liveKanjiLookupClient = KanjiLookupClient.live(lookupClient: resolvedLookupClient)
       kanjiLookupClient =
         KanjiLookupClient.clientFromProcessArguments(live: liveKanjiLookupClient)

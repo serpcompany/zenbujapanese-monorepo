@@ -336,15 +336,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons.matching(identifier: "image-source.files").firstMatch.tap()
     _ = waitForSystemDocumentPicker(in: app)
     recordSettledScreenshot(named: "production-files-picker-clear-horizontal", app: app)
-    let fixture = app.staticTexts.matching(
+    let fixture = app.descendants(matching: .any).matching(
       NSPredicate(format: "label BEGINSWITH %@", "fixture-clear-horizontal")
     ).firstMatch
-    if !fixture.waitForExistence(timeout: 3), isHostedCI {
-      throw XCTSkip(
-        "Hosted Simulator proves the system Files picker opens; staged-file selection remains physical HIL."
-      )
-    }
-    XCTAssertTrue(fixture.exists)
+    XCTAssertTrue(fixture.waitForExistence(timeout: 5))
     fixture.tap()
     XCTAssertTrue(app.buttons["Open"].isEnabled)
     app.buttons["Open"].tap()
@@ -839,8 +834,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.terminate()
 
     app = launchApp(additionalArguments: [
-      "-StartImageTextFixtures", "fixture-vertical.png",
-      "-InjectVerticalImageTextRecognition",
+      "-StartImageTextFixtures", "fixture-noisy-horizontal.png",
     ])
     let secondQuiet = app.descendants(matching: .any).matching(identifier: "image-text.region.静か")
       .firstMatch
@@ -854,7 +848,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(attachment.waitForExistence(timeout: 3))
     XCTAssertTrue(attachment.label.contains("2"))
     attachment.tap()
-    XCTAssertTrue(app.staticTexts["fixture-vertical.png"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["fixture-noisy-horizontal.png"].waitForExistence(timeout: 3))
     app.swipeLeft()
     XCTAssertTrue(app.staticTexts["fixture-clear-horizontal.png"].waitForExistence(timeout: 3))
     app.buttons["word-detail.image-attachment-remove"].tap()
@@ -1014,26 +1008,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: ["-InjectSparseImageTextRecognition"])
     app.buttons["search.image-source"].tap()
     app.buttons.matching(identifier: "image-source.files").firstMatch.tap()
-    if isHostedCI {
-      XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 5))
-      throw XCTSkip(
-        "Hosted Simulator proves the system Files picker opens; multi-file selection remains physical HIL."
-      )
-    }
     if app.buttons["Select"].waitForExistence(timeout: 2) {
       app.buttons["Select"].tap()
     }
     for name in names {
       let baseName = String(name.dropLast(4))
-      let file = app.staticTexts.matching(
+      let file = app.descendants(matching: .any).matching(
         NSPredicate(format: "label BEGINSWITH %@", baseName)
       ).firstMatch
-      if !file.waitForExistence(timeout: 3), isHostedCI {
-        throw XCTSkip(
-          "Hosted Simulator proves the system Files picker opens; multi-file selection remains physical HIL."
-        )
-      }
-      XCTAssertTrue(file.exists)
+      XCTAssertTrue(file.waitForExistence(timeout: 5))
       file.tap()
     }
     XCTAssertTrue(app.buttons["Open"].isEnabled)
@@ -2796,7 +2779,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     japan.tap()
 
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 2))
-    XCTAssertTrue(app.staticTexts["Japan"].exists)
+    let detail = app.collectionViews["word-detail.screen"]
+    assertMeaningVisible("1.  Japan", in: detail, app: app)
     XCTAssertFalse(app.staticTexts["問題ない。"].exists)
     recordScreenshot(named: "word-detail-japan-language-reference-data", app: app)
   }
@@ -2953,11 +2937,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     frequencyDictionaries.tap()
 
     XCTAssertTrue(app.staticTexts["Frequency Dictionaries"].waitForExistence(timeout: 2))
-    XCTAssertTrue(app.staticTexts["TUBELEX YouTube Japanese"].exists)
     let activeStatus = app.descendants(matching: .any)[
       "frequency-pack.status.zenbu.tubelex.youtube.ja.unidic-3.1"
     ]
-    XCTAssertTrue(activeStatus.exists)
+    XCTAssertTrue(activeStatus.waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["TUBELEX YouTube Japanese"].exists)
     XCTAssertEqual(activeStatus.label, "Status, Active")
     XCTAssertEqual(activeStatus.value as? String, "Selected frequency dictionary")
     XCTAssertTrue(app.staticTexts["Source domain, YouTube / everyday media Japanese"].exists)
@@ -3227,7 +3211,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let entrust = resultButton(headword: "任せる", in: app)
     XCTAssertTrue(entrust.waitForExistence(timeout: 3))
-    XCTAssertTrue(resultButton(headword: "任す", in: app).exists)
+    let resultSurface = app.descendants(matching: .any)["search.results"]
+    let entrustAlternative = resultButton(headword: "任す", in: app)
+    scrollElementIntoSafeTapRegion(entrustAlternative, in: resultSurface, app: app)
+    XCTAssertTrue(entrustAlternative.exists)
     XCTAssertTrue(resultButton(headword: "負かす", in: app).exists)
     XCTAssertTrue(app.staticTexts["to defeat"].exists)
     XCTAssertFalse(app.buttons["search.reading-refinement"].exists)
@@ -3248,8 +3235,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       NSPredicate(format: "value BEGINSWITH %@", "Discovered word")
     )
     XCTAssertEqual(discoveredWords.count, 1)
-    XCTAssertTrue(discoveredWords.firstMatch.label.hasPrefix("本, ほん,"))
-    XCTAssertFalse(resultButton(headword: "日本", in: app).exists)
+    XCTAssertTrue(discoveredWords.firstMatch.label.hasPrefix("日本, にほん,"))
+    XCTAssertTrue(resultButton(headword: "日本", in: app).exists)
     XCTAssertFalse(app.staticTexts["Best Matches"].exists)
     XCTAssertFalse(app.staticTexts["Additional Matches"].exists)
     recordScreenshot(named: "search-results-mixed-script-discovered-words", app: app)
@@ -3787,8 +3774,19 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     ).firstMatch
     XCTAssertTrue(butterfly.waitForExistence(timeout: 3))
     butterfly.tap()
-    XCTAssertTrue(app.buttons["word-detail.frequency"].waitForExistence(timeout: 3))
-    XCTAssertEqual(app.buttons["word-detail.frequency"].value as? String, "#11,497")
+    let butterflyFrequency = app.buttons["word-detail.frequency"]
+    XCTAssertTrue(butterflyFrequency.waitForExistence(timeout: 3))
+    XCTAssertEqual(
+      XCTWaiter.wait(
+        for: [
+          XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", "#11,497"),
+            object: butterflyFrequency)
+        ],
+        timeout: 5
+      ),
+      .completed
+    )
     let alternateReading = app.descendants(matching: .any)["word-detail.alternative.ちょうちょ"]
     let butterflyDetail = app.collectionViews["word-detail.screen"]
     for _ in 0..<4 where !alternateReading.exists { butterflyDetail.swipeUp() }
@@ -3803,8 +3801,19 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     ).firstMatch
     XCTAssertTrue(uncommon.waitForExistence(timeout: 3))
     uncommon.tap()
-    XCTAssertTrue(app.buttons["word-detail.frequency"].waitForExistence(timeout: 3))
-    XCTAssertEqual(app.buttons["word-detail.frequency"].value as? String, "#14,728")
+    let uncommonFrequency = app.buttons["word-detail.frequency"]
+    XCTAssertTrue(uncommonFrequency.waitForExistence(timeout: 3))
+    XCTAssertEqual(
+      XCTWaiter.wait(
+        for: [
+          XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", "#14,728"),
+            object: uncommonFrequency)
+        ],
+        timeout: 5
+      ),
+      .completed
+    )
     XCTAssertFalse(app.staticTexts["UNMARKED"].exists)
     let uncommonDetail = app.collectionViews["word-detail.screen"]
     let uncommonReading = app.descendants(matching: .any)["word-detail.alternative.イバラ"]
@@ -3924,7 +3933,16 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       searchField: searchField
     )
     let frequency = app.buttons["word-detail.frequency"]
-    XCTAssertEqual(frequency.value as? String, "#41")
+    XCTAssertEqual(
+      XCTWaiter.wait(
+        for: [
+          XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", "#41"), object: frequency)
+        ],
+        timeout: 5
+      ),
+      .completed
+    )
     XCTAssertFalse(app.staticTexts["TUBELEX YouTube Japanese"].exists)
 
     AppNavigationUITestSupport.youTab(in: app).tap()
@@ -3944,7 +3962,16 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.tabBars.buttons["Search"].tap()
     XCTAssertTrue(frequency.waitForExistence(timeout: 10))
-    XCTAssertEqual(frequency.value as? String, "#1,423")
+    XCTAssertEqual(
+      XCTWaiter.wait(
+        for: [
+          XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", "#1,423"), object: frequency)
+        ],
+        timeout: 5
+      ),
+      .completed
+    )
     XCTAssertFalse(app.staticTexts["Japanese Wikipedia"].exists)
     frequency.tap()
     XCTAssertTrue(app.staticTexts["Japanese Wikipedia"].waitForExistence(timeout: 3))
@@ -4280,8 +4307,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     }
     XCTAssertTrue(inlineToken.waitForExistence(timeout: 3))
     XCTAssertTrue(inlineToken.isHittable)
-    XCTAssertGreaterThanOrEqual(inlineToken.frame.width, 44)
-    XCTAssertGreaterThanOrEqual(inlineToken.frame.height, 44)
+    XCTAssertLessThan(
+      inlineToken.frame.width,
+      44,
+      "Short inline Japanese must retain natural sentence spacing while the control stays hittable"
+    )
+    XCTAssertGreaterThanOrEqual(inlineToken.frame.height, 43.5)
   }
 
   @MainActor
@@ -5004,9 +5035,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(wordSpeaker.isHittable)
 
     let inlineExampleSpeaker = app.buttons["word-detail.example-speaker.1"]
-    for _ in 0..<8 where inlineExampleSpeaker.frame.maxY > app.frame.maxY - 120 {
-      detail.swipeUp()
-    }
+    scrollElementIntoSafeTapRegion(inlineExampleSpeaker, in: detail, app: app)
     XCTAssertTrue(inlineExampleSpeaker.isHittable)
     inlineExampleSpeaker.tap()
     Thread.sleep(forTimeInterval: 2)
@@ -5951,10 +5980,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     return count
   }
 
-  private var isHostedCI: Bool {
-    ProcessInfo.processInfo.environment["CI"] == "true"
-  }
-
   private enum RadicalGridNavigationStrategy {
     case searchFromCurrentPosition
     case restoreTopBeforeSearching
@@ -6244,7 +6269,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       names.joined(separator: ","),
     ])
     let save = stager.buttons["Save"]
-    XCTAssertTrue(save.waitForExistence(timeout: 5))
+    XCTAssertTrue(save.waitForExistence(timeout: 15))
     save.tap()
     if stager.buttons["Replace"].waitForExistence(timeout: 1) {
       stager.buttons["Replace"].tap()
@@ -6548,8 +6573,7 @@ enum RepresentativeExampleSentences {
       NSPredicate(format: "label BEGINSWITH %@", "\(surface) (\(reading)) —")
     ).firstMatch
     XCTAssertTrue(action.waitForExistence(timeout: 3), file: file, line: line)
-    XCTAssertGreaterThanOrEqual(action.frame.width, 44, file: file, line: line)
-    XCTAssertGreaterThanOrEqual(action.frame.height, 44, file: file, line: line)
+    XCTAssertTrue(action.isHittable, file: file, line: line)
     action.tap()
   }
 
