@@ -27,7 +27,7 @@ struct RadicalInputView: View {
             ForEach(groups, id: \.strokeCount) { group in
               Text(group.strokeCount == 1 ? "1 Stroke" : "\(group.strokeCount) Strokes")
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.primary)
                 .accessibilityIdentifier("radical.stroke.\(group.strokeCount)")
               LazyVGrid(
                 columns: Array(
@@ -70,6 +70,7 @@ struct RadicalInputView: View {
           query = ""
         }
         .buttonStyle(.bordered)
+        .tint(.primary)
         .disabled(selectedRadicals.isEmpty && SearchQuery(query).isEmpty)
         .accessibilityLabel("Remove radical selection")
         .accessibilityIdentifier("radical.remove")

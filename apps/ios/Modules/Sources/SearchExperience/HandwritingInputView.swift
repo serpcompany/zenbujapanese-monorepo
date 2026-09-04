@@ -59,7 +59,9 @@ struct HandwritingInputView: View {
     if model.candidates.isEmpty {
       HStack {
         switch model.recognitionState {
-        case .idle: Text("Draw one Japanese character")
+        case .idle:
+          Text("Draw one Japanese character")
+            .foregroundStyle(.primary)
         case .recognizing:
           ProgressView().controlSize(.small)
           Text("Recognizing…")
