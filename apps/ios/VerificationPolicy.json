@@ -34,6 +34,7 @@
   },
   "correctness_plans": ["ZenbuPR", "ZenbuSudachiIntegration"],
   "intentional_same_stage_evidence": {
+    "ui.example-compact-hit-region|ui.example-compact-hit-region-dark": "The same direct no-handler audit must independently pass in light and dark appearance because #173 requires both appearances and appearance-specific accessibility geometry remains possible.",
     "ui.example-candidate-selection|ui.example-layout": "Candidate selection proves the native ambiguity Menu destination and Back restoration; the shared-layout journey independently proves reconstruction, rhythm, wrapping, ordinary linked navigation, and speech.",
     "ui.example-candidate-selection|ui.example-layout-hit-regions": "Candidate selection proves Menu routing; the focused hit audit independently inventories compact inline target accessibility without opening destinations.",
     "ui.example-candidate-selection|ui.example-layout-maximum": "Candidate selection runs once at normal size; the single maximum-size smoke independently proves adaptive wrapping and clipping.",
@@ -217,6 +218,12 @@
     "ui.example-compact-hit-region": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testRepresentativeExampleSentenceInlineLinksExposeUnsuppressedHitRegions",
+      "traits": ["ui", "accessibility", "normal-dynamic-type"],
+      "journeys": ["example-sentences-compact-hit-region"]
+    },
+    "ui.example-compact-hit-region-dark": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkDefaultRepresentativeExampleSentenceInlineLinksKeepExactHitRegions",
       "traits": ["ui", "accessibility", "normal-dynamic-type"],
       "journeys": ["example-sentences-compact-hit-region"]
     },
@@ -457,6 +464,7 @@
       "ui.example-layout-maximum",
       "ui.example-layout-hit-regions",
       "ui.example-compact-hit-region",
+      "ui.example-compact-hit-region-dark",
       "ui.example-candidate-selection",
       "ui.conjugations",
       "ui.japanese-text-analysis-settings",
@@ -864,7 +872,8 @@
       "tdd": [
         "ui.word-detail-text-maximum-dark",
         "ui.word-detail-text-maximum-light",
-        "ui.example-compact-hit-region"
+        "ui.example-compact-hit-region",
+        "ui.example-compact-hit-region-dark"
       ],
       "issue-final": [
         "contracts.repository",
@@ -890,7 +899,8 @@
         "ui.dictionary-sources-maximum-dark",
         "ui.dictionary-sources-maximum-light",
         "ui.example-layout-maximum",
-        "ui.example-compact-hit-region"
+        "ui.example-compact-hit-region",
+        "ui.example-compact-hit-region-dark"
       ]
     }
   }
