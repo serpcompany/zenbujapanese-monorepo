@@ -872,6 +872,56 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 ios_verification.merge_candidate_partitions(inaccessible),
             )
 
+    def test_timing_lane_counts_fail_closed_before_lane_id_generation(self):
+        repo_root = Path(__file__).parents[4]
+        inventory = ios_verification.repository_inventory(repo_root)
+        invalid_counts = (True, False, 0, -1, 1.5, 27)
+        for timing_group in ("accessibility-ui", "normal-ui"):
+            for invalid_count in invalid_counts:
+                with self.subTest(
+                    timing_group=timing_group, invalid_count=invalid_count
+                ):
+                    invalid = json.loads(json.dumps(inventory))
+                    invalid["merge_candidate_timing_profile"]["lane_counts"][
+                        timing_group
+                    ] = invalid_count
+                    with self.assertRaisesRegex(
+                        ios_verification.PolicyError,
+                        f"{timing_group} lane count.*integer.*1.*26",
+                    ):
+                        ios_verification.merge_candidate_partitions(invalid)
+
+        over_test_count = json.loads(json.dumps(inventory))
+        accessibility = set(
+            over_test_count["plans"]["ZenbuAccessibility"]["included_tests"]
+        )
+        unit = {
+            test
+            for test in over_test_count["plans"]["ZenbuPR"]["included_tests"]
+            if test.startswith("ZenbuJapaneseTests/")
+        }
+        normal = sorted(
+            set(over_test_count["plans"]["ZenbuPR"]["included_tests"])
+            - unit
+            - accessibility
+        )[:2]
+        retained = unit | accessibility | set(normal)
+        over_test_count["plans"]["ZenbuPR"]["included_tests"] = sorted(retained)
+        durations = over_test_count["merge_candidate_timing_profile"][
+            "test_durations_seconds"
+        ]
+        over_test_count["merge_candidate_timing_profile"]["test_durations_seconds"] = {
+            test: seconds for test, seconds in durations.items() if test in retained
+        }
+        over_test_count["merge_candidate_timing_profile"]["lane_counts"][
+            "normal-ui"
+        ] = 3
+        with self.assertRaisesRegex(
+            ios_verification.PolicyError,
+            "normal-ui lane count.*integer.*1.*2",
+        ):
+            ios_verification.merge_candidate_partitions(over_test_count)
+
     def test_manual_premerge_planner_preserves_the_same_measured_matrix(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "github-output"

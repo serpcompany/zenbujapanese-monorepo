@@ -110,6 +110,7 @@ INFRASTRUCTURE_FAILURES = {
     "simulator-uuid-lost",
     "xcode-service-unavailable",
 }
+LANE_SUFFIXES = "abcdefghijklmnopqrstuvwxyz"
 
 
 def require_verified_sha(*, current_sha: str, partition_shas: list[str]) -> None:
@@ -657,13 +658,27 @@ def _timing_balanced_partitions(
         lanes[lane_index]["tests"].append(test)
         lanes[lane_index]["measured_test_seconds"] += durations[test]
     return {
-        f"{lane_prefix}-{chr(ord('a') + index)}": {
+        f"{lane_prefix}-{LANE_SUFFIXES[index]}": {
             "plan": lane["plan"],
             "tests": sorted(lane["tests"]),
             "measured_test_seconds": round(lane["measured_test_seconds"], 3),
         }
         for index, lane in enumerate(lanes)
     }
+
+
+def _validated_lane_count(*, timing_group: str, raw_count: Any, test_count: int) -> int:
+    maximum = min(test_count, len(LANE_SUFFIXES))
+    if (
+        isinstance(raw_count, bool)
+        or not isinstance(raw_count, int)
+        or not 1 <= raw_count <= maximum
+    ):
+        raise PolicyError(
+            f"{timing_group} lane count must be an integer from 1 to {maximum}; "
+            f"got {raw_count!r}"
+        )
+    return raw_count
 
 
 def merge_candidate_partitions(inventory: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -702,16 +717,26 @@ def merge_candidate_partitions(inventory: dict[str, Any]) -> dict[str, dict[str,
         )
 
     lane_counts = timing_profile["lane_counts"]
+    accessibility_lane_count = _validated_lane_count(
+        timing_group="accessibility-ui",
+        raw_count=lane_counts.get("accessibility-ui"),
+        test_count=len(accessibility),
+    )
+    normal_lane_count = _validated_lane_count(
+        timing_group="normal-ui",
+        raw_count=lane_counts.get("normal-ui"),
+        test_count=len(normal_ui),
+    )
     accessibility_partitions = _timing_balanced_partitions(
         tests=accessibility,
         durations=durations,
-        lane_count=lane_counts["accessibility-ui"],
+        lane_count=accessibility_lane_count,
         lane_prefix="accessibility-ui",
     )
     normal_partitions = _timing_balanced_partitions(
         tests=normal_ui,
         durations=durations,
-        lane_count=lane_counts["normal-ui"],
+        lane_count=normal_lane_count,
         lane_prefix="normal-ui",
     )
     integration = inventory["plans"]["ZenbuSudachiIntegration"]["included_tests"]
