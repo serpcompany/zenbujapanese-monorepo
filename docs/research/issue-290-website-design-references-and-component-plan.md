@@ -20,6 +20,114 @@ Evidence baseline: `issue-271-website-dictionary-plan` at `485b3a63f40377d425e35
 
 > Compatibility-first resolution (2026-09-05): use official shadcn Create's current Next.js/default-family preset, neutral semantic surfaces, and generated blue interaction theme through standard `components.json` and `apps/web/app/globals.css`. Add Zenbu red only as a separate brand token initially. Retain generated dark tokens without designing or exposing a theme switch in the first pass. Use the free shadcncraft Figma Starter Kit for lightweight pre-code mockups only; do not use its React code.
 
+> Figma status clarification (2026-09-05): no Figma file or library has been created or used yet. The free shadcncraft Starter Kit is only the current candidate because official shadcn documentation lists it and it supports shadcn/Create-aligned variables. Its free surface is primarily a component kit with a small set of blocks, not a complete free page-template system. Do not imply that page templates have already been selected.
+
+> Owner definition of “simple” (2026-09-05): begin with a very minimal, familiar website containing the elements people ordinarily expect. Recall and Kanjikana are simplicity references only, not visual templates to copy.
+
+### Owner-supplied simplicity references
+
+The owner supplied current Recall and Kanjikana pages to establish the intended degree of restraint rather than a brand or layout to reproduce.
+
+Observed qualities to carry into the first Zenbu mockups:
+
+- compact, conventional header rather than an application dashboard shell;
+- centered, bounded content width and generous whitespace;
+- light neutral/white surfaces with dark readable text;
+- blue reserved for clear actions and links;
+- thin borders and separators before shadows or ornamental effects;
+- plain section headings, lists, grids, and definition/fact groupings;
+- cards only when repeated content is genuinely a card-like unit;
+- expected footer/navigation/legal patterns without novelty;
+- minimal animation and decorative chrome;
+- responsive stacking driven by content rather than a separate mobile visual concept.
+
+Reference boundaries:
+
+- Recall's landing and public deck pages demonstrate sparse navigation, restrained blue calls to action, bounded prose, simple fact rows, and repeated learning cards.
+- Kanjikana demonstrates a compact learning-tool header, search and locale/theme controls, simple content grids/lists, and content-first Japanese detail pages.
+- Do not copy their logos, typography, marketing content, illustrations, navigation inventory, grids, monetization patterns, or precise page composition.
+- Zenbu's actual sections and hierarchy still come from its approved app/web dictionary contract and real app content.
+
+### Initial minimal page-frame inventory
+
+The first Figma work should use the selected shadcn-compatible component kit to assemble only conventional frames:
+
+1. **Site shell:** Zenbu identity, essential navigation, locale control, main landmark, and expected footer.
+2. **Dictionary landing:** page identity, one submit-first search form, short usage guidance, and no speculative feature dashboard.
+3. **Submitted results:** retained query, explicit Best/Additional groups, simple exact-entry links, and defined status states.
+4. **Exact entry:** exact identity, reading/pronunciation actions, ordered public dictionary sections, and examples/relationships where present; layout remains a prototype question rather than an assumed two-column rule.
+5. **Prose frame:** one Typeset-backed readable content container for About/Legal/Resources-like content.
+
+Use official shadcn primitives and applicable official blocks inside these frames. Composing Zenbu's domain-specific result and entry sections is necessary; hand-building replacement controls is not.
+
+### Simplicity is a delivery constraint, not a visual-design project
+
+The owner clarified that the references are not invitations to develop an elaborate style. The goal is to avoid spending substantial time, energy, or thought on distinctive presentation before the site has useful content.
+
+Prioritize, in order:
+
+1. functional public content and navigation;
+2. fast loading and server-renderable output;
+3. responsive behavior from conventional document flow;
+4. accessible native semantics and official shadcn controls;
+5. low defect surface and straightforward browser QA;
+6. restrained, recognizable Zenbu branding;
+7. visual customization only where a real requirement remains unmet.
+
+Default implementation posture:
+
+- use shadcn's generated defaults and semantic tokens;
+- prefer ordinary document flow, headings, lists, links, forms, and bounded containers;
+- minimize bespoke CSS, animation, layout modes, component variants, and dependencies;
+- do not make Figma, theming, or a design system an independent project;
+- do not block useful content on visual polish;
+- add complexity only in response to a demonstrated content, usability, accessibility, or product requirement.
+
+The Figma-kit candidate is optional tooling, not a required dependency or deliverable. Any pre-code design work should be the smallest structural check needed to prevent obvious rework.
+
+### Figma trial result
+
+On 2026-09-05, a fresh [`Zenbu Japanese Website V1`](https://www.figma.com/design/p7tBaTcDh3VTbxItGG0zLM) design file was created in the owner's `SERP 2025` Starter team to test the out-of-box component workflow.
+
+Discovery established:
+
+- no current shadcn/shadcncraft library was available to add through the connected Figma library inventory;
+- Figma's maintained `Simple Design System` was already available and included component sets for Header, Footer, Search, Button, Input, Select, Navigation, Card, and Notification;
+- it also exposed semantic color variables, blue primitives, spacing/radius variables, and heading/body text styles;
+- the available components could support a minimal structural mockup, but they would be Figma-only stand-ins for official shadcn code rather than one-to-one design/code components;
+- the Starter plan reached its MCP call limit before the first component instance could be imported or any canvas content created;
+- the desktop upgrade prompt advertised a ¥2,400/month Professional Full seat with 200 MCP calls per day.
+
+No upgrade was purchased and no old `shadcnblocks` file was used. The fresh file remains blank. Because design is explicitly subordinate to delivery, do not pay for or wait indefinitely on Figma merely to produce low-fidelity frames that can be validated more reliably in the browser.
+
+#### Browser workaround and completed first pass
+
+The owner supplied a separate, current September 2026 shadcn community file and asked whether it could be used through the authenticated browser. That route succeeded and supersedes the blocked blank-file experiment above.
+
+Source/design file: [shadcn/ui components with variables and Tailwind classes — September 2026](https://www.figma.com/design/5IgA60ZAyhIh97skZt6cnv/shadcn-ui-components-with-variables---Tailwind-classes---Updated-September-2026--Community-?node-id=4003-2&p=f)
+
+A new isolated page named `Zenbu Website V1` was added inside the editable community-file copy. The existing component, example, block, variable, style, and icon pages were not modified.
+
+Completed frames:
+
+- [`01 Dictionary Landing`](https://www.figma.com/design/5IgA60ZAyhIh97skZt6cnv/shadcn-ui-components-with-variables---Tailwind-classes---Updated-September-2026--Community-?node-id=4005-18445&p=f)
+- [`02 Search Results — hello`](https://www.figma.com/design/5IgA60ZAyhIh97skZt6cnv/shadcn-ui-components-with-variables---Tailwind-classes---Updated-September-2026--Community-?node-id=4005-18446&p=f)
+- [`03 Exact Entry — 今日は`](https://www.figma.com/design/5IgA60ZAyhIh97skZt6cnv/shadcn-ui-components-with-variables---Tailwind-classes---Updated-September-2026--Community-?node-id=4005-18447&p=f)
+
+The first pass intentionally uses:
+
+- a compact expected header and footer;
+- one task-focused landing search;
+- explicit Best Matches and Additional Matches groups;
+- one content-first exact-entry column;
+- linked shadcn Button, Input Group, Item, and Badge instances;
+- the kit's Tailwind/shadcn variables and spacing;
+- Inter for Latin text and verified Noto Sans JP for Japanese text;
+- real representative Zenbu/JMdict fixture content;
+- no hero art, dashboard, marketing blocks, animation, or speculative product features.
+
+Validation confirmed all three frames are 1280×900, contain the expected Header/Content/Footer structure, retain linked component instances, contain no unfinished placeholders, and have no Japanese text left on the Inter family. Mobile/responsive frames remain intentionally uncreated until the owner reviews whether this degree of simplicity is correct.
+
 Zenbu's website should feel like a calm, fast reference tool with one unmistakable Zenbu signature: the existing red `全` mark. It should preserve the iPhone app's information hierarchy and learner-visible states without copying either the old red-chrome iPhone UI or Takoboto's dense desktop shell.
 
 The recommended V1 direction is:

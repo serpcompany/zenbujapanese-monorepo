@@ -360,3 +360,23 @@ Resolve #277 with a minimal pnpm workspace for the website, not shadcn's generat
 - retain preset `b1PzeK` as the selected visual/component preset, but initialize it against the existing `apps/web` project rather than running its New Project `--monorepo` command at the Zenbu root.
 
 This is deliberately reversible. Shared domain/data contracts may still be introduced later under their own approved issue; that does not require prematurely extracting the website's UI components.
+
+### 2026-09-05 — Figma-library status and simplicity references
+
+No Figma library or design file has been created yet. The free shadcncraft Starter Kit remains only the current candidate for component-aligned mockups; its free offering must not be described as a complete page-template library.
+
+The owner defined “simple” through Recall and Kanjikana examples: a minimal, conventional, content-first website with compact expected navigation, bounded readable content, light neutral surfaces, restrained blue interaction, thin borders, generous whitespace, and little decorative chrome. These are degree-of-simplicity references, not designs to copy. The first frames should assemble the site shell, dictionary landing, submitted results, exact entry, and one prose layout from official shadcn-shaped components, with Zenbu-specific hierarchy supplied by the app/web dictionary contract.
+
+### 2026-09-05 — Simplicity as an execution priority
+
+The owner is explicitly optimizing for getting content online through a fast, functional, responsive, minimal, low-bug website—not for investing in an elaborate visual identity or design process. Use official defaults and conventional composition as the answer whenever they satisfy the requirement. Figma, theming, custom styling, motion, and layout experimentation must remain subordinate to delivery and should not become independent workstreams.
+
+The shadcncraft Figma kit is therefore optional rather than required. The smallest pre-code structural check is preferable to a multi-page polished mockup set, and useful implementation should not wait for cosmetic decisions.
+
+### 2026-09-05 — Figma MCP trial
+
+A fresh [`Zenbu Japanese Website V1`](https://www.figma.com/design/p7tBaTcDh3VTbxItGG0zLM) file was created in the `SERP 2025` Starter team. The connector exposed no current shadcn-specific library, but Figma's `Simple Design System` provided sufficient generic Header, Footer, Search, Button, Input, Select, Navigation, Card, Notification, variable, spacing, radius, and text-style assets for a structural mockup.
+
+The Starter team reached its MCP call limit before the first component instance could be imported, leaving the new file blank. No paid upgrade was authorized or purchased, and the unrelated legacy `shadcnblocks` file was excluded. Treat this as evidence that Figma may add more process/cost than value for the minimal V1 unless the quota resets or an existing suitable library becomes directly accessible.
+
+The owner subsequently supplied a separate, current September 2026 shadcn community file. Authenticated browser access made the editable local component library available without using the unrelated legacy file. A new isolated `Zenbu Website V1` page was added and three desktop frames were completed from linked shadcn Button, Input Group, Item, and Badge instances plus the kit's Tailwind variables and text styles. See the [component-plan report](issue-290-website-design-references-and-component-plan.md#browser-workaround-and-completed-first-pass) for exact frame links and validation evidence.
