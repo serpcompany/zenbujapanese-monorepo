@@ -1668,7 +1668,8 @@ final class AccessibilityAuditUITests: XCTestCase {
     let japan = app.buttons["result.japan"]
     XCTAssertTrue(japan.waitForExistence(timeout: 5))
     japan.tap()
-    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 5))
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 5))
     let identity = app.descendants(matching: .any)["ruby.日本.日本=にほん"]
     XCTAssertTrue(identity.waitForExistence(timeout: 5))
     XCTAssertEqual(identity.label, "日本, にほん")
@@ -1698,6 +1699,48 @@ final class AccessibilityAuditUITests: XCTestCase {
       named: "Word Detail - \(appearance == .dark ? "dark" : "light") accessibility XXXL",
       types: types
     )
+    if types == .dynamicType.union(.textClipped) {
+      let alternative = app.descendants(matching: .any)["word-detail.alternative.にっぽん"]
+      bringIntoUnobscuredViewport(alternative, in: detail, app: app)
+      XCTAssertGreaterThanOrEqual(alternative.frame.height, 44)
+      retainElementScreenshot(
+        alternative,
+        named: "Word Detail alternative - \(appearance) accessibility XXXL"
+      )
+
+      let meaning = app.staticTexts["1.  Japan"]
+      bringIntoUnobscuredViewport(meaning, in: detail, app: app)
+      XCTAssertGreaterThanOrEqual(meaning.frame.height, 44)
+      retainElementScreenshot(
+        meaning,
+        named: "Word Detail meaning - \(appearance) accessibility XXXL"
+      )
+    }
+  }
+
+  @MainActor
+  private func bringIntoUnobscuredViewport(
+    _ element: XCUIElement,
+    in list: XCUIElement,
+    app: XCUIApplication,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let visibleTop = app.navigationBars.firstMatch.frame.maxY
+    let visibleBottom = app.tabBars.firstMatch.frame.minY
+    for _ in 0..<10 {
+      if !element.exists || element.frame.maxY > visibleBottom {
+        list.swipeUp(velocity: .slow)
+      } else if element.frame.minY < visibleTop {
+        list.swipeDown(velocity: .slow)
+      } else {
+        break
+      }
+    }
+    XCTAssertTrue(element.exists, file: file, line: line)
+    XCTAssertTrue(element.isHittable, file: file, line: line)
+    XCTAssertGreaterThanOrEqual(element.frame.minY, visibleTop, file: file, line: line)
+    XCTAssertLessThanOrEqual(element.frame.maxY, visibleBottom, file: file, line: line)
   }
 
   @MainActor
