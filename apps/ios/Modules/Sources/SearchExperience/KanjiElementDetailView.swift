@@ -145,10 +145,14 @@ private struct KanjiElementContent: View {
     }
 
     if !entry.meanings.isEmpty {
-      Section("MEANING / STRUCTURE") {
+      Section {
         Text(
           "This element contributes forms associated with \(entry.meanings.joined(separator: ", "))."
         )
+        .accessibilityIdentifier("kanji-element.meaning-explanation")
+      } header: {
+        Text("MEANING / STRUCTURE")
+          .accessibilityIdentifier("kanji-element.meaning-header")
       }
     }
 

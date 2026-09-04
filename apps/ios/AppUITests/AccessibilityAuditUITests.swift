@@ -1638,6 +1638,23 @@ final class AccessibilityAuditUITests: XCTestCase {
       named: "Kanji Element Detail accessibility XXXL",
       types: .contrast
     )
+    let meaningHeader = app.staticTexts["kanji-element.meaning-header"]
+    let meaningExplanation = app.staticTexts["kanji-element.meaning-explanation"]
+    bringIntoUnobscuredViewport(meaningExplanation, in: elementDetail, app: app)
+    XCTAssertTrue(meaningHeader.exists)
+    XCTAssertGreaterThanOrEqual(
+      meaningHeader.frame.minY,
+      app.navigationBars.firstMatch.frame.maxY
+    )
+    XCTAssertLessThanOrEqual(meaningHeader.frame.maxY, app.tabBars.firstMatch.frame.minY)
+    retainElementScreenshot(
+      meaningHeader,
+      named: "Kanji Element meaning header - \(appearance) accessibility XXXL"
+    )
+    retainElementScreenshot(
+      meaningExplanation,
+      named: "Kanji Element meaning explanation - \(appearance) accessibility XXXL"
+    )
     let containingSection = app.staticTexts["KANJI CONTAINING THIS ELEMENT"]
     for _ in 0..<10 where !containingSection.exists { elementDetail.swipeUp() }
     XCTAssertTrue(containingSection.exists)
