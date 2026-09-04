@@ -3240,6 +3240,19 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(app.staticTexts["Best Matches"].exists)
     XCTAssertFalse(app.staticTexts["Additional Matches"].exists)
     recordScreenshot(named: "search-results-mixed-script-discovered-words", app: app)
+
+    app.buttons["Clear text"].tap()
+    searchField.tap()
+    searchField.typeText("蝶々abc")
+    let iterationWord = resultButton(headword: "蝶々", in: app)
+    XCTAssertTrue(iterationWord.waitForExistence(timeout: 3))
+    XCTAssertTrue(iterationWord.label.hasPrefix("蝶々, ちょうちょう, butterfly"))
+    assertElement(
+      iterationWord,
+      reachesValue: "Discovered word 1, Frequency rank 11,497",
+      timeout: 5
+    )
+    XCTAssertFalse(resultButton(headword: "ＡＢＣ", in: app).exists)
   }
 
   @MainActor
@@ -3776,17 +3789,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     butterfly.tap()
     let butterflyFrequency = app.buttons["word-detail.frequency"]
     XCTAssertTrue(butterflyFrequency.waitForExistence(timeout: 3))
-    XCTAssertEqual(
-      XCTWaiter.wait(
-        for: [
-          XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value == %@", "#11,497"),
-            object: butterflyFrequency)
-        ],
-        timeout: 5
-      ),
-      .completed
-    )
+    assertElement(butterflyFrequency, reachesValue: "#11,497", timeout: 5)
     let alternateReading = app.descendants(matching: .any)["word-detail.alternative.ちょうちょ"]
     let butterflyDetail = app.collectionViews["word-detail.screen"]
     for _ in 0..<4 where !alternateReading.exists { butterflyDetail.swipeUp() }
@@ -3803,17 +3806,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     uncommon.tap()
     let uncommonFrequency = app.buttons["word-detail.frequency"]
     XCTAssertTrue(uncommonFrequency.waitForExistence(timeout: 3))
-    XCTAssertEqual(
-      XCTWaiter.wait(
-        for: [
-          XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value == %@", "#14,728"),
-            object: uncommonFrequency)
-        ],
-        timeout: 5
-      ),
-      .completed
-    )
+    assertElement(uncommonFrequency, reachesValue: "#14,728", timeout: 5)
     XCTAssertFalse(app.staticTexts["UNMARKED"].exists)
     let uncommonDetail = app.collectionViews["word-detail.screen"]
     let uncommonReading = app.descendants(matching: .any)["word-detail.alternative.イバラ"]
@@ -3933,16 +3926,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       searchField: searchField
     )
     let frequency = app.buttons["word-detail.frequency"]
-    XCTAssertEqual(
-      XCTWaiter.wait(
-        for: [
-          XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value == %@", "#41"), object: frequency)
-        ],
-        timeout: 5
-      ),
-      .completed
-    )
+    assertElement(frequency, reachesValue: "#41", timeout: 5)
     XCTAssertFalse(app.staticTexts["TUBELEX YouTube Japanese"].exists)
 
     AppNavigationUITestSupport.youTab(in: app).tap()
@@ -3962,16 +3946,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.tabBars.buttons["Search"].tap()
     XCTAssertTrue(frequency.waitForExistence(timeout: 10))
-    XCTAssertEqual(
-      XCTWaiter.wait(
-        for: [
-          XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value == %@", "#1,423"), object: frequency)
-        ],
-        timeout: 5
-      ),
-      .completed
-    )
+    assertElement(frequency, reachesValue: "#1,423", timeout: 5)
     XCTAssertFalse(app.staticTexts["Japanese Wikipedia"].exists)
     frequency.tap()
     XCTAssertTrue(app.staticTexts["Japanese Wikipedia"].waitForExistence(timeout: 3))
@@ -6309,6 +6284,28 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     for _ in 0..<attempts where !element.isHittable {
       container.swipeDown(velocity: .slow)
     }
+  }
+
+  @MainActor
+  private func assertElement(
+    _ element: XCUIElement,
+    reachesValue expectedValue: String,
+    timeout: TimeInterval,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let expectation = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", expectedValue),
+      object: element
+    )
+    let result = XCTWaiter.wait(for: [expectation], timeout: timeout)
+    XCTAssertEqual(
+      result,
+      .completed,
+      "Expected \(element.identifier) to reach value \(expectedValue); found \(String(describing: element.value))",
+      file: file,
+      line: line
+    )
   }
 
   @MainActor
