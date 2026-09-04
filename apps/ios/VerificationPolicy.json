@@ -1028,6 +1028,22 @@
         "ui.reading-aids-romaji"
       ]
     },
+    "secondary-accessibility-adjudication": {
+      "paths": [],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
+        "apps/ios/CI.md",
+        "apps/ios/VerificationPolicy.json"
+      ],
+      "tdd": [
+        "ui.accessibility-secondary-dark",
+        "ui.accessibility-secondary-light"
+      ],
+      "issue-final": [
+        "ui.accessibility-secondary-dark",
+        "ui.accessibility-secondary-light"
+      ]
+    },
     "search-readiness-test-repair": {
       "paths": [],
       "reviewed_override_paths": [
