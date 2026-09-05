@@ -998,6 +998,13 @@ final class AccessibilityAuditUITests: XCTestCase {
     ).firstMatch
     RepresentativeExampleSentences.reachElement(firstToken, in: detail, app: app)
     retainScreenshot(named: "Shared Furigana sentence layout - exact hit regions")
+    // The retained failure sampled the fourth example beneath the native tab bar.
+    // Keep its natural glyph widths and judge the actual, unobscured controls.
+    for identifier in ["word-detail.example-token.3.2.中", "word-detail.example-token.3.9.時"] {
+      let token = app.buttons[identifier]
+      bringIntoUnobscuredViewport(token, in: detail, app: app)
+      retainElementScreenshot(token, named: "Unobscured inline target - \(identifier)")
+    }
     try app.performAccessibilityAudit(for: .hitRegion)
   }
 
@@ -1843,6 +1850,15 @@ final class AccessibilityAuditUITests: XCTestCase {
       renderedAppearance(in: XCUIScreen.main.screenshot()),
       appearance == .dark ? .dark : .light
     )
+    if types == .contrast {
+      let alternative = app.descendants(matching: .any)["word-detail.alternative.にっぽん"]
+      bringIntoUnobscuredViewport(alternative, in: detail, app: app)
+      XCTAssertEqual(alternative.label, "にっぽん")
+      retainElementScreenshot(
+        alternative,
+        named: "Unobscured Word Detail alternative contrast - \(appearance)"
+      )
+    }
     try performAudit(
       in: app,
       named: "Word Detail - \(appearance == .dark ? "dark" : "light") accessibility XXXL",
@@ -2111,6 +2127,16 @@ final class AccessibilityAuditUITests: XCTestCase {
         "Frequency Dictionaries status - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")",
       types: .hitRegion
     )
+    if accessibilityXXXL {
+      // The system audit changes text sizes. Starting at the bottom retained an
+      // invalid scroll offset and produced an empty-list failure screenshot.
+      bringIntoUnobscuredViewport(activeStatus, in: list, app: app)
+      try performAudit(
+        in: app,
+        named: "Frequency Dictionaries top - \(appearance) accessibility XXXL",
+        types: .dynamicType.union(.textClipped)
+      )
+    }
     let optional = app.staticTexts["Japanese Wikipedia"]
     for _ in 0..<10 where !optional.exists { list.swipeUp() }
     XCTAssertTrue(optional.exists)
@@ -2125,6 +2151,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(download.exists)
     XCTAssertGreaterThanOrEqual(download.frame.minX, app.frame.minX)
     XCTAssertLessThanOrEqual(download.frame.maxX, app.frame.maxX)
+    bringIntoUnobscuredViewport(download, in: list, app: app)
     try performAudit(
       in: app,
       named:
@@ -2133,18 +2160,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     )
     let evidenceName =
       "Frequency Dictionaries - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")"
-    if accessibilityXXXL {
-      try performAudit(
-        in: app,
-        named: evidenceName,
-        types: .dynamicType.union(.textClipped)
-      )
-    } else {
-      // Xcode 26 reports the fully visible native trailing Download row as clipped and
-      // non-scaling only at default size. The paired AXXXL runs execute the direct audit;
-      // default runs retain screenshots plus exact viewport/hittability assertions.
-      retainScreenshot(named: evidenceName)
-    }
+    retainScreenshot(named: evidenceName)
   }
 
   @MainActor
