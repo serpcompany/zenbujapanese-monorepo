@@ -429,15 +429,30 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func waitForSystemPhotoPicker(in app: XCUIApplication) {
-    // PhotosUI changes its container hierarchy between presentations. Wait for
-    // its public navigation and interactive Cancel after the cold service handoff.
+    // Cold CI presentation reached a successful Cancel interaction within 35.39s
+    // of this wait; warm readiness took 3.59s. Allow scheduling headroom while
+    // requiring the public Photos navigation and interactive Cancel together.
     let navigation = app.navigationBars["Photos"]
-    XCTAssertTrue(navigation.waitForExistence(timeout: 10))
-    let interactiveCancel = XCTNSPredicateExpectation(
-      predicate: NSPredicate(format: "exists == true AND isHittable == true"),
-      object: navigation.buttons["Cancel"]
+    let cancel = navigation.buttons["Cancel"]
+    let startedAt = ProcessInfo.processInfo.systemUptime
+    let readiness = XCTNSPredicateExpectation(
+      predicate: NSPredicate { _, _ in
+        navigation.exists && cancel.exists && cancel.isHittable
+      },
+      object: app
     )
-    XCTAssertEqual(XCTWaiter.wait(for: [interactiveCancel], timeout: 5), .completed)
+    let result = XCTWaiter.wait(for: [readiness], timeout: 45)
+    let elapsed = ProcessInfo.processInfo.systemUptime - startedAt
+    print(
+      String(
+        format: "Native Photos readiness: result=%ld elapsed_seconds=%.3f deadline_seconds=45",
+        result.rawValue, elapsed
+      )
+    )
+    XCTAssertEqual(
+      result, .completed,
+      "The native Photos navigation and its interactive Cancel must become ready within 45 seconds."
+    )
   }
 
   @MainActor
