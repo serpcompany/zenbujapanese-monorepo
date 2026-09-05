@@ -119,8 +119,6 @@
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testRepresentativeExampleSentenceWordMenuPassesHitRegionAudit": 26.427,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerReachableSearchAndWordDetailAreReadableInDarkMode": 37.878,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerReachableSearchAndWordDetailAreReadableInLightMode": 37.527,
-    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode": 205.529,
-    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode": 202.308,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutKeepsExactInlineHitRegionInventory": 25.857,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedReadingAidSentenceLayoutWrapsNaturallyAtLargestAccessibilityTextSize": 85.415,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testStrokeOrderStepActionsUseDirectionalSymbols": 17.403,

@@ -425,6 +425,54 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             ["ui.reading-aid", "ui.word", "ui.examples"],
         )
 
+    def test_secondary_accessibility_adjudication_keeps_broad_audits_diagnostic(self):
+        repo_root = Path(__file__).parents[4]
+        manifest = ios_verification.load_and_validate_manifest(
+            repo_root / "apps/ios/VerificationPolicy.json"
+        )
+        arguments = {
+            "manifest": manifest,
+            "changed_paths": [],
+            "event": "local",
+            "draft": True,
+            "source_sha": "candidate",
+            "requested_capabilities": ["secondary-accessibility-adjudication"],
+        }
+
+        tdd = ios_verification.resolve_plan(stage="tdd", **arguments)
+        issue_final = ios_verification.resolve_plan(stage="issue-final", **arguments)
+        diagnostics = ios_verification.resolve_plan(
+            manifest=manifest,
+            changed_paths=[],
+            stage="tdd",
+            event="local",
+            draft=True,
+            source_sha="candidate",
+            requested_capabilities=["secondary-accessibility-diagnostics"],
+        )
+        tdd_partitions = ios_verification.selector_partitions(
+            manifest, tdd["selectors"]
+        )
+        issue_final_partitions = ios_verification.selector_partitions(
+            manifest, issue_final["selectors"]
+        )
+        diagnostic_partitions = ios_verification.selector_partitions(
+            manifest, diagnostics["selectors"]
+        )
+
+        self.assertEqual(
+            set(diagnostic_partitions["diagnostics"]),
+            {
+                "diagnostic.secondary-surfaces-dark",
+                "diagnostic.secondary-surfaces-light",
+            },
+        )
+        self.assertNotIn("ui", tdd_partitions)
+        self.assertNotIn("diagnostics", tdd_partitions)
+        self.assertNotIn("diagnostics", issue_final_partitions)
+        self.assertEqual(tdd["selectors"], ["contracts.repository"])
+        self.assertEqual(issue_final["selectors"], ["contracts.repository"])
+
     def test_reused_products_with_wrong_source_fingerprint_fail_closed(self):
         marker = {
             "source_fingerprint": "old-source",
@@ -724,15 +772,15 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             )
             self.assertEqual(
                 [lane["test_count"] for lane in matrix],
-                [112, 24, 23, 23, 26, 26, 26, 27, 26, 3],
+                [112, 22, 23, 23, 26, 26, 26, 27, 26, 3],
             )
             self.assertEqual(
                 [lane["measured_test_seconds"] for lane in matrix],
                 [
                     33.951,
-                    1289.502,
-                    1288.224,
-                    1287.983,
+                    1150.814,
+                    1153.155,
+                    1153.903,
                     1295.008,
                     1292.152,
                     1285.508,
@@ -773,7 +821,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             {lane: len(partition["tests"]) for lane, partition in partitions.items()},
             {
                 "unit": 112,
-                "accessibility-ui-a": 24,
+                "accessibility-ui-a": 22,
                 "accessibility-ui-b": 23,
                 "accessibility-ui-c": 23,
                 "normal-ui-a": 26,
@@ -812,7 +860,9 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         normal_loads = [
             partitions[lane]["measured_test_seconds"] for lane in normal_lanes
         ]
-        self.assertLess(max(accessibility_loads) - min(accessibility_loads), 2)
+        # Removing the two long #289 whole-window diagnostics leaves the three exact
+        # correctness shards within 3.089 seconds across roughly 19 minutes each.
+        self.assertLess(max(accessibility_loads) - min(accessibility_loads), 4)
         self.assertLess(max(normal_loads) - min(normal_loads), 10)
 
         unmeasured = json.loads(json.dumps(inventory))
@@ -993,7 +1043,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             {lane: len(partition["tests"]) for lane, partition in partitions.items()},
             {
                 "unit": 112,
-                "accessibility-ui-a": 24,
+                "accessibility-ui-a": 22,
                 "accessibility-ui-b": 23,
                 "accessibility-ui-c": 23,
                 "normal-ui-a": 26,
@@ -1009,7 +1059,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         repo_root = Path(__file__).parents[4]
         expected = {
             "complete.merge-unit": ("ZenbuPR", 112),
-            "complete.merge-accessibility-a": ("ZenbuPR", 24),
+            "complete.merge-accessibility-a": ("ZenbuPR", 22),
             "complete.merge-accessibility-b": ("ZenbuPR", 23),
             "complete.merge-accessibility-c": ("ZenbuPR", 23),
             "complete.merge-ui-a": ("ZenbuPR", 26),

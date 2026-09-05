@@ -24,8 +24,10 @@
   "testTargets" : [
     {
       "parallelizable" : false,
-      "selectedTests" : [
-        "AccessibilityAuditUITests"
+      "selectedTests" : ["AccessibilityAuditUITests"],
+      "skippedTests" : [
+        "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode",
+        "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode"
       ],
       "target" : {
         "containerPath" : "container:ZenbuJapanese.xcodeproj",

@@ -40,6 +40,8 @@
         "SearchExperienceJourneyUITests"
       ],
       "skippedTests" : [
+        "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode",
+        "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode",
         "SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
         "SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()"
       ],

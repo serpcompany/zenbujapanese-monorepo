@@ -44,6 +44,8 @@
         "SearchExperienceJourneyUITests"
       ],
       "skippedTests" : [
+        "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode",
+        "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode",
         "SearchExperienceJourneyUITests/testImageTextAppleTranslationWorksOfflineAcrossPhysicalColdRelaunch()",
         "SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
         "SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()"

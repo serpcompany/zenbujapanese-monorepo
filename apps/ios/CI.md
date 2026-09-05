@@ -41,12 +41,13 @@ Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
 provider except for the bounded bundled-provider cold-relaunch journey. The
 merge-candidate workflow invokes and retains both correctness plans.
 
-The exact inventory contains 324 tests. `ZenbuPR` includes 313 (112 Unit and 201
+The exact inventory contains 324 tests. `ZenbuPR` includes 311 (112 Unit and 199
 UI), and `ZenbuSudachiIntegration` includes three network-backed Unit tests. The
-eight exact tests outside those correctness plans are one performance-only Unit
-test, three physical/system HIL journeys, and #269's four deliberately red
-framework diagnostics. The diagnostics remain independently callable through
-their dedicated plan and never enter `ZenbuPR` or `ZenbuNightly`.
+ten exact tests outside those correctness plans are one performance-only Unit
+test, three physical/system HIL journeys, #269's four deliberately red framework
+diagnostics, and #289's two broad secondary-surface whole-window diagnostics. The
+diagnostics remain independently callable through their dedicated plan and never
+enter `ZenbuPR` or `ZenbuNightly`.
 
 The complete suite is not repeated after merge when the merge-queue SHA already
 passed. The manual breadth workflow has no schedule because iOS changes are
@@ -73,6 +74,19 @@ AX5 geometry and navigation, plus native tab/navigation legibility. This narrow 
 separation is not an audit handler, expected failure, skip, or permission to move any
 other #173 audit out of correctness coverage.
 
+#293 empirically proved that Xcode's whole-window contrast audit is sensitive but
+not specific at the native iOS 26 Liquid Glass boundary: it detected an unobscured
+authored defect and cleared that exact finding after semantic repair while retaining
+an anonymous native-boundary finding. On that evidence, #289's two unchanged broad
+secondary-surface methods remain visibly red in `ZenbuAccessibilityDiagnostics`.
+Their focused app-owned You, Frequency, Dictionary Sources, Japanese Text Analysis,
+Kanji, Conjugation, Example, Media, and Image Text seams remain blocking in
+`ZenbuPR` or `ZenbuAccessibility`. This is the entire #289 authorization boundary;
+it does not move any other direct audit out of correctness coverage. Ordinary
+#289 TDD and issue-final selection run repository contracts only. An explicit
+`secondary-accessibility-diagnostics` request remains available when a human
+chooses to replay the two visible-red whole-window diagnostics.
+
 `VerificationPolicy.json` is the canonical capability and lifecycle manifest.
 `Tools/ios_verification.py` validates it and resolves a plan from changed paths,
 a reviewed capability name, lifecycle stage, draft state, and exact source SHA.
@@ -82,7 +96,7 @@ through the same interface.
 
 For the merge-candidate stage, the planner derives ten lanes from the committed
 Xcode plan inventory and `VerificationTimingProfile.json`. Every `ZenbuPR` Unit
-test belongs to the Unit lane. The complete 70-test `ZenbuAccessibility`
+test belongs to the Unit lane. The complete 68-test `ZenbuAccessibility`
 partition is split across three lanes, and the remaining 131 normal UI tests are
 split across five lanes. The separate `ZenbuSudachiIntegration` plan is the
 tenth lane. UI identities are assigned by deterministic longest-processing-time
@@ -95,7 +109,7 @@ stops being covered.
 
 The timing profile comes from workflow run `33888752432` on exact source
 `84bece9fc47e5aa0bd7420befc600a915464f5d3`. Its complete per-test log inventory
-produces measured test loads of 1,289.502, 1,288.224, and 1,287.983 seconds for
+produces measured test loads of 1,150.814, 1,153.155, and 1,153.903 seconds for
 Accessibility and 1,295.008, 1,292.152, 1,285.508, 1,285.392, and 1,285.777
 seconds for normal UI. Four normal shards would retain roughly 1,613 seconds of
 test load and predict about 37 minutes with the observed setup/build overhead;
@@ -105,7 +119,7 @@ bytes. All result bundles, logs, screenshots, summaries, and identity records
 remain retained for 30 days; the next authorized run must measure actual storage
 instead of reducing evidence.
 
-The current generated counts are 112 Unit; 24, 23, and 23 Accessibility UI;
+The current generated counts are 112 Unit; 22, 23, and 23 Accessibility UI;
 26, 26, 26, 27, and 26 normal UI; and 3 Sudachi integration tests.
 
 For ordinary issue work, keep the PR draft, run the repository-selected local
@@ -318,14 +332,12 @@ GitHub had no `main` branch protection when #227 began.
 
 ## Current rollout state
 
-The #225, #230, and app-controlled #173 failures have reviewed corrections. The
-remaining native Accessibility XXXL tab-edge refinement is retained as
-non-blocking follow-up #269. A current-head Ready checkpoint has proved the fast
-gate names and runtime.
-
-#227 now owns the remaining rollout: retain the active `main` ruleset and merge
-queue, then require the ten generated lanes on one exact merge-group SHA. The
-nine `ZenbuPR` lanes collectively execute its complete inventory exactly once;
-the tenth runs `ZenbuSudachiIntegration`. Never make that candidate green by
-deleting coverage, skipping a known failing journey, or adding a blanket
-accessibility exception.
+The current dependency order is #289 → #256 → #294 → #173 → #227. #269's
+tab-edge and #289's secondary-surface native whole-window findings remain visible
+in the dedicated diagnostics plan while focused app-controlled seams stay
+blocking. The consolidated affected-screen UI/accessibility coverage runs once
+under #173 after #294; #227 then runs the ten generated lanes on one exact
+merge-group SHA. The nine `ZenbuPR` lanes collectively execute its complete
+inventory exactly once; the tenth runs `ZenbuSudachiIntegration`. Never make that
+candidate green by deleting coverage, skipping a known failing journey, or adding
+a blanket accessibility exception.

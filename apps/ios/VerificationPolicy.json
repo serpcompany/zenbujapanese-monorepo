@@ -37,7 +37,9 @@
     "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testDarkKanjiElementRetainsNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR.",
     "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testDarkSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR.",
     "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testLightKanjiElementRetainsNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR.",
-    "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testLightSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR."
+    "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testLightSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR.",
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode": "The unchanged broad whole-window audit remains visibly red in ZenbuAccessibilityDiagnostics after #293 proved native Liquid Glass boundary findings are sensitive but not specific; focused app-owned accessibility seams remain blocking in ZenbuPR and ZenbuAccessibility.",
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode": "The unchanged broad whole-window audit remains visibly red in ZenbuAccessibilityDiagnostics after #293 proved native Liquid Glass boundary findings are sensitive but not specific; focused app-owned accessibility seams remain blocking in ZenbuPR and ZenbuAccessibility."
   },
   "correctness_plans": ["ZenbuPR", "ZenbuSudachiIntegration"],
   "intentional_same_stage_evidence": {
@@ -438,17 +440,17 @@
       "traits": ["ui", "accessibility", "normal-dynamic-type"],
       "journeys": ["accessibility-reviewer-light"]
     },
-    "ui.accessibility-secondary-dark": {
-      "plan": "ZenbuPR",
+    "diagnostic.secondary-surfaces-dark": {
+      "plan": "ZenbuAccessibilityDiagnostics",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode",
-      "traits": ["ui", "accessibility", "normal-dynamic-type"],
-      "journeys": ["accessibility-secondary-dark"]
+      "traits": ["ui", "accessibility", "normal-dynamic-type", "framework-diagnostic"],
+      "journeys": []
     },
-    "ui.accessibility-secondary-light": {
-      "plan": "ZenbuPR",
+    "diagnostic.secondary-surfaces-light": {
+      "plan": "ZenbuAccessibilityDiagnostics",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode",
-      "traits": ["ui", "accessibility", "normal-dynamic-type"],
-      "journeys": ["accessibility-secondary-light"]
+      "traits": ["ui", "accessibility", "normal-dynamic-type", "framework-diagnostic"],
+      "journeys": []
     },
     "accessibility.japanese-text-analysis-settings": {
       "plan": "ZenbuAccessibility",
@@ -589,8 +591,6 @@
       "ui.dictionary-sources-maximum-light",
       "ui.accessibility-reviewer-dark",
       "ui.accessibility-reviewer-light",
-      "ui.accessibility-secondary-dark",
-      "ui.accessibility-secondary-light",
       "ui.recent-search",
       "ui.image-text",
       "ui.image-text-translation-assets",
@@ -618,7 +618,9 @@
       "diagnostic.search-results-tab-edge-dark",
       "diagnostic.search-results-tab-edge-light",
       "diagnostic.kanji-element-tab-edge-dark",
-      "diagnostic.kanji-element-tab-edge-light"
+      "diagnostic.kanji-element-tab-edge-light",
+      "diagnostic.secondary-surfaces-dark",
+      "diagnostic.secondary-surfaces-light"
     ],
     "accessibility": [
       "accessibility.you-list",
@@ -644,7 +646,7 @@
     ]
   },
   "stages": {
-    "tdd": ["unit", "ui", "diagnostics"],
+    "tdd": ["contracts", "unit", "ui", "diagnostics"],
     "issue-final": ["contracts", "unit", "ui", "accessibility", "integration"],
     "hosted-fast": ["contracts", "unit", "ui", "accessibility"],
     "merge-candidate": ["contracts", "complete", "integration"],
@@ -1033,15 +1035,27 @@
       "reviewed_override_paths": [
         "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
         "apps/ios/CI.md",
+        "apps/ios/TestPlans/ZenbuAccessibility.xctestplan",
+        "apps/ios/TestPlans/ZenbuAccessibilityDiagnostics.xctestplan",
+        "apps/ios/TestPlans/ZenbuNightly.xctestplan",
+        "apps/ios/TestPlans/ZenbuPR.xctestplan",
+        "apps/ios/Tools/Tests/test_ios_verification.py",
+        "apps/ios/VerificationTimingProfile.json",
+        "apps/ios/VerificationPolicy.json"
+      ],
+      "tdd": ["contracts.repository"],
+      "issue-final": ["contracts.repository"]
+    },
+    "secondary-accessibility-diagnostics": {
+      "paths": [],
+      "reviewed_override_paths": [
+        "apps/ios/AppUITests/AccessibilityAuditUITests.swift",
+        "apps/ios/TestPlans/ZenbuAccessibilityDiagnostics.xctestplan",
         "apps/ios/VerificationPolicy.json"
       ],
       "tdd": [
-        "ui.accessibility-secondary-dark",
-        "ui.accessibility-secondary-light"
-      ],
-      "issue-final": [
-        "ui.accessibility-secondary-dark",
-        "ui.accessibility-secondary-light"
+        "diagnostic.secondary-surfaces-dark",
+        "diagnostic.secondary-surfaces-light"
       ]
     },
     "search-readiness-test-repair": {
