@@ -847,10 +847,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let attachment = app.buttons["word-detail.image-attachment"]
     XCTAssertTrue(attachment.waitForExistence(timeout: 3))
     XCTAssertTrue(attachment.label.contains("2"))
+    XCTAssertFalse(app.staticTexts["Encounter Media"].exists)
+    XCTAssertFalse(app.staticTexts["Saved Image"].exists)
+    XCTAssertGreaterThan(attachment.frame.midX, app.frame.midX)
     attachment.tap()
-    XCTAssertTrue(app.staticTexts["fixture-noisy-horizontal.png"].waitForExistence(timeout: 3))
+    let imagePage = app.images["word-detail.image-page"]
+    XCTAssertTrue(imagePage.waitForExistence(timeout: 3))
+    XCTAssertEqual(imagePage.label, "Image 1 of 2")
+    XCTAssertFalse(app.staticTexts["fixture-noisy-horizontal.png"].exists)
+    XCTAssertFalse(app.staticTexts["Encounter Images"].exists)
+    XCTAssertFalse(app.staticTexts["Saved with this word."].exists)
     app.swipeLeft()
-    XCTAssertTrue(app.staticTexts["fixture-clear-horizontal.png"].waitForExistence(timeout: 3))
+    XCTAssertEqual(imagePage.label, "Image 2 of 2")
     app.buttons["word-detail.image-attachment-remove"].tap()
     XCTAssertTrue(app.buttons["word-detail.image-attachment-done"].waitForExistence(timeout: 3))
     app.buttons["word-detail.image-attachment-done"].tap()
@@ -2301,6 +2309,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let clearAll = app.buttons["recent-search.clear-all"]
     XCTAssertTrue(clearAll.exists)
 
+    XCTAssertFalse(app.staticTexts["Recent Searches"].exists)
+    XCTAssertLessThanOrEqual(clearAll.frame.maxY, recentSearch.frame.minY)
+    XCTAssertGreaterThan(clearAll.frame.midX, app.frame.midX)
+
     clearAll.tap()
 
     let alert = app.alerts["Clear Recent Searches?"]
@@ -3538,7 +3550,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     ]
     let frequency = app.buttons["word-detail.frequency"]
 
-    XCTAssertTrue(app.staticTexts["WORD"].waitForExistence(timeout: 3))
+    XCTAssertTrue(pronounce.waitForExistence(timeout: 3))
     XCTAssertTrue(identity.exists)
     XCTAssertEqual(identity.label, "見る, みる")
     XCTAssertTrue(pitch.exists)
@@ -3547,14 +3559,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertEqual(app.images.matching(identifier: "ear.badge.waveform").count, 0)
     XCTAssertGreaterThanOrEqual(pronounce.frame.width, 44)
     XCTAssertGreaterThanOrEqual(pronounce.frame.height, 44)
-    XCTAssertTrue(app.staticTexts["ENTRY"].exists)
+    XCTAssertFalse(app.staticTexts["ENTRY"].exists)
     XCTAssertTrue(partOfSpeech.exists)
     XCTAssertTrue(frequency.exists)
 
     XCTAssertLessThan(identity.frame.minY, pitch.frame.minY)
     XCTAssertLessThan(identity.frame.minY, pronounce.frame.minY)
     XCTAssertLessThan(max(pitch.frame.maxY, pronounce.frame.maxY), partOfSpeech.frame.minY)
-    XCTAssertLessThan(partOfSpeech.frame.minY, frequency.frame.minY)
+    XCTAssertLessThanOrEqual(pronounce.frame.maxX, pitch.frame.minX)
+    XCTAssertLessThan(frequency.frame.minY, partOfSpeech.frame.minY)
     recordScreenshot(named: "word-detail-logical-header-hierarchy", app: app)
 
     let loadedRank = XCTNSPredicateExpectation(
@@ -3686,8 +3699,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons["word-detail.add-menu"].tap()
     app.buttons["Choose Photo"].tap()
     let picker = waitForSystemPhotoPicker(in: app)
-    picker.coordinate(withNormalizedOffset: CGVector(dx: 0.10, dy: 0.12)).tap()
+    let cancelPhoto = picker.buttons["Cancel"]
+    XCTAssertTrue(cancelPhoto.waitForExistence(timeout: 3))
+    cancelPhoto.tap()
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    XCTAssertFalse(app.buttons["word-detail.image-attachment"].exists)
     app.buttons["word-detail.add-menu"].tap()
     app.buttons["Add Note"].tap()
     XCTAssertTrue(app.textFields["word-note.editor"].waitForExistence(timeout: 2))

@@ -10,7 +10,13 @@ struct RecentSearchHistoryView: View {
   var body: some View {
     List {
       if !searches.isEmpty {
-        Section("Recent Searches") {
+        Section {
+          HStack {
+            Spacer()
+            Button("Clear All", action: requestClearAll)
+              .frame(minHeight: 44)
+              .accessibilityIdentifier("recent-search.clear-all")
+          }
           ForEach(Array(searches.enumerated()), id: \.element) { index, search in
             Button {
               selectSearch(search)
@@ -30,11 +36,7 @@ struct RecentSearchHistoryView: View {
               }
             }
           }
-
-          Button("Clear All", action: requestClearAll)
-            .accessibilityIdentifier("recent-search.clear-all")
         }
-        .headerProminence(.increased)
       }
     }
     .listStyle(.plain)

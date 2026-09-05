@@ -5,6 +5,7 @@ import UIKit
 import UniformTypeIdentifiers
 
 struct WordDetailView: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @FocusState private var noteEditorFocused: Bool
   @State private var editingNoteID: String?
   @State private var noteDraft = ""
@@ -15,6 +16,7 @@ struct WordDetailView: View {
   @State private var lastSpeechRequest: String?
   @State private var encounterMedia: [EncounterMedia] = []
   @State private var selectedEncounterMediaItem: PhotosPickerItem?
+  @State private var showsPhotoPicker = false
   @State private var encounterMediaImportFailed = false
   @State private var cameraAlert: WordDetailCameraAlert?
   @State private var showsCamera = false
@@ -44,33 +46,36 @@ struct WordDetailView: View {
   var body: some View {
     ScrollViewReader { proxy in
       List {
-        Section("WORD") {
-          WordIdentityView(entry: entry)
-          PronunciationRow(
-            entry: entry,
-            pronounce: { speechSynthesisClient.speak(entry.reading) }
-          )
-          if let latestEncounterMedia = displayableEncounterMedia.first {
-            EncounterMediaRow(
-              media: latestEncounterMedia,
-              count: displayableEncounterMedia.count,
-              encounterMedia: displayableEncounterMedia,
-              removeEncounterMedia: removeEncounterMedia
+        Section {
+          VStack(alignment: .leading, spacing: 12) {
+            headerLayout {
+              WordIdentityView(entry: entry)
+              VStack(alignment: .trailing, spacing: 8) {
+                FrequencyRow(
+                  result: frequency,
+                  showDetails: { frequencyDisclosure = FrequencyDisclosureItem(result: frequency) }
+                )
+                if let latestEncounterMedia = displayableEncounterMedia.first {
+                  EncounterMediaRow(
+                    media: latestEncounterMedia,
+                    count: displayableEncounterMedia.count,
+                    encounterMedia: displayableEncounterMedia,
+                    removeEncounterMedia: removeEncounterMedia
+                  )
+                }
+              }
+            }
+            PronunciationRow(
+              entry: entry,
+              pronounce: { speechSynthesisClient.speak(entry.reading) }
             )
           }
-        }
-
-        Section("ENTRY") {
           PartOfSpeechRow(
             entry: entry,
             title: (entry.senses.first?.partsOfSpeech ?? entry.partsOfSpeech)
               .map(\.rawValue)
               .joined(separator: " · "),
             conjugationTable: conjugationTable
-          )
-          FrequencyRow(
-            result: frequency,
-            showDetails: { frequencyDisclosure = FrequencyDisclosureItem(result: frequency) }
           )
         }
 
@@ -158,8 +163,8 @@ struct WordDetailView: View {
           Menu {
             Button("Add Note", systemImage: "square.and.pencil", action: beginAddingNote)
             Button("Take Photo", systemImage: "camera", action: presentCamera)
-            PhotosPicker(selection: $selectedEncounterMediaItem, matching: .images) {
-              Label("Choose Photo", systemImage: "photo.on.rectangle")
+            Button("Choose Photo", systemImage: "photo.on.rectangle") {
+              showsPhotoPicker = true
             }
           } label: {
             Label("Add", systemImage: "plus")
@@ -171,6 +176,11 @@ struct WordDetailView: View {
         }
       }
     }
+    .photosPicker(
+      isPresented: $showsPhotoPicker,
+      selection: $selectedEncounterMediaItem,
+      matching: .images
+    )
     .alert("Unable to Save Image", isPresented: $encounterMediaImportFailed) {
       Button("OK", role: .cancel) {}
     } message: {
@@ -246,6 +256,12 @@ struct WordDetailView: View {
       noteDraft = ""
       isLoadingExamples = false
     }
+  }
+
+  private var headerLayout: AnyLayout {
+    dynamicTypeSize.isAccessibilitySize
+      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+      : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
   }
 
   private var displayableEncounterMedia: [EncounterMedia] {
@@ -574,15 +590,15 @@ private struct PronunciationRow: View {
   var body: some View {
     if dynamicTypeSize.isAccessibilitySize {
       VStack(alignment: .leading, spacing: 12) {
-        pitchAccent
         pronounceButton
           .frame(maxWidth: .infinity, alignment: .leading)
+        pitchAccent
       }
     } else {
       HStack(spacing: 16) {
-        pitchAccent
-        Spacer(minLength: 8)
         pronounceButton
+        pitchAccent
+        Spacer(minLength: 0)
       }
     }
   }
@@ -617,21 +633,19 @@ private struct EncounterMediaRow: View {
     Button {
       presentedMedia = media
     } label: {
-      LabeledContent("Encounter Media") {
-        if let image = UIImage(data: media.data) {
-          HStack(spacing: 8) {
-            Text(count == 1 ? "Saved Image" : "\(count) Images")
-            Image(uiImage: image)
-              .resizable()
-              .scaledToFill()
-              .frame(width: 56, height: 44)
-              .clipped()
-              .clipShape(RoundedRectangle(cornerRadius: 5))
+      if let image = UIImage(data: media.data) {
+        HStack(spacing: 8) {
+          if count > 1 {
+            Text("\(count)").font(.caption.monospacedDigit())
           }
+          Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
+            .frame(width: 56, height: 44)
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 5))
         }
       }
-      .frame(maxWidth: .infinity)
-      .contentShape(.rect)
     }
     .buttonStyle(.plain)
     .accessibilityLabel("Saved encounter images, \(count)")
@@ -667,22 +681,21 @@ private struct EncounterMediaViewer: View {
   var body: some View {
     NavigationStack {
       TabView(selection: $selectedMediaID) {
-        ForEach(encounterMedia) { media in
+        ForEach(Array(encounterMedia.enumerated()), id: \.element.id) { index, media in
           VStack(spacing: 12) {
             if let image = UIImage(data: media.data) {
               Image(uiImage: image).resizable().scaledToFit()
+                .accessibilityLabel("Image \(index + 1) of \(encounterMedia.count)")
+                .accessibilityIdentifier("word-detail.image-page")
+                .accessibilityHidden(media.id != selectedMediaID)
             }
-            Text(media.name).foregroundStyle(.secondary)
-            Text("Saved with this word.")
-              .font(.footnote)
-              .foregroundStyle(.secondary)
           }
           .padding()
           .tag(media.id)
         }
       }
       .tabViewStyle(.page(indexDisplayMode: .automatic))
-      .navigationTitle("Encounter Images")
+      .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
           Button("Done", action: dismiss.callAsFunction)
@@ -727,13 +740,10 @@ private struct FrequencyRow: View {
   var body: some View {
     let presentation = FrequencyPresentationModel(result: result)
     Button(action: showDetails) {
-      LabeledContent("Frequency") {
-        Text(presentation.inlineText)
-          .font(.headline.monospacedDigit())
-          .frame(minWidth: 44, minHeight: 44)
-      }
-      .frame(maxWidth: .infinity)
-      .contentShape(.rect)
+      Text(presentation.inlineText)
+        .font(.headline.monospacedDigit())
+        .frame(minWidth: 44, minHeight: 44)
+        .contentShape(.rect)
     }
     .buttonStyle(.plain)
     .accessibilityLabel(presentation.inlineAccessibilityLabel)
