@@ -98,6 +98,12 @@ private func submitAccessibilitySearch(
   searchField.tap()
   searchField.typeText(query)
   app.keyboards.buttons["Search"].tap()
+  XCTAssertTrue(
+    app.keyboards.firstMatch.waitForNonExistence(timeout: 10),
+    "Submitted Search must dismiss the keyboard before selecting a result.",
+    file: file,
+    line: line
+  )
   let bestMatches = app.staticTexts["Best Matches"]
   let noMatches = app.staticTexts["No Dictionary Matches"]
   let unavailable = app.staticTexts["Dictionary unavailable"]
@@ -635,6 +641,11 @@ final class AccessibilityAuditUITests: XCTestCase {
       NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
     ).firstMatch
     XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
+    let results = app.collectionViews["search.results"]
+    XCTAssertTrue(results.waitForExistence(timeout: 3))
+    bringIntoUnobscuredViewport(primaryResult, in: results, app: app)
+    XCTAssertTrue(primaryResult.label.hasPrefix("要る, いる"))
+    retainElementScreenshot(primaryResult, named: "Current-entry matrix result before navigation")
     primaryResult.tap()
 
     let detail = app.collectionViews["word-detail.screen"]
@@ -1808,6 +1819,20 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCUIDevice.shared.appearance = appearance
     defer { XCUIDevice.shared.appearance = originalAppearance }
 
+    var defaultTextSizes: [String: CGSize] = [:]
+    if types == .dynamicType.union(.textClipped) {
+      let (defaultApp, defaultDetail) = try launchWordDetail(
+        query: "日本",
+        resultLabelPrefix: "日本, にほん",
+        appearance: appearance,
+        additionalArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL"]
+      )
+      defaultTextSizes = shortWordDetailTextSizes(
+        in: defaultApp, detail: defaultDetail, evidenceName: "\(appearance) default"
+      )
+      defaultApp.terminate()
+    }
+
     let app = launchApp(
       appearance: appearance,
       additionalArguments: [
@@ -1880,7 +1905,36 @@ final class AccessibilityAuditUITests: XCTestCase {
         meaning,
         named: "Word Detail meaning - \(appearance) accessibility XXXL"
       )
+      let largeTextSizes = shortWordDetailTextSizes(
+        in: app, detail: detail, evidenceName: "\(appearance) accessibility XXXL"
+      )
+      for label in ["1.  Japan", "Add Note"] {
+        let baseline = try XCTUnwrap(defaultTextSizes[label])
+        let enlarged = try XCTUnwrap(largeTextSizes[label])
+        XCTAssertGreaterThan(
+          enlarged.height, baseline.height, "\(label) must scale with Dynamic Type"
+        )
+      }
     }
+  }
+
+  @MainActor
+  private func shortWordDetailTextSizes(
+    in app: XCUIApplication,
+    detail: XCUIElement,
+    evidenceName: String
+  ) -> [String: CGSize] {
+    var sizes: [String: CGSize] = [:]
+    for label in ["1.  Japan", "Add Note"] {
+      let text = app.staticTexts[label]
+      bringIntoUnobscuredViewport(text, in: detail, app: app)
+      XCTAssertEqual(text.label, label)
+      XCTAssertGreaterThanOrEqual(text.frame.minX, app.frame.minX)
+      XCTAssertLessThanOrEqual(text.frame.maxX, app.frame.maxX)
+      sizes[label] = text.frame.size
+      retainElementScreenshot(text, named: "Word Detail \(label) text - \(evidenceName)")
+    }
+    return sizes
   }
 
   @MainActor
