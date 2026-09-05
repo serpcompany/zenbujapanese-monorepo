@@ -1,0 +1,311 @@
+[
+  {
+    "entry": {
+      "id": {
+        "rawValue": "042e07f7052f611fed33ddddf37f55fd"
+      },
+      "sourceProvenances": [
+        {
+          "sourceIdentity": "edrdg.jmdict",
+          "sourceRecordID": "1358280"
+        }
+      ],
+      "reading": "たべる",
+      "headword": "食べる",
+      "summary": "to eat",
+      "partsOfSpeech": [
+        {
+          "rawValue": "Ichidan Verb"
+        },
+        {
+          "rawValue": "Transitive Verb"
+        }
+      ],
+      "writtenForms": [
+        {
+          "value": "食べる",
+          "kind": "written",
+          "labels": []
+        },
+        {
+          "value": "喰べる",
+          "kind": "written",
+          "labels": ["Search only"]
+        }
+      ],
+      "readingForms": [
+        {
+          "value": "たべる",
+          "kind": "reading",
+          "labels": []
+        }
+      ],
+      "senses": [
+        {
+          "meaning": "to eat",
+          "notes": [],
+          "partsOfSpeech": [
+            {
+              "rawValue": "Ichidan Verb"
+            },
+            {
+              "rawValue": "Transitive Verb"
+            }
+          ]
+        },
+        {
+          "meaning": "to live on (e.g. a salary), to live off, to subsist on",
+          "notes": [],
+          "partsOfSpeech": [
+            {
+              "rawValue": "Ichidan Verb"
+            },
+            {
+              "rawValue": "Transitive Verb"
+            }
+          ]
+        }
+      ],
+      "pitchAccent": {
+        "downstep": 2,
+        "moraCount": 3,
+        "sourceIdentity": "UniDic for Contemporary Written Japanese 3.1.0"
+      },
+      "isCommon": true
+    },
+    "romaji": ["taberu"],
+    "frequency": {
+      "pack": {
+        "id": {
+          "rawValue": "zenbu.tubelex.youtube.ja.unidic-3.1"
+        },
+        "displayName": "TUBELEX YouTube Japanese",
+        "domain": "YouTube / everyday media Japanese",
+        "domainDescription": "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+        "version": "2025.1",
+        "attribution": "TUBELEX Japanese frequency lists by Adam Nohejl and contributors"
+      },
+      "languageReferenceID": {
+        "rawValue": "042e07f7052f611fed33ddddf37f55fd"
+      },
+      "rank": 165,
+      "coveredSourceRows": 351453,
+      "sourceCount": 88048,
+      "sourceTotalTokens": 165721393,
+      "sourceDocuments": null,
+      "sourceVideos": 100660,
+      "sourceChannels": 30550,
+      "matchedForm": "食べる",
+      "sourcePartOfSpeech": "動詞-一般",
+      "sourceRecordDigest": "2df374c250ba70fe9f26d3779f7a32c4d0862a14592de0238cb3a42103187c30",
+      "mappingRelation": "uniqueFormFallback"
+    }
+  },
+  {
+    "entry": {
+      "id": {
+        "rawValue": "4e5300d8c3ec437367fdc5e36f09010f"
+      },
+      "sourceProvenances": [
+        {
+          "sourceIdentity": "edrdg.jmdict",
+          "sourceRecordID": "1289400"
+        }
+      ],
+      "reading": "こんにちは",
+      "headword": "今日は",
+      "summary": "hello, good day, good afternoon",
+      "partsOfSpeech": [
+        {
+          "rawValue": "Interjection"
+        }
+      ],
+      "writtenForms": [
+        {
+          "value": "今日は",
+          "kind": "written",
+          "labels": []
+        },
+        {
+          "value": "今日わ",
+          "kind": "written",
+          "labels": ["Search only"]
+        }
+      ],
+      "readingForms": [
+        {
+          "value": "こんにちは",
+          "kind": "reading",
+          "labels": []
+        },
+        {
+          "value": "こんにちわ",
+          "kind": "reading",
+          "labels": []
+        },
+        {
+          "value": "こにちわ",
+          "kind": "reading",
+          "labels": ["Search only"]
+        },
+        {
+          "value": "こにちは",
+          "kind": "reading",
+          "labels": ["Search only"]
+        }
+      ],
+      "senses": [
+        {
+          "meaning": "hello, good day, good afternoon",
+          "notes": ["Usually written in kana", "は is pronounced as わ"],
+          "partsOfSpeech": [
+            {
+              "rawValue": "Interjection"
+            }
+          ]
+        }
+      ],
+      "pitchAccent": {
+        "downstep": 5,
+        "moraCount": 5,
+        "sourceIdentity": "UniDic for Contemporary Written Japanese 3.1.0"
+      },
+      "isCommon": true
+    },
+    "romaji": ["konnichiha", "konnichiwa", "konichiwa", "konichiha"],
+    "frequency": {
+      "pack": {
+        "id": {
+          "rawValue": "zenbu.tubelex.youtube.ja.unidic-3.1"
+        },
+        "displayName": "TUBELEX YouTube Japanese",
+        "domain": "YouTube / everyday media Japanese",
+        "domainDescription": "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+        "version": "2025.1",
+        "attribution": "TUBELEX Japanese frequency lists by Adam Nohejl and contributors"
+      },
+      "languageReferenceID": {
+        "rawValue": "4e5300d8c3ec437367fdc5e36f09010f"
+      },
+      "rank": 386,
+      "coveredSourceRows": 351453,
+      "sourceCount": 32598,
+      "sourceTotalTokens": 165721393,
+      "sourceDocuments": null,
+      "sourceVideos": 100660,
+      "sourceChannels": 30550,
+      "matchedForm": "今日は",
+      "sourcePartOfSpeech": "感動詞-一般",
+      "sourceRecordDigest": "d6a5ad48994d736a2abc57478ef98d6a3785d79390a54c644edc0788d8e6c469",
+      "mappingRelation": "uniqueFormFallback"
+    }
+  },
+  {
+    "entry": {
+      "id": {
+        "rawValue": "4d23e97b17d2c2cba357382be08dac1f"
+      },
+      "sourceProvenances": [
+        {
+          "sourceIdentity": "edrdg.jmdict",
+          "sourceRecordID": "1237410"
+        }
+      ],
+      "reading": "はし",
+      "headword": "橋",
+      "summary": "bridge",
+      "partsOfSpeech": [
+        {
+          "rawValue": "Noun"
+        }
+      ],
+      "writtenForms": [
+        {
+          "value": "橋",
+          "kind": "written",
+          "labels": []
+        }
+      ],
+      "readingForms": [
+        {
+          "value": "はし",
+          "kind": "reading",
+          "labels": []
+        }
+      ],
+      "senses": [
+        {
+          "meaning": "bridge",
+          "notes": [],
+          "partsOfSpeech": [
+            {
+              "rawValue": "Noun"
+            }
+          ]
+        }
+      ],
+      "pitchAccent": {
+        "downstep": 0,
+        "moraCount": 2,
+        "sourceIdentity": "UniDic for Contemporary Written Japanese 3.1.0"
+      },
+      "isCommon": true
+    },
+    "romaji": ["hashi"],
+    "frequency": null
+  },
+  {
+    "entry": {
+      "id": {
+        "rawValue": "5db1f282105450687047aaab5026ad72"
+      },
+      "sourceProvenances": [
+        {
+          "sourceIdentity": "edrdg.jmdict",
+          "sourceRecordID": "2151440"
+        }
+      ],
+      "reading": "きょう",
+      "headword": "橋",
+      "summary": "pons, pons Varolii",
+      "partsOfSpeech": [
+        {
+          "rawValue": "Noun"
+        }
+      ],
+      "writtenForms": [
+        {
+          "value": "橋",
+          "kind": "written",
+          "labels": []
+        }
+      ],
+      "readingForms": [
+        {
+          "value": "きょう",
+          "kind": "reading",
+          "labels": []
+        }
+      ],
+      "senses": [
+        {
+          "meaning": "pons, pons Varolii",
+          "notes": [],
+          "partsOfSpeech": [
+            {
+              "rawValue": "Noun"
+            }
+          ]
+        }
+      ],
+      "pitchAccent": {
+        "downstep": 1,
+        "moraCount": 2,
+        "sourceIdentity": "UniDic for Contemporary Written Japanese 3.1.0"
+      },
+      "isCommon": false
+    },
+    "romaji": ["kyou"],
+    "frequency": null
+  }
+]
