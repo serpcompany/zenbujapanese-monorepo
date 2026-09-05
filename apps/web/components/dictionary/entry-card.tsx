@@ -16,8 +16,9 @@ import {
 import { PitchAccentView } from './pitch-accent';
 import { ExampleSentenceView } from './example-sentence';
 import { ListenButton } from './listen-button';
+import { getTranslations } from 'next-intl/server';
 
-export function EntryCard({
+export async function EntryCard({
   sample,
   detail = false,
 }: {
@@ -25,6 +26,7 @@ export function EntryCard({
   detail?: boolean;
 }) {
   const { entry, romaji, frequency } = sample;
+  const t = await getTranslations('Dictionary');
   const senses = detail ? entry.senses : entry.senses.slice(0, 1);
   return (
     <article aria-label={`${entry.headword} — ${entry.summary}`}>
@@ -120,7 +122,8 @@ export function EntryCard({
                 className="entry-link"
                 href={`/dictionary/${entrySlug(entry)}`}
               >
-                View {entry.headword} entry <span aria-hidden="true">→</span>
+                {t('viewEntry', { headword: entry.headword })}{' '}
+                <span aria-hidden="true">→</span>
               </Link>
             )}
           </CardFooter>

@@ -1,5 +1,11 @@
 # Zenbu web foundation
 
+The current foundation also implements the #278/#279 locale and route shells.
+Start at `http://localhost:3300/`, then open the local route directory at
+`http://localhost:3300/sitemap`. Japanese equivalents begin at `/ja` and
+`/ja/sitemap`. See [ROUTES.md](ROUTES.md) for every review URL, route purpose,
+placeholder policy, locale behavior and the remaining hosting boundary.
+
 From the repository root, with Node 22+ and pnpm 10.14.0:
 
 ```sh
@@ -11,6 +17,7 @@ pnpm lint
 pnpm build
 pnpm --filter web exec playwright install chromium
 pnpm test
+pnpm --filter web test:production
 ```
 
 Only `apps/web` is a JavaScript workspace package. The root scripts explicitly
@@ -28,12 +35,13 @@ Full delivery/ranking stays with #281/#282. Source extraction, IDs, optional
 enrichments and licenses are described in [SAMPLE-PROVENANCE.md](SAMPLE-PROVENANCE.md).
 The foundation is marked noindex; final search SEO policy belongs to #280.
 
-`app/layout.tsx` owns theme/font; `app/dictionary/layout.tsx` preserves the two
+`app/[locale]/layout.tsx` owns theme/font; `app/[locale]/dictionary/layout.tsx` preserves the two
 independent reading preferences across internal navigation. Pages, filtering,
 entry cards, pitch and example markup use Server Components. The small reading
 provider and official UI controls provide client interaction. `next/form`
-submits search to the server, and `next/link` preserves layout state. Preferences
-reset on a full reload; persistence is not implemented in this foundation.
+submits search to the server, and next-intl's Link preserves the locale.
+The two reading preferences use session cookies so explicit changes survive
+locale switches and reloads; only the dictionary layout reads these cookies.
 
 `lib/dictionary/types.ts` is the consumed public slice of the existing Swift
 types, using their original names, field meanings and value wrappers. Optional
@@ -55,13 +63,19 @@ pnpm exec shadcn info --json
 pnpm exec shadcn preset resolve --json
 ```
 
-The resolver reports `b1PzeK`, no fallbacks: Nova / Neutral / Blue / Inter,
+The original foundation resolver reported `b1PzeK`, no fallbacks: Nova / Neutral / Blue / Inter,
 Base UI, Lucide and default radius. `components.json` records `base-nova`, RSC,
 local aliases, Tailwind v4 `app/globals.css` and CSS variables. Global CSS retains
 the official light/dark semantic tokens. The separate `--brand: #BC002D` and
 native `--pitch-downstep` token leave blue interactions intact. Only components
 consumed here (and their official dependencies) were installed. The official
 agent skill and its source lock are local to this web package.
+
+After the required move to `app/[locale]/layout.tsx`, shadcn 4.21.0's preset
+scanner no longer finds the nested Inter declaration and reports a font fallback.
+The actual `Inter` import, font variable, Nova/Neutral/Blue tokens and brand token
+are unchanged; the browser still renders the same Inter font. Do not apply the
+scanner's inferred Geist fallback over the approved theme.
 
 References: [existing Next project](https://ui.shadcn.com/docs/installation/next),
 [theming](https://ui.shadcn.com/docs/theming),

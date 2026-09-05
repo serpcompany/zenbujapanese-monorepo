@@ -76,6 +76,23 @@ for (const locale of ['en', 'ja'] as const) {
           () => document.documentElement.scrollWidth > innerWidth,
         ),
       ).toBe(false);
+      if (
+        [
+          '/',
+          '/sitemap',
+          '/products',
+          '/products/zenbu-japanese/pricing',
+          '/blog/behind-the-dictionary',
+          '/legal/privacy',
+          '/dictionary',
+          '/watch/dictionary-walkthrough',
+        ].includes(path)
+      ) {
+        await page.screenshot({
+          path: test.info().outputPath('page.png'),
+          fullPage: true,
+        });
+      }
     });
   }
   test(`${locale} unknown dynamic slugs and paths are 404`, async ({
@@ -131,7 +148,7 @@ test('locale switching preserves query, entry identity and independent reading a
     page.getByRole('switch', { name: 'ローマ字' }),
   ).not.toBeChecked();
   await expect(page.getByRole('switch', { name: 'ふりがな' })).toBeChecked();
-  await page.getByRole('link', { name: 'View 食べる entry' }).click();
+  await page.getByRole('link', { name: '食べるの項目を見る' }).click();
   await expect(page).toHaveURL(/\/ja\/dictionary\/.+-1358280$/);
   await page.getByRole('combobox').selectOption('en');
   await expect(page).toHaveURL(/:3300\/dictionary\/.+-1358280$/);

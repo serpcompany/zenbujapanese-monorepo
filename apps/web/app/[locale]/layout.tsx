@@ -31,7 +31,10 @@ export default async function RootLayout({
 }) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
-  const [t, messages] = await Promise.all([getTranslations({locale, namespace:'Shell'}),getMessages({locale})]);
+  const [t, messages] = await Promise.all([
+    getTranslations({ locale, namespace: 'Shell' }),
+    getMessages({ locale }),
+  ]);
   return (
     <html lang={locale} className={inter.variable}>
       <body>

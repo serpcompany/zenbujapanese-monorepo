@@ -67,7 +67,7 @@ export async function ScaffoldPage({
   );
 }
 
-export function PreviewCard({
+export async function PreviewCard({
   title,
   description,
   href,
@@ -78,6 +78,7 @@ export function PreviewCard({
   href: string;
   children?: React.ReactNode;
 }) {
+  const t = await getTranslations('Shell');
   return (
     <Card>
       <CardHeader>
@@ -86,7 +87,7 @@ export function PreviewCard({
       </CardHeader>
       {children ? <CardContent>{children}</CardContent> : null}
       <CardFooter variant="plain">
-        <PreviewLink href={href}>Open preview →</PreviewLink>
+        <PreviewLink href={href}>{t('open')} →</PreviewLink>
       </CardFooter>
     </Card>
   );

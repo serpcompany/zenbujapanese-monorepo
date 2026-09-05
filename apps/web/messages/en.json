@@ -7,6 +7,9 @@
     "notice": "This page establishes the layout and navigation. Its content has not been approved for publication.",
     "missingCopy": "Japanese authored content is not available yet. The English planning copy below is shown explicitly as a fallback.",
     "open": "Open preview",
+    "overview": "Overview",
+    "features": "Features",
+    "pricing": "Pricing",
     "notFound": "This page could not be found.",
     "unavailable": "This address does not have an approved sample page.",
     "sections": {
@@ -23,6 +26,7 @@
     }
   },
   "Dictionary": {
+    "viewEntry": "View {headword} entry",
     "searchLabel": "Search dictionary",
     "search": "Search",
     "placeholder": "Japanese, romaji, or English",

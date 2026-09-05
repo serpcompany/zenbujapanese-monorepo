@@ -41,7 +41,9 @@ jobs:
       - run: pnpm test
       - run: pnpm --filter web test:production
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: failure()
+        if: always()
         with:
           name: web-test-results
-          path: apps/web/test-results
+          path: |
+            apps/web/test-results
+            apps/web/test-results-production

@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { ScaffoldPage, PreviewLink, ContentSections } from './scaffold';
 
 export const sampleProduct = 'zenbu-japanese';
-export function ProductPage({
+export async function ProductPage({
   product,
   surface = 'overview',
 }: {
@@ -10,6 +11,7 @@ export function ProductPage({
   surface?: 'overview' | 'features' | 'pricing';
 }) {
   if (product !== sampleProduct) notFound();
+  const t = await getTranslations('Shell');
   const titles = {
     overview: 'Zenbu Japanese',
     features: 'Zenbu Japanese — Features',
@@ -53,11 +55,13 @@ export function ProductPage({
       description="Product information and related feature and pricing surfaces."
     >
       <div className="product-links">
-        <PreviewLink href={`/products/${product}`}>Overview</PreviewLink>
+        <PreviewLink href={`/products/${product}`}>{t('overview')}</PreviewLink>
         <PreviewLink href={`/products/${product}/features`}>
-          Features
+          {t('features')}
         </PreviewLink>
-        <PreviewLink href={`/products/${product}/pricing`}>Pricing</PreviewLink>
+        <PreviewLink href={`/products/${product}/pricing`}>
+          {t('pricing')}
+        </PreviewLink>
       </div>
       <ContentSections items={content[surface]} />
     </ScaffoldPage>
