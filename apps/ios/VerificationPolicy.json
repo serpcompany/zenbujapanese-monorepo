@@ -1,5 +1,18 @@
 {
   "version": 1,
+  "issue_execution": {
+    "maximum_prepared_seconds": 60,
+    "allowed_tiers": ["contracts", "unit"],
+    "default_deferred_owner_stage": "hosted-fast",
+    "deferred_owner_by_tier": {
+      "ui": "hosted-fast",
+      "diagnostics": "manual",
+      "accessibility": "hosted-fast",
+      "integration": "merge-candidate",
+      "complete": "merge-candidate",
+      "performance": "performance"
+    }
+  },
   "required_journeys": [
     "accessibility-adaptive-layout",
     "you-navigation",
@@ -70,47 +83,60 @@
       "traits": ["static"],
       "journeys": ["verification-policy"]
     },
+    "contracts.issue-policy": {
+      "plan": null,
+      "test": null,
+      "traits": ["static", "deterministic"],
+      "journeys": ["issue-verification-policy"],
+      "issue_execution_seconds": 5
+    },
     "unit.complete": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseTests",
-      "traits": ["deterministic"],
+      "traits": ["deterministic", "complete-target"],
       "journeys": ["unit-contracts"]
     },
     "unit.japanese-text-analysis": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseTests/JapaneseTextAnalysisTests/testProviderDictionaryFormsResolveInflectedVerbsWithoutNounOrIteLinks",
       "traits": ["deterministic"],
-      "journeys": ["japanese-text-analysis-provider"]
+      "journeys": ["japanese-text-analysis-provider"],
+      "issue_execution_seconds": 45
     },
     "unit.bundled-japanese-text-analysis": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseTests/LanguageTechnologyPackTests/testBundledOfficialDictionaryRunsOfflineAndSurvivesRelaunch",
       "traits": ["deterministic"],
-      "journeys": ["japanese-text-analysis-provider"]
+      "journeys": ["japanese-text-analysis-provider"],
+      "issue_execution_seconds": 45
     },
     "unit.reading-aids": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseTests/JapaneseRubyAnnotationTests/testAppleRomajiUsesTrustedReadingsAndRejectsRawKanji",
       "traits": ["deterministic"],
-      "journeys": ["reading-aids"]
+      "journeys": ["reading-aids"],
+      "issue_execution_seconds": 45
     },
     "unit.reading-aids-mixed-input": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseTests/JapaneseRubyAnnotationTests/testAppleRomajiPreservesExistingWhitespaceAndMixedLatinNumbers",
       "traits": ["deterministic"],
-      "journeys": ["romaji-mixed-input"]
+      "journeys": ["romaji-mixed-input"],
+      "issue_execution_seconds": 45
     },
     "unit.search-frequency-rank": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseTests/FrequencyPackTests/testSearchFrequencyRankPresentationUsesExactProviderNeutralRank",
       "traits": ["deterministic"],
-      "journeys": ["search-frequency-rank"]
+      "journeys": ["search-frequency-rank"],
+      "issue_execution_seconds": 45
     },
     "unit.search-frequency-batch": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseTests/FrequencyPackTests/testSearchFrequencyCapabilityLooksUpVisibleRanksInOneBatch",
       "traits": ["deterministic"],
-      "journeys": ["search-frequency-batch"]
+      "journeys": ["search-frequency-batch"],
+      "issue_execution_seconds": 45
     },
     "ui.reading-aids": {
       "plan": "ZenbuPR",
@@ -557,7 +583,7 @@
     }
   },
   "tiers": {
-    "contracts": ["contracts.repository"],
+    "contracts": ["contracts.repository", "contracts.issue-policy"],
     "unit": [
       "unit.complete",
       "unit.japanese-text-analysis",
@@ -650,11 +676,13 @@
     "issue-final": ["contracts", "unit", "ui", "accessibility", "integration"],
     "hosted-fast": ["contracts", "unit", "ui", "accessibility"],
     "merge-candidate": ["contracts", "complete", "integration"],
-    "manual": ["contracts", "complete", "integration"],
+    "manual": ["contracts", "diagnostics", "complete", "integration"],
     "release": ["contracts", "complete", "integration"],
     "performance": ["performance"]
   },
   "required_stage_selectors": {
+    "tdd": ["contracts.issue-policy"],
+    "issue-final": ["contracts.issue-policy"],
     "hosted-fast": ["contracts.repository"]
   },
   "relevant_paths": [
@@ -1054,6 +1082,10 @@
         "apps/ios/VerificationPolicy.json"
       ],
       "tdd": [
+        "diagnostic.secondary-surfaces-dark",
+        "diagnostic.secondary-surfaces-light"
+      ],
+      "manual": [
         "diagnostic.secondary-surfaces-dark",
         "diagnostic.secondary-surfaces-light"
       ]

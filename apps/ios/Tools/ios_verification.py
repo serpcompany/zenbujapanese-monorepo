@@ -111,6 +111,16 @@ INFRASTRUCTURE_FAILURES = {
     "xcode-service-unavailable",
 }
 LANE_SUFFIXES = "abcdefghijklmnopqrstuvwxyz"
+LOCAL_ISSUE_STAGES = {"tdd", "issue-final"}
+LOCAL_ISSUE_PROHIBITED_TRAITS = {
+    "accessibility",
+    "complete-suite",
+    "integration",
+    "large-resource",
+    "network",
+    "performance",
+    "ui",
+}
 
 
 def require_verified_sha(*, current_sha: str, partition_shas: list[str]) -> None:
@@ -119,6 +129,17 @@ def require_verified_sha(*, current_sha: str, partition_shas: list[str]) -> None
             raise VerifiedSHAError(
                 f"required result SHA {tested_sha} does not match current SHA {current_sha}"
             )
+
+
+def require_issue_duration_within_budget(
+    *, observed_seconds: float, maximum_seconds: float
+) -> None:
+    if observed_seconds > maximum_seconds:
+        raise PolicyError(
+            f"issue verification observed {observed_seconds:.3f}s, exceeding the "
+            f"{maximum_seconds:g}s prepared-environment budget; defer this selector "
+            "to its PR owner"
+        )
 
 
 def classify_failure(*, tests_started: int, failure_category: str) -> dict[str, Any]:
@@ -305,6 +326,29 @@ def build_fingerprint(
 def load_and_validate_manifest(path: Path) -> dict[str, Any]:
     manifest = json.loads(path.read_text(encoding="utf-8"))
     selectors = manifest.get("selectors", {})
+    issue_execution = manifest.get("issue_execution")
+    if issue_execution is not None:
+        maximum_seconds = issue_execution.get("maximum_prepared_seconds")
+        if (
+            isinstance(maximum_seconds, bool)
+            or not isinstance(maximum_seconds, (int, float))
+            or maximum_seconds <= 0
+            or maximum_seconds > 60
+        ):
+            raise PolicyError(
+                "issue execution maximum_prepared_seconds must be within 0...60"
+            )
+        allowed_tiers = issue_execution.get("allowed_tiers")
+        if not isinstance(allowed_tiers, list) or not set(allowed_tiers) <= {
+            "contracts",
+            "unit",
+        }:
+            raise PolicyError(
+                "issue execution may allow only contracts and focused unit tiers"
+            )
+        default_owner = issue_execution.get("default_deferred_owner_stage")
+        if not isinstance(default_owner, str) or not default_owner.strip():
+            raise PolicyError("issue execution requires a default deferred owner stage")
     for tier, selector_ids in manifest.get("tiers", {}).items():
         maximum_size_journeys: set[str] = set()
         for selector_id in selector_ids:
@@ -334,6 +378,10 @@ def load_and_validate_manifest(path: Path) -> dict[str, Any]:
                     raise PolicyError(
                         f"complete-suite selector {selector_id} cannot run at {stage}"
                     )
+    for stage, selector_ids in manifest.get("required_stage_selectors", {}).items():
+        if stage in LOCAL_ISSUE_STAGES and issue_execution is not None:
+            for selector_id in selector_ids:
+                _issue_execution_disposition(manifest, selector_id)
     tier_selector_ids = {
         selector_id
         for selector_ids in manifest.get("tiers", {}).values()
@@ -378,6 +426,9 @@ def load_and_validate_manifest(path: Path) -> dict[str, Any]:
                         f"capability {capability} selects maximum-size coverage "
                         "without an adaptive layout change"
                     )
+            if stage in LOCAL_ISSUE_STAGES and issue_execution is not None:
+                for selector_id in selector_ids:
+                    _issue_execution_disposition(manifest, selector_id)
             _validate_no_equivalent_selectors(
                 selectors,
                 selector_ids,
@@ -398,7 +449,103 @@ def load_and_validate_manifest(path: Path) -> dict[str, Any]:
             context=f"unclassified-fallback/{stage}",
             intentional=manifest.get("intentional_same_stage_evidence", {}),
         )
+        if stage in LOCAL_ISSUE_STAGES and issue_execution is not None:
+            for selector_id in selector_ids:
+                _issue_execution_disposition(manifest, selector_id)
     return manifest
+
+
+def _issue_execution_disposition(
+    manifest: dict[str, Any], selector_id: str
+) -> tuple[bool, str, str | None]:
+    """Classify one requested selector for the prepared local issue budget."""
+    policy = manifest.get("issue_execution")
+    if policy is None:
+        return True, "legacy manifest has no issue execution policy", None
+    selector = manifest["selectors"][selector_id]
+    tier = next(
+        (
+            tier_name
+            for tier_name, members in manifest.get("tiers", {}).items()
+            if selector_id in members
+        ),
+        None,
+    )
+    if tier is None:
+        raise PolicyError(f"selector {selector_id} has no verification tier")
+    allowed_tiers = set(policy["allowed_tiers"])
+    owners = policy.get("deferred_owner_by_tier", {})
+    default_owner = policy["default_deferred_owner_stage"]
+    traits = set(selector.get("traits", []))
+
+    if tier not in allowed_tiers:
+        owner = owners.get(tier)
+        if not isinstance(owner, str) or not owner.strip():
+            raise PolicyError(
+                f"tier {tier} requires an explicit deferred owner for issue execution"
+            )
+        return False, f"{tier} tier is deferred from issue-level execution", owner
+
+    test_identity = selector.get("test")
+    if tier == "unit" and "complete-target" in traits:
+        return (
+            False,
+            "complete test targets are not issue-level checks",
+            default_owner,
+        )
+    seconds = selector.get("issue_execution_seconds")
+    if seconds is None:
+        return (
+            False,
+            "selector has no reviewed prepared-environment duration",
+            default_owner,
+        )
+    if tier in allowed_tiers and "deterministic" not in traits:
+        raise PolicyError(
+            f"selector {selector_id} must be deterministic for issue-level execution"
+        )
+    if tier == "unit":
+        identity_parts = (
+            test_identity.split("/") if isinstance(test_identity, str) else []
+        )
+        if len(identity_parts) != 3 or not all(identity_parts):
+            raise PolicyError(
+                f"selector {selector_id} must name one exact target/class/method "
+                "for issue-level unit execution"
+            )
+        test_target = test_identity.split("/", 1)[0]
+        if test_target.endswith("UITests"):
+            raise PolicyError(
+                f"selector {selector_id} is an XCUITest and cannot run at issue-level"
+            )
+
+    prohibited = sorted(traits & LOCAL_ISSUE_PROHIBITED_TRAITS)
+    if prohibited:
+        return (
+            False,
+            f"{'+'.join(prohibited)} coverage is deferred from issue-level execution",
+            default_owner,
+        )
+    if (
+        isinstance(seconds, bool)
+        or not isinstance(seconds, (int, float))
+        or seconds <= 0
+    ):
+        raise PolicyError(
+            f"selector {selector_id} issue_execution_seconds must be positive"
+        )
+    maximum_seconds = policy["maximum_prepared_seconds"]
+    if seconds > maximum_seconds:
+        return (
+            False,
+            f"predicted {seconds:g}s exceeds the {maximum_seconds:g}s issue budget",
+            default_owner,
+        )
+    return (
+        True,
+        f"predicted {seconds:g}s within the {maximum_seconds:g}s issue budget",
+        None,
+    )
 
 
 def _validate_no_equivalent_selectors(
@@ -885,6 +1032,7 @@ def resolve_plan(
             "source_sha": source_sha,
             "selectors": [],
             "selection_reasons": [],
+            "deferred_selectors": [],
         }
 
     selected: list[str] = []
@@ -958,6 +1106,29 @@ def resolve_plan(
                         "path": matching_paths[0],
                     }
                 )
+    deferred_selectors: list[dict[str, str]] = []
+    if stage in LOCAL_ISSUE_STAGES and manifest.get("issue_execution") is not None:
+        runnable: list[str] = []
+        runnable_reasons: list[dict[str, str]] = []
+        reason_by_selector = {reason["selector"]: reason for reason in reasons}
+        for selector_id in selected:
+            may_run, disposition, owner_stage = _issue_execution_disposition(
+                manifest, selector_id
+            )
+            if may_run:
+                runnable.append(selector_id)
+                runnable_reasons.append(reason_by_selector[selector_id])
+            else:
+                assert owner_stage is not None
+                deferred_selectors.append(
+                    {
+                        "selector": selector_id,
+                        "owner_stage": owner_stage,
+                        "reason": disposition,
+                    }
+                )
+        selected = runnable
+        reasons = runnable_reasons
     _validate_no_equivalent_selectors(
         manifest["selectors"],
         selected,
@@ -971,6 +1142,7 @@ def resolve_plan(
         "source_sha": source_sha,
         "selectors": selected,
         "selection_reasons": reasons,
+        "deferred_selectors": deferred_selectors,
     }
 
 
@@ -1062,6 +1234,9 @@ def parse_arguments(arguments: list[str]) -> argparse.Namespace:
 
     subparsers.add_parser("validate")
 
+    source = subparsers.add_parser("source-fingerprint")
+    source.add_argument("--repo-root", type=Path, default=Path("."))
+
     plan = subparsers.add_parser("plan")
     plan.add_argument("--stage", required=True)
     plan.add_argument("--event", default="local")
@@ -1085,6 +1260,10 @@ def parse_arguments(arguments: list[str]) -> argparse.Namespace:
     verify.add_argument("--marker", type=Path, required=True)
     verify.add_argument("--source-fingerprint", required=True)
     verify.add_argument("--build-fingerprint", required=True)
+
+    duration = subparsers.add_parser("verify-issue-duration")
+    duration.add_argument("--summary", type=Path, required=True)
+    duration.add_argument("--maximum-seconds", type=float, required=True)
 
     sha = subparsers.add_parser("verify-sha")
     sha.add_argument("--current", required=True)
@@ -1128,6 +1307,9 @@ def parse_arguments(arguments: list[str]) -> argparse.Namespace:
 
 def main(arguments: list[str]) -> int:
     options = parse_arguments(arguments)
+    if options.command == "source-fingerprint":
+        print(source_fingerprint(options.repo_root))
+        return 0
     if options.command == "lease-run":
         command = options.remainder
         if command and command[0] == "--":
@@ -1181,6 +1363,13 @@ def main(arguments: list[str]) -> int:
         )
         print(json.dumps(inventory, indent=2, sort_keys=True))
         return 0
+    if options.command == "verify-issue-duration":
+        summary = json.loads(options.summary.read_text(encoding="utf-8"))
+        require_issue_duration_within_budget(
+            observed_seconds=float(summary["durations_seconds"]["total"]),
+            maximum_seconds=options.maximum_seconds,
+        )
+        return 0
     if options.command == "tests":
         manifest = load_and_validate_manifest(options.manifest)
         inventory = repository_inventory(options.repo_root)
@@ -1198,6 +1387,15 @@ def main(arguments: list[str]) -> int:
             selector = manifest["selectors"].get(selector_id)
             if selector is None:
                 raise PolicyError(f"unknown selector {selector_id}")
+            if options.stage in LOCAL_ISSUE_STAGES:
+                may_run, reason, owner_stage = _issue_execution_disposition(
+                    manifest, selector_id
+                )
+                if not may_run:
+                    raise PolicyError(
+                        f"selector {selector_id} is deferred at {options.stage}: "
+                        f"{reason}; owner {owner_stage}"
+                    )
             if selector["plan"] != options.plan:
                 raise PolicyError(
                     f"selector {selector_id} belongs to {selector['plan']}, not {options.plan}"

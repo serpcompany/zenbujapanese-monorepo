@@ -8,7 +8,7 @@ remains decision evidence, but this file owns the executable cadence.
 
 | Stage                                      | What runs                                                                                            | Purpose                                                                                            |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Implementation                             | Relevant unit tests and issue-focused UI tests                                                       | Fast red-green feedback at the public seam changed by the issue                                    |
+| Issue implementation                       | Repository-selected deterministic policy checks and focused unit contracts, each budgeted for no more than 60 seconds on a prepared local environment | Fast red-green feedback without launching XCUITest, accessibility, integration, network, or complete targets |
 | Draft pull request push                    | Scope, manifest validation, and a SHA-bound deferred status on Ubuntu                                | Keep WIP pushes cheap; the draft itself remains unmergeable                                        |
 | Ready pull request or later non-draft push | Manifest-selected repository contracts, units, critical journeys, and focused accessibility coverage | Automatically verify the exact current head without accepting stale green results                  |
 | Merge queue                                | Cheap required-status reporting plus ten concurrent exact-candidate lanes: Unit, three complete Accessibility UI shards, five normal UI shards, and `ZenbuSudachiIntegration` | Blocking integration evidence without repeating fast macOS partitions or learner journeys |
@@ -60,10 +60,13 @@ dSYMs, checksums, and candidate result bundles to the documented 400-day-or-long
 evidence store. `iOS performance trend` remains a separate weekly trend, not a
 substitute for correctness.
 
-During Apple-native refactor issue loops, adaptive-layout changes retain one
-focused maximum-size smoke for the exact surface under review. Broader functional
-journeys run at normal Dynamic Type; the existing direct accessibility audits remain
-visible under #173 and are not replaced, skipped, or treated as passing by that split.
+During Apple-native refactor issue loops, an issue may add or update an exact
+learner-visible UI or maximum-size test, but the local issue runner records it as
+deferred instead of launching XCUITest. A Ready PR exact-head checkpoint owns
+affected Critical UI and focused accessibility execution. For the current #218
+batch, #173 owns the one consolidated affected-screen checkpoint after #294.
+The existing direct accessibility audits remain visible and are not replaced,
+skipped, or treated as passing by that placement.
 
 #269 records one explicit framework-diagnostic disposition for native Liquid Glass
 tab-edge snapshots. Its four direct whole-window Search/Kanji contrast audits remain
@@ -122,12 +125,17 @@ instead of reducing evidence.
 The current generated counts are 112 Unit; 22, 23, and 23 Accessibility UI;
 26, 26, 26, 27, and 26 normal UI; and 3 Sudachi integration tests.
 
-For ordinary issue work, keep the PR draft, run the repository-selected local
-issue gate, and push the reviewed commit. Changing the PR to Ready automatically
-runs the hosted fast plan. A later non-draft source push automatically produces a
-new run on the new head. Changing it back to Draft cancels an in-progress fast run;
-subsequent draft pushes remain cheap. Manual dispatch is investigation/recovery,
-not normal cadence.
+For ordinary issue work, keep the PR draft and run the repository-selected local
+issue gate. That gate may execute only deterministic policy checks and focused
+unit selectors with a reviewed prepared-environment estimate of at most 60
+seconds. Complete Unit targets and all UI, accessibility, diagnostics,
+integration, network, performance, and complete-suite selectors are returned in
+`deferred_selectors` with their owning lifecycle stage; they are never silently
+dropped. Changing the PR to Ready automatically runs the affected hosted fast
+plan on the exact current head. A later non-draft source push automatically
+produces a new run on the new head. Changing it back to Draft cancels an
+in-progress fast run; subsequent draft pushes remain cheap. Manual dispatch is
+investigation/recovery, not normal cadence.
 
 Both stable contexts are required on the merge-group SHA. `ios-quality.yml`
 therefore reports `ios-fast / Required` for `merge_group`, but its merge-group
@@ -173,6 +181,17 @@ apps/ios/Tools/run_issue_verification.sh issue-final BASE_SHA HEAD_SHA RESULT_DI
 
 It resolves committed policy from the base/head diff plus any reviewed capability,
 verifies that `HEAD_SHA` is the active checkout, and executes the resulting tiers.
+Its JSON plan prints both executable `selectors` and owned `deferred_selectors`.
+`contracts.issue-policy` is the bounded policy seam used by every issue run;
+`contracts.repository` remains PR-owned. A focused unit selector is issue-eligible
+only when it names one test contract, is deterministic, has no prohibited traits,
+and records a reviewed prepared-environment duration no greater than 60 seconds.
+Focused Unit execution is offline-only. It fails with the repository bootstrap
+instruction when the pinned Sudachi build cache is absent, retains fingerprinted
+DerivedData under `ZENBU_ISSUE_DERIVED_DATA_ROOT` (or the scoped temporary-cache
+default), and refuses the issue gate when the emitted setup + build + test total
+exceeds the same 60-second budget. A cold preparation/build is not misreported as
+an under-one-minute issue result.
 The lower-level selector and Xcode-plan adapters reject direct calls without a
 repository-policy authorization context; selector JSON is never a caller-facing
 issue-gate interface.

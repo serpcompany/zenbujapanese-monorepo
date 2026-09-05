@@ -444,9 +444,9 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         diagnostics = ios_verification.resolve_plan(
             manifest=manifest,
             changed_paths=[],
-            stage="tdd",
-            event="local",
-            draft=True,
+            stage="manual",
+            event="workflow_dispatch",
+            draft=False,
             source_sha="candidate",
             requested_capabilities=["secondary-accessibility-diagnostics"],
         )
@@ -470,8 +470,18 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         self.assertNotIn("ui", tdd_partitions)
         self.assertNotIn("diagnostics", tdd_partitions)
         self.assertNotIn("diagnostics", issue_final_partitions)
-        self.assertEqual(tdd["selectors"], ["contracts.repository"])
-        self.assertEqual(issue_final["selectors"], ["contracts.repository"])
+        self.assertEqual(tdd["selectors"], ["contracts.issue-policy"])
+        self.assertEqual(issue_final["selectors"], ["contracts.issue-policy"])
+        self.assertEqual(
+            tdd["deferred_selectors"],
+            [
+                {
+                    "selector": "contracts.repository",
+                    "owner_stage": "hosted-fast",
+                    "reason": "selector has no reviewed prepared-environment duration",
+                }
+            ],
+        )
 
     def test_reused_products_with_wrong_source_fingerprint_fail_closed(self):
         marker = {

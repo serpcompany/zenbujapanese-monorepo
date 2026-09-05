@@ -139,13 +139,31 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("run_selected_test_plan.sh", workflow)
         self.assertNotIn("run_ci_test_plan.sh", workflow)
 
-    def test_local_issue_gate_owns_selection_and_same_plan_build_reuse(self):
+    def test_local_issue_gate_is_offline_budgeted_and_reuses_prepared_products(self):
         issue_runner = (TOOLS / "run_issue_verification.sh").read_text(encoding="utf-8")
         selected_runner = (TOOLS / "run_selected_test_plan.sh").read_text(
             encoding="utf-8"
         )
         xcode_runner = (TOOLS / "run_ci_test_plan.sh").read_text(encoding="utf-8")
         self.assertIn('ios_verification.py" plan', issue_runner)
+        self.assertIn("contracts.issue-policy", issue_runner)
+        self.assertIn(
+            "for prohibited_tier in ui diagnostics accessibility integration complete performance",
+            issue_runner,
+        )
+        self.assertNotIn("run_partition ui ", issue_runner)
+        self.assertNotIn("run_partition accessibility ", issue_runner)
+        self.assertNotIn("run_partition integration ", issue_runner)
+        self.assertIn("--offline", issue_runner)
+        self.assertIn("source-fingerprint", issue_runner)
+        self.assertIn("ZENBU_ISSUE_DERIVED_DATA_ROOT", issue_runner)
+        self.assertIn("maximum_prepared_seconds", issue_runner)
+        self.assertIn("verify-issue-duration", issue_runner)
+        self.assertIn("partition_status=$?", issue_runner)
+        self.assertIn("duration_status=$?", issue_runner)
+        self.assertIn('return "$partition_status"', issue_runner)
+        self.assertNotIn("mktemp -d", issue_runner)
+        self.assertNotIn("cleanup_reuse_root", issue_runner)
         self.assertIn('ZENBU_DERIVED_DATA="$reuse_root/$plan"', issue_runner)
         self.assertIn("resolved no selectors", selected_runner)
         self.assertIn("ZENBU_POLICY_AUTHORIZED", selected_runner)
