@@ -8,31 +8,53 @@ struct LookupClient: Sendable {
   var entriesMatchingForm: @Sendable (String) async throws -> [DictionaryEntry]
   var entriesContainingKanji: @Sendable (String) async throws -> [DictionaryEntry]
 
-  static let live = LookupClient(
-    search: { query in
-      #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-InjectLookupFailure") {
-          throw LookupClientError.injectedFailure
-        }
-        if injectedOneTimeFailureQuery() == query,
-          await InjectedLookupFailure.shared.consumeFailure()
-        {
-          throw LookupClientError.injectedFailure
-        }
-      #endif
-      return try await LanguageReferenceData.shared.search(query)
-    },
-    entry: { id in try await LanguageReferenceData.shared.entry(id) },
-    entryMatchingForm: { form in try await LanguageReferenceData.shared.entry(matchingForm: form) },
-    entriesMatchingForm: { form in
-      try await LanguageReferenceData.shared.entries(matchingForm: form)
-    },
-    entriesContainingKanji: { character in
-      try await LanguageReferenceData.shared.entries(containingKanji: character)
-    }
-  )
+  static let live: LookupClient = {
+    let client = LookupClient(
+      search: { query in
+        #if DEBUG
+          if ProcessInfo.processInfo.arguments.contains("-InjectLookupFailure") {
+            throw LookupClientError.injectedFailure
+          }
+        #endif
+        return try await LanguageReferenceData.shared.search(query)
+      },
+      entry: { id in try await LanguageReferenceData.shared.entry(id) },
+      entryMatchingForm: { form in try await LanguageReferenceData.shared.entry(matchingForm: form)
+      },
+      entriesMatchingForm: { form in
+        try await LanguageReferenceData.shared.entries(matchingForm: form)
+      },
+      entriesContainingKanji: { character in
+        try await LanguageReferenceData.shared.entries(containingKanji: character)
+      }
+    )
+    #if DEBUG
+      if let query = injectedOneTimeFailureQuery() {
+        return injectingOneTimeFailure(for: query, live: client)
+      }
+    #endif
+    return client
+  }()
 
   #if DEBUG
+    static func injectingOneTimeFailure(for failedQuery: SearchQuery, live: LookupClient)
+      -> LookupClient
+    {
+      let failure = InjectedLookupFailure()
+      return LookupClient(
+        search: { query in
+          if query == failedQuery, try await failure.consumeFailure() {
+            throw LookupClientError.injectedFailure
+          }
+          return try await live.search(query)
+        },
+        entry: live.entry,
+        entryMatchingForm: live.entryMatchingForm,
+        entriesMatchingForm: live.entriesMatchingForm,
+        entriesContainingKanji: live.entriesContainingKanji
+      )
+    }
+
     static func freshBundledDatabase() -> LookupClient {
       fixtureClient(LanguageReferenceData())
     }
@@ -55,7 +77,7 @@ struct LookupClient: Sendable {
 }
 
 #if DEBUG
-  private enum LookupClientError: Error {
+  enum LookupClientError: Error {
     case injectedFailure
   }
 
@@ -71,10 +93,10 @@ struct LookupClient: Sendable {
   }
 
   private actor InjectedLookupFailure {
-    static let shared = InjectedLookupFailure()
     private var isPending = true
 
-    func consumeFailure() -> Bool {
+    func consumeFailure() throws -> Bool {
+      try Task.checkCancellation()
       guard isPending else { return false }
       isPending = false
       return true

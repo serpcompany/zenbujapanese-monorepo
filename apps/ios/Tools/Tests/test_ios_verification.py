@@ -891,7 +891,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             )
             self.assertEqual(
                 [lane["test_count"] for lane in matrix],
-                [113, 2, 22, 23, 23, 26, 26, 26, 27, 26, 3],
+                [114, 2, 22, 23, 23, 26, 26, 26, 27, 26, 3],
             )
             self.assertEqual(
                 [lane["measured_test_seconds"] for lane in matrix],
@@ -941,7 +941,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         self.assertEqual(
             {lane: len(partition["tests"]) for lane, partition in partitions.items()},
             {
-                "unit": 113,
+                "unit": 114,
                 "increased-contrast": 2,
                 "accessibility-ui-a": 22,
                 "accessibility-ui-b": 23,
@@ -1164,7 +1164,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         self.assertEqual(
             {lane: len(partition["tests"]) for lane, partition in partitions.items()},
             {
-                "unit": 113,
+                "unit": 114,
                 "increased-contrast": 2,
                 "accessibility-ui-a": 22,
                 "accessibility-ui-b": 23,
@@ -1181,7 +1181,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
     def test_generated_partition_selectors_expand_to_the_inventory_tests(self):
         repo_root = Path(__file__).parents[4]
         expected = {
-            "complete.merge-unit": ("ZenbuPR", 113),
+            "complete.merge-unit": ("ZenbuPR", 114),
             "complete.increased-contrast": ("ZenbuIncreasedContrast", 2),
             "complete.merge-accessibility-a": ("ZenbuPR", 22),
             "complete.merge-accessibility-b": ("ZenbuPR", 23),

@@ -12,6 +12,7 @@ struct WordDetailView: View {
   @State private var notes: [LearnerWordNote] = []
   @State private var noteSaveTask: Task<Void, Never>?
   @State private var examples: [ExampleSentence] = []
+  @State private var examplesEntryID: LanguageReferenceID?
   @State private var isLoadingExamples = true
   @State private var lastSpeechRequest: String?
   @State private var encounterMedia: [EncounterMedia] = []
@@ -132,8 +133,8 @@ struct WordDetailView: View {
           }
           EntryExamplesSection(
             entry: entry,
-            examples: examples,
-            isLoading: isLoadingExamples,
+            examples: examplesEntryID == entry.id ? examples : [],
+            isLoading: isLoadingExamples || examplesEntryID != entry.id,
             speechSynthesisClient: speechSynthesisClient,
             japaneseTextAnalysisClient: japaneseTextAnalysisClient,
             openWord: openWord
@@ -242,7 +243,8 @@ struct WordDetailView: View {
       let storedMedia = await encounterMediaStore.encounters(word)
       guard !Task.isCancelled else { return }
       encounterMedia = storedMedia
-      examples = (try? await exampleSentenceClient.examples(entry)) ?? []
+      let loadedExamples = (try? await exampleSentenceClient.examples(entry)) ?? []
+      guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()
       frequency =
         (try? await frequencyCapability.evidence(for: entry.id))
@@ -252,8 +254,11 @@ struct WordDetailView: View {
             reason: "Frequency data unavailable"
           ))
       notes = await wordNoteStore.load(entry.noteID)
+      guard !Task.isCancelled else { return }
       editingNoteID = nil
       noteDraft = ""
+      examples = loadedExamples
+      examplesEntryID = entry.id
       isLoadingExamples = false
     }
   }
@@ -1085,7 +1090,9 @@ private struct EntryExamplesSection: View {
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
-    if isLoading {
+    // Keep the same entry's loaded rows during refresh so a native Back
+    // transition does not collapse the List and discard its scroll position.
+    if isLoading && examples.isEmpty {
       ProgressView("Loading examples")
     } else if examples.isEmpty {
       Text("No source-matched examples")

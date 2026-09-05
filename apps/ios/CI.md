@@ -41,7 +41,7 @@ Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
 provider except for the bounded bundled-provider cold-relaunch journey. The
 merge-candidate workflow invokes and retains all three correctness plans.
 
-The exact inventory contains 334 tests. `ZenbuPR` includes 312 (113 Unit and 199
+The exact inventory contains 335 tests. `ZenbuPR` includes 313 (114 Unit and 199
 UI), and `ZenbuSudachiIntegration` includes three network-backed Unit tests. The
 seventeen exact tests outside those correctness plans are one performance-only Unit
 test, three physical/system HIL journeys, #269's four deliberately red framework
@@ -204,7 +204,7 @@ bytes. All result bundles, logs, screenshots, summaries, and identity records
 remain retained for 30 days; the next authorized run must measure actual storage
 instead of reducing evidence.
 
-The current generated counts are 112 Unit; 22, 23, and 23 Accessibility UI;
+The current generated counts are 114 Unit; 22, 23, and 23 Accessibility UI;
 26, 26, 26, 27, and 26 normal UI; and 3 Sudachi integration tests.
 
 For ordinary issue work, keep the PR draft and run the repository-selected local

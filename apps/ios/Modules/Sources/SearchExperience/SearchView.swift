@@ -34,6 +34,8 @@ struct SearchView: View {
   @FocusState private var isSearchFocused: Bool
 
   var body: some View {
+    let taskID = searchTaskID
+    let taskQuery = SearchQuery(taskID.query)
     VStack(spacing: 0) {
       SearchBar(
         query: $query,
@@ -145,11 +147,12 @@ struct SearchView: View {
       exampleCount = 0
       presentationState = .idle
     }
-    .task(id: searchTaskID) {
-      let taskID = searchTaskID
-      guard settledSearchTaskID != taskID else { return }
+    .task(id: taskID) {
+      guard !Task.isCancelled, searchTaskID == taskID, settledSearchTaskID != taskID else {
+        return
+      }
       presentationState = .idle
-      guard !searchQuery.isEmpty else {
+      guard !taskQuery.isEmpty else {
         results = .empty
         exampleCount = 0
         return
@@ -158,15 +161,15 @@ struct SearchView: View {
       do {
         try await Task.sleep(for: .milliseconds(100))
         try Task.checkCancellation()
-        async let searchedResults = lookupClient.search(searchQuery)
-        async let searchedExampleCount = exampleSentenceClient.count(searchQuery)
+        async let searchedResults = lookupClient.search(taskQuery)
+        async let searchedExampleCount = exampleSentenceClient.count(taskQuery)
         let foundResults = try await searchedResults
         try Task.checkCancellation()
         let directExampleCount = (try? await searchedExampleCount) ?? 0
         try Task.checkCancellation()
         let foundExampleCount: Int
         if foundResults.usesPrimaryEntryExamples,
-          let entry = foundResults.primaryEntry(for: searchQuery)
+          let entry = foundResults.primaryEntry(for: taskQuery)
         {
           foundExampleCount = (try? await exampleSentenceClient.examples(entry).count) ?? 0
         } else {
@@ -177,7 +180,7 @@ struct SearchView: View {
         settledSearchTaskID = taskID
         results = foundResults
         exampleCount = foundExampleCount
-        if foundResults.isEmpty && foundExampleCount == 0 && !searchQuery.isSingleKanji {
+        if foundResults.isEmpty && foundExampleCount == 0 && !taskQuery.isSingleKanji {
           presentationState = .noResults
         } else {
           presentationState = .results

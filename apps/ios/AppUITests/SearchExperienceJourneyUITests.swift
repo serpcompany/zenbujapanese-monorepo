@@ -412,12 +412,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let picker = waitForSystemPhotoPicker(in: app)
     recordSettledScreenshot(named: "production-photo-library-picker", app: app)
 
-    let photo = picker.images.matching(
-      NSPredicate(format: "label BEGINSWITH %@", "Photo,")
-    ).firstMatch
-    XCTAssertTrue(photo.waitForExistence(timeout: 5))
-    XCTAssertTrue(photo.isHittable)
-    photo.tap()
+    selectVisibleSystemPhoto(in: picker, app: app)
 
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
     let recognized = app.descendants(matching: .any)["image-text.raw-text"]
@@ -442,6 +437,36 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(picker.waitForExistence(timeout: 10))
     XCTAssertTrue(app.navigationBars["Photos"].exists)
     return picker
+  }
+
+  @MainActor
+  private func selectVisibleSystemPhoto(in picker: XCUIElement, app: XCUIApplication) {
+    let navigation = app.navigationBars["Photos"]
+    let photo = picker.images.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "Photo,")
+    ).firstMatch
+    XCTAssertTrue(photo.waitForExistence(timeout: 5))
+    guard navigation.exists, navigation.buttons["Cancel"].isHittable, picker.exists else {
+      XCTFail("The native Photos picker must be the interactive presented surface")
+      return
+    }
+    let top = max(picker.frame.minY, navigation.frame.maxY)
+    let viewport = CGRect(
+      x: picker.frame.minX, y: top, width: picker.frame.width,
+      height: max(0, min(picker.frame.maxY, app.frame.maxY) - top)
+    ).intersection(app.frame)
+    let frame = photo.frame
+    guard frame.width >= 44, frame.height >= 44, viewport.contains(frame) else {
+      XCTFail("The native photo must be fully visible with a 44-point touch area: \(frame)")
+      return
+    }
+    // Photos exposes PXGGridLayout-Info as a non-actionable Image child. Its
+    // observed visible cell is selectable by one touch, not Image.tap().
+    XCTContext.runActivity(named: "Select visible native photo at \(frame)") { _ in
+      app.coordinate(withNormalizedOffset: .zero)
+        .withOffset(CGVector(dx: frame.midX - app.frame.minX, dy: frame.midY - app.frame.minY))
+        .tap()
+    }
   }
 
   @MainActor
@@ -1061,11 +1086,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     }
     XCTAssertTrue(app.buttons["Open"].isEnabled)
     app.buttons["Open"].tap()
-    XCTAssertTrue(selectImageTextPage(named: "fixture-empty", pageCount: names.count, in: app))
     XCTAssertTrue(app.alerts["No Text Found"].waitForExistence(timeout: 10))
     XCTAssertTrue(app.staticTexts["Japanese text was not found in this image."].exists)
     recordSettledScreenshot(named: "image-text-multiple-empty-alert", app: app)
     app.alerts["No Text Found"].buttons["OK"].firstMatch.tap()
+    XCTAssertTrue(selectImageTextPage(named: "fixture-empty", pageCount: names.count, in: app))
 
     XCTAssertTrue(
       selectImageTextPage(named: "fixture-noisy-horizontal", pageCount: names.count, in: app))
@@ -3723,6 +3748,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(miruRuby.exists)
     let frequency = app.buttons["word-detail.frequency"]
     XCTAssertTrue(frequency.waitForExistence(timeout: 3))
+    assertElement(frequency, reachesValue: "#41", timeout: 5)
     XCTAssertEqual(frequency.value as? String, "#41")
     XCTAssertFalse(app.staticTexts["TUBELEX YouTube Japanese"].exists)
     XCTAssertFalse(app.staticTexts["YouTube / everyday media Japanese"].exists)
@@ -3734,8 +3760,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons["Choose Photo"].tap()
     // PhotosUI can move from a transient presentation window into the main
     // window. Its native navigation bar remains the public cancellation seam.
+    _ = waitForSystemPhotoPicker(in: app)
     let pickerNavigation = app.navigationBars["Photos"]
-    XCTAssertTrue(pickerNavigation.waitForExistence(timeout: 5))
     let cancelPhoto = pickerNavigation.buttons["Cancel"]
     XCTAssertTrue(cancelPhoto.waitForExistence(timeout: 3))
     recordScreenshot(named: "word-detail-native-photo-picker-before-cancel", app: app)
@@ -3833,12 +3859,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let selectionPicker = waitForSystemPhotoPicker(in: app)
     recordSettledScreenshot(named: "word-detail-photo-picker-selection", app: app)
     // The fresh disposable Simulator is seeded with one repository-owned photo.
-    let photo = selectionPicker.images.matching(
-      NSPredicate(format: "label BEGINSWITH %@", "Photo,")
-    ).firstMatch
-    XCTAssertTrue(photo.waitForExistence(timeout: 5))
-    XCTAssertTrue(photo.isHittable)
-    photo.tap()
+    selectVisibleSystemPhoto(in: selectionPicker, app: app)
     let attachment = app.buttons["word-detail.image-attachment"]
     XCTAssertTrue(attachment.waitForExistence(timeout: 10))
     XCTAssertTrue(attachment.label.contains("1"))
@@ -3969,6 +3990,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let frequency = app.buttons["word-detail.frequency"]
     XCTAssertTrue(frequency.waitForExistence(timeout: 3))
+    assertElement(frequency, reachesValue: "#41", timeout: 5)
     XCTAssertEqual(frequency.label, "Frequency rank 41. Double tap for details.")
     XCTAssertEqual(frequency.value as? String, "#41")
     XCTAssertFalse(app.staticTexts["TUBELEX YouTube Japanese"].exists)
@@ -5502,18 +5524,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     searchField.typeText("問題")
 
     let bestMatches = app.staticTexts["Best Matches"]
-    XCTAssertTrue(bestMatches.waitForExistence(timeout: 2))
+    XCTAssertEqual(waitForStableSearchOutcome(in: app), .results)
+    XCTAssertTrue(bestMatches.exists)
     app.keyboards.buttons["Search"].tap()
-    let keyboardDismissed = XCTNSPredicateExpectation(
-      predicate: NSPredicate(format: "exists == false"),
-      object: app.keyboards.firstMatch
-    )
-    XCTAssertEqual(XCTWaiter.wait(for: [keyboardDismissed], timeout: 2), .completed)
+    waitForSubmittedSearchResults(in: app)
     recordScreenshot(named: "search-results-problem", app: app)
 
     let primaryResult = app.buttons["result.problem"]
     XCTAssertTrue(primaryResult.exists)
-    primaryResult.tap()
+    WordDetailUITestSupport.tapVisibleSearchResult(primaryResult, in: app)
 
     let detail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(detail.waitForExistence(timeout: 2))

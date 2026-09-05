@@ -805,12 +805,23 @@ final class AccessibilityAuditUITests: XCTestCase {
     let installed = app.descendants(matching: .any)[
       "frequency-pack.status.zenbu.wikipedia.written.ja.unidic-3.1"
     ]
-    XCTAssertEqual(installed.label, "Status, Installed")
-    XCTAssertEqual(installed.value as? String, "Not selected")
-
     let use = app.buttons[
       "frequency-pack.activate.zenbu.wikipedia.written.ja.unidic-3.1"
     ]
+    let installedSnapshot = XCTNSPredicateExpectation(
+      predicate: NSPredicate { _, _ in
+        installed.exists && installed.label == "Status, Installed"
+          && installed.value as? String == "Not selected" && use.exists
+      },
+      object: app
+    )
+    XCTAssertEqual(
+      XCTWaiter.wait(for: [installedSnapshot], timeout: 10), .completed,
+      "Verified checksum completion must be followed by the installed snapshot and activation action"
+    )
+    XCTAssertEqual(installed.label, "Status, Installed")
+    XCTAssertEqual(installed.value as? String, "Not selected")
+
     XCTAssertTrue(use.isHittable)
     XCTAssertEqual(use.label, "Use This Dictionary")
     XCTAssertTrue(containsSystemBluePixels(in: use.screenshot()))
@@ -1038,6 +1049,9 @@ final class AccessibilityAuditUITests: XCTestCase {
       destination.buttons.firstMatch.tap()
       XCTAssertTrue(app.navigationBars["食べる"].waitForExistence(timeout: 5))
       XCTAssertTrue(sentence.waitForExistence(timeout: 5))
+      XCTAssertTrue(token.isHittable, "Back must restore the inline word without scrolling")
+      XCTAssertGreaterThanOrEqual(token.frame.minY, app.navigationBars.firstMatch.frame.maxY)
+      XCTAssertLessThanOrEqual(token.frame.maxY, app.tabBars.firstMatch.frame.minY)
     }
   }
 

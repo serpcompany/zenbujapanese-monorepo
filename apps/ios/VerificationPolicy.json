@@ -152,6 +152,13 @@
       "traits": ["deterministic", "complete-target"],
       "journeys": ["unit-contracts"]
     },
+    "unit.lookup-cancellation": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseTests/LookupClientTests/testCancelledLookupDoesNotConsumeTheNextMatchingInjectedFailure",
+      "traits": ["deterministic"],
+      "journeys": ["lookup-request-cancellation"],
+      "issue_execution_seconds": 90.31
+    },
     "unit.japanese-text-analysis": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseTests/JapaneseTextAnalysisTests/testProviderDictionaryFormsResolveInflectedVerbsWithoutNounOrIteLinks",
@@ -642,6 +649,7 @@
     "contracts": ["contracts.repository", "contracts.issue-policy"],
     "unit": [
       "unit.complete",
+      "unit.lookup-cancellation",
       "unit.japanese-text-analysis",
       "unit.bundled-japanese-text-analysis",
       "unit.reading-aids",
@@ -957,10 +965,11 @@
     "lookup-runtime": {
       "paths": [
         "apps/ios/Modules/Sources/SearchExperience/LookupClient*.swift",
+        "apps/ios/Modules/Tests/SearchExperienceTests/LookupClientTests.swift",
         "apps/ios/LanguageData/**"
       ],
-      "tdd": ["ui.search-ranking"],
-      "issue-final": ["unit.complete", "ui.search-ranking"],
+      "tdd": ["unit.lookup-cancellation", "ui.search-ranking"],
+      "issue-final": ["unit.lookup-cancellation", "unit.complete", "ui.search-ranking"],
       "hosted-fast": ["unit.complete", "ui.search-ranking"]
     },
     "recent-searches": {

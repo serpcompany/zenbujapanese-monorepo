@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F23000000000000000000002 /* LookupClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F23000000000000000000001 /* LookupClientTests.swift */; };
 		151000000000000000000001 /* ExampleSentenceRetrievalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 151000000000000000000004 /* ExampleSentenceRetrievalTests.swift */; };
 		ACCE55000000000000000002 /* ZenbuThemeAccessibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCE55000000000000000001 /* ZenbuThemeAccessibilityTests.swift */; };
 		F0A100000000000000000002 /* JapaneseRubyAnnotationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A100000000000000000001 /* JapaneseRubyAnnotationTests.swift */; };
@@ -49,6 +50,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		F23000000000000000000001 /* LookupClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookupClientTests.swift; sourceTree = "<group>"; };
 		151000000000000000000004 /* ExampleSentenceRetrievalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleSentenceRetrievalTests.swift; sourceTree = "<group>"; };
 		ACCE55000000000000000001 /* ZenbuThemeAccessibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenbuThemeAccessibilityTests.swift; sourceTree = "<group>"; };
 		F0A100000000000000000001 /* JapaneseRubyAnnotationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JapaneseRubyAnnotationTests.swift; sourceTree = "<group>"; };
@@ -107,6 +109,7 @@
 				F24900000000000000000001 /* ImageTextFlowModelTests.swift */,
 				F25200000000000000000003 /* LanguageTechnologyPackTests.swift */,
 				F23500000000000000000001 /* KanjiDetailRestorationTests.swift */,
+				F23000000000000000000001 /* LookupClientTests.swift */,
 			);
 			path = Modules/Tests/SearchExperienceTests;
 			sourceTree = SOURCE_ROOT;
@@ -385,6 +388,7 @@
 				F24900000000000000000002 /* ImageTextFlowModelTests.swift in Sources */,
 				F25200000000000000000004 /* LanguageTechnologyPackTests.swift in Sources */,
 				F23500000000000000000002 /* KanjiDetailRestorationTests.swift in Sources */,
+				F23000000000000000000002 /* LookupClientTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
