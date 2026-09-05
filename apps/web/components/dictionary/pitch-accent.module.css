@@ -1,9 +1,0 @@
-/* Pitch evidence colors from the iOS app's ZenbuTheme.pitchDownstep. */
-.accent {
-  --pitch-downstep: color(display-p3 0.830324 0.140382 0.133196);
-  color: var(--pitch-downstep);
-}
-
-:global(.dark) .accent {
-  --pitch-downstep: color(display-p3 0.933534 0.431676 0.423491);
-}
