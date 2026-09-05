@@ -1,8 +1,6 @@
 import SwiftUI
 
 struct DictionarySourcesView: View {
-  @Environment(\.openURL) private var openURL
-
   var body: some View {
     List {
       Section("Zenbu Japanese") {
@@ -17,21 +15,12 @@ struct DictionarySourcesView: View {
 
       Section("JMdict") {
         Text("Dictionary data from the Electronic Dictionary Research and Development Group.")
-        HStack {
-          Text("License")
-          Spacer()
-          Text("CC BY-SA 4.0")
-        }
+        LabeledContent("License", value: "CC BY-SA 4.0")
         LabeledContent("Snapshot", value: "2026-08-10")
-        Button {
-          openURL(URL(string: "https://www.edrdg.org/jmdict/j_jmdict.html")!)
-        } label: {
-          Text("Project documentation")
-            .font(.body)
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(ZenbuTheme.interactiveForeground)
-        .accessibilityAddTraits(.isLink)
+        Link(
+          "Project documentation",
+          destination: URL(string: "https://www.edrdg.org/jmdict/j_jmdict.html")!
+        )
         .accessibilityIdentifier("dictionary-sources.jmdict-project")
         Link(
           "License terms", destination: URL(string: "https://www.edrdg.org/edrdg/licence.html")!
@@ -42,11 +31,7 @@ struct DictionarySourcesView: View {
         Text(
           "Kanji classifications, meanings, and Japanese readings from the Electronic Dictionary Research and Development Group."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("CC BY-SA 4.0")
-        }
+        LabeledContent("License", value: "CC BY-SA 4.0")
         LabeledContent("Snapshot", value: "2026-08-10")
         Link(
           "Project documentation",
@@ -60,11 +45,7 @@ struct DictionarySourcesView: View {
         Text(
           "Visible kanji-component data from the Electronic Dictionary Research and Development Group."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("CC BY-SA 4.0")
-        }
+        LabeledContent("License", value: "CC BY-SA 4.0")
         LabeledContent("Snapshot", value: "2026-08-10")
         Link(
           "Project documentation",
@@ -78,11 +59,7 @@ struct DictionarySourcesView: View {
         Text(
           "Ordered kanji stroke geometry from KanjiVG by Ulrich Apel, transformed into Zenbu's app-owned drawing format."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("CC BY-SA 3.0")
-        }
+        LabeledContent("License", value: "CC BY-SA 3.0")
         LabeledContent("Release", value: "r20250816")
         NavigationLink("Bundled license text") {
           BundledLicenseTextView(
@@ -101,11 +78,7 @@ struct DictionarySourcesView: View {
         Text(
           "Kanji element structures and variants from Kanjium, including additions and modifications by Uros O. and EDRDG-derived fields."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("CC BY-SA 4.0")
-        }
+        LabeledContent("License", value: "CC BY-SA 4.0")
         LabeledContent("Snapshot", value: "8a0cdaa")
         Link(
           "Project and attribution",
@@ -119,11 +92,7 @@ struct DictionarySourcesView: View {
         Text(
           "Pitch-accent facts from UniDic for Contemporary Written Japanese 3.1.0, published by the National Institute for Japanese Language and Linguistics."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("New BSD")
-        }
+        LabeledContent("License", value: "New BSD")
         LabeledContent("Version", value: "3.1.0")
         NavigationLink("Bundled license text") {
           BundledLicenseTextView(
@@ -141,15 +110,79 @@ struct DictionarySourcesView: View {
             string: "https://clrd.ninjal.ac.jp/unidic_archive/cwj/back_number_en.html")!)
       }
 
+      Section("TUBELEX YouTube Japanese Frequency") {
+        Text(
+          "The included active-by-default frequency pack measures Japanese lemmas in YouTube subtitles across everyday media categories. Its ranks describe this media corpus, not universal Japanese frequency."
+        )
+        LabeledContent("License", value: "BSD-3-Clause")
+        LabeledContent("Version", value: "2025.1 · UniDic 3.1")
+        LabeledContent("Snapshot", value: "7cb5fb36")
+        NavigationLink("Bundled license text") {
+          BundledLicenseTextView(
+            title: "TUBELEX BSD-3-Clause License",
+            resource: "TUBELEX-BSD-3-CLAUSE"
+          )
+        }
+        .accessibilityIdentifier("dictionary-sources.tubelex-license")
+        Link(
+          "Project and frequency lists",
+          destination: URL(
+            string:
+              "https://github.com/naist-nlp/tubelex/tree/7cb5fb36add76b83a266d1967536e1a1d3faa513")!
+        )
+      }
+
+      Section("Japanese Wikipedia Frequency") {
+        Text(
+          "The optional downloadable pack measures written Japanese in the 2022-10-20 Japanese Wikipedia dump using UniDic 3.1 and NFKC normalization."
+        )
+        LabeledContent("License", value: "BSD-3-Clause")
+        LabeledContent("Version", value: "2022-10-20 · UniDic 3.1")
+        LabeledContent("Snapshot", value: "8b7a2811")
+        NavigationLink("Bundled license text") {
+          BundledLicenseTextView(
+            title: "Wikipedia Frequency BSD-3-Clause License",
+            resource: "WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE"
+          )
+        }
+        .accessibilityIdentifier("dictionary-sources.wikipedia-frequency-license")
+        Link(
+          "Project and frequency lists",
+          destination: URL(
+            string:
+              "https://github.com/adno/wikipedia-word-frequency-clean/tree/8b7a28118736ef4bc9b70ebb4abc33d32b53200c"
+          )!
+        )
+      }
+
+      Section("Japanese Text Analysis") {
+        Text(
+          "Optional on-device Japanese word boundaries, dictionary forms, readings, and parts of speech from Sudachi.rs and SudachiDict Core. ZIPFoundation reads the checksum-pinned official dictionary wheel during installation."
+        )
+        LabeledContent("Engine", value: "sudachi.rs 0.6.11")
+        LabeledContent("Binding", value: "sudachi-swift 0.1.1")
+        LabeledContent("Dictionary", value: "SudachiDict Core 20260723")
+        LabeledContent("Archive reader", value: "ZIPFoundation 0.9.20")
+        LabeledContent("License", value: "Apache-2.0 · BSD-3-Clause · MIT")
+        NavigationLink("Bundled license and attribution text") {
+          BundledLicenseTextView(
+            title: "Japanese Text Analysis Notices",
+            resource: "SudachiLanguageTechnologyNotices"
+          )
+        }
+        .accessibilityIdentifier("dictionary-sources.japanese-analysis-license")
+        Link(
+          "SudachiDict release",
+          destination: URL(
+            string: "https://github.com/WorksApplications/SudachiDict/releases/tag/v20260723")!
+        )
+      }
+
       Section("Tatoeba") {
         Text(
           "Offline Japanese–English example sentences from Tatoeba's official weekly export. Zenbu retains both sentence IDs, supplied contributor usernames, per-record license class, and the exact source snapshot."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("CC BY 2.0 FR")
-        }
+        LabeledContent("License", value: "CC BY 2.0 FR")
         LabeledContent("Snapshot", value: "2026-08-08")
         NavigationLink("Contributor credits") {
           TatoebaContributorCreditsView()
@@ -174,11 +207,7 @@ struct DictionarySourcesView: View {
         Text(
           "Offline single-character handwriting recognition by Dario Radmann and DaKanji contributors, converted to Core ML by Zenbu Japanese."
         )
-        HStack {
-          Text("License")
-          Spacer()
-          Text("MIT")
-        }
+        LabeledContent("License", value: "MIT")
         LabeledContent("Model", value: "Single Kanji Recognition v1.2")
         NavigationLink("Bundled license text") {
           BundledLicenseTextView(
@@ -199,11 +228,8 @@ struct DictionarySourcesView: View {
         )
       }
     }
-    .font(.body)
     .accessibilityIdentifier("dictionary-sources.list")
     .headerProminence(.increased)
-    .foregroundStyle(ZenbuTheme.foreground)
-    .tint(ZenbuTheme.interactiveForeground)
     .navigationTitle("Dictionary Sources")
     .navigationBarTitleDisplayMode(.inline)
   }
@@ -248,12 +274,12 @@ private struct BundledLicenseTextView: View {
   }
 
   var body: some View {
-    ScrollView {
-      Text(text)
-        .font(.system(.footnote, design: .monospaced))
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .accessibilityIdentifier("dictionary-sources.license-text")
+    List {
+      Section {
+        Text(text)
+          .font(.system(.footnote, design: .monospaced))
+          .accessibilityIdentifier("dictionary-sources.license-text")
+      }
     }
     .navigationTitle(title)
     .navigationBarTitleDisplayMode(.inline)

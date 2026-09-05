@@ -1,0 +1,318 @@
+#!/usr/bin/env python3
+
+import importlib.util
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+
+MODULE_PATH = Path(__file__).with_name("issue251_morphology_benchmark.py")
+SPEC = importlib.util.spec_from_file_location("issue251_benchmark", MODULE_PATH)
+benchmark = importlib.util.module_from_spec(SPEC)
+assert SPEC.loader is not None
+SPEC.loader.exec_module(benchmark)
+
+
+class Issue251MorphologyBenchmarkTests(unittest.TestCase):
+    def setUp(self):
+        self.truth = {
+            "id": "red-contract",
+            "text": "学生がいる。",
+            "tokens": [
+                {
+                    "surface": "学生",
+                    "start": 0,
+                    "end": 2,
+                    "lemma": "学生",
+                    "reading": "ガクセイ",
+                    "pos": "NOUN",
+                    "oov": False,
+                },
+                {
+                    "surface": "が",
+                    "start": 2,
+                    "end": 3,
+                    "lemma": "が",
+                    "reading": "ガ",
+                    "pos": "ADP",
+                    "oov": False,
+                },
+                {
+                    "surface": "いる",
+                    "start": 3,
+                    "end": 5,
+                    "lemma": "居る",
+                    "reading": "イル",
+                    "pos": "VERB",
+                    "oov": False,
+                    "link": {"kind": "abstain", "forbiddenIds": ["wrong-id"]},
+                },
+                {
+                    "surface": "。",
+                    "start": 5,
+                    "end": 6,
+                    "lemma": "。",
+                    "reading": "。",
+                    "pos": "PUNCT",
+                    "oov": False,
+                },
+            ],
+        }
+        self.metadata = {
+            "schema": "zenbu.japanese-text-analysis-output.v1",
+            "engine": "contract",
+            "engineVersion": "1",
+            "dictionary": "fixture",
+            "dictionarySHA256": "a" * 64,
+        }
+        self.correct = {
+            **self.metadata,
+            "id": "red-contract",
+            "text": "学生がいる。",
+            "tokens": [dict(token) for token in self.truth["tokens"]],
+        }
+
+    def score_one(self, mutation):
+        candidate = json.loads(json.dumps(self.correct, ensure_ascii=False))
+        mutation(candidate)
+        return benchmark.score_records([self.truth], [candidate])
+
+    def test_wrong_boundary_fails_exact_sentence(self):
+        result = self.score_one(
+            lambda row: row["tokens"].__setitem__(
+                0, {**row["tokens"][0], "end": 1, "surface": "学"}
+            )
+        )
+        self.assertEqual(result["sentenceAllCorrect"], {"correct": 0, "total": 1})
+        self.assertLess(result["boundary"]["f1"], 1)
+
+    def test_wrong_lemma_reading_and_pos_fail_independent_metrics(self):
+        for field, wrong, metric in [
+            ("lemma", "生徒", "lemma"),
+            ("reading", "ガクショウ", "reading"),
+            ("pos", "VERB", "pos"),
+        ]:
+            with self.subTest(field=field):
+                result = self.score_one(
+                    lambda row, f=field, value=wrong: row["tokens"][0].__setitem__(
+                        f, value
+                    )
+                )
+                self.assertLess(result[metric]["accuracy"], 1)
+                self.assertEqual(result["sentenceAllCorrect"]["correct"], 0)
+
+    def test_guessed_homograph_is_a_severe_wrong_link(self):
+        def guess(row):
+            row["tokens"][2]["linkIds"] = ["wrong-id"]
+
+        result = self.score_one(guess)
+        self.assertEqual(result["links"]["severeWrong"], 1)
+        self.assertEqual(result["links"]["exactLink"]["precision"], 0)
+        self.assertFalse(result["hardGates"]["zeroSevereWrongLinks"])
+
+    def test_ranges_must_round_trip_to_exact_text(self):
+        candidate = json.loads(json.dumps(self.correct, ensure_ascii=False))
+        candidate["tokens"][0]["surface"] = "生徒"
+        with self.assertRaisesRegex(ValueError, "round-trip"):
+            benchmark.validate_candidate(candidate)
+
+    def test_version_and_checksum_drift_fail_closed(self):
+        for field, value in [("engineVersion", "2"), ("dictionarySHA256", "b" * 64)]:
+            with self.subTest(field=field):
+                candidate = json.loads(json.dumps(self.correct, ensure_ascii=False))
+                candidate[field] = value
+                with self.assertRaisesRegex(ValueError, "metadata drift"):
+                    benchmark.validate_candidate(
+                        candidate, expected_metadata=self.metadata
+                    )
+
+    def test_public_result_loader_rejects_mixed_provider_metadata(self):
+        second = json.loads(json.dumps(self.correct, ensure_ascii=False))
+        second["id"] = "second"
+        second["engineVersion"] = "2"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "results.jsonl"
+            path.write_text(
+                "\n".join(
+                    json.dumps(row, ensure_ascii=False)
+                    for row in (self.correct, second)
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "metadata drift"):
+                benchmark.load_jsonl(path, self.metadata)
+
+    def test_oov_precision_recall_and_f1_are_independent_from_accuracy(self):
+        truth = {
+            "id": "oov",
+            "text": "猫X",
+            "tokens": [
+                {"surface": "猫", "start": 0, "end": 1, "oov": False},
+                {"surface": "X", "start": 1, "end": 2, "oov": True},
+            ],
+        }
+        candidate = {
+            **self.metadata,
+            "id": "oov",
+            "text": "猫X",
+            "tokens": [
+                {"surface": "猫", "start": 0, "end": 1, "oov": True},
+                {"surface": "X", "start": 1, "end": 2, "oov": True},
+            ],
+        }
+        result = benchmark.score_records([truth], [candidate])
+        self.assertEqual(result["oovDetection"]["precision"], 0.5)
+        self.assertEqual(result["oovDetection"]["recall"], 1)
+
+    def test_explicit_alternate_boundaries_are_reported_separately(self):
+        truth = {
+            "id": "alternate",
+            "text": "日本語",
+            "tokens": [{"surface": "日本語", "start": 0, "end": 3}],
+            "allowedBoundaryEdgeSets": [[], [2]],
+        }
+        candidate = {
+            **self.metadata,
+            "id": "alternate",
+            "text": "日本語",
+            "tokens": [
+                {"surface": "日本", "start": 0, "end": 2},
+                {"surface": "語", "start": 2, "end": 3},
+            ],
+        }
+        result = benchmark.score_records([truth], [candidate])
+        self.assertLess(result["boundary"]["f1"], 1)
+        self.assertEqual(result["allowedBoundary"]["f1"], 1)
+
+    def test_committed_confirmation_truth_hash_matches_both_manifests(self):
+        fixtures = Path(__file__).parents[1] / "fixtures"
+        truth = fixtures / "issue251-morphology-confirmation-holdout-v1.json"
+        digest = benchmark.hashlib.sha256(truth.read_bytes()).hexdigest()
+        source = json.loads(
+            (fixtures / "issue251-morphology-benchmark-v1.source.json").read_text()
+        )
+        results = json.loads(
+            (fixtures / "issue251-morphology-results-v1.json").read_text()
+        )
+        self.assertEqual(source["confirmationHoldout"]["truthSHA256"], digest)
+        self.assertEqual(
+            results["decisionEvidence"]["confirmationHoldout"]["truthSHA256"],
+            digest,
+        )
+        samples = fixtures / "issue251-ios-measurement-samples-v1.json"
+        self.assertEqual(
+            results["simulatorFeasibility"]["rawSamplesSHA256"],
+            benchmark.hashlib.sha256(samples.read_bytes()).hexdigest(),
+        )
+        strata = fixtures / "issue251-confirmation-strata.json"
+        self.assertEqual(
+            results["decisionEvidence"]["confirmationHoldout"]["strataSHA256"],
+            benchmark.hashlib.sha256(strata.read_bytes()).hexdigest(),
+        )
+
+    def test_scalar_range_round_trips_to_retained_apple_character_geometry(self):
+        text = "日本語を読む"
+        boxes = [
+            {"scalarStart": 0, "scalarEnd": 1, "x": 0.80, "y": 0.10},
+            {"scalarStart": 1, "scalarEnd": 2, "x": 0.80, "y": 0.18},
+            {"scalarStart": 2, "scalarEnd": 3, "x": 0.80, "y": 0.26},
+            {"scalarStart": 3, "scalarEnd": 4, "x": 0.60, "y": 0.10},
+            {"scalarStart": 4, "scalarEnd": 5, "x": 0.40, "y": 0.10},
+            {"scalarStart": 5, "scalarEnd": 6, "x": 0.40, "y": 0.18},
+        ]
+        mapped = benchmark.apple_character_geometry_for_scalar_range(text, 0, 3, boxes)
+        self.assertEqual(mapped, boxes[0:3])
+        self.assertEqual(text[0:3], "日本語")
+
+    def test_geometry_mapping_fails_when_vision_evidence_is_not_scalar_complete(self):
+        with self.assertRaisesRegex(ValueError, "does not cover"):
+            benchmark.apple_character_geometry_for_scalar_range(
+                "日本語",
+                0,
+                3,
+                [{"scalarStart": 0, "scalarEnd": 1, "x": 0.0, "y": 0.0}],
+            )
+
+    def test_multi_scalar_swift_character_geometry_maps_without_one_box_per_scalar(
+        self,
+    ):
+        text = "葛󠄀を"
+        boxes = [
+            {"scalarStart": 0, "scalarEnd": 2, "x": 0.8, "y": 0.1},
+            {"scalarStart": 2, "scalarEnd": 3, "x": 0.6, "y": 0.1},
+        ]
+        self.assertEqual(
+            benchmark.apple_character_geometry_for_scalar_range(text, 0, 2, boxes),
+            [boxes[0]],
+        )
+
+    def test_script_strata_are_deterministic_from_transcript(self):
+        self.assertEqual(benchmark.script_stratum("iPhoneを2台"), "mixedLatinOrNumber")
+        self.assertEqual(benchmark.script_stratum("日本語です"), "kanjiKana")
+        self.assertEqual(benchmark.script_stratum("こんにちは。"), "kanaOrSymbolOnly")
+
+    def test_reordered_candidates_score_by_id_not_file_order(self):
+        second_truth = {
+            "id": "second",
+            "text": "猫",
+            "tokens": [
+                {
+                    "surface": "猫",
+                    "start": 0,
+                    "end": 1,
+                    "lemma": "猫",
+                    "reading": "ネコ",
+                    "pos": "NOUN",
+                    "oov": False,
+                }
+            ],
+        }
+        second = {**self.metadata, **second_truth}
+        result = benchmark.score_records(
+            [self.truth, second_truth], [second, self.correct]
+        )
+        self.assertEqual(result["sentenceAllCorrect"], {"correct": 2, "total": 2})
+
+    def test_normalized_result_hash_is_order_independent_and_deterministic(self):
+        second = {
+            **self.metadata,
+            "id": "second",
+            "text": "猫",
+            "tokens": [
+                {
+                    "surface": "猫",
+                    "start": 0,
+                    "end": 1,
+                    "lemma": "猫",
+                    "reading": "ネコ",
+                    "pos": "NOUN",
+                    "oov": False,
+                }
+            ],
+        }
+        self.assertEqual(
+            benchmark.normalized_output_sha256([self.correct, second]),
+            benchmark.normalized_output_sha256([second, self.correct]),
+        )
+
+    def test_conllu_truth_retains_lexeme_and_surface_pronunciation_readings(self):
+        misc = "SpaceAfter=No|UnidicInfo=エラブ,選ぶ,選ん,選ぶ,エラン,,,エラブ,エラブ,選ぶ"
+        self.assertEqual(benchmark._unidic_readings(misc), ["エラブ", "エラン"])
+
+    def test_sentence_bootstrap_is_deterministic_and_exposes_direction(self):
+        samples_a = [1.0, 1.0, 1.0, 0.9, 0.8]
+        samples_b = [0.7, 0.6, 0.7, 0.5, 0.4]
+        first = benchmark.bootstrap_paired_difference(
+            samples_a, samples_b, seed=251, replicates=1000
+        )
+        second = benchmark.bootstrap_paired_difference(
+            samples_a, samples_b, seed=251, replicates=1000
+        )
+        self.assertEqual(first, second)
+        self.assertGreater(first["low95"], 0)
+
+
+if __name__ == "__main__":
+    unittest.main()

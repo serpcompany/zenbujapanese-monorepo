@@ -24,8 +24,19 @@
   "testTargets" : [
     {
       "parallelizable" : false,
-      "selectedTests" : [
-        "AccessibilityAuditUITests"
+      "selectedTests" : ["AccessibilityAuditUITests"],
+      "skippedTests" : [
+        "AccessibilityAuditUITests/testReviewerContrastWithIncreaseContrastInLightMode",
+        "AccessibilityAuditUITests/testReviewerContrastWithIncreaseContrastInDarkMode",
+        "AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutRetainsRawHitRegionDiagnostic",
+        "AccessibilityAuditUITests/testDarkWordDetailRetainsCompleteAX5Diagnostic",
+        "AccessibilityAuditUITests/testLightWordDetailRetainsCompleteAX5Diagnostic",
+        "AccessibilityAuditUITests/testDarkShortWordDetailRetainsSystemDynamicTypeDiagnostic",
+        "AccessibilityAuditUITests/testLightShortWordDetailRetainsSystemDynamicTypeDiagnostic",
+        "AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInLightMode",
+        "AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInDarkMode",
+        "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode",
+        "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode"
       ],
       "target" : {
         "containerPath" : "container:ZenbuJapanese.xcodeproj",

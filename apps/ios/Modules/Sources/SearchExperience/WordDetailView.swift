@@ -1,75 +1,115 @@
+import CoreTransferable
+import PhotosUI
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 struct WordDetailView: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @FocusState private var noteEditorFocused: Bool
   @State private var editingNoteID: String?
   @State private var noteDraft = ""
   @State private var notes: [LearnerWordNote] = []
   @State private var noteSaveTask: Task<Void, Never>?
   @State private var examples: [ExampleSentence] = []
+  @State private var examplesEntryID: LanguageReferenceID?
   @State private var isLoadingExamples = true
   @State private var lastSpeechRequest: String?
   @State private var encounterMedia: [EncounterMedia] = []
-  @State private var showsEncounterMediaPicker = false
+  @State private var selectedEncounterMediaItem: PhotosPickerItem?
+  @State private var showsPhotoPicker = false
   @State private var encounterMediaImportFailed = false
+  @State private var cameraAlert: WordDetailCameraAlert?
+  @State private var showsCamera = false
+  @State private var frequencyDisclosure: FrequencyDisclosureItem?
+  @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
+  @State private var frequency: FrequencyLookupResult = .unavailable(
+    FrequencyPackUnavailable(
+      pack: nil,
+      reason: "Loading frequency data")
+  )
 
   let entry: DictionaryEntry
-  let initialImageAttachment: WordImageAttachment?
+  let initialEncounterMedia: EncounterMediaAttachment?
   let speechSynthesisClient: SpeechSynthesisClient
   let exampleSentenceClient: ExampleSentenceClient
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let wordNoteStore: WordNoteStore
   let encounterMediaStore: EncounterMediaStore
+  let cameraAuthorizationClient: CameraAuthorizationClient
+  let frequencyCapability: FrequencyCapability
   let conjugationTable: ConjugationTable?
   let openRelated: (DictionaryRelationship) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
   let openWord: (DictionaryEntry) -> Void
-  let openConjugations: (ConjugationTable) -> Void
+  let manageFrequencyDictionaries: () -> Void
 
   var body: some View {
     ScrollViewReader { proxy in
-      ScrollView {
-        VStack(spacing: 0) {
-          WordHeader(
-            entry: entry,
-            encounterMedia: encounterMedia,
-            pronounce: { speechSynthesisClient.speak(entry.reading) },
-            removeEncounterMedia: removeEncounterMedia
-          )
+      List {
+        Section {
+          VStack(alignment: .leading, spacing: 12) {
+            headerLayout {
+              WordIdentityView(entry: entry)
+              VStack(alignment: .trailing, spacing: 8) {
+                FrequencyRow(
+                  result: frequency,
+                  showDetails: { frequencyDisclosure = FrequencyDisclosureItem(result: frequency) }
+                )
+                if let latestEncounterMedia = displayableEncounterMedia.first {
+                  EncounterMediaRow(
+                    media: latestEncounterMedia,
+                    count: displayableEncounterMedia.count,
+                    encounterMedia: displayableEncounterMedia,
+                    removeEncounterMedia: removeEncounterMedia
+                  )
+                }
+              }
+            }
+            PronunciationRow(
+              entry: entry,
+              pronounce: { speechSynthesisClient.speak(entry.reading) }
+            )
+          }
           PartOfSpeechRow(
+            entry: entry,
             title: (entry.senses.first?.partsOfSpeech ?? entry.partsOfSpeech)
               .map(\.rawValue)
               .joined(separator: " · "),
-            conjugationTable: conjugationTable,
-            openConjugations: openConjugations
+            conjugationTable: conjugationTable
           )
+        }
 
-          if !entry.alternativeForms.isEmpty {
-            SectionLabel("ALTERNATIVES")
+        if !entry.alternativeForms.isEmpty {
+          Section("ALTERNATIVES") {
             AlternativeFormsSection(forms: entry.alternativeForms, openKanji: openKanji)
           }
+        }
 
-          SectionLabel("MEANING")
+        Section("MEANING") {
           MeaningSection(senses: entry.senses)
+        }
 
-          if !entry.primaryKanji.isEmpty {
-            SectionLabel("KANJI")
+        if !entry.primaryKanji.isEmpty {
+          Section("KANJI") {
             PrimaryKanjiSection(
-              characters: entry.primaryKanji, entry: entry, openKanji: openKanji)
+              characters: entry.primaryKanji, entry: entry)
           }
+        }
 
-          if !entry.alternativeKanji.isEmpty {
-            SectionLabel("ALTERNATIVE KANJI")
-            AlternativeKanjiSection(characters: entry.alternativeKanji, openKanji: openKanji)
+        if !entry.alternativeKanji.isEmpty {
+          Section("ALTERNATIVE KANJI") {
+            AlternativeKanjiSection(characters: entry.alternativeKanji)
           }
+        }
 
-          if !entry.relationships.isEmpty {
-            SectionLabel("RELATED WORDS")
+        if !entry.relationships.isEmpty {
+          Section("RELATED WORDS") {
             RelationshipsSection(relationships: entry.relationships, openRelated: openRelated)
           }
+        }
 
-          SectionLabel("NOTES")
+        Section("NOTES") {
           NotesSection(
             notes: notes,
             editingNoteID: editingNoteID,
@@ -79,20 +119,29 @@ struct WordDetailView: View {
             addNote: beginAddingNote
           )
           .id("word-note.section")
+        }
 
-          SectionLabel("EXAMPLES")
+        Section("EXAMPLES") {
+          if analysisAvailability == .reduced {
+            Label(
+              "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
+              systemImage: "info.circle"
+            )
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .accessibilityIdentifier("word-detail.reduced-analysis")
+          }
           EntryExamplesSection(
             entry: entry,
-            examples: examples,
-            isLoading: isLoadingExamples,
+            examples: examplesEntryID == entry.id ? examples : [],
+            isLoading: isLoadingExamples || examplesEntryID != entry.id,
             speechSynthesisClient: speechSynthesisClient,
             japaneseTextAnalysisClient: japaneseTextAnalysisClient,
             openWord: openWord
           )
         }
       }
-      .background(ZenbuTheme.background)
-      .scrollIndicators(.hidden)
+      .listStyle(.insetGrouped)
       .scrollDismissesKeyboard(.immediately)
       .accessibilityIdentifier("word-detail.screen")
       .onChange(of: editingNoteID) { _, noteID in
@@ -103,7 +152,6 @@ struct WordDetailView: View {
         }
       }
     }
-    .background(ZenbuTheme.background)
     .navigationTitle(entry.headword)
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
@@ -113,30 +161,57 @@ struct WordDetailView: View {
             .font(.body.weight(.semibold))
             .accessibilityIdentifier("word-note.done")
         } else {
-          Button(action: beginAddingNote) {
-            Image(systemName: "square.and.pencil")
+          Menu {
+            Button("Add Note", systemImage: "square.and.pencil", action: beginAddingNote)
+            Button("Take Photo", systemImage: "camera", action: presentCamera)
+            Button("Choose Photo", systemImage: "photo.on.rectangle") {
+              showsPhotoPicker = true
+            }
+          } label: {
+            Label("Add", systemImage: "plus")
+              .labelStyle(.iconOnly)
           }
-          .accessibilityLabel("Add note")
-          .accessibilityIdentifier("word-detail.toolbar-note")
-
-          Button(action: { showsEncounterMediaPicker = true }) {
-            Image(systemName: "photo.badge.plus")
-          }
-          .accessibilityLabel("Add encounter image")
-          .accessibilityIdentifier("word-detail.toolbar-image")
+          .menuOrder(.fixed)
+          .accessibilityLabel("Add")
+          .accessibilityIdentifier("word-detail.add-menu")
         }
       }
     }
-    .sheet(isPresented: $showsEncounterMediaPicker) {
-      ImagePhotoLibraryPicker { result in
-        showsEncounterMediaPicker = false
-        handleEncounterMediaSelection(result)
-      }
-    }
+    .photosPicker(
+      isPresented: $showsPhotoPicker,
+      selection: $selectedEncounterMediaItem,
+      matching: .images
+    )
     .alert("Unable to Save Image", isPresented: $encounterMediaImportFailed) {
       Button("OK", role: .cancel) {}
     } message: {
       Text("The selected image could not be read.")
+    }
+    .alert(item: $cameraAlert) { alert in
+      alert.alert(openSettings: cameraAuthorizationClient.openSettings)
+    }
+    .sheet(isPresented: $showsCamera) {
+      #if DEBUG
+        if WordDetailCameraFixtureScenario.current == .cancel {
+          WordDetailCameraCancelFixture {
+            saveCameraResult(.success(nil))
+            showsCamera = false
+          }
+        } else {
+          cameraPicker
+        }
+      #else
+        cameraPicker
+      #endif
+    }
+    .sheet(item: $frequencyDisclosure) { item in
+      FrequencyDisclosureView(
+        item: item,
+        manage: {
+          frequencyDisclosure = nil
+          manageFrequencyDictionaries()
+        }
+      )
     }
     .overlay(alignment: .topLeading) {
       if let lastSpeechRequest {
@@ -151,6 +226,9 @@ struct WordDetailView: View {
       notification in
       lastSpeechRequest = notification.object as? String
     }
+    .onChange(of: selectedEncounterMediaItem) {
+      importSelectedEncounterMedia()
+    }
     .onDisappear {
       guard editingNoteID != nil else { return }
       persistDraft()
@@ -159,40 +237,125 @@ struct WordDetailView: View {
       isLoadingExamples = true
       encounterMedia = []
       let word = entry.encounterWordReference
-      if let initialImageAttachment {
-        await encounterMediaStore.save(initialImageAttachment, word)
+      if let initialEncounterMedia {
+        await encounterMediaStore.save(initialEncounterMedia, word)
       }
       let storedMedia = await encounterMediaStore.encounters(word)
       guard !Task.isCancelled else { return }
       encounterMedia = storedMedia
-      examples = (try? await exampleSentenceClient.examples(entry)) ?? []
+      let loadedExamples = (try? await exampleSentenceClient.examples(entry)) ?? []
+      guard !Task.isCancelled else { return }
+      analysisAvailability = await japaneseTextAnalysisClient.availability()
+      frequency =
+        (try? await frequencyCapability.evidence(for: entry.id))
+        ?? .unavailable(
+          FrequencyPackUnavailable(
+            pack: nil,
+            reason: "Frequency data unavailable"
+          ))
       notes = await wordNoteStore.load(entry.noteID)
+      guard !Task.isCancelled else { return }
       editingNoteID = nil
       noteDraft = ""
+      examples = loadedExamples
+      examplesEntryID = entry.id
       isLoadingExamples = false
     }
   }
 
-  private func removeEncounterMedia(_ mediaID: String) {
+  private var headerLayout: AnyLayout {
+    dynamicTypeSize.isAccessibilitySize
+      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+      : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+  }
+
+  private var displayableEncounterMedia: [EncounterMedia] {
+    encounterMedia.filter { UIImage(data: $0.data) != nil }
+  }
+
+  private func removeEncounterMedia(_ mediaID: String) async {
+    let word = entry.encounterWordReference
+    await encounterMediaStore.remove(word, mediaID)
+    encounterMedia = await encounterMediaStore.encounters(word)
+  }
+
+  private func importSelectedEncounterMedia() {
+    guard let selectedEncounterMediaItem else { return }
     Task { @MainActor in
-      let word = entry.encounterWordReference
-      await encounterMediaStore.remove(word, mediaID)
-      encounterMedia = await encounterMediaStore.encounters(word)
+      defer { self.selectedEncounterMediaItem = nil }
+      do {
+        guard
+          let selectedMedia = try await selectedEncounterMediaItem.loadTransferable(
+            type: SelectedEncounterMedia.self)
+        else {
+          encounterMediaImportFailed = true
+          return
+        }
+        await saveEncounterMedia(selectedMedia.asset)
+      } catch {
+        encounterMediaImportFailed = true
+      }
     }
   }
 
-  private func handleEncounterMediaSelection(_ result: Result<[ImageTextAsset], Error>) {
-    guard case .success(let assets) = result else {
-      encounterMediaImportFailed = true
+  private func presentCamera() {
+    guard cameraAuthorizationClient.isCameraAvailable() else {
+      cameraAlert = .unavailable
       return
     }
-    guard let asset = assets.first else { return }
     Task { @MainActor in
-      let word = entry.encounterWordReference
-      await encounterMediaStore.save(
-        WordImageAttachment(name: asset.name, data: asset.data), word)
-      encounterMedia = await encounterMediaStore.encounters(word)
+      switch cameraAuthorizationClient.state() {
+      case .authorized:
+        openCamera()
+      case .notDetermined:
+        if await cameraAuthorizationClient.requestAccess() {
+          openCamera()
+        } else {
+          cameraAlert = .denied
+        }
+      case .denied:
+        cameraAlert = .denied
+      case .restricted:
+        cameraAlert = .restricted
+      }
     }
+  }
+
+  private func openCamera() {
+    #if DEBUG
+      if let fixtureResult = WordDetailCameraTestFixtures.resultFromProcessArguments() {
+        saveCameraResult(fixtureResult)
+        return
+      }
+    #endif
+    showsCamera = true
+  }
+
+  private var cameraPicker: some View {
+    ImageCameraPicker { result in
+      showsCamera = false
+      saveCameraResult(result)
+    }
+    .ignoresSafeArea()
+  }
+
+  private func saveCameraResult(_ result: Result<ImageTextAsset?, Error>) {
+    switch result {
+    case .success(let asset):
+      guard let asset else { return }
+      Task { @MainActor in
+        await saveEncounterMedia(asset)
+      }
+    case .failure:
+      cameraAlert = .saveFailure
+    }
+  }
+
+  private func saveEncounterMedia(_ asset: ImageTextAsset) async {
+    let word = entry.encounterWordReference
+    await encounterMediaStore.save(
+      EncounterMediaAttachment(name: asset.name, data: asset.data), word)
+    encounterMedia = await encounterMediaStore.encounters(word)
   }
 
   private func beginEditingNote(_ note: LearnerWordNote) {
@@ -258,176 +421,314 @@ struct WordDetailView: View {
   }
 }
 
+#if DEBUG
+  private struct WordDetailCameraCancelFixture: View {
+    let cancel: () -> Void
+
+    var body: some View {
+      NavigationStack {
+        Color.black
+          .ignoresSafeArea()
+          .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+              Button("Cancel", action: cancel)
+                .accessibilityIdentifier("word-detail.camera-fixture-cancel")
+            }
+          }
+      }
+    }
+  }
+#endif
+
+private enum WordDetailCameraAlert: String, Identifiable {
+  case unavailable
+  case denied
+  case restricted
+  case saveFailure
+
+  var id: String { rawValue }
+
+  func alert(openSettings: @escaping () -> Void) -> Alert {
+    switch self {
+    case .unavailable:
+      Alert(
+        title: Text("Camera Unavailable"),
+        message: Text("Camera capture requires a physical device with an available camera."),
+        dismissButton: .default(Text("OK"))
+      )
+    case .denied:
+      Alert(
+        title: Text("Camera Access Denied"),
+        message: Text("Allow Camera access in Settings to take a photo for this word."),
+        primaryButton: .default(Text("Open Settings"), action: openSettings),
+        secondaryButton: .cancel()
+      )
+    case .restricted:
+      Alert(
+        title: Text("Camera Access Restricted"),
+        message: Text("Camera access is restricted on this device."),
+        dismissButton: .default(Text("OK"))
+      )
+    case .saveFailure:
+      Alert(
+        title: Text("Unable to Save Image"),
+        message: Text("The captured image could not be read."),
+        dismissButton: .default(Text("OK"))
+      )
+    }
+  }
+}
+
+private struct SelectedEncounterMedia: Transferable {
+  let asset: ImageTextAsset
+
+  static var transferRepresentation: some TransferRepresentation {
+    FileRepresentation(importedContentType: .image) { received in
+      guard
+        let asset = ImageTextAsset(
+          photoLibraryImageAt: received.file,
+          name: received.file.lastPathComponent)
+      else {
+        throw CocoaError(.fileReadCorruptFile)
+      }
+      return SelectedEncounterMedia(asset: asset)
+    }
+  }
+}
+
 private struct PrimaryKanjiSection: View {
   let characters: [String]
   let entry: DictionaryEntry
-  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
-    VStack(spacing: 0) {
-      ForEach(characters, id: \.self) { character in
-        if let kanji = KanjiCharacter(character) {
-          Button {
-            openKanji(kanji, entry)
-          } label: {
-            HStack {
-              Text(character)
-                .font(.title2.weight(.semibold))
-              Text("Kanji in \(entry.headword)")
-                .font(.subheadline)
-                .foregroundStyle(ZenbuTheme.secondaryText)
-              Spacer()
-              Image(systemName: "chevron.right").foregroundStyle(
-                ZenbuTheme.secondaryText
-              )
-              .accessibilityHidden(true)
-            }
-            .padding(.horizontal, 28)
-            .frame(minHeight: 58)
-            .contentShape(Rectangle())
-          }
-          .buttonStyle(.plain)
-          .accessibilityLabel("\(character), Kanji in \(entry.headword)")
-          .accessibilityIdentifier("word-detail.kanji.\(character)")
-        }
+    ForEach(characters, id: \.self) { character in
+      if let kanji = KanjiCharacter(character) {
+        WordDetailKanjiLink(
+          kanji: kanji,
+          destinationEntry: entry,
+          accessibilityLabel: "Kanji \(character)",
+          accessibilityIdentifier: "word-detail.kanji.\(character)"
+        )
       }
     }
-    .background(ZenbuTheme.row)
   }
 }
 
 private struct AlternativeKanjiSection: View {
   let characters: [String]
-  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
-    VStack(spacing: 0) {
-      ForEach(characters, id: \.self) { character in
-        if let kanji = KanjiCharacter(character) {
-          Button {
-            openKanji(kanji, nil)
-          } label: {
-            HStack {
-              Text(character)
-                .font(.title2.weight(.semibold))
-              Spacer()
-              Image(systemName: "chevron.right")
-                .foregroundStyle(ZenbuTheme.secondaryText)
-                .accessibilityHidden(true)
-            }
-            .padding(.horizontal, 28)
-            .frame(minHeight: 50)
-            .contentShape(Rectangle())
-          }
-          .buttonStyle(.plain)
-          .accessibilityLabel("Alternative kanji \(character)")
-          .accessibilityIdentifier("word-detail.alternative-kanji.\(character)")
-        }
+    ForEach(characters, id: \.self) { character in
+      if let kanji = KanjiCharacter(character) {
+        WordDetailKanjiLink(
+          kanji: kanji,
+          destinationEntry: nil,
+          accessibilityLabel: "Alternative kanji \(character)",
+          accessibilityIdentifier: "word-detail.alternative-kanji.\(character)"
+        )
       }
     }
-    .background(ZenbuTheme.row)
   }
 }
 
-private struct WordHeader: View {
-  let entry: DictionaryEntry
-  let encounterMedia: [EncounterMedia]
-  let pronounce: () -> Void
-  let removeEncounterMedia: (String) -> Void
-  @State private var showsAttachment = false
-  @State private var selectedMediaID: String?
+private struct WordDetailKanjiLink: View {
+  let kanji: KanjiCharacter
+  let destinationEntry: DictionaryEntry?
+  let accessibilityLabel: String
+  let accessibilityIdentifier: String
 
   var body: some View {
-    VStack(spacing: 12) {
-      HStack(alignment: .top, spacing: 12) {
-        JapaneseRubyText(
-          surface: entry.headword,
-          reading: entry.reading,
-          baseFont: .largeTitle.weight(.light),
-          rubyFont: .title3.weight(.semibold)
-        )
-        Spacer()
-        if let latest = encounterMedia.first, let image = UIImage(data: latest.data) {
-          Button {
-            selectedMediaID = latest.id
-            showsAttachment = true
-          } label: {
-            VStack(spacing: 3) {
-              Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 66, height: 52)
-                .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: 5))
-              Text(encounterMedia.count == 1 ? "Saved Image" : "\(encounterMedia.count) Images")
-                .font(.caption2)
-            }
-          }
-          .buttonStyle(.plain)
-          .accessibilityLabel("Saved encounter images, \(encounterMedia.count)")
-          .accessibilityIdentifier("word-detail.image-attachment")
-        } else {
-          FrequencyBadge(frequency: entry.frequency)
-        }
-      }
+    NavigationLink(value: SearchExperienceRoute.kanji(kanji, destinationEntry)) {
+      Text(kanji.rawValue)
+        .font(.title2.weight(.semibold))
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    .accessibilityLabel(accessibilityLabel)
+    .accessibilityIdentifier(accessibilityIdentifier)
+  }
+}
 
-      HStack(spacing: 18) {
-        if let pitch = entry.pitchAccent {
-          PitchAccentView(reading: entry.reading, pitch: pitch)
-        }
-        Spacer()
-        Button(action: pronounce) {
-          Label("Pronounce \(entry.reading)", systemImage: "speaker.wave.2.fill")
-            .labelStyle(.iconOnly)
-            .font(.title2)
-            .frame(minWidth: 46, minHeight: 44)
-            .background(ZenbuTheme.accent, in: Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Pronounce \(entry.reading)")
-        .accessibilityIdentifier("word-detail.pronounce")
+private struct WordIdentityView: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  let entry: DictionaryEntry
+
+  var body: some View {
+    ViewThatFits(in: .horizontal) {
+      JapaneseRubyText(
+        surface: entry.headword,
+        reading: entry.reading,
+        baseFont: .largeTitle.weight(.light),
+        rubyFont: .title3.weight(.semibold)
+      )
+      .fixedSize(horizontal: true, vertical: false)
+
+      VStack(alignment: .leading, spacing: 6) {
+        Text(entry.headword)
+          .font(.title2.weight(.semibold))
+          .fixedSize(horizontal: false, vertical: true)
+          .accessibilityIdentifier("word-detail.identity-surface")
+        Text(entry.reading)
+          .font(dynamicTypeSize.isAccessibilitySize ? .body : .callout)
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+          .accessibilityIdentifier("word-detail.identity-reading")
+        RomajiReadingAidText(
+          trustedReading: entry.reading,
+          font: .callout,
+          exposesAccessibility: false
+        )
+      }
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel("\(entry.headword), \(entry.reading)")
+      .accessibilityIdentifier("word-detail.identity")
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+}
+
+private struct PronunciationRow: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  let entry: DictionaryEntry
+  let pronounce: () -> Void
+
+  @ViewBuilder
+  var body: some View {
+    if dynamicTypeSize.isAccessibilitySize {
+      VStack(alignment: .leading, spacing: 12) {
+        pronounceButton
+          .frame(maxWidth: .infinity, alignment: .leading)
+        pitchAccent
+      }
+    } else {
+      HStack(spacing: 16) {
+        pronounceButton
+        pitchAccent
+        Spacer(minLength: 0)
       }
     }
-    .padding(.horizontal, 28)
-    .padding(.top, 6)
-    .padding(.bottom, 9)
-    .background(ZenbuTheme.row)
-    .sheet(isPresented: $showsAttachment) {
-      NavigationStack {
-        TabView(selection: $selectedMediaID) {
-          ForEach(encounterMedia) { media in
-            VStack(spacing: 12) {
-              if let image = UIImage(data: media.data) {
-                Image(uiImage: image).resizable().scaledToFit()
-              }
-              Text(media.name).foregroundStyle(ZenbuTheme.secondaryText)
-              Text("Saved with this word.")
-                .font(.footnote)
-                .foregroundStyle(ZenbuTheme.secondaryText)
-            }
-            .padding()
-            .tag(Optional(media.id))
+  }
+
+  @ViewBuilder
+  private var pitchAccent: some View {
+    if let pitch = entry.pitchAccent {
+      PitchAccentView(reading: entry.reading, pitch: pitch)
+    }
+  }
+
+  private var pronounceButton: some View {
+    Button(action: pronounce) {
+      Image(systemName: "speaker.wave.2.fill")
+        .font(.title2)
+        .frame(minWidth: 44, minHeight: 44)
+    }
+    .buttonStyle(.bordered)
+    .accessibilityLabel("Pronounce \(entry.reading)")
+    .accessibilityIdentifier("word-detail.pronounce")
+  }
+}
+
+private struct EncounterMediaRow: View {
+  @State private var presentedMedia: EncounterMedia?
+  let media: EncounterMedia
+  let count: Int
+  let encounterMedia: [EncounterMedia]
+  let removeEncounterMedia: (String) async -> Void
+
+  var body: some View {
+    Button {
+      presentedMedia = media
+    } label: {
+      if let image = UIImage(data: media.data) {
+        HStack(spacing: 8) {
+          if count > 1 {
+            Text("\(count)").font(.caption.monospacedDigit())
           }
-        }
-        .tabViewStyle(.page(indexDisplayMode: .automatic))
-        .navigationTitle("Encounter Images")
-        .toolbar {
-          ToolbarItem(placement: .cancellationAction) {
-            Button("Done") { showsAttachment = false }
-              .accessibilityIdentifier("word-detail.image-attachment-done")
-          }
-          ToolbarItem(placement: .destructiveAction) {
-            Button("Remove from Word", role: .destructive) {
-              guard let selectedMediaID else { return }
-              removeEncounterMedia(selectedMediaID)
-              self.selectedMediaID = encounterMedia.first(where: { $0.id != selectedMediaID })?.id
-              if encounterMedia.count <= 1 { showsAttachment = false }
-            }
-            .accessibilityIdentifier("word-detail.image-attachment-remove")
-          }
+          Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
+            .frame(width: 56, height: 44)
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 5))
         }
       }
     }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Saved encounter images, \(count)")
+    .accessibilityIdentifier("word-detail.image-attachment")
+    .sheet(item: $presentedMedia) { media in
+      EncounterMediaViewer(
+        encounterMedia: encounterMedia,
+        initialMediaID: media.id,
+        removeEncounterMedia: removeEncounterMedia
+      )
+    }
+  }
+}
+
+private struct EncounterMediaViewer: View {
+  @Environment(\.dismiss) private var dismiss
+  @State private var selectedMediaID: String
+  @State private var isRemovingMedia = false
+
+  let encounterMedia: [EncounterMedia]
+  let removeEncounterMedia: (String) async -> Void
+
+  init(
+    encounterMedia: [EncounterMedia],
+    initialMediaID: String,
+    removeEncounterMedia: @escaping (String) async -> Void
+  ) {
+    self.encounterMedia = encounterMedia
+    self.removeEncounterMedia = removeEncounterMedia
+    _selectedMediaID = State(initialValue: initialMediaID)
+  }
+
+  var body: some View {
+    NavigationStack {
+      TabView(selection: $selectedMediaID) {
+        ForEach(Array(encounterMedia.enumerated()), id: \.element.id) { index, media in
+          VStack(spacing: 12) {
+            if let image = UIImage(data: media.data) {
+              Image(uiImage: image).resizable().scaledToFit()
+                .accessibilityLabel("Image \(index + 1) of \(encounterMedia.count)")
+                .accessibilityIdentifier("word-detail.image-page")
+                .accessibilityHidden(media.id != selectedMediaID)
+            }
+          }
+          .padding()
+          .tag(media.id)
+        }
+      }
+      .tabViewStyle(.page(indexDisplayMode: .automatic))
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) {
+          Button("Done", action: dismiss.callAsFunction)
+            .accessibilityIdentifier("word-detail.image-attachment-done")
+        }
+        ToolbarItem(placement: .destructiveAction) {
+          Button("Remove from Word", role: .destructive) {
+            Task { await removeSelectedMedia() }
+          }
+          .disabled(isRemovingMedia)
+          .accessibilityIdentifier("word-detail.image-attachment-remove")
+        }
+      }
+    }
+  }
+
+  private func removeSelectedMedia() async {
+    guard !isRemovingMedia else { return }
+    isRemovingMedia = true
+    defer { isRemovingMedia = false }
+    await removeEncounterMedia(selectedMediaID)
+    guard encounterMedia.count > 1,
+      let nextMedia = encounterMedia.first(where: { $0.id != selectedMediaID })
+    else {
+      dismiss()
+      return
+    }
+    selectedMediaID = nextMedia.id
   }
 }
 
@@ -437,21 +738,74 @@ extension DictionaryEntry {
   }
 }
 
-private struct FrequencyBadge: View {
-  @ScaledMetric(relativeTo: .body) private var badgeSize = 66.0
-  let frequency: DictionaryEntry.Frequency
+private struct FrequencyRow: View {
+  let result: FrequencyLookupResult
+  let showDetails: () -> Void
 
   var body: some View {
-    ZStack {
-      Circle().stroke(ZenbuTheme.mutedForeground.opacity(0.18), lineWidth: 6)
-      Text(frequency.rawValue)
-        .font(.body.bold())
-        .multilineTextAlignment(.center)
-        .fixedSize(horizontal: false, vertical: true)
-        .padding(2)
+    let presentation = FrequencyPresentationModel(result: result)
+    Button(action: showDetails) {
+      Text(presentation.inlineText)
+        .font(.headline.monospacedDigit())
+        .frame(minWidth: 44, minHeight: 44)
+        .contentShape(.rect)
     }
-    .frame(width: badgeSize, height: badgeSize)
-    .padding(.top, 3)
+    .buttonStyle(.plain)
+    .accessibilityLabel(presentation.inlineAccessibilityLabel)
+    .accessibilityValue(presentation.inlineText)
+    .accessibilityIdentifier("word-detail.frequency")
+  }
+}
+
+private struct FrequencyDisclosureItem: Identifiable {
+  let result: FrequencyLookupResult
+
+  var id: String {
+    FrequencyPresentationModel(result: result).pack?.id.rawValue ?? "frequency-unavailable"
+  }
+}
+
+private struct FrequencyDisclosureView: View {
+  @Environment(\.dismiss) private var dismiss
+  let item: FrequencyDisclosureItem
+  let manage: () -> Void
+
+  var body: some View {
+    let presentation = FrequencyPresentationModel(result: item.result)
+    NavigationStack {
+      List {
+        if let pack = presentation.pack {
+          Section(pack.displayName) {
+            LabeledContent("Domain", value: pack.domain)
+            Text(pack.domainDescription)
+            LabeledContent("Version", value: pack.version)
+            LabeledContent("Source", value: pack.attribution)
+          }
+        }
+        Section("Frequency") {
+          if let rankText = presentation.rankText,
+            let percentileText = presentation.percentileText
+          {
+            LabeledContent("Rank", value: rankText)
+            LabeledContent("Percentile", value: percentileText)
+          } else if let explanation = presentation.explanation {
+            Text(explanation)
+          }
+        }
+        Section {
+          Button("Manage Frequency Dictionaries", action: manage)
+            .accessibilityIdentifier("frequency-detail.manage")
+        }
+      }
+      .accessibilityIdentifier("frequency-detail.list")
+      .navigationTitle("Frequency Details")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .confirmationAction) {
+          Button("Done", action: dismiss.callAsFunction)
+        }
+      }
+    }
   }
 }
 
@@ -461,19 +815,21 @@ private struct PitchAccentView: View {
 
   var body: some View {
     HStack(spacing: 8) {
-      Image(systemName: "ear.badge.waveform")
       Text(reading.katakana)
         .font(.body.weight(.medium))
         .padding(.bottom, 4)
         .overlay(alignment: .bottom) {
           PitchContour(downstep: pitch.downstep, moraCount: pitch.moraCount)
-            .stroke(ZenbuTheme.destructive, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+            .stroke(
+              ZenbuTheme.pitchDownstep,
+              style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
+            )
             .frame(height: 7)
         }
     }
     .padding(.horizontal, 12)
     .frame(minHeight: 34)
-    .background(ZenbuTheme.accent, in: Capsule())
+    .background(.fill.tertiary, in: Capsule())
     .accessibilityElement(children: .combine)
     .accessibilityLabel(
       "Pitch accent for \(reading), downstep \(pitch.downstep), \(pitch.moraCount) mora"
@@ -515,61 +871,43 @@ extension String {
 }
 
 private struct PartOfSpeechRow: View {
+  let entry: DictionaryEntry
   let title: String
   let conjugationTable: ConjugationTable?
-  let openConjugations: (ConjugationTable) -> Void
 
   var body: some View {
     if let conjugationTable {
-      Button {
-        openConjugations(conjugationTable)
-      } label: {
-        HStack {
-          Text(title.isEmpty ? "Dictionary entry" : title)
-          Spacer()
-          Text("View Conjugations")
-            .foregroundStyle(ZenbuTheme.secondaryText)
-          Image(systemName: "chevron.right")
-            .foregroundStyle(ZenbuTheme.secondaryText)
-            .accessibilityHidden(true)
+      NavigationLink(value: SearchExperienceRoute.conjugations(entry, conjugationTable)) {
+        LabeledContent {
+          VStack(alignment: .trailing, spacing: 2) {
+            Text(title.isEmpty ? "Dictionary entry" : title)
+              .multilineTextAlignment(.trailing)
+              .fixedSize(horizontal: false, vertical: true)
+              .accessibilityIdentifier(entryVerificationIdentifier)
+            Text("View Conjugations")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
+        } label: {
+          Text("Part of speech")
         }
         .font(.body)
-        .contentShape(Rectangle())
       }
-      .buttonStyle(.plain)
       .accessibilityIdentifier("word-detail.conjugations")
-      .rowChrome
     } else {
-      Text(title.isEmpty ? "Dictionary entry" : title)
-        .font(.headline)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .rowChrome
+      LabeledContent {
+        Text(title.isEmpty ? "Dictionary entry" : title)
+          .multilineTextAlignment(.trailing)
+          .fixedSize(horizontal: false, vertical: true)
+          .accessibilityIdentifier(entryVerificationIdentifier)
+      } label: {
+        Text("Part of speech")
+      }
     }
   }
-}
 
-extension View {
-  fileprivate var rowChrome: some View {
-    padding(.horizontal, 28)
-      .padding(.vertical, 11)
-      .background(ZenbuTheme.row)
-      .overlay(alignment: .top) { Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5) }
-  }
-}
-
-private struct SectionLabel: View {
-  let title: String
-  init(_ title: String) { self.title = title }
-
-  var body: some View {
-    Text(title)
-      .font(.footnote.weight(.medium))
-      .foregroundStyle(ZenbuTheme.secondaryText)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(.horizontal, 28)
-      .frame(minHeight: 45, alignment: .bottom)
-      .padding(.bottom, 8)
-      .background(ZenbuTheme.background)
+  private var entryVerificationIdentifier: String {
+    "word-detail.entry.\(entry.id.rawValue)"
   }
 }
 
@@ -577,26 +915,21 @@ private struct MeaningSection: View {
   let senses: [DictionarySense]
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 13) {
-      ForEach(Array(senses.enumerated()), id: \.offset) { index, sense in
-        VStack(alignment: .leading, spacing: 6) {
-          HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text("\(index + 1).")
-            Text(sense.meaning)
-          }
+    ForEach(senses, id: \.self) { sense in
+      VStack(alignment: .leading, spacing: 6) {
+        Text("\(senseNumber(for: sense)).  \(sense.meaning)")
           .font(.body.weight(.semibold))
-          if !sense.notes.isEmpty {
-            Text(sense.notes.joined(separator: " · "))
-              .font(.footnote)
-              .foregroundStyle(ZenbuTheme.secondaryText)
-          }
+        if !sense.notes.isEmpty {
+          Text(sense.notes.joined(separator: " · "))
+            .font(.footnote)
+            .foregroundStyle(.secondary)
         }
       }
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.horizontal, 32)
-    .padding(.vertical, 15)
-    .background(ZenbuTheme.row)
+  }
+
+  private func senseNumber(for sense: DictionarySense) -> Int {
+    (senses.firstIndex(of: sense) ?? senses.startIndex) + 1
   }
 }
 
@@ -614,9 +947,6 @@ private struct AlternativeFormsSection: View {
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.horizontal, 28)
-    .padding(.vertical, 9)
-    .background(ZenbuTheme.row)
   }
 
   private var writtenForms: [DictionaryForm] { forms.filter { $0.kind == .written } }
@@ -659,9 +989,16 @@ private struct AlternativeFormLine: View {
   }
 
   private func formLabel(_ form: DictionaryForm) -> some View {
-    Text(form.value + (form.labels.isEmpty ? "" : " (\(form.labels.joined(separator: ", ")))"))
-      .font(.body)
-      .foregroundStyle(form.labels.isEmpty ? ZenbuTheme.foreground : ZenbuTheme.secondaryText)
+    VStack(alignment: .leading, spacing: 2) {
+      Text(form.value + (form.labels.isEmpty ? "" : " (\(form.labels.joined(separator: ", ")))"))
+        .font(.body)
+        .foregroundStyle(form.labels.isEmpty ? Color.primary : Color.secondary)
+      RomajiReadingAidText(
+        trustedReading: form.value,
+        isEnabled: form.kind == .reading,
+        exposesAccessibility: false
+      )
+    }
   }
 }
 
@@ -670,35 +1007,33 @@ private struct RelationshipsSection: View {
   let openRelated: (DictionaryRelationship) -> Void
 
   var body: some View {
-    VStack(spacing: 0) {
-      ForEach(relationships, id: \.self) { relationship in
-        Button {
-          openRelated(relationship)
-        } label: {
-          HStack {
-            VStack(alignment: .leading, spacing: 3) {
-              Text("\(relationship.headword)  \(relationship.reading)")
-                .font(.headline)
-              Text("\(relationship.relation) · \(relationship.summary)")
-                .font(.footnote)
-                .foregroundStyle(ZenbuTheme.secondaryText)
-                .lineLimit(2)
-            }
-            Spacer()
-            Image(systemName: "chevron.right").foregroundStyle(
-              ZenbuTheme.secondaryText
-            )
-            .accessibilityHidden(true)
-          }
-          .padding(.horizontal, 28)
-          .padding(.vertical, 11)
-          .contentShape(Rectangle())
+    ForEach(relationships, id: \.self) { relationship in
+      Button {
+        openRelated(relationship)
+      } label: {
+        VStack(alignment: .leading, spacing: 3) {
+          JapaneseRubyText(
+            surface: relationship.headword,
+            reading: relationship.reading,
+            baseFont: .headline,
+            rubyFont: .caption,
+            exposesAccessibility: false
+          )
+          .foregroundStyle(.primary)
+          .accessibilityIdentifier("word-detail.related-primary.\(relationship.headword)")
+          Text("\(relationship.relation) · \(relationship.summary)")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .lineLimit(2)
+            .accessibilityIdentifier("word-detail.related-support.\(relationship.headword)")
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("word-detail.related.\(relationship.headword)")
       }
+      .tint(.primary)
+      .accessibilityLabel(
+        "\(relationship.headword), \(relationship.reading), \(relationship.relation), \(relationship.summary)"
+      )
+      .accessibilityIdentifier("word-detail.related.\(relationship.headword)")
     }
-    .background(ZenbuTheme.row)
   }
 }
 
@@ -711,52 +1046,37 @@ private struct NotesSection: View {
   let addNote: () -> Void
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 0) {
-      ForEach(Array(notes.enumerated()), id: \.element.id) { index, note in
-        if editingNoteID == note.id {
-          noteEditor
-        } else {
-          Button {
-            editNote(note)
-          } label: {
-            Text(note.text)
-              .italic()
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .fixedSize(horizontal: false, vertical: true)
-              .padding(.horizontal, 28)
-              .padding(.vertical, 11)
-          }
-          .buttonStyle(.plain)
-          .accessibilityIdentifier(index == 0 ? "word-detail.note" : "word-detail.note.\(index)")
-        }
-      }
-
-      if let editingNoteID, !notes.contains(where: { $0.id == editingNoteID }) {
+    ForEach(Array(notes.enumerated()), id: \.element.id) { index, note in
+      if editingNoteID == note.id {
         noteEditor
-      }
-
-      if editingNoteID == nil || !noteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-      {
-        Button("Add Note", action: addNote)
-          .buttonStyle(.plain)
-          .italic()
-          .foregroundStyle(ZenbuTheme.secondaryText)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(.horizontal, 28)
-          .padding(.vertical, 11)
-          .accessibilityIdentifier("word-detail.add-note")
+      } else {
+        Button {
+          editNote(note)
+        } label: {
+          Text(note.text)
+            .italic()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityIdentifier(index == 0 ? "word-detail.note" : "word-detail.note.\(index)")
       }
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .background(ZenbuTheme.row)
+
+    if let editingNoteID, !notes.contains(where: { $0.id == editingNoteID }) {
+      noteEditor
+    }
+
+    if editingNoteID == nil || !noteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      Button("Add Note", systemImage: "square.and.pencil", action: addNote)
+        .font(.body)
+        .accessibilityIdentifier("word-detail.add-note")
+    }
   }
 
   private var noteEditor: some View {
     TextField("Add Note", text: $noteDraft, axis: .vertical)
       .italic()
       .focused(editorFocused)
-      .padding(.horizontal, 28)
-      .padding(.vertical, 11)
       .accessibilityIdentifier("word-note.editor")
   }
 }
@@ -770,50 +1090,26 @@ private struct EntryExamplesSection: View {
   let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 18) {
-      if isLoading {
-        ProgressView("Loading examples")
-      } else if examples.isEmpty {
-        Text("No source-matched examples")
-          .foregroundStyle(ZenbuTheme.secondaryText)
-      } else {
-        ForEach(Array(examples.enumerated()), id: \.element.id) { index, example in
-          VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .center, spacing: 10) {
-              LinkedJapaneseText(
-                text: example.japanese,
-                highlightedQuery: SearchQuery(entry.headword),
-                highlightedEntry: entry,
-                japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-                identifierPrefix: "word-detail.example-token.\(index)",
-                openWord: openWord
-              )
-              .frame(maxWidth: .infinity, alignment: .leading)
-
-              Button {
-                speechSynthesisClient.speak(example.japanese)
-              } label: {
-                Image(systemName: "speaker.wave.2")
-                  .frame(width: 44, height: 44)
-              }
-              .accessibilityLabel("Speak Word Detail example \(index + 1)")
-              .accessibilityIdentifier("word-detail.example-speaker.\(index)")
-            }
-            Text(example.english)
-              .font(.subheadline)
-              .foregroundStyle(ZenbuTheme.secondaryText)
-              .accessibilityHidden(true)
-          }
-          .accessibilityElement(children: .contain)
-          .accessibilityLabel("\(example.japanese), \(example.english)")
-          .accessibilityIdentifier("word-detail.example.\(index)")
-        }
+    // Keep the same entry's loaded rows during refresh so a native Back
+    // transition does not collapse the List and discard its scroll position.
+    if isLoading && examples.isEmpty {
+      ProgressView("Loading examples")
+    } else if examples.isEmpty {
+      Text("No source-matched examples")
+        .foregroundStyle(.secondary)
+    } else {
+      ForEach(Array(examples.enumerated()), id: \.element.id) { index, example in
+        JapaneseExampleRowContent(
+          example: example,
+          highlightedQuery: SearchQuery(entry.headword),
+          highlightedEntry: entry,
+          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+          presentation: .wordDetail(index: index),
+          speak: { speechSynthesisClient.speak(example.japanese) },
+          openWord: openWord
+        )
       }
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.horizontal, 28)
-    .padding(.vertical, 20)
-    .background(ZenbuTheme.row)
   }
 }
 

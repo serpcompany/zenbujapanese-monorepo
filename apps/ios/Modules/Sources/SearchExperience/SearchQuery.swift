@@ -15,7 +15,8 @@ struct SearchQuery: Hashable, Sendable {
   var isJapaneseOnly: Bool { !isEmpty && japaneseSegments == [self] }
   var isSingleKanji: Bool { KanjiCharacter(value) != nil }
   var isMixedScript: Bool {
-    !japaneseSegments.isEmpty && value.unicodeScalars.contains { $0.isASCII && CharacterSet.letters.contains($0) }
+    !japaneseSegments.isEmpty
+      && value.unicodeScalars.contains { $0.isASCII && CharacterSet.letters.contains($0) }
   }
 
   var japaneseSegments: [SearchQuery] {
@@ -44,7 +45,9 @@ struct SearchQuery: Hashable, Sendable {
     func replaceSuffix(_ suffix: String, with endings: [String]) {
       guard value.hasSuffix(suffix), value.count > suffix.count else { return }
       let stem = String(value.dropLast(suffix.count))
-      endings.forEach { append(stem + $0) }
+      for ending in endings {
+        append(stem + ending)
+      }
     }
 
     // Irregulars remain first because their regular-looking alternatives are
@@ -77,7 +80,7 @@ struct SearchQuery: Hashable, Sendable {
 
   private static func isJapanese(_ scalar: Unicode.Scalar) -> Bool {
     switch scalar.value {
-    case 0x3040...0x30FF, 0x3400...0x4DBF, 0x4E00...0x9FFF:
+    case 0x3005, 0x3040...0x30FF, 0x3400...0x4DBF, 0x4E00...0x9FFF:
       true
     default:
       false

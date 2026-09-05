@@ -1,0 +1,39 @@
+{
+  "configurations" : [
+    {
+      "id" : "F2520000-0000-4000-8000-000000000001",
+      "name" : "Pinned Core Network Integration",
+      "options" : {
+        "language" : "en",
+        "region" : "US"
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "defaultTestExecutionTimeAllowance" : 300,
+    "maximumTestExecutionTimeAllowance" : 900,
+    "testTimeoutsEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:ZenbuJapanese.xcodeproj",
+      "identifier" : "5CD4552D207F8AC0D2D15CD6",
+      "name" : "ZenbuJapanese"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "selectedTests" : [
+        "JapaneseTextAnalysisTests/testShippedSudachiAdapterMatchesFrozenProviderContract()",
+        "JapaneseTextAnalysisTests/testShippedAdapterMatchesFrozenHardCaseFieldsAndAppOwnedLinkPolicy()",
+        "JapaneseTextAnalysisTests/testShippedSudachiAdapterRetainsFrozenConfirmationQuality()"
+      ],
+      "target" : {
+        "containerPath" : "container:ZenbuJapanese.xcodeproj",
+        "identifier" : "151000000000000000000008",
+        "name" : "ZenbuJapaneseTests"
+      }
+    }
+  ],
+  "version" : 1
+}

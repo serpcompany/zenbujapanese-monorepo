@@ -3,183 +3,218 @@ import SwiftUI
 struct KanjiElementDetailView: View {
   let elementID: KanjiElementID
   let lookupClient: KanjiElementLookupClient
-  let openAlternative: (KanjiElementID) -> Void
-  let openKanji: (KanjiCharacter) -> Void
   let preservedContribution: KanjiCharacter?
-  let preserveContribution: (KanjiCharacter) -> Void
 
   @State private var loadState = KanjiElementDetailLoadState.loading
   @State private var retryID = 0
-  @State private var scrollPosition: KanjiCharacter?
 
   var body: some View {
-    ScrollView {
-      VStack(spacing: 0) {
-        header
+    ScrollViewReader { proxy in
+      List {
+        Section {
+          KanjiElementHeader(elementID: elementID, entry: entry)
+        }
+
         switch loadState {
         case .loading:
-          ProgressView("Loading element reference…")
-            .frame(maxWidth: .infinity)
-            .padding(24)
-        case .missing:
-          Text("No element reference is available.")
-            .foregroundStyle(ZenbuTheme.secondaryText)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(24)
-        case .failed:
-          VStack(spacing: 12) {
-            Text("Element reference unavailable")
-            Button("Retry") { retryID += 1 }
-              .accessibilityIdentifier("kanji-element.retry")
+          Section {
+            HStack {
+              Spacer()
+              ProgressView("Loading element reference…")
+              Spacer()
+            }
+            .padding(.vertical, 16)
           }
-          .frame(maxWidth: .infinity)
-          .padding(24)
+        case .missing:
+          Section {
+            ContentUnavailableView(
+              "No Element Reference",
+              systemImage: "square.dashed",
+              description: Text("No source-backed reference is available for this element.")
+            )
+          }
+        case .failed:
+          Section {
+            ContentUnavailableView {
+              Label("Element reference unavailable", systemImage: "exclamationmark.triangle")
+                .foregroundStyle(.red)
+            } description: {
+              Text("Zenbu couldn't open its offline element reference.")
+            } actions: {
+              Button("Retry", action: retry)
+                .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("kanji-element.retry")
+            }
+          }
         case .loaded(let entry):
-          content(entry)
+          KanjiElementContent(entry: entry)
         }
       }
-      .scrollTargetLayout()
+      .listStyle(.insetGrouped)
+      .accessibilityIdentifier("kanji-element.screen")
+      .onAppear { restorePreservedContribution(with: proxy) }
+      .onChange(of: containingCharacters) {
+        restorePreservedContribution(with: proxy)
+      }
     }
-    .scrollPosition(id: $scrollPosition, anchor: .center)
-    .accessibilityIdentifier("kanji-element.screen")
-    .onAppear { restorePreservedContribution() }
-    .onChange(of: containingCharacters) { restorePreservedContribution() }
-    .background(ZenbuTheme.background)
     .navigationTitle("Element")
     .navigationBarTitleDisplayMode(.inline)
     .task(id: KanjiElementDetailLoadRequest(id: elementID, retryID: retryID)) {
-      loadState = .loading
-      do {
-        if let entry = try await lookupClient.entry(elementID) {
-          guard !Task.isCancelled else { return }
-          loadState = .loaded(entry)
-        } else {
-          guard !Task.isCancelled else { return }
-          loadState = .missing
-        }
-      } catch is CancellationError {
-        return
-      } catch {
-        guard !Task.isCancelled else { return }
-        loadState = .failed
-      }
+      await loadEntry()
     }
+  }
+
+  private var entry: KanjiElementEntry? {
+    guard case .loaded(let entry) = loadState else { return nil }
+    return entry
   }
 
   private var containingCharacters: [KanjiCharacter] {
-    guard case .loaded(let entry) = loadState else { return [] }
-    return entry.containingKanji.map(\.character)
+    entry?.containingKanji.map(\.character) ?? []
   }
 
-  private func restorePreservedContribution() {
+  private func retry() { retryID += 1 }
+
+  private func restorePreservedContribution(with proxy: ScrollViewProxy) {
     guard let preservedContribution, containingCharacters.contains(preservedContribution) else {
       return
     }
-    scrollPosition = nil
     Task { @MainActor in
       await Task.yield()
       guard containingCharacters.contains(preservedContribution) else { return }
-      scrollPosition = preservedContribution
+      proxy.scrollTo(preservedContribution, anchor: .center)
     }
   }
 
-  private var header: some View {
+  private func loadEntry() async {
+    loadState = .loading
+    do {
+      if let entry = try await lookupClient.entry(elementID) {
+        guard !Task.isCancelled else { return }
+        loadState = .loaded(entry)
+      } else {
+        guard !Task.isCancelled else { return }
+        loadState = .missing
+      }
+    } catch is CancellationError {
+      return
+    } catch {
+      guard !Task.isCancelled else { return }
+      loadState = .failed
+    }
+  }
+}
+
+private struct KanjiElementHeader: View {
+  @ScaledMetric(relativeTo: .largeTitle) private var glyphSize = 108.0
+
+  let elementID: KanjiElementID
+  let entry: KanjiElementEntry?
+
+  var body: some View {
     VStack(spacing: 16) {
       Text(elementID.rawValue)
-        .font(.system(size: 108, weight: .light))
+        .font(.system(size: glyphSize, weight: .light))
         .accessibilityIdentifier("kanji-element.glyph")
-      if case .loaded(let entry) = loadState {
-        if !entry.meanings.isEmpty {
-          Text(entry.meanings.joined(separator: ", "))
-            .font(.title3.weight(.semibold))
-            .multilineTextAlignment(.center)
-        }
-        if !entry.alternatives.isEmpty {
-          HStack(spacing: 10) {
-            Text("Alternative")
-              .font(.caption)
-              .foregroundStyle(ZenbuTheme.secondaryText)
-            ForEach(entry.alternatives, id: \.self) { alternative in
-              Button(alternative.rawValue) { openAlternative(alternative) }
-                .font(.title3)
-                .accessibilityIdentifier("kanji-element.alternative.\(alternative.rawValue)")
-            }
-          }
-        }
+      if let entry, !entry.meanings.isEmpty {
+        Text(entry.meanings.joined(separator: ", "))
+          .font(.title3.weight(.semibold))
+          .multilineTextAlignment(.center)
       }
     }
     .frame(maxWidth: .infinity)
-    .padding(24)
-    .background(ZenbuTheme.row)
+    .padding(.vertical, 8)
   }
+}
 
-  @ViewBuilder
-  private func content(_ entry: KanjiElementEntry) -> some View {
-    if !entry.meanings.isEmpty {
-      roleSection(
-        title: "MEANING / STRUCTURE",
-        text:
-          "This element contributes forms associated with \(entry.meanings.joined(separator: ", "))."
-      )
-    }
-    if !entry.commonLinkedOnReadings.isEmpty {
-      roleSection(
-        title: "SOUND PATTERNS",
-        text: "Linked on-readings: \(entry.commonLinkedOnReadings.joined(separator: ", "))"
-      )
-    }
-    if let standalone = entry.standaloneKanji {
-      KanjiSectionHeader(title: "AS A STANDALONE KANJI")
-      contributionRow(standalone, identifierPrefix: "kanji-element.standalone")
-    }
-    if !entry.containingKanji.isEmpty {
-      KanjiSectionHeader(title: "KANJI CONTAINING THIS ELEMENT")
-      ForEach(entry.containingKanji) { contribution in
-        contributionRow(contribution, identifierPrefix: "kanji-element.contribution")
-        Divider().overlay(ZenbuTheme.divider)
+private struct KanjiElementContent: View {
+  let entry: KanjiElementEntry
+
+  var body: some View {
+    if !entry.alternatives.isEmpty {
+      Section("ALTERNATIVE FORMS") {
+        ForEach(entry.alternatives, id: \.self) { alternative in
+          NavigationLink(value: SearchExperienceRoute.kanjiElement(alternative)) {
+            Text(alternative.rawValue)
+              .font(.title3)
+          }
+          .accessibilityLabel("Alternative element \(alternative.rawValue)")
+          .accessibilityIdentifier("kanji-element.alternative.\(alternative.rawValue)")
+        }
       }
     }
-    VStack(alignment: .leading, spacing: 4) {
-      Text("Source")
-        .font(.caption.weight(.semibold))
-      Text(
-        "Structure: \(entry.structureProvenance.sourceIdentity) \(entry.structureProvenance.sourceSnapshot)"
-      )
-      .accessibilityIdentifier("kanji-element.structure-source")
-      Text(
-        "Meanings and readings: \(entry.metadataProvenance.sourceIdentity) \(entry.metadataProvenance.sourceSnapshot)"
-      )
-      .accessibilityIdentifier("kanji-element.metadata-source")
+
+    if !entry.meanings.isEmpty {
+      Section {
+        Text(
+          "This element contributes forms associated with \(entry.meanings.joined(separator: ", "))."
+        )
+        .accessibilityIdentifier("kanji-element.meaning-explanation")
+      } header: {
+        Text("MEANING / STRUCTURE")
+          .accessibilityIdentifier("kanji-element.meaning-header")
+      }
+    }
+
+    if !entry.commonLinkedOnReadings.isEmpty {
+      Section("SOUND PATTERNS") {
+        Text("Linked on-readings: \(entry.commonLinkedOnReadings.joined(separator: ", "))")
+      }
+    }
+
+    if let standalone = entry.standaloneKanji {
+      Section("AS A STANDALONE KANJI") {
+        KanjiContributionRow(
+          contribution: standalone,
+          identifierPrefix: "kanji-element.standalone"
+        )
+      }
+    }
+
+    if !entry.containingKanji.isEmpty {
+      Section("KANJI CONTAINING THIS ELEMENT") {
+        ForEach(entry.containingKanji) { contribution in
+          KanjiContributionRow(
+            contribution: contribution,
+            identifierPrefix: "kanji-element.contribution"
+          )
+        }
+      }
+    }
+
+    Section("SOURCE") {
+      LabeledContent("Structure") {
+        Text(
+          "\(entry.structureProvenance.sourceIdentity) \(entry.structureProvenance.sourceSnapshot)"
+        )
+        .multilineTextAlignment(.trailing)
+        .accessibilityIdentifier("kanji-element.structure-source")
+      }
+      LabeledContent("Meanings and readings") {
+        Text(
+          "\(entry.metadataProvenance.sourceIdentity) \(entry.metadataProvenance.sourceSnapshot)"
+        )
+        .multilineTextAlignment(.trailing)
+        .accessibilityIdentifier("kanji-element.metadata-source")
+      }
       Text("Both sources are independently normalized into Zenbu Japanese Language Reference Data.")
-        .foregroundStyle(ZenbuTheme.secondaryText)
-    }
-    .font(.caption)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(20)
-  }
-
-  private func roleSection(title: String, text: String) -> some View {
-    VStack(spacing: 0) {
-      KanjiSectionHeader(title: title)
-      Text(text)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .background(ZenbuTheme.row)
+        .font(.caption)
     }
   }
+}
 
-  private func contributionRow(
-    _ contribution: KanjiElementContribution,
-    identifierPrefix: String
-  ) -> some View {
-    Button {
-      preserveContribution(contribution.character)
-      openKanji(contribution.character)
-    } label: {
+private struct KanjiContributionRow: View {
+  @ScaledMetric(relativeTo: .title) private var glyphSize = 48.0
+
+  let contribution: KanjiElementContribution
+  let identifierPrefix: String
+
+  var body: some View {
+    NavigationLink(value: SearchExperienceRoute.kanji(contribution.character, nil)) {
       HStack(spacing: 18) {
         Text(contribution.character.rawValue)
-          .font(.system(size: 48, weight: .light))
-          .frame(width: 64)
+          .font(.system(size: glyphSize, weight: .light))
+          .frame(minWidth: 64)
         VStack(alignment: .leading, spacing: 5) {
           if !contribution.meanings.isEmpty {
             Text(contribution.meanings.prefix(3).joined(separator: ", "))
@@ -188,18 +223,10 @@ struct KanjiElementDetailView: View {
           if !contribution.onReadings.isEmpty {
             Text(contribution.onReadings.joined(separator: ", "))
               .font(.caption)
-              .foregroundStyle(ZenbuTheme.secondaryText)
           }
         }
-        Spacer()
-        Image(systemName: "chevron.right")
-          .foregroundStyle(ZenbuTheme.mutedForeground)
       }
-      .padding(.horizontal, 20)
-      .padding(.vertical, 12)
-      .contentShape(Rectangle())
     }
-    .buttonStyle(.plain)
     .accessibilityLabel(
       ([contribution.character.rawValue] + contribution.meanings + contribution.onReadings)
         .joined(separator: ", ")

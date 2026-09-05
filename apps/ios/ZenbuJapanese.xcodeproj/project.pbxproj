@@ -7,15 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F23000000000000000000002 /* LookupClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F23000000000000000000001 /* LookupClientTests.swift */; };
 		151000000000000000000001 /* ExampleSentenceRetrievalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 151000000000000000000004 /* ExampleSentenceRetrievalTests.swift */; };
 		ACCE55000000000000000002 /* ZenbuThemeAccessibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCE55000000000000000001 /* ZenbuThemeAccessibilityTests.swift */; };
 		F0A100000000000000000002 /* JapaneseRubyAnnotationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A100000000000000000001 /* JapaneseRubyAnnotationTests.swift */; };
 		F0A200000000000000000002 /* EncounterMediaStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A200000000000000000001 /* EncounterMediaStoreTests.swift */; };
+		F21200000000000000000002 /* FrequencyPackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21200000000000000000001 /* FrequencyPackTests.swift */; };
+		F24200000000000000000002 /* JapaneseTextAnalysisTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F24200000000000000000001 /* JapaneseTextAnalysisTests.swift */; };
+		F24900000000000000000002 /* ImageTextFlowModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F24900000000000000000001 /* ImageTextFlowModelTests.swift */; };
+		F25200000000000000000002 /* issue251-morphology-confirmation-holdout-v1.json in Resources */ = {isa = PBXBuildFile; fileRef = F25200000000000000000001 /* issue251-morphology-confirmation-holdout-v1.json */; };
+		F25200000000000000000006 /* issue251-morphology-hard-cases-v1.json in Resources */ = {isa = PBXBuildFile; fileRef = F25200000000000000000005 /* issue251-morphology-hard-cases-v1.json */; };
+		F25200000000000000000004 /* LanguageTechnologyPackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F25200000000000000000003 /* LanguageTechnologyPackTests.swift */; };
+		F23500000000000000000002 /* KanjiDetailRestorationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F23500000000000000000001 /* KanjiDetailRestorationTests.swift */; };
 		151000000000000000000002 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
 		15100000000000000000000E /* ExampleSentenceRetrieval-v1-summary.tsv in Resources */ = {isa = PBXBuildFile; fileRef = 151000000000000000000010 /* ExampleSentenceRetrieval-v1-summary.tsv */; };
 		15100000000000000000000F /* ExampleSentenceRetrieval-v1-rows.tsv in Resources */ = {isa = PBXBuildFile; fileRef = 151000000000000000000011 /* ExampleSentenceRetrieval-v1-rows.tsv */; };
 		0739C012E20A0C475890D563 /* SearchExperienceJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2D0ECA911F40E070D8F4FD /* SearchExperienceJourneyUITests.swift */; };
 		ACCE55000000000000000004 /* AccessibilityAuditUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCE55000000000000000003 /* AccessibilityAuditUITests.swift */; };
+		193000000000000000000002 /* ConjugationUITestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193000000000000000000001 /* ConjugationUITestSupport.swift */; };
+		244000000000000000000002 /* WordDetailUITestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 244000000000000000000001 /* WordDetailUITestSupport.swift */; };
+		173000000000000000000002 /* ImageTextFilesUITestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173000000000000000000001 /* ImageTextFilesUITestSupport.swift */; };
 		48A12CB415EF48F78F16871A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */; };
 		A1C04F09D3A74D8B82D3C6E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */; };
 		E1FD0205CD84132DCB314678 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
@@ -40,10 +51,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		F23000000000000000000001 /* LookupClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookupClientTests.swift; sourceTree = "<group>"; };
 		151000000000000000000004 /* ExampleSentenceRetrievalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleSentenceRetrievalTests.swift; sourceTree = "<group>"; };
 		ACCE55000000000000000001 /* ZenbuThemeAccessibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenbuThemeAccessibilityTests.swift; sourceTree = "<group>"; };
 		F0A100000000000000000001 /* JapaneseRubyAnnotationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JapaneseRubyAnnotationTests.swift; sourceTree = "<group>"; };
 		F0A200000000000000000001 /* EncounterMediaStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncounterMediaStoreTests.swift; sourceTree = "<group>"; };
+		F21200000000000000000001 /* FrequencyPackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrequencyPackTests.swift; sourceTree = "<group>"; };
+		F24200000000000000000001 /* JapaneseTextAnalysisTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JapaneseTextAnalysisTests.swift; sourceTree = "<group>"; };
+		F24900000000000000000001 /* ImageTextFlowModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageTextFlowModelTests.swift; sourceTree = "<group>"; };
+		F25200000000000000000001 /* issue251-morphology-confirmation-holdout-v1.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "issue251-morphology-confirmation-holdout-v1.json"; path = "../../docs/research/fixtures/issue251-morphology-confirmation-holdout-v1.json"; sourceTree = SOURCE_ROOT; };
+		F25200000000000000000005 /* issue251-morphology-hard-cases-v1.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "issue251-morphology-hard-cases-v1.json"; path = "../../docs/research/fixtures/issue251-morphology-hard-cases-v1.json"; sourceTree = SOURCE_ROOT; };
+		F25200000000000000000003 /* LanguageTechnologyPackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageTechnologyPackTests.swift; sourceTree = "<group>"; };
+		F23500000000000000000001 /* KanjiDetailRestorationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiDetailRestorationTests.swift; sourceTree = "<group>"; };
 		151000000000000000000005 /* ZenbuJapaneseTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ZenbuJapaneseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		151000000000000000000010 /* ExampleSentenceRetrieval-v1-summary.tsv */ = {isa = PBXFileReference; lastKnownFileType = text; path = "ExampleSentenceRetrieval-v1-summary.tsv"; sourceTree = "<group>"; };
 		151000000000000000000011 /* ExampleSentenceRetrieval-v1-rows.tsv */ = {isa = PBXFileReference; lastKnownFileType = text; path = "ExampleSentenceRetrieval-v1-rows.tsv"; sourceTree = "<group>"; };
@@ -52,6 +71,9 @@
 		0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ZenbuJapanese.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6E2D0ECA911F40E070D8F4FD /* SearchExperienceJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchExperienceJourneyUITests.swift; sourceTree = "<group>"; };
 		ACCE55000000000000000003 /* AccessibilityAuditUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityAuditUITests.swift; sourceTree = "<group>"; };
+		193000000000000000000001 /* ConjugationUITestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConjugationUITestSupport.swift; sourceTree = "<group>"; };
+		244000000000000000000001 /* WordDetailUITestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDetailUITestSupport.swift; sourceTree = "<group>"; };
+		173000000000000000000001 /* ImageTextFilesUITestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageTextFilesUITestSupport.swift; sourceTree = "<group>"; };
 		A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenbuJapaneseApp.swift; sourceTree = "<group>"; };
 		B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DF09FB39B581100E5F9B6C10 /* ZenbuJapaneseUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ZenbuJapaneseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -84,6 +106,12 @@
 				ACCE55000000000000000001 /* ZenbuThemeAccessibilityTests.swift */,
 				F0A100000000000000000001 /* JapaneseRubyAnnotationTests.swift */,
 				F0A200000000000000000001 /* EncounterMediaStoreTests.swift */,
+				F21200000000000000000001 /* FrequencyPackTests.swift */,
+				F24200000000000000000001 /* JapaneseTextAnalysisTests.swift */,
+				F24900000000000000000001 /* ImageTextFlowModelTests.swift */,
+				F25200000000000000000003 /* LanguageTechnologyPackTests.swift */,
+				F23500000000000000000001 /* KanjiDetailRestorationTests.swift */,
+				F23000000000000000000001 /* LookupClientTests.swift */,
 			);
 			path = Modules/Tests/SearchExperienceTests;
 			sourceTree = SOURCE_ROOT;
@@ -91,6 +119,8 @@
 		151000000000000000000013 /* RetrievalFixtures */ = {
 			isa = PBXGroup;
 			children = (
+				F25200000000000000000001 /* issue251-morphology-confirmation-holdout-v1.json */,
+				F25200000000000000000005 /* issue251-morphology-hard-cases-v1.json */,
 				151000000000000000000010 /* ExampleSentenceRetrieval-v1-summary.tsv */,
 				151000000000000000000011 /* ExampleSentenceRetrieval-v1-rows.tsv */,
 			);
@@ -102,6 +132,9 @@
 			children = (
 				6E2D0ECA911F40E070D8F4FD /* SearchExperienceJourneyUITests.swift */,
 				ACCE55000000000000000003 /* AccessibilityAuditUITests.swift */,
+				193000000000000000000001 /* ConjugationUITestSupport.swift */,
+				244000000000000000000001 /* WordDetailUITestSupport.swift */,
+				173000000000000000000001 /* ImageTextFilesUITestSupport.swift */,
 			);
 			path = AppUITests;
 			sourceTree = "<group>";
@@ -179,6 +212,7 @@
 				A108F17A14E04A2AA1B1C108 /* Copy canonical Image Text fixtures for Debug */,
 				F38B6861CA6A9754CF93F50B /* Frameworks */,
 				C3E26B21F5C96FAD04F5E803 /* Resources */,
+				F25800000000000000000001 /* Prepare bundled Sudachi Core */,
 			);
 			buildRules = (
 			);
@@ -256,6 +290,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F25200000000000000000002 /* issue251-morphology-confirmation-holdout-v1.json in Resources */,
+				F25200000000000000000006 /* issue251-morphology-hard-cases-v1.json in Resources */,
 				15100000000000000000000E /* ExampleSentenceRetrieval-v1-summary.tsv in Resources */,
 				15100000000000000000000F /* ExampleSentenceRetrieval-v1-rows.tsv in Resources */,
 			);
@@ -273,6 +309,23 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		F25800000000000000000001 /* Prepare bundled Sudachi Core */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Tools/prepare_sudachi_core.py",
+				"$(SRCROOT)/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json",
+			);
+			name = "Prepare bundled Sudachi Core";
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/system_core.dic",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\ncache_root=\"${ZENBU_SUDACHI_BUILD_CACHE:-$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore}\"\n/usr/bin/python3 \"$SRCROOT/Tools/prepare_sudachi_core.py\" \\\n  --manifest \"$SRCROOT/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json\" \\\n  --cache \"$cache_root\" \\\n  --offline \\\n  --output \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/system_core.dic\"\n";
+		};
 		8A1400000000000000000001 /* Verify Tatoeba provenance for Release */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -333,6 +386,12 @@
 				ACCE55000000000000000002 /* ZenbuThemeAccessibilityTests.swift in Sources */,
 				F0A100000000000000000002 /* JapaneseRubyAnnotationTests.swift in Sources */,
 				F0A200000000000000000002 /* EncounterMediaStoreTests.swift in Sources */,
+				F21200000000000000000002 /* FrequencyPackTests.swift in Sources */,
+				F24200000000000000000002 /* JapaneseTextAnalysisTests.swift in Sources */,
+				F24900000000000000000002 /* ImageTextFlowModelTests.swift in Sources */,
+				F25200000000000000000004 /* LanguageTechnologyPackTests.swift in Sources */,
+				F23500000000000000000002 /* KanjiDetailRestorationTests.swift in Sources */,
+				F23000000000000000000002 /* LookupClientTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -342,6 +401,9 @@
 			files = (
 				0739C012E20A0C475890D563 /* SearchExperienceJourneyUITests.swift in Sources */,
 				ACCE55000000000000000004 /* AccessibilityAuditUITests.swift in Sources */,
+				193000000000000000000002 /* ConjugationUITestSupport.swift in Sources */,
+				244000000000000000000002 /* WordDetailUITestSupport.swift in Sources */,
+				173000000000000000000002 /* ImageTextFilesUITestSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -410,18 +472,18 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 16;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Zenbu Japanese";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text in a photo you choose to capture.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text and save photos with words you are learning.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary;
 				PRODUCT_NAME = "Zenbu Japanese";
 				SDKROOT = iphoneos;
@@ -525,20 +587,21 @@
 		90793D271909E1FB3A90A7FC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				INFOPLIST_FILE = "Info-Debug.plist";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 16;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Zenbu Japanese";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text in a photo you choose to capture.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Zenbu uses the camera to recognize Japanese text and save photos with words you are learning.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary;
 				PRODUCT_NAME = "Zenbu Japanese";
 				SDKROOT = iphoneos;

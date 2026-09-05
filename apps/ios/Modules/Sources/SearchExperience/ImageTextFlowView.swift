@@ -1,9 +1,14 @@
 import SwiftUI
+@preconcurrency import Translation
 import UIKit
 
 struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
-  @State private var sharedAsset: ImageTextAsset?
+  @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
+  @State private var recordedCopyRequest: String?
+  let textAnalysisClient: JapaneseTextAnalysisClient
+  let translationClient: NaturalTranslationClient
+  let clipboardClient: ImageTextClipboardClient
   let close: () -> Void
   let openWord: (DictionaryEntry, ImageTextAsset) -> Void
 
@@ -12,6 +17,7 @@ struct ImageTextFlowView: View {
     recognitionClient: ImageTextRecognitionClient,
     textAnalysisClient: JapaneseTextAnalysisClient,
     translationClient: NaturalTranslationClient,
+    clipboardClient: ImageTextClipboardClient,
     close: @escaping () -> Void,
     openWord: @escaping (DictionaryEntry, ImageTextAsset) -> Void
   ) {
@@ -22,6 +28,9 @@ struct ImageTextFlowView: View {
         textAnalysisClient: textAnalysisClient,
         translationClient: translationClient
       ))
+    self.textAnalysisClient = textAnalysisClient
+    self.translationClient = translationClient
+    self.clipboardClient = clipboardClient
     self.close = close
     self.openWord = openWord
   }
@@ -29,13 +38,21 @@ struct ImageTextFlowView: View {
   var body: some View {
     GeometryReader { geometry in
       VStack(spacing: 0) {
+        if analysisAvailability == .reduced {
+          Label(
+            "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
+            systemImage: "info.circle"
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          .padding(.horizontal, 16)
+          .padding(.vertical, 8)
+          .accessibilityIdentifier("image-text.reduced-analysis")
+        }
         if model.canRequestTranslation {
           translation
         }
-        page
-        if model.pages.count > 1 {
-          pageIndicators
-        }
+        pages
       }
       .frame(
         width: geometry.size.width,
@@ -43,8 +60,6 @@ struct ImageTextFlowView: View {
         alignment: .top
       )
     }
-    .accessibilityHidden(sharedAsset != nil)
-    .background(ZenbuTheme.background)
     .navigationTitle("Photo")
     .navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden(true)
@@ -71,7 +86,32 @@ struct ImageTextFlowView: View {
         shareMenu
       }
     }
-    .task { await model.load() }
+    .overlay(alignment: .topLeading) {
+      if let recordedCopyRequest {
+        Text("")
+          .frame(width: 1, height: 1)
+          .accessibilityElement()
+          .accessibilityLabel("Copy request \(recordedCopyRequest)")
+          .accessibilityIdentifier("image-text.copy-request")
+      }
+    }
+    .task {
+      analysisAvailability = await textAnalysisClient.availability()
+      await model.load()
+    }
+    .task(id: model.pendingTranslationPreparation?.id) {
+      guard model.pendingTranslationPreparation != nil else { return }
+      if let injectedClient = translationClient.preparationClient {
+        await model.performPendingTranslationPreparation(using: injectedClient)
+      }
+    }
+    .background {
+      if let request = model.pendingTranslationPreparation,
+        translationClient.preparationClient == nil
+      {
+        NativeTranslationPreparationTask(requestID: request.id, model: model)
+      }
+    }
     .onDisappear { model.suspendTranslation() }
     .alert(
       "No Text Found",
@@ -85,26 +125,24 @@ struct ImageTextFlowView: View {
     } message: {
       Text("Japanese text was not found in this image.")
     }
-    .sheet(
-      item: $sharedAsset,
-      onDismiss: { sharedAsset = nil },
-      content: { asset in
-        ImageActivityView(asset: asset)
-          .ignoresSafeArea()
-      }
-    )
   }
 
   @ViewBuilder
   private var translation: some View {
     switch model.translationState {
+    case .checkingAvailability:
+      ProgressView("Checking translation availability…")
+        .padding(.vertical, 8)
+        .accessibilityIdentifier("image-text.translation-checking")
+    case .preparing:
+      ProgressView("Preparing offline translation…")
+        .padding(.vertical, 8)
+        .accessibilityIdentifier("image-text.translation-preparing")
     case .idle:
       Button("Translate Image Text") {
         model.requestTranslation()
       }
       .buttonStyle(.borderedProminent)
-      .tint(ZenbuTheme.selectedTab)
-      .foregroundStyle(ZenbuTheme.primaryForeground)
       .padding(.vertical, 8)
       .accessibilityIdentifier("image-text.translate")
     case .translating:
@@ -115,39 +153,100 @@ struct ImageTextFlowView: View {
       VStack(alignment: .leading, spacing: 4) {
         Text("NATURAL TRANSLATION")
           .font(.caption.bold())
-          .foregroundStyle(ZenbuTheme.secondaryText)
+          .foregroundStyle(.secondary)
         Text(value)
           .frame(maxWidth: .infinity, alignment: .leading)
           .accessibilityIdentifier("image-text.translation")
       }
       .padding(.horizontal, 16)
       .padding(.vertical, 8)
-      .background(ZenbuTheme.row)
+    case .cancelled:
+      translationRecovery(
+        title: "Translation download cancelled",
+        message: "Your recognized text is unchanged. Try again when you’re ready."
+      )
+    case .unsupported:
+      translationStatus(
+        title: "Translation not supported",
+        message: "Japanese to English translation isn’t supported on this device.",
+        retryable: false,
+        statusIdentifier: "image-text.translation-unsupported"
+      )
+    case .preparationFailed:
+      translationRecovery(
+        title: "Translation download failed",
+        message: "Check your connection and try downloading Apple’s language resources again."
+      )
     case .failed:
-      Text("Translation unavailable")
-        .accessibilityIdentifier("image-text.translation-unavailable")
-        .padding(.vertical, 8)
+      translationRecovery(
+        title: "Translation failed",
+        message: "Your recognized text is unchanged. Try again."
+      )
     }
+  }
+
+  private func translationRecovery(
+    title: LocalizedStringKey,
+    message: LocalizedStringKey
+  ) -> some View {
+    translationStatus(
+      title: title,
+      message: message,
+      retryable: true,
+      statusIdentifier: "image-text.translation-recovery"
+    )
+  }
+
+  private func translationStatus(
+    title: LocalizedStringKey,
+    message: LocalizedStringKey,
+    retryable: Bool,
+    statusIdentifier: String
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Label(title, systemImage: "translate")
+        .font(.headline)
+        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityIdentifier(statusIdentifier)
+      Text(message)
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+      if retryable {
+        Button("Retry", systemImage: "arrow.clockwise") {
+          model.retryTranslation()
+        }
+        .accessibilityIdentifier("image-text.translation-retry")
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 16)
+    .padding(.vertical, 8)
   }
 
   @ViewBuilder
   private var shareMenu: some View {
     Menu {
       Button {
-        UIPasteboard.general.string = model.copiedText
+        let text = model.copiedText
+        recordedCopyRequest = clipboardClient.copy(text)
       } label: {
-        Label("Copy Text", systemImage: "doc.on.doc")
+        Label("Copy Text", systemImage: "document.on.document")
       }
       .accessibilityIdentifier("image-text.copy-text")
 
-      if model.pages.indices.contains(model.selectedPage) {
-        let asset = model.pages[model.selectedPage].asset
-        Button {
-          sharedAsset = asset
-        } label: {
-          Label("Share Image", systemImage: "photo")
+      if let payload = model.selectedSharePayload {
+        if let sharedImage = UIImage(data: payload.data) {
+          let image = Image(uiImage: sharedImage)
+          ShareLink(
+            item: image,
+            preview: SharePreview(payload.name, image: image)
+          ) {
+            Label("Share Image", systemImage: "photo")
+          }
+          .accessibilityLabel("Share Image, selected image \(payload.name)")
+          .accessibilityIdentifier("image-text.share-image")
         }
-        .accessibilityIdentifier("image-text.share-image")
       }
     } label: {
       Image(systemName: "square.and.arrow.up")
@@ -156,69 +255,82 @@ struct ImageTextFlowView: View {
     .accessibilityIdentifier("image-text.share")
   }
 
-  @ViewBuilder
-  private var page: some View {
-    if model.pages.indices.contains(model.selectedPage) {
-      switch model.pages[model.selectedPage].state {
-      case .loading:
-        ProgressView("Recognizing Japanese text…")
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .accessibilityIdentifier("image-text.loading")
-      case .failed:
-        VStack(spacing: 14) {
-          Text("Image text unavailable")
-          Text("Close and choose the file again.")
-            .foregroundStyle(ZenbuTheme.secondaryText)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-      case .loaded(let page):
-        ImageTextCanvas(
-          page: page,
-          showsHighlights: model.showsHighlights,
-          selectedRegion: model.selectedRegion,
-          selectRegion: { model.selectedRegion = $0 },
-          openWord: {
-            model.selectedRegion = nil
-            openWord($0, page.asset)
-          }
-        )
+  private var pages: some View {
+    TabView(selection: selectedPage) {
+      ForEach(Array(model.pages.enumerated()), id: \.element.id) { index, page in
+        pageContent(page)
+          .tag(index)
+          .accessibilityHidden(index != model.selectedPage)
       }
+    }
+    .tabViewStyle(.page(indexDisplayMode: model.pages.count > 1 ? .automatic : .never))
+    .indexViewStyle(.page(backgroundDisplayMode: .interactive))
+    .accessibilityIdentifier("image-text.pages")
+  }
+
+  private var selectedPage: Binding<Int> {
+    Binding {
+      model.selectedPage
+    } set: { index in
+      model.selectPage(index)
     }
   }
 
-  private var pageIndicators: some View {
-    HStack(spacing: 12) {
-      ForEach(model.pages.indices, id: \.self) { index in
-        Button {
-          model.selectPage(index)
-        } label: {
-          Circle()
-            .fill(
-              index == model.selectedPage
-                ? ZenbuTheme.foreground : ZenbuTheme.mutedForeground.opacity(0.3)
-            )
-            .frame(width: 10, height: 10)
-            .frame(width: 36, height: 36)
-            .contentShape(Rectangle())
+  @ViewBuilder
+  private func pageContent(_ modelPage: ImageTextFlowModel.Page) -> some View {
+    switch modelPage.state {
+    case .loading:
+      ProgressView("Recognizing Japanese text…")
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityIdentifier("image-text.loading")
+    case .failed:
+      ContentUnavailableView(
+        "Image text unavailable",
+        systemImage: "text.viewfinder",
+        description: Text("Close and choose the file again.")
+      )
+    case .loaded(let page):
+      ImageTextCanvas(
+        page: page,
+        showsHighlights: model.showsHighlights,
+        selectedRegion: model.selectedRegion,
+        selectRegion: { model.selectedRegion = $0 },
+        openWord: {
+          openWord($0, page.asset)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Page \(index + 1) of \(model.pages.count)")
-        .accessibilityIdentifier("image-text.page.\(index + 1)")
-      }
+      )
     }
-    .frame(height: 38)
   }
 }
 
-private struct ImageActivityView: UIViewControllerRepresentable {
-  let asset: ImageTextAsset
+private struct NativeTranslationPreparationTask: View {
+  @State private var configuration = TranslationSession.Configuration(
+    source: Locale.Language(identifier: "ja"),
+    target: Locale.Language(identifier: "en")
+  )
+  let requestID: UUID
+  let model: ImageTextFlowModel
 
-  func makeUIViewController(context: Context) -> UIActivityViewController {
-    let item: Any = UIImage(data: asset.data) ?? asset.data
-    return UIActivityViewController(activityItems: [item], applicationActivities: nil)
+  var body: some View {
+    Color.clear
+      .frame(width: 0, height: 0)
+      .accessibilityHidden(true)
+      .translationTask(configuration) { session in
+        guard let request = model.claimPendingTranslationPreparation(id: requestID) else { return }
+        do {
+          try await session.prepareTranslation()
+          guard model.beginPreparedTranslation(request) else { return }
+          let response = try await session.translate(request.source)
+          model.finishPreparedTranslation(response.targetText, for: request)
+        } catch is CancellationError {
+          model.cancelPreparedTranslation(request)
+        } catch  where TranslationError.alreadyCancelled ~= error {
+          model.cancelPreparedTranslation(request)
+        } catch {
+          model.failPreparedTranslation(request)
+        }
+      }
   }
-
-  func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 private struct ImageTextCanvas: View {
@@ -246,8 +358,8 @@ private struct ImageTextCanvas: View {
                 selectRegion(region)
               } label: {
                 Rectangle()
-                  .fill(ZenbuTheme.selectedTab.opacity(0.32))
-                  .overlay(Rectangle().stroke(ZenbuTheme.selectedTab, lineWidth: 1))
+                  .fill(ZenbuTheme.recognitionHighlight.opacity(0.32))
+                  .overlay(Rectangle().stroke(ZenbuTheme.recognitionHighlight, lineWidth: 1))
               }
               .buttonStyle(.plain)
               .frame(width: max(rect.width, 28), height: max(rect.height, 28))
@@ -258,31 +370,42 @@ private struct ImageTextCanvas: View {
           }
 
           if let selectedRegion {
-            Button {
-              openWord(selectedRegion.entry)
-            } label: {
-              HStack(spacing: 7) {
-                JapaneseRubyText(
-                  surface: selectedRegion.entry.headword,
-                  reading: selectedRegion.entry.reading,
-                  baseFont: .headline,
-                  rubyFont: .body
+            Group {
+              if let entry = selectedRegion.entry {
+                Button {
+                  openWord(entry)
+                } label: {
+                  imageTextGloss(entry)
+                }
+                .accessibilityLabel("\(entry.headword), \(entry.reading), \(entry.summary)")
+                .accessibilityIdentifier("image-text.gloss")
+              } else {
+                Menu {
+                  ForEach(selectedRegion.candidateEntries) { candidate in
+                    Button {
+                      openWord(candidate)
+                    } label: {
+                      Text("\(candidate.headword) (\(candidate.reading)) — \(candidate.summary)")
+                    }
+                  }
+                } label: {
+                  Label(
+                    "\(selectedRegion.surface): \(selectedRegion.candidateEntries.count) dictionary entries",
+                    systemImage: "ellipsis.circle"
+                  )
+                  .padding(.horizontal, 12)
+                  .padding(.vertical, 8)
+                  .background(.background, in: RoundedRectangle(cornerRadius: 12))
+                }
+                .accessibilityLabel("\(selectedRegion.surface), choose dictionary entry")
+                .accessibilityHint(
+                  "Shows \(selectedRegion.candidateEntries.count) possible dictionary entries"
                 )
-                Text(selectedRegion.entry.summary)
-                  .fixedSize(horizontal: false, vertical: true)
-                Image(systemName: "chevron.right")
+                .accessibilityIdentifier("image-text.candidates")
               }
-              .padding(.horizontal, 12)
-              .padding(.vertical, 8)
-              .background(ZenbuTheme.row, in: RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
-            .foregroundStyle(ZenbuTheme.foreground)
             .padding(20)
-            .accessibilityLabel(
-              "\(selectedRegion.entry.headword), \(selectedRegion.entry.reading), \(selectedRegion.entry.summary)"
-            )
-            .accessibilityIdentifier("image-text.gloss")
           }
 
           Text("")
@@ -303,7 +426,22 @@ private struct ImageTextCanvas: View {
         .accessibilityLabel("Imported image \(page.asset.name)")
       }
     }
-    .background(ZenbuTheme.background)
+  }
+
+  private func imageTextGloss(_ entry: DictionaryEntry) -> some View {
+    HStack(spacing: 7) {
+      JapaneseRubyText(
+        surface: entry.headword,
+        reading: entry.reading,
+        baseFont: .headline,
+        rubyFont: .body
+      )
+      Text(entry.summary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .padding(.horizontal, 12)
+    .padding(.vertical, 8)
+    .background(.background, in: RoundedRectangle(cornerRadius: 12))
   }
 
   private func aspectFitRect(imageSize: CGSize, container: CGSize) -> CGRect {

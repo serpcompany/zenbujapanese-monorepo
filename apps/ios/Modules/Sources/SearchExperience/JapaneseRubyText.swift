@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct JapaneseRubyText: View {
+  @Environment(ReadingAidPreferences.self) private var readingAidPreferences
+
   private struct Piece: Identifiable {
     let id: String
     let segment: JapaneseRubySegment
@@ -12,6 +14,7 @@ struct JapaneseRubyText: View {
   let rubyFont: Font
   let underlined: Bool
   let exposesAccessibility: Bool
+  let displaysRomaji: Bool
 
   init(
     surface: String,
@@ -19,7 +22,8 @@ struct JapaneseRubyText: View {
     baseFont: Font = .body,
     rubyFont: Font = .caption.weight(.semibold),
     underlined: Bool = false,
-    exposesAccessibility: Bool = true
+    exposesAccessibility: Bool = true,
+    displaysRomaji: Bool = true
   ) {
     self.surface = surface
     self.reading = reading
@@ -27,32 +31,51 @@ struct JapaneseRubyText: View {
     self.rubyFont = rubyFont
     self.underlined = underlined
     self.exposesAccessibility = exposesAccessibility
+    self.displaysRomaji = displaysRomaji
   }
 
   @ViewBuilder
   var body: some View {
     if exposesAccessibility {
-      rubyContent
+      readingAidContent
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(surface), \(reading)")
         .accessibilityIdentifier("ruby.\(surface).\(presentationIdentity)")
     } else {
-      rubyContent
+      readingAidContent
     }
   }
 
-  private var rubyContent: some View {
-    HStack(alignment: .bottom, spacing: 0) {
-      ForEach(pieces) { piece in
-        if let ruby = piece.segment.reading {
-          VStack(spacing: 0) {
-            Text(ruby).font(rubyFont)
+  private var readingAidContent: some View {
+    VStack(alignment: .leading, spacing: 2) {
+      furiganaContent
+      RomajiReadingAidText(
+        trustedReading: reading,
+        isEnabled: displaysRomaji,
+        exposesAccessibility: false
+      )
+    }
+  }
+
+  @ViewBuilder
+  private var furiganaContent: some View {
+    if readingAidPreferences.showsFurigana {
+      HStack(alignment: .bottom, spacing: 0) {
+        ForEach(pieces) { piece in
+          if let furigana = piece.segment.reading {
+            VStack(spacing: 0) {
+              Text(furigana).font(rubyFont)
+              Text(piece.segment.base).font(baseFont).underline(underlined)
+            }
+          } else {
             Text(piece.segment.base).font(baseFont).underline(underlined)
           }
-        } else {
-          Text(piece.segment.base).font(baseFont).underline(underlined)
         }
       }
+    } else {
+      Text(surface)
+        .font(baseFont)
+        .underline(underlined)
     }
   }
 

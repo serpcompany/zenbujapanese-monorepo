@@ -1,0 +1,27 @@
+name: Issue251KuromojiNative
+options:
+  bundleIdPrefix: co.serp.issue251
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  Kuromoji:
+    path: ../kuromoji-swift-native
+targets:
+  Issue251KuromojiNative:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    dependencies:
+      - package: Kuromoji
+        product: KuromojiIPADIC
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: co.serp.issue251.kuromoji-native
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        TARGETED_DEVICE_FAMILY: 1
+        SWIFT_VERSION: 6.0
+        IPHONEOS_DEPLOYMENT_TARGET: 17.0

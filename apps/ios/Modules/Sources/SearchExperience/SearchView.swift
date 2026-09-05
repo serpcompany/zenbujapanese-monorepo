@@ -1,5 +1,7 @@
+@preconcurrency import PhotosUI
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 struct SearchView: View {
   @Binding var query: String
@@ -9,19 +11,21 @@ struct SearchView: View {
   let cameraAuthorizationClient: CameraAuthorizationClient
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
-  let openResult: (DictionaryEntry) -> Void
-  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
-  let openExamples: (SearchQuery, DictionaryEntry?, Bool) -> Void
+  let frequencyCapability: FrequencyCapability
+  let frequencyRefreshID: Int
   let openImageText: ([ImageTextAsset]) -> Void
-  let imageImportInitialDirectory: URL?
   @State private var results = LookupSearchResults.empty
   @State private var presentationState = SearchPresentationState.idle
   @State private var retryID = 0
+  @State private var settledSearchTaskID: SearchTaskID?
   @State private var inputMode = SearchInputMode.inactive
   @State private var sparseRadicalQuery: SearchQuery?
   @State private var exampleCount = 0
   @State private var showsImageSources = false
   @State private var presentedImageSource: ImageSourceSheet?
+  @State private var showsPhotoLibrary = false
+  @State private var selectedPhotoItems: [PhotosPickerItem] = []
+  @State private var showsFileImporter = false
   @State private var imageImportAlert: ImageImportAlert?
   @State private var isShowingImageImportAlert = false
   @State private var imageImportTask: Task<Void, Never>?
@@ -30,6 +34,8 @@ struct SearchView: View {
   @FocusState private var isSearchFocused: Bool
 
   var body: some View {
+    let taskID = searchTaskID
+    let taskQuery = SearchQuery(taskID.query)
     VStack(spacing: 0) {
       SearchBar(
         query: $query,
@@ -63,16 +69,9 @@ struct SearchView: View {
           results: results,
           exampleCount: exampleCount,
           showsAdditionalMatches: sparseRadicalQuery != searchQuery,
-          selectRefinement: selectRefinement,
-          openResult: openResult,
-          openKanji: openKanji,
-          openExamples: {
-            openExamples(
-              searchQuery,
-              results.primaryEntry(for: searchQuery),
-              results.usesPrimaryEntryExamples
-            )
-          }
+          frequencyCapability: frequencyCapability,
+          frequencyRefreshID: frequencyRefreshID,
+          selectRefinement: selectRefinement
         )
         .id(
           SearchResultsIdentity(
@@ -87,6 +86,7 @@ struct SearchView: View {
         ScrollView {
           ContentUnavailableView {
             Label("Dictionary unavailable", systemImage: "exclamationmark.triangle")
+              .foregroundStyle(.red)
           } description: {
             Text("Zenbu couldn't open its offline Language Reference Data.")
           } actions: {
@@ -113,7 +113,7 @@ struct SearchView: View {
 
       switch inputMode {
       case .keyboard where isSearchFocused:
-        SearchInputModeBar(
+        SearchInputModePicker(
           selectedMode: .keyboard,
           selectMode: selectInputMode
         )
@@ -140,16 +140,19 @@ struct SearchView: View {
         )
       }
     }
-    .background(ZenbuTheme.background)
     .navigationTitle("Search")
     .onChange(of: query) { _, _ in
+      settledSearchTaskID = nil
       results = .empty
       exampleCount = 0
       presentationState = .idle
     }
-    .task(id: SearchTaskID(query: query, retryID: retryID)) {
+    .task(id: taskID) {
+      guard !Task.isCancelled, searchTaskID == taskID, settledSearchTaskID != taskID else {
+        return
+      }
       presentationState = .idle
-      guard !searchQuery.isEmpty else {
+      guard !taskQuery.isEmpty else {
         results = .empty
         exampleCount = 0
         return
@@ -158,24 +161,26 @@ struct SearchView: View {
       do {
         try await Task.sleep(for: .milliseconds(100))
         try Task.checkCancellation()
-        async let searchedResults = lookupClient.search(searchQuery)
-        async let searchedExampleCount = exampleSentenceClient.count(searchQuery)
+        async let searchedResults = lookupClient.search(taskQuery)
+        async let searchedExampleCount = exampleSentenceClient.count(taskQuery)
         let foundResults = try await searchedResults
         try Task.checkCancellation()
         let directExampleCount = (try? await searchedExampleCount) ?? 0
         try Task.checkCancellation()
         let foundExampleCount: Int
         if foundResults.usesPrimaryEntryExamples,
-          let entry = foundResults.primaryEntry(for: searchQuery)
+          let entry = foundResults.primaryEntry(for: taskQuery)
         {
           foundExampleCount = (try? await exampleSentenceClient.examples(entry).count) ?? 0
         } else {
           foundExampleCount = directExampleCount
         }
         try Task.checkCancellation()
+        guard searchTaskID == taskID, settledSearchTaskID != taskID else { return }
+        settledSearchTaskID = taskID
         results = foundResults
         exampleCount = foundExampleCount
-        if foundResults.isEmpty && foundExampleCount == 0 && !searchQuery.isSingleKanji {
+        if foundResults.isEmpty && foundExampleCount == 0 && !taskQuery.isSingleKanji {
           presentationState = .noResults
         } else {
           presentationState = .results
@@ -183,6 +188,10 @@ struct SearchView: View {
       } catch is CancellationError {
         return
       } catch {
+        guard !Task.isCancelled, searchTaskID == taskID, settledSearchTaskID != taskID else {
+          return
+        }
+        settledSearchTaskID = taskID
         results = .empty
         exampleCount = 0
         presentationState = .failure
@@ -193,7 +202,7 @@ struct SearchView: View {
         .accessibilityIdentifier("image-source.camera")
       Button("Photo Library") { presentPhotoLibrary() }
         .accessibilityIdentifier("image-source.photo-library")
-      Button("Files") { presentedImageSource = .files }
+      Button("Files") { showsFileImporter = true }
         .accessibilityIdentifier("image-source.files")
       Button("Cancel", role: .cancel) {}
     }
@@ -205,20 +214,24 @@ struct SearchView: View {
           importCameraImage(result)
         }
         .ignoresSafeArea()
-      case .photoLibrary:
-        ImagePhotoLibraryPicker { result in
-          presentedImageSource = nil
-          importPhotoLibraryImages(result)
-        }
-        .ignoresSafeArea()
-      case .files:
-        ImageFilePicker(initialDirectory: imageImportInitialDirectory) { result in
-          presentedImageSource = nil
-          importImages(result)
-        }
-        .ignoresSafeArea()
       }
     }
+    .photosPicker(
+      isPresented: $showsPhotoLibrary,
+      selection: $selectedPhotoItems,
+      maxSelectionCount: 1,
+      matching: .images
+    )
+    .onChange(of: selectedPhotoItems) { _, items in
+      importPhotoLibraryItems(items)
+    }
+    .fileImporter(
+      isPresented: $showsFileImporter,
+      allowedContentTypes: [.image],
+      allowsMultipleSelection: true,
+      onCompletion: importImages,
+      onCancellation: {}
+    )
     .alert(
       imageImportAlert?.title ?? "",
       isPresented: $isShowingImageImportAlert,
@@ -249,6 +262,10 @@ struct SearchView: View {
 
   private var searchQuery: SearchQuery {
     SearchQuery(query)
+  }
+
+  private var searchTaskID: SearchTaskID {
+    SearchTaskID(query: query, retryID: retryID)
   }
 
   private var showsRecentSearches: Bool {
@@ -282,9 +299,9 @@ struct SearchView: View {
   }
 
   private func recordRecentSearch(_ recentSearch: SearchQuery) {
-    recentSearchRefreshID += 1
     Task {
       await recentSearchStore.record(recentSearch)
+      recentSearchRefreshID += 1
     }
   }
 
@@ -298,8 +315,7 @@ struct SearchView: View {
     sparseRadicalQuery = nil
     query = submittedQuery.value
     recordRecentSearch(submittedQuery)
-    isSearchFocused = false
-    inputMode = .handwriting
+    deactivateInput()
   }
 
   private func submitRadicalQuery(_ submittedQuery: SearchQuery) {
@@ -323,9 +339,15 @@ struct SearchView: View {
 
   private func importImages(_ result: Result<[URL], Error>) {
     guard case .success(let urls) = result else {
+      if case .failure(let error) = result,
+        error is CancellationError || (error as? CocoaError)?.code == .userCancelled
+      {
+        return
+      }
       presentImageImportAlert(.importFailure("The Files selection could not be read."))
       return
     }
+    guard !urls.isEmpty else { return }
     imageImportTask?.cancel()
     imageImportTask = Task {
       var assets: [ImageTextAsset] = []
@@ -387,7 +409,8 @@ struct SearchView: View {
         return
       }
     #endif
-    presentedImageSource = .photoLibrary
+    selectedPhotoItems = []
+    showsPhotoLibrary = true
   }
 
   private func importCameraImage(_ result: Result<ImageTextAsset?, Error>) {
@@ -399,12 +422,28 @@ struct SearchView: View {
     }
   }
 
-  private func importPhotoLibraryImages(_ result: Result<[ImageTextAsset], Error>) {
-    switch result {
-    case .success(let assets):
-      if !assets.isEmpty { openImageText(assets) }
-    case .failure:
-      presentImageImportAlert(.importFailure("The selected photos could not be read."))
+  private func importPhotoLibraryItems(_ items: [PhotosPickerItem]) {
+    guard !items.isEmpty else { return }
+    imageImportTask?.cancel()
+    imageImportTask = Task {
+      do {
+        var assets: [ImageTextAsset] = []
+        for item in items {
+          guard let selected = try await item.loadTransferable(type: SelectedImageTextPhoto.self)
+          else { continue }
+          assets.append(selected.asset)
+        }
+        guard !Task.isCancelled else { return }
+        guard !assets.isEmpty else { throw ImageSourcePickerError.unreadableImage }
+        selectedPhotoItems = []
+        openImageText(assets)
+      } catch is CancellationError {
+        return
+      } catch {
+        selectedPhotoItems = []
+        presentImageImportAlert(.importFailure("The selected photos could not be read."))
+      }
+      imageImportTask = nil
     }
   }
 
@@ -455,10 +494,25 @@ private enum ImageImportAlert: Identifiable {
 
 private enum ImageSourceSheet: String, Identifiable {
   case camera
-  case photoLibrary
-  case files
 
   var id: String { rawValue }
+}
+
+private struct SelectedImageTextPhoto: Transferable {
+  let asset: ImageTextAsset
+
+  static var transferRepresentation: some TransferRepresentation {
+    FileRepresentation(importedContentType: .image) { received in
+      guard
+        let asset = ImageTextAsset(
+          photoLibraryImageAt: received.file,
+          name: received.file.lastPathComponent)
+      else {
+        throw ImageSourcePickerError.unreadableImage
+      }
+      return SelectedImageTextPhoto(asset: asset)
+    }
+  }
 }
 
 private struct SearchTaskID: Hashable {
@@ -496,7 +550,7 @@ private struct SearchBar: View {
     HStack(spacing: 12) {
       HStack(spacing: 8) {
         Image(systemName: "magnifyingglass")
-          .foregroundStyle(ZenbuTheme.mutedForeground)
+          .foregroundStyle(.secondary)
 
         searchTextField
           .textInputAutocapitalization(.never)
@@ -519,7 +573,7 @@ private struct SearchBar: View {
             query = ""
           } label: {
             Image(systemName: "xmark.circle.fill")
-              .foregroundStyle(ZenbuTheme.mutedForeground)
+              .foregroundStyle(.secondary)
               .frame(width: 44, height: 44)
               .contentShape(Rectangle())
           }
@@ -531,12 +585,11 @@ private struct SearchBar: View {
       .font(.body)
       .padding(.horizontal, 10)
       .frame(minHeight: 44)
-      .background(ZenbuTheme.searchField, in: RoundedRectangle(cornerRadius: 9))
+      .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 9))
 
       Button(action: openImageSource) {
         Image(systemName: "camera")
           .font(.title3)
-          .foregroundStyle(ZenbuTheme.interactiveForeground)
           .frame(width: 44, height: 44)
           .contentShape(Rectangle())
       }
@@ -547,14 +600,12 @@ private struct SearchBar: View {
       if isInputActive {
         Button("Cancel", action: cancel)
           .buttonStyle(.plain)
-          .foregroundStyle(ZenbuTheme.interactiveForeground)
           .frame(minHeight: 44)
           .accessibilityIdentifier("search.cancel")
       }
     }
     .padding(.horizontal, 16)
     .padding(.bottom, 10)
-    .background(ZenbuTheme.background)
   }
 
   @ViewBuilder
@@ -572,98 +623,100 @@ private struct SearchResultsView: View {
   let results: LookupSearchResults
   let exampleCount: Int
   let showsAdditionalMatches: Bool
+  let frequencyCapability: FrequencyCapability
+  let frequencyRefreshID: Int
   let selectRefinement: (SearchRefinement) -> Void
-  let openResult: (DictionaryEntry) -> Void
-  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
-  let openExamples: () -> Void
+  @State private var frequencyResults: [LanguageReferenceID: FrequencyLookupResult] = [:]
 
   var body: some View {
-    VStack(spacing: 0) {
+    List {
       if exampleCount > 0 {
-        Button(action: openExamples) {
-          HStack {
+        Section {
+          NavigationLink(
+            value: SearchExperienceRoute.examples(
+              query,
+              results.primaryEntry(for: query),
+              results.usesPrimaryEntryExamples
+            )
+          ) {
             Text(exampleActionTitle)
-              .frame(maxWidth: .infinity, alignment: .center)
-              .fixedSize(horizontal: false, vertical: true)
-            Image(systemName: "chevron.right")
-              .foregroundStyle(ZenbuTheme.secondaryText)
-              .accessibilityHidden(true)
-          }
-          .font(.headline)
-          .foregroundStyle(ZenbuTheme.interactiveForeground)
-          .padding(.horizontal, 18)
-          .frame(minHeight: 52)
-          .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("search.examples")
-      }
-
-      ScrollView {
-        LazyVStack(spacing: 0, pinnedViews: []) {
-          if let refinement = results.readingRefinement {
-            Button {
-              selectRefinement(refinement)
-            } label: {
-              HStack {
-                Text("Search for「\(refinement.query.value)」")
-                  .frame(maxWidth: .infinity, alignment: .center)
-                  .fixedSize(horizontal: false, vertical: true)
-                Image(systemName: "chevron.right")
-                  .foregroundStyle(ZenbuTheme.secondaryText)
-                  .accessibilityHidden(true)
-              }
               .font(.headline)
-              .foregroundStyle(ZenbuTheme.interactiveForeground)
-              .padding(.horizontal, 18)
-              .frame(minHeight: 52)
-              .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Search for Japanese reading \(refinement.query.value)")
-            .accessibilityIdentifier("search.reading-refinement")
           }
+          .accessibilityIdentifier("search.examples")
+        }
+      }
 
-          if results.presentation == .discoveredWords {
-            ResultSectionHeader(title: "Discovered Words")
-            ForEach(
-              Array((results.best + results.additional).prefix(12).enumerated()), id: \.offset
-            ) {
-              index, entry in
-              ResultRow(entry: entry, marker: .additional, rank: .discovered(index + 1)) {
-                openResult(entry)
-              }
-            }
-          } else if query.isSingleKanji || !results.best.isEmpty {
-            ResultSectionHeader(title: "Best Matches")
-            if let character = KanjiCharacter(query.value) {
-              KanjiPrimaryRow(character: character.rawValue, entry: primaryKanjiEntry) {
-                openKanji(character, primaryKanjiEntry)
-              }
-            }
-            ForEach(Array(results.best.enumerated()), id: \.element.id) { index, entry in
-              ResultRow(
-                entry: entry, marker: .best, rank: .best(index + (query.isSingleKanji ? 2 : 1))
-              ) {
-                openResult(entry)
-              }
-            }
+      if let refinement = results.readingRefinement {
+        Section {
+          Button {
+            selectRefinement(refinement)
+          } label: {
+            Text("Search for「\(refinement.query.value)」")
+              .font(.headline)
           }
+          .accessibilityLabel("Search for Japanese reading \(refinement.query.value)")
+          .accessibilityIdentifier("search.reading-refinement")
+        }
+      }
 
-          if showsAdditionalMatches, results.presentation == .ranked, !results.additional.isEmpty {
-            ResultSectionHeader(title: "Additional Matches")
-            ForEach(Array(results.additional.enumerated()), id: \.element.id) { index, entry in
-              ResultRow(entry: entry, marker: .additional, rank: .additional(index + 1)) {
-                openResult(entry)
-              }
-            }
+      if results.presentation == .discoveredWords {
+        Section("Discovered Words") {
+          ForEach(
+            (results.best + results.additional).prefix(12).enumerated(), id: \.element.id
+          ) { index, entry in
+            ResultRow(
+              entry: entry,
+              frequencyResult: frequencyResults[entry.id],
+              rank: .discovered(index + 1)
+            )
+          }
+        }
+      } else if query.isSingleKanji || !results.best.isEmpty {
+        Section("Best Matches") {
+          if let character = KanjiCharacter(query.value) {
+            KanjiPrimaryRow(character: character, entry: primaryKanjiEntry)
+          }
+          ForEach(results.best.enumerated(), id: \.element.id) { index, entry in
+            ResultRow(
+              entry: entry,
+              frequencyResult: frequencyResults[entry.id],
+              rank: .best(index + (query.isSingleKanji ? 2 : 1))
+            )
           }
         }
       }
-      .id(query)
-      .scrollIndicators(.hidden)
+
+      if showsAdditionalMatches, results.presentation == .ranked, !results.additional.isEmpty {
+        Section {
+          ForEach(results.additional.enumerated(), id: \.element.id) { index, entry in
+            ResultRow(
+              entry: entry,
+              frequencyResult: frequencyResults[entry.id],
+              rank: .additional(index + 1)
+            )
+          }
+        } header: {
+          Text("Additional Matches")
+            .accessibilityIdentifier("search.additional-matches-header")
+        }
+      }
     }
-    .background(ZenbuTheme.background)
+    .listStyle(.plain)
+    .id(query)
+    .accessibilityIdentifier("search.results")
+    .task(id: frequencyTaskID) {
+      frequencyResults = [:]
+      do {
+        let loaded = try await frequencyCapability.evidence(for: displayedEntryIDs)
+        try Task.checkCancellation()
+        frequencyResults = loaded
+      } catch is CancellationError {
+        return
+      } catch {
+        frequencyResults = FrequencyLookupResult.unavailableResults(
+          for: displayedEntryIDs, pack: nil, reason: "Frequency data unavailable")
+      }
+    }
   }
 
   private var primaryKanjiEntry: DictionaryEntry? {
@@ -674,136 +727,108 @@ private struct SearchResultsView: View {
     if exampleCount > 50 { return "View 50+ Example Sentences" }
     return "View \(exampleCount) Example \(exampleCount == 1 ? "Sentence" : "Sentences")"
   }
-}
 
-private struct KanjiPrimaryRow: View {
-  let character: String
-  let entry: DictionaryEntry?
-  let action: () -> Void
+  private var displayedEntryIDs: [LanguageReferenceID] {
+    let entries =
+      results.presentation == .discoveredWords
+      ? Array((results.best + results.additional).prefix(12))
+      : results.best + (showsAdditionalMatches ? results.additional : [])
+    var seen = Set<LanguageReferenceID>()
+    return entries.compactMap { seen.insert($0.id).inserted ? $0.id : nil }
+  }
 
-  var body: some View {
-    Button(action: action) {
-      HStack(spacing: 10) {
-        Text(character)
-          .font(.title.weight(.light))
-        Text("KANJI")
-          .font(.caption2.weight(.bold))
-          .foregroundStyle(ZenbuTheme.secondaryText)
-        Text(entry?.summary ?? "Kanji detail")
-          .lineLimit(1)
-          .foregroundStyle(ZenbuTheme.secondaryText)
-          .frame(maxWidth: .infinity, alignment: .trailing)
-        Image(systemName: "chevron.right")
-          .foregroundStyle(ZenbuTheme.secondaryText)
-          .accessibilityHidden(true)
-      }
-      .padding(.horizontal, 15)
-      .frame(minHeight: 54)
-      .contentShape(Rectangle())
-      .overlay(alignment: .bottom) {
-        Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
-      }
-    }
-    .buttonStyle(.plain)
-    .accessibilityLabel("\(character), KANJI, \(entry?.summary ?? "Kanji detail")")
-    .accessibilityValue("Best match 1, Kanji primary")
-    .accessibilityIdentifier("result.kanji-primary.\(character)")
+  private var frequencyTaskID: SearchFrequencyTaskID {
+    SearchFrequencyTaskID(entryIDs: displayedEntryIDs, refreshID: frequencyRefreshID)
   }
 }
 
-private struct ResultSectionHeader: View {
-  let title: String
+private struct KanjiPrimaryRow: View {
+  let character: KanjiCharacter
+  let entry: DictionaryEntry?
 
   var body: some View {
-    Text(title)
-      .font(.callout.weight(.semibold))
-      .foregroundStyle(ZenbuTheme.secondaryText)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(.horizontal, 53)
-      .frame(minHeight: 43, alignment: .bottom)
-      .padding(.bottom, 7)
-      .overlay(alignment: .bottom) {
-        Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
+    NavigationLink(value: SearchExperienceRoute.kanji(character, entry)) {
+      HStack(spacing: 10) {
+        Text(character.rawValue)
+          .font(.title.weight(.light))
+        VStack(alignment: .leading, spacing: 3) {
+          Text("KANJI")
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(.primary)
+          Text(entry?.summary ?? "Kanji detail")
+            .foregroundStyle(.primary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
       }
+      .contentShape(Rectangle())
+    }
+    .accessibilityLabel("\(character.rawValue), KANJI, \(entry?.summary ?? "Kanji detail")")
+    .accessibilityValue("Best match 1, Kanji primary")
+    .accessibilityIdentifier("result.kanji-primary.\(character.rawValue)")
   }
 }
 
 private struct ResultRow: View {
-  enum Marker {
-    case best
-    case additional
-  }
-
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let entry: DictionaryEntry
-  let marker: Marker
+  let frequencyResult: FrequencyLookupResult?
   let rank: ResultRank
-  let action: () -> Void
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
   var body: some View {
-    Button(action: action) {
+    NavigationLink(value: SearchExperienceRoute.word(entry, nil)) {
       Group {
-        if usesExpandedLayout {
-          VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top, spacing: 9) {
-              markerView.frame(width: 24)
-              titleBlock
-              Spacer(minLength: 8)
-              chevron
-            }
-            Text(entry.summary)
-              .font(.body)
-              .foregroundStyle(ZenbuTheme.secondaryText)
-              .fixedSize(horizontal: false, vertical: true)
+        if dynamicTypeSize.isAccessibilitySize {
+          VStack(alignment: .leading, spacing: 5) {
+            frequencyRank
+            entryContent
           }
         } else {
-          HStack(spacing: 9) {
-            markerView.frame(width: 24)
-            titleBlock
-              .frame(width: 92, alignment: .leading)
-            Text(entry.summary)
-              .font(.callout)
-              .foregroundStyle(ZenbuTheme.secondaryText)
-              .lineLimit(1)
-              .frame(maxWidth: .infinity, alignment: .trailing)
-            chevron
+          HStack(alignment: .top, spacing: 10) {
+            frequencyRank
+              .frame(minWidth: 54, alignment: .leading)
+            entryContent
           }
         }
       }
-      .padding(.horizontal, 15)
-      .padding(.vertical, usesExpandedLayout ? 10 : 0)
-      .frame(minHeight: 54)
       .contentShape(Rectangle())
-      .overlay(alignment: .bottom) {
-        Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
-      }
     }
-    .buttonStyle(.plain)
     .accessibilityLabel("\(entry.headword), \(entry.reading), \(entry.summary)")
-    .accessibilityValue(rank.accessibilityValue)
+    .accessibilityValue("\(rank.accessibilityValue), \(frequencyPresentation.accessibilityValue)")
     .accessibilityIdentifier(resultIdentifier)
+  }
+
+  private var entryContent: some View {
+    VStack(alignment: .leading, spacing: 5) {
+      titleBlock
+      Text(entry.summary)
+        .font(.body)
+        .foregroundStyle(.primary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+
+  private var frequencyRank: some View {
+    Text(frequencyPresentation.text)
+      .font(.caption.monospacedDigit())
+      .foregroundStyle(.primary)
+      .fixedSize(horizontal: false, vertical: true)
+      .accessibilityHidden(true)
+  }
+
+  private var frequencyPresentation: SearchFrequencyRankPresentationModel {
+    SearchFrequencyRankPresentationModel(result: frequencyResult)
   }
 
   private var titleBlock: some View {
     JapaneseRubyText(
       surface: entry.headword,
       reading: entry.reading,
-      baseFont: usesExpandedLayout ? .title3 : .title2,
-      rubyFont: usesExpandedLayout ? .body.weight(.semibold) : .caption.weight(.semibold)
+      baseFont: .title3,
+      rubyFont: .caption.weight(.semibold)
     )
     .fixedSize(horizontal: false, vertical: true)
-    .foregroundStyle(ZenbuTheme.foreground)
-  }
-
-  private var chevron: some View {
-    Image(systemName: "chevron.right")
-      .font(.headline)
-      .foregroundStyle(ZenbuTheme.secondaryText)
-      .accessibilityHidden(true)
-  }
-
-  private var usesExpandedLayout: Bool {
-    dynamicTypeSize >= .xxLarge
   }
 
   private var resultIdentifier: String {
@@ -813,23 +838,11 @@ private struct ResultRow: View {
     default: "result.\(entry.id.rawValue)"
     }
   }
+}
 
-  @ViewBuilder
-  private var markerView: some View {
-    switch marker {
-    case .best:
-      Circle()
-        .stroke(ZenbuTheme.secondaryText, lineWidth: 1.2)
-        .frame(width: 17, height: 17)
-        .accessibilityHidden(true)
-    case .additional:
-      Rectangle()
-        .stroke(ZenbuTheme.secondaryText, lineWidth: 1.2)
-        .frame(width: 13, height: 13)
-        .rotationEffect(.degrees(45))
-        .accessibilityHidden(true)
-    }
-  }
+private struct SearchFrequencyTaskID: Hashable {
+  let entryIDs: [LanguageReferenceID]
+  let refreshID: Int
 }
 
 private enum ResultRank {

@@ -1,6 +1,1185 @@
+import UIKit
+import Vision
 import XCTest
 
+private struct AuditException: CustomStringConvertible {
+  let auditType: XCUIAccessibilityAuditType
+  let identifier: String
+
+  init(_ auditType: XCUIAccessibilityAuditType, identifier: String) {
+    self.auditType = auditType
+    self.identifier = identifier
+  }
+
+  @MainActor
+  func matches(_ issue: XCUIAccessibilityAuditIssue) -> Bool {
+    guard issue.auditType == auditType else { return false }
+    return issue.element?.identifier == identifier
+  }
+
+  var description: String {
+    "\(auditType.rawValue):\(identifier)"
+  }
+}
+
+private enum RenderedAppearance {
+  case light
+  case dark
+}
+
+@MainActor
+private func configuredAccessibilityApp(
+  appearance: XCUIDevice.Appearance,
+  additionalArguments: [String]
+) -> XCUIApplication {
+  let app = XCUIApplication()
+  app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+  app.launchArguments += ["-UseJapaneseAnalysisFixture"]
+  app.launchArguments += [
+    appearance == .dark ? "-ForceUITestDarkAppearance" : "-ForceUITestLightAppearance"
+  ]
+  app.launchArguments += additionalArguments
+  return app
+}
+
+@MainActor
+private func sampledAccessibilityPixels(in screenshot: XCUIScreenshot) -> [UInt8] {
+  guard let source = screenshot.image.cgImage else { return [] }
+  let scale = min(1, 256 / Double(max(source.width, source.height)))
+  let width = max(1, Int((Double(source.width) * scale).rounded()))
+  let height = max(1, Int((Double(source.height) * scale).rounded()))
+  var pixels = [UInt8](repeating: 0, count: width * height * 4)
+  guard
+    let context = CGContext(
+      data: &pixels,
+      width: width,
+      height: height,
+      bitsPerComponent: 8,
+      bytesPerRow: width * 4,
+      space: CGColorSpaceCreateDeviceRGB(),
+      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    )
+  else { return [] }
+  context.draw(source, in: CGRect(x: 0, y: 0, width: width, height: height))
+  return pixels
+}
+
+@MainActor
+private func accessibilityRenderedAppearance(
+  in screenshot: XCUIScreenshot
+) -> RenderedAppearance? {
+  let pixels = sampledAccessibilityPixels(in: screenshot)
+  guard pixels.count >= 4 else { return nil }
+  var darkPixels = 0
+  var lightPixels = 0
+  for offset in stride(from: 0, to: pixels.count, by: 4) {
+    let luminance =
+      (Int(pixels[offset]) + Int(pixels[offset + 1]) + Int(pixels[offset + 2])) / 3
+    if luminance <= 90 {
+      darkPixels += 1
+    } else if luminance >= 165 {
+      lightPixels += 1
+    }
+  }
+  guard darkPixels + lightPixels >= pixels.count / 8 else { return nil }
+  if darkPixels > lightPixels { return .dark }
+  if lightPixels > darkPixels { return .light }
+  return nil
+}
+
+@MainActor
+private func submitAccessibilitySearch(
+  _ query: String,
+  in app: XCUIApplication,
+  file: StaticString = #filePath,
+  line: UInt = #line
+) {
+  let searchField = app.textFields["search.field"]
+  XCTAssertTrue(searchField.waitForExistence(timeout: 3), file: file, line: line)
+  searchField.tap()
+  searchField.typeText(query)
+  app.keyboards.buttons["Search"].tap()
+  XCTAssertTrue(
+    app.keyboards.firstMatch.waitForNonExistence(timeout: 10),
+    "Submitted Search must dismiss the keyboard before selecting a result.",
+    file: file,
+    line: line
+  )
+  let bestMatches = app.staticTexts["Best Matches"]
+  let noMatches = app.staticTexts["No Dictionary Matches"]
+  let unavailable = app.staticTexts["Dictionary unavailable"]
+  let stableOutcome = XCTNSPredicateExpectation(
+    predicate: NSPredicate { _, _ in
+      bestMatches.exists || noMatches.exists || unavailable.exists
+    },
+    object: app
+  )
+  XCTAssertEqual(
+    XCTWaiter.wait(for: [stableOutcome], timeout: 10),
+    .completed,
+    "Search should reach a learner-visible terminal state.",
+    file: file,
+    line: line
+  )
+}
+
 final class AccessibilityAuditUITests: XCTestCase {
+  @MainActor
+  func testYouHierarchyRemainsReachableAtLargestAccessibilityTextSize() throws {
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    XCTAssertTrue(AppNavigationUITestSupport.youTab(in: app).waitForExistence(timeout: 3))
+    AppNavigationUITestSupport.youTab(in: app).tap()
+
+    let list = app.collectionViews["you.list"]
+    XCTAssertTrue(list.waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["Your Content"].exists)
+    XCTAssertTrue(app.staticTexts["Preferences"].exists)
+    XCTAssertTrue(app.buttons["you.media-library"].isHittable)
+    let readingAids = app.buttons["you.reading-aids"]
+    XCTAssertTrue(readingAids.exists)
+    XCTAssertTrue(readingAids.isHittable)
+    XCTAssertTrue(readingAids.label.contains("Reading Aids"))
+
+    let frequencyDictionaries = app.buttons["you.frequency-dictionaries"]
+    for _ in 0..<4 where !frequencyDictionaries.isHittable {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(frequencyDictionaries.isHittable)
+    let japaneseAnalysis = app.buttons["you.japanese-analysis"]
+    for _ in 0..<4 where !japaneseAnalysis.isHittable {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(japaneseAnalysis.isHittable)
+
+    let credits = app.buttons["you.credits"]
+    for _ in 0..<4 where !credits.isHittable {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(credits.isHittable)
+    XCTAssertGreaterThanOrEqual(credits.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(credits.frame.maxX, app.frame.maxX)
+    retainScreenshot(named: "You hierarchy at Accessibility XXXL")
+  }
+
+  @MainActor
+  func testJapaneseTextAnalysisManagementRemainsReachableAtLargestAccessibilityTextSize() throws {
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    XCTAssertTrue(AppNavigationUITestSupport.youTab(in: app).waitForExistence(timeout: 3))
+    AppNavigationUITestSupport.youTab(in: app).tap()
+    let youList = app.collectionViews["you.list"]
+    XCTAssertTrue(youList.waitForExistence(timeout: 3))
+    let destination = app.buttons["you.japanese-analysis"]
+    for _ in 0..<8 where !destination.exists || !destination.isHittable {
+      youList.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(destination.waitForExistence(timeout: 3))
+    XCTAssertTrue(destination.isHittable)
+    destination.tap()
+    let list = app.collectionViews["language-technology-packs.list"]
+    XCTAssertTrue(list.waitForExistence(timeout: 3))
+    let availability = app.staticTexts["Availability, Included with Zenbu"]
+    for _ in 0..<8 where !availability.exists {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(availability.exists)
+    let offline = app.staticTexts["Offline use, Works Offline"]
+    for _ in 0..<8 where !offline.exists {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(offline.exists)
+    let contribution = app.staticTexts["Installed contribution, 217.5 MB"]
+    for _ in 0..<8 where !contribution.exists {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(contribution.exists)
+    XCTAssertFalse(app.buttons["language-technology-pack.download.sudachi-core-ja-20260723"].exists)
+    XCTAssertFalse(app.buttons["language-technology-pack.remove.sudachi-core-ja-20260723"].exists)
+  }
+
+  @MainActor
+  func testLongWordIdentityUsesSecondaryReadingAtLargestAccessibilityTextSize() throws {
+    try verifyLongWordIdentityAtLargestAccessibilityTextSize(appearance: .light)
+  }
+
+  @MainActor
+  func testLongPartOfSpeechRemainsCompleteAtDefaultTextSize() throws {
+    let expected = "Godan Verb · Auxiliary Verb · Intransitive Verb · Transitive Verb"
+    let (app, detail) = try launchWordDetail(
+      query: "仕る",
+      resultLabelPrefix: "仕る, つかまつる",
+      appearance: .light
+    )
+    let conjugations = app.buttons["word-detail.conjugations"]
+    for _ in 0..<4 where !conjugations.exists || !conjugations.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(conjugations.isHittable)
+    let partOfSpeech = app.staticTexts[
+      "word-detail.entry.7a719ec3441746ac068296d7b42321e3"
+    ]
+    XCTAssertTrue(partOfSpeech.exists)
+    XCTAssertEqual(partOfSpeech.label, expected)
+    XCTAssertGreaterThan(partOfSpeech.frame.height, 0)
+    XCTAssertGreaterThanOrEqual(partOfSpeech.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(partOfSpeech.frame.maxX, app.frame.maxX)
+    XCTAssertTrue(app.staticTexts["View Conjugations"].exists)
+    retainElementScreenshot(conjugations, named: "Long part of speech default size")
+  }
+
+  @MainActor
+  func testInlineWordDetailCurrentEntryUsesSystemAccentAndSemanticEmphasis() throws {
+    try verifyInlineWordDetailCurrentEntry(
+      appearance: .light,
+      accessibilityXXXL: false
+    )
+  }
+
+  @MainActor
+  func testInlineWordDetailCurrentEntryAppearanceAndSizeMatrix() throws {
+    for appearance in [XCUIDevice.Appearance.light, .dark] {
+      for accessibilityXXXL in [false, true] {
+        if appearance == .light, !accessibilityXXXL { continue }
+        try verifyInlineWordDetailCurrentEntry(
+          appearance: appearance,
+          accessibilityXXXL: accessibilityXXXL
+        )
+      }
+    }
+  }
+
+  @MainActor
+  func testInlineWordDetailOtherLinkedWordRetainsPrimaryTextTreatment() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(appearance: .light)
+    try submitSearch("見る", in: app)
+    let primaryResult = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "見る, みる")
+    ).firstMatch
+    XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
+    primaryResult.tap()
+
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    let currentToken = app.buttons["word-detail.example-token.0.0.見る"]
+    for _ in 0..<12 where !currentToken.exists || !currentToken.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    let otherLinkedToken = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "word-detail.example-token.0.",
+        "明らか, あきらか"
+      )
+    ).firstMatch
+    XCTAssertTrue(currentToken.waitForExistence(timeout: 3))
+    XCTAssertTrue(otherLinkedToken.waitForExistence(timeout: 3))
+    XCTAssertTrue(containsSystemBluePixels(in: currentToken.screenshot()))
+    XCTAssertFalse(containsSystemBluePixels(in: otherLinkedToken.screenshot()))
+    XCTAssertEqual(otherLinkedToken.value as? String, "")
+    XCTAssertFalse(otherLinkedToken.isSelected)
+    retainElementScreenshot(currentToken, named: "Current 見る token")
+    retainElementScreenshot(otherLinkedToken, named: "Neutral 明らか token")
+  }
+
+  @MainActor
+  func testRelatedWordUsesNeutralTextAndPreservesNativeNavigation() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let (app, detail) = try launchWordDetail(
+      query: "見る",
+      resultLabelPrefix: "見る, みる",
+      appearance: .light
+    )
+    let related = app.buttons["word-detail.related.見える"]
+    for _ in 0..<12 where !related.exists || !related.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+
+    XCTAssertTrue(related.waitForExistence(timeout: 3))
+    XCTAssertTrue(related.isHittable)
+    XCTAssertGreaterThanOrEqual(related.frame.height, 44)
+    XCTAssertGreaterThanOrEqual(related.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(related.frame.maxX, app.frame.maxX)
+    assertRelatedWordVisualHierarchy(in: app, row: related, appearance: .light)
+    retainElementScreenshot(related, named: "Neutral Related Word row")
+
+    related.tap()
+    let relatedDetail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(relatedDetail.waitForExistence(timeout: 3))
+    let relatedNavigation = app.navigationBars["見える"]
+    guard relatedNavigation.waitForExistence(timeout: 3) else {
+      return XCTFail("Related Word should open the matching Word Detail destination.")
+    }
+    relatedNavigation.buttons.firstMatch.tap()
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    XCTAssertTrue(related.waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  func testRelatedWordRemainsNeutralInDarkAppearance() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .dark
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let (app, detail) = try launchWordDetail(
+      query: "見る",
+      resultLabelPrefix: "見る, みる",
+      appearance: .dark
+    )
+    let related = app.buttons["word-detail.related.見える"]
+    for _ in 0..<12 where !related.exists || !related.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+
+    XCTAssertTrue(related.waitForExistence(timeout: 3))
+    XCTAssertTrue(related.isHittable)
+    XCTAssertGreaterThanOrEqual(related.frame.height, 44)
+    assertRelatedWordVisualHierarchy(in: app, row: related, appearance: .dark)
+    retainElementScreenshot(related, named: "Neutral Related Word row - dark")
+  }
+
+  @MainActor
+  private func assertRelatedWordVisualHierarchy(
+    in app: XCUIApplication,
+    row: XCUIElement,
+    appearance: XCUIDevice.Appearance
+  ) {
+    XCTAssertEqual(
+      row.label,
+      "見える, みえる, Related intransitive verb, to be seen, to be visible, to be in sight"
+    )
+    let primaryPieces = app.staticTexts.matching(
+      identifier: "word-detail.related-primary.見える"
+    ).allElementsBoundByIndex
+    let support = app.staticTexts["word-detail.related-support.見える"]
+    XCTAssertFalse(primaryPieces.isEmpty)
+    XCTAssertTrue(support.exists)
+    XCTAssertLessThan(
+      primaryPieces.map(\.frame.maxY).max() ?? .greatestFiniteMagnitude, support.frame.minY)
+    XCTAssertTrue(
+      primaryPieces.contains {
+        containsSystemPrimaryTextPixels(in: $0.screenshot(), appearance: appearance)
+      }
+    )
+    XCTAssertTrue(
+      containsSystemSecondaryTextPixels(in: support.screenshot(), appearance: appearance))
+    XCTAssertGreaterThan(
+      foregroundPixelFraction(in: support.screenshot()),
+      0,
+      "The secondary relationship summary must remain visibly rendered."
+    )
+    XCTAssertFalse(
+      containsSystemBluePixels(in: row.screenshot()),
+      "Related Word content should use system-primary and system-secondary text, not action tint."
+    )
+  }
+
+  @MainActor
+  func testInlineWordDetailAmbiguousCandidateRemainsNeutralAndSelectable() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "見る",
+      resultLabelPrefix: "見る, みる",
+      appearance: .light
+    )
+    let row = app.descendants(matching: .any).matching(
+      NSPredicate(format: "label == %@", "見ることは信ずることなり。, Seeing is believing.")
+    ).firstMatch
+    for _ in 0..<12 where !row.exists || !row.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(row.waitForExistence(timeout: 3))
+    let candidate = row.descendants(matching: .button).matching(
+      NSPredicate(format: "label == %@", "こと, choose dictionary entry")
+    ).firstMatch
+
+    XCTAssertTrue(candidate.waitForExistence(timeout: 3))
+    XCTAssertTrue(candidate.isHittable)
+    XCTAssertEqual(candidate.value as? String, "")
+    XCTAssertFalse(candidate.isSelected)
+    XCTAssertTrue(candidate.label.hasPrefix("こと"))
+    XCTAssertFalse(
+      containsSystemBluePixels(in: candidate.screenshot()),
+      "An unresolved candidate is sentence content, so it should stay neutral until selected."
+    )
+    retainElementScreenshot(candidate, named: "Neutral ambiguous sentence token")
+
+    candidate.tap()
+    let choice = app.buttons["こと (こと) — particle indicating a command"]
+    XCTAssertTrue(choice.waitForExistence(timeout: 3))
+    choice.tap()
+    XCTAssertTrue(app.descendants(matching: .any)["ruby.こと.こと"].waitForExistence(timeout: 3))
+    let back = app.navigationBars.buttons.firstMatch
+    XCTAssertTrue(back.waitForExistence(timeout: 3))
+    back.tap()
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    RepresentativeExampleSentences.reachElement(candidate, in: detail, app: app)
+    XCTAssertTrue(candidate.isHittable)
+  }
+
+  @MainActor
+  func testReducedInlineAnalysisDoesNotAccentAnySentenceText() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "問題",
+      resultLabelPrefix: "問題, もんだい",
+      appearance: .light,
+      additionalArguments: [
+        "-ResetLanguageTechnologyPacks", "-UseReducedJapaneseAnalysis",
+      ]
+    )
+    let firstToken = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.")
+    ).firstMatch
+    for _ in 0..<12 where !firstToken.exists || !firstToken.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+
+    XCTAssertTrue(app.staticTexts["word-detail.reduced-analysis"].exists)
+    XCTAssertTrue(firstToken.waitForExistence(timeout: 3))
+    XCTAssertEqual(firstToken.value as? String, "")
+    XCTAssertFalse(firstToken.isSelected)
+    XCTAssertFalse(containsSystemBluePixels(in: firstToken.screenshot()))
+    XCTAssertEqual(
+      app.buttons.matching(
+        NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.")
+      ).count,
+      0
+    )
+    retainElementScreenshot(firstToken, named: "Neutral reduced-analysis sentence")
+  }
+
+  @MainActor
+  func testMultipleCurrentEntryOccurrencesAreTheOnlyAccentedSentenceTokens() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "来る",
+      resultLabelPrefix: "来る, くる, to come",
+      appearance: .light
+    )
+    let row = app.descendants(matching: .any).matching(
+      NSPredicate(format: "label == %@", "来る日も来る日も雨だった。, It rained day after day.")
+    ).firstMatch
+    for _ in 0..<20 where !row.exists || !row.isHittable {
+      detail.swipeUp(velocity: .fast)
+    }
+    XCTAssertTrue(row.waitForExistence(timeout: 3))
+    let currentOccurrences = row.descendants(matching: .button).matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@ AND value == %@",
+        "word-detail.example-token.",
+        "来る, くる",
+        "Current word"
+      )
+    )
+
+    XCTAssertEqual(currentOccurrences.count, 2)
+    for occurrence in currentOccurrences.allElementsBoundByIndex {
+      XCTAssertEqual(occurrence.value as? String, "Current word")
+      XCTAssertTrue(occurrence.isSelected)
+      XCTAssertTrue(containsSystemBluePixels(in: occurrence.screenshot()))
+    }
+    let otherTokens = row.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND value != %@",
+        "word-detail.example-token.",
+        "Current word"
+      )
+    )
+    XCTAssertGreaterThan(otherTokens.count, 0)
+    for token in otherTokens.allElementsBoundByIndex {
+      XCTAssertNotEqual(token.value as? String, "Current word")
+      XCTAssertFalse(token.isSelected)
+      XCTAssertFalse(containsSystemBluePixels(in: token.screenshot()))
+    }
+    retainElementScreenshot(
+      row,
+      named: "Two current-word occurrences with neutral surrounding tokens"
+    )
+  }
+
+  @MainActor
+  func testFullAnalysisKeepsNoCurrentAndLongMixedScriptSentencesSelective() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "見る",
+      resultLabelPrefix: "見る, みる",
+      appearance: .light,
+      additionalArguments: ["-Issue246WordDetailExampleFixtures"]
+    )
+
+    let noCurrentRow = app.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "label == %@",
+        "水は見る見るうちに橋げたのところまで達した。, The water came up to the bridge girder in a second."
+      )
+    ).firstMatch
+    for _ in 0..<12 where !noCurrentRow.exists || !noCurrentRow.isHittable {
+      detail.swipeUp(velocity: .fast)
+    }
+    XCTAssertTrue(noCurrentRow.waitForExistence(timeout: 3))
+    let noCurrentTokens = noCurrentRow.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.")
+    ).allElementsBoundByIndex
+    XCTAssertGreaterThan(noCurrentTokens.count, 1)
+    XCTAssertGreaterThan(noCurrentTokens.filter { $0.elementType == .button }.count, 0)
+    for token in noCurrentTokens {
+      XCTAssertNotEqual(token.value as? String, "Current word")
+      XCTAssertFalse(token.isSelected)
+      XCTAssertFalse(containsSystemBluePixels(in: token.screenshot()))
+    }
+    retainElementScreenshot(noCurrentRow, named: "Full-analysis sentence without current entry")
+
+    let longRow = app.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "label == %@",
+        "REM睡眠中の脳波は起きている時と同じ脳波であり、夢を見るステージです。, The brain waves during REM sleep are the same as when awake, and it's the stage when you have dreams."
+      )
+    ).firstMatch
+    for _ in 0..<4 where !longRow.exists || !longRow.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(longRow.waitForExistence(timeout: 3))
+    let longTokens = longRow.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "word-detail.example-token.")
+    ).allElementsBoundByIndex
+    let current = longTokens.filter { $0.value as? String == "Current word" }
+    XCTAssertEqual(current.count, 1)
+    guard let currentToken = current.first else { return }
+    XCTAssertTrue(currentToken.isSelected)
+    XCTAssertTrue(containsSystemBluePixels(in: currentToken.screenshot()))
+    for token in longTokens where token.value as? String != "Current word" {
+      XCTAssertFalse(token.isSelected)
+      XCTAssertFalse(containsSystemBluePixels(in: token.screenshot()))
+    }
+    for token in longTokens {
+      XCTAssertGreaterThan(token.frame.width, 0)
+      XCTAssertGreaterThan(token.frame.height, 0)
+      XCTAssertGreaterThanOrEqual(token.frame.minX, app.frame.minX)
+      XCTAssertLessThanOrEqual(token.frame.maxX, app.frame.maxX)
+    }
+    retainElementScreenshot(longRow, named: "Selective current word in long mixed-script sentence")
+  }
+
+  @MainActor
+  func testInlineWordDetailInflectedSurfaceUsesCanonicalCurrentEntryPresentation() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "食べる",
+      resultLabelPrefix: "食べる, たべる",
+      appearance: .light
+    )
+    let inflectedToken = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "word-detail.example-token.20.",
+        "食べ, たべる"
+      )
+    ).firstMatch
+    for _ in 0..<32 where !inflectedToken.exists || !inflectedToken.isHittable {
+      detail.swipeUp(velocity: .fast)
+    }
+    XCTAssertTrue(inflectedToken.waitForExistence(timeout: 3))
+    XCTAssertEqual(inflectedToken.value as? String, "Current word")
+    XCTAssertTrue(inflectedToken.isSelected)
+    XCTAssertTrue(containsSystemBluePixels(in: inflectedToken.screenshot()))
+    assertNaturalInlineWordControl(inflectedToken, in: app)
+    retainElementScreenshot(inflectedToken, named: "Inflected current 食べ token")
+  }
+
+  @MainActor
+  func testInlineWordDetailAlternateWrittenFormUsesCurrentEntryPresentation() throws {
+    let (app, detail) = try launchWordDetail(
+      query: "○",
+      resultLabelPrefix: "○, まる",
+      appearance: .light
+    )
+    let alternateToken = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "word-detail.example-token.2.",
+        "〇, まる"
+      )
+    ).firstMatch
+    for _ in 0..<12 where !alternateToken.exists || !alternateToken.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(alternateToken.waitForExistence(timeout: 3))
+    XCTAssertEqual(alternateToken.value as? String, "Current word")
+    XCTAssertTrue(alternateToken.isSelected)
+    XCTAssertTrue(containsSystemBluePixels(in: alternateToken.screenshot()))
+    assertNaturalInlineWordControl(alternateToken, in: app)
+    retainElementScreenshot(alternateToken, named: "Alternate current 〇 token")
+  }
+
+  @MainActor
+  private func verifyInlineWordDetailCurrentEntry(
+    appearance: XCUIDevice.Appearance,
+    accessibilityXXXL: Bool
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: accessibilityXXXL
+        ? ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        : []
+    )
+    try submitSearch("いる", in: app)
+    let primaryResult = app.buttons.matching(
+      NSPredicate(format: "value BEGINSWITH %@", "Best match 1")
+    ).firstMatch
+    XCTAssertTrue(primaryResult.waitForExistence(timeout: 3))
+    let results = app.collectionViews["search.results"]
+    XCTAssertTrue(results.waitForExistence(timeout: 3))
+    XCTAssertTrue(primaryResult.label.hasPrefix("要る, いる"))
+    retainElementScreenshot(primaryResult, named: "Current-entry matrix result before navigation")
+    WordDetailUITestSupport.tapVisibleSearchResult(primaryResult, in: app)
+
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    let currentToken = app.buttons.matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+        "word-detail.example-token.",
+        "要る, いる"
+      )
+    ).firstMatch
+    for _ in 0..<12 where !currentToken.exists || !currentToken.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(currentToken.waitForExistence(timeout: 3))
+    assertNaturalInlineWordControl(currentToken, in: app)
+    XCTAssertEqual(currentToken.value as? String, "Current word")
+    XCTAssertTrue(currentToken.isSelected)
+    XCTAssertTrue(
+      containsSystemBluePixels(in: currentToken.screenshot()),
+      "Only the current app-owned entry token should use the system accent."
+    )
+    retainElementScreenshot(
+      currentToken,
+      named:
+        "Current 要る token - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")"
+    )
+
+  }
+
+  @MainActor
+  private func assertNaturalInlineWordControl(
+    _ control: XCUIElement,
+    in app: XCUIApplication,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    // Short inline Japanese keeps its glyph-width sentence rhythm. Dedicated Example Sentences
+    // expose the same words through the full-size native Words menu; inline Word Detail retains
+    // its underlined, selected, directly hittable presentation without manufacturing 44pt gaps.
+    XCTAssertTrue(control.isHittable, file: file, line: line)
+    XCTAssertGreaterThan(control.frame.width, 0, file: file, line: line)
+    XCTAssertGreaterThanOrEqual(control.frame.height, 43.5, file: file, line: line)
+    XCTAssertGreaterThanOrEqual(control.frame.minX, app.frame.minX, file: file, line: line)
+    XCTAssertLessThanOrEqual(control.frame.maxX, app.frame.maxX, file: file, line: line)
+  }
+
+  @MainActor
+  func testActiveFrequencyDictionaryUsesSystemSelectionSemantics() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: ["-ResetFrequencyPacks"]
+    )
+    XCTAssertTrue(AppNavigationUITestSupport.youTab(in: app).waitForExistence(timeout: 3))
+    AppNavigationUITestSupport.youTab(in: app).tap()
+    app.buttons["you.frequency-dictionaries"].tap()
+
+    let activeStatus = waitForActiveFrequencyStatus(in: app)
+    XCTAssertEqual(activeStatus.label, "Status, Active")
+    XCTAssertEqual(activeStatus.value as? String, "Selected frequency dictionary")
+    XCTAssertTrue(
+      containsSystemBluePixels(in: activeStatus.screenshot()),
+      "An active frequency dictionary is a current selection and must use the system accent."
+    )
+  }
+
+  @MainActor
+  private func waitForActiveFrequencyStatus(in app: XCUIApplication) -> XCUIElement {
+    let activeStatus = app.descendants(matching: .any)[
+      "frequency-pack.status.zenbu.tubelex.youtube.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(
+      activeStatus.waitForExistence(timeout: 10),
+      "The included Frequency Pack should reach its learner-visible active state."
+    )
+    return activeStatus
+  }
+
+  @MainActor
+  func testFrequencyDownloadFailureUsesErrorSemanticsAndKeepsRetryOrdinary() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: ["-ResetFrequencyPacks", "-FrequencyPackChecksumFailure"]
+    )
+    AppNavigationUITestSupport.youTab(in: app).tap()
+    app.buttons["you.frequency-dictionaries"].tap()
+    let list = app.collectionViews["frequency-packs.list"]
+    XCTAssertTrue(list.waitForExistence(timeout: 3))
+    let download = app.buttons[
+      "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    for _ in 0..<8 where !download.isHittable { list.swipeUp() }
+    XCTAssertTrue(download.isHittable)
+    download.tap()
+
+    let failure = app.descendants(matching: .any)[
+      "frequency-pack.failure.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(failure.waitForExistence(timeout: 4))
+    XCTAssertEqual(failure.label, "Download failed")
+    XCTAssertEqual(failure.value as? String, "Downloaded file failed checksum validation.")
+    XCTAssertTrue(
+      containsRedPixels(in: failure.screenshot()),
+      "A serious validation failure must use the system error color in addition to text and icon."
+    )
+
+    let retry = app.buttons[
+      "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertEqual(retry.label, "Retry")
+    XCTAssertFalse(
+      containsRedPixels(in: retry.screenshot()),
+      "Retry is an ordinary recovery action and must retain the system accent."
+    )
+  }
+
+  @MainActor
+  func testVerifiedFrequencyDownloadBecomesNeutralInstalledChoice() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: ["-ResetFrequencyPacks"]
+    )
+    AppNavigationUITestSupport.youTab(in: app).tap()
+    app.buttons["you.frequency-dictionaries"].tap()
+    let list = app.collectionViews["frequency-packs.list"]
+    XCTAssertTrue(list.waitForExistence(timeout: 3))
+    let download = app.buttons[
+      "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    for _ in 0..<8 where !download.isHittable { list.swipeUp() }
+    XCTAssertTrue(download.isHittable)
+    download.tap()
+
+    let verified = app.descendants(matching: .any)[
+      "frequency-pack.verified.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(verified.waitForExistence(timeout: 90))
+    XCTAssertEqual(verified.label, "Verified")
+    XCTAssertEqual(verified.value as? String, "Download and checksum verified")
+    XCTAssertTrue(
+      containsGreenPixels(in: verified.screenshot()),
+      "Verified completion must use system green in addition to its label and symbol."
+    )
+
+    let installed = app.descendants(matching: .any)[
+      "frequency-pack.status.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    let use = app.buttons[
+      "frequency-pack.activate.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    let installedSnapshot = XCTNSPredicateExpectation(
+      predicate: NSPredicate { _, _ in
+        installed.exists && installed.label == "Status, Installed"
+          && installed.value as? String == "Not selected" && use.exists
+      },
+      object: app
+    )
+    XCTAssertEqual(
+      XCTWaiter.wait(for: [installedSnapshot], timeout: 10), .completed,
+      "Verified checksum completion must be followed by the installed snapshot and activation action"
+    )
+    XCTAssertEqual(installed.label, "Status, Installed")
+    XCTAssertEqual(installed.value as? String, "Not selected")
+
+    XCTAssertTrue(use.isHittable)
+    XCTAssertEqual(use.label, "Use This Dictionary")
+    XCTAssertTrue(containsSystemBluePixels(in: use.screenshot()))
+    XCTAssertFalse(containsRedPixels(in: use.screenshot()))
+
+    let remove = app.buttons[
+      "frequency-pack.remove.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(remove.isHittable)
+    XCTAssertEqual(remove.label, "Remove Pack")
+    XCTAssertTrue(containsRedPixels(in: remove.screenshot()))
+    remove.tap()
+    XCTAssertTrue(verified.waitForNonExistence(timeout: 3))
+
+    let available = app.descendants(matching: .any)[
+      "frequency-pack.status.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    XCTAssertTrue(available.waitForExistence(timeout: 3))
+    XCTAssertEqual(available.label, "Status, Available")
+    XCTAssertEqual(available.value as? String, "Not installed")
+  }
+
+  @MainActor
+  func testOrdinaryActionsDoNotShareTheSystemDestructiveColor() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    var app = launchApp(appearance: .light, additionalArguments: ["-ResetRecentSearches"])
+    let searchTab = app.tabBars.buttons["Search"]
+    XCTAssertTrue(searchTab.waitForExistence(timeout: 3))
+    XCTAssertFalse(
+      containsRedPixels(in: searchTab.screenshot()),
+      "An ordinary selected tab must not share the system destructive color."
+    )
+
+    try submitSearch("日本", in: app)
+    app.terminate()
+    app = launchApp(appearance: .light)
+    let recentSearch = app.buttons["recent-search.0"]
+    XCTAssertTrue(recentSearch.waitForExistence(timeout: 3))
+    recentSearch.swipeLeft()
+    let delete = app.buttons["Delete"]
+    XCTAssertTrue(delete.waitForExistence(timeout: 3))
+    XCTAssertTrue(
+      containsRedPixels(in: delete.screenshot()),
+      "A destructive Delete action must retain the system destructive color."
+    )
+    app.terminate()
+
+    try stageImageTextFixture(appearance: .light)
+    app = launchApp(
+      appearance: .light,
+      additionalArguments: [
+        "-StartImageTextFixtures", "fixture-clear-horizontal.png",
+      ]
+    )
+    let translate = app.buttons["image-text.translate"]
+    XCTAssertTrue(translate.waitForExistence(timeout: 20))
+    XCTAssertFalse(
+      containsRedPixels(in: translate.screenshot()),
+      "Translate is an ordinary prominent action and must use the system accent."
+    )
+    let close = app.buttons["image-text.close"]
+    XCTAssertTrue(close.isHittable)
+    XCTAssertFalse(
+      containsRedPixels(in: close.screenshot()),
+      "Close is an ordinary cancellation action and must use the system accent."
+    )
+  }
+
+  @MainActor
+  func testStrokeOrderStepActionsUseDirectionalSymbols() throws {
+    let app = launchApp(appearance: .light)
+    try submitSearch("山", in: app)
+    let mountain = app.buttons["result.kanji-primary.山"]
+    XCTAssertTrue(mountain.waitForExistence(timeout: 4))
+    mountain.tap()
+    let strokeOrder = app.buttons["kanji-detail.stroke-order"]
+    XCTAssertTrue(strokeOrder.waitForExistence(timeout: 4))
+    strokeOrder.tap()
+
+    let next = app.buttons["stroke-order.next"]
+    XCTAssertTrue(next.waitForExistence(timeout: 3))
+    XCTAssertTrue(next.isHittable)
+    XCTAssertLessThan(
+      foregroundPixelFraction(in: next.screenshot()),
+      0.34,
+      "A one-step action needs a directional stroke symbol, not a filled skip-to-end media glyph."
+    )
+    next.tap()
+    let previous = app.buttons["stroke-order.previous"]
+    XCTAssertTrue(previous.isEnabled)
+    previous.tap()
+    XCTAssertEqual(app.descendants(matching: .any)["stroke-order.progress"].label, "Stroke 1 of 3")
+  }
+
+  @MainActor
+  func testLightRepresentativeExampleSentenceLayoutsRemainReadableAndOperable() throws {
+    try auditRepresentativeExampleSentences(appearance: .light, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testSharedReadingAidSentenceLayoutWrapsNaturallyAtLargestAccessibilityTextSize() throws {
+    defer {
+      let cleanup = launchApp(
+        appearance: .light,
+        additionalArguments: ["-ResetReadingAidPreferences"]
+      )
+      cleanup.terminate()
+    }
+    let app = launchApp(
+      appearance: .dark,
+      additionalArguments: [
+        "-ResetReadingAidPreferences",
+        "-Issue246WordDetailExampleFixtures",
+        "-UIPreferredContentSizeCategoryName",
+        "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    AppNavigationUITestSupport.youTab(in: app).tap()
+    app.buttons["you.reading-aids"].tap()
+    let showRomaji = app.switches["reading-aids.show-romaji"]
+    XCTAssertTrue(showRomaji.waitForExistence(timeout: 3))
+    showRomaji.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+    let romajiEnabled = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "1"),
+      object: showRomaji
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [romajiEnabled], timeout: 2), .completed)
+    app.tabBars.buttons["Search"].tap()
+    try submitSearch("見る", in: app)
+    let result = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "見る, みる")
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 3))
+    result.tap()
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    let prefix = "word-detail.example-token.0."
+    let first = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", prefix)
+    ).firstMatch
+    RepresentativeExampleSentences.reachElement(first, in: detail, app: app)
+    let tokens = RepresentativeExampleSentences.orderedTokens(prefix: prefix, in: app)
+    XCTAssertEqual(
+      RepresentativeExampleSentences.reconstructedSentence(from: tokens, prefix: prefix),
+      "水は見る見るうちに橋げたのところまで達した。"
+    )
+    let visualLines = Dictionary(grouping: tokens) { Int($0.frame.maxY.rounded()) }
+    XCTAssertLessThan(
+      visualLines.count,
+      tokens.count,
+      "Largest text must retain natural multi-token Japanese lines instead of one token per row"
+    )
+    for token in tokens {
+      XCTAssertGreaterThanOrEqual(token.frame.minX, detail.frame.minX)
+      XCTAssertLessThanOrEqual(token.frame.maxX, detail.frame.maxX)
+    }
+    let terminalPunctuation = try XCTUnwrap(tokens.last)
+    let precedingToken = try XCTUnwrap(tokens.dropLast().last)
+    XCTAssertEqual(
+      terminalPunctuation.frame.maxY,
+      precedingToken.frame.maxY,
+      accuracy: 1,
+      "Japanese terminal punctuation must wrap with the preceding token"
+    )
+    let romaji = app.descendants(matching: .any)["word-detail.example-token.0.romaji"]
+    XCTAssertTrue(romaji.exists)
+    XCTAssertTrue(romaji.label.hasPrefix("Romaji, "))
+    let english = app.staticTexts["word-detail.example-english.0"]
+    XCTAssertTrue(english.exists)
+    XCTAssertGreaterThanOrEqual(romaji.frame.minX, detail.frame.minX)
+    XCTAssertLessThanOrEqual(romaji.frame.maxX, detail.frame.maxX)
+    XCTAssertGreaterThan(english.frame.minY, romaji.frame.maxY)
+    try performAudit(
+      in: app,
+      named: "Shared Reading Aid sentence layout - dark accessibility XXXL",
+      types: .dynamicType.union(.textClipped).union(.hitRegion)
+    )
+  }
+
+  @MainActor
+  func testSharedFuriganaSentenceLayoutKeepsExactInlineHitRegionInventory() throws {
+    let (app, detail) = try launchInlineTargetFixture()
+    let sentence = app.descendants(matching: .any)["word-detail.example.3"]
+    let cases = [
+      (
+        "word-detail.example-token.3.2.中", "中", "ちゅう",
+        "medium (size), average (grade, level, etc.), middle"
+      ),
+      ("word-detail.example-token.3.9.時", "時", "とき", "time, hour, moment"),
+    ]
+    for (identifier, surface, reading, summary) in cases {
+      let token = app.buttons[identifier]
+      bringIntoUnobscuredViewport(token, in: detail, app: app)
+      XCTAssertEqual(
+        sentence.label,
+        "REM睡眠中の脳波は起きている時と同じ脳波であり、夢を見るステージです。, During REM sleep, brain waves resemble the waking state, and dreams occur."
+      )
+      XCTAssertEqual(token.label, "\(surface), choose dictionary entry")
+      assertNaturalInlineWordControl(token, in: app)
+      let otherIdentifier = try XCTUnwrap(cases.first { $0.0 != identifier }).0
+      let other = app.buttons[otherIdentifier]
+      XCTAssertTrue(other.exists)
+      XCTAssertFalse(token.frame.intersects(other.frame), "Inline word targets must not overlap")
+      retainElementScreenshot(token, named: "Operable inline \(surface) in complete sentence")
+      let geometry = XCTAttachment(string: "\(surface): \(token.frame)")
+      geometry.name = "Actual inline target geometry - \(surface)"
+      geometry.lifetime = .keepAlways
+      add(geometry)
+      token.tap()
+      // Literal expectations are from bundled JMdict records 1620400 and 1315840.
+      let choice = app.buttons["\(surface) (\(reading)) — \(summary)"]
+      XCTAssertTrue(choice.waitForExistence(timeout: 3))
+      XCTAssertTrue(choice.isHittable)
+      XCTAssertGreaterThanOrEqual(choice.frame.width, 44)
+      XCTAssertGreaterThanOrEqual(choice.frame.height, 44)
+      choice.tap()
+      let destination = app.navigationBars[surface]
+      XCTAssertTrue(destination.waitForExistence(timeout: 5))
+      let identity = app.descendants(matching: .any)["ruby.\(surface).\(surface)=\(reading)"]
+      XCTAssertTrue(identity.waitForExistence(timeout: 3))
+      XCTAssertEqual(identity.label, "\(surface), \(reading)")
+      destination.buttons.firstMatch.tap()
+      XCTAssertTrue(app.navigationBars["食べる"].waitForExistence(timeout: 5))
+      XCTAssertTrue(sentence.waitForExistence(timeout: 5))
+      XCTAssertTrue(token.isHittable, "Back must restore the inline word without scrolling")
+      XCTAssertGreaterThanOrEqual(token.frame.minY, app.navigationBars.firstMatch.frame.maxY)
+      XCTAssertLessThanOrEqual(token.frame.maxY, app.tabBars.firstMatch.frame.minY)
+    }
+  }
+
+  @MainActor
+  func testSharedFuriganaSentenceLayoutRetainsRawHitRegionDiagnostic() throws {
+    let (app, detail) = try launchInlineTargetFixture()
+    for identifier in ["word-detail.example-token.3.2.中", "word-detail.example-token.3.9.時"] {
+      let token = app.buttons[identifier]
+      bringIntoUnobscuredViewport(token, in: detail, app: app)
+      retainElementScreenshot(token, named: "Unobscured inline target - \(identifier)")
+    }
+    try app.performAccessibilityAudit(for: .hitRegion)
+  }
+
+  @MainActor
+  private func launchInlineTargetFixture() throws -> (XCUIApplication, XCUIElement) {
+    let (app, detail) = try launchWordDetail(
+      query: "taberu",
+      resultLabelPrefix: "食べる, たべる",
+      appearance: .light,
+      additionalArguments: ["-Issue253SentenceLayoutFixtures"]
+    )
+    let firstToken = app.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "identifier BEGINSWITH %@",
+        "word-detail.example-token.0."
+      )
+    ).firstMatch
+    RepresentativeExampleSentences.reachElement(firstToken, in: detail, app: app)
+    retainScreenshot(named: "Shared Furigana sentence layout - exact hit regions")
+    return (app, detail)
+  }
+
+  @MainActor
+  func testDarkRepresentativeExampleSentenceLayoutsRemainReadableAndOperableAtAccessibilityXXXL()
+    throws
+  {
+    try auditRepresentativeExampleSentences(appearance: .dark, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  func testDarkRepresentativeExampleSentenceLayoutsRemainReadableAndOperableAtDefaultSize()
+    throws
+  {
+    try auditRepresentativeExampleSentences(appearance: .dark, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testLightRepresentativeExampleSentenceLayoutsRemainReadableAndOperableAtAccessibilityXXXL()
+    throws
+  {
+    try auditRepresentativeExampleSentences(appearance: .light, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  func testRepresentativeExampleSentenceWordMenuPassesHitRegionAudit() throws {
+    try auditRepresentativeExampleHitRegions(appearance: .light, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testDarkRepresentativeExampleSentenceWordMenuPassesHitRegionAudit() throws {
+    try auditRepresentativeExampleHitRegions(appearance: .dark, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testLightAccessibilityXXXLRepresentativeExampleSentenceInlineLinksKeepExactHitRegions()
+    throws
+  {
+    try auditRepresentativeExampleHitRegions(appearance: .light, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  func testDarkAccessibilityXXXLRepresentativeExampleSentenceInlineLinksKeepExactHitRegions()
+    throws
+  {
+    try auditRepresentativeExampleHitRegions(appearance: .dark, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  private func auditRepresentativeExampleHitRegions(
+    appearance: XCUIDevice.Appearance,
+    accessibilityXXXL: Bool
+  ) throws {
+    let app = try launchRepresentativeExampleSentences(
+      appearance: appearance,
+      accessibilityXXXL: accessibilityXXXL
+    )
+    let sentence = app.descendants(matching: .any)["example.japanese.0"]
+    XCTAssertTrue(sentence.waitForExistence(timeout: 12))
+    XCTAssertEqual(sentence.label, RepresentativeExampleSentences.rows[0].japanese)
+    let words = app.buttons["example.words.0"]
+    XCTAssertTrue(words.exists)
+    XCTAssertTrue(words.isHittable)
+    XCTAssertEqual(words.label, "Choose a word from example 1")
+    XCTAssertGreaterThanOrEqual(words.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(words.frame.height, 44)
+    XCTAssertEqual(
+      app.buttons.matching(
+        NSPredicate(format: "identifier BEGINSWITH %@", "example.token.")
+      ).count,
+      0,
+      "Compact sentence text must not remain a collection of undersized controls"
+    )
+    let thirdWords = app.buttons["example.words.2"]
+    RepresentativeExampleSentences.reachElement(
+      thirdWords,
+      in: app.collectionViews["example-list.screen"],
+      app: app
+    )
+    XCTAssertTrue(thirdWords.isHittable)
+    thirdWords.tap()
+    let wordActions = app.buttons.matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "example.words.2.")
+    )
+    XCTAssertTrue(wordActions.firstMatch.waitForExistence(timeout: 3))
+    XCTAssertEqual(wordActions.count, 3)
+    for action in wordActions.allElementsBoundByIndex {
+      XCTAssertGreaterThanOrEqual(action.frame.width, 44)
+      XCTAssertGreaterThanOrEqual(action.frame.height, 44)
+      XCTAssertTrue(action.label.contains(" — "))
+    }
+    retainScreenshot(
+      named:
+        "Example Sentences word menu - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")"
+    )
+    try app.performAccessibilityAudit(for: .hitRegion)
+  }
+
   @MainActor
   func testLightImageSourceActionsHaveReadableSystemContrast() throws {
     let originalAppearance = XCUIDevice.shared.appearance
@@ -18,6 +1197,46 @@ final class AccessibilityAuditUITests: XCTestCase {
       in: app,
       named: "Image source actions - light appearance",
       types: .contrast
+    )
+  }
+
+  @MainActor
+  func testLightImageTextNativeControlsRemainAccessibleAtLargestTextSize() throws {
+    try auditImageTextNativeControls(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkImageTextNativeControlsRemainAccessibleAtLargestTextSize() throws {
+    try auditImageTextNativeControls(appearance: .dark)
+  }
+
+  @MainActor
+  func testTranslationRecoveryRemainsReachableAtLargestAccessibilityTextSize() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: [
+        "-StartImageTextFixtures", "fixture-clear-horizontal.png",
+        "-InjectImageTextTranslationCancelled",
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    XCTAssertTrue(app.buttons["image-text.translate"].waitForExistence(timeout: 20))
+    app.buttons["image-text.translate"].tap()
+    let recovery = app.descendants(matching: .any)
+      .matching(identifier: "image-text.translation-recovery").firstMatch
+    XCTAssertTrue(recovery.waitForExistence(timeout: 3))
+    XCTAssertGreaterThanOrEqual(recovery.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(recovery.frame.maxX, app.frame.maxX)
+    XCTAssertTrue(app.buttons["Retry"].isHittable)
+    XCTAssertTrue(app.buttons["image-text.close"].isHittable)
+    try performAudit(
+      in: app,
+      named: "Image Text translation recovery - accessibility XXXL",
+      types: .dynamicType.union(.textClipped).union(.hitRegion)
     )
   }
 
@@ -78,6 +1297,199 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testLightSearchInputControlsRemainUsableAtLargestAccessibilityTextSize() throws {
+    try verifySearchInputControlsAtLargestAccessibilityTextSize(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkSearchInputControlsRemainUsableAtLargestAccessibilityTextSize() throws {
+    try verifySearchInputControlsAtLargestAccessibilityTextSize(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightSearchInputControlsPassCompleteAudit() throws {
+    try auditSearchInputControls(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkSearchInputControlsPassCompleteAudit() throws {
+    try auditSearchInputControls(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightSearchResultsRemainReadableAtLargestAccessibilityTextSize() throws {
+    try auditSearchResultsAtLargestAccessibilityTextSize(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkSearchResultsRemainReadableAtLargestAccessibilityTextSize() throws {
+    try auditSearchResultsAtLargestAccessibilityTextSize(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightSearchFrequencyRankRemainsReadableAtLargestAccessibilityTextSize() throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = .light
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: .light,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    try submitSearch("日本", in: app)
+
+    let resultSurface = app.descendants(matching: .any)["search.results"]
+    XCTAssertTrue(resultSurface.waitForExistence(timeout: 3))
+    let japan = app.buttons["result.japan"]
+    for _ in 0..<8 where !japan.exists || !japan.isHittable {
+      resultSurface.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(japan.waitForExistence(timeout: 3))
+    XCTAssertTrue(japan.isHittable)
+    let loadedRank = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "Best match 1, Frequency rank 115"),
+      object: japan
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [loadedRank], timeout: 3), .completed)
+    XCTAssertGreaterThan(japan.frame.height, 52)
+    XCTAssertTrue(japan.label.hasPrefix("日本, にほん,"))
+    retainElementScreenshot(japan, named: "Exact frequency rank at Accessibility XXXL")
+  }
+
+  @MainActor
+  private func auditSearchResultsAtLargestAccessibilityTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    try submitSearch("日本", in: app)
+
+    let resultSurface = app.descendants(matching: .any)["search.results"]
+    XCTAssertTrue(resultSurface.waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["Best Matches"].waitForExistence(timeout: 3))
+    let additionalMatches = app.staticTexts["search.additional-matches-header"]
+    bringIntoUnobscuredViewport(additionalMatches, in: resultSurface, app: app)
+    XCTAssertEqual(additionalMatches.label, "Additional Matches")
+    XCTAssertGreaterThanOrEqual(additionalMatches.frame.height, 44)
+    let headerScreenshot = additionalMatches.screenshot()
+    XCTAssertTrue(
+      containsSystemSecondaryTextPixels(in: headerScreenshot, appearance: appearance)
+    )
+    XCTAssertGreaterThan(foregroundPixelFraction(in: headerScreenshot), 0.01)
+    retainElementScreenshot(
+      additionalMatches,
+      named: "Unobscured Additional Matches - \(appearance) accessibility XXXL"
+    )
+    assertNativeTabChrome(in: app, appearance: appearance)
+
+    let japan = app.buttons["result.japan"]
+    for _ in 0..<8 where !japan.exists || !japan.isHittable {
+      resultSurface.swipeDown(velocity: .slow)
+    }
+    XCTAssertTrue(japan.waitForExistence(timeout: 3))
+    XCTAssertTrue(japan.isHittable)
+    let loadedRank = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "Best match 1, Frequency rank 115"),
+      object: japan
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [loadedRank], timeout: 3), .completed)
+    XCTAssertGreaterThan(japan.frame.height, 52)
+    XCTAssertTrue(japan.label.hasPrefix("日本, にほん,"))
+    japan.tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 4))
+    let back = app.navigationBars.firstMatch.buttons.firstMatch
+    XCTAssertTrue(back.isHittable)
+    back.tap()
+    XCTAssertTrue(app.descendants(matching: .any)["search.results"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.buttons["result.japan"].waitForExistence(timeout: 4))
+  }
+
+  @MainActor
+  private func auditSearchInputControls(appearance: XCUIDevice.Appearance) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: ["-ResetRecentSearches"]
+    )
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+    app.buttons["search.input.handwriting"].tap()
+    XCTAssertTrue(app.otherElements["handwriting.canvas"].waitForExistence(timeout: 3))
+    try performAudit(
+      in: app,
+      named: "Handwriting input - \(appearance)",
+      types: auditTypes
+    )
+
+    app.buttons["search.input.radicals"].tap()
+    XCTAssertTrue(app.staticTexts["1 Stroke"].waitForExistence(timeout: 3))
+    app.buttons["radical.one"].tap()
+    XCTAssertTrue(app.buttons["radical.remove"].isEnabled)
+    try performAudit(
+      in: app,
+      named: "Radical input - \(appearance)",
+      types: auditTypes,
+      expectedExceptions: [AuditException(.contrast, identifier: "radical.stroke.3")]
+    )
+  }
+
+  @MainActor
+  private func verifySearchInputControlsAtLargestAccessibilityTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    searchField.tap()
+
+    let modePicker = app.segmentedControls["search.input.mode"]
+    XCTAssertTrue(modePicker.waitForExistence(timeout: 2))
+    for label in ["Keyboard", "Handwriting", "Radicals"] {
+      let mode = modePicker.buttons[label]
+      XCTAssertTrue(mode.exists)
+      XCTAssertTrue(mode.isHittable)
+      XCTAssertGreaterThanOrEqual(mode.frame.height, 32)
+      XCTAssertGreaterThanOrEqual(mode.frame.minX, app.frame.minX)
+      XCTAssertLessThanOrEqual(mode.frame.maxX, app.frame.maxX)
+    }
+
+    modePicker.buttons["Handwriting"].tap()
+    let erase = app.buttons["handwriting.erase"]
+    XCTAssertTrue(erase.waitForExistence(timeout: 2))
+    XCTAssertFalse(app.buttons["handwriting.search"].exists)
+    XCTAssertLessThanOrEqual(erase.frame.maxY, app.tabBars.firstMatch.frame.minY)
+
+    modePicker.buttons["Radicals"].tap()
+    let remove = app.buttons["radical.remove"]
+    XCTAssertTrue(remove.waitForExistence(timeout: 2))
+    XCTAssertFalse(app.buttons["radical.search"].exists)
+    XCTAssertLessThanOrEqual(remove.frame.maxY, app.tabBars.firstMatch.frame.minY)
+  }
+
+  @MainActor
   private func verifyLoadingAndFailureAtLargestAccessibilityTextSize(
     appearance: XCUIDevice.Appearance
   ) throws {
@@ -111,6 +1523,14 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.buttons["search.cancel"].exists)
     XCTAssertTrue(title.exists)
     XCTAssertTrue(description.exists)
+    XCTAssertTrue(
+      containsRedPixels(in: title.screenshot()),
+      "A serious offline-data failure must use system red in addition to explicit text and symbol."
+    )
+    XCTAssertFalse(
+      containsRedPixels(in: retry.screenshot()),
+      "Retry is an ordinary recovery action and must retain the system accent."
+    )
     XCTAssertTrue(retry.exists)
     if !retry.isHittable {
       failure.swipeUp()
@@ -147,12 +1567,36 @@ final class AccessibilityAuditUITests: XCTestCase {
 
   @MainActor
   func testReviewerReachableSearchAndWordDetailAreReadableInDarkMode() throws {
-    try auditReviewerJourney(appearance: .dark)
+    try auditReviewerJourney(
+      appearance: .dark, types: auditTypes.subtracting(.contrast), usesExplicitWordScaling: true
+    )
   }
 
   @MainActor
   func testReviewerReachableSearchAndWordDetailAreReadableInLightMode() throws {
-    try auditReviewerJourney(appearance: .light)
+    try auditReviewerJourney(
+      appearance: .light, types: auditTypes.subtracting(.contrast), usesExplicitWordScaling: true
+    )
+  }
+
+  @MainActor
+  func testReviewerDefaultCompleteAuditInDarkMode() throws {
+    try auditReviewerJourney(appearance: .dark, types: auditTypes)
+  }
+
+  @MainActor
+  func testReviewerDefaultCompleteAuditInLightMode() throws {
+    try auditReviewerJourney(appearance: .light, types: auditTypes)
+  }
+
+  @MainActor
+  func testReviewerContrastWithIncreaseContrastInDarkMode() throws {
+    try auditReviewerJourney(appearance: .dark, types: .contrast, increaseContrast: true)
+  }
+
+  @MainActor
+  func testReviewerContrastWithIncreaseContrastInLightMode() throws {
+    try auditReviewerJourney(appearance: .light, types: .contrast, increaseContrast: true)
   }
 
   @MainActor
@@ -167,16 +1611,361 @@ final class AccessibilityAuditUITests: XCTestCase {
 
   @MainActor
   func testDarkWordDetailRemainsUsableAtLargestAccessibilityTextSize() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .dark,
+      types: auditTypes.subtracting([.dynamicType, .textClipped, .contrast]),
+      checksTextScaling: true
+    )
+  }
+
+  @MainActor
+  func testLightWordDetailRemainsUsableAtLargestAccessibilityTextSize() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .light,
+      types: auditTypes.subtracting([.dynamicType, .textClipped, .contrast]),
+      checksTextScaling: true
+    )
+  }
+
+  @MainActor
+  func testDarkShortWordDetailSupportsDynamicTypeWithoutClipping() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .dark,
+      types: .textClipped,
+      checksTextScaling: true
+    )
+  }
+
+  @MainActor
+  func testLightShortWordDetailSupportsDynamicTypeWithoutClipping() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .light,
+      types: .textClipped,
+      checksTextScaling: true
+    )
+  }
+
+  @MainActor
+  func testDarkShortWordDetailRetainsSystemDynamicTypeDiagnostic() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .dark, types: .dynamicType.union(.textClipped), checksTextScaling: true
+    )
+  }
+
+  @MainActor
+  func testLightShortWordDetailRetainsSystemDynamicTypeDiagnostic() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .light, types: .dynamicType.union(.textClipped), checksTextScaling: true
+    )
+  }
+
+  @MainActor
+  func testDarkWordDetailRetainsCompleteAX5Diagnostic() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .dark, types: auditTypes
+    )
+  }
+
+  @MainActor
+  func testLightWordDetailRetainsCompleteAX5Diagnostic() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .light, types: auditTypes
+    )
+  }
+
+  @MainActor
+  func testDarkRichWordDetailRemainsReachableAtDefaultTextSize() throws {
+    try verifyRichWordDetailAtDefaultTextSize(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightRichWordDetailRemainsReachableAtDefaultTextSize() throws {
+    try verifyRichWordDetailAtDefaultTextSize(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkWordDetailAddMenuRemainsReachableAtDefaultTextSize() throws {
+    try verifyWordDetailAddMenuAtDefaultTextSize(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightWordDetailAddMenuRemainsReachableAtDefaultTextSize() throws {
+    try verifyWordDetailAddMenuAtDefaultTextSize(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkKanjiElementDetailRemainsReachableAtLargestAccessibilityTextSize() throws {
+    try verifyKanjiElementDetailAtLargestAccessibilityTextSize(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightKanjiElementDetailRemainsReachableAtLargestAccessibilityTextSize() throws {
+    try verifyKanjiElementDetailAtLargestAccessibilityTextSize(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkTsubusuConjugationsRemainReadableAtLargestAccessibilityTextSize() throws {
+    try auditTsubusuConjugations(appearance: .dark, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  func testLightTsubusuConjugationsRemainReadableAtLargestAccessibilityTextSize() throws {
+    try auditTsubusuConjugations(appearance: .light, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  func testDarkTsubusuConjugationsRemainCompactAtDefaultTextSize() throws {
+    try auditTsubusuConjugations(appearance: .dark, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testLightTsubusuConjugationsRemainCompactAtDefaultTextSize() throws {
+    try auditTsubusuConjugations(appearance: .light, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  private func auditTsubusuConjugations(
+    appearance: XCUIDevice.Appearance,
+    accessibilityXXXL: Bool
+  ) throws {
     let originalAppearance = XCUIDevice.shared.appearance
-    XCUIDevice.shared.appearance = .dark
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let contentSizeArguments =
+      accessibilityXXXL
+      ? ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+      : []
+    let app = launchApp(appearance: appearance, additionalArguments: contentSizeArguments)
+    try submitSearch("潰す", in: app)
+    let result = app.buttons.matching(
+      NSPredicate(
+        format: "label BEGINSWITH %@", ConjugationUITestSupport.tsubusuResultPrefix)
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 5))
+    result.tap()
+    ConjugationUITestSupport.assertTsubusuEntry(in: app)
+
+    let wordDetail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(wordDetail.waitForExistence(timeout: 5))
+    let conjugations = app.buttons["word-detail.conjugations"]
+    for _ in 0..<12 where !conjugations.exists || !conjugations.isHittable {
+      wordDetail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(conjugations.isHittable)
+    conjugations.tap()
+
+    let screen = app.descendants(matching: .any)["conjugations.screen"]
+    XCTAssertTrue(screen.waitForExistence(timeout: 5))
+    let rowIDs = ConjugationUITestSupport.verbRowIDs
+    assertAccessibleConjugationRows(
+      rowIDs,
+      in: app,
+      list: screen,
+      accessibilityXXXL: accessibilityXXXL
+    )
+    let sizeName = accessibilityXXXL ? "accessibility XXXL" : "default"
+    let focusedAuditTypes =
+      XCUIAccessibilityAuditType.dynamicType
+      .union(.textClipped)
+      .union(.hitRegion)
+    try performAudit(
+      in: app,
+      named: "潰す conjugations - \(appearance) \(sizeName)",
+      types: focusedAuditTypes
+    )
+
+    let polite = app.buttons["conjugations.mode.polite"]
+    XCTAssertTrue(polite.isHittable)
+    polite.tap()
+    assertAccessibleConjugationRows(
+      rowIDs,
+      in: app,
+      list: screen,
+      accessibilityXXXL: accessibilityXXXL
+    )
+    try performAudit(
+      in: app,
+      named: "潰す polite conjugations - \(appearance) \(sizeName)",
+      types: focusedAuditTypes
+    )
+  }
+
+  @MainActor
+  private func assertAccessibleConjugationRows(
+    _ rowIDs: [String],
+    in app: XCUIApplication,
+    list: XCUIElement,
+    accessibilityXXXL: Bool,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let visibleTop = max(app.navigationBars.firstMatch.frame.maxY, list.frame.minY)
+    let visibleBottom = app.tabBars.firstMatch.frame.minY
+    var previousRowHeight: CGFloat?
+    for id in rowIDs {
+      let section = ConjugationUITestSupport.reachSection(
+        id,
+        in: app,
+        list: list,
+        visibleTop: visibleTop,
+        visibleBottom: visibleBottom
+      )
+      let row = section.row
+      guard row.exists else {
+        XCTFail("Missing conjugation row \(id)", file: file, line: line)
+        return
+      }
+      XCTAssertGreaterThanOrEqual(row.frame.minX, app.frame.minX, file: file, line: line)
+      XCTAssertLessThanOrEqual(row.frame.maxX, app.frame.maxX, file: file, line: line)
+      XCTAssertGreaterThanOrEqual(section.title.frame.minY, visibleTop, file: file, line: line)
+      XCTAssertLessThanOrEqual(row.frame.maxY, visibleBottom, file: file, line: line)
+      XCTAssertTrue(row.isHittable, file: file, line: line)
+      let maximumHeight: CGFloat = accessibilityXXXL ? 190 : 100
+      XCTAssertLessThanOrEqual(row.frame.height, maximumHeight, file: file, line: line)
+      if let previousRowHeight {
+        XCTAssertLessThanOrEqual(
+          abs(row.frame.height - previousRowHeight),
+          accessibilityXXXL ? 50 : 24,
+          file: file,
+          line: line
+        )
+      }
+      previousRowHeight = row.frame.height
+      ConjugationUITestSupport.assertSectionChrome(section, file: file, line: line)
+    }
+
+    ConjugationUITestSupport.restoreTop(in: app, list: list)
+    let firstRow = app.descendants(matching: .any)["conjugations.row.present-future"]
+    let modePicker = app.descendants(matching: .any)["conjugations.mode"]
+    XCTAssertTrue(firstRow.exists, file: file, line: line)
+    XCTAssertTrue(modePicker.isHittable, file: file, line: line)
+    XCTAssertGreaterThanOrEqual(modePicker.frame.height, 35, file: file, line: line)
+  }
+
+  @MainActor
+  private func verifyKanjiElementDetailAtLargestAccessibilityTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
     defer { XCUIDevice.shared.appearance = originalAppearance }
 
     let app = launchApp(
-      appearance: .dark,
+      appearance: appearance,
       additionalArguments: [
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
+    try submitSearch("静", in: app)
+    let quiet = app.buttons["result.kanji-primary.静"]
+    XCTAssertTrue(quiet.waitForExistence(timeout: 4))
+    quiet.tap()
+    let kanjiDetail = app.collectionViews["kanji-detail.screen"]
+    XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 4))
+    let element = app.buttons["kanji-detail.element.青"]
+    for _ in 0..<10 where !element.isHittable { kanjiDetail.swipeUp() }
+    XCTAssertTrue(element.isHittable)
+    element.tap()
+
+    let elementDetail = app.collectionViews["kanji-element.screen"]
+    XCTAssertTrue(elementDetail.waitForExistence(timeout: 4))
+    let glyph = app.staticTexts["kanji-element.glyph"]
+    XCTAssertTrue(glyph.waitForExistence(timeout: 3))
+    XCTAssertGreaterThan(glyph.frame.height, 100)
+    XCTAssertGreaterThanOrEqual(glyph.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(glyph.frame.maxX, app.frame.maxX)
+    let alternative = app.buttons["kanji-element.alternative.靑"]
+    XCTAssertTrue(alternative.waitForExistence(timeout: 3))
+    XCTAssertTrue(alternative.isHittable)
+    let meaningHeader = app.staticTexts["kanji-element.meaning-header"]
+    let meaningExplanation = app.staticTexts["kanji-element.meaning-explanation"]
+    bringIntoUnobscuredViewport(meaningExplanation, in: elementDetail, app: app)
+    XCTAssertTrue(meaningHeader.exists)
+    XCTAssertEqual(meaningHeader.label, "MEANING / STRUCTURE")
+    XCTAssertEqual(
+      meaningExplanation.label,
+      "This element contributes forms associated with blue, green."
+    )
+    XCTAssertGreaterThanOrEqual(meaningHeader.frame.height, 44)
+    XCTAssertGreaterThan(meaningExplanation.frame.height, 100)
+    XCTAssertGreaterThanOrEqual(
+      meaningHeader.frame.minY,
+      app.navigationBars.firstMatch.frame.maxY
+    )
+    XCTAssertLessThanOrEqual(meaningHeader.frame.maxY, app.tabBars.firstMatch.frame.minY)
+    let headerScreenshot = meaningHeader.screenshot()
+    XCTAssertTrue(
+      containsSystemSecondaryTextPixels(in: headerScreenshot, appearance: appearance)
+    )
+    XCTAssertGreaterThan(foregroundPixelFraction(in: headerScreenshot), 0.01)
+    let explanationScreenshot = meaningExplanation.screenshot()
+    XCTAssertTrue(
+      containsSystemPrimaryTextPixels(in: explanationScreenshot, appearance: appearance)
+    )
+    XCTAssertGreaterThan(foregroundPixelFraction(in: explanationScreenshot), 0.01)
+    retainElementScreenshot(
+      meaningHeader,
+      named: "Kanji Element meaning header - \(appearance) accessibility XXXL"
+    )
+    retainElementScreenshot(
+      meaningExplanation,
+      named: "Kanji Element meaning explanation - \(appearance) accessibility XXXL"
+    )
+    assertNativeTabChrome(in: app, appearance: appearance)
+    let navigationBar = app.navigationBars["Element"]
+    XCTAssertTrue(navigationBar.exists)
+    let back = navigationBar.buttons.firstMatch
+    XCTAssertTrue(back.exists)
+    XCTAssertTrue(back.isHittable)
+    XCTAssertGreaterThanOrEqual(back.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(back.frame.height, 44)
+    XCTAssertTrue(
+      containsSystemPrimaryTextPixels(in: navigationBar.screenshot(), appearance: appearance)
+    )
+    retainElementScreenshot(
+      navigationBar,
+      named: "Native Element navigation - \(appearance) accessibility XXXL"
+    )
+    let containingSection = app.staticTexts["KANJI CONTAINING THIS ELEMENT"]
+    for _ in 0..<10 where !containingSection.exists { elementDetail.swipeUp() }
+    XCTAssertTrue(containingSection.exists)
+  }
+
+  @MainActor
+  private func auditWordDetailAtLargestAccessibilityTextSize(
+    appearance: XCUIDevice.Appearance,
+    types: XCUIAccessibilityAuditType,
+    checksTextScaling: Bool = false
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    var defaultTextSizes: [String: CGSize] = [:]
+    if checksTextScaling {
+      let (defaultApp, defaultDetail) = try launchWordDetail(
+        query: "日本",
+        resultLabelPrefix: "日本, にほん",
+        appearance: appearance,
+        additionalArguments: [
+          "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL",
+          "-ResetReadingAidPreferences",
+        ]
+      )
+      defaultTextSizes = shortWordDetailTextSizes(
+        in: defaultApp, detail: defaultDetail, evidenceName: "\(appearance) default"
+      )
+      defaultApp.terminate()
+    }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ] + (checksTextScaling ? ["-ResetReadingAidPreferences"] : [])
+    )
+    XCTAssertEqual(XCUIDevice.shared.appearance, appearance)
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
@@ -186,17 +1975,329 @@ final class AccessibilityAuditUITests: XCTestCase {
     let japan = app.buttons["result.japan"]
     XCTAssertTrue(japan.waitForExistence(timeout: 5))
     japan.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 5))
-    XCTAssertTrue(app.staticTexts["MEANING"].waitForExistence(timeout: 5))
-    XCTAssertTrue(
-      app.descendants(matching: .any).matching(
-        NSPredicate(format: "label == %@", "日本, にほん")
-      ).firstMatch.exists)
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 5))
+    let identity = app.descendants(matching: .any)["ruby.日本.日本=にほん"]
+    XCTAssertTrue(identity.waitForExistence(timeout: 5))
+    XCTAssertEqual(identity.label, "日本, にほん")
+    XCTAssertTrue(identity.isHittable)
+    XCTAssertTrue(app.buttons["word-detail.add-menu"].isHittable)
+    let frequency = app.buttons["word-detail.frequency"]
+    XCTAssertTrue(frequency.waitForExistence(timeout: 3))
+    let loadedFrequency = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "#115"),
+      object: frequency
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [loadedFrequency], timeout: 5), .completed)
+    let pronunciation = app.buttons["word-detail.pronounce"]
+    XCTAssertTrue(pronunciation.exists)
+    XCTAssertTrue(pronunciation.isHittable)
+    XCTAssertEqual(pronunciation.label, "Pronounce にほん")
+    XCTAssertGreaterThanOrEqual(pronunciation.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(pronunciation.frame.maxX, app.frame.maxX)
+    XCTAssertGreaterThanOrEqual(pronunciation.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(pronunciation.frame.height, 44)
+    XCTAssertEqual(
+      renderedAppearance(in: XCUIScreen.main.screenshot()),
+      appearance == .dark ? .dark : .light
+    )
+    // Run this scenario's non-mutating usability audits at the untouched top.
+    // Required short-word scenarios separately audit clipping here. The original
+    // complete system audit remains an explicit diagnostic, never a gate waiver.
     try performAudit(
       in: app,
-      named: "Word Detail - dark accessibility XXXL",
-      types: auditTypes.subtracting(.dynamicType)
+      named: "Word Detail - \(appearance == .dark ? "dark" : "light") accessibility XXXL",
+      types: types
     )
+    if checksTextScaling {
+      let largeTextSizes = shortWordDetailTextSizes(
+        in: app, detail: detail, evidenceName: "\(appearance) accessibility XXXL",
+        accessibilityXXXL: true
+      )
+      for label in ["日本", "にほん", "Noun", "Part of speech", "1.  Japan", "Add Note"] {
+        let baseline = try XCTUnwrap(defaultTextSizes[label])
+        let enlarged = try XCTUnwrap(largeTextSizes[label])
+        XCTAssertGreaterThan(
+          enlarged.height, baseline.height, "\(label) must scale with Dynamic Type"
+        )
+      }
+    }
+  }
+
+  @MainActor
+  private func shortWordDetailTextSizes(
+    in app: XCUIApplication,
+    detail: XCUIElement,
+    evidenceName: String,
+    accessibilityXXXL: Bool = false
+  ) -> [String: CGSize] {
+    let identity = app.descendants(matching: .any)["ruby.日本.日本=にほん"]
+    bringIntoUnobscuredViewport(identity, in: detail, app: app)
+    XCTAssertEqual(identity.label, "日本, にほん")
+    var sizes = wordIdentityGlyphSizes(in: identity.screenshot(), evidenceName: evidenceName)
+    for label in ["Part of speech", "Noun", "にっぽん", "1.  Japan", "Add Note"] {
+      let text =
+        label == "にっぽん"
+        ? app.descendants(matching: .any)["word-detail.alternative.にっぽん"]
+        : app.staticTexts[label]
+      bringIntoUnobscuredViewport(text, in: detail, app: app)
+      XCTAssertEqual(text.label, label)
+      XCTAssertGreaterThanOrEqual(text.frame.minX, app.frame.minX)
+      XCTAssertLessThanOrEqual(text.frame.maxX, app.frame.maxX)
+      if accessibilityXXXL, label == "にっぽん" || label == "1.  Japan" {
+        XCTAssertGreaterThanOrEqual(text.frame.height, 44)
+      }
+      let screenshot = text.screenshot()
+      if accessibilityXXXL, label == "にっぽん" {
+        let ratio = renderedTextContrast(in: screenshot.image.cgImage)
+        XCTAssertGreaterThanOrEqual(
+          ratio ?? 0, 4.5, "Visible にっぽん must retain primary-text contrast")
+        let measurement = XCTAttachment(
+          string: "にっぽん contrast=\(ratio.map { String($0) } ?? "unavailable")")
+        measurement.name = "AX5 alternative contrast - \(evidenceName)"
+        measurement.lifetime = .keepAlways
+        add(measurement)
+      }
+      sizes[label] = text.frame.size
+      let retained = XCTAttachment(screenshot: screenshot)
+      retained.name = "Word Detail \(label) text - \(evidenceName)"
+      retained.lifetime = .keepAlways
+      add(retained)
+    }
+    return sizes
+  }
+
+  @MainActor
+  private func wordIdentityGlyphSizes(
+    in screenshot: XCUIScreenshot, evidenceName: String
+  ) -> [String: CGSize] {
+    let retained = XCTAttachment(screenshot: screenshot)
+    retained.name = "Exact 日本 and にほん glyphs - \(evidenceName)"
+    retained.lifetime = .keepAlways
+    add(retained)
+    guard let image = screenshot.image.cgImage else {
+      XCTFail("Word identity must provide visible glyph pixels")
+      return [:]
+    }
+    let request = VNRecognizeTextRequest()
+    request.recognitionLevel = .accurate
+    request.recognitionLanguages = ["ja-JP", "en-US"]
+    request.usesLanguageCorrection = false
+    do {
+      try VNImageRequestHandler(cgImage: image).perform([request])
+    } catch {
+      XCTFail("Could not measure the word identity glyphs: \(error)")
+      return [:]
+    }
+    var sizes: [String: CGSize] = [:]
+    var confidences: [String: VNConfidence] = [:]
+    for label in ["日本", "にほん"] {
+      let matches = (request.results ?? []).filter {
+        guard let text = $0.topCandidates(1).first else { return false }
+        // Native Vision assigns 0.5 to the correctly rendered AX5 kana in the
+        // retained fixture. Exact text, unique match and bounded identity still
+        // fail closed; the higher numeric-rank threshold is a separate contract.
+        return text.string == label && text.confidence >= 0.5
+      }
+      guard matches.count == 1, let match = matches.first else {
+        XCTFail("Expected exactly one confidently recognized \(label) in the identity crop")
+        continue
+      }
+      let box = match.boundingBox
+      confidences[label] = match.topCandidates(1).first?.confidence
+      sizes[label] = CGSize(
+        width: box.width * CGFloat(image.width) / screenshot.image.scale,
+        height: box.height * CGFloat(image.height) / screenshot.image.scale
+      )
+    }
+    let metrics = XCTAttachment(string: "\(evidenceName): \(sizes); confidence=\(confidences)")
+    metrics.name = "Word identity glyph measurements - \(evidenceName)"
+    metrics.lifetime = .keepAlways
+    add(metrics)
+    return sizes
+  }
+
+  @MainActor
+  private func bringIntoUnobscuredViewport(
+    _ element: XCUIElement,
+    in list: XCUIElement,
+    app: XCUIApplication,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let visibleTop = app.navigationBars.firstMatch.frame.maxY
+    let visibleBottom = app.tabBars.firstMatch.frame.minY
+    for _ in 0..<10 {
+      if !element.exists || element.frame.maxY > visibleBottom {
+        list.swipeUp(velocity: .slow)
+      } else if element.frame.minY < visibleTop {
+        list.swipeDown(velocity: .slow)
+      } else {
+        break
+      }
+    }
+    XCTAssertTrue(element.exists, file: file, line: line)
+    XCTAssertTrue(element.isHittable, file: file, line: line)
+    XCTAssertGreaterThanOrEqual(element.frame.minY, visibleTop, file: file, line: line)
+    XCTAssertLessThanOrEqual(element.frame.maxY, visibleBottom, file: file, line: line)
+  }
+
+  @MainActor
+  private func assertNativeTabChrome(
+    in app: XCUIApplication,
+    appearance: XCUIDevice.Appearance,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let tabBar = app.tabBars.firstMatch
+    XCTAssertTrue(tabBar.exists, file: file, line: line)
+    let search = tabBar.buttons["Search"]
+    let you = AppNavigationUITestSupport.youTab(in: app)
+    for tab in [search, you] {
+      XCTAssertTrue(tab.exists, file: file, line: line)
+      XCTAssertTrue(tab.isHittable, file: file, line: line)
+      XCTAssertGreaterThanOrEqual(tab.frame.width, 44, file: file, line: line)
+      XCTAssertGreaterThanOrEqual(tab.frame.height, 44, file: file, line: line)
+      XCTAssertGreaterThanOrEqual(tab.frame.minX, app.frame.minX, file: file, line: line)
+      XCTAssertLessThanOrEqual(tab.frame.maxX, app.frame.maxX, file: file, line: line)
+      XCTAssertLessThanOrEqual(tab.frame.maxY, app.frame.maxY, file: file, line: line)
+    }
+    XCTAssertTrue(containsSystemBluePixels(in: search.screenshot()), file: file, line: line)
+    XCTAssertTrue(
+      containsSystemPrimaryTextPixels(in: you.screenshot(), appearance: appearance),
+      file: file,
+      line: line
+    )
+    retainElementScreenshot(
+      tabBar,
+      named: "Native tab chrome - \(appearance) accessibility XXXL"
+    )
+  }
+
+  @MainActor
+  private func verifyLongWordIdentityAtLargestAccessibilityTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let headword = WordDetailUITestSupport.longHeadword
+    let reading = WordDetailUITestSupport.longReading
+    let (app, detail) = try launchWordDetail(
+      query: headword,
+      resultLabelPrefix: "\(headword), \(reading)",
+      appearance: appearance,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+
+    let identity = WordDetailUITestSupport.assertLongIdentityUsesSecondaryReading(in: app)
+    retainElementScreenshot(
+      identity,
+      named: "Long identity - \(appearance == .dark ? "dark" : "light") accessibility XXXL"
+    )
+
+    let pronounce = app.buttons["word-detail.pronounce"]
+    for _ in 0..<3 where !pronounce.exists || !pronounce.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(pronounce.isHittable)
+    XCTAssertGreaterThanOrEqual(pronounce.frame.width, 44)
+    XCTAssertGreaterThanOrEqual(pronounce.frame.height, 44)
+    XCTAssertEqual(app.images.matching(identifier: "ear.badge.waveform").count, 0)
+
+    for character in WordDetailUITestSupport.longPrimaryKanji {
+      let linkedKanji = app.buttons["word-detail.kanji.\(character)"]
+      for _ in 0..<8 where !linkedKanji.exists || !linkedKanji.isHittable {
+        detail.swipeUp(velocity: .slow)
+      }
+      XCTAssertTrue(linkedKanji.isHittable)
+      XCTAssertEqual(linkedKanji.label, "Kanji \(character)")
+      XCTAssertGreaterThan(linkedKanji.frame.height, 0)
+      XCTAssertGreaterThanOrEqual(linkedKanji.frame.minX, app.frame.minX)
+      XCTAssertLessThanOrEqual(linkedKanji.frame.maxX, app.frame.maxX)
+    }
+    retainElementScreenshot(
+      detail,
+      named:
+        "Long Word Detail Kanji rows - \(appearance == .dark ? "dark" : "light") accessibility XXXL"
+    )
+  }
+
+  @MainActor
+  private func verifyRichWordDetailAtDefaultTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(appearance: appearance)
+    try submitSearch("見る", in: app)
+    let result = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "見る, みる")
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 5))
+    result.tap()
+
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 5))
+    let alternatives = app.staticTexts["ALTERNATIVES"]
+    for _ in 0..<4 where !alternatives.exists { detail.swipeUp(velocity: .slow) }
+    XCTAssertTrue(alternatives.exists)
+    let add = app.buttons["word-detail.add-menu"]
+    XCTAssertTrue(add.isHittable)
+    add.tap()
+    let addNote = app.buttons["Add Note"]
+    let takePhoto = app.buttons["Take Photo"]
+    let choosePhoto = app.buttons["Choose Photo"]
+    XCTAssertTrue(addNote.waitForExistence(timeout: 3))
+    for action in [addNote, takePhoto, choosePhoto] {
+      XCTAssertGreaterThanOrEqual(action.frame.minX, app.frame.minX)
+      XCTAssertLessThanOrEqual(action.frame.maxX, app.frame.maxX)
+    }
+    app.tap()
+    let related = app.buttons["word-detail.related.見える"]
+    for _ in 0..<16 where !related.exists || !related.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(related.exists)
+    XCTAssertGreaterThanOrEqual(related.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(related.frame.maxX, app.frame.maxX)
+
+    let firstExample = app.descendants(matching: .any)["word-detail.example.0"]
+    for _ in 0..<16 where !firstExample.exists || !firstExample.isHittable {
+      detail.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(firstExample.exists)
+    XCTAssertGreaterThanOrEqual(firstExample.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(firstExample.frame.maxX, app.frame.maxX)
+  }
+
+  @MainActor
+  private func verifyWordDetailAddMenuAtDefaultTextSize(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(appearance: appearance)
+    try submitSearch("見る", in: app)
+    let result = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "見る, みる")
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 5))
+    result.tap()
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 5))
+
+    let add = app.buttons["word-detail.add-menu"]
+    XCTAssertTrue(add.isHittable)
+    add.tap()
+    for title in ["Add Note", "Take Photo", "Choose Photo"] {
+      let action = app.buttons[title]
+      XCTAssertTrue(action.waitForExistence(timeout: 3))
+      XCTAssertGreaterThanOrEqual(action.frame.minX, app.frame.minX)
+      XCTAssertLessThanOrEqual(action.frame.maxX, app.frame.maxX)
+    }
   }
 
   @MainActor
@@ -210,6 +2311,93 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  func testDarkFrequencyDictionariesRemainReadableAtDefaultTextSize() throws {
+    try auditFrequencyDictionaries(appearance: .dark, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testLightFrequencyDictionariesRemainReadableAtDefaultTextSize() throws {
+    try auditFrequencyDictionaries(appearance: .light, accessibilityXXXL: false)
+  }
+
+  @MainActor
+  func testDarkFrequencyDictionariesRemainReadableAtLargestAccessibilityTextSize() throws {
+    try auditFrequencyDictionaries(appearance: .dark, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  func testLightFrequencyDictionariesRemainReadableAtLargestAccessibilityTextSize() throws {
+    try auditFrequencyDictionaries(appearance: .light, accessibilityXXXL: true)
+  }
+
+  @MainActor
+  private func auditFrequencyDictionaries(
+    appearance: XCUIDevice.Appearance,
+    accessibilityXXXL: Bool
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+    var arguments = ["-ResetFrequencyPacks"]
+    if accessibilityXXXL {
+      arguments += [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    }
+    let app = launchApp(appearance: appearance, additionalArguments: arguments)
+    AppNavigationUITestSupport.youTab(in: app).tap()
+    let destination = app.buttons["you.frequency-dictionaries"]
+    XCTAssertTrue(destination.waitForExistence(timeout: 3))
+    XCTAssertTrue(destination.isHittable)
+    destination.tap()
+    let list = app.collectionViews["frequency-packs.list"]
+    XCTAssertTrue(list.waitForExistence(timeout: 3))
+    let activeStatus = waitForActiveFrequencyStatus(in: app)
+    XCTAssertEqual(activeStatus.label, "Status, Active")
+    XCTAssertEqual(activeStatus.value as? String, "Selected frequency dictionary")
+    try performAudit(
+      in: app,
+      named:
+        "Frequency Dictionaries status - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")",
+      types: .hitRegion
+    )
+    if accessibilityXXXL {
+      // The system audit changes text sizes. Starting at the bottom retained an
+      // invalid scroll offset and produced an empty-list failure screenshot.
+      bringIntoUnobscuredViewport(activeStatus, in: list, app: app)
+      try performAudit(
+        in: app,
+        named: "Frequency Dictionaries top - \(appearance) accessibility XXXL",
+        types: .dynamicType.union(.textClipped)
+      )
+    }
+    let optional = app.staticTexts["Japanese Wikipedia"]
+    for _ in 0..<10 where !optional.exists { list.swipeUp() }
+    XCTAssertTrue(optional.exists)
+    let download = app.buttons[
+      "frequency-pack.download.zenbu.wikipedia.written.ja.unidic-3.1"
+    ]
+    for _ in 0..<6 where !download.isHittable { list.swipeUp() }
+    XCTAssertTrue(download.isHittable)
+    for _ in 0..<4 where download.frame.midY > list.frame.midY + 100 {
+      list.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(download.exists)
+    XCTAssertGreaterThanOrEqual(download.frame.minX, app.frame.minX)
+    XCTAssertLessThanOrEqual(download.frame.maxX, app.frame.maxX)
+    bringIntoUnobscuredViewport(download, in: list, app: app)
+    try performAudit(
+      in: app,
+      named:
+        "Frequency Dictionaries action - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")",
+      types: .hitRegion
+    )
+    let evidenceName =
+      "Frequency Dictionaries - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")"
+    retainScreenshot(named: evidenceName)
+  }
+
+  @MainActor
   private func auditDictionarySourcesAtLargestAccessibilityTextSize(
     appearance: XCUIDevice.Appearance
   ) throws {
@@ -220,19 +2408,24 @@ final class AccessibilityAuditUITests: XCTestCase {
     let app = launchApp(
       appearance: appearance,
       additionalArguments: [
+        "-ResetWordImageAttachments",
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
-    app.tabBars.buttons["More"].tap()
-    let mediaLibrary = app.buttons["more.media-library"]
+    AppNavigationUITestSupport.youTab(in: app).tap()
+    let mediaLibrary = app.buttons["you.media-library"]
     XCTAssertTrue(mediaLibrary.waitForExistence(timeout: 3))
     XCTAssertTrue(mediaLibrary.isHittable)
-    XCTAssertTrue(app.buttons["more.credits"].isHittable)
     mediaLibrary.tap()
     XCTAssertTrue(app.staticTexts["No Encounter Media"].waitForExistence(timeout: 3))
     app.navigationBars["Media Library"].buttons.firstMatch.tap()
-    XCTAssertTrue(app.buttons["more.credits"].waitForExistence(timeout: 3))
-    app.buttons["more.credits"].tap()
+    let youList = app.collectionViews["you.list"]
+    let credits = app.buttons["you.credits"]
+    for _ in 0..<4 where !credits.isHittable {
+      youList.swipeUp(velocity: .slow)
+    }
+    XCTAssertTrue(credits.isHittable)
+    credits.tap()
     XCTAssertTrue(app.staticTexts["Dictionary Sources"].waitForExistence(timeout: 5))
     let backButton = app.navigationBars["Dictionary Sources"].buttons.firstMatch
     XCTAssertTrue(backButton.waitForExistence(timeout: 3))
@@ -243,14 +2436,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       in: app,
       named:
         "Dictionary Sources - \(appearance == .dark ? "dark" : "light") accessibility XXXL",
-      // Xcode 26 reports an unidentified SwiftUI bookkeeping node as a
-      // contrast failure only in the dark state. The ordinary dark Dictionary
-      // Sources journey keeps contrast blocking, and theme unit tests enforce
-      // every foreground/surface pair. Tracked by #173.
-      types:
-        appearance == .dark
-        ? auditTypes.subtracting(.dynamicType.union(.contrast))
-        : auditTypes.subtracting(.dynamicType)
+      types: auditTypes
     )
 
     // Reachability is checked after the audit. Auditing midway through this
@@ -265,17 +2451,40 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
-  private func auditReviewerJourney(appearance: XCUIDevice.Appearance) throws {
+  private func auditReviewerJourney(
+    appearance: XCUIDevice.Appearance,
+    types: XCUIAccessibilityAuditType,
+    increaseContrast: Bool = false,
+    usesExplicitWordScaling: Bool = false
+  ) throws {
     let originalAppearance = XCUIDevice.shared.appearance
     XCUIDevice.shared.appearance = appearance
     defer { XCUIDevice.shared.appearance = originalAppearance }
 
-    let app = launchApp(appearance: appearance)
+    XCTAssertEqual(UIAccessibility.isDarkerSystemColorsEnabled, increaseContrast)
+    if increaseContrast { assertContrastMeasurementSensitivity() }
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-ResetRecentSearches", "-ReportAccessibilitySettings",
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL",
+      ]
+    )
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    let receipt = app.descendants(matching: .any).matching(
+      NSPredicate(format: "value == %@", "increaseContrast=\(increaseContrast)")
+    ).firstMatch
+    XCTAssertTrue(
+      receipt.waitForExistence(timeout: 3), "The actual app must observe the runner setting"
+    )
+    let settings = XCTAttachment(string: "App \(receipt.value as? String ?? "missing")")
+    settings.name = "Reviewer public accessibility setting - \(appearance)"
+    settings.lifetime = .keepAlways
+    add(settings)
 
     try XCTContext.runActivity(named: "Search root") { _ in
-      try performAudit(in: app, named: "Search root")
+      if !increaseContrast { try performAudit(in: app, named: "Search root", types: types) }
     }
 
     searchField.tap()
@@ -286,20 +2495,51 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10))
 
     try XCTContext.runActivity(named: "Search results") { _ in
-      try performAudit(in: app, named: "Search results")
+      if increaseContrast {
+        let results = app.collectionViews["search.results"]
+        let loadedRank = XCTNSPredicateExpectation(
+          predicate: NSPredicate(format: "value CONTAINS %@", "Frequency rank 115"), object: japan
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [loadedRank], timeout: 5), .completed)
+        bringIntoUnobscuredViewport(japan, in: results, app: app)
+        assertRenderedRankContrast(in: japan)
+        retainReviewerContrastLabels(
+          ["Best Matches", "Additional Matches"], in: results, app: app
+        )
+      } else {
+        try performAudit(in: app, named: "Search results", types: types)
+      }
     }
 
     japan.tap()
-    XCTAssertTrue(app.scrollViews["word-detail.screen"].waitForExistence(timeout: 5))
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 5))
+    let frequency = app.buttons["word-detail.frequency"]
+    XCTAssertTrue(frequency.waitForExistence(timeout: 3))
+    let loadedFrequency = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "#115"),
+      object: frequency
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [loadedFrequency], timeout: 5), .completed)
+    let identity = app.descendants(matching: .any)["ruby.日本.日本=にほん"]
+    XCTAssertTrue(identity.isHittable)
 
     try XCTContext.runActivity(named: "Word Detail") { _ in
-      // Xcode 26.5 reports every semantic Word Detail text style as partially
-      // unsupported only in dark appearance. Light Word Detail keeps the
-      // Dynamic Type audit blocking; the dedicated dark accessibility-XXXL
-      // journey above keeps scaling and clipping blocking. Tracked by #173.
-      let wordDetailAuditTypes =
-        appearance == .dark ? auditTypes.subtracting(.dynamicType) : auditTypes
-      try performAudit(in: app, named: "Word Detail", types: wordDetailAuditTypes)
+      if increaseContrast {
+        retainReviewerContrastLabels(
+          ["Noun", "ALTERNATIVES", "MEANING", "KANJI", "NOTES", "Add Note"],
+          in: detail, app: app
+        )
+      } else {
+        try performAudit(
+          in: app,
+          named: "Word Detail",
+          // Required short-word tests retain direct clipping and paired six-label
+          // default/AX5 measurements. Original system Dynamic Type audits remain
+          // in the explicit default and AX5 diagnostic counterparts.
+          types: usesExplicitWordScaling ? types.subtracting(.dynamicType) : types
+        )
+      }
     }
 
     let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
@@ -307,6 +2547,169 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance == .dark ? "Word Detail - dark appearance" : "Word Detail - light appearance"
     screenshot.lifetime = .keepAlways
     add(screenshot)
+  }
+
+  @MainActor
+  private func retainReviewerContrastLabels(
+    _ labels: [String], in list: XCUIElement, app: XCUIApplication
+  ) {
+    for label in labels {
+      let text = app.staticTexts[label]
+      bringIntoUnobscuredViewport(text, in: list, app: app)
+      let screenshot = text.screenshot()
+      let ratio = renderedTextContrast(in: screenshot.image.cgImage)
+      XCTAssertGreaterThanOrEqual(ratio ?? 0, 4.5, "Visible \(label) must meet text contrast")
+      let measurement = XCTAttachment(
+        string: "\(label): \(ratio.map { String($0) } ?? "no glyph contrast")")
+      measurement.name = "Measured reviewer text contrast - \(label)"
+      measurement.lifetime = .keepAlways
+      add(measurement)
+      let retained = XCTAttachment(screenshot: screenshot)
+      retained.name = "Increased Contrast reviewer \(label)"
+      retained.lifetime = .keepAlways
+      add(retained)
+    }
+    // Positioning the last label must not obscure an earlier target before the audit.
+    for label in labels {
+      let text = app.staticTexts[label]
+      XCTAssertTrue(text.isHittable)
+      XCTAssertGreaterThanOrEqual(text.frame.minY, app.navigationBars.firstMatch.frame.maxY)
+      XCTAssertLessThanOrEqual(text.frame.maxY, app.tabBars.firstMatch.frame.minY)
+    }
+  }
+
+  @MainActor
+  private func assertRenderedRankContrast(in row: XCUIElement) {
+    let screenshot = row.screenshot()
+    let rowEvidence = XCTAttachment(screenshot: screenshot)
+    rowEvidence.name = "Japan result containing exact frequency rank"
+    rowEvidence.lifetime = .keepAlways
+    add(rowEvidence)
+    guard let image = screenshot.image.cgImage else {
+      XCTFail("The visible Japan row must provide a screenshot")
+      return
+    }
+    // The rank deliberately shares its row's VoiceOver value. Apple Vision locates
+    // its public rendered pixels without exposing a duplicate accessibility node.
+    let request = VNRecognizeTextRequest()
+    request.recognitionLevel = .accurate
+    request.recognitionLanguages = ["en-US"]
+    request.usesLanguageCorrection = false
+    do {
+      try VNImageRequestHandler(cgImage: image).perform([request])
+    } catch {
+      XCTFail("Could not locate the rendered frequency rank: \(error)")
+      return
+    }
+    guard let rankPattern = try? NSRegularExpression(pattern: "(?<!\\S)#115(?!\\S)") else {
+      XCTFail("The exact rank token pattern must be valid")
+      return
+    }
+    let matches = (request.results ?? []).compactMap { observation -> CGRect? in
+      guard let candidate = observation.topCandidates(1).first,
+        candidate.confidence >= 0.9
+      else { return nil }
+      let tokens = rankPattern.matches(
+        in: candidate.string, range: NSRange(candidate.string.startIndex..., in: candidate.string)
+      )
+      guard tokens.count == 1,
+        let range = Range(tokens[0].range, in: candidate.string),
+        let rectangle = try? candidate.boundingBox(for: range)
+      else { return nil }
+      return rectangle.boundingBox
+    }
+    guard matches.count == 1, let match = matches.first else {
+      XCTFail("Expected exactly one confidently recognized #115 in the Japan row")
+      return
+    }
+    let box = match
+    let bounds = CGRect(x: 0, y: 0, width: image.width, height: image.height)
+    let cropRect = CGRect(
+      x: box.minX * bounds.width, y: (1 - box.maxY) * bounds.height,
+      width: box.width * bounds.width, height: box.height * bounds.height
+    ).insetBy(dx: -3, dy: -3).integral.intersection(bounds)
+    guard let crop = image.cropping(to: cropRect) else {
+      XCTFail("The exact rank must have a bounded pixel crop")
+      return
+    }
+    let ratio = renderedTextContrast(in: crop)
+    XCTAssertGreaterThanOrEqual(ratio ?? 0, 4.5, "The rendered #115 must meet text contrast")
+    let pixels = XCTAttachment(image: UIImage(cgImage: crop))
+    pixels.name = "Exact #115 recognized pixel crop"
+    pixels.lifetime = .keepAlways
+    add(pixels)
+    let measurement = XCTAttachment(
+      string: "#115 crop=\(cropRect) contrast=\(ratio.map { String($0) } ?? "unavailable")"
+    )
+    measurement.name = "Measured exact rank contrast"
+    measurement.lifetime = .keepAlways
+    add(measurement)
+  }
+
+  @MainActor
+  private func renderedTextContrast(in image: CGImage?) -> Double? {
+    guard let image,
+      let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)
+    else { return nil }
+    var pixels = [UInt8](repeating: 0, count: image.width * image.height * 4)
+    guard
+      let context = CGContext(
+        data: &pixels, width: image.width, height: image.height, bitsPerComponent: 8,
+        bytesPerRow: image.width * 4, space: colorSpace,
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+      )
+    else { return nil }
+    context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+    return dominantTextContrast(in: pixels)
+  }
+
+  // A bounded solid-text screenshot seam, not a whole-window contrast estimator.
+  // Modal background and the most frequent distinct glyph color avoid measuring
+  // antialiased edge pixels. Uniform/low-contrast crops cannot produce a pass.
+  private func dominantTextContrast(in pixels: [UInt8]) -> Double? {
+    guard pixels.count.isMultiple(of: 4), !pixels.isEmpty else { return nil }
+    var counts: [Int: Int] = [:]
+    for index in stride(from: 0, to: pixels.count, by: 4) where pixels[index + 3] == 255 {
+      let rgb = Int(pixels[index]) << 16 | Int(pixels[index + 1]) << 8 | Int(pixels[index + 2])
+      counts[rgb, default: 0] += 1
+    }
+    let ranked = counts.sorted { $0.value == $1.value ? $0.key < $1.key : $0.value > $1.value }
+    guard let background = ranked.first else { return nil }
+    func luminance(_ rgb: Int) -> Double {
+      let channels = [16, 8, 0].map { shift -> Double in
+        let value = Double((rgb >> shift) & 255) / 255
+        return value <= 0.04045 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+      }
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
+    }
+    let backgroundLuminance = luminance(background.key)
+    // Select by prevalence before computing contrast. Searching for a color that
+    // clears a threshold could mistake rare dark noise for faint foreground text.
+    guard let foreground = ranked.dropFirst().first, foreground.value >= 8 else { return nil }
+    let foregroundLuminance = luminance(foreground.key)
+    return (max(backgroundLuminance, foregroundLuminance) + 0.05)
+      / (min(backgroundLuminance, foregroundLuminance) + 0.05)
+  }
+
+  private func assertContrastMeasurementSensitivity() {
+    let white = Array(repeating: [UInt8](arrayLiteral: 255, 255, 255, 255), count: 40).flatMap {
+      $0
+    }
+    let black = Array(repeating: [UInt8](arrayLiteral: 0, 0, 0, 255), count: 20).flatMap { $0 }
+    let gray = Array(repeating: [UInt8](arrayLiteral: 127, 127, 127, 255), count: 20).flatMap { $0 }
+    let faint = Array(repeating: [UInt8](arrayLiteral: 240, 240, 240, 255), count: 20).flatMap {
+      $0
+    }
+    XCTAssertEqual(dominantTextContrast(in: white + black) ?? 0, 21, accuracy: 0.001)
+    XCTAssertEqual(
+      dominantTextContrast(in: black + black + Array(white.prefix(40))) ?? 0, 21, accuracy: 0.001)
+    XCTAssertEqual(dominantTextContrast(in: white + gray) ?? 0, 4.004, accuracy: 0.001)
+    XCTAssertLessThan(dominantTextContrast(in: white + faint) ?? 0, 4.5)
+    XCTAssertLessThan(
+      dominantTextContrast(in: white + faint + Array(black.prefix(32))) ?? 0, 4.5,
+      "Minor black noise must not hide the dominant faint text"
+    )
+    XCTAssertNil(dominantTextContrast(in: white))
   }
 
   @MainActor
@@ -319,26 +2722,20 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: appearance,
       additionalArguments: ["-ResetWordImageAttachments"]
     )
-    app.tabBars.buttons["More"].tap()
-    XCTAssertTrue(app.staticTexts["More"].waitForExistence(timeout: 3))
-    // Xcode 26 reports native NavigationLink and toolbar labels as partially
-    // unsupported for Dynamic Type in both appearances. Every label uses a
-    // semantic font, while the dedicated accessibility-XXXL journeys keep
-    // scaling and reachability blocking. Tracked by #173.
-    let secondaryNavigationAuditTypes = auditTypes.subtracting(.dynamicType)
-    try performAudit(in: app, named: "More", types: secondaryNavigationAuditTypes)
-    app.buttons["more.media-library"].tap()
+    AppNavigationUITestSupport.youTab(in: app).tap()
+    XCTAssertTrue(app.staticTexts["You"].waitForExistence(timeout: 3))
+    // Two frameless clipped-text findings remain blocking after native grouping/fixed-size probes.
+    try performAudit(in: app, named: "You", types: auditTypes)
+    app.buttons["you.media-library"].tap()
     XCTAssertTrue(app.staticTexts["No Encounter Media"].waitForExistence(timeout: 3))
     try performAudit(in: app, named: "Empty Media Library")
     app.navigationBars["Media Library"].buttons.firstMatch.tap()
-    XCTAssertTrue(app.buttons["more.credits"].waitForExistence(timeout: 3))
-    app.buttons["more.credits"].tap()
+    XCTAssertTrue(app.buttons["you.credits"].waitForExistence(timeout: 3))
+    app.buttons["you.credits"].tap()
     XCTAssertTrue(app.staticTexts["Dictionary Sources"].waitForExistence(timeout: 3))
-    // Xcode 26 reports semantic Settings text as unsupported despite explicit
-    // semantic fonts. Dedicated light and dark accessibility-XXXL journeys
-    // above keep scaling, clipping, and reachability blocking. Tracked by #173.
-    let settingsAuditTypes = auditTypes.subtracting(.dynamicType)
-    try performAudit(in: app, named: "Dictionary Sources", types: settingsAuditTypes)
+    // Frameless default-size Dynamic Type/contrast findings remain blocking; the paired AXXXL
+    // Sources audit runs `.all` without exceptions.
+    try performAudit(in: app, named: "Dictionary Sources", types: auditTypes)
     app.terminate()
 
     app = launchApp(appearance: appearance)
@@ -349,7 +2746,15 @@ final class AccessibilityAuditUITests: XCTestCase {
     try performAudit(in: app, named: "Handwriting input")
     app.buttons["search.input.radicals"].tap()
     XCTAssertTrue(app.staticTexts["1 Stroke"].waitForExistence(timeout: 3))
-    try performAudit(in: app, named: "Radical input")
+    app.buttons["radical.one"].tap()
+    XCTAssertTrue(app.buttons["radical.remove"].isEnabled)
+    // The enabled journey removes the disabled-control finding. Only the exact `3 Strokes`
+    // header remains where it crosses native tab material; the XXXL pair proves grid adaptation.
+    try performAudit(
+      in: app,
+      named: "Radical input",
+      expectedExceptions: [AuditException(.contrast, identifier: "radical.stroke.3")]
+    )
     app.terminate()
 
     app = launchApp(appearance: appearance)
@@ -357,17 +2762,44 @@ final class AccessibilityAuditUITests: XCTestCase {
     let mountain = app.buttons["result.kanji-primary.山"]
     XCTAssertTrue(mountain.waitForExistence(timeout: 4))
     mountain.tap()
-    XCTAssertTrue(app.scrollViews["kanji-detail.screen"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.collectionViews["kanji-detail.screen"].waitForExistence(timeout: 4))
     XCTAssertTrue(
       app.descendants(matching: .any)["kanji-detail.strokes"].waitForExistence(timeout: 4))
     XCTAssertTrue(app.staticTexts["READINGS"].waitForExistence(timeout: 4))
     let strokeOrder = app.buttons["kanji-detail.stroke-order"]
     XCTAssertTrue(strokeOrder.waitForExistence(timeout: 3))
+    // Every finding remains blocking; focused Kanji journeys keep content, navigation, glyph
+    // metrics, and reachability blocking.
     try performAudit(in: app, named: "Kanji Detail")
     strokeOrder.tap()
     XCTAssertTrue(
       app.descendants(matching: .any)["stroke-order.progress"].waitForExistence(timeout: 3))
-    try performAudit(in: app, named: "Stroke Order")
+    // The exact native toolbar Close button scales and remains hittable in focused stroke tests;
+    // Xcode alone reports its semantic toolbar label as partially unsupported.
+    try performAudit(
+      in: app,
+      named: "Stroke Order",
+      expectedExceptions: [AuditException(.dynamicType, identifier: "stroke-order.close")]
+    )
+    app.terminate()
+
+    app = launchApp(appearance: appearance)
+    try submitSearch("静", in: app)
+    let quiet = app.buttons["result.kanji-primary.静"]
+    XCTAssertTrue(quiet.waitForExistence(timeout: 4))
+    quiet.tap()
+    let kanjiDetail = app.collectionViews["kanji-detail.screen"]
+    XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 4))
+    let element = app.buttons["kanji-detail.element.青"]
+    for _ in 0..<8 where !element.exists || !element.isHittable {
+      kanjiDetail.swipeUp()
+    }
+    XCTAssertTrue(element.isHittable)
+    element.tap()
+    XCTAssertTrue(app.collectionViews["kanji-element.screen"].waitForExistence(timeout: 4))
+    XCTAssertEqual(app.staticTexts["kanji-element.glyph"].label, "青")
+    // Frameless Dynamic Type/contrast nodes remain blocking after native grouping/position probes.
+    try performAudit(in: app, named: "Kanji Element Detail")
     app.terminate()
 
     app = launchApp(
@@ -378,13 +2810,12 @@ final class AccessibilityAuditUITests: XCTestCase {
     let examples = app.buttons["search.examples"]
     XCTAssertTrue(examples.waitForExistence(timeout: 4))
     examples.tap()
-    XCTAssertTrue(app.scrollViews["example-list.screen"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.collectionViews["example-list.screen"].waitForExistence(timeout: 4))
     XCTAssertTrue(app.descendants(matching: .any)["example.row.0"].waitForExistence(timeout: 3))
     XCTAssertTrue(
-      app.buttons.matching(
-        NSPredicate(format: "identifier BEGINSWITH %@", "example.token.0.")
-      ).firstMatch.waitForExistence(timeout: 12)
+      app.descendants(matching: .any)["example.japanese.0"].waitForExistence(timeout: 12)
     )
+    // #242's complete いる boundary removes the prior one-character exception in this fixture.
     try performAudit(in: app, named: "Example Sentences")
     app.terminate()
 
@@ -398,7 +2829,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     let conjugations = app.buttons["word-detail.conjugations"]
     XCTAssertTrue(conjugations.waitForExistence(timeout: 4))
     conjugations.tap()
-    XCTAssertTrue(app.scrollViews["conjugations.screen"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.collectionViews["conjugations.screen"].waitForExistence(timeout: 4))
     XCTAssertTrue(
       app.descendants(matching: .any)["conjugations.row.present-future"].waitForExistence(
         timeout: 3))
@@ -423,64 +2854,270 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
+  private func auditRepresentativeExampleSentences(
+    appearance: XCUIDevice.Appearance,
+    accessibilityXXXL: Bool
+  ) throws {
+    let app = try launchRepresentativeExampleSentences(
+      appearance: appearance,
+      accessibilityXXXL: accessibilityXXXL
+    )
+    let list = app.collectionViews["example-list.screen"]
+
+    let first = RepresentativeExampleSentences.rows[0]
+    let firstRow = RepresentativeExampleSentences.reachRow(first, in: app, list: list)
+    XCTAssertTrue(firstRow.exists)
+    XCTAssertEqual(
+      RepresentativeExampleSentences.englishText(for: first, in: app).label, first.english)
+    if !accessibilityXXXL {
+      RepresentativeExampleSentences.assertDefaultGeometry(for: first, in: app)
+    } else {
+      RepresentativeExampleSentences.assertAccessibilityGeometry(for: first, in: app)
+    }
+    try performAudit(
+      in: app,
+      named:
+        "Example Sentences - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")",
+      types: .dynamicType.union(.textClipped)
+    )
+
+    let rubyLinked = RepresentativeExampleSentences.rows[2]
+    let rubyLinkedRow = RepresentativeExampleSentences.reachRow(
+      rubyLinked,
+      in: app,
+      list: list
+    )
+    XCTAssertTrue(rubyLinkedRow.exists)
+    XCTAssertEqual(
+      RepresentativeExampleSentences.englishText(for: rubyLinked, in: app).label,
+      rubyLinked.english
+    )
+    let wordSelector = app.buttons["example.words.\(rubyLinked.index)"]
+    XCTAssertTrue(wordSelector.exists)
+    RepresentativeExampleSentences.reachElement(wordSelector, in: list, app: app)
+    XCTAssertTrue(wordSelector.isHittable)
+    if !accessibilityXXXL {
+      RepresentativeExampleSentences.assertDefaultGeometry(for: rubyLinked, in: app)
+    } else {
+      RepresentativeExampleSentences.assertAccessibilityGeometry(for: rubyLinked, in: app)
+    }
+    try performAudit(
+      in: app,
+      named:
+        "Example Sentences ruby-linked row - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")",
+      types: .dynamicType.union(.textClipped)
+    )
+
+    let eighth = RepresentativeExampleSentences.rows[7]
+    let eighthRow = RepresentativeExampleSentences.reachRow(
+      eighth,
+      requiringSpeaker: true,
+      in: app,
+      list: list
+    )
+    let speaker = app.buttons["example.speaker.\(eighth.index)"]
+    XCTAssertTrue(eighthRow.isHittable)
+    XCTAssertEqual(
+      RepresentativeExampleSentences.englishText(for: eighth, in: app).label,
+      eighth.english
+    )
+    XCTAssertTrue(speaker.isHittable)
+    if !accessibilityXXXL {
+      RepresentativeExampleSentences.assertDefaultGeometry(for: eighth, in: app)
+    }
+    try performAudit(
+      in: app,
+      named:
+        "Example Sentences eighth row - \(appearance) \(accessibilityXXXL ? "accessibility XXXL" : "default")",
+      types: .dynamicType.union(.textClipped)
+    )
+  }
+
+  @MainActor
+  private func launchRepresentativeExampleSentences(
+    appearance: XCUIDevice.Appearance,
+    accessibilityXXXL: Bool
+  ) throws -> XCUIApplication {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    addTeardownBlock { XCUIDevice.shared.appearance = originalAppearance }
+
+    var arguments = ["-ExampleSentenceAccessibilityFixtureLimit", "8"]
+    if accessibilityXXXL {
+      arguments += [
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    }
+    let app = launchApp(appearance: appearance, additionalArguments: arguments)
+    try submitSearch("いる", in: app)
+    let examples = app.buttons["search.examples"]
+    XCTAssertTrue(examples.waitForExistence(timeout: 4))
+    examples.tap()
+    XCTAssertTrue(app.collectionViews["example-list.screen"].waitForExistence(timeout: 4))
+    return app
+  }
+
+  @MainActor
+  private func auditImageTextNativeControls(
+    appearance: XCUIDevice.Appearance
+  ) throws {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    defer { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-StartImageTextFixtures", "fixture-clear-horizontal.png",
+        "-InjectImageTextTranslation",
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    let close = app.buttons["image-text.close"]
+    XCTAssertTrue(close.waitForExistence(timeout: 20))
+    XCTAssertTrue(
+      app.descendants(matching: .any)["image-text.raw-text"].waitForExistence(timeout: 20))
+    for identifier in ["image-text.close", "image-text.highlights", "image-text.share"] {
+      let action = app.buttons[identifier]
+      XCTAssertTrue(action.exists)
+      XCTAssertTrue(action.isHittable)
+    }
+    try performAudit(in: app, named: "Image Text native controls - \(appearance)")
+  }
+
+  @MainActor
   private func performAudit(
     in app: XCUIApplication,
     named stateName: String,
-    types: XCUIAccessibilityAuditType? = nil
+    types: XCUIAccessibilityAuditType? = nil,
+    expectedExceptions: [AuditException] = []
   ) throws {
-    let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-    screenshot.name = "Accessibility state - \(stateName)"
-    screenshot.lifetime = .keepAlways
-    add(screenshot)
+    retainScreenshot(named: stateName)
+    var remainingExceptions = expectedExceptions
 
     try app.performAccessibilityAudit(for: types ?? auditTypes) { issue in
-      let element = issue.element
-      let identifier = element?.identifier
-      // Xcode 26 can report frameless SwiftUI bookkeeping nodes as clipped.
-      // A real element, including one with an empty label, is never ignored.
-      if issue.auditType == .textClipped, issue.element == nil {
-        return true
-      }
-      // Hosted Xcode crops the final antialiased glyph pixel from these two
-      // full-width native NavigationLink accessibility-node snapshots. Their
-      // exact labels, identifiers, and public navigation are asserted by the
-      // critical UI journey, while light/dark accessibility-XXXL tests keep
-      // their actual scaling and reachability blocking. Tracked by #173.
-      if issue.auditType == .textClipped,
-        ["more.media-library", "more.credits"].contains(identifier ?? "")
-          || ["Media Library", "Credits & Attributions"].contains(element?.label ?? "")
-      {
-        return true
-      }
-      // The compact-device audit flags this fully visible semantic-body link
-      // even after replacing SwiftUI Link with an app-owned scalable control.
-      // Keep the single exact exception tracked by #173.
-      if issue.auditType == .dynamicType,
-        identifier == "dictionary-sources.jmdict-project"
-      {
-        return true
-      }
-      // iOS 26 intentionally lets scroll content pass beneath the native,
-      // translucent tab bar. Xcode's screenshot audit reports the clipped
-      // pixels as low-contrast text even though the content becomes fully
-      // readable when scrolled above the bar. For concrete findings, ignore
-      // only app content whose frame intersects the system-owned bar or its
-      // measured 12-point shadow/blur boundary. Content outside that boundary
-      // and the two tab controls themselves remain blocking.
-      let tabBar = app.tabBars.firstMatch
-      if issue.auditType == .contrast,
-        let element,
-        tabBar.exists,
-        element.elementType == .staticText,
-        !element.label.isEmpty,
-        !["Search", "More"].contains(element.label),
-        !["magnifyingglass", "ellipsis"].contains(identifier ?? ""),
-        element.frame.intersects(tabBar.frame.insetBy(dx: 0, dy: -12))
-      {
+      if let index = remainingExceptions.firstIndex(where: { $0.matches(issue) }) {
+        remainingExceptions.remove(at: index)
         return true
       }
       return false
     }
+    XCTAssertTrue(
+      remainingExceptions.isEmpty,
+      "Expected exact accessibility exceptions were not observed in \(stateName): \(remainingExceptions)"
+    )
+  }
+
+  @MainActor
+  private func retainScreenshot(named stateName: String) {
+    let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+    screenshot.name = "Accessibility state - \(stateName)"
+    screenshot.lifetime = .keepAlways
+    add(screenshot)
+  }
+
+  @MainActor
+  private func retainElementScreenshot(_ element: XCUIElement, named name: String) {
+    let screenshot = XCTAttachment(screenshot: element.screenshot())
+    screenshot.name = name
+    screenshot.lifetime = .keepAlways
+    add(screenshot)
+  }
+
+  @MainActor
+  private func containsRedPixels(in screenshot: XCUIScreenshot) -> Bool {
+    containsPixels(in: screenshot, requiredCount: 24) { red, green, blue in
+      red >= 150 && red >= green + 45 && red >= blue + 35
+    }
+  }
+
+  @MainActor
+  private func containsSystemBluePixels(in screenshot: XCUIScreenshot) -> Bool {
+    containsPixels(in: screenshot) { red, green, blue in
+      blue >= 150 && blue >= red + 45 && blue >= green + 30
+    }
+  }
+
+  @MainActor
+  private func containsSystemPrimaryTextPixels(
+    in screenshot: XCUIScreenshot,
+    appearance: XCUIDevice.Appearance
+  ) -> Bool {
+    containsPixels(in: screenshot, requiredCount: 8) { red, green, blue in
+      switch appearance {
+      case .dark: red >= 225 && green >= 225 && blue >= 225
+      default: red <= 50 && green <= 50 && blue <= 50
+      }
+    }
+  }
+
+  @MainActor
+  private func containsSystemSecondaryTextPixels(
+    in screenshot: XCUIScreenshot,
+    appearance: XCUIDevice.Appearance
+  ) -> Bool {
+    containsPixels(in: screenshot, requiredCount: 8) { red, green, blue in
+      guard abs(red - green) <= 8, abs(green - blue) <= 8 else { return false }
+      switch appearance {
+      case .dark: return (130...210).contains(red)
+      default: return (100...190).contains(red)
+      }
+    }
+  }
+
+  @MainActor
+  private func containsGreenPixels(in screenshot: XCUIScreenshot) -> Bool {
+    containsPixels(in: screenshot) { red, green, blue in
+      green >= 130 && green >= red + 50 && green >= blue + 40
+    }
+  }
+
+  @MainActor
+  private func containsPixels(
+    in screenshot: XCUIScreenshot,
+    requiredCount: Int = 12,
+    matching: (_ red: Int, _ green: Int, _ blue: Int) -> Bool
+  ) -> Bool {
+    let pixels = sampledRGBAPixels(in: screenshot)
+    var matchCount = 0
+    for offset in stride(from: 0, to: pixels.count, by: 4) {
+      let red = Int(pixels[offset])
+      let green = Int(pixels[offset + 1])
+      let blue = Int(pixels[offset + 2])
+      if matching(red, green, blue) {
+        matchCount += 1
+        if matchCount >= requiredCount { return true }
+      }
+    }
+    return false
+  }
+
+  @MainActor
+  private func foregroundPixelFraction(in screenshot: XCUIScreenshot) -> Double {
+    let pixels = sampledRGBAPixels(in: screenshot)
+    guard pixels.count >= 4 else { return 1 }
+    let background = (red: Int(pixels[0]), green: Int(pixels[1]), blue: Int(pixels[2]))
+    var foregroundCount = 0
+    for offset in stride(from: 0, to: pixels.count, by: 4) {
+      if abs(Int(pixels[offset]) - background.red)
+        + abs(Int(pixels[offset + 1]) - background.green)
+        + abs(Int(pixels[offset + 2]) - background.blue)
+        >= 80
+      {
+        foregroundCount += 1
+      }
+    }
+    return Double(foregroundCount) / Double(pixels.count / 4)
+  }
+
+  @MainActor
+  private func renderedAppearance(in screenshot: XCUIScreenshot) -> RenderedAppearance? {
+    accessibilityRenderedAppearance(in: screenshot)
+  }
+
+  @MainActor
+  private func sampledRGBAPixels(in screenshot: XCUIScreenshot) -> [UInt8] {
+    sampledAccessibilityPixels(in: screenshot)
   }
 
   @MainActor
@@ -488,41 +3125,128 @@ final class AccessibilityAuditUITests: XCTestCase {
     appearance: XCUIDevice.Appearance,
     additionalArguments: [String] = []
   ) -> XCUIApplication {
-    let app = XCUIApplication()
-    app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-    app.launchArguments += [
-      "-AppleInterfaceStyle", appearance == .dark ? "Dark" : "Light",
-      "-AppleInterfaceStyleSwitchesAutomatically", "NO",
-    ]
-    app.launchArguments += additionalArguments
+    let app = configuredAccessibilityApp(
+      appearance: appearance,
+      additionalArguments: additionalArguments
+    )
     app.launch()
+    XCTAssertEqual(
+      renderedAppearance(in: XCUIScreen.main.screenshot()),
+      appearance == .dark ? .dark : .light,
+      "The accessibility fixture must render the requested appearance."
+    )
     return app
   }
 
   @MainActor
+  private func launchWordDetail(
+    query: String,
+    resultLabelPrefix: String,
+    appearance: XCUIDevice.Appearance,
+    additionalArguments: [String] = []
+  ) throws -> (app: XCUIApplication, detail: XCUIElement) {
+    let app = launchApp(appearance: appearance, additionalArguments: additionalArguments)
+    try submitSearch(query, in: app)
+    let result = app.buttons.matching(
+      NSPredicate(format: "label BEGINSWITH %@", resultLabelPrefix)
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 3))
+    result.tap()
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    return (app, detail)
+  }
+
+  @MainActor
   private func submitSearch(_ query: String, in app: XCUIApplication) throws {
-    let searchField = app.textFields["search.field"]
-    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
-    searchField.tap()
-    searchField.typeText(query)
-    app.keyboards.buttons["Search"].tap()
-    XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10))
+    submitAccessibilitySearch(query, in: app)
   }
 
   @MainActor
   private func stageImageTextFixture(appearance: XCUIDevice.Appearance) throws {
     let stager = launchApp(
       appearance: appearance,
-      additionalArguments: [
-        "-ExportImageTextFixtures", "fixture-clear-horizontal.png",
-      ])
-    let save = stager.buttons["Save"]
-    XCTAssertTrue(save.waitForExistence(timeout: 20))
-    save.tap()
-    if stager.buttons["Replace"].waitForExistence(timeout: 1) {
-      stager.buttons["Replace"].tap()
-    }
-    XCTAssertTrue(stager.textFields["search.field"].waitForExistence(timeout: 5))
+      additionalArguments: ["-PrepareImageTextFixtures"])
+    ImageTextFilesUITestSupport.verifyPreparedFixtures(["fixture-clear-horizontal.png"], in: stager)
     stager.terminate()
+  }
+}
+
+/// Non-blocking probes for Xcode's whole-window audit of content beneath native Liquid Glass.
+/// These tests intentionally remain red and live only in ZenbuAccessibilityDiagnostics.
+final class AccessibilityFrameworkDiagnosticUITests: XCTestCase {
+  @MainActor
+  func testDarkSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize() throws {
+    try diagnoseSearchResults(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize() throws {
+    try diagnoseSearchResults(appearance: .light)
+  }
+
+  @MainActor
+  func testDarkKanjiElementRetainsNativeTabEdgeWarningAtLargestAccessibilityTextSize() throws {
+    try diagnoseKanjiElement(appearance: .dark)
+  }
+
+  @MainActor
+  func testLightKanjiElementRetainsNativeTabEdgeWarningAtLargestAccessibilityTextSize() throws {
+    try diagnoseKanjiElement(appearance: .light)
+  }
+
+  @MainActor
+  private func diagnoseSearchResults(appearance: XCUIDevice.Appearance) throws {
+    let app = launchDiagnosticApp(appearance: appearance)
+    try submitDiagnosticSearch("日本", in: app)
+    XCTAssertTrue(app.descendants(matching: .any)["search.results"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["search.additional-matches-header"].waitForExistence(timeout: 3))
+    try app.performAccessibilityAudit(for: .contrast)
+  }
+
+  @MainActor
+  private func diagnoseKanjiElement(appearance: XCUIDevice.Appearance) throws {
+    let app = launchDiagnosticApp(appearance: appearance)
+    try submitDiagnosticSearch("静", in: app)
+    let quiet = app.buttons["result.kanji-primary.静"]
+    XCTAssertTrue(quiet.waitForExistence(timeout: 4))
+    quiet.tap()
+    let kanjiDetail = app.collectionViews["kanji-detail.screen"]
+    XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 4))
+    let element = app.buttons["kanji-detail.element.青"]
+    for _ in 0..<10 where !element.isHittable { kanjiDetail.swipeUp() }
+    XCTAssertTrue(element.isHittable)
+    element.tap()
+    XCTAssertTrue(app.collectionViews["kanji-element.screen"].waitForExistence(timeout: 4))
+    XCTAssertTrue(app.staticTexts["kanji-element.meaning-explanation"].waitForExistence(timeout: 3))
+    try app.performAccessibilityAudit(for: .contrast)
+  }
+
+  @MainActor
+  private func launchDiagnosticApp(appearance: XCUIDevice.Appearance) -> XCUIApplication {
+    let originalAppearance = XCUIDevice.shared.appearance
+    XCUIDevice.shared.appearance = appearance
+    addTeardownBlock { XCUIDevice.shared.appearance = originalAppearance }
+
+    let app = configuredAccessibilityApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-UIPreferredContentSizeCategoryName",
+        "UICTContentSizeCategoryAccessibilityXXXL",
+      ]
+    )
+    app.launch()
+    XCTAssertEqual(XCUIDevice.shared.appearance, appearance)
+    XCTAssertEqual(
+      accessibilityRenderedAppearance(in: XCUIScreen.main.screenshot()),
+      appearance == .dark ? .dark : .light,
+      "The framework diagnostic must render the requested appearance."
+    )
+    return app
+  }
+
+  @MainActor
+  private func submitDiagnosticSearch(_ query: String, in app: XCUIApplication) throws {
+    submitAccessibilitySearch(query, in: app)
   }
 }

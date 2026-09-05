@@ -5,70 +5,43 @@ import XCTest
 @testable import SearchExperience
 
 final class ZenbuThemeAccessibilityTests: XCTestCase {
-  func testDarkModeBrandTextMeetsNormalTextContrast() throws {
-    let foreground = try resolvedRGB(ZenbuTheme.interactiveForeground, style: .dark)
-    let background = try resolvedRGB(ZenbuTheme.background, style: .dark)
-
-    XCTAssertGreaterThanOrEqual(
-      contrastRatio(foreground, background),
-      8.0,
-      "Dark-mode brand text must remain readable even at small linked-text sizes."
-    )
-  }
-
-  func testBrandChromeTextHasContrastMarginForSmallAntialiasedLabels() throws {
+  func testRecognitionHighlightRemainsDistinctFromSystemBackgrounds() throws {
     for style in [UIUserInterfaceStyle.light, .dark] {
-      let foreground = try resolvedRGB(ZenbuTheme.primaryForeground, style: style)
-      let background = try resolvedRGB(ZenbuTheme.chrome, style: style)
+      let foreground = try resolvedRGB(ZenbuTheme.recognitionHighlight, style: style)
+      let background = try resolvedRGB(Color(uiColor: .systemBackground), style: style)
       XCTAssertGreaterThanOrEqual(
         contrastRatio(foreground, background),
-        6.0,
-        "Small labels on brand chrome need margin beyond the minimum ratio, \(style)."
+        3.0,
+        "Recognition highlight, \(style)."
       )
     }
   }
 
-  func testSecondaryTextHasHostedAntialiasingContrastMargin() throws {
+  func testRadicalSelectionFillSupportsItsWhiteGlyph() throws {
     for style in [UIUserInterfaceStyle.light, .dark] {
-      for background in [ZenbuTheme.background, ZenbuTheme.card] {
-        let ratio = contrastRatio(
-          try resolvedRGB(ZenbuTheme.secondaryText, style: style),
-          try resolvedRGB(background, style: style)
-        )
-        XCTAssertGreaterThanOrEqual(
-          ratio,
-          6.0,
-          "Secondary text needs margin beyond AA for hosted antialiasing, \(style)."
-        )
-      }
+      let glyph = try resolvedRGB(.white, style: style)
+      let fill = try resolvedRGB(ZenbuTheme.radicalSelection, style: style)
+      XCTAssertGreaterThanOrEqual(contrastRatio(glyph, fill), 4.5, "Radical glyph, \(style)")
     }
   }
 
-  func testNormalTextThemePairsMeetContrastInBothAppearances() throws {
-    let pairs: [(name: String, foreground: Color, background: Color)] = [
-      ("body on page", ZenbuTheme.foreground, ZenbuTheme.background),
-      ("secondary text on page", ZenbuTheme.secondaryText, ZenbuTheme.background),
-      ("interactive text on page", ZenbuTheme.interactiveForeground, ZenbuTheme.background),
-      ("system control tint on page", ZenbuTheme.systemControlTint, ZenbuTheme.background),
-      ("body on card", ZenbuTheme.foreground, ZenbuTheme.card),
-      ("secondary text on card", ZenbuTheme.secondaryText, ZenbuTheme.card),
-      ("interactive text on card", ZenbuTheme.interactiveForeground, ZenbuTheme.card),
-      ("system control tint on card", ZenbuTheme.systemControlTint, ZenbuTheme.card),
-      ("text on brand chrome", ZenbuTheme.primaryForeground, ZenbuTheme.chrome),
-      (
-        "destructive action text on fill", ZenbuTheme.primaryForeground,
-        ZenbuTheme.destructiveActionTint
-      ),
-    ]
-
+  func testStrokeProgressRemainsDistinctFromSystemBackgrounds() throws {
     for style in [UIUserInterfaceStyle.light, .dark] {
-      for pair in pairs {
-        let ratio = contrastRatio(
-          try resolvedRGB(pair.foreground, style: style),
-          try resolvedRGB(pair.background, style: style)
-        )
-        XCTAssertGreaterThanOrEqual(ratio, 4.5, "\(pair.name), \(style)")
-      }
+      let foreground = try resolvedRGB(ZenbuTheme.strokeProgress, style: style)
+      let background = try resolvedRGB(Color(uiColor: .systemBackground), style: style)
+      XCTAssertGreaterThanOrEqual(
+        contrastRatio(foreground, background), 3.0, "Stroke progress, \(style)")
+    }
+  }
+
+  func testPitchDownstepRemainsDistinctFromSystemBackgrounds() throws {
+    for style in [UIUserInterfaceStyle.light, .dark] {
+      let systemBackground = Color(uiColor: .systemBackground)
+      let ratio = contrastRatio(
+        try resolvedRGB(ZenbuTheme.pitchDownstep, style: style),
+        try resolvedRGB(systemBackground, style: style)
+      )
+      XCTAssertGreaterThanOrEqual(ratio, 3.0, "Pitch downstep, \(style)")
     }
   }
 

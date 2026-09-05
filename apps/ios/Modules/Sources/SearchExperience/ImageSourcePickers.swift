@@ -1,8 +1,7 @@
-@preconcurrency import PhotosUI
 import ImageIO
 import SwiftUI
-import UniformTypeIdentifiers
 import UIKit
+import UniformTypeIdentifiers
 
 struct ImageCameraPicker: UIViewControllerRepresentable {
   let completion: @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
@@ -24,7 +23,8 @@ struct ImageCameraPicker: UIViewControllerRepresentable {
   func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 
   @MainActor
-  final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+  final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate
+  {
     let completion: @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void
 
     init(completion: @escaping @MainActor @Sendable (Result<ImageTextAsset?, Error>) -> Void) {
@@ -50,80 +50,43 @@ struct ImageCameraPicker: UIViewControllerRepresentable {
   }
 }
 
-struct ImagePhotoLibraryPicker: UIViewControllerRepresentable {
-  let completion: @MainActor @Sendable (Result<[ImageTextAsset], Error>) -> Void
-
-  func makeCoordinator() -> Coordinator {
-    Coordinator(completion: completion)
-  }
-
-  func makeUIViewController(context: Context) -> PHPickerViewController {
-    var configuration = PHPickerConfiguration(photoLibrary: .shared())
-    configuration.filter = .images
-    configuration.selectionLimit = 1
-    let picker = PHPickerViewController(configuration: configuration)
-    picker.delegate = context.coordinator
-    return picker
-  }
-
-  func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
-
-  @MainActor
-  final class Coordinator: NSObject, PHPickerViewControllerDelegate {
-    let completion: @MainActor @Sendable (Result<[ImageTextAsset], Error>) -> Void
-
-    init(completion: @escaping @MainActor @Sendable (Result<[ImageTextAsset], Error>) -> Void) {
-      self.completion = completion
-    }
-
-    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-      guard let result = results.first else {
-        completion(.success([]))
-        return
-      }
-      let suggestedName = result.itemProvider.suggestedName ?? "Photo"
-      result.itemProvider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) {
-        url, error in
-        let asset = url.flatMap {
-          ImageTextAsset(photoLibraryImageAt: $0, name: suggestedName)
-        }
-        Task { @MainActor [completion = self.completion] in
-          if error != nil || asset == nil {
-            completion(.failure(ImageSourcePickerError.unreadableImage))
-          } else {
-            completion(.success([asset].compactMap { $0 }))
-          }
-        }
-      }
-    }
-  }
-}
-
-private extension ImageTextAsset {
+extension ImageTextAsset {
   init?(cameraImage: UIImage) {
     guard let data = cameraImage.imageTextData else { return nil }
     self.init(name: "Camera Capture.jpg", data: data)
   }
+}
 
+extension ImageTextAsset {
   init?(photoLibraryImageAt url: URL, name: String) {
     guard
-      let source = CGImageSourceCreateWithURL(url as CFURL, [
-        kCGImageSourceShouldCache: false,
-      ] as CFDictionary),
-      let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
-        kCGImageSourceCreateThumbnailFromImageAlways: true,
-        kCGImageSourceCreateThumbnailWithTransform: true,
-        kCGImageSourceThumbnailMaxPixelSize: 4_096,
-        kCGImageSourceShouldCacheImmediately: true,
-      ] as CFDictionary),
-      let data = UIImage(cgImage: image).jpegData(compressionQuality: 0.9)
+      let source = CGImageSourceCreateWithURL(
+        url as CFURL,
+        [kCGImageSourceShouldCache: false] as CFDictionary
+      ),
+      let data = Self.normalizedPhotoData(from: source)
     else { return nil }
     self.init(name: name, data: data)
   }
+
+  private static func normalizedPhotoData(from source: CGImageSource) -> Data? {
+    guard
+      let image = CGImageSourceCreateThumbnailAtIndex(
+        source, 0,
+        [
+          kCGImageSourceCreateThumbnailFromImageAlways: true,
+          kCGImageSourceCreateThumbnailWithTransform: true,
+          kCGImageSourceThumbnailMaxPixelSize: 4_096,
+          kCGImageSourceShouldCacheImmediately: true,
+        ] as CFDictionary)
+    else { return nil }
+    return UIImage(cgImage: image).jpegData(compressionQuality: 0.9)
+  }
 }
 
-private extension UIImage {
-  var imageTextData: Data? {
+extension UIImage {
+  fileprivate var imageTextData: Data? {
+    guard size.width > 0, size.height > 0 else { return nil }
     let maximumDimension: CGFloat = 4_096
     let largestDimension = max(size.width, size.height)
     let scale = largestDimension > maximumDimension ? maximumDimension / largestDimension : 1
@@ -137,6 +100,6 @@ private extension UIImage {
   }
 }
 
-private enum ImageSourcePickerError: Error {
+enum ImageSourcePickerError: Error {
   case unreadableImage
 }

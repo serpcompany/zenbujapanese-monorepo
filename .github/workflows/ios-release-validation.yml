@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+env:
+  ZENBU_POLICY_AUTHORIZED: true
+  ZENBU_VERIFICATION_STAGE: release
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -32,6 +36,19 @@ jobs:
           sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
           xcodebuild -version
 
+      - name: Restore pinned Sudachi Core source artifact
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: ~/Library/Caches/com.zenbujapanese.build/SudachiCore/wheels/b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498.whl
+          key: sudachi-core-wheel-20260723-b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498-${{ runner.os }}
+
+      - name: Prepare verified Sudachi Core build cache
+        run: |
+          python3 apps/ios/Tools/prepare_sudachi_core.py \
+            --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
+            --cache "$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore" \
+            --cache-only
+
       - name: Audit source privacy and bundled data
         run: bash apps/ios/Tools/audit_release_privacy.sh source
 
@@ -41,6 +58,15 @@ jobs:
             ZenbuPR \
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
             "$RUNNER_TEMP/ZenbuPreReleaseValidation.xcresult"
+
+      - name: Run required reviewer Increase Contrast checks
+        run: |
+          apps/ios/Tools/run_selected_test_plan.sh \
+            ZenbuIncreasedContrast \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
+            "$RUNNER_TEMP/ZenbuPreReleaseContrast.xcresult" \
+            '["complete.increased-contrast"]' \
+            "$GITHUB_SHA"
 
       - name: Build the Release simulator product
         run: |
@@ -66,6 +92,11 @@ jobs:
       - name: Package test evidence
         if: always()
         run: |
+          if [[ -d "$RUNNER_TEMP/ZenbuPreReleaseContrast.xcresult" ]]; then
+            ditto -c -k --keepParent \
+              "$RUNNER_TEMP/ZenbuPreReleaseContrast.xcresult" \
+              "$RUNNER_TEMP/ZenbuPreReleaseContrast.xcresult.zip"
+          fi
           if [[ -d "$RUNNER_TEMP/ZenbuPreReleaseValidation.xcresult" ]]; then
             ditto -c -k --keepParent \
               "$RUNNER_TEMP/ZenbuPreReleaseValidation.xcresult" \
@@ -78,6 +109,9 @@ jobs:
         with:
           name: ZenbuPreReleaseValidation-${{ github.sha }}-${{ github.run_id }}
           path: |
+            ${{ runner.temp }}/ZenbuPreReleaseContrast.xcresult.zip
+            ${{ runner.temp }}/ZenbuPreReleaseContrast.xcresult.timing.json
+            ${{ runner.temp }}/ZenbuPreReleaseContrast.xcresult.xcodebuild.log
             ${{ runner.temp }}/ZenbuPreReleaseValidation.xcresult.zip
             ${{ runner.temp }}/ZenbuPreReleaseValidation-identity.txt
           if-no-files-found: warn

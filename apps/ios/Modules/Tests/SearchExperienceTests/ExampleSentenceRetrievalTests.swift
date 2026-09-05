@@ -4,6 +4,66 @@ import XCTest
 @testable import SearchExperience
 
 final class ExampleSentenceRetrievalTests: XCTestCase {
+  func testIssue253PresentationFixturesStayOutsideExampleMatchAndRanking() async throws {
+    let live = ExampleSentenceClient.live
+    let fixture = ExampleSentenceClient.issue253SentenceLayoutFixture(live: live)
+    let lookup = LookupClient.freshBundledDatabase()
+    let matchedEntry = try await lookup.entryMatchingForm("食べる")
+    let entry = try XCTUnwrap(matchedEntry)
+    let fixtureRetrieval = try await fixture.retrieve(.dictionaryEntry(entry))
+    let liveRetrieval = try await live.retrieve(.dictionaryEntry(entry))
+    let fixtureExamples = try await fixture.examples(entry)
+
+    XCTAssertEqual(fixtureRetrieval, liveRetrieval)
+    XCTAssertEqual(
+      fixtureExamples.map(\.japanese),
+      [
+        "食べるために生きてるんじゃない。生きるために食べてるんだ。",
+        "たべる？",
+        "問題を解いてから、友達と話します。",
+        "REM睡眠中の脳波は起きている時と同じ脳波であり、夢を見るステージです。",
+        "見ることは信ずることなり。",
+        "ZENBU2026SUPERCALIFRAGILISTICEXPIALIDOCIOUS。",
+      ]
+    )
+  }
+
+  func testIssue246PresentationFixtureDoesNotInventDictionaryMatchEvidence() async throws {
+    let live = ExampleSentenceClient.live
+    let fixture = ExampleSentenceClient.issue246WordDetailFixture(live: live)
+    let lookup = LookupClient.freshBundledDatabase()
+    let matchedMiru = try await lookup.entryMatchingForm("見る")
+    let miru = try XCTUnwrap(matchedMiru)
+    let fixtureResult = try await fixture.retrieve(.dictionaryEntry(miru))
+    let liveResult = try await live.retrieve(.dictionaryEntry(miru))
+
+    XCTAssertEqual(
+      fixtureResult,
+      liveResult,
+      "The presentation fixture must not replace app-owned Match or Ranking evidence."
+    )
+    let fixtureExamples = try await fixture.examples(miru)
+    XCTAssertEqual(
+      fixtureExamples.map(\.id.rawValue),
+      [
+        "esp1_ea71ea7cd918b2d745f27ffbee917f5a",
+        "esp1_05d9fecf64a4857657bbc5bcce0aee6f",
+      ]
+    )
+    let analyzed = await JapaneseTextAnalysisClient.resolving(
+      morphologyClient: .uiTestFixture,
+      lookupClient: lookup
+    ).linkedTokens(fixtureExamples[0].japanese, SearchQuery(miru.headword), miru)
+    XCTAssertFalse(analyzed.contains { $0.represents(miru) })
+    XCTAssertEqual(analyzed.first { $0.surface == "見る見る" }?.partOfSpeech.first, "副詞")
+
+    let matchedProblem = try await lookup.entryMatchingForm("問題")
+    let problem = try XCTUnwrap(matchedProblem)
+    let fixtureProblemExamples = try await fixture.examples(problem)
+    let liveProblemExamples = try await live.examples(problem)
+    XCTAssertEqual(fixtureProblemExamples, liveProblemExamples)
+  }
+
   func testRomajiQueryOffersSourceBackedJapaneseReading() async throws {
     let results = try await LookupClient.freshBundledDatabase().search(SearchQuery("iru"))
 

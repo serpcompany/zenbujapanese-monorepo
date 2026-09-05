@@ -1,0 +1,419 @@
+{
+  "schema": "zenbu.japanese-morphology-comparison.v1",
+  "frozenAt": "2026-09-03",
+  "winner": "sudachi.rs-0.6.11+sudachidict-core-20260723",
+  "recommendedBoundary": "Provider-native hierarchy: mode C learner candidate with mode A child spans; do not merge spans in Zenbu code",
+  "decisionEvidence": {
+    "confirmationHoldout": {
+      "protocolFreezeCommit": "6e51f8008f2a7cefe50f81314f95c28c7dc91ba5",
+      "records": 512,
+      "tokens": 12237,
+      "truthSHA256": "d19d00a4682b9b22cacd2efbf3aad849095db09fa5413115ac1899e5f60e0af0",
+      "selectedIDsSHA256": "54ec9f1368d9d20b140dd7e13574a25448c1dc6a0eca7bea2d918839d0326964",
+      "sudachiA": {
+        "boundaryF1": 0.99024,
+        "tokenSpanF1": 0.976436,
+        "lemmaAccuracy": 0.851026,
+        "readingAccuracy": 0.949699,
+        "posAccuracy": 0.899077,
+        "sentencesAllCorrect": 29,
+        "fileSHA256": "738daef8ab772f96a2c62eccad291df73a5144240e226d0531377f1af5977a75",
+        "normalizedOutputSHA256": "d8d2a4a73d1e0d16f44f089bf9908f41970b9e63c14706fc77383de720186fae"
+      },
+      "sudachiB": {
+        "boundaryF1": 0.97893,
+        "tokenSpanF1": 0.944359,
+        "lemmaAccuracy": 0.807224,
+        "readingAccuracy": 0.899032,
+        "posAccuracy": 0.855765,
+        "sentencesAllCorrect": 23,
+        "fileSHA256": "0d2d4f1a41accf03b930012c9f483b759e7c0bc4d41be9620758695de984bff4",
+        "normalizedOutputSHA256": "1a3a9d25285fe90f717539b8ea7d5e3b51f6d75bdc515686aaafb740c5eb63d6"
+      },
+      "sudachiC": {
+        "boundaryF1": 0.975597,
+        "tokenSpanF1": 0.937474,
+        "lemmaAccuracy": 0.797336,
+        "readingAccuracy": 0.888077,
+        "posAccuracy": 0.845796,
+        "sentencesAllCorrect": 23,
+        "fileSHA256": "1e85310c465f62ca16c927966fe6d7c40d1bc3c8722aa098ec6a819a9525c219",
+        "normalizedOutputSHA256": "5f9b096c251edbc6164c728bc561eca0678ba8c140c86ea7b8385e2924dba2fc"
+      },
+      "faanauKuromoji": {
+        "boundaryF1": 0.967051,
+        "tokenSpanF1": 0.920382,
+        "lemmaAccuracy": 0.739397,
+        "readingAccuracy": 0.835585,
+        "posAccuracy": 0.775108,
+        "sentencesAllCorrect": 9,
+        "fileSHA256": "908bdce9e998f626ccc2e5295780e803eb5b55c52ccfdf6e12b52e1e6718e0d8",
+        "normalizedOutputSHA256": "06d0e2f7b7e2c0271b52e4ea8d148f3833d52a86f43bda0791eb95531b7f3dbe"
+      },
+      "pairedSudachiAMinusKuromoji95CI": {
+        "boundaryF1": [0.020665, 0.028109],
+        "tokenSpanF1": [0.049196, 0.065326],
+        "lemmaAccuracy": [0.10141, 0.119912],
+        "readingAccuracy": [0.102712, 0.123901],
+        "posAccuracy": [0.112137, 0.132765],
+        "bootstrapSeed": 25120260903,
+        "replicates": 10000
+      },
+      "strata": {
+        "domain": "UD GSD news/blog; 512 OCR-perfect transcripts",
+        "mixedLatinOrNumber": {
+          "records": 163,
+          "sudachiA": {
+            "boundaryF1": 0.985825,
+            "lemmaAccuracy": 0.865507,
+            "readingAccuracy": 0.918753,
+            "posAccuracy": 0.891481
+          },
+          "faanauKuromoji": {
+            "boundaryF1": 0.97018,
+            "lemmaAccuracy": 0.72265,
+            "readingAccuracy": 0.784732,
+            "posAccuracy": 0.793088
+          }
+        },
+        "kanjiKana": {
+          "records": 345,
+          "sudachiA": {
+            "boundaryF1": 0.992841,
+            "lemmaAccuracy": 0.843073,
+            "readingAccuracy": 0.967907,
+            "posAccuracy": 0.903339
+          },
+          "faanauKuromoji": {
+            "boundaryF1": 0.965056,
+            "lemmaAccuracy": 0.749804,
+            "readingAccuracy": 0.865354,
+            "posAccuracy": 0.764545
+          }
+        },
+        "kanaOrSymbolOnly": {
+          "records": 4,
+          "sudachiA": {
+            "boundaryF1": 1.0,
+            "lemmaAccuracy": 0.678571,
+            "readingAccuracy": 1.0,
+            "posAccuracy": 0.964286
+          },
+          "faanauKuromoji": {
+            "boundaryF1": 1.0,
+            "lemmaAccuracy": 0.607143,
+            "readingAccuracy": 0.96,
+            "posAccuracy": 0.75
+          }
+        }
+      },
+      "strataSHA256": "e7c74123d0309fe1e74e97345d802bd24393855d3c598be490599c222f02de7c",
+      "executionSeconds": 9
+    },
+    "exploratoryEvidence": "GSD dev/test and PUD outputs preceded the complete auditable protocol/truth commit. They are corroborating only and do not decide the winner."
+  },
+  "providers": {
+    "sudachi": {
+      "engine": "sudachi.rs",
+      "engineVersion": "0.6.11",
+      "engineCommit": "90fd6068c80c2fc3b63e0dbab0e341475bad4d8f",
+      "binding": "sudachi-swift 0.1.1",
+      "bindingCommit": "92f55c556ba0e6c6f25660b049072811d40f045f",
+      "dictionary": "SudachiDict Core 20260723",
+      "dictionarySHA256": "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f",
+      "license": "Apache-2.0 plus SudachiDict LEGAL third-party notices"
+    },
+    "faanauKuromoji": {
+      "engine": "@faanau/kuromoji",
+      "engineVersion": "0.2.1",
+      "engineCommit": "380a8da1072691006b1a8c300885a04d582e80a1",
+      "npmTarballSHA256": "979d6d5ef7464a0b9e1461ee9f4d9ffe712874f57a7afb556e4465ed966f6b20",
+      "dictionary": "mecab-ipadic-2.7.0-20070801",
+      "dictionaryAggregateSHA256": "484ee6b00d145650e82421d330463809e4b7b500ba0140064efd1849544adb86",
+      "license": "Apache-2.0 plus NAIST and ICOT notices"
+    },
+    "nativeSwiftKuromoji": {
+      "engineCommit": "c601b3bf912babf0aa94c209a5dc74a46bd225db",
+      "sourceDictionaryArchiveSHA256": "b62f527d881c504576baed9c6ef6561554658b175ce6ae0096a60307e49e3523",
+      "generatedDictionaryAggregateSHA256": "8ce1e22cc662d5d4726a755e28ff4ec02955235f63a8ca5c0a0a8d3e7e3909c6",
+      "license": "Apache-2.0 plus NAIST and ICOT notices; current app bundle omitted required notices"
+    },
+    "luceneKuromoji": {
+      "engineVersion": "10.5.1",
+      "engineCommit": "64ce863a2bea79c69c19c4d56268c26710ff0ff9",
+      "dictionaryAggregateSHA256": "628babc9f58dfdc19598cc563014204a580ad4d0b56c28f22317e25233261b12",
+      "license": "Apache-2.0 plus bundled NAIST and ICOT notices"
+    }
+  },
+  "quality": {
+    "gsdDev": {
+      "records": 507,
+      "tokens": 12287,
+      "sudachiA": {
+        "boundaryF1": 0.990469,
+        "tokenSpanF1": 0.976727,
+        "lemmaAccuracy": 0.852108,
+        "readingAccuracy": 0.949199,
+        "posAccuracy": 0.900871,
+        "sentencesAllCorrect": 30,
+        "normalizedOutputSHA256": "0cc5603d5986530c726f8929d9b84996c434cc014ac0a235688375bb6aee9a21"
+      },
+      "sudachiB": {
+        "boundaryF1": 0.979311,
+        "tokenSpanF1": 0.944978,
+        "lemmaAccuracy": 0.80726,
+        "readingAccuracy": 0.898759,
+        "posAccuracy": 0.857573,
+        "sentencesAllCorrect": 22,
+        "normalizedOutputSHA256": "c5ed933958b160c06fa3a93b93086bbc2d856cdf712fe20d8dc7caf46026eea1"
+      },
+      "sudachiC": {
+        "boundaryF1": 0.975382,
+        "tokenSpanF1": 0.936693,
+        "lemmaAccuracy": 0.796028,
+        "readingAccuracy": 0.886082,
+        "posAccuracy": 0.845935,
+        "sentencesAllCorrect": 22,
+        "normalizedOutputSHA256": "5a45bc21d5daf916bd72fa580afc6ec1797b86ca674a4c6bcc08dd25bdd81fa7"
+      },
+      "faanauKuromoji": {
+        "boundaryF1": 0.966944,
+        "tokenSpanF1": 0.919437,
+        "lemmaAccuracy": 0.741739,
+        "readingAccuracy": 0.838812,
+        "posAccuracy": 0.773663,
+        "sentencesAllCorrect": 10,
+        "normalizedOutputSHA256": "7519149985941740b25baa21cfb375dafb11007a704605b3db5a9ef41d4019c9"
+      },
+      "nativeSwiftKuromoji": {
+        "boundaryF1": 0.966632,
+        "tokenSpanF1": 0.918794,
+        "lemmaAccuracy": 0.741169,
+        "readingAccuracy": 0.83854,
+        "posAccuracy": 0.773175,
+        "sentencesAllCorrect": 10,
+        "normalizedResolvedOutputSHA256": "6d447fbd8d7572a0bdd730a72e8ce551234440ecbc36f9277092bf55f6c9b6fe",
+        "excluded": "Two same-day commits, no release, unpinned dictionary build, incomplete notices in built app"
+      },
+      "ocrStrata": {
+        "cleanRecords": 3,
+        "noisyRecords": 1,
+        "sudachiA": {
+          "cleanBoundaryF1": 0.971429,
+          "noisyBoundaryF1": 0.947368
+        },
+        "sudachiB": { "cleanBoundaryF1": 1.0, "noisyBoundaryF1": 0.947368 },
+        "faanauKuromoji": {
+          "cleanBoundaryF1": 1.0,
+          "noisyBoundaryF1": 0.888889
+        }
+      },
+      "luceneKuromojiSearch": {
+        "boundaryF1": 0.970511,
+        "tokenSpanF1": 0.927152,
+        "lemmaAccuracy": 0.799935,
+        "readingAccuracy": 0.847505,
+        "posAccuracy": 0.790429,
+        "sentencesAllCorrect": 14,
+        "normalizedOutputSHA256": "629f1ef911a64c1c911e933a8533ffb6d25d4621125c6f4a84977eaf9ba77698",
+        "excluded": "No public explicit OOV attribute and no credible iOS JVM route"
+      }
+    },
+    "gsdSealedTest": {
+      "records": 543,
+      "tokens": 13034,
+      "sudachiA": {
+        "boundaryF1": 0.992439,
+        "tokenSpanF1": 0.980485,
+        "lemmaAccuracy": 0.838269,
+        "readingAccuracy": 0.959393,
+        "posAccuracy": 0.900951,
+        "sentencesAllCorrect": 28,
+        "normalizedOutputSHA256": "c67943f0db092b992e205fb2f5585b6ac1003384fdab71b3d7cf5442cfcfd054"
+      },
+      "sudachiB": {
+        "boundaryF1": 0.982754,
+        "tokenSpanF1": 0.953321,
+        "lemmaAccuracy": 0.799294,
+        "readingAccuracy": 0.914675,
+        "posAccuracy": 0.864355,
+        "sentencesAllCorrect": 22,
+        "normalizedOutputSHA256": "b7164f2c6fa9f19752da47839167556f967b0994fcbd48b15fc9ac3e1b662407"
+      },
+      "sudachiC": {
+        "boundaryF1": 0.979809,
+        "tokenSpanF1": 0.946437,
+        "lemmaAccuracy": 0.789781,
+        "readingAccuracy": 0.904052,
+        "posAccuracy": 0.854995,
+        "sentencesAllCorrect": 21,
+        "normalizedOutputSHA256": "e013617d304abbe5b77bc065f45cde4d8ba004b07cea28a27f3d52f97e7a560d"
+      },
+      "faanauKuromoji": {
+        "boundaryF1": 0.968868,
+        "tokenSpanF1": 0.922405,
+        "lemmaAccuracy": 0.734157,
+        "readingAccuracy": 0.858048,
+        "posAccuracy": 0.769909,
+        "sentencesAllCorrect": 14,
+        "normalizedOutputSHA256": "e289e0a8f9e70f2f05450f36f4009e841e5c73f6231f6694cdff3261af2ecd6d"
+      },
+      "pairedSudachiAMinusKuromoji95CI": {
+        "boundaryF1": [0.020414, 0.026686],
+        "tokenSpanF1": [0.050457, 0.064967],
+        "lemmaAccuracy": [0.096064, 0.112628],
+        "readingAccuracy": [0.089102, 0.108536],
+        "posAccuracy": [0.12647, 0.147579],
+        "bootstrapSeed": 25120260903,
+        "replicates": 10000
+      }
+    },
+    "pudExternalDomain": {
+      "records": 1000,
+      "tokens": 28788,
+      "sudachiA": {
+        "boundaryF1": 0.993724,
+        "tokenSpanF1": 0.984951,
+        "lemmaAccuracy": 0.85024,
+        "readingAccuracy": 0.960558,
+        "posAccuracy": 0.89176,
+        "sentencesAllCorrect": 5,
+        "normalizedOutputSHA256": "85b0e7764d952f8b5af759d21c402d4bf28195d2dd5b0b7755baee19b9b7e395"
+      },
+      "faanauKuromoji": {
+        "boundaryF1": 0.971589,
+        "tokenSpanF1": 0.932775,
+        "lemmaAccuracy": 0.756409,
+        "readingAccuracy": 0.858151,
+        "posAccuracy": 0.764207,
+        "sentencesAllCorrect": 2,
+        "normalizedOutputSHA256": "a872cdcf4f080b2995d7323b0ed4c138d6bee2dd5e511706f4be1af813d1e9c5"
+      },
+      "pairedSudachiAMinusKuromoji95CI": {
+        "boundaryF1": [0.020135, 0.023979],
+        "tokenSpanF1": [0.047616, 0.056188],
+        "lemmaAccuracy": [0.086776, 0.096881],
+        "readingAccuracy": [0.093872, 0.105759],
+        "posAccuracy": [0.122163, 0.134076],
+        "bootstrapSeed": 25120260903,
+        "replicates": 10000
+      }
+    },
+    "zenbuHardCases": {
+      "records": 10,
+      "tokens": 69,
+      "sudachiA": {
+        "boundaryF1": 0.951613,
+        "allowedBoundaryF1": 0.968254,
+        "lemmaAccuracy": 0.910448,
+        "readingAccuracy": 0.968254,
+        "posAccuracy": 0.941176,
+        "oovPrecision": 1.0,
+        "oovRecall": 0.2,
+        "oovF1": 0.333333,
+        "exactCandidateRecall": 0.5,
+        "exactLinkPrecision": 1.0,
+        "exactLinkRecall": 0.5,
+        "abstentions": "6/6",
+        "severeWrongLinks": 0,
+        "severeWrongLinkRate": 0.0
+      },
+      "sudachiB": {
+        "boundaryF1": 0.95935,
+        "allowedBoundaryF1": 0.967742,
+        "lemmaAccuracy": 0.925373,
+        "readingAccuracy": 0.984127,
+        "posAccuracy": 0.955882,
+        "oovPrecision": 1.0,
+        "oovRecall": 0.2,
+        "oovF1": 0.333333,
+        "exactCandidateRecall": 1.0,
+        "exactLinkPrecision": 1.0,
+        "exactLinkRecall": 1.0,
+        "abstentions": "6/6",
+        "severeWrongLinks": 0,
+        "severeWrongLinkRate": 0.0
+      },
+      "faanauKuromoji": {
+        "boundaryF1": 0.95082,
+        "allowedBoundaryF1": 0.95935,
+        "lemmaAccuracy": 0.865672,
+        "readingAccuracy": 0.968254,
+        "posAccuracy": 0.926471,
+        "oovPrecision": 1.0,
+        "oovRecall": 0.6,
+        "oovF1": 0.75,
+        "exactCandidateRecall": 1.0,
+        "exactLinkPrecision": 1.0,
+        "exactLinkRecall": 1.0,
+        "abstentions": "6/6",
+        "severeWrongLinks": 0,
+        "severeWrongLinkRate": 0.0
+      },
+      "nativeSwiftKuromoji": {
+        "boundaryF1": 0.95082,
+        "lemmaAccuracy": 0.865672,
+        "readingAccuracy": 0.968254,
+        "posAccuracy": 0.926471,
+        "oovAccuracy": 0.956522,
+        "exactCandidateRecall": 1.0,
+        "abstentions": "6/6",
+        "severeWrongLinks": 0,
+        "normalizedResolvedOutputSHA256": "de5d4afb7b9d4915c436437e5de2ddc9e80a25d80958c5fd52a8fbb78d58913e"
+      },
+      "interpretation": "Mode A follows primary short-unit boundaries but divides 日本語; modes B/C retain its one app-owned candidate. A production prototype should consume Sudachi's own hierarchy rather than inventing a merge rule."
+    }
+  },
+  "simulatorFeasibility": {
+    "environment": "iPhone 17 Pro Simulator; iOS 26.0.1; Xcode 26.0 17A324; Apple M3 Max host; Release -Os",
+    "physicalDeviceEvidence": false,
+    "rawSamplesSHA256": "cac5533d4fd77b543379bfc5e976147ea19d30357d95436ff4ea99741e13d41e",
+    "protocol": "30 fresh processes per provider; 20 warmups plus 200 measured calls; 10 deterministic repeats; 100 concurrent calls; 90/90 launches completed",
+    "executionSeconds": 92,
+    "sudachi": {
+      "compressedRuntimeBytes": 29519209,
+      "compressedDictionaryBytes": 72276502,
+      "installedDictionaryBytes": 217466039,
+      "releaseAppBytes": 220103908,
+      "coldInitP50Milliseconds": 7.187167,
+      "coldInitP95Milliseconds": 7.70825,
+      "warmP50Milliseconds": 0.054958,
+      "warmP95Milliseconds": 0.06625,
+      "warmThroughputSentencesPerSecond": 20831.164,
+      "steadyRSSP50Bytes": 311328768,
+      "steadyRSSP95Bytes": 311853056,
+      "concurrency": "30x100/30x100; one hash; zero failures",
+      "checksumValidation": "30/30 real Core digests passed; 30/30 corrupt payloads rejected; missing resource has explicit error",
+      "checksumValidationP50Milliseconds": 78.120042,
+      "checksumValidationP95Milliseconds": 83.9445
+    },
+    "faanauKuromojiJSC": {
+      "compressedDictionaryBytes": 17791956,
+      "expandedDictionaryBytes": 100260388,
+      "releaseAppBytes": 100484007,
+      "coldInitP50Milliseconds": 33.402,
+      "coldInitP95Milliseconds": 34.425625,
+      "warmP50Milliseconds": 0.034083,
+      "warmP95Milliseconds": 0.072,
+      "warmThroughputSentencesPerSecond": 25739.472,
+      "steadyRSSP50Bytes": 483196928,
+      "steadyRSSP95Bytes": 484392960,
+      "concurrency": "30x100/30x100; one hash; same VM serializes",
+      "integrationBlocker": "iOS JavaScriptCore has neither fetch nor DecompressionStream; requires native loader/decompression/JS lifecycle bridge"
+    },
+    "nativeSwiftKuromoji": {
+      "repositoryCommit": "c601b3bf912babf0aa94c209a5dc74a46bd225db",
+      "generatedDictionaryBytes": 35895128,
+      "releaseAppBytes": 36484719,
+      "coldInitP50Milliseconds": 15.963792,
+      "coldInitP95Milliseconds": 17.339083,
+      "warmP50Milliseconds": 0.024916,
+      "warmP95Milliseconds": 0.032667,
+      "warmThroughputSentencesPerSecond": 43169.779,
+      "steadyRSSP50Bytes": 331464704,
+      "steadyRSSP95Bytes": 332103680,
+      "concurrency": "30x100/30x100; one hash",
+      "excluded": "Two same-day commits, no tag/release, no published adoption history, unpinned dictionary download script"
+    }
+  }
+}

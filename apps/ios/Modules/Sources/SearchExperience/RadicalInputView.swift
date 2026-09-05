@@ -7,94 +7,80 @@ struct RadicalInputView: View {
   let selectMode: (SearchInputMode) -> Void
   let submit: (SearchQuery) -> Void
   @State private var selectedRadicals: Set<String> = []
-  @State private var selectedCandidate: SearchQuery?
   @State private var catalog: RadicalCatalog?
   @State private var loadFailed = false
 
   var body: some View {
     VStack(spacing: 0) {
       candidateStrip
-      SearchInputModeBar(selectedMode: .radicals, selectMode: selectMode)
+      SearchInputModePicker(selectedMode: .radicals, selectMode: selectMode)
 
-      HStack(spacing: 0) {
-        ScrollView {
-          if loadFailed {
-            ContentUnavailableView(
-              "Radical data unavailable", systemImage: "exclamationmark.triangle"
-            )
-            .accessibilityIdentifier("radical.load-failure")
-          } else {
-            LazyVStack(alignment: .leading, spacing: 8) {
-              ForEach(groups, id: \.strokeCount) { group in
-                Text(group.strokeCount == 1 ? "1 Stroke" : "\(group.strokeCount) Strokes")
-                  .font(.caption.weight(.semibold))
-                  .foregroundStyle(ZenbuTheme.secondaryText)
-                LazyVGrid(
-                  columns: Array(
-                    repeating: GridItem(.flexible(), spacing: 4),
-                    count: dynamicTypeSize >= .xxLarge ? 4 : 8
-                  ),
-                  spacing: 4
-                ) {
-                  ForEach(group.values) { radical in
-                    Button(radical.glyph) { toggle(radical.id) }
-                      .font(.title3)
-                      .frame(maxWidth: .infinity, minHeight: 44)
-                      .background(
-                        selectedRadicals.contains(radical.id)
-                          ? ZenbuTheme.selectedTab
-                          : ZenbuTheme.accent,
-                        in: RoundedRectangle(cornerRadius: 5)
-                      )
-                      .accessibilityLabel("Radical \(radical.glyph)")
-                      .accessibilityValue(
-                        selectedRadicals.contains(radical.id) ? "Selected" : "Not selected"
-                      )
-                      .accessibilityIdentifier(radical.accessibilityIdentifier)
-                  }
+      ScrollView {
+        if loadFailed {
+          ContentUnavailableView {
+            Label("Radical data unavailable", systemImage: "exclamationmark.triangle")
+              .foregroundStyle(.red)
+          }
+          .accessibilityIdentifier("radical.load-failure")
+        } else {
+          LazyVStack(alignment: .leading, spacing: 8) {
+            ForEach(groups, id: \.strokeCount) { group in
+              Text(group.strokeCount == 1 ? "1 Stroke" : "\(group.strokeCount) Strokes")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.primary)
+                .accessibilityIdentifier("radical.stroke.\(group.strokeCount)")
+              LazyVGrid(
+                columns: Array(
+                  repeating: GridItem(.flexible(), spacing: 4),
+                  count: dynamicTypeSize >= .xxLarge ? 4 : 8
+                ),
+                spacing: 4
+              ) {
+                ForEach(group.values) { radical in
+                  Button(radical.glyph) { toggle(radical.id) }
+                    .font(.title3)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(
+                      selectedRadicals.contains(radical.id)
+                        ? ZenbuTheme.radicalSelection
+                        : Color(uiColor: .secondarySystemFill),
+                      in: RoundedRectangle(cornerRadius: 5)
+                    )
+                    .foregroundStyle(
+                      selectedRadicals.contains(radical.id) ? Color.white : Color.primary
+                    )
+                    .accessibilityLabel("Radical \(radical.glyph)")
+                    .accessibilityValue(
+                      selectedRadicals.contains(radical.id) ? "Selected" : "Not selected"
+                    )
+                    .accessibilityIdentifier(radical.accessibilityIdentifier)
                 }
               }
             }
-            .padding(10)
           }
+          .padding(10)
         }
-        .accessibilityIdentifier("radical.grid")
-
-        VStack(spacing: 0) {
-          Button {
-            selectedRadicals.removeAll()
-            selectedCandidate = nil
-            query = ""
-          } label: {
-            Image(systemName: "delete.left")
-              .font(.title2)
-              .frame(maxWidth: .infinity, maxHeight: .infinity)
-          }
-          .disabled(selectedRadicals.isEmpty && SearchQuery(query).isEmpty)
-          .accessibilityLabel("Remove radical selection")
-          .accessibilityIdentifier("radical.remove")
-
-          Button("Search") {
-            if let selectedCandidate { submit(selectedCandidate) }
-          }
-          .font(.body.weight(.semibold))
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .background(
-            selectedCandidate == nil
-              ? ZenbuTheme.mutedForeground.opacity(0.08) : ZenbuTheme.selectedTab
-          )
-          .foregroundStyle(
-            selectedCandidate == nil ? ZenbuTheme.foreground : ZenbuTheme.primaryForeground
-          )
-          .buttonStyle(UndimmedPlainButtonStyle())
-          .disabled(selectedCandidate == nil)
-          .accessibilityIdentifier("radical.search")
-        }
-        .frame(width: 90)
       }
-      .frame(minHeight: dynamicTypeSize >= .xxLarge ? 360 : 258)
+      .accessibilityIdentifier("radical.grid")
+      .frame(minHeight: dynamicTypeSize >= .xxLarge ? 260 : 258)
+
+      HStack {
+        Button("Remove", systemImage: "delete.left") {
+          selectedRadicals.removeAll()
+          query = ""
+        }
+        .buttonStyle(.bordered)
+        .tint(.primary)
+        .disabled(selectedRadicals.isEmpty && SearchQuery(query).isEmpty)
+        .accessibilityLabel("Remove radical selection")
+        .accessibilityIdentifier("radical.remove")
+
+        Spacer()
+      }
+      .controlSize(.large)
+      .padding(.horizontal)
+      .padding(.bottom, 10)
     }
-    .background(ZenbuTheme.row)
     .task {
       guard catalog == nil else { return }
       do {
@@ -113,7 +99,7 @@ struct RadicalInputView: View {
         Spacer()
       }
       .font(.body)
-      .foregroundStyle(ZenbuTheme.secondaryText)
+      .foregroundStyle(.secondary)
       .fixedSize(horizontal: false, vertical: true)
       .padding(.horizontal, 14)
       .padding(.vertical, 6)
@@ -121,22 +107,17 @@ struct RadicalInputView: View {
     } else {
       ScrollView(.horizontal, showsIndicators: false) {
         LazyHStack(spacing: 0) {
-          ForEach(radicalCandidates, id: \.value) { candidate in
+          ForEach(Array(radicalCandidates.enumerated()), id: \.element.value) {
+            index, candidate in
             Button(candidate.value) {
-              selectedCandidate = SearchQuery(candidate.value)
-              query = candidate.value
+              let submittedQuery = SearchQuery(candidate.value)
+              query = submittedQuery.value
+              submit(submittedQuery)
             }
             .font(.title)
-            .foregroundStyle(
-              selectedCandidate?.value == candidate.value
-                ? ZenbuTheme.primaryForeground
-                : ZenbuTheme.foreground
-            )
             .frame(minWidth: 54, minHeight: 46)
-            .background(
-              selectedCandidate?.value == candidate.value ? ZenbuTheme.selectedTab : .clear
-            )
             .accessibilityLabel("Use radical candidate \(candidate.value)")
+            .accessibilityValue("Candidate rank \(index + 1)")
             .accessibilityIdentifier("radical.candidate.\(candidate.value)")
           }
         }
@@ -160,12 +141,6 @@ struct RadicalInputView: View {
       selectedRadicals.remove(radical)
     } else {
       selectedRadicals.insert(radical)
-    }
-    if let selectedCandidate,
-      !radicalCandidates.contains(where: { $0.value == selectedCandidate.value })
-    {
-      self.selectedCandidate = nil
-      query = ""
     }
   }
 }

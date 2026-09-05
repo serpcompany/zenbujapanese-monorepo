@@ -40,15 +40,6 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
     )
   }
 
-  var frequency: Frequency {
-    isCommon ? .common : .unmarked
-  }
-
-  enum Frequency: String, Sendable {
-    case common = "COMMON"
-    case unmarked = "UNMARKED"
-  }
-
   var alternativeForms: [DictionaryForm] {
     var seen = Set<String>()
     return (writtenForms + readingForms).filter {
@@ -70,7 +61,8 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
   var alternativeKanji: [String] {
     let primary = Set(primaryKanji)
     var seen = Set<String>()
-    return writtenForms
+    return
+      writtenForms
       .filter { $0.value != headword }
       .flatMap { form in form.value.map(String.init) }
       .filter { character in
@@ -85,8 +77,8 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
   }
 }
 
-private extension Character {
-  var isCJKUnifiedIdeograph: Bool {
+extension Character {
+  fileprivate var isCJKUnifiedIdeograph: Bool {
     unicodeScalars.contains { (0x3400...0x9FFF).contains(Int($0.value)) }
   }
 }

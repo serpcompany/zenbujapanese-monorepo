@@ -1,0 +1,47 @@
+{
+  "configurations" : [
+    {
+      "id" : "269D1A60-5D31-4E1B-99CD-9CF8D3926901",
+      "name" : "English (US)",
+      "options" : {
+        "language" : "en",
+        "region" : "US"
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "defaultTestExecutionTimeAllowance" : 600,
+    "maximumTestExecutionTimeAllowance" : 1200,
+    "testTimeoutsEnabled" : true,
+    "uiTestingScreenshotsLifetime" : "keepAlways",
+    "userAttachmentLifetime" : "keepAlways",
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:ZenbuJapanese.xcodeproj",
+      "identifier" : "5CD4552D207F8AC0D2D15CD6",
+      "name" : "ZenbuJapanese"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "selectedTests" : [
+        "AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutRetainsRawHitRegionDiagnostic",
+        "AccessibilityAuditUITests/testDarkWordDetailRetainsCompleteAX5Diagnostic",
+        "AccessibilityAuditUITests/testLightWordDetailRetainsCompleteAX5Diagnostic",
+        "AccessibilityAuditUITests/testDarkShortWordDetailRetainsSystemDynamicTypeDiagnostic",
+        "AccessibilityAuditUITests/testLightShortWordDetailRetainsSystemDynamicTypeDiagnostic",
+        "AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInLightMode",
+        "AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInDarkMode",
+        "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode",
+        "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode",
+        "AccessibilityFrameworkDiagnosticUITests"
+      ],
+      "target" : {
+        "containerPath" : "container:ZenbuJapanese.xcodeproj",
+        "identifier" : "74E6EB6E486E0D87C41A29EF",
+        "name" : "ZenbuJapaneseUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

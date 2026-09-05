@@ -22,46 +22,34 @@ struct HandwritingInputView: View {
   var body: some View {
     VStack(spacing: 0) {
       candidateStrip
-      SearchInputModeBar(selectedMode: .handwriting, selectMode: selectMode)
+      SearchInputModePicker(selectedMode: .handwriting, selectMode: selectMode)
 
-      HStack(spacing: 0) {
-        HandwritingCanvas(strokes: $model.strokes, completedStroke: model.recognize)
-          .aspectRatio(1, contentMode: .fit)
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .padding(8)
+      HandwritingCanvas(strokes: $model.strokes, completedStroke: model.recognize)
+        .aspectRatio(1, contentMode: .fit)
+        .frame(
+          minWidth: dynamicTypeSize.isAccessibilitySize ? nil : 240,
+          maxWidth: .infinity,
+          minHeight: dynamicTypeSize.isAccessibilitySize ? nil : 240,
+          maxHeight: .infinity
+        )
+        .padding(8)
 
-        VStack(spacing: 0) {
-          Button {
-            model.eraseDrawing()
-          } label: {
-            Image(systemName: "eraser")
-              .font(.title2)
-              .frame(maxWidth: .infinity, maxHeight: .infinity)
-          }
-          .disabled(model.strokes.isEmpty)
-          .accessibilityLabel("Erase drawing")
-          .accessibilityIdentifier("handwriting.erase")
-
-          Button("Search") {
-            let normalized = model.submittedQuery(appendingTo: query)
-            query = normalized.value
-            submit(normalized)
-          }
-          .font(.body.weight(.semibold))
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .background(canSubmit ? ZenbuTheme.selectedTab : ZenbuTheme.mutedForeground.opacity(0.08))
-          .foregroundStyle(canSubmit ? ZenbuTheme.primaryForeground : ZenbuTheme.foreground)
-          .buttonStyle(UndimmedPlainButtonStyle())
-          .disabled(!canSubmit)
-          .accessibilityIdentifier("handwriting.search")
+      HStack {
+        Button {
+          model.eraseDrawing()
+        } label: {
+          Image(systemName: "eraser")
         }
-        .frame(width: dynamicTypeSize >= .xxLarge ? 110 : 64)
+        .buttonStyle(.bordered)
+        .disabled(model.strokes.isEmpty)
+        .accessibilityLabel("Erase drawing")
+        .accessibilityIdentifier("handwriting.erase")
+
+        Spacer()
       }
-      .frame(minHeight: dynamicTypeSize >= .xxLarge ? 340 : 264)
-    }
-    .background(ZenbuTheme.row)
-    .overlay(alignment: .top) {
-      Rectangle().fill(ZenbuTheme.mutedForeground.opacity(0.1)).frame(height: 0.5)
+      .controlSize(.large)
+      .padding(.horizontal)
+      .padding(.bottom, 10)
     }
     .onDisappear { model.cancelRecognition() }
   }
@@ -71,7 +59,9 @@ struct HandwritingInputView: View {
     if model.candidates.isEmpty {
       HStack {
         switch model.recognitionState {
-        case .idle: Text("Draw one Japanese character")
+        case .idle:
+          Text("Draw one Japanese character")
+            .foregroundStyle(.primary)
         case .recognizing:
           ProgressView().controlSize(.small)
           Text("Recognizing…")
@@ -85,7 +75,7 @@ struct HandwritingInputView: View {
         Spacer()
       }
       .font(.body)
-      .foregroundStyle(ZenbuTheme.secondaryText)
+      .foregroundStyle(.secondary)
       .fixedSize(horizontal: false, vertical: true)
       .padding(.horizontal, 14)
       .padding(.vertical, 6)
@@ -95,11 +85,12 @@ struct HandwritingInputView: View {
         HStack(spacing: 0) {
           ForEach(Array(model.candidates.enumerated()), id: \.element.id) { index, candidate in
             Button(candidate.value) {
-              query.append(candidate.value)
+              let submittedQuery = SearchQuery(query + candidate.value)
+              query = submittedQuery.value
               model.acceptCandidate()
+              submit(submittedQuery)
             }
             .font(.title)
-            .foregroundStyle(ZenbuTheme.foreground)
             .frame(minWidth: 54, minHeight: 46)
             .accessibilityLabel("Use handwriting candidate \(candidate.value)")
             .accessibilityValue("Candidate rank \(index + 1)")
@@ -109,9 +100,5 @@ struct HandwritingInputView: View {
       }
       .frame(minHeight: 46)
     }
-  }
-
-  private var canSubmit: Bool {
-    !SearchQuery(query).isEmpty || (!model.strokes.isEmpty && model.candidates.first != nil)
   }
 }

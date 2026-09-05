@@ -1,11 +1,18 @@
 import SwiftUI
+import UIKit
 
 public struct SearchExperienceRootView: View {
+  @State private var readingAidPreferences = ReadingAidPreferences()
   @State private var selectedTab = SearchExperienceTab.search
+  @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
+  @State private var youPath: [YouRoute] = []
   @State private var query = ""
   #if DEBUG
-    @State private var exportsImageFixtures = false
+    @State private var preparesJapaneseAnalysis = ProcessInfo.processInfo.arguments.contains(
+      "-EnsureJapaneseAnalysis")
+    private let independentlyHostsYou = ProcessInfo.processInfo.arguments.contains(
+      "-IndependentlyHostYou")
   #endif
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
@@ -16,37 +23,53 @@ public struct SearchExperienceRootView: View {
     @State private var lastFinishedSpeech: SpeechPlaybackVerificationEvent?
   #endif
   private let lookupClient: LookupClient
+  private let exampleSentenceClient: ExampleSentenceClient
+  private let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   private let recentSearchStore = RecentSearchStore.live
   private let encounterMediaStore = EncounterMediaStore.live
   private let handwritingRecognitionClient: HandwritingRecognitionClient
   private let cameraAuthorizationClient: CameraAuthorizationClient
   private let speechSynthesisClient: SpeechSynthesisClient
+  private let kanjiLookupClient: KanjiLookupClient
   private let kanjiStrokeOrderClient: KanjiStrokeOrderClient
   private let kanjiElementLookupClient: KanjiElementLookupClient
   private let japaneseConjugationClient = JapaneseConjugationClient.live
-  private let imageImportInitialDirectory: URL?
   private let imageTextRecognitionClient: ImageTextRecognitionClient
   private let naturalTranslationClient: NaturalTranslationClient
-  #if DEBUG
-    private let imageFixtureExportURLs: [URL]
-  #endif
+  private let imageTextClipboardClient: ImageTextClipboardClient
 
   public init() {
     #if DEBUG
-      lookupClient = LookupClient.clientFromProcessArguments(live: .live) ?? .live
+      let resolvedLookupClient = LookupClient.clientFromProcessArguments(live: .live) ?? .live
+      lookupClient = resolvedLookupClient
+      exampleSentenceClient = .clientFromProcessArguments(live: .live) ?? .live
+      let usesReducedAnalysis = ProcessInfo.processInfo.arguments.contains(
+        "-UseReducedJapaneseAnalysis")
+      if usesReducedAnalysis {
+        japaneseTextAnalysisClient = .characterFallback
+      } else {
+        japaneseTextAnalysisClient = .resolving(
+          morphologyClient: ProcessInfo.processInfo.arguments.contains(
+            "-UseJapaneseAnalysisFixture")
+            ? .uiTestFixture : .live,
+          lookupClient: resolvedLookupClient
+        )
+      }
+      let liveKanjiLookupClient = KanjiLookupClient.live(lookupClient: resolvedLookupClient)
+      kanjiLookupClient =
+        KanjiLookupClient.clientFromProcessArguments(live: liveKanjiLookupClient)
+        ?? liveKanjiLookupClient
       handwritingRecognitionClient =
         HandwritingRecognitionFixture.clientFromProcessArguments() ?? .live
       cameraAuthorizationClient = CameraAuthorizationClient.clientFromProcessArguments() ?? .live
       speechSynthesisClient = SpeechSynthesisClient.clientFromProcessArguments() ?? .live
       kanjiStrokeOrderClient = KanjiStrokeOrderClient.clientFromProcessArguments() ?? .live
       kanjiElementLookupClient = KanjiElementLookupClient.clientFromProcessArguments() ?? .live
-      imageImportInitialDirectory = ImageTextTestFixtures.prepareIfRequested()
+      let imageImportInitialDirectory = ImageTextTestFixtures.prepareIfRequested()
       imageTextRecognitionClient =
         ImageTextRecognitionFixture.clientFromProcessArguments(live: .live) ?? .live
       naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live
-      imageFixtureExportURLs = ImageTextTestFixtures.exportURLsFromProcessArguments(
-        in: imageImportInitialDirectory)
-      _exportsImageFixtures = State(initialValue: !imageFixtureExportURLs.isEmpty)
+      imageTextClipboardClient = ImageTextClipboardClient.clientFromProcessArguments() ?? .live
       if let session = ImageTextTestFixtures.sessionFromProcessArguments(
         in: imageImportInitialDirectory)
       {
@@ -55,38 +78,40 @@ public struct SearchExperienceRootView: View {
       }
     #else
       lookupClient = .live
+      exampleSentenceClient = .live
+      japaneseTextAnalysisClient = .live(lookupClient: .live)
+      kanjiLookupClient = .live(lookupClient: .live)
       handwritingRecognitionClient = .live
       cameraAuthorizationClient = .live
       speechSynthesisClient = .live
       kanjiStrokeOrderClient = .live
       kanjiElementLookupClient = .live
-      imageImportInitialDirectory = nil
       imageTextRecognitionClient = .live
       naturalTranslationClient = .live
+      imageTextClipboardClient = .live
     #endif
   }
 
   public var body: some View {
-    TabView(selection: $selectedTab) {
-      Tab("Search", systemImage: "magnifyingglass", value: SearchExperienceTab.search) {
-        searchNavigation
-      }
-
-      Tab("More", systemImage: "ellipsis", value: SearchExperienceTab.more) {
-        NavigationStack {
-          MoreView(store: encounterMediaStore)
+    Group {
+      #if DEBUG
+        if independentlyHostsYou {
+          YouNavigationView(path: $youPath, store: encounterMediaStore)
+        } else if preparesJapaneseAnalysis {
+          ProgressView("Preparing on-device Japanese Text Analysis")
+            .accessibilityIdentifier("language-technology-pack.preparing")
+        } else {
+          verifiedAppTabs
         }
-      }
+      #else
+        appTabs
+      #endif
     }
-    .tint(ZenbuTheme.interactiveForeground)
-    .foregroundStyle(ZenbuTheme.foreground)
-    .background(ZenbuTheme.background)
     #if DEBUG
-      .sheet(isPresented: $exportsImageFixtures) {
-        ImageFileExporter(urls: imageFixtureExportURLs) {
-          exportsImageFixtures = false
-        }
-        .ignoresSafeArea()
+      .task {
+        guard preparesJapaneseAnalysis else { return }
+        await LanguageTechnologyPackStore.shared.ensureInstalledForTesting()
+        preparesJapaneseAnalysis = false
       }
     #endif
     .overlay(alignment: .topLeading) {
@@ -97,6 +122,10 @@ public struct SearchExperienceRootView: View {
         )
       #endif
     }
+    .environment(readingAidPreferences)
+    #if DEBUG
+      .preferredColorScheme(forcedUITestColorScheme)
+    #endif
     #if DEBUG
       .onReceive(NotificationCenter.default.publisher(for: SpeechPlaybackVerification.notification))
       {
@@ -113,8 +142,50 @@ public struct SearchExperienceRootView: View {
     #endif
   }
 
+  #if DEBUG
+    @ViewBuilder
+    private var verifiedAppTabs: some View {
+      if ProcessInfo.processInfo.arguments.contains("-ReportAccessibilitySettings") {
+        appTabs.accessibilityValue(
+          "increaseContrast=\(UIAccessibility.isDarkerSystemColorsEnabled)"
+        )
+      } else {
+        appTabs
+      }
+    }
+
+    private var forcedUITestColorScheme: ColorScheme? {
+      let arguments = ProcessInfo.processInfo.arguments
+      if arguments.contains("-ForceUITestDarkAppearance") { return .dark }
+      if arguments.contains("-ForceUITestLightAppearance") { return .light }
+      return nil
+    }
+  #endif
+
+  private var appTabs: some View {
+    TabView(selection: $selectedTab) {
+      Tab("Search", systemImage: "magnifyingglass", value: SearchExperienceTab.search) {
+        searchNavigation
+      }
+
+      Tab(value: SearchExperienceTab.you) {
+        YouNavigationView(path: $youPath, store: encounterMediaStore)
+      } label: {
+        Label("You", systemImage: "person.crop.circle")
+          .accessibilityLabel("You, personal content and settings")
+          .accessibilityIdentifier("tab.you")
+      }
+    }
+    .scrollEdgeEffectStyle(.hard, for: .bottom)
+    .onChange(of: selectedTab) { previous, current in
+      if previous != .search, current == .search {
+        frequencyRefreshID += 1
+      }
+    }
+  }
+
   private var searchNavigation: some View {
-    NavigationStack(path: $path) {
+    NavigationStack(path: searchPath) {
       SearchView(
         query: $query,
         lookupClient: lookupClient,
@@ -122,72 +193,57 @@ public struct SearchExperienceRootView: View {
         handwritingRecognitionClient: handwritingRecognitionClient,
         cameraAuthorizationClient: cameraAuthorizationClient,
         radicalLookupClient: .live,
-        exampleSentenceClient: .live,
-        openResult: { entry in path.append(.word(entry, nil)) },
-        openKanji: openKanji,
-        openExamples: { query, entry, usesEntryExamples in
-          path.append(.examples(query, entry, usesEntryExamples))
-        },
+        exampleSentenceClient: exampleSentenceClient,
+        frequencyCapability: .live,
+        frequencyRefreshID: frequencyRefreshID,
         openImageText: { assets in
           let session = ImageTextSession(assets: assets)
           imageTextSessionStore.insert(session)
           path.append(.image(session.id))
-        },
-        imageImportInitialDirectory: imageImportInitialDirectory
+        }
       )
       .navigationDestination(for: SearchExperienceRoute.self) { route in
         switch route {
         case .word(let entry, let imageContext):
           WordDetailView(
             entry: entry,
-            initialImageAttachment: imageAttachment(for: imageContext),
+            initialEncounterMedia: encounterMediaAttachment(for: imageContext),
             speechSynthesisClient: speechSynthesisClient,
-            exampleSentenceClient: .live,
-            japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
+            exampleSentenceClient: exampleSentenceClient,
+            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
             wordNoteStore: .live,
             encounterMediaStore: encounterMediaStore,
+            cameraAuthorizationClient: cameraAuthorizationClient,
+            frequencyCapability: .live,
             conjugationTable: japaneseConjugationClient.table(entry),
             openRelated: openRelated,
             openKanji: openKanji,
             openWord: { entry in path.append(.word(entry, nil)) },
-            openConjugations: { table in path.append(.conjugations(entry, table)) }
+            manageFrequencyDictionaries: openFrequencyDictionaries
           )
         case .kanji(let character, let entry):
           KanjiDetailView(
             character: character,
             entry: entry,
-            kanjiLookupClient: .live(lookupClient: lookupClient),
+            kanjiLookupClient: kanjiLookupClient,
             kanjiElementLookupClient: kanjiElementLookupClient,
             kanjiStrokeOrderClient: kanjiStrokeOrderClient,
-            openWord: { entry in path.append(.word(entry, nil)) },
-            openElement: { id in path.append(.kanjiElement(id)) },
             preservedWordID: kanjiScrollWordIDs[character],
-            preserveWordID: {
-              kanjiScrollWordIDs[character] = $0
-              kanjiScrollElementIDs[character] = nil
-            },
-            preservedElementID: kanjiScrollElementIDs[character],
-            preserveElementID: {
-              kanjiScrollElementIDs[character] = $0
-              kanjiScrollWordIDs[character] = nil
-            }
+            preservedElementID: kanjiScrollElementIDs[character]
           )
         case .kanjiElement(let id):
           KanjiElementDetailView(
             elementID: id,
             lookupClient: kanjiElementLookupClient,
-            openAlternative: { alternative in path.append(.kanjiElement(alternative)) },
-            openKanji: { character in openKanji(character, entry: nil) },
-            preservedContribution: kanjiElementScrollContributionIDs[id],
-            preserveContribution: { kanjiElementScrollContributionIDs[id] = $0 }
+            preservedContribution: kanjiElementScrollContributionIDs[id]
           )
         case .examples(let query, let highlightedEntry, let usesEntryExamples):
           ExampleSentencesView(
             query: query,
             highlightedEntry: highlightedEntry,
             usesHighlightedEntryExamples: usesEntryExamples,
-            exampleSentenceClient: .live,
-            japaneseTextAnalysisClient: .live(lookupClient: lookupClient),
+            exampleSentenceClient: exampleSentenceClient,
+            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
             speechSynthesisClient: speechSynthesisClient,
             openWord: { entry in path.append(.word(entry, nil)) }
           )
@@ -198,8 +254,9 @@ public struct SearchExperienceRootView: View {
             ImageTextFlowView(
               session: session,
               recognitionClient: imageTextRecognitionClient,
-              textAnalysisClient: .live(lookupClient: lookupClient),
+              textAnalysisClient: japaneseTextAnalysisClient,
               translationClient: naturalTranslationClient,
+              clipboardClient: imageTextClipboardClient,
               close: {
                 if path.last == .image(sessionID) { path.removeLast() }
                 imageTextSessionStore.remove(sessionID)
@@ -213,13 +270,42 @@ public struct SearchExperienceRootView: View {
         }
       }
     }
-    .foregroundStyle(ZenbuTheme.foreground)
-    .background(ZenbuTheme.background)
+  }
+
+  private var searchPath: Binding<[SearchExperienceRoute]> {
+    Binding {
+      path
+    } set: { newPath in
+      if newPath.count > path.count {
+        preserveKanjiContext(from: path.last, to: newPath.last)
+        if case .kanji(let character, _) = newPath.last {
+          kanjiScrollWordIDs[character] = nil
+        }
+      }
+      path = newPath
+    }
+  }
+
+  private func preserveKanjiContext(
+    from origin: SearchExperienceRoute?,
+    to destination: SearchExperienceRoute?
+  ) {
+    switch (origin, destination) {
+    case (.kanji(let character, _), .word(let entry, _)):
+      kanjiScrollWordIDs[character] = entry.id
+      kanjiScrollElementIDs[character] = nil
+    case (.kanji(let character, _), .kanjiElement(let elementID)):
+      kanjiScrollElementIDs[character] = elementID
+      kanjiScrollWordIDs[character] = nil
+    case (.kanjiElement(let elementID), .kanji(let character, _)):
+      kanjiElementScrollContributionIDs[elementID] = character
+    default:
+      break
+    }
   }
 
   private func openKanji(_ character: KanjiCharacter, entry: DictionaryEntry?) {
-    kanjiScrollWordIDs[character] = nil
-    path.append(.kanji(character, entry))
+    searchPath.wrappedValue = path + [.kanji(character, entry)]
   }
 
   private func openRelated(_ relationship: DictionaryRelationship) {
@@ -241,13 +327,20 @@ public struct SearchExperienceRootView: View {
     }
   }
 
-  private func imageAttachment(for context: ImageWordContext?) -> WordImageAttachment? {
+  private func openFrequencyDictionaries() {
+    selectedTab = .you
+    youPath = [.frequencyDictionaries]
+  }
+
+  private func encounterMediaAttachment(for context: ImageWordContext?)
+    -> EncounterMediaAttachment?
+  {
     guard let context,
       let asset = imageTextSessionStore.session(context.sessionID)?.assets.first(where: {
         $0.id == context.assetID
       })
     else { return nil }
-    return WordImageAttachment(name: asset.name, data: asset.data)
+    return EncounterMediaAttachment(name: asset.name, data: asset.data)
   }
 }
 
@@ -286,12 +379,12 @@ public struct SearchExperienceRootView: View {
   }
 #endif
 
-private struct ImageWordContext: Hashable {
+struct ImageWordContext: Hashable {
   let sessionID: UUID
   let assetID: UUID
 }
 
-private enum SearchExperienceRoute: Hashable {
+enum SearchExperienceRoute: Hashable {
   case word(DictionaryEntry, ImageWordContext?)
   case kanji(KanjiCharacter, DictionaryEntry?)
   case kanjiElement(KanjiElementID)
@@ -302,5 +395,5 @@ private enum SearchExperienceRoute: Hashable {
 
 private enum SearchExperienceTab: Hashable {
   case search
-  case more
+  case you
 }

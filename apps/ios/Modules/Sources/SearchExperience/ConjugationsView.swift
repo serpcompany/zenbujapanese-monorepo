@@ -2,14 +2,15 @@ import SwiftUI
 
 struct ConjugationsView: View {
   @State private var mode = ConjugationMode.plain
+  @State private var presentedExplanation: ConjugationKindPresentation?
 
   let entry: DictionaryEntry
   let table: ConjugationTable
 
   var body: some View {
-    ScrollView {
-      VStack(spacing: table.supportsModes ? 28 : 0) {
-        if table.supportsModes {
+    List {
+      if table.supportsModes {
+        Section {
           Picker("Conjugation mode", selection: $mode) {
             ForEach(ConjugationMode.allCases, id: \.self) { option in
               Text(option.rawValue)
@@ -18,61 +19,199 @@ struct ConjugationsView: View {
             }
           }
           .pickerStyle(.segmented)
+          .controlSize(.large)
           .accessibilityIdentifier("conjugations.mode")
         }
-
-        VStack(spacing: 0) {
-          let forms = table.forms(for: mode)
-          ForEach(Array(forms.enumerated()), id: \.element.id) { index, form in
-            ConjugationRow(form: form, isLast: index == forms.count - 1)
-          }
-        }
-        .background(ZenbuTheme.row, in: RoundedRectangle(cornerRadius: 10))
       }
-      .padding(.horizontal, 28)
-      .padding(.top, 30)
+
+      ForEach(table.forms(for: mode)) { form in
+        ConjugationSection(form: form) {
+          presentedExplanation = form.id.presentation
+        }
+      }
     }
+    .listStyle(.plain)
+    .listSectionSpacing(.compact)
+    .environment(\.defaultMinListRowHeight, 35)
     .accessibilityIdentifier("conjugations.screen")
-    .background(ZenbuTheme.background)
     .navigationTitle(table.title)
     .navigationBarTitleDisplayMode(.inline)
+    .sheet(item: $presentedExplanation) { explanation in
+      ConjugationExplanationSheet(explanation: explanation)
+    }
   }
 }
 
-private struct ConjugationRow: View {
+private struct ConjugationSection: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let form: ConjugatedForm
-  let isLast: Bool
+  let showExplanation: () -> Void
 
   var body: some View {
-    Group {
-      if dynamicTypeSize >= .xxLarge {
-        VStack(alignment: .leading, spacing: 6) {
-          ConjugatedSurface(form: form)
-          Text(form.id.title).font(.body).foregroundStyle(ZenbuTheme.secondaryText)
+    let presentation = form.id.presentation
+    Section {
+      HStack {
+        ConjugatedSurface(form: form)
+          .accessibilityHidden(true)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel("\(form.surface), \(presentation.title)")
+      .accessibilityValue(form.reading)
+      .accessibilityIdentifier("conjugations.row.\(form.id.rawValue)")
+    } header: {
+      HStack(spacing: 8) {
+        Text(presentation.title)
+          .font(dynamicTypeSize.isAccessibilitySize ? .caption2 : .headline)
+          .accessibilityIdentifier("conjugations.title.\(form.id.rawValue)")
+        Spacer()
+        Button(action: showExplanation) {
+          Image(systemName: "info.circle")
+            .font(dynamicTypeSize.isAccessibilitySize ? .caption2 : .body)
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
         }
-      } else {
-        HStack(spacing: 16) {
-          ConjugatedSurface(form: form)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .layoutPriority(1)
-          Text(form.id.title)
-            .font(.callout)
-            .frame(maxWidth: .infinity, alignment: .trailing)
+        .buttonStyle(.plain)
+        .accessibilityLabel("About \(presentation.title)")
+        .accessibilityIdentifier("conjugations.info.\(form.id.rawValue)")
+      }
+      .textCase(nil)
+    }
+  }
+}
+
+private struct ConjugationExplanationSheet: View {
+  @Environment(\.dismiss) private var dismiss
+  let explanation: ConjugationKindPresentation
+
+  var body: some View {
+    NavigationStack {
+      Form {
+        Text(explanation.explanation)
+          .accessibilityIdentifier("conjugations.explanation.\(explanation.id.rawValue)")
+      }
+      .navigationTitle(explanation.title)
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .confirmationAction) {
+          Button("Done") { dismiss() }
+            .accessibilityIdentifier("conjugations.explanation.done")
         }
       }
     }
-    .padding(.horizontal, 20)
-    .frame(minHeight: 50)
-    .overlay(alignment: .bottom) {
-      if !isLast {
-        Rectangle().fill(ZenbuTheme.divider).frame(height: 0.5)
-      }
+    .presentationDetents([.medium])
+  }
+}
+
+private struct ConjugationKindPresentation: Identifiable {
+  let id: ConjugatedForm.Kind
+  let title: String
+  let explanation: String
+}
+
+extension ConjugatedForm.Kind {
+  fileprivate var presentation: ConjugationKindPresentation {
+    switch self {
+    case .presentFuture:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Present/Future",
+        explanation:
+          "The non-past form. It can describe a present habit or fact, or a future action or state."
+      )
+    case .past:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Past",
+        explanation: "Describes an action or state in the past."
+      )
+    case .negative:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Negative",
+        explanation: "Says that an action does not happen, or a state is not true."
+      )
+    case .pastNegative:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Past Negative",
+        explanation: "Says that an action did not happen, or a state was not true."
+      )
+    case .teForm:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Te-Form",
+        explanation:
+          "A connecting form. It can link actions or descriptions and, depending on context, show sequence, cause, or reason."
+      )
+    case .potential:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Potential",
+        explanation:
+          "Expresses ability or possibility: that someone can do the action or that the action is possible."
+      )
+    case .passive:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Passive",
+        explanation:
+          "Presents the person, thing, or event affected by an action as the focus. The exact meaning depends on context."
+      )
+    case .causative:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Causative",
+        explanation:
+          "Expresses causing or allowing another person or thing to perform an action or enter a state."
+      )
+    case .conditional:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Conditional",
+        explanation:
+          "Sets a condition for what follows: if this happens, the next statement can apply."
+      )
+    case .volitional:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Volitional",
+        explanation:
+          "Expresses will or intention. In context, it can also propose doing something together."
+      )
+    case .imperative:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Imperative",
+        explanation:
+          "Gives a strong command or instruction. It can sound forceful, so context matters."
+      )
+    case .standalone:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Standalone",
+        explanation:
+          "The adjective's base form, shown on its own rather than attached to a noun or verb."
+      )
+    case .modifyingANoun:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Modifying a Noun",
+        explanation: "Places the adjective before a noun to describe that noun."
+      )
+    case .adverb:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Adverb",
+        explanation: "Places the adjective form before a verb to describe how an action is done."
+      )
+    case .noun:
+      ConjugationKindPresentation(
+        id: self,
+        title: "Noun",
+        explanation: "Turns the adjective into a noun that names the quality or its degree."
+      )
     }
-    .accessibilityElement(children: .ignore)
-    .accessibilityLabel("\(form.surface), \(form.id.title)")
-    .accessibilityValue(form.reading)
-    .accessibilityIdentifier("conjugations.row.\(form.id.rawValue)")
   }
 }
 
@@ -80,22 +219,13 @@ private struct ConjugatedSurface: View {
   let form: ConjugatedForm
 
   var body: some View {
-    if let annotation = form.readingAnnotation {
-      HStack(alignment: .bottom, spacing: 0) {
-        VStack(spacing: -2) {
-          Text(annotation.readingPrefix)
-            .font(.body)
-          Text(annotation.surfacePrefix)
-            .font(.title3)
-        }
-        Text(annotation.sharedSuffix)
-          .font(.title3)
-      }
-      .fixedSize(horizontal: false, vertical: true)
-    } else {
-      Text(form.surface)
-        .font(.title3)
-        .fixedSize(horizontal: false, vertical: true)
-    }
+    JapaneseRubyText(
+      surface: form.surface,
+      reading: form.reading,
+      baseFont: .title3,
+      rubyFont: .body,
+      exposesAccessibility: false
+    )
+    .fixedSize(horizontal: false, vertical: true)
   }
 }

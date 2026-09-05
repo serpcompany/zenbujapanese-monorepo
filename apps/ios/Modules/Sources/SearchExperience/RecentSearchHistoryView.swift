@@ -11,6 +11,12 @@ struct RecentSearchHistoryView: View {
     List {
       if !searches.isEmpty {
         Section {
+          HStack {
+            Spacer()
+            Button("Clear All", action: requestClearAll)
+              .frame(minHeight: 44)
+              .accessibilityIdentifier("recent-search.clear-all")
+          }
           ForEach(Array(searches.enumerated()), id: \.element) { index, search in
             Button {
               selectSearch(search)
@@ -20,10 +26,7 @@ struct RecentSearchHistoryView: View {
               } icon: {
                 Image(systemName: "clock.arrow.circlepath")
               }
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
             .accessibilityLabel(search.value)
             .accessibilityValue("Recent search \(index + 1)")
             .accessibilityIdentifier("recent-search.\(index)")
@@ -31,24 +34,12 @@ struct RecentSearchHistoryView: View {
               Button("Delete", role: .destructive) {
                 remove(search)
               }
-              .tint(ZenbuTheme.destructiveActionTint)
             }
-            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
           }
-        } header: {
-          HStack {
-            Text("Recent Searches")
-            Spacer()
-            Button("Clear All", action: requestClearAll)
-              .accessibilityIdentifier("recent-search.clear-all")
-          }
-          .textCase(nil)
         }
       }
     }
     .listStyle(.plain)
-    .scrollContentBackground(.hidden)
-    .background(ZenbuTheme.background)
     .task(id: refreshID) {
       await reload()
     }

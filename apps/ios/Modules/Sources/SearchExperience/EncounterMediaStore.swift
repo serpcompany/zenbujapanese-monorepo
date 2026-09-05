@@ -1,7 +1,7 @@
 import CryptoKit
 import Foundation
 
-struct WordImageAttachment: Hashable, Sendable {
+struct EncounterMediaAttachment: Hashable, Sendable {
   let name: String
   let data: Data
 
@@ -32,14 +32,28 @@ struct EncounterMediaSummary: Identifiable, Hashable, Sendable {
 
 struct EncounterMediaStore: Sendable {
   var encounters: @Sendable (EncounterWordReference) async -> [EncounterMedia]
-  var save: @Sendable (WordImageAttachment, EncounterWordReference) async -> Void
+  var save: @Sendable (EncounterMediaAttachment, EncounterWordReference) async -> Void
   var remove: @Sendable (EncounterWordReference, String) async -> Void
   var library: @Sendable () async -> [EncounterMediaSummary]
   var media: @Sendable (String) async -> EncounterMedia?
   var deleteMedia: @Sendable (String) async -> Void
 
   static let live = EncounterMediaStore(
-    encounters: { word in await EncounterMediaStorage.shared.encounters(for: word) },
+    encounters: { word in
+      #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-InjectCorruptEncounterMedia") {
+          return [
+            EncounterMedia(
+              id: "corrupt-media-fixture",
+              name: "corrupt-media.image",
+              data: Data([0x00]),
+              savedAt: .now
+            )
+          ]
+        }
+      #endif
+      return await EncounterMediaStorage.shared.encounters(for: word)
+    },
     save: { attachment, word in await EncounterMediaStorage.shared.save(attachment, for: word) },
     remove: { word, mediaID in await EncounterMediaStorage.shared.remove(word, mediaID: mediaID) },
     library: { await EncounterMediaStorage.shared.library() },
@@ -128,7 +142,7 @@ private actor EncounterMediaStorage {
       .compactMap { loadMedia($0.mediaID, record: current.media[$0.mediaID]) }
   }
 
-  func save(_ attachment: WordImageAttachment, for word: EncounterWordReference) {
+  func save(_ attachment: EncounterMediaAttachment, for word: EncounterWordReference) {
     prepareIfNeeded()
     guard !attachment.data.isEmpty else { return }
     var current = index()
@@ -196,7 +210,9 @@ private actor EncounterMediaStorage {
     guard !didPrepare else { return }
     didPrepare = true
     #if DEBUG
-      if ProcessInfo.processInfo.arguments.contains("-ResetWordImageAttachments") {
+      if ProcessInfo.processInfo.arguments.contains("-ResetEncounterMedia")
+        || ProcessInfo.processInfo.arguments.contains("-ResetWordImageAttachments")
+      {
         try? FileManager.default.removeItem(at: directory)
         if let legacyDirectory { try? FileManager.default.removeItem(at: legacyDirectory) }
       }

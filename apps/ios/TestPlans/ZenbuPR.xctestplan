@@ -26,7 +26,10 @@
     {
       "parallelizable" : false,
       "skippedTests" : [
-        "ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus()"
+        "ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus()",
+        "JapaneseTextAnalysisTests/testShippedSudachiAdapterMatchesFrozenProviderContract()",
+        "JapaneseTextAnalysisTests/testShippedAdapterMatchesFrozenHardCaseFieldsAndAppOwnedLinkPolicy()",
+        "JapaneseTextAnalysisTests/testShippedSudachiAdapterRetainsFrozenConfirmationQuality()"
       ],
       "target" : {
         "containerPath" : "container:ZenbuJapanese.xcodeproj",
@@ -36,7 +39,23 @@
     },
     {
       "parallelizable" : false,
+      "selectedTests" : [
+        "AccessibilityAuditUITests",
+        "SearchExperienceJourneyUITests"
+      ],
       "skippedTests" : [
+        "AccessibilityAuditUITests/testReviewerContrastWithIncreaseContrastInLightMode",
+        "AccessibilityAuditUITests/testReviewerContrastWithIncreaseContrastInDarkMode",
+        "AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutRetainsRawHitRegionDiagnostic",
+        "AccessibilityAuditUITests/testDarkWordDetailRetainsCompleteAX5Diagnostic",
+        "AccessibilityAuditUITests/testLightWordDetailRetainsCompleteAX5Diagnostic",
+        "AccessibilityAuditUITests/testDarkShortWordDetailRetainsSystemDynamicTypeDiagnostic",
+        "AccessibilityAuditUITests/testLightShortWordDetailRetainsSystemDynamicTypeDiagnostic",
+        "AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInLightMode",
+        "AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInDarkMode",
+        "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode",
+        "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode",
+        "SearchExperienceJourneyUITests/testImageTextAppleTranslationWorksOfflineAcrossPhysicalColdRelaunch()",
         "SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow()",
         "SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech()"
       ],

@@ -68,6 +68,9 @@
       </MacroExpansion>
       <TestPlans>
          <TestPlanReference
+            reference = "container:TestPlans/ZenbuIncreasedContrast.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
             reference = "container:TestPlans/ZenbuPR.xctestplan"
             default = "YES">
          </TestPlanReference>
@@ -75,10 +78,16 @@
             reference = "container:TestPlans/ZenbuAccessibility.xctestplan">
          </TestPlanReference>
          <TestPlanReference
+            reference = "container:TestPlans/ZenbuAccessibilityDiagnostics.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
             reference = "container:TestPlans/ZenbuNightly.xctestplan">
          </TestPlanReference>
          <TestPlanReference
             reference = "container:TestPlans/ZenbuPerformance.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:TestPlans/ZenbuSudachiIntegration.xctestplan">
          </TestPlanReference>
       </TestPlans>
       <CommandLineArguments>

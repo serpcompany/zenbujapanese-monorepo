@@ -2,19 +2,44 @@ name: iOS performance trend
 
 on:
   schedule:
-    - cron: "41 18 * * 0"
+    - cron: '41 18 * * 0'
   workflow_dispatch:
 
 permissions:
   contents: read
+
+env:
+  ZENBU_POLICY_AUTHORIZED: true
+  ZENBU_VERIFICATION_STAGE: performance
 
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
+  plan:
+    name: performance / Policy
+    runs-on: ubuntu-24.04
+    outputs:
+      selectors: ${{ steps.plan.outputs.performance_selectors }}
+      source_sha: ${{ steps.plan.outputs.source_sha }}
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Resolve performance policy
+        id: plan
+        run: |
+          python3 apps/ios/Tools/ios_verification.py plan \
+            --stage performance \
+            --event "$GITHUB_EVENT_NAME" \
+            --draft false \
+            --source-sha "$GITHUB_SHA" \
+            --capability full-performance \
+            --github-output "$GITHUB_OUTPUT"
+
   simulator-performance:
     name: simulator performance baseline
+    needs: plan
     runs-on: [self-hosted, macOS]
     timeout-minutes: 60
     steps:
@@ -27,12 +52,21 @@ jobs:
       - name: Select pinned Xcode
         run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
 
+      - name: Prepare verified Sudachi Core build cache
+        run: |
+          python3 apps/ios/Tools/prepare_sudachi_core.py \
+            --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
+            --cache "$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore" \
+            --cache-only
+
       - name: Run performance plan
         run: |
-          apps/ios/Tools/run_ci_test_plan.sh \
+          apps/ios/Tools/run_selected_test_plan.sh \
             ZenbuPerformance \
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
-            "$RUNNER_TEMP/ZenbuPerformance.xcresult"
+            "$RUNNER_TEMP/ZenbuPerformance.xcresult" \
+            '${{ needs.plan.outputs.selectors }}' \
+            '${{ needs.plan.outputs.source_sha }}'
 
       - name: Package test evidence
         if: always()
@@ -45,7 +79,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ZenbuPerformance-${{ github.run_id }}
-          path: ${{ runner.temp }}/ZenbuPerformance.xcresult.zip
+          name: ZenbuPerformance-${{ needs.plan.outputs.source_sha }}-Xcode-26.5-iOS-26-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/ZenbuPerformance.xcresult.zip
+            ${{ runner.temp }}/ZenbuPerformance.xcresult.timing.json
+            ${{ runner.temp }}/ZenbuPerformance.xcresult.xcodebuild.log
           if-no-files-found: warn
           retention-days: 90

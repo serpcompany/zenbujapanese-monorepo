@@ -24,6 +24,7 @@ import Foundation
         },
         entry: live.entry,
         entryMatchingForm: live.entryMatchingForm,
+        entriesMatchingForm: live.entriesMatchingForm,
         entriesContainingKanji: live.entriesContainingKanji
       )
     }

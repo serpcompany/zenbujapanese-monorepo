@@ -1,0 +1,774 @@
+{
+  "schema": "zenbu.japanese-morphology-hard-cases.v1",
+  "authorship": "Manually authored and adjudicated from disclosed Zenbu regressions and ordinary Japanese before broad provider execution; no candidate output is ground truth.",
+  "rangeUnit": "unicode-scalar",
+  "cases": [
+    {
+      "id": "zenbu-001-nihongo-compound",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": "Mode A 日本|語 is a defensible analyzer decomposition, while 日本語 is the required learner candidate and app-owned entry."
+      },
+      "allowedBoundaryEdgeSets": [
+        [3, 4],
+        [2, 3, 4]
+      ],
+      "category": ["compound", "kanji-kana", "ocr-clean"],
+      "text": "日本語の勉強",
+      "tokens": [
+        {
+          "surface": "日本語",
+          "start": 0,
+          "end": 3,
+          "lemma": "日本語",
+          "reading": "ニホンゴ",
+          "pos": "NOUN",
+          "oov": false,
+          "link": {
+            "kind": "exact",
+            "ids": ["c81e1608bebbf039176be3e23f1c03bb"]
+          }
+        },
+        {
+          "surface": "の",
+          "start": 3,
+          "end": 4,
+          "lemma": "の",
+          "reading": "ノ",
+          "pos": "ADP",
+          "oov": false
+        },
+        {
+          "surface": "勉強",
+          "start": 4,
+          "end": 6,
+          "lemma": "勉強",
+          "reading": "ベンキョウ",
+          "pos": "NOUN",
+          "oov": false
+        }
+      ]
+    },
+    {
+      "id": "zenbu-002-kyou-particle",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": null
+      },
+      "allowedBoundaryEdgeSets": [[2, 3, 5, 6, 8, 10]],
+      "category": ["particle", "homograph", "ocr-clean"],
+      "text": "今日は静かな公園です。",
+      "tokens": [
+        {
+          "surface": "今日",
+          "start": 0,
+          "end": 2,
+          "lemma": "今日",
+          "reading": "キョウ",
+          "pos": "NOUN",
+          "oov": false
+        },
+        {
+          "surface": "は",
+          "start": 2,
+          "end": 3,
+          "lemma": "は",
+          "reading": "ハ",
+          "pos": "ADP",
+          "oov": false
+        },
+        {
+          "surface": "静か",
+          "start": 3,
+          "end": 5,
+          "lemma": "静か",
+          "reading": "シズカ",
+          "pos": "ADJ",
+          "oov": false
+        },
+        {
+          "surface": "な",
+          "start": 5,
+          "end": 6,
+          "lemma": "だ",
+          "reading": "ナ",
+          "pos": "AUX",
+          "oov": false
+        },
+        {
+          "surface": "公園",
+          "start": 6,
+          "end": 8,
+          "lemma": "公園",
+          "reading": "コウエン",
+          "pos": "NOUN",
+          "oov": false
+        },
+        {
+          "surface": "です",
+          "start": 8,
+          "end": 10,
+          "lemma": "です",
+          "reading": "デス",
+          "pos": "AUX",
+          "oov": false
+        },
+        {
+          "surface": "。",
+          "start": 10,
+          "end": 11,
+          "lemma": "。",
+          "reading": "。",
+          "pos": "PUNCT",
+          "oov": false
+        }
+      ]
+    },
+    {
+      "id": "zenbu-003-inflection",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": null
+      },
+      "allowedBoundaryEdgeSets": [[2, 3, 5, 6, 7, 9, 10, 12, 14]],
+      "category": ["inflection", "auxiliary", "ocr-clean"],
+      "text": "問題を解いて、友達と話します。",
+      "tokens": [
+        {
+          "surface": "問題",
+          "start": 0,
+          "end": 2,
+          "lemma": "問題",
+          "reading": "モンダイ",
+          "pos": "NOUN",
+          "oov": false
+        },
+        {
+          "surface": "を",
+          "start": 2,
+          "end": 3,
+          "lemma": "を",
+          "reading": "ヲ",
+          "pos": "ADP",
+          "oov": false
+        },
+        {
+          "surface": "解い",
+          "start": 3,
+          "end": 5,
+          "lemma": "解く",
+          "reading": "トイ",
+          "pos": "VERB",
+          "oov": false
+        },
+        {
+          "surface": "て",
+          "start": 5,
+          "end": 6,
+          "lemma": "て",
+          "reading": "テ",
+          "pos": "SCONJ",
+          "oov": false
+        },
+        {
+          "surface": "、",
+          "start": 6,
+          "end": 7,
+          "lemma": "、",
+          "reading": "、",
+          "pos": "PUNCT",
+          "oov": false
+        },
+        {
+          "surface": "友達",
+          "start": 7,
+          "end": 9,
+          "lemma": "友達",
+          "reading": "トモダチ",
+          "pos": "NOUN",
+          "oov": false
+        },
+        {
+          "surface": "と",
+          "start": 9,
+          "end": 10,
+          "lemma": "と",
+          "reading": "ト",
+          "pos": "ADP",
+          "oov": false
+        },
+        {
+          "surface": "話し",
+          "start": 10,
+          "end": 12,
+          "lemma": "話す",
+          "reading": "ハナシ",
+          "pos": "VERB",
+          "oov": false
+        },
+        {
+          "surface": "ます",
+          "start": 12,
+          "end": 14,
+          "lemma": "ます",
+          "reading": "マス",
+          "pos": "AUX",
+          "oov": false
+        },
+        {
+          "surface": "。",
+          "start": 14,
+          "end": 15,
+          "lemma": "。",
+          "reading": "。",
+          "pos": "PUNCT",
+          "oov": false
+        }
+      ]
+    },
+    {
+      "id": "zenbu-004-existential-iru",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": "Morphology identifies existential 居る, but app-owned identity must abstain because the surface いる has several dictionary identities."
+      },
+      "allowedBoundaryEdgeSets": [[2, 3, 5, 6, 8]],
+      "category": ["ambiguity", "homograph", "issue-242"],
+      "text": "そこに学生がいる。",
+      "tokens": [
+        {
+          "surface": "そこ",
+          "start": 0,
+          "end": 2,
+          "lemma": "其処",
+          "reading": "ソコ",
+          "pos": "PRON",
+          "oov": false
+        },
+        {
+          "surface": "に",
+          "start": 2,
+          "end": 3,
+          "lemma": "に",
+          "reading": "ニ",
+          "pos": "ADP",
+          "oov": false
+        },
+        {
+          "surface": "学生",
+          "start": 3,
+          "end": 5,
+          "lemma": "学生",
+          "reading": "ガクセイ",
+          "pos": "NOUN",
+          "oov": false
+        },
+        {
+          "surface": "が",
+          "start": 5,
+          "end": 6,
+          "lemma": "が",
+          "reading": "ガ",
+          "pos": "ADP",
+          "oov": false
+        },
+        {
+          "surface": "いる",
+          "start": 6,
+          "end": 8,
+          "lemma": "居る",
+          "reading": "イル",
+          "pos": "VERB",
+          "oov": false,
+          "link": {
+            "kind": "abstain",
+            "forbiddenIds": ["d12d09f1107aef0f7d43b54b62f0b7e1"]
+          }
+        },
+        {
+          "surface": "。",
+          "start": 8,
+          "end": 9,
+          "lemma": "。",
+          "reading": "。",
+          "pos": "PUNCT",
+          "oov": false
+        }
+      ]
+    },
+    {
+      "id": "zenbu-005-longer-mochiiru",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": null
+      },
+      "allowedBoundaryEdgeSets": [[2, 4, 5, 8]],
+      "category": ["longer-form", "issue-242"],
+      "text": "この方法を用いる。",
+      "tokens": [
+        {
+          "surface": "この",
+          "start": 0,
+          "end": 2,
+          "lemma": "此の",
+          "reading": "コノ",
+          "pos": "DET",
+          "oov": false
+        },
+        {
+          "surface": "方法",
+          "start": 2,
+          "end": 4,
+          "lemma": "方法",
+          "reading": "ホウホウ",
+          "pos": "NOUN",
+          "oov": false
+        },
+        {
+          "surface": "を",
+          "start": 4,
+          "end": 5,
+          "lemma": "を",
+          "reading": "ヲ",
+          "pos": "ADP",
+          "oov": false
+        },
+        {
+          "surface": "用いる",
+          "start": 5,
+          "end": 8,
+          "lemma": "用いる",
+          "reading": "モチイル",
+          "pos": "VERB",
+          "oov": false,
+          "link": {
+            "kind": "exact",
+            "ids": ["03b458abdf1afaa0c2b0db0201cd91e3"]
+          }
+        },
+        {
+          "surface": "。",
+          "start": 8,
+          "end": 9,
+          "lemma": "。",
+          "reading": "。",
+          "pos": "PUNCT",
+          "oov": false
+        }
+      ]
+    },
+    {
+      "id": "zenbu-006-inflected-set",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": null
+      },
+      "allowedBoundaryEdgeSets": [[2, 4, 5, 6, 8, 9, 11, 12, 14, 17, 18]],
+      "category": ["inflection", "auxiliary"],
+      "text": "食べました。飲んでいる。走らなかった。",
+      "tokens": [
+        {
+          "surface": "食べ",
+          "start": 0,
+          "end": 2,
+          "lemma": "食べる",
+          "reading": "タベ",
+          "pos": "VERB",
+          "oov": false
+        },
+        {
+          "surface": "まし",
+          "start": 2,
+          "end": 4,
+          "lemma": "ます",
+          "reading": "マシ",
+          "pos": "AUX",
+          "oov": false
+        },
+        {
+          "surface": "た",
+          "start": 4,
+          "end": 5,
+          "lemma": "た",
+          "reading": "タ",
+          "pos": "AUX",
+          "oov": false
+        },
+        {
+          "surface": "。",
+          "start": 5,
+          "end": 6,
+          "lemma": "。",
+          "reading": "。",
+          "pos": "PUNCT",
+          "oov": false
+        },
+        {
+          "surface": "飲ん",
+          "start": 6,
+          "end": 8,
+          "lemma": "飲む",
+          "reading": "ノン",
+          "pos": "VERB",
+          "oov": false
+        },
+        {
+          "surface": "で",
+          "start": 8,
+          "end": 9,
+          "lemma": "で",
+          "reading": "デ",
+          "pos": "SCONJ",
+          "oov": false
+        },
+        {
+          "surface": "いる",
+          "start": 9,
+          "end": 11,
+          "lemma": "居る",
+          "reading": "イル",
+          "pos": "VERB",
+          "oov": false,
+          "link": { "kind": "abstain" }
+        },
+        {
+          "surface": "。",
+          "start": 11,
+          "end": 12,
+          "lemma": "。",
+          "reading": "。",
+          "pos": "PUNCT",
+          "oov": false
+        },
+        {
+          "surface": "走ら",
+          "start": 12,
+          "end": 14,
+          "lemma": "走る",
+          "reading": "ハシラ",
+          "pos": "VERB",
+          "oov": false
+        },
+        {
+          "surface": "なかっ",
+          "start": 14,
+          "end": 17,
+          "lemma": "ない",
+          "reading": "ナカッ",
+          "pos": "AUX",
+          "oov": false
+        },
+        {
+          "surface": "た",
+          "start": 17,
+          "end": 18,
+          "lemma": "た",
+          "reading": "タ",
+          "pos": "AUX",
+          "oov": false
+        },
+        {
+          "surface": "。",
+          "start": 18,
+          "end": 19,
+          "lemma": "。",
+          "reading": "。",
+          "pos": "PUNCT",
+          "oov": false
+        }
+      ]
+    },
+    {
+      "id": "zenbu-007-counter-latin",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": "Latin product name and digits are expected OOV for the Japanese dictionaries; whitespace remains outside token spans."
+      },
+      "allowedBoundaryEdgeSets": [[6, 9, 10, 11, 12, 14, 15]],
+      "category": ["counter", "latin", "number"],
+      "text": "iPhone 17を2台買った。",
+      "tokens": [
+        {
+          "surface": "iPhone",
+          "start": 0,
+          "end": 6,
+          "lemma": "iPhone",
+          "reading": null,
+          "pos": "PROPN",
+          "oov": true
+        },
+        {
+          "surface": "17",
+          "start": 7,
+          "end": 9,
+          "lemma": "17",
+          "reading": null,
+          "pos": "NUM",
+          "oov": true
+        },
+        {
+          "surface": "を",
+          "start": 9,
+          "end": 10,
+          "lemma": "を",
+          "reading": "ヲ",
+          "pos": "ADP",
+          "oov": false
+        },
+        {
+          "surface": "2",
+          "start": 10,
+          "end": 11,
+          "lemma": "2",
+          "reading": null,
+          "pos": "NUM",
+          "oov": true
+        },
+        {
+          "surface": "台",
+          "start": 11,
+          "end": 12,
+          "lemma": "台",
+          "reading": "ダイ",
+          "pos": "NOUN",
+          "oov": false
+        },
+        {
+          "surface": "買っ",
+          "start": 12,
+          "end": 14,
+          "lemma": "買う",
+          "reading": "カッ",
+          "pos": "VERB",
+          "oov": false
+        },
+        {
+          "surface": "た",
+          "start": 14,
+          "end": 15,
+          "lemma": "た",
+          "reading": "タ",
+          "pos": "AUX",
+          "oov": false
+        },
+        {
+          "surface": "。",
+          "start": 15,
+          "end": 16,
+          "lemma": "。",
+          "reading": "。",
+          "pos": "PUNCT",
+          "oov": false
+        }
+      ]
+    },
+    {
+      "id": "zenbu-008-oov",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": "The invented compound may defensibly split before 語; the complete span remains the learner candidate."
+      },
+      "allowedBoundaryEdgeSets": [
+        [6, 7, 9, 10],
+        [5, 6, 7, 9, 10]
+      ],
+      "category": ["oov", "loanword"],
+      "text": "ゼンブニャ語を試した。",
+      "tokens": [
+        {
+          "surface": "ゼンブニャ語",
+          "start": 0,
+          "end": 6,
+          "lemma": "ゼンブニャ語",
+          "reading": "ゼンブニャゴ",
+          "pos": "NOUN",
+          "oov": true
+        },
+        {
+          "surface": "を",
+          "start": 6,
+          "end": 7,
+          "lemma": "を",
+          "reading": "ヲ",
+          "pos": "ADP",
+          "oov": false
+        },
+        {
+          "surface": "試し",
+          "start": 7,
+          "end": 9,
+          "lemma": "試す",
+          "reading": "タメシ",
+          "pos": "VERB",
+          "oov": false
+        },
+        {
+          "surface": "た",
+          "start": 9,
+          "end": 10,
+          "lemma": "た",
+          "reading": "タ",
+          "pos": "AUX",
+          "oov": false
+        },
+        {
+          "surface": "。",
+          "start": 10,
+          "end": 11,
+          "lemma": "。",
+          "reading": "。",
+          "pos": "PUNCT",
+          "oov": false
+        }
+      ]
+    },
+    {
+      "id": "zenbu-009-bare-ambiguity",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": "Readings and exact dictionary identities are deliberately unresolved without context."
+      },
+      "allowedBoundaryEdgeSets": [[1, 4]],
+      "category": ["ambiguity", "homograph"],
+      "text": "静 読本 いる",
+      "tokens": [
+        {
+          "surface": "静",
+          "start": 0,
+          "end": 1,
+          "lemma": "静",
+          "reading": null,
+          "pos": "NOUN",
+          "oov": false,
+          "link": { "kind": "abstain" }
+        },
+        {
+          "surface": "読本",
+          "start": 2,
+          "end": 4,
+          "lemma": "読本",
+          "reading": null,
+          "pos": "NOUN",
+          "oov": false,
+          "link": { "kind": "abstain" }
+        },
+        {
+          "surface": "いる",
+          "start": 5,
+          "end": 7,
+          "lemma": null,
+          "reading": "イル",
+          "pos": "VERB",
+          "oov": false,
+          "link": {
+            "kind": "abstain",
+            "forbiddenIds": ["d12d09f1107aef0f7d43b54b62f0b7e1"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "zenbu-010-ocr-noisy",
+      "adjudication": {
+        "status": "provisional-single-reviewer",
+        "uncertainty": "解ぃ is a synthetic OCR corruption and must remain OOV/unresolved rather than repaired by a hidden heuristic."
+      },
+      "allowedBoundaryEdgeSets": [[2, 3, 5, 6, 7, 9, 10, 12, 14]],
+      "category": ["ocr-noisy", "honest-failure"],
+      "text": "問題を解ぃて、友達と話します。",
+      "tokens": [
+        {
+          "surface": "問題",
+          "start": 0,
+          "end": 2,
+          "lemma": "問題",
+          "reading": "モンダイ",
+          "pos": "NOUN",
+          "oov": false
+        },
+        {
+          "surface": "を",
+          "start": 2,
+          "end": 3,
+          "lemma": "を",
+          "reading": "ヲ",
+          "pos": "ADP",
+          "oov": false
+        },
+        {
+          "surface": "解ぃ",
+          "start": 3,
+          "end": 5,
+          "lemma": null,
+          "reading": null,
+          "pos": null,
+          "oov": true,
+          "link": { "kind": "abstain" }
+        },
+        {
+          "surface": "て",
+          "start": 5,
+          "end": 6,
+          "lemma": "て",
+          "reading": "テ",
+          "pos": "SCONJ",
+          "oov": false
+        },
+        {
+          "surface": "、",
+          "start": 6,
+          "end": 7,
+          "lemma": "、",
+          "reading": "、",
+          "pos": "PUNCT",
+          "oov": false
+        },
+        {
+          "surface": "友達",
+          "start": 7,
+          "end": 9,
+          "lemma": "友達",
+          "reading": "トモダチ",
+          "pos": "NOUN",
+          "oov": false
+        },
+        {
+          "surface": "と",
+          "start": 9,
+          "end": 10,
+          "lemma": "と",
+          "reading": "ト",
+          "pos": "ADP",
+          "oov": false
+        },
+        {
+          "surface": "話し",
+          "start": 10,
+          "end": 12,
+          "lemma": "話す",
+          "reading": "ハナシ",
+          "pos": "VERB",
+          "oov": false
+        },
+        {
+          "surface": "ます",
+          "start": 12,
+          "end": 14,
+          "lemma": "ます",
+          "reading": "マス",
+          "pos": "AUX",
+          "oov": false
+        },
+        {
+          "surface": "。",
+          "start": 14,
+          "end": 15,
+          "lemma": "。",
+          "reading": "。",
+          "pos": "PUNCT",
+          "oov": false
+        }
+      ]
+    }
+  ]
+}

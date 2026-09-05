@@ -25,6 +25,7 @@
       "SearchExperienceJourneyUITests/testCapturedAdjectiveFormListsDoNotExposeVerbModeControls()",
       "SearchExperienceJourneyUITests/testCapturedSuruAndKuruIrregularConjugationsArePubliclyReachable()",
       "SearchExperienceJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation()",
+      "SearchExperienceJourneyUITests/testWordDetailNativePhotoCancellationAndSelectionPersistsAcrossRelaunch()",
       "SearchExperienceJourneyUITests/testDictionarySourceAttributionIsReachableFromSearch()",
       "SearchExperienceJourneyUITests/testDisposableHistoryClearAllConfirmsAndCancelLeavesSearchRoot()",
       "SearchExperienceJourneyUITests/testDisposableRecentSearchCanBeRemovedWithoutAffectingAnotherRow()",
@@ -108,6 +109,7 @@
       "SearchExperienceJourneyUITests/testHandwritingCanvasProvidesUncrampedPhysicalPhoneDrawingArea()",
       "SearchExperienceJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult()",
       "SearchExperienceJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation()",
+      "SearchExperienceJourneyUITests/testWordDetailNativePhotoCancellationAndSelectionPersistsAcrossRelaunch()",
       "SearchExperienceJourneyUITests/testProductionExamplesOpenScrollAndLinkedWordRemainOperable()",
       "SearchExperienceJourneyUITests/testProductionSpeechControlsRemainOperableAcrossWordAndExamples()",
       "SearchExperienceJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail()",
@@ -295,6 +297,7 @@
       "journey_id": "JOURNEY-INSPECT-WORD",
       "test_ids": [
         "SearchExperienceJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation()",
+        "SearchExperienceJourneyUITests/testWordDetailNativePhotoCancellationAndSelectionPersistsAcrossRelaunch()",
         "SearchExperienceJourneyUITests/testMultipleReadingUncommonAndLinkedAlternativeKanjiClassesArePubliclyOperable()",
         "SearchExperienceJourneyUITests/testWordNotesRemainIsolatedAcrossSameSpellingHomographs()",
         "SearchExperienceJourneyUITests/testDictionarySourceAttributionIsReachableFromSearch()",

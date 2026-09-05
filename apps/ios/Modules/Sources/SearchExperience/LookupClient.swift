@@ -5,64 +5,103 @@ struct LookupClient: Sendable {
   var search: @Sendable (SearchQuery) async throws -> LookupSearchResults
   var entry: @Sendable (LanguageReferenceID) async throws -> DictionaryEntry?
   var entryMatchingForm: @Sendable (String) async throws -> DictionaryEntry?
+  var entriesMatchingForm: @Sendable (String) async throws -> [DictionaryEntry]
   var entriesContainingKanji: @Sendable (String) async throws -> [DictionaryEntry]
 
-  static let live = LookupClient(
-    search: { query in
-      #if DEBUG
-      if ProcessInfo.processInfo.arguments.contains("-InjectLookupFailure") {
-        throw LookupClientError.injectedFailure
+  static let live: LookupClient = {
+    let client = LookupClient(
+      search: { query in
+        #if DEBUG
+          if ProcessInfo.processInfo.arguments.contains("-InjectLookupFailure") {
+            throw LookupClientError.injectedFailure
+          }
+        #endif
+        return try await LanguageReferenceData.shared.search(query)
+      },
+      entry: { id in try await LanguageReferenceData.shared.entry(id) },
+      entryMatchingForm: { form in try await LanguageReferenceData.shared.entry(matchingForm: form)
+      },
+      entriesMatchingForm: { form in
+        try await LanguageReferenceData.shared.entries(matchingForm: form)
+      },
+      entriesContainingKanji: { character in
+        try await LanguageReferenceData.shared.entries(containingKanji: character)
       }
-      if ProcessInfo.processInfo.arguments.contains("-InjectLookupFailureOnce"),
-        await InjectedLookupFailure.shared.consumeFailure()
-      {
-        throw LookupClientError.injectedFailure
+    )
+    #if DEBUG
+      if let query = injectedOneTimeFailureQuery() {
+        return injectingOneTimeFailure(for: query, live: client)
       }
-      #endif
-      return try await LanguageReferenceData.shared.search(query)
-    },
-    entry: { id in try await LanguageReferenceData.shared.entry(id) },
-    entryMatchingForm: { form in try await LanguageReferenceData.shared.entry(matchingForm: form) },
-    entriesContainingKanji: { character in
-      try await LanguageReferenceData.shared.entries(containingKanji: character)
-    }
-  )
+    #endif
+    return client
+  }()
 
   #if DEBUG
-  static func freshBundledDatabase() -> LookupClient {
-    fixtureClient(LanguageReferenceData())
-  }
+    static func injectingOneTimeFailure(for failedQuery: SearchQuery, live: LookupClient)
+      -> LookupClient
+    {
+      let failure = InjectedLookupFailure()
+      return LookupClient(
+        search: { query in
+          if query == failedQuery, try await failure.consumeFailure() {
+            throw LookupClientError.injectedFailure
+          }
+          return try await live.search(query)
+        },
+        entry: live.entry,
+        entryMatchingForm: live.entryMatchingForm,
+        entriesMatchingForm: live.entriesMatchingForm,
+        entriesContainingKanji: live.entriesContainingKanji
+      )
+    }
 
-  static func databaseFixture(_ databaseURL: URL) -> LookupClient {
-    fixtureClient(LanguageReferenceData(databaseURL: databaseURL, validatesBundledArtifact: false))
-  }
+    static func freshBundledDatabase() -> LookupClient {
+      fixtureClient(LanguageReferenceData())
+    }
 
-  private static func fixtureClient(_ data: LanguageReferenceData) -> LookupClient {
-    return LookupClient(
-      search: { query in try await data.search(query) },
-      entry: { id in try await data.entry(id) },
-      entryMatchingForm: { form in try await data.entry(matchingForm: form) },
-      entriesContainingKanji: { character in try await data.entries(containingKanji: character) }
-    )
-  }
+    static func databaseFixture(_ databaseURL: URL) -> LookupClient {
+      fixtureClient(
+        LanguageReferenceData(databaseURL: databaseURL, validatesBundledArtifact: false))
+    }
+
+    private static func fixtureClient(_ data: LanguageReferenceData) -> LookupClient {
+      return LookupClient(
+        search: { query in try await data.search(query) },
+        entry: { id in try await data.entry(id) },
+        entryMatchingForm: { form in try await data.entry(matchingForm: form) },
+        entriesMatchingForm: { form in try await data.entries(matchingForm: form) },
+        entriesContainingKanji: { character in try await data.entries(containingKanji: character) }
+      )
+    }
   #endif
 }
 
 #if DEBUG
-private enum LookupClientError: Error {
-  case injectedFailure
-}
-
-private actor InjectedLookupFailure {
-  static let shared = InjectedLookupFailure()
-  private var isPending = true
-
-  func consumeFailure() -> Bool {
-    guard isPending else { return false }
-    isPending = false
-    return true
+  enum LookupClientError: Error {
+    case injectedFailure
   }
-}
+
+  private func injectedOneTimeFailureQuery() -> SearchQuery? {
+    let arguments = ProcessInfo.processInfo.arguments
+    guard
+      let argumentIndex = arguments.firstIndex(of: "-InjectLookupFailureOnceQuery"),
+      arguments.indices.contains(argumentIndex + 1)
+    else {
+      return nil
+    }
+    return SearchQuery(arguments[argumentIndex + 1])
+  }
+
+  private actor InjectedLookupFailure {
+    private var isPending = true
+
+    func consumeFailure() throws -> Bool {
+      try Task.checkCancellation()
+      guard isPending else { return false }
+      isPending = false
+      return true
+    }
+  }
 #endif
 
 private actor LanguageReferenceData {
@@ -75,14 +114,23 @@ private actor LanguageReferenceData {
   private let databaseURL: URL?
   private let validatesBundledArtifact: Bool
   private let literalSearchQueryPolicy = LiteralSearchQueryPolicy.referenceCompatible
-  private let japaneseTextAnalysis = JapaneseTextAnalysisClient.characterFallback
+  private let japaneseTextAnalysis = JapaneseTextAnalysisClient.resolving(
+    morphologyClient: .live,
+    lookupClient: LookupClient(
+      search: { _ in .empty },
+      entry: { _ in nil },
+      entryMatchingForm: { _ in nil },
+      entriesMatchingForm: { _ in [] },
+      entriesContainingKanji: { _ in [] }
+    )
+  )
 
   init(databaseURL: URL? = nil, validatesBundledArtifact: Bool = true) {
     self.databaseURL = databaseURL
     self.validatesBundledArtifact = validatesBundledArtifact
   }
 
-  func search(_ query: SearchQuery) throws -> LookupSearchResults {
+  func search(_ query: SearchQuery) async throws -> LookupSearchResults {
     try Task<Never, Never>.checkCancellation()
     if let cached = searchResultCache[query] {
       searchCacheOrder.removeAll { $0 == query }
@@ -90,7 +138,7 @@ private actor LanguageReferenceData {
       return cached
     }
 
-    let results = try searchUncached(query)
+    let results = try await searchUncached(query)
     searchResultCache[query] = results
     searchCacheOrder.append(query)
     if searchCacheOrder.count > Self.searchCacheCapacity {
@@ -99,7 +147,7 @@ private actor LanguageReferenceData {
     return results
   }
 
-  private func searchUncached(_ query: SearchQuery) throws -> LookupSearchResults {
+  private func searchUncached(_ query: SearchQuery) async throws -> LookupSearchResults {
     if query.isASCII,
       let japaneseReading = try rankedEnglish(query, exactFormOnly: true).first?.entry.reading
     {
@@ -141,14 +189,18 @@ private actor LanguageReferenceData {
     if query.isASCII,
       !directResults.isEmpty,
       let exactFormEntry = try entry(matchingForm: query.value),
-      (directResults.best + directResults.additional).contains(where: { $0.id == exactFormEntry.id })
+      (directResults.best + directResults.additional).contains(where: { $0.id == exactFormEntry.id }
+      )
     {
       return directResults.usingPrimaryEntryExamples()
     }
     guard directResults.isEmpty else { return directResults }
-    let analyzedResults = try japaneseTextAnalysis.lookupSegments(query).compactMap { segment in
+    let analyzedResults = try await japaneseTextAnalysis.lookupSegments(query).compactMap {
+      segment in
       let segmentResults = try searchOnce(segment)
-      return (segmentResults.best + segmentResults.additional).first { $0.headword == segment.value }
+      return (segmentResults.best + segmentResults.additional).first {
+        $0.headword == segment.value
+      }
         ?? segmentResults.best.first
     }
     if analyzedResults.count > 1 || (query.isMixedScript && !analyzedResults.isEmpty) {
@@ -187,12 +239,16 @@ private actor LanguageReferenceData {
   }
 
   func entry(matchingForm form: String) throws -> DictionaryEntry? {
+    try entries(matchingForm: form).first
+  }
+
+  func entries(matchingForm form: String) throws -> [DictionaryEntry] {
     let query = SearchQuery(form)
-    guard !query.isEmpty else { return nil }
-    return try (query.isASCII
+    guard !query.isEmpty else { return [] }
+    return try
+      (query.isASCII
       ? rankedEnglish(query, exactFormOnly: true)
-      : rankedJapanese(query, exactFormOnly: true)
-    ).first?.entry
+      : rankedJapanese(query, exactFormOnly: true)).map(\.entry)
   }
 
   func entries(containingKanji character: String) throws -> [DictionaryEntry] {
@@ -207,8 +263,10 @@ private actor LanguageReferenceData {
     }
     guard !orderedFingerprints.isEmpty else { return [] }
 
-    let placeholders = Array(repeating: "?", count: orderedFingerprints.count).joined(separator: ",")
-    let statement = try prepare("""
+    let placeholders = Array(repeating: "?", count: orderedFingerprints.count).joined(
+      separator: ",")
+    let statement = try prepare(
+      """
       SELECT \(Self.selectedColumns)
       FROM entries e
       WHERE e.semantic_fingerprint IN (\(placeholders))
@@ -260,14 +318,17 @@ private actor LanguageReferenceData {
     exactFormOnly: Bool = false
   ) throws -> [RankedDictionaryEntry] {
     guard exactFormOnly || Self.hasSearchTerms(query.value) else { return [] }
-    let glossMatches = exactFormOnly
-      ? [:] : try glossEvidence(
+    let glossMatches =
+      exactFormOnly
+      ? [:]
+      : try glossEvidence(
         query: query,
         matchExpression: Self.ftsPhrase(query.value),
         restrictions: try senseRestrictions()
       )
     let romajiMatches = try romajiEvidence(query: query, exactFormOnly: exactFormOnly)
-    let statement = try prepare(exactFormOnly ? Self.exactASCIICandidateSQL : Self.asciiCandidateSQL)
+    let statement = try prepare(
+      exactFormOnly ? Self.exactASCIICandidateSQL : Self.asciiCandidateSQL)
     defer { sqlite3_finalize(statement) }
     bind(exactFormOnly ? query.value : Self.ftsPhrase(query.value), at: 1, to: statement)
     if !exactFormOnly {
@@ -300,18 +361,23 @@ private actor LanguageReferenceData {
             headwordLength: entry.headword.count,
             semanticFingerprint: fingerprint
           )
-          ranked.append((RankedDictionaryEntry(
-            entry: entry,
-            presentationRank: rank.presentationRank,
-            hasExactOrPrefixMatch: romaji != .contains,
-            semanticFingerprint: fingerprint
-          ), rank))
+          ranked.append(
+            (
+              RankedDictionaryEntry(
+                entry: entry,
+                presentationRank: rank.presentationRank,
+                hasExactOrPrefixMatch: romaji != .contains,
+                semanticFingerprint: fingerprint
+              ), rank
+            ))
         }
         continue
       }
-      let lane: DictionaryMatch.EvidenceLane = selectedGloss.relation == .glossToken
+      let lane: DictionaryMatch.EvidenceLane =
+        selectedGloss.relation == .glossToken
         ? .tokenGloss : .strongGloss
-      let corroborated = lane == .strongGloss
+      let corroborated =
+        lane == .strongGloss
         && match.romajiEvidence.contains(where: { $0 == .exact || $0 == .prefix })
       let rank = EnglishDictionaryRank(
         lane: lane,
@@ -325,12 +391,15 @@ private actor LanguageReferenceData {
         headwordLength: entry.headword.count,
         semanticFingerprint: fingerprint
       )
-      ranked.append((RankedDictionaryEntry(
-        entry: entry,
-        presentationRank: rank.presentationRank,
-        hasExactOrPrefixMatch: lane == .strongGloss || corroborated,
-        semanticFingerprint: fingerprint
-      ), rank))
+      ranked.append(
+        (
+          RankedDictionaryEntry(
+            entry: entry,
+            presentationRank: rank.presentationRank,
+            hasExactOrPrefixMatch: lane == .strongGloss || corroborated,
+            semanticFingerprint: fingerprint
+          ), rank
+        ))
     }
     return Self.deduplicated(ranked.sorted { $0.1 < $1.1 }.map(\.0))
   }
@@ -347,17 +416,20 @@ private actor LanguageReferenceData {
     while try checkedSQLiteStep(glossStatement) == .row {
       let entryID = LanguageReferenceID(rawValue: Self.string(column: 0, statement: glossStatement))
       let senseOrder = Int(sqlite3_column_int(glossStatement, 1))
-      let written = restrictions[
-        SenseRestrictionKey(entryID: entryID, senseOrder: senseOrder, kind: .written)
-      ] ?? []
-      let reading = restrictions[
-        SenseRestrictionKey(entryID: entryID, senseOrder: senseOrder, kind: .reading)
-      ] ?? []
+      let written =
+        restrictions[
+          SenseRestrictionKey(entryID: entryID, senseOrder: senseOrder, kind: .written)
+        ] ?? []
+      let reading =
+        restrictions[
+          SenseRestrictionKey(entryID: entryID, senseOrder: senseOrder, kind: .reading)
+        ] ?? []
       let displayedHeadword = SearchQuery(Self.string(column: 5, statement: glossStatement)).value
       let displayedReading = SearchQuery(Self.string(column: 6, statement: glossStatement)).value
-      guard (written.isEmpty || written.contains(displayedHeadword)),
-        (reading.isEmpty || reading.contains(displayedReading)),
-        let relation = Self.glossRelation(query: query.value, gloss: Self.string(column: 3, statement: glossStatement))
+      guard written.isEmpty || written.contains(displayedHeadword),
+        reading.isEmpty || reading.contains(displayedReading),
+        let relation = Self.glossRelation(
+          query: query.value, gloss: Self.string(column: 3, statement: glossStatement))
       else { continue }
       let parts: [PartOfSpeech] = try Self.decode(column: 4, statement: glossStatement)
       result[entryID, default: []].append(
@@ -389,7 +461,8 @@ private actor LanguageReferenceData {
     )
     var result: [LanguageReferenceID: Set<DictionaryMatch.RomajiRelation>] = [:]
     while try checkedSQLiteStep(romajiStatement) == .row {
-      let entryID = LanguageReferenceID(rawValue: Self.string(column: 0, statement: romajiStatement))
+      let entryID = LanguageReferenceID(
+        rawValue: Self.string(column: 0, statement: romajiStatement))
       let form = Self.string(column: 1, statement: romajiStatement)
       result[entryID, default: []].insert(
         form == query.value ? .exact : form.hasPrefix(query.value) ? .prefix : .contains
@@ -427,10 +500,12 @@ private actor LanguageReferenceData {
       fingerprints[entry.id] = Self.string(column: 17, statement: statement)
       senseCounts[entry.id] = Int(sqlite3_column_int(statement, 20))
       evidence[entry.id, default: []].insert(
-        DictionaryMatch.FormEvidence(relation: relation, normalizedForm: form, priorityProfile: profile)
+        DictionaryMatch.FormEvidence(
+          relation: relation, normalizedForm: form, priorityProfile: profile)
       )
     }
-    let ranked = entries.compactMap { id, entry -> (RankedDictionaryEntry, JapaneseDictionaryRank)? in
+    let ranked = entries.compactMap {
+      id, entry -> (RankedDictionaryEntry, JapaneseDictionaryRank)? in
       guard let selected = evidence[id]?.min(by: Self.formEvidencePrecedes),
         let fingerprint = fingerprints[id]
       else { return nil }
@@ -461,13 +536,16 @@ private actor LanguageReferenceData {
     defer { sqlite3_finalize(restrictionStatement) }
     var restrictions: [SenseRestrictionKey: Set<String>] = [:]
     while try checkedSQLiteStep(restrictionStatement) == .row {
-      guard let kind = SearchFormKind(
-        rawValue: Int(sqlite3_column_int(restrictionStatement, 2))
-      ) else {
+      guard
+        let kind = SearchFormKind(
+          rawValue: Int(sqlite3_column_int(restrictionStatement, 2))
+        )
+      else {
         throw LookupDatabaseError.invalidDictionaryRankingMetadata
       }
       let key = SenseRestrictionKey(
-        entryID: LanguageReferenceID(rawValue: Self.string(column: 0, statement: restrictionStatement)),
+        entryID: LanguageReferenceID(
+          rawValue: Self.string(column: 0, statement: restrictionStatement)),
         senseOrder: Int(sqlite3_column_int(restrictionStatement, 1)),
         kind: kind
       )
@@ -505,18 +583,22 @@ private actor LanguageReferenceData {
 
   private func openDatabase() throws -> OpaquePointer {
     if let connection { return connection.pointer }
-    guard let url = databaseURL
-      ?? Bundle.module.url(forResource: "LanguageReferenceData", withExtension: "sqlite3")
+    guard
+      let url = databaseURL
+        ?? Bundle.module.url(forResource: "LanguageReferenceData", withExtension: "sqlite3")
     else {
       throw LookupDatabaseError.missingBundledData
     }
 
     var opened: OpaquePointer?
-    guard sqlite3_open_v2(url.path, &opened, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK,
+    guard
+      sqlite3_open_v2(url.path, &opened, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil)
+        == SQLITE_OK,
       let opened
     else {
       defer { sqlite3_close(opened) }
-      throw LookupDatabaseError.sqlite(message: opened.map { String(cString: sqlite3_errmsg($0)) } ?? "open failed")
+      throw LookupDatabaseError.sqlite(
+        message: opened.map { String(cString: sqlite3_errmsg($0)) } ?? "open failed")
     }
     if validatesBundledArtifact {
       do {
@@ -535,19 +617,23 @@ private actor LanguageReferenceData {
     databaseURL: URL
   ) throws {
     let contract = try DictionaryRankingArtifactContract.bundled()
-    guard (try FileManager.default.attributesOfItem(atPath: databaseURL.path)[.size] as? NSNumber)?.intValue
+    guard
+      (try FileManager.default.attributesOfItem(atPath: databaseURL.path)[.size] as? NSNumber)?
+        .intValue
         == contract.databaseBytes
     else {
       throw LookupDatabaseError.invalidDictionaryRankingMetadata
     }
     var statement: OpaquePointer?
-    guard sqlite3_prepare_v2(
-      database,
-      "SELECT key, value FROM metadata",
-      -1,
-      &statement,
-      nil
-    ) == SQLITE_OK, let statement else {
+    guard
+      sqlite3_prepare_v2(
+        database,
+        "SELECT key, value FROM metadata",
+        -1,
+        &statement,
+        nil
+      ) == SQLITE_OK, let statement
+    else {
       throw LookupDatabaseError.invalidDictionaryRankingMetadata
     }
     defer { sqlite3_finalize(statement) }
@@ -556,8 +642,10 @@ private actor LanguageReferenceData {
       actual[string(column: 0, statement: statement)] = string(column: 1, statement: statement)
     }
     guard try decodedMetadataString("dictionary_ranking_policy", from: actual) == contract.policy,
-      try decodedMetadataString("dictionary_ranking_schema_version", from: actual) == contract.schemaVersion,
-      try decodedMetadataString("dictionary_ranking_mapping_sha256", from: actual) == contract.mappingSHA256,
+      try decodedMetadataString("dictionary_ranking_schema_version", from: actual)
+        == contract.schemaVersion,
+      try decodedMetadataString("dictionary_ranking_mapping_sha256", from: actual)
+        == contract.mappingSHA256,
       try decodedMetadata(
         DictionaryRankingArtifactContract.EvidenceCounts.self,
         key: "dictionary_ranking_evidence",
@@ -577,13 +665,15 @@ private actor LanguageReferenceData {
     else { throw LookupDatabaseError.invalidDictionaryRankingMetadata }
 
     var equivalenceStatement: OpaquePointer?
-    guard sqlite3_prepare_v2(
-      database,
-      "SELECT count(*), total(group_size) FROM (SELECT count(*) AS group_size FROM entries GROUP BY semantic_fingerprint HAVING count(*) > 1)",
-      -1,
-      &equivalenceStatement,
-      nil
-    ) == SQLITE_OK, let equivalenceStatement else {
+    guard
+      sqlite3_prepare_v2(
+        database,
+        "SELECT count(*), total(group_size) FROM (SELECT count(*) AS group_size FROM entries GROUP BY semantic_fingerprint HAVING count(*) > 1)",
+        -1,
+        &equivalenceStatement,
+        nil
+      ) == SQLITE_OK, let equivalenceStatement
+    else {
       throw LookupDatabaseError.invalidDictionaryRankingMetadata
     }
     defer { sqlite3_finalize(equivalenceStatement) }
@@ -595,8 +685,9 @@ private actor LanguageReferenceData {
 
     for (table, expectedCount) in contract.evidenceCounts.tableCounts {
       var countStatement: OpaquePointer?
-      guard sqlite3_prepare_v2(database, "SELECT count(*) FROM \(table)", -1, &countStatement, nil)
-        == SQLITE_OK,
+      guard
+        sqlite3_prepare_v2(database, "SELECT count(*) FROM \(table)", -1, &countStatement, nil)
+          == SQLITE_OK,
         let countStatement
       else {
         throw LookupDatabaseError.invalidDictionaryRankingMetadata
@@ -614,8 +705,9 @@ private actor LanguageReferenceData {
       ("dictionary_form_fts", contract.searchIndex.formRows),
     ] {
       var countStatement: OpaquePointer?
-      guard sqlite3_prepare_v2(database, "SELECT count(*) FROM \(table)", -1, &countStatement, nil)
-        == SQLITE_OK,
+      guard
+        sqlite3_prepare_v2(database, "SELECT count(*) FROM \(table)", -1, &countStatement, nil)
+          == SQLITE_OK,
         let countStatement
       else {
         throw LookupDatabaseError.invalidDictionaryRankingMetadata
@@ -654,7 +746,8 @@ private actor LanguageReferenceData {
 
   private func bind(_ value: Data, at index: Int32, to statement: OpaquePointer) {
     _ = value.withUnsafeBytes { bytes in
-      sqlite3_bind_blob(statement, index, bytes.baseAddress, Int32(bytes.count), Self.transientDestructor)
+      sqlite3_bind_blob(
+        statement, index, bytes.baseAddress, Int32(bytes.count), Self.transientDestructor)
     }
   }
 
@@ -665,16 +758,19 @@ private actor LanguageReferenceData {
     let readingForms: [DictionaryForm] = try Self.decode(column: 10, statement: statement)
     let senses: [DictionarySense] = try Self.decode(column: 11, statement: statement)
     let relationships: [DictionaryRelationship] = try Self.decode(column: 12, statement: statement)
-    let pitchAccent: PitchAccent? = sqlite3_column_type(statement, 13) == SQLITE_NULL
+    let pitchAccent: PitchAccent? =
+      sqlite3_column_type(statement, 13) == SQLITE_NULL
       ? nil
       : try Self.decode(column: 13, statement: statement)
     return DictionaryEntry(
       id: LanguageReferenceID(rawValue: Self.string(column: 0, statement: statement)),
       noteID: WordNoteID(rawValue: Self.string(column: 1, statement: statement)),
-      sourceProvenances: [LanguageReferenceProvenance(
-        sourceIdentity: Self.string(column: 2, statement: statement),
-        sourceRecordID: Self.string(column: 3, statement: statement)
-      )],
+      sourceProvenances: [
+        LanguageReferenceProvenance(
+          sourceIdentity: Self.string(column: 2, statement: statement),
+          sourceRecordID: Self.string(column: 3, statement: statement)
+        )
+      ],
       reading: Self.string(column: 5, statement: statement),
       headword: Self.string(column: 4, statement: statement),
       summary: Self.string(column: 6, statement: statement),
@@ -699,7 +795,9 @@ private actor LanguageReferenceData {
     return Data(bytes: bytes, count: Int(sqlite3_column_bytes(statement, column)))
   }
 
-  private static func decode<Value: Decodable>(column: Int32, statement: OpaquePointer) throws -> Value {
+  private static func decode<Value: Decodable>(column: Int32, statement: OpaquePointer) throws
+    -> Value
+  {
     let data = Data(string(column: column, statement: statement).utf8)
     return try JSONDecoder().decode(Value.self, from: data)
   }
@@ -707,7 +805,8 @@ private actor LanguageReferenceData {
   private static let transientDestructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
   private static let searchCacheCapacity = 32
 
-  private static func glossRelation(query: String, gloss: String) -> DictionaryMatch.GlossRelation? {
+  private static func glossRelation(query: String, gloss: String) -> DictionaryMatch.GlossRelation?
+  {
     let value = SearchQuery(gloss).value
     if value == query { return .exactGloss }
     if value.hasPrefix("\(query) (") { return .qualifiedGloss }

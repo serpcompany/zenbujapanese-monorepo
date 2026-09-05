@@ -1,0 +1,376 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		199DFC23FCDFFF42B4138CE1 /* system_core.dic in Resources */ = {isa = PBXBuildFile; fileRef = D932E31EAC2B008D669AB893 /* system_core.dic */; };
+		49862FAFFF41ED5048DEDB18 /* Sudachi in Frameworks */ = {isa = PBXBuildFile; productRef = BF286D4E1C1DB2A226BD1179 /* Sudachi */; };
+		4B71BBDCC96D6F1C215745F0 /* SudachiDict-LICENSE-2.0.txt in Resources */ = {isa = PBXBuildFile; fileRef = F6BBF750AB5343488C966576 /* SudachiDict-LICENSE-2.0.txt */; };
+		66182F02D154B74BF679B6D2 /* sudachi-swift-LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 236F6176A7FC3147D4507100 /* sudachi-swift-LICENSE */; };
+		6CF08DE65C694B54A42A392F /* sudachi-swift-NOTICE in Resources */ = {isa = PBXBuildFile; fileRef = 8492E39C2AED0C2315FFC64B /* sudachi-swift-NOTICE */; };
+		760005A35B9D3408BEF9038E /* char.def in Resources */ = {isa = PBXBuildFile; fileRef = 31D3302E48AD4DB5730F66A2 /* char.def */; };
+		7C349B731FB5157253E8894A /* SudachiDict-LEGAL in Resources */ = {isa = PBXBuildFile; fileRef = 8A4D9EDBC3816C4689197B42 /* SudachiDict-LEGAL */; };
+		CF4F7F1DBC1030C682ECA1D5 /* Issue251SudachiApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518512D253D2CD5D9C4793AA /* Issue251SudachiApp.swift */; };
+		D2314BCC8CED1EC440498F21 /* unk.def in Resources */ = {isa = PBXBuildFile; fileRef = 74B4995FF72C981ED0C6E9C9 /* unk.def */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		16414BEF44AD709015C1CC2D /* sudachi-swift */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "sudachi-swift"; path = "../sudachi-swift"; sourceTree = SOURCE_ROOT; };
+		236F6176A7FC3147D4507100 /* sudachi-swift-LICENSE */ = {isa = PBXFileReference; path = "sudachi-swift-LICENSE"; sourceTree = "<group>"; };
+		31D3302E48AD4DB5730F66A2 /* char.def */ = {isa = PBXFileReference; path = char.def; sourceTree = "<group>"; };
+		518512D253D2CD5D9C4793AA /* Issue251SudachiApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Issue251SudachiApp.swift; sourceTree = "<group>"; };
+		74B4995FF72C981ED0C6E9C9 /* unk.def */ = {isa = PBXFileReference; path = unk.def; sourceTree = "<group>"; };
+		8492E39C2AED0C2315FFC64B /* sudachi-swift-NOTICE */ = {isa = PBXFileReference; path = "sudachi-swift-NOTICE"; sourceTree = "<group>"; };
+		8A4D9EDBC3816C4689197B42 /* SudachiDict-LEGAL */ = {isa = PBXFileReference; path = "SudachiDict-LEGAL"; sourceTree = "<group>"; };
+		D932E31EAC2B008D669AB893 /* system_core.dic */ = {isa = PBXFileReference; path = system_core.dic; sourceTree = "<group>"; };
+		EB0C5DA4176322101E4EB584 /* Issue251Sudachi.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Issue251Sudachi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F6BBF750AB5343488C966576 /* SudachiDict-LICENSE-2.0.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "SudachiDict-LICENSE-2.0.txt"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		203092FB45B9197353FE21FB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				49862FAFFF41ED5048DEDB18 /* Sudachi in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		70BAB890797E7DCE0ADBB33B /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				16414BEF44AD709015C1CC2D /* sudachi-swift */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		98D1E3F53CFA46BB2D86AEE8 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				518512D253D2CD5D9C4793AA /* Issue251SudachiApp.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		CE5C47FA25E21B922667D3CD /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				31D3302E48AD4DB5730F66A2 /* char.def */,
+				236F6176A7FC3147D4507100 /* sudachi-swift-LICENSE */,
+				8492E39C2AED0C2315FFC64B /* sudachi-swift-NOTICE */,
+				8A4D9EDBC3816C4689197B42 /* SudachiDict-LEGAL */,
+				F6BBF750AB5343488C966576 /* SudachiDict-LICENSE-2.0.txt */,
+				D932E31EAC2B008D669AB893 /* system_core.dic */,
+				74B4995FF72C981ED0C6E9C9 /* unk.def */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		EBBBE515048E57FE23299496 = {
+			isa = PBXGroup;
+			children = (
+				70BAB890797E7DCE0ADBB33B /* Packages */,
+				CE5C47FA25E21B922667D3CD /* Resources */,
+				98D1E3F53CFA46BB2D86AEE8 /* Sources */,
+				F99DF934ED0214D5035C4A28 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F99DF934ED0214D5035C4A28 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				EB0C5DA4176322101E4EB584 /* Issue251Sudachi.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		568782912347482A525D4363 /* Issue251Sudachi */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EADC2ACBD5D4CC9CA6CA1EF4 /* Build configuration list for PBXNativeTarget "Issue251Sudachi" */;
+			buildPhases = (
+				911A0187BDA5DC3914838658 /* Sources */,
+				866BC0B05C6E57E7C379F443 /* Resources */,
+				203092FB45B9197353FE21FB /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Issue251Sudachi;
+			packageProductDependencies = (
+				BF286D4E1C1DB2A226BD1179 /* Sudachi */,
+			);
+			productName = Issue251Sudachi;
+			productReference = EB0C5DA4176322101E4EB584 /* Issue251Sudachi.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		363798958249843E93335307 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+			};
+			buildConfigurationList = 252DB43C71B6FB95CB421255 /* Build configuration list for PBXProject "Issue251Sudachi" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = EBBBE515048E57FE23299496;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				85D2B0F0F83C9F7EB660EF5A /* XCLocalSwiftPackageReference "../sudachi-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				568782912347482A525D4363 /* Issue251Sudachi */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		866BC0B05C6E57E7C379F443 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7C349B731FB5157253E8894A /* SudachiDict-LEGAL in Resources */,
+				4B71BBDCC96D6F1C215745F0 /* SudachiDict-LICENSE-2.0.txt in Resources */,
+				760005A35B9D3408BEF9038E /* char.def in Resources */,
+				66182F02D154B74BF679B6D2 /* sudachi-swift-LICENSE in Resources */,
+				6CF08DE65C694B54A42A392F /* sudachi-swift-NOTICE in Resources */,
+				199DFC23FCDFFF42B4138CE1 /* system_core.dic in Resources */,
+				D2314BCC8CED1EC440498F21 /* unk.def in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		911A0187BDA5DC3914838658 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CF4F7F1DBC1030C682ECA1D5 /* Issue251SudachiApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		74FD27CD951EA4F2E8E2099A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		8C4288DBB5EDA8826BB4B5CC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = co.serp.issue251.sudachi;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		A24AFB710E2B83A4611FB5C2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A580AD295FA813E489738E90 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = co.serp.issue251.sudachi;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		252DB43C71B6FB95CB421255 /* Build configuration list for PBXProject "Issue251Sudachi" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A24AFB710E2B83A4611FB5C2 /* Debug */,
+				74FD27CD951EA4F2E8E2099A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		EADC2ACBD5D4CC9CA6CA1EF4 /* Build configuration list for PBXNativeTarget "Issue251Sudachi" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A580AD295FA813E489738E90 /* Debug */,
+				8C4288DBB5EDA8826BB4B5CC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		85D2B0F0F83C9F7EB660EF5A /* XCLocalSwiftPackageReference "../sudachi-swift" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../sudachi-swift";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		BF286D4E1C1DB2A226BD1179 /* Sudachi */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Sudachi;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 363798958249843E93335307 /* Project object */;
+}

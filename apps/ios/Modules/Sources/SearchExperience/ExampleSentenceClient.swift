@@ -140,6 +140,20 @@ enum ExampleSentenceRetrievalError: Error, Hashable, Sendable {
 struct ExampleSentenceClient: Sendable {
   var retrieve: @Sendable (ExampleSentenceRetrievalRequest) async throws
     -> ExampleSentenceRetrievalResult
+  private var entryExamples: @Sendable (DictionaryEntry) async throws -> [ExampleSentence]
+
+  init(
+    retrieve:
+      @escaping @Sendable (ExampleSentenceRetrievalRequest) async throws
+      -> ExampleSentenceRetrievalResult,
+    entryExamples: (@Sendable (DictionaryEntry) async throws -> [ExampleSentence])? = nil
+  ) {
+    self.retrieve = retrieve
+    self.entryExamples =
+      entryExamples ?? { entry in
+        try await retrieve(.dictionaryEntry(entry)).sentences
+      }
+  }
 
   static let live = ExampleSentenceClient(
     retrieve: { request in try await ExampleSentenceData.shared.retrieve(request) }
@@ -151,7 +165,7 @@ struct ExampleSentenceClient: Sendable {
   }
 
   func examples(_ entry: DictionaryEntry) async throws -> [ExampleSentence] {
-    try await retrieve(.dictionaryEntry(entry)).sentences
+    try await entryExamples(entry)
   }
 
   func count(_ query: SearchQuery) async throws -> Int {
@@ -163,6 +177,90 @@ struct ExampleSentenceClient: Sendable {
     try await retrieve(query.isASCII ? .directEnglish(query) : .directJapanese(query)).sentences
   }
 }
+
+#if DEBUG
+  extension ExampleSentenceClient {
+    static func clientFromProcessArguments(live: ExampleSentenceClient) -> ExampleSentenceClient? {
+      if ProcessInfo.processInfo.arguments.contains("-Issue253SentenceLayoutFixtures") {
+        return issue253SentenceLayoutFixture(live: live)
+      }
+      return ProcessInfo.processInfo.arguments.contains("-Issue246WordDetailExampleFixtures")
+        ? issue246WordDetailFixture(live: live) : nil
+    }
+
+    static func issue253SentenceLayoutFixture(live: ExampleSentenceClient) -> ExampleSentenceClient
+    {
+      return ExampleSentenceClient(retrieve: live.retrieve) { entry in
+        guard entry.headword == "食べる" else { return try await live.examples(entry) }
+        let rows: [(String, String, String)] = [
+          (
+            "esp1_25300000000000000000000000000001",
+            "食べるために生きてるんじゃない。生きるために食べてるんだ。",
+            "I don't live to eat. I eat to live."
+          ),
+          (
+            "esp1_25300000000000000000000000000002",
+            "たべる？",
+            "Will you eat?"
+          ),
+          (
+            "esp1_25300000000000000000000000000003",
+            "問題を解いてから、友達と話します。",
+            "After solving the problem, I will talk with my friend."
+          ),
+          (
+            "esp1_25300000000000000000000000000004",
+            "REM睡眠中の脳波は起きている時と同じ脳波であり、夢を見るステージです。",
+            "During REM sleep, brain waves resemble the waking state, and dreams occur."
+          ),
+          (
+            "esp1_25300000000000000000000000000005",
+            "見ることは信ずることなり。",
+            "Seeing is believing."
+          ),
+          (
+            "esp1_25300000000000000000000000000006",
+            "ZENBU2026SUPERCALIFRAGILISTICEXPIALIDOCIOUS。",
+            "A deliberately long out-of-vocabulary token remains readable."
+          ),
+        ]
+        return try rows.map { rawID, japanese, english in
+          guard let id = ExampleSentenceID(rawValue: rawID) else {
+            throw ExampleSentenceRetrievalError.retrievalUnavailable(.invalidBaseCorpus)
+          }
+          return ExampleSentence(id: id, japanese: japanese, english: english)
+        }
+      }
+    }
+
+    static func issue246WordDetailFixture(live: ExampleSentenceClient) -> ExampleSentenceClient {
+      return ExampleSentenceClient(retrieve: live.retrieve) { entry in
+        guard entry.id == LanguageReferenceID(rawValue: "7f490a9c9c0da94f4e9474f4efe74be1") else {
+          return try await live.examples(entry)
+        }
+        guard
+          let noCurrentID = ExampleSentenceID(
+            rawValue: "esp1_ea71ea7cd918b2d745f27ffbee917f5a"),
+          let longMixedScriptID = ExampleSentenceID(
+            rawValue: "esp1_05d9fecf64a4857657bbc5bcce0aee6f")
+        else { throw ExampleSentenceRetrievalError.retrievalUnavailable(.invalidBaseCorpus) }
+        return [
+          ExampleSentence(
+            id: noCurrentID,
+            japanese: "水は見る見るうちに橋げたのところまで達した。",
+            english: "The water came up to the bridge girder in a second."
+          ),
+          ExampleSentence(
+            id: longMixedScriptID,
+            japanese: "REM睡眠中の脳波は起きている時と同じ脳波であり、夢を見るステージです。",
+            english:
+              "The brain waves during REM sleep are the same as when awake, and it's the stage when you have dreams."
+          ),
+        ]
+      }
+    }
+  }
+#endif
 
 private actor ExampleSentenceData {
   static let policyVersion = "ExampleSentenceRetrievalPolicy/v1"

@@ -1,11 +1,5 @@
 import SwiftUI
 
-struct UndimmedPlainButtonStyle: ButtonStyle {
-  func makeBody(configuration: Configuration) -> some View {
-    configuration.label.opacity(configuration.isPressed ? 0.7 : 1)
-  }
-}
-
 enum SearchInputMode: Equatable {
   case inactive
   case keyboard
@@ -13,51 +7,32 @@ enum SearchInputMode: Equatable {
   case radicals
 }
 
-struct SearchInputModeBar: View {
+struct SearchInputModePicker: View {
   let selectedMode: SearchInputMode
   let selectMode: (SearchInputMode) -> Void
 
   var body: some View {
-    HStack(spacing: 8) {
-      Spacer()
-      modeButton("Radicals", symbol: "square.grid.3x3", mode: .radicals)
-      modeButton("Handwriting", symbol: "hand.draw", mode: .handwriting)
-      modeButton("Keyboard", symbol: "keyboard", mode: .keyboard)
+    Picker("Search input", selection: selection) {
+      Text("Keyboard")
+        .tag(SearchInputMode.keyboard)
+        .accessibilityIdentifier("search.input.keyboard")
+      Text("Handwriting")
+        .tag(SearchInputMode.handwriting)
+        .accessibilityIdentifier("search.input.handwriting")
+      Text("Radicals")
+        .tag(SearchInputMode.radicals)
+        .accessibilityIdentifier("search.input.radicals")
     }
-    .padding(.horizontal, 12)
-    .frame(minHeight: 44)
-    .background(ZenbuTheme.row)
+    .pickerStyle(.segmented)
+    .accessibilityIdentifier("search.input.mode")
+    .padding(.horizontal)
+    .padding(.vertical, 8)
   }
 
-  private func modeButton(_ label: String, symbol: String, mode: SearchInputMode) -> some View {
-    Button {
-      selectMode(mode)
-    } label: {
-      Image(systemName: symbol)
-        .font(.title3)
-        .frame(width: 44, height: 44)
-        .contentShape(Rectangle())
-        .background(
-          selectedMode == mode ? ZenbuTheme.selectedTab : Color.clear,
-          in: RoundedRectangle(cornerRadius: 7))
-    }
-    .buttonStyle(.plain)
-    .foregroundStyle(
-      selectedMode == mode ? ZenbuTheme.primaryForeground : ZenbuTheme.foreground
+  private var selection: Binding<SearchInputMode> {
+    Binding(
+      get: { selectedMode == .inactive ? .keyboard : selectedMode },
+      set: { mode in selectMode(mode) }
     )
-    .accessibilityLabel(label)
-    .accessibilityAddTraits(selectedMode == mode ? .isSelected : [])
-    .accessibilityIdentifier("search.input.\(mode.accessibilityName)")
-  }
-}
-
-extension SearchInputMode {
-  fileprivate var accessibilityName: String {
-    switch self {
-    case .inactive: "inactive"
-    case .keyboard: "keyboard"
-    case .handwriting: "handwriting"
-    case .radicals: "radicals"
-    }
   }
 }
