@@ -39,13 +39,15 @@ Deterministic bundle selection, pack lifecycle, checksum, corruption, update,
 fallback, range, and resolver tests remain in `ZenbuPR` without network access.
 Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
 provider except for the bounded bundled-provider cold-relaunch journey. The
-merge-candidate workflow invokes and retains both correctness plans.
+merge-candidate workflow invokes and retains all three correctness plans.
 
-The exact inventory contains 324 tests. `ZenbuPR` includes 311 (112 Unit and 199
+The exact inventory contains 329 tests. `ZenbuPR` includes 312 (113 Unit and 199
 UI), and `ZenbuSudachiIntegration` includes three network-backed Unit tests. The
-ten exact tests outside those correctness plans are one performance-only Unit
+twelve exact tests outside those correctness plans are one performance-only Unit
 test, three physical/system HIL journeys, #269's four deliberately red framework
-diagnostics, and #289's two broad secondary-surface whole-window diagnostics. The
+diagnostics, #289's two broad secondary-surface whole-window diagnostics, and
+#173's two default-complete-audit reviewer diagnostics. `ZenbuIncreasedContrast`
+requires the two additional reviewer contrast methods on its own configuration. The
 diagnostics remain independently callable through their dedicated plan and never
 enter `ZenbuPR` or `ZenbuNightly`.
 
@@ -97,18 +99,59 @@ Agents do not assemble final selector lists. A newly discovered bug selector is
 added to the manifest with its capability and reason, reviewed, and then selected
 through the same interface.
 
-For the merge-candidate stage, the planner derives ten lanes from the committed
+For the merge-candidate stage, the planner derives eleven lanes from the committed
 Xcode plan inventory and `VerificationTimingProfile.json`. Every `ZenbuPR` Unit
 test belongs to the Unit lane. The complete 68-test `ZenbuAccessibility`
 partition is split across three lanes, and the remaining 131 normal UI tests are
 split across five lanes. The separate `ZenbuSudachiIntegration` plan is the
-tenth lane. UI identities are assigned by deterministic longest-processing-time
+separate integration lane. The two-test `ZenbuIncreasedContrast` lane is also
+required; its measured duration and timing-source run are null until actual app
+evidence exists. The existing UI identities are assigned by deterministic longest-processing-time
 balancing: measured duration descending, test identity as the stable tie-breaker,
 then the lowest-load lane with lane order as its stable tie-breaker. Repository
 validation fails if the timing profile omits or invents a current UI test, if the
 generated lanes omit or duplicate any required `ZenbuPR` test, if a lane drifts
 from the deterministic split, or if the complete Accessibility or Sudachi plan
-stops being covered.
+stops being covered. The dedicated Increase Contrast partition must exactly match
+its plan as well.
+
+Issue #173 preserves the original reviewer journey in both appearances. All
+selectors below belong to `AccessibilityAuditUITests`; `Light` and `Dark` each
+denote a separate method with the same mapping.
+
+| Method | Required configuration and coverage |
+| --- | --- |
+| `testReviewerReachableSearchAndWordDetailAreReadableIn{Light,Dark}Mode` | Original `ZenbuPR`/`ZenbuAccessibility` membership; direct non-contrast audits (see Word Detail Dynamic Type mapping below) and navigation, including Dynamic Type, hit regions and clipping |
+| `testReviewerContrastWithIncreaseContrastIn{Light,Dark}Mode` | Required `ZenbuIncreasedContrast`; nine named-label rendered-pixel contrast checks with actual test-process and app Increase Contrast receipts |
+| `testReviewerDefaultCompleteAuditIn{Light,Dark}Mode` | `ZenbuAccessibilityDiagnostics` only; original direct complete default audit, nonblocking |
+
+The default diagnostics retain the original complete audit. The original required
+reviewers still audit Dynamic Type at Search root and results. Only the Word
+Detail state's Dynamic Type check maps to the existing required
+`testLightShortWordDetailSupportsDynamicTypeWithoutClipping` and
+`testDarkShortWordDetailSupportsDynamicTypeWithoutClipping`: these retain direct
+AX5 Dynamic Type/clipping audits plus exact meaning and Add Note geometry at
+default and AX5 sizes. No other Dynamic Type audits move.
+
+The runner uses public `simctl ui <owned-device> increase_contrast` only around
+the dedicated plan's test command. It reads the original setting, enables and
+verifies it before tests, then restores and verifies the original in `finally`
+on success or failure. Both setting receipts are retained in the test log; the
+runner still deletes its own ephemeral Simulator on exit. Other plans never
+invoke this setting wrapper.
+
+The reviewed manual capability `reviewer-contrast` resolves the original two
+reviewer selectors, the existing light/dark short Word Detail AX5 selectors,
+and `complete.increased-contrast`; the separate
+`reviewer-default-complete-audit-diagnostics` capability resolves only the two default
+complete-audit diagnostics. A real `iOS pre-merge` workflow dispatch with input
+`capability=reviewer-contrast` runs exactly two lanes: the four default reviewer/AX5
+tests and the two Increase Contrast tests. The default input remains `full-merge`.
+The workflow resolves selectors through the policy and uses the exact dispatch
+source SHA for both checkouts and test receipts. It does not claim complete-suite
+evidence for the focused choice. Manual remains a hosted `workflow_dispatch`
+stage; these UI checks remain deferred from local issue TDD. Full merge-candidate,
+manual full-merge, and pre-release validation all require the contrast lane.
 
 The timing profile comes from workflow run `33888752432` on exact source
 `84bece9fc47e5aa0bd7420befc600a915464f5d3`. Its complete per-test log inventory

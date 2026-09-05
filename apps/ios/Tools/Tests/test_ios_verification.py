@@ -15,6 +15,50 @@ SPEC.loader.exec_module(ios_verification)
 
 
 class IOSVerificationPolicyTests(unittest.TestCase):
+    def test_reviewer_contrast_is_required_in_its_own_restored_configuration(self):
+        repo = Path(__file__).parents[4]
+        inventory = ios_verification.repository_inventory(repo)
+        manifest = json.loads((repo / "apps/ios/VerificationPolicy.json").read_text())
+        prefix = "ZenbuJapaneseUITests/AccessibilityAuditUITests/"
+        increased = {prefix + "testReviewerContrastWithIncreaseContrastIn" + mode + "Mode" for mode in ("Light", "Dark")}
+        defaults = {prefix + "testReviewerDefaultCompleteAuditIn" + mode + "Mode" for mode in ("Light", "Dark")}
+        self.assertEqual(set(inventory["plans"]["ZenbuIncreasedContrast"]["included_tests"]), increased)
+        partitions = ios_verification.merge_candidate_partitions(inventory)
+        self.assertEqual(set(partitions["increased-contrast"]["tests"]), increased)
+        all_required = [test for part in partitions.values() for test in part["tests"]]
+        for test in increased:
+            self.assertEqual(all_required.count(test), 1)
+        for plan in ("ZenbuPR", "ZenbuAccessibility", "ZenbuNightly"):
+            self.assertFalse((increased | defaults) & set(inventory["plans"][plan]["included_tests"]))
+        self.assertTrue(defaults <= set(inventory["plans"]["ZenbuAccessibilityDiagnostics"]["included_tests"]))
+        self.assertTrue(defaults <= set(manifest["non_correctness_exclusions"]))
+        for stage in ("merge-candidate", "manual", "release"):
+            self.assertIn("complete.increased-contrast", manifest["capabilities"]["full-merge"][stage])
+        for mode in ("Light", "Dark"):
+            original = prefix + "testReviewerReachableSearchAndWordDetailAreReadableIn" + mode + "Mode"
+            self.assertEqual(all_required.count(original), 1)
+            self.assertNotIn(original, manifest["non_correctness_exclusions"])
+            replacement = prefix + "test" + mode + "ShortWordDetailSupportsDynamicTypeWithoutClipping"
+            self.assertEqual(all_required.count(replacement), 1)
+            self.assertNotIn(replacement, manifest["non_correctness_exclusions"])
+        self.assertEqual(set(manifest["capabilities"]["reviewer-contrast"]["manual"]), {
+            "ui.accessibility-reviewer-light", "ui.accessibility-reviewer-dark",
+            "ui.word-detail-text-maximum-light", "ui.word-detail-text-maximum-dark",
+            "complete.increased-contrast",
+        })
+        resolved = ios_verification.resolve_plan(
+            manifest, changed_paths=[], stage="manual", event="workflow_dispatch",
+            draft=False, source_sha="candidate", requested_capabilities=["reviewer-contrast"],
+        )
+        matrix = ios_verification.merge_candidate_matrix(manifest, resolved["selectors"], inventory)["include"]
+        self.assertEqual({lane["plan"]: lane["test_count"] for lane in matrix}, {
+            "ZenbuPR": 4, "ZenbuIncreasedContrast": 2,
+        })
+        omitted = json.loads(json.dumps(partitions))
+        omitted["increased-contrast"]["tests"].pop()
+        with self.assertRaisesRegex(ios_verification.PolicyError, "increased-contrast partition"):
+            ios_verification.require_exact_merge_candidate_partitions(inventory, omitted)
+
     def test_final_matrix_executes_deferred_search_word_feedback_once(self):
         inventory = ios_verification.repository_inventory(Path(__file__).parents[4])
         partitions = ios_verification.merge_candidate_partitions(inventory)
@@ -776,6 +820,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 [lane["lane"] for lane in matrix],
                 [
                     "unit",
+                    "increased-contrast",
                     "accessibility-ui-a",
                     "accessibility-ui-b",
                     "accessibility-ui-c",
@@ -791,6 +836,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 [lane["plan"] for lane in matrix],
                 [
                     "ZenbuPR",
+                    "ZenbuIncreasedContrast",
                     "ZenbuPR",
                     "ZenbuPR",
                     "ZenbuPR",
@@ -804,12 +850,13 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             )
             self.assertEqual(
                 [lane["test_count"] for lane in matrix],
-                [112, 22, 23, 23, 26, 26, 26, 27, 26, 3],
+                [113, 2, 22, 23, 23, 26, 26, 26, 27, 26, 3],
             )
             self.assertEqual(
                 [lane["measured_test_seconds"] for lane in matrix],
                 [
                     33.951,
+                    None,
                     1150.814,
                     1153.155,
                     1153.903,
@@ -823,12 +870,13 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             )
             self.assertEqual(
                 {lane["timing_profile_run_id"] for lane in matrix},
-                {33888752432},
+                {33888752432, None},
             )
             self.assertEqual(
                 [lane["selectors"] for lane in matrix],
                 [
                     ["complete.merge-unit"],
+                    ["complete.increased-contrast"],
                     ["complete.merge-accessibility-a"],
                     ["complete.merge-accessibility-b"],
                     ["complete.merge-accessibility-c"],
@@ -852,7 +900,8 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         self.assertEqual(
             {lane: len(partition["tests"]) for lane, partition in partitions.items()},
             {
-                "unit": 112,
+                "unit": 113,
+                "increased-contrast": 2,
                 "accessibility-ui-a": 22,
                 "accessibility-ui-b": 23,
                 "accessibility-ui-c": 23,
@@ -1033,7 +1082,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 for line in output.read_text(encoding="utf-8").splitlines()
             )
             self.assertEqual(
-                len(json.loads(values["merge_candidate_matrix"])["include"]), 10
+                len(json.loads(values["merge_candidate_matrix"])["include"]), 11
             )
 
     def test_repository_contract_requires_one_selector_for_every_generated_lane(self):
@@ -1074,7 +1123,8 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         self.assertEqual(
             {lane: len(partition["tests"]) for lane, partition in partitions.items()},
             {
-                "unit": 112,
+                "unit": 113,
+                "increased-contrast": 2,
                 "accessibility-ui-a": 22,
                 "accessibility-ui-b": 23,
                 "accessibility-ui-c": 23,
@@ -1090,7 +1140,8 @@ class IOSVerificationPolicyTests(unittest.TestCase):
     def test_generated_partition_selectors_expand_to_the_inventory_tests(self):
         repo_root = Path(__file__).parents[4]
         expected = {
-            "complete.merge-unit": ("ZenbuPR", 112),
+            "complete.merge-unit": ("ZenbuPR", 113),
+            "complete.increased-contrast": ("ZenbuIncreasedContrast", 2),
             "complete.merge-accessibility-a": ("ZenbuPR", 22),
             "complete.merge-accessibility-b": ("ZenbuPR", 23),
             "complete.merge-accessibility-c": ("ZenbuPR", 23),

@@ -889,6 +889,11 @@ def merge_candidate_partitions(inventory: dict[str, Any]) -> dict[str, dict[str,
     integration = inventory["plans"]["ZenbuSudachiIntegration"]["included_tests"]
     return {
         "unit": {"plan": "ZenbuPR", "tests": unit},
+        "increased-contrast": {
+            "plan": "ZenbuIncreasedContrast",
+            "tests": inventory["plans"]["ZenbuIncreasedContrast"]["included_tests"],
+            "measured_test_seconds": None,
+        },
         **accessibility_partitions,
         **normal_partitions,
         "sudachi-integration": {
@@ -957,6 +962,8 @@ def require_exact_merge_candidate_partitions(
             )
 
     integration = partitions["sudachi-integration"]
+    if partitions["increased-contrast"] != expected["increased-contrast"]:
+        raise PolicyError("increased-contrast partition must equal ZenbuIncreasedContrast")
     required_integration = set(
         inventory["plans"]["ZenbuSudachiIntegration"]["included_tests"]
     )
@@ -998,9 +1005,25 @@ def merge_candidate_matrix(
                     if "measured_test_seconds" in partition
                     else timing_profile["fixed_lane_test_load_seconds"][lane]
                 ),
-                "timing_profile_run_id": timing_profile["source"]["workflow_run_id"],
+                "timing_profile_run_id": (
+                    None if lane == "increased-contrast"
+                    else timing_profile["source"]["workflow_run_id"]
+                ),
             }
         )
+    reviewer_gate = set(
+        manifest.get("capabilities", {}).get("reviewer-contrast", {}).get("manual", [])
+    )
+    if reviewer_gate and selected == reviewer_gate:
+        reviewer_selectors = sorted(selected & set(manifest["tiers"]["ui"]))
+        include.append({
+            "lane": "reviewer-default-and-ax5",
+            "plan": "ZenbuPR",
+            "selectors": reviewer_selectors,
+            "test_count": len(reviewer_selectors),
+            "measured_test_seconds": None,
+            "timing_profile_run_id": None,
+        })
     return {"include": include}
 
 

@@ -16,6 +16,14 @@ def trigger_section(workflow: str) -> str:
 
 
 class IOSWorkflowPolicyTests(unittest.TestCase):
+    def test_manual_premerge_can_select_only_the_registered_reviewer_gate(self):
+        workflow = workflow_text("ios-premerge.yml")
+        triggers = trigger_section(workflow)
+        self.assertIn("default: full-merge", triggers)
+        self.assertIn("options: [full-merge, reviewer-contrast]", triggers)
+        self.assertIn("MANUAL_CAPABILITY: ${{ inputs.capability || 'full-merge' }}", workflow)
+        self.assertIn('args+=(--capability "$MANUAL_CAPABILITY")', workflow)
+
     def test_photo_fixture_is_loaded_only_into_the_new_disposable_simulator(self):
         runner = (TOOLS / "run_ci_test_plan.sh").read_text(encoding="utf-8")
         seed = 'xcrun simctl addmedia "$simulator_id" "$repo_root/docs/clone-discovery/nihongo/fixtures/image-text/fixture-clear-horizontal.png"'
@@ -48,7 +56,7 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("  pull_request:\n", triggers)
         self.assertIn("  merge_group:\n", triggers)
         self.assertIn("  workflow_dispatch:\n", triggers)
-        self.assertIn("    name: ios-premerge / Required\n", workflow)
+        self.assertIn("'ios-premerge / Reviewer contrast' || 'ios-premerge / Required'", workflow)
 
     def test_complete_suite_uses_the_measured_exact_candidate_matrix(self):
         workflow = workflow_text("ios-premerge.yml")
@@ -132,6 +140,9 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
 
     def test_release_validation_is_manual_complete_and_release_configured(self):
         workflow = workflow_text("ios-release-validation.yml")
+        self.assertIn("ZenbuIncreasedContrast", workflow)
+        self.assertIn('["complete.increased-contrast"]', workflow)
+        self.assertIn("ZenbuPreReleaseContrast.xcresult.zip", workflow)
         triggers = trigger_section(workflow)
         self.assertIn("  workflow_dispatch:\n", triggers)
         self.assertNotIn("  pull_request:\n", triggers)

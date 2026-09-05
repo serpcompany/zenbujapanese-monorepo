@@ -44,6 +44,10 @@
         "SearchExperienceJourneyUITests"
       ],
       "skippedTests" : [
+        "AccessibilityAuditUITests/testReviewerContrastWithIncreaseContrastInLightMode",
+        "AccessibilityAuditUITests/testReviewerContrastWithIncreaseContrastInDarkMode",
+        "AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInLightMode",
+        "AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInDarkMode",
         "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode",
         "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode",
         "SearchExperienceJourneyUITests/testImageTextAppleTranslationWorksOfflineAcrossPhysicalColdRelaunch()",

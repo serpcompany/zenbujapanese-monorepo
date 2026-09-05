@@ -25,6 +25,8 @@
     {
       "parallelizable" : false,
       "selectedTests" : [
+        "AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInLightMode",
+        "AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInDarkMode",
         "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode",
         "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode",
         "AccessibilityFrameworkDiagnosticUITests"

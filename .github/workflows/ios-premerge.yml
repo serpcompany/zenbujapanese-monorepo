@@ -5,6 +5,12 @@ on:
     branches: [main]
   merge_group:
   workflow_dispatch:
+    inputs:
+      capability:
+        description: Registered verification capability
+        type: choice
+        default: full-merge
+        options: [full-merge, reviewer-contrast]
 
 permissions:
   contents: read
@@ -60,6 +66,7 @@ jobs:
         id: plan
         env:
           HEAD_SHA: ${{ github.event.merge_group.head_sha || github.sha }}
+          MANUAL_CAPABILITY: ${{ inputs.capability || 'full-merge' }}
         run: |
           set -euo pipefail
           stage=merge-candidate
@@ -67,6 +74,9 @@ jobs:
           args=(--stage "$stage" --event "$GITHUB_EVENT_NAME" --draft false --source-sha "$HEAD_SHA" --github-output "$GITHUB_OUTPUT")
           if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
             args+=(--base '${{ github.event.pull_request.base.sha }}' --head '${{ github.event.pull_request.head.sha }}')
+          elif [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            [[ "$MANUAL_CAPABILITY" == full-merge || "$MANUAL_CAPABILITY" == reviewer-contrast ]] || exit 64
+            args+=(--capability "$MANUAL_CAPABILITY")
           else
             args+=(--capability full-merge)
           fi
@@ -122,8 +132,11 @@ jobs:
 
       - name: Record exact candidate identity
         if: always()
+        env:
+          CAPABILITY: ${{ inputs.capability || 'full-merge' }}
         run: |
           {
+            printf 'capability=%s\n' "$CAPABILITY"
             printf 'event=%s\n' "$GITHUB_EVENT_NAME"
             printf 'tested_sha=%s\n' "$GITHUB_SHA"
             printf 'lane=%s\n' '${{ matrix.lane }}'
@@ -170,7 +183,7 @@ jobs:
           retention-days: 30
 
   required:
-    name: ios-premerge / Required
+    name: ${{ github.event_name == 'workflow_dispatch' && inputs.capability == 'reviewer-contrast' && 'ios-premerge / Reviewer contrast' || 'ios-premerge / Required' }}
     if: always()
     needs: [scope, complete-suite]
     runs-on: ubuntu-24.04
@@ -194,5 +207,5 @@ jobs:
             echo 'No iOS consumer changed in this merge group.'
             exit 0
           fi
-          printf 'Complete-suite result: %s\n' "$COMPLETE_RESULT"
+          printf 'Selected-capability result: %s\n' "$COMPLETE_RESULT"
           [[ "$COMPLETE_RESULT" == success ]]

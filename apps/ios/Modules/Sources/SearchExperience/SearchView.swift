@@ -809,7 +809,7 @@ private struct ResultRow: View {
   private var frequencyRank: some View {
     Text(frequencyPresentation.text)
       .font(.caption.monospacedDigit())
-      .foregroundStyle(.secondary)
+      .foregroundStyle(.primary)
       .fixedSize(horizontal: false, vertical: true)
       .accessibilityHidden(true)
   }

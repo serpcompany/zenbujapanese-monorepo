@@ -1,4 +1,5 @@
 import UIKit
+import Vision
 import XCTest
 
 private struct AuditException: CustomStringConvertible {
@@ -1501,12 +1502,36 @@ final class AccessibilityAuditUITests: XCTestCase {
 
   @MainActor
   func testReviewerReachableSearchAndWordDetailAreReadableInDarkMode() throws {
-    try auditReviewerJourney(appearance: .dark)
+    try auditReviewerJourney(
+      appearance: .dark, types: auditTypes.subtracting(.contrast), usesExplicitWordScaling: true
+    )
   }
 
   @MainActor
   func testReviewerReachableSearchAndWordDetailAreReadableInLightMode() throws {
-    try auditReviewerJourney(appearance: .light)
+    try auditReviewerJourney(
+      appearance: .light, types: auditTypes.subtracting(.contrast), usesExplicitWordScaling: true
+    )
+  }
+
+  @MainActor
+  func testReviewerDefaultCompleteAuditInDarkMode() throws {
+    try auditReviewerJourney(appearance: .dark, types: auditTypes)
+  }
+
+  @MainActor
+  func testReviewerDefaultCompleteAuditInLightMode() throws {
+    try auditReviewerJourney(appearance: .light, types: auditTypes)
+  }
+
+  @MainActor
+  func testReviewerContrastWithIncreaseContrastInDarkMode() throws {
+    try auditReviewerJourney(appearance: .dark, types: .contrast, increaseContrast: true)
+  }
+
+  @MainActor
+  func testReviewerContrastWithIncreaseContrastInLightMode() throws {
+    try auditReviewerJourney(appearance: .light, types: .contrast, increaseContrast: true)
   }
 
   @MainActor
@@ -2271,17 +2296,40 @@ final class AccessibilityAuditUITests: XCTestCase {
   }
 
   @MainActor
-  private func auditReviewerJourney(appearance: XCUIDevice.Appearance) throws {
+  private func auditReviewerJourney(
+    appearance: XCUIDevice.Appearance,
+    types: XCUIAccessibilityAuditType,
+    increaseContrast: Bool = false,
+    usesExplicitWordScaling: Bool = false
+  ) throws {
     let originalAppearance = XCUIDevice.shared.appearance
     XCUIDevice.shared.appearance = appearance
     defer { XCUIDevice.shared.appearance = originalAppearance }
 
-    let app = launchApp(appearance: appearance, additionalArguments: ["-ResetRecentSearches"])
+    XCTAssertEqual(UIAccessibility.isDarkerSystemColorsEnabled, increaseContrast)
+    if increaseContrast { assertContrastMeasurementSensitivity() }
+    let app = launchApp(
+      appearance: appearance,
+      additionalArguments: [
+        "-ResetRecentSearches", "-ReportAccessibilitySettings",
+        "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL",
+      ]
+    )
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    let receipt = app.descendants(matching: .any).matching(
+      NSPredicate(format: "value == %@", "increaseContrast=\(increaseContrast)")
+    ).firstMatch
+    XCTAssertTrue(
+      receipt.waitForExistence(timeout: 3), "The actual app must observe the runner setting"
+    )
+    let settings = XCTAttachment(string: "App \(receipt.value as? String ?? "missing")")
+    settings.name = "Reviewer public accessibility setting - \(appearance)"
+    settings.lifetime = .keepAlways
+    add(settings)
 
     try XCTContext.runActivity(named: "Search root") { _ in
-      try performAudit(in: app, named: "Search root")
+      if !increaseContrast { try performAudit(in: app, named: "Search root", types: types) }
     }
 
     searchField.tap()
@@ -2292,9 +2340,20 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10))
 
     try XCTContext.runActivity(named: "Search results") { _ in
-      // Xcode 26 flags final native List text beneath system tab material. Every finding remains
-      // blocking here; the AXXXL journey separately keeps those rows readable/reachable.
-      try performAudit(in: app, named: "Search results")
+      if increaseContrast {
+        let results = app.collectionViews["search.results"]
+        let loadedRank = XCTNSPredicateExpectation(
+          predicate: NSPredicate(format: "value CONTAINS %@", "Frequency rank 115"), object: japan
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [loadedRank], timeout: 5), .completed)
+        bringIntoUnobscuredViewport(japan, in: results, app: app)
+        assertRenderedRankContrast(in: japan)
+        retainReviewerContrastLabels(
+          ["Best Matches", "Additional Matches"], in: results, app: app
+        )
+      } else {
+        try performAudit(in: app, named: "Search results", types: types)
+      }
     }
 
     japan.tap()
@@ -2311,14 +2370,21 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(identity.isHittable)
 
     try XCTContext.runActivity(named: "Word Detail") { _ in
-      // Every retained finding below is pinned to this exact short-entry state. The two
-      // Dynamic Type nodes use semantic fonts and are separately exercised at Accessibility
-      // XXXL. All Word Detail findings remain blocking.
-      try performAudit(
-        in: app,
-        named: "Word Detail",
-        types: auditTypes
-      )
+      if increaseContrast {
+        retainReviewerContrastLabels(
+          ["Noun", "ALTERNATIVES", "MEANING", "KANJI", "NOTES", "Add Note"],
+          in: detail, app: app
+        )
+      } else {
+        try performAudit(
+          in: app,
+          named: "Word Detail",
+          // Required short-word tests retain direct AX5 Dynamic Type audits and
+          // compare default/AX5 Add Note and meaning text geometry. The original
+          // default full audit remains in its diagnostic counterpart.
+          types: usesExplicitWordScaling ? types.subtracting(.dynamicType) : types
+        )
+      }
     }
 
     let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
@@ -2326,6 +2392,169 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance == .dark ? "Word Detail - dark appearance" : "Word Detail - light appearance"
     screenshot.lifetime = .keepAlways
     add(screenshot)
+  }
+
+  @MainActor
+  private func retainReviewerContrastLabels(
+    _ labels: [String], in list: XCUIElement, app: XCUIApplication
+  ) {
+    for label in labels {
+      let text = app.staticTexts[label]
+      bringIntoUnobscuredViewport(text, in: list, app: app)
+      let screenshot = text.screenshot()
+      let ratio = renderedTextContrast(in: screenshot.image.cgImage)
+      XCTAssertGreaterThanOrEqual(ratio ?? 0, 4.5, "Visible \(label) must meet text contrast")
+      let measurement = XCTAttachment(
+        string: "\(label): \(ratio.map { String($0) } ?? "no glyph contrast")")
+      measurement.name = "Measured reviewer text contrast - \(label)"
+      measurement.lifetime = .keepAlways
+      add(measurement)
+      let retained = XCTAttachment(screenshot: screenshot)
+      retained.name = "Increased Contrast reviewer \(label)"
+      retained.lifetime = .keepAlways
+      add(retained)
+    }
+    // Positioning the last label must not obscure an earlier target before the audit.
+    for label in labels {
+      let text = app.staticTexts[label]
+      XCTAssertTrue(text.isHittable)
+      XCTAssertGreaterThanOrEqual(text.frame.minY, app.navigationBars.firstMatch.frame.maxY)
+      XCTAssertLessThanOrEqual(text.frame.maxY, app.tabBars.firstMatch.frame.minY)
+    }
+  }
+
+  @MainActor
+  private func assertRenderedRankContrast(in row: XCUIElement) {
+    let screenshot = row.screenshot()
+    let rowEvidence = XCTAttachment(screenshot: screenshot)
+    rowEvidence.name = "Japan result containing exact frequency rank"
+    rowEvidence.lifetime = .keepAlways
+    add(rowEvidence)
+    guard let image = screenshot.image.cgImage else {
+      XCTFail("The visible Japan row must provide a screenshot")
+      return
+    }
+    // The rank deliberately shares its row's VoiceOver value. Apple Vision locates
+    // its public rendered pixels without exposing a duplicate accessibility node.
+    let request = VNRecognizeTextRequest()
+    request.recognitionLevel = .accurate
+    request.recognitionLanguages = ["en-US"]
+    request.usesLanguageCorrection = false
+    do {
+      try VNImageRequestHandler(cgImage: image).perform([request])
+    } catch {
+      XCTFail("Could not locate the rendered frequency rank: \(error)")
+      return
+    }
+    guard let rankPattern = try? NSRegularExpression(pattern: "(?<!\\S)#115(?!\\S)") else {
+      XCTFail("The exact rank token pattern must be valid")
+      return
+    }
+    let matches = (request.results ?? []).compactMap { observation -> CGRect? in
+      guard let candidate = observation.topCandidates(1).first,
+        candidate.confidence >= 0.9
+      else { return nil }
+      let tokens = rankPattern.matches(
+        in: candidate.string, range: NSRange(candidate.string.startIndex..., in: candidate.string)
+      )
+      guard tokens.count == 1,
+        let range = Range(tokens[0].range, in: candidate.string),
+        let rectangle = try? candidate.boundingBox(for: range)
+      else { return nil }
+      return rectangle.boundingBox
+    }
+    guard matches.count == 1, let match = matches.first else {
+      XCTFail("Expected exactly one confidently recognized #115 in the Japan row")
+      return
+    }
+    let box = match
+    let bounds = CGRect(x: 0, y: 0, width: image.width, height: image.height)
+    let cropRect = CGRect(
+      x: box.minX * bounds.width, y: (1 - box.maxY) * bounds.height,
+      width: box.width * bounds.width, height: box.height * bounds.height
+    ).insetBy(dx: -3, dy: -3).integral.intersection(bounds)
+    guard let crop = image.cropping(to: cropRect) else {
+      XCTFail("The exact rank must have a bounded pixel crop")
+      return
+    }
+    let ratio = renderedTextContrast(in: crop)
+    XCTAssertGreaterThanOrEqual(ratio ?? 0, 4.5, "The rendered #115 must meet text contrast")
+    let pixels = XCTAttachment(image: UIImage(cgImage: crop))
+    pixels.name = "Exact #115 recognized pixel crop"
+    pixels.lifetime = .keepAlways
+    add(pixels)
+    let measurement = XCTAttachment(
+      string: "#115 crop=\(cropRect) contrast=\(ratio.map { String($0) } ?? "unavailable")"
+    )
+    measurement.name = "Measured exact rank contrast"
+    measurement.lifetime = .keepAlways
+    add(measurement)
+  }
+
+  @MainActor
+  private func renderedTextContrast(in image: CGImage?) -> Double? {
+    guard let image,
+      let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)
+    else { return nil }
+    var pixels = [UInt8](repeating: 0, count: image.width * image.height * 4)
+    guard
+      let context = CGContext(
+        data: &pixels, width: image.width, height: image.height, bitsPerComponent: 8,
+        bytesPerRow: image.width * 4, space: colorSpace,
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+      )
+    else { return nil }
+    context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+    return dominantTextContrast(in: pixels)
+  }
+
+  // A bounded solid-text screenshot seam, not a whole-window contrast estimator.
+  // Modal background and the most frequent distinct glyph color avoid measuring
+  // antialiased edge pixels. Uniform/low-contrast crops cannot produce a pass.
+  private func dominantTextContrast(in pixels: [UInt8]) -> Double? {
+    guard pixels.count.isMultiple(of: 4), !pixels.isEmpty else { return nil }
+    var counts: [Int: Int] = [:]
+    for index in stride(from: 0, to: pixels.count, by: 4) where pixels[index + 3] == 255 {
+      let rgb = Int(pixels[index]) << 16 | Int(pixels[index + 1]) << 8 | Int(pixels[index + 2])
+      counts[rgb, default: 0] += 1
+    }
+    let ranked = counts.sorted { $0.value == $1.value ? $0.key < $1.key : $0.value > $1.value }
+    guard let background = ranked.first else { return nil }
+    func luminance(_ rgb: Int) -> Double {
+      let channels = [16, 8, 0].map { shift -> Double in
+        let value = Double((rgb >> shift) & 255) / 255
+        return value <= 0.04045 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+      }
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
+    }
+    let backgroundLuminance = luminance(background.key)
+    // Select by prevalence before computing contrast. Searching for a color that
+    // clears a threshold could mistake rare dark noise for faint foreground text.
+    guard let foreground = ranked.dropFirst().first, foreground.value >= 8 else { return nil }
+    let foregroundLuminance = luminance(foreground.key)
+    return (max(backgroundLuminance, foregroundLuminance) + 0.05)
+      / (min(backgroundLuminance, foregroundLuminance) + 0.05)
+  }
+
+  private func assertContrastMeasurementSensitivity() {
+    let white = Array(repeating: [UInt8](arrayLiteral: 255, 255, 255, 255), count: 40).flatMap {
+      $0
+    }
+    let black = Array(repeating: [UInt8](arrayLiteral: 0, 0, 0, 255), count: 20).flatMap { $0 }
+    let gray = Array(repeating: [UInt8](arrayLiteral: 127, 127, 127, 255), count: 20).flatMap { $0 }
+    let faint = Array(repeating: [UInt8](arrayLiteral: 240, 240, 240, 255), count: 20).flatMap {
+      $0
+    }
+    XCTAssertEqual(dominantTextContrast(in: white + black) ?? 0, 21, accuracy: 0.001)
+    XCTAssertEqual(
+      dominantTextContrast(in: black + black + Array(white.prefix(40))) ?? 0, 21, accuracy: 0.001)
+    XCTAssertEqual(dominantTextContrast(in: white + gray) ?? 0, 4.004, accuracy: 0.001)
+    XCTAssertLessThan(dominantTextContrast(in: white + faint) ?? 0, 4.5)
+    XCTAssertLessThan(
+      dominantTextContrast(in: white + faint + Array(black.prefix(32))) ?? 0, 4.5,
+      "Minor black noise must not hide the dominant faint text"
+    )
+    XCTAssertNil(dominantTextContrast(in: white))
   }
 
   @MainActor

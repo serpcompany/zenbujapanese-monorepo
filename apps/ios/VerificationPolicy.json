@@ -46,6 +46,8 @@
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech": "Live Japanese voice completion is retained in the separately recorded physical speech HIL journey."
   },
   "non_correctness_exclusions": {
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInLightMode": "Original complete default audit remains direct and diagnostic after #173 evidence. Required reviewers preserve Search Dynamic Type and other non-contrast coverage; existing short Word Detail AX5 audits and exact geometry cover Word Detail Dynamic Type. ZenbuIncreasedContrast requires nine named-label rendered-pixel contrast checks.",
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInDarkMode": "Original complete default audit remains direct and diagnostic after #173 evidence. Required reviewers preserve Search Dynamic Type and other non-contrast coverage; existing short Word Detail AX5 audits and exact geometry cover Word Detail Dynamic Type. ZenbuIncreasedContrast requires nine named-label rendered-pixel contrast checks.",
     "ZenbuJapaneseTests/ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus": "This benchmark belongs to the performance trend and is not a functional correctness journey.",
     "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testDarkKanjiElementRetainsNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR.",
     "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testDarkSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR.",
@@ -54,7 +56,7 @@
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode": "The unchanged broad whole-window audit remains visibly red in ZenbuAccessibilityDiagnostics after #293 proved native Liquid Glass boundary findings are sensitive but not specific; focused app-owned accessibility seams remain blocking in ZenbuPR and ZenbuAccessibility.",
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInLightMode": "The unchanged broad whole-window audit remains visibly red in ZenbuAccessibilityDiagnostics after #293 proved native Liquid Glass boundary findings are sensitive but not specific; focused app-owned accessibility seams remain blocking in ZenbuPR and ZenbuAccessibility."
   },
-  "correctness_plans": ["ZenbuPR", "ZenbuSudachiIntegration"],
+  "correctness_plans": ["ZenbuPR", "ZenbuSudachiIntegration", "ZenbuIncreasedContrast"],
   "intentional_same_stage_evidence": {
     "ui.example-compact-hit-region|ui.example-compact-hit-region-dark": "The same direct no-handler audit must independently pass in light and dark appearance because #173 requires both appearances and appearance-specific accessibility geometry remains possible.",
     "ui.example-candidate-selection|ui.example-layout": "Candidate selection proves the native ambiguity Menu destination and Back restoration; the shared-layout journey independently proves reconstruction, rhythm, wrapping, ordinary linked navigation, and speech.",
@@ -77,6 +79,25 @@
     "accessibility.image-translation-recovery|ui.image-text-translation-assets": "The normal-size journey proves cancellation, retry, unsupported, failure, and preserved session behavior; one independent maximum-size smoke proves the new native recovery presentation remains reachable without duplicating the full journey."
   },
   "selectors": {
+    "complete.increased-contrast": {
+      "plan": "ZenbuIncreasedContrast",
+      "test": null,
+      "partition": "increased-contrast",
+      "traits": ["complete-suite", "generated-partition"],
+      "journeys": ["accessibility-reviewer-contrast"]
+    },
+    "diagnostic.reviewer-default-complete-audit-light": {
+      "plan": "ZenbuAccessibilityDiagnostics",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInLightMode",
+      "traits": ["ui", "accessibility", "normal-dynamic-type", "framework-diagnostic"],
+      "journeys": []
+    },
+    "diagnostic.reviewer-default-complete-audit-dark": {
+      "plan": "ZenbuAccessibilityDiagnostics",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInDarkMode",
+      "traits": ["ui", "accessibility", "normal-dynamic-type", "framework-diagnostic"],
+      "journeys": []
+    },
     "contracts.repository": {
       "plan": null,
       "test": null,
@@ -641,6 +662,8 @@
       "ui.bundled-japanese-text-analysis"
     ],
     "diagnostics": [
+      "diagnostic.reviewer-default-complete-audit-light",
+      "diagnostic.reviewer-default-complete-audit-dark",
       "diagnostic.search-results-tab-edge-dark",
       "diagnostic.search-results-tab-edge-light",
       "diagnostic.kanji-element-tab-edge-dark",
@@ -659,6 +682,7 @@
     "integration": ["integration.sudachi"],
     "performance": ["performance.search"],
     "complete": [
+      "complete.increased-contrast",
       "complete.public",
       "complete.merge-unit",
       "complete.merge-accessibility-a",
@@ -676,7 +700,7 @@
     "issue-final": ["contracts", "unit", "ui", "accessibility", "integration"],
     "hosted-fast": ["contracts", "unit", "ui", "accessibility"],
     "merge-candidate": ["contracts", "complete", "integration"],
-    "manual": ["contracts", "diagnostics", "complete", "integration"],
+    "manual": ["contracts", "ui", "diagnostics", "complete", "integration"],
     "release": ["contracts", "complete", "integration"],
     "performance": ["performance"]
   },
@@ -725,6 +749,24 @@
     ]
   },
   "capabilities": {
+    "reviewer-contrast": {
+      "adaptive_layout": true,
+      "paths": [],
+      "manual": [
+        "ui.accessibility-reviewer-light",
+        "ui.accessibility-reviewer-dark",
+        "ui.word-detail-text-maximum-light",
+        "ui.word-detail-text-maximum-dark",
+        "complete.increased-contrast"
+      ]
+    },
+    "reviewer-default-complete-audit-diagnostics": {
+      "paths": [],
+      "manual": [
+        "diagnostic.reviewer-default-complete-audit-light",
+        "diagnostic.reviewer-default-complete-audit-dark"
+      ]
+    },
     "full-fast": {
       "paths": [],
       "adaptive_layout": true,
@@ -747,6 +789,7 @@
     "full-merge": {
       "paths": [],
       "merge-candidate": [
+        "complete.increased-contrast",
         "contracts.repository",
         "complete.merge-unit",
         "complete.merge-accessibility-a",
@@ -760,6 +803,7 @@
         "integration.sudachi"
       ],
       "manual": [
+        "complete.increased-contrast",
         "contracts.repository",
         "complete.merge-unit",
         "complete.merge-accessibility-a",
@@ -773,6 +817,7 @@
         "integration.sudachi"
       ],
       "release": [
+        "complete.increased-contrast",
         "contracts.repository",
         "complete.public",
         "integration.sudachi"

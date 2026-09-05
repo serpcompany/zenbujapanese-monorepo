@@ -201,8 +201,7 @@ build_finished="$(seconds)"
 test_started="$build_finished"
 phase="test"
 test_log="${result_bundle}.xcodebuild.log"
-set +e
-xcodebuild test-without-building \
+test_command=(xcodebuild test-without-building \
   -project "$repo_root/apps/ios/ZenbuJapanese.xcodeproj" \
   -scheme ZenbuJapanese \
   -testPlan "$plan" \
@@ -210,7 +209,12 @@ xcodebuild test-without-building \
   -parallel-testing-enabled NO \
   -derivedDataPath "$derived_data" \
   -resultBundlePath "$result_bundle" \
-  "$@" 2>&1 | tee "$test_log"
+  "$@")
+if [[ "$plan" == ZenbuIncreasedContrast ]]; then
+  test_command=(python3 "$tool_dir/increased_contrast.py" --device "$simulator_id" -- "${test_command[@]}")
+fi
+set +e
+"${test_command[@]}" 2>&1 | tee "$test_log"
 test_status=${PIPESTATUS[0]}
 set -e
 test_finished="$(seconds)"

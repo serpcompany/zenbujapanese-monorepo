@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 public struct SearchExperienceRootView: View {
   @State private var readingAidPreferences = ReadingAidPreferences()
@@ -107,7 +108,7 @@ public struct SearchExperienceRootView: View {
           ProgressView("Preparing on-device Japanese Text Analysis")
             .accessibilityIdentifier("language-technology-pack.preparing")
         } else {
-          appTabs
+          verifiedAppTabs
         }
       #else
         appTabs
@@ -157,6 +158,17 @@ public struct SearchExperienceRootView: View {
   }
 
   #if DEBUG
+    @ViewBuilder
+    private var verifiedAppTabs: some View {
+      if ProcessInfo.processInfo.arguments.contains("-ReportAccessibilitySettings") {
+        appTabs.accessibilityValue(
+          "increaseContrast=\(UIAccessibility.isDarkerSystemColorsEnabled)"
+        )
+      } else {
+        appTabs
+      }
+    }
+
     private var forcedUITestColorScheme: ColorScheme? {
       let arguments = ProcessInfo.processInfo.arguments
       if arguments.contains("-ForceUITestDarkAppearance") { return .dark }

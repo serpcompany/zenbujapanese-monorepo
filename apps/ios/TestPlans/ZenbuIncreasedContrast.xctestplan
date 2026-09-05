@@ -1,0 +1,39 @@
+{
+  "configurations": [
+    {
+      "id": "D2924659-C535-4B6F-A36C-CC599A802173",
+      "name": "Increase Contrast",
+      "options": {
+        "language": "en",
+        "region": "US"
+      }
+    }
+  ],
+  "defaultOptions": {
+    "defaultTestExecutionTimeAllowance": 600,
+    "maximumTestExecutionTimeAllowance": 1200,
+    "testTimeoutsEnabled": true,
+    "uiTestingScreenshotsLifetime": "keepAlways",
+    "userAttachmentLifetime": "keepAlways",
+    "targetForVariableExpansion": {
+      "containerPath": "container:ZenbuJapanese.xcodeproj",
+      "identifier": "5CD4552D207F8AC0D2D15CD6",
+      "name": "ZenbuJapanese"
+    }
+  },
+  "testTargets": [
+    {
+      "parallelizable": false,
+      "selectedTests": [
+        "AccessibilityAuditUITests/testReviewerContrastWithIncreaseContrastInLightMode",
+        "AccessibilityAuditUITests/testReviewerContrastWithIncreaseContrastInDarkMode"
+      ],
+      "target": {
+        "containerPath": "container:ZenbuJapanese.xcodeproj",
+        "identifier": "74E6EB6E486E0D87C41A29EF",
+        "name": "ZenbuJapaneseUITests"
+      }
+    }
+  ],
+  "version": 1
+}

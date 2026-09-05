@@ -59,6 +59,15 @@ jobs:
             com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
             "$RUNNER_TEMP/ZenbuPreReleaseValidation.xcresult"
 
+      - name: Run required reviewer Increase Contrast checks
+        run: |
+          apps/ios/Tools/run_selected_test_plan.sh \
+            ZenbuIncreasedContrast \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
+            "$RUNNER_TEMP/ZenbuPreReleaseContrast.xcresult" \
+            '["complete.increased-contrast"]' \
+            "$GITHUB_SHA"
+
       - name: Build the Release simulator product
         run: |
           xcodebuild build \
@@ -83,6 +92,11 @@ jobs:
       - name: Package test evidence
         if: always()
         run: |
+          if [[ -d "$RUNNER_TEMP/ZenbuPreReleaseContrast.xcresult" ]]; then
+            ditto -c -k --keepParent \
+              "$RUNNER_TEMP/ZenbuPreReleaseContrast.xcresult" \
+              "$RUNNER_TEMP/ZenbuPreReleaseContrast.xcresult.zip"
+          fi
           if [[ -d "$RUNNER_TEMP/ZenbuPreReleaseValidation.xcresult" ]]; then
             ditto -c -k --keepParent \
               "$RUNNER_TEMP/ZenbuPreReleaseValidation.xcresult" \
@@ -95,6 +109,9 @@ jobs:
         with:
           name: ZenbuPreReleaseValidation-${{ github.sha }}-${{ github.run_id }}
           path: |
+            ${{ runner.temp }}/ZenbuPreReleaseContrast.xcresult.zip
+            ${{ runner.temp }}/ZenbuPreReleaseContrast.xcresult.timing.json
+            ${{ runner.temp }}/ZenbuPreReleaseContrast.xcresult.xcodebuild.log
             ${{ runner.temp }}/ZenbuPreReleaseValidation.xcresult.zip
             ${{ runner.temp }}/ZenbuPreReleaseValidation-identity.txt
           if-no-files-found: warn

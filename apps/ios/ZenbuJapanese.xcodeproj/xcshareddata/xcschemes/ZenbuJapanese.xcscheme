@@ -68,6 +68,9 @@
       </MacroExpansion>
       <TestPlans>
          <TestPlanReference
+            reference = "container:TestPlans/ZenbuIncreasedContrast.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
             reference = "container:TestPlans/ZenbuPR.xctestplan"
             default = "YES">
          </TestPlanReference>
