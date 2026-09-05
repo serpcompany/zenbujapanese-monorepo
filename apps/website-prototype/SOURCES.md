@@ -2,6 +2,16 @@
 
 Accessed 2026-09-05. New implementation; no previous prototype code restored.
 
+## Selected A revision
+
+Owner selected A and requested Nova / Neutral / Blue / Inter preset `b1PzeK`, with brand `#BC002D`. Theme tokens recovered from the approved website planning commit `c594edf:apps/web/app/globals.css`; no old layout restored. Official Base Nova Badge fetched from https://ui.shadcn.com/r/styles/base-nova/badge.json and incorporated in `src/badge.tsx` with only the cn utility localized. Tailwind v4 renders its actual utilities. Brand colors the title; controls and frequency badges use the approved blue primary.
+
+`src/pitch.tsx` ports `apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift` PitchAccentView/PitchContour: medium katakana, horizontal padding12, min-height34 capsule, 4px text-bottom padding, 7px SVG, 1.5px round stroke; measured width × downstep / mora count; heiban full line. Exact ZenbuTheme P3 light/dark stroke colors retained. Browser reading font metrics and CSS capsule fill approximate platform text/material rendering.
+
+Speech behavior inspected in SpeechSynthesisClient.swift: native AVFoundation cancels ongoing speech, selects ja-JP, default speech rate×.82. Browser cancels speech, selects Japanese voice, reads kana at Web Speech relative rate .82. Different engines/rate scales prevent exact audio identity. Verified browser utterance payload `きのう`, `ja-JP`, `.82` using interception; this is not a recording or a listening-quality assertion.
+
+Selected A screenshot names are `A-selected-desktop.png`, `A-selected-mobile.png`, `A-entry-desktop.png`, and `A-entry-mobile.png`. Earlier screenshots and B/C are historical comparison artifacts.
+
 ## Incorporated components
 
 `src/ui.tsx` adapts the actual shadcn/ui Card and Radix Switch component structure, with plain CSS replacing Tailwind class strings and unused Card subcomponents omitted:

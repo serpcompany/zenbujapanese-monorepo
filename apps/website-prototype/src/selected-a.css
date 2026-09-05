@@ -1,0 +1,10 @@
+body{font-family:'Inter',sans-serif;background:var(--background);color:var(--foreground)}
+.variant-A{--accent:var(--primary);--muted:var(--muted-foreground);--line:var(--border);background:var(--background)}
+.variant-A .hero{padding-top:70px;padding-bottom:44px}.variant-A h1{color:var(--brand);margin:0 0 35px;font-family:'Inter',sans-serif;font-weight:600;font-size:48px;letter-spacing:-2px}
+.variant-A .search-box{border-color:var(--border);box-shadow:0 4px 14px #00000008;color:var(--muted-foreground)}.variant-A .search-box input{color:var(--foreground)}
+.variant-A .word-column h3{font-family:'Noto Sans JP',sans-serif}.variant-A rt,.variant-A .example p[lang=ja]{color:var(--muted-foreground)}.variant-A .example{border-color:var(--border)}
+.variant-A .entry-link,.back-link{display:flex;align-items:center;gap:5px;color:var(--primary);font-size:12px;margin-top:24px;width:fit-content}.back-link{margin:0 0 20px}.entry-link:hover,.back-link:hover{text-decoration:underline}
+.variant-A .pronunciation>button{width:auto;min-height:34px;height:auto;gap:6px;padding:5px 10px;display:flex;border-radius:var(--radius);font-size:12px;border-color:var(--border);color:var(--foreground)}
+.native-pitch{display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:999px;background:var(--secondary)}.native-pitch>span{display:inline-block;position:relative;font-family:'Noto Sans JP',sans-serif;font-size:16px;font-weight:500;line-height:24px;padding-bottom:4px;color:var(--foreground)}.native-pitch svg{position:absolute;left:0;bottom:0;overflow:visible;display:block}
+.prototype-switcher{background:#252525;box-shadow:0 10px 35px #0002}.prototype-switcher small{color:#ccc}.switch[data-state=unchecked]{background:var(--border)}button:focus-visible,a:focus-visible,input:focus-visible{outline-color:var(--ring)}
+@media(max-width:640px){.variant-A .hero{padding-top:44px;padding-bottom:31px}.variant-A h1{font-size:35px;letter-spacing:-1.4px;margin-bottom:28px}.variant-A .entry-link{margin-top:16px}.variant-A .pronunciation{gap:12px}}

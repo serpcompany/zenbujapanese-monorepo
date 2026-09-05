@@ -1,5 +1,7 @@
 # Issue 298 — design set one (throwaway)
 
+Latest decision: owner selected A. The selected view now uses the approved Nova/Neutral/Blue/Inter theme, title-only hero, official Base Nova frequency Badge, native-style katakana pitch contour, natural Listen control, and working `/entry/:word?variant=A` fixture pages. Both reading preferences survive entry/back navigation in memory. No header/footer. Current screenshots use `A-selected-*` and `A-entry-*`; B/C below describe prior explorations, not the selected direction. `npx tsc --noEmit` and build pass.
+
 Question: which hierarchy makes dictionary entries easiest to read? Three independent layouts at `/`, selected with `?variant=A`, `B`, or `C`.
 
 Run `npm install && npm run dev` from this directory. Preview: http://localhost:3100/?variant=A. The development switcher cycles with buttons or left/right keys and preserves its variant in the URL. Reading controls and query are in-memory. No existing web app was present, so this is a separately named Vite prototype beside `apps/ios`.
