@@ -3703,10 +3703,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(app.buttons["word-detail.toolbar-flashcards"].exists)
     app.buttons["word-detail.add-menu"].tap()
     app.buttons["Choose Photo"].tap()
-    let picker = waitForSystemPhotoPicker(in: app)
-    let cancelPhoto = picker.buttons["Cancel"]
+    // PhotosUI can move from a transient presentation window into the main
+    // window. Its native navigation bar remains the public cancellation seam.
+    let pickerNavigation = app.navigationBars["Photos"]
+    XCTAssertTrue(pickerNavigation.waitForExistence(timeout: 5))
+    let cancelPhoto = pickerNavigation.buttons["Cancel"]
     XCTAssertTrue(cancelPhoto.waitForExistence(timeout: 3))
+    recordScreenshot(named: "word-detail-native-photo-picker-before-cancel", app: app)
     cancelPhoto.tap()
+    XCTAssertTrue(pickerNavigation.waitForNonExistence(timeout: 3))
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
     XCTAssertFalse(app.buttons["word-detail.image-attachment"].exists)
     app.buttons["word-detail.add-menu"].tap()
