@@ -334,7 +334,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordSettledScreenshot(named: "production-image-source-menu-files", app: app)
 
     app.buttons.matching(identifier: "image-source.files").firstMatch.tap()
-    _ = waitForSystemDocumentPicker(in: app)
+    openLocalImageFixtureDirectory(in: app)
     recordSettledScreenshot(named: "production-files-picker-clear-horizontal", app: app)
     let fixture = app.descendants(matching: .any).matching(
       NSPredicate(format: "label BEGINSWITH %@", "fixture-clear-horizontal")
@@ -366,10 +366,22 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  private func waitForSystemDocumentPicker(in app: XCUIApplication) -> XCUIElement {
-    let picker = app.windows.element(boundBy: 1)
-    XCTAssertTrue(picker.waitForExistence(timeout: 5))
-    return picker
+  private func openLocalImageFixtureDirectory(in app: XCUIApplication) {
+    // Newly exported files need not appear in Files' Recents. Navigate the
+    // same public local directory where stageImageTextFixtures saves them.
+    let browse = app.tabBars.buttons["Browse"]
+    XCTAssertTrue(browse.waitForExistence(timeout: 5))
+    browse.tap()
+
+    let localDirectoryTitle = app.navigationBars.staticTexts["On My iPhone"]
+    if !localDirectoryTitle.exists {
+      let localDirectory = app.descendants(matching: .any).matching(
+        NSPredicate(format: "label == %@", "On My iPhone")
+      ).firstMatch
+      XCTAssertTrue(localDirectory.waitForExistence(timeout: 5))
+      localDirectory.tap()
+    }
+    XCTAssertTrue(localDirectoryTitle.waitForExistence(timeout: 5))
   }
 
   @MainActor
@@ -1016,6 +1028,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: ["-InjectSparseImageTextRecognition"])
     app.buttons["search.image-source"].tap()
     app.buttons.matching(identifier: "image-source.files").firstMatch.tap()
+    openLocalImageFixtureDirectory(in: app)
     if app.buttons["Select"].waitForExistence(timeout: 2) {
       app.buttons["Select"].tap()
     }
@@ -6047,21 +6060,26 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     for _ in 0..<32 {
       if isFullyVisible(button) { return button }
-      if button.exists, button.frame.minY < grid.frame.minY {
-        grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.42))
-          .press(
-            forDuration: 0.05,
-            thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.58))
-          )
-        continue
-      }
-      grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65))
-        .press(
+      let hasRealizedTarget = button.exists && !button.frame.isEmpty
+      let movesBackward = hasRealizedTarget && button.frame.minY < grid.frame.minY
+      let start = grid.coordinate(
+        withNormalizedOffset: CGVector(dx: 0.5, dy: movesBackward ? 0.42 : 0.65))
+      let end = grid.coordinate(
+        withNormalizedOffset: CGVector(dx: 0.5, dy: movesBackward ? 0.58 : 0.48))
+      if hasRealizedTarget {
+        // Once the lazy target exists, avoid the fling that can repeatedly
+        // overshoot its row at either edge of this short grid viewport.
+        start.press(
           forDuration: 0.05,
-          thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.48))
+          thenDragTo: end,
+          withVelocity: .slow,
+          thenHoldForDuration: 0.1
         )
+      } else {
+        start.press(forDuration: 0.05, thenDragTo: end)
+      }
     }
-    XCTAssertTrue(button.exists, "Missing radical button \(identifier)")
+    XCTAssertTrue(isFullyVisible(button), "Could not fully reveal radical button \(identifier)")
     return button
   }
 
@@ -6297,11 +6315,13 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     ])
     let save = stager.buttons["Save"]
     XCTAssertTrue(save.waitForExistence(timeout: 15))
+    XCTAssertTrue(stager.navigationBars.staticTexts["On My iPhone"].exists)
     save.tap()
     if stager.buttons["Replace"].waitForExistence(timeout: 1) {
       stager.buttons["Replace"].tap()
     }
-    XCTAssertTrue(stager.textFields["search.field"].waitForExistence(timeout: 5))
+    XCTAssertTrue(save.waitForNonExistence(timeout: 5))
+    XCTAssertTrue(stager.textFields["search.field"].isHittable)
     stager.terminate()
   }
 
