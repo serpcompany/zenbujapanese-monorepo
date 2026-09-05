@@ -222,8 +222,9 @@ bytes. All result bundles, logs, screenshots, summaries, and identity records
 remain retained for 30 days; the next authorized run must measure actual storage
 instead of reducing evidence.
 
-The split native Photos journey has no measured standalone duration yet. Its
-explicit provisional scheduling weight is 300 seconds, inherited conservatively
+The split native Photos journey passed in 93.093 seconds in run `33962023371`
+and 110.339 seconds in run `33963715511`. Its retained conservative provisional
+scheduling weight is still 300 seconds, inherited
 from that combined journey's timeout envelope in run `33959363388`, job
 `101288424696`. The profile retains that provenance separately from its historical
 observed source. A partition containing this provisional entry emits
