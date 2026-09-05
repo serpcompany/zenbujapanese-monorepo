@@ -357,8 +357,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons["search.image-source"].tap()
     app.buttons.matching(identifier: "image-source.files").firstMatch.tap()
 
-    let cancel = app.buttons["Cancel"]
-    XCTAssertTrue(cancel.waitForExistence(timeout: 5))
+    let cancel = app.navigationBars.buttons["Cancel"]
+    XCTAssertTrue(cancel.waitForExistence(timeout: 10))
     cancel.tap()
 
     XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
@@ -398,7 +398,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons["search.image-source"].tap()
     app.buttons.matching(identifier: "image-source.photo-library").firstMatch.tap()
 
-    _ = waitForSystemPhotoPicker(in: app)
+    waitForSystemPhotoPicker(in: app)
     app.navigationBars["Photos"].buttons["Cancel"].tap()
     XCTAssertTrue(app.navigationBars["Photos"].waitForNonExistence(timeout: 3))
     XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
@@ -409,10 +409,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp()
     app.buttons["search.image-source"].tap()
     app.buttons.matching(identifier: "image-source.photo-library").firstMatch.tap()
-    let picker = waitForSystemPhotoPicker(in: app)
+    waitForSystemPhotoPicker(in: app)
     recordSettledScreenshot(named: "production-photo-library-picker", app: app)
 
-    selectVisibleSystemPhoto(in: picker, app: app)
+    selectVisibleSystemPhoto(in: app)
 
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
     let recognized = app.descendants(matching: .any)["image-text.raw-text"]
@@ -428,43 +428,58 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  private func waitForSystemPhotoPicker(in app: XCUIApplication) -> XCUIElement {
-    // PhotosUI moves between presentation windows. Its public Photos container
-    // owns the image grid; the observed cold service handoff can take nine seconds.
-    let picker = app.otherElements.matching(
-      NSPredicate(format: "label == %@", "Photos")
-    ).firstMatch
-    XCTAssertTrue(picker.waitForExistence(timeout: 10))
-    XCTAssertTrue(app.navigationBars["Photos"].exists)
-    return picker
+  private func waitForSystemPhotoPicker(in app: XCUIApplication) {
+    // PhotosUI changes its container hierarchy between presentations. Wait for
+    // its public navigation and interactive Cancel after the cold service handoff.
+    let navigation = app.navigationBars["Photos"]
+    XCTAssertTrue(navigation.waitForExistence(timeout: 10))
+    let interactiveCancel = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "exists == true AND isHittable == true"),
+      object: navigation.buttons["Cancel"]
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [interactiveCancel], timeout: 5), .completed)
   }
 
   @MainActor
-  private func selectVisibleSystemPhoto(in picker: XCUIElement, app: XCUIApplication) {
+  private func selectVisibleSystemPhoto(in app: XCUIApplication) {
     let navigation = app.navigationBars["Photos"]
-    let photo = picker.images.matching(
+    let photo = app.images.matching(
       NSPredicate(format: "label BEGINSWITH %@", "Photo,")
     ).firstMatch
     XCTAssertTrue(photo.waitForExistence(timeout: 5))
-    guard navigation.exists, navigation.buttons["Cancel"].isHittable, picker.exists else {
+    guard navigation.exists, navigation.buttons["Cancel"].isHittable else {
       XCTFail("The native Photos picker must be the interactive presented surface")
       return
     }
-    let top = max(picker.frame.minY, navigation.frame.maxY)
+    let top = max(app.frame.minY, navigation.frame.maxY)
     let viewport = CGRect(
-      x: picker.frame.minX, y: top, width: picker.frame.width,
-      height: max(0, min(picker.frame.maxY, app.frame.maxY) - top)
+      x: app.frame.minX, y: top, width: app.frame.width,
+      height: max(0, app.frame.maxY - top)
     ).intersection(app.frame)
     let frame = photo.frame
-    guard frame.width >= 44, frame.height >= 44, viewport.contains(frame) else {
+    let screenshot = app.screenshot().image
+    let pixelWidth = screenshot.size.width * screenshot.scale
+    guard pixelWidth > 0 else {
+      XCTFail("The native photo viewport must have a measurable screenshot scale")
+      return
+    }
+    // Accessibility can round a screen-edge coordinate slightly below zero.
+    // Allow at most one physical pixel, and still require a visible 44-point area.
+    let onePixel = app.frame.width / pixelWidth
+    let visibleFrame = frame.intersection(viewport)
+    guard visibleFrame.width >= 44, visibleFrame.height >= 44,
+      viewport.insetBy(dx: -onePixel, dy: -onePixel).contains(frame)
+    else {
       XCTFail("The native photo must be fully visible with a 44-point touch area: \(frame)")
       return
     }
     // Photos exposes PXGGridLayout-Info as a non-actionable Image child. Its
     // observed visible cell is selectable by one touch, not Image.tap().
-    XCTContext.runActivity(named: "Select visible native photo at \(frame)") { _ in
+    XCTContext.runActivity(named: "Select visible native photo at \(visibleFrame)") { _ in
       app.coordinate(withNormalizedOffset: .zero)
-        .withOffset(CGVector(dx: frame.midX - app.frame.minX, dy: frame.midY - app.frame.minY))
+        .withOffset(
+          CGVector(dx: visibleFrame.midX - app.frame.minX, dy: visibleFrame.midY - app.frame.minY)
+        )
         .tap()
     }
   }
@@ -1086,14 +1101,28 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     }
     XCTAssertTrue(app.buttons["Open"].isEnabled)
     app.buttons["Open"].tap()
+    // Files does not promise selection order. Find the empty asset before
+    // requiring its alert; an already-present alert is checked against its asset below.
+    let importReady = XCTNSPredicateExpectation(
+      predicate: NSPredicate { _, _ in
+        app.buttons["image-text.close"].exists || app.alerts["No Text Found"].exists
+      }, object: app
+    )
+    XCTAssertEqual(XCTWaiter.wait(for: [importReady], timeout: 20), .completed)
+    if !app.alerts["No Text Found"].exists {
+      XCTAssertTrue(
+        selectImageTextPage(
+          named: "fixture-empty", pageCount: names.count, in: app,
+          stoppingAtNoTextAlert: true))
+    }
     XCTAssertTrue(app.alerts["No Text Found"].waitForExistence(timeout: 10))
-    XCTAssertTrue(app.staticTexts["Japanese text was not found in this image."].exists)
     recordSettledScreenshot(named: "image-text-multiple-empty-alert", app: app)
-    app.alerts["No Text Found"].buttons["OK"].firstMatch.tap()
-    XCTAssertTrue(selectImageTextPage(named: "fixture-empty", pageCount: names.count, in: app))
+    XCTAssertTrue(acknowledgeNoTextAlert(for: "fixture-empty.png", in: app))
 
     XCTAssertTrue(
-      selectImageTextPage(named: "fixture-noisy-horizontal", pageCount: names.count, in: app))
+      selectImageTextPage(
+        named: "fixture-noisy-horizontal", pageCount: names.count, in: app,
+        acknowledgingNoTextFor: "fixture-empty.png"))
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
     let noisyText = app.descendants(matching: .any)["image-text.raw-text"]
     XCTAssertTrue(noisyText.waitForExistence(timeout: 20))
@@ -1104,7 +1133,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
         .firstMatch.exists
     )
     recordSettledScreenshot(named: "image-text-multiple-noisy", app: app)
-    XCTAssertTrue(selectImageTextPage(named: "fixture-sparse", pageCount: names.count, in: app))
+    XCTAssertTrue(
+      selectImageTextPage(
+        named: "fixture-sparse", pageCount: names.count, in: app,
+        acknowledgingNoTextFor: "fixture-empty.png"))
     let sparseText = app.descendants(matching: .any)["image-text.raw-text"]
     XCTAssertTrue(sparseText.waitForExistence(timeout: 20))
     XCTAssertEqual(sparseText.label, "Recognized text 静")
@@ -3760,7 +3792,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons["Choose Photo"].tap()
     // PhotosUI can move from a transient presentation window into the main
     // window. Its native navigation bar remains the public cancellation seam.
-    _ = waitForSystemPhotoPicker(in: app)
+    waitForSystemPhotoPicker(in: app)
     let pickerNavigation = app.navigationBars["Photos"]
     let cancelPhoto = pickerNavigation.buttons["Cancel"]
     XCTAssertTrue(cancelPhoto.waitForExistence(timeout: 3))
@@ -3856,10 +3888,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(miruRuby.exists)
     app.buttons["word-detail.add-menu"].tap()
     app.buttons["Choose Photo"].tap()
-    let selectionPicker = waitForSystemPhotoPicker(in: app)
+    waitForSystemPhotoPicker(in: app)
     recordSettledScreenshot(named: "word-detail-photo-picker-selection", app: app)
     // The fresh disposable Simulator is seeded with one repository-owned photo.
-    selectVisibleSystemPhoto(in: selectionPicker, app: app)
+    selectVisibleSystemPhoto(in: app)
     let attachment = app.buttons["word-detail.image-attachment"]
     XCTAssertTrue(attachment.waitForExistence(timeout: 10))
     XCTAssertTrue(attachment.label.contains("1"))
@@ -6372,24 +6404,66 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   private func selectImageTextPage(
     named name: String,
     pageCount: Int,
-    in app: XCUIApplication
+    in app: XCUIApplication,
+    stoppingAtNoTextAlert: Bool = false,
+    acknowledgingNoTextFor emptyAssetName: String? = nil
   ) -> Bool {
     let currentPage = app.descendants(matching: .any)["image-text.current-page"]
     let pages = app.collectionViews["image-text.pages"]
-    guard currentPage.waitForExistence(timeout: 5) else { return false }
-    guard pages.waitForExistence(timeout: 5) else { return false }
+    let noTextAlert = app.alerts["No Text Found"]
+    // An alert can hide the page marker and prevent paging. The initial empty
+    // seek leaves it untouched; its caller must validate the message and asset.
+    if stoppingAtNoTextAlert, noTextAlert.exists { return true }
+    guard currentPage.waitForExistence(timeout: 5) else {
+      return stoppingAtNoTextAlert && noTextAlert.exists
+    }
+    if stoppingAtNoTextAlert, noTextAlert.exists { return true }
+    guard pages.waitForExistence(timeout: 5) else {
+      return stoppingAtNoTextAlert && noTextAlert.exists
+    }
+    if stoppingAtNoTextAlert, noTextAlert.exists { return true }
     if currentPage.label.contains(name) { return true }
 
     for _ in 1..<pageCount {
+      if stoppingAtNoTextAlert, noTextAlert.exists { return true }
+      if let emptyAssetName, app.alerts["No Text Found"].exists {
+        guard acknowledgeNoTextAlert(for: emptyAssetName, in: app) else { return false }
+      }
       pages.swipeRight()
+      if stoppingAtNoTextAlert, noTextAlert.exists { return true }
+      if currentPage.waitForExistence(timeout: 3), currentPage.label.contains(name) { return true }
     }
+    if stoppingAtNoTextAlert, noTextAlert.exists { return true }
     if currentPage.waitForExistence(timeout: 3), currentPage.label.contains(name) { return true }
 
     for _ in 1..<pageCount {
+      if stoppingAtNoTextAlert, noTextAlert.exists { return true }
+      if let emptyAssetName, app.alerts["No Text Found"].exists {
+        guard acknowledgeNoTextAlert(for: emptyAssetName, in: app) else { return false }
+      }
       pages.swipeLeft()
+      if stoppingAtNoTextAlert, noTextAlert.exists { return true }
       if currentPage.waitForExistence(timeout: 3), currentPage.label.contains(name) { return true }
     }
-    return false
+    return stoppingAtNoTextAlert && noTextAlert.exists
+  }
+
+  @MainActor
+  private func acknowledgeNoTextAlert(for assetName: String, in app: XCUIApplication) -> Bool {
+    let alert = app.alerts["No Text Found"]
+    guard alert.waitForExistence(timeout: 10),
+      alert.staticTexts["Japanese text was not found in this image."].exists
+    else {
+      XCTFail("The empty image must present the exact No Text Found message")
+      return false
+    }
+    alert.buttons["OK"].firstMatch.tap()
+    let currentPage = app.descendants(matching: .any)["image-text.current-page"]
+    guard currentPage.waitForExistence(timeout: 5), currentPage.label == assetName else {
+      XCTFail("No Text Found must belong to \(assetName), not another imported image")
+      return false
+    }
+    return true
   }
 
   @MainActor
