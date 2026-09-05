@@ -886,6 +886,11 @@ def merge_candidate_partitions(inventory: dict[str, Any]) -> dict[str, dict[str,
         lane_count=normal_lane_count,
         lane_prefix="normal-ui",
     )
+    provisional_tests = set(timing_profile.get("provisional_test_durations", {}))
+    for partition in (*accessibility_partitions.values(), *normal_partitions.values()):
+        if provisional_tests.intersection(partition["tests"]):
+            partition["estimated_test_seconds"] = partition["measured_test_seconds"]
+            partition["measured_test_seconds"] = None
     integration = inventory["plans"]["ZenbuSudachiIntegration"]["included_tests"]
     return {
         "unit": {"plan": "ZenbuPR", "tests": unit},
@@ -1000,6 +1005,7 @@ def merge_candidate_matrix(
                 "plan": partition["plan"],
                 "selectors": [selector_id],
                 "test_count": len(partition["tests"]),
+                "estimated_test_seconds": partition.get("estimated_test_seconds"),
                 "measured_test_seconds": (
                     partition["measured_test_seconds"]
                     if "measured_test_seconds" in partition

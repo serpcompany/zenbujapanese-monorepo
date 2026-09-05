@@ -15,6 +15,33 @@ SPEC.loader.exec_module(ios_verification)
 
 
 class IOSVerificationPolicyTests(unittest.TestCase):
+    def test_split_photo_scheduling_weight_is_not_reported_as_measured_runtime(self):
+        repo = Path(__file__).parents[4]
+        inventory = ios_verification.repository_inventory(repo)
+        identity = (
+            "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/"
+            "testWordDetailNativePhotoCancellationAndSelectionPersistsAcrossRelaunch"
+        )
+        profile = inventory["merge_candidate_timing_profile"]
+        self.assertEqual(profile["test_durations_seconds"][identity], 300)
+        provenance = profile["provisional_test_durations"][identity]
+        self.assertEqual(provenance["status"], "provisional")
+        self.assertEqual(provenance["workflow_run_id"], 33959363388)
+        self.assertEqual(provenance["job_id"], 101288424696)
+        partitions = ios_verification.merge_candidate_partitions(inventory)
+        lane, partition = next(
+            (lane, part) for lane, part in partitions.items() if identity in part["tests"]
+        )
+        self.assertIsNone(partition["measured_test_seconds"])
+        self.assertGreaterEqual(partition["estimated_test_seconds"], 300)
+        manifest = ios_verification.load_and_validate_manifest(repo / "apps/ios/VerificationPolicy.json")
+        matrix = ios_verification.merge_candidate_matrix(
+            manifest, manifest["capabilities"]["full-merge"]["manual"], inventory
+        )["include"]
+        emitted = next(item for item in matrix if item["lane"] == lane)
+        self.assertIsNone(emitted["measured_test_seconds"])
+        self.assertEqual(emitted["estimated_test_seconds"], partition["estimated_test_seconds"])
+
     def test_refactor_regressions_has_three_independent_samples_and_one_picker_lane(self):
         repo = Path(__file__).parents[4]
         inventory = ios_verification.repository_inventory(repo)
@@ -35,6 +62,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             "testKanjiDetailRelatedWordOpensWordDetailAndBackRestoresPosition",
         }
         pickers = {
+            "testWordDetailNativePhotoCancellationAndSelectionPersistsAcrossRelaunch",
             "testImageTextFilesSourceCancelsWithoutReportingAnImportFailure",
             "testPhotoLibrarySourceOpensSystemPickerAndCancels",
             "testImageTextMultipleFilesRecoverFromEmptyAndRemainTransient",
@@ -43,7 +71,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         prefix = "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/"
         for index, lane in enumerate(matrix):
             self.assertEqual(lane["plan"], "ZenbuPR")
-            self.assertEqual(lane["test_count"], 4)
+            self.assertEqual(lane["test_count"], 4 if index < 3 else 5)
             actual = {manifest["selectors"][key]["test"] for key in lane["selectors"]}
             self.assertEqual(actual, {prefix + name for name in (stable if index < 3 else pickers)})
             self.assertTrue(actual <= set(inventory["plans"]["ZenbuPR"]["included_tests"]))
@@ -145,6 +173,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             "testDisposableHistoryClearAllConfirmsAndCancelLeavesSearchRoot",
             "testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation",
             "testWordDetailPresentsIdentityPronunciationAndMetadataInLogicalOrder",
+            "testWordDetailNativePhotoCancellationAndSelectionPersistsAcrossRelaunch",
             "testWordDetailEncounterMediaViewerPagesAndRemovesOnlyTheSelectedImage",
             "testLongMixedScriptWordDetailUsesCompleteSecondaryReadingFallback",
             "testWordDetailCameraFixtureSavesDirectlyAndPersistsInMediaLibrary",
@@ -926,7 +955,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             )
             self.assertEqual(
                 [lane["test_count"] for lane in matrix],
-                [114, 2, 22, 23, 23, 26, 26, 26, 27, 26, 3],
+                [116, 2, 22, 23, 23, 26, 26, 26, 27, 27, 3],
             )
             self.assertEqual(
                 [lane["measured_test_seconds"] for lane in matrix],
@@ -936,11 +965,11 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                     1150.814,
                     1153.155,
                     1153.903,
-                    1295.008,
-                    1292.152,
-                    1285.508,
-                    1285.392,
-                    1285.777,
+                    None,
+                    1352.422,
+                    1348.125,
+                    1350.604,
+                    1351.338,
                     4.116,
                 ],
             )
@@ -976,7 +1005,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         self.assertEqual(
             {lane: len(partition["tests"]) for lane, partition in partitions.items()},
             {
-                "unit": 114,
+                "unit": 116,
                 "increased-contrast": 2,
                 "accessibility-ui-a": 22,
                 "accessibility-ui-b": 23,
@@ -985,7 +1014,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 "normal-ui-b": 26,
                 "normal-ui-c": 26,
                 "normal-ui-d": 27,
-                "normal-ui-e": 26,
+                "normal-ui-e": 27,
                 "sudachi-integration": 3,
             },
         )
@@ -1015,12 +1044,15 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             partitions[lane]["measured_test_seconds"] for lane in accessibility_lanes
         ]
         normal_loads = [
-            partitions[lane]["measured_test_seconds"] for lane in normal_lanes
+            partitions[lane].get("estimated_test_seconds", partitions[lane]["measured_test_seconds"])
+            for lane in normal_lanes
         ]
         # Removing the two long #289 whole-window diagnostics leaves the three exact
         # correctness shards within 3.089 seconds across roughly 19 minutes each.
         self.assertLess(max(accessibility_loads) - min(accessibility_loads), 4)
-        self.assertLess(max(normal_loads) - min(normal_loads), 10)
+        # The split Photos journey has a conservative provisional scheduling weight;
+        # the resulting five shards remain within 12 seconds of scheduling load.
+        self.assertLess(max(normal_loads) - min(normal_loads), 12)
 
         unmeasured = json.loads(json.dumps(inventory))
         missing_timing = next(
@@ -1199,7 +1231,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         self.assertEqual(
             {lane: len(partition["tests"]) for lane, partition in partitions.items()},
             {
-                "unit": 114,
+                "unit": 116,
                 "increased-contrast": 2,
                 "accessibility-ui-a": 22,
                 "accessibility-ui-b": 23,
@@ -1208,7 +1240,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 "normal-ui-b": 26,
                 "normal-ui-c": 26,
                 "normal-ui-d": 27,
-                "normal-ui-e": 26,
+                "normal-ui-e": 27,
                 "sudachi-integration": 3,
             },
         )
@@ -1216,7 +1248,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
     def test_generated_partition_selectors_expand_to_the_inventory_tests(self):
         repo_root = Path(__file__).parents[4]
         expected = {
-            "complete.merge-unit": ("ZenbuPR", 114),
+            "complete.merge-unit": ("ZenbuPR", 116),
             "complete.increased-contrast": ("ZenbuIncreasedContrast", 2),
             "complete.merge-accessibility-a": ("ZenbuPR", 22),
             "complete.merge-accessibility-b": ("ZenbuPR", 23),
@@ -1225,7 +1257,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             "complete.merge-ui-b": ("ZenbuPR", 26),
             "complete.merge-ui-c": ("ZenbuPR", 26),
             "complete.merge-ui-d": ("ZenbuPR", 27),
-            "complete.merge-ui-e": ("ZenbuPR", 26),
+            "complete.merge-ui-e": ("ZenbuPR", 27),
             "integration.sudachi": ("ZenbuSudachiIntegration", 3),
         }
         for selector, (plan, count) in expected.items():

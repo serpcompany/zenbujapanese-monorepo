@@ -41,7 +41,7 @@ Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
 provider except for the bounded bundled-provider cold-relaunch journey. The
 merge-candidate workflow invokes and retains all three correctness plans.
 
-The exact inventory contains 335 tests. `ZenbuPR` includes 313 (114 Unit and 199
+The exact inventory contains 338 tests. `ZenbuPR` includes 316 (116 Unit and 200
 UI), and `ZenbuSudachiIntegration` includes three network-backed Unit tests. The
 seventeen exact tests outside those correctness plans are one performance-only Unit
 test, three physical/system HIL journeys, #269's four deliberately red framework
@@ -106,7 +106,7 @@ through the same interface.
 For the merge-candidate stage, the planner derives eleven lanes from the committed
 Xcode plan inventory and `VerificationTimingProfile.json`. Every `ZenbuPR` Unit
 test belongs to the Unit lane. The complete 68-test `ZenbuAccessibility`
-partition is split across three lanes, and the remaining 131 normal UI tests are
+partition is split across three lanes, and the remaining 132 normal UI tests are
 split across five lanes. The separate `ZenbuSudachiIntegration` plan is the
 separate integration lane. The two-test `ZenbuIncreasedContrast` lane is also
 required; its measured duration and timing-source run are null until actual app
@@ -195,16 +195,22 @@ manual full-merge, and pre-release validation all require the contrast lane.
 The manual `refactor-regressions` capability adds final #230/#236/#294/#173
 evidence through the same workflow and SHA-bound runner: three independent
 four-test stability samples (lookup retry, structured Word Detail, Search Back,
-and Kanji-to-word Back), plus one separate four-test picker lane (Files cancel,
-Photos cancel, empty-file recovery, and native image paging). All run through
+and Kanji-to-word Back), plus one separate five-test picker lane (Files cancel,
+Photos cancel, empty-file recovery, native image paging, and Word Detail photo
+cancellation/selection/persistence). All run through
 `ZenbuPR` on separate disposable hosted Simulators. The three samples are
 intentional stability evidence, not retries; every sample and the picker lane
 must succeed. Partial manual choices report `ios-premerge / Focused <capability>`
 and cannot satisfy `ios-premerge / Required`. The default `full-merge` remains
-the complete eleven-lane gate. Existing tests and Xcode plan membership remain
-unchanged; local issue checks still defer these UI methods.
+the complete eleven-lane gate. The structured Word Detail journey retains its
+reference-data and related-navigation assertions; the independent native Photos
+journey retains cancellation without saving, selection for the same word without
+Image Text, and attachment persistence after relaunch. This splits the cumulative
+five-minute timeout observed in run `33959363388`, job `101288424696`; it does not
+claim scrolling was stuck. Neither journey's timeout increases, and local issue
+checks still defer these UI methods.
 
-The timing profile comes from workflow run `33888752432` on exact source
+The historical measured timing profile comes from workflow run `33888752432` on exact source
 `84bece9fc47e5aa0bd7420befc600a915464f5d3`. Its complete per-test log inventory
 produces measured test loads of 1,150.814, 1,153.155, and 1,153.903 seconds for
 Accessibility and 1,295.008, 1,292.152, 1,285.508, 1,285.392, and 1,285.777
@@ -216,8 +222,19 @@ bytes. All result bundles, logs, screenshots, summaries, and identity records
 remain retained for 30 days; the next authorized run must measure actual storage
 instead of reducing evidence.
 
-The current generated counts are 114 Unit; 22, 23, and 23 Accessibility UI;
-26, 26, 26, 27, and 26 normal UI; and 3 Sudachi integration tests.
+The split native Photos journey has no measured standalone duration yet. Its
+explicit provisional scheduling weight is 300 seconds, inherited conservatively
+from that combined journey's timeout envelope in run `33959363388`, job
+`101288424696`. The profile retains that provenance separately from its historical
+observed source. A partition containing this provisional entry emits
+`estimated_test_seconds` and a null `measured_test_seconds`; the weight is neither
+runtime evidence nor permission to run the journey in an ordinary local issue gate.
+The current normal-UI scheduling loads are 1,341.348 (estimated), 1,352.422,
+1,348.125, 1,350.604, and 1,351.338 seconds. The old combined journey's historical
+duration remains a conservative weight pending new measurements.
+
+The current generated counts are 116 Unit; 22, 23, and 23 Accessibility UI;
+26, 26, 26, 27, and 27 normal UI; and 3 Sudachi integration tests.
 
 For ordinary issue work, keep the PR draft and run the repository-selected local
 issue gate. That gate may execute only deterministic policy checks and focused

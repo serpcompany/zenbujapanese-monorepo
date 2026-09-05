@@ -143,6 +143,7 @@ jobs:
             printf 'plan=%s\n' '${{ matrix.plan }}'
             printf 'planned_test_count=%s\n' '${{ matrix.test_count }}'
             printf 'measured_test_seconds=%s\n' '${{ matrix.measured_test_seconds }}'
+            printf 'estimated_test_seconds=%s\n' '${{ matrix.estimated_test_seconds }}'
             printf 'timing_profile_run_id=%s\n' '${{ matrix.timing_profile_run_id }}'
             printf 'repository=%s\n' "$GITHUB_REPOSITORY"
             printf 'run=%s/%s/actions/runs/%s\n' \

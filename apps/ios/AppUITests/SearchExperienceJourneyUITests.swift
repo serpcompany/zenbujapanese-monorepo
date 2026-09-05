@@ -1762,7 +1762,22 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     tapNativeBack(in: app)
     XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 2))
     let restoredRelatedWord = XCTNSPredicateExpectation(
-      predicate: NSPredicate(format: "isHittable == true"),
+      predicate: NSPredicate { object, _ in
+        guard let row = object as? XCUIElement, row.exists, kanjiDetail.exists else {
+          return false
+        }
+        let rowFrame = row.frame
+        let viewportFrame = kanjiDetail.frame
+        // A restored row can be visible while accessibility still reports an
+        // infinite, empty frame. Wait for usable geometry before asking for a hit point.
+        for frame in [rowFrame, viewportFrame] {
+          guard frame.origin.x.isFinite, frame.origin.y.isFinite,
+            frame.width.isFinite, frame.height.isFinite, !frame.isEmpty
+          else { return false }
+        }
+        guard viewportFrame.contains(rowFrame) else { return false }
+        return row.isHittable
+      },
       object: relatedQuiet
     )
     XCTAssertEqual(XCTWaiter.wait(for: [restoredRelatedWord], timeout: 2), .completed)
@@ -3804,19 +3819,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(app.buttons["word-detail.add-menu"].exists)
     XCTAssertFalse(app.buttons["word-detail.toolbar-flashcards"].exists)
     app.buttons["word-detail.add-menu"].tap()
-    app.buttons["Choose Photo"].tap()
-    // PhotosUI can move from a transient presentation window into the main
-    // window. Its native navigation bar remains the public cancellation seam.
-    waitForSystemPhotoPicker(in: app)
-    let pickerNavigation = app.navigationBars["Photos"]
-    let cancelPhoto = pickerNavigation.buttons["Cancel"]
-    XCTAssertTrue(cancelPhoto.waitForExistence(timeout: 3))
-    recordScreenshot(named: "word-detail-native-photo-picker-before-cancel", app: app)
-    cancelPhoto.tap()
-    XCTAssertTrue(pickerNavigation.waitForNonExistence(timeout: 3))
-    XCTAssertTrue(detail.waitForExistence(timeout: 3))
-    XCTAssertFalse(app.buttons["word-detail.image-attachment"].exists)
-    app.buttons["word-detail.add-menu"].tap()
     app.buttons["Add Note"].tap()
     XCTAssertTrue(app.textFields["word-note.editor"].waitForExistence(timeout: 2))
     app.buttons["word-note.done"].tap()
@@ -3901,6 +3903,35 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       maximumGestureCount: 6
     )
     XCTAssertTrue(miruRuby.exists)
+  }
+
+  @MainActor
+  func testWordDetailNativePhotoCancellationAndSelectionPersistsAcrossRelaunch() throws {
+    let app = launchApp(additionalArguments: ["-ResetEncounterMedia"])
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る", resultLabelPrefix: "見る, みる", in: app, searchField: searchField
+    )
+    let detail = app.collectionViews["word-detail.screen"]
+    XCTAssertTrue(detail.waitForExistence(timeout: 2))
+    let miruRuby = app.descendants(matching: .any).matching(
+      NSPredicate(format: "label == %@", "見る, みる")
+    ).firstMatch
+    XCTAssertTrue(miruRuby.exists)
+    app.buttons["word-detail.add-menu"].tap()
+    app.buttons["Choose Photo"].tap()
+    // PhotosUI can move from a transient presentation window into the main
+    // window. Its native navigation bar remains the public cancellation seam.
+    waitForSystemPhotoPicker(in: app)
+    let pickerNavigation = app.navigationBars["Photos"]
+    let cancelPhoto = pickerNavigation.buttons["Cancel"]
+    XCTAssertTrue(cancelPhoto.waitForExistence(timeout: 3))
+    recordScreenshot(named: "word-detail-native-photo-picker-before-cancel", app: app)
+    cancelPhoto.tap()
+    XCTAssertTrue(pickerNavigation.waitForNonExistence(timeout: 3))
+    XCTAssertTrue(detail.waitForExistence(timeout: 3))
+    XCTAssertFalse(app.buttons["word-detail.image-attachment"].exists)
     app.buttons["word-detail.add-menu"].tap()
     app.buttons["Choose Photo"].tap()
     waitForSystemPhotoPicker(in: app)
@@ -5957,10 +5988,17 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   ) {
     var gestureCount = 0
     while gestureCount <= maximumGestureCount {
+      let appSnapshot: XCUIElementSnapshot
+      do {
+        appSnapshot = try app.snapshot()
+      } catch {
+        XCTFail("Could not capture list navigation geometry: \(error)")
+        return
+      }
+      // Read keyboard presence and geometry from the same immutable hierarchy: the
+      // keyboard can disappear between separate live exists and frame queries.
       let lowerBoundary =
-        app.keyboards.firstMatch.exists
-        ? app.keyboards.firstMatch.frame.minY
-        : app.frame.maxY - 120
+        firstKeyboardFrame(in: appSnapshot)?.minY ?? appSnapshot.frame.maxY - 120
       if element.exists,
         !requiresHittable || element.isHittable,
         element.frame.minY >= scrollView.frame.minY + 8,
@@ -5996,6 +6034,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTFail(
       "Could not reach \(element.identifier) after \(gestureCount) \(direction) gestures"
     )
+  }
+
+  @MainActor
+  private func firstKeyboardFrame(in snapshot: XCUIElementSnapshot) -> CGRect? {
+    if snapshot.elementType == .keyboard { return snapshot.frame }
+    for child in snapshot.children {
+      if let frame = firstKeyboardFrame(in: child) { return frame }
+    }
+    return nil
   }
 
   @MainActor

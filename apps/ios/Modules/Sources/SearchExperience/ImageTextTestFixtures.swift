@@ -20,20 +20,36 @@
       else { return nil }
       let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         .appending(path: "Image Text Fixtures", directoryHint: .isDirectory)
-      try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-      for name in fixtureNames {
-        guard
-          let source = Bundle.main.url(
-            forResource: String(name.dropLast(4)),
-            withExtension: "png",
-            subdirectory: "ImageTextFixtures"
-          )
-        else { continue }
-        let destination = directory.appending(path: name)
-        try? FileManager.default.removeItem(at: destination)
-        try? FileManager.default.copyItem(at: source, to: destination)
+      let sources = fixtureNames.compactMap { name in
+        Bundle.main.url(
+          forResource: String(name.dropLast(4)),
+          withExtension: "png",
+          subdirectory: "ImageTextFixtures"
+        )
       }
-      return directory
+      guard sources.count == fixtureNames.count else { return nil }
+      do {
+        try prepareCopies(from: sources, in: directory)
+        return directory
+      } catch {
+        return nil
+      }
+    }
+
+    static func prepareCopies(from sources: [URL], in directory: URL) throws {
+      try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+      for source in sources {
+        let destination = directory.appending(path: source.lastPathComponent)
+        let bytes = try Data(contentsOf: source)
+        // SwiftUI can initialize the root again while Files is exporting these
+        // URLs. Preserve unchanged files so active references keep their identity.
+        if FileManager.default.fileExists(atPath: destination.path),
+          try Data(contentsOf: destination) == bytes
+        {
+          continue
+        }
+        try bytes.write(to: destination, options: .atomic)
+      }
     }
 
     static func sessionFromProcessArguments(in directory: URL?) -> ImageTextSession? {

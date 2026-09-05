@@ -126,6 +126,12 @@
       "traits": ["ui", "normal-dynamic-type", "refactor-pickers"],
       "journeys": []
     },
+    "ui.word-detail-native-photo": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordDetailNativePhotoCancellationAndSelectionPersistsAcrossRelaunch",
+      "traits": ["ui", "normal-dynamic-type", "refactor-pickers"],
+      "journeys": []
+    },
     "ui.refactor-pickers-images-paging": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextMultipleImagesUseNativePagingWithoutCustomPageButtons",
@@ -714,6 +720,7 @@
       "ui.refactor-pickers-photos-cancel",
       "ui.refactor-pickers-files-recovery",
       "ui.refactor-pickers-images-paging",
+      "ui.word-detail-native-photo",
       "ui.shell",
       "ui.you-hierarchy",
       "ui.reading-aids",
@@ -863,7 +870,8 @@
         "ui.refactor-pickers-files-cancel",
         "ui.refactor-pickers-photos-cancel",
         "ui.refactor-pickers-files-recovery",
-        "ui.refactor-pickers-images-paging"
+        "ui.refactor-pickers-images-paging",
+        "ui.word-detail-native-photo"
       ]
     },
     "reviewer-contrast": {

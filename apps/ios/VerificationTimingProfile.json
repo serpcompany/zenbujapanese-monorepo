@@ -56,7 +56,16 @@
     "sudachi-integration": 4.116,
     "unit": 33.951
   },
+  "provisional_test_durations": {
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordDetailNativePhotoCancellationAndSelectionPersistsAcrossRelaunch": {
+      "status": "provisional",
+      "basis": "Conservative scheduling weight inherited from the combined journey's 300-second timeout envelope; not an observed duration of the split Photos journey.",
+      "workflow_run_id": 33959363388,
+      "job_id": 101288424696
+    }
+  },
   "test_durations_seconds": {
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordDetailNativePhotoCancellationAndSelectionPersistsAcrossRelaunch": 300.0,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testActiveFrequencyDictionaryUsesSystemSelectionSemantics": 32.322,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkAccessibilityXXXLRepresentativeExampleSentenceInlineLinksKeepExactHitRegions": 65.329,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkDictionarySourcesRemainUsableAtLargestAccessibilityTextSize": 56.111,

@@ -6,6 +6,42 @@ import XCTest
 
 @MainActor
 final class ImageTextFlowModelTests: XCTestCase {
+  func testRepeatedFixturePreparationPreservesAnExportedFileIdentity() throws {
+    let manager = FileManager.default
+    let root = manager.temporaryDirectory.appending(path: UUID().uuidString)
+    try manager.createDirectory(at: root, withIntermediateDirectories: true)
+    defer { try? manager.removeItem(at: root) }
+    let source = root.appending(path: "fixture.png")
+    let directory = root.appending(path: "prepared")
+    let bytes = Data([1, 2, 3])
+    try bytes.write(to: source)
+    try ImageTextTestFixtures.prepareCopies(from: [source], in: directory)
+    let destination = directory.appending(path: source.lastPathComponent)
+    // Keep the original inode alive, as an active export can, so reuse cannot
+    // disguise deleting and recreating the same file.
+    let exportedFile = try FileHandle(forReadingFrom: destination)
+    defer { try? exportedFile.close() }
+    let originalIdentity = try XCTUnwrap(
+      manager.attributesOfItem(atPath: destination.path)[.systemFileNumber] as? NSNumber)
+
+    try ImageTextTestFixtures.prepareCopies(from: [source], in: directory)
+
+    XCTAssertEqual(
+      try manager.attributesOfItem(atPath: destination.path)[.systemFileNumber] as? NSNumber,
+      originalIdentity)
+    XCTAssertEqual(try Data(contentsOf: destination), bytes)
+    XCTAssertEqual(try exportedFile.readToEnd(), bytes)
+  }
+
+  func testFixturePreparationReportsUnavailableSources() throws {
+    let manager = FileManager.default
+    let root = manager.temporaryDirectory.appending(path: UUID().uuidString)
+    defer { try? manager.removeItem(at: root) }
+    XCTAssertThrowsError(
+      try ImageTextTestFixtures.prepareCopies(
+        from: [root.appending(path: "missing.png")], in: root.appending(path: "prepared")))
+  }
+
   func testInstalledTranslationAssetsTranslateWithoutPreparing() async throws {
     let probe = NaturalTranslationProbe()
     let model = ImageTextFlowModel(
