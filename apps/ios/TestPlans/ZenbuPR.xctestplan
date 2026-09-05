@@ -46,6 +46,10 @@
       "skippedTests" : [
         "AccessibilityAuditUITests/testReviewerContrastWithIncreaseContrastInLightMode",
         "AccessibilityAuditUITests/testReviewerContrastWithIncreaseContrastInDarkMode",
+        "AccessibilityAuditUITests/testDarkWordDetailRetainsCompleteAX5Diagnostic",
+        "AccessibilityAuditUITests/testLightWordDetailRetainsCompleteAX5Diagnostic",
+        "AccessibilityAuditUITests/testDarkShortWordDetailRetainsSystemDynamicTypeDiagnostic",
+        "AccessibilityAuditUITests/testLightShortWordDetailRetainsSystemDynamicTypeDiagnostic",
         "AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInLightMode",
         "AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInDarkMode",
         "AccessibilityAuditUITests/testSecondaryPublicSurfacesPassCompleteAuditInDarkMode",

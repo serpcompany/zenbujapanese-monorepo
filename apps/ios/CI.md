@@ -41,12 +41,15 @@ Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
 provider except for the bounded bundled-provider cold-relaunch journey. The
 merge-candidate workflow invokes and retains all three correctness plans.
 
-The exact inventory contains 329 tests. `ZenbuPR` includes 312 (113 Unit and 199
+The exact inventory contains 333 tests. `ZenbuPR` includes 312 (113 Unit and 199
 UI), and `ZenbuSudachiIntegration` includes three network-backed Unit tests. The
-twelve exact tests outside those correctness plans are one performance-only Unit
+sixteen exact tests outside those correctness plans are one performance-only Unit
 test, three physical/system HIL journeys, #269's four deliberately red framework
 diagnostics, #289's two broad secondary-surface whole-window diagnostics, and
-#173's two default-complete-audit reviewer diagnostics. `ZenbuIncreasedContrast`
+#173's two default-complete-audit reviewer diagnostics and two original short-word
+AX5 system Dynamic Type diagnostics, plus two original full AX5 Word Detail audits.
+The diagnostic plan contains twelve tests.
+`ZenbuIncreasedContrast`
 requires the two additional reviewer contrast methods on its own configuration. The
 diagnostics remain independently callable through their dedicated plan and never
 enter `ZenbuPR` or `ZenbuNightly`.
@@ -130,8 +133,22 @@ reviewers still audit Dynamic Type at Search root and results. Only the Word
 Detail state's Dynamic Type check maps to the existing required
 `testLightShortWordDetailSupportsDynamicTypeWithoutClipping` and
 `testDarkShortWordDetailSupportsDynamicTypeWithoutClipping`: these retain direct
-AX5 Dynamic Type/clipping audits plus exact meaning and Add Note geometry at
-default and AX5 sizes. No other Dynamic Type audits move.
+AX5 clipping audits and paired default/AX5 text measurements for 日本, にほん,
+Noun, Part of speech, meaning, and Add Note. The grouped Japanese identity uses
+native Vision glyph bounds in its exact visible crop; the other measurements
+use exact static-text bounds, never enclosing card heights. The original AX5
+system Dynamic Type/clipping calls remain in
+`test{Light,Dark}ShortWordDetailRetainsSystemDynamicTypeDiagnostic`, selected by
+the existing reviewer diagnostic capability.
+
+The `test{Light,Dark}WordDetailRemainsUsableAtLargestAccessibilityTextSize`
+counterparts also use these paired measurements instead of the opaque system
+Dynamic Type flag. Their other audit types remain, and any contrast-containing
+combination positions the exact alternative reading before auditing. The original
+full `.all` audit at its original viewport is retained in
+`test{Light,Dark}WordDetailRetainsCompleteAX5Diagnostic`. The final complete plan
+still requires all four usability/scaling methods; the focused six-test selector
+is unchanged. No other Dynamic Type scenarios change.
 
 The runner uses public `simctl ui <owned-device> increase_contrast` only around
 the dedicated plan's test command. It reads the original setting, enables and

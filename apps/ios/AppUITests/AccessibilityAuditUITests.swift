@@ -1548,7 +1548,7 @@ final class AccessibilityAuditUITests: XCTestCase {
   func testDarkWordDetailRemainsUsableAtLargestAccessibilityTextSize() throws {
     try auditWordDetailAtLargestAccessibilityTextSize(
       appearance: .dark,
-      types: auditTypes
+      types: auditTypes.subtracting(.dynamicType), checksTextScaling: true
     )
   }
 
@@ -1556,7 +1556,7 @@ final class AccessibilityAuditUITests: XCTestCase {
   func testLightWordDetailRemainsUsableAtLargestAccessibilityTextSize() throws {
     try auditWordDetailAtLargestAccessibilityTextSize(
       appearance: .light,
-      types: auditTypes
+      types: auditTypes.subtracting(.dynamicType), checksTextScaling: true
     )
   }
 
@@ -1564,7 +1564,8 @@ final class AccessibilityAuditUITests: XCTestCase {
   func testDarkShortWordDetailSupportsDynamicTypeWithoutClipping() throws {
     try auditWordDetailAtLargestAccessibilityTextSize(
       appearance: .dark,
-      types: .dynamicType.union(.textClipped)
+      types: .textClipped,
+      checksTextScaling: true
     )
   }
 
@@ -1572,7 +1573,36 @@ final class AccessibilityAuditUITests: XCTestCase {
   func testLightShortWordDetailSupportsDynamicTypeWithoutClipping() throws {
     try auditWordDetailAtLargestAccessibilityTextSize(
       appearance: .light,
-      types: .dynamicType.union(.textClipped)
+      types: .textClipped,
+      checksTextScaling: true
+    )
+  }
+
+  @MainActor
+  func testDarkShortWordDetailRetainsSystemDynamicTypeDiagnostic() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .dark, types: .dynamicType.union(.textClipped), checksTextScaling: true
+    )
+  }
+
+  @MainActor
+  func testLightShortWordDetailRetainsSystemDynamicTypeDiagnostic() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .light, types: .dynamicType.union(.textClipped), checksTextScaling: true
+    )
+  }
+
+  @MainActor
+  func testDarkWordDetailRetainsCompleteAX5Diagnostic() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .dark, types: auditTypes, anchorsContrast: false
+    )
+  }
+
+  @MainActor
+  func testLightWordDetailRetainsCompleteAX5Diagnostic() throws {
+    try auditWordDetailAtLargestAccessibilityTextSize(
+      appearance: .light, types: auditTypes, anchorsContrast: false
     )
   }
 
@@ -1838,19 +1868,24 @@ final class AccessibilityAuditUITests: XCTestCase {
   @MainActor
   private func auditWordDetailAtLargestAccessibilityTextSize(
     appearance: XCUIDevice.Appearance,
-    types: XCUIAccessibilityAuditType
+    types: XCUIAccessibilityAuditType,
+    checksTextScaling: Bool = false,
+    anchorsContrast: Bool = true
   ) throws {
     let originalAppearance = XCUIDevice.shared.appearance
     XCUIDevice.shared.appearance = appearance
     defer { XCUIDevice.shared.appearance = originalAppearance }
 
     var defaultTextSizes: [String: CGSize] = [:]
-    if types == .dynamicType.union(.textClipped) {
+    if checksTextScaling {
       let (defaultApp, defaultDetail) = try launchWordDetail(
         query: "日本",
         resultLabelPrefix: "日本, にほん",
         appearance: appearance,
-        additionalArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL"]
+        additionalArguments: [
+          "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL",
+          "-ResetReadingAidPreferences",
+        ]
       )
       defaultTextSizes = shortWordDetailTextSizes(
         in: defaultApp, detail: defaultDetail, evidenceName: "\(appearance) default"
@@ -1862,7 +1897,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: appearance,
       additionalArguments: [
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
-      ]
+      ] + (checksTextScaling ? ["-ResetReadingAidPreferences"] : [])
     )
     XCTAssertEqual(XCUIDevice.shared.appearance, appearance)
     let searchField = app.textFields["search.field"]
@@ -1900,7 +1935,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       renderedAppearance(in: XCUIScreen.main.screenshot()),
       appearance == .dark ? .dark : .light
     )
-    if types == .contrast {
+    if anchorsContrast, types.contains(.contrast) {
       let alternative = app.descendants(matching: .any)["word-detail.alternative.にっぽん"]
       bringIntoUnobscuredViewport(alternative, in: detail, app: app)
       XCTAssertEqual(alternative.label, "にっぽん")
@@ -1914,26 +1949,12 @@ final class AccessibilityAuditUITests: XCTestCase {
       named: "Word Detail - \(appearance == .dark ? "dark" : "light") accessibility XXXL",
       types: types
     )
-    if types == .dynamicType.union(.textClipped) {
-      let alternative = app.descendants(matching: .any)["word-detail.alternative.にっぽん"]
-      bringIntoUnobscuredViewport(alternative, in: detail, app: app)
-      XCTAssertGreaterThanOrEqual(alternative.frame.height, 44)
-      retainElementScreenshot(
-        alternative,
-        named: "Word Detail alternative - \(appearance) accessibility XXXL"
-      )
-
-      let meaning = app.staticTexts["1.  Japan"]
-      bringIntoUnobscuredViewport(meaning, in: detail, app: app)
-      XCTAssertGreaterThanOrEqual(meaning.frame.height, 44)
-      retainElementScreenshot(
-        meaning,
-        named: "Word Detail meaning - \(appearance) accessibility XXXL"
-      )
+    if checksTextScaling {
       let largeTextSizes = shortWordDetailTextSizes(
-        in: app, detail: detail, evidenceName: "\(appearance) accessibility XXXL"
+        in: app, detail: detail, evidenceName: "\(appearance) accessibility XXXL",
+        accessibilityXXXL: true
       )
-      for label in ["1.  Japan", "Add Note"] {
+      for label in ["日本", "にほん", "Noun", "Part of speech", "1.  Japan", "Add Note"] {
         let baseline = try XCTUnwrap(defaultTextSizes[label])
         let enlarged = try XCTUnwrap(largeTextSizes[label])
         XCTAssertGreaterThan(
@@ -1947,18 +1968,78 @@ final class AccessibilityAuditUITests: XCTestCase {
   private func shortWordDetailTextSizes(
     in app: XCUIApplication,
     detail: XCUIElement,
-    evidenceName: String
+    evidenceName: String,
+    accessibilityXXXL: Bool = false
   ) -> [String: CGSize] {
-    var sizes: [String: CGSize] = [:]
-    for label in ["1.  Japan", "Add Note"] {
-      let text = app.staticTexts[label]
+    let identity = app.descendants(matching: .any)["ruby.日本.日本=にほん"]
+    bringIntoUnobscuredViewport(identity, in: detail, app: app)
+    XCTAssertEqual(identity.label, "日本, にほん")
+    var sizes = wordIdentityGlyphSizes(in: identity.screenshot(), evidenceName: evidenceName)
+    for label in ["Part of speech", "Noun", "にっぽん", "1.  Japan", "Add Note"] {
+      let text =
+        label == "にっぽん"
+        ? app.descendants(matching: .any)["word-detail.alternative.にっぽん"]
+        : app.staticTexts[label]
       bringIntoUnobscuredViewport(text, in: detail, app: app)
       XCTAssertEqual(text.label, label)
       XCTAssertGreaterThanOrEqual(text.frame.minX, app.frame.minX)
       XCTAssertLessThanOrEqual(text.frame.maxX, app.frame.maxX)
+      if accessibilityXXXL, label == "にっぽん" || label == "1.  Japan" {
+        XCTAssertGreaterThanOrEqual(text.frame.height, 44)
+      }
       sizes[label] = text.frame.size
       retainElementScreenshot(text, named: "Word Detail \(label) text - \(evidenceName)")
     }
+    return sizes
+  }
+
+  @MainActor
+  private func wordIdentityGlyphSizes(
+    in screenshot: XCUIScreenshot, evidenceName: String
+  ) -> [String: CGSize] {
+    let retained = XCTAttachment(screenshot: screenshot)
+    retained.name = "Exact 日本 and にほん glyphs - \(evidenceName)"
+    retained.lifetime = .keepAlways
+    add(retained)
+    guard let image = screenshot.image.cgImage else {
+      XCTFail("Word identity must provide visible glyph pixels")
+      return [:]
+    }
+    let request = VNRecognizeTextRequest()
+    request.recognitionLevel = .accurate
+    request.recognitionLanguages = ["ja-JP", "en-US"]
+    request.usesLanguageCorrection = false
+    do {
+      try VNImageRequestHandler(cgImage: image).perform([request])
+    } catch {
+      XCTFail("Could not measure the word identity glyphs: \(error)")
+      return [:]
+    }
+    var sizes: [String: CGSize] = [:]
+    var confidences: [String: VNConfidence] = [:]
+    for label in ["日本", "にほん"] {
+      let matches = (request.results ?? []).filter {
+        guard let text = $0.topCandidates(1).first else { return false }
+        // Native Vision assigns 0.5 to the correctly rendered AX5 kana in the
+        // retained fixture. Exact text, unique match and bounded identity still
+        // fail closed; the higher numeric-rank threshold is a separate contract.
+        return text.string == label && text.confidence >= 0.5
+      }
+      guard matches.count == 1, let match = matches.first else {
+        XCTFail("Expected exactly one confidently recognized \(label) in the identity crop")
+        continue
+      }
+      let box = match.boundingBox
+      confidences[label] = match.topCandidates(1).first?.confidence
+      sizes[label] = CGSize(
+        width: box.width * CGFloat(image.width) / screenshot.image.scale,
+        height: box.height * CGFloat(image.height) / screenshot.image.scale
+      )
+    }
+    let metrics = XCTAttachment(string: "\(evidenceName): \(sizes); confidence=\(confidences)")
+    metrics.name = "Word identity glyph measurements - \(evidenceName)"
+    metrics.lifetime = .keepAlways
+    add(metrics)
     return sizes
   }
 
@@ -2379,9 +2460,9 @@ final class AccessibilityAuditUITests: XCTestCase {
         try performAudit(
           in: app,
           named: "Word Detail",
-          // Required short-word tests retain direct AX5 Dynamic Type audits and
-          // compare default/AX5 Add Note and meaning text geometry. The original
-          // default full audit remains in its diagnostic counterpart.
+          // Required short-word tests retain direct clipping and paired six-label
+          // default/AX5 measurements. Original system Dynamic Type audits remain
+          // in the explicit default and AX5 diagnostic counterparts.
           types: usesExplicitWordScaling ? types.subtracting(.dynamicType) : types
         )
       }

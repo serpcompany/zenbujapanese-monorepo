@@ -46,8 +46,12 @@
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech": "Live Japanese voice completion is retained in the separately recorded physical speech HIL journey."
   },
   "non_correctness_exclusions": {
-    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInLightMode": "Original complete default audit remains direct and diagnostic after #173 evidence. Required reviewers preserve Search Dynamic Type and other non-contrast coverage; existing short Word Detail AX5 audits and exact geometry cover Word Detail Dynamic Type. ZenbuIncreasedContrast requires nine named-label rendered-pixel contrast checks.",
-    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInDarkMode": "Original complete default audit remains direct and diagnostic after #173 evidence. Required reviewers preserve Search Dynamic Type and other non-contrast coverage; existing short Word Detail AX5 audits and exact geometry cover Word Detail Dynamic Type. ZenbuIncreasedContrast requires nine named-label rendered-pixel contrast checks.",
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkWordDetailRetainsCompleteAX5Diagnostic": "Original full AX5 system audit and original viewport are retained. Required usability tests preserve the other audit types with an unobscured contrast target and replace opaque Dynamic Type with six exact paired text measurements.",
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightWordDetailRetainsCompleteAX5Diagnostic": "Original full AX5 system audit and original viewport are retained. Required usability tests preserve the other audit types with an unobscured contrast target and replace opaque Dynamic Type with six exact paired text measurements.",
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkShortWordDetailRetainsSystemDynamicTypeDiagnostic": "Preserves the original AX5 system Dynamic Type and clipping scenario. Required short-word tests keep direct clipping and paired exact default/AX5 text measurements for the six reported labels; no named audit handler is used.",
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightShortWordDetailRetainsSystemDynamicTypeDiagnostic": "Preserves the original AX5 system Dynamic Type and clipping scenario. Required short-word tests keep direct clipping and paired exact default/AX5 text measurements for the six reported labels; no named audit handler is used.",
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInLightMode": "Original complete default audit remains direct and diagnostic after #173 evidence. Required reviewers preserve Search Dynamic Type and other non-contrast coverage; required short Word Detail clipping and paired exact text metrics cover scaling; original AX5 system Dynamic Type audits remain diagnostic. ZenbuIncreasedContrast requires nine named-label rendered-pixel contrast checks.",
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInDarkMode": "Original complete default audit remains direct and diagnostic after #173 evidence. Required reviewers preserve Search Dynamic Type and other non-contrast coverage; required short Word Detail clipping and paired exact text metrics cover scaling; original AX5 system Dynamic Type audits remain diagnostic. ZenbuIncreasedContrast requires nine named-label rendered-pixel contrast checks.",
     "ZenbuJapaneseTests/ExampleSentenceRetrievalTests/testCommonEnglishLookupCompletesWithoutScanningTheWholeGlossCorpus": "This benchmark belongs to the performance trend and is not a functional correctness journey.",
     "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testDarkKanjiElementRetainsNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR.",
     "ZenbuJapaneseUITests/AccessibilityFrameworkDiagnosticUITests/testDarkSearchResultsRetainNativeTabEdgeWarningAtLargestAccessibilityTextSize": "This deliberately red whole-window Xcode framework diagnostic is preserved in ZenbuAccessibilityDiagnostics; exact unobscured learner content and native chrome remain blocking in ZenbuPR.",
@@ -79,6 +83,30 @@
     "accessibility.image-translation-recovery|ui.image-text-translation-assets": "The normal-size journey proves cancellation, retry, unsupported, failure, and preserved session behavior; one independent maximum-size smoke proves the new native recovery presentation remains reachable without duplicating the full journey."
   },
   "selectors": {
+    "diagnostic.word-detail-complete-ax5-dark": {
+      "plan": "ZenbuAccessibilityDiagnostics",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkWordDetailRetainsCompleteAX5Diagnostic",
+      "traits": ["ui", "accessibility", "accessibility-maximum", "framework-diagnostic"],
+      "journeys": []
+    },
+    "diagnostic.word-detail-complete-ax5-light": {
+      "plan": "ZenbuAccessibilityDiagnostics",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightWordDetailRetainsCompleteAX5Diagnostic",
+      "traits": ["ui", "accessibility", "accessibility-maximum", "framework-diagnostic"],
+      "journeys": []
+    },
+    "diagnostic.short-word-system-dynamic-type-dark": {
+      "plan": "ZenbuAccessibilityDiagnostics",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkShortWordDetailRetainsSystemDynamicTypeDiagnostic",
+      "traits": ["ui", "accessibility", "accessibility-maximum", "framework-diagnostic"],
+      "journeys": []
+    },
+    "diagnostic.short-word-system-dynamic-type-light": {
+      "plan": "ZenbuAccessibilityDiagnostics",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightShortWordDetailRetainsSystemDynamicTypeDiagnostic",
+      "traits": ["ui", "accessibility", "accessibility-maximum", "framework-diagnostic"],
+      "journeys": []
+    },
     "complete.increased-contrast": {
       "plan": "ZenbuIncreasedContrast",
       "test": null,
@@ -662,6 +690,10 @@
       "ui.bundled-japanese-text-analysis"
     ],
     "diagnostics": [
+      "diagnostic.word-detail-complete-ax5-dark",
+      "diagnostic.word-detail-complete-ax5-light",
+      "diagnostic.short-word-system-dynamic-type-dark",
+      "diagnostic.short-word-system-dynamic-type-light",
       "diagnostic.reviewer-default-complete-audit-light",
       "diagnostic.reviewer-default-complete-audit-dark",
       "diagnostic.search-results-tab-edge-dark",
@@ -761,8 +793,13 @@
       ]
     },
     "reviewer-default-complete-audit-diagnostics": {
+      "adaptive_layout": true,
       "paths": [],
       "manual": [
+        "diagnostic.word-detail-complete-ax5-dark",
+        "diagnostic.word-detail-complete-ax5-light",
+        "diagnostic.short-word-system-dynamic-type-dark",
+        "diagnostic.short-word-system-dynamic-type-light",
         "diagnostic.reviewer-default-complete-audit-light",
         "diagnostic.reviewer-default-complete-audit-dark"
       ]

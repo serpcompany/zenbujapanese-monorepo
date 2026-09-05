@@ -15,6 +15,27 @@ SPEC.loader.exec_module(ios_verification)
 
 
 class IOSVerificationPolicyTests(unittest.TestCase):
+    def test_short_word_system_dt_scenarios_remain_explicit_diagnostics(self):
+        repo = Path(__file__).parents[4]
+        inventory = ios_verification.repository_inventory(repo)
+        manifest = json.loads((repo / "apps/ios/VerificationPolicy.json").read_text())
+        prefix = "ZenbuJapaneseUITests/AccessibilityAuditUITests/"
+        diagnostics = {
+            prefix + "test" + mode + scenario
+            for mode in ("Light", "Dark")
+            for scenario in ("ShortWordDetailRetainsSystemDynamicTypeDiagnostic", "WordDetailRetainsCompleteAX5Diagnostic")
+        }
+        self.assertTrue(diagnostics <= set(manifest["non_correctness_exclusions"]))
+        self.assertTrue(diagnostics <= set(inventory["plans"]["ZenbuAccessibilityDiagnostics"]["included_tests"]))
+        for plan in ("ZenbuPR", "ZenbuAccessibility", "ZenbuNightly", "ZenbuIncreasedContrast"):
+            self.assertFalse(diagnostics & set(inventory["plans"][plan]["included_tests"]))
+        selected = manifest["capabilities"]["reviewer-default-complete-audit-diagnostics"]["manual"]
+        self.assertTrue(diagnostics <= {manifest["selectors"][key]["test"] for key in selected})
+        required = set(inventory["plans"]["ZenbuPR"]["included_tests"])
+        for mode in ("Light", "Dark"):
+            self.assertIn(prefix + "test" + mode + "ShortWordDetailSupportsDynamicTypeWithoutClipping", required)
+            self.assertIn(prefix + "test" + mode + "WordDetailRemainsUsableAtLargestAccessibilityTextSize", required)
+
     def test_reviewer_contrast_is_required_in_its_own_restored_configuration(self):
         repo = Path(__file__).parents[4]
         inventory = ios_verification.repository_inventory(repo)
