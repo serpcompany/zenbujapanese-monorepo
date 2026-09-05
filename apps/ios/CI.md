@@ -383,8 +383,10 @@ shared host settings. No runner deletes global Simulator or process state.
 
 DEBUG Image Text fixtures are prepared in `Documents/ImageTextFixtures` and
 verified through native Files at `On My iPhone / Zenbu Japanese / ImageTextFixtures`.
-Only the app's Debug configuration enables `UIFileSharingEnabled` and
-`LSSupportsOpeningDocumentsInPlace`; this exposes all Debug Documents, not just
+Only the app's Debug configuration merges `Info-Debug.plist` with its generated
+Info.plist, declaring Boolean `UIFileSharingEnabled` and
+`LSSupportsOpeningDocumentsInPlace`. The first key is not a supported generated
+`INFOPLIST_KEY_` setting. This exposes all Debug Documents, not just
 the fixture folder. Release does not enable either key. Encounter Media remains
 in Application Support. The real Files importer, multi-selection, OCR, empty-image
 recovery and transient-session assertions still run; preparation does not export

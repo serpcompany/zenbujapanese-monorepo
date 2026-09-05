@@ -1,4 +1,5 @@
 from pathlib import Path
+import plistlib
 import re
 import unittest
 
@@ -30,9 +31,20 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
             if "PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary;" in settings:
                 configurations[name] = settings
         self.assertEqual(set(configurations), {"Debug", "Release"})
+        debug_input = re.search(
+            r'^\s*INFOPLIST_FILE = "?([^";]+)"?;', configurations["Debug"], re.MULTILINE
+        )
+        self.assertIsNotNone(debug_input, "Debug must select an explicit Info.plist input")
+        plist_path = REPO_ROOT / "apps/ios" / debug_input.group(1)
+        with plist_path.open("rb") as source:
+            debug_plist = plistlib.load(source)
+        self.assertIn("GENERATE_INFOPLIST_FILE = YES;", configurations["Debug"])
+        self.assertIsNone(re.search(r'^\s*INFOPLIST_FILE =', configurations["Release"], re.MULTILINE))
         for key in ("UIFileSharingEnabled", "LSSupportsOpeningDocumentsInPlace"):
-            self.assertIn(f"INFOPLIST_KEY_{key} = YES;", configurations["Debug"])
+            self.assertIs(debug_plist.get(key), True, "Files keys must be actual plist booleans")
             self.assertNotIn(f"INFOPLIST_KEY_{key}", configurations["Release"])
+        self.assertNotIn("INFOPLIST_KEY_UIFileSharingEnabled", project)
+        self.assertNotIn("UISupportsDocumentBrowser", debug_plist)
         self.assertNotIn("INFOPLIST_KEY_UISupportsDocumentBrowser", project)
 
     def test_manual_premerge_can_select_only_registered_gates(self):
