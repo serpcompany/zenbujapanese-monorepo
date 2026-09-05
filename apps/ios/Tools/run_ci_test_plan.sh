@@ -140,6 +140,10 @@ fi
 xcrun simctl boot "$simulator_id"
 xcrun simctl bootstatus "$simulator_id" -b
 
+# A real local Photos asset makes picker selection deterministic on a fresh device.
+# This UUID was created by this invocation; personal Simulator libraries are untouched.
+xcrun simctl addmedia "$simulator_id" "$repo_root/docs/clone-discovery/nihongo/fixtures/image-text/fixture-clear-horizontal.png"
+
 xcode_version="$(xcodebuild -version | tr '\n' ' ' | sed 's/ $//')"
 fingerprint_arguments=()
 build_arguments=()

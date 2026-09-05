@@ -16,6 +16,14 @@ def trigger_section(workflow: str) -> str:
 
 
 class IOSWorkflowPolicyTests(unittest.TestCase):
+    def test_photo_fixture_is_loaded_only_into_the_new_disposable_simulator(self):
+        runner = (TOOLS / "run_ci_test_plan.sh").read_text(encoding="utf-8")
+        seed = 'xcrun simctl addmedia "$simulator_id" "$repo_root/docs/clone-discovery/nihongo/fixtures/image-text/fixture-clear-horizontal.png"'
+        self.assertIn(seed, runner)
+        self.assertLess(runner.index("xcrun simctl create"), runner.index(seed))
+        self.assertLess(runner.index("xcrun simctl bootstatus"), runner.index(seed))
+        self.assertNotIn("simctl addmedia booted", runner)
+
     def test_fast_workflow_reports_required_status_on_pull_requests_and_merge_groups(
         self,
     ):

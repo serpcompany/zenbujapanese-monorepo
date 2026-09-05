@@ -15,6 +15,28 @@ SPEC.loader.exec_module(ios_verification)
 
 
 class IOSVerificationPolicyTests(unittest.TestCase):
+    def test_final_matrix_executes_deferred_search_word_feedback_once(self):
+        inventory = ios_verification.repository_inventory(Path(__file__).parents[4])
+        partitions = ios_verification.merge_candidate_partitions(inventory)
+        tests = [
+            test for partition in partitions.values() for test in partition["tests"]
+        ]
+        for method in (
+            "testDisposableHistoryClearAllConfirmsAndCancelLeavesSearchRoot",
+            "testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation",
+            "testWordDetailPresentsIdentityPronunciationAndMetadataInLogicalOrder",
+            "testWordDetailEncounterMediaViewerPagesAndRemovesOnlyTheSelectedImage",
+            "testLongMixedScriptWordDetailUsesCompleteSecondaryReadingFallback",
+            "testWordDetailCameraFixtureSavesDirectlyAndPersistsInMediaLibrary",
+        ):
+            with self.subTest(method=method):
+                self.assertEqual(
+                    tests.count(
+                        f"ZenbuJapaneseUITests/SearchExperienceJourneyUITests/{method}"
+                    ),
+                    1,
+                )
+
     def test_network_selector_in_ordinary_unit_tier_is_rejected(self):
         manifest = {
             "version": 1,

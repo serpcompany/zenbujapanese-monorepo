@@ -3789,6 +3789,32 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       maximumGestureCount: 6
     )
     XCTAssertTrue(miruRuby.exists)
+    app.buttons["word-detail.add-menu"].tap()
+    app.buttons["Choose Photo"].tap()
+    let selectionPicker = waitForSystemPhotoPicker(in: app)
+    recordSettledScreenshot(named: "word-detail-photo-picker-selection", app: app)
+    // The fresh disposable Simulator is seeded with one repository-owned photo.
+    let photo = selectionPicker.images.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "Photo,")
+    ).firstMatch
+    XCTAssertTrue(photo.waitForExistence(timeout: 5))
+    XCTAssertTrue(photo.isHittable)
+    photo.tap()
+    let attachment = app.buttons["word-detail.image-attachment"]
+    XCTAssertTrue(attachment.waitForExistence(timeout: 10))
+    XCTAssertTrue(attachment.label.contains("1"))
+    XCTAssertTrue(miruRuby.exists)
+    XCTAssertFalse(app.buttons["image-text.close"].exists)
+    recordScreenshot(named: "word-detail-photo-selection-saved", app: app)
+
+    app.terminate()
+    let relaunched = launchApp()
+    let relaunchedSearch = relaunched.textFields["search.field"]
+    XCTAssertTrue(relaunchedSearch.waitForExistence(timeout: 3))
+    openWordDetail(
+      for: "見る", resultLabelPrefix: "見る, みる", in: relaunched, searchField: relaunchedSearch
+    )
+    XCTAssertTrue(relaunched.buttons["word-detail.image-attachment"].waitForExistence(timeout: 3))
   }
 
   @MainActor
