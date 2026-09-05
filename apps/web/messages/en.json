@@ -1,0 +1,38 @@
+{
+  "Shell": {
+    "language": "Website language",
+    "directory": "Local route directory",
+    "home": "Back to website preview",
+    "scaffold": "Scaffold preview · Content not final",
+    "notice": "This page establishes the layout and navigation. Its content has not been approved for publication.",
+    "missingCopy": "Japanese authored content is not available yet. The English planning copy below is shown explicitly as a fallback.",
+    "open": "Open preview",
+    "notFound": "This page could not be found.",
+    "unavailable": "This address does not have an approved sample page.",
+    "sections": {
+      "about": "About",
+      "contact": "Contact",
+      "support": "Support",
+      "legal": "Legal",
+      "dictionary": "Dictionary",
+      "videos": "Videos",
+      "blog": "Blog",
+      "products": "Products",
+      "resources": "Resources",
+      "learn": "Learn"
+    }
+  },
+  "Dictionary": {
+    "searchLabel": "Search dictionary",
+    "search": "Search",
+    "placeholder": "Japanese, romaji, or English",
+    "romaji": "Romaji",
+    "furigana": "Furigana",
+    "readingAids": "Reading aids",
+    "listen": "Listen",
+    "audioUnavailable": "Audio unavailable in this browser",
+    "audioFailed": "Pronunciation could not be played",
+    "glossNotice": "This sample retains the app’s English definitions; Japanese definitions are not supplied.",
+    "back": "Back to sample dictionary"
+  }
+}

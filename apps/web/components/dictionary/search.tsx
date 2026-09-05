@@ -8,17 +8,24 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { ReadingToggles } from './reading-preferences';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { getPathname } from '@/i18n/navigation';
 
-export function DictionarySearch({ query = '' }: { query?: string }) {
+export async function DictionarySearch({ query = '' }: { query?: string }) {
+  const locale = await getLocale();
+  const t = await getTranslations('Dictionary');
   return (
     <section className="dictionary-hero">
       <h1>Zenbu Dictionary</h1>
       <div className="mx-auto max-w-[620px]">
-        <Form action="/dictionary" role="search">
+        <Form
+          action={getPathname({ locale, href: '/dictionary' })}
+          role="search"
+        >
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="search" className="sr-only">
-                Search dictionary
+                {t('searchLabel')}
               </FieldLabel>
               <InputGroup className="h-14 px-2">
                 <InputGroupInput
@@ -27,13 +34,13 @@ export function DictionarySearch({ query = '' }: { query?: string }) {
                   name="search"
                   type="search"
                   defaultValue={query}
-                  placeholder="Japanese, romaji, or English"
+                  placeholder={t('placeholder')}
                 />
                 <InputGroupAddon>
                   <SearchIcon aria-hidden="true" />
                 </InputGroupAddon>
                 <InputGroupAddon align="inline-end">
-                  <Button type="submit" size="icon-lg" aria-label="Search">
+                  <Button type="submit" size="icon-lg" aria-label={t('search')}>
                     <ArrowRightIcon data-icon="inline-end" />
                   </Button>
                 </InputGroupAddon>
@@ -42,6 +49,9 @@ export function DictionarySearch({ query = '' }: { query?: string }) {
           </FieldGroup>
         </Form>
         <ReadingToggles />
+        {locale === 'ja' ? (
+          <p className="sample-disclosure mt-5">{t('glossNotice')}</p>
+        ) : null}
       </div>
     </section>
   );

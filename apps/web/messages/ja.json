@@ -1,0 +1,38 @@
+{
+  "Shell": {
+    "language": "サイトの言語",
+    "directory": "ローカルページ一覧",
+    "home": "サイトのプレビューに戻る",
+    "scaffold": "構成プレビュー · 内容は未確定です",
+    "notice": "このページはレイアウトと画面遷移を確認するためのものです。公開用の内容はまだ承認されていません。",
+    "missingCopy": "日本語の本文はまだ用意されていません。以下に未確定の英語の説明を表示しています。",
+    "open": "プレビューを開く",
+    "notFound": "ページが見つかりませんでした。",
+    "unavailable": "このアドレスに対応するサンプルページはありません。",
+    "sections": {
+      "about": "Zenbuについて",
+      "contact": "お問い合わせ",
+      "support": "サポート",
+      "legal": "法的情報",
+      "dictionary": "辞書",
+      "videos": "動画",
+      "blog": "ブログ",
+      "products": "製品",
+      "resources": "学習リソース",
+      "learn": "学ぶ"
+    }
+  },
+  "Dictionary": {
+    "searchLabel": "辞書を検索",
+    "search": "検索",
+    "placeholder": "日本語・ローマ字・英語",
+    "romaji": "ローマ字",
+    "furigana": "ふりがな",
+    "readingAids": "読み方の表示",
+    "listen": "発音を聞く",
+    "audioUnavailable": "このブラウザーでは音声を利用できません",
+    "audioFailed": "発音を再生できませんでした",
+    "glossNotice": "このサンプルにはアプリの英語の語義を表示しています。日本語の語義は含まれていません。",
+    "back": "サンプル辞書に戻る"
+  }
+}

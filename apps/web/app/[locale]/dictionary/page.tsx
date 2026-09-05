@@ -10,7 +10,7 @@ import { searchSamples } from '@/lib/dictionary/sample-dictionary';
 
 export default async function DictionaryPage({
   searchParams,
-}: PageProps<'/dictionary'>) {
+}: PageProps<'/[locale]/dictionary'>) {
   const params = await searchParams;
   const query = typeof params.search === 'string' ? params.search : '';
   const results = searchSamples(query);

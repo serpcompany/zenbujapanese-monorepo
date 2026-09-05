@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { notFound } from 'next/navigation';
 import { DictionarySearch } from '@/components/dictionary/search';
 import { EntryCard } from '@/components/dictionary/entry-card';
@@ -6,7 +6,7 @@ import { resolveSample } from '@/lib/dictionary/sample-dictionary';
 
 export default async function EntryPage({
   params,
-}: PageProps<'/dictionary/[slug]'>) {
+}: PageProps<'/[locale]/dictionary/[slug]'>) {
   const { slug } = await params;
   const sample = resolveSample(slug);
   if (!sample) notFound();

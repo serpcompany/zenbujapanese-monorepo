@@ -9,7 +9,7 @@ on:
       - 'pnpm-lock.yaml'
       - '.github/workflows/web.yml'
   push:
-    branches: [main, refactor/native-swiftui-components, codex/issue-277-web-foundation]
+    branches: [main, refactor/native-swiftui-components, codex/issue-277-web-foundation, codex/issue-279-website-route-foundation]
     paths: *web_paths
   workflow_dispatch:
 
@@ -39,6 +39,7 @@ jobs:
       - run: pnpm build
       - run: pnpm --filter web exec playwright install --with-deps chromium
       - run: pnpm test
+      - run: pnpm --filter web test:production
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: failure()
         with:

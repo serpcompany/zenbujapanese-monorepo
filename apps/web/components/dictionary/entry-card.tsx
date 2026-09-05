@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -15,6 +15,7 @@ import {
 } from '@/lib/dictionary/sample-dictionary';
 import { PitchAccentView } from './pitch-accent';
 import { ExampleSentenceView } from './example-sentence';
+import { ListenButton } from './listen-button';
 
 export function EntryCard({
   sample,
@@ -63,7 +64,6 @@ export function EntryCard({
               <span>
                 {entry.partsOfSpeech.map((part) => part.rawValue).join(' · ')}
               </span>
-              {entry.isCommon ? <Badge variant="outline">Common</Badge> : null}
             </div>
             {senses.map((sense, index) => (
               <div key={index}>
@@ -76,12 +76,15 @@ export function EntryCard({
                 ) : null}
               </div>
             ))}
-            {entry.pitchAccent ? (
-              <PitchAccentView
-                reading={entry.reading}
-                pitch={entry.pitchAccent}
-              />
-            ) : null}
+            <div className="flex flex-wrap items-center gap-3">
+              <ListenButton reading={entry.reading} />
+              {entry.pitchAccent ? (
+                <PitchAccentView
+                  reading={entry.reading}
+                  pitch={entry.pitchAccent}
+                />
+              ) : null}
+            </div>
             {entry.id.rawValue === '042e07f7052f611fed33ddddf37f55fd' ? (
               <ExampleSentenceView
                 sentence={eatingExample}
