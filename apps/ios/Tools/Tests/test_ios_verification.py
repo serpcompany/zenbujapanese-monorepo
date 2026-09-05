@@ -15,6 +15,26 @@ SPEC.loader.exec_module(ios_verification)
 
 
 class IOSVerificationPolicyTests(unittest.TestCase):
+    def test_word_usability_replacement_checks_are_all_required(self):
+        repo = Path(__file__).parents[4]
+        inventory = ios_verification.repository_inventory(repo)
+        partitions = ios_verification.merge_candidate_partitions(inventory)
+        required = [test for part in partitions.values() for test in part["tests"]]
+        prefix = "ZenbuJapaneseUITests/AccessibilityAuditUITests/"
+        for mode in ("Light", "Dark"):
+            for name in (
+                "test" + mode + "WordDetailRemainsUsableAtLargestAccessibilityTextSize",
+                "test" + mode + "ShortWordDetailSupportsDynamicTypeWithoutClipping",
+                "testReviewerContrastWithIncreaseContrastIn" + mode + "Mode",
+                "test" + mode + "SearchResultsRemainReadableAtLargestAccessibilityTextSize",
+            ):
+                self.assertEqual(required.count(prefix + name), 1)
+        inline = prefix + "testSharedFuriganaSentenceLayoutKeepsExactInlineHitRegionInventory"
+        raw = prefix + "testSharedFuriganaSentenceLayoutRetainsRawHitRegionDiagnostic"
+        self.assertEqual(required.count(inline), 1)
+        self.assertNotIn(raw, required)
+        self.assertIn(raw, inventory["plans"]["ZenbuAccessibilityDiagnostics"]["included_tests"])
+
     def test_short_word_system_dt_scenarios_remain_explicit_diagnostics(self):
         repo = Path(__file__).parents[4]
         inventory = ios_verification.repository_inventory(repo)

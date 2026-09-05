@@ -1,3 +1,4 @@
+import Vision
 import XCTest
 
 enum AppNavigationUITestSupport {
@@ -367,6 +368,13 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func openLocalImageFixtureDirectory(in app: XCUIApplication) {
+    // The cold Files service handoff took about nine seconds in hosted evidence.
+    // Wait for its native navigation chrome before starting directory navigation.
+    let pickerCancel = app.navigationBars.buttons["Cancel"]
+    XCTAssertTrue(
+      pickerCancel.waitForExistence(timeout: 10),
+      "The native Files picker must finish presentation before directory navigation."
+    )
     // Newly exported files need not appear in Files' Recents. Navigate the
     // same public local directory where stageImageTextFixtures saves them.
     let browse = app.tabBars.buttons["Browse"]
@@ -390,8 +398,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons["search.image-source"].tap()
     app.buttons.matching(identifier: "image-source.photo-library").firstMatch.tap()
 
-    let picker = waitForSystemPhotoPicker(in: app)
-    picker.coordinate(withNormalizedOffset: CGVector(dx: 0.10, dy: 0.12)).tap()
+    _ = waitForSystemPhotoPicker(in: app)
+    app.navigationBars["Photos"].buttons["Cancel"].tap()
+    XCTAssertTrue(app.navigationBars["Photos"].waitForNonExistence(timeout: 3))
     XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
   }
 
@@ -403,7 +412,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let picker = waitForSystemPhotoPicker(in: app)
     recordSettledScreenshot(named: "production-photo-library-picker", app: app)
 
-    picker.coordinate(withNormalizedOffset: CGVector(dx: 0.16, dy: 0.42)).tap()
+    let photo = picker.images.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "Photo,")
+    ).firstMatch
+    XCTAssertTrue(photo.waitForExistence(timeout: 5))
+    XCTAssertTrue(photo.isHittable)
+    photo.tap()
 
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 20))
     let recognized = app.descendants(matching: .any)["image-text.raw-text"]
@@ -420,8 +434,13 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func waitForSystemPhotoPicker(in app: XCUIApplication) -> XCUIElement {
-    let picker = app.windows.element(boundBy: 1)
-    XCTAssertTrue(picker.waitForExistence(timeout: 5))
+    // PhotosUI moves between presentation windows. Its public Photos container
+    // owns the image grid; the observed cold service handoff can take nine seconds.
+    let picker = app.otherElements.matching(
+      NSPredicate(format: "label == %@", "Photos")
+    ).firstMatch
+    XCTAssertTrue(picker.waitForExistence(timeout: 10))
+    XCTAssertTrue(app.navigationBars["Photos"].exists)
     return picker
   }
 
@@ -2314,6 +2333,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
     submitSearch("think", in: app, searchField: searchField)
+    waitForSubmittedSearchResults(in: app)
     XCTAssertTrue(resultButton(headword: "思う", in: app).waitForExistence(timeout: 3))
     showRecentSearches(in: app, searchField: searchField)
 
@@ -2324,11 +2344,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     XCTAssertFalse(app.staticTexts["Recent Searches"].exists)
     XCTAssertLessThanOrEqual(clearAll.frame.maxY, recentSearch.frame.minY)
-    // Native List buttons expose a full-width hit frame even when their label
-    // is trailing aligned. Assert the visible label's position separately.
-    let clearAllLabel = clearAll.staticTexts["Clear All"]
-    XCTAssertTrue(clearAllLabel.exists)
-    XCTAssertGreaterThan(clearAllLabel.frame.minX, app.frame.midX)
+    try assertClearAllLabelIsTrailing(in: clearAll, app: app)
     XCTAssertGreaterThanOrEqual(clearAll.frame.height, 44)
 
     clearAll.tap()
@@ -3890,6 +3906,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let missingRank = app.buttons["word-detail.frequency"]
     XCTAssertTrue(missingRank.waitForExistence(timeout: 3))
+    assertNoFrequencyRankIsReady(missingRank)
     XCTAssertEqual(
       missingRank.label,
       "The active frequency dictionary has no rank for this entry. Double tap for details.")
@@ -3921,6 +3938,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let frequency = app.buttons["word-detail.frequency"]
     XCTAssertTrue(frequency.waitForExistence(timeout: 3))
+    assertNoFrequencyRankIsReady(frequency)
     XCTAssertEqual(
       frequency.label,
       "The active frequency dictionary has no rank for this entry. Double tap for details."
@@ -5521,6 +5539,53 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.keyboards.buttons["Search"].tap()
   }
 
+  @MainActor
+  private func waitForSubmittedSearchResults(in app: XCUIApplication) {
+    XCTAssertTrue(
+      app.keyboards.firstMatch.waitForNonExistence(timeout: 10),
+      "Submitted Search must dismiss the keyboard before selecting a result."
+    )
+    XCTAssertEqual(waitForStableSearchOutcome(in: app), .results)
+  }
+
+  @MainActor
+  private func assertClearAllLabelIsTrailing(in button: XCUIElement, app: XCUIApplication) throws {
+    let screenshot = button.screenshot()
+    let evidence = XCTAttachment(screenshot: screenshot)
+    evidence.name = "Rendered Clear All placement in native history row"
+    evidence.lifetime = .keepAlways
+    add(evidence)
+    let image = try XCTUnwrap(screenshot.image.cgImage)
+    // Native Button semantics merge the label. Inspect the real rendered text
+    // with Apple's Vision instead of manufacturing a duplicate accessibility node.
+    let request = VNRecognizeTextRequest()
+    request.recognitionLevel = .accurate
+    request.recognitionLanguages = ["en-US"]
+    request.usesLanguageCorrection = false
+    try VNImageRequestHandler(cgImage: image).perform([request])
+    let labels = (request.results ?? []).filter {
+      guard let candidate = $0.topCandidates(1).first else { return false }
+      return candidate.string == "Clear All" && candidate.confidence >= 0.9
+    }
+    XCTAssertEqual(labels.count, 1, "Expected exactly one confidently rendered Clear All label")
+    if let label = labels.first {
+      let labelLeft = button.frame.minX + label.boundingBox.minX * button.frame.width
+      XCTAssertGreaterThan(labelLeft, app.frame.midX, "Clear All must be trailing aligned")
+    }
+  }
+
+  @MainActor
+  private func assertNoFrequencyRankIsReady(_ frequency: XCUIElement) {
+    let expected =
+      "The active frequency dictionary has no rank for this entry. Double tap for details."
+    let ready = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "label == %@", expected), object: frequency)
+    XCTAssertEqual(
+      XCTWaiter.wait(for: [ready], timeout: 5), .completed,
+      "Frequency must finish loading with no-rank evidence, not remain unavailable"
+    )
+  }
+
   private enum StableSearchOutcome: Equatable {
     case results
     case noMatches
@@ -5738,11 +5803,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     searchField: XCUIElement
   ) {
     submitSearch(query, in: app, searchField: searchField)
+    waitForSubmittedSearchResults(in: app)
     let result = app.buttons.matching(
       NSPredicate(format: "label BEGINSWITH %@", resultLabelPrefix)
     ).firstMatch
     XCTAssertTrue(result.waitForExistence(timeout: 3))
-    result.tap()
+    WordDetailUITestSupport.tapVisibleSearchResult(result, in: app)
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
   }
 

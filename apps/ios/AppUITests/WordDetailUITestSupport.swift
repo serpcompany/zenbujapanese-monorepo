@@ -6,6 +6,40 @@ enum WordDetailUITestSupport {
   static let longPrimaryKanji = ["検", "知", "多", "重", "衝", "突", "出"]
 
   @MainActor
+  static func tapVisibleSearchResult(
+    _ result: XCUIElement,
+    in app: XCUIApplication,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    let navigation = app.navigationBars.firstMatch
+    let searchField = app.textFields["search.field"]
+    let tabBar = app.tabBars.firstMatch
+    guard result.exists, navigation.exists, searchField.exists, tabBar.exists else {
+      XCTFail("Search result and native viewport boundaries must exist", file: file, line: line)
+      return
+    }
+    let top = max(navigation.frame.maxY, searchField.frame.maxY) + 8
+    let bottom = tabBar.frame.minY - 8
+    let viewport = CGRect(
+      x: app.frame.minX, y: top, width: app.frame.width, height: max(0, bottom - top))
+    let visible = result.frame.intersection(viewport)
+    guard !visible.isNull, visible.width >= 44, visible.height >= 44 else {
+      XCTFail(
+        "Result \(result.identifier) needs a visible 44-point touch area; found \(visible)",
+        file: file, line: line
+      )
+      return
+    }
+    // An accessibility-size row can be taller than the display. Tap its actual
+    // visible portion once; the caller must still prove the destination opens.
+    let offset = CGVector(dx: visible.midX - app.frame.minX, dy: visible.midY - app.frame.minY)
+    XCTContext.runActivity(named: "Tap visible Search result intersection \(visible)") { _ in
+      app.coordinate(withNormalizedOffset: .zero).withOffset(offset).tap()
+    }
+  }
+
+  @MainActor
   static func assertLongIdentityUsesSecondaryReading(
     in app: XCUIApplication,
     file: StaticString = #filePath,

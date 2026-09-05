@@ -28,6 +28,7 @@
       "skippedTests" : [
         "AccessibilityAuditUITests/testReviewerContrastWithIncreaseContrastInLightMode",
         "AccessibilityAuditUITests/testReviewerContrastWithIncreaseContrastInDarkMode",
+        "AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutRetainsRawHitRegionDiagnostic",
         "AccessibilityAuditUITests/testDarkWordDetailRetainsCompleteAX5Diagnostic",
         "AccessibilityAuditUITests/testLightWordDetailRetainsCompleteAX5Diagnostic",
         "AccessibilityAuditUITests/testDarkShortWordDetailRetainsSystemDynamicTypeDiagnostic",

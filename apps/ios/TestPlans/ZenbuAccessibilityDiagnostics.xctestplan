@@ -25,6 +25,7 @@
     {
       "parallelizable" : false,
       "selectedTests" : [
+        "AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutRetainsRawHitRegionDiagnostic",
         "AccessibilityAuditUITests/testDarkWordDetailRetainsCompleteAX5Diagnostic",
         "AccessibilityAuditUITests/testLightWordDetailRetainsCompleteAX5Diagnostic",
         "AccessibilityAuditUITests/testDarkShortWordDetailRetainsSystemDynamicTypeDiagnostic",

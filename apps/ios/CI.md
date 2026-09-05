@@ -41,14 +41,15 @@ Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
 provider except for the bounded bundled-provider cold-relaunch journey. The
 merge-candidate workflow invokes and retains all three correctness plans.
 
-The exact inventory contains 333 tests. `ZenbuPR` includes 312 (113 Unit and 199
+The exact inventory contains 334 tests. `ZenbuPR` includes 312 (113 Unit and 199
 UI), and `ZenbuSudachiIntegration` includes three network-backed Unit tests. The
-sixteen exact tests outside those correctness plans are one performance-only Unit
+seventeen exact tests outside those correctness plans are one performance-only Unit
 test, three physical/system HIL journeys, #269's four deliberately red framework
 diagnostics, #289's two broad secondary-surface whole-window diagnostics, and
 #173's two default-complete-audit reviewer diagnostics and two original short-word
 AX5 system Dynamic Type diagnostics, plus two original full AX5 Word Detail audits.
-The diagnostic plan contains twelve tests.
+The original inline-sentence whole-window hit-region audit is also retained.
+The diagnostic plan contains thirteen tests.
 `ZenbuIncreasedContrast`
 requires the two additional reviewer contrast methods on its own configuration. The
 diagnostics remain independently callable through their dedicated plan and never
@@ -142,13 +143,34 @@ system Dynamic Type/clipping calls remain in
 the existing reviewer diagnostic capability.
 
 The `test{Light,Dark}WordDetailRemainsUsableAtLargestAccessibilityTextSize`
-counterparts also use these paired measurements instead of the opaque system
-Dynamic Type flag. Their other audit types remain, and any contrast-containing
-combination positions the exact alternative reading before auditing. The original
+counterparts use paired scaling measurements. Their remaining audit categories
+(including hit regions and element semantics) run at the stable top before any
+viewport movement. Clipping is required in the same-日本 short-word pair; contrast
+is required through the IC nine-label checks and the exact AX5 にっぽん crop
+(quantitative 4.5:1 threshold in both appearances). Geometry alone is not a
+contrast assertion, and these named checks do not claim to measure every
+offscreen node reported by the retained original whole-window audit.
+This avoids mutating font/viewport state and then attempting to rediscover an
+already virtualized header. The original
 full `.all` audit at its original viewport is retained in
 `test{Light,Dark}WordDetailRetainsCompleteAX5Diagnostic`. The final complete plan
 still requires all four usability/scaling methods; the focused six-test selector
 is unchanged. No other Dynamic Type scenarios change.
+
+### Inline sentence targets
+
+`testSharedFuriganaSentenceLayoutKeepsExactInlineHitRegionInventory` retains the
+literal REM-sleep sentence, distinct visible 中/時 targets, native 44-point height,
+natural width, candidate-menu choices from JMdict 1620400/1315840, destination
+identity, and Back restoration. The unfiltered original `.hitRegion` observation
+is preserved in `testSharedFuriganaSentenceLayoutRetainsRawHitRegionDiagnostic`.
+This is the engineering policy for inline text in a sentence, grounded in
+[WCAG 2.5.5](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html),
+[2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html), and
+[WCAG2ICT's software interpretation](https://www.w3.org/TR/wcag2ict-22/#target-size-minimum).
+It is not an Apple-specific exemption: Apple's general 44-point button guidance
+and all standalone-control requirements remain. No width/spacing or product UI
+change is made, and no equivalent menu on this Word Detail page is claimed.
 
 The runner uses public `simctl ui <owned-device> increase_contrast` only around
 the dedicated plan's test command. It reads the original setting, enables and

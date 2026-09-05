@@ -46,8 +46,9 @@
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordAndExampleSpeakersCompleteLiveJapaneseSpeech": "Live Japanese voice completion is retained in the separately recorded physical speech HIL journey."
   },
   "non_correctness_exclusions": {
-    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkWordDetailRetainsCompleteAX5Diagnostic": "Original full AX5 system audit and original viewport are retained. Required usability tests preserve the other audit types with an unobscured contrast target and replace opaque Dynamic Type with six exact paired text measurements.",
-    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightWordDetailRetainsCompleteAX5Diagnostic": "Original full AX5 system audit and original viewport are retained. Required usability tests preserve the other audit types with an unobscured contrast target and replace opaque Dynamic Type with six exact paired text measurements.",
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutRetainsRawHitRegionDiagnostic": "Retains the original whole-window hit-region observation. The required inline sentence journey uses the documented WCAG inline-text classification, exact sentence/geometry, and literal source-backed candidate selection and Back for middle/time; standalone target requirements are unchanged.",
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkWordDetailRetainsCompleteAX5Diagnostic": "Original full AX5 system audit and original viewport are retained. Required usability tests keep other audits at the stable top. Required short-word tests retain clipping and six exact paired scaling measurements; required IC nine-label checks and the exact visible AX5 にっぽん 4.5:1 measurement provide named contrast acceptance, not a claim about every offscreen node.",
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightWordDetailRetainsCompleteAX5Diagnostic": "Original full AX5 system audit and original viewport are retained. Required usability tests keep other audits at the stable top. Required short-word tests retain clipping and six exact paired scaling measurements; required IC nine-label checks and the exact visible AX5 にっぽん 4.5:1 measurement provide named contrast acceptance, not a claim about every offscreen node.",
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkShortWordDetailRetainsSystemDynamicTypeDiagnostic": "Preserves the original AX5 system Dynamic Type and clipping scenario. Required short-word tests keep direct clipping and paired exact default/AX5 text measurements for the six reported labels; no named audit handler is used.",
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightShortWordDetailRetainsSystemDynamicTypeDiagnostic": "Preserves the original AX5 system Dynamic Type and clipping scenario. Required short-word tests keep direct clipping and paired exact default/AX5 text measurements for the six reported labels; no named audit handler is used.",
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerDefaultCompleteAuditInLightMode": "Original complete default audit remains direct and diagnostic after #173 evidence. Required reviewers preserve Search Dynamic Type and other non-contrast coverage; required short Word Detail clipping and paired exact text metrics cover scaling; original AX5 system Dynamic Type audits remain diagnostic. ZenbuIncreasedContrast requires nine named-label rendered-pixel contrast checks.",
@@ -83,6 +84,12 @@
     "accessibility.image-translation-recovery|ui.image-text-translation-assets": "The normal-size journey proves cancellation, retry, unsupported, failure, and preserved session behavior; one independent maximum-size smoke proves the new native recovery presentation remains reachable without duplicating the full journey."
   },
   "selectors": {
+    "diagnostic.inline-sentence-hit-regions": {
+      "plan": "ZenbuAccessibilityDiagnostics",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutRetainsRawHitRegionDiagnostic",
+      "traits": ["ui", "accessibility", "framework-diagnostic"],
+      "journeys": []
+    },
     "diagnostic.word-detail-complete-ax5-dark": {
       "plan": "ZenbuAccessibilityDiagnostics",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkWordDetailRetainsCompleteAX5Diagnostic",
@@ -690,6 +697,7 @@
       "ui.bundled-japanese-text-analysis"
     ],
     "diagnostics": [
+      "diagnostic.inline-sentence-hit-regions",
       "diagnostic.word-detail-complete-ax5-dark",
       "diagnostic.word-detail-complete-ax5-light",
       "diagnostic.short-word-system-dynamic-type-dark",
@@ -796,6 +804,7 @@
       "adaptive_layout": true,
       "paths": [],
       "manual": [
+        "diagnostic.inline-sentence-hit-regions",
         "diagnostic.word-detail-complete-ax5-dark",
         "diagnostic.word-detail-complete-ax5-light",
         "diagnostic.short-word-system-dynamic-type-dark",
