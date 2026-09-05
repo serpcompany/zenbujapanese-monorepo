@@ -15,12 +15,12 @@ export default async function EntryPage({
   return (
     <main>
       <DictionarySearch />
-      <section className="dictionary-content" aria-label="Dictionary entry">
-        <Link href="/dictionary" className="entry-link mb-5">
+      <section className="mx-auto w-full max-w-5xl px-6 pb-16" aria-label="Dictionary entry">
+        <Link href="/dictionary" className="mb-5 inline-block text-sm text-primary underline-offset-4 hover:underline">
           ← {t('back')}
         </Link>
         <EntryCard sample={sample} detail />
-        <p className="source-disclosure">
+        <p className="mt-6 text-xs leading-5 text-muted-foreground [&_a]:underline [&_a]:underline-offset-4">
           Verified app sample.{' '}
           <a href="/data-notices.txt">UniDic and TUBELEX notices</a>.
         </p>

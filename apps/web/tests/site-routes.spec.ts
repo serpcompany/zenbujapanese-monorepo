@@ -127,11 +127,11 @@ test('homepage directory links expose all 23 patterns in the current locale', as
 }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Local route directory' }).click();
-  await expect(page.locator('.route-directory a')).toHaveCount(23);
+  await expect(page.locator('main ol a')).toHaveCount(23);
   await page.getByRole('combobox').selectOption('ja');
   await expect(page).toHaveURL(/\/ja\/sitemap$/);
   await page
-    .locator('.route-directory a')
+    .locator('main ol a')
     .filter({ hasText: 'Product pricing' })
     .click();
   await expect(page).toHaveURL(/\/ja\/products\/zenbu-japanese\/pricing$/);

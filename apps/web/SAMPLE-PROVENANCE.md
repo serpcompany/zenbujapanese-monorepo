@@ -36,9 +36,10 @@ Romaji strings come from `forms WHERE entry_id = ? AND kind = 2`, preserving
 stored form order. These are reading aids/search terms from the app artifact,
 not a web romanization implementation. Full-word ruby uses the supplied reading
 without inventing per-kanji alignment. Pitch evidence is the stored object,
-including its original UniDic source identity. For example, 食べる has downstep 2,
-moraCount 3. The neutral capsule and red under-text downstep follow
-`WordDetailView.PitchAccentView` and `ZenbuTheme.pitchDownstep`.
+including its original UniDic source identity. For example, 食べる has downstep 2
+and moraCount 3. The foundation displays the verified downstep number in a
+standard shadcn Badge. A richer pitch graph remains deferred until a proven,
+licensed renderer is selected.
 
 Frequency was joined by the identical app ID BLOB to `frequency_evidence` in
 the TUBELEX artifact. Corpus disclosure, total tokens and corpus counts come

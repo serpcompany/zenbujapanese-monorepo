@@ -20,7 +20,7 @@ export default async function WatchPage({
       title="Dictionary walkthrough"
       description="Video playback, transcript, and supporting references for one video."
     >
-      <div className="video-preview">
+      <div className="grid min-h-60 place-items-center rounded-lg bg-muted sm:aspect-video">
         <Empty>
           <EmptyHeader>
             <EmptyTitle>Video not supplied</EmptyTitle>

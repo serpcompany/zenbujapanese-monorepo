@@ -30,20 +30,20 @@ export async function EntryCard({
   const senses = detail ? entry.senses : entry.senses.slice(0, 1);
   return (
     <article aria-label={`${entry.headword} — ${entry.summary}`}>
-      <Card className="entry-card">
-        <CardHeader className="word-column">
+      <Card className="grid gap-5 p-5 sm:grid-cols-[12rem_1fr] sm:gap-8 sm:p-7">
+        <CardHeader className="items-start gap-1 border-b p-0 pb-5 sm:border-r sm:border-b-0 sm:pr-6 sm:pb-0">
           <CardTitle>
-            <h2 lang="ja">
+            <h2 className="text-3xl leading-relaxed font-medium tracking-normal" lang="ja">
               <ruby>
                 {entry.headword}
-                <rt>{entry.reading}</rt>
+                <rt className="text-xs font-normal tracking-widest text-muted-foreground">{entry.reading}</rt>
               </ruby>
             </h2>
           </CardTitle>
-          <CardDescription className="reading-romaji">
+          <CardDescription className="reading-romaji text-sm">
             {romaji[0]}
           </CardDescription>
-          <div className="frequency">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             {frequency ? (
               <>
                 <Badge
@@ -61,20 +61,20 @@ export async function EntryCard({
           </div>
         </CardHeader>
         <div className="min-w-0">
-          <CardContent className="meaning-column">
-            <div className="entry-topline">
+          <CardContent className="p-0">
+            <div className="mb-3 text-sm text-muted-foreground">
               <span>
                 {entry.partsOfSpeech.map((part) => part.rawValue).join(' · ')}
               </span>
             </div>
             {senses.map((sense, index) => (
               <div key={index}>
-                <p className="definition">
+                <p className="text-lg leading-7 font-medium">
                   {detail && senses.length > 1 ? `${index + 1}. ` : ''}
                   {sense.meaning}
                 </p>
                 {sense.notes.length ? (
-                  <p className="sense-notes">{sense.notes.join(' · ')}</p>
+                  <p className="mt-1 mb-4 text-sm leading-6 text-muted-foreground">{sense.notes.join(' · ')}</p>
                 ) : null}
               </div>
             ))}
@@ -108,9 +108,9 @@ export async function EntryCard({
               />
             ) : null}
           </CardContent>
-          <CardFooter variant="plain" className="px-0">
+          <CardFooter className="mt-5 px-0">
             {detail ? (
-              <p className="entry-source">
+              <p className="text-xs leading-5 text-muted-foreground [&_a]:underline [&_a]:underline-offset-4">
                 JMdict {entry.sourceProvenances[0].sourceRecordID} ·{' '}
                 <a href="https://www.edrdg.org/">EDRDG</a> ·{' '}
                 <a href="https://creativecommons.org/licenses/by-sa/4.0/">
@@ -119,7 +119,7 @@ export async function EntryCard({
               </p>
             ) : (
               <Link
-                className="entry-link"
+                className="text-sm text-primary underline-offset-4 hover:underline"
                 href={`/dictionary/${entrySlug(entry)}`}
               >
                 {t('viewEntry', { headword: entry.headword })}{' '}

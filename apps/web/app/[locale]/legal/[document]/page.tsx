@@ -20,13 +20,13 @@ export default async function LegalDocument({
       title={item.title}
       description="Document structure only. This is not a published policy, legal notice, or advice."
     >
-      <article>
+      <article className="typeset max-w-3xl">
         <h2>Pending policy decisions</h2>
-        <ul className="outline-list">
+        <ul>
           {item.topics.map((topic) => (
             <li key={topic}>
               {topic}
-              <p className="text-muted-foreground">
+              <p>
                 Approved wording is pending.
               </p>
             </li>

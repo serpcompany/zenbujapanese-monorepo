@@ -7,7 +7,7 @@ export default function LegalIndex() {
       title="Legal information"
       description="A directory of policy documents. None of these preview documents are operative legal terms."
     >
-      <div className="preview-grid">
+      <div className="grid gap-4 sm:grid-cols-2">
         {Object.entries(legalPages).map(([slug, item]) => (
           <PreviewCard
             key={slug}

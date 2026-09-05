@@ -14,7 +14,7 @@ export function LanguageSelector({ label }: { label: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   return (
-    <label className="language-selector">
+    <label className="flex items-center gap-2 text-sm text-muted-foreground">
       {label}
       <NativeSelect
         aria-label={label}

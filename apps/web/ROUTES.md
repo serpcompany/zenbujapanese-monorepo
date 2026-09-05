@@ -45,8 +45,8 @@ paths return 404. A wrong dictionary headword/ID pair remains 404.
 
 ## Shared structure and placeholder policy
 
-`app/[locale]/layout.tsx` provides the approved Inter/Nova/Neutral/Blue theme,
-red brand token, locale provider and language selector. There is no marketing
+`app/[locale]/layout.tsx` provides the generator-selected Inter/Vega/Neutral
+theme, separate red brand token, locale provider and language selector. There is no marketing
 header navigation or global footer. Fixed page shells prerender for English and
 Japanese. Dictionary pages alone read the two reading-preference session cookies.
 Server Components render content; client code is limited to the locale selector,

@@ -8,12 +8,12 @@ export function ExampleSentenceView({
   attribution: React.ReactNode;
 }) {
   return (
-    <figure className="example-sentence">
+    <figure className="mt-5 border-t pt-4 text-sm leading-7">
       <blockquote>
-        <p lang="ja">{sentence.japanese}</p>
+        <p className="text-muted-foreground" lang="ja">{sentence.japanese}</p>
         <p>{sentence.english}</p>
       </blockquote>
-      <figcaption>{attribution}</figcaption>
+      <figcaption className="mt-3 text-xs text-muted-foreground">{attribution}</figcaption>
     </figure>
   );
 }
