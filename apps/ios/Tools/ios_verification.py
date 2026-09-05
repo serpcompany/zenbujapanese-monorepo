@@ -1024,6 +1024,28 @@ def merge_candidate_matrix(
             "measured_test_seconds": None,
             "timing_profile_run_id": None,
         })
+    refactor_gate = set(
+        manifest.get("capabilities", {}).get("refactor-regressions", {}).get("manual", [])
+    )
+    if refactor_gate and selected == refactor_gate:
+        # Three independent hosted samples are required together, never retries.
+        for lane, trait in [
+            ("refactor-stability-1", "refactor-stability"),
+            ("refactor-stability-2", "refactor-stability"),
+            ("refactor-stability-3", "refactor-stability"),
+            ("refactor-pickers", "refactor-pickers"),
+        ]:
+            lane_selectors = sorted(
+                key for key in selected if trait in manifest["selectors"][key]["traits"]
+            )
+            include.append({
+                "lane": lane,
+                "plan": "ZenbuPR",
+                "selectors": lane_selectors,
+                "test_count": len(lane_selectors),
+                "measured_test_seconds": None,
+                "timing_profile_run_id": None,
+            })
     return {"include": include}
 
 

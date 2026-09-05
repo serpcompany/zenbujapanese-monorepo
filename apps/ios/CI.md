@@ -192,6 +192,18 @@ evidence for the focused choice. Manual remains a hosted `workflow_dispatch`
 stage; these UI checks remain deferred from local issue TDD. Full merge-candidate,
 manual full-merge, and pre-release validation all require the contrast lane.
 
+The manual `refactor-regressions` capability adds final #230/#236/#294/#173
+evidence through the same workflow and SHA-bound runner: three independent
+four-test stability samples (lookup retry, structured Word Detail, Search Back,
+and Kanji-to-word Back), plus one separate four-test picker lane (Files cancel,
+Photos cancel, empty-file recovery, and native image paging). All run through
+`ZenbuPR` on separate disposable hosted Simulators. The three samples are
+intentional stability evidence, not retries; every sample and the picker lane
+must succeed. Partial manual choices report `ios-premerge / Focused <capability>`
+and cannot satisfy `ios-premerge / Required`. The default `full-merge` remains
+the complete eleven-lane gate. Existing tests and Xcode plan membership remain
+unchanged; local issue checks still defer these UI methods.
+
 The timing profile comes from workflow run `33888752432` on exact source
 `84bece9fc47e5aa0bd7420befc600a915464f5d3`. Its complete per-test log inventory
 produces measured test loads of 1,150.814, 1,153.155, and 1,153.903 seconds for

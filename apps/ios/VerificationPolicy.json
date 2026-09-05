@@ -84,6 +84,54 @@
     "accessibility.image-translation-recovery|ui.image-text-translation-assets": "The normal-size journey proves cancellation, retry, unsupported, failure, and preserved session behavior; one independent maximum-size smoke proves the new native recovery presentation remains reachable without duplicating the full journey."
   },
   "selectors": {
+    "ui.refactor-stability-lookup-retry": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testLookupFailureIsNotPresentedAsNoMatchAndRetryRecovers",
+      "traits": ["ui", "normal-dynamic-type", "refactor-stability"],
+      "journeys": []
+    },
+    "ui.refactor-stability-word-reference": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation",
+      "traits": ["ui", "normal-dynamic-type", "refactor-stability"],
+      "journeys": []
+    },
+    "ui.refactor-stability-search-back": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testJapaneseQueryOpensWordDetailAndBackPreservesResults",
+      "traits": ["ui", "normal-dynamic-type", "refactor-stability"],
+      "journeys": []
+    },
+    "ui.refactor-stability-kanji-back": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKanjiDetailRelatedWordOpensWordDetailAndBackRestoresPosition",
+      "traits": ["ui", "normal-dynamic-type", "refactor-stability"],
+      "journeys": []
+    },
+    "ui.refactor-pickers-files-cancel": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextFilesSourceCancelsWithoutReportingAnImportFailure",
+      "traits": ["ui", "normal-dynamic-type", "refactor-pickers"],
+      "journeys": []
+    },
+    "ui.refactor-pickers-photos-cancel": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testPhotoLibrarySourceOpensSystemPickerAndCancels",
+      "traits": ["ui", "normal-dynamic-type", "refactor-pickers"],
+      "journeys": []
+    },
+    "ui.refactor-pickers-files-recovery": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextMultipleFilesRecoverFromEmptyAndRemainTransient",
+      "traits": ["ui", "normal-dynamic-type", "refactor-pickers"],
+      "journeys": []
+    },
+    "ui.refactor-pickers-images-paging": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextMultipleImagesUseNativePagingWithoutCustomPageButtons",
+      "traits": ["ui", "normal-dynamic-type", "refactor-pickers"],
+      "journeys": []
+    },
     "diagnostic.inline-sentence-hit-regions": {
       "plan": "ZenbuAccessibilityDiagnostics",
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutRetainsRawHitRegionDiagnostic",
@@ -658,6 +706,14 @@
       "unit.search-frequency-batch"
     ],
     "ui": [
+      "ui.refactor-stability-lookup-retry",
+      "ui.refactor-stability-word-reference",
+      "ui.refactor-stability-search-back",
+      "ui.refactor-stability-kanji-back",
+      "ui.refactor-pickers-files-cancel",
+      "ui.refactor-pickers-photos-cancel",
+      "ui.refactor-pickers-files-recovery",
+      "ui.refactor-pickers-images-paging",
       "ui.shell",
       "ui.you-hierarchy",
       "ui.reading-aids",
@@ -797,6 +853,19 @@
     ]
   },
   "capabilities": {
+    "refactor-regressions": {
+      "paths": [],
+      "manual": [
+        "ui.refactor-stability-lookup-retry",
+        "ui.refactor-stability-word-reference",
+        "ui.refactor-stability-search-back",
+        "ui.refactor-stability-kanji-back",
+        "ui.refactor-pickers-files-cancel",
+        "ui.refactor-pickers-photos-cancel",
+        "ui.refactor-pickers-files-recovery",
+        "ui.refactor-pickers-images-paging"
+      ]
+    },
     "reviewer-contrast": {
       "adaptive_layout": true,
       "paths": [],

@@ -16,13 +16,24 @@ def trigger_section(workflow: str) -> str:
 
 
 class IOSWorkflowPolicyTests(unittest.TestCase):
-    def test_manual_premerge_can_select_only_the_registered_reviewer_gate(self):
+    def test_manual_premerge_can_select_only_registered_gates(self):
         workflow = workflow_text("ios-premerge.yml")
         triggers = trigger_section(workflow)
         self.assertIn("default: full-merge", triggers)
-        self.assertIn("options: [full-merge, reviewer-contrast]", triggers)
+        self.assertIn("options: [full-merge, reviewer-contrast, refactor-regressions]", triggers)
         self.assertIn("MANUAL_CAPABILITY: ${{ inputs.capability || 'full-merge' }}", workflow)
         self.assertIn('args+=(--capability "$MANUAL_CAPABILITY")', workflow)
+
+    def test_partial_manual_gate_cannot_report_required_and_every_sample_must_pass(self):
+        workflow = workflow_text("ios-premerge.yml")
+        required = workflow.split("  required:\n", 1)[1]
+        self.assertIn("github.event_name == 'workflow_dispatch' && inputs.capability != 'full-merge'", required)
+        self.assertIn("format('ios-premerge / Focused {0}', inputs.capability)", required)
+        self.assertIn("|| 'ios-premerge / Required'", required)
+        self.assertIn('[[ "$COMPLETE_RESULT" == success ]]', required)
+        self.assertIn("fail-fast: false", workflow)
+        self.assertNotIn("continue-on-error", workflow)
+        self.assertIn("'${{ needs.scope.outputs.source_sha }}'", workflow)
 
     def test_photo_fixture_is_loaded_only_into_the_new_disposable_simulator(self):
         runner = (TOOLS / "run_ci_test_plan.sh").read_text(encoding="utf-8")
@@ -56,7 +67,7 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("  pull_request:\n", triggers)
         self.assertIn("  merge_group:\n", triggers)
         self.assertIn("  workflow_dispatch:\n", triggers)
-        self.assertIn("'ios-premerge / Reviewer contrast' || 'ios-premerge / Required'", workflow)
+        self.assertIn("|| 'ios-premerge / Required'", workflow)
 
     def test_complete_suite_uses_the_measured_exact_candidate_matrix(self):
         workflow = workflow_text("ios-premerge.yml")

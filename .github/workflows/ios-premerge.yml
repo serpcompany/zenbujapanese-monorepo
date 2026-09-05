@@ -10,7 +10,7 @@ on:
         description: Registered verification capability
         type: choice
         default: full-merge
-        options: [full-merge, reviewer-contrast]
+        options: [full-merge, reviewer-contrast, refactor-regressions]
 
 permissions:
   contents: read
@@ -75,7 +75,7 @@ jobs:
           if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
             args+=(--base '${{ github.event.pull_request.base.sha }}' --head '${{ github.event.pull_request.head.sha }}')
           elif [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
-            [[ "$MANUAL_CAPABILITY" == full-merge || "$MANUAL_CAPABILITY" == reviewer-contrast ]] || exit 64
+            [[ "$MANUAL_CAPABILITY" == full-merge || "$MANUAL_CAPABILITY" == reviewer-contrast || "$MANUAL_CAPABILITY" == refactor-regressions ]] || exit 64
             args+=(--capability "$MANUAL_CAPABILITY")
           else
             args+=(--capability full-merge)
@@ -183,7 +183,7 @@ jobs:
           retention-days: 30
 
   required:
-    name: ${{ github.event_name == 'workflow_dispatch' && inputs.capability == 'reviewer-contrast' && 'ios-premerge / Reviewer contrast' || 'ios-premerge / Required' }}
+    name: ${{ github.event_name == 'workflow_dispatch' && inputs.capability != 'full-merge' && format('ios-premerge / Focused {0}', inputs.capability) || 'ios-premerge / Required' }}
     if: always()
     needs: [scope, complete-suite]
     runs-on: ubuntu-24.04

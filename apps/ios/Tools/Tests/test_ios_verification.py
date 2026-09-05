@@ -15,6 +15,41 @@ SPEC.loader.exec_module(ios_verification)
 
 
 class IOSVerificationPolicyTests(unittest.TestCase):
+    def test_refactor_regressions_has_three_independent_samples_and_one_picker_lane(self):
+        repo = Path(__file__).parents[4]
+        inventory = ios_verification.repository_inventory(repo)
+        manifest = ios_verification.load_and_validate_manifest(repo / "apps/ios/VerificationPolicy.json")
+        resolved = ios_verification.resolve_plan(
+            manifest, changed_paths=[], stage="manual", event="workflow_dispatch",
+            draft=False, source_sha="candidate", requested_capabilities=["refactor-regressions"],
+        )
+        self.assertEqual(resolved["source_sha"], "candidate")
+        matrix = ios_verification.merge_candidate_matrix(manifest, resolved["selectors"], inventory)["include"]
+        self.assertEqual([lane["lane"] for lane in matrix], [
+            "refactor-stability-1", "refactor-stability-2", "refactor-stability-3", "refactor-pickers",
+        ])
+        stable = {
+            "testLookupFailureIsNotPresentedAsNoMatchAndRetryRecovers",
+            "testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation",
+            "testJapaneseQueryOpensWordDetailAndBackPreservesResults",
+            "testKanjiDetailRelatedWordOpensWordDetailAndBackRestoresPosition",
+        }
+        pickers = {
+            "testImageTextFilesSourceCancelsWithoutReportingAnImportFailure",
+            "testPhotoLibrarySourceOpensSystemPickerAndCancels",
+            "testImageTextMultipleFilesRecoverFromEmptyAndRemainTransient",
+            "testImageTextMultipleImagesUseNativePagingWithoutCustomPageButtons",
+        }
+        prefix = "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/"
+        for index, lane in enumerate(matrix):
+            self.assertEqual(lane["plan"], "ZenbuPR")
+            self.assertEqual(lane["test_count"], 4)
+            actual = {manifest["selectors"][key]["test"] for key in lane["selectors"]}
+            self.assertEqual(actual, {prefix + name for name in (stable if index < 3 else pickers)})
+            self.assertTrue(actual <= set(inventory["plans"]["ZenbuPR"]["included_tests"]))
+        full = manifest["capabilities"]["full-merge"]["manual"]
+        self.assertEqual(len(ios_verification.merge_candidate_matrix(manifest, full, inventory)["include"]), 11)
+
     def test_word_usability_replacement_checks_are_all_required(self):
         repo = Path(__file__).parents[4]
         inventory = ios_verification.repository_inventory(repo)
