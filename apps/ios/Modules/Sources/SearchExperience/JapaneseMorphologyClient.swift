@@ -147,6 +147,16 @@ struct JapaneseMorphologyClient: Sendable {
     static let uiTestFixture = JapaneseMorphologyClient { text in
       let annotated: [(surface: String, lemma: String, reading: String, partOfSpeech: String)]?
       switch text {
+      case "世界、こんにちは！", "世界、こんにちは。":
+        // SudachiPy 0.6.11 / Core 20260723 mode C output for the public
+        // punctuation-query examples. The generic noun fallback is not valid
+        // reading/POS evidence for either 世界 or the greeting こんにちは.
+        let punctuation = text.hasSuffix("！") ? "!" : "。"
+        annotated = [
+          ("世界", "世界", "セカイ", "名詞"), ("、", "、", "、", "補助記号"),
+          ("こんにちは", "こんにちは", "コンニチハ", "感動詞"),
+          (String(text.suffix(1)), punctuation, punctuation, "補助記号"),
+        ]
       case "今日は静かな公園です。":
         annotated = [
           ("今日", "今日", "キョウ", "名詞"), ("は", "は", "ハ", "助詞"),

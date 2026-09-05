@@ -2311,7 +2311,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     XCTAssertFalse(app.staticTexts["Recent Searches"].exists)
     XCTAssertLessThanOrEqual(clearAll.frame.maxY, recentSearch.frame.minY)
-    XCTAssertGreaterThan(clearAll.frame.midX, app.frame.midX)
+    // Native List buttons expose a full-width hit frame even when their label
+    // is trailing aligned. Assert the visible label's position separately.
+    let clearAllLabel = clearAll.staticTexts["Clear All"]
+    XCTAssertTrue(clearAllLabel.exists)
+    XCTAssertGreaterThan(clearAllLabel.frame.minX, app.frame.midX)
+    XCTAssertGreaterThanOrEqual(clearAll.frame.height, 44)
 
     clearAll.tap()
 

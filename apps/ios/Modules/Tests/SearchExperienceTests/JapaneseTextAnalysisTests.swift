@@ -53,6 +53,20 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     XCTAssertEqual(longMixedScript.candidates[18].surface, "見る")
     XCTAssertEqual(longMixedScript.candidates[18].dictionaryForm, "見る")
     XCTAssertEqual(longMixedScript.candidates[18].partOfSpeech.first, "動詞")
+
+    // The punctuation-only English lookup journey must retain selectable Japanese words.
+    // Frozen against SudachiPy 0.6.11 / Core 20260723, split mode C.
+    let client = JapaneseTextAnalysisClient.resolving(
+      morphologyClient: .uiTestFixture,
+      lookupClient: .freshBundledDatabase()
+    )
+    for sentence in ["世界、こんにちは！", "世界、こんにちは。"] {
+      let tokens = await client.linkedTokens(sentence, SearchQuery("hello-world"), nil)
+      XCTAssertEqual(tokens.map(\.surface), ["世界", "、", "こんにちは", String(sentence.suffix(1))])
+      XCTAssertEqual(tokens.first { $0.surface == "世界" }?.entry?.headword, "世界")
+      XCTAssertEqual(tokens.first { $0.surface == "こんにちは" }?.entry?.reading, "こんにちは")
+      XCTAssertEqual(tokens.first { $0.surface == "こんにちは" }?.entry?.headword, "今日は")
+    }
   }
 
   func testProviderEvidenceSeparatesTodayFromTopicParticleWithoutGreetingLink() async throws {
@@ -64,8 +78,42 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     )
 
     XCTAssertEqual(tokens.map(\.surface), ["今日", "は", "静か", "な", "公園", "です", "。"])
-    XCTAssertFalse(tokens.contains { $0.entry?.headword == "こんにちは" })
+    XCTAssertFalse(tokens.contains { $0.entry?.reading == "こんにちは" })
     XCTAssertEqual(tokens.first { $0.surface == "静か" }?.entry?.headword, "静か")
+  }
+
+  func testProviderInterjectionEvidenceMakesGreetingSelectableWithoutLinkingPunctuation()
+    async throws
+  {
+    let client = JapaneseTextAnalysisClient.resolving(
+      morphologyClient: JapaneseMorphologyClient { text in
+        JapaneseMorphologyAnalysis(
+          transcript: text,
+          candidates: [
+            JapaneseMorphologyCandidate(
+              surface: "こんにちは", scalarRange: 0..<5, dictionaryForm: "こんにちは",
+              normalizedForm: "こんにちは", reading: "コンニチハ", partOfSpeech: ["感動詞"],
+              isOutOfVocabulary: false, children: []
+            ),
+            JapaneseMorphologyCandidate(
+              surface: "！", scalarRange: 5..<6, dictionaryForm: "!",
+              normalizedForm: "!", reading: "!", partOfSpeech: ["補助記号"],
+              isOutOfVocabulary: false, children: []
+            ),
+          ],
+          engine: "frozen-test-provider", engineVersion: "1",
+          dictionary: "Sudachi Core 20260723 mode C evidence", dictionarySHA256: "fixture"
+        )
+      },
+      lookupClient: .freshBundledDatabase()
+    )
+    let tokens = await client.linkedTokens("こんにちは！", SearchQuery(""), nil)
+    XCTAssertEqual(tokens.first?.entry?.headword, "今日は")
+    XCTAssertEqual(tokens.first?.entry?.reading, "こんにちは")
+    XCTAssertNil(tokens.last?.entry)
+    XCTAssertTrue(tokens.last?.candidateEntries.isEmpty == true)
+    let segments = await client.lookupSegments(SearchQuery("こんにちは！"))
+    XCTAssertEqual(segments.map(\.value), ["こんにちは"])
   }
 
   func testProviderDictionaryFormsResolveInflectedVerbsWithoutNounOrIteLinks() async throws {
@@ -405,7 +453,7 @@ final class JapaneseTextAnalysisTests: XCTestCase {
     )
     XCTAssertEqual(tokens.map(\.surface).joined(), "日本語の勉強。今日は問題を解いて話します。そこに学生がいる。用いる。")
     XCTAssertEqual(tokens.first { $0.surface == "日本語" }?.entry?.headword, "日本語")
-    XCTAssertFalse(tokens.contains { $0.entry?.headword == "こんにちは" })
+    XCTAssertFalse(tokens.contains { $0.entry?.reading == "こんにちは" })
     XCTAssertEqual(tokens.first { $0.surface == "解い" }?.dictionaryForm, "解く")
     XCTAssertNil(tokens.first { $0.surface == "解い" }?.entry)
     XCTAssertEqual(tokens.first { $0.surface == "話し" }?.entry?.headword, "話す")

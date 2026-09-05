@@ -316,6 +316,7 @@ private actor JapaneseTextAnalyzer {
     case "動詞": normalized.contains("verb")
     case "形容詞", "形状詞": normalized.contains("adjective")
     case "名詞", "代名詞": normalized.contains("noun") || normalized == "pronoun"
+    case "感動詞": normalized == "interjection"
     case "接頭辞": normalized.contains("prefix")
     case "接尾辞": normalized.contains("suffix")
     default: true
@@ -333,7 +334,7 @@ private actor JapaneseTextAnalyzer {
   }
 
   fileprivate static func isLinkablePartOfSpeech(_ value: String) -> Bool {
-    ["名詞", "動詞", "形容詞", "形状詞", "代名詞", "接頭辞", "接尾辞"].contains(value)
+    ["名詞", "動詞", "形容詞", "形状詞", "代名詞", "接頭辞", "接尾辞", "感動詞"].contains(value)
   }
 
   private func entries(for surface: String) async -> [DictionaryEntry] {
