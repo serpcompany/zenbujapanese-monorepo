@@ -1,9 +1,0 @@
-/* Zenbu-specific behavior that is not part of the shadcn-generated theme. */
-
-[data-romaji='false'] .reading-romaji {
-  display: none;
-}
-
-[data-furigana='false'] rt {
-  display: none;
-}

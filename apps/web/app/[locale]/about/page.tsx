@@ -18,7 +18,7 @@ export default function AboutPage() {
           },
         ]}
       />
-      <a className="text-sm text-primary underline-offset-4 hover:underline" href="/data-notices.txt">
+      <a className="preview-link" href="/data-notices.txt">
         Read sample data notices
       </a>
     </ScaffoldPage>

@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '../globals.css';
-import '../typeset.css';
-import '../zenbu.css';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getTranslations, getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -41,7 +39,7 @@ export default async function RootLayout({
     <html lang={locale} className={inter.variable}>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <div className="mx-auto flex w-full max-w-5xl justify-end px-6 pt-5">
+          <div className="edition-control">
             <LanguageSelector label={t('language')} />
           </div>
           {children}

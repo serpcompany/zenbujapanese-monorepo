@@ -54,7 +54,7 @@ export async function ProductPage({
       title={titles[surface]}
       description="Product information and related feature and pricing surfaces."
     >
-      <nav className="flex flex-wrap gap-6 text-sm font-medium text-primary">
+      <div className="product-links">
         <PreviewLink href={`/products/${product}`}>{t('overview')}</PreviewLink>
         <PreviewLink href={`/products/${product}/features`}>
           {t('features')}
@@ -62,7 +62,7 @@ export async function ProductPage({
         <PreviewLink href={`/products/${product}/pricing`}>
           {t('pricing')}
         </PreviewLink>
-      </nav>
+      </div>
       <ContentSections items={content[surface]} />
     </ScaffoldPage>
   );

@@ -29,11 +29,10 @@ test('reading aids toggle independently and persist through entry navigation', a
   await expect(page.getByText('taberu', { exact: true })).toBeVisible();
   await expect(page.locator('rt')).toBeHidden();
   await expect(
-    page.getByText('Pitch 2', { exact: true }),
-  ).toHaveAttribute(
-    'aria-label',
-    'Pitch accent for たべる, downstep 2, 3 mora',
-  );
+    page.getByRole('img', {
+      name: 'Pitch accent for たべる, downstep 2, 3 mora',
+    }),
+  ).toBeVisible();
 });
 
 test('homographs keep exact identities and absent frequency remains absent', async ({

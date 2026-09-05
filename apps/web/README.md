@@ -56,27 +56,26 @@ database/schema choice is implied.
 Scaffolded `apps/web` with `create-next-app`, then initialized the existing project:
 
 ```sh
-pnpm dlx shadcn@latest init --preset bIkeymG --yes --pointer --force --reinstall
+pnpm dlx shadcn@latest init --preset b1PzeK --yes --pointer
 # Only after components.json existed:
 pnpm dlx skills add shadcn/ui --skill shadcn --agent codex --yes
 pnpm exec shadcn info --json
 pnpm exec shadcn preset resolve --json
 ```
 
-The current owner-selected generator preset is `bIkeymG`: Vega / Neutral /
-neutral-black primary / Inter, Base UI, Lucide and default radius.
-`components.json` records `base-vega`, RSC, local aliases, Tailwind v4
-`app/globals.css` and CSS variables. The generated global CSS retains the exact
-light/dark semantic tokens. Only components
+The original foundation resolver reported `b1PzeK`, no fallbacks: Nova / Neutral / Blue / Inter,
+Base UI, Lucide and default radius. `components.json` records `base-nova`, RSC,
+local aliases, Tailwind v4 `app/globals.css` and CSS variables. Global CSS retains
+the official light/dark semantic tokens. The separate `--brand: #BC002D` and
+native `--pitch-downstep` token leave blue interactions intact. Only components
 consumed here (and their official dependencies) were installed. The official
 agent skill and its source lock are local to this web package.
 
-`app/globals.css` is generator-owned. App layout uses Tailwind utilities in
-reusable components. `app/typeset.css` is the unmodified official shadcn Typeset
-stylesheet. `app/zenbu.css` contains the small Zenbu-specific reading-toggle
-behavior. Inter is loaded by the locale layout. The current pitch presentation
-uses a standard shadcn Badge with the verified numeric downstep; a richer renderer
-is deferred until a proven implementation is selected.
+After the required move to `app/[locale]/layout.tsx`, shadcn 4.21.0's preset
+scanner no longer finds the nested Inter declaration and reports a font fallback.
+The actual `Inter` import, font variable, Nova/Neutral/Blue tokens and brand token
+are unchanged; the browser still renders the same Inter font. Do not apply the
+scanner's inferred Geist fallback over the approved theme.
 
 References: [existing Next project](https://ui.shadcn.com/docs/installation/next),
 [theming](https://ui.shadcn.com/docs/theming),

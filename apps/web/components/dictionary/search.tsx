@@ -15,8 +15,8 @@ export async function DictionarySearch({ query = '' }: { query?: string }) {
   const locale = await getLocale();
   const t = await getTranslations('Dictionary');
   return (
-    <section className="px-6 py-12 text-center md:py-16">
-      <h1 className="mb-8 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">Zenbu Dictionary</h1>
+    <section className="dictionary-hero">
+      <h1>Zenbu Dictionary</h1>
       <div className="mx-auto max-w-[620px]">
         <Form
           action={getPathname({ locale, href: '/dictionary' })}
@@ -50,7 +50,7 @@ export async function DictionarySearch({ query = '' }: { query?: string }) {
         </Form>
         <ReadingToggles />
         {locale === 'ja' ? (
-          <p className="mt-5 text-sm leading-6 text-muted-foreground">{t('glossNotice')}</p>
+          <p className="sample-disclosure mt-5">{t('glossNotice')}</p>
         ) : null}
       </div>
     </section>

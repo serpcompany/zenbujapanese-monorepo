@@ -10,9 +10,9 @@ export default async function LessonPage({
       title="First words"
       description="A structured lesson outline with a learning objective and practice, distinct from a blog article."
     >
-      <article className="typeset max-w-3xl">
+      <article>
         <h2>Lesson outline</h2>
-        <ol>
+        <ol className="outline-list">
           <li>
             <h3>Learning objective</h3>
             <p>
