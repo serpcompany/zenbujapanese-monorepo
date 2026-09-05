@@ -6,7 +6,11 @@ import SwiftUI
 struct PrototypeIssue293App: App {
   var body: some Scene {
     WindowGroup {
-      PrototypeRootView(variant: .fromProcessArguments)
+      if ProcessInfo.processInfo.arguments.contains("-DefaultContrastControl") {
+        DefaultContrastControlView()
+      } else {
+        PrototypeRootView(variant: .fromProcessArguments)
+      }
     }
   }
 }
