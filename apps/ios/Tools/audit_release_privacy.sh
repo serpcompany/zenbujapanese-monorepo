@@ -4,6 +4,8 @@ set -euo pipefail
 export PYTHONDONTWRITEBYTECODE=1
 
 tool_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=apps/ios/Tools/release_signing_metadata.sh
+source "${tool_dir}/release_signing_metadata.sh"
 ios_dir="$(cd "${tool_dir}/.." && pwd)"
 manifest="${ios_dir}/App/PrivacyInfo.xcprivacy"
 project="${ZENBU_XCODE_PROJECT:-${ios_dir}/ZenbuJapanese.xcodeproj/project.pbxproj}"
@@ -454,6 +456,14 @@ find "$app_path" -type f ! -name '*.sqlite3' \
   ! -path "${app_path}/_CodeSignature/*" -print0 >"$url_scan_files" \
   || fail "failed to enumerate packaged files for URL inspection"
 while IFS= read -r -d '' packaged_url_file; do
+  signing_metadata_status=0
+  release_is_validated_signing_metadata "$mode" "$packaged_url_file" \
+    "${scratch_dir}/nested-signature-verification" || signing_metadata_status=$?
+  case "$signing_metadata_status" in
+    0) continue ;;
+    1) ;;
+    *) fail "nested resource bundle signing metadata failed signature verification" ;;
+  esac
   scan_packaged_url_file "$packaged_url_file"
 done <"$url_scan_files"
 scan_packaged_url_file "$url_scan_executable"

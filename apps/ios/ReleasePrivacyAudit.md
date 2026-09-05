@@ -56,6 +56,16 @@ For a signed candidate, URL inventory strips `LC_CODE_SIGNATURE` from a scratch 
 
 ## Final candidate evidence
 
+Signed resource bundles may store their signature outside a Mach-O executable.
+The signed-candidate URL scan excludes only `CodeDirectory`, `CodeSignature`,
+`CodeRequirements`, and `CodeResources` immediately under a `.bundle/_CodeSignature`
+directory, after strict signature verification of that containing bundle.
+These are Apple's canonical signing-component filenames in
+[`codedirectory.h`](https://github.com/apple-oss-distributions/Security/blob/main/OSX/libsecurity_codesigning/lib/codedirectory.h).
+Unknown filenames remain scanned; invalid containing signatures fail closed.
+Unsigned preflight does not apply this nested exclusion. Certificate hosts remain
+absent from the product URL allowlist, so ordinary resources containing them fail.
+
 The Gate 3 owner must attach these results to issue #143 for the exact candidate commit and archive:
 
 - Source audit output and dependency inventory.

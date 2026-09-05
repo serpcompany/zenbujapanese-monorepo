@@ -15,6 +15,51 @@ fail() {
   exit 1
 }
 
+test_nested_signing_metadata() {
+  [[ -n "${ZENBU_SIGNED_ARCHIVE:-}" ]] || fail "signing-metadata test requires ZENBU_SIGNED_ARCHIVE"
+  # shellcheck source=apps/ios/Tools/release_signing_metadata.sh
+  source "${test_dir}/../release_signing_metadata.sh"
+  local signed_bundle="${ZENBU_SIGNED_ARCHIVE}/Products/Applications/Zenbu Japanese.app/ZIPFoundation_ZIPFoundation.bundle"
+  local fixture_bundle="${scratch_dir}/Valid.bundle"
+  cp -R "$signed_bundle" "$fixture_bundle"
+  codesign --verify --strict "$fixture_bundle" >"${scratch_dir}/fixture-signature.log" 2>&1 \
+    || fail "signed resource fixture is not valid"
+  local signature_file="${fixture_bundle}/_CodeSignature/CodeSignature"
+  release_is_validated_signing_metadata signed-candidate "$signature_file" "${scratch_dir}/verify.log" \
+    || fail "valid nested signature metadata remains in the product URL scan"
+  if release_is_validated_signing_metadata unsigned-preflight "$signature_file" "${scratch_dir}/verify.log"; then
+    fail "unsigned preflight unexpectedly excluded nested signature bytes"
+  fi
+  local ordinary_file="${scratch_dir}/ordinary-resource.txt"
+  printf '%s\n' 'https://certs.apple.com/example' >"$ordinary_file"
+  if release_is_validated_signing_metadata signed-candidate "$ordinary_file" "${scratch_dir}/verify.log"; then
+    fail "ordinary Apple-host product URL was excluded"
+  fi
+  local allowed_hosts
+  allowed_hosts="$(sed -n "s/^allowed_url_hosts='\(.*\)'$/\1/p" "$audit")"
+  [[ -n "$allowed_hosts" ]] || fail "could not read the real product-host policy"
+  printf '%s\n' certs.apple.com | rg -v "$allowed_hosts" >/dev/null \
+    || fail "certificate host was globally allowed as product traffic"
+  local unknown_file="${fixture_bundle}/_CodeSignature/ordinary-resource.txt"
+  printf '%s\n' 'https://certs.apple.com/example' >"$unknown_file"
+  if release_is_validated_signing_metadata signed-candidate "$unknown_file" "${scratch_dir}/verify.log"; then
+    fail "unknown file inside a signature directory was excluded"
+  fi
+  local fake_file="${scratch_dir}/Fake.bundle/_CodeSignature/CodeSignature"
+  mkdir -p "$(dirname "$fake_file")"
+  printf '%s\n' 'https://certs.apple.com/example' >"$fake_file"
+  local fake_status=0
+  release_is_validated_signing_metadata signed-candidate "$fake_file" "${scratch_dir}/verify.log" \
+    || fake_status=$?
+  [[ "$fake_status" == 2 ]] || fail "fake unsigned signature directory did not fail closed"
+  echo "PASS: validated nested signatures only; unsigned, fake, and ordinary resources stay blocking"
+}
+
+if [[ "${1:-}" == signing-metadata ]]; then
+  test_nested_signing_metadata
+  exit 0
+fi
+
 [[ -f "$source_contract" ]] || fail "reviewed source contract fixture is missing"
 
 "$audit" source >"${scratch_dir}/source.log"
@@ -265,6 +310,7 @@ if [[ -n "${ZENBU_UNSIGNED_ARCHIVE:-}" ]]; then
 fi
 
 if [[ -n "${ZENBU_SIGNED_ARCHIVE:-}" ]]; then
+  test_nested_signing_metadata
   "$audit" signed-candidate "$ZENBU_SIGNED_ARCHIVE" >"${scratch_dir}/signed-candidate.log"
   rg -q 'frozen signed-candidate privacy audit complete' "${scratch_dir}/signed-candidate.log" \
     || fail "signed candidate did not complete the frozen privacy audit"
