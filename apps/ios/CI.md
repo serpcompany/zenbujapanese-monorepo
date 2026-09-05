@@ -381,6 +381,15 @@ notes, Encounter Media, fixture providers, permissions) inside their disposable
 Simulator. Accessibility text size and appearance are launch arguments, not
 shared host settings. No runner deletes global Simulator or process state.
 
+DEBUG Image Text fixtures are prepared in `Documents/ImageTextFixtures` and
+verified through native Files at `On My iPhone / Zenbu Japanese / ImageTextFixtures`.
+Only the app's Debug configuration enables `UIFileSharingEnabled` and
+`LSSupportsOpeningDocumentsInPlace`; this exposes all Debug Documents, not just
+the fixture folder. Release does not enable either key. Encounter Media remains
+in Application Support. The real Files importer, multi-selection, OCR, empty-image
+recovery and transient-session assertions still run; preparation does not export
+through Apple's separate document-export workflow or write its private provider storage.
+
 The #244–#252 issue evidence used the same Xcode project/scheme and explicit
 `-only-testing` selectors later normalized into this manifest. Exact retained
 partition outcomes were: #244 10/10 normal UI (295.900s), 5/5 repair UI

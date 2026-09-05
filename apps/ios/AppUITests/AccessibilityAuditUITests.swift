@@ -3166,16 +3166,8 @@ final class AccessibilityAuditUITests: XCTestCase {
   private func stageImageTextFixture(appearance: XCUIDevice.Appearance) throws {
     let stager = launchApp(
       appearance: appearance,
-      additionalArguments: [
-        "-ExportImageTextFixtures", "fixture-clear-horizontal.png",
-      ])
-    let save = stager.buttons["Save"]
-    XCTAssertTrue(save.waitForExistence(timeout: 20))
-    save.tap()
-    if stager.buttons["Replace"].waitForExistence(timeout: 1) {
-      stager.buttons["Replace"].tap()
-    }
-    XCTAssertTrue(stager.textFields["search.field"].waitForExistence(timeout: 5))
+      additionalArguments: ["-PrepareImageTextFixtures"])
+    ImageTextFilesUITestSupport.verifyPreparedFixtures(["fixture-clear-horizontal.png"], in: stager)
     stager.terminate()
   }
 }

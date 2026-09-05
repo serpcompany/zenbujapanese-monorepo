@@ -358,7 +358,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.buttons.matching(identifier: "image-source.files").firstMatch.tap()
 
     let cancel = app.navigationBars.buttons["Cancel"]
-    XCTAssertTrue(cancel.waitForExistence(timeout: 10))
+    XCTAssertTrue(ImageTextFilesUITestSupport.waitForPicker(in: app))
     cancel.tap()
 
     XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
@@ -368,28 +368,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func openLocalImageFixtureDirectory(in app: XCUIApplication) {
-    // The cold Files service handoff took about nine seconds in hosted evidence.
-    // Wait for its native navigation chrome before starting directory navigation.
-    let pickerCancel = app.navigationBars.buttons["Cancel"]
     XCTAssertTrue(
-      pickerCancel.waitForExistence(timeout: 10),
-      "The native Files picker must finish presentation before directory navigation."
+      ImageTextFilesUITestSupport.openFixtureDirectory(in: app),
+      "Native Files must open On My iPhone / Zenbu Japanese / ImageTextFixtures"
     )
-    // Newly exported files need not appear in Files' Recents. Navigate the
-    // same public local directory where stageImageTextFixtures saves them.
-    let browse = app.tabBars.buttons["Browse"]
-    XCTAssertTrue(browse.waitForExistence(timeout: 5))
-    browse.tap()
-
-    let localDirectoryTitle = app.navigationBars.staticTexts["On My iPhone"]
-    if !localDirectoryTitle.exists {
-      let localDirectory = app.descendants(matching: .any).matching(
-        NSPredicate(format: "label == %@", "On My iPhone")
-      ).firstMatch
-      XCTAssertTrue(localDirectory.waitForExistence(timeout: 5))
-      localDirectory.tap()
-    }
-    XCTAssertTrue(localDirectoryTitle.waitForExistence(timeout: 5))
   }
 
   @MainActor
@@ -1747,6 +1729,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     scrollElementIntoSafeTapRegion(relatedQuiet, in: kanjiDetail, app: app)
     recordScreenshot(named: "kanji-shizu-elements-and-related-words", app: app)
 
+    let relatedQuietIdentifier = relatedQuiet.identifier
     relatedQuiet.tap()
     let relatedWordDetail = app.collectionViews["word-detail.screen"]
     XCTAssertTrue(relatedWordDetail.waitForExistence(timeout: 2))
@@ -1763,13 +1746,25 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(kanjiDetail.waitForExistence(timeout: 2))
     let restoredRelatedWord = XCTNSPredicateExpectation(
       predicate: NSPredicate { object, _ in
-        guard let row = object as? XCUIElement, row.exists, kanjiDetail.exists else {
+        guard let row = object as? XCUIElement else { return false }
+        let appSnapshot: XCUIElementSnapshot
+        do {
+          appSnapshot = try app.snapshot()
+        } catch {
+          XCTFail("Could not capture restored kanji geometry: \(error)")
           return false
         }
-        let rowFrame = row.frame
-        let viewportFrame = kanjiDetail.frame
-        // A restored row can be visible while accessibility still reports an
-        // infinite, empty frame. Wait for usable geometry before asking for a hit point.
+        guard
+          let viewport = self.snapshot(
+            withIdentifier: "kanji-detail.screen", in: appSnapshot
+          ), viewport.elementType == .collectionView,
+          let restoredRow = self.snapshot(withIdentifier: relatedQuietIdentifier, in: viewport),
+          restoredRow.elementType == .button
+        else { return false }
+        // A restored screen can briefly have an empty accessibility hierarchy.
+        // Read presence and geometry from one snapshot before asking for a hit point.
+        let rowFrame = restoredRow.frame
+        let viewportFrame = viewport.frame
         for frame in [rowFrame, viewportFrame] {
           guard frame.origin.x.isFinite, frame.origin.y.isFinite,
             frame.width.isFinite, frame.height.isFinite, !frame.isEmpty
@@ -1778,7 +1773,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
         guard viewportFrame.contains(rowFrame) else { return false }
         return row.isHittable
       },
-      object: relatedQuiet
+      object: app.buttons[relatedQuietIdentifier]
     )
     XCTAssertEqual(XCTWaiter.wait(for: [restoredRelatedWord], timeout: 2), .completed)
     recordScreenshot(named: "kanji-related-word-back-restores-position", app: app)
@@ -5696,31 +5691,32 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     file: StaticString = #filePath,
     line: UInt = #line
   ) -> StableSearchOutcome? {
-    let bestMatches = app.staticTexts["Best Matches"]
-    let noMatches = app.staticTexts["No Dictionary Matches"]
-    let unavailable = app.staticTexts["Dictionary unavailable"]
+    let terminalState = app.staticTexts.matching(
+      NSPredicate(
+        format: "label IN %@",
+        ["Best Matches", "No Dictionary Matches", "Dictionary unavailable"]
+      )
+    ).firstMatch
     let startedAt = Date()
-    let terminalState = XCTNSPredicateExpectation(
-      predicate: NSPredicate { _, _ in
-        bestMatches.exists || noMatches.exists || unavailable.exists
-      },
-      object: app
-    )
-    let result = XCTWaiter.wait(for: [terminalState], timeout: timeout)
+    // Native waiting resolves all terminal labels in one query instead of
+    // serial live queries that can consume the enclosing predicate's deadline.
+    let reachedTerminalState = terminalState.waitForExistence(timeout: timeout)
     let latency = Date().timeIntervalSince(startedAt)
     XCTContext.runActivity(
       named: String(
-        format: "Search reached a stable learner-visible state in %.3f seconds", latency)
+        format: "Search terminal-state wait %@ in %.3f seconds",
+        reachedTerminalState ? "succeeded" : "timed out", latency)
     ) { activity in
       activity.add(
         XCTAttachment(
           string: String(
-            format: "readiness_seconds=%.3f timeout_seconds=%.3f", latency, timeout
+            format: "wait_seconds=%.3f timeout_seconds=%.3f reached_terminal_state=%@",
+            latency, timeout, reachedTerminalState ? "true" : "false"
           )
         )
       )
     }
-    guard result == .completed else {
+    guard reachedTerminalState else {
       XCTFail(
         "Search did not reach results, no matches, or unavailable within \(timeout) seconds",
         file: file,
@@ -5728,9 +5724,15 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       )
       return nil
     }
-    if bestMatches.exists { return .results }
-    if noMatches.exists { return .noMatches }
-    return .unavailable
+    let terminalLabel = terminalState.label
+    switch terminalLabel {
+    case "Best Matches": return .results
+    case "No Dictionary Matches": return .noMatches
+    case "Dictionary unavailable": return .unavailable
+    default:
+      XCTFail("Unexpected Search terminal label: \(terminalLabel)", file: file, line: line)
+      return nil
+    }
   }
 
   @MainActor
@@ -6034,6 +6036,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTFail(
       "Could not reach \(element.identifier) after \(gestureCount) \(direction) gestures"
     )
+  }
+
+  @MainActor
+  private func snapshot(
+    withIdentifier identifier: String,
+    in root: XCUIElementSnapshot
+  ) -> XCUIElementSnapshot? {
+    if root.identifier == identifier { return root }
+    for child in root.children {
+      if let match = snapshot(withIdentifier: identifier, in: child) { return match }
+    }
+    return nil
   }
 
   @MainActor
@@ -6530,19 +6544,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func stageImageTextFixtures(_ names: [String]) {
-    let stager = launchApp(additionalArguments: [
-      "-ExportImageTextFixtures",
-      names.joined(separator: ","),
-    ])
-    let save = stager.buttons["Save"]
-    XCTAssertTrue(save.waitForExistence(timeout: 15))
-    XCTAssertTrue(stager.navigationBars.staticTexts["On My iPhone"].exists)
-    save.tap()
-    if stager.buttons["Replace"].waitForExistence(timeout: 1) {
-      stager.buttons["Replace"].tap()
-    }
-    XCTAssertTrue(save.waitForNonExistence(timeout: 5))
-    XCTAssertTrue(stager.textFields["search.field"].isHittable)
+    let stager = launchApp(additionalArguments: ["-PrepareImageTextFixtures"])
+    ImageTextFilesUITestSupport.verifyPreparedFixtures(names, in: stager)
     stager.terminate()
   }
 

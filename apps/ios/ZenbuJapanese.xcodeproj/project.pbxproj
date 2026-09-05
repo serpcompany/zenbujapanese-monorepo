@@ -26,6 +26,7 @@
 		ACCE55000000000000000004 /* AccessibilityAuditUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCE55000000000000000003 /* AccessibilityAuditUITests.swift */; };
 		193000000000000000000002 /* ConjugationUITestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193000000000000000000001 /* ConjugationUITestSupport.swift */; };
 		244000000000000000000002 /* WordDetailUITestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 244000000000000000000001 /* WordDetailUITestSupport.swift */; };
+		173000000000000000000002 /* ImageTextFilesUITestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173000000000000000000001 /* ImageTextFilesUITestSupport.swift */; };
 		48A12CB415EF48F78F16871A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */; };
 		A1C04F09D3A74D8B82D3C6E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */; };
 		E1FD0205CD84132DCB314678 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
@@ -72,6 +73,7 @@
 		ACCE55000000000000000003 /* AccessibilityAuditUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityAuditUITests.swift; sourceTree = "<group>"; };
 		193000000000000000000001 /* ConjugationUITestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConjugationUITestSupport.swift; sourceTree = "<group>"; };
 		244000000000000000000001 /* WordDetailUITestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDetailUITestSupport.swift; sourceTree = "<group>"; };
+		173000000000000000000001 /* ImageTextFilesUITestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageTextFilesUITestSupport.swift; sourceTree = "<group>"; };
 		A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenbuJapaneseApp.swift; sourceTree = "<group>"; };
 		B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DF09FB39B581100E5F9B6C10 /* ZenbuJapaneseUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ZenbuJapaneseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -132,6 +134,7 @@
 				ACCE55000000000000000003 /* AccessibilityAuditUITests.swift */,
 				193000000000000000000001 /* ConjugationUITestSupport.swift */,
 				244000000000000000000001 /* WordDetailUITestSupport.swift */,
+				173000000000000000000001 /* ImageTextFilesUITestSupport.swift */,
 			);
 			path = AppUITests;
 			sourceTree = "<group>";
@@ -400,6 +403,7 @@
 				ACCE55000000000000000004 /* AccessibilityAuditUITests.swift in Sources */,
 				193000000000000000000002 /* ConjugationUITestSupport.swift in Sources */,
 				244000000000000000000002 /* WordDetailUITestSupport.swift in Sources */,
+				173000000000000000000002 /* ImageTextFilesUITestSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -583,6 +587,8 @@
 		90793D271909E1FB3A90A7FC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				INFOPLIST_KEY_UIFileSharingEnabled = YES;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 16;

@@ -16,10 +16,9 @@
       guard
         arguments.contains("-PrepareImageTextFixtures")
           || arguments.contains("-StartImageTextFixtures")
-          || arguments.contains("-ExportImageTextFixtures")
       else { return nil }
-      let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        .appending(path: "Image Text Fixtures", directoryHint: .isDirectory)
+      let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        .appending(path: "ImageTextFixtures", directoryHint: .isDirectory)
       let sources = fixtureNames.compactMap { name in
         Bundle.main.url(
           forResource: String(name.dropLast(4)),
@@ -41,7 +40,7 @@
       for source in sources {
         let destination = directory.appending(path: source.lastPathComponent)
         let bytes = try Data(contentsOf: source)
-        // SwiftUI can initialize the root again while Files is exporting these
+        // SwiftUI can initialize the root again while Files is reading these
         // URLs. Preserve unchanged files so active references keep their identity.
         if FileManager.default.fileExists(atPath: destination.path),
           try Data(contentsOf: destination) == bytes
@@ -64,16 +63,6 @@
         return ImageTextAsset(name: String(name), data: data)
       }
       return assets.isEmpty ? nil : ImageTextSession(assets: assets)
-    }
-
-    static func exportURLsFromProcessArguments(in directory: URL?) -> [URL] {
-      let arguments = ProcessInfo.processInfo.arguments
-      guard let marker = arguments.firstIndex(of: "-ExportImageTextFixtures"),
-        arguments.indices.contains(marker + 1), let directory
-      else { return [] }
-      return arguments[marker + 1].split(separator: ",").map {
-        directory.appending(path: String($0))
-      }
     }
 
   }

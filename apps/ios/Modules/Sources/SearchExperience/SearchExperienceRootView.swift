@@ -9,7 +9,6 @@ public struct SearchExperienceRootView: View {
   @State private var youPath: [YouRoute] = []
   @State private var query = ""
   #if DEBUG
-    @State private var exportsImageFixtures = false
     @State private var preparesJapaneseAnalysis = ProcessInfo.processInfo.arguments.contains(
       "-EnsureJapaneseAnalysis")
     private let independentlyHostsYou = ProcessInfo.processInfo.arguments.contains(
@@ -38,9 +37,6 @@ public struct SearchExperienceRootView: View {
   private let imageTextRecognitionClient: ImageTextRecognitionClient
   private let naturalTranslationClient: NaturalTranslationClient
   private let imageTextClipboardClient: ImageTextClipboardClient
-  #if DEBUG
-    private let imageFixtureExportURLs: [URL]
-  #endif
 
   public init() {
     #if DEBUG
@@ -74,9 +70,6 @@ public struct SearchExperienceRootView: View {
         ImageTextRecognitionFixture.clientFromProcessArguments(live: .live) ?? .live
       naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live
       imageTextClipboardClient = ImageTextClipboardClient.clientFromProcessArguments() ?? .live
-      imageFixtureExportURLs = ImageTextTestFixtures.exportURLsFromProcessArguments(
-        in: imageImportInitialDirectory)
-      _exportsImageFixtures = State(initialValue: !imageFixtureExportURLs.isEmpty)
       if let session = ImageTextTestFixtures.sessionFromProcessArguments(
         in: imageImportInitialDirectory)
       {
@@ -119,14 +112,6 @@ public struct SearchExperienceRootView: View {
         guard preparesJapaneseAnalysis else { return }
         await LanguageTechnologyPackStore.shared.ensureInstalledForTesting()
         preparesJapaneseAnalysis = false
-      }
-    #endif
-    #if DEBUG
-      .sheet(isPresented: $exportsImageFixtures) {
-        ImageFileExporter(urls: imageFixtureExportURLs) {
-          exportsImageFixtures = false
-        }
-        .ignoresSafeArea()
       }
     #endif
     .overlay(alignment: .topLeading) {

@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import unittest
 
 
@@ -16,6 +17,24 @@ def trigger_section(workflow: str) -> str:
 
 
 class IOSWorkflowPolicyTests(unittest.TestCase):
+    def test_files_fixture_documents_are_exposed_only_in_debug(self):
+        project = (REPO_ROOT / "apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj").read_text()
+        configurations = {}
+        for match in re.finditer(
+            r"[A-F0-9]+ /\* (Debug|Release) \*/ = \{\s*"
+            r"isa = XCBuildConfiguration;\s*buildSettings = \{(.*?)\n\s*\};",
+            project,
+            re.DOTALL,
+        ):
+            name, settings = match.groups()
+            if "PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary;" in settings:
+                configurations[name] = settings
+        self.assertEqual(set(configurations), {"Debug", "Release"})
+        for key in ("UIFileSharingEnabled", "LSSupportsOpeningDocumentsInPlace"):
+            self.assertIn(f"INFOPLIST_KEY_{key} = YES;", configurations["Debug"])
+            self.assertNotIn(f"INFOPLIST_KEY_{key}", configurations["Release"])
+        self.assertNotIn("INFOPLIST_KEY_UISupportsDocumentBrowser", project)
+
     def test_manual_premerge_can_select_only_registered_gates(self):
         workflow = workflow_text("ios-premerge.yml")
         triggers = trigger_section(workflow)
