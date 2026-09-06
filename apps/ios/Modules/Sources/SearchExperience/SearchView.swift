@@ -37,98 +37,7 @@ struct SearchView: View {
   var body: some View {
     let taskID = searchTaskID
     let taskQuery = SearchQuery(taskID.query)
-    VStack(spacing: 0) {
-      switch resolvedPresentationState {
-      case .idle:
-        RecentSearchHistoryView(
-          recentSearchStore: recentSearchStore,
-          refreshID: recentSearchRefreshID,
-          requestClearAll: { isConfirmingClearAll = true },
-          selectSearch: selectRecentSearch
-        )
-
-      case .loading:
-        ProgressView("Searching")
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .accessibilityIdentifier("search.loading")
-
-      case .results:
-        SearchResultsView(
-          query: searchQuery,
-          results: results,
-          exampleCount: exampleCount,
-          showsAdditionalMatches: sparseRadicalQuery != searchQuery,
-          frequencyCapability: frequencyCapability,
-          frequencyRefreshID: frequencyRefreshID,
-          selectRefinement: selectRefinement
-        )
-        .id(
-          SearchResultsIdentity(
-            query: searchQuery,
-            best: results.best.map(\.id),
-            additional: results.additional.map(\.id),
-            refinement: results.readingRefinement?.query
-          )
-        )
-
-      case .failure:
-        ScrollView {
-          ContentUnavailableView {
-            Label("Dictionary unavailable", systemImage: "exclamationmark.triangle")
-              .foregroundStyle(.red)
-          } description: {
-            Text("Zenbu couldn't open its offline Language Reference Data.")
-          } actions: {
-            Button("Retry") {
-              retryID += 1
-            }
-            .buttonStyle(.borderedProminent)
-          }
-          .padding(.vertical, 24)
-        }
-        .accessibilityIdentifier("search.failure")
-
-      case .noResults:
-        ContentUnavailableView {
-          Label("No Dictionary Matches", systemImage: "magnifyingglass")
-        } description: {
-          Text("Try another Japanese or English Search query.")
-        }
-        .accessibilityIdentifier("search.no-results")
-
-      case .specializedInput:
-        Color.clear
-      }
-
-      switch inputMode {
-      case .keyboard where isSearchFocused:
-        SearchInputModePicker(
-          selectedMode: .keyboard,
-          selectMode: selectInputMode
-        )
-      case .handwriting:
-        HandwritingInputView(
-          query: $query,
-          recognitionClient: handwritingRecognitionClient,
-          selectMode: selectInputMode,
-          submit: submitComposedQuery
-        )
-      case .radicals:
-        EmptyView()
-      default:
-        EmptyView()
-      }
-    }
-    .safeAreaInset(edge: .bottom, spacing: 0) {
-      if inputMode == .radicals {
-        RadicalInputView(
-          query: $query,
-          lookupClient: radicalLookupClient,
-          selectMode: selectInputMode,
-          submit: submitRadicalQuery
-        )
-      }
-    }
+    searchContent
     .navigationTitle("Search")
     .searchable(
       text: $query,
@@ -278,6 +187,101 @@ struct SearchView: View {
     .onDisappear {
       imageImportTask?.cancel()
       imageImportTask = nil
+    }
+  }
+
+  private var searchContent: some View {
+    VStack(spacing: 0) {
+      switch resolvedPresentationState {
+      case .idle:
+        RecentSearchHistoryView(
+          recentSearchStore: recentSearchStore,
+          refreshID: recentSearchRefreshID,
+          requestClearAll: { isConfirmingClearAll = true },
+          selectSearch: selectRecentSearch
+        )
+
+      case .loading:
+        ProgressView("Searching")
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .accessibilityIdentifier("search.loading")
+
+      case .results:
+        SearchResultsView(
+          query: searchQuery,
+          results: results,
+          exampleCount: exampleCount,
+          showsAdditionalMatches: sparseRadicalQuery != searchQuery,
+          frequencyCapability: frequencyCapability,
+          frequencyRefreshID: frequencyRefreshID,
+          selectRefinement: selectRefinement
+        )
+        .id(
+          SearchResultsIdentity(
+            query: searchQuery,
+            best: results.best.map(\.id),
+            additional: results.additional.map(\.id),
+            refinement: results.readingRefinement?.query
+          )
+        )
+
+      case .failure:
+        ScrollView {
+          ContentUnavailableView {
+            Label("Dictionary unavailable", systemImage: "exclamationmark.triangle")
+              .foregroundStyle(.red)
+          } description: {
+            Text("Zenbu couldn't open its offline Language Reference Data.")
+          } actions: {
+            Button("Retry") {
+              retryID += 1
+            }
+            .buttonStyle(.borderedProminent)
+          }
+          .padding(.vertical, 24)
+        }
+        .accessibilityIdentifier("search.failure")
+
+      case .noResults:
+        ContentUnavailableView {
+          Label("No Dictionary Matches", systemImage: "magnifyingglass")
+        } description: {
+          Text("Try another Japanese or English Search query.")
+        }
+        .accessibilityIdentifier("search.no-results")
+
+      case .specializedInput:
+        Color.clear
+      }
+
+      switch inputMode {
+      case .keyboard where isSearchFocused:
+        SearchInputModePicker(
+          selectedMode: .keyboard,
+          selectMode: selectInputMode
+        )
+      case .handwriting:
+        HandwritingInputView(
+          query: $query,
+          recognitionClient: handwritingRecognitionClient,
+          selectMode: selectInputMode,
+          submit: submitComposedQuery
+        )
+      case .radicals:
+        EmptyView()
+      default:
+        EmptyView()
+      }
+    }
+    .safeAreaInset(edge: .bottom, spacing: 0) {
+      if inputMode == .radicals {
+        RadicalInputView(
+          query: $query,
+          lookupClient: radicalLookupClient,
+          selectMode: selectInputMode,
+          submit: submitRadicalQuery
+        )
+      }
     }
   }
 
