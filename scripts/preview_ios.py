@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Disposable, local-only iOS issue preview. Requires Xcode and an iOS 26 runtime."""
+import fcntl
 import hashlib
 import json
 import pathlib
@@ -26,6 +27,12 @@ def main():
     source = pathlib.Path(__file__).resolve().parent.parent
     repo_key = hashlib.sha256(str(source).encode()).hexdigest()[:12]
     root = pathlib.Path.home() / "Library/Caches/ZenbuPreviews" / repo_key / "issue-313"
+    root.parent.mkdir(parents=True, exist_ok=True)
+    lock = (root.parent / "issue-313.lock").open("w")
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        raise RuntimeError("Another preview or cleanup is running; wait for it to finish.")
     manifest = root / "owner.json"
     checkout = root / "checkout"
     branch = "codex/issue-313-native-search"
@@ -65,11 +72,9 @@ def main():
     root.mkdir(parents=True, exist_ok=True)
     manifest.write_text(json.dumps(state, indent=2))
     if not checkout.exists():
-        run("git", "clone", "--no-hardlinks", "--no-checkout", str(source), str(checkout))
+        run("git", "clone", "--no-hardlinks", str(source), str(checkout))
     if run("git", "-C", str(checkout), "status", "--porcelain", capture=True):
-        # An initial --no-checkout clone has no HEAD worktree yet.
-        if (checkout / "apps").exists():
-            raise RuntimeError(f"Preview checkout has edits; refusing to overwrite: {checkout}")
+        raise RuntimeError(f"Preview checkout has edits; refusing to overwrite: {checkout}")
     # The local issue branch is the reviewed source; never switch the owner's checkout.
     commit = run("git", "-C", str(source), "rev-parse", "--verify", branch + "^{commit}", capture=True)
     run("git", "-C", str(checkout), "fetch", "origin", branch)

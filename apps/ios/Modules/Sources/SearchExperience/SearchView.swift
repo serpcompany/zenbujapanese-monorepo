@@ -38,149 +38,149 @@ struct SearchView: View {
     let taskID = searchTaskID
     let taskQuery = SearchQuery(taskID.query)
     searchContent
-    .navigationTitle("Search")
-    .searchable(
-      text: $query,
-      isPresented: $isSearchPresented,
-      placement: .navigationBarDrawer(displayMode: .always),
-      prompt: "Search Japanese or English"
-    )
-    .searchFocused($isSearchFocused)
-    .textInputAutocapitalization(.never)
-    .autocorrectionDisabled()
-    .onSubmit(of: .search) {
-      sparseRadicalQuery = nil
-      completeSubmission(SearchQuery(query))
-    }
-    .onChange(of: isSearchFocused) { _, focused in
-      if focused { inputMode = .keyboard }
-    }
-    .onChange(of: isSearchPresented) { _, presented in
-      if !presented { deactivateInput() }
-    }
-    .toolbar {
-      ToolbarItem(placement: .topBarTrailing) {
-        Button("Image Search", systemImage: "camera") { showsImageSources = true }
-          .accessibilityIdentifier("search.image-source")
+      .navigationTitle("Search")
+      .searchable(
+        text: $query,
+        isPresented: $isSearchPresented,
+        placement: .navigationBarDrawer(displayMode: .always),
+        prompt: "Search Japanese or English"
+      )
+      .searchFocused($isSearchFocused)
+      .textInputAutocapitalization(.never)
+      .autocorrectionDisabled()
+      .onSubmit(of: .search) {
+        sparseRadicalQuery = nil
+        completeSubmission(SearchQuery(query))
       }
-    }
-    .onChange(of: query) { _, _ in
-      settledSearchTaskID = nil
-      results = .empty
-      exampleCount = 0
-      presentationState = .idle
-    }
-    .task(id: taskID) {
-      guard !Task.isCancelled, searchTaskID == taskID, settledSearchTaskID != taskID else {
-        return
+      .onChange(of: isSearchFocused) { _, focused in
+        if focused { inputMode = .keyboard }
       }
-      presentationState = .idle
-      guard !taskQuery.isEmpty else {
+      .onChange(of: isSearchPresented) { _, presented in
+        if !presented { deactivateInput() }
+      }
+      .toolbar {
+        ToolbarItem(placement: .topBarTrailing) {
+          Button("Image Search", systemImage: "camera") { showsImageSources = true }
+            .accessibilityIdentifier("search.image-source")
+        }
+      }
+      .onChange(of: query) { _, _ in
+        settledSearchTaskID = nil
         results = .empty
         exampleCount = 0
-        return
+        presentationState = .idle
       }
-      presentationState = .loading
-      do {
-        try await Task.sleep(for: .milliseconds(100))
-        try Task.checkCancellation()
-        async let searchedResults = lookupClient.search(taskQuery)
-        async let searchedExampleCount = exampleSentenceClient.count(taskQuery)
-        let foundResults = try await searchedResults
-        try Task.checkCancellation()
-        let directExampleCount = (try? await searchedExampleCount) ?? 0
-        try Task.checkCancellation()
-        let foundExampleCount: Int
-        if foundResults.usesPrimaryEntryExamples,
-          let entry = foundResults.primaryEntry(for: taskQuery)
-        {
-          foundExampleCount = (try? await exampleSentenceClient.examples(entry).count) ?? 0
-        } else {
-          foundExampleCount = directExampleCount
-        }
-        try Task.checkCancellation()
-        guard searchTaskID == taskID, settledSearchTaskID != taskID else { return }
-        settledSearchTaskID = taskID
-        results = foundResults
-        exampleCount = foundExampleCount
-        if foundResults.isEmpty && foundExampleCount == 0 && !taskQuery.isSingleKanji {
-          presentationState = .noResults
-        } else {
-          presentationState = .results
-        }
-      } catch is CancellationError {
-        return
-      } catch {
+      .task(id: taskID) {
         guard !Task.isCancelled, searchTaskID == taskID, settledSearchTaskID != taskID else {
           return
         }
-        settledSearchTaskID = taskID
-        results = .empty
-        exampleCount = 0
-        presentationState = .failure
-      }
-    }
-    .confirmationDialog("Image Search", isPresented: $showsImageSources) {
-      Button("Take Photo") { presentCamera() }
-        .accessibilityIdentifier("image-source.camera")
-      Button("Photo Library") { presentPhotoLibrary() }
-        .accessibilityIdentifier("image-source.photo-library")
-      Button("Files") { showsFileImporter = true }
-        .accessibilityIdentifier("image-source.files")
-      Button("Cancel", role: .cancel) {}
-    }
-    .sheet(item: $presentedImageSource) { source in
-      switch source {
-      case .camera:
-        ImageCameraPicker { result in
-          presentedImageSource = nil
-          importCameraImage(result)
+        presentationState = .idle
+        guard !taskQuery.isEmpty else {
+          results = .empty
+          exampleCount = 0
+          return
         }
-        .ignoresSafeArea()
+        presentationState = .loading
+        do {
+          try await Task.sleep(for: .milliseconds(100))
+          try Task.checkCancellation()
+          async let searchedResults = lookupClient.search(taskQuery)
+          async let searchedExampleCount = exampleSentenceClient.count(taskQuery)
+          let foundResults = try await searchedResults
+          try Task.checkCancellation()
+          let directExampleCount = (try? await searchedExampleCount) ?? 0
+          try Task.checkCancellation()
+          let foundExampleCount: Int
+          if foundResults.usesPrimaryEntryExamples,
+            let entry = foundResults.primaryEntry(for: taskQuery)
+          {
+            foundExampleCount = (try? await exampleSentenceClient.examples(entry).count) ?? 0
+          } else {
+            foundExampleCount = directExampleCount
+          }
+          try Task.checkCancellation()
+          guard searchTaskID == taskID, settledSearchTaskID != taskID else { return }
+          settledSearchTaskID = taskID
+          results = foundResults
+          exampleCount = foundExampleCount
+          if foundResults.isEmpty && foundExampleCount == 0 && !taskQuery.isSingleKanji {
+            presentationState = .noResults
+          } else {
+            presentationState = .results
+          }
+        } catch is CancellationError {
+          return
+        } catch {
+          guard !Task.isCancelled, searchTaskID == taskID, settledSearchTaskID != taskID else {
+            return
+          }
+          settledSearchTaskID = taskID
+          results = .empty
+          exampleCount = 0
+          presentationState = .failure
+        }
       }
-    }
-    .photosPicker(
-      isPresented: $showsPhotoLibrary,
-      selection: $selectedPhotoItems,
-      maxSelectionCount: 1,
-      matching: .images
-    )
-    .onChange(of: selectedPhotoItems) { _, items in
-      importPhotoLibraryItems(items)
-    }
-    .fileImporter(
-      isPresented: $showsFileImporter,
-      allowedContentTypes: [.image],
-      allowsMultipleSelection: true,
-      onCompletion: importImages,
-      onCancellation: {}
-    )
-    .alert(
-      imageImportAlert?.title ?? "",
-      isPresented: $isShowingImageImportAlert,
-      presenting: imageImportAlert
-    ) { alert in
-      if alert.offersSettings {
-        Button("Open Settings", action: cameraAuthorizationClient.openSettings)
+      .confirmationDialog("Image Search", isPresented: $showsImageSources) {
+        Button("Take Photo") { presentCamera() }
+          .accessibilityIdentifier("image-source.camera")
+        Button("Photo Library") { presentPhotoLibrary() }
+          .accessibilityIdentifier("image-source.photo-library")
+        Button("Files") { showsFileImporter = true }
+          .accessibilityIdentifier("image-source.files")
         Button("Cancel", role: .cancel) {}
-      } else {
-        Button("OK") {}
       }
-    } message: { alert in
-      Text(alert.message)
-    }
-    .alert("Clear Recent Searches?", isPresented: $isConfirmingClearAll) {
-      Button("Cancel", role: .cancel) {}
-      Button("Clear All", role: .destructive) {
-        clearRecentSearches()
+      .sheet(item: $presentedImageSource) { source in
+        switch source {
+        case .camera:
+          ImageCameraPicker { result in
+            presentedImageSource = nil
+            importCameraImage(result)
+          }
+          .ignoresSafeArea()
+        }
       }
-    } message: {
-      Text("This removes every recent Search query from this device.")
-    }
-    .onDisappear {
-      imageImportTask?.cancel()
-      imageImportTask = nil
-    }
+      .photosPicker(
+        isPresented: $showsPhotoLibrary,
+        selection: $selectedPhotoItems,
+        maxSelectionCount: 1,
+        matching: .images
+      )
+      .onChange(of: selectedPhotoItems) { _, items in
+        importPhotoLibraryItems(items)
+      }
+      .fileImporter(
+        isPresented: $showsFileImporter,
+        allowedContentTypes: [.image],
+        allowsMultipleSelection: true,
+        onCompletion: importImages,
+        onCancellation: {}
+      )
+      .alert(
+        imageImportAlert?.title ?? "",
+        isPresented: $isShowingImageImportAlert,
+        presenting: imageImportAlert
+      ) { alert in
+        if alert.offersSettings {
+          Button("Open Settings", action: cameraAuthorizationClient.openSettings)
+          Button("Cancel", role: .cancel) {}
+        } else {
+          Button("OK") {}
+        }
+      } message: { alert in
+        Text(alert.message)
+      }
+      .alert("Clear Recent Searches?", isPresented: $isConfirmingClearAll) {
+        Button("Cancel", role: .cancel) {}
+        Button("Clear All", role: .destructive) {
+          clearRecentSearches()
+        }
+      } message: {
+        Text("This removes every recent Search query from this device.")
+      }
+      .onDisappear {
+        imageImportTask?.cancel()
+        imageImportTask = nil
+      }
   }
 
   private var searchContent: some View {
@@ -244,7 +244,16 @@ struct SearchView: View {
         .accessibilityIdentifier("search.no-results")
 
       case .specializedInput:
-        Color.clear
+        if inputMode == .radicals {
+          RadicalInputView(
+            query: $query,
+            lookupClient: radicalLookupClient,
+            selectMode: selectInputMode,
+            submit: submitRadicalQuery
+          )
+        } else {
+          Color.clear
+        }
       }
 
       switch inputMode {
@@ -266,16 +275,6 @@ struct SearchView: View {
         EmptyView()
       }
     }
-    .safeAreaInset(edge: .bottom, spacing: 0) {
-      if inputMode == .radicals {
-        RadicalInputView(
-          query: $query,
-          lookupClient: radicalLookupClient,
-          selectMode: selectInputMode,
-          submit: submitRadicalQuery
-        )
-      }
-    }
   }
 
   private var searchQuery: SearchQuery {
@@ -291,6 +290,7 @@ struct SearchView: View {
   }
 
   private var resolvedPresentationState: SearchPresentationState {
+    if inputMode == .radicals { return .specializedInput }
     guard searchQuery.isEmpty else { return presentationState }
     return showsRecentSearches ? .idle : .specializedInput
   }
