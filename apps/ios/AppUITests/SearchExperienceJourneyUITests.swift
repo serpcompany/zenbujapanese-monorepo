@@ -2322,7 +2322,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertGreaterThanOrEqual(recentSearch.frame.height, 44)
     XCTAssertLessThanOrEqual(recentSearch.frame.height, 52)
     XCTAssertFalse(app.keyboards.firstMatch.exists)
-    XCTAssertFalse(app.buttons["Cancel"].exists)
+    XCTAssertFalse(app.buttons["Close"].exists)
   }
 
   @MainActor
@@ -2444,7 +2444,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(app.staticTexts["Recent Searches"].exists)
     recordScreenshot(named: "recent-search-cleared-disposable-history", app: app)
 
-    let cancel = app.buttons["Cancel"]
+    let cancel = app.buttons["Close"]
     XCTAssertTrue(cancel.exists)
     cancel.tap()
     XCTAssertFalse(app.keyboards.firstMatch.exists)
@@ -3211,7 +3211,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(app.otherElements["search.no-results"].exists)
     recordScreenshot(named: "search-results-dictionary-failure", app: app)
 
-    app.buttons["Cancel"].tap()
+    app.buttons["Close"].tap()
     XCTAssertTrue(app.staticTexts["Dictionary unavailable"].waitForExistence(timeout: 2))
     XCTAssertTrue(retry.exists)
     XCTAssertFalse(resultButton(headword: "思う", in: app).exists)

@@ -1520,7 +1520,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     let description = app.staticTexts["Zenbu couldn't open its offline Language Reference Data."]
     let retry = app.buttons["Retry"]
     XCTAssertTrue(app.keyboards.firstMatch.exists)
-    XCTAssertTrue(app.buttons["Cancel"].exists)
+    XCTAssertTrue(app.buttons["Close"].exists)
     XCTAssertTrue(title.exists)
     XCTAssertTrue(description.exists)
     XCTAssertTrue(

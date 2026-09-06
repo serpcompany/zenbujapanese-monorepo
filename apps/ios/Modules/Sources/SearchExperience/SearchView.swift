@@ -56,21 +56,14 @@ struct SearchView: View {
       if focused { inputMode = .keyboard }
     }
     .onChange(of: isSearchPresented) { _, presented in
-      if !presented && inputMode == .keyboard { deactivateInput() }
+      if !presented { deactivateInput() }
     }
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
         Button("Image Search", systemImage: "camera") { showsImageSources = true }
           .accessibilityIdentifier("search.image-source")
       }
-      if inputMode == .handwriting || inputMode == .radicals {
-        ToolbarItem(placement: .topBarLeading) {
-          Button("Cancel", action: deactivateInput)
-            .accessibilityIdentifier("search.cancel")
-        }
-      }
     }
-
     .onChange(of: query) { _, _ in
       settledSearchTaskID = nil
       results = .empty
@@ -333,7 +326,7 @@ struct SearchView: View {
   private func selectInputMode(_ mode: SearchInputMode) {
     sparseRadicalQuery = nil
     inputMode = mode
-    isSearchPresented = mode == .keyboard
+    if mode == .keyboard { isSearchPresented = true }
     isSearchFocused = mode == .keyboard
   }
 
@@ -349,7 +342,6 @@ struct SearchView: View {
     query = submittedQuery.value
     recordRecentSearch(submittedQuery)
     isSearchFocused = false
-    isSearchPresented = false
     inputMode = .inactive
   }
 
@@ -361,7 +353,6 @@ struct SearchView: View {
 
   private func deactivateInput() {
     isSearchFocused = false
-    isSearchPresented = false
     inputMode = .inactive
   }
 
