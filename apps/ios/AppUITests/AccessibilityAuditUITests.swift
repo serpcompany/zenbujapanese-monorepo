@@ -94,7 +94,7 @@ private func submitAccessibilitySearch(
   file: StaticString = #filePath,
   line: UInt = #line
 ) {
-  let searchField = app.textFields["search.field"]
+  let searchField = app.searchFields.firstMatch
   XCTAssertTrue(searchField.waitForExistence(timeout: 3), file: file, line: line)
   searchField.tap()
   searchField.typeText(query)
@@ -1271,7 +1271,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     XCTAssertTrue(recentSearch.isHittable)
     XCTAssertGreaterThan(recentSearch.frame.height, 52)
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     searchField.tap()
     searchField.typeText("zzzzzzzzzzzz")
     let title = app.staticTexts["No Dictionary Matches"]
@@ -1424,7 +1424,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       appearance: appearance,
       additionalArguments: ["-ResetRecentSearches"]
     )
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     app.buttons["search.input.handwriting"].tap()
@@ -1461,7 +1461,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
 
@@ -1505,7 +1505,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("think")
@@ -1520,7 +1520,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     let description = app.staticTexts["Zenbu couldn't open its offline Language Reference Data."]
     let retry = app.buttons["Retry"]
     XCTAssertTrue(app.keyboards.firstMatch.exists)
-    XCTAssertTrue(app.buttons["search.cancel"].exists)
+    XCTAssertTrue(app.buttons["Cancel"].exists)
     XCTAssertTrue(title.exists)
     XCTAssertTrue(description.exists)
     XCTAssertTrue(
@@ -1553,7 +1553,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     let app = launchApp(appearance: appearance, additionalArguments: ["-ResetRecentSearches"])
     try submitSearch("hello", in: app)
     app.buttons["Clear text"].tap()
-    app.textFields["search.field"].tap()
+    app.searchFields.firstMatch.tap()
     let recentSearch = app.buttons["recent-search.0"]
     XCTAssertTrue(recentSearch.waitForExistence(timeout: 3))
     recentSearch.swipeLeft()
@@ -1966,7 +1966,7 @@ final class AccessibilityAuditUITests: XCTestCase {
       ] + (checksTextScaling ? ["-ResetReadingAidPreferences"] : [])
     )
     XCTAssertEqual(XCUIDevice.shared.appearance, appearance)
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("日本")
@@ -2470,7 +2470,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL",
       ]
     )
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     let receipt = app.descendants(matching: .any).matching(
       NSPredicate(format: "value == %@", "increaseContrast=\(increaseContrast)")
@@ -2739,7 +2739,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     app.terminate()
 
     app = launchApp(appearance: appearance)
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     searchField.tap()
     app.buttons["search.input.handwriting"].tap()
     XCTAssertTrue(app.otherElements["handwriting.canvas"].waitForExistence(timeout: 3))

@@ -98,7 +98,7 @@ def main():
     if not owned or owned["state"] != "Booted":
         run("xcrun", "simctl", "boot", device)
     run("xcrun", "simctl", "bootstatus", device, "-b")
-    product = root / "build/Build/Products/Debug-iphonesimulator/ZenbuJapanese.app"
+    product = root / "build/Build/Products/Debug-iphonesimulator/Zenbu Japanese.app"
     run("xcrun", "simctl", "install", device, str(product))
     run("xcrun", "simctl", "launch", "--terminate-running-process", device, "com.zenbujapanese.dictionary")
     run("open", "-a", "Simulator", "--args", "-CurrentDeviceUDID", device)

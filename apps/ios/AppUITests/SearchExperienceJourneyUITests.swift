@@ -19,7 +19,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: [
       "-ResetReadingAidPreferences", "-Issue253SentenceLayoutFixtures",
     ])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("taberu")
@@ -103,7 +103,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testReadingAidToggleHidesOnlyFuriganaAndPersistsAcrossColdRelaunch() throws {
     defer { resetReadingAidPreferences() }
     var app = launchApp(additionalArguments: ["-ResetReadingAidPreferences"])
-    var searchField = app.textFields["search.field"]
+    var searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "食べる",
@@ -158,7 +158,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.terminate()
     app = launchApp()
-    searchField = app.textFields["search.field"]
+    searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "食べる",
@@ -212,7 +212,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       app.staticTexts["Images saved with words from Image Text will appear here."].exists)
 
     app.tabBars.buttons["Search"].tap()
-    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 3))
     AppNavigationUITestSupport.youTab(in: app).tap()
     XCTAssertTrue(app.navigationBars["Media Library"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["No Encounter Media"].exists)
@@ -237,7 +237,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.launch()
     XCTAssertTrue(app.tabBars.buttons["Search"].waitForExistence(timeout: 3))
     XCTAssertTrue(app.tabBars.buttons["Search"].isSelected)
-    XCTAssertTrue(app.textFields["search.field"].exists)
+    XCTAssertTrue(app.searchFields.firstMatch.exists)
     XCTAssertTrue(AppNavigationUITestSupport.youTab(in: app).waitForExistence(timeout: 3))
     XCTAssertFalse(app.tabBars.buttons["More"].exists)
 
@@ -255,7 +255,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToYou() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     let imageSearch = app.buttons["search.image-source"]
     XCTAssertTrue(imageSearch.exists)
@@ -298,7 +298,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     }
     app.tabBars.buttons["Search"].tap()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     searchField.tap()
     searchField.typeText("日本")
     let japan = app.buttons["result.japan"]
@@ -361,7 +361,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(ImageTextFilesUITestSupport.waitForPicker(in: app))
     cancel.tap()
 
-    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 3))
     XCTAssertFalse(app.alerts["Unable to Import Images"].exists)
     XCTAssertFalse(app.buttons["image-text.close"].exists)
   }
@@ -383,7 +383,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     waitForSystemPhotoPicker(in: app)
     app.navigationBars["Photos"].buttons["Cancel"].tap()
     XCTAssertTrue(app.navigationBars["Photos"].waitForNonExistence(timeout: 3))
-    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 3))
   }
 
   @MainActor
@@ -491,7 +491,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(alert.waitForExistence(timeout: 3))
     XCTAssertTrue(alert.staticTexts["The selected photos could not be read."].exists)
     alert.buttons["OK"].tap()
-    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 3))
   }
 
   @MainActor
@@ -506,7 +506,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       alert.staticTexts["Camera capture requires a physical device with an available camera."]
         .exists)
     alert.buttons["OK"].tap()
-    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 3))
   }
 
   @MainActor
@@ -521,7 +521,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       alert.staticTexts["Allow Camera access in Settings to capture Japanese text."].exists)
     XCTAssertTrue(alert.buttons["Open Settings"].exists)
     alert.buttons["Cancel"].tap()
-    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 3))
   }
 
   @MainActor
@@ -535,7 +535,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(alert.staticTexts["Camera access is restricted on this device."].exists)
     XCTAssertFalse(alert.buttons["Open Settings"].exists)
     alert.buttons["OK"].tap()
-    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 3))
   }
 
   @MainActor
@@ -684,7 +684,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     )
 
     app.buttons["image-text.close"].tap()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
   }
 
@@ -758,7 +758,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       app.descendants(matching: .any)["image-text.translation-preparing"].waitForExistence(
         timeout: 3))
     app.buttons["image-text.close"].tap()
-    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 3))
     XCTAssertTrue(app.buttons["search.image-source"].isHittable)
   }
 
@@ -849,7 +849,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.terminate()
     app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("静か", in: app, searchField: searchField)
     let result = app.buttons.matching(
@@ -872,7 +872,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.terminate()
     app = launchApp()
-    let relaunchedSearchField = app.textFields["search.field"]
+    let relaunchedSearchField = app.searchFields.firstMatch
     XCTAssertTrue(relaunchedSearchField.waitForExistence(timeout: 3))
     submitSearch("静か", in: app, searchField: relaunchedSearchField)
     let relaunchedResult = app.buttons.matching(
@@ -1015,7 +1015,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     assertBundledAnalysisJapaneseRegion(in: app)
 
     app.buttons["image-text.close"].tap()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
     let openExamples = app.buttons["search.examples"]
@@ -1153,7 +1153,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.terminate()
     let relaunched = launchApp()
-    XCTAssertTrue(relaunched.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(relaunched.searchFields.firstMatch.waitForExistence(timeout: 3))
     XCTAssertFalse(relaunched.buttons["image-text.close"].exists)
     recordSettledScreenshot(named: "image-text-cold-relaunch-search", app: relaunched)
   }
@@ -1221,10 +1221,10 @@ final class SearchExperienceJourneyUITests: XCTestCase {
         thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5))
       )
     XCTAssertTrue(app.buttons["image-text.close"].waitForExistence(timeout: 3))
-    XCTAssertFalse(app.textFields["search.field"].exists)
+    XCTAssertFalse(app.searchFields.firstMatch.exists)
 
     app.buttons["image-text.close"].tap()
-    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 3))
   }
 
   @MainActor
@@ -1550,7 +1550,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.terminate()
     app.launch()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     XCTAssertEqual(searchField.value as? String, "Search Japanese or English")
     XCTAssertFalse(app.otherElements["stroke-order.screen"].exists)
@@ -1562,7 +1562,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testYamaInputsReachKanjiDetailAndPlayStrokeOrder() throws {
     for query in ["yama", "やま", "山"] {
       let app = launchApp()
-      let searchField = app.textFields["search.field"]
+      let searchField = app.searchFields.firstMatch
       XCTAssertTrue(searchField.waitForExistence(timeout: 3))
       submitSearch(query, in: app, searchField: searchField)
 
@@ -1614,7 +1614,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testKanjiDetailShowsSourceBackedClassificationAndReadings() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("静か", in: app, searchField: searchField)
 
@@ -1695,7 +1695,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testKanjiDetailRelatedWordOpensWordDetailAndBackRestoresPosition() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("静か", in: app, searchField: searchField)
 
@@ -1801,7 +1801,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testSearchInputModesUseNativeSelectionAndCandidateSubmissionControls() throws {
     let app = launchApp(additionalArguments: ["-HandwritingRecognitionFixture", "cho"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
 
@@ -1923,7 +1923,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testRadicalSearchRequiresCandidateWhenEnteringWithPopulatedQuery() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("think")
@@ -2268,7 +2268,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testNewestRecentSearchRerunsItsResultSet() throws {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("mondai")
@@ -2305,7 +2305,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testPersistedRecentSearchesAppearImmediatelyOnColdRelaunch() throws {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
     submitSearch("think", in: app, searchField: searchField)
@@ -2322,13 +2322,13 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertGreaterThanOrEqual(recentSearch.frame.height, 44)
     XCTAssertLessThanOrEqual(recentSearch.frame.height, 52)
     XCTAssertFalse(app.keyboards.firstMatch.exists)
-    XCTAssertFalse(app.buttons["search.cancel"].exists)
+    XCTAssertFalse(app.buttons["Cancel"].exists)
   }
 
   @MainActor
   func testSelectingOlderRecentSearchMovesNormalizedQueryToTopWithoutDuplication() throws {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
     submitSearch("think", in: app, searchField: searchField)
@@ -2358,7 +2358,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testEmptyHistoryShowsCleanIdleSearchSurface() throws {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
-    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 3))
 
     XCTAssertFalse(app.staticTexts["Recent Searches"].exists)
     XCTAssertFalse(app.buttons["recent-search.clear-all"].exists)
@@ -2370,7 +2370,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testDisposableRecentSearchCanBeRemovedWithoutAffectingAnotherRow() throws {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
     submitSearch("think", in: app, searchField: searchField)
@@ -2411,7 +2411,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testDisposableHistoryClearAllConfirmsAndCancelLeavesSearchRoot() throws {
     let app = launchApp(additionalArguments: ["-ResetRecentSearches"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
     submitSearch("think", in: app, searchField: searchField)
@@ -2444,7 +2444,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(app.staticTexts["Recent Searches"].exists)
     recordScreenshot(named: "recent-search-cleared-disposable-history", app: app)
 
-    let cancel = app.buttons["search.cancel"]
+    let cancel = app.buttons["Cancel"]
     XCTAssertTrue(cancel.exists)
     cancel.tap()
     XCTAssertFalse(app.keyboards.firstMatch.exists)
@@ -2463,7 +2463,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testAmbiguousRomajiCanRefineToJapaneseReading() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("mondai")
@@ -2513,7 +2513,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testNihonOffersJapaneseReadingRefinement() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("nihon")
@@ -2555,7 +2555,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testIruOffersJapaneseReadingRefinement() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("iru")
@@ -2580,7 +2580,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testMixedScriptWordDetailPlacesRubyOnlyAboveKanji() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("女らしい", in: app, searchField: searchField)
 
@@ -2603,7 +2603,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testSourceBackedRomajiOffersJapaneseReadingBeyondCapturedExamples() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("sushi")
@@ -2618,7 +2618,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testEnglishQueryReturnsRankedDictionaryResults() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
     searchField.tap()
@@ -2659,7 +2659,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     for appearance in [XCUIDevice.Appearance.light, .dark] {
       XCUIDevice.shared.appearance = appearance
       let app = launchApp(additionalArguments: ["-ResetFrequencyPacks"])
-      let searchField = app.textFields["search.field"]
+      let searchField = app.searchFields.firstMatch
       XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
       submitSearch("日本", in: app, searchField: searchField)
@@ -2693,7 +2693,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testHelloRanksTheJapaneseGreetingAheadOfTheLoanwordAndSubstringNoise() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("hello")
@@ -2712,7 +2712,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testGreetingWordDetailShowsCleanAlternativesPitchAndLearnerFacingExamples() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("hello")
@@ -2745,7 +2745,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testWordDetailFinalContentClearsBottomNavigation() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("hello")
@@ -2771,7 +2771,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testPartialEnglishQueryUpdatesLiveResults() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
     searchField.tap()
@@ -2786,7 +2786,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testCancelDismissesFocusAndRetainsPopulatedResults() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("think")
@@ -2811,7 +2811,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testNoMatchKeepsQueryAboveNativeNoResultsState() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("zzzxqv")
@@ -2829,7 +2829,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testTrailingWhitespaceIsNormalizedBeforeShowingRomajiResults() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("taberu ")
@@ -2849,7 +2849,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testMultiWordSearchPreservesSpaceAsItIsTyped() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("hello ")
@@ -2864,7 +2864,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testHumanPacedMultiWordSearchReturnsFrozenSentenceResultsWithoutQueuedDelay() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
 
@@ -2897,7 +2897,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testOrdinaryJapaneseResultOpensItsOwnLanguageReferenceData() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("日本")
@@ -3200,7 +3200,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(
       additionalArguments: ["-InjectLookupFailureOnceQuery", "think"])
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("think")
@@ -3211,7 +3211,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(app.otherElements["search.no-results"].exists)
     recordScreenshot(named: "search-results-dictionary-failure", app: app)
 
-    app.buttons["search.cancel"].tap()
+    app.buttons["Cancel"].tap()
     XCTAssertTrue(app.staticTexts["Dictionary unavailable"].waitForExistence(timeout: 2))
     XCTAssertTrue(retry.exists)
     XCTAssertFalse(resultButton(headword: "思う", in: app).exists)
@@ -3232,7 +3232,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testEditingAFailedLookupReplacesTheFailureNormally() throws {
     let app = launchApp(
       additionalArguments: ["-InjectLookupFailureOnceQuery", "think"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
     searchField.tap()
@@ -3257,7 +3257,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testSearchPresentsNativeLoadingStateBeforeDelayedResults() throws {
     let app = launchApp(additionalArguments: ["-InjectLookupDelay"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
     searchField.tap()
@@ -3274,7 +3274,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testRapidQueryChangeCancelsStaleSearchWithoutFlashingOldResults() throws {
     let app = launchApp(additionalArguments: ["-InjectLookupDelayQuery", "think"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
     searchField.tap()
@@ -3301,7 +3301,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testInflectedRomajiFindsDictionaryForm() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("tabeta")
@@ -3332,7 +3332,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testInflectedRomajiTeFormFindsDictionaryForm() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("makasete")
@@ -3353,7 +3353,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testMixedScriptShowsDiscoveredWords() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     searchField.typeText("にほんabc")
@@ -3386,7 +3386,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testWordDetailAddMenuExposesNoteCameraAndPhotoActionsInOrder() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -3421,7 +3421,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: [
       "-CameraUnavailable", "-ResetEncounterMedia",
     ])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -3447,7 +3447,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testWordDetailDeniedCameraOffersNativeSettingsRecovery() throws {
     let app = launchApp(additionalArguments: ["-CameraAuthorizationDenied"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -3471,7 +3471,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testWordDetailUndeterminedCameraDenialOffersSettingsRecovery() throws {
     let app = launchApp(additionalArguments: ["-CameraAuthorizationNotDeterminedDenied"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -3496,7 +3496,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       "-CameraAuthorizationNotDeterminedGranted",
       "-ResetEncounterMedia",
     ])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -3516,7 +3516,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testWordDetailRestrictedCameraExplainsManagedBoundary() throws {
     let app = launchApp(additionalArguments: ["-CameraAuthorizationRestricted"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -3541,7 +3541,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     var app = launchApp(additionalArguments: [
       "-WordDetailCameraFixtureCapture", "-ResetEncounterMedia",
     ])
-    var searchField = app.textFields["search.field"]
+    var searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -3565,7 +3565,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.terminate()
     app = launchApp()
-    searchField = app.textFields["search.field"]
+    searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -3581,7 +3581,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: [
       "-WordDetailCameraFixtureCancel", "-ResetEncounterMedia",
     ])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -3606,7 +3606,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: [
       "-WordDetailCameraFixtureFailure", "-ResetEncounterMedia",
     ])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -3631,7 +3631,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: [
       "-InjectCorruptEncounterMedia", "-ResetEncounterMedia",
     ])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -3647,7 +3647,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testWordDetailPresentsIdentityPronunciationAndMetadataInLogicalOrder() throws {
     let app = launchApp(additionalArguments: ["-ResetEncounterMedia", "-ResetFrequencyPacks"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -3709,7 +3709,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let headword = WordDetailUITestSupport.longHeadword
     let reading = WordDetailUITestSupport.longReading
     let app = launchApp(additionalArguments: ["-ResetEncounterMedia", "-ResetFrequencyPacks"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: headword,
@@ -3738,7 +3738,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let headword = WordDetailUITestSupport.longHeadword
     let reading = WordDetailUITestSupport.longReading
     let app = launchApp(additionalArguments: ["-ResetEncounterMedia", "-ResetFrequencyPacks"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: headword,
@@ -3787,7 +3787,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation() throws {
     let app = launchApp(additionalArguments: ["-ResetEncounterMedia"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("見る", in: app, searchField: searchField)
 
@@ -3903,7 +3903,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testWordDetailNativePhotoCancellationAndSelectionPersistsAcrossRelaunch() throws {
     let app = launchApp(additionalArguments: ["-ResetEncounterMedia"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る", resultLabelPrefix: "見る, みる", in: app, searchField: searchField
@@ -3942,7 +3942,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     app.terminate()
     let relaunched = launchApp()
-    let relaunchedSearch = relaunched.textFields["search.field"]
+    let relaunchedSearch = relaunched.searchFields.firstMatch
     XCTAssertTrue(relaunchedSearch.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る", resultLabelPrefix: "見る, みる", in: relaunched, searchField: relaunchedSearch
@@ -3953,7 +3953,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testMultipleReadingUncommonAndLinkedAlternativeKanjiClassesArePubliclyOperable() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("蝶々", in: app, searchField: searchField)
 
@@ -4021,7 +4021,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testMissingTUBELEXEntryShowsNeutralFrequencyPlaceholder() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "どいたま",
@@ -4052,7 +4052,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testFrequencyRankDisclosureShowsActiveSourceAndRoutesToManagement() throws {
     let app = launchApp(additionalArguments: ["-ResetFrequencyPacks"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -4095,7 +4095,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testSwitchingToPinnedWikipediaKeepsInlineFrequencyProviderNeutral() throws {
     let app = launchApp(additionalArguments: ["-ResetFrequencyPacks"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -4148,7 +4148,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testEditedWordNotePersistsWhenTheEntryIsReopened() throws {
     let app = launchApp(additionalArguments: ["-ResetWordNotes"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("問題", in: app, searchField: searchField)
     let problem = app.buttons["result.problem"]
@@ -4222,7 +4222,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted() throws {
     let app = launchApp(additionalArguments: ["-ResetWordNotes"])
-    var searchField = app.textFields["search.field"]
+    var searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "いる",
@@ -4279,7 +4279,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.launchArguments.removeAll { $0 == "-ResetWordNotes" }
     app.terminate()
     app.launch()
-    searchField = app.textFields["search.field"]
+    searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "いる",
@@ -4320,7 +4320,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testEmptyWordNoteDoneIsANoOpAndBackAutosavesPopulatedText() throws {
     let app = launchApp(additionalArguments: ["-ResetWordNotes"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "問題",
@@ -4379,7 +4379,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     app.launchArguments.removeAll { $0 == "-ResetWordNotes" }
     app.terminate()
     app.launch()
-    let relaunchedSearchField = app.textFields["search.field"]
+    let relaunchedSearchField = app.searchFields.firstMatch
     XCTAssertTrue(relaunchedSearchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "問題",
@@ -4397,7 +4397,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testWordNotesRemainIsolatedAcrossSameSpellingHomographs() throws {
     let app = launchApp(additionalArguments: ["-ResetWordNotes"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("モール", in: app, searchField: searchField)
 
@@ -4439,7 +4439,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testDedicatedExampleTokenCompactionDoesNotChangeWordDetailTokenHitRegions() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
@@ -4471,7 +4471,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testInlineWordDetailOtherLinkedWordStaysNeutralAndPreservesNavigation() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "見る",
@@ -4521,7 +4521,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testInlineWordDetailReadingFormUsesCurrentCanonicalIdentity() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "いる",
@@ -4553,7 +4553,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
         "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
       ]
     )
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
@@ -4594,7 +4594,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testWordDetailExampleCentersJapaneseAndSpeakerAtDefaultSize() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
@@ -4640,7 +4640,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
         "-RecordSpeechRequests",
       ]
     )
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
@@ -4721,7 +4721,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: [
       "-ExampleSentenceAccessibilityFixtureLimit", "8",
     ])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
     app.buttons["search.examples"].tap()
@@ -4776,7 +4776,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testExampleSentenceWordsMenuPreservesAmbiguousChoicesAndBackNavigation() throws {
     let app = launchApp(additionalArguments: ["-Issue253SentenceLayoutFixtures"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "taberu",
@@ -4840,7 +4840,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       "-Issue253SentenceLayoutFixtures", "-RecordJapaneseAnalysisRequests",
       "-RecordSpeechRequests",
     ])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "taberu",
@@ -4970,7 +4970,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testExampleSentencesCanBeOpenedScrolledSpokenAndTraversed() throws {
     let app = launchApp(additionalArguments: ["-RecordSpeechRequests"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
@@ -5027,7 +5027,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let app = launchApp(additionalArguments: [
       "-ResetLanguageTechnologyPacks", "-UseReducedJapaneseAnalysis",
     ])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openWordDetail(
       for: "問題",
@@ -5047,7 +5047,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testHighlightedIruKeepsOnePublicWordBoundaryAndOpensCanonicalDetail() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
@@ -5097,7 +5097,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testExampleOnlyPunctuationQueryOpensItsSourceBackedSentence() throws {
     let app = launchApp(additionalArguments: ["-RecordSpeechRequests"])
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("hello-world", in: app, searchField: searchField)
 
@@ -5136,7 +5136,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testProductionExamplesOpenScrollAndLinkedWordRemainOperable() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
@@ -5168,7 +5168,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testProductionSpeechControlsRemainOperableAcrossWordAndExamples() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
@@ -5213,7 +5213,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testWordAndExampleSpeakersCompleteLiveJapaneseSpeech() throws {
     let app = launchApp(additionalArguments: ["-ObserveSpeechPlayback"])
     var previousSpeechInvocation: String?
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
 
@@ -5278,7 +5278,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openConjugations(
       for: "いる",
@@ -5343,7 +5343,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testGodanConjugationsExposeCapturedPlainAndPoliteForms() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openConjugations(for: "書く", resultLabelPrefix: "書く, かく", in: app, searchField: searchField)
 
@@ -5392,7 +5392,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testTsubusuConjugationsKeepEveryAppOwnedFormReadableInPlainAndPoliteModes() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openConjugations(
       for: "潰す",
@@ -5447,7 +5447,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testCapturedSuruAndKuruIrregularConjugationsArePubliclyReachable() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openConjugations(
       for: "する", resultLabelPrefix: "する, する, to do", in: app, searchField: searchField)
@@ -5536,7 +5536,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   @MainActor
   func testCapturedAdjectiveFormListsDoNotExposeVerbModeControls() throws {
     let app = launchApp()
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openConjugations(
       for: "とんでもない",
@@ -5590,7 +5590,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   func testJapaneseQueryOpensWordDetailAndBackPreservesResults() throws {
     let app = launchApp()
 
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
 
     searchField.tap()
@@ -5913,7 +5913,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func openKanjiDetail(for character: String, in app: XCUIApplication) -> XCUIElement {
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch(character, in: app, searchField: searchField)
     let result = app.buttons["result.kanji-primary.\(character)"]
@@ -6167,7 +6167,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func openHandwriting(in app: XCUIApplication) -> HandwritingSurface {
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     let mode = app.buttons["search.input.handwriting"]
@@ -6180,7 +6180,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   private func openRadicals(in app: XCUIApplication) -> RadicalSurface {
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     searchField.tap()
     let mode = app.buttons["search.input.radicals"]

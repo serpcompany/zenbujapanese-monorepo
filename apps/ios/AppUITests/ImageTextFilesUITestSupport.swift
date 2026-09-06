@@ -44,7 +44,7 @@ enum ImageTextFilesUITestSupport {
   }
 
   static func verifyPreparedFixtures(_ names: [String], in app: XCUIApplication) {
-    guard app.textFields["search.field"].waitForExistence(timeout: 5) else {
+    guard app.searchFields.firstMatch.waitForExistence(timeout: 5) else {
       XCTFail("Fixture preparation must return to Search")
       return
     }
@@ -61,6 +61,6 @@ enum ImageTextFilesUITestSupport {
       XCTAssertTrue(fixture.waitForExistence(timeout: 5), "Missing prepared fixture: \(name)")
     }
     app.navigationBars.buttons["Cancel"].firstMatch.tap()
-    XCTAssertTrue(app.textFields["search.field"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 3))
   }
 }

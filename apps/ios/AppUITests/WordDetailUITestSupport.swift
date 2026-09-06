@@ -13,7 +13,7 @@ enum WordDetailUITestSupport {
     line: UInt = #line
   ) {
     let navigation = app.navigationBars.firstMatch
-    let searchField = app.textFields["search.field"]
+    let searchField = app.searchFields.firstMatch
     let tabBar = app.tabBars.firstMatch
     guard result.exists, navigation.exists, searchField.exists, tabBar.exists else {
       XCTFail("Search result and native viewport boundaries must exist", file: file, line: line)
