@@ -32,23 +32,12 @@ struct SearchView: View {
   @State private var isConfirmingClearAll = false
   @State private var recentSearchRefreshID = 0
   @FocusState private var isSearchFocused: Bool
+  @State private var isSearchPresented = false
 
   var body: some View {
     let taskID = searchTaskID
     let taskQuery = SearchQuery(taskID.query)
     VStack(spacing: 0) {
-      SearchBar(
-        query: $query,
-        isFocused: $isSearchFocused,
-        isInputActive: inputMode != .inactive,
-        activateKeyboard: { inputMode = .keyboard },
-        openImageSource: { showsImageSources = true },
-        cancel: deactivateInput
-      ) { submittedQuery in
-        sparseRadicalQuery = nil
-        completeSubmission(submittedQuery)
-      }
-
       switch resolvedPresentationState {
       case .idle:
         RecentSearchHistoryView(
@@ -141,6 +130,38 @@ struct SearchView: View {
       }
     }
     .navigationTitle("Search")
+    .searchable(
+      text: $query,
+      isPresented: $isSearchPresented,
+      placement: .navigationBarDrawer(displayMode: .always),
+      prompt: "Search Japanese or English"
+    )
+    .searchFocused($isSearchFocused)
+    .textInputAutocapitalization(.never)
+    .autocorrectionDisabled()
+    .onSubmit(of: .search) {
+      sparseRadicalQuery = nil
+      completeSubmission(SearchQuery(query))
+    }
+    .onChange(of: isSearchFocused) { _, focused in
+      if focused { inputMode = .keyboard }
+    }
+    .onChange(of: isSearchPresented) { _, presented in
+      if !presented && inputMode == .keyboard { deactivateInput() }
+    }
+    .toolbar {
+      ToolbarItem(placement: .topBarTrailing) {
+        Button("Image Search", systemImage: "camera") { showsImageSources = true }
+          .accessibilityIdentifier("search.image-source")
+      }
+      if inputMode == .handwriting || inputMode == .radicals {
+        ToolbarItem(placement: .topBarLeading) {
+          Button("Cancel", action: deactivateInput)
+            .accessibilityIdentifier("search.cancel")
+        }
+      }
+    }
+
     .onChange(of: query) { _, _ in
       settledSearchTaskID = nil
       results = .empty
@@ -308,6 +329,7 @@ struct SearchView: View {
   private func selectInputMode(_ mode: SearchInputMode) {
     sparseRadicalQuery = nil
     inputMode = mode
+    isSearchPresented = mode == .keyboard
     isSearchFocused = mode == .keyboard
   }
 
@@ -323,6 +345,7 @@ struct SearchView: View {
     query = submittedQuery.value
     recordRecentSearch(submittedQuery)
     isSearchFocused = false
+    isSearchPresented = false
     inputMode = .inactive
   }
 
@@ -334,6 +357,7 @@ struct SearchView: View {
 
   private func deactivateInput() {
     isSearchFocused = false
+    isSearchPresented = false
     inputMode = .inactive
   }
 
@@ -534,88 +558,6 @@ private struct SearchResultsIdentity: Hashable {
   let best: [LanguageReferenceID]
   let additional: [LanguageReferenceID]
   let refinement: SearchQuery?
-}
-
-private struct SearchBar: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-  @Binding var query: String
-  var isFocused: FocusState<Bool>.Binding
-  let isInputActive: Bool
-  let activateKeyboard: () -> Void
-  let openImageSource: () -> Void
-  let cancel: () -> Void
-  let submitQuery: (SearchQuery) -> Void
-
-  var body: some View {
-    HStack(spacing: 12) {
-      HStack(spacing: 8) {
-        Image(systemName: "magnifyingglass")
-          .foregroundStyle(.secondary)
-
-        searchTextField
-          .textInputAutocapitalization(.never)
-          .autocorrectionDisabled()
-          .submitLabel(.search)
-          .focused(isFocused)
-          .onChange(of: isFocused.wrappedValue) { _, focused in
-            if focused { activateKeyboard() }
-          }
-          .onSubmit {
-            let submittedQuery = SearchQuery(query)
-            query = submittedQuery.value
-            submitQuery(submittedQuery)
-            isFocused.wrappedValue = false
-          }
-          .accessibilityIdentifier("search.field")
-
-        if !query.isEmpty {
-          Button {
-            query = ""
-          } label: {
-            Image(systemName: "xmark.circle.fill")
-              .foregroundStyle(.secondary)
-              .frame(width: 44, height: 44)
-              .contentShape(Rectangle())
-          }
-          .buttonStyle(.plain)
-          .accessibilityLabel("Clear text")
-        }
-
-      }
-      .font(.body)
-      .padding(.horizontal, 10)
-      .frame(minHeight: 44)
-      .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 9))
-
-      Button(action: openImageSource) {
-        Image(systemName: "camera")
-          .font(.title3)
-          .frame(width: 44, height: 44)
-          .contentShape(Rectangle())
-      }
-      .buttonStyle(.plain)
-      .accessibilityLabel("Image Search")
-      .accessibilityIdentifier("search.image-source")
-
-      if isInputActive {
-        Button("Cancel", action: cancel)
-          .buttonStyle(.plain)
-          .frame(minHeight: 44)
-          .accessibilityIdentifier("search.cancel")
-      }
-    }
-    .padding(.horizontal, 16)
-    .padding(.bottom, 10)
-  }
-
-  @ViewBuilder
-  private var searchTextField: some View {
-    if dynamicTypeSize >= .xxLarge {
-      TextField("Search", text: $query)
-    } else {
-      TextField("Search Japanese or English", text: $query)
-    }
-  }
 }
 
 private struct SearchResultsView: View {
