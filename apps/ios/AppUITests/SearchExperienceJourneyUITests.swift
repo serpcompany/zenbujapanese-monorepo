@@ -259,7 +259,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     let imageSearch = app.buttons["search.image-source"]
     XCTAssertTrue(imageSearch.exists)
-    XCTAssertGreaterThanOrEqual(imageSearch.frame.minX, searchField.frame.maxX)
+    XCTAssertLessThanOrEqual(imageSearch.frame.maxY, searchField.frame.minY)
     XCTAssertFalse(app.buttons["search.sources"].exists)
     recordSettledScreenshot(named: "issue-216-after-search", app: app)
 
@@ -3211,7 +3211,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertFalse(app.otherElements["search.no-results"].exists)
     recordScreenshot(named: "search-results-dictionary-failure", app: app)
 
-    app.buttons["Close"].tap()
+    searchField.typeText("\n")
     XCTAssertTrue(app.staticTexts["Dictionary unavailable"].waitForExistence(timeout: 2))
     XCTAssertTrue(retry.exists)
     XCTAssertFalse(resultButton(headword: "思う", in: app).exists)
