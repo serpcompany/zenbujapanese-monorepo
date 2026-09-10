@@ -10,7 +10,7 @@ This document is preserved only as migration evidence. Do not use it as an activ
 
 [Map the Zenbu Japanese iOS project foundation](https://github.com/serpcompany/zenbujapanese-monorepo/issues/1) is the canonical planning artifact. [Verify migration coverage of the legacy iOS plan](https://github.com/serpcompany/zenbujapanese-monorepo/issues/38) records where this document's decisions, open questions, research requirements, evidence boundaries, and workflow constraints moved.
 
-This plan defines a new native iOS implementation informed by the previous [prototypes](../../../../prototypes/) without treating any one prototype as the complete product specification or target architecture.
+This plan defines a new native iOS implementation informed by the previous [prototypes](../../../../../prototypes/) without treating any one prototype as the complete product specification or target architecture.
 
 Zenbu Japanese is one primary installed iOS product containing several connected **Product Experiences**. A Product Experience is planned as a coherent area but is not assumed to be a separate app or top-level tab.
 
@@ -28,7 +28,7 @@ Lookup is the dictionary and limited-content lookup Product Experience for words
 - AI-generated explanation using broader image context is a future, post-MVP feature.
 - The existing screenshots and prototype audit are preliminary references only. An exhaustive current product and language-stack inventory is required before implementation planning.
 
-See [Lookup](../../product/lookup.md).
+See [Lookup](../../../product/lookup.md).
 
 ### Translator
 
@@ -46,7 +46,7 @@ Translator covers sentence translation, larger text translation, and real-time c
 - Camera/photo/file translation reuses the same shared OCR, lookup, and natural-translation flow exposed by Lookup.
 - Sentence-shaped Lookup queries can hand off to Translator with their text preserved.
 
-See [Translator](../../product/translator.md).
+See [Translator](../../../product/translator.md).
 
 ### AI Sensei
 
@@ -57,7 +57,7 @@ AI Sensei is an accounted-for post-MVP Product Experience: an in-app, Japanese-s
 - Its domain relevance should come from Zenbu's app-owned LLM application layer, context, Japanese reference capabilities, and evaluations rather than a generic model wrapper.
 - Detailed features, memory, persistence, handoffs, and technical design remain deferred until it is deliberately scheduled.
 
-See [AI Sensei](../../product/ai-sensei.md).
+See [AI Sensei](../../../product/ai-sensei.md).
 
 ### Media
 
@@ -79,7 +79,7 @@ Read, Watch, and Listen are separate deferred **Consumption Experiences**, not p
 - Reader may later provide a purpose-built interactive manga experience.
 - Listen may later synchronize audio with lyrics or transcripts.
 
-See [Media Analysis](../../product/media-analysis.md) and [User Library](../../product/user-library.md).
+See [Media Analysis](../../../product/media-analysis.md) and [User Library](../../../product/user-library.md).
 
 ### User Library
 
@@ -105,7 +105,7 @@ KanjiMon is the gamified Product Experience for encountering, collecting, and le
 - It may be architected so a separate KanjiMon app is possible later, but no separate app is planned now.
 - It should reuse shared kanji lookup, saved-item, and learning capabilities rather than create a disconnected profile or duplicate kanji system.
 
-See [KanjiMon](../../product/kanjimon.md).
+See [KanjiMon](../../../product/kanjimon.md).
 
 ### Learning Profile, settings, and navigation
 
@@ -178,11 +178,11 @@ The breadth-first product landscape is sufficiently mapped for this stage. Conti
 
 ## Current planning sources
 
-- [Domain glossary](../../../CONTEXT.md)
-- [User Library](../../product/user-library.md)
-- [Media Analysis](../../product/media-analysis.md)
-- [Lookup](../../product/lookup.md)
-- [Translator](../../product/translator.md)
-- [AI Sensei](../../product/ai-sensei.md)
-- [KanjiMon](../../product/kanjimon.md)
-- [Language capability boundaries](../../adr/0001-language-capability-boundaries.md)
+- [Domain glossary](../../../../CONTEXT.md)
+- [User Library](../../../product/user-library.md)
+- [Media Analysis](../../../product/media-analysis.md)
+- [Lookup](../../../product/lookup.md)
+- [Translator](../../../product/translator.md)
+- [AI Sensei](../../../product/ai-sensei.md)
+- [KanjiMon](../../../product/kanjimon.md)
+- [Language capability boundaries](../../../adr/0001-language-capability-boundaries.md)
