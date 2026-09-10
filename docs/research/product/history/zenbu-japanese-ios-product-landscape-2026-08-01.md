@@ -10,7 +10,7 @@ This document is preserved only as migration evidence. Do not use it as an activ
 
 [Map the Zenbu Japanese iOS project foundation](https://github.com/serpcompany/zenbujapanese-monorepo/issues/1) is the canonical planning artifact. [Verify migration coverage of the legacy iOS plan](https://github.com/serpcompany/zenbujapanese-monorepo/issues/38) records where this document's decisions, open questions, research requirements, evidence boundaries, and workflow constraints moved.
 
-This plan defines a new native iOS implementation informed by the previous [prototypes](../../../../../prototypes/) without treating any one prototype as the complete product specification or target architecture.
+This plan defines a new native iOS implementation informed by external historical prototypes that were not retained in this repository, without treating any one prototype as the complete product specification or target architecture.
 
 Zenbu Japanese is one primary installed iOS product containing several connected **Product Experiences**. A Product Experience is planned as a coherent area but is not assumed to be a separate app or top-level tab.
 
@@ -79,7 +79,7 @@ Read, Watch, and Listen are separate deferred **Consumption Experiences**, not p
 - Reader may later provide a purpose-built interactive manga experience.
 - Listen may later synchronize audio with lyrics or transcripts.
 
-See [Media Analysis](../../../product/media-analysis.md) and [User Library](../../../product/user-library.md).
+See [Media Analysis](../../../product/media-analysis.md) and [Media Library](../../../product/media-library.md).
 
 ### User Library
 
@@ -179,7 +179,7 @@ The breadth-first product landscape is sufficiently mapped for this stage. Conti
 ## Current planning sources
 
 - [Domain glossary](../../../../CONTEXT.md)
-- [User Library](../../../product/user-library.md)
+- [Media Library](../../../product/media-library.md)
 - [Media Analysis](../../../product/media-analysis.md)
 - [Lookup](../../../product/lookup.md)
 - [Translator](../../../product/translator.md)
