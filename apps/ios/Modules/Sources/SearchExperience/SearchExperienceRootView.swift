@@ -8,6 +8,8 @@ public struct SearchExperienceRootView: View {
   @State private var path: [SearchExperienceRoute] = []
   @State private var youPath: [YouRoute] = []
   @State private var query = ""
+  @State private var isSearchPresented = false
+  @FocusState private var isSearchFocused: Bool
   #if DEBUG
     @State private var preparesJapaneseAnalysis = ProcessInfo.processInfo.arguments.contains(
       "-EnsureJapaneseAnalysis")
@@ -164,7 +166,7 @@ public struct SearchExperienceRootView: View {
 
   private var appTabs: some View {
     TabView(selection: $selectedTab) {
-      Tab("Search", systemImage: "magnifyingglass", value: SearchExperienceTab.search) {
+      Tab("Search", systemImage: "magnifyingglass", value: SearchExperienceTab.search, role: .search) {
         searchNavigation
       }
 
@@ -176,6 +178,10 @@ public struct SearchExperienceRootView: View {
           .accessibilityIdentifier("tab.you")
       }
     }
+    .searchable(text: $query, isPresented: $isSearchPresented, prompt: "Search Japanese or English")
+    .searchFocused($isSearchFocused)
+    .textInputAutocapitalization(.never)
+    .autocorrectionDisabled()
     .scrollEdgeEffectStyle(.hard, for: .bottom)
     .onChange(of: selectedTab) { previous, current in
       if previous != .search, current == .search {
@@ -200,7 +206,9 @@ public struct SearchExperienceRootView: View {
           let session = ImageTextSession(assets: assets)
           imageTextSessionStore.insert(session)
           path.append(.image(session.id))
-        }
+        },
+        isSearchFocused: $isSearchFocused,
+        isSearchPresented: $isSearchPresented
       )
       .navigationDestination(for: SearchExperienceRoute.self) { route in
         switch route {
