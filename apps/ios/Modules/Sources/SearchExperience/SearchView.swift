@@ -31,14 +31,23 @@ struct SearchView: View {
   @State private var imageImportTask: Task<Void, Never>?
   @State private var isConfirmingClearAll = false
   @State private var recentSearchRefreshID = 0
-  @FocusState.Binding var isSearchFocused: Bool
-  @Binding var isSearchPresented: Bool
+  @FocusState private var isSearchFocused: Bool
+  @State private var isSearchPresented = false
 
   var body: some View {
     let taskID = searchTaskID
     let taskQuery = SearchQuery(taskID.query)
     searchContent
       .navigationTitle("Search")
+      .searchable(
+        text: $query,
+        isPresented: $isSearchPresented,
+        placement: .navigationBarDrawer(displayMode: .always),
+        prompt: "Search Japanese or English"
+      )
+      .searchFocused($isSearchFocused)
+      .textInputAutocapitalization(.never)
+      .autocorrectionDisabled()
       .onSubmit(of: .search) {
         sparseRadicalQuery = nil
         completeSubmission(SearchQuery(query))
@@ -176,25 +185,6 @@ struct SearchView: View {
 
   private var searchContent: some View {
     VStack(spacing: 0) {
-      switch inputMode {
-      case .keyboard where isSearchFocused:
-        SearchInputModePicker(
-          selectedMode: .keyboard,
-          selectMode: selectInputMode
-        )
-      case .handwriting:
-        HandwritingInputView(
-          query: $query,
-          recognitionClient: handwritingRecognitionClient,
-          selectMode: selectInputMode,
-          submit: submitComposedQuery
-        )
-      case .radicals:
-        EmptyView()
-      default:
-        EmptyView()
-      }
-
       switch resolvedPresentationState {
       case .idle:
         RecentSearchHistoryView(
@@ -266,7 +256,24 @@ struct SearchView: View {
         }
       }
 
-
+      switch inputMode {
+      case .keyboard where isSearchFocused:
+        SearchInputModePicker(
+          selectedMode: .keyboard,
+          selectMode: selectInputMode
+        )
+      case .handwriting:
+        HandwritingInputView(
+          query: $query,
+          recognitionClient: handwritingRecognitionClient,
+          selectMode: selectInputMode,
+          submit: submitComposedQuery
+        )
+      case .radicals:
+        EmptyView()
+      default:
+        EmptyView()
+      }
     }
   }
 
