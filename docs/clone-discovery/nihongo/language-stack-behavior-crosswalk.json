@@ -2,7 +2,7 @@
   "ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/72",
   "source_provenance_ticket": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/73",
   "source_provenance_record": "source-provenance.json",
-  "research_context": "https://github.com/serpcompany/zenbujapanese-monorepo/blob/research/nihongo-language-stack/docs/clone-discovery/nihongo/language-stack-and-resource-provenance.md",
+  "research_context": "https://github.com/serpcompany/zenbujapanese-monorepo/blob/main/docs/clone-discovery/nihongo/language-stack-and-resource-provenance.md",
   "domain_boundary": "Language facts belong to app-owned Language Reference Data; Japanese Text Analysis, Image Text Recognition, and speech behavior remain focused Shared Capabilities independent of provider schemas.",
   "inputs": [
     {"capability":"dictionary entries","provenance_status":"selected_pinned_official_export","named_component":"JMdict","observation_ids":["BEHAVIOR-OBS-003","BEHAVIOR-OBS-004","BEHAVIOR-OBS-005","BEHAVIOR-OBS-006","BEHAVIOR-OBS-019"],"parity_limit":"Zenbu uses a pinned official JMdict_e.gz snapshot with ent_seq provenance and documented app-owned transforms; exact Nihongo snapshots and edits are not required."},
