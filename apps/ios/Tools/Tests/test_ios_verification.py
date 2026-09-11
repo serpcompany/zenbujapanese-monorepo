@@ -83,7 +83,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                     ios_verification.selection_simulator_resources(manifest, inventory, "ZenbuPR", selected), expected)
         self.assertEqual(ios_verification.selection_simulator_resources(manifest, inventory, "ZenbuSudachiIntegration", None), [])
 
-    def test_merge_repair_gate_selects_only_the_five_affected_journeys(self):
+    def test_merge_repair_gate_selects_only_the_six_affected_journeys(self):
         repo = Path(__file__).parents[4]
         manifest = ios_verification.load_and_validate_manifest(repo / "apps/ios/VerificationPolicy.json")
         resolved = ios_verification.resolve_plan(
@@ -92,9 +92,9 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         )
         matrix = ios_verification.merge_candidate_matrix(manifest, resolved["selectors"], ios_verification.repository_inventory(repo))["include"]
         self.assertEqual(len(matrix), 1)
-        self.assertEqual(matrix[0]["test_count"], 5)
+        self.assertEqual(matrix[0]["test_count"], 6)
         self.assertEqual(set(matrix[0]["selectors"]), {
-            "ui.conjugations-suru-regression", "ui.conjugations-kuru-regression",
+            "ui.conjugations-adjective-regression", "ui.conjugations-suru-regression", "ui.conjugations-kuru-regression",
             "ui.conjugations-dark-adaptive-regression", "ui.radical-selection-regression",
             "ui.refactor-pickers-photos-cancel",
         })

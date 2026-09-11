@@ -302,11 +302,13 @@ The required jobs always report a conclusion. Non-iOS PRs therefore pass the
 gate without starting macOS runners instead of remaining permanently pending
 because an entire required workflow was path-filtered away.
 
-The manual `merge-repair-regressions` capability runs only the five affected
+The manual `merge-repair-regressions` capability runs only the six affected
 conjugation, radical-selection, and empty-Photos-cancellation methods on hosted
 Xcode 26.5. It reports a focused context and cannot satisfy the full required gate.
 Conjugation measurements use one coherent snapshot per section and move rows below
-sticky headers before asserting their unchanged geometry bounds.
+sticky headers before asserting their unchanged geometry bounds. Ordinary form
+inspection uses the List viewport; accessibility callers retain their explicit,
+stricter unobscured bounds above the floating tab bar.
 
 ## Runner contract
 
