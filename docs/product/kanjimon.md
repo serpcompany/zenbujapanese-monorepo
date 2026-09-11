@@ -18,7 +18,7 @@ Its central idea is that photographing kanji encountered in the world can feel l
 
 ## Historical evidence
 
-- `/Users/devin/dev/repos/github@zenbujapanese/zenbujapanese-monorepo/docs/product-ideas/kanjimon.md`
+- `https://github.com/zenbujapanese/research/blob/main/product-ideas/kanjimon.md`
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/kanjimon-prototype-1`
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/kanjimon-prototype-2`
 

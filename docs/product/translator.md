@@ -40,7 +40,7 @@ Owll Translator research, earlier Zenbu prototypes, and existing provider-compar
 
 Relevant historical material includes:
 
-- `/Users/devin/dev/repos/github@zenbujapanese/zenbujapanese-monorepo/docs/product-ideas/zenbu-translator.md`
+- `https://github.com/zenbujapanese/research/blob/main/product-ideas/zenbu-translator.md`
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/japanese-app-v2/docs/reference/translate-flow.md`
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/japanese-app-v2/docs/reference/owll-translator-reference-stack-notes.md`
 - `/Users/devin/dev/repos/github@zenbujapanese/prototypes/japanese-app-v2/docs/product/features/translate.md`
