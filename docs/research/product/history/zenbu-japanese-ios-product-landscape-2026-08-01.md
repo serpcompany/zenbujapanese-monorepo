@@ -189,4 +189,4 @@ The breadth-first product landscape is sufficiently mapped for this stage. Conti
 - [Translator](../../../product/translator.md)
 - [AI Sensei](../../../product/ai-sensei.md)
 - [KanjiMon](../../../product/kanjimon.md)
-- [Language capability boundaries](../../../adr/0001-language-capability-boundaries.md)
+- [Keep language data and tools replaceable](../../../adr/0001-keep-language-data-and-tools-replaceable.md)

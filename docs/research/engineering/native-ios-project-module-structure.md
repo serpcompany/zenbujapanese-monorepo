@@ -5,7 +5,7 @@ Research supporting the Wayfinder decision [Choose the native iOS project and mo
 ## Decision context
 
 - Zenbu Japanese is one installed iPhone app with three initial **Product Experiences**: Lookup, Translator, and Media Library. The app shell coordinates routing and composition without taking ownership of Product Experience histories or records. See the resolutions of [Fix the initial MVP Product Experience boundary](https://github.com/serpcompany/zenbujapanese-monorepo/issues/2) and [Establish the cross-product ownership rules](https://github.com/serpcompany/zenbujapanese-monorepo/issues/3).
-- The eight initial **Shared Capabilities** are app-owned contracts, explicitly not commitments to eight packages or custom implementations. Product Experiences must depend on app-owned models and capability interfaces rather than provider schemas. See [Inventory the MVP Shared Capabilities and their contracts](https://github.com/serpcompany/zenbujapanese-monorepo/issues/4) and [ADR 0001](../../adr/0001-language-capability-boundaries.md).
+- The eight initial **Shared Capabilities** are app-owned contracts, explicitly not commitments to eight packages or custom implementations. Product Experiences must depend on app-owned models and capability interfaces rather than provider schemas. See [Inventory the MVP Shared Capabilities and their contracts](https://github.com/serpcompany/zenbujapanese-monorepo/issues/4) and [ADR 0001](../../adr/0001-keep-language-data-and-tools-replaceable.md).
 - The first implementation targets iPhone and iOS 26 or later. See [Define the supported Apple platform and device baseline](https://github.com/serpcompany/zenbujapanese-monorepo/issues/16).
 
 ## Primary-source findings

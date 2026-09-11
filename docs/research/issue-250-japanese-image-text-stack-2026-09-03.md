@@ -66,7 +66,7 @@ Use this modular target stack:
    native caption tracks, WebVTT/SRT files, or speech transcription. Do not OCR
    ordinary video frames when text already exists.
 
-This follows [ADR 0001](../adr/0001-language-capability-boundaries.md): provider
+This follows [ADR 0001](../adr/0001-keep-language-data-and-tools-replaceable.md): provider
 modules remain replaceable Language Technology behind app-owned Image Text
 Recognition and Japanese Text Analysis boundaries. It does not select a cloud
 provider or authorize a package/data addition.

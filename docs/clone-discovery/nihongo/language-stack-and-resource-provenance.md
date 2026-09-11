@@ -119,7 +119,7 @@ Use the following implementation-handoff language unless later evidence supersed
 - **Unknown/proprietary behavior:** search ranking, commonality weights, tokenizer, parser, lemma resolution, deinflection, conjugation rules, handwriting recognition, offline OCR, recognized-text grouping, kanji decomposition/visual-history compilation, stroke data, TTS configuration, and audio-selection/fallback logic.
 - **Candidate substitutes:** KANJIDIC2/RADKFILE/KRADFILE, KanjiVG, UniDic with a measured analyzer, Apple Vision, and Apple speech synthesis. Record each as a proposed substitute until fixture comparison and stakeholder approval establish an acceptable variance.
 
-All ingested facts should remain **Language Reference Data** with source/version/license provenance independent of provider schemas. Tokenization, OCR, speech, and other replaceable algorithms should remain behind focused Shared Capability interfaces, consistent with `docs/adr/0001-language-capability-boundaries.md`.
+All ingested facts should remain **Language Reference Data** with source/version/license provenance independent of provider schemas. Tokenization, OCR, speech, and other replaceable algorithms should remain behind focused Shared Capability interfaces, consistent with `docs/adr/0001-keep-language-data-and-tools-replaceable.md`.
 
 ## Source index
 

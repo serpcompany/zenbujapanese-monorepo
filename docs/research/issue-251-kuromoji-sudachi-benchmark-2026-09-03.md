@@ -47,7 +47,7 @@ The selected component is replaceable **Language Technology** behind app-owned
 POS, OOV, and provider-version evidence. It does not own
 `LanguageReferenceID`, Dictionary Ranking, Image Text geometry, recognition,
 overlay selection, navigation, or Encounter Media. This follows
-[ADR 0001](../adr/0001-language-capability-boundaries.md).
+[ADR 0001](../adr/0001-keep-language-data-and-tools-replaceable.md).
 
 Migaku is not a candidate. The captured historical Migaku 1.30.8 runtime proves
 a Kuromoji-named foundation plus separate proprietary parsing and deconjugation;
