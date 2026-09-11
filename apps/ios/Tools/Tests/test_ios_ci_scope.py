@@ -1,6 +1,8 @@
 import importlib.util
 import io
 from pathlib import Path
+import subprocess
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 from unittest.mock import patch
@@ -123,7 +125,41 @@ class IOSCIScopeTests(unittest.TestCase):
         with redirect_stdout(output):
             result = ios_ci_scope.main(["--force", "true"])
         self.assertEqual(result, 0)
+        self.assertIn("ios_runtime_changed=true\n", output.getvalue())
         self.assertTrue(output.getvalue().endswith("ios_changed=true\n"))
+
+    def test_runtime_rename_outside_ios_keeps_both_paths_for_classification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "config", "user.email", "ci-scope@example.invalid"],
+                cwd=repository,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.name", "CI Scope Test"],
+                cwd=repository,
+                check=True,
+            )
+            source = repository / "apps/ios/App/App.swift"
+            source.parent.mkdir(parents=True)
+            source.write_text("struct App {}\n", encoding="utf-8")
+            subprocess.run(["git", "add", "."], cwd=repository, check=True)
+            subprocess.run(["git", "commit", "-qm", "base"], cwd=repository, check=True)
+            base = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=repository, text=True
+            ).strip()
+            destination = repository / "docs/App.swift"
+            destination.parent.mkdir()
+            source.rename(destination)
+            subprocess.run(["git", "add", "-A"], cwd=repository, check=True)
+            subprocess.run(["git", "commit", "-qm", "move"], cwd=repository, check=True)
+
+            paths = ios_ci_scope.changed_paths(base, "HEAD", repository)
+
+        self.assertEqual(paths, ["apps/ios/App/App.swift", "docs/App.swift"])
+        self.assertTrue(any(ios_ci_scope.is_ios_runtime_path(path) for path in paths))
 
     @patch.object(ios_ci_scope.subprocess, "run")
     def test_changed_paths_use_merge_base_semantics(self, run):
@@ -133,7 +169,8 @@ class IOSCIScopeTests(unittest.TestCase):
             ["apps/ios/App/ZenbuJapaneseApp.swift"],
         )
         run.assert_called_once_with(
-            ["git", "diff", "--name-only", "base-sha...head-sha"],
+            ["git", "diff", "--no-renames", "--name-only", "base-sha...head-sha"],
+            cwd=None,
             check=True,
             capture_output=True,
             text=True,

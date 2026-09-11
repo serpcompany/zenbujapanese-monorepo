@@ -57,9 +57,12 @@ def is_ios_runtime_path(path: str) -> bool:
     return is_ios_relevant_path(normalized)
 
 
-def changed_paths(base_sha: str, head_sha: str) -> list[str]:
+def changed_paths(
+    base_sha: str, head_sha: str, repo_root: Path | None = None
+) -> list[str]:
     result = subprocess.run(
-        ["git", "diff", "--name-only", f"{base_sha}...{head_sha}"],
+        ["git", "diff", "--no-renames", "--name-only", f"{base_sha}...{head_sha}"],
+        cwd=repo_root,
         check=True,
         capture_output=True,
         text=True,
