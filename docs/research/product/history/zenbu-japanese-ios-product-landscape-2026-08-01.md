@@ -8,6 +8,8 @@ Last updated: 2026-08-01
 
 This document is preserved only as migration evidence. Do not use it as an active plan or add decisions and implementation tasks here.
 
+Historical terminology: this 2026-08-01 record used `User Library` for the then-current concept. The current canonical term is `Media Library`, but the terms are not exact synonyms: current `CONTEXT.md` excludes Lookup history and Saved Language Items from Media Library.
+
 [Map the Zenbu Japanese iOS project foundation](https://github.com/serpcompany/zenbujapanese-monorepo/issues/1) is the canonical planning artifact. [Verify migration coverage of the legacy iOS plan](https://github.com/serpcompany/zenbujapanese-monorepo/issues/38) records where this document's decisions, open questions, research requirements, evidence boundaries, and workflow constraints moved.
 
 This plan defines a new native iOS implementation informed by external historical prototypes that were not retained in this repository, without treating any one prototype as the complete product specification or target architecture.
@@ -67,7 +69,7 @@ Potential inputs include pasted text, subtitles, scripts, PDFs, audio, video, an
 
 Media Analysis MVP:
 
-- stores durable analysis results in the device-local User Library
+- stores durable analysis results in the then-current device-local User Library concept
 - does not make Zenbu a file-storage service
 - does not require an account, sync, public catalog, community publishing, or Zenbu content curation
 - uses reference classifications rather than personalized learner-readiness scoring
@@ -81,9 +83,9 @@ Read, Watch, and Listen are separate deferred **Consumption Experiences**, not p
 
 See [Media Analysis](../../../product/media-analysis.md) and [Media Library](../../../product/media-library.md).
 
-### User Library
+### User Library (historical terminology)
 
-The User Library is the learner's private, device-local collection of saved Lookup Capture results and Media Entries. It stores the durable value produced by Zenbu's tools, not a managed copy of every imported file.
+In this historical plan, the User Library concept is the learner's private, device-local collection of saved Lookup Capture results and Media Entries. It stores the durable value produced by Zenbu's tools, not a managed copy of every imported file.
 
 Learners may create and name their own Collections. Public catalogs, community publishing, curated content, account sync, and backup are possible later layers rather than MVP requirements.
 
@@ -115,6 +117,8 @@ Settings, account behavior, navigation grouping, and the exact menu/drop-up pres
 
 ## Preserved evidence and boundaries
 
+The absolute paths below record historical external checkout locations and are not expected to resolve within this repository.
+
 - The strongest existing full-product UI and Zenbu visual-direction reference is `/Users/devin/dev/repos/github@zenbujapanese/prototypes/japanese-app-v2/_archive/nextjs-app`.
 - The working TestFlight single-image OCR flow lives under `/Users/devin/dev/repos/github@zenbujapanese/prototypes/japanese-app-v2`. Its OCR interaction is preliminary Lookup reference material, and its natural translation is a required Lookup MVP addition.
 - The TestFlight flow's latency and network dependency remain technical problems to investigate later. The desired direction is fast local or offline processing wherever evaluation shows it is feasible; no concrete implementation has been selected.
@@ -143,7 +147,7 @@ The Media Analysis landscape pass is sufficiently defined for now:
 
 - it analyzes a larger bounded work as one entity
 - it is distinct from single-shot Lookup Capture
-- MVP produces durable, device-local analysis in the User Library
+- MVP produces durable, device-local analysis in the then-current User Library concept
 - MVP uses reference classifications rather than learner-personalized scoring
 - MVP does not include file storage, public catalogs, community publishing, curated content, or interactive consumption experiences
 - Watch, Reader, and Listen remain separate deferred product definitions
