@@ -397,3 +397,7 @@ private enum SearchExperienceTab: Hashable {
   case search
   case you
 }
+
+#Preview("Search") {
+  SearchExperienceRootView()
+}

@@ -4,8 +4,7 @@
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
-      buildImplicitDependencies = "YES"
-      runPostActionsOnFailure = "NO">
+      buildImplicitDependencies = "YES">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -30,7 +29,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "5CD4552D207F8AC0D2D15CD6"
-               BuildableName = "ZenbuJapanese.app"
+               BuildableName = "Zenbu Japanese.app"
                BlueprintName = "ZenbuJapanese"
                ReferencedContainer = "container:ZenbuJapanese.xcodeproj">
             </BuildableReference>
@@ -55,13 +54,12 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES"
-      onlyGenerateCoverageForSpecifiedTargets = "NO">
+      shouldUseLaunchSchemeArgsEnv = "YES">
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5CD4552D207F8AC0D2D15CD6"
-            BuildableName = "ZenbuJapanese.app"
+            BuildableName = "Zenbu Japanese.app"
             BlueprintName = "ZenbuJapanese"
             ReferencedContainer = "container:ZenbuJapanese.xcodeproj">
          </BuildableReference>
@@ -90,8 +88,6 @@
             reference = "container:TestPlans/ZenbuSudachiIntegration.xctestplan">
          </TestPlanReference>
       </TestPlans>
-      <CommandLineArguments>
-      </CommandLineArguments>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -108,7 +104,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5CD4552D207F8AC0D2D15CD6"
-            BuildableName = "ZenbuJapanese.app"
+            BuildableName = "Zenbu Japanese.app"
             BlueprintName = "ZenbuJapanese"
             ReferencedContainer = "container:ZenbuJapanese.xcodeproj">
          </BuildableReference>
@@ -125,7 +121,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5CD4552D207F8AC0D2D15CD6"
-            BuildableName = "ZenbuJapanese.app"
+            BuildableName = "Zenbu Japanese.app"
             BlueprintName = "ZenbuJapanese"
             ReferencedContainer = "container:ZenbuJapanese.xcodeproj">
          </BuildableReference>
