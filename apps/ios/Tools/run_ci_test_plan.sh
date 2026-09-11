@@ -255,6 +255,7 @@ set -e
 test_finished="$(seconds)"
 
 tests_started=0
+tests_export_exit=0
 if [[ -d "$result_bundle" ]]; then
   set +e
   result_summary="$(
@@ -267,6 +268,7 @@ if [[ -d "$result_bundle" ]]; then
     printf '%s\n' "$result_summary" > "${result_bundle}.results.json"
     xcrun xcresulttool get test-results tests --path "$result_bundle" --format json \
       > "${result_bundle}.tests.json" 2>>"$test_log"
+    tests_export_exit=$?
     tests_started="$(printf '%s' "$result_summary" | jq -r '.totalTestCount // 0' 2>>"$test_log")"
     result_summary_exit=$?
   fi
@@ -281,6 +283,10 @@ failure_category=unclassified-zero-test
 if [[ "$test_status" -eq 0 && "$tests_started" -eq 0 ]]; then
   failure_category=zero-test-success
   test_status=67
+elif [[ "$test_status" -eq 0 && "$tests_export_exit" -ne 0 ]]; then
+  printf 'Unable to export the executed test inventory (exit %s).\n' "$tests_export_exit" >> "$test_log"
+  failure_category=test-inventory-export-failure
+  test_status="$tests_export_exit"
 elif [[ "$test_status" -eq 0 ]]; then
   failure_category=success
 elif [[ "$tests_started" -gt 0 ]]; then
@@ -295,6 +301,8 @@ fi
 failure_json="$(
   if [[ "$failure_category" == success ]]; then
     printf '%s\n' '{"classification":"success","rerun_eligible":false}'
+  elif [[ "$failure_category" == test-inventory-export-failure ]]; then
+    printf '%s\n' '{"classification":"test-inventory-export-failure","rerun_eligible":false}'
   elif [[ "$failure_category" == zero-test-success ]]; then
     printf '%s\n' '{"classification":"zero-test-success","rerun_eligible":false}'
   else

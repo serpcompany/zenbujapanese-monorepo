@@ -46,6 +46,7 @@ elif args[0] == "simctl":
 elif args[:4] == ["xcresulttool", "get", "test-results", "summary"]:
     print(json.dumps({"totalTestCount": 1, "result": "Passed"}))
 elif args[:4] == ["xcresulttool", "get", "test-results", "tests"]:
+    if os.environ["RUNNER_FAILURE"] == "export": sys.exit(19)
     print(json.dumps({"testNodes": []}))
 else: sys.exit(99)
 '''
@@ -87,6 +88,13 @@ else: sys.exit(99)
         self.assertEqual(summary["durations_seconds"]["test"], 0)
         self.assertGreater(summary["durations_seconds"]["build"], 0)
         self.assertEqual(summary["failure"]["classification"], "post-build-setup-failure")
+
+    def test_inventory_export_failure_cannot_report_a_successful_lane(self):
+        result, events, summary = self.run_runner("export")
+        self.assertEqual(result.returncode, 19, result.stderr)
+        self.assertIn("test", events)
+        self.assertEqual(summary["tests_started"], 1)
+        self.assertEqual(summary["failure"]["classification"], "test-inventory-export-failure")
 
     def test_build_failure_cleans_up_without_starting_tests(self):
         result, events, summary = self.run_runner("build")
