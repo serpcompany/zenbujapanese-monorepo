@@ -6114,7 +6114,16 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let navigationBar = app.navigationBars.firstMatch
     XCTAssertTrue(navigationBar.waitForExistence(timeout: 3), "Expected a native navigation bar")
     let backButton = navigationBar.buttons.firstMatch
-    XCTAssertTrue(backButton.waitForExistence(timeout: 3), "Expected a native Back button")
+    // Native navigation can expose a hittable Back button before enabling it.
+    // Run 34551526451 tapped the greyed-out control and remained in Word Detail.
+    let ready = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "exists == true AND enabled == true AND hittable == true"),
+      object: backButton
+    )
+    XCTAssertEqual(
+      XCTWaiter.wait(for: [ready], timeout: 3), .completed,
+      "Expected an enabled, hittable native Back button"
+    )
     return backButton
   }
 
