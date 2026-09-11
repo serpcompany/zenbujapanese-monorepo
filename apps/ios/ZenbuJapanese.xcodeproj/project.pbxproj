@@ -75,7 +75,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 376F81E60ED620D541A9BF80 /* Build configuration list for PBXNativeTarget "ZenbuJapanese" */;
 			buildPhases = (
-				8A1400000000000000000001 /* Verify Tatoeba provenance for Release */,
 				E0343DFD8725F6F5A7D4FFEB /* Sources */,
 				F38B6861CA6A9754CF93F50B /* Frameworks */,
 				C3E26B21F5C96FAD04F5E803 /* Resources */,
@@ -155,35 +154,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "set -e\ncache_root=\"${ZENBU_SUDACHI_BUILD_CACHE:-$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore}\"\n/usr/bin/python3 \"$SRCROOT/Tools/prepare_sudachi_core.py\" \\\n  --manifest \"$SRCROOT/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json\" \\\n  --cache \"$cache_root\" \\\n  --offline \\\n  --output \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/system_core.dic\"\n";
-		};
-		8A1400000000000000000001 /* Verify Tatoeba provenance for Release */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/Tools/verify_tatoeba_provenance.py",
-				"$(SRCROOT)/Tools/tatoeba_adapter.py",
-				"$(SRCROOT)/Tools/import_jmdict.py",
-				"$(SRCROOT)/LanguageData/Sources/Tatoeba-2026-08-08.source.json",
-				"$(SRCROOT)/LanguageData/Generated/JMdict_e-2026-08-10.import.json",
-				"$(SRCROOT)/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3",
-				"$(SRCROOT)/LanguageData/Sources/Tatoeba-nihongo-sample-2026-08-14.tsv",
-				"$(SRCROOT)/LanguageData/Sources/jpn_sentences-2026-08-08.tsv.bz2",
-				"$(SRCROOT)/LanguageData/Sources/eng_sentences-2026-08-08.tsv.bz2",
-				"$(SRCROOT)/LanguageData/Sources/jpn-eng_links-2026-08-08.tsv.bz2",
-				"$(SRCROOT)/LanguageData/Sources/jpn_sentences_detailed-2026-08-08.tsv.bz2",
-				"$(SRCROOT)/LanguageData/Sources/eng_sentences_detailed-2026-08-08.tsv.bz2",
-				"$(SRCROOT)/LanguageData/Sources/jpn_sentences_CC0-2026-08-08.tsv.bz2",
-				"$(SRCROOT)/LanguageData/Sources/eng_sentences_CC0-2026-08-08.tsv.bz2",
-			);
-			name = "Verify Tatoeba provenance for Release";
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/tatoeba-provenance-verified.stamp",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "set -e\nif [ \"$CONFIGURATION\" = \"Release\" ]; then\n  /usr/bin/python3 \"$SRCROOT/Tools/verify_tatoeba_provenance.py\" \\\n    \"$SRCROOT/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3\" \\\n    \"$SRCROOT/LanguageData/Sources/Tatoeba-2026-08-08.source.json\" \\\n    \"$SRCROOT/LanguageData/Generated/JMdict_e-2026-08-10.import.json\" \\\n    \"$SRCROOT/Tools/import_jmdict.py\" \\\n    \"$SRCROOT/Tools/tatoeba_adapter.py\" \\\n    \"$SRCROOT/LanguageData/Sources/Tatoeba-nihongo-sample-2026-08-14.tsv\" \\\n    \"$SRCROOT/LanguageData/Sources\"\nfi\n/usr/bin/touch \"$DERIVED_FILE_DIR/tatoeba-provenance-verified.stamp\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

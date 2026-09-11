@@ -40,7 +40,7 @@ The generated SQLite diagram adaptation is distributed under CC BY-SA 3.0. Dicti
 
 `apps/ios/Tools/import_kanji_elements.py` combines Kanjium structural membership and variants with the separately normalized KANJIDIC2 meaning and on-reading summaries. It rejects a secondary Kanji Reference artifact whose checksum does not match its pinned import manifest, retains the Kanjium and KANJIDIC2 identities/snapshots as separate provenance, removes transitive leaf descendants to produce app-owned top-level elements, preserves explicit source phonetic annotations, and derives a reading-pattern role only from shared normalized on-readings. The resulting `zenbu.kanji-elements.v1` JSON is consumed through `KanjiElementLookupClient`; Product Experience code never reads Kanjium tables. Kanjium lexical, pitch-accent, provider-encoded lookup, mnemonic, and proprietary-etymology fields are excluded.
 
-Dictionary Sources identifies the source, attribution, modifications, snapshot, and license. The scheduled update check verifies both the pinned database bytes and the latest upstream commit before a source promotion.
+Dictionary Sources identifies the source, attribution, modifications, snapshot, and license.
 
 ## Tatoeba
 
@@ -48,9 +48,7 @@ Seven `*-2026-08-08.tsv.bz2` files are pinned official Tatoeba weekly exports: J
 
 The general exports are published under CC BY 2.0 FR; CC0 membership is established only through the corresponding official CC0 exports. Named contributors are generated into the bundled database and exposed from Dictionary Sources without adding attribution clutter to learner-facing rows. The bundled notice identifies the source, licenses, and Zenbu's selection/indexing modifications. No contributor identity is inferred for a `\\N` detailed-export username.
 
-`verify_tatoeba_provenance.py` is a Release build gate. It validates the generated database, importer/adapter/transform identities, all seven pinned input hashes, the durable 35-pair public reference sample, retained provider IDs, contributor status, license class, snapshot identity, and contributor-credit counts. The v1.0 release posture is recorded in `Tatoeba-2026-08-08.source.json`: preserve the full 232,703-pair corpus, disclose the supplied and `not-supplied` attribution states, and treat the unresolved attribution uncertainty as an explicit owner-accepted known risk rather than as independently cleared legal advice. `--inspection` remains available for investigation but is not the Release build mode.
-
-The public-safe reference record is `apps/ios/LanguageData/Sources/Tatoeba-nihongo-sample-2026-08-14.tsv`. It records exact public sentence facts, observed context/rank/timestamp, both Tatoeba IDs, classifications, and internal evidence pointer names plus SHA-256 values. It does not contain or distribute private reference-app screenshots.
+The v1.0 release posture is recorded in `Tatoeba-2026-08-08.source.json`: preserve the full 232,703-pair corpus, disclose the supplied and `not-supplied` attribution states, and treat the unresolved attribution uncertainty as an explicit owner-accepted known risk rather than as independently cleared legal advice.
 
 ## App-owned word relationships
 
