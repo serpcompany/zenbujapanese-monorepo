@@ -50,6 +50,14 @@ print(f"{float(sys.argv[2]) - float(sys.argv[1]):.3f}")
 PY
 }
 
+setup_elapsed_after_build() {
+  python3 - "$setup_started" "$setup_finished" "$build_finished" "$1" <<'PYTIME'
+import sys
+start, prebuild_end, build_end, setup_end = map(float, sys.argv[1:])
+print(f"{prebuild_end - start + setup_end - build_end:.3f}")
+PYTIME
+}
+
 setup_started="$(seconds)"
 setup_finished="$setup_started"
 build_started="$setup_started"
@@ -93,7 +101,11 @@ finalize() {
       setup_duration="$(elapsed "$setup_started" "$failed_at")"
     elif [[ "$phase" == build ]]; then
       build_duration="$(elapsed "$build_started" "$failed_at")"
+    elif [[ "$phase" == post-build-setup ]]; then
+      setup_duration="$(setup_elapsed_after_build "$failed_at")"
+      build_duration="$(elapsed "$build_started" "$build_finished")"
     else
+      setup_duration="$(setup_elapsed_after_build "$test_started")"
       build_duration="$(elapsed "$build_started" "$build_finished")"
       test_duration="$(elapsed "$test_started" "$failed_at")"
     fi
@@ -143,16 +155,8 @@ if [[ -z "${ZENBU_DERIVED_DATA:-}" ]]; then
 fi
 
 xcrun simctl boot "$simulator_id"
-xcrun simctl bootstatus "$simulator_id" -b
-
-# A real local Photos asset makes picker selection deterministic on a fresh device.
-# This UUID was created by this invocation; personal Simulator libraries are untouched.
-photo_setup_started="$(seconds)"
-if [[ "$requires_photo_fixture" == true ]]; then
-  xcrun simctl addmedia "$simulator_id" "$repo_root/docs/clone-discovery/nihongo/fixtures/image-text/fixture-clear-horizontal.png"
-fi
-printf 'photos_fixture_required=%s photos_setup_seconds=%s\n' \
-  "$requires_photo_fixture" "$(elapsed "$photo_setup_started" "$(seconds)")"
+# Boot continues asynchronously while build-for-testing prepares the products.
+# Wait for readiness and seed requested resources before executing any test.
 
 xcode_version="$(xcodebuild -version | tr '\n' ' ' | sed 's/ $//')"
 fingerprint_arguments=()
@@ -208,7 +212,18 @@ else
 fi
 build_finished="$(seconds)"
 
-test_started="$build_finished"
+phase=post-build-setup
+xcrun simctl bootstatus "$simulator_id" -b
+
+# Only this invocation's fresh device receives the requested Photos fixture.
+photo_setup_started="$(seconds)"
+if [[ "$requires_photo_fixture" == true ]]; then
+  xcrun simctl addmedia "$simulator_id" "$repo_root/docs/clone-discovery/nihongo/fixtures/image-text/fixture-clear-horizontal.png"
+fi
+printf 'photos_fixture_required=%s photos_setup_seconds=%s\n' \
+  "$requires_photo_fixture" "$(elapsed "$photo_setup_started" "$(seconds)")"
+
+test_started="$(seconds)"
 phase="test"
 test_log="${result_bundle}.xcodebuild.log"
 test_command=(xcodebuild test-without-building \
@@ -279,7 +294,7 @@ failure_json="$(
   fi
 )"
 
-setup_duration="$(elapsed "$setup_started" "$setup_finished")"
+setup_duration="$(setup_elapsed_after_build "$test_started")"
 build_duration="$(elapsed "$build_started" "$build_finished")"
 test_duration="$(elapsed "$test_started" "$test_finished")"
 python3 "$tool_dir/ios_verification.py" summary \

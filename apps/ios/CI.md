@@ -320,6 +320,11 @@ stricter unobscured bounds above the floating tab bar.
 
 ## Runner contract
 
+The runner starts its owned simulator before building and waits for boot completion
+after the build. Requested Photos assets are seeded before test execution. Setup
+timings include any remaining post-build readiness work; overlapping boot time is
+not counted twice in total elapsed time.
+
 `run_selected_test_plan.sh` translates only manifest selector IDs, including the
 repository-generated merge partition selectors, into Xcode test identifiers.
 The `ios_verification.py tests` adapter returns tagged JSON with either
