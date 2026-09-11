@@ -7,7 +7,7 @@ This directory owns the primary installed iOS product and its complete build, me
 - Open [`ZenbuJapanese.xcodeproj`](ZenbuJapanese.xcodeproj/) for the application.
 - [`App/`](App/) owns the application target and bundled resources.
 - [`Modules/`](Modules/) owns Swift packages and Product Experience implementations used by the app.
-- [`Tools/`](Tools/) owns repository-supported iOS language-data, privacy, parity, and release automation.
+- [`Tools/`](Tools/) owns repository-supported iOS language-data import and build preparation tools.
 - [`metadata/`](metadata/) contains the canonical App Store metadata consumed by `asc metadata` commands.
 
 ## Operating documentation
