@@ -4509,7 +4509,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     XCTAssertTrue(addNote.isHittable)
     XCTAssertEqual(addNote.label, "Add Note")
     XCTAssertFalse(app.buttons["word-detail.note"].exists)
-    XCTAssertTrue(app.staticTexts["No source-matched examples"].exists)
+    // Examples resolve independently of the note controls.
+    XCTAssertTrue(app.staticTexts["No source-matched examples"].waitForExistence(timeout: 3))
     recordScreenshot(named: "word-note-homograph-isolation", app: app)
   }
 
