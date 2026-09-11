@@ -1,4 +1,4 @@
-# Agent map
+# AGENTS
 
 Use this file only for routing. Open the smallest source whose condition matches the task.
 
