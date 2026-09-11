@@ -10,7 +10,6 @@ final class ReadingAidPreferences {
   }
 
   private static let storageKey = "reading-aids.preferences.v1"
-  private static var didPrepareDefaultsForProcess = false
   private let defaults: UserDefaults
 
   var showsFurigana = true {
@@ -20,17 +19,8 @@ final class ReadingAidPreferences {
     didSet { persist() }
   }
 
-  init(
-    defaults: UserDefaults = .standard,
-    processArguments: [String] = ProcessInfo.processInfo.arguments
-  ) {
+  init(defaults: UserDefaults = .standard) {
     self.defaults = defaults
-    let requestsReset = processArguments.contains("-ResetReadingAidPreferences")
-    let resetsThisInitialization = requestsReset && !Self.didPrepareDefaultsForProcess
-    if requestsReset { Self.didPrepareDefaultsForProcess = true }
-    if resetsThisInitialization {
-      defaults.removeObject(forKey: Self.storageKey)
-    }
     guard
       let data = defaults.data(forKey: Self.storageKey),
       let stored = try? JSONDecoder().decode(StoredPreferences.self, from: data)

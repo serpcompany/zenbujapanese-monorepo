@@ -24,15 +24,12 @@ private actor WordNoteStorage {
   static let shared = WordNoteStorage()
   private let defaults = UserDefaults.standard
   private let storageKey = "lookup.word-notes.v4"
-  private var didPrepare = false
 
   func load(_ id: WordNoteID) -> [LearnerWordNote] {
-    resetForUITestingIfRequested()
     return notes()[id.rawValue] ?? []
   }
 
   func save(_ incomingNotes: [LearnerWordNote], for id: WordNoteID) {
-    resetForUITestingIfRequested()
     var stored = notes()
     let normalized = incomingNotes.compactMap { note -> LearnerWordNote? in
       let text = note.text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -54,15 +51,5 @@ private actor WordNoteStorage {
   private func write(_ notes: [String: [LearnerWordNote]]) {
     guard let data = try? JSONEncoder().encode(notes) else { return }
     defaults.set(data, forKey: storageKey)
-  }
-
-  private func resetForUITestingIfRequested() {
-    guard !didPrepare else { return }
-    didPrepare = true
-    #if DEBUG
-      if ProcessInfo.processInfo.arguments.contains("-ResetWordNotes") {
-        defaults.removeObject(forKey: storageKey)
-      }
-    #endif
   }
 }
