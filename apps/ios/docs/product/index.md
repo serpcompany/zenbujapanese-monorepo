@@ -27,7 +27,3 @@ association from one word, or delete the image and all of its word associations.
 These images are stored locally and participate in normal system-managed device backup. The
 Media Library is not currently a general file store, import system, analysis tool, sync service,
 or publishing destination.
-
-Future concepts, competitor observations, prototypes, and unapproved product plans belong
-in the private [`zenbujapanese/research`](https://github.com/zenbujapanese/research)
-repository. Work that is ready to be decided or implemented belongs in GitHub Issues.

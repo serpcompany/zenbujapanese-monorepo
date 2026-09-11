@@ -46,9 +46,3 @@ Image Search recognizes Japanese text in one or more selected images. A learner 
 
 The Image Search session itself is temporary. Opening a recognized word associates the
 source image with that word as Encounter Media, which then appears in the Media Library.
-
-## Related settings
-
-The **You** tab provides independent Furigana and Romaji preferences, management of optional
-frequency dictionaries and Japanese Text Analysis resources, and source credits and
-attributions.
