@@ -62,7 +62,7 @@ No executable was extracted, decrypted, disassembled, or decompiled. No personal
 
 ### Historically observed attributions requiring installed-build recapture
 
-These records came from the preliminary local research named in `docs/product/lookup.md`. They are useful leads, not current dossier authority until the installed version's acknowledgment/source screens are captured with app version and date.
+These records came from preliminary local research that preceded `apps/ios/docs/product/lookup.md`. They are useful leads, not current dossier authority until the installed version's acknowledgment/source screens are captured with app version and date.
 
 | Lead | Historical observation | Upstream reuse posture |
 | --- | --- | --- |

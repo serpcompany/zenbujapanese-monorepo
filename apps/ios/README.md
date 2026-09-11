@@ -11,6 +11,7 @@ This directory owns the primary installed iOS product and its complete build, me
 
 ## Operating documentation
 
+- [`docs/product/`](docs/product/) describes current user-facing iOS behavior.
 - [`ReleasePrivacyAudit.md`](ReleasePrivacyAudit.md) defines release privacy and security auditing.
 - [`CHANGELOG.md`](CHANGELOG.md), [`screenshots/`](screenshots/), and [iOS release records](../../docs/releases/ios/) are owned by this delivery surface.
 
