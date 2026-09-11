@@ -2,34 +2,6 @@ import CryptoKit
 import Foundation
 import SQLite3
 
-#if DEBUG
-  actor FrequencyPackDebugDownloadGate {
-    static let shared = FrequencyPackDebugDownloadGate()
-
-    private var waiter: CheckedContinuation<Void, Never>?
-    private var releasedBeforeWaiting = false
-
-    func wait() async {
-      if releasedBeforeWaiting {
-        releasedBeforeWaiting = false
-        return
-      }
-      await withCheckedContinuation { continuation in
-        waiter = continuation
-      }
-    }
-
-    func release() {
-      guard let waiter else {
-        releasedBeforeWaiting = true
-        return
-      }
-      self.waiter = nil
-      waiter.resume()
-    }
-  }
-#endif
-
 struct FrequencyCapability: Sendable {
   private let batchLookup:
     @Sendable ([LanguageReferenceID]) async throws -> [LanguageReferenceID: FrequencyLookupResult]
@@ -477,25 +449,12 @@ private actor FrequencyPackStore {
       return
     }
     let storageDirectory = support.appendingPathComponent("FrequencyPacks", isDirectory: true)
-    #if DEBUG
-      if ProcessInfo.processInfo.arguments.contains("-ResetFrequencyPacks") {
-        try? FileManager.default.removeItem(at: storageDirectory)
-      }
-    #endif
     manager = try? FrequencyPackManager(
       catalog: catalog,
       bundledArtifactURL: bundledArtifactURL,
       languageDataURL: languageDataURL,
       storageDirectory: storageDirectory,
       download: { url in
-        #if DEBUG
-          if ProcessInfo.processInfo.arguments.contains("-FrequencyPackDownloadGate") {
-            await FrequencyPackDebugDownloadGate.shared.wait()
-          }
-          if ProcessInfo.processInfo.arguments.contains("-FrequencyPackChecksumFailure") {
-            return Data("invalid frequency fixture".utf8)
-          }
-        #endif
         let (data, response) = try await URLSession.shared.data(from: url)
         guard (response as? HTTPURLResponse)?.statusCode == 200 else {
           throw FrequencyPackError.invalidSource

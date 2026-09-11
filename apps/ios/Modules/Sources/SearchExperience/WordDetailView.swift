@@ -14,7 +14,6 @@ struct WordDetailView: View {
   @State private var examples: [ExampleSentence] = []
   @State private var examplesEntryID: LanguageReferenceID?
   @State private var isLoadingExamples = true
-  @State private var lastSpeechRequest: String?
   @State private var encounterMedia: [EncounterMedia] = []
   @State private var selectedEncounterMediaItem: PhotosPickerItem?
   @State private var showsPhotoPicker = false
@@ -191,18 +190,7 @@ struct WordDetailView: View {
       alert.alert(openSettings: cameraAuthorizationClient.openSettings)
     }
     .sheet(isPresented: $showsCamera) {
-      #if DEBUG
-        if WordDetailCameraFixtureScenario.current == .cancel {
-          WordDetailCameraCancelFixture {
-            saveCameraResult(.success(nil))
-            showsCamera = false
-          }
-        } else {
-          cameraPicker
-        }
-      #else
-        cameraPicker
-      #endif
+      cameraPicker
     }
     .sheet(item: $frequencyDisclosure) { item in
       FrequencyDisclosureView(
@@ -212,19 +200,6 @@ struct WordDetailView: View {
           manageFrequencyDictionaries()
         }
       )
-    }
-    .overlay(alignment: .topLeading) {
-      if let lastSpeechRequest {
-        Color.clear
-          .frame(width: 1, height: 1)
-          .accessibilityElement()
-          .accessibilityLabel("Speech requested \(lastSpeechRequest)")
-          .accessibilityIdentifier("speech.request")
-      }
-    }
-    .onReceive(NotificationCenter.default.publisher(for: .speechSynthesisRequested)) {
-      notification in
-      lastSpeechRequest = notification.object as? String
     }
     .onChange(of: selectedEncounterMediaItem) {
       importSelectedEncounterMedia()
@@ -322,12 +297,6 @@ struct WordDetailView: View {
   }
 
   private func openCamera() {
-    #if DEBUG
-      if let fixtureResult = WordDetailCameraTestFixtures.resultFromProcessArguments() {
-        saveCameraResult(fixtureResult)
-        return
-      }
-    #endif
     showsCamera = true
   }
 
@@ -420,25 +389,6 @@ struct WordDetailView: View {
     return updatedNotes
   }
 }
-
-#if DEBUG
-  private struct WordDetailCameraCancelFixture: View {
-    let cancel: () -> Void
-
-    var body: some View {
-      NavigationStack {
-        Color.black
-          .ignoresSafeArea()
-          .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-              Button("Cancel", action: cancel)
-                .accessibilityIdentifier("word-detail.camera-fixture-cancel")
-            }
-          }
-      }
-    }
-  }
-#endif
 
 private enum WordDetailCameraAlert: String, Identifiable {
   case unavailable

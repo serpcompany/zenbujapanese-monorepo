@@ -113,14 +113,6 @@ struct FrequencyDictionariesView: View {
       ProgressView("Downloading \(pack.manifest.displayName)")
         .accessibilityValue("Download and validation in progress")
         .accessibilityIdentifier("frequency-pack.progress.\(pack.id.rawValue)")
-      #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-FrequencyPackDownloadGate") {
-          Button("Continue Download Fixture") {
-            Task { await FrequencyPackDebugDownloadGate.shared.release() }
-          }
-          .accessibilityIdentifier("frequency-pack.fixture.continue")
-        }
-      #endif
     } else if pack.availableActions.contains(.download) {
       Button(pack.failureMessage == nil ? FrequencyPackAction.download.label : "Retry") {
         perform(pack.id, confirmsVerification: true) { try await client.download(pack.id) }

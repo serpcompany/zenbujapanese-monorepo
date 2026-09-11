@@ -4,10 +4,6 @@ struct ExampleSentencesView: View {
   @State private var examples: [ExampleSentence] = []
   @State private var isLoading = true
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
-  @State private var lastSpeechRequest: String?
-  #if DEBUG
-    @State private var analysisRequestCount = 0
-  #endif
 
   let query: SearchQuery
   let highlightedEntry: DictionaryEntry?
@@ -52,37 +48,6 @@ struct ExampleSentencesView: View {
     }
     .navigationTitle(query.value)
     .navigationBarTitleDisplayMode(.inline)
-    .overlay(alignment: .topLeading) {
-      if let lastSpeechRequest {
-        Color.clear
-          .frame(width: 1, height: 1)
-          .accessibilityElement()
-          .accessibilityLabel("Speech requested \(lastSpeechRequest)")
-          .accessibilityIdentifier("speech.request")
-      }
-      #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-RecordJapaneseAnalysisRequests") {
-          Color.clear
-            .frame(width: 1, height: 1)
-            .accessibilityElement()
-            .accessibilityLabel("Japanese analysis requests \(analysisRequestCount)")
-            .accessibilityIdentifier("examples.analysis-request-count")
-        }
-      #endif
-    }
-    .onReceive(NotificationCenter.default.publisher(for: .speechSynthesisRequested)) {
-      notification in
-      lastSpeechRequest = notification.object as? String
-    }
-    #if DEBUG
-      .onReceive(NotificationCenter.default.publisher(for: .linkedJapaneseTextAnalysisRequested)) {
-        notification in
-        guard ProcessInfo.processInfo.arguments.contains("-RecordJapaneseAnalysisRequests"),
-          (notification.object as? String)?.hasPrefix("example.token.") == true
-        else { return }
-        analysisRequestCount += 1
-      }
-    #endif
     .task(id: query) {
       isLoading = true
       analysisAvailability = await japaneseTextAnalysisClient.availability()
@@ -92,26 +57,9 @@ struct ExampleSentencesView: View {
       } else {
         loadedExamples = (try? await exampleSentenceClient.search(query)) ?? []
       }
-      examples = accessibilityFixtureExamples(from: loadedExamples)
+      examples = loadedExamples
       isLoading = false
     }
-  }
-
-  private func accessibilityFixtureExamples(
-    from loadedExamples: [ExampleSentence]
-  ) -> [ExampleSentence] {
-    #if DEBUG
-      let arguments = ProcessInfo.processInfo.arguments
-      guard
-        let marker = arguments.firstIndex(of: "-ExampleSentenceAccessibilityFixtureLimit"),
-        arguments.indices.contains(marker + 1),
-        let limit = Int(arguments[marker + 1]),
-        limit >= 0
-      else { return loadedExamples }
-      return Array(loadedExamples.prefix(limit))
-    #else
-      return loadedExamples
-    #endif
   }
 }
 

@@ -1,2 +1,0 @@
-aba6ff0e313298d4bef0e2b00a265eb9892a41ad1816e6eb95f4d02e823a3b8f  zenbu-icon-pack-complete.zip
-80dd5f9d3333962f802b9c019110e9d8aa5c5c2bc2330bf96c955a1c54797c9d  ../../../apps/ios/App/Assets.xcassets/AppIcon.appiconset/AppIcon.png

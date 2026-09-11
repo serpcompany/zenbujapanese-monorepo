@@ -39,21 +39,7 @@ struct EncounterMediaStore: Sendable {
   var deleteMedia: @Sendable (String) async -> Void
 
   static let live = EncounterMediaStore(
-    encounters: { word in
-      #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-InjectCorruptEncounterMedia") {
-          return [
-            EncounterMedia(
-              id: "corrupt-media-fixture",
-              name: "corrupt-media.image",
-              data: Data([0x00]),
-              savedAt: .now
-            )
-          ]
-        }
-      #endif
-      return await EncounterMediaStorage.shared.encounters(for: word)
-    },
+    encounters: { word in await EncounterMediaStorage.shared.encounters(for: word) },
     save: { attachment, word in await EncounterMediaStorage.shared.save(attachment, for: word) },
     remove: { word, mediaID in await EncounterMediaStorage.shared.remove(word, mediaID: mediaID) },
     library: { await EncounterMediaStorage.shared.library() },
@@ -209,14 +195,6 @@ private actor EncounterMediaStorage {
   private func prepareIfNeeded() {
     guard !didPrepare else { return }
     didPrepare = true
-    #if DEBUG
-      if ProcessInfo.processInfo.arguments.contains("-ResetEncounterMedia")
-        || ProcessInfo.processInfo.arguments.contains("-ResetWordImageAttachments")
-      {
-        try? FileManager.default.removeItem(at: directory)
-        if let legacyDirectory { try? FileManager.default.removeItem(at: legacyDirectory) }
-      }
-    #endif
     if !FileManager.default.fileExists(atPath: directory.path),
       let legacyDirectory,
       FileManager.default.fileExists(atPath: legacyDirectory.path)

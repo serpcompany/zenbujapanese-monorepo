@@ -400,15 +400,6 @@ struct SearchView: View {
   }
 
   private func presentPhotoLibrary() {
-    #if DEBUG
-      if ProcessInfo.processInfo.arguments.contains("-PhotoLibraryProviderFailure") {
-        Task { @MainActor in
-          await Task.yield()
-          presentImageImportAlert(.importFailure("The selected photos could not be read."))
-        }
-        return
-      }
-    #endif
     selectedPhotoItems = []
     showsPhotoLibrary = true
   }

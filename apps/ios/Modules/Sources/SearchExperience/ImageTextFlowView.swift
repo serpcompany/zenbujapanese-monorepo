@@ -5,7 +5,6 @@ import UIKit
 struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
-  @State private var recordedCopyRequest: String?
   let textAnalysisClient: JapaneseTextAnalysisClient
   let translationClient: NaturalTranslationClient
   let clipboardClient: ImageTextClipboardClient
@@ -86,29 +85,12 @@ struct ImageTextFlowView: View {
         shareMenu
       }
     }
-    .overlay(alignment: .topLeading) {
-      if let recordedCopyRequest {
-        Text("")
-          .frame(width: 1, height: 1)
-          .accessibilityElement()
-          .accessibilityLabel("Copy request \(recordedCopyRequest)")
-          .accessibilityIdentifier("image-text.copy-request")
-      }
-    }
     .task {
       analysisAvailability = await textAnalysisClient.availability()
       await model.load()
     }
-    .task(id: model.pendingTranslationPreparation?.id) {
-      guard model.pendingTranslationPreparation != nil else { return }
-      if let injectedClient = translationClient.preparationClient {
-        await model.performPendingTranslationPreparation(using: injectedClient)
-      }
-    }
     .background {
-      if let request = model.pendingTranslationPreparation,
-        translationClient.preparationClient == nil
-      {
+      if let request = model.pendingTranslationPreparation {
         NativeTranslationPreparationTask(requestID: request.id, model: model)
       }
     }
@@ -229,7 +211,7 @@ struct ImageTextFlowView: View {
     Menu {
       Button {
         let text = model.copiedText
-        recordedCopyRequest = clipboardClient.copy(text)
+        clipboardClient.copy(text)
       } label: {
         Label("Copy Text", systemImage: "document.on.document")
       }

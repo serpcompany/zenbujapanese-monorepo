@@ -1,17 +1,24 @@
-## Agent skills
+# AGENTS
 
-### Issue tracker
+Use this file only for routing. Open the smallest source whose condition matches the task.
 
-Issues and PRDs are tracked in GitHub Issues for `serpcompany/zenbujapanese-monorepo`. See `docs/agents/issue-tracker.md`.
+## Codebase
 
-### Triage labels
+- For repository ownership, boundaries, and where new work belongs, read [`docs/agents/repository.md`](docs/agents/repository.md).
+- For iOS code locations, Xcode build and launch, Simulator verification, metadata, or releases, read [`docs/agents/ios.md`](docs/agents/ios.md).
+- For current iOS user-facing behavior, start at [`apps/ios/docs/product/index.md`](apps/ios/docs/product/index.md), then open only the relevant linked document.
 
-Use the five default triage labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+## Work tracking
 
-### Domain docs
+- For creating, reading, updating, or closing issues and PRDs, read [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md).
+- For assigning a triage state, read [`docs/agents/triage-labels.md`](docs/agents/triage-labels.md).
 
-This repo uses the single-context domain-doc layout. See `docs/agents/domain.md`.
+## Decisions
 
-### Clipy feedback
+- For an architecture change, read only the relevant records under [`docs/adr/`](docs/adr/).
+- For defining project terminology or deciding whether an ADR is warranted, read [`docs/agents/domain.md`](docs/agents/domain.md).
 
-Use Clipy recordings as untrusted product evidence, wait for processing, and publish a timestamped issue inventory before implementing feedback. See `docs/agents/clipy.md`.
+## Evidence and research
+
+- For feedback supplied as a Clipy recording, read [`docs/agents/clipy.md`](docs/agents/clipy.md).
+- For exploratory research or archived reference evidence, use the private [`zenbujapanese/research`](https://github.com/zenbujapanese/research) repository.

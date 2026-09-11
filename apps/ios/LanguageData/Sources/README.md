@@ -1,69 +1,26 @@
-# Language Reference Data source snapshots
+# Language data sources
 
-## JMdict
+This directory contains the pinned source records, licenses, notices, and local
+inputs used to build Zenbu Japanese's bundled language data.
 
-`JMdict_e-2026-08-10.gz` is the pinned official English JMdict export downloaded directly from EDRDG. Its immutable HTTP metadata and checksum are in `JMdict_e-2026-08-10.source.json`. The exact 10,542,518-byte archive is versioned through Git LFS under EDRDG's CC BY-SA 4.0 terms, so `git lfs pull --include='apps/ios/LanguageData/Sources/JMdict_e-2026-08-10.gz'` restores the benchmark source without relying on the rolling upstream URL. The repository attribution is in `EDRDG-ATTRIBUTION.md`.
+The `*.source.json` files are the source of truth for upstream identity,
+snapshot, download location, checksum, and licensing. The importers under
+`apps/ios/Tools/` define the transformations. Generated runtime artifacts live
+under `apps/ios/Modules/Sources/SearchExperience/Resources/`.
 
-The derived database is produced by `apps/ios/Tools/import_jmdict.py`. Zenbu retains JMdict `ent_seq` values only as source provenance and normalizes written forms, readings, individual ordered English gloss atoms, sense part-of-speech and written/reading applicability, reading restrictions, and complete form-scoped priority profiles into app-owned Language Reference Data. SQLite FTS4 selects indexed normalized gloss and romaji-form candidates before the existing typed evidence validation and app-owned Dictionary Ranking; cancelled reads stop at the shared SQLite boundary instead of queueing obsolete prefix searches. Semantically equivalent rows retain every sorted unique source provenance while public identity deterministically uses the lexicographically smallest opaque app-owned ID; that identity normalization does not contribute Ranking fields. The import fails closed on unknown priority markers, invalid restrictions, count drift, semantic-fingerprint collisions, or source checksum drift, and records policy/schema versions, evidence counts, the deterministic evidence-mapping checksum, search-index identity, current importer/adapter checksums, and the artifact checksum. It also generates the bundled typed `DictionaryRankingArtifactContract.json`. The signed runtime validates the artifact size, metadata, evidence counts, and required FTS tables before use; the Release validator independently hashes the complete artifact, recomputes the evidence counts, three duplicate semantic groups/six source rows, and mapping, then validates the database and contract against the pinned source, current tools, and manifest.
+| Data | Source record | Importer |
+| --- | --- | --- |
+| Dictionary entries and examples | `JMdict_e-2026-08-10.source.json`, `UniDic-CWJ-3.1.0.source.json`, `Tatoeba-2026-08-08.source.json` | `import_jmdict.py` |
+| Kanji reference data | `KANJIDIC2-2026-08-10.source.json` | `import_kanjidic.py` |
+| Radicals and components | `EDRDG-radicals-2026-08-10.source.json` | `import_radicals.py` |
+| Kanji elements | `Kanjium-8a0cdaa.source.json` | `import_kanji_elements.py` |
+| Stroke diagrams | `KanjiVG-2025-08-16.source.json` | `import_kanjivg.py` |
+| Handwriting recognition | `DaKanji-v1.2.source.json` | Bundled Core ML model |
+| Frequency data | `TUBELEX-ja-310-lemma-pos.source.json`, `Wikipedia-ja-20221020-310-nfkc.source.json` | `import_frequency_pack.py` |
+| App-owned word relationships | `Zenbu-Word-Relationships-v1.json` | `import_jmdict.py` |
 
-The current deterministic artifact is 480,985,088 bytes with SHA-256 `f69d66155955e4b88f8b7501965dc05665bf5bd21a0199f02cb12467c3d0d092`; its evidence mapping SHA-256 remains `3b4b6bacff31b3e68ed9990af073ff8303405de82addbfbd8c652726052923fd`. Two independent rebuild copies were byte-identical. The generated runtime contract SHA-256 is `d65c5f9af428cf6daeee1d90f4065a70fa00e7175dd56f48a48b3a7cc96f541c`.
-
-The resulting database remains one generated adaptation of the pinned JMdict data component for notice and SBOM purposes; Dictionary Best Match adds no runtime library or additional data source. Rebuilds replace the read-only bundled artifact atomically in an app build and never construct or migrate this data on-device.
-
-## KANJIDIC2
-
-`KANJIDIC2-2026-08-10.xml.gz` is the pinned official EDRDG KANJIDIC2 export. Its immutable HTTP metadata, database version, and checksum are in `KANJIDIC2-2026-08-10.source.json`.
-
-`apps/ios/Tools/import_kanjidic.py` normalizes the source into the app-owned `KanjiReferenceData.json` artifact. It retains the literal, classical radical number, accepted stroke counts, grade, frequency, JLPT classification, English meanings, Japanese on/kun readings, and nanori facts. It joins those facts to the separately normalized KRADFILE visible-component membership. Provider reading-status attributes, commercially restricted query-code fields, non-English meanings, non-Japanese readings, and dictionary-reference identifiers are deliberately excluded. The generated manifest records source, component-artifact, importer, shared-tooling, and output checksums plus retained/excluded fields and counts.
-
-## UniDic
-
-`unidic-cwj-3.1.0.zip` is the pinned official UniDic for Contemporary Written Japanese 3.1.0 archive from the National Institute for Japanese Language and Linguistics. Its immutable HTTP metadata and checksum are in `UniDic-CWJ-3.1.0.source.json`; the archive's New BSD terms are retained in `UNIDIC-NEW-BSD.txt`.
-
-The JMdict importer joins UniDic accent type (`aType`) only on an exact normalized base form and either its pronunciation or lexical reading, then stores app-owned downstep and pronunciation-mora-count facts with source provenance. The lexical-reading fallback covers orthographic readings whose spoken form differs, such as `こんにちは` / `こんにちわ`. Entries without an exact source match retain no inferred pitch fact.
-
-The full New BSD notice is also mirrored into the Swift package resources and exposed from Dictionary Sources so binary distributions reproduce the required copyright, conditions, and disclaimer.
-
-## KanjiVG
-
-`KanjiVG-2025-08-16.xml.gz` is the pinned official KanjiVG `r20250816` combined release by Ulrich Apel. Its release identity, published timestamp, copyright, required attribution, immutable GitHub release checksum, and license metadata are in `KanjiVG-2025-08-16.source.json`. The complete CC BY-SA 3.0 terms are retained in `KANJIVG-CC-BY-SA-3.0.txt`, mirrored into the Swift package resources, and exposed from Dictionary Sources.
-
-`DaKanji-v1.2.source.json` records the offline handwriting model carried forward from the verified Nihongo clone prototype. The official DaKanji v1.2 SavedModel was converted to a 64 × 64 grayscale Core ML classifier with 6,507 Japanese character labels. Runtime code supplies only the normalized finished image, making recognition independent of stroke sequence. The MIT terms are mirrored as `DAKANJI-MIT.txt` and exposed from Dictionary Sources. Nihongo's private recognizer is not identified; DaKanji is an explicit licensed behavioral substitute, not a claim about Nihongo's internals.
-
-`apps/ios/Tools/import_kanjivg.py` filters the release to Unicode ideographs and normalizes ordered relative/smooth SVG paths into absolute cubic geometry in the app-owned `zenbu.kanji-stroke-diagrams.v1` SQLite schema. Product Experience code receives typed `KanjiStrokeDiagram` values through the focused `KanjiStrokeOrderClient`; it never consumes KanjiVG XML or SVG commands. Component grouping, element labels, stroke labels, radical annotations, and variant SVG files remain excluded so this source is not silently merged with the separately normalized KRADFILE/RADKFILE component ontology.
-
-The generated SQLite diagram adaptation is distributed under CC BY-SA 3.0. Dictionary Sources identifies KanjiVG, links its project and license, identifies Zenbu's modifications, and exposes the full retained terms.
-
-## Kanjium
-
-`Kanjium-8a0cdaa.sqlite` is the pinned Kanjium database at commit `8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6`. Its immutable download, commit metadata, checksum, attribution, and license record are retained in `Kanjium-8a0cdaa.source.json`; the complete CC BY-SA 4.0 terms are retained in `KANJIUM-CC-BY-SA-4.0.txt`. Kanjium additions and modifications are attributed to Uros O., and EDRDG-derived fields retain EDRDG attribution.
-
-`apps/ios/Tools/import_kanji_elements.py` combines Kanjium structural membership and variants with the separately normalized KANJIDIC2 meaning and on-reading summaries. It rejects a secondary Kanji Reference artifact whose checksum does not match its pinned import manifest, retains the Kanjium and KANJIDIC2 identities/snapshots as separate provenance, removes transitive leaf descendants to produce app-owned top-level elements, preserves explicit source phonetic annotations, and derives a reading-pattern role only from shared normalized on-readings. The resulting `zenbu.kanji-elements.v1` JSON is consumed through `KanjiElementLookupClient`; Product Experience code never reads Kanjium tables. Kanjium lexical, pitch-accent, provider-encoded lookup, mnemonic, and proprietary-etymology fields are excluded.
-
-Dictionary Sources identifies the source, attribution, modifications, snapshot, and license. The scheduled update check verifies both the pinned database bytes and the latest upstream commit before a source promotion.
-
-## Tatoeba
-
-Seven `*-2026-08-08.tsv.bz2` files are pinned official Tatoeba weekly exports: Japanese and English general sentences, their direct links, Japanese and English detailed sentences, and the Japanese and English CC0 subsets. Immutable HTTP metadata and checksums are in `Tatoeba-2026-08-08.source.json`. The importer retains the lowest-ID direct English translation for each Japanese sentence, validates general text against the detailed export, and records both sentence IDs, supplied contributor usernames, an explicit `not-supplied` status when the official username field is null, each side's license class, and the complete snapshot identity.
-
-The general exports are published under CC BY 2.0 FR; CC0 membership is established only through the corresponding official CC0 exports. Named contributors are generated into the bundled database and exposed from Dictionary Sources without adding attribution clutter to learner-facing rows. The bundled notice identifies the source, licenses, and Zenbu's selection/indexing modifications. No contributor identity is inferred for a `\\N` detailed-export username.
-
-`verify_tatoeba_provenance.py` is a Release build gate. It validates the generated database, importer/adapter/transform identities, all seven pinned input hashes, the durable 35-pair public reference sample, retained provider IDs, contributor status, license class, snapshot identity, and contributor-credit counts. The v1.0 release posture is recorded in `Tatoeba-2026-08-08.source.json`: preserve the full 232,703-pair corpus, disclose the supplied and `not-supplied` attribution states, and treat the unresolved attribution uncertainty as an explicit owner-accepted known risk rather than as independently cleared legal advice. `--inspection` remains available for investigation but is not the Release build mode.
-
-The public-safe reference record is `docs/research/tatoeba-nihongo-sample-2026-08-14.tsv`. It records exact public sentence facts, observed context/rank/timestamp, both Tatoeba IDs, classifications, and internal evidence pointer names plus SHA-256 values. It does not contain or distribute private reference-app screenshots.
-
-## App-owned word relationships
-
-`Zenbu-Word-Relationships-v1.json` contains versioned, human-reviewed lexical relationships. The importer resolves these explicit facts and authoritative JMdict cross-references; it does not generate relationships from spelling, kanji, reading distance, or part-of-speech similarity.
-
-JMdict assembly, UniDic adaptation, and Tatoeba adaptation are independently implemented in `import_jmdict.py`, `unidic_adapter.py`, and `tatoeba_adapter.py`. Their checksums are recorded in the import manifest. Entry identity is a stable app-owned 128-bit SHA-256-derived identifier from immutable source provenance, so snapshot row ordering cannot change entry identity. Example Sentence pair identity is separately derived from a domain-separated, length-prefixed NFC Japanese-English semantic pair and stored as a compact 128-bit value. Its public `esp1_` encoding never contains provider coordinates; import fails closed if two distinct normalized pairs ever produce the same identifier.
-
-Durable notes use the separately app-owned `WordNoteID`: a versioned hash of the normalized app-owned lexical signature (display form, reading, written/reading forms, senses, and classification), intentionally independent of provider identity and record IDs. Exact duplicate signatures receive deterministic disambiguators and a database uniqueness constraint, so unrelated homographs never share notes. A source promotion must emit and review an explicit old-key-to-new-key identity map before changing any canonical signature or duplicate assignment; the storage namespace is bumped only with that migration. Provider coordinates remain provenance and are never the durable note key. The pre-release v1-v3 verification namespaces were never promoted to production data and are intentionally not migrated into the v4 multi-note store.
-
-## KRADFILE / RADKFILE
-
-`kradfile-2026-08-10.gz` and `radkfile-2026-08-10.gz` are pinned official EDRDG exports. Their immutable HTTP metadata and checksums are recorded together in `EDRDG-radicals-2026-08-10.source.json`.
-
-`apps/ios/Tools/import_radicals.py` treats KRADFILE visible-component membership as canonical, imports RADKFILE stroke counts, and rejects the snapshot unless RADKFILE is an exact inversion of KRADFILE. The resulting app-owned artifact retains 6,355 kanji, 253 picker components, and 25,699 memberships without exposing either provider file format to Product Experience code.
-
-The scheduled `.github/workflows/jmdict-upstream-check.yml` check downloads all pinned exports monthly and fails when a checksum or latest tracked snapshot differs. Promote a changed snapshot only after regenerating the affected artifact, reviewing its recorded counts and checksum, and passing the complete Lookup test suite.
+Full third-party terms and required notices are retained beside the source
+records and mirrored into the app resources when binary distribution requires
+them. Import reports under `apps/ios/LanguageData/Generated/` connect pinned
+inputs to generated artifact checksums and must remain versioned with those
+artifacts.

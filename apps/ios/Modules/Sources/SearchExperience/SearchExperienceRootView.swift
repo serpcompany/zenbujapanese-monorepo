@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 public struct SearchExperienceRootView: View {
   @State private var readingAidPreferences = ReadingAidPreferences()
@@ -8,20 +7,10 @@ public struct SearchExperienceRootView: View {
   @State private var path: [SearchExperienceRoute] = []
   @State private var youPath: [YouRoute] = []
   @State private var query = ""
-  #if DEBUG
-    @State private var preparesJapaneseAnalysis = ProcessInfo.processInfo.arguments.contains(
-      "-EnsureJapaneseAnalysis")
-    private let independentlyHostsYou = ProcessInfo.processInfo.arguments.contains(
-      "-IndependentlyHostYou")
-  #endif
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
   @State private var kanjiElementScrollContributionIDs: [KanjiElementID: KanjiCharacter] = [:]
-  #if DEBUG
-    @State private var lastStartedSpeech: SpeechPlaybackVerificationEvent?
-    @State private var lastFinishedSpeech: SpeechPlaybackVerificationEvent?
-  #endif
   private let lookupClient: LookupClient
   private let exampleSentenceClient: ExampleSentenceClient
   private let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
@@ -39,128 +28,24 @@ public struct SearchExperienceRootView: View {
   private let imageTextClipboardClient: ImageTextClipboardClient
 
   public init() {
-    #if DEBUG
-      let resolvedLookupClient = LookupClient.clientFromProcessArguments(live: .live) ?? .live
-      lookupClient = resolvedLookupClient
-      exampleSentenceClient = .clientFromProcessArguments(live: .live) ?? .live
-      let usesReducedAnalysis = ProcessInfo.processInfo.arguments.contains(
-        "-UseReducedJapaneseAnalysis")
-      if usesReducedAnalysis {
-        japaneseTextAnalysisClient = .characterFallback
-      } else {
-        japaneseTextAnalysisClient = .resolving(
-          morphologyClient: ProcessInfo.processInfo.arguments.contains(
-            "-UseJapaneseAnalysisFixture")
-            ? .uiTestFixture : .live,
-          lookupClient: resolvedLookupClient
-        )
-      }
-      let liveKanjiLookupClient = KanjiLookupClient.live(lookupClient: resolvedLookupClient)
-      kanjiLookupClient =
-        KanjiLookupClient.clientFromProcessArguments(live: liveKanjiLookupClient)
-        ?? liveKanjiLookupClient
-      handwritingRecognitionClient =
-        HandwritingRecognitionFixture.clientFromProcessArguments() ?? .live
-      cameraAuthorizationClient = CameraAuthorizationClient.clientFromProcessArguments() ?? .live
-      speechSynthesisClient = SpeechSynthesisClient.clientFromProcessArguments() ?? .live
-      kanjiStrokeOrderClient = KanjiStrokeOrderClient.clientFromProcessArguments() ?? .live
-      kanjiElementLookupClient = KanjiElementLookupClient.clientFromProcessArguments() ?? .live
-      let imageImportInitialDirectory = ImageTextTestFixtures.prepareIfRequested()
-      imageTextRecognitionClient =
-        ImageTextRecognitionFixture.clientFromProcessArguments(live: .live) ?? .live
-      naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live
-      imageTextClipboardClient = ImageTextClipboardClient.clientFromProcessArguments() ?? .live
-      if let session = ImageTextTestFixtures.sessionFromProcessArguments(
-        in: imageImportInitialDirectory)
-      {
-        _imageTextSessionStore = State(initialValue: ImageTextSessionStore(session: session))
-        _path = State(initialValue: [.image(session.id)])
-      }
-    #else
-      lookupClient = .live
-      exampleSentenceClient = .live
-      japaneseTextAnalysisClient = .live(lookupClient: .live)
-      kanjiLookupClient = .live(lookupClient: .live)
-      handwritingRecognitionClient = .live
-      cameraAuthorizationClient = .live
-      speechSynthesisClient = .live
-      kanjiStrokeOrderClient = .live
-      kanjiElementLookupClient = .live
-      imageTextRecognitionClient = .live
-      naturalTranslationClient = .live
-      imageTextClipboardClient = .live
-    #endif
+    lookupClient = .live
+    exampleSentenceClient = .live
+    japaneseTextAnalysisClient = .live(lookupClient: .live)
+    kanjiLookupClient = .live(lookupClient: .live)
+    handwritingRecognitionClient = .live
+    cameraAuthorizationClient = .live
+    speechSynthesisClient = .live
+    kanjiStrokeOrderClient = .live
+    kanjiElementLookupClient = .live
+    imageTextRecognitionClient = .live
+    naturalTranslationClient = .live
+    imageTextClipboardClient = .live
   }
 
   public var body: some View {
-    Group {
-      #if DEBUG
-        if independentlyHostsYou {
-          YouNavigationView(path: $youPath, store: encounterMediaStore)
-        } else if preparesJapaneseAnalysis {
-          ProgressView("Preparing on-device Japanese Text Analysis")
-            .accessibilityIdentifier("language-technology-pack.preparing")
-        } else {
-          verifiedAppTabs
-        }
-      #else
-        appTabs
-      #endif
-    }
-    #if DEBUG
-      .task {
-        guard preparesJapaneseAnalysis else { return }
-        await LanguageTechnologyPackStore.shared.ensureInstalledForTesting()
-        preparesJapaneseAnalysis = false
-      }
-    #endif
-    .overlay(alignment: .topLeading) {
-      #if DEBUG
-        SpeechPlaybackVerificationOverlay(
-          started: lastStartedSpeech,
-          finished: lastFinishedSpeech
-        )
-      #endif
-    }
-    .environment(readingAidPreferences)
-    #if DEBUG
-      .preferredColorScheme(forcedUITestColorScheme)
-    #endif
-    #if DEBUG
-      .onReceive(NotificationCenter.default.publisher(for: SpeechPlaybackVerification.notification))
-      {
-        notification in
-        guard let event = notification.object as? SpeechPlaybackVerificationEvent else { return }
-        switch event.phase {
-        case .started:
-          lastStartedSpeech = event
-          lastFinishedSpeech = nil
-        case .finished:
-          lastFinishedSpeech = event
-        }
-      }
-    #endif
+    appTabs
+      .environment(readingAidPreferences)
   }
-
-  #if DEBUG
-    @ViewBuilder
-    private var verifiedAppTabs: some View {
-      if ProcessInfo.processInfo.arguments.contains("-ReportAccessibilitySettings") {
-        appTabs.accessibilityValue(
-          "increaseContrast=\(UIAccessibility.isDarkerSystemColorsEnabled)"
-        )
-      } else {
-        appTabs
-      }
-    }
-
-    private var forcedUITestColorScheme: ColorScheme? {
-      let arguments = ProcessInfo.processInfo.arguments
-      if arguments.contains("-ForceUITestDarkAppearance") { return .dark }
-      if arguments.contains("-ForceUITestLightAppearance") { return .light }
-      return nil
-    }
-  #endif
 
   private var appTabs: some View {
     TabView(selection: $selectedTab) {
@@ -343,41 +228,6 @@ public struct SearchExperienceRootView: View {
     return EncounterMediaAttachment(name: asset.name, data: asset.data)
   }
 }
-
-#if DEBUG
-  private struct SpeechPlaybackVerificationOverlay: View {
-    let started: SpeechPlaybackVerificationEvent?
-    let finished: SpeechPlaybackVerificationEvent?
-
-    var body: some View {
-      if SpeechPlaybackVerification.isEnabled {
-        VStack(spacing: 0) {
-          verificationElement(started, phaseLabel: "started", identifier: "speech.playback.started")
-          verificationElement(
-            finished, phaseLabel: "finished", identifier: "speech.playback.finished")
-        }
-      }
-    }
-
-    @ViewBuilder
-    private func verificationElement(
-      _ event: SpeechPlaybackVerificationEvent?,
-      phaseLabel: String,
-      identifier: String
-    ) -> some View {
-      if let event {
-        Color.clear
-          .frame(width: 1, height: 1)
-          .accessibilityElement()
-          .accessibilityLabel("Speech \(phaseLabel) \(event.text)")
-          .accessibilityValue(
-            "\(event.invocationID.uuidString)|\(event.voiceLanguage ?? "unresolved")"
-          )
-          .accessibilityIdentifier(identifier)
-      }
-    }
-  }
-#endif
 
 struct ImageWordContext: Hashable {
   let sessionID: UUID

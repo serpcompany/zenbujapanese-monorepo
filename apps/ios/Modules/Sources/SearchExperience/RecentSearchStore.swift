@@ -19,15 +19,12 @@ private actor RecentSearchHistory {
 
   private let defaults = UserDefaults.standard
   private let storageKey = "lookup.recent-searches.v1"
-  private var didPrepare = false
 
   func load() -> [SearchQuery] {
-    resetForUITestingIfRequested()
     return (defaults.stringArray(forKey: storageKey) ?? []).map(SearchQuery.init)
   }
 
   func record(_ query: SearchQuery) {
-    resetForUITestingIfRequested()
     guard !query.isEmpty else { return }
     var searches = defaults.stringArray(forKey: storageKey) ?? []
     searches.removeAll { $0 == query.value }
@@ -36,23 +33,11 @@ private actor RecentSearchHistory {
   }
 
   func remove(_ query: SearchQuery) {
-    resetForUITestingIfRequested()
     let searches = (defaults.stringArray(forKey: storageKey) ?? []).filter { $0 != query.value }
     defaults.set(searches, forKey: storageKey)
   }
 
   func removeAll() {
-    resetForUITestingIfRequested()
     defaults.removeObject(forKey: storageKey)
-  }
-
-  private func resetForUITestingIfRequested() {
-    guard !didPrepare else { return }
-    didPrepare = true
-    #if DEBUG
-      if ProcessInfo.processInfo.arguments.contains("-ResetRecentSearches") {
-        defaults.removeObject(forKey: storageKey)
-      }
-    #endif
   }
 }

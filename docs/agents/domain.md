@@ -1,35 +1,7 @@
-# Domain Docs
+# Domain documentation
 
-How the engineering skills should consume this repo’s domain documentation when exploring the codebase.
+This repository currently has no domain glossary. Do not create one as project setup or codebase documentation.
 
-## Before exploring, read these
+When a real terminology conflict is resolved and misunderstanding it would cause a product or architectural mistake, record the term in a root `CONTEXT.md`. Keep each definition to the minimum needed to distinguish that term. Product flows, implementation details, provider behavior, and speculative concepts belong elsewhere.
 
-- `CONTEXT.md` at the repository root.
-- Relevant ADRs under `docs/adr/`.
-
-If either location does not exist, proceed silently. Do not flag its absence or suggest creating it upfront. The `/domain-modeling` skill creates domain documentation lazily when terms or decisions are resolved.
-
-## File structure
-
-This repository uses a single-context layout:
-
-```text
-/
-├── CONTEXT.md
-├── apps/
-│   └── ios/
-└── docs/
-    └── adr/
-```
-
-`CONTEXT.md` contains the shared domain language. `docs/adr/` contains durable architectural decisions.
-
-## Use the glossary’s vocabulary
-
-When output names a domain concept—in an issue title, refactor proposal, hypothesis, or test name—use the term defined in `CONTEXT.md`. Do not drift to synonyms the glossary explicitly avoids.
-
-If the necessary concept is absent from the glossary, reconsider whether the proposed language belongs to the project. If it exposes a real gap, note it for `/domain-modeling`.
-
-## Flag ADR conflicts
-
-If proposed work contradicts an existing ADR, surface the conflict explicitly rather than silently overriding the decision.
+Record an ADR under `docs/adr/` only when a decision is difficult to reverse, surprising without context, and the result of a genuine tradeoff. Read relevant ADRs before changing the architecture. If a root `CONTEXT.md` exists in the future, read it when the task uses its terms.

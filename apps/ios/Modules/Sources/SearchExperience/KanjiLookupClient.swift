@@ -76,41 +76,7 @@ struct KanjiLookupClient: Sendable {
       }
     )
   }
-
-  #if DEBUG
-    static func clientFromProcessArguments(live: KanjiLookupClient) -> KanjiLookupClient? {
-      guard ProcessInfo.processInfo.arguments.contains("-InjectKanjiRelatedWordsFailureOnce") else {
-        return nil
-      }
-      let fixture = KanjiRelatedWordsFailureFixture()
-      return KanjiLookupClient(
-        entry: live.entry,
-        relatedWords: { character in
-          if await fixture.consumeFailure() {
-            throw KanjiLookupFixtureError.injectedFailure
-          }
-          return try await live.relatedWords(character)
-        }
-      )
-    }
-  #endif
 }
-
-#if DEBUG
-  private actor KanjiRelatedWordsFailureFixture {
-    private var hasFailed = false
-
-    func consumeFailure() -> Bool {
-      guard !hasFailed else { return false }
-      hasFailed = true
-      return true
-    }
-  }
-
-  private enum KanjiLookupFixtureError: Error {
-    case injectedFailure
-  }
-#endif
 
 private actor KanjiReferenceData {
   static let shared = KanjiReferenceData()
