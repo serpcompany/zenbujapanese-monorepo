@@ -1125,7 +1125,8 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     // requiring its alert; an already-present alert is checked against its asset below.
     let importReady = XCTNSPredicateExpectation(
       predicate: NSPredicate { _, _ in
-        app.buttons["image-text.close"].exists || app.alerts["No Text Found"].exists
+        app.descendants(matching: .any)["image-text.current-page"].exists
+          || app.alerts["No Text Found"].exists
       }, object: app
     )
     XCTAssertEqual(XCTWaiter.wait(for: [importReady], timeout: 20), .completed)
@@ -3065,16 +3066,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let list = app.collectionViews["language-technology-packs.list"]
     XCTAssertTrue(list.waitForExistence(timeout: 3))
+    // The list exists during asynchronous catalog loading. Require its content
+    // before inspecting the included pack's metadata.
+    let active = app.descendants(matching: .any)[
+      "language-technology-pack.status.sudachi-core-ja-20260723"
+    ]
+    XCTAssertTrue(active.waitForExistence(timeout: 3))
     XCTAssertTrue(app.staticTexts["Japanese Text Analysis"].exists)
     XCTAssertTrue(app.staticTexts["Engine, sudachi.rs 0.6.11"].exists)
     XCTAssertTrue(app.staticTexts["Dictionary, Core 20260723"].exists)
     XCTAssertTrue(app.staticTexts["Availability, Included with Zenbu"].exists)
     XCTAssertTrue(app.staticTexts["Offline use, Works Offline"].exists)
     XCTAssertTrue(app.staticTexts["Installed contribution, 217.5 MB"].exists)
-    let active = app.descendants(matching: .any)[
-      "language-technology-pack.status.sudachi-core-ja-20260723"
-    ]
-    XCTAssertTrue(active.waitForExistence(timeout: 3))
     XCTAssertEqual(active.label, "Status, Active")
     XCTAssertEqual(active.value as? String, "Ready for on-device analysis")
     XCTAssertFalse(app.buttons["language-technology-pack.download.sudachi-core-ja-20260723"].exists)
