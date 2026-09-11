@@ -33,7 +33,8 @@ to determine `ios-premerge / Required`; shadow jobs cannot replace that context.
 `ZenbuShadowComparison-<SHA>-<run>-<attempt>` retains exact selectors, executed
 inventories, test failures, per-method and lane timings, and end-to-end shadow wall
 time including scheduling/build overhead. Missing receipts, skipped tests,
-failed repetitions, and full-only failures remain visible. Lightweight receipts
+failed repetitions, workflow reruns, and full-only failures remain visible.
+A rerun requires review of its earlier failures before it can count. Lightweight receipts
 avoid downloading videos just to compare runs. Full result bundles remain retained.
 
 Cutover requires three consecutive iOS merge candidates with shadow wall time at

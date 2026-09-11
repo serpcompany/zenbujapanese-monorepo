@@ -42,6 +42,7 @@ class ShadowReportTests(unittest.TestCase):
                 json.dumps(
                     {
                         "source_sha": "candidate",
+                        "attempt": 1,
                         "selectors": lane["selectors"],
                         "durations_seconds": {
                             "setup": 1,
@@ -162,6 +163,24 @@ class ShadowReportTests(unittest.TestCase):
         result = self.compare()
         self.assertFalse(result["candidate_qualifies"])
         self.assertTrue(any("120 seconds" in p for p in result["problems"]))
+
+    def test_workflow_rerun_cannot_hide_a_previous_failed_attempt(self):
+        for path in self.evidence.glob("*.timing.json"):
+            document = json.loads(path.read_text())
+            document["attempt"] = 2
+            path.write_text(json.dumps(document))
+        result = report.compare(
+            self.manifest,
+            self.inventory,
+            self.evidence,
+            self.jobs,
+            "candidate",
+            "2026-09-11T00:00:00Z",
+            run_attempt=2,
+        )
+        self.assertFalse(result["candidate_qualifies"])
+        self.assertEqual(result["run_attempt"], 2)
+        self.assertTrue(any("prior failures" in p for p in result["problems"]))
 
     def test_wall_time_includes_setup_and_scheduling(self):
         self.jobs[-1]["completed_at"] = "2026-09-11T00:15:01Z"

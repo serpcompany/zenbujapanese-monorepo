@@ -36,7 +36,9 @@ def test_cases(document):
     return cases
 
 
-def compare(manifest, inventory, evidence, jobs, source_sha, run_started_at):
+def compare(
+    manifest, inventory, evidence, jobs, source_sha, run_started_at, run_attempt=1
+):
     full = policy.merge_candidate_matrix(
         manifest, manifest["capabilities"]["full-merge"]["merge-candidate"], inventory
     )["include"]
@@ -44,6 +46,10 @@ def compare(manifest, inventory, evidence, jobs, source_sha, run_started_at):
     partitions = policy.merge_candidate_partitions(inventory)
     records = []
     problems = []
+    if run_attempt != 1:
+        problems.append(
+            "Workflow rerun requires review of prior failures before it can count"
+        )
     failures = {"full": set(), "shadow": set()}
     shadow_completed = []
     for suite, lanes in [("full", full), ("shadow", shadow)]:
@@ -86,6 +92,8 @@ def compare(manifest, inventory, evidence, jobs, source_sha, run_started_at):
                     timing["selectors"]
                 ) != set(lane["selectors"]):
                     raise ValueError("SHA or selector receipt mismatch")
+                if timing.get("attempt") != run_attempt:
+                    raise ValueError("workflow attempt receipt mismatch")
                 if set(cases) != expected or result["totalTestCount"] != len(expected):
                     raise ValueError(
                         "executed test inventory differs from planned inventory"
@@ -161,6 +169,7 @@ def compare(manifest, inventory, evidence, jobs, source_sha, run_started_at):
     return {
         "source_sha": source_sha,
         "run_started_at": run_started_at,
+        "run_attempt": run_attempt,
         "blocking_journey_owners": policy.blocking_journey_owners(manifest),
         "shadow_wall_seconds": elapsed,
         "lanes": records,
@@ -178,6 +187,8 @@ def main():
     parser.add_argument("--jobs", type=Path, required=True)
     parser.add_argument("--source-sha", required=True)
     parser.add_argument("--run-started-at", required=True)
+    parser.add_argument("--run-id", required=True)
+    parser.add_argument("--run-attempt", type=int, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[3]
@@ -191,7 +202,9 @@ def main():
         json.loads(args.jobs.read_text())["jobs"],
         args.source_sha,
         args.run_started_at,
+        args.run_attempt,
     )
+    report["run_id"] = args.run_id
     args.output.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps({k: v for k, v in report.items() if k != "lanes"}, indent=2))
 

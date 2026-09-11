@@ -371,7 +371,8 @@ jobs:
           started="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .run_started_at)"
           python3 apps/ios/Tools/ios_shadow_report.py \
             --evidence receipts --jobs jobs.json --source-sha "$SOURCE_SHA" \
-            --run-started-at "$started" --output shadow-comparison.json \
+            --run-started-at "$started" --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT" --output shadow-comparison.json \
             | tee shadow-summary.json
           { printf '### Lean merge shadow comparison\n```json\n'; cat shadow-summary.json; printf '\n```\n'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
