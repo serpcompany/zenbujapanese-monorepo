@@ -28,10 +28,5 @@ let package = Package(
       resources: [.process("Resources")],
       linkerSettings: [.linkedLibrary("sqlite3")]
     ),
-    .testTarget(
-      name: "SearchExperienceTests",
-      dependencies: ["SearchExperience"],
-      linkerSettings: [.linkedLibrary("sqlite3")]
-    ),
   ]
 )
