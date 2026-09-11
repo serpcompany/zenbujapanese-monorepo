@@ -191,18 +191,7 @@ struct WordDetailView: View {
       alert.alert(openSettings: cameraAuthorizationClient.openSettings)
     }
     .sheet(isPresented: $showsCamera) {
-      #if DEBUG
-        if WordDetailCameraFixtureScenario.current == .cancel {
-          WordDetailCameraCancelFixture {
-            saveCameraResult(.success(nil))
-            showsCamera = false
-          }
-        } else {
-          cameraPicker
-        }
-      #else
-        cameraPicker
-      #endif
+      cameraPicker
     }
     .sheet(item: $frequencyDisclosure) { item in
       FrequencyDisclosureView(
@@ -322,12 +311,6 @@ struct WordDetailView: View {
   }
 
   private func openCamera() {
-    #if DEBUG
-      if let fixtureResult = WordDetailCameraTestFixtures.resultFromProcessArguments() {
-        saveCameraResult(fixtureResult)
-        return
-      }
-    #endif
     showsCamera = true
   }
 
@@ -420,25 +403,6 @@ struct WordDetailView: View {
     return updatedNotes
   }
 }
-
-#if DEBUG
-  private struct WordDetailCameraCancelFixture: View {
-    let cancel: () -> Void
-
-    var body: some View {
-      NavigationStack {
-        Color.black
-          .ignoresSafeArea()
-          .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-              Button("Cancel", action: cancel)
-                .accessibilityIdentifier("word-detail.camera-fixture-cancel")
-            }
-          }
-      }
-    }
-  }
-#endif
 
 private enum WordDetailCameraAlert: String, Identifiable {
   case unavailable

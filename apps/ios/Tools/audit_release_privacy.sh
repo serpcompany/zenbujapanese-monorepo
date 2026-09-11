@@ -344,7 +344,7 @@ fi
 executable_name="$(plist_value CFBundleExecutable "$archive_app_info")"
 executable="${app_path}/${executable_name}"
 [[ -x "$executable" ]] || fail "archive executable is missing"
-denylist_scan "DEBUG or test-only runtime marker" 'PrepareImageTextFixtures|StartImageTextFixtures|ExportImageTextFixtures|InjectLookupFailure|DEBUG=1|docs/clone-discovery|clipy\.online' "$app_path"
+denylist_scan "DEBUG or test-only runtime marker" 'InjectLookupFailure|DEBUG=1|clipy\.online' "$app_path"
 non_executable_product_files=()
 non_executable_product_inventory="${scratch_dir}/non-executable-product-files"
 find "$app_path" -type f ! -path "$executable" -print0 \

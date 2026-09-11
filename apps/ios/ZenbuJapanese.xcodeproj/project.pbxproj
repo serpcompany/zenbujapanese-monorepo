@@ -77,7 +77,6 @@
 			buildPhases = (
 				8A1400000000000000000001 /* Verify Tatoeba provenance for Release */,
 				E0343DFD8725F6F5A7D4FFEB /* Sources */,
-				A108F17A14E04A2AA1B1C108 /* Copy canonical Image Text fixtures for Debug */,
 				F38B6861CA6A9754CF93F50B /* Frameworks */,
 				C3E26B21F5C96FAD04F5E803 /* Resources */,
 				F25800000000000000000001 /* Prepare bundled Sudachi Core */,
@@ -185,26 +184,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "set -e\nif [ \"$CONFIGURATION\" = \"Release\" ]; then\n  /usr/bin/python3 \"$SRCROOT/Tools/verify_tatoeba_provenance.py\" \\\n    \"$SRCROOT/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3\" \\\n    \"$SRCROOT/LanguageData/Sources/Tatoeba-2026-08-08.source.json\" \\\n    \"$SRCROOT/LanguageData/Generated/JMdict_e-2026-08-10.import.json\" \\\n    \"$SRCROOT/Tools/import_jmdict.py\" \\\n    \"$SRCROOT/Tools/tatoeba_adapter.py\" \\\n    \"$SRCROOT/LanguageData/Sources/Tatoeba-nihongo-sample-2026-08-14.tsv\" \\\n    \"$SRCROOT/LanguageData/Sources\"\nfi\n/usr/bin/touch \"$DERIVED_FILE_DIR/tatoeba-provenance-verified.stamp\"\n";
-		};
-		A108F17A14E04A2AA1B1C108 /* Copy canonical Image Text fixtures for Debug */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/../../docs/clone-discovery/nihongo/fixtures/image-text/fixture-clear-horizontal.png",
-				"$(SRCROOT)/../../docs/clone-discovery/nihongo/fixtures/image-text/fixture-vertical.png",
-				"$(SRCROOT)/../../docs/clone-discovery/nihongo/fixtures/image-text/fixture-sparse.png",
-				"$(SRCROOT)/../../docs/clone-discovery/nihongo/fixtures/image-text/fixture-noisy-horizontal.png",
-				"$(SRCROOT)/../../docs/clone-discovery/nihongo/fixtures/image-text/fixture-empty.png",
-			);
-			name = "Copy canonical Image Text fixtures for Debug";
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/canonical-image-text-fixtures.stamp",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "if [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  fixture_source=\"$SRCROOT/../../docs/clone-discovery/nihongo/fixtures/image-text\"\n  fixture_target=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/ImageTextFixtures\"\n  mkdir -p \"$fixture_target\"\n  for fixture in fixture-clear-horizontal.png fixture-vertical.png fixture-sparse.png fixture-noisy-horizontal.png fixture-empty.png; do\n    /bin/cp \"$fixture_source/$fixture\" \"$fixture_target/$fixture\"\n  done\nfi\n/usr/bin/touch \"$DERIVED_FILE_DIR/canonical-image-text-fixtures.stamp\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

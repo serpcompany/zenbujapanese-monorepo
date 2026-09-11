@@ -61,21 +61,14 @@ public struct SearchExperienceRootView: View {
         ?? liveKanjiLookupClient
       handwritingRecognitionClient =
         HandwritingRecognitionFixture.clientFromProcessArguments() ?? .live
-      cameraAuthorizationClient = CameraAuthorizationClient.clientFromProcessArguments() ?? .live
+      cameraAuthorizationClient = .live
       speechSynthesisClient = SpeechSynthesisClient.clientFromProcessArguments() ?? .live
       kanjiStrokeOrderClient = KanjiStrokeOrderClient.clientFromProcessArguments() ?? .live
       kanjiElementLookupClient = KanjiElementLookupClient.clientFromProcessArguments() ?? .live
-      let imageImportInitialDirectory = ImageTextTestFixtures.prepareIfRequested()
       imageTextRecognitionClient =
         ImageTextRecognitionFixture.clientFromProcessArguments(live: .live) ?? .live
       naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live
       imageTextClipboardClient = ImageTextClipboardClient.clientFromProcessArguments() ?? .live
-      if let session = ImageTextTestFixtures.sessionFromProcessArguments(
-        in: imageImportInitialDirectory)
-      {
-        _imageTextSessionStore = State(initialValue: ImageTextSessionStore(session: session))
-        _path = State(initialValue: [.image(session.id)])
-      }
     #else
       lookupClient = .live
       exampleSentenceClient = .live
