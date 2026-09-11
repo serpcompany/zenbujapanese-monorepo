@@ -89,16 +89,8 @@ struct ImageTextFlowView: View {
       analysisAvailability = await textAnalysisClient.availability()
       await model.load()
     }
-    .task(id: model.pendingTranslationPreparation?.id) {
-      guard model.pendingTranslationPreparation != nil else { return }
-      if let injectedClient = translationClient.preparationClient {
-        await model.performPendingTranslationPreparation(using: injectedClient)
-      }
-    }
     .background {
-      if let request = model.pendingTranslationPreparation,
-        translationClient.preparationClient == nil
-      {
+      if let request = model.pendingTranslationPreparation {
         NativeTranslationPreparationTask(requestID: request.id, model: model)
       }
     }

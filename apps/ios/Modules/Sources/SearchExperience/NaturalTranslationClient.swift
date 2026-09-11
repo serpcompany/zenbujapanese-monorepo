@@ -4,22 +4,13 @@ import Translation
 struct NaturalTranslationClient: Sendable {
   var availability: @Sendable () async throws -> NaturalTranslationAvailability
   var translateInstalled: @Sendable (String) async throws -> String
-  var preparationClient: NaturalTranslationPreparationClient?
-
-  init(translate: @escaping @Sendable (String) async throws -> String) {
-    availability = { .installed }
-    translateInstalled = translate
-    preparationClient = nil
-  }
 
   init(
     availability: @escaping @Sendable () async throws -> NaturalTranslationAvailability,
-    translateInstalled: @escaping @Sendable (String) async throws -> String,
-    preparationClient: NaturalTranslationPreparationClient? = nil
+    translateInstalled: @escaping @Sendable (String) async throws -> String
   ) {
     self.availability = availability
     self.translateInstalled = translateInstalled
-    self.preparationClient = preparationClient
   }
 
   static let live = NaturalTranslationClient(
@@ -52,12 +43,6 @@ enum NaturalTranslationAvailability: Equatable, Sendable {
   case unsupported
 }
 
-struct NaturalTranslationPreparationClient: Sendable {
-  var prepare: @Sendable () async throws -> Void
-  var translate: @Sendable (String) async throws -> String
-}
-
 enum NaturalTranslationError: Error {
   case languageAssetsUnavailable
-  case emptySource
 }

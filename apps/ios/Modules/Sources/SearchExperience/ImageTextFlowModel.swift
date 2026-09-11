@@ -154,24 +154,6 @@ final class ImageTextFlowModel {
     }
   }
 
-  func performPendingTranslationPreparation(
-    using client: NaturalTranslationPreparationClient
-  ) async {
-    guard let pendingTranslationPreparation = claimPendingTranslationPreparation() else { return }
-    do {
-      try await client.prepare()
-      try Task.checkCancellation()
-      guard beginPreparedTranslation(pendingTranslationPreparation) else { return }
-      let translation = try await client.translate(pendingTranslationPreparation.source)
-      try Task.checkCancellation()
-      finishPreparedTranslation(translation, for: pendingTranslationPreparation)
-    } catch is CancellationError {
-      cancelPreparedTranslation(pendingTranslationPreparation)
-    } catch {
-      failPreparedTranslation(pendingTranslationPreparation)
-    }
-  }
-
   func claimPendingTranslationPreparation(
     id expectedID: UUID? = nil
   ) -> PendingTranslationPreparation? {
