@@ -2,7 +2,8 @@
 
 This is the current operating policy for the Zenbu Japanese iOS App. The
 historical research in `docs/research/ios-ci-accessibility-release-gates-2026-08-21.md`
-remains decision evidence, but this file owns the executable cadence.
+remains decision evidence. `VerificationPolicy.json` owns the executable cadence;
+this file explains it.
 
 ## Test layers
 
@@ -11,9 +12,38 @@ remains decision evidence, but this file owns the executable cadence.
 | Issue implementation                       | Repository-selected deterministic policy checks and focused unit contracts, each budgeted for no more than 60 seconds on a prepared local environment | Fast red-green feedback without launching XCUITest, accessibility, integration, network, or complete targets |
 | Draft pull request push                    | Scope, manifest validation, and a SHA-bound deferred status on Ubuntu                                | Keep WIP pushes cheap; the draft itself remains unmergeable                                        |
 | Ready pull request or later non-draft push | Manifest-selected repository contracts and units                                              | Verify the exact current head quickly without accepting stale green results                         |
-| Merge queue                                | Cheap required-status reporting plus ten concurrent exact-candidate lanes: Unit, three complete Accessibility UI shards, five normal UI shards, and `ZenbuSudachiIntegration` | Blocking integration evidence without repeating fast macOS partitions or learner journeys |
+| Merge queue                                | Cheap required-status reporting plus eleven concurrent exact-candidate lanes: Unit, three complete Accessibility UI shards, five normal UI shards, Increase Contrast, and `ZenbuSudachiIntegration` | Blocking integration evidence without repeating fast macOS partitions or learner journeys |
 | Manual investigation                       | `iOS nightly quality`, started with `workflow_dispatch`                                              | Two-device accessibility breadth, repetitions, and sanitizers when investigation warrants the cost |
 | Pre-release                                | Manual `iOS pre-release validation`, then separately authorized physical-device and release checks   | Transient validation for an identified proposed candidate; never inferred from development CI      |
+
+## Lean merge shadow
+
+Feature branches still merge directly to protected `main` through the merge queue.
+No staging branch is introduced. `blocking_journey_owners` in
+`VerificationPolicy.json` assigns each required journey exactly one blocking owner.
+Validation rejects missing, duplicate, unknown, or mismatched owners and owners
+whose tests are absent from the required merge plans.
+
+`lean-merge-shadow` derives its selectors from those owners, with complete Unit,
+Sudachi integration, four timing-balanced UI lanes, one accessibility lane, and
+repository contracts. It runs beside the full suite on iOS merge candidates and
+is also callable through manual pre-merge dispatch. The full suite alone continues
+to determine `ios-premerge / Required`; shadow jobs cannot replace that context.
+
+`ZenbuShadowComparison-<SHA>-<run>-<attempt>` retains exact selectors, executed
+inventories, test failures, per-method and lane timings, and end-to-end shadow wall
+time including scheduling/build overhead. Missing receipts, skipped tests,
+failed repetitions, and full-only failures remain visible. Lightweight receipts
+avoid downloading videos just to compare runs. Full result bundles remain retained.
+
+Cutover requires three consecutive iOS merge candidates with shadow wall time at
+most 15 minutes, blocking UI methods below 120 seconds, no full-only authoritative
+journey failure, no unexplained flakes, and explicit owner approval after review.
+A qualifying report never authorizes cutover itself. All broader appearance,
+maximum-size, recovery, and exhaustive tests remain callable manually and before
+release; during shadow mode they also remain in the full required gate. Files
+repair evidence stays on #173, Examples readiness on #322, and rollout status on
+#321. No ruleset or release changes are part of shadow implementation.
 
 The three network-backed Sudachi provenance checks run through the explicit
 `ZenbuSudachiIntegration` plan. They validate the immutable official Core wheel,
@@ -41,7 +71,7 @@ Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
 provider except for the bounded bundled-provider cold-relaunch journey. The
 merge-candidate workflow invokes and retains all three correctness plans.
 
-The exact inventory contains 338 tests. `ZenbuPR` includes 316 (116 Unit and 200
+The exact inventory contains 341 tests. `ZenbuPR` includes 319 (116 Unit and 203
 UI), and `ZenbuSudachiIntegration` includes three network-backed Unit tests. The
 seventeen exact tests outside those correctness plans are one performance-only Unit
 test, three physical/system HIL journeys, #269's four deliberately red framework
@@ -107,7 +137,7 @@ through the same interface.
 For the merge-candidate stage, the planner derives eleven lanes from the committed
 Xcode plan inventory and `VerificationTimingProfile.json`. Every `ZenbuPR` Unit
 test belongs to the Unit lane. The complete 68-test `ZenbuAccessibility`
-partition is split across three lanes, and the remaining 132 normal UI tests are
+partition is split across three lanes, and the remaining 135 normal UI tests are
 split across five lanes. The separate `ZenbuSudachiIntegration` plan is the
 separate integration lane. The two-test `ZenbuIncreasedContrast` lane is also
 required; its measured duration and timing-source run are null until actual app
@@ -231,12 +261,11 @@ from that combined journey's timeout envelope in run `33959363388`, job
 observed source. A partition containing this provisional entry emits
 `estimated_test_seconds` and a null `measured_test_seconds`; the weight is neither
 runtime evidence nor permission to run the journey in an ordinary local issue gate.
-The current normal-UI scheduling loads are 1,341.348 (estimated), 1,352.422,
-1,348.125, 1,350.604, and 1,351.338 seconds. The old combined journey's historical
-duration remains a conservative weight pending new measurements.
-
-The current generated counts are 116 Unit; 22, 23, and 23 Accessibility UI;
-26, 26, 26, 27, and 27 normal UI; and 3 Sudachi integration tests.
+The Word Note, Conjugations, and Romaji owners separate their core journey from
+editor screenshots, exhaustive forms, and appearance permutations. Their retained
+broader methods remain in the full/manual/pre-release plans. Provisional weights
+are scheduling inputs, not hosted runtime proof. Use `ios_verification.py inventory`
+for current lane counts and loads rather than copying those generated values here.
 
 For ordinary issue work, keep the PR draft and run the repository-selected local
 issue gate. That gate may execute only deterministic policy checks and focused

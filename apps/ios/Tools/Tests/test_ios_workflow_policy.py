@@ -47,11 +47,22 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertNotIn("UISupportsDocumentBrowser", debug_plist)
         self.assertNotIn("INFOPLIST_KEY_UISupportsDocumentBrowser", project)
 
+    def test_shadow_cannot_replace_or_block_the_full_required_gate(self):
+        workflow = workflow_text("ios-premerge.yml")
+        required = workflow.split("  required:\n", 1)[1]
+        self.assertIn("needs: [scope, complete-suite]", required)
+        self.assertNotIn("shadow-suite", required)
+        self.assertNotIn("shadow-contracts", required)
+        self.assertIn('[[ "$COMPLETE_RESULT" == success ]]', required)
+        self.assertIn("needs.scope.outputs.shadow_matrix", workflow)
+        self.assertIn("ios_shadow_report.py", workflow)
+        self.assertIn("ZenbuReceipt-", workflow)
+
     def test_manual_premerge_can_select_only_registered_gates(self):
         workflow = workflow_text("ios-premerge.yml")
         triggers = trigger_section(workflow)
         self.assertIn("default: full-merge", triggers)
-        self.assertIn("options: [full-merge, reviewer-contrast, refactor-regressions]", triggers)
+        self.assertIn("options: [full-merge, reviewer-contrast, refactor-regressions, lean-merge-shadow]", triggers)
         self.assertIn("MANUAL_CAPABILITY: ${{ inputs.capability || 'full-merge' }}", workflow)
         self.assertIn('args+=(--capability "$MANUAL_CAPABILITY")', workflow)
 
@@ -103,7 +114,7 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
     def test_complete_suite_uses_the_measured_exact_candidate_matrix(self):
         workflow = workflow_text("ios-premerge.yml")
         complete_job = workflow.split("  complete-suite:\n", 1)[1].split(
-            "\n  required:\n", 1
+            "\n  shadow-suite:\n", 1
         )[0]
         self.assertIn("github.event_name == 'merge_group'", complete_job)
         self.assertNotIn("github.event_name == 'pull_request'", complete_job)

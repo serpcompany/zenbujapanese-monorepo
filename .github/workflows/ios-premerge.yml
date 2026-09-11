@@ -10,7 +10,7 @@ on:
         description: Registered verification capability
         type: choice
         default: full-merge
-        options: [full-merge, reviewer-contrast, refactor-regressions]
+        options: [full-merge, reviewer-contrast, refactor-regressions, lean-merge-shadow]
 
 permissions:
   contents: read
@@ -34,6 +34,7 @@ jobs:
       ios_changed: ${{ steps.scope.outputs.ios_changed }}
       merge_candidate_matrix: ${{ steps.plan.outputs.merge_candidate_matrix }}
       source_sha: ${{ steps.plan.outputs.source_sha }}
+      shadow_matrix: ${{ steps.shadow.outputs.merge_candidate_matrix }}
     steps:
       - name: Check out enough history to classify the merge candidate
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -75,12 +76,22 @@ jobs:
           if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
             args+=(--base '${{ github.event.pull_request.base.sha }}' --head '${{ github.event.pull_request.head.sha }}')
           elif [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
-            [[ "$MANUAL_CAPABILITY" == full-merge || "$MANUAL_CAPABILITY" == reviewer-contrast || "$MANUAL_CAPABILITY" == refactor-regressions ]] || exit 64
+            [[ "$MANUAL_CAPABILITY" == full-merge || "$MANUAL_CAPABILITY" == reviewer-contrast || "$MANUAL_CAPABILITY" == refactor-regressions || "$MANUAL_CAPABILITY" == lean-merge-shadow ]] || exit 64
             args+=(--capability "$MANUAL_CAPABILITY")
           else
             args+=(--capability full-merge)
           fi
           python3 apps/ios/Tools/ios_verification.py plan "${args[@]}"
+
+      - name: Derive the shadow lanes from blocking journey owners
+        id: shadow
+        env:
+          HEAD_SHA: ${{ github.event.merge_group.head_sha || github.sha }}
+        run: |
+          python3 apps/ios/Tools/ios_verification.py plan \
+            --stage merge-candidate --event merge_group --draft false \
+            --source-sha "$HEAD_SHA" --capability lean-merge-shadow \
+            --github-output "$GITHUB_OUTPUT"
 
   complete-suite:
     name: ios-premerge / ${{ matrix.lane }}
@@ -162,6 +173,15 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - name: Retain lightweight comparison receipts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuReceipt-${{ matrix.lane }}-${{ needs.scope.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ZenbuPreMerge-${{ matrix.lane }}.xcresult.*.json
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Package test evidence
         if: always()
         run: |
@@ -182,6 +202,188 @@ jobs:
             ${{ runner.temp }}/ZenbuPreMerge-${{ matrix.lane }}-identity.txt
           if-no-files-found: warn
           retention-days: 30
+
+  shadow-suite:
+    name: ios-shadow / ${{ matrix.lane }}
+    needs: scope
+    if: >-
+      ${{
+        (github.event_name == 'merge_group' && needs.scope.outputs.ios_changed == 'true')
+      }}
+    runs-on: macos-26
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.scope.outputs.shadow_matrix) }}
+    steps:
+      - name: Check out exact merge-candidate source and LFS data
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          lfs: true
+          ref: ${{ github.event.merge_group.head_sha || github.sha }}
+
+      - name: Select pinned Xcode
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Restore pinned Sudachi Core source artifact
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: ~/Library/Caches/com.zenbujapanese.build/SudachiCore/wheels/b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498.whl
+          key: sudachi-core-wheel-20260723-b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498-${{ runner.os }}
+
+      - name: Prepare verified Sudachi Core build cache
+        run: |
+          python3 apps/ios/Tools/prepare_sudachi_core.py \
+            --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
+            --cache "$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore" \
+            --cache-only
+
+      - name: Run the exact generated partition
+        run: |
+          apps/ios/Tools/run_selected_test_plan.sh \
+            '${{ matrix.plan }}' \
+            com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
+            "$RUNNER_TEMP/ZenbuPreMerge-${{ matrix.lane }}.xcresult" \
+            '${{ toJson(matrix.selectors) }}' \
+            '${{ needs.scope.outputs.source_sha }}'
+
+      - name: Record exact candidate identity
+        if: always()
+        env:
+          CAPABILITY: lean-merge-shadow
+        run: |
+          {
+            printf 'capability=%s\n' "$CAPABILITY"
+            printf 'event=%s\n' "$GITHUB_EVENT_NAME"
+            printf 'tested_sha=%s\n' "$GITHUB_SHA"
+            printf 'lane=%s\n' '${{ matrix.lane }}'
+            printf 'plan=%s\n' '${{ matrix.plan }}'
+            printf 'planned_test_count=%s\n' '${{ matrix.test_count }}'
+            printf 'measured_test_seconds=%s\n' '${{ matrix.measured_test_seconds }}'
+            printf 'estimated_test_seconds=%s\n' '${{ matrix.estimated_test_seconds }}'
+            printf 'timing_profile_run_id=%s\n' '${{ matrix.timing_profile_run_id }}'
+            printf 'repository=%s\n' "$GITHUB_REPOSITORY"
+            printf 'run=%s/%s/actions/runs/%s\n' \
+              "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+          } | tee "$RUNNER_TEMP/ZenbuPreMerge-${{ matrix.lane }}-identity.txt"
+
+      - name: Publish lane identity and timing immediately
+        if: always()
+        run: |
+          summary="$RUNNER_TEMP/ZenbuPreMerge-${{ matrix.lane }}.xcresult.timing.json"
+          if [[ -f "$summary" ]]; then
+            {
+              printf '### %s verification evidence\n```json\n' '${{ matrix.lane }}'
+              cat "$summary"
+              printf '\n```\n'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Retain lightweight comparison receipts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuReceipt-${{ matrix.lane }}-${{ needs.scope.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ZenbuPreMerge-${{ matrix.lane }}.xcresult.*.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Package test evidence
+        if: always()
+        run: |
+          result="$RUNNER_TEMP/ZenbuPreMerge-${{ matrix.lane }}.xcresult"
+          if [[ -d "$result" ]]; then
+            ditto -c -k --keepParent "$result" "$result.zip"
+          fi
+
+      - name: Retain exact merge-candidate evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ZenbuPreMerge-${{ matrix.lane }}-${{ needs.scope.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/ZenbuPreMerge-${{ matrix.lane }}.xcresult.zip
+            ${{ runner.temp }}/ZenbuPreMerge-${{ matrix.lane }}.xcresult.timing.json
+            ${{ runner.temp }}/ZenbuPreMerge-${{ matrix.lane }}.xcresult.xcodebuild.log
+            ${{ runner.temp }}/ZenbuPreMerge-${{ matrix.lane }}-identity.txt
+          if-no-files-found: warn
+          retention-days: 30
+
+  shadow-contracts:
+    name: ios-shadow / Contracts
+    needs: scope
+    if: >-
+      ${{
+        (github.event_name == 'merge_group' && needs.scope.outputs.ios_changed == 'true') ||
+        (github.event_name == 'workflow_dispatch' && inputs.capability == 'lean-merge-shadow')
+      }}
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact source and LFS data
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          lfs: true
+          ref: ${{ github.event.merge_group.head_sha || github.sha }}
+      - name: Install audit tooling
+        run: |
+          brew install actionlint ripgrep
+          gem install sqlite3 --version 2.9.6 --platform ruby --no-document -- \
+            --enable-system-libraries
+          ruby -e 'require "sqlite3"; abort "FTS4 unavailable" unless SQLite3::Database.new(":memory:").execute("PRAGMA compile_options").flatten.include?("ENABLE_FTS4")'
+      - name: Verify repository contracts
+        run: |
+          set -euo pipefail
+          actionlint
+          for plan in apps/ios/TestPlans/*.xctestplan; do jq empty "$plan"; done
+          xmllint --noout apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme
+          rg -q 'ZenbuPR.xctestplan' apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme
+          python3 -m unittest discover apps/ios/Tools/Tests -p 'test_*.py'
+          bash apps/ios/Tools/Tests/audit-release-privacy.test.sh
+          bash apps/ios/Tools/audit_release_privacy.sh source
+
+  shadow-report:
+    name: ios-shadow / Comparison report
+    needs: [scope, complete-suite, shadow-suite, shadow-contracts]
+    if: ${{ always() && github.event_name == 'merge_group' && needs.scope.outputs.ios_changed == 'true' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ needs.scope.outputs.source_sha }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: ZenbuReceipt-*-${{ needs.scope.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: receipts
+      - name: Compare exact candidate receipts and end-to-end shadow timing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ needs.scope.outputs.source_sha }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100" > jobs.json
+          started="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .run_started_at)"
+          python3 apps/ios/Tools/ios_shadow_report.py \
+            --evidence receipts --jobs jobs.json --source-sha "$SOURCE_SHA" \
+            --run-started-at "$started" --output shadow-comparison.json \
+            | tee shadow-summary.json
+          { printf '### Lean merge shadow comparison\n```json\n'; cat shadow-summary.json; printf '\n```\n'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: ZenbuShadowComparison-${{ needs.scope.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            shadow-comparison.json
+            shadow-summary.json
+            jobs.json
+          if-no-files-found: error
+          retention-days: 90
 
   required:
     name: ${{ github.event_name == 'workflow_dispatch' && inputs.capability != 'full-merge' && format('ios-premerge / Focused {0}', inputs.capability) || 'ios-premerge / Required' }}

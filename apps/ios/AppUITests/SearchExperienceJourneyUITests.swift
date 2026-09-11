@@ -78,6 +78,21 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let english = app.staticTexts["word-detail.example-english.0"]
     XCTAssertTrue(english.exists)
     XCTAssertGreaterThan(english.frame.minY, exampleRomaji.frame.maxY)
+  }
+
+  @MainActor
+  func testRomajiAppearanceMatrixPreservesShortAndWrappedWordDetailRows() throws {
+    defer { resetReadingAidPreferences() }
+    defer { XCUIDevice.shared.appearance = .light }
+    XCUIDevice.shared.appearance = .light
+    let app = launchApp(additionalArguments: [
+      "-ResetReadingAidPreferences", "-Issue253SentenceLayoutFixtures",
+    ])
+    openWordDetail(
+      for: "taberu", resultLabelPrefix: "食べる, たべる", in: app,
+      searchField: app.textFields["search.field"]
+    )
+    setReadingAidPreferences(furigana: true, romaji: true, in: app)
     recordReadingAidShortAndWrappedScreens(
       named: "Reading Aids - light - Furigana and Romaji", in: app)
 
@@ -4229,6 +4244,50 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   func testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted() throws {
+    let noteText = "Review animate existence"
+    let app = launchApp(additionalArguments: ["-ResetWordNotes"])
+    openWordDetail(
+      for: "いる", resultLabelPrefix: "いる, いる, to be (of animate objects)",
+      in: app, searchField: app.textFields["search.field"]
+    )
+    let detail = app.collectionViews["word-detail.screen"]
+    let addNote = app.buttons["word-detail.add-note"]
+    scrollWordDetailElementIntoView(addNote, in: detail, app: app)
+    XCTAssertTrue(addNote.isHittable)
+    addNote.tap()
+    var editor = app.textFields["word-note.editor"]
+    XCTAssertTrue(editor.waitForExistence(timeout: 2))
+    XCTAssertEqual(editor.value as? String, "Add Note")
+    editor.tap()
+    editor.typeText(noteText)
+    app.buttons["word-note.done"].tap()
+    XCTAssertEqual(app.buttons["word-detail.note"].label, noteText)
+
+    app.launchArguments.removeAll { $0 == "-ResetWordNotes" }
+    app.terminate()
+    app.launch()
+    openWordDetail(
+      for: "いる", resultLabelPrefix: "いる, いる, to be (of animate objects)",
+      in: app, searchField: app.textFields["search.field"]
+    )
+    let savedNote = app.buttons["word-detail.note"]
+    scrollWordDetailElementIntoView(savedNote, in: detail, app: app)
+    XCTAssertEqual(savedNote.label, noteText)
+    savedNote.tap()
+    editor = app.textFields["word-note.editor"]
+    XCTAssertTrue(editor.waitForExistence(timeout: 2))
+    editor.tap()
+    editor.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: noteText.count))
+    let cleared = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "value == %@", "Add Note"), object: editor)
+    XCTAssertEqual(XCTWaiter.wait(for: [cleared], timeout: 10), .completed)
+    app.buttons["word-note.done"].tap()
+    XCTAssertFalse(savedNote.exists)
+    XCTAssertTrue(addNote.exists)
+  }
+
+  @MainActor
+  func testWordNoteEditorPresentationAndWarmBackPreservePersistedNotes() throws {
     let app = launchApp(additionalArguments: ["-ResetWordNotes"])
     var searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
@@ -5285,6 +5344,29 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
   @MainActor
   func testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail() throws {
+    let app = launchApp()
+    openConjugations(
+      for: "いる", resultLabelPrefix: "いる, いる, to be (of animate objects)",
+      in: app, searchField: app.textFields["search.field"]
+    )
+    XCTAssertTrue(app.collectionViews["conjugations.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.staticTexts["る Verb"].exists)
+    XCTAssertTrue(app.buttons["conjugations.mode.plain"].isSelected)
+    assertConjugationRows(
+      [("present-future", "いる, Present/Future"), ("past", "いた, Past")], in: app)
+    app.buttons["conjugations.mode.polite"].tap()
+    XCTAssertTrue(app.buttons["conjugations.mode.polite"].isSelected)
+    assertConjugationRows(
+      [("present-future", "います, Present/Future"), ("past", "いました, Past")], in: app)
+    app.buttons["conjugations.mode.plain"].tap()
+    XCTAssertEqual(app.descendants(matching: .any)["conjugations.row.past"].label, "いた, Past")
+    tapNativeBack(in: app)
+    XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.descendants(matching: .any)["ruby.いる.いる"].exists)
+  }
+
+  @MainActor
+  func testIchidanConjugationRowsPreserveAllPlainAndPoliteForms() throws {
     let app = launchApp()
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))

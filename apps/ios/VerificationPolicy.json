@@ -40,6 +40,33 @@
     "shell-navigation",
     "word-detail"
   ],
+  "blocking_journey_owners": [
+    {"journey": "accessibility-adaptive-layout", "selector": "accessibility.search-layout"},
+    {"journey": "you-navigation", "selector": "ui.you-hierarchy"},
+    {"journey": "conjugations", "selector": "ui.conjugations"},
+    {"journey": "example-sentence-word-selector", "selector": "ui.example-word-selector"},
+    {"journey": "example-sentence-ambiguous-word-selector", "selector": "ui.example-word-selector-ambiguity"},
+    {"journey": "example-sentence-word-selector-adaptive", "selector": "ui.example-word-selector-maximum"},
+    {"journey": "example-sentences", "selector": "ui.examples"},
+    {"journey": "encounter-media", "selector": "ui.encounter-media"},
+    {"journey": "handwriting", "selector": "ui.search-input"},
+    {"journey": "image-text", "selector": "ui.image-text"},
+    {"journey": "image-text-translation-assets", "selector": "ui.image-text-translation-assets"},
+    {"journey": "japanese-text-analysis-provider", "selector": "integration.sudachi"},
+    {"journey": "japanese-text-analysis-offline", "selector": "ui.bundled-japanese-text-analysis"},
+    {"journey": "japanese-text-analysis-settings", "selector": "ui.japanese-text-analysis-settings"},
+    {"journey": "kanji-detail", "selector": "ui.kanji"},
+    {"journey": "reading-aids", "selector": "ui.reading-aids"},
+    {"journey": "reading-aid-adaptive-layout", "selector": "ui.example-layout-maximum"},
+    {"journey": "romaji-presentation", "selector": "ui.reading-aids-romaji"},
+    {"journey": "romaji-mixed-input", "selector": "unit.reading-aids-mixed-input"},
+    {"journey": "radical-input", "selector": "ui.search-input"},
+    {"journey": "recent-searches", "selector": "ui.recent-search"},
+    {"journey": "search-input", "selector": "ui.search-input"},
+    {"journey": "search-ranking", "selector": "ui.search-ranking"},
+    {"journey": "shell-navigation", "selector": "ui.shell"},
+    {"journey": "word-detail", "selector": "ui.word-detail"}
+  ],
   "hil_exclusions": {
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextAppleTranslationWorksOfflineAcrossPhysicalColdRelaunch": "Apple Translation asset installation and airplane-mode cold relaunch require the separately recorded physical-device HIL journey; Apple documents that Translation does not operate in iOS Simulator.",
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testPhotoLibrarySelectionStartsImageTextFlow": "Physical Photos picker selection is retained in the separately recorded system HIL journey.",
@@ -465,6 +492,7 @@
     },
     "accessibility.search-layout": {
       "plan": "ZenbuAccessibility",
+      "compatible_plans": ["ZenbuPR"],
       "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testLightLoadingAndFailureRemainUsableAtLargestAccessibilityTextSize",
       "traits": ["accessibility", "accessibility-maximum"],
       "journeys": ["accessibility-adaptive-layout"]
@@ -810,8 +838,8 @@
     "tdd": ["contracts", "unit", "ui", "diagnostics"],
     "issue-final": ["contracts", "unit", "ui", "accessibility", "integration"],
     "hosted-fast": ["contracts", "unit", "ui", "accessibility"],
-    "merge-candidate": ["contracts", "complete", "integration"],
-    "manual": ["contracts", "ui", "diagnostics", "complete", "integration"],
+    "merge-candidate": ["contracts", "complete", "integration", "ui", "accessibility"],
+    "manual": ["contracts", "ui", "accessibility", "diagnostics", "complete", "integration"],
     "release": ["contracts", "complete", "integration"],
     "performance": ["performance"]
   },
@@ -860,6 +888,11 @@
     ]
   },
   "capabilities": {
+    "lean-merge-shadow": {
+      "paths": [],
+      "adaptive_layout": true,
+      "derive_blocking_journey_owners": true
+    },
     "refactor-regressions": {
       "paths": [],
       "manual": [

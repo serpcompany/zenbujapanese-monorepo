@@ -229,6 +229,9 @@ if [[ -d "$result_bundle" ]]; then
   )"
   result_summary_exit=$?
   if [[ "$result_summary_exit" -eq 0 ]]; then
+    printf '%s\n' "$result_summary" > "${result_bundle}.results.json"
+    xcrun xcresulttool get test-results tests --path "$result_bundle" --format json \
+      > "${result_bundle}.tests.json" 2>>"$test_log"
     tests_started="$(printf '%s' "$result_summary" | jq -r '.totalTestCount // 0' 2>>"$test_log")"
     result_summary_exit=$?
   fi

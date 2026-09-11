@@ -395,6 +395,20 @@ def load_and_validate_manifest(path: Path) -> dict[str, Any]:
     for journey in manifest.get("required_journeys", []):
         if journey not in covered_journeys:
             raise PolicyError(f"required journey {journey} has no verification tier")
+    owners = blocking_journey_owners(manifest)
+    shadow = manifest.get("capabilities", {}).get("lean-merge-shadow")
+    if shadow is not None:
+        if shadow.get("derive_blocking_journey_owners") is not True:
+            raise PolicyError("lean-merge-shadow must derive blocking journey owners")
+        selected = {"contracts.repository", "complete.merge-unit", "integration.sudachi"}
+        selected.update(
+            key for key in owners.values()
+            if not str(selectors[key].get("test", "")).startswith("ZenbuJapaneseTests/")
+        )
+        for stage in ("merge-candidate", "manual"):
+            if stage in shadow:
+                raise PolicyError("lean-merge-shadow cannot override derived selectors")
+            shadow[stage] = sorted(selected)
     allowed_by_stage = {
         stage: {
             selector_id
@@ -410,7 +424,7 @@ def load_and_validate_manifest(path: Path) -> dict[str, Any]:
     }
     for capability, policy in manifest.get("capabilities", {}).items():
         for stage, selector_ids in policy.items():
-            if stage in ("paths", "reviewed_override_paths", "adaptive_layout"):
+            if stage in ("paths", "reviewed_override_paths", "adaptive_layout", "derive_blocking_journey_owners"):
                 continue
             if stage not in allowed_by_stage:
                 raise PolicyError(f"unknown stage {stage} on capability {capability}")
@@ -430,7 +444,8 @@ def load_and_validate_manifest(path: Path) -> dict[str, Any]:
                 for selector_id in selector_ids:
                     _issue_execution_disposition(manifest, selector_id)
             _validate_no_equivalent_selectors(
-                selectors,
+                ownership_scoped_selectors(manifest)
+                if capability == "lean-merge-shadow" else selectors,
                 selector_ids,
                 context=f"{capability}/{stage}",
                 intentional=manifest.get("intentional_same_stage_evidence", {}),
@@ -453,6 +468,87 @@ def load_and_validate_manifest(path: Path) -> dict[str, Any]:
             for selector_id in selector_ids:
                 _issue_execution_disposition(manifest, selector_id)
     return manifest
+
+
+def blocking_journey_owners(manifest: dict[str, Any]) -> dict[str, str]:
+    """Each required learner journey has exactly one authoritative selector."""
+    owners: dict[str, str] = {}
+    required = set(manifest.get("required_journeys", []))
+    records = manifest.get("blocking_journey_owners", [])
+    if not isinstance(records, list):
+        raise PolicyError(
+            "blocking_journey_owners must be a list of journey/selector records"
+        )
+    for record in records:
+        if not isinstance(record, dict):
+            raise PolicyError("invalid blocking owner record")
+        journey, selector_id = record.get("journey"), record.get("selector")
+        if not isinstance(journey, str) or journey not in required:
+            raise PolicyError(f"unknown blocking journey {journey}")
+        if journey in owners:
+            raise PolicyError(f"{journey} has multiple blocking owners")
+        if not isinstance(selector_id, str) or selector_id not in manifest["selectors"]:
+            raise PolicyError(f"unknown blocking owner {selector_id} for {journey}")
+        if journey not in manifest["selectors"][selector_id].get("journeys", []):
+            raise PolicyError(
+                f"blocking owner {selector_id} does not declare {journey}"
+            )
+        owners[journey] = selector_id
+    missing = sorted(required - set(owners))
+    if missing:
+        raise PolicyError(
+            "required journeys have no blocking owner: " + ", ".join(missing)
+        )
+    return owners
+
+
+def ownership_scoped_selectors(manifest: dict[str, Any]) -> dict[str, Any]:
+    owners = blocking_journey_owners(manifest)
+    return {
+        key: {
+            **value,
+            "journeys": [journey for journey, owner in owners.items() if owner == key],
+        }
+        for key, value in manifest["selectors"].items()
+    }
+
+
+def selector_tests(
+    selector: dict[str, Any], inventory: dict[str, Any], partitions: dict[str, Any]
+) -> set[str]:
+    if selector.get("partition"):
+        return set(partitions[selector["partition"]]["tests"])
+    plan = selector.get("plan")
+    if plan is None:
+        return set()
+    test = selector.get("test")
+    if test is None:
+        return set(inventory["plans"][plan]["included_tests"])
+    if "/" not in test:
+        return set(inventory["targets"][test]) & set(
+            inventory["plans"][plan]["included_tests"]
+        )
+    return {test}
+
+
+def require_blocking_coverage(
+    manifest: dict[str, Any], inventory: dict[str, Any], partitions: dict[str, Any]
+) -> None:
+    required_tests: set[str] = set()
+    for key in (
+        manifest.get("capabilities", {})
+        .get("full-merge", {})
+        .get("merge-candidate", [])
+    ):
+        required_tests.update(
+            selector_tests(manifest["selectors"][key], inventory, partitions)
+        )
+    for journey, key in blocking_journey_owners(manifest).items():
+        tests = selector_tests(manifest["selectors"][key], inventory, partitions)
+        if not tests or not tests <= required_tests:
+            raise PolicyError(
+                f"blocking owner {key} for {journey} has tests not required by the merge gate"
+            )
 
 
 def _issue_execution_disposition(
@@ -614,6 +710,16 @@ def validate_repository_contracts(manifest: dict[str, Any], repo_root: Path) -> 
             "full-merge merge-candidate policy omits generated lanes: "
             + ", ".join(missing)
         )
+    require_blocking_coverage(manifest, inventory, merge_partitions)
+    if "lean-merge-shadow" in manifest.get("capabilities", {}):
+        shadow_lanes = lean_shadow_matrix(manifest, inventory)["include"]
+        shadow_tests: set[str] = set()
+        for lane in shadow_lanes:
+            for key in lane["selectors"]:
+                shadow_tests.update(selector_tests(manifest["selectors"][key], inventory, merge_partitions))
+        for key in blocking_journey_owners(manifest).values():
+            if not selector_tests(manifest["selectors"][key], inventory, merge_partitions) <= shadow_tests:
+                raise PolicyError(f"shadow suite omits blocking owner {key}")
     plan_names = set(inventory["plans"])
     all_tests = set(inventory["tests"])
     exact_exclusions = set(manifest.get("hil_exclusions", {})) | set(
@@ -629,6 +735,9 @@ def validate_repository_contracts(manifest: dict[str, Any], repo_root: Path) -> 
         if plan is not None and plan not in plan_names:
             raise PolicyError(f"selector {selector_id} references missing plan {plan}")
         test = selector.get("test")
+        for compatible in selector.get("compatible_plans", []):
+            if compatible not in plan_names or test not in inventory["plans"][compatible]["included_tests"]:
+                raise PolicyError(f"selector {selector_id} is not reachable in compatible plan {compatible}")
         partition = selector.get("partition")
         if partition is not None:
             if test is not None:
@@ -981,11 +1090,81 @@ def require_exact_merge_candidate_partitions(
         )
 
 
+def lean_shadow_matrix(
+    manifest: dict[str, Any], inventory: dict[str, Any]
+) -> dict[str, list[dict[str, Any]]]:
+    """Balance authoritative UI selectors; complete Unit covers unit owners."""
+    selectors = manifest["selectors"]
+    owners = set(blocking_journey_owners(manifest).values())
+    durations = inventory["merge_candidate_timing_profile"]["test_durations_seconds"]
+    ui = {
+        key
+        for key in owners
+        if str(selectors[key].get("test", "")).startswith("ZenbuJapaneseUITests/")
+    }
+    accessibility = {
+        key for key in ui if "/AccessibilityAuditUITests/" in selectors[key]["test"]
+    }
+    normal = ui - accessibility
+    lanes: list[list[str]] = [[] for _ in range(4)]
+    loads = [0.0] * 4
+    for key in sorted(normal, key=lambda k: (-durations[selectors[k]["test"]], k)):
+        index = min(range(4), key=lambda i: (loads[i], i))
+        lanes[index].append(key)
+        loads[index] += durations[selectors[key]["test"]]
+    include = []
+    seen_tests: set[str] = set()
+    partitions = merge_candidate_partitions(inventory)
+    for name, plan, keys in [
+        ("shadow-unit", "ZenbuPR", ["complete.merge-unit"]),
+        ("shadow-sudachi", "ZenbuSudachiIntegration", ["integration.sudachi"]),
+        *[
+            (f"shadow-ui-{chr(97 + i)}", "ZenbuPR", keys)
+            for i, keys in enumerate(lanes)
+        ],
+        ("shadow-accessibility", "ZenbuPR", sorted(accessibility)),
+    ]:
+        if not keys:
+            raise PolicyError(f"empty lean shadow lane {name}")
+        tests: set[str] = set()
+        for key in keys:
+            selector = selectors[key]
+            if plan not in [selector["plan"], *selector.get("compatible_plans", [])]:
+                raise PolicyError(f"shadow selector {key} cannot execute in {plan}")
+            selected = selector_tests(selector, inventory, partitions)
+            if tests & selected:
+                raise PolicyError(f"duplicate blocking tests in {name}")
+            tests.update(selected)
+        if seen_tests & tests:
+            raise PolicyError(f"blocking tests repeated across shadow lanes: {name}")
+        seen_tests.update(tests)
+        include.append(
+            {
+                "lane": name,
+                "plan": plan,
+                "selectors": sorted(keys),
+                "test_count": len(tests),
+                "tests": sorted(tests),
+                "estimated_test_seconds": sum(durations[t] for t in tests)
+                if tests <= set(durations)
+                else None,
+                "measured_test_seconds": None,
+                "timing_profile_run_id": inventory["merge_candidate_timing_profile"][
+                    "source"
+                ]["workflow_run_id"],
+            }
+        )
+    return {"include": include}
+
+
 def merge_candidate_matrix(
     manifest: dict[str, Any],
     selector_ids: list[str],
     inventory: dict[str, Any],
 ) -> dict[str, list[dict[str, Any]]]:
+    shadow = manifest.get("capabilities", {}).get("lean-merge-shadow", {}).get("merge-candidate", [])
+    if shadow and set(selector_ids) == set(shadow):
+        return lean_shadow_matrix(manifest, inventory)
     partitions = merge_candidate_partitions(inventory)
     timing_profile = inventory["merge_candidate_timing_profile"]
     selectors_by_partition = {
@@ -1214,7 +1393,8 @@ def resolve_plan(
         selected = retained
         reasons = retained_reasons
     _validate_no_equivalent_selectors(
-        manifest["selectors"],
+        ownership_scoped_selectors(manifest)
+        if requested == {"lean-merge-shadow"} else manifest["selectors"],
         selected,
         context=f"resolved-candidate/{stage}",
         intentional=manifest.get("intentional_same_stage_evidence", {}),
@@ -1481,7 +1661,7 @@ def main(arguments: list[str]) -> int:
                         f"selector {selector_id} is deferred at {options.stage}: "
                         f"{reason}; owner {owner_stage}"
                     )
-            if selector["plan"] != options.plan:
+            if options.plan not in [selector["plan"], *selector.get("compatible_plans", [])]:
                 raise PolicyError(
                     f"selector {selector_id} belongs to {selector['plan']}, not {options.plan}"
                 )

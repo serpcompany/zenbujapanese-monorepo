@@ -15,6 +15,58 @@ SPEC.loader.exec_module(ios_verification)
 
 
 class IOSVerificationPolicyTests(unittest.TestCase):
+    def test_blocking_owner_map_rejects_missing_duplicate_unknown_and_mismatched_owners(self):
+        repo = Path(__file__).parents[4]
+        original = json.loads((repo / "apps/ios/VerificationPolicy.json").read_text())
+        for mutation, message in [
+            (lambda m: m["blocking_journey_owners"].pop(), "no blocking owner"),
+            (lambda m: m["blocking_journey_owners"].append(m["blocking_journey_owners"][0]), "multiple blocking owners"),
+            (lambda m: m["blocking_journey_owners"][0].update(selector="missing.selector"), "unknown blocking owner"),
+            (lambda m: m["blocking_journey_owners"][0].update(selector="ui.search-input"), "does not declare"),
+        ]:
+            with self.subTest(message=message), tempfile.TemporaryDirectory() as directory:
+                manifest = json.loads(json.dumps(original))
+                mutation(manifest)
+                path = Path(directory) / "policy.json"
+                path.write_text(json.dumps(manifest))
+                with self.assertRaisesRegex(ios_verification.PolicyError, message):
+                    ios_verification.load_and_validate_manifest(path)
+
+    def test_blocking_test_cannot_survive_only_in_nonrequired_plans(self):
+        repo = Path(__file__).parents[4]
+        manifest = ios_verification.load_and_validate_manifest(repo / "apps/ios/VerificationPolicy.json")
+        inventory = ios_verification.repository_inventory(repo)
+        partitions = ios_verification.merge_candidate_partitions(inventory)
+        test = manifest["selectors"]["ui.examples"]["test"]
+        for part in partitions.values():
+            part["tests"] = [item for item in part["tests"] if item != test]
+        self.assertIn(test, inventory["plans"]["ZenbuNightly"]["included_tests"])
+        with self.assertRaisesRegex(ios_verification.PolicyError, "blocking.*not required"):
+            ios_verification.require_blocking_coverage(manifest, inventory, partitions)
+
+    def test_shadow_is_derived_and_covers_every_owner_once_with_complete_unit(self):
+        repo = Path(__file__).parents[4]
+        raw = json.loads((repo / "apps/ios/VerificationPolicy.json").read_text())
+        # A valid owner replacement must change execution without editing a second list.
+        next(x for x in raw["blocking_journey_owners"] if x["journey"] == "example-sentences")["selector"] = "ui.example-layout"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "policy.json"
+            path.write_text(json.dumps(raw))
+            manifest = ios_verification.load_and_validate_manifest(path)
+        inventory = ios_verification.repository_inventory(repo)
+        lanes = ios_verification.lean_shadow_matrix(manifest, inventory)["include"]
+        selected = [key for lane in lanes for key in lane["selectors"]]
+        self.assertIn("ui.example-layout", selected)
+        self.assertNotIn("ui.examples", selected)
+        self.assertEqual(len([lane for lane in lanes if lane["lane"].startswith("shadow-ui-")]), 4)
+        self.assertEqual(len([lane for lane in lanes if lane["lane"] == "shadow-accessibility"]), 1)
+        tests = [test for lane in lanes for test in lane["tests"]]
+        self.assertEqual(len(tests), len(set(tests)))
+        partitions = ios_verification.merge_candidate_partitions(inventory)
+        self.assertEqual(set(lanes[0]["tests"]), set(partitions["unit"]["tests"]))
+        for key in ios_verification.blocking_journey_owners(manifest).values():
+            self.assertTrue(ios_verification.selector_tests(manifest["selectors"][key], inventory, partitions) <= set(tests))
+
     def test_split_photo_scheduling_weight_is_not_reported_as_measured_runtime(self):
         repo = Path(__file__).parents[4]
         inventory = ios_verification.repository_inventory(repo)
@@ -1031,7 +1083,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             )
             self.assertEqual(
                 [lane["test_count"] for lane in matrix],
-                [116, 2, 22, 23, 23, 26, 26, 26, 27, 27, 3],
+                [116, 2, 22, 23, 23, 26, 27, 27, 27, 28, 3],
             )
             self.assertEqual(
                 [lane["measured_test_seconds"] for lane in matrix],
@@ -1042,10 +1094,10 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                     1153.155,
                     1153.903,
                     None,
-                    1352.422,
-                    1348.125,
-                    1350.604,
-                    1351.338,
+                    1372.86,
+                    None,
+                    None,
+                    None,
                     4.116,
                 ],
             )
@@ -1087,10 +1139,10 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 "accessibility-ui-b": 23,
                 "accessibility-ui-c": 23,
                 "normal-ui-a": 26,
-                "normal-ui-b": 26,
-                "normal-ui-c": 26,
+                "normal-ui-b": 27,
+                "normal-ui-c": 27,
                 "normal-ui-d": 27,
-                "normal-ui-e": 27,
+                "normal-ui-e": 28,
                 "sudachi-integration": 3,
             },
         )
@@ -1313,10 +1365,10 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 "accessibility-ui-b": 23,
                 "accessibility-ui-c": 23,
                 "normal-ui-a": 26,
-                "normal-ui-b": 26,
-                "normal-ui-c": 26,
+                "normal-ui-b": 27,
+                "normal-ui-c": 27,
                 "normal-ui-d": 27,
-                "normal-ui-e": 27,
+                "normal-ui-e": 28,
                 "sudachi-integration": 3,
             },
         )
@@ -1330,10 +1382,10 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             "complete.merge-accessibility-b": ("ZenbuPR", 23),
             "complete.merge-accessibility-c": ("ZenbuPR", 23),
             "complete.merge-ui-a": ("ZenbuPR", 26),
-            "complete.merge-ui-b": ("ZenbuPR", 26),
-            "complete.merge-ui-c": ("ZenbuPR", 26),
+            "complete.merge-ui-b": ("ZenbuPR", 27),
+            "complete.merge-ui-c": ("ZenbuPR", 27),
             "complete.merge-ui-d": ("ZenbuPR", 27),
-            "complete.merge-ui-e": ("ZenbuPR", 27),
+            "complete.merge-ui-e": ("ZenbuPR", 28),
             "integration.sudachi": ("ZenbuSudachiIntegration", 3),
         }
         for selector, (plan, count) in expected.items():

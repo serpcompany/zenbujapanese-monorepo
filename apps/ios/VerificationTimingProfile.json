@@ -62,6 +62,57 @@
       "basis": "Conservative scheduling weight inherited from the combined journey's 300-second timeout envelope; not an observed duration of the split Photos journey.",
       "workflow_run_id": 33959363388,
       "job_id": 101288424696
+    },
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRomajiPreferenceAddsSecondaryReadingToActualSearchAndWordDetail": {
+      "status": "provisional",
+      "basis": "Measured local focused execution; retained as provisional for hosted scheduling until a merge-candidate observation.",
+      "local_observation": {
+        "base_sha": "8271bf963636bedba08735651d82dfa3bffc63f1",
+        "source_fingerprint": "f7772ae3395d789f3f4fb15656fe944e523e4baaef19930b6775ce8ef8d6055a",
+        "xcode_version": "Xcode 27.0 Build version 27A266a",
+        "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+        "test_seconds": 33.144,
+        "date": "2026-09-11"
+      }
+    },
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRomajiAppearanceMatrixPreservesShortAndWrappedWordDetailRows": {
+      "status": "provisional",
+      "basis": "Conservative pre-split scheduling weight; focused measurement pending for the separated journey.",
+      "workflow_run_id": 33888752432
+    },
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail": {
+      "status": "provisional",
+      "basis": "Measured local focused execution; retained as provisional for hosted scheduling until a merge-candidate observation.",
+      "local_observation": {
+        "base_sha": "8271bf963636bedba08735651d82dfa3bffc63f1",
+        "source_fingerprint": "f7772ae3395d789f3f4fb15656fe944e523e4baaef19930b6775ce8ef8d6055a",
+        "xcode_version": "Xcode 27.0 Build version 27A266a",
+        "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+        "test_seconds": 25.783,
+        "date": "2026-09-11"
+      }
+    },
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIchidanConjugationRowsPreserveAllPlainAndPoliteForms": {
+      "status": "provisional",
+      "basis": "Conservative pre-split scheduling weight; focused measurement pending for the separated journey.",
+      "workflow_run_id": 33888752432
+    },
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted": {
+      "status": "provisional",
+      "basis": "Measured local focused execution; retained as provisional for hosted scheduling until a merge-candidate observation.",
+      "local_observation": {
+        "base_sha": "8271bf963636bedba08735651d82dfa3bffc63f1",
+        "source_fingerprint": "f7772ae3395d789f3f4fb15656fe944e523e4baaef19930b6775ce8ef8d6055a",
+        "xcode_version": "Xcode 27.0 Build version 27A266a",
+        "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+        "test_seconds": 44.632,
+        "date": "2026-09-11"
+      }
+    },
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteEditorPresentationAndWarmBackPreservePersistedNotes": {
+      "status": "provisional",
+      "basis": "Conservative pre-split scheduling weight; focused measurement pending for the separated journey.",
+      "workflow_run_id": 33888752432
     }
   },
   "test_durations_seconds": {
@@ -173,7 +224,7 @@
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHelloRanksTheJapaneseGreetingAheadOfTheLoanwordAndSubstringNoise": 20.443,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHighlightedIruKeepsOnePublicWordBoundaryAndOpensCanonicalDetail": 59.361,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testHumanPacedMultiWordSearchReturnsFrozenSentenceResultsWithoutQueuedDelay": 29.495,
-    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail": 133.715,
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIchidanConjugationsSwitchBetweenPlainAndPoliteAndReturnToWordDetail": 25.783,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextAmbiguousWholeObservationOffersNativeCandidateMenu": 17.104,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextClearFileSupportsHighlightsGlossNestedWordSharingAndClose": 104.071,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testImageTextEncounterMediaPersistsIntoLaterSearchAndAppearsInMediaLibrary": 88.367,
@@ -232,7 +283,7 @@
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRealRadicalCandidateWithoutAnyDictionaryMatchStillOpensKanjiResult": 33.588,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRecordedPhysicalPhoneYamaGestureIncludesYamaCandidate": 19.407,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRepresentativeExampleSentencesKeepCompactContentNavigationAndSpeech": 114.635,
-    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRomajiPreferenceAddsSecondaryReadingToActualSearchAndWordDetail": 238.359,
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRomajiPreferenceAddsSecondaryReadingToActualSearchAndWordDetail": 33.144,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSameYamaShapeRecognizesAcrossNoncanonicalStrokeOrder": 19.244,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSearchChromeKeepsImageSearchOutsideTheFieldAndMovesSourcesToYou": 21.897,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSearchInputModesUseNativeSelectionAndCandidateSubmissionControls": 16.783,
@@ -261,10 +312,13 @@
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordDetailRestrictedCameraExplainsManagedBoundary": 25.161,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordDetailUndeterminedCameraDenialOffersSettingsRecovery": 54.154,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordDetailUndeterminedCameraGrantCapturesForTheSameWord": 21.515,
-    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted": 121.866,
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted": 44.632,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNotesRemainIsolatedAcrossSameSpellingHomographs": 70.367,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder": 125.985,
-    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testYouUsesNativePersonalSettingsHierarchyAndSupportsIndependentHosting": 103.994
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testYouUsesNativePersonalSettingsHierarchyAndSupportsIndependentHosting": 103.994,
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRomajiAppearanceMatrixPreservesShortAndWrappedWordDetailRows": 238.359,
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIchidanConjugationRowsPreserveAllPlainAndPoliteForms": 133.715,
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteEditorPresentationAndWarmBackPreservePersistedNotes": 121.866
   },
   "version": 1
 }
