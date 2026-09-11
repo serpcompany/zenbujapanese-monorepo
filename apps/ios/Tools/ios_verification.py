@@ -326,6 +326,12 @@ def build_fingerprint(
 def load_and_validate_manifest(path: Path) -> dict[str, Any]:
     manifest = json.loads(path.read_text(encoding="utf-8"))
     selectors = manifest.get("selectors", {})
+    for key, selector in selectors.items():
+        resources = selector.get("simulator_resources", [])
+        if not isinstance(resources, list) or any(item != "photo-library" for item in resources):
+            raise PolicyError(f"unknown simulator resources for {key}")
+        if resources and str(selector.get("test", "")).count("/") != 2:
+            raise PolicyError(f"simulator resources require an exact test method: {key}")
     issue_execution = manifest.get("issue_execution")
     if issue_execution is not None:
         maximum_seconds = issue_execution.get("maximum_prepared_seconds")
@@ -549,6 +555,31 @@ def require_blocking_coverage(
             raise PolicyError(
                 f"blocking owner {key} for {journey} has tests not required by the merge gate"
             )
+
+def selection_simulator_resources(
+    manifest: dict[str, Any],
+    inventory: dict[str, Any],
+    plan: str,
+    selected_tests: list[str] | None,
+) -> list[str]:
+    tests = set(inventory["plans"][plan]["included_tests"])
+    if selected_tests is not None:
+        tests = {
+            test
+            for test in tests
+            if any(
+                test == selected or test.startswith(selected + "/")
+                for selected in selected_tests
+            )
+        }
+    return sorted(
+        {
+            resource
+            for selector in manifest["selectors"].values()
+            if selector.get("test") in tests
+            for resource in selector.get("simulator_resources", [])
+        }
+    )
 
 
 def _issue_execution_disposition(
@@ -1196,6 +1227,15 @@ def merge_candidate_matrix(
                 ),
             }
         )
+    repair_gate = set(
+        manifest.get("capabilities", {}).get("merge-repair-regressions", {}).get("manual", [])
+    )
+    if repair_gate and selected == repair_gate:
+        include.append({
+            "lane": "merge-repair-regressions", "plan": "ZenbuPR",
+            "selectors": sorted(selected), "test_count": len(selected),
+            "measured_test_seconds": None, "timing_profile_run_id": None,
+        })
     reviewer_gate = set(
         manifest.get("capabilities", {}).get("reviewer-contrast", {}).get("manual", [])
     )
@@ -1694,6 +1734,10 @@ def main(arguments: list[str]) -> int:
             selection = {"mode": "full-plan", "tests": []}
         else:
             selection = {"mode": "selected-tests", "tests": selected_tests}
+        selection["simulator_resources"] = selection_simulator_resources(
+            manifest, inventory, options.plan,
+            None if full_plan_selector_count else selected_tests,
+        )
         print(json.dumps(selection, separators=(",", ":")))
         return 0
     if options.command == "fingerprint":

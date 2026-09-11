@@ -10,7 +10,7 @@ on:
         description: Registered verification capability
         type: choice
         default: full-merge
-        options: [full-merge, reviewer-contrast, refactor-regressions, lean-merge-shadow]
+        options: [full-merge, reviewer-contrast, refactor-regressions, lean-merge-shadow, merge-repair-regressions]
 
 permissions:
   contents: read
@@ -76,7 +76,7 @@ jobs:
           if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
             args+=(--base '${{ github.event.pull_request.base.sha }}' --head '${{ github.event.pull_request.head.sha }}')
           elif [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
-            [[ "$MANUAL_CAPABILITY" == full-merge || "$MANUAL_CAPABILITY" == reviewer-contrast || "$MANUAL_CAPABILITY" == refactor-regressions || "$MANUAL_CAPABILITY" == lean-merge-shadow ]] || exit 64
+            [[ "$MANUAL_CAPABILITY" == full-merge || "$MANUAL_CAPABILITY" == reviewer-contrast || "$MANUAL_CAPABILITY" == refactor-regressions || "$MANUAL_CAPABILITY" == lean-merge-shadow || "$MANUAL_CAPABILITY" == merge-repair-regressions ]] || exit 64
             args+=(--capability "$MANUAL_CAPABILITY")
           else
             args+=(--capability full-merge)

@@ -85,7 +85,7 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         workflow = workflow_text("ios-premerge.yml")
         triggers = trigger_section(workflow)
         self.assertIn("default: full-merge", triggers)
-        self.assertIn("options: [full-merge, reviewer-contrast, refactor-regressions, lean-merge-shadow]", triggers)
+        self.assertIn("options: [full-merge, reviewer-contrast, refactor-regressions, lean-merge-shadow, merge-repair-regressions]", triggers)
         self.assertIn("MANUAL_CAPABILITY: ${{ inputs.capability || 'full-merge' }}", workflow)
         self.assertIn('args+=(--capability "$MANUAL_CAPABILITY")', workflow)
 

@@ -111,6 +111,30 @@
     "accessibility.image-translation-recovery|ui.image-text-translation-assets": "The normal-size journey proves cancellation, retry, unsupported, failure, and preserved session behavior; one independent maximum-size smoke proves the new native recovery presentation remains reachable without duplicating the full journey."
   },
   "selectors": {
+    "ui.radical-selection-regression": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testRadicalSelectionNarrowsAndRemovalBroadensRealCandidates",
+      "traits": ["ui"],
+      "journeys": []
+    },
+    "ui.conjugations-suru-regression": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSuruConjugationsPreserveFormsAndResetModeForNextEntry",
+      "traits": ["ui"],
+      "journeys": []
+    },
+    "ui.conjugations-kuru-regression": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKuruConjugationsPreservePlainPoliteFormsAndReadings",
+      "traits": ["ui"],
+      "journeys": []
+    },
+    "ui.conjugations-dark-adaptive-regression": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkTsubusuConjugationsRemainReadableAtLargestAccessibilityTextSize",
+      "traits": ["ui", "accessibility-maximum"],
+      "journeys": []
+    },
     "ui.refactor-stability-lookup-retry": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testLookupFailureIsNotPresentedAsNoMatchAndRetryRecovers",
@@ -156,6 +180,7 @@
     "ui.word-detail-native-photo": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordDetailNativePhotoCancellationAndSelectionPersistsAcrossRelaunch",
+      "simulator_resources": ["photo-library"],
       "traits": ["ui", "normal-dynamic-type", "refactor-pickers"],
       "journeys": []
     },
@@ -740,6 +765,10 @@
       "unit.search-frequency-batch"
     ],
     "ui": [
+      "ui.radical-selection-regression",
+      "ui.conjugations-suru-regression",
+      "ui.conjugations-kuru-regression",
+      "ui.conjugations-dark-adaptive-regression",
       "ui.refactor-stability-lookup-retry",
       "ui.refactor-stability-word-reference",
       "ui.refactor-stability-search-back",
@@ -892,6 +921,11 @@
       "paths": [],
       "adaptive_layout": true,
       "derive_blocking_journey_owners": true
+    },
+    "merge-repair-regressions": {
+      "paths": [],
+      "adaptive_layout": true,
+      "manual": ["ui.conjugations-suru-regression", "ui.conjugations-kuru-regression", "ui.conjugations-dark-adaptive-regression", "ui.radical-selection-regression", "ui.refactor-pickers-photos-cancel"]
     },
     "refactor-regressions": {
       "paths": [],

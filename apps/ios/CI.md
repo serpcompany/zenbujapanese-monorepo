@@ -72,7 +72,7 @@ Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
 provider except for the bounded bundled-provider cold-relaunch journey. The
 merge-candidate workflow invokes and retains all three correctness plans.
 
-The exact inventory contains 341 tests. `ZenbuPR` includes 319 (116 Unit and 203
+The exact inventory contains 342 tests. `ZenbuPR` includes 320 (116 Unit and 204
 UI), and `ZenbuSudachiIntegration` includes three network-backed Unit tests. The
 seventeen exact tests outside those correctness plans are one performance-only Unit
 test, three physical/system HIL journeys, #269's four deliberately red framework
@@ -138,7 +138,7 @@ through the same interface.
 For the merge-candidate stage, the planner derives eleven lanes from the committed
 Xcode plan inventory and `VerificationTimingProfile.json`. Every `ZenbuPR` Unit
 test belongs to the Unit lane. The complete 68-test `ZenbuAccessibility`
-partition is split across three lanes, and the remaining 135 normal UI tests are
+partition is split across three lanes, and the remaining 136 normal UI tests are
 split across five lanes. The separate `ZenbuSudachiIntegration` plan is the
 separate integration lane. The two-test `ZenbuIncreasedContrast` lane is also
 required; its measured duration and timing-source run are null until actual app
@@ -302,6 +302,12 @@ The required jobs always report a conclusion. Non-iOS PRs therefore pass the
 gate without starting macOS runners instead of remaining permanently pending
 because an entire required workflow was path-filtered away.
 
+The manual `merge-repair-regressions` capability runs only the five affected
+conjugation, radical-selection, and empty-Photos-cancellation methods on hosted
+Xcode 26.5. It reports a focused context and cannot satisfy the full required gate.
+Conjugation measurements use one coherent snapshot per section and move rows below
+sticky headers before asserting their unchanged geometry bounds.
+
 ## Runner contract
 
 `run_selected_test_plan.sh` translates only manifest selector IDs, including the
@@ -309,7 +315,12 @@ repository-generated merge partition selectors, into Xcode test identifiers.
 The `ios_verification.py tests` adapter returns tagged JSON with either
 `selected-tests` and its exact identities or `full-plan` with an empty test list;
 the shell runner rejects unknown modes, empty selected partitions, and any
-full-plan selector combined with another selector.
+full-plan selector combined with another selector. The tagged response also carries
+`simulator_resources`, derived from the exact selected methods. Only a lane that
+includes the native photo-selection/persistence test seeds the repository photo;
+Unit, Sudachi, and unrelated UI lanes avoid Photos setup. Direct manual runner
+calls keep the conservative fixture default. Setup logs record the decision and
+Photos preparation time.
 `run_ci_test_plan.sh` owns the Simulator lifecycle, uses
 `build-for-testing` followed by `test-without-building`, and records separate
 setup, build, test, and total durations. Supplying the same `ZENBU_DERIVED_DATA`

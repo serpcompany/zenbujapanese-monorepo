@@ -39,6 +39,7 @@ done < <(printf '%s' "$selectors_json" | jq -r '.[]')
 test_names=()
 selector_arguments=()
 full_plan_selector_count=0
+requires_photo_fixture=false
 for selector_id in "${selector_ids[@]}"; do
   resolved_selection="$(
     python3 "$tool_dir/ios_verification.py" tests \
@@ -48,6 +49,14 @@ for selector_id in "${selector_ids[@]}"; do
       --selector "$selector_id"
   )"
   selection_mode="$(printf '%s' "$resolved_selection" | jq -er '.mode')"
+  resource_decision="$(printf '%s' "$resolved_selection" | jq -er '
+    if (.simulator_resources | type) == "array"
+    then (.simulator_resources | index("photo-library") != null | tostring)
+    else error("missing simulator resource decision") end
+  ')"
+  if [[ "$resource_decision" == true ]]; then
+    requires_photo_fixture=true
+  fi
   case "$selection_mode" in
     full-plan)
       [[ "$(printf '%s' "$resolved_selection" | jq '.tests | length')" -eq 0 ]] || {
@@ -91,5 +100,6 @@ selected_command=(
 if [[ ${#selector_arguments[@]} -gt 0 ]]; then
   selected_command+=("${selector_arguments[@]}")
 fi
-ZENBU_SELECTOR_IDS="$selectors_json" ZENBU_SOURCE_SHA="$source_sha" \
+ZENBU_REQUIRES_PHOTOS_FIXTURE="$requires_photo_fixture" \
+  ZENBU_SELECTOR_IDS="$selectors_json" ZENBU_SOURCE_SHA="$source_sha" \
   "${selected_command[@]}"

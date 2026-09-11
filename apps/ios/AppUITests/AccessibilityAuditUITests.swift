@@ -1817,26 +1817,28 @@ final class AccessibilityAuditUITests: XCTestCase {
         visibleBottom: visibleBottom
       )
       let row = section.row
-      guard row.exists else {
+      guard let geometry = section.snapshot else {
         XCTFail("Missing conjugation row \(id)", file: file, line: line)
         return
       }
-      XCTAssertGreaterThanOrEqual(row.frame.minX, app.frame.minX, file: file, line: line)
-      XCTAssertLessThanOrEqual(row.frame.maxX, app.frame.maxX, file: file, line: line)
-      XCTAssertGreaterThanOrEqual(section.title.frame.minY, visibleTop, file: file, line: line)
-      XCTAssertLessThanOrEqual(row.frame.maxY, visibleBottom, file: file, line: line)
+      XCTAssertGreaterThanOrEqual(
+        geometry.row.frame.minX, geometry.appFrame.minX, file: file, line: line)
+      XCTAssertLessThanOrEqual(
+        geometry.row.frame.maxX, geometry.appFrame.maxX, file: file, line: line)
+      XCTAssertGreaterThanOrEqual(geometry.title.frame.minY, visibleTop, file: file, line: line)
+      XCTAssertLessThanOrEqual(geometry.row.frame.maxY, visibleBottom, file: file, line: line)
       XCTAssertTrue(row.isHittable, file: file, line: line)
       let maximumHeight: CGFloat = accessibilityXXXL ? 190 : 100
-      XCTAssertLessThanOrEqual(row.frame.height, maximumHeight, file: file, line: line)
+      XCTAssertLessThanOrEqual(geometry.row.frame.height, maximumHeight, file: file, line: line)
       if let previousRowHeight {
         XCTAssertLessThanOrEqual(
-          abs(row.frame.height - previousRowHeight),
+          abs(geometry.row.frame.height - previousRowHeight),
           accessibilityXXXL ? 50 : 24,
           file: file,
           line: line
         )
       }
-      previousRowHeight = row.frame.height
+      previousRowHeight = geometry.row.frame.height
       ConjugationUITestSupport.assertSectionChrome(section, file: file, line: line)
     }
 
@@ -3004,6 +3006,19 @@ final class AccessibilityAuditUITests: XCTestCase {
       if let index = remainingExceptions.firstIndex(where: { $0.matches(issue) }) {
         remainingExceptions.remove(at: index)
         return true
+      }
+      let snapshot = try? issue.element?.snapshot()
+      let identifier = snapshot?.identifier ?? "unavailable"
+      let frame = snapshot.map { String(describing: $0.frame) } ?? "unavailable"
+      XCTContext.runActivity(named: "Accessibility finding: \(identifier), frame \(frame)") {
+        activity in
+        let attachment = XCTAttachment(
+          string:
+            "State: \(stateName)\nType: \(issue.auditType.rawValue)\nIdentifier: \(identifier)\nLabel: \(snapshot?.label ?? "unavailable")\nFrame: \(frame)"
+        )
+        attachment.name = "Unhandled accessibility finding"
+        attachment.lifetime = .keepAlways
+        activity.add(attachment)
       }
       return false
     }
