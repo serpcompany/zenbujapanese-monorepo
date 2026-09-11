@@ -605,8 +605,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let translate = app.buttons["image-text.translate"]
     XCTAssertTrue(translate.exists)
     translate.tap()
-    let translation = app.staticTexts["image-text.translation"]
-    XCTAssertTrue(translation.waitForExistence(timeout: 3))
+    let translation = app.descendants(matching: .any)["image-text.translation"]
+    guard translation.waitForExistence(timeout: 3) else {
+      XCTFail("Translated Image Text must expose image-text.translation")
+      return
+    }
     XCTAssertTrue(translation.label.contains("quiet park"))
     assertImageTextToolbarIsHittable(in: app)
     let translationHighlights = app.buttons["image-text.highlights"]
@@ -696,7 +699,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     )
     XCTAssertTrue(app.buttons["image-text.translate"].waitForExistence(timeout: 20))
     app.buttons["image-text.translate"].tap()
-    let preparedTranslation = app.staticTexts["image-text.translation"]
+    let preparedTranslation = app.descendants(matching: .any)["image-text.translation"]
     XCTAssertTrue(preparedTranslation.waitForExistence(timeout: 3))
     XCTAssertTrue(preparedTranslation.label.contains("quiet park"))
     app.terminate()
@@ -781,7 +784,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       var app = launchApp(additionalArguments: arguments, networkUnavailable: true)
       XCTAssertTrue(app.buttons["image-text.translate"].waitForExistence(timeout: 20))
       app.buttons["image-text.translate"].tap()
-      let firstTranslation = app.staticTexts["image-text.translation"]
+      let firstTranslation = app.descendants(matching: .any)["image-text.translation"]
       XCTAssertTrue(firstTranslation.waitForExistence(timeout: 30))
       XCTAssertFalse(firstTranslation.label.isEmpty)
       let frozenTranslation = firstTranslation.label
@@ -790,7 +793,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       app = launchApp(additionalArguments: arguments, networkUnavailable: true)
       XCTAssertTrue(app.buttons["image-text.translate"].waitForExistence(timeout: 20))
       app.buttons["image-text.translate"].tap()
-      let relaunchedTranslation = app.staticTexts["image-text.translation"]
+      let relaunchedTranslation = app.descendants(matching: .any)["image-text.translation"]
       XCTAssertTrue(relaunchedTranslation.waitForExistence(timeout: 30))
       XCTAssertEqual(relaunchedTranslation.label, frozenTranslation)
     #endif
