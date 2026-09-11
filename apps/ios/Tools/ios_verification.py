@@ -1064,6 +1064,7 @@ def resolve_plan(
     draft: bool,
     source_sha: str,
     requested_capabilities: list[str] | None = None,
+    allowed_tiers: set[str] | None = None,
 ) -> dict[str, Any]:
     """Return the exact repository-selected work for one candidate and stage."""
     if stage not in manifest.get("stages", {}):
@@ -1180,6 +1181,38 @@ def resolve_plan(
                 )
         selected = runnable
         reasons = runnable_reasons
+    if allowed_tiers is not None:
+        if stage != "hosted-fast":
+            raise PolicyError("tier restriction is supported only for hosted-fast")
+        stage_tiers = set(manifest.get("stages", {}).get(stage, []))
+        disallowed_tiers = allowed_tiers - stage_tiers
+        if disallowed_tiers:
+            raise PolicyError(
+                f"tiers are not allowed at {stage}: {', '.join(sorted(disallowed_tiers))}"
+            )
+        tiers_by_selector = {
+            selector_id: tier
+            for tier, selector_ids in manifest.get("tiers", {}).items()
+            for selector_id in selector_ids
+        }
+        reason_by_selector = {reason["selector"]: reason for reason in reasons}
+        retained: list[str] = []
+        retained_reasons: list[dict[str, str]] = []
+        for selector_id in selected:
+            tier = tiers_by_selector[selector_id]
+            if tier in allowed_tiers:
+                retained.append(selector_id)
+                retained_reasons.append(reason_by_selector[selector_id])
+                continue
+            deferred_selectors.append(
+                {
+                    "selector": selector_id,
+                    "owner_stage": "merge-candidate",
+                    "reason": f"{tier} is deferred from {stage} by the caller",
+                }
+            )
+        selected = retained
+        reasons = retained_reasons
     _validate_no_equivalent_selectors(
         manifest["selectors"],
         selected,
@@ -1297,6 +1330,7 @@ def parse_arguments(arguments: list[str]) -> argparse.Namespace:
     plan.add_argument("--head")
     plan.add_argument("--path", action="append", default=[])
     plan.add_argument("--capability", action="append", default=[])
+    plan.add_argument("--tier", action="append", default=[])
     plan.add_argument("--github-output", type=Path)
 
     fingerprint = subparsers.add_parser("fingerprint")
@@ -1542,6 +1576,7 @@ def main(arguments: list[str]) -> int:
         draft=options.draft == "true",
         source_sha=options.source_sha,
         requested_capabilities=options.capability,
+        allowed_tiers=set(options.tier) if options.tier else None,
     )
     plan["partitions"] = selector_partitions(manifest, plan["selectors"])
     plan["merge_candidate_matrix"] = (

@@ -77,7 +77,7 @@ jobs:
             --github-output "$GITHUB_OUTPUT"
           )
           if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
-            args+=(--base "$BASE_SHA" --head "$HEAD_SHA")
+            args+=(--base "$BASE_SHA" --head "$HEAD_SHA" --tier contracts --tier unit)
           else
             args+=(--capability full-fast)
           fi

@@ -482,6 +482,82 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                     expected,
                 )
 
+    def test_hosted_plan_can_defer_ui_tiers_to_the_merge_candidate(self):
+        manifest = {
+            "version": 1,
+            "selectors": {
+                "contracts.repository": {
+                    "plan": "ZenbuPR",
+                    "test": "contracts",
+                    "traits": [],
+                    "journeys": [],
+                },
+                "unit.all": {
+                    "plan": "ZenbuPR",
+                    "test": "units",
+                    "traits": [],
+                    "journeys": [],
+                },
+                "ui.search": {
+                    "plan": "ZenbuPR",
+                    "test": "ui-search",
+                    "traits": [],
+                    "journeys": [],
+                },
+                "accessibility.search": {
+                    "plan": "ZenbuAccessibility",
+                    "test": "accessibility-search",
+                    "traits": [],
+                    "journeys": [],
+                },
+            },
+            "tiers": {
+                "contracts": ["contracts.repository"],
+                "unit": ["unit.all"],
+                "ui": ["ui.search"],
+                "accessibility": ["accessibility.search"],
+            },
+            "capabilities": {
+                "ios": {
+                    "paths": ["apps/ios/**"],
+                    "hosted-fast": [
+                        "contracts.repository",
+                        "unit.all",
+                        "ui.search",
+                        "accessibility.search",
+                    ],
+                }
+            },
+            "stages": {"hosted-fast": ["contracts", "unit", "ui", "accessibility"]},
+        }
+
+        plan = ios_verification.resolve_plan(
+            manifest,
+            changed_paths=["apps/ios/App/App.swift"],
+            stage="hosted-fast",
+            event="synchronize",
+            draft=False,
+            source_sha="current",
+            allowed_tiers={"contracts", "unit"},
+        )
+
+        self.assertEqual(plan["selectors"], ["contracts.repository", "unit.all"])
+        self.assertEqual(
+            plan["deferred_selectors"],
+            [
+                {
+                    "selector": "ui.search",
+                    "owner_stage": "merge-candidate",
+                    "reason": "ui is deferred from hosted-fast by the caller",
+                },
+                {
+                    "selector": "accessibility.search",
+                    "owner_stage": "merge-candidate",
+                    "reason": "accessibility is deferred from hosted-fast by the caller",
+                },
+            ],
+        )
+
     def test_test_only_repair_stays_focused_while_shared_runtime_expands(self):
         manifest = {
             "version": 1,

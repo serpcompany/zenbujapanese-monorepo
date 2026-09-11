@@ -10,7 +10,7 @@ remains decision evidence, but this file owns the executable cadence.
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | Issue implementation                       | Repository-selected deterministic policy checks and focused unit contracts, each budgeted for no more than 60 seconds on a prepared local environment | Fast red-green feedback without launching XCUITest, accessibility, integration, network, or complete targets |
 | Draft pull request push                    | Scope, manifest validation, and a SHA-bound deferred status on Ubuntu                                | Keep WIP pushes cheap; the draft itself remains unmergeable                                        |
-| Ready pull request or later non-draft push | Manifest-selected repository contracts, units, critical journeys, and focused accessibility coverage | Automatically verify the exact current head without accepting stale green results                  |
+| Ready pull request or later non-draft push | Manifest-selected repository contracts and units                                              | Verify the exact current head quickly without accepting stale green results                         |
 | Merge queue                                | Cheap required-status reporting plus ten concurrent exact-candidate lanes: Unit, three complete Accessibility UI shards, five normal UI shards, and `ZenbuSudachiIntegration` | Blocking integration evidence without repeating fast macOS partitions or learner journeys |
 | Manual investigation                       | `iOS nightly quality`, started with `workflow_dispatch`                                              | Two-device accessibility breadth, repetitions, and sanitizers when investigation warrants the cost |
 | Pre-release                                | Manual `iOS pre-release validation`, then separately authorized physical-device and release checks   | Transient validation for an identified proposed candidate; never inferred from development CI      |
@@ -68,9 +68,10 @@ substitute for correctness.
 
 During Apple-native refactor issue loops, an issue may add or update an exact
 learner-visible UI or maximum-size test, but the local issue runner records it as
-deferred instead of launching XCUITest. A Ready PR exact-head checkpoint owns
-affected Critical UI and focused accessibility execution. For the current #218
-batch, #173 owns the one consolidated affected-screen checkpoint after #294.
+deferred instead of launching XCUITest. Ready PR checks retain exact-head
+repository contracts and Unit coverage; the merge-candidate workflow owns UI and
+accessibility execution. For the current #218 batch, #173 owns the one consolidated
+affected-screen checkpoint after #294.
 The existing direct accessibility audits remain visible and are not replaced,
 skipped, or treated as passing by that placement.
 

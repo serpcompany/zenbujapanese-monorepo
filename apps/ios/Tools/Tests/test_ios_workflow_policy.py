@@ -139,6 +139,7 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         workflow = workflow_text("ios-quality.yml")
         self.assertIn("apps/ios/Tools/ios_verification.py plan", workflow)
         self.assertIn("needs.scope.outputs.run_expensive == 'true'", workflow)
+        self.assertIn("--tier contracts --tier unit", workflow)
         self.assertNotIn("-only-testing:", workflow)
 
     def test_critical_ui_budget_covers_the_measured_ready_checkpoint(self):
