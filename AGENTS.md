@@ -1,13 +1,25 @@
-# AGENTS
+# Agent map
 
-## Issue tracker
+Use this file as a routing map. Open only the sources whose condition matches the current task.
 
-Issues and PRDs are tracked in GitHub Issues for `serpcompany/zenbujapanese-monorepo`. See `docs/agents/issue-tracker.md`.
+## Repository
 
-## Triage labels
+- For repository boundaries, delivery surfaces, or shared assets, read [`README.md`](README.md).
+- For iOS project structure, build entry points, App Store metadata, or releases, read [`apps/ios/README.md`](apps/ios/README.md).
+- For current iOS user-facing behavior, read [`apps/ios/docs/product/README.md`](apps/ios/docs/product/README.md) and then only the linked product document relevant to the task.
+- For brand artwork or platform icon exports, read [`assets/brand/README.md`](assets/brand/README.md).
 
-Use the five default triage labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+## Work tracking
 
-## Domain decisions
+- For creating, reading, updating, or closing issues and PRDs, read [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md).
+- For assigning a triage state, read [`docs/agents/triage-labels.md`](docs/agents/triage-labels.md).
 
-Create domain language only when a real terminology conflict is resolved, and record ADRs only for durable architectural decisions. See `docs/agents/domain.md`.
+## Decisions
+
+- For an architecture change, read only the relevant records under [`docs/adr/`](docs/adr/).
+- For defining project terminology or deciding whether an ADR is warranted, read [`docs/agents/domain.md`](docs/agents/domain.md).
+
+## Evidence and research
+
+- For feedback supplied as a Clipy recording, read [`docs/agents/clipy.md`](docs/agents/clipy.md).
+- For exploratory research or archived reference evidence, use the private [`zenbujapanese/research`](https://github.com/zenbujapanese/research) repository. Keep accepted implementation decisions and current product behavior in this repository.
