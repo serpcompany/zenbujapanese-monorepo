@@ -111,6 +111,12 @@
     "accessibility.image-translation-recovery|ui.image-text-translation-assets": "The normal-size journey proves cancellation, retry, unsupported, failure, and preserved session behavior; one independent maximum-size smoke proves the new native recovery presentation remains reachable without duplicating the full journey."
   },
   "selectors": {
+    "ui.word-detail-add-menu-dark-regression": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/AccessibilityAuditUITests/testDarkWordDetailAddMenuRemainsReachableAtDefaultTextSize",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": []
+    },
     "ui.word-note-homograph-regression": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNotesRemainIsolatedAcrossSameSpellingHomographs",
@@ -777,6 +783,7 @@
       "unit.search-frequency-batch"
     ],
     "ui": [
+      "ui.word-detail-add-menu-dark-regression",
       "ui.word-note-homograph-regression",
       "ui.conjugations-adjective-regression",
       "ui.radical-selection-regression",
