@@ -13,9 +13,8 @@ This repository is the shared home of the Zenbu Japanese product family. It keep
 | --- | --- |
 | `apps/<surface>/` | One delivery surface. It owns its platform toolchain, dependencies, build and test entry points, operational documentation, versioning, metadata, signing, deployment, and release process. |
 | `assets/` | Product-family source assets that are not runtime inputs of one app. Runtime assets remain with their consuming app. |
-| `docs/` | Canonical cross-product product documentation, ADRs, research, provenance, and release records. App-specific operational truth stays under the owning app. |
+| `docs/` | Canonical cross-product domain documentation, ADRs, research, and provenance. App-specific operational truth stays under the owning app. |
 | `.github/workflows/` | Flat workflow files with delivery-surface-owned routing. New or renamed workflows use a clear product prefix, keep an always-created scope or aggregate gate, and conditionally run expensive work for affected consumers. |
-| `metadata/` | The iOS App Store metadata remains at this legacy root path to preserve current release-tooling inputs. The iOS delivery surface owns it; relocation is deferred until a separately scoped consumer audit and release-path test can prove the move safe. |
 | `packages/<name>/` | A versioned shared artifact with at least two real consumers. This directory remains absent until that threshold is met. |
 
 One Git repository does not imply one build graph. Do not add a root package manager or monorepo orchestrator until multiple real delivery surfaces create measured coordination work that justifies one. A Shared Capability also does not imply shared runtime or UI source: platform-native implementations may share a documented contract without sharing executable code. Cross-platform APIs and data formats must be versioned and backward-compatible because web and app-store deployments cannot be atomic.
