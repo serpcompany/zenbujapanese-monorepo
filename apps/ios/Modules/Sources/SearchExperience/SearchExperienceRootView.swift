@@ -56,13 +56,11 @@ public struct SearchExperienceRootView: View {
         )
       }
       let liveKanjiLookupClient = KanjiLookupClient.live(lookupClient: resolvedLookupClient)
-      kanjiLookupClient =
-        KanjiLookupClient.clientFromProcessArguments(live: liveKanjiLookupClient)
-        ?? liveKanjiLookupClient
+      kanjiLookupClient = liveKanjiLookupClient
       handwritingRecognitionClient = .live
       cameraAuthorizationClient = .live
       speechSynthesisClient = SpeechSynthesisClient.clientFromProcessArguments() ?? .live
-      kanjiStrokeOrderClient = KanjiStrokeOrderClient.clientFromProcessArguments() ?? .live
+      kanjiStrokeOrderClient = .live
       kanjiElementLookupClient = .live
       imageTextRecognitionClient = .live
       naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live

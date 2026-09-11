@@ -9,13 +9,8 @@ struct LookupClient: Sendable {
   var entriesContainingKanji: @Sendable (String) async throws -> [DictionaryEntry]
 
   static let live: LookupClient = {
-    let client = LookupClient(
+    LookupClient(
       search: { query in
-        #if DEBUG
-          if ProcessInfo.processInfo.arguments.contains("-InjectLookupFailure") {
-            throw LookupClientError.injectedFailure
-          }
-        #endif
         return try await LanguageReferenceData.shared.search(query)
       },
       entry: { id in try await LanguageReferenceData.shared.entry(id) },
@@ -28,81 +23,8 @@ struct LookupClient: Sendable {
         try await LanguageReferenceData.shared.entries(containingKanji: character)
       }
     )
-    #if DEBUG
-      if let query = injectedOneTimeFailureQuery() {
-        return injectingOneTimeFailure(for: query, live: client)
-      }
-    #endif
-    return client
   }()
-
-  #if DEBUG
-    static func injectingOneTimeFailure(for failedQuery: SearchQuery, live: LookupClient)
-      -> LookupClient
-    {
-      let failure = InjectedLookupFailure()
-      return LookupClient(
-        search: { query in
-          if query == failedQuery, try await failure.consumeFailure() {
-            throw LookupClientError.injectedFailure
-          }
-          return try await live.search(query)
-        },
-        entry: live.entry,
-        entryMatchingForm: live.entryMatchingForm,
-        entriesMatchingForm: live.entriesMatchingForm,
-        entriesContainingKanji: live.entriesContainingKanji
-      )
-    }
-
-    static func freshBundledDatabase() -> LookupClient {
-      fixtureClient(LanguageReferenceData())
-    }
-
-    static func databaseFixture(_ databaseURL: URL) -> LookupClient {
-      fixtureClient(
-        LanguageReferenceData(databaseURL: databaseURL, validatesBundledArtifact: false))
-    }
-
-    private static func fixtureClient(_ data: LanguageReferenceData) -> LookupClient {
-      return LookupClient(
-        search: { query in try await data.search(query) },
-        entry: { id in try await data.entry(id) },
-        entryMatchingForm: { form in try await data.entry(matchingForm: form) },
-        entriesMatchingForm: { form in try await data.entries(matchingForm: form) },
-        entriesContainingKanji: { character in try await data.entries(containingKanji: character) }
-      )
-    }
-  #endif
 }
-
-#if DEBUG
-  enum LookupClientError: Error {
-    case injectedFailure
-  }
-
-  private func injectedOneTimeFailureQuery() -> SearchQuery? {
-    let arguments = ProcessInfo.processInfo.arguments
-    guard
-      let argumentIndex = arguments.firstIndex(of: "-InjectLookupFailureOnceQuery"),
-      arguments.indices.contains(argumentIndex + 1)
-    else {
-      return nil
-    }
-    return SearchQuery(arguments[argumentIndex + 1])
-  }
-
-  private actor InjectedLookupFailure {
-    private var isPending = true
-
-    func consumeFailure() throws -> Bool {
-      try Task.checkCancellation()
-      guard isPending else { return false }
-      isPending = false
-      return true
-    }
-  }
-#endif
 
 private actor LanguageReferenceData {
   static let shared = LanguageReferenceData()

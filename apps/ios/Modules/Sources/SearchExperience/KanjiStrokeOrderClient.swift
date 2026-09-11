@@ -33,38 +33,7 @@ struct KanjiStrokeOrderClient: Sendable {
   static let live = KanjiStrokeOrderClient { character in
     try await KanjiStrokeData.shared.diagram(character)
   }
-
-  #if DEBUG
-  static func clientFromProcessArguments() -> KanjiStrokeOrderClient? {
-    guard ProcessInfo.processInfo.arguments.contains("-InjectStrokeOrderFailureOnce") else {
-      return nil
-    }
-    let fixture = KanjiStrokeOrderFailureFixture()
-    return KanjiStrokeOrderClient { character in
-      if await fixture.consumeFailure() {
-        throw KanjiStrokeOrderFixtureError.injectedFailure
-      }
-      return try await KanjiStrokeOrderClient.live.diagram(character)
-    }
-  }
-  #endif
 }
-
-#if DEBUG
-private actor KanjiStrokeOrderFailureFixture {
-  private var hasFailed = false
-
-  func consumeFailure() -> Bool {
-    guard !hasFailed else { return false }
-    hasFailed = true
-    return true
-  }
-}
-
-private enum KanjiStrokeOrderFixtureError: Error {
-  case injectedFailure
-}
-#endif
 
 private actor KanjiStrokeData {
   static let shared = KanjiStrokeData()

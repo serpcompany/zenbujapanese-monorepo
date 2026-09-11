@@ -159,11 +159,6 @@ struct ExampleSentenceClient: Sendable {
     retrieve: { request in try await ExampleSentenceData.shared.retrieve(request) }
   )
 
-  static func testing(databaseURL: URL) -> ExampleSentenceClient {
-    let data = ExampleSentenceData(databaseURL: databaseURL)
-    return ExampleSentenceClient(retrieve: { request in try await data.retrieve(request) })
-  }
-
   func examples(_ entry: DictionaryEntry) async throws -> [ExampleSentence] {
     try await entryExamples(entry)
   }
