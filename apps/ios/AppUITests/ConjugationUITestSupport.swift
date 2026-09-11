@@ -30,6 +30,7 @@ enum ConjugationUITestSupport {
     let info: XCUIElementSnapshot
     let mode: XCUIElementSnapshot?
     let appFrame: CGRect
+    let listFrame: CGRect
     let visibleTop: CGFloat
     let visibleBottom: CGFloat
   }
@@ -87,7 +88,10 @@ enum ConjugationUITestSupport {
       }
       if let geometry {
         let top = visibleTop ?? geometry.visibleTop
-        let bottom = visibleBottom ?? geometry.visibleBottom
+        // Data/form inspection needs the List viewport, not the floating tab
+        // bar's rectangular shadow bounds. Accessibility callers explicitly
+        // supply their stricter unobscured boundary and still assert it.
+        let bottom = visibleBottom ?? min(geometry.listFrame.maxY, geometry.appFrame.maxY)
         if geometry.title.frame.minY < top
           || geometry.row.frame.minY < geometry.title.frame.maxY
         {
@@ -130,6 +134,7 @@ enum ConjugationUITestSupport {
     return SectionSnapshot(
       title: title, row: row, info: info, mode: find("conjugations.mode", in: root),
       appFrame: root.frame,
+      listFrame: list.frame,
       visibleTop: max(navigation.frame.maxY, list.frame.minY),
       visibleBottom: tabs.frame.minY
     )
