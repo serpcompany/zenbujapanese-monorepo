@@ -31,7 +31,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                     ios_verification.selection_simulator_resources(manifest, inventory, "ZenbuPR", selected), expected)
         self.assertEqual(ios_verification.selection_simulator_resources(manifest, inventory, "ZenbuSudachiIntegration", None), [])
 
-    def test_merge_repair_gate_selects_only_the_eight_affected_journeys(self):
+    def test_merge_repair_gate_selects_only_the_nine_affected_journeys(self):
         repo = Path(__file__).parents[4]
         manifest = ios_verification.load_and_validate_manifest(repo / "apps/ios/VerificationPolicy.json")
         resolved = ios_verification.resolve_plan(
@@ -40,12 +40,12 @@ class IOSVerificationPolicyTests(unittest.TestCase):
         )
         matrix = ios_verification.merge_candidate_matrix(manifest, resolved["selectors"], ios_verification.repository_inventory(repo))["include"]
         self.assertEqual(len(matrix), 1)
-        self.assertEqual(matrix[0]["test_count"], 8)
+        self.assertEqual(matrix[0]["test_count"], 9)
         self.assertEqual(set(matrix[0]["selectors"]), {
             "ui.conjugations-adjective-regression", "ui.conjugations-suru-regression", "ui.conjugations-kuru-regression",
             "ui.conjugations-dark-adaptive-regression", "ui.radical-selection-regression",
             "ui.refactor-pickers-photos-cancel", "ui.refactor-pickers-files-recovery",
-            "ui.japanese-text-analysis-settings",
+            "ui.japanese-text-analysis-settings", "ui.word-note-homograph-regression",
         })
 
     def test_split_photo_scheduling_weight_is_not_reported_as_measured_runtime(self):

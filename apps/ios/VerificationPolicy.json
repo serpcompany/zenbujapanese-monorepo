@@ -84,6 +84,12 @@
     "accessibility.image-translation-recovery|ui.image-text-translation-assets": "The normal-size journey proves cancellation, retry, unsupported, failure, and preserved session behavior; one independent maximum-size smoke proves the new native recovery presentation remains reachable without duplicating the full journey."
   },
   "selectors": {
+    "ui.word-note-homograph-regression": {
+      "plan": "ZenbuPR",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNotesRemainIsolatedAcrossSameSpellingHomographs",
+      "traits": ["ui", "normal-dynamic-type"],
+      "journeys": []
+    },
     "ui.conjugations-adjective-regression": {
       "plan": "ZenbuPR",
       "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCapturedAdjectiveFormListsDoNotExposeVerbModeControls",
@@ -743,6 +749,7 @@
       "unit.search-frequency-batch"
     ],
     "ui": [
+      "ui.word-note-homograph-regression",
       "ui.conjugations-adjective-regression",
       "ui.radical-selection-regression",
       "ui.conjugations-suru-regression",
@@ -899,7 +906,7 @@
     "merge-repair-regressions": {
       "paths": [],
       "adaptive_layout": true,
-      "manual": ["ui.conjugations-adjective-regression", "ui.conjugations-suru-regression", "ui.conjugations-kuru-regression", "ui.conjugations-dark-adaptive-regression", "ui.radical-selection-regression", "ui.refactor-pickers-photos-cancel", "ui.refactor-pickers-files-recovery", "ui.japanese-text-analysis-settings"]
+      "manual": ["ui.word-note-homograph-regression", "ui.conjugations-adjective-regression", "ui.conjugations-suru-regression", "ui.conjugations-kuru-regression", "ui.conjugations-dark-adaptive-regression", "ui.radical-selection-regression", "ui.refactor-pickers-photos-cancel", "ui.refactor-pickers-files-recovery", "ui.japanese-text-analysis-settings"]
     },
     "refactor-regressions": {
       "paths": [],
