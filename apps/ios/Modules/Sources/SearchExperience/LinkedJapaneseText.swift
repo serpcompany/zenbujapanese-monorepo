@@ -1,12 +1,5 @@
 import SwiftUI
 
-#if DEBUG
-  extension Notification.Name {
-    static let linkedJapaneseTextAnalysisRequested = Notification.Name(
-      "LinkedJapaneseTextAnalysisRequested")
-  }
-#endif
-
 struct LinkedJapaneseText: View {
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   private struct AnalysisIdentity: Hashable {
@@ -95,14 +88,6 @@ struct LinkedJapaneseText: View {
     .accessibilityElement(children: .contain)
     .task(id: analysisIdentity) {
       didFinishAnalysis = false
-      #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-RecordJapaneseAnalysisRequests") {
-          NotificationCenter.default.post(
-            name: .linkedJapaneseTextAnalysisRequested,
-            object: identifierPrefix
-          )
-        }
-      #endif
       let resolvedTokens = await japaneseTextAnalysisClient.linkedTokens(
         text,
         highlightedQuery,

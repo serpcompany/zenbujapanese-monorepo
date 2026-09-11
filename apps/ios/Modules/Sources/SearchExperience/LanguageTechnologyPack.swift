@@ -461,11 +461,6 @@ actor LanguageTechnologyPackStore {
     let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[
       0]
     let directory = support.appendingPathComponent("LanguageTechnologyPacks", isDirectory: true)
-    #if DEBUG
-      if ProcessInfo.processInfo.arguments.contains("-ResetLanguageTechnologyPacks") {
-        try? FileManager.default.removeItem(at: directory)
-      }
-    #endif
     manager = try? LanguageTechnologyPackManager(
       catalog: .bundled(),
       storageDirectory: directory,
@@ -499,13 +494,4 @@ actor LanguageTechnologyPackStore {
   func installedDictionaryURL() async -> URL? {
     await manager?.installedDictionaryURL()
   }
-
-  #if DEBUG
-    func ensureInstalledForTesting() async {
-      guard let manager, let pack = await manager.snapshot().packs.first, !pack.isInstalled else {
-        return
-      }
-      try? await download(pack.id)
-    }
-  #endif
 }

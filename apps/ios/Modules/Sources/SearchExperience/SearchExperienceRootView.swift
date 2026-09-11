@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 public struct SearchExperienceRootView: View {
   @State private var readingAidPreferences = ReadingAidPreferences()
@@ -8,12 +7,6 @@ public struct SearchExperienceRootView: View {
   @State private var path: [SearchExperienceRoute] = []
   @State private var youPath: [YouRoute] = []
   @State private var query = ""
-  #if DEBUG
-    @State private var preparesJapaneseAnalysis = ProcessInfo.processInfo.arguments.contains(
-      "-EnsureJapaneseAnalysis")
-    private let independentlyHostsYou = ProcessInfo.processInfo.arguments.contains(
-      "-IndependentlyHostYou")
-  #endif
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
@@ -35,95 +28,24 @@ public struct SearchExperienceRootView: View {
   private let imageTextClipboardClient: ImageTextClipboardClient
 
   public init() {
-    #if DEBUG
-      let resolvedLookupClient = LookupClient.live
-      lookupClient = resolvedLookupClient
-      exampleSentenceClient = .live
-      let usesReducedAnalysis = ProcessInfo.processInfo.arguments.contains(
-        "-UseReducedJapaneseAnalysis")
-      if usesReducedAnalysis {
-        japaneseTextAnalysisClient = .characterFallback
-      } else {
-        japaneseTextAnalysisClient = .resolving(
-          morphologyClient: ProcessInfo.processInfo.arguments.contains(
-            "-UseJapaneseAnalysisFixture")
-            ? .uiTestFixture : .live,
-          lookupClient: resolvedLookupClient
-        )
-      }
-      let liveKanjiLookupClient = KanjiLookupClient.live(lookupClient: resolvedLookupClient)
-      kanjiLookupClient = liveKanjiLookupClient
-      handwritingRecognitionClient = .live
-      cameraAuthorizationClient = .live
-      speechSynthesisClient = .live
-      kanjiStrokeOrderClient = .live
-      kanjiElementLookupClient = .live
-      imageTextRecognitionClient = .live
-      naturalTranslationClient = .live
-      imageTextClipboardClient = .live
-    #else
-      lookupClient = .live
-      exampleSentenceClient = .live
-      japaneseTextAnalysisClient = .live(lookupClient: .live)
-      kanjiLookupClient = .live(lookupClient: .live)
-      handwritingRecognitionClient = .live
-      cameraAuthorizationClient = .live
-      speechSynthesisClient = .live
-      kanjiStrokeOrderClient = .live
-      kanjiElementLookupClient = .live
-      imageTextRecognitionClient = .live
-      naturalTranslationClient = .live
-      imageTextClipboardClient = .live
-    #endif
+    lookupClient = .live
+    exampleSentenceClient = .live
+    japaneseTextAnalysisClient = .live(lookupClient: .live)
+    kanjiLookupClient = .live(lookupClient: .live)
+    handwritingRecognitionClient = .live
+    cameraAuthorizationClient = .live
+    speechSynthesisClient = .live
+    kanjiStrokeOrderClient = .live
+    kanjiElementLookupClient = .live
+    imageTextRecognitionClient = .live
+    naturalTranslationClient = .live
+    imageTextClipboardClient = .live
   }
 
   public var body: some View {
-    Group {
-      #if DEBUG
-        if independentlyHostsYou {
-          YouNavigationView(path: $youPath, store: encounterMediaStore)
-        } else if preparesJapaneseAnalysis {
-          ProgressView("Preparing on-device Japanese Text Analysis")
-            .accessibilityIdentifier("language-technology-pack.preparing")
-        } else {
-          verifiedAppTabs
-        }
-      #else
-        appTabs
-      #endif
-    }
-    #if DEBUG
-      .task {
-        guard preparesJapaneseAnalysis else { return }
-        await LanguageTechnologyPackStore.shared.ensureInstalledForTesting()
-        preparesJapaneseAnalysis = false
-      }
-    #endif
-    .environment(readingAidPreferences)
-    #if DEBUG
-      .preferredColorScheme(forcedUITestColorScheme)
-    #endif
+    appTabs
+      .environment(readingAidPreferences)
   }
-
-  #if DEBUG
-    @ViewBuilder
-    private var verifiedAppTabs: some View {
-      if ProcessInfo.processInfo.arguments.contains("-ReportAccessibilitySettings") {
-        appTabs.accessibilityValue(
-          "increaseContrast=\(UIAccessibility.isDarkerSystemColorsEnabled)"
-        )
-      } else {
-        appTabs
-      }
-    }
-
-    private var forcedUITestColorScheme: ColorScheme? {
-      let arguments = ProcessInfo.processInfo.arguments
-      if arguments.contains("-ForceUITestDarkAppearance") { return .dark }
-      if arguments.contains("-ForceUITestLightAppearance") { return .light }
-      return nil
-    }
-  #endif
 
   private var appTabs: some View {
     TabView(selection: $selectedTab) {
