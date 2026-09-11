@@ -41,7 +41,7 @@ Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
 provider except for the bounded bundled-provider cold-relaunch journey. The
 merge-candidate workflow invokes and retains all three correctness plans.
 
-The exact inventory contains 338 tests. `ZenbuPR` includes 316 (116 Unit and 200
+The exact inventory contains 339 tests. `ZenbuPR` includes 317 (116 Unit and 201
 UI), and `ZenbuSudachiIntegration` includes three network-backed Unit tests. The
 seventeen exact tests outside those correctness plans are one performance-only Unit
 test, three physical/system HIL journeys, #269's four deliberately red framework
@@ -107,7 +107,7 @@ through the same interface.
 For the merge-candidate stage, the planner derives eleven lanes from the committed
 Xcode plan inventory and `VerificationTimingProfile.json`. Every `ZenbuPR` Unit
 test belongs to the Unit lane. The complete 68-test `ZenbuAccessibility`
-partition is split across three lanes, and the remaining 132 normal UI tests are
+partition is split across three lanes, and the remaining 133 normal UI tests are
 split across five lanes. The separate `ZenbuSudachiIntegration` plan is the
 separate integration lane. The two-test `ZenbuIncreasedContrast` lane is also
 required; its measured duration and timing-source run are null until actual app
@@ -231,12 +231,11 @@ from that combined journey's timeout envelope in run `33959363388`, job
 observed source. A partition containing this provisional entry emits
 `estimated_test_seconds` and a null `measured_test_seconds`; the weight is neither
 runtime evidence nor permission to run the journey in an ordinary local issue gate.
-The current normal-UI scheduling loads are 1,341.348 (estimated), 1,352.422,
-1,348.125, 1,350.604, and 1,351.338 seconds. The old combined journey's historical
-duration remains a conservative weight pending new measurements.
+The split suru/kuru regression journeys also retain provisional local measurements;
+use the inventory command for their current generated lane loads.
 
 The current generated counts are 116 Unit; 22, 23, and 23 Accessibility UI;
-26, 26, 26, 27, and 27 normal UI; and 3 Sudachi integration tests.
+26, 26, 27, 27, and 27 normal UI; and 3 Sudachi integration tests.
 
 For ordinary issue work, keep the PR draft and run the repository-selected local
 issue gate. That gate may execute only deterministic policy checks and focused
@@ -272,6 +271,12 @@ The required jobs always report a conclusion. Non-iOS PRs therefore pass the
 gate without starting macOS runners instead of remaining permanently pending
 because an entire required workflow was path-filtered away.
 
+The manual `merge-repair-regressions` capability runs only the five affected
+conjugation, radical-selection, and empty-Photos-cancellation methods on hosted
+Xcode 26.5. It reports a focused context and cannot satisfy the full required gate.
+Conjugation measurements use one coherent snapshot per section and move rows below
+sticky headers before asserting their unchanged geometry bounds.
+
 ## Runner contract
 
 `run_selected_test_plan.sh` translates only manifest selector IDs, including the
@@ -279,7 +284,12 @@ repository-generated merge partition selectors, into Xcode test identifiers.
 The `ios_verification.py tests` adapter returns tagged JSON with either
 `selected-tests` and its exact identities or `full-plan` with an empty test list;
 the shell runner rejects unknown modes, empty selected partitions, and any
-full-plan selector combined with another selector.
+full-plan selector combined with another selector. The tagged response also carries
+`simulator_resources`, derived from the exact selected methods. Only a lane that
+includes the native photo-selection/persistence test seeds the repository photo;
+Unit, Sudachi, and unrelated UI lanes avoid Photos setup. Direct manual runner
+calls keep the conservative fixture default. Setup logs record the decision and
+Photos preparation time.
 `run_ci_test_plan.sh` owns the Simulator lifecycle, uses
 `build-for-testing` followed by `test-without-building`, and records separate
 setup, build, test, and total durations. Supplying the same `ZENBU_DERIVED_DATA`

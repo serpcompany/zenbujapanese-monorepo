@@ -15,6 +15,38 @@ SPEC.loader.exec_module(ios_verification)
 
 
 class IOSVerificationPolicyTests(unittest.TestCase):
+    def test_simulator_resources_follow_exact_selected_tests(self):
+        repo = Path(__file__).parents[4]
+        manifest = ios_verification.load_and_validate_manifest(repo / "apps/ios/VerificationPolicy.json")
+        inventory = ios_verification.repository_inventory(repo)
+        photo = manifest["selectors"]["ui.word-detail-native-photo"]["test"]
+        example = manifest["selectors"]["ui.examples"]["test"]
+        for selected, expected in [
+            (None, ["photo-library"]), ([photo], ["photo-library"]),
+            (["ZenbuJapaneseUITests/SearchExperienceJourneyUITests"], ["photo-library"]),
+            (["ZenbuJapaneseTests"], []), ([example], []),
+        ]:
+            with self.subTest(selected=selected):
+                self.assertEqual(
+                    ios_verification.selection_simulator_resources(manifest, inventory, "ZenbuPR", selected), expected)
+        self.assertEqual(ios_verification.selection_simulator_resources(manifest, inventory, "ZenbuSudachiIntegration", None), [])
+
+    def test_merge_repair_gate_selects_only_the_five_affected_journeys(self):
+        repo = Path(__file__).parents[4]
+        manifest = ios_verification.load_and_validate_manifest(repo / "apps/ios/VerificationPolicy.json")
+        resolved = ios_verification.resolve_plan(
+            manifest, changed_paths=[], stage="manual", event="workflow_dispatch",
+            draft=False, source_sha="candidate", requested_capabilities=["merge-repair-regressions"],
+        )
+        matrix = ios_verification.merge_candidate_matrix(manifest, resolved["selectors"], ios_verification.repository_inventory(repo))["include"]
+        self.assertEqual(len(matrix), 1)
+        self.assertEqual(matrix[0]["test_count"], 5)
+        self.assertEqual(set(matrix[0]["selectors"]), {
+            "ui.conjugations-suru-regression", "ui.conjugations-kuru-regression",
+            "ui.conjugations-dark-adaptive-regression", "ui.radical-selection-regression",
+            "ui.refactor-pickers-photos-cancel",
+        })
+
     def test_split_photo_scheduling_weight_is_not_reported_as_measured_runtime(self):
         repo = Path(__file__).parents[4]
         inventory = ios_verification.repository_inventory(repo)
@@ -1031,7 +1063,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             )
             self.assertEqual(
                 [lane["test_count"] for lane in matrix],
-                [116, 2, 22, 23, 23, 26, 26, 26, 27, 27, 3],
+                [116, 2, 22, 23, 23, 26, 26, 27, 27, 27, 3],
             )
             self.assertEqual(
                 [lane["measured_test_seconds"] for lane in matrix],
@@ -1042,10 +1074,10 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                     1153.155,
                     1153.903,
                     None,
-                    1352.422,
-                    1348.125,
-                    1350.604,
-                    1351.338,
+                    None,
+                    None,
+                    1319.448,
+                    1320.197,
                     4.116,
                 ],
             )
@@ -1088,7 +1120,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 "accessibility-ui-c": 23,
                 "normal-ui-a": 26,
                 "normal-ui-b": 26,
-                "normal-ui-c": 26,
+                "normal-ui-c": 27,
                 "normal-ui-d": 27,
                 "normal-ui-e": 27,
                 "sudachi-integration": 3,
@@ -1314,7 +1346,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 "accessibility-ui-c": 23,
                 "normal-ui-a": 26,
                 "normal-ui-b": 26,
-                "normal-ui-c": 26,
+                "normal-ui-c": 27,
                 "normal-ui-d": 27,
                 "normal-ui-e": 27,
                 "sudachi-integration": 3,
@@ -1331,7 +1363,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             "complete.merge-accessibility-c": ("ZenbuPR", 23),
             "complete.merge-ui-a": ("ZenbuPR", 26),
             "complete.merge-ui-b": ("ZenbuPR", 26),
-            "complete.merge-ui-c": ("ZenbuPR", 26),
+            "complete.merge-ui-c": ("ZenbuPR", 27),
             "complete.merge-ui-d": ("ZenbuPR", 27),
             "complete.merge-ui-e": ("ZenbuPR", 27),
             "integration.sudachi": ("ZenbuSudachiIntegration", 3),
@@ -1382,7 +1414,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             )
         self.assertEqual(
             json.loads(output.getvalue()),
-            {"mode": "full-plan", "tests": []},
+            {"mode": "full-plan", "tests": [], "simulator_resources": ["photo-library"]},
         )
 
     def test_target_selector_must_be_nonempty_in_its_declared_plan(self):

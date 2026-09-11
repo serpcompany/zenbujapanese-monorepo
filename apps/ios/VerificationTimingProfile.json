@@ -62,6 +62,30 @@
       "basis": "Conservative scheduling weight inherited from the combined journey's 300-second timeout envelope; not an observed duration of the split Photos journey.",
       "workflow_run_id": 33959363388,
       "job_id": 101288424696
+    },
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSuruConjugationsPreserveFormsAndResetModeForNextEntry": {
+      "status": "provisional",
+      "basis": "Measured local split journey with coherent snapshots; hosted scheduling confirmation pending.",
+      "local_observation": {
+        "base_sha": "8271bf963636bedba08735651d82dfa3bffc63f1",
+        "source_fingerprint": "490a402696b8e4b279f01393f6dccbacab32f70a704411d83c29c8caf62ceed7",
+        "xcode_version": "Xcode 27.0 Build version 27A266a",
+        "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+        "test_seconds": 62.843,
+        "date": "2026-09-11"
+      }
+    },
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKuruConjugationsPreservePlainPoliteFormsAndReadings": {
+      "status": "provisional",
+      "basis": "Measured local split journey with coherent snapshots; hosted scheduling confirmation pending.",
+      "local_observation": {
+        "base_sha": "8271bf963636bedba08735651d82dfa3bffc63f1",
+        "source_fingerprint": "490a402696b8e4b279f01393f6dccbacab32f70a704411d83c29c8caf62ceed7",
+        "xcode_version": "Xcode 27.0 Build version 27A266a",
+        "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+        "test_seconds": 49.831,
+        "date": "2026-09-11"
+      }
     }
   },
   "test_durations_seconds": {
@@ -143,7 +167,6 @@
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCameraUnavailableOnSimulatorReportsHardwareBoundary": 13.87,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCancelDismissesFocusAndRetainsPopulatedResults": 24.619,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCapturedAdjectiveFormListsDoNotExposeVerbModeControls": 110.984,
-    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCapturedSuruAndKuruIrregularConjugationsArePubliclyReachable": 268.585,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testCommonWordDetailShowsStructuredLanguageReferenceDataAndRelatedNavigation": 137.057,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testDedicatedExampleTokenCompactionDoesNotChangeWordDetailTokenHitRegions": 45.474,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testDictionarySourceAttributionIsReachableFromSearch": 121.037,
@@ -264,7 +287,9 @@
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteCanBeAddedPersistedAcrossColdRelaunchAndDeleted": 121.866,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNotesRemainIsolatedAcrossSameSpellingHomographs": 70.367,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testYamaInputsReachKanjiDetailAndPlayStrokeOrder": 125.985,
-    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testYouUsesNativePersonalSettingsHierarchyAndSupportsIndependentHosting": 103.994
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testYouUsesNativePersonalSettingsHierarchyAndSupportsIndependentHosting": 103.994,
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSuruConjugationsPreserveFormsAndResetModeForNextEntry": 62.843,
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKuruConjugationsPreservePlainPoliteFormsAndReadings": 49.831
   },
   "version": 1
 }

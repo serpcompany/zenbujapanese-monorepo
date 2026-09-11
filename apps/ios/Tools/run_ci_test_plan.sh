@@ -28,6 +28,11 @@ plan="$1"
 device_type="$2"
 result_bundle="$3"
 shift 3
+requires_photo_fixture="${ZENBU_REQUIRES_PHOTOS_FIXTURE:-true}"
+[[ "$requires_photo_fixture" == true || "$requires_photo_fixture" == false ]] || {
+  echo "invalid repository Photos fixture decision" >&2
+  exit 64
+}
 
 [[ ! -e "$result_bundle" ]] || {
   echo "result bundle already exists: $result_bundle" >&2
@@ -142,7 +147,12 @@ xcrun simctl bootstatus "$simulator_id" -b
 
 # A real local Photos asset makes picker selection deterministic on a fresh device.
 # This UUID was created by this invocation; personal Simulator libraries are untouched.
-xcrun simctl addmedia "$simulator_id" "$repo_root/docs/clone-discovery/nihongo/fixtures/image-text/fixture-clear-horizontal.png"
+photo_setup_started="$(seconds)"
+if [[ "$requires_photo_fixture" == true ]]; then
+  xcrun simctl addmedia "$simulator_id" "$repo_root/docs/clone-discovery/nihongo/fixtures/image-text/fixture-clear-horizontal.png"
+fi
+printf 'photos_fixture_required=%s photos_setup_seconds=%s\n' \
+  "$requires_photo_fixture" "$(elapsed "$photo_setup_started" "$(seconds)")"
 
 xcode_version="$(xcodebuild -version | tr '\n' ' ' | sed 's/ $//')"
 fingerprint_arguments=()

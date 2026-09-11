@@ -1848,7 +1848,11 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let grass = radicalButton("radical.grass", in: app)
     grass.tap()
-    XCTAssertEqual(grass.value as? String, "Selected")
+    // Selection can relayout the lazy grid. Re-establish the selected tile's
+    // viewport before reading it, just as we do before tapping it again.
+    XCTAssertEqual(
+      radicalButton("radical.grass", in: app, navigationStrategy: .restoreTopBeforeSearching)
+        .value as? String, "Selected")
     XCTAssertTrue(candidateStrip.waitForExistence(timeout: 3))
     let broadCount = candidateCount(in: candidateStrip)
     XCTAssertGreaterThan(broadCount, 1)
@@ -1856,7 +1860,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
 
     let strike = radicalButton("radical.strike", in: app)
     strike.tap()
-    XCTAssertEqual(strike.value as? String, "Selected")
+    XCTAssertEqual(
+      radicalButton("radical.strike", in: app, navigationStrategy: .restoreTopBeforeSearching)
+        .value as? String, "Selected")
     let narrowCount = candidateCount(in: candidateStrip)
     XCTAssertLessThan(narrowCount, broadCount)
     XCTAssertTrue(app.buttons["radical.candidate.薮"].exists)
@@ -5453,7 +5459,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
-  func testCapturedSuruAndKuruIrregularConjugationsArePubliclyReachable() throws {
+  func testSuruConjugationsPreserveFormsAndResetModeForNextEntry() throws {
     let app = launchApp()
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
@@ -5500,6 +5506,19 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     tapNativeBack(in: app)
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     app.buttons["Clear text"].tap()
+    openConjugations(for: "来る", resultLabelPrefix: "来る, くる", in: app, searchField: searchField)
+    XCTAssertTrue(app.staticTexts["Irregular Verb"].waitForExistence(timeout: 3))
+    XCTAssertTrue(app.buttons["conjugations.mode.plain"].isSelected)
+    XCTAssertEqual(
+      app.descendants(matching: .any)["conjugations.row.present-future"].label, "来る, Present/Future"
+    )
+  }
+
+  @MainActor
+  func testKuruConjugationsPreservePlainPoliteFormsAndReadings() throws {
+    let app = launchApp()
+    let searchField = app.textFields["search.field"]
+    XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     openConjugations(for: "来る", resultLabelPrefix: "来る, くる", in: app, searchField: searchField)
     XCTAssertTrue(app.staticTexts["Irregular Verb"].waitForExistence(timeout: 3))
     assertConjugationRows(
@@ -5800,14 +5819,13 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     var rowHeights: [CGFloat] = []
     for row in expectedRows {
       let section = ConjugationUITestSupport.reachSection(row.id, in: app, list: list)
-      let element = section.row
-      guard element.exists else {
+      guard let geometry = section.snapshot else {
         XCTFail("Missing conjugation row \(row.id)", file: file, line: line)
         return
       }
-      XCTAssertEqual(element.label, row.label, file: file, line: line)
+      XCTAssertEqual(geometry.row.label, row.label, file: file, line: line)
       ConjugationUITestSupport.assertSectionChrome(section, file: file, line: line)
-      rowHeights.append(element.frame.height)
+      rowHeights.append(geometry.row.frame.height)
     }
     if let shortestRow = rowHeights.min(), let tallestRow = rowHeights.max() {
       XCTAssertLessThanOrEqual(

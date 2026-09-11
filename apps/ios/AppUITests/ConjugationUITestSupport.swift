@@ -21,6 +21,17 @@ enum ConjugationUITestSupport {
     let title: XCUIElement
     let row: XCUIElement
     let info: XCUIElement
+    let snapshot: SectionSnapshot?
+  }
+
+  struct SectionSnapshot {
+    let title: XCUIElementSnapshot
+    let row: XCUIElementSnapshot
+    let info: XCUIElementSnapshot
+    let mode: XCUIElementSnapshot?
+    let appFrame: CGRect
+    let visibleTop: CGFloat
+    let visibleBottom: CGFloat
   }
 
   static let tsubusuEntryIdentifier = "word-detail.entry.bd93a73462d262782863f14e5c461706"
@@ -66,24 +77,101 @@ enum ConjugationUITestSupport {
     let title = app.staticTexts["conjugations.title.\(id)"]
     let row = app.descendants(matching: .any)["conjugations.row.\(id)"]
     let info = app.buttons["conjugations.info.\(id)"]
-    let effectiveVisibleTop =
-      visibleTop ?? max(app.navigationBars.firstMatch.frame.maxY, list.frame.minY)
-    let effectiveVisibleBottom = visibleBottom ?? app.tabBars.firstMatch.frame.minY
+    var geometry: SectionSnapshot?
     for _ in 0..<8 {
-      if title.exists, row.exists, info.exists {
-        if title.frame.minY < effectiveVisibleTop {
-          list.swipeDown(velocity: .slow)
+      do {
+        geometry = try sectionSnapshot(id, in: app)
+      } catch {
+        XCTFail("Could not capture conjugation section \(id): \(error)")
+        return SectionElements(title: title, row: row, info: info, snapshot: nil)
+      }
+      if let geometry {
+        let top = visibleTop ?? geometry.visibleTop
+        let bottom = visibleBottom ?? geometry.visibleBottom
+        if geometry.title.frame.minY < top
+          || geometry.row.frame.minY < geometry.title.frame.maxY
+        {
+          // Plain Lists pin section headers. A hittable row can still be
+          // partially covered by its header after a large swipe.
+          let correction =
+            max(
+              top - geometry.title.frame.minY,
+              geometry.title.frame.maxY - geometry.row.frame.minY
+            ) + 12
+          dragContent(correction, in: app, geometry: geometry)
           continue
         }
-        if row.frame.maxY > effectiveVisibleBottom || !info.isHittable {
-          list.swipeUp(velocity: .slow)
+        if geometry.row.frame.maxY > bottom {
+          dragContent(bottom - geometry.row.frame.maxY - 12, in: app, geometry: geometry)
           continue
         }
-        return SectionElements(title: title, row: row, info: info)
+        if info.isHittable {
+          return SectionElements(title: title, row: row, info: info, snapshot: geometry)
+        }
       }
       list.swipeUp(velocity: .slow)
     }
-    return SectionElements(title: title, row: row, info: info)
+    XCTFail("Could not fully expose conjugation section \(id) within eight gestures")
+    return SectionElements(title: title, row: row, info: info, snapshot: geometry)
+  }
+
+  @MainActor
+  private static func sectionSnapshot(_ id: String, in app: XCUIApplication) throws
+    -> SectionSnapshot?
+  {
+    let root = try app.snapshot()
+    guard let title = find("conjugations.title.\(id)", in: root),
+      let row = find("conjugations.row.\(id)", in: root),
+      let info = find("conjugations.info.\(id)", in: root),
+      let list = find("conjugations.screen", in: root),
+      let navigation = first(.navigationBar, in: root),
+      let tabs = first(.tabBar, in: root)
+    else { return nil }
+    return SectionSnapshot(
+      title: title, row: row, info: info, mode: find("conjugations.mode", in: root),
+      appFrame: root.frame,
+      visibleTop: max(navigation.frame.maxY, list.frame.minY),
+      visibleBottom: tabs.frame.minY
+    )
+  }
+
+  @MainActor
+  private static func find(_ identifier: String, in root: XCUIElementSnapshot)
+    -> XCUIElementSnapshot?
+  {
+    if root.identifier == identifier { return root }
+    for child in root.children {
+      if let match = find(identifier, in: child) { return match }
+    }
+    return nil
+  }
+
+  @MainActor
+  private static func first(_ type: XCUIElement.ElementType, in root: XCUIElementSnapshot)
+    -> XCUIElementSnapshot?
+  {
+    if root.elementType == type { return root }
+    for child in root.children {
+      if let match = first(type, in: child) { return match }
+    }
+    return nil
+  }
+
+  @MainActor
+  private static func dragContent(
+    _ correction: CGFloat, in app: XCUIApplication, geometry: SectionSnapshot
+  ) {
+    let height = geometry.visibleBottom - geometry.visibleTop
+    let distance = min(max(abs(correction), 44), height * 0.35)
+    let y = geometry.visibleTop + height * (correction > 0 ? 0.3 : 0.7)
+    let origin = app.coordinate(withNormalizedOffset: .zero)
+    let start = origin.withOffset(
+      CGVector(dx: geometry.appFrame.midX - geometry.appFrame.minX, dy: y - geometry.appFrame.minY))
+    let end = origin.withOffset(
+      CGVector(
+        dx: geometry.appFrame.midX - geometry.appFrame.minX,
+        dy: y - geometry.appFrame.minY + (correction > 0 ? distance : -distance)))
+    start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.1)
   }
 
   @MainActor
@@ -102,12 +190,25 @@ enum ConjugationUITestSupport {
     in app: XCUIApplication,
     list: XCUIElement
   ) {
-    let firstRow = app.descendants(matching: .any)["conjugations.row.\(firstRowID)"]
     let modePicker = app.descendants(matching: .any)["conjugations.mode"]
-    for _ in 0..<8
-    where !firstRow.exists || (requiresModePicker && !modePicker.isHittable) {
+    for _ in 0..<8 {
+      if let geometry = try? sectionSnapshot(firstRowID, in: app),
+        geometry.title.frame.minY >= geometry.visibleTop,
+        geometry.title.frame.maxY <= geometry.row.frame.minY,
+        geometry.row.frame.maxY <= geometry.visibleBottom
+      {
+        if !requiresModePicker { return }
+        if let mode = geometry.mode,
+          mode.frame.minY >= geometry.visibleTop,
+          mode.frame.maxY <= geometry.visibleBottom,
+          modePicker.isHittable
+        {
+          return
+        }
+      }
       list.swipeDown(velocity: .slow)
     }
+    XCTFail("Could not restore the complete conjugation controls within eight gestures")
   }
 
   @MainActor
@@ -139,27 +240,28 @@ enum ConjugationUITestSupport {
     file: StaticString = #filePath,
     line: UInt = #line
   ) {
-    XCTAssertTrue(section.title.exists, file: file, line: line)
-    XCTAssertTrue(section.row.exists, file: file, line: line)
-    XCTAssertTrue(section.info.exists, file: file, line: line)
+    guard let geometry = section.snapshot else {
+      XCTFail("Missing coherent conjugation section geometry", file: file, line: line)
+      return
+    }
     XCTAssertLessThanOrEqual(
-      section.title.frame.maxY,
-      section.row.frame.minY,
+      geometry.title.frame.maxY,
+      geometry.row.frame.minY,
       file: file,
       line: line
     )
     XCTAssertLessThanOrEqual(
-      sectionGap(title: section.title.frame, row: section.row.frame),
+      sectionGap(title: geometry.title.frame, row: geometry.row.frame),
       24,
       file: file,
       line: line
     )
-    XCTAssertGreaterThanOrEqual(section.row.frame.height, 35, file: file, line: line)
+    XCTAssertGreaterThanOrEqual(geometry.row.frame.height, 35, file: file, line: line)
     XCTAssertTrue(section.info.isHittable, file: file, line: line)
-    XCTAssertGreaterThanOrEqual(section.info.frame.width, 43.5, file: file, line: line)
-    XCTAssertGreaterThanOrEqual(section.info.frame.height, 43.5, file: file, line: line)
+    XCTAssertGreaterThanOrEqual(geometry.info.frame.width, 43.5, file: file, line: line)
+    XCTAssertGreaterThanOrEqual(geometry.info.frame.height, 43.5, file: file, line: line)
     XCTAssertTrue(
-      section.row.label.hasSuffix(", \(section.title.label)"),
+      geometry.row.label.hasSuffix(", \(geometry.title.label)"),
       file: file,
       line: line
     )
