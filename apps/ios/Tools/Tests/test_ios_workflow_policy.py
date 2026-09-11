@@ -99,6 +99,13 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("  merge_group:\n", triggers)
         self.assertIn("  workflow_dispatch:\n", triggers)
         self.assertIn("|| 'ios-premerge / Required'", workflow)
+        scope = workflow.split("  scope:\n", 1)[1].split("\n  complete-suite:\n", 1)[0]
+        self.assertIn("ios_runtime_changed: ${{ steps.scope.outputs.ios_runtime_changed }}", scope)
+        complete = workflow.split("  complete-suite:\n", 1)[1].split("\n  required:\n", 1)[0]
+        self.assertIn("needs.scope.outputs.ios_runtime_changed == 'true'", complete)
+        required = workflow.split("  required:\n", 1)[1]
+        self.assertIn("IOS_RUNTIME_CHANGED: ${{ needs.scope.outputs.ios_runtime_changed }}", required)
+        self.assertIn('if [[ "$GITHUB_EVENT_NAME" == merge_group && "$IOS_RUNTIME_CHANGED" != true ]]; then', required)
 
     def test_complete_suite_uses_the_measured_exact_candidate_matrix(self):
         workflow = workflow_text("ios-premerge.yml")
@@ -139,7 +146,19 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         workflow = workflow_text("ios-quality.yml")
         self.assertIn("apps/ios/Tools/ios_verification.py plan", workflow)
         self.assertIn("needs.scope.outputs.run_expensive == 'true'", workflow)
+        self.assertEqual(
+            workflow.count("needs.scope.outputs.ios_runtime_changed == 'true'"),
+            4,
+        )
         self.assertNotIn("-only-testing:", workflow)
+
+        scope = workflow.split("  scope:\n", 1)[1].split("\n  repo-contracts:\n", 1)[0]
+        self.assertIn("ios_runtime_changed: ${{ steps.scope.outputs.ios_runtime_changed }}", scope)
+
+        required = workflow.split("  required:\n", 1)[1]
+        self.assertIn("IOS_RUNTIME_CHANGED: ${{ needs.scope.outputs.ios_runtime_changed }}", required)
+        self.assertIn('[[ "$IOS_RUNTIME_CHANGED" == true || "$IOS_RUNTIME_CHANGED" == false ]]', required)
+        self.assertIn('if [[ "$IOS_RUNTIME_CHANGED" != true ]]; then', required)
 
     def test_critical_ui_budget_covers_the_measured_ready_checkpoint(self):
         workflow = workflow_text("ios-quality.yml")

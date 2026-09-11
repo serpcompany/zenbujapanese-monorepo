@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Report whether changed repository paths can affect the iOS product or its CI."""
+"""Report iOS ownership and whether changed paths require Xcode verification."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ import sys
 
 IOS_PREFIXES = (
     "apps/ios/",
+    "docs/releases/ios/",
     "docs/clone-discovery/nihongo/fixtures/image-text/",
 )
 
@@ -20,6 +21,19 @@ IOS_EXACT_PATHS = {
     "docs/research/fixtures/example-sentence-retrieval-issue-147-retrieval-candidate-rows.tsv",
     "docs/research/tatoeba-nihongo-sample-2026-08-14.tsv",
 }
+
+IOS_NON_RUNTIME_EXACT_PATHS = {
+    "apps/ios/CHANGELOG.md",
+    "apps/ios/CI.md",
+    "apps/ios/README.md",
+    "apps/ios/ReleasePrivacyAudit.md",
+}
+
+IOS_NON_RUNTIME_PREFIXES = (
+    "apps/ios/Verification/",
+    "apps/ios/screenshots/app-store/",
+    "docs/releases/ios/",
+)
 
 
 def is_ios_relevant_path(path: str) -> bool:
@@ -32,6 +46,15 @@ def is_ios_relevant_path(path: str) -> bool:
             and normalized.endswith((".yml", ".yaml"))
         )
     )
+
+
+def is_ios_runtime_path(path: str) -> bool:
+    normalized = path.removeprefix("./")
+    if normalized in IOS_NON_RUNTIME_EXACT_PATHS or normalized.startswith(
+        IOS_NON_RUNTIME_PREFIXES
+    ):
+        return False
+    return is_ios_relevant_path(normalized)
 
 
 def changed_paths(base_sha: str, head_sha: str) -> list[str]:
@@ -49,11 +72,17 @@ def report(paths: list[str], github_output: Path | None = None) -> bool:
     for path in paths:
         print(f"  {path}")
     ios_changed = any(is_ios_relevant_path(path) for path in paths)
-    output = f"ios_changed={'true' if ios_changed else 'false'}"
-    print(output)
+    ios_runtime_changed = any(is_ios_runtime_path(path) for path in paths)
+    outputs = (
+        f"ios_runtime_changed={'true' if ios_runtime_changed else 'false'}",
+        f"ios_changed={'true' if ios_changed else 'false'}",
+    )
+    for output in outputs:
+        print(output)
     if github_output is not None:
         with github_output.open("a", encoding="utf-8") as output_file:
-            output_file.write(f"{output}\n")
+            for output in outputs:
+                output_file.write(f"{output}\n")
     return ios_changed
 
 

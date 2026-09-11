@@ -32,6 +32,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       ios_changed: ${{ steps.scope.outputs.ios_changed }}
+      ios_runtime_changed: ${{ steps.scope.outputs.ios_runtime_changed }}
       merge_candidate_matrix: ${{ steps.plan.outputs.merge_candidate_matrix }}
       source_sha: ${{ steps.plan.outputs.source_sha }}
     steps:
@@ -88,7 +89,7 @@ jobs:
     if: >-
       ${{
         github.event_name == 'workflow_dispatch' ||
-        (github.event_name == 'merge_group' && needs.scope.outputs.ios_changed == 'true')
+        (github.event_name == 'merge_group' && needs.scope.outputs.ios_runtime_changed == 'true')
       }}
     runs-on: macos-26
     timeout-minutes: 90
@@ -192,6 +193,7 @@ jobs:
       - name: Require the complete suite only on an iOS merge candidate
         env:
           IOS_CHANGED: ${{ needs.scope.outputs.ios_changed }}
+          IOS_RUNTIME_CHANGED: ${{ needs.scope.outputs.ios_runtime_changed }}
           COMPLETE_RESULT: ${{ needs.complete-suite.result }}
           CURRENT_SHA: ${{ needs.scope.outputs.source_sha }}
           SCOPE_RESULT: ${{ needs.scope.result }}
@@ -199,13 +201,14 @@ jobs:
           set -euo pipefail
           [[ "$SCOPE_RESULT" == success ]]
           [[ "$IOS_CHANGED" == true || "$IOS_CHANGED" == false ]]
+          [[ "$IOS_RUNTIME_CHANGED" == true || "$IOS_RUNTIME_CHANGED" == false ]]
           [[ -n "$CURRENT_SHA" ]]
           if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
             echo 'The complete suite is deferred until this PR enters the merge queue.'
             exit 0
           fi
-          if [[ "$GITHUB_EVENT_NAME" == merge_group && "$IOS_CHANGED" != true ]]; then
-            echo 'No iOS consumer changed in this merge group.'
+          if [[ "$GITHUB_EVENT_NAME" == merge_group && "$IOS_RUNTIME_CHANGED" != true ]]; then
+            echo 'No iOS runtime consumer changed in this merge group.'
             exit 0
           fi
           printf 'Selected-capability result: %s\n' "$COMPLETE_RESULT"

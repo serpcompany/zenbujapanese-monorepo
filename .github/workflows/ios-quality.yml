@@ -30,6 +30,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       ios_changed: ${{ steps.scope.outputs.ios_changed }}
+      ios_runtime_changed: ${{ steps.scope.outputs.ios_runtime_changed }}
       cadence: ${{ steps.plan.outputs.cadence }}
       source_sha: ${{ steps.plan.outputs.source_sha }}
       run_expensive: ${{ steps.plan.outputs.run_expensive }}
@@ -86,7 +87,7 @@ jobs:
   repo-contracts:
     name: ios-fast / Repository contracts
     needs: scope
-    if: ${{ needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.contracts_selectors != '[]' && !inputs.prove_failure }}
+    if: ${{ needs.scope.outputs.ios_runtime_changed == 'true' && needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.contracts_selectors != '[]' && !inputs.prove_failure }}
     runs-on: macos-26
     timeout-minutes: 30
     outputs:
@@ -121,7 +122,7 @@ jobs:
   ios-unit:
     name: ios-fast / Unit
     needs: scope
-    if: ${{ needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.unit_selectors != '[]' && !inputs.prove_failure }}
+    if: ${{ needs.scope.outputs.ios_runtime_changed == 'true' && needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.unit_selectors != '[]' && !inputs.prove_failure }}
     runs-on: macos-26
     timeout-minutes: 30
     outputs:
@@ -189,7 +190,7 @@ jobs:
   ios-ui:
     name: ios-fast / Critical UI
     needs: scope
-    if: ${{ needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.ui_selectors != '[]' && !inputs.prove_failure }}
+    if: ${{ needs.scope.outputs.ios_runtime_changed == 'true' && needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.ui_selectors != '[]' && !inputs.prove_failure }}
     runs-on: macos-26
     timeout-minutes: 45
     outputs:
@@ -257,7 +258,7 @@ jobs:
   ios-accessibility:
     name: ios-fast / Accessibility smoke
     needs: scope
-    if: ${{ needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.accessibility_selectors != '[]' && !inputs.prove_failure }}
+    if: ${{ needs.scope.outputs.ios_runtime_changed == 'true' && needs.scope.outputs.run_expensive == 'true' && needs.scope.outputs.accessibility_selectors != '[]' && !inputs.prove_failure }}
     runs-on: macos-26
     timeout-minutes: 20
     outputs:
@@ -343,6 +344,7 @@ jobs:
           CONTRACTS_SHA: ${{ needs.repo-contracts.outputs.tested_sha }}
           CURRENT_SHA: ${{ needs.scope.outputs.source_sha }}
           IOS_CHANGED: ${{ needs.scope.outputs.ios_changed }}
+          IOS_RUNTIME_CHANGED: ${{ needs.scope.outputs.ios_runtime_changed }}
           SCOPE_RESULT: ${{ needs.scope.result }}
           UNIT_RESULT: ${{ needs.ios-unit.result }}
           UNIT_SELECTORS: ${{ needs.scope.outputs.unit_selectors }}
@@ -354,10 +356,15 @@ jobs:
           set -euo pipefail
           [[ "$SCOPE_RESULT" == success ]]
           [[ "$IOS_CHANGED" == true || "$IOS_CHANGED" == false ]]
+          [[ "$IOS_RUNTIME_CHANGED" == true || "$IOS_RUNTIME_CHANGED" == false ]]
           [[ -n "$CURRENT_SHA" && -n "$CADENCE" ]]
           printf 'cadence=%s source_sha=%s\n' "$CADENCE" "$CURRENT_SHA"
           if [[ "$IOS_CHANGED" != true ]]; then
             echo 'No iOS consumer changed; no macOS verification was selected.'
+            exit 0
+          fi
+          if [[ "$IOS_RUNTIME_CHANGED" != true ]]; then
+            echo 'Only iOS-owned non-runtime files changed; no macOS verification was selected.'
             exit 0
           fi
           if [[ "$CADENCE" == deferred-draft ]]; then

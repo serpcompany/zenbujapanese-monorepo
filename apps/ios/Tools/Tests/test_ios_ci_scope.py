@@ -26,6 +26,49 @@ class IOSCIScopeTests(unittest.TestCase):
             ios_ci_scope.is_ios_relevant_path(".github/workflows/ios-premerge.yml")
         )
 
+    def test_ios_owned_documents_and_evidence_do_not_require_xcode(self):
+        paths = [
+            "apps/ios/README.md",
+            "apps/ios/CHANGELOG.md",
+            "apps/ios/CI.md",
+            "apps/ios/ReleasePrivacyAudit.md",
+            "apps/ios/Verification/JOURNEY-SEARCH-TEXT-v3/README.md",
+            "apps/ios/Verification/JOURNEY-SEARCH-TEXT-v3/evidence.png",
+            "apps/ios/screenshots/app-store/en-US/iphone-67/01-search-results.png",
+            "docs/releases/ios/1.0.0.md",
+        ]
+        for path in paths:
+            with self.subTest(path=path):
+                self.assertTrue(ios_ci_scope.is_ios_relevant_path(path))
+                self.assertFalse(ios_ci_scope.is_ios_runtime_path(path))
+
+    def test_product_family_documents_and_brand_sources_do_not_require_xcode(self):
+        paths = [
+            "README.md",
+            "assets/brand/zenbu/zenbu-icon-pack-complete.zip",
+            "docs/research/engineering/product-family-repository-topology-2026-09-11.md",
+        ]
+        for path in paths:
+            with self.subTest(path=path):
+                self.assertFalse(ios_ci_scope.is_ios_runtime_path(path))
+
+    def test_runtime_paths_require_xcode(self):
+        paths = [
+            "apps/ios/App/ZenbuJapaneseApp.swift",
+            "apps/ios/Modules/Sources/SearchExperience/SearchView.swift",
+            "apps/ios/AppUITests/SearchExperienceJourneyUITests.swift",
+            "apps/ios/TestPlans/ZenbuPR.xctestplan",
+            "apps/ios/LanguageData/Generated/JMdict.sqlite3",
+            "apps/ios/VerificationPolicy.json",
+            "apps/ios/VerificationTimingProfile.json",
+            "apps/ios/Tools/ios_ci_scope.py",
+            ".github/workflows/ios-premerge.yml",
+            "docs/clone-discovery/nihongo/fixtures/image-text/fixture-empty.png",
+        ]
+        for path in paths:
+            with self.subTest(path=path):
+                self.assertTrue(ios_ci_scope.is_ios_runtime_path(path))
+
     def test_external_build_inputs_are_relevant(self):
         self.assertTrue(
             ios_ci_scope.is_ios_relevant_path(
@@ -62,6 +105,17 @@ class IOSCIScopeTests(unittest.TestCase):
                 ["README.md", "apps/ios/App/ZenbuJapaneseApp.swift"]
             )
         self.assertEqual(result, 0)
+        self.assertTrue(output.getvalue().endswith("ios_changed=true\n"))
+        self.assertIn("ios_runtime_changed=true\n", output.getvalue())
+
+    def test_cli_reports_owned_non_runtime_changes_without_xcode_impact(self):
+        output = io.StringIO()
+        with redirect_stdout(output):
+            result = ios_ci_scope.main(
+                ["apps/ios/README.md", "docs/releases/ios/1.0.0.md"]
+            )
+        self.assertEqual(result, 0)
+        self.assertIn("ios_runtime_changed=false\n", output.getvalue())
         self.assertTrue(output.getvalue().endswith("ios_changed=true\n"))
 
     def test_forced_manual_run_is_ios_relevant(self):
