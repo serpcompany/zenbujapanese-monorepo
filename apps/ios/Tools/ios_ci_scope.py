@@ -27,9 +27,11 @@ IOS_NON_RUNTIME_EXACT_PATHS = {
     "apps/ios/CI.md",
     "apps/ios/README.md",
     "apps/ios/ReleasePrivacyAudit.md",
+    "apps/ios/SearchExperienceVerification.md",
 }
 
 IOS_NON_RUNTIME_PREFIXES = (
+    "apps/ios/Brand/",
     "apps/ios/Verification/",
     "apps/ios/screenshots/app-store/",
     "docs/releases/ios/",

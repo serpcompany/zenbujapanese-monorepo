@@ -34,6 +34,8 @@ class IOSCIScopeTests(unittest.TestCase):
             "apps/ios/CHANGELOG.md",
             "apps/ios/CI.md",
             "apps/ios/ReleasePrivacyAudit.md",
+            "apps/ios/SearchExperienceVerification.md",
+            "apps/ios/Brand/zenbu-icon-pack-complete.zip",
             "apps/ios/Verification/JOURNEY-SEARCH-TEXT-v3/README.md",
             "apps/ios/Verification/JOURNEY-SEARCH-TEXT-v3/evidence.png",
             "apps/ios/screenshots/app-store/en-US/iphone-67/01-search-results.png",
@@ -43,6 +45,19 @@ class IOSCIScopeTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue(ios_ci_scope.is_ios_relevant_path(path))
                 self.assertFalse(ios_ci_scope.is_ios_runtime_path(path))
+
+    def test_issue_319_old_and_new_move_paths_do_not_require_xcode(self):
+        moved_paths = [
+            "apps/ios/Brand/README.md",
+            "assets/brand/zenbu/README.md",
+            "apps/ios/SearchExperienceVerification.md",
+            "apps/ios/Verification/search-experience-regression-index.md",
+            "screenshots/app-store/en-US/iphone-67/01-search-results.png",
+            "apps/ios/screenshots/app-store/en-US/iphone-67/01-search-results.png",
+        ]
+        self.assertFalse(
+            any(ios_ci_scope.is_ios_runtime_path(path) for path in moved_paths)
+        )
 
     def test_product_family_documents_and_brand_sources_do_not_require_xcode(self):
         paths = [
