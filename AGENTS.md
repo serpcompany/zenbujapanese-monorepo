@@ -1,13 +1,12 @@
 # Agent map
 
-Use this file as a routing map. Open only the sources whose condition matches the current task.
+Use this file only for routing. Open the smallest source whose condition matches the task.
 
-## Repository
+## Codebase
 
-- For repository boundaries, delivery surfaces, or shared assets, read [`README.md`](README.md).
-- For iOS project structure, build entry points, App Store metadata, or releases, read [`apps/ios/README.md`](apps/ios/README.md).
-- For current iOS user-facing behavior, read [`apps/ios/docs/product/README.md`](apps/ios/docs/product/README.md) and then only the linked product document relevant to the task.
-- For brand artwork or platform icon exports, read [`assets/brand/README.md`](assets/brand/README.md).
+- For repository ownership, boundaries, and where new work belongs, read [`docs/agents/repository.md`](docs/agents/repository.md).
+- For iOS code locations, Xcode build and launch, Simulator verification, metadata, or releases, read [`docs/agents/ios.md`](docs/agents/ios.md).
+- For current iOS user-facing behavior, start at [`apps/ios/docs/product/index.md`](apps/ios/docs/product/index.md), then open only the relevant linked document.
 
 ## Work tracking
 
@@ -22,4 +21,4 @@ Use this file as a routing map. Open only the sources whose condition matches th
 ## Evidence and research
 
 - For feedback supplied as a Clipy recording, read [`docs/agents/clipy.md`](docs/agents/clipy.md).
-- For exploratory research or archived reference evidence, use the private [`zenbujapanese/research`](https://github.com/zenbujapanese/research) repository. Keep accepted implementation decisions and current product behavior in this repository.
+- For exploratory research or archived reference evidence, use the private [`zenbujapanese/research`](https://github.com/zenbujapanese/research) repository.

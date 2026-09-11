@@ -12,7 +12,7 @@ This directory owns the primary installed iOS product and its complete build, me
 
 ## Operating documentation
 
-- [`docs/product/`](docs/product/) describes current user-facing iOS behavior.
+- [`docs/product/index.md`](docs/product/index.md) describes current user-facing iOS behavior.
 - [GitHub Releases](https://github.com/serpcompany/zenbujapanese-monorepo/releases) contains completed release records.
 - [`CHANGELOG.md`](CHANGELOG.md) and [`screenshots/`](screenshots/) are owned by this delivery surface.
 
