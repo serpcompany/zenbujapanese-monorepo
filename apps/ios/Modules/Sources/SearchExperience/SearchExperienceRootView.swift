@@ -63,7 +63,7 @@ public struct SearchExperienceRootView: View {
       kanjiStrokeOrderClient = .live
       kanjiElementLookupClient = .live
       imageTextRecognitionClient = .live
-      naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live
+      naturalTranslationClient = .live
       imageTextClipboardClient = .live
     #else
       lookupClient = .live

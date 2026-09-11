@@ -44,68 +44,6 @@ struct NaturalTranslationClient: Sendable {
       return try await session.translate(source).targetText
     }
   )
-
-  #if DEBUG
-    static func clientFromProcessArguments() -> NaturalTranslationClient? {
-      let arguments = ProcessInfo.processInfo.arguments
-      let translation =
-        "I studied Japanese. Today I saw butterflies in a quiet park. After solving the problem, I will talk with my friends."
-      if arguments.contains("-InjectImageTextTranslationUnsupported") {
-        return NaturalTranslationClient(
-          availability: { .unsupported },
-          translateInstalled: { _ in throw NaturalTranslationError.languageAssetsUnavailable }
-        )
-      }
-      if arguments.contains("-InjectImageTextTranslationPreparing") {
-        return NaturalTranslationClient(
-          availability: { .downloadable },
-          translateInstalled: { _ in throw NaturalTranslationError.languageAssetsUnavailable },
-          preparationClient: NaturalTranslationPreparationClient(
-            prepare: { try await Task.sleep(for: .seconds(30)) },
-            translate: { _ in translation }
-          )
-        )
-      }
-      if arguments.contains("-InjectImageTextTranslationCancelled") {
-        return NaturalTranslationClient(
-          availability: { .downloadable },
-          translateInstalled: { _ in throw NaturalTranslationError.languageAssetsUnavailable },
-          preparationClient: NaturalTranslationPreparationClient(
-            prepare: { throw CancellationError() },
-            translate: { _ in translation }
-          )
-        )
-      }
-      if arguments.contains("-InjectImageTextTranslationPreparationFailure") {
-        return NaturalTranslationClient(
-          availability: { .downloadable },
-          translateInstalled: { _ in throw NaturalTranslationError.languageAssetsUnavailable },
-          preparationClient: NaturalTranslationPreparationClient(
-            prepare: { throw NaturalTranslationError.languageAssetsUnavailable },
-            translate: { _ in translation }
-          )
-        )
-      }
-      if arguments.contains("-InjectImageTextTranslationPrepared") {
-        return NaturalTranslationClient(
-          availability: { .downloadable },
-          translateInstalled: { _ in throw NaturalTranslationError.languageAssetsUnavailable },
-          preparationClient: NaturalTranslationPreparationClient(
-            prepare: {},
-            translate: { source in
-              guard !source.isEmpty else { throw NaturalTranslationError.emptySource }
-              return translation
-            }
-          )
-        )
-      }
-      guard arguments.contains("-InjectImageTextTranslation") else { return nil }
-      return NaturalTranslationClient(translate: { source in
-        guard !source.isEmpty else { throw NaturalTranslationError.emptySource }
-        return translation
-      })
-    }
-  #endif
 }
 
 enum NaturalTranslationAvailability: Equatable, Sendable {
