@@ -72,7 +72,7 @@ Ordinary UI and accessibility launches use a deterministic DEBUG-only analysis
 provider except for the bounded bundled-provider cold-relaunch journey. The
 merge-candidate workflow invokes and retains all three correctness plans.
 
-The exact inventory contains 342 tests. `ZenbuPR` includes 320 (116 Unit and 204
+The exact inventory contains 343 tests. `ZenbuPR` includes 321 (116 Unit and 205
 UI), and `ZenbuSudachiIntegration` includes three network-backed Unit tests. The
 seventeen exact tests outside those correctness plans are one performance-only Unit
 test, three physical/system HIL journeys, #269's four deliberately red framework
@@ -264,7 +264,9 @@ observed source. A partition containing this provisional entry emits
 runtime evidence nor permission to run the journey in an ordinary local issue gate.
 The Word Note, Conjugations, and Romaji owners separate their core journey from
 editor screenshots, exhaustive forms, and appearance permutations. Their retained
-broader methods remain in the full/manual/pre-release plans. Provisional weights
+broader methods remain in the full/manual/pre-release plans. The offline owner
+checks real Image Text analysis across cold relaunch; the original combined
+Image Text-and-Examples offline journey remains in those full plans. Provisional weights
 are scheduling inputs, not hosted runtime proof. Use `ios_verification.py inventory`
 for current lane counts and loads rather than copying those generated values here.
 

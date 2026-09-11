@@ -971,9 +971,25 @@ final class AccessibilityAuditUITests: XCTestCase {
       NSPredicate(format: "identifier BEGINSWITH %@", prefix)
     ).firstMatch
     RepresentativeExampleSentences.reachElement(first, in: detail, app: app)
-    let tokens = RepresentativeExampleSentences.orderedTokens(prefix: prefix, in: app)
+    // Assert all geometry from one settled snapshot instead of repeatedly
+    // querying the accessibility service for each token and List bound.
+    let snapshot = try detail.snapshot()
+    @MainActor
+    func descendants(_ node: XCUIElementSnapshot) -> [XCUIElementSnapshot] {
+      [node] + node.children.flatMap { descendants($0) }
+    }
+    let elements = descendants(snapshot)
+    let tokens = elements.filter {
+      $0.identifier.hasPrefix(prefix)
+        && RepresentativeExampleSentences.tokenOrdinal($0.identifier, prefix: prefix) != .max
+    }.sorted {
+      RepresentativeExampleSentences.tokenOrdinal($0.identifier, prefix: prefix)
+        < RepresentativeExampleSentences.tokenOrdinal($1.identifier, prefix: prefix)
+    }
     XCTAssertEqual(
-      RepresentativeExampleSentences.reconstructedSentence(from: tokens, prefix: prefix),
+      tokens.map {
+        RepresentativeExampleSentences.tokenSurface(from: $0.identifier, prefix: prefix)
+      }.joined(),
       "水は見る見るうちに橋げたのところまで達した。"
     )
     let visualLines = Dictionary(grouping: tokens) { Int($0.frame.maxY.rounded()) }
@@ -983,8 +999,8 @@ final class AccessibilityAuditUITests: XCTestCase {
       "Largest text must retain natural multi-token Japanese lines instead of one token per row"
     )
     for token in tokens {
-      XCTAssertGreaterThanOrEqual(token.frame.minX, detail.frame.minX)
-      XCTAssertLessThanOrEqual(token.frame.maxX, detail.frame.maxX)
+      XCTAssertGreaterThanOrEqual(token.frame.minX, snapshot.frame.minX)
+      XCTAssertLessThanOrEqual(token.frame.maxX, snapshot.frame.maxX)
     }
     let terminalPunctuation = try XCTUnwrap(tokens.last)
     let precedingToken = try XCTUnwrap(tokens.dropLast().last)
@@ -994,13 +1010,15 @@ final class AccessibilityAuditUITests: XCTestCase {
       accuracy: 1,
       "Japanese terminal punctuation must wrap with the preceding token"
     )
-    let romaji = app.descendants(matching: .any)["word-detail.example-token.0.romaji"]
-    XCTAssertTrue(romaji.exists)
+    let romaji = try XCTUnwrap(
+      elements.first { $0.identifier == "word-detail.example-token.0.romaji" })
     XCTAssertTrue(romaji.label.hasPrefix("Romaji, "))
-    let english = app.staticTexts["word-detail.example-english.0"]
-    XCTAssertTrue(english.exists)
-    XCTAssertGreaterThanOrEqual(romaji.frame.minX, detail.frame.minX)
-    XCTAssertLessThanOrEqual(romaji.frame.maxX, detail.frame.maxX)
+    let english = try XCTUnwrap(
+      elements.first {
+        $0.elementType == .staticText && $0.identifier == "word-detail.example-english.0"
+      })
+    XCTAssertGreaterThanOrEqual(romaji.frame.minX, snapshot.frame.minX)
+    XCTAssertLessThanOrEqual(romaji.frame.maxX, snapshot.frame.maxX)
     XCTAssertGreaterThan(english.frame.minY, romaji.frame.maxY)
     try performAudit(
       in: app,

@@ -511,7 +511,7 @@
     },
     "ui.bundled-japanese-text-analysis": {
       "plan": "ZenbuPR",
-      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBundledJapaneseAnalysisLinksImageTextAndExamplesBeforeSettingsAcrossColdRelaunch",
+      "test": "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBundledJapaneseAnalysisLinksImageTextAcrossColdRelaunch",
       "traits": ["ui", "normal-dynamic-type", "offline"],
       "journeys": ["image-text", "japanese-text-analysis-offline"]
     },

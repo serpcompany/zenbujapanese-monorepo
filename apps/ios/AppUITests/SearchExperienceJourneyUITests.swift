@@ -1019,18 +1019,19 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  func testBundledJapaneseAnalysisLinksImageTextAcrossColdRelaunch() throws {
+    let app = launchBundledAnalysisFixture()
+    assertBundledAnalysisJapaneseRegion(in: app)
+    app.terminate()
+    app.launch()
+    assertBundledAnalysisJapaneseRegion(in: app)
+  }
+
+  @MainActor
   func testBundledJapaneseAnalysisLinksImageTextAndExamplesBeforeSettingsAcrossColdRelaunch()
     throws
   {
-    let arguments = [
-      "-ResetLanguageTechnologyPacks", "-StartImageTextFixtures", "fixture-vertical.png",
-      "-InjectVerticalImageTextRecognition",
-    ]
-    let app = launchApp(
-      additionalArguments: arguments,
-      usesJapaneseAnalysisFixture: false,
-      networkUnavailable: true
-    )
+    let app = launchBundledAnalysisFixture()
     assertBundledAnalysisJapaneseRegion(in: app)
 
     app.terminate()
@@ -6548,6 +6549,18 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     recordScreenshot(named: "\(name) - short Search row", app: app)
     result.tap()
     XCTAssertTrue(detail.waitForExistence(timeout: 3))
+  }
+
+  @MainActor
+  private func launchBundledAnalysisFixture() -> XCUIApplication {
+    launchApp(
+      additionalArguments: [
+        "-ResetLanguageTechnologyPacks", "-StartImageTextFixtures", "fixture-vertical.png",
+        "-InjectVerticalImageTextRecognition",
+      ],
+      usesJapaneseAnalysisFixture: false,
+      networkUnavailable: true
+    )
   }
 
   @MainActor

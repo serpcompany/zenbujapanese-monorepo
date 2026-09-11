@@ -137,6 +137,10 @@
         "test_seconds": 49.831,
         "date": "2026-09-11"
       }
+    },
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBundledJapaneseAnalysisLinksImageTextAcrossColdRelaunch": {
+      "status": "provisional",
+      "basis": "Initial scheduling estimate for the cold-relaunch Image Text owner; focused measurement pending. The original combined offline Examples journey remains in the full plans."
     }
   },
   "test_durations_seconds": {
@@ -343,7 +347,8 @@
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testIchidanConjugationRowsPreserveAllPlainAndPoliteForms": 133.715,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteEditorPresentationAndWarmBackPreservePersistedNotes": 121.866,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSuruConjugationsPreserveFormsAndResetModeForNextEntry": 62.843,
-    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKuruConjugationsPreservePlainPoliteFormsAndReadings": 49.831
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKuruConjugationsPreservePlainPoliteFormsAndReadings": 49.831,
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBundledJapaneseAnalysisLinksImageTextAcrossColdRelaunch": 80.0
   },
   "version": 1
 }

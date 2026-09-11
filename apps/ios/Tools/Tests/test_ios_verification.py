@@ -1139,7 +1139,7 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             )
             self.assertEqual(
                 [lane["test_count"] for lane in matrix],
-                [116, 2, 22, 23, 23, 26, 27, 28, 28, 27, 3],
+                [116, 2, 22, 23, 23, 27, 27, 28, 27, 28, 3],
             )
             self.assertEqual(
                 [lane["measured_test_seconds"] for lane in matrix],
@@ -1194,11 +1194,11 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 "accessibility-ui-a": 22,
                 "accessibility-ui-b": 23,
                 "accessibility-ui-c": 23,
-                "normal-ui-a": 26,
+                "normal-ui-a": 27,
                 "normal-ui-b": 27,
                 "normal-ui-c": 28,
-                "normal-ui-d": 28,
-                "normal-ui-e": 27,
+                "normal-ui-d": 27,
+                "normal-ui-e": 28,
                 "sudachi-integration": 3,
             },
         )
@@ -1420,11 +1420,11 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 "accessibility-ui-a": 22,
                 "accessibility-ui-b": 23,
                 "accessibility-ui-c": 23,
-                "normal-ui-a": 26,
+                "normal-ui-a": 27,
                 "normal-ui-b": 27,
                 "normal-ui-c": 28,
-                "normal-ui-d": 28,
-                "normal-ui-e": 27,
+                "normal-ui-d": 27,
+                "normal-ui-e": 28,
                 "sudachi-integration": 3,
             },
         )
@@ -1437,11 +1437,11 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             "complete.merge-accessibility-a": ("ZenbuPR", 22),
             "complete.merge-accessibility-b": ("ZenbuPR", 23),
             "complete.merge-accessibility-c": ("ZenbuPR", 23),
-            "complete.merge-ui-a": ("ZenbuPR", 26),
+            "complete.merge-ui-a": ("ZenbuPR", 27),
             "complete.merge-ui-b": ("ZenbuPR", 27),
             "complete.merge-ui-c": ("ZenbuPR", 28),
-            "complete.merge-ui-d": ("ZenbuPR", 28),
-            "complete.merge-ui-e": ("ZenbuPR", 27),
+            "complete.merge-ui-d": ("ZenbuPR", 27),
+            "complete.merge-ui-e": ("ZenbuPR", 28),
             "integration.sudachi": ("ZenbuSudachiIntegration", 3),
         }
         for selector, (plan, count) in expected.items():
