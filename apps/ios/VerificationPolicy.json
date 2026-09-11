@@ -899,7 +899,7 @@
     "merge-repair-regressions": {
       "paths": [],
       "adaptive_layout": true,
-      "manual": ["ui.conjugations-adjective-regression", "ui.conjugations-suru-regression", "ui.conjugations-kuru-regression", "ui.conjugations-dark-adaptive-regression", "ui.radical-selection-regression", "ui.refactor-pickers-photos-cancel"]
+      "manual": ["ui.conjugations-adjective-regression", "ui.conjugations-suru-regression", "ui.conjugations-kuru-regression", "ui.conjugations-dark-adaptive-regression", "ui.radical-selection-regression", "ui.refactor-pickers-photos-cancel", "ui.refactor-pickers-files-recovery", "ui.japanese-text-analysis-settings"]
     },
     "refactor-regressions": {
       "paths": [],
