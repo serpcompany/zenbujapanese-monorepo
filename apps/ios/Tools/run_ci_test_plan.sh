@@ -68,6 +68,7 @@ selector_json="${ZENBU_SELECTOR_IDS:-[]}"
 summary_written=false
 phase=setup
 simulator_id=""
+boot_status_pid=""
 runtime_id=unavailable
 xcode_version=unavailable
 source_fingerprint=unavailable
@@ -78,6 +79,12 @@ derived_data=""
 # Invoked by the EXIT trap through finalize.
 # shellcheck disable=SC2329
 cleanup() {
+  if [[ -n "$boot_status_pid" ]]; then
+    if jobs -pr | grep -qx "$boot_status_pid"; then
+      kill "$boot_status_pid" 2>/dev/null || true
+    fi
+    wait "$boot_status_pid" 2>/dev/null || true
+  fi
   if [[ -n "$simulator_id" ]]; then
     xcrun simctl shutdown "$simulator_id" >/dev/null 2>&1 || true
     xcrun simctl delete "$simulator_id" >/dev/null 2>&1 || true
@@ -155,6 +162,8 @@ if [[ -z "${ZENBU_DERIVED_DATA:-}" ]]; then
 fi
 
 xcrun simctl boot "$simulator_id"
+xcrun simctl bootstatus "$simulator_id" -b &
+boot_status_pid=$!
 # Boot continues asynchronously while build-for-testing prepares the products.
 # Wait for readiness and seed requested resources before executing any test.
 
@@ -213,7 +222,8 @@ fi
 build_finished="$(seconds)"
 
 phase=post-build-setup
-xcrun simctl bootstatus "$simulator_id" -b
+wait "$boot_status_pid"
+boot_status_pid=""
 
 # Only this invocation's fresh device receives the requested Photos fixture.
 photo_setup_started="$(seconds)"

@@ -71,14 +71,18 @@ else: sys.exit(99)
     def test_build_overlaps_boot_but_tests_require_boot_and_requested_fixture(self):
         result, events, summary = self.run_runner()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(events, ["boot", "build", "bootstatus", "addmedia", "test", "shutdown", "delete"])
+        self.assertEqual(events[0], "boot")
+        self.assertCountEqual(events[1:3], ["build", "bootstatus"])
+        self.assertEqual(events[3:], ["addmedia", "test", "shutdown", "delete"])
         self.assertEqual(summary["tests_started"], 1)
         self.assertEqual(summary["failure"]["classification"], "success")
 
     def test_boot_failure_keeps_build_evidence_and_never_starts_tests(self):
         result, events, summary = self.run_runner("boot")
         self.assertEqual(result.returncode, 9, result.stderr)
-        self.assertEqual(events, ["boot", "build", "bootstatus", "shutdown", "delete"])
+        self.assertEqual(events[0], "boot")
+        self.assertCountEqual(events[1:3], ["build", "bootstatus"])
+        self.assertEqual(events[3:], ["shutdown", "delete"])
         self.assertEqual(summary["tests_started"], 0)
         self.assertEqual(summary["durations_seconds"]["test"], 0)
         self.assertGreater(summary["durations_seconds"]["build"], 0)
@@ -87,7 +91,10 @@ else: sys.exit(99)
     def test_build_failure_cleans_up_without_starting_tests(self):
         result, events, summary = self.run_runner("build")
         self.assertEqual(result.returncode, 8, result.stderr)
-        self.assertEqual(events, ["boot", "build", "shutdown", "delete"])
+        self.assertEqual(events[0], "boot")
+        self.assertEqual(events[-2:], ["shutdown", "delete"])
+        self.assertIn("build", events)
+        self.assertNotIn("test", events)
         self.assertEqual(summary["failure"]["classification"], "build-failure")
 
 
