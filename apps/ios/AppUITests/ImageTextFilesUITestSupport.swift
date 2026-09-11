@@ -2,6 +2,18 @@ import XCTest
 
 @MainActor
 enum ImageTextFilesUITestSupport {
+  private static func directoryTitle(_ title: String, in app: XCUIApplication) -> XCUIElement {
+    // Files exposes folder titles as Actions Menu buttons on current iOS.
+    // Match the exact title representations, never the parent Back button.
+    app.navigationBars.descendants(matching: .any).matching(
+      NSPredicate(
+        format: "(elementType == %d AND label == %@) OR (elementType == %d AND label == %@)",
+        XCUIElement.ElementType.staticText.rawValue, title,
+        XCUIElement.ElementType.button.rawValue, "\(title), Actions Menu"
+      )
+    ).firstMatch
+  }
+
   static func waitForPicker(in app: XCUIApplication) -> Bool {
     // Run 33962023371 retained a cold Files handoff of about 33 seconds,
     // including provider startup and a blocked remote accessibility snapshot.
@@ -15,11 +27,11 @@ enum ImageTextFilesUITestSupport {
     guard browse.waitForExistence(timeout: 5) else { return false }
     browse.tap()
 
-    let fixtureTitle = app.navigationBars.staticTexts["ImageTextFixtures"]
+    let fixtureTitle = directoryTitle("ImageTextFixtures", in: app)
     if fixtureTitle.exists { return true }
-    let appTitle = app.navigationBars.staticTexts["Zenbu Japanese"]
+    let appTitle = directoryTitle("Zenbu Japanese", in: app)
     if !appTitle.exists {
-      let localTitle = app.navigationBars.staticTexts["On My iPhone"]
+      let localTitle = directoryTitle("On My iPhone", in: app)
       if !localTitle.exists {
         let local = app.descendants(matching: .any).matching(
           NSPredicate(format: "label == %@", "On My iPhone")

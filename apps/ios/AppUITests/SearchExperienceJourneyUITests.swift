@@ -11,6 +11,11 @@ enum AppNavigationUITestSupport {
 }
 
 final class SearchExperienceJourneyUITests: XCTestCase {
+  override func setUpWithError() throws {
+    try super.setUpWithError()
+    continueAfterFailure = false
+  }
+
   @MainActor
   func testRomajiPreferenceAddsSecondaryReadingToActualSearchAndWordDetail() throws {
     defer { resetReadingAidPreferences() }

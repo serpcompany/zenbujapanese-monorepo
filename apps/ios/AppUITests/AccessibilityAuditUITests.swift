@@ -124,6 +124,11 @@ private func submitAccessibilitySearch(
 }
 
 final class AccessibilityAuditUITests: XCTestCase {
+  override func setUpWithError() throws {
+    try super.setUpWithError()
+    continueAfterFailure = false
+  }
+
   @MainActor
   func testYouHierarchyRemainsReachableAtLargestAccessibilityTextSize() throws {
     let app = launchApp(
