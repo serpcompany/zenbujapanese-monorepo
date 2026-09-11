@@ -30,8 +30,7 @@ The Media Library shows each retained image once with all associated words and
 supports deleting the media itself. Durable writes complete before either view
 refreshes.
 
-Encounter Media is not an Image Text Result, Saved Language Item, Media Entry,
-provider-supplied example, or canonical dictionary image. It stores no network
-URL or provider identity and is never uploaded by this capability. The lightweight
-Media Library in version 1 manages Encounter Media only; importing and analyzing
-larger works remains a separate Media Entry contract.
+Encounter Media is distinct from a temporary Image Text session, a provider-supplied
+example, or a canonical dictionary image. It stores no network URL or provider identity
+and is never uploaded by this capability. The Media Library manages these saved images
+and their word associations.

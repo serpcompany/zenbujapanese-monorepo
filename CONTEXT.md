@@ -1,20 +1,24 @@
 # Zenbu Japanese
 
-Zenbu Japanese is a connected set of Japanese-learning experiences organized around one learning journey.
+Zenbu Japanese is an iOS app for looking up Japanese and retaining useful context encountered while learning.
 
 ## Language
 
 **Product Experience**:
-A self-contained user-facing area with its own purpose, flows, and requirements. A Product Experience is not assumed to be a separately distributed app.
+A substantial, self-contained user-facing area with its own purpose, flows, and requirements. A supporting screen or navigation destination is not automatically a Product Experience.
 _Avoid_: App, feature app, standalone app
 
 **Zenbu Japanese iOS App**:
-The primary installed iOS product that brings multiple Product Experiences together.
+The installed iOS product containing Lookup and its supporting screens and capabilities.
 _Avoid_: App suite, bundle of apps
 
 **Shared Capability**:
-Behavior or data used by multiple Product Experiences without being a user-facing destination of its own.
+Behavior or data used by user-facing areas without being a destination of its own.
 _Avoid_: Shared app, product area
+
+**Lookup**:
+The primary Product Experience for searching Language Reference Data and inspecting words, kanji, and Example Sentences. Its root is labeled Search in the iOS app and also opens the Image Text Flow.
+_Avoid_: Search query, dictionary provider
 
 **Language Reference Data**:
 Canonical app-owned Japanese lexical, orthographic, pronunciation, and classification facts whose source provenance is retained independently of any provider schema.
@@ -70,7 +74,7 @@ _Avoid_: Corpus order, source order, match eligibility
 
 **Japanese Text Analysis**:
 The Shared Capability that resolves Japanese text into app-owned segments, tokens, lemmas, language-item candidates, and occurrence mappings.
-_Avoid_: Media Analysis, translation
+_Avoid_: Translation
 
 **Reading Aid**:
 An optional learner-facing representation that supports pronunciation of Japanese text. Furigana and Romaji are distinct Reading Aid types with independent display preferences.
@@ -86,84 +90,32 @@ _Avoid_: Furigana, Ruby, English translation
 
 **Image Text Recognition**:
 The Shared Capability that extracts ordered text regions from a bounded image while retaining their spatial and recognition evidence.
-_Avoid_: Lookup Capture, contextual image explanation
+_Avoid_: Image Text Flow, dictionary lookup
 
 **Natural Translation**:
-The Shared Capability that produces coherent Japanese–English meaning for bounded text or a conversation turn with explicitly supplied active-session context.
+The Shared Capability that produces coherent Japanese-to-English meaning for bounded text.
 _Avoid_: Dictionary gloss, word-for-word substitution
-
-**Language Explanation**:
-An on-demand generated interpretation of bounded Japanese text that explains grammar, omitted elements, register, nuance, and translation choices without becoming an open-ended tutoring conversation.
-_Avoid_: AI Sensei, contextual image explanation
 
 **Speech Synthesis**:
 The Shared Capability that produces spoken language from text for Product Experience-owned playback behavior.
 _Avoid_: Pronunciation recording, audio routing
 
-**Speech Transcription**:
-The Shared Capability that turns spoken audio into text or timed utterance updates without owning capture, conversation, or media workflows.
-_Avoid_: Audio routing, caption-generation workflow
-
 **You**:
 The personal and settings entry point in the Zenbu Japanese iOS App. You does not imply authentication or own the destinations, histories, settings, or data reachable through it, and it is not a Product Experience.
 _Avoid_: More, Profile, Account, Product Experience, data owner, unified user area
 
-**Cross-Product Flow**:
-A user-facing flow that composes contracts owned by multiple Product Experiences and is coordinated by the Zenbu Japanese iOS App shell. Multiple Product Experiences may provide entry points into the same flow; leaving it restores the originating context. The shell coordinates the flow without owning its histories or durable records.
-_Avoid_: Duplicate product flow, Shared Capability, shell-owned Product Experience
-
-**Contextual Handoff**:
-An app-wide convenience that supplies selected or origin-provided content to a chosen Product Experience, which handles it as ordinary input through the Zenbu Japanese iOS App shell's normal navigation.
-_Avoid_: Cross-Product Flow, embedded Product Experience, special integration
-
 **Image Text Flow**:
-A Cross-Product Flow that turns one bounded camera, Photo Library, or image-file input into interactive recognized Japanese and, when requested or entered through Translator, a whole-content natural translation. It is distinct from importing a larger work into the Media Library.
-_Avoid_: Lookup Capture, Media import, contextual image explanation
-
-**Image Text Result**:
-A learner-saved result from an Image Text Flow that retains its explicitly saved source image, recognized Japanese regions, and any generated whole-content translation. Saving it does not automatically save every recognized language item.
-_Avoid_: Saved Language Item, Media Entry, automatic image history
+A Lookup flow that turns one or more camera, Photo Library, or image-file inputs into interactive recognized Japanese and, when requested, a whole-content Natural Translation. The session is temporary; opening a recognized word may retain its source image as Encounter Media.
+_Avoid_: Image Text Recognition, saved image history
 
 **Encounter Media**:
-A learner-retained image or other bounded source asset associated with one or more Encounter Examples. Zenbu stores identical media once, can associate it with several language items, and presents it once in the Media Library with those associations. Removing an association from one word does not delete shared media; deleting Encounter Media from the Media Library removes all of its associations.
-_Avoid_: Word Image Attachment, temporary navigation image, Image Text Result, Media Entry, canonical dictionary image
-
-**Learning Profile**:
-The connected record of a learner's saved material, encounters, activity, and progress across Product Experiences.
-_Avoid_: User area, central profile area
-
-**Media Entry**:
-The durable Media Library record representing one explicitly saved larger bounded work. It contains Zenbu's app-owned source copy and its Media Analysis and may connect that work to an applicable Consumption Experience.
-_Avoid_: Transient import, Media Analysis
-
-**Media Analysis**:
-The Media Library-owned workflow and result for extracting and presenting whole-work vocabulary, frequency, difficulty, coverage, and cohort analysis attached to a Media Entry. A learner can inspect a Media Analysis without opening a Consumption Experience.
-_Avoid_: Media Entry, personalized readiness score
+A learner-retained image associated with one or more Encounter Examples. Zenbu stores identical images once, can associate an image with several words, and presents it once in the Media Library with those associations. Removing one word association does not delete a shared image; deleting Encounter Media from the Media Library removes all of its associations.
+_Avoid_: Temporary Image Text input, provider-supplied example, canonical dictionary image
 
 **Media Library**:
-The Product Experience for privately browsing and managing retained media. It presents lightweight Encounter Media separately from larger Media Entries and their Media Analysis. It persists on the learner's device without requiring an account. A compatible Media Entry may launch a separate Consumption Experience. Lookup history and Saved Language Items do not live in the Media Library.
-_Avoid_: User Library, universal user-content store, public catalog
-
-**Saved Language Item**:
-A word, kanji, phrase, sentence, or other language item the learner deliberately saves for later reference or study. Its final user-facing name, organization model, navigation placement, and relationship to future study experiences remain unresolved.
-_Avoid_: Media Entry, Lookup history
+The supporting screen under You for browsing and deleting Encounter Media saved with words. It is not a Product Experience or a general-purpose file store.
+_Avoid_: Product Experience, photo editor, cloud drive
 
 **Encounter Example**:
-A learner-preserved occurrence of a Language Reference Data entry or Saved Language Item in personally encountered context, optionally including surrounding text, a translation, and associated Encounter Media. One language item may have many Encounter Examples, and one Encounter Media record may support examples for several language items. It remains distinct from provider-supplied example-sentence data.
-_Avoid_: Canonical example sentence, Image Text history
-
-**Collection**:
-A learner-created and learner-named grouping of Media Entries in their Media Library.
-_Avoid_: System category, media type
-
-**Consumption Experience**:
-The interactive Read, Watch, or Listen experience attached to a Media Entry. It reuses the same extracted and segmented Japanese as the entry's Media Analysis.
-_Avoid_: Media Analysis, separate media app
-
-**KanjiMon**:
-The gamified Product Experience for encountering, collecting, and learning kanji in real-world context.
-_Avoid_: Capture
-
-**AI Sensei**:
-The in-app, Japanese-specialized contextual LLM chat for open-ended questions and follow-ups about material encountered across Zenbu Japanese.
-_Avoid_: Dojo, course engine, generic chatbot
+A learner-preserved association between a Language Reference Data word and personally encountered Encounter Media. One word may have many Encounter Examples, and one Encounter Media record may support examples for several words. It remains distinct from provider-supplied Example Sentences.
+_Avoid_: Example Sentence Corpus record, automatic Image Text history
