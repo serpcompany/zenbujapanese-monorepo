@@ -65,41 +65,7 @@ struct KanjiElementLookupClient: Sendable {
     elements: { character in try await KanjiElementReferenceData.shared.elements(character) },
     entry: { id in try await KanjiElementReferenceData.shared.entry(id) }
   )
-
-  #if DEBUG
-  static func clientFromProcessArguments() -> KanjiElementLookupClient? {
-    guard ProcessInfo.processInfo.arguments.contains("-InjectKanjiElementFailureOnce") else {
-      return nil
-    }
-    let fixture = KanjiElementFailureFixture()
-    return KanjiElementLookupClient(
-      elements: { character in try await KanjiElementLookupClient.live.elements(character) },
-      entry: { id in
-        if await fixture.consumeFailure() {
-          throw KanjiElementFixtureError.injectedFailure
-        }
-        return try await KanjiElementLookupClient.live.entry(id)
-      }
-    )
-  }
-  #endif
 }
-
-#if DEBUG
-private actor KanjiElementFailureFixture {
-  private var hasFailed = false
-
-  func consumeFailure() -> Bool {
-    guard !hasFailed else { return false }
-    hasFailed = true
-    return true
-  }
-}
-
-private enum KanjiElementFixtureError: Error {
-  case injectedFailure
-}
-#endif
 
 private actor KanjiElementReferenceData {
   static let shared = KanjiElementReferenceData()

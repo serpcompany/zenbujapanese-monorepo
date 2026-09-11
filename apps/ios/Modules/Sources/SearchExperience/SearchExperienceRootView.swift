@@ -63,7 +63,7 @@ public struct SearchExperienceRootView: View {
       cameraAuthorizationClient = .live
       speechSynthesisClient = SpeechSynthesisClient.clientFromProcessArguments() ?? .live
       kanjiStrokeOrderClient = KanjiStrokeOrderClient.clientFromProcessArguments() ?? .live
-      kanjiElementLookupClient = KanjiElementLookupClient.clientFromProcessArguments() ?? .live
+      kanjiElementLookupClient = .live
       imageTextRecognitionClient = .live
       naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live
       imageTextClipboardClient = .live
