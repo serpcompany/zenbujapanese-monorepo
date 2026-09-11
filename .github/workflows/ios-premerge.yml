@@ -28,6 +28,9 @@ concurrency:
   group: >-
     ${{ github.workflow }}-${{
       github.event.pull_request.number || github.event.merge_group.head_sha || github.ref
+    }}-${{
+      github.event_name == 'workflow_dispatch' &&
+      (inputs.selector || inputs.capability || 'full-merge') || 'required'
     }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 

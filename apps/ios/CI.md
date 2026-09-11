@@ -308,7 +308,9 @@ For a single failing journey, dispatch `ios-premerge.yml` on the repair branch w
 `-f selector=ui.example-word-selector` (or another registered single-method selector).
 The selector overrides the manual capability, retains the normal evidence artifacts,
 and reports `ios-premerge / Focused <selector>`. It cannot run as a merge-candidate
-selection or satisfy `ios-premerge / Required`. Diagnose with this focused run before
+selection or satisfy `ios-premerge / Required`. Different manual selectors use
+independent concurrency groups on isolated hosted runners, so one focused check
+does not wait behind a different focused check. Diagnose with this focused run before
 requesting another broad comparison; a changed SHA still needs final merge validation.
 
 The manual `merge-repair-regressions` capability runs only the nine affected
