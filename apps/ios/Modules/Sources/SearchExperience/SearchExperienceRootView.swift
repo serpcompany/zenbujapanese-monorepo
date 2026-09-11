@@ -40,7 +40,7 @@ public struct SearchExperienceRootView: View {
 
   public init() {
     #if DEBUG
-      let resolvedLookupClient = LookupClient.clientFromProcessArguments(live: .live) ?? .live
+      let resolvedLookupClient = LookupClient.live
       lookupClient = resolvedLookupClient
       exampleSentenceClient = .clientFromProcessArguments(live: .live) ?? .live
       let usesReducedAnalysis = ProcessInfo.processInfo.arguments.contains(
@@ -59,14 +59,12 @@ public struct SearchExperienceRootView: View {
       kanjiLookupClient =
         KanjiLookupClient.clientFromProcessArguments(live: liveKanjiLookupClient)
         ?? liveKanjiLookupClient
-      handwritingRecognitionClient =
-        HandwritingRecognitionFixture.clientFromProcessArguments() ?? .live
+      handwritingRecognitionClient = .live
       cameraAuthorizationClient = .live
       speechSynthesisClient = SpeechSynthesisClient.clientFromProcessArguments() ?? .live
       kanjiStrokeOrderClient = KanjiStrokeOrderClient.clientFromProcessArguments() ?? .live
       kanjiElementLookupClient = KanjiElementLookupClient.clientFromProcessArguments() ?? .live
-      imageTextRecognitionClient =
-        ImageTextRecognitionFixture.clientFromProcessArguments(live: .live) ?? .live
+      imageTextRecognitionClient = .live
       naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live
       imageTextClipboardClient = ImageTextClipboardClient.clientFromProcessArguments() ?? .live
     #else
