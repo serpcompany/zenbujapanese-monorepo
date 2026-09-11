@@ -13,7 +13,7 @@ This directory owns the primary installed iOS product and its complete build, me
 ## Operating documentation
 
 - [`docs/product/`](docs/product/) describes current user-facing iOS behavior.
-- [`docs/releases/`](docs/releases/) contains immutable records of completed iOS releases.
+- [GitHub Releases](https://github.com/serpcompany/zenbujapanese-monorepo/releases) contains completed release records.
 - [`ReleasePrivacyAudit.md`](ReleasePrivacyAudit.md) defines release privacy and security auditing.
 - [`CHANGELOG.md`](CHANGELOG.md) and [`screenshots/`](screenshots/) are owned by this delivery surface.
 
