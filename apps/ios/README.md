@@ -16,4 +16,4 @@ This directory owns the primary installed iOS product and its complete build, me
 - [GitHub Releases](https://github.com/serpcompany/zenbujapanese-monorepo/releases) contains completed release records.
 - [`CHANGELOG.md`](CHANGELOG.md) and [`screenshots/`](screenshots/) are owned by this delivery surface.
 
-Cross-product language and architectural decisions remain in the repository-level [`CONTEXT.md`](../../CONTEXT.md) and [`docs/adr/`](../../docs/adr/). Exploratory research and archived evidence live in the private [`zenbujapanese/research`](https://github.com/zenbujapanese/research) repository.
+Cross-product architectural decisions remain in the repository-level [`docs/adr/`](../../docs/adr/). Exploratory research and archived evidence live in the private [`zenbujapanese/research`](https://github.com/zenbujapanese/research) repository.

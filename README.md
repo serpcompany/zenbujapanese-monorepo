@@ -20,7 +20,6 @@ One Git repository does not imply one build graph. Do not add a root package man
 
 ## Shared context
 
-- [Domain language](CONTEXT.md)
 - [Architectural decisions](docs/adr/)
 - [Product-family monorepo decision](docs/adr/0005-keep-a-lightweight-product-family-monorepo.md)
 - [Exploratory research and archived evidence](https://github.com/zenbujapanese/research)
