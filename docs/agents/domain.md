@@ -16,9 +16,10 @@ This repository uses a single-context layout:
 ```text
 /
 ├── CONTEXT.md
-├── docs/
-│   └── adr/
-└── src/
+├── apps/
+│   └── ios/
+└── docs/
+    └── adr/
 ```
 
 `CONTEXT.md` contains the shared domain language. `docs/adr/` contains durable architectural decisions.
