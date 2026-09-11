@@ -6219,6 +6219,12 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let navigationBar = app.navigationBars.firstMatch
     XCTAssertTrue(navigationBar.waitForExistence(timeout: 3), "Expected a native navigation bar")
     let backButton = navigationBar.buttons.firstMatch
+    // Read an already-ready control directly. On a busy runner, one AX query
+    // can outlast the predicate waiter's deadline before its first evaluation
+    // returns (34573145324). Poll only when the control is not ready yet.
+    if backButton.exists, backButton.isEnabled, backButton.isHittable {
+      return backButton
+    }
     // Native navigation can expose a hittable Back button before enabling it.
     // Run 34551526451 tapped the greyed-out control and remained in Word Detail.
     let ready = XCTNSPredicateExpectation(
