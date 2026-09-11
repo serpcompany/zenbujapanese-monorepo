@@ -92,8 +92,8 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
     def test_partial_manual_gate_cannot_report_required_and_every_sample_must_pass(self):
         workflow = workflow_text("ios-premerge.yml")
         required = workflow.split("  required:\n", 1)[1]
-        self.assertIn("github.event_name == 'workflow_dispatch' && inputs.capability != 'full-merge'", required)
-        self.assertIn("format('ios-premerge / Focused {0}', inputs.capability)", required)
+        self.assertIn("github.event_name == 'workflow_dispatch' && (inputs.selector != '' || inputs.capability != 'full-merge')", required)
+        self.assertIn("format('ios-premerge / Focused {0}', inputs.selector || inputs.capability)", required)
         self.assertIn("|| 'ios-premerge / Required'", required)
         self.assertIn('[[ "$COMPLETE_RESULT" == success ]]', required)
         self.assertIn("fail-fast: false", workflow)

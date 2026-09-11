@@ -1495,6 +1495,36 @@ def lifecycle_cadence(*, stage: str, event: str, draft: bool) -> str:
     raise PolicyError(f"unsupported lifecycle stage {stage}")
 
 
+def focused_manual_plan(manifest, inventory, selector_id, *, stage, event, source_sha):
+    """Resolve one registered method without issuing the required merge context."""
+    if stage != "manual" or event != "workflow_dispatch":
+        raise PolicyError("single-selector execution requires manual workflow_dispatch")
+    allowed = {
+        key for tier in manifest["stages"]["manual"]
+        for key in manifest["tiers"][tier]
+    }
+    selector = manifest["selectors"].get(selector_id)
+    if selector is None or selector_id not in allowed:
+        raise PolicyError(f"unknown or non-manual selector {selector_id}")
+    identity = selector.get("test")
+    if not identity or len(identity.split("/")) != 3 or selector.get("partition"):
+        raise PolicyError("focused execution requires one explicit test method")
+    included = inventory["plans"].get(selector["plan"], {}).get("included_tests", [])
+    if identity not in included:
+        raise PolicyError("focused test must exist in its declared plan")
+    return {
+        "cadence": "run-manual", "source_sha": source_sha,
+        "selectors": [selector_id],
+        "partitions": selector_partitions(manifest, [selector_id]),
+        "merge_candidate_matrix": {"include": [{
+            "lane": "focused-journey", "plan": selector["plan"],
+            "selectors": [selector_id], "test_count": 1,
+            "measured_test_seconds": None, "estimated_test_seconds": None,
+            "timing_profile_run_id": None,
+        }]},
+    }
+
+
 def selector_partitions(
     manifest: dict[str, Any], selector_ids: list[str]
 ) -> dict[str, list[str]]:
@@ -1550,6 +1580,7 @@ def parse_arguments(arguments: list[str]) -> argparse.Namespace:
     plan.add_argument("--head")
     plan.add_argument("--path", action="append", default=[])
     plan.add_argument("--capability", action="append", default=[])
+    plan.add_argument("--selector")
     plan.add_argument("--tier", action="append", default=[])
     plan.add_argument("--github-output", type=Path)
 
@@ -1789,28 +1820,36 @@ def main(arguments: list[str]) -> int:
         validate_repository_contracts(manifest, Path.cwd())
         print(f"verification policy valid: {options.manifest}")
         return 0
-    paths = options.path
-    if options.base and options.head:
-        paths.extend(changed_paths(options.base, options.head, Path.cwd()))
-    plan = resolve_plan(
-        manifest,
-        changed_paths=paths,
-        stage=options.stage,
-        event=options.event,
-        draft=options.draft == "true",
-        source_sha=options.source_sha,
-        requested_capabilities=options.capability,
-        allowed_tiers=set(options.tier) if options.tier else None,
-    )
-    plan["partitions"] = selector_partitions(manifest, plan["selectors"])
-    plan["merge_candidate_matrix"] = (
-        merge_candidate_matrix(
-            manifest, plan["selectors"], repository_inventory(Path.cwd())
+    if options.selector:
+        if options.capability or options.tier:
+            raise PolicyError("a focused selector cannot be combined with capabilities or tiers")
+        plan = focused_manual_plan(
+            manifest, repository_inventory(Path.cwd()), options.selector,
+            stage=options.stage, event=options.event, source_sha=options.source_sha,
         )
-        if options.stage in ("merge-candidate", "manual")
-        and plan["cadence"] in ("verify-merge-candidate", "run-manual")
-        else {"include": []}
-    )
+    else:
+        paths = options.path
+        if options.base and options.head:
+            paths.extend(changed_paths(options.base, options.head, Path.cwd()))
+        plan = resolve_plan(
+            manifest,
+            changed_paths=paths,
+            stage=options.stage,
+            event=options.event,
+            draft=options.draft == "true",
+            source_sha=options.source_sha,
+            requested_capabilities=options.capability,
+            allowed_tiers=set(options.tier) if options.tier else None,
+        )
+        plan["partitions"] = selector_partitions(manifest, plan["selectors"])
+        plan["merge_candidate_matrix"] = (
+            merge_candidate_matrix(
+                manifest, plan["selectors"], repository_inventory(Path.cwd())
+            )
+            if options.stage in ("merge-candidate", "manual")
+            and plan["cadence"] in ("verify-merge-candidate", "run-manual")
+            else {"include": []}
+        )
     print(json.dumps(plan, indent=2, sort_keys=True))
     if options.github_output:
         values = {

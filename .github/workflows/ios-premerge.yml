@@ -12,6 +12,11 @@ on:
         default: full-merge
         options: [full-merge, reviewer-contrast, refactor-regressions, lean-merge-shadow, merge-repair-regressions]
 
+      selector:
+        description: Optional registered single-test selector; overrides capability for a focused repair
+        type: string
+        default: ''
+
 permissions:
   contents: read
 
@@ -68,6 +73,7 @@ jobs:
         env:
           HEAD_SHA: ${{ github.event.merge_group.head_sha || github.sha }}
           MANUAL_CAPABILITY: ${{ inputs.capability || 'full-merge' }}
+          MANUAL_SELECTOR: ${{ inputs.selector }}
         run: |
           set -euo pipefail
           stage=merge-candidate
@@ -76,8 +82,12 @@ jobs:
           if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
             args+=(--base '${{ github.event.pull_request.base.sha }}' --head '${{ github.event.pull_request.head.sha }}')
           elif [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
-            [[ "$MANUAL_CAPABILITY" == full-merge || "$MANUAL_CAPABILITY" == reviewer-contrast || "$MANUAL_CAPABILITY" == refactor-regressions || "$MANUAL_CAPABILITY" == lean-merge-shadow || "$MANUAL_CAPABILITY" == merge-repair-regressions ]] || exit 64
-            args+=(--capability "$MANUAL_CAPABILITY")
+            if [[ -n "$MANUAL_SELECTOR" ]]; then
+              args+=(--selector "$MANUAL_SELECTOR")
+            else
+              [[ "$MANUAL_CAPABILITY" == full-merge || "$MANUAL_CAPABILITY" == reviewer-contrast || "$MANUAL_CAPABILITY" == refactor-regressions || "$MANUAL_CAPABILITY" == lean-merge-shadow || "$MANUAL_CAPABILITY" == merge-repair-regressions ]] || exit 64
+              args+=(--capability "$MANUAL_CAPABILITY")
+            fi
           else
             args+=(--capability full-merge)
           fi
@@ -318,7 +328,7 @@ jobs:
     if: >-
       ${{
         (github.event_name == 'merge_group' && needs.scope.outputs.ios_changed == 'true') ||
-        (github.event_name == 'workflow_dispatch' && inputs.capability == 'lean-merge-shadow')
+        (github.event_name == 'workflow_dispatch' && inputs.capability == 'lean-merge-shadow' && inputs.selector == '')
       }}
     runs-on: macos-26
     timeout-minutes: 20
@@ -388,7 +398,7 @@ jobs:
           retention-days: 90
 
   required:
-    name: ${{ github.event_name == 'workflow_dispatch' && inputs.capability != 'full-merge' && format('ios-premerge / Focused {0}', inputs.capability) || 'ios-premerge / Required' }}
+    name: ${{ github.event_name == 'workflow_dispatch' && (inputs.selector != '' || inputs.capability != 'full-merge') && format('ios-premerge / Focused {0}', inputs.selector || inputs.capability) || 'ios-premerge / Required' }}
     if: always()
     needs: [scope, complete-suite]
     runs-on: ubuntu-24.04

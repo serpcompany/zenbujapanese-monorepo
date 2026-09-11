@@ -83,6 +83,29 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                     ios_verification.selection_simulator_resources(manifest, inventory, "ZenbuPR", selected), expected)
         self.assertEqual(ios_verification.selection_simulator_resources(manifest, inventory, "ZenbuSudachiIntegration", None), [])
 
+    def test_single_selector_is_exact_and_cannot_run_as_a_merge_candidate(self):
+        repo = Path(__file__).parents[4]
+        manifest = ios_verification.load_and_validate_manifest(repo / "apps/ios/VerificationPolicy.json")
+        inventory = ios_verification.repository_inventory(repo)
+        args = dict(stage="manual", event="workflow_dispatch", source_sha="candidate")
+        resolved = ios_verification.focused_manual_plan(
+            manifest, inventory, "ui.example-word-selector", **args)
+        lane, = resolved["merge_candidate_matrix"]["include"]
+        self.assertEqual(lane["selectors"], ["ui.example-word-selector"])
+        self.assertEqual(lane["test_count"], 1)
+        self.assertEqual(lane["lane"], "focused-journey")
+        for selector in ("unknown", "complete.merge-unit", "complete.public"):
+            with self.subTest(selector=selector), self.assertRaises(ios_verification.PolicyError):
+                ios_verification.focused_manual_plan(manifest, inventory, selector, **args)
+        for stage, event in (("merge-candidate", "merge_group"), ("manual", "pull_request")):
+            with self.subTest(stage=stage), self.assertRaises(ios_verification.PolicyError):
+                ios_verification.focused_manual_plan(
+                    manifest, inventory, "ui.example-word-selector",
+                    stage=stage, event=event, source_sha="candidate")
+        manifest["selectors"]["ui.example-word-selector"]["test"] = "ZenbuJapaneseUITests/Missing/testMissing"
+        with self.assertRaises(ios_verification.PolicyError):
+            ios_verification.focused_manual_plan(manifest, inventory, "ui.example-word-selector", **args)
+
     def test_merge_repair_gate_selects_only_the_nine_affected_journeys(self):
         repo = Path(__file__).parents[4]
         manifest = ios_verification.load_and_validate_manifest(repo / "apps/ios/VerificationPolicy.json")

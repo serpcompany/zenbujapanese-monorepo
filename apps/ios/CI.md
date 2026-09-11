@@ -302,6 +302,13 @@ The required jobs always report a conclusion. Non-iOS PRs therefore pass the
 gate without starting macOS runners instead of remaining permanently pending
 because an entire required workflow was path-filtered away.
 
+For a single failing journey, dispatch `ios-premerge.yml` on the repair branch with
+`-f selector=ui.example-word-selector` (or another registered single-method selector).
+The selector overrides the manual capability, retains the normal evidence artifacts,
+and reports `ios-premerge / Focused <selector>`. It cannot run as a merge-candidate
+selection or satisfy `ios-premerge / Required`. Diagnose with this focused run before
+requesting another broad comparison; a changed SHA still needs final merge validation.
+
 The manual `merge-repair-regressions` capability runs only the nine affected
 conjugation, radical-selection, Files recovery, Japanese-analysis settings, homograph-note, and
 empty-Photos-cancellation methods on hosted
