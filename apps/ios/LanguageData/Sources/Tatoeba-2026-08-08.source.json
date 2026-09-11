@@ -18,7 +18,7 @@
     "statement": "Preserve the full current example-sentence experience for version 1.0, retain all available attribution and not-supplied evidence, disclose the known uncertainty, and do not represent this owner decision as independent legal advice."
   },
   "reference_sample": {
-    "path": "docs/research/tatoeba-nihongo-sample-2026-08-14.tsv",
+    "path": "apps/ios/LanguageData/Sources/Tatoeba-nihongo-sample-2026-08-14.tsv",
     "sha256": "824fb7cc704e822e57678e23bcbbb5f37ab61a69b0f75991cb0076cc9bf91619",
     "pair_count": 35,
     "query_counts": {"cave": 7, "cat": 7, "eat": 7, "beautiful": 7, "thank you": 7},

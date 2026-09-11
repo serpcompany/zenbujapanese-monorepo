@@ -50,7 +50,7 @@ The general exports are published under CC BY 2.0 FR; CC0 membership is establis
 
 `verify_tatoeba_provenance.py` is a Release build gate. It validates the generated database, importer/adapter/transform identities, all seven pinned input hashes, the durable 35-pair public reference sample, retained provider IDs, contributor status, license class, snapshot identity, and contributor-credit counts. The v1.0 release posture is recorded in `Tatoeba-2026-08-08.source.json`: preserve the full 232,703-pair corpus, disclose the supplied and `not-supplied` attribution states, and treat the unresolved attribution uncertainty as an explicit owner-accepted known risk rather than as independently cleared legal advice. `--inspection` remains available for investigation but is not the Release build mode.
 
-The public-safe reference record is `docs/research/tatoeba-nihongo-sample-2026-08-14.tsv`. It records exact public sentence facts, observed context/rank/timestamp, both Tatoeba IDs, classifications, and internal evidence pointer names plus SHA-256 values. It does not contain or distribute private reference-app screenshots.
+The public-safe reference record is `apps/ios/LanguageData/Sources/Tatoeba-nihongo-sample-2026-08-14.tsv`. It records exact public sentence facts, observed context/rank/timestamp, both Tatoeba IDs, classifications, and internal evidence pointer names plus SHA-256 values. It does not contain or distribute private reference-app screenshots.
 
 ## App-owned word relationships
 
