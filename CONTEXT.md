@@ -32,45 +32,17 @@ _Avoid_: Provider schema, retrieval behavior, matching technology
 A replaceable established library, model, or system component used to implement language analysis without owning the app's product contract or language data.
 _Avoid_: Language Data Source, corpus, Product Experience, retrieval policy
 
-**Dictionary Match**:
-An evidence-backed relationship establishing that a Language Reference Data entry is relevant to a Search query.
-_Avoid_: Result row, provider hit, source membership
-
-**Dictionary Ranking**:
-The app-owned ordering of eligible Dictionary Matches for presentation and downstream entry selection.
-_Avoid_: Provider entry order, provider result order, database row order, provider rank, match eligibility
-
-**Canonical Sense and Gloss Order**:
-The app-owned preservation of a Language Data Source's authorial sense sequence and the documented editorial sequence of glosses within each sense as typed lexical evidence. It is distinct from provider entry, export, result, or database row order and from provider identifiers.
-_Avoid_: Provider result order, insertion order, record ID order
-
 **Dictionary Sense**:
-A distinct meaning within Language Reference Data that retains its part of speech, Canonical Sense and Gloss Order, and any written-form or reading-form applicability. A Dictionary Sense contributes Match evidence only when the displayed written/reading pair satisfies that applicability.
-_Avoid_: Flat gloss, provider sense row, unrestricted meaning
-
-**Dictionary Best Matches**:
-The highest-evidence group produced by Dictionary Ranking for presentation in Lookup. The group may contain more than one entry.
-_Avoid_: Primary Dictionary Entry, all dictionary results
-
-**Primary Dictionary Entry**:
-The first ordered Dictionary Match when a downstream flow requires one Language Reference Data entry.
-_Avoid_: First provider row, Dictionary Best Matches
+A distinct meaning associated with a Language Reference Data entry. It may include part of speech and restrictions on the written forms or readings to which it applies.
+_Avoid_: Flat gloss, provider sense row
 
 **Example Sentence Corpus**:
 The canonical app-owned collection of source-backed Japanese–English example pairs and their retained provenance.
 _Avoid_: Tatoeba database, Nihongo sentences, retrieval results
 
 **Example Sentence Retrieval**:
-The Shared Capability that accepts a Search query or dictionary entry, analyzes its language forms, establishes Example Sentence Matches, and applies Example Sentence Ranking to produce relevant ordered corpus records. It owns the retrieval policy while delegating language analysis to replaceable Language Technology.
-_Avoid_: Data source, corpus, provider search, matching technology
-
-**Example Sentence Match**:
-An evidence-backed relationship establishing that an Example Sentence Corpus record is relevant to a Search query or dictionary entry.
-_Avoid_: Substring hit, ranking score, source membership
-
-**Example Sentence Ranking**:
-The ordering of eligible Example Sentence Matches for presentation to the learner.
-_Avoid_: Corpus order, source order, match eligibility
+The Shared Capability that finds relevant Example Sentence Corpus records for a Search query or dictionary entry. Its language-processing dependencies remain replaceable.
+_Avoid_: Data source, corpus, provider search
 
 **Japanese Text Analysis**:
 The Shared Capability that resolves Japanese text into app-owned segments, tokens, lemmas, language-item candidates, and occurrence mappings.
@@ -109,13 +81,9 @@ A Lookup flow that turns one or more camera, Photo Library, or image-file inputs
 _Avoid_: Image Text Recognition, saved image history
 
 **Encounter Media**:
-A learner-retained image associated with one or more Encounter Examples. Zenbu stores identical images once, can associate an image with several words, and presents it once in the Media Library with those associations. Removing one word association does not delete a shared image; deleting Encounter Media from the Media Library removes all of its associations.
+A learner-retained image associated with one or more words and available from the Media Library.
 _Avoid_: Temporary Image Text input, provider-supplied example, canonical dictionary image
 
 **Media Library**:
 The supporting screen under You for browsing and deleting Encounter Media saved with words. It is not a Product Experience or a general-purpose file store.
 _Avoid_: Product Experience, photo editor, cloud drive
-
-**Encounter Example**:
-A learner-preserved association between a Language Reference Data word and personally encountered Encounter Media. One word may have many Encounter Examples, and one Encounter Media record may support examples for several words. It remains distinct from provider-supplied Example Sentences.
-_Avoid_: Example Sentence Corpus record, automatic Image Text history
