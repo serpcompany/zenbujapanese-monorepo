@@ -1,14 +1,28 @@
-# README
+# Zenbu Japanese
 
-This project is for the main `zenbujapanese.com` website monorepo.
+This repository is the shared home of the Zenbu Japanese product family. It keeps canonical product language, research, architectural decisions, contracts, provenance, and cross-product evidence together while each delivery surface remains independently buildable, testable, versioned, and releasable.
 
-The `zenbujapanese.com` website idea/goals/plan is to generate organic (SEO) traffic with the intention of driving leads/users/sales of various PRODUCTS (apps, extensions, SAAS, tools, etc.) for learning/consuming japanese (for english speakers/learners) and/or english (for japanese speakers/learners).
+## Current delivery surfaces
 
-The initial working 'idea/philosphy' is to offer these tools, apps, etc. for free (freemium model) with premium upgrades, namely being the ability to create a user profile and save your data, progress, bookmarks, etc. 
+- [Zenbu Japanese iOS App](apps/ios/README.md) is the only delivery surface currently implemented in this repository.
+- Website and web Product Experiences, browser extensions, Android, and additional Apple-platform products receive their own `apps/<surface>/` root only after that product is approved. Empty placeholder apps are not created in advance.
 
-```
-[Website (SEO)] 
-  -> [Users] 
-    -> [Fremium Tools, SAAS, Extensions, iOS, Courses, etc.] // For simplicity i was thinking of making these independent, but maybe just planning to connect them at some kind of "user/db" area
-```
+## Repository ownership
 
+| Path | Owner and boundary |
+| --- | --- |
+| `apps/<surface>/` | One delivery surface. It owns its platform toolchain, dependencies, build and test entry points, operational documentation, versioning, metadata, signing, deployment, and release process. |
+| `assets/` | Product-family source assets that are not runtime inputs of one app. Runtime assets remain with their consuming app. |
+| `docs/` | Canonical cross-product product documentation, ADRs, research, provenance, and release records. App-specific operational truth stays under the owning app. |
+| `.github/workflows/` | Flat, product-prefixed workflows. Each workflow keeps an always-created scope or aggregate gate and conditionally runs expensive work for affected consumers. |
+| `packages/<name>/` | A versioned shared artifact with at least two real consumers. This directory remains absent until that threshold is met. |
+
+One Git repository does not imply one build graph. Do not add a root package manager or monorepo orchestrator until multiple real delivery surfaces create measured coordination work that justifies one. A Shared Capability also does not imply shared runtime or UI source: platform-native implementations may share a documented contract without sharing executable code.
+
+## Shared context
+
+- [Domain language](CONTEXT.md)
+- [Architectural decisions](docs/adr/)
+- [Product-family repository topology research](docs/research/engineering/product-family-repository-topology-2026-09-11.md)
+
+Repository extraction is reconsidered only when a persistent access, compliance, ownership, product, tooling, release-stability, or independently versioned platform boundary is measured. The research report records those triggers and the rejected speculative structures.
