@@ -14,7 +14,6 @@ struct WordDetailView: View {
   @State private var examples: [ExampleSentence] = []
   @State private var examplesEntryID: LanguageReferenceID?
   @State private var isLoadingExamples = true
-  @State private var lastSpeechRequest: String?
   @State private var encounterMedia: [EncounterMedia] = []
   @State private var selectedEncounterMediaItem: PhotosPickerItem?
   @State private var showsPhotoPicker = false
@@ -201,19 +200,6 @@ struct WordDetailView: View {
           manageFrequencyDictionaries()
         }
       )
-    }
-    .overlay(alignment: .topLeading) {
-      if let lastSpeechRequest {
-        Color.clear
-          .frame(width: 1, height: 1)
-          .accessibilityElement()
-          .accessibilityLabel("Speech requested \(lastSpeechRequest)")
-          .accessibilityIdentifier("speech.request")
-      }
-    }
-    .onReceive(NotificationCenter.default.publisher(for: .speechSynthesisRequested)) {
-      notification in
-      lastSpeechRequest = notification.object as? String
     }
     .onChange(of: selectedEncounterMediaItem) {
       importSelectedEncounterMedia()

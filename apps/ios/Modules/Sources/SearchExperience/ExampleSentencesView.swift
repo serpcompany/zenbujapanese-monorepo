@@ -4,7 +4,6 @@ struct ExampleSentencesView: View {
   @State private var examples: [ExampleSentence] = []
   @State private var isLoading = true
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
-  @State private var lastSpeechRequest: String?
   #if DEBUG
     @State private var analysisRequestCount = 0
   #endif
@@ -53,13 +52,6 @@ struct ExampleSentencesView: View {
     .navigationTitle(query.value)
     .navigationBarTitleDisplayMode(.inline)
     .overlay(alignment: .topLeading) {
-      if let lastSpeechRequest {
-        Color.clear
-          .frame(width: 1, height: 1)
-          .accessibilityElement()
-          .accessibilityLabel("Speech requested \(lastSpeechRequest)")
-          .accessibilityIdentifier("speech.request")
-      }
       #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-RecordJapaneseAnalysisRequests") {
           Color.clear
@@ -69,10 +61,6 @@ struct ExampleSentencesView: View {
             .accessibilityIdentifier("examples.analysis-request-count")
         }
       #endif
-    }
-    .onReceive(NotificationCenter.default.publisher(for: .speechSynthesisRequested)) {
-      notification in
-      lastSpeechRequest = notification.object as? String
     }
     #if DEBUG
       .onReceive(NotificationCenter.default.publisher(for: .linkedJapaneseTextAnalysisRequested)) {

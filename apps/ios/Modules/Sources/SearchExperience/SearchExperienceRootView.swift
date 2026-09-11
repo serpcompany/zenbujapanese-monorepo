@@ -18,10 +18,6 @@ public struct SearchExperienceRootView: View {
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
   @State private var kanjiElementScrollContributionIDs: [KanjiElementID: KanjiCharacter] = [:]
-  #if DEBUG
-    @State private var lastStartedSpeech: SpeechPlaybackVerificationEvent?
-    @State private var lastFinishedSpeech: SpeechPlaybackVerificationEvent?
-  #endif
   private let lookupClient: LookupClient
   private let exampleSentenceClient: ExampleSentenceClient
   private let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
@@ -59,7 +55,7 @@ public struct SearchExperienceRootView: View {
       kanjiLookupClient = liveKanjiLookupClient
       handwritingRecognitionClient = .live
       cameraAuthorizationClient = .live
-      speechSynthesisClient = SpeechSynthesisClient.clientFromProcessArguments() ?? .live
+      speechSynthesisClient = .live
       kanjiStrokeOrderClient = .live
       kanjiElementLookupClient = .live
       imageTextRecognitionClient = .live
@@ -103,31 +99,9 @@ public struct SearchExperienceRootView: View {
         preparesJapaneseAnalysis = false
       }
     #endif
-    .overlay(alignment: .topLeading) {
-      #if DEBUG
-        SpeechPlaybackVerificationOverlay(
-          started: lastStartedSpeech,
-          finished: lastFinishedSpeech
-        )
-      #endif
-    }
     .environment(readingAidPreferences)
     #if DEBUG
       .preferredColorScheme(forcedUITestColorScheme)
-    #endif
-    #if DEBUG
-      .onReceive(NotificationCenter.default.publisher(for: SpeechPlaybackVerification.notification))
-      {
-        notification in
-        guard let event = notification.object as? SpeechPlaybackVerificationEvent else { return }
-        switch event.phase {
-        case .started:
-          lastStartedSpeech = event
-          lastFinishedSpeech = nil
-        case .finished:
-          lastFinishedSpeech = event
-        }
-      }
     #endif
   }
 
@@ -332,41 +306,6 @@ public struct SearchExperienceRootView: View {
     return EncounterMediaAttachment(name: asset.name, data: asset.data)
   }
 }
-
-#if DEBUG
-  private struct SpeechPlaybackVerificationOverlay: View {
-    let started: SpeechPlaybackVerificationEvent?
-    let finished: SpeechPlaybackVerificationEvent?
-
-    var body: some View {
-      if SpeechPlaybackVerification.isEnabled {
-        VStack(spacing: 0) {
-          verificationElement(started, phaseLabel: "started", identifier: "speech.playback.started")
-          verificationElement(
-            finished, phaseLabel: "finished", identifier: "speech.playback.finished")
-        }
-      }
-    }
-
-    @ViewBuilder
-    private func verificationElement(
-      _ event: SpeechPlaybackVerificationEvent?,
-      phaseLabel: String,
-      identifier: String
-    ) -> some View {
-      if let event {
-        Color.clear
-          .frame(width: 1, height: 1)
-          .accessibilityElement()
-          .accessibilityLabel("Speech \(phaseLabel) \(event.text)")
-          .accessibilityValue(
-            "\(event.invocationID.uuidString)|\(event.voiceLanguage ?? "unresolved")"
-          )
-          .accessibilityIdentifier(identifier)
-      }
-    }
-  }
-#endif
 
 struct ImageWordContext: Hashable {
   let sessionID: UUID
