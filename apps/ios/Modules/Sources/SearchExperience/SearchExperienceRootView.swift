@@ -42,7 +42,7 @@ public struct SearchExperienceRootView: View {
     #if DEBUG
       let resolvedLookupClient = LookupClient.live
       lookupClient = resolvedLookupClient
-      exampleSentenceClient = .clientFromProcessArguments(live: .live) ?? .live
+      exampleSentenceClient = .live
       let usesReducedAnalysis = ProcessInfo.processInfo.arguments.contains(
         "-UseReducedJapaneseAnalysis")
       if usesReducedAnalysis {
