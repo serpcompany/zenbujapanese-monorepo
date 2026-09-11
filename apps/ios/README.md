@@ -1,6 +1,6 @@
 # Zenbu Japanese iOS App
 
-This directory owns the primary installed iOS product and its complete build, test, metadata, signing, and release boundary. Other delivery surfaces must not depend on this app's SwiftUI, Xcode, or release implementation merely because they share the repository.
+This directory owns the primary installed iOS product and its complete build, test, metadata, signing, and release boundary. The legacy root [`metadata/`](../../metadata/) location remains an iOS-owned release-tooling input until a separately scoped migration proves every consumer. Other delivery surfaces must not depend on this app's SwiftUI, Xcode, or release implementation merely because they share the repository.
 
 ## Entry points
 

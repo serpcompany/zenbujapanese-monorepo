@@ -48,10 +48,11 @@ app-owned Zenbu screenshot as the photo input rather than prototype or fixture
 media.
 
 The two active prose references left behind by the production/test rename were
-updated to `SearchExperienceJourneyUITests` and
-`SearchExperienceVerification.md`. A Markdown scan under `apps/ios` found no
-other active stale prose references from those renames; historical
-machine-generated evidence identifiers were intentionally left unchanged.
+updated to `SearchExperienceJourneyUITests` and the current
+[`Verification/search-experience-regression-index.md`](../search-experience-regression-index.md).
+A Markdown scan under `apps/ios` found no other active stale prose references
+from those renames; historical machine-generated evidence identifiers were
+intentionally left unchanged.
 
 ## Complete simulator suite
 
