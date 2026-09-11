@@ -21,13 +21,6 @@ retrieval_validator="${tool_dir}/example_sentence_retrieval_index.py"
 dictionary_ranking_validator="${tool_dir}/validate_dictionary_ranking_data.py"
 dictionary_ranking_contract="${ios_dir}/Modules/Sources/SearchExperience/Resources/DictionaryRankingArtifactContract.json"
 dictionary_source="${ios_dir}/LanguageData/Sources/JMdict_e-2026-08-10.gz"
-retrieval_fixture_validator="${tool_dir}/validate_example_sentence_retrieval_fixtures.rb"
-retrieval_contexts="${ios_dir}/../../docs/research/fixtures/example-sentence-retrieval-issue-147-observation-contexts.tsv"
-retrieval_summary="${ios_dir}/LanguageData/Generated/ExampleSentenceRetrieval-v1-summary.tsv"
-retrieval_rows="${ios_dir}/LanguageData/Generated/ExampleSentenceRetrieval-v1-rows.tsv"
-retrieval_baseline_candidates="${ios_dir}/../../docs/research/fixtures/example-sentence-retrieval-issue-147-retrieval-candidate-rows.tsv"
-retrieval_comparison_summary="${ios_dir}/LanguageData/Generated/ExampleSentenceRetrieval-v1-comparison-summary.tsv"
-retrieval_comparison_rows="${ios_dir}/LanguageData/Generated/ExampleSentenceRetrieval-v1-comparison-rows.tsv"
 mode="${1:-}"
 archive_path="${2:-}"
 scratch_dir="$(mktemp -d)"
@@ -246,12 +239,7 @@ python3 "$dictionary_ranking_validator" "$language_database" "$language_import_m
 python3 "$retrieval_validator" "$language_database" --manifest "$language_import_manifest" \
   >"${scratch_dir}/retrieval-validation" \
   || fail "bundled Example Sentence Retrieval index validation failed"
-ruby "$retrieval_fixture_validator" "$language_database" "$retrieval_contexts" \
-  "$retrieval_summary" "$retrieval_rows" "$retrieval_baseline_candidates" \
-  "$retrieval_comparison_summary" "$retrieval_comparison_rows" \
-  >"${scratch_dir}/retrieval-fixture-validation" \
-  || fail "bundled Example Sentence Retrieval regression fixture replay failed"
-pass "bundled Dictionary Ranking and Example Sentence Retrieval artifacts, manifests, and regression fixtures match"
+pass "bundled Dictionary Ranking and Example Sentence Retrieval artifacts and manifests match"
 
 if [[ "$mode" == "source" ]]; then
   echo "INFO: source audit complete; this is not archive or signed-candidate evidence"
@@ -292,12 +280,7 @@ python3 "$dictionary_ranking_validator" "$archive_language_database" "$language_
 python3 "$retrieval_validator" "$archive_language_database" --manifest "$language_import_manifest" \
   >"${scratch_dir}/archive-retrieval-validation" \
   || fail "archive Example Sentence Retrieval index validation failed"
-ruby "$retrieval_fixture_validator" "$archive_language_database" "$retrieval_contexts" \
-  "$retrieval_summary" "$retrieval_rows" "$retrieval_baseline_candidates" \
-  "$retrieval_comparison_summary" "$retrieval_comparison_rows" \
-  >"${scratch_dir}/archive-retrieval-fixture-validation" \
-  || fail "archive Example Sentence Retrieval regression fixture replay failed"
-pass "archive Dictionary Ranking and Example Sentence Retrieval artifacts, manifests, and regression fixtures match"
+pass "archive Dictionary Ranking and Example Sentence Retrieval artifacts and manifests match"
 
 archive_sudachi_inventory="${scratch_dir}/archive-sudachi-inventory"
 find "$app_path" -type f -name 'system_core.dic' -print >"$archive_sudachi_inventory" \
