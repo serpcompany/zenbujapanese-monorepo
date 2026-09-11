@@ -2293,7 +2293,11 @@ final class AccessibilityAuditUITests: XCTestCase {
       NSPredicate(format: "label BEGINSWITH %@", "見る, みる")
     ).firstMatch
     XCTAssertTrue(result.waitForExistence(timeout: 5))
-    result.tap()
+    // Select the visible native disclosure. The row's geometric center lies
+    // between its labels in the hosted default-size layout (34572504350).
+    let disclosure = result.images["chevron.forward"]
+    XCTAssertTrue(disclosure.isHittable)
+    disclosure.tap()
     XCTAssertTrue(app.collectionViews["word-detail.screen"].waitForExistence(timeout: 5))
 
     let add = app.buttons["word-detail.add-menu"]
