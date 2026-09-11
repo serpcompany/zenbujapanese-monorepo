@@ -4802,7 +4802,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     let searchField = app.textFields["search.field"]
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
     submitSearch("いる", in: app, searchField: searchField)
-    app.buttons["search.examples"].tap()
+    openSearchExamples(in: app)
 
     let examples = app.collectionViews["example-list.screen"]
     XCTAssertTrue(examples.waitForExistence(timeout: 4))
@@ -4864,7 +4864,7 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     )
     tapNativeBack(in: app)
     XCTAssertTrue(searchField.waitForExistence(timeout: 3))
-    app.buttons["search.examples"].tap()
+    openSearchExamples(in: app)
 
     let examples = app.collectionViews["example-list.screen"]
     XCTAssertTrue(examples.waitForExistence(timeout: 4))
@@ -5739,10 +5739,20 @@ final class SearchExperienceJourneyUITests: XCTestCase {
   }
 
   @MainActor
+  private func openSearchExamples(in app: XCUIApplication) {
+    waitForSubmittedSearchResults(in: app)
+    let examples = app.buttons["search.examples"]
+    XCTAssertTrue(examples.exists || examples.waitForExistence(timeout: 4))
+    XCTAssertTrue(examples.isHittable)
+    examples.tap()
+  }
+
+  @MainActor
   private func submitSearch(_ query: String, in app: XCUIApplication, searchField: XCUIElement) {
     searchField.tap()
-    searchField.typeText(query)
-    app.keyboards.buttons["Search"].tap()
+    // Return submits the same native text-field action without depending on a
+    // separate synthesized touch on the software keyboard during its updates.
+    searchField.typeText(query + "\n")
   }
 
   @MainActor
