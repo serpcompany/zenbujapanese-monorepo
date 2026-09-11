@@ -65,5 +65,3 @@ Durable notes use the separately app-owned `WordNoteID`: a versioned hash of the
 `kradfile-2026-08-10.gz` and `radkfile-2026-08-10.gz` are pinned official EDRDG exports. Their immutable HTTP metadata and checksums are recorded together in `EDRDG-radicals-2026-08-10.source.json`.
 
 `apps/ios/Tools/import_radicals.py` treats KRADFILE visible-component membership as canonical, imports RADKFILE stroke counts, and rejects the snapshot unless RADKFILE is an exact inversion of KRADFILE. The resulting app-owned artifact retains 6,355 kanji, 253 picker components, and 25,699 memberships without exposing either provider file format to Product Experience code.
-
-The scheduled `.github/workflows/jmdict-upstream-check.yml` check downloads all pinned exports monthly and fails when a checksum or latest tracked snapshot differs. Promote a changed snapshot only after regenerating the affected artifact, reviewing its recorded counts and checksum, and passing the complete Lookup test suite.
