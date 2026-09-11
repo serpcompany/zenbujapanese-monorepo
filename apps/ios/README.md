@@ -14,7 +14,6 @@ This directory owns the primary installed iOS product and its complete build, me
 
 - [`docs/product/`](docs/product/) describes current user-facing iOS behavior.
 - [GitHub Releases](https://github.com/serpcompany/zenbujapanese-monorepo/releases) contains completed release records.
-- [`ReleasePrivacyAudit.md`](ReleasePrivacyAudit.md) defines release privacy and security auditing.
 - [`CHANGELOG.md`](CHANGELOG.md) and [`screenshots/`](screenshots/) are owned by this delivery surface.
 
 Cross-product language and decisions remain in the repository-level [`CONTEXT.md`](../../CONTEXT.md), [`docs/adr/`](../../docs/adr/), and [`docs/research/`](../../docs/research/) so this directory does not duplicate shared truth.
