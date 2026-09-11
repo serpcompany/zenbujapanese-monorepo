@@ -66,7 +66,7 @@ public struct SearchExperienceRootView: View {
       kanjiElementLookupClient = KanjiElementLookupClient.clientFromProcessArguments() ?? .live
       imageTextRecognitionClient = .live
       naturalTranslationClient = NaturalTranslationClient.clientFromProcessArguments() ?? .live
-      imageTextClipboardClient = ImageTextClipboardClient.clientFromProcessArguments() ?? .live
+      imageTextClipboardClient = .live
     #else
       lookupClient = .live
       exampleSentenceClient = .live

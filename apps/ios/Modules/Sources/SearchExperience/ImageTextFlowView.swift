@@ -5,7 +5,6 @@ import UIKit
 struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
-  @State private var recordedCopyRequest: String?
   let textAnalysisClient: JapaneseTextAnalysisClient
   let translationClient: NaturalTranslationClient
   let clipboardClient: ImageTextClipboardClient
@@ -84,15 +83,6 @@ struct ImageTextFlowView: View {
         .accessibilityIdentifier("image-text.highlights")
 
         shareMenu
-      }
-    }
-    .overlay(alignment: .topLeading) {
-      if let recordedCopyRequest {
-        Text("")
-          .frame(width: 1, height: 1)
-          .accessibilityElement()
-          .accessibilityLabel("Copy request \(recordedCopyRequest)")
-          .accessibilityIdentifier("image-text.copy-request")
       }
     }
     .task {
@@ -229,7 +219,7 @@ struct ImageTextFlowView: View {
     Menu {
       Button {
         let text = model.copiedText
-        recordedCopyRequest = clipboardClient.copy(text)
+        clipboardClient.copy(text)
       } label: {
         Label("Copy Text", systemImage: "document.on.document")
       }
