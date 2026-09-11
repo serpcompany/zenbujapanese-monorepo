@@ -4261,7 +4261,9 @@ final class SearchExperienceJourneyUITests: XCTestCase {
     editor.tap()
     editor.typeText(noteText)
     app.buttons["word-note.done"].tap()
-    XCTAssertEqual(app.buttons["word-detail.note"].label, noteText)
+    let savedNote = app.buttons["word-detail.note"]
+    XCTAssertTrue(savedNote.waitForExistence(timeout: 2))
+    XCTAssertEqual(savedNote.label, noteText)
 
     app.launchArguments.removeAll { $0 == "-ResetWordNotes" }
     app.terminate()
@@ -4270,7 +4272,6 @@ final class SearchExperienceJourneyUITests: XCTestCase {
       for: "いる", resultLabelPrefix: "いる, いる, to be (of animate objects)",
       in: app, searchField: app.textFields["search.field"]
     )
-    let savedNote = app.buttons["word-detail.note"]
     scrollWordDetailElementIntoView(savedNote, in: detail, app: app)
     XCTAssertEqual(savedNote.label, noteText)
     savedNote.tap()

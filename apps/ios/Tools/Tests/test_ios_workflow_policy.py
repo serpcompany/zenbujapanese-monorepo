@@ -57,6 +57,9 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("needs.scope.outputs.shadow_matrix", workflow)
         self.assertIn("ios_shadow_report.py", workflow)
         self.assertIn("ZenbuReceipt-", workflow)
+        report = workflow.split("  shadow-report:\n", 1)[1].split("  required:\n", 1)[0]
+        self.assertIn("ref: ${{ github.event.merge_group.head_sha || github.sha }}", report)
+        self.assertNotIn("needs.scope.outputs.source_sha", report)
 
     def test_manual_premerge_can_select_only_registered_gates(self):
         workflow = workflow_text("ios-premerge.yml")

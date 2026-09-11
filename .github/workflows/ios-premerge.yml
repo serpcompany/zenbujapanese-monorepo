@@ -357,15 +357,15 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: ${{ needs.scope.outputs.source_sha }}
+          ref: ${{ github.event.merge_group.head_sha || github.sha }}
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          pattern: ZenbuReceipt-*-${{ needs.scope.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          pattern: ZenbuReceipt-*-${{ github.event.merge_group.head_sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: receipts
       - name: Compare exact candidate receipts and end-to-end shadow timing
         env:
           GH_TOKEN: ${{ github.token }}
-          SOURCE_SHA: ${{ needs.scope.outputs.source_sha }}
+          SOURCE_SHA: ${{ github.event.merge_group.head_sha || github.sha }}
         run: |
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100" > jobs.json
           started="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .run_started_at)"
@@ -377,7 +377,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: ZenbuShadowComparison-${{ needs.scope.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ZenbuShadowComparison-${{ github.event.merge_group.head_sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             shadow-comparison.json
             shadow-summary.json
