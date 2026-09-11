@@ -367,6 +367,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SOURCE_SHA: ${{ github.event.merge_group.head_sha || github.sha }}
         run: |
+          set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100" > jobs.json
           started="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .run_started_at)"
           python3 apps/ios/Tools/ios_shadow_report.py \

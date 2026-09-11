@@ -1,6 +1,8 @@
 from pathlib import Path
 import plistlib
 import re
+import subprocess
+import tempfile
 import unittest
 
 
@@ -60,6 +62,24 @@ class IOSWorkflowPolicyTests(unittest.TestCase):
         report = workflow.split("  shadow-report:\n", 1)[1].split("  required:\n", 1)[0]
         self.assertIn("ref: ${{ github.event.merge_group.head_sha || github.sha }}", report)
         self.assertNotIn("needs.scope.outputs.source_sha", report)
+
+    def test_report_command_failure_cannot_be_hidden_by_tee(self):
+        workflow = workflow_text("ios-premerge.yml")
+        report = workflow.split("  shadow-report:\n", 1)[1].split("  required:\n", 1)[0]
+        script = report.split("        run: |\n", 1)[1].split("      - uses:", 1)[0]
+        script = "\n".join(line[10:] for line in script.splitlines())
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run(
+                ["bash", "-e", "-c", "gh() { printf '{}'; }; python3() { return 7; };\n" + script],
+                cwd=directory,
+                env={
+                    "PATH": "/usr/bin:/bin", "GITHUB_REPOSITORY": "test/repo",
+                    "GITHUB_RUN_ID": "1", "GITHUB_RUN_ATTEMPT": "1",
+                    "SOURCE_SHA": "candidate", "GITHUB_STEP_SUMMARY": str(Path(directory) / "summary"),
+                }, capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 7, result.stderr)
+            self.assertFalse((Path(directory) / "summary").exists())
 
     def test_manual_premerge_can_select_only_registered_gates(self):
         workflow = workflow_text("ios-premerge.yml")
