@@ -140,7 +140,27 @@
     },
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBundledJapaneseAnalysisLinksImageTextAcrossColdRelaunch": {
       "status": "provisional",
-      "basis": "Initial scheduling estimate for the cold-relaunch Image Text owner; focused measurement pending. The original combined offline Examples journey remains in the full plans."
+      "basis": "Measured local focused execution; provisional for hosted scheduling until a merge-candidate observation.",
+      "local_observation": {
+        "source_sha": "dd3913682fc6808bac52cb5c8b14fa1b79d93dea",
+        "source_fingerprint": "79ed6c3c74fb77daebdf384277ea53e8085ee4d6306d25ebf3eced7897966e43",
+        "xcode_version": "Xcode 27.0 Build version 27A266a",
+        "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+        "test_seconds": 15.535,
+        "date": "2026-09-11"
+      }
+    },
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedReadingAidSentenceLayoutWrapsNaturallyAtLargestAccessibilityTextSize": {
+      "status": "provisional",
+      "basis": "Measured local focused execution; provisional for hosted scheduling until a merge-candidate observation.",
+      "local_observation": {
+        "source_sha": "dd3913682fc6808bac52cb5c8b14fa1b79d93dea",
+        "source_fingerprint": "79ed6c3c74fb77daebdf384277ea53e8085ee4d6306d25ebf3eced7897966e43",
+        "xcode_version": "Xcode 27.0 Build version 27A266a",
+        "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+        "test_seconds": 55.533,
+        "date": "2026-09-11"
+      }
     }
   },
   "test_durations_seconds": {
@@ -208,7 +228,7 @@
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerReachableSearchAndWordDetailAreReadableInDarkMode": 37.878,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testReviewerReachableSearchAndWordDetailAreReadableInLightMode": 37.527,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedFuriganaSentenceLayoutKeepsExactInlineHitRegionInventory": 25.857,
-    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedReadingAidSentenceLayoutWrapsNaturallyAtLargestAccessibilityTextSize": 85.415,
+    "ZenbuJapaneseUITests/AccessibilityAuditUITests/testSharedReadingAidSentenceLayoutWrapsNaturallyAtLargestAccessibilityTextSize": 55.533,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testStrokeOrderStepActionsUseDirectionalSymbols": 17.403,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testTranslationRecoveryRemainsReachableAtLargestAccessibilityTextSize": 13.754,
     "ZenbuJapaneseUITests/AccessibilityAuditUITests/testVerifiedFrequencyDownloadBecomesNeutralInstalledChoice": 53.84,
@@ -348,7 +368,7 @@
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testWordNoteEditorPresentationAndWarmBackPreservePersistedNotes": 121.866,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testSuruConjugationsPreserveFormsAndResetModeForNextEntry": 62.843,
     "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testKuruConjugationsPreservePlainPoliteFormsAndReadings": 49.831,
-    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBundledJapaneseAnalysisLinksImageTextAcrossColdRelaunch": 80.0
+    "ZenbuJapaneseUITests/SearchExperienceJourneyUITests/testBundledJapaneseAnalysisLinksImageTextAcrossColdRelaunch": 15.535
   },
   "version": 1
 }

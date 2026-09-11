@@ -1139,16 +1139,16 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             )
             self.assertEqual(
                 [lane["test_count"] for lane in matrix],
-                [116, 2, 22, 23, 23, 27, 27, 28, 27, 28, 3],
+                [116, 2, 22, 23, 23, 27, 27, 27, 28, 28, 3],
             )
             self.assertEqual(
                 [lane["measured_test_seconds"] for lane in matrix],
                 [
                     33.951,
                     None,
-                    1150.814,
-                    1153.155,
-                    1153.903,
+                    1143.310,
+                    1141.824,
+                    None,
                     None,
                     None,
                     None,
@@ -1196,8 +1196,8 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 "accessibility-ui-c": 23,
                 "normal-ui-a": 27,
                 "normal-ui-b": 27,
-                "normal-ui-c": 28,
-                "normal-ui-d": 27,
+                "normal-ui-c": 27,
+                "normal-ui-d": 28,
                 "normal-ui-e": 28,
                 "sudachi-integration": 3,
             },
@@ -1225,14 +1225,15 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             )
         )
         accessibility_loads = [
-            partitions[lane]["measured_test_seconds"] for lane in accessibility_lanes
+            partitions[lane].get("estimated_test_seconds", partitions[lane]["measured_test_seconds"])
+            for lane in accessibility_lanes
         ]
         normal_loads = [
             partitions[lane].get("estimated_test_seconds", partitions[lane]["measured_test_seconds"])
             for lane in normal_lanes
         ]
-        # Removing the two long #289 whole-window diagnostics leaves the three exact
-        # correctness shards within 3.089 seconds across roughly 19 minutes each.
+        # Balance scheduling load while keeping provisional observations distinct
+        # from the published fully measured lane totals.
         self.assertLess(max(accessibility_loads) - min(accessibility_loads), 4)
         # The split Photos journey has a conservative provisional scheduling weight;
         # the resulting five shards remain within 12 seconds of scheduling load.
@@ -1422,8 +1423,8 @@ class IOSVerificationPolicyTests(unittest.TestCase):
                 "accessibility-ui-c": 23,
                 "normal-ui-a": 27,
                 "normal-ui-b": 27,
-                "normal-ui-c": 28,
-                "normal-ui-d": 27,
+                "normal-ui-c": 27,
+                "normal-ui-d": 28,
                 "normal-ui-e": 28,
                 "sudachi-integration": 3,
             },
@@ -1439,8 +1440,8 @@ class IOSVerificationPolicyTests(unittest.TestCase):
             "complete.merge-accessibility-c": ("ZenbuPR", 23),
             "complete.merge-ui-a": ("ZenbuPR", 27),
             "complete.merge-ui-b": ("ZenbuPR", 27),
-            "complete.merge-ui-c": ("ZenbuPR", 28),
-            "complete.merge-ui-d": ("ZenbuPR", 27),
+            "complete.merge-ui-c": ("ZenbuPR", 27),
+            "complete.merge-ui-d": ("ZenbuPR", 28),
             "complete.merge-ui-e": ("ZenbuPR", 28),
             "integration.sudachi": ("ZenbuSudachiIntegration", 3),
         }
