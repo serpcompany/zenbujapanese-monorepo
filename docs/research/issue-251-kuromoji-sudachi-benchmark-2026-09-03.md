@@ -276,7 +276,7 @@ The three exact Xcode projects, Swift sources, JavaScriptCore loader adapter,
 resource instructions, commands, and all 90 per-process scalar result rows plus
 the 30 selected-provider checksum-validation rows are
 retained under
-[`docs/research/tools/issue251-ios/`](tools/issue251-ios/README.md) and
+[the archived iOS harness](https://github.com/zenbujapanese/research/tree/main/language-technology/japanese-morphology/tools/issue251-ios) and
 [the iOS sample artifact](fixtures/issue251-ios-measurement-samples-v1.json).
 
 The Sudachi binding pins official
