@@ -4,14 +4,12 @@ Use this file only for routing. Open the smallest source whose condition matches
 
 ## Codebase
 
-- For repository ownership, boundaries, and where new work belongs, read [`docs/agents/repository.md`](docs/agents/repository.md).
 - For iOS code locations, Xcode build and launch, Simulator verification, metadata, or releases, read [`docs/agents/ios.md`](docs/agents/ios.md).
-- For current iOS user-facing behavior, start at [`apps/ios/docs/product/index.md`](apps/ios/docs/product/index.md), then open only the relevant linked document.
+- For durable current iOS behavior, start at [`apps/ios/docs/product/index.md`](apps/ios/docs/product/index.md), then open only the relevant linked document. Update that product documentation and any applicable verification in the same PR as a behavior change.
 
 ## Work tracking
 
-- For creating, reading, updating, or closing issues and PRDs, read [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md).
-- For assigning a triage state, read [`docs/agents/triage-labels.md`](docs/agents/triage-labels.md).
+- For proposed user stories, feature changes, discovery evidence, acceptance criteria, or other issue and PRD work, read [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md).
 
 ## Decisions
 
