@@ -6,7 +6,7 @@ Routing only. Open the smallest source matching the task.
 
 - [`docs/technologies.md`](docs/technologies.md) — technology implementations, roles, and current consumers.
 - [`docs/data-sources.md`](docs/data-sources.md) — supplied information, source roles, and current consumers.
-- [`docs/agents/ios.md`](docs/agents/ios.md) — iOS code locations, Xcode build and launch, Simulator verification, metadata, and releases.
+- [`docs/agents/ios.md`](docs/agents/ios.md) — Xcode build and launch, Simulator verification, and the current iOS test and CI boundary.
 - [`apps/ios/docs/product/index.md`](apps/ios/docs/product/index.md) — durable current iOS behavior. Open only the relevant linked document. Update applicable product documentation and verification in the same PR as a behavior change.
 
 ## Work tracking
