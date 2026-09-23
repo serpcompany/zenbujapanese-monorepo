@@ -335,9 +335,11 @@ private struct ImageTextCanvas: View {
 
           if showsHighlights {
             ForEach(page.regions) { region in
-              let rect = displayRect(region.boundingBox, in: imageRect)
+              let recognizedRect = displayRect(region.boundingBox, in: imageRect)
+              let rect = interactiveTokenRect(recognizedRect)
               ImageTextRegionButton(
                 region: region,
+                isVertical: recognizedRect.height > recognizedRect.width * 1.35,
                 isSelected: selectedRegion?.id == region.id,
                 select: selectRegion
               )
@@ -449,10 +451,20 @@ private struct ImageTextCanvas: View {
       height: normalized.height * imageRect.height
     )
   }
+
+  private func interactiveTokenRect(_ recognizedRect: CGRect) -> CGRect {
+    if recognizedRect.height > recognizedRect.width * 1.35 {
+      let gap = min(4, recognizedRect.height * 0.16)
+      return recognizedRect.insetBy(dx: 0, dy: gap / 2)
+    }
+    let gap = min(5, recognizedRect.width * 0.16)
+    return recognizedRect.insetBy(dx: gap / 2, dy: 0)
+  }
 }
 
 private struct ImageTextRegionButton: View {
   let region: ImageTextRegion
+  let isVertical: Bool
   let isSelected: Bool
   let select: (ImageTextRegion) -> Void
 
@@ -462,14 +474,23 @@ private struct ImageTextRegionButton: View {
     } label: {
       Color.clear
         .contentShape(.rect)
-        .overlay(alignment: .bottom) {
-          Rectangle()
-            .fill(ZenbuTheme.recognitionHighlight)
-            .frame(height: isSelected ? 3 : 1.5)
+        .background {
+          RoundedRectangle(cornerRadius: 3)
+            .fill(ZenbuTheme.recognitionHighlight.opacity(isSelected ? 0.14 : 0.05))
         }
+        .overlay(alignment: isVertical ? .trailing : .bottom) { underline }
     }
     .buttonStyle(.plain)
     .accessibilityLabel("Recognized \(region.surface)")
     .accessibilityIdentifier("image-text.region.\(region.surface)")
+  }
+
+  private var underline: some View {
+    Rectangle()
+      .fill(ZenbuTheme.recognitionHighlight.opacity(isSelected ? 1 : 0.78))
+      .frame(
+        width: isVertical ? 3 : nil,
+        height: isVertical ? nil : 3
+      )
   }
 }
