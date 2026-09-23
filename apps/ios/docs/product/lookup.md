@@ -25,6 +25,10 @@ A word detail can present its written form and reading, ordered meanings, altern
 kanji, related words, conjugations, source-matched Example Sentences, pronunciation, and
 frequency information when the corresponding data is available.
 
+Selectable Japanese inside Word Detail and Example Sentences uses the same interactive
+word-boundary analysis as Image Search. Selecting a linked word continues into its normal
+dictionary entry.
+
 A learner can write notes for a word and associate photos with it. Notes and associated
 photos persist on the device.
 
@@ -37,8 +41,8 @@ learner's place in the preceding detail.
 Image Search recognizes Japanese text in one or more selected images. A learner can:
 
 - show or hide recognition underlines for every recognized Japanese token;
-- use the same Kuromoji parser family as the Zenbu browser extension for interactive word
-  boundaries;
+- use the same Kuromoji parser family as the Zenbu browser extension and other linked
+  Japanese in the app for interactive word boundaries;
 - select a recognized token to open the full Word Detail experience in a temporary,
   full-height sheet, including a candidate chooser or no-entry state when needed, with an
   option to continue to the normal full-screen dictionary route;

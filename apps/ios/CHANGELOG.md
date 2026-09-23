@@ -2,6 +2,17 @@
 
 All notable user-facing changes to Zenbu Japanese are recorded here.
 
+## Unreleased
+
+### Changed
+
+- Image Text now divides recognized Japanese into individually selectable words and marks
+  each boundary with a separate underline instead of highlighting broad OCR regions.
+- Selecting a recognized word opens the existing Word Detail experience in a large sheet,
+  with candidate selection and a route to the normal full-screen entry when available.
+- Interactive Japanese text now uses the same Kuromoji parser family as the Zenbu browser
+  extension, with improved dictionary-form resolution and an explicit no-entry state.
+
 ## [1.0.0] - 2026-08-17
 
 ### Added
