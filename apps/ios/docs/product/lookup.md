@@ -36,8 +36,11 @@ learner's place in the preceding detail.
 
 Image Search recognizes Japanese text in one or more selected images. A learner can:
 
-- show or hide recognition highlights;
-- select a recognized region and choose among dictionary candidates;
+- show or hide recognition highlights for every recognized Japanese token;
+- use a finer word boundary when a broader analyzed span has no dictionary match but one of
+  its contained words does;
+- select a recognized token, including one without a dictionary match, and choose among
+  dictionary candidates when available;
 - open a recognized word in its dictionary detail;
 - copy the recognized text;
 - share the selected source image; and

@@ -251,7 +251,7 @@ final class ImageTextFlowModel {
       let tokens = await textAnalysisClient.linkedTokens(observation.text, SearchQuery(""), nil)
       for token in tokens {
         let entries = token.entry.map { [$0] } ?? token.candidateEntries
-        guard !entries.isEmpty,
+        guard token.surface.containsJapaneseText,
           let box = boundingBox(forScalarRange: token.scalarRange, in: observation)
         else { continue }
         regions.append(
@@ -324,4 +324,16 @@ struct ImageTextRegion: Identifiable {
   let boundingBox: CGRect
   let entry: DictionaryEntry?
   let candidateEntries: [DictionaryEntry]
+}
+
+extension String {
+  fileprivate var containsJapaneseText: Bool {
+    contains { character in
+      character.unicodeScalars.contains {
+        (0x3040...0x30FF).contains($0.value)
+          || (0x3400...0x9FFF).contains($0.value)
+          || (0x20000...0x2FA1F).contains($0.value)
+      }
+    }
+  }
 }

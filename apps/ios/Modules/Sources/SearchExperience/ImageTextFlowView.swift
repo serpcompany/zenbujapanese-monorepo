@@ -361,7 +361,7 @@ private struct ImageTextCanvas: View {
                 }
                 .accessibilityLabel("\(entry.headword), \(entry.reading), \(entry.summary)")
                 .accessibilityIdentifier("image-text.gloss")
-              } else {
+              } else if !selectedRegion.candidateEntries.isEmpty {
                 Menu {
                   ForEach(selectedRegion.candidateEntries) { candidate in
                     Button {
@@ -384,6 +384,15 @@ private struct ImageTextCanvas: View {
                   "Shows \(selectedRegion.candidateEntries.count) possible dictionary entries"
                 )
                 .accessibilityIdentifier("image-text.candidates")
+              } else {
+                Label(
+                  "\(selectedRegion.surface): no dictionary entry",
+                  systemImage: "text.magnifyingglass"
+                )
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(.background, in: RoundedRectangle(cornerRadius: 12))
+                .accessibilityIdentifier("image-text.unlinked-token")
               }
             }
             .buttonStyle(.plain)

@@ -226,31 +226,58 @@ private actor JapaneseTextAnalyzer {
     do {
       let analysis = try await morphologyClient.analyze(text)
       var tokens: [JapaneseTextToken] = []
-      for (index, candidate) in analysis.candidates.enumerated() {
+      for candidate in analysis.candidates {
         let resolution = await resolvedEntry(
           for: candidate,
           highlightedQuery: highlightedQuery,
           highlightedEntry: highlightedEntry
         )
-        tokens.append(
-          JapaneseTextToken(
-            id: index,
-            surface: candidate.surface,
-            entry: resolution.entry,
-            scalarRange: candidate.scalarRange,
-            dictionaryForm: candidate.dictionaryForm,
-            reading: candidate.reading,
-            partOfSpeech: candidate.partOfSpeech,
-            isOutOfVocabulary: candidate.isOutOfVocabulary,
-            candidateEntryIDs: resolution.candidates.map(\.id),
-            candidateEntries: resolution.candidates
-          ))
+        if resolution.candidates.isEmpty, candidate.children.count > 1 {
+          var childTokens: [JapaneseTextToken] = []
+          for child in candidate.children {
+            let childResolution = await resolvedEntry(
+              for: child,
+              highlightedQuery: highlightedQuery,
+              highlightedEntry: highlightedEntry
+            )
+            childTokens.append(
+              token(
+                for: child,
+                resolution: childResolution,
+                id: tokens.count + childTokens.count
+              ))
+          }
+          if childTokens.contains(where: { !$0.candidateEntries.isEmpty }) {
+            tokens.append(contentsOf: childTokens)
+            continue
+          }
+        }
+        tokens.append(token(for: candidate, resolution: resolution, id: tokens.count))
       }
       return tokens
     } catch {
       return await JapaneseTextAnalysisClient.characterFallback.linkedTokens(
         text, highlightedQuery, highlightedEntry)
     }
+  }
+
+  private func token(
+    for candidate: JapaneseMorphologyCandidate,
+    resolution: (entry: DictionaryEntry?, candidates: [DictionaryEntry]),
+    id: Int
+  ) -> JapaneseTextToken {
+    JapaneseTextToken(
+      id: id,
+      surface: candidate.surface,
+      entry: resolution.entry,
+      scalarRange: candidate.scalarRange,
+      dictionaryForm: candidate.dictionaryForm,
+      reading: candidate.reading,
+      partOfSpeech: candidate.partOfSpeech,
+      isOutOfVocabulary: candidate.isOutOfVocabulary,
+      candidateEntryIDs: resolution.candidates.map(\.id),
+      candidateEntries: resolution.candidates
+    )
   }
 
   private func resolvedEntry(
