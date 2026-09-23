@@ -17,7 +17,18 @@ struct RecognizedWordSheet<EntryContent: View>: View {
   @Environment(\.dismiss) private var dismiss
 
   let request: RecognizedWordSheetRequest
-  @ViewBuilder let entryContent: (DictionaryEntry, EncounterMediaAttachment) -> EntryContent
+  let openFullEntry: (DictionaryEntry) -> Void
+  private let entryContent: (DictionaryEntry, EncounterMediaAttachment) -> EntryContent
+
+  init(
+    request: RecognizedWordSheetRequest,
+    openFullEntry: @escaping (DictionaryEntry) -> Void,
+    @ViewBuilder entryContent: @escaping (DictionaryEntry, EncounterMediaAttachment) -> EntryContent
+  ) {
+    self.request = request
+    self.openFullEntry = openFullEntry
+    self.entryContent = entryContent
+  }
 
   var body: some View {
     NavigationStack {
@@ -38,7 +49,7 @@ struct RecognizedWordSheet<EntryContent: View>: View {
   @ViewBuilder
   private var content: some View {
     if let entry = request.entry {
-      entryContent(entry, request.encounterMedia)
+      presentedEntry(entry)
     } else if !request.candidateEntries.isEmpty {
       candidateList
     } else {
@@ -78,8 +89,20 @@ struct RecognizedWordSheet<EntryContent: View>: View {
     .navigationTitle("Choose “\(request.surface)”")
     .navigationBarTitleDisplayMode(.inline)
     .navigationDestination(for: DictionaryEntry.self) { entry in
-      entryContent(entry, request.encounterMedia)
+      presentedEntry(entry)
     }
     .accessibilityIdentifier("recognized-word-sheet.candidates")
+  }
+
+  private func presentedEntry(_ entry: DictionaryEntry) -> some View {
+    entryContent(entry, request.encounterMedia)
+      .toolbar {
+        ToolbarItem(placement: .bottomBar) {
+          Button("Open Full Entry", systemImage: "arrow.up.right.square") {
+            openFullEntry(entry)
+          }
+          .accessibilityIdentifier("recognized-word-sheet.open-full-entry")
+        }
+      }
   }
 }

@@ -148,7 +148,10 @@ public struct SearchExperienceRootView: View {
         }
       }
       .sheet(item: $recognizedWordSheet) { request in
-        RecognizedWordSheet(request: request) { entry, encounterMedia in
+        RecognizedWordSheet(
+          request: request,
+          openFullEntry: openRecognizedWord
+        ) { entry, encounterMedia in
           wordDetailView(
             entry: entry,
             initialEncounterMedia: encounterMedia,
@@ -157,6 +160,11 @@ public struct SearchExperienceRootView: View {
         }
       }
     }
+  }
+
+  private func openRecognizedWord(_ entry: DictionaryEntry) {
+    path.append(.word(entry, nil))
+    recognizedWordSheet = nil
   }
 
   private func wordDetailView(
