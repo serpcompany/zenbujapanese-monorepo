@@ -148,13 +148,16 @@ public struct SearchExperienceRootView: View {
               textAnalysisClient: japaneseTextAnalysisClient,
               translationClient: naturalTranslationClient,
               clipboardClient: imageTextClipboardClient,
+              pronounce: speechSynthesisClient.speak,
+              recordEncounter: { entry, asset in
+                await encounterMediaStore.save(
+                  EncounterMediaAttachment(name: asset.name, data: asset.data),
+                  entry.encounterWordReference
+                )
+              },
               close: {
                 if path.last == .image(sessionID) { path.removeLast() }
                 imageTextSessionStore.remove(sessionID)
-              },
-              openWord: { entry, asset in
-                path.append(
-                  .word(entry, ImageWordContext(sessionID: sessionID, assetID: asset.id)))
               }
             )
           }

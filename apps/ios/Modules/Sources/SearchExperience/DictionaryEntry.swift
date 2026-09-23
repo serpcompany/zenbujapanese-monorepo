@@ -75,6 +75,10 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
   var displayPartOfSpeech: String {
     partsOfSpeech.map(\.rawValue).joined(separator: " · ")
   }
+
+  var encounterWordReference: EncounterWordReference {
+    EncounterWordReference(id: noteID, headword: headword, reading: reading)
+  }
 }
 
 extension Character {

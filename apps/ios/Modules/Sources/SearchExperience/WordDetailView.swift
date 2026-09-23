@@ -682,12 +682,6 @@ private struct EncounterMediaViewer: View {
   }
 }
 
-extension DictionaryEntry {
-  fileprivate var encounterWordReference: EncounterWordReference {
-    EncounterWordReference(id: noteID, headword: headword, reading: reading)
-  }
-}
-
 private struct FrequencyRow: View {
   let result: FrequencyLookupResult
   let showDetails: () -> Void

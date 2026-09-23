@@ -324,6 +324,15 @@ struct ImageTextRegion: Identifiable {
   let boundingBox: CGRect
   let entry: DictionaryEntry?
   let candidateEntries: [DictionaryEntry]
+
+  var previewRequest: DictionaryEntryPreviewRequest {
+    DictionaryEntryPreviewRequest(
+      id: id,
+      surface: surface,
+      entry: entry,
+      candidateEntries: candidateEntries
+    )
+  }
 }
 
 extension String {

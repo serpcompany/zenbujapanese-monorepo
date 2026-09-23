@@ -39,9 +39,8 @@ Image Search recognizes Japanese text in one or more selected images. A learner 
 - show or hide recognition underlines for every recognized Japanese token;
 - use the same Kuromoji parser family as the Zenbu browser extension for interactive word
   boundaries;
-- select a recognized token, including one without a dictionary match, and choose among
-  dictionary candidates when available;
-- open a recognized word in its dictionary detail;
+- select a recognized token to open a temporary dictionary preview sheet, including a
+  candidate chooser or no-entry state when needed;
 - copy the recognized text;
 - share the selected source image; and
 - request a Japanese-to-English natural translation when Apple's on-device translation is

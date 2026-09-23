@@ -8,8 +8,9 @@ struct ImageTextFlowView: View {
   let textAnalysisClient: JapaneseTextAnalysisClient
   let translationClient: NaturalTranslationClient
   let clipboardClient: ImageTextClipboardClient
+  let pronounce: (String) -> Void
+  let recordEncounter: (DictionaryEntry, ImageTextAsset) async -> Void
   let close: () -> Void
-  let openWord: (DictionaryEntry, ImageTextAsset) -> Void
 
   init(
     session: ImageTextSession,
@@ -17,8 +18,9 @@ struct ImageTextFlowView: View {
     textAnalysisClient: JapaneseTextAnalysisClient,
     translationClient: NaturalTranslationClient,
     clipboardClient: ImageTextClipboardClient,
-    close: @escaping () -> Void,
-    openWord: @escaping (DictionaryEntry, ImageTextAsset) -> Void
+    pronounce: @escaping (String) -> Void,
+    recordEncounter: @escaping (DictionaryEntry, ImageTextAsset) async -> Void,
+    close: @escaping () -> Void
   ) {
     _model = State(
       initialValue: ImageTextFlowModel(
@@ -30,8 +32,9 @@ struct ImageTextFlowView: View {
     self.textAnalysisClient = textAnalysisClient
     self.translationClient = translationClient
     self.clipboardClient = clipboardClient
+    self.pronounce = pronounce
+    self.recordEncounter = recordEncounter
     self.close = close
-    self.openWord = openWord
   }
 
   var body: some View {
@@ -95,6 +98,15 @@ struct ImageTextFlowView: View {
       }
     }
     .onDisappear { model.suspendTranslation() }
+    .sheet(item: selectedRegion) { region in
+      if let asset = model.selectedSharePayload {
+        DictionaryEntryPreviewSheet(
+          request: region.previewRequest,
+          pronounce: pronounce,
+          didPresentEntry: { entry in await recordEncounter(entry, asset) }
+        )
+      }
+    }
     .alert(
       "No Text Found",
       isPresented: Binding(
@@ -276,11 +288,16 @@ struct ImageTextFlowView: View {
         page: page,
         showsHighlights: model.showsHighlights,
         selectedRegion: model.selectedRegion,
-        selectRegion: { model.selectedRegion = $0 },
-        openWord: {
-          openWord($0, page.asset)
-        }
+        selectRegion: { model.selectedRegion = $0 }
       )
+    }
+  }
+
+  private var selectedRegion: Binding<ImageTextRegion?> {
+    Binding {
+      model.selectedRegion
+    } set: { region in
+      model.selectedRegion = region
     }
   }
 }
@@ -320,7 +337,6 @@ private struct ImageTextCanvas: View {
   let showsHighlights: Bool
   let selectedRegion: ImageTextRegion?
   let selectRegion: (ImageTextRegion) -> Void
-  let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
     GeometryReader { geometry in
@@ -348,54 +364,6 @@ private struct ImageTextCanvas: View {
             }
           }
 
-          if let selectedRegion {
-            Group {
-              if let entry = selectedRegion.entry {
-                Button {
-                  openWord(entry)
-                } label: {
-                  imageTextGloss(entry)
-                }
-                .accessibilityLabel("\(entry.headword), \(entry.reading), \(entry.summary)")
-                .accessibilityIdentifier("image-text.gloss")
-              } else if !selectedRegion.candidateEntries.isEmpty {
-                Menu {
-                  ForEach(selectedRegion.candidateEntries) { candidate in
-                    Button {
-                      openWord(candidate)
-                    } label: {
-                      Text("\(candidate.headword) (\(candidate.reading)) — \(candidate.summary)")
-                    }
-                  }
-                } label: {
-                  Label(
-                    "\(selectedRegion.surface): \(selectedRegion.candidateEntries.count) dictionary entries",
-                    systemImage: "ellipsis.circle"
-                  )
-                  .padding(.horizontal, 12)
-                  .padding(.vertical, 8)
-                  .background(.background, in: RoundedRectangle(cornerRadius: 12))
-                }
-                .accessibilityLabel("\(selectedRegion.surface), choose dictionary entry")
-                .accessibilityHint(
-                  "Shows \(selectedRegion.candidateEntries.count) possible dictionary entries"
-                )
-                .accessibilityIdentifier("image-text.candidates")
-              } else {
-                Label(
-                  "\(selectedRegion.surface): no dictionary entry",
-                  systemImage: "text.magnifyingglass"
-                )
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(.background, in: RoundedRectangle(cornerRadius: 12))
-                .accessibilityIdentifier("image-text.unlinked-token")
-              }
-            }
-            .buttonStyle(.plain)
-            .padding(20)
-          }
-
           Text("")
             .frame(width: 1, height: 1)
             .accessibilityElement()
@@ -414,22 +382,6 @@ private struct ImageTextCanvas: View {
         .accessibilityLabel("Imported image \(page.asset.name)")
       }
     }
-  }
-
-  private func imageTextGloss(_ entry: DictionaryEntry) -> some View {
-    HStack(spacing: 7) {
-      JapaneseRubyText(
-        surface: entry.headword,
-        reading: entry.reading,
-        baseFont: .headline,
-        rubyFont: .body
-      )
-      Text(entry.summary)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-    .padding(.horizontal, 12)
-    .padding(.vertical, 8)
-    .background(.background, in: RoundedRectangle(cornerRadius: 12))
   }
 
   private func aspectFitRect(imageSize: CGSize, container: CGSize) -> CGRect {
