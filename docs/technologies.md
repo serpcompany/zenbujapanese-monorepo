@@ -18,10 +18,11 @@ support learner-facing capabilities. The catalogs remain the complete record.
 flowchart LR
     Text["Typed Japanese"] --> Sudachi["Sudachi analysis"]
     Image["Image"] --> Vision["Apple Vision OCR"]
+    Vision --> Kuromoji["Kuromoji parsing"]
     Drawing["Handwriting"] --> CoreML["Core ML recognition"]
 
-    Vision --> Sudachi
     Sudachi --> Lookup["Offline dictionary lookup"]
+    Kuromoji --> Lookup
     CoreML --> Lookup
 
     SudachiDict[("SudachiDict Core")] -. lexical data .-> Sudachi
@@ -39,6 +40,7 @@ flowchart LR
 | Image Search | Apple Vision | Recognizes Japanese and English text and its position in selected images. | iOS | [`ImageTextRecognitionClient.swift`](../apps/ios/Modules/Sources/SearchExperience/ImageTextRecognitionClient.swift) |
 | Handwriting Search | Core ML | Runs the DaKanji character-recognition model against a completed drawing. | iOS | [`OfflineHandwritingRecognizer.swift`](../apps/ios/Modules/Sources/SearchExperience/OfflineHandwritingRecognizer.swift) |
 | Japanese text analysis | Sudachi.rs through sudachi-swift | Finds word boundaries, dictionary forms, readings, parts of speech, unknown-word status, and text ranges. | iOS | [`Package.swift`](../apps/ios/Modules/Package.swift), [`JapaneseMorphologyClient.swift`](../apps/ios/Modules/Sources/SearchExperience/JapaneseMorphologyClient.swift) |
+| Interactive Japanese parsing | kuromoji.js through Apple JavaScriptCore | Finds word boundaries, dictionary forms, readings, parts of speech, unknown-word status, and text ranges for Image Search and linked Japanese text. | iOS | [`Package.swift`](../apps/ios/Modules/Package.swift), [`KuromojiMorphologyClient.swift`](../apps/ios/Modules/Sources/SearchExperience/KuromojiMorphologyClient.swift) |
 | Japanese-to-English translation | Apple Translation | Translates recognized Japanese text using installed Apple language assets. | iOS | [`NaturalTranslationClient.swift`](../apps/ios/Modules/Sources/SearchExperience/NaturalTranslationClient.swift) |
 | Japanese pronunciation | AVFoundation | Speaks Japanese words and example sentences with the system speech synthesizer. | iOS | [`SpeechSynthesisClient.swift`](../apps/ios/Modules/Sources/SearchExperience/SpeechSynthesisClient.swift) |
 | Camera, photo, and file import | PhotosUI and UIKit | Accepts images for Image Search and saved word encounters. | iOS | [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |

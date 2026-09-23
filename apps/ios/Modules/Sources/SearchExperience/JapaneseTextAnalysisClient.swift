@@ -294,47 +294,58 @@ private actor JapaneseTextAnalyzer {
       }
     }
 
-    guard candidate.partOfSpeech.first.map(Self.isLinkablePartOfSpeech) == true,
-      candidate.isOutOfVocabulary == false
-    else { return (nil, []) }
+    guard SearchQuery(candidate.surface).isJapaneseOnly else { return (nil, []) }
 
-    let directFamily = await entries(for: candidate.surface)
-    if candidate.surface == candidate.dictionaryForm, directFamily.count > 1 {
-      return (nil, directFamily)
-    }
-    let directEntries = filteredEntries(directFamily, candidate: candidate)
-    if candidate.surface.unicodeScalars.allSatisfy(\.isKana), directEntries.count > 1 {
-      return (nil, directEntries)
-    }
-    let providerForms = [candidate.dictionaryForm, candidate.normalizedForm]
-      .filter { !$0.isEmpty && $0 != "*" }
-    for form in providerForms {
-      let candidates = filteredEntries(await entries(for: form), candidate: candidate)
+    for form in Self.lookupForms(for: candidate) {
+      let family = await entries(for: form)
+      guard !family.isEmpty else { continue }
+      let preferred = preferredEntries(
+        family,
+        candidate: candidate,
+        matchesSurfaceReading: form == candidate.surface
+      )
+      let candidates = preferred.isEmpty ? family : preferred
       if candidates.count == 1 { return (candidates[0], candidates) }
-      if candidates.count > 1 { return (nil, candidates) }
+      return (nil, candidates)
     }
-    return (directEntries.count == 1 ? directEntries[0] : nil, directEntries)
+    return (nil, [])
   }
 
-  private func filteredEntries(
+  private func preferredEntries(
     _ entries: [DictionaryEntry],
-    candidate: JapaneseMorphologyCandidate
+    candidate: JapaneseMorphologyCandidate,
+    matchesSurfaceReading: Bool
   ) -> [DictionaryEntry] {
     var filtered = entries
     if let providerPOS = candidate.partOfSpeech.first {
-      filtered = filtered.filter { entry in
+      let compatible = filtered.filter { entry in
         entry.partsOfSpeech.contains { part in Self.isCompatible(part, with: providerPOS) }
       }
+      if !compatible.isEmpty { filtered = compatible }
     }
-    if candidate.surface == candidate.dictionaryForm, !candidate.reading.isEmpty,
-      candidate.reading != "*"
-    {
-      filtered = filtered.filter {
+    if matchesSurfaceReading, !candidate.reading.isEmpty, candidate.reading != "*" {
+      let readingMatches = filtered.filter {
         ($0.reading.applyingTransform(.hiraganaToKatakana, reverse: false) ?? $0.reading)
           == candidate.reading
       }
+      if !readingMatches.isEmpty { filtered = readingMatches }
     }
     return filtered
+  }
+
+  private static func lookupForms(for candidate: JapaneseMorphologyCandidate) -> [String] {
+    var forms: [String] = []
+    var seen = Set<String>()
+    func append(_ value: String) {
+      guard !value.isEmpty, value != "*", seen.insert(value).inserted else { return }
+      forms.append(value)
+    }
+    for form in [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm] {
+      append(form)
+      append(form.applyingTransform(.hiraganaToKatakana, reverse: true) ?? form)
+      append(form.applyingTransform(.hiraganaToKatakana, reverse: false) ?? form)
+    }
+    return forms
   }
 
   private static func isCompatible(_ part: PartOfSpeech, with providerPOS: String) -> Bool {
@@ -343,6 +354,13 @@ private actor JapaneseTextAnalyzer {
     case "動詞": normalized.contains("verb")
     case "形容詞", "形状詞": normalized.contains("adjective")
     case "名詞", "代名詞": normalized.contains("noun") || normalized == "pronoun"
+    case "副詞": normalized.contains("adverb")
+    case "助詞": normalized.contains("particle") || normalized.contains("conjunction")
+    case "助動詞":
+      normalized.contains("auxiliary") || normalized.contains("adjective")
+        || normalized.contains("suffix")
+    case "接続詞": normalized.contains("conjunction")
+    case "連体詞": normalized.contains("pre-noun") || normalized.contains("determiner")
     case "感動詞": normalized == "interjection"
     case "接頭辞": normalized.contains("prefix")
     case "接尾辞": normalized.contains("suffix")

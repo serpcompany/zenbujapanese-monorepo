@@ -26,7 +26,10 @@ let package = Package(
         .product(name: "ZIPFoundation", package: "ZIPFoundation"),
       ],
       resources: [.process("Resources")],
-      linkerSettings: [.linkedLibrary("sqlite3")]
-    ),
+      linkerSettings: [
+        .linkedFramework("JavaScriptCore"),
+        .linkedLibrary("sqlite3"),
+      ]
+    )
   ]
 )

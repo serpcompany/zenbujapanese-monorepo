@@ -17,6 +17,7 @@ under `apps/ios/Modules/Sources/SearchExperience/Resources/`.
 | Stroke diagrams | `KanjiVG-2025-08-16.source.json` | `import_kanjivg.py` |
 | Handwriting recognition | `DaKanji-v1.2.source.json` | Bundled Core ML model |
 | Frequency data | `TUBELEX-ja-310-lemma-pos.source.json`, `Wikipedia-ja-20221020-310-nfkc.source.json` | `import_frequency_pack.py` |
+| Interactive Japanese parsing | `Kuromoji-0.1.2.source.json` | Bundled JavaScriptCore engine and compressed IPADIC resources |
 | App-owned word relationships | `Zenbu-Word-Relationships-v1.json` | `import_jmdict.py` |
 
 Full third-party terms and required notices are retained beside the source

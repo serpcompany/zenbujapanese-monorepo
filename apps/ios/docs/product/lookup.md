@@ -36,9 +36,9 @@ learner's place in the preceding detail.
 
 Image Search recognizes Japanese text in one or more selected images. A learner can:
 
-- show or hide recognition highlights for every recognized Japanese token;
-- use a finer word boundary when a broader analyzed span has no dictionary match but one of
-  its contained words does;
+- show or hide recognition underlines for every recognized Japanese token;
+- use the same Kuromoji parser family as the Zenbu browser extension for interactive word
+  boundaries;
 - select a recognized token, including one without a dictionary match, and choose among
   dictionary candidates when available;
 - open a recognized word in its dictionary detail;

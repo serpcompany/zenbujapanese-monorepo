@@ -30,7 +30,13 @@ public struct SearchExperienceRootView: View {
   public init() {
     lookupClient = .live
     exampleSentenceClient = .live
-    japaneseTextAnalysisClient = .live(lookupClient: .live)
+    let morphologyClient: JapaneseMorphologyClient =
+      ProcessInfo.processInfo.environment["ZENBU_MORPHOLOGY_ENGINE"] == "sudachi"
+      ? .live : .kuromoji
+    japaneseTextAnalysisClient = .resolving(
+      morphologyClient: morphologyClient,
+      lookupClient: .live
+    )
     kanjiLookupClient = .live(lookupClient: .live)
     handwritingRecognitionClient = .live
     cameraAuthorizationClient = .live

@@ -336,18 +336,13 @@ private struct ImageTextCanvas: View {
           if showsHighlights {
             ForEach(page.regions) { region in
               let rect = displayRect(region.boundingBox, in: imageRect)
-              Button {
-                selectRegion(region)
-              } label: {
-                Rectangle()
-                  .fill(ZenbuTheme.recognitionHighlight.opacity(0.32))
-                  .overlay(Rectangle().stroke(ZenbuTheme.recognitionHighlight, lineWidth: 1))
-              }
-              .buttonStyle(.plain)
-              .frame(width: max(rect.width, 28), height: max(rect.height, 28))
+              ImageTextRegionButton(
+                region: region,
+                isSelected: selectedRegion?.id == region.id,
+                select: selectRegion
+              )
+              .frame(width: max(rect.width, 1), height: max(rect.height, 1))
               .position(x: rect.midX, y: rect.midY)
-              .accessibilityLabel("Recognized \(region.surface)")
-              .accessibilityIdentifier("image-text.region.\(region.surface)")
             }
           }
 
@@ -453,5 +448,28 @@ private struct ImageTextCanvas: View {
       width: normalized.width * imageRect.width,
       height: normalized.height * imageRect.height
     )
+  }
+}
+
+private struct ImageTextRegionButton: View {
+  let region: ImageTextRegion
+  let isSelected: Bool
+  let select: (ImageTextRegion) -> Void
+
+  var body: some View {
+    Button {
+      select(region)
+    } label: {
+      Color.clear
+        .contentShape(.rect)
+        .overlay(alignment: .bottom) {
+          Rectangle()
+            .fill(ZenbuTheme.recognitionHighlight)
+            .frame(height: isSelected ? 3 : 1.5)
+        }
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Recognized \(region.surface)")
+    .accessibilityIdentifier("image-text.region.\(region.surface)")
   }
 }
