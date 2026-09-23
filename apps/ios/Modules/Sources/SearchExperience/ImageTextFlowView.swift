@@ -5,11 +5,10 @@ import UIKit
 struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
+  @Binding private var presentedWord: RecognizedWordSheetRequest?
   let textAnalysisClient: JapaneseTextAnalysisClient
   let translationClient: NaturalTranslationClient
   let clipboardClient: ImageTextClipboardClient
-  let pronounce: (String) -> Void
-  let recordEncounter: (DictionaryEntry, ImageTextAsset) async -> Void
   let close: () -> Void
 
   init(
@@ -18,8 +17,7 @@ struct ImageTextFlowView: View {
     textAnalysisClient: JapaneseTextAnalysisClient,
     translationClient: NaturalTranslationClient,
     clipboardClient: ImageTextClipboardClient,
-    pronounce: @escaping (String) -> Void,
-    recordEncounter: @escaping (DictionaryEntry, ImageTextAsset) async -> Void,
+    presentedWord: Binding<RecognizedWordSheetRequest?>,
     close: @escaping () -> Void
   ) {
     _model = State(
@@ -29,11 +27,10 @@ struct ImageTextFlowView: View {
         textAnalysisClient: textAnalysisClient,
         translationClient: translationClient
       ))
+    _presentedWord = presentedWord
     self.textAnalysisClient = textAnalysisClient
     self.translationClient = translationClient
     self.clipboardClient = clipboardClient
-    self.pronounce = pronounce
-    self.recordEncounter = recordEncounter
     self.close = close
   }
 
@@ -98,14 +95,8 @@ struct ImageTextFlowView: View {
       }
     }
     .onDisappear { model.suspendTranslation() }
-    .sheet(item: selectedRegion) { region in
-      if let asset = model.selectedSharePayload {
-        DictionaryEntryPreviewSheet(
-          request: region.previewRequest,
-          pronounce: pronounce,
-          didPresentEntry: { entry in await recordEncounter(entry, asset) }
-        )
-      }
+    .onChange(of: presentedWord?.id) { _, wordID in
+      if wordID == nil { model.selectedRegion = nil }
     }
     .alert(
       "No Text Found",
@@ -288,18 +279,14 @@ struct ImageTextFlowView: View {
         page: page,
         showsHighlights: model.showsHighlights,
         selectedRegion: model.selectedRegion,
-        selectRegion: { model.selectedRegion = $0 }
+        selectRegion: { region in
+          model.selectedRegion = region
+          presentedWord = region.sheetRequest(asset: page.asset)
+        }
       )
     }
   }
 
-  private var selectedRegion: Binding<ImageTextRegion?> {
-    Binding {
-      model.selectedRegion
-    } set: { region in
-      model.selectedRegion = region
-    }
-  }
 }
 
 private struct NativeTranslationPreparationTask: View {

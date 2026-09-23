@@ -325,12 +325,13 @@ struct ImageTextRegion: Identifiable {
   let entry: DictionaryEntry?
   let candidateEntries: [DictionaryEntry]
 
-  var previewRequest: DictionaryEntryPreviewRequest {
-    DictionaryEntryPreviewRequest(
-      id: id,
+  func sheetRequest(asset: ImageTextAsset) -> RecognizedWordSheetRequest {
+    RecognizedWordSheetRequest(
+      id: "\(asset.id).\(id)",
       surface: surface,
       entry: entry,
-      candidateEntries: candidateEntries
+      candidateEntries: candidateEntries,
+      asset: asset
     )
   }
 }
