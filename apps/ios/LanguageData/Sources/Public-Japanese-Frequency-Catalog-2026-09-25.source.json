@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "identity": "Migaku public data catalog",
+    "owner": "Underlying compiler/rightsholder not published by catalog",
+    "catalogURL": "https://migaku-public-data.migaku.com/dicts/index.json",
+    "snapshotResource": "Migaku-public-catalog-ja-frequency-lists-2026-09-25.json",
+    "snapshotSHA256": "9f3d483fd31fcef5f08e88b7859e094abb81c07ea24ec477437b854d99441794",
+    "retrievedAt": "2026-09-25"
+  },
+  "distribution": {
+    "delivery": "User-initiated direct download from third-party public catalog",
+    "authorityStatus": "Upstream ownership, license, modification, and redistribution terms not published",
+    "productDecision": "Nine checksum-pinned archives are offered as direct-source downloads; Zenbu does not bundle or mirror them.",
+    "rehostingAllowed": false,
+    "hostingFollowUp": "GitHub issue #353"
+  },
+  "format": {
+    "container": "ZIP containing one UTF-8 JSON file",
+    "shape": "Ordered array whose rows are either a written-form string or a [written form, reading] pair, depending on the list",
+    "rankPolicy": "One-based array position; repeated forms and readings remain distinct source rows.",
+    "measurement": "Unknown; the catalog exposes only an ordering, not counts.",
+    "tokenizer": "Unknown",
+    "normalization": "NFKC written forms for analysis; original row retained in the record digest.",
+    "mappingPolicy": "FrequencyPackMappingV1 form-only analysis. A supplied reading is retained for reporting but is not consumed by the current v1 mapper."
+  },
+  "mapping": {
+    "policyVersion": 1,
+    "policyResource": "apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackMappingV1.sql",
+    "installer": "apps/ios/Modules/Sources/SearchExperience/FrequencyPackInstaller.swift",
+    "analysis": "apps/ios/LanguageData/Generated/Migaku-public-catalog-ja-ordered-json-v1.analysis.json"
+  },
+  "artifacts": [
+    {
+      "packID": "zenbu.public.netflix.ja.ordered-v1",
+      "displayName": "Netflix",
+      "domain": "Streaming subtitles",
+      "upstreamURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Netflix.json.zip",
+      "archive": "Netflix.json.zip",
+      "archiveEntry": "Netflix.json",
+      "bytes": 1039994,
+      "sha256": "294cdbf53794665196867b8283030a2d5504aad31a6da55324c0f6996f4eb9db",
+      "rawJSONBytes": 3228941,
+      "rows": 102844,
+      "licenseIdentifier": "Public source · terms not published",
+      "attribution": "Downloaded directly from the public Japanese frequency catalog: Netflix. The catalog does not identify the underlying compiler."
+    },
+    {
+      "packID": "zenbu.public.novels.ja.ordered-v1",
+      "displayName": "Novels",
+      "domain": "Fiction / novels",
+      "upstreamURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Novel%205k.json.zip",
+      "archive": "Novels.json.zip",
+      "archiveEntry": "Novel 5k.json",
+      "bytes": 164820,
+      "sha256": "8b0a9faeb3414ddd017f71628c4c721e895be38df21486de5fcf98f92ee8e356",
+      "rawJSONBytes": 569913,
+      "rows": 16469,
+      "licenseIdentifier": "Public source · terms not published",
+      "attribution": "Downloaded directly from the public Japanese frequency catalog: Novels. The catalog does not identify the underlying compiler."
+    },
+    {
+      "packID": "zenbu.public.slice-of-life.ja.ordered-v1",
+      "displayName": "Slice of Life",
+      "domain": "Everyday-life anime dialogue",
+      "upstreamURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Slice%20of%20Life.json.zip",
+      "archive": "Slice_of_Life.json.zip",
+      "archiveEntry": "Slice of Life.json",
+      "bytes": 411869,
+      "sha256": "64508836972f97a58b481a71d85bd2d98e76b0a40c20c827820cd966cf869369",
+      "rawJSONBytes": 1274114,
+      "rows": 43125,
+      "licenseIdentifier": "Public source · terms not published",
+      "attribution": "Downloaded directly from the public Japanese frequency catalog: Slice of Life. The catalog does not identify the underlying compiler."
+    },
+    {
+      "packID": "zenbu.public.nhk.ja.ordered-v1",
+      "displayName": "NHK",
+      "domain": "Online news",
+      "upstreamURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/NHK.json.zip",
+      "archive": "NHK.json.zip",
+      "archiveEntry": "NHK.json",
+      "bytes": 349003,
+      "sha256": "5ee8dc07db5ef1a93e82b3a28e5fe1bcad6bfba889ae91f9f5be10adb724c3e1",
+      "rawJSONBytes": 1617165,
+      "rows": 38075,
+      "licenseIdentifier": "Public source · terms not published",
+      "attribution": "Downloaded directly from the public Japanese frequency catalog: NHK. The catalog does not identify the underlying compiler."
+    },
+    {
+      "packID": "zenbu.public.shonen.ja.ordered-v1",
+      "displayName": "Shonen",
+      "domain": "Action-oriented anime dialogue",
+      "upstreamURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Shonen.json.zip",
+      "archive": "Shonen.json.zip",
+      "archiveEntry": "Shonen.json",
+      "bytes": 550470,
+      "sha256": "27142bc7017cfabd64c4838ef2a8520f5bdffff429ff44c0b34556db0a248b9e",
+      "rawJSONBytes": 1700426,
+      "rows": 56396,
+      "licenseIdentifier": "Public source · terms not published",
+      "attribution": "Downloaded directly from the public Japanese frequency catalog: Shonen. The catalog does not identify the underlying compiler."
+    },
+    {
+      "packID": "zenbu.public.jp-dict.ja.ordered-v1",
+      "displayName": "JP Dict",
+      "domain": "Japanese dictionary definitions",
+      "upstreamURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Monodicts_206k.json.zip",
+      "archive": "JP_Dict.json.zip",
+      "archiveEntry": "Monodicts_206k.json",
+      "bytes": 1203851,
+      "sha256": "c8d5deb015159c163829cf89ced71b8651a23f5e7dfa85cc70ae46c302e3637c",
+      "rawJSONBytes": 3389244,
+      "rows": 206621,
+      "licenseIdentifier": "Public source · terms not published",
+      "attribution": "Downloaded directly from the public Japanese frequency catalog: JP Dict. The catalog does not identify the underlying compiler."
+    },
+    {
+      "packID": "zenbu.public.visual-novel.ja.ordered-v1",
+      "displayName": "Visual Novel",
+      "domain": "Interactive fiction",
+      "upstreamURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/VN_Freq_v2.json.zip",
+      "archive": "Visual_Novel.json.zip",
+      "archiveEntry": "VN_Freq_v2.json",
+      "bytes": 178905,
+      "sha256": "673d4bc98c328fdf1e7e11c41ea6ec44ef21b4883b83b568da239446c4a5e679",
+      "rawJSONBytes": 493039,
+      "rows": 35058,
+      "licenseIdentifier": "Public source · terms not published",
+      "attribution": "Downloaded directly from the public Japanese frequency catalog: Visual Novel. The catalog does not identify the underlying compiler."
+    },
+    {
+      "packID": "zenbu.public.tv-shows.ja.ordered-v1",
+      "displayName": "TV Shows",
+      "domain": "Anime and television drama",
+      "upstreamURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Anime_J-drama.json.zip",
+      "archive": "TV_Shows.json.zip",
+      "archiveEntry": "Anime_J-drama.json",
+      "bytes": 561111,
+      "sha256": "1c6651c63a5a5e8ade4818cc11a26412244c22301c59cb40354f9bf7cb783c51",
+      "rawJSONBytes": 1589061,
+      "rows": 99999,
+      "licenseIdentifier": "Public source · terms not published",
+      "attribution": "Downloaded directly from the public Japanese frequency catalog: TV Shows. The catalog does not identify the underlying compiler."
+    },
+    {
+      "packID": "zenbu.public.internet.ja.ordered-v1",
+      "displayName": "Internet",
+      "domain": "Broad Japanese web",
+      "upstreamURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/CC100.json.zip",
+      "archive": "Internet.json.zip",
+      "archiveEntry": "CC100.json",
+      "bytes": 941696,
+      "sha256": "d6fdb6c77c1b34b31a57baf486cfdc7e3d6505e4e14b045a086a80bbfbe5d5d6",
+      "rawJSONBytes": 2477283,
+      "rows": 160836,
+      "licenseIdentifier": "Public source · terms not published",
+      "attribution": "Downloaded directly from the public Japanese frequency catalog: Internet. The catalog does not identify the underlying compiler."
+    }
+  ],
+  "excludedArtifacts": [
+    {
+      "id": "youtube",
+      "displayName": "YouTube",
+      "upstreamURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/YoutubeFreq.json.zip",
+      "bytes": 300673,
+      "sha256": "7227297dcee800f913ec0e38c0c7c970f63e47c6476ea9e3b44b4f85188be5c1",
+      "reason": "Analysis-only; TUBELEX is the offered YouTube source because it is more comprehensive and publishes corpus, tokenizer, count, and license evidence."
+    }
+  ]
+}

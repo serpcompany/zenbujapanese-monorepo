@@ -16,7 +16,7 @@ under `apps/ios/Modules/Sources/SearchExperience/Resources/`.
 | Kanji elements | `Kanjium-8a0cdaa.source.json` | `import_kanji_elements.py` |
 | Stroke diagrams | `KanjiVG-2025-08-16.source.json` | `import_kanjivg.py` |
 | Handwriting recognition | `DaKanji-v1.2.source.json` | Bundled Core ML model |
-| Frequency data | `TUBELEX-ja-310-lemma-pos.source.json`, `Wikipedia-ja-20221020-310-nfkc.source.json` | `import_frequency_pack.py` |
+| Frequency data | `TUBELEX-ja-310-lemma-pos.source.json`, `Wikipedia-ja-20221020-310-nfkc.source.json`, `Public-Japanese-Frequency-Catalog-2026-09-25.source.json` | `import_frequency_pack.py`, `analyze_ordered_json_frequency_lists.py`, on-device `FrequencyPackInstaller` |
 | Interactive Japanese parsing | `Kuromoji-0.1.2.source.json` | Bundled JavaScriptCore engine and compressed IPADIC resources |
 | App-owned word relationships | `Zenbu-Word-Relationships-v1.json` | `import_jmdict.py` |
 
@@ -26,9 +26,11 @@ them. Import reports under `apps/ios/LanguageData/Generated/` connect pinned
 inputs to generated artifact checksums and must remain versioned with those
 artifacts.
 
-The public-catalog ordered JSON packs retain their pinned catalog snapshot and
-analysis under `LanguageData/Candidates` and `LanguageData/Generated`. Their raw
-archives are downloaded directly by the app and are not stored in this repository.
+The public-catalog ordered JSON packs have an authoritative source record in this
+directory plus their pinned catalog snapshot and analysis under `LanguageData/Candidates`
+and `LanguageData/Generated`. Their unresolved upstream ownership and terms are recorded
+explicitly rather than inferred. Raw archives are downloaded directly by the app and are
+not stored in this repository.
 See
 [`FREQUENCY_SOURCE_DECISIONS.md`](../FREQUENCY_SOURCE_DECISIONS.md) for the
 decision matrix and reproducible analysis of the ten ordered-JSON packs.

@@ -15,10 +15,11 @@ validates its exact checksum and shape, maps it locally, and retains only the
 generated removable SQLite pack.
 
 The catalog still does not publish an underlying compiler/rightsholder,
-occurrence counts, tokenizer and tie semantics, or redistribution terms. The app
-discloses those limitations per pack and treats array position as the explicit
-rank. Supplied readings remain in source-record digests but the v1 mapping policy
-continues to use normalized written forms only and rejects ambiguous mappings.
+occurrence counts, tokenizer and tie semantics, or redistribution terms. Credits &
+Attributions discloses those shared limitations, while each compact pack card contains
+only operational status, installed storage, and actions. The runtime treats array position
+as the explicit rank. Supplied readings remain in source-record digests but the v1 mapping
+policy continues to use normalized written forms only and rejects ambiguous mappings.
 
 ## Source decision matrix
 

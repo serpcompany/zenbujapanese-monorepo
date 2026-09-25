@@ -21,8 +21,8 @@ Frequency Dictionaries offers checksum-pinned optional packs for streaming,
 fiction, news, anime, Japanese dictionary definitions, television, online video,
 and broad web Japanese. These packs download directly from their public source
 catalog, are mapped locally into Zenbu's dictionary, and can be activated or
-removed independently. Their rows disclose that occurrence counts, tokenizer
-details, provenance, and redistribution terms are not published by the catalog.
+removed independently. Credits & Attributions discloses that occurrence counts,
+tokenizer details, provenance, and redistribution terms are not published by the catalog.
 Each compact pack card shows its current status, installed storage size when
 applicable, and available actions. Source and license information remains available
 under Credits & Attributions.

@@ -9,7 +9,7 @@
   },
   "distributionDecision": {
     "status": "optional-direct-source-download",
-    "reason": "Product decision permits user-initiated downloads for nine catalog lists while retaining explicit disclosure that provenance, semantics, and redistribution terms are not published. The generic YouTube list remains analysis-only because TUBELEX is the more comprehensive documented YouTube source.",
+    "reason": "Product decision permits user-initiated downloads for nine catalog lists while Credits & Attributions discloses that provenance, semantics, and redistribution terms are not published. The generic YouTube list remains analysis-only because TUBELEX is the more comprehensive documented YouTube source.",
     "shippingBehavior": "Do not bundle or mirror the archives. For a runtime-catalog selection, download its checksum-pinned ZIP directly from the public catalog, map it on-device, discard the raw archive, and retain only the removable local SQLite pack."
   },
   "format": {
