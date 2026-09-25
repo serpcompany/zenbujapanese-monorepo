@@ -95,12 +95,6 @@ struct FrequencyDictionariesView: View {
         "Storage",
         value: ByteCountFormatter.string(fromByteCount: Int64(installedBytes), countStyle: .file)
       )
-    } else {
-      LabeledContent(
-        "Download",
-        value: ByteCountFormatter.string(
-          fromByteCount: Int64(pack.manifest.sourceBytes), countStyle: .file)
-      )
     }
   }
 
