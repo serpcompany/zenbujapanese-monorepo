@@ -20,6 +20,23 @@ TUBELEX = (
 
 
 class FrequencyPackRuntimeContractTests(unittest.TestCase):
+    def test_optional_packs_are_downloadable_but_not_shipped_as_installed_artifacts(self) -> None:
+        catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
+
+        bundled = [pack for pack in catalog["packs"] if pack["bundled"]]
+        self.assertEqual(
+            ["zenbu.tubelex.youtube.ja.unidic-3.1"],
+            [pack["packID"] for pack in bundled],
+        )
+
+        optional = [pack for pack in catalog["packs"] if not pack["bundled"]]
+        self.assertGreater(len(optional), 0)
+        for pack in optional:
+            with self.subTest(pack=pack["packID"]):
+                self.assertTrue(pack["removable"])
+                self.assertIsNone(pack["bundledArtifactSHA256"])
+                self.assertRegex(pack["downloadURL"], r"^https://")
+
     def test_every_selectable_pack_has_verified_evidence_smoke_test(self) -> None:
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
         analysis = json.loads(ANALYSIS.read_text(encoding="utf-8"))

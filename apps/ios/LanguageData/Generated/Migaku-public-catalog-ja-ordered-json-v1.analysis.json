@@ -1,6 +1,6 @@
 {
-  "analysisToolSHA256": "fd3e36608ce2c098d2e0a474279cd2e44c32d5193b4526f43d6d9e5b7812eb91",
-  "candidateCatalogSHA256": "93ead2fe17f5fb98883587b8ecd3e6746ac58939844c7e892a41f7ad32fa4382",
+  "analysisToolSHA256": "3198517c1f745736dfe7886cdd1976014d821c5225ff46cc8d70b78884682240",
+  "candidateCatalogSHA256": "c032b68e3589801a3278d34892f3bd48285c9913eeeb1dd71818813c95345f37",
   "candidates": [
     {
       "analysis": {
@@ -433,14 +433,14 @@
       "url": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/CC100.json.zip"
     }
   ],
-  "distributionDecision": {
-    "reason": "Product decision permits user-initiated downloads for nine catalog lists while Credits & Attributions discloses that provenance, semantics, and redistribution terms are not published. The generic YouTube list remains analysis-only because TUBELEX is the more comprehensive documented YouTube source.",
-    "shippingBehavior": "Do not bundle or mirror the archives. For a runtime-catalog selection, download its checksum-pinned ZIP directly from the public catalog, map it on-device, discard the raw archive, and retain only the removable local SQLite pack.",
-    "status": "optional-direct-source-download"
-  },
   "languageDataSHA256": "f69d66155955e4b88f8b7501965dc05665bf5bd21a0199f02cb12467c3d0d092",
   "mappingPolicySHA256": "7cf8ee196cd98c9683ac35f3214bc149ce6bfae55a1ee5f9c854c02816d2ecae",
   "publicCatalogSnapshotSHA256": "9f3d483fd31fcef5f08e88b7859e094abb81c07ea24ec477437b854d99441794",
+  "runtimeDecision": {
+    "reason": "Nine catalog lists are offered as user-initiated downloads. The generic YouTube list remains analysis-only because TUBELEX is the more comprehensive YouTube source.",
+    "shippingBehavior": "Do not bundle or mirror the archives. For a runtime-catalog selection, download its checksum-pinned ZIP directly from the public catalog, map it on-device, discard the raw archive, and retain only the removable local SQLite pack.",
+    "status": "optional-direct-source-download"
+  },
   "schema": "zenbu.frequency-candidate-analysis.v1",
   "tubelexArtifactSHA256": "d4a9e84b8a2c359394015a01f82307ea68c1a61c32597b7d7cab82ee5d4a6d87",
   "wikipediaArtifactSHA256": "d3dba5c4902b9323799d5c0ac53af2dd84a0c1bd208d047176a4a6a703f31eea"

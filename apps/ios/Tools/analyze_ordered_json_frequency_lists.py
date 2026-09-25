@@ -265,7 +265,7 @@ def main(arguments: argparse.Namespace) -> None:
         "mappingPolicySHA256": sha256(MAPPING_SQL),
         "tubelexArtifactSHA256": sha256(arguments.tubelex),
         "wikipediaArtifactSHA256": sha256(arguments.wikipedia),
-        "distributionDecision": catalog["distributionDecision"],
+        "runtimeDecision": catalog["runtimeDecision"],
         "candidates": [],
     }
     for candidate in catalog["candidates"]:

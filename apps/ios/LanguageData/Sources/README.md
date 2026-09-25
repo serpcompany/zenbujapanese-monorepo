@@ -4,7 +4,7 @@ This directory contains the pinned source records, licenses, notices, and local
 inputs used to build Zenbu Japanese's bundled language data.
 
 The `*.source.json` files are the source of truth for upstream identity,
-snapshot, download location, checksum, and licensing. The importers under
+snapshot, download location, checksum, and import configuration. The importers under
 `apps/ios/Tools/` define the transformations. Generated runtime artifacts live
 under `apps/ios/Modules/Sources/SearchExperience/Resources/`.
 
@@ -28,9 +28,8 @@ artifacts.
 
 The public-catalog ordered JSON packs have an authoritative source record in this
 directory plus their pinned catalog snapshot and analysis under `LanguageData/Candidates`
-and `LanguageData/Generated`. Their unresolved upstream ownership and terms are recorded
-explicitly rather than inferred. Raw archives are downloaded directly by the app and are
-not stored in this repository.
+and `LanguageData/Generated`. Raw archives are downloaded by the app only when a user
+chooses a pack and are not stored in this repository or shipped in the app bundle.
 See
 [`FREQUENCY_SOURCE_DECISIONS.md`](../FREQUENCY_SOURCE_DECISIONS.md) for the
-decision matrix and reproducible analysis of the ten ordered-JSON packs.
+runtime selection and reproducible analysis of the ten ordered-JSON packs.

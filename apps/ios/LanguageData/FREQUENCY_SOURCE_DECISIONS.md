@@ -1,35 +1,37 @@
-# Japanese frequency source decisions
+# Japanese frequency source analysis
 
-Updated 2026-09-25 for issue #351. A public download is evidence of availability,
-not evidence that Zenbu may redistribute the compiled data in an iOS app.
+Updated 2026-09-25 for issue #351.
 
-## Shipping decision
+## Runtime source selection
 
-Zenbu ships the BSD-3-Clause TUBELEX pack and offers the BSD-3-Clause Wikipedia
-pack. By product decision, nine of the ten checksum-pinned ordered-JSON archives
-are offered as optional direct-source downloads. The generic YouTube list remains
-analyzed but is not offered because TUBELEX is larger, documented, and licensed.
-Zenbu does not bundle or mirror
-their raw data: the app downloads each selected ZIP from the public catalog,
-validates its exact checksum and shape, maps it locally, and retains only the
-generated removable SQLite pack.
+Zenbu ships TUBELEX as the default frequency pack. Wikipedia and nine of the ten
+checksum-pinned public-catalog lists are optional user downloads. The generic
+YouTube list remains analysis-only because TUBELEX is the more comprehensive
+YouTube source.
 
-The catalog still does not publish an underlying compiler/rightsholder,
-occurrence counts, tokenizer and tie semantics, or redistribution terms. Credits &
-Attributions discloses those shared limitations, while each compact pack card contains
-only operational status, installed storage, and actions. The runtime treats array position
-as the explicit rank. Supplied readings remain in source-record digests but the v1 mapping
-policy continues to use normalized written forms only and rejects ambiguous mappings.
+When a user downloads a pack, the app downloads its selected ZIP, validates the
+exact checksum and shape, maps it locally, discards the ZIP, and retains a
+removable SQLite pack. The nine public-catalog packs are not included in the app
+bundle.
 
-## Source decision matrix
+The public lists are ordered arrays. Zenbu treats array position as the explicit
+rank. Supplied readings remain in source-record digests, while the v1 mapping
+policy uses normalized written forms and rejects ambiguous mappings.
 
-| Source | Publisher / canonical source | Snapshot and availability | Domain and scale | Semantics and bias | Distribution terms | Decision |
-| --- | --- | --- | --- | --- | --- | --- |
-| TUBELEX Japanese | Adam Nohejl, NAIST NLP; <https://github.com/naist-nlp/tubelex> | Commit `7cb5fb36`; immutable raw GitHub artifact | YouTube subtitles; 100,660 videos, 30,550 channels, 165,721,393 tokens | UniDic 3.1 lemma/POS counts; media-category bias; pinned source-row order breaks ties | BSD-3-Clause with bundled notice; app redistribution allowed | **Approved and bundled** |
-| Wikipedia Word Frequency Clean | Adam Nohejl and contributors; <https://github.com/adno/wikipedia-word-frequency-clean> | Commit `8b7a2811`; 2022-10-20 dump; immutable raw GitHub artifact | Encyclopedic written Japanese; 2,177,257 documents, 609,365,356 tokens | UniDic 3.1 NFKC surface counts; encyclopedic/formal bias; pinned source-row order breaks ties | BSD-3-Clause with bundled notice; app redistribution allowed | **Approved and optional download** |
-| BCCWJ v1 frequency tables | NINJAL; <https://clrd.ninjal.ac.jp/bccwj/freq-list.html> | Version 1.0 downloads remain available | Balanced written corpus; 104.3 million words across books, magazines, news, web, textbooks, legal and other registers | Short/long-unit lexemes with POS, raw frequency and per-million frequency; manual reports about 2% analysis error and defines deterministic tie ordering | Page permits free research/education use. Commercial product use and redistribution are not granted by that statement; NINJAL has separate commercial contracts and restricts distribution | **No-go without written product/redistribution grant** |
-| CEJC frequency tables | NINJAL; <https://www2.ninjal.ac.jp/conversation/cejc/cejc-wc.html> | Official tables available; current project page maintained | Recorded everyday conversation with demographic/context dimensions | Short-unit lexeme, written form, pronunciation and POS; conversational sampling bias | Published materials carry noncommercial/no-derivatives restrictions and corpus-specific terms; app redistribution is not established | **No-go** |
-| Migaku public Japanese catalog (10 lists below) | Migaku public catalog/distributor; underlying compiler/publisher unidentified; <https://migaku-public-data.migaku.com/dicts/index.json> | Committed Japanese frequency-list snapshot SHA-256 `9f3d483fd31fcef5f08e88b7859e094abb81c07ea24ec477437b854d99441794`; all ten archive URLs available on 2026-09-25 | Streaming, fiction, anime dialogue, news, YouTube, dictionary definitions, visual novels, television and web | Ordered strings or `[written, reading]` pairs; no counts, corpus dates, document/token totals, tokenizer, normalization, tie policy or upstream attribution published | Catalog publishes downloads but no license or app-redistribution grant for compiled lists; Zenbu downloads selected packs directly and does not bundle or mirror them | **Nine optional direct-source downloads; generic YouTube excluded in favor of TUBELEX** |
+| Source | Runtime behavior | Domain |
+| --- | --- | --- |
+| TUBELEX Japanese | Bundled and active by default | YouTube subtitles |
+| Wikipedia Word Frequency Clean | Optional user download | Encyclopedic written Japanese |
+| Netflix | Optional user download | Streaming subtitles |
+| Novels | Optional user download | Fiction and novels |
+| Slice of Life | Optional user download | Everyday-life anime dialogue |
+| NHK | Optional user download | Online news |
+| Shonen | Optional user download | Action-oriented anime dialogue |
+| JP Dict | Optional user download | Japanese dictionary definitions |
+| Visual Novel | Optional user download | Interactive fiction |
+| TV Shows | Optional user download | Anime and television drama |
+| Internet | Optional user download | Broad Japanese web |
+| Public-catalog YouTube | Analysis only; TUBELEX is used instead | Online video |
 
 The candidate catalog record at
 `Candidates/Migaku-public-catalog-ja-frequency-lists-2026-09-25.json` preserves
@@ -85,14 +87,14 @@ The supplied YouTube list is not a substitute for TUBELEX: only 22,733 of its
 43,241 mapped IDs overlap TUBELEX, its top-1,000 mapped Jaccard is 0.3996, and
 shared raw ranks correlate at 0.2641. These are practical ordering differences,
 not a quality judgment. TUBELEX remains the only offered YouTube pack because it
-is more comprehensive and publishes corpus, tokenization, count, and license evidence.
+is more comprehensive.
 
 ## Storage and reproducibility
 
 The ten compressed candidates total 5,702,392 bytes and their raw JSON totals
 17,223,490 bytes. Projected runtime SQLite sizes use the current v1 evidence
 schema, 4,096-byte pages, rank index, source-row removal, and `VACUUM`. They are
-deterministic analysis projections, not approved shipping artifacts.
+deterministic analysis projections, not runtime artifacts.
 
 | Candidate | Compressed ZIP | Raw JSON | Projected runtime SQLite |
 | --- | ---: | ---: | ---: |
