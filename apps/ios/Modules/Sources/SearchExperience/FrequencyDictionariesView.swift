@@ -14,11 +14,6 @@ struct FrequencyDictionariesView: View {
           Section {
             status(for: pack)
             LabeledContent("Source domain", value: pack.manifest.domain)
-            Link(
-              pack.manifest.orderedJSONSource == nil
-                ? "Source and license" : "Public source catalog",
-              destination: pack.manifest.licenseURL
-            )
             storage(for: pack)
             if let failure = pack.failureMessage {
               Label(failure, systemImage: "exclamationmark.triangle")
