@@ -23,9 +23,9 @@ and broad web Japanese. These packs download directly from their public source
 catalog, are mapped locally into Zenbu's dictionary, and can be activated or
 removed independently. Their rows disclose that occurrence counts, tokenizer
 details, provenance, and redistribution terms are not published by the catalog.
-Each compact pack card shows its current status, source domain, installed storage
-size when applicable, and available actions. Source and license information remains
-available under Credits & Attributions.
+Each compact pack card shows its current status, installed storage size when
+applicable, and available actions. Source and license information remains available
+under Credits & Attributions.
 
 ### Media Library
 

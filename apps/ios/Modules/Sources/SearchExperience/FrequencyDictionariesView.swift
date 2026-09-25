@@ -13,7 +13,6 @@ struct FrequencyDictionariesView: View {
         ForEach(snapshot.packs) { pack in
           Section {
             status(for: pack)
-            LabeledContent("Source domain", value: pack.manifest.domain)
             storage(for: pack)
             if let failure = pack.failureMessage {
               Label(failure, systemImage: "exclamationmark.triangle")
