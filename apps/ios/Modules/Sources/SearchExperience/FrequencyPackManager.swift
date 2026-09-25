@@ -231,6 +231,11 @@ actor FrequencyPackManager {
     let stateURL = storageDirectory.appendingPathComponent("state.json")
     let saved = try? JSONDecoder().decode(
       PersistedFrequencyPackState.self, from: Data(contentsOf: stateURL))
+    let currentPackIDs = Set(catalog.packs.map(\.packID))
+    for record in saved?.installedRecords ?? [] where !currentPackIDs.contains(record.packID) {
+      try? FileManager.default.removeItem(
+        at: Self.artifactURL(for: record.packID, in: storageDirectory))
+    }
     let validatedRecords: [FrequencyPackID: InstalledFrequencyPackRecord] = Dictionary(
       uniqueKeysWithValues: (saved?.installedRecords ?? []).compactMap { record in
         guard let manifest = catalog.packs.first(where: { $0.packID == record.packID }),
@@ -254,6 +259,14 @@ actor FrequencyPackManager {
     } else {
       activePackID = bundled.packID
     }
+    try JSONEncoder().encode(
+      PersistedFrequencyPackState(
+        activePackID: activePackID,
+        installedRecords: installedRecords.values.sorted {
+          $0.packID.rawValue < $1.packID.rawValue
+        }
+      )
+    ).write(to: stateURL, options: .atomic)
   }
 
   func snapshot() throws -> FrequencyPackSnapshot {

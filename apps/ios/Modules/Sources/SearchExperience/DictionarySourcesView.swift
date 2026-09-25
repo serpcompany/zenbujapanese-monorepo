@@ -157,7 +157,7 @@ struct DictionarySourcesView: View {
 
       Section("Public Japanese Frequency Catalog") {
         Text(
-          "Optional Netflix, Novels, Slice of Life, NHK, Shonen, YouTube, JP Dict, Visual Novel, TV Shows, and Internet packs download directly from the public catalog. Zenbu verifies the published archives and maps them on-device."
+          "Optional Netflix, Novels, Slice of Life, NHK, Shonen, JP Dict, Visual Novel, TV Shows, and Internet packs download directly from the public catalog. Zenbu verifies the published archives and maps them on-device. TUBELEX remains Zenbu's YouTube frequency source."
         )
         LabeledContent("Version", value: "Catalog snapshot 2026-09-25")
         LabeledContent("License", value: "Terms not published by catalog")

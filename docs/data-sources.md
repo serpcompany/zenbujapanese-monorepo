@@ -20,10 +20,10 @@ authoritative for exact versions, URLs, checksums, licenses, and transformations
 | Kanji and handwriting | [DaKanji](https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition) | A model that predicts candidate Japanese characters from a completed drawing. | iOS |
 | Frequency data | [TUBELEX](https://github.com/naist-nlp/tubelex) | Japanese word frequency data from occurrences across YouTube. | iOS |
 | Frequency data | [Wikipedia Word Frequency Clean](https://github.com/adno/wikipedia-word-frequency-clean) | Japanese word frequency data from occurrences across Wikipedia. | iOS |
-| Frequency data | [Public Japanese frequency catalog](https://migaku-public-data.migaku.com/dicts/index.json) | Ten ordered Japanese lists for streaming, novels, anime genres, NHK news, YouTube, Japanese dictionary definitions, visual novels, television, and the web. Optional packs download directly from the catalog and are mapped on-device; the catalog does not publish occurrence counts, tokenizer details, upstream provenance, or redistribution terms. | iOS |
+| Frequency data | [Public Japanese frequency catalog](https://migaku-public-data.migaku.com/dicts/index.json) | Nine optional ordered Japanese lists for streaming, novels, anime genres, NHK news, Japanese dictionary definitions, visual novels, television, and the web. Packs download directly from the catalog and are mapped on-device; the catalog does not publish occurrence counts, tokenizer details, upstream provenance, or redistribution terms. Its YouTube list is analyzed but not offered because TUBELEX is the documented, more comprehensive YouTube source. | iOS |
 | Unverified app-owned data | [`Zenbu Word Relationships`](../apps/ios/LanguageData/Sources/Zenbu-Word-Relationships-v1.json) | Two uncited relationships between dictionary entries. No source or reviewer is recorded, so the file is pending a separate removal decision. | iOS |
 
-The ten public-catalog lists are checksum-pinned optional sources. Their mapping
-coverage, TUBELEX/Wikipedia overlap, source limitations, and direct-download
-decision are recorded in the iOS
+The ten public-catalog lists remain checksum-pinned for comparison; nine are
+optional sources. Their mapping coverage, TUBELEX/Wikipedia overlap, source
+limitations, and direct-download decisions are recorded in the iOS
 [`frequency source decisions`](../apps/ios/LanguageData/FREQUENCY_SOURCE_DECISIONS.md).

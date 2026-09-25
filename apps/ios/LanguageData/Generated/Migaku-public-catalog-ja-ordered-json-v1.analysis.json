@@ -1,6 +1,6 @@
 {
   "analysisToolSHA256": "ff95a1ea5a8d27f5d4a0b2c981cef6d8f8e462dec64ac4aebcfbed87e0e5f7f0",
-  "candidateCatalogSHA256": "c895644a3be51597e32b8f354315e5871a98a7b914b585d13b27e68e19ee5353",
+  "candidateCatalogSHA256": "6985fed856d648212edbb301a039cd978a1e0f2b09f2ecb6ce782ee6a4c77f14",
   "candidates": [
     {
       "analysis": {
@@ -394,8 +394,8 @@
     }
   ],
   "distributionDecision": {
-    "reason": "Product decision permits user-initiated downloads from the public catalog while retaining explicit disclosure that provenance, semantics, and redistribution terms are not published.",
-    "shippingBehavior": "Do not bundle or mirror the archives. Download a selected checksum-pinned ZIP directly from the public catalog, map it on-device, discard the raw archive, and retain only the removable local SQLite pack.",
+    "reason": "Product decision permits user-initiated downloads for nine catalog lists while retaining explicit disclosure that provenance, semantics, and redistribution terms are not published. The generic YouTube list remains analysis-only because TUBELEX is the more comprehensive documented YouTube source.",
+    "shippingBehavior": "Do not bundle or mirror the archives. For a runtime-catalog selection, download its checksum-pinned ZIP directly from the public catalog, map it on-device, discard the raw archive, and retain only the removable local SQLite pack.",
     "status": "optional-direct-source-download"
   },
   "languageDataSHA256": "f69d66155955e4b88f8b7501965dc05665bf5bd21a0199f02cb12467c3d0d092",
