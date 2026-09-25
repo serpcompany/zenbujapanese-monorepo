@@ -133,10 +133,7 @@ struct EnglishDictionaryRank: Comparable, Sendable {
         corroborationRank: corroborationRank,
         romajiSpecificityRank: romajiSpecificityRank,
         senseOrder: senseOrder,
-        priorityPresenceRank: priorityPresenceRank,
-        relation: relation,
-        priorityProfile: priorityProfile,
-        glossOrder: glossOrder
+        relation: relation
       )
     )
   }
@@ -172,9 +169,7 @@ struct JapaneseDictionaryRank: Comparable, Sendable {
   var presentationRank: DictionaryPresentationRank {
     .japanese(
       JapaneseDictionaryPresentationRank(
-        relation: relation,
-        priorityProfile: priorityProfile,
-        senseBreadthRank: senseBreadthRank
+        relation: relation
       )
     )
   }
@@ -201,14 +196,9 @@ struct EnglishDictionaryPresentationRank: Equatable, Sendable {
   let corroborationRank: Int
   let romajiSpecificityRank: Int
   let senseOrder: Int
-  let priorityPresenceRank: Int
   let relation: DictionaryMatch.GlossRelation
-  let priorityProfile: LanguageReferencePriorityProfile
-  let glossOrder: Int
 }
 
 struct JapaneseDictionaryPresentationRank: Equatable, Sendable {
   let relation: DictionaryMatch.FormRelation
-  let priorityProfile: LanguageReferencePriorityProfile
-  let senseBreadthRank: Int
 }

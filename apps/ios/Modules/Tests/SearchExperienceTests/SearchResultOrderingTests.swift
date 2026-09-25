@@ -108,7 +108,7 @@ struct SearchResultOrderingTests {
   func liveJapaneseGroups() async throws {
     try await assertLiveGroupOrdering(
       query: "いる",
-      crossGroup: ("要る", "入る"),
+      crossGroup: ("要る", "いるか座"),
       sameGroup: ("没る", "癒る")
     )
   }
@@ -117,12 +117,12 @@ struct SearchResultOrderingTests {
   func liveRomajiGroups() async throws {
     try await assertLiveGroupOrdering(
       query: "miru",
-      crossGroup: ("見る", "診る"),
+      crossGroup: ("見る", "ミルク"),
       sameGroup: ("釬", "廻る")
     )
   }
 
-  @Test("makasete exercises live deinflection and frequency cannot cross its groups")
+  @Test("makasete uses frequency between equally relevant makasu matches")
   func liveInflectedRomajiGroups() async throws {
     let query = SearchQuery("makasete")
     #expect(try await LookupClient.live.entryMatchingForm(query.value) == nil)
@@ -133,16 +133,17 @@ struct SearchResultOrderingTests {
     let defeat = try #require(results.entries.first { $0.headword == "負かす" })
     let entrust = try #require(results.entries.first { $0.headword == "任す" })
     #expect(results.relevanceGroup(for: entrusted) < results.relevanceGroup(for: defeat))
-    #expect(results.relevanceGroup(for: defeat) < results.relevanceGroup(for: entrust))
+    #expect(results.relevanceGroup(for: defeat) == results.relevanceGroup(for: entrust))
 
-    let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
-      entrusted.id: .evidence(fixtureEvidence(id: entrusted.id, rank: 50_000)),
-      defeat.id: .evidence(fixtureEvidence(id: defeat.id, rank: 2)),
-      entrust.id: .evidence(fixtureEvidence(id: entrust.id, rank: 1)),
-    ]
+    let capability = try FrequencyCapability.freshBundledTUBELEX()
+    let evidence = try await capability.evidence(for: [entrusted.id, defeat.id, entrust.id])
+    #expect(numericRank(evidence[entrusted.id]) == 1_966)
+    #expect(numericRank(evidence[entrust.id]) == 8_642)
+    #expect(numericRank(evidence[defeat.id]) == 39_632)
     #expect(
       SearchResultFrequencyOrdering.ordered(results, evidence: evidence).map(\.id)
-        == [entrusted.id, defeat.id, entrust.id]
+        .filter { $0 == entrusted.id || $0 == defeat.id || $0 == entrust.id }
+        == [entrusted.id, entrust.id, defeat.id]
     )
   }
 
@@ -277,4 +278,9 @@ private func fixtureEvidence(id: LanguageReferenceID, rank: Int) -> FrequencyEvi
     sourceRecordDigest: "fixture",
     mappingRelation: .exactWrittenReading
   )
+}
+
+private func numericRank(_ result: FrequencyLookupResult?) -> Int? {
+  guard case .evidence(let evidence) = result else { return nil }
+  return evidence.rank
 }
