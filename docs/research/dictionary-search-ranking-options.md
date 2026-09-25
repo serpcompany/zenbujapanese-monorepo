@@ -1,72 +1,383 @@
-# Dictionary search ranking options
+# Japanese dictionary search engine and ranking research
 
-Date: 2026-09-25
+Date: 2026-09-26
 
-## Answer
+## Conclusion
 
-There is no reliable package that can replace Zenbu's dictionary-specific relevance policy and then apply the selected corpus-frequency rank inside equally relevant results. General-purpose search engines can retrieve text candidates and produce a generic document-relevance score, but they do not understand JMdict sense order, gloss atoms, written-versus-reading matches, romaji corroboration, form restrictions, or Zenbu's active frequency pack.
+Zenbu should **not trust the current ranking merely because its two reported
+examples now pass**. The first implementation mixed retrieval metadata into a
+relevance group, and the first regression encoded the resulting wrong order.
 
-The lowest-risk fix is therefore **not** to replace the search stack. Restore the relevance information that Zenbu already calculated before #350, make that the primary sort key, and use active-pack frequency only inside the same relevance group. Also carry the matching gloss/sense into the result presentation so a secondary sense such as `別荘` → “prison; jail” is shown instead of the unrelated primary summary.
+There is no mature native iOS package that owns Zenbu's full contract:
 
-In tuple form:
+1. retrieve Japanese forms and English JMdict glosses;
+2. normalize romaji and reverse Japanese inflections;
+3. rank the *matching sense*, not just the containing entry; and
+4. apply whichever external frequency pack the user selected only after the
+   results are equally relevant.
+
+The best available choices are:
+
+- **Use JPDB as a product-behavior reference, not as a dependency.** JPDB
+  publicly demonstrates useful handling of `prison` and `任せて`, but it
+  publishes neither its search/ranking source nor a reusable search library.
+  Its public API is a remote service, not an offline iOS engine.
+  [JPDB About](https://jpdb.io/about),
+  [JPDB changelog](https://jpdb.io/changelog)
+- **Use Yomitan and 10ten as algorithm/test references.** They have extensive,
+  maintained Japanese deinflection logic and explicit comparators. Yomitan's
+  comparator puts source-match and deinflection quality before its configured
+  frequency dictionary. It is nevertheless a GPL browser-extension codebase,
+  and its term database does not provide Zenbu's English reverse-gloss search.
+  [Yomitan comparator](https://github.com/yomidevs/yomitan/blob/67db60ddc2cbd7b5172d777c117e3201d7ddff0f/ext/js/language/translator.js#L2177-L2225),
+  [Yomitan package and license](https://github.com/yomidevs/yomitan/blob/67db60ddc2cbd7b5172d777c117e3201d7ddff0f/package.json),
+  [10ten comparator](https://github.com/birchill/10ten-ja-reader/blob/main/src/background/word-match-sorting.ts),
+  [10ten deinflection tests](https://github.com/birchill/10ten-ja-reader/blob/main/src/background/deinflect.test.ts)
+- **Prototype `jmdict-fast` as a retrieval/deinflection replacement.** It is the
+  closest technical fit: an MIT Rust engine with indexed exact, prefix, fuzzy,
+  romaji and English-gloss lookup plus a bundled Japanese deinflector. It is
+  young, its native Swift/SPM distribution is explicitly still "coming soon",
+  and it gives all English posting-list matches the same score and all
+  deinflected matches the same score. It therefore cannot enforce either
+  reported ordering without a final, much smaller Zenbu policy.
+  [`jmdict-fast` overview](https://github.com/theGlenn/jmdict-fst/blob/095279d426d7999c046e0483cff11605987aa49a/README.md),
+  [lookup implementation](https://github.com/theGlenn/jmdict-fst/blob/095279d426d7999c046e0483cff11605987aa49a/jmdict-fast/src/dict.rs#L302-L570)
+
+The recommended next step is a time-boxed `jmdict-fast` spike behind Zenbu's
+lookup interface, evaluated against a broad frozen corpus. Until that wins on
+correctness and iOS integration, retain SQLite retrieval but replace implicit
+integer grouping with an explicit, inspectable evidence record and
+lexicographic comparison. The app-owned portion should be only:
 
 ```text
-(existing dictionary presentation rank, active frequency rank, existing total-order fallback)
+match quality -> deinflection quality -> selected frequency rank -> stable fallback
 ```
 
-This is a small extension of the existing app-owned contract, not a new search engine.
+That small policy still needs tests; no package removes that responsibility.
 
-## What Zenbu used before #350
+## The four separate problems
 
-Commit [`477014a`](https://github.com/serpcompany/zenbujapanese-monorepo/commit/477014aae7a3705e331167a91bc20f114458715f) did not introduce a search package or change dictionary ranking. At that point Zenbu already used:
+Calling all of this "search ranking" obscures where an engine helps and where
+product policy remains:
 
-- the system SQLite library through its C API (`import SQLite3`), not GRDB;
-- two generated SQLite FTS4 indexes, `dictionary_gloss_fts` and `dictionary_form_fts`, for bounded candidate retrieval (the checked artifact contract still identifies the technology as `sqlite-fts4`);
-- app-owned ranking introduced by [`c1d209e`](https://github.com/serpcompany/zenbujapanese-monorepo/commit/c1d209ef049379b5bd683e4d5a3a0089c4e0d269) and hardened by [`b237267`](https://github.com/serpcompany/zenbujapanese-monorepo/commit/b2372672d42320c80f3d7076ff41203f50b165fb) and [`d3f6c83`](https://github.com/serpcompany/zenbujapanese-monorepo/commit/d3f6c8325446e863313c4e8c069140bde8171016).
+| Layer | Question | Suitable existing technology | Still Zenbu-specific? |
+| --- | --- | --- | --- |
+| Candidate retrieval | Which entries or senses contain the query? | SQLite FTS, `jmdict-fast`, Tantivy, Lucene | Schema, indexed fields, and result bounds |
+| Japanese morphology | What lemmas can an inflected Japanese input represent? | Yomitan/10ten rules, `bunpo`, Kuromoji/Sudachi | Romaji preprocessing and ambiguity policy |
+| Dictionary relevance | Is this a written-form, reading, primary-gloss, later-sense, prefix, or incidental match? | Yomitan/10ten cover Japanese source matching; no reviewed package covers Zenbu's English sense policy | Yes, especially English reverse lookup |
+| Corpus frequency | Which equally relevant entry is more frequent in the active user-selected pack? | A keyed rank table | Yes: pack selection, missing ranks, and tie behavior |
 
-The English comparator distinguished strong gloss, token-only gloss, and romaji-only lanes; exact/prefix romaji corroboration; canonical sense and gloss order; exact/qualified/infinitive gloss relations; form priority evidence; and stable lexical tie-breaks. The Japanese comparator distinguished exact written, exact reading, written prefix, reading prefix, written substring, and reading substring before its lexical tie-breaks. The leading equal `DictionaryPresentationRank` group became “Best Matches”; lower relevance groups became “Additional Matches.” Frequency evidence was displayed but did not override those relevance groups.
+SQLite describes BM25 as a function of phrase frequency, document frequency,
+document length, and column weights. Those are useful document-retrieval
+signals, but they do not represent an external corpus rank or JMdict sense
+position. [SQLite FTS5 BM25](https://www.sqlite.org/fts5.html#the_bm25_function)
 
-Commit [`e580e4c`](https://github.com/serpcompany/zenbujapanese-monorepo/commit/e580e4cfb1b4c78671d40acd6145260fc87c80e3) implemented #350 by flattening those groups, deleting `presentationRank` from returned candidates, and sorting the whole bounded candidate set by active frequency first. That is the direct cause of a frequent secondary-sense match outranking clearer primary-sense matches.
+## JPDB: strong product evidence, no reusable engine disclosed
 
-Relevant current files are [`LookupClient.swift`](../../apps/ios/Modules/Sources/SearchExperience/LookupClient.swift), [`DictionaryRanking.swift`](../../apps/ios/Modules/Sources/SearchExperience/DictionaryRanking.swift), [`SearchView.swift`](../../apps/ios/Modules/Sources/SearchExperience/SearchView.swift), and [`DictionaryRankingArtifactContract.json`](../../apps/ios/Modules/Sources/SearchExperience/Resources/DictionaryRankingArtifactContract.json).
+### What JPDB actually publishes
 
-## Options
+JPDB's first-party About page says that it uses JMdict/EDICT and that its
+backend is written in Rust. It does not name its index, morphological analyzer,
+ranking model, or a library that implements them.
+[JPDB About](https://jpdb.io/about)
 
-### SQLite FTS5 and BM25
+The first-party changelog establishes that JPDB has a morphological analyzer,
+verb deconjugator, romaji search preprocessing, global frequency calculation,
+and a public parsing API. It also records fixes and behavioral changes to each
+of those components, including forced token boundaries,
+short-causative/conditional deconjugation, romaji parsing, and global frequency
+calculation. It does not publish the ranking formula or say that these
+components are third-party packages.
+[JPDB changelog](https://jpdb.io/changelog)
 
-SQLite FTS5 is a strong, maintained embedded retrieval engine. Its built-in `bm25()` ranks documents from query phrase frequency, inverse document frequency, document length, and optional per-column weights; `ORDER BY rank` is the optimized default-BM25 form. FTS5 also supports phrase, prefix, proximity, and Boolean queries, custom tokenizers, and custom auxiliary ranking functions. [SQLite FTS5 documentation](https://www.sqlite.org/fts5.html#the_bm25_function), [ranking documentation](https://www.sqlite.org/fts5.html#sorting_by_auxiliary_function_results), [extension API](https://www.sqlite.org/fts5.html#extending_fts5)
+The public product also exposes global frequency ranks and lets vocabulary
+lists sort by frequency across the whole corpus. This is JPDB's corpus rank,
+not a selectable external frequency-pack contract like Zenbu's.
+[JPDB frequency-sorted vocabulary list](https://jpdb.io/anime/21/free/vocabulary-list?offset=200&sort_by=by-frequency-local),
+[JPDB vocabulary page](https://jpdb.io/vocabulary/1580640/%E4%BA%BA)
 
-What it can replace: Zenbu's FTS4 candidate retrieval, and some coarse text weighting if gloss fields are split into columns.
+### Direct behavior check
 
-What it cannot replace: the dictionary policy. BM25 does not know that an exact primary gloss should beat an exact later sense, that a written-form hit should beat a reading substring, or that frequency-list rank is a secondary product signal rather than within-document term frequency. Encoding those facts as separate columns and weights, joining frequency metadata, or implementing a custom auxiliary function is still custom schema and ranking work. It would also be a migration from a currently validated FTS4 artifact, so FTS5 is not justified merely to fix this ordering bug.
+The following is first-party live product behavior observed on 2026-09-26. It
+is evidence of output, not evidence of the undisclosed implementation:
 
-### GRDB.swift with FTS5
+| Query | Observed JPDB behavior | What it establishes |
+| --- | --- | --- |
+| [`prison`](https://jpdb.io/search?q=prison&lang=english) | `刑務所` (Top 12,400), `牢獄` (10,300), and `牢` (9,500) appear before the more frequent `別荘` (9,300); the latter displays “holiday house; vacation home; villa” as sense 1 and “prison; jail” as sense 2. | JPDB demonstrably does not sort all English matches by frequency first. Dictionary/sense relevance precedes or modifies global frequency. |
+| [`任せて`](https://jpdb.io/search?q=%E4%BB%BB%E3%81%9B%E3%81%A6&lang=english) | `任せる` (Top 800) appears before `任す` (4,300), with conjugation labels shown; the kanji evidence excludes the unrelated `まく` analyses seen for romaji. | Written-form evidence, deconjugation and frequency are composed successfully for this input. |
+| [`makasete`](https://jpdb.io/search?q=makasete&lang=english) | Results are `任せる` (Top 800), `巻く` (2,100), `任す` (4,300), `撒く` (8,900), `負かす` (20,500), and `蒔く` (28,300), with different te-form interpretations shown. | JPDB generates ambiguous romaji/deconjugation candidates and, for this result set, orders them by global frequency; importantly, `任す` precedes `負かす`. Its candidate set and fixed corpus still differ from Zenbu's selectable-pack contract. |
 
-GRDB is the credible Swift wrapper in this space: an actively maintained MIT SQLite toolkit with FTS5 table creation, query-interface support for `ORDER BY rank`, external-content synchronization, and Swift APIs for custom FTS5 tokenizers. [GRDB repository](https://github.com/groue/GRDB.swift), [full-text search guide](https://github.com/groue/GRDB.swift/blob/master/Documentation/FullTextSearch.md), [custom tokenizer guide](https://github.com/groue/GRDB.swift/blob/master/Documentation/FTS5Tokenizers.md)
+### Can Zenbu use JPDB's implementation?
 
-GRDB would reduce low-level SQLite plumbing and improve database ergonomics. It does **not** supply a different relevance model: its FTS5 relevance ordering is SQLite's ranking, and its own documentation directs ranking behavior back to SQLite. Adopting GRDB would add a dependency and require rewriting a working read-only database layer while leaving Zenbu's semantic comparator necessary. It is a reasonable future database-maintenance decision, but not a solution to “relevance first, corpus frequency second.”
+No reusable implementation was found in JPDB's first-party About, FAQ,
+Contact, changelog, public pages, or their linked resources. The site links no
+official source repository and discloses only “Rust” for its backend.
+[JPDB About](https://jpdb.io/about),
+[JPDB FAQ](https://jpdb.io/faq),
+[JPDB Contact](https://jpdb.io/contact-us)
 
-### TantivySwift
+This is an explicit **unknown**, not a claim that JPDB uses no third-party
+components internally. The defensible conclusion is narrower: JPDB does not
+publish enough to embed, audit, version, or reproduce its search behavior in
+an offline iOS app. Calling its remote API would also replace Zenbu's offline,
+deterministic lookup with a network dependency, and the first-party changelog
+shows that API and parser behavior change over time.
+[JPDB changelog](https://jpdb.io/changelog)
 
-[`TantivySwift`](https://github.com/carbon/TantivySwift) is a real embedded Swift binding to Tantivy. Its repository documents iOS device/simulator support, an XCFramework distributed through SwiftPM, BM25-scored search, structured queries, field boosts, and numeric field sorting. It is MIT licensed. However, its current public surface is new and lightly adopted (the repository presently shows two stars), requires Swift 6.2 and iOS 18+, and lists only default, English-stemmed, raw, lowercase, and whitespace analyzers—no Japanese morphological analyzer. A numeric `orderBy` replaces BM25 scoring rather than composing a deterministic dictionary relevance/frequency tuple. [Package requirements and analyzers](https://github.com/carbon/TantivySwift#requirements), [search and sorting API](https://github.com/carbon/TantivySwift#search)
+**Decision: do not integrate JPDB as the search engine.** Keep it in a
+differential test set as one respected product comparison, with divergences
+reviewed rather than automatically treated as Zenbu bugs.
 
-Tantivy itself is capable, but this binding is not a lower-risk choice than SQLite for Zenbu. Zenbu would still need to design fields, index sense metadata, integrate Japanese analysis, encode dictionary relevance, combine the active frequency pack, distribute another native binary, and rebuild/validate its bundled index. It is not recommended for this fix.
+## Candidate evaluation
 
-### Core Spotlight (contrast, not a package recommendation)
+### Yomitan and 10ten
 
-Apple describes Core Spotlight as an on-device private index that apps can query, and provides `rankingHint` to distinguish the relative importance of similar items. [Indexing app content](https://developer.apple.com/documentation/corespotlight/adding-your-app-s-content-to-spotlight-indexes), [`rankingHint`](https://developer.apple.com/documentation/corespotlight/cssearchableitemattributeset/rankinghint), [querying indexed content](https://developer.apple.com/documentation/corespotlight/searching-for-information-in-your-app)
+Yomitan has the clearest established comparator found. It orders term results
+by primary-reading match, matched source length, text-processing-chain length,
+inflection-chain length, and exact source matches; only then does it apply the
+configured frequency dictionary, followed by dictionary order and dictionary
+score. Its frequency updater handles rank-style and occurrence-style lists.
+[Yomitan comparator](https://github.com/yomidevs/yomitan/blob/67db60ddc2cbd7b5172d777c117e3201d7ddff0f/ext/js/language/translator.js#L2177-L2225),
+[Yomitan frequency update](https://github.com/yomidevs/yomitan/blob/67db60ddc2cbd7b5172d777c117e3201d7ddff0f/ext/js/language/translator.js#L2340-L2376),
+[Yomitan frequency settings](https://github.com/yomidevs/yomitan/blob/67db60ddc2cbd7b5172d777c117e3201d7ddff0f/ext/settings.html)
 
-It is appropriate when content should participate in system/app search, but its ranking is system-owned and not a versioned, inspectable dictionary comparator. A single ranking hint also cannot express query-dependent sense relevance followed by a user-selected frequency dictionary. It would make deterministic regression fixtures harder, not easier.
+Yomitan's Japanese transforms are condition-aware and chained, while its
+language-development guide explicitly requires valid and invalid deinflection
+tests. That is materially safer than an untyped list of string rewrites.
+[Yomitan Japanese transforms](https://github.com/yomidevs/yomitan/blob/67db60ddc2cbd7b5172d777c117e3201d7ddff0f/ext/js/language/ja/japanese-transforms.js),
+[Yomitan language-feature guide](https://github.com/yomidevs/yomitan/blob/67db60ddc2cbd7b5172d777c117e3201d7ddff0f/docs/development/language-features.md)
 
-Remote services such as Algolia, Typesense, Meilisearch, or Elasticsearch can expose configurable relevance, but would introduce networking, hosting, privacy, offline, index-version, and operating-cost concerns while still requiring Zenbu to define the same domain ranking rules. They are disproportionate for a bundled dictionary and were not evaluated as implementation candidates.
+10ten likewise explicitly sorts Japanese word matches using deinflection reason
+count, headword-versus-reading match, and JMdict priority, and maintains an
+extensive deinflection test file. Like Yomitan, it is GPL-3.0-or-later and a
+browser-extension TypeScript project rather than a native Swift package.
+[10ten match sorting](https://github.com/birchill/10ten-ja-reader/blob/main/src/background/word-match-sorting.ts),
+[10ten deinflection tests](https://github.com/birchill/10ten-ja-reader/blob/main/src/background/deinflect.test.ts),
+[10ten package and license](https://github.com/birchill/10ten-ja-reader/blob/main/package.json)
 
-## Recommendation
+Limits:
 
-Keep direct SQLite and the generated index for now. Reuse the already-tested relevance machinery instead of inventing a new scoring formula:
+- Yomitan is JavaScript for a browser extension, stores dictionaries in
+  IndexedDB, and is GPL-3.0-or-later; it is not a Swift package.
+  [Yomitan README](https://github.com/yomidevs/yomitan/blob/67db60ddc2cbd7b5172d777c117e3201d7ddff0f/README.md),
+  [Yomitan package](https://github.com/yomidevs/yomitan/blob/67db60ddc2cbd7b5172d777c117e3201d7ddff0f/package.json)
+- Its dictionary database indexes term expression and reading; glossary is
+  stored data rather than the English reverse-search index Zenbu needs.
+  [Yomitan dictionary schema](https://github.com/yomidevs/yomitan/blob/67db60ddc2cbd7b5172d777c117e3201d7ddff0f/ext/js/dictionary/dictionary-database.js#L80-L150)
+- It is mature, not infallible; Yomitan has an open report concerning incorrect
+  frequency sorting. [Yomitan issue #1037](https://github.com/yomidevs/yomitan/issues/1037)
 
-1. Return the existing `DictionaryPresentationRank` (or a smaller stable relevance-group key) with each candidate instead of discarding it at the lookup boundary.
-2. Sort first by that relevance group, then by active frequency rank, then by the existing deterministic lexical order and canonical ID fallback.
-3. Preserve the selected `GlossEvidence`/sense for English queries and render its matched gloss in the result row.
-4. Add regressions for `prison`, polysemous later-sense matches, Japanese exact-versus-reading/prefix cases, missing frequency evidence, and switching active packs.
+**Decision: adapt the staged comparison model and test discipline; do not drop
+the browser engine into the app.**
 
-FTS5 can be assessed separately if Zenbu later needs better retrieval performance or richer query syntax. GRDB can be assessed separately if reducing raw SQLite code becomes a maintenance goal. Neither change should be coupled to correcting #350's comparator.
+### `jmdict-fast` / `jmdict-fst`
+
+This is the closest package to Zenbu's retrieval boundary. The MIT Rust v0.1.7
+engine provides memory-mapped offline data, exact/prefix/fuzzy lookup over
+kanji, kana and romaji, English-gloss reverse lookup, JMdict sense data, and
+Japanese deinflection through its `bunpo` crate.
+[`jmdict-fst` README](https://github.com/theGlenn/jmdict-fst/blob/095279d426d7999c046e0483cff11605987aa49a/README.md),
+[`bunpo` README](https://github.com/theGlenn/jmdict-fst/blob/095279d426d7999c046e0483cff11605987aa49a/bunpo/README.md),
+[`jmdict-fast` license](https://github.com/theGlenn/jmdict-fst/blob/095279d426d7999c046e0483cff11605987aa49a/LICENSE)
+
+It does **not** replace ranking policy:
+
+- every deinflected result is assigned `0.75`, then equal scores preserve the
+  generation/ID order;
+- English lookup lowercases ASCII tokens, AND-intersects posting lists, and
+  assigns the same computed score to every intersected entry;
+- it has no user-selected external-frequency join; and
+- romaji lookup and Japanese deinflection are separate paths, so a romanized
+  inflection still needs normalization/composition policy.
+
+These facts are visible in the lookup implementation.
+[`Dict::deinflect_candidates` and `lookup_gloss`](https://github.com/theGlenn/jmdict-fst/blob/095279d426d7999c046e0483cff11605987aa49a/jmdict-fast/src/dict.rs#L339-L570)
+
+Consequences for the reported cases:
+
+- **`prison`:** its token-AND index retrieves entries containing the English
+  token, but all hits receive the same score. It cannot itself decide that a
+  first-sense prison gloss should beat `別荘`'s later prison sense.
+- **`makasete`:** it can provide candidate lemmas after romaji-to-kana
+  preprocessing, but equal-scored deinflections do not guarantee rank 8,642
+  before rank 39,632. Zenbu must join the active pack and compare those ranks.
+
+The repository provides Rust FFI layers and an iOS-capable Flutter bridge, but
+its own root README marks Swift/SPM as “coming soon,” and its FFI README says
+the UniFFI Swift wrapper is not yet built.
+[`jmdict-fst` platform status](https://github.com/theGlenn/jmdict-fst/blob/095279d426d7999c046e0483cff11605987aa49a/README.md),
+[`jmdict-fast-ffi` status](https://github.com/theGlenn/jmdict-fst/blob/095279d426d7999c046e0483cff11605987aa49a/jmdict-fast-ffi/README.md)
+
+**Decision: prototype, do not immediately replace production lookup.** The
+prototype must build a real arm64 iOS XCFramework, load a pinned index without
+network access, and run the same corpus against SQLite and `jmdict-fast`.
+
+### SQLite FTS5 and GRDB
+
+SQLite FTS5 is mature embedded candidate retrieval. It supports phrases,
+prefixes, proximity/Boolean queries, per-column BM25 weights, custom tokenizers,
+and custom auxiliary functions. It cannot infer JMdict sense semantics or an
+external frequency list without application schema/policy. SQLite is in the
+public domain.
+[SQLite FTS5](https://www.sqlite.org/fts5.html),
+[SQLite custom tokenizers and functions](https://www.sqlite.org/fts5.html#extending_fts5),
+[SQLite copyright](https://www.sqlite.org/copyright.html)
+
+GRDB is a maintained MIT Swift SQLite toolkit with FTS4/FTS5 creation, relevance
+ordering, external-content synchronization and custom FTS5 tokenizers. It
+reduces low-level database plumbing; its ranking remains SQLite's ranking.
+[GRDB repository](https://github.com/groue/GRDB.swift),
+[GRDB full-text search guide](https://github.com/groue/GRDB.swift/blob/0d8cf958b4b66a0473ec6e6986eb9da462171da9/Documentation/FullTextSearch.md),
+[GRDB custom tokenizer guide](https://github.com/groue/GRDB.swift/blob/0d8cf958b4b66a0473ec6e6986eb9da462171da9/Documentation/FTS5Tokenizers.md)
+
+**Decision: retain SQLite now.** Evaluate GRDB separately as a database-layer
+maintenance improvement, not as a correctness fix.
+
+### Tantivy and TantivySwift
+
+Tantivy is a mature MIT Rust full-text engine with BM25 retrieval. `TantivySwift`
+provides an iOS XCFramework and SwiftPM wrapper with field boosts and numeric
+sorting. However, the wrapper's analyzers are default, English, raw, lowercase,
+whitespace, and English-with-surface—there is no Japanese analyzer. Its numeric
+`orderBy` replaces relevance order rather than composing a dictionary
+relevance/frequency tuple.
+[Tantivy repository](https://github.com/quickwit-oss/tantivy),
+[Tantivy license](https://github.com/quickwit-oss/tantivy/blob/main/LICENSE),
+[`TantivySwift` README](https://github.com/carbon/TantivySwift/blob/1cafe1437ce916ffe385a1f7ad8b8f86d2eb9177/README.md)
+
+At the reviewed snapshot, `TantivySwift` requires Swift 6.4/Xcode 27 and iOS
+18+, is a young wrapper, and its repository does not declare a license in
+`Package.swift` or provide a root `LICENSE` file. Those are adoption blockers
+independent of ranking quality.
+[`TantivySwift` package](https://github.com/carbon/TantivySwift/blob/1cafe1437ce916ffe385a1f7ad8b8f86d2eb9177/Package.swift)
+
+**Decision: do not adopt for this problem.** It would replace a working embedded
+index while leaving Japanese analysis, sense relevance and active-pack
+frequency composition to Zenbu.
+
+### Lucene Kuromoji
+
+Lucene's Japanese tokenizer performs Viterbi morphological segmentation and
+emits base form, part of speech, reading/pronunciation, and inflection
+attributes. Lucene also supplies BM25 and customizable similarity/query
+composition. These are morphology and document-retrieval capabilities, not a
+JMdict reverse-dictionary relevance policy.
+[Lucene JapaneseTokenizer](https://lucene.apache.org/core/10_3_0/analysis/kuromoji/org/apache/lucene/analysis/ja/JapaneseTokenizer.html),
+[Lucene scoring](https://lucene.apache.org/core/10_3_0/core/org/apache/lucene/search/package-summary.html),
+[Lucene license](https://github.com/apache/lucene/blob/main/LICENSE.txt)
+
+Current Lucene is a Java library requiring Java 21 or later, not a native iOS
+package. [Lucene system requirements](https://lucene.apache.org/core/10_0_0/SYSTEM_REQUIREMENTS.html)
+
+**Decision: keep Kuromoji/Sudachi for text analysis where already useful; do
+not add Lucene as the iOS dictionary search engine.**
+
+### Jamdict and smaller JMdict engines
+
+Jamdict is an MIT Python/SQLite library. Its lookup is exact or SQL `LIKE`
+matching over kanji, kana and full gloss text; it does not provide deinflection,
+a relevance score, or external-frequency composition. Its latest main-branch
+commit at the reviewed snapshot is from 2021.
+[Jamdict README](https://github.com/neocl/jamdict/blob/85c66c19064977adda469e3d0facf5ad9c8c6866/README.md),
+[Jamdict SQL lookup](https://github.com/neocl/jamdict/blob/85c66c19064977adda469e3d0facf5ad9c8c6866/jamdict/jmdict_sqlite.py#L115-L170)
+
+`tentoku-rs` combines JMdict SQLite lookup, 10ten-derived deinflection, POS
+validation, priority sorting, and a C FFI. It is GPL-3.0-or-later, version
+0.1.x, and does not provide Zenbu's English sense relevance or selected
+frequency-pack integration.
+[`tentoku-rs` README](https://github.com/eridgd/tentoku-rs/blob/9b9c111d2d7805ebe751265c1b7eff6eae28e56c/README.md),
+[`tentoku-rs` sorting](https://github.com/eridgd/tentoku-rs/blob/9b9c111d2d7805ebe751265c1b7eff6eae28e56c/src/sorting.rs)
+
+**Decision: do not adopt Jamdict or `tentoku-rs`.**
+
+## Safer architecture
+
+Whether retrieval remains SQLite or moves to `jmdict-fast`, the boundary should
+return evidence rather than a pre-collapsed integer group:
+
+```text
+SearchCandidate
+  entryID
+  matchedForm                 // written, reading, romaji
+  matchedSenseID
+  matchedGlossID
+  lexicalRelation            // exact phrase, exact token, prefix, substring
+  senseIndex
+  sourceLength
+  preprocessingChain
+  deinflectionChain
+  selectedFrequencyRank?     // loaded only after retrieval
+  stableDictionaryOrder
+```
+
+The comparator should be a visible lexicographic list, modeled on Yomitan's
+staging rather than a weighted score:
+
+1. language/query lane and lexical relation;
+2. matched sense/gloss quality and sense order;
+3. source coverage and preprocessing/deinflection cost;
+4. selected frequency rank, only when every preceding field is equal;
+5. stable dictionary order and ID.
+
+This avoids the previous failure mode: internal source priority or sense breadth
+cannot accidentally split entries that the product considers equally relevant.
+It also makes a result explainable in a failing test.
+
+## Verification required before trusting either implementation
+
+### Frozen golden corpus
+
+Build a versioned corpus large enough that no single hand-picked example can
+define the policy. It should include:
+
+- English: whole gloss, exact token, qualified phrase, first versus later
+  sense, same word in unrelated primary sense, plurals, punctuation and romaji;
+- Japanese: exact written, exact reading, kana/kanji mismatch, prefix,
+  substring, common homophones and form restrictions;
+- deinflection: every supported conjugation class, ambiguous chains, invalid
+  chains and romanized input;
+- frequency: equal relevance with inverted ranks, missing rank, tied rank,
+  active-pack switching and a pack update;
+- the reported `prison`, `任せて`, and `makasete` cases with exact IDs and ranks.
+
+Yomitan's valid/invalid transform fixtures and 10ten's deinflection suite are
+good models for morphology coverage.
+[Yomitan test guidance](https://github.com/yomidevs/yomitan/blob/67db60ddc2cbd7b5172d777c117e3201d7ddff0f/docs/development/language-features.md),
+[10ten deinflection tests](https://github.com/birchill/10ten-ja-reader/blob/main/src/background/deinflect.test.ts)
+
+### Invariants, not only snapshots
+
+Property tests should prove:
+
+- changing a frequency pack cannot move a result across a relevance boundary;
+- within identical relevance evidence, a smaller rank always sorts first;
+- absent or tied frequency preserves deterministic dictionary order;
+- adding non-relevance metadata cannot change grouping;
+- the displayed gloss is the gloss that caused the English match;
+- cancellation, relaunch and pack replacement cannot mix evidence versions.
+
+### Differential testing
+
+Run the frozen corpus against:
+
+1. the current SQLite engine;
+2. the `jmdict-fast` prototype;
+3. current Yomitan for Japanese lookup/deinflection where its data model
+   overlaps; and
+4. JPDB's public search as a periodically captured product comparison.
+
+Differences must be reviewed; neither external product is automatically the
+oracle. Promote each accepted difference into a permanent regression before
+changing the comparator.
+
+## Final recommendation
+
+1. Do not replace the current engine with JPDB, Lucene, Tantivy, GRDB, Jamdict,
+   or Yomitan on the assumption that “package” means correct end-to-end policy.
+2. Open a bounded `jmdict-fast` prototype for retrieval and deinflection only.
+3. Keep production SQLite until the prototype passes the frozen corpus and an
+   arm64 iOS offline packaging test.
+4. Replace opaque relevance-group integers with explicit match evidence and a
+   short lexicographic comparator based on the Yomitan/10ten staging.
+5. Require corpus, invariant, and differential tests before declaring the
+   branch merge-ready again.
