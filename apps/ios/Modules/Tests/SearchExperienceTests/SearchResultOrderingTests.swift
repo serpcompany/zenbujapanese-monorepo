@@ -122,13 +122,53 @@ struct SearchResultOrderingTests {
     )
   }
 
-  @Test("inflected romaji keeps groups while frequency inverts an equivalent pair")
+  @Test("makasete exercises live deinflection and frequency cannot cross its groups")
   func liveInflectedRomajiGroups() async throws {
-    try await assertLiveGroupOrdering(
-      query: "utte",
-      crossGroup: ("討っ手", "打ってつけ"),
-      sameGroup: ("討っ手", "ウェッティ")
+    let query = SearchQuery("makasete")
+    #expect(try await LookupClient.live.entryMatchingForm(query.value) == nil)
+    let results = try await LookupClient.live.search(query)
+    #expect(results.wasDeinflected)
+
+    let entrusted = try #require(results.entries.first { $0.headword == "任せる" })
+    let defeat = try #require(results.entries.first { $0.headword == "負かす" })
+    let entrust = try #require(results.entries.first { $0.headword == "任す" })
+    #expect(results.relevanceGroup(for: entrusted) < results.relevanceGroup(for: defeat))
+    #expect(results.relevanceGroup(for: defeat) < results.relevanceGroup(for: entrust))
+
+    let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
+      entrusted.id: .evidence(fixtureEvidence(id: entrusted.id, rank: 50_000)),
+      defeat.id: .evidence(fixtureEvidence(id: defeat.id, rank: 2)),
+      entrust.id: .evidence(fixtureEvidence(id: entrust.id, rank: 1)),
+    ]
+    #expect(
+      SearchResultFrequencyOrdering.ordered(results, evidence: evidence).map(\.id)
+        == [entrusted.id, defeat.id, entrust.id]
     )
+  }
+
+  @Test("live deinflection keeps cross-groups fixed and inverts frequency within one group")
+  func liveDeinflectionSameGroupOrdering() async throws {
+    let query = SearchQuery("kaetta")
+    #expect(try await LookupClient.live.entryMatchingForm(query.value) == nil)
+    let results = try await LookupClient.live.search(query)
+    #expect(results.wasDeinflected)
+
+    let stronger = try #require(results.entries.first { $0.headword == "替え歌" })
+    let weaker = try #require(results.entries.first { $0.headword == "変える" })
+    let first = try #require(results.entries.first { $0.headword == "嘉悦大学" })
+    let second = try #require(results.entries.first { $0.headword == "嘉悦女子短大" })
+    #expect(results.relevanceGroup(for: stronger) < results.relevanceGroup(for: weaker))
+    #expect(results.relevanceGroup(for: first) == results.relevanceGroup(for: second))
+
+    let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
+      stronger.id: .evidence(fixtureEvidence(id: stronger.id, rank: 50_000)),
+      weaker.id: .evidence(fixtureEvidence(id: weaker.id, rank: 1)),
+      first.id: .evidence(fixtureEvidence(id: first.id, rank: 50_000)),
+      second.id: .evidence(fixtureEvidence(id: second.id, rank: 1)),
+    ]
+    let ordered = SearchResultFrequencyOrdering.ordered(results, evidence: evidence)
+    #expect(ordered.firstIndex(of: stronger)! < ordered.firstIndex(of: weaker)!)
+    #expect(ordered.firstIndex(of: second)! < ordered.firstIndex(of: first)!)
   }
 
   @Test("deinflection composition rebases whole relevance groups without splitting metadata")
@@ -154,6 +194,7 @@ struct SearchResultOrderingTests {
     #expect(results.relevanceGroup(for: alternateB.entry) == 1)
     #expect(results.displaySummary(for: alternateB.entry) == "alternate match b")
   }
+
 }
 
 private func assertLiveGroupOrdering(

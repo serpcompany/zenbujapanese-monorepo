@@ -102,6 +102,7 @@ private actor LanguageReferenceData {
           sources: [primaryItems] + displacedSources,
           leadingLexicalEntryCount: primaryItems.count,
           usesPrimaryEntryExamples: true,
+          resolution: .deinflected,
           limit: 60
         )
       }
@@ -129,6 +130,7 @@ private actor LanguageReferenceData {
         leadingLexicalEntryCount: analyzedResults.count,
         usesPrimaryEntryExamples: false,
         hasExactOrPrefixMatch: false,
+        resolution: .analyzed,
         limit: analyzedResults.count
       )
       .presenting(.discoveredWords)

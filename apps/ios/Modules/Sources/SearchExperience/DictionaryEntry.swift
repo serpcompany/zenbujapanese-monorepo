@@ -214,6 +214,7 @@ struct LookupSearchResults: Sendable {
   /// this bound to preserve its intentionally narrow candidate list without restoring buckets.
   let leadingLexicalEntryCount: Int
   let presentation: Presentation
+  let resolution: Resolution
   let readingRefinement: SearchRefinement?
   let usesPrimaryEntryExamples: Bool
   let hasExactOrPrefixMatch: Bool
@@ -222,6 +223,7 @@ struct LookupSearchResults: Sendable {
     items: [LookupSearchResultItem],
     leadingLexicalEntryCount: Int? = nil,
     presentation: Presentation = .ranked,
+    resolution: Resolution = .direct,
     readingRefinement: SearchRefinement? = nil,
     usesPrimaryEntryExamples: Bool = false,
     hasExactOrPrefixMatch: Bool = true
@@ -229,6 +231,7 @@ struct LookupSearchResults: Sendable {
     self.items = items
     self.leadingLexicalEntryCount = min(leadingLexicalEntryCount ?? items.count, items.count)
     self.presentation = presentation
+    self.resolution = resolution
     self.readingRefinement = readingRefinement
     self.usesPrimaryEntryExamples = usesPrimaryEntryExamples
     self.hasExactOrPrefixMatch = hasExactOrPrefixMatch
@@ -237,6 +240,7 @@ struct LookupSearchResults: Sendable {
   static let empty = LookupSearchResults(items: [], hasExactOrPrefixMatch: false)
 
   var entries: [DictionaryEntry] { items.map(\.entry) }
+  var wasDeinflected: Bool { resolution == .deinflected }
 
   var isEmpty: Bool {
     entries.isEmpty
@@ -259,6 +263,7 @@ struct LookupSearchResults: Sendable {
       items: items,
       leadingLexicalEntryCount: leadingLexicalEntryCount,
       presentation: presentation,
+      resolution: resolution,
       readingRefinement: readingRefinement,
       usesPrimaryEntryExamples: true,
       hasExactOrPrefixMatch: hasExactOrPrefixMatch
@@ -270,6 +275,7 @@ struct LookupSearchResults: Sendable {
       items: items,
       leadingLexicalEntryCount: leadingLexicalEntryCount,
       presentation: presentation,
+      resolution: resolution,
       readingRefinement: SearchRefinement(query: query),
       usesPrimaryEntryExamples: usesPrimaryEntryExamples,
       hasExactOrPrefixMatch: hasExactOrPrefixMatch
@@ -284,6 +290,7 @@ struct LookupSearchResults: Sendable {
       items: items,
       leadingLexicalEntryCount: leadingLexicalEntryCount,
       presentation: presentation,
+      resolution: resolution,
       readingRefinement: readingRefinement,
       usesPrimaryEntryExamples: usesPrimaryEntryExamples,
       hasExactOrPrefixMatch: hasExactOrPrefixMatch ?? self.hasExactOrPrefixMatch
@@ -295,6 +302,7 @@ struct LookupSearchResults: Sendable {
     leadingLexicalEntryCount: Int,
     usesPrimaryEntryExamples: Bool,
     hasExactOrPrefixMatch: Bool = true,
+    resolution: Resolution = .direct,
     limit: Int = 60
   ) -> LookupSearchResults {
     var items: [LookupSearchResultItem] = []
@@ -316,6 +324,7 @@ struct LookupSearchResults: Sendable {
     return LookupSearchResults(
       items: items,
       leadingLexicalEntryCount: leadingLexicalEntryCount,
+      resolution: resolution,
       usesPrimaryEntryExamples: usesPrimaryEntryExamples,
       hasExactOrPrefixMatch: hasExactOrPrefixMatch
     )
@@ -324,6 +333,12 @@ struct LookupSearchResults: Sendable {
   enum Presentation: Equatable, Sendable {
     case ranked
     case discoveredWords
+  }
+
+  enum Resolution: Equatable, Sendable {
+    case direct
+    case deinflected
+    case analyzed
   }
 }
 

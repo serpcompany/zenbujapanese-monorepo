@@ -63,6 +63,7 @@ editing or resubmitting the visible query.
 | Japanese | `いる` | One **Results** collection; relevance groups remain stable and numeric ranks ascend within each equivalent group. |
 | English | `prison` | Direct prison matches precede incidental matches regardless of frequency; each row shows the matching prison gloss. |
 | Romaji | `miru` | Romaji relevance groups remain stable and frequency orders only within equivalent groups. |
+| Inflected romaji | `makasete` | The query enters deinflection (there is no direct form) and keeps `任せる`, `負かす`, then `任す` in relevance-group order even when their numeric ranks would suggest another global order. |
 | Radical origin | Submit a sparse radical selection | One **Results** collection contains only the leading lexical-rank candidate group, frequency-ordered within that group. |
 | Single kanji | `静` | The dedicated Kanji row remains first; word rows use frequency order and visible positions include the Kanji row. |
 | No evidence | `齉` | The dictionary entry remains discoverable with `—` and follows any entry with mapped evidence. |
