@@ -1,6 +1,6 @@
 {
-  "analysisToolSHA256": "3cb1ad81cf6727529e8cb4da4a32f5270ddf43d83a4483e6155733d4cb9f0cb9",
-  "candidateCatalogSHA256": "02081d7239f789eb73ed07adea0dcb1767407ad127afaba4dd6305ad5185f018",
+  "analysisToolSHA256": "ee2d19789b9050b115afda684e2c89ab98c664e6e96c1d1e597ed19e4ccba514",
+  "candidateCatalogSHA256": "c73c82d2cc6e0e415e9157c90cabfe41a70d6fddd8c1236d01bbe08152659606",
   "candidates": [
     {
       "analysis": {
@@ -8,6 +8,8 @@
         "duplicateMappings": 15213,
         "mappedPercent": 50.61,
         "mappedRows": 52053,
+        "projectedRuntimeSQLiteBytes": 6340608,
+        "rawJSONBytes": 3228941,
         "repeatedNormalizedForms": 2006,
         "repeatedWrittenReadingPairs": 0,
         "sourceRows": 102844,
@@ -18,7 +20,13 @@
           "top1000MappedJaccard": 0.3446
         },
         "uniqueNormalizedForms": 100838,
-        "unmappedRows": 27384
+        "unmappedRows": 27384,
+        "wikipedia": {
+          "candidateMappedOverlapPercent": 96.5,
+          "sharedMappedLanguageReferenceIDs": 50229,
+          "sharedRankPearson": 0.4589,
+          "top1000MappedJaccard": 0.1423
+        }
       },
       "archive": "Netflix.json.zip",
       "bytes": 1039994,
@@ -35,6 +43,8 @@
         "duplicateMappings": 325,
         "mappedPercent": 55.45,
         "mappedRows": 9132,
+        "projectedRuntimeSQLiteBytes": 1110016,
+        "rawJSONBytes": 569913,
         "repeatedNormalizedForms": 334,
         "repeatedWrittenReadingPairs": 16,
         "sourceRows": 16469,
@@ -45,7 +55,13 @@
           "top1000MappedJaccard": 0.2649
         },
         "uniqueNormalizedForms": 16135,
-        "unmappedRows": 5663
+        "unmappedRows": 5663,
+        "wikipedia": {
+          "candidateMappedOverlapPercent": 81.71,
+          "sharedMappedLanguageReferenceIDs": 7462,
+          "sharedRankPearson": 0.5033,
+          "top1000MappedJaccard": 0.0485
+        }
       },
       "archive": "Novels.json.zip",
       "bytes": 164820,
@@ -62,6 +78,8 @@
         "duplicateMappings": 4224,
         "mappedPercent": 58.81,
         "mappedRows": 25360,
+        "projectedRuntimeSQLiteBytes": 3055616,
+        "rawJSONBytes": 1274114,
         "repeatedNormalizedForms": 1170,
         "repeatedWrittenReadingPairs": 0,
         "sourceRows": 43125,
@@ -72,7 +90,13 @@
           "top1000MappedJaccard": 0.2902
         },
         "uniqueNormalizedForms": 41955,
-        "unmappedRows": 8595
+        "unmappedRows": 8595,
+        "wikipedia": {
+          "candidateMappedOverlapPercent": 98.13,
+          "sharedMappedLanguageReferenceIDs": 24885,
+          "sharedRankPearson": 0.2848,
+          "top1000MappedJaccard": 0.0817
+        }
       },
       "archive": "Slice_of_Life.json.zip",
       "bytes": 411869,
@@ -89,6 +113,8 @@
         "duplicateMappings": 2263,
         "mappedPercent": 14.7,
         "mappedRows": 5596,
+        "projectedRuntimeSQLiteBytes": 688128,
+        "rawJSONBytes": 1617165,
         "repeatedNormalizedForms": 3759,
         "repeatedWrittenReadingPairs": 435,
         "sourceRows": 38075,
@@ -99,7 +125,13 @@
           "top1000MappedJaccard": 0.1444
         },
         "uniqueNormalizedForms": 34316,
-        "unmappedRows": 28235
+        "unmappedRows": 28235,
+        "wikipedia": {
+          "candidateMappedOverlapPercent": 79.25,
+          "sharedMappedLanguageReferenceIDs": 4435,
+          "sharedRankPearson": 0.1126,
+          "top1000MappedJaccard": 0.1605
+        }
       },
       "archive": "NHK.json.zip",
       "bytes": 349003,
@@ -116,6 +148,8 @@
         "duplicateMappings": 6423,
         "mappedPercent": 56.92,
         "mappedRows": 32098,
+        "projectedRuntimeSQLiteBytes": 3874816,
+        "rawJSONBytes": 1700426,
         "repeatedNormalizedForms": 0,
         "repeatedWrittenReadingPairs": 0,
         "sourceRows": 56396,
@@ -126,7 +160,13 @@
           "top1000MappedJaccard": 0.3004
         },
         "uniqueNormalizedForms": 56396,
-        "unmappedRows": 13126
+        "unmappedRows": 13126,
+        "wikipedia": {
+          "candidateMappedOverlapPercent": 97.7,
+          "sharedMappedLanguageReferenceIDs": 31361,
+          "sharedRankPearson": 0.3008,
+          "top1000MappedJaccard": 0.0982
+        }
       },
       "archive": "Shonen.json.zip",
       "bytes": 550470,
@@ -143,6 +183,8 @@
         "duplicateMappings": 3578,
         "mappedPercent": 76.87,
         "mappedRows": 43241,
+        "projectedRuntimeSQLiteBytes": 5292032,
+        "rawJSONBytes": 884304,
         "repeatedNormalizedForms": 1,
         "repeatedWrittenReadingPairs": 1,
         "sourceRows": 56251,
@@ -153,7 +195,13 @@
           "top1000MappedJaccard": 0.3996
         },
         "uniqueNormalizedForms": 56250,
-        "unmappedRows": 5401
+        "unmappedRows": 5401,
+        "wikipedia": {
+          "candidateMappedOverlapPercent": 63.43,
+          "sharedMappedLanguageReferenceIDs": 27427,
+          "sharedRankPearson": 0.3276,
+          "top1000MappedJaccard": 0.1689
+        }
       },
       "archive": "YouTube.json.zip",
       "bytes": 300673,
@@ -170,6 +218,8 @@
         "duplicateMappings": 27943,
         "mappedPercent": 63.81,
         "mappedRows": 131840,
+        "projectedRuntimeSQLiteBytes": 16388096,
+        "rawJSONBytes": 3389244,
         "repeatedNormalizedForms": 0,
         "repeatedWrittenReadingPairs": 0,
         "sourceRows": 206621,
@@ -180,7 +230,13 @@
           "top1000MappedJaccard": 0.2004
         },
         "uniqueNormalizedForms": 206621,
-        "unmappedRows": 39453
+        "unmappedRows": 39453,
+        "wikipedia": {
+          "candidateMappedOverlapPercent": 47.64,
+          "sharedMappedLanguageReferenceIDs": 62813,
+          "sharedRankPearson": 0.5096,
+          "top1000MappedJaccard": 0.2129
+        }
       },
       "archive": "JP_Dict.json.zip",
       "bytes": 1203851,
@@ -197,6 +253,8 @@
         "duplicateMappings": 731,
         "mappedPercent": 81.41,
         "mappedRows": 28539,
+        "projectedRuntimeSQLiteBytes": 3420160,
+        "rawJSONBytes": 493039,
         "repeatedNormalizedForms": 1371,
         "repeatedWrittenReadingPairs": 1371,
         "sourceRows": 35058,
@@ -207,7 +265,13 @@
           "top1000MappedJaccard": 0.3602
         },
         "uniqueNormalizedForms": 33687,
-        "unmappedRows": 2306
+        "unmappedRows": 2306,
+        "wikipedia": {
+          "candidateMappedOverlapPercent": 97.12,
+          "sharedMappedLanguageReferenceIDs": 27718,
+          "sharedRankPearson": 0.1819,
+          "top1000MappedJaccard": 0.0676
+        }
       },
       "archive": "Visual_Novel.json.zip",
       "bytes": 178905,
@@ -224,6 +288,8 @@
         "duplicateMappings": 9989,
         "mappedPercent": 68.09,
         "mappedRows": 68087,
+        "projectedRuntimeSQLiteBytes": 8372224,
+        "rawJSONBytes": 1589061,
         "repeatedNormalizedForms": 0,
         "repeatedWrittenReadingPairs": 0,
         "sourceRows": 99999,
@@ -234,7 +300,13 @@
           "top1000MappedJaccard": 0.292
         },
         "uniqueNormalizedForms": 99999,
-        "unmappedRows": 16258
+        "unmappedRows": 16258,
+        "wikipedia": {
+          "candidateMappedOverlapPercent": 60.27,
+          "sharedMappedLanguageReferenceIDs": 41033,
+          "sharedRankPearson": 0.3627,
+          "top1000MappedJaccard": 0.0869
+        }
       },
       "archive": "TV_Shows.json.zip",
       "bytes": 561111,
@@ -251,6 +323,8 @@
         "duplicateMappings": 21606,
         "mappedPercent": 55.35,
         "mappedRows": 89015,
+        "projectedRuntimeSQLiteBytes": 10907648,
+        "rawJSONBytes": 2477283,
         "repeatedNormalizedForms": 7653,
         "repeatedWrittenReadingPairs": 7653,
         "sourceRows": 160836,
@@ -261,7 +335,13 @@
           "top1000MappedJaccard": 0.4433
         },
         "uniqueNormalizedForms": 153183,
-        "unmappedRows": 41492
+        "unmappedRows": 41492,
+        "wikipedia": {
+          "candidateMappedOverlapPercent": 74.38,
+          "sharedMappedLanguageReferenceIDs": 66213,
+          "sharedRankPearson": 0.6208,
+          "top1000MappedJaccard": 0.229
+        }
       },
       "archive": "Internet.json.zip",
       "bytes": 941696,
@@ -280,6 +360,8 @@
   },
   "languageDataSHA256": "f69d66155955e4b88f8b7501965dc05665bf5bd21a0199f02cb12467c3d0d092",
   "mappingPolicySHA256": "7cf8ee196cd98c9683ac35f3214bc149ce6bfae55a1ee5f9c854c02816d2ecae",
+  "publicCatalogSnapshotSHA256": "9f3d483fd31fcef5f08e88b7859e094abb81c07ea24ec477437b854d99441794",
   "schema": "zenbu.frequency-candidate-analysis.v1",
-  "tubelexArtifactSHA256": "d4a9e84b8a2c359394015a01f82307ea68c1a61c32597b7d7cab82ee5d4a6d87"
+  "tubelexArtifactSHA256": "d4a9e84b8a2c359394015a01f82307ea68c1a61c32597b7d7cab82ee5d4a6d87",
+  "wikipediaArtifactSHA256": "d3dba5c4902b9323799d5c0ac53af2dd84a0c1bd208d047176a4a6a703f31eea"
 }

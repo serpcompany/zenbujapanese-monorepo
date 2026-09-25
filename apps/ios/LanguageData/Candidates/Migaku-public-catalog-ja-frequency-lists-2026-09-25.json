@@ -1,0 +1,17 @@
+{
+  "source": "https://migaku-public-data.migaku.com/dicts/index.json",
+  "retrievedAt": "2026-09-25",
+  "language": "ja",
+  "frequencyLists": [
+    {"name":"Netflix","description":"Sourced from Netflix Japan","urlZip":"/ja/frequency_lists/Netflix.json.zip"},
+    {"name":"Novels","description":"Frequency across 5000 Japanese novels","urlZip":"/ja/frequency_lists/Novel 5k.json.zip"},
+    {"name":"Slice of Life","description":"\"Slice of Life\" is a genre of anime that portrays everyday experiences in a realistic manner, often emphasizing the mundane and routine","urlZip":"/ja/frequency_lists/Slice of Life.json.zip"},
+    {"name":"NHK","description":"Frequency across articles from the news website NHK","urlZip":"/ja/frequency_lists/NHK.json.zip"},
+    {"name":"Shonen","description":"\"Shonen\" is a genre of anime that often includes fantasy, adventure, and action, aimed at adolescent male target audiences","urlZip":"/ja/frequency_lists/Shonen.json.zip"},
+    {"name":"YouTube","description":"Sourced from a variety of YouTube videos","urlZip":"/ja/frequency_lists/YoutubeFreq.json.zip"},
+    {"name":"JP Dict","description":"Frequency across a range of Japanese-Japanese dictionary definitions. Useful for learners who are still getting acquainted with using a monolingual dictionary","urlZip":"/ja/frequency_lists/Monodicts_206k.json.zip"},
+    {"name":"Visual Novel","description":"Visual Novels (VNs) are interactive games that combine storytelling with character and background visuals. Player choices lead to different outcomes and endings","urlZip":"/ja/frequency_lists/VN_Freq_v2.json.zip"},
+    {"name":"TV Shows","description":"Sourced from a variety of anime and Japanese drama","urlZip":"/ja/frequency_lists/Anime_J-drama.json.zip"},
+    {"name":"Internet","description":"Sourced from across the Japanese Internet. Note: formal words may appear more commonly in this list","urlZip":"/ja/frequency_lists/CC100.json.zip"}
+  ]
+}

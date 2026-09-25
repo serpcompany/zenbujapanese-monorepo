@@ -3,7 +3,8 @@
   "catalog": {
     "identity": "Migaku public data catalog",
     "url": "https://migaku-public-data.migaku.com/dicts/index.json",
-    "localSnapshotSHA256": "5927c09666b666720178c870e78d7a861d21948464ff3b3fdabc3319e8474bfe",
+    "snapshotResource": "Migaku-public-catalog-ja-frequency-lists-2026-09-25.json",
+    "snapshotSHA256": "9f3d483fd31fcef5f08e88b7859e094abb81c07ea24ec477437b854d99441794",
     "retrievedAt": "2026-09-25"
   },
   "distributionDecision": {

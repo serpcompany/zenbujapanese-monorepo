@@ -15,6 +15,7 @@ import math
 import sqlite3
 import tempfile
 import unicodedata
+import urllib.parse
 import zipfile
 from pathlib import Path
 
@@ -39,14 +40,17 @@ def normalized(value: str) -> str:
     return unicodedata.normalize("NFKC", value).strip()
 
 
-def read_rows(archive: Path, candidate: dict[str, object]) -> list[tuple[int, str, str, bytes]]:
+def read_rows(
+    archive: Path, candidate: dict[str, object]
+) -> tuple[list[tuple[int, str, str, bytes]], int]:
     if archive.stat().st_size != candidate["bytes"] or sha256(archive) != candidate["sha256"]:
         raise ValueError(f"{archive.name}: archive size or SHA-256 mismatch")
     with zipfile.ZipFile(archive) as package:
         names = package.namelist()
         if names != [candidate["entry"]]:
             raise ValueError(f"{archive.name}: expected exactly {candidate['entry']!r}, found {names!r}")
-        value = json.loads(package.read(names[0]))
+        raw_json = package.read(names[0])
+        value = json.loads(raw_json)
     if not isinstance(value, list) or len(value) != candidate["rows"]:
         raise ValueError(f"{archive.name}: expected {candidate['rows']} rows")
     result: list[tuple[int, str, str, bytes]] = []
@@ -61,15 +65,40 @@ def read_rows(archive: Path, candidate: dict[str, object]) -> list[tuple[int, st
         if not form:
             raise ValueError(f"{archive.name}: row {rank} has an empty normalized form")
         result.append((rank, form, reading, hashlib.sha256(canonical_json(row)).digest()))
-    return result
+    return result, len(raw_json)
+
+
+def validate_catalog_snapshot(catalog_path: Path, catalog: dict[str, object]) -> str:
+    metadata = catalog["catalog"]
+    snapshot = catalog_path.parent / metadata["snapshotResource"]
+    digest = sha256(snapshot)
+    if digest != metadata["snapshotSHA256"]:
+        raise ValueError("public catalog snapshot SHA-256 mismatch")
+    source = json.loads(snapshot.read_text(encoding="utf-8"))
+    if source.get("source") != metadata["url"] or source.get("retrievedAt") != metadata["retrievedAt"]:
+        raise ValueError("public catalog snapshot identity mismatch")
+    published = {item["name"]: item for item in source.get("frequencyLists", [])}
+    for candidate in catalog["candidates"]:
+        item = published.get(candidate["name"])
+        path = urllib.parse.unquote(urllib.parse.urlparse(candidate["url"]).path)
+        if item is None or not path.endswith(item["urlZip"]):
+            raise ValueError(f"{candidate['name']}: candidate URL does not match catalog snapshot")
+    if len(published) != len(catalog["candidates"]):
+        raise ValueError("public catalog snapshot candidate count mismatch")
+    return digest
 
 
 def mapping_report(
-    rows: list[tuple[int, str, str, bytes]], language_data: Path, tubelex: Path
+    rows: list[tuple[int, str, str, bytes]],
+    raw_json_bytes: int,
+    language_data: Path,
+    references: dict[str, Path],
 ) -> dict[str, object]:
     with tempfile.TemporaryDirectory() as directory:
-        database = sqlite3.connect(Path(directory) / "candidate.sqlite3")
+        database_path = Path(directory) / "candidate.sqlite3"
+        database = sqlite3.connect(database_path)
         database.executescript(
+            "PRAGMA page_size=4096; PRAGMA journal_mode=OFF; PRAGMA auto_vacuum=NONE;"
             "CREATE TABLE source_rows(rank INTEGER PRIMARY KEY, form TEXT NOT NULL, "
             "source_count INTEGER NOT NULL, source_pos TEXT NOT NULL, "
             "source_record_digest BLOB NOT NULL);"
@@ -97,28 +126,21 @@ def mapping_report(
         eligible = database.execute("SELECT count(*) FROM eligible").fetchone()[0]
         repeated_forms = count - len({form for _, form, _, _ in rows})
         repeated_pairs = count - len({(form, reading) for _, form, reading, _ in rows})
-        database.execute("ATTACH DATABASE ? AS tubelex", (str(tubelex),))
-        shared = database.execute(
-            "SELECT count(*) FROM frequency_evidence c JOIN tubelex.frequency_evidence t "
-            "ON t.language_reference_id = c.language_reference_id"
-        ).fetchone()[0]
-        top1000_shared = database.execute(
-            "SELECT count(*) FROM frequency_evidence c JOIN tubelex.frequency_evidence t "
-            "ON t.language_reference_id = c.language_reference_id WHERE c.rank <= 1000 AND t.rank <= 1000"
-        ).fetchone()[0]
-        top1000_candidate = database.execute(
-            "SELECT count(*) FROM frequency_evidence WHERE rank <= 1000"
-        ).fetchone()[0]
-        top1000_tubelex = database.execute(
-            "SELECT count(*) FROM tubelex.frequency_evidence WHERE rank <= 1000"
-        ).fetchone()[0]
-        rank_pairs = database.execute(
-            "SELECT CAST(c.rank AS REAL), CAST(t.rank AS REAL) FROM frequency_evidence c "
-            "JOIN tubelex.frequency_evidence t ON t.language_reference_id = c.language_reference_id"
-        ).fetchall()
-        rho = pearson(rank_pairs)
+        comparisons: dict[str, object] = {}
+        for alias, reference in references.items():
+            database.execute(f"ATTACH DATABASE ? AS {alias}", (str(reference),))
+            comparisons[alias] = comparison(database, alias, mapped)
+        database.execute("DROP TABLE source_rows")
+        database.execute(
+            "CREATE INDEX frequency_evidence_rank_index ON frequency_evidence(rank, language_reference_id)"
+        )
+        database.commit()
+        database.execute("VACUUM")
+        projected_bytes = database_path.stat().st_size
         return {
             "sourceRows": count,
+            "rawJSONBytes": raw_json_bytes,
+            "projectedRuntimeSQLiteBytes": projected_bytes,
             "uniqueNormalizedForms": count - repeated_forms,
             "repeatedNormalizedForms": repeated_forms,
             "repeatedWrittenReadingPairs": repeated_pairs,
@@ -127,15 +149,38 @@ def mapping_report(
             "unmappedRows": count - matched,
             "duplicateMappings": eligible - mapped,
             "mappedPercent": round(mapped * 100 / count, 2),
-            "tubelex": {
-                "sharedMappedLanguageReferenceIDs": shared,
-                "candidateMappedOverlapPercent": round(shared * 100 / mapped, 2) if mapped else 0,
-                "top1000MappedJaccard": round(
-                    top1000_shared / (top1000_candidate + top1000_tubelex - top1000_shared), 4
-                ),
-                "sharedRankPearson": round(rho, 4) if rho is not None else None,
-            },
+            **comparisons,
         }
+
+
+def comparison(database: sqlite3.Connection, alias: str, mapped: int) -> dict[str, object]:
+    shared = database.execute(
+        f"SELECT count(*) FROM frequency_evidence c JOIN {alias}.frequency_evidence r "
+        "ON r.language_reference_id = c.language_reference_id"
+    ).fetchone()[0]
+    top1000_shared = database.execute(
+        f"SELECT count(*) FROM frequency_evidence c JOIN {alias}.frequency_evidence r "
+        "ON r.language_reference_id = c.language_reference_id WHERE c.rank <= 1000 AND r.rank <= 1000"
+    ).fetchone()[0]
+    top1000_candidate = database.execute(
+        "SELECT count(*) FROM frequency_evidence WHERE rank <= 1000"
+    ).fetchone()[0]
+    top1000_reference = database.execute(
+        f"SELECT count(*) FROM {alias}.frequency_evidence WHERE rank <= 1000"
+    ).fetchone()[0]
+    rank_pairs = database.execute(
+        f"SELECT CAST(c.rank AS REAL), CAST(r.rank AS REAL) FROM frequency_evidence c "
+        f"JOIN {alias}.frequency_evidence r ON r.language_reference_id = c.language_reference_id"
+    ).fetchall()
+    rho = pearson(rank_pairs)
+    return {
+        "sharedMappedLanguageReferenceIDs": shared,
+        "candidateMappedOverlapPercent": round(shared * 100 / mapped, 2) if mapped else 0,
+        "top1000MappedJaccard": round(
+            top1000_shared / (top1000_candidate + top1000_reference - top1000_shared), 4
+        ),
+        "sharedRankPearson": round(rho, 4) if rho is not None else None,
+    }
 
 
 def pearson(pairs: list[tuple[float, float]]) -> float | None:
@@ -152,21 +197,32 @@ def pearson(pairs: list[tuple[float, float]]) -> float | None:
 
 def main(arguments: argparse.Namespace) -> None:
     catalog = json.loads(arguments.catalog.read_text(encoding="utf-8"))
+    snapshot_sha256 = validate_catalog_snapshot(arguments.catalog, catalog)
+    wikipedia_import = json.loads(arguments.wikipedia_import_report.read_text(encoding="utf-8"))
+    if sha256(arguments.wikipedia) != wikipedia_import["artifactSHA256"]:
+        raise ValueError("Wikipedia comparison artifact SHA-256 mismatch")
     output: dict[str, object] = {
         "schema": "zenbu.frequency-candidate-analysis.v1",
         "analysisToolSHA256": sha256(Path(__file__)),
         "candidateCatalogSHA256": sha256(arguments.catalog),
+        "publicCatalogSnapshotSHA256": snapshot_sha256,
         "languageDataSHA256": sha256(arguments.language_data),
         "mappingPolicySHA256": sha256(MAPPING_SQL),
         "tubelexArtifactSHA256": sha256(arguments.tubelex),
+        "wikipediaArtifactSHA256": sha256(arguments.wikipedia),
         "distributionDecision": catalog["distributionDecision"],
         "candidates": [],
     }
     for candidate in catalog["candidates"]:
         archive = arguments.archives / candidate["archive"]
-        rows = read_rows(archive, candidate)
+        rows, raw_json_bytes = read_rows(archive, candidate)
         report = {key: candidate[key] for key in ("id", "name", "domain", "description", "url", "archive", "bytes", "sha256")}
-        report["analysis"] = mapping_report(rows, arguments.language_data, arguments.tubelex)
+        report["analysis"] = mapping_report(
+            rows,
+            raw_json_bytes,
+            arguments.language_data,
+            {"tubelex": arguments.tubelex, "wikipedia": arguments.wikipedia},
+        )
         output["candidates"].append(report)
         print(f"{candidate['name']}: {report['analysis']['mappedRows']:,} mapped")
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
@@ -179,6 +235,8 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--archives", type=Path, required=True)
     result.add_argument("--language-data", type=Path, required=True)
     result.add_argument("--tubelex", type=Path, required=True)
+    result.add_argument("--wikipedia", type=Path, required=True)
+    result.add_argument("--wikipedia-import-report", type=Path, required=True)
     result.add_argument("--output", type=Path, required=True)
     return result
 
