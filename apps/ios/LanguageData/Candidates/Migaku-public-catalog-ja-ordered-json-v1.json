@@ -8,9 +8,9 @@
     "retrievedAt": "2026-09-25"
   },
   "distributionDecision": {
-    "status": "no-go-pending-rights",
-    "reason": "The public catalog supplies downloads and short descriptions but no license, attribution chain, modification terms, or app redistribution grant for these compiled lists.",
-    "shippingBehavior": "Do not bundle, mirror, or direct-download these archives from Zenbu. Re-evaluate when the applicable rightsholder publishes terms that cover app redistribution."
+    "status": "optional-direct-source-download",
+    "reason": "Product decision permits user-initiated downloads from the public catalog while retaining explicit disclosure that provenance, semantics, and redistribution terms are not published.",
+    "shippingBehavior": "Do not bundle or mirror the archives. Download a selected checksum-pinned ZIP directly from the public catalog, map it on-device, discard the raw archive, and retain only the removable local SQLite pack."
   },
   "format": {
     "container": "ZIP containing one UTF-8 JSON file",

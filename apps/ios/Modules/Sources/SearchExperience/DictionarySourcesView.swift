@@ -155,6 +155,24 @@ struct DictionarySourcesView: View {
         )
       }
 
+      Section("Public Japanese Frequency Catalog") {
+        Text(
+          "Optional Netflix, Novels, Slice of Life, NHK, Shonen, YouTube, JP Dict, Visual Novel, TV Shows, and Internet packs download directly from the public catalog. Zenbu verifies the published archives and maps them on-device."
+        )
+        LabeledContent("Version", value: "Catalog snapshot 2026-09-25")
+        LabeledContent("License", value: "Terms not published by catalog")
+        Text(
+          "The catalog does not identify the underlying compiler or publish occurrence counts, tokenizer details, provenance, or redistribution terms. Zenbu does not bundle or mirror these archives."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        Link(
+          "Public source catalog",
+          destination: URL(string: "https://migaku-public-data.migaku.com/dicts/index.json")!
+        )
+        .accessibilityIdentifier("dictionary-sources.public-frequency-catalog")
+      }
+
       Section("Japanese Text Analysis") {
         Text(
           "Optional on-device Japanese word boundaries, dictionary forms, readings, and parts of speech from Sudachi.rs and SudachiDict Core. ZIPFoundation reads the checksum-pinned official dictionary wheel during installation."

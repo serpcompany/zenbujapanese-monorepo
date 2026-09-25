@@ -40,7 +40,7 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
     guard let url = Bundle.module.url(forResource: "FrequencyPackCatalog", withExtension: "json")
     else { throw FrequencyPackError.invalidCatalog }
     let catalog = try JSONDecoder().decode(Self.self, from: Data(contentsOf: url))
-    guard catalog.schemaVersion == 1, catalog.packs.count == 2,
+    guard catalog.schemaVersion == 1, catalog.packs.count >= 2,
       catalog.packs.filter(\.bundled).count == 1,
       Set(catalog.packs.map(\.packID)).count == catalog.packs.count,
       Set(
@@ -53,6 +53,7 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
           && $0.runtimeInstallerVersion == 1 && !$0.offlineImporterSHA256.isEmpty
           && !$0.mappingPolicySHA256.isEmpty && !$0.languageDataSHA256.isEmpty
           && !$0.artifactContentSHA256.isEmpty
+          && $0.hasValidSourceContract
       }),
       catalog.trustedHistoricalManifests.allSatisfy({ historical in
         !historical.bundled && catalog.packs.contains { $0.packID == historical.packID }
@@ -102,6 +103,14 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
   let licenseResource: String
   let bundled: Bool
   let removable: Bool
+  let orderedJSONSource: FrequencyPackOrderedJSONSource?
+
+  var hasValidSourceContract: Bool {
+    guard let orderedJSONSource else { return true }
+    return !bundled && orderedJSONSource.rawJSONBytes > 0
+      && !orderedJSONSource.archiveEntry.isEmpty
+      && !presentationCapabilities.contains("count")
+  }
 
   var disclosure: FrequencyPackDisclosure {
     FrequencyPackDisclosure(
@@ -119,6 +128,11 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
     encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
     return try encoder.encode(self).sha256
   }
+}
+
+struct FrequencyPackOrderedJSONSource: Codable, Equatable, Sendable {
+  let archiveEntry: String
+  let rawJSONBytes: Int
 }
 
 struct FrequencyPackDisclosure: Equatable, Sendable {

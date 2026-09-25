@@ -17,10 +17,12 @@ You is a supporting navigation area rather than a separate Product Experience. I
 - management of optional frequency dictionaries and Japanese Text Analysis resources; and
 - source credits and attributions.
 
-Frequency Dictionaries also discloses when publicly downloadable source lists
-were evaluated but could not be offered because their provenance and app
-redistribution terms were not published. Such candidates are not downloaded or
-installed by the app.
+Frequency Dictionaries offers checksum-pinned optional packs for streaming,
+fiction, news, anime, Japanese dictionary definitions, television, online video,
+and broad web Japanese. These packs download directly from their public source
+catalog, are mapped locally into Zenbu's dictionary, and can be activated or
+removed independently. Their rows disclose that occurrence counts, tokenizer
+details, provenance, and redistribution terms are not published by the catalog.
 
 ### Media Library
 

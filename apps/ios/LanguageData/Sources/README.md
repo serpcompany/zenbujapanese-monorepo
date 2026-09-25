@@ -26,7 +26,9 @@ them. Import reports under `apps/ios/LanguageData/Generated/` connect pinned
 inputs to generated artifact checksums and must remain versioned with those
 artifacts.
 
-Frequency candidates that have not passed the redistribution and provenance
-gate are kept outside this source-of-truth table. See
+The public-catalog ordered JSON packs retain their pinned catalog snapshot and
+analysis under `LanguageData/Candidates` and `LanguageData/Generated`. Their raw
+archives are downloaded directly by the app and are not stored in this repository.
+See
 [`FREQUENCY_SOURCE_DECISIONS.md`](../FREQUENCY_SOURCE_DECISIONS.md) for the
-decision matrix and reproducible analysis of the ten ordered-JSON candidates.
+decision matrix and reproducible analysis of the ten ordered-JSON packs.

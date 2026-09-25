@@ -5,19 +5,18 @@ not evidence that Zenbu may redistribute the compiled data in an iOS app.
 
 ## Shipping decision
 
-Zenbu continues to ship the BSD-3-Clause TUBELEX pack and offer the
-BSD-3-Clause Wikipedia pack. No additional pack is approved in this review.
-The ten real ordered-JSON archives supplied for the issue are checksum-pinned
-and analyzed, but remain a **no-go pending rights**: the public catalog gives
-download links and brief domain descriptions but no license, attribution chain,
-modification terms, or app-redistribution permission for these compiled lists.
+Zenbu ships the BSD-3-Clause TUBELEX pack and offers the BSD-3-Clause Wikipedia
+pack. By product decision, the ten checksum-pinned ordered-JSON archives are
+also offered as optional direct-source downloads. Zenbu does not bundle or mirror
+their raw data: the app downloads each selected ZIP from the public catalog,
+validates its exact checksum and shape, maps it locally, and retains only the
+generated removable SQLite pack.
 
-They must not be bundled, mirrored, or made a direct in-app download until the
-applicable rightsholder publishes suitable terms. A user-file bypass is also not
-implemented: it would activate data with unknown provenance and tokenizer/count
-semantics as a trusted Zenbu ranking source, while the current v1 mapper cannot
-use the supplied reading field to resolve ambiguity. This can be reconsidered
-with an explicitly untrusted custom-list product contract.
+The catalog still does not publish an underlying compiler/rightsholder,
+occurrence counts, tokenizer and tie semantics, or redistribution terms. The app
+discloses those limitations per pack and treats array position as the explicit
+rank. Supplied readings remain in source-record digests but the v1 mapping policy
+continues to use normalized written forms only and rejects ambiguous mappings.
 
 ## Source decision matrix
 
@@ -27,7 +26,7 @@ with an explicitly untrusted custom-list product contract.
 | Wikipedia Word Frequency Clean | Adam Nohejl and contributors; <https://github.com/adno/wikipedia-word-frequency-clean> | Commit `8b7a2811`; 2022-10-20 dump; immutable raw GitHub artifact | Encyclopedic written Japanese; 2,177,257 documents, 609,365,356 tokens | UniDic 3.1 NFKC surface counts; encyclopedic/formal bias; pinned source-row order breaks ties | BSD-3-Clause with bundled notice; app redistribution allowed | **Approved and optional download** |
 | BCCWJ v1 frequency tables | NINJAL; <https://clrd.ninjal.ac.jp/bccwj/freq-list.html> | Version 1.0 downloads remain available | Balanced written corpus; 104.3 million words across books, magazines, news, web, textbooks, legal and other registers | Short/long-unit lexemes with POS, raw frequency and per-million frequency; manual reports about 2% analysis error and defines deterministic tie ordering | Page permits free research/education use. Commercial product use and redistribution are not granted by that statement; NINJAL has separate commercial contracts and restricts distribution | **No-go without written product/redistribution grant** |
 | CEJC frequency tables | NINJAL; <https://www2.ninjal.ac.jp/conversation/cejc/cejc-wc.html> | Official tables available; current project page maintained | Recorded everyday conversation with demographic/context dimensions | Short-unit lexeme, written form, pronunciation and POS; conversational sampling bias | Published materials carry noncommercial/no-derivatives restrictions and corpus-specific terms; app redistribution is not established | **No-go** |
-| Migaku public Japanese catalog (10 lists below) | Migaku public catalog/distributor; underlying compiler/publisher unidentified; <https://migaku-public-data.migaku.com/dicts/index.json> | Committed Japanese frequency-list snapshot SHA-256 `9f3d483fd31fcef5f08e88b7859e094abb81c07ea24ec477437b854d99441794`; all ten archive URLs available on 2026-09-25 | Streaming, fiction, anime dialogue, news, YouTube, dictionary definitions, visual novels, television and web | Ordered strings or `[written, reading]` pairs; no counts, corpus dates, document/token totals, tokenizer, normalization, tie policy or upstream attribution published | Catalog publishes downloads but no license or app-redistribution grant for compiled lists | **No-go pending rights and provenance** |
+| Migaku public Japanese catalog (10 lists below) | Migaku public catalog/distributor; underlying compiler/publisher unidentified; <https://migaku-public-data.migaku.com/dicts/index.json> | Committed Japanese frequency-list snapshot SHA-256 `9f3d483fd31fcef5f08e88b7859e094abb81c07ea24ec477437b854d99441794`; all ten archive URLs available on 2026-09-25 | Streaming, fiction, anime dialogue, news, YouTube, dictionary definitions, visual novels, television and web | Ordered strings or `[written, reading]` pairs; no counts, corpus dates, document/token totals, tokenizer, normalization, tie policy or upstream attribution published | Catalog publishes downloads but no license or app-redistribution grant for compiled lists; Zenbu downloads directly and does not bundle or mirror them | **Optional direct-source download with limitations disclosed** |
 
 The candidate catalog record at
 `Candidates/Migaku-public-catalog-ja-frequency-lists-2026-09-25.json` preserves
@@ -137,20 +136,11 @@ entry names, row shapes and row counts. It records hashes for the public-catalog
 snapshot, candidate catalog, language database, mapping policy, and both
 comparison artifacts.
 
-## Remaining acceptance criteria
+## Runtime contract
 
-No new source can enter `FrequencyPackCatalog.json` until all of the following
-are supplied and reviewed:
-
-- rightsholder/publisher identity and upstream artifact provenance;
-- an immutable version or snapshot and continued canonical availability;
-- corpus date range, document/token totals and known sampling biases;
-- tokenizer, normalization, lemma/surface/POS semantics and tie policy;
-- explicit attribution, modification, app-redistribution and download-hosting rights;
-- a reading-aware mapping decision (or an explicit decision to retain v1 form-only mapping);
-- a deterministic runtime artifact/import report with exact installed bytes;
-- catalog, bundled notice/credits, install/update/remove/corruption tests, and active-pack persistence verification.
-
-Until then, the issue's “two additional approved sources” acceptance criterion
-is blocked by a documented no-go and requires product/legal review rather than
-weakening Zenbu's trust contract.
+Each optional catalog pack pins the public URL, ZIP byte count and SHA-256,
+single archive entry and uncompressed byte count, ordered row count, mapping
+coverage, logical mapping SHA-256, and logical artifact SHA-256. Installation
+fails closed on any mismatch. Raw archives are discarded after local mapping;
+installed packs remain removable and only an installed, validated pack can be
+selected as active.

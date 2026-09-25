@@ -36,6 +36,15 @@ def canonical_json(value: object) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
 
 
+def artifact_content_sha256(metadata: dict[str, str]) -> str:
+    digest = hashlib.sha256(b"zenbu.frequency-pack-content.v1\0")
+    for key, value in sorted(metadata.items()):
+        for item in (key.encode("utf-8"), value.encode("utf-8")):
+            digest.update(len(item).to_bytes(8, "big"))
+            digest.update(item)
+    return digest.hexdigest()
+
+
 def normalized(value: str) -> str:
     return unicodedata.normalize("NFKC", value).strip()
 
@@ -93,6 +102,8 @@ def mapping_report(
     raw_json_bytes: int,
     language_data: Path,
     references: dict[str, Path],
+    pack_id: str,
+    pack_version: str,
 ) -> dict[str, object]:
     with tempfile.TemporaryDirectory() as directory:
         database_path = Path(directory) / "candidate.sqlite3"
@@ -110,7 +121,7 @@ def mapping_report(
         count = len(rows)
         database.executemany(
             "INSERT INTO source_rows VALUES (?, ?, ?, '', ?)",
-            ((rank, form, count - rank + 1, digest) for rank, form, _, digest in rows),
+            ((rank, form, 0, digest) for rank, form, _, digest in rows),
         )
         mapping = (
             MAPPING_SQL.read_text(encoding="utf-8")
@@ -126,6 +137,41 @@ def mapping_report(
         eligible = database.execute("SELECT count(*) FROM eligible").fetchone()[0]
         repeated_forms = count - len({form for _, form, _, _ in rows})
         repeated_pairs = count - len({(form, reading) for _, form, reading, _ in rows})
+        mapping_digest = hashlib.sha256()
+        for identifier, rank, source_count, form, relation, source_pos, source_digest in database.execute(
+            "SELECT language_reference_id, rank, source_count, matched_form, "
+            "mapping_relation, source_pos, source_record_digest "
+            "FROM frequency_evidence ORDER BY language_reference_id"
+        ):
+            mapping_digest.update(
+                identifier
+                + rank.to_bytes(8, "big")
+                + source_count.to_bytes(8, "big")
+                + form.encode("utf-8")
+                + b"\0"
+                + relation.encode("utf-8")
+                + b"\0"
+                + source_pos.encode("utf-8")
+                + b"\0"
+                + source_digest
+            )
+        mapping_sha256 = mapping_digest.hexdigest()
+        metadata = {
+            "artifact_schema": "zenbu.frequency-pack.v1",
+            "pack_id": pack_id,
+            "pack_version": pack_version,
+            "mapping_policy_version": "1",
+            "presentation_policy_version": "1",
+            "source_total_tokens": "0",
+            "covered_source_rows": str(count),
+            "mapped_rows": str(mapped),
+            "ambiguous_rows": str(ambiguous),
+            "unmapped_rows": str(count - matched),
+            "duplicate_mappings": str(eligible - mapped),
+            "mapping_sha256": mapping_sha256,
+            "mapping_policy_sha256": sha256(MAPPING_SQL),
+            "language_data_sha256": sha256(language_data),
+        }
         comparisons: dict[str, object] = {}
         for alias, reference in references.items():
             database.execute(f"ATTACH DATABASE ? AS {alias}", (str(reference),))
@@ -149,6 +195,8 @@ def mapping_report(
             "unmappedRows": count - matched,
             "duplicateMappings": eligible - mapped,
             "mappedPercent": round(mapped * 100 / count, 2),
+            "mappingSHA256": mapping_sha256,
+            "artifactContentSHA256": artifact_content_sha256(metadata),
             **comparisons,
         }
 
@@ -216,12 +264,18 @@ def main(arguments: argparse.Namespace) -> None:
     for candidate in catalog["candidates"]:
         archive = arguments.archives / candidate["archive"]
         rows, raw_json_bytes = read_rows(archive, candidate)
+        pack_id = f"zenbu.public.{candidate['id']}.ja.ordered-v1"
+        pack_version = catalog["catalog"]["retrievedAt"]
         report = {key: candidate[key] for key in ("id", "name", "domain", "description", "url", "archive", "bytes", "sha256")}
+        report["packID"] = pack_id
+        report["packVersion"] = pack_version
         report["analysis"] = mapping_report(
             rows,
             raw_json_bytes,
             arguments.language_data,
             {"tubelex": arguments.tubelex, "wikipedia": arguments.wikipedia},
+            pack_id,
+            pack_version,
         )
         output["candidates"].append(report)
         print(f"{candidate['name']}: {report['analysis']['mappedRows']:,} mapped")
