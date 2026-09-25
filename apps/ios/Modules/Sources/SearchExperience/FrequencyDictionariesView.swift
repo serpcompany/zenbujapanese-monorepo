@@ -12,37 +12,8 @@ struct FrequencyDictionariesView: View {
       if let snapshot {
         ForEach(snapshot.packs) { pack in
           Section {
-            LabeledContent("Status") {
-              Label(
-                pack.isActive ? "Active" : (pack.isInstalled ? "Installed" : "Available"),
-                systemImage: pack.isActive
-                  ? "checkmark.circle.fill"
-                  : (pack.isInstalled ? "checkmark.circle" : "arrow.down.circle")
-              )
-              .foregroundStyle(
-                pack.isActive ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary)
-              )
-              .accessibilityElement(children: .ignore)
-              .accessibilityLabel(
-                pack.isActive ? "Active" : (pack.isInstalled ? "Installed" : "Available")
-              )
-              .accessibilityValue(
-                pack.isActive
-                  ? "Selected frequency dictionary"
-                  : (pack.isInstalled ? "Not selected" : "Not installed")
-              )
-              .accessibilityIdentifier("frequency-pack.status.\(pack.id.rawValue)")
-            }
+            status(for: pack)
             LabeledContent("Source domain", value: pack.manifest.domain)
-            LabeledContent("Version", value: pack.manifest.packVersion)
-            LabeledContent("License", value: pack.manifest.licenseIdentifier)
-            LabeledContent("Update", value: pack.updateStatus)
-            Text(pack.manifest.domainDescription)
-              .font(.footnote)
-              .foregroundStyle(.secondary)
-            Text(pack.manifest.attribution)
-              .font(.footnote)
-              .foregroundStyle(.secondary)
             Link(
               pack.manifest.orderedJSONSource == nil
                 ? "Source and license" : "Public source catalog",
@@ -93,6 +64,28 @@ struct FrequencyDictionariesView: View {
       guard !Task.isCancelled, self.verifiedPackID == verifiedPackID else { return }
       self.verifiedPackID = nil
     }
+  }
+
+  private func status(for pack: FrequencyPackState) -> some View {
+    HStack(spacing: 12) {
+      Text("Status")
+      Spacer(minLength: 0)
+      Label(
+        pack.isActive ? "Active" : (pack.isInstalled ? "Installed" : "Available"),
+        systemImage: pack.isActive
+          ? "checkmark.circle.fill"
+          : (pack.isInstalled ? "checkmark.circle" : "arrow.down.circle")
+      )
+      .foregroundStyle(pack.isActive ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
+    }
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("Status")
+    .accessibilityValue(
+      pack.isActive
+        ? "Active, selected frequency dictionary"
+        : (pack.isInstalled ? "Installed, not selected" : "Available, not installed")
+    )
+    .accessibilityIdentifier("frequency-pack.status.\(pack.id.rawValue)")
   }
 
   @ViewBuilder
