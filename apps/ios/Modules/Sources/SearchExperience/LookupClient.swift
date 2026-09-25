@@ -94,19 +94,15 @@ private actor LanguageReferenceData {
       let deinflectedResults = try query.deinflectedCandidates.map(searchOnce)
       if let primaryIndex = deinflectedResults.firstIndex(where: { !$0.entries.isEmpty }) {
         let primaryResult = deinflectedResults[primaryIndex]
-        let primaryMatches = Self.uniqued(
-          Array(primaryResult.entries.prefix(primaryResult.leadingLexicalEntryCount)))
-        let primaryIDs = Set(primaryMatches.map(\.id))
-        let alternateMatches = deinflectedResults.dropFirst(primaryIndex + 1).flatMap {
-          $0.entries
-        }
-        let displacedMatches = Self.uniqued(
-          alternateMatches + directResults.entries
-        ).filter { !primaryIDs.contains($0.id) }
-        return LookupSearchResults(
-          entries: Array((primaryMatches + displacedMatches).prefix(60)),
-          leadingLexicalEntryCount: primaryMatches.count,
-          usesPrimaryEntryExamples: true
+        let primaryItems = Array(
+          primaryResult.items.prefix(primaryResult.leadingLexicalEntryCount))
+        let displacedSources = deinflectedResults.dropFirst(primaryIndex + 1).map(\.items)
+          + [directResults.items]
+        return LookupSearchResults.composing(
+          sources: [primaryItems] + displacedSources,
+          leadingLexicalEntryCount: primaryItems.count,
+          usesPrimaryEntryExamples: true,
+          limit: 60
         )
       }
     }
@@ -122,27 +118,26 @@ private actor LanguageReferenceData {
     let analyzedResults = try await japaneseTextAnalysis.lookupSegments(query).compactMap {
       segment in
       let segmentResults = try searchOnce(segment)
-      return segmentResults.entries.first {
-        $0.headword == segment.value
+      return segmentResults.items.first {
+        $0.entry.headword == segment.value
       }
-        ?? segmentResults.entries.first
+        ?? segmentResults.items.first
     }
     if analyzedResults.count > 1 || (query.isMixedScript && !analyzedResults.isEmpty) {
-      return LookupSearchResults(
-        entries: Array(Self.uniqued(analyzedResults)),
-        presentation: .discoveredWords,
-        hasExactOrPrefixMatch: false
+      return LookupSearchResults.composing(
+        sources: analyzedResults.map { [$0] },
+        leadingLexicalEntryCount: analyzedResults.count,
+        usesPrimaryEntryExamples: false,
+        hasExactOrPrefixMatch: false,
+        limit: analyzedResults.count
       )
+      .presenting(.discoveredWords)
     }
     if query.isMixedScript {
       for segment in query.japaneseSegments {
         let results = try searchOnce(segment)
         if !results.isEmpty {
-          return LookupSearchResults(
-            entries: results.entries,
-            presentation: .discoveredWords,
-            hasExactOrPrefixMatch: false
-          )
+          return results.presenting(.discoveredWords, hasExactOrPrefixMatch: false)
         }
       }
     }
@@ -210,11 +205,6 @@ private actor LanguageReferenceData {
     }
   }
 
-  private static func uniqued(_ entries: [DictionaryEntry]) -> [DictionaryEntry] {
-    var seen = Set<LanguageReferenceID>()
-    return entries.filter { seen.insert($0.id).inserted }
-  }
-
   private func searchLiteralEnglish(_ query: SearchQuery) throws -> LookupSearchResults {
     try searchOnce(query)
   }
@@ -229,13 +219,7 @@ private actor LanguageReferenceData {
       $0.presentationRank == leadingPresentationRank
     }.count
     return LookupSearchResults(
-      entries: ranked.prefix(60).map(\.entry),
-      relevanceGroups: Self.relevanceGroups(for: Array(ranked.prefix(60))),
-      matchedSummaries: Dictionary(
-        uniqueKeysWithValues: ranked.prefix(60).compactMap { rankedEntry in
-          rankedEntry.matchedSummary.map { (rankedEntry.entry.id, $0) }
-        }
-      ),
+      items: Self.resultItems(for: Array(ranked.prefix(60))),
       leadingLexicalEntryCount: leadingLexicalEntryCount,
       hasExactOrPrefixMatch: ranked.contains { $0.hasExactOrPrefixMatch }
     )
@@ -814,10 +798,10 @@ private actor LanguageReferenceData {
     }
   }
 
-  private static func relevanceGroups(
+  private static func resultItems(
     for entries: [RankedDictionaryEntry]
-  ) -> [LanguageReferenceID: Int] {
-    var result: [LanguageReferenceID: Int] = [:]
+  ) -> [LookupSearchResultItem] {
+    var result: [LookupSearchResultItem] = []
     var previousRank: DictionaryPresentationRank?
     var group = -1
     for entry in entries {
@@ -825,7 +809,12 @@ private actor LanguageReferenceData {
         group += 1
         previousRank = entry.presentationRank
       }
-      result[entry.entry.id] = group
+      result.append(
+        LookupSearchResultItem(
+          entry: entry.entry,
+          relevanceGroup: group,
+          matchedSummary: entry.matchedSummary
+        ))
     }
     return result
   }

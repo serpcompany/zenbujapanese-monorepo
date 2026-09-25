@@ -1,7 +1,7 @@
 # Language data sources
 
-This directory contains the pinned source records, licenses, notices, and local
-inputs used to build Zenbu Japanese's bundled language data.
+This directory contains the pinned source records, dependency notices, and local
+inputs used to build or install Zenbu Japanese language data.
 
 The `*.source.json` files are the source of truth for upstream identity,
 snapshot, download location, checksum, and import configuration. The importers under
@@ -20,11 +20,11 @@ under `apps/ios/Modules/Sources/SearchExperience/Resources/`.
 | Interactive Japanese parsing | `Kuromoji-0.1.2.source.json` | Bundled JavaScriptCore engine and compressed IPADIC resources |
 | App-owned word relationships | `Zenbu-Word-Relationships-v1.json` | `import_jmdict.py` |
 
-Full third-party terms and required notices are retained beside the source
-records and mirrored into the app resources when binary distribution requires
-them. Import reports under `apps/ios/LanguageData/Generated/` connect pinned
-inputs to generated artifact checksums and must remain versioned with those
-artifacts.
+Required notices for bundled dependencies remain beside their source records and
+in the app resources. Frequency-pack manifests contain the runtime source URL,
+attribution, checksums, mapping contract, and delivery behavior. Import reports
+under `apps/ios/LanguageData/Generated/` connect pinned inputs to generated
+artifact checksums and remain versioned with those artifacts.
 
 The public-catalog ordered JSON packs have an authoritative source record in this
 directory plus their pinned catalog snapshot and analysis under `LanguageData/Candidates`

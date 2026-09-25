@@ -25,8 +25,11 @@ struct SearchResultOrderingTests {
     let directB = fixtureEntry(id: "00000000000000000000000000000002", headword: "乙")
     let weaker = fixtureEntry(id: "00000000000000000000000000000003", headword: "丙")
     let results = LookupSearchResults(
-      entries: [directA, directB, weaker],
-      relevanceGroups: [directA.id: 0, directB.id: 0, weaker.id: 1]
+      items: [
+        LookupSearchResultItem(entry: directA, relevanceGroup: 0, matchedSummary: nil),
+        LookupSearchResultItem(entry: directB, relevanceGroup: 0, matchedSummary: nil),
+        LookupSearchResultItem(entry: weaker, relevanceGroup: 1, matchedSummary: nil),
+      ]
     )
     let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
       directA.id: .evidence(fixtureEvidence(id: directA.id, rank: 20)),
@@ -46,8 +49,9 @@ struct SearchResultOrderingTests {
     let second = fixtureEntry(id: "00000000000000000000000000000002", headword: "乙")
     let third = fixtureEntry(id: "00000000000000000000000000000003", headword: "丙")
     let results = LookupSearchResults(
-      entries: [first, second, third],
-      relevanceGroups: [first.id: 0, second.id: 0, third.id: 0]
+      items: [first, second, third].map {
+        LookupSearchResultItem(entry: $0, relevanceGroup: 0, matchedSummary: nil)
+      }
     )
     let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
       first.id: .evidence(fixtureEvidence(id: first.id, rank: 10)),
@@ -65,7 +69,9 @@ struct SearchResultOrderingTests {
     let first = fixtureEntry(id: "00000000000000000000000000000001", headword: "甲")
     let second = fixtureEntry(id: "00000000000000000000000000000002", headword: "乙")
     let results = LookupSearchResults(
-      entries: [first, second], relevanceGroups: [first.id: 0, second.id: 0])
+      items: [first, second].map {
+        LookupSearchResultItem(entry: $0, relevanceGroup: 0, matchedSummary: nil)
+      })
     let packA = [
       first.id: FrequencyLookupResult.evidence(fixtureEvidence(id: first.id, rank: 1)),
       second.id: FrequencyLookupResult.evidence(fixtureEvidence(id: second.id, rank: 2)),
@@ -98,12 +104,92 @@ struct SearchResultOrderingTests {
     )
   }
 
-  @Test(arguments: ["いる", "miru"])
-  func japaneseAndRomajiSearchesExposeRelevanceGroups(_ query: String) async throws {
-    let results = try await LookupClient.live.search(SearchQuery(query))
-    #expect(!results.entries.isEmpty)
-    #expect(results.entries.allSatisfy { results.relevanceGroup(for: $0) >= 0 })
+  @Test("live Japanese groups stay primary while frequency inverts an equivalent pair")
+  func liveJapaneseGroups() async throws {
+    try await assertLiveGroupOrdering(
+      query: "いる",
+      crossGroup: ("要る", "入る"),
+      sameGroup: ("没る", "癒る")
+    )
   }
+
+  @Test("live romaji groups stay primary while frequency inverts an equivalent pair")
+  func liveRomajiGroups() async throws {
+    try await assertLiveGroupOrdering(
+      query: "miru",
+      crossGroup: ("見る", "診る"),
+      sameGroup: ("釬", "廻る")
+    )
+  }
+
+  @Test("inflected romaji keeps groups while frequency inverts an equivalent pair")
+  func liveInflectedRomajiGroups() async throws {
+    try await assertLiveGroupOrdering(
+      query: "utte",
+      crossGroup: ("討っ手", "打ってつけ"),
+      sameGroup: ("討っ手", "ウェッティ")
+    )
+  }
+
+  @Test("deinflection composition rebases whole relevance groups without splitting metadata")
+  func deinflectionCompositionPreservesMetadata() {
+    let primary = fixtureItem(
+      id: "00000000000000000000000000000001", headword: "primary", group: 0,
+      matchedSummary: "primary match")
+    let alternateA = fixtureItem(
+      id: "00000000000000000000000000000002", headword: "alternate-a", group: 4,
+      matchedSummary: "alternate match a")
+    let alternateB = fixtureItem(
+      id: "00000000000000000000000000000003", headword: "alternate-b", group: 4,
+      matchedSummary: "alternate match b")
+
+    let results = LookupSearchResults.composing(
+      sources: [[primary], [alternateA, alternateB]],
+      leadingLexicalEntryCount: 1,
+      usesPrimaryEntryExamples: true
+    )
+
+    #expect(results.relevanceGroup(for: primary.entry) == 0)
+    #expect(results.relevanceGroup(for: alternateA.entry) == 1)
+    #expect(results.relevanceGroup(for: alternateB.entry) == 1)
+    #expect(results.displaySummary(for: alternateB.entry) == "alternate match b")
+  }
+}
+
+private func assertLiveGroupOrdering(
+  query: String,
+  crossGroup: (stronger: String, weaker: String),
+  sameGroup: (first: String, second: String)
+) async throws {
+  let results = try await LookupClient.live.search(SearchQuery(query))
+  let stronger = try #require(results.entries.first { $0.headword == crossGroup.stronger })
+  let weaker = try #require(results.entries.first { $0.headword == crossGroup.weaker })
+  let first = try #require(results.entries.first { $0.headword == sameGroup.first })
+  let second = try #require(results.entries.first { $0.headword == sameGroup.second })
+  #expect(results.relevanceGroup(for: stronger) < results.relevanceGroup(for: weaker))
+  #expect(results.relevanceGroup(for: first) == results.relevanceGroup(for: second))
+
+  var evidence: [LanguageReferenceID: FrequencyLookupResult] = [:]
+  evidence[stronger.id] = .evidence(fixtureEvidence(id: stronger.id, rank: 50_000))
+  evidence[weaker.id] = .evidence(fixtureEvidence(id: weaker.id, rank: 1))
+  evidence[first.id] = .evidence(fixtureEvidence(id: first.id, rank: 50_000))
+  evidence[second.id] = .evidence(fixtureEvidence(id: second.id, rank: 1))
+  let ordered = SearchResultFrequencyOrdering.ordered(results, evidence: evidence)
+  #expect(ordered.firstIndex(of: stronger)! < ordered.firstIndex(of: weaker)!)
+  #expect(ordered.firstIndex(of: second)! < ordered.firstIndex(of: first)!)
+}
+
+private func fixtureItem(
+  id: String,
+  headword: String,
+  group: Int,
+  matchedSummary: String? = nil
+) -> LookupSearchResultItem {
+  LookupSearchResultItem(
+    entry: fixtureEntry(id: id, headword: headword),
+    relevanceGroup: group,
+    matchedSummary: matchedSummary
+  )
 }
 
 private func fixtureEntry(id: String, headword: String) -> DictionaryEntry {

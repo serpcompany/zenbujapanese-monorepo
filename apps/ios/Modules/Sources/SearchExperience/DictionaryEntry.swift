@@ -193,16 +193,23 @@ enum LanguageReferenceIdentity {
   }
 }
 
+struct LookupSearchResultItem: Sendable {
+  let entry: DictionaryEntry
+  let relevanceGroup: Int
+  let matchedSummary: String?
+
+  var displaySummary: String { matchedSummary ?? entry.summary }
+
+  func rebased(to relevanceGroup: Int) -> Self {
+    Self(entry: entry, relevanceGroup: relevanceGroup, matchedSummary: matchedSummary)
+  }
+}
+
 struct LookupSearchResults: Sendable {
   /// The relevance-filtered, deduplicated candidate set in deterministic dictionary order.
   /// Frequency is deliberately not part of retrieval; the presentation layer reorders this
   /// bounded set with evidence from the active frequency pack.
-  let entries: [DictionaryEntry]
-  /// Stable equivalence classes produced by dictionary retrieval. A lower value is always more
-  /// relevant; frequency evidence may reorder entries only when this value is equal.
-  private let relevanceGroups: [LanguageReferenceID: Int]
-  /// The English sense that matched the submitted query, when English gloss evidence was used.
-  private let matchedSummaries: [LanguageReferenceID: String]
+  let items: [LookupSearchResultItem]
   /// Count of the leading equivalent lexical-rank group. Radical-origin presentation uses
   /// this bound to preserve its intentionally narrow candidate list without restoring buckets.
   let leadingLexicalEntryCount: Int
@@ -212,38 +219,35 @@ struct LookupSearchResults: Sendable {
   let hasExactOrPrefixMatch: Bool
 
   init(
-    entries: [DictionaryEntry],
-    relevanceGroups: [LanguageReferenceID: Int]? = nil,
-    matchedSummaries: [LanguageReferenceID: String] = [:],
+    items: [LookupSearchResultItem],
     leadingLexicalEntryCount: Int? = nil,
     presentation: Presentation = .ranked,
     readingRefinement: SearchRefinement? = nil,
     usesPrimaryEntryExamples: Bool = false,
     hasExactOrPrefixMatch: Bool = true
   ) {
-    self.entries = entries
-    self.relevanceGroups = relevanceGroups
-      ?? Dictionary(uniqueKeysWithValues: entries.enumerated().map { ($0.element.id, $0.offset) })
-    self.matchedSummaries = matchedSummaries
-    self.leadingLexicalEntryCount = min(leadingLexicalEntryCount ?? entries.count, entries.count)
+    self.items = items
+    self.leadingLexicalEntryCount = min(leadingLexicalEntryCount ?? items.count, items.count)
     self.presentation = presentation
     self.readingRefinement = readingRefinement
     self.usesPrimaryEntryExamples = usesPrimaryEntryExamples
     self.hasExactOrPrefixMatch = hasExactOrPrefixMatch
   }
 
-  static let empty = LookupSearchResults(entries: [], hasExactOrPrefixMatch: false)
+  static let empty = LookupSearchResults(items: [], hasExactOrPrefixMatch: false)
+
+  var entries: [DictionaryEntry] { items.map(\.entry) }
 
   var isEmpty: Bool {
     entries.isEmpty
   }
 
   func relevanceGroup(for entry: DictionaryEntry) -> Int {
-    relevanceGroups[entry.id] ?? entries.firstIndex(of: entry) ?? .max
+    items.first { $0.entry.id == entry.id }?.relevanceGroup ?? .max
   }
 
   func displaySummary(for entry: DictionaryEntry) -> String {
-    matchedSummaries[entry.id] ?? entry.summary
+    items.first { $0.entry.id == entry.id }?.displaySummary ?? entry.summary
   }
 
   func primaryEntry(for query: SearchQuery) -> DictionaryEntry? {
@@ -252,9 +256,7 @@ struct LookupSearchResults: Sendable {
 
   func usingPrimaryEntryExamples() -> LookupSearchResults {
     LookupSearchResults(
-      entries: entries,
-      relevanceGroups: relevanceGroups,
-      matchedSummaries: matchedSummaries,
+      items: items,
       leadingLexicalEntryCount: leadingLexicalEntryCount,
       presentation: presentation,
       readingRefinement: readingRefinement,
@@ -265,12 +267,55 @@ struct LookupSearchResults: Sendable {
 
   func offeringReadingRefinement(_ query: SearchQuery) -> LookupSearchResults {
     LookupSearchResults(
-      entries: entries,
-      relevanceGroups: relevanceGroups,
-      matchedSummaries: matchedSummaries,
+      items: items,
       leadingLexicalEntryCount: leadingLexicalEntryCount,
       presentation: presentation,
       readingRefinement: SearchRefinement(query: query),
+      usesPrimaryEntryExamples: usesPrimaryEntryExamples,
+      hasExactOrPrefixMatch: hasExactOrPrefixMatch
+    )
+  }
+
+  func presenting(
+    _ presentation: Presentation,
+    hasExactOrPrefixMatch: Bool? = nil
+  ) -> LookupSearchResults {
+    LookupSearchResults(
+      items: items,
+      leadingLexicalEntryCount: leadingLexicalEntryCount,
+      presentation: presentation,
+      readingRefinement: readingRefinement,
+      usesPrimaryEntryExamples: usesPrimaryEntryExamples,
+      hasExactOrPrefixMatch: hasExactOrPrefixMatch ?? self.hasExactOrPrefixMatch
+    )
+  }
+
+  static func composing(
+    sources: [[LookupSearchResultItem]],
+    leadingLexicalEntryCount: Int,
+    usesPrimaryEntryExamples: Bool,
+    hasExactOrPrefixMatch: Bool = true,
+    limit: Int = 60
+  ) -> LookupSearchResults {
+    var items: [LookupSearchResultItem] = []
+    var seen = Set<LanguageReferenceID>()
+    var nextGroup = 0
+    for source in sources {
+      var rebasedGroups: [Int: Int] = [:]
+      for item in source where seen.insert(item.entry.id).inserted {
+        let group = rebasedGroups[item.relevanceGroup] ?? {
+          defer { nextGroup += 1 }
+          return nextGroup
+        }()
+        rebasedGroups[item.relevanceGroup] = group
+        items.append(item.rebased(to: group))
+        if items.count == limit { break }
+      }
+      if items.count == limit { break }
+    }
+    return LookupSearchResults(
+      items: items,
+      leadingLexicalEntryCount: leadingLexicalEntryCount,
       usesPrimaryEntryExamples: usesPrimaryEntryExamples,
       hasExactOrPrefixMatch: hasExactOrPrefixMatch
     )

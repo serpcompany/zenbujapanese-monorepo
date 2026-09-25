@@ -617,11 +617,11 @@ private struct SearchResultsView: View {
   let frequencyCapability: FrequencyCapability
   let frequencyRefreshID: Int
   let selectRefinement: (SearchRefinement) -> Void
-  @State private var frequencyResults: [LanguageReferenceID: FrequencyLookupResult] = [:]
+  @State private var frequencyLoadState = SearchFrequencyLoadState()
 
   var body: some View {
     let orderedEntries = SearchResultFrequencyOrdering.ordered(
-      results, entries: presentedEntries, evidence: frequencyResults)
+      results, entries: presentedEntries, evidence: frequencyLoadState.results)
     List {
       if exampleCount > 0 {
         Section {
@@ -660,7 +660,7 @@ private struct SearchResultsView: View {
             ResultRow(
               entry: entry,
               summary: results.displaySummary(for: entry),
-              frequencyResult: frequencyResults[entry.id],
+              frequencyResult: frequencyLoadState.results[entry.id],
               rank: .discovered(position: index + 1, count: min(results.entries.count, 12))
             )
           }
@@ -678,7 +678,7 @@ private struct SearchResultsView: View {
             ResultRow(
               entry: entry,
               summary: results.displaySummary(for: entry),
-              frequencyResult: frequencyResults[entry.id],
+              frequencyResult: frequencyLoadState.results[entry.id],
               rank: .result(
                 position: index + (query.isSingleKanji ? 2 : 1),
                 count: orderedEntries.count + (query.isSingleKanji ? 1 : 0)
@@ -703,17 +703,21 @@ private struct SearchResultsView: View {
     .id(query)
     .accessibilityIdentifier("search.results")
     .task(id: frequencyTaskID) {
-      frequencyResults = [:]
+      let requestID = frequencyTaskID
+      frequencyLoadState.begin(requestID)
       do {
-        let loaded = try await frequencyCapability.evidence(for: displayedEntryIDs)
-        try Task.checkCancellation()
-        frequencyResults = loaded
+        let response = try await SearchFrequencyLoader.load(
+          requestID, using: frequencyCapability)
+        _ = frequencyLoadState.commit(response.results, for: response.request)
       } catch is CancellationError {
         return
       } catch {
         guard !Task.isCancelled else { return }
-        frequencyResults = FrequencyLookupResult.unavailableResults(
-          for: displayedEntryIDs, pack: nil, reason: "Frequency data unavailable")
+        _ = frequencyLoadState.commit(
+          FrequencyLookupResult.unavailableResults(
+            for: requestID.entryIDs, pack: nil, reason: "Frequency data unavailable"),
+          for: requestID
+        )
       }
     }
   }
@@ -746,7 +750,7 @@ private struct SearchResultsView: View {
 
   private var frequencyUnavailableReason: String? {
     displayedEntryIDs.compactMap { id in
-      guard case .unavailable(let unavailable) = frequencyResults[id] else { return nil }
+      guard case .unavailable(let unavailable) = frequencyLoadState.results[id] else { return nil }
       return unavailable.reason
     }.first
   }
@@ -852,9 +856,45 @@ private struct ResultRow: View {
   }
 }
 
-private struct SearchFrequencyTaskID: Hashable {
+struct SearchFrequencyTaskID: Hashable {
   let entryIDs: [LanguageReferenceID]
   let refreshID: Int
+}
+
+struct SearchFrequencyLoadState {
+  private(set) var activeRequest: SearchFrequencyTaskID?
+  private(set) var results: [LanguageReferenceID: FrequencyLookupResult] = [:]
+
+  mutating func begin(_ request: SearchFrequencyTaskID) {
+    activeRequest = request
+    results = [:]
+  }
+
+  @discardableResult
+  mutating func commit(
+    _ results: [LanguageReferenceID: FrequencyLookupResult],
+    for request: SearchFrequencyTaskID
+  ) -> Bool {
+    guard activeRequest == request else { return false }
+    self.results = results
+    return true
+  }
+}
+
+struct SearchFrequencyResponse: Sendable {
+  let request: SearchFrequencyTaskID
+  let results: [LanguageReferenceID: FrequencyLookupResult]
+}
+
+enum SearchFrequencyLoader {
+  static func load(
+    _ request: SearchFrequencyTaskID,
+    using capability: FrequencyCapability
+  ) async throws -> SearchFrequencyResponse {
+    let results = try await capability.evidence(for: request.entryIDs)
+    try Task.checkCancellation()
+    return SearchFrequencyResponse(request: request, results: results)
+  }
 }
 
 private enum ResultRank {
