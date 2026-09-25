@@ -1,5 +1,5 @@
 {
-  "analysisToolSHA256": "ff95a1ea5a8d27f5d4a0b2c981cef6d8f8e462dec64ac4aebcfbed87e0e5f7f0",
+  "analysisToolSHA256": "fd3e36608ce2c098d2e0a474279cd2e44c32d5193b4526f43d6d9e5b7812eb91",
   "candidateCatalogSHA256": "6985fed856d648212edbb301a039cd978a1e0f2b09f2ecb6ce782ee6a4c77f14",
   "candidates": [
     {
@@ -14,6 +14,10 @@
         "rawJSONBytes": 3228941,
         "repeatedNormalizedForms": 2006,
         "repeatedWrittenReadingPairs": 0,
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 6
+        },
         "sourceRows": 102844,
         "tubelex": {
           "candidateMappedOverlapPercent": 78.86,
@@ -53,6 +57,10 @@
         "rawJSONBytes": 569913,
         "repeatedNormalizedForms": 334,
         "repeatedWrittenReadingPairs": 16,
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 7
+        },
         "sourceRows": 16469,
         "tubelex": {
           "candidateMappedOverlapPercent": 93.66,
@@ -92,6 +100,10 @@
         "rawJSONBytes": 1274114,
         "repeatedNormalizedForms": 1170,
         "repeatedWrittenReadingPairs": 0,
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 12
+        },
         "sourceRows": 43125,
         "tubelex": {
           "candidateMappedOverlapPercent": 84.11,
@@ -131,6 +143,10 @@
         "rawJSONBytes": 1617165,
         "repeatedNormalizedForms": 3759,
         "repeatedWrittenReadingPairs": 435,
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 4
+        },
         "sourceRows": 38075,
         "tubelex": {
           "candidateMappedOverlapPercent": 64.67,
@@ -170,6 +186,10 @@
         "rawJSONBytes": 1700426,
         "repeatedNormalizedForms": 0,
         "repeatedWrittenReadingPairs": 0,
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 7
+        },
         "sourceRows": 56396,
         "tubelex": {
           "candidateMappedOverlapPercent": 83.96,
@@ -209,6 +229,10 @@
         "rawJSONBytes": 884304,
         "repeatedNormalizedForms": 1,
         "repeatedWrittenReadingPairs": 1,
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 5
+        },
         "sourceRows": 56251,
         "tubelex": {
           "candidateMappedOverlapPercent": 52.57,
@@ -248,6 +272,10 @@
         "rawJSONBytes": 3389244,
         "repeatedNormalizedForms": 0,
         "repeatedWrittenReadingPairs": 0,
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 2
+        },
         "sourceRows": 206621,
         "tubelex": {
           "candidateMappedOverlapPercent": 36.86,
@@ -287,6 +315,10 @@
         "rawJSONBytes": 493039,
         "repeatedNormalizedForms": 1371,
         "repeatedWrittenReadingPairs": 1371,
+        "smokeTest": {
+          "languageReferenceID": "3d4908f75d7b71234e20d190717d957a",
+          "rank": 3
+        },
         "sourceRows": 35058,
         "tubelex": {
           "candidateMappedOverlapPercent": 90.81,
@@ -326,6 +358,10 @@
         "rawJSONBytes": 1589061,
         "repeatedNormalizedForms": 0,
         "repeatedWrittenReadingPairs": 0,
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 8
+        },
         "sourceRows": 99999,
         "tubelex": {
           "candidateMappedOverlapPercent": 49.6,
@@ -365,6 +401,10 @@
         "rawJSONBytes": 2477283,
         "repeatedNormalizedForms": 7653,
         "repeatedWrittenReadingPairs": 7653,
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 5
+        },
         "sourceRows": 160836,
         "tubelex": {
           "candidateMappedOverlapPercent": 58.44,

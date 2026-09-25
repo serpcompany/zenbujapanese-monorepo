@@ -47,6 +47,7 @@ struct FrequencyCapability: Sendable {
       throw FrequencyPackError.invalidCatalog
     }
     let artifact = try FrequencyPackArtifact(url: url, manifest: manifest)
+    try artifact.validateSmokeTest()
     return FrequencyCapability(batchLookup: { ids in try artifact.evidence(for: ids) })
   }
 }
@@ -329,6 +330,16 @@ struct FrequencyPackArtifact: Sendable {
       throw FrequencyPackError.invalidArtifact
     }
     return result
+  }
+
+  func validateSmokeTest() throws {
+    let smokeTest = manifest.smokeTest
+    let languageReferenceID = LanguageReferenceID(rawValue: smokeTest.languageReferenceID)
+    guard
+      case .evidence(let evidence) = try evidence(for: languageReferenceID),
+      evidence.rank == smokeTest.rank,
+      evidence.pack.id == manifest.packID
+    else { throw FrequencyPackError.invalidArtifact }
   }
 
   func evidence(for ids: [LanguageReferenceID]) throws

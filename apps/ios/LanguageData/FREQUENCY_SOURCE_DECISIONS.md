@@ -146,3 +146,8 @@ coverage, logical mapping SHA-256, and logical artifact SHA-256. Installation
 fails closed on any mismatch. Raw archives are discarded after local mapping;
 installed packs remain removable and only an installed, validated pack can be
 selected as active.
+
+Every selectable manifest also pins a smoke-test `LanguageReferenceID` and expected rank.
+The bundled pack, a freshly installed artifact, every restored installed artifact, and any pack
+being activated must return that exact evidence row. A mismatch fails closed instead of exposing
+an installed or active pack that cannot populate frequency evidence.

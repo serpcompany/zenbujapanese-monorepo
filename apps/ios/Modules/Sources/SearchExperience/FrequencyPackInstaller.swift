@@ -97,7 +97,8 @@ enum FrequencyPackInstaller {
       "DROP TABLE source_rows; CREATE INDEX frequency_evidence_rank_index ON frequency_evidence(rank,language_reference_id); VACUUM;"
     )
     let artifactSHA256 = try Data(contentsOf: candidate).sha256
-    _ = try FrequencyPackArtifact(url: candidate, manifest: manifest)
+    let artifact = try FrequencyPackArtifact(url: candidate, manifest: manifest)
+    try artifact.validateSmokeTest()
     try FileManager.default.createDirectory(
       at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
     if FileManager.default.fileExists(atPath: destination.path) {

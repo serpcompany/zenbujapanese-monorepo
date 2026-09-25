@@ -34,6 +34,11 @@ uses the default Kuromoji path.
 
 This repository currently has no test targets or CI workflows. Issue [#329](https://github.com/serpcompany/zenbujapanese-monorepo/issues/329) owns the clean-slate replacement strategy. Verify ordinary changes by building and launching the real app; add test or CI infrastructure only through approved follow-up work from that strategy.
 
+Frequency-pack selection has one repo-local Python contract test. Run
+`python3 -m unittest apps/ios/Tools/tests/test_frequency_pack_runtime_contract.py` to verify
+that every selectable manifest pins a known evidence row and rank, each ordered source agrees
+with the generated mapping analysis, and the bundled TUBELEX artifact contains its pinned row.
+
 ## Search frequency-ordering comparison harness
 
 Use these fixed fixtures when changing dictionary candidate retrieval, frequency ordering, or

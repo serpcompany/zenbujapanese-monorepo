@@ -16,7 +16,8 @@ Ordinary Japanese, English, and romaji searches present one **Results** collecti
 first builds a bounded set from exact, prefix, contains, gloss, and romaji query evidence, then
 orders entries with mapped evidence from the active frequency dictionary by ascending numeric
 rank. Frequency never introduces an entry that the query did not retrieve. Entries without
-mapped evidence remain visible after ranked entries.
+mapped evidence remain visible after ranked entries and show a dash: this means the selected
+corpus does not rank that entry, not that the active pack failed.
 
 Equal ranks and entries without mapped evidence retain the dictionary's deterministic
 query-match order, whose final retrieval tie-break is the semantic fingerprint and canonical

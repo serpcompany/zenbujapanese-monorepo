@@ -172,6 +172,12 @@ def mapping_report(
             "mapping_policy_sha256": sha256(MAPPING_SQL),
             "language_data_sha256": sha256(language_data),
         }
+        smoke_row = database.execute(
+            "SELECT lower(hex(language_reference_id)), rank "
+            "FROM frequency_evidence ORDER BY rank, language_reference_id LIMIT 1"
+        ).fetchone()
+        if smoke_row is None:
+            raise ValueError(f"{pack_id}: mapped artifact has no smoke-test evidence row")
         comparisons: dict[str, object] = {}
         for alias, reference in references.items():
             database.execute(f"ATTACH DATABASE ? AS {alias}", (str(reference),))
@@ -197,6 +203,7 @@ def mapping_report(
             "mappedPercent": round(mapped * 100 / count, 2),
             "mappingSHA256": mapping_sha256,
             "artifactContentSHA256": artifact_content_sha256(metadata),
+            "smokeTest": {"languageReferenceID": smoke_row[0], "rank": smoke_row[1]},
             **comparisons,
         }
 
