@@ -230,6 +230,12 @@ private actor LanguageReferenceData {
     }.count
     return LookupSearchResults(
       entries: ranked.prefix(60).map(\.entry),
+      relevanceGroups: Self.relevanceGroups(for: Array(ranked.prefix(60))),
+      matchedSummaries: Dictionary(
+        uniqueKeysWithValues: ranked.prefix(60).compactMap { rankedEntry in
+          rankedEntry.matchedSummary.map { (rankedEntry.entry.id, $0) }
+        }
+      ),
       leadingLexicalEntryCount: leadingLexicalEntryCount,
       hasExactOrPrefixMatch: ranked.contains { $0.hasExactOrPrefixMatch }
     )
@@ -289,7 +295,8 @@ private actor LanguageReferenceData {
                 entry: entry,
                 presentationRank: rank.presentationRank,
                 hasExactOrPrefixMatch: romaji != .contains,
-                semanticFingerprint: fingerprint
+                semanticFingerprint: fingerprint,
+                matchedSummary: nil
               ), rank
             ))
         }
@@ -319,7 +326,8 @@ private actor LanguageReferenceData {
             entry: entry,
             presentationRank: rank.presentationRank,
             hasExactOrPrefixMatch: lane == .strongGloss || corroborated,
-            semanticFingerprint: fingerprint
+            semanticFingerprint: fingerprint,
+            matchedSummary: selectedGloss.meaning
           ), rank
         ))
     }
@@ -359,6 +367,7 @@ private actor LanguageReferenceData {
           relation: relation,
           senseOrder: senseOrder,
           glossOrder: Int(sqlite3_column_int(glossStatement, 2)),
+          meaning: Self.string(column: 3, statement: glossStatement),
           partsOfSpeech: parts,
           restrictedWrittenForms: written.sorted(),
           restrictedReadingForms: reading.sorted()
@@ -444,7 +453,8 @@ private actor LanguageReferenceData {
           entry: entry,
           presentationRank: rank.presentationRank,
           hasExactOrPrefixMatch: selected.relation.rawValue < 4,
-          semanticFingerprint: fingerprint
+          semanticFingerprint: fingerprint,
+          matchedSummary: nil
         ),
         rank
       )
@@ -798,9 +808,26 @@ private actor LanguageReferenceData {
         entry: normalized,
         presentationRank: leading.presentationRank,
         hasExactOrPrefixMatch: group.contains(where: \.hasExactOrPrefixMatch),
-        semanticFingerprint: fingerprint
+        semanticFingerprint: fingerprint,
+        matchedSummary: leading.matchedSummary
       )
     }
+  }
+
+  private static func relevanceGroups(
+    for entries: [RankedDictionaryEntry]
+  ) -> [LanguageReferenceID: Int] {
+    var result: [LanguageReferenceID: Int] = [:]
+    var previousRank: DictionaryPresentationRank?
+    var group = -1
+    for entry in entries {
+      if previousRank != entry.presentationRank {
+        group += 1
+        previousRank = entry.presentationRank
+      }
+      result[entry.entry.id] = group
+    }
+    return result
   }
 
   private static let selectedColumns = """
@@ -950,6 +977,7 @@ private struct RankedDictionaryEntry {
   let presentationRank: DictionaryPresentationRank
   let hasExactOrPrefixMatch: Bool
   let semanticFingerprint: String
+  let matchedSummary: String?
 }
 
 private struct SenseRestrictionKey: Hashable {

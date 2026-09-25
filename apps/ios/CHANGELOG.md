@@ -6,6 +6,11 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Changed
 
+- Search now presents one Results list ordered by dictionary relevance first and active
+  frequency-dictionary rank second. English rows show the gloss that matched the query.
+- TUBELEX remains included by default. Japanese Wikipedia and nine domain-specific frequency
+  dictionaries can be downloaded, activated, switched, and removed from You → Frequency
+  Dictionaries.
 - Image Text now divides recognized Japanese into individually selectable words and marks
   each boundary with a separate underline instead of highlighting broad OCR regions.
 - Selecting a recognized word opens the existing Word Detail experience in a large sheet,

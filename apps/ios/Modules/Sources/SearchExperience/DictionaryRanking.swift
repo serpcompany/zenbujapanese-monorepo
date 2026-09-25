@@ -96,6 +96,7 @@ struct DictionaryMatch: Hashable, Sendable {
     let relation: GlossRelation
     let senseOrder: Int
     let glossOrder: Int
+    let meaning: String
     let partsOfSpeech: [PartOfSpeech]
     let restrictedWrittenForms: [String]
     let restrictedReadingForms: [String]

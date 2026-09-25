@@ -31,11 +31,22 @@ class FrequencyPackRuntimeContractTests(unittest.TestCase):
 
         optional = [pack for pack in catalog["packs"] if not pack["bundled"]]
         self.assertGreater(len(optional), 0)
+        for pack in catalog["packs"]:
+            with self.subTest(pack=pack["packID"]):
+                self.assertNotIn("licenseIdentifier", pack)
+                self.assertNotIn("licenseURL", pack)
+                self.assertNotIn("licenseResource", pack)
         for pack in optional:
             with self.subTest(pack=pack["packID"]):
                 self.assertTrue(pack["removable"])
                 self.assertIsNone(pack["bundledArtifactSHA256"])
                 self.assertRegex(pack["downloadURL"], r"^https://")
+
+        bundled_sqlite = sorted(
+            path.name
+            for path in CATALOG.parent.glob("*FrequencyPack.sqlite3")
+        )
+        self.assertEqual(["TUBELEXFrequencyPack.sqlite3"], bundled_sqlite)
 
     def test_every_selectable_pack_has_verified_evidence_smoke_test(self) -> None:
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))

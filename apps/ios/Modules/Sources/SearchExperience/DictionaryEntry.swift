@@ -198,6 +198,11 @@ struct LookupSearchResults: Sendable {
   /// Frequency is deliberately not part of retrieval; the presentation layer reorders this
   /// bounded set with evidence from the active frequency pack.
   let entries: [DictionaryEntry]
+  /// Stable equivalence classes produced by dictionary retrieval. A lower value is always more
+  /// relevant; frequency evidence may reorder entries only when this value is equal.
+  private let relevanceGroups: [LanguageReferenceID: Int]
+  /// The English sense that matched the submitted query, when English gloss evidence was used.
+  private let matchedSummaries: [LanguageReferenceID: String]
   /// Count of the leading equivalent lexical-rank group. Radical-origin presentation uses
   /// this bound to preserve its intentionally narrow candidate list without restoring buckets.
   let leadingLexicalEntryCount: Int
@@ -208,6 +213,8 @@ struct LookupSearchResults: Sendable {
 
   init(
     entries: [DictionaryEntry],
+    relevanceGroups: [LanguageReferenceID: Int]? = nil,
+    matchedSummaries: [LanguageReferenceID: String] = [:],
     leadingLexicalEntryCount: Int? = nil,
     presentation: Presentation = .ranked,
     readingRefinement: SearchRefinement? = nil,
@@ -215,6 +222,9 @@ struct LookupSearchResults: Sendable {
     hasExactOrPrefixMatch: Bool = true
   ) {
     self.entries = entries
+    self.relevanceGroups = relevanceGroups
+      ?? Dictionary(uniqueKeysWithValues: entries.enumerated().map { ($0.element.id, $0.offset) })
+    self.matchedSummaries = matchedSummaries
     self.leadingLexicalEntryCount = min(leadingLexicalEntryCount ?? entries.count, entries.count)
     self.presentation = presentation
     self.readingRefinement = readingRefinement
@@ -228,6 +238,14 @@ struct LookupSearchResults: Sendable {
     entries.isEmpty
   }
 
+  func relevanceGroup(for entry: DictionaryEntry) -> Int {
+    relevanceGroups[entry.id] ?? entries.firstIndex(of: entry) ?? .max
+  }
+
+  func displaySummary(for entry: DictionaryEntry) -> String {
+    matchedSummaries[entry.id] ?? entry.summary
+  }
+
   func primaryEntry(for query: SearchQuery) -> DictionaryEntry? {
     entries.first { $0.headword == query.value } ?? entries.first
   }
@@ -235,6 +253,8 @@ struct LookupSearchResults: Sendable {
   func usingPrimaryEntryExamples() -> LookupSearchResults {
     LookupSearchResults(
       entries: entries,
+      relevanceGroups: relevanceGroups,
+      matchedSummaries: matchedSummaries,
       leadingLexicalEntryCount: leadingLexicalEntryCount,
       presentation: presentation,
       readingRefinement: readingRefinement,
@@ -246,6 +266,8 @@ struct LookupSearchResults: Sendable {
   func offeringReadingRefinement(_ query: SearchQuery) -> LookupSearchResults {
     LookupSearchResults(
       entries: entries,
+      relevanceGroups: relevanceGroups,
+      matchedSummaries: matchedSummaries,
       leadingLexicalEntryCount: leadingLexicalEntryCount,
       presentation: presentation,
       readingRefinement: SearchRefinement(query: query),

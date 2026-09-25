@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Analyze checksum-pinned ordered JSON frequency archives without shipping them.
-
-This tool intentionally emits reports, not runtime artifacts. Candidate archives whose
-redistribution rights are unresolved must not enter the app catalog merely because they
-are publicly downloadable.
-"""
+"""Analyze checksum-pinned ordered JSON frequency archives for optional runtime packs."""
 
 from __future__ import annotations
 

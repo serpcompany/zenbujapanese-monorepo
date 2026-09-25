@@ -621,7 +621,7 @@ private struct SearchResultsView: View {
 
   var body: some View {
     let orderedEntries = SearchResultFrequencyOrdering.ordered(
-      presentedEntries, evidence: frequencyResults)
+      results, entries: presentedEntries, evidence: frequencyResults)
     List {
       if exampleCount > 0 {
         Section {
@@ -659,6 +659,7 @@ private struct SearchResultsView: View {
           ) { index, entry in
             ResultRow(
               entry: entry,
+              summary: results.displaySummary(for: entry),
               frequencyResult: frequencyResults[entry.id],
               rank: .discovered(position: index + 1, count: min(results.entries.count, 12))
             )
@@ -676,6 +677,7 @@ private struct SearchResultsView: View {
           ForEach(orderedEntries.enumerated(), id: \.element.id) { index, entry in
             ResultRow(
               entry: entry,
+              summary: results.displaySummary(for: entry),
               frequencyResult: frequencyResults[entry.id],
               rank: .result(
                 position: index + (query.isSingleKanji ? 2 : 1),
@@ -780,6 +782,7 @@ private struct KanjiPrimaryRow: View {
 
 private struct ResultRow: View {
   let entry: DictionaryEntry
+  let summary: String
   let frequencyResult: FrequencyLookupResult?
   let rank: ResultRank
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -802,7 +805,7 @@ private struct ResultRow: View {
       }
       .contentShape(Rectangle())
     }
-    .accessibilityLabel("\(entry.headword), \(entry.reading), \(entry.summary)")
+    .accessibilityLabel("\(entry.headword), \(entry.reading), \(summary)")
     .accessibilityValue("\(rank.accessibilityValue), \(frequencyPresentation.accessibilityValue)")
     .accessibilityIdentifier(resultIdentifier)
   }
@@ -810,7 +813,7 @@ private struct ResultRow: View {
   private var entryContent: some View {
     VStack(alignment: .leading, spacing: 5) {
       titleBlock
-      Text(entry.summary)
+      Text(summary)
         .font(.body)
         .foregroundStyle(.primary)
         .fixedSize(horizontal: false, vertical: true)
@@ -867,13 +870,18 @@ private enum ResultRank {
 }
 
 enum SearchResultFrequencyOrdering {
-  /// Active-pack evidence is primary. Dictionary relevance order is the deterministic
-  /// fallback for equal/missing evidence; canonical entry ID is the final tie-breaker.
+  /// Dictionary relevance is primary. Active-pack evidence orders only equivalent relevance
+  /// groups; dictionary order and canonical entry ID are deterministic fallbacks.
   static func ordered(
-    _ entries: [DictionaryEntry],
+    _ results: LookupSearchResults,
+    entries: [DictionaryEntry]? = nil,
     evidence: [LanguageReferenceID: FrequencyLookupResult]
   ) -> [DictionaryEntry] {
-    entries.enumerated().sorted { lhs, rhs in
+    let entries = entries ?? results.entries
+    return entries.enumerated().sorted { lhs, rhs in
+      let lhsGroup = results.relevanceGroup(for: lhs.element)
+      let rhsGroup = results.relevanceGroup(for: rhs.element)
+      if lhsGroup != rhsGroup { return lhsGroup < rhsGroup }
       let lhsRank = numericRank(evidence[lhs.element.id])
       let rhsRank = numericRank(evidence[rhs.element.id])
       switch (lhsRank, rhsRank) {

@@ -30,6 +30,11 @@ let package = Package(
         .linkedFramework("JavaScriptCore"),
         .linkedLibrary("sqlite3"),
       ]
-    )
+    ),
+    .testTarget(
+      name: "SearchExperienceTests",
+      dependencies: ["SearchExperience"],
+      resources: [.copy("Fixtures")]
+    ),
   ]
 )

@@ -61,6 +61,22 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
     else { throw FrequencyPackError.invalidCatalog }
     return catalog
   }
+
+  static func bundledArtifactURL() throws -> URL {
+    guard
+      let url = Bundle.module.url(
+        forResource: "TUBELEXFrequencyPack", withExtension: "sqlite3")
+    else { throw FrequencyPackError.missingBundledPack }
+    return url
+  }
+
+  static func languageDataURL() throws -> URL {
+    guard
+      let url = Bundle.module.url(
+        forResource: "LanguageReferenceData", withExtension: "sqlite3")
+    else { throw FrequencyPackError.invalidArtifact }
+    return url
+  }
 }
 
 struct FrequencyPackManifest: Codable, Equatable, Sendable {
@@ -97,10 +113,7 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
   let corpusDocuments: Int?
   let corpusVideos: Int?
   let corpusChannels: Int?
-  let licenseIdentifier: String
   let attribution: String
-  let licenseURL: URL
-  let licenseResource: String
   let bundled: Bool
   let removable: Bool
   let orderedJSONSource: FrequencyPackOrderedJSONSource?

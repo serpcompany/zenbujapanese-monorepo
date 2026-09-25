@@ -19,58 +19,43 @@ enum FrequencyPackInstaller {
       .appendingPathComponent(".\(UUID().uuidString).sqlite3")
     defer { try? FileManager.default.removeItem(at: candidate) }
     var database: OpaquePointer?
-    guard sqlite3_open(candidate.path, &database) == SQLITE_OK, let database else {
+    guard sqlite3_open(candidate.path, &database) == SQLITE_OK, let handle = database else {
       throw FrequencyPackError.invalidArtifact
     }
-    defer { sqlite3_close(database) }
+    defer {
+      if let database { sqlite3_close(database) }
+    }
     try execute(
-      database,
+      handle,
       "PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;"
         + "CREATE TABLE metadata(key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID;"
         + "CREATE TABLE source_rows(rank INTEGER PRIMARY KEY, form TEXT NOT NULL, source_count INTEGER NOT NULL, source_pos TEXT NOT NULL, source_record_digest BLOB NOT NULL);"
         + "CREATE TABLE frequency_evidence(language_reference_id BLOB PRIMARY KEY, rank INTEGER NOT NULL, source_count INTEGER NOT NULL, covered_source_rows INTEGER NOT NULL, mapping_relation TEXT NOT NULL, matched_form TEXT NOT NULL, source_pos TEXT NOT NULL, source_record_digest BLOB NOT NULL) WITHOUT ROWID;"
         + "BEGIN IMMEDIATE;"
     )
-    var insert: OpaquePointer?
-    guard
-      sqlite3_prepare_v2(
-        database, "INSERT INTO source_rows VALUES(?, ?, ?, ?, ?)", -1, &insert, nil)
-        == SQLITE_OK,
-      let insert
-    else { throw sqliteError(database) }
-    defer { sqlite3_finalize(insert) }
-    for row in parsedSource.rows {
-      sqlite3_bind_int64(insert, 1, Int64(row.rank))
-      bind(row.form, at: 2, to: insert)
-      sqlite3_bind_int64(insert, 3, Int64(row.count))
-      bind(row.partOfSpeech, at: 4, to: insert)
-      bind(row.digest, at: 5, to: insert)
-      guard sqlite3_step(insert) == SQLITE_DONE else { throw sqliteError(database) }
-      sqlite3_reset(insert)
-      sqlite3_clear_bindings(insert)
-    }
+    try insert(parsedSource.rows, into: handle)
     guard parsedSource.rows.count == manifest.coveredSourceRows,
       parsedSource.totalTokens == manifest.sourceTotalTokens
     else {
       throw FrequencyPackError.invalidSource
     }
-    try execute(database, "COMMIT")
+    try execute(handle, "COMMIT")
     try execute(
-      database,
+      handle,
       try mappingSQL(
         languageDataURL: languageDataURL,
         coveredSourceRows: manifest.coveredSourceRows
       ))
-    let mapped = try scalar(database, "SELECT COUNT(*) FROM frequency_evidence")
+    let mapped = try scalar(handle, "SELECT COUNT(*) FROM frequency_evidence")
     let ambiguous = try scalar(
-      database,
+      handle,
       "SELECT COUNT(*) FROM resolutions WHERE candidate_count>1 AND pos_candidate_count != 1")
-    let matchedSourceRows = try scalar(database, "SELECT COUNT(*) FROM resolutions")
+    let matchedSourceRows = try scalar(handle, "SELECT COUNT(*) FROM resolutions")
     let unmapped = manifest.coveredSourceRows - matchedSourceRows
-    let eligible = try scalar(database, "SELECT COUNT(*) FROM eligible")
+    let eligible = try scalar(handle, "SELECT COUNT(*) FROM eligible")
     guard mapped == manifest.mappedRows, ambiguous == manifest.ambiguousRows,
       unmapped == manifest.unmappedRows, eligible - mapped == manifest.duplicateMappings,
-      try FrequencyPackArtifactContent.mappingSHA256(database) == manifest.mappingSHA256
+      try FrequencyPackArtifactContent.mappingSHA256(handle) == manifest.mappingSHA256
     else { throw FrequencyPackError.mappingMismatch }
     for (key, value) in [
       ("artifact_schema", "zenbu.frequency-pack.v1"),
@@ -89,16 +74,18 @@ enum FrequencyPackInstaller {
       ("duplicate_mappings", String(manifest.duplicateMappings)),
     ] {
       try execute(
-        database,
+        handle,
         "INSERT INTO metadata VALUES('\(sql(key))','\(sql(value))')")
     }
     try execute(
-      database,
+      handle,
       "DROP TABLE source_rows; CREATE INDEX frequency_evidence_rank_index ON frequency_evidence(rank,language_reference_id); VACUUM;"
     )
     let artifactSHA256 = try Data(contentsOf: candidate).sha256
     let artifact = try FrequencyPackArtifact(url: candidate, manifest: manifest)
     try artifact.validateSmokeTest()
+    guard sqlite3_close(handle) == SQLITE_OK else { throw sqliteError(handle) }
+    database = nil
     try FileManager.default.createDirectory(
       at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
     if FileManager.default.fileExists(atPath: destination.path) {
@@ -127,6 +114,27 @@ enum FrequencyPackInstaller {
         with: languageDataURL.path.replacingOccurrences(of: "'", with: "''")
       )
       .replacingOccurrences(of: "{{COVERED_SOURCE_ROWS}}", with: String(coveredSourceRows))
+  }
+
+  private static func insert(_ rows: [SourceRow], into database: OpaquePointer) throws {
+    var statement: OpaquePointer?
+    guard
+      sqlite3_prepare_v2(
+        database, "INSERT INTO source_rows VALUES(?, ?, ?, ?, ?)", -1, &statement, nil)
+        == SQLITE_OK,
+      let statement
+    else { throw sqliteError(database) }
+    defer { sqlite3_finalize(statement) }
+    for row in rows {
+      sqlite3_bind_int64(statement, 1, Int64(row.rank))
+      bind(row.form, at: 2, to: statement)
+      sqlite3_bind_int64(statement, 3, Int64(row.count))
+      bind(row.partOfSpeech, at: 4, to: statement)
+      bind(row.digest, at: 5, to: statement)
+      guard sqlite3_step(statement) == SQLITE_DONE else { throw sqliteError(database) }
+      sqlite3_reset(statement)
+      sqlite3_clear_bindings(statement)
+    }
   }
 
   private static func sourceRows(

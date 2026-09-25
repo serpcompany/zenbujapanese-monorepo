@@ -32,7 +32,19 @@ uses the default Kuromoji path.
 
 ## Current verification boundary
 
-This repository currently has no test targets or CI workflows. Issue [#329](https://github.com/serpcompany/zenbujapanese-monorepo/issues/329) owns the clean-slate replacement strategy. Verify ordinary changes by building and launching the real app; add test or CI infrastructure only through approved follow-up work from that strategy.
+The `SearchExperienceTests` Swift package target covers dictionary result ordering and the
+optional frequency-pack lifecycle on an arm64 iOS Simulator. Run it from
+`apps/ios/Modules` with:
+
+```sh
+xcodebuild -scheme ZenbuJapaneseModules \
+  -destination 'platform=iOS Simulator,id=<booted-simulator-udid>' \
+  ONLY_ACTIVE_ARCH=YES test
+```
+
+The repository still has no CI workflow. Issue [#329](https://github.com/serpcompany/zenbujapanese-monorepo/issues/329)
+owns the broader test and CI replacement strategy. Verify ordinary app changes by also building,
+launching, and inspecting the real app.
 
 Frequency-pack selection has one repo-local Python contract test. Run
 `python3 -m unittest apps/ios/Tools/tests/test_frequency_pack_runtime_contract.py` to verify
@@ -48,9 +60,9 @@ editing or resubmitting the visible query.
 
 | Fixture | Query | Verify |
 | --- | --- | --- |
-| Japanese | `いる` | One **Results** collection; every numeric rank ascends and every `—` row follows ranked rows. |
-| English | `quiet` | Relevant gloss matches remain present; numeric rank, not removed buckets, controls their order. |
-| Romaji | `miru` | Romaji matches remain relevant and use the same frequency-first ordering. |
+| Japanese | `いる` | One **Results** collection; relevance groups remain stable and numeric ranks ascend within each equivalent group. |
+| English | `prison` | Direct prison matches precede incidental matches regardless of frequency; each row shows the matching prison gloss. |
+| Romaji | `miru` | Romaji relevance groups remain stable and frequency orders only within equivalent groups. |
 | Radical origin | Submit a sparse radical selection | One **Results** collection contains only the leading lexical-rank candidate group, frequency-ordered within that group. |
 | Single kanji | `静` | The dedicated Kanji row remains first; word rows use frequency order and visible positions include the Kanji row. |
 | No evidence | `齉` | The dictionary entry remains discoverable with `—` and follows any entry with mapped evidence. |
@@ -60,7 +72,8 @@ editing or resubmitting the visible query.
 
 For pack switching, record the visible headwords and ranks for `いる` under TUBELEX, activate
 Japanese Wikipedia, return to Search without changing the query, and verify that rows reorder
-where the displayed rank values differ. Switch back and verify the original ordering returns.
+where displayed rank values differ within the same relevance group. Switch back and verify the
+original ordering returns.
 
 For unavailable-pack fallback, begin a search and make the active installed pack unreadable in a
 debug Simulator container (or inject an unavailable `FrequencyCapability`). Verify that the same

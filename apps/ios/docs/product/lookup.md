@@ -13,17 +13,17 @@ A learner can search in Japanese or English using:
 - Image Search using the camera, Photo Library, or an image file.
 
 Ordinary Japanese, English, and romaji searches present one **Results** collection. The app
-first builds a bounded set from exact, prefix, contains, gloss, and romaji query evidence, then
-orders entries with mapped evidence from the active frequency dictionary by ascending numeric
-rank. Frequency never introduces an entry that the query did not retrieve. Entries without
-mapped evidence remain visible after ranked entries and show a dash: this means the selected
-corpus does not rank that entry, not that the active pack failed.
+first builds a bounded set from exact, prefix, contains, gloss, and romaji query evidence. It
+keeps stronger dictionary matches ahead of weaker matches, then uses ascending rank from the
+active frequency dictionary to order entries within each equivalent relevance group. Frequency
+never introduces an entry that the query did not retrieve or lets an incidental match outrank a
+direct match. An English result displays the matching gloss, even when that gloss is not the
+entry's first sense. Entries without mapped evidence remain visible with a dash.
 
-Equal ranks and entries without mapped evidence retain the dictionary's deterministic
-query-match order, whose final retrieval tie-break is the semantic fingerprint and canonical
-entry identifier. While frequency data is loading, or when the active dictionary is unavailable,
-the whole collection uses that same fallback order. Unavailability is disclosed below the
-results without blocking lookup.
+Equal ranks and entries without mapped evidence retain the dictionary's deterministic order
+within their relevance group. While frequency data is loading, or when the active dictionary is
+unavailable, the whole collection uses dictionary relevance order. Unavailability is disclosed
+below the results without blocking lookup.
 
 Changing the active frequency dictionary reorders the currently displayed result collection
 without resubmitting the query. Results can also offer a Japanese-reading refinement, related

@@ -17,13 +17,13 @@ You is a supporting navigation area rather than a separate Product Experience. I
 - management of optional frequency dictionaries and Japanese Text Analysis resources; and
 - source credits and attributions.
 
-Frequency Dictionaries offers checksum-pinned optional packs for streaming,
-fiction, news, anime, Japanese dictionary definitions, television, online video,
-and broad web Japanese. These packs download directly from their public source
-catalog, are mapped locally into Zenbu's dictionary, and can be activated or
-removed independently. Each compact pack card shows its current status, installed
-storage size when applicable, and available actions. Credits & Attributions links
-to the public catalog used for these optional downloads.
+Frequency Dictionaries includes TUBELEX YouTube Japanese in the app and offers
+Japanese Wikipedia plus nine checksum-pinned optional packs for Netflix, novels,
+slice-of-life anime, NHK, shonen anime, Japanese dictionary definitions, visual novels,
+television, and broad web Japanese. Optional packs are downloaded on request, mapped
+locally into Zenbu's dictionary, and can be activated or removed independently. Each
+compact pack card shows its current status, installed storage size when applicable,
+and available actions.
 
 ### Media Library
 
