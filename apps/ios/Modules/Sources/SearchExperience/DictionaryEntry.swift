@@ -198,6 +198,9 @@ struct LookupSearchResults: Sendable {
   /// Frequency is deliberately not part of retrieval; the presentation layer reorders this
   /// bounded set with evidence from the active frequency pack.
   let entries: [DictionaryEntry]
+  /// Count of the leading equivalent lexical-rank group. Radical-origin presentation uses
+  /// this bound to preserve its intentionally narrow candidate list without restoring buckets.
+  let leadingLexicalEntryCount: Int
   let presentation: Presentation
   let readingRefinement: SearchRefinement?
   let usesPrimaryEntryExamples: Bool
@@ -205,12 +208,14 @@ struct LookupSearchResults: Sendable {
 
   init(
     entries: [DictionaryEntry],
+    leadingLexicalEntryCount: Int? = nil,
     presentation: Presentation = .ranked,
     readingRefinement: SearchRefinement? = nil,
     usesPrimaryEntryExamples: Bool = false,
     hasExactOrPrefixMatch: Bool = true
   ) {
     self.entries = entries
+    self.leadingLexicalEntryCount = min(leadingLexicalEntryCount ?? entries.count, entries.count)
     self.presentation = presentation
     self.readingRefinement = readingRefinement
     self.usesPrimaryEntryExamples = usesPrimaryEntryExamples
@@ -230,6 +235,7 @@ struct LookupSearchResults: Sendable {
   func usingPrimaryEntryExamples() -> LookupSearchResults {
     LookupSearchResults(
       entries: entries,
+      leadingLexicalEntryCount: leadingLexicalEntryCount,
       presentation: presentation,
       readingRefinement: readingRefinement,
       usesPrimaryEntryExamples: true,
@@ -240,6 +246,7 @@ struct LookupSearchResults: Sendable {
   func offeringReadingRefinement(_ query: SearchQuery) -> LookupSearchResults {
     LookupSearchResults(
       entries: entries,
+      leadingLexicalEntryCount: leadingLexicalEntryCount,
       presentation: presentation,
       readingRefinement: SearchRefinement(query: query),
       usesPrimaryEntryExamples: usesPrimaryEntryExamples,

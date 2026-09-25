@@ -125,6 +125,21 @@ struct EnglishDictionaryRank: Comparable, Sendable {
   let headwordLength: Int
   let semanticFingerprint: String
 
+  var presentationRank: DictionaryPresentationRank {
+    .english(
+      EnglishDictionaryPresentationRank(
+        lane: lane,
+        corroborationRank: corroborationRank,
+        romajiSpecificityRank: romajiSpecificityRank,
+        senseOrder: senseOrder,
+        priorityPresenceRank: priorityPresenceRank,
+        relation: relation,
+        priorityProfile: priorityProfile,
+        glossOrder: glossOrder
+      )
+    )
+  }
+
   static func < (lhs: Self, rhs: Self) -> Bool {
     if lhs.lane != rhs.lane { return lhs.lane < rhs.lane }
     if lhs.corroborationRank != rhs.corroborationRank {
@@ -153,6 +168,16 @@ struct JapaneseDictionaryRank: Comparable, Sendable {
   let headwordLength: Int
   let semanticFingerprint: String
 
+  var presentationRank: DictionaryPresentationRank {
+    .japanese(
+      JapaneseDictionaryPresentationRank(
+        relation: relation,
+        priorityProfile: priorityProfile,
+        senseBreadthRank: senseBreadthRank
+      )
+    )
+  }
+
   static func < (lhs: Self, rhs: Self) -> Bool {
     if lhs.relation != rhs.relation { return lhs.relation < rhs.relation }
     if lhs.priorityProfile < rhs.priorityProfile { return true }
@@ -163,4 +188,26 @@ struct JapaneseDictionaryRank: Comparable, Sendable {
     if lhs.headwordLength != rhs.headwordLength { return lhs.headwordLength < rhs.headwordLength }
     return lhs.semanticFingerprint < rhs.semanticFingerprint
   }
+}
+
+enum DictionaryPresentationRank: Equatable, Sendable {
+  case english(EnglishDictionaryPresentationRank)
+  case japanese(JapaneseDictionaryPresentationRank)
+}
+
+struct EnglishDictionaryPresentationRank: Equatable, Sendable {
+  let lane: DictionaryMatch.EvidenceLane
+  let corroborationRank: Int
+  let romajiSpecificityRank: Int
+  let senseOrder: Int
+  let priorityPresenceRank: Int
+  let relation: DictionaryMatch.GlossRelation
+  let priorityProfile: LanguageReferencePriorityProfile
+  let glossOrder: Int
+}
+
+struct JapaneseDictionaryPresentationRank: Equatable, Sendable {
+  let relation: DictionaryMatch.FormRelation
+  let priorityProfile: LanguageReferencePriorityProfile
+  let senseBreadthRank: Int
 }

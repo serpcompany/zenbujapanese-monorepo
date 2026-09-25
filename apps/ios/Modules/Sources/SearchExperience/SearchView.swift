@@ -68,6 +68,8 @@ struct SearchView: View {
           query: searchQuery,
           results: results,
           exampleCount: exampleCount,
+          rankedEntryLimit: sparseRadicalQuery == searchQuery
+            ? results.leadingLexicalEntryCount : nil,
           frequencyCapability: frequencyCapability,
           frequencyRefreshID: frequencyRefreshID,
           selectRefinement: selectRefinement
@@ -610,6 +612,8 @@ private struct SearchResultsView: View {
   let query: SearchQuery
   let results: LookupSearchResults
   let exampleCount: Int
+  /// Radical-origin searches intentionally retain only their leading lexical-rank group.
+  let rankedEntryLimit: Int?
   let frequencyCapability: FrequencyCapability
   let frequencyRefreshID: Int
   let selectRefinement: (SearchRefinement) -> Void
@@ -617,7 +621,7 @@ private struct SearchResultsView: View {
 
   var body: some View {
     let orderedEntries = SearchResultFrequencyOrdering.ordered(
-      results.entries, evidence: frequencyResults)
+      presentedEntries, evidence: frequencyResults)
     List {
       if exampleCount > 0 {
         Section {
@@ -722,12 +726,16 @@ private struct SearchResultsView: View {
   }
 
   private var displayedEntryIDs: [LanguageReferenceID] {
-    let entries =
-      results.presentation == .discoveredWords
-      ? Array(results.entries.prefix(12))
-      : results.entries
     var seen = Set<LanguageReferenceID>()
-    return entries.compactMap { seen.insert($0.id).inserted ? $0.id : nil }
+    return presentedEntries.compactMap { seen.insert($0.id).inserted ? $0.id : nil }
+  }
+
+  private var presentedEntries: [DictionaryEntry] {
+    if results.presentation == .discoveredWords {
+      return Array(results.entries.prefix(12))
+    }
+    guard let rankedEntryLimit else { return results.entries }
+    return Array(results.entries.prefix(rankedEntryLimit))
   }
 
   private var frequencyTaskID: SearchFrequencyTaskID {

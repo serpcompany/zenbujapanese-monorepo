@@ -29,6 +29,10 @@ without resubmitting the query. Results can also offer a Japanese-reading refine
 Example Sentences, discovered words, frequency information, and a dedicated Kanji result for a
 single-kanji query.
 
+A sparse radical-selection submission keeps its intentionally narrow leading lexical-rank
+candidate group. Those candidates still appear in one **Results** collection and are ordered by
+the active frequency dictionary within that group.
+
 Recent text searches are stored on the device. A learner can repeat or remove one search,
 or clear the entire history.
 

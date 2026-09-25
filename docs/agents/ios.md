@@ -46,6 +46,7 @@ editing or resubmitting the visible query.
 | Japanese | `いる` | One **Results** collection; every numeric rank ascends and every `—` row follows ranked rows. |
 | English | `quiet` | Relevant gloss matches remain present; numeric rank, not removed buckets, controls their order. |
 | Romaji | `miru` | Romaji matches remain relevant and use the same frequency-first ordering. |
+| Radical origin | Submit a sparse radical selection | One **Results** collection contains only the leading lexical-rank candidate group, frequency-ordered within that group. |
 | Single kanji | `静` | The dedicated Kanji row remains first; word rows use frequency order and visible positions include the Kanji row. |
 | No evidence | `齉` | The dictionary entry remains discoverable with `—` and follows any entry with mapped evidence. |
 | Reading refinement | `what is your name` | The Japanese-reading refinement remains available and starts the refined search. |
