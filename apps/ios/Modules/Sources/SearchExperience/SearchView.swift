@@ -68,7 +68,6 @@ struct SearchView: View {
           query: searchQuery,
           results: results,
           exampleCount: exampleCount,
-          showsAdditionalMatches: sparseRadicalQuery != searchQuery,
           frequencyCapability: frequencyCapability,
           frequencyRefreshID: frequencyRefreshID,
           selectRefinement: selectRefinement
@@ -76,8 +75,7 @@ struct SearchView: View {
         .id(
           SearchResultsIdentity(
             query: searchQuery,
-            best: results.best.map(\.id),
-            additional: results.additional.map(\.id),
+            entries: results.entries.map(\.id),
             refinement: results.readingRefinement?.query
           )
         )
@@ -522,8 +520,7 @@ private enum SearchPresentationState: Equatable {
 
 private struct SearchResultsIdentity: Hashable {
   let query: SearchQuery
-  let best: [LanguageReferenceID]
-  let additional: [LanguageReferenceID]
+  let entries: [LanguageReferenceID]
   let refinement: SearchQuery?
 }
 
@@ -613,13 +610,14 @@ private struct SearchResultsView: View {
   let query: SearchQuery
   let results: LookupSearchResults
   let exampleCount: Int
-  let showsAdditionalMatches: Bool
   let frequencyCapability: FrequencyCapability
   let frequencyRefreshID: Int
   let selectRefinement: (SearchRefinement) -> Void
   @State private var frequencyResults: [LanguageReferenceID: FrequencyLookupResult] = [:]
 
   var body: some View {
+    let orderedEntries = SearchResultFrequencyOrdering.ordered(
+      results.entries, evidence: frequencyResults)
     List {
       if exampleCount > 0 {
         Section {
@@ -653,42 +651,45 @@ private struct SearchResultsView: View {
       if results.presentation == .discoveredWords {
         Section("Discovered Words") {
           ForEach(
-            (results.best + results.additional).prefix(12).enumerated(), id: \.element.id
+            results.entries.prefix(12).enumerated(), id: \.element.id
           ) { index, entry in
             ResultRow(
               entry: entry,
               frequencyResult: frequencyResults[entry.id],
-              rank: .discovered(index + 1)
+              rank: .discovered(position: index + 1, count: min(results.entries.count, 12))
             )
           }
         }
-      } else if query.isSingleKanji || !results.best.isEmpty {
-        Section("Best Matches") {
-          if let character = KanjiCharacter(query.value) {
-            KanjiPrimaryRow(character: character, entry: primaryKanjiEntry)
-          }
-          ForEach(results.best.enumerated(), id: \.element.id) { index, entry in
-            ResultRow(
-              entry: entry,
-              frequencyResult: frequencyResults[entry.id],
-              rank: .best(index + (query.isSingleKanji ? 2 : 1))
-            )
-          }
-        }
-      }
-
-      if showsAdditionalMatches, results.presentation == .ranked, !results.additional.isEmpty {
+      } else if query.isSingleKanji || !results.entries.isEmpty {
         Section {
-          ForEach(results.additional.enumerated(), id: \.element.id) { index, entry in
+          if let character = KanjiCharacter(query.value) {
+            KanjiPrimaryRow(
+              character: character,
+              entry: primaryKanjiEntry,
+              resultCount: orderedEntries.count + 1
+            )
+          }
+          ForEach(orderedEntries.enumerated(), id: \.element.id) { index, entry in
             ResultRow(
               entry: entry,
               frequencyResult: frequencyResults[entry.id],
-              rank: .additional(index + 1)
+              rank: .result(
+                position: index + (query.isSingleKanji ? 2 : 1),
+                count: orderedEntries.count + (query.isSingleKanji ? 1 : 0)
+              )
             )
           }
         } header: {
-          Text("Additional Matches")
-            .accessibilityIdentifier("search.additional-matches-header")
+          Text("Results")
+            .accessibilityIdentifier("search.results-header")
+        } footer: {
+          if let frequencyUnavailableReason {
+            Label(
+              "Frequency ordering unavailable. Showing dictionary relevance order. \(frequencyUnavailableReason)",
+              systemImage: "info.circle"
+            )
+            .accessibilityIdentifier("search.frequency-ordering-unavailable")
+          }
         }
       }
     }
@@ -704,6 +705,7 @@ private struct SearchResultsView: View {
       } catch is CancellationError {
         return
       } catch {
+        guard !Task.isCancelled else { return }
         frequencyResults = FrequencyLookupResult.unavailableResults(
           for: displayedEntryIDs, pack: nil, reason: "Frequency data unavailable")
       }
@@ -722,8 +724,8 @@ private struct SearchResultsView: View {
   private var displayedEntryIDs: [LanguageReferenceID] {
     let entries =
       results.presentation == .discoveredWords
-      ? Array((results.best + results.additional).prefix(12))
-      : results.best + (showsAdditionalMatches ? results.additional : [])
+      ? Array(results.entries.prefix(12))
+      : results.entries
     var seen = Set<LanguageReferenceID>()
     return entries.compactMap { seen.insert($0.id).inserted ? $0.id : nil }
   }
@@ -731,11 +733,19 @@ private struct SearchResultsView: View {
   private var frequencyTaskID: SearchFrequencyTaskID {
     SearchFrequencyTaskID(entryIDs: displayedEntryIDs, refreshID: frequencyRefreshID)
   }
+
+  private var frequencyUnavailableReason: String? {
+    displayedEntryIDs.compactMap { id in
+      guard case .unavailable(let unavailable) = frequencyResults[id] else { return nil }
+      return unavailable.reason
+    }.first
+  }
 }
 
 private struct KanjiPrimaryRow: View {
   let character: KanjiCharacter
   let entry: DictionaryEntry?
+  let resultCount: Int
 
   var body: some View {
     NavigationLink(value: SearchExperienceRoute.kanji(character, entry)) {
@@ -755,7 +765,7 @@ private struct KanjiPrimaryRow: View {
       .contentShape(Rectangle())
     }
     .accessibilityLabel("\(character.rawValue), KANJI, \(entry?.summary ?? "Kanji detail")")
-    .accessibilityValue("Best match 1, Kanji primary")
+    .accessibilityValue("Result 1 of \(resultCount), Kanji primary")
     .accessibilityIdentifier("result.kanji-primary.\(character.rawValue)")
   }
 }
@@ -837,15 +847,43 @@ private struct SearchFrequencyTaskID: Hashable {
 }
 
 private enum ResultRank {
-  case best(Int)
-  case additional(Int)
-  case discovered(Int)
+  case result(position: Int, count: Int)
+  case discovered(position: Int, count: Int)
 
   var accessibilityValue: String {
     switch self {
-    case .best(let position): "Best match \(position)"
-    case .additional(let position): "Additional match \(position)"
-    case .discovered(let position): "Discovered word \(position)"
+    case .result(let position, let count): "Result \(position) of \(count)"
+    case .discovered(let position, let count): "Discovered word \(position) of \(count)"
     }
+  }
+}
+
+enum SearchResultFrequencyOrdering {
+  /// Active-pack evidence is primary. Dictionary relevance order is the deterministic
+  /// fallback for equal/missing evidence; canonical entry ID is the final tie-breaker.
+  static func ordered(
+    _ entries: [DictionaryEntry],
+    evidence: [LanguageReferenceID: FrequencyLookupResult]
+  ) -> [DictionaryEntry] {
+    entries.enumerated().sorted { lhs, rhs in
+      let lhsRank = numericRank(evidence[lhs.element.id])
+      let rhsRank = numericRank(evidence[rhs.element.id])
+      switch (lhsRank, rhsRank) {
+      case let (.some(left), .some(right)) where left != right:
+        return left < right
+      case (.some, .none):
+        return true
+      case (.none, .some):
+        return false
+      default:
+        if lhs.offset != rhs.offset { return lhs.offset < rhs.offset }
+        return lhs.element.id.rawValue < rhs.element.id.rawValue
+      }
+    }.map(\.element)
+  }
+
+  private static func numericRank(_ result: FrequencyLookupResult?) -> Int? {
+    guard case .evidence(let evidence) = result else { return nil }
+    return evidence.rank
   }
 }

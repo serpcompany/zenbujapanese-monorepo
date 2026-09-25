@@ -12,9 +12,22 @@ A learner can search in Japanese or English using:
 - radical selection; or
 - Image Search using the camera, Photo Library, or an image file.
 
-Text searches present app-ranked Best Matches and, when available, Additional Matches.
-Results can also offer a Japanese-reading refinement, related Example Sentences, discovered
-words, frequency information, and a dedicated Kanji result for a single-kanji query.
+Ordinary Japanese, English, and romaji searches present one **Results** collection. The app
+first builds a bounded set from exact, prefix, contains, gloss, and romaji query evidence, then
+orders entries with mapped evidence from the active frequency dictionary by ascending numeric
+rank. Frequency never introduces an entry that the query did not retrieve. Entries without
+mapped evidence remain visible after ranked entries.
+
+Equal ranks and entries without mapped evidence retain the dictionary's deterministic
+query-match order, whose final retrieval tie-break is the semantic fingerprint and canonical
+entry identifier. While frequency data is loading, or when the active dictionary is unavailable,
+the whole collection uses that same fallback order. Unavailability is disclosed below the
+results without blocking lookup.
+
+Changing the active frequency dictionary reorders the currently displayed result collection
+without resubmitting the query. Results can also offer a Japanese-reading refinement, related
+Example Sentences, discovered words, frequency information, and a dedicated Kanji result for a
+single-kanji query.
 
 Recent text searches are stored on the device. A learner can repeat or remove one search,
 or clear the entire history.

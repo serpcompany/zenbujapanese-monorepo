@@ -194,45 +194,42 @@ enum LanguageReferenceIdentity {
 }
 
 struct LookupSearchResults: Sendable {
-  let best: [DictionaryEntry]
-  let additional: [DictionaryEntry]
+  /// The relevance-filtered, deduplicated candidate set in deterministic dictionary order.
+  /// Frequency is deliberately not part of retrieval; the presentation layer reorders this
+  /// bounded set with evidence from the active frequency pack.
+  let entries: [DictionaryEntry]
   let presentation: Presentation
   let readingRefinement: SearchRefinement?
   let usesPrimaryEntryExamples: Bool
   let hasExactOrPrefixMatch: Bool
 
   init(
-    best: [DictionaryEntry],
-    additional: [DictionaryEntry],
+    entries: [DictionaryEntry],
     presentation: Presentation = .ranked,
     readingRefinement: SearchRefinement? = nil,
     usesPrimaryEntryExamples: Bool = false,
     hasExactOrPrefixMatch: Bool = true
   ) {
-    self.best = best
-    self.additional = additional
+    self.entries = entries
     self.presentation = presentation
     self.readingRefinement = readingRefinement
     self.usesPrimaryEntryExamples = usesPrimaryEntryExamples
     self.hasExactOrPrefixMatch = hasExactOrPrefixMatch
   }
 
-  static let empty = LookupSearchResults(best: [], additional: [], hasExactOrPrefixMatch: false)
+  static let empty = LookupSearchResults(entries: [], hasExactOrPrefixMatch: false)
 
   var isEmpty: Bool {
-    best.isEmpty && additional.isEmpty
+    entries.isEmpty
   }
 
   func primaryEntry(for query: SearchQuery) -> DictionaryEntry? {
-    (best + additional).first { $0.headword == query.value }
-      ?? best.first
-      ?? additional.first
+    entries.first { $0.headword == query.value } ?? entries.first
   }
 
   func usingPrimaryEntryExamples() -> LookupSearchResults {
     LookupSearchResults(
-      best: best,
-      additional: additional,
+      entries: entries,
       presentation: presentation,
       readingRefinement: readingRefinement,
       usesPrimaryEntryExamples: true,
@@ -242,8 +239,7 @@ struct LookupSearchResults: Sendable {
 
   func offeringReadingRefinement(_ query: SearchQuery) -> LookupSearchResults {
     LookupSearchResults(
-      best: best,
-      additional: additional,
+      entries: entries,
       presentation: presentation,
       readingRefinement: SearchRefinement(query: query),
       usesPrimaryEntryExamples: usesPrimaryEntryExamples,

@@ -254,9 +254,9 @@ public struct SearchExperienceRootView: View {
         return
       }
       let entry =
-        (results.best + results.additional).first {
+        results.entries.first {
           $0.headword == relationship.headword && $0.reading == relationship.reading
-        } ?? results.best.first ?? results.additional.first
+        } ?? results.entries.first
       if let entry { path.append(.word(entry, nil)) }
     }
   }

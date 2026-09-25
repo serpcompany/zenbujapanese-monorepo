@@ -79,7 +79,7 @@ private actor LanguageReferenceData {
       var literalResults = try searchLiteralEnglish(literalQuery)
       if !refinedResults.isEmpty, !literalResults.isEmpty {
         if let exactFormEntry = try entry(matchingForm: query.value),
-          (literalResults.best + literalResults.additional).contains(where: {
+          literalResults.entries.contains(where: {
             $0.id == exactFormEntry.id
           })
         {
@@ -92,18 +92,17 @@ private actor LanguageReferenceData {
     let directResults = try searchOnce(query)
     if !directResults.hasExactOrPrefixMatch, !query.deinflectedCandidates.isEmpty {
       let deinflectedResults = try query.deinflectedCandidates.map(searchOnce)
-      if let primaryIndex = deinflectedResults.firstIndex(where: { !$0.best.isEmpty }) {
-        let deinflectedBest = Self.uniqued(deinflectedResults[primaryIndex].best)
-        let bestIDs = Set(deinflectedBest.map(\.id))
+      if let primaryIndex = deinflectedResults.firstIndex(where: { !$0.entries.isEmpty }) {
+        let primaryMatches = Self.uniqued(deinflectedResults[primaryIndex].entries)
+        let primaryIDs = Set(primaryMatches.map(\.id))
         let alternateMatches = deinflectedResults.dropFirst(primaryIndex + 1).flatMap {
-          $0.best + $0.additional
+          $0.entries
         }
         let displacedMatches = Self.uniqued(
-          alternateMatches + directResults.best + directResults.additional
-        ).filter { !bestIDs.contains($0.id) }
+          alternateMatches + directResults.entries
+        ).filter { !primaryIDs.contains($0.id) }
         return LookupSearchResults(
-          best: deinflectedBest,
-          additional: Array(displacedMatches.prefix(max(0, 60 - deinflectedBest.count))),
+          entries: Array((primaryMatches + displacedMatches).prefix(60)),
           usesPrimaryEntryExamples: true
         )
       }
@@ -111,7 +110,7 @@ private actor LanguageReferenceData {
     if query.isASCII,
       !directResults.isEmpty,
       let exactFormEntry = try entry(matchingForm: query.value),
-      (directResults.best + directResults.additional).contains(where: { $0.id == exactFormEntry.id }
+      directResults.entries.contains(where: { $0.id == exactFormEntry.id }
       )
     {
       return directResults.usingPrimaryEntryExamples()
@@ -120,15 +119,14 @@ private actor LanguageReferenceData {
     let analyzedResults = try await japaneseTextAnalysis.lookupSegments(query).compactMap {
       segment in
       let segmentResults = try searchOnce(segment)
-      return (segmentResults.best + segmentResults.additional).first {
+      return segmentResults.entries.first {
         $0.headword == segment.value
       }
-        ?? segmentResults.best.first
+        ?? segmentResults.entries.first
     }
     if analyzedResults.count > 1 || (query.isMixedScript && !analyzedResults.isEmpty) {
       return LookupSearchResults(
-        best: Array(Self.uniqued(analyzedResults)),
-        additional: [],
+        entries: Array(Self.uniqued(analyzedResults)),
         presentation: .discoveredWords,
         hasExactOrPrefixMatch: false
       )
@@ -138,8 +136,7 @@ private actor LanguageReferenceData {
         let results = try searchOnce(segment)
         if !results.isEmpty {
           return LookupSearchResults(
-            best: results.best,
-            additional: results.additional,
+            entries: results.entries,
             presentation: .discoveredWords,
             hasExactOrPrefixMatch: false
           )
@@ -224,13 +221,8 @@ private actor LanguageReferenceData {
 
     let ranked = query.isASCII ? try rankedEnglish(query) : try rankedJapanese(query)
     guard !ranked.isEmpty else { return .empty }
-    let leadingPresentationRank = ranked[0].presentationRank
-    let best = ranked.prefix { $0.presentationRank == leadingPresentationRank }.map(\.entry)
-    let additionalAllowance = max(0, 60 - best.count)
-    let additional = ranked.dropFirst(best.count).prefix(additionalAllowance).map(\.entry)
     return LookupSearchResults(
-      best: Array(best),
-      additional: Array(additional),
+      entries: ranked.prefix(60).map(\.entry),
       hasExactOrPrefixMatch: ranked.contains { $0.hasExactOrPrefixMatch }
     )
   }
@@ -287,7 +279,6 @@ private actor LanguageReferenceData {
             (
               RankedDictionaryEntry(
                 entry: entry,
-                presentationRank: rank.presentationRank,
                 hasExactOrPrefixMatch: romaji != .contains,
                 semanticFingerprint: fingerprint
               ), rank
@@ -317,7 +308,6 @@ private actor LanguageReferenceData {
         (
           RankedDictionaryEntry(
             entry: entry,
-            presentationRank: rank.presentationRank,
             hasExactOrPrefixMatch: lane == .strongGloss || corroborated,
             semanticFingerprint: fingerprint
           ), rank
@@ -442,7 +432,6 @@ private actor LanguageReferenceData {
       return (
         RankedDictionaryEntry(
           entry: entry,
-          presentationRank: rank.presentationRank,
           hasExactOrPrefixMatch: selected.relation.rawValue < 4,
           semanticFingerprint: fingerprint
         ),
@@ -796,7 +785,6 @@ private actor LanguageReferenceData {
       else { return nil }
       return RankedDictionaryEntry(
         entry: normalized,
-        presentationRank: leading.presentationRank,
         hasExactOrPrefixMatch: group.contains(where: \.hasExactOrPrefixMatch),
         semanticFingerprint: fingerprint
       )
@@ -947,7 +935,6 @@ private enum SearchFormKind: Int {
 
 private struct RankedDictionaryEntry {
   let entry: DictionaryEntry
-  let presentationRank: DictionaryPresentationRank
   let hasExactOrPrefixMatch: Bool
   let semanticFingerprint: String
 }
