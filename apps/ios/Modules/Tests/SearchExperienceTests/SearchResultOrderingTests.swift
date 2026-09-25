@@ -3,6 +3,22 @@ import Testing
 
 @Suite("Search result relevance and frequency ordering")
 struct SearchResultOrderingTests {
+  @Test("English match relation precedes source-priority fallback")
+  func englishRelationPrecedesPriorityFallback() {
+    let prioritizedExact = englishRank(priorityPresence: 0, relation: .exactGloss)
+    let prioritizedQualified = englishRank(priorityPresence: 0, relation: .qualifiedGloss)
+    let unprioritizedExact = englishRank(priorityPresence: 1, relation: .exactGloss)
+
+    let sorted = [prioritizedQualified, unprioritizedExact, prioritizedExact].sorted()
+
+    #expect(unprioritizedExact < prioritizedQualified)
+    #expect(
+      sorted.map(\.presentationRank)
+        == [prioritizedExact.presentationRank, unprioritizedExact.presentationRank,
+          prioritizedQualified.presentationRank]
+    )
+  }
+
   @Test("prison keeps direct matches ahead of an incidental sense and presents the matched sense")
   func prisonRegression() async throws {
     let results = try await LookupClient.live.search(SearchQuery("prison"))
@@ -196,6 +212,24 @@ struct SearchResultOrderingTests {
     #expect(results.displaySummary(for: alternateB.entry) == "alternate match b")
   }
 
+}
+
+private func englishRank(
+  priorityPresence: Int,
+  relation: DictionaryMatch.GlossRelation
+) -> EnglishDictionaryRank {
+  EnglishDictionaryRank(
+    lane: .strongGloss,
+    corroborationRank: 0,
+    romajiSpecificityRank: 0,
+    senseOrder: 0,
+    priorityPresenceRank: priorityPresence,
+    relation: relation,
+    priorityProfile: .unmarked,
+    glossOrder: 0,
+    headwordLength: 1,
+    semanticFingerprint: "fixture-\(priorityPresence)-\(relation.rawValue)"
+  )
 }
 
 private func assertLiveGroupOrdering(

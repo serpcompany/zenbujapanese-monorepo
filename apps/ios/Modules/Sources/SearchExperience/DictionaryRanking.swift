@@ -147,10 +147,10 @@ struct EnglishDictionaryRank: Comparable, Sendable {
       return lhs.romajiSpecificityRank < rhs.romajiSpecificityRank
     }
     if lhs.senseOrder != rhs.senseOrder { return lhs.senseOrder < rhs.senseOrder }
+    if lhs.relation != rhs.relation { return lhs.relation < rhs.relation }
     if lhs.priorityPresenceRank != rhs.priorityPresenceRank {
       return lhs.priorityPresenceRank < rhs.priorityPresenceRank
     }
-    if lhs.relation != rhs.relation { return lhs.relation < rhs.relation }
     if lhs.priorityProfile < rhs.priorityProfile { return true }
     if rhs.priorityProfile < lhs.priorityProfile { return false }
     if lhs.glossOrder != rhs.glossOrder { return lhs.glossOrder < rhs.glossOrder }
