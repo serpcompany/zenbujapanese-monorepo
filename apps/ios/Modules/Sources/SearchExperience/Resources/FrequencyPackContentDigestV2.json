@@ -1,0 +1,10 @@
+{
+  "schema": "zenbu.frequency-pack-content-digest-vector.v2",
+  "metadata": {
+    "artifact_schema": "zenbu.frequency-pack.v2",
+    "empty": "",
+    "mapping_sha256": "00",
+    "unicode": "見る"
+  },
+  "sha256": "dbf245803c8b60d22be0cba23d855508b8f3592947a312946c7108241b75dcc2"
+}

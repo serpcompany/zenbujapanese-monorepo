@@ -25,6 +25,11 @@ A word detail can present its written form and reading, ordered meanings, altern
 kanji, related words, conjugations, source-matched Example Sentences, pronunciation, and
 frequency information when the corresponding data is available.
 
+Frequency information always identifies its source domain. Packs can provide
+an explicit rank with tied entries and a percentile among ranked source records.
+Occurrence counts and total-token statistics are shown only when the source
+actually supplies them; the app does not infer or fabricate missing counts.
+
 Selectable Japanese inside Word Detail and Example Sentences uses the same interactive
 word-boundary analysis as Image Search. Selecting a linked word continues into its normal
 dictionary entry.

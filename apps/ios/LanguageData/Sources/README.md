@@ -20,6 +20,17 @@ under `apps/ios/Modules/Sources/SearchExperience/Resources/`.
 | Interactive Japanese parsing | `Kuromoji-0.1.2.source.json` | Bundled JavaScriptCore engine and compressed IPADIC resources |
 | App-owned word relationships | `Zenbu-Word-Relationships-v1.json` | `import_jmdict.py` |
 
+## Authorized research snapshots
+
+JPDB is not a distributed app data source. The owner-authorized acquisition
+record and seed-manifest example are retained as
+`JPDB.owner-authorization.json` and `JPDB.seeds.example.json`. Fetched markup is
+converted immediately into an external structured-data snapshot; that workflow
+and the non-distribution gate are documented in
+[`../../Tools/JPDB_IMPORT.md`](../../Tools/JPDB_IMPORT.md). `acquire_jpdb.py`
+and `import_jpdb.py` may be used for internal evaluation, but no generated JPDB
+artifact belongs in app resources until redistribution rights are recorded.
+
 Full third-party terms and required notices are retained beside the source
 records and mirrored into the app resources when binary distribution requires
 them. Import reports under `apps/ios/LanguageData/Generated/` connect pinned

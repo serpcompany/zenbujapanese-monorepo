@@ -20,6 +20,10 @@ MAPPING_SQL = (
     Path(__file__).resolve().parents[1]
     / "Modules/Sources/SearchExperience/Resources/FrequencyPackMappingV1.sql"
 )
+MAPPING_SQL_V2 = (
+    Path(__file__).resolve().parents[1]
+    / "Modules/Sources/SearchExperience/Resources/FrequencyPackMappingV2.sql"
+)
 csv.field_size_limit(16 * 1024 * 1024)
 
 
@@ -47,6 +51,15 @@ def artifact_content_sha256(metadata: dict[str, str]) -> str:
     mapping SHA transitively covers every ordered evidence row and its typed fields.
     """
     digest = hashlib.sha256(b"zenbu.frequency-pack-content.v1\0")
+    for key, value in sorted(metadata.items()):
+        for item in (key.encode("utf-8"), value.encode("utf-8")):
+            digest.update(len(item).to_bytes(8, "big"))
+            digest.update(item)
+    return digest.hexdigest()
+
+
+def artifact_content_sha256_v2(metadata: dict[str, str]) -> str:
+    digest = hashlib.sha256(b"zenbu.frequency-pack-content.v2\0")
     for key, value in sorted(metadata.items()):
         for item in (key.encode("utf-8"), value.encode("utf-8")):
             digest.update(len(item).to_bytes(8, "big"))
@@ -235,6 +248,210 @@ def create_artifact(
     }
 
 
+def read_manifest_v2(path: Path) -> dict[str, object]:
+    manifest = read_manifest(path)
+    if int(manifest.get("schemaVersion", 0)) != 2:
+        raise ValueError("v2 source manifest schemaVersion must be 2")
+    if int(manifest.get("mappingPolicyVersion", 0)) != 2:
+        raise ValueError("v2 mapping policy version must be 2")
+    if int(manifest.get("presentationPolicyVersion", 0)) != 2:
+        raise ValueError("v2 presentation policy version must be 2")
+    format_data = manifest["format"]
+    assert isinstance(format_data, dict)
+    for field in ("rankColumn", "sourceRecordIDColumn"):
+        if not str(format_data.get(field, "")).strip():
+            raise ValueError(f"v2 source format missing {field}")
+    capabilities = set(manifest.get("presentationCapabilities", []))
+    count_available = bool(format_data.get("countColumn"))
+    if ("count" in capabilities) != count_available:
+        raise ValueError("v2 count capability and source format disagree")
+    source_data = manifest["source"]
+    assert isinstance(source_data, dict)
+    if source_data.get("totalTokens") is not None and int(source_data["totalTokens"]) <= 0:
+        raise ValueError("v2 totalTokens must be positive when supplied")
+    return manifest
+
+
+def source_rows_v2(
+    source: Path, manifest: dict[str, object]
+) -> list[tuple[int, int, int | None, str]]:
+    format_data = manifest["format"]
+    source_data = manifest["source"]
+    assert isinstance(format_data, dict)
+    assert isinstance(source_data, dict)
+    rank_column = str(format_data["rankColumn"])
+    record_id_column = str(format_data["sourceRecordIDColumn"])
+    count_value = format_data.get("countColumn")
+    count_column = str(count_value) if count_value else ""
+    handle = (
+        lzma.open(source, "rt", encoding="utf-8", newline="")
+        if source.suffix == ".xz"
+        else source.open("r", encoding="utf-8", newline="")
+    )
+    rows: list[tuple[int, int, int | None, str]] = []
+    seen_ids: set[int] = set()
+    previous_rank = 0
+    with handle:
+        reader = csv.DictReader(handle, delimiter="\t", quoting=csv.QUOTE_NONE)
+        required = {rank_column, record_id_column}
+        if (
+            not reader.fieldnames
+            or len(set(reader.fieldnames)) != len(reader.fieldnames)
+            or not required <= set(reader.fieldnames)
+        ):
+            raise ValueError("v2 source columns do not match manifest")
+        for record in reader:
+            if None in record or any(value is None for value in record.values()):
+                raise ValueError("v2 source row width does not match header")
+            rank = int(record[rank_column])
+            source_record_id = int(record[record_id_column])
+            count_text = record.get(count_column, "") if count_column else ""
+            source_count = int(count_text) if count_text else None
+            if rank < 1 or rank < previous_rank or source_record_id < 1:
+                raise ValueError("v2 source ranks and identifiers must be positive and ordered")
+            if source_count is not None and source_count < 0:
+                raise ValueError("v2 source counts cannot be negative")
+            if source_record_id in seen_ids:
+                raise ValueError("v2 source contains duplicate source_record_id")
+            seen_ids.add(source_record_id)
+            previous_rank = rank
+            rows.append((rank, source_record_id, source_count, canonical_json(record)))
+    expected_rows = int(source_data["coveredRows"])
+    if len(rows) != expected_rows or (rows and rows[-1][0] > len(rows)):
+        raise ValueError("v2 source row or rank coverage mismatch")
+    if count_column and any(row[2] is None for row in rows):
+        raise ValueError("v2 source_count must be present for every row")
+    return rows
+
+
+def mapping_sha256_v2(database: sqlite3.Connection) -> str:
+    digest = hashlib.sha256(b"zenbu.frequency-pack-mapping.v2\0")
+    for identifier, rank, count, source_record_id, matched_form, relation, source_pos, source_digest in database.execute(
+        "SELECT language_reference_id,rank,source_count,source_record_id,matched_form,"
+        "mapping_relation,source_pos,source_record_digest "
+        "FROM frequency_evidence ORDER BY language_reference_id"
+    ):
+        digest.update(identifier)
+        digest.update(int(rank).to_bytes(8, "big"))
+        digest.update(b"\x00" if count is None else b"\x01")
+        if count is not None:
+            digest.update(int(count).to_bytes(8, "big"))
+        digest.update(int(source_record_id).to_bytes(8, "big"))
+        for value in (matched_form, relation, source_pos):
+            digest.update(value.encode("utf-8"))
+            digest.update(b"\0")
+        digest.update(source_digest)
+    return digest.hexdigest()
+
+
+def create_artifact_v2(
+    output: Path,
+    manifest: dict[str, object],
+    rows: list[tuple[int, int, int | None, str]],
+    language_data: Path,
+) -> dict[str, object]:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=output.parent) as temporary:
+        candidate = Path(temporary) / output.name
+        database = sqlite3.connect(candidate)
+        try:
+            database.executescript(
+                "PRAGMA page_size=4096;PRAGMA journal_mode=OFF;PRAGMA synchronous=OFF;"
+                "PRAGMA locking_mode=EXCLUSIVE;PRAGMA auto_vacuum=NONE;"
+                "CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL) WITHOUT ROWID;"
+                "CREATE TABLE source_rows(rank INTEGER NOT NULL,source_record_id INTEGER PRIMARY KEY,"
+                "source_count INTEGER,source_record_digest BLOB NOT NULL);"
+                "CREATE INDEX source_rows_rank ON source_rows(rank,source_record_id);"
+                "CREATE TABLE frequency_evidence(language_reference_id BLOB PRIMARY KEY,rank INTEGER NOT NULL,"
+                "source_count INTEGER,covered_source_rows INTEGER NOT NULL,mapping_relation TEXT NOT NULL,"
+                "matched_form TEXT NOT NULL,source_pos TEXT NOT NULL,source_record_digest BLOB NOT NULL,"
+                "source_record_id INTEGER NOT NULL UNIQUE) WITHOUT ROWID;"
+            )
+            database.executemany(
+                "INSERT INTO source_rows VALUES (?,?,?,?)",
+                [
+                    (rank, record_id, count, hashlib.sha256(record.encode("utf-8")).digest())
+                    for rank, record_id, count, record in rows
+                ],
+            )
+            mapping_sql = (
+                MAPPING_SQL_V2.read_text(encoding="utf-8")
+                .replace("{{LANGUAGE_DATA_PATH}}", str(language_data).replace("'", "''"))
+                .replace("{{COVERED_SOURCE_ROWS}}", str(len(rows)))
+            )
+            database.executescript(mapping_sql)
+            mapped = int(database.execute("SELECT count(*) FROM frequency_evidence").fetchone()[0])
+            unmapped = len(rows) - mapped
+            mapping_sha = mapping_sha256_v2(database)
+            metadata = {
+                "artifact_schema": "zenbu.frequency-pack.v2",
+                "pack_id": str(manifest["packID"]),
+                "pack_version": str(manifest["packVersion"]),
+                "mapped_rows": str(mapped),
+                "ambiguous_rows": "0",
+                "unmapped_rows": str(unmapped),
+                "duplicate_mappings": "0",
+                "covered_source_rows": str(len(rows)),
+                "ranked_source_records": str(len(rows)),
+                "source_count_available": "1" if any(row[2] is not None for row in rows) else "0",
+                "mapping_sha256": mapping_sha,
+                "mapping_policy_version": "2",
+                "mapping_policy_sha256": sha256(MAPPING_SQL_V2),
+                "presentation_policy_version": "2",
+                "language_data_sha256": sha256(language_data),
+            }
+            source_data = manifest["source"]
+            assert isinstance(source_data, dict)
+            if source_data.get("totalTokens") is not None:
+                metadata["source_total_tokens"] = str(source_data["totalTokens"])
+            content_sha = artifact_content_sha256_v2(metadata)
+            database.executemany("INSERT INTO metadata VALUES (?,?)", sorted(metadata.items()))
+            database.execute("DROP TABLE source_rows")
+            database.execute(
+                "CREATE INDEX frequency_evidence_rank_index "
+                "ON frequency_evidence(rank,language_reference_id)"
+            )
+            database.commit()
+            database.execute("VACUUM")
+        finally:
+            database.close()
+        candidate.replace(output)
+    return {
+        "mappedRows": mapped,
+        "ambiguousRows": 0,
+        "unmappedRows": unmapped,
+        "duplicateMappings": 0,
+        "mappingSHA256": mapping_sha,
+        "artifactContentSHA256": content_sha,
+    }
+
+
+def import_pack_v2(arguments: argparse.Namespace) -> None:
+    source = arguments.source.resolve()
+    source_manifest = arguments.source_manifest.resolve()
+    language_data = arguments.language_data.resolve()
+    output = arguments.output.resolve()
+    output_manifest = arguments.output_manifest.resolve()
+    manifest = read_manifest_v2(source_manifest)
+    validate_source(source, manifest)
+    rows = source_rows_v2(source, manifest)
+    mapping = create_artifact_v2(output, manifest, rows, language_data)
+    import_record = {
+        "schema": "zenbu.frequency-pack-import.v2",
+        "sourceManifest": manifest,
+        "sourceManifestSHA256": sha256(source_manifest),
+        "sourceSHA256": sha256(source),
+        "languageDataSHA256": sha256(language_data),
+        "importerSHA256": sha256(Path(__file__)),
+        "mappingPolicySHA256": sha256(MAPPING_SQL_V2),
+        "artifactBytes": output.stat().st_size,
+        "artifactSHA256": sha256(output),
+        **mapping,
+    }
+    output_manifest.parent.mkdir(parents=True, exist_ok=True)
+    output_manifest.write_text(canonical_json(import_record) + "\n", encoding="utf-8")
+
+
 def import_pack(arguments: argparse.Namespace) -> None:
     source = arguments.source.resolve()
     source_manifest = arguments.source_manifest.resolve()
@@ -271,9 +488,17 @@ def parser() -> argparse.ArgumentParser:
     return result
 
 
+def import_pack_versioned(arguments: argparse.Namespace) -> None:
+    manifest = json.loads(arguments.source_manifest.read_text(encoding="utf-8"))
+    if int(manifest.get("schemaVersion", 1)) == 2:
+        import_pack_v2(arguments)
+    else:
+        import_pack(arguments)
+
+
 if __name__ == "__main__":
     try:
-        import_pack(parser().parse_args())
+        import_pack_versioned(parser().parse_args())
     except (OSError, ValueError, KeyError, sqlite3.Error) as error:
         print(f"frequency pack import failed: {error}", file=sys.stderr)
         raise SystemExit(1)

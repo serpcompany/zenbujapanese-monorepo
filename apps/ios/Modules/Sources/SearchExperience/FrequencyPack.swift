@@ -93,8 +93,8 @@ struct FrequencyEvidence: Equatable, Sendable {
   let languageReferenceID: LanguageReferenceID
   let rank: Int
   let coveredSourceRows: Int
-  let sourceCount: Int
-  let sourceTotalTokens: Int
+  let sourceCount: Int?
+  let sourceTotalTokens: Int?
   let sourceDocuments: Int?
   let sourceVideos: Int?
   let sourceChannels: Int?
@@ -109,11 +109,14 @@ struct FrequencyEvidence: Equatable, Sendable {
     case exactReadingPOS
     case exactWrittenPOS
     case uniqueFormFallback
+    case sourceRecordID
   }
 
-  var topPercentDisplay: String {
+  var topPercentDisplay: String? {
+    guard coveredSourceRows > 0 else { return nil }
     let percent = Double(rank) / Double(coveredSourceRows) * 100
-    return "Top \(String(format: "%.2f", locale: Locale(identifier: "en_US_POSIX"), percent))%"
+    let value = String(format: "%.2f", locale: Locale(identifier: "en_US_POSIX"), percent)
+    return pack.usesTopRankBand ? "Within top \(value)%" : "Top \(value)%"
   }
 }
 
@@ -124,6 +127,8 @@ struct FrequencyPresentationModel: Equatable, Sendable {
   let pack: FrequencyPackDisclosure?
   let rankText: String?
   let percentileText: String?
+  let countText: String?
+  let totalTokensText: String?
   let explanation: String?
 
   init(result: FrequencyLookupResult) {
@@ -131,11 +136,19 @@ struct FrequencyPresentationModel: Equatable, Sendable {
     switch result {
     case .evidence(let evidence):
       let formattedRank = evidence.rank.formatted(.number.locale(Locale(identifier: "en_US")))
-      inlineText = "#\(formattedRank)"
-      inlineAccessibilityLabel = "Frequency rank \(evidence.rank). Double tap for details."
+      inlineText = evidence.pack.usesTopRankBand ? "Top \(formattedRank)" : "#\(formattedRank)"
+      inlineAccessibilityLabel = evidence.pack.usesTopRankBand
+        ? "Frequency band top \(evidence.rank). Double tap for details."
+        : "Frequency rank \(evidence.rank). Double tap for details."
       pack = evidence.pack
-      rankText = "#\(formattedRank)"
+      rankText = evidence.pack.usesTopRankBand ? "Top \(formattedRank)" : "#\(formattedRank)"
       percentileText = evidence.topPercentDisplay
+      countText = evidence.sourceCount.map {
+        $0.formatted(.number.locale(Locale(identifier: "en_US")))
+      }
+      totalTokensText = evidence.sourceTotalTokens.map {
+        $0.formatted(.number.locale(Locale(identifier: "en_US")))
+      }
       explanation = nil
     case .noEvidence(let pack):
       inlineText = "—"
@@ -144,6 +157,8 @@ struct FrequencyPresentationModel: Equatable, Sendable {
       self.pack = pack
       rankText = nil
       percentileText = nil
+      countText = nil
+      totalTokensText = nil
       explanation = "\(pack.displayName) has no mapped frequency rank for this entry."
     case .unavailable(let unavailable):
       inlineText = "—"
@@ -151,6 +166,8 @@ struct FrequencyPresentationModel: Equatable, Sendable {
       pack = unavailable.pack
       rankText = nil
       percentileText = nil
+      countText = nil
+      totalTokensText = nil
       explanation = unavailable.reason
     }
   }
@@ -167,8 +184,10 @@ struct SearchFrequencyRankPresentationModel: Equatable, Sendable {
       accessibilityValue = "Frequency rank loading"
     case .evidence(let evidence):
       let rank = evidence.rank.formatted(.number.locale(Locale(identifier: "en_US")))
-      text = "#\(rank)"
-      accessibilityValue = "Frequency rank \(rank)"
+      text = evidence.pack.usesTopRankBand ? "Top \(rank)" : "#\(rank)"
+      accessibilityValue = evidence.pack.usesTopRankBand
+        ? "Frequency band top \(rank)"
+        : "Frequency rank \(rank)"
     case .noEvidence:
       text = "—"
       accessibilityValue = "The active frequency dictionary has no rank for this entry"
@@ -198,7 +217,8 @@ enum FrequencyPackArtifactContent {
   /// transitively covers every ordered evidence row, so SQLite page layout is excluded.
   static func sha256(metadata: [String: String]) -> String {
     var digest = SHA256()
-    digest.update(data: Data("zenbu.frequency-pack-content.v1\0".utf8))
+    let version = metadata["artifact_schema"] == "zenbu.frequency-pack.v2" ? 2 : 1
+    digest.update(data: Data("zenbu.frequency-pack-content.v\(version)\0".utf8))
     for (key, value) in metadata.sorted(by: { $0.key < $1.key }) {
       update(key, digest: &digest)
       update(value, digest: &digest)
@@ -206,7 +226,13 @@ enum FrequencyPackArtifactContent {
     return digest.finalize().map { String(format: "%02x", $0) }.joined()
   }
 
-  static func mappingSHA256(_ database: OpaquePointer) throws -> String {
+  static func mappingSHA256(_ database: OpaquePointer, version: Int = 1) throws -> String {
+    if version == 2 { return try mappingSHA256V2(database) }
+    guard version == 1 else { throw FrequencyPackError.invalidArtifact }
+    return try mappingSHA256V1(database)
+  }
+
+  private static func mappingSHA256V1(_ database: OpaquePointer) throws -> String {
     var statement: OpaquePointer?
     guard
       sqlite3_prepare_v2(
@@ -241,6 +267,54 @@ enum FrequencyPackArtifactContent {
       }
       digest.update(
         data: Data(bytes: sourceDigest, count: Int(sqlite3_column_bytes(statement, 6))))
+    }
+    return digest.finalize().map { String(format: "%02x", $0) }.joined()
+  }
+
+  private static func mappingSHA256V2(_ database: OpaquePointer) throws -> String {
+    var statement: OpaquePointer?
+    guard
+      sqlite3_prepare_v2(
+        database,
+        "SELECT language_reference_id,rank,source_count,source_record_id,matched_form,"
+          + "mapping_relation,source_pos,source_record_digest "
+          + "FROM frequency_evidence ORDER BY language_reference_id",
+        -1,
+        &statement,
+        nil
+      ) == SQLITE_OK, let statement
+    else { throw sqliteError(database) }
+    defer { sqlite3_finalize(statement) }
+    var digest = SHA256()
+    digest.update(data: Data("zenbu.frequency-pack-mapping.v2\0".utf8))
+    while sqlite3_step(statement) == SQLITE_ROW {
+      guard let identifier = sqlite3_column_blob(statement, 0) else {
+        throw FrequencyPackError.invalidArtifact
+      }
+      digest.update(
+        data: Data(bytes: identifier, count: Int(sqlite3_column_bytes(statement, 0))))
+      var rank = UInt64(sqlite3_column_int64(statement, 1)).bigEndian
+      digest.update(data: Data(bytes: &rank, count: MemoryLayout<UInt64>.size))
+      let hasCount = sqlite3_column_type(statement, 2) != SQLITE_NULL
+      digest.update(data: Data([hasCount ? 1 : 0]))
+      if hasCount {
+        var count = UInt64(sqlite3_column_int64(statement, 2)).bigEndian
+        digest.update(data: Data(bytes: &count, count: MemoryLayout<UInt64>.size))
+      }
+      var sourceRecordID = UInt64(sqlite3_column_int64(statement, 3)).bigEndian
+      digest.update(data: Data(bytes: &sourceRecordID, count: MemoryLayout<UInt64>.size))
+      for column in Int32(4)...Int32(6) {
+        guard let value = sqlite3_column_text(statement, column) else {
+          throw FrequencyPackError.invalidArtifact
+        }
+        digest.update(data: Data(String(cString: value).utf8))
+        digest.update(data: Data([0]))
+      }
+      guard let sourceDigest = sqlite3_column_blob(statement, 7) else {
+        throw FrequencyPackError.invalidArtifact
+      }
+      digest.update(
+        data: Data(bytes: sourceDigest, count: Int(sqlite3_column_bytes(statement, 7))))
     }
     return digest.finalize().map { String(format: "%02x", $0) }.joined()
   }
@@ -284,26 +358,42 @@ struct FrequencyPackArtifact: Sendable {
       throw FrequencyPackError.invalidArtifact
     }
     defer { sqlite3_finalize(statement) }
+    let invalidEvidenceSQL: String
+    switch manifest.runtimeInstallerVersion {
+    case 1:
+      invalidEvidenceSQL =
+        "SELECT count(*) FROM frequency_evidence "
+        + "WHERE length(language_reference_id) != 16 OR length(source_record_digest) != 32 "
+        + "OR rank < 1 OR rank > covered_source_rows "
+        + "OR covered_source_rows != \(manifest.coveredSourceRows)"
+    case 2:
+      let countClause =
+        manifest.presentationCapabilities.contains("count")
+        ? " OR source_count IS NULL OR source_count < 0" : " OR source_count IS NOT NULL"
+      invalidEvidenceSQL =
+        "SELECT count(*) FROM frequency_evidence "
+        + "WHERE length(language_reference_id) != 16 OR length(source_record_digest) != 32 "
+        + "OR rank < 1 OR rank > covered_source_rows OR source_record_id < 1 "
+        + "OR mapping_relation != 'sourceRecordID' "
+        + "OR covered_source_rows != \(manifest.coveredSourceRows)" + countClause
+    default:
+      throw FrequencyPackError.invalidArtifact
+    }
     guard
       try Self.integer(
         database,
         sql: "SELECT count(*) FROM frequency_evidence"
       ) == manifest.mappedRows,
-      try Self.integer(
-        database,
-        sql: "SELECT count(*) FROM frequency_evidence "
-          + "WHERE length(language_reference_id) != 16 OR length(source_record_digest) != 32 "
-          + "OR rank < 1 OR rank > covered_source_rows "
-          + "OR covered_source_rows != \(manifest.coveredSourceRows)"
-      ) == 0,
+      try Self.integer(database, sql: invalidEvidenceSQL) == 0,
       try Self.text(database, sql: "PRAGMA integrity_check") == "ok",
-      try FrequencyPackArtifactContent.mappingSHA256(database) == manifest.mappingSHA256
+      try FrequencyPackArtifactContent.mappingSHA256(
+        database, version: manifest.runtimeInstallerVersion) == manifest.mappingSHA256
     else { throw FrequencyPackError.invalidArtifact }
     var metadata: [String: String] = [:]
     while sqlite3_step(statement) == SQLITE_ROW {
       metadata[Self.string(statement, 0)] = Self.string(statement, 1)
     }
-    guard metadata["artifact_schema"] == "zenbu.frequency-pack.v1",
+    guard metadata["artifact_schema"] == manifest.artifactSchema,
       metadata["pack_id"] == manifest.packID.rawValue,
       metadata["pack_version"] == manifest.packVersion,
       metadata["mapped_rows"] == String(manifest.mappedRows),
@@ -315,11 +405,22 @@ struct FrequencyPackArtifact: Sendable {
       metadata["mapping_policy_sha256"] == manifest.mappingPolicySHA256,
       metadata["presentation_policy_version"] == String(manifest.presentationPolicyVersion),
       metadata["language_data_sha256"] == manifest.languageDataSHA256,
-      metadata["source_total_tokens"] == String(manifest.sourceTotalTokens),
       metadata["covered_source_rows"] == String(manifest.coveredSourceRows),
       FrequencyPackArtifactContent.sha256(metadata: metadata) == manifest.artifactContentSHA256
     else {
       throw FrequencyPackError.invalidArtifact
+    }
+    if manifest.runtimeInstallerVersion == 1 {
+      guard let total = manifest.sourceTotalTokens,
+        metadata["source_total_tokens"] == String(total)
+      else { throw FrequencyPackError.invalidArtifact }
+    } else {
+      let expectedTotalTokens = manifest.sourceTotalTokens.map { String($0) }
+      guard metadata["ranked_source_records"] == String(manifest.coveredSourceRows),
+        metadata["source_count_available"]
+          == (manifest.presentationCapabilities.contains("count") ? "1" : "0"),
+        metadata["source_total_tokens"] == expectedTotalTokens
+      else { throw FrequencyPackError.invalidArtifact }
     }
     self.manifest = manifest
   }
@@ -381,7 +482,9 @@ struct FrequencyPackArtifact: Sendable {
             languageReferenceID: id,
             rank: Int(sqlite3_column_int64(statement, 0)),
             coveredSourceRows: Int(sqlite3_column_int64(statement, 2)),
-            sourceCount: Int(sqlite3_column_int64(statement, 1)),
+            sourceCount:
+              sqlite3_column_type(statement, 1) == SQLITE_NULL
+              ? nil : Int(sqlite3_column_int64(statement, 1)),
             sourceTotalTokens: manifest.sourceTotalTokens,
             sourceDocuments: manifest.corpusDocuments,
             sourceVideos: manifest.corpusVideos,

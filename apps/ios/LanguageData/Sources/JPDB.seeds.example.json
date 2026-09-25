@@ -1,0 +1,7 @@
+{
+  "schema": "zenbu.jpdb-seeds.v1",
+  "discoveryMode": "public-frontend-closure-v1",
+  "urls": [
+    "https://jpdb.io/"
+  ]
+}

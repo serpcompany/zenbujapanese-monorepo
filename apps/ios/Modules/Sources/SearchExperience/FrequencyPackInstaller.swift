@@ -9,8 +9,37 @@ enum FrequencyPackInstaller {
     languageDataURL: URL,
     destination: URL
   ) throws -> InstalledFrequencyPackRecord {
+    switch manifest.runtimeInstallerVersion {
+    case 1:
+      return try installV1(
+        source: source,
+        manifest: manifest,
+        languageDataURL: languageDataURL,
+        destination: destination
+      )
+    case 2:
+      return try installV2(
+        source: source,
+        manifest: manifest,
+        languageDataURL: languageDataURL,
+        destination: destination
+      )
+    default:
+      throw FrequencyPackError.invalidSource
+    }
+  }
+
+  private static func installV1(
+    source: Data,
+    manifest: FrequencyPackManifest,
+    languageDataURL: URL,
+    destination: URL
+  ) throws -> InstalledFrequencyPackRecord {
+    guard let sourceTotalTokens = manifest.sourceTotalTokens else {
+      throw FrequencyPackError.invalidSource
+    }
     guard try Data(contentsOf: languageDataURL).sha256 == manifest.languageDataSHA256,
-      try mappingPolicySHA256() == manifest.mappingPolicySHA256
+      try mappingPolicySHA256(version: 1) == manifest.mappingPolicySHA256
     else { throw FrequencyPackError.mappingMismatch }
     let decompressed = try (source as NSData).decompressed(using: .lzma) as Data
     guard let text = String(data: decompressed, encoding: .utf8) else {
@@ -81,7 +110,7 @@ enum FrequencyPackInstaller {
       sqlite3_reset(insert)
       sqlite3_clear_bindings(insert)
     }
-    guard rank == manifest.coveredSourceRows, total == manifest.sourceTotalTokens else {
+    guard rank == manifest.coveredSourceRows, total == sourceTotalTokens else {
       throw FrequencyPackError.invalidSource
     }
     try execute(database, "COMMIT")
@@ -100,7 +129,7 @@ enum FrequencyPackInstaller {
     let eligible = try scalar(database, "SELECT COUNT(*) FROM eligible")
     guard mapped == manifest.mappedRows, ambiguous == manifest.ambiguousRows,
       unmapped == manifest.unmappedRows, eligible - mapped == manifest.duplicateMappings,
-      try FrequencyPackArtifactContent.mappingSHA256(database) == manifest.mappingSHA256
+      try FrequencyPackArtifactContent.mappingSHA256(database, version: 1) == manifest.mappingSHA256
     else { throw FrequencyPackError.mappingMismatch }
     for (key, value) in [
       ("artifact_schema", "zenbu.frequency-pack.v1"),
@@ -114,7 +143,7 @@ enum FrequencyPackInstaller {
       ("mapping_policy_sha256", manifest.mappingPolicySHA256),
       ("presentation_policy_version", String(manifest.presentationPolicyVersion)),
       ("language_data_sha256", manifest.languageDataSHA256),
-      ("source_total_tokens", String(manifest.sourceTotalTokens)),
+      ("source_total_tokens", String(sourceTotalTokens)),
       ("covered_source_rows", String(manifest.coveredSourceRows)),
       ("duplicate_mappings", String(manifest.duplicateMappings)),
     ] {
@@ -144,11 +173,154 @@ enum FrequencyPackInstaller {
     return record
   }
 
+  private static func installV2(
+    source: Data,
+    manifest: FrequencyPackManifest,
+    languageDataURL: URL,
+    destination: URL
+  ) throws -> InstalledFrequencyPackRecord {
+    guard try Data(contentsOf: languageDataURL).sha256 == manifest.languageDataSHA256,
+      try mappingPolicySHA256(version: 2) == manifest.mappingPolicySHA256
+    else { throw FrequencyPackError.mappingMismatch }
+    let decompressed = try (source as NSData).decompressed(using: .lzma) as Data
+    guard let text = String(data: decompressed, encoding: .utf8) else {
+      throw FrequencyPackError.invalidSource
+    }
+    let lines = text.split(separator: "\n", omittingEmptySubsequences: true)
+    guard let header = lines.first?.split(separator: "\t", omittingEmptySubsequences: false),
+      Set(header).count == header.count,
+      let rankIndex = header.firstIndex(of: "rank"),
+      let recordIDIndex = header.firstIndex(of: "source_record_id")
+    else { throw FrequencyPackError.invalidSource }
+    let countIndex = header.firstIndex(of: "source_count")
+    guard (countIndex != nil) == manifest.presentationCapabilities.contains("count") else {
+      throw FrequencyPackError.invalidSource
+    }
+    let fieldNames = header.map(String.init)
+    let candidate = destination.deletingLastPathComponent()
+      .appendingPathComponent(".\(UUID().uuidString).sqlite3")
+    defer { try? FileManager.default.removeItem(at: candidate) }
+    var database: OpaquePointer?
+    guard sqlite3_open(candidate.path, &database) == SQLITE_OK, let database else {
+      throw FrequencyPackError.invalidArtifact
+    }
+    defer { sqlite3_close(database) }
+    try execute(
+      database,
+      "PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;"
+        + "CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL) WITHOUT ROWID;"
+        + "CREATE TABLE source_rows(rank INTEGER NOT NULL,source_record_id INTEGER PRIMARY KEY,source_count INTEGER,source_record_digest BLOB NOT NULL);"
+        + "CREATE INDEX source_rows_rank ON source_rows(rank,source_record_id);"
+        + "CREATE TABLE frequency_evidence(language_reference_id BLOB PRIMARY KEY,rank INTEGER NOT NULL,source_count INTEGER,covered_source_rows INTEGER NOT NULL,mapping_relation TEXT NOT NULL,matched_form TEXT NOT NULL,source_pos TEXT NOT NULL,source_record_digest BLOB NOT NULL,source_record_id INTEGER NOT NULL UNIQUE) WITHOUT ROWID;"
+        + "BEGIN IMMEDIATE;"
+    )
+    var insert: OpaquePointer?
+    guard
+      sqlite3_prepare_v2(
+        database, "INSERT INTO source_rows VALUES(?,?,?,?)", -1, &insert, nil)
+        == SQLITE_OK,
+      let insert
+    else { throw sqliteError(database) }
+    defer { sqlite3_finalize(insert) }
+    var rowCount = 0
+    var previousRank = 0
+    for rawLine in lines.dropFirst() {
+      let columns = rawLine.split(separator: "\t", omittingEmptySubsequences: false)
+      guard columns.count == header.count,
+        columns.indices.contains(rankIndex), columns.indices.contains(recordIDIndex),
+        let rank = Int(columns[rankIndex]), let sourceRecordID = Int64(columns[recordIDIndex]),
+        rank >= 1, rank >= previousRank, sourceRecordID >= 1
+      else { throw FrequencyPackError.invalidSource }
+      rowCount += 1
+      previousRank = rank
+      guard rank <= manifest.coveredSourceRows else { throw FrequencyPackError.invalidSource }
+      sqlite3_bind_int64(insert, 1, Int64(rank))
+      sqlite3_bind_int64(insert, 2, sourceRecordID)
+      if let countIndex {
+        guard columns.indices.contains(countIndex), let count = Int64(columns[countIndex]), count >= 0
+        else { throw FrequencyPackError.invalidSource }
+        sqlite3_bind_int64(insert, 3, count)
+      } else {
+        sqlite3_bind_null(insert, 3)
+      }
+      let sourceRecord = Dictionary(
+        uniqueKeysWithValues: fieldNames.enumerated().map { index, field in
+          (field, columns.indices.contains(index) ? String(columns[index]) : "")
+        })
+      let sourceRecordData = try JSONSerialization.data(
+        withJSONObject: sourceRecord, options: [.sortedKeys, .withoutEscapingSlashes])
+      bind(Data(SHA256.hash(data: sourceRecordData)), at: 4, to: insert)
+      guard sqlite3_step(insert) == SQLITE_DONE else { throw sqliteError(database) }
+      sqlite3_reset(insert)
+      sqlite3_clear_bindings(insert)
+    }
+    guard rowCount == manifest.coveredSourceRows else { throw FrequencyPackError.invalidSource }
+    try execute(database, "COMMIT")
+    try execute(
+      database,
+      try mappingSQL(
+        languageDataURL: languageDataURL,
+        coveredSourceRows: manifest.coveredSourceRows,
+        version: 2
+      ))
+    let mapped = try scalar(database, "SELECT COUNT(*) FROM frequency_evidence")
+    let unmapped = manifest.coveredSourceRows - mapped
+    guard mapped == manifest.mappedRows, manifest.ambiguousRows == 0,
+      unmapped == manifest.unmappedRows, manifest.duplicateMappings == 0,
+      try FrequencyPackArtifactContent.mappingSHA256(database, version: 2)
+        == manifest.mappingSHA256
+    else { throw FrequencyPackError.mappingMismatch }
+    var metadata = [
+      "artifact_schema": "zenbu.frequency-pack.v2",
+      "pack_id": manifest.packID.rawValue,
+      "pack_version": manifest.packVersion,
+      "mapped_rows": String(mapped),
+      "ambiguous_rows": "0",
+      "unmapped_rows": String(unmapped),
+      "mapping_sha256": manifest.mappingSHA256,
+      "mapping_policy_version": String(manifest.mappingPolicyVersion),
+      "mapping_policy_sha256": manifest.mappingPolicySHA256,
+      "presentation_policy_version": String(manifest.presentationPolicyVersion),
+      "language_data_sha256": manifest.languageDataSHA256,
+      "covered_source_rows": String(manifest.coveredSourceRows),
+      "ranked_source_records": String(manifest.coveredSourceRows),
+      "source_count_available": countIndex == nil ? "0" : "1",
+      "duplicate_mappings": "0",
+    ]
+    if let total = manifest.sourceTotalTokens {
+      metadata["source_total_tokens"] = String(total)
+    }
+    for (key, value) in metadata {
+      try execute(database, "INSERT INTO metadata VALUES('\(sql(key))','\(sql(value))')")
+    }
+    try execute(
+      database,
+      "DROP TABLE source_rows; CREATE INDEX frequency_evidence_rank_index ON frequency_evidence(rank,language_reference_id); VACUUM;"
+    )
+    let artifactSHA256 = try Data(contentsOf: candidate).sha256
+    _ = try FrequencyPackArtifact(url: candidate, manifest: manifest)
+    try FileManager.default.createDirectory(
+      at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+    if FileManager.default.fileExists(atPath: destination.path) {
+      _ = try FileManager.default.replaceItemAt(destination, withItemAt: candidate)
+    } else {
+      try FileManager.default.moveItem(at: candidate, to: destination)
+    }
+    return InstalledFrequencyPackRecord(
+      packID: manifest.packID,
+      packVersion: manifest.packVersion,
+      manifestSHA256: try manifest.trustSHA256(),
+      artifactSHA256: artifactSHA256
+    )
+  }
+
   private static func mappingSQL(
     languageDataURL: URL,
-    coveredSourceRows: Int
+    coveredSourceRows: Int,
+    version: Int = 1
   ) throws -> String {
-    guard let url = Bundle.module.url(forResource: "FrequencyPackMappingV1", withExtension: "sql")
+    guard let url = Bundle.module.url(
+      forResource: "FrequencyPackMappingV\(version)", withExtension: "sql")
     else { throw FrequencyPackError.invalidArtifact }
     return try String(contentsOf: url, encoding: .utf8)
       .replacingOccurrences(
@@ -158,8 +330,9 @@ enum FrequencyPackInstaller {
       .replacingOccurrences(of: "{{COVERED_SOURCE_ROWS}}", with: String(coveredSourceRows))
   }
 
-  private static func mappingPolicySHA256() throws -> String {
-    guard let url = Bundle.module.url(forResource: "FrequencyPackMappingV1", withExtension: "sql")
+  private static func mappingPolicySHA256(version: Int) throws -> String {
+    guard let url = Bundle.module.url(
+      forResource: "FrequencyPackMappingV\(version)", withExtension: "sql")
     else { throw FrequencyPackError.invalidArtifact }
     return try Data(contentsOf: url).sha256
   }

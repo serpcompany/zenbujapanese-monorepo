@@ -45,6 +45,7 @@ flowchart LR
 | Japanese pronunciation | AVFoundation | Speaks Japanese words and example sentences with the system speech synthesizer. | iOS | [`SpeechSynthesisClient.swift`](../apps/ios/Modules/Sources/SearchExperience/SpeechSynthesisClient.swift) |
 | Camera, photo, and file import | PhotosUI and UIKit | Accepts images for Image Search and saved word encounters. | iOS | [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |
 | Offline reference data | SQLite | Reads dictionary, example, stroke-diagram, and frequency databases on the device. | iOS | [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |
+| JPDB research warehouse | MySQL 8.x | Stores immutable owner-authorized structured frontend snapshots, response checksums/metadata, normalized facts, provenance, and validation evidence for internal analysis. HTML, CSS, and response bodies are not retained. It is not an app runtime dependency. | Internal iOS language-data tooling | [`jpdb_mysql`](../apps/ios/Tools/jpdb_mysql/) |
 | Downloadable resource installation | CryptoKit and ZIPFoundation | Verifies and extracts downloadable frequency and language-analysis resources. | iOS | [`Package.swift`](../apps/ios/Modules/Package.swift), [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |
 
 Sudachi is analysis technology, not Zenbu's Japanese-English dictionary. Apple

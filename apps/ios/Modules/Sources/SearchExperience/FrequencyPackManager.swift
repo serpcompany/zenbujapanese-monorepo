@@ -40,7 +40,7 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
     guard let url = Bundle.module.url(forResource: "FrequencyPackCatalog", withExtension: "json")
     else { throw FrequencyPackError.invalidCatalog }
     let catalog = try JSONDecoder().decode(Self.self, from: Data(contentsOf: url))
-    guard catalog.schemaVersion == 1, catalog.packs.count == 2,
+    guard catalog.schemaVersion == 1, catalog.packs.count >= 2,
       catalog.packs.filter(\.bundled).count == 1,
       Set(catalog.packs.map(\.packID)).count == catalog.packs.count,
       Set(
@@ -49,8 +49,7 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
         }
       ).count == catalog.packs.count + catalog.trustedHistoricalManifests.count,
       catalog.allTrustedManifests.allSatisfy({
-        $0.mappingPolicyVersion == 1 && $0.presentationPolicyVersion == 1
-          && $0.runtimeInstallerVersion == 1 && !$0.offlineImporterSHA256.isEmpty
+        $0.hasValidVersionedContract && !$0.offlineImporterSHA256.isEmpty
           && !$0.mappingPolicySHA256.isEmpty && !$0.languageDataSHA256.isEmpty
           && !$0.artifactContentSHA256.isEmpty
       }),
@@ -77,7 +76,7 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
   let downloadURL: URL
   let sourceBytes: Int
   let sourceSHA256: String
-  let sourceTotalTokens: Int
+  let sourceTotalTokens: Int?
   let coveredSourceRows: Int
   let mappedRows: Int
   let ambiguousRows: Int
@@ -103,6 +102,24 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
   let bundled: Bool
   let removable: Bool
 
+  var artifactSchema: String {
+    "zenbu.frequency-pack.v\(runtimeInstallerVersion)"
+  }
+
+  var hasValidVersionedContract: Bool {
+    switch runtimeInstallerVersion {
+    case 1:
+      mappingPolicyVersion == 1 && presentationPolicyVersion == 1
+        && sourceTotalTokens != nil
+    case 2:
+      mappingPolicyVersion == 2 && presentationPolicyVersion == 2
+        && presentationCapabilities.contains("explicitTiedRank")
+        && presentationCapabilities.contains("sourceRecordIDMapping")
+    default:
+      false
+    }
+  }
+
   var disclosure: FrequencyPackDisclosure {
     FrequencyPackDisclosure(
       id: packID,
@@ -110,7 +127,8 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
       domain: domain,
       domainDescription: domainDescription,
       version: packVersion,
-      attribution: attribution
+      attribution: attribution,
+      usesTopRankBand: presentationCapabilities.contains("rankBandUpperBound")
     )
   }
 
@@ -128,6 +146,7 @@ struct FrequencyPackDisclosure: Equatable, Sendable {
   let domainDescription: String
   let version: String
   let attribution: String
+  let usesTopRankBand: Bool
 }
 
 struct FrequencyPackSnapshot: Equatable, Sendable {
@@ -210,7 +229,8 @@ actor FrequencyPackManager {
       try Data(contentsOf: bundledArtifactURL).sha256 == bundledSHA256,
       try Data(contentsOf: languageDataURL).sha256 == bundled.languageDataSHA256,
       let mappingPolicyURL = Bundle.module.url(
-        forResource: "FrequencyPackMappingV1", withExtension: "sql"),
+        forResource: "FrequencyPackMappingV\(bundled.mappingPolicyVersion)",
+        withExtension: "sql"),
       try Data(contentsOf: mappingPolicyURL).sha256 == bundled.mappingPolicySHA256
     else { throw FrequencyPackError.invalidArtifact }
     _ = try FrequencyPackArtifact(url: bundledArtifactURL, manifest: bundled)

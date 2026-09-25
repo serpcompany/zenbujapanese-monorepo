@@ -1,0 +1,12 @@
+{
+  "schema": "zenbu.jpdb-authorization.v1",
+  "authorizedBy": "User asserting ownership of JPDB",
+  "authorizedAt": "2026-09-25T00:00:00+09:00",
+  "scope": "Automated acquisition of public JPDB pages for an internal, reproducible Zenbu research snapshot and normalized SQLite evaluation. Access-control bypass, CAPTCHA bypass, private account data, and vulnerability probing are excluded.",
+  "allowedOrigins": [
+    "https://jpdb.io/"
+  ],
+  "evidence": "GitHub issue #352 task conversation",
+  "redistributionAllowed": false,
+  "redistributionNote": "This authorization permits acquisition work but does not yet establish rights to distribute raw or normalized JPDB data in the app."
+}

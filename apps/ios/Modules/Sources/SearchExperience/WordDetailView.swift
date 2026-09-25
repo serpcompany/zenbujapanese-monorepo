@@ -727,12 +727,22 @@ private struct FrequencyDisclosureView: View {
           }
         }
         Section("Frequency") {
-          if let rankText = presentation.rankText,
-            let percentileText = presentation.percentileText
-          {
+          if let rankText = presentation.rankText {
             LabeledContent("Rank", value: rankText)
-            LabeledContent("Percentile", value: percentileText)
-          } else if let explanation = presentation.explanation {
+          }
+          if let percentileText = presentation.percentileText {
+            LabeledContent(
+              pack.usesTopRankBand ? "Approx. percentile" : "Percentile",
+              value: percentileText
+            )
+          }
+          if let countText = presentation.countText {
+            LabeledContent("Occurrences", value: countText)
+          }
+          if let totalTokensText = presentation.totalTokensText {
+            LabeledContent("Corpus Tokens", value: totalTokensText)
+          }
+          if presentation.rankText == nil, let explanation = presentation.explanation {
             Text(explanation)
           }
         }

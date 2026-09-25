@@ -20,4 +20,5 @@ authoritative for exact versions, URLs, checksums, licenses, and transformations
 | Kanji and handwriting | [DaKanji](https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition) | A model that predicts candidate Japanese characters from a completed drawing. | iOS |
 | Frequency data | [TUBELEX](https://github.com/naist-nlp/tubelex) | Japanese word frequency data from occurrences across YouTube. | iOS |
 | Frequency data | [Wikipedia Word Frequency Clean](https://github.com/adno/wikipedia-word-frequency-clean) | Japanese word frequency data from occurrences across Wikipedia. | iOS |
+| Authorized research | [JPDB](https://jpdb.io/) | Public-frontend vocabulary, frequency, pronunciation, kanji, examples, and indexed-media evidence acquired under the recorded owner authorization. Redistribution remains disabled. | Internal language-data research warehouse |
 | Unverified app-owned data | [`Zenbu Word Relationships`](../apps/ios/LanguageData/Sources/Zenbu-Word-Relationships-v1.json) | Two uncited relationships between dictionary entries. No source or reviewer is recorded, so the file is pending a separate removal decision. | iOS |
