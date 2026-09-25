@@ -17,6 +17,11 @@ You is a supporting navigation area rather than a separate Product Experience. I
 - management of optional frequency dictionaries and Japanese Text Analysis resources; and
 - source credits and attributions.
 
+Frequency Dictionaries also discloses when publicly downloadable source lists
+were evaluated but could not be offered because their provenance and app
+redistribution terms were not published. Such candidates are not downloaded or
+installed by the app.
+
 ### Media Library
 
 The current Media Library works like a small saved-photo album. It contains images associated

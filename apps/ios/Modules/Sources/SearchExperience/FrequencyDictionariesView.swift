@@ -66,6 +66,18 @@ struct FrequencyDictionariesView: View {
             Text(pack.manifest.displayName)
           }
         }
+        Section("Additional Sources Evaluated") {
+          Text(
+            "Ten public Japanese frequency lists covering streaming, fiction, news, anime, dictionaries, television, video, and the web were evaluated. They are not offered for installation because their catalog does not publish the provenance and app-redistribution terms Zenbu requires."
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          Link(
+            "Public source catalog",
+            destination: URL(string: "https://migaku-public-data.migaku.com/dicts/index.json")!
+          )
+          .accessibilityIdentifier("frequency-pack.candidate-catalog")
+        }
       } else if let screenFailure {
         ContentUnavailableView {
           Label("Frequency Dictionaries Unavailable", systemImage: "exclamationmark.triangle")

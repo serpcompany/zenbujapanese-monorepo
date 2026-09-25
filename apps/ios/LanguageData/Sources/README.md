@@ -25,3 +25,8 @@ records and mirrored into the app resources when binary distribution requires
 them. Import reports under `apps/ios/LanguageData/Generated/` connect pinned
 inputs to generated artifact checksums and must remain versioned with those
 artifacts.
+
+Frequency candidates that have not passed the redistribution and provenance
+gate are kept outside this source-of-truth table. See
+[`FREQUENCY_SOURCE_DECISIONS.md`](../FREQUENCY_SOURCE_DECISIONS.md) for the
+decision matrix and reproducible analysis of the ten ordered-JSON candidates.

@@ -1,0 +1,285 @@
+{
+  "analysisToolSHA256": "3cb1ad81cf6727529e8cb4da4a32f5270ddf43d83a4483e6155733d4cb9f0cb9",
+  "candidateCatalogSHA256": "02081d7239f789eb73ed07adea0dcb1767407ad127afaba4dd6305ad5185f018",
+  "candidates": [
+    {
+      "analysis": {
+        "ambiguousRows": 8194,
+        "duplicateMappings": 15213,
+        "mappedPercent": 50.61,
+        "mappedRows": 52053,
+        "repeatedNormalizedForms": 2006,
+        "repeatedWrittenReadingPairs": 0,
+        "sourceRows": 102844,
+        "tubelex": {
+          "candidateMappedOverlapPercent": 78.86,
+          "sharedMappedLanguageReferenceIDs": 41049,
+          "sharedRankPearson": 0.5201,
+          "top1000MappedJaccard": 0.3446
+        },
+        "uniqueNormalizedForms": 100838,
+        "unmappedRows": 27384
+      },
+      "archive": "Netflix.json.zip",
+      "bytes": 1039994,
+      "description": "Words sourced from Netflix Japan.",
+      "domain": "Streaming subtitles",
+      "id": "netflix",
+      "name": "Netflix",
+      "sha256": "294cdbf53794665196867b8283030a2d5504aad31a6da55324c0f6996f4eb9db",
+      "url": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Netflix.json.zip"
+    },
+    {
+      "analysis": {
+        "ambiguousRows": 1349,
+        "duplicateMappings": 325,
+        "mappedPercent": 55.45,
+        "mappedRows": 9132,
+        "repeatedNormalizedForms": 334,
+        "repeatedWrittenReadingPairs": 16,
+        "sourceRows": 16469,
+        "tubelex": {
+          "candidateMappedOverlapPercent": 93.66,
+          "sharedMappedLanguageReferenceIDs": 8553,
+          "sharedRankPearson": 0.6332,
+          "top1000MappedJaccard": 0.2649
+        },
+        "uniqueNormalizedForms": 16135,
+        "unmappedRows": 5663
+      },
+      "archive": "Novels.json.zip",
+      "bytes": 164820,
+      "description": "Frequency across 5,000 Japanese novels.",
+      "domain": "Fiction / novels",
+      "id": "novels",
+      "name": "Novels",
+      "sha256": "8b0a9faeb3414ddd017f71628c4c721e895be38df21486de5fcf98f92ee8e356",
+      "url": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Novel%205k.json.zip"
+    },
+    {
+      "analysis": {
+        "ambiguousRows": 4946,
+        "duplicateMappings": 4224,
+        "mappedPercent": 58.81,
+        "mappedRows": 25360,
+        "repeatedNormalizedForms": 1170,
+        "repeatedWrittenReadingPairs": 0,
+        "sourceRows": 43125,
+        "tubelex": {
+          "candidateMappedOverlapPercent": 84.11,
+          "sharedMappedLanguageReferenceIDs": 21330,
+          "sharedRankPearson": 0.2506,
+          "top1000MappedJaccard": 0.2902
+        },
+        "uniqueNormalizedForms": 41955,
+        "unmappedRows": 8595
+      },
+      "archive": "Slice_of_Life.json.zip",
+      "bytes": 411869,
+      "description": "Everyday-life anime vocabulary.",
+      "domain": "Everyday-life anime dialogue",
+      "id": "slice-of-life",
+      "name": "Slice of Life",
+      "sha256": "64508836972f97a58b481a71d85bd2d98e76b0a40c20c827820cd966cf869369",
+      "url": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Slice%20of%20Life.json.zip"
+    },
+    {
+      "analysis": {
+        "ambiguousRows": 1981,
+        "duplicateMappings": 2263,
+        "mappedPercent": 14.7,
+        "mappedRows": 5596,
+        "repeatedNormalizedForms": 3759,
+        "repeatedWrittenReadingPairs": 435,
+        "sourceRows": 38075,
+        "tubelex": {
+          "candidateMappedOverlapPercent": 64.67,
+          "sharedMappedLanguageReferenceIDs": 3619,
+          "sharedRankPearson": 0.0725,
+          "top1000MappedJaccard": 0.1444
+        },
+        "uniqueNormalizedForms": 34316,
+        "unmappedRows": 28235
+      },
+      "archive": "NHK.json.zip",
+      "bytes": 349003,
+      "description": "Frequency across articles from the NHK news website.",
+      "domain": "Online news",
+      "id": "nhk",
+      "name": "NHK",
+      "sha256": "5ee8dc07db5ef1a93e82b3a28e5fe1bcad6bfba889ae91f9f5be10adb724c3e1",
+      "url": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/NHK.json.zip"
+    },
+    {
+      "analysis": {
+        "ambiguousRows": 4749,
+        "duplicateMappings": 6423,
+        "mappedPercent": 56.92,
+        "mappedRows": 32098,
+        "repeatedNormalizedForms": 0,
+        "repeatedWrittenReadingPairs": 0,
+        "sourceRows": 56396,
+        "tubelex": {
+          "candidateMappedOverlapPercent": 83.96,
+          "sharedMappedLanguageReferenceIDs": 26948,
+          "sharedRankPearson": 0.3316,
+          "top1000MappedJaccard": 0.3004
+        },
+        "uniqueNormalizedForms": 56396,
+        "unmappedRows": 13126
+      },
+      "archive": "Shonen.json.zip",
+      "bytes": 550470,
+      "description": "Vocabulary from fantasy, adventure, and action-oriented anime.",
+      "domain": "Action-oriented anime dialogue",
+      "id": "shonen",
+      "name": "Shonen",
+      "sha256": "27142bc7017cfabd64c4838ef2a8520f5bdffff429ff44c0b34556db0a248b9e",
+      "url": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Shonen.json.zip"
+    },
+    {
+      "analysis": {
+        "ambiguousRows": 4031,
+        "duplicateMappings": 3578,
+        "mappedPercent": 76.87,
+        "mappedRows": 43241,
+        "repeatedNormalizedForms": 1,
+        "repeatedWrittenReadingPairs": 1,
+        "sourceRows": 56251,
+        "tubelex": {
+          "candidateMappedOverlapPercent": 52.57,
+          "sharedMappedLanguageReferenceIDs": 22733,
+          "sharedRankPearson": 0.2641,
+          "top1000MappedJaccard": 0.3996
+        },
+        "uniqueNormalizedForms": 56250,
+        "unmappedRows": 5401
+      },
+      "archive": "YouTube.json.zip",
+      "bytes": 300673,
+      "description": "Words sourced from a variety of YouTube videos.",
+      "domain": "Online video",
+      "id": "youtube",
+      "name": "YouTube",
+      "sha256": "7227297dcee800f913ec0e38c0c7c970f63e47c6476ea9e3b44b4f85188be5c1",
+      "url": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/YoutubeFreq.json.zip"
+    },
+    {
+      "analysis": {
+        "ambiguousRows": 7385,
+        "duplicateMappings": 27943,
+        "mappedPercent": 63.81,
+        "mappedRows": 131840,
+        "repeatedNormalizedForms": 0,
+        "repeatedWrittenReadingPairs": 0,
+        "sourceRows": 206621,
+        "tubelex": {
+          "candidateMappedOverlapPercent": 36.86,
+          "sharedMappedLanguageReferenceIDs": 48601,
+          "sharedRankPearson": 0.4087,
+          "top1000MappedJaccard": 0.2004
+        },
+        "uniqueNormalizedForms": 206621,
+        "unmappedRows": 39453
+      },
+      "archive": "JP_Dict.json.zip",
+      "bytes": 1203851,
+      "description": "Frequency across Japanese–Japanese dictionary definitions.",
+      "domain": "Japanese dictionary definitions",
+      "id": "jp-dict",
+      "name": "JP Dict",
+      "sha256": "c8d5deb015159c163829cf89ced71b8651a23f5e7dfa85cc70ae46c302e3637c",
+      "url": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Monodicts_206k.json.zip"
+    },
+    {
+      "analysis": {
+        "ambiguousRows": 3482,
+        "duplicateMappings": 731,
+        "mappedPercent": 81.41,
+        "mappedRows": 28539,
+        "repeatedNormalizedForms": 1371,
+        "repeatedWrittenReadingPairs": 1371,
+        "sourceRows": 35058,
+        "tubelex": {
+          "candidateMappedOverlapPercent": 90.81,
+          "sharedMappedLanguageReferenceIDs": 25915,
+          "sharedRankPearson": 0.3836,
+          "top1000MappedJaccard": 0.3602
+        },
+        "uniqueNormalizedForms": 33687,
+        "unmappedRows": 2306
+      },
+      "archive": "Visual_Novel.json.zip",
+      "bytes": 178905,
+      "description": "Vocabulary from Japanese visual novels.",
+      "domain": "Interactive fiction",
+      "id": "visual-novel",
+      "name": "Visual Novel",
+      "sha256": "673d4bc98c328fdf1e7e11c41ea6ec44ef21b4883b83b568da239446c4a5e679",
+      "url": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/VN_Freq_v2.json.zip"
+    },
+    {
+      "analysis": {
+        "ambiguousRows": 5665,
+        "duplicateMappings": 9989,
+        "mappedPercent": 68.09,
+        "mappedRows": 68087,
+        "repeatedNormalizedForms": 0,
+        "repeatedWrittenReadingPairs": 0,
+        "sourceRows": 99999,
+        "tubelex": {
+          "candidateMappedOverlapPercent": 49.6,
+          "sharedMappedLanguageReferenceIDs": 33773,
+          "sharedRankPearson": 0.3986,
+          "top1000MappedJaccard": 0.292
+        },
+        "uniqueNormalizedForms": 99999,
+        "unmappedRows": 16258
+      },
+      "archive": "TV_Shows.json.zip",
+      "bytes": 561111,
+      "description": "Words sourced from anime and Japanese dramas.",
+      "domain": "Anime and television drama",
+      "id": "tv-shows",
+      "name": "TV Shows",
+      "sha256": "1c6651c63a5a5e8ade4818cc11a26412244c22301c59cb40354f9bf7cb783c51",
+      "url": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Anime_J-drama.json.zip"
+    },
+    {
+      "analysis": {
+        "ambiguousRows": 8723,
+        "duplicateMappings": 21606,
+        "mappedPercent": 55.35,
+        "mappedRows": 89015,
+        "repeatedNormalizedForms": 7653,
+        "repeatedWrittenReadingPairs": 7653,
+        "sourceRows": 160836,
+        "tubelex": {
+          "candidateMappedOverlapPercent": 58.44,
+          "sharedMappedLanguageReferenceIDs": 52024,
+          "sharedRankPearson": 0.6702,
+          "top1000MappedJaccard": 0.4433
+        },
+        "uniqueNormalizedForms": 153183,
+        "unmappedRows": 41492
+      },
+      "archive": "Internet.json.zip",
+      "bytes": 941696,
+      "description": "Japanese Internet vocabulary; formal words may rank unusually highly.",
+      "domain": "Broad Japanese web",
+      "id": "internet",
+      "name": "Internet",
+      "sha256": "d6fdb6c77c1b34b31a57baf486cfdc7e3d6505e4e14b045a086a80bbfbe5d5d6",
+      "url": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/CC100.json.zip"
+    }
+  ],
+  "distributionDecision": {
+    "reason": "The public catalog supplies downloads and short descriptions but no license, attribution chain, modification terms, or app redistribution grant for these compiled lists.",
+    "shippingBehavior": "Do not bundle, mirror, or direct-download these archives from Zenbu. Re-evaluate when the applicable rightsholder publishes terms that cover app redistribution.",
+    "status": "no-go-pending-rights"
+  },
+  "languageDataSHA256": "f69d66155955e4b88f8b7501965dc05665bf5bd21a0199f02cb12467c3d0d092",
+  "mappingPolicySHA256": "7cf8ee196cd98c9683ac35f3214bc149ce6bfae55a1ee5f9c854c02816d2ecae",
+  "schema": "zenbu.frequency-candidate-analysis.v1",
+  "tubelexArtifactSHA256": "d4a9e84b8a2c359394015a01f82307ea68c1a61c32597b7d7cab82ee5d4a6d87"
+}

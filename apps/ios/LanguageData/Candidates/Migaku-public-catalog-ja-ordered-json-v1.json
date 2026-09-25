@@ -1,0 +1,35 @@
+{
+  "schema": "zenbu.frequency-candidate-catalog.v1",
+  "catalog": {
+    "identity": "Migaku public data catalog",
+    "url": "https://migaku-public-data.migaku.com/dicts/index.json",
+    "localSnapshotSHA256": "5927c09666b666720178c870e78d7a861d21948464ff3b3fdabc3319e8474bfe",
+    "retrievedAt": "2026-09-25"
+  },
+  "distributionDecision": {
+    "status": "no-go-pending-rights",
+    "reason": "The public catalog supplies downloads and short descriptions but no license, attribution chain, modification terms, or app redistribution grant for these compiled lists.",
+    "shippingBehavior": "Do not bundle, mirror, or direct-download these archives from Zenbu. Re-evaluate when the applicable rightsholder publishes terms that cover app redistribution."
+  },
+  "format": {
+    "container": "ZIP containing one UTF-8 JSON file",
+    "shape": "Ordered array whose rows are either a written-form string or a [written form, reading] pair, depending on the list",
+    "rankPolicy": "One-based array position; repeated forms and readings remain distinct source rows.",
+    "measurement": "Unknown; the catalog exposes only an ordering, not counts.",
+    "tokenizer": "Unknown",
+    "normalization": "NFKC written forms for analysis; original row retained in the record digest.",
+    "mappingPolicy": "FrequencyPackMappingV1 form-only analysis. A supplied reading is retained for reporting but is not consumed by the current v1 mapper."
+  },
+  "candidates": [
+    {"id":"netflix","name":"Netflix","domain":"Streaming subtitles","description":"Words sourced from Netflix Japan.","archive":"Netflix.json.zip","entry":"Netflix.json","url":"https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Netflix.json.zip","bytes":1039994,"rows":102844,"sha256":"294cdbf53794665196867b8283030a2d5504aad31a6da55324c0f6996f4eb9db"},
+    {"id":"novels","name":"Novels","domain":"Fiction / novels","description":"Frequency across 5,000 Japanese novels.","archive":"Novels.json.zip","entry":"Novel 5k.json","url":"https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Novel%205k.json.zip","bytes":164820,"rows":16469,"sha256":"8b0a9faeb3414ddd017f71628c4c721e895be38df21486de5fcf98f92ee8e356"},
+    {"id":"slice-of-life","name":"Slice of Life","domain":"Everyday-life anime dialogue","description":"Everyday-life anime vocabulary.","archive":"Slice_of_Life.json.zip","entry":"Slice of Life.json","url":"https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Slice%20of%20Life.json.zip","bytes":411869,"rows":43125,"sha256":"64508836972f97a58b481a71d85bd2d98e76b0a40c20c827820cd966cf869369"},
+    {"id":"nhk","name":"NHK","domain":"Online news","description":"Frequency across articles from the NHK news website.","archive":"NHK.json.zip","entry":"NHK.json","url":"https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/NHK.json.zip","bytes":349003,"rows":38075,"sha256":"5ee8dc07db5ef1a93e82b3a28e5fe1bcad6bfba889ae91f9f5be10adb724c3e1"},
+    {"id":"shonen","name":"Shonen","domain":"Action-oriented anime dialogue","description":"Vocabulary from fantasy, adventure, and action-oriented anime.","archive":"Shonen.json.zip","entry":"Shonen.json","url":"https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Shonen.json.zip","bytes":550470,"rows":56396,"sha256":"27142bc7017cfabd64c4838ef2a8520f5bdffff429ff44c0b34556db0a248b9e"},
+    {"id":"youtube","name":"YouTube","domain":"Online video","description":"Words sourced from a variety of YouTube videos.","archive":"YouTube.json.zip","entry":"YoutubeFreq.json","url":"https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/YoutubeFreq.json.zip","bytes":300673,"rows":56251,"sha256":"7227297dcee800f913ec0e38c0c7c970f63e47c6476ea9e3b44b4f85188be5c1"},
+    {"id":"jp-dict","name":"JP Dict","domain":"Japanese dictionary definitions","description":"Frequency across Japanese–Japanese dictionary definitions.","archive":"JP_Dict.json.zip","entry":"Monodicts_206k.json","url":"https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Monodicts_206k.json.zip","bytes":1203851,"rows":206621,"sha256":"c8d5deb015159c163829cf89ced71b8651a23f5e7dfa85cc70ae46c302e3637c"},
+    {"id":"visual-novel","name":"Visual Novel","domain":"Interactive fiction","description":"Vocabulary from Japanese visual novels.","archive":"Visual_Novel.json.zip","entry":"VN_Freq_v2.json","url":"https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/VN_Freq_v2.json.zip","bytes":178905,"rows":35058,"sha256":"673d4bc98c328fdf1e7e11c41ea6ec44ef21b4883b83b568da239446c4a5e679"},
+    {"id":"tv-shows","name":"TV Shows","domain":"Anime and television drama","description":"Words sourced from anime and Japanese dramas.","archive":"TV_Shows.json.zip","entry":"Anime_J-drama.json","url":"https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Anime_J-drama.json.zip","bytes":561111,"rows":99999,"sha256":"1c6651c63a5a5e8ade4818cc11a26412244c22301c59cb40354f9bf7cb783c51"},
+    {"id":"internet","name":"Internet","domain":"Broad Japanese web","description":"Japanese Internet vocabulary; formal words may rank unusually highly.","archive":"Internet.json.zip","entry":"CC100.json","url":"https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/CC100.json.zip","bytes":941696,"rows":160836,"sha256":"d6fdb6c77c1b34b31a57baf486cfdc7e3d6505e4e14b045a086a80bbfbe5d5d6"}
+  ]
+}

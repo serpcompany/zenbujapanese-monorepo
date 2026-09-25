@@ -46,6 +46,7 @@ flowchart LR
 | Camera, photo, and file import | PhotosUI and UIKit | Accepts images for Image Search and saved word encounters. | iOS | [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |
 | Offline reference data | SQLite | Reads dictionary, example, stroke-diagram, and frequency databases on the device. | iOS | [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |
 | Downloadable resource installation | CryptoKit and ZIPFoundation | Verifies and extracts downloadable frequency and language-analysis resources. | iOS | [`Package.swift`](../apps/ios/Modules/Package.swift), [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |
+| Frequency candidate analysis | Python, ZIP, JSON, and SQLite | Reproducibly validates ordered candidate archives, maps them against Language Reference IDs, and compares their ordering with TUBELEX without placing unapproved data in the shipping catalog. | iOS development | [`analyze_ordered_json_frequency_lists.py`](../apps/ios/Tools/analyze_ordered_json_frequency_lists.py), [`FREQUENCY_SOURCE_DECISIONS.md`](../apps/ios/LanguageData/FREQUENCY_SOURCE_DECISIONS.md) |
 
 Sudachi is analysis technology, not Zenbu's Japanese-English dictionary. Apple
 Vision recognizes text but does not interpret its words. Apple Translation
