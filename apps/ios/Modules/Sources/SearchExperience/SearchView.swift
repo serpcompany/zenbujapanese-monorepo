@@ -910,8 +910,8 @@ private enum ResultRank {
 }
 
 enum SearchResultFrequencyOrdering {
-  /// Dictionary relevance is primary. Active-pack evidence orders only equivalent relevance
-  /// groups; dictionary order and canonical entry ID are deterministic fallbacks.
+  /// Explicit match evidence is primary. Active-pack evidence orders only equivalent matches;
+  /// the original dictionary rank and canonical entry ID are deterministic fallbacks.
   static func ordered(
     _ results: LookupSearchResults,
     entries: [DictionaryEntry]? = nil,

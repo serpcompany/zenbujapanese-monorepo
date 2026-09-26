@@ -788,6 +788,9 @@ private actor LanguageReferenceData {
     }
     return orderedFingerprints.compactMap { fingerprint in
       guard let group = groups[fingerprint], let leading = group.first,
+        let strongestMatch = group.min(by: {
+          $0.presentationRank < $1.presentationRank
+        }),
         let normalized = LanguageReferenceIdentity.normalizedEntry(
           group.map(\.entry),
           preserving: leading.entry
@@ -795,11 +798,11 @@ private actor LanguageReferenceData {
       else { return nil }
       return RankedDictionaryEntry(
         entry: normalized,
-        presentationRank: leading.presentationRank,
+        presentationRank: strongestMatch.presentationRank,
         legacyPresentationRank: leading.legacyPresentationRank,
         hasExactOrPrefixMatch: group.contains(where: \.hasExactOrPrefixMatch),
         semanticFingerprint: fingerprint,
-        matchedSummary: leading.matchedSummary
+        matchedSummary: strongestMatch.matchedSummary
       )
     }
   }

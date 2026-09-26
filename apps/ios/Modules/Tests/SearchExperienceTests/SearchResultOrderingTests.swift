@@ -3,19 +3,35 @@ import Testing
 
 @Suite("Search result relevance and frequency ordering")
 struct SearchResultOrderingTests {
-  @Test("English match relation precedes source-priority fallback")
-  func englishRelationPrecedesPriorityFallback() {
+  @Test("original English fallback is preserved while final relevance remains primary")
+  func originalEnglishFallbackAndFinalRelevance() {
     let prioritizedExact = englishRank(priorityPresence: 0, relation: .exactGloss)
     let prioritizedQualified = englishRank(priorityPresence: 0, relation: .qualifiedGloss)
     let unprioritizedExact = englishRank(priorityPresence: 1, relation: .exactGloss)
 
     let sorted = [prioritizedQualified, unprioritizedExact, prioritizedExact].sorted()
 
-    #expect(unprioritizedExact < prioritizedQualified)
+    #expect(prioritizedQualified < unprioritizedExact)
     #expect(
-      sorted.map(\.presentationRank)
-        == [prioritizedExact.presentationRank, unprioritizedExact.presentationRank,
-          prioritizedQualified.presentationRank]
+      sorted == [prioritizedExact, prioritizedQualified, unprioritizedExact]
+    )
+
+    let qualified = fixtureEntry(
+      id: "00000000000000000000000000000004", headword: "qualified")
+    let exact = fixtureEntry(id: "00000000000000000000000000000005", headword: "exact")
+    let results = LookupSearchResults(
+      items: [
+        fixtureEnglishItem(entry: qualified, rank: prioritizedQualified, fallbackOrder: 0),
+        fixtureEnglishItem(entry: exact, rank: unprioritizedExact, fallbackOrder: 1),
+      ]
+    )
+    let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
+      qualified.id: .evidence(fixtureEvidence(id: qualified.id, rank: 1)),
+      exact.id: .evidence(fixtureEvidence(id: exact.id, rank: 50_000)),
+    ]
+    #expect(
+      SearchResultFrequencyOrdering.ordered(results, evidence: evidence).map(\.id)
+        == [exact.id, qualified.id]
     )
   }
 
@@ -265,6 +281,19 @@ private func englishRank(
     glossOrder: 0,
     headwordLength: 1,
     semanticFingerprint: "fixture-\(priorityPresence)-\(relation.rawValue)"
+  )
+}
+
+private func fixtureEnglishItem(
+  entry: DictionaryEntry,
+  rank: EnglishDictionaryRank,
+  fallbackOrder: Int
+) -> LookupSearchResultItem {
+  LookupSearchResultItem(
+    entry: entry,
+    relevance: DictionaryRelevance(sourceOrder: 0, matchRank: rank.presentationRank),
+    fallbackOrder: fallbackOrder,
+    matchedSummary: entry.summary
   )
 }
 
