@@ -60,9 +60,9 @@ editing or resubmitting the visible query.
 
 | Fixture | Query | Verify |
 | --- | --- | --- |
-| Japanese | `いる` | One **Results** collection; relevance groups remain stable and numeric ranks ascend within each equivalent group. |
+| Japanese | `いる` | One **Results** collection; exact matches remain ahead of prefix matches and numeric ranks ascend when match evidence is equivalent. |
 | English | `prison` | Direct prison matches precede incidental matches regardless of frequency; each row shows the matching prison gloss. |
-| Romaji | `miru` | Romaji relevance groups remain stable and frequency orders only within equivalent groups. |
+| Romaji | `miru` | Exact romaji matches remain ahead of prefixes and frequency orders only equivalent matches. |
 | Inflected romaji | `makasete` | The query enters deinflection (there is no direct form), keeps `任せる` in the stronger candidate group, then frequency-orders the equivalent exact-reading `まかす` matches as `任す` before `負かす`. |
 | Radical origin | Submit a sparse radical selection | One **Results** collection contains only the leading lexical-rank candidate group, frequency-ordered within that group. |
 | Single kanji | `静` | The dedicated Kanji row remains first; word rows use frequency order and visible positions include the Kanji row. |
@@ -73,7 +73,7 @@ editing or resubmitting the visible query.
 
 For pack switching, record the visible headwords and ranks for `いる` under TUBELEX, activate
 Japanese Wikipedia, return to Search without changing the query, and verify that rows reorder
-where displayed rank values differ within the same relevance group. Switch back and verify the
+where displayed rank values differ between entries with equivalent match evidence. Switch back and verify the
 original ordering returns.
 
 For unavailable-pack fallback, begin a search and make the active installed pack unreadable in a

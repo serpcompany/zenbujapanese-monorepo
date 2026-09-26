@@ -14,14 +14,14 @@ A learner can search in Japanese or English using:
 
 Ordinary Japanese, English, and romaji searches present one **Results** collection. The app
 first builds a bounded set from exact, prefix, contains, gloss, and romaji query evidence. It
-keeps stronger dictionary matches ahead of weaker matches, then uses ascending rank from the
-active frequency dictionary to order entries within each equivalent relevance group. Frequency
+compares that explicit match evidence first, then uses ascending rank from the active frequency
+dictionary when the preceding evidence is equal. Frequency
 never introduces an entry that the query did not retrieve or lets an incidental match outrank a
 direct match. An English result displays the matching gloss, even when that gloss is not the
 entry's first sense. Entries without mapped evidence remain visible with a dash.
 
-Equal ranks and entries without mapped evidence retain the dictionary's deterministic order
-within their relevance group. While frequency data is loading, or when the active dictionary is
+Equal ranks and entries without mapped evidence retain the dictionary's deterministic fallback
+order. While frequency data is loading, or when the active dictionary is
 unavailable, the whole collection uses dictionary relevance order. Unavailability is disclosed
 below the results without blocking lookup.
 

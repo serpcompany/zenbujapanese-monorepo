@@ -193,15 +193,36 @@ enum LanguageReferenceIdentity {
   }
 }
 
+struct DictionaryRelevance: Equatable, Sendable, Comparable {
+  let sourceOrder: Int
+  let matchRank: DictionaryPresentationRank
+
+  static let maximum = Self(
+    sourceOrder: .max,
+    matchRank: .japanese(JapaneseDictionaryPresentationRank(relation: .readingContains))
+  )
+
+  static func < (lhs: Self, rhs: Self) -> Bool {
+    if lhs.sourceOrder != rhs.sourceOrder { return lhs.sourceOrder < rhs.sourceOrder }
+    return lhs.matchRank < rhs.matchRank
+  }
+}
+
 struct LookupSearchResultItem: Sendable {
   let entry: DictionaryEntry
-  let relevanceGroup: Int
+  let relevance: DictionaryRelevance
+  let fallbackOrder: Int
   let matchedSummary: String?
 
   var displaySummary: String { matchedSummary ?? entry.summary }
 
-  func rebased(to relevanceGroup: Int) -> Self {
-    Self(entry: entry, relevanceGroup: relevanceGroup, matchedSummary: matchedSummary)
+  func rebased(sourceOrder: Int, fallbackOrder: Int) -> Self {
+    Self(
+      entry: entry,
+      relevance: DictionaryRelevance(sourceOrder: sourceOrder, matchRank: relevance.matchRank),
+      fallbackOrder: fallbackOrder,
+      matchedSummary: matchedSummary
+    )
   }
 }
 
@@ -246,8 +267,12 @@ struct LookupSearchResults: Sendable {
     entries.isEmpty
   }
 
-  func relevanceGroup(for entry: DictionaryEntry) -> Int {
-    items.first { $0.entry.id == entry.id }?.relevanceGroup ?? .max
+  func relevance(for entry: DictionaryEntry) -> DictionaryRelevance {
+    items.first { $0.entry.id == entry.id }?.relevance ?? .maximum
+  }
+
+  func fallbackOrder(for entry: DictionaryEntry) -> Int {
+    items.first { $0.entry.id == entry.id }?.fallbackOrder ?? .max
   }
 
   func displaySummary(for entry: DictionaryEntry) -> String {
@@ -307,16 +332,9 @@ struct LookupSearchResults: Sendable {
   ) -> LookupSearchResults {
     var items: [LookupSearchResultItem] = []
     var seen = Set<LanguageReferenceID>()
-    var nextGroup = 0
-    for source in sources {
-      var rebasedGroups: [Int: Int] = [:]
+    for (sourceOrder, source) in sources.enumerated() {
       for item in source where seen.insert(item.entry.id).inserted {
-        let group = rebasedGroups[item.relevanceGroup] ?? {
-          defer { nextGroup += 1 }
-          return nextGroup
-        }()
-        rebasedGroups[item.relevanceGroup] = group
-        items.append(item.rebased(to: group))
+        items.append(item.rebased(sourceOrder: sourceOrder, fallbackOrder: items.count))
         if items.count == limit { break }
       }
       if items.count == limit { break }

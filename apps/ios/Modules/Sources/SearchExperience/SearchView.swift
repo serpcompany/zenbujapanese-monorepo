@@ -919,9 +919,9 @@ enum SearchResultFrequencyOrdering {
   ) -> [DictionaryEntry] {
     let entries = entries ?? results.entries
     return entries.enumerated().sorted { lhs, rhs in
-      let lhsGroup = results.relevanceGroup(for: lhs.element)
-      let rhsGroup = results.relevanceGroup(for: rhs.element)
-      if lhsGroup != rhsGroup { return lhsGroup < rhsGroup }
+      let lhsRelevance = results.relevance(for: lhs.element)
+      let rhsRelevance = results.relevance(for: rhs.element)
+      if lhsRelevance != rhsRelevance { return lhsRelevance < rhsRelevance }
       let lhsRank = numericRank(evidence[lhs.element.id])
       let rhsRank = numericRank(evidence[rhs.element.id])
       switch (lhsRank, rhsRank) {
@@ -932,7 +932,9 @@ enum SearchResultFrequencyOrdering {
       case (.none, .some):
         return false
       default:
-        if lhs.offset != rhs.offset { return lhs.offset < rhs.offset }
+        let lhsFallback = results.fallbackOrder(for: lhs.element)
+        let rhsFallback = results.fallbackOrder(for: rhs.element)
+        if lhsFallback != rhsFallback { return lhsFallback < rhsFallback }
         return lhs.element.id.rawValue < rhs.element.id.rawValue
       }
     }.map(\.element)

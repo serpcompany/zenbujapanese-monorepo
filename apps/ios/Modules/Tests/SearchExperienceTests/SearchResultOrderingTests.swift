@@ -19,6 +19,40 @@ struct SearchResultOrderingTests {
     )
   }
 
+  @Test("legacy best-match rank is preserved for radical result bounds")
+  func legacyPresentationRank() {
+    let first = JapaneseDictionaryRank(
+      relation: .writtenExact,
+      priorityProfile: .unmarked,
+      senseBreadthRank: -2,
+      headwordLength: 1,
+      semanticFingerprint: "first"
+    )
+    let stableFallbackOnly = JapaneseDictionaryRank(
+      relation: .writtenExact,
+      priorityProfile: .unmarked,
+      senseBreadthRank: -2,
+      headwordLength: 8,
+      semanticFingerprint: "second"
+    )
+    let differentLegacyBucket = JapaneseDictionaryRank(
+      relation: .writtenExact,
+      priorityProfile: .unmarked,
+      senseBreadthRank: -1,
+      headwordLength: 1,
+      semanticFingerprint: "third"
+    )
+
+    #expect(
+      DictionaryLegacyPresentationRank.japanese(first)
+        == .japanese(stableFallbackOnly)
+    )
+    #expect(
+      DictionaryLegacyPresentationRank.japanese(first)
+        != .japanese(differentLegacyBucket)
+    )
+  }
+
   @Test("prison keeps direct matches ahead of an incidental sense and presents the matched sense")
   func prisonRegression() async throws {
     let results = try await LookupClient.live.search(SearchQuery("prison"))
@@ -35,16 +69,16 @@ struct SearchResultOrderingTests {
     #expect(results.displaySummary(for: villa) == "prison")
   }
 
-  @Test("frequency only changes order within an equal relevance group")
+  @Test("frequency only changes order for equivalent match evidence")
   func equalRelevanceFrequencyOrdering() {
     let directA = fixtureEntry(id: "00000000000000000000000000000001", headword: "甲")
     let directB = fixtureEntry(id: "00000000000000000000000000000002", headword: "乙")
     let weaker = fixtureEntry(id: "00000000000000000000000000000003", headword: "丙")
     let results = LookupSearchResults(
       items: [
-        LookupSearchResultItem(entry: directA, relevanceGroup: 0, matchedSummary: nil),
-        LookupSearchResultItem(entry: directB, relevanceGroup: 0, matchedSummary: nil),
-        LookupSearchResultItem(entry: weaker, relevanceGroup: 1, matchedSummary: nil),
+        fixtureItem(entry: directA, relation: .writtenExact, fallbackOrder: 0),
+        fixtureItem(entry: directB, relation: .writtenExact, fallbackOrder: 1),
+        fixtureItem(entry: weaker, relation: .writtenPrefix, fallbackOrder: 2),
       ]
     )
     let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
@@ -65,8 +99,8 @@ struct SearchResultOrderingTests {
     let second = fixtureEntry(id: "00000000000000000000000000000002", headword: "乙")
     let third = fixtureEntry(id: "00000000000000000000000000000003", headword: "丙")
     let results = LookupSearchResults(
-      items: [first, second, third].map {
-        LookupSearchResultItem(entry: $0, relevanceGroup: 0, matchedSummary: nil)
+      items: [first, second, third].enumerated().map {
+        fixtureItem(entry: $0.element, fallbackOrder: $0.offset)
       }
     )
     let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
@@ -85,8 +119,8 @@ struct SearchResultOrderingTests {
     let first = fixtureEntry(id: "00000000000000000000000000000001", headword: "甲")
     let second = fixtureEntry(id: "00000000000000000000000000000002", headword: "乙")
     let results = LookupSearchResults(
-      items: [first, second].map {
-        LookupSearchResultItem(entry: $0, relevanceGroup: 0, matchedSummary: nil)
+      items: [first, second].enumerated().map {
+        fixtureItem(entry: $0.element, fallbackOrder: $0.offset)
       })
     let packA = [
       first.id: FrequencyLookupResult.evidence(fixtureEvidence(id: first.id, rank: 1)),
@@ -120,18 +154,18 @@ struct SearchResultOrderingTests {
     )
   }
 
-  @Test("live Japanese groups stay primary while frequency inverts an equivalent pair")
+  @Test("live Japanese match quality stays primary while frequency inverts an equivalent pair")
   func liveJapaneseGroups() async throws {
-    try await assertLiveGroupOrdering(
+    try await assertLiveRelevanceOrdering(
       query: "いる",
       crossGroup: ("要る", "いるか座"),
       sameGroup: ("没る", "癒る")
     )
   }
 
-  @Test("live romaji groups stay primary while frequency inverts an equivalent pair")
+  @Test("live romaji match quality stays primary while frequency inverts an equivalent pair")
   func liveRomajiGroups() async throws {
-    try await assertLiveGroupOrdering(
+    try await assertLiveRelevanceOrdering(
       query: "miru",
       crossGroup: ("見る", "ミルク"),
       sameGroup: ("釬", "廻る")
@@ -148,8 +182,8 @@ struct SearchResultOrderingTests {
     let entrusted = try #require(results.entries.first { $0.headword == "任せる" })
     let defeat = try #require(results.entries.first { $0.headword == "負かす" })
     let entrust = try #require(results.entries.first { $0.headword == "任す" })
-    #expect(results.relevanceGroup(for: entrusted) < results.relevanceGroup(for: defeat))
-    #expect(results.relevanceGroup(for: defeat) == results.relevanceGroup(for: entrust))
+    #expect(results.relevance(for: entrusted) < results.relevance(for: defeat))
+    #expect(results.relevance(for: defeat) == results.relevance(for: entrust))
 
     let capability = try FrequencyCapability.freshBundledTUBELEX()
     let evidence = try await capability.evidence(for: [entrusted.id, defeat.id, entrust.id])
@@ -163,7 +197,7 @@ struct SearchResultOrderingTests {
     )
   }
 
-  @Test("live deinflection keeps cross-groups fixed and inverts frequency within one group")
+  @Test("live deinflection preserves source quality and frequency-orders equivalent matches")
   func liveDeinflectionSameGroupOrdering() async throws {
     let query = SearchQuery("kaetta")
     #expect(try await LookupClient.live.entryMatchingForm(query.value) == nil)
@@ -174,8 +208,8 @@ struct SearchResultOrderingTests {
     let weaker = try #require(results.entries.first { $0.headword == "変える" })
     let first = try #require(results.entries.first { $0.headword == "嘉悦大学" })
     let second = try #require(results.entries.first { $0.headword == "嘉悦女子短大" })
-    #expect(results.relevanceGroup(for: stronger) < results.relevanceGroup(for: weaker))
-    #expect(results.relevanceGroup(for: first) == results.relevanceGroup(for: second))
+    #expect(results.relevance(for: stronger) < results.relevance(for: weaker))
+    #expect(results.relevance(for: first) == results.relevance(for: second))
 
     let evidence: [LanguageReferenceID: FrequencyLookupResult] = [
       stronger.id: .evidence(fixtureEvidence(id: stronger.id, rank: 50_000)),
@@ -188,7 +222,7 @@ struct SearchResultOrderingTests {
     #expect(ordered.firstIndex(of: second)! < ordered.firstIndex(of: first)!)
   }
 
-  @Test("deinflection composition rebases whole relevance groups without splitting metadata")
+  @Test("deinflection composition preserves structured relevance metadata")
   func deinflectionCompositionPreservesMetadata() {
     let primary = fixtureItem(
       id: "00000000000000000000000000000001", headword: "primary", group: 0,
@@ -206,9 +240,11 @@ struct SearchResultOrderingTests {
       usesPrimaryEntryExamples: true
     )
 
-    #expect(results.relevanceGroup(for: primary.entry) == 0)
-    #expect(results.relevanceGroup(for: alternateA.entry) == 1)
-    #expect(results.relevanceGroup(for: alternateB.entry) == 1)
+    #expect(results.relevance(for: primary.entry).sourceOrder == 0)
+    #expect(results.relevance(for: alternateA.entry).sourceOrder == 1)
+    #expect(results.relevance(for: alternateB.entry).sourceOrder == 1)
+    #expect(results.relevance(for: alternateA.entry).matchRank == alternateA.relevance.matchRank)
+    #expect(results.relevance(for: alternateB.entry).matchRank == alternateB.relevance.matchRank)
     #expect(results.displaySummary(for: alternateB.entry) == "alternate match b")
   }
 
@@ -232,7 +268,7 @@ private func englishRank(
   )
 }
 
-private func assertLiveGroupOrdering(
+private func assertLiveRelevanceOrdering(
   query: String,
   crossGroup: (stronger: String, weaker: String),
   sameGroup: (first: String, second: String)
@@ -242,8 +278,8 @@ private func assertLiveGroupOrdering(
   let weaker = try #require(results.entries.first { $0.headword == crossGroup.weaker })
   let first = try #require(results.entries.first { $0.headword == sameGroup.first })
   let second = try #require(results.entries.first { $0.headword == sameGroup.second })
-  #expect(results.relevanceGroup(for: stronger) < results.relevanceGroup(for: weaker))
-  #expect(results.relevanceGroup(for: first) == results.relevanceGroup(for: second))
+  #expect(results.relevance(for: stronger) < results.relevance(for: weaker))
+  #expect(results.relevance(for: first) == results.relevance(for: second))
 
   var evidence: [LanguageReferenceID: FrequencyLookupResult] = [:]
   evidence[stronger.id] = .evidence(fixtureEvidence(id: stronger.id, rank: 50_000))
@@ -261,9 +297,27 @@ private func fixtureItem(
   group: Int,
   matchedSummary: String? = nil
 ) -> LookupSearchResultItem {
-  LookupSearchResultItem(
+  fixtureItem(
     entry: fixtureEntry(id: id, headword: headword),
-    relevanceGroup: group,
+    sourceOrder: group,
+    matchedSummary: matchedSummary
+  )
+}
+
+private func fixtureItem(
+  entry: DictionaryEntry,
+  sourceOrder: Int = 0,
+  relation: DictionaryMatch.FormRelation = .writtenExact,
+  fallbackOrder: Int = 0,
+  matchedSummary: String? = nil
+) -> LookupSearchResultItem {
+  LookupSearchResultItem(
+    entry: entry,
+    relevance: DictionaryRelevance(
+      sourceOrder: sourceOrder,
+      matchRank: .japanese(JapaneseDictionaryPresentationRank(relation: relation))
+    ),
+    fallbackOrder: fallbackOrder,
     matchedSummary: matchedSummary
   )
 }

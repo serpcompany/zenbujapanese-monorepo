@@ -216,9 +216,9 @@ private actor LanguageReferenceData {
 
     let ranked = query.isASCII ? try rankedEnglish(query) : try rankedJapanese(query)
     guard !ranked.isEmpty else { return .empty }
-    let leadingPresentationRank = ranked[0].presentationRank
+    let leadingLegacyRank = ranked[0].legacyPresentationRank
     let leadingLexicalEntryCount = ranked.prefix {
-      $0.presentationRank == leadingPresentationRank
+      $0.legacyPresentationRank == leadingLegacyRank
     }.count
     return LookupSearchResults(
       items: Self.resultItems(for: Array(ranked.prefix(60))),
@@ -280,6 +280,7 @@ private actor LanguageReferenceData {
               RankedDictionaryEntry(
                 entry: entry,
                 presentationRank: rank.presentationRank,
+                legacyPresentationRank: .english(rank),
                 hasExactOrPrefixMatch: romaji != .contains,
                 semanticFingerprint: fingerprint,
                 matchedSummary: nil
@@ -311,6 +312,7 @@ private actor LanguageReferenceData {
           RankedDictionaryEntry(
             entry: entry,
             presentationRank: rank.presentationRank,
+            legacyPresentationRank: .english(rank),
             hasExactOrPrefixMatch: lane == .strongGloss || corroborated,
             semanticFingerprint: fingerprint,
             matchedSummary: selectedGloss.meaning
@@ -438,6 +440,7 @@ private actor LanguageReferenceData {
         RankedDictionaryEntry(
           entry: entry,
           presentationRank: rank.presentationRank,
+          legacyPresentationRank: .japanese(rank),
           hasExactOrPrefixMatch: selected.relation.rawValue < 4,
           semanticFingerprint: fingerprint,
           matchedSummary: nil
@@ -793,6 +796,7 @@ private actor LanguageReferenceData {
       return RankedDictionaryEntry(
         entry: normalized,
         presentationRank: leading.presentationRank,
+        legacyPresentationRank: leading.legacyPresentationRank,
         hasExactOrPrefixMatch: group.contains(where: \.hasExactOrPrefixMatch),
         semanticFingerprint: fingerprint,
         matchedSummary: leading.matchedSummary
@@ -803,22 +807,17 @@ private actor LanguageReferenceData {
   private static func resultItems(
     for entries: [RankedDictionaryEntry]
   ) -> [LookupSearchResultItem] {
-    var result: [LookupSearchResultItem] = []
-    var previousRank: DictionaryPresentationRank?
-    var group = -1
-    for entry in entries {
-      if previousRank != entry.presentationRank {
-        group += 1
-        previousRank = entry.presentationRank
-      }
-      result.append(
+    entries.enumerated().map { fallbackOrder, entry in
         LookupSearchResultItem(
           entry: entry.entry,
-          relevanceGroup: group,
+          relevance: DictionaryRelevance(
+            sourceOrder: 0,
+            matchRank: entry.presentationRank
+          ),
+          fallbackOrder: fallbackOrder,
           matchedSummary: entry.matchedSummary
-        ))
+        )
     }
-    return result
   }
 
   private static let selectedColumns = """
@@ -966,6 +965,7 @@ private enum SearchFormKind: Int {
 private struct RankedDictionaryEntry {
   let entry: DictionaryEntry
   let presentationRank: DictionaryPresentationRank
+  let legacyPresentationRank: DictionaryLegacyPresentationRank
   let hasExactOrPrefixMatch: Bool
   let semanticFingerprint: String
   let matchedSummary: String?

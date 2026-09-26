@@ -186,19 +186,73 @@ struct JapaneseDictionaryRank: Comparable, Sendable {
   }
 }
 
-enum DictionaryPresentationRank: Equatable, Sendable {
+enum DictionaryPresentationRank: Equatable, Sendable, Comparable {
   case english(EnglishDictionaryPresentationRank)
   case japanese(JapaneseDictionaryPresentationRank)
+
+  static func < (lhs: Self, rhs: Self) -> Bool {
+    switch (lhs, rhs) {
+    case let (.english(left), .english(right)):
+      return left < right
+    case let (.japanese(left), .japanese(right)):
+      return left < right
+    case (.english, .japanese):
+      return true
+    case (.japanese, .english):
+      return false
+    }
+  }
 }
 
-struct EnglishDictionaryPresentationRank: Equatable, Sendable {
+struct EnglishDictionaryPresentationRank: Equatable, Sendable, Comparable {
   let lane: DictionaryMatch.EvidenceLane
   let corroborationRank: Int
   let romajiSpecificityRank: Int
   let senseOrder: Int
   let relation: DictionaryMatch.GlossRelation
+
+  static func < (lhs: Self, rhs: Self) -> Bool {
+    if lhs.lane != rhs.lane { return lhs.lane < rhs.lane }
+    if lhs.corroborationRank != rhs.corroborationRank {
+      return lhs.corroborationRank < rhs.corroborationRank
+    }
+    if lhs.romajiSpecificityRank != rhs.romajiSpecificityRank {
+      return lhs.romajiSpecificityRank < rhs.romajiSpecificityRank
+    }
+    if lhs.senseOrder != rhs.senseOrder { return lhs.senseOrder < rhs.senseOrder }
+    return lhs.relation < rhs.relation
+  }
 }
 
-struct JapaneseDictionaryPresentationRank: Equatable, Sendable {
+struct JapaneseDictionaryPresentationRank: Equatable, Sendable, Comparable {
   let relation: DictionaryMatch.FormRelation
+
+  static func < (lhs: Self, rhs: Self) -> Bool {
+    lhs.relation < rhs.relation
+  }
+}
+
+enum DictionaryLegacyPresentationRank: Equatable, Sendable {
+  case english(EnglishDictionaryRank)
+  case japanese(JapaneseDictionaryRank)
+
+  static func == (lhs: Self, rhs: Self) -> Bool {
+    switch (lhs, rhs) {
+    case let (.english(left), .english(right)):
+      return left.lane == right.lane
+        && left.corroborationRank == right.corroborationRank
+        && left.romajiSpecificityRank == right.romajiSpecificityRank
+        && left.senseOrder == right.senseOrder
+        && left.priorityPresenceRank == right.priorityPresenceRank
+        && left.relation == right.relation
+        && left.priorityProfile == right.priorityProfile
+        && left.glossOrder == right.glossOrder
+    case let (.japanese(left), .japanese(right)):
+      return left.relation == right.relation
+        && left.priorityProfile == right.priorityProfile
+        && left.senseBreadthRank == right.senseBreadthRank
+    default:
+      return false
+    }
+  }
 }
