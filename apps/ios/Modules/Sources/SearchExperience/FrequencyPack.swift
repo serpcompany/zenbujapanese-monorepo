@@ -2,8 +2,9 @@ import CryptoKit
 import Foundation
 import SQLite3
 
-/// One lookup result per enabled frequency dictionary, in the learner's priority order. The
-/// first result orders search results; an empty list means no dictionary is enabled.
+/// One lookup result per enabled frequency dictionary, in the learner's priority order. Search
+/// orders by the first result, then each next one breaks ties; an empty list means no dictionary
+/// is enabled.
 typealias FrequencyRanks = [FrequencyLookupResult]
 
 struct FrequencyCapability: Sendable {
@@ -47,7 +48,11 @@ struct FrequencyCapability: Sendable {
       throw FrequencyPackError.missingBundledPack
     }
     let catalog = try FrequencyPackCatalog.bundled()
-    guard let manifest = catalog.packs.first(where: \.bundled) else {
+    guard
+      let manifest = catalog.packs.first(where: {
+        $0.bundled && $0.bundledResource == "TUBELEXFrequencyPack"
+      })
+    else {
       throw FrequencyPackError.invalidCatalog
     }
     let artifact = try FrequencyPackArtifact(url: url, manifest: manifest)
@@ -78,12 +83,20 @@ struct FrequencyPackClient: Sendable {
 
 enum FrequencyLookupResult: Equatable, Sendable {
   case evidence(FrequencyEvidence)
+  case level(FrequencyLevelEvidence)
   case noEvidence(pack: FrequencyPackDisclosure)
   case unavailable(FrequencyPackUnavailable)
 
-  var hasRank: Bool {
-    if case .evidence = self { return true }
-    return false
+  /// Whether the dictionary has a rank or level for the entry.
+  var hasEvidence: Bool { sortValue != nil }
+
+  /// Smaller values sort first: a rank, or a level ordered from N5 to N1.
+  var sortValue: Int? {
+    switch self {
+    case .evidence(let evidence): evidence.rank
+    case .level(let evidence): evidence.level.sortValue
+    case .noEvidence, .unavailable: nil
+    }
   }
 
   static func unavailableResults(
@@ -133,6 +146,30 @@ struct FrequencyEvidence: Equatable, Sendable {
   }
 }
 
+/// A JLPT level; the raw value is the level number, so N5 (the easiest) is 5.
+enum JLPTLevel: Int, CaseIterable, Sendable {
+  case n1 = 1
+  case n2
+  case n3
+  case n4
+  case n5
+
+  var label: String { "N\(rawValue)" }
+
+  /// Learners study from N5 up, so N5 sorts first.
+  var sortValue: Int { 6 - rawValue }
+}
+
+struct FrequencyLevelEvidence: Equatable, Sendable {
+  let pack: FrequencyPackDisclosure
+  let languageReferenceID: LanguageReferenceID
+  let level: JLPTLevel
+
+  static let explanation =
+    "JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has "
+    + "published no official vocabulary list since 2010."
+}
+
 /// How common a ranked word is, using Migaku's star cutoffs so learners who know that scale
 /// read Zenbu's chips the same way.
 enum FrequencyTier: Int, Comparable, Sendable {
@@ -162,6 +199,16 @@ enum FrequencyTier: Int, Comparable, Sendable {
     }
   }
 
+  /// JLPT levels on the same scale: N5 and N4 read as very common, N3 and N2 as common, and
+  /// N1 as moderately common.
+  init(level: JLPTLevel) {
+    switch level {
+    case .n5, .n4: self = .veryCommon
+    case .n3, .n2: self = .common
+    case .n1: self = .moderate
+    }
+  }
+
   static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
 }
 
@@ -175,7 +222,10 @@ struct FrequencyPresentationModel: Equatable, Sendable {
   let pack: FrequencyPackDisclosure?
   let rankText: String?
   let percentileText: String?
+  let levelText: String?
   let explanation: String?
+  /// Row text when the dictionary has nothing for the entry.
+  let missingText: String
 
   init(result: FrequencyLookupResult) {
     self.result = result
@@ -191,17 +241,42 @@ struct FrequencyPresentationModel: Equatable, Sendable {
       pack = evidence.pack
       rankText = "#\(formattedRank)"
       percentileText = evidence.topPercentDisplay
+      levelText = nil
       explanation = nil
+      missingText = "No rank"
+    case .level(let evidence):
+      packName = evidence.pack.shortName
+      tier = FrequencyTier(level: evidence.level)
+      inlineText = evidence.level.label
+      inlineAccessibilityLabel =
+        "\(evidence.pack.shortName) level \(evidence.level.label). Double tap for details."
+      pack = evidence.pack
+      rankText = nil
+      percentileText = nil
+      levelText = evidence.level.label
+      explanation = FrequencyLevelEvidence.explanation
+      missingText = "Not listed"
     case .noEvidence(let pack):
       packName = pack.shortName
       tier = nil
       inlineText = "—"
-      inlineAccessibilityLabel =
-        "\(pack.shortName) has no rank for this entry. Double tap for details."
       self.pack = pack
       rankText = nil
       percentileText = nil
-      explanation = "\(pack.displayName) has no mapped frequency rank for this entry."
+      levelText = nil
+      switch pack.kind {
+      case .rank:
+        inlineAccessibilityLabel =
+          "\(pack.shortName) has no rank for this entry. Double tap for details."
+        explanation = "\(pack.displayName) has no mapped frequency rank for this entry."
+        missingText = "No rank"
+      case .level:
+        inlineAccessibilityLabel =
+          "\(pack.shortName) does not list this entry. Double tap for details."
+        explanation =
+          "\(pack.displayName) does not list this entry. \(FrequencyLevelEvidence.explanation)"
+        missingText = "Not listed"
+      }
     case .unavailable(let unavailable):
       packName = unavailable.pack?.shortName ?? "Frequency"
       tier = nil
@@ -210,15 +285,18 @@ struct FrequencyPresentationModel: Equatable, Sendable {
       pack = unavailable.pack
       rankText = nil
       percentileText = nil
+      levelText = nil
       explanation = unavailable.reason
+      missingText = "Unavailable"
     }
   }
 }
 
 struct SearchFrequencyRankPresentationModel: Equatable, Sendable {
   /// Chips in priority order: the first enabled dictionary always, because it orders the
-  /// results, then each other dictionary that ranks the entry. Empty while evidence loads or
-  /// when no dictionary is enabled.
+  /// results, then each other dictionary that ranks the entry. A level dictionary such as JLPT
+  /// is left out when it does not list the entry, even when first. Empty while evidence loads
+  /// or when no dictionary is enabled.
   let chips: [FrequencyPresentationModel]
   let accessibilityValue: String
 
@@ -229,12 +307,22 @@ struct SearchFrequencyRankPresentationModel: Equatable, Sendable {
         ranks == nil ? "Frequency rank loading" : "No frequency dictionary enabled"
       return
     }
-    let shown = ranks.enumerated().filter { $0.offset == 0 || $0.element.hasRank }.map(\.element)
+    let shown = ranks.enumerated().filter { offset, result in
+      if result.hasEvidence { return true }
+      if case .noEvidence(let pack) = result, pack.kind == .level { return false }
+      return offset == 0
+    }.map(\.element)
+    guard !shown.isEmpty else {
+      chips = []
+      accessibilityValue = "No frequency rank"
+      return
+    }
     chips = shown.map(FrequencyPresentationModel.init(result:))
     accessibilityValue = zip(shown, chips).map { result, chip in
       switch result {
       case .evidence(let evidence):
         "\(chip.packName) frequency rank \(evidence.rank), \(chip.tier?.label ?? "")"
+      case .level(let evidence): "\(chip.packName) level \(evidence.level.label)"
       case .noEvidence: "\(chip.packName) has no rank for this entry"
       case .unavailable: "\(chip.packName) rank unavailable"
       }
@@ -314,6 +402,33 @@ enum FrequencyPackArtifactContent {
     return digest.finalize().map { String(format: "%02x", $0) }.joined()
   }
 
+  /// Every (ID, level) row in ID order: the 16 ID bytes, then the level as an unsigned 64-bit
+  /// big-endian integer.
+  static func levelMappingSHA256(_ database: OpaquePointer) throws -> String {
+    var statement: OpaquePointer?
+    guard
+      sqlite3_prepare_v2(
+        database,
+        "SELECT language_reference_id, level FROM level_evidence ORDER BY language_reference_id",
+        -1,
+        &statement,
+        nil
+      ) == SQLITE_OK, let statement
+    else { throw sqliteError(database) }
+    defer { sqlite3_finalize(statement) }
+    var digest = SHA256()
+    while sqlite3_step(statement) == SQLITE_ROW {
+      guard let identifier = sqlite3_column_blob(statement, 0) else {
+        throw FrequencyPackError.invalidArtifact
+      }
+      digest.update(
+        data: Data(bytes: identifier, count: Int(sqlite3_column_bytes(statement, 0))))
+      var level = UInt64(sqlite3_column_int64(statement, 1)).bigEndian
+      digest.update(data: Data(bytes: &level, count: MemoryLayout<UInt64>.size))
+    }
+    return digest.finalize().map { String(format: "%02x", $0) }.joined()
+  }
+
   private static func update(_ value: String, digest: inout SHA256) {
     let data = Data(value.utf8)
     var count = UInt64(data.count).bigEndian
@@ -339,6 +454,17 @@ struct FrequencyPackArtifact: Sendable {
       throw FrequencyPackError.invalidArtifact
     }
     defer { sqlite3_close(database) }
+    let metadata = try Self.metadata(database)
+    switch manifest.packKind {
+    case .rank: try Self.validateRankArtifact(database, metadata: metadata, manifest: manifest)
+    case .level: try Self.validateLevelArtifact(database, metadata: metadata, manifest: manifest)
+    }
+    guard FrequencyPackArtifactContent.sha256(metadata: metadata) == manifest.artifactContentSHA256
+    else { throw FrequencyPackError.invalidArtifact }
+    self.manifest = manifest
+  }
+
+  private static func metadata(_ database: OpaquePointer) throws -> [String: String] {
     var statement: OpaquePointer?
     guard
       sqlite3_prepare_v2(
@@ -353,6 +479,16 @@ struct FrequencyPackArtifact: Sendable {
       throw FrequencyPackError.invalidArtifact
     }
     defer { sqlite3_finalize(statement) }
+    var metadata: [String: String] = [:]
+    while sqlite3_step(statement) == SQLITE_ROW {
+      metadata[Self.string(statement, 0)] = Self.string(statement, 1)
+    }
+    return metadata
+  }
+
+  private static func validateRankArtifact(
+    _ database: OpaquePointer, metadata: [String: String], manifest: FrequencyPackManifest
+  ) throws {
     guard
       try Self.integer(
         database,
@@ -366,13 +502,8 @@ struct FrequencyPackArtifact: Sendable {
           + "OR covered_source_rows != \(manifest.coveredSourceRows)"
       ) == 0,
       try Self.text(database, sql: "PRAGMA integrity_check") == "ok",
-      try FrequencyPackArtifactContent.mappingSHA256(database) == manifest.mappingSHA256
-    else { throw FrequencyPackError.invalidArtifact }
-    var metadata: [String: String] = [:]
-    while sqlite3_step(statement) == SQLITE_ROW {
-      metadata[Self.string(statement, 0)] = Self.string(statement, 1)
-    }
-    guard metadata["artifact_schema"] == "zenbu.frequency-pack.v1",
+      try FrequencyPackArtifactContent.mappingSHA256(database) == manifest.mappingSHA256,
+      metadata["artifact_schema"] == "zenbu.frequency-pack.v1",
       metadata["pack_id"] == manifest.packID.rawValue,
       metadata["pack_version"] == manifest.packVersion,
       metadata["mapped_rows"] == String(manifest.mappedRows),
@@ -385,12 +516,38 @@ struct FrequencyPackArtifact: Sendable {
       metadata["presentation_policy_version"] == String(manifest.presentationPolicyVersion),
       metadata["language_data_sha256"] == manifest.languageDataSHA256,
       metadata["source_total_tokens"] == String(manifest.sourceTotalTokens),
-      metadata["covered_source_rows"] == String(manifest.coveredSourceRows),
-      FrequencyPackArtifactContent.sha256(metadata: metadata) == manifest.artifactContentSHA256
+      metadata["covered_source_rows"] == String(manifest.coveredSourceRows)
     else {
       throw FrequencyPackError.invalidArtifact
     }
-    self.manifest = manifest
+  }
+
+  private static func validateLevelArtifact(
+    _ database: OpaquePointer, metadata: [String: String], manifest: FrequencyPackManifest
+  ) throws {
+    guard
+      try Self.integer(database, sql: "SELECT count(*) FROM level_evidence")
+        == manifest.mappedRows,
+      try Self.integer(
+        database,
+        sql: "SELECT count(*) FROM level_evidence "
+          + "WHERE length(language_reference_id) != 16 OR level NOT BETWEEN 1 AND 5"
+      ) == 0,
+      try Self.text(database, sql: "PRAGMA integrity_check") == "ok",
+      try FrequencyPackArtifactContent.levelMappingSHA256(database) == manifest.mappingSHA256,
+      metadata["artifact_schema"] == "zenbu.level-pack.v1",
+      metadata["pack_id"] == manifest.packID.rawValue,
+      metadata["pack_version"] == manifest.packVersion,
+      metadata["source_rows"] == String(manifest.coveredSourceRows),
+      metadata["mapped_rows"] == String(manifest.mappedRows),
+      metadata["unmapped_rows"] == String(manifest.unmappedRows),
+      metadata["duplicate_mappings"] == String(manifest.duplicateMappings),
+      metadata["mapping_sha256"] == manifest.mappingSHA256,
+      metadata["language_data_sha256"] == manifest.languageDataSHA256,
+      metadata["offline_importer_sha256"] == manifest.offlineImporterSHA256
+    else {
+      throw FrequencyPackError.invalidArtifact
+    }
   }
 
   func evidence(for id: LanguageReferenceID) throws -> FrequencyLookupResult {
@@ -403,11 +560,16 @@ struct FrequencyPackArtifact: Sendable {
   func validateSmokeTest() throws {
     let smokeTest = manifest.smokeTest
     let languageReferenceID = LanguageReferenceID(rawValue: smokeTest.languageReferenceID)
-    guard
-      case .evidence(let evidence) = try evidence(for: languageReferenceID),
-      evidence.rank == smokeTest.rank,
-      evidence.pack.id == manifest.packID
-    else { throw FrequencyPackError.invalidArtifact }
+    switch try evidence(for: languageReferenceID) {
+    case .evidence(let evidence)
+    where evidence.rank == smokeTest.rank && evidence.pack.id == manifest.packID:
+      return
+    case .level(let evidence)
+    where evidence.level.rawValue == smokeTest.rank && evidence.pack.id == manifest.packID:
+      return
+    default:
+      throw FrequencyPackError.invalidArtifact
+    }
   }
 
   func evidence(for ids: [LanguageReferenceID]) throws
@@ -423,6 +585,9 @@ struct FrequencyPackArtifact: Sendable {
         for: ids, pack: manifest.disclosure, reason: "Pack unavailable")
     }
     defer { sqlite3_close(database) }
+    if manifest.packKind == .level {
+      return try levelEvidence(for: ids, in: database)
+    }
     var statement: OpaquePointer?
     guard
       sqlite3_prepare_v2(
@@ -486,6 +651,51 @@ struct FrequencyPackArtifact: Sendable {
     return results
   }
 
+  private func levelEvidence(for ids: [LanguageReferenceID], in database: OpaquePointer) throws
+    -> [LanguageReferenceID: FrequencyLookupResult]
+  {
+    var statement: OpaquePointer?
+    guard
+      sqlite3_prepare_v2(
+        database,
+        "SELECT level FROM level_evidence WHERE language_reference_id = ?",
+        -1,
+        &statement,
+        nil
+      ) == SQLITE_OK,
+      let statement
+    else {
+      throw FrequencyPackError.sqlite(String(cString: sqlite3_errmsg(database)))
+    }
+    defer { sqlite3_finalize(statement) }
+    var results: [LanguageReferenceID: FrequencyLookupResult] = [:]
+    for id in ids {
+      sqlite3_reset(statement)
+      sqlite3_clear_bindings(statement)
+      guard let key = id.bytes else {
+        results[id] = .noEvidence(pack: manifest.disclosure)
+        continue
+      }
+      _ = key.withUnsafeBytes { buffer in
+        sqlite3_bind_blob(
+          statement, 1, buffer.baseAddress, Int32(buffer.count), Self.transientDestructor)
+      }
+      switch sqlite3_step(statement) {
+      case SQLITE_DONE:
+        results[id] = .noEvidence(pack: manifest.disclosure)
+      case SQLITE_ROW:
+        guard let level = JLPTLevel(rawValue: Int(sqlite3_column_int64(statement, 0))) else {
+          throw FrequencyPackError.invalidArtifact
+        }
+        results[id] = .level(
+          FrequencyLevelEvidence(pack: manifest.disclosure, languageReferenceID: id, level: level))
+      default:
+        throw FrequencyPackError.sqlite(String(cString: sqlite3_errmsg(database)))
+      }
+    }
+    return results
+  }
+
   private static func string(_ statement: OpaquePointer, _ column: Int32) -> String {
     guard let value = sqlite3_column_text(statement, column) else { return "" }
     return String(cString: value)
@@ -523,11 +733,10 @@ private actor FrequencyPackStore {
 
   init() {
     guard
-      let bundledArtifactURL = Bundle.module.url(
-        forResource: "TUBELEXFrequencyPack", withExtension: "sqlite3"),
       let languageDataURL = Bundle.module.url(
         forResource: "LanguageReferenceData", withExtension: "sqlite3"),
       let catalog = try? FrequencyPackCatalog.bundled(),
+      let bundledArtifactURLs = try? catalog.bundledArtifactURLs(),
       let support = FileManager.default.urls(
         for: .applicationSupportDirectory, in: .userDomainMask
       ).first
@@ -538,7 +747,7 @@ private actor FrequencyPackStore {
     let storageDirectory = support.appendingPathComponent("FrequencyPacks", isDirectory: true)
     manager = try? FrequencyPackManager(
       catalog: catalog,
-      bundledArtifactURL: bundledArtifactURL,
+      bundledArtifactURLs: bundledArtifactURLs,
       languageDataURL: languageDataURL,
       storageDirectory: storageDirectory,
       download: { url in

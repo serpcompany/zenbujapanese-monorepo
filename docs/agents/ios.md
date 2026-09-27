@@ -32,8 +32,9 @@ uses the default Kuromoji path.
 
 ## Current verification boundary
 
-The `SearchExperienceTests` Swift package target covers dictionary result ordering and the
-optional frequency-pack lifecycle on an arm64 iOS Simulator. Run it from
+The `SearchExperienceTests` Swift package target covers Search behavior (result ordering,
+deinflection, frequency chips and packs, pitch accent, and parts of speech) on an arm64 iOS
+Simulator. Run it from
 `apps/ios/Modules` with:
 
 ```sh
@@ -42,49 +43,27 @@ xcodebuild -scheme ZenbuJapaneseModules \
   ONLY_ACTIVE_ARCH=YES test
 ```
 
-The repository still has no CI workflow. Issue [#329](https://github.com/serpcompany/zenbujapanese-monorepo/issues/329)
-owns the broader test and CI replacement strategy. Verify ordinary app changes by also building,
+The repository still has no CI workflow. Verify ordinary app changes by also building,
 launching, and inspecting the real app.
 
 Frequency-pack selection has one repo-local Python contract test. Run
 `python3 -m unittest apps/ios/Tools/tests/test_frequency_pack_runtime_contract.py` to verify
 that every selectable manifest pins a known evidence row and rank, each ordered source agrees
-with the generated mapping analysis, and the bundled TUBELEX artifact contains its pinned row.
+with the generated mapping analysis, the bundled TUBELEX artifact contains its pinned row, and
+the bundled JLPT level pack matches its pinned source files and import report. Rebuild the JLPT
+pack with `python3 apps/ios/Tools/import_jlpt_level_pack.py > apps/ios/LanguageData/Generated/JLPT-Waller-2025-08-26.import.json`
+and copy the reported hashes into its catalog manifest.
 
-## Search frequency-ordering comparison harness
+## Search manual checks
 
-Use these fixed fixtures when changing dictionary candidate retrieval, frequency ordering, or
-the Search results presentation. Run every text fixture with the included TUBELEX pack, then
-install Japanese Wikipedia under **You → Frequency Dictionaries**, move it to the top of the
-Enabled list, and repeat without
-editing or resubmitting the visible query.
+Search ordering, deinflection, and frequency-chip rules are covered by `SearchExperienceTests`.
+When changing Search results or frequency dictionaries, also check in the Simulator:
 
-| Fixture | Query | Verify |
-| --- | --- | --- |
-| Japanese | `いる` | One **Results** collection; exact matches remain ahead of prefix matches and numeric ranks ascend when match evidence is equivalent. |
-| English | `prison` | Direct prison matches precede incidental matches regardless of frequency; each row shows the matching prison gloss. |
-| Romaji | `miru` | Exact romaji matches remain ahead of prefixes and frequency orders only equivalent matches. |
-| Inflected romaji | `makasete` | The query enters deinflection (there is no direct form), keeps `任せる` in the stronger candidate group, then frequency-orders the equivalent exact-reading `まかす` matches as `任す` before `負かす`. |
-| Inflected kana | `まけたら` | 負ける leads the Results collection without the optional Japanese Text Analysis resource installed. |
-| Exact word and inflection | `いって` | The exact word 一手 stays first; 言う, 行く, and 要る follow ahead of prefix matches. |
-| Radical origin | Submit a sparse radical selection | One **Results** collection contains only the leading lexical-rank candidate group, frequency-ordered within that group. |
-| Single kanji | `静` | The dedicated Kanji row remains first; word rows use frequency order and visible positions include the Kanji row. |
-| No evidence | `齉` | The dictionary entry remains discoverable with `—` and follows any entry with mapped evidence. |
-| Reading refinement | `what is your name` | The Japanese-reading refinement remains available and starts the refined search. |
-| Discovered words | `日本語を勉強する` | **Discovered Words** remains distinct from ordinary ranked results. |
-| Example Sentences | `見る` | The Example Sentences action remains available and opens its associated flow. |
-
-For pack priority, record the visible headwords and ranks for `いる` under TUBELEX, enable
-Japanese Wikipedia and move it first, return to Search without changing the query, and verify
-that rows show a Wikipedia chip first, followed by TUBELEX, and reorder where displayed rank
-values differ between entries with equivalent match evidence. Move TUBELEX back to the top and
-verify the original ordering returns. Disable every pack and verify that rows show no frequency
-chips, use dictionary relevance order, and Word Detail hides its frequency row.
-
-For unavailable-pack fallback, begin a search and make the first enabled installed pack
-unreadable in a debug Simulator container (or inject an unavailable `FrequencyCapability`). Verify that the same
-candidate IDs remain in deterministic dictionary order, the list is not emptied, and the
-non-blocking frequency-ordering disclosure appears. Restore the pack after the check.
-
-For cancellation, rapidly submit `quiet`, `miru`, and `いる`, then switch packs while the last
-query is visible. Only `いる` candidates and evidence in the new priority order may remain.
+- `いる` shows chips in the Enabled order (JLPT first by default). Reordering or disabling
+  dictionaries under **You → Frequency Dictionaries** re-sorts the visible results without
+  resubmitting, and disabling every dictionary removes the chips.
+- `静` keeps its Kanji row first; `日本語を勉強する` shows **Discovered Words**; `見る` offers
+  Example Sentences; `what is your name` offers the Japanese-reading refinement.
+- With a pack made unreadable in a debug container, results stay listed and the footer names
+  the unavailable dictionary.
+- Rapidly submitting `quiet`, `miru`, then `いる` leaves only `いる` results.

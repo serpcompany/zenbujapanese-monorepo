@@ -5,7 +5,7 @@ It is updated with the implementation and is not a roadmap or an ideas backlog.
 
 The current app has two tabs:
 
-- **Search** opens the [Lookup](lookup.md) Product Experience.
+- **Search** opens the [Dictionary](dictionary.md) Product Experience.
 - **You** opens personal content, preferences, language-resource management, and credits.
 
 ## You
@@ -17,21 +17,25 @@ You is a supporting navigation area rather than a separate Product Experience. I
 - management of optional frequency dictionaries and Japanese Text Analysis resources; and
 - source credits and attributions.
 
-Frequency Dictionaries includes TUBELEX YouTube Japanese in the app and offers
+Frequency Dictionaries includes JLPT Levels and TUBELEX YouTube Japanese in the app and offers
 Japanese Wikipedia plus nine checksum-pinned optional packs for Netflix, novels,
 slice-of-life anime, NHK, shonen anime, Japanese dictionary definitions, visual novels,
 television, and broad web Japanese. Optional packs are downloaded on request and mapped
 locally into Zenbu's dictionary. A learner can enable any number of installed packs,
-including none. A newly downloaded pack is enabled automatically. TUBELEX can be disabled
-but not removed, and removing an optional pack also disables it.
+including none. A newly downloaded pack is enabled automatically. JLPT Levels and TUBELEX can
+be disabled but not removed, and removing an optional pack also disables it. A new install
+enables JLPT Levels first and TUBELEX second. JLPT Levels marks words with an estimated N5–N1
+level from Jonathan Waller's lists; JLPT publishes no official vocabulary list, so the app
+presents levels as unofficial study estimates.
 
 The screen lists one row per pack in three sections. **Enabled** holds packs that are
-switched on, in priority order; Edit reorders them. Ranks appear in this order, and the first
-pack orders Search. **Installed** holds downloaded packs that are switched off, and
+switched on, in priority order; Edit reorders them. Ranks appear in this order, and Search
+sorts by the first pack, breaking ties with each next pack. **Installed** holds downloaded packs that are switched off, and
 **Available** offers a download button for each remaining pack. A row's subtitle shows its
 domain and size, or a download failure. Swiping a row reveals Details and Remove, and Update
 when a newer version exists. When the app upgrades from the single active pack, that pack
-becomes the only enabled one.
+becomes the only enabled one. An update that adds a bundled pack, such as JLPT Levels, enables
+it once at the top of the learner's list; disabling it afterward is remembered.
 
 ### Media Library
 

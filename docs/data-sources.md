@@ -2,9 +2,10 @@
 
 A data source supplies information, data, content, etc. for a technology to process or present.
 
-Source names link to the official publisher or project. For iOS, the
-[`source index`](../apps/ios/LanguageData/Sources/README.md) and its records are
-authoritative for exact versions, URLs, checksums, licenses, and transformations.
+This is the index for the whole repository: one row per source and the apps that use it.
+Source names link to the official publisher or project. Each app's source records hold the
+exact versions, URLs, checksums, licenses, and transformations; for iOS, see the
+[`source index`](../apps/ios/LanguageData/Sources/README.md).
 
 | Category | Source | What it supplies | Current consumer |
 | --- | --- | --- | --- |
@@ -18,12 +19,11 @@ authoritative for exact versions, URLs, checksums, licenses, and transformations
 | Kanji and handwriting | [Kanjium](https://github.com/mifunetoshiro/kanjium) | Structural membership, variants, and source phonetic annotations used with app-owned kanji facts. | iOS |
 | Kanji and handwriting | [KanjiVG](https://kanjivg.tagaini.net/) | Ordered vector paths for writing kanji. | iOS |
 | Kanji and handwriting | [DaKanji](https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition) | A model that predicts candidate Japanese characters from a completed drawing. | iOS |
+| Study levels | [JLPT vocabulary lists with JMdict IDs](https://github.com/stephenmk/yomitan-jlpt-vocab) | Unofficial JLPT level estimates (N5–N1) from Jonathan Waller's lists. | iOS |
 | Frequency data | [TUBELEX](https://github.com/naist-nlp/tubelex) | Japanese word frequency data from occurrences across YouTube. | iOS |
 | Frequency data | [Wikipedia Word Frequency Clean](https://github.com/adno/wikipedia-word-frequency-clean) | Japanese word frequency data from occurrences across Wikipedia. | iOS |
-| Frequency data | [Public Japanese frequency catalog](https://migaku-public-data.migaku.com/dicts/index.json) | Nine optional ordered Japanese lists for streaming, novels, anime genres, NHK news, Japanese dictionary definitions, visual novels, television, and the web. Packs download on demand and are mapped on-device. Its YouTube list is analyzed but not offered because TUBELEX is the more comprehensive YouTube source. | iOS |
+| Frequency data | [Public Japanese frequency catalog](https://migaku-public-data.migaku.com/dicts/index.json) | Optional domain-specific frequency lists (streaming, novels, anime, news, and more), downloaded on demand. | iOS |
 | Unverified app-owned data | [`Zenbu Word Relationships`](../apps/ios/LanguageData/Sources/Zenbu-Word-Relationships-v1.json) | Two uncited relationships between dictionary entries. No source or reviewer is recorded, so the file is pending a separate removal decision. | iOS |
 
-The ten public-catalog lists remain checksum-pinned for comparison; nine are
-optional sources. Their mapping coverage, TUBELEX/Wikipedia overlap, runtime
-selection, and reproducible analysis are recorded in the iOS
+Which frequency sources iOS offers, and why, is recorded in the
 [`frequency source analysis`](../apps/ios/LanguageData/FREQUENCY_SOURCE_DECISIONS.md).

@@ -21,15 +21,15 @@ flowchart LR
     Vision --> Kuromoji["Kuromoji parsing"]
     Drawing["Handwriting"] --> CoreML["Core ML recognition"]
 
-    Sudachi --> Lookup["Offline dictionary lookup"]
-    Kuromoji --> Lookup
-    CoreML --> Lookup
+    Sudachi --> Dictionary["Offline dictionary"]
+    Kuromoji --> Dictionary
+    CoreML --> Dictionary
 
     SudachiDict[("SudachiDict Core")] -. lexical data .-> Sudachi
-    JMdict[("JMdict")] -. dictionary data .-> Lookup
+    JMdict[("JMdict")] -. dictionary data .-> Dictionary
     DaKanji[("DaKanji model")] -. model data .-> CoreML
 
-    Lookup --> Results["Words and meanings"]
+    Dictionary --> Results["Words and meanings"]
     Vision --> Translation["Apple Translation"]
     Results --> Speech["AVFoundation speech"]
 ```
@@ -48,6 +48,7 @@ flowchart LR
 | Downloadable resource installation | CryptoKit and ZIPFoundation | Verifies and extracts downloadable frequency and language-analysis resources. | iOS | [`Package.swift`](../apps/ios/Modules/Package.swift), [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |
 | Ordered frequency-pack installation | Swift, ZIPFoundation, CryptoKit, JSON, and SQLite | Downloads checksum-pinned ordered JSON archives directly from their public catalog, validates their exact ZIP/row contract, maps forms to Language Reference IDs on-device, and installs removable SQLite packs. | iOS | [`FrequencyPackInstaller.swift`](../apps/ios/Modules/Sources/SearchExperience/FrequencyPackInstaller.swift), [`FrequencyPackCatalog.json`](../apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackCatalog.json) |
 | Frequency source analysis | Python, ZIP, JSON, and SQLite | Reproducibly validates ordered archives, maps them against Language Reference IDs, computes runtime trust hashes, and compares their ordering with TUBELEX and Wikipedia. | iOS development | [`analyze_ordered_json_frequency_lists.py`](../apps/ios/Tools/analyze_ordered_json_frequency_lists.py), [`FREQUENCY_SOURCE_DECISIONS.md`](../apps/ios/LanguageData/FREQUENCY_SOURCE_DECISIONS.md) |
+| Bundled frequency and level packs | Python and SQLite | Builds the bundled TUBELEX rank pack and JLPT level pack from pinned sources, with the hashes the app verifies before use. | iOS development | [`import_frequency_pack.py`](../apps/ios/Tools/import_frequency_pack.py), [`import_jlpt_level_pack.py`](../apps/ios/Tools/import_jlpt_level_pack.py) |
 
 Sudachi is analysis technology, not Zenbu's Japanese-English dictionary. Apple
 Vision recognizes text but does not interpret its words. Apple Translation

@@ -621,8 +621,7 @@ private struct SearchResultsView: View {
 
   var body: some View {
     let orderedEntries = SearchResultFrequencyOrdering.ordered(
-      results, entries: presentedEntries,
-      evidence: frequencyLoadState.results.compactMapValues(\.first))
+      results, entries: presentedEntries, ranks: frequencyLoadState.results)
     List {
       if exampleCount > 0 {
         Section {
@@ -690,12 +689,9 @@ private struct SearchResultsView: View {
           Text("Results")
             .accessibilityIdentifier("search.results-header")
         } footer: {
-          if let frequencyUnavailableReason {
-            Label(
-              "Frequency ordering unavailable. Showing dictionary relevance order. \(frequencyUnavailableReason)",
-              systemImage: "info.circle"
-            )
-            .accessibilityIdentifier("search.frequency-ordering-unavailable")
+          if let frequencyUnavailableNotice {
+            Label(frequencyUnavailableNotice, systemImage: "info.circle")
+              .accessibilityIdentifier("search.frequency-ordering-unavailable")
           }
         }
       }
@@ -750,13 +746,32 @@ private struct SearchResultsView: View {
     SearchFrequencyTaskID(entryIDs: displayedEntryIDs, refreshID: frequencyRefreshID)
   }
 
-  private var frequencyUnavailableReason: String? {
-    displayedEntryIDs.compactMap { id in
-      guard case .unavailable(let unavailable) = frequencyLoadState.results[id]?.first else {
-        return nil
+  private var frequencyUnavailableNotice: String? {
+    SearchFrequencyUnavailableNotice.text(
+      for: displayedEntryIDs.compactMap { frequencyLoadState.results[$0] })
+  }
+}
+
+/// Discloses enabled dictionaries whose data could not be read, and says how Search is ordered
+/// without them.
+enum SearchFrequencyUnavailableNotice {
+  static func text(for ranks: [FrequencyRanks]) -> String? {
+    let packCount = ranks.map(\.count).max() ?? 0
+    // Unavailable packs, one per priority position that any displayed entry reports.
+    let unavailable: [FrequencyPackUnavailable] = (0..<packCount).compactMap { position in
+      for entryRanks in ranks where entryRanks.indices.contains(position) {
+        if case .unavailable(let unavailable) = entryRanks[position] { return unavailable }
       }
-      return unavailable.reason
-    }.first
+      return nil
+    }
+    guard let first = unavailable.first else { return nil }
+    if unavailable.count == packCount {
+      return "Frequency ordering unavailable. Showing dictionary relevance order. "
+        + first.reason
+    }
+    let names = unavailable.map { $0.pack?.shortName ?? "A frequency dictionary" }
+    return "\(names.formatted(.list(type: .and))) unavailable. "
+      + "Search is ordered by the other enabled dictionaries."
   }
 }
 
@@ -912,39 +927,40 @@ private enum ResultRank {
 }
 
 enum SearchResultFrequencyOrdering {
-  /// Explicit match evidence is primary. Evidence from the first enabled pack orders only
-  /// equivalent matches; the original dictionary rank and canonical entry ID are deterministic
-  /// fallbacks.
+  /// Explicit match evidence is primary. Enabled dictionaries order only equivalent matches, in
+  /// priority order: the first dictionary's rank or level, then the next dictionary's to break
+  /// ties, and so on. An entry a dictionary ranks precedes one it does not. The original
+  /// dictionary rank and canonical entry ID are deterministic fallbacks.
   static func ordered(
     _ results: LookupSearchResults,
     entries: [DictionaryEntry]? = nil,
-    evidence: [LanguageReferenceID: FrequencyLookupResult]
+    ranks: [LanguageReferenceID: FrequencyRanks]
   ) -> [DictionaryEntry] {
     let entries = entries ?? results.entries
     return entries.enumerated().sorted { lhs, rhs in
       let lhsRelevance = results.relevance(for: lhs.element)
       let rhsRelevance = results.relevance(for: rhs.element)
       if lhsRelevance != rhsRelevance { return lhsRelevance < rhsRelevance }
-      let lhsRank = numericRank(evidence[lhs.element.id])
-      let rhsRank = numericRank(evidence[rhs.element.id])
-      switch (lhsRank, rhsRank) {
-      case let (.some(left), .some(right)) where left != right:
-        return left < right
-      case (.some, .none):
-        return true
-      case (.none, .some):
-        return false
-      default:
-        let lhsFallback = results.fallbackOrder(for: lhs.element)
-        let rhsFallback = results.fallbackOrder(for: rhs.element)
-        if lhsFallback != rhsFallback { return lhsFallback < rhsFallback }
-        return lhs.element.id.rawValue < rhs.element.id.rawValue
+      let lhsRanks = ranks[lhs.element.id] ?? []
+      let rhsRanks = ranks[rhs.element.id] ?? []
+      for index in 0..<max(lhsRanks.count, rhsRanks.count) {
+        let lhsValue = lhsRanks.indices.contains(index) ? lhsRanks[index].sortValue : nil
+        let rhsValue = rhsRanks.indices.contains(index) ? rhsRanks[index].sortValue : nil
+        switch (lhsValue, rhsValue) {
+        case let (.some(left), .some(right)) where left != right:
+          return left < right
+        case (.some, .none):
+          return true
+        case (.none, .some):
+          return false
+        default:
+          continue
+        }
       }
+      let lhsFallback = results.fallbackOrder(for: lhs.element)
+      let rhsFallback = results.fallbackOrder(for: rhs.element)
+      if lhsFallback != rhsFallback { return lhsFallback < rhsFallback }
+      return lhs.element.id.rawValue < rhs.element.id.rawValue
     }.map(\.element)
-  }
-
-  private static func numericRank(_ result: FrequencyLookupResult?) -> Int? {
-    guard case .evidence(let evidence) = result else { return nil }
-    return evidence.rank
   }
 }

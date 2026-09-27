@@ -4,6 +4,14 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ## Unreleased
 
+### Added
+
+- JLPT Levels is a new included dictionary, enabled first by default, that marks words with an
+  estimated JLPT level (N5–N1) on Search and Word Detail, such as `JLPT N3`. Search puts
+  easier levels first and breaks ties with the next enabled dictionary. Existing installs get it
+  once at the top of their list. Levels come from Jonathan Waller's lists (CC BY-SA 4.0) and are
+  unofficial study estimates.
+
 ### Fixed
 
 - Inflected Japanese searches such as `まけたら`, `食べなかった`, and `勉強した` now find
@@ -11,8 +19,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Changed
 
-- Search now presents one Results list ordered by dictionary relevance first and the first
-  enabled frequency dictionary's rank second. English rows show the gloss that matched the query.
+- Search now presents one Results list ordered by dictionary relevance first, then by the enabled
+  frequency dictionaries in priority order. English rows show the gloss that matched the query.
 - TUBELEX remains included and enabled by default. Japanese Wikipedia and nine domain-specific
   frequency dictionaries can be downloaded and removed from You → Frequency Dictionaries.
 - Any number of frequency dictionaries, including none, can be switched on and reordered from a

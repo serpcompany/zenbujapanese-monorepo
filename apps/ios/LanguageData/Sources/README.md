@@ -1,7 +1,9 @@
 # Language data sources
 
 This directory contains the pinned source records, dependency notices, and local
-inputs used to build or install Zenbu Japanese language data.
+inputs used to build or install Zenbu Japanese language data. The repository-wide
+[`data sources`](../../../../docs/data-sources.md) index lists every source and its consumers;
+this directory holds the iOS specifics.
 
 The `*.source.json` files are the source of truth for upstream identity,
 snapshot, download location, checksum, and import configuration. The importers under
@@ -16,6 +18,7 @@ under `apps/ios/Modules/Sources/SearchExperience/Resources/`.
 | Kanji elements | `Kanjium-8a0cdaa.source.json` | `import_kanji_elements.py` |
 | Stroke diagrams | `KanjiVG-2025-08-16.source.json` | `import_kanjivg.py` |
 | Handwriting recognition | `DaKanji-v1.2.source.json` | Bundled Core ML model |
+| JLPT levels | `JLPT-Waller-2025-08-26.source.json` | `import_jlpt_level_pack.py` |
 | Frequency data | `TUBELEX-ja-310-lemma-pos.source.json`, `Wikipedia-ja-20221020-310-nfkc.source.json`, `Public-Japanese-Frequency-Catalog-2026-09-25.source.json` | `import_frequency_pack.py`, `analyze_ordered_json_frequency_lists.py`, on-device `FrequencyPackInstaller` |
 | Interactive Japanese parsing | `Kuromoji-0.1.2.source.json` | Bundled JavaScriptCore engine and compressed IPADIC resources |
 | App-owned word relationships | `Zenbu-Word-Relationships-v1.json` | `import_jmdict.py` |
