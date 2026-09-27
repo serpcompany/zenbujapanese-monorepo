@@ -16,8 +16,6 @@ struct YouNavigationView: View {
             MediaLibraryView(store: store)
           case .frequencyDictionaries:
             FrequencyDictionariesView(client: .live)
-          case .languageTechnology:
-            LanguageTechnologyPacksView(client: .live)
           case .credits:
             DictionarySourcesView()
           }
@@ -48,11 +46,6 @@ struct YouRootView: View {
           Label("Frequency Dictionaries", systemImage: "chart.bar.xaxis")
         }
         .accessibilityIdentifier("you.frequency-dictionaries")
-
-        NavigationLink(value: YouRoute.languageTechnology) {
-          Label("Japanese Text Analysis", systemImage: "text.magnifyingglass")
-        }
-        .accessibilityIdentifier("you.japanese-analysis")
       }
 
       Section("About") {
@@ -71,7 +64,6 @@ enum YouRoute: Hashable {
   case readingAids
   case mediaLibrary
   case frequencyDictionaries
-  case languageTechnology
   case credits
 }
 

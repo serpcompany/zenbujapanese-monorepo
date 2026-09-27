@@ -14,7 +14,7 @@ You is a supporting navigation area rather than a separate Product Experience. I
 
 - the Media Library;
 - independent Furigana and Romaji preferences;
-- management of optional frequency dictionaries and Japanese Text Analysis resources; and
+- management of optional frequency dictionaries; and
 - source credits and attributions.
 
 Frequency Dictionaries includes JLPT Levels and TUBELEX YouTube Japanese in the app and offers

@@ -22,6 +22,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Changed
 
+- You no longer has a Japanese Text Analysis screen. The analysis is included with the app and
+  had nothing to change; its sources and licenses remain under Credits & Attributions.
 - The conjugation table is compact: the word, its meaning, and a one-line rule sit at the top,
   and every form fits in one list with its changed ending highlighted. Tapping a form opens its
   own screen, which explains it and lists the example sentences that use it.
