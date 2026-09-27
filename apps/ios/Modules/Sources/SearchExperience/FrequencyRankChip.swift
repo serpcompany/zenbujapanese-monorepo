@@ -25,6 +25,7 @@ struct FrequencyRankChip: View {
         Text(presentation.inlineText)
           .monospacedDigit()
           .foregroundStyle(.primary)
+          .layoutPriority(1)
       }
       .font(.caption)
       .lineLimit(1)
@@ -47,6 +48,7 @@ struct FrequencyRankChip: View {
           .foregroundStyle(.primary)
           .padding(.horizontal, 6)
           .padding(.vertical, 2)
+          .layoutPriority(1)
       }
       .font(.caption)
       .lineLimit(1)
@@ -90,8 +92,7 @@ struct FrequencyChipFlowLayout: Layout {
     var y = bounds.minY
     for row in rows(for: subviews, width: bounds.width) {
       var x = bounds.minX
-      for index in row.indices {
-        let size = subviews[index].sizeThatFits(.unspecified)
+      for (index, size) in zip(row.indices, row.sizes) {
         subviews[index].place(
           at: CGPoint(x: x, y: y + (row.height - size.height) / 2),
           proposal: ProposedViewSize(size))
@@ -103,22 +104,32 @@ struct FrequencyChipFlowLayout: Layout {
 
   private struct Row {
     var indices: [Int] = []
+    var sizes: [CGSize] = []
     var width: CGFloat = 0
     var height: CGFloat = 0
+  }
+
+  /// A chip wider than the whole row (large Dynamic Type sizes) is offered the row width so it
+  /// truncates instead of widening the layout past its container.
+  private func size(of subview: LayoutSubview, maxWidth: CGFloat) -> CGSize {
+    let ideal = subview.sizeThatFits(.unspecified)
+    guard ideal.width > maxWidth else { return ideal }
+    return subview.sizeThatFits(ProposedViewSize(width: maxWidth, height: nil))
   }
 
   private func rows(for subviews: Subviews, width: CGFloat) -> [Row] {
     var rows: [Row] = []
     var current = Row()
     for index in subviews.indices {
-      let size = subviews[index].sizeThatFits(.unspecified)
+      let size = size(of: subviews[index], maxWidth: width)
       let proposedWidth =
         current.indices.isEmpty ? size.width : current.width + spacing + size.width
       if proposedWidth > width, !current.indices.isEmpty {
         rows.append(current)
-        current = Row(indices: [index], width: size.width, height: size.height)
+        current = Row(indices: [index], sizes: [size], width: size.width, height: size.height)
       } else {
         current.indices.append(index)
+        current.sizes.append(size)
         current.width = proposedWidth
         current.height = max(current.height, size.height)
       }
