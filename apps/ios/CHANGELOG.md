@@ -6,6 +6,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- Account has a profile at the top: add a photo, name, username, and email, all stored only on
+  your device.
 - JLPT Levels is a new included dictionary, enabled first by default, that marks words with an
   estimated JLPT level (N5–N1) on Search and Word Detail, such as `JLPT N3`. Search puts
   easier levels first and breaks ties with the next enabled dictionary. Existing installs get it
