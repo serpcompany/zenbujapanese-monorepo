@@ -64,6 +64,8 @@ editing or resubmitting the visible query.
 | English | `prison` | Direct prison matches precede incidental matches regardless of frequency; each row shows the matching prison gloss. |
 | Romaji | `miru` | Exact romaji matches remain ahead of prefixes and frequency orders only equivalent matches. |
 | Inflected romaji | `makasete` | The query enters deinflection (there is no direct form), keeps `任せる` in the stronger candidate group, then frequency-orders the equivalent exact-reading `まかす` matches as `任す` before `負かす`. |
+| Inflected kana | `まけたら` | 負ける leads the Results collection without the optional Japanese Text Analysis resource installed. |
+| Exact word and inflection | `いって` | The exact word 一手 stays first; 言う, 行く, and 要る follow ahead of prefix matches. |
 | Radical origin | Submit a sparse radical selection | One **Results** collection contains only the leading lexical-rank candidate group, frequency-ordered within that group. |
 | Single kanji | `静` | The dedicated Kanji row remains first; word rows use frequency order and visible positions include the Kanji row. |
 | No evidence | `齉` | The dictionary entry remains discoverable with `—` and follows any entry with mapped evidence. |

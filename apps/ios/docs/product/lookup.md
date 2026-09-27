@@ -20,6 +20,12 @@ never introduces an entry that the query did not retrieve or lets an incidental 
 direct match. An English result displays the matching gloss, even when that gloss is not the
 entry's first sense. Entries without mapped evidence remain visible with a dash.
 
+An inflected Japanese query in kana or kanji, such as `まけたら`, `食べさせられなかったら`, or
+`勉強した`, is deinflected on the device without the optional Japanese Text Analysis resource.
+Every dictionary form that exists with a matching word class is offered, so ambiguous kana
+such as `いって` returns 言う, 行く, and 要る. When the query is itself a dictionary word
+(`いって` is 一手), that exact match stays first and the dictionary forms follow it.
+
 Equal ranks and entries without mapped evidence retain the dictionary's deterministic fallback
 order. While frequency data is loading, or when the active dictionary is
 unavailable, the whole collection uses dictionary relevance order. Unavailability is disclosed

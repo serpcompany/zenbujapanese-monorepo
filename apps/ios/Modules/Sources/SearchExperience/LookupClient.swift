@@ -107,6 +107,32 @@ private actor LanguageReferenceData {
         )
       }
     }
+    if query.isJapaneseOnly {
+      let deinflectedSources = try japaneseDeinflectedSources(for: query)
+      if !deinflectedSources.isEmpty {
+        // An exact dictionary form stays first (した is 下 and 舌 before する); the
+        // deinflected lemmas follow it ahead of prefix and contains matches.
+        let exactItems = directResults.items.prefix { item in
+          guard case .japanese(let rank) = item.relevance.matchRank else { return false }
+          return rank.relation <= .readingExact
+        }
+        if !exactItems.isEmpty {
+          return LookupSearchResults.composing(
+            sources: [Array(exactItems)] + deinflectedSources
+              + [Array(directResults.items.dropFirst(exactItems.count))],
+            leadingLexicalEntryCount: directResults.leadingLexicalEntryCount,
+            usesPrimaryEntryExamples: directResults.usesPrimaryEntryExamples,
+            hasExactOrPrefixMatch: directResults.hasExactOrPrefixMatch
+          )
+        }
+        return LookupSearchResults.composing(
+          sources: deinflectedSources + [directResults.items],
+          leadingLexicalEntryCount: deinflectedSources[0].count,
+          usesPrimaryEntryExamples: true,
+          resolution: .deinflected
+        )
+      }
+    }
     if query.isASCII,
       !directResults.isEmpty,
       let exactFormEntry = try entry(matchingForm: query.value),
@@ -209,6 +235,25 @@ private actor LanguageReferenceData {
 
   private func searchLiteralEnglish(_ query: SearchQuery) throws -> LookupSearchResults {
     try searchOnce(query)
+  }
+
+  /// Dictionary entries for kana and kanji inflections, grouped by deinflection chain length
+  /// so a direct conjugation (まけたら → 負ける) outranks a longer, less plausible chain.
+  private func japaneseDeinflectedSources(
+    for query: SearchQuery
+  ) throws -> [[LookupSearchResultItem]] {
+    var sourcesByDepth: [Int: [RankedDictionaryEntry]] = [:]
+    var seen = Set<LanguageReferenceID>()
+    for candidate in JapaneseDeinflector.candidates(for: query.value) {
+      let matches = try rankedJapanese(SearchQuery(candidate.term), exactFormOnly: true)
+        .filter { ranked in
+          candidate.wordClasses.contains { $0.accepts(ranked.entry.partsOfSpeech) }
+        }
+      for match in matches where seen.insert(match.entry.id).inserted {
+        sourcesByDepth[candidate.depth, default: []].append(match)
+      }
+    }
+    return sourcesByDepth.keys.sorted().map { Self.resultItems(for: sourcesByDepth[$0]!) }
   }
 
   private func searchOnce(_ query: SearchQuery) throws -> LookupSearchResults {
