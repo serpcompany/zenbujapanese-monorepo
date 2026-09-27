@@ -1,0 +1,14 @@
+{
+  "note": "Replacement packs for #376. Each entry swaps out the listed current public-catalog packs.",
+  "packs": [
+    {
+      "id": "tv-movies",
+      "packVersion": "2026-09-27",
+      "displayName": "TV & Movies",
+      "domain": "Japanese TV drama and film subtitles · Jiten",
+      "description": "Vocabulary from Japanese TV dramas and films.",
+      "jitenMediaTypes": ["Drama", "Movie"],
+      "replaces": ["zenbu.public.netflix.ja.ordered-v1", "zenbu.public.tv-shows.ja.ordered-v1"]
+    }
+  ]
+}

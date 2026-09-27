@@ -1,0 +1,31 @@
+{
+  "builderSHA256": "102f84b7a7e8f425aaa4f09cd8d564f1e9327ff322e9fa87eab16673b1ee43e8",
+  "candidates": [
+    {
+      "analysis": {
+        "ambiguousRows": 6593,
+        "artifactContentSHA256": "e71c0470c0408d7509a3fedb928986176448ce51f3c7f9f026e26dceeeedc65b",
+        "coveredSourceRows": 193752,
+        "duplicateMappings": 28402,
+        "mappedRows": 108209,
+        "mappingSHA256": "def9405094dbae809b4dc081dab7250f9882f05be1123d33f777ae3a768b1983",
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 5
+        },
+        "unmappedRows": 50548
+      },
+      "id": "tv-movies",
+      "jitenCSVSHA256": {
+        "Drama": "d21882d0842e3385df6c635a30f8a7c374801b3b4e8f4d0601b0c454a8adc4c7",
+        "Movie": "5c6e539e586b34e004be95a46891ffe8f485981da6cf1419656b1969f41b1654"
+      },
+      "packID": "zenbu.jiten.tv-movies.ja.ordered-v2",
+      "packVersion": "2026-09-27",
+      "sourceSHA256": "e6a6ec5cd4ebc7188ec8d963c0447d8c6a6ead4716fa8a2d728981efc9aedda1"
+    }
+  ],
+  "languageDataSHA256": "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073",
+  "mappingPolicySHA256": "5f61dd29c529f4fe558473a0356c3d384002fb9eaaf006cb9750e5ebfeb8da20",
+  "schema": "zenbu.frequency-candidate-analysis.v2"
+}

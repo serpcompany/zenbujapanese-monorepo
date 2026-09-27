@@ -1,0 +1,126 @@
+{
+ "current": [
+  {
+   "id": "netflix",
+   "archive": "SCRATCH/current/Netflix.json.zip"
+  },
+  {
+   "id": "tv-shows",
+   "archive": "SCRATCH/current/TV_Shows.json.zip"
+  },
+  {
+   "id": "novels",
+   "archive": "SCRATCH/current/Novels.json.zip"
+  },
+  {
+   "id": "shonen",
+   "archive": "SCRATCH/current/Shonen.json.zip"
+  },
+  {
+   "id": "slice-of-life",
+   "archive": "SCRATCH/current/Slice_of_Life.json.zip"
+  },
+  {
+   "id": "nhk",
+   "archive": "SCRATCH/current/NHK.json.zip"
+  }
+ ],
+ "candidates": [
+  {
+   "id": "jiten-drama",
+   "kind": "jiten",
+   "csv": [
+    "SCRATCH/jiten/Drama.csv"
+   ],
+   "replaces": [
+    "netflix",
+    "tv-shows"
+   ]
+  },
+  {
+   "id": "jiten-movie",
+   "kind": "jiten",
+   "csv": [
+    "SCRATCH/jiten/Movie.csv"
+   ],
+   "replaces": [
+    "netflix",
+    "tv-shows"
+   ],
+   "compareWith": [
+    "jiten-drama"
+   ]
+  },
+  {
+   "id": "jiten-tv-movies",
+   "kind": "jiten",
+   "csv": [
+    "SCRATCH/jiten/Drama.csv",
+    "SCRATCH/jiten/Movie.csv"
+   ],
+   "replaces": [
+    "netflix",
+    "tv-shows"
+   ],
+   "compareWith": [
+    "jiten-drama",
+    "jiten-movie"
+   ]
+  },
+  {
+   "id": "jiten-anime",
+   "kind": "jiten",
+   "csv": [
+    "SCRATCH/jiten/Anime.csv"
+   ],
+   "replaces": [
+    "slice-of-life",
+    "tv-shows"
+   ]
+  },
+  {
+   "id": "jiten-novel",
+   "kind": "jiten",
+   "csv": [
+    "SCRATCH/jiten/Novel.csv"
+   ],
+   "replaces": [
+    "novels"
+   ]
+  },
+  {
+   "id": "jiten-manga",
+   "kind": "jiten",
+   "csv": [
+    "SCRATCH/jiten/Manga.csv"
+   ],
+   "replaces": [
+    "shonen"
+   ]
+  },
+  {
+   "id": "tubelex-news",
+   "kind": "tubelex",
+   "categories": [
+    "news"
+   ],
+   "replaces": [
+    "nhk"
+   ]
+  },
+  {
+   "id": "tubelex-people-comedy",
+   "kind": "tubelex",
+   "categories": [
+    "people",
+    "comedy"
+   ],
+   "replaces": [
+    "slice-of-life"
+   ],
+   "compareWith": [
+    "jiten-anime"
+   ]
+  }
+ ]
+}

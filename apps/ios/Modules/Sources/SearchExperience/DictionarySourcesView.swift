@@ -142,7 +142,7 @@ struct DictionarySourcesView: View {
         )
       }
 
-      Section("TUBELEX YouTube Japanese Frequency") {
+      Section("YouTube Frequency (TUBELEX)") {
         Text(
           "The included enabled-by-default frequency pack measures Japanese lemmas in YouTube subtitles across everyday media categories. Its ranks describe this media corpus, not universal Japanese frequency."
         )
@@ -187,9 +187,28 @@ struct DictionarySourcesView: View {
         )
       }
 
+      Section("TV & Movies Frequency (Jiten)") {
+        Text(
+          "The optional TV & Movies pack merges Jiten's Japanese drama and film frequency lists. Zenbu drops each list's unobserved tail, merges the two by list position, and maps words on-device by dictionary form and reading. This modified data is shared under the same license."
+        )
+        LabeledContent("License", value: "CC BY-SA 4.0")
+        LabeledContent("Version", value: "Snapshot 2026-09-27 · Drama + Movie")
+        NavigationLink("Bundled license text") {
+          BundledLicenseTextView(
+            title: "Jiten CC BY-SA 4.0 License",
+            resource: "JITEN-CC-BY-SA-4.0"
+          )
+        }
+        .accessibilityIdentifier("dictionary-sources.jiten-license")
+        Link(
+          "Jiten frequency dictionaries",
+          destination: URL(string: "https://jiten.moe/frequency-dictionaries")!
+        )
+      }
+
       Section("Public Japanese Frequency Catalog") {
         Text(
-          "Optional Netflix, Novels, Slice of Life, NHK, Shonen, JP Dict, Visual Novel, TV Shows, and Internet packs download directly from the public catalog. Zenbu verifies the published archives and maps them on-device. TUBELEX remains Zenbu's YouTube frequency source."
+          "Optional Novels, Slice of Life, NHK, Shonen, JP Dict, Visual Novel, and Internet packs download directly from the public catalog. Zenbu verifies the published archives and maps them on-device."
         )
         LabeledContent("Version", value: "Catalog snapshot 2026-09-25")
         Link(

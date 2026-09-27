@@ -14,6 +14,7 @@ ANALYSIS = (
     ROOT
     / "apps/ios/LanguageData/Generated/Migaku-public-catalog-ja-ordered-json-v1.analysis.json"
 )
+JITEN_ANALYSIS = ROOT / "apps/ios/LanguageData/Generated/Jiten-ja-ordered-json-v2.analysis.json"
 RESOURCES = ROOT / "apps/ios/Modules/Sources/SearchExperience/Resources"
 TUBELEX = RESOURCES / "TUBELEXFrequencyPack.sqlite3"
 JLPT = RESOURCES / "JLPTLevelPack.sqlite3"
@@ -63,6 +64,9 @@ class FrequencyPackRuntimeContractTests(unittest.TestCase):
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
         analysis = json.loads(ANALYSIS.read_text(encoding="utf-8"))
         analyzed = {candidate["packID"]: candidate for candidate in analysis["candidates"]}
+        if JITEN_ANALYSIS.is_file():
+            jiten = json.loads(JITEN_ANALYSIS.read_text(encoding="utf-8"))
+            analyzed.update({candidate["packID"]: candidate for candidate in jiten["candidates"]})
 
         self.assertGreater(len(catalog["packs"]), 1)
         for pack in catalog["packs"]:

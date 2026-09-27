@@ -48,55 +48,6 @@
       }
     },
     {
-      "packID": "zenbu.public.netflix.ja.ordered-v1",
-      "packVersion": "2026-09-25",
-      "displayName": "Netflix",
-      "domain": "Streaming subtitles",
-      "domainDescription": "Words sourced from Netflix Japan. Rank is the one-based position published by the source catalog; occurrence counts and tokenizer details are not supplied.",
-      "sourceIdentity": "Public Japanese frequency catalog · Netflix",
-      "sourceSnapshot": "294cdbf53794665196867b8283030a2d5504aad31a6da55324c0f6996f4eb9db",
-      "measurement": "ordered-list position (occurrence counts unavailable)",
-      "tokenizer": "Not published",
-      "normalization": "NFKC written forms; canonical app forms",
-      "rankTiePolicy": "One-based JSON array position; published source order is preserved and every row receives a distinct rank.",
-      "downloadURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Netflix.json.zip",
-      "sourceBytes": 1039994,
-      "sourceSHA256": "294cdbf53794665196867b8283030a2d5504aad31a6da55324c0f6996f4eb9db",
-      "sourceTotalTokens": 0,
-      "coveredSourceRows": 102844,
-      "mappedRows": 52053,
-      "ambiguousRows": 8194,
-      "unmappedRows": 27384,
-      "duplicateMappings": 15213,
-      "mappingSHA256": "119e68406a66e1594d5b213e8597e8b1f4752c22b6a7ca3e0ee4fe9f7ee55c46",
-      "artifactContentSHA256": "fcfe1bab1fbbebd6e0c62b655fb060d7c317b5843dbad76da6c00586329302e7",
-      "mappingPolicyVersion": 1,
-      "mappingPolicySHA256": "7cf8ee196cd98c9683ac35f3214bc149ce6bfae55a1ee5f9c854c02816d2ecae",
-      "offlineImporterSHA256": "fd3e36608ce2c098d2e0a474279cd2e44c32d5193b4526f43d6d9e5b7812eb91",
-      "runtimeInstallerVersion": 1,
-      "presentationPolicyVersion": 1,
-      "presentationCapabilities": [
-        "orderedSourceRank",
-        "numericTopPercentile"
-      ],
-      "languageDataSHA256": "f69d66155955e4b88f8b7501965dc05665bf5bd21a0199f02cb12467c3d0d092",
-      "bundledArtifactSHA256": null,
-      "corpusDocuments": null,
-      "corpusVideos": null,
-      "corpusChannels": null,
-      "attribution": "Japanese frequency list from the public source catalog: Netflix.",
-      "bundled": false,
-      "removable": true,
-      "orderedJSONSource": {
-        "archiveEntry": "Netflix.json",
-        "rawJSONBytes": 3228941
-      },
-      "smokeTest": {
-        "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
-        "rank": 6
-      }
-    },
-    {
       "packID": "zenbu.public.novels.ja.ordered-v1",
       "packVersion": "2026-09-25",
       "displayName": "Novels",
@@ -391,55 +342,6 @@
       }
     },
     {
-      "packID": "zenbu.public.tv-shows.ja.ordered-v1",
-      "packVersion": "2026-09-25",
-      "displayName": "TV Shows",
-      "domain": "Anime and television drama",
-      "domainDescription": "Words sourced from anime and Japanese dramas. Rank is the one-based position published by the source catalog; occurrence counts and tokenizer details are not supplied.",
-      "sourceIdentity": "Public Japanese frequency catalog · TV Shows",
-      "sourceSnapshot": "1c6651c63a5a5e8ade4818cc11a26412244c22301c59cb40354f9bf7cb783c51",
-      "measurement": "ordered-list position (occurrence counts unavailable)",
-      "tokenizer": "Not published",
-      "normalization": "NFKC written forms; canonical app forms",
-      "rankTiePolicy": "One-based JSON array position; published source order is preserved and every row receives a distinct rank.",
-      "downloadURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Anime_J-drama.json.zip",
-      "sourceBytes": 561111,
-      "sourceSHA256": "1c6651c63a5a5e8ade4818cc11a26412244c22301c59cb40354f9bf7cb783c51",
-      "sourceTotalTokens": 0,
-      "coveredSourceRows": 99999,
-      "mappedRows": 68087,
-      "ambiguousRows": 5665,
-      "unmappedRows": 16258,
-      "duplicateMappings": 9989,
-      "mappingSHA256": "2d4611d58af549bb69ba4f213d08a541844a998ba30c89ab7483f7c214c630b2",
-      "artifactContentSHA256": "b8d37b14bb088956f77f56ec80e5f3a9c7c2fdce5dd8785543dfa0165464c796",
-      "mappingPolicyVersion": 1,
-      "mappingPolicySHA256": "7cf8ee196cd98c9683ac35f3214bc149ce6bfae55a1ee5f9c854c02816d2ecae",
-      "offlineImporterSHA256": "fd3e36608ce2c098d2e0a474279cd2e44c32d5193b4526f43d6d9e5b7812eb91",
-      "runtimeInstallerVersion": 1,
-      "presentationPolicyVersion": 1,
-      "presentationCapabilities": [
-        "orderedSourceRank",
-        "numericTopPercentile"
-      ],
-      "languageDataSHA256": "f69d66155955e4b88f8b7501965dc05665bf5bd21a0199f02cb12467c3d0d092",
-      "bundledArtifactSHA256": null,
-      "corpusDocuments": null,
-      "corpusVideos": null,
-      "corpusChannels": null,
-      "attribution": "Japanese frequency list from the public source catalog: TV Shows.",
-      "bundled": false,
-      "removable": true,
-      "orderedJSONSource": {
-        "archiveEntry": "Anime_J-drama.json",
-        "rawJSONBytes": 1589061
-      },
-      "smokeTest": {
-        "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
-        "rank": 8
-      }
-    },
-    {
       "packID": "zenbu.public.internet.ja.ordered-v1",
       "packVersion": "2026-09-25",
       "displayName": "Internet",
@@ -539,8 +441,8 @@
     {
       "packID": "zenbu.tubelex.youtube.ja.unidic-3.1",
       "packVersion": "2025.1",
-      "displayName": "TUBELEX YouTube Japanese",
-      "domain": "YouTube / everyday media Japanese",
+      "displayName": "YouTube",
+      "domain": "Everyday YouTube Japanese · TUBELEX",
       "domainDescription": "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
       "sourceIdentity": "TUBELEX Japanese",
       "sourceSnapshot": "7cb5fb36add76b83a266d1967536e1a1d3faa513",
@@ -627,55 +529,6 @@
       "smokeTest": {
         "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
         "rank": 5
-      }
-    },
-    {
-      "packID": "zenbu.public.netflix.ja.ordered-v1",
-      "packVersion": "2026-09-25",
-      "displayName": "Netflix",
-      "domain": "Streaming subtitles",
-      "domainDescription": "Words sourced from Netflix Japan. Rank is the one-based position published by the source catalog; occurrence counts and tokenizer details are not supplied.",
-      "sourceIdentity": "Public Japanese frequency catalog · Netflix",
-      "sourceSnapshot": "294cdbf53794665196867b8283030a2d5504aad31a6da55324c0f6996f4eb9db",
-      "measurement": "ordered-list position (occurrence counts unavailable)",
-      "tokenizer": "Not published",
-      "normalization": "NFKC written forms; canonical app forms",
-      "rankTiePolicy": "One-based JSON array position; published source order is preserved and every row receives a distinct rank.",
-      "downloadURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Netflix.json.zip",
-      "sourceBytes": 1039994,
-      "sourceSHA256": "294cdbf53794665196867b8283030a2d5504aad31a6da55324c0f6996f4eb9db",
-      "sourceTotalTokens": 0,
-      "coveredSourceRows": 102844,
-      "mappedRows": 52053,
-      "ambiguousRows": 8194,
-      "unmappedRows": 27384,
-      "duplicateMappings": 15213,
-      "mappingSHA256": "119e68406a66e1594d5b213e8597e8b1f4752c22b6a7ca3e0ee4fe9f7ee55c46",
-      "artifactContentSHA256": "1870bf2bc0e4bb77151abcec0b53d773f8b52f4ccf2ca3b517ed854f585e9175",
-      "mappingPolicyVersion": 1,
-      "mappingPolicySHA256": "568d2c293eceae6aff760059dc803331d11490d74ab54f5e85e9e5ef7ff8b339",
-      "offlineImporterSHA256": "fd3e36608ce2c098d2e0a474279cd2e44c32d5193b4526f43d6d9e5b7812eb91",
-      "runtimeInstallerVersion": 1,
-      "presentationPolicyVersion": 1,
-      "presentationCapabilities": [
-        "orderedSourceRank",
-        "numericTopPercentile"
-      ],
-      "languageDataSHA256": "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073",
-      "bundledArtifactSHA256": null,
-      "corpusDocuments": null,
-      "corpusVideos": null,
-      "corpusChannels": null,
-      "attribution": "Japanese frequency list from the public source catalog: Netflix.",
-      "bundled": false,
-      "removable": true,
-      "orderedJSONSource": {
-        "archiveEntry": "Netflix.json",
-        "rawJSONBytes": 3228941
-      },
-      "smokeTest": {
-        "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
-        "rank": 6
       }
     },
     {
@@ -973,55 +826,6 @@
       }
     },
     {
-      "packID": "zenbu.public.tv-shows.ja.ordered-v1",
-      "packVersion": "2026-09-25",
-      "displayName": "TV Shows",
-      "domain": "Anime and television drama",
-      "domainDescription": "Words sourced from anime and Japanese dramas. Rank is the one-based position published by the source catalog; occurrence counts and tokenizer details are not supplied.",
-      "sourceIdentity": "Public Japanese frequency catalog · TV Shows",
-      "sourceSnapshot": "1c6651c63a5a5e8ade4818cc11a26412244c22301c59cb40354f9bf7cb783c51",
-      "measurement": "ordered-list position (occurrence counts unavailable)",
-      "tokenizer": "Not published",
-      "normalization": "NFKC written forms; canonical app forms",
-      "rankTiePolicy": "One-based JSON array position; published source order is preserved and every row receives a distinct rank.",
-      "downloadURL": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/Anime_J-drama.json.zip",
-      "sourceBytes": 561111,
-      "sourceSHA256": "1c6651c63a5a5e8ade4818cc11a26412244c22301c59cb40354f9bf7cb783c51",
-      "sourceTotalTokens": 0,
-      "coveredSourceRows": 99999,
-      "mappedRows": 68087,
-      "ambiguousRows": 5665,
-      "unmappedRows": 16258,
-      "duplicateMappings": 9989,
-      "mappingSHA256": "2d4611d58af549bb69ba4f213d08a541844a998ba30c89ab7483f7c214c630b2",
-      "artifactContentSHA256": "d74721339132d542dd4cb001ec57254bc93f98a671f5df63db3148f1bb83156f",
-      "mappingPolicyVersion": 1,
-      "mappingPolicySHA256": "568d2c293eceae6aff760059dc803331d11490d74ab54f5e85e9e5ef7ff8b339",
-      "offlineImporterSHA256": "fd3e36608ce2c098d2e0a474279cd2e44c32d5193b4526f43d6d9e5b7812eb91",
-      "runtimeInstallerVersion": 1,
-      "presentationPolicyVersion": 1,
-      "presentationCapabilities": [
-        "orderedSourceRank",
-        "numericTopPercentile"
-      ],
-      "languageDataSHA256": "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073",
-      "bundledArtifactSHA256": null,
-      "corpusDocuments": null,
-      "corpusVideos": null,
-      "corpusChannels": null,
-      "attribution": "Japanese frequency list from the public source catalog: TV Shows.",
-      "bundled": false,
-      "removable": true,
-      "orderedJSONSource": {
-        "archiveEntry": "Anime_J-drama.json",
-        "rawJSONBytes": 1589061
-      },
-      "smokeTest": {
-        "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
-        "rank": 8
-      }
-    },
-    {
       "packID": "zenbu.public.internet.ja.ordered-v1",
       "packVersion": "2026-09-25",
       "displayName": "Internet",
@@ -1064,6 +868,55 @@
       "orderedJSONSource": {
         "archiveEntry": "CC100.json",
         "rawJSONBytes": 2477283
+      },
+      "smokeTest": {
+        "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+        "rank": 5
+      }
+    },
+    {
+      "packID": "zenbu.jiten.tv-movies.ja.ordered-v2",
+      "packVersion": "2026-09-27",
+      "displayName": "TV & Movies",
+      "domain": "Japanese TV drama and film subtitles · Jiten",
+      "domainDescription": "Vocabulary from Japanese TV dramas and films. Built from Jiten (jiten.moe) Drama + Movie frequency data, CC BY-SA 4.0. Rank is the one-based position in the list; occurrence counts are not supplied.",
+      "sourceIdentity": "Jiten frequency list · Drama + Movie",
+      "sourceSnapshot": "d21882d0842e3385df6c635a30f8a7c374801b3b4e8f4d0601b0c454a8adc4c7,5c6e539e586b34e004be95a46891ffe8f485981da6cf1419656b1969f41b1654",
+      "measurement": "ordered-list position (occurrence counts unavailable)",
+      "tokenizer": "Jiten (JMdict-linked)",
+      "normalization": "NFKC dictionary forms and readings; canonical app forms",
+      "rankTiePolicy": "One-based position in Jiten's published order; the unobserved tail bucket is dropped and every remaining row receives a distinct rank. Lists are merged by mean list percentile; a word missing from a list counts as its last position.",
+      "downloadURL": "http://127.0.0.1:8376/jiten-tv-movies.json.zip",
+      "sourceBytes": 2226011,
+      "sourceSHA256": "e6a6ec5cd4ebc7188ec8d963c0447d8c6a6ead4716fa8a2d728981efc9aedda1",
+      "sourceTotalTokens": 0,
+      "coveredSourceRows": 193752,
+      "mappedRows": 108209,
+      "ambiguousRows": 6593,
+      "unmappedRows": 50548,
+      "duplicateMappings": 28402,
+      "mappingSHA256": "def9405094dbae809b4dc081dab7250f9882f05be1123d33f777ae3a768b1983",
+      "artifactContentSHA256": "e71c0470c0408d7509a3fedb928986176448ce51f3c7f9f026e26dceeeedc65b",
+      "mappingPolicyVersion": 2,
+      "mappingPolicySHA256": "5f61dd29c529f4fe558473a0356c3d384002fb9eaaf006cb9750e5ebfeb8da20",
+      "offlineImporterSHA256": "102f84b7a7e8f425aaa4f09cd8d564f1e9327ff322e9fa87eab16673b1ee43e8",
+      "runtimeInstallerVersion": 1,
+      "presentationPolicyVersion": 1,
+      "presentationCapabilities": [
+        "orderedSourceRank",
+        "numericTopPercentile"
+      ],
+      "languageDataSHA256": "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073",
+      "bundledArtifactSHA256": null,
+      "corpusDocuments": null,
+      "corpusVideos": null,
+      "corpusChannels": null,
+      "attribution": "Jiten (jiten.moe) Drama + Movie frequency data, CC BY-SA 4.0; modified.",
+      "bundled": false,
+      "removable": true,
+      "orderedJSONSource": {
+        "archiveEntry": "jiten-tv-movies.json",
+        "rawJSONBytes": 6375586
       },
       "smokeTest": {
         "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",

@@ -1,0 +1,146 @@
+-- SPIKE (#376). Bundled on the spike branch only; used by packs with mappingPolicyVersion 2.
+-- FrequencyPackMappingV2 = V1 plus an optional source reading. When source_rows.source_reading
+-- is non-empty, a candidate entry must carry that reading (entry reading or a reading form), and
+-- JMdict reading restrictions (re_restr) must allow the matched written form. Rows without a
+-- reading behave exactly as in V1. Unique reading-constrained matches are labelled
+-- exactWrittenReading / exactReading, which FrequencyPack.MappingRelation already declares.
+ATTACH DATABASE '{{LANGUAGE_DATA_PATH}}' AS language;
+CREATE TEMP TABLE language_readings AS
+  SELECT id, reading FROM language.entries
+  UNION SELECT entry_id, form FROM language.forms WHERE kind = 1;
+CREATE INDEX temp.language_readings_index ON language_readings(id, reading);
+CREATE TEMP TABLE candidates AS
+WITH language_forms AS (
+  SELECT headword AS form, id, 0 AS form_evidence_order, parts_of_speech_json FROM language.entries
+  UNION ALL SELECT reading, id, 1, parts_of_speech_json FROM language.entries
+  UNION ALL
+    SELECT forms.form, forms.entry_id, 2 + forms.kind, entries.parts_of_speech_json
+    FROM language.forms
+    JOIN language.entries ON entries.id = forms.entry_id
+), classified AS (
+  SELECT
+    s.*,
+    CASE
+      WHEN s.source_pos LIKE '動詞%' THEN 'verb'
+      WHEN s.source_pos LIKE '名詞%' OR s.source_pos LIKE '代名詞%' THEN 'noun'
+      WHEN s.source_pos LIKE '形容詞%' OR s.source_pos LIKE '形状詞%' THEN 'adjective'
+      WHEN s.source_pos LIKE '副詞%' THEN 'adverb'
+      WHEN s.source_pos LIKE '助詞%' THEN 'particle'
+      WHEN s.source_pos LIKE '助動詞%' THEN 'auxiliary'
+      WHEN s.source_pos LIKE '接続詞%' THEN 'conjunction'
+      WHEN s.source_pos LIKE '感動詞%' THEN 'interjection'
+      WHEN s.source_pos LIKE '接頭辞%' THEN 'prefix'
+      WHEN s.source_pos LIKE '接尾辞%' THEN 'suffix'
+      ELSE NULL
+    END AS source_pos_class
+  FROM source_rows s
+)
+SELECT
+  s.rank,
+  s.form,
+  s.source_count,
+  s.source_pos,
+  s.source_record_digest,
+  s.source_reading,
+  l.id,
+  MIN(l.form_evidence_order) AS form_evidence_order,
+  MAX(
+    CASE s.source_pos_class
+      WHEN 'verb' THEN l.parts_of_speech_json LIKE '%"godanVerb"%'
+        OR l.parts_of_speech_json LIKE '%"ichidanVerb"%'
+        OR l.parts_of_speech_json LIKE '%"suruVerb"%'
+        OR l.parts_of_speech_json LIKE '%"kuruVerb"%'
+        OR l.parts_of_speech_json LIKE '%"zuruVerb"%'
+        OR l.parts_of_speech_json LIKE '%"archaicVerb"%'
+        OR l.parts_of_speech_json LIKE '%"verb"%'
+      WHEN 'noun' THEN l.parts_of_speech_json LIKE '%"noun"%'
+        OR l.parts_of_speech_json LIKE '%"pronoun"%'
+        OR l.parts_of_speech_json LIKE '%"nounPrefix"%'
+        OR l.parts_of_speech_json LIKE '%"nounSuffix"%'
+        OR l.parts_of_speech_json LIKE '%"noAdjective"%'
+        OR l.parts_of_speech_json LIKE '%"prenominal"%'
+        OR l.parts_of_speech_json LIKE '%"takesSuru"%'
+      WHEN 'adjective' THEN l.parts_of_speech_json LIKE '%"iAdjective"%'
+        OR l.parts_of_speech_json LIKE '%"naAdjective"%'
+        OR l.parts_of_speech_json LIKE '%"taruAdjective"%'
+        OR l.parts_of_speech_json LIKE '%"archaicAdjective"%'
+        OR l.parts_of_speech_json LIKE '%"archaicNaAdjective"%'
+        OR l.parts_of_speech_json LIKE '%"auxiliaryAdjective"%'
+      WHEN 'adverb' THEN l.parts_of_speech_json LIKE '%"adverb"%'
+        OR l.parts_of_speech_json LIKE '%"adverbTo"%'
+      WHEN 'particle' THEN l.parts_of_speech_json LIKE '%"particle"%'
+      WHEN 'auxiliary' THEN l.parts_of_speech_json LIKE '%"auxiliary"%'
+        OR l.parts_of_speech_json LIKE '%"auxiliaryVerb"%'
+        OR l.parts_of_speech_json LIKE '%"auxiliaryAdjective"%'
+        OR l.parts_of_speech_json LIKE '%"copula"%'
+      WHEN 'conjunction' THEN l.parts_of_speech_json LIKE '%"conjunction"%'
+      WHEN 'interjection' THEN l.parts_of_speech_json LIKE '%"interjection"%'
+      WHEN 'prefix' THEN l.parts_of_speech_json LIKE '%"prefix"%'
+        OR l.parts_of_speech_json LIKE '%"nounPrefix"%'
+      WHEN 'suffix' THEN l.parts_of_speech_json LIKE '%"suffix"%'
+        OR l.parts_of_speech_json LIKE '%"nounSuffix"%'
+      ELSE 0
+    END
+  ) AS pos_match
+FROM classified s
+JOIN language_forms l ON l.form = s.form
+WHERE s.source_reading = ''
+   OR EXISTS (
+     SELECT 1 FROM language_readings r
+     WHERE r.id = l.id AND r.reading = s.source_reading
+       AND (
+         NOT EXISTS (
+           SELECT 1 FROM language.reading_form_restrictions x
+           WHERE x.entry_id = l.id AND x.reading = r.reading)
+         OR s.form = s.source_reading
+         OR EXISTS (
+           SELECT 1 FROM language.reading_form_restrictions x
+           WHERE x.entry_id = l.id AND x.reading = r.reading AND x.written_form = s.form)
+       ))
+GROUP BY s.rank, l.id;
+CREATE TEMP TABLE resolutions AS
+SELECT rank, COUNT(*) AS candidate_count, SUM(pos_match) AS pos_candidate_count
+FROM candidates
+GROUP BY rank;
+CREATE TEMP TABLE eligible AS
+SELECT
+  c.*,
+  CASE
+    WHEN r.candidate_count = 1 AND c.source_reading != '' THEN
+      CASE WHEN c.form = c.source_reading THEN 'exactReading' ELSE 'exactWrittenReading' END
+    WHEN r.candidate_count = 1 THEN 'uniqueFormFallback'
+    WHEN r.pos_candidate_count = 1 AND c.pos_match = 1
+      THEN CASE c.form_evidence_order % 2
+        WHEN 1 THEN 'exactReadingPOS'
+        ELSE 'exactWrittenPOS'
+      END
+  END AS mapping_relation
+FROM candidates c
+JOIN resolutions r USING(rank)
+WHERE r.candidate_count = 1
+   OR (r.pos_candidate_count = 1 AND c.pos_match = 1);
+INSERT INTO frequency_evidence
+SELECT
+  id,
+  rank,
+  source_count,
+  {{COVERED_SOURCE_ROWS}},
+  mapping_relation,
+  form,
+  source_pos,
+  source_record_digest
+FROM (
+  SELECT
+    e.*,
+    ROW_NUMBER() OVER(
+      PARTITION BY id
+      ORDER BY
+        CASE mapping_relation
+          WHEN 'exactWrittenReading' THEN 0 WHEN 'exactWrittenPOS' THEN 0
+          WHEN 'exactReading' THEN 1 ELSE 2 END,
+        form_evidence_order,
+        rank
+    ) AS choice
+  FROM eligible e
+)
+WHERE choice = 1;
