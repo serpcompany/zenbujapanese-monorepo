@@ -155,6 +155,18 @@ struct DictionarySourcesView: View {
         )
       }
 
+      Section("Public Japanese Frequency Catalog") {
+        Text(
+          "Optional Netflix, Novels, Slice of Life, NHK, Shonen, JP Dict, Visual Novel, TV Shows, and Internet packs download directly from the public catalog. Zenbu verifies the published archives and maps them on-device. TUBELEX remains Zenbu's YouTube frequency source."
+        )
+        LabeledContent("Version", value: "Catalog snapshot 2026-09-25")
+        Link(
+          "Public source catalog",
+          destination: URL(string: "https://migaku-public-data.migaku.com/dicts/index.json")!
+        )
+        .accessibilityIdentifier("dictionary-sources.public-frequency-catalog")
+      }
+
       Section("Japanese Text Analysis") {
         Text(
           "Optional on-device Japanese word boundaries, dictionary forms, readings, and parts of speech from Sudachi.rs and SudachiDict Core. ZIPFoundation reads the checksum-pinned official dictionary wheel during installation."
@@ -175,6 +187,36 @@ struct DictionarySourcesView: View {
           "SudachiDict release",
           destination: URL(
             string: "https://github.com/WorksApplications/SudachiDict/releases/tag/v20260723")!
+        )
+      }
+
+      Section("Interactive Japanese Parsing") {
+        Text(
+          "On-device word boundaries, dictionary forms, readings, and parts of speech for interactive text use kuromoji.js with MeCab IPADIC resources bundled in the app."
+        )
+        LabeledContent("Engine", value: "kuromoji.js 0.1.2")
+        LabeledContent("Dictionary", value: "MeCab IPADIC 2.7.0-20070801")
+        LabeledContent("Runtime", value: "Apple JavaScriptCore")
+        LabeledContent("License", value: "Apache-2.0 · IPADIC notices")
+        NavigationLink("Bundled Apache-2.0 license") {
+          BundledLicenseTextView(
+            title: "Kuromoji Apache-2.0 License",
+            resource: "LICENSE-2.0",
+            subdirectory: "Kuromoji"
+          )
+        }
+        NavigationLink("Bundled IPADIC attribution notices") {
+          BundledLicenseTextView(
+            title: "Kuromoji and IPADIC Notices",
+            resource: "NOTICE",
+            resourceExtension: "md",
+            subdirectory: "Kuromoji"
+          )
+        }
+        .accessibilityIdentifier("dictionary-sources.kuromoji-license")
+        Link(
+          "Kuromoji project",
+          destination: URL(string: "https://github.com/takuyaa/kuromoji.js")!
         )
       }
 
@@ -263,9 +305,21 @@ private struct TatoebaContributorCreditsView: View {
 private struct BundledLicenseTextView: View {
   let title: String
   let resource: String
+  var resourceExtension = "txt"
+  var subdirectory: String?
 
   private var text: String {
-    guard let url = Bundle.module.url(forResource: resource, withExtension: "txt"),
+    let url =
+      Bundle.module.url(
+        forResource: resource,
+        withExtension: resourceExtension,
+        subdirectory: subdirectory
+      )
+      ?? Bundle.module.url(
+        forResource: resource,
+        withExtension: resourceExtension
+      )
+    guard let url,
       let contents = try? String(contentsOf: url, encoding: .utf8)
     else {
       return "License text unavailable"

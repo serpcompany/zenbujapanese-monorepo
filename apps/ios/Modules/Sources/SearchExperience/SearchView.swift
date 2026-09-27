@@ -68,7 +68,8 @@ struct SearchView: View {
           query: searchQuery,
           results: results,
           exampleCount: exampleCount,
-          showsAdditionalMatches: sparseRadicalQuery != searchQuery,
+          rankedEntryLimit: sparseRadicalQuery == searchQuery
+            ? results.leadingLexicalEntryCount : nil,
           frequencyCapability: frequencyCapability,
           frequencyRefreshID: frequencyRefreshID,
           selectRefinement: selectRefinement
@@ -76,8 +77,7 @@ struct SearchView: View {
         .id(
           SearchResultsIdentity(
             query: searchQuery,
-            best: results.best.map(\.id),
-            additional: results.additional.map(\.id),
+            entries: results.entries.map(\.id),
             refinement: results.readingRefinement?.query
           )
         )
@@ -522,8 +522,7 @@ private enum SearchPresentationState: Equatable {
 
 private struct SearchResultsIdentity: Hashable {
   let query: SearchQuery
-  let best: [LanguageReferenceID]
-  let additional: [LanguageReferenceID]
+  let entries: [LanguageReferenceID]
   let refinement: SearchQuery?
 }
 
@@ -613,13 +612,16 @@ private struct SearchResultsView: View {
   let query: SearchQuery
   let results: LookupSearchResults
   let exampleCount: Int
-  let showsAdditionalMatches: Bool
+  /// Radical-origin searches intentionally retain only their leading lexical-rank group.
+  let rankedEntryLimit: Int?
   let frequencyCapability: FrequencyCapability
   let frequencyRefreshID: Int
   let selectRefinement: (SearchRefinement) -> Void
-  @State private var frequencyResults: [LanguageReferenceID: FrequencyLookupResult] = [:]
+  @State private var frequencyLoadState = SearchFrequencyLoadState()
 
   var body: some View {
+    let orderedEntries = SearchResultFrequencyOrdering.ordered(
+      results, entries: presentedEntries, evidence: frequencyLoadState.results)
     List {
       if exampleCount > 0 {
         Section {
@@ -653,42 +655,47 @@ private struct SearchResultsView: View {
       if results.presentation == .discoveredWords {
         Section("Discovered Words") {
           ForEach(
-            (results.best + results.additional).prefix(12).enumerated(), id: \.element.id
+            results.entries.prefix(12).enumerated(), id: \.element.id
           ) { index, entry in
             ResultRow(
               entry: entry,
-              frequencyResult: frequencyResults[entry.id],
-              rank: .discovered(index + 1)
+              summary: results.displaySummary(for: entry),
+              frequencyResult: frequencyLoadState.results[entry.id],
+              rank: .discovered(position: index + 1, count: min(results.entries.count, 12))
             )
           }
         }
-      } else if query.isSingleKanji || !results.best.isEmpty {
-        Section("Best Matches") {
-          if let character = KanjiCharacter(query.value) {
-            KanjiPrimaryRow(character: character, entry: primaryKanjiEntry)
-          }
-          ForEach(results.best.enumerated(), id: \.element.id) { index, entry in
-            ResultRow(
-              entry: entry,
-              frequencyResult: frequencyResults[entry.id],
-              rank: .best(index + (query.isSingleKanji ? 2 : 1))
-            )
-          }
-        }
-      }
-
-      if showsAdditionalMatches, results.presentation == .ranked, !results.additional.isEmpty {
+      } else if query.isSingleKanji || !results.entries.isEmpty {
         Section {
-          ForEach(results.additional.enumerated(), id: \.element.id) { index, entry in
+          if let character = KanjiCharacter(query.value) {
+            KanjiPrimaryRow(
+              character: character,
+              entry: primaryKanjiEntry,
+              resultCount: orderedEntries.count + 1
+            )
+          }
+          ForEach(orderedEntries.enumerated(), id: \.element.id) { index, entry in
             ResultRow(
               entry: entry,
-              frequencyResult: frequencyResults[entry.id],
-              rank: .additional(index + 1)
+              summary: results.displaySummary(for: entry),
+              frequencyResult: frequencyLoadState.results[entry.id],
+              rank: .result(
+                position: index + (query.isSingleKanji ? 2 : 1),
+                count: orderedEntries.count + (query.isSingleKanji ? 1 : 0)
+              )
             )
           }
         } header: {
-          Text("Additional Matches")
-            .accessibilityIdentifier("search.additional-matches-header")
+          Text("Results")
+            .accessibilityIdentifier("search.results-header")
+        } footer: {
+          if let frequencyUnavailableReason {
+            Label(
+              "Frequency ordering unavailable. Showing dictionary relevance order. \(frequencyUnavailableReason)",
+              systemImage: "info.circle"
+            )
+            .accessibilityIdentifier("search.frequency-ordering-unavailable")
+          }
         }
       }
     }
@@ -696,16 +703,21 @@ private struct SearchResultsView: View {
     .id(query)
     .accessibilityIdentifier("search.results")
     .task(id: frequencyTaskID) {
-      frequencyResults = [:]
+      let requestID = frequencyTaskID
+      frequencyLoadState.begin(requestID)
       do {
-        let loaded = try await frequencyCapability.evidence(for: displayedEntryIDs)
-        try Task.checkCancellation()
-        frequencyResults = loaded
+        let response = try await SearchFrequencyLoader.load(
+          requestID, using: frequencyCapability)
+        _ = frequencyLoadState.commit(response.results, for: response.request)
       } catch is CancellationError {
         return
       } catch {
-        frequencyResults = FrequencyLookupResult.unavailableResults(
-          for: displayedEntryIDs, pack: nil, reason: "Frequency data unavailable")
+        guard !Task.isCancelled else { return }
+        _ = frequencyLoadState.commit(
+          FrequencyLookupResult.unavailableResults(
+            for: requestID.entryIDs, pack: nil, reason: "Frequency data unavailable"),
+          for: requestID
+        )
       }
     }
   }
@@ -720,22 +732,34 @@ private struct SearchResultsView: View {
   }
 
   private var displayedEntryIDs: [LanguageReferenceID] {
-    let entries =
-      results.presentation == .discoveredWords
-      ? Array((results.best + results.additional).prefix(12))
-      : results.best + (showsAdditionalMatches ? results.additional : [])
     var seen = Set<LanguageReferenceID>()
-    return entries.compactMap { seen.insert($0.id).inserted ? $0.id : nil }
+    return presentedEntries.compactMap { seen.insert($0.id).inserted ? $0.id : nil }
+  }
+
+  private var presentedEntries: [DictionaryEntry] {
+    if results.presentation == .discoveredWords {
+      return Array(results.entries.prefix(12))
+    }
+    guard let rankedEntryLimit else { return results.entries }
+    return Array(results.entries.prefix(rankedEntryLimit))
   }
 
   private var frequencyTaskID: SearchFrequencyTaskID {
     SearchFrequencyTaskID(entryIDs: displayedEntryIDs, refreshID: frequencyRefreshID)
+  }
+
+  private var frequencyUnavailableReason: String? {
+    displayedEntryIDs.compactMap { id in
+      guard case .unavailable(let unavailable) = frequencyLoadState.results[id] else { return nil }
+      return unavailable.reason
+    }.first
   }
 }
 
 private struct KanjiPrimaryRow: View {
   let character: KanjiCharacter
   let entry: DictionaryEntry?
+  let resultCount: Int
 
   var body: some View {
     NavigationLink(value: SearchExperienceRoute.kanji(character, entry)) {
@@ -755,13 +779,14 @@ private struct KanjiPrimaryRow: View {
       .contentShape(Rectangle())
     }
     .accessibilityLabel("\(character.rawValue), KANJI, \(entry?.summary ?? "Kanji detail")")
-    .accessibilityValue("Best match 1, Kanji primary")
+    .accessibilityValue("Result 1 of \(resultCount), Kanji primary")
     .accessibilityIdentifier("result.kanji-primary.\(character.rawValue)")
   }
 }
 
 private struct ResultRow: View {
   let entry: DictionaryEntry
+  let summary: String
   let frequencyResult: FrequencyLookupResult?
   let rank: ResultRank
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -784,7 +809,7 @@ private struct ResultRow: View {
       }
       .contentShape(Rectangle())
     }
-    .accessibilityLabel("\(entry.headword), \(entry.reading), \(entry.summary)")
+    .accessibilityLabel("\(entry.headword), \(entry.reading), \(summary)")
     .accessibilityValue("\(rank.accessibilityValue), \(frequencyPresentation.accessibilityValue)")
     .accessibilityIdentifier(resultIdentifier)
   }
@@ -792,7 +817,7 @@ private struct ResultRow: View {
   private var entryContent: some View {
     VStack(alignment: .leading, spacing: 5) {
       titleBlock
-      Text(entry.summary)
+      Text(summary)
         .font(.body)
         .foregroundStyle(.primary)
         .fixedSize(horizontal: false, vertical: true)
@@ -831,21 +856,92 @@ private struct ResultRow: View {
   }
 }
 
-private struct SearchFrequencyTaskID: Hashable {
+struct SearchFrequencyTaskID: Hashable {
   let entryIDs: [LanguageReferenceID]
   let refreshID: Int
 }
 
+struct SearchFrequencyLoadState {
+  private(set) var activeRequest: SearchFrequencyTaskID?
+  private(set) var results: [LanguageReferenceID: FrequencyLookupResult] = [:]
+
+  mutating func begin(_ request: SearchFrequencyTaskID) {
+    activeRequest = request
+    results = [:]
+  }
+
+  @discardableResult
+  mutating func commit(
+    _ results: [LanguageReferenceID: FrequencyLookupResult],
+    for request: SearchFrequencyTaskID
+  ) -> Bool {
+    guard activeRequest == request else { return false }
+    self.results = results
+    return true
+  }
+}
+
+struct SearchFrequencyResponse: Sendable {
+  let request: SearchFrequencyTaskID
+  let results: [LanguageReferenceID: FrequencyLookupResult]
+}
+
+enum SearchFrequencyLoader {
+  static func load(
+    _ request: SearchFrequencyTaskID,
+    using capability: FrequencyCapability
+  ) async throws -> SearchFrequencyResponse {
+    let results = try await capability.evidence(for: request.entryIDs)
+    try Task.checkCancellation()
+    return SearchFrequencyResponse(request: request, results: results)
+  }
+}
+
 private enum ResultRank {
-  case best(Int)
-  case additional(Int)
-  case discovered(Int)
+  case result(position: Int, count: Int)
+  case discovered(position: Int, count: Int)
 
   var accessibilityValue: String {
     switch self {
-    case .best(let position): "Best match \(position)"
-    case .additional(let position): "Additional match \(position)"
-    case .discovered(let position): "Discovered word \(position)"
+    case .result(let position, let count): "Result \(position) of \(count)"
+    case .discovered(let position, let count): "Discovered word \(position) of \(count)"
     }
+  }
+}
+
+enum SearchResultFrequencyOrdering {
+  /// Explicit match evidence is primary. Active-pack evidence orders only equivalent matches;
+  /// the original dictionary rank and canonical entry ID are deterministic fallbacks.
+  static func ordered(
+    _ results: LookupSearchResults,
+    entries: [DictionaryEntry]? = nil,
+    evidence: [LanguageReferenceID: FrequencyLookupResult]
+  ) -> [DictionaryEntry] {
+    let entries = entries ?? results.entries
+    return entries.enumerated().sorted { lhs, rhs in
+      let lhsRelevance = results.relevance(for: lhs.element)
+      let rhsRelevance = results.relevance(for: rhs.element)
+      if lhsRelevance != rhsRelevance { return lhsRelevance < rhsRelevance }
+      let lhsRank = numericRank(evidence[lhs.element.id])
+      let rhsRank = numericRank(evidence[rhs.element.id])
+      switch (lhsRank, rhsRank) {
+      case let (.some(left), .some(right)) where left != right:
+        return left < right
+      case (.some, .none):
+        return true
+      case (.none, .some):
+        return false
+      default:
+        let lhsFallback = results.fallbackOrder(for: lhs.element)
+        let rhsFallback = results.fallbackOrder(for: rhs.element)
+        if lhsFallback != rhsFallback { return lhsFallback < rhsFallback }
+        return lhs.element.id.rawValue < rhs.element.id.rawValue
+      }
+    }.map(\.element)
+  }
+
+  private static func numericRank(_ result: FrequencyLookupResult?) -> Int? {
+    guard case .evidence(let evidence) = result else { return nil }
+    return evidence.rank
   }
 }

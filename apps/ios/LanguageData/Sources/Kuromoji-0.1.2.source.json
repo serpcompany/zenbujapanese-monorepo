@@ -1,0 +1,21 @@
+{
+  "resource_id": "SOURCE-JAPANESE-PARSER-KUROMOJI",
+  "identity": "kuromoji.js with MeCab IPADIC",
+  "version": "0.1.2",
+  "download_url": "https://registry.npmjs.org/kuromoji/-/kuromoji-0.1.2.tgz",
+  "fetched_at_utc": "2026-09-23T15:15:00Z",
+  "compressed_bytes": 21834991,
+  "runtime_bytes": 18099923,
+  "sha256": "ccf8778839df92ae3a3d64a93998ac92d1e92c7f73fe6193295a5258c98308b4",
+  "runtime_dictionary_sha256": "118a96f97fbfdafaa3c0b09204588034c1a6aeb0edf889f5d1b7c8376dab5c9e",
+  "engine_sha256": "ab0ac10f1c4a9b5e246e63e57b04ba14d3a6148cd7e8d62cb97a960d4f85a3e6",
+  "dictionary": "mecab-ipadic-2.7.0-20070801",
+  "license": "Apache-2.0 with retained MeCab IPADIC and ICOT notices",
+  "license_file": "KUROMOJI-APACHE-2.0.txt",
+  "license_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+  "notice_file": "MECAB-IPADIC-NOTICE.md",
+  "notice_sha256": "fab84e2471dada5afa7ea4226b629f3fda414f9b50b62b4f832f8b57fe9addd7",
+  "project_url": "https://github.com/takuyaa/kuromoji.js",
+  "runtime": "Apple JavaScriptCore with an app-owned bundle resource loader",
+  "provenance_note": "The engine bytes match the Zenbu browser extension's kuromoji.js runtime. The npm package supplies the checksum-pinned public dictionary assets; no Migaku-owned code or data is included."
+}

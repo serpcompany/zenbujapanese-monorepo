@@ -12,38 +12,7 @@ struct FrequencyDictionariesView: View {
       if let snapshot {
         ForEach(snapshot.packs) { pack in
           Section {
-            LabeledContent("Status") {
-              Label(
-                pack.isActive ? "Active" : (pack.isInstalled ? "Installed" : "Available"),
-                systemImage: pack.isActive
-                  ? "checkmark.circle.fill"
-                  : (pack.isInstalled ? "checkmark.circle" : "arrow.down.circle")
-              )
-              .foregroundStyle(
-                pack.isActive ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary)
-              )
-              .accessibilityElement(children: .ignore)
-              .accessibilityLabel(
-                pack.isActive ? "Active" : (pack.isInstalled ? "Installed" : "Available")
-              )
-              .accessibilityValue(
-                pack.isActive
-                  ? "Selected frequency dictionary"
-                  : (pack.isInstalled ? "Not selected" : "Not installed")
-              )
-              .accessibilityIdentifier("frequency-pack.status.\(pack.id.rawValue)")
-            }
-            LabeledContent("Source domain", value: pack.manifest.domain)
-            LabeledContent("Version", value: pack.manifest.packVersion)
-            LabeledContent("License", value: pack.manifest.licenseIdentifier)
-            LabeledContent("Update", value: pack.updateStatus)
-            Text(pack.manifest.domainDescription)
-              .font(.footnote)
-              .foregroundStyle(.secondary)
-            Text(pack.manifest.attribution)
-              .font(.footnote)
-              .foregroundStyle(.secondary)
-            Link("Source and license", destination: pack.manifest.licenseURL)
+            status(for: pack)
             storage(for: pack)
             if let failure = pack.failureMessage {
               Label(failure, systemImage: "exclamationmark.triangle")
@@ -91,18 +60,34 @@ struct FrequencyDictionariesView: View {
     }
   }
 
+  private func status(for pack: FrequencyPackState) -> some View {
+    HStack(spacing: 12) {
+      Text("Status")
+      Spacer(minLength: 0)
+      Label(
+        pack.isActive ? "Active" : (pack.isInstalled ? "Installed" : "Available"),
+        systemImage: pack.isActive
+          ? "checkmark.circle.fill"
+          : (pack.isInstalled ? "checkmark.circle" : "arrow.down.circle")
+      )
+      .foregroundStyle(pack.isActive ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
+    }
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("Status")
+    .accessibilityValue(
+      pack.isActive
+        ? "Active, selected frequency dictionary"
+        : (pack.isInstalled ? "Installed, not selected" : "Available, not installed")
+    )
+    .accessibilityIdentifier("frequency-pack.status.\(pack.id.rawValue)")
+  }
+
   @ViewBuilder
   private func storage(for pack: FrequencyPackState) -> some View {
     if let installedBytes = pack.installedBytes {
       LabeledContent(
         "Storage",
         value: ByteCountFormatter.string(fromByteCount: Int64(installedBytes), countStyle: .file)
-      )
-    } else {
-      LabeledContent(
-        "Download",
-        value: ByteCountFormatter.string(
-          fromByteCount: Int64(pack.manifest.sourceBytes), countStyle: .file)
       )
     }
   }

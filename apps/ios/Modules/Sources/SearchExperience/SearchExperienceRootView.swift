@@ -8,6 +8,7 @@ public struct SearchExperienceRootView: View {
   @State private var youPath: [YouRoute] = []
   @State private var query = ""
   @State private var imageTextSessionStore = ImageTextSessionStore()
+  @State private var recognizedWordSheet: RecognizedWordSheetRequest?
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
   @State private var kanjiElementScrollContributionIDs: [KanjiElementID: KanjiCharacter] = [:]
@@ -30,7 +31,13 @@ public struct SearchExperienceRootView: View {
   public init() {
     lookupClient = .live
     exampleSentenceClient = .live
-    japaneseTextAnalysisClient = .live(lookupClient: .live)
+    let morphologyClient: JapaneseMorphologyClient =
+      ProcessInfo.processInfo.environment["ZENBU_MORPHOLOGY_ENGINE"] == "sudachi"
+      ? .live : .kuromoji
+    japaneseTextAnalysisClient = .resolving(
+      morphologyClient: morphologyClient,
+      lookupClient: .live
+    )
     kanjiLookupClient = .live(lookupClient: .live)
     handwritingRecognitionClient = .live
     cameraAuthorizationClient = .live
@@ -90,21 +97,10 @@ public struct SearchExperienceRootView: View {
       .navigationDestination(for: SearchExperienceRoute.self) { route in
         switch route {
         case .word(let entry, let imageContext):
-          WordDetailView(
+          wordDetailView(
             entry: entry,
             initialEncounterMedia: encounterMediaAttachment(for: imageContext),
-            speechSynthesisClient: speechSynthesisClient,
-            exampleSentenceClient: exampleSentenceClient,
-            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-            wordNoteStore: .live,
-            encounterMediaStore: encounterMediaStore,
-            cameraAuthorizationClient: cameraAuthorizationClient,
-            frequencyCapability: .live,
-            conjugationTable: japaneseConjugationClient.table(entry),
-            openRelated: openRelated,
-            openKanji: openKanji,
-            openWord: { entry in path.append(.word(entry, nil)) },
-            manageFrequencyDictionaries: openFrequencyDictionaries
+            presentedInSheet: false
           )
         case .kanji(let character, let entry):
           KanjiDetailView(
@@ -142,19 +138,72 @@ public struct SearchExperienceRootView: View {
               textAnalysisClient: japaneseTextAnalysisClient,
               translationClient: naturalTranslationClient,
               clipboardClient: imageTextClipboardClient,
+              presentedWord: $recognizedWordSheet,
               close: {
                 if path.last == .image(sessionID) { path.removeLast() }
                 imageTextSessionStore.remove(sessionID)
-              },
-              openWord: { entry, asset in
-                path.append(
-                  .word(entry, ImageWordContext(sessionID: sessionID, assetID: asset.id)))
               }
             )
           }
         }
       }
+      .sheet(item: $recognizedWordSheet) { request in
+        RecognizedWordSheet(
+          request: request,
+          openFullEntry: openRecognizedWord
+        ) { entry, encounterMedia in
+          wordDetailView(
+            entry: entry,
+            initialEncounterMedia: encounterMedia,
+            presentedInSheet: true
+          )
+        }
+      }
     }
+  }
+
+  private func openRecognizedWord(_ entry: DictionaryEntry) {
+    path.append(.word(entry, nil))
+    recognizedWordSheet = nil
+  }
+
+  private func wordDetailView(
+    entry: DictionaryEntry,
+    initialEncounterMedia: EncounterMediaAttachment?,
+    presentedInSheet: Bool
+  ) -> some View {
+    WordDetailView(
+      entry: entry,
+      initialEncounterMedia: initialEncounterMedia,
+      speechSynthesisClient: speechSynthesisClient,
+      exampleSentenceClient: exampleSentenceClient,
+      japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+      wordNoteStore: .live,
+      encounterMediaStore: encounterMediaStore,
+      cameraAuthorizationClient: cameraAuthorizationClient,
+      frequencyCapability: .live,
+      conjugationTable: japaneseConjugationClient.table(entry),
+      openRelated: { relationship in
+        dismissRecognizedWordSheet(if: presentedInSheet)
+        openRelated(relationship)
+      },
+      openKanji: { character, entry in
+        dismissRecognizedWordSheet(if: presentedInSheet)
+        openKanji(character, entry: entry)
+      },
+      openWord: { entry in
+        dismissRecognizedWordSheet(if: presentedInSheet)
+        path.append(.word(entry, nil))
+      },
+      manageFrequencyDictionaries: {
+        dismissRecognizedWordSheet(if: presentedInSheet)
+        openFrequencyDictionaries()
+      }
+    )
+  }
+
+  private func dismissRecognizedWordSheet(if shouldDismiss: Bool) {
+    if shouldDismiss { recognizedWordSheet = nil }
   }
 
   private var searchPath: Binding<[SearchExperienceRoute]> {
@@ -205,9 +254,9 @@ public struct SearchExperienceRootView: View {
         return
       }
       let entry =
-        (results.best + results.additional).first {
+        results.entries.first {
           $0.headword == relationship.headword && $0.reading == relationship.reading
-        } ?? results.best.first ?? results.additional.first
+        } ?? results.entries.first
       if let entry { path.append(.word(entry, nil)) }
     }
   }

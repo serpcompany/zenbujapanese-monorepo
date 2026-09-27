@@ -40,7 +40,7 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
     guard let url = Bundle.module.url(forResource: "FrequencyPackCatalog", withExtension: "json")
     else { throw FrequencyPackError.invalidCatalog }
     let catalog = try JSONDecoder().decode(Self.self, from: Data(contentsOf: url))
-    guard catalog.schemaVersion == 1, catalog.packs.count == 2,
+    guard catalog.schemaVersion == 1, catalog.packs.count >= 2,
       catalog.packs.filter(\.bundled).count == 1,
       Set(catalog.packs.map(\.packID)).count == catalog.packs.count,
       Set(
@@ -53,12 +53,29 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
           && $0.runtimeInstallerVersion == 1 && !$0.offlineImporterSHA256.isEmpty
           && !$0.mappingPolicySHA256.isEmpty && !$0.languageDataSHA256.isEmpty
           && !$0.artifactContentSHA256.isEmpty
+          && $0.hasValidSourceContract && $0.hasValidSmokeTest
       }),
       catalog.trustedHistoricalManifests.allSatisfy({ historical in
         !historical.bundled && catalog.packs.contains { $0.packID == historical.packID }
       })
     else { throw FrequencyPackError.invalidCatalog }
     return catalog
+  }
+
+  static func bundledArtifactURL() throws -> URL {
+    guard
+      let url = Bundle.module.url(
+        forResource: "TUBELEXFrequencyPack", withExtension: "sqlite3")
+    else { throw FrequencyPackError.missingBundledPack }
+    return url
+  }
+
+  static func languageDataURL() throws -> URL {
+    guard
+      let url = Bundle.module.url(
+        forResource: "LanguageReferenceData", withExtension: "sqlite3")
+    else { throw FrequencyPackError.invalidArtifact }
+    return url
   }
 }
 
@@ -96,12 +113,25 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
   let corpusDocuments: Int?
   let corpusVideos: Int?
   let corpusChannels: Int?
-  let licenseIdentifier: String
   let attribution: String
-  let licenseURL: URL
-  let licenseResource: String
   let bundled: Bool
   let removable: Bool
+  let orderedJSONSource: FrequencyPackOrderedJSONSource?
+  let smokeTest: FrequencyPackSmokeTest
+
+  var hasValidSourceContract: Bool {
+    guard let orderedJSONSource else { return true }
+    return !bundled && orderedJSONSource.rawJSONBytes > 0
+      && !orderedJSONSource.archiveEntry.isEmpty
+      && !presentationCapabilities.contains("count")
+  }
+
+  var hasValidSmokeTest: Bool {
+    smokeTest.rank > 0 && smokeTest.languageReferenceID.count == 32
+      && smokeTest.languageReferenceID.unicodeScalars.allSatisfy {
+        CharacterSet(charactersIn: "0123456789abcdef").contains($0)
+      }
+  }
 
   var disclosure: FrequencyPackDisclosure {
     FrequencyPackDisclosure(
@@ -119,6 +149,16 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
     encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
     return try encoder.encode(self).sha256
   }
+}
+
+struct FrequencyPackOrderedJSONSource: Codable, Equatable, Sendable {
+  let archiveEntry: String
+  let rawJSONBytes: Int
+}
+
+struct FrequencyPackSmokeTest: Codable, Equatable, Sendable {
+  let languageReferenceID: String
+  let rank: Int
 }
 
 struct FrequencyPackDisclosure: Equatable, Sendable {
@@ -213,10 +253,16 @@ actor FrequencyPackManager {
         forResource: "FrequencyPackMappingV1", withExtension: "sql"),
       try Data(contentsOf: mappingPolicyURL).sha256 == bundled.mappingPolicySHA256
     else { throw FrequencyPackError.invalidArtifact }
-    _ = try FrequencyPackArtifact(url: bundledArtifactURL, manifest: bundled)
+    let bundledArtifact = try FrequencyPackArtifact(url: bundledArtifactURL, manifest: bundled)
+    try bundledArtifact.validateSmokeTest()
     let stateURL = storageDirectory.appendingPathComponent("state.json")
     let saved = try? JSONDecoder().decode(
       PersistedFrequencyPackState.self, from: Data(contentsOf: stateURL))
+    let currentPackIDs = Set(catalog.packs.map(\.packID))
+    for record in saved?.installedRecords ?? [] where !currentPackIDs.contains(record.packID) {
+      try? FileManager.default.removeItem(
+        at: Self.artifactURL(for: record.packID, in: storageDirectory))
+    }
     let validatedRecords: [FrequencyPackID: InstalledFrequencyPackRecord] = Dictionary(
       uniqueKeysWithValues: (saved?.installedRecords ?? []).compactMap { record in
         guard let manifest = catalog.packs.first(where: { $0.packID == record.packID }),
@@ -230,6 +276,11 @@ actor FrequencyPackManager {
         else { return nil }
         return (record.packID, record)
       })
+    for record in saved?.installedRecords ?? []
+    where validatedRecords[record.packID] == nil && currentPackIDs.contains(record.packID) {
+      try? FileManager.default.removeItem(
+        at: Self.artifactURL(for: record.packID, in: storageDirectory))
+    }
     installedRecords = validatedRecords
     let savedID = saved?.activePackID
     if let savedID,
@@ -240,6 +291,14 @@ actor FrequencyPackManager {
     } else {
       activePackID = bundled.packID
     }
+    try JSONEncoder().encode(
+      PersistedFrequencyPackState(
+        activePackID: activePackID,
+        installedRecords: installedRecords.values.sorted {
+          $0.packID.rawValue < $1.packID.rawValue
+        }
+      )
+    ).write(to: stateURL, options: .atomic)
   }
 
   func snapshot() throws -> FrequencyPackSnapshot {
@@ -337,7 +396,9 @@ actor FrequencyPackManager {
       } ?? false
     guard manifest.bundled || installedIsValid else { throw FrequencyPackError.packNotInstalled }
     let installedManifest = effectiveManifest(for: manifest)
-    _ = try FrequencyPackArtifact(url: artifactURL(for: manifest), manifest: installedManifest)
+    let artifact = try FrequencyPackArtifact(
+      url: artifactURL(for: manifest), manifest: installedManifest)
+    try artifact.validateSmokeTest()
     activePackID = packID
     try persist()
   }
@@ -402,7 +463,7 @@ actor FrequencyPackManager {
       installedManifest.packID == manifest.packID,
       FileManager.default.fileExists(atPath: url.path),
       (try? Data(contentsOf: url).sha256) == record.artifactSHA256,
-      (try? FrequencyPackArtifact(url: url, manifest: installedManifest)) != nil
+      Self.validArtifact(at: url, manifest: installedManifest)
     else { return false }
     return true
   }
@@ -415,6 +476,16 @@ actor FrequencyPackManager {
       manifest.packID == record.packID
         && manifest.packVersion == record.packVersion
         && (try? manifest.trustSHA256()) == record.manifestSHA256
+    }
+  }
+
+  private static func validArtifact(at url: URL, manifest: FrequencyPackManifest) -> Bool {
+    do {
+      let artifact = try FrequencyPackArtifact(url: url, manifest: manifest)
+      try artifact.validateSmokeTest()
+      return true
+    } catch {
+      return false
     }
   }
 }

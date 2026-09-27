@@ -79,7 +79,7 @@ private actor LanguageReferenceData {
       var literalResults = try searchLiteralEnglish(literalQuery)
       if !refinedResults.isEmpty, !literalResults.isEmpty {
         if let exactFormEntry = try entry(matchingForm: query.value),
-          (literalResults.best + literalResults.additional).contains(where: {
+          literalResults.entries.contains(where: {
             $0.id == exactFormEntry.id
           })
         {
@@ -92,26 +92,25 @@ private actor LanguageReferenceData {
     let directResults = try searchOnce(query)
     if !directResults.hasExactOrPrefixMatch, !query.deinflectedCandidates.isEmpty {
       let deinflectedResults = try query.deinflectedCandidates.map(searchOnce)
-      if let primaryIndex = deinflectedResults.firstIndex(where: { !$0.best.isEmpty }) {
-        let deinflectedBest = Self.uniqued(deinflectedResults[primaryIndex].best)
-        let bestIDs = Set(deinflectedBest.map(\.id))
-        let alternateMatches = deinflectedResults.dropFirst(primaryIndex + 1).flatMap {
-          $0.best + $0.additional
-        }
-        let displacedMatches = Self.uniqued(
-          alternateMatches + directResults.best + directResults.additional
-        ).filter { !bestIDs.contains($0.id) }
-        return LookupSearchResults(
-          best: deinflectedBest,
-          additional: Array(displacedMatches.prefix(max(0, 60 - deinflectedBest.count))),
-          usesPrimaryEntryExamples: true
+      if let primaryIndex = deinflectedResults.firstIndex(where: { !$0.entries.isEmpty }) {
+        let primaryResult = deinflectedResults[primaryIndex]
+        let primaryItems = Array(
+          primaryResult.items.prefix(primaryResult.leadingLexicalEntryCount))
+        let displacedSources = deinflectedResults.dropFirst(primaryIndex + 1).map(\.items)
+          + [directResults.items]
+        return LookupSearchResults.composing(
+          sources: [primaryItems] + displacedSources,
+          leadingLexicalEntryCount: primaryItems.count,
+          usesPrimaryEntryExamples: true,
+          resolution: .deinflected,
+          limit: 60
         )
       }
     }
     if query.isASCII,
       !directResults.isEmpty,
       let exactFormEntry = try entry(matchingForm: query.value),
-      (directResults.best + directResults.additional).contains(where: { $0.id == exactFormEntry.id }
+      directResults.entries.contains(where: { $0.id == exactFormEntry.id }
       )
     {
       return directResults.usingPrimaryEntryExamples()
@@ -120,29 +119,27 @@ private actor LanguageReferenceData {
     let analyzedResults = try await japaneseTextAnalysis.lookupSegments(query).compactMap {
       segment in
       let segmentResults = try searchOnce(segment)
-      return (segmentResults.best + segmentResults.additional).first {
-        $0.headword == segment.value
+      return segmentResults.items.first {
+        $0.entry.headword == segment.value
       }
-        ?? segmentResults.best.first
+        ?? segmentResults.items.first
     }
     if analyzedResults.count > 1 || (query.isMixedScript && !analyzedResults.isEmpty) {
-      return LookupSearchResults(
-        best: Array(Self.uniqued(analyzedResults)),
-        additional: [],
-        presentation: .discoveredWords,
-        hasExactOrPrefixMatch: false
+      return LookupSearchResults.composing(
+        sources: analyzedResults.map { [$0] },
+        leadingLexicalEntryCount: analyzedResults.count,
+        usesPrimaryEntryExamples: false,
+        hasExactOrPrefixMatch: false,
+        resolution: .analyzed,
+        limit: analyzedResults.count
       )
+      .presenting(.discoveredWords)
     }
     if query.isMixedScript {
       for segment in query.japaneseSegments {
         let results = try searchOnce(segment)
         if !results.isEmpty {
-          return LookupSearchResults(
-            best: results.best,
-            additional: results.additional,
-            presentation: .discoveredWords,
-            hasExactOrPrefixMatch: false
-          )
+          return results.presenting(.discoveredWords, hasExactOrPrefixMatch: false)
         }
       }
     }
@@ -210,11 +207,6 @@ private actor LanguageReferenceData {
     }
   }
 
-  private static func uniqued(_ entries: [DictionaryEntry]) -> [DictionaryEntry] {
-    var seen = Set<LanguageReferenceID>()
-    return entries.filter { seen.insert($0.id).inserted }
-  }
-
   private func searchLiteralEnglish(_ query: SearchQuery) throws -> LookupSearchResults {
     try searchOnce(query)
   }
@@ -224,13 +216,13 @@ private actor LanguageReferenceData {
 
     let ranked = query.isASCII ? try rankedEnglish(query) : try rankedJapanese(query)
     guard !ranked.isEmpty else { return .empty }
-    let leadingPresentationRank = ranked[0].presentationRank
-    let best = ranked.prefix { $0.presentationRank == leadingPresentationRank }.map(\.entry)
-    let additionalAllowance = max(0, 60 - best.count)
-    let additional = ranked.dropFirst(best.count).prefix(additionalAllowance).map(\.entry)
+    let leadingLegacyRank = ranked[0].legacyPresentationRank
+    let leadingLexicalEntryCount = ranked.prefix {
+      $0.legacyPresentationRank == leadingLegacyRank
+    }.count
     return LookupSearchResults(
-      best: Array(best),
-      additional: Array(additional),
+      items: Self.resultItems(for: Array(ranked.prefix(60))),
+      leadingLexicalEntryCount: leadingLexicalEntryCount,
       hasExactOrPrefixMatch: ranked.contains { $0.hasExactOrPrefixMatch }
     )
   }
@@ -288,8 +280,10 @@ private actor LanguageReferenceData {
               RankedDictionaryEntry(
                 entry: entry,
                 presentationRank: rank.presentationRank,
+                legacyPresentationRank: .english(rank),
                 hasExactOrPrefixMatch: romaji != .contains,
-                semanticFingerprint: fingerprint
+                semanticFingerprint: fingerprint,
+                matchedSummary: nil
               ), rank
             ))
         }
@@ -318,8 +312,10 @@ private actor LanguageReferenceData {
           RankedDictionaryEntry(
             entry: entry,
             presentationRank: rank.presentationRank,
+            legacyPresentationRank: .english(rank),
             hasExactOrPrefixMatch: lane == .strongGloss || corroborated,
-            semanticFingerprint: fingerprint
+            semanticFingerprint: fingerprint,
+            matchedSummary: selectedGloss.meaning
           ), rank
         ))
     }
@@ -359,6 +355,7 @@ private actor LanguageReferenceData {
           relation: relation,
           senseOrder: senseOrder,
           glossOrder: Int(sqlite3_column_int(glossStatement, 2)),
+          meaning: Self.string(column: 3, statement: glossStatement),
           partsOfSpeech: parts,
           restrictedWrittenForms: written.sorted(),
           restrictedReadingForms: reading.sorted()
@@ -443,8 +440,10 @@ private actor LanguageReferenceData {
         RankedDictionaryEntry(
           entry: entry,
           presentationRank: rank.presentationRank,
+          legacyPresentationRank: .japanese(rank),
           hasExactOrPrefixMatch: selected.relation.rawValue < 4,
-          semanticFingerprint: fingerprint
+          semanticFingerprint: fingerprint,
+          matchedSummary: nil
         ),
         rank
       )
@@ -789,6 +788,9 @@ private actor LanguageReferenceData {
     }
     return orderedFingerprints.compactMap { fingerprint in
       guard let group = groups[fingerprint], let leading = group.first,
+        let strongestMatch = group.min(by: {
+          $0.presentationRank < $1.presentationRank
+        }),
         let normalized = LanguageReferenceIdentity.normalizedEntry(
           group.map(\.entry),
           preserving: leading.entry
@@ -796,10 +798,28 @@ private actor LanguageReferenceData {
       else { return nil }
       return RankedDictionaryEntry(
         entry: normalized,
-        presentationRank: leading.presentationRank,
+        presentationRank: strongestMatch.presentationRank,
+        legacyPresentationRank: leading.legacyPresentationRank,
         hasExactOrPrefixMatch: group.contains(where: \.hasExactOrPrefixMatch),
-        semanticFingerprint: fingerprint
+        semanticFingerprint: fingerprint,
+        matchedSummary: strongestMatch.matchedSummary
       )
+    }
+  }
+
+  private static func resultItems(
+    for entries: [RankedDictionaryEntry]
+  ) -> [LookupSearchResultItem] {
+    entries.enumerated().map { fallbackOrder, entry in
+        LookupSearchResultItem(
+          entry: entry.entry,
+          relevance: DictionaryRelevance(
+            sourceOrder: 0,
+            matchRank: entry.presentationRank
+          ),
+          fallbackOrder: fallbackOrder,
+          matchedSummary: entry.matchedSummary
+        )
     }
   }
 
@@ -948,8 +968,10 @@ private enum SearchFormKind: Int {
 private struct RankedDictionaryEntry {
   let entry: DictionaryEntry
   let presentationRank: DictionaryPresentationRank
+  let legacyPresentationRank: DictionaryLegacyPresentationRank
   let hasExactOrPrefixMatch: Bool
   let semanticFingerprint: String
+  let matchedSummary: String?
 }
 
 private struct SenseRestrictionKey: Hashable {

@@ -11,6 +11,7 @@ authoritative for exact versions, URLs, checksums, licenses, and transformations
 | Dictionaries and language analysis | [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html) | Japanese written forms, readings, English meanings, usage information, cross-references, and source priority evidence. | iOS |
 | Dictionaries and language analysis | [UniDic](https://clrd.ninjal.ac.jp/unidic_archive/cwj/3.1.0/) | Source-matched pronunciation and pitch-accent facts used while importing JMdict. | iOS |
 | Dictionaries and language analysis | [SudachiDict Core](https://github.com/WorksApplications/SudachiDict) | Lexical data required by Sudachi.rs to identify and describe Japanese words. It is not Zenbu's learner-facing Japanese-English dictionary. | iOS |
+| Dictionaries and language analysis | [MeCab IPADIC through kuromoji.js](https://github.com/takuyaa/kuromoji.js) | Bundled morphological data used by Kuromoji to parse interactive Japanese text. It is not Zenbu's learner-facing Japanese-English dictionary. | iOS |
 | Examples and corpora | [Tatoeba](https://tatoeba.org/en/downloads) | Japanese sentences, English translations, links, contributor information, and license provenance. | iOS |
 | Kanji and handwriting | [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project) | Kanji meanings, readings, stroke counts, school grade, frequency, and JLPT classification. | iOS |
 | Kanji and handwriting | [KRADFILE and RADKFILE](https://www.edrdg.org/krad/kradinf.html) | Visible component membership and component stroke-count evidence. | iOS |
@@ -19,4 +20,10 @@ authoritative for exact versions, URLs, checksums, licenses, and transformations
 | Kanji and handwriting | [DaKanji](https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition) | A model that predicts candidate Japanese characters from a completed drawing. | iOS |
 | Frequency data | [TUBELEX](https://github.com/naist-nlp/tubelex) | Japanese word frequency data from occurrences across YouTube. | iOS |
 | Frequency data | [Wikipedia Word Frequency Clean](https://github.com/adno/wikipedia-word-frequency-clean) | Japanese word frequency data from occurrences across Wikipedia. | iOS |
+| Frequency data | [Public Japanese frequency catalog](https://migaku-public-data.migaku.com/dicts/index.json) | Nine optional ordered Japanese lists for streaming, novels, anime genres, NHK news, Japanese dictionary definitions, visual novels, television, and the web. Packs download on demand and are mapped on-device. Its YouTube list is analyzed but not offered because TUBELEX is the more comprehensive YouTube source. | iOS |
 | Unverified app-owned data | [`Zenbu Word Relationships`](../apps/ios/LanguageData/Sources/Zenbu-Word-Relationships-v1.json) | Two uncited relationships between dictionary entries. No source or reviewer is recorded, so the file is pending a separate removal decision. | iOS |
+
+The ten public-catalog lists remain checksum-pinned for comparison; nine are
+optional sources. Their mapping coverage, TUBELEX/Wikipedia overlap, runtime
+selection, and reproducible analysis are recorded in the iOS
+[`frequency source analysis`](../apps/ios/LanguageData/FREQUENCY_SOURCE_DECISIONS.md).

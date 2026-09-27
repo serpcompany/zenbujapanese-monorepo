@@ -18,10 +18,11 @@ support learner-facing capabilities. The catalogs remain the complete record.
 flowchart LR
     Text["Typed Japanese"] --> Sudachi["Sudachi analysis"]
     Image["Image"] --> Vision["Apple Vision OCR"]
+    Vision --> Kuromoji["Kuromoji parsing"]
     Drawing["Handwriting"] --> CoreML["Core ML recognition"]
 
-    Vision --> Sudachi
     Sudachi --> Lookup["Offline dictionary lookup"]
+    Kuromoji --> Lookup
     CoreML --> Lookup
 
     SudachiDict[("SudachiDict Core")] -. lexical data .-> Sudachi
@@ -39,11 +40,14 @@ flowchart LR
 | Image Search | Apple Vision | Recognizes Japanese and English text and its position in selected images. | iOS | [`ImageTextRecognitionClient.swift`](../apps/ios/Modules/Sources/SearchExperience/ImageTextRecognitionClient.swift) |
 | Handwriting Search | Core ML | Runs the DaKanji character-recognition model against a completed drawing. | iOS | [`OfflineHandwritingRecognizer.swift`](../apps/ios/Modules/Sources/SearchExperience/OfflineHandwritingRecognizer.swift) |
 | Japanese text analysis | Sudachi.rs through sudachi-swift | Finds word boundaries, dictionary forms, readings, parts of speech, unknown-word status, and text ranges. | iOS | [`Package.swift`](../apps/ios/Modules/Package.swift), [`JapaneseMorphologyClient.swift`](../apps/ios/Modules/Sources/SearchExperience/JapaneseMorphologyClient.swift) |
+| Interactive Japanese parsing | kuromoji.js through Apple JavaScriptCore | By default, finds word boundaries, dictionary forms, readings, parts of speech, unknown-word status, and text ranges for Image Search and linked Japanese text. A launch-environment switch retains Sudachi for local comparison. | iOS | [`Package.swift`](../apps/ios/Modules/Package.swift), [`SearchExperienceRootView.swift`](../apps/ios/Modules/Sources/SearchExperience/SearchExperienceRootView.swift), [`KuromojiMorphologyClient.swift`](../apps/ios/Modules/Sources/SearchExperience/KuromojiMorphologyClient.swift) |
 | Japanese-to-English translation | Apple Translation | Translates recognized Japanese text using installed Apple language assets. | iOS | [`NaturalTranslationClient.swift`](../apps/ios/Modules/Sources/SearchExperience/NaturalTranslationClient.swift) |
 | Japanese pronunciation | AVFoundation | Speaks Japanese words and example sentences with the system speech synthesizer. | iOS | [`SpeechSynthesisClient.swift`](../apps/ios/Modules/Sources/SearchExperience/SpeechSynthesisClient.swift) |
 | Camera, photo, and file import | PhotosUI and UIKit | Accepts images for Image Search and saved word encounters. | iOS | [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |
 | Offline reference data | SQLite | Reads dictionary, example, stroke-diagram, and frequency databases on the device. | iOS | [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |
 | Downloadable resource installation | CryptoKit and ZIPFoundation | Verifies and extracts downloadable frequency and language-analysis resources. | iOS | [`Package.swift`](../apps/ios/Modules/Package.swift), [`SearchExperience`](../apps/ios/Modules/Sources/SearchExperience/) |
+| Ordered frequency-pack installation | Swift, ZIPFoundation, CryptoKit, JSON, and SQLite | Downloads checksum-pinned ordered JSON archives directly from their public catalog, validates their exact ZIP/row contract, maps forms to Language Reference IDs on-device, and installs removable SQLite packs. | iOS | [`FrequencyPackInstaller.swift`](../apps/ios/Modules/Sources/SearchExperience/FrequencyPackInstaller.swift), [`FrequencyPackCatalog.json`](../apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackCatalog.json) |
+| Frequency source analysis | Python, ZIP, JSON, and SQLite | Reproducibly validates ordered archives, maps them against Language Reference IDs, computes runtime trust hashes, and compares their ordering with TUBELEX and Wikipedia. | iOS development | [`analyze_ordered_json_frequency_lists.py`](../apps/ios/Tools/analyze_ordered_json_frequency_lists.py), [`FREQUENCY_SOURCE_DECISIONS.md`](../apps/ios/LanguageData/FREQUENCY_SOURCE_DECISIONS.md) |
 
 Sudachi is analysis technology, not Zenbu's Japanese-English dictionary. Apple
 Vision recognizes text but does not interpret its words. Apple Translation

@@ -5,11 +5,11 @@ import UIKit
 struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
+  @Binding private var presentedWord: RecognizedWordSheetRequest?
   let textAnalysisClient: JapaneseTextAnalysisClient
   let translationClient: NaturalTranslationClient
   let clipboardClient: ImageTextClipboardClient
   let close: () -> Void
-  let openWord: (DictionaryEntry, ImageTextAsset) -> Void
 
   init(
     session: ImageTextSession,
@@ -17,8 +17,8 @@ struct ImageTextFlowView: View {
     textAnalysisClient: JapaneseTextAnalysisClient,
     translationClient: NaturalTranslationClient,
     clipboardClient: ImageTextClipboardClient,
-    close: @escaping () -> Void,
-    openWord: @escaping (DictionaryEntry, ImageTextAsset) -> Void
+    presentedWord: Binding<RecognizedWordSheetRequest?>,
+    close: @escaping () -> Void
   ) {
     _model = State(
       initialValue: ImageTextFlowModel(
@@ -27,11 +27,11 @@ struct ImageTextFlowView: View {
         textAnalysisClient: textAnalysisClient,
         translationClient: translationClient
       ))
+    _presentedWord = presentedWord
     self.textAnalysisClient = textAnalysisClient
     self.translationClient = translationClient
     self.clipboardClient = clipboardClient
     self.close = close
-    self.openWord = openWord
   }
 
   var body: some View {
@@ -95,6 +95,9 @@ struct ImageTextFlowView: View {
       }
     }
     .onDisappear { model.suspendTranslation() }
+    .onChange(of: presentedWord?.id) { _, wordID in
+      if wordID == nil { model.selectedRegion = nil }
+    }
     .alert(
       "No Text Found",
       isPresented: Binding(
@@ -276,13 +279,14 @@ struct ImageTextFlowView: View {
         page: page,
         showsHighlights: model.showsHighlights,
         selectedRegion: model.selectedRegion,
-        selectRegion: { model.selectedRegion = $0 },
-        openWord: {
-          openWord($0, page.asset)
+        selectRegion: { region in
+          model.selectedRegion = region
+          presentedWord = region.sheetRequest(asset: page.asset)
         }
       )
     }
   }
+
 }
 
 private struct NativeTranslationPreparationTask: View {
@@ -320,7 +324,6 @@ private struct ImageTextCanvas: View {
   let showsHighlights: Bool
   let selectedRegion: ImageTextRegion?
   let selectRegion: (ImageTextRegion) -> Void
-  let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
     GeometryReader { geometry in
@@ -335,59 +338,17 @@ private struct ImageTextCanvas: View {
 
           if showsHighlights {
             ForEach(page.regions) { region in
-              let rect = displayRect(region.boundingBox, in: imageRect)
-              Button {
-                selectRegion(region)
-              } label: {
-                Rectangle()
-                  .fill(ZenbuTheme.recognitionHighlight.opacity(0.32))
-                  .overlay(Rectangle().stroke(ZenbuTheme.recognitionHighlight, lineWidth: 1))
-              }
-              .buttonStyle(.plain)
-              .frame(width: max(rect.width, 28), height: max(rect.height, 28))
+              let recognizedRect = displayRect(region.boundingBox, in: imageRect)
+              let rect = interactiveTokenRect(recognizedRect)
+              ImageTextRegionButton(
+                region: region,
+                isVertical: recognizedRect.height > recognizedRect.width * 1.35,
+                isSelected: selectedRegion?.id == region.id,
+                select: selectRegion
+              )
+              .frame(width: max(rect.width, 1), height: max(rect.height, 1))
               .position(x: rect.midX, y: rect.midY)
-              .accessibilityLabel("Recognized \(region.surface)")
-              .accessibilityIdentifier("image-text.region.\(region.surface)")
             }
-          }
-
-          if let selectedRegion {
-            Group {
-              if let entry = selectedRegion.entry {
-                Button {
-                  openWord(entry)
-                } label: {
-                  imageTextGloss(entry)
-                }
-                .accessibilityLabel("\(entry.headword), \(entry.reading), \(entry.summary)")
-                .accessibilityIdentifier("image-text.gloss")
-              } else {
-                Menu {
-                  ForEach(selectedRegion.candidateEntries) { candidate in
-                    Button {
-                      openWord(candidate)
-                    } label: {
-                      Text("\(candidate.headword) (\(candidate.reading)) — \(candidate.summary)")
-                    }
-                  }
-                } label: {
-                  Label(
-                    "\(selectedRegion.surface): \(selectedRegion.candidateEntries.count) dictionary entries",
-                    systemImage: "ellipsis.circle"
-                  )
-                  .padding(.horizontal, 12)
-                  .padding(.vertical, 8)
-                  .background(.background, in: RoundedRectangle(cornerRadius: 12))
-                }
-                .accessibilityLabel("\(selectedRegion.surface), choose dictionary entry")
-                .accessibilityHint(
-                  "Shows \(selectedRegion.candidateEntries.count) possible dictionary entries"
-                )
-                .accessibilityIdentifier("image-text.candidates")
-              }
-            }
-            .buttonStyle(.plain)
-            .padding(20)
           }
 
           Text("")
@@ -410,22 +371,6 @@ private struct ImageTextCanvas: View {
     }
   }
 
-  private func imageTextGloss(_ entry: DictionaryEntry) -> some View {
-    HStack(spacing: 7) {
-      JapaneseRubyText(
-        surface: entry.headword,
-        reading: entry.reading,
-        baseFont: .headline,
-        rubyFont: .body
-      )
-      Text(entry.summary)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-    .padding(.horizontal, 12)
-    .padding(.vertical, 8)
-    .background(.background, in: RoundedRectangle(cornerRadius: 12))
-  }
-
   private func aspectFitRect(imageSize: CGSize, container: CGSize) -> CGRect {
     let scale = min(container.width / imageSize.width, container.height / imageSize.height)
     let size = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
@@ -444,5 +389,47 @@ private struct ImageTextCanvas: View {
       width: normalized.width * imageRect.width,
       height: normalized.height * imageRect.height
     )
+  }
+
+  private func interactiveTokenRect(_ recognizedRect: CGRect) -> CGRect {
+    if recognizedRect.height > recognizedRect.width * 1.35 {
+      let gap = min(4, recognizedRect.height * 0.16)
+      return recognizedRect.insetBy(dx: 0, dy: gap / 2)
+    }
+    let gap = min(5, recognizedRect.width * 0.16)
+    return recognizedRect.insetBy(dx: gap / 2, dy: 0)
+  }
+}
+
+private struct ImageTextRegionButton: View {
+  let region: ImageTextRegion
+  let isVertical: Bool
+  let isSelected: Bool
+  let select: (ImageTextRegion) -> Void
+
+  var body: some View {
+    Button {
+      select(region)
+    } label: {
+      Color.clear
+        .contentShape(.rect)
+        .background {
+          RoundedRectangle(cornerRadius: 3)
+            .fill(ZenbuTheme.recognitionHighlight.opacity(isSelected ? 0.14 : 0.05))
+        }
+        .overlay(alignment: isVertical ? .trailing : .bottom) { underline }
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Recognized \(region.surface)")
+    .accessibilityIdentifier("image-text.region.\(region.surface)")
+  }
+
+  private var underline: some View {
+    Rectangle()
+      .fill(ZenbuTheme.recognitionHighlight.opacity(isSelected ? 1 : 0.78))
+      .frame(
+        width: isVertical ? 3 : nil,
+        height: isVertical ? nil : 3
+      )
   }
 }
