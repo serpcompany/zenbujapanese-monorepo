@@ -55,7 +55,8 @@ with the generated mapping analysis, and the bundled TUBELEX artifact contains i
 
 Use these fixed fixtures when changing dictionary candidate retrieval, frequency ordering, or
 the Search results presentation. Run every text fixture with the included TUBELEX pack, then
-install and activate Japanese Wikipedia under **You → Frequency Dictionaries** and repeat without
+install Japanese Wikipedia under **You → Frequency Dictionaries**, move it to the top of the
+Enabled list, and repeat without
 editing or resubmitting the visible query.
 
 | Fixture | Query | Verify |
@@ -71,15 +72,17 @@ editing or resubmitting the visible query.
 | Discovered words | `日本語を勉強する` | **Discovered Words** remains distinct from ordinary ranked results. |
 | Example Sentences | `見る` | The Example Sentences action remains available and opens its associated flow. |
 
-For pack switching, record the visible headwords and ranks for `いる` under TUBELEX, activate
-Japanese Wikipedia, return to Search without changing the query, and verify that rows reorder
-where displayed rank values differ between entries with equivalent match evidence. Switch back and verify the
-original ordering returns.
+For pack priority, record the visible headwords and ranks for `いる` under TUBELEX, enable
+Japanese Wikipedia and move it first, return to Search without changing the query, and verify
+that rows show a Wikipedia chip with `+1` and reorder where displayed rank values differ between
+entries with equivalent match evidence. Move TUBELEX back to the top and verify the original
+ordering returns. Disable every pack and verify that rows show no frequency chips, use
+dictionary relevance order, and Word Detail hides its frequency row.
 
-For unavailable-pack fallback, begin a search and make the active installed pack unreadable in a
-debug Simulator container (or inject an unavailable `FrequencyCapability`). Verify that the same
+For unavailable-pack fallback, begin a search and make the first enabled installed pack
+unreadable in a debug Simulator container (or inject an unavailable `FrequencyCapability`). Verify that the same
 candidate IDs remain in deterministic dictionary order, the list is not emptied, and the
 non-blocking frequency-ordering disclosure appears. Restore the pack after the check.
 
 For cancellation, rapidly submit `quiet`, `miru`, and `いる`, then switch packs while the last
-query is visible. Only `いる` candidates and evidence from the newly active pack may remain.
+query is visible. Only `いる` candidates and evidence in the new priority order may remain.

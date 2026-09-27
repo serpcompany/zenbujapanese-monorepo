@@ -168,18 +168,32 @@ struct FrequencyPackDisclosure: Equatable, Sendable {
   let domainDescription: String
   let version: String
   let attribution: String
+
+  /// A compact label for rank chips.
+  var shortName: String {
+    switch id.rawValue {
+    case "zenbu.tubelex.youtube.ja.unidic-3.1": "YouTube"
+    case "zenbu.wikipedia.written.ja.unidic-3.1": "Wikipedia"
+    default: displayName
+    }
+  }
 }
 
 struct FrequencyPackSnapshot: Equatable, Sendable {
-  let activePackID: FrequencyPackID
+  /// Enabled packs in the learner's priority order. The first pack orders search results.
+  let enabledPackIDs: [FrequencyPackID]
   let packs: [FrequencyPackState]
+
+  var enabledPacks: [FrequencyPackState] {
+    enabledPackIDs.compactMap { id in packs.first { $0.id == id } }
+  }
 }
 
 struct FrequencyPackState: Equatable, Identifiable, Sendable {
   var id: FrequencyPackID { manifest.packID }
   let manifest: FrequencyPackManifest
   let isInstalled: Bool
-  let isActive: Bool
+  let isEnabled: Bool
   let installedBytes: Int?
   let failureMessage: String?
   let updateStatus: String
@@ -187,21 +201,24 @@ struct FrequencyPackState: Equatable, Identifiable, Sendable {
 
   var availableActions: [FrequencyPackAction] {
     guard isInstalled else { return [.download] }
-    guard manifest.removable else { return [] }
-    return (isActive ? [] : [.activate]) + (updateAvailable ? [.update] : []) + [.remove]
+    return [isEnabled ? .disable : .enable]
+      + (updateAvailable ? [.update] : [])
+      + (manifest.removable ? [.remove] : [])
   }
 }
 
 enum FrequencyPackAction: Equatable, Sendable {
   case download
-  case activate
+  case enable
+  case disable
   case update
   case remove
 
   var label: String {
     switch self {
     case .download: "Download"
-    case .activate: "Use This Dictionary"
+    case .enable: "Enable"
+    case .disable: "Disable"
     case .update: "Download Update"
     case .remove: "Remove Pack"
     }
@@ -223,7 +240,7 @@ actor FrequencyPackManager {
   private let languageDataURL: URL
   private let storageDirectory: URL
   private let downloadSource: Download
-  private var activePackID: FrequencyPackID
+  private var enabledPackIDs: [FrequencyPackID]
   private var installedRecords: [FrequencyPackID: InstalledFrequencyPackRecord]
   private var failures: [FrequencyPackID: String] = [:]
 
@@ -282,28 +299,21 @@ actor FrequencyPackManager {
         at: Self.artifactURL(for: record.packID, in: storageDirectory))
     }
     installedRecords = validatedRecords
-    let savedID = saved?.activePackID
-    if let savedID,
-      catalog.packs.contains(where: { $0.packID == savedID }),
-      savedID == bundled.packID || validatedRecords[savedID] != nil
-    {
-      activePackID = savedID
-    } else {
-      activePackID = bundled.packID
+    // State saved before multiple enabled packs stored one active pack; it becomes the only
+    // enabled pack. A new install enables the bundled pack.
+    let savedIDs = saved.map { $0.enabledPackIDs ?? $0.activePackID.map { [$0] } ?? [] }
+    var seen = Set<FrequencyPackID>()
+    enabledPackIDs = (savedIDs ?? [bundled.packID]).filter { id in
+      catalog.packs.contains(where: { $0.packID == id })
+        && (id == bundled.packID || validatedRecords[id] != nil)
+        && seen.insert(id).inserted
     }
-    try JSONEncoder().encode(
-      PersistedFrequencyPackState(
-        activePackID: activePackID,
-        installedRecords: installedRecords.values.sorted {
-          $0.packID.rawValue < $1.packID.rawValue
-        }
-      )
-    ).write(to: stateURL, options: .atomic)
+    try Self.persist(enabledPackIDs, installedRecords, in: storageDirectory)
   }
 
   func snapshot() throws -> FrequencyPackSnapshot {
     FrequencyPackSnapshot(
-      activePackID: activePackID,
+      enabledPackIDs: enabledPackIDs,
       packs: catalog.packs.map { manifest in
         let url = artifactURL(for: manifest)
         let installedRecord = installedRecords[manifest.packID]
@@ -317,7 +327,7 @@ actor FrequencyPackManager {
         return FrequencyPackState(
           manifest: manifest,
           isInstalled: installed,
-          isActive: manifest.packID == activePackID,
+          isEnabled: enabledPackIDs.contains(manifest.packID),
           installedBytes: bytes,
           failureMessage: failures[manifest.packID],
           updateStatus: manifest.bundled
@@ -331,28 +341,37 @@ actor FrequencyPackManager {
     )
   }
 
-  func evidence(for id: LanguageReferenceID) throws -> FrequencyLookupResult {
+  func evidence(for id: LanguageReferenceID) throws -> FrequencyRanks {
     guard let result = try evidence(for: [id])[id] else {
       throw FrequencyPackError.invalidArtifact
     }
     return result
   }
 
-  func evidence(for ids: [LanguageReferenceID]) throws
-    -> [LanguageReferenceID: FrequencyLookupResult]
-  {
-    guard let catalogManifest = catalog.packs.first(where: { $0.packID == activePackID }) else {
-      throw FrequencyPackError.invalidCatalog
+  /// Returns one result per enabled pack for each entry, in priority order. With no enabled
+  /// packs, every entry has an empty list.
+  func evidence(for ids: [LanguageReferenceID]) throws -> [LanguageReferenceID: FrequencyRanks] {
+    var ranks = Dictionary(uniqueKeysWithValues: ids.map { ($0, FrequencyRanks()) })
+    for packID in enabledPackIDs {
+      guard let catalogManifest = catalog.packs.first(where: { $0.packID == packID }) else {
+        throw FrequencyPackError.invalidCatalog
+      }
+      let manifest = effectiveManifest(for: catalogManifest)
+      let results: [LanguageReferenceID: FrequencyLookupResult]
+      do {
+        results = try FrequencyPackArtifact(
+          url: artifactURL(for: manifest), manifest: manifest
+        ).evidence(for: ids)
+      } catch {
+        results = FrequencyLookupResult.unavailableResults(
+          for: ids, pack: manifest.disclosure, reason: "Frequency data unavailable")
+      }
+      for id in ids {
+        guard let result = results[id] else { throw FrequencyPackError.invalidArtifact }
+        ranks[id, default: []].append(result)
+      }
     }
-    let manifest = effectiveManifest(for: catalogManifest)
-    do {
-      return try FrequencyPackArtifact(
-        url: artifactURL(for: manifest), manifest: manifest
-      ).evidence(for: ids)
-    } catch {
-      return FrequencyLookupResult.unavailableResults(
-        for: ids, pack: manifest.disclosure, reason: "Frequency data unavailable")
-    }
+    return ranks
   }
 
   func download(_ packID: FrequencyPackID) async throws {
@@ -370,7 +389,11 @@ actor FrequencyPackManager {
         languageDataURL: languageDataURL,
         destination: artifactURL(for: manifest)
       )
+      let isNewInstall = installedRecords[packID] == nil
       installedRecords[packID] = record
+      if isNewInstall, !enabledPackIDs.contains(packID) {
+        enabledPackIDs.append(packID)
+      }
       try persist()
     } catch {
       failures[packID] =
@@ -381,7 +404,8 @@ actor FrequencyPackManager {
     }
   }
 
-  func activate(_ packID: FrequencyPackID) throws {
+  /// Appends an installed pack to the end of the enabled priority order.
+  func enable(_ packID: FrequencyPackID) throws {
     guard let manifest = catalog.packs.first(where: { $0.packID == packID }) else {
       throw FrequencyPackError.packNotInstalled
     }
@@ -399,7 +423,22 @@ actor FrequencyPackManager {
     let artifact = try FrequencyPackArtifact(
       url: artifactURL(for: manifest), manifest: installedManifest)
     try artifact.validateSmokeTest()
-    activePackID = packID
+    guard !enabledPackIDs.contains(packID) else { return }
+    enabledPackIDs.append(packID)
+    try persist()
+  }
+
+  func disable(_ packID: FrequencyPackID) throws {
+    enabledPackIDs.removeAll { $0 == packID }
+    try persist()
+  }
+
+  /// Replaces the priority order. The new order must contain exactly the enabled packs.
+  func reorderEnabled(_ packIDs: [FrequencyPackID]) throws {
+    guard packIDs.count == enabledPackIDs.count, Set(packIDs) == Set(enabledPackIDs) else {
+      throw FrequencyPackError.invalidPack
+    }
+    enabledPackIDs = packIDs
     try persist()
   }
 
@@ -411,9 +450,7 @@ actor FrequencyPackManager {
     }
     failures[packID] = nil
     installedRecords[packID] = nil
-    if activePackID == packID {
-      activePackID = catalog.packs.first(where: \.bundled)!.packID
-    }
+    enabledPackIDs.removeAll { $0 == packID }
     try persist()
   }
 
@@ -441,9 +478,18 @@ actor FrequencyPackManager {
   }
 
   private func persist() throws {
+    try Self.persist(enabledPackIDs, installedRecords, in: storageDirectory)
+  }
+
+  private static func persist(
+    _ enabledPackIDs: [FrequencyPackID],
+    _ installedRecords: [FrequencyPackID: InstalledFrequencyPackRecord],
+    in storageDirectory: URL
+  ) throws {
     let data = try JSONEncoder().encode(
       PersistedFrequencyPackState(
-        activePackID: activePackID,
+        enabledPackIDs: enabledPackIDs,
+        activePackID: nil,
         installedRecords: installedRecords.values.sorted {
           $0.packID.rawValue < $1.packID.rawValue
         }
@@ -491,6 +537,8 @@ actor FrequencyPackManager {
 }
 
 private struct PersistedFrequencyPackState: Codable {
-  let activePackID: FrequencyPackID
+  let enabledPackIDs: [FrequencyPackID]?
+  /// Written by versions that supported one active pack; read only for migration.
+  let activePackID: FrequencyPackID?
   let installedRecords: [InstalledFrequencyPackRecord]
 }

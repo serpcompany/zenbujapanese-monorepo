@@ -203,6 +203,7 @@ struct SearchResultOrderingTests {
 
     let capability = try FrequencyCapability.freshBundledTUBELEX()
     let evidence = try await capability.evidence(for: [entrusted.id, defeat.id, entrust.id])
+      .compactMapValues(\.first)
     #expect(numericRank(evidence[entrusted.id]) == 1_966)
     #expect(numericRank(evidence[entrust.id]) == 8_642)
     #expect(numericRank(evidence[defeat.id]) == 39_632)

@@ -22,11 +22,8 @@ struct WordDetailView: View {
   @State private var showsCamera = false
   @State private var frequencyDisclosure: FrequencyDisclosureItem?
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
-  @State private var frequency: FrequencyLookupResult = .unavailable(
-    FrequencyPackUnavailable(
-      pack: nil,
-      reason: "Loading frequency data")
-  )
+  /// Empty while loading and when no frequency dictionary is enabled.
+  @State private var frequency = FrequencyRanks()
 
   let entry: DictionaryEntry
   let initialEncounterMedia: EncounterMediaAttachment?
@@ -50,20 +47,20 @@ struct WordDetailView: View {
           VStack(alignment: .leading, spacing: 12) {
             headerLayout {
               WordIdentityView(entry: entry)
-              VStack(alignment: .trailing, spacing: 8) {
-                FrequencyRow(
-                  result: frequency,
-                  showDetails: { frequencyDisclosure = FrequencyDisclosureItem(result: frequency) }
+              if let latestEncounterMedia = displayableEncounterMedia.first {
+                EncounterMediaRow(
+                  media: latestEncounterMedia,
+                  count: displayableEncounterMedia.count,
+                  encounterMedia: displayableEncounterMedia,
+                  removeEncounterMedia: removeEncounterMedia
                 )
-                if let latestEncounterMedia = displayableEncounterMedia.first {
-                  EncounterMediaRow(
-                    media: latestEncounterMedia,
-                    count: displayableEncounterMedia.count,
-                    encounterMedia: displayableEncounterMedia,
-                    removeEncounterMedia: removeEncounterMedia
-                  )
-                }
               }
+            }
+            if !frequency.isEmpty {
+              FrequencyRanksRow(
+                ranks: frequency,
+                showDetails: { frequencyDisclosure = FrequencyDisclosureItem(result: $0) }
+              )
             }
             PronunciationRow(
               entry: entry,
@@ -223,11 +220,13 @@ struct WordDetailView: View {
       analysisAvailability = await japaneseTextAnalysisClient.availability()
       frequency =
         (try? await frequencyCapability.evidence(for: entry.id))
-        ?? .unavailable(
-          FrequencyPackUnavailable(
-            pack: nil,
-            reason: "Frequency data unavailable"
-          ))
+        ?? [
+          .unavailable(
+            FrequencyPackUnavailable(
+              pack: nil,
+              reason: "Frequency data unavailable"
+            ))
+        ]
       notes = await wordNoteStore.load(entry.noteID)
       guard !Task.isCancelled else { return }
       editingNoteID = nil
@@ -682,21 +681,31 @@ private struct EncounterMediaViewer: View {
   }
 }
 
-private struct FrequencyRow: View {
-  let result: FrequencyLookupResult
-  let showDetails: () -> Void
+/// One chip per enabled frequency dictionary, in priority order.
+private struct FrequencyRanksRow: View {
+  let ranks: FrequencyRanks
+  let showDetails: (FrequencyLookupResult) -> Void
 
   var body: some View {
-    let presentation = FrequencyPresentationModel(result: result)
-    Button(action: showDetails) {
-      Text(presentation.inlineText)
-        .font(.headline.monospacedDigit())
-        .frame(minWidth: 44, minHeight: 44)
-        .contentShape(.rect)
+    FrequencyChipFlowLayout {
+      ForEach(ranks.enumerated(), id: \.offset) { index, result in
+        let presentation = FrequencyPresentationModel(result: result)
+        Button {
+          showDetails(result)
+        } label: {
+          FrequencyRankChip(presentation: presentation, isPrimary: index == 0)
+            .frame(minHeight: 32)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(presentation.inlineAccessibilityLabel)
+        .accessibilityValue(presentation.inlineText)
+        .accessibilityIdentifier(
+          "word-detail.frequency.\(presentation.pack?.id.rawValue ?? "unavailable")")
+      }
     }
-    .buttonStyle(.plain)
-    .accessibilityLabel(presentation.inlineAccessibilityLabel)
-    .accessibilityValue(presentation.inlineText)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("word-detail.frequency")
   }
 }

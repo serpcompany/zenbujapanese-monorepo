@@ -19,7 +19,8 @@ struct SearchFrequencyOrchestrationTests {
         using: FrequencyCapability { ids in
           try await Task.sleep(for: .milliseconds(30))
           return FrequencyLookupResult.unavailableResults(
-            for: ids, pack: nil, reason: "fixture")
+            for: ids, pack: nil, reason: "fixture"
+          ).mapValues { [$0] }
         }
       )
     }
@@ -43,7 +44,8 @@ struct SearchFrequencyOrchestrationTests {
         using: FrequencyCapability { ids in
           try? await Task.sleep(for: .milliseconds(50))
           return FrequencyLookupResult.unavailableResults(
-            for: ids, pack: nil, reason: "fixture")
+            for: ids, pack: nil, reason: "fixture"
+          ).mapValues { [$0] }
         }
       )
     }

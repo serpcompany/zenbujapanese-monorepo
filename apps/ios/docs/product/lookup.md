@@ -14,25 +14,29 @@ A learner can search in Japanese or English using:
 
 Ordinary Japanese, English, and romaji searches present one **Results** collection. The app
 first builds a bounded set from exact, prefix, contains, gloss, and romaji query evidence. It
-compares that explicit match evidence first, then uses ascending rank from the active frequency
-dictionary when the preceding evidence is equal. Frequency
+compares that explicit match evidence first, then uses ascending rank from the first enabled
+frequency dictionary when the preceding evidence is equal. Frequency
 never introduces an entry that the query did not retrieve or lets an incidental match outrank a
 direct match. An English result displays the matching gloss, even when that gloss is not the
-entry's first sense. Entries without mapped evidence remain visible with a dash.
+entry's first sense. Each row places a labeled chip for the first enabled dictionary's rank,
+such as `YouTube 812`, beside the headword, plus a `+N` chip counting other enabled
+dictionaries that rank the entry. A dash replaces the rank when the first dictionary has no
+mapped evidence. At standard text sizes, the summary shows at most two lines.
 
 Equal ranks and entries without mapped evidence retain the dictionary's deterministic fallback
-order. While frequency data is loading, or when the active dictionary is
-unavailable, the whole collection uses dictionary relevance order. Unavailability is disclosed
+order. While frequency data is loading, when no frequency dictionary is enabled, or when the
+first enabled dictionary is unavailable, the whole collection uses dictionary relevance order.
+With no enabled dictionary, rows show no frequency information. Unavailability is disclosed
 below the results without blocking lookup.
 
-Changing the active frequency dictionary reorders the currently displayed result collection
-without resubmitting the query. Results can also offer a Japanese-reading refinement, related
+Changing the enabled frequency dictionaries or their order updates the currently displayed
+result collection without resubmitting the query. Results can also offer a Japanese-reading refinement, related
 Example Sentences, discovered words, frequency information, and a dedicated Kanji result for a
 single-kanji query.
 
 A sparse radical-selection submission keeps its intentionally narrow leading lexical-rank
 candidate group. Those candidates still appear in one **Results** collection and are ordered by
-the active frequency dictionary within that group.
+the first enabled frequency dictionary within that group.
 
 Recent text searches are stored on the device. A learner can repeat or remove one search,
 or clear the entire history.
@@ -41,7 +45,10 @@ or clear the entire history.
 
 A word detail can present its written form and reading, ordered meanings, alternative forms,
 kanji, related words, conjugations, source-matched Example Sentences, pronunciation, and
-frequency information when the corresponding data is available.
+frequency information when the corresponding data is available. Frequency appears as a row of
+`Name  rank` chips under the headword, one per enabled dictionary in priority order. Selecting
+a chip opens that dictionary's frequency details. The row is hidden when no dictionary is
+enabled.
 
 Selectable Japanese inside Word Detail and Example Sentences uses the same interactive
 word-boundary analysis as Image Search. Selecting a linked word continues into its normal

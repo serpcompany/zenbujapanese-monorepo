@@ -621,7 +621,8 @@ private struct SearchResultsView: View {
 
   var body: some View {
     let orderedEntries = SearchResultFrequencyOrdering.ordered(
-      results, entries: presentedEntries, evidence: frequencyLoadState.results)
+      results, entries: presentedEntries,
+      evidence: frequencyLoadState.results.compactMapValues(\.first))
     List {
       if exampleCount > 0 {
         Section {
@@ -660,7 +661,7 @@ private struct SearchResultsView: View {
             ResultRow(
               entry: entry,
               summary: results.displaySummary(for: entry),
-              frequencyResult: frequencyLoadState.results[entry.id],
+              frequencyRanks: frequencyLoadState.results[entry.id],
               rank: .discovered(position: index + 1, count: min(results.entries.count, 12))
             )
           }
@@ -678,7 +679,7 @@ private struct SearchResultsView: View {
             ResultRow(
               entry: entry,
               summary: results.displaySummary(for: entry),
-              frequencyResult: frequencyLoadState.results[entry.id],
+              frequencyRanks: frequencyLoadState.results[entry.id],
               rank: .result(
                 position: index + (query.isSingleKanji ? 2 : 1),
                 count: orderedEntries.count + (query.isSingleKanji ? 1 : 0)
@@ -715,7 +716,8 @@ private struct SearchResultsView: View {
         guard !Task.isCancelled else { return }
         _ = frequencyLoadState.commit(
           FrequencyLookupResult.unavailableResults(
-            for: requestID.entryIDs, pack: nil, reason: "Frequency data unavailable"),
+            for: requestID.entryIDs, pack: nil, reason: "Frequency data unavailable"
+          ).mapValues { [$0] },
           for: requestID
         )
       }
@@ -750,7 +752,9 @@ private struct SearchResultsView: View {
 
   private var frequencyUnavailableReason: String? {
     displayedEntryIDs.compactMap { id in
-      guard case .unavailable(let unavailable) = frequencyLoadState.results[id] else { return nil }
+      guard case .unavailable(let unavailable) = frequencyLoadState.results[id]?.first else {
+        return nil
+      }
       return unavailable.reason
     }.first
   }
@@ -787,26 +791,30 @@ private struct KanjiPrimaryRow: View {
 private struct ResultRow: View {
   let entry: DictionaryEntry
   let summary: String
-  let frequencyResult: FrequencyLookupResult?
+  let frequencyRanks: FrequencyRanks?
   let rank: ResultRank
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
   var body: some View {
     NavigationLink(value: SearchExperienceRoute.word(entry, nil)) {
-      Group {
+      VStack(alignment: .leading, spacing: 4) {
         if dynamicTypeSize.isAccessibilitySize {
-          VStack(alignment: .leading, spacing: 5) {
-            frequencyRank
-            entryContent
-          }
+          titleBlock
+          frequencyChips
         } else {
-          HStack(alignment: .top, spacing: 10) {
-            frequencyRank
-              .frame(minWidth: 54, alignment: .leading)
-            entryContent
+          HStack(alignment: .lastTextBaseline, spacing: 8) {
+            titleBlock
+            Spacer(minLength: 0)
+            frequencyChips
           }
         }
+        Text(summary)
+          .font(.body)
+          .foregroundStyle(.primary)
+          .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+          .fixedSize(horizontal: false, vertical: true)
       }
+      .frame(maxWidth: .infinity, alignment: .leading)
       .contentShape(Rectangle())
     }
     .accessibilityLabel("\(entry.headword), \(entry.reading), \(summary)")
@@ -814,27 +822,22 @@ private struct ResultRow: View {
     .accessibilityIdentifier(resultIdentifier)
   }
 
-  private var entryContent: some View {
-    VStack(alignment: .leading, spacing: 5) {
-      titleBlock
-      Text(summary)
-        .font(.body)
-        .foregroundStyle(.primary)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-    .frame(maxWidth: .infinity, alignment: .leading)
-  }
-
-  private var frequencyRank: some View {
-    Text(frequencyPresentation.text)
-      .font(.caption.monospacedDigit())
-      .foregroundStyle(.primary)
-      .fixedSize(horizontal: false, vertical: true)
+  @ViewBuilder
+  private var frequencyChips: some View {
+    if let primary = frequencyPresentation.primary {
+      HStack(spacing: 4) {
+        FrequencyRankChip(presentation: primary, isPrimary: true)
+        if frequencyPresentation.additionalRankCount > 0 {
+          FrequencyAdditionalRanksChip(count: frequencyPresentation.additionalRankCount)
+        }
+      }
+      .fixedSize()
       .accessibilityHidden(true)
+    }
   }
 
   private var frequencyPresentation: SearchFrequencyRankPresentationModel {
-    SearchFrequencyRankPresentationModel(result: frequencyResult)
+    SearchFrequencyRankPresentationModel(ranks: frequencyRanks)
   }
 
   private var titleBlock: some View {
@@ -863,7 +866,7 @@ struct SearchFrequencyTaskID: Hashable {
 
 struct SearchFrequencyLoadState {
   private(set) var activeRequest: SearchFrequencyTaskID?
-  private(set) var results: [LanguageReferenceID: FrequencyLookupResult] = [:]
+  private(set) var results: [LanguageReferenceID: FrequencyRanks] = [:]
 
   mutating func begin(_ request: SearchFrequencyTaskID) {
     activeRequest = request
@@ -872,7 +875,7 @@ struct SearchFrequencyLoadState {
 
   @discardableResult
   mutating func commit(
-    _ results: [LanguageReferenceID: FrequencyLookupResult],
+    _ results: [LanguageReferenceID: FrequencyRanks],
     for request: SearchFrequencyTaskID
   ) -> Bool {
     guard activeRequest == request else { return false }
@@ -883,7 +886,7 @@ struct SearchFrequencyLoadState {
 
 struct SearchFrequencyResponse: Sendable {
   let request: SearchFrequencyTaskID
-  let results: [LanguageReferenceID: FrequencyLookupResult]
+  let results: [LanguageReferenceID: FrequencyRanks]
 }
 
 enum SearchFrequencyLoader {
@@ -910,8 +913,9 @@ private enum ResultRank {
 }
 
 enum SearchResultFrequencyOrdering {
-  /// Explicit match evidence is primary. Active-pack evidence orders only equivalent matches;
-  /// the original dictionary rank and canonical entry ID are deterministic fallbacks.
+  /// Explicit match evidence is primary. Evidence from the first enabled pack orders only
+  /// equivalent matches; the original dictionary rank and canonical entry ID are deterministic
+  /// fallbacks.
   static func ordered(
     _ results: LookupSearchResults,
     entries: [DictionaryEntry]? = nil,

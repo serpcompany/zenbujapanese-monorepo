@@ -10,6 +10,7 @@ struct FrequencyDictionariesView: View {
   var body: some View {
     List {
       if let snapshot {
+        enabledOrder(snapshot)
         ForEach(snapshot.packs) { pack in
           Section {
             status(for: pack)
@@ -49,6 +50,12 @@ struct FrequencyDictionariesView: View {
     }
     .navigationTitle("Frequency Dictionaries")
     .navigationBarTitleDisplayMode(.inline)
+    .toolbar {
+      if (snapshot?.enabledPackIDs.count ?? 0) > 1 {
+        EditButton()
+          .accessibilityIdentifier("frequency-packs.reorder")
+      }
+    }
     .contentMargins(.bottom, 120, for: .scrollContent)
     .accessibilityIdentifier("frequency-packs.list")
     .task { await load() }
@@ -60,24 +67,68 @@ struct FrequencyDictionariesView: View {
     }
   }
 
+  @ViewBuilder
+  private func enabledOrder(_ snapshot: FrequencyPackSnapshot) -> some View {
+    Section {
+      if snapshot.enabledPacks.isEmpty {
+        Text("None enabled. Search uses dictionary relevance order and hides frequency ranks.")
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("frequency-packs.enabled.empty")
+      } else {
+        ForEach(Array(snapshot.enabledPacks.enumerated()), id: \.element.id) { index, pack in
+          HStack(spacing: 12) {
+            Text("\(index + 1)")
+              .font(.body.monospacedDigit())
+              .foregroundStyle(.secondary)
+            Text(pack.manifest.displayName)
+            Spacer(minLength: 0)
+            if index == 0 {
+              Text("Sorts Search")
+                .font(.footnote)
+                .foregroundStyle(.tint)
+            }
+          }
+          .accessibilityElement(children: .ignore)
+          .accessibilityLabel(pack.manifest.displayName)
+          .accessibilityValue(
+            index == 0 ? "Priority 1, sorts search results" : "Priority \(index + 1)")
+          .accessibilityIdentifier("frequency-packs.enabled.\(pack.id.rawValue)")
+        }
+        .onMove { source, destination in
+          var order = snapshot.enabledPackIDs
+          order.move(fromOffsets: source, toOffset: destination)
+          reorder(order)
+        }
+      }
+    } header: {
+      Text("Enabled")
+    } footer: {
+      if snapshot.enabledPackIDs.count > 1 {
+        Text(
+          "Ranks appear in this order. Search sorts equally relevant results by the first dictionary. Drag to reorder."
+        )
+      }
+    }
+  }
+
   private func status(for pack: FrequencyPackState) -> some View {
     HStack(spacing: 12) {
       Text("Status")
       Spacer(minLength: 0)
       Label(
-        pack.isActive ? "Active" : (pack.isInstalled ? "Installed" : "Available"),
-        systemImage: pack.isActive
+        pack.isEnabled ? "Enabled" : (pack.isInstalled ? "Installed" : "Available"),
+        systemImage: pack.isEnabled
           ? "checkmark.circle.fill"
           : (pack.isInstalled ? "checkmark.circle" : "arrow.down.circle")
       )
-      .foregroundStyle(pack.isActive ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
+      .foregroundStyle(pack.isEnabled ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
     }
     .accessibilityElement(children: .ignore)
     .accessibilityLabel("Status")
     .accessibilityValue(
-      pack.isActive
-        ? "Active, selected frequency dictionary"
-        : (pack.isInstalled ? "Installed, not selected" : "Available, not installed")
+      pack.isEnabled
+        ? "Enabled"
+        : (pack.isInstalled ? "Installed, not enabled" : "Available, not installed")
     )
     .accessibilityIdentifier("frequency-pack.status.\(pack.id.rawValue)")
   }
@@ -104,11 +155,17 @@ struct FrequencyDictionariesView: View {
       }
       .accessibilityIdentifier("frequency-pack.download.\(pack.id.rawValue)")
     } else {
-      if pack.availableActions.contains(.activate) {
-        Button(FrequencyPackAction.activate.label) {
-          perform(pack.id) { try await client.activate(pack.id) }
+      if pack.availableActions.contains(.enable) {
+        Button(FrequencyPackAction.enable.label) {
+          perform(pack.id) { try await client.enable(pack.id) }
         }
-        .accessibilityIdentifier("frequency-pack.activate.\(pack.id.rawValue)")
+        .accessibilityIdentifier("frequency-pack.enable.\(pack.id.rawValue)")
+      }
+      if pack.availableActions.contains(.disable) {
+        Button(FrequencyPackAction.disable.label) {
+          perform(pack.id) { try await client.disable(pack.id) }
+        }
+        .accessibilityIdentifier("frequency-pack.disable.\(pack.id.rawValue)")
       }
       if pack.availableActions.contains(.update) {
         Button(FrequencyPackAction.update.label) {
@@ -117,17 +174,12 @@ struct FrequencyDictionariesView: View {
         .accessibilityIdentifier("frequency-pack.update.\(pack.id.rawValue)")
       }
       if pack.availableActions.contains(.remove) {
-        Button(
-          pack.isActive
-            ? "\(FrequencyPackAction.remove.label) and Use Included Dictionary"
-            : FrequencyPackAction.remove.label,
-          role: .destructive
-        ) {
+        Button(FrequencyPackAction.remove.label, role: .destructive) {
           perform(pack.id) { try await client.remove(pack.id) }
         }
         .accessibilityIdentifier("frequency-pack.remove.\(pack.id.rawValue)")
       }
-      if pack.availableActions.isEmpty {
+      if !pack.manifest.removable {
         Text("Included with Zenbu · Works offline")
           .font(.footnote)
           .foregroundStyle(.secondary)
@@ -138,6 +190,16 @@ struct FrequencyDictionariesView: View {
 
   private func refresh() {
     Task { await load() }
+  }
+
+  private func reorder(_ order: [FrequencyPackID]) {
+    if let snapshot {
+      self.snapshot = FrequencyPackSnapshot(enabledPackIDs: order, packs: snapshot.packs)
+    }
+    Task { @MainActor in
+      try? await client.reorderEnabled(order)
+      await load()
+    }
   }
 
   private func perform(

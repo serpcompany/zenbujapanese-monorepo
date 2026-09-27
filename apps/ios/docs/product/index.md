@@ -20,10 +20,15 @@ You is a supporting navigation area rather than a separate Product Experience. I
 Frequency Dictionaries includes TUBELEX YouTube Japanese in the app and offers
 Japanese Wikipedia plus nine checksum-pinned optional packs for Netflix, novels,
 slice-of-life anime, NHK, shonen anime, Japanese dictionary definitions, visual novels,
-television, and broad web Japanese. Optional packs are downloaded on request, mapped
-locally into Zenbu's dictionary, and can be activated or removed independently. Each
-compact pack card shows its current status, installed storage size when applicable,
-and available actions.
+television, and broad web Japanese. Optional packs are downloaded on request and mapped
+locally into Zenbu's dictionary. A learner can enable any number of installed packs,
+including none. A newly downloaded pack is enabled automatically. TUBELEX can be disabled
+but not removed, and removing an optional pack also disables it.
+
+Enabled packs form a priority list at the top of the screen, which Edit reorders. Ranks
+appear in this order, and the first pack orders Search. Each pack card shows its status,
+installed storage size when applicable, and available actions. When the app upgrades from
+the single active pack, that pack becomes the only enabled one.
 
 ### Media Library
 
