@@ -32,8 +32,9 @@ uses the default Kuromoji path.
 
 ## Current verification boundary
 
-The `SearchExperienceTests` Swift package target covers dictionary result ordering and the
-optional frequency-pack lifecycle on an arm64 iOS Simulator. Run it from
+The `SearchExperienceTests` Swift package target covers Search behavior (result ordering,
+deinflection, frequency chips and packs, pitch accent, and parts of speech) on an arm64 iOS
+Simulator. Run it from
 `apps/ios/Modules` with:
 
 ```sh
@@ -42,8 +43,7 @@ xcodebuild -scheme ZenbuJapaneseModules \
   ONLY_ACTIVE_ARCH=YES test
 ```
 
-The repository still has no CI workflow. Issue [#329](https://github.com/serpcompany/zenbujapanese-monorepo/issues/329)
-owns the broader test and CI replacement strategy. Verify ordinary app changes by also building,
+The repository still has no CI workflow. Verify ordinary app changes by also building,
 launching, and inspecting the real app.
 
 Frequency-pack selection has one repo-local Python contract test. Run
@@ -57,7 +57,8 @@ and copy the reported hashes into its catalog manifest.
 ## Search frequency-ordering comparison harness
 
 Use these fixed fixtures when changing dictionary candidate retrieval, frequency ordering, or
-the Search results presentation. Run every text fixture with the included TUBELEX pack, then
+the Search results presentation. Run every text fixture with the default packs (JLPT Levels
+first, then TUBELEX), then
 install Japanese Wikipedia under **You → Frequency Dictionaries**, move it to the top of the
 Enabled list, and repeat without
 editing or resubmitting the visible query.
@@ -77,11 +78,11 @@ editing or resubmitting the visible query.
 | Discovered words | `日本語を勉強する` | **Discovered Words** remains distinct from ordinary ranked results. |
 | Example Sentences | `見る` | The Example Sentences action remains available and opens its associated flow. |
 
-For pack priority, record the visible headwords and ranks for `いる` under TUBELEX, enable
-Japanese Wikipedia and move it first, return to Search without changing the query, and verify
-that rows show a Wikipedia chip first, followed by TUBELEX, and reorder where displayed rank
-values differ between entries with equivalent match evidence. Move TUBELEX back to the top and
-verify the original ordering returns. Disable every pack and verify that rows show no frequency
+For pack priority, record the visible headwords and chips for `いる` under the defaults (JLPT N5
+words first, TUBELEX breaking ties). Enable Japanese Wikipedia and move it first, return to
+Search without changing the query, and verify that chips follow the Enabled order and rows
+reorder where displayed values differ between entries with equivalent match evidence. Restore
+the default order and verify the original ordering returns. Disable every pack and verify that rows show no frequency
 chips, use dictionary relevance order, and Word Detail hides its frequency row.
 
 For unavailable-pack fallback, begin a search and make the first enabled installed pack
