@@ -50,11 +50,15 @@ or clear the entire history.
 
 A word detail can present its written form and reading, ordered meanings, alternative forms,
 kanji, related words, conjugations, source-matched Example Sentences, pronunciation, and
-frequency information when the corresponding data is available. Frequency appears as a row of
-`Name  rank` chips under the headword, one per enabled dictionary in priority order and tinted
-with the same commonness color as Search. Selecting
-a chip opens that dictionary's frequency details. The row is hidden when no dictionary is
-enabled.
+frequency information when the corresponding data is available.
+
+The top of a word detail shows the headword, then its kana reading with the pitch accent drawn as
+an overline across the high morae and a hook at the downstep, a pronounce button, the romaji aid
+when enabled, and the part of speech. A Conjugations row follows when a conjugation table exists.
+
+A **Frequency** section after the meanings lists each enabled dictionary in priority order with
+its commonness marker and rank, or "No rank". Selecting a row opens that dictionary's frequency
+details. The section is hidden when no dictionary is enabled.
 
 Selectable Japanese inside Word Detail and Example Sentences uses the same interactive
 word-boundary analysis as Image Search. Selecting a linked word continues into its normal

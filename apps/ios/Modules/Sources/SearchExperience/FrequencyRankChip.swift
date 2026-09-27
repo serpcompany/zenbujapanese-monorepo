@@ -1,99 +1,58 @@
 import SwiftUI
 
-/// A dictionary name and its rank, such as "Netflix 449", colored by how common the rank is.
-/// Subtle chips confine the color to a small dot so dense lists stay readable; prominent chips
-/// tint the name for a single entry's detail. With Differentiate Without Color, a star count
-/// replaces the color-only cue.
+/// A dictionary name and its rank, such as "Netflix 449", marked with how common the rank is.
+/// At accessibility sizes the rank moves under the name instead of truncating it.
 struct FrequencyRankChip: View {
-  enum Style {
-    case subtle
-    case prominent
-  }
-
   let presentation: FrequencyPresentationModel
-  var style = Style.prominent
-  @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-  @ScaledMetric(relativeTo: .caption) private var dotSize = 6.0
   @ScaledMetric(relativeTo: .caption) private var horizontalPadding = 6.0
   @ScaledMetric(relativeTo: .caption) private var verticalPadding = 2.0
   @ScaledMetric(relativeTo: .caption) private var cornerRadius = 6.0
 
   var body: some View {
-    let color = presentation.tier?.color ?? Color.secondary
-    let stacked = dynamicTypeSize.isAccessibilitySize
-    switch style {
-    case .subtle:
-      // At accessibility sizes the rank moves under the name instead of truncating it.
-      let layout =
-        stacked
-        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 0))
-        : AnyLayout(HStackLayout(spacing: horizontalPadding * 0.67))
-      layout {
-        HStack(spacing: horizontalPadding * 0.67) {
-          tierMarker(color: color)
-          Text(presentation.packName)
-            .foregroundStyle(.secondary)
-        }
-        Text(presentation.inlineText)
-          .monospacedDigit()
-          .foregroundStyle(.primary)
-          .layoutPriority(1)
+    let layout =
+      dynamicTypeSize.isAccessibilitySize
+      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 0))
+      : AnyLayout(HStackLayout(spacing: horizontalPadding * 0.67))
+    layout {
+      HStack(spacing: horizontalPadding * 0.67) {
+        FrequencyTierMarker(tier: presentation.tier)
+        Text(presentation.packName)
+          .foregroundStyle(.secondary)
       }
-      .font(.caption)
-      .lineLimit(1)
-      .padding(.horizontal, horizontalPadding)
-      .padding(.vertical, verticalPadding)
-      .overlay {
-        RoundedRectangle(cornerRadius: cornerRadius)
-          .strokeBorder(.separator, lineWidth: 1)
-      }
-    case .prominent:
-      let layout =
-        stacked
-        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 0))
-        : AnyLayout(HStackLayout(spacing: 0))
-      layout {
-        HStack(spacing: horizontalPadding * 0.67) {
-          if differentiateWithoutColor { tierMarker(color: color) }
-          Text(presentation.packName)
-        }
-        .fontWeight(.semibold)
+      Text(presentation.inlineText)
+        .monospacedDigit()
         .foregroundStyle(.primary)
-        .padding(.horizontal, horizontalPadding)
-        .padding(.vertical, verticalPadding)
-        .frame(maxWidth: stacked ? .infinity : nil, alignment: .leading)
-        .background(color.opacity(0.28))
-        Text(presentation.inlineText)
-          .monospacedDigit()
-          .foregroundStyle(.primary)
-          .padding(.horizontal, horizontalPadding)
-          .padding(.vertical, verticalPadding)
-          .layoutPriority(1)
-      }
-      .fixedSize(horizontal: stacked, vertical: false)
-      .font(.caption)
-      .lineLimit(1)
-      .clipShape(.rect(cornerRadius: cornerRadius))
-      .overlay {
-        RoundedRectangle(cornerRadius: cornerRadius)
-          .strokeBorder(color.opacity(0.6), lineWidth: 1)
-      }
+        .layoutPriority(1)
+    }
+    .font(.caption)
+    .lineLimit(1)
+    .padding(.horizontal, horizontalPadding)
+    .padding(.vertical, verticalPadding)
+    .overlay {
+      RoundedRectangle(cornerRadius: cornerRadius)
+        .strokeBorder(.separator, lineWidth: 1)
     }
   }
+}
 
-  /// A colored dot, or a star count such as "5★" when color alone must not carry meaning.
-  @ViewBuilder
-  private func tierMarker(color: Color) -> some View {
+/// How common a rank is: a colored dot, or a star count such as "5★" when Differentiate Without
+/// Color is on. Draws nothing for a dictionary with no rank when color can't be used.
+struct FrequencyTierMarker: View {
+  let tier: FrequencyTier?
+  @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
+  @ScaledMetric(relativeTo: .caption) private var dotSize = 6.0
+
+  var body: some View {
     if differentiateWithoutColor {
-      if let tier = presentation.tier {
+      if let tier {
         Text("\(tier.rawValue)★")
           .monospacedDigit()
           .foregroundStyle(.secondary)
       }
     } else {
       Circle()
-        .fill(color)
+        .fill(tier?.color ?? Color.secondary)
         .frame(width: dotSize, height: dotSize)
     }
   }
@@ -136,16 +95,12 @@ extension FrequencyTier {
 
 /// Places chips left to right, wrapping to a new line when the row is full.
 struct FrequencyChipFlowLayout: Layout {
-  /// Horizontal gap between chips on a line.
   var spacing: CGFloat = 6
-  /// Vertical gap between lines; defaults to `spacing`.
-  var lineSpacing: CGFloat?
 
   func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
     let rows = rows(for: subviews, width: proposal.width ?? .infinity)
     let width = rows.map(\.width).max() ?? 0
-    let height =
-      rows.map(\.height).reduce(0, +) + verticalGap * CGFloat(max(rows.count - 1, 0))
+    let height = rows.map(\.height).reduce(0, +) + spacing * CGFloat(max(rows.count - 1, 0))
     return CGSize(width: width, height: height)
   }
 
@@ -161,11 +116,9 @@ struct FrequencyChipFlowLayout: Layout {
           proposal: ProposedViewSize(size))
         x += size.width + spacing
       }
-      y += row.height + verticalGap
+      y += row.height + spacing
     }
   }
-
-  private var verticalGap: CGFloat { lineSpacing ?? spacing }
 
   private struct Row {
     var indices: [Int] = []

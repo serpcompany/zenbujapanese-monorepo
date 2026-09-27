@@ -825,7 +825,7 @@ private struct ResultRow: View {
     if !visible.chips.isEmpty {
       FrequencyChipFlowLayout(spacing: chipSpacing) {
         ForEach(visible.chips.enumerated(), id: \.offset) { _, chip in
-          FrequencyRankChip(presentation: chip, style: .subtle)
+          FrequencyRankChip(presentation: chip)
         }
         if visible.hiddenCount > 0 {
           FrequencyAdditionalRanksChip(count: visible.hiddenCount)
