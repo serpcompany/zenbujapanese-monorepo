@@ -149,6 +149,9 @@ struct JapaneseTextAnalysisClient: Sendable {
       _ highlightedQuery: SearchQuery,
       _ highlightedEntry: DictionaryEntry?
     ) async -> [JapaneseTextToken]
+  /// The text's words as linked text shows them, with inflections joined (見なかった), and
+  /// without dictionary resolution.
+  var words: @Sendable (_ text: String) async -> [String]
 
   static let characterFallback = JapaneseTextAnalysisClient(
     lookupSegments: { _ in [] },
@@ -163,7 +166,8 @@ struct JapaneseTextAnalysisClient: Sendable {
           scalarRange: 0..<text.unicodeScalars.count
         )
       ]
-    }
+    },
+    words: { text in text.isEmpty ? [] : [text] }
   )
 
   static func live(lookupClient: LookupClient) -> JapaneseTextAnalysisClient {
@@ -203,6 +207,10 @@ struct JapaneseTextAnalysisClient: Sendable {
           highlightedQuery: highlightedQuery,
           highlightedEntry: highlightedEntry
         )
+      },
+      words: { text in
+        guard let analysis = try? await morphologyClient.analyze(text) else { return [] }
+        return JapaneseInflectionGrouping.group(analysis.candidates).map(\.surface)
       }
     )
   }

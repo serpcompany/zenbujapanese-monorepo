@@ -21,7 +21,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 - The conjugation table is compact: the word, its meaning, and a one-line rule sit at the top,
   and every form fits in one list with its changed ending highlighted. Tapping a form explains
-  it on its own screen, highlights its ending, shows its polite or plain counterpart, and lists the
+  it on its own screen, highlights its ending, and lists the
   example sentences that use it.
 - Example sentences underline each word separately, so you can see where one word ends and the
   next begins, and they highlight the word or form you're studying. Inflected words such as

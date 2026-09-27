@@ -104,7 +104,7 @@ private struct ConjugationRow: View {
   }
 }
 
-/// One conjugated form: what it means, how it's built, its other register, and an example.
+/// One conjugated form: what it means, the form itself, and the Example Sentences that use it.
 struct ConjugatedFormView: View {
   @State private var examples: [ExampleSentence] = []
   @State private var isLoadingExamples = true
@@ -151,12 +151,6 @@ struct ConjugatedFormView: View {
         )
       }
 
-      if let counterpart {
-        Section(counterpart.mode.rawValue) {
-          ConjugatedSurface(form: counterpart.form, font: .title3, rubyFont: .caption2)
-        }
-      }
-
       Section("Examples") {
         ExampleSentenceRows(
           examples: examples,
@@ -181,16 +175,6 @@ struct ConjugatedFormView: View {
     }
   }
 
-  /// The same form in the other register, when it is spelled differently.
-  private var counterpart: (mode: ConjugationMode, form: ConjugatedForm)? {
-    guard table.supportsModes else { return nil }
-    let other: ConjugationMode = mode == .plain ? .polite : .plain
-    guard let match = table.forms(for: other).first(where: { $0.id == form.id }),
-      match.surface != form.surface
-    else { return nil }
-    return (other, match)
-  }
-
   /// Other forms with the same spelling, such as potential and passive 見られる.
   private var sharedSpellings: [String] {
     table.forms(for: mode)
@@ -198,44 +182,19 @@ struct ConjugatedFormView: View {
       .map(\.id.presentation.title)
   }
 
-  /// Every retrieved Example Sentence that uses this exact form, in retrieval order.
+  /// Every retrieved Example Sentence in which the parser reads this exact form as one word,
+  /// in retrieval order. Word boundaries come from the same inflection grouping linked text
+  /// uses, so 見たかった (wanted to see) and 見た目 (appearance) are not examples of past 見た.
   private func loadExamples() async -> [ExampleSentence] {
     let sentences = (try? await exampleSentenceClient.search(SearchQuery(form.surface))) ?? []
-    return sentences.filter { Self.containsCompleteForm(form.surface, in: $0.japanese) }
-  }
-
-  /// Whether `sentence` uses `surface` as a whole form, not inside a longer one: 見たら is a
-  /// conditional, not the past 見た, and 花見た is a different word.
-  static func containsCompleteForm(_ surface: String, in sentence: String) -> Bool {
-    var searchStart = sentence.startIndex
-    while let range = sentence.range(of: surface, range: searchStart..<sentence.endIndex) {
-      let previous = range.lowerBound > sentence.startIndex
-        ? sentence[sentence.index(before: range.lowerBound)] : nil
-      let next = range.upperBound < sentence.endIndex ? sentence[range.upperBound] : nil
-      // A kanji form may follow a particle such as を; a kana form needs a clear break.
-      let startsCleanly: Bool =
-        switch previous {
-        case nil: true
-        case let character? where character.isKanji: false
-        case let character? where character.isHiragana: !(surface.first?.isHiragana ?? true)
-        default: true
-        }
-      let endsCleanly: Bool =
-        switch next {
-        case nil: true
-        case let character? where character.isHiragana: followingParticles.contains(character)
-        default: true
-        }
-      if startsCleanly, endsCleanly { return true }
-      searchStart = sentence.index(after: range.lowerBound)
+    var examples: [ExampleSentence] = []
+    for sentence in sentences where sentence.japanese.contains(form.surface) {
+      if await japaneseTextAnalysisClient.words(sentence.japanese).contains(form.surface) {
+        examples.append(sentence)
+      }
     }
-    return false
+    return examples
   }
-
-  /// Particles that can follow a finished form without extending its inflection.
-  private static let followingParticles: Set<Character> = [
-    "の", "か", "よ", "ね", "し", "と", "が", "を", "は", "も", "ん", "わ", "ぞ", "ぜ", "な",
-  ]
 }
 
 private struct ConjugationKindPresentation: Identifiable {
@@ -378,9 +337,5 @@ private struct ConjugatedSurface: View {
 extension Character {
   fileprivate var isKanji: Bool {
     unicodeScalars.contains { (0x4E00...0x9FFF).contains($0.value) || $0 == "々" }
-  }
-
-  fileprivate var isHiragana: Bool {
-    unicodeScalars.allSatisfy { (0x3041...0x309F).contains($0.value) }
   }
 }
