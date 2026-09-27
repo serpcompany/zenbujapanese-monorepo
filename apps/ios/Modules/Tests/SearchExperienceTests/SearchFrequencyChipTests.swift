@@ -95,3 +95,50 @@ struct SearchFrequencyChipTests {
       mappingRelation: .exactWrittenReading)
   }
 }
+
+@Suite("Search frequency unavailable notice")
+struct SearchFrequencyUnavailableNoticeTests {
+  private let jlpt = FrequencyPackDisclosure(
+    id: FrequencyPackID(rawValue: "zenbu.jlpt.waller.levels"), kind: .level,
+    displayName: "JLPT Levels",
+    domain: "Fixture", domainDescription: "Fixture", version: "1", attribution: "Fixture")
+  private let youtube = FrequencyPackDisclosure(
+    id: FrequencyPackID(rawValue: "zenbu.tubelex.youtube.ja.unidic-3.1"), kind: .rank,
+    displayName: "TUBELEX", domain: "Fixture", domainDescription: "Fixture", version: "1",
+    attribution: "Fixture")
+
+  @Test("no notice when every dictionary is available")
+  func allAvailable() {
+    #expect(
+      SearchFrequencyUnavailableNotice.text(for: [
+        [.noEvidence(pack: jlpt), .noEvidence(pack: youtube)]
+      ]) == nil)
+  }
+
+  @Test("a failed first dictionary names it and says the others still order Search")
+  func firstUnavailable() {
+    let text = SearchFrequencyUnavailableNotice.text(for: [
+      [unavailable(jlpt), .noEvidence(pack: youtube)]
+    ])
+    #expect(text == "JLPT unavailable. Search is ordered by the other enabled dictionaries.")
+  }
+
+  @Test("a failed later dictionary is also disclosed")
+  func laterUnavailable() {
+    let text = SearchFrequencyUnavailableNotice.text(for: [
+      [.noEvidence(pack: jlpt), unavailable(youtube)]
+    ])
+    #expect(text == "YouTube unavailable. Search is ordered by the other enabled dictionaries.")
+  }
+
+  @Test("relevance order is claimed only when every dictionary failed")
+  func allUnavailable() {
+    let text = SearchFrequencyUnavailableNotice.text(for: [[unavailable(jlpt), unavailable(youtube)]])
+    #expect(
+      text == "Frequency ordering unavailable. Showing dictionary relevance order. Pack unavailable")
+  }
+
+  private func unavailable(_ pack: FrequencyPackDisclosure) -> FrequencyLookupResult {
+    .unavailable(FrequencyPackUnavailable(pack: pack, reason: "Pack unavailable"))
+  }
+}

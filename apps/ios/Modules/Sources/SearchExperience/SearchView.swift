@@ -689,12 +689,9 @@ private struct SearchResultsView: View {
           Text("Results")
             .accessibilityIdentifier("search.results-header")
         } footer: {
-          if let frequencyUnavailableReason {
-            Label(
-              "Frequency ordering unavailable. Showing dictionary relevance order. \(frequencyUnavailableReason)",
-              systemImage: "info.circle"
-            )
-            .accessibilityIdentifier("search.frequency-ordering-unavailable")
+          if let frequencyUnavailableNotice {
+            Label(frequencyUnavailableNotice, systemImage: "info.circle")
+              .accessibilityIdentifier("search.frequency-ordering-unavailable")
           }
         }
       }
@@ -749,13 +746,32 @@ private struct SearchResultsView: View {
     SearchFrequencyTaskID(entryIDs: displayedEntryIDs, refreshID: frequencyRefreshID)
   }
 
-  private var frequencyUnavailableReason: String? {
-    displayedEntryIDs.compactMap { id in
-      guard case .unavailable(let unavailable) = frequencyLoadState.results[id]?.first else {
-        return nil
+  private var frequencyUnavailableNotice: String? {
+    SearchFrequencyUnavailableNotice.text(
+      for: displayedEntryIDs.compactMap { frequencyLoadState.results[$0] })
+  }
+}
+
+/// Discloses enabled dictionaries whose data could not be read, and says how Search is ordered
+/// without them.
+enum SearchFrequencyUnavailableNotice {
+  static func text(for ranks: [FrequencyRanks]) -> String? {
+    let packCount = ranks.map(\.count).max() ?? 0
+    // Unavailable packs, one per priority position that any displayed entry reports.
+    let unavailable: [FrequencyPackUnavailable] = (0..<packCount).compactMap { position in
+      for entryRanks in ranks where entryRanks.indices.contains(position) {
+        if case .unavailable(let unavailable) = entryRanks[position] { return unavailable }
       }
-      return unavailable.reason
-    }.first
+      return nil
+    }
+    guard let first = unavailable.first else { return nil }
+    if unavailable.count == packCount {
+      return "Frequency ordering unavailable. Showing dictionary relevance order. "
+        + first.reason
+    }
+    let names = unavailable.map { $0.pack?.shortName ?? "A frequency dictionary" }
+    return "\(names.formatted(.list(type: .and))) unavailable. "
+      + "Search is ordered by the other enabled dictionaries."
   }
 }
 

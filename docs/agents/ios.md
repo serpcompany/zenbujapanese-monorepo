@@ -86,8 +86,10 @@ chips, use dictionary relevance order, and Word Detail hides its frequency row.
 
 For unavailable-pack fallback, begin a search and make the first enabled installed pack
 unreadable in a debug Simulator container (or inject an unavailable `FrequencyCapability`). Verify that the same
-candidate IDs remain in deterministic dictionary order, the list is not emptied, and the
-non-blocking frequency-ordering disclosure appears. Restore the pack after the check.
+candidate IDs remain, the list is not emptied, the remaining enabled packs still order the
+results, and the non-blocking disclosure names the unavailable pack. With every enabled pack
+unavailable, verify deterministic dictionary order and the relevance-order disclosure. Restore
+the pack after the check.
 
 For cancellation, rapidly submit `quiet`, `miru`, and `いる`, then switch packs while the last
 query is visible. Only `いる` candidates and evidence in the new priority order may remain.
