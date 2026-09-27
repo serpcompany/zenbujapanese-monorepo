@@ -149,6 +149,9 @@ struct JapaneseTextAnalysisClient: Sendable {
       _ highlightedQuery: SearchQuery,
       _ highlightedEntry: DictionaryEntry?
     ) async -> [JapaneseTextToken]
+  /// The text's words as linked text shows them, with inflections joined (見なかった), and
+  /// without dictionary resolution.
+  var words: @Sendable (_ text: String) async -> [String]
 
   static let characterFallback = JapaneseTextAnalysisClient(
     lookupSegments: { _ in [] },
@@ -163,7 +166,8 @@ struct JapaneseTextAnalysisClient: Sendable {
           scalarRange: 0..<text.unicodeScalars.count
         )
       ]
-    }
+    },
+    words: { text in text.isEmpty ? [] : [text] }
   )
 
   static func live(lookupClient: LookupClient) -> JapaneseTextAnalysisClient {
@@ -203,6 +207,10 @@ struct JapaneseTextAnalysisClient: Sendable {
           highlightedQuery: highlightedQuery,
           highlightedEntry: highlightedEntry
         )
+      },
+      words: { text in
+        guard let analysis = try? await morphologyClient.analyze(text) else { return [] }
+        return JapaneseInflectionGrouping.group(analysis.candidates).map(\.surface)
       }
     )
   }
@@ -226,7 +234,7 @@ private actor JapaneseTextAnalyzer {
     do {
       let analysis = try await morphologyClient.analyze(text)
       var tokens: [JapaneseTextToken] = []
-      for candidate in analysis.candidates {
+      for candidate in JapaneseInflectionGrouping.group(analysis.candidates) {
         let resolution = await resolvedEntry(
           for: candidate,
           highlightedQuery: highlightedQuery,
@@ -340,7 +348,14 @@ private actor JapaneseTextAnalyzer {
       guard !value.isEmpty, value != "*", seen.insert(value).inserted else { return }
       forms.append(value)
     }
-    for form in [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm] {
+    // A joined inflection's surface is never its dictionary form, and it can collide with an
+    // unrelated headword: しまった (past of しまう) is also the interjection "darn it!". Look up
+    // only its head's forms; an unresolved joined word falls back to its pieces.
+    let evidence =
+      candidate.joinsInflection
+      ? [candidate.dictionaryForm, candidate.normalizedForm]
+      : [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm]
+    for form in evidence {
       append(form)
       append(form.applyingTransform(.hiraganaToKatakana, reverse: true) ?? form)
       append(form.applyingTransform(.hiraganaToKatakana, reverse: false) ?? form)

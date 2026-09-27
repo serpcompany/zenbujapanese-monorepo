@@ -104,8 +104,8 @@ struct WordDetailView: View {
           .id("word-note.section")
         }
 
-        Section("EXAMPLES") {
-          if analysisAvailability == .reduced {
+        if analysisAvailability == .reduced {
+          Section {
             Label(
               "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
               systemImage: "info.circle"
@@ -114,15 +114,19 @@ struct WordDetailView: View {
             .foregroundStyle(.secondary)
             .accessibilityIdentifier("word-detail.reduced-analysis")
           }
-          EntryExamplesSection(
-            entry: entry,
-            examples: examplesEntryID == entry.id ? examples : [],
-            isLoading: isLoadingExamples || examplesEntryID != entry.id,
-            speechSynthesisClient: speechSynthesisClient,
-            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-            openWord: openWord
-          )
         }
+        ExampleSentenceSections(
+          title: "EXAMPLES",
+          examples: examplesEntryID == entry.id ? examples : [],
+          isLoading: isLoadingExamples || examplesEntryID != entry.id,
+          emptyMessage: "No source-matched examples",
+          highlightedQuery: SearchQuery(entry.headword),
+          highlightedEntry: entry,
+          presentation: { .wordDetail(index: $0) },
+          speechSynthesisClient: speechSynthesisClient,
+          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+          openWord: openWord
+        )
       }
       .listStyle(.insetGrouped)
       .scrollDismissesKeyboard(.immediately)
@@ -481,12 +485,45 @@ private struct WordDetailKanjiLink: View {
 /// The word itself: headword with furigana (following the Reading Aids setting), and its pitch
 /// accent, pronounce button, and latest encounter photo in the space to its right.
 private struct WordHeroView: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-  @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   let entry: DictionaryEntry
   let encounterMedia: [EncounterMedia]
   let removeEncounterMedia: (String) async -> Void
   let pronounce: () -> Void
+
+  var body: some View {
+    WordHeadline(
+      surface: entry.headword,
+      reading: entry.reading,
+      pitch: entry.pitchAccent,
+      identifierPrefix: "word-detail",
+      pronounce: pronounce
+    ) {
+      if let latest = encounterMedia.first {
+        EncounterMediaRow(
+          media: latest,
+          count: encounterMedia.count,
+          encounterMedia: encounterMedia,
+          removeEncounterMedia: removeEncounterMedia
+        )
+      }
+    }
+  }
+}
+
+/// A word or conjugated form shown large with furigana (following the Reading Aids setting),
+/// with its pitch accent, pronounce button, and an optional accessory to its right. Word Detail
+/// and the conjugation screens share it so a word always looks the same.
+struct WordHeadline<Accessory: View>: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @Environment(ReadingAidPreferences.self) private var readingAidPreferences
+  let surface: String
+  let reading: String
+  /// A trailing part of `surface` in the accent color, such as a conjugation's ending.
+  var highlightedEnding = ""
+  var pitch: PitchAccent?
+  let identifierPrefix: String
+  let pronounce: () -> Void
+  @ViewBuilder let accessory: () -> Accessory
 
   var body: some View {
     let layout =
@@ -505,48 +542,49 @@ private struct WordHeroView: View {
     ViewThatFits(in: .horizontal) {
       VStack(alignment: .leading, spacing: 2) {
         JapaneseRubyText(
-          surface: entry.headword,
-          reading: entry.reading,
+          surface: surface,
+          reading: reading,
           baseFont: .largeTitle,
-          rubyFont: .title3.weight(.semibold)
+          rubyFont: .title3.weight(.semibold),
+          highlightedEnding: highlightedEnding
         )
         .fixedSize(horizontal: true, vertical: false)
         readingWithoutFurigana
       }
 
       VStack(alignment: .leading, spacing: 6) {
-        Text(entry.headword)
+        Text(surface.highlightingEnding(highlightedEnding))
           .font(.title2.weight(.semibold))
           .fixedSize(horizontal: false, vertical: true)
-          .accessibilityIdentifier("word-detail.identity-surface")
-        Text(entry.reading)
+          .accessibilityIdentifier("\(identifierPrefix).identity-surface")
+        Text(reading)
           .font(dynamicTypeSize.isAccessibilitySize ? .body : .callout)
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
-          .accessibilityIdentifier("word-detail.identity-reading")
-        RomajiReadingAidText(trustedReading: entry.reading, font: .callout)
+          .accessibilityIdentifier("\(identifierPrefix).identity-reading")
+        RomajiReadingAidText(trustedReading: reading, font: .callout)
       }
       .accessibilityElement(children: .combine)
-      .accessibilityIdentifier("word-detail.identity")
+      .accessibilityIdentifier("\(identifierPrefix).identity")
     }
   }
 
-  /// A dictionary headword always needs its reading, so it moves under the headword when the
-  /// learner turns furigana off.
+  /// A headword always needs its reading, so it moves under the headword when the learner
+  /// turns furigana off.
   @ViewBuilder
   private var readingWithoutFurigana: some View {
-    if !readingAidPreferences.showsFurigana, entry.reading != entry.headword {
-      Text(entry.reading)
+    if !readingAidPreferences.showsFurigana, reading != surface {
+      Text(reading)
         .font(.title3)
         .foregroundStyle(.secondary)
-        .accessibilityIdentifier("word-detail.identity-reading")
+        .accessibilityIdentifier("\(identifierPrefix).identity-reading")
     }
   }
 
   private var controls: some View {
     HStack(spacing: 8) {
-      if let pitch = entry.pitchAccent {
-        PitchAccentBadge(reading: entry.reading, pitch: pitch)
+      if let pitch {
+        PitchAccentBadge(reading: reading, pitch: pitch)
       }
       Button(action: pronounce) {
         Image(systemName: "speaker.wave.2.fill")
@@ -555,17 +593,42 @@ private struct WordHeroView: View {
           .contentShape(.rect)
       }
       .buttonStyle(.borderless)
-      .accessibilityLabel("Pronounce \(entry.reading)")
-      .accessibilityIdentifier("word-detail.pronounce")
-      if let latest = encounterMedia.first {
-        EncounterMediaRow(
-          media: latest,
-          count: encounterMedia.count,
-          encounterMedia: encounterMedia,
-          removeEncounterMedia: removeEncounterMedia
-        )
-      }
+      .accessibilityLabel("Pronounce \(reading)")
+      .accessibilityIdentifier("\(identifierPrefix).pronounce")
+      accessory()
     }
+  }
+}
+
+extension WordHeadline where Accessory == EmptyView {
+  init(
+    surface: String,
+    reading: String,
+    highlightedEnding: String = "",
+    pitch: PitchAccent? = nil,
+    identifierPrefix: String,
+    pronounce: @escaping () -> Void
+  ) {
+    self.init(
+      surface: surface,
+      reading: reading,
+      highlightedEnding: highlightedEnding,
+      pitch: pitch,
+      identifierPrefix: identifierPrefix,
+      pronounce: pronounce,
+      accessory: { EmptyView() }
+    )
+  }
+}
+
+extension String {
+  /// This string with `ending` drawn in the accent color when it ends the string.
+  func highlightingEnding(_ ending: String) -> AttributedString {
+    var result = AttributedString(self)
+    guard !ending.isEmpty, hasSuffix(ending) else { return result }
+    let start = result.characters.index(result.endIndex, offsetBy: -ending.count)
+    result[start...].foregroundColor = .accentColor
+    return result
   }
 }
 
@@ -1045,38 +1108,6 @@ private struct NotesSection: View {
       .italic()
       .focused(editorFocused)
       .accessibilityIdentifier("word-note.editor")
-  }
-}
-
-private struct EntryExamplesSection: View {
-  let entry: DictionaryEntry
-  let examples: [ExampleSentence]
-  let isLoading: Bool
-  let speechSynthesisClient: SpeechSynthesisClient
-  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
-  let openWord: (DictionaryEntry) -> Void
-
-  var body: some View {
-    // Keep the same entry's loaded rows during refresh so a native Back
-    // transition does not collapse the List and discard its scroll position.
-    if isLoading && examples.isEmpty {
-      ProgressView("Loading examples")
-    } else if examples.isEmpty {
-      Text("No source-matched examples")
-        .foregroundStyle(.secondary)
-    } else {
-      ForEach(Array(examples.enumerated()), id: \.element.id) { index, example in
-        JapaneseExampleRowContent(
-          example: example,
-          highlightedQuery: SearchQuery(entry.headword),
-          highlightedEntry: entry,
-          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-          presentation: .wordDetail(index: index),
-          speak: { speechSynthesisClient.speak(example.japanese) },
-          openWord: openWord
-        )
-      }
-    }
   }
 }
 

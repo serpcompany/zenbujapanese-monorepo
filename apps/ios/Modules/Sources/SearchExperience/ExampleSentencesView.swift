@@ -85,6 +85,55 @@ private struct ExampleSentenceRow: View {
   }
 }
 
+/// Example Sentences as list sections, one card per sentence, with loading and empty states.
+/// Word Detail and the conjugated form screen share it, so examples look and behave the same
+/// wherever they appear. Place it directly in a `List`, not inside a `Section`.
+struct ExampleSentenceSections: View {
+  let title: String
+  let examples: [ExampleSentence]
+  let isLoading: Bool
+  let emptyMessage: String
+  let highlightedQuery: SearchQuery
+  let highlightedEntry: DictionaryEntry?
+  let presentation: (Int) -> JapaneseExampleRowContent.Presentation
+  let speechSynthesisClient: SpeechSynthesisClient
+  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
+  let openWord: (DictionaryEntry) -> Void
+
+  var body: some View {
+    // Keep loaded rows during refresh so a native Back transition does not collapse the
+    // List and discard its scroll position.
+    if isLoading && examples.isEmpty {
+      Section(title) { ProgressView("Loading examples") }
+    } else if examples.isEmpty {
+      Section(title) {
+        Text(emptyMessage)
+          .foregroundStyle(.secondary)
+      }
+    } else {
+      ForEach(Array(examples.enumerated()), id: \.element.id) { index, example in
+        Section {
+          JapaneseExampleRowContent(
+            example: example,
+            highlightedQuery: highlightedQuery,
+            highlightedEntry: highlightedEntry,
+            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+            presentation: presentation(index),
+            speak: { speechSynthesisClient.speak(example.japanese) },
+            openWord: openWord
+          )
+        } header: {
+          // Only the first card carries the heading; the rest follow as their own cards.
+          if index == 0 { Text(title) }
+        }
+        // Consecutive examples belong together, so they use the system's compact spacing
+        // rather than the default gap between unrelated sections.
+        .listSectionSpacing(.compact)
+      }
+    }
+  }
+}
+
 /// The shared learner-visible geometry for Japanese/translation rows with a speech action.
 /// Dedicated Examples expose one native word-selection menu, while Word Detail retains its
 /// evidence-backed inline current-word treatment.
@@ -92,6 +141,8 @@ struct JapaneseExampleRowContent: View {
   enum Presentation {
     case dedicated(index: Int)
     case wordDetail(index: Int)
+    /// An example on a conjugated form's screen, highlighting that form.
+    case conjugatedForm(ConjugatedForm.Kind, index: Int)
 
     struct WordSelectorConfiguration {
       let label: String
@@ -109,6 +160,7 @@ struct JapaneseExampleRowContent: View {
       let rowIdentifier: String
       let combinesRowAccessibility: Bool
       let highlightsCurrentEntry: Bool
+      let highlightsQuery: Bool
     }
 
     var configuration: Configuration {
@@ -127,7 +179,8 @@ struct JapaneseExampleRowContent: View {
           englishIdentifier: "example.english.\(index)",
           rowIdentifier: "example.row.\(index)",
           combinesRowAccessibility: false,
-          highlightsCurrentEntry: false
+          highlightsCurrentEntry: false,
+          highlightsQuery: true
         )
       case .wordDetail(let index):
         Configuration(
@@ -140,7 +193,22 @@ struct JapaneseExampleRowContent: View {
           englishIdentifier: "word-detail.example-english.\(index)",
           rowIdentifier: "word-detail.example.\(index)",
           combinesRowAccessibility: true,
-          highlightsCurrentEntry: true
+          highlightsCurrentEntry: true,
+          highlightsQuery: false
+        )
+      case .conjugatedForm(let kind, let index):
+        Configuration(
+          tokenPresentation: .standard,
+          tokenIdentifierPrefix: "conjugations.example-token.\(kind.rawValue).\(index)",
+          japaneseIdentifier: nil,
+          wordSelector: nil,
+          speakerLabel: "Speak example \(index + 1)",
+          speakerIdentifier: "conjugations.example-speaker.\(kind.rawValue).\(index)",
+          englishIdentifier: "conjugations.example-english.\(kind.rawValue).\(index)",
+          rowIdentifier: "conjugations.example.\(kind.rawValue).\(index)",
+          combinesRowAccessibility: true,
+          highlightsCurrentEntry: false,
+          highlightsQuery: true
         )
       }
     }
@@ -229,6 +297,7 @@ struct JapaneseExampleRowContent: View {
       presentation: configuration.tokenPresentation,
       japaneseIdentifier: configuration.japaneseIdentifier,
       highlightsCurrentEntry: configuration.highlightsCurrentEntry,
+      highlightsQuery: configuration.highlightsQuery,
       tokensChanged: updateWordSelectionTokens,
       openWord: openWord
     )

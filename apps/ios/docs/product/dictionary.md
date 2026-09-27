@@ -46,6 +46,20 @@ follows and opens the conjugation table when one exists. It names one word class
 modifiers in sentence case without repeating "verb", for example "Godan verb (intransitive)",
 "Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".
 
+The conjugation table starts with the word, its reading and meaning, its word class, and a
+one-line rule for how that class conjugates. A Plain/Polite control switches register when both
+exist. Each row names the form and shows it with the changed ending highlighted. Selecting a row
+opens that form's screen. It leads with what the form means, then shows the form the way Word
+Detail shows a word (furigana and a pronounce button) with its ending highlighted, and then every
+Example Sentence that uses the complete form, in the same list Word Detail uses. Forms that share a spelling, such as potential and
+passive 見られる, say so. Selecting a word in the example opens its Word Detail, and Back returns
+to the form.
+
+Linked Japanese in Example Sentences gives each word its own underline, so word boundaries are
+visible. An inflected verb or adjective is one word with its endings, such as 見なかった,
+見ている, or 静かな, and opens its dictionary entry. The words that make up the current entry or the searched form are
+accented.
+
 A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word.
 Selecting a row opens that dictionary's details. JLPT levels are presented as unofficial study
 estimates.

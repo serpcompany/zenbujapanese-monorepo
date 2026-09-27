@@ -136,7 +136,19 @@ public struct SearchExperienceRootView: View {
             openWord: { entry in path.append(.word(entry, nil)) }
           )
         case .conjugations(let entry, let table):
-          ConjugationsView(entry: entry, table: table)
+          ConjugationsView(
+            entry: entry, table: table, speechSynthesisClient: speechSynthesisClient)
+        case .conjugatedForm(let entry, let table, let form, let mode):
+          ConjugatedFormView(
+            entry: entry,
+            table: table,
+            form: form,
+            mode: mode,
+            exampleSentenceClient: exampleSentenceClient,
+            speechSynthesisClient: speechSynthesisClient,
+            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+            openWord: { entry in path.append(.word(entry, nil)) }
+          )
         case .image(let sessionID):
           if let session = imageTextSessionStore.session(sessionID) {
             ImageTextFlowView(
@@ -296,6 +308,7 @@ enum SearchExperienceRoute: Hashable {
   case kanjiElement(KanjiElementID)
   case examples(SearchQuery, DictionaryEntry?, Bool)
   case conjugations(DictionaryEntry, ConjugationTable)
+  case conjugatedForm(DictionaryEntry, ConjugationTable, ConjugatedForm, ConjugationMode)
   case image(UUID)
 }
 

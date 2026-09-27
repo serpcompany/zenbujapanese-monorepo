@@ -28,6 +28,8 @@ struct LinkedJapaneseText: View {
   let presentation: Presentation
   let japaneseIdentifier: String?
   let highlightsCurrentEntry: Bool
+  /// Accents the words that make up each occurrence of `highlightedQuery` in the text.
+  let highlightsQuery: Bool
   let tokensChanged: ([JapaneseTextToken]) -> Void
   let openWord: (DictionaryEntry) -> Void
 
@@ -40,6 +42,7 @@ struct LinkedJapaneseText: View {
     presentation: Presentation = .standard,
     japaneseIdentifier: String? = nil,
     highlightsCurrentEntry: Bool = false,
+    highlightsQuery: Bool = false,
     tokensChanged: @escaping ([JapaneseTextToken]) -> Void = { _ in },
     openWord: @escaping (DictionaryEntry) -> Void
   ) {
@@ -51,6 +54,7 @@ struct LinkedJapaneseText: View {
     self.presentation = presentation
     self.japaneseIdentifier = japaneseIdentifier
     self.highlightsCurrentEntry = highlightsCurrentEntry
+    self.highlightsQuery = highlightsQuery
     self.tokensChanged = tokensChanged
     self.openWord = openWord
   }
@@ -106,6 +110,7 @@ struct LinkedJapaneseText: View {
         Text(text)
           .font(.title3)
       } else {
+        let queryRanges = highlightsQuery ? queryScalarRanges : []
         LinkedTokenLayout(itemSpacing: 0, lineSpacing: lineSpacing) {
           ForEach(tokens) { token in
             LinkedTokenView(
@@ -113,6 +118,7 @@ struct LinkedJapaneseText: View {
               identifier: "\(identifierPrefix).\(token.id).\(token.surface)",
               presentation: presentation,
               isCurrentEntry: isCurrentEntry(token),
+              matchesQuery: queryRanges.contains { $0.overlaps(token.scalarRange) },
               openWord: openWord
             )
             .layoutValue(
@@ -126,6 +132,17 @@ struct LinkedJapaneseText: View {
           }
         }
       }
+    }
+  }
+
+  /// Unicode-scalar ranges of every occurrence of the query, matching token scalar ranges.
+  private var queryScalarRanges: [Range<Int>] {
+    let scalars = Array(text.unicodeScalars)
+    let query = Array(highlightedQuery.value.unicodeScalars)
+    guard !query.isEmpty, query.count <= scalars.count else { return [] }
+    return (0...(scalars.count - query.count)).compactMap { start in
+      scalars[start..<(start + query.count)].elementsEqual(query)
+        ? start..<(start + query.count) : nil
     }
   }
 
@@ -148,19 +165,31 @@ private struct LinkedTokenView: View {
   let identifier: String
   let presentation: LinkedJapaneseText.Presentation
   let isCurrentEntry: Bool
+  let matchesQuery: Bool
   let openWord: (DictionaryEntry) -> Void
+
+  private var isHighlighted: Bool { isCurrentEntry || matchesQuery }
+
+  /// The entry's reading when the text uses one of its forms; otherwise the parsed reading of
+  /// the text itself, so an inflected word such as 見なかった gets furigana for 見, not 見る.
+  private func displayReading(for entry: DictionaryEntry) -> String {
+    let forms = [entry.headword] + entry.writtenForms.map(\.value) + entry.readingForms.map(\.value)
+    guard !forms.contains(token.surface), let reading = token.reading, !reading.isEmpty else {
+      return entry.reading
+    }
+    return reading.applyingTransform(.hiraganaToKatakana, reverse: true) ?? reading
+  }
 
   var body: some View {
     if let entry = token.entry {
       if presentation.usesDedicatedWordSelector {
         JapaneseRubyText(
           surface: token.surface,
-          reading: entry.reading,
-          underlined: false,
+          reading: displayReading(for: entry),
           exposesAccessibility: false,
           displaysRomaji: false
         )
-        .foregroundStyle(Color.primary)
+        .foregroundStyle(isHighlighted ? Color.accentColor : Color.primary)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(token.surface)
         .accessibilityIdentifier(identifier)
@@ -170,15 +199,15 @@ private struct LinkedTokenView: View {
         } label: {
           JapaneseRubyText(
             surface: token.surface,
-            reading: entry.reading,
-            underlined: true,
+            reading: displayReading(for: entry),
             exposesAccessibility: false,
             displaysRomaji: false
           )
-          // Underlining carries the interactive affordance. Inline Word Detail
-          // examples additionally accent the complete current token so its ruby
-          // stays visually associated with its base text.
-          .foregroundStyle(isCurrentEntry ? Color.accentColor : Color.primary)
+          // Each word's own underline carries the interactive affordance and shows where
+          // one parsed word ends and the next begins. The current entry or query match is
+          // accented, ruby included, so it stays associated with its base text.
+          .foregroundStyle(isHighlighted ? Color.accentColor : Color.primary)
+          .wordUnderline(isHighlighted: isHighlighted)
         }
         .buttonStyle(.plain)
         .frame(
@@ -208,7 +237,8 @@ private struct LinkedTokenView: View {
         } label: {
           Text(token.surface)
             .font(.body)
-            .underline()
+            .foregroundStyle(isHighlighted ? Color.accentColor : Color.primary)
+            .wordUnderline(isHighlighted: isHighlighted)
             .frame(
               minHeight: presentation.usesMinimumHitRegionHeight ? 44 : nil,
               alignment: .bottom
@@ -226,6 +256,19 @@ private struct LinkedTokenView: View {
         .font(.body)
         .accessibilityIdentifier(identifier)
     }
+  }
+}
+
+extension View {
+  /// A short underline inset from both edges, so adjacent words read as separate pieces.
+  fileprivate func wordUnderline(isHighlighted: Bool) -> some View {
+    padding(.bottom, 3)
+      .overlay(alignment: .bottom) {
+        Capsule()
+          .fill(isHighlighted ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.tertiary))
+          .frame(height: 2)
+          .padding(.horizontal, 2)
+      }
   }
 }
 
