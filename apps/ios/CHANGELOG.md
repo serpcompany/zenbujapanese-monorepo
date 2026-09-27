@@ -4,6 +4,11 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ## Unreleased
 
+### Fixed
+
+- Inflected Japanese searches such as `まけたら`, `食べなかった`, and `勉強した` now find
+  their dictionary forms (負ける, 食べる, 勉強) without downloading Japanese Text Analysis.
+
 ### Changed
 
 - Search now presents one Results list ordered by dictionary relevance first and active
