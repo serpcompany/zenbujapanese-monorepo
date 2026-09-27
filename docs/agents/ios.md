@@ -74,10 +74,10 @@ editing or resubmitting the visible query.
 
 For pack priority, record the visible headwords and ranks for `いる` under TUBELEX, enable
 Japanese Wikipedia and move it first, return to Search without changing the query, and verify
-that rows show a Wikipedia chip with `+1` and reorder where displayed rank values differ between
-entries with equivalent match evidence. Move TUBELEX back to the top and verify the original
-ordering returns. Disable every pack and verify that rows show no frequency chips, use
-dictionary relevance order, and Word Detail hides its frequency row.
+that rows show a Wikipedia chip first, followed by TUBELEX, and reorder where displayed rank
+values differ between entries with equivalent match evidence. Move TUBELEX back to the top and
+verify the original ordering returns. Disable every pack and verify that rows show no frequency
+chips, use dictionary relevance order, and Word Detail hides its frequency row.
 
 For unavailable-pack fallback, begin a search and make the first enabled installed pack
 unreadable in a debug Simulator container (or inject an unavailable `FrequencyCapability`). Verify that the same

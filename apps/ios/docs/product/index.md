@@ -25,10 +25,13 @@ locally into Zenbu's dictionary. A learner can enable any number of installed pa
 including none. A newly downloaded pack is enabled automatically. TUBELEX can be disabled
 but not removed, and removing an optional pack also disables it.
 
-Enabled packs form a priority list at the top of the screen, which Edit reorders. Ranks
-appear in this order, and the first pack orders Search. Each pack card shows its status,
-installed storage size when applicable, and available actions. When the app upgrades from
-the single active pack, that pack becomes the only enabled one.
+The screen lists one row per pack in three sections. **Enabled** holds packs that are
+switched on, in priority order; Edit reorders them. Ranks appear in this order, and the first
+pack orders Search. **Installed** holds downloaded packs that are switched off, and
+**Available** offers a download button for each remaining pack. A row's subtitle shows its
+domain and size, or a download failure. Swiping a row reveals Details and Remove, and Update
+when a newer version exists. When the app upgrades from the single active pack, that pack
+becomes the only enabled one.
 
 ### Media Library
 

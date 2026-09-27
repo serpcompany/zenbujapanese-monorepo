@@ -798,21 +798,14 @@ private struct ResultRow: View {
   var body: some View {
     NavigationLink(value: SearchExperienceRoute.word(entry, nil)) {
       VStack(alignment: .leading, spacing: 4) {
-        if dynamicTypeSize.isAccessibilitySize {
-          titleBlock
-          frequencyChips
-        } else {
-          HStack(alignment: .lastTextBaseline, spacing: 8) {
-            titleBlock
-            Spacer(minLength: 0)
-            frequencyChips
-          }
-        }
+        titleBlock
         Text(summary)
           .font(.body)
           .foregroundStyle(.primary)
           .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
           .fixedSize(horizontal: false, vertical: true)
+        frequencyChips
+          .padding(.top, 2)
       }
       .frame(maxWidth: .infinity, alignment: .leading)
       .contentShape(Rectangle())
@@ -824,14 +817,13 @@ private struct ResultRow: View {
 
   @ViewBuilder
   private var frequencyChips: some View {
-    if let primary = frequencyPresentation.primary {
-      HStack(spacing: 4) {
-        FrequencyRankChip(presentation: primary, isPrimary: true)
-        if frequencyPresentation.additionalRankCount > 0 {
-          FrequencyAdditionalRanksChip(count: frequencyPresentation.additionalRankCount)
+    let chips = frequencyPresentation.chips
+    if !chips.isEmpty {
+      FrequencyChipFlowLayout {
+        ForEach(chips.enumerated(), id: \.offset) { _, chip in
+          FrequencyRankChip(presentation: chip, style: .subtle)
         }
       }
-      .fixedSize()
       .accessibilityHidden(true)
     }
   }

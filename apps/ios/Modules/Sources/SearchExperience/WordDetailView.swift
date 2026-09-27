@@ -688,12 +688,12 @@ private struct FrequencyRanksRow: View {
 
   var body: some View {
     FrequencyChipFlowLayout {
-      ForEach(ranks.enumerated(), id: \.offset) { index, result in
+      ForEach(ranks.enumerated(), id: \.offset) { _, result in
         let presentation = FrequencyPresentationModel(result: result)
         Button {
           showDetails(result)
         } label: {
-          FrequencyRankChip(presentation: presentation, isPrimary: index == 0)
+          FrequencyRankChip(presentation: presentation)
             .frame(minHeight: 32)
             .contentShape(.rect)
         }

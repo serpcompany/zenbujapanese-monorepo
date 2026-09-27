@@ -3,37 +3,24 @@ import SwiftUI
 struct FrequencyDictionariesView: View {
   @State private var snapshot: FrequencyPackSnapshot?
   @State private var workingPackID: FrequencyPackID?
-  @State private var verifiedPackID: FrequencyPackID?
+  @State private var detailPack: FrequencyPackState?
   @State private var screenFailure: String?
   let client: FrequencyPackClient
 
   var body: some View {
     List {
       if let snapshot {
-        enabledOrder(snapshot)
-        ForEach(snapshot.packs) { pack in
-          Section {
-            status(for: pack)
-            storage(for: pack)
-            if let failure = pack.failureMessage {
-              Label(failure, systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.red)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Download failed")
-                .accessibilityValue(failure)
-                .accessibilityIdentifier("frequency-pack.failure.\(pack.id.rawValue)")
-            }
-            if verifiedPackID == pack.id {
-              Label("Verified", systemImage: "checkmark.seal.fill")
-                .foregroundStyle(.green)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Verified")
-                .accessibilityValue("Download and checksum verified")
-                .accessibilityIdentifier("frequency-pack.verified.\(pack.id.rawValue)")
-            }
-            actions(for: pack)
-          } header: {
-            Text(pack.manifest.displayName)
+        enabledSection(snapshot)
+        let installed = snapshot.packs.filter { $0.isInstalled && !$0.isEnabled }
+        if !installed.isEmpty {
+          Section("Installed") {
+            ForEach(installed) { row(for: $0) }
+          }
+        }
+        let available = snapshot.packs.filter { !$0.isInstalled }
+        if !available.isEmpty {
+          Section("Available") {
+            ForEach(available) { row(for: $0) }
           }
         }
       } else if let screenFailure {
@@ -58,133 +45,115 @@ struct FrequencyDictionariesView: View {
     }
     .contentMargins(.bottom, 120, for: .scrollContent)
     .accessibilityIdentifier("frequency-packs.list")
-    .task { await load() }
-    .task(id: verifiedPackID) {
-      guard let verifiedPackID else { return }
-      try? await Task.sleep(for: .seconds(8))
-      guard !Task.isCancelled, self.verifiedPackID == verifiedPackID else { return }
-      self.verifiedPackID = nil
+    .sheet(item: $detailPack) { pack in
+      FrequencyPackDetailView(pack: pack)
     }
+    .task { await load() }
   }
 
-  @ViewBuilder
-  private func enabledOrder(_ snapshot: FrequencyPackSnapshot) -> some View {
+  private func enabledSection(_ snapshot: FrequencyPackSnapshot) -> some View {
     Section {
-      if snapshot.enabledPacks.isEmpty {
-        Text("None enabled. Search uses dictionary relevance order and hides frequency ranks.")
-          .foregroundStyle(.secondary)
-          .accessibilityIdentifier("frequency-packs.enabled.empty")
-      } else {
-        ForEach(Array(snapshot.enabledPacks.enumerated()), id: \.element.id) { index, pack in
-          HStack(spacing: 12) {
-            Text("\(index + 1)")
-              .font(.body.monospacedDigit())
-              .foregroundStyle(.secondary)
-            Text(pack.manifest.displayName)
-            Spacer(minLength: 0)
-            if index == 0 {
-              Text("Sorts Search")
-                .font(.footnote)
-                .foregroundStyle(.tint)
-            }
-          }
-          .accessibilityElement(children: .ignore)
-          .accessibilityLabel(pack.manifest.displayName)
-          .accessibilityValue(
-            index == 0 ? "Priority 1, sorts search results" : "Priority \(index + 1)")
-          .accessibilityIdentifier("frequency-packs.enabled.\(pack.id.rawValue)")
-        }
+      ForEach(snapshot.enabledPacks) { row(for: $0) }
         .onMove { source, destination in
           var order = snapshot.enabledPackIDs
           order.move(fromOffsets: source, toOffset: destination)
           reorder(order)
         }
-      }
     } header: {
       Text("Enabled")
     } footer: {
-      if snapshot.enabledPackIDs.count > 1 {
-        Text(
-          "Ranks appear in this order. Search sorts equally relevant results by the first dictionary. Drag to reorder."
-        )
+      Group {
+        if snapshot.enabledPackIDs.isEmpty {
+          Text("None enabled. Search uses dictionary relevance order and hides frequency ranks.")
+        } else if snapshot.enabledPackIDs.count > 1 {
+          Text("Ranks appear in this order. The first dictionary sorts Search.")
+        }
       }
+      .accessibilityIdentifier("frequency-packs.enabled.footer")
     }
   }
 
-  private func status(for pack: FrequencyPackState) -> some View {
+  private func row(for pack: FrequencyPackState) -> some View {
     HStack(spacing: 12) {
-      Text("Status")
-      Spacer(minLength: 0)
-      Label(
-        pack.isEnabled ? "Enabled" : (pack.isInstalled ? "Installed" : "Available"),
-        systemImage: pack.isEnabled
-          ? "checkmark.circle.fill"
-          : (pack.isInstalled ? "checkmark.circle" : "arrow.down.circle")
-      )
-      .foregroundStyle(pack.isEnabled ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
+      VStack(alignment: .leading, spacing: 2) {
+        Text(pack.manifest.displayName)
+        subtitle(for: pack)
+          .font(.footnote)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      trailingControl(for: pack)
     }
-    .accessibilityElement(children: .ignore)
-    .accessibilityLabel("Status")
-    .accessibilityValue(
-      pack.isEnabled
-        ? "Enabled"
-        : (pack.isInstalled ? "Installed, not enabled" : "Available, not installed")
-    )
-    .accessibilityIdentifier("frequency-pack.status.\(pack.id.rawValue)")
-  }
-
-  @ViewBuilder
-  private func storage(for pack: FrequencyPackState) -> some View {
-    if let installedBytes = pack.installedBytes {
-      LabeledContent(
-        "Storage",
-        value: ByteCountFormatter.string(fromByteCount: Int64(installedBytes), countStyle: .file)
-      )
-    }
-  }
-
-  @ViewBuilder
-  private func actions(for pack: FrequencyPackState) -> some View {
-    if workingPackID == pack.id {
-      ProgressView("Downloading \(pack.manifest.displayName)")
-        .accessibilityValue("Download and validation in progress")
-        .accessibilityIdentifier("frequency-pack.progress.\(pack.id.rawValue)")
-    } else if pack.availableActions.contains(.download) {
-      Button(pack.failureMessage == nil ? FrequencyPackAction.download.label : "Retry") {
-        perform(pack.id, confirmsVerification: true) { try await client.download(pack.id) }
-      }
-      .accessibilityIdentifier("frequency-pack.download.\(pack.id.rawValue)")
-    } else {
-      if pack.availableActions.contains(.enable) {
-        Button(FrequencyPackAction.enable.label) {
-          perform(pack.id) { try await client.enable(pack.id) }
-        }
-        .accessibilityIdentifier("frequency-pack.enable.\(pack.id.rawValue)")
-      }
-      if pack.availableActions.contains(.disable) {
-        Button(FrequencyPackAction.disable.label) {
-          perform(pack.id) { try await client.disable(pack.id) }
-        }
-        .accessibilityIdentifier("frequency-pack.disable.\(pack.id.rawValue)")
-      }
-      if pack.availableActions.contains(.update) {
-        Button(FrequencyPackAction.update.label) {
-          perform(pack.id, confirmsVerification: true) { try await client.download(pack.id) }
-        }
-        .accessibilityIdentifier("frequency-pack.update.\(pack.id.rawValue)")
-      }
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("frequency-pack.row.\(pack.id.rawValue)")
+    .swipeActions(edge: .trailing) {
       if pack.availableActions.contains(.remove) {
-        Button(FrequencyPackAction.remove.label, role: .destructive) {
+        Button("Remove", systemImage: "trash", role: .destructive) {
           perform(pack.id) { try await client.remove(pack.id) }
         }
         .accessibilityIdentifier("frequency-pack.remove.\(pack.id.rawValue)")
       }
-      if !pack.manifest.removable {
-        Text("Included with Zenbu · Works offline")
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-          .accessibilityIdentifier("frequency-pack.included.\(pack.id.rawValue)")
+      Button("Details", systemImage: "info.circle") {
+        detailPack = pack
       }
+      .accessibilityIdentifier("frequency-pack.details.\(pack.id.rawValue)")
+    }
+    .swipeActions(edge: .leading) {
+      if pack.availableActions.contains(.update) {
+        Button("Update", systemImage: "arrow.down.circle") {
+          perform(pack.id) { try await client.download(pack.id) }
+        }
+        .tint(.accentColor)
+        .accessibilityIdentifier("frequency-pack.update.\(pack.id.rawValue)")
+      }
+    }
+  }
+
+  @ViewBuilder
+  private func subtitle(for pack: FrequencyPackState) -> some View {
+    if let failure = pack.failureMessage {
+      Text(failure)
+        .foregroundStyle(.red)
+        .accessibilityIdentifier("frequency-pack.failure.\(pack.id.rawValue)")
+    } else if pack.updateAvailable {
+      Text("Update available · swipe right to download")
+        .foregroundStyle(.tint)
+    } else {
+      Text(pack.detailSummary)
+        .foregroundStyle(.secondary)
+    }
+  }
+
+  @ViewBuilder
+  private func trailingControl(for pack: FrequencyPackState) -> some View {
+    if workingPackID == pack.id {
+      ProgressView()
+        .accessibilityLabel("Downloading \(pack.manifest.displayName)")
+        .accessibilityIdentifier("frequency-pack.progress.\(pack.id.rawValue)")
+    } else if pack.isInstalled {
+      Toggle(
+        pack.manifest.displayName,
+        isOn: Binding(
+          get: { pack.isEnabled },
+          set: { setEnabled(pack.id, $0) }
+        )
+      )
+      .labelsHidden()
+      .accessibilityIdentifier("frequency-pack.toggle.\(pack.id.rawValue)")
+    } else {
+      Button {
+        perform(pack.id) { try await client.download(pack.id) }
+      } label: {
+        Image(
+          systemName: pack.failureMessage == nil ? "arrow.down.circle" : "arrow.clockwise.circle"
+        )
+        .font(.title2)
+      }
+      .buttonStyle(.borderless)
+      .accessibilityLabel(
+        pack.failureMessage == nil
+          ? "Download \(pack.manifest.displayName)" : "Retry \(pack.manifest.displayName)"
+      )
+      .accessibilityIdentifier("frequency-pack.download.\(pack.id.rawValue)")
     }
   }
 
@@ -192,10 +161,24 @@ struct FrequencyDictionariesView: View {
     Task { await load() }
   }
 
-  private func reorder(_ order: [FrequencyPackID]) {
+  private func setEnabled(_ packID: FrequencyPackID, _ isEnabled: Bool) {
     if let snapshot {
-      self.snapshot = FrequencyPackSnapshot(enabledPackIDs: order, packs: snapshot.packs)
+      var order = snapshot.enabledPackIDs.filter { $0 != packID }
+      if isEnabled { order.append(packID) }
+      withAnimation { self.snapshot = snapshot.withEnabledPackIDs(order) }
     }
+    Task { @MainActor in
+      if isEnabled {
+        try? await client.enable(packID)
+      } else {
+        try? await client.disable(packID)
+      }
+      await load()
+    }
+  }
+
+  private func reorder(_ order: [FrequencyPackID]) {
+    snapshot = snapshot?.withEnabledPackIDs(order)
     Task { @MainActor in
       try? await client.reorderEnabled(order)
       await load()
@@ -204,19 +187,12 @@ struct FrequencyDictionariesView: View {
 
   private func perform(
     _ packID: FrequencyPackID,
-    confirmsVerification: Bool = false,
     operation: @escaping @MainActor () async throws -> Void
   ) {
-    verifiedPackID = nil
     workingPackID = packID
     Task { @MainActor in
       defer { workingPackID = nil }
-      do {
-        try await operation()
-        if confirmsVerification {
-          verifiedPackID = packID
-        }
-      } catch {}
+      try? await operation()
       await load()
     }
   }
@@ -230,5 +206,74 @@ struct FrequencyDictionariesView: View {
       snapshot = nil
       screenFailure = "Pack information could not be loaded."
     }
+  }
+}
+
+private struct FrequencyPackDetailView: View {
+  @Environment(\.dismiss) private var dismiss
+  let pack: FrequencyPackState
+
+  var body: some View {
+    NavigationStack {
+      List {
+        Section {
+          Text(pack.manifest.domainDescription)
+        }
+        Section {
+          LabeledContent("Domain", value: pack.manifest.domain)
+          LabeledContent("Version", value: pack.manifest.packVersion)
+          LabeledContent("Status", value: pack.manifest.bundled ? "Included" : pack.updateStatus)
+          if let storage = pack.storageText {
+            LabeledContent("Storage", value: storage)
+          }
+        }
+        Section("Source") {
+          Text(pack.manifest.attribution)
+            .font(.footnote)
+        }
+      }
+      .navigationTitle(pack.manifest.displayName)
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .confirmationAction) {
+          Button("Done", action: dismiss.callAsFunction)
+        }
+      }
+    }
+    .accessibilityIdentifier("frequency-pack.detail")
+  }
+}
+
+extension FrequencyPackState {
+  fileprivate var storageText: String? {
+    installedBytes.map {
+      ByteCountFormatter.string(fromByteCount: Int64($0), countStyle: .file)
+    }
+  }
+
+  /// The row subtitle: domain plus "Included" or the installed size.
+  fileprivate var detailSummary: String {
+    let detail = manifest.bundled ? "Included" : storageText
+    return [manifest.domain, detail].compactMap { $0 }.joined(separator: " · ")
+  }
+}
+
+extension FrequencyPackSnapshot {
+  /// An optimistic copy that reflects a new enabled order before the store confirms it.
+  fileprivate func withEnabledPackIDs(_ ids: [FrequencyPackID]) -> FrequencyPackSnapshot {
+    FrequencyPackSnapshot(
+      enabledPackIDs: ids,
+      packs: packs.map { pack in
+        FrequencyPackState(
+          manifest: pack.manifest,
+          isInstalled: pack.isInstalled,
+          isEnabled: ids.contains(pack.id),
+          installedBytes: pack.installedBytes,
+          failureMessage: pack.failureMessage,
+          updateStatus: pack.updateStatus,
+          updateAvailable: pack.updateAvailable
+        )
+      }
+    )
   }
 }

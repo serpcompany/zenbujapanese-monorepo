@@ -10,9 +10,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   enabled frequency dictionary's rank second. English rows show the gloss that matched the query.
 - TUBELEX remains included and enabled by default. Japanese Wikipedia and nine domain-specific
   frequency dictionaries can be downloaded and removed from You → Frequency Dictionaries.
-- Any number of frequency dictionaries, including none, can be enabled and reordered. Search rows
-  show a compact labeled rank chip plus a `+N` count, and Word Detail shows every enabled
-  dictionary's rank.
+- Any number of frequency dictionaries, including none, can be switched on and reordered from a
+  simplified Frequency Dictionaries screen. Search rows and Word Detail show a rank chip for each
+  enabled dictionary, each with its own color.
 - Image Text now divides recognized Japanese into individually selectable words and marks
   each boundary with a separate underline instead of highlighting broad OCR regions.
 - Selecting a recognized word opens the existing Word Detail experience in a large sheet,

@@ -18,10 +18,11 @@ compares that explicit match evidence first, then uses ascending rank from the f
 frequency dictionary when the preceding evidence is equal. Frequency
 never introduces an entry that the query did not retrieve or lets an incidental match outrank a
 direct match. An English result displays the matching gloss, even when that gloss is not the
-entry's first sense. Each row places a labeled chip for the first enabled dictionary's rank,
-such as `YouTube 812`, beside the headword, plus a `+N` chip counting other enabled
-dictionaries that rank the entry. A dash replaces the rank when the first dictionary has no
-mapped evidence. At standard text sizes, the summary shows at most two lines.
+entry's first sense. Below the summary, a row of compact chips such as `YouTube 812` shows
+each enabled dictionary's rank in priority order. The first dictionary's chip always appears,
+with a dash when it has no mapped evidence; other dictionaries appear only when they rank the
+entry. A small dot marks each dictionary's color. At standard text sizes, the summary shows at
+most two lines.
 
 Equal ranks and entries without mapped evidence retain the dictionary's deterministic fallback
 order. While frequency data is loading, when no frequency dictionary is enabled, or when the
@@ -30,9 +31,9 @@ With no enabled dictionary, rows show no frequency information. Unavailability i
 below the results without blocking lookup.
 
 Changing the enabled frequency dictionaries or their order updates the currently displayed
-result collection without resubmitting the query. Results can also offer a Japanese-reading refinement, related
-Example Sentences, discovered words, frequency information, and a dedicated Kanji result for a
-single-kanji query.
+result collection without resubmitting the query. Results can also offer a Japanese-reading
+refinement, related Example Sentences, discovered words, frequency information, and a dedicated
+Kanji result for a single-kanji query.
 
 A sparse radical-selection submission keeps its intentionally narrow leading lexical-rank
 candidate group. Those candidates still appear in one **Results** collection and are ordered by
@@ -46,7 +47,8 @@ or clear the entire history.
 A word detail can present its written form and reading, ordered meanings, alternative forms,
 kanji, related words, conjugations, source-matched Example Sentences, pronunciation, and
 frequency information when the corresponding data is available. Frequency appears as a row of
-`Name  rank` chips under the headword, one per enabled dictionary in priority order. Selecting
+`Name  rank` chips under the headword, one per enabled dictionary in priority order and tinted
+with that dictionary's color. Selecting
 a chip opens that dictionary's frequency details. The row is hidden when no dictionary is
 enabled.
 

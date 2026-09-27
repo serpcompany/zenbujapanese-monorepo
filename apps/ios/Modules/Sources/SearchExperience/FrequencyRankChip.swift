@@ -1,44 +1,83 @@
 import SwiftUI
 
-/// A dictionary name and its rank, such as "Netflix 449". The primary chip belongs to the
-/// enabled dictionary that orders search results.
+/// A dictionary name and its rank, such as "Netflix 449". Each dictionary keeps its own color.
+/// Subtle chips confine it to a small dot so dense lists stay readable; prominent chips tint
+/// the name for a single entry's detail.
 struct FrequencyRankChip: View {
-  let presentation: FrequencyPresentationModel
-  var isPrimary = false
-
-  var body: some View {
-    HStack(spacing: 0) {
-      Text(presentation.packName)
-        .fontWeight(.semibold)
-        .foregroundStyle(isPrimary ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .background(.fill.secondary)
-      Text(presentation.inlineText)
-        .monospacedDigit()
-        .foregroundStyle(.primary)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-    }
-    .font(.caption)
-    .lineLimit(1)
-    .background(.fill.quaternary)
-    .clipShape(.rect(cornerRadius: 6))
+  enum Style {
+    case subtle
+    case prominent
   }
-}
 
-/// A "+N" chip counting additional enabled dictionaries that rank an entry.
-struct FrequencyAdditionalRanksChip: View {
-  let count: Int
+  let presentation: FrequencyPresentationModel
+  var style = Style.prominent
 
   var body: some View {
-    Text("+\(count)")
-      .font(.caption.monospacedDigit())
-      .foregroundStyle(.secondary)
+    let color = presentation.pack?.chipColor ?? .secondary
+    switch style {
+    case .subtle:
+      HStack(spacing: 4) {
+        Circle()
+          .fill(color)
+          .frame(width: 6, height: 6)
+        Text(presentation.packName)
+          .foregroundStyle(.secondary)
+        Text(presentation.inlineText)
+          .monospacedDigit()
+          .foregroundStyle(.primary)
+      }
+      .font(.caption)
       .lineLimit(1)
       .padding(.horizontal, 6)
       .padding(.vertical, 2)
-      .background(.fill.quaternary, in: .rect(cornerRadius: 6))
+      .overlay {
+        RoundedRectangle(cornerRadius: 6)
+          .strokeBorder(.separator, lineWidth: 1)
+      }
+    case .prominent:
+      HStack(spacing: 0) {
+        Text(presentation.packName)
+          .fontWeight(.semibold)
+          .foregroundStyle(color)
+          .padding(.horizontal, 6)
+          .padding(.vertical, 2)
+          .background(color.opacity(0.18))
+        Text(presentation.inlineText)
+          .monospacedDigit()
+          .foregroundStyle(.primary)
+          .padding(.horizontal, 6)
+          .padding(.vertical, 2)
+      }
+      .font(.caption)
+      .lineLimit(1)
+      .clipShape(.rect(cornerRadius: 6))
+      .overlay {
+        RoundedRectangle(cornerRadius: 6)
+          .strokeBorder(color.opacity(0.5), lineWidth: 1)
+      }
+    }
+  }
+}
+
+extension FrequencyPackDisclosure {
+  /// A stable color for this dictionary's chips across Search and Word Detail.
+  var chipColor: Color {
+    // System colors adapt to dark mode and Increase Contrast. Gray is reserved for
+    // unavailable evidence and yellow reads poorly on light backgrounds.
+    switch id.rawValue {
+    case "zenbu.tubelex.youtube.ja.unidic-3.1": .red
+    case "zenbu.wikipedia.written.ja.unidic-3.1": .blue
+    case "zenbu.public.netflix.ja.ordered-v1": .pink
+    case "zenbu.public.novels.ja.ordered-v1": .brown
+    case "zenbu.public.slice-of-life.ja.ordered-v1": .mint
+    case "zenbu.public.nhk.ja.ordered-v1": .indigo
+    case "zenbu.public.shonen.ja.ordered-v1": .orange
+    case "zenbu.public.jp-dict.ja.ordered-v1": .teal
+    case "zenbu.public.visual-novel.ja.ordered-v1": .purple
+    case "zenbu.public.tv-shows.ja.ordered-v1": .cyan
+    case "zenbu.public.internet.ja.ordered-v1": .green
+    default: .accentColor
+    }
   }
 }
 

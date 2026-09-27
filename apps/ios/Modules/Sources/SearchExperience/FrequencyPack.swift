@@ -81,6 +81,11 @@ enum FrequencyLookupResult: Equatable, Sendable {
   case noEvidence(pack: FrequencyPackDisclosure)
   case unavailable(FrequencyPackUnavailable)
 
+  var hasRank: Bool {
+    if case .evidence = self { return true }
+    return false
+  }
+
   static func unavailableResults(
     for ids: [LanguageReferenceID],
     pack: FrequencyPackDisclosure?,
@@ -173,40 +178,28 @@ struct FrequencyPresentationModel: Equatable, Sendable {
 }
 
 struct SearchFrequencyRankPresentationModel: Equatable, Sendable {
-  /// The first enabled dictionary's chip. Nil while evidence loads or when none is enabled.
-  let primary: FrequencyPresentationModel?
-  /// Other enabled dictionaries that have a rank for this entry.
-  let additionalRankCount: Int
+  /// Chips in priority order: the first enabled dictionary always, because it orders the
+  /// results, then each other dictionary that ranks the entry. Empty while evidence loads or
+  /// when no dictionary is enabled.
+  let chips: [FrequencyPresentationModel]
   let accessibilityValue: String
 
   init(ranks: FrequencyRanks?) {
-    guard let ranks, let first = ranks.first else {
-      primary = nil
-      additionalRankCount = 0
+    guard let ranks, !ranks.isEmpty else {
+      chips = []
       accessibilityValue =
         ranks == nil ? "Frequency rank loading" : "No frequency dictionary enabled"
       return
     }
-    let primary = FrequencyPresentationModel(result: first)
-    self.primary = primary
-    additionalRankCount = ranks.dropFirst().count { result in
-      if case .evidence = result { return true }
-      return false
-    }
-    let primaryValue =
-      switch first {
-      case .evidence(let evidence):
-        "\(primary.packName) frequency rank \(evidence.rank)"
-      case .noEvidence:
-        "\(primary.packName) has no rank for this entry"
-      case .unavailable:
-        "\(primary.packName) rank unavailable"
+    let shown = ranks.enumerated().filter { $0.offset == 0 || $0.element.hasRank }.map(\.element)
+    chips = shown.map(FrequencyPresentationModel.init(result:))
+    accessibilityValue = zip(shown, chips).map { result, chip in
+      switch result {
+      case .evidence(let evidence): "\(chip.packName) frequency rank \(evidence.rank)"
+      case .noEvidence: "\(chip.packName) has no rank for this entry"
+      case .unavailable: "\(chip.packName) rank unavailable"
       }
-    accessibilityValue =
-      additionalRankCount == 0
-      ? primaryValue
-      : "\(primaryValue), ranked in \(additionalRankCount) more "
-        + (additionalRankCount == 1 ? "dictionary" : "dictionaries")
+    }.joined(separator: ", ")
   }
 }
 
