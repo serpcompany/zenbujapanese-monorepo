@@ -1,6 +1,6 @@
-# Lookup
+# Dictionary
 
-Lookup is the app's primary Product Experience. It appears as the **Search** tab and uses
+Dictionary is the app's primary Product Experience. It appears as the **Search** tab and uses
 bundled Language Reference Data so ordinary dictionary lookup works offline.
 
 ## Search

@@ -5,7 +5,7 @@ It is updated with the implementation and is not a roadmap or an ideas backlog.
 
 The current app has two tabs:
 
-- **Search** opens the [Lookup](lookup.md) Product Experience.
+- **Search** opens the [Dictionary](dictionary.md) Product Experience.
 - **You** opens personal content, preferences, language-resource management, and credits.
 
 ## You

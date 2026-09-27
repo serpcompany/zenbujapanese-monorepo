@@ -21,15 +21,15 @@ flowchart LR
     Vision --> Kuromoji["Kuromoji parsing"]
     Drawing["Handwriting"] --> CoreML["Core ML recognition"]
 
-    Sudachi --> Lookup["Offline dictionary lookup"]
-    Kuromoji --> Lookup
-    CoreML --> Lookup
+    Sudachi --> Dictionary["Offline dictionary"]
+    Kuromoji --> Dictionary
+    CoreML --> Dictionary
 
     SudachiDict[("SudachiDict Core")] -. lexical data .-> Sudachi
-    JMdict[("JMdict")] -. dictionary data .-> Lookup
+    JMdict[("JMdict")] -. dictionary data .-> Dictionary
     DaKanji[("DaKanji model")] -. model data .-> CoreML
 
-    Lookup --> Results["Words and meanings"]
+    Dictionary --> Results["Words and meanings"]
     Vision --> Translation["Apple Translation"]
     Results --> Speech["AVFoundation speech"]
 ```

@@ -1,7 +1,9 @@
 # Language data sources
 
 This directory contains the pinned source records, dependency notices, and local
-inputs used to build or install Zenbu Japanese language data.
+inputs used to build or install Zenbu Japanese language data. The repository-wide
+[`data sources`](../../../../docs/data-sources.md) index lists every source and its consumers;
+this directory holds the iOS specifics.
 
 The `*.source.json` files are the source of truth for upstream identity,
 snapshot, download location, checksum, and import configuration. The importers under
