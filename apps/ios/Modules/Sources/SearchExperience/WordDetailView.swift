@@ -5,7 +5,6 @@ import UIKit
 import UniformTypeIdentifiers
 
 struct WordDetailView: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @FocusState private var noteEditorFocused: Bool
   @State private var editingNoteID: String?
   @State private var noteDraft = ""
@@ -44,36 +43,13 @@ struct WordDetailView: View {
     ScrollViewReader { proxy in
       List {
         Section {
-          VStack(alignment: .leading, spacing: 12) {
-            headerLayout {
-              WordIdentityView(entry: entry)
-              if let latestEncounterMedia = displayableEncounterMedia.first {
-                EncounterMediaRow(
-                  media: latestEncounterMedia,
-                  count: displayableEncounterMedia.count,
-                  encounterMedia: displayableEncounterMedia,
-                  removeEncounterMedia: removeEncounterMedia
-                )
-              }
-            }
-            if !frequency.isEmpty {
-              FrequencyRanksRow(
-                ranks: frequency,
-                showDetails: { frequencyDisclosure = FrequencyDisclosureItem(result: $0) }
-              )
-            }
-            PronunciationRow(
-              entry: entry,
-              pronounce: { speechSynthesisClient.speak(entry.reading) }
-            )
-          }
-          PartOfSpeechRow(
+          WordHeroView(
             entry: entry,
-            title: (entry.senses.first?.partsOfSpeech ?? entry.partsOfSpeech)
-              .map(\.rawValue)
-              .joined(separator: " · "),
-            conjugationTable: conjugationTable
+            encounterMedia: displayableEncounterMedia,
+            removeEncounterMedia: removeEncounterMedia,
+            pronounce: { speechSynthesisClient.speak(entry.reading) }
           )
+          PartOfSpeechRow(entry: entry, conjugationTable: conjugationTable)
         }
 
         if !entry.alternativeForms.isEmpty {
@@ -84,6 +60,17 @@ struct WordDetailView: View {
 
         Section("MEANING") {
           MeaningSection(senses: entry.senses)
+        }
+
+        if !frequency.isEmpty {
+          Section("FREQUENCY") {
+            ForEach(frequency.enumerated(), id: \.offset) { _, result in
+              FrequencyRankRow(result: result) {
+                frequencyDisclosure = FrequencyDisclosureItem(result: $0)
+              }
+            }
+          }
+          .accessibilityIdentifier("word-detail.frequency")
         }
 
         if !entry.primaryKanji.isEmpty {
@@ -235,12 +222,6 @@ struct WordDetailView: View {
       examplesEntryID = entry.id
       isLoadingExamples = false
     }
-  }
-
-  private var headerLayout: AnyLayout {
-    dynamicTypeSize.isAccessibilitySize
-      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-      : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
   }
 
   private var displayableEncounterMedia: [EncounterMedia] {
@@ -497,19 +478,41 @@ private struct WordDetailKanjiLink: View {
   }
 }
 
-private struct WordIdentityView: View {
+/// The word itself: headword with furigana (following the Reading Aids setting), and its pitch
+/// accent, pronounce button, and latest encounter photo in the space to its right.
+private struct WordHeroView: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   let entry: DictionaryEntry
+  let encounterMedia: [EncounterMedia]
+  let removeEncounterMedia: (String) async -> Void
+  let pronounce: () -> Void
 
   var body: some View {
+    let layout =
+      dynamicTypeSize.isAccessibilitySize
+      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+      : AnyLayout(HStackLayout(alignment: .center, spacing: 12))
+    layout {
+      headword
+        .frame(maxWidth: .infinity, alignment: .leading)
+      controls
+    }
+    .padding(.vertical, 4)
+  }
+
+  private var headword: some View {
     ViewThatFits(in: .horizontal) {
-      JapaneseRubyText(
-        surface: entry.headword,
-        reading: entry.reading,
-        baseFont: .largeTitle.weight(.light),
-        rubyFont: .title3.weight(.semibold)
-      )
-      .fixedSize(horizontal: true, vertical: false)
+      VStack(alignment: .leading, spacing: 2) {
+        JapaneseRubyText(
+          surface: entry.headword,
+          reading: entry.reading,
+          baseFont: .largeTitle,
+          rubyFont: .title3.weight(.semibold)
+        )
+        .fixedSize(horizontal: true, vertical: false)
+        readingWithoutFurigana
+      }
 
       VStack(alignment: .leading, spacing: 6) {
         Text(entry.headword)
@@ -521,58 +524,167 @@ private struct WordIdentityView: View {
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
           .accessibilityIdentifier("word-detail.identity-reading")
-        RomajiReadingAidText(
-          trustedReading: entry.reading,
-          font: .callout,
-          exposesAccessibility: false
-        )
+        RomajiReadingAidText(trustedReading: entry.reading, font: .callout)
       }
-      .accessibilityElement(children: .ignore)
-      .accessibilityLabel("\(entry.headword), \(entry.reading)")
+      .accessibilityElement(children: .combine)
       .accessibilityIdentifier("word-detail.identity")
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+
+  /// A dictionary headword always needs its reading, so it moves under the headword when the
+  /// learner turns furigana off.
+  @ViewBuilder
+  private var readingWithoutFurigana: some View {
+    if !readingAidPreferences.showsFurigana, entry.reading != entry.headword {
+      Text(entry.reading)
+        .font(.title3)
+        .foregroundStyle(.secondary)
+        .accessibilityIdentifier("word-detail.identity-reading")
+    }
+  }
+
+  private var controls: some View {
+    HStack(spacing: 8) {
+      if let pitch = entry.pitchAccent {
+        PitchAccentBadge(reading: entry.reading, pitch: pitch)
+      }
+      Button(action: pronounce) {
+        Image(systemName: "speaker.wave.2.fill")
+          .font(.title3)
+          .frame(minWidth: 44, minHeight: 44)
+          .contentShape(.rect)
+      }
+      .buttonStyle(.borderless)
+      .accessibilityLabel("Pronounce \(entry.reading)")
+      .accessibilityIdentifier("word-detail.pronounce")
+      if let latest = encounterMedia.first {
+        EncounterMediaRow(
+          media: latest,
+          count: encounterMedia.count,
+          encounterMedia: encounterMedia,
+          removeEncounterMedia: removeEncounterMedia
+        )
+      }
+    }
   }
 }
 
-private struct PronunciationRow: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+/// The part of speech, which opens the conjugation table when one exists.
+private struct PartOfSpeechRow: View {
   let entry: DictionaryEntry
-  let pronounce: () -> Void
+  let conjugationTable: ConjugationTable?
 
-  @ViewBuilder
   var body: some View {
-    if dynamicTypeSize.isAccessibilitySize {
-      VStack(alignment: .leading, spacing: 12) {
-        pronounceButton
-          .frame(maxWidth: .infinity, alignment: .leading)
-        pitchAccent
+    if let conjugationTable {
+      NavigationLink(value: SearchExperienceRoute.conjugations(entry, conjugationTable)) {
+        label
       }
-    } else {
-      HStack(spacing: 16) {
-        pronounceButton
-        pitchAccent
-        Spacer(minLength: 0)
-      }
+      .accessibilityHint("Shows conjugations")
+      .accessibilityIdentifier("word-detail.conjugations")
+    } else if !title.isEmpty {
+      label
     }
   }
 
-  @ViewBuilder
-  private var pitchAccent: some View {
-    if let pitch = entry.pitchAccent {
-      PitchAccentView(reading: entry.reading, pitch: pitch)
-    }
+  private var label: some View {
+    Text(title.isEmpty ? "Dictionary entry" : title)
+      .fixedSize(horizontal: false, vertical: true)
+      .accessibilityIdentifier("word-detail.entry.\(entry.id.rawValue)")
   }
 
-  private var pronounceButton: some View {
-    Button(action: pronounce) {
-      Image(systemName: "speaker.wave.2.fill")
-        .font(.title2)
-        .frame(minWidth: 44, minHeight: 44)
+  private var title: String { entry.displayPartOfSpeech }
+}
+
+/// The reading in katakana with its pitch accent drawn as a contour: a dot per mora at high or
+/// low pitch joined by a line, and a hollow dot for the pitch of a following particle.
+private struct PitchAccentBadge: View {
+  let reading: String
+  let pitch: PitchAccent
+  @ScaledMetric(relativeTo: .body) private var moraWidth: CGFloat = 20
+  @ScaledMetric(relativeTo: .body) private var contourSpace = 7.0
+  @ScaledMetric(relativeTo: .body) private var horizontalPadding = 10.0
+
+  var body: some View {
+    let morae = reading.katakana.morae
+    // A combined mora such as キョ needs more room than a single kana.
+    let widths = morae.map { moraWidth * ($0.count > 1 ? 1.5 : 1) }
+    HStack(spacing: 0) {
+      ForEach(morae.enumerated(), id: \.offset) { index, mora in
+        Text(mora)
+          .font(.body)
+          .lineLimit(1)
+          .fixedSize()
+          .frame(width: widths[index])
+      }
+      // Room for the particle dot after the last mora.
+      Color.clear.frame(width: moraWidth * 0.6, height: 1)
     }
-    .buttonStyle(.bordered)
-    .accessibilityLabel("Pronounce \(entry.reading)")
-    .accessibilityIdentifier("word-detail.pronounce")
+    .padding(.vertical, contourSpace)
+    .overlay {
+      PitchContour(
+        levels: pitch.levels(moraCount: morae.count), moraWidths: widths,
+        particleWidth: moraWidth * 0.6)
+        .foregroundStyle(ZenbuTheme.pitchDownstep)
+    }
+    .padding(.horizontal, horizontalPadding)
+    .padding(.vertical, 2)
+    .background(.fill.tertiary, in: Capsule())
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(
+      "Pitch accent for \(reading), downstep \(pitch.downstep), \(pitch.moraCount) mora")
+    .accessibilityIdentifier("word-detail.pitch")
+  }
+}
+
+/// Draws pitch levels across evenly spaced morae: high points at the top edge, low points at the
+/// bottom edge, and a hollow point for the following particle.
+private struct PitchContour: View {
+  let levels: (morae: [Bool], particle: Bool)
+  let moraWidths: [CGFloat]
+  let particleWidth: CGFloat
+  @ScaledMetric(relativeTo: .body) private var dotSize: CGFloat = 5
+
+  var body: some View {
+    Canvas { context, size in
+      let inset = dotSize / 2 + 1
+      func y(_ high: Bool) -> CGFloat { high ? inset : size.height - inset }
+      var x: CGFloat = 0
+      var moraPoints: [CGPoint] = []
+      for (width, high) in zip(moraWidths, levels.morae) {
+        moraPoints.append(CGPoint(x: x + width / 2, y: y(high)))
+        x += width
+      }
+      guard !moraPoints.isEmpty else { return }
+      let particlePoint = CGPoint(x: x + particleWidth / 2, y: y(levels.particle))
+      var line = Path()
+      line.addLines(moraPoints + [particlePoint])
+      context.stroke(line, with: .foreground, lineWidth: 1.5)
+      for point in moraPoints {
+        context.fill(dot(at: point), with: .foreground)
+      }
+      context.fill(dot(at: particlePoint), with: .color(Color(.tertiarySystemFill)))
+      context.stroke(dot(at: particlePoint), with: .foreground, lineWidth: 1.5)
+    }
+    .accessibilityHidden(true)
+  }
+
+  private func dot(at point: CGPoint) -> Path {
+    Path(
+      ellipseIn: CGRect(
+        x: point.x - dotSize / 2, y: point.y - dotSize / 2, width: dotSize, height: dotSize))
+  }
+}
+
+extension String {
+  fileprivate var katakana: String {
+    String(
+      unicodeScalars.map { scalar in
+        let value = scalar.value
+        if (0x3041...0x3096).contains(value), let converted = UnicodeScalar(value + 0x60) {
+          return Character(String(converted))
+        }
+        return Character(String(scalar))
+      })
   }
 }
 
@@ -681,34 +793,34 @@ private struct EncounterMediaViewer: View {
   }
 }
 
-/// One chip per enabled frequency dictionary, in priority order.
-private struct FrequencyRanksRow: View {
-  let ranks: FrequencyRanks
+/// One enabled dictionary's rank for this entry. Selecting it opens that dictionary's details.
+private struct FrequencyRankRow: View {
+  let result: FrequencyLookupResult
   let showDetails: (FrequencyLookupResult) -> Void
-  @ScaledMetric(relativeTo: .caption) private var chipSpacing = 6.0
 
   var body: some View {
-    // Each chip's 44 pt tap area already separates lines, so lines need no extra gap.
-    FrequencyChipFlowLayout(spacing: chipSpacing, lineSpacing: 0) {
-      ForEach(ranks.enumerated(), id: \.offset) { _, result in
-        let presentation = FrequencyPresentationModel(result: result)
-        Button {
-          showDetails(result)
-        } label: {
-          FrequencyRankChip(presentation: presentation)
-            .frame(minHeight: 44)
-            .contentShape(.rect)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(presentation.inlineAccessibilityLabel)
-        .accessibilityValue(presentation.inlineText)
-        .accessibilityIdentifier(
-          "word-detail.frequency.\(presentation.pack?.id.rawValue ?? "unavailable")")
+    let presentation = FrequencyPresentationModel(result: result)
+    Button {
+      showDetails(result)
+    } label: {
+      HStack(spacing: 10) {
+        FrequencyTierMarker(tier: presentation.tier)
+        Text(presentation.packName)
+          .foregroundStyle(.primary)
+        Spacer(minLength: 8)
+        Text(presentation.tier == nil ? "No rank" : presentation.inlineText)
+          .monospacedDigit()
+          .foregroundStyle(.secondary)
       }
+      .contentShape(.rect)
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .accessibilityElement(children: .contain)
-    .accessibilityIdentifier("word-detail.frequency")
+    // List buttons tint their labels with the accent color; keep the row's own text colors.
+    .tint(.primary)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(presentation.inlineAccessibilityLabel)
+    .accessibilityAddTraits(.isButton)
+    .accessibilityIdentifier(
+      "word-detail.frequency.\(presentation.pack?.id.rawValue ?? "unavailable")")
   }
 }
 
@@ -761,108 +873,6 @@ private struct FrequencyDisclosureView: View {
         }
       }
     }
-  }
-}
-
-private struct PitchAccentView: View {
-  let reading: String
-  let pitch: PitchAccent
-
-  var body: some View {
-    HStack(spacing: 8) {
-      Text(reading.katakana)
-        .font(.body.weight(.medium))
-        .padding(.bottom, 4)
-        .overlay(alignment: .bottom) {
-          PitchContour(downstep: pitch.downstep, moraCount: pitch.moraCount)
-            .stroke(
-              ZenbuTheme.pitchDownstep,
-              style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
-            )
-            .frame(height: 7)
-        }
-    }
-    .padding(.horizontal, 12)
-    .frame(minHeight: 34)
-    .background(.fill.tertiary, in: Capsule())
-    .accessibilityElement(children: .combine)
-    .accessibilityLabel(
-      "Pitch accent for \(reading), downstep \(pitch.downstep), \(pitch.moraCount) mora"
-    )
-    .accessibilityIdentifier("word-detail.pitch")
-  }
-}
-
-private struct PitchContour: Shape {
-  let downstep: Int
-  let moraCount: Int
-
-  func path(in rect: CGRect) -> Path {
-    var path = Path()
-    let count = max(moraCount, 1)
-    let drop = downstep == 0 ? count : min(max(downstep, 1), count)
-    let dropX = rect.minX + rect.width * CGFloat(drop) / CGFloat(count)
-    path.move(to: CGPoint(x: rect.minX, y: rect.minY + 1))
-    path.addLine(to: CGPoint(x: dropX, y: rect.minY + 1))
-    if downstep > 0 {
-      path.addLine(to: CGPoint(x: min(rect.maxX, dropX + 5), y: rect.maxY - 1))
-      path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - 1))
-    }
-    return path
-  }
-}
-
-extension String {
-  fileprivate var katakana: String {
-    String(
-      unicodeScalars.map { scalar in
-        let value = scalar.value
-        if (0x3041...0x3096).contains(value), let converted = UnicodeScalar(value + 0x60) {
-          return Character(String(converted))
-        }
-        return Character(String(scalar))
-      })
-  }
-}
-
-private struct PartOfSpeechRow: View {
-  let entry: DictionaryEntry
-  let title: String
-  let conjugationTable: ConjugationTable?
-
-  var body: some View {
-    if let conjugationTable {
-      NavigationLink(value: SearchExperienceRoute.conjugations(entry, conjugationTable)) {
-        LabeledContent {
-          VStack(alignment: .trailing, spacing: 2) {
-            Text(title.isEmpty ? "Dictionary entry" : title)
-              .multilineTextAlignment(.trailing)
-              .fixedSize(horizontal: false, vertical: true)
-              .accessibilityIdentifier(entryVerificationIdentifier)
-            Text("View Conjugations")
-              .font(.caption)
-              .foregroundStyle(.secondary)
-          }
-        } label: {
-          Text("Part of speech")
-        }
-        .font(.body)
-      }
-      .accessibilityIdentifier("word-detail.conjugations")
-    } else {
-      LabeledContent {
-        Text(title.isEmpty ? "Dictionary entry" : title)
-          .multilineTextAlignment(.trailing)
-          .fixedSize(horizontal: false, vertical: true)
-          .accessibilityIdentifier(entryVerificationIdentifier)
-      } label: {
-        Text("Part of speech")
-      }
-    }
-  }
-
-  private var entryVerificationIdentifier: String {
-    "word-detail.entry.\(entry.id.rawValue)"
   }
 }
 
