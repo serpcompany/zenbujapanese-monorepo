@@ -20,13 +20,12 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 ### Changed
 
 - The conjugation table is compact: the word, its meaning, and a one-line rule sit at the top,
-  and every form fits in one list with its changed ending highlighted. Tapping a form explains
-  it on its own screen, highlights its ending, and lists the
-  example sentences that use it.
-- Example sentences underline each word separately, so you can see where one word ends and the
-  next begins, and they highlight the word or form you're studying. Inflected words such as
-  見なかった are one tappable word instead of 見 + なかっ + た, here and in Image Search.
-
+  and every form fits in one list with its changed ending highlighted. Tapping a form opens its
+  own screen, which explains it and lists the example sentences that use it.
+- Example sentences appear as separate cards, underline each word separately so you can see
+  where one word ends and the next begins, and highlight the word or form you're studying.
+  Inflected words such as 見なかった are one tappable word instead of 見 + なかっ + た, here and
+  in Image Search.
 - Search now presents one Results list ordered by dictionary relevance first, then by the enabled
   frequency dictionaries in priority order. English rows show the gloss that matched the query.
 - TUBELEX remains included and enabled by default. Japanese Wikipedia and nine domain-specific
