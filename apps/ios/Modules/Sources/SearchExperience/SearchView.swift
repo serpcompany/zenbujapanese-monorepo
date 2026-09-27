@@ -31,6 +31,7 @@ struct SearchView: View {
   @State private var imageImportTask: Task<Void, Never>?
   @State private var isConfirmingClearAll = false
   @State private var recentSearchRefreshID = 0
+  @State private var recentSearches: [SearchQuery] = []
   @FocusState private var isSearchFocused: Bool
 
   var body: some View {
@@ -54,8 +55,8 @@ struct SearchView: View {
         RecentSearchHistoryView(
           recentSearchStore: recentSearchStore,
           refreshID: recentSearchRefreshID,
-          requestClearAll: { isConfirmingClearAll = true },
-          selectSearch: selectRecentSearch
+          selectSearch: selectRecentSearch,
+          searches: $recentSearches
         )
 
       case .loading:
@@ -141,6 +142,23 @@ struct SearchView: View {
       }
     }
     .navigationTitle("Search")
+    .toolbar {
+      if showsRecentSearchActions {
+        ToolbarItem(placement: .topBarTrailing) {
+          Menu {
+            Button(role: .destructive) {
+              isConfirmingClearAll = true
+            } label: {
+              Label("Clear Recent Searches", systemImage: "trash")
+            }
+            .accessibilityIdentifier("recent-search.clear-all")
+          } label: {
+            Label("Search Actions", systemImage: "ellipsis")
+          }
+          .accessibilityIdentifier("search.actions-menu")
+        }
+      }
+    }
     .onChange(of: query) { _, _ in
       settledSearchTaskID = nil
       results = .empty
@@ -270,6 +288,10 @@ struct SearchView: View {
 
   private var showsRecentSearches: Bool {
     searchQuery.isEmpty && (inputMode == .inactive || inputMode == .keyboard)
+  }
+
+  private var showsRecentSearchActions: Bool {
+    resolvedPresentationState == .idle && !recentSearches.isEmpty
   }
 
   private var resolvedPresentationState: SearchPresentationState {
@@ -653,7 +675,8 @@ private struct SearchResultsView: View {
       }
 
       if results.presentation == .discoveredWords {
-        Section("Discovered Words") {
+        Section {
+          SearchListHeading("Discovered Words")
           ForEach(
             results.entries.prefix(12).enumerated(), id: \.element.id
           ) { index, entry in
@@ -685,12 +708,12 @@ private struct SearchResultsView: View {
               )
             )
           }
-        } header: {
-          Text("Results")
-            .accessibilityIdentifier("search.results-header")
-        } footer: {
+          // Plain List headers and footers pin over scrolling rows, so the notice is a row.
           if let frequencyUnavailableNotice {
             Label(frequencyUnavailableNotice, systemImage: "info.circle")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+              .listRowSeparator(.hidden)
               .accessibilityIdentifier("search.frequency-ordering-unavailable")
           }
         }
@@ -962,5 +985,21 @@ enum SearchResultFrequencyOrdering {
       if lhsFallback != rhsFallback { return lhsFallback < rhsFallback }
       return lhs.element.id.rawValue < rhs.element.id.rawValue
     }.map(\.element)
+  }
+}
+
+/// A heading placed as a row, because a plain List pins Section headers over scrolling rows.
+struct SearchListHeading: View {
+  let title: LocalizedStringKey
+
+  init(_ title: LocalizedStringKey) {
+    self.title = title
+  }
+
+  var body: some View {
+    Text(title)
+      .font(.headline)
+      .listRowSeparator(.hidden)
+      .accessibilityAddTraits(.isHeader)
   }
 }

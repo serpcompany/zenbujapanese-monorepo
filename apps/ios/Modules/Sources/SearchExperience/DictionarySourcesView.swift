@@ -201,7 +201,7 @@ struct DictionarySourcesView: View {
 
       Section("Japanese Text Analysis") {
         Text(
-          "Optional on-device Japanese word boundaries, dictionary forms, readings, and parts of speech from Sudachi.rs and SudachiDict Core. ZIPFoundation reads the checksum-pinned official dictionary wheel during installation."
+          "On-device Japanese word boundaries, dictionary forms, readings, and parts of speech for dictionary search come from Sudachi.rs and SudachiDict Core, included with the app and usable offline."
         )
         LabeledContent("Engine", value: "sudachi.rs 0.6.11")
         LabeledContent("Binding", value: "sudachi-swift 0.1.1")
