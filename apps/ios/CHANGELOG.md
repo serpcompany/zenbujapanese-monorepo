@@ -12,7 +12,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   frequency dictionaries can be downloaded and removed from You → Frequency Dictionaries.
 - Any number of frequency dictionaries, including none, can be switched on and reordered from a
   simplified Frequency Dictionaries screen. Search rows and Word Detail show a rank chip for each
-  enabled dictionary, each with its own color.
+  enabled dictionary, colored from green for very common words to gray for rare ones.
 - Image Text now divides recognized Japanese into individually selectable words and marks
   each boundary with a separate underline instead of highlighting broad OCR regions.
 - Selecting a recognized word opens the existing Word Detail experience in a large sheet,

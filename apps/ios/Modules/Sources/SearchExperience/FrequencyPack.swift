@@ -133,9 +133,43 @@ struct FrequencyEvidence: Equatable, Sendable {
   }
 }
 
+/// How common a ranked word is, using Migaku's star cutoffs so learners who know that scale
+/// read Zenbu's chips the same way.
+enum FrequencyTier: Int, Comparable, Sendable {
+  case rare = 1
+  case uncommon
+  case moderate
+  case common
+  case veryCommon
+
+  init(rank: Int) {
+    switch rank {
+    case ...1_500: self = .veryCommon
+    case ...5_000: self = .common
+    case ...15_000: self = .moderate
+    case ...30_000: self = .uncommon
+    default: self = .rare
+    }
+  }
+
+  var label: String {
+    switch self {
+    case .veryCommon: "very common"
+    case .common: "common"
+    case .moderate: "moderately common"
+    case .uncommon: "uncommon"
+    case .rare: "rare"
+    }
+  }
+
+  static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
+}
+
 struct FrequencyPresentationModel: Equatable, Sendable {
   let result: FrequencyLookupResult
   let packName: String
+  /// Nil when the dictionary has no rank for the entry.
+  let tier: FrequencyTier?
   let inlineText: String
   let inlineAccessibilityLabel: String
   let pack: FrequencyPackDisclosure?
@@ -149,6 +183,7 @@ struct FrequencyPresentationModel: Equatable, Sendable {
     case .evidence(let evidence):
       let formattedRank = evidence.rank.formatted(.number.locale(Locale(identifier: "en_US")))
       packName = evidence.pack.shortName
+      tier = FrequencyTier(rank: evidence.rank)
       inlineText = formattedRank
       inlineAccessibilityLabel =
         "\(evidence.pack.shortName) frequency rank \(evidence.rank). Double tap for details."
@@ -158,6 +193,7 @@ struct FrequencyPresentationModel: Equatable, Sendable {
       explanation = nil
     case .noEvidence(let pack):
       packName = pack.shortName
+      tier = nil
       inlineText = "—"
       inlineAccessibilityLabel =
         "\(pack.shortName) has no rank for this entry. Double tap for details."
@@ -167,6 +203,7 @@ struct FrequencyPresentationModel: Equatable, Sendable {
       explanation = "\(pack.displayName) has no mapped frequency rank for this entry."
     case .unavailable(let unavailable):
       packName = unavailable.pack?.shortName ?? "Frequency"
+      tier = nil
       inlineText = "—"
       inlineAccessibilityLabel = "\(packName) rank unavailable. Double tap for details."
       pack = unavailable.pack
@@ -195,7 +232,8 @@ struct SearchFrequencyRankPresentationModel: Equatable, Sendable {
     chips = shown.map(FrequencyPresentationModel.init(result:))
     accessibilityValue = zip(shown, chips).map { result, chip in
       switch result {
-      case .evidence(let evidence): "\(chip.packName) frequency rank \(evidence.rank)"
+      case .evidence(let evidence):
+        "\(chip.packName) frequency rank \(evidence.rank), \(chip.tier?.label ?? "")"
       case .noEvidence: "\(chip.packName) has no rank for this entry"
       case .unavailable: "\(chip.packName) rank unavailable"
       }

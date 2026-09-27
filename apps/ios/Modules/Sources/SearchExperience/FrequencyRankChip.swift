@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// A dictionary name and its rank, such as "Netflix 449". Each dictionary keeps its own color.
-/// Subtle chips confine it to a small dot so dense lists stay readable; prominent chips tint
-/// the name for a single entry's detail.
+/// A dictionary name and its rank, such as "Netflix 449", colored by how common the rank is.
+/// Subtle chips confine the color to a small dot so dense lists stay readable; prominent chips
+/// tint the name for a single entry's detail.
 struct FrequencyRankChip: View {
   enum Style {
     case subtle
@@ -13,7 +13,7 @@ struct FrequencyRankChip: View {
   var style = Style.prominent
 
   var body: some View {
-    let color = presentation.pack?.chipColor ?? .secondary
+    let color = presentation.tier?.color ?? Color.secondary
     switch style {
     case .subtle:
       HStack(spacing: 4) {
@@ -38,10 +38,10 @@ struct FrequencyRankChip: View {
       HStack(spacing: 0) {
         Text(presentation.packName)
           .fontWeight(.semibold)
-          .foregroundStyle(color)
+          .foregroundStyle(.primary)
           .padding(.horizontal, 6)
           .padding(.vertical, 2)
-          .background(color.opacity(0.18))
+          .background(color.opacity(0.28))
         Text(presentation.inlineText)
           .monospacedDigit()
           .foregroundStyle(.primary)
@@ -53,30 +53,22 @@ struct FrequencyRankChip: View {
       .clipShape(.rect(cornerRadius: 6))
       .overlay {
         RoundedRectangle(cornerRadius: 6)
-          .strokeBorder(color.opacity(0.5), lineWidth: 1)
+          .strokeBorder(color.opacity(0.6), lineWidth: 1)
       }
     }
   }
 }
 
-extension FrequencyPackDisclosure {
-  /// A stable color for this dictionary's chips across Search and Word Detail.
-  var chipColor: Color {
-    // System colors adapt to dark mode and Increase Contrast. Gray is reserved for
-    // unavailable evidence and yellow reads poorly on light backgrounds.
-    switch id.rawValue {
-    case "zenbu.tubelex.youtube.ja.unidic-3.1": .red
-    case "zenbu.wikipedia.written.ja.unidic-3.1": .blue
-    case "zenbu.public.netflix.ja.ordered-v1": .pink
-    case "zenbu.public.novels.ja.ordered-v1": .brown
-    case "zenbu.public.slice-of-life.ja.ordered-v1": .mint
-    case "zenbu.public.nhk.ja.ordered-v1": .indigo
-    case "zenbu.public.shonen.ja.ordered-v1": .orange
-    case "zenbu.public.jp-dict.ja.ordered-v1": .teal
-    case "zenbu.public.visual-novel.ja.ordered-v1": .purple
-    case "zenbu.public.tv-shows.ja.ordered-v1": .cyan
-    case "zenbu.public.internet.ja.ordered-v1": .green
-    default: .accentColor
+extension FrequencyTier {
+  /// A traffic-light scale from green for the words to learn first to red for uncommon words,
+  /// with gray for rare ones. System colors adapt to dark mode and Increase Contrast.
+  var color: Color {
+    switch self {
+    case .veryCommon: .green
+    case .common: .yellow
+    case .moderate: .orange
+    case .uncommon: .red
+    case .rare: .gray
     }
   }
 }

@@ -21,7 +21,8 @@ direct match. An English result displays the matching gloss, even when that glos
 entry's first sense. Below the summary, a row of compact chips such as `YouTube 812` shows
 each enabled dictionary's rank in priority order. The first dictionary's chip always appears,
 with a dash when it has no mapped evidence; other dictionaries appear only when they rank the
-entry. A small dot marks each dictionary's color. At standard text sizes, the summary shows at
+entry. Each chip's dot shows how common the rank is: green for ranks up to 1,500, yellow up to
+5,000, orange up to 15,000, red up to 30,000, and gray beyond. At standard text sizes, the summary shows at
 most two lines.
 
 Equal ranks and entries without mapped evidence retain the dictionary's deterministic fallback
@@ -48,7 +49,7 @@ A word detail can present its written form and reading, ordered meanings, altern
 kanji, related words, conjugations, source-matched Example Sentences, pronunciation, and
 frequency information when the corresponding data is available. Frequency appears as a row of
 `Name  rank` chips under the headword, one per enabled dictionary in priority order and tinted
-with that dictionary's color. Selecting
+with the same commonness color as Search. Selecting
 a chip opens that dictionary's frequency details. The row is hidden when no dictionary is
 enabled.
 
