@@ -148,6 +148,40 @@ struct PitchAccent: Hashable, Sendable, Codable {
   let sourceIdentity: String
 }
 
+extension PitchAccent {
+  /// High (true) or low pitch for each mora, then for a following particle such as が.
+  /// Heiban (0) rises after the first mora and stays high into the particle; atamadaka (1) is
+  /// high on the first mora only; otherwise pitch is high from the second mora through the
+  /// downstep mora and low afterward, including the particle.
+  func levels(moraCount count: Int) -> (morae: [Bool], particle: Bool) {
+    let morae = (0..<count).map { index in
+      switch downstep {
+      case 0: index > 0
+      case 1: index == 0
+      default: index > 0 && index < downstep
+      }
+    }
+    return (morae, downstep == 0)
+  }
+}
+
+extension String {
+  /// Splits kana into morae: small ya/yu/yo and small vowels join the preceding kana, while ッ,
+  /// ン, and ー each count as their own mora.
+  var morae: [String] {
+    let combining = Set("ゃゅょぁぃぅぇぉゎャュョァィゥェォヮ")
+    var result: [String] = []
+    for character in self {
+      if combining.contains(character), let last = result.popLast() {
+        result.append(last + String(character))
+      } else {
+        result.append(String(character))
+      }
+    }
+    return result
+  }
+}
+
 struct LanguageReferenceID: Hashable, Sendable {
   let rawValue: String
 }

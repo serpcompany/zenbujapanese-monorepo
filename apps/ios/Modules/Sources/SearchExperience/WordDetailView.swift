@@ -599,30 +599,83 @@ private struct PartOfSpeechRow: View {
   }
 }
 
-/// The reading in katakana with its pitch accent drawn as an overline across the high morae and
-/// a hook at the downstep, the notation used by NHK-style accent dictionaries.
+/// The reading in katakana with its pitch accent drawn as a contour: a dot per mora at high or
+/// low pitch joined by a line, and a hollow dot for the pitch of a following particle.
 private struct PitchAccentBadge: View {
   let reading: String
   let pitch: PitchAccent
-  @ScaledMetric(relativeTo: .body) private var contourHeight = 5.0
+  @ScaledMetric(relativeTo: .body) private var moraWidth: CGFloat = 20
+  @ScaledMetric(relativeTo: .body) private var contourSpace = 7.0
   @ScaledMetric(relativeTo: .body) private var horizontalPadding = 10.0
 
   var body: some View {
-    Text(reading.katakana)
-      .font(.body)
-      .padding(.top, contourHeight + 2)
-      .overlay(alignment: .top) {
-        PitchOverline(downstep: pitch.downstep, moraCount: pitch.moraCount)
-          .stroke(ZenbuTheme.pitchDownstep, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
-          .frame(height: contourHeight)
+    let morae = reading.katakana.morae
+    // A combined mora such as キョ needs more room than a single kana.
+    let widths = morae.map { moraWidth * ($0.count > 1 ? 1.5 : 1) }
+    HStack(spacing: 0) {
+      ForEach(morae.enumerated(), id: \.offset) { index, mora in
+        Text(mora)
+          .font(.body)
+          .lineLimit(1)
+          .fixedSize()
+          .frame(width: widths[index])
       }
-      .padding(.horizontal, horizontalPadding)
-      .padding(.vertical, 4)
-      .background(.fill.tertiary, in: Capsule())
-      .accessibilityElement(children: .ignore)
-      .accessibilityLabel(
-        "Pitch accent for \(reading), downstep \(pitch.downstep), \(pitch.moraCount) mora")
-      .accessibilityIdentifier("word-detail.pitch")
+      // Room for the particle dot after the last mora.
+      Color.clear.frame(width: moraWidth * 0.6, height: 1)
+    }
+    .padding(.vertical, contourSpace)
+    .overlay {
+      PitchContour(
+        levels: pitch.levels(moraCount: morae.count), moraWidths: widths,
+        particleWidth: moraWidth * 0.6)
+        .foregroundStyle(ZenbuTheme.pitchDownstep)
+    }
+    .padding(.horizontal, horizontalPadding)
+    .padding(.vertical, 2)
+    .background(.fill.tertiary, in: Capsule())
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(
+      "Pitch accent for \(reading), downstep \(pitch.downstep), \(pitch.moraCount) mora")
+    .accessibilityIdentifier("word-detail.pitch")
+  }
+}
+
+/// Draws pitch levels across evenly spaced morae: high points at the top edge, low points at the
+/// bottom edge, and a hollow point for the following particle.
+private struct PitchContour: View {
+  let levels: (morae: [Bool], particle: Bool)
+  let moraWidths: [CGFloat]
+  let particleWidth: CGFloat
+  @ScaledMetric(relativeTo: .body) private var dotSize: CGFloat = 5
+
+  var body: some View {
+    Canvas { context, size in
+      let inset = dotSize / 2 + 1
+      func y(_ high: Bool) -> CGFloat { high ? inset : size.height - inset }
+      var x: CGFloat = 0
+      var moraPoints: [CGPoint] = []
+      for (width, high) in zip(moraWidths, levels.morae) {
+        moraPoints.append(CGPoint(x: x + width / 2, y: y(high)))
+        x += width
+      }
+      guard !moraPoints.isEmpty else { return }
+      let particlePoint = CGPoint(x: x + particleWidth / 2, y: y(levels.particle))
+      var line = Path()
+      line.addLines(moraPoints + [particlePoint])
+      context.stroke(line, with: .foreground, lineWidth: 1.5)
+      for point in moraPoints {
+        context.fill(dot(at: point), with: .foreground)
+      }
+      context.fill(dot(at: particlePoint), with: .color(Color(.tertiarySystemFill)))
+      context.stroke(dot(at: particlePoint), with: .foreground, lineWidth: 1.5)
+    }
+    .accessibilityHidden(true)
+  }
+
+  private func dot(at point: CGPoint) -> Path {
+    Path(
+      ellipseIn: CGRect(
+        x: point.x - dotSize / 2, y: point.y - dotSize / 2, width: dotSize, height: dotSize))
   }
 }
 
@@ -636,33 +689,6 @@ extension String {
         }
         return Character(String(scalar))
       })
-  }
-}
-
-private struct PitchOverline: Shape {
-  let downstep: Int
-  let moraCount: Int
-
-  /// Heiban (0) rises after the first mora and stays high; atamadaka (1) is high on the first
-  /// mora only; otherwise morae 2 through the downstep are high.
-  func path(in rect: CGRect) -> Path {
-    var path = Path()
-    let count = max(moraCount, 1)
-    let (first, last) =
-      switch downstep {
-      case 0: (1, count)
-      case 1: (0, 1)
-      default: (1, min(downstep, count))
-      }
-    guard last > first else { return path }
-    let moraWidth = rect.width / CGFloat(count)
-    let top = rect.minY + 0.75
-    path.move(to: CGPoint(x: rect.minX + moraWidth * CGFloat(first), y: top))
-    path.addLine(to: CGPoint(x: rect.minX + moraWidth * CGFloat(last), y: top))
-    if downstep > 0 {
-      path.addLine(to: CGPoint(x: rect.minX + moraWidth * CGFloat(last), y: rect.maxY))
-    }
-    return path
   }
 }
 
