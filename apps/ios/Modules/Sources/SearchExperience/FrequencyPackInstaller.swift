@@ -11,7 +11,8 @@ enum FrequencyPackInstaller {
     destination: URL
   ) throws -> InstalledFrequencyPackRecord {
     guard try Data(contentsOf: languageDataURL).sha256 == manifest.languageDataSHA256,
-      try mappingPolicySHA256() == manifest.mappingPolicySHA256
+      try mappingPolicySHA256(version: manifest.mappingPolicyVersion)
+        == manifest.mappingPolicySHA256
     else { throw FrequencyPackError.mappingMismatch }
     let parsedSource = try sourceRows(source, manifest: manifest)
 
@@ -29,7 +30,7 @@ enum FrequencyPackInstaller {
       handle,
       "PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;"
         + "CREATE TABLE metadata(key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID;"
-        + "CREATE TABLE source_rows(rank INTEGER PRIMARY KEY, form TEXT NOT NULL, source_count INTEGER NOT NULL, source_pos TEXT NOT NULL, source_record_digest BLOB NOT NULL);"
+        + "CREATE TABLE source_rows(rank INTEGER PRIMARY KEY, form TEXT NOT NULL, source_reading TEXT NOT NULL, source_count INTEGER NOT NULL, source_pos TEXT NOT NULL, source_record_digest BLOB NOT NULL);"
         + "CREATE TABLE frequency_evidence(language_reference_id BLOB PRIMARY KEY, rank INTEGER NOT NULL, source_count INTEGER NOT NULL, covered_source_rows INTEGER NOT NULL, mapping_relation TEXT NOT NULL, matched_form TEXT NOT NULL, source_pos TEXT NOT NULL, source_record_digest BLOB NOT NULL) WITHOUT ROWID;"
         + "BEGIN IMMEDIATE;"
     )
@@ -43,6 +44,7 @@ enum FrequencyPackInstaller {
     try execute(
       handle,
       try mappingSQL(
+        version: manifest.mappingPolicyVersion,
         languageDataURL: languageDataURL,
         coveredSourceRows: manifest.coveredSourceRows
       ))
@@ -103,12 +105,11 @@ enum FrequencyPackInstaller {
   }
 
   private static func mappingSQL(
+    version: Int,
     languageDataURL: URL,
     coveredSourceRows: Int
   ) throws -> String {
-    guard let url = Bundle.module.url(forResource: "FrequencyPackMappingV1", withExtension: "sql")
-    else { throw FrequencyPackError.invalidArtifact }
-    return try String(contentsOf: url, encoding: .utf8)
+    return try String(contentsOf: mappingPolicyURL(version: version), encoding: .utf8)
       .replacingOccurrences(
         of: "{{LANGUAGE_DATA_PATH}}",
         with: languageDataURL.path.replacingOccurrences(of: "'", with: "''")
@@ -120,7 +121,7 @@ enum FrequencyPackInstaller {
     var statement: OpaquePointer?
     guard
       sqlite3_prepare_v2(
-        database, "INSERT INTO source_rows VALUES(?, ?, ?, ?, ?)", -1, &statement, nil)
+        database, "INSERT INTO source_rows VALUES(?, ?, ?, ?, ?, ?)", -1, &statement, nil)
         == SQLITE_OK,
       let statement
     else { throw sqliteError(database) }
@@ -128,9 +129,10 @@ enum FrequencyPackInstaller {
     for row in rows {
       sqlite3_bind_int64(statement, 1, Int64(row.rank))
       bind(row.form, at: 2, to: statement)
-      sqlite3_bind_int64(statement, 3, Int64(row.count))
-      bind(row.partOfSpeech, at: 4, to: statement)
-      bind(row.digest, at: 5, to: statement)
+      bind(row.reading, at: 3, to: statement)
+      sqlite3_bind_int64(statement, 4, Int64(row.count))
+      bind(row.partOfSpeech, at: 5, to: statement)
+      bind(row.digest, at: 6, to: statement)
       guard sqlite3_step(statement) == SQLITE_DONE else { throw sqliteError(database) }
       sqlite3_reset(statement)
       sqlite3_clear_bindings(statement)
@@ -212,11 +214,13 @@ enum FrequencyPackInstaller {
     else { throw FrequencyPackError.invalidSource }
     let rows = try sourceRows.enumerated().map { offset, value -> SourceRow in
       let rawForm: String
+      var rawReading = ""
       switch value {
       case let form as String:
         rawForm = form
       case let pair as [String] where pair.count == 2:
         rawForm = pair[0]
+        rawReading = pair[1]
       default:
         throw FrequencyPackError.invalidSource
       }
@@ -227,6 +231,7 @@ enum FrequencyPackInstaller {
       return try SourceRow(
         rank: offset + 1,
         rawForm: rawForm,
+        rawReading: rawReading,
         count: 0,
         partOfSpeech: "",
         digest: Data(SHA256.hash(data: sourceRecord))
@@ -235,10 +240,17 @@ enum FrequencyPackInstaller {
     return (rows, 0)
   }
 
-  private static func mappingPolicySHA256() throws -> String {
-    guard let url = Bundle.module.url(forResource: "FrequencyPackMappingV1", withExtension: "sql")
+  private static func mappingPolicySHA256(version: Int) throws -> String {
+    try Data(contentsOf: mappingPolicyURL(version: version)).sha256
+  }
+
+  /// V1 matches forms only; V2 also requires a supplied source reading to match.
+  private static func mappingPolicyURL(version: Int) throws -> URL {
+    guard [1, 2].contains(version),
+      let url = Bundle.module.url(
+        forResource: "FrequencyPackMappingV\(version)", withExtension: "sql")
     else { throw FrequencyPackError.invalidArtifact }
-    return try Data(contentsOf: url).sha256
+    return url
   }
 
   private static func scalar(_ database: OpaquePointer, _ sql: String) throws -> Int {
@@ -277,16 +289,22 @@ enum FrequencyPackInstaller {
   private struct SourceRow {
     let rank: Int
     let form: String
+    let reading: String
     let count: Int
     let partOfSpeech: String
     let digest: Data
 
-    init(rank: Int, rawForm: String, count: Int, partOfSpeech: String, digest: Data) throws {
+    init(
+      rank: Int, rawForm: String, rawReading: String = "", count: Int, partOfSpeech: String,
+      digest: Data
+    ) throws {
       let form = rawForm.precomposedStringWithCompatibilityMapping.trimmingCharacters(
         in: CharacterSet.whitespacesAndNewlines)
       guard !form.isEmpty else { throw FrequencyPackError.invalidSource }
       self.rank = rank
       self.form = form
+      self.reading = rawReading.precomposedStringWithCompatibilityMapping.trimmingCharacters(
+        in: CharacterSet.whitespacesAndNewlines)
       self.count = count
       self.partOfSpeech = partOfSpeech
       self.digest = digest

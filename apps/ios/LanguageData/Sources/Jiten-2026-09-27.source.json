@@ -1,0 +1,130 @@
+{
+  "schema": "zenbu.source-record.v1",
+  "identity": "Jiten frequency lists",
+  "retrievedAt": "2026-09-27",
+  "homepage": "https://jiten.moe/frequency-dictionaries",
+  "endpoint": "https://api.jiten.moe/api/frequency-list/download?downloadType=csv&mediaType=<mediaType>",
+  "code": {
+    "repository": "https://github.com/Sirush/Jiten",
+    "license": "Apache-2.0"
+  },
+  "license": {
+    "identifier": "CC-BY-SA-4.0",
+    "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "statement": "All frequency lists are licensed under CC BY-SA 4.0",
+    "attribution": "Jiten (jiten.moe)",
+    "notice": "apps/ios/Modules/Sources/SearchExperience/Resources/JLPT-VOCABULARY-CC-BY-SA-4.0.txt"
+  },
+  "format": {
+    "columns": [
+      "Word",
+      "Form",
+      "Rank"
+    ],
+    "word": "JMdict dictionary form",
+    "form": "kana reading",
+    "rank": "one-based competition rank; the final max-rank bucket holds unobserved words"
+  },
+  "snapshotPolicy": "Jiten downloads are unversioned, so each media list is pinned here as retrieved (xz-compressed; csvSHA256 covers the decompressed CSV).",
+  "files": {
+    "Anime": {
+      "file": "Jiten-2026-09-27/Anime.csv.xz",
+      "csvSHA256": "860ba39199e5846fea0f144215e422f46de102999fee0893194f73839dd6564f",
+      "csvBytes": 7545053,
+      "rows": 216783
+    },
+    "Drama": {
+      "file": "Jiten-2026-09-27/Drama.csv.xz",
+      "csvSHA256": "d21882d0842e3385df6c635a30f8a7c374801b3b4e8f4d0601b0c454a8adc4c7",
+      "csvBytes": 7836421,
+      "rows": 224588
+    },
+    "Manga": {
+      "file": "Jiten-2026-09-27/Manga.csv.xz",
+      "csvSHA256": "e7189440d2f3825e3106e7734848a4b54732d2c969788549cef09f7c671520ed",
+      "csvBytes": 9293562,
+      "rows": 273783
+    },
+    "Movie": {
+      "file": "Jiten-2026-09-27/Movie.csv.xz",
+      "csvSHA256": "5c6e539e586b34e004be95a46891ffe8f485981da6cf1419656b1969f41b1654",
+      "csvBytes": 5125399,
+      "rows": 151398
+    },
+    "Novel": {
+      "file": "Jiten-2026-09-27/Novel.csv.xz",
+      "csvSHA256": "876bed464d9ed81292269821b976409e50f36d690f2a02cce089bde0a6827b8b",
+      "csvBytes": 11424292,
+      "rows": 321958
+    },
+    "VideoGame": {
+      "file": "Jiten-2026-09-27/VideoGame.csv.xz",
+      "csvSHA256": "9a12e239127c7aec739c504f1f6b51c000cd800d22f53e392f377e8e51c2eeb8",
+      "csvBytes": 6364334,
+      "rows": 181190
+    },
+    "VisualNovel": {
+      "file": "Jiten-2026-09-27/VisualNovel.csv.xz",
+      "csvSHA256": "df25c83aa311887cadbfcbb3f212df350b270ebd60e8cf9c58d92d550ab5de29",
+      "csvBytes": 8768641,
+      "rows": 247298
+    }
+  },
+  "packs": [
+    {
+      "id": "tv-movies",
+      "displayName": "TV & Movies",
+      "domain": "Japanese TV drama and film subtitles · Jiten",
+      "description": "Vocabulary from Japanese TV dramas and films.",
+      "jitenMediaTypes": [
+        "Drama",
+        "Movie"
+      ]
+    },
+    {
+      "id": "anime",
+      "displayName": "Anime",
+      "domain": "Anime subtitles · Jiten",
+      "description": "Vocabulary from Japanese anime.",
+      "jitenMediaTypes": [
+        "Anime"
+      ]
+    },
+    {
+      "id": "manga",
+      "displayName": "Manga",
+      "domain": "Manga dialogue · Jiten",
+      "description": "Vocabulary from Japanese manga.",
+      "jitenMediaTypes": [
+        "Manga"
+      ]
+    },
+    {
+      "id": "novels",
+      "displayName": "Novels",
+      "domain": "Japanese novels · Jiten",
+      "description": "Vocabulary from Japanese novels and light novels.",
+      "jitenMediaTypes": [
+        "Novel"
+      ]
+    },
+    {
+      "id": "visual-novels",
+      "displayName": "Visual Novels",
+      "domain": "Visual novel scripts · Jiten",
+      "description": "Vocabulary from Japanese visual novels.",
+      "jitenMediaTypes": [
+        "VisualNovel"
+      ]
+    },
+    {
+      "id": "video-games",
+      "displayName": "Video Games",
+      "domain": "Video game scripts · Jiten",
+      "description": "Vocabulary from Japanese video game scripts.",
+      "jitenMediaTypes": [
+        "VideoGame"
+      ]
+    }
+  ]
+}

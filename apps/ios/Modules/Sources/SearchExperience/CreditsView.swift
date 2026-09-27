@@ -43,9 +43,11 @@ struct CreditsView: View {
         credit: "Wikipedia frequency data by Adam Nohejl and contributors.",
         license: "BSD-3-Clause",
         project: "https://github.com/adno/wikipedia-word-frequency-clean")
-      Section("Other Frequency Lists") {
-        Text("The optional media lists are publicly available Japanese frequency lists.")
-      }
+      source(
+        "Jiten",
+        credit:
+          "TV & Movies, Anime, Manga, Novels, Visual Novels, and Video Games frequency data by Jiten (jiten.moe).",
+        license: "CC BY-SA 4.0", project: "https://jiten.moe/frequency-dictionaries")
       source(
         "Sudachi", credit: "Japanese word analysis for Search by Sudachi.rs and SudachiDict.",
         license: "Apache-2.0 · BSD-3-Clause · MIT",

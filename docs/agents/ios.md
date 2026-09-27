@@ -57,8 +57,9 @@ and copy the reported hashes into its catalog manifest.
 Every frequency pack pins the SHA-256 of `LanguageReferenceData.sqlite3`. After rebuilding it
 with `import_jmdict.py` (inputs are listed in `LanguageData/Sources/README.md`), also copy its
 ranking contract into `DictionaryRankingArtifactContract.json`, rebuild the TUBELEX and Wikipedia
-packs with `import_frequency_pack.py`, rerun `analyze_ordered_json_frequency_lists.py`, rebuild
-the JLPT pack, and update each catalog manifest. Move the previous manifests of downloadable
+packs with `import_frequency_pack.py`, rebuild the Jiten packs with
+`build_jiten_frequency_packs.py --out-dir <dir>` (it rewrites their manifests and keeps changed
+ones trusted) and publish the new ZIPs, rebuild the JLPT pack, and update each catalog manifest. Move the previous manifests of downloadable
 packs into `trustedHistoricalManifests` so packs a learner already installed stay trusted.
 
 Downloadable packs are served from `cdn.zenbujapanese.com` (Cloudflare R2 bucket

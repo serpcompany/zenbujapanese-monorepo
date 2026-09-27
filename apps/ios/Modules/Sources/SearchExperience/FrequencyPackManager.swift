@@ -51,7 +51,7 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
         }
       ).count == catalog.packs.count + catalog.trustedHistoricalManifests.count,
       catalog.allTrustedManifests.allSatisfy({
-        $0.mappingPolicyVersion == 1 && $0.presentationPolicyVersion == 1
+        [1, 2].contains($0.mappingPolicyVersion) && $0.presentationPolicyVersion == 1
           && $0.runtimeInstallerVersion == 1 && !$0.offlineImporterSHA256.isEmpty
           && !$0.mappingPolicySHA256.isEmpty && !$0.languageDataSHA256.isEmpty
           && !$0.artifactContentSHA256.isEmpty

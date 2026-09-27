@@ -12,9 +12,9 @@ struct FrequencyPackLifecycleTests {
     let bundled = try #require(catalog.packs.first { $0.bundled && $0.packKind == .rank })
     let jlpt = try #require(catalog.packs.first { $0.packKind == .level })
     let optional = try #require(
-      catalog.packs.first { $0.packID.rawValue == "zenbu.public.novels.ja.ordered-v1" }
+      catalog.packs.first { $0.packID.rawValue == "zenbu.jiten.anime.ja.ordered-v2" }
     )
-    let source = try novelSource()
+    let source = try animeSource()
     let storage = temporaryStorage()
     defer { try? FileManager.default.removeItem(at: storage) }
 
@@ -66,9 +66,9 @@ struct FrequencyPackLifecycleTests {
   func legacyActivePackMigrates() async throws {
     let catalog = try FrequencyPackCatalog.bundled()
     let optional = try #require(
-      catalog.packs.first { $0.packID.rawValue == "zenbu.public.novels.ja.ordered-v1" }
+      catalog.packs.first { $0.packID.rawValue == "zenbu.jiten.anime.ja.ordered-v2" }
     )
-    let source = try novelSource()
+    let source = try animeSource()
     let storage = temporaryStorage()
     defer { try? FileManager.default.removeItem(at: storage) }
 
@@ -134,10 +134,10 @@ struct FrequencyPackLifecycleTests {
     return LanguageReferenceID(rawValue: String(digest.prefix(32)))
   }
 
-  private func novelSource() throws -> Data {
+  private func animeSource() throws -> Data {
     let sourceURL = try #require(
       Bundle.module.url(
-        forResource: "Novel 5k", withExtension: "json.zip", subdirectory: "Fixtures")
+        forResource: "jiten-anime", withExtension: "json.zip", subdirectory: "Fixtures")
     )
     return try Data(contentsOf: sourceURL)
   }
