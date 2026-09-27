@@ -3,20 +3,19 @@ import SwiftUI
 struct RecentSearchHistoryView: View {
   let recentSearchStore: RecentSearchStore
   let refreshID: Int
-  let requestClearAll: () -> Void
   let selectSearch: (SearchQuery) -> Void
-  @State private var searches: [SearchQuery] = []
+  @Binding var searches: [SearchQuery]
 
   var body: some View {
     List {
       if !searches.isEmpty {
         Section {
-          HStack {
-            Spacer()
-            Button("Clear All", action: requestClearAll)
-              .frame(minHeight: 44)
-              .accessibilityIdentifier("recent-search.clear-all")
-          }
+          // A row rather than a Section header, which a plain List pins over scrolling rows.
+          Text("Recent")
+            .font(.headline)
+            .listRowSeparator(.hidden)
+            .accessibilityAddTraits(.isHeader)
+            .accessibilityIdentifier("recent-search.header")
           ForEach(Array(searches.enumerated()), id: \.element) { index, search in
             Button {
               selectSearch(search)

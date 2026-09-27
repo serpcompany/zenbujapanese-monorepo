@@ -29,8 +29,10 @@ again. If frequency data can't be read, Search still shows every result and says
 dictionary is unavailable. Results can also offer a Japanese-reading refinement, related
 Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query.
 
-Recent text searches are stored on the device. A learner can repeat or remove one search,
-or clear the entire history.
+Recent text searches are stored on the device and listed under a **Recent** heading while the
+query is empty. A learner can repeat a search, swipe to remove one, or clear the entire history
+from the **⋯** menu, which appears only while recent searches are listed. Result headings scroll
+with the results instead of staying pinned over them.
 
 ## Dictionary and kanji details
 
