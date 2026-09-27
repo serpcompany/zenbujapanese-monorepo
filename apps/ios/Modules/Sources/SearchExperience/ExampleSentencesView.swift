@@ -126,6 +126,9 @@ struct ExampleSentenceSections: View {
           // Only the first card carries the heading; the rest follow as their own cards.
           if index == 0 { Text(title) }
         }
+        // Consecutive examples belong together, so they use the system's compact spacing
+        // rather than the default gap between unrelated sections.
+        .listSectionSpacing(.compact)
       }
     }
   }
