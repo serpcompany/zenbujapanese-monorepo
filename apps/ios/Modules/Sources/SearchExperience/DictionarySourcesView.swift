@@ -187,12 +187,12 @@ struct DictionarySourcesView: View {
         )
       }
 
-      Section("TV & Movies Frequency (Jiten)") {
+      Section("Jiten Frequency Lists") {
         Text(
-          "The optional TV & Movies pack merges Jiten's Japanese drama and film frequency lists. Zenbu drops each list's unobserved tail, merges the two by list position, and maps words on-device by dictionary form and reading. This modified data is shared under the same license."
+          "The optional TV & Movies, Anime, Manga, Novels, and Visual Novels packs are built from Jiten's frequency lists. Zenbu drops each list's unobserved tail, merges the drama and film lists by list position for TV & Movies, and maps words on-device by dictionary form and reading. This modified data is shared under the same license."
         )
         LabeledContent("License", value: "CC BY-SA 4.0")
-        LabeledContent("Version", value: "Snapshot 2026-09-27 · Drama + Movie")
+        LabeledContent("Version", value: "Snapshot 2026-09-27")
         NavigationLink("Bundled license text") {
           BundledLicenseTextView(
             title: "Jiten CC BY-SA 4.0 License",
@@ -208,7 +208,7 @@ struct DictionarySourcesView: View {
 
       Section("Public Japanese Frequency Catalog") {
         Text(
-          "Optional Novels, Slice of Life, NHK, Shonen, JP Dict, Visual Novel, and Internet packs download directly from the public catalog. Zenbu verifies the published archives and maps them on-device."
+          "Optional NHK, JP Dict, and Internet packs download directly from the public catalog. Zenbu verifies the published archives and maps them on-device."
         )
         LabeledContent("Version", value: "Catalog snapshot 2026-09-25")
         Link(

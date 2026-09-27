@@ -7,8 +7,66 @@
       "displayName": "TV & Movies",
       "domain": "Japanese TV drama and film subtitles · Jiten",
       "description": "Vocabulary from Japanese TV dramas and films.",
-      "jitenMediaTypes": ["Drama", "Movie"],
-      "replaces": ["zenbu.public.netflix.ja.ordered-v1", "zenbu.public.tv-shows.ja.ordered-v1"]
+      "jitenMediaTypes": [
+        "Drama",
+        "Movie"
+      ],
+      "replaces": [
+        "zenbu.public.netflix.ja.ordered-v1",
+        "zenbu.public.tv-shows.ja.ordered-v1"
+      ]
+    },
+    {
+      "id": "anime",
+      "packVersion": "2026-09-27",
+      "displayName": "Anime",
+      "domain": "Anime subtitles · Jiten",
+      "description": "Vocabulary from Japanese anime.",
+      "jitenMediaTypes": [
+        "Anime"
+      ],
+      "replaces": [
+        "zenbu.public.slice-of-life.ja.ordered-v1"
+      ]
+    },
+    {
+      "id": "manga",
+      "packVersion": "2026-09-27",
+      "displayName": "Manga",
+      "domain": "Manga dialogue · Jiten",
+      "description": "Vocabulary from Japanese manga.",
+      "jitenMediaTypes": [
+        "Manga"
+      ],
+      "replaces": [
+        "zenbu.public.shonen.ja.ordered-v1"
+      ]
+    },
+    {
+      "id": "novels",
+      "packVersion": "2026-09-27",
+      "displayName": "Novels",
+      "domain": "Japanese novels · Jiten",
+      "description": "Vocabulary from Japanese novels and light novels.",
+      "jitenMediaTypes": [
+        "Novel"
+      ],
+      "replaces": [
+        "zenbu.public.novels.ja.ordered-v1"
+      ]
+    },
+    {
+      "id": "visual-novels",
+      "packVersion": "2026-09-27",
+      "displayName": "Visual Novels",
+      "domain": "Visual novel scripts · Jiten",
+      "description": "Vocabulary from Japanese visual novels.",
+      "jitenMediaTypes": [
+        "VisualNovel"
+      ],
+      "replaces": [
+        "zenbu.public.visual-novel.ja.ordered-v1"
+      ]
     }
   ]
 }

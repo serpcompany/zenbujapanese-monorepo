@@ -1,0 +1,1424 @@
+{
+  "candidates": [
+    {
+      "csv": {
+        "Drama": "d21882d0842e3385df6c635a30f8a7c374801b3b4e8f4d0601b0c454a8adc4c7"
+      },
+      "id": "jiten-drama",
+      "kind": "jiten",
+      "mappings": [
+        {
+          "ambiguousRows": 9749,
+          "comparisons": {
+            "current_netflix": {
+              "candidateMappedOverlapPercent": 43.13,
+              "sharedMappedLanguageReferenceIDs": 44297,
+              "sharedRankPearson": 0.7403,
+              "top1000MappedJaccard": 0.4511
+            },
+            "current_tv-shows": {
+              "candidateMappedOverlapPercent": 60.92,
+              "sharedMappedLanguageReferenceIDs": 62572,
+              "sharedRankPearson": 0.7596,
+              "top1000MappedJaccard": 0.4884
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 40.76,
+              "sharedMappedLanguageReferenceIDs": 41863,
+              "sharedRankPearson": 0.4817,
+              "top1000MappedJaccard": 0.2741
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 49.05,
+              "sharedMappedLanguageReferenceIDs": 50380,
+              "sharedRankPearson": 0.3613,
+              "top1000MappedJaccard": 0.0745
+            }
+          },
+          "duplicateMappings": 26890,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "と【と】",
+            "で【で】",
+            "も【も】",
+            "です【です】",
+            "だ【だ】",
+            "よ【よ】",
+            "か【か】",
+            "から【から】",
+            "する【する】",
+            "ね【ね】",
+            "さん【さん】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "はずです【はずです】",
+            "でした【でした】",
+            "ついて【ついて】",
+            "OK【オッケー】",
+            "SNS【エス・エヌ・エス】",
+            "田中【たなか】",
+            "お役に立てる【おやくにたてる】",
+            "佐藤【さとあ】",
+            "山田【おおした】",
+            "鈴木【すすぎ】",
+            "5歳【ごさい】",
+            "ハッハッ【ハッハッ】",
+            "10歳【じゅっさい】",
+            "新宿【あらじゅく】"
+          ],
+          "mappedPercent": 56.45,
+          "mappedRows": 102713,
+          "mappingPolicy": "FrequencyPackMappingV1.sql",
+          "mappingRelations": {
+            "uniqueFormFallback": 102713
+          },
+          "projectedRuntimeSQLiteBytes": 12464128,
+          "sourceRows": 181968,
+          "unmappedRows": 42616
+        },
+        {
+          "ambiguousRows": 6259,
+          "comparisons": {
+            "current_netflix": {
+              "candidateMappedOverlapPercent": 42.5,
+              "sharedMappedLanguageReferenceIDs": 44339,
+              "sharedRankPearson": 0.7279,
+              "top1000MappedJaccard": 0.3865
+            },
+            "current_tv-shows": {
+              "candidateMappedOverlapPercent": 59.93,
+              "sharedMappedLanguageReferenceIDs": 62534,
+              "sharedRankPearson": 0.7491,
+              "top1000MappedJaccard": 0.4151
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 40.28,
+              "sharedMappedLanguageReferenceIDs": 42027,
+              "sharedRankPearson": 0.4784,
+              "top1000MappedJaccard": 0.2604
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 48.33,
+              "sharedMappedLanguageReferenceIDs": 50426,
+              "sharedRankPearson": 0.3516,
+              "top1000MappedJaccard": 0.0686
+            }
+          },
+          "duplicateMappings": 26863,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "と【と】",
+            "で【で】",
+            "も【も】",
+            "です【です】",
+            "だ【だ】",
+            "よ【よ】",
+            "か【か】",
+            "から【から】",
+            "する【する】",
+            "ね【ね】",
+            "さん【さん】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "はずです【はずです】",
+            "でした【でした】",
+            "ついて【ついて】",
+            "OK【オッケー】",
+            "SNS【エス・エヌ・エス】",
+            "田中【たなか】",
+            "お役に立てる【おやくにたてる】",
+            "変わってる【かわっている】",
+            "佐藤【さとあ】",
+            "山田【おおした】",
+            "鈴木【すすぎ】",
+            "5歳【ごさい】",
+            "ハッハッ【ハッハッ】",
+            "方がよい【ほうがいい】"
+          ],
+          "mappedPercent": 57.34,
+          "mappedRows": 104337,
+          "mappingPolicy": "FrequencyPackMappingV2.sql",
+          "mappingRelations": {
+            "exactReading": 21593,
+            "exactWrittenReading": 82744
+          },
+          "projectedRuntimeSQLiteBytes": 12595200,
+          "sourceRows": 181968,
+          "unmappedRows": 44509
+        }
+      ]
+    },
+    {
+      "csv": {
+        "Movie": "5c6e539e586b34e004be95a46891ffe8f485981da6cf1419656b1969f41b1654"
+      },
+      "id": "jiten-movie",
+      "kind": "jiten",
+      "mappings": [
+        {
+          "ambiguousRows": 7361,
+          "comparisons": {
+            "cand_jiten-drama": {
+              "candidateMappedOverlapPercent": 94.55,
+              "sharedMappedLanguageReferenceIDs": 67985,
+              "sharedRankPearson": 0.7497,
+              "top1000MappedJaccard": 0.601
+            },
+            "current_netflix": {
+              "candidateMappedOverlapPercent": 50.31,
+              "sharedMappedLanguageReferenceIDs": 36172,
+              "sharedRankPearson": 0.669,
+              "top1000MappedJaccard": 0.4624
+            },
+            "current_tv-shows": {
+              "candidateMappedOverlapPercent": 69.74,
+              "sharedMappedLanguageReferenceIDs": 50142,
+              "sharedRankPearson": 0.7281,
+              "top1000MappedJaccard": 0.5245
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 46.56,
+              "sharedMappedLanguageReferenceIDs": 33476,
+              "sharedRankPearson": 0.3883,
+              "top1000MappedJaccard": 0.2632
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 54.72,
+              "sharedMappedLanguageReferenceIDs": 39347,
+              "sharedRankPearson": 0.3045,
+              "top1000MappedJaccard": 0.0675
+            }
+          },
+          "duplicateMappings": 14264,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "で【で】",
+            "と【と】",
+            "だ【だ】",
+            "も【も】",
+            "よ【よ】",
+            "か【か】",
+            "です【です】",
+            "から【から】",
+            "する【する】",
+            "な【な】",
+            "んだ【んだ】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "はずです【はずです】",
+            "OK【オッケー】",
+            "ついて【ついて】",
+            "でした【でした】",
+            "鈴木【すすぎ】",
+            "新宿【あらじゅく】",
+            "ハッハッ【ハッハッ】",
+            "田中【たなか】",
+            "山田【おおした】",
+            "佐藤【さとあ】",
+            "佐々木【ささき】",
+            "吉田【きちだ】",
+            "田村【えりりん】",
+            "加藤【かとお】"
+          ],
+          "mappedPercent": 62.76,
+          "mappedRows": 71902,
+          "mappingPolicy": "FrequencyPackMappingV1.sql",
+          "mappingRelations": {
+            "uniqueFormFallback": 71902
+          },
+          "projectedRuntimeSQLiteBytes": 8675328,
+          "sourceRows": 114558,
+          "unmappedRows": 21031
+        },
+        {
+          "ambiguousRows": 4409,
+          "comparisons": {
+            "cand_jiten-drama": {
+              "candidateMappedOverlapPercent": 94.73,
+              "sharedMappedLanguageReferenceIDs": 69552,
+              "sharedRankPearson": 0.7644,
+              "top1000MappedJaccard": 0.7418
+            },
+            "current_netflix": {
+              "candidateMappedOverlapPercent": 49.38,
+              "sharedMappedLanguageReferenceIDs": 36254,
+              "sharedRankPearson": 0.6549,
+              "top1000MappedJaccard": 0.389
+            },
+            "current_tv-shows": {
+              "candidateMappedOverlapPercent": 68.25,
+              "sharedMappedLanguageReferenceIDs": 50109,
+              "sharedRankPearson": 0.7178,
+              "top1000MappedJaccard": 0.4405
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 45.82,
+              "sharedMappedLanguageReferenceIDs": 33645,
+              "sharedRankPearson": 0.3837,
+              "top1000MappedJaccard": 0.2505
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 53.72,
+              "sharedMappedLanguageReferenceIDs": 39444,
+              "sharedRankPearson": 0.2938,
+              "top1000MappedJaccard": 0.0607
+            }
+          },
+          "duplicateMappings": 14522,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "で【で】",
+            "と【と】",
+            "だ【だ】",
+            "も【も】",
+            "よ【よ】",
+            "か【か】",
+            "です【です】",
+            "から【から】",
+            "する【する】",
+            "な【な】",
+            "んだ【んだ】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "はずです【はずです】",
+            "OK【オッケー】",
+            "ついて【ついて】",
+            "でした【でした】",
+            "鈴木【すすぎ】",
+            "新宿【あらじゅく】",
+            "ハッハッ【ハッハッ】",
+            "田中【たなか】",
+            "山田【おおした】",
+            "佐藤【さとあ】",
+            "佐々木【ささき】",
+            "吉田【きちだ】",
+            "上野【あがの】",
+            "田村【えりりん】"
+          ],
+          "mappedPercent": 64.09,
+          "mappedRows": 73424,
+          "mappingPolicy": "FrequencyPackMappingV2.sql",
+          "mappingRelations": {
+            "exactReading": 14556,
+            "exactWrittenReading": 58868
+          },
+          "projectedRuntimeSQLiteBytes": 8822784,
+          "sourceRows": 114558,
+          "unmappedRows": 22203
+        }
+      ]
+    },
+    {
+      "csv": {
+        "Drama": "d21882d0842e3385df6c635a30f8a7c374801b3b4e8f4d0601b0c454a8adc4c7",
+        "Movie": "5c6e539e586b34e004be95a46891ffe8f485981da6cf1419656b1969f41b1654"
+      },
+      "id": "jiten-tv-movies",
+      "kind": "jiten",
+      "mappings": [
+        {
+          "ambiguousRows": 10146,
+          "comparisons": {
+            "cand_jiten-drama": {
+              "candidateMappedOverlapPercent": 96.21,
+              "sharedMappedLanguageReferenceIDs": 102529,
+              "sharedRankPearson": 0.948,
+              "top1000MappedJaccard": 0.6817
+            },
+            "cand_jiten-movie": {
+              "candidateMappedOverlapPercent": 67.43,
+              "sharedMappedLanguageReferenceIDs": 71854,
+              "sharedRankPearson": 0.8425,
+              "top1000MappedJaccard": 0.6941
+            },
+            "current_netflix": {
+              "candidateMappedOverlapPercent": 42.46,
+              "sharedMappedLanguageReferenceIDs": 45244,
+              "sharedRankPearson": 0.7244,
+              "top1000MappedJaccard": 0.4494
+            },
+            "current_tv-shows": {
+              "candidateMappedOverlapPercent": 59.41,
+              "sharedMappedLanguageReferenceIDs": 63305,
+              "sharedRankPearson": 0.7512,
+              "top1000MappedJaccard": 0.5215
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 40.48,
+              "sharedMappedLanguageReferenceIDs": 43136,
+              "sharedRankPearson": 0.4783,
+              "top1000MappedJaccard": 0.271
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 48.82,
+              "sharedMappedLanguageReferenceIDs": 52030,
+              "sharedRankPearson": 0.3632,
+              "top1000MappedJaccard": 0.0677
+            }
+          },
+          "duplicateMappings": 28555,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "で【で】",
+            "と【と】",
+            "も【も】",
+            "だ【だ】",
+            "よ【よ】",
+            "です【です】",
+            "か【か】",
+            "から【から】",
+            "する【する】",
+            "な【な】",
+            "ね【ね】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "はずです【はずです】",
+            "ついて【ついて】",
+            "OK【オッケー】",
+            "でした【でした】",
+            "鈴木【すすぎ】",
+            "田中【たなか】",
+            "ハッハッ【ハッハッ】",
+            "山田【おおした】",
+            "新宿【あらじゅく】",
+            "佐藤【さとあ】",
+            "SNS【エス・エヌ・エス】",
+            "佐々木【ささき】",
+            "吉田【きちだ】",
+            "中村【おかむら】"
+          ],
+          "mappedPercent": 55.0,
+          "mappedRows": 106565,
+          "mappingPolicy": "FrequencyPackMappingV1.sql",
+          "mappingRelations": {
+            "uniqueFormFallback": 106565
+          },
+          "projectedRuntimeSQLiteBytes": 12931072,
+          "sourceRows": 193752,
+          "unmappedRows": 48486
+        },
+        {
+          "ambiguousRows": 6593,
+          "comparisons": {
+            "cand_jiten-drama": {
+              "candidateMappedOverlapPercent": 96.42,
+              "sharedMappedLanguageReferenceIDs": 104337,
+              "sharedRankPearson": 0.962,
+              "top1000MappedJaccard": 0.8406
+            },
+            "cand_jiten-movie": {
+              "candidateMappedOverlapPercent": 67.85,
+              "sharedMappedLanguageReferenceIDs": 73424,
+              "sharedRankPearson": 0.8593,
+              "top1000MappedJaccard": 0.8687
+            },
+            "current_netflix": {
+              "candidateMappedOverlapPercent": 41.84,
+              "sharedMappedLanguageReferenceIDs": 45271,
+              "sharedRankPearson": 0.7113,
+              "top1000MappedJaccard": 0.3769
+            },
+            "current_tv-shows": {
+              "candidateMappedOverlapPercent": 58.47,
+              "sharedMappedLanguageReferenceIDs": 63265,
+              "sharedRankPearson": 0.7394,
+              "top1000MappedJaccard": 0.4333
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 40.01,
+              "sharedMappedLanguageReferenceIDs": 43295,
+              "sharedRankPearson": 0.4756,
+              "top1000MappedJaccard": 0.2552
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 48.11,
+              "sharedMappedLanguageReferenceIDs": 52057,
+              "sharedRankPearson": 0.3541,
+              "top1000MappedJaccard": 0.0617
+            }
+          },
+          "duplicateMappings": 28402,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "で【で】",
+            "と【と】",
+            "も【も】",
+            "だ【だ】",
+            "よ【よ】",
+            "です【です】",
+            "か【か】",
+            "から【から】",
+            "する【する】",
+            "な【な】",
+            "ね【ね】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "はずです【はずです】",
+            "ついて【ついて】",
+            "OK【オッケー】",
+            "でした【でした】",
+            "鈴木【すすぎ】",
+            "田中【たなか】",
+            "ハッハッ【ハッハッ】",
+            "山田【おおした】",
+            "新宿【あらじゅく】",
+            "佐藤【さとあ】",
+            "SNS【エス・エヌ・エス】",
+            "変わってる【かわっている】",
+            "佐々木【ささき】",
+            "吉田【きちだ】"
+          ],
+          "mappedPercent": 55.85,
+          "mappedRows": 108209,
+          "mappingPolicy": "FrequencyPackMappingV2.sql",
+          "mappingRelations": {
+            "exactReading": 22297,
+            "exactWrittenReading": 85912
+          },
+          "projectedRuntimeSQLiteBytes": 13062144,
+          "sourceRows": 193752,
+          "unmappedRows": 50548
+        }
+      ]
+    },
+    {
+      "csv": {
+        "Anime": "860ba39199e5846fea0f144215e422f46de102999fee0893194f73839dd6564f"
+      },
+      "id": "jiten-anime",
+      "kind": "jiten",
+      "mappings": [
+        {
+          "ambiguousRows": 11201,
+          "comparisons": {
+            "current_slice-of-life": {
+              "candidateMappedOverlapPercent": 25.81,
+              "sharedMappedLanguageReferenceIDs": 24996,
+              "sharedRankPearson": 0.5383,
+              "top1000MappedJaccard": 0.3782
+            },
+            "current_tv-shows": {
+              "candidateMappedOverlapPercent": 63.53,
+              "sharedMappedLanguageReferenceIDs": 61513,
+              "sharedRankPearson": 0.7854,
+              "top1000MappedJaccard": 0.5047
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 42.21,
+              "sharedMappedLanguageReferenceIDs": 40869,
+              "sharedRankPearson": 0.4671,
+              "top1000MappedJaccard": 0.2864
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 51.23,
+              "sharedMappedLanguageReferenceIDs": 49610,
+              "sharedRankPearson": 0.3632,
+              "top1000MappedJaccard": 0.0689
+            }
+          },
+          "duplicateMappings": 33523,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "だ【だ】",
+            "と【と】",
+            "で【で】",
+            "も【も】",
+            "よ【よ】",
+            "か【か】",
+            "な【な】",
+            "する【する】",
+            "から【から】",
+            "です【です】",
+            "んだ【んだ】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "はずです【はずです】",
+            "ついて【ついて】",
+            "でした【でした】",
+            "ハッハッ【ハッハッ】",
+            "OK【オッケー】",
+            "というわけだ【というわけだ】",
+            "お役に立てる【おやくにたてる】",
+            "うふ【うふ】",
+            "ぐわー【ぐわー】",
+            "どどう【どどう】",
+            "撃【げき】",
+            "何万【なんまん】",
+            "ことこそ【ことこそ】",
+            "あは【あは】"
+          ],
+          "mappedPercent": 55.19,
+          "mappedRows": 96832,
+          "mappingPolicy": "FrequencyPackMappingV1.sql",
+          "mappingRelations": {
+            "uniqueFormFallback": 96832
+          },
+          "projectedRuntimeSQLiteBytes": 11743232,
+          "sourceRows": 175456,
+          "unmappedRows": 33900
+        },
+        {
+          "ambiguousRows": 7623,
+          "comparisons": {
+            "current_slice-of-life": {
+              "candidateMappedOverlapPercent": 25.42,
+              "sharedMappedLanguageReferenceIDs": 24977,
+              "sharedRankPearson": 0.5084,
+              "top1000MappedJaccard": 0.3156
+            },
+            "current_tv-shows": {
+              "candidateMappedOverlapPercent": 62.49,
+              "sharedMappedLanguageReferenceIDs": 61408,
+              "sharedRankPearson": 0.7709,
+              "top1000MappedJaccard": 0.4184
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 41.71,
+              "sharedMappedLanguageReferenceIDs": 40984,
+              "sharedRankPearson": 0.4634,
+              "top1000MappedJaccard": 0.2742
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 50.45,
+              "sharedMappedLanguageReferenceIDs": 49570,
+              "sharedRankPearson": 0.3547,
+              "top1000MappedJaccard": 0.0635
+            }
+          },
+          "duplicateMappings": 33553,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "だ【だ】",
+            "と【と】",
+            "で【で】",
+            "も【も】",
+            "よ【よ】",
+            "か【か】",
+            "な【な】",
+            "する【する】",
+            "から【から】",
+            "です【です】",
+            "んだ【んだ】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "はずです【はずです】",
+            "ついて【ついて】",
+            "でした【でした】",
+            "ハッハッ【ハッハッ】",
+            "OK【オッケー】",
+            "というわけだ【というわけだ】",
+            "気にすんな【きにするな】",
+            "いい天気【よいてんき】",
+            "変わってる【かわっている】",
+            "お役に立てる【おやくにたてる】",
+            "うふ【うふ】",
+            "ぐわー【ぐわー】",
+            "どどう【どどう】",
+            "行かなくちゃ【いかなくては】"
+          ],
+          "mappedPercent": 56.0,
+          "mappedRows": 98264,
+          "mappingPolicy": "FrequencyPackMappingV2.sql",
+          "mappingRelations": {
+            "exactReading": 21981,
+            "exactWrittenReading": 76283
+          },
+          "projectedRuntimeSQLiteBytes": 11845632,
+          "sourceRows": 175456,
+          "unmappedRows": 36016
+        }
+      ]
+    },
+    {
+      "csv": {
+        "Novel": "876bed464d9ed81292269821b976409e50f36d690f2a02cce089bde0a6827b8b"
+      },
+      "id": "jiten-novel",
+      "kind": "jiten",
+      "mappings": [
+        {
+          "ambiguousRows": 12859,
+          "comparisons": {
+            "current_novels": {
+              "candidateMappedOverlapPercent": 6.53,
+              "sharedMappedLanguageReferenceIDs": 9022,
+              "sharedRankPearson": 0.7321,
+              "top1000MappedJaccard": 0.3011
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 37.46,
+              "sharedMappedLanguageReferenceIDs": 51732,
+              "sharedRankPearson": 0.5535,
+              "top1000MappedJaccard": 0.2875
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 46.04,
+              "sharedMappedLanguageReferenceIDs": 63577,
+              "sharedRankPearson": 0.3977,
+              "top1000MappedJaccard": 0.0769
+            }
+          },
+          "duplicateMappings": 60257,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "と【と】",
+            "で【で】",
+            "も【も】",
+            "だ【だ】",
+            "から【から】",
+            "する【する】",
+            "か【か】",
+            "こと【こと】",
+            "な【な】",
+            "ある【ある】",
+            "その【その】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "はずです【はずです】",
+            "ついて【ついて】",
+            "でした【でした】",
+            "というわけだ【というわけだ】",
+            "Tシャツ【ティーシャツ】",
+            "顔を覗く【かおをのぞく】",
+            "OK【オッケー】",
+            "に越したことはない【にこしたことはない】",
+            "ことこそ【ことこそ】",
+            "五歳【ごさい】",
+            "出る前【でるまえ】",
+            "何万【なんまん】",
+            "撃【げき】",
+            "SNS【エス・エヌ・エス】"
+          ],
+          "mappedPercent": 50.72,
+          "mappedRows": 138093,
+          "mappingPolicy": "FrequencyPackMappingV1.sql",
+          "mappingRelations": {
+            "uniqueFormFallback": 138093
+          },
+          "projectedRuntimeSQLiteBytes": 16736256,
+          "sourceRows": 272246,
+          "unmappedRows": 61037
+        },
+        {
+          "ambiguousRows": 7600,
+          "comparisons": {
+            "current_novels": {
+              "candidateMappedOverlapPercent": 6.44,
+              "sharedMappedLanguageReferenceIDs": 9022,
+              "sharedRankPearson": 0.6969,
+              "top1000MappedJaccard": 0.2533
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 37.05,
+              "sharedMappedLanguageReferenceIDs": 51893,
+              "sharedRankPearson": 0.5486,
+              "top1000MappedJaccard": 0.262
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 45.37,
+              "sharedMappedLanguageReferenceIDs": 63547,
+              "sharedRankPearson": 0.3914,
+              "top1000MappedJaccard": 0.0688
+            }
+          },
+          "duplicateMappings": 60591,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "と【と】",
+            "で【で】",
+            "も【も】",
+            "だ【だ】",
+            "から【から】",
+            "する【する】",
+            "か【か】",
+            "こと【こと】",
+            "な【な】",
+            "ある【ある】",
+            "その【その】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "はずです【はずです】",
+            "ついて【ついて】",
+            "でした【でした】",
+            "というわけだ【というわけだ】",
+            "Tシャツ【ティーシャツ】",
+            "顔を覗く【かおをのぞく】",
+            "OK【オッケー】",
+            "言いにくい【いいがたい】",
+            "数人【かずと】",
+            "に越したことはない【にこしたことはない】",
+            "ことこそ【ことこそ】",
+            "五歳【ごさい】",
+            "出る前【でるまえ】",
+            "何万【なんまん】"
+          ],
+          "mappedPercent": 51.45,
+          "mappedRows": 140061,
+          "mappingPolicy": "FrequencyPackMappingV2.sql",
+          "mappingRelations": {
+            "exactReading": 24161,
+            "exactWrittenReading": 115900
+          },
+          "projectedRuntimeSQLiteBytes": 16924672,
+          "sourceRows": 272246,
+          "unmappedRows": 63994
+        }
+      ]
+    },
+    {
+      "csv": {
+        "Manga": "e7189440d2f3825e3106e7734848a4b54732d2c969788549cef09f7c671520ed"
+      },
+      "id": "jiten-manga",
+      "kind": "jiten",
+      "mappings": [
+        {
+          "ambiguousRows": 12660,
+          "comparisons": {
+            "current_shonen": {
+              "candidateMappedOverlapPercent": 30.4,
+              "sharedMappedLanguageReferenceIDs": 31542,
+              "sharedRankPearson": 0.6179,
+              "top1000MappedJaccard": 0.4213
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 42.4,
+              "sharedMappedLanguageReferenceIDs": 43992,
+              "sharedRankPearson": 0.501,
+              "top1000MappedJaccard": 0.3173
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 51.1,
+              "sharedMappedLanguageReferenceIDs": 53028,
+              "sharedRankPearson": 0.3732,
+              "top1000MappedJaccard": 0.0929
+            }
+          },
+          "duplicateMappings": 39485,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "と【と】",
+            "で【で】",
+            "だ【だ】",
+            "も【も】",
+            "か【か】",
+            "よ【よ】",
+            "から【から】",
+            "する【する】",
+            "な【な】",
+            "です【です】",
+            "んだ【んだ】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "OK【オッケー】",
+            "ついて【ついて】",
+            "でした【でした】",
+            "はずです【はずです】",
+            "成【あきら】",
+            "結【こんざき】",
+            "どどう【どどう】",
+            "近【ちかざき】",
+            "TV【ティー・ブイ】",
+            "殺【あやめ】",
+            "千代田区【ちよだく】",
+            "立【たかし】",
+            "新宿【あらじゅく】",
+            "警【かがり】"
+          ],
+          "mappedPercent": 49.84,
+          "mappedRows": 103766,
+          "mappingPolicy": "FrequencyPackMappingV1.sql",
+          "mappingRelations": {
+            "uniqueFormFallback": 103766
+          },
+          "projectedRuntimeSQLiteBytes": 12558336,
+          "sourceRows": 208204,
+          "unmappedRows": 52293
+        },
+        {
+          "ambiguousRows": 8731,
+          "comparisons": {
+            "current_shonen": {
+              "candidateMappedOverlapPercent": 29.94,
+              "sharedMappedLanguageReferenceIDs": 31527,
+              "sharedRankPearson": 0.5968,
+              "top1000MappedJaccard": 0.3435
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 41.91,
+              "sharedMappedLanguageReferenceIDs": 44124,
+              "sharedRankPearson": 0.4984,
+              "top1000MappedJaccard": 0.2904
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 50.34,
+              "sharedMappedLanguageReferenceIDs": 52997,
+              "sharedRankPearson": 0.3654,
+              "top1000MappedJaccard": 0.0819
+            }
+          },
+          "duplicateMappings": 39794,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "と【と】",
+            "で【で】",
+            "だ【だ】",
+            "も【も】",
+            "か【か】",
+            "よ【よ】",
+            "から【から】",
+            "する【する】",
+            "な【な】",
+            "です【です】",
+            "んだ【んだ】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "OK【オッケー】",
+            "ついて【ついて】",
+            "でした【でした】",
+            "はずです【はずです】",
+            "成【あきら】",
+            "結【こんざき】",
+            "どどう【どどう】",
+            "近【ちかざき】",
+            "TV【ティー・ブイ】",
+            "殺【あやめ】",
+            "千代田区【ちよだく】",
+            "立【たかし】",
+            "普【あまね】",
+            "新宿【あらじゅく】"
+          ],
+          "mappedPercent": 50.57,
+          "mappedRows": 105287,
+          "mappingPolicy": "FrequencyPackMappingV2.sql",
+          "mappingRelations": {
+            "exactReading": 22602,
+            "exactWrittenReading": 82685
+          },
+          "projectedRuntimeSQLiteBytes": 12685312,
+          "sourceRows": 208204,
+          "unmappedRows": 54392
+        }
+      ]
+    },
+    {
+      "categories": [
+        "news"
+      ],
+      "id": "tubelex-news",
+      "kind": "tubelex",
+      "mappings": [
+        {
+          "ambiguousRows": 2324,
+          "comparisons": {
+            "current_nhk": {
+              "candidateMappedOverlapPercent": 11.28,
+              "sharedMappedLanguageReferenceIDs": 3211,
+              "sharedRankPearson": 0.2588,
+              "top1000MappedJaccard": 0.1601
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 100.0,
+              "sharedMappedLanguageReferenceIDs": 28469,
+              "sharedRankPearson": 0.6544,
+              "top1000MappedJaccard": 0.472
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 97.01,
+              "sharedMappedLanguageReferenceIDs": 27617,
+              "sharedRankPearson": 0.413,
+              "top1000MappedJaccard": 0.2415
+            }
+          },
+          "duplicateMappings": 415,
+          "firstAmbiguous": [
+            "て【】",
+            "だ【】",
+            "が【】",
+            "為る【】",
+            "で【】",
+            "居る【】",
+            "事【】",
+            "ない【】",
+            "御【】",
+            "様【】",
+            "方【】",
+            "さん【】",
+            "韓国【】",
+            "来る【】",
+            "月【】"
+          ],
+          "firstUnmapped": [
+            "<num>【】",
+            "私-代名詞【】",
+            "円-助数詞【】",
+            "於く【】",
+            "アメリカ-america【】",
+            "ロシア-rossiya【】",
+            "コロナ-corona【】",
+            "エリア-area【】",
+            "コメント-comment【】",
+            "ウクライナ-ukraina【】",
+            "トウキョウ【】",
+            "僕-代名詞【】",
+            "チャンネル-channel【】",
+            "タイワン【】",
+            "ニュース-news【】"
+          ],
+          "mappedPercent": 48.2,
+          "mappedRows": 28469,
+          "mappingPolicy": "FrequencyPackMappingV1.sql",
+          "mappingRelations": {
+            "exactReadingPOS": 44,
+            "exactWrittenPOS": 391,
+            "uniqueFormFallback": 28034
+          },
+          "projectedRuntimeSQLiteBytes": 4063232,
+          "sourceRows": 59064,
+          "unmappedRows": 27856
+        }
+      ],
+      "tubelexSHA256": "39d4edb2ccac4405b47d0f93e9ec7b11678b3b305d1a37c877dd76588817c8e9"
+    },
+    {
+      "categories": [
+        "people",
+        "comedy"
+      ],
+      "id": "tubelex-people-comedy",
+      "kind": "tubelex",
+      "mappings": [
+        {
+          "ambiguousRows": 3428,
+          "comparisons": {
+            "cand_jiten-anime": {
+              "candidateMappedOverlapPercent": 82.37,
+              "sharedMappedLanguageReferenceIDs": 34372,
+              "sharedRankPearson": 0.5427,
+              "top1000MappedJaccard": 0.2604
+            },
+            "current_slice-of-life": {
+              "candidateMappedOverlapPercent": 48.34,
+              "sharedMappedLanguageReferenceIDs": 20172,
+              "sharedRankPearson": 0.4602,
+              "top1000MappedJaccard": 0.2797
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 100.0,
+              "sharedMappedLanguageReferenceIDs": 41731,
+              "sharedRankPearson": 0.8253,
+              "top1000MappedJaccard": 0.8448
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 94.73,
+              "sharedMappedLanguageReferenceIDs": 39532,
+              "sharedRankPearson": 0.4125,
+              "top1000MappedJaccard": 0.1685
+            }
+          },
+          "duplicateMappings": 1309,
+          "firstAmbiguous": [
+            "て【】",
+            "だ【】",
+            "が【】",
+            "為る【】",
+            "で【】",
+            "居る【】",
+            "事【】",
+            "ない【】",
+            "御【】",
+            "様【】",
+            "何【】",
+            "来る【】",
+            "さん【】",
+            "方【】",
+            "一寸【】"
+          ],
+          "firstUnmapped": [
+            "<num>【】",
+            "私-代名詞【】",
+            "僕-代名詞【】",
+            "円-助数詞【】",
+            "[音楽]【】",
+            "そう-様態【】",
+            "っ【】",
+            "チャンネル-channel【】",
+            "そう-伝聞【】",
+            "いー【】",
+            "ユー-you【】",
+            "ポイント-point【】",
+            "サイズ-size【】",
+            "チューブ-tube【】",
+            "ファン-fan(熱狂者)【】"
+          ],
+          "mappedPercent": 33.56,
+          "mappedRows": 41731,
+          "mappingPolicy": "FrequencyPackMappingV1.sql",
+          "mappingRelations": {
+            "exactReadingPOS": 59,
+            "exactWrittenPOS": 433,
+            "uniqueFormFallback": 41239
+          },
+          "projectedRuntimeSQLiteBytes": 5959680,
+          "sourceRows": 124337,
+          "unmappedRows": 77869
+        }
+      ],
+      "tubelexSHA256": "39d4edb2ccac4405b47d0f93e9ec7b11678b3b305d1a37c877dd76588817c8e9"
+    }
+  ],
+  "current": [
+    {
+      "id": "netflix",
+      "mapping": {
+        "ambiguousRows": 8194,
+        "duplicateMappings": 15213,
+        "firstAmbiguous": [
+          "だ【ダ】",
+          "は【ハ】",
+          "の【ノ】",
+          "た【タ】",
+          "に【ニ】",
+          "て【テ】",
+          "が【ガ】",
+          "する【スル】",
+          "為る【スル】",
+          "も【モ】",
+          "と【ト】",
+          "で【デ】",
+          "よ【ヨ】",
+          "ない【ナイ】",
+          "てる【テル】"
+        ],
+        "firstUnmapped": [
+          "会える【アウ】",
+          "ううっ【ウウ】",
+          "勝てる【カツ】",
+          "ッス【デス】",
+          "%【パーセント】",
+          "ハハ【ハハ】",
+          "ル【ル】",
+          "オ【オ】",
+          "やれる【ヤル】",
+          "ソン【ソン】",
+          "ぐっ【グッ】",
+          "アン【アン】",
+          "どっ【ドコ】",
+          "ヘッ【ヘエ】",
+          "戻れる【モドル】"
+        ],
+        "mappedPercent": 50.61,
+        "mappedRows": 52053,
+        "mappingPolicy": "FrequencyPackMappingV1.sql",
+        "mappingRelations": {
+          "uniqueFormFallback": 52053
+        },
+        "projectedRuntimeSQLiteBytes": 6184960,
+        "sourceRows": 102844,
+        "unmappedRows": 27384
+      }
+    },
+    {
+      "id": "tv-shows",
+      "mapping": {
+        "ambiguousRows": 5665,
+        "duplicateMappings": 9989,
+        "firstAmbiguous": [
+          "の【】",
+          "だ【】",
+          "た【】",
+          "は【】",
+          "て【】",
+          "に【】",
+          "が【】",
+          "する【】",
+          "為る【】",
+          "ない【】",
+          "ん【】",
+          "か【】",
+          "よ【】",
+          "です【】",
+          "と【】"
+        ],
+        "firstUnmapped": [
+          "・【】",
+          "わぁ【】",
+          "あッ【】",
+          "えッ【】",
+          "悟【】",
+          "あ~【】",
+          "っと【】",
+          "のび太【】",
+          "おぉ【】",
+          "待てる【】",
+          "勝てる【】",
+          "会える【】",
+          "まっ【】",
+          "お待ち【】",
+          "アン【】"
+        ],
+        "mappedPercent": 68.09,
+        "mappedRows": 68087,
+        "mappingPolicy": "FrequencyPackMappingV1.sql",
+        "mappingRelations": {
+          "uniqueFormFallback": 68087
+        },
+        "projectedRuntimeSQLiteBytes": 8192000,
+        "sourceRows": 99999,
+        "unmappedRows": 16258
+      }
+    },
+    {
+      "id": "novels",
+      "mapping": {
+        "ambiguousRows": 1349,
+        "duplicateMappings": 325,
+        "firstAmbiguous": [
+          "の【ノ】",
+          "た【タ】",
+          "だ【ダ】",
+          "て【テ】",
+          "は【ハ】",
+          "に【ニ】",
+          "が【ガ】",
+          "と【ト】",
+          "為る【スル】",
+          "も【モ】",
+          "居る【イル】",
+          "で【デ】",
+          "か【カ】",
+          "ない【ナイ】",
+          "から【カラ】"
+        ],
+        "firstUnmapped": [
+          "於く【オク】",
+          "びっ【ビッ】",
+          "さっ【サッ】",
+          "ざっ【ザッ】",
+          "ぱっ【パッ】",
+          "ちら【チラ】",
+          "シュ【シュ】",
+          "思い掛ける【オモイガケル】",
+          "ぐっ【グッ】",
+          "戻らかす【モトラカス】",
+          "立【リツ】",
+          "ばっ【バッ】",
+          "染む【シム】",
+          "殺【サツ】",
+          "ぼー【ボー】"
+        ],
+        "mappedPercent": 55.45,
+        "mappedRows": 9132,
+        "mappingPolicy": "FrequencyPackMappingV1.sql",
+        "mappingRelations": {
+          "uniqueFormFallback": 9132
+        },
+        "projectedRuntimeSQLiteBytes": 1089536,
+        "sourceRows": 16469,
+        "unmappedRows": 5663
+      }
+    },
+    {
+      "id": "shonen",
+      "mapping": {
+        "ambiguousRows": 4749,
+        "duplicateMappings": 6423,
+        "firstAmbiguous": [
+          "だ【ダ】",
+          "の【ノ】",
+          "は【ハ】",
+          "た【タ】",
+          "に【ニ】",
+          "て【テ】",
+          "が【ガ】",
+          "する【スル】",
+          "為る【ナル】",
+          "も【モ】",
+          "と【ト】",
+          "で【デ】",
+          "よ【ヨ】",
+          "ない【ナイ】",
+          "か【カ】"
+        ],
+        "firstUnmapped": [
+          "悟空【ゴクウ】",
+          "ルフィ【ルフィ】",
+          "ナルト【ナルト】",
+          "ノ【ノ】",
+          "ううっ【ウウ】",
+          "ぐっ【グッ】",
+          "一護【イチゴ】",
+          "ッス【デス】",
+          "悟飯【ゴハン】",
+          "サスケ【サスケ】",
+          "勝てる【カツ】",
+          "ナツ【ナツ】",
+          "~【カラ】",
+          "ベジータ【ベジータ】",
+          "うぅ【ウウ】"
+        ],
+        "mappedPercent": 56.92,
+        "mappedRows": 32098,
+        "mappingPolicy": "FrequencyPackMappingV1.sql",
+        "mappingRelations": {
+          "uniqueFormFallback": 32098
+        },
+        "projectedRuntimeSQLiteBytes": 3796992,
+        "sourceRows": 56396,
+        "unmappedRows": 13126
+      }
+    },
+    {
+      "id": "slice-of-life",
+      "mapping": {
+        "ambiguousRows": 4946,
+        "duplicateMappings": 4224,
+        "firstAmbiguous": [
+          "だ【ダ】",
+          "た【タ】",
+          "の【ノ】",
+          "て【テ】",
+          "は【ハ】",
+          "に【ニ】",
+          "が【ガ】",
+          "する【スル】",
+          "も【モ】",
+          "よ【ヨ】",
+          "で【デ】",
+          "と【ト】",
+          "ん【ノ】",
+          "か【カ】",
+          "ない【ナイ】"
+        ],
+        "firstUnmapped": [
+          "夏目【ナツメ】",
+          "西片【ニシカタ】",
+          "透【トオル】",
+          "ハルヒ【ハルヒ】",
+          "ハル【ハル】",
+          "あッ【アッ】",
+          "京子【キョウコ】",
+          "由希【ユキ】",
+          "海藤【カイトウ】",
+          "伊織【イオリ】",
+          "竜児【リュウジ】",
+          "結衣【ユイ】",
+          "真琴【マコト】",
+          "トシ【トシ】",
+          "燃【ネン】"
+        ],
+        "mappedPercent": 58.81,
+        "mappedRows": 25360,
+        "mappingPolicy": "FrequencyPackMappingV1.sql",
+        "mappingRelations": {
+          "uniqueFormFallback": 25360
+        },
+        "projectedRuntimeSQLiteBytes": 3002368,
+        "sourceRows": 43125,
+        "unmappedRows": 8595
+      }
+    },
+    {
+      "id": "nhk",
+      "mapping": {
+        "ambiguousRows": 1981,
+        "duplicateMappings": 2263,
+        "firstAmbiguous": [
+          "の【ノ】",
+          "が【ガ】",
+          "に【ニ】",
+          "は【ハ】",
+          "ます【マス】",
+          "て【テ】",
+          "た【タ】",
+          "で【デ】",
+          "と【ト】",
+          "い【イ】",
+          "まし【マシ】",
+          "人【】",
+          "し【シ】",
+          "や【ヤ】",
+          "から【カラ】"
+        ],
+        "firstUnmapped": [
+          "ないる【ナイル】",
+          "たむ【タム】",
+          "なっ【ナッ】",
+          "までる【マデル】",
+          "なりる【ナリル】",
+          "ありる【アリル】",
+          "言っ【】",
+          "ときる【トキル】",
+          "っています【ッテイマス】",
+          "考う【】",
+          "始【ハジ】",
+          "たちる【タチル】",
+          "よりる【ヨリル】",
+          "たいる【タイル】",
+          "増う【】"
+        ],
+        "mappedPercent": 14.7,
+        "mappedRows": 5596,
+        "mappingPolicy": "FrequencyPackMappingV1.sql",
+        "mappingRelations": {
+          "uniqueFormFallback": 5596
+        },
+        "projectedRuntimeSQLiteBytes": 671744,
+        "sourceRows": 38075,
+        "unmappedRows": 28235
+      }
+    }
+  ],
+  "languageDataSHA256": "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073",
+  "mappingV1SHA256": "568d2c293eceae6aff760059dc803331d11490d74ab54f5e85e9e5ef7ff8b339",
+  "mappingV2DraftSHA256": "5f61dd29c529f4fe558473a0356c3d384002fb9eaaf006cb9750e5ebfeb8da20",
+  "schema": "zenbu.spike-376.analysis.v1"
+}

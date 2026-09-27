@@ -3,6 +3,72 @@
   "candidates": [
     {
       "analysis": {
+        "ambiguousRows": 7623,
+        "artifactContentSHA256": "c5857381cb517852ba2b2792662f65b8a79161ca2d60c08be8beca3e865c92d5",
+        "coveredSourceRows": 175456,
+        "duplicateMappings": 33553,
+        "mappedRows": 98264,
+        "mappingSHA256": "4006f78d315dab845dce8549dc7986db996921289a7d8dfa2565ea54e91c3fd3",
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 5
+        },
+        "unmappedRows": 36016
+      },
+      "id": "anime",
+      "jitenCSVSHA256": {
+        "Anime": "860ba39199e5846fea0f144215e422f46de102999fee0893194f73839dd6564f"
+      },
+      "packID": "zenbu.jiten.anime.ja.ordered-v2",
+      "packVersion": "2026-09-27",
+      "sourceSHA256": "ffbd2b21921ec5a12e1899cd1d67e1b6f162ce17779cd9daeff5e79758e80bc1"
+    },
+    {
+      "analysis": {
+        "ambiguousRows": 8731,
+        "artifactContentSHA256": "f260a9944d7934dfcf629e22a86dea9d92ee51afbd3294f6e3aa98b7bece469b",
+        "coveredSourceRows": 208204,
+        "duplicateMappings": 39794,
+        "mappedRows": 105287,
+        "mappingSHA256": "00eeab21e1b2dd3ae2a3b5dde7d31c61be7541a459e5e427aba999c5476ff77d",
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 5
+        },
+        "unmappedRows": 54392
+      },
+      "id": "manga",
+      "jitenCSVSHA256": {
+        "Manga": "e7189440d2f3825e3106e7734848a4b54732d2c969788549cef09f7c671520ed"
+      },
+      "packID": "zenbu.jiten.manga.ja.ordered-v2",
+      "packVersion": "2026-09-27",
+      "sourceSHA256": "740d6faed5c1a3707304a643c82faffe6299f291892249ec458c2f763e649c1f"
+    },
+    {
+      "analysis": {
+        "ambiguousRows": 7600,
+        "artifactContentSHA256": "1410392126fe24005a7e7e147d529460560f32a51ed8e2dc637bbe42be613dc1",
+        "coveredSourceRows": 272246,
+        "duplicateMappings": 60591,
+        "mappedRows": 140061,
+        "mappingSHA256": "38d3fe9d3a5ad0500662d58d7eee436722a498436cdde5e4c26530f82ec6b241",
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 2
+        },
+        "unmappedRows": 63994
+      },
+      "id": "novels",
+      "jitenCSVSHA256": {
+        "Novel": "876bed464d9ed81292269821b976409e50f36d690f2a02cce089bde0a6827b8b"
+      },
+      "packID": "zenbu.jiten.novels.ja.ordered-v2",
+      "packVersion": "2026-09-27",
+      "sourceSHA256": "8e7f37d621a837d91b77be9fd94bad0216102bcdb4a944b851f36c759c461dfb"
+    },
+    {
+      "analysis": {
         "ambiguousRows": 6593,
         "artifactContentSHA256": "e71c0470c0408d7509a3fedb928986176448ce51f3c7f9f026e26dceeeedc65b",
         "coveredSourceRows": 193752,
@@ -23,6 +89,28 @@
       "packID": "zenbu.jiten.tv-movies.ja.ordered-v2",
       "packVersion": "2026-09-27",
       "sourceSHA256": "e6a6ec5cd4ebc7188ec8d963c0447d8c6a6ead4716fa8a2d728981efc9aedda1"
+    },
+    {
+      "analysis": {
+        "ambiguousRows": 7743,
+        "artifactContentSHA256": "4fa9a0ce4f1ed0bce5ccdc39a1285aa45f63be8b83695a9c1a078b91bbecb665",
+        "coveredSourceRows": 205292,
+        "duplicateMappings": 47730,
+        "mappedRows": 115109,
+        "mappingSHA256": "315085621b340af5caeb60aae438d1b08a3b421023402b27be882bfe01e6907f",
+        "smokeTest": {
+          "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
+          "rank": 4
+        },
+        "unmappedRows": 34710
+      },
+      "id": "visual-novels",
+      "jitenCSVSHA256": {
+        "VisualNovel": "df25c83aa311887cadbfcbb3f212df350b270ebd60e8cf9c58d92d550ab5de29"
+      },
+      "packID": "zenbu.jiten.visual-novels.ja.ordered-v2",
+      "packVersion": "2026-09-27",
+      "sourceSHA256": "edf3056faa8386f4468590dfca981f7bd8dad616db77ea564f5109bad1240020"
     }
   ],
   "languageDataSHA256": "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073",
