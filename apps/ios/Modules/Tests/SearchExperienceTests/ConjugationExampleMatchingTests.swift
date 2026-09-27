@@ -4,7 +4,7 @@ import Testing
 @Suite("Conjugation example matching")
 struct ConjugationExampleMatchingTests {
   private func matches(_ surface: String, _ sentence: String) -> Bool {
-    ConjugatedFormSheet.containsCompleteForm(surface, in: sentence)
+    ConjugatedFormView.containsCompleteForm(surface, in: sentence)
   }
 
   @Test("a form counts only when it stands complete")

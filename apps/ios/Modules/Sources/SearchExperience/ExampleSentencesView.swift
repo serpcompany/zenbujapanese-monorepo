@@ -111,6 +111,7 @@ struct JapaneseExampleRowContent: View {
       let rowIdentifier: String
       let combinesRowAccessibility: Bool
       let highlightsCurrentEntry: Bool
+      let highlightsQuery: Bool
     }
 
     var configuration: Configuration {
@@ -129,7 +130,8 @@ struct JapaneseExampleRowContent: View {
           englishIdentifier: "example.english.\(index)",
           rowIdentifier: "example.row.\(index)",
           combinesRowAccessibility: false,
-          highlightsCurrentEntry: false
+          highlightsCurrentEntry: false,
+          highlightsQuery: true
         )
       case .wordDetail(let index):
         Configuration(
@@ -142,7 +144,8 @@ struct JapaneseExampleRowContent: View {
           englishIdentifier: "word-detail.example-english.\(index)",
           rowIdentifier: "word-detail.example.\(index)",
           combinesRowAccessibility: true,
-          highlightsCurrentEntry: true
+          highlightsCurrentEntry: true,
+          highlightsQuery: false
         )
       case .conjugatedForm(let kind):
         Configuration(
@@ -155,7 +158,8 @@ struct JapaneseExampleRowContent: View {
           englishIdentifier: "conjugations.example-english.\(kind.rawValue)",
           rowIdentifier: "conjugations.example.\(kind.rawValue)",
           combinesRowAccessibility: true,
-          highlightsCurrentEntry: false
+          highlightsCurrentEntry: false,
+          highlightsQuery: true
         )
       }
     }
@@ -244,6 +248,7 @@ struct JapaneseExampleRowContent: View {
       presentation: configuration.tokenPresentation,
       japaneseIdentifier: configuration.japaneseIdentifier,
       highlightsCurrentEntry: configuration.highlightsCurrentEntry,
+      highlightsQuery: configuration.highlightsQuery,
       tokensChanged: updateWordSelectionTokens,
       openWord: openWord
     )

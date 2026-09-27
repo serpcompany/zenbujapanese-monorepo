@@ -47,10 +47,15 @@ follows and opens the conjugation table when one exists.
 The conjugation table starts with the word, its reading and meaning, its word class, and a
 one-line rule for how that class conjugates. A Plain/Polite control switches register when both
 exist. Each row names the form and shows it with the changed ending highlighted. Selecting a row
-opens a sheet with the form's reading, a pronounce button, a short explanation, how the form is
+opens that form's screen: its reading, a pronounce button, a short explanation, how the form is
 built from the dictionary form, the form in the other register, and a short Example Sentence that
 uses the complete form when one exists. Forms that share a spelling, such as potential and
-passive 見られる, say so.
+passive 見られる, say so. Selecting a word in the example opens its Word Detail, and Back returns
+to the form.
+
+Linked Japanese in Example Sentences gives each parsed word its own underline, so word
+boundaries are visible. The words that make up the current entry or the searched form are
+accented.
 
 A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word.
 Selecting a row opens that dictionary's details. JLPT levels are presented as unofficial study
