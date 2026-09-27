@@ -685,16 +685,18 @@ private struct EncounterMediaViewer: View {
 private struct FrequencyRanksRow: View {
   let ranks: FrequencyRanks
   let showDetails: (FrequencyLookupResult) -> Void
+  @ScaledMetric(relativeTo: .caption) private var chipSpacing = 6.0
 
   var body: some View {
-    FrequencyChipFlowLayout {
+    // Each chip's 44 pt tap area already separates lines, so lines need no extra gap.
+    FrequencyChipFlowLayout(spacing: chipSpacing, lineSpacing: 0) {
       ForEach(ranks.enumerated(), id: \.offset) { _, result in
         let presentation = FrequencyPresentationModel(result: result)
         Button {
           showDetails(result)
         } label: {
           FrequencyRankChip(presentation: presentation)
-            .frame(minHeight: 32)
+            .frame(minHeight: 44)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)

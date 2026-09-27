@@ -22,7 +22,10 @@ entry's first sense. Below the summary, a row of compact chips such as `YouTube 
 each enabled dictionary's rank in priority order. The first dictionary's chip always appears,
 with a dash when it has no mapped evidence; other dictionaries appear only when they rank the
 entry. Each chip's dot shows how common the rank is: green for ranks up to 1,500, yellow up to
-5,000, orange up to 15,000, red up to 30,000, and gray beyond. At standard text sizes, the summary shows at
+5,000, orange up to 15,000, red up to 30,000, and gray beyond. With Differentiate Without Color,
+a star count from 5★ to 1★ replaces the dot. At accessibility text sizes, a row shows only the
+first dictionary's chip, with the rank below the name, plus a `+N` count; VoiceOver still reads
+every rank. At standard text sizes, the summary shows at
 most two lines.
 
 Equal ranks and entries without mapped evidence retain the dictionary's deterministic fallback

@@ -186,7 +186,8 @@ struct FrequencyPresentationModel: Equatable, Sendable {
       tier = FrequencyTier(rank: evidence.rank)
       inlineText = formattedRank
       inlineAccessibilityLabel =
-        "\(evidence.pack.shortName) frequency rank \(evidence.rank). Double tap for details."
+        "\(evidence.pack.shortName) frequency rank \(evidence.rank), "
+        + "\(FrequencyTier(rank: evidence.rank).label). Double tap for details."
       pack = evidence.pack
       rankText = "#\(formattedRank)"
       percentileText = evidence.topPercentDisplay
@@ -238,6 +239,12 @@ struct SearchFrequencyRankPresentationModel: Equatable, Sendable {
       case .unavailable: "\(chip.packName) rank unavailable"
       }
     }.joined(separator: ", ")
+  }
+
+  /// The first `limit` chips and how many were left out, for layouts with too little room to
+  /// show every dictionary (such as accessibility text sizes). VoiceOver still reads all ranks.
+  func collapsed(to limit: Int) -> (chips: [FrequencyPresentationModel], hiddenCount: Int) {
+    (Array(chips.prefix(limit)), max(chips.count - limit, 0))
   }
 }
 

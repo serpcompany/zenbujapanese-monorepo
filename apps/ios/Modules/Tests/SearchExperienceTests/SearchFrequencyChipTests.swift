@@ -31,6 +31,21 @@ struct SearchFrequencyChipTests {
       ])
   }
 
+  @Test("collapsing keeps the first chips and counts the rest")
+  func collapse() {
+    let model = SearchFrequencyRankPresentationModel(ranks: [
+      .evidence(evidence(pack: pack("a"), rank: 1)),
+      .evidence(evidence(pack: pack("b"), rank: 2)),
+      .evidence(evidence(pack: pack("c"), rank: 3)),
+    ])
+    let one = model.collapsed(to: 1)
+    #expect(one.chips.map(\.packName) == ["a"])
+    #expect(one.hiddenCount == 2)
+    let all = model.collapsed(to: .max)
+    #expect(all.chips.count == 3)
+    #expect(all.hiddenCount == 0)
+  }
+
   @Test("loading and no enabled dictionary show no chips")
   func emptyStates() {
     #expect(SearchFrequencyRankPresentationModel(ranks: nil).chips.isEmpty)

@@ -794,6 +794,7 @@ private struct ResultRow: View {
   let frequencyRanks: FrequencyRanks?
   let rank: ResultRank
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @ScaledMetric(relativeTo: .caption) private var chipSpacing = 6.0
 
   var body: some View {
     NavigationLink(value: SearchExperienceRoute.word(entry, nil)) {
@@ -815,13 +816,19 @@ private struct ResultRow: View {
     .accessibilityIdentifier(resultIdentifier)
   }
 
+  /// Every ranked dictionary at standard sizes. At accessibility sizes only the dictionary that
+  /// orders the results is drawn, plus a count, so the headword and meaning stay prominent.
   @ViewBuilder
   private var frequencyChips: some View {
-    let chips = frequencyPresentation.chips
-    if !chips.isEmpty {
-      FrequencyChipFlowLayout {
-        ForEach(chips.enumerated(), id: \.offset) { _, chip in
+    let visible = frequencyPresentation.collapsed(
+      to: dynamicTypeSize.isAccessibilitySize ? 1 : .max)
+    if !visible.chips.isEmpty {
+      FrequencyChipFlowLayout(spacing: chipSpacing) {
+        ForEach(visible.chips.enumerated(), id: \.offset) { _, chip in
           FrequencyRankChip(presentation: chip, style: .subtle)
+        }
+        if visible.hiddenCount > 0 {
+          FrequencyAdditionalRanksChip(count: visible.hiddenCount)
         }
       }
       .accessibilityHidden(true)
