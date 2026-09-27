@@ -25,6 +25,11 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Changed
 
+- Optional frequency dictionaries now download from Zenbu's own servers instead of third-party
+  hosts. Dictionaries you already downloaded keep working.
+- **Credits & Attributions** now uses that name for its screen too, and is trimmed to each
+  source's author, license, and project link. License texts and Tatoeba contributors are on one
+  **Licenses** screen.
 - The You tab is now **Account**, laid out like Settings with colored icons. It adds Help &
   Support, the Privacy Policy, and the app's version.
 - Account no longer has a Japanese Text Analysis screen. The analysis is included with the app

@@ -61,6 +61,14 @@ packs with `import_frequency_pack.py`, rerun `analyze_ordered_json_frequency_lis
 the JLPT pack, and update each catalog manifest. Move the previous manifests of downloadable
 packs into `trustedHistoricalManifests` so packs a learner already installed stay trusted.
 
+Downloadable packs are served from `cdn.zenbujapanese.com` (Cloudflare R2 bucket
+`zenbujapanese-cdn`), never from upstream hosts. Point a new or changed manifest's `downloadURL`
+at `https://cdn.zenbujapanese.com/frequency-packs/<packID>/<sourceSHA256>.<ext>`, then upload the
+verified source file with
+`CLOUDFLARE_ACCOUNT_ID=<SERP account> python3 apps/ios/Tools/publish_frequency_pack_sources.py <file>…`.
+The tool matches files by size and SHA-256 and re-downloads each public URL to verify it. Never
+overwrite or delete an object: trusted historical manifests still reference it.
+
 ## Search manual checks
 
 Search ordering, deinflection, and frequency-chip rules are covered by `SearchExperienceTests`.

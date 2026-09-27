@@ -12,7 +12,7 @@
   "weights_sha256": "67194af64129b148d7c06652b84b1af7546573a0d247fb56d63d169eceac6723",
   "license": "MIT",
   "license_url": "https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition/blob/master/LICENSE",
-  "license_file": "DAKANJI-MIT.txt",
+  "license_file": "apps/ios/Modules/Sources/SearchExperience/Resources/DAKANJI-MIT.txt",
   "license_sha256": "7d1e84def59e1bedb1c3a8c3038d77cf33027be52d2b64f0811571ce58e5be11",
   "copyright": "Copyright (c) 2021 CaptainDario",
   "attribution": "DaKanji Single Kanji Recognition by Dario Radmann and contributors; Core ML conversion by Zenbu Japanese",
