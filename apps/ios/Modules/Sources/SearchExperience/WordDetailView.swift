@@ -104,8 +104,8 @@ struct WordDetailView: View {
           .id("word-note.section")
         }
 
-        Section("EXAMPLES") {
-          if analysisAvailability == .reduced {
+        if analysisAvailability == .reduced {
+          Section {
             Label(
               "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
               systemImage: "info.circle"
@@ -114,18 +114,19 @@ struct WordDetailView: View {
             .foregroundStyle(.secondary)
             .accessibilityIdentifier("word-detail.reduced-analysis")
           }
-          ExampleSentenceRows(
-            examples: examplesEntryID == entry.id ? examples : [],
-            isLoading: isLoadingExamples || examplesEntryID != entry.id,
-            emptyMessage: "No source-matched examples",
-            highlightedQuery: SearchQuery(entry.headword),
-            highlightedEntry: entry,
-            presentation: { .wordDetail(index: $0) },
-            speechSynthesisClient: speechSynthesisClient,
-            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-            openWord: openWord
-          )
         }
+        ExampleSentenceSections(
+          title: "EXAMPLES",
+          examples: examplesEntryID == entry.id ? examples : [],
+          isLoading: isLoadingExamples || examplesEntryID != entry.id,
+          emptyMessage: "No source-matched examples",
+          highlightedQuery: SearchQuery(entry.headword),
+          highlightedEntry: entry,
+          presentation: { .wordDetail(index: $0) },
+          speechSynthesisClient: speechSynthesisClient,
+          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+          openWord: openWord
+        )
       }
       .listStyle(.insetGrouped)
       .scrollDismissesKeyboard(.immediately)

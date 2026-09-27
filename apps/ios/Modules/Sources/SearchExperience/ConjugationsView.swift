@@ -151,19 +151,18 @@ struct ConjugatedFormView: View {
         )
       }
 
-      Section("Examples") {
-        ExampleSentenceRows(
-          examples: examples,
-          isLoading: isLoadingExamples,
-          emptyMessage: "No example sentences use this form yet.",
-          highlightedQuery: SearchQuery(form.surface),
-          highlightedEntry: nil,
-          presentation: { .conjugatedForm(form.id, index: $0) },
-          speechSynthesisClient: speechSynthesisClient,
-          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-          openWord: openWord
-        )
-      }
+      ExampleSentenceSections(
+        title: "Examples",
+        examples: examples,
+        isLoading: isLoadingExamples,
+        emptyMessage: "No example sentences use this form yet.",
+        highlightedQuery: SearchQuery(form.surface),
+        highlightedEntry: nil,
+        presentation: { .conjugatedForm(form.id, index: $0) },
+        speechSynthesisClient: speechSynthesisClient,
+        japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+        openWord: openWord
+      )
     }
     .listSectionSpacing(.compact)
     .navigationTitle(presentation.title)

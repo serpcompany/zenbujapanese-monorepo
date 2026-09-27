@@ -85,9 +85,11 @@ private struct ExampleSentenceRow: View {
   }
 }
 
-/// A list's example rows with their loading and empty states. Word Detail and the conjugated
-/// form screen share it, so examples look and behave the same wherever they appear.
-struct ExampleSentenceRows: View {
+/// Example Sentences as list sections, one card per sentence, with loading and empty states.
+/// Word Detail and the conjugated form screen share it, so examples look and behave the same
+/// wherever they appear. Place it directly in a `List`, not inside a `Section`.
+struct ExampleSentenceSections: View {
+  let title: String
   let examples: [ExampleSentence]
   let isLoading: Bool
   let emptyMessage: String
@@ -102,21 +104,28 @@ struct ExampleSentenceRows: View {
     // Keep loaded rows during refresh so a native Back transition does not collapse the
     // List and discard its scroll position.
     if isLoading && examples.isEmpty {
-      ProgressView("Loading examples")
+      Section(title) { ProgressView("Loading examples") }
     } else if examples.isEmpty {
-      Text(emptyMessage)
-        .foregroundStyle(.secondary)
+      Section(title) {
+        Text(emptyMessage)
+          .foregroundStyle(.secondary)
+      }
     } else {
       ForEach(Array(examples.enumerated()), id: \.element.id) { index, example in
-        JapaneseExampleRowContent(
-          example: example,
-          highlightedQuery: highlightedQuery,
-          highlightedEntry: highlightedEntry,
-          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-          presentation: presentation(index),
-          speak: { speechSynthesisClient.speak(example.japanese) },
-          openWord: openWord
-        )
+        Section {
+          JapaneseExampleRowContent(
+            example: example,
+            highlightedQuery: highlightedQuery,
+            highlightedEntry: highlightedEntry,
+            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+            presentation: presentation(index),
+            speak: { speechSynthesisClient.speak(example.japanese) },
+            openWord: openWord
+          )
+        } header: {
+          // Only the first card carries the heading; the rest follow as their own cards.
+          if index == 0 { Text(title) }
+        }
       }
     }
   }
