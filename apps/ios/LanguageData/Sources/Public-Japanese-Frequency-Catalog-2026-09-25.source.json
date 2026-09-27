@@ -8,9 +8,9 @@
     "retrievedAt": "2026-09-25"
   },
   "runtimeDelivery": {
-    "delivery": "User-initiated download from the public catalog",
+    "delivery": "User-initiated download of byte-identical copies from https://cdn.zenbujapanese.com/frequency-packs/<packID>/<sha256>.json.zip",
     "productDecision": "Nine checksum-pinned archives are optional downloads and are not shipped in the app bundle.",
-    "hostingFollowUp": "GitHub issue #353"
+    "publishing": "apps/ios/Tools/publish_frequency_pack_sources.py"
   },
   "format": {
     "container": "ZIP containing one UTF-8 JSON file",
