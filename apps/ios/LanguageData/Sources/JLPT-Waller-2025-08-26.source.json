@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "packID": "zenbu.jlpt.waller.levels",
+  "packVersion": "2025-08-26",
+  "displayName": "JLPT Levels",
+  "locale": "ja",
+  "domain": "JLPT study levels (unofficial)",
+  "domainDescription": "Estimated JLPT levels from Jonathan Waller's N5–N1 vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+  "source": {
+    "identity": "yomitan-jlpt-vocab original_data",
+    "owner": "stephenmk, from lists by Jonathan Waller",
+    "snapshot": "b062d4e38c4bdd0950ae1d4ec55f04b176182e03",
+    "url": "https://github.com/stephenmk/yomitan-jlpt-vocab/tree/b062d4e38c4bdd0950ae1d4ec55f04b176182e03/original_data",
+    "retrievedAt": "2026-09-27",
+    "files": [
+      {"level": 5, "path": "JLPT-Waller-2025-08-26/n5.csv", "bytes": 24010, "sha256": "07dc6f197b51cc076c65c3c9f23218d10c2b67f76545f5c1c4d9e3750495533a"},
+      {"level": 4, "path": "JLPT-Waller-2025-08-26/n4.csv", "bytes": 24772, "sha256": "a14dcc7fdc02259b22331a486c6ff66df74c16472c8aeb5a0ebe7e5fa8ee8eb4"},
+      {"level": 3, "path": "JLPT-Waller-2025-08-26/n3.csv", "bytes": 88623, "sha256": "bd4d68c59cfee861351e1bdf9d99818e434392201eabbed4d3657225fe53a3ac"},
+      {"level": 2, "path": "JLPT-Waller-2025-08-26/n2.csv", "bytes": 95356, "sha256": "42a4413326e857d701dc9659b2711637ab612304a339fe0d09f4f0f042d3a214"},
+      {"level": 1, "path": "JLPT-Waller-2025-08-26/n1.csv", "bytes": 199103, "sha256": "7a58f0584e9ec2b0299ccb9b109f3bd03e08b90d129a714307c0a1cb72f07b32"}
+    ]
+  },
+  "format": {
+    "encoding": "utf-8",
+    "columns": ["jmdict_seq", "kana", "kanji", "waller_definition"],
+    "joinColumn": "jmdict_seq"
+  },
+  "license": {
+    "identifier": "CC-BY-SA-4.0",
+    "attribution": "JLPT vocabulary lists by Jonathan Waller (tanos.co.uk), with JMdict IDs by stephenmk (yomitan-jlpt-vocab)",
+    "url": "https://github.com/stephenmk/yomitan-jlpt-vocab/blob/b062d4e38c4bdd0950ae1d4ec55f04b176182e03/LICENSE",
+    "notice": "apps/ios/Modules/Sources/SearchExperience/Resources/JLPT-VOCABULARY-CC-BY-SA-4.0.txt",
+    "shareAlike": "The converted JLPTLevelPack.sqlite3 artifact is released under CC BY-SA 4.0."
+  },
+  "mappingPolicy": "Exact join: Language Reference ID = sha256(\"edrdg.jmdict\\0\" + jmdict_seq)[:16]. Rows without a jmdict_seq are unmapped. An entry listed at several levels keeps the easiest (highest-numbered) level.",
+  "presentationPolicyVersion": 1,
+  "presentationCapabilities": ["jlptLevel"]
+}

@@ -41,7 +41,7 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
     else { throw FrequencyPackError.invalidCatalog }
     let catalog = try JSONDecoder().decode(Self.self, from: Data(contentsOf: url))
     guard catalog.schemaVersion == 1, catalog.packs.count >= 2,
-      catalog.packs.filter(\.bundled).count == 1,
+      catalog.packs.contains(where: \.bundled),
       Set(catalog.packs.map(\.packID)).count == catalog.packs.count,
       Set(
         catalog.allTrustedManifests.map {
@@ -54,6 +54,7 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
           && !$0.mappingPolicySHA256.isEmpty && !$0.languageDataSHA256.isEmpty
           && !$0.artifactContentSHA256.isEmpty
           && $0.hasValidSourceContract && $0.hasValidSmokeTest
+          && ($0.packKind == .rank || ($0.bundled && !$0.removable))
       }),
       catalog.trustedHistoricalManifests.allSatisfy({ historical in
         !historical.bundled && catalog.packs.contains { $0.packID == historical.packID }
@@ -62,12 +63,15 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
     return catalog
   }
 
-  static func bundledArtifactURL() throws -> URL {
-    guard
-      let url = Bundle.module.url(
-        forResource: "TUBELEXFrequencyPack", withExtension: "sqlite3")
-    else { throw FrequencyPackError.missingBundledPack }
-    return url
+  /// The artifact shipped in the app for each bundled pack.
+  func bundledArtifactURLs() throws -> [FrequencyPackID: URL] {
+    try Dictionary(
+      uniqueKeysWithValues: packs.filter(\.bundled).map { manifest in
+        guard let resource = manifest.bundledResource,
+          let url = Bundle.module.url(forResource: resource, withExtension: "sqlite3")
+        else { throw FrequencyPackError.missingBundledPack }
+        return (manifest.packID, url)
+      })
   }
 
   static func languageDataURL() throws -> URL {
@@ -79,9 +83,19 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
   }
 }
 
+/// What a pack's value measures. Rank packs order words by corpus frequency; level packs place
+/// words in coarse study levels such as JLPT N5–N1.
+enum FrequencyPackKind: String, Codable, Sendable {
+  case rank
+  case level
+}
+
 struct FrequencyPackManifest: Codable, Equatable, Sendable {
   let packID: FrequencyPackID
   let packVersion: String
+  /// Absent for rank packs so their encoded manifests, and the trust hashes of installed
+  /// records, stay unchanged.
+  let kind: FrequencyPackKind?
   let displayName: String
   let domain: String
   let domainDescription: String
@@ -110,6 +124,8 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
   let presentationCapabilities: [String]
   let languageDataSHA256: String
   let bundledArtifactSHA256: String?
+  /// The app resource name of a bundled pack's artifact.
+  let bundledResource: String?
   let corpusDocuments: Int?
   let corpusVideos: Int?
   let corpusChannels: Int?
@@ -119,6 +135,8 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
   let orderedJSONSource: FrequencyPackOrderedJSONSource?
   let smokeTest: FrequencyPackSmokeTest
 
+  var packKind: FrequencyPackKind { kind ?? .rank }
+
   var hasValidSourceContract: Bool {
     guard let orderedJSONSource else { return true }
     return !bundled && orderedJSONSource.rawJSONBytes > 0
@@ -127,7 +145,9 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
   }
 
   var hasValidSmokeTest: Bool {
-    smokeTest.rank > 0 && smokeTest.languageReferenceID.count == 32
+    smokeTest.rank > 0
+      && (packKind == .rank || JLPTLevel(rawValue: smokeTest.rank) != nil)
+      && smokeTest.languageReferenceID.count == 32
       && smokeTest.languageReferenceID.unicodeScalars.allSatisfy {
         CharacterSet(charactersIn: "0123456789abcdef").contains($0)
       }
@@ -136,6 +156,7 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
   var disclosure: FrequencyPackDisclosure {
     FrequencyPackDisclosure(
       id: packID,
+      kind: packKind,
       displayName: displayName,
       domain: domain,
       domainDescription: domainDescription,
@@ -158,11 +179,13 @@ struct FrequencyPackOrderedJSONSource: Codable, Equatable, Sendable {
 
 struct FrequencyPackSmokeTest: Codable, Equatable, Sendable {
   let languageReferenceID: String
+  /// The expected rank, or for a level pack the expected level number (5 for N5).
   let rank: Int
 }
 
 struct FrequencyPackDisclosure: Equatable, Sendable {
   let id: FrequencyPackID
+  let kind: FrequencyPackKind
   let displayName: String
   let domain: String
   let domainDescription: String
@@ -174,6 +197,7 @@ struct FrequencyPackDisclosure: Equatable, Sendable {
     switch id.rawValue {
     case "zenbu.tubelex.youtube.ja.unidic-3.1": "YouTube"
     case "zenbu.wikipedia.written.ja.unidic-3.1": "Wikipedia"
+    case "zenbu.jlpt.waller.levels": "JLPT"
     default: displayName
     }
   }
@@ -236,7 +260,7 @@ actor FrequencyPackManager {
   typealias Download = @Sendable (URL) async throws -> Data
 
   private let catalog: FrequencyPackCatalog
-  private let bundledArtifactURL: URL
+  private let bundledArtifactURLs: [FrequencyPackID: URL]
   private let languageDataURL: URL
   private let storageDirectory: URL
   private let downloadSource: Download
@@ -249,32 +273,39 @@ actor FrequencyPackManager {
 
   init(
     catalog: FrequencyPackCatalog,
-    bundledArtifactURL: URL,
+    bundledArtifactURLs: [FrequencyPackID: URL],
     languageDataURL: URL,
     storageDirectory: URL,
     download: @escaping Download
   ) throws {
-    guard let bundled = catalog.packs.first(where: \.bundled),
-      catalog.packs.filter(\.bundled).count == 1,
-      !bundled.removable
-    else { throw FrequencyPackError.invalidCatalog }
+    let bundledPacks = catalog.packs.filter(\.bundled)
+    guard !bundledPacks.isEmpty, bundledPacks.allSatisfy({ !$0.removable }) else {
+      throw FrequencyPackError.invalidCatalog
+    }
     self.catalog = catalog
-    self.bundledArtifactURL = bundledArtifactURL
+    self.bundledArtifactURLs = bundledArtifactURLs
     self.languageDataURL = languageDataURL
     self.storageDirectory = storageDirectory
     downloadSource = download
     try FileManager.default.createDirectory(
       at: storageDirectory, withIntermediateDirectories: true)
-    guard let bundledSHA256 = bundled.bundledArtifactSHA256,
-      !bundledSHA256.isEmpty,
-      try Data(contentsOf: bundledArtifactURL).sha256 == bundledSHA256,
-      try Data(contentsOf: languageDataURL).sha256 == bundled.languageDataSHA256,
-      let mappingPolicyURL = Bundle.module.url(
-        forResource: "FrequencyPackMappingV1", withExtension: "sql"),
-      try Data(contentsOf: mappingPolicyURL).sha256 == bundled.mappingPolicySHA256
-    else { throw FrequencyPackError.invalidArtifact }
-    let bundledArtifact = try FrequencyPackArtifact(url: bundledArtifactURL, manifest: bundled)
-    try bundledArtifact.validateSmokeTest()
+    let languageDataSHA256 = try Data(contentsOf: languageDataURL).sha256
+    for bundled in bundledPacks {
+      guard let url = bundledArtifactURLs[bundled.packID],
+        let bundledSHA256 = bundled.bundledArtifactSHA256,
+        !bundledSHA256.isEmpty,
+        try Data(contentsOf: url).sha256 == bundledSHA256,
+        languageDataSHA256 == bundled.languageDataSHA256
+      else { throw FrequencyPackError.invalidArtifact }
+      if bundled.packKind == .rank {
+        guard
+          let mappingPolicyURL = Bundle.module.url(
+            forResource: "FrequencyPackMappingV1", withExtension: "sql"),
+          try Data(contentsOf: mappingPolicyURL).sha256 == bundled.mappingPolicySHA256
+        else { throw FrequencyPackError.invalidArtifact }
+      }
+      try FrequencyPackArtifact(url: url, manifest: bundled).validateSmokeTest()
+    }
     let stateURL = storageDirectory.appendingPathComponent("state.json")
     let saved = try? JSONDecoder().decode(
       PersistedFrequencyPackState.self, from: Data(contentsOf: stateURL))
@@ -303,16 +334,28 @@ actor FrequencyPackManager {
     }
     installedRecords = validatedRecords
     // State saved before multiple enabled packs stored one active pack; it becomes the only
-    // enabled pack. A new install enables the bundled pack.
+    // enabled pack. A new install enables every bundled pack in catalog order.
+    let bundledIDs = bundledPacks.map(\.packID)
     let savedIDs = saved.map { $0.enabledPackIDs ?? $0.activePackID.map { [$0] } ?? [] }
+    var ids = savedIDs ?? bundledIDs
+    // A bundled pack added in an app update is enabled once, ahead of the learner's packs.
+    // Later disabling it sticks because it is then remembered as known.
+    let knownBundledIDs = Set(
+      saved.map { $0.knownBundledPackIDs ?? Self.legacyBundledPackIDs } ?? bundledIDs)
+    ids.insert(contentsOf: bundledIDs.filter { !knownBundledIDs.contains($0) }, at: 0)
     var seen = Set<FrequencyPackID>()
-    enabledPackIDs = (savedIDs ?? [bundled.packID]).filter { id in
+    enabledPackIDs = ids.filter { id in
       catalog.packs.contains(where: { $0.packID == id })
-        && (id == bundled.packID || validatedRecords[id] != nil)
+        && (bundledIDs.contains(id) || validatedRecords[id] != nil)
         && seen.insert(id).inserted
     }
-    try Self.persist(enabledPackIDs, installedRecords, in: storageDirectory)
+    try Self.persist(enabledPackIDs, installedRecords, bundledIDs, in: storageDirectory)
   }
+
+  /// Bundled packs in state saved before bundled packs were tracked.
+  private static let legacyBundledPackIDs = [
+    FrequencyPackID(rawValue: "zenbu.tubelex.youtube.ja.unidic-3.1")
+  ]
 
   func snapshot() throws -> FrequencyPackSnapshot {
     FrequencyPackSnapshot(
@@ -468,9 +511,9 @@ actor FrequencyPackManager {
   }
 
   private func artifactURL(for manifest: FrequencyPackManifest) -> URL {
-    manifest.bundled
-      ? bundledArtifactURL
-      : Self.artifactURL(for: manifest.packID, in: storageDirectory)
+    // Bundled packs read their shipped artifact; downloaded packs live in storage.
+    bundledArtifactURLs[manifest.packID]
+      ?? Self.artifactURL(for: manifest.packID, in: storageDirectory)
   }
 
   private func effectiveManifest(for catalogManifest: FrequencyPackManifest)
@@ -491,18 +534,22 @@ actor FrequencyPackManager {
   }
 
   private func persist() throws {
-    try Self.persist(enabledPackIDs, installedRecords, in: storageDirectory)
+    try Self.persist(
+      enabledPackIDs, installedRecords, catalog.packs.filter(\.bundled).map(\.packID),
+      in: storageDirectory)
   }
 
   private static func persist(
     _ enabledPackIDs: [FrequencyPackID],
     _ installedRecords: [FrequencyPackID: InstalledFrequencyPackRecord],
+    _ knownBundledPackIDs: [FrequencyPackID],
     in storageDirectory: URL
   ) throws {
     let data = try JSONEncoder().encode(
       PersistedFrequencyPackState(
         enabledPackIDs: enabledPackIDs,
         activePackID: nil,
+        knownBundledPackIDs: knownBundledPackIDs,
         installedRecords: installedRecords.values.sorted {
           $0.packID.rawValue < $1.packID.rawValue
         }
@@ -553,5 +600,7 @@ private struct PersistedFrequencyPackState: Codable {
   let enabledPackIDs: [FrequencyPackID]?
   /// Written by versions that supported one active pack; read only for migration.
   let activePackID: FrequencyPackID?
+  /// Bundled packs this state has already seen, so a newly bundled pack is enabled only once.
+  let knownBundledPackIDs: [FrequencyPackID]?
   let installedRecords: [InstalledFrequencyPackRecord]
 }

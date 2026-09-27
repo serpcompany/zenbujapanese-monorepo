@@ -30,7 +30,7 @@ struct SearchResultOrderingTests {
       exact.id: .evidence(fixtureEvidence(id: exact.id, rank: 50_000)),
     ]
     #expect(
-      SearchResultFrequencyOrdering.ordered(results, evidence: evidence).map(\.id)
+      SearchResultFrequencyOrdering.ordered(results, ranks: evidence.mapValues { [$0] }).map(\.id)
         == [exact.id, qualified.id]
     )
   }
@@ -79,7 +79,7 @@ struct SearchResultOrderingTests {
       villa.id: .evidence(fixtureEvidence(id: villa.id, rank: 1)),
       prison.id: .evidence(fixtureEvidence(id: prison.id, rank: 50_000)),
     ]
-    let ordered = SearchResultFrequencyOrdering.ordered(results, evidence: evidence)
+    let ordered = SearchResultFrequencyOrdering.ordered(results, ranks: evidence.mapValues { [$0] })
 
     #expect(ordered.firstIndex(of: prison)! < ordered.firstIndex(of: villa)!)
     #expect(results.displaySummary(for: villa) == "prison")
@@ -104,7 +104,7 @@ struct SearchResultOrderingTests {
     ]
 
     #expect(
-      SearchResultFrequencyOrdering.ordered(results, evidence: evidence).map(\.id)
+      SearchResultFrequencyOrdering.ordered(results, ranks: evidence.mapValues { [$0] }).map(\.id)
         == [directB.id, directA.id, weaker.id]
     )
   }
@@ -125,9 +125,40 @@ struct SearchResultOrderingTests {
     ]
 
     #expect(
-      SearchResultFrequencyOrdering.ordered(results, evidence: evidence).map(\.id)
+      SearchResultFrequencyOrdering.ordered(results, ranks: evidence.mapValues { [$0] }).map(\.id)
         == [first.id, second.id, third.id]
     )
+  }
+
+  @Test("JLPT level orders first and the next dictionary's rank breaks level ties")
+  func levelThenRank() {
+    let n3 = fixtureEntry(id: "00000000000000000000000000000001", headword: "甲")
+    let n5Rare = fixtureEntry(id: "00000000000000000000000000000002", headword: "乙")
+    let n5Common = fixtureEntry(id: "00000000000000000000000000000003", headword: "丙")
+    let unlisted = fixtureEntry(id: "00000000000000000000000000000004", headword: "丁")
+    let results = LookupSearchResults(
+      items: [n3, n5Rare, n5Common, unlisted].enumerated().map {
+        fixtureItem(entry: $0.element, fallbackOrder: $0.offset)
+      })
+    let jlpt = FrequencyPackDisclosure(
+      id: FrequencyPackID(rawValue: "jlpt"), kind: .level, displayName: "JLPT",
+      domain: "Fixture", domainDescription: "Fixture", version: "1", attribution: "Fixture")
+    func level(_ entry: DictionaryEntry, _ level: JLPTLevel) -> FrequencyLookupResult {
+      .level(FrequencyLevelEvidence(pack: jlpt, languageReferenceID: entry.id, level: level))
+    }
+    func rank(_ entry: DictionaryEntry, _ rank: Int) -> FrequencyLookupResult {
+      .evidence(fixtureEvidence(id: entry.id, rank: rank))
+    }
+    let ranks: [LanguageReferenceID: FrequencyRanks] = [
+      n3.id: [level(n3, .n3), rank(n3, 1)],
+      n5Rare.id: [level(n5Rare, .n5), rank(n5Rare, 900)],
+      n5Common.id: [level(n5Common, .n5), rank(n5Common, 20)],
+      unlisted.id: [.noEvidence(pack: jlpt), rank(unlisted, 2)],
+    ]
+
+    #expect(
+      SearchResultFrequencyOrdering.ordered(results, ranks: ranks).map(\.id)
+        == [n5Common.id, n5Rare.id, n3.id, unlisted.id])
   }
 
   @Test("changing active-pack evidence reorders only equivalent results")
@@ -148,13 +179,13 @@ struct SearchResultOrderingTests {
     ]
 
     #expect(
-      SearchResultFrequencyOrdering.ordered(results, evidence: packA).map(\.id)
+      SearchResultFrequencyOrdering.ordered(results, ranks: packA.mapValues { [$0] }).map(\.id)
         == [first.id, second.id])
     #expect(
-      SearchResultFrequencyOrdering.ordered(results, evidence: packB).map(\.id)
+      SearchResultFrequencyOrdering.ordered(results, ranks: packB.mapValues { [$0] }).map(\.id)
         == [second.id, first.id])
     #expect(
-      SearchResultFrequencyOrdering.ordered(results, evidence: packA).map(\.id)
+      SearchResultFrequencyOrdering.ordered(results, ranks: packA.mapValues { [$0] }).map(\.id)
         == [first.id, second.id])
   }
 
@@ -165,7 +196,7 @@ struct SearchResultOrderingTests {
     let unavailable = FrequencyLookupResult.unavailableResults(
       for: results.entries.map(\.id), pack: nil, reason: "fixture")
     #expect(
-      SearchResultFrequencyOrdering.ordered(results, evidence: unavailable).map(\.id)
+      SearchResultFrequencyOrdering.ordered(results, ranks: unavailable.mapValues { [$0] }).map(\.id)
         == results.entries.map(\.id)
     )
   }
@@ -208,7 +239,7 @@ struct SearchResultOrderingTests {
     #expect(numericRank(evidence[entrust.id]) == 8_642)
     #expect(numericRank(evidence[defeat.id]) == 39_632)
     #expect(
-      SearchResultFrequencyOrdering.ordered(results, evidence: evidence).map(\.id)
+      SearchResultFrequencyOrdering.ordered(results, ranks: evidence.mapValues { [$0] }).map(\.id)
         .filter { $0 == entrusted.id || $0 == defeat.id || $0 == entrust.id }
         == [entrusted.id, entrust.id, defeat.id]
     )
@@ -234,7 +265,7 @@ struct SearchResultOrderingTests {
       first.id: .evidence(fixtureEvidence(id: first.id, rank: 50_000)),
       second.id: .evidence(fixtureEvidence(id: second.id, rank: 1)),
     ]
-    let ordered = SearchResultFrequencyOrdering.ordered(results, evidence: evidence)
+    let ordered = SearchResultFrequencyOrdering.ordered(results, ranks: evidence.mapValues { [$0] })
     #expect(ordered.firstIndex(of: stronger)! < ordered.firstIndex(of: weaker)!)
     #expect(ordered.firstIndex(of: second)! < ordered.firstIndex(of: first)!)
   }
@@ -316,7 +347,7 @@ private func assertLiveRelevanceOrdering(
   evidence[weaker.id] = .evidence(fixtureEvidence(id: weaker.id, rank: 1))
   evidence[first.id] = .evidence(fixtureEvidence(id: first.id, rank: 50_000))
   evidence[second.id] = .evidence(fixtureEvidence(id: second.id, rank: 1))
-  let ordered = SearchResultFrequencyOrdering.ordered(results, evidence: evidence)
+  let ordered = SearchResultFrequencyOrdering.ordered(results, ranks: evidence.mapValues { [$0] })
   #expect(ordered.firstIndex(of: stronger)! < ordered.firstIndex(of: weaker)!)
   #expect(ordered.firstIndex(of: second)! < ordered.firstIndex(of: first)!)
 }
@@ -377,6 +408,7 @@ private func fixtureEvidence(id: LanguageReferenceID, rank: Int) -> FrequencyEvi
   FrequencyEvidence(
     pack: FrequencyPackDisclosure(
       id: FrequencyPackID(rawValue: "fixture"),
+      kind: .rank,
       displayName: "Fixture",
       domain: "Fixture",
       domainDescription: "Fixture",

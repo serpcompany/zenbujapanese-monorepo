@@ -110,9 +110,41 @@ struct DictionarySourcesView: View {
             string: "https://clrd.ninjal.ac.jp/unidic_archive/cwj/back_number_en.html")!)
       }
 
+      Section("JLPT Levels") {
+        Text(
+          "The included first-by-default dictionary marks words with an estimated JLPT level from Jonathan Waller's N5–N1 vocabulary lists, joined to JMdict entries by stephenmk. JLPT has published no official vocabulary list since 2010, so levels are unofficial study estimates, not an exam syllabus."
+        )
+        LabeledContent("License", value: "CC BY-SA 4.0")
+        LabeledContent("Version", value: "2025-08-26")
+        LabeledContent("Snapshot", value: "b062d4e3")
+        Text(
+          "Zenbu's converted JLPT level pack is released under the same license."
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        NavigationLink("Bundled license text") {
+          BundledLicenseTextView(
+            title: "JLPT Vocabulary CC BY-SA 4.0 License",
+            resource: "JLPT-VOCABULARY-CC-BY-SA-4.0"
+          )
+        }
+        .accessibilityIdentifier("dictionary-sources.jlpt-license")
+        Link(
+          "JLPT vocabulary lists with JMdict IDs",
+          destination: URL(
+            string:
+              "https://github.com/stephenmk/yomitan-jlpt-vocab/tree/b062d4e38c4bdd0950ae1d4ec55f04b176182e03"
+          )!
+        )
+        Link(
+          "Jonathan Waller's JLPT resources",
+          destination: URL(string: "http://www.tanos.co.uk/jlpt/")!
+        )
+      }
+
       Section("TUBELEX YouTube Japanese Frequency") {
         Text(
-          "The included active-by-default frequency pack measures Japanese lemmas in YouTube subtitles across everyday media categories. Its ranks describe this media corpus, not universal Japanese frequency."
+          "The included enabled-by-default frequency pack measures Japanese lemmas in YouTube subtitles across everyday media categories. Its ranks describe this media corpus, not universal Japanese frequency."
         )
         LabeledContent("License", value: "BSD-3-Clause")
         LabeledContent("Version", value: "2025.1 · UniDic 3.1")

@@ -4,7 +4,9 @@ Updated 2026-09-25 for issue #351.
 
 ## Runtime source selection
 
-Zenbu ships TUBELEX as the default frequency pack. Wikipedia and nine of the ten
+Zenbu ships JLPT Levels (issue #360) first and TUBELEX second as the default frequency packs.
+JLPT Levels is a level pack, not a rank pack: it maps Waller's N5–N1 lists by exact JMdict
+sequence join (`import_jlpt_level_pack.py`) and stores levels as levels. Wikipedia and nine of the ten
 checksum-pinned public-catalog lists are optional user downloads. The generic
 YouTube list remains analysis-only because TUBELEX is the more comprehensive
 YouTube source.
@@ -20,7 +22,8 @@ policy uses normalized written forms and rejects ambiguous mappings.
 
 | Source | Runtime behavior | Domain |
 | --- | --- | --- |
-| TUBELEX Japanese | Bundled and active by default | YouTube subtitles |
+| JLPT Levels (Waller, via stephenmk) | Bundled and enabled first by default | Unofficial JLPT study levels |
+| TUBELEX Japanese | Bundled and enabled by default | YouTube subtitles |
 | Wikipedia Word Frequency Clean | Optional user download | Encyclopedic written Japanese |
 | Netflix | Optional user download | Streaming subtitles |
 | Novels | Optional user download | Fiction and novels |

@@ -20,6 +20,33 @@ struct SearchFrequencyChipTests {
     #expect(model.chips.map(\.tier) == [nil, .veryCommon])
   }
 
+  @Test("a JLPT level reads as a level chip and is hidden when the word is not listed")
+  func levelChips() {
+    let jlpt = pack("JLPT", kind: .level)
+    let listed = SearchFrequencyRankPresentationModel(ranks: [
+      .level(FrequencyLevelEvidence(pack: jlpt, languageReferenceID: id, level: .n3)),
+      .evidence(evidence(pack: pack("ranked"), rank: 20_000)),
+    ])
+    #expect(listed.chips.map(\.packName) == ["JLPT", "ranked"])
+    #expect(listed.chips.map(\.inlineText) == ["N3", "20,000"])
+    #expect(listed.chips.map(\.tier) == [.common, .uncommon])
+    #expect(listed.accessibilityValue.hasPrefix("JLPT level N3, "))
+
+    let unlisted = SearchFrequencyRankPresentationModel(ranks: [
+      .noEvidence(pack: jlpt),
+      .evidence(evidence(pack: pack("ranked"), rank: 12)),
+    ])
+    #expect(unlisted.chips.map(\.packName) == ["ranked"])
+    #expect(SearchFrequencyRankPresentationModel(ranks: [.noEvidence(pack: jlpt)]).chips.isEmpty)
+  }
+
+  @Test("JLPT levels map onto the commonness tiers")
+  func levelTiers() {
+    #expect(
+      JLPTLevel.allCases.reversed().map(FrequencyTier.init(level:))
+        == [.veryCommon, .veryCommon, .common, .common, .moderate])
+  }
+
   @Test("tiers follow Migaku's rank cutoffs")
   func tierCutoffs() {
     let tiers = [1, 1_500, 1_501, 5_000, 5_001, 15_000, 15_001, 30_000, 30_001]
@@ -54,9 +81,9 @@ struct SearchFrequencyChipTests {
     #expect(disabled.accessibilityValue == "No frequency dictionary enabled")
   }
 
-  private func pack(_ name: String) -> FrequencyPackDisclosure {
+  private func pack(_ name: String, kind: FrequencyPackKind = .rank) -> FrequencyPackDisclosure {
     FrequencyPackDisclosure(
-      id: FrequencyPackID(rawValue: name), displayName: name, domain: "Fixture",
+      id: FrequencyPackID(rawValue: name), kind: kind, displayName: name, domain: "Fixture",
       domainDescription: "Fixture", version: "1", attribution: "Fixture")
   }
 

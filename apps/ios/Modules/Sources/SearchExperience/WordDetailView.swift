@@ -808,7 +808,7 @@ private struct FrequencyRankRow: View {
         Text(presentation.packName)
           .foregroundStyle(.primary)
         Spacer(minLength: 8)
-        Text(presentation.tier == nil ? "No rank" : presentation.inlineText)
+        Text(presentation.tier == nil ? presentation.missingText : presentation.inlineText)
           .monospacedDigit()
           .foregroundStyle(.secondary)
       }
@@ -849,8 +849,10 @@ private struct FrequencyDisclosureView: View {
             LabeledContent("Source", value: pack.attribution)
           }
         }
-        Section("Frequency") {
-          if let rankText = presentation.rankText,
+        Section(presentation.levelText == nil ? "Frequency" : "Level") {
+          if let levelText = presentation.levelText {
+            LabeledContent("JLPT Level", value: levelText)
+          } else if let rankText = presentation.rankText,
             let percentileText = presentation.percentileText
           {
             LabeledContent("Rank", value: rankText)

@@ -1,3 +1,4 @@
+import hashlib
 import json
 import sqlite3
 import unittest
@@ -13,10 +14,12 @@ ANALYSIS = (
     ROOT
     / "apps/ios/LanguageData/Generated/Migaku-public-catalog-ja-ordered-json-v1.analysis.json"
 )
-TUBELEX = (
-    ROOT
-    / "apps/ios/Modules/Sources/SearchExperience/Resources/TUBELEXFrequencyPack.sqlite3"
-)
+RESOURCES = ROOT / "apps/ios/Modules/Sources/SearchExperience/Resources"
+TUBELEX = RESOURCES / "TUBELEXFrequencyPack.sqlite3"
+JLPT = RESOURCES / "JLPTLevelPack.sqlite3"
+JLPT_RECORD = ROOT / "apps/ios/LanguageData/Sources/JLPT-Waller-2025-08-26.source.json"
+JLPT_REPORT = ROOT / "apps/ios/LanguageData/Generated/JLPT-Waller-2025-08-26.import.json"
+JLPT_IMPORTER = ROOT / "apps/ios/Tools/import_jlpt_level_pack.py"
 
 
 class FrequencyPackRuntimeContractTests(unittest.TestCase):
@@ -25,9 +28,14 @@ class FrequencyPackRuntimeContractTests(unittest.TestCase):
 
         bundled = [pack for pack in catalog["packs"] if pack["bundled"]]
         self.assertEqual(
-            ["zenbu.tubelex.youtube.ja.unidic-3.1"],
+            ["zenbu.jlpt.waller.levels", "zenbu.tubelex.youtube.ja.unidic-3.1"],
             [pack["packID"] for pack in bundled],
         )
+        for pack in bundled:
+            with self.subTest(pack=pack["packID"]):
+                self.assertFalse(pack["removable"])
+                artifact = RESOURCES / f"{pack['bundledResource']}.sqlite3"
+                self.assertEqual(pack["bundledArtifactSHA256"], sha256(artifact))
 
         optional = [pack for pack in catalog["packs"] if not pack["bundled"]]
         self.assertGreater(len(optional), 0)
@@ -40,6 +48,8 @@ class FrequencyPackRuntimeContractTests(unittest.TestCase):
             with self.subTest(pack=pack["packID"]):
                 self.assertTrue(pack["removable"])
                 self.assertIsNone(pack["bundledArtifactSHA256"])
+                self.assertNotIn("kind", pack)
+                self.assertNotIn("bundledResource", pack)
                 self.assertRegex(pack["downloadURL"], r"^https://")
 
         bundled_sqlite = sorted(
@@ -47,6 +57,7 @@ class FrequencyPackRuntimeContractTests(unittest.TestCase):
             for path in CATALOG.parent.glob("*FrequencyPack.sqlite3")
         )
         self.assertEqual(["TUBELEXFrequencyPack.sqlite3"], bundled_sqlite)
+        self.assertTrue(JLPT.is_file())
 
     def test_every_selectable_pack_has_verified_evidence_smoke_test(self) -> None:
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
@@ -63,7 +74,9 @@ class FrequencyPackRuntimeContractTests(unittest.TestCase):
                 if pack.get("orderedJSONSource") is not None:
                     self.assertEqual(smoke, analyzed[pack["packID"]]["analysis"]["smokeTest"])
 
-        bundled = next(pack for pack in catalog["packs"] if pack["bundled"])
+        bundled = next(
+            pack for pack in catalog["packs"] if pack["bundled"] and "kind" not in pack
+        )
         smoke = bundled["smokeTest"]
         with sqlite3.connect(TUBELEX) as database:
             row = database.execute(
@@ -72,6 +85,46 @@ class FrequencyPackRuntimeContractTests(unittest.TestCase):
                 (smoke["languageReferenceID"],),
             ).fetchone()
         self.assertEqual((smoke["rank"],), row)
+
+    def test_jlpt_level_pack_matches_its_pinned_source_and_import_report(self) -> None:
+        catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
+        record = json.loads(JLPT_RECORD.read_text(encoding="utf-8"))
+        report = json.loads(JLPT_REPORT.read_text(encoding="utf-8"))
+        pack = next(pack for pack in catalog["packs"] if pack.get("kind") == "level")
+
+        self.assertEqual(record["packID"], pack["packID"])
+        self.assertEqual(record["packVersion"], pack["packVersion"])
+        self.assertEqual(record["source"]["snapshot"], pack["sourceSnapshot"])
+        for file in record["source"]["files"]:
+            with self.subTest(file=file["path"]):
+                self.assertEqual(file["sha256"], sha256(JLPT_RECORD.parent / file["path"]))
+        self.assertEqual(sha256(JLPT_IMPORTER), pack["offlineImporterSHA256"])
+        for key in (
+            "sourceBytes", "sourceSHA256", "coveredSourceRows", "mappedRows", "unmappedRows",
+            "duplicateMappings", "mappingSHA256", "artifactContentSHA256",
+            "offlineImporterSHA256", "languageDataSHA256", "bundledArtifactSHA256", "smokeTest",
+        ):
+            with self.subTest(key=key):
+                self.assertEqual(report[key], pack[key])
+
+        smoke = pack["smokeTest"]
+        with sqlite3.connect(JLPT) as database:
+            levels = dict(
+                database.execute("SELECT level, count(*) FROM level_evidence GROUP BY level")
+            )
+            row = database.execute(
+                "SELECT level FROM level_evidence WHERE lower(hex(language_reference_id)) = ?",
+                (smoke["languageReferenceID"],),
+            ).fetchone()
+        self.assertEqual((smoke["rank"],), row)
+        self.assertEqual(pack["mappedRows"], sum(levels.values()))
+        self.assertEqual(
+            report["levelCounts"], {f"N{level}": levels[level] for level in range(5, 0, -1)}
+        )
+
+
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 if __name__ == "__main__":

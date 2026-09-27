@@ -1,0 +1,24 @@
+{
+  "sourceBytes": 431864,
+  "sourceSHA256": "b65a05099acaac17a0e7ba8fcedc26660f019b30d6ff451ab9d6721981bf4935",
+  "coveredSourceRows": 8293,
+  "mappedRows": 7747,
+  "unmappedRows": 14,
+  "duplicateMappings": 532,
+  "mappingSHA256": "7d90e20a578aed3fbe6bae2fdd56e9f2f24cf83f41e5d9d7dfd1ac75262bf2ca",
+  "artifactContentSHA256": "5ca9ff697b3db22083ad1d7d1b7993d192f898bc263aa999f8105c78b958f252",
+  "offlineImporterSHA256": "8231235bbb1cf8c08415127212713a10a2ce97000d0f668f6b1b5b926669d224",
+  "languageDataSHA256": "f69d66155955e4b88f8b7501965dc05665bf5bd21a0199f02cb12467c3d0d092",
+  "bundledArtifactSHA256": "b8554365d82b3bc0303daeb72b30f07c5775a0831df9b3445273777c4eca88c8",
+  "levelCounts": {
+    "N5": 667,
+    "N4": 630,
+    "N3": 1651,
+    "N2": 1738,
+    "N1": 3061
+  },
+  "smokeTest": {
+    "languageReferenceID": "00998f55cbbcc3ffb376095f602cfa84",
+    "rank": 5
+  }
+}
