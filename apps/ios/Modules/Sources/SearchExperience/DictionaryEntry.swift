@@ -72,8 +72,9 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
       }
   }
 
+  /// The first sense's part of speech (falling back to the entry's), worded for display.
   var displayPartOfSpeech: String {
-    partsOfSpeech.map(\.rawValue).joined(separator: " · ")
+    PartOfSpeechFormatter.phrase(for: senses.first?.partsOfSpeech ?? partsOfSpeech)
   }
 
   var encounterWordReference: EncounterWordReference {

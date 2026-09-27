@@ -592,11 +592,7 @@ private struct PartOfSpeechRow: View {
       .accessibilityIdentifier("word-detail.entry.\(entry.id.rawValue)")
   }
 
-  private var title: String {
-    (entry.senses.first?.partsOfSpeech ?? entry.partsOfSpeech)
-      .map(\.rawValue)
-      .joined(separator: " · ")
-  }
+  private var title: String { entry.displayPartOfSpeech }
 }
 
 /// The reading in katakana with its pitch accent drawn as a contour: a dot per mora at high or
