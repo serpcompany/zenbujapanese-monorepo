@@ -429,7 +429,7 @@ struct FrequencyPackArtifact: Sendable {
         database,
         "SELECT rank, source_count, covered_source_rows, mapping_relation, matched_form, "
           + "source_pos, lower(hex(source_record_digest)) "
-          + "FROM frequency_evidence WHERE lower(hex(language_reference_id)) = ?",
+          + "FROM frequency_evidence WHERE language_reference_id = ?",
         -1,
         &statement,
         nil
@@ -443,7 +443,15 @@ struct FrequencyPackArtifact: Sendable {
     for id in ids {
       sqlite3_reset(statement)
       sqlite3_clear_bindings(statement)
-      sqlite3_bind_text(statement, 1, id.rawValue, -1, Self.transientDestructor)
+      // Bind the raw 16-byte key so SQLite can use the primary key instead of scanning.
+      guard let key = id.bytes else {
+        results[id] = .noEvidence(pack: manifest.disclosure)
+        continue
+      }
+      _ = key.withUnsafeBytes { buffer in
+        sqlite3_bind_blob(
+          statement, 1, buffer.baseAddress, Int32(buffer.count), Self.transientDestructor)
+      }
       switch sqlite3_step(statement) {
       case SQLITE_DONE:
         results[id] = .noEvidence(pack: manifest.disclosure)
@@ -502,7 +510,7 @@ struct FrequencyPackArtifact: Sendable {
   }
 
   private static let transientDestructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
-  private let manifest: FrequencyPackManifest
+  let manifest: FrequencyPackManifest
 }
 
 extension String {

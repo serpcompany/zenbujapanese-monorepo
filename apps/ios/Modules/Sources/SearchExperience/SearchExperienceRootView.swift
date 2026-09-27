@@ -69,6 +69,13 @@ public struct SearchExperienceRootView: View {
       }
     }
     .scrollEdgeEffectStyle(.hard, for: .bottom)
+    .task {
+      // Opening the pack store verifies every installed pack once. Doing it at launch, off the
+      // main actor, keeps that work out of the first search.
+      await Task.detached(priority: .utility) {
+        _ = try? await FrequencyPackClient.live.snapshot()
+      }.value
+    }
     .onChange(of: selectedTab) { previous, current in
       if previous != .search, current == .search {
         frequencyRefreshID += 1

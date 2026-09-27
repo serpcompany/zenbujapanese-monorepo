@@ -243,6 +243,9 @@ actor FrequencyPackManager {
   private var enabledPackIDs: [FrequencyPackID]
   private var installedRecords: [FrequencyPackID: InstalledFrequencyPackRecord]
   private var failures: [FrequencyPackID: String] = [:]
+  /// Artifacts already verified against their manifest. Verification scans and hashes every
+  /// row, so lookups reuse these instead of re-verifying on every search.
+  private var verifiedArtifacts: [FrequencyPackID: FrequencyPackArtifact] = [:]
 
   init(
     catalog: FrequencyPackCatalog,
@@ -359,10 +362,9 @@ actor FrequencyPackManager {
       let manifest = effectiveManifest(for: catalogManifest)
       let results: [LanguageReferenceID: FrequencyLookupResult]
       do {
-        results = try FrequencyPackArtifact(
-          url: artifactURL(for: manifest), manifest: manifest
-        ).evidence(for: ids)
+        results = try verifiedArtifact(for: manifest).evidence(for: ids)
       } catch {
+        verifiedArtifacts[packID] = nil
         results = FrequencyLookupResult.unavailableResults(
           for: ids, pack: manifest.disclosure, reason: "Frequency data unavailable")
       }
@@ -391,6 +393,7 @@ actor FrequencyPackManager {
       )
       let isNewInstall = installedRecords[packID] == nil
       installedRecords[packID] = record
+      verifiedArtifacts[packID] = nil
       if isNewInstall, !enabledPackIDs.contains(packID) {
         enabledPackIDs.append(packID)
       }
@@ -450,8 +453,18 @@ actor FrequencyPackManager {
     }
     failures[packID] = nil
     installedRecords[packID] = nil
+    verifiedArtifacts[packID] = nil
     enabledPackIDs.removeAll { $0 == packID }
     try persist()
+  }
+
+  private func verifiedArtifact(for manifest: FrequencyPackManifest) throws -> FrequencyPackArtifact {
+    if let artifact = verifiedArtifacts[manifest.packID], artifact.manifest == manifest {
+      return artifact
+    }
+    let artifact = try FrequencyPackArtifact(url: artifactURL(for: manifest), manifest: manifest)
+    verifiedArtifacts[manifest.packID] = artifact
+    return artifact
   }
 
   private func artifactURL(for manifest: FrequencyPackManifest) -> URL {

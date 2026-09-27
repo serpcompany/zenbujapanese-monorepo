@@ -185,6 +185,20 @@ extension String {
 
 struct LanguageReferenceID: Hashable, Sendable {
   let rawValue: String
+
+  /// The 16 raw bytes behind the 32-character hex identifier, or nil when it is malformed.
+  var bytes: Data? {
+    guard rawValue.utf8.count == 32 else { return nil }
+    var data = Data(capacity: 16)
+    var index = rawValue.startIndex
+    while index < rawValue.endIndex {
+      let next = rawValue.index(index, offsetBy: 2)
+      guard let byte = UInt8(rawValue[index..<next], radix: 16) else { return nil }
+      data.append(byte)
+      index = next
+    }
+    return data
+  }
 }
 
 struct WordNoteID: Codable, Hashable, Sendable {
