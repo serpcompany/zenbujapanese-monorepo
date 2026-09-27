@@ -43,9 +43,11 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
     guard catalog.schemaVersion == 1, catalog.packs.count >= 2,
       catalog.packs.contains(where: \.bundled),
       Set(catalog.packs.map(\.packID)).count == catalog.packs.count,
+      // A historical manifest may share its pack version with the current one when only
+      // derived hashes changed, such as after a language-data rebuild.
       Set(
-        catalog.allTrustedManifests.map {
-          "\($0.packID.rawValue)@\($0.packVersion)"
+        try catalog.allTrustedManifests.map {
+          "\($0.packID.rawValue)@\($0.packVersion)@\(try $0.trustSHA256())"
         }
       ).count == catalog.packs.count + catalog.trustedHistoricalManifests.count,
       catalog.allTrustedManifests.allSatisfy({

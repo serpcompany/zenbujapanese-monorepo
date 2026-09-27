@@ -75,20 +75,20 @@ is Pearson correlation of raw source ranks for shared mapped IDs.
 
 | Candidate | TUBELEX overlap | TUBELEX top-1k Jaccard | TUBELEX rank corr. | Wikipedia overlap | Wikipedia top-1k Jaccard | Wikipedia rank corr. |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Netflix | 78.86% | 0.3446 | 0.5201 | 96.50% | 0.1423 | 0.4589 |
-| Novels | 93.66% | 0.2649 | 0.6332 | 81.71% | 0.0485 | 0.5033 |
-| Slice of Life | 84.11% | 0.2902 | 0.2506 | 98.13% | 0.0817 | 0.2848 |
-| NHK | 64.67% | 0.1444 | 0.0725 | 79.25% | 0.1605 | 0.1126 |
-| Shonen | 83.96% | 0.3004 | 0.3316 | 97.70% | 0.0982 | 0.3008 |
-| YouTube | 52.57% | 0.3996 | 0.2641 | 63.43% | 0.1689 | 0.3276 |
-| JP Dict | 36.86% | 0.2004 | 0.4087 | 47.64% | 0.2129 | 0.5096 |
-| Visual Novel | 90.81% | 0.3602 | 0.3836 | 97.12% | 0.0676 | 0.1819 |
-| TV Shows | 49.60% | 0.2920 | 0.3986 | 60.27% | 0.0869 | 0.3627 |
-| Internet | 58.44% | 0.4433 | 0.6702 | 74.38% | 0.2290 | 0.6208 |
+| Netflix | 78.91% | 0.3412 | 0.5205 | 96.50% | 0.1423 | 0.4589 |
+| Novels | 93.67% | 0.2618 | 0.6328 | 81.71% | 0.0485 | 0.5033 |
+| Slice of Life | 84.18% | 0.2874 | 0.2507 | 98.13% | 0.0817 | 0.2848 |
+| NHK | 64.74% | 0.1448 | 0.0725 | 79.25% | 0.1605 | 0.1126 |
+| Shonen | 84.02% | 0.2976 | 0.3322 | 97.70% | 0.0982 | 0.3008 |
+| YouTube | 52.61% | 0.3955 | 0.2644 | 63.43% | 0.1689 | 0.3276 |
+| JP Dict | 36.88% | 0.1978 | 0.4085 | 47.64% | 0.2129 | 0.5096 |
+| Visual Novel | 90.81% | 0.3556 | 0.3835 | 97.12% | 0.0676 | 0.1819 |
+| TV Shows | 49.64% | 0.2893 | 0.3993 | 60.27% | 0.0869 | 0.3627 |
+| Internet | 58.47% | 0.4372 | 0.6698 | 74.38% | 0.2290 | 0.6208 |
 
-The supplied YouTube list is not a substitute for TUBELEX: only 22,733 of its
-43,241 mapped IDs overlap TUBELEX, its top-1,000 mapped Jaccard is 0.3996, and
-shared raw ranks correlate at 0.2641. These are practical ordering differences,
+The supplied YouTube list is not a substitute for TUBELEX: only 22,747 of its
+43,241 mapped IDs overlap TUBELEX, its top-1,000 mapped Jaccard is 0.3955, and
+shared raw ranks correlate at 0.2644. These are practical ordering differences,
 not a quality judgment. TUBELEX remains the only offered YouTube pack because it
 is more comprehensive.
 
@@ -101,22 +101,22 @@ deterministic analysis projections, not runtime artifacts.
 
 | Candidate | Compressed ZIP | Raw JSON | Projected runtime SQLite |
 | --- | ---: | ---: | ---: |
-| Netflix | 1,039,994 | 3,228,941 | 6,340,608 |
-| Novels | 164,820 | 569,913 | 1,110,016 |
-| Slice of Life | 411,869 | 1,274,114 | 3,055,616 |
-| NHK | 349,003 | 1,617,165 | 688,128 |
-| Shonen | 550,470 | 1,700,426 | 3,874,816 |
-| YouTube | 300,673 | 884,304 | 5,292,032 |
-| JP Dict | 1,203,851 | 3,389,244 | 16,388,096 |
-| Visual Novel | 178,905 | 493,039 | 3,420,160 |
-| TV Shows | 561,111 | 1,589,061 | 8,372,224 |
-| Internet | 941,696 | 2,477,283 | 10,907,648 |
-| **Total** | **5,702,392** | **17,223,490** | **59,449,344** |
+| Netflix | 1,039,994 | 3,228,941 | 6,184,960 |
+| Novels | 164,820 | 569,913 | 1,089,536 |
+| Slice of Life | 411,869 | 1,274,114 | 3,002,368 |
+| NHK | 349,003 | 1,617,165 | 671,744 |
+| Shonen | 550,470 | 1,700,426 | 3,796,992 |
+| YouTube | 300,673 | 884,304 | 5,181,440 |
+| JP Dict | 1,203,851 | 3,389,244 | 15,994,880 |
+| Visual Novel | 178,905 | 493,039 | 3,358,720 |
+| TV Shows | 561,111 | 1,589,061 | 8,192,000 |
+| Internet | 941,696 | 2,477,283 | 10,633,216 |
+| **Total** | **5,702,392** | **17,223,490** | **58,105,856** |
 
 The verified iOS Simulator debug build contains 793,920,633 file bytes. This is
 a developer-build measurement, not an App Store download estimate. This change
 adds **zero candidate archive or SQLite bytes** to the app bundle. For comparison,
-the current bundled TUBELEX SQLite artifact is 8,122,368 bytes and the generated
+the current bundled TUBELEX SQLite artifact is 8,134,656 bytes and the generated
 optional Wikipedia artifact is 8,884,224 bytes.
 
 Reproduce the analysis from a checkout that has the separately held archives:

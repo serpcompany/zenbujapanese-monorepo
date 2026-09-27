@@ -105,13 +105,54 @@ struct PartOfSpeech: RawRepresentable, Hashable, Sendable, Codable {
   }
 }
 
+/// Stable category identifiers written by the JMdict importer. `PartOfSpeechFormatter` owns
+/// every learner-facing word, so these values never change for wording reasons.
 extension PartOfSpeech {
-  static let suruVerb = Self(rawValue: "Suru Verb")
-  static let irregularVerb = Self(rawValue: "Irregular Verb")
-  static let ichidanVerb = Self(rawValue: "Ichidan Verb")
-  static let godanVerb = Self(rawValue: "Godan Verb")
-  static let iAdjective = Self(rawValue: "I-adjective")
-  static let naAdjective = Self(rawValue: "Na-adjective")
+  static let noun = Self(rawValue: "noun")
+  static let pronoun = Self(rawValue: "pronoun")
+  static let nounPrefix = Self(rawValue: "nounPrefix")
+  static let nounSuffix = Self(rawValue: "nounSuffix")
+  /// A noun that may take the genitive particle の.
+  static let noAdjective = Self(rawValue: "noAdjective")
+  /// A noun or verb acting prenominally.
+  static let prenominal = Self(rawValue: "prenominal")
+  /// A rentaishi such as この or 大きな.
+  static let preNounAdjective = Self(rawValue: "preNounAdjective")
+  static let iAdjective = Self(rawValue: "iAdjective")
+  static let naAdjective = Self(rawValue: "naAdjective")
+  static let taruAdjective = Self(rawValue: "taruAdjective")
+  static let archaicAdjective = Self(rawValue: "archaicAdjective")
+  static let archaicNaAdjective = Self(rawValue: "archaicNaAdjective")
+  static let adverb = Self(rawValue: "adverb")
+  /// An adverb taking the particle と.
+  static let adverbTo = Self(rawValue: "adverbTo")
+  static let auxiliary = Self(rawValue: "auxiliary")
+  static let auxiliaryAdjective = Self(rawValue: "auxiliaryAdjective")
+  static let auxiliaryVerb = Self(rawValue: "auxiliaryVerb")
+  static let conjunction = Self(rawValue: "conjunction")
+  static let copula = Self(rawValue: "copula")
+  static let counter = Self(rawValue: "counter")
+  static let expression = Self(rawValue: "expression")
+  static let interjection = Self(rawValue: "interjection")
+  static let numeric = Self(rawValue: "numeric")
+  static let prefix = Self(rawValue: "prefix")
+  static let suffix = Self(rawValue: "suffix")
+  static let particle = Self(rawValue: "particle")
+  static let unclassified = Self(rawValue: "unclassified")
+  /// A verb with no specified conjugation class.
+  static let verb = Self(rawValue: "verb")
+  static let ichidanVerb = Self(rawValue: "ichidanVerb")
+  static let godanVerb = Self(rawValue: "godanVerb")
+  static let suruVerb = Self(rawValue: "suruVerb")
+  /// 来る, the only kuru verb.
+  static let kuruVerb = Self(rawValue: "kuruVerb")
+  static let zuruVerb = Self(rawValue: "zuruVerb")
+  /// Nidan, yodan, and other classical conjugations.
+  static let archaicVerb = Self(rawValue: "archaicVerb")
+  /// A noun or participle that takes する, such as 経験.
+  static let takesSuru = Self(rawValue: "takesSuru")
+  static let transitive = Self(rawValue: "transitive")
+  static let intransitive = Self(rawValue: "intransitive")
 }
 
 struct DictionaryForm: Hashable, Sendable, Codable {

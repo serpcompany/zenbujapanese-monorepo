@@ -1,11 +1,11 @@
 {
-  "analysisToolSHA256": "3198517c1f745736dfe7886cdd1976014d821c5225ff46cc8d70b78884682240",
+  "analysisToolSHA256": "23034dbbd6c06516b64916841facd33bfcc8b3344ee079d84f2473311d36e0e2",
   "candidateCatalogSHA256": "c032b68e3589801a3278d34892f3bd48285c9913eeeb1dd71818813c95345f37",
   "candidates": [
     {
       "analysis": {
         "ambiguousRows": 8194,
-        "artifactContentSHA256": "fcfe1bab1fbbebd6e0c62b655fb060d7c317b5843dbad76da6c00586329302e7",
+        "artifactContentSHA256": "1870bf2bc0e4bb77151abcec0b53d773f8b52f4ccf2ca3b517ed854f585e9175",
         "duplicateMappings": 15213,
         "mappedPercent": 50.61,
         "mappedRows": 52053,
@@ -20,10 +20,10 @@
         },
         "sourceRows": 102844,
         "tubelex": {
-          "candidateMappedOverlapPercent": 78.86,
-          "sharedMappedLanguageReferenceIDs": 41049,
-          "sharedRankPearson": 0.5201,
-          "top1000MappedJaccard": 0.3446
+          "candidateMappedOverlapPercent": 78.91,
+          "sharedMappedLanguageReferenceIDs": 41077,
+          "sharedRankPearson": 0.5205,
+          "top1000MappedJaccard": 0.3412
         },
         "uniqueNormalizedForms": 100838,
         "unmappedRows": 27384,
@@ -48,7 +48,7 @@
     {
       "analysis": {
         "ambiguousRows": 1349,
-        "artifactContentSHA256": "45c13f7abafcbd36303ec2a7ea7327d8eb765739367b73ab4ae022b24d791077",
+        "artifactContentSHA256": "62ca8e21e54b9467b55e86b7bc39d64ff388e7f2643706ba3f3f65a5da30ccb2",
         "duplicateMappings": 325,
         "mappedPercent": 55.45,
         "mappedRows": 9132,
@@ -63,10 +63,10 @@
         },
         "sourceRows": 16469,
         "tubelex": {
-          "candidateMappedOverlapPercent": 93.66,
-          "sharedMappedLanguageReferenceIDs": 8553,
-          "sharedRankPearson": 0.6332,
-          "top1000MappedJaccard": 0.2649
+          "candidateMappedOverlapPercent": 93.67,
+          "sharedMappedLanguageReferenceIDs": 8554,
+          "sharedRankPearson": 0.6328,
+          "top1000MappedJaccard": 0.2618
         },
         "uniqueNormalizedForms": 16135,
         "unmappedRows": 5663,
@@ -91,7 +91,7 @@
     {
       "analysis": {
         "ambiguousRows": 4946,
-        "artifactContentSHA256": "b273ec13cf89ab7ded281ecbd25da0e25da30345aa4b10917ce6747adc687722",
+        "artifactContentSHA256": "3859d38778176cfe455e7e303b91f884a6f3ab27409db697a10f8eab4d8bd0e3",
         "duplicateMappings": 4224,
         "mappedPercent": 58.81,
         "mappedRows": 25360,
@@ -106,10 +106,10 @@
         },
         "sourceRows": 43125,
         "tubelex": {
-          "candidateMappedOverlapPercent": 84.11,
-          "sharedMappedLanguageReferenceIDs": 21330,
-          "sharedRankPearson": 0.2506,
-          "top1000MappedJaccard": 0.2902
+          "candidateMappedOverlapPercent": 84.18,
+          "sharedMappedLanguageReferenceIDs": 21349,
+          "sharedRankPearson": 0.2507,
+          "top1000MappedJaccard": 0.2874
         },
         "uniqueNormalizedForms": 41955,
         "unmappedRows": 8595,
@@ -134,7 +134,7 @@
     {
       "analysis": {
         "ambiguousRows": 1981,
-        "artifactContentSHA256": "3d962a4907e3317538fb779fe73d5829a3dedcf24e5dae5bacaaaecb32fc56a6",
+        "artifactContentSHA256": "887560ab2e1805a47e0f3d634fa71a10408dd32ff635ecbd8a4c2df5876d6e68",
         "duplicateMappings": 2263,
         "mappedPercent": 14.7,
         "mappedRows": 5596,
@@ -149,10 +149,10 @@
         },
         "sourceRows": 38075,
         "tubelex": {
-          "candidateMappedOverlapPercent": 64.67,
-          "sharedMappedLanguageReferenceIDs": 3619,
+          "candidateMappedOverlapPercent": 64.74,
+          "sharedMappedLanguageReferenceIDs": 3623,
           "sharedRankPearson": 0.0725,
-          "top1000MappedJaccard": 0.1444
+          "top1000MappedJaccard": 0.1448
         },
         "uniqueNormalizedForms": 34316,
         "unmappedRows": 28235,
@@ -177,7 +177,7 @@
     {
       "analysis": {
         "ambiguousRows": 4749,
-        "artifactContentSHA256": "983de4795fce1a26d7e311e585736f8c8f9edab260b58eff92936103983293ac",
+        "artifactContentSHA256": "991bb69e22705fed2e2644ad6f9fd458790501ec66d1e929c131f5f82af931d1",
         "duplicateMappings": 6423,
         "mappedPercent": 56.92,
         "mappedRows": 32098,
@@ -192,10 +192,10 @@
         },
         "sourceRows": 56396,
         "tubelex": {
-          "candidateMappedOverlapPercent": 83.96,
-          "sharedMappedLanguageReferenceIDs": 26948,
-          "sharedRankPearson": 0.3316,
-          "top1000MappedJaccard": 0.3004
+          "candidateMappedOverlapPercent": 84.02,
+          "sharedMappedLanguageReferenceIDs": 26968,
+          "sharedRankPearson": 0.3322,
+          "top1000MappedJaccard": 0.2976
         },
         "uniqueNormalizedForms": 56396,
         "unmappedRows": 13126,
@@ -220,7 +220,7 @@
     {
       "analysis": {
         "ambiguousRows": 4031,
-        "artifactContentSHA256": "06354c9e458b439343e1bc0c2617218d652905e39162d959d7cd2624e778d190",
+        "artifactContentSHA256": "db325b1f7ef5690420045621207f01ab3163aabdc07f01b9421123b976f9c9d2",
         "duplicateMappings": 3578,
         "mappedPercent": 76.87,
         "mappedRows": 43241,
@@ -235,10 +235,10 @@
         },
         "sourceRows": 56251,
         "tubelex": {
-          "candidateMappedOverlapPercent": 52.57,
-          "sharedMappedLanguageReferenceIDs": 22733,
-          "sharedRankPearson": 0.2641,
-          "top1000MappedJaccard": 0.3996
+          "candidateMappedOverlapPercent": 52.61,
+          "sharedMappedLanguageReferenceIDs": 22747,
+          "sharedRankPearson": 0.2644,
+          "top1000MappedJaccard": 0.3955
         },
         "uniqueNormalizedForms": 56250,
         "unmappedRows": 5401,
@@ -263,7 +263,7 @@
     {
       "analysis": {
         "ambiguousRows": 7385,
-        "artifactContentSHA256": "6553cba3d6bd01425ca39e7f6588557b1514d88062e76cda3e8cd2655a3da4a6",
+        "artifactContentSHA256": "f95717ebb40c6470ebf5b70210001d70d045d7cad25ef71a018b7d21a00d3d38",
         "duplicateMappings": 27943,
         "mappedPercent": 63.81,
         "mappedRows": 131840,
@@ -278,10 +278,10 @@
         },
         "sourceRows": 206621,
         "tubelex": {
-          "candidateMappedOverlapPercent": 36.86,
-          "sharedMappedLanguageReferenceIDs": 48601,
-          "sharedRankPearson": 0.4087,
-          "top1000MappedJaccard": 0.2004
+          "candidateMappedOverlapPercent": 36.88,
+          "sharedMappedLanguageReferenceIDs": 48627,
+          "sharedRankPearson": 0.4085,
+          "top1000MappedJaccard": 0.1978
         },
         "uniqueNormalizedForms": 206621,
         "unmappedRows": 39453,
@@ -306,7 +306,7 @@
     {
       "analysis": {
         "ambiguousRows": 3482,
-        "artifactContentSHA256": "8624edb89d7c366b685b22c33589101616b338c7331f5c5de8a964942b438d35",
+        "artifactContentSHA256": "cb7b5d8a73492b4ceba74c4feee4b5084a08d7a86bce5a5d1297e1f8d9ef6ecb",
         "duplicateMappings": 731,
         "mappedPercent": 81.41,
         "mappedRows": 28539,
@@ -323,8 +323,8 @@
         "tubelex": {
           "candidateMappedOverlapPercent": 90.81,
           "sharedMappedLanguageReferenceIDs": 25915,
-          "sharedRankPearson": 0.3836,
-          "top1000MappedJaccard": 0.3602
+          "sharedRankPearson": 0.3835,
+          "top1000MappedJaccard": 0.3556
         },
         "uniqueNormalizedForms": 33687,
         "unmappedRows": 2306,
@@ -349,7 +349,7 @@
     {
       "analysis": {
         "ambiguousRows": 5665,
-        "artifactContentSHA256": "b8d37b14bb088956f77f56ec80e5f3a9c7c2fdce5dd8785543dfa0165464c796",
+        "artifactContentSHA256": "d74721339132d542dd4cb001ec57254bc93f98a671f5df63db3148f1bb83156f",
         "duplicateMappings": 9989,
         "mappedPercent": 68.09,
         "mappedRows": 68087,
@@ -364,10 +364,10 @@
         },
         "sourceRows": 99999,
         "tubelex": {
-          "candidateMappedOverlapPercent": 49.6,
-          "sharedMappedLanguageReferenceIDs": 33773,
-          "sharedRankPearson": 0.3986,
-          "top1000MappedJaccard": 0.292
+          "candidateMappedOverlapPercent": 49.64,
+          "sharedMappedLanguageReferenceIDs": 33795,
+          "sharedRankPearson": 0.3993,
+          "top1000MappedJaccard": 0.2893
         },
         "uniqueNormalizedForms": 99999,
         "unmappedRows": 16258,
@@ -392,7 +392,7 @@
     {
       "analysis": {
         "ambiguousRows": 8723,
-        "artifactContentSHA256": "4ba30dddbd65bb9ec6f269605d9a0f68d74142edd4929017cad733785b447a1c",
+        "artifactContentSHA256": "1b317dc8277bde102bec64bc7a7506c9bd351f1b5da185da045a62d7cf4b204e",
         "duplicateMappings": 21606,
         "mappedPercent": 55.35,
         "mappedRows": 89015,
@@ -407,10 +407,10 @@
         },
         "sourceRows": 160836,
         "tubelex": {
-          "candidateMappedOverlapPercent": 58.44,
-          "sharedMappedLanguageReferenceIDs": 52024,
-          "sharedRankPearson": 0.6702,
-          "top1000MappedJaccard": 0.4433
+          "candidateMappedOverlapPercent": 58.47,
+          "sharedMappedLanguageReferenceIDs": 52048,
+          "sharedRankPearson": 0.6698,
+          "top1000MappedJaccard": 0.4372
         },
         "uniqueNormalizedForms": 153183,
         "unmappedRows": 41492,
@@ -433,8 +433,8 @@
       "url": "https://migaku-public-data.migaku.com/dicts/ja/frequency_lists/CC100.json.zip"
     }
   ],
-  "languageDataSHA256": "f69d66155955e4b88f8b7501965dc05665bf5bd21a0199f02cb12467c3d0d092",
-  "mappingPolicySHA256": "7cf8ee196cd98c9683ac35f3214bc149ce6bfae55a1ee5f9c854c02816d2ecae",
+  "languageDataSHA256": "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073",
+  "mappingPolicySHA256": "568d2c293eceae6aff760059dc803331d11490d74ab54f5e85e9e5ef7ff8b339",
   "publicCatalogSnapshotSHA256": "9f3d483fd31fcef5f08e88b7859e094abb81c07ea24ec477437b854d99441794",
   "runtimeDecision": {
     "reason": "Nine catalog lists are offered as user-initiated downloads. The generic YouTube list remains analysis-only because TUBELEX is the more comprehensive YouTube source.",
@@ -442,6 +442,6 @@
     "status": "optional-direct-source-download"
   },
   "schema": "zenbu.frequency-candidate-analysis.v1",
-  "tubelexArtifactSHA256": "d4a9e84b8a2c359394015a01f82307ea68c1a61c32597b7d7cab82ee5d4a6d87",
-  "wikipediaArtifactSHA256": "d3dba5c4902b9323799d5c0ac53af2dd84a0c1bd208d047176a4a6a703f31eea"
+  "tubelexArtifactSHA256": "662986ecdc97449e6e071563be3e5e48f102ed101362cec5910120e1c79f4b38",
+  "wikipediaArtifactSHA256": "86c9650df9f58a8b0a700799dc3c191a3ba1d1069abd8269b130c2d2496fd0e8"
 }
