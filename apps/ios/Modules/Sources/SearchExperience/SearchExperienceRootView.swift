@@ -2,6 +2,7 @@ import SwiftUI
 
 public struct SearchExperienceRootView: View {
   @State private var readingAidPreferences = ReadingAidPreferences()
+  @State private var userProfile = UserProfile()
   @State private var selectedTab = SearchExperienceTab.search
   @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
@@ -52,6 +53,7 @@ public struct SearchExperienceRootView: View {
   public var body: some View {
     appTabs
       .environment(readingAidPreferences)
+      .environment(userProfile)
   }
 
   private var appTabs: some View {

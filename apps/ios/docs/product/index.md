@@ -13,6 +13,7 @@ The current app has two tabs:
 Account is a supporting navigation area rather than a separate Product Experience. There is no
 sign-in yet; the tab holds on-device content and preferences. It provides:
 
+- a profile card with the learner's photo, name, and username;
 - the Media Library;
 - independent Furigana and Romaji preferences;
 - management of optional frequency dictionaries;
@@ -20,6 +21,13 @@ sign-in yet; the tab holds on-device content and preferences. It provides:
 - the app's name, version, and description above source credits and attributions.
 
 Rows use Settings-style tinted icon tiles in grouped cards without section headings.
+
+The profile card opens Profile, where a learner adds or changes a photo and edits their name,
+username, and email in place. Each field saves when the learner leaves it. A username keeps only
+lowercase `a–z`, digits, `_`, and `.`, drops a leading `@`, and is capped at 30 characters; names
+in any script belong in the name. An email must be a single valid address or empty; an invalid
+one shows an error and is not saved. Without a photo, the card shows the name's initials. The
+profile is stored only on the device and is not linked to any account.
 
 Frequency Dictionaries includes JLPT Levels and TUBELEX YouTube Japanese in the app and offers
 Japanese Wikipedia plus nine checksum-pinned optional packs for Netflix, novels,

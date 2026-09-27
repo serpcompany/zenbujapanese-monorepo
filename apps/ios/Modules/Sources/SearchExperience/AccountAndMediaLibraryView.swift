@@ -10,6 +10,8 @@ struct AccountNavigationView: View {
       AccountRootView()
         .navigationDestination(for: AccountRoute.self) { route in
           switch route {
+          case .profile:
+            ProfileView()
           case .readingAids:
             ReadingAidSettingsView()
           case .mediaLibrary:
@@ -27,6 +29,13 @@ struct AccountNavigationView: View {
 struct AccountRootView: View {
   var body: some View {
     List {
+      Section {
+        NavigationLink(value: AccountRoute.profile) {
+          ProfileCardRow()
+        }
+        .accessibilityIdentifier("account.profile")
+      }
+
       Section {
         NavigationLink(value: AccountRoute.mediaLibrary) {
           AccountRowLabel("Media Library", systemImage: "photo.on.rectangle.angled", tint: .orange)
@@ -191,6 +200,7 @@ private enum AppBundleInfo {
 }
 
 enum AccountRoute: Hashable {
+  case profile
   case readingAids
   case mediaLibrary
   case frequencyDictionaries
