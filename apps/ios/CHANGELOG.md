@@ -16,6 +16,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 - Inflected Japanese searches such as `まけたら`, `食べなかった`, and `勉強した` now find
   their dictionary forms (負ける, 食べる, 勉強) without downloading Japanese Text Analysis.
+- Word Detail shows the right part of speech for adverbs, pronouns, pre-noun adjectives, and
+  nouns that take する: もちろん is an adverb, これ a pronoun, この a pre-noun adjective, and 経験
+  a noun and する verb. Common adverbs such as そう and もう now also get a TUBELEX rank.
 
 ### Changed
 

@@ -349,21 +349,31 @@ private actor JapaneseTextAnalyzer {
   }
 
   private static func isCompatible(_ part: PartOfSpeech, with providerPOS: String) -> Bool {
-    let normalized = part.rawValue.lowercased()
+    let verbs: Set<PartOfSpeech> = [
+      .verb, .godanVerb, .ichidanVerb, .suruVerb, .kuruVerb, .zuruVerb, .archaicVerb,
+      .auxiliaryVerb,
+    ]
+    let adjectives: Set<PartOfSpeech> = [
+      .iAdjective, .naAdjective, .taruAdjective, .archaicAdjective, .archaicNaAdjective,
+      .auxiliaryAdjective,
+    ]
+    let nouns: Set<PartOfSpeech> = [
+      .noun, .pronoun, .nounPrefix, .nounSuffix, .noAdjective, .prenominal, .takesSuru,
+    ]
     return switch providerPOS {
-    case "動詞": normalized.contains("verb")
-    case "形容詞", "形状詞": normalized.contains("adjective")
-    case "名詞", "代名詞": normalized.contains("noun") || normalized == "pronoun"
-    case "副詞": normalized.contains("adverb")
-    case "助詞": normalized.contains("particle") || normalized.contains("conjunction")
+    case "動詞": verbs.contains(part)
+    case "形容詞", "形状詞": adjectives.contains(part)
+    case "名詞", "代名詞": nouns.contains(part)
+    case "副詞": part == .adverb || part == .adverbTo
+    case "助詞": part == .particle || part == .conjunction
     case "助動詞":
-      normalized.contains("auxiliary") || normalized.contains("adjective")
-        || normalized.contains("suffix")
-    case "接続詞": normalized.contains("conjunction")
-    case "連体詞": normalized.contains("pre-noun") || normalized.contains("determiner")
-    case "感動詞": normalized == "interjection"
-    case "接頭辞": normalized.contains("prefix")
-    case "接尾辞": normalized.contains("suffix")
+      [.auxiliary, .auxiliaryVerb, .copula, .suffix, .nounSuffix].contains(part)
+        || adjectives.contains(part)
+    case "接続詞": part == .conjunction
+    case "連体詞": part == .preNounAdjective
+    case "感動詞": part == .interjection
+    case "接頭辞": part == .prefix || part == .nounPrefix
+    case "接尾辞": part == .suffix || part == .nounSuffix
     default: true
     }
   }

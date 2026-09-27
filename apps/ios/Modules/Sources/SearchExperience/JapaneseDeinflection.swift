@@ -12,17 +12,13 @@ enum JapaneseWordClass: Hashable, Sendable {
   case iAdjective
 
   func accepts(_ partsOfSpeech: [PartOfSpeech]) -> Bool {
-    let labels = Set(partsOfSpeech.map(\.rawValue))
     switch self {
-    case .ichidan: return labels.contains(PartOfSpeech.ichidanVerb.rawValue)
-    case .godan: return labels.contains(PartOfSpeech.godanVerb.rawValue)
-    case .kuru: return labels.contains(PartOfSpeech.irregularVerb.rawValue)
-    case .suru: return labels.contains(PartOfSpeech.suruVerb.rawValue)
-    case .suruNoun:
-      return labels.contains(PartOfSpeech.suruVerb.rawValue)
-        || (labels.contains("Noun")
-          && (labels.contains("Transitive Verb") || labels.contains("Intransitive Verb")))
-    case .iAdjective: return labels.contains(PartOfSpeech.iAdjective.rawValue)
+    case .ichidan: partsOfSpeech.contains(.ichidanVerb)
+    case .godan: partsOfSpeech.contains(.godanVerb)
+    case .kuru: partsOfSpeech.contains(.kuruVerb)
+    case .suru: partsOfSpeech.contains(.suruVerb)
+    case .suruNoun: partsOfSpeech.contains(.takesSuru) || partsOfSpeech.contains(.suruVerb)
+    case .iAdjective: partsOfSpeech.contains(.iAdjective)
     }
   }
 }

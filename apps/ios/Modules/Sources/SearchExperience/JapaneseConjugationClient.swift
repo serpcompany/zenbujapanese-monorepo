@@ -82,7 +82,7 @@ private enum JapaneseConjugator {
     if entry.partsOfSpeech.contains(.suruVerb) {
       return suruTable(for: entry)
     }
-    if entry.partsOfSpeech.contains(.irregularVerb),
+    if entry.partsOfSpeech.contains(.kuruVerb),
        entry.reading.hasSuffix("くる")
     {
       return kuruTable(for: entry)

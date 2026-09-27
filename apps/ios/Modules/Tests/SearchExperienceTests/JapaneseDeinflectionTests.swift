@@ -88,10 +88,10 @@ struct JapaneseDeinflectionTests {
   @Test("word classes only accept matching dictionary parts of speech")
   func wordClassAcceptance() {
     #expect(JapaneseWordClass.ichidan.accepts([.ichidanVerb]))
-    #expect(!JapaneseWordClass.ichidan.accepts([PartOfSpeech(rawValue: "Noun")]))
+    #expect(!JapaneseWordClass.ichidan.accepts([.noun]))
     #expect(JapaneseWordClass.godan.accepts([.godanVerb]))
     #expect(JapaneseWordClass.iAdjective.accepts([.iAdjective]))
-    #expect(JapaneseWordClass.suruNoun.accepts([PartOfSpeech(rawValue: "Noun"), PartOfSpeech(rawValue: "Transitive Verb")]))
-    #expect(!JapaneseWordClass.suruNoun.accepts([PartOfSpeech(rawValue: "Noun")]))
+    #expect(JapaneseWordClass.suruNoun.accepts([.noun, .takesSuru, .transitive]))
+    #expect(!JapaneseWordClass.suruNoun.accepts([.noun, .transitive]))
   }
 }

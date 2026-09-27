@@ -42,7 +42,9 @@ The top of a word detail shows the headword with furigana, following the Reading
 When furigana is off, the reading appears under the headword instead. To the right of the
 headword are the pitch accent (the reading in katakana with an overline across the high morae and
 a hook at the downstep), a pronounce button, and the latest encounter photo. A part-of-speech row
-follows and opens the conjugation table when one exists.
+follows and opens the conjugation table when one exists. It names one word class and then its
+modifiers in sentence case without repeating "verb", for example "Godan verb (intransitive)",
+"Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".
 
 A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word.
 Selecting a row opens that dictionary's details. JLPT levels are presented as unofficial study

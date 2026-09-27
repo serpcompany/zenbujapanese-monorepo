@@ -72,7 +72,100 @@ def normalized_text(value: str) -> str:
     return " ".join(unicodedata.normalize("NFKC", value).casefold().split())
 
 
-def normalize_parts_of_speech(provider_labels: list[str]) -> list[str]:
+ARCHAIC_VERB_CODES = (
+    "v2a-s", "v2b-k", "v2b-s", "v2d-k", "v2d-s", "v2g-k", "v2g-s", "v2h-k", "v2h-s",
+    "v2k-k", "v2k-s", "v2m-k", "v2m-s", "v2n-s", "v2r-k", "v2r-s", "v2s-s", "v2t-k",
+    "v2t-s", "v2w-s", "v2y-k", "v2y-s", "v2z-s", "v4b", "v4g", "v4h", "v4k", "v4m",
+    "v4n", "v4r", "v4s", "v4t", "vn", "vr", "vs-c",
+)
+GODAN_VERB_CODES = (
+    "v5aru", "v5b", "v5g", "v5k", "v5k-s", "v5m", "v5n", "v5r", "v5r-i", "v5s", "v5t",
+    "v5u", "v5u-s", "v5uru",
+)
+
+# Every JMdict <pos> entity code maps to stable app-owned category identifiers. Wording belongs
+# to the app's part-of-speech formatter, so the stored identifiers never carry display text.
+PART_OF_SPEECH_CATEGORIES: dict[str, str] = {
+    "n": "noun",
+    "n-adv": "noun",
+    "n-t": "noun",
+    "pn": "pronoun",
+    "n-pref": "nounPrefix",
+    "n-suf": "nounSuffix",
+    "adj-no": "noAdjective",
+    "adj-f": "prenominal",
+    "adj-pn": "preNounAdjective",
+    "adj-i": "iAdjective",
+    "adj-ix": "iAdjective",
+    "adj-na": "naAdjective",
+    "adj-t": "taruAdjective",
+    "adj-nari": "archaicNaAdjective",
+    "adj-ku": "archaicAdjective",
+    "adj-shiku": "archaicAdjective",
+    "adj-kari": "archaicAdjective",
+    "adv": "adverb",
+    "adv-to": "adverbTo",
+    "aux": "auxiliary",
+    "aux-adj": "auxiliaryAdjective",
+    "aux-v": "auxiliaryVerb",
+    "conj": "conjunction",
+    "cop": "copula",
+    "ctr": "counter",
+    "exp": "expression",
+    "int": "interjection",
+    "num": "numeric",
+    "pref": "prefix",
+    "suf": "suffix",
+    "prt": "particle",
+    "unc": "unclassified",
+    "v-unspec": "verb",
+    "v1": "ichidanVerb",
+    "v1-s": "ichidanVerb",
+    "vz": "zuruVerb",
+    **{code: "godanVerb" for code in GODAN_VERB_CODES},
+    **{code: "archaicVerb" for code in ARCHAIC_VERB_CODES},
+    "vk": "kuruVerb",
+    "vs": "takesSuru",
+    "vs-i": "suruVerb",
+    "vs-s": "suruVerb",
+    "vi": "intransitive",
+    "vt": "transitive",
+}
+
+
+def jmdict_entity_codes(source: Path) -> dict[str, str]:
+    """Map each expanded JMdict entity description back to its entity code."""
+    with gzip.open(source, "rt", encoding="utf-8") as xml_source:
+        declarations = []
+        for line in xml_source:
+            if line.startswith("]>"):
+                break
+            declarations.append(line)
+    codes: dict[str, str] = {}
+    for code, description in re.findall(r'<!ENTITY (\S+) "([^"]*)">', "".join(declarations)):
+        if codes.setdefault(description, code) != code:
+            raise ValueError(f"ambiguous JMdict entity description: {description}")
+    return codes
+
+
+def normalize_parts_of_speech(provider_labels: list[str], entity_codes: dict[str, str]) -> list[str]:
+    categories: list[str] = []
+    for provider_label in provider_labels:
+        code = entity_codes.get(provider_label)
+        category = PART_OF_SPEECH_CATEGORIES.get(code or "")
+        if category is None:
+            raise ValueError(f"unmapped JMdict part of speech: {code or provider_label}")
+        if category not in categories:
+            categories.append(category)
+    return categories
+
+
+def legacy_note_parts_of_speech(provider_labels: list[str]) -> list[str]:
+    """Reproduce the retired description-substring labels for durable-note identity only.
+
+    Saved learner notes are keyed by note identity, so its signature keeps these labels.
+    Nothing displays them or stores them as part-of-speech data.
+    """
     categories: list[str] = []
     rules = [
         ("ichidan verb", "Ichidan Verb"),
@@ -161,8 +254,8 @@ def word_note_identity(record: dict[str, object]) -> str:
         "reading": normalized_text(str(record["reading"])),
         "writtenForms": record["written_forms"],
         "readingForms": record["reading_forms"],
-        "senses": record["senses"],
-        "partsOfSpeech": record["parts_of_speech"],
+        "senses": record["note_senses"],
+        "partsOfSpeech": record["note_parts_of_speech"],
     }
     payload = json.dumps(signature, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return f"wn1:{hashlib.sha256(payload.encode()).hexdigest()}"
@@ -424,6 +517,7 @@ def import_snapshot(
     reading_restriction_count = 0
     relationship_count = 0
     retained_source_ids = hashlib.sha256()
+    entity_codes = jmdict_entity_codes(source)
     entry_records: list[dict[str, object]] = []
     form_to_entry_ids: dict[str, list[bytes]] = {}
     lexical_payload_by_fingerprint: dict[bytes, str] = {}
@@ -458,9 +552,8 @@ def import_snapshot(
                 primary_written, written_common = choose_primary(written_forms, "keb")
                 primary_reading, reading_common = choose_primary(readings, "reb")
                 headword = primary_written or primary_reading
-                parts_of_speech = normalize_parts_of_speech(
-                    list(dict.fromkeys(text_values(entry, "sense/pos")))
-                )
+                entry_pos_labels = list(dict.fromkeys(text_values(entry, "sense/pos")))
+                parts_of_speech = normalize_parts_of_speech(entry_pos_labels, entity_codes)
                 entry_id = language_reference_id("edrdg.jmdict", source_record_id_text)
                 written_values = text_values(entry, "k_ele/keb")
                 reading_values = text_values(entry, "r_ele/reb")
@@ -510,11 +603,13 @@ def import_snapshot(
                     if (element.findtext("reb") or "").strip()
                 ]
                 normalized_senses = []
+                note_senses = []
                 canonical_senses: list[dict[str, object]] = []
                 gloss_atoms: list[dict[str, object]] = []
                 cross_references: list[dict[str, object]] = []
                 for sense_order, (sense, meaning_group) in enumerate(zip(senses, sense_glosses)):
-                    sense_parts_of_speech = normalize_parts_of_speech(text_values(sense, "pos"))
+                    sense_pos_labels = text_values(sense, "pos")
+                    sense_parts_of_speech = normalize_parts_of_speech(sense_pos_labels, entity_codes)
                     restricted_written_forms = [
                         normalized_text(value) for value in text_values(sense, "stagk")
                     ]
@@ -550,6 +645,13 @@ def import_snapshot(
                             "meaning": ", ".join(meaning_group),
                             "notes": notes,
                             "partsOfSpeech": sense_parts_of_speech,
+                        }
+                    )
+                    note_senses.append(
+                        {
+                            "meaning": ", ".join(meaning_group),
+                            "notes": notes,
+                            "partsOfSpeech": legacy_note_parts_of_speech(sense_pos_labels),
                         }
                     )
                     for reference in text_values(sense, "xref"):
@@ -690,7 +792,9 @@ def import_snapshot(
                         "reading": primary_reading,
                         "summary": meaning_groups[0],
                         "senses": normalized_senses,
+                        "note_senses": note_senses,
                         "parts_of_speech": parts_of_speech,
+                        "note_parts_of_speech": legacy_note_parts_of_speech(entry_pos_labels),
                         "written_forms": normalized_written_forms,
                         "reading_forms": normalized_reading_forms,
                         "cross_references": cross_references,
@@ -957,7 +1061,8 @@ def import_snapshot(
                 "Tatoeba Japanese and English record IDs retained only in the Example Sentence provenance table",
                 "Tatoeba supplied contributor names, explicit not-supplied status, per-side license class, pair license class, and pinned snapshot identity retained only in provenance",
                 "collision-free durable-note identity derived from an app-owned semantic lexical signature with deterministic exact-duplicate disambiguation",
-                "provider part-of-speech taxonomy normalized to app-owned classification labels",
+                "every JMdict part-of-speech entity code mapped explicitly to app-owned category identifiers; an unmapped code fails the import",
+                "durable-note identity signature retains the retired part-of-speech labels so saved notes keep their identity",
                 "app-owned commonness marker derived from priority on the selected display form",
                 "deterministic app-owned rank score derived from documented JMdict priority tags",
                 "UniDic aType normalized to deterministic downstep and pronunciation-mora-count facts by exact base-form and pronunciation-or-lexical-reading match",
