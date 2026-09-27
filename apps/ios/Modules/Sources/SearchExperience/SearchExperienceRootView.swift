@@ -136,7 +136,8 @@ public struct SearchExperienceRootView: View {
             openWord: { entry in path.append(.word(entry, nil)) }
           )
         case .conjugations(let entry, let table):
-          ConjugationsView(entry: entry, table: table)
+          ConjugationsView(
+            entry: entry, table: table, speechSynthesisClient: speechSynthesisClient)
         case .conjugatedForm(let entry, let table, let form, let mode):
           ConjugatedFormView(
             entry: entry,

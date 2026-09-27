@@ -6,13 +6,16 @@ struct JapaneseRubyText: View {
   private struct Piece: Identifiable {
     let id: String
     let segment: JapaneseRubySegment
+    /// Characters of `surface` before this piece.
+    let offset: Int
   }
 
   let surface: String
   let reading: String
   let baseFont: Font
   let rubyFont: Font
-  let underlined: Bool
+  /// A trailing part of `surface` drawn in the accent color, such as the ending of a conjugation.
+  let highlightedEnding: String
   let exposesAccessibility: Bool
   let displaysRomaji: Bool
 
@@ -21,7 +24,7 @@ struct JapaneseRubyText: View {
     reading: String,
     baseFont: Font = .body,
     rubyFont: Font = .caption.weight(.semibold),
-    underlined: Bool = false,
+    highlightedEnding: String = "",
     exposesAccessibility: Bool = true,
     displaysRomaji: Bool = true
   ) {
@@ -29,7 +32,7 @@ struct JapaneseRubyText: View {
     self.reading = reading
     self.baseFont = baseFont
     self.rubyFont = rubyFont
-    self.underlined = underlined
+    self.highlightedEnding = surface.hasSuffix(highlightedEnding) ? highlightedEnding : ""
     self.exposesAccessibility = exposesAccessibility
     self.displaysRomaji = displaysRomaji
   }
@@ -65,18 +68,29 @@ struct JapaneseRubyText: View {
           if let furigana = piece.segment.reading {
             VStack(spacing: 0) {
               Text(furigana).font(rubyFont)
-              Text(piece.segment.base).font(baseFont).underline(underlined)
+              Text(highlighted(piece.segment.base, at: piece.offset)).font(baseFont)
             }
           } else {
-            Text(piece.segment.base).font(baseFont).underline(underlined)
+            Text(highlighted(piece.segment.base, at: piece.offset)).font(baseFont)
           }
         }
       }
     } else {
-      Text(surface)
+      Text(highlighted(surface, at: 0))
         .font(baseFont)
-        .underline(underlined)
     }
+  }
+
+  /// `text` starts `offset` characters into `surface`; its characters within the highlighted
+  /// ending take the accent color.
+  private func highlighted(_ text: String, at offset: Int) -> AttributedString {
+    var result = AttributedString(text)
+    let highlightStart = surface.count - highlightedEnding.count
+    guard !highlightedEnding.isEmpty, offset + text.count > highlightStart else { return result }
+    let start = result.characters.index(
+      result.startIndex, offsetBy: max(0, highlightStart - offset))
+    result[start...].foregroundColor = .accentColor
+    return result
   }
 
   private var segments: [JapaneseRubySegment] {
@@ -84,10 +98,13 @@ struct JapaneseRubyText: View {
   }
 
   private var pieces: [Piece] {
-    segments.enumerated().map { index, segment in
-      Piece(
+    var offset = 0
+    return segments.enumerated().map { index, segment in
+      defer { offset += segment.base.count }
+      return Piece(
         id: "\(surface)|\(reading)|\(index)|\(segment.base)|\(segment.reading ?? "")",
-        segment: segment
+        segment: segment,
+        offset: offset
       )
     }
   }

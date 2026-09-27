@@ -34,8 +34,6 @@ struct ConjugatedForm: Hashable, Identifiable, Sendable {
   /// The part of `surface` added after the unchanging stem, such as させる in 見させる.
   let ending: String
 
-  var stem: String { String(surface.dropLast(ending.count)) }
-
   var readingAnnotation: ReadingAnnotation? {
     guard surface != reading else { return nil }
     let surfaceCharacters = Array(surface)

@@ -5,11 +5,14 @@ struct ConjugationsView: View {
 
   let entry: DictionaryEntry
   let table: ConjugationTable
+  let speechSynthesisClient: SpeechSynthesisClient
 
   var body: some View {
     List {
       Section {
-        ConjugationHeader(entry: entry, rule: table.rule)
+        ConjugationHeader(entry: entry, rule: table.rule) {
+          speechSynthesisClient.speak(entry.reading)
+        }
       }
 
       if table.supportsModes {
@@ -49,14 +52,16 @@ struct ConjugationsView: View {
 private struct ConjugationHeader: View {
   let entry: DictionaryEntry
   let rule: String
+  let pronounce: () -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      JapaneseRubyText(
+      WordHeadline(
         surface: entry.headword,
         reading: entry.reading,
-        baseFont: .largeTitle,
-        rubyFont: .subheadline
+        pitch: entry.pitchAccent,
+        identifierPrefix: "conjugations.header",
+        pronounce: pronounce
       )
       Text(entry.summary)
         .foregroundStyle(.secondary)
@@ -72,7 +77,7 @@ private struct ConjugationHeader: View {
         .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
     }
     .padding(.vertical, 4)
-    .accessibilityElement(children: .combine)
+    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("conjugations.header")
   }
 }
@@ -118,17 +123,13 @@ struct ConjugatedFormView: View {
     List {
       Section {
         VStack(alignment: .leading, spacing: 10) {
-          HStack(alignment: .lastTextBaseline, spacing: 12) {
-            ConjugatedSurface(form: form, font: .largeTitle, rubyFont: .subheadline, alwaysShowsReading: true)
-            Button {
-              speechSynthesisClient.speak(form.reading)
-            } label: {
-              Image(systemName: "speaker.wave.2.fill")
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel("Pronounce \(form.surface)")
-            .accessibilityIdentifier("conjugations.form.pronounce")
-          }
+          WordHeadline(
+            surface: form.surface,
+            reading: form.reading,
+            highlightedEnding: form.ending,
+            identifierPrefix: "conjugations.form",
+            pronounce: { speechSynthesisClient.speak(form.reading) }
+          )
           Text(presentation.explanation)
             .foregroundStyle(.secondary)
             .accessibilityIdentifier("conjugations.explanation.\(form.id.rawValue)")
@@ -142,13 +143,6 @@ struct ConjugatedFormView: View {
           }
         }
         .padding(.vertical, 4)
-      }
-
-      if !form.stem.isEmpty, !form.ending.isEmpty {
-        Section("How it's built") {
-          Text("\(entry.headword) → \(form.stem) + \(form.ending)")
-            .font(.title3)
-        }
       }
 
       if let counterpart {
@@ -361,32 +355,24 @@ private struct ConjugatedSurface: View {
   let form: ConjugatedForm
   let font: Font
   let rubyFont: Font
-  var alwaysShowsReading = false
 
   var body: some View {
     // The stem reading is already in the header, so rows show furigana only when the
     // ending itself contains kanji, as in 来させる, whose reading changes.
-    if alwaysShowsReading || form.ending.contains(where: \.isKanji) {
+    if form.ending.contains(where: \.isKanji) {
       JapaneseRubyText(
         surface: form.surface,
         reading: form.reading,
         baseFont: font,
         rubyFont: rubyFont,
+        highlightedEnding: form.ending,
         exposesAccessibility: false
       )
       .fixedSize(horizontal: false, vertical: true)
     } else {
-      Text(tintedSurface)
+      Text(form.surface.highlightingEnding(form.ending))
         .font(font)
     }
-  }
-
-  private var tintedSurface: AttributedString {
-    var stem = AttributedString(form.stem)
-    var ending = AttributedString(form.ending)
-    ending.foregroundColor = .accentColor
-    stem.append(ending)
-    return stem
   }
 }
 

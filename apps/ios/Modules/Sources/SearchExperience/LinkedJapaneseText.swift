@@ -176,7 +176,6 @@ private struct LinkedTokenView: View {
         JapaneseRubyText(
           surface: token.surface,
           reading: entry.reading,
-          underlined: false,
           exposesAccessibility: false,
           displaysRomaji: false
         )
