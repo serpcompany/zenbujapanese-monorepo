@@ -121,17 +121,11 @@ struct ConjugatedFormView: View {
   var body: some View {
     let presentation = form.id.presentation
     List {
+      // What the form means is the reason to open this screen, so it leads.
       Section {
         VStack(alignment: .leading, spacing: 10) {
-          WordHeadline(
-            surface: form.surface,
-            reading: form.reading,
-            highlightedEnding: form.ending,
-            identifierPrefix: "conjugations.form",
-            pronounce: { speechSynthesisClient.speak(form.reading) }
-          )
           Text(presentation.explanation)
-            .foregroundStyle(.secondary)
+            .font(.title3)
             .accessibilityIdentifier("conjugations.explanation.\(form.id.rawValue)")
           if !sharedSpellings.isEmpty {
             Label(
@@ -143,6 +137,18 @@ struct ConjugatedFormView: View {
           }
         }
         .padding(.vertical, 4)
+        .listRowBackground(Color.clear)
+        .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
+      }
+
+      Section {
+        WordHeadline(
+          surface: form.surface,
+          reading: form.reading,
+          highlightedEnding: form.ending,
+          identifierPrefix: "conjugations.form",
+          pronounce: { speechSynthesisClient.speak(form.reading) }
+        )
       }
 
       if let counterpart {
