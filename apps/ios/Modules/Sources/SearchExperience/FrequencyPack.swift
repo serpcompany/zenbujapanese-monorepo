@@ -2,19 +2,23 @@ import CryptoKit
 import Foundation
 import SQLite3
 
+/// One lookup result per enabled frequency dictionary, in the learner's priority order. The
+/// first result orders search results; an empty list means no dictionary is enabled.
+typealias FrequencyRanks = [FrequencyLookupResult]
+
 struct FrequencyCapability: Sendable {
   private let batchLookup:
-    @Sendable ([LanguageReferenceID]) async throws -> [LanguageReferenceID: FrequencyLookupResult]
+    @Sendable ([LanguageReferenceID]) async throws -> [LanguageReferenceID: FrequencyRanks]
 
   init(
     batchLookup:
       @escaping @Sendable ([LanguageReferenceID]) async throws
-      -> [LanguageReferenceID: FrequencyLookupResult]
+      -> [LanguageReferenceID: FrequencyRanks]
   ) {
     self.batchLookup = batchLookup
   }
 
-  func evidence(for id: LanguageReferenceID) async throws -> FrequencyLookupResult {
+  func evidence(for id: LanguageReferenceID) async throws -> FrequencyRanks {
     guard let result = try await batchLookup([id])[id] else {
       throw FrequencyPackError.invalidArtifact
     }
@@ -22,7 +26,7 @@ struct FrequencyCapability: Sendable {
   }
 
   func evidence(for ids: [LanguageReferenceID]) async throws
-    -> [LanguageReferenceID: FrequencyLookupResult]
+    -> [LanguageReferenceID: FrequencyRanks]
   {
     let results = try await batchLookup(ids)
     guard ids.allSatisfy({ results[$0] != nil }) else {
@@ -48,20 +52,26 @@ struct FrequencyCapability: Sendable {
     }
     let artifact = try FrequencyPackArtifact(url: url, manifest: manifest)
     try artifact.validateSmokeTest()
-    return FrequencyCapability(batchLookup: { ids in try artifact.evidence(for: ids) })
+    return FrequencyCapability(batchLookup: { ids in
+      try artifact.evidence(for: ids).mapValues { [$0] }
+    })
   }
 }
 
 struct FrequencyPackClient: Sendable {
   var snapshot: @Sendable () async throws -> FrequencyPackSnapshot
   var download: @Sendable (FrequencyPackID) async throws -> Void
-  var activate: @Sendable (FrequencyPackID) async throws -> Void
+  var enable: @Sendable (FrequencyPackID) async throws -> Void
+  var disable: @Sendable (FrequencyPackID) async throws -> Void
+  var reorderEnabled: @Sendable ([FrequencyPackID]) async throws -> Void
   var remove: @Sendable (FrequencyPackID) async throws -> Void
 
   static let live = FrequencyPackClient(
     snapshot: { try await FrequencyPackStore.shared.snapshot() },
     download: { try await FrequencyPackStore.shared.download($0) },
-    activate: { try await FrequencyPackStore.shared.activate($0) },
+    enable: { try await FrequencyPackStore.shared.enable($0) },
+    disable: { try await FrequencyPackStore.shared.disable($0) },
+    reorderEnabled: { try await FrequencyPackStore.shared.reorderEnabled($0) },
     remove: { try await FrequencyPackStore.shared.remove($0) }
   )
 }
@@ -70,6 +80,11 @@ enum FrequencyLookupResult: Equatable, Sendable {
   case evidence(FrequencyEvidence)
   case noEvidence(pack: FrequencyPackDisclosure)
   case unavailable(FrequencyPackUnavailable)
+
+  var hasRank: Bool {
+    if case .evidence = self { return true }
+    return false
+  }
 
   static func unavailableResults(
     for ids: [LanguageReferenceID],
@@ -118,8 +133,43 @@ struct FrequencyEvidence: Equatable, Sendable {
   }
 }
 
+/// How common a ranked word is, using Migaku's star cutoffs so learners who know that scale
+/// read Zenbu's chips the same way.
+enum FrequencyTier: Int, Comparable, Sendable {
+  case rare = 1
+  case uncommon
+  case moderate
+  case common
+  case veryCommon
+
+  init(rank: Int) {
+    switch rank {
+    case ...1_500: self = .veryCommon
+    case ...5_000: self = .common
+    case ...15_000: self = .moderate
+    case ...30_000: self = .uncommon
+    default: self = .rare
+    }
+  }
+
+  var label: String {
+    switch self {
+    case .veryCommon: "very common"
+    case .common: "common"
+    case .moderate: "moderately common"
+    case .uncommon: "uncommon"
+    case .rare: "rare"
+    }
+  }
+
+  static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
+}
+
 struct FrequencyPresentationModel: Equatable, Sendable {
   let result: FrequencyLookupResult
+  let packName: String
+  /// Nil when the dictionary has no rank for the entry.
+  let tier: FrequencyTier?
   let inlineText: String
   let inlineAccessibilityLabel: String
   let pack: FrequencyPackDisclosure?
@@ -132,23 +182,31 @@ struct FrequencyPresentationModel: Equatable, Sendable {
     switch result {
     case .evidence(let evidence):
       let formattedRank = evidence.rank.formatted(.number.locale(Locale(identifier: "en_US")))
-      inlineText = "#\(formattedRank)"
-      inlineAccessibilityLabel = "Frequency rank \(evidence.rank). Double tap for details."
+      packName = evidence.pack.shortName
+      tier = FrequencyTier(rank: evidence.rank)
+      inlineText = formattedRank
+      inlineAccessibilityLabel =
+        "\(evidence.pack.shortName) frequency rank \(evidence.rank), "
+        + "\(FrequencyTier(rank: evidence.rank).label). Double tap for details."
       pack = evidence.pack
       rankText = "#\(formattedRank)"
       percentileText = evidence.topPercentDisplay
       explanation = nil
     case .noEvidence(let pack):
+      packName = pack.shortName
+      tier = nil
       inlineText = "—"
       inlineAccessibilityLabel =
-        "The active frequency dictionary has no rank for this entry. Double tap for details."
+        "\(pack.shortName) has no rank for this entry. Double tap for details."
       self.pack = pack
       rankText = nil
       percentileText = nil
       explanation = "\(pack.displayName) has no mapped frequency rank for this entry."
     case .unavailable(let unavailable):
+      packName = unavailable.pack?.shortName ?? "Frequency"
+      tier = nil
       inlineText = "—"
-      inlineAccessibilityLabel = "Frequency rank unavailable. Double tap for details."
+      inlineAccessibilityLabel = "\(packName) rank unavailable. Double tap for details."
       pack = unavailable.pack
       rankText = nil
       percentileText = nil
@@ -158,25 +216,35 @@ struct FrequencyPresentationModel: Equatable, Sendable {
 }
 
 struct SearchFrequencyRankPresentationModel: Equatable, Sendable {
-  let text: String
+  /// Chips in priority order: the first enabled dictionary always, because it orders the
+  /// results, then each other dictionary that ranks the entry. Empty while evidence loads or
+  /// when no dictionary is enabled.
+  let chips: [FrequencyPresentationModel]
   let accessibilityValue: String
 
-  init(result: FrequencyLookupResult?) {
-    switch result {
-    case nil:
-      text = "—"
-      accessibilityValue = "Frequency rank loading"
-    case .evidence(let evidence):
-      let rank = evidence.rank.formatted(.number.locale(Locale(identifier: "en_US")))
-      text = "#\(rank)"
-      accessibilityValue = "Frequency rank \(rank)"
-    case .noEvidence:
-      text = "—"
-      accessibilityValue = "The active frequency dictionary has no rank for this entry"
-    case .unavailable:
-      text = "—"
-      accessibilityValue = "Frequency rank unavailable"
+  init(ranks: FrequencyRanks?) {
+    guard let ranks, !ranks.isEmpty else {
+      chips = []
+      accessibilityValue =
+        ranks == nil ? "Frequency rank loading" : "No frequency dictionary enabled"
+      return
     }
+    let shown = ranks.enumerated().filter { $0.offset == 0 || $0.element.hasRank }.map(\.element)
+    chips = shown.map(FrequencyPresentationModel.init(result:))
+    accessibilityValue = zip(shown, chips).map { result, chip in
+      switch result {
+      case .evidence(let evidence):
+        "\(chip.packName) frequency rank \(evidence.rank), \(chip.tier?.label ?? "")"
+      case .noEvidence: "\(chip.packName) has no rank for this entry"
+      case .unavailable: "\(chip.packName) rank unavailable"
+      }
+    }.joined(separator: ", ")
+  }
+
+  /// The first `limit` chips and how many were left out, for layouts with too little room to
+  /// show every dictionary (such as accessibility text sizes). VoiceOver still reads all ranks.
+  func collapsed(to limit: Int) -> (chips: [FrequencyPresentationModel], hiddenCount: Int) {
+    (Array(chips.prefix(limit)), max(chips.count - limit, 0))
   }
 }
 
@@ -475,19 +543,13 @@ private actor FrequencyPackStore {
     )
   }
 
-  func evidence(for id: LanguageReferenceID) async throws -> FrequencyLookupResult {
-    guard let result = try await evidence(for: [id])[id] else {
-      throw FrequencyPackError.invalidArtifact
-    }
-    return result
-  }
-
   func evidence(for ids: [LanguageReferenceID]) async throws
-    -> [LanguageReferenceID: FrequencyLookupResult]
+    -> [LanguageReferenceID: FrequencyRanks]
   {
     guard let manager else {
       return FrequencyLookupResult.unavailableResults(
-        for: ids, pack: nil, reason: "Bundled frequency data unavailable")
+        for: ids, pack: nil, reason: "Bundled frequency data unavailable"
+      ).mapValues { [$0] }
     }
     return try await manager.evidence(for: ids)
   }
@@ -502,9 +564,19 @@ private actor FrequencyPackStore {
     try await manager.download(packID)
   }
 
-  func activate(_ packID: FrequencyPackID) async throws {
+  func enable(_ packID: FrequencyPackID) async throws {
     guard let manager else { throw FrequencyPackError.invalidCatalog }
-    try await manager.activate(packID)
+    try await manager.enable(packID)
+  }
+
+  func disable(_ packID: FrequencyPackID) async throws {
+    guard let manager else { throw FrequencyPackError.invalidCatalog }
+    try await manager.disable(packID)
+  }
+
+  func reorderEnabled(_ packIDs: [FrequencyPackID]) async throws {
+    guard let manager else { throw FrequencyPackError.invalidCatalog }
+    try await manager.reorderEnabled(packIDs)
   }
 
   func remove(_ packID: FrequencyPackID) async throws {
