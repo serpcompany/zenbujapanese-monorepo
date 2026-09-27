@@ -1,14 +1,14 @@
 import SwiftUI
 import UIKit
 
-struct YouNavigationView: View {
-  @Binding var path: [YouRoute]
+struct AccountNavigationView: View {
+  @Binding var path: [AccountRoute]
   let store: EncounterMediaStore
 
   var body: some View {
     NavigationStack(path: $path) {
-      YouRootView()
-        .navigationDestination(for: YouRoute.self) { route in
+      AccountRootView()
+        .navigationDestination(for: AccountRoute.self) { route in
           switch route {
           case .readingAids:
             ReadingAidSettingsView()
@@ -24,43 +24,165 @@ struct YouNavigationView: View {
   }
 }
 
-struct YouRootView: View {
+struct AccountRootView: View {
   var body: some View {
     List {
-      Section("Your Content") {
-        NavigationLink(value: YouRoute.mediaLibrary) {
-          Label("Media Library", systemImage: "photo.on.rectangle.angled")
+      Section {
+        NavigationLink(value: AccountRoute.mediaLibrary) {
+          AccountRowLabel("Media Library", systemImage: "photo.on.rectangle.angled", tint: .orange)
         }
-        .accessibilityIdentifier("you.media-library")
+        .accessibilityIdentifier("account.media-library")
       }
 
-      Section("Preferences") {
-        NavigationLink(value: YouRoute.readingAids) {
-          Label("Reading Aids", systemImage: "character.book.closed")
+      Section {
+        NavigationLink(value: AccountRoute.readingAids) {
+          AccountRowLabel("Reading Aids", systemImage: "character.book.closed.fill", tint: .blue)
         }
-        .accessibilityIdentifier("you.reading-aids")
+        .accessibilityIdentifier("account.reading-aids")
+
+        NavigationLink(value: AccountRoute.frequencyDictionaries) {
+          AccountRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
+        }
+        .accessibilityIdentifier("account.frequency-dictionaries")
       }
 
-      Section("Language Resources") {
-        NavigationLink(value: YouRoute.frequencyDictionaries) {
-          Label("Frequency Dictionaries", systemImage: "chart.bar.xaxis")
+      Section {
+        AccountExternalLink(destination: AccountLinks.support) {
+          AccountRowLabel("Help & Support", systemImage: "questionmark.bubble.fill", tint: .red)
         }
-        .accessibilityIdentifier("you.frequency-dictionaries")
+        .accessibilityIdentifier("account.support")
       }
 
-      Section("About") {
-        NavigationLink(value: YouRoute.credits) {
-          Label("Credits & Attributions", systemImage: "info.circle")
+      Section {
+        AccountAboutHeader()
+          .listRowBackground(Color.clear)
+          .listRowInsets(EdgeInsets(top: 8, leading: 4, bottom: 8, trailing: 4))
+      }
+
+      Section {
+        AccountExternalLink(destination: AccountLinks.privacyPolicy) {
+          AccountRowLabel("Privacy Policy", systemImage: "hand.raised.fill", tint: .blue)
         }
-        .accessibilityIdentifier("you.credits")
+        .accessibilityIdentifier("account.privacy-policy")
+
+        NavigationLink(value: AccountRoute.credits) {
+          AccountRowLabel("Credits & Attributions", systemImage: "text.book.closed.fill", tint: .gray)
+        }
+        .accessibilityIdentifier("account.credits")
       }
     }
-    .accessibilityIdentifier("you.list")
-    .navigationTitle("You")
+    .listSectionSpacing(.compact)
+    .accessibilityIdentifier("account.list")
+    .navigationTitle("Account")
   }
 }
 
-enum YouRoute: Hashable {
+/// A Settings-style row: a white symbol on a rounded, tinted tile, then the title.
+private struct AccountRowLabel: View {
+  let title: String
+  let systemImage: String
+  let tint: Color
+
+  init(_ title: String, systemImage: String, tint: Color) {
+    self.title = title
+    self.systemImage = systemImage
+    self.tint = tint
+  }
+
+  var body: some View {
+    Label {
+      Text(title)
+        .foregroundStyle(.primary)
+    } icon: {
+      Image(systemName: systemImage)
+        .font(.system(size: 15, weight: .semibold))
+        .foregroundStyle(.white)
+        .frame(width: 30, height: 30)
+        .background(tint.gradient, in: .rect(cornerRadius: 7))
+    }
+  }
+}
+
+/// A row that opens a web page, marked the way Settings marks rows that leave the app.
+private struct AccountExternalLink<Label: View>: View {
+  let destination: URL
+  @ViewBuilder let label: Label
+
+  var body: some View {
+    Link(destination: destination) {
+      HStack {
+        label
+        Spacer()
+        Image(systemName: "arrow.up.right")
+          .font(.footnote.weight(.semibold))
+          .foregroundStyle(.tertiary)
+          .accessibilityHidden(true)
+      }
+    }
+    .foregroundStyle(.primary)
+  }
+}
+
+private struct AccountAboutHeader: View {
+  var body: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      HStack(spacing: 12) {
+        if let icon = AppBundleInfo.icon {
+          Image(uiImage: icon)
+            .resizable()
+            .frame(width: 56, height: 56)
+            .clipShape(.rect(cornerRadius: 13))
+            .accessibilityHidden(true)
+        }
+        VStack(alignment: .leading, spacing: 2) {
+          Text(AppBundleInfo.name)
+            .font(.title3.bold())
+          if let version = AppBundleInfo.version {
+            Text("Version \(version)")
+              .foregroundStyle(.secondary)
+          }
+        }
+      }
+      Text(
+        "Look up Japanese words, kanji, readings, meanings, conjugations, and example sentences in one focused dictionary."
+      )
+      .foregroundStyle(.secondary)
+    }
+    .accessibilityElement(children: .combine)
+    .accessibilityIdentifier("account.about")
+  }
+}
+
+private enum AccountLinks {
+  // Kept in step with apps/ios/metadata App Store listing URLs.
+  static let support = URL(string: "https://zenbujapanese.com/support")!
+  static let privacyPolicy = URL(string: "https://zenbujapanese.com/privacy")!
+}
+
+private enum AppBundleInfo {
+  static var name: String {
+    Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+      ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String
+      ?? "Zenbu Japanese"
+  }
+
+  static var version: String? {
+    Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+  }
+
+  /// The compiled asset catalog exposes the app icon only through its Info.plist file names.
+  static var icon: UIImage? {
+    guard
+      let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
+      let primary = icons["CFBundlePrimaryIcon"] as? [String: Any]
+    else { return nil }
+    let names = (primary["CFBundleIconFiles"] as? [String] ?? []).reversed()
+      + [primary["CFBundleIconName"] as? String].compactMap { $0 }
+    return names.lazy.compactMap { UIImage(named: $0) }.first
+  }
+}
+
+enum AccountRoute: Hashable {
   case readingAids
   case mediaLibrary
   case frequencyDictionaries

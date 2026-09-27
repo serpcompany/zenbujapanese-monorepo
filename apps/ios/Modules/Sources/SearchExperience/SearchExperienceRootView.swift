@@ -5,7 +5,7 @@ public struct SearchExperienceRootView: View {
   @State private var selectedTab = SearchExperienceTab.search
   @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
-  @State private var youPath: [YouRoute] = []
+  @State private var accountPath: [AccountRoute] = []
   @State private var query = ""
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var recognizedWordSheet: RecognizedWordSheetRequest?
@@ -60,12 +60,12 @@ public struct SearchExperienceRootView: View {
         searchNavigation
       }
 
-      Tab(value: SearchExperienceTab.you) {
-        YouNavigationView(path: $youPath, store: encounterMediaStore)
+      Tab(value: SearchExperienceTab.account) {
+        AccountNavigationView(path: $accountPath, store: encounterMediaStore)
       } label: {
-        Label("You", systemImage: "person.crop.circle")
-          .accessibilityLabel("You, personal content and settings")
-          .accessibilityIdentifier("tab.you")
+        Label("Account", systemImage: "person.crop.circle")
+          .accessibilityLabel("Account, personal content and settings")
+          .accessibilityIdentifier("tab.account")
       }
     }
     .scrollEdgeEffectStyle(.hard, for: .bottom)
@@ -281,8 +281,8 @@ public struct SearchExperienceRootView: View {
   }
 
   private func openFrequencyDictionaries() {
-    selectedTab = .you
-    youPath = [.frequencyDictionaries]
+    selectedTab = .account
+    accountPath = [.frequencyDictionaries]
   }
 
   private func encounterMediaAttachment(for context: ImageWordContext?)
@@ -314,5 +314,5 @@ enum SearchExperienceRoute: Hashable {
 
 private enum SearchExperienceTab: Hashable {
   case search
-  case you
+  case account
 }

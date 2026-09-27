@@ -14,6 +14,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- The Results and Discovered Words headings no longer stay pinned over results as you scroll.
 - Inflected Japanese searches such as `まけたら`, `食べなかった`, and `勉強した` now find
   their dictionary forms (負ける, 食べる, 勉強) without downloading Japanese Text Analysis.
 - Word Detail shows the right part of speech for adverbs, pronouns, pre-noun adjectives, and
@@ -22,8 +23,12 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Changed
 
-- You no longer has a Japanese Text Analysis screen. The analysis is included with the app and
-  had nothing to change; its sources and licenses remain under Credits & Attributions.
+- The You tab is now **Account**, laid out like Settings with colored icons. It adds Help &
+  Support, the Privacy Policy, and the app's version.
+- Account no longer has a Japanese Text Analysis screen. The analysis is included with the app
+  and had nothing to change; its sources and licenses remain under Credits & Attributions.
+- Recent searches sit under a **Recent** heading, and Clear Recent Searches moved to the **⋯**
+  menu at the top of Search.
 - The conjugation table is compact: the word, its meaning, and a one-line rule sit at the top,
   and every form fits in one list with its changed ending highlighted. Tapping a form opens its
   own screen, which explains it and lists the example sentences that use it.

@@ -6,16 +6,20 @@ It is updated with the implementation and is not a roadmap or an ideas backlog.
 The current app has two tabs:
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience.
-- **You** opens personal content, preferences, language-resource management, and credits.
+- **Account** opens personal content, preferences, language-resource management, support, and credits.
 
-## You
+## Account
 
-You is a supporting navigation area rather than a separate Product Experience. It provides:
+Account is a supporting navigation area rather than a separate Product Experience. There is no
+sign-in yet; the tab holds on-device content and preferences. It provides:
 
 - the Media Library;
 - independent Furigana and Romaji preferences;
-- management of optional frequency dictionaries; and
-- source credits and attributions.
+- management of optional frequency dictionaries;
+- Help & Support and the Privacy Policy, which open the Zenbu website; and
+- the app's name, version, and description above source credits and attributions.
+
+Rows use Settings-style tinted icon tiles in grouped cards without section headings.
 
 Frequency Dictionaries includes JLPT Levels and TUBELEX YouTube Japanese in the app and offers
 Japanese Wikipedia plus nine checksum-pinned optional packs for Netflix, novels,
