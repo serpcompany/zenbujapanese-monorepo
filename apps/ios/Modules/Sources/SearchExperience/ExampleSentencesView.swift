@@ -92,6 +92,8 @@ struct JapaneseExampleRowContent: View {
   enum Presentation {
     case dedicated(index: Int)
     case wordDetail(index: Int)
+    /// The example on a conjugated form's sheet, highlighting that form.
+    case conjugatedForm(ConjugatedForm.Kind)
 
     struct WordSelectorConfiguration {
       let label: String
@@ -141,6 +143,19 @@ struct JapaneseExampleRowContent: View {
           rowIdentifier: "word-detail.example.\(index)",
           combinesRowAccessibility: true,
           highlightsCurrentEntry: true
+        )
+      case .conjugatedForm(let kind):
+        Configuration(
+          tokenPresentation: .standard,
+          tokenIdentifierPrefix: "conjugations.example-token.\(kind.rawValue)",
+          japaneseIdentifier: nil,
+          wordSelector: nil,
+          speakerLabel: "Speak example",
+          speakerIdentifier: "conjugations.example-speaker.\(kind.rawValue)",
+          englishIdentifier: "conjugations.example-english.\(kind.rawValue)",
+          rowIdentifier: "conjugations.example.\(kind.rawValue)",
+          combinesRowAccessibility: true,
+          highlightsCurrentEntry: false
         )
       }
     }

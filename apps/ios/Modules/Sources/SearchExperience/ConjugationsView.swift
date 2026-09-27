@@ -8,6 +8,8 @@ struct ConjugationsView: View {
   let table: ConjugationTable
   let exampleSentenceClient: ExampleSentenceClient
   let speechSynthesisClient: SpeechSynthesisClient
+  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
+  let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
     List {
@@ -56,7 +58,12 @@ struct ConjugationsView: View {
           .filter { $0.id != form.id && $0.surface == form.surface }
           .map(\.id.presentation.title),
         exampleSentenceClient: exampleSentenceClient,
-        speechSynthesisClient: speechSynthesisClient
+        speechSynthesisClient: speechSynthesisClient,
+        japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+        openWord: { word in
+          selectedForm = nil
+          openWord(word)
+        }
       )
     }
   }
@@ -140,6 +147,8 @@ struct ConjugatedFormSheet: View {
   let sharedSpellings: [String]
   let exampleSentenceClient: ExampleSentenceClient
   let speechSynthesisClient: SpeechSynthesisClient
+  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
+  let openWord: (DictionaryEntry) -> Void
 
   var body: some View {
     let presentation = form.id.presentation
@@ -190,14 +199,15 @@ struct ConjugatedFormSheet: View {
           Section("Example") { ProgressView() }
         } else if let example {
           Section("Example") {
-            VStack(alignment: .leading, spacing: 4) {
-              Text(highlighted(example.japanese))
-              Text(example.english)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityIdentifier("conjugations.sheet.example")
+            JapaneseExampleRowContent(
+              example: example,
+              highlightedQuery: SearchQuery(form.surface),
+              highlightedEntry: nil,
+              japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+              presentation: .conjugatedForm(form.id),
+              speak: { speechSynthesisClient.speak(example.japanese) },
+              openWord: openWord
+            )
           }
         }
       }
@@ -262,15 +272,6 @@ struct ConjugatedFormSheet: View {
   private static let followingParticles: Set<Character> = [
     "の", "か", "よ", "ね", "し", "と", "が", "を", "は", "も", "ん", "わ", "ぞ", "ぜ", "な",
   ]
-
-  private func highlighted(_ sentence: String) -> AttributedString {
-    var text = AttributedString(sentence)
-    if let range = text.range(of: form.surface) {
-      text[range].foregroundColor = .accentColor
-      text[range].font = .body.weight(.semibold)
-    }
-    return text
-  }
 }
 
 private struct ConjugationKindPresentation: Identifiable {

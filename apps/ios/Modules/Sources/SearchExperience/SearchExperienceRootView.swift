@@ -140,7 +140,9 @@ public struct SearchExperienceRootView: View {
             entry: entry,
             table: table,
             exampleSentenceClient: exampleSentenceClient,
-            speechSynthesisClient: speechSynthesisClient
+            speechSynthesisClient: speechSynthesisClient,
+            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+            openWord: { entry in path.append(.word(entry, nil)) }
           )
         case .image(let sessionID):
           if let session = imageTextSessionStore.session(sessionID) {
