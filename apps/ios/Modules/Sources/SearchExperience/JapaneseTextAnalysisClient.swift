@@ -348,7 +348,14 @@ private actor JapaneseTextAnalyzer {
       guard !value.isEmpty, value != "*", seen.insert(value).inserted else { return }
       forms.append(value)
     }
-    for form in [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm] {
+    // A joined inflection's surface is never its dictionary form, and it can collide with an
+    // unrelated headword: しまった (past of しまう) is also the interjection "darn it!". Look up
+    // only its head's forms; an unresolved joined word falls back to its pieces.
+    let evidence =
+      candidate.joinsInflection
+      ? [candidate.dictionaryForm, candidate.normalizedForm]
+      : [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm]
+    for form in evidence {
       append(form)
       append(form.applyingTransform(.hiraganaToKatakana, reverse: true) ?? form)
       append(form.applyingTransform(.hiraganaToKatakana, reverse: false) ?? form)

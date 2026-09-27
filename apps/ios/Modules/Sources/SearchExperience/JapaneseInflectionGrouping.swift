@@ -5,9 +5,11 @@ import Foundation
 ///
 /// Both parsers split inflections into separate morphemes: auxiliaries (ない, た, ます), the
 /// connective particles て, で, and ば, IPADIC's suffix verbs (れる, られる, せる, させる), and
-/// helper verbs such as いる or しまう after て. The joined candidate keeps the head's dictionary
-/// form, so it resolves to the head's entry, and keeps the pieces as children, so the analyzer
-/// can fall back to them when the joined word resolves to nothing.
+/// helper verbs such as いる or しまう after て. A na-adjective stem joins one following な, で,
+/// or に (静かな), but not the predicate copula, so 静かだ still reads as 静か + だ. The joined
+/// candidate keeps the head's dictionary form, so it resolves to the head's entry, and keeps the
+/// pieces as children, so the analyzer can fall back to them when the joined word resolves to
+/// nothing.
 enum JapaneseInflectionGrouping {
   static func group(_ candidates: [JapaneseMorphologyCandidate]) -> [JapaneseMorphologyCandidate] {
     var grouped: [JapaneseMorphologyCandidate] = []
@@ -21,6 +23,12 @@ enum JapaneseInflectionGrouping {
           pieces.append(candidates[index])
           index += 1
         }
+      } else if isNaAdjectiveStem(head), index < candidates.endIndex,
+        ["な", "で", "に"].contains(candidates[index].surface),
+        ["助動詞", "助詞"].contains(candidates[index].partOfSpeech.first)
+      {
+        pieces.append(candidates[index])
+        index += 1
       }
       grouped.append(pieces.count == 1 ? head : joined(pieces))
     }
@@ -29,6 +37,12 @@ enum JapaneseInflectionGrouping {
 
   private static func isInflectingHead(_ candidate: JapaneseMorphologyCandidate) -> Bool {
     ["動詞", "形容詞"].contains(candidate.partOfSpeech.first)
+  }
+
+  /// IPADIC tags a na-adjective stem as a noun with 形容動詞語幹; UniDic tags it 形状詞.
+  private static func isNaAdjectiveStem(_ candidate: JapaneseMorphologyCandidate) -> Bool {
+    let pos = candidate.partOfSpeech
+    return pos.first == "形状詞" || (pos.first == "名詞" && pos.contains("形容動詞語幹"))
   }
 
   private static func attaches(
@@ -62,7 +76,8 @@ enum JapaneseInflectionGrouping {
       reading: pieces.map(\.reading).joined(),
       partOfSpeech: head.partOfSpeech,
       isOutOfVocabulary: head.isOutOfVocabulary,
-      children: pieces
+      children: pieces,
+      joinsInflection: true
     )
   }
 }

@@ -54,8 +54,8 @@ passive 見られる, say so. Selecting a word in the example opens its Word Det
 to the form.
 
 Linked Japanese in Example Sentences gives each word its own underline, so word boundaries are
-visible. An inflected verb or adjective is one word with its endings, such as 見なかった or
-見ている, and opens its dictionary entry. The words that make up the current entry or the searched form are
+visible. An inflected verb or adjective is one word with its endings, such as 見なかった,
+見ている, or 静かな, and opens its dictionary entry. The words that make up the current entry or the searched form are
 accented.
 
 A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word.
