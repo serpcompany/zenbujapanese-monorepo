@@ -7,6 +7,12 @@ Source names link to the official publisher or project. Each app's source record
 exact versions, URLs, checksums, licenses, and transformations; for iOS, see the
 [`source index`](../apps/ios/LanguageData/Sources/README.md).
 
+When adding, removing, or relicensing a source, update iOS **Credits & Attributions**
+([`CreditsView.swift`](../apps/ios/Modules/Sources/SearchExperience/CreditsView.swift)) in the
+same PR: a one-line credit, the license name, and a project link, with no versions or dates. If
+the license requires shipping its text, add one copy under the app's `Resources`, list it on the
+Licenses screen, and point the source record at that file instead of keeping a second copy.
+
 | Category | Source | What it supplies | Current consumer |
 | --- | --- | --- | --- |
 | Dictionaries and language analysis | [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html) | Japanese written forms, readings, English meanings, usage information, cross-references, and source priority evidence. | iOS |

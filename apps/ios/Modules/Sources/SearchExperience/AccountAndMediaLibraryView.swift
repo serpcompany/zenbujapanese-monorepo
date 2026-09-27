@@ -19,7 +19,7 @@ struct AccountNavigationView: View {
           case .frequencyDictionaries:
             FrequencyDictionariesView(client: .live)
           case .credits:
-            DictionarySourcesView()
+            CreditsView()
           }
         }
     }
