@@ -7,7 +7,8 @@ struct JapaneseConjugationClient: Sendable {
 }
 
 struct ConjugationTable: Hashable, Sendable {
-  let title: String
+  /// One line on how this word class forms its conjugations.
+  let rule: String
   let plain: [ConjugatedForm]
   let polite: [ConjugatedForm]
 
@@ -30,6 +31,10 @@ struct ConjugatedForm: Hashable, Identifiable, Sendable {
   let id: Kind
   let surface: String
   let reading: String
+  /// The part of `surface` added after the unchanging stem, such as させる in 見させる.
+  let ending: String
+
+  var stem: String { String(surface.dropLast(ending.count)) }
 
   var readingAnnotation: ReadingAnnotation? {
     guard surface != reading else { return nil }
@@ -106,7 +111,7 @@ private enum JapaneseConjugator {
     guard entry.headword != "いい", entry.headword.last == "い", entry.reading.last == "い"
     else { return nil }
     return ConjugationTable(
-      title: "い Adjective",
+      rule: "Drop the final い, then add the ending.",
       plain: forms(
         surfaceStem: String(entry.headword.dropLast()),
         readingStem: String(entry.reading.dropLast()),
@@ -122,7 +127,7 @@ private enum JapaneseConjugator {
 
   private static func naAdjectiveTable(for entry: DictionaryEntry) -> ConjugationTable {
     ConjugationTable(
-      title: "な Adjective",
+      rule: "Keep the word as is and add な, で, or に.",
       plain: forms(
         surfaceStem: entry.headword,
         readingStem: entry.reading,
@@ -140,7 +145,7 @@ private enum JapaneseConjugator {
     let surfaceStem = String(entry.headword.dropLast(2))
     let readingStem = String(entry.reading.dropLast(2))
     return ConjugationTable(
-      title: "する Verb",
+      rule: "Conjugate する like an irregular verb after the noun.",
       plain: forms(
         surfaceStem: surfaceStem,
         readingStem: readingStem,
@@ -193,7 +198,7 @@ private enum JapaneseConjugator {
       volitional: "来ましょう", imperative: "来なさい"
     ) : politeReading
     return ConjugationTable(
-      title: "Irregular Verb",
+      rule: "来る is irregular: its reading changes between く, き, and こ.",
       plain: forms(
         surfaceStem: surfaceStem,
         readingStem: readingStem,
@@ -213,7 +218,7 @@ private enum JapaneseConjugator {
     let surfaceStem = String(entry.headword.dropLast())
     let readingStem = String(entry.reading.dropLast())
     return ConjugationTable(
-      title: "る Verb",
+      rule: "Drop る, then add the ending.",
       plain: forms(
         surfaceStem: surfaceStem,
         readingStem: readingStem,
@@ -251,7 +256,7 @@ private enum JapaneseConjugator {
     let teForm = isIkuException ? "って" : surfaceEnding.teForm
 
     return ConjugationTable(
-      title: "う Verb",
+      rule: "Change the final kana to another vowel sound, then add the ending.",
       plain: forms(
         surfaceStem: surfaceStem,
         readingStem: readingStem,
@@ -288,7 +293,8 @@ private enum JapaneseConjugator {
       ConjugatedForm(
         id: rule.kind,
         surface: surfaceStem + rule.surfaceSuffix,
-        reading: readingStem + rule.readingSuffix
+        reading: readingStem + rule.readingSuffix,
+        ending: rule.surfaceSuffix
       )
     }
   }

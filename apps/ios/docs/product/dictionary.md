@@ -44,6 +44,14 @@ headword are the pitch accent (the reading in katakana with an overline across t
 a hook at the downstep), a pronounce button, and the latest encounter photo. A part-of-speech row
 follows and opens the conjugation table when one exists.
 
+The conjugation table starts with the word, its reading and meaning, its word class, and a
+one-line rule for how that class conjugates. A Plain/Polite control switches register when both
+exist. Each row names the form and shows it with the changed ending highlighted. Selecting a row
+opens a sheet with the form's reading, a pronounce button, a short explanation, how the form is
+built from the dictionary form, the form in the other register, and a short Example Sentence that
+uses the complete form when one exists. Forms that share a spelling, such as potential and
+passive 見られる, say so.
+
 A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word.
 Selecting a row opens that dictionary's details. JLPT levels are presented as unofficial study
 estimates.

@@ -2,13 +2,19 @@ import SwiftUI
 
 struct ConjugationsView: View {
   @State private var mode = ConjugationMode.plain
-  @State private var presentedExplanation: ConjugationKindPresentation?
+  @State private var selectedForm: ConjugatedForm?
 
   let entry: DictionaryEntry
   let table: ConjugationTable
+  let exampleSentenceClient: ExampleSentenceClient
+  let speechSynthesisClient: SpeechSynthesisClient
 
   var body: some View {
     List {
+      Section {
+        ConjugationHeader(entry: entry, rule: table.rule)
+      }
+
       if table.supportsModes {
         Section {
           Picker("Conjugation mode", selection: $mode) {
@@ -19,78 +25,184 @@ struct ConjugationsView: View {
             }
           }
           .pickerStyle(.segmented)
-          .controlSize(.large)
           .accessibilityIdentifier("conjugations.mode")
         }
+        .listRowBackground(Color.clear)
+        .listRowInsets(EdgeInsets())
       }
 
-      ForEach(table.forms(for: mode)) { form in
-        ConjugationSection(form: form) {
-          presentedExplanation = form.id.presentation
+      Section {
+        ForEach(table.forms(for: mode)) { form in
+          Button {
+            selectedForm = form
+          } label: {
+            ConjugationRow(form: form)
+          }
+          .foregroundStyle(.primary)
         }
       }
     }
-    .listStyle(.plain)
+    .listStyle(.insetGrouped)
     .listSectionSpacing(.compact)
-    .environment(\.defaultMinListRowHeight, 35)
     .accessibilityIdentifier("conjugations.screen")
-    .navigationTitle(table.title)
+    .navigationTitle("Conjugations")
     .navigationBarTitleDisplayMode(.inline)
-    .sheet(item: $presentedExplanation) { explanation in
-      ConjugationExplanationSheet(explanation: explanation)
+    .sheet(item: $selectedForm) { form in
+      ConjugatedFormSheet(
+        entry: entry,
+        form: form,
+        counterpart: counterpart(of: form),
+        sharedSpellings: table.forms(for: mode)
+          .filter { $0.id != form.id && $0.surface == form.surface }
+          .map(\.id.presentation.title),
+        exampleSentenceClient: exampleSentenceClient,
+        speechSynthesisClient: speechSynthesisClient
+      )
     }
+  }
+
+  /// The same form in the other register, when it is spelled differently.
+  private func counterpart(of form: ConjugatedForm) -> (mode: ConjugationMode, form: ConjugatedForm)? {
+    guard table.supportsModes else { return nil }
+    let other: ConjugationMode = mode == .plain ? .polite : .plain
+    guard let match = table.forms(for: other).first(where: { $0.id == form.id }),
+      match.surface != form.surface
+    else { return nil }
+    return (other, match)
   }
 }
 
-private struct ConjugationSection: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+private struct ConjugationHeader: View {
+  let entry: DictionaryEntry
+  let rule: String
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      JapaneseRubyText(
+        surface: entry.headword,
+        reading: entry.reading,
+        baseFont: .largeTitle,
+        rubyFont: .subheadline
+      )
+      Text(entry.summary)
+        .foregroundStyle(.secondary)
+      if !entry.displayPartOfSpeech.isEmpty {
+        Text(entry.displayPartOfSpeech)
+          .font(.subheadline)
+      }
+      Text(rule)
+        .font(.footnote)
+        .foregroundStyle(.tint)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
+    }
+    .padding(.vertical, 4)
+    .accessibilityElement(children: .combine)
+    .accessibilityIdentifier("conjugations.header")
+  }
+}
+
+private struct ConjugationRow: View {
   let form: ConjugatedForm
-  let showExplanation: () -> Void
+
+  var body: some View {
+    let title = form.id.presentation.title
+    HStack(spacing: 12) {
+      Text(title)
+        .foregroundStyle(.secondary)
+        .accessibilityIdentifier("conjugations.title.\(form.id.rawValue)")
+      Spacer(minLength: 8)
+      ConjugatedSurface(form: form, font: .title3, rubyFont: .caption2)
+        .multilineTextAlignment(.trailing)
+      Image(systemName: "chevron.right")
+        .font(.footnote.weight(.semibold))
+        .foregroundStyle(.tertiary)
+    }
+    .contentShape(Rectangle())
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("\(title), \(form.surface)")
+    .accessibilityValue(form.reading)
+    .accessibilityHint("Explains this form")
+    .accessibilityIdentifier("conjugations.row.\(form.id.rawValue)")
+  }
+}
+
+struct ConjugatedFormSheet: View {
+  @Environment(\.dismiss) private var dismiss
+  @State private var example: ExampleSentence?
+  @State private var isLoadingExample = true
+
+  let entry: DictionaryEntry
+  let form: ConjugatedForm
+  let counterpart: (mode: ConjugationMode, form: ConjugatedForm)?
+  /// Other forms with the same spelling, such as potential and passive 見られる.
+  let sharedSpellings: [String]
+  let exampleSentenceClient: ExampleSentenceClient
+  let speechSynthesisClient: SpeechSynthesisClient
 
   var body: some View {
     let presentation = form.id.presentation
-    Section {
-      HStack {
-        ConjugatedSurface(form: form)
-          .accessibilityHidden(true)
-      }
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .accessibilityElement(children: .ignore)
-      .accessibilityLabel("\(form.surface), \(presentation.title)")
-      .accessibilityValue(form.reading)
-      .accessibilityIdentifier("conjugations.row.\(form.id.rawValue)")
-    } header: {
-      HStack(spacing: 8) {
-        Text(presentation.title)
-          .font(dynamicTypeSize.isAccessibilitySize ? .caption2 : .headline)
-          .accessibilityIdentifier("conjugations.title.\(form.id.rawValue)")
-        Spacer()
-        Button(action: showExplanation) {
-          Image(systemName: "info.circle")
-            .font(dynamicTypeSize.isAccessibilitySize ? .caption2 : .body)
-            .frame(minWidth: 44, minHeight: 44)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("About \(presentation.title)")
-        .accessibilityIdentifier("conjugations.info.\(form.id.rawValue)")
-      }
-      .textCase(nil)
-    }
-  }
-}
-
-private struct ConjugationExplanationSheet: View {
-  @Environment(\.dismiss) private var dismiss
-  let explanation: ConjugationKindPresentation
-
-  var body: some View {
     NavigationStack {
-      Form {
-        Text(explanation.explanation)
-          .accessibilityIdentifier("conjugations.explanation.\(explanation.id.rawValue)")
+      List {
+        Section {
+          VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .lastTextBaseline, spacing: 12) {
+              ConjugatedSurface(form: form, font: .largeTitle, rubyFont: .subheadline, alwaysShowsReading: true)
+              Button {
+                speechSynthesisClient.speak(form.reading)
+              } label: {
+                Image(systemName: "speaker.wave.2.fill")
+              }
+              .buttonStyle(.borderless)
+              .accessibilityLabel("Pronounce \(form.surface)")
+              .accessibilityIdentifier("conjugations.sheet.pronounce")
+            }
+            Text(presentation.explanation)
+              .foregroundStyle(.secondary)
+              .accessibilityIdentifier("conjugations.explanation.\(form.id.rawValue)")
+            if !sharedSpellings.isEmpty {
+              Label(
+                "Same spelling as \(sharedSpellings.formatted(.list(type: .and))). Context tells them apart.",
+                systemImage: "equal.circle"
+              )
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+            }
+          }
+          .padding(.vertical, 4)
+        }
+
+        if !form.stem.isEmpty, !form.ending.isEmpty {
+          Section("How it's built") {
+            Text("\(entry.headword) → \(form.stem) + \(form.ending)")
+              .font(.title3)
+          }
+        }
+
+        if let counterpart {
+          Section(counterpart.mode.rawValue) {
+            ConjugatedSurface(form: counterpart.form, font: .title3, rubyFont: .caption2)
+          }
+        }
+
+        if isLoadingExample {
+          Section("Example") { ProgressView() }
+        } else if let example {
+          Section("Example") {
+            VStack(alignment: .leading, spacing: 4) {
+              Text(highlighted(example.japanese))
+              Text(example.english)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("conjugations.sheet.example")
+          }
+        }
       }
-      .navigationTitle(explanation.title)
+      .listSectionSpacing(.compact)
+      .navigationTitle(presentation.title)
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
@@ -99,7 +211,65 @@ private struct ConjugationExplanationSheet: View {
         }
       }
     }
-    .presentationDetents([.medium])
+    .presentationDetents([.fraction(0.7), .large])
+    .presentationDragIndicator(.visible)
+    .task(id: form) {
+      example = await loadExample()
+      isLoadingExample = false
+    }
+  }
+
+  /// A short sentence that contains this exact form, preferring one with some context over a
+  /// bare exclamation such as 見て！. Nothing when the corpus has none.
+  private func loadExample() async -> ExampleSentence? {
+    let sentences = (try? await exampleSentenceClient.search(SearchQuery(form.surface))) ?? []
+    let matches = sentences.filter { Self.containsCompleteForm(form.surface, in: $0.japanese) }
+    let minimumLength = form.surface.count + 5
+    return matches.filter { $0.japanese.count >= minimumLength }
+      .min { $0.japanese.count < $1.japanese.count }
+      ?? matches.min { $0.japanese.count < $1.japanese.count }
+  }
+
+  /// Whether `sentence` uses `surface` as a whole form, not inside a longer one: 見たら is a
+  /// conditional, not the past 見た, and 花見た is a different word.
+  static func containsCompleteForm(_ surface: String, in sentence: String) -> Bool {
+    var searchStart = sentence.startIndex
+    while let range = sentence.range(of: surface, range: searchStart..<sentence.endIndex) {
+      let previous = range.lowerBound > sentence.startIndex
+        ? sentence[sentence.index(before: range.lowerBound)] : nil
+      let next = range.upperBound < sentence.endIndex ? sentence[range.upperBound] : nil
+      // A kanji form may follow a particle such as を; a kana form needs a clear break.
+      let startsCleanly: Bool =
+        switch previous {
+        case nil: true
+        case let character? where character.isKanji: false
+        case let character? where character.isHiragana: !(surface.first?.isHiragana ?? true)
+        default: true
+        }
+      let endsCleanly: Bool =
+        switch next {
+        case nil: true
+        case let character? where character.isHiragana: followingParticles.contains(character)
+        default: true
+        }
+      if startsCleanly, endsCleanly { return true }
+      searchStart = sentence.index(after: range.lowerBound)
+    }
+    return false
+  }
+
+  /// Particles that can follow a finished form without extending its inflection.
+  private static let followingParticles: Set<Character> = [
+    "の", "か", "よ", "ね", "し", "と", "が", "を", "は", "も", "ん", "わ", "ぞ", "ぜ", "な",
+  ]
+
+  private func highlighted(_ sentence: String) -> AttributedString {
+    var text = AttributedString(sentence)
+    if let range = text.range(of: form.surface) {
+      text[range].foregroundColor = .accentColor
+      text[range].font = .body.weight(.semibold)
+    }
+    return text
   }
 }
 
@@ -217,15 +387,43 @@ extension ConjugatedForm.Kind {
 
 private struct ConjugatedSurface: View {
   let form: ConjugatedForm
+  let font: Font
+  let rubyFont: Font
+  var alwaysShowsReading = false
 
   var body: some View {
-    JapaneseRubyText(
-      surface: form.surface,
-      reading: form.reading,
-      baseFont: .title3,
-      rubyFont: .body,
-      exposesAccessibility: false
-    )
-    .fixedSize(horizontal: false, vertical: true)
+    // The stem reading is already in the header, so rows show furigana only when the
+    // ending itself contains kanji, as in 来させる, whose reading changes.
+    if alwaysShowsReading || form.ending.contains(where: \.isKanji) {
+      JapaneseRubyText(
+        surface: form.surface,
+        reading: form.reading,
+        baseFont: font,
+        rubyFont: rubyFont,
+        exposesAccessibility: false
+      )
+      .fixedSize(horizontal: false, vertical: true)
+    } else {
+      Text(tintedSurface)
+        .font(font)
+    }
+  }
+
+  private var tintedSurface: AttributedString {
+    var stem = AttributedString(form.stem)
+    var ending = AttributedString(form.ending)
+    ending.foregroundColor = .accentColor
+    stem.append(ending)
+    return stem
+  }
+}
+
+extension Character {
+  fileprivate var isKanji: Bool {
+    unicodeScalars.contains { (0x4E00...0x9FFF).contains($0.value) || $0 == "々" }
+  }
+
+  fileprivate var isHiragana: Bool {
+    unicodeScalars.allSatisfy { (0x3041...0x309F).contains($0.value) }
   }
 }

@@ -19,6 +19,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Changed
 
+- The conjugation table is compact: the word, its meaning, and a one-line rule sit at the top,
+  and every form fits in one list with its changed ending highlighted. Tapping a form explains
+  it, shows how it's built and its polite or plain counterpart, and gives an example sentence.
+
 - Search now presents one Results list ordered by dictionary relevance first, then by the enabled
   frequency dictionaries in priority order. English rows show the gloss that matched the query.
 - TUBELEX remains included and enabled by default. Japanese Wikipedia and nine domain-specific

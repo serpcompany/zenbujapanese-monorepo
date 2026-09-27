@@ -136,7 +136,12 @@ public struct SearchExperienceRootView: View {
             openWord: { entry in path.append(.word(entry, nil)) }
           )
         case .conjugations(let entry, let table):
-          ConjugationsView(entry: entry, table: table)
+          ConjugationsView(
+            entry: entry,
+            table: table,
+            exampleSentenceClient: exampleSentenceClient,
+            speechSynthesisClient: speechSynthesisClient
+          )
         case .image(let sessionID):
           if let session = imageTextSessionStore.session(sessionID) {
             ImageTextFlowView(
