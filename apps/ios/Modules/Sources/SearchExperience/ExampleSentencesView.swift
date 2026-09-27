@@ -85,6 +85,43 @@ private struct ExampleSentenceRow: View {
   }
 }
 
+/// A list's example rows with their loading and empty states. Word Detail and the conjugated
+/// form screen share it, so examples look and behave the same wherever they appear.
+struct ExampleSentenceRows: View {
+  let examples: [ExampleSentence]
+  let isLoading: Bool
+  let emptyMessage: String
+  let highlightedQuery: SearchQuery
+  let highlightedEntry: DictionaryEntry?
+  let presentation: (Int) -> JapaneseExampleRowContent.Presentation
+  let speechSynthesisClient: SpeechSynthesisClient
+  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
+  let openWord: (DictionaryEntry) -> Void
+
+  var body: some View {
+    // Keep loaded rows during refresh so a native Back transition does not collapse the
+    // List and discard its scroll position.
+    if isLoading && examples.isEmpty {
+      ProgressView("Loading examples")
+    } else if examples.isEmpty {
+      Text(emptyMessage)
+        .foregroundStyle(.secondary)
+    } else {
+      ForEach(Array(examples.enumerated()), id: \.element.id) { index, example in
+        JapaneseExampleRowContent(
+          example: example,
+          highlightedQuery: highlightedQuery,
+          highlightedEntry: highlightedEntry,
+          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+          presentation: presentation(index),
+          speak: { speechSynthesisClient.speak(example.japanese) },
+          openWord: openWord
+        )
+      }
+    }
+  }
+}
+
 /// The shared learner-visible geometry for Japanese/translation rows with a speech action.
 /// Dedicated Examples expose one native word-selection menu, while Word Detail retains its
 /// evidence-backed inline current-word treatment.
@@ -92,8 +129,8 @@ struct JapaneseExampleRowContent: View {
   enum Presentation {
     case dedicated(index: Int)
     case wordDetail(index: Int)
-    /// The example on a conjugated form's sheet, highlighting that form.
-    case conjugatedForm(ConjugatedForm.Kind)
+    /// An example on a conjugated form's screen, highlighting that form.
+    case conjugatedForm(ConjugatedForm.Kind, index: Int)
 
     struct WordSelectorConfiguration {
       let label: String
@@ -147,16 +184,16 @@ struct JapaneseExampleRowContent: View {
           highlightsCurrentEntry: true,
           highlightsQuery: false
         )
-      case .conjugatedForm(let kind):
+      case .conjugatedForm(let kind, let index):
         Configuration(
           tokenPresentation: .standard,
-          tokenIdentifierPrefix: "conjugations.example-token.\(kind.rawValue)",
+          tokenIdentifierPrefix: "conjugations.example-token.\(kind.rawValue).\(index)",
           japaneseIdentifier: nil,
           wordSelector: nil,
-          speakerLabel: "Speak example",
-          speakerIdentifier: "conjugations.example-speaker.\(kind.rawValue)",
-          englishIdentifier: "conjugations.example-english.\(kind.rawValue)",
-          rowIdentifier: "conjugations.example.\(kind.rawValue)",
+          speakerLabel: "Speak example \(index + 1)",
+          speakerIdentifier: "conjugations.example-speaker.\(kind.rawValue).\(index)",
+          englishIdentifier: "conjugations.example-english.\(kind.rawValue).\(index)",
+          rowIdentifier: "conjugations.example.\(kind.rawValue).\(index)",
           combinesRowAccessibility: true,
           highlightsCurrentEntry: false,
           highlightsQuery: true

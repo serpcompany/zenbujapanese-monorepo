@@ -106,8 +106,8 @@ private struct ConjugationRow: View {
 
 /// One conjugated form: what it means, how it's built, its other register, and an example.
 struct ConjugatedFormView: View {
-  @State private var example: ExampleSentence?
-  @State private var isLoadingExample = true
+  @State private var examples: [ExampleSentence] = []
+  @State private var isLoadingExamples = true
 
   let entry: DictionaryEntry
   let table: ConjugationTable
@@ -157,20 +157,18 @@ struct ConjugatedFormView: View {
         }
       }
 
-      if isLoadingExample {
-        Section("Example") { ProgressView() }
-      } else if let example {
-        Section("Example") {
-          JapaneseExampleRowContent(
-            example: example,
-            highlightedQuery: SearchQuery(form.surface),
-            highlightedEntry: nil,
-            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-            presentation: .conjugatedForm(form.id),
-            speak: { speechSynthesisClient.speak(example.japanese) },
-            openWord: openWord
-          )
-        }
+      Section("Examples") {
+        ExampleSentenceRows(
+          examples: examples,
+          isLoading: isLoadingExamples,
+          emptyMessage: "No example sentences use this form yet.",
+          highlightedQuery: SearchQuery(form.surface),
+          highlightedEntry: nil,
+          presentation: { .conjugatedForm(form.id, index: $0) },
+          speechSynthesisClient: speechSynthesisClient,
+          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+          openWord: openWord
+        )
       }
     }
     .listSectionSpacing(.compact)
@@ -178,8 +176,8 @@ struct ConjugatedFormView: View {
     .navigationBarTitleDisplayMode(.inline)
     .accessibilityIdentifier("conjugations.form.\(form.id.rawValue)")
     .task(id: form) {
-      example = await loadExample()
-      isLoadingExample = false
+      examples = await loadExamples()
+      isLoadingExamples = false
     }
   }
 
@@ -200,15 +198,10 @@ struct ConjugatedFormView: View {
       .map(\.id.presentation.title)
   }
 
-  /// A short sentence that contains this exact form, preferring one with some context over a
-  /// bare exclamation such as 見て！. Nothing when the corpus has none.
-  private func loadExample() async -> ExampleSentence? {
+  /// Every retrieved Example Sentence that uses this exact form, in retrieval order.
+  private func loadExamples() async -> [ExampleSentence] {
     let sentences = (try? await exampleSentenceClient.search(SearchQuery(form.surface))) ?? []
-    let matches = sentences.filter { Self.containsCompleteForm(form.surface, in: $0.japanese) }
-    let minimumLength = form.surface.count + 5
-    return matches.filter { $0.japanese.count >= minimumLength }
-      .min { $0.japanese.count < $1.japanese.count }
-      ?? matches.min { $0.japanese.count < $1.japanese.count }
+    return sentences.filter { Self.containsCompleteForm(form.surface, in: $0.japanese) }
   }
 
   /// Whether `sentence` uses `surface` as a whole form, not inside a longer one: 見たら is a

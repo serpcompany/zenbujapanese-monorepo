@@ -49,7 +49,8 @@ one-line rule for how that class conjugates. A Plain/Polite control switches reg
 exist. Each row names the form and shows it with the changed ending highlighted. Selecting a row
 opens that form's screen. It leads with what the form means, then shows the form the way Word
 Detail shows a word (furigana and a pronounce button) with its ending highlighted, the form in
-the other register, and a short Example Sentence that uses the complete form when one exists. Forms that share a spelling, such as potential and
+the other register, and every Example Sentence that uses the complete form, in the same list
+Word Detail uses. Forms that share a spelling, such as potential and
 passive 見られる, say so. Selecting a word in the example opens its Word Detail, and Back returns
 to the form.
 

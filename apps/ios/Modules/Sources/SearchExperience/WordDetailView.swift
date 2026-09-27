@@ -114,10 +114,13 @@ struct WordDetailView: View {
             .foregroundStyle(.secondary)
             .accessibilityIdentifier("word-detail.reduced-analysis")
           }
-          EntryExamplesSection(
-            entry: entry,
+          ExampleSentenceRows(
             examples: examplesEntryID == entry.id ? examples : [],
             isLoading: isLoadingExamples || examplesEntryID != entry.id,
+            emptyMessage: "No source-matched examples",
+            highlightedQuery: SearchQuery(entry.headword),
+            highlightedEntry: entry,
+            presentation: { .wordDetail(index: $0) },
             speechSynthesisClient: speechSynthesisClient,
             japaneseTextAnalysisClient: japaneseTextAnalysisClient,
             openWord: openWord
@@ -1104,38 +1107,6 @@ private struct NotesSection: View {
       .italic()
       .focused(editorFocused)
       .accessibilityIdentifier("word-note.editor")
-  }
-}
-
-private struct EntryExamplesSection: View {
-  let entry: DictionaryEntry
-  let examples: [ExampleSentence]
-  let isLoading: Bool
-  let speechSynthesisClient: SpeechSynthesisClient
-  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
-  let openWord: (DictionaryEntry) -> Void
-
-  var body: some View {
-    // Keep the same entry's loaded rows during refresh so a native Back
-    // transition does not collapse the List and discard its scroll position.
-    if isLoading && examples.isEmpty {
-      ProgressView("Loading examples")
-    } else if examples.isEmpty {
-      Text("No source-matched examples")
-        .foregroundStyle(.secondary)
-    } else {
-      ForEach(Array(examples.enumerated()), id: \.element.id) { index, example in
-        JapaneseExampleRowContent(
-          example: example,
-          highlightedQuery: SearchQuery(entry.headword),
-          highlightedEntry: entry,
-          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-          presentation: .wordDetail(index: index),
-          speak: { speechSynthesisClient.speak(example.japanese) },
-          openWord: openWord
-        )
-      }
-    }
   }
 }
 
