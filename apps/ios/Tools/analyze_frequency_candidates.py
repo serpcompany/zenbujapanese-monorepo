@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Spike #376: map licensed frequency candidates (Jiten CSV, TUBELEX categories) and compare them.
+"""Map frequency-list candidates and compare them with current packs, TUBELEX, and Wikipedia.
 
-Exploration only. Writes nothing under Resources, Generated, Sources, or Candidates.
+Reports coverage (mapped / ambiguous / unmapped) under FrequencyPackMappingV1 and, for lists with
+readings, FrequencyPackMappingV2, plus overlap, top-1k Jaccard, and rank correlation. Used for
+#376 to choose the Jiten packs; results are in LanguageData/Generated/Frequency-candidates-376.analysis.json.
 """
 
 from __future__ import annotations
@@ -13,12 +15,12 @@ import json
 import lzma
 import sqlite3
 import sys
-import tempfile
 import zipfile
 from pathlib import Path
 
-TOOLS = Path(__file__).resolve().parents[1]
+TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))
+from build_jiten_frequency_packs import jiten_pairs, read_list  # noqa: E402
 from analyze_ordered_json_frequency_lists import (  # noqa: E402
     MAPPING_SQL as MAPPING_V1,
     canonical_json,
@@ -34,60 +36,11 @@ TUBELEX = TOOLS.parent / "LanguageData/Sources/TUBELEX-ja-310-lemma-pos.tsv.xz"
 Row = tuple[int, str, str, int, str, bytes]
 
 
-def assign_ranks(source_ranks: list[int]) -> tuple[list[int], int]:
-    """Return (rank for each row in file order, number of leading rows to keep).
-
-    `source_ranks` is Jiten's published competition rank per row (1, 2, 2, 4, …), already in
-    file order. The final bucket at max(source_ranks) is the unobserved tail.
-    """
-    # Drop the unobserved tail bucket, then rank by row position. Position keeps the V1
-    # "every row receives a distinct rank" contract and needs no runtime rank parser; Jiten's
-    # upstream order inside a tie bucket is kept as published.
-    if not source_ranks:
-        return [], 0
-    tail = max(source_ranks)
-    keep = len(source_ranks)
-    while keep and source_ranks[keep - 1] == tail:
-        keep -= 1
-    if keep == 0 or len(source_ranks) - keep < 2:  # no real tail bucket: keep everything
-        keep = len(source_ranks)
-    return list(range(1, keep + 1)), keep
-
-
-def jiten_pairs(paths: list[Path]) -> list[tuple[str, str]]:
-    """Return `(dictionary form, reading)` pairs in rank order from one or more Jiten CSVs.
-
-    Each list loses its unobserved tail first. Several lists merge by mean list percentile
-    (position / kept rows), counting a pair missing from a list as percentile 1.0 so a word
-    must be common across the merged media to rank high. Ties keep first-seen order.
-    """
-    lists: list[list[tuple[str, str]]] = []
-    for path in paths:
-        with path.open(encoding="utf-8", newline="") as handle:
-            records = list(csv.DictReader(handle))
-        if not records or list(records[0]) != ["Word", "Form", "Rank"]:
-            raise ValueError(f"{path.name}: expected Word,Form,Rank")
-        _, keep = assign_ranks([int(r["Rank"]) for r in records])
-        lists.append([(r["Word"], r["Form"]) for r in records[:keep]])
-    if len(lists) == 1:
-        return lists[0]
-    percentiles: dict[tuple[str, str], list[float]] = {}
-    for index, pairs in enumerate(lists):
-        for position, pair in enumerate(pairs, 1):
-            slots = percentiles.setdefault(pair, [1.0] * len(lists))
-            slots[index] = min(slots[index], position / len(pairs))
-    order = {pair: i for i, pair in enumerate(percentiles)}
-    return sorted(percentiles, key=lambda pair: (sum(percentiles[pair]) / len(lists), order[pair]))
-
-
 def jiten_rows(paths: list[Path]) -> list[Row]:
     rows: list[Row] = []
-    for rank, (word, reading) in enumerate(jiten_pairs(paths), 1):
-        form = normalized(word)
-        if not form:
-            raise ValueError(f"empty form at rank {rank}")
+    for rank, (word, reading) in enumerate(jiten_pairs([read_list(p) for p in paths]), 1):
         digest = hashlib.sha256(canonical_json([word, reading])).digest()
-        rows.append((rank, form, normalized(reading), 0, "", digest))
+        rows.append((rank, normalized(word), normalized(reading), 0, "", digest))
     return rows
 
 
@@ -216,6 +169,8 @@ def main() -> None:
     parser.add_argument("--tubelex-artifact", type=Path, required=True)
     parser.add_argument("--wikipedia-artifact", type=Path, required=True)
     parser.add_argument("--work", type=Path, required=True, help="scratch dir for artifacts")
+    parser.add_argument("--current-archives", type=Path, default=Path("."),
+                        help="dir holding the current packs' source archives named in the plan")
     parser.add_argument("--output", type=Path, required=True)
     arguments = parser.parse_args()
     plan = json.loads(arguments.plan.read_text(encoding="utf-8"))
@@ -224,14 +179,14 @@ def main() -> None:
         "schema": "zenbu.spike-376.analysis.v1",
         "languageDataSHA256": sha256(arguments.language_data),
         "mappingV1SHA256": sha256(MAPPING_V1),
-        "mappingV2DraftSHA256": sha256(MAPPING_V2),
+        "mappingV2SHA256": sha256(MAPPING_V2),
         "candidates": [],
         "current": [],
     }
     artifacts: dict[str, Path] = {}
     # Current packs first so replacements can be compared against them.
     for current in plan.get("current", []):
-        rows = ordered_json_rows(Path(current["archive"]))
+        rows = ordered_json_rows(arguments.current_archives / current["archive"])
         out = arguments.work / f"current-{current['id']}.sqlite3"
         mapping = map_rows(rows, MAPPING_V1, arguments.language_data, out)
         artifacts[f"current_{current['id']}"] = out

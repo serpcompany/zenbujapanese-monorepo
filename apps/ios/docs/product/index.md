@@ -30,13 +30,14 @@ one shows an error and is not saved. Without a photo, the card shows the name's 
 profile is stored only on the device and is not linked to any account.
 
 Frequency Dictionaries includes JLPT Levels and YouTube (TUBELEX) in the app and offers
-Japanese Wikipedia, five packs built from Jiten's CC BY-SA 4.0 lists (TV & Movies, Anime,
-Manga, Novels, and Visual Novels), and three checksum-pinned optional packs for NHK, Japanese
-dictionary definitions, and broad web Japanese. Optional packs are downloaded on request and mapped
-locally into Zenbu's dictionary. A learner can enable any number of installed packs,
-including none. A newly downloaded pack is enabled automatically. JLPT Levels and TUBELEX can
+seven optional packs: Japanese Wikipedia, plus TV & Movies, Anime, Manga, Novels, Visual Novels,
+and Video Games built from Jiten's CC BY-SA 4.0 lists. Every pack's source is openly licensed.
+Optional packs are downloaded on request and mapped locally into Zenbu's dictionary; Jiten packs
+match words by reading as well as spelling. A pack removed from the catalog in an update is
+deleted from the device on the next launch. A learner can enable any number of installed packs,
+including none. A newly downloaded pack is enabled automatically. JLPT Levels and YouTube can
 be disabled but not removed, and removing an optional pack also disables it. A new install
-enables JLPT Levels first and TUBELEX second. JLPT Levels marks words with an estimated N5–N1
+enables JLPT Levels first and YouTube second. JLPT Levels marks words with an estimated N5–N1
 level from Jonathan Waller's lists; JLPT publishes no official vocabulary list, so the app
 presents levels as unofficial study estimates.
 

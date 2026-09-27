@@ -1,9 +1,8 @@
--- SPIKE (#376). Bundled on the spike branch only; used by packs with mappingPolicyVersion 2.
 -- FrequencyPackMappingV2 = V1 plus an optional source reading. When source_rows.source_reading
 -- is non-empty, a candidate entry must carry that reading (entry reading or a reading form), and
 -- JMdict reading restrictions (re_restr) must allow the matched written form. Rows without a
 -- reading behave exactly as in V1. Unique reading-constrained matches are labelled
--- exactWrittenReading / exactReading, which FrequencyPack.MappingRelation already declares.
+-- exactWrittenReading / exactReading.
 ATTACH DATABASE '{{LANGUAGE_DATA_PATH}}' AS language;
 CREATE TEMP TABLE language_readings AS
   SELECT id, reading FROM language.entries

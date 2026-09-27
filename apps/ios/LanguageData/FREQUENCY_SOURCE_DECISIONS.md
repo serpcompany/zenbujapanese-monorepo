@@ -1,40 +1,80 @@
 # Japanese frequency source analysis
 
-Updated 2026-09-25 for issue #351.
+Updated 2026-09-27 for issue #376. The sections after "Historical: public-catalog packs (#351)"
+record the earlier decision and stay for provenance.
 
 ## Runtime source selection
 
-Zenbu ships JLPT Levels (issue #360) first and TUBELEX second as the default frequency packs.
-JLPT Levels is a level pack, not a rank pack: it maps Waller's N5–N1 lists by exact JMdict
-sequence join (`import_jlpt_level_pack.py`) and stores levels as levels. Wikipedia and nine of the ten
-checksum-pinned public-catalog lists are optional user downloads. The generic
-YouTube list remains analysis-only because TUBELEX is the more comprehensive
-YouTube source.
+Every frequency pack Zenbu offers has an openly licensed source.
 
-When a user downloads a pack, the app downloads its selected ZIP, validates the
-exact checksum and shape, maps it locally, discards the ZIP, and retains a
-removable SQLite pack. The nine public-catalog packs are not included in the app
-bundle.
+| Pack | Source | License | Runtime behavior |
+| --- | --- | --- | --- |
+| JLPT Levels | Waller's lists via stephenmk | CC BY-SA 4.0 | Bundled, enabled first |
+| YouTube | TUBELEX | BSD-3-Clause | Bundled, enabled second |
+| Japanese Wikipedia | Wikipedia Word Frequency Clean | BSD-3-Clause | Optional download |
+| TV & Movies | Jiten Drama + Movie | CC BY-SA 4.0 | Optional download |
+| Anime | Jiten Anime | CC BY-SA 4.0 | Optional download |
+| Manga | Jiten Manga | CC BY-SA 4.0 | Optional download |
+| Novels | Jiten Novel | CC BY-SA 4.0 | Optional download |
+| Visual Novels | Jiten VisualNovel | CC BY-SA 4.0 | Optional download |
+| Video Games | Jiten VideoGame | CC BY-SA 4.0 | Optional download |
 
-The public lists are ordered arrays. Zenbu treats array position as the explicit
-rank. Supplied readings remain in source-record digests, while the v1 mapping
-policy uses normalized written forms and rejects ambiguous mappings.
+The nine public-catalog packs (Netflix, TV Shows, Slice of Life, Shonen, Novels, Visual Novel,
+NHK, JP Dict, Internet) were removed: their originals, Yomitan community lists, carry no
+license. Pack IDs that leave the catalog are deleted from devices on launch. NHK, JP Dict, and
+Internet have no licensed replacement; they can return only if their authors grant a license.
 
-| Source | Runtime behavior | Domain |
-| --- | --- | --- |
-| JLPT Levels (Waller, via stephenmk) | Bundled and enabled first by default | Unofficial JLPT study levels |
-| TUBELEX Japanese | Bundled and enabled by default | YouTube subtitles |
-| Wikipedia Word Frequency Clean | Optional user download | Encyclopedic written Japanese |
-| Netflix | Optional user download | Streaming subtitles |
-| Novels | Optional user download | Fiction and novels |
-| Slice of Life | Optional user download | Everyday-life anime dialogue |
-| NHK | Optional user download | Online news |
-| Shonen | Optional user download | Action-oriented anime dialogue |
-| JP Dict | Optional user download | Japanese dictionary definitions |
-| Visual Novel | Optional user download | Interactive fiction |
-| TV Shows | Optional user download | Anime and television drama |
-| Internet | Optional user download | Broad Japanese web |
-| Public-catalog YouTube | Analysis only; TUBELEX is used instead | Online video |
+## Jiten packs
+
+Jiten (jiten.moe) publishes JMdict-linked frequency lists per media type under CC BY-SA 4.0 as
+`Word,Form,Rank` CSVs (dictionary form, kana reading, competition rank; no counts or POS).
+Downloads are unversioned, so the snapshots used are pinned in
+`Sources/Jiten-2026-09-27.source.json` and `Sources/Jiten-2026-09-27/`.
+
+`build_jiten_frequency_packs.py` builds each pack:
+
+- **Tail:** each list's final max-rank bucket (40–66k rows of words Jiten never observed) is
+  dropped.
+- **Rank:** row position after the tail is dropped, so every row keeps a distinct rank, matching
+  the other ordered packs. Jiten's order inside a tie bucket is kept.
+- **Merge (TV & Movies):** mean list percentile; a word missing from a list counts as that list's
+  last position.
+- **Mapping:** `FrequencyPackMappingV2` joins on dictionary form **and** reading, honoring
+  JMdict reading restrictions. It is additive: V1 packs keep their pinned V1 policy.
+
+Reading-aware mapping cuts ambiguous rows by 30–41% on every list (Novels: 12,859 → 7,600) and
+resolves homographs such as 方 (ほう/かた) that V1 must skip.
+
+## #376 candidate results
+
+From `Generated/Frequency-candidates-376.analysis.json` (`analyze_frequency_candidates.py`,
+plan `Candidates/Frequency-candidates-376.plan.json`). Top-1k is the Jaccard index of the top
+1,000 mapped entries.
+
+| Pack | Rows | Mapped | Ambiguous | Pack it replaced (mapped) | Top-1k vs replaced | Top-1k vs YouTube |
+| --- | ---: | ---: | ---: | --- | ---: | ---: |
+| TV & Movies | 193,752 | 108,209 | 6,593 | Netflix (52,053), TV Shows (68,087) | 0.38, 0.43 | 0.26 |
+| Anime | 175,456 | 98,264 | 7,623 | Slice of Life (25,360) | 0.32 | 0.27 |
+| Manga | 208,204 | 105,287 | 8,731 | Shonen (32,098) | 0.34 | 0.29 |
+| Novels | 272,246 | 140,061 | 7,600 | Novels (9,132) | 0.25 | 0.26 |
+| Visual Novels | 205,292 | 115,109 | 7,743 | Visual Novel (28,539) | 0.45 | 0.26 |
+| Video Games | 141,113 | 89,254 | 6,219 | — (new) | — | 0.29 |
+
+Distinctness decisions:
+
+- **Drama vs Movie:** Movie overlaps Drama 95% by entry and 0.74 top-1k, so they ship merged as
+  TV & Movies. Other measured Jiten pairs sit at 0.53–0.70 and ship separately
+  (Video Games: 0.53 vs Visual Novels and TV & Movies, 0.63 vs Anime).
+- **TUBELEX categories:** people+comedy (0.84 top-1k vs YouTube) and gaming (0.64) mostly repeat
+  the bundled YouTube pack and were not shipped. News (0.47 vs YouTube, 0.16 vs NHK) is spoken
+  YouTube news rather than NHK's written news, so it did not replace NHK.
+
+Sources considered and rejected for #376: BCCWJ, CSJ, and CEJC (research/education only);
+hermitdave FrequencyWords (broken tokenization); wordfreq (blended); NINJAL NWJC (license
+unconfirmed); manythings.org news list and Wiktionary's unsourced "5000 Most Frequent Words"
+(no source license); Game Gengo (per-episode stats; decks unlicensed).
+
+## Historical: public-catalog packs (#351)
 
 The candidate catalog record at
 `Candidates/Migaku-public-catalog-ja-frequency-lists-2026-09-25.json` preserves

@@ -14,7 +14,7 @@ ANALYSIS = (
     ROOT
     / "apps/ios/LanguageData/Generated/Migaku-public-catalog-ja-ordered-json-v1.analysis.json"
 )
-JITEN_ANALYSIS = ROOT / "apps/ios/LanguageData/Generated/Jiten-ja-ordered-json-v2.analysis.json"
+JITEN_ANALYSIS = ROOT / "apps/ios/LanguageData/Generated/Jiten-2026-09-27.analysis.json"
 RESOURCES = ROOT / "apps/ios/Modules/Sources/SearchExperience/Resources"
 TUBELEX = RESOURCES / "TUBELEXFrequencyPack.sqlite3"
 JLPT = RESOURCES / "JLPTLevelPack.sqlite3"

@@ -2,7 +2,7 @@
   "candidates": [
     {
       "csv": {
-        "Drama": "d21882d0842e3385df6c635a30f8a7c374801b3b4e8f4d0601b0c454a8adc4c7"
+        "Drama.csv": "7aad976114ca7463f8677ba36d5d08a470029440fdd69d9bad71189006858763"
       },
       "id": "jiten-drama",
       "kind": "jiten",
@@ -158,7 +158,7 @@
     },
     {
       "csv": {
-        "Movie": "5c6e539e586b34e004be95a46891ffe8f485981da6cf1419656b1969f41b1654"
+        "Movie.csv": "24c20e855998c9a75821de3a7b9f5e036abd3efcb3e0d0ef56243becd67598a6"
       },
       "id": "jiten-movie",
       "kind": "jiten",
@@ -326,8 +326,8 @@
     },
     {
       "csv": {
-        "Drama": "d21882d0842e3385df6c635a30f8a7c374801b3b4e8f4d0601b0c454a8adc4c7",
-        "Movie": "5c6e539e586b34e004be95a46891ffe8f485981da6cf1419656b1969f41b1654"
+        "Drama.csv": "7aad976114ca7463f8677ba36d5d08a470029440fdd69d9bad71189006858763",
+        "Movie.csv": "24c20e855998c9a75821de3a7b9f5e036abd3efcb3e0d0ef56243becd67598a6"
       },
       "id": "jiten-tv-movies",
       "kind": "jiten",
@@ -507,7 +507,7 @@
     },
     {
       "csv": {
-        "Anime": "860ba39199e5846fea0f144215e422f46de102999fee0893194f73839dd6564f"
+        "Anime.csv": "cf1b7107385ab09feca123862e9b2830ae89c083cc3871b43daefced41844883"
       },
       "id": "jiten-anime",
       "kind": "jiten",
@@ -515,6 +515,12 @@
         {
           "ambiguousRows": 11201,
           "comparisons": {
+            "cand_jiten-tv-movies": {
+              "candidateMappedOverlapPercent": 87.93,
+              "sharedMappedLanguageReferenceIDs": 85146,
+              "sharedRankPearson": 0.7409,
+              "top1000MappedJaccard": 0.58
+            },
             "current_slice-of-life": {
               "candidateMappedOverlapPercent": 25.81,
               "sharedMappedLanguageReferenceIDs": 24996,
@@ -588,6 +594,12 @@
         {
           "ambiguousRows": 7623,
           "comparisons": {
+            "cand_jiten-tv-movies": {
+              "candidateMappedOverlapPercent": 88.16,
+              "sharedMappedLanguageReferenceIDs": 86633,
+              "sharedRankPearson": 0.7526,
+              "top1000MappedJaccard": 0.7038
+            },
             "current_slice-of-life": {
               "candidateMappedOverlapPercent": 25.42,
               "sharedMappedLanguageReferenceIDs": 24977,
@@ -663,7 +675,7 @@
     },
     {
       "csv": {
-        "Novel": "876bed464d9ed81292269821b976409e50f36d690f2a02cce089bde0a6827b8b"
+        "Novel.csv": "96803bad91884b4788e53dc8b2ee575e7b296b857eb1d0398c786d04b627d813"
       },
       "id": "jiten-novel",
       "kind": "jiten",
@@ -807,7 +819,7 @@
     },
     {
       "csv": {
-        "Manga": "e7189440d2f3825e3106e7734848a4b54732d2c969788549cef09f7c671520ed"
+        "Manga.csv": "7bb21061002f9e3ac0a47d6dc05cd544f349385582c9552ea9e1a9ea412219cf"
       },
       "id": "jiten-manga",
       "kind": "jiten",
@@ -815,6 +827,12 @@
         {
           "ambiguousRows": 12660,
           "comparisons": {
+            "cand_jiten-anime": {
+              "candidateMappedOverlapPercent": 83.56,
+              "sharedMappedLanguageReferenceIDs": 86705,
+              "sharedRankPearson": 0.8135,
+              "top1000MappedJaccard": 0.5492
+            },
             "current_shonen": {
               "candidateMappedOverlapPercent": 30.4,
               "sharedMappedLanguageReferenceIDs": 31542,
@@ -882,6 +900,12 @@
         {
           "ambiguousRows": 8731,
           "comparisons": {
+            "cand_jiten-anime": {
+              "candidateMappedOverlapPercent": 83.8,
+              "sharedMappedLanguageReferenceIDs": 88227,
+              "sharedRankPearson": 0.8242,
+              "top1000MappedJaccard": 0.6767
+            },
             "current_shonen": {
               "candidateMappedOverlapPercent": 29.94,
               "sharedMappedLanguageReferenceIDs": 31527,
@@ -946,6 +970,318 @@
           "projectedRuntimeSQLiteBytes": 12685312,
           "sourceRows": 208204,
           "unmappedRows": 54392
+        }
+      ]
+    },
+    {
+      "csv": {
+        "VisualNovel.csv": "1444a4c424a158716e153b1969914960a4793c766ed745fe6342163d2c9986b3"
+      },
+      "id": "jiten-visual-novel",
+      "kind": "jiten",
+      "mappings": [
+        {
+          "ambiguousRows": 11963,
+          "comparisons": {
+            "current_visual-novel": {
+              "candidateMappedOverlapPercent": 25.06,
+              "sharedMappedLanguageReferenceIDs": 28433,
+              "sharedRankPearson": 0.7095,
+              "top1000MappedJaccard": 0.5102
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 40.13,
+              "sharedMappedLanguageReferenceIDs": 45533,
+              "sharedRankPearson": 0.5015,
+              "top1000MappedJaccard": 0.2795
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 48.23,
+              "sharedMappedLanguageReferenceIDs": 54716,
+              "sharedRankPearson": 0.3103,
+              "top1000MappedJaccard": 0.0619
+            }
+          },
+          "duplicateMappings": 47625,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "と【と】",
+            "も【も】",
+            "で【で】",
+            "だ【だ】",
+            "する【する】",
+            "から【から】",
+            "か【か】",
+            "よ【よ】",
+            "な【な】",
+            "こと【こと】",
+            "ん【ん】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "でした【でした】",
+            "はずです【はずです】",
+            "ついて【ついて】",
+            "OK【オッケー】",
+            "というわけだ【というわけだ】",
+            "じゅる【じゅる】",
+            "お役に立てる【おやくにたてる】",
+            "顔を覗く【かおをのぞく】",
+            "先走り【さきばしり】",
+            "に越したことはない【にこしたことはない】",
+            "一足先【ひとあしさき】",
+            "おっきな【おっきな】",
+            "忘れられる【わすれられる】",
+            "出る前【でるまえ】"
+          ],
+          "mappedPercent": 55.26,
+          "mappedRows": 113450,
+          "mappingPolicy": "FrequencyPackMappingV1.sql",
+          "mappingRelations": {
+            "uniqueFormFallback": 113450
+          },
+          "projectedRuntimeSQLiteBytes": 13758464,
+          "sourceRows": 205292,
+          "unmappedRows": 32254
+        },
+        {
+          "ambiguousRows": 7743,
+          "comparisons": {
+            "current_visual-novel": {
+              "candidateMappedOverlapPercent": 24.7,
+              "sharedMappedLanguageReferenceIDs": 28430,
+              "sharedRankPearson": 0.6795,
+              "top1000MappedJaccard": 0.4539
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 39.67,
+              "sharedMappedLanguageReferenceIDs": 45661,
+              "sharedRankPearson": 0.4988,
+              "top1000MappedJaccard": 0.2597
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 47.53,
+              "sharedMappedLanguageReferenceIDs": 54710,
+              "sharedRankPearson": 0.3026,
+              "top1000MappedJaccard": 0.0565
+            }
+          },
+          "duplicateMappings": 47730,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "と【と】",
+            "も【も】",
+            "で【で】",
+            "だ【だ】",
+            "する【する】",
+            "から【から】",
+            "か【か】",
+            "よ【よ】",
+            "な【な】",
+            "こと【こと】",
+            "ん【ん】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "でした【でした】",
+            "はずです【はずです】",
+            "ついて【ついて】",
+            "OK【オッケー】",
+            "というわけだ【というわけだ】",
+            "じゅる【じゅる】",
+            "心地いい【ここちよい】",
+            "言いにくい【いいがたい】",
+            "いい天気【よいてんき】",
+            "変わってる【かわっている】",
+            "方がよい【ほうがいい】",
+            "お役に立てる【おやくにたてる】",
+            "顔を覗く【かおをのぞく】",
+            "先走り【さきばしり】"
+          ],
+          "mappedPercent": 56.07,
+          "mappedRows": 115109,
+          "mappingPolicy": "FrequencyPackMappingV2.sql",
+          "mappingRelations": {
+            "exactReading": 22085,
+            "exactWrittenReading": 93024
+          },
+          "projectedRuntimeSQLiteBytes": 13897728,
+          "sourceRows": 205292,
+          "unmappedRows": 34710
+        }
+      ]
+    },
+    {
+      "csv": {
+        "VideoGame.csv": "c70bfe42cc3b48437ac4d643451b7ad2a3f20c5d1567e6055f2fd2cff3b7f209"
+      },
+      "id": "jiten-video-game",
+      "kind": "jiten",
+      "mappings": [
+        {
+          "ambiguousRows": 9524,
+          "comparisons": {
+            "cand_jiten-anime": {
+              "candidateMappedOverlapPercent": 86.34,
+              "sharedMappedLanguageReferenceIDs": 75685,
+              "sharedRankPearson": 0.7575,
+              "top1000MappedJaccard": 0.5145
+            },
+            "cand_jiten-tv-movies": {
+              "candidateMappedOverlapPercent": 86.76,
+              "sharedMappedLanguageReferenceIDs": 76049,
+              "sharedRankPearson": 0.6504,
+              "top1000MappedJaccard": 0.4407
+            },
+            "cand_jiten-visual-novel": {
+              "candidateMappedOverlapPercent": 92.36,
+              "sharedMappedLanguageReferenceIDs": 80957,
+              "sharedRankPearson": 0.7457,
+              "top1000MappedJaccard": 0.4311
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 43.21,
+              "sharedMappedLanguageReferenceIDs": 37873,
+              "sharedRankPearson": 0.4665,
+              "top1000MappedJaccard": 0.3046
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 52.45,
+              "sharedMappedLanguageReferenceIDs": 45972,
+              "sharedRankPearson": 0.3526,
+              "top1000MappedJaccard": 0.0956
+            }
+          },
+          "duplicateMappings": 28779,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "と【と】",
+            "も【も】",
+            "だ【だ】",
+            "で【で】",
+            "か【か】",
+            "から【から】",
+            "な【な】",
+            "する【する】",
+            "よ【よ】",
+            "こと【こと】",
+            "です【です】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "はずです【はずです】",
+            "でした【でした】",
+            "ついて【ついて】",
+            "お役に立てる【おやくにたてる】",
+            "というわけだ【というわけだ】",
+            "HP【エイチ・ピー】",
+            "まえに【まえに】",
+            "ハッハッ【ハッハッ】",
+            "OK【オッケー】",
+            "おっきな【おっきな】",
+            "ことこそ【ことこそ】",
+            "一足先【ひとあしさき】",
+            "撃【げき】",
+            "出る前【でるまえ】"
+          ],
+          "mappedPercent": 62.12,
+          "mappedRows": 87655,
+          "mappingPolicy": "FrequencyPackMappingV1.sql",
+          "mappingRelations": {
+            "uniqueFormFallback": 87655
+          },
+          "projectedRuntimeSQLiteBytes": 10604544,
+          "sourceRows": 141113,
+          "unmappedRows": 15155
+        },
+        {
+          "ambiguousRows": 6219,
+          "comparisons": {
+            "cand_jiten-anime": {
+              "candidateMappedOverlapPercent": 86.54,
+              "sharedMappedLanguageReferenceIDs": 77237,
+              "sharedRankPearson": 0.7692,
+              "top1000MappedJaccard": 0.6329
+            },
+            "cand_jiten-tv-movies": {
+              "candidateMappedOverlapPercent": 86.94,
+              "sharedMappedLanguageReferenceIDs": 77600,
+              "sharedRankPearson": 0.6603,
+              "top1000MappedJaccard": 0.5307
+            },
+            "cand_jiten-visual-novel": {
+              "candidateMappedOverlapPercent": 92.51,
+              "sharedMappedLanguageReferenceIDs": 82570,
+              "sharedRankPearson": 0.7591,
+              "top1000MappedJaccard": 0.5308
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 42.62,
+              "sharedMappedLanguageReferenceIDs": 38036,
+              "sharedRankPearson": 0.4638,
+              "top1000MappedJaccard": 0.2864
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 51.59,
+              "sharedMappedLanguageReferenceIDs": 46042,
+              "sharedRankPearson": 0.3425,
+              "top1000MappedJaccard": 0.0851
+            }
+          },
+          "duplicateMappings": 29604,
+          "firstAmbiguous": [
+            "の【の】",
+            "は【は】",
+            "に【に】",
+            "が【が】",
+            "と【と】",
+            "も【も】",
+            "だ【だ】",
+            "で【で】",
+            "か【か】",
+            "から【から】",
+            "な【な】",
+            "する【する】",
+            "よ【よ】",
+            "こと【こと】",
+            "です【です】"
+          ],
+          "firstUnmapped": [
+            "はずだ【はずだ】",
+            "はずです【はずです】",
+            "でした【でした】",
+            "ついて【ついて】",
+            "お役に立てる【おやくにたてる】",
+            "というわけだ【というわけだ】",
+            "方がよい【ほうがいい】",
+            "HP【エイチ・ピー】",
+            "まえに【まえに】",
+            "変わってる【かわっている】",
+            "ハッハッ【ハッハッ】",
+            "いい天気【よいてんき】",
+            "OK【オッケー】",
+            "行かなくちゃ【いかなくては】",
+            "気にすんな【きにするな】"
+          ],
+          "mappedPercent": 63.25,
+          "mappedRows": 89254,
+          "mappingPolicy": "FrequencyPackMappingV2.sql",
+          "mappingRelations": {
+            "exactReading": 18458,
+            "exactWrittenReading": 70796
+          },
+          "projectedRuntimeSQLiteBytes": 10747904,
+          "sourceRows": 141113,
+          "unmappedRows": 16036
         }
       ]
     },
@@ -1110,6 +1446,85 @@
           "projectedRuntimeSQLiteBytes": 5959680,
           "sourceRows": 124337,
           "unmappedRows": 77869
+        }
+      ],
+      "tubelexSHA256": "39d4edb2ccac4405b47d0f93e9ec7b11678b3b305d1a37c877dd76588817c8e9"
+    },
+    {
+      "categories": [
+        "gaming"
+      ],
+      "id": "tubelex-gaming",
+      "kind": "tubelex",
+      "mappings": [
+        {
+          "ambiguousRows": 3456,
+          "comparisons": {
+            "cand_jiten-video-game": {
+              "candidateMappedOverlapPercent": 80.09,
+              "sharedMappedLanguageReferenceIDs": 32475,
+              "sharedRankPearson": 0.5919,
+              "top1000MappedJaccard": 0.2882
+            },
+            "tubelex": {
+              "candidateMappedOverlapPercent": 100.0,
+              "sharedMappedLanguageReferenceIDs": 40549,
+              "sharedRankPearson": 0.8257,
+              "top1000MappedJaccard": 0.6363
+            },
+            "wikipedia": {
+              "candidateMappedOverlapPercent": 94.89,
+              "sharedMappedLanguageReferenceIDs": 38477,
+              "sharedRankPearson": 0.3736,
+              "top1000MappedJaccard": 0.1127
+            }
+          },
+          "duplicateMappings": 1360,
+          "firstAmbiguous": [
+            "だ【】",
+            "て【】",
+            "が【】",
+            "為る【】",
+            "で【】",
+            "ない【】",
+            "居る【】",
+            "何【】",
+            "事【】",
+            "来る【】",
+            "一寸【】",
+            "さん【】",
+            "御【】",
+            "様【】",
+            "方【】"
+          ],
+          "firstUnmapped": [
+            "<num>【】",
+            "[音楽]【】",
+            "私-代名詞【】",
+            "っ【】",
+            "そう-様態【】",
+            "ゲーム-game【】",
+            "僕-代名詞【】",
+            "オーケー-okay【】",
+            "いー【】",
+            "レベル-level【】",
+            "ダメージ-damage【】",
+            "うー【】",
+            "アイテム-item【】",
+            "チャンネル-channel【】",
+            "プレー-play【】"
+          ],
+          "mappedPercent": 25.16,
+          "mappedRows": 40549,
+          "mappingPolicy": "FrequencyPackMappingV1.sql",
+          "mappingRelations": {
+            "exactReadingPOS": 61,
+            "exactWrittenPOS": 438,
+            "uniqueFormFallback": 40050
+          },
+          "projectedRuntimeSQLiteBytes": 5787648,
+          "sourceRows": 161173,
+          "unmappedRows": 115808
         }
       ],
       "tubelexSHA256": "39d4edb2ccac4405b47d0f93e9ec7b11678b3b305d1a37c877dd76588817c8e9"
@@ -1367,6 +1782,56 @@
       }
     },
     {
+      "id": "visual-novel",
+      "mapping": {
+        "ambiguousRows": 3482,
+        "duplicateMappings": 731,
+        "firstAmbiguous": [
+          "為る【】",
+          "居る【】",
+          "事【】",
+          "俺【】",
+          "何【】",
+          "そう【】",
+          "御【】",
+          "私【】",
+          "さん【】",
+          "来る【】",
+          "様【】",
+          "どう【】",
+          "ちゃん【】",
+          "もう【】",
+          "物【】"
+        ],
+        "firstUnmapped": [
+          "ぐっ【】",
+          "ぎゅっ【】",
+          "じゅる【】",
+          "ちゅる【】",
+          "ぷ【】",
+          "ちゅぱ【】",
+          "ちゅぷ【】",
+          "於く【】",
+          "びっ【】",
+          "くちゅ【】",
+          "きゅっ【】",
+          "ぱっ【】",
+          "ばっ【】",
+          "ぺろ【】",
+          "ぴん【】"
+        ],
+        "mappedPercent": 81.41,
+        "mappedRows": 28539,
+        "mappingPolicy": "FrequencyPackMappingV1.sql",
+        "mappingRelations": {
+          "uniqueFormFallback": 28539
+        },
+        "projectedRuntimeSQLiteBytes": 3358720,
+        "sourceRows": 35058,
+        "unmappedRows": 2306
+      }
+    },
+    {
       "id": "nhk",
       "mapping": {
         "ambiguousRows": 1981,
@@ -1419,6 +1884,6 @@
   ],
   "languageDataSHA256": "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073",
   "mappingV1SHA256": "568d2c293eceae6aff760059dc803331d11490d74ab54f5e85e9e5ef7ff8b339",
-  "mappingV2DraftSHA256": "5f61dd29c529f4fe558473a0356c3d384002fb9eaaf006cb9750e5ebfeb8da20",
+  "mappingV2SHA256": "ebc84f6bc0c5170f2c30555453e5436521102e79771321989c97b83ecfcafadf",
   "schema": "zenbu.spike-376.analysis.v1"
 }

@@ -6,6 +6,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- New optional frequency dictionaries built from openly licensed Jiten lists (CC BY-SA 4.0):
+  **TV & Movies**, **Anime**, **Manga**, **Novels**, **Visual Novels**, and **Video Games**.
+  They match words by reading as well as spelling, so words written the same way, such as
+  方 (ほう, direction) and 方 (かた, person), get their own ranks.
 - Account has a profile at the top: add a photo, name, username, and email, all stored only on
   your device.
 - JLPT Levels is a new included dictionary, enabled first by default, that marks words with an
@@ -25,6 +29,12 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Changed
 
+- The included TUBELEX dictionary is now called **YouTube**.
+- Optional frequency dictionaries now download from Zenbu's own servers instead of third-party
+  hosts. Dictionaries you already downloaded keep working.
+- **Credits & Attributions** now uses that name for its screen too, and is trimmed to each
+  source's author, license, and project link. License texts and Tatoeba contributors are on one
+  **Licenses** screen.
 - The You tab is now **Account**, laid out like Settings with colored icons. It adds Help &
   Support, the Privacy Policy, and the app's version.
 - Account no longer has a Japanese Text Analysis screen. The analysis is included with the app
@@ -51,6 +61,14 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   with candidate selection and a route to the normal full-screen entry when available.
 - Interactive Japanese text now uses the same Kuromoji parser family as the Zenbu browser
   extension, with improved dictionary-form resolution and an explicit no-entry state.
+
+### Removed
+
+- The Netflix, TV Shows, Slice of Life, Shonen, Novels, Visual Novel, NHK, JP Dict, and Internet
+  frequency dictionaries are removed because their sources have no license. If you downloaded
+  any of them, they are deleted when you update. Download their replacements from
+  **Account → Frequency Dictionaries**: TV & Movies, Anime, Manga, Novels, and Visual Novels.
+  NHK, JP Dict, and Internet have no licensed replacement yet.
 
 ## [1.0.0] - 2026-08-17
 

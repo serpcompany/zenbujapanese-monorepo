@@ -1,0 +1,169 @@
+{
+  "note": "Run from the repository root. Current archives are the pre-#376 public-catalog sources (cdn.zenbujapanese.com, see git history of FrequencyPackCatalog.json).",
+  "current": [
+    {
+      "id": "netflix",
+      "archive": "Netflix.json.zip"
+    },
+    {
+      "id": "tv-shows",
+      "archive": "TV_Shows.json.zip"
+    },
+    {
+      "id": "novels",
+      "archive": "Novels.json.zip"
+    },
+    {
+      "id": "shonen",
+      "archive": "Shonen.json.zip"
+    },
+    {
+      "id": "slice-of-life",
+      "archive": "Slice_of_Life.json.zip"
+    },
+    {
+      "id": "visual-novel",
+      "archive": "Visual_Novel.json.zip"
+    },
+    {
+      "id": "nhk",
+      "archive": "NHK.json.zip"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "jiten-drama",
+      "kind": "jiten",
+      "csv": [
+        "apps/ios/LanguageData/Sources/Jiten-2026-09-27/Drama.csv.xz"
+      ],
+      "replaces": [
+        "netflix",
+        "tv-shows"
+      ]
+    },
+    {
+      "id": "jiten-movie",
+      "kind": "jiten",
+      "csv": [
+        "apps/ios/LanguageData/Sources/Jiten-2026-09-27/Movie.csv.xz"
+      ],
+      "replaces": [
+        "netflix",
+        "tv-shows"
+      ],
+      "compareWith": [
+        "jiten-drama"
+      ]
+    },
+    {
+      "id": "jiten-tv-movies",
+      "kind": "jiten",
+      "csv": [
+        "apps/ios/LanguageData/Sources/Jiten-2026-09-27/Drama.csv.xz",
+        "apps/ios/LanguageData/Sources/Jiten-2026-09-27/Movie.csv.xz"
+      ],
+      "replaces": [
+        "netflix",
+        "tv-shows"
+      ],
+      "compareWith": [
+        "jiten-drama",
+        "jiten-movie"
+      ]
+    },
+    {
+      "id": "jiten-anime",
+      "kind": "jiten",
+      "csv": [
+        "apps/ios/LanguageData/Sources/Jiten-2026-09-27/Anime.csv.xz"
+      ],
+      "replaces": [
+        "slice-of-life",
+        "tv-shows"
+      ],
+      "compareWith": [
+        "jiten-tv-movies"
+      ]
+    },
+    {
+      "id": "jiten-novel",
+      "kind": "jiten",
+      "csv": [
+        "apps/ios/LanguageData/Sources/Jiten-2026-09-27/Novel.csv.xz"
+      ],
+      "replaces": [
+        "novels"
+      ]
+    },
+    {
+      "id": "jiten-manga",
+      "kind": "jiten",
+      "csv": [
+        "apps/ios/LanguageData/Sources/Jiten-2026-09-27/Manga.csv.xz"
+      ],
+      "replaces": [
+        "shonen"
+      ],
+      "compareWith": [
+        "jiten-anime"
+      ]
+    },
+    {
+      "id": "jiten-visual-novel",
+      "kind": "jiten",
+      "csv": [
+        "apps/ios/LanguageData/Sources/Jiten-2026-09-27/VisualNovel.csv.xz"
+      ],
+      "replaces": [
+        "visual-novel"
+      ]
+    },
+    {
+      "id": "jiten-video-game",
+      "kind": "jiten",
+      "csv": [
+        "apps/ios/LanguageData/Sources/Jiten-2026-09-27/VideoGame.csv.xz"
+      ],
+      "compareWith": [
+        "jiten-visual-novel",
+        "jiten-anime",
+        "jiten-tv-movies"
+      ]
+    },
+    {
+      "id": "tubelex-news",
+      "kind": "tubelex",
+      "categories": [
+        "news"
+      ],
+      "replaces": [
+        "nhk"
+      ]
+    },
+    {
+      "id": "tubelex-people-comedy",
+      "kind": "tubelex",
+      "categories": [
+        "people",
+        "comedy"
+      ],
+      "replaces": [
+        "slice-of-life"
+      ],
+      "compareWith": [
+        "jiten-anime"
+      ]
+    },
+    {
+      "id": "tubelex-gaming",
+      "kind": "tubelex",
+      "categories": [
+        "gaming"
+      ],
+      "compareWith": [
+        "jiten-video-game"
+      ]
+    }
+  ]
+}

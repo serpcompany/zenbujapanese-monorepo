@@ -18,6 +18,10 @@
     "coveredRows": 560821,
     "documents": 2177257
   },
+  "runtimeDelivery": {
+    "delivery": "User-initiated download of a byte-identical copy from https://cdn.zenbujapanese.com/frequency-packs/<packID>/<sha256>.tsv.xz",
+    "publishing": "apps/ios/Tools/publish_frequency_pack_sources.py"
+  },
   "format": {
     "compression": "xz-lzma2",
     "measurement": "surface occurrence count",
