@@ -52,9 +52,11 @@ A word detail can present its written form and reading, ordered meanings, altern
 kanji, related words, conjugations, source-matched Example Sentences, pronunciation, and
 frequency information when the corresponding data is available.
 
-The top of a word detail shows the headword, then its kana reading with the pitch accent drawn as
-an overline across the high morae and a hook at the downstep, a pronounce button, the romaji aid
-when enabled, and the part of speech. A Conjugations row follows when a conjugation table exists.
+The top of a word detail shows the headword with furigana, following the Reading Aids setting.
+When furigana is off, the reading appears under the headword instead. To the right of the
+headword are the pitch accent (the reading in katakana with an overline across the high morae and
+a hook at the downstep), a pronounce button, and the latest encounter photo. A part-of-speech row
+follows and opens the conjugation table when one exists.
 
 A **Frequency** section after the meanings lists each enabled dictionary in priority order with
 its commonness marker and rank, or "No rank". Selecting a row opens that dictionary's frequency
