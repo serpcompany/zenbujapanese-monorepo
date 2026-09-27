@@ -79,11 +79,13 @@ struct AccountRootView: View {
 
 /// A Settings-style row: a white symbol on a rounded, tinted tile, then the title.
 private struct AccountRowLabel: View {
-  let title: String
+  let title: LocalizedStringKey
   let systemImage: String
   let tint: Color
+  @ScaledMetric(relativeTo: .body) private var tileSize = 30
+  @ScaledMetric(relativeTo: .body) private var symbolSize = 15
 
-  init(_ title: String, systemImage: String, tint: Color) {
+  init(_ title: LocalizedStringKey, systemImage: String, tint: Color) {
     self.title = title
     self.systemImage = systemImage
     self.tint = tint
@@ -92,13 +94,12 @@ private struct AccountRowLabel: View {
   var body: some View {
     Label {
       Text(title)
-        .foregroundStyle(.primary)
     } icon: {
       Image(systemName: systemImage)
-        .font(.system(size: 15, weight: .semibold))
+        .font(.system(size: symbolSize, weight: .semibold))
         .foregroundStyle(.white)
-        .frame(width: 30, height: 30)
-        .background(tint.gradient, in: .rect(cornerRadius: 7))
+        .frame(width: tileSize, height: tileSize)
+        .background(tint.gradient, in: .rect(cornerRadius: tileSize * 0.23))
     }
   }
 }
@@ -124,9 +125,16 @@ private struct AccountExternalLink<Label: View>: View {
 }
 
 private struct AccountAboutHeader: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
   var body: some View {
+    // At accessibility sizes the name needs the full width rather than a column beside the icon.
+    let layout =
+      dynamicTypeSize.isAccessibilitySize
+      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+      : AnyLayout(HStackLayout(spacing: 12))
     VStack(alignment: .leading, spacing: 12) {
-      HStack(spacing: 12) {
+      layout {
         if let icon = AppBundleInfo.icon {
           Image(uiImage: icon)
             .resizable()
@@ -171,7 +179,7 @@ private enum AppBundleInfo {
   }
 
   /// The compiled asset catalog exposes the app icon only through its Info.plist file names.
-  static var icon: UIImage? {
+  static let icon: UIImage? = {
     guard
       let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
       let primary = icons["CFBundlePrimaryIcon"] as? [String: Any]
@@ -179,7 +187,7 @@ private enum AppBundleInfo {
     let names = (primary["CFBundleIconFiles"] as? [String] ?? []).reversed()
       + [primary["CFBundleIconName"] as? String].compactMap { $0 }
     return names.lazy.compactMap { UIImage(named: $0) }.first
-  }
+  }()
 }
 
 enum AccountRoute: Hashable {
@@ -222,9 +230,9 @@ struct MediaLibraryView: View {
     Group {
       if items.isEmpty {
         ContentUnavailableView(
-          "No Encounter Media",
+          "No Saved Images",
           systemImage: "photo.on.rectangle.angled",
-          description: Text("Images saved with words from Image Text will appear here.")
+          description: Text("Images you open words from in Image Search will appear here.")
         )
         .accessibilityIdentifier("media-library.empty")
       } else {

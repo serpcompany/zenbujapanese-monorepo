@@ -10,11 +10,7 @@ struct RecentSearchHistoryView: View {
     List {
       if !searches.isEmpty {
         Section {
-          // A row rather than a Section header, which a plain List pins over scrolling rows.
-          Text("Recent")
-            .font(.headline)
-            .listRowSeparator(.hidden)
-            .accessibilityAddTraits(.isHeader)
+          SearchListHeading("Recent")
             .accessibilityIdentifier("recent-search.header")
           ForEach(Array(searches.enumerated()), id: \.element) { index, search in
             Button {
@@ -31,6 +27,12 @@ struct RecentSearchHistoryView: View {
             .accessibilityIdentifier("recent-search.\(index)")
             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
               Button("Delete", role: .destructive) {
+                remove(search)
+              }
+            }
+            // Swipe actions are hard to discover, so removal is also on long press.
+            .contextMenu {
+              Button("Remove from Recent", systemImage: "trash", role: .destructive) {
                 remove(search)
               }
             }

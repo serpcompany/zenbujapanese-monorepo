@@ -676,10 +676,7 @@ private struct SearchResultsView: View {
 
       if results.presentation == .discoveredWords {
         Section {
-          Text("Discovered Words")
-            .font(.headline)
-            .listRowSeparator(.hidden)
-            .accessibilityAddTraits(.isHeader)
+          SearchListHeading("Discovered Words")
           ForEach(
             results.entries.prefix(12).enumerated(), id: \.element.id
           ) { index, entry in
@@ -988,5 +985,21 @@ enum SearchResultFrequencyOrdering {
       if lhsFallback != rhsFallback { return lhsFallback < rhsFallback }
       return lhs.element.id.rawValue < rhs.element.id.rawValue
     }.map(\.element)
+  }
+}
+
+/// A heading placed as a row, because a plain List pins Section headers over scrolling rows.
+struct SearchListHeading: View {
+  let title: LocalizedStringKey
+
+  init(_ title: LocalizedStringKey) {
+    self.title = title
+  }
+
+  var body: some View {
+    Text(title)
+      .font(.headline)
+      .listRowSeparator(.hidden)
+      .accessibilityAddTraits(.isHeader)
   }
 }

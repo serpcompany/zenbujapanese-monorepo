@@ -30,7 +30,7 @@ dictionary is unavailable. Results can also offer a Japanese-reading refinement,
 Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query.
 
 Recent text searches are stored on the device and listed under a **Recent** heading while the
-query is empty. A learner can repeat a search, swipe to remove one, or clear the entire history
+query is empty. A learner can repeat a search, remove one by swiping or long-pressing it, or clear the entire history
 from the **⋯** menu, which appears only while recent searches are listed. Result headings scroll
 with the results instead of staying pinned over them.
 
