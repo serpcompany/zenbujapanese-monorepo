@@ -226,7 +226,7 @@ private actor JapaneseTextAnalyzer {
     do {
       let analysis = try await morphologyClient.analyze(text)
       var tokens: [JapaneseTextToken] = []
-      for candidate in analysis.candidates {
+      for candidate in JapaneseInflectionGrouping.group(analysis.candidates) {
         let resolution = await resolvedEntry(
           for: candidate,
           highlightedQuery: highlightedQuery,

@@ -24,7 +24,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   it on its own screen, highlights its ending, shows its polite or plain counterpart, and lists the
   example sentences that use it.
 - Example sentences underline each word separately, so you can see where one word ends and the
-  next begins, and they highlight the word or form you're studying.
+  next begins, and they highlight the word or form you're studying. Inflected words such as
+  見なかった are one tappable word instead of 見 + なかっ + た, here and in Image Search.
 
 - Search now presents one Results list ordered by dictionary relevance first, then by the enabled
   frequency dictionaries in priority order. English rows show the gloss that matched the query.

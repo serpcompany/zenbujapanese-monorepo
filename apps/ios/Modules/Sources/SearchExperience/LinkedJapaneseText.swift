@@ -170,12 +170,22 @@ private struct LinkedTokenView: View {
 
   private var isHighlighted: Bool { isCurrentEntry || matchesQuery }
 
+  /// The entry's reading when the text uses one of its forms; otherwise the parsed reading of
+  /// the text itself, so an inflected word such as 見なかった gets furigana for 見, not 見る.
+  private func displayReading(for entry: DictionaryEntry) -> String {
+    let forms = [entry.headword] + entry.writtenForms.map(\.value) + entry.readingForms.map(\.value)
+    guard !forms.contains(token.surface), let reading = token.reading, !reading.isEmpty else {
+      return entry.reading
+    }
+    return reading.applyingTransform(.hiraganaToKatakana, reverse: true) ?? reading
+  }
+
   var body: some View {
     if let entry = token.entry {
       if presentation.usesDedicatedWordSelector {
         JapaneseRubyText(
           surface: token.surface,
-          reading: entry.reading,
+          reading: displayReading(for: entry),
           exposesAccessibility: false,
           displaysRomaji: false
         )
@@ -189,7 +199,7 @@ private struct LinkedTokenView: View {
         } label: {
           JapaneseRubyText(
             surface: token.surface,
-            reading: entry.reading,
+            reading: displayReading(for: entry),
             exposesAccessibility: false,
             displaysRomaji: false
           )
