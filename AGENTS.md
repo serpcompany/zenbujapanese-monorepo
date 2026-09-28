@@ -18,6 +18,7 @@ Routing only. Open the smallest source matching the task.
 
 - [`docs/adr/`](docs/adr/) — architecture changes. Read only the relevant records.
 - [`docs/agents/domain.md`](docs/agents/domain.md) — project terminology and deciding whether an ADR is warranted.
+- [`CONTEXT.md`](CONTEXT.md) — terms that are easy to confuse, such as Language Reference ID and JMdict entry number.
 
 ## Evidence and research
 

@@ -8,7 +8,8 @@ Every Zenbu client, including iOS, the website, and the browser extension, uses 
 language data. A build pipeline converts the sources into versioned, platform-neutral SQLite
 artifacts. Each artifact has a manifest giving its schema version and SHA-256. Clients download
 an artifact and query it locally. No client sends dictionary lookups to a server, so clients
-keep working offline. Data versions are independent of app versions: each client declares the
+keep working offline. The website publishes pages from its own copy and is not a lookup service
+([ADR 0007](0007-publish-the-dictionary-at-permanent-urls-from-the-websites-copy.md)). Data versions are independent of app versions: each client declares the
 schema versions it can read.
 
 JMdict is the dictionary for every client. The browser extension moves into this repository
