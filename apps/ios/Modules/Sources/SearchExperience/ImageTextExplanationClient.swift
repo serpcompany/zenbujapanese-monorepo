@@ -158,7 +158,9 @@ private struct OnDeviceExplainer {
   private func translateBatch(_ sources: [String]) async throws -> [String: String] {
     var notes: [ImageTextNote] = []
     for source in sources {
-      if let entry = try? await lookupClient.entryMatchingForm(source) {
+      if let entry = try? await lookupClient.entryMatchingForm(source),
+        Self.isSetPhrase(source, entry: entry)
+      {
         notes.append(ImageTextNote(phrase: source, entry: entry))
       }
     }

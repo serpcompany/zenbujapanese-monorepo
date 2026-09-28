@@ -348,8 +348,11 @@ struct ImageTextFlowView: View {
       .padding(16)
     }
     .accessibilityIdentifier("image-text.translation")
-    // Choosing Translate is the request, so it starts without another tap.
-    .task(id: page.asset.id) {
+    // Choosing Translate is the request, so it starts without another tap. Keyed to the
+    // selection because a neighboring page's view appears before `selectPage` runs, and
+    // `selectPage` cancels whatever was started for the old page.
+    .task(id: model.selectedPage) {
+      guard model.isSelected(page) else { return }
       if case .idle = model.translationState { model.requestTranslation() }
       model.requestExplanation()
     }
@@ -733,14 +736,14 @@ private struct ImageTextLineCards: View {
     .onAppear {
       if activeLineID == nil { activeLineID = page.lines.first?.id }
     }
-    .task(id: page.asset.id) { translateIfReady() }
+    .task(id: model.selectedPage) { translateIfReady() }
   }
 
   /// Like the Player's captions, lines are translated without asking when translation is ready.
   private func translateIfReady() {
-    guard readingAidPreferences.showsTranslations, case .idle = model.translationState else {
-      return
-    }
+    guard model.isSelected(page), readingAidPreferences.showsTranslations,
+      case .idle = model.translationState
+    else { return }
     model.requestTranslation(preparesIfNeeded: false)
   }
 }
@@ -786,8 +789,10 @@ private struct ImageTextReader: View {
       )
       .accessibilityIdentifier("image-text.reader")
     }
-    .task(id: page.asset.id) {
-      if readingAidPreferences.showsTranslations, case .idle = model.translationState {
+    .task(id: model.selectedPage) {
+      if model.isSelected(page), readingAidPreferences.showsTranslations,
+        case .idle = model.translationState
+      {
         model.requestTranslation(preparesIfNeeded: false)
       }
     }

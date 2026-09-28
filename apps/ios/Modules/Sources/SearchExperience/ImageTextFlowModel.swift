@@ -107,6 +107,10 @@ final class ImageTextFlowModel {
     selectedLoadedPage?.observations.map(\.text).joined(separator: "\n") ?? ""
   }
 
+  func isSelected(_ page: ImageTextPage) -> Bool {
+    pages.indices.contains(selectedPage) && pages[selectedPage].id == page.asset.id
+  }
+
   var selectedLoadedPage: ImageTextPage? {
     guard pages.indices.contains(selectedPage), case .loaded(let page) = pages[selectedPage].state
     else { return nil }
