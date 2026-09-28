@@ -200,6 +200,7 @@ struct FrequencyPackDisclosure: Equatable, Sendable {
     case "zenbu.tubelex.youtube.ja.unidic-3.1": "YouTube"
     case "zenbu.wikipedia.written.ja.unidic-3.1": "Wikipedia"
     case "zenbu.jlpt.waller.levels": "JLPT"
+    case "zenbu.jiten.video-games.ja.ordered-v2": "Games"
     default: displayName
     }
   }
