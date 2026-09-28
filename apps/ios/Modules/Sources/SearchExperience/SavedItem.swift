@@ -4,7 +4,7 @@ import Foundation
 /// or attach photos to.
 struct SavedItem: Hashable, Sendable {
   enum Kind: Hashable, Sendable {
-    case word(LanguageReferenceID, noteID: WordNoteID)
+    case word(LanguageReferenceID)
     case kanji(KanjiCharacter)
   }
 
@@ -14,7 +14,7 @@ struct SavedItem: Hashable, Sendable {
 
   static func word(_ entry: DictionaryEntry) -> SavedItem {
     SavedItem(
-      kind: .word(entry.id, noteID: entry.noteID), headword: entry.headword, reading: entry.reading)
+      kind: .word(entry.id), headword: entry.headword, reading: entry.reading)
   }
 
   static func kanji(_ character: KanjiCharacter, reading: String) -> SavedItem {
@@ -25,18 +25,14 @@ struct SavedItem: Hashable, Sendable {
   /// the character. The prefix can't collide with a Language Reference ID, which is hexadecimal.
   var storedID: String {
     switch kind {
-    case .word(let id, _): id.rawValue
+    case .word(let id): id.rawValue
     case .kanji(let character): Self.kanjiPrefix + character.rawValue
     }
   }
 
-  /// The key notes and photos are saved under.
-  var noteID: WordNoteID {
-    switch kind {
-    case .word(_, let noteID): noteID
-    case .kanji: WordNoteID(rawValue: storedID)
-    }
-  }
+  /// The key notes and photos are saved under, the same as `storedID`, so a word's notes and
+  /// photos stay attached when a dictionary update edits its meanings.
+  var noteID: SavedItemID { SavedItemID(rawValue: storedID) }
 
   var encounterReference: EncounterWordReference {
     EncounterWordReference(id: noteID, headword: headword, reading: reading)

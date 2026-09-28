@@ -10,7 +10,7 @@ struct EncounterMediaAttachment: Hashable, Sendable {
 }
 
 struct EncounterWordReference: Codable, Hashable, Sendable {
-  let id: WordNoteID
+  let id: SavedItemID
   let headword: String
   let reading: String
 }
@@ -209,7 +209,7 @@ private actor EncounterMediaStorage {
       migrated.encounters.append(
         EncounterRecord(
           word: EncounterWordReference(
-            id: WordNoteID(rawValue: wordID), headword: "Saved Word", reading: ""),
+            id: SavedItemID(rawValue: wordID), headword: "Saved Word", reading: ""),
           mediaID: record.blobID,
           savedAt: date
         )

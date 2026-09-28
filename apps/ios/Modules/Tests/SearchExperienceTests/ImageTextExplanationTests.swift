@@ -53,7 +53,6 @@ struct ImageTextExplanationTests {
   private static func entry(_ headword: String) -> DictionaryEntry {
     DictionaryEntry(
       id: LanguageReferenceID(rawValue: headword),
-      noteID: WordNoteID(rawValue: headword),
       sourceProvenances: [
         LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: headword)
       ],

@@ -15,7 +15,7 @@ final class SavedItemNotes {
   /// The note being edited, or a new note's ID while one is being added.
   private(set) var editingNoteID: String?
   var draft = ""
-  @ObservationIgnored private var noteID: WordNoteID?
+  @ObservationIgnored private var noteID: SavedItemID?
   @ObservationIgnored private var saveTask: Task<Void, Never>?
   @ObservationIgnored private let store: WordNoteStore
 
@@ -26,7 +26,7 @@ final class SavedItemNotes {
   var isEditing: Bool { editingNoteID != nil }
 
   /// Shows the notes saved for `noteID`, dropping any edit in progress.
-  func load(_ noteID: WordNoteID) async {
+  func load(_ noteID: SavedItemID) async {
     let loaded = await store.load(noteID)
     guard !Task.isCancelled else { return }
     self.noteID = noteID

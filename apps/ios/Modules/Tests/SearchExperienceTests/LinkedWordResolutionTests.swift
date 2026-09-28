@@ -102,7 +102,6 @@ struct LinkedWordResolutionTests {
   ) -> DictionaryEntry {
     DictionaryEntry(
       id: LanguageReferenceID(rawValue: id),
-      noteID: WordNoteID(rawValue: id),
       sourceProvenances: [LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: id)],
       reading: headword,
       headword: headword,

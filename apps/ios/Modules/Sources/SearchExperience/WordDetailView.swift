@@ -227,7 +227,7 @@ struct WordDetailView: View {
               reason: "Frequency data unavailable"
             ))
         ]
-      await notes.load(entry.noteID)
+      await notes.load(item.noteID)
       guard !Task.isCancelled else { return }
       examples = loadedExamples
       examplesEntryID = entry.id

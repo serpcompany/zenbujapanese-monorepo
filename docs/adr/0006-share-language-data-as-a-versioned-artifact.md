@@ -25,9 +25,8 @@ with `publish_frequency_pack_sources.py` until this pipeline exists.
 
 A rebuild never changes or reuses a Language Reference ID. Anything a learner saves about a
 word refers to it by Language Reference ID, so saved data and synced data survive dictionary
-updates. Word notes and encounter media still use `WordNoteID`, which hashes a word's meanings
-and so changes when JMdict edits them. They move to Language Reference IDs before any learner
-data syncs.
+updates. Word notes and encounter media are keyed by Language Reference ID
+too, so a JMdict edit to a word's meanings no longer detaches them.
 
 ## Precompute first, and hold clients to one conformance suite
 
