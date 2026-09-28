@@ -52,7 +52,9 @@ written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examp
 The top of a word detail shows the headword with furigana, following the Reading Aids setting.
 When furigana is off, the reading appears under the headword instead. To the right of the
 headword are the pitch accent (the reading in katakana with an overline across the high morae and
-a hook at the downstep), a pronounce button, and the latest encounter photo. A part-of-speech row
+a hook at the downstep), a pronounce button, and the latest encounter photo. Pitch comes from
+UniDic; for a two-part compound UniDic doesn't list whole, such as 記者会見, it is estimated from
+the parts' accent-combination types, and a word with neither shows no pitch. A part-of-speech row
 follows and opens the conjugation table when one exists. It names one word class and then its
 modifiers in sentence case without repeating "verb", for example "Godan verb (intransitive)",
 "Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".

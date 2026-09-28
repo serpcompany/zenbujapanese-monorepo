@@ -16,7 +16,7 @@ Licenses screen, and point the source record at that file instead of keeping a s
 | Category | Source | What it supplies | Current consumer |
 | --- | --- | --- | --- |
 | Dictionaries and language analysis | [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html) | Japanese written forms, readings, English meanings, usage information, cross-references, and source priority evidence. | iOS |
-| Dictionaries and language analysis | [UniDic](https://clrd.ninjal.ac.jp/unidic_archive/cwj/3.1.0/) | Source-matched pronunciation and pitch-accent facts used while importing JMdict. | iOS |
+| Dictionaries and language analysis | [UniDic](https://clrd.ninjal.ac.jp/unidic_archive/cwj/3.1.0/) | Source-matched pronunciation and pitch-accent facts used while importing JMdict, and the accent-combination types used to estimate pitch for two-part compounds. | iOS |
 | Dictionaries and language analysis | [SudachiDict Core](https://github.com/WorksApplications/SudachiDict) | Lexical data required by Sudachi.rs to identify and describe Japanese words. It is not Zenbu's learner-facing Japanese-English dictionary. | iOS |
 | Dictionaries and language analysis | [MeCab IPADIC through kuromoji.js](https://github.com/takuyaa/kuromoji.js) | Bundled morphological data used by Kuromoji to parse interactive Japanese text. It is not Zenbu's learner-facing Japanese-English dictionary. | iOS |
 | Examples and corpora | [Tatoeba](https://tatoeba.org/en/downloads) | Japanese sentences, English translations, links, contributor information, license provenance, and the Japanese word index that links sentences to dictionary entries. | iOS |
