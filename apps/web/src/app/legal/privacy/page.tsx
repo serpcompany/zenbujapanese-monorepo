@@ -10,8 +10,8 @@ export default function PrivacyPage() {
   return (
     <PageShell title="Privacy Policy" updated="September 28, 2026">
       <p>
-        This policy explains how {site.name} handles information in the {site.name} iPhone app and
-        on zenbujapanese.com.
+        This policy explains how we handle information in the {site.name} iPhone app and on
+        zenbujapanese.com.
       </p>
 
       <h2>The short version</h2>
