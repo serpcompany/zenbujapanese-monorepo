@@ -21,6 +21,10 @@ show the meaning that matched.
 Each row shows compact chips such as `JLPT N3` or `YouTube 812`, one per enabled dictionary
 that ranks or lists the word, with a colored dot for how common it is.
 
+A word the learner knows shows a green **✓ Known** capsule at the right of its headword.
+Swiping a row to the right, or long-pressing it, marks the word known or unknown without
+opening it.
+
 An inflected Japanese query such as `まけたら` or `勉強した` finds its dictionary forms on the
 device. When the query is itself a word (`いって` is 一手), that word stays first.
 
@@ -69,6 +73,12 @@ estimates.
 Selectable Japanese inside Word Detail and Example Sentences uses the same interactive
 word-boundary analysis as Image Search. Selecting a linked word continues into its normal
 dictionary entry.
+
+The top-right of a word detail holds **Share**, which shares the headword, reading, and numbered
+meanings as text, and a **•••** menu. The menu starts with **Mark as Known** (or **Mark as
+Unknown**), followed by Add Note, Take Photo, and Choose Photo. A known word shows the same
+**✓ Known** capsule under its headword. A word counts as unknown until the learner marks it, and
+known words persist on the device, keyed by the dictionary entry's stable identifier.
 
 A learner can write notes for a word and associate photos with it. Notes and associated
 photos persist on the device.

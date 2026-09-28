@@ -832,25 +832,45 @@ private struct ResultRow: View {
   let frequencyRanks: FrequencyRanks?
   let rank: ResultRank
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @Environment(WordKnowledge.self) private var wordKnowledge
   @ScaledMetric(relativeTo: .caption) private var chipSpacing = 6.0
 
   var body: some View {
+    let isKnown = wordKnowledge.isKnown(entry.id)
     NavigationLink(value: SearchExperienceRoute.word(entry, nil)) {
-      VStack(alignment: .leading, spacing: 4) {
-        titleBlock
+      VStack(alignment: .leading, spacing: 6) {
+        HStack(alignment: .lastTextBaseline, spacing: 8) {
+          titleBlock
+          Spacer(minLength: 0)
+          if isKnown {
+            KnownWordBadge()
+          }
+        }
         Text(summary)
           .font(.body)
           .foregroundStyle(.primary)
           .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
           .fixedSize(horizontal: false, vertical: true)
         frequencyChips
-          .padding(.top, 2)
+          .padding(.top, 4)
       }
       .frame(maxWidth: .infinity, alignment: .leading)
       .contentShape(Rectangle())
+      .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
+    }
+    .swipeActions(edge: .leading) {
+      KnownWordMenuButton(entry: entry, identifierPrefix: resultIdentifier)
+        .tint(isKnown ? .orange : .green)
+    }
+    .contextMenu {
+      KnownWordMenuButton(entry: entry, identifierPrefix: resultIdentifier)
     }
     .accessibilityLabel("\(entry.headword), \(entry.reading), \(summary)")
-    .accessibilityValue("\(rank.accessibilityValue), \(frequencyPresentation.accessibilityValue)")
+    .accessibilityValue(
+      ((isKnown ? ["Known"] : [])
+        + [rank.accessibilityValue, frequencyPresentation.accessibilityValue])
+        .joined(separator: ", ")
+    )
     .accessibilityIdentifier(resultIdentifier)
   }
 

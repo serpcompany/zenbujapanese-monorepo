@@ -15,10 +15,11 @@ sign-in yet; the tab holds on-device content and preferences. It provides:
 
 - a profile card with the learner's photo, name, and username;
 - the Media Library;
+- Known Words;
 - independent Furigana and Romaji preferences;
-- management of optional frequency dictionaries;
-- Help & Support and the Privacy Policy, which open the Zenbu website; and
-- the app's name, version, and description above source credits and attributions.
+- management of optional frequency dictionaries; and
+- the app's name, version, and description, followed by Help & Support and the Privacy Policy,
+  which open the Zenbu website, and source credits and attributions.
 
 Rows use Settings-style tinted icon tiles in grouped cards without section headings.
 
@@ -49,6 +50,15 @@ domain and size, or a download failure. Swiping a row reveals Details and Remove
 when a newer version exists. When the app upgrades from the single active pack, that pack
 becomes the only enabled one. An update that adds a bundled pack, such as JLPT Levels, enables
 it once at the top of the learner's list; disabling it afterward is remembered.
+
+### Known Words
+
+Known Words shows its count on the Account row and lists every word the learner marked known,
+most recent first. A learner can search the list by headword or reading, swipe a word to mark it
+unknown, or open it in Search (or search its headword when the entry is no longer in the dictionary).
+Known words are stored only on the device. If the saved known words
+came from a newer version of Zenbu, or a damaged file couldn't be kept aside, they are shown but
+can't be changed, and Known Words and the Mark as Known button say so.
 
 ### Media Library
 

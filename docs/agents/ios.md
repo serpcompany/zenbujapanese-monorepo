@@ -83,3 +83,15 @@ When changing Search results or frequency dictionaries, also check in the Simula
 - With a pack made unreadable in a debug container, results stay listed and the footer names
   the unavailable dictionary.
 - Rapidly submitting `quiet`, `miru`, then `いる` leaves only `いる` results.
+
+## Known words manual checks
+
+`WordKnowledgeTests` cover known-word storage: persistence, unreadable and newer-version files,
+failed writes, and backups. When changing known words, also check in the Simulator:
+
+- Swiping a Search result right, or the **•••** menu on Word Detail, toggles **✓ Known** on
+  both screens, and the mark survives a relaunch.
+- **Account → Known Words** shows the count, lists the word, swipes it back to unknown, and
+  opens it in Search.
+- Known words live in `Application Support/Zenbu Japanese/word-knowledge.json` in the app's
+  data container.

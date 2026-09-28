@@ -6,6 +6,11 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- Mark words as **Known**. Swipe a Search result or long-press it, or use the **•••** menu on a
+  word's page. Known words show a green **✓ Known** capsule in Search and on the word's page,
+  and **Account → Known Words** lists them with a count, search, and swipe to mark unknown.
+  Known words are stored only on your device.
+- Share a word from its page: the headword, reading, and meanings are shared as text.
 - New optional frequency dictionaries built from openly licensed Jiten lists (CC BY-SA 4.0):
   **TV & Movies**, **Anime**, **Manga**, **Novels**, **Visual Novels**, and **Video Games**.
   They match words by reading as well as spelling, so words written the same way, such as
@@ -29,6 +34,11 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Changed
 
+- A word's page has **Share** and **•••** buttons in place of **+**. Add Note, Take Photo, and
+  Choose Photo are in the **•••** menu.
+- The Video Games frequency chip is shortened to **Games**.
+- In Account, Help & Support sits with the Privacy Policy and Credits & Attributions below the
+  app's name and version.
 - The included TUBELEX dictionary is now called **YouTube**.
 - Optional frequency dictionaries now download from Zenbu's own servers instead of third-party
   hosts. Dictionaries you already downloaded keep working.
