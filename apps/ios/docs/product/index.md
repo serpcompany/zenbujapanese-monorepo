@@ -55,7 +55,8 @@ it once at the top of the learner's list; disabling it afterward is remembered.
 
 Known Words shows its count on the Account row and lists every word the learner marked known,
 most recent first. A learner can search the list by headword or reading, swipe a word to mark it
-unknown, or open it in Search. Known words are stored only on the device. If the saved known words
+unknown, or open it in Search (or search its headword when the entry is no longer in the dictionary).
+Known words are stored only on the device. If the saved known words
 came from a newer version of Zenbu, or a damaged file couldn't be kept aside, they are shown but
 can't be changed, and Known Words and the Mark as Known button say so.
 
