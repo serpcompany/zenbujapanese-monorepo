@@ -166,13 +166,13 @@ final class WordKnowledgeTests {
   func retryAfterFailedWrite() async throws {
     let knowledge = WordKnowledge(fileURL: fileURL)
     await knowledge.flush()
-    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    try setDirectoryWritable(false)
+    // A regular file where the directory should be makes the write fail.
+    try Data().write(to: directory)
     knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
     await knowledge.flush()
     #expect(!FileManager.default.fileExists(atPath: fileURL.path))
 
-    try setDirectoryWritable(true)
+    try FileManager.default.removeItem(at: directory)
     knowledge.saveIfNeeded()
     await knowledge.flush()
     let reloaded = WordKnowledge(fileURL: fileURL)
@@ -192,14 +192,80 @@ final class WordKnowledgeTests {
     let knowledge = WordKnowledge(fileURL: fileURL)
     await knowledge.flush()
     #expect(knowledge.isKnown(taberu))
+    #expect(knowledge.readOnlyReason == .newerVersion)
     knowledge.setStatus(.known, id: miru, headword: "見る", reading: "みる")
+    #expect(!knowledge.isKnown(miru))
     await knowledge.flush()
     #expect(try Data(contentsOf: fileURL) == Data(json.utf8))
   }
 
-  private func setDirectoryWritable(_ writable: Bool) throws {
-    try FileManager.default.setAttributes(
-      [.posixPermissions: writable ? 0o755 : 0o555], ofItemAtPath: directory.path)
+  @Test("a newer file with a different layout is left unchanged")
+  func newerVersionWithUnknownLayout() async throws {
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let json = """
+      {"version":2,"entries":[{"id":"\(taberu.rawValue)","status":"known"}]}
+      """
+    try Data(json.utf8).write(to: fileURL)
+
+    let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
+    #expect(knowledge.readOnlyReason == .newerVersion)
+    #expect(knowledge.records.isEmpty)
+    knowledge.setStatus(.known, id: miru, headword: "見る", reading: "みる")
+    await knowledge.flush()
+    #expect(try Data(contentsOf: fileURL) == Data(json.utf8))
+    #expect(try backups().isEmpty)
+  }
+
+  @Test("a version that isn't a whole number counts as newer")
+  func nonIntegerVersionIsNewer() async throws {
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let json = """
+      {"version":"2.0","records":[
+      {"entryID":"\(taberu.rawValue)","headword":"食べる","reading":"たべる","status":"known","updatedAt":0}]}
+      """
+    try Data(json.utf8).write(to: fileURL)
+
+    let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
+    #expect(knowledge.readOnlyReason == .newerVersion)
+    #expect(knowledge.isKnown(taberu))
+    #expect(try Data(contentsOf: fileURL) == Data(json.utf8))
+    #expect(try backups().isEmpty)
+  }
+
+  @Test("an unreadable file that can't be kept aside is never saved over")
+  func couldNotKeepCopy() async throws {
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    try Data("not json".utf8).write(to: fileURL)
+    // A locked directory takes no new files, so the copy fails.
+    try setDirectoryLocked(true)
+    defer { try? setDirectoryLocked(false) }
+
+    let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
+    #expect(knowledge.readOnlyReason == .couldNotKeepCopy)
+    knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
+    #expect(!knowledge.isKnown(taberu))
+    try setDirectoryLocked(false)
+    #expect(try Data(contentsOf: fileURL) == Data("not json".utf8))
+    #expect(try backups().isEmpty)
+  }
+
+  @Test("unreadable files kept in quick succession are all kept, up to the newest 3")
+  func backupsArePruned() async throws {
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    for _ in 0..<4 {
+      try Data("not json".utf8).write(to: fileURL)
+      let knowledge = WordKnowledge(fileURL: fileURL)
+      await knowledge.flush()
+      #expect(!knowledge.isReadOnly)
+    }
+    #expect(try backups().count == 3)
+  }
+
+  private func setDirectoryLocked(_ locked: Bool) throws {
+    try FileManager.default.setAttributes([.immutable: locked], ofItemAtPath: directory.path)
   }
 
   private func backups() throws -> [String] {

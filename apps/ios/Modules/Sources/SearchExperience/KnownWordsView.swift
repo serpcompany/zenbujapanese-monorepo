@@ -9,13 +9,13 @@ struct KnownWordMenuButton: View {
 
   var body: some View {
     let isKnown = wordKnowledge.isKnown(entry.id)
-    Button(
-      isKnown ? "Mark as Unknown" : "Mark as Known",
-      systemImage: isKnown ? "xmark.circle" : "checkmark.circle"
-    ) {
+    let title: LocalizedStringKey =
+      wordKnowledge.isReadOnly
+      ? "Known Words Can’t Be Changed" : isKnown ? "Mark as Unknown" : "Mark as Known"
+    Button(title, systemImage: isKnown ? "xmark.circle" : "checkmark.circle") {
       wordKnowledge.toggleKnown(entry)
     }
-    .disabled(!wordKnowledge.isLoaded)
+    .disabled(!wordKnowledge.isLoaded || wordKnowledge.isReadOnly)
     .accessibilityIdentifier("\(identifierPrefix).\(isKnown ? "mark-unknown" : "mark-known")")
   }
 }
@@ -57,24 +57,35 @@ struct KnownWordsView: View {
         ContentUnavailableView(
           "No Known Words",
           systemImage: "checkmark.circle",
-          description: Text("Words you mark as known in Search or on a word’s page will appear here.")
+          description: Text(
+            readOnlyMessage
+              ?? "Words you mark as known in Search or on a word’s page will appear here.")
         )
         .accessibilityIdentifier("known-words.empty")
       } else {
         List {
-          ForEach(records) { record in
-            Button {
-              openWord(record)
-            } label: {
-              KnownWordsListRow(record: record)
-            }
-            .foregroundStyle(.primary)
-            .accessibilityIdentifier("known-words.item.\(record.entryID)")
-            .swipeActions {
-              Button("Mark as Unknown", systemImage: "xmark.circle") {
-                wordKnowledge.setStatus(.unknown, for: record)
+          Section {
+            ForEach(records) { record in
+              Button {
+                openWord(record)
+              } label: {
+                KnownWordsListRow(record: record)
               }
-              .tint(.orange)
+              .foregroundStyle(.primary)
+              .accessibilityIdentifier("known-words.item.\(record.entryID)")
+              .swipeActions {
+                if !wordKnowledge.isReadOnly {
+                  Button("Mark as Unknown", systemImage: "xmark.circle") {
+                    wordKnowledge.setStatus(.unknown, for: record)
+                  }
+                  .tint(.orange)
+                }
+              }
+            }
+          } footer: {
+            if let readOnlyMessage {
+              Text(readOnlyMessage)
+                .accessibilityIdentifier("known-words.read-only")
             }
           }
         }
@@ -88,6 +99,17 @@ struct KnownWordsView: View {
       }
     }
     .navigationTitle("Known Words")
+  }
+
+  private var readOnlyMessage: LocalizedStringKey? {
+    switch wordKnowledge.readOnlyReason {
+    case .newerVersion:
+      "Known words can’t be changed because they were saved by a newer version of Zenbu."
+    case .couldNotKeepCopy:
+      "Known words can’t be saved right now. Free up storage and reopen Zenbu."
+    case nil:
+      nil
+    }
   }
 
   private var filteredRecords: [WordKnowledgeRecord] {
