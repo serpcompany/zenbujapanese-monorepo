@@ -59,9 +59,9 @@ it once at the top of the learner's list; disabling it afterward is remembered.
 
 ### Known Words
 
-Known Words shows its count on the Account row and lists every word the learner marked known,
-most recent first. A learner can search the list by headword or reading, swipe a word to mark it
-unknown, or open its word page in Search. A word whose entry ID changed opens the entry with the
+Known Words shows its count on the Account row and lists every word and kanji the learner marked
+known, most recent first. A learner can search the list by headword or reading, swipe an item to
+mark it unknown, or open its word or kanji page in Search. A word whose entry ID changed opens the entry with the
 same headword and reading, and a search for the headword only when there is none.
 Known words are stored only on the device. If the saved known words
 came from a newer version of Zenbu, or a damaged file couldn't be kept aside, they are shown but
@@ -71,9 +71,9 @@ it, and Known Words asks the learner to reopen Zenbu.
 
 ### Lists
 
-Lists are the learner's own named groups of dictionary words, such as "Favorites" or "Anime S1
-vocab". A new install starts with one list, **Favorites**, which can be renamed or deleted like
-any other; once deleted it is not created again. Words are added from a word's **•••** menu
+Lists are the learner's own named groups of dictionary words and kanji, such as "Favorites" or
+"Anime S1 vocab". A new install starts with one list, **Favorites**, which can be renamed or deleted like
+any other; once deleted it is not created again. Words and kanji are added from their page's **•••** menu
 (see [Dictionary](dictionary.md)).
 
 The Account row shows how many lists there are. Lists shows every list in the learner's order

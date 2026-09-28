@@ -184,7 +184,7 @@ final class WordKnowledgeTests {
   func newerVersionIsReadOnly() async throws {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     let json = """
-      {"version":2,"records":[
+      {"version":3,"records":[
       {"entryID":"\(taberu.rawValue)","headword":"食べる","reading":"たべる","status":"known","updatedAt":0,"gloss":"eat"}]}
       """
     try Data(json.utf8).write(to: fileURL)
@@ -203,7 +203,7 @@ final class WordKnowledgeTests {
   func newerVersionWithUnknownLayout() async throws {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     let json = """
-      {"version":2,"entries":[{"id":"\(taberu.rawValue)","status":"known"}]}
+      {"version":3,"entries":[{"id":"\(taberu.rawValue)","status":"known"}]}
       """
     try Data(json.utf8).write(to: fileURL)
 

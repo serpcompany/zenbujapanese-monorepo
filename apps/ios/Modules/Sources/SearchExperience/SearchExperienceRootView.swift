@@ -90,7 +90,7 @@ public struct SearchExperienceRootView: View {
         AccountNavigationView(
           path: $accountPath,
           store: encounterMediaStore,
-          openWord: openSavedWord
+          openItem: openSavedItem
         )
       } label: {
         Label("Account", systemImage: "person.crop.circle")
@@ -174,8 +174,12 @@ public struct SearchExperienceRootView: View {
         kanjiLookupClient: kanjiLookupClient,
         kanjiElementLookupClient: kanjiElementLookupClient,
         kanjiStrokeOrderClient: kanjiStrokeOrderClient,
+        wordNoteStore: .live,
+        encounterMediaStore: encounterMediaStore,
+        cameraAuthorizationClient: cameraAuthorizationClient,
         preservedWordID: kanjiScrollWordIDs[character],
-        preservedElementID: kanjiScrollElementIDs[character]
+        preservedElementID: kanjiScrollElementIDs[character],
+        openList: openWordList
       )
     case .kanjiElement(let id):
       KanjiElementDetailView(
@@ -384,10 +388,14 @@ public struct SearchExperienceRootView: View {
 
   /// Opens a saved word's entry. When its ID is no longer found, opens the entry with the same
   /// headword and reading, and only when there is none, searches the headword.
-  private func openSavedWord(_ id: LanguageReferenceID, headword: String, reading: String) {
+  private func openSavedItem(_ storedID: String, headword: String, reading: String) {
+    selectedTab = .search
+    if let kanji = SavedItem.kanji(storedID: storedID) {
+      path.append(.kanji(kanji, nil))
+      return
+    }
     Task { @MainActor in
-      selectedTab = .search
-      if let entry = try? await lookupClient.entry(id) {
+      if let entry = try? await lookupClient.entry(LanguageReferenceID(rawValue: storedID)) {
         path.append(.word(entry, nil))
       } else if let entry = try? await lookupClient.search(SearchQuery(headword)).entries.first(
         where: { $0.headword == headword && $0.reading == reading })

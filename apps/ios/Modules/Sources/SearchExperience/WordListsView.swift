@@ -1,12 +1,12 @@
 import SwiftUI
 
-/// Word Detail → ••• → Add to List…: every list, with a checkmark on the ones holding the word.
-/// Tapping a list adds or removes the word at once.
+/// Word or Kanji Detail → ••• → Add to List…: every list, with a checkmark on the ones holding
+/// the item. Tapping a list adds or removes it at once.
 struct WordListPickerView: View {
   @Environment(WordLists.self) private var wordLists
   @Environment(\.dismiss) private var dismiss
   @State private var namePrompt: WordListNamePrompt?
-  let entry: DictionaryEntry
+  let item: SavedItem
 
   var body: some View {
     NavigationStack {
@@ -18,9 +18,9 @@ struct WordListPickerView: View {
           List {
             Section {
               ForEach(wordLists.lists) { list in
-                let isMember = wordLists.contains(entry.id, in: list.id)
+                let isMember = wordLists.contains(item, in: list.id)
                 Button {
-                  wordLists.toggle(entry, in: list.id)
+                  wordLists.toggle(item, in: list.id)
                 } label: {
                   HStack {
                     Text(list.name)
@@ -66,8 +66,7 @@ struct WordListPickerView: View {
       }
       .wordListNamePrompt($namePrompt) { name in
         if let list = wordLists.createList(named: name) {
-          wordLists.addWord(
-            entry.id, headword: entry.headword, reading: entry.reading, to: list.id)
+          wordLists.add(item, to: list.id)
         }
       }
     }
@@ -295,7 +294,7 @@ struct WordListView: View {
   private func row(_ word: WordListMembership) -> some View {
     let label = SavedWordRow(
       headword: word.headword, reading: word.reading, date: word.addedAt,
-      isKnown: wordKnowledge.isKnown(word.languageReferenceID))
+      isKnown: wordKnowledge.isKnown(storedID: word.entryID))
     Group {
       if isSelecting {
         // While selecting, a tap selects the row instead of opening the word.
@@ -313,7 +312,7 @@ struct WordListView: View {
     .swipeActions {
       if !wordLists.isReadOnly {
         Button("Remove", systemImage: "minus.circle", role: .destructive) {
-          wordLists.removeWord(word.languageReferenceID, from: listID)
+          wordLists.remove(storedID: word.entryID, from: listID)
         }
         .accessibilityIdentifier("word-list.remove.\(word.entryID)")
       }
@@ -374,7 +373,7 @@ struct WordListView: View {
 
   private func removeSelected() {
     for word in selectedWords {
-      wordLists.removeWord(word.languageReferenceID, from: listID)
+      wordLists.remove(storedID: word.entryID, from: listID)
     }
     editMode = .inactive
   }

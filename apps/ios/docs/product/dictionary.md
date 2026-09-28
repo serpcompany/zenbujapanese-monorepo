@@ -101,6 +101,12 @@ A kanji detail can present readings, meanings, stroke order, components, element
 that contain the kanji. Component and element links can be followed without losing the
 learner's place in the preceding detail.
 
+A kanji detail has the same **Share** button and **•••** menu as a word detail. Share sends the
+kanji, its readings, and its meanings as text. The menu marks the kanji known, adds it to lists,
+and adds notes and photos, which work as they do for a word. Lists and Notes sections appear
+above the words containing the kanji, and a known kanji shows the **✓ Known** capsule. A kanji
+is saved as itself, not as a dictionary word, so marking 最 known doesn't mark the word 最.
+
 ## Image Search
 
 Image Search recognizes Japanese text in one or more selected images. It reads both

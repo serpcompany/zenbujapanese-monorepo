@@ -217,7 +217,7 @@ final class WordListsTests {
   func newerVersionIsReadOnly() async throws {
     let listID = UUID()
     let json = """
-      {"version":2,"lists":[{"id":"\(listID)","name":"Anime","position":0,"createdAt":0,"updatedAt":0,"color":"red"}],
+      {"version":3,"lists":[{"id":"\(listID)","name":"Anime","position":0,"createdAt":0,"updatedAt":0,"color":"red"}],
       "memberships":[]}
       """
     try writeFile(json)
