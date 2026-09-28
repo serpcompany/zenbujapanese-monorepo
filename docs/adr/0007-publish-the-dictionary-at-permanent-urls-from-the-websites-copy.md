@@ -26,9 +26,13 @@ app's share links and the website build the same URL. A request with a stale or 
 artifact once held returns 410, or 308 when a replacement is recorded. Any other unknown number
 returns 404.
 
-English has no locale prefix. If another gloss language is added, its pages live under
-`/<lang>/dictionary/` with the same numbers, linked by hreflang. The headword is always
-Japanese; the direction of a lookup lives in search, as in the app.
+The headword is always Japanese; the direction of a lookup lives in search, as in the app. A
+URL prefix names the site locale, the language the reader picks for the site, and English has
+none. Meanings are in the locale's language when JMdict has them, otherwise in English, so
+`/es/dictionary/` explains words in Spanish and `/ja/dictionary/` is a Japanese-English
+dictionary for Japanese speakers. Every locale uses the same numbers, linked by hreflang. The
+URL carries no language pair: a dictionary of words in another language, such as English words
+explained in Japanese, needs other data and gets its own section or site.
 
 ## Kanji URLs are the character
 
