@@ -370,18 +370,19 @@ private actor JapaneseTextAnalyzer {
     return forms
   }
 
+  private static let verbs: Set<PartOfSpeech> = [
+    .verb, .godanVerb, .ichidanVerb, .suruVerb, .kuruVerb, .zuruVerb, .archaicVerb,
+    .auxiliaryVerb,
+  ]
+  private static let adjectives: Set<PartOfSpeech> = [
+    .iAdjective, .naAdjective, .taruAdjective, .archaicAdjective, .archaicNaAdjective,
+    .auxiliaryAdjective,
+  ]
+  private static let nouns: Set<PartOfSpeech> = [
+    .noun, .pronoun, .nounPrefix, .nounSuffix, .noAdjective, .prenominal, .takesSuru,
+  ]
+
   private static func isCompatible(_ part: PartOfSpeech, with providerPOS: String) -> Bool {
-    let verbs: Set<PartOfSpeech> = [
-      .verb, .godanVerb, .ichidanVerb, .suruVerb, .kuruVerb, .zuruVerb, .archaicVerb,
-      .auxiliaryVerb,
-    ]
-    let adjectives: Set<PartOfSpeech> = [
-      .iAdjective, .naAdjective, .taruAdjective, .archaicAdjective, .archaicNaAdjective,
-      .auxiliaryAdjective,
-    ]
-    let nouns: Set<PartOfSpeech> = [
-      .noun, .pronoun, .nounPrefix, .nounSuffix, .noAdjective, .prenominal, .takesSuru,
-    ]
     return switch providerPOS {
     case "動詞": verbs.contains(part)
     case "形容詞", "形状詞": adjectives.contains(part)
@@ -433,8 +434,4 @@ extension Character {
         (0x3400...0x9FFF).contains(Int($0.value))
       }
   }
-}
-
-extension Unicode.Scalar {
-  fileprivate var isKana: Bool { (0x3040...0x30FF).contains(Int(value)) }
 }

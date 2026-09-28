@@ -34,33 +34,6 @@ struct ConjugatedForm: Hashable, Identifiable, Sendable {
   /// The part of `surface` added after the unchanging stem, such as させる in 見させる.
   let ending: String
 
-  var readingAnnotation: ReadingAnnotation? {
-    guard surface != reading else { return nil }
-    let surfaceCharacters = Array(surface)
-    let readingCharacters = Array(reading)
-    var sharedSuffixCount = 0
-    while sharedSuffixCount < min(surfaceCharacters.count, readingCharacters.count),
-          surfaceCharacters[surfaceCharacters.count - sharedSuffixCount - 1]
-            == readingCharacters[readingCharacters.count - sharedSuffixCount - 1]
-    {
-      sharedSuffixCount += 1
-    }
-    let surfacePrefixEnd = surfaceCharacters.count - sharedSuffixCount
-    let readingPrefixEnd = readingCharacters.count - sharedSuffixCount
-    guard surfacePrefixEnd > 0, readingPrefixEnd > 0 else { return nil }
-    return ReadingAnnotation(
-      surfacePrefix: String(surfaceCharacters[..<surfacePrefixEnd]),
-      readingPrefix: String(readingCharacters[..<readingPrefixEnd]),
-      sharedSuffix: String(surfaceCharacters[surfacePrefixEnd...])
-    )
-  }
-
-  struct ReadingAnnotation: Hashable, Sendable {
-    let surfacePrefix: String
-    let readingPrefix: String
-    let sharedSuffix: String
-  }
-
   enum Kind: String, CaseIterable, Hashable, Sendable {
     case presentFuture = "present-future"
     case past

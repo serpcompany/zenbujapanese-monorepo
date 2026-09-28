@@ -76,7 +76,7 @@ Search ordering, deinflection, and frequency-chip rules are covered by `SearchEx
 When changing Search results or frequency dictionaries, also check in the Simulator:
 
 - `いる` shows chips in the Enabled order (JLPT first by default). Reordering or disabling
-  dictionaries under **You → Frequency Dictionaries** re-sorts the visible results without
+  dictionaries under **Account → Frequency Dictionaries** re-sorts the visible results without
   resubmitting, and disabling every dictionary removes the chips.
 - `静` keeps its Kanji row first; `日本語を勉強する` shows **Discovered Words**; `見る` offers
   Example Sentences; `what is your name` offers the Japanese-reading refinement.

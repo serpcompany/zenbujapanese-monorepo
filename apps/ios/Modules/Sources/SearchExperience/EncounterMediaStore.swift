@@ -1,4 +1,3 @@
-import CryptoKit
 import Foundation
 
 struct EncounterMediaAttachment: Hashable, Sendable {
@@ -6,7 +5,7 @@ struct EncounterMediaAttachment: Hashable, Sendable {
   let data: Data
 
   var sha256: String {
-    SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    data.sha256
   }
 }
 
@@ -47,17 +46,6 @@ struct EncounterMediaStore: Sendable {
     deleteMedia: { mediaID in await EncounterMediaStorage.shared.deleteMedia(mediaID) }
   )
 
-  static func fileBacked(directory: URL, legacyDirectory: URL? = nil) -> EncounterMediaStore {
-    let storage = EncounterMediaStorage(directory: directory, legacyDirectory: legacyDirectory)
-    return EncounterMediaStore(
-      encounters: { word in await storage.encounters(for: word) },
-      save: { attachment, word in await storage.save(attachment, for: word) },
-      remove: { word, mediaID in await storage.remove(word, mediaID: mediaID) },
-      library: { await storage.library() },
-      media: { mediaID in await storage.media(mediaID) },
-      deleteMedia: { mediaID in await storage.deleteMedia(mediaID) }
-    )
-  }
 }
 
 private actor EncounterMediaStorage {

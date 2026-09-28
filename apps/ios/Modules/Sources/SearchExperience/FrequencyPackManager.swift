@@ -77,10 +77,7 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
   }
 
   static func languageDataURL() throws -> URL {
-    guard
-      let url = Bundle.module.url(
-        forResource: "LanguageReferenceData", withExtension: "sqlite3")
-    else { throw FrequencyPackError.invalidArtifact }
+    guard let url = Bundle.languageReferenceDataURL else { throw FrequencyPackError.invalidArtifact }
     return url
   }
 }
@@ -295,22 +292,24 @@ actor FrequencyPackManager {
     downloadSource = download
     try FileManager.default.createDirectory(
       at: storageDirectory, withIntermediateDirectories: true)
-    let languageDataSHA256 = try Data(contentsOf: languageDataURL).sha256
+    let languageDataSHA256 = try fileSHA256(languageDataURL)
     for bundled in bundledPacks {
       guard let url = bundledArtifactURLs[bundled.packID],
         let bundledSHA256 = bundled.bundledArtifactSHA256,
         !bundledSHA256.isEmpty,
-        try Data(contentsOf: url).sha256 == bundledSHA256,
+        try fileSHA256(url) == bundledSHA256,
         languageDataSHA256 == bundled.languageDataSHA256
       else { throw FrequencyPackError.invalidArtifact }
       if bundled.packKind == .rank {
         guard
           let mappingPolicyURL = Bundle.module.url(
             forResource: "FrequencyPackMappingV1", withExtension: "sql"),
-          try Data(contentsOf: mappingPolicyURL).sha256 == bundled.mappingPolicySHA256
+          try fileSHA256(mappingPolicyURL) == bundled.mappingPolicySHA256
         else { throw FrequencyPackError.invalidArtifact }
       }
-      try FrequencyPackArtifact(url: url, manifest: bundled).validateSmokeTest()
+      let artifact = try FrequencyPackArtifact(url: url, manifest: bundled)
+      try artifact.validateSmokeTest()
+      verifiedArtifacts[bundled.packID] = artifact
     }
     let stateURL = storageDirectory.appendingPathComponent("state.json")
     let saved = try? JSONDecoder().decode(
@@ -475,6 +474,7 @@ actor FrequencyPackManager {
     let artifact = try FrequencyPackArtifact(
       url: artifactURL(for: manifest), manifest: installedManifest)
     try artifact.validateSmokeTest()
+    verifiedArtifacts[packID] = artifact
     guard !enabledPackIDs.contains(packID) else { return }
     enabledPackIDs.append(packID)
     try persist()
@@ -574,7 +574,7 @@ actor FrequencyPackManager {
       record.packID == manifest.packID,
       installedManifest.packID == manifest.packID,
       FileManager.default.fileExists(atPath: url.path),
-      (try? Data(contentsOf: url).sha256) == record.artifactSHA256,
+      (try? fileSHA256(url)) == record.artifactSHA256,
       Self.validArtifact(at: url, manifest: installedManifest)
     else { return false }
     return true

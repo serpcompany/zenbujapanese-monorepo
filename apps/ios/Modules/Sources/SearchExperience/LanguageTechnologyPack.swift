@@ -329,7 +329,7 @@ actor LanguageTechnologyPackManager {
       guard
         (try? staging.resourceValues(forKeys: [.fileSizeKey]).fileSize)
           == manifest.installedBytes,
-        try Self.cancellableFileSHA256(staging) == manifest.installedSHA256
+        try fileSHA256(staging, cancellable: true) == manifest.installedSHA256
       else {
         throw LanguageTechnologyPackError.invalidArtifact
       }
@@ -414,20 +414,7 @@ actor LanguageTechnologyPackManager {
       digest.update(data: data[offset..<end])
       offset = end
     }
-    return digest.finalize().map { String(format: "%02x", $0) }.joined()
-  }
-
-  private static func cancellableFileSHA256(_ url: URL) throws -> String {
-    let handle = try FileHandle(forReadingFrom: url)
-    defer { try? handle.close() }
-    var digest = SHA256()
-    while true {
-      try Task.checkCancellation()
-      let chunk = try handle.read(upToCount: 4 * 1_024 * 1_024) ?? Data()
-      if chunk.isEmpty { break }
-      digest.update(data: chunk)
-    }
-    return digest.finalize().map { String(format: "%02x", $0) }.joined()
+    return digest.finalize().hexString
   }
 
   static func validateGoldenOutput(dictionaryURL: URL) throws {

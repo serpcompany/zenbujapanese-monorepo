@@ -29,10 +29,7 @@ attribution, checksums, mapping contract, and delivery behavior. Import reports
 under `apps/ios/LanguageData/Generated/` connect pinned inputs to generated
 artifact checksums and remain versioned with those artifacts.
 
-The public-catalog ordered JSON packs have an authoritative source record in this
-directory plus their pinned catalog snapshot and analysis under `LanguageData/Candidates`
-and `LanguageData/Generated`. Raw archives are downloaded by the app only when a user
-chooses a pack and are not stored in this repository or shipped in the app bundle.
-See
-[`FREQUENCY_SOURCE_DECISIONS.md`](../FREQUENCY_SOURCE_DECISIONS.md) for the
-runtime selection and reproducible analysis of the ten ordered-JSON packs.
+Downloadable frequency packs are fetched by the app only when a learner chooses one;
+their raw archives are not stored in this repository or shipped in the app bundle. See
+[`FREQUENCY_SOURCE_DECISIONS.md`](../FREQUENCY_SOURCE_DECISIONS.md) for how the current
+packs were selected and for the record of the removed public-catalog packs.

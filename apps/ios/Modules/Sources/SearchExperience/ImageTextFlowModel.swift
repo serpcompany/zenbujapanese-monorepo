@@ -135,8 +135,6 @@ final class ImageTextFlowModel {
     return pages[selectedPage].asset
   }
 
-  var canRequestTranslation: Bool { !translationSources.isEmpty }
-
   /// Translates the selected page. `preparesIfNeeded: false` skips pages whose language
   /// resources would need downloading, for views that translate without being asked.
   func requestTranslation(preparesIfNeeded: Bool = true) {
@@ -413,17 +411,7 @@ struct ImageTextPage {
     paragraphs = ImageTextParagraph.group(lines)
   }
 
-  var hasJapaneseText: Bool {
-    observations.contains { observation in
-      observation.text.contains { character in
-        character.unicodeScalars.contains {
-          (0x3040...0x30FF).contains($0.value)
-            || (0x3400...0x9FFF).contains($0.value)
-            || (0x20000...0x2FA1F).contains($0.value)
-        }
-      }
-    }
-  }
+  var hasJapaneseText: Bool { !lines.isEmpty }
 }
 
 struct ImageTextRegion: Identifiable {
