@@ -343,25 +343,44 @@ struct WordHeadline<Accessory: View>: View {
   let pronounce: () -> Void
   @ViewBuilder let accessory: () -> Accessory
 
+  /// The headword beside the pitch accent and controls, at the largest size that fits there.
+  /// When even the smaller headword doesn't fit, the controls move under a full-size headword.
   var body: some View {
-    let layout =
-      dynamicTypeSize.isAccessibilitySize
-      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-      : AnyLayout(HStackLayout(alignment: .center, spacing: 12))
-    layout {
-      headword
-        .frame(maxWidth: .infinity, alignment: .leading)
-      controls
+    Group {
+      if dynamicTypeSize.isAccessibilitySize {
+        stacked
+      } else {
+        ViewThatFits(in: .horizontal) {
+          beside(rubyHeadword(baseFont: .largeTitle, rubyFont: .title3.weight(.semibold)))
+          beside(
+            rubyHeadword(baseFont: .title.weight(.semibold), rubyFont: .caption.weight(.semibold)))
+          stacked
+        }
+      }
     }
     .padding(.vertical, 4)
   }
 
-  /// The headword at the largest size that fits beside the pitch accent and controls. It keeps
-  /// its furigana while a smaller size still fits, and only then moves the reading underneath.
+  private func beside(_ headword: some View) -> some View {
+    HStack(alignment: .center, spacing: 12) {
+      headword
+        .frame(maxWidth: .infinity, alignment: .leading)
+      controls
+    }
+  }
+
+  private var stacked: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      headword
+      controls
+    }
+  }
+
+  /// The headword on its own line: full size with furigana, or wrapped text with the reading
+  /// underneath when even that is too wide.
   private var headword: some View {
     ViewThatFits(in: .horizontal) {
       rubyHeadword(baseFont: .largeTitle, rubyFont: .title3.weight(.semibold))
-      rubyHeadword(baseFont: .title.weight(.semibold), rubyFont: .caption.weight(.semibold))
 
       VStack(alignment: .leading, spacing: 6) {
         Text(surface.highlightingEnding(highlightedEnding))
