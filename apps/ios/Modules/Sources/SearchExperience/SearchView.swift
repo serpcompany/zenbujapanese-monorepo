@@ -918,7 +918,8 @@ struct ResultRow<Link: Hashable>: View {
       surface: entry.headword,
       reading: entry.reading,
       baseFont: .title3,
-      rubyFont: .caption.weight(.semibold)
+      rubyFont: .caption.weight(.semibold),
+      highlightsKanjiOnTap: false
     )
     .fixedSize(horizontal: false, vertical: true)
   }

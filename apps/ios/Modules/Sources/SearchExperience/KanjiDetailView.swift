@@ -654,7 +654,8 @@ private struct KanjiWordsSection: View {
               surface: entry.headword,
               reading: entry.reading,
               baseFont: .title3,
-              rubyFont: .body
+              rubyFont: .body,
+              highlightsKanjiOnTap: false
             )
             Spacer()
             Text(entry.summary)

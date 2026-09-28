@@ -406,8 +406,7 @@ struct WordHeadline<Accessory: View>: View {
         reading: reading,
         baseFont: baseFont,
         rubyFont: rubyFont,
-        highlightedEnding: highlightedEnding,
-        highlightsKanjiOnTap: true
+        highlightedEnding: highlightedEnding
       )
       .fixedSize(horizontal: true, vertical: false)
       readingWithoutFurigana
@@ -911,7 +910,8 @@ private struct RelationshipsSection: View {
             reading: relationship.reading,
             baseFont: .headline,
             rubyFont: .caption,
-            exposesAccessibility: false
+            exposesAccessibility: false,
+            highlightsKanjiOnTap: false
           )
           .foregroundStyle(.primary)
           .accessibilityIdentifier("word-detail.related-primary.\(relationship.headword)")

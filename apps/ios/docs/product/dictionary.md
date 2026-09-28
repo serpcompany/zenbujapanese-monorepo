@@ -50,9 +50,8 @@ Below the top card, sections appear in this order: Meaning, Frequency, Alternati
 written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 
 The top of a word detail shows the headword with furigana, following the Reading Aids setting.
-Tapping a kanji in the headword colors it and its part of the furigana (肉 and にく in 弱肉強食)
-when the kanji's own readings split the word's reading one way; tapping it again clears it.
-Irregular readings such as 大人 (おとな) don't split.
+Tapping one of its kanji shows which furigana belongs to it (see
+[Furigana kanji highlight](index.md#furigana-kanji-highlight)).
 When furigana is off, the reading appears under the headword instead. A long headword shrinks one size to
 keep its furigana beside the pitch accent; when even that doesn't fit, the pitch accent moves to
 its own line under a full-size headword. To the right of the

@@ -10,6 +10,23 @@ The app runs in portrait on iPhone. It has three tabs:
   videos with linked Japanese captions.
 - **Account** opens personal content, preferences, language-resource management, support, and credits.
 
+## Furigana kanji highlight
+
+Wherever furigana appears over a run of kanji, a learner can tap one kanji to see which part of
+the reading belongs to it: the kanji and its kana turn the accent color (肉 and にく in 弱肉強食).
+Tapping it again, or tapping another kanji, moves or clears the highlight. The word keeps its
+compact furigana; nothing is spaced apart.
+
+The split comes from each kanji's own readings, including the sound changes compounds make
+(学校 is がっ・こう, 人々 is ひと・びと), and appears only when those readings split the word's
+reading exactly one way. Words read as a whole, such as 大人 (おとな) or 今日 (きょう), have no
+per-kanji highlight.
+
+It works on any furigana that isn't itself a tap target: Word Detail and conjugation headwords,
+conjugation tables, and Media Library words. Where tapping a word already opens it — Search
+results, Known Words and list rows, a kanji's word list, Related Words, and linked words in
+sentences and captions — a tap opens the word, whose headword then offers the highlight.
+
 ## Account
 
 Account is a supporting navigation area rather than a separate Product Experience. There is no

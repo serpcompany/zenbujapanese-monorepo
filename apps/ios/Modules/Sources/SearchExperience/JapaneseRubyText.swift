@@ -30,7 +30,8 @@ struct JapaneseRubyText: View {
   /// Hides furigana here even when the Furigana preference is on, such as over a known word.
   let hidesFurigana: Bool
   /// Tapping a kanji in a run such as 弱肉強食 colors it and its part of the reading (じゃく),
-  /// when the kanji's own readings split the run's reading one way.
+  /// when the kanji's own readings split the run's reading one way. On everywhere except where
+  /// tapping the text already does something, such as a row that opens the word.
   let highlightsKanjiOnTap: Bool
 
   init(
@@ -42,7 +43,7 @@ struct JapaneseRubyText: View {
     exposesAccessibility: Bool = true,
     displaysRomaji: Bool = true,
     hidesFurigana: Bool = false,
-    highlightsKanjiOnTap: Bool = false
+    highlightsKanjiOnTap: Bool = true
   ) {
     self.surface = surface
     self.reading = reading
@@ -130,9 +131,11 @@ struct JapaneseRubyText: View {
     HStack(spacing: 0) {
       ForEach(Array(piece.segment.base.enumerated()), id: \.offset) { index, character in
         let selection = SelectedKanji(piece: piece.index, character: index)
-        Text(String(character))
+        Text(
+          selectableCharacter(
+            character, at: piece.offset + index, selected: selectedKanji == selection)
+        )
           .font(baseFont)
-          .foregroundStyle(selectedKanji == selection ? Color.accentColor : Color.primary)
           .contentShape(.rect)
           .onTapGesture {
             withAnimation(.easeOut(duration: 0.15)) {
@@ -141,6 +144,14 @@ struct JapaneseRubyText: View {
           }
       }
     }
+  }
+
+  private func selectableCharacter(
+    _ character: Character, at offset: Int, selected: Bool
+  ) -> AttributedString {
+    var text = highlighted(String(character), at: offset)
+    if selected { text.foregroundColor = .accentColor }
+    return text
   }
 
   /// `text` starts `offset` characters into `surface`; its characters within the highlighted
