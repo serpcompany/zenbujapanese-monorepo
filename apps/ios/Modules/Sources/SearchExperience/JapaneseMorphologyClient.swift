@@ -65,33 +65,6 @@ struct JapaneseMorphologyCandidate: Equatable, Sendable {
   /// such as 見なかった; its surface is not a dictionary form.
   var joinsInflection = false
 
-  var coarsePartOfSpeech: String? {
-    guard let primary = partOfSpeech.first else { return nil }
-    let secondary = partOfSpeech.dropFirst().first
-    switch primary {
-    case "名詞":
-      if secondary == "固有名詞" { return "PROPN" }
-      if secondary == "数詞" { return "NUM" }
-      if secondary == "助動詞語幹" { return "AUX" }
-      return "NOUN"
-    case "代名詞": return "PRON"
-    case "動詞": return "VERB"
-    case "形容詞", "形状詞": return "ADJ"
-    case "連体詞": return "DET"
-    case "副詞": return "ADV"
-    case "助動詞": return "AUX"
-    case "接続詞": return "CCONJ"
-    case "感動詞": return "INTJ"
-    case "補助記号": return secondary == "一般" ? "SYM" : "PUNCT"
-    case "記号", "接頭辞", "接尾辞": return "NOUN"
-    case "空白": return "SPACE"
-    case "助詞":
-      if secondary == "接続助詞" || secondary == "準体助詞" { return "SCONJ" }
-      if secondary == "終助詞" { return "PART" }
-      return "ADP"
-    default: return nil
-    }
-  }
 }
 
 struct JapaneseMorphologyAnalysis: Equatable, Sendable {
@@ -132,17 +105,6 @@ struct JapaneseMorphologyClient: Sendable {
     },
     analyze: { text in try await JapaneseMorphologyStore.shared.analyze(text) }
   )
-
-  static func sudachiCore(dictionaryURL: URL) throws -> JapaneseMorphologyClient {
-    let adapter = try SudachiJapaneseMorphologyAdapter(dictionaryURL: dictionaryURL)
-    return JapaneseMorphologyClient { text in
-      try Task.checkCancellation()
-      let analysis = try adapter.analyze(text)
-      try Task.checkCancellation()
-      return analysis
-    }
-  }
-
 }
 
 actor JapaneseMorphologyStore {
@@ -280,8 +242,8 @@ enum SudachiRuntimeResources {
   static func dictionary(at dictionaryURL: URL) throws -> SudachiDictionary {
     guard let charURL = Bundle.module.url(forResource: "char", withExtension: "def"),
       let unknownURL = Bundle.module.url(forResource: "unk", withExtension: "def"),
-      try Data(contentsOf: charURL).sha256 == SudachiCoreContract.characterDefinitionSHA256,
-      try Data(contentsOf: unknownURL).sha256 == SudachiCoreContract.unknownDefinitionSHA256
+      try fileSHA256(charURL) == SudachiCoreContract.characterDefinitionSHA256,
+      try fileSHA256(unknownURL) == SudachiCoreContract.unknownDefinitionSHA256
     else { throw JapaneseMorphologyError.providerContractMismatch }
     return try SudachiDictionary(
       systemDictPath: dictionaryURL.path,

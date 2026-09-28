@@ -360,7 +360,7 @@ enum FrequencyPackArtifactContent {
       update(key, digest: &digest)
       update(value, digest: &digest)
     }
-    return digest.finalize().map { String(format: "%02x", $0) }.joined()
+    return digest.finalize().hexString
   }
 
   static func mappingSHA256(_ database: OpaquePointer) throws -> String {
@@ -399,7 +399,7 @@ enum FrequencyPackArtifactContent {
       digest.update(
         data: Data(bytes: sourceDigest, count: Int(sqlite3_column_bytes(statement, 6))))
     }
-    return digest.finalize().map { String(format: "%02x", $0) }.joined()
+    return digest.finalize().hexString
   }
 
   /// Every (ID, level) row in ID order: the 16 ID bytes, then the level as an unsigned 64-bit
@@ -426,7 +426,7 @@ enum FrequencyPackArtifactContent {
       var level = UInt64(sqlite3_column_int64(statement, 1)).bigEndian
       digest.update(data: Data(bytes: &level, count: MemoryLayout<UInt64>.size))
     }
-    return digest.finalize().map { String(format: "%02x", $0) }.joined()
+    return digest.finalize().hexString
   }
 
   private static func update(_ value: String, digest: inout SHA256) {
@@ -481,7 +481,7 @@ struct FrequencyPackArtifact: Sendable {
     defer { sqlite3_finalize(statement) }
     var metadata: [String: String] = [:]
     while sqlite3_step(statement) == SQLITE_ROW {
-      metadata[Self.string(statement, 0)] = Self.string(statement, 1)
+      metadata[sqliteText(statement, 0)] = sqliteText(statement, 1)
     }
     return metadata
   }
@@ -613,17 +613,14 @@ struct FrequencyPackArtifact: Sendable {
         results[id] = .noEvidence(pack: manifest.disclosure)
         continue
       }
-      _ = key.withUnsafeBytes { buffer in
-        sqlite3_bind_blob(
-          statement, 1, buffer.baseAddress, Int32(buffer.count), Self.transientDestructor)
-      }
+      sqliteBind(key, at: 1, to: statement)
       switch sqlite3_step(statement) {
       case SQLITE_DONE:
         results[id] = .noEvidence(pack: manifest.disclosure)
       case SQLITE_ROW:
         guard
           let relation = FrequencyEvidence.MappingRelation(
-            rawValue: Self.string(statement, 3))
+            rawValue: sqliteText(statement, 3))
         else {
           throw FrequencyPackError.invalidArtifact
         }
@@ -638,9 +635,9 @@ struct FrequencyPackArtifact: Sendable {
             sourceDocuments: manifest.corpusDocuments,
             sourceVideos: manifest.corpusVideos,
             sourceChannels: manifest.corpusChannels,
-            matchedForm: Self.string(statement, 4),
-            sourcePartOfSpeech: Self.string(statement, 5).nilIfEmpty,
-            sourceRecordDigest: Self.string(statement, 6),
+            matchedForm: sqliteText(statement, 4),
+            sourcePartOfSpeech: sqliteText(statement, 5).nilIfEmpty,
+            sourceRecordDigest: sqliteText(statement, 6),
             mappingRelation: relation
           )
         )
@@ -676,10 +673,7 @@ struct FrequencyPackArtifact: Sendable {
         results[id] = .noEvidence(pack: manifest.disclosure)
         continue
       }
-      _ = key.withUnsafeBytes { buffer in
-        sqlite3_bind_blob(
-          statement, 1, buffer.baseAddress, Int32(buffer.count), Self.transientDestructor)
-      }
+      sqliteBind(key, at: 1, to: statement)
       switch sqlite3_step(statement) {
       case SQLITE_DONE:
         results[id] = .noEvidence(pack: manifest.disclosure)
@@ -694,11 +688,6 @@ struct FrequencyPackArtifact: Sendable {
       }
     }
     return results
-  }
-
-  private static func string(_ statement: OpaquePointer, _ column: Int32) -> String {
-    guard let value = sqlite3_column_text(statement, column) else { return "" }
-    return String(cString: value)
   }
 
   private static func integer(_ database: OpaquePointer, sql: String) throws -> Int {
@@ -716,10 +705,9 @@ struct FrequencyPackArtifact: Sendable {
       let statement, sqlite3_step(statement) == SQLITE_ROW
     else { throw FrequencyPackError.invalidArtifact }
     defer { sqlite3_finalize(statement) }
-    return string(statement, 0)
+    return sqliteText(statement, 0)
   }
 
-  private static let transientDestructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
   let manifest: FrequencyPackManifest
 }
 
@@ -733,8 +721,7 @@ private actor FrequencyPackStore {
 
   init() {
     guard
-      let languageDataURL = Bundle.module.url(
-        forResource: "LanguageReferenceData", withExtension: "sqlite3"),
+      let languageDataURL = Bundle.languageReferenceDataURL,
       let catalog = try? FrequencyPackCatalog.bundled(),
       let bundledArtifactURLs = try? catalog.bundledArtifactURLs(),
       let support = FileManager.default.urls(

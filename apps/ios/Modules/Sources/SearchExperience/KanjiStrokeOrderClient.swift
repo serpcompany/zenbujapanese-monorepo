@@ -37,7 +37,7 @@ struct KanjiStrokeOrderClient: Sendable {
 
 private actor KanjiStrokeData {
   static let shared = KanjiStrokeData()
-  private var connection: KanjiStrokeSQLiteConnection?
+  private var connection: SQLiteConnection?
 
   func diagram(_ character: KanjiCharacter) throws -> KanjiStrokeDiagram? {
     let database = try openDatabase()
@@ -48,7 +48,7 @@ private actor KanjiStrokeData {
       throw KanjiStrokeDataError.sqlite(message: String(cString: sqlite3_errmsg(database)))
     }
     defer { sqlite3_finalize(statement) }
-    sqlite3_bind_text(statement, 1, character.rawValue, -1, Self.transientDestructor)
+    sqliteBind(character.rawValue, at: 1, to: statement)
     let stepResult = sqlite3_step(statement)
     if stepResult == SQLITE_DONE { return nil }
     guard stepResult == SQLITE_ROW else {
@@ -92,7 +92,7 @@ private actor KanjiStrokeData {
         message: opened.map { String(cString: sqlite3_errmsg($0)) } ?? "open failed"
       )
     }
-    let connection = KanjiStrokeSQLiteConnection(pointer: opened)
+    let connection = SQLiteConnection(pointer: opened)
     self.connection = connection
     return connection.pointer
   }
@@ -130,20 +130,6 @@ private actor KanjiStrokeData {
       throw KanjiStrokeDataError.invalidArtifact("stroke does not begin with a move")
     }
     return KanjiStroke(commands: commands)
-  }
-
-  private static let transientDestructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
-}
-
-private final class KanjiStrokeSQLiteConnection: @unchecked Sendable {
-  let pointer: OpaquePointer
-
-  init(pointer: OpaquePointer) {
-    self.pointer = pointer
-  }
-
-  deinit {
-    sqlite3_close(pointer)
   }
 }
 

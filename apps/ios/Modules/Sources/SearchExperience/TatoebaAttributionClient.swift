@@ -9,7 +9,7 @@ struct TatoebaContributorCredit: Identifiable, Sendable {
 
 enum TatoebaAttributionClient {
   static func contributorCredits() -> [TatoebaContributorCredit] {
-    guard let url = Bundle.module.url(forResource: "LanguageReferenceData", withExtension: "sqlite3") else {
+    guard let url = Bundle.languageReferenceDataURL else {
       return []
     }
     var database: OpaquePointer?

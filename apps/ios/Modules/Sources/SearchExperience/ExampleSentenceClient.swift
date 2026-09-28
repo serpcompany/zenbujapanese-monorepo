@@ -17,7 +17,7 @@ struct ExampleSentenceID: RawRepresentable, Hashable, Comparable, Sendable {
 
   init?(bytes: UnsafeRawBufferPointer) {
     guard bytes.count == Self.encodedByteCount else { return nil }
-    let hex = bytes.map { String(format: "%02x", $0) }.joined()
+    let hex = bytes.hexString
     self.init(rawValue: Self.prefix + hex)
   }
 
@@ -183,7 +183,7 @@ private actor ExampleSentenceData {
   static let shared = ExampleSentenceData(databaseURL: nil)
 
   private let databaseURL: URL?
-  private var connection: ExampleSentenceSQLiteConnection?
+  private var connection: SQLiteConnection?
   private var baseIsValidated = false
   private var englishIndexIsValidated = false
   private var porterProbeIsCreated = false
@@ -239,7 +239,7 @@ private actor ExampleSentenceData {
       """
     )
     defer { sqlite3_finalize(statement) }
-    bind(matchExpression, at: 1, to: statement)
+    sqliteBind(matchExpression, at: 1, to: statement)
 
     var candidatesByID: [ExampleSentenceID: ExampleSentenceMatch] = [:]
     while try checkedSQLiteStep(statement) == .row {
@@ -289,7 +289,7 @@ private actor ExampleSentenceData {
       """
     )
     defer { sqlite3_finalize(statement) }
-    bind(query.value, at: 1, to: statement)
+    sqliteBind(query.value, at: 1, to: statement)
 
     var matchesByID: [ExampleSentenceID: ExampleSentenceMatch] = [:]
     while try checkedSQLiteStep(statement) == .row {
@@ -353,7 +353,7 @@ private actor ExampleSentenceData {
     )
     defer { sqlite3_finalize(statement) }
     for (index, term) in terms.enumerated() {
-      bind(term, at: Int32(index + 1), to: statement)
+      sqliteBind(term, at: Int32(index + 1), to: statement)
     }
 
     var matchesByID: [ExampleSentenceID: ExampleSentenceMatch] = [:]
@@ -418,11 +418,11 @@ private actor ExampleSentenceData {
       """
     )
     defer { sqlite3_finalize(statement) }
-    bind(matchExpression, at: 1, to: statement)
+    sqliteBind(matchExpression, at: 1, to: statement)
     var ranges: [ExampleSentenceID: ExampleSentenceMatchedRange] = [:]
     while try checkedSQLiteStep(statement) == .row {
       let id = try exampleSentenceID(column: 0, statement: statement)
-      let english = Self.string(column: 1, statement: statement)
+      let english = sqliteText(statement, 1)
       if let range = phraseRange(in: english, offsets: try offsets(column: 2, statement: statement)) {
         ranges[id] = range
       }
@@ -441,7 +441,7 @@ private actor ExampleSentenceData {
     try execute("DELETE FROM temp.example_sentence_porter_query_probe")
     let insertion = try prepare("INSERT INTO temp.example_sentence_porter_query_probe(value) VALUES (?)")
     defer { sqlite3_finalize(insertion) }
-    bind(query, at: 1, to: insertion)
+    sqliteBind(query, at: 1, to: insertion)
     guard try checkedSQLiteStep(insertion) == .done else { return false }
 
     let probe = try prepare(
@@ -449,7 +449,7 @@ private actor ExampleSentenceData {
         + "WHERE example_sentence_porter_query_probe MATCH ?"
     )
     defer { sqlite3_finalize(probe) }
-    bind(matchExpression, at: 1, to: probe)
+    sqliteBind(matchExpression, at: 1, to: probe)
     guard try checkedSQLiteStep(probe) == .row else { return false }
     return sqlite3_column_int(probe, 0) == 1
   }
@@ -469,7 +469,7 @@ private actor ExampleSentenceData {
       )
       defer { sqlite3_finalize(identityProbe) }
       guard try checkedSQLiteStep(identityProbe) == .row,
-        Self.string(column: 0, statement: identityProbe) == "blob",
+        sqliteText(identityProbe, 0) == "blob",
         sqlite3_column_int(identityProbe, 1) == ExampleSentenceID.encodedByteCount
       else { throw unavailable(.invalidBaseCorpus) }
     } else {
@@ -570,23 +570,24 @@ private actor ExampleSentenceData {
   }
 
   private func entryEvidence(id: LanguageReferenceID) throws -> EntryEvidence {
+    guard let key = id.bytes else { throw invalid(.missingEntryEvidence) }
     let statement = try prepare(
       """
       SELECT e.reading, f.form, f.kind
       FROM entries e
       JOIN forms f ON f.entry_id = e.id
-      WHERE lower(hex(e.id)) = ? AND f.kind IN (0, 1)
+      WHERE e.id = ? AND f.kind IN (0, 1)
       ORDER BY f.kind, f.form
       """
     )
     defer { sqlite3_finalize(statement) }
-    bind(id.rawValue.lowercased(), at: 1, to: statement)
+    sqliteBind(key, at: 1, to: statement)
     var storedReading: String?
     var writtenForms = Set<String>()
     var readingForms = Set<String>()
     while try checkedSQLiteStep(statement) == .row {
-      storedReading = Self.string(column: 0, statement: statement)
-      let form = Self.string(column: 1, statement: statement)
+      storedReading = sqliteText(statement, 0)
+      let form = sqliteText(statement, 1)
       if sqlite3_column_int(statement, 2) == 0 {
         writtenForms.insert(form)
       } else {
@@ -609,8 +610,8 @@ private actor ExampleSentenceData {
       """
     )
     defer { sqlite3_finalize(statement) }
-    bind(selectedForm, at: 1, to: statement)
-    bind(reading, at: 2, to: statement)
+    sqliteBind(selectedForm, at: 1, to: statement)
+    sqliteBind(reading, at: 2, to: statement)
     guard try checkedSQLiteStep(statement) == .row else { return 0 }
     return Int(sqlite3_column_int64(statement, 0))
   }
@@ -663,7 +664,7 @@ private actor ExampleSentenceData {
   }
 
   private func offsets(column: Int32, statement: OpaquePointer) throws -> [FTSOffset] {
-    let raw = Self.string(column: column, statement: statement)
+    let raw = sqliteText(statement, column)
     let values = raw.split(separator: " ").compactMap { Int($0) }
     guard values.count.isMultiple(of: 4) else { throw unavailable(.queryFailed) }
     return stride(from: 0, to: values.count, by: 4).map { index in
@@ -744,8 +745,8 @@ private actor ExampleSentenceData {
   private func example(from statement: OpaquePointer) throws -> ExampleSentence {
     ExampleSentence(
       id: try exampleSentenceID(column: 0, statement: statement),
-      japanese: Self.string(column: 1, statement: statement),
-      english: Self.string(column: 2, statement: statement)
+      japanese: sqliteText(statement, 1),
+      english: sqliteText(statement, 2)
     )
   }
 
@@ -769,11 +770,11 @@ private actor ExampleSentenceData {
   private func metadataValue(_ key: String) throws -> String {
     let statement = try prepare("SELECT value FROM metadata WHERE key = ?")
     defer { sqlite3_finalize(statement) }
-    bind(key, at: 1, to: statement)
+    sqliteBind(key, at: 1, to: statement)
     guard try checkedSQLiteStep(statement) == .row else {
       throw unavailable(.invalidIndexMetadata)
     }
-    return Self.string(column: 0, statement: statement)
+    return sqliteText(statement, 0)
   }
 
   private func scalarInt(_ sql: String) throws -> Int {
@@ -787,7 +788,7 @@ private actor ExampleSentenceData {
     let statement = try prepare(sql)
     defer { sqlite3_finalize(statement) }
     guard try checkedSQLiteStep(statement) == .row else { throw unavailable(.queryFailed) }
-    return Self.string(column: 0, statement: statement)
+    return sqliteText(statement, 0)
   }
 
   private func execute(_ sql: String) throws {
@@ -810,10 +811,7 @@ private actor ExampleSentenceData {
     let url: URL
     if let databaseURL {
       url = databaseURL
-    } else if let bundled = Bundle.module.url(
-      forResource: "LanguageReferenceData",
-      withExtension: "sqlite3"
-    ) {
+    } else if let bundled = Bundle.languageReferenceDataURL {
       url = bundled
     } else {
       throw unavailable(.missingBundledData)
@@ -828,13 +826,9 @@ private actor ExampleSentenceData {
       defer { sqlite3_close(opened) }
       throw unavailable(.missingBundledData)
     }
-    let connection = ExampleSentenceSQLiteConnection(pointer: opened)
+    let connection = SQLiteConnection(pointer: opened)
     self.connection = connection
     return opened
-  }
-
-  private func bind(_ value: String, at index: Int32, to statement: OpaquePointer) {
-    sqlite3_bind_text(statement, index, value, -1, Self.transientDestructor)
   }
 
   private func invalid(_ reason: ExampleSentenceInvalidQueryReason) -> ExampleSentenceRetrievalError {
@@ -847,12 +841,6 @@ private actor ExampleSentenceData {
     .retrievalUnavailable(reason)
   }
 
-  private static func string(column: Int32, statement: OpaquePointer) -> String {
-    guard let text = sqlite3_column_text(statement, column) else { return "" }
-    return String(cString: text)
-  }
-
-  private static let transientDestructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 }
 
 private struct EntryEvidence {
@@ -888,10 +876,4 @@ private struct RankTuple: Comparable {
     }
     return left.pairID < right.pairID
   }
-}
-
-private final class ExampleSentenceSQLiteConnection: @unchecked Sendable {
-  let pointer: OpaquePointer
-  init(pointer: OpaquePointer) { self.pointer = pointer }
-  deinit { sqlite3_close(pointer) }
 }

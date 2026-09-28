@@ -10,7 +10,7 @@ enum FrequencyPackInstaller {
     languageDataURL: URL,
     destination: URL
   ) throws -> InstalledFrequencyPackRecord {
-    guard try Data(contentsOf: languageDataURL).sha256 == manifest.languageDataSHA256,
+    guard try fileSHA256(languageDataURL) == manifest.languageDataSHA256,
       try mappingPolicySHA256(version: manifest.mappingPolicyVersion)
         == manifest.mappingPolicySHA256
     else { throw FrequencyPackError.mappingMismatch }
@@ -83,7 +83,7 @@ enum FrequencyPackInstaller {
       handle,
       "DROP TABLE source_rows; CREATE INDEX frequency_evidence_rank_index ON frequency_evidence(rank,language_reference_id); VACUUM;"
     )
-    let artifactSHA256 = try Data(contentsOf: candidate).sha256
+    let artifactSHA256 = try fileSHA256(candidate)
     let artifact = try FrequencyPackArtifact(url: candidate, manifest: manifest)
     try artifact.validateSmokeTest()
     guard sqlite3_close(handle) == SQLITE_OK else { throw sqliteError(handle) }
@@ -128,11 +128,11 @@ enum FrequencyPackInstaller {
     defer { sqlite3_finalize(statement) }
     for row in rows {
       sqlite3_bind_int64(statement, 1, Int64(row.rank))
-      bind(row.form, at: 2, to: statement)
-      bind(row.reading, at: 3, to: statement)
+      sqliteBind(row.form, at: 2, to: statement)
+      sqliteBind(row.reading, at: 3, to: statement)
       sqlite3_bind_int64(statement, 4, Int64(row.count))
-      bind(row.partOfSpeech, at: 5, to: statement)
-      bind(row.digest, at: 6, to: statement)
+      sqliteBind(row.partOfSpeech, at: 5, to: statement)
+      sqliteBind(row.digest, at: 6, to: statement)
       guard sqlite3_step(statement) == SQLITE_DONE else { throw sqliteError(database) }
       sqlite3_reset(statement)
       sqlite3_clear_bindings(statement)
@@ -272,16 +272,6 @@ enum FrequencyPackInstaller {
     .sqlite(String(cString: sqlite3_errmsg(database)))
   }
 
-  private static func bind(_ value: String, at index: Int32, to statement: OpaquePointer) {
-    sqlite3_bind_text(statement, index, value, -1, transientDestructor)
-  }
-
-  private static func bind(_ value: Data, at index: Int32, to statement: OpaquePointer) {
-    _ = value.withUnsafeBytes {
-      sqlite3_bind_blob(statement, index, $0.baseAddress, Int32($0.count), transientDestructor)
-    }
-  }
-
   private static func sql(_ value: String) -> String {
     value.replacingOccurrences(of: "'", with: "''")
   }
@@ -309,13 +299,5 @@ enum FrequencyPackInstaller {
       self.partOfSpeech = partOfSpeech
       self.digest = digest
     }
-  }
-
-  private static let transientDestructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
-}
-
-extension Data {
-  var sha256: String {
-    SHA256.hash(data: self).map { String(format: "%02x", $0) }.joined()
   }
 }
