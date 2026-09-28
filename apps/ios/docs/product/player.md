@@ -22,8 +22,9 @@ The video plays in YouTube's embedded player at the top of the screen, and the t
 visible. The navigation bar reads **Player**, with a **•••** menu of quick switches for Furigana,
 Furigana on Known Words, Word Meanings, and Translations, and **Share Video**. Between the
 controls and the caption cards, a fixed line with a divider below it reports how many of the
-captions' words the learner knows, such as **38 of 52 words known · 73%**. If the video's owner doesn't allow other apps to play it, the player shows **Video
-Unavailable**.
+captions' words the learner knows: the percentage, colored like the Recent pill, then the counts,
+such as **73%** 38 of 52 words known. If the video's owner doesn't allow other apps to play it,
+the player shows **Video Unavailable**.
 
 - **No caption overlay.** The player doesn't draw YouTube's own captions over the video; the
   caption cards below replace them.
