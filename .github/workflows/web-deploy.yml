@@ -73,6 +73,9 @@ jobs:
       - run: pnpm db:migrate:production
       - name: Deploy
         run: pnpm deploy:production 2>&1 | tee deploy.log
+        env:
+          # Public, build-time analytics IDs for production pages (production environment variables).
+          NEXT_PUBLIC_GTM_ID: ${{ vars.NEXT_PUBLIC_GTM_ID }}
       - name: Smoke test
         # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
         run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" production
