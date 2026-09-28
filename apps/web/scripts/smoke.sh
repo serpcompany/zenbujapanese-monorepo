@@ -71,7 +71,12 @@ fi
 
 # Without the smoke-test header, a workers.dev URL redirects to the branded domain.
 if [[ "$base" == *.workers.dev ]]; then
-  got="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "$base/legal/terms/")"
+  # Retry: a new deploy can take a few seconds to replace the previous version at the edge.
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    got="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "$base/legal/terms/")"
+    [ "$got" = "308 $canonical/legal/terms/" ] && break
+    sleep 3
+  done
   if [ "$got" = "308 $canonical/legal/terms/" ]; then
     pass "workers.dev redirects to $canonical"
   else
