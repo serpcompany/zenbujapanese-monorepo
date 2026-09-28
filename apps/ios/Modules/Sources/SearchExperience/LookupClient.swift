@@ -576,8 +576,35 @@ private actor LanguageReferenceData {
         throw error
       }
     }
+    do {
+      try Self.attachCompoundPitch(opened)
+    } catch {
+      sqlite3_close(opened)
+      throw error
+    }
     connection = SQLiteConnection(pointer: opened)
     return opened
+  }
+
+  /// Attaches the estimated pitch of compounds UniDic doesn't list whole, which
+  /// `selectedColumns` falls back to. Without the bundled file an empty table stands in.
+  private static func attachCompoundPitch(_ database: OpaquePointer) throws {
+    let url = Bundle.module.url(forResource: "CompoundPitch", withExtension: "sqlite3")
+    var statement: OpaquePointer?
+    guard
+      sqlite3_prepare_v2(database, "ATTACH DATABASE ? AS compound_pitch", -1, &statement, nil)
+        == SQLITE_OK,
+      let statement
+    else { throw LookupDatabaseError.sqlite(message: String(cString: sqlite3_errmsg(database))) }
+    defer { sqlite3_finalize(statement) }
+    sqliteBind(url?.path ?? ":memory:", at: 1, to: statement)
+    guard sqlite3_step(statement) == SQLITE_DONE,
+      url != nil
+        || sqlite3_exec(
+          database,
+          "CREATE TABLE compound_pitch.entry_pitch (entry_id BLOB PRIMARY KEY, pitch_accent_json TEXT NOT NULL)",
+          nil, nil, nil) == SQLITE_OK
+    else { throw LookupDatabaseError.sqlite(message: String(cString: sqlite3_errmsg(database))) }
   }
 
   private static func validateDictionaryRankingMetadata(
@@ -840,7 +867,9 @@ private actor LanguageReferenceData {
   private static let selectedColumns = """
     lower(hex(e.id)), e.note_identity, e.source_identity, CAST(e.source_record_id AS TEXT), e.headword, e.reading, e.summary,
     e.meanings_json, e.parts_of_speech_json, e.written_forms_json, e.reading_forms_json,
-    e.senses_json, e.relationships_json, e.pitch_accent_json,
+    e.senses_json, e.relationships_json,
+    COALESCE(e.pitch_accent_json,
+      (SELECT c.pitch_accent_json FROM compound_pitch.entry_pitch c WHERE c.entry_id = e.id)),
     e.is_common, e.rank_score, length(e.headword), lower(hex(e.semantic_fingerprint))
     """
 

@@ -59,12 +59,16 @@ bundled `LanguageReferenceData.sqlite3`. Run
 `python3 -m unittest apps/ios/Tools/tests/test_example_word_index_contract.py` to verify that it
 matches that database, its pinned source, and its import report.
 
+Pitch for two-part compounds UniDic doesn't list whole, such as 記者会見, comes from
+`CompoundPitch.sqlite3`, also built against that database. Run
+`python3 -m unittest apps/ios/Tools/tests/test_compound_pitch_contract.py` to verify it.
+
 Every frequency pack pins the SHA-256 of `LanguageReferenceData.sqlite3`. After rebuilding it
 with `import_jmdict.py` (inputs are listed in `LanguageData/Sources/README.md`), also copy its
 ranking contract into `DictionaryRankingArtifactContract.json`, rebuild the TUBELEX and Wikipedia
 packs with `import_frequency_pack.py`, rebuild the Jiten packs with
 `build_jiten_frequency_packs.py --out-dir <dir>` (it rewrites their manifests and keeps changed
-ones trusted) and publish the new ZIPs, rebuild the JLPT pack, rebuild the example word index with `import_example_word_index.py`
+ones trusted) and publish the new ZIPs, rebuild the JLPT pack, rebuild the example word index with `import_example_word_index.py`, rebuild the compound pitch estimates with `import_compound_pitch.py`
 (inputs in `LanguageData/Sources/Tatoeba-jpn-indices-2026-09-26.source.json`), and update each catalog manifest. Move the previous manifests of downloadable
 packs into `trustedHistoricalManifests` so packs a learner already installed stay trusted.
 
