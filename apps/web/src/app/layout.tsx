@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@/components/analytics'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
+import { Toaster } from '@/components/ui/sonner'
 import { site } from '@/lib/site'
 import './globals.css'
 
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <SiteHeader />
         {children}
         <SiteFooter />
+        <Toaster />
         <Analytics />
       </body>
     </html>
