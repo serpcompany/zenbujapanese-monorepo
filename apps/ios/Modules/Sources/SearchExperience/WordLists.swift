@@ -241,6 +241,8 @@ private actor WordListsWriter {
     switch await file.read() {
     case .missing:
       return Loaded()
+    case .unreadable:
+      return Loaded(contents: Contents(), readOnlyReason: .couldNotKeepCopy)
     case .newerVersion(let newer):
       let stored = try? JSONDecoder.localStore.decode(LoadedFile.self, from: newer)
       return Loaded(

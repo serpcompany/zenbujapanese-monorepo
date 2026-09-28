@@ -168,6 +168,8 @@ private actor WordKnowledgeWriter {
     switch await file.read() {
     case .missing:
       return ([:], false, nil)
+    case .unreadable:
+      return ([:], false, .couldNotKeepCopy)
     case .newerVersion(let newer):
       let records = (try? JSONDecoder.localStore.decode(LoadedFile.self, from: newer))?.records
       return (Self.byEntryID(records?.compactMap(\.value) ?? []), false, .newerVersion)

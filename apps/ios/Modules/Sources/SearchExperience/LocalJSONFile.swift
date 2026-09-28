@@ -6,7 +6,8 @@ import OSLog
 enum LocalFileReadOnlyReason: Sendable {
   /// The file was saved by a newer version, and saving over it could lose its data.
   case newerVersion
-  /// The file couldn't be read in full, and no copy of it could be kept aside.
+  /// The file couldn't be read, or couldn't be read in full and no copy of it could be kept
+  /// aside. Reopening Zenbu may help.
   case couldNotKeepCopy
 }
 
@@ -17,6 +18,9 @@ enum LocalFileReadOnlyReason: Sendable {
 actor LocalJSONFile {
   enum Contents {
     case missing
+    /// The file exists but couldn't be read, for example before the device's first unlock. It
+    /// must not be written over.
+    case unreadable
     /// Saved by a newer version. Records may still decode, but the file must not be written.
     case newerVersion(Data)
     case current(Data)
@@ -59,7 +63,15 @@ actor LocalJSONFile {
   }
 
   func read() -> Contents {
-    guard let data = try? Data(contentsOf: fileURL) else { return .missing }
+    let data: Data
+    do {
+      data = try Data(contentsOf: fileURL)
+    } catch CocoaError.fileReadNoSuchFile {
+      return .missing
+    } catch {
+      logger.error("Couldn't read the \(self.description) file: \(error.localizedDescription)")
+      return .unreadable
+    }
     let version = (try? JSONDecoder().decode(VersionProbe.self, from: data))?.version
     guard let version, version > currentVersion else { return .current(data) }
     logger.error("The \(self.description) file is from a newer version; not saving over it")

@@ -184,6 +184,27 @@ final class WordListsTests {
     #expect(try backups().count == 1)
   }
 
+  @Test("a file that exists but can't be read is never replaced with Favorites")
+  func unreadableFileIsReadOnly() async throws {
+    let json = """
+      {"version":1,"lists":[{"id":"\(UUID())","name":"Anime","position":0,"createdAt":0,"updatedAt":0}],
+      "memberships":[]}
+      """
+    try writeFile(json)
+    try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: fileURL.path)
+    defer {
+      try? FileManager.default.setAttributes(
+        [.posixPermissions: 0o644], ofItemAtPath: fileURL.path)
+    }
+
+    let lists = await loadedLists()
+    #expect(lists.readOnlyReason == .couldNotKeepCopy)
+    #expect(lists.createList(named: "New") == nil)
+    await lists.flush()
+    try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: fileURL.path)
+    #expect(try Data(contentsOf: fileURL) == Data(json.utf8))
+  }
+
   @Test("changes made before the file loads are ignored")
   func changesBeforeLoad() async {
     let lists = WordLists(fileURL: fileURL)
