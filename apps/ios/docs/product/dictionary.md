@@ -76,9 +76,14 @@ dictionary entry.
 
 The top-right of a word detail holds **Share**, which shares the headword, reading, and numbered
 meanings as text, and a **•••** menu. The menu starts with **Mark as Known** (or **Mark as
-Unknown**), followed by Add Note, Take Photo, and Choose Photo. A known word shows the same
+Unknown**) and **Add to List…**, followed by Add Note, Take Photo, and Choose Photo. A known word shows the same
 **✓ Known** capsule under its headword. A word counts as unknown until the learner marks it, and
 known words persist on the device, keyed by the dictionary entry's stable identifier.
+
+**Add to List…** opens a sheet listing every word list, with a checkmark on the lists that
+contain the word. Tapping a list adds or removes the word at once, **New List** asks for a name,
+creates the list, and adds the word to it, and Done closes the sheet. Word Detail and Search
+results don't show which lists a word is in; only the sheet does.
 
 A learner can write notes for a word and associate photos with it. Notes and associated
 photos persist on the device.

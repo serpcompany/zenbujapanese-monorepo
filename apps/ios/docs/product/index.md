@@ -16,6 +16,7 @@ sign-in yet; the tab holds on-device content and preferences. It provides:
 - a profile card with the learner's photo, name, and username;
 - the Media Library;
 - Known Words;
+- Lists;
 - independent Furigana and Romaji preferences;
 - management of optional frequency dictionaries; and
 - the app's name, version, and description, followed by Help & Support and the Privacy Policy,
@@ -59,6 +60,25 @@ unknown, or open it in Search (or search its headword when the entry is no longe
 Known words are stored only on the device. If the saved known words
 came from a newer version of Zenbu, or a damaged file couldn't be kept aside, they are shown but
 can't be changed, and Known Words and the Mark as Known button say so.
+
+### Lists
+
+Lists are the learner's own named groups of dictionary words, such as "Favorites" or "Anime S1
+vocab". A new install starts with one list, **Favorites**, which can be renamed or deleted like
+any other; once deleted it is not created again. Words are added from a word's **•••** menu
+(see [Dictionary](dictionary.md)).
+
+The Account row shows how many lists there are. Lists shows every list in the learner's order
+with its word count. A learner can create a list, swipe a list to rename or delete it (a list
+that has words asks first), reorder lists with Edit, and open a list. Names are trimmed, can't be
+empty, and may repeat. A list shows its words most recently added first; the learner can search
+it by headword or reading, swipe a word to remove it from that list, or open it in Search (or
+search its headword when the entry is no longer in the dictionary). Deleting a list removes its
+words from that list only.
+
+Lists are stored only on the device, keyed by each entry's stable identifier. Like Known Words,
+lists saved by a newer version of Zenbu, or a damaged file that couldn't be kept aside, are shown
+but can't be changed, and Lists and the list picker say so.
 
 ### Media Library
 
