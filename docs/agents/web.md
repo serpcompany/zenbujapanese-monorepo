@@ -4,6 +4,14 @@
 Cloudflare D1 through Drizzle. It owns its toolchain (pnpm, its own lockfile) per ADR 0005. Run
 every command below from `apps/web`. Decisions and scope live in issue #402.
 
+The website follows these SERP engineering standards:
+
+- [Drizzle + D1 data promotion](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/database-management-promotion-drizzle-d1.md)
+- [Environment configuration](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/environment-configuration.md)
+- [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md):
+  pages end with a slash (`/about/`); files never do (`/robots.txt`, `/sitemap-index.xml`). The
+  other form redirects (308) to it. `src/lib/pages.ts` is the single list of static page paths.
+
 Before writing Next.js code, read the relevant guide in `node_modules/next/dist/docs/`; this
 Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 
@@ -28,7 +36,7 @@ lists every child sitemap and each child sitemap lists the new URLs.
 | --- | --- | --- | --- |
 | Local | — | `localhost` | `zenbujapanese-web-local` (local only) |
 | Staging | `zenbujapanese-web-staging` | `staging.zenbujapanese.com` | `zenbujapanese-web-staging` |
-| Production | `zenbujapanese-web-production` | `zenbujapanese.com` (after cutover) | `zenbujapanese-web-production` |
+| Production | `zenbujapanese-web-production` | `zenbujapanese.com` (`www` redirects to it) | `zenbujapanese-web-production` |
 
 Deploys and remote migrations run only through the `Web deploy` GitHub Actions workflow, never
 from an agent's machine. Each merge to `main` that changes `apps/web/**` applies staging
@@ -63,12 +71,13 @@ production`), then check the output. `scripts/smoke.sh <url> <staging|production
 search-engine rules for each environment, so CI fails if production is hidden or staging is
 exposed.
 
-Production serves its workers.dev URL until DNS moves off the placeholder GitHub Pages site
-(`serpcompany/zenbujapanese.com`). At cutover, add custom domains for `zenbujapanese.com` and
-`www.zenbujapanese.com` in `wrangler.jsonc`, and update the `production` environment's
-`WEB_PRODUCTION_URL` variable. Keep `workers_dev` on: the zone's bot protection blocks CI runners, so
-smoke tests use the workers.dev URLs, while people review on the branded domains. `/privacy` and `/support` must keep working: the
-shipped iOS app and App Store metadata link to them.
+Both Workers keep their workers.dev URLs: the zone's bot protection blocks CI runners, so smoke
+tests use them, while people review on the branded domains. `www.zenbujapanese.com` is a custom
+domain on the production Worker and redirects to the apex in `next.config.ts`. `/privacy` and
+`/support` must keep working: the shipped iOS app and App Store metadata link to them.
+
+Email Routing on the zone forwards `support@zenbujapanese.com` to `support+zenbujapanese@serp.co`
+and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.
 
 ## Database
 

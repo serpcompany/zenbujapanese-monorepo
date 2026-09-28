@@ -2,7 +2,7 @@ import { PageShell } from '@/components/page-shell'
 import { pageMetadata } from '@/lib/metadata'
 import { site } from '@/lib/site'
 
-export const metadata = pageMetadata('/about')
+export const metadata = pageMetadata('/about/')
 
 export default function AboutPage() {
   return (

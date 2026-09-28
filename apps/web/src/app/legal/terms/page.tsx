@@ -3,7 +3,7 @@ import { PageShell } from '@/components/page-shell'
 import { pageMetadata } from '@/lib/metadata'
 import { site } from '@/lib/site'
 
-export const metadata = pageMetadata('/legal/terms')
+export const metadata = pageMetadata('/legal/terms/')
 
 export default function TermsPage() {
   return (
@@ -78,7 +78,7 @@ export default function TermsPage() {
       <h2>10. Contact</h2>
       <p>
         Questions go to <a href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a>. See also
-        the <Link href="/legal/privacy">Privacy Policy</Link>.
+        the <Link href="/legal/privacy/">Privacy Policy</Link>.
       </p>
     </PageShell>
   )

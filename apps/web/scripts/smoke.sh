@@ -20,9 +20,34 @@ expect() {
   if [ "$got" = "$want" ]; then pass "$got $path"; else fail "$got $path (want $want)"; fi
 }
 
-for path in / /support /legal/privacy /sitemap-index.xml /sitemaps/pages.xml /robots.txt; do
+expect_redirect() {
+  local path="$1" want="$2" got
+  got="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "$base$path")"
+  if [ "$got" = "308 $base$want" ]; then pass "308 $path -> $want"; else fail "$path gave '$got' (want 308 -> $want)"; fi
+}
+
+for path in / /support/ /legal/privacy/ /sitemap-index.xml /sitemaps/pages.xml /robots.txt; do
   expect "$path" 200
 done
+# SERP trailing-slash standard: pages end in a slash, files never do. The other form redirects.
+expect_redirect /support /support/
+expect_redirect /robots.txt/ /robots.txt
+expect_redirect /sitemaps/pages.xml/ /sitemaps/pages.xml
+
+# Sitemaps list only canonical URLs: child sitemaps are unslashed files, pages end in a slash.
+index_locs="$(curl -s "$base/sitemap-index.xml" | grep -oE '<loc>[^<]+</loc>' || true)"
+page_locs="$(curl -s "$base/sitemaps/pages.xml" | grep -oE '<loc>[^<]+</loc>' || true)"
+if [ -n "$index_locs" ] && ! grep -vqE '\.xml</loc>$' <<<"$index_locs"; then
+  pass 'sitemap index lists unslashed .xml files'
+else
+  fail 'sitemap index has a non-canonical URL'
+fi
+if [ -n "$page_locs" ] && ! grep -vqE '/</loc>$' <<<"$page_locs"; then
+  pass 'pages sitemap lists slashed page URLs'
+else
+  fail 'pages sitemap has a non-canonical URL'
+fi
+# The shipped iOS app links to /privacy.
 expect /privacy 308
 
 robots="$(curl -s "$base/robots.txt")"
