@@ -30,6 +30,22 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 After changing routes, open the changed pages in `pnpm preview` and confirm `/sitemap-index.xml`
 lists every child sitemap and each child sitemap lists the new URLs.
 
+## Dictionary search
+
+`src/lib/dictionary/search/` ports the app's Search retrieval to TypeScript and runs on D1. It
+must return what the app returns: the ADR 0006 conformance suite
+(`apps/ios/LanguageData/Conformance/search-retrieval.json`) checks it. To run the suite, load the
+search tables into a local D1 at `.search-d1/` (about 20 seconds), then run the tests:
+
+```sh
+scripts/load-search-d1.sh
+ZENBU_SEARCH_D1=1 pnpm test
+```
+
+`scripts/build-search-d1.py` defines the search tables. D1 rejects the app's FTS4 indexes, so
+they are FTS5, and `form_chars` indexes Japanese forms by character in place of the app's scan
+over every form. Without `ZENBU_SEARCH_D1=1`, `pnpm test` skips the suite.
+
 ## Environments and deploys
 
 | Environment | Worker | Domain | D1 database |
