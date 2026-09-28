@@ -10,10 +10,10 @@ from its own copy of the shared language-data artifact.
 
 ## Word URLs end in the JMdict entry number
 
-A word page is `/dictionary/<slug>-<ent_seq>/`, for example `/dictionary/居る-1577980/`. The
-number is JMdict's `ent_seq`, not the Language Reference ID. It keeps homographs such as 居る,
-要る, and 射る apart, it is 7 digits against the Language Reference ID's 32, and it matches jpdb,
-Takoboto, and Tangorin. EDRDG never reuses an `ent_seq`, and the Language Reference ID is a hash
+A word page is `/dictionary/<slug>-<ent_seq>/`, for example `/dictionary/要る-1546640/`. The
+number is JMdict's `ent_seq`, not the Language Reference ID. It keeps homographs such as 要る,
+入る, and 射る (all いる) apart, it is 7 digits against the Language Reference ID's 32, and it
+matches jpdb, Takoboto, and Tangorin. EDRDG never reuses an `ent_seq`, and the Language Reference ID is a hash
 of it, so both are equally permanent. The cost is that public URLs expose JMdict's key, which
 `import_jmdict.py` otherwise keeps out of Zenbu's identifiers. A word from any other source
 would need its own URL form. Learner data keeps using Language Reference IDs (ADR 0006).
@@ -22,7 +22,7 @@ The slug is only for reading. It is the headword as the app displays it, NFC-nor
 `/ ? # % \` and whitespace replaced by `-`, falling back to the reading if nothing is left. It
 is percent-encoded UTF-8 in canonical URLs and sitemaps. The artifact precomputes it, so the
 app's share links and the website build the same URL. A request with a stale or missing slug
-(`/dictionary/1577980/`) redirects (308) to the current one. An `ent_seq` that a published
+(`/dictionary/1546640/`) redirects (308) to the current one. An `ent_seq` that a published
 artifact once held returns 410, or 308 when a replacement is recorded. Any other unknown number
 returns 404.
 

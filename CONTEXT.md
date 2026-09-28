@@ -1,14 +1,16 @@
-# Context
+# Zenbu Japanese
 
-Terms whose misreading has caused, or would cause, a product or architectural mistake.
+One Japanese dictionary shared by every Zenbu app: the iOS app, the website, and later the
+browser extension.
 
-## Language Reference ID
+## Language
 
-Zenbu's permanent 16-byte ID for a dictionary entry: the first 16 bytes of SHA-256 over the
-source identity and its record number. Anything a learner saves or syncs refers to a word by it
-(ADR 0006). It is not a JMdict `ent_seq`.
+**Language Reference ID**:
+Zenbu's permanent identity for a dictionary entry. Anything a learner saves or syncs refers to a
+word by it.
+_Avoid_: word ID, entry ID, ent_seq
 
-## JMdict entry number
-
-JMdict's `ent_seq`, a 7-digit number EDRDG never reuses. Word page URLs end in it
-(ADR 0007). It identifies a word publicly; it never keys learner data.
+**JMdict entry number**:
+JMdict's own permanent number for an entry (`ent_seq`). It is the public ID at the end of a word
+page URL and never keys learner data.
+_Avoid_: word ID, Language Reference ID
