@@ -47,6 +47,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- Tapping another word while a word's half-height sheet is open, in the Player or Image Search,
+  now shows it in the same half-height sheet instead of reopening the sheet at full height.
 - Image Search now recognizes vertical Japanese (縦書き), such as book pages and signs,
   instead of reporting that no Japanese text was found. Columns are read right to left.
 - The Results and Discovered Words headings no longer stay pinned over results as you scroll.

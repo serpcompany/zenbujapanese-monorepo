@@ -12,10 +12,10 @@ public struct SearchExperienceRootView: View {
   @State private var accountPath: [AccountRoute] = []
   @State private var query = ""
   @State private var imageTextSessionStore = ImageTextSessionStore()
-  @State private var recognizedWordSheet: RecognizedWordSheetRequest?
+  @State private var imageWordSheet = WordSheetPresentation()
   /// Player's stack holds Player routes and, after Open Full Entry, dictionary routes.
   @State private var watchPath = NavigationPath()
-  @State private var watchWordSheet: RecognizedWordSheetRequest?
+  @State private var watchWordSheet = WordSheetPresentation()
   @State private var watchHistory = WatchHistory()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
@@ -134,18 +134,20 @@ public struct SearchExperienceRootView: View {
       .navigationDestination(for: SearchExperienceRoute.self) { route in
         dictionaryDestination(route, in: .search)
       }
-      .sheet(item: $recognizedWordSheet) { request in
-        RecognizedWordSheet(
-          request: request,
-          opensAtHalfHeight: true,
-          openFullEntry: { entry in openFullEntry(entry, in: .search) }
-        ) { entry, encounterMedia in
-          wordDetailView(
-            entry: entry,
-            initialEncounterMedia: encounterMedia,
-            presentedInSheet: true,
-            in: .search
-          )
+      .sheet(isPresented: imageWordSheet.isPresentedBinding) {
+        if let request = imageWordSheet.request {
+          RecognizedWordSheet(
+            request: request,
+            detent: $imageWordSheet.detent,
+            openFullEntry: { entry in openFullEntry(entry, in: .search) }
+          ) { entry, encounterMedia in
+            wordDetailView(
+              entry: entry,
+              initialEncounterMedia: encounterMedia,
+              presentedInSheet: true,
+              in: .search
+            )
+          }
         }
       }
     }
@@ -214,7 +216,7 @@ public struct SearchExperienceRootView: View {
           translationClient: naturalTranslationClient,
           explanationClient: imageTextExplanationClient,
           clipboardClient: imageTextClipboardClient,
-          presentedWord: $recognizedWordSheet,
+          presentedWord: imageWordSheet.requestBinding,
           close: {
             if path.last == .image(sessionID) { path.removeLast() }
             imageTextSessionStore.remove(sessionID)
@@ -240,7 +242,7 @@ public struct SearchExperienceRootView: View {
             history: watchHistory,
             captionClient: .live,
             japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-            presentedWord: $watchWordSheet
+            presentedWord: watchWordSheet.requestBinding
           )
         case .search(let search):
           VideoSearchView(search: search) { videoID in
@@ -251,18 +253,20 @@ public struct SearchExperienceRootView: View {
       .navigationDestination(for: SearchExperienceRoute.self) { route in
         dictionaryDestination(route, in: .player)
       }
-      .sheet(item: $watchWordSheet) { request in
-        RecognizedWordSheet(
-          request: request,
-          opensAtHalfHeight: true,
-          openFullEntry: { entry in openFullEntry(entry, in: .player) }
-        ) { entry, encounterMedia in
-          wordDetailView(
-            entry: entry,
-            initialEncounterMedia: encounterMedia,
-            presentedInSheet: true,
-            in: .player
-          )
+      .sheet(isPresented: watchWordSheet.isPresentedBinding) {
+        if let request = watchWordSheet.request {
+          RecognizedWordSheet(
+            request: request,
+            detent: $watchWordSheet.detent,
+            openFullEntry: { entry in openFullEntry(entry, in: .player) }
+          ) { entry, encounterMedia in
+            wordDetailView(
+              entry: entry,
+              initialEncounterMedia: encounterMedia,
+              presentedInSheet: true,
+              in: .player
+            )
+          }
         }
       }
     }
@@ -323,8 +327,8 @@ public struct SearchExperienceRootView: View {
 
   private func dismissRecognizedWordSheet(if shouldDismiss: Bool) {
     guard shouldDismiss else { return }
-    recognizedWordSheet = nil
-    watchWordSheet = nil
+    imageWordSheet.request = nil
+    watchWordSheet.request = nil
   }
 
   private var searchPath: Binding<[SearchExperienceRoute]> {
