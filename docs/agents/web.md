@@ -41,8 +41,11 @@ lists every child sitemap and each child sitemap lists the new URLs.
 Deploys and remote migrations run only through the `Web deploy` GitHub Actions workflow, never
 from an agent's machine. Each merge to `main` that changes `apps/web/**` applies staging
 migrations, deploys staging, and smoke-tests its workers.dev URL (`scripts/smoke.sh`). The production job then
-waits for approval on the `production` GitHub environment, applies production migrations, deploys
-the same commit, and smoke-tests its workers.dev URL. Both environments deploy only from `main`.
+runs automatically once staging passes: it applies production migrations, deploys the same commit,
+and smoke-tests its workers.dev URL. Staging's smoke tests are the gate; the `production` GitHub
+environment has no required reviewer for now. Add one (Settings → Environments → production) once
+production data migrations begin, such as with the dictionary. Both environments deploy only from
+`main`.
 The workflow uses the `CLOUDFLARE_API_TOKEN` secret (the "Edit Cloudflare Workers" template plus D1 Edit, limited
 to the SERP account and the zenbujapanese.com zone) and the `CLOUDFLARE_ACCOUNT_ID` variable.
 
@@ -72,13 +75,29 @@ production`), then check the output. `scripts/smoke.sh <url> <staging|production
 search-engine rules for each environment, so CI fails if production is hidden or staging is
 exposed.
 
-The branded domains are canonical. `www.zenbujapanese.com` and each Worker's workers.dev URL
-permanently redirect (308) to them in one hop (`redirectHostTo` in `next.config.ts`), keeping the
-canonical trailing-slash form. The zone is on the free plan, whose Bot Fight Mode blocks CI runners
-and cannot be skipped by WAF rules, so smoke tests call the workers.dev URLs with the
-`x-zenbu-smoke-test` header, which exempts a request from that redirect. The header is not a
-secret. `/privacy` and `/support` must keep working: the shipped iOS app and App Store metadata
-link to them.
+### Canonical hosts
+
+Each environment has one canonical host: `zenbujapanese.com` for production and
+`staging.zenbujapanese.com` for staging. Every other host serving the same Worker permanently
+redirects (308) to it in one hop, keeping the canonical trailing-slash form, through
+`redirectHostTo` in `next.config.ts`:
+
+- `www.zenbujapanese.com`, a custom domain on the production Worker.
+- Each Worker's workers.dev URL. Wrangler enables it by default; left alone it serves a crawlable
+  duplicate of the site.
+
+The zone is on the free plan, whose Bot Fight Mode blocks CI runners and cannot be skipped by WAF
+rules, so CI smoke-tests the workers.dev URLs with the `x-zenbu-smoke-test` header, which exempts a
+request from the host redirect. The header is not a secret. `scripts/smoke.sh` also checks, with a
+retry for edge propagation, that a plain workers.dev request 308s to the canonical host.
+
+When adding a host (a new custom domain, preview URLs), add a `redirectHostTo` rule and a smoke
+check in the same change. To test host rules locally, run `wrangler dev` without `--env production`
+and send a `Host` header: with that environment's custom domains, Wrangler rewrites `Host` to the
+route's domain and host rules never match.
+
+`/privacy` and `/support` must keep working: the shipped iOS app and App Store metadata link to
+them.
 
 Email Routing on the zone forwards `support@zenbujapanese.com` to `support+zenbujapanese@serp.co`
 and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.
