@@ -214,7 +214,8 @@ private struct LinkedTokenView: View {
           reading: displayReading(for: entry),
           exposesAccessibility: false,
           displaysRomaji: false,
-          hidesFurigana: hidesFurigana(for: entry)
+          hidesFurigana: hidesFurigana(for: entry),
+          highlightsKanjiOnTap: false
         )
         .foregroundStyle(isHighlighted ? Color.accentColor : Color.primary)
         .accessibilityElement(children: .ignore)
@@ -229,7 +230,8 @@ private struct LinkedTokenView: View {
             reading: displayReading(for: entry),
             exposesAccessibility: false,
             displaysRomaji: false,
-            hidesFurigana: hidesFurigana(for: entry)
+            hidesFurigana: hidesFurigana(for: entry),
+            highlightsKanjiOnTap: false
           )
           // Each word's own underline carries the interactive affordance and shows where
           // one parsed word ends and the next begins. The current entry or query match is

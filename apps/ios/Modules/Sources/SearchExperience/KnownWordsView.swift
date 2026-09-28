@@ -139,7 +139,8 @@ struct SavedWordRow: View {
         surface: headword,
         reading: reading,
         baseFont: .title3,
-        rubyFont: .caption.weight(.semibold)
+        rubyFont: .caption.weight(.semibold),
+        highlightsKanjiOnTap: false
       )
       Spacer()
       if isKnown {
