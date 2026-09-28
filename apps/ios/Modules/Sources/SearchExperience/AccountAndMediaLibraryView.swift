@@ -4,7 +4,7 @@ import UIKit
 struct AccountNavigationView: View {
   @Binding var path: [AccountRoute]
   let store: EncounterMediaStore
-  let openWord: (LanguageReferenceID) -> Void
+  let openWord: (WordKnowledgeRecord) -> Void
 
   var body: some View {
     NavigationStack(path: $path) {

@@ -3,7 +3,8 @@ import SwiftUI
 public struct SearchExperienceRootView: View {
   @State private var readingAidPreferences = ReadingAidPreferences()
   @State private var userProfile = UserProfile()
-  @State private var wordKnowledge = WordKnowledge()
+  @State private var wordKnowledge = WordKnowledge.shared
+  @Environment(\.scenePhase) private var scenePhase
   @State private var selectedTab = SearchExperienceTab.search
   @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
@@ -56,6 +57,9 @@ public struct SearchExperienceRootView: View {
       .environment(readingAidPreferences)
       .environment(userProfile)
       .environment(wordKnowledge)
+      .onChange(of: scenePhase) { _, phase in
+        if phase == .active { wordKnowledge.saveIfNeeded() }
+      }
   }
 
   private var appTabs: some View {
@@ -288,11 +292,16 @@ public struct SearchExperienceRootView: View {
     }
   }
 
-  private func openKnownWord(_ id: LanguageReferenceID) {
+  /// Opens the word's entry, or searches its headword when the entry is no longer found.
+  private func openKnownWord(_ record: WordKnowledgeRecord) {
     Task { @MainActor in
-      guard let entry = try? await lookupClient.entry(id) else { return }
       selectedTab = .search
-      path.append(.word(entry, nil))
+      if let entry = try? await lookupClient.entry(record.languageReferenceID) {
+        path.append(.word(entry, nil))
+      } else {
+        path = []
+        query = record.headword
+      }
     }
   }
 

@@ -859,11 +859,11 @@ private struct ResultRow: View {
       .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
     }
     .swipeActions(edge: .leading) {
-      knownButton(isKnown: isKnown)
+      KnownWordMenuButton(entry: entry)
         .tint(isKnown ? .orange : .green)
     }
     .contextMenu {
-      knownButton(isKnown: isKnown)
+      KnownWordMenuButton(entry: entry)
     }
     .accessibilityLabel("\(entry.headword), \(entry.reading), \(summary)")
     .accessibilityValue(
@@ -872,15 +872,6 @@ private struct ResultRow: View {
         .joined(separator: ", ")
     )
     .accessibilityIdentifier(resultIdentifier)
-  }
-
-  private func knownButton(isKnown: Bool) -> some View {
-    Button(
-      isKnown ? "Mark as Unknown" : "Mark as Known",
-      systemImage: isKnown ? "xmark.circle" : "checkmark.circle"
-    ) {
-      wordKnowledge.toggleKnown(entry)
-    }
   }
 
   /// Every ranked dictionary at standard sizes. At accessibility sizes only the dictionary that

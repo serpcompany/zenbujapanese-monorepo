@@ -512,7 +512,7 @@ private struct WordHeroView: View {
     VStack(alignment: .leading, spacing: 6) {
       headline
       if wordKnowledge.isKnown(entry.id) {
-        KnownWordBadge()
+        KnownWordBadge(announces: true)
           .padding(.bottom, 4)
       }
     }

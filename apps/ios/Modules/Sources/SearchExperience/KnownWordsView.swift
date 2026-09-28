@@ -19,6 +19,9 @@ struct KnownWordMenuButton: View {
 
 /// The capsule Search results and Word Detail show for a known word.
 struct KnownWordBadge: View {
+  /// Off where the surrounding row already says "Known" to VoiceOver.
+  var announces = false
+
   var body: some View {
     HStack(spacing: 3) {
       Image(systemName: "checkmark")
@@ -29,7 +32,9 @@ struct KnownWordBadge: View {
     .padding(.horizontal, 8)
     .padding(.vertical, 3)
     .background(.green.opacity(0.15), in: .capsule)
-    .accessibilityHidden(true)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("Known")
+    .accessibilityHidden(!announces)
   }
 }
 
@@ -37,7 +42,7 @@ struct KnownWordBadge: View {
 struct KnownWordsView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @State private var searchText = ""
-  let openWord: (LanguageReferenceID) -> Void
+  let openWord: (WordKnowledgeRecord) -> Void
 
   var body: some View {
     let records = filteredRecords
@@ -53,7 +58,7 @@ struct KnownWordsView: View {
         List {
           ForEach(records) { record in
             Button {
-              openWord(record.languageReferenceID)
+              openWord(record)
             } label: {
               KnownWordsListRow(record: record)
             }
@@ -61,7 +66,7 @@ struct KnownWordsView: View {
             .accessibilityIdentifier("known-words.item.\(record.entryID)")
             .swipeActions {
               Button("Mark as Unknown", systemImage: "xmark.circle") {
-                markUnknown(record)
+                wordKnowledge.setStatus(.unknown, for: record)
               }
               .tint(.orange)
             }
@@ -87,14 +92,6 @@ struct KnownWordsView: View {
     }
   }
 
-  private func markUnknown(_ record: WordKnowledgeRecord) {
-    wordKnowledge.setStatus(
-      .unknown,
-      id: record.languageReferenceID,
-      headword: record.headword,
-      reading: record.reading
-    )
-  }
 }
 
 private struct KnownWordsListRow: View {

@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import OSLog
 
 enum WordKnowledgeStatus: String, Codable, Sendable {
   case known
@@ -21,17 +22,30 @@ struct WordKnowledgeRecord: Codable, Hashable, Identifiable, Sendable {
 
 /// Which words the learner knows. A word without a record is unknown.
 ///
-/// Records are held in memory for fast lookups and saved as one JSON file on the device.
+/// Records are held in memory for fast lookups and saved as one JSON file on the device. The
+/// file loads off the main actor; changes made before it finishes are kept over loaded ones.
 @MainActor
 @Observable
 final class WordKnowledge {
-  private(set) var records: [String: WordKnowledgeRecord]
+  static let shared = WordKnowledge()
+
+  private(set) var records: [String: WordKnowledgeRecord] = [:]
+  /// Known words, most recently marked first.
+  private(set) var knownRecords: [WordKnowledgeRecord] = []
   @ObservationIgnored private let writer: WordKnowledgeWriter
   @ObservationIgnored private var lastWrite: Task<Void, Never>?
+  @ObservationIgnored private var hasUnsavedChanges = false
 
   init(fileURL: URL = WordKnowledge.defaultFileURL) {
-    records = WordKnowledgeWriter.load(fileURL)
-    writer = WordKnowledgeWriter(fileURL: fileURL)
+    let writer = WordKnowledgeWriter(fileURL: fileURL)
+    self.writer = writer
+    lastWrite = Task {
+      let loaded = await writer.load()
+      records = loaded.merging(records) { _, current in current }
+      knownRecords = records.values
+        .filter { $0.status == .known }
+        .sorted { $0.updatedAt > $1.updatedAt }
+    }
   }
 
   func status(_ id: LanguageReferenceID) -> WordKnowledgeStatus {
@@ -42,32 +56,31 @@ final class WordKnowledge {
     status(id) == .known
   }
 
-  /// Known words, most recently marked first.
-  var knownRecords: [WordKnowledgeRecord] {
-    records.values
-      .filter { $0.status == .known }
-      .sorted { $0.updatedAt > $1.updatedAt }
-  }
-
-  var knownCount: Int {
-    records.values.count { $0.status == .known }
-  }
+  var knownCount: Int { knownRecords.count }
 
   func setStatus(_ status: WordKnowledgeStatus, for entry: DictionaryEntry) {
     setStatus(status, id: entry.id, headword: entry.headword, reading: entry.reading)
+  }
+
+  func setStatus(_ status: WordKnowledgeStatus, for record: WordKnowledgeRecord) {
+    setStatus(
+      status, id: record.languageReferenceID, headword: record.headword, reading: record.reading)
   }
 
   func setStatus(
     _ status: WordKnowledgeStatus, id: LanguageReferenceID, headword: String, reading: String
   ) {
     guard self.status(id) != status else { return }
-    records[id.rawValue] = WordKnowledgeRecord(
+    let record = WordKnowledgeRecord(
       entryID: id.rawValue,
       headword: headword,
       reading: reading,
       status: status,
       updatedAt: Date()
     )
+    records[id.rawValue] = record
+    knownRecords.removeAll { $0.entryID == id.rawValue }
+    if status == .known { knownRecords.insert(record, at: 0) }
     persist()
   }
 
@@ -75,18 +88,24 @@ final class WordKnowledge {
     setStatus(isKnown(entry.id) ? .unknown : .known, for: entry)
   }
 
-  /// Waits until every change so far is on disk.
+  /// Tries again to save changes whose last write failed.
+  func saveIfNeeded() {
+    if hasUnsavedChanges { persist() }
+  }
+
+  /// Waits until the file has loaded and every change so far has been written.
   func flush() async {
     await lastWrite?.value
   }
 
+  /// Writes after the load and any earlier write, taking the snapshot then so the file always
+  /// holds loaded records too.
   private func persist() {
-    let snapshot = Array(records.values)
     let previous = lastWrite
     let writer = writer
     lastWrite = Task {
       await previous?.value
-      await writer.write(snapshot)
+      hasUnsavedChanges = !(await writer.write(Array(records.values)))
     }
   }
 
@@ -104,28 +123,65 @@ private actor WordKnowledgeWriter {
     var records: [WordKnowledgeRecord]
   }
 
+  /// Decodes each record on its own, so one unreadable record doesn't discard the rest.
+  private struct LoadedFile: Decodable {
+    let records: [WordKnowledgeRecord?]
+
+    private enum CodingKeys: String, CodingKey { case records }
+    private struct LossyRecord: Decodable {
+      let record: WordKnowledgeRecord?
+      init(from decoder: Decoder) throws {
+        record = try? WordKnowledgeRecord(from: decoder)
+      }
+    }
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      records = try container.decode([LossyRecord].self, forKey: .records).map(\.record)
+    }
+  }
+
+  private static let logger = Logger(subsystem: "com.zenbujapanese", category: "WordKnowledge")
   private let fileURL: URL
 
   init(fileURL: URL) {
     self.fileURL = fileURL
   }
 
-  /// A missing or unreadable file loads as no records.
-  nonisolated static func load(_ fileURL: URL) -> [String: WordKnowledgeRecord] {
-    guard let data = try? Data(contentsOf: fileURL),
-      let stored = try? JSONDecoder.wordKnowledge.decode(StoredFile.self, from: data)
-    else { return [:] }
-    return Dictionary(stored.records.map { ($0.entryID, $0) }) { _, latest in latest }
+  /// A missing file loads as no records. A file that can't be read in full is kept beside it
+  /// before the next write replaces it.
+  func load() -> [String: WordKnowledgeRecord] {
+    guard let data = try? Data(contentsOf: fileURL) else { return [:] }
+    guard let stored = try? JSONDecoder.wordKnowledge.decode(LoadedFile.self, from: data) else {
+      preserveUnreadableFile()
+      return [:]
+    }
+    let records = stored.records.compactMap(\.self)
+    if records.count != stored.records.count { preserveUnreadableFile() }
+    return Dictionary(records.map { ($0.entryID, $0) }) { _, latest in latest }
   }
 
-  func write(_ records: [WordKnowledgeRecord]) {
+  /// Returns whether the records reached the disk.
+  func write(_ records: [WordKnowledgeRecord]) -> Bool {
     let sorted = records.sorted { $0.entryID < $1.entryID }
-    guard let data = try? JSONEncoder.wordKnowledge.encode(StoredFile(records: sorted)) else {
-      return
+    do {
+      let data = try JSONEncoder.wordKnowledge.encode(StoredFile(records: sorted))
+      try FileManager.default.createDirectory(
+        at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+      try data.write(to: fileURL, options: .atomic)
+      return true
+    } catch {
+      Self.logger.error("Couldn't save known words: \(error.localizedDescription)")
+      return false
     }
-    try? FileManager.default.createDirectory(
-      at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-    try? data.write(to: fileURL, options: .atomic)
+  }
+
+  private func preserveUnreadableFile() {
+    let stamp = Int(Date().timeIntervalSince1970)
+    let backup = fileURL.deletingLastPathComponent()
+      .appending(path: "word-knowledge.unreadable-\(stamp).json")
+    try? FileManager.default.copyItem(at: fileURL, to: backup)
+    Self.logger.error("Kept an unreadable known-words file at \(backup.lastPathComponent)")
   }
 }
 

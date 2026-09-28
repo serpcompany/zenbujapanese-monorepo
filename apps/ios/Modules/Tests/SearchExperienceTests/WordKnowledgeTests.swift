@@ -4,10 +4,14 @@ import Testing
 
 @MainActor
 @Suite("Known words")
-struct WordKnowledgeTests {
-  private let fileURL = FileManager.default.temporaryDirectory
+final class WordKnowledgeTests {
+  private let directory = FileManager.default.temporaryDirectory
     .appending(path: "word-knowledge-tests-\(UUID().uuidString)", directoryHint: .isDirectory)
-    .appending(path: "word-knowledge.json")
+  private var fileURL: URL { directory.appending(path: "word-knowledge.json") }
+
+  deinit {
+    try? FileManager.default.removeItem(at: directory)
+  }
 
   private let taberu = LanguageReferenceID(rawValue: "0123456789abcdef0123456789abcdef")
   private let miru = LanguageReferenceID(rawValue: "fedcba9876543210fedcba9876543210")
@@ -26,6 +30,7 @@ struct WordKnowledgeTests {
     await knowledge.flush()
 
     let reloaded = WordKnowledge(fileURL: fileURL)
+    await reloaded.flush()
     #expect(reloaded.isKnown(taberu))
     #expect(reloaded.records[taberu.rawValue]?.headword == "食べる")
     #expect(reloaded.records[taberu.rawValue]?.reading == "たべる")
@@ -39,6 +44,7 @@ struct WordKnowledgeTests {
     await knowledge.flush()
 
     let reloaded = WordKnowledge(fileURL: fileURL)
+    await reloaded.flush()
     #expect(reloaded.status(taberu) == .unknown)
     #expect(reloaded.records[taberu.rawValue]?.status == .unknown)
     #expect(reloaded.knownCount == 0)
@@ -67,13 +73,52 @@ struct WordKnowledgeTests {
     #expect(knowledge.records[taberu.rawValue]?.updatedAt == markedAt)
   }
 
-  @Test("a corrupt file loads as no records")
-  func corruptFile() throws {
-    try FileManager.default.createDirectory(
-      at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+  @Test("a corrupt file loads as no records and is kept beside the new file")
+  func corruptFile() async throws {
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     try Data("not json".utf8).write(to: fileURL)
 
     let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
     #expect(knowledge.records.isEmpty)
+    #expect(try backups().count == 1)
+  }
+
+  @Test("an unreadable record doesn't discard the rest")
+  func unreadableRecord() async throws {
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let json = """
+      {"version":1,"records":[
+      {"entryID":"\(taberu.rawValue)","headword":"食べる","reading":"たべる","status":"known","updatedAt":0},
+      {"entryID":"\(miru.rawValue)","headword":"見る","reading":"みる","status":"learning","updatedAt":0}]}
+      """
+    try Data(json.utf8).write(to: fileURL)
+
+    let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
+    #expect(knowledge.isKnown(taberu))
+    #expect(knowledge.records.count == 1)
+    #expect(try backups().count == 1)
+  }
+
+  @Test("changes made while the file loads keep the loaded records")
+  func changesDuringLoad() async {
+    let first = WordKnowledge(fileURL: fileURL)
+    first.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
+    await first.flush()
+
+    let second = WordKnowledge(fileURL: fileURL)
+    second.setStatus(.known, id: miru, headword: "見る", reading: "みる")
+    await second.flush()
+
+    let reloaded = WordKnowledge(fileURL: fileURL)
+    await reloaded.flush()
+    #expect(reloaded.isKnown(taberu))
+    #expect(reloaded.isKnown(miru))
+  }
+
+  private func backups() throws -> [String] {
+    try FileManager.default.contentsOfDirectory(atPath: directory.path)
+      .filter { $0.hasPrefix("word-knowledge.unreadable-") }
   }
 }
