@@ -1,24 +1,13 @@
-import CoreTransferable
-import PhotosUI
 import SwiftUI
 import UIKit
-import UniformTypeIdentifiers
 
 struct WordDetailView: View {
   @FocusState private var noteEditorFocused: Bool
-  @State private var editingNoteID: String?
-  @State private var noteDraft = ""
-  @State private var notes: [LearnerWordNote] = []
-  @State private var noteSaveTask: Task<Void, Never>?
+  @State private var notes: SavedItemNotes
+  @State private var photos: SavedItemPhotos
   @State private var examples: [ExampleSentence] = []
   @State private var examplesEntryID: LanguageReferenceID?
   @State private var isLoadingExamples = true
-  @State private var encounterMedia: [EncounterMedia] = []
-  @State private var selectedEncounterMediaItem: PhotosPickerItem?
-  @State private var showsPhotoPicker = false
-  @State private var encounterMediaImportFailed = false
-  @State private var cameraAlert: WordDetailCameraAlert?
-  @State private var showsCamera = false
   @State private var showsListPicker = false
   @State private var frequencyDisclosure: FrequencyDisclosureItem?
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
@@ -30,9 +19,6 @@ struct WordDetailView: View {
   let speechSynthesisClient: SpeechSynthesisClient
   let exampleSentenceClient: ExampleSentenceClient
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
-  let wordNoteStore: WordNoteStore
-  let encounterMediaStore: EncounterMediaStore
-  let cameraAuthorizationClient: CameraAuthorizationClient
   let frequencyCapability: FrequencyCapability
   let conjugationTable: ConjugationTable?
   let openRelated: (DictionaryRelationship) -> Void
@@ -40,6 +26,43 @@ struct WordDetailView: View {
   let openWord: (DictionaryEntry) -> Void
   let manageFrequencyDictionaries: () -> Void
   let openList: (UUID) -> Void
+
+  init(
+    entry: DictionaryEntry,
+    initialEncounterMedia: EncounterMediaAttachment?,
+    speechSynthesisClient: SpeechSynthesisClient,
+    exampleSentenceClient: ExampleSentenceClient,
+    japaneseTextAnalysisClient: JapaneseTextAnalysisClient,
+    wordNoteStore: WordNoteStore,
+    encounterMediaStore: EncounterMediaStore,
+    cameraAuthorizationClient: CameraAuthorizationClient,
+    frequencyCapability: FrequencyCapability,
+    conjugationTable: ConjugationTable?,
+    openRelated: @escaping (DictionaryRelationship) -> Void,
+    openKanji: @escaping (KanjiCharacter, DictionaryEntry?) -> Void,
+    openWord: @escaping (DictionaryEntry) -> Void,
+    manageFrequencyDictionaries: @escaping () -> Void,
+    openList: @escaping (UUID) -> Void
+  ) {
+    _notes = State(initialValue: SavedItemNotes(store: wordNoteStore))
+    _photos = State(
+      initialValue: SavedItemPhotos(
+        store: encounterMediaStore, cameraAuthorizationClient: cameraAuthorizationClient))
+    self.entry = entry
+    self.initialEncounterMedia = initialEncounterMedia
+    self.speechSynthesisClient = speechSynthesisClient
+    self.exampleSentenceClient = exampleSentenceClient
+    self.japaneseTextAnalysisClient = japaneseTextAnalysisClient
+    self.frequencyCapability = frequencyCapability
+    self.conjugationTable = conjugationTable
+    self.openRelated = openRelated
+    self.openKanji = openKanji
+    self.openWord = openWord
+    self.manageFrequencyDictionaries = manageFrequencyDictionaries
+    self.openList = openList
+  }
+
+  private var item: SavedItem { .word(entry) }
 
   private var shareText: String {
     let heading = entry.reading == entry.headword
@@ -54,8 +77,8 @@ struct WordDetailView: View {
         Section {
           WordHeroView(
             entry: entry,
-            encounterMedia: displayableEncounterMedia,
-            removeEncounterMedia: removeEncounterMedia,
+            encounterMedia: photos.displayable,
+            removeEncounterMedia: photos.remove,
             pronounce: { speechSynthesisClient.speak(entry.reading) }
           )
           PartOfSpeechRow(entry: entry, conjugationTable: conjugationTable)
@@ -102,18 +125,14 @@ struct WordDetailView: View {
         }
 
         Section("LISTS") {
-          WordListsSection(entry: entry, openList: openList) { showsListPicker = true }
+          SavedItemListsSection(
+            item: item, identifierPrefix: "word-detail", openList: openList
+          ) { showsListPicker = true }
         }
 
         Section("NOTES") {
-          NotesSection(
-            notes: notes,
-            editingNoteID: editingNoteID,
-            noteDraft: $noteDraft,
-            editorFocused: $noteEditorFocused,
-            editNote: beginEditingNote,
-            addNote: beginAddingNote
-          )
+          SavedItemNotesSection(
+            notes: notes, editorFocused: $noteEditorFocused, identifierPrefix: "word-detail")
           .id("word-note.section")
         }
 
@@ -144,7 +163,8 @@ struct WordDetailView: View {
       .listStyle(.insetGrouped)
       .scrollDismissesKeyboard(.immediately)
       .accessibilityIdentifier("word-detail.screen")
-      .onChange(of: editingNoteID) { _, noteID in
+      .onChange(of: notes.editingNoteID) { _, noteID in
+        noteEditorFocused = noteID != nil
         guard noteID != nil else { return }
         Task { @MainActor in
           try? await Task.sleep(for: .milliseconds(350))
@@ -156,8 +176,8 @@ struct WordDetailView: View {
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
       ToolbarItemGroup(placement: .topBarTrailing) {
-        if editingNoteID != nil {
-          Button("Done", action: finishEditingNote)
+        if notes.isEditing {
+          Button("Done", action: notes.finishEditing)
             .font(.body.weight(.semibold))
             .accessibilityIdentifier("word-note.done")
         } else {
@@ -165,49 +185,19 @@ struct WordDetailView: View {
             Label("Share", systemImage: "square.and.arrow.up")
           }
           .accessibilityIdentifier("word-detail.share")
-          Menu {
-            Section {
-              KnownWordMenuButton(entry: entry)
-              Button("Add to List…", systemImage: "text.badge.plus") {
-                showsListPicker = true
-              }
-              .accessibilityIdentifier("word-detail.add-to-list")
-            }
-            Section {
-              Button("Add Note", systemImage: "square.and.pencil", action: beginAddingNote)
-              Button("Take Photo", systemImage: "camera", action: presentCamera)
-              Button("Choose Photo", systemImage: "photo.on.rectangle") {
-                showsPhotoPicker = true
-              }
-            }
-          } label: {
-            Label("More", systemImage: "ellipsis")
-              .labelStyle(.iconOnly)
-          }
-          .menuOrder(.fixed)
-          .accessibilityLabel("More")
-          .accessibilityIdentifier("word-detail.more-menu")
+          SavedItemMenu(
+            item: item,
+            identifierPrefix: "word-detail",
+            addToList: { showsListPicker = true },
+            addNote: notes.beginAdding,
+            photos: photos
+          )
         }
       }
     }
-    .photosPicker(
-      isPresented: $showsPhotoPicker,
-      selection: $selectedEncounterMediaItem,
-      matching: .images
-    )
-    .alert("Unable to Save Image", isPresented: $encounterMediaImportFailed) {
-      Button("OK", role: .cancel) {}
-    } message: {
-      Text("The selected image could not be read.")
-    }
-    .alert(item: $cameraAlert) { alert in
-      alert.alert(openSettings: cameraAuthorizationClient.openSettings)
-    }
-    .sheet(isPresented: $showsCamera) {
-      cameraPicker
-    }
+    .savedItemPhotoPresentation(photos)
     .sheet(isPresented: $showsListPicker) {
-      WordListPickerView(entry: entry)
+      WordListPickerView(item: item)
     }
     .sheet(item: $frequencyDisclosure) { item in
       FrequencyDisclosureView(
@@ -218,23 +208,13 @@ struct WordDetailView: View {
         }
       )
     }
-    .onChange(of: selectedEncounterMediaItem) {
-      importSelectedEncounterMedia()
-    }
     .onDisappear {
-      guard editingNoteID != nil else { return }
-      persistDraft()
+      notes.finishEditing()
     }
     .task(id: entry.id) {
       isLoadingExamples = true
-      encounterMedia = []
-      let word = entry.encounterWordReference
-      if let initialEncounterMedia {
-        await encounterMediaStore.save(initialEncounterMedia, word)
-      }
-      let storedMedia = await encounterMediaStore.encounters(word)
+      await photos.load(item, saving: initialEncounterMedia)
       guard !Task.isCancelled else { return }
-      encounterMedia = storedMedia
       let loadedExamples = (try? await exampleSentenceClient.examples(entry)) ?? []
       guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()
@@ -247,214 +227,11 @@ struct WordDetailView: View {
               reason: "Frequency data unavailable"
             ))
         ]
-      notes = await wordNoteStore.load(entry.noteID)
+      await notes.load(entry.noteID)
       guard !Task.isCancelled else { return }
-      editingNoteID = nil
-      noteDraft = ""
       examples = loadedExamples
       examplesEntryID = entry.id
       isLoadingExamples = false
-    }
-  }
-
-  private var displayableEncounterMedia: [EncounterMedia] {
-    encounterMedia.filter { UIImage(data: $0.data) != nil }
-  }
-
-  private func removeEncounterMedia(_ mediaID: String) async {
-    let word = entry.encounterWordReference
-    await encounterMediaStore.remove(word, mediaID)
-    encounterMedia = await encounterMediaStore.encounters(word)
-  }
-
-  private func importSelectedEncounterMedia() {
-    guard let selectedEncounterMediaItem else { return }
-    Task { @MainActor in
-      defer { self.selectedEncounterMediaItem = nil }
-      do {
-        guard
-          let selectedMedia = try await selectedEncounterMediaItem.loadTransferable(
-            type: SelectedEncounterMedia.self)
-        else {
-          encounterMediaImportFailed = true
-          return
-        }
-        await saveEncounterMedia(selectedMedia.asset)
-      } catch {
-        encounterMediaImportFailed = true
-      }
-    }
-  }
-
-  private func presentCamera() {
-    guard cameraAuthorizationClient.isCameraAvailable() else {
-      cameraAlert = .unavailable
-      return
-    }
-    Task { @MainActor in
-      switch cameraAuthorizationClient.state() {
-      case .authorized:
-        openCamera()
-      case .notDetermined:
-        if await cameraAuthorizationClient.requestAccess() {
-          openCamera()
-        } else {
-          cameraAlert = .denied
-        }
-      case .denied:
-        cameraAlert = .denied
-      case .restricted:
-        cameraAlert = .restricted
-      }
-    }
-  }
-
-  private func openCamera() {
-    showsCamera = true
-  }
-
-  private var cameraPicker: some View {
-    ImageCameraPicker { result in
-      showsCamera = false
-      saveCameraResult(result)
-    }
-    .ignoresSafeArea()
-  }
-
-  private func saveCameraResult(_ result: Result<ImageTextAsset?, Error>) {
-    switch result {
-    case .success(let asset):
-      guard let asset else { return }
-      Task { @MainActor in
-        await saveEncounterMedia(asset)
-      }
-    case .failure:
-      cameraAlert = .saveFailure
-    }
-  }
-
-  private func saveEncounterMedia(_ asset: ImageTextAsset) async {
-    let word = entry.encounterWordReference
-    await encounterMediaStore.save(
-      EncounterMediaAttachment(name: asset.name, data: asset.data), word)
-    encounterMedia = await encounterMediaStore.encounters(word)
-  }
-
-  private func beginEditingNote(_ note: LearnerWordNote) {
-    editingNoteID = note.id
-    noteDraft = note.text
-    noteEditorFocused = true
-  }
-
-  private func beginAddingNote() {
-    if let editingNoteID {
-      let updatedNotes = notesApplyingDraft(noteID: editingNoteID, draft: noteDraft)
-      notes = updatedNotes
-      scheduleNoteSave(updatedNotes)
-    }
-    editingNoteID = UUID().uuidString
-    noteDraft = ""
-    noteEditorFocused = true
-  }
-
-  private func finishEditingNote() {
-    persistDraft()
-  }
-
-  private func persistDraft() {
-    let updatedNotes = applyingDraft()
-    scheduleNoteSave(updatedNotes)
-  }
-
-  @discardableResult
-  private func scheduleNoteSave(_ updatedNotes: [LearnerWordNote]) -> Task<Void, Never> {
-    let precedingSave = noteSaveTask
-    let save = Task {
-      await precedingSave?.value
-      await wordNoteStore.save(updatedNotes, entry.noteID)
-    }
-    noteSaveTask = save
-    return save
-  }
-
-  private func applyingDraft() -> [LearnerWordNote] {
-    guard let editingNoteID else { return notes }
-    let updatedNotes = notesApplyingDraft(noteID: editingNoteID, draft: noteDraft)
-    notes = updatedNotes
-    self.editingNoteID = nil
-    noteDraft = ""
-    noteEditorFocused = false
-    return updatedNotes
-  }
-
-  private func notesApplyingDraft(noteID: String, draft: String) -> [LearnerWordNote] {
-    let normalized = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-    var updatedNotes = notes
-    if let index = updatedNotes.firstIndex(where: { $0.id == noteID }) {
-      if normalized.isEmpty {
-        updatedNotes.remove(at: index)
-      } else {
-        updatedNotes[index].text = normalized
-      }
-    } else if !normalized.isEmpty {
-      updatedNotes.append(LearnerWordNote(id: noteID, text: normalized))
-    }
-    return updatedNotes
-  }
-}
-
-private enum WordDetailCameraAlert: String, Identifiable {
-  case unavailable
-  case denied
-  case restricted
-  case saveFailure
-
-  var id: String { rawValue }
-
-  func alert(openSettings: @escaping () -> Void) -> Alert {
-    switch self {
-    case .unavailable:
-      Alert(
-        title: Text("Camera Unavailable"),
-        message: Text("Camera capture requires a physical device with an available camera."),
-        dismissButton: .default(Text("OK"))
-      )
-    case .denied:
-      Alert(
-        title: Text("Camera Access Denied"),
-        message: Text("Allow Camera access in Settings to take a photo for this word."),
-        primaryButton: .default(Text("Open Settings"), action: openSettings),
-        secondaryButton: .cancel()
-      )
-    case .restricted:
-      Alert(
-        title: Text("Camera Access Restricted"),
-        message: Text("Camera access is restricted on this device."),
-        dismissButton: .default(Text("OK"))
-      )
-    case .saveFailure:
-      Alert(
-        title: Text("Unable to Save Image"),
-        message: Text("The captured image could not be read."),
-        dismissButton: .default(Text("OK"))
-      )
-    }
-  }
-}
-
-private struct SelectedEncounterMedia: Transferable {
-  let asset: ImageTextAsset
-
-  static var transferRepresentation: some TransferRepresentation {
-    FileRepresentation(importedContentType: .image) { received in
-      guard
-        let asset = ImageTextAsset(
-          photoLibraryImageAt: received.file,
-          name: received.file.lastPathComponent)
-      else {
-        throw CocoaError(.fileReadCorruptFile)
-      }
-      return SelectedEncounterMedia(asset: asset)
     }
   }
 }
@@ -540,7 +317,7 @@ private struct WordHeroView: View {
       pronounce: pronounce
     ) {
       if let latest = encounterMedia.first {
-        EncounterMediaRow(
+        SavedItemPhotoButton(
           media: latest,
           count: encounterMedia.count,
           encounterMedia: encounterMedia,
@@ -792,7 +569,8 @@ extension String {
   }
 }
 
-private struct EncounterMediaRow: View {
+/// The latest photo attached to a word or kanji, with how many there are; it opens them all.
+struct SavedItemPhotoButton: View {
   @State private var presentedMedia: EncounterMedia?
   let media: EncounterMedia
   let count: Int
@@ -1109,80 +887,6 @@ private struct RelationshipsSection: View {
 }
 
 /// The lists holding the word, each opening that list, then Add to List, which opens the picker.
-private struct WordListsSection: View {
-  @Environment(WordLists.self) private var wordLists
-  let entry: DictionaryEntry
-  let openList: (UUID) -> Void
-  let editLists: () -> Void
-
-  var body: some View {
-    ForEach(wordLists.lists.filter { wordLists.contains(entry.id, in: $0.id) }) { list in
-      Button {
-        openList(list.id)
-      } label: {
-        HStack {
-          Label(list.name, systemImage: "list.bullet")
-          Spacer()
-          Image(systemName: "chevron.right")
-            .font(.footnote.weight(.semibold))
-            .foregroundStyle(.tertiary)
-        }
-      }
-      .tint(.primary)
-      .accessibilityIdentifier("word-detail.list.\(list.id)")
-    }
-
-    Button("Add to List", systemImage: "text.badge.plus", action: editLists)
-      .font(.body)
-      .disabled(!wordLists.canChange)
-      .accessibilityIdentifier("word-detail.add-to-list-row")
-  }
-}
-
-private struct NotesSection: View {
-  let notes: [LearnerWordNote]
-  let editingNoteID: String?
-  @Binding var noteDraft: String
-  let editorFocused: FocusState<Bool>.Binding
-  let editNote: (LearnerWordNote) -> Void
-  let addNote: () -> Void
-
-  var body: some View {
-    ForEach(Array(notes.enumerated()), id: \.element.id) { index, note in
-      if editingNoteID == note.id {
-        noteEditor
-      } else {
-        Button {
-          editNote(note)
-        } label: {
-          Text(note.text)
-            .italic()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-        .accessibilityIdentifier(index == 0 ? "word-detail.note" : "word-detail.note.\(index)")
-      }
-    }
-
-    if let editingNoteID, !notes.contains(where: { $0.id == editingNoteID }) {
-      noteEditor
-    }
-
-    if editingNoteID == nil || !noteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-      Button("Add Note", systemImage: "square.and.pencil", action: addNote)
-        .font(.body)
-        .accessibilityIdentifier("word-detail.add-note")
-    }
-  }
-
-  private var noteEditor: some View {
-    TextField("Add Note", text: $noteDraft, axis: .vertical)
-      .italic()
-      .focused(editorFocused)
-      .accessibilityIdentifier("word-note.editor")
-  }
-}
-
 extension Character {
   fileprivate var isKanji: Bool {
     unicodeScalars.contains { (0x3400...0x9FFF).contains(Int($0.value)) }

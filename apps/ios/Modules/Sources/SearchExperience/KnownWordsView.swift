@@ -1,19 +1,19 @@
 import SwiftUI
 
-/// The Word Detail menu item that marks a word known or unknown.
+/// The Word Detail and Kanji Detail menu item that marks a word or kanji known or unknown.
 struct KnownWordMenuButton: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
-  let entry: DictionaryEntry
+  let item: SavedItem
   /// The accessibility identifier prefix of the screen showing the button.
   var identifierPrefix = "word-detail"
 
   var body: some View {
-    let isKnown = wordKnowledge.isKnown(entry.id)
+    let isKnown = wordKnowledge.isKnown(item)
     let title: LocalizedStringKey =
       wordKnowledge.isReadOnly
       ? "Known Words Can’t Be Changed" : isKnown ? "Mark as Unknown" : "Mark as Known"
     Button(title, systemImage: isKnown ? "xmark.circle" : "checkmark.circle") {
-      wordKnowledge.toggleKnown(entry)
+      wordKnowledge.toggleKnown(item)
     }
     .disabled(!wordKnowledge.isLoaded || wordKnowledge.isReadOnly)
     .accessibilityIdentifier("\(identifierPrefix).\(isKnown ? "mark-unknown" : "mark-known")")
@@ -41,7 +41,7 @@ struct KnownWordBadge: View {
   }
 }
 
-/// Account → Known Words: every word the learner marked known, most recent first.
+/// Account → Known Words: every word and kanji the learner marked known, most recent first.
 struct KnownWordsView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @State private var searchText = ""
@@ -59,7 +59,7 @@ struct KnownWordsView: View {
           systemImage: "checkmark.circle",
           description: Text(
             readOnlyMessage
-              ?? "Words you mark as known in Search or on a word’s page will appear here.")
+              ?? "Words and kanji you mark as known on their pages will appear here.")
         )
         .accessibilityIdentifier("known-words.empty")
       } else {

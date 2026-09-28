@@ -8,13 +8,60 @@ struct KanjiDetailView: View {
   let kanjiStrokeOrderClient: KanjiStrokeOrderClient
   let preservedWordID: LanguageReferenceID?
   let preservedElementID: KanjiElementID?
+  let openList: (UUID) -> Void
 
+  @Environment(WordKnowledge.self) private var wordKnowledge
+  @FocusState private var noteEditorFocused: Bool
+  @State private var notes: SavedItemNotes
+  @State private var photos: SavedItemPhotos
+  @State private var showsListPicker = false
   @State private var loadState = KanjiDetailLoadState.loading
   @State private var retryID = 0
   @State private var strokeDiagramLoadState = KanjiStrokeDiagramLoadState.loading
   @State private var strokeRetryID = 0
   @State private var presentedStrokeDiagram: KanjiStrokeDiagram?
   @State private var pendingScrollTarget: KanjiDetailScrollTarget?
+
+  init(
+    character: KanjiCharacter,
+    entry: DictionaryEntry?,
+    kanjiLookupClient: KanjiLookupClient,
+    kanjiElementLookupClient: KanjiElementLookupClient,
+    kanjiStrokeOrderClient: KanjiStrokeOrderClient,
+    wordNoteStore: WordNoteStore,
+    encounterMediaStore: EncounterMediaStore,
+    cameraAuthorizationClient: CameraAuthorizationClient,
+    preservedWordID: LanguageReferenceID?,
+    preservedElementID: KanjiElementID?,
+    openList: @escaping (UUID) -> Void
+  ) {
+    _notes = State(initialValue: SavedItemNotes(store: wordNoteStore))
+    _photos = State(
+      initialValue: SavedItemPhotos(
+        store: encounterMediaStore, cameraAuthorizationClient: cameraAuthorizationClient))
+    self.character = character
+    self.entry = entry
+    self.kanjiLookupClient = kanjiLookupClient
+    self.kanjiElementLookupClient = kanjiElementLookupClient
+    self.kanjiStrokeOrderClient = kanjiStrokeOrderClient
+    self.preservedWordID = preservedWordID
+    self.preservedElementID = preservedElementID
+    self.openList = openList
+  }
+
+  /// The kanji as Known Words and Lists save it, with its first reading shown under it there.
+  private var item: SavedItem {
+    .kanji(character, reading: reference?.readings.first?.value ?? "")
+  }
+
+  private var shareText: String {
+    guard let reference else { return character.rawValue }
+    let readings = reference.readings.map(\.value).joined(separator: "、")
+    let heading = readings.isEmpty ? character.rawValue : "\(character.rawValue)【\(readings)】"
+    return [heading, reference.meanings.joined(separator: ", ")]
+      .filter { !$0.isEmpty }
+      .joined(separator: "\n")
+  }
 
   var body: some View {
     ScrollViewReader { proxy in
@@ -27,6 +74,17 @@ struct KanjiDetailView: View {
             retryStrokeOrder: retryStrokeOrder,
             openStrokeOrder: openStrokeOrder
           )
+          if let latest = photos.displayable.first {
+            SavedItemPhotoButton(
+              media: latest,
+              count: photos.displayable.count,
+              encounterMedia: photos.displayable,
+              removeEncounterMedia: photos.remove
+            )
+          }
+          if wordKnowledge.isKnown(item) {
+            KnownWordBadge(announces: true)
+          }
         }
 
         if loadState == .loading {
@@ -70,6 +128,17 @@ struct KanjiDetailView: View {
           KanjiElementsSection(elements: elements)
         }
 
+        Section("LISTS") {
+          SavedItemListsSection(
+            item: item, identifierPrefix: "kanji-detail", openList: openList
+          ) { showsListPicker = true }
+        }
+
+        Section("NOTES") {
+          SavedItemNotesSection(
+            notes: notes, editorFocused: $noteEditorFocused, identifierPrefix: "kanji-detail")
+        }
+
         if !relatedWords.isEmpty {
           KanjiWordsSection(entries: orderedRelatedWords)
         }
@@ -94,6 +163,42 @@ struct KanjiDetailView: View {
     }
     .navigationTitle(character.rawValue)
     .navigationBarTitleDisplayMode(.inline)
+    .toolbar {
+      ToolbarItemGroup(placement: .topBarTrailing) {
+        if notes.isEditing {
+          Button("Done", action: notes.finishEditing)
+            .font(.body.weight(.semibold))
+            .accessibilityIdentifier("word-note.done")
+        } else {
+          ShareLink(item: shareText) {
+            Label("Share", systemImage: "square.and.arrow.up")
+          }
+          .accessibilityIdentifier("kanji-detail.share")
+          SavedItemMenu(
+            item: item,
+            identifierPrefix: "kanji-detail",
+            addToList: { showsListPicker = true },
+            addNote: notes.beginAdding,
+            photos: photos
+          )
+        }
+      }
+    }
+    .savedItemPhotoPresentation(photos)
+    .sheet(isPresented: $showsListPicker) {
+      WordListPickerView(item: item)
+    }
+    .onChange(of: notes.editingNoteID) { _, noteID in
+      noteEditorFocused = noteID != nil
+    }
+    .onDisappear {
+      notes.finishEditing()
+    }
+    .task(id: character) {
+      let item = SavedItem.kanji(character, reading: "")
+      await photos.load(item)
+      await notes.load(item.noteID)
+    }
     .sheet(item: $presentedStrokeDiagram) { diagram in
       KanjiStrokeOrderSheet(diagram: diagram)
     }

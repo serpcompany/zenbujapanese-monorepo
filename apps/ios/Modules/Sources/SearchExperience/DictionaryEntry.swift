@@ -90,10 +90,6 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
   var displayPartOfSpeech: String {
     PartOfSpeechFormatter.phrase(for: senses.first?.partsOfSpeech ?? partsOfSpeech)
   }
-
-  var encounterWordReference: EncounterWordReference {
-    EncounterWordReference(id: noteID, headword: headword, reading: reading)
-  }
 }
 
 extension Character {

@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// A learner's named list of dictionary words, such as Favorites.
+/// A learner's named list of dictionary words and kanji, such as Favorites.
 struct WordList: Codable, Hashable, Identifiable, Sendable {
   let id: UUID
   var name: String
@@ -11,10 +11,10 @@ struct WordList: Codable, Hashable, Identifiable, Sendable {
   var updatedAt: Date
 }
 
-/// One word in one list. A word appears in a list at most once.
+/// One word or kanji in one list. An item appears in a list at most once.
 struct WordListMembership: Codable, Hashable, Identifiable, Sendable {
   let listID: UUID
-  /// The word's Language Reference ID.
+  /// `SavedItem.storedID`: the word's Language Reference ID, or `kanji:` and the character.
   let entryID: String
   /// Kept so the word can still be found if its entry's ID changes.
   let headword: String
@@ -22,7 +22,8 @@ struct WordListMembership: Codable, Hashable, Identifiable, Sendable {
   let addedAt: Date
 
   var id: String { entryID }
-  var languageReferenceID: LanguageReferenceID { LanguageReferenceID(rawValue: entryID) }
+  /// The kanji this membership holds, or nil for a word.
+  var kanji: KanjiCharacter? { SavedItem.kanji(storedID: entryID) }
 }
 
 /// The learner's word lists and the words in each.
@@ -86,7 +87,15 @@ final class WordLists {
   }
 
   func contains(_ id: LanguageReferenceID, in listID: UUID) -> Bool {
-    membershipsByList[listID]?.contains { $0.entryID == id.rawValue } == true
+    contains(storedID: id.rawValue, in: listID)
+  }
+
+  func contains(_ item: SavedItem, in listID: UUID) -> Bool {
+    contains(storedID: item.storedID, in: listID)
+  }
+
+  private func contains(storedID: String, in listID: UUID) -> Bool {
+    membershipsByList[listID]?.contains { $0.entryID == storedID } == true
   }
 
   /// Adds a list at the end, or does nothing when the trimmed name is empty.
@@ -132,26 +141,43 @@ final class WordLists {
   }
 
   func toggle(_ entry: DictionaryEntry, in listID: UUID) {
-    if contains(entry.id, in: listID) {
-      removeWord(entry.id, from: listID)
+    toggle(.word(entry), in: listID)
+  }
+
+  func toggle(_ item: SavedItem, in listID: UUID) {
+    if contains(item, in: listID) {
+      remove(storedID: item.storedID, from: listID)
     } else {
-      addWord(entry.id, headword: entry.headword, reading: entry.reading, to: listID)
+      add(item, to: listID)
     }
   }
 
+  func add(_ item: SavedItem, to listID: UUID) {
+    add(storedID: item.storedID, headword: item.headword, reading: item.reading, to: listID)
+  }
+
   func addWord(_ id: LanguageReferenceID, headword: String, reading: String, to listID: UUID) {
-    guard canChange, lists.contains(where: { $0.id == listID }), !contains(id, in: listID)
-    else { return }
-    let membership = WordListMembership(
-      listID: listID, entryID: id.rawValue, headword: headword, reading: reading,
-      addedAt: Date())
-    membershipsByList[listID, default: []].insert(membership, at: 0)
-    persist()
+    add(storedID: id.rawValue, headword: headword, reading: reading, to: listID)
   }
 
   func removeWord(_ id: LanguageReferenceID, from listID: UUID) {
-    guard canChange, contains(id, in: listID) else { return }
-    membershipsByList[listID]?.removeAll { $0.entryID == id.rawValue }
+    remove(storedID: id.rawValue, from: listID)
+  }
+
+  /// Removes a word or kanji by `SavedItem.storedID`.
+  func remove(storedID: String, from listID: UUID) {
+    guard canChange, contains(storedID: storedID, in: listID) else { return }
+    membershipsByList[listID]?.removeAll { $0.entryID == storedID }
+    persist()
+  }
+
+  private func add(storedID: String, headword: String, reading: String, to listID: UUID) {
+    guard canChange, lists.contains(where: { $0.id == listID }),
+      !contains(storedID: storedID, in: listID)
+    else { return }
+    let membership = WordListMembership(
+      listID: listID, entryID: storedID, headword: headword, reading: reading, addedAt: Date())
+    membershipsByList[listID, default: []].insert(membership, at: 0)
     persist()
   }
 
@@ -203,7 +229,9 @@ final class WordLists {
 
 private actor WordListsWriter {
   private struct StoredFile: Codable {
-    static let currentVersion = 1
+    /// Version 2 adds kanji memberships, which a version 1 app would open as words; it opens a
+    /// version 2 file read-only instead.
+    static let currentVersion = 2
     var version = currentVersion
     var lists: [WordList]
     var memberships: [WordListMembership]

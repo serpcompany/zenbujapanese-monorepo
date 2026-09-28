@@ -26,7 +26,8 @@ enum WordKnowledgeStatus: Codable, Hashable, Sendable {
   }
 }
 
-/// One learner judgement about a dictionary word, keyed by its stable Language Reference ID.
+/// One learner judgement about a dictionary word or kanji, keyed by `SavedItem.storedID`: a
+/// word's stable Language Reference ID, or `kanji:` and the character.
 /// Marking a word unknown keeps its record, so a later sync can tell a removal from no status.
 struct WordKnowledgeRecord: Codable, Hashable, Identifiable, Sendable {
   let entryID: String
@@ -36,10 +37,11 @@ struct WordKnowledgeRecord: Codable, Hashable, Identifiable, Sendable {
   var updatedAt: Date
 
   var id: String { entryID }
-  var languageReferenceID: LanguageReferenceID { LanguageReferenceID(rawValue: entryID) }
+  /// The kanji this record is about, or nil for a word.
+  var kanji: KanjiCharacter? { SavedItem.kanji(storedID: entryID) }
 }
 
-/// Which words the learner knows. A word without a record is unknown.
+/// Which words and kanji the learner knows. A word without a record is unknown.
 ///
 /// Records are held in memory for fast lookups and saved as one JSON file on the device. The
 /// file loads off the main actor.
@@ -84,6 +86,14 @@ final class WordKnowledge {
     status(id) == .known
   }
 
+  func isKnown(_ item: SavedItem) -> Bool {
+    isKnown(storedID: item.storedID)
+  }
+
+  func isKnown(storedID: String) -> Bool {
+    records[storedID]?.status == .known
+  }
+
   var knownCount: Int { knownRecords.count }
 
   func setStatus(_ status: WordKnowledgeStatus, for entry: DictionaryEntry) {
@@ -92,28 +102,36 @@ final class WordKnowledge {
 
   func setStatus(_ status: WordKnowledgeStatus, for record: WordKnowledgeRecord) {
     setStatus(
-      status, id: record.languageReferenceID, headword: record.headword, reading: record.reading)
+      status, storedID: record.entryID, headword: record.headword, reading: record.reading)
   }
 
   func setStatus(
     _ status: WordKnowledgeStatus, id: LanguageReferenceID, headword: String, reading: String
   ) {
-    guard isLoaded, !isReadOnly, self.status(id) != status else { return }
+    setStatus(status, storedID: id.rawValue, headword: headword, reading: reading)
+  }
+
+  func toggleKnown(_ item: SavedItem) {
+    setStatus(
+      isKnown(item) ? .unknown : .known, storedID: item.storedID, headword: item.headword,
+      reading: item.reading)
+  }
+
+  private func setStatus(
+    _ status: WordKnowledgeStatus, storedID: String, headword: String, reading: String
+  ) {
+    guard isLoaded, !isReadOnly, (records[storedID]?.status ?? .unknown) != status else { return }
     let record = WordKnowledgeRecord(
-      entryID: id.rawValue,
+      entryID: storedID,
       headword: headword,
       reading: reading,
       status: status,
       updatedAt: Date()
     )
-    records[id.rawValue] = record
-    knownRecords.removeAll { $0.entryID == id.rawValue }
+    records[storedID] = record
+    knownRecords.removeAll { $0.entryID == storedID }
     if status == .known { knownRecords.insert(record, at: 0) }
     persist()
-  }
-
-  func toggleKnown(_ entry: DictionaryEntry) {
-    setStatus(isKnown(entry.id) ? .unknown : .known, for: entry)
   }
 
   /// Tries again to save changes whose last write failed.
@@ -141,7 +159,9 @@ final class WordKnowledge {
 
 private actor WordKnowledgeWriter {
   private struct StoredFile: Codable {
-    static let currentVersion = 1
+    /// Version 2 adds kanji records, which a version 1 app would open as words; it opens a
+    /// version 2 file read-only instead.
+    static let currentVersion = 2
     var version = currentVersion
     var records: [WordKnowledgeRecord]
   }
