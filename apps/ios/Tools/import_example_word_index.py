@@ -51,6 +51,7 @@ def index_lines(source: Path) -> list[str]:
 def load_entries(database: sqlite3.Connection):
     by_sequence: dict[int, bytes] = {}
     kana_headword: set[bytes] = set()
+    headwords: dict[bytes, str] = {}
     fingerprint: dict[bytes, bytes] = {}
     for entry_id, sequence, headword, reading, semantic in database.execute(
         "SELECT id, source_record_id, headword, reading, semantic_fingerprint FROM entries "
@@ -59,6 +60,7 @@ def load_entries(database: sqlite3.Connection):
     ):
         by_sequence[sequence] = entry_id
         fingerprint[entry_id] = semantic
+        headwords[entry_id] = headword
         if headword == reading:
             kana_headword.add(entry_id)
 
@@ -77,10 +79,17 @@ def load_entries(database: sqlite3.Connection):
     siblings: dict[bytes, list[bytes]] = defaultdict(list)
     for entry_id, semantic in fingerprint.items():
         siblings[semantic].append(entry_id)
-    return by_sequence, kana_headword, by_form, readings, primary_written, fingerprint, siblings
+    return (
+        by_sequence, kana_headword, headwords, by_form, readings, primary_written, fingerprint,
+        siblings,
+    )
 
 
-def resolve(token, by_sequence, by_form, readings, primary_written) -> bytes | None:
+def is_kana(value: str) -> bool:
+    return all("\u3041" <= c <= "\u30ff" for c in value)
+
+
+def resolve(token, by_sequence, headwords, by_form, readings, primary_written) -> bytes | None:
     """The one dictionary entry a Tatoeba index token names, or None when ambiguous."""
     if token["sequence"]:
         return by_sequence.get(int(token["sequence"]))
@@ -89,12 +98,16 @@ def resolve(token, by_sequence, by_form, readings, primary_written) -> bytes | N
     if token["reading"]:
         candidates = {entry for entry in candidates if token["reading"] in readings[entry]}
     if len(candidates) > 1:
-        # Index headwords are the entry's first written form (其れ for それ), or its
-        # reading when it has none.
-        primary = {
-            entry for entry in candidates if primary_written.get(entry, head) == head
-        }
-        candidates = primary or candidates
+        # An index headword is the entry's first written form (其れ for それ), or its kana
+        # when the word is usually written in kana. Bare kana such as そう can therefore
+        # name several usually-kana entries (the adverb 然う and the suffix そう); it names
+        # one only when a single candidate shows that kana as its headword.
+        if is_kana(head):
+            candidates = {entry for entry in candidates if headwords[entry] == head}
+        else:
+            candidates = {
+                entry for entry in candidates if primary_written.get(entry, head) == head
+            } or candidates
     return next(iter(candidates)) if len(candidates) == 1 else None
 
 
@@ -115,9 +128,10 @@ def import_index(source: Path, source_manifest: dict, language_data: Path, outpu
 
     database = sqlite3.connect(f"file:{language_data}?mode=ro", uri=True)
     try:
-        by_sequence, kana_headword, by_form, readings, primary_written, fingerprint, siblings = (
-            load_entries(database)
-        )
+        (
+            by_sequence, kana_headword, headwords, by_form, readings, primary_written,
+            fingerprint, siblings,
+        ) = load_entries(database)
         pairs = load_pairs(database)
         japanese_lengths = dict(
             database.execute("SELECT id, length(japanese) FROM example_sentences")
@@ -140,7 +154,7 @@ def import_index(source: Path, source_manifest: dict, language_data: Path, outpu
             if not match or not raw:
                 continue
             tokens_seen += 1
-            entry = resolve(match, by_sequence, by_form, readings, primary_written)
+            entry = resolve(match, by_sequence, headwords, by_form, readings, primary_written)
             if entry is None:
                 continue
             tokens_resolved += 1
