@@ -1,7 +1,8 @@
 name: Web deploy
 
 # Promotes merged website code through staging, then production, per the SERP Drizzle + D1
-# standard. Production waits for approval on the `production` GitHub environment.
+# standard. Production runs once staging passes; add a required reviewer on the `production`
+# GitHub environment to gate it manually.
 on:
   push:
     branches: [main]
