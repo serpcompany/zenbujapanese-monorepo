@@ -4,7 +4,7 @@ export const site = {
   description:
     'An offline-first Japanese dictionary, image-text reader, and translator for iPhone.',
   url: 'https://zenbujapanese.com',
-  supportEmail: 'support@serp.co'
+  supportEmail: 'support@zenbujapanese.com'
 } as const
 
 /**
