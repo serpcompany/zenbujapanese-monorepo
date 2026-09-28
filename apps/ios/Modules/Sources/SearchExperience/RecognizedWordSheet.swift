@@ -10,24 +10,59 @@ struct RecognizedWordSheetRequest: Identifiable {
   let encounterMedia: EncounterMediaAttachment?
 }
 
+/// Which word the half-height word sheet shows. Tapping another word while the sheet is open
+/// swaps the word in the same sheet and returns it to half height: with `sheet(item:)` the new
+/// word dismissed and re-presented the sheet, which reopened at full height.
+@MainActor
+@Observable
+final class WordSheetPresentation {
+  var request: RecognizedWordSheetRequest? {
+    didSet {
+      if let request {
+        displayedRequest = request
+        if request.id != oldValue?.id { detent = .medium }
+      }
+    }
+  }
+  /// The word the sheet shows. It keeps the last word after `request` clears, so the sheet
+  /// doesn't go blank while it animates away.
+  private(set) var displayedRequest: RecognizedWordSheetRequest?
+  var detent: PresentationDetent = .medium
+
+  var isPresented: Bool { request != nil }
+
+  /// For `sheet(isPresented:)`, which stays presented while `request` changes.
+  var isPresentedBinding: Binding<Bool> {
+    Binding(
+      get: { self.request != nil },
+      set: { if !$0 { self.request = nil } }
+    )
+  }
+
+  var requestBinding: Binding<RecognizedWordSheetRequest?> {
+    Binding(get: { self.request }, set: { self.request = $0 })
+  }
+}
+
 struct RecognizedWordSheet<EntryContent: View>: View {
   @Environment(\.dismiss) private var dismiss
   @State private var candidateRanks: [LanguageReferenceID: FrequencyRanks] = [:]
 
   let request: RecognizedWordSheetRequest
-  /// Opens at half height and leaves the screen behind usable, so a playing video stays visible.
-  let opensAtHalfHeight: Bool
+  /// Half or full height. The sheet opens at half height and leaves the screen behind usable, so
+  /// a playing video or the tapped word in an image stays visible and another word can be tapped.
+  @Binding var detent: PresentationDetent
   let openFullEntry: (DictionaryEntry) -> Void
   private let entryContent: (DictionaryEntry, EncounterMediaAttachment?) -> EntryContent
 
   init(
     request: RecognizedWordSheetRequest,
-    opensAtHalfHeight: Bool = false,
+    detent: Binding<PresentationDetent>,
     openFullEntry: @escaping (DictionaryEntry) -> Void,
     @ViewBuilder entryContent: @escaping (DictionaryEntry, EncounterMediaAttachment?) -> EntryContent
   ) {
     self.request = request
-    self.opensAtHalfHeight = opensAtHalfHeight
+    _detent = detent
     self.openFullEntry = openFullEntry
     self.entryContent = entryContent
   }
@@ -36,9 +71,10 @@ struct RecognizedWordSheet<EntryContent: View>: View {
     NavigationStack {
       content
     }
-    .presentationDetents(opensAtHalfHeight ? [.medium, .large] : [.large])
-    .presentationBackgroundInteraction(
-      opensAtHalfHeight ? .enabled(upThrough: .medium) : .automatic)
+    // A new word starts a fresh stack, so a candidate chosen for the last word doesn't linger.
+    .id(request.id)
+    .presentationDetents([.medium, .large], selection: $detent)
+    .presentationBackgroundInteraction(.enabled(upThrough: .medium))
     .presentationDragIndicator(.visible)
     .presentationBackground(Color(uiColor: .systemBackground))
     .accessibilityIdentifier("recognized-word-sheet")

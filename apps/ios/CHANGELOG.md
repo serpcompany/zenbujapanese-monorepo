@@ -6,6 +6,12 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- Image Search has four views: **Photo**, **Both** (the image above the Player's caption cards,
+  with furigana and line translations), **Text** (the recognized Japanese as paragraph cards),
+  and **Translate** (a natural translation, then context on what the text is and its idioms,
+  with their dictionary meanings). Tapping a word, on the image or in the text, opens it at
+  half height, as in the Player, and vertical text is marked with tinted word chips. Without
+  Apple Translation, Apple Intelligence translates on the device.
 - New **Player** tab: search YouTube or paste a link to watch the video with its Japanese captions
   as cards below the player instead of over the video. The card being spoken is highlighted and
   scrolls along as the video plays, tapping a card jumps to that line, and tapping a word pauses the
@@ -41,6 +47,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- Tapping another word while a word's half-height sheet is open, in the Player or Image Search,
+  now shows it in the same half-height sheet instead of reopening the sheet at full height.
+- Image Search now recognizes vertical Japanese (縦書き), such as book pages and signs,
+  instead of reporting that no Japanese text was found. Columns are read right to left.
 - The Results and Discovered Words headings no longer stay pinned over results as you scroll.
 - Inflected Japanese searches such as `まけたら`, `食べなかった`, and `勉強した` now find
   their dictionary forms (負ける, 食べる, 勉強) without downloading Japanese Text Analysis.

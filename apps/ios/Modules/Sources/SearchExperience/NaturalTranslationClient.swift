@@ -3,14 +3,22 @@ import Translation
 
 struct NaturalTranslationClient: Sendable {
   var availability: @Sendable () async throws -> NaturalTranslationAvailability
-  var translateInstalled: @Sendable (String) async throws -> String
+  /// Translates each source text in one batch, returning translations keyed by source.
+  var translateAllInstalled: @Sendable ([String]) async throws -> [String: String]
 
   init(
     availability: @escaping @Sendable () async throws -> NaturalTranslationAvailability,
-    translateInstalled: @escaping @Sendable (String) async throws -> String
+    translateAllInstalled: @escaping @Sendable ([String]) async throws -> [String: String]
   ) {
     self.availability = availability
-    self.translateInstalled = translateInstalled
+    self.translateAllInstalled = translateAllInstalled
+  }
+
+  func translateInstalled(_ source: String) async throws -> String {
+    guard let translation = try await translateAllInstalled([source])[source] else {
+      throw NaturalTranslationError.languageAssetsUnavailable
+    }
+    return translation
   }
 
   static let live = NaturalTranslationClient(
@@ -26,15 +34,32 @@ struct NaturalTranslationClient: Sendable {
       @unknown default: return .unsupported
       }
     },
-    translateInstalled: { source in
+    translateAllInstalled: { sources in
       let session = TranslationSession(
         installedSource: Locale.Language(identifier: "ja"),
         target: Locale.Language(identifier: "en")
       )
       guard await session.isReady else { throw NaturalTranslationError.languageAssetsUnavailable }
-      return try await session.translate(source).targetText
+      return try await session.translations(for: sources)
     }
   )
+}
+
+extension TranslationSession {
+  /// Translates several texts in one batch, keyed by source text.
+  func translations(for sources: [String]) async throws -> [String: String] {
+    let requests = sources.enumerated().map { index, source in
+      TranslationSession.Request(sourceText: source, clientIdentifier: String(index))
+    }
+    var bySource: [String: String] = [:]
+    for response in try await translations(from: requests) {
+      guard let identifier = response.clientIdentifier, let index = Int(identifier),
+        sources.indices.contains(index)
+      else { continue }
+      bySource[sources[index]] = response.targetText
+    }
+    return bySource
+  }
 }
 
 enum NaturalTranslationAvailability: Equatable, Sendable {
