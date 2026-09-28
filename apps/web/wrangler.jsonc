@@ -28,7 +28,7 @@
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web" }],
   "env": {
     "staging": {
-      "workers_dev": false,
+      "workers_dev": true,
       "routes": [{ "pattern": "staging.zenbujapanese.com", "custom_domain": true }],
       "d1_databases": [
         {
@@ -42,8 +42,8 @@
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web-staging" }]
     },
     "production": {
-      // Serves the workers.dev URL until DNS moves off GitHub Pages. At cutover, set workers_dev
-      // to false and add custom domains for zenbujapanese.com and www.zenbujapanese.com.
+      // At cutover, add custom domains for zenbujapanese.com and www.zenbujapanese.com. Keep
+      // workers_dev: CI smoke-tests the workers.dev URL, which skips the zone's bot protection.
       "workers_dev": true,
       "d1_databases": [
         {

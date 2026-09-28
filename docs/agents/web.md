@@ -31,9 +31,9 @@ lists every child sitemap and each child sitemap lists the new URLs.
 
 Deploys and remote migrations run only through the `Web deploy` GitHub Actions workflow, never
 from an agent's machine. Each merge to `main` that changes `apps/web/**` applies staging
-migrations, deploys staging, and smoke-tests it (`scripts/smoke.sh`). The production job then
+migrations, deploys staging, and smoke-tests its workers.dev URL (`scripts/smoke.sh`). The production job then
 waits for approval on the `production` GitHub environment, applies production migrations, deploys
-the same commit, and smoke-tests `WEB_PRODUCTION_URL`. Both environments deploy only from `main`.
+the same commit, and smoke-tests its workers.dev URL. Both environments deploy only from `main`.
 The workflow uses the `CLOUDFLARE_API_TOKEN` secret (the "Edit Cloudflare Workers" template plus D1 Edit, limited
 to the SERP account and the zenbujapanese.com zone) and the `CLOUDFLARE_ACCOUNT_ID` variable.
 
@@ -48,7 +48,8 @@ Web Analytics).
 Production serves its workers.dev URL until DNS moves off the placeholder GitHub Pages site
 (`serpcompany/zenbujapanese.com`). At cutover, add custom domains for `zenbujapanese.com` and
 `www.zenbujapanese.com` in `wrangler.jsonc`, and update the `production` environment's
-`WEB_PRODUCTION_URL` variable. `/privacy` and `/support` must keep working: the
+`WEB_PRODUCTION_URL` variable. Keep `workers_dev` on: the zone's bot protection blocks CI runners, so
+smoke tests use the workers.dev URLs, while people review on the branded domains. `/privacy` and `/support` must keep working: the
 shipped iOS app and App Store metadata link to them.
 
 ## Database
