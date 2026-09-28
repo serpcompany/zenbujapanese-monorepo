@@ -15,6 +15,13 @@ struct ImageTextInsights: Hashable, Sendable {
   /// A few sentences on what the text is and what it's for.
   let context: String
   let notes: [ImageTextNote]
+
+  /// Notes on idioms inside longer text. An idiom that is a whole paragraph, as in a list of
+  /// proverbs, already has its meaning under Translation, so Context doesn't repeat it.
+  func notes(notRepeating paragraphs: [ImageTextParagraph]) -> [ImageTextNote] {
+    let paragraphTexts = Set(paragraphs.map(\.text))
+    return notes.filter { !paragraphTexts.contains($0.phrase) }
+  }
 }
 
 enum ImageTextExplanationAvailability: Equatable, Sendable {

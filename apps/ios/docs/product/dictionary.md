@@ -121,8 +121,9 @@ marks on the image.
   end a sentence stay separate.
 - **Translate** has two sections. **Translation** shows each paragraph with its natural
   translation. **Context** says in a few sentences what the text is and what it's for, then
-  lists its idioms, proverbs, and set expressions with their dictionary meanings; each opens
-  its Word Detail.
+  lists idioms, proverbs, and set expressions inside longer text with their dictionary
+  meanings; each opens its Word Detail. An idiom that is a whole paragraph, as in a list of
+  proverbs, isn't repeated there, since Translation already gives its meaning.
 
 Translation uses Apple Translation, preparing Apple's language resources first when needed.
 Where Apple Translation isn't available, Apple Intelligence's on-device model translates

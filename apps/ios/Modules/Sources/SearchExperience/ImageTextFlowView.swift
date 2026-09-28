@@ -375,7 +375,8 @@ struct ImageTextFlowView: View {
             .textSelection(.enabled)
             .accessibilityIdentifier("image-text.context")
         }
-        ForEach(insights.notes) { note in
+        let notes = insights.notes(notRepeating: page.paragraphs)
+        ForEach(notes) { note in
           VStack(alignment: .leading, spacing: 4) {
             Button(note.phrase) { open(note.entry, in: page, lineID: -1) }
               .font(.headline)
@@ -389,7 +390,9 @@ struct ImageTextFlowView: View {
           .accessibilityIdentifier("image-text.note.\(note.phrase)")
         }
         sectionFootnote(
-          "Written on this device by Apple Intelligence. Idiom meanings are from Zenbu’s dictionary."
+          notes.isEmpty
+            ? "Written on this device by Apple Intelligence."
+            : "Written on this device by Apple Intelligence. Idiom meanings are from Zenbu’s dictionary."
         )
       }
     case .failed:
