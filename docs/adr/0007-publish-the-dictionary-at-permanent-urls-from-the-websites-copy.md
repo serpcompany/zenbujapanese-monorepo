@@ -4,7 +4,7 @@ status: accepted
 
 # Publish the dictionary at permanent URLs from the website's own copy
 
-zenbujapanese.com publishes one public page per dictionary word and one page per search. Its
+zenbujapanese.com publishes one public page per dictionary word, per kanji, and per search. Its
 URLs are permanent, so they are keyed on an ID that never changes, and the website serves them
 from its own copy of the shared language-data artifact.
 
@@ -29,6 +29,14 @@ returns 404.
 English has no locale prefix. If another gloss language is added, its pages live under
 `/<lang>/dictionary/` with the same numbers, linked by hreflang. The headword is always
 Japanese; the direction of a lookup lives in search, as in the app.
+
+## Kanji URLs are the character
+
+A kanji page is `/dictionary/kanji/<character>/`, for example `/dictionary/kanji/生/`. The
+character is the kanji's permanent ID, as it is in the app, which saves a kanji as itself. The
+path is the exact code point and is never Unicode-normalized: 75 KANJIDIC2 characters are
+compatibility ideographs that NFC would turn into a different kanji. A kanji with no meanings or
+readings is `noindex`.
 
 ## Search pages are indexed
 
