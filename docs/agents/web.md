@@ -41,8 +41,11 @@ lists every child sitemap and each child sitemap lists the new URLs.
 Deploys and remote migrations run only through the `Web deploy` GitHub Actions workflow, never
 from an agent's machine. Each merge to `main` that changes `apps/web/**` applies staging
 migrations, deploys staging, and smoke-tests its workers.dev URL (`scripts/smoke.sh`). The production job then
-waits for approval on the `production` GitHub environment, applies production migrations, deploys
-the same commit, and smoke-tests its workers.dev URL. Both environments deploy only from `main`.
+runs automatically once staging passes: it applies production migrations, deploys the same commit,
+and smoke-tests its workers.dev URL. Staging's smoke tests are the gate; the `production` GitHub
+environment has no required reviewer for now. Add one (Settings → Environments → production) once
+production data migrations begin, such as with the dictionary. Both environments deploy only from
+`main`.
 The workflow uses the `CLOUDFLARE_API_TOKEN` secret (the "Edit Cloudflare Workers" template plus D1 Edit, limited
 to the SERP account and the zenbujapanese.com zone) and the `CLOUDFLARE_ACCOUNT_ID` variable.
 
