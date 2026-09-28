@@ -100,6 +100,10 @@ struct WordDetailView: View {
           }
         }
 
+        Section("LISTS") {
+          WordListsSection(entry: entry) { showsListPicker = true }
+        }
+
         Section("NOTES") {
           NotesSection(
             notes: notes,
@@ -1100,6 +1104,30 @@ private struct RelationshipsSection: View {
       )
       .accessibilityIdentifier("word-detail.related.\(relationship.headword)")
     }
+  }
+}
+
+/// The lists holding the word, then Add to List. Every row opens the list picker.
+private struct WordListsSection: View {
+  @Environment(WordLists.self) private var wordLists
+  let entry: DictionaryEntry
+  let editLists: () -> Void
+
+  var body: some View {
+    ForEach(wordLists.lists.filter { wordLists.contains(entry.id, in: $0.id) }) { list in
+      Button(action: editLists) {
+        Label(list.name, systemImage: "list.bullet")
+          .frame(maxWidth: .infinity, alignment: .leading)
+      }
+      .tint(.primary)
+      .accessibilityHint("Changes which lists hold this word")
+      .accessibilityIdentifier("word-detail.list.\(list.id)")
+    }
+
+    Button("Add to List", systemImage: "text.badge.plus", action: editLists)
+      .font(.body)
+      .disabled(!wordLists.canChange)
+      .accessibilityIdentifier("word-detail.add-to-list-row")
   }
 }
 

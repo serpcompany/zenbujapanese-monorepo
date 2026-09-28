@@ -82,8 +82,9 @@ known words persist on the device, keyed by the dictionary entry's stable identi
 
 **Add to List…** opens a sheet listing every word list, with a checkmark on the lists that
 contain the word. Tapping a list adds or removes the word at once, **New List** asks for a name,
-creates the list, and adds the word to it, and Done closes the sheet. Word Detail and Search
-results don't show which lists a word is in; only the sheet does.
+creates the list, and adds the word to it, and Done closes the sheet. A **Lists** section above
+Notes names every list holding the word, followed by **Add to List**; each row opens the same
+sheet. Search results don't show which lists a word is in.
 
 A learner can write notes for a word and associate photos with it. Notes and associated
 photos persist on the device.

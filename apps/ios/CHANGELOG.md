@@ -11,8 +11,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   and **Account → Known Words** lists them with a count, search, and swipe to mark unknown.
   Known words are stored only on your device.
 - Save words to your own **Lists**. Use **Add to List…** in the **•••** menu on a word's page
-  to add it to any list or a new one. **Account → Lists** starts with **Favorites** and lets you
-  create, rename (swipe, or tap a list in Edit), reorder, and delete lists, and search a list or swipe a word out of it. Lists
+  to add it to any list or a new one; the word's page lists them above Notes. **Account → Lists** starts with **Favorites** and lets you
+  create, rename (swipe, or tap a list in Edit), reorder, and delete lists, and search a list, swipe a word out of it, or select several words to remove. Lists
   are stored only on your device.
 - Share a word from its page: the headword, reading, and meanings are shared as text.
 - New optional frequency dictionaries built from openly licensed Jiten lists (CC BY-SA 4.0):

@@ -221,56 +221,164 @@ private struct WordListIndexRow: View {
   }
 }
 
-/// One list's words, most recently added first.
+/// One list's words, most recently added first, with a menu to rename or delete the list and
+/// to select words to remove.
 struct WordListView: View {
   @Environment(WordLists.self) private var wordLists
+  @Environment(\.dismiss) private var dismiss
   @State private var searchText = ""
+  @State private var editMode = EditMode.inactive
+  @State private var selection = Set<String>()
+  @State private var namePrompt: WordListNamePrompt?
+  @State private var confirmsDeletion = false
   let listID: UUID
   let openWord: (WordListMembership) -> Void
 
+  private var list: WordList? { wordLists.lists.first { $0.id == listID } }
+  private var isSelecting: Bool { editMode.isEditing }
+
   var body: some View {
+    content
+      .navigationTitle(list?.name ?? "")
+      .toolbar { toolbar }
+      // Select All takes the back button's place while selecting.
+      .navigationBarBackButtonHidden(isSelecting)
+      .environment(\.editMode, $editMode)
+      .onChange(of: isSelecting) {
+        if !isSelecting { selection = [] }
+      }
+      .wordListNamePrompt($namePrompt) { _ in }
+      .confirmationDialog(
+        Text("Delete “\(list?.name ?? "")”?"),
+        isPresented: $confirmsDeletion,
+        titleVisibility: .visible
+      ) {
+        Button("Delete List", role: .destructive, action: deleteList)
+          .accessibilityIdentifier("word-list.confirm-delete")
+      } message: {
+        let count = wordLists.wordCount(in: listID)
+        Text("^[\(count) word](inflect: true) will be removed with this list.")
+      }
+  }
+
+  @ViewBuilder
+  private var content: some View {
     let words = filteredWords
+    if !wordLists.isLoaded {
+      ProgressView("Loading List")
+        .accessibilityIdentifier("word-list.loading")
+    } else if wordLists.wordCount(in: listID) == 0 {
+      ContentUnavailableView(
+        "No Words",
+        systemImage: "list.bullet.rectangle",
+        description: Text("Add words from the ••• menu on a word’s page.")
+      )
+      .accessibilityIdentifier("word-list.empty")
+    } else {
+      List(selection: $selection) {
+        ForEach(words) { word in
+          row(word)
+        }
+      }
+      .overlay {
+        if words.isEmpty {
+          ContentUnavailableView.search(text: searchText)
+        }
+      }
+      .searchable(text: $searchText, prompt: "Search this list")
+      .accessibilityIdentifier("word-list.list")
+    }
+  }
+
+  @ViewBuilder
+  private func row(_ word: WordListMembership) -> some View {
+    let label = SavedWordRow(headword: word.headword, reading: word.reading, date: word.addedAt)
     Group {
-      if !wordLists.isLoaded {
-        ProgressView("Loading List")
-          .accessibilityIdentifier("word-list.loading")
-      } else if wordLists.wordCount(in: listID) == 0 {
-        ContentUnavailableView(
-          "No Words",
-          systemImage: "list.bullet.rectangle",
-          description: Text("Add words from the ••• menu on a word’s page.")
-        )
-        .accessibilityIdentifier("word-list.empty")
+      if isSelecting {
+        // While selecting, a tap selects the row instead of opening the word.
+        label
       } else {
-        List {
-          ForEach(words) { word in
-            Button {
-              openWord(word)
-            } label: {
-              SavedWordRow(headword: word.headword, reading: word.reading, date: word.addedAt)
-            }
-            .foregroundStyle(.primary)
-            .accessibilityIdentifier("word-list.item.\(word.entryID)")
-            .swipeActions {
-              if !wordLists.isReadOnly {
-                Button("Remove", systemImage: "minus.circle", role: .destructive) {
-                  wordLists.removeWord(word.languageReferenceID, from: listID)
-                }
-                .accessibilityIdentifier("word-list.remove.\(word.entryID)")
-              }
-            }
-          }
+        Button {
+          openWord(word)
+        } label: {
+          label
         }
-        .overlay {
-          if words.isEmpty {
-            ContentUnavailableView.search(text: searchText)
-          }
-        }
-        .searchable(text: $searchText, prompt: "Search this list")
-        .accessibilityIdentifier("word-list.list")
+        .foregroundStyle(.primary)
       }
     }
-    .navigationTitle(wordLists.lists.first { $0.id == listID }?.name ?? "")
+    .accessibilityIdentifier("word-list.item.\(word.entryID)")
+    .swipeActions {
+      if !wordLists.isReadOnly {
+        Button("Remove", systemImage: "minus.circle", role: .destructive) {
+          wordLists.removeWord(word.languageReferenceID, from: listID)
+        }
+        .accessibilityIdentifier("word-list.remove.\(word.entryID)")
+      }
+    }
+  }
+
+  @ToolbarContentBuilder
+  private var toolbar: some ToolbarContent {
+    if isSelecting {
+      ToolbarItem(placement: .topBarLeading) {
+        let allSelected = !filteredWords.isEmpty && selectedWords.count == filteredWords.count
+        Button(allSelected ? "Deselect All" : "Select All") {
+          selection = allSelected ? [] : Set(filteredWords.map(\.entryID))
+        }
+        .accessibilityIdentifier("word-list.select-all")
+      }
+      ToolbarItemGroup(placement: .topBarTrailing) {
+        Button("Remove", role: .destructive, action: removeSelected)
+          .disabled(selectedWords.isEmpty)
+          .accessibilityIdentifier("word-list.remove-selected")
+        Button("Done") { editMode = .inactive }
+          .fontWeight(.semibold)
+          .accessibilityIdentifier("word-list.done-selecting")
+      }
+    } else if wordLists.canChange, let list {
+      ToolbarItem(placement: .topBarTrailing) {
+        Menu {
+          Button("Rename List", systemImage: "pencil") { namePrompt = .rename(list) }
+            .accessibilityIdentifier("word-list.rename")
+          Button("Select Words", systemImage: "checkmark.circle") {
+            editMode = .active
+          }
+          .disabled(wordLists.wordCount(in: listID) == 0)
+          .accessibilityIdentifier("word-list.select")
+          Divider()
+          Button("Delete List", systemImage: "trash", role: .destructive) {
+            if wordLists.wordCount(in: listID) == 0 {
+              deleteList()
+            } else {
+              confirmsDeletion = true
+            }
+          }
+          .accessibilityIdentifier("word-list.delete")
+        } label: {
+          Label("More", systemImage: "ellipsis")
+            .labelStyle(.iconOnly)
+        }
+        .accessibilityLabel("More")
+        .accessibilityIdentifier("word-list.more-menu")
+      }
+    }
+  }
+
+  /// The selected words still shown, so a search never removes words it hides.
+  private var selectedWords: [WordListMembership] {
+    filteredWords.filter { selection.contains($0.entryID) }
+  }
+
+  private func removeSelected() {
+    for word in selectedWords {
+      wordLists.removeWord(word.languageReferenceID, from: listID)
+    }
+    editMode = .inactive
+  }
+
+  private func deleteList() {
+    wordLists.deleteList(listID)
+    dismiss()
   }
 
   private var filteredWords: [WordListMembership] {

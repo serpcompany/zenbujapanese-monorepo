@@ -74,8 +74,9 @@ that has words asks first), and open a list. In Edit, the learner drags lists to
 taps a list to rename it. Names are trimmed, can't be
 empty, and may repeat. A list shows its words most recently added first; the learner can search
 it by headword or reading, swipe a word to remove it from that list, or open it in Search (or
-search its headword when the entry is no longer in the dictionary). Deleting a list removes its
-words from that list only.
+search its headword when the entry is no longer in the dictionary). Its **•••** menu renames the
+list, deletes it (asking first when it has words), or selects words: while selecting, the top bar
+offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
 
 Lists are stored only on the device, keyed by each entry's stable identifier. Like Known Words,
 lists saved by a newer version of Zenbu, or a damaged file that couldn't be kept aside, are shown
