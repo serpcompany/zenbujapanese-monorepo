@@ -29,6 +29,7 @@ jobs:
       url: https://staging.zenbujapanese.com
     defaults:
       run:
+        shell: bash
         working-directory: apps/web
     steps:
       - uses: actions/checkout@v4
@@ -42,9 +43,11 @@ jobs:
           cache-dependency-path: apps/web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:migrate:staging
-      - run: pnpm deploy:staging
+      - name: Deploy
+        run: pnpm deploy:staging 2>&1 | tee deploy.log
       - name: Smoke test
-        run: ./scripts/smoke.sh https://staging.zenbujapanese.com
+        # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
+        run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)"
 
   production:
     needs: staging
@@ -54,6 +57,7 @@ jobs:
       url: ${{ vars.WEB_PRODUCTION_URL }}
     defaults:
       run:
+        shell: bash
         working-directory: apps/web
     steps:
       - uses: actions/checkout@v4
@@ -67,6 +71,8 @@ jobs:
           cache-dependency-path: apps/web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:migrate:production
-      - run: pnpm deploy:production
+      - name: Deploy
+        run: pnpm deploy:production 2>&1 | tee deploy.log
       - name: Smoke test
-        run: ./scripts/smoke.sh "${{ vars.WEB_PRODUCTION_URL }}"
+        # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
+        run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)"
