@@ -60,21 +60,10 @@ enum JapaneseRubyAnnotation {
     }
     let runs = surfaceRuns(surface)
     guard runs.contains(where: \.isKanji), runs.contains(where: { !$0.isKanji }) else {
-      return perKanji(JapaneseRubySegment(base: surface, reading: reading))
+      return [JapaneseRubySegment(base: surface, reading: reading)]
     }
-    return alignedSegments(runs: runs, reading: reading)?.flatMap(perKanji)
+    return alignedSegments(runs: runs, reading: reading)
       ?? runs.map { JapaneseRubySegment(base: $0.base, reading: nil) }
-  }
-
-  /// Splits a kanji run's reading over each kanji (弱肉強食 → じゃく·にく·きょう·しょく) when the
-  /// kanji's own readings split it exactly one way. Irregular readings such as 大人 (おとな) keep
-  /// one reading over the whole run.
-  private static func perKanji(_ segment: JapaneseRubySegment) -> [JapaneseRubySegment] {
-    guard let reading = segment.reading, segment.base.count > 1,
-      segment.base.allSatisfy(\.isKanjiOrIterationMark),
-      let split = KanjiReadingSplitter.split(segment.base, reading: reading)
-    else { return [segment] }
-    return zip(segment.base, split).map { JapaneseRubySegment(base: String($0), reading: $1) }
   }
 
   private struct SurfaceRun {

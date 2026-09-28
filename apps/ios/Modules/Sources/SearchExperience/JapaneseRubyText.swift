@@ -2,17 +2,21 @@ import SwiftUI
 
 struct JapaneseRubyText: View {
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
-  /// Space around each reading that sits beside another, so 弱肉 reads じゃく・にく rather than
-  /// じゃくにく.
-  @ScaledMetric(relativeTo: .body) private var adjacentReadingGap = 3.0
+  /// The tapped kanji, as its piece and its position in that piece.
+  @State private var selectedKanji: SelectedKanji?
+
+  private struct SelectedKanji: Equatable {
+    let piece: Int
+    let character: Int
+  }
 
   private struct Piece: Identifiable {
     let id: String
     let segment: JapaneseRubySegment
     /// Characters of `surface` before this piece.
     let offset: Int
-    /// Whether a neighboring piece also has a reading.
-    let besideAnotherReading: Bool
+    /// This piece's position among the pieces.
+    let index: Int
   }
 
   let surface: String
@@ -25,6 +29,9 @@ struct JapaneseRubyText: View {
   let displaysRomaji: Bool
   /// Hides furigana here even when the Furigana preference is on, such as over a known word.
   let hidesFurigana: Bool
+  /// Tapping a kanji in a run such as 弱肉強食 colors it and its part of the reading (じゃく),
+  /// when the kanji's own readings split the run's reading one way.
+  let highlightsKanjiOnTap: Bool
 
   init(
     surface: String,
@@ -34,7 +41,8 @@ struct JapaneseRubyText: View {
     highlightedEnding: String = "",
     exposesAccessibility: Bool = true,
     displaysRomaji: Bool = true,
-    hidesFurigana: Bool = false
+    hidesFurigana: Bool = false,
+    highlightsKanjiOnTap: Bool = false
   ) {
     self.surface = surface
     self.reading = reading
@@ -44,6 +52,7 @@ struct JapaneseRubyText: View {
     self.exposesAccessibility = exposesAccessibility
     self.displaysRomaji = displaysRomaji
     self.hidesFurigana = hidesFurigana
+    self.highlightsKanjiOnTap = highlightsKanjiOnTap
   }
 
   @ViewBuilder
@@ -75,11 +84,17 @@ struct JapaneseRubyText: View {
       HStack(alignment: .bottom, spacing: 0) {
         ForEach(pieces) { piece in
           if let furigana = piece.segment.reading {
-            VStack(spacing: 0) {
-              Text(furigana).font(rubyFont)
-              Text(highlighted(piece.segment.base, at: piece.offset)).font(baseFont)
+            if let split = kanjiSplit(piece) {
+              VStack(spacing: 0) {
+                Text(selectableReading(split, piece: piece.index)).font(rubyFont)
+                selectableKanji(piece)
+              }
+            } else {
+              VStack(spacing: 0) {
+                Text(furigana).font(rubyFont)
+                Text(highlighted(piece.segment.base, at: piece.offset)).font(baseFont)
+              }
             }
-            .padding(.horizontal, piece.besideAnotherReading ? adjacentReadingGap : 0)
           } else {
             Text(highlighted(piece.segment.base, at: piece.offset)).font(baseFont)
           }
@@ -88,6 +103,43 @@ struct JapaneseRubyText: View {
     } else {
       Text(highlighted(surface, at: 0))
         .font(baseFont)
+    }
+  }
+
+  /// Each kanji's part of the piece's reading, when tapping kanji highlights them.
+  private func kanjiSplit(_ piece: Piece) -> [String]? {
+    guard highlightsKanjiOnTap, let reading = piece.segment.reading,
+      piece.segment.base.count > 1
+    else { return nil }
+    return KanjiReadingSplitter.split(piece.segment.base, reading: reading)
+  }
+
+  private func selectableReading(_ split: [String], piece: Int) -> AttributedString {
+    var result = AttributedString()
+    for (index, part) in split.enumerated() {
+      var text = AttributedString(part)
+      if selectedKanji == SelectedKanji(piece: piece, character: index) {
+        text.foregroundColor = .accentColor
+      }
+      result += text
+    }
+    return result
+  }
+
+  private func selectableKanji(_ piece: Piece) -> some View {
+    HStack(spacing: 0) {
+      ForEach(Array(piece.segment.base.enumerated()), id: \.offset) { index, character in
+        let selection = SelectedKanji(piece: piece.index, character: index)
+        Text(String(character))
+          .font(baseFont)
+          .foregroundStyle(selectedKanji == selection ? Color.accentColor : Color.primary)
+          .contentShape(.rect)
+          .onTapGesture {
+            withAnimation(.easeOut(duration: 0.15)) {
+              selectedKanji = selectedKanji == selection ? nil : selection
+            }
+          }
+      }
     }
   }
 
@@ -108,18 +160,14 @@ struct JapaneseRubyText: View {
   }
 
   private var pieces: [Piece] {
-    let segments = segments
     var offset = 0
     return segments.enumerated().map { index, segment in
       defer { offset += segment.base.count }
-      let hasReading = { (index: Int) in
-        segments.indices.contains(index) && segments[index].reading != nil
-      }
       return Piece(
         id: "\(surface)|\(reading)|\(index)|\(segment.base)|\(segment.reading ?? "")",
         segment: segment,
         offset: offset,
-        besideAnotherReading: hasReading(index - 1) || hasReading(index + 1)
+        index: index
       )
     }
   }

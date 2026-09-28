@@ -406,7 +406,8 @@ struct WordHeadline<Accessory: View>: View {
         reading: reading,
         baseFont: baseFont,
         rubyFont: rubyFont,
-        highlightedEnding: highlightedEnding
+        highlightedEnding: highlightedEnding,
+        highlightsKanjiOnTap: true
       )
       .fixedSize(horizontal: true, vertical: false)
       readingWithoutFurigana
