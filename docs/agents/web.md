@@ -9,7 +9,8 @@ The website follows these SERP engineering standards:
 - [Drizzle + D1 data promotion](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/database-management-promotion-drizzle-d1.md)
 - [Environment configuration](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/environment-configuration.md)
 - [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md):
-  write page paths with the slash (`src/lib/pages.ts` is the single list of static pages).
+  pages end with a slash (`/about/`); files never do (`/robots.txt`, `/sitemap-index.xml`). The
+  other form redirects (308) to it. `src/lib/pages.ts` is the single list of static page paths.
 
 Before writing Next.js code, read the relevant guide in `node_modules/next/dist/docs/`; this
 Next.js version differs from older releases (see `apps/web/AGENTS.md`).

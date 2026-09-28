@@ -5,7 +5,7 @@ import { isProductionSite } from './src/lib/site'
 const wwwHost = { type: 'host', value: 'www.zenbujapanese.com' } as const
 
 const nextConfig: NextConfig = {
-  // SERP URL trailing-slash standard: pages end in /, file URLs never do.
+  // SERP URL trailing-slash standard: pages end in / (/about/); files never do (/robots.txt).
   trailingSlash: true,
   turbopack: {
     // Keep lockfiles outside apps/web from changing the workspace root.
@@ -21,8 +21,8 @@ const nextConfig: NextConfig = {
         destination: 'https://zenbujapanese.com/:path+',
         permanent: true
       },
-      // Next.js sends file URLs with a trailing slash to the file, but OpenNext skips that
-      // built-in redirect, so repeat it here. Two rules: OpenNext cannot fill an empty path.
+      // Files never end in a slash: /robots.txt/ -> /robots.txt. Next.js does this itself, but
+      // OpenNext skips it, so repeat it here. Two rules: OpenNext cannot fill an empty path.
       {
         source: '/:file([^/]+\\.\\w+)/',
         destination: '/:file',
