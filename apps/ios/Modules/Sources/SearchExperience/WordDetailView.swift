@@ -343,25 +343,44 @@ struct WordHeadline<Accessory: View>: View {
   let pronounce: () -> Void
   @ViewBuilder let accessory: () -> Accessory
 
+  /// The headword beside the pitch accent and controls, at the largest size that fits there.
+  /// When even the smaller headword doesn't fit, the controls move under a full-size headword.
   var body: some View {
-    let layout =
-      dynamicTypeSize.isAccessibilitySize
-      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-      : AnyLayout(HStackLayout(alignment: .center, spacing: 12))
-    layout {
-      headword
-        .frame(maxWidth: .infinity, alignment: .leading)
-      controls
+    Group {
+      if dynamicTypeSize.isAccessibilitySize {
+        stacked
+      } else {
+        ViewThatFits(in: .horizontal) {
+          beside(rubyHeadword(baseFont: .largeTitle, rubyFont: .title3.weight(.semibold)))
+          beside(
+            rubyHeadword(baseFont: .title.weight(.semibold), rubyFont: .caption.weight(.semibold)))
+          stacked
+        }
+      }
     }
     .padding(.vertical, 4)
   }
 
-  /// The headword at the largest size that fits beside the pitch accent and controls. It keeps
-  /// its furigana while a smaller size still fits, and only then moves the reading underneath.
+  private func beside(_ headword: some View) -> some View {
+    HStack(alignment: .center, spacing: 12) {
+      headword
+        .frame(maxWidth: .infinity, alignment: .leading)
+      controls
+    }
+  }
+
+  private var stacked: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      headword
+      controls
+    }
+  }
+
+  /// The headword on its own line: full size with furigana, or wrapped text with the reading
+  /// underneath when even that is too wide.
   private var headword: some View {
     ViewThatFits(in: .horizontal) {
       rubyHeadword(baseFont: .largeTitle, rubyFont: .title3.weight(.semibold))
-      rubyHeadword(baseFont: .title.weight(.semibold), rubyFont: .caption.weight(.semibold))
 
       VStack(alignment: .leading, spacing: 6) {
         Text(surface.highlightingEnding(highlightedEnding))
@@ -408,18 +427,22 @@ struct WordHeadline<Accessory: View>: View {
 
   private var controls: some View {
     HStack(spacing: 8) {
+      // With a pitch accent, the pitch pill is also the pronounce button, so a long word keeps
+      // room for its headword.
       if let pitch {
-        PitchAccentBadge(reading: reading, pitch: pitch)
+        PitchAccentBadge(reading: reading, pitch: pitch, pronounce: pronounce)
+          .accessibilityIdentifier("\(identifierPrefix).pronounce")
+      } else {
+        Button(action: pronounce) {
+          Image(systemName: "speaker.wave.2.fill")
+            .font(.title3)
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel("Pronounce \(reading)")
+        .accessibilityIdentifier("\(identifierPrefix).pronounce")
       }
-      Button(action: pronounce) {
-        Image(systemName: "speaker.wave.2.fill")
-          .font(.title3)
-          .frame(minWidth: 44, minHeight: 44)
-          .contentShape(.rect)
-      }
-      .buttonStyle(.borderless)
-      .accessibilityLabel("Pronounce \(reading)")
-      .accessibilityIdentifier("\(identifierPrefix).pronounce")
       accessory()
     }
   }
@@ -485,9 +508,11 @@ private struct PartOfSpeechRow: View {
 
 /// The reading in katakana with its pitch accent drawn as a contour: a dot per mora at high or
 /// low pitch joined by a line, and a hollow dot for the pitch of a following particle.
+/// The reading's pitch accent in a capsule with a speaker, which pronounces the word.
 private struct PitchAccentBadge: View {
   let reading: String
   let pitch: PitchAccent
+  let pronounce: () -> Void
   @ScaledMetric(relativeTo: .body) private var moraWidth: CGFloat = 20
   @ScaledMetric(relativeTo: .body) private var contourSpace = 7.0
   @ScaledMetric(relativeTo: .body) private var horizontalPadding = 10.0
@@ -496,6 +521,25 @@ private struct PitchAccentBadge: View {
     let morae = reading.katakana.morae
     // A combined mora such as キョ needs more room than a single kana.
     let widths = morae.map { moraWidth * ($0.count > 1 ? 1.5 : 1) }
+    Button(action: pronounce) {
+      HStack(spacing: 6) {
+        Image(systemName: "speaker.wave.2.fill")
+          .font(.subheadline)
+          .foregroundStyle(.tint)
+        contour(morae: morae, widths: widths)
+      }
+      .padding(.horizontal, horizontalPadding)
+      .padding(.vertical, 2)
+      .frame(minHeight: 44)
+      .background(.fill.tertiary, in: Capsule())
+      .contentShape(Capsule())
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Pronounce \(reading)")
+    .accessibilityValue("Pitch accent, downstep \(pitch.downstep), \(pitch.moraCount) mora")
+  }
+
+  private func contour(morae: [String], widths: [CGFloat]) -> some View {
     HStack(spacing: 0) {
       ForEach(morae.enumerated(), id: \.offset) { index, mora in
         Text(mora)
@@ -514,13 +558,6 @@ private struct PitchAccentBadge: View {
         particleWidth: moraWidth * 0.6)
         .foregroundStyle(ZenbuTheme.pitchDownstep)
     }
-    .padding(.horizontal, horizontalPadding)
-    .padding(.vertical, 2)
-    .background(.fill.tertiary, in: Capsule())
-    .accessibilityElement(children: .ignore)
-    .accessibilityLabel(
-      "Pitch accent for \(reading), downstep \(pitch.downstep), \(pitch.moraCount) mora")
-    .accessibilityIdentifier("word-detail.pitch")
   }
 }
 

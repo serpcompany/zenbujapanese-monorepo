@@ -50,11 +50,12 @@ Below the top card, sections appear in this order: Meaning, Frequency, Alternati
 written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 
 The top of a word detail shows the headword with furigana, following the Reading Aids setting.
-When furigana is off, the reading appears under the headword instead. A long headword shrinks to
-keep its furigana beside the pitch accent, and moves its reading underneath only when even the
-smaller size doesn't fit. To the right of the
+When furigana is off, the reading appears under the headword instead. A long headword shrinks one size to
+keep its furigana beside the pitch accent; when even that doesn't fit, the pitch accent moves to
+its own line under a full-size headword. To the right of the
 headword are the pitch accent (the reading in katakana with an overline across the high morae and
-a hook at the downstep), a pronounce button, and the latest encounter photo. Pitch comes from
+a hook at the downstep) in a capsule with a speaker, which pronounces the word when tapped, and
+the latest encounter photo. A word without pitch shows a standalone pronounce button. Pitch comes from
 UniDic; for a two-part compound UniDic doesn't list whole, such as 記者会見, it is estimated from
 the parts' accent-combination types, and a word with neither shows no pitch. A part-of-speech row
 follows and opens the conjugation table when one exists. It names one word class and then its
