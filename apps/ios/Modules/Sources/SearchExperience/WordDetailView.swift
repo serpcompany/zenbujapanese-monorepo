@@ -39,6 +39,13 @@ struct WordDetailView: View {
   let openWord: (DictionaryEntry) -> Void
   let manageFrequencyDictionaries: () -> Void
 
+  private var shareText: String {
+    let heading = entry.reading == entry.headword
+      ? entry.headword : "\(entry.headword)【\(entry.reading)】"
+    let meanings = entry.senses.enumerated().map { "\($0.offset + 1). \($0.element.meaning)" }
+    return ([heading] + meanings).joined(separator: "\n")
+  }
+
   var body: some View {
     ScrollViewReader { proxy in
       List {
@@ -148,19 +155,28 @@ struct WordDetailView: View {
             .font(.body.weight(.semibold))
             .accessibilityIdentifier("word-note.done")
         } else {
+          ShareLink(item: shareText) {
+            Label("Share", systemImage: "square.and.arrow.up")
+          }
+          .accessibilityIdentifier("word-detail.share")
           Menu {
-            Button("Add Note", systemImage: "square.and.pencil", action: beginAddingNote)
-            Button("Take Photo", systemImage: "camera", action: presentCamera)
-            Button("Choose Photo", systemImage: "photo.on.rectangle") {
-              showsPhotoPicker = true
+            Section {
+              KnownWordMenuButton(entry: entry)
+            }
+            Section {
+              Button("Add Note", systemImage: "square.and.pencil", action: beginAddingNote)
+              Button("Take Photo", systemImage: "camera", action: presentCamera)
+              Button("Choose Photo", systemImage: "photo.on.rectangle") {
+                showsPhotoPicker = true
+              }
             }
           } label: {
-            Label("Add", systemImage: "plus")
+            Label("More", systemImage: "ellipsis")
               .labelStyle(.iconOnly)
           }
           .menuOrder(.fixed)
-          .accessibilityLabel("Add")
-          .accessibilityIdentifier("word-detail.add-menu")
+          .accessibilityLabel("More")
+          .accessibilityIdentifier("word-detail.more-menu")
         }
       }
     }
@@ -490,7 +506,19 @@ private struct WordHeroView: View {
   let removeEncounterMedia: (String) async -> Void
   let pronounce: () -> Void
 
+  @Environment(WordKnowledge.self) private var wordKnowledge
+
   var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      headline
+      if wordKnowledge.isKnown(entry.id) {
+        KnownWordBadge()
+          .padding(.bottom, 4)
+      }
+    }
+  }
+
+  private var headline: some View {
     WordHeadline(
       surface: entry.headword,
       reading: entry.reading,

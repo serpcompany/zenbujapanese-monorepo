@@ -3,6 +3,7 @@ import SwiftUI
 public struct SearchExperienceRootView: View {
   @State private var readingAidPreferences = ReadingAidPreferences()
   @State private var userProfile = UserProfile()
+  @State private var wordKnowledge = WordKnowledge()
   @State private var selectedTab = SearchExperienceTab.search
   @State private var frequencyRefreshID = 0
   @State private var path: [SearchExperienceRoute] = []
@@ -54,6 +55,7 @@ public struct SearchExperienceRootView: View {
     appTabs
       .environment(readingAidPreferences)
       .environment(userProfile)
+      .environment(wordKnowledge)
   }
 
   private var appTabs: some View {
@@ -63,7 +65,11 @@ public struct SearchExperienceRootView: View {
       }
 
       Tab(value: SearchExperienceTab.account) {
-        AccountNavigationView(path: $accountPath, store: encounterMediaStore)
+        AccountNavigationView(
+          path: $accountPath,
+          store: encounterMediaStore,
+          openWord: openKnownWord
+        )
       } label: {
         Label("Account", systemImage: "person.crop.circle")
           .accessibilityLabel("Account, personal content and settings")
@@ -279,6 +285,14 @@ public struct SearchExperienceRootView: View {
           $0.headword == relationship.headword && $0.reading == relationship.reading
         } ?? results.entries.first
       if let entry { path.append(.word(entry, nil)) }
+    }
+  }
+
+  private func openKnownWord(_ id: LanguageReferenceID) {
+    Task { @MainActor in
+      guard let entry = try? await lookupClient.entry(id) else { return }
+      selectedTab = .search
+      path.append(.word(entry, nil))
     }
   }
 

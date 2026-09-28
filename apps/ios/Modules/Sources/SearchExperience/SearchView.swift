@@ -832,26 +832,55 @@ private struct ResultRow: View {
   let frequencyRanks: FrequencyRanks?
   let rank: ResultRank
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @Environment(WordKnowledge.self) private var wordKnowledge
   @ScaledMetric(relativeTo: .caption) private var chipSpacing = 6.0
 
   var body: some View {
+    let isKnown = wordKnowledge.isKnown(entry.id)
     NavigationLink(value: SearchExperienceRoute.word(entry, nil)) {
-      VStack(alignment: .leading, spacing: 4) {
-        titleBlock
+      VStack(alignment: .leading, spacing: 6) {
+        HStack(alignment: .lastTextBaseline, spacing: 8) {
+          titleBlock
+          Spacer(minLength: 0)
+          if isKnown {
+            KnownWordBadge()
+          }
+        }
         Text(summary)
           .font(.body)
           .foregroundStyle(.primary)
           .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
           .fixedSize(horizontal: false, vertical: true)
         frequencyChips
-          .padding(.top, 2)
+          .padding(.top, 4)
       }
       .frame(maxWidth: .infinity, alignment: .leading)
       .contentShape(Rectangle())
+      .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
+    }
+    .swipeActions(edge: .leading) {
+      knownButton(isKnown: isKnown)
+        .tint(isKnown ? .orange : .green)
+    }
+    .contextMenu {
+      knownButton(isKnown: isKnown)
     }
     .accessibilityLabel("\(entry.headword), \(entry.reading), \(summary)")
-    .accessibilityValue("\(rank.accessibilityValue), \(frequencyPresentation.accessibilityValue)")
+    .accessibilityValue(
+      ((isKnown ? ["Known"] : [])
+        + [rank.accessibilityValue, frequencyPresentation.accessibilityValue])
+        .joined(separator: ", ")
+    )
     .accessibilityIdentifier(resultIdentifier)
+  }
+
+  private func knownButton(isKnown: Bool) -> some View {
+    Button(
+      isKnown ? "Mark as Unknown" : "Mark as Known",
+      systemImage: isKnown ? "xmark.circle" : "checkmark.circle"
+    ) {
+      wordKnowledge.toggleKnown(entry)
+    }
   }
 
   /// Every ranked dictionary at standard sizes. At accessibility sizes only the dictionary that

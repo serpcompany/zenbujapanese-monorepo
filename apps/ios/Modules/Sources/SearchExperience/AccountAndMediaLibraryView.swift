@@ -4,6 +4,7 @@ import UIKit
 struct AccountNavigationView: View {
   @Binding var path: [AccountRoute]
   let store: EncounterMediaStore
+  let openWord: (LanguageReferenceID) -> Void
 
   var body: some View {
     NavigationStack(path: $path) {
@@ -16,6 +17,8 @@ struct AccountNavigationView: View {
             ReadingAidSettingsView()
           case .mediaLibrary:
             MediaLibraryView(store: store)
+          case .knownWords:
+            KnownWordsView(openWord: openWord)
           case .frequencyDictionaries:
             FrequencyDictionariesView(client: .live)
           case .credits:
@@ -27,6 +30,8 @@ struct AccountNavigationView: View {
 }
 
 struct AccountRootView: View {
+  @Environment(WordKnowledge.self) private var wordKnowledge
+
   var body: some View {
     List {
       Section {
@@ -41,6 +46,15 @@ struct AccountRootView: View {
           AccountRowLabel("Media Library", systemImage: "photo.on.rectangle.angled", tint: .orange)
         }
         .accessibilityIdentifier("account.media-library")
+
+        NavigationLink(value: AccountRoute.knownWords) {
+          LabeledContent {
+            Text(wordKnowledge.knownCount, format: .number)
+          } label: {
+            AccountRowLabel("Known Words", systemImage: "checkmark.circle.fill", tint: .teal)
+          }
+        }
+        .accessibilityIdentifier("account.known-words")
       }
 
       Section {
@@ -203,6 +217,7 @@ enum AccountRoute: Hashable {
   case profile
   case readingAids
   case mediaLibrary
+  case knownWords
   case frequencyDictionaries
   case credits
 }
