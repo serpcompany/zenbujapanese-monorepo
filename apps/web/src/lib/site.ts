@@ -8,10 +8,13 @@ export const site = {
 } as const
 
 /**
- * Only `pnpm deploy:production` builds with SITE_ENV=production. Every other build (local,
- * staging, previews) is kept out of search engines.
+ * Production is marked by SITE_ENV=production both at build time (`pnpm deploy:production`, for
+ * next.config headers) and at runtime (the production Worker var in wrangler.jsonc, for anything
+ * rendered on request). Everything else is kept out of search engines.
  */
-export const isProductionSite = process.env.SITE_ENV === 'production'
+export function isProductionSite() {
+  return process.env.SITE_ENV === 'production'
+}
 
 export function absoluteUrl(path: string) {
   return new URL(path, site.url).toString()

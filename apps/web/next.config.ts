@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
     ]
   },
   async headers() {
-    if (isProductionSite) return []
+    if (isProductionSite()) return []
     return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }]
   }
 }
