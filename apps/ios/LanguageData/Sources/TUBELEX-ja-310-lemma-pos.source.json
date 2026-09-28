@@ -34,7 +34,13 @@
     "url": "https://github.com/naist-nlp/tubelex/blob/7cb5fb36add76b83a266d1967536e1a1d3faa513/LICENSE",
     "notice": "apps/ios/Modules/Sources/SearchExperience/Resources/TUBELEX-BSD-3-CLAUSE.txt"
   },
-  "mappingPolicyVersion": 1,
+  "readingSource": {
+    "identity": "UniDic for Contemporary Written Japanese 3.1.0",
+    "record": "apps/ios/LanguageData/Sources/UniDic-CWJ-3.1.0.source.json",
+    "sha256": "340651aa78cc02caf690f94de8809d41c4acda694226517884ecad81c51523fc",
+    "policy": "A row FrequencyPackMappingV1 matches but can't place on one entry gets its UniDic lemma reading (lForm) when UniDic gives that lemma and part of speech exactly one; FrequencyPackMappingV2 then requires the reading. The reading is withdrawn when it would move an entry V1 already ranks to a worse-ranked row. Other rows carry no reading and map as in V1."
+  },
+  "mappingPolicyVersion": 2,
   "rankTiePolicy": "One-based source row ordinal after the header; equal counts retain pinned source artifact order and receive distinct ranks.",
   "presentationPolicyVersion": 1,
   "presentationCapabilities": ["count", "exactSourceRowRank", "numericTopPercentile"]

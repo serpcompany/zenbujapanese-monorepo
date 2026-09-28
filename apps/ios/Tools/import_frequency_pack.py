@@ -5,21 +5,23 @@ from __future__ import annotations
 
 import argparse
 import csv
+import io
 import hashlib
 import json
 import lzma
+import re
 import sqlite3
 import sys
 import tempfile
 import unicodedata
+import zipfile
 from pathlib import Path
 
 
 ARTIFACT_SCHEMA = "zenbu.frequency-pack.v1"
-MAPPING_SQL = (
-    Path(__file__).resolve().parents[1]
-    / "Modules/Sources/SearchExperience/Resources/FrequencyPackMappingV1.sql"
-)
+RESOURCES = Path(__file__).resolve().parents[1] / "Modules/Sources/SearchExperience/Resources"
+UNIDIC_LEXICON = "unidic-cwj-3.1.0/lex_3_1.csv"
+KATAKANA_WORD = re.compile(r"^[ァ-ヺー・]+$")
 csv.field_size_limit(16 * 1024 * 1024)
 
 
@@ -29,6 +31,10 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def mapping_sql_path(manifest: dict[str, object]) -> Path:
+    return RESOURCES / f"FrequencyPackMappingV{manifest.get('mappingPolicyVersion', 1)}.sql"
 
 
 def canonical_json(value: object) -> str:
@@ -126,13 +132,130 @@ def source_rows(
     return rows, observed_total
 
 
+def unidic_lemma_readings(unidic: Path, manifest: dict[str, object]) -> dict[tuple[str, str], str]:
+    """Map each UniDic (lemma, part of speech) to its reading when UniDic gives exactly one.
+
+    TUBELEX counts UniDic lemmas, so a lemma's reading (lForm) names the word it counted even
+    when JMdict files the same spelling under several readings. Lemmas UniDic itself files under
+    more than one reading, such as 家 (イエ, ウチ, ヤ), get none.
+    """
+    reading_source = manifest["readingSource"]
+    assert isinstance(reading_source, dict)
+    if sha256(unidic) != reading_source["sha256"]:
+        raise ValueError("UniDic archive SHA-256 mismatch")
+    readings: dict[tuple[str, str], set[str]] = {}
+    with zipfile.ZipFile(unidic) as archive, archive.open(UNIDIC_LEXICON) as raw:
+        for record in csv.reader(io.TextIOWrapper(raw, encoding="utf-8", newline="")):
+            pos = "-".join(part for part in record[4:8] if part and part != "*")
+            readings.setdefault((record[11], pos), set()).add(record[10])
+    return {
+        key: next(iter(values))
+        for key, values in readings.items()
+        if len(values) == 1 and next(iter(values)) not in ("", "*")
+    }
+
+
+def source_reading(form: str, lemma_reading: str) -> str:
+    """JMdict writes readings of katakana words in katakana and of everything else in hiragana."""
+    if KATAKANA_WORD.match(form):
+        return lemma_reading
+    return "".join(chr(ord(c) - 0x60) if "ァ" <= c <= "ヶ" else c for c in lemma_reading)
+
+
+def mapped_database(
+    rows: list[tuple[int, str, int, str, str]],
+    readings: list[str],
+    mapping_sql_file: Path,
+    language_data: Path,
+) -> sqlite3.Connection:
+    """Run a mapping policy over the rows in memory; digests are left empty."""
+    database = sqlite3.connect(":memory:")
+    database.executescript(
+        "CREATE TABLE source_rows (rank INTEGER PRIMARY KEY, form TEXT NOT NULL, "
+        "source_reading TEXT NOT NULL, source_count INTEGER NOT NULL, "
+        "source_pos TEXT NOT NULL, source_record_digest BLOB NOT NULL);"
+        "CREATE TABLE frequency_evidence (language_reference_id BLOB PRIMARY KEY, "
+        "rank INTEGER, source_count INTEGER, covered_source_rows INTEGER, "
+        "mapping_relation TEXT, matched_form TEXT, source_pos TEXT, "
+        "source_record_digest BLOB) WITHOUT ROWID;"
+    )
+    database.executemany(
+        "INSERT INTO source_rows VALUES (?, ?, ?, ?, ?, x'')",
+        [
+            (rank, form, reading, count, pos)
+            for (rank, form, count, pos, _), reading in zip(rows, readings)
+        ],
+    )
+    database.executescript(
+        mapping_sql_file.read_text(encoding="utf-8")
+        .replace("{{LANGUAGE_DATA_PATH}}", str(language_data).replace("'", "''"))
+        .replace("{{COVERED_SOURCE_ROWS}}", str(len(rows)))
+    )
+    return database
+
+
+def source_readings(
+    rows: list[tuple[int, str, int, str, str]],
+    manifest: dict[str, object],
+    language_data: Path,
+    unidic: Path | None,
+) -> list[str]:
+    """Give a row a reading only where V1 can't place it, so rows V1 places keep their mapping.
+
+    V2 prefers a reading match over a better-ranked spelling-only match for the same entry, so a
+    reading that would move an entry V1 already ranks to a worse row is withdrawn. No entry V1
+    ranks loses its rank or gets a worse one.
+    """
+    if "readingSource" not in manifest:
+        return [""] * len(rows)
+    if unidic is None:
+        raise ValueError("source manifest names a UniDic reading source; pass --unidic")
+    lemma_readings = unidic_lemma_readings(unidic, manifest)
+    empty = [""] * len(rows)
+    v1 = mapped_database(rows, empty, RESOURCES / "FrequencyPackMappingV1.sql", language_data)
+    try:
+        unresolved = {
+            rank
+            for (rank,) in v1.execute(
+                "SELECT rank FROM resolutions WHERE rank NOT IN (SELECT rank FROM eligible)"
+            )
+        }
+        v1_ranks = dict(v1.execute("SELECT language_reference_id, rank FROM frequency_evidence"))
+    finally:
+        v1.close()
+    readings = [
+        source_reading(form, lemma_readings[(form, pos)])
+        if rank in unresolved and (form, pos) in lemma_readings
+        else ""
+        for rank, form, _, pos, _ in rows
+    ]
+    while True:
+        v2 = mapped_database(rows, readings, mapping_sql_path(manifest), language_data)
+        try:
+            worse = [
+                rank
+                for identifier, rank in v2.execute(
+                    "SELECT language_reference_id, rank FROM frequency_evidence"
+                )
+                if readings[rank - 1] and v1_ranks.get(identifier, rank) < rank
+            ]
+        finally:
+            v2.close()
+        if not worse:
+            return readings
+        for rank in worse:
+            readings[rank - 1] = ""
+
+
 def create_artifact(
     output: Path,
     manifest: dict[str, object],
     rows: list[tuple[int, str, int, str, str]],
+    readings: list[str],
     total_tokens: int,
     language_data: Path,
 ) -> dict[str, object]:
+    mapping_sql_file = mapping_sql_path(manifest)
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=output.parent) as temporary:
         candidate = Path(temporary) / output.name
@@ -146,7 +269,7 @@ def create_artifact(
                 "PRAGMA auto_vacuum=NONE;"
                 "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID;"
                 "CREATE TABLE source_rows (rank INTEGER PRIMARY KEY, form TEXT NOT NULL, "
-                "source_count INTEGER NOT NULL, source_pos TEXT NOT NULL, "
+                "source_reading TEXT NOT NULL, source_count INTEGER NOT NULL, source_pos TEXT NOT NULL, "
                 "source_record_digest BLOB NOT NULL);"
                 "CREATE TABLE frequency_evidence ("
                 "language_reference_id BLOB PRIMARY KEY, rank INTEGER NOT NULL, "
@@ -155,14 +278,14 @@ def create_artifact(
                 "source_pos TEXT NOT NULL, source_record_digest BLOB NOT NULL) WITHOUT ROWID;"
             )
             database.executemany(
-                "INSERT INTO source_rows VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO source_rows VALUES (?, ?, ?, ?, ?, ?)",
                 [
-                    (rank, form, count, pos, hashlib.sha256(record.encode("utf-8")).digest())
-                    for rank, form, count, pos, record in rows
+                    (rank, form, reading, count, pos, hashlib.sha256(record.encode("utf-8")).digest())
+                    for (rank, form, count, pos, record), reading in zip(rows, readings)
                 ],
             )
             mapping_sql = (
-                MAPPING_SQL.read_text(encoding="utf-8")
+                mapping_sql_file.read_text(encoding="utf-8")
                 .replace("{{LANGUAGE_DATA_PATH}}", str(language_data).replace("'", "''"))
                 .replace("{{COVERED_SOURCE_ROWS}}", str(len(rows)))
             )
@@ -208,7 +331,7 @@ def create_artifact(
                 "unmapped_rows": str(unmapped),
                 "duplicate_mappings": str(duplicate_mappings),
                 "mapping_sha256": mapping_sha256,
-                "mapping_policy_sha256": sha256(MAPPING_SQL),
+                "mapping_policy_sha256": sha256(mapping_sql_file),
                 "language_data_sha256": sha256(language_data),
             }
             artifact_content_sha = artifact_content_sha256(metadata)
@@ -244,7 +367,9 @@ def import_pack(arguments: argparse.Namespace) -> None:
     manifest = read_manifest(source_manifest)
     validate_source(source, manifest)
     rows, total_tokens = source_rows(source, manifest)
-    mapping = create_artifact(output, manifest, rows, total_tokens, language_data)
+    unidic = arguments.unidic.resolve() if arguments.unidic else None
+    readings = source_readings(rows, manifest, language_data, unidic)
+    mapping = create_artifact(output, manifest, rows, readings, total_tokens, language_data)
     import_record = {
         "schema": "zenbu.frequency-pack-import.v1",
         "sourceManifest": manifest,
@@ -252,7 +377,8 @@ def import_pack(arguments: argparse.Namespace) -> None:
         "sourceSHA256": sha256(source),
         "languageDataSHA256": sha256(language_data),
         "importerSHA256": sha256(Path(__file__)),
-        "mappingPolicySHA256": sha256(MAPPING_SQL),
+        "mappingPolicySHA256": sha256(mapping_sql_path(manifest)),
+        "readingRows": sum(1 for reading in readings if reading),
         "artifactBytes": output.stat().st_size,
         "artifactSHA256": sha256(output),
         **mapping,
@@ -268,6 +394,9 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--language-data", type=Path, required=True)
     result.add_argument("--output", type=Path, required=True)
     result.add_argument("--output-manifest", type=Path, required=True)
+    result.add_argument(
+        "--unidic", type=Path, help="unidic-cwj-3.1.0.zip, for sources with a readingSource"
+    )
     return result
 
 
