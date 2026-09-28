@@ -19,6 +19,7 @@ struct WordDetailView: View {
   @State private var encounterMediaImportFailed = false
   @State private var cameraAlert: WordDetailCameraAlert?
   @State private var showsCamera = false
+  @State private var showsListPicker = false
   @State private var frequencyDisclosure: FrequencyDisclosureItem?
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
   /// Empty while loading and when no frequency dictionary is enabled.
@@ -162,6 +163,10 @@ struct WordDetailView: View {
           Menu {
             Section {
               KnownWordMenuButton(entry: entry)
+              Button("Add to List…", systemImage: "text.badge.plus") {
+                showsListPicker = true
+              }
+              .accessibilityIdentifier("word-detail.add-to-list")
             }
             Section {
               Button("Add Note", systemImage: "square.and.pencil", action: beginAddingNote)
@@ -195,6 +200,9 @@ struct WordDetailView: View {
     }
     .sheet(isPresented: $showsCamera) {
       cameraPicker
+    }
+    .sheet(isPresented: $showsListPicker) {
+      WordListPickerView(entry: entry)
     }
     .sheet(item: $frequencyDisclosure) { item in
       FrequencyDisclosureView(

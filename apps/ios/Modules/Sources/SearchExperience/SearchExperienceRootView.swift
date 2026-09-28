@@ -4,6 +4,7 @@ public struct SearchExperienceRootView: View {
   @State private var readingAidPreferences = ReadingAidPreferences()
   @State private var userProfile = UserProfile()
   private let wordKnowledge = WordKnowledge.shared
+  private let wordLists = WordLists.shared
   @Environment(\.scenePhase) private var scenePhase
   @State private var selectedTab = SearchExperienceTab.search
   @State private var frequencyRefreshID = 0
@@ -57,8 +58,12 @@ public struct SearchExperienceRootView: View {
       .environment(readingAidPreferences)
       .environment(userProfile)
       .environment(wordKnowledge)
+      .environment(wordLists)
       .onChange(of: scenePhase) { _, phase in
-        if phase == .active { wordKnowledge.saveIfNeeded() }
+        if phase == .active {
+          wordKnowledge.saveIfNeeded()
+          wordLists.saveIfNeeded()
+        }
       }
   }
 
@@ -72,7 +77,7 @@ public struct SearchExperienceRootView: View {
         AccountNavigationView(
           path: $accountPath,
           store: encounterMediaStore,
-          openWord: openKnownWord
+          openWord: openSavedWord
         )
       } label: {
         Label("Account", systemImage: "person.crop.circle")
@@ -293,14 +298,14 @@ public struct SearchExperienceRootView: View {
   }
 
   /// Opens the word's entry, or searches its headword when the entry is no longer found.
-  private func openKnownWord(_ record: WordKnowledgeRecord) {
+  private func openSavedWord(_ id: LanguageReferenceID, headword: String) {
     Task { @MainActor in
       selectedTab = .search
-      if let entry = try? await lookupClient.entry(record.languageReferenceID) {
+      if let entry = try? await lookupClient.entry(id) {
         path.append(.word(entry, nil))
       } else {
         path = []
-        query = record.headword
+        query = headword
       }
     }
   }

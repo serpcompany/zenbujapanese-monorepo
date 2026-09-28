@@ -69,7 +69,8 @@ struct KnownWordsView: View {
               Button {
                 openWord(record)
               } label: {
-                KnownWordsListRow(record: record)
+                SavedWordRow(
+                  headword: record.headword, reading: record.reading, date: record.updatedAt)
               }
               .foregroundStyle(.primary)
               .accessibilityIdentifier("known-words.item.\(record.entryID)")
@@ -122,24 +123,27 @@ struct KnownWordsView: View {
 
 }
 
-private struct KnownWordsListRow: View {
-  let record: WordKnowledgeRecord
+/// A saved word in Known Words or a list: its headword with furigana, and when it was saved.
+struct SavedWordRow: View {
+  let headword: String
+  let reading: String
+  let date: Date
 
   var body: some View {
     HStack {
       JapaneseRubyText(
-        surface: record.headword,
-        reading: record.reading,
+        surface: headword,
+        reading: reading,
         baseFont: .title3,
         rubyFont: .caption.weight(.semibold)
       )
       Spacer()
-      Text(record.updatedAt, format: .dateTime.month().day())
+      Text(date, format: .dateTime.month().day())
         .font(.caption)
         .foregroundStyle(.secondary)
     }
     .contentShape(Rectangle())
     .accessibilityElement(children: .combine)
-    .accessibilityLabel("\(record.headword), \(record.reading)")
+    .accessibilityLabel("\(headword), \(reading)")
   }
 }
