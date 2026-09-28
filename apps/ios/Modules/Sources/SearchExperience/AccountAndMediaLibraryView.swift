@@ -1,10 +1,12 @@
 import SwiftUI
+@preconcurrency import Translation
 import UIKit
 
 struct AccountNavigationView: View {
   @Binding var path: [AccountRoute]
   let store: EncounterMediaStore
-  let openWord: (WordKnowledgeRecord) -> Void
+  /// Opens a saved word by its ID, falling back to its headword and reading.
+  let openWord: (LanguageReferenceID, String, String) -> Void
 
   var body: some View {
     NavigationStack(path: $path) {
@@ -18,7 +20,11 @@ struct AccountNavigationView: View {
           case .mediaLibrary:
             MediaLibraryView(store: store)
           case .knownWords:
-            KnownWordsView(openWord: openWord)
+            KnownWordsView { openWord($0.languageReferenceID, $0.headword, $0.reading) }
+          case .wordLists:
+            WordListsView()
+          case .wordList(let listID):
+            WordListView(listID: listID) { openWord($0.languageReferenceID, $0.headword, $0.reading) }
           case .frequencyDictionaries:
             FrequencyDictionariesView(client: .live)
           case .credits:
@@ -31,6 +37,7 @@ struct AccountNavigationView: View {
 
 struct AccountRootView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
+  @Environment(WordLists.self) private var wordLists
 
   var body: some View {
     List {
@@ -57,6 +64,17 @@ struct AccountRootView: View {
           }
         }
         .accessibilityIdentifier("account.known-words")
+
+        NavigationLink(value: AccountRoute.wordLists) {
+          LabeledContent {
+            if wordLists.isLoaded {
+              Text(wordLists.lists.count, format: .number)
+            }
+          } label: {
+            AccountRowLabel("Lists", systemImage: "list.bullet.rectangle.fill", tint: .indigo)
+          }
+        }
+        .accessibilityIdentifier("account.lists")
       }
 
       Section {
@@ -218,12 +236,16 @@ enum AccountRoute: Hashable {
   case readingAids
   case mediaLibrary
   case knownWords
+  case wordLists
+  case wordList(UUID)
   case frequencyDictionaries
   case credits
 }
 
 private struct ReadingAidSettingsView: View {
   @Environment(ReadingAidPreferences.self) private var preferences
+  @State private var appleTranslation: NaturalTranslationAvailability?
+  @State private var downloadRequest: TranslationSession.Configuration?
 
   var body: some View {
     @Bindable var preferences = preferences
@@ -233,6 +255,9 @@ private struct ReadingAidSettingsView: View {
           .accessibilityIdentifier("reading-aids.show-furigana")
         Toggle("Show Romaji", isOn: $preferences.showsRomaji)
           .accessibilityIdentifier("reading-aids.show-romaji")
+        Toggle("Hide Furigana on Known Words", isOn: $preferences.hidesFuriganaOnKnownWords)
+          .disabled(!preferences.showsFurigana)
+          .accessibilityIdentifier("reading-aids.hide-known-furigana")
       } header: {
         Text("Reading Aids")
       } footer: {
@@ -240,10 +265,67 @@ private struct ReadingAidSettingsView: View {
           "Furigana appears above kanji. Romaji uses Apple’s system romanization and appears below complete Japanese text."
         )
       }
+      Section {
+        Toggle("Show Word Meanings", isOn: $preferences.showsWordMeanings)
+          .accessibilityIdentifier("reading-aids.show-word-meanings")
+        Toggle("Show Sentence Translations", isOn: $preferences.showsTranslations)
+          .accessibilityIdentifier("reading-aids.show-translations")
+        Picker("Translation Language", selection: $preferences.translationLanguage) {
+          ForEach(TranslationLanguage.allCases) { language in
+            Text(language.name).tag(language)
+          }
+        }
+        .disabled(!preferences.showsTranslations)
+        .accessibilityIdentifier("reading-aids.translation-language")
+        Picker("Translate Player Captions With", selection: $preferences.translationSource) {
+          ForEach(TranslationSource.allCases) { source in
+            Text(source.name).tag(source)
+          }
+        }
+        .disabled(!preferences.showsTranslations)
+        .accessibilityIdentifier("reading-aids.translation-source")
+        appleTranslationRow
+      } header: {
+        Text("Meanings and Translations")
+      } footer: {
+        Text(
+          "Word meanings show a short meaning under each linked word you haven’t marked known. Sentence translations show a natural translation under Player captions and example sentences. YouTube translates the whole video but can split lines differently; Apple translates each line on your device once its Japanese language is downloaded, and also fills lines YouTube leaves out."
+        )
+      }
+    }
+    .task { appleTranslation = try? await NaturalTranslationClient.live.availability() }
+    .translationTask(downloadRequest) { session in
+      // Apple's own sheet asks before downloading the language.
+      try? await session.prepareTranslation()
+      appleTranslation = try? await NaturalTranslationClient.live.availability()
+      downloadRequest = nil
     }
     .accessibilityIdentifier("reading-aids.form")
     .navigationTitle("Reading Aids")
     .navigationBarTitleDisplayMode(.inline)
+  }
+}
+
+extension ReadingAidSettingsView {
+  /// Whether Apple Translation can translate Japanese yet, with a way to download it.
+  @ViewBuilder
+  fileprivate var appleTranslationRow: some View {
+    switch appleTranslation {
+    case .installed:
+      LabeledContent("Apple Translation", value: "Japanese Downloaded")
+    case .downloadable:
+      Button("Download Japanese for Apple Translation", systemImage: "arrow.down.circle") {
+        downloadRequest = TranslationSession.Configuration(
+          source: Locale.Language(identifier: "ja"),
+          target: Locale.Language(identifier: preferences.translationLanguage.rawValue)
+        )
+      }
+      .accessibilityIdentifier("reading-aids.download-apple-translation")
+    case .unsupported:
+      LabeledContent("Apple Translation", value: "Unavailable")
+    case nil:
+      EmptyView()
+    }
   }
 }
 

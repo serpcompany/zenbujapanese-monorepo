@@ -18,6 +18,8 @@ struct JapaneseRubyText: View {
   let highlightedEnding: String
   let exposesAccessibility: Bool
   let displaysRomaji: Bool
+  /// Hides furigana here even when the Furigana preference is on, such as over a known word.
+  let hidesFurigana: Bool
 
   init(
     surface: String,
@@ -26,7 +28,8 @@ struct JapaneseRubyText: View {
     rubyFont: Font = .caption.weight(.semibold),
     highlightedEnding: String = "",
     exposesAccessibility: Bool = true,
-    displaysRomaji: Bool = true
+    displaysRomaji: Bool = true,
+    hidesFurigana: Bool = false
   ) {
     self.surface = surface
     self.reading = reading
@@ -35,6 +38,7 @@ struct JapaneseRubyText: View {
     self.highlightedEnding = surface.hasSuffix(highlightedEnding) ? highlightedEnding : ""
     self.exposesAccessibility = exposesAccessibility
     self.displaysRomaji = displaysRomaji
+    self.hidesFurigana = hidesFurigana
   }
 
   @ViewBuilder
@@ -62,7 +66,7 @@ struct JapaneseRubyText: View {
 
   @ViewBuilder
   private var furiganaContent: some View {
-    if readingAidPreferences.showsFurigana {
+    if readingAidPreferences.showsFurigana, !hidesFurigana {
       HStack(alignment: .bottom, spacing: 0) {
         ForEach(pieces) { piece in
           if let furigana = piece.segment.reading {

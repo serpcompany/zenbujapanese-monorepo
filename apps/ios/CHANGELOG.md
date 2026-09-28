@@ -6,10 +6,26 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- New **Player** tab: search YouTube or paste a link to watch the video with its Japanese captions
+  as cards below the player instead of over the video. The card being spoken is highlighted and
+  scrolls along as the video plays, tapping a card jumps to that line, and tapping a word pauses the
+  video and opens it in the dictionary at half height. English translations appear beneath each
+  line. Music-app controls add a scrubber, playback speed, and a repeat-line button; while paused,
+  the previous and next line buttons play one line and pause again. Player shows how much of a
+  video's vocabulary you know, such as **73%** 38 of 52 words known, and Recent lists watched
+  videos as cards with that percentage, their length, and how far you watched.
+- **Reading Aids** adds **Show Word Meanings**, a short meaning under each word you haven't marked
+  known; **Show Sentence Translations**, with a translation language and a choice of YouTube or
+  on-device Apple Translation for Player captions (with a button to download Apple's Japanese);
+  and **Hide Furigana on Known Words**.
 - Mark words as **Known**. Swipe a Search result or long-press it, or use the **•••** menu on a
   word's page. Known words show a green **✓ Known** capsule in Search and on the word's page,
   and **Account → Known Words** lists them with a count, search, and swipe to mark unknown.
   Known words are stored only on your device.
+- Save words to your own **Lists**. Use **Add to List…** in the **•••** menu on a word's page
+  to add it to any list or a new one; the word's page lists them above Notes. **Account → Lists** starts with **Favorites** and lets you
+  create, rename (swipe, or tap a list in Edit), reorder, and delete lists, and search a list, swipe a word out of it, or select several words to remove. Lists
+  are stored only on your device.
 - Share a word from its page: the headword, reading, and meanings are shared as text.
 - New optional frequency dictionaries built from openly licensed Jiten lists (CC BY-SA 4.0):
   **TV & Movies**, **Anime**, **Manga**, **Novels**, **Visual Novels**, and **Video Games**.
@@ -36,6 +52,13 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Changed
 
+- Words you marked known no longer show an underline in linked Japanese.
+- The word sheet from Image Search and Player has a close button and **Open Full Entry** in its top
+  bar instead of Done and a bottom button, and no longer repeats the word as its title. Its
+  **Choose** list uses the same rows as Search results. Open Full Entry, and links out of the
+  sheet, stay in the tab the sheet came from.
+- Word Detail lists **Alternatives** after Frequency instead of above Meaning.
+- The app stays in portrait on iPhone.
 - A word's page has **Share** and **•••** buttons in place of **+**. Add Note, Take Photo, and
   Choose Photo are in the **•••** menu.
 - The Video Games frequency chip is shortened to **Games**.

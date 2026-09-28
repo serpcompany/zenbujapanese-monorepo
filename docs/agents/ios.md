@@ -104,3 +104,49 @@ failed writes, and backups. When changing known words, also check in the Simulat
   opens it in Search.
 - Known words live in `Application Support/Zenbu Japanese/word-knowledge.json` in the app's
   data container.
+
+## Word lists manual checks
+
+`WordListsTests` cover list storage: create, rename, delete, and reorder surviving a reload,
+membership, the one-time Favorites list, and unreadable and newer-version files. When changing
+word lists, also check in the Simulator:
+
+- Word Detail **•••** → **Add to List…** toggles a word in Favorites and in a list made with
+  **New List**, and both survive a relaunch. The word's **Lists** section above Notes names both.
+- **Account → Lists** shows the count; a list removes a word by swipe or by **•••** → Select
+  Words, renames or deletes itself from **•••**, and opens a word in Search;
+  the index renames by swipe or by tapping a list in Edit, reorders in Edit, and asks before deleting a list that has words.
+- Lists live in `Application Support/Zenbu Japanese/word-lists.json` in the app's data container.
+
+## Player manual checks
+
+`YouTubeCaptionsTests` cover link parsing, search-result links, caption-track choice,
+timed-text parsing, translation pairing, card size, and word meanings. The live caption fetch
+and the embedded player need the network, so when changing Player, also check these videos in
+the Simulator. Type a link into the Player search bar; typing Japanese there triggers a paste
+prompt, so search in English.
+
+| Video | What it exercises |
+| --- | --- |
+| `https://youtu.be/AQdI1o2D32I` (Fuku) | Creator-made captions with line-aligned YouTube translations |
+| `https://www.youtube.com/watch?v=C7GcYZzyeY8` (Metal Gear Solid 4) | A 1.5-hour video with long lines and ~500 counted words |
+| `https://www.youtube.com/watch?v=T_lC2O1oIew` (Plastic Love) | Automatic captions, sound tags, and sentence-length translations that must not grow a card past two lines |
+| `https://www.youtube.com/watch?v=fi6XzdRVjkk&list=PLq2VAzMUDhfHyvK6AoYEwOLCVnNNNr18d` | A playlist link to a video without Japanese captions, showing **No Japanese Captions** |
+
+With each video, check that:
+
+- The video plays inline without YouTube's caption overlay, the spoken line's card is
+  highlighted and scrolls into view, tapping a card outside its words plays from that line, and
+  the previous, play/pause, and next controls move between lines. Dragging the scrubber seeks,
+  and the speed menu changes playback speed. While paused, previous and next play one line and
+  pause at its end; while playing, they jump and keep playing.
+- The repeat button replays the current line until it's turned off, and skipping or tapping a
+  card moves the repeat to that line.
+- The video appears under **Recent** after going back, with its title and thumbnail.
+- Searching words in the Player search bar shows YouTube results in the app, and tapping a
+  video opens it in Player.
+- English lines appear beneath the Japanese, and the tab bar stays visible while watching.
+- Tapping a word pauses the video and opens the word sheet at half height; **Open Full Entry**
+  opens the word inside Player, and Back returns to the video.
+- A video without Japanese captions shows **No Japanese Captions**, and one that disallows
+  embedding shows **Video Unavailable**.

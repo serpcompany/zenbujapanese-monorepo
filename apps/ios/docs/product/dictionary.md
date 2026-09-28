@@ -43,6 +43,8 @@ with the results instead of staying pinned over them.
 A word detail can present its written form and reading, ordered meanings, alternative forms,
 kanji, related words, conjugations, source-matched Example Sentences, pronunciation, and
 frequency information when the corresponding data is available.
+Below the top card, sections appear in this order: Meaning, Frequency, Alternatives (other
+written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 
 The top of a word detail shows the headword with furigana, following the Reading Aids setting.
 When furigana is off, the reading appears under the headword instead. To the right of the
@@ -63,8 +65,11 @@ to the form.
 
 Linked Japanese in Example Sentences gives each word its own underline, so word boundaries are
 visible. An inflected verb or adjective is one word with its endings, such as 見なかった,
-見ている, or 静かな, and opens its dictionary entry. The words that make up the current entry or the searched form are
-accented.
+見ている, or 静かな, and opens its dictionary entry. The words that make up the current entry or
+the searched form are accented. Words the learner marked known have no underline, and no
+furigana when **Hide Furigana on Known Words** is on, but can still be selected. With **Show
+Word Meanings** on, each unknown word shows a short accent-colored meaning under it, and
+**Show Sentence Translations** controls whether example sentences show their English.
 
 A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word.
 Selecting a row opens that dictionary's details. JLPT levels are presented as unofficial study
@@ -76,9 +81,15 @@ dictionary entry.
 
 The top-right of a word detail holds **Share**, which shares the headword, reading, and numbered
 meanings as text, and a **•••** menu. The menu starts with **Mark as Known** (or **Mark as
-Unknown**), followed by Add Note, Take Photo, and Choose Photo. A known word shows the same
+Unknown**) and **Add to List…**, followed by Add Note, Take Photo, and Choose Photo. A known word shows the same
 **✓ Known** capsule under its headword. A word counts as unknown until the learner marks it, and
 known words persist on the device, keyed by the dictionary entry's stable identifier.
+
+**Add to List…** opens a sheet listing every word list, with a checkmark on the lists that
+contain the word. Tapping a list adds or removes the word at once, **New List** asks for a name,
+creates the list, and adds the word to it, and Done closes the sheet. A **Lists** section above
+Notes names every list holding the word, each opening that list in Account, followed by
+**Add to List**, which opens the same sheet. Search results don't show which lists a word is in.
 
 A learner can write notes for a word and associate photos with it. Notes and associated
 photos persist on the device.
@@ -97,8 +108,10 @@ left, and English elsewhere in the image does not hide the Japanese. A learner c
 - use the same Kuromoji parser family as the Zenbu browser extension and other linked
   Japanese in the app for interactive word boundaries;
 - select a recognized token to open the full Word Detail experience in a temporary,
-  full-height sheet, including a candidate chooser or no-entry state when needed, with an
-  option to continue to the normal full-screen dictionary route;
+  full-height sheet. A token with several possible entries opens a **Choose** list that uses
+  Search's result rows, and one with none shows a no-entry state. The sheet's top bar has a
+  close button and **Open Full Entry**, which continues to the normal full-screen dictionary
+  route in the tab the sheet was opened from;
 - copy the recognized text;
 - share the selected source image; and
 - request a Japanese-to-English natural translation when Apple's on-device translation is
