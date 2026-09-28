@@ -44,6 +44,47 @@ struct ImageTextRecognitionTests {
     #expect(lines == ["駅の近くに本屋があります", "毎朝コーヒーを飲みます"])
   }
 
+  @Test("lines report their reading direction")
+  func lineDirection() async throws {
+    let vertical = try await recognize("vertical-with-english-subtitle.png")
+    #expect(vertical.first { $0.text == "人生の時計" }?.isVertical == true)
+    #expect(vertical.first { $0.text.contains("Clock of Life") }?.isVertical == false)
+    let horizontal = try await recognize("horizontal-japanese.png")
+    #expect(horizontal.allSatisfy { !$0.isVertical })
+  }
+
+  @Test("book columns that wrap join into paragraphs at sentence ends")
+  func bookParagraphs() async throws {
+    let page = try await page("vertical-novel-page-photo.jpg")
+    #expect(!page.lines.contains { $0.text == "176" })
+    #expect(page.paragraphs.count == 4)
+    #expect(page.paragraphs.first?.text.hasPrefix("家族って「ある」ものじゃなかった") == true)
+    #expect(page.paragraphs.first?.text.hasSuffix("来てしまっていた。") == true)
+    #expect(page.paragraphs.last?.text.hasSuffix("一緒になれなかった。") == true)
+  }
+
+  @Test("a list keeps each item as its own paragraph")
+  func listParagraphs() async throws {
+    let page = try await page("vertical-proverbs.png")
+    #expect(page.paragraphs.count == page.lines.count)
+    #expect(page.paragraphs.first?.text == "木を見て森を見ず")
+  }
+
+  @Test("two horizontal lines stay separate")
+  func shortHorizontalParagraphs() async throws {
+    let page = try await page("horizontal-japanese.png")
+    #expect(page.paragraphs.map(\.text) == ["駅の近くに本屋があります", "毎朝コーヒーを飲みます"])
+  }
+
+  private func page(_ name: String) async throws -> ImageTextPage {
+    let observations = try await recognize(name)
+    return ImageTextPage(
+      asset: ImageTextAsset(name: name, data: Data()),
+      observations: observations,
+      regions: []
+    )
+  }
+
   private func recognizedLines(_ name: String) async throws -> [String] {
     try await recognize(name).map(\.text)
   }

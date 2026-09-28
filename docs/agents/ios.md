@@ -90,8 +90,15 @@ When changing Search results or frequency dictionaries, also check in the Simula
 `Modules/Tests/SearchExperienceTests/Fixtures/ImageText`: vertical Japanese (a book-page photo,
 a proverb list, and a panel with an English subtitle) and a horizontal control. When changing
 text recognition, also open one vertical and one horizontal image in the Simulator's Image
-Search and check that the underlines follow each column and that copied text reads in column
-order.
+Search and check:
+
+- **Photo** shows chips down vertical columns and underlines under horizontal lines, and a
+  word low on a tall photo pans above the half-height sheet;
+- **Both** outlines the top card's line on the image and keeps a tapped word visible above
+  the sheet;
+- **Text** joins the book-page columns into paragraphs; and
+- **Translate** shows "Translation not supported" in the Simulator, because Apple's
+  on-device translation only runs on a real device. Check translations on a device.
 
 ## Known words manual checks
 

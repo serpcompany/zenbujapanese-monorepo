@@ -5,6 +5,9 @@ import UIKit
 struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
+  @AppStorage("image-text.view-mode") private var mode = ImageTextViewMode.both
+  /// The line (or, in Text, the paragraph) the learner is on: outlined on the photo in Both.
+  @State private var activeLineID: Int?
   @Binding private var presentedWord: RecognizedWordSheetRequest?
   let textAnalysisClient: JapaneseTextAnalysisClient
   let translationClient: NaturalTranslationClient
@@ -35,30 +38,30 @@ struct ImageTextFlowView: View {
   }
 
   var body: some View {
-    GeometryReader { geometry in
-      VStack(spacing: 0) {
-        if analysisAvailability == .reduced {
-          Label(
-            "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
-            systemImage: "info.circle"
-          )
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-          .padding(.horizontal, 16)
-          .padding(.vertical, 8)
-          .accessibilityIdentifier("image-text.reduced-analysis")
-        }
-        if model.canRequestTranslation {
-          translation
-        }
-        pages
+    VStack(spacing: 0) {
+      if analysisAvailability == .reduced {
+        Label(
+          "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
+          systemImage: "info.circle"
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .accessibilityIdentifier("image-text.reduced-analysis")
       }
-      .frame(
-        width: geometry.size.width,
-        height: geometry.size.height,
-        alignment: .top
-      )
+      Picker("View", selection: $mode) {
+        ForEach(ImageTextViewMode.allCases) { mode in
+          Text(mode.title).tag(mode)
+        }
+      }
+      .pickerStyle(.segmented)
+      .padding(.horizontal, 16)
+      .padding(.vertical, 8)
+      .accessibilityIdentifier("image-text.mode")
+      pages
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .navigationTitle("Photo")
     .navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden(true)
@@ -72,15 +75,17 @@ struct ImageTextFlowView: View {
       }
 
       ToolbarItemGroup(placement: .topBarTrailing) {
-        Button {
-          model.showsHighlights.toggle()
-        } label: {
-          Image(systemName: model.showsHighlights ? "viewfinder" : "viewfinder.circle")
+        if mode == .photo {
+          Button {
+            model.showsHighlights.toggle()
+          } label: {
+            Image(systemName: model.showsHighlights ? "viewfinder" : "viewfinder.circle")
+          }
+          .accessibilityLabel(
+            model.showsHighlights ? "Hide recognition highlights" : "Show recognition highlights"
+          )
+          .accessibilityIdentifier("image-text.highlights")
         }
-        .accessibilityLabel(
-          model.showsHighlights ? "Hide recognition highlights" : "Show recognition highlights"
-        )
-        .accessibilityIdentifier("image-text.highlights")
 
         shareMenu
       }
@@ -112,8 +117,10 @@ struct ImageTextFlowView: View {
     }
   }
 
+  /// Download, progress, and failure states for the natural translation. A finished translation
+  /// is shown by each mode itself.
   @ViewBuilder
-  private var translation: some View {
+  private var translationStatus: some View {
     switch model.translationState {
     case .checkingAvailability:
       ProgressView("Checking translation availability…")
@@ -134,24 +141,15 @@ struct ImageTextFlowView: View {
       ProgressView("Translating…")
         .padding(.vertical, 8)
         .accessibilityIdentifier("image-text.translating")
-    case .translated(let value):
-      VStack(alignment: .leading, spacing: 4) {
-        Text("NATURAL TRANSLATION")
-          .font(.caption.bold())
-          .foregroundStyle(.secondary)
-        Text(value)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .accessibilityIdentifier("image-text.translation")
-      }
-      .padding(.horizontal, 16)
-      .padding(.vertical, 8)
+    case .translated:
+      EmptyView()
     case .cancelled:
       translationRecovery(
         title: "Translation download cancelled",
         message: "Your recognized text is unchanged. Try again when you’re ready."
       )
     case .unsupported:
-      translationStatus(
+      translationStatusMessage(
         title: "Translation not supported",
         message: "Japanese to English translation isn’t supported on this device.",
         retryable: false,
@@ -174,7 +172,7 @@ struct ImageTextFlowView: View {
     title: LocalizedStringKey,
     message: LocalizedStringKey
   ) -> some View {
-    translationStatus(
+    translationStatusMessage(
       title: title,
       message: message,
       retryable: true,
@@ -182,7 +180,7 @@ struct ImageTextFlowView: View {
     )
   }
 
-  private func translationStatus(
+  private func translationStatusMessage(
     title: LocalizedStringKey,
     message: LocalizedStringKey,
     retryable: Bool,
@@ -205,8 +203,6 @@ struct ImageTextFlowView: View {
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.horizontal, 16)
-    .padding(.vertical, 8)
   }
 
   @ViewBuilder
@@ -257,6 +253,7 @@ struct ImageTextFlowView: View {
     Binding {
       model.selectedPage
     } set: { index in
+      activeLineID = nil
       model.selectPage(index)
     }
   }
@@ -275,18 +272,123 @@ struct ImageTextFlowView: View {
         description: Text("Close and choose the file again.")
       )
     case .loaded(let page):
-      ImageTextCanvas(
-        page: page,
-        showsHighlights: model.showsHighlights,
-        selectedRegion: model.selectedRegion,
-        selectRegion: { region in
-          model.selectedRegion = region
-          presentedWord = region.sheetRequest(asset: page.asset)
-        }
-      )
+      switch mode {
+      case .photo:
+        ImageTextCanvas(
+          page: page,
+          showsRegions: model.showsHighlights,
+          selectedRegion: model.selectedRegion,
+          keepsSelectionAboveSheet: presentedWord != nil,
+          outlinedLineID: nil,
+          selectRegion: { region in
+            model.selectedRegion = region
+            presentedWord = region.sheetRequest(asset: page.asset)
+          }
+        )
+        .clipped()
+      case .both:
+        ImageTextLineCards(
+          page: page,
+          model: model,
+          textAnalysisClient: textAnalysisClient,
+          highlightedEntry: presentedWord?.entry,
+          isWordSheetPresented: presentedWord != nil,
+          activeLineID: $activeLineID,
+          openWord: { entry, lineID in open(entry, in: page, lineID: lineID) },
+          openCandidates: { surface, candidates, lineID in
+            open(surface, candidates: candidates, in: page, lineID: lineID)
+          }
+        )
+      case .text:
+        ImageTextReader(
+          page: page,
+          textAnalysisClient: textAnalysisClient,
+          highlightedEntry: presentedWord?.entry,
+          activeParagraphID: activeLineID,
+          isWordSheetPresented: presentedWord != nil,
+          openWord: { entry, paragraphID in open(entry, in: page, lineID: paragraphID) },
+          openCandidates: { surface, candidates, paragraphID in
+            open(surface, candidates: candidates, in: page, lineID: paragraphID)
+          }
+        )
+      case .translate:
+        translatePage(page)
+      }
     }
   }
 
+  private func translatePage(_ page: ImageTextPage) -> some View {
+    ScrollView {
+      VStack(alignment: .leading, spacing: 20) {
+        translationStatus
+        if case .translated = model.translationState {
+          ForEach(page.paragraphs) { paragraph in
+            VStack(alignment: .leading, spacing: 6) {
+              Text(paragraph.text)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+              Text(model.translation(of: paragraph.text) ?? "")
+                .accessibilityIdentifier("image-text.translation.\(paragraph.id)")
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .textSelection(.enabled)
+          }
+        }
+      }
+      .padding(16)
+    }
+    .accessibilityIdentifier("image-text.translation")
+    // Choosing Translate is the request, so it starts without another tap.
+    .task(id: page.asset.id) {
+      if case .idle = model.translationState { model.requestTranslation() }
+    }
+  }
+
+  private func open(_ entry: DictionaryEntry, in page: ImageTextPage, lineID: Int) {
+    activeLineID = lineID
+    presentedWord = RecognizedWordSheetRequest(
+      id: "\(page.asset.id).line.\(lineID).\(entry.id.rawValue)",
+      surface: entry.headword,
+      entry: entry,
+      candidateEntries: [],
+      encounterMedia: EncounterMediaAttachment(name: page.asset.name, data: page.asset.data)
+    )
+  }
+
+  private func open(
+    _ surface: String,
+    candidates: [DictionaryEntry],
+    in page: ImageTextPage,
+    lineID: Int
+  ) {
+    activeLineID = lineID
+    presentedWord = RecognizedWordSheetRequest(
+      id: "\(page.asset.id).line.\(lineID).\(surface)",
+      surface: surface,
+      entry: nil,
+      candidateEntries: candidates,
+      encounterMedia: EncounterMediaAttachment(name: page.asset.name, data: page.asset.data)
+    )
+  }
+}
+
+/// How Image Search shows a recognized page.
+enum ImageTextViewMode: String, CaseIterable, Identifiable {
+  case photo
+  case both
+  case text
+  case translate
+
+  var id: Self { self }
+
+  var title: LocalizedStringKey {
+    switch self {
+    case .photo: "Photo"
+    case .both: "Both"
+    case .text: "Text"
+    case .translate: "Translate"
+    }
+  }
 }
 
 private struct NativeTranslationPreparationTask: View {
@@ -306,8 +408,8 @@ private struct NativeTranslationPreparationTask: View {
         do {
           try await session.prepareTranslation()
           guard model.beginPreparedTranslation(request) else { return }
-          let response = try await session.translate(request.source)
-          model.finishPreparedTranslation(response.targetText, for: request)
+          let translations = try await session.translations(for: request.source)
+          model.finishPreparedTranslation(translations, for: request)
         } catch is CancellationError {
           model.cancelPreparedTranslation(request)
         } catch  where TranslationError.alreadyCancelled ~= error {
@@ -321,8 +423,11 @@ private struct NativeTranslationPreparationTask: View {
 
 private struct ImageTextCanvas: View {
   let page: ImageTextPage
-  let showsHighlights: Bool
+  let showsRegions: Bool
   let selectedRegion: ImageTextRegion?
+  /// Pans the photo so the selected word isn't hidden by the half-height word sheet.
+  let keepsSelectionAboveSheet: Bool
+  let outlinedLineID: Int?
   let selectRegion: (ImageTextRegion) -> Void
 
   var body: some View {
@@ -336,19 +441,31 @@ private struct ImageTextCanvas: View {
             .frame(width: geometry.size.width, height: geometry.size.height)
             .accessibilityHidden(true)
 
-          if showsHighlights {
+          if showsRegions {
             ForEach(page.regions) { region in
-              let recognizedRect = displayRect(region.boundingBox, in: imageRect)
-              let rect = interactiveTokenRect(recognizedRect)
+              let rect = interactiveTokenRect(
+                displayRect(region.boundingBox, in: imageRect),
+                isVertical: region.isVertical
+              )
               ImageTextRegionButton(
                 region: region,
-                isVertical: recognizedRect.height > recognizedRect.width * 1.35,
                 isSelected: selectedRegion?.id == region.id,
                 select: selectRegion
               )
               .frame(width: max(rect.width, 1), height: max(rect.height, 1))
               .position(x: rect.midX, y: rect.midY)
             }
+          }
+
+          if let line = page.lines.first(where: { $0.id == outlinedLineID }) {
+            let rect = displayRect(line.boundingBox, in: imageRect).insetBy(dx: -3, dy: -3)
+            RoundedRectangle(cornerRadius: 4)
+              .fill(.tint.opacity(0.12))
+              .strokeBorder(.tint, lineWidth: 2)
+              .frame(width: rect.width, height: rect.height)
+              .position(x: rect.midX, y: rect.midY)
+              .allowsHitTesting(false)
+              .accessibilityHidden(true)
           }
 
           Text("")
@@ -365,10 +482,24 @@ private struct ImageTextCanvas: View {
             .accessibilityLabel(page.asset.name)
             .accessibilityIdentifier("image-text.current-page")
         }
+        .offset(y: sheetOffset(imageRect: imageRect, height: geometry.size.height))
+        .animation(.easeInOut(duration: 0.25), value: keepsSelectionAboveSheet)
+        .animation(.easeInOut(duration: 0.25), value: selectedRegion?.id)
+        .animation(.easeInOut(duration: 0.2), value: outlinedLineID)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Imported image \(page.asset.name)")
       }
     }
+  }
+
+  /// The half-height sheet covers roughly the lower 60% of this view, so a selected word below
+  /// that line is moved up to the middle of the part that stays visible.
+  private func sheetOffset(imageRect: CGRect, height: CGFloat) -> CGFloat {
+    guard keepsSelectionAboveSheet, let selectedRegion else { return 0 }
+    let visibleHeight = height * 0.4
+    let rect = displayRect(selectedRegion.boundingBox, in: imageRect)
+    guard rect.maxY > visibleHeight else { return 0 }
+    return visibleHeight / 2 - rect.midY
   }
 
   private func aspectFitRect(imageSize: CGSize, container: CGSize) -> CGRect {
@@ -391,9 +522,11 @@ private struct ImageTextCanvas: View {
     )
   }
 
-  private func interactiveTokenRect(_ recognizedRect: CGRect) -> CGRect {
-    if recognizedRect.height > recognizedRect.width * 1.35 {
-      let gap = min(4, recognizedRect.height * 0.16)
+  /// Vertical chips nearly touch, since alternating shades already mark word boundaries;
+  /// horizontal underlines keep a gap between words.
+  private func interactiveTokenRect(_ recognizedRect: CGRect, isVertical: Bool) -> CGRect {
+    if isVertical {
+      let gap = min(1.5, recognizedRect.height * 0.08)
       return recognizedRect.insetBy(dx: 0, dy: gap / 2)
     }
     let gap = min(5, recognizedRect.width * 0.16)
@@ -401,9 +534,11 @@ private struct ImageTextCanvas: View {
   }
 }
 
+/// A recognized word over the photo. Words in vertical lines are tinted chips that alternate
+/// shade along the column, because an underline beside a column reads as a ruling line;
+/// horizontal words keep an underline.
 private struct ImageTextRegionButton: View {
   let region: ImageTextRegion
-  let isVertical: Bool
   let isSelected: Bool
   let select: (ImageTextRegion) -> Void
 
@@ -415,21 +550,192 @@ private struct ImageTextRegionButton: View {
         .contentShape(.rect)
         .background {
           RoundedRectangle(cornerRadius: 3)
-            .fill(ZenbuTheme.recognitionHighlight.opacity(isSelected ? 0.14 : 0.05))
+            .fill(ZenbuTheme.recognitionHighlight.opacity(fillOpacity))
         }
-        .overlay(alignment: isVertical ? .trailing : .bottom) { underline }
+        .overlay(alignment: .bottom) {
+          if !region.isVertical { underline }
+        }
     }
     .buttonStyle(.plain)
     .accessibilityLabel("Recognized \(region.surface)")
     .accessibilityIdentifier("image-text.region.\(region.surface)")
   }
 
+  private var fillOpacity: Double {
+    if region.isVertical {
+      return isSelected ? 0.45 : region.indexInLine.isMultiple(of: 2) ? 0.12 : 0.24
+    }
+    return isSelected ? 0.14 : 0.05
+  }
+
   private var underline: some View {
     Rectangle()
       .fill(ZenbuTheme.recognitionHighlight.opacity(isSelected ? 1 : 0.78))
-      .frame(
-        width: isVertical ? 3 : nil,
-        height: isVertical ? nil : 3
+      .frame(height: 3)
+  }
+}
+
+/// Both: the photo on top with the current line outlined, and each recognized line below as a
+/// card in the Player's caption style.
+private struct ImageTextLineCards: View {
+  @Environment(ReadingAidPreferences.self) private var readingAidPreferences
+  let page: ImageTextPage
+  let model: ImageTextFlowModel
+  let textAnalysisClient: JapaneseTextAnalysisClient
+  let highlightedEntry: DictionaryEntry?
+  let isWordSheetPresented: Bool
+  @Binding var activeLineID: Int?
+  let openWord: (DictionaryEntry, Int) -> Void
+  let openCandidates: (String, [DictionaryEntry], Int) -> Void
+
+  var body: some View {
+    GeometryReader { geometry in
+      VStack(spacing: 0) {
+        ImageTextCanvas(
+          page: page,
+          showsRegions: false,
+          selectedRegion: nil,
+          keepsSelectionAboveSheet: false,
+          outlinedLineID: activeLineID,
+          selectRegion: { _ in }
+        )
+        // The photo shrinks while a word is open so the tapped line stays above the sheet.
+        .frame(height: geometry.size.height * (isWordSheetPresented ? 0.2 : 0.38))
+        .clipped()
+        .padding(.bottom, 4)
+        .animation(.easeInOut(duration: 0.25), value: isWordSheetPresented)
+
+        if readingAidPreferences.showsTranslations, !isWordSheetPresented {
+          translateControl
+            .padding(.horizontal, 16)
+            .padding(.bottom, 6)
+        }
+
+        ScrollView {
+          LazyVStack(spacing: 10) {
+            ForEach(page.lines) { line in
+              card(line)
+                .id(line.id)
+            }
+          }
+          .scrollTargetLayout()
+          .padding(.horizontal, 12)
+        }
+        .scrollPosition(id: $activeLineID, anchor: .top)
+        // Room to scroll the last lines above the half-height word sheet.
+        .contentMargins(
+          .bottom, isWordSheetPresented ? geometry.size.height * 0.45 : 16, for: .scrollContent
+        )
+        .accessibilityIdentifier("image-text.lines")
+      }
+    }
+    .onAppear {
+      if activeLineID == nil { activeLineID = page.lines.first?.id }
+    }
+  }
+
+  @ViewBuilder
+  private var translateControl: some View {
+    switch model.translationState {
+    case .idle:
+      Button("Translate Lines", systemImage: "translate") { model.requestTranslation() }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityIdentifier("image-text.translate-lines")
+    case .checkingAvailability, .preparing, .translating:
+      ProgressView()
+        .controlSize(.small)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    case .translated:
+      EmptyView()
+    case .cancelled, .unsupported, .preparationFailed, .failed:
+      Label("Translation unavailable. See Translate for details.", systemImage: "translate")
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+  }
+
+  private func card(_ line: ImageTextLine) -> some View {
+    let isActive = line.id == activeLineID
+    return VStack(alignment: .leading, spacing: 6) {
+      LinkedJapaneseText(
+        text: line.text,
+        highlightedQuery: SearchQuery(""),
+        highlightedEntry: isActive ? highlightedEntry : nil,
+        japaneseTextAnalysisClient: textAnalysisClient,
+        identifierPrefix: "image-text.line.\(line.id)",
+        highlightsCurrentEntry: true,
+        openCandidates: { surface, candidates in openCandidates(surface, candidates, line.id) },
+        openWord: { entry in openWord(entry, line.id) }
       )
+      if readingAidPreferences.showsTranslations, let translation = model.translation(of: line.text)
+      {
+        Text(translation)
+          .font(.callout)
+          .foregroundStyle(.secondary)
+          .padding(.top, 8)
+      }
+    }
+    .padding(.horizontal, 16)
+    .padding(.vertical, 12)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background { cardBackground(isActive: isActive) }
+    // Tapping a line outside its words outlines it on the photo.
+    .contentShape(.rect)
+    .onTapGesture { withAnimation { activeLineID = line.id } }
+    .accessibilityElement(children: .contain)
+    .accessibilityAddTraits(isActive ? .isSelected : [])
+    .accessibilityIdentifier("image-text.line.\(line.id)")
+  }
+
+  /// Matches the Player's caption cards: the current line gets a tinted fill and an outline.
+  private func cardBackground(isActive: Bool) -> some View {
+    let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+    return shape
+      .fill(isActive ? AnyShapeStyle(.tint.opacity(0.18)) : AnyShapeStyle(.fill.quaternary))
+      .overlay { shape.strokeBorder(.tint, lineWidth: isActive ? 2.5 : 0) }
+      .animation(.easeInOut(duration: 0.2), value: isActive)
+  }
+}
+
+/// Text: the recognized Japanese as paragraphs of linked text, like a reader.
+private struct ImageTextReader: View {
+  let page: ImageTextPage
+  let textAnalysisClient: JapaneseTextAnalysisClient
+  let highlightedEntry: DictionaryEntry?
+  let activeParagraphID: Int?
+  let isWordSheetPresented: Bool
+  let openWord: (DictionaryEntry, Int) -> Void
+  let openCandidates: (String, [DictionaryEntry], Int) -> Void
+
+  var body: some View {
+    GeometryReader { geometry in
+      ScrollView {
+        VStack(alignment: .leading, spacing: 20) {
+          ForEach(page.paragraphs) { paragraph in
+            LinkedJapaneseText(
+              text: paragraph.text,
+              highlightedQuery: SearchQuery(""),
+              highlightedEntry: paragraph.id == activeParagraphID ? highlightedEntry : nil,
+              japaneseTextAnalysisClient: textAnalysisClient,
+              identifierPrefix: "image-text.paragraph.\(paragraph.id)",
+              highlightsCurrentEntry: true,
+              openCandidates: { surface, candidates in
+                openCandidates(surface, candidates, paragraph.id)
+              },
+              openWord: { entry in openWord(entry, paragraph.id) }
+            )
+            .frame(maxWidth: .infinity, alignment: .leading)
+          }
+        }
+        .padding(16)
+      }
+      .contentMargins(
+        .bottom, isWordSheetPresented ? geometry.size.height * 0.45 : 0, for: .scrollContent
+      )
+      .accessibilityIdentifier("image-text.reader")
+    }
   }
 }

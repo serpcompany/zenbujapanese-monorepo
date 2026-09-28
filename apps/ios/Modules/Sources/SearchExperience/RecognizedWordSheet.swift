@@ -15,7 +15,8 @@ struct RecognizedWordSheet<EntryContent: View>: View {
   @State private var candidateRanks: [LanguageReferenceID: FrequencyRanks] = [:]
 
   let request: RecognizedWordSheetRequest
-  /// Opens at half height and leaves the screen behind usable, so a playing video stays visible.
+  /// Opens at half height and leaves the screen behind usable, so a playing video or the tapped
+  /// word in an image stays visible and another word can be tapped.
   let opensAtHalfHeight: Bool
   let openFullEntry: (DictionaryEntry) -> Void
   private let entryContent: (DictionaryEntry, EncounterMediaAttachment?) -> EntryContent

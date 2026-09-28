@@ -9,19 +9,24 @@ struct RecognizedImageTextObservation: Hashable, Identifiable, Sendable {
   let boundingBox: CGRect
   let confidence: Float
   let characterBoxes: [CGRect]
+  /// Whether the line runs top to bottom, judged in image pixels rather than normalized
+  /// coordinates so a wide or tall image doesn't skew the result.
+  let isVertical: Bool
 
   init(
     id: Int,
     text: String,
     boundingBox: CGRect,
     confidence: Float,
-    characterBoxes: [CGRect] = []
+    characterBoxes: [CGRect] = [],
+    isVertical: Bool = false
   ) {
     self.id = id
     self.text = text
     self.boundingBox = boundingBox
     self.confidence = confidence
     self.characterBoxes = characterBoxes
+    self.isVertical = isVertical
   }
 }
 
@@ -50,7 +55,9 @@ private enum VisionTextRecognizer {
     else {
       throw ImageTextRecognitionError.invalidImage
     }
-    let handler = ImageRequestHandler(image, orientation: imageOrientation(source))
+    let orientation = imageOrientation(source)
+    let handler = ImageRequestHandler(image, orientation: orientation)
+    let pixelSize = orientedSize(image, orientation: orientation)
 
     var results = try await handler.perform(
       request(languages: ["ja-JP", "en-US"], languageCorrection: true))
@@ -63,12 +70,14 @@ private enum VisionTextRecognizer {
     try Task.checkCancellation()
     return results.enumerated().compactMap { index, observation in
       guard let candidate = observation.topCandidates(1).first else { return nil }
+      let boxes = characterBoxes(candidate)
       return RecognizedImageTextObservation(
         id: index,
         text: candidate.string,
         boundingBox: observation.boundingBox.cgRect,
         confidence: candidate.confidence,
-        characterBoxes: characterBoxes(candidate)
+        characterBoxes: boxes,
+        isVertical: isVertical(observation.boundingBox.cgRect, characterBoxes: boxes, in: pixelSize)
       )
     }
   }
@@ -77,6 +86,34 @@ private enum VisionTextRecognizer {
     let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
     let rawValue = (properties?[kCGImagePropertyOrientation] as? NSNumber)?.uint32Value ?? 1
     return CGImagePropertyOrientation(rawValue: rawValue) ?? .up
+  }
+
+  private static func orientedSize(
+    _ image: CGImage,
+    orientation: CGImagePropertyOrientation
+  ) -> CGSize {
+    switch orientation {
+    case .left, .leftMirrored, .right, .rightMirrored:
+      CGSize(width: image.height, height: image.width)
+    default:
+      CGSize(width: image.width, height: image.height)
+    }
+  }
+
+  /// A line is vertical when its characters advance downward. Single-character lines fall back
+  /// to the shape of the line's box.
+  private static func isVertical(
+    _ boundingBox: CGRect,
+    characterBoxes: [CGRect],
+    in size: CGSize
+  ) -> Bool {
+    let boxes = characterBoxes.filter { !$0.isNull && !$0.isEmpty }
+    if let first = boxes.first, let last = boxes.last, boxes.count > 1 {
+      let dx = abs(last.midX - first.midX) * size.width
+      let dy = abs(last.midY - first.midY) * size.height
+      return dy > dx
+    }
+    return boundingBox.height * size.height > boundingBox.width * size.width * 1.35
   }
 
   private static func characterBoxes(_ candidate: RecognizedText) -> [CGRect] {

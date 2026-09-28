@@ -135,6 +135,7 @@ public struct SearchExperienceRootView: View {
       .sheet(item: $recognizedWordSheet) { request in
         RecognizedWordSheet(
           request: request,
+          opensAtHalfHeight: true,
           openFullEntry: { entry in openFullEntry(entry, in: .search) }
         ) { entry, encounterMedia in
           wordDetailView(
