@@ -40,8 +40,9 @@ Each case maps a query to the Language Reference IDs Search returns, in order, b
 frequency evidence reorders them, along with its resolution, presentation, and reading
 refinement. The suite pins the artifact SHA-256 it was recorded against. Every client must pass
 it. On iOS, `SearchConformanceTests` checks it. After an intended change to Search or the
-dictionary, record it again and review the diff. Cases that need the downloadable Japanese Text
-Analysis pack, such as full sentences, will be added once tests can load that pack.
+dictionary, record it again and review the diff. The suite starts with search queries. Text
+inputs, such as full sentences, need the downloadable Japanese Text Analysis pack and are added
+once tests can load it.
 
 The discussion and reviewer answers are in
 [issue 377](https://github.com/serpcompany/zenbujapanese-monorepo/issues/377). This decision
