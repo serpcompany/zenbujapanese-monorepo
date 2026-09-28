@@ -50,7 +50,9 @@ presents levels as unofficial study estimates.
 
 The screen lists one row per pack in three sections. **Enabled** holds packs that are
 switched on, in priority order; Edit reorders them. Ranks appear in this order, and Search
-sorts by the first pack, breaking ties with each next pack. **Installed** holds downloaded packs that are switched off, and
+sorts by the first pack, breaking ties with each next pack. A word the first pack doesn't rank
+places by how common the next pack that ranks it says it is (家, which YouTube doesn't rank, places
+by its JLPT N5 level), rather than after every ranked word. **Installed** holds downloaded packs that are switched off, and
 **Available** offers a download button for each remaining pack. A row's subtitle shows its
 domain and size, or a download failure. Swiping a row reveals Details and Remove, and Update
 when a newer version exists. When the app upgrades from the single active pack, that pack
