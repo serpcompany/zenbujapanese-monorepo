@@ -62,7 +62,8 @@ Each value that differs by environment lives where the code that reads it runs:
 `SITE_ENV=production` is set in both the production Worker `vars` and the `deploy:production`
 build. Anything else is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that
 disallows everything. Analytics load only in production and only when their build-time IDs are
-set: `NEXT_PUBLIC_GTM_ID` (Google Tag Manager) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare Web
+set: `NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable that
+the `Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare Web
 Analytics).
 
 Before merging a change to environment configuration, build without the variable and run the
