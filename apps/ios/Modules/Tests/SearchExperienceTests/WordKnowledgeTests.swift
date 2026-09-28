@@ -84,21 +84,63 @@ final class WordKnowledgeTests {
     #expect(try backups().count == 1)
   }
 
-  @Test("an unreadable record doesn't discard the rest")
+  @Test("an unreadable record doesn't discard the rest, and is kept aside only once")
   func unreadableRecord() async throws {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     let json = """
       {"version":1,"records":[
       {"entryID":"\(taberu.rawValue)","headword":"食べる","reading":"たべる","status":"known","updatedAt":0},
+      {"entryID":"\(miru.rawValue)","headword":"見る"}]}
+      """
+    try Data(json.utf8).write(to: fileURL)
+
+    let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
+    #expect(knowledge.isLoaded)
+    #expect(knowledge.isKnown(taberu))
+    #expect(knowledge.records.count == 1)
+
+    let relaunched = WordKnowledge(fileURL: fileURL)
+    await relaunched.flush()
+    #expect(relaunched.isKnown(taberu))
+    #expect(try backups().count == 1)
+  }
+
+  @Test("a status from a newer version reads as unknown and is saved back unchanged")
+  func unrecognizedStatus() async throws {
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let json = """
+      {"version":1,"records":[
       {"entryID":"\(miru.rawValue)","headword":"見る","reading":"みる","status":"learning","updatedAt":0}]}
       """
     try Data(json.utf8).write(to: fileURL)
 
     let knowledge = WordKnowledge(fileURL: fileURL)
     await knowledge.flush()
-    #expect(knowledge.isKnown(taberu))
-    #expect(knowledge.records.count == 1)
-    #expect(try backups().count == 1)
+    #expect(!knowledge.isKnown(miru))
+    knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
+    await knowledge.flush()
+
+    let reloaded = WordKnowledge(fileURL: fileURL)
+    await reloaded.flush()
+    #expect(reloaded.records[miru.rawValue]?.status == .unrecognized("learning"))
+    #expect(reloaded.isKnown(taberu))
+    #expect(try backups().isEmpty)
+  }
+
+  @Test("rapid changes all reach the file")
+  func rapidChanges() async {
+    let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
+    knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
+    knowledge.setStatus(.known, id: miru, headword: "見る", reading: "みる")
+    knowledge.setStatus(.unknown, id: taberu, headword: "食べる", reading: "たべる")
+    await knowledge.flush()
+
+    let reloaded = WordKnowledge(fileURL: fileURL)
+    await reloaded.flush()
+    #expect(!reloaded.isKnown(taberu))
+    #expect(reloaded.isKnown(miru))
   }
 
   @Test("changes made while the file loads keep the loaded records")

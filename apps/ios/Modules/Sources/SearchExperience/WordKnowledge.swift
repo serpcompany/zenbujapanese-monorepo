@@ -2,9 +2,29 @@ import Foundation
 import Observation
 import OSLog
 
-enum WordKnowledgeStatus: String, Codable, Sendable {
+enum WordKnowledgeStatus: Codable, Hashable, Sendable {
   case known
   case unknown
+  /// A status written by a newer version. It reads as unknown and is saved back unchanged.
+  case unrecognized(String)
+
+  init(from decoder: Decoder) throws {
+    let value = try decoder.singleValueContainer().decode(String.self)
+    switch value {
+    case "known": self = .known
+    case "unknown": self = .unknown
+    default: self = .unrecognized(value)
+    }
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+    switch self {
+    case .known: try container.encode("known")
+    case .unknown: try container.encode("unknown")
+    case .unrecognized(let value): try container.encode(value)
+    }
+  }
 }
 
 /// One learner judgement about a dictionary word, keyed by its stable Language Reference ID.
@@ -29,22 +49,28 @@ struct WordKnowledgeRecord: Codable, Hashable, Identifiable, Sendable {
 final class WordKnowledge {
   static let shared = WordKnowledge()
 
+  /// False until the file has loaded; known-word controls wait for it.
+  private(set) var isLoaded = false
   private(set) var records: [String: WordKnowledgeRecord] = [:]
   /// Known words, most recently marked first.
   private(set) var knownRecords: [WordKnowledgeRecord] = []
   @ObservationIgnored private let writer: WordKnowledgeWriter
   @ObservationIgnored private var lastWrite: Task<Void, Never>?
   @ObservationIgnored private var hasUnsavedChanges = false
+  @ObservationIgnored private var writeQueued = false
 
   init(fileURL: URL = WordKnowledge.defaultFileURL) {
     let writer = WordKnowledgeWriter(fileURL: fileURL)
     self.writer = writer
     lastWrite = Task {
-      let loaded = await writer.load()
+      let (loaded, needsRewrite) = await writer.load()
       records = loaded.merging(records) { _, current in current }
       knownRecords = records.values
         .filter { $0.status == .known }
         .sorted { $0.updatedAt > $1.updatedAt }
+      isLoaded = true
+      // Replaces a partly unreadable file, already kept aside, so it isn't copied every launch.
+      if needsRewrite { persist() }
     }
   }
 
@@ -99,12 +125,15 @@ final class WordKnowledge {
   }
 
   /// Writes after the load and any earlier write, taking the snapshot then so the file always
-  /// holds loaded records too.
+  /// holds loaded records too. A write already waiting to start covers later changes.
   private func persist() {
+    guard !writeQueued else { return }
+    writeQueued = true
     let previous = lastWrite
     let writer = writer
     lastWrite = Task {
       await previous?.value
+      writeQueued = false
       hasUnsavedChanges = !(await writer.write(Array(records.values)))
     }
   }
@@ -148,17 +177,18 @@ private actor WordKnowledgeWriter {
     self.fileURL = fileURL
   }
 
-  /// A missing file loads as no records. A file that can't be read in full is kept beside it
-  /// before the next write replaces it.
-  func load() -> [String: WordKnowledgeRecord] {
-    guard let data = try? Data(contentsOf: fileURL) else { return [:] }
+  /// A missing file loads as no records. A file that can't be read in full is kept beside it,
+  /// and `needsRewrite` asks for the readable records to replace it.
+  func load() -> (records: [String: WordKnowledgeRecord], needsRewrite: Bool) {
+    guard let data = try? Data(contentsOf: fileURL) else { return ([:], false) }
     guard let stored = try? JSONDecoder.wordKnowledge.decode(LoadedFile.self, from: data) else {
       preserveUnreadableFile()
-      return [:]
+      return ([:], true)
     }
     let records = stored.records.compactMap(\.self)
-    if records.count != stored.records.count { preserveUnreadableFile() }
-    return Dictionary(records.map { ($0.entryID, $0) }) { _, latest in latest }
+    let isPartial = records.count != stored.records.count
+    if isPartial { preserveUnreadableFile() }
+    return (Dictionary(records.map { ($0.entryID, $0) }) { _, latest in latest }, isPartial)
   }
 
   /// Returns whether the records reached the disk.

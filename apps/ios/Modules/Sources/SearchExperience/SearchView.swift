@@ -859,11 +859,11 @@ private struct ResultRow: View {
       .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
     }
     .swipeActions(edge: .leading) {
-      KnownWordMenuButton(entry: entry)
+      KnownWordMenuButton(entry: entry, identifierPrefix: resultIdentifier)
         .tint(isKnown ? .orange : .green)
     }
     .contextMenu {
-      KnownWordMenuButton(entry: entry)
+      KnownWordMenuButton(entry: entry, identifierPrefix: resultIdentifier)
     }
     .accessibilityLabel("\(entry.headword), \(entry.reading), \(summary)")
     .accessibilityValue(

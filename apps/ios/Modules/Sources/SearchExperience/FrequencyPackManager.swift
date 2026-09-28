@@ -195,12 +195,14 @@ struct FrequencyPackDisclosure: Equatable, Sendable {
   let attribution: String
 
   /// A compact label for rank chips.
+  /// Matched by pack family rather than the versioned ID, so a rebuilt pack keeps its label.
+  /// It stays out of the manifest because manifest changes alter installed packs' trust hashes.
   var shortName: String {
     switch id.rawValue {
     case "zenbu.tubelex.youtube.ja.unidic-3.1": "YouTube"
     case "zenbu.wikipedia.written.ja.unidic-3.1": "Wikipedia"
     case "zenbu.jlpt.waller.levels": "JLPT"
-    case "zenbu.jiten.video-games.ja.ordered-v2": "Games"
+    case let id where id.hasPrefix("zenbu.jiten.video-games."): "Games"
     default: displayName
     }
   }

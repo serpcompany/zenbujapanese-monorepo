@@ -4,6 +4,8 @@ import SwiftUI
 struct KnownWordMenuButton: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   let entry: DictionaryEntry
+  /// The accessibility identifier prefix of the screen showing the button.
+  var identifierPrefix = "word-detail"
 
   var body: some View {
     let isKnown = wordKnowledge.isKnown(entry.id)
@@ -13,7 +15,8 @@ struct KnownWordMenuButton: View {
     ) {
       wordKnowledge.toggleKnown(entry)
     }
-    .accessibilityIdentifier(isKnown ? "word-detail.mark-unknown" : "word-detail.mark-known")
+    .disabled(!wordKnowledge.isLoaded)
+    .accessibilityIdentifier("\(identifierPrefix).\(isKnown ? "mark-unknown" : "mark-known")")
   }
 }
 
@@ -47,7 +50,9 @@ struct KnownWordsView: View {
   var body: some View {
     let records = filteredRecords
     Group {
-      if wordKnowledge.knownCount == 0 {
+      if !wordKnowledge.isLoaded {
+        ProgressView()
+      } else if wordKnowledge.knownCount == 0 {
         ContentUnavailableView(
           "No Known Words",
           systemImage: "checkmark.circle",

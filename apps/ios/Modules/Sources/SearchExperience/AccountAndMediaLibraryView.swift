@@ -49,7 +49,9 @@ struct AccountRootView: View {
 
         NavigationLink(value: AccountRoute.knownWords) {
           LabeledContent {
-            Text(wordKnowledge.knownCount, format: .number)
+            if wordKnowledge.isLoaded {
+              Text(wordKnowledge.knownCount, format: .number)
+            }
           } label: {
             AccountRowLabel("Known Words", systemImage: "checkmark.circle.fill", tint: .teal)
           }

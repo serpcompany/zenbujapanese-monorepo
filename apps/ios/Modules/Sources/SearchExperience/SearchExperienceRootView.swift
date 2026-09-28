@@ -3,7 +3,7 @@ import SwiftUI
 public struct SearchExperienceRootView: View {
   @State private var readingAidPreferences = ReadingAidPreferences()
   @State private var userProfile = UserProfile()
-  @State private var wordKnowledge = WordKnowledge.shared
+  private let wordKnowledge = WordKnowledge.shared
   @Environment(\.scenePhase) private var scenePhase
   @State private var selectedTab = SearchExperienceTab.search
   @State private var frequencyRefreshID = 0
