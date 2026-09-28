@@ -9,7 +9,8 @@ CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/
 
 Zenbu's modifications select the lowest-ID directly linked English translation
 for each Japanese sentence, normalize the data into an app-owned SQLite schema,
-and add deterministic search indexes. Both Tatoeba sentence IDs, contributor
+and add deterministic search indexes. Tatoeba's Japanese indices export is
+used to link sentences to kana-headword dictionary entries. Both Tatoeba sentence IDs, contributor
 usernames supplied by the official detailed exports, explicit not-supplied
 status where those exports contain no username, and the license class of each
 side are retained in the bundled database. Named contributors are listed in

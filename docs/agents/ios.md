@@ -54,12 +54,18 @@ the bundled JLPT level pack matches its pinned source files and import report. R
 pack with `python3 apps/ios/Tools/import_jlpt_level_pack.py > apps/ios/LanguageData/Generated/JLPT-Waller-2025-08-26.import.json`
 and copy the reported hashes into its catalog manifest.
 
+Examples for kana-headword words come from `ExampleWordIndex.sqlite3`, which is built against the
+bundled `LanguageReferenceData.sqlite3`. Run
+`python3 -m unittest apps/ios/Tools/tests/test_example_word_index_contract.py` to verify that it
+matches that database, its pinned source, and its import report.
+
 Every frequency pack pins the SHA-256 of `LanguageReferenceData.sqlite3`. After rebuilding it
 with `import_jmdict.py` (inputs are listed in `LanguageData/Sources/README.md`), also copy its
 ranking contract into `DictionaryRankingArtifactContract.json`, rebuild the TUBELEX and Wikipedia
 packs with `import_frequency_pack.py`, rebuild the Jiten packs with
 `build_jiten_frequency_packs.py --out-dir <dir>` (it rewrites their manifests and keeps changed
-ones trusted) and publish the new ZIPs, rebuild the JLPT pack, and update each catalog manifest. Move the previous manifests of downloadable
+ones trusted) and publish the new ZIPs, rebuild the JLPT pack, rebuild the example word index with `import_example_word_index.py`
+(inputs in `LanguageData/Sources/Tatoeba-jpn-indices-2026-09-26.source.json`), and update each catalog manifest. Move the previous manifests of downloadable
 packs into `trustedHistoricalManifests` so packs a learner already installed stay trusted.
 
 Downloadable packs are served from `cdn.zenbujapanese.com` (Cloudflare R2 bucket

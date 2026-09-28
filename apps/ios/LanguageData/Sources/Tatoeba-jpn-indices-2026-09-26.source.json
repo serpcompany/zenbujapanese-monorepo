@@ -1,0 +1,16 @@
+{
+  "resource_id": "SOURCE-COMPONENT-TATOEBA-JPN-INDICES",
+  "identity": "Tatoeba Japanese indices export 2026-09-26",
+  "snapshot_date": "2026-09-26",
+  "fetched_at_utc": "2026-09-28T11:37:48Z",
+  "license": "CC BY 2.0 FR",
+  "license_url": "https://creativecommons.org/licenses/by/2.0/fr/",
+  "notice": "apps/ios/Modules/Sources/SearchExperience/Resources/TATOEBA-NOTICE.txt",
+  "documentation_url": "https://en.wiki.tatoeba.org/articles/show/japanese-indices",
+  "download_url": "https://downloads.tatoeba.org/exports/jpn_indices.tar.bz2",
+  "http_last_modified": "Sat, 26 Sep 2026 06:27:39 GMT",
+  "http_etag": "\"6ab765db-2bad57\"",
+  "compressed_bytes": 2862423,
+  "sha256": "0be79dba59773ccb2270d076fbb0b7ddfb4c2bda7b5a92ca1c0fb359dcf04904",
+  "compatibility": "Sentence IDs are stable across Tatoeba exports. Index lines are matched to the bundled 2026-08-08 sentence pairs by Japanese and English sentence ID; lines without a bundled pair are skipped and counted in the import report."
+}
