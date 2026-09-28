@@ -1,0 +1,1475 @@
+{
+  "artifact" : {
+    "name" : "LanguageReferenceData.sqlite3",
+    "sha256" : "e13452e70d34124b50ace380fa1da348530c88b1eca0315ab14129d89ee0f073"
+  },
+  "cases" : [
+    {
+      "presentation" : "ranked",
+      "query" : "見る",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "見る",
+          "id" : "7f490a9c9c0da94f4e9474f4efe74be1",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "見る見る",
+          "id" : "474b104afb430ff1fc86f36fadde4add",
+          "reading" : "みるみる"
+        },
+        {
+          "headword" : "見る目",
+          "id" : "4c5eaeaaad2c058d5c301329aa6b4a88",
+          "reading" : "みるめ"
+        },
+        {
+          "headword" : "見るは法楽",
+          "id" : "2b3ca41b0c543401df151a4106ad2a81",
+          "reading" : "みるはほうらく"
+        },
+        {
+          "headword" : "見る目嗅ぐ鼻",
+          "id" : "4fef69bd8c280a0b22ab3a7f2d7203de",
+          "reading" : "みるめかぐはな"
+        },
+        {
+          "headword" : "見るも",
+          "id" : "4f6718feab0e5f67630ea4261d9a2316",
+          "reading" : "みるも"
+        },
+        {
+          "headword" : "観る将",
+          "id" : "ad0f267255937c9d6ea1e43aa6a104cd",
+          "reading" : "みるしょう"
+        },
+        {
+          "headword" : "見る度に",
+          "id" : "bfb42f17f9e5f4a324694725d09f95c1",
+          "reading" : "みるたびに"
+        },
+        {
+          "headword" : "見るべき",
+          "id" : "466a6161f0a9afbfb2524c865777f528",
+          "reading" : "みるべき"
+        },
+        {
+          "headword" : "見る間に",
+          "id" : "3c7c9798cef4b100ba05c3eeffb161ea",
+          "reading" : "みるまに"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "食べる",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "食べる",
+          "id" : "042e07f7052f611fed33ddddf37f55fd",
+          "reading" : "たべる"
+        },
+        {
+          "headword" : "食べるラー油",
+          "id" : "fd827431e19bc7fb09960a096c9524fa",
+          "reading" : "たべるラーゆ"
+        },
+        {
+          "headword" : "生で食べる",
+          "id" : "dff3165ef28c41316d56eb2b8ea7dff6",
+          "reading" : "なまでたべる"
+        },
+        {
+          "headword" : "一口食べる",
+          "id" : "c352d62b02786501277a9c446d5a55f5",
+          "reading" : "ひとくちたべる"
+        },
+        {
+          "headword" : "ぼりぼり食べる",
+          "id" : "fd239aa6e7576233e57ebaa56dda945a",
+          "reading" : "ぼりぼりたべる"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "日本",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "日本",
+          "id" : "6342bfc30de4f6cc49b6c2db81692c98",
+          "reading" : "にほん"
+        },
+        {
+          "headword" : "日本史",
+          "id" : "6d7011da63dfaa80ff65593d40ea6bf7",
+          "reading" : "にほんし"
+        },
+        {
+          "headword" : "日本製",
+          "id" : "bfe49c72bc83e2cff0ed2d753a14b66b",
+          "reading" : "にほんせい"
+        },
+        {
+          "headword" : "日本中",
+          "id" : "0eebd94f427c23432c7983f7b347fcdc",
+          "reading" : "にほんじゅう"
+        },
+        {
+          "headword" : "日本初",
+          "id" : "dfd458bc6f10621156240c24c5bd29b4",
+          "reading" : "にほんはつ"
+        },
+        {
+          "headword" : "日本企業",
+          "id" : "7ab8229a1d17988e065f0052595a1fe4",
+          "reading" : "にほんきぎょう"
+        },
+        {
+          "headword" : "日本全国",
+          "id" : "8b6aa8a5b81efa56fa5d8bc9270188a9",
+          "reading" : "にほんぜんこく"
+        },
+        {
+          "headword" : "日本料理",
+          "id" : "d11db1a1f442b789e47cd386fd1f35fb",
+          "reading" : "にほんりょうり"
+        },
+        {
+          "headword" : "日本社会",
+          "id" : "cbac5860c930ac6958003018cb70a98f",
+          "reading" : "にほんしゃかい"
+        },
+        {
+          "headword" : "日本政府",
+          "id" : "8ba67f9f9f3ec68858d3ac13d934999e",
+          "reading" : "にほんせいふ"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "日本語",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "日本語",
+          "id" : "c81e1608bebbf039176be3e23f1c03bb",
+          "reading" : "にほんご"
+        },
+        {
+          "headword" : "日本語力",
+          "id" : "b391f038a193adcecb591a7c47ea765c",
+          "reading" : "にほんごりょく"
+        },
+        {
+          "headword" : "日本語化",
+          "id" : "b260c4360f4606b12d5aada4c735fb6b",
+          "reading" : "にほんごか"
+        },
+        {
+          "headword" : "日本語族",
+          "id" : "e77991c5bfec13b6f451bf75cb63908e",
+          "reading" : "にほんごぞく"
+        },
+        {
+          "headword" : "日本語訳",
+          "id" : "9f97fc31f2fa9fe253f0b7f247127f9c",
+          "reading" : "にほんごやく"
+        },
+        {
+          "headword" : "日本語学",
+          "id" : "fb6789c42af279d4583fea973abf32e7",
+          "reading" : "にほんごがく"
+        },
+        {
+          "headword" : "日本語版",
+          "id" : "9b08246d9e905dee4b7b91ecc5d22fb2",
+          "reading" : "にほんごばん"
+        },
+        {
+          "headword" : "日本語話者",
+          "id" : "90a43622f359989c6d7f0639cefa99cc",
+          "reading" : "にほんごわしゃ"
+        },
+        {
+          "headword" : "日本語学者",
+          "id" : "d4f57916295c9df43b0bb1f6e699a25e",
+          "reading" : "にほんごがくしゃ"
+        },
+        {
+          "headword" : "日本語環境",
+          "id" : "528e56dc81bf1dfa3eb615b9904bfa51",
+          "reading" : "にほんごかんきょう"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "先生",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "先生",
+          "id" : "72309de2d19aa24aa677dfba2428ff13",
+          "reading" : "せんせい"
+        },
+        {
+          "headword" : "先生",
+          "id" : "f1d57578d14065179330cdf2aa2b305b",
+          "reading" : "せんじょう"
+        },
+        {
+          "headword" : "先生",
+          "id" : "cfb3574684a006d1cb0f8b0b9cc11e46",
+          "reading" : "シーサン"
+        },
+        {
+          "headword" : "先生方",
+          "id" : "28573e3fe512a186432dbb2a3258a019",
+          "reading" : "せんせいがた"
+        },
+        {
+          "headword" : "先生に就く",
+          "id" : "d33a8f2d971c0087eb476b6f7c59ff97",
+          "reading" : "せんせいにつく"
+        },
+        {
+          "headword" : "先生と言われるほどの馬鹿でなし",
+          "id" : "fdc8544c9cfbbe6ae44baa205de2acd1",
+          "reading" : "せんせいといわれるほどのばかでなし"
+        },
+        {
+          "headword" : "節先生",
+          "id" : "26546fe594dc8e65f3dfa60812517f6d",
+          "reading" : "たかしせんせい"
+        },
+        {
+          "headword" : "大先生",
+          "id" : "b75e83cf5f21b04e91109d5dace29855",
+          "reading" : "だいせんせい"
+        },
+        {
+          "headword" : "烏有先生",
+          "id" : "f851e1f6383041aa4f9b12f98eb9db51",
+          "reading" : "うゆうせんせい"
+        },
+        {
+          "headword" : "校長先生",
+          "id" : "e186c452fdfd3442091eb1b8b60f70c2",
+          "reading" : "こうちょうせんせい"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "静",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "静",
+          "id" : "fdfd4b61e060b36b5416c578de4bfec3",
+          "reading" : "せい"
+        },
+        {
+          "headword" : "静",
+          "id" : "db15f908a4dfe8a0ab6b542af20063d9",
+          "reading" : "しず"
+        },
+        {
+          "headword" : "静岡",
+          "id" : "72496e5e4e1f63277a5f5492b02bac0c",
+          "reading" : "しずおか"
+        },
+        {
+          "headword" : "静か",
+          "id" : "657d72cf95a8d0510ef6464fc032bae0",
+          "reading" : "しずか"
+        },
+        {
+          "headword" : "静止",
+          "id" : "97b399e92aa196a78127fe936581bb76",
+          "reading" : "せいし"
+        },
+        {
+          "headword" : "静寂",
+          "id" : "915ef27d8295c718efaeef2eaf3fe122",
+          "reading" : "せいじゃく"
+        },
+        {
+          "headword" : "静まる",
+          "id" : "893524ddb3ae13996ef2786550dd14bd",
+          "reading" : "しずまる"
+        },
+        {
+          "headword" : "静粛",
+          "id" : "78d474fe0d310d749120ff3d1b1f5d29",
+          "reading" : "せいしゅく"
+        },
+        {
+          "headword" : "静養",
+          "id" : "d4389546143c224ad429ad367c22a833",
+          "reading" : "せいよう"
+        },
+        {
+          "headword" : "静脈",
+          "id" : "213b5520164b788c048a7c76d9cb90ec",
+          "reading" : "じょうみゃく"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "家",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "家",
+          "id" : "6f54be67247dcd72328d454c302c328a",
+          "reading" : "いえ"
+        },
+        {
+          "headword" : "家",
+          "id" : "11f59f15bcbbd9324880efb97d43df2b",
+          "reading" : "うち"
+        },
+        {
+          "headword" : "家",
+          "id" : "442b440d176ec8ea3b3f03901d251f86",
+          "reading" : "け"
+        },
+        {
+          "headword" : "内",
+          "id" : "8e98db8b38eb85164c0d5b96e90316c6",
+          "reading" : "うち"
+        },
+        {
+          "headword" : "屋",
+          "id" : "89e0002aea24586730b828bf87fe22d4",
+          "reading" : "や"
+        },
+        {
+          "headword" : "家",
+          "id" : "9e71f08316fd0ae2657c0f8ed0101903",
+          "reading" : "ち"
+        },
+        {
+          "headword" : "家",
+          "id" : "f55306825940a587e1cfb289ded1be8d",
+          "reading" : "か"
+        },
+        {
+          "headword" : "ん家",
+          "id" : "73b999f65f6f1edba1fedf31e2198137",
+          "reading" : "んち"
+        },
+        {
+          "headword" : "家づくり",
+          "id" : "f03d956d8e11cddd829c4806403842b6",
+          "reading" : "いえづくり"
+        },
+        {
+          "headword" : "家族",
+          "id" : "fe7a811a38c8ca9faae4f623e55b9865",
+          "reading" : "かぞく"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "水",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "水",
+          "id" : "722c94624b09c10ca07a96c1cb03701f",
+          "reading" : "みず"
+        },
+        {
+          "headword" : "水",
+          "id" : "ced396ff21268b4a6a945cec1fb64a1a",
+          "reading" : "すい"
+        },
+        {
+          "headword" : "水準",
+          "id" : "bd35b2a24fad440c817d7de9d00ce6eb",
+          "reading" : "すいじゅん"
+        },
+        {
+          "headword" : "水道",
+          "id" : "68d5dc1dacaa1af0f7b69cae2f428c06",
+          "reading" : "すいどう"
+        },
+        {
+          "headword" : "水面",
+          "id" : "2462f5db345fcd049e4e0313a95066fd",
+          "reading" : "すいめん"
+        },
+        {
+          "headword" : "水田",
+          "id" : "9f03f0742fc5f8742eee696fd534a13a",
+          "reading" : "すいでん"
+        },
+        {
+          "headword" : "水泳",
+          "id" : "3be98c2feb165ca5ec327fef3aa001b2",
+          "reading" : "すいえい"
+        },
+        {
+          "headword" : "水産",
+          "id" : "411345a1543c23fcf4b7a05b62551ca4",
+          "reading" : "すいさん"
+        },
+        {
+          "headword" : "水曜",
+          "id" : "a530032e96ff2a819c9c2b855bec15fc",
+          "reading" : "すいよう"
+        },
+        {
+          "headword" : "水分",
+          "id" : "c36acf2a68500efbede75ec79e0bdb53",
+          "reading" : "すいぶん"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "前",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "前",
+          "id" : "e407cd7d59cb9766a7640cd0a5a29bfe",
+          "reading" : "まえ"
+        },
+        {
+          "headword" : "前",
+          "id" : "c909a534aa737cbf51894cc6935c9639",
+          "reading" : "ぜん"
+        },
+        {
+          "headword" : "先",
+          "id" : "118bf52e46d534ec8008e7dbff9dcbe2",
+          "reading" : "さき"
+        },
+        {
+          "headword" : "前夜祭",
+          "id" : "380e3e0662610c529ea22627c874142c",
+          "reading" : "ぜんやさい"
+        },
+        {
+          "headword" : "前髪",
+          "id" : "db79273f1f1e6870f03cac289096b77b",
+          "reading" : "まえがみ"
+        },
+        {
+          "headword" : "前年",
+          "id" : "e66507b2c84d327b7c999097813d8a0f",
+          "reading" : "ぜんねん"
+        },
+        {
+          "headword" : "前提",
+          "id" : "6e68c087a82006d0eacba8c0d28d3e6b",
+          "reading" : "ぜんてい"
+        },
+        {
+          "headword" : "前半",
+          "id" : "f493288957d9664783f91c74c523bb02",
+          "reading" : "ぜんはん"
+        },
+        {
+          "headword" : "前回",
+          "id" : "6e9140268f5d880be828f54584f6bec6",
+          "reading" : "ぜんかい"
+        },
+        {
+          "headword" : "前向き",
+          "id" : "ba6a3f9d73ecf869f536c3c618c56f6a",
+          "reading" : "まえむき"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "行く",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "行く",
+          "id" : "02b555a06b217e79bca2d442a5a03d86",
+          "reading" : "いく"
+        },
+        {
+          "headword" : "行く末",
+          "id" : "9131e9c0bdbf65f8a322f343feab2c17",
+          "reading" : "ゆくすえ"
+        },
+        {
+          "headword" : "行く手",
+          "id" : "f273d5cdb64bd99b6d3ee0c2d29031d1",
+          "reading" : "ゆくて"
+        },
+        {
+          "headword" : "行く先",
+          "id" : "61f3a41fb8f84dfa81887a73ff9a85dd",
+          "reading" : "ゆくさき"
+        },
+        {
+          "headword" : "行方",
+          "id" : "d7662e85b77609a8bcfa103f170232c3",
+          "reading" : "ゆくえ"
+        },
+        {
+          "headword" : "行く行く",
+          "id" : "279d158d5c0a10e6cf2fcfd64b81f7cf",
+          "reading" : "ゆくゆく"
+        },
+        {
+          "headword" : "行く年",
+          "id" : "67a4da6dca7c33ae296e7a757142a3b9",
+          "reading" : "ゆくとし"
+        },
+        {
+          "headword" : "行く方",
+          "id" : "772174fb836b69b9182f512154d52b59",
+          "reading" : "ゆくかた"
+        },
+        {
+          "headword" : "行く春",
+          "id" : "d1c004786abe1bd72a5ad24e8eed86a4",
+          "reading" : "ゆくはる"
+        },
+        {
+          "headword" : "行くあて",
+          "id" : "b49e278c25107b19e791be25d5de6e0e",
+          "reading" : "いくあて"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "いる",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "要る",
+          "id" : "d12d09f1107aef0f7d43b54b62f0b7e1",
+          "reading" : "いる"
+        },
+        {
+          "headword" : "入る",
+          "id" : "e36e4bdfdf4b6535e82b863470af9499",
+          "reading" : "いる"
+        },
+        {
+          "headword" : "いる",
+          "id" : "8647047758cffbea50d72922fad277e0",
+          "reading" : "いる"
+        },
+        {
+          "headword" : "射る",
+          "id" : "e85ded84cc6528b1785230911b2ab431",
+          "reading" : "いる"
+        },
+        {
+          "headword" : "鋳る",
+          "id" : "e73b1768f01728210672d2fcd73db4f8",
+          "reading" : "いる"
+        },
+        {
+          "headword" : "炒る",
+          "id" : "856095faec102f96bc40f7c592b41f21",
+          "reading" : "いる"
+        },
+        {
+          "headword" : "率る",
+          "id" : "d1c35802eb939dbfd03c6e44066e3fa6",
+          "reading" : "いる"
+        },
+        {
+          "headword" : "癒る",
+          "id" : "1ffcd444a2cf906f4dcbafab7d9c9324",
+          "reading" : "いる"
+        },
+        {
+          "headword" : "没る",
+          "id" : "2a68bfe16459c6ba9581a076d8e68aef",
+          "reading" : "いる"
+        },
+        {
+          "headword" : "沃る",
+          "id" : "625929124ccf0595525d794cd8d8450f",
+          "reading" : "いる"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "たべる",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "食べる",
+          "id" : "042e07f7052f611fed33ddddf37f55fd",
+          "reading" : "たべる"
+        },
+        {
+          "headword" : "食べるラー油",
+          "id" : "fd827431e19bc7fb09960a096c9524fa",
+          "reading" : "たべるラーゆ"
+        },
+        {
+          "headword" : "生で食べる",
+          "id" : "dff3165ef28c41316d56eb2b8ea7dff6",
+          "reading" : "なまでたべる"
+        },
+        {
+          "headword" : "一口食べる",
+          "id" : "c352d62b02786501277a9c446d5a55f5",
+          "reading" : "ひとくちたべる"
+        },
+        {
+          "headword" : "ぼりぼり食べる",
+          "id" : "fd239aa6e7576233e57ebaa56dda945a",
+          "reading" : "ぼりぼりたべる"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "みる",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "見る",
+          "id" : "7f490a9c9c0da94f4e9474f4efe74be1",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "診る",
+          "id" : "f37cd505f9ae21759037f506c8dc010b",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "看る",
+          "id" : "be22518bbc0f20e391306e0ae748bd32",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "廻る",
+          "id" : "c6fe6ba85f18a84e83825df8bee24433",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "海松",
+          "id" : "67198ee9915a3950e92722370ff79af5",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "海松貝",
+          "id" : "c37d167c3bf69400a5276df4a59f86fa",
+          "reading" : "みるがい"
+        },
+        {
+          "headword" : "観る将",
+          "id" : "ad0f267255937c9d6ea1e43aa6a104cd",
+          "reading" : "みるしょう"
+        },
+        {
+          "headword" : "見るも無残",
+          "id" : "e8320e2c56b443400704287b0adf0709",
+          "reading" : "みるもむざん"
+        },
+        {
+          "headword" : "見る見る",
+          "id" : "474b104afb430ff1fc86f36fadde4add",
+          "reading" : "みるみる"
+        },
+        {
+          "headword" : "見る目",
+          "id" : "4c5eaeaaad2c058d5c301329aa6b4a88",
+          "reading" : "みるめ"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "ありがとう",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "有難う",
+          "id" : "aead518e84274687eaf56db5618ffd7f",
+          "reading" : "ありがとう"
+        },
+        {
+          "headword" : "有難うございます",
+          "id" : "d4148b392890d51b7a69936cabc65f7f",
+          "reading" : "ありがとうございます"
+        },
+        {
+          "headword" : "有難うございました",
+          "id" : "7966f37d02995b7200200bbca05482a4",
+          "reading" : "ありがとうございました"
+        },
+        {
+          "headword" : "ありがとナス",
+          "id" : "58a9764be819e5f2c253d9e8c24509a2",
+          "reading" : "ありがとナス"
+        },
+        {
+          "headword" : "ありがとさん",
+          "id" : "61178de8043f61cea3ae026bcac11774",
+          "reading" : "ありがとさん"
+        },
+        {
+          "headword" : "誠にありがとうございます",
+          "id" : "31897e53ac1408442f32d5d125e65f2f",
+          "reading" : "まことにありがとうございます"
+        },
+        {
+          "headword" : "毎度ありがとうございます",
+          "id" : "bab6290d8f968d910c02cc57d3b5b320",
+          "reading" : "まいどありがとうございます"
+        },
+        {
+          "headword" : "どうも有難う",
+          "id" : "914ef15b85949e010c3299c2a84f082c",
+          "reading" : "どうもありがとう"
+        },
+        {
+          "headword" : "どうも有難うございます",
+          "id" : "6755ec7b0f2dc3731e0df703acc91af8",
+          "reading" : "どうもありがとうございます"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "すし",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "寿司",
+          "id" : "850bc3ac4ddbe2a4bc8cb2e2d1270dfa",
+          "reading" : "すし"
+        },
+        {
+          "headword" : "寿司米",
+          "id" : "4f5c1b7853c1857956469e6191cf8950",
+          "reading" : "すしまい"
+        },
+        {
+          "headword" : "すし酢",
+          "id" : "b8f04d61d32368524d4f02bc8856fdef",
+          "reading" : "すしず"
+        },
+        {
+          "headword" : "寿司種",
+          "id" : "eb2245f66e883b7712075171bc44fb00",
+          "reading" : "すしだね"
+        },
+        {
+          "headword" : "寿司飯",
+          "id" : "293e6fe0eee48a8252d42da4b5a1b4be",
+          "reading" : "すしめし"
+        },
+        {
+          "headword" : "寿司店",
+          "id" : "85ca659732017f6feb2b84026b4a4a5d",
+          "reading" : "すしてん"
+        },
+        {
+          "headword" : "寿司屋",
+          "id" : "6a4ec9bb7bd849849bdddfc2467ff039",
+          "reading" : "すしや"
+        },
+        {
+          "headword" : "すし詰め",
+          "id" : "3b1a071613f37f598ad2b4775756c8ea",
+          "reading" : "すしづめ"
+        },
+        {
+          "headword" : "寿司桶",
+          "id" : "6ec7496feedb7e792139634db419dc66",
+          "reading" : "すしおけ"
+        },
+        {
+          "headword" : "寿司の具",
+          "id" : "ff769b0885a1019ec8da437e370dcc0c",
+          "reading" : "すしのぐ"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "miru",
+      "readingRefinement" : "みる",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "見る",
+          "id" : "7f490a9c9c0da94f4e9474f4efe74be1",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "診る",
+          "id" : "f37cd505f9ae21759037f506c8dc010b",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "看る",
+          "id" : "be22518bbc0f20e391306e0ae748bd32",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "釬",
+          "id" : "0febbcd8debedc04bdf6fb684d9b70b4",
+          "reading" : "ミル"
+        },
+        {
+          "headword" : "廻る",
+          "id" : "c6fe6ba85f18a84e83825df8bee24433",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "海松",
+          "id" : "67198ee9915a3950e92722370ff79af5",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "ミル",
+          "id" : "ca5f926222b7aab69c8553080619ff1a",
+          "reading" : "ミル"
+        },
+        {
+          "headword" : "ミル",
+          "id" : "2d4be0c85347f2b1e223daff08121af4",
+          "reading" : "ミル"
+        },
+        {
+          "headword" : "ミルク",
+          "id" : "37c5bf97281cf4339d6de4f0ecf5e114",
+          "reading" : "ミルク"
+        },
+        {
+          "headword" : "見る見る",
+          "id" : "474b104afb430ff1fc86f36fadde4add",
+          "reading" : "みるみる"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "taberu",
+      "readingRefinement" : "たべる",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "食べる",
+          "id" : "042e07f7052f611fed33ddddf37f55fd",
+          "reading" : "たべる"
+        },
+        {
+          "headword" : "食べるラー油",
+          "id" : "fd827431e19bc7fb09960a096c9524fa",
+          "reading" : "たべるラーゆ"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "sensei",
+      "readingRefinement" : "せんせい",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "先生",
+          "id" : "72309de2d19aa24aa677dfba2428ff13",
+          "reading" : "せんせい"
+        },
+        {
+          "headword" : "先生と言われるほどの馬鹿でなし",
+          "id" : "fdc8544c9cfbbe6ae44baa205de2acd1",
+          "reading" : "せんせいといわれるほどのばかでなし"
+        },
+        {
+          "headword" : "先制",
+          "id" : "7fd951f702df628877b3f624ea4c29d2",
+          "reading" : "せんせい"
+        },
+        {
+          "headword" : "宣誓",
+          "id" : "beea48bcac60410e0911fe2feb5bad0f",
+          "reading" : "せんせい"
+        },
+        {
+          "headword" : "専制",
+          "id" : "de7b6420b10f4532b0f7d14bf4e4713a",
+          "reading" : "せんせい"
+        },
+        {
+          "headword" : "専政",
+          "id" : "b992cc1f2e8ea2512a8b7f4b31f824c5",
+          "reading" : "せんせい"
+        },
+        {
+          "headword" : "蝉声",
+          "id" : "66e3bf591f3045310f2f0a569d04c68a",
+          "reading" : "せんせい"
+        },
+        {
+          "headword" : "先聖",
+          "id" : "85f2a2a15db8e81ed8562a108a15a47b",
+          "reading" : "せんせい"
+        },
+        {
+          "headword" : "占星",
+          "id" : "dab7ab6d2980373577455dc7f576949b",
+          "reading" : "せんせい"
+        },
+        {
+          "headword" : "潜性",
+          "id" : "67bd64dbf58d0e06273066953b67396c",
+          "reading" : "せんせい"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "nihongo",
+      "readingRefinement" : "にほんご",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "日本語大辞典",
+          "id" : "7f969b5608f018b5ec25fe37922cfeff",
+          "reading" : "にほんごだいじてん"
+        },
+        {
+          "headword" : "日本語",
+          "id" : "c81e1608bebbf039176be3e23f1c03bb",
+          "reading" : "にほんご"
+        },
+        {
+          "headword" : "日本語力",
+          "id" : "b391f038a193adcecb591a7c47ea765c",
+          "reading" : "にほんごりょく"
+        },
+        {
+          "headword" : "日本語化",
+          "id" : "b260c4360f4606b12d5aada4c735fb6b",
+          "reading" : "にほんごか"
+        },
+        {
+          "headword" : "日本語族",
+          "id" : "e77991c5bfec13b6f451bf75cb63908e",
+          "reading" : "にほんごぞく"
+        },
+        {
+          "headword" : "日本語訳",
+          "id" : "9f97fc31f2fa9fe253f0b7f247127f9c",
+          "reading" : "にほんごやく"
+        },
+        {
+          "headword" : "日本語学",
+          "id" : "fb6789c42af279d4583fea973abf32e7",
+          "reading" : "にほんごがく"
+        },
+        {
+          "headword" : "日本語版",
+          "id" : "9b08246d9e905dee4b7b91ecc5d22fb2",
+          "reading" : "にほんごばん"
+        },
+        {
+          "headword" : "日本語話者",
+          "id" : "90a43622f359989c6d7f0639cefa99cc",
+          "reading" : "にほんごわしゃ"
+        },
+        {
+          "headword" : "日本語学者",
+          "id" : "d4f57916295c9df43b0bb1f6e699a25e",
+          "reading" : "にほんごがくしゃ"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "eat",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "食べる",
+          "id" : "042e07f7052f611fed33ddddf37f55fd",
+          "reading" : "たべる"
+        },
+        {
+          "headword" : "食う",
+          "id" : "24470252d8953401e5a677d6aaf1b6c8",
+          "reading" : "くう"
+        },
+        {
+          "headword" : "召し上がる",
+          "id" : "83a5eac8001488de5ab7206aecda4c4b",
+          "reading" : "めしあがる"
+        },
+        {
+          "headword" : "喫する",
+          "id" : "418c0551560729c2afcc977113b2b1e2",
+          "reading" : "きっする"
+        },
+        {
+          "headword" : "食らう",
+          "id" : "f9a691f77cf128c4a71c1aa197408a49",
+          "reading" : "くらう"
+        },
+        {
+          "headword" : "食す",
+          "id" : "d42527f312307f0ed556fd1d6c8a9ec1",
+          "reading" : "おす"
+        },
+        {
+          "headword" : "食す",
+          "id" : "465a90d1771b7ed84023f7c8c3665a3a",
+          "reading" : "しょくす"
+        },
+        {
+          "headword" : "喫す",
+          "id" : "29ee205b7824b696785fc2c42a23c4ad",
+          "reading" : "きっす"
+        },
+        {
+          "headword" : "食する",
+          "id" : "9f8d7172fa1120949c1722e697d4781e",
+          "reading" : "しょくする"
+        },
+        {
+          "headword" : "口に運ぶ",
+          "id" : "7667b0f794554eaa670623ddea978984",
+          "reading" : "くちにはこぶ"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "quiet",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "静か",
+          "id" : "657d72cf95a8d0510ef6464fc032bae0",
+          "reading" : "しずか"
+        },
+        {
+          "headword" : "沈黙",
+          "id" : "09a0973743cec485edb99b217f8e9360",
+          "reading" : "ちんもく"
+        },
+        {
+          "headword" : "無事",
+          "id" : "1605cc5574441b6ec84b71d695d5143b",
+          "reading" : "ぶじ"
+        },
+        {
+          "headword" : "穏やか",
+          "id" : "8e51f64c738159e724fe07705cbdd154",
+          "reading" : "おだやか"
+        },
+        {
+          "headword" : "平穏",
+          "id" : "3b1ec0a8a386df48b783a12975d25792",
+          "reading" : "へいおん"
+        },
+        {
+          "headword" : "悠々",
+          "id" : "18e6242ca51d8f8808fc6d764be49a08",
+          "reading" : "ゆうゆう"
+        },
+        {
+          "headword" : "無口",
+          "id" : "f712cffab6dc1e9931ecf5144c9782fe",
+          "reading" : "むくち"
+        },
+        {
+          "headword" : "和やか",
+          "id" : "8f379c63c2848071658e15f63cfc4158",
+          "reading" : "なごやか"
+        },
+        {
+          "headword" : "安静",
+          "id" : "a1a3cabb7731ab40ba811ac5fab23583",
+          "reading" : "あんせい"
+        },
+        {
+          "headword" : "大人しい",
+          "id" : "bf57f7762f8628bc90796424330479d2",
+          "reading" : "おとなしい"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "prison",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "刑務所",
+          "id" : "4177ac7d792e1845620b34050dcdbc02",
+          "reading" : "けいむしょ"
+        },
+        {
+          "headword" : "拘置所",
+          "id" : "06456df45f1f877dd8c2d0400554c663",
+          "reading" : "こうちしょ"
+        },
+        {
+          "headword" : "監獄",
+          "id" : "c6d12e73ca694137051d8100711da542",
+          "reading" : "かんごく"
+        },
+        {
+          "headword" : "牢獄",
+          "id" : "34aa7a204c68626c1e003af0ec45d8a4",
+          "reading" : "ろうごく"
+        },
+        {
+          "headword" : "牢",
+          "id" : "48ca2243eae9aafb1baad20c31d4ff6d",
+          "reading" : "ろう"
+        },
+        {
+          "headword" : "務所",
+          "id" : "c49235ef62048f36283707bfcec76eff",
+          "reading" : "ムショ"
+        },
+        {
+          "headword" : "獄屋",
+          "id" : "f6d11f3a58bca70796cab3415d5a3386",
+          "reading" : "ごくや"
+        },
+        {
+          "headword" : "獄所",
+          "id" : "8909ac74ed03170a1fda9c852219c84c",
+          "reading" : "ごくしょ"
+        },
+        {
+          "headword" : "プリズン",
+          "id" : "14385cf8f3a1f632345145e532f1b96a",
+          "reading" : "プリズン"
+        },
+        {
+          "headword" : "刑獄",
+          "id" : "ae539b4eb3dbaf4e84c8edeca9fd5ba4",
+          "reading" : "けいごく"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "house",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "住居",
+          "id" : "cf5925eba434588f7ec7463a4d0cc4e0",
+          "reading" : "じゅうきょ"
+        },
+        {
+          "headword" : "家屋",
+          "id" : "1a72f7ea68d9879d7222e3d642feb190",
+          "reading" : "かおく"
+        },
+        {
+          "headword" : "ハウス",
+          "id" : "4722fee7968aade78ef9060a4b1381be",
+          "reading" : "ハウス"
+        },
+        {
+          "headword" : "家",
+          "id" : "442b440d176ec8ea3b3f03901d251f86",
+          "reading" : "け"
+        },
+        {
+          "headword" : "家",
+          "id" : "6f54be67247dcd72328d454c302c328a",
+          "reading" : "いえ"
+        },
+        {
+          "headword" : "住まい",
+          "id" : "796f0788b3c1283a08212f9b98d9b0fe",
+          "reading" : "すまい"
+        },
+        {
+          "headword" : "宅",
+          "id" : "36c81ed9d290caa084a198dc33ed43ee",
+          "reading" : "たく"
+        },
+        {
+          "headword" : "舎",
+          "id" : "71eae2e6af299f91badbdce4a25cc134",
+          "reading" : "しゃ"
+        },
+        {
+          "headword" : "メゾン",
+          "id" : "98592ecb80b7faec688bfb69817949e0",
+          "reading" : "メゾン"
+        },
+        {
+          "headword" : "人家",
+          "id" : "a9bcc4eef6a8ac7c5845bfa24e26bd9a",
+          "reading" : "じんか"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "water",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "水分",
+          "id" : "c36acf2a68500efbede75ec79e0bdb53",
+          "reading" : "すいぶん"
+        },
+        {
+          "headword" : "水",
+          "id" : "722c94624b09c10ca07a96c1cb03701f",
+          "reading" : "みず"
+        },
+        {
+          "headword" : "手洗い",
+          "id" : "4c5219287d5466ea3a5b4d286a6bbf13",
+          "reading" : "てあらい"
+        },
+        {
+          "headword" : "お水",
+          "id" : "abd8d01ae137a4588a57834e651157e1",
+          "reading" : "おみず"
+        },
+        {
+          "headword" : "ウォーター",
+          "id" : "8dbd6241ed7de0d3297f06dc19153994",
+          "reading" : "ウォーター"
+        },
+        {
+          "headword" : "水をやる",
+          "id" : "9214d27fe176d33e12a1300b65b47b72",
+          "reading" : "みずをやる"
+        },
+        {
+          "headword" : "注ぐ",
+          "id" : "75f2a4c5812883b99078f7a895b87687",
+          "reading" : "そそぐ"
+        },
+        {
+          "headword" : "水",
+          "id" : "ced396ff21268b4a6a945cec1fb64a1a",
+          "reading" : "すい"
+        },
+        {
+          "headword" : "湧水",
+          "id" : "940b160dbc6fe35ed43ed67bbc7ef10d",
+          "reading" : "ゆうすい"
+        },
+        {
+          "headword" : "凍結",
+          "id" : "87e3a83f1280d6a99379e6462c2244ca",
+          "reading" : "とうけつ"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "to see",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "ご覧になる",
+          "id" : "be95cd848551d73159f4f2da5558bddd",
+          "reading" : "ごらんになる"
+        },
+        {
+          "headword" : "思い描く",
+          "id" : "d237e9db70205dbf2765a147ede86b04",
+          "reading" : "おもいえがく"
+        },
+        {
+          "headword" : "見る",
+          "id" : "7f490a9c9c0da94f4e9474f4efe74be1",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "会う",
+          "id" : "5a238575a0b37a31bff65148e1092c72",
+          "reading" : "あう"
+        },
+        {
+          "headword" : "分かる",
+          "id" : "d3094eebd02ffb0c94cb40cfbdf7d1c3",
+          "reading" : "わかる"
+        },
+        {
+          "headword" : "見受ける",
+          "id" : "a15ee6a1eb9185d6ff9bcbd0eaf2bdc8",
+          "reading" : "みうける"
+        },
+        {
+          "headword" : "見送る",
+          "id" : "557c6faa01df2309dcfe2dc8a56fda03",
+          "reading" : "みおくる"
+        },
+        {
+          "headword" : "送り出す",
+          "id" : "ff394c616671a824fe0980b25bbea7aa",
+          "reading" : "おくりだす"
+        },
+        {
+          "headword" : "見す",
+          "id" : "d2ea5ae43851283312eb1ad96983e657",
+          "reading" : "めす"
+        },
+        {
+          "headword" : "ご覧じる",
+          "id" : "1553f337a3dca303c8be4977acc7517a",
+          "reading" : "ごろうじる"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "thank you",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "有難うございます",
+          "id" : "d4148b392890d51b7a69936cabc65f7f",
+          "reading" : "ありがとうございます"
+        },
+        {
+          "headword" : "有難うございました",
+          "id" : "7966f37d02995b7200200bbca05482a4",
+          "reading" : "ありがとうございました"
+        },
+        {
+          "headword" : "どうも",
+          "id" : "241d53310b1bebfc437f26a0f88a0cc8",
+          "reading" : "どうも"
+        },
+        {
+          "headword" : "メルシー",
+          "id" : "1366d88247c98ef977dc5ad1a483b699",
+          "reading" : "メルシー"
+        },
+        {
+          "headword" : "サンキュー",
+          "id" : "bf84fe10e7111700ab1edd2e424da1de",
+          "reading" : "サンキュー"
+        },
+        {
+          "headword" : "ご馳走様",
+          "id" : "36e7053129094ab42c05c04788cfe1dc",
+          "reading" : "ごちそうさま"
+        },
+        {
+          "headword" : "ご苦労様",
+          "id" : "3b615253363baa3299d596b68ddd5b3d",
+          "reading" : "ごくろうさま"
+        },
+        {
+          "headword" : "お疲れ様",
+          "id" : "aa1c5f33bcf41bc13396af00c056fc87",
+          "reading" : "おつかれさま"
+        },
+        {
+          "headword" : "頂きます",
+          "id" : "45bbe04eb717c59ed533c6df51685030",
+          "reading" : "いただきます"
+        },
+        {
+          "headword" : "３９",
+          "id" : "b5dd4793abfda34449a05c4653190faa",
+          "reading" : "さんきゅう"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "食べた",
+      "resolution" : "deinflected",
+      "results" : [
+        {
+          "headword" : "食べる",
+          "id" : "042e07f7052f611fed33ddddf37f55fd",
+          "reading" : "たべる"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "行きました",
+      "resolution" : "deinflected",
+      "results" : [
+        {
+          "headword" : "行く",
+          "id" : "02b555a06b217e79bca2d442a5a03d86",
+          "reading" : "いく"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "見ない",
+      "resolution" : "deinflected",
+      "results" : [
+        {
+          "headword" : "見る",
+          "id" : "7f490a9c9c0da94f4e9474f4efe74be1",
+          "reading" : "みる"
+        },
+        {
+          "headword" : "類を見ない",
+          "id" : "d3f26bdd8bd76125a8ccb2c4b82cf4fa",
+          "reading" : "るいをみない"
+        },
+        {
+          "headword" : "比を見ない",
+          "id" : "732792dd4e782a41310a6027a54bfce2",
+          "reading" : "ひをみない"
+        },
+        {
+          "headword" : "思っても見ない",
+          "id" : "208724b3dde6e4b594a0d78a88d2bfb4",
+          "reading" : "おもってもみない"
+        },
+        {
+          "headword" : "史上に例を見ない",
+          "id" : "ee68139eddcbaab55a3940c7189fb2cb",
+          "reading" : "しじょうにれいをみない"
+        },
+        {
+          "headword" : "日光を見ない中は結構と言うな",
+          "id" : "e150e1f785eeda62cb7c1cfc52da819b",
+          "reading" : "にっこうをみないうちはけっこうというな"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "高くて",
+      "resolution" : "deinflected",
+      "results" : [
+        {
+          "headword" : "高い",
+          "id" : "380d957d6f36dc2e2aacdb743198d104",
+          "reading" : "たかい"
+        }
+      ]
+    }
+  ],
+  "formatVersion" : 1,
+  "resultLimit" : 10,
+  "suite" : "zenbu.search-retrieval-conformance"
+}

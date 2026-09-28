@@ -43,6 +43,12 @@ xcodebuild -scheme ZenbuJapaneseModules \
   ONLY_ACTIVE_ARCH=YES test
 ```
 
+`SearchConformanceTests` checks Search against the shared conformance suite in
+`apps/ios/LanguageData/Conformance/search-retrieval.json` (see ADR 0006). After an intended
+change to Search results or a dictionary rebuild, record it again by adding
+`TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` before the test command above, add
+`-only-testing:SearchExperienceTests/SearchConformanceTests` after it, and review the diff.
+
 The repository still has no CI workflow. Verify ordinary app changes by also building,
 launching, and inspecting the real app.
 
