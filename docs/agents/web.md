@@ -16,6 +16,7 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 - `pnpm check` runs Biome, typecheck, `drizzle-kit check` (migration validation), Vitest, and
   `next build`. The `Web` GitHub Actions workflow
   runs it on pull requests that change `apps/web/**`.
+- `scripts/smoke.sh <base-url>` checks a running site's key pages and the `/privacy` redirect.
 
 After changing routes, open the changed pages in `pnpm preview` and confirm `/sitemap-index.xml`
 lists every child sitemap and each child sitemap lists the new URLs.
@@ -28,8 +29,15 @@ lists every child sitemap and each child sitemap lists the new URLs.
 | Staging | `zenbujapanese-web-staging` | `staging.zenbujapanese.com` | `zenbujapanese-web-staging` |
 | Production | `zenbujapanese-web-production` | `zenbujapanese.com` (after cutover) | `zenbujapanese-web-production` |
 
-Deploys run from a developer machine, never from CI. Deploy only with explicit approval, staging
-first: `pnpm deploy:staging`, verify, then `pnpm deploy:production`.
+Deploys and remote migrations run only through the `Web deploy` GitHub Actions workflow, never
+from an agent's machine. Each merge to `main` that changes `apps/web/**` applies staging
+migrations, deploys staging, and smoke-tests it (`scripts/smoke.sh`). The production job then
+waits for approval on the `production` GitHub environment, applies production migrations, deploys
+the same commit, and smoke-tests `WEB_PRODUCTION_URL`. Both environments deploy only from `main`.
+The workflow uses the `CLOUDFLARE_API_TOKEN` secret (the "Edit Cloudflare Workers" template plus D1 Edit, limited
+to the SERP account and the zenbujapanese.com zone) and the `CLOUDFLARE_ACCOUNT_ID` variable.
+
+The `deploy:*` and remote `db:migrate:*` scripts remain for a human-run emergency only.
 
 Only `deploy:production` builds with `SITE_ENV=production`. Every other build sends
 `X-Robots-Tag: noindex` and a `robots.txt` that disallows everything, so staging never reaches
@@ -39,7 +47,8 @@ Web Analytics).
 
 Production serves its workers.dev URL until DNS moves off the placeholder GitHub Pages site
 (`serpcompany/zenbujapanese.com`). At cutover, add custom domains for `zenbujapanese.com` and
-`www.zenbujapanese.com` in `wrangler.jsonc`. `/privacy` and `/support` must keep working: the
+`www.zenbujapanese.com` in `wrangler.jsonc`, and update the `production` environment's
+`WEB_PRODUCTION_URL` variable. `/privacy` and `/support` must keep working: the
 shipped iOS app and App Store metadata link to them.
 
 ## Database
