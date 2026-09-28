@@ -401,6 +401,8 @@ extension WordLists {
       "Lists can’t be changed because they were saved by a newer version of Zenbu."
     case .couldNotKeepCopy:
       "Lists can’t be saved right now. Free up storage and reopen Zenbu."
+    case .couldNotRead:
+      "Lists couldn’t be loaded. Reopen Zenbu to try again."
     case nil:
       nil
     }

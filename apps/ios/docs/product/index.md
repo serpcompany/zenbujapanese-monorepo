@@ -60,7 +60,9 @@ unknown, or open its word page in Search. A word whose entry ID changed opens th
 same headword and reading, and a search for the headword only when there is none.
 Known words are stored only on the device. If the saved known words
 came from a newer version of Zenbu, or a damaged file couldn't be kept aside, they are shown but
-can't be changed, and Known Words and the Mark as Known button say so.
+can't be changed, and Known Words and the Mark as Known button say so. If the file exists but
+can't be read at launch, such as before the device's first unlock, nothing is shown or saved over
+it, and Known Words asks the learner to reopen Zenbu.
 
 ### Lists
 
@@ -83,7 +85,9 @@ A word's page also names the lists holding it; tapping one opens that list here.
 
 Lists are stored only on the device, keyed by each entry's stable identifier. Like Known Words,
 lists saved by a newer version of Zenbu, or a damaged file that couldn't be kept aside, are shown
-but can't be changed, and Lists and the list picker say so.
+but can't be changed, and Lists and the list picker say so. A lists file that can't be read at
+launch is left untouched, Favorites is not created over it, and Lists asks the learner to reopen
+Zenbu.
 
 ### Media Library
 

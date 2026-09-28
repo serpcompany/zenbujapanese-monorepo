@@ -198,7 +198,7 @@ final class WordListsTests {
     }
 
     let lists = await loadedLists()
-    #expect(lists.readOnlyReason == .couldNotKeepCopy)
+    #expect(lists.readOnlyReason == .couldNotRead)
     #expect(lists.createList(named: "New") == nil)
     await lists.flush()
     try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: fileURL.path)

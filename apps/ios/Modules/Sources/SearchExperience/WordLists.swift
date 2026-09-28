@@ -242,7 +242,7 @@ private actor WordListsWriter {
     case .missing:
       return Loaded()
     case .unreadable:
-      return Loaded(contents: Contents(), readOnlyReason: .couldNotKeepCopy)
+      return Loaded(contents: Contents(), readOnlyReason: .couldNotRead)
     case .newerVersion(let newer):
       let stored = try? JSONDecoder.localStore.decode(LoadedFile.self, from: newer)
       return Loaded(

@@ -6,9 +6,11 @@ import OSLog
 enum LocalFileReadOnlyReason: Sendable {
   /// The file was saved by a newer version, and saving over it could lose its data.
   case newerVersion
-  /// The file couldn't be read, or couldn't be read in full and no copy of it could be kept
-  /// aside. Reopening Zenbu may help.
+  /// The file couldn't be read in full, and no copy of it could be kept aside.
   case couldNotKeepCopy
+  /// The file exists but couldn't be read at launch, for example before the device's first
+  /// unlock.
+  case couldNotRead
 }
 
 /// One versioned JSON file on the device that a store loads once and rewrites in full.

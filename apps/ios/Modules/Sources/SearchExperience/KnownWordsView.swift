@@ -108,6 +108,8 @@ struct KnownWordsView: View {
       "Known words can’t be changed because they were saved by a newer version of Zenbu."
     case .couldNotKeepCopy:
       "Known words can’t be saved right now. Free up storage and reopen Zenbu."
+    case .couldNotRead:
+      "Known words couldn’t be loaded. Reopen Zenbu to try again."
     case nil:
       nil
     }
