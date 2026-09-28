@@ -47,7 +47,7 @@ jobs:
         run: pnpm deploy:staging 2>&1 | tee deploy.log
       - name: Smoke test
         # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
-        run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)"
+        run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" staging
 
   production:
     needs: staging
@@ -75,4 +75,4 @@ jobs:
         run: pnpm deploy:production 2>&1 | tee deploy.log
       - name: Smoke test
         # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
-        run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)"
+        run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" production

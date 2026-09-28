@@ -16,7 +16,8 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 - `pnpm check` runs Biome, typecheck, `drizzle-kit check` (migration validation), Vitest, and
   `next build`. The `Web` GitHub Actions workflow
   runs it on pull requests that change `apps/web/**`.
-- `scripts/smoke.sh <base-url>` checks a running site's key pages and the `/privacy` redirect.
+- `scripts/smoke.sh <base-url> <staging|production>` checks a running site's key pages, the
+  `/privacy` redirect, and that environment's search-engine rules.
 
 After changing routes, open the changed pages in `pnpm preview` and confirm `/sitemap-index.xml`
 lists every child sitemap and each child sitemap lists the new URLs.
@@ -39,11 +40,28 @@ to the SERP account and the zenbujapanese.com zone) and the `CLOUDFLARE_ACCOUNT_
 
 The `deploy:*` and remote `db:migrate:*` scripts remain for a human-run emergency only.
 
-Only `deploy:production` builds with `SITE_ENV=production`. Every other build sends
-`X-Robots-Tag: noindex` and a `robots.txt` that disallows everything, so staging never reaches
-search engines. Analytics also load only in production builds, and only when their build-time IDs
-are set: `NEXT_PUBLIC_GTM_ID` (Google Tag Manager) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare
-Web Analytics).
+### Environment configuration
+
+Each value that differs by environment lives where the code that reads it runs:
+
+- **Worker `vars` in `wrangler.jsonc`**, per environment, for anything rendered on request. OpenNext
+  renders routes such as `robots.txt` inside the Worker, where build-time variables are absent.
+- **The build**, for static pages and `next.config` headers, which are rendered once at build
+  time. `deploy:production` sets these.
+- **`wrangler secret put --env <env>`** for secrets. **`.dev.vars`** holds local values only and is
+  never committed.
+
+`SITE_ENV=production` is set in both the production Worker `vars` and the `deploy:production`
+build. Anything else is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that
+disallows everything. Analytics load only in production and only when their build-time IDs are
+set: `NEXT_PUBLIC_GTM_ID` (Google Tag Manager) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare Web
+Analytics).
+
+Before merging a change to environment configuration, build without the variable and run the
+Worker with the target environment's `vars` (`pnpm exec opennextjs-cloudflare preview --env
+production`), then check the output. `scripts/smoke.sh <url> <staging|production>` asserts the
+search-engine rules for each environment, so CI fails if production is hidden or staging is
+exposed.
 
 Production serves its workers.dev URL until DNS moves off the placeholder GitHub Pages site
 (`serpcompany/zenbujapanese.com`). At cutover, add custom domains for `zenbujapanese.com` and

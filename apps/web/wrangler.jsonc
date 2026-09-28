@@ -28,6 +28,7 @@
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web" }],
   "env": {
     "staging": {
+      "vars": { "SITE_ENV": "staging" },
       "workers_dev": true,
       "routes": [{ "pattern": "staging.zenbujapanese.com", "custom_domain": true }],
       "d1_databases": [
@@ -42,6 +43,7 @@
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web-staging" }]
     },
     "production": {
+      "vars": { "SITE_ENV": "production" },
       // At cutover, add custom domains for zenbujapanese.com and www.zenbujapanese.com. Keep
       // workers_dev: CI smoke-tests the workers.dev URL, which skips the zone's bot protection.
       "workers_dev": true,
