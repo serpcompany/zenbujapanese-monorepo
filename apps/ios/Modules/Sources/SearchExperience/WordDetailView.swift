@@ -408,18 +408,22 @@ struct WordHeadline<Accessory: View>: View {
 
   private var controls: some View {
     HStack(spacing: 8) {
+      // With a pitch accent, the pitch pill is also the pronounce button, so a long word keeps
+      // room for its headword.
       if let pitch {
-        PitchAccentBadge(reading: reading, pitch: pitch)
+        PitchAccentBadge(reading: reading, pitch: pitch, pronounce: pronounce)
+          .accessibilityIdentifier("\(identifierPrefix).pronounce")
+      } else {
+        Button(action: pronounce) {
+          Image(systemName: "speaker.wave.2.fill")
+            .font(.title3)
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel("Pronounce \(reading)")
+        .accessibilityIdentifier("\(identifierPrefix).pronounce")
       }
-      Button(action: pronounce) {
-        Image(systemName: "speaker.wave.2.fill")
-          .font(.title3)
-          .frame(minWidth: 44, minHeight: 44)
-          .contentShape(.rect)
-      }
-      .buttonStyle(.borderless)
-      .accessibilityLabel("Pronounce \(reading)")
-      .accessibilityIdentifier("\(identifierPrefix).pronounce")
       accessory()
     }
   }
@@ -485,9 +489,11 @@ private struct PartOfSpeechRow: View {
 
 /// The reading in katakana with its pitch accent drawn as a contour: a dot per mora at high or
 /// low pitch joined by a line, and a hollow dot for the pitch of a following particle.
+/// The reading's pitch accent in a capsule with a speaker, which pronounces the word.
 private struct PitchAccentBadge: View {
   let reading: String
   let pitch: PitchAccent
+  let pronounce: () -> Void
   @ScaledMetric(relativeTo: .body) private var moraWidth: CGFloat = 20
   @ScaledMetric(relativeTo: .body) private var contourSpace = 7.0
   @ScaledMetric(relativeTo: .body) private var horizontalPadding = 10.0
@@ -496,6 +502,25 @@ private struct PitchAccentBadge: View {
     let morae = reading.katakana.morae
     // A combined mora such as キョ needs more room than a single kana.
     let widths = morae.map { moraWidth * ($0.count > 1 ? 1.5 : 1) }
+    Button(action: pronounce) {
+      HStack(spacing: 6) {
+        Image(systemName: "speaker.wave.2.fill")
+          .font(.subheadline)
+          .foregroundStyle(.tint)
+        contour(morae: morae, widths: widths)
+      }
+      .padding(.horizontal, horizontalPadding)
+      .padding(.vertical, 2)
+      .frame(minHeight: 44)
+      .background(.fill.tertiary, in: Capsule())
+      .contentShape(Capsule())
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("Pronounce \(reading)")
+    .accessibilityValue("Pitch accent, downstep \(pitch.downstep), \(pitch.moraCount) mora")
+  }
+
+  private func contour(morae: [String], widths: [CGFloat]) -> some View {
     HStack(spacing: 0) {
       ForEach(morae.enumerated(), id: \.offset) { index, mora in
         Text(mora)
@@ -514,13 +539,6 @@ private struct PitchAccentBadge: View {
         particleWidth: moraWidth * 0.6)
         .foregroundStyle(ZenbuTheme.pitchDownstep)
     }
-    .padding(.horizontal, horizontalPadding)
-    .padding(.vertical, 2)
-    .background(.fill.tertiary, in: Capsule())
-    .accessibilityElement(children: .ignore)
-    .accessibilityLabel(
-      "Pitch accent for \(reading), downstep \(pitch.downstep), \(pitch.moraCount) mora")
-    .accessibilityIdentifier("word-detail.pitch")
   }
 }
 
