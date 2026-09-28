@@ -51,7 +51,8 @@ struct KnownWordsView: View {
     let records = filteredRecords
     Group {
       if !wordKnowledge.isLoaded {
-        ProgressView()
+        ProgressView("Loading Known Words")
+          .accessibilityIdentifier("known-words.loading")
       } else if wordKnowledge.knownCount == 0 {
         ContentUnavailableView(
           "No Known Words",

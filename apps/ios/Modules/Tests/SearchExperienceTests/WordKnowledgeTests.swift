@@ -17,8 +17,9 @@ final class WordKnowledgeTests {
   private let miru = LanguageReferenceID(rawValue: "fedcba9876543210fedcba9876543210")
 
   @Test("a word without a record is unknown")
-  func defaultsToUnknown() {
+  func defaultsToUnknown() async {
     let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
     #expect(knowledge.status(taberu) == .unknown)
     #expect(knowledge.knownCount == 0)
   }
@@ -26,6 +27,7 @@ final class WordKnowledgeTests {
   @Test("known words survive a reload")
   func persistence() async {
     let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
     knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
     await knowledge.flush()
 
@@ -39,6 +41,7 @@ final class WordKnowledgeTests {
   @Test("marking a word unknown keeps its record")
   func unknownKeepsRecord() async {
     let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
     knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
     knowledge.setStatus(.unknown, id: taberu, headword: "食べる", reading: "たべる")
     await knowledge.flush()
@@ -52,8 +55,9 @@ final class WordKnowledgeTests {
   }
 
   @Test("only known words are counted and listed, most recent first")
-  func knownRecordsOrder() {
+  func knownRecordsOrder() async {
     let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
     knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
     knowledge.setStatus(.known, id: miru, headword: "見る", reading: "みる")
     #expect(knowledge.knownCount == 2)
@@ -65,8 +69,9 @@ final class WordKnowledgeTests {
   }
 
   @Test("setting the same status again does not change when it was marked")
-  func repeatedStatusIsIgnored() {
+  func repeatedStatusIsIgnored() async {
     let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
     knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
     let markedAt = knowledge.records[taberu.rawValue]?.updatedAt
     knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
@@ -81,6 +86,9 @@ final class WordKnowledgeTests {
     let knowledge = WordKnowledge(fileURL: fileURL)
     await knowledge.flush()
     #expect(knowledge.records.isEmpty)
+    #expect(try backups().count == 1)
+    let relaunched = WordKnowledge(fileURL: fileURL)
+    await relaunched.flush()
     #expect(try backups().count == 1)
   }
 
@@ -143,20 +151,55 @@ final class WordKnowledgeTests {
     #expect(reloaded.isKnown(miru))
   }
 
-  @Test("changes made while the file loads keep the loaded records")
-  func changesDuringLoad() async {
-    let first = WordKnowledge(fileURL: fileURL)
-    first.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
-    await first.flush()
+  @Test("changes made before the file loads are ignored")
+  func changesBeforeLoad() async {
+    let knowledge = WordKnowledge(fileURL: fileURL)
+    #expect(!knowledge.isLoaded)
+    knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
+    #expect(!knowledge.isKnown(taberu))
+    await knowledge.flush()
+    #expect(knowledge.isLoaded)
+    #expect(!knowledge.isKnown(taberu))
+  }
 
-    let second = WordKnowledge(fileURL: fileURL)
-    second.setStatus(.known, id: miru, headword: "見る", reading: "みる")
-    await second.flush()
+  @Test("a failed write is saved again by saveIfNeeded")
+  func retryAfterFailedWrite() async throws {
+    let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    try setDirectoryWritable(false)
+    knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
+    await knowledge.flush()
+    #expect(!FileManager.default.fileExists(atPath: fileURL.path))
 
+    try setDirectoryWritable(true)
+    knowledge.saveIfNeeded()
+    await knowledge.flush()
     let reloaded = WordKnowledge(fileURL: fileURL)
     await reloaded.flush()
     #expect(reloaded.isKnown(taberu))
-    #expect(reloaded.isKnown(miru))
+  }
+
+  @Test("a file from a newer version is never saved over")
+  func newerVersionIsReadOnly() async throws {
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let json = """
+      {"version":2,"records":[
+      {"entryID":"\(taberu.rawValue)","headword":"食べる","reading":"たべる","status":"known","updatedAt":0,"gloss":"eat"}]}
+      """
+    try Data(json.utf8).write(to: fileURL)
+
+    let knowledge = WordKnowledge(fileURL: fileURL)
+    await knowledge.flush()
+    #expect(knowledge.isKnown(taberu))
+    knowledge.setStatus(.known, id: miru, headword: "見る", reading: "みる")
+    await knowledge.flush()
+    #expect(try Data(contentsOf: fileURL) == Data(json.utf8))
+  }
+
+  private func setDirectoryWritable(_ writable: Bool) throws {
+    try FileManager.default.setAttributes(
+      [.posixPermissions: writable ? 0o755 : 0o555], ofItemAtPath: directory.path)
   }
 
   private func backups() throws -> [String] {
