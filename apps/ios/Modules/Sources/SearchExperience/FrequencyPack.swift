@@ -99,6 +99,15 @@ enum FrequencyLookupResult: Equatable, Sendable {
     }
   }
 
+  /// How common the rank or level says the entry is, or nil without either.
+  var tier: FrequencyTier? {
+    switch self {
+    case .evidence(let evidence): FrequencyTier(rank: evidence.rank)
+    case .level(let evidence): FrequencyTier(level: evidence.level)
+    case .noEvidence, .unavailable: nil
+    }
+  }
+
   static func unavailableResults(
     for ids: [LanguageReferenceID],
     pack: FrequencyPackDisclosure?,

@@ -158,7 +158,40 @@ struct SearchResultOrderingTests {
 
     #expect(
       SearchResultFrequencyOrdering.ordered(results, ranks: ranks).map(\.id)
-        == [n5Common.id, n5Rare.id, n3.id, unlisted.id])
+        == [n5Common.id, n5Rare.id, unlisted.id, n3.id])
+  }
+
+  @Test("an entry the first dictionary misses places by the next dictionary, not last")
+  func unrankedInFirstDictionaryUsesTheNext() {
+    // Search "house": YouTube has no rank for 家 (いえ), which JLPT lists at N5.
+    let ie = fixtureEntry(id: "00000000000000000000000000000001", headword: "家")
+    let sumai = fixtureEntry(id: "00000000000000000000000000000002", headword: "住まい")
+    let okusha = fixtureEntry(id: "00000000000000000000000000000003", headword: "屋舎")
+    let unranked = fixtureEntry(id: "00000000000000000000000000000004", headword: "舎屋")
+    let results = LookupSearchResults(
+      items: [unranked, okusha, sumai, ie].enumerated().map {
+        fixtureItem(entry: $0.element, fallbackOrder: $0.offset)
+      })
+    let jlpt = FrequencyPackDisclosure(
+      id: FrequencyPackID(rawValue: "jlpt"), kind: .level, displayName: "JLPT",
+      domain: "Fixture", domainDescription: "Fixture", version: "1", attribution: "Fixture")
+    let youTube = fixtureEvidence(id: sumai.id, rank: 1).pack
+    let ranks: [LanguageReferenceID: FrequencyRanks] = [
+      ie.id: [
+        .noEvidence(pack: youTube),
+        .level(FrequencyLevelEvidence(pack: jlpt, languageReferenceID: ie.id, level: .n5)),
+      ],
+      sumai.id: [
+        .evidence(fixtureEvidence(id: sumai.id, rank: 7_056)),
+        .level(FrequencyLevelEvidence(pack: jlpt, languageReferenceID: sumai.id, level: .n2)),
+      ],
+      okusha.id: [.evidence(fixtureEvidence(id: okusha.id, rank: 252_598)), .noEvidence(pack: jlpt)],
+      unranked.id: [.noEvidence(pack: youTube), .noEvidence(pack: jlpt)],
+    ]
+
+    #expect(
+      SearchResultFrequencyOrdering.ordered(results, ranks: ranks).map(\.headword)
+        == ["家", "住まい", "屋舎", "舎屋"])
   }
 
   @Test("changing active-pack evidence reorders only equivalent results")

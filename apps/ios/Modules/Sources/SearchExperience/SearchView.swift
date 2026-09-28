@@ -986,10 +986,12 @@ enum ResultRank {
 }
 
 enum SearchResultFrequencyOrdering {
-  /// Explicit match evidence is primary. Enabled dictionaries order only equivalent matches, in
-  /// priority order: the first dictionary's rank or level, then the next dictionary's to break
-  /// ties, and so on. An entry a dictionary ranks precedes one it does not. The original
-  /// dictionary rank and canonical entry ID are deterministic fallbacks.
+  /// Explicit match evidence is primary. Enabled dictionaries order only equivalent matches:
+  /// first by how common the first dictionary that ranks an entry says it is, so an entry the
+  /// first dictionary misses (家 in YouTube) still places by its JLPT level or next rank; then by
+  /// the first dictionary's rank or level, the next dictionary's to break ties, and so on, with
+  /// a ranked entry before an unranked one. The original dictionary rank and canonical entry ID
+  /// are deterministic fallbacks.
   static func ordered(
     _ results: LookupSearchResults,
     entries: [DictionaryEntry]? = nil,
@@ -1002,6 +1004,13 @@ enum SearchResultFrequencyOrdering {
       if lhsRelevance != rhsRelevance { return lhsRelevance < rhsRelevance }
       let lhsRanks = ranks[lhs.element.id] ?? []
       let rhsRanks = ranks[rhs.element.id] ?? []
+      let lhsTier = lhsRanks.lazy.compactMap(\.tier).first
+      let rhsTier = rhsRanks.lazy.compactMap(\.tier).first
+      if lhsTier != rhsTier {
+        guard let lhsTier else { return false }
+        guard let rhsTier else { return true }
+        return lhsTier > rhsTier
+      }
       for index in 0..<max(lhsRanks.count, rhsRanks.count) {
         let lhsValue = lhsRanks.indices.contains(index) ? lhsRanks[index].sortValue : nil
         let rhsValue = rhsRanks.indices.contains(index) ? rhsRanks[index].sortValue : nil
