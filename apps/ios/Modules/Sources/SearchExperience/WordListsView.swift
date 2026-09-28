@@ -225,6 +225,7 @@ private struct WordListIndexRow: View {
 /// to select words to remove.
 struct WordListView: View {
   @Environment(WordLists.self) private var wordLists
+  @Environment(WordKnowledge.self) private var wordKnowledge
   @Environment(\.dismiss) private var dismiss
   @State private var searchText = ""
   @State private var editMode = EditMode.inactive
@@ -292,7 +293,9 @@ struct WordListView: View {
 
   @ViewBuilder
   private func row(_ word: WordListMembership) -> some View {
-    let label = SavedWordRow(headword: word.headword, reading: word.reading, date: word.addedAt)
+    let label = SavedWordRow(
+      headword: word.headword, reading: word.reading, date: word.addedAt,
+      isKnown: wordKnowledge.isKnown(word.languageReferenceID))
     Group {
       if isSelecting {
         // While selecting, a tap selects the row instead of opening the word.

@@ -123,11 +123,13 @@ struct KnownWordsView: View {
 
 }
 
-/// A saved word in Known Words or a list: its headword with furigana, and when it was saved.
+/// A saved word in Known Words or a list: its headword with furigana, the Known capsule when
+/// asked for, and when it was saved.
 struct SavedWordRow: View {
   let headword: String
   let reading: String
   let date: Date
+  var isKnown = false
 
   var body: some View {
     HStack {
@@ -138,6 +140,9 @@ struct SavedWordRow: View {
         rubyFont: .caption.weight(.semibold)
       )
       Spacer()
+      if isKnown {
+        KnownWordBadge()
+      }
       Text(date, format: .dateTime.month().day())
         .font(.caption)
         .foregroundStyle(.secondary)
@@ -145,5 +150,6 @@ struct SavedWordRow: View {
     .contentShape(Rectangle())
     .accessibilityElement(children: .combine)
     .accessibilityLabel("\(headword), \(reading)")
+    .accessibilityValue(isKnown ? Text("Known") : Text(""))
   }
 }

@@ -73,7 +73,7 @@ The Account row shows how many lists there are. Lists shows every list in the le
 with its word count. A learner can create a list, swipe a list to rename or delete it (a list
 that has words asks first), and open a list. In Edit, the learner drags lists to reorder them and
 taps a list to rename it. Names are trimmed, can't be
-empty, and may repeat. A list shows its words most recently added first; the learner can search
+empty, and may repeat. A list shows its words most recently added first, with the **✓ Known** capsule on known words; the learner can search
 it by headword or reading, swipe a word to remove it from that list, or open its word page, found
 the same way as in Known Words. Its **•••** menu renames the
 list, deletes it (asking first when it has words), or selects words: while selecting, the top bar
