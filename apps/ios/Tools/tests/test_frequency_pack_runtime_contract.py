@@ -17,6 +17,8 @@ ANALYSIS = (
 JITEN_ANALYSIS = ROOT / "apps/ios/LanguageData/Generated/Jiten-2026-09-27.analysis.json"
 RESOURCES = ROOT / "apps/ios/Modules/Sources/SearchExperience/Resources"
 TUBELEX = RESOURCES / "TUBELEXFrequencyPack.sqlite3"
+TUBELEX_REPORT = ROOT / "apps/ios/LanguageData/Generated/TUBELEX-ja-310-lemma-pos.import.json"
+LANGUAGE_DATA = RESOURCES / "LanguageReferenceData.sqlite3"
 JLPT = RESOURCES / "JLPTLevelPack.sqlite3"
 JLPT_RECORD = ROOT / "apps/ios/LanguageData/Sources/JLPT-Waller-2025-08-26.source.json"
 JLPT_REPORT = ROOT / "apps/ios/LanguageData/Generated/JLPT-Waller-2025-08-26.import.json"
@@ -89,6 +91,37 @@ class FrequencyPackRuntimeContractTests(unittest.TestCase):
                 (smoke["languageReferenceID"],),
             ).fetchone()
         self.assertEqual((smoke["rank"],), row)
+
+    def test_tubelex_pack_matches_its_import_report_and_ranks_shared_spellings(self) -> None:
+        catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
+        report = json.loads(TUBELEX_REPORT.read_text(encoding="utf-8"))
+        pack = next(p for p in catalog["packs"] if p["packID"] == report["sourceManifest"]["packID"])
+
+        self.assertEqual(report["sourceManifest"]["mappingPolicyVersion"], pack["mappingPolicyVersion"])
+        self.assertEqual(sha256(TUBELEX), report["artifactSHA256"])
+        for key in (
+            "mappedRows", "ambiguousRows", "unmappedRows", "duplicateMappings", "mappingSHA256",
+            "artifactContentSHA256", "mappingPolicySHA256", "languageDataSHA256", "sourceSHA256",
+        ):
+            with self.subTest(key=key):
+                self.assertEqual(report[key], pack[key])
+        self.assertEqual(report["importerSHA256"], pack["offlineImporterSHA256"])
+
+        # TUBELEX counts spellings JMdict files under several entries; the UniDic lemma reading
+        # places these on one (#440).
+        with sqlite3.connect(TUBELEX) as database:
+            database.execute("ATTACH DATABASE ? AS language", (str(LANGUAGE_DATA),))
+            for headword, reading, rank in (
+                ("事", "こと", 23), ("時", "とき", 57), ("上", "うえ", 127), ("先生", "せんせい", 359),
+            ):
+                with self.subTest(headword=headword):
+                    row = database.execute(
+                        "SELECT e.rank FROM frequency_evidence e "
+                        "JOIN language.entries l ON l.id = e.language_reference_id "
+                        "WHERE l.headword = ? AND l.reading = ?",
+                        (headword, reading),
+                    ).fetchone()
+                    self.assertEqual((rank,), row)
 
     def test_jlpt_level_pack_matches_its_pinned_source_and_import_report(self) -> None:
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))

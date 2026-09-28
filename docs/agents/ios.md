@@ -66,7 +66,7 @@ Pitch for two-part compounds UniDic doesn't list whole, such as 記者会見, co
 Every frequency pack pins the SHA-256 of `LanguageReferenceData.sqlite3`. After rebuilding it
 with `import_jmdict.py` (inputs are listed in `LanguageData/Sources/README.md`), also copy its
 ranking contract into `DictionaryRankingArtifactContract.json`, rebuild the TUBELEX and Wikipedia
-packs with `import_frequency_pack.py`, rebuild the Jiten packs with
+packs with `import_frequency_pack.py` (TUBELEX also needs `--unidic apps/ios/LanguageData/Sources/unidic-cwj-3.1.0.zip`), rebuild the Jiten packs with
 `build_jiten_frequency_packs.py --out-dir <dir>` (it rewrites their manifests and keeps changed
 ones trusted) and publish the new ZIPs, rebuild the JLPT pack, rebuild the example word index with `import_example_word_index.py`, rebuild the compound pitch estimates with `import_compound_pitch.py`
 (inputs in `LanguageData/Sources/Tatoeba-jpn-indices-2026-09-26.source.json`), and update each catalog manifest. Move the previous manifests of downloadable

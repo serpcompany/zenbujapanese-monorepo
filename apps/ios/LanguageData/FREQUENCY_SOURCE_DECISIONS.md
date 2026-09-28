@@ -45,6 +45,33 @@ Downloads are unversioned, so the snapshots used are pinned in
 Reading-aware mapping cuts ambiguous rows by 30–41% on every list (Novels: 12,859 → 7,600) and
 resolves homographs such as 方 (ほう/かた) that V1 must skip.
 
+## YouTube shared spellings (#440)
+
+TUBELEX counts UniDic lemmas by spelling and part of speech, with no reading, so V1 skips a row
+whose spelling several JMdict entries share (事, 時, 先生: 627 of the top 5,000 rows). JMdict
+priority can't choose: 家's いえ, うち, and け are all only ichi1. UniDic can: TUBELEX was
+tokenized with UniDic 3.1, and a lemma with one part of speech usually has one lemma reading
+(lForm).
+
+`import_frequency_pack.py` gives a TUBELEX row its UniDic reading only when V1 matches it but
+can't place it and UniDic has exactly one reading for that lemma and part of speech, then maps
+the pack with `FrequencyPackMappingV2`. A reading is withdrawn if it would move an entry V1
+already ranks to a worse-ranked row. Rows V1 places are unchanged.
+
+| TUBELEX | V1 | V2 + UniDic readings |
+| --- | ---: | ---: |
+| Top-5,000 rows ranked | 3,291 | 3,583 |
+| Top-5,000 rows matched but unranked | 627 | 331 |
+| Mapped entries | 56,792 | 58,056 |
+
+No entry lost its rank or got a worse one; 105 got a better one (色 75,248 → 245, from the
+romaji row "iro" to 色). The remaining 331 are spellings UniDic also files under several
+readings (家: イエ, ウチ, ヤ; 下, 子, 気, 前, 後), whose counts mix words, and kana such as て, だ,
+and で that several entries share. They stay unranked rather than guessed.
+
+Wikipedia is unchanged. Its rows are surface forms with no part of speech, and most of its
+skipped top-5,000 rows are kana (ある, いる, もの), where a reading can't choose either.
+
 ## #376 candidate results
 
 From `Generated/Frequency-candidates-376.analysis.json` (`analyze_frequency_candidates.py`,

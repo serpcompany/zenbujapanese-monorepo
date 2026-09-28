@@ -47,6 +47,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- About 1,260 more words now show a YouTube rank, including common ones whose spelling belongs to
+  more than one dictionary word, such as 事 (こと), 時 (とき), 年 (ねん), 上 (うえ), and 先生
+  (せんせい). About 100 words, such as 色 and 猫, now take a better YouTube rank from their usual
+  spelling instead of a rare one.
 - Tapping another word while a word's half-height sheet is open, in the Player or Image Search,
   now shows it in the same half-height sheet instead of reopening the sheet at full height.
 - Image Search now recognizes vertical Japanese (縦書き), such as book pages and signs,
