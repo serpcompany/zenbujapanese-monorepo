@@ -12,7 +12,6 @@ export default function AboutPage() {
         handwritten, or heard in a video. Its dictionary works offline, and your words, notes, and
         lists stay on your device.
       </p>
-      <p>{site.name} is made by SERP.</p>
     </PageShell>
   )
 }

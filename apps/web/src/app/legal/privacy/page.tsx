@@ -10,8 +10,8 @@ export default function PrivacyPage() {
   return (
     <PageShell title="Privacy Policy" updated="September 28, 2026">
       <p>
-        This policy explains how SERP handles information in the {site.name} iPhone app and on
-        zenbujapanese.com.
+        This policy explains how {site.name} handles information in the {site.name} iPhone app and
+        on zenbujapanese.com.
       </p>
 
       <h2>The short version</h2>
@@ -24,8 +24,8 @@ export default function PrivacyPage() {
       <h2>Information in the app</h2>
       <p>
         Recent searches, word notes, known words, and word lists are stored in the app's private
-        storage on your device and are not sent to SERP. Images you choose for Image Search are
-        processed on your device and discarded when you close them.
+        storage on your device and are not sent to {site.name}. Images you choose for Image Search
+        are processed on your device and discarded when you close them.
       </p>
       <p>
         Text recognition, translation, and pronunciation use Apple's Vision, Translation, and speech

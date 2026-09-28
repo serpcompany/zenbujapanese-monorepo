@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { legalPages } from '@/lib/pages'
+import { site } from '@/lib/site'
 
 export function SiteFooter() {
   return (
@@ -14,7 +15,9 @@ export function SiteFooter() {
           ))}
           <Link href="/sitemap">Sitemap</Link>
         </nav>
-        <p>© {new Date().getFullYear()} SERP</p>
+        <p>
+          © {new Date().getFullYear()} {site.name}
+        </p>
       </div>
     </footer>
   )

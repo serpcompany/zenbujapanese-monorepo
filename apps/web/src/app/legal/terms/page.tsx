@@ -10,8 +10,8 @@ export default function TermsPage() {
     <PageShell title="Terms of Use" updated="September 28, 2026">
       <p>
         These terms apply to the {site.name} iPhone app and zenbujapanese.com (the "Service"),
-        provided by TSMC LLC, doing business as SERP ("we"). By using the Service you agree to them.
-        If you do not agree, do not use the Service.
+        provided by TSMC LLC, doing business as {site.name} ("we"). By using the Service you agree
+        to them. If you do not agree, do not use the Service.
       </p>
 
       <h2>1. The Service</h2>
@@ -41,7 +41,7 @@ export default function TermsPage() {
       <h2>4. Our content</h2>
       <p>
         Apart from third-party data under its own license, the Service's software, design, and text
-        belong to SERP and may not be copied or redistributed without permission.
+        belong to {site.name} and may not be copied or redistributed without permission.
       </p>
 
       <h2>5. The iPhone app</h2>
@@ -58,9 +58,9 @@ export default function TermsPage() {
 
       <h2>7. Limitation of liability</h2>
       <p>
-        TO THE EXTENT THE LAW ALLOWS, SERP AND ITS OFFICERS, EMPLOYEES, AND AGENTS ARE NOT LIABLE
-        FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING FROM YOUR
-        USE OF THE SERVICE.
+        TO THE EXTENT THE LAW ALLOWS, ZENBU JAPANESE AND ITS OFFICERS, EMPLOYEES, AND AGENTS ARE NOT
+        LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING
+        FROM YOUR USE OF THE SERVICE.
       </p>
 
       <h2>8. Changes and termination</h2>

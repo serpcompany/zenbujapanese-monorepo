@@ -17,7 +17,7 @@ export default function DmcaPage() {
 
       <h2>1. Designated Copyright Agent</h2>
       <address className="not-italic">
-        SERP
+        {site.name}
         <br />
         TSMC LLC
         <br />
@@ -58,7 +58,7 @@ export default function DmcaPage() {
         and where it appeared; a statement under penalty of perjury that you believe in good faith
         it was removed by mistake; and your name, address, telephone number, and consent to the
         jurisdiction of the federal district court for your address (or, outside the United States,
-        any judicial district where SERP may be found). We may restore the material 10 to 14
+        any judicial district where {site.name} may be found). We may restore the material 10 to 14
         business days after forwarding it, unless the complainant tells us they have filed a court
         action.
       </p>
