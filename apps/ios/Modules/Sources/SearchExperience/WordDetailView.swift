@@ -19,6 +19,7 @@ struct WordDetailView: View {
   @State private var encounterMediaImportFailed = false
   @State private var cameraAlert: WordDetailCameraAlert?
   @State private var showsCamera = false
+  @State private var showsListPicker = false
   @State private var frequencyDisclosure: FrequencyDisclosureItem?
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
   /// Empty while loading and when no frequency dictionary is enabled.
@@ -38,6 +39,7 @@ struct WordDetailView: View {
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
   let openWord: (DictionaryEntry) -> Void
   let manageFrequencyDictionaries: () -> Void
+  let openList: (UUID) -> Void
 
   private var shareText: String {
     let heading = entry.reading == entry.headword
@@ -97,6 +99,10 @@ struct WordDetailView: View {
           Section("RELATED WORDS") {
             RelationshipsSection(relationships: entry.relationships, openRelated: openRelated)
           }
+        }
+
+        Section("LISTS") {
+          WordListsSection(entry: entry, openList: openList) { showsListPicker = true }
         }
 
         Section("NOTES") {
@@ -162,6 +168,10 @@ struct WordDetailView: View {
           Menu {
             Section {
               KnownWordMenuButton(entry: entry)
+              Button("Add to List…", systemImage: "text.badge.plus") {
+                showsListPicker = true
+              }
+              .accessibilityIdentifier("word-detail.add-to-list")
             }
             Section {
               Button("Add Note", systemImage: "square.and.pencil", action: beginAddingNote)
@@ -195,6 +205,9 @@ struct WordDetailView: View {
     }
     .sheet(isPresented: $showsCamera) {
       cameraPicker
+    }
+    .sheet(isPresented: $showsListPicker) {
+      WordListPickerView(entry: entry)
     }
     .sheet(item: $frequencyDisclosure) { item in
       FrequencyDisclosureView(
@@ -1092,6 +1105,37 @@ private struct RelationshipsSection: View {
       )
       .accessibilityIdentifier("word-detail.related.\(relationship.headword)")
     }
+  }
+}
+
+/// The lists holding the word, each opening that list, then Add to List, which opens the picker.
+private struct WordListsSection: View {
+  @Environment(WordLists.self) private var wordLists
+  let entry: DictionaryEntry
+  let openList: (UUID) -> Void
+  let editLists: () -> Void
+
+  var body: some View {
+    ForEach(wordLists.lists.filter { wordLists.contains(entry.id, in: $0.id) }) { list in
+      Button {
+        openList(list.id)
+      } label: {
+        HStack {
+          Label(list.name, systemImage: "list.bullet")
+          Spacer()
+          Image(systemName: "chevron.right")
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.tertiary)
+        }
+      }
+      .tint(.primary)
+      .accessibilityIdentifier("word-detail.list.\(list.id)")
+    }
+
+    Button("Add to List", systemImage: "text.badge.plus", action: editLists)
+      .font(.body)
+      .disabled(!wordLists.canChange)
+      .accessibilityIdentifier("word-detail.add-to-list-row")
   }
 }
 

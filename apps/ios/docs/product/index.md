@@ -16,6 +16,7 @@ sign-in yet; the tab holds on-device content and preferences. It provides:
 - a profile card with the learner's photo, name, and username;
 - the Media Library;
 - Known Words;
+- Lists;
 - independent Furigana and Romaji preferences;
 - management of optional frequency dictionaries; and
 - the app's name, version, and description, followed by Help & Support and the Privacy Policy,
@@ -55,10 +56,38 @@ it once at the top of the learner's list; disabling it afterward is remembered.
 
 Known Words shows its count on the Account row and lists every word the learner marked known,
 most recent first. A learner can search the list by headword or reading, swipe a word to mark it
-unknown, or open it in Search (or search its headword when the entry is no longer in the dictionary).
+unknown, or open its word page in Search. A word whose entry ID changed opens the entry with the
+same headword and reading, and a search for the headword only when there is none.
 Known words are stored only on the device. If the saved known words
 came from a newer version of Zenbu, or a damaged file couldn't be kept aside, they are shown but
-can't be changed, and Known Words and the Mark as Known button say so.
+can't be changed, and Known Words and the Mark as Known button say so. If the file exists but
+can't be read at launch, such as before the device's first unlock, nothing is shown or saved over
+it, and Known Words asks the learner to reopen Zenbu.
+
+### Lists
+
+Lists are the learner's own named groups of dictionary words, such as "Favorites" or "Anime S1
+vocab". A new install starts with one list, **Favorites**, which can be renamed or deleted like
+any other; once deleted it is not created again. Words are added from a word's **•••** menu
+(see [Dictionary](dictionary.md)).
+
+The Account row shows how many lists there are. Lists shows every list in the learner's order
+with its word count. A learner can create a list, swipe a list to rename or delete it (a list
+that has words asks first), and open a list. In Edit, the learner drags lists to reorder them and
+taps a list to rename it. Names are trimmed, can't be
+empty, and may repeat. A list shows its words most recently added first, with the **✓ Known** capsule on known words; the learner can search
+it by headword or reading, swipe a word to remove it from that list, or open its word page, found
+the same way as in Known Words. Its **•••** menu renames the
+list, deletes it (asking first when it has words), or selects words: while selecting, the top bar
+offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
+
+A word's page also names the lists holding it; tapping one opens that list here.
+
+Lists are stored only on the device, keyed by each entry's stable identifier. Like Known Words,
+lists saved by a newer version of Zenbu, or a damaged file that couldn't be kept aside, are shown
+but can't be changed, and Lists and the list picker say so. A lists file that can't be read at
+launch is left untouched, Favorites is not created over it, and Lists asks the learner to reopen
+Zenbu.
 
 ### Media Library
 

@@ -1,6 +1,5 @@
 import Foundation
 import Observation
-import OSLog
 
 enum WordKnowledgeStatus: Codable, Hashable, Sendable {
   case known
@@ -25,15 +24,6 @@ enum WordKnowledgeStatus: Codable, Hashable, Sendable {
     case .unrecognized(let value): try container.encode(value)
     }
   }
-}
-
-/// Why known words can't be saved. Changes are then ignored so none are shown that wouldn't
-/// survive a relaunch.
-enum WordKnowledgeReadOnlyReason: Sendable {
-  /// The file was saved by a newer version, and saving over it could lose its data.
-  case newerVersion
-  /// The file couldn't be read in full, and no copy of it could be kept aside.
-  case couldNotKeepCopy
 }
 
 /// One learner judgement about a dictionary word, keyed by its stable Language Reference ID.
@@ -62,20 +52,18 @@ final class WordKnowledge {
   /// ignored, so callers showing or acting on known state should wait for it.
   private(set) var isLoaded = false
   /// Set when changes can't be saved; they are then ignored.
-  private(set) var readOnlyReason: WordKnowledgeReadOnlyReason?
+  private(set) var readOnlyReason: LocalFileReadOnlyReason?
   var isReadOnly: Bool { readOnlyReason != nil }
   private(set) var records: [String: WordKnowledgeRecord] = [:]
   /// Known words, most recently marked first.
   private(set) var knownRecords: [WordKnowledgeRecord] = []
   @ObservationIgnored private let writer: WordKnowledgeWriter
-  @ObservationIgnored private var lastWrite: Task<Void, Never>?
-  @ObservationIgnored private var hasUnsavedChanges = false
-  @ObservationIgnored private var writeQueued = false
+  @ObservationIgnored private let writes = LocalFileWriteQueue()
 
   init(fileURL: URL = WordKnowledge.defaultFileURL) {
     let writer = WordKnowledgeWriter(fileURL: fileURL)
     self.writer = writer
-    lastWrite = Task {
+    writes.load { [self] in
       let (loaded, needsRewrite, readOnlyReason) = await writer.load()
       records = loaded
       self.readOnlyReason = readOnlyReason
@@ -130,31 +118,17 @@ final class WordKnowledge {
 
   /// Tries again to save changes whose last write failed.
   func saveIfNeeded() {
-    if hasUnsavedChanges { persist() }
+    if writes.hasUnsavedChanges { persist() }
   }
 
   /// Waits until the file has loaded and every change so far has been written.
   func flush() async {
-    // Loops because the load can queue a rewrite after it finishes.
-    var finished: Task<Void, Never>?
-    while let task = lastWrite, task != finished {
-      await task.value
-      finished = task
-    }
+    await writes.flush()
   }
 
-  /// Writes after the load and any earlier write, taking the snapshot then so the file always
-  /// holds loaded records too. A write already waiting to start covers later changes.
   private func persist() {
-    guard !writeQueued else { return }
-    writeQueued = true
-    let previous = lastWrite
     let writer = writer
-    lastWrite = Task {
-      await previous?.value
-      writeQueued = false
-      hasUnsavedChanges = !(await writer.write(Array(records.values)))
-    }
+    writes.save { [self] in await writer.write(Array(records.values)) }
   }
 
   nonisolated static let defaultFileURL = FileManager.default.urls(
@@ -172,71 +146,44 @@ private actor WordKnowledgeWriter {
     var records: [WordKnowledgeRecord]
   }
 
-  /// Reads only the version, so a newer file is recognized even if its layout changed. A version
-  /// that isn't a whole number this version knows counts as newer.
-  private struct VersionProbe: Decodable {
-    let isNewer: Bool
-
-    private enum CodingKeys: String, CodingKey { case version }
-
-    init(from decoder: Decoder) throws {
-      let container = try decoder.container(keyedBy: CodingKeys.self)
-      guard container.contains(.version), try !container.decodeNil(forKey: .version) else {
-        isNewer = false
-        return
-      }
-      let version = try? container.decode(Int.self, forKey: .version)
-      isNewer = (version ?? .max) > StoredFile.currentVersion
-    }
-  }
-
-  /// Decodes each record on its own, so one unreadable record doesn't discard the rest.
   private struct LoadedFile: Decodable {
-    let records: [WordKnowledgeRecord?]
-
-    private enum CodingKeys: String, CodingKey { case records }
-    private struct LossyRecord: Decodable {
-      let record: WordKnowledgeRecord?
-      init(from decoder: Decoder) throws {
-        record = try? WordKnowledgeRecord(from: decoder)
-      }
-    }
-
-    init(from decoder: Decoder) throws {
-      let container = try decoder.container(keyedBy: CodingKeys.self)
-      records = try container.decode([LossyRecord].self, forKey: .records).map(\.record)
-    }
+    let records: [LossyDecodable<WordKnowledgeRecord>]
   }
 
-  private static let logger = Logger(
-    subsystem: Bundle.main.bundleIdentifier ?? "com.zenbujapanese.dictionary",
-    category: "WordKnowledge")
-  private let fileURL: URL
+  private let file: LocalJSONFile
 
   init(fileURL: URL) {
-    self.fileURL = fileURL
+    file = LocalJSONFile(
+      fileURL: fileURL, currentVersion: StoredFile.currentVersion,
+      description: "known words", logCategory: "WordKnowledge")
   }
 
   /// A missing file loads as no records. A file that can't be read in full is kept beside it,
   /// and `needsRewrite` asks for the readable records to replace it once that copy exists.
-  func load() -> (
+  func load() async -> (
     records: [String: WordKnowledgeRecord], needsRewrite: Bool,
-    readOnlyReason: WordKnowledgeReadOnlyReason?
+    readOnlyReason: LocalFileReadOnlyReason?
   ) {
-    guard let data = try? Data(contentsOf: fileURL) else { return ([:], false, nil) }
-    let decoder = JSONDecoder.wordKnowledge
-    if (try? decoder.decode(VersionProbe.self, from: data))?.isNewer == true {
-      Self.logger.error("Known words file is from a newer version; not saving over it")
-      let records = (try? decoder.decode(LoadedFile.self, from: data))?.records ?? []
-      return (Self.byEntryID(records.compactMap(\.self)), false, .newerVersion)
+    let data: Data
+    switch await file.read() {
+    case .missing:
+      return ([:], false, nil)
+    case .unreadable:
+      return ([:], false, .couldNotRead)
+    case .newerVersion(let newer):
+      let records = (try? JSONDecoder.localStore.decode(LoadedFile.self, from: newer))?.records
+      return (Self.byEntryID(records?.compactMap(\.value) ?? []), false, .newerVersion)
+    case .current(let current):
+      data = current
     }
-    guard let stored = try? decoder.decode(LoadedFile.self, from: data) else {
-      return preserveUnreadableFile() ? ([:], true, nil) : ([:], false, .couldNotKeepCopy)
+    guard let stored = try? JSONDecoder.localStore.decode(LoadedFile.self, from: data) else {
+      return await file.keepUnreadableCopy() ? ([:], true, nil) : ([:], false, .couldNotKeepCopy)
     }
-    let records = stored.records.compactMap(\.self)
+    let records = stored.records.compactMap(\.value)
     let loaded = Self.byEntryID(records)
     guard records.count != stored.records.count else { return (loaded, false, nil) }
-    return preserveUnreadableFile() ? (loaded, true, nil) : (loaded, false, .couldNotKeepCopy)
+    return await file.keepUnreadableCopy()
+      ? (loaded, true, nil) : (loaded, false, .couldNotKeepCopy)
   }
 
   private static func byEntryID(_ records: [WordKnowledgeRecord]) -> [String: WordKnowledgeRecord] {
@@ -244,62 +191,10 @@ private actor WordKnowledgeWriter {
   }
 
   /// Returns whether the records reached the disk.
-  func write(_ records: [WordKnowledgeRecord]) -> Bool {
-    do {
-      let data = try JSONEncoder.wordKnowledge.encode(StoredFile(records: records))
-      try FileManager.default.createDirectory(
-        at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-      try data.write(to: fileURL, options: .atomic)
-      return true
-    } catch {
-      Self.logger.error("Couldn't save known words: \(error.localizedDescription)")
+  func write(_ records: [WordKnowledgeRecord]) async -> Bool {
+    guard let data = try? JSONEncoder.localStore.encode(StoredFile(records: records)) else {
       return false
     }
-  }
-
-  private static let backupPrefix = "word-knowledge.unreadable-"
-  private static let backupsKept = 3
-
-  /// Returns whether the copy exists. Only the newest few copies are kept.
-  private func preserveUnreadableFile() -> Bool {
-    let stamp = Int(Date().timeIntervalSince1970 * 1000)
-    let suffix = UUID().uuidString.prefix(8)
-    let directory = fileURL.deletingLastPathComponent()
-    let backup = directory.appending(path: "\(Self.backupPrefix)\(stamp)-\(suffix).json")
-    do {
-      try FileManager.default.copyItem(at: fileURL, to: backup)
-      Self.logger.error("Kept an unreadable known-words file at \(backup.lastPathComponent)")
-      pruneBackups(in: directory)
-      return true
-    } catch {
-      Self.logger.error("Couldn't keep an unreadable known-words file: \(error.localizedDescription)")
-      return false
-    }
-  }
-
-  /// Names start with a millisecond timestamp, so name order is age order.
-  private func pruneBackups(in directory: URL) {
-    let fileManager = FileManager.default
-    guard let names = try? fileManager.contentsOfDirectory(atPath: directory.path) else { return }
-    let backups = names.filter { $0.hasPrefix(Self.backupPrefix) }.sorted()
-    for name in backups.dropLast(Self.backupsKept) {
-      try? fileManager.removeItem(at: directory.appending(path: name))
-    }
-  }
-}
-
-extension JSONEncoder {
-  fileprivate static var wordKnowledge: JSONEncoder {
-    let encoder = JSONEncoder()
-    encoder.dateEncodingStrategy = .millisecondsSince1970
-    return encoder
-  }
-}
-
-extension JSONDecoder {
-  fileprivate static var wordKnowledge: JSONDecoder {
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .millisecondsSince1970
-    return decoder
+    return await file.write(data)
   }
 }

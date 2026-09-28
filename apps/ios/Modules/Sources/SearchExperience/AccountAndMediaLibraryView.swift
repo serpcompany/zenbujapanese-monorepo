@@ -4,7 +4,8 @@ import UIKit
 struct AccountNavigationView: View {
   @Binding var path: [AccountRoute]
   let store: EncounterMediaStore
-  let openWord: (WordKnowledgeRecord) -> Void
+  /// Opens a saved word by its ID, falling back to its headword and reading.
+  let openWord: (LanguageReferenceID, String, String) -> Void
 
   var body: some View {
     NavigationStack(path: $path) {
@@ -18,7 +19,11 @@ struct AccountNavigationView: View {
           case .mediaLibrary:
             MediaLibraryView(store: store)
           case .knownWords:
-            KnownWordsView(openWord: openWord)
+            KnownWordsView { openWord($0.languageReferenceID, $0.headword, $0.reading) }
+          case .wordLists:
+            WordListsView()
+          case .wordList(let listID):
+            WordListView(listID: listID) { openWord($0.languageReferenceID, $0.headword, $0.reading) }
           case .frequencyDictionaries:
             FrequencyDictionariesView(client: .live)
           case .credits:
@@ -31,6 +36,7 @@ struct AccountNavigationView: View {
 
 struct AccountRootView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
+  @Environment(WordLists.self) private var wordLists
 
   var body: some View {
     List {
@@ -57,6 +63,17 @@ struct AccountRootView: View {
           }
         }
         .accessibilityIdentifier("account.known-words")
+
+        NavigationLink(value: AccountRoute.wordLists) {
+          LabeledContent {
+            if wordLists.isLoaded {
+              Text(wordLists.lists.count, format: .number)
+            }
+          } label: {
+            AccountRowLabel("Lists", systemImage: "list.bullet.rectangle.fill", tint: .indigo)
+          }
+        }
+        .accessibilityIdentifier("account.lists")
       }
 
       Section {
@@ -218,6 +235,8 @@ enum AccountRoute: Hashable {
   case readingAids
   case mediaLibrary
   case knownWords
+  case wordLists
+  case wordList(UUID)
   case frequencyDictionaries
   case credits
 }
