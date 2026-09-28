@@ -4,7 +4,7 @@ import { site } from '@/lib/site'
 
 export const metadata = pageMetadata('/legal/dmca')
 
-const dmcaEmail = site.supportEmail
+const dmcaEmail = 'dmca@zenbujapanese.com'
 
 export default function DmcaPage() {
   return (

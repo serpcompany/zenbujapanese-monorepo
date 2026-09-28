@@ -28,7 +28,7 @@ lists every child sitemap and each child sitemap lists the new URLs.
 | --- | --- | --- | --- |
 | Local | — | `localhost` | `zenbujapanese-web-local` (local only) |
 | Staging | `zenbujapanese-web-staging` | `staging.zenbujapanese.com` | `zenbujapanese-web-staging` |
-| Production | `zenbujapanese-web-production` | `zenbujapanese.com` (after cutover) | `zenbujapanese-web-production` |
+| Production | `zenbujapanese-web-production` | `zenbujapanese.com` (`www` redirects to it) | `zenbujapanese-web-production` |
 
 Deploys and remote migrations run only through the `Web deploy` GitHub Actions workflow, never
 from an agent's machine. Each merge to `main` that changes `apps/web/**` applies staging
@@ -63,12 +63,13 @@ production`), then check the output. `scripts/smoke.sh <url> <staging|production
 search-engine rules for each environment, so CI fails if production is hidden or staging is
 exposed.
 
-Production serves its workers.dev URL until DNS moves off the placeholder GitHub Pages site
-(`serpcompany/zenbujapanese.com`). At cutover, add custom domains for `zenbujapanese.com` and
-`www.zenbujapanese.com` in `wrangler.jsonc`, and update the `production` environment's
-`WEB_PRODUCTION_URL` variable. Keep `workers_dev` on: the zone's bot protection blocks CI runners, so
-smoke tests use the workers.dev URLs, while people review on the branded domains. `/privacy` and `/support` must keep working: the
-shipped iOS app and App Store metadata link to them.
+Both Workers keep their workers.dev URLs: the zone's bot protection blocks CI runners, so smoke
+tests use them, while people review on the branded domains. `www.zenbujapanese.com` is a custom
+domain on the production Worker and redirects to the apex in `next.config.ts`. `/privacy` and
+`/support` must keep working: the shipped iOS app and App Store metadata link to them.
+
+Email Routing on the zone forwards `support@zenbujapanese.com` to `support+zenbujapanese@serp.co`
+and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.
 
 ## Database
 
