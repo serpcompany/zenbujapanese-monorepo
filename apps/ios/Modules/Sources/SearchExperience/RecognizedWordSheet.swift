@@ -18,9 +18,15 @@ struct RecognizedWordSheetRequest: Identifiable {
 final class WordSheetPresentation {
   var request: RecognizedWordSheetRequest? {
     didSet {
-      if request != nil, request?.id != oldValue?.id { detent = .medium }
+      if let request {
+        displayedRequest = request
+        if request.id != oldValue?.id { detent = .medium }
+      }
     }
   }
+  /// The word the sheet shows. It keeps the last word after `request` clears, so the sheet
+  /// doesn't go blank while it animates away.
+  private(set) var displayedRequest: RecognizedWordSheetRequest?
   var detent: PresentationDetent = .medium
 
   var isPresented: Bool { request != nil }

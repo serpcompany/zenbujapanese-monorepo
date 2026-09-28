@@ -325,8 +325,14 @@ struct ImageTextFlowView: View {
                 Text(paragraph.text)
                   .font(.subheadline)
                   .foregroundStyle(.secondary)
-                Text(model.translation(of: paragraph.text) ?? "")
-                  .accessibilityIdentifier("image-text.translation.\(paragraph.id)")
+                if let translation = model.translation(of: paragraph.text) {
+                  Text(translation)
+                    .accessibilityIdentifier("image-text.translation.\(paragraph.id)")
+                } else {
+                  Text("This paragraph couldn’t be translated.")
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("image-text.translation-missing.\(paragraph.id)")
+                }
               }
               .frame(maxWidth: .infinity, alignment: .leading)
               .textSelection(.enabled)
@@ -378,7 +384,7 @@ struct ImageTextFlowView: View {
         let notes = insights.notes(notRepeating: page.paragraphs)
         ForEach(notes) { note in
           VStack(alignment: .leading, spacing: 4) {
-            Button(note.phrase) { open(note.entry, in: page, lineID: -1) }
+            Button(note.phrase) { open(note.entry, in: page, lineID: nil) }
               .font(.headline)
             Text(note.meaning)
               .font(.callout)
@@ -434,10 +440,12 @@ struct ImageTextFlowView: View {
     presentedWord = region.sheetRequest(asset: page.asset)
   }
 
-  private func open(_ entry: DictionaryEntry, in page: ImageTextPage, lineID: Int) {
-    activeLineID = lineID
+  /// `lineID` is nil for words outside any line, such as idioms under Context, which leave the
+  /// current line as it is.
+  private func open(_ entry: DictionaryEntry, in page: ImageTextPage, lineID: Int?) {
+    if let lineID { activeLineID = lineID }
     presentedWord = RecognizedWordSheetRequest(
-      id: "\(page.asset.id).line.\(lineID).\(entry.id.rawValue)",
+      id: "\(page.asset.id).line.\(lineID.map(String.init) ?? "context").\(entry.id.rawValue)",
       surface: entry.headword,
       entry: entry,
       candidateEntries: [],

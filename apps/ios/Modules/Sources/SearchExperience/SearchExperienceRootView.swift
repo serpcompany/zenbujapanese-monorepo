@@ -135,7 +135,7 @@ public struct SearchExperienceRootView: View {
         dictionaryDestination(route, in: .search)
       }
       .sheet(isPresented: imageWordSheet.isPresentedBinding) {
-        if let request = imageWordSheet.request {
+        if let request = imageWordSheet.displayedRequest {
           RecognizedWordSheet(
             request: request,
             detent: $imageWordSheet.detent,
@@ -254,7 +254,7 @@ public struct SearchExperienceRootView: View {
         dictionaryDestination(route, in: .player)
       }
       .sheet(isPresented: watchWordSheet.isPresentedBinding) {
-        if let request = watchWordSheet.request {
+        if let request = watchWordSheet.displayedRequest {
           RecognizedWordSheet(
             request: request,
             detent: $watchWordSheet.detent,

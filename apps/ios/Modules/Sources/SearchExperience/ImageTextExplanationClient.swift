@@ -136,8 +136,26 @@ private struct OnDeviceExplainer {
     )
   }
 
+  /// Translates in batches that stay under the model's context, since a page's paragraphs and
+  /// lines together can be twice the page's text.
   func translations(_ sources: [String]) async throws -> [String: String] {
-    guard !sources.isEmpty else { return [:] }
+    var translations: [String: String] = [:]
+    var batch: [String] = []
+    for source in sources {
+      let length = batch.reduce(0) { $0 + $1.count }
+      if !batch.isEmpty, length + source.count > Self.maximumTextLength {
+        translations.merge(try await translateBatch(batch)) { current, _ in current }
+        batch = []
+      }
+      batch.append(source)
+    }
+    if !batch.isEmpty {
+      translations.merge(try await translateBatch(batch)) { current, _ in current }
+    }
+    return translations
+  }
+
+  private func translateBatch(_ sources: [String]) async throws -> [String: String] {
     var notes: [ImageTextNote] = []
     for source in sources {
       if let entry = try? await lookupClient.entryMatchingForm(source) {
@@ -155,13 +173,13 @@ private struct OnDeviceExplainer {
         """
     )
     var translations: [String: String] = [:]
+    // Accepts "1. text", "1) text", and "**1.** text".
+    let numberedLine = /^[\s*]*(\d+)[\s*]*[.):][\s*]*(.+)$/
     for line in response.content.split(separator: "\n") {
-      let parts = line.split(separator: ".", maxSplits: 1)
-      guard parts.count == 2,
-        let number = Int(parts[0].trimmingCharacters(in: .whitespaces)),
-        sources.indices.contains(number - 1)
+      guard let match = try? numberedLine.wholeMatch(in: line),
+        let number = Int(match.1), sources.indices.contains(number - 1)
       else { continue }
-      translations[sources[number - 1]] = parts[1].trimmingCharacters(in: .whitespaces)
+      translations[sources[number - 1]] = match.2.trimmingCharacters(in: .whitespaces)
     }
     return translations
   }

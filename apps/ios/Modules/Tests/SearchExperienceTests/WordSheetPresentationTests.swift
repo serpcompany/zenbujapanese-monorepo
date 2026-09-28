@@ -56,5 +56,6 @@ struct WordSheetPresentationTests {
 
     #expect(presentation.request == nil)
     #expect(!presentation.isPresented)
+    #expect(presentation.displayedRequest?.surface == "木")
   }
 }
