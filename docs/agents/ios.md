@@ -105,5 +105,5 @@ word lists, also check in the Simulator:
 - Word Detail **•••** → **Add to List…** toggles a word in Favorites and in a list made with
   **New List**, and both survive a relaunch.
 - **Account → Lists** shows the count; a list removes a word by swipe and opens it in Search;
-  the index renames, reorders with Edit, and asks before deleting a list that has words.
+  the index renames by swipe or by tapping a list in Edit, reorders in Edit, and asks before deleting a list that has words.
 - Lists live in `Application Support/Zenbu Japanese/word-lists.json` in the app's data container.

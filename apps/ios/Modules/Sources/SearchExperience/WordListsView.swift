@@ -155,12 +155,8 @@ struct WordListsView: View {
   }
 
   private func row(_ list: WordList) -> some View {
-    NavigationLink(value: AccountRoute.wordList(list.id)) {
-      LabeledContent {
-        Text(wordLists.wordCount(in: list.id), format: .number)
-      } label: {
-        Text(list.name)
-      }
+    WordListIndexRow(list: list, count: wordLists.wordCount(in: list.id)) {
+      namePrompt = .rename(list)
     }
     .accessibilityIdentifier("word-lists.list.\(list.id)")
     // No full swipe, so a list is never deleted by swiping too far.
@@ -192,6 +188,36 @@ struct WordListsView: View {
 
   private var deletionTitle: Text {
     Text("Delete “\(pendingDeletion?.name ?? "")”?")
+  }
+}
+
+/// A list in Account → Lists. It opens the list, or while editing, renames it.
+private struct WordListIndexRow: View {
+  @Environment(\.editMode) private var editMode
+  let list: WordList
+  let count: Int
+  let rename: () -> Void
+
+  var body: some View {
+    if editMode?.wrappedValue.isEditing == true {
+      Button(action: rename) {
+        label
+      }
+      .foregroundStyle(.primary)
+      .accessibilityHint("Renames the list")
+    } else {
+      NavigationLink(value: AccountRoute.wordList(list.id)) {
+        label
+      }
+    }
+  }
+
+  private var label: some View {
+    LabeledContent {
+      Text(count, format: .number)
+    } label: {
+      Text(list.name)
+    }
   }
 }
 

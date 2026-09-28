@@ -70,7 +70,8 @@ any other; once deleted it is not created again. Words are added from a word's *
 
 The Account row shows how many lists there are. Lists shows every list in the learner's order
 with its word count. A learner can create a list, swipe a list to rename or delete it (a list
-that has words asks first), reorder lists with Edit, and open a list. Names are trimmed, can't be
+that has words asks first), and open a list. In Edit, the learner drags lists to reorder them and
+taps a list to rename it. Names are trimmed, can't be
 empty, and may repeat. A list shows its words most recently added first; the learner can search
 it by headword or reading, swipe a word to remove it from that list, or open it in Search (or
 search its headword when the entry is no longer in the dictionary). Deleting a list removes its
