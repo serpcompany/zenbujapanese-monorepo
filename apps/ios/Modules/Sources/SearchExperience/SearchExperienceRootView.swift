@@ -34,6 +34,7 @@ public struct SearchExperienceRootView: View {
   private let japaneseConjugationClient = JapaneseConjugationClient.live
   private let imageTextRecognitionClient: ImageTextRecognitionClient
   private let naturalTranslationClient: NaturalTranslationClient
+  private let imageTextExplanationClient: ImageTextExplanationClient
   private let imageTextClipboardClient: ImageTextClipboardClient
 
   public init() {
@@ -54,6 +55,7 @@ public struct SearchExperienceRootView: View {
     kanjiElementLookupClient = .live
     imageTextRecognitionClient = .live
     naturalTranslationClient = .live
+    imageTextExplanationClient = .live(lookupClient: lookupClient)
     imageTextClipboardClient = .live
   }
 
@@ -210,6 +212,7 @@ public struct SearchExperienceRootView: View {
           recognitionClient: imageTextRecognitionClient,
           textAnalysisClient: japaneseTextAnalysisClient,
           translationClient: naturalTranslationClient,
+          explanationClient: imageTextExplanationClient,
           clipboardClient: imageTextClipboardClient,
           presentedWord: $recognizedWordSheet,
           close: {

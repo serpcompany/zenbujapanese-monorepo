@@ -10,9 +10,6 @@ enum ZenbuTheme {
     dark: p3(0.569606, 0.121069, 0.108493)
   )
 
-  /// Domain visualization: OCR region evidence over imported images.
-  static let recognitionHighlight = evidenceCoral
-
   /// Domain visualization: the currently animated kanji stroke and its start point.
   static let strokeProgress = evidenceCoral
 

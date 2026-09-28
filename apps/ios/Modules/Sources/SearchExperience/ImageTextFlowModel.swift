@@ -17,6 +17,13 @@ final class ImageTextFlowModel {
     case preparationFailed
     case failed
   }
+  enum ExplanationState: Equatable {
+    case idle
+    case unavailable(ImageTextExplanationAvailability)
+    case loading
+    case loaded([ImageTextNote])
+    case failed
+  }
   enum PageState {
     case loading
     case loaded(ImageTextPage)
@@ -36,22 +43,27 @@ final class ImageTextFlowModel {
   var showsHighlights = true
   var noTextAlertPage: Int?
   var translationState: TranslationState = .idle
+  private(set) var explanationState: ExplanationState = .idle
+  private var explanationTask: Task<Void, Never>?
   private var translationTask: Task<Void, Never>?
   private var translationInvocationID: UUID?
   private let recognitionClient: ImageTextRecognitionClient
   private let textAnalysisClient: JapaneseTextAnalysisClient
   private let translationClient: NaturalTranslationClient
+  private let explanationClient: ImageTextExplanationClient
 
   init(
     assets: [ImageTextAsset],
     recognitionClient: ImageTextRecognitionClient,
     textAnalysisClient: JapaneseTextAnalysisClient,
-    translationClient: NaturalTranslationClient
+    translationClient: NaturalTranslationClient,
+    explanationClient: ImageTextExplanationClient = .unavailable
   ) {
     pages = assets.map { Page(asset: $0) }
     self.recognitionClient = recognitionClient
     self.textAnalysisClient = textAnalysisClient
     self.translationClient = translationClient
+    self.explanationClient = explanationClient
   }
 
   func load() async {
@@ -83,6 +95,7 @@ final class ImageTextFlowModel {
     selectedPage = index
     selectedRegion = nil
     cancelTranslation()
+    cancelExplanation()
     if case .loaded(let page) = pages[index].state, !page.hasJapaneseText {
       noTextAlertPage = index
     }
@@ -170,6 +183,39 @@ final class ImageTextFlowModel {
     }
   }
 
+  /// Writes notes on the selected page's idioms and grammar with the on-device model.
+  func requestExplanation() {
+    guard case .idle = explanationState, let page = selectedLoadedPage else { return }
+    let availability = explanationClient.availability()
+    guard availability == .available else {
+      explanationState = .unavailable(availability)
+      return
+    }
+    let text = page.paragraphs.map(\.text).joined(separator: "\n")
+    guard !text.isEmpty else { return }
+    let pageID = pages[selectedPage].id
+    explanationState = .loading
+    explanationTask = Task { [explanationClient] in
+      let state: ExplanationState
+      do {
+        state = .loaded(try await explanationClient.explain(text))
+      } catch {
+        state = .failed
+      }
+      guard !Task.isCancelled, pages.indices.contains(selectedPage),
+        pages[selectedPage].id == pageID
+      else { return }
+      explanationState = state
+      explanationTask = nil
+    }
+  }
+
+  func cancelExplanation() {
+    explanationTask?.cancel()
+    explanationTask = nil
+    explanationState = .idle
+  }
+
   func claimPendingTranslationPreparation(
     id expectedID: UUID? = nil
   ) -> PendingTranslationPreparation? {
@@ -244,6 +290,7 @@ final class ImageTextFlowModel {
   }
 
   func suspendTranslation() {
+    if case .loading = explanationState { cancelExplanation() }
     translationTask?.cancel()
     translationTask = nil
     translationInvocationID = nil

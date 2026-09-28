@@ -19,6 +19,7 @@ struct ImageTextFlowView: View {
     recognitionClient: ImageTextRecognitionClient,
     textAnalysisClient: JapaneseTextAnalysisClient,
     translationClient: NaturalTranslationClient,
+    explanationClient: ImageTextExplanationClient,
     clipboardClient: ImageTextClipboardClient,
     presentedWord: Binding<RecognizedWordSheetRequest?>,
     close: @escaping () -> Void
@@ -28,7 +29,8 @@ struct ImageTextFlowView: View {
         assets: session.assets,
         recognitionClient: recognitionClient,
         textAnalysisClient: textAnalysisClient,
-        translationClient: translationClient
+        translationClient: translationClient,
+        explanationClient: explanationClient
       ))
     _presentedWord = presentedWord
     self.textAnalysisClient = textAnalysisClient
@@ -278,14 +280,9 @@ struct ImageTextFlowView: View {
           page: page,
           showsRegions: model.showsHighlights,
           selectedRegion: model.selectedRegion,
-          keepsSelectionAboveSheet: presentedWord != nil,
           outlinedLineID: nil,
-          selectRegion: { region in
-            model.selectedRegion = region
-            presentedWord = region.sheetRequest(asset: page.asset)
-          }
+          selectRegion: { region in select(region, in: page) }
         )
-        .clipped()
       case .both:
         ImageTextLineCards(
           page: page,
@@ -293,7 +290,9 @@ struct ImageTextFlowView: View {
           textAnalysisClient: textAnalysisClient,
           highlightedEntry: presentedWord?.entry,
           isWordSheetPresented: presentedWord != nil,
+          selectedRegion: model.selectedRegion,
           activeLineID: $activeLineID,
+          selectRegion: { region in select(region, in: page) },
           openWord: { entry, lineID in open(entry, in: page, lineID: lineID) },
           openCandidates: { surface, candidates, lineID in
             open(surface, candidates: candidates, in: page, lineID: lineID)
@@ -334,6 +333,7 @@ struct ImageTextFlowView: View {
             .textSelection(.enabled)
           }
         }
+        notes(page)
       }
       .padding(16)
     }
@@ -341,7 +341,71 @@ struct ImageTextFlowView: View {
     // Choosing Translate is the request, so it starts without another tap.
     .task(id: page.asset.id) {
       if case .idle = model.translationState { model.requestTranslation() }
+      model.requestExplanation()
     }
+  }
+
+  @ViewBuilder
+  private func notes(_ page: ImageTextPage) -> some View {
+    switch model.explanationState {
+    case .idle, .unavailable(.available), .unavailable(.unsupported):
+      EmptyView()
+    case .unavailable(.appleIntelligenceNotEnabled):
+      notesFootnote("Turn on Apple Intelligence in Settings to see notes on idioms.")
+    case .unavailable(.modelNotReady):
+      notesFootnote(
+        "Notes on idioms appear once Apple Intelligence finishes downloading.")
+    case .loading:
+      VStack(alignment: .leading, spacing: 8) {
+        notesHeader
+        ProgressView("Finding idioms…")
+          .accessibilityIdentifier("image-text.notes-loading")
+      }
+    case .loaded(let notes) where notes.isEmpty:
+      EmptyView()
+    case .loaded(let notes):
+      VStack(alignment: .leading, spacing: 14) {
+        notesHeader
+        ForEach(notes) { note in
+          VStack(alignment: .leading, spacing: 4) {
+            Button(note.phrase) { open(note.entry, in: page, lineID: -1) }
+              .font(.headline)
+            Text(note.meaning)
+              .font(.callout)
+              .foregroundStyle(.secondary)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .accessibilityElement(children: .combine)
+          .accessibilityIdentifier("image-text.note.\(note.phrase)")
+        }
+        Text("Idioms picked on this device by Apple Intelligence. Meanings from Zenbu’s dictionary.")
+          .font(.caption)
+          .foregroundStyle(.tertiary)
+      }
+    case .failed:
+      notesFootnote("Notes couldn’t be written for this image.")
+    }
+  }
+
+  private var notesHeader: some View {
+    Text("NOTES")
+      .font(.caption.bold())
+      .foregroundStyle(.secondary)
+      .padding(.top, 8)
+  }
+
+  private func notesFootnote(_ message: LocalizedStringKey) -> some View {
+    Label(message, systemImage: "sparkles")
+      .font(.footnote)
+      .foregroundStyle(.secondary)
+      .padding(.top, 8)
+  }
+
+  private func select(_ region: ImageTextRegion, in page: ImageTextPage) {
+    model.selectedRegion = region
+    activeLineID = region.lineID
+    presentedWord = region.sheetRequest(asset: page.asset)
   }
 
   private func open(_ entry: DictionaryEntry, in page: ImageTextPage, lineID: Int) {
@@ -425,8 +489,6 @@ private struct ImageTextCanvas: View {
   let page: ImageTextPage
   let showsRegions: Bool
   let selectedRegion: ImageTextRegion?
-  /// Pans the photo so the selected word isn't hidden by the half-height word sheet.
-  let keepsSelectionAboveSheet: Bool
   let outlinedLineID: Int?
   let selectRegion: (ImageTextRegion) -> Void
 
@@ -435,10 +497,11 @@ private struct ImageTextCanvas: View {
       if let image = UIImage(data: page.asset.data) {
         let imageRect = aspectFitRect(imageSize: image.size, container: geometry.size)
         ZStack(alignment: .topLeading) {
+          // Top-aligned so a wide photo stays above the half-height word sheet without moving.
           Image(uiImage: image)
             .resizable()
             .scaledToFit()
-            .frame(width: geometry.size.width, height: geometry.size.height)
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
             .accessibilityHidden(true)
 
           if showsRegions {
@@ -482,9 +545,6 @@ private struct ImageTextCanvas: View {
             .accessibilityLabel(page.asset.name)
             .accessibilityIdentifier("image-text.current-page")
         }
-        .offset(y: sheetOffset(imageRect: imageRect, height: geometry.size.height))
-        .animation(.easeInOut(duration: 0.25), value: keepsSelectionAboveSheet)
-        .animation(.easeInOut(duration: 0.25), value: selectedRegion?.id)
         .animation(.easeInOut(duration: 0.2), value: outlinedLineID)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Imported image \(page.asset.name)")
@@ -492,22 +552,12 @@ private struct ImageTextCanvas: View {
     }
   }
 
-  /// The half-height sheet covers roughly the lower 60% of this view, so a selected word below
-  /// that line is moved up to the middle of the part that stays visible.
-  private func sheetOffset(imageRect: CGRect, height: CGFloat) -> CGFloat {
-    guard keepsSelectionAboveSheet, let selectedRegion else { return 0 }
-    let visibleHeight = height * 0.4
-    let rect = displayRect(selectedRegion.boundingBox, in: imageRect)
-    guard rect.maxY > visibleHeight else { return 0 }
-    return visibleHeight / 2 - rect.midY
-  }
-
   private func aspectFitRect(imageSize: CGSize, container: CGSize) -> CGRect {
     let scale = min(container.width / imageSize.width, container.height / imageSize.height)
     let size = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
     return CGRect(
       x: (container.width - size.width) / 2,
-      y: (container.height - size.height) / 2,
+      y: 0,
       width: size.width,
       height: size.height
     )
@@ -534,9 +584,9 @@ private struct ImageTextCanvas: View {
   }
 }
 
-/// A recognized word over the photo. Words in vertical lines are tinted chips that alternate
-/// shade along the column, because an underline beside a column reads as a ruling line;
-/// horizontal words keep an underline.
+/// A recognized word over the photo, in the accent color linked words use elsewhere. Words in
+/// vertical lines are tinted chips that alternate shade along the column, because an underline
+/// beside a column reads as a ruling line; horizontal words keep an underline.
 private struct ImageTextRegionButton: View {
   let region: ImageTextRegion
   let isSelected: Bool
@@ -550,7 +600,7 @@ private struct ImageTextRegionButton: View {
         .contentShape(.rect)
         .background {
           RoundedRectangle(cornerRadius: 3)
-            .fill(ZenbuTheme.recognitionHighlight.opacity(fillOpacity))
+            .fill(Color.accentColor.opacity(fillOpacity))
         }
         .overlay(alignment: .bottom) {
           if !region.isVertical { underline }
@@ -570,7 +620,7 @@ private struct ImageTextRegionButton: View {
 
   private var underline: some View {
     Rectangle()
-      .fill(ZenbuTheme.recognitionHighlight.opacity(isSelected ? 1 : 0.78))
+      .fill(Color.accentColor.opacity(isSelected ? 1 : 0.78))
       .frame(height: 3)
   }
 }
@@ -584,26 +634,30 @@ private struct ImageTextLineCards: View {
   let textAnalysisClient: JapaneseTextAnalysisClient
   let highlightedEntry: DictionaryEntry?
   let isWordSheetPresented: Bool
+  let selectedRegion: ImageTextRegion?
   @Binding var activeLineID: Int?
+  let selectRegion: (ImageTextRegion) -> Void
   let openWord: (DictionaryEntry, Int) -> Void
   let openCandidates: (String, [DictionaryEntry], Int) -> Void
+  /// The card at the top of the list. Scrolling makes it the active line; tapping a word only
+  /// changes the active line, so nothing moves under the learner's finger.
+  @State private var scrolledLineID: Int?
 
   var body: some View {
     GeometryReader { geometry in
       VStack(spacing: 0) {
         ImageTextCanvas(
           page: page,
-          showsRegions: false,
-          selectedRegion: nil,
-          keepsSelectionAboveSheet: false,
+          showsRegions: true,
+          selectedRegion: selectedRegion,
           outlinedLineID: activeLineID,
-          selectRegion: { _ in }
+          selectRegion: { region in
+            withAnimation { scrolledLineID = region.lineID }
+            selectRegion(region)
+          }
         )
-        // The photo shrinks while a word is open so the tapped line stays above the sheet.
-        .frame(height: geometry.size.height * (isWordSheetPresented ? 0.2 : 0.38))
-        .clipped()
+        .frame(height: geometry.size.height * 0.38)
         .padding(.bottom, 4)
-        .animation(.easeInOut(duration: 0.25), value: isWordSheetPresented)
 
         if readingAidPreferences.showsTranslations, !isWordSheetPresented {
           translateControl
@@ -621,7 +675,10 @@ private struct ImageTextLineCards: View {
           .scrollTargetLayout()
           .padding(.horizontal, 12)
         }
-        .scrollPosition(id: $activeLineID, anchor: .top)
+        .scrollPosition(id: $scrolledLineID, anchor: .top)
+        .onChange(of: scrolledLineID) { _, lineID in
+          if let lineID { activeLineID = lineID }
+        }
         // Room to scroll the last lines above the half-height word sheet.
         .contentMargins(
           .bottom, isWordSheetPresented ? geometry.size.height * 0.45 : 16, for: .scrollContent
@@ -631,6 +688,7 @@ private struct ImageTextLineCards: View {
     }
     .onAppear {
       if activeLineID == nil { activeLineID = page.lines.first?.id }
+      scrolledLineID = activeLineID
     }
   }
 
@@ -681,7 +739,7 @@ private struct ImageTextLineCards: View {
     .padding(.horizontal, 16)
     .padding(.vertical, 12)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background { cardBackground(isActive: isActive) }
+    .background { ImageTextCardBackground(isActive: isActive) }
     // Tapping a line outside its words outlines it on the photo.
     .contentShape(.rect)
     .onTapGesture { withAnimation { activeLineID = line.id } }
@@ -690,18 +748,25 @@ private struct ImageTextLineCards: View {
     .accessibilityIdentifier("image-text.line.\(line.id)")
   }
 
-  /// Matches the Player's caption cards: the current line gets a tinted fill and an outline.
-  private func cardBackground(isActive: Bool) -> some View {
+}
+
+/// Matches the Player's caption cards: the current line gets a tinted fill and an outline.
+private struct ImageTextCardBackground: View {
+  let isActive: Bool
+
+  var body: some View {
     let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
-    return shape
+    shape
       .fill(isActive ? AnyShapeStyle(.tint.opacity(0.18)) : AnyShapeStyle(.fill.quaternary))
       .overlay { shape.strokeBorder(.tint, lineWidth: isActive ? 2.5 : 0) }
       .animation(.easeInOut(duration: 0.2), value: isActive)
   }
 }
 
-/// Text: the recognized Japanese as paragraphs of linked text, like a reader.
+/// Text: the recognized Japanese as paragraph cards in the caption style, one Dynamic Type step
+/// larger than Both since this view is for reading.
 private struct ImageTextReader: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let page: ImageTextPage
   let textAnalysisClient: JapaneseTextAnalysisClient
   let highlightedEntry: DictionaryEntry?
@@ -713,12 +778,13 @@ private struct ImageTextReader: View {
   var body: some View {
     GeometryReader { geometry in
       ScrollView {
-        VStack(alignment: .leading, spacing: 20) {
+        LazyVStack(spacing: 10) {
           ForEach(page.paragraphs) { paragraph in
+            let isActive = isWordSheetPresented && paragraph.id == activeParagraphID
             LinkedJapaneseText(
               text: paragraph.text,
               highlightedQuery: SearchQuery(""),
-              highlightedEntry: paragraph.id == activeParagraphID ? highlightedEntry : nil,
+              highlightedEntry: isActive ? highlightedEntry : nil,
               japaneseTextAnalysisClient: textAnalysisClient,
               identifierPrefix: "image-text.paragraph.\(paragraph.id)",
               highlightsCurrentEntry: true,
@@ -727,15 +793,28 @@ private struct ImageTextReader: View {
               },
               openWord: { entry in openWord(entry, paragraph.id) }
             )
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .background { ImageTextCardBackground(isActive: isActive) }
           }
         }
-        .padding(16)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
       }
+      .dynamicTypeSize(dynamicTypeSize.oneStepLarger)
       .contentMargins(
         .bottom, isWordSheetPresented ? geometry.size.height * 0.45 : 0, for: .scrollContent
       )
       .accessibilityIdentifier("image-text.reader")
     }
+  }
+}
+
+extension DynamicTypeSize {
+  fileprivate var oneStepLarger: DynamicTypeSize {
+    let sizes = DynamicTypeSize.allCases
+    guard let index = sizes.firstIndex(of: self), index + 1 < sizes.count else { return self }
+    return sizes[index + 1]
   }
 }

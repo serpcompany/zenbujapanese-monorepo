@@ -8,8 +8,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 - Image Search has four views: **Photo**, **Both** (the image above caption-style cards with
   furigana and line translations), **Text** (the recognized Japanese as paragraphs), and
-  **Translate** (each paragraph translated). Tapping a word opens it at half height, as in the
-  Player, and vertical text is marked with tinted word chips instead of underlines.
+  **Translate** (each paragraph translated, with notes on the page's idioms from the dictionary
+  when Apple Intelligence is on). Tapping a word, on the image or in the text, opens it at half
+  height, as in the Player, and vertical text is marked with tinted word chips.
 - New **Player** tab: search YouTube or paste a link to watch the video with its Japanese captions
   as cards below the player instead of over the video. The card being spoken is highlighted and
   scrolls along as the video plays, tapping a card jumps to that line, and tapping a word pauses the
