@@ -56,7 +56,8 @@ it once at the top of the learner's list; disabling it afterward is remembered.
 
 Known Words shows its count on the Account row and lists every word the learner marked known,
 most recent first. A learner can search the list by headword or reading, swipe a word to mark it
-unknown, or open it in Search (or search its headword when the entry is no longer in the dictionary).
+unknown, or open its word page in Search. A word whose entry ID changed opens the entry with the
+same headword and reading, and a search for the headword only when there is none.
 Known words are stored only on the device. If the saved known words
 came from a newer version of Zenbu, or a damaged file couldn't be kept aside, they are shown but
 can't be changed, and Known Words and the Mark as Known button say so.
@@ -73,10 +74,12 @@ with its word count. A learner can create a list, swipe a list to rename or dele
 that has words asks first), and open a list. In Edit, the learner drags lists to reorder them and
 taps a list to rename it. Names are trimmed, can't be
 empty, and may repeat. A list shows its words most recently added first; the learner can search
-it by headword or reading, swipe a word to remove it from that list, or open it in Search (or
-search its headword when the entry is no longer in the dictionary). Its **•••** menu renames the
+it by headword or reading, swipe a word to remove it from that list, or open its word page, found
+the same way as in Known Words. Its **•••** menu renames the
 list, deletes it (asking first when it has words), or selects words: while selecting, the top bar
 offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
+
+A word's page also names the lists holding it; tapping one opens that list here.
 
 Lists are stored only on the device, keyed by each entry's stable identifier. Like Known Words,
 lists saved by a newer version of Zenbu, or a damaged file that couldn't be kept aside, are shown

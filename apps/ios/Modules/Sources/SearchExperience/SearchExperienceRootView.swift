@@ -234,6 +234,10 @@ public struct SearchExperienceRootView: View {
       manageFrequencyDictionaries: {
         dismissRecognizedWordSheet(if: presentedInSheet)
         openFrequencyDictionaries()
+      },
+      openList: { listID in
+        dismissRecognizedWordSheet(if: presentedInSheet)
+        openWordList(listID)
       }
     )
   }
@@ -297,17 +301,27 @@ public struct SearchExperienceRootView: View {
     }
   }
 
-  /// Opens the word's entry, or searches its headword when the entry is no longer found.
-  private func openSavedWord(_ id: LanguageReferenceID, headword: String) {
+  /// Opens a saved word's entry. When its ID is no longer found, opens the entry with the same
+  /// headword and reading, and only when there is none, searches the headword.
+  private func openSavedWord(_ id: LanguageReferenceID, headword: String, reading: String) {
     Task { @MainActor in
       selectedTab = .search
       if let entry = try? await lookupClient.entry(id) {
+        path.append(.word(entry, nil))
+      } else if let entry = try? await lookupClient.search(SearchQuery(headword)).entries.first(
+        where: { $0.headword == headword && $0.reading == reading })
+      {
         path.append(.word(entry, nil))
       } else {
         path = []
         query = headword
       }
     }
+  }
+
+  private func openWordList(_ listID: UUID) {
+    selectedTab = .account
+    accountPath = [.wordLists, .wordList(listID)]
   }
 
   private func openFrequencyDictionaries() {

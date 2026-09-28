@@ -4,8 +4,8 @@ import UIKit
 struct AccountNavigationView: View {
   @Binding var path: [AccountRoute]
   let store: EncounterMediaStore
-  /// Opens a saved word by its ID, falling back to searching its headword.
-  let openWord: (LanguageReferenceID, String) -> Void
+  /// Opens a saved word by its ID, falling back to its headword and reading.
+  let openWord: (LanguageReferenceID, String, String) -> Void
 
   var body: some View {
     NavigationStack(path: $path) {
@@ -19,11 +19,11 @@ struct AccountNavigationView: View {
           case .mediaLibrary:
             MediaLibraryView(store: store)
           case .knownWords:
-            KnownWordsView { openWord($0.languageReferenceID, $0.headword) }
+            KnownWordsView { openWord($0.languageReferenceID, $0.headword, $0.reading) }
           case .wordLists:
             WordListsView()
           case .wordList(let listID):
-            WordListView(listID: listID) { openWord($0.languageReferenceID, $0.headword) }
+            WordListView(listID: listID) { openWord($0.languageReferenceID, $0.headword, $0.reading) }
           case .frequencyDictionaries:
             FrequencyDictionariesView(client: .live)
           case .credits:

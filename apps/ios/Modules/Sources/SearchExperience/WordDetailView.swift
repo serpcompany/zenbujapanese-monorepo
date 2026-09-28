@@ -39,6 +39,7 @@ struct WordDetailView: View {
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
   let openWord: (DictionaryEntry) -> Void
   let manageFrequencyDictionaries: () -> Void
+  let openList: (UUID) -> Void
 
   private var shareText: String {
     let heading = entry.reading == entry.headword
@@ -101,7 +102,7 @@ struct WordDetailView: View {
         }
 
         Section("LISTS") {
-          WordListsSection(entry: entry) { showsListPicker = true }
+          WordListsSection(entry: entry, openList: openList) { showsListPicker = true }
         }
 
         Section("NOTES") {
@@ -1107,20 +1108,27 @@ private struct RelationshipsSection: View {
   }
 }
 
-/// The lists holding the word, then Add to List. Every row opens the list picker.
+/// The lists holding the word, each opening that list, then Add to List, which opens the picker.
 private struct WordListsSection: View {
   @Environment(WordLists.self) private var wordLists
   let entry: DictionaryEntry
+  let openList: (UUID) -> Void
   let editLists: () -> Void
 
   var body: some View {
     ForEach(wordLists.lists.filter { wordLists.contains(entry.id, in: $0.id) }) { list in
-      Button(action: editLists) {
-        Label(list.name, systemImage: "list.bullet")
-          .frame(maxWidth: .infinity, alignment: .leading)
+      Button {
+        openList(list.id)
+      } label: {
+        HStack {
+          Label(list.name, systemImage: "list.bullet")
+          Spacer()
+          Image(systemName: "chevron.right")
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.tertiary)
+        }
       }
       .tint(.primary)
-      .accessibilityHint("Changes which lists hold this word")
       .accessibilityIdentifier("word-detail.list.\(list.id)")
     }
 
