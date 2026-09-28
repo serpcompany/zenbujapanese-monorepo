@@ -13,6 +13,10 @@ public struct SearchExperienceRootView: View {
   @State private var query = ""
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var recognizedWordSheet: RecognizedWordSheetRequest?
+  /// Player's stack holds Player routes and, after Open Full Entry, dictionary routes.
+  @State private var watchPath = NavigationPath()
+  @State private var watchWordSheet: RecognizedWordSheetRequest?
+  @State private var watchHistory = WatchHistory()
   @State private var kanjiScrollWordIDs: [KanjiCharacter: LanguageReferenceID] = [:]
   @State private var kanjiScrollElementIDs: [KanjiCharacter: KanjiElementID] = [:]
   @State private var kanjiElementScrollContributionIDs: [KanjiElementID: KanjiCharacter] = [:]
@@ -73,6 +77,13 @@ public struct SearchExperienceRootView: View {
         searchNavigation
       }
 
+      Tab(
+        "Player", systemImage: "play.rectangle",
+        value: SearchExperienceTab.watchAndListen
+      ) {
+        watchNavigation
+      }
+
       Tab(value: SearchExperienceTab.account) {
         AccountNavigationView(
           path: $accountPath,
@@ -119,94 +130,158 @@ public struct SearchExperienceRootView: View {
         }
       )
       .navigationDestination(for: SearchExperienceRoute.self) { route in
-        switch route {
-        case .word(let entry, let imageContext):
-          wordDetailView(
-            entry: entry,
-            initialEncounterMedia: encounterMediaAttachment(for: imageContext),
-            presentedInSheet: false
-          )
-        case .kanji(let character, let entry):
-          KanjiDetailView(
-            character: character,
-            entry: entry,
-            kanjiLookupClient: kanjiLookupClient,
-            kanjiElementLookupClient: kanjiElementLookupClient,
-            kanjiStrokeOrderClient: kanjiStrokeOrderClient,
-            preservedWordID: kanjiScrollWordIDs[character],
-            preservedElementID: kanjiScrollElementIDs[character]
-          )
-        case .kanjiElement(let id):
-          KanjiElementDetailView(
-            elementID: id,
-            lookupClient: kanjiElementLookupClient,
-            preservedContribution: kanjiElementScrollContributionIDs[id]
-          )
-        case .examples(let query, let highlightedEntry, let usesEntryExamples):
-          ExampleSentencesView(
-            query: query,
-            highlightedEntry: highlightedEntry,
-            usesHighlightedEntryExamples: usesEntryExamples,
-            exampleSentenceClient: exampleSentenceClient,
-            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-            speechSynthesisClient: speechSynthesisClient,
-            openWord: { entry in path.append(.word(entry, nil)) }
-          )
-        case .conjugations(let entry, let table):
-          ConjugationsView(
-            entry: entry, table: table, speechSynthesisClient: speechSynthesisClient)
-        case .conjugatedForm(let entry, let table, let form, let mode):
-          ConjugatedFormView(
-            entry: entry,
-            table: table,
-            form: form,
-            mode: mode,
-            exampleSentenceClient: exampleSentenceClient,
-            speechSynthesisClient: speechSynthesisClient,
-            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-            openWord: { entry in path.append(.word(entry, nil)) }
-          )
-        case .image(let sessionID):
-          if let session = imageTextSessionStore.session(sessionID) {
-            ImageTextFlowView(
-              session: session,
-              recognitionClient: imageTextRecognitionClient,
-              textAnalysisClient: japaneseTextAnalysisClient,
-              translationClient: naturalTranslationClient,
-              clipboardClient: imageTextClipboardClient,
-              presentedWord: $recognizedWordSheet,
-              close: {
-                if path.last == .image(sessionID) { path.removeLast() }
-                imageTextSessionStore.remove(sessionID)
-              }
-            )
-          }
-        }
+        dictionaryDestination(route, in: .search)
       }
       .sheet(item: $recognizedWordSheet) { request in
         RecognizedWordSheet(
           request: request,
-          openFullEntry: openRecognizedWord
+          openFullEntry: { entry in openFullEntry(entry, in: .search) }
         ) { entry, encounterMedia in
           wordDetailView(
             entry: entry,
             initialEncounterMedia: encounterMedia,
-            presentedInSheet: true
+            presentedInSheet: true,
+            in: .search
           )
         }
       }
     }
   }
 
-  private func openRecognizedWord(_ entry: DictionaryEntry) {
-    path.append(.word(entry, nil))
-    recognizedWordSheet = nil
+  /// The dictionary pages, shared by Search and by Player after Open Full Entry.
+  @ViewBuilder
+  private func dictionaryDestination(
+    _ route: SearchExperienceRoute,
+    in stack: DictionaryStack
+  ) -> some View {
+    switch route {
+    case .word(let entry, let imageContext):
+      wordDetailView(
+        entry: entry,
+        initialEncounterMedia: encounterMediaAttachment(for: imageContext),
+        presentedInSheet: false,
+        in: stack
+      )
+    case .kanji(let character, let entry):
+      KanjiDetailView(
+        character: character,
+        entry: entry,
+        kanjiLookupClient: kanjiLookupClient,
+        kanjiElementLookupClient: kanjiElementLookupClient,
+        kanjiStrokeOrderClient: kanjiStrokeOrderClient,
+        preservedWordID: kanjiScrollWordIDs[character],
+        preservedElementID: kanjiScrollElementIDs[character]
+      )
+    case .kanjiElement(let id):
+      KanjiElementDetailView(
+        elementID: id,
+        lookupClient: kanjiElementLookupClient,
+        preservedContribution: kanjiElementScrollContributionIDs[id]
+      )
+    case .examples(let query, let highlightedEntry, let usesEntryExamples):
+      ExampleSentencesView(
+        query: query,
+        highlightedEntry: highlightedEntry,
+        usesHighlightedEntryExamples: usesEntryExamples,
+        exampleSentenceClient: exampleSentenceClient,
+        japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+        speechSynthesisClient: speechSynthesisClient,
+        openWord: { entry in push(.word(entry, nil), in: stack) }
+      )
+    case .conjugations(let entry, let table):
+      ConjugationsView(
+        entry: entry, table: table, speechSynthesisClient: speechSynthesisClient)
+    case .conjugatedForm(let entry, let table, let form, let mode):
+      ConjugatedFormView(
+        entry: entry,
+        table: table,
+        form: form,
+        mode: mode,
+        exampleSentenceClient: exampleSentenceClient,
+        speechSynthesisClient: speechSynthesisClient,
+        japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+        openWord: { entry in push(.word(entry, nil), in: stack) }
+      )
+    case .image(let sessionID):
+      if let session = imageTextSessionStore.session(sessionID) {
+        ImageTextFlowView(
+          session: session,
+          recognitionClient: imageTextRecognitionClient,
+          textAnalysisClient: japaneseTextAnalysisClient,
+          translationClient: naturalTranslationClient,
+          clipboardClient: imageTextClipboardClient,
+          presentedWord: $recognizedWordSheet,
+          close: {
+            if path.last == .image(sessionID) { path.removeLast() }
+            imageTextSessionStore.remove(sessionID)
+          }
+        )
+      }
+    }
+  }
+
+  private var watchNavigation: some View {
+    NavigationStack(path: $watchPath) {
+      WatchAndListenView(
+        history: watchHistory,
+        searchProvider: .youTube,
+        openVideo: { videoID in watchPath.append(PlayerRoute.video(videoID)) },
+        search: { search in watchPath.append(PlayerRoute.search(search)) }
+      )
+      .navigationDestination(for: PlayerRoute.self) { route in
+        switch route {
+        case .video(let videoID):
+          WatchSessionView(
+            videoID: videoID,
+            history: watchHistory,
+            captionClient: .live,
+            japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+            presentedWord: $watchWordSheet
+          )
+        case .search(let search):
+          VideoSearchView(search: search) { videoID in
+            watchPath.append(PlayerRoute.video(videoID))
+          }
+        }
+      }
+      .navigationDestination(for: SearchExperienceRoute.self) { route in
+        dictionaryDestination(route, in: .player)
+      }
+      .sheet(item: $watchWordSheet) { request in
+        RecognizedWordSheet(
+          request: request,
+          opensAtHalfHeight: true,
+          openFullEntry: { entry in openFullEntry(entry, in: .player) }
+        ) { entry, encounterMedia in
+          wordDetailView(
+            entry: entry,
+            initialEncounterMedia: encounterMedia,
+            presentedInSheet: true,
+            in: .player
+          )
+        }
+      }
+    }
+  }
+
+  private func openFullEntry(_ entry: DictionaryEntry, in stack: DictionaryStack) {
+    dismissRecognizedWordSheet(if: true)
+    push(.word(entry, nil), in: stack)
+  }
+
+  /// Pushes a dictionary page onto the stack it was opened from, so Back returns there.
+  private func push(_ route: SearchExperienceRoute, in stack: DictionaryStack) {
+    switch stack {
+    case .search: searchPath.wrappedValue = path + [route]
+    case .player: watchPath.append(route)
+    }
   }
 
   private func wordDetailView(
     entry: DictionaryEntry,
     initialEncounterMedia: EncounterMediaAttachment?,
-    presentedInSheet: Bool
+    presentedInSheet: Bool,
+    in stack: DictionaryStack
   ) -> some View {
     WordDetailView(
       entry: entry,
@@ -221,15 +296,15 @@ public struct SearchExperienceRootView: View {
       conjugationTable: japaneseConjugationClient.table(entry),
       openRelated: { relationship in
         dismissRecognizedWordSheet(if: presentedInSheet)
-        openRelated(relationship)
+        openRelated(relationship, in: stack)
       },
       openKanji: { character, entry in
         dismissRecognizedWordSheet(if: presentedInSheet)
-        openKanji(character, entry: entry)
+        push(.kanji(character, entry), in: stack)
       },
       openWord: { entry in
         dismissRecognizedWordSheet(if: presentedInSheet)
-        path.append(.word(entry, nil))
+        push(.word(entry, nil), in: stack)
       },
       manageFrequencyDictionaries: {
         dismissRecognizedWordSheet(if: presentedInSheet)
@@ -243,7 +318,9 @@ public struct SearchExperienceRootView: View {
   }
 
   private func dismissRecognizedWordSheet(if shouldDismiss: Bool) {
-    if shouldDismiss { recognizedWordSheet = nil }
+    guard shouldDismiss else { return }
+    recognizedWordSheet = nil
+    watchWordSheet = nil
   }
 
   private var searchPath: Binding<[SearchExperienceRoute]> {
@@ -278,15 +355,11 @@ public struct SearchExperienceRootView: View {
     }
   }
 
-  private func openKanji(_ character: KanjiCharacter, entry: DictionaryEntry?) {
-    searchPath.wrappedValue = path + [.kanji(character, entry)]
-  }
-
-  private func openRelated(_ relationship: DictionaryRelationship) {
+  private func openRelated(_ relationship: DictionaryRelationship, in stack: DictionaryStack) {
     Task { @MainActor in
       if let targetID = relationship.targetID {
         if let entry = try? await lookupClient.entry(LanguageReferenceID(rawValue: targetID)) {
-          path.append(.word(entry, nil))
+          push(.word(entry, nil), in: stack)
         }
         return
       }
@@ -297,7 +370,7 @@ public struct SearchExperienceRootView: View {
         results.entries.first {
           $0.headword == relationship.headword && $0.reading == relationship.reading
         } ?? results.entries.first
-      if let entry { path.append(.word(entry, nil)) }
+      if let entry { push(.word(entry, nil), in: stack) }
     }
   }
 
@@ -346,6 +419,17 @@ struct ImageWordContext: Hashable {
   let assetID: UUID
 }
 
+/// The tab a dictionary page was opened from, which its links and Back button stay in.
+enum DictionaryStack {
+  case search
+  case player
+}
+
+enum PlayerRoute: Hashable {
+  case video(YouTubeVideoID)
+  case search(VideoSearch)
+}
+
 enum SearchExperienceRoute: Hashable {
   case word(DictionaryEntry, ImageWordContext?)
   case kanji(KanjiCharacter, DictionaryEntry?)
@@ -358,5 +442,6 @@ enum SearchExperienceRoute: Hashable {
 
 private enum SearchExperienceTab: Hashable {
   case search
+  case watchAndListen
   case account
 }

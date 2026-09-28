@@ -61,12 +61,6 @@ struct WordDetailView: View {
           PartOfSpeechRow(entry: entry, conjugationTable: conjugationTable)
         }
 
-        if !entry.alternativeForms.isEmpty {
-          Section("ALTERNATIVES") {
-            AlternativeFormsSection(forms: entry.alternativeForms, openKanji: openKanji)
-          }
-        }
-
         Section("MEANING") {
           MeaningSection(senses: entry.senses)
         }
@@ -80,6 +74,12 @@ struct WordDetailView: View {
             }
           }
           .accessibilityIdentifier("word-detail.frequency")
+        }
+
+        if !entry.alternativeForms.isEmpty {
+          Section("ALTERNATIVES") {
+            AlternativeFormsSection(forms: entry.alternativeForms, openKanji: openKanji)
+          }
         }
 
         if !entry.primaryKanji.isEmpty {

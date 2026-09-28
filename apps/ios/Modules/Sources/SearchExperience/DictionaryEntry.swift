@@ -18,6 +18,20 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
 
   var sourceProvenance: LanguageReferenceProvenance { sourceProvenances[0] }
 
+  /// A few words of the first meaning, short enough to sit under the word in running text.
+  var shortMeaning: String? { Self.shortMeaning(from: meanings) }
+
+  static func shortMeaning(from meanings: [String], limit: Int = 18) -> String? {
+    guard let first = meanings.first else { return nil }
+    // Drop notes such as "(clothes, etc.)" before splitting, so a comma inside one can't cut it.
+    let withoutNotes = first.replacing(/\s*\([^)]*\)/, with: "")
+    var gloss = (withoutNotes.split(separator: ",").first.map(String.init) ?? withoutNotes)
+      .trimmingCharacters(in: .whitespaces)
+    if gloss.hasPrefix("to ") { gloss.removeFirst(3) }
+    guard !gloss.isEmpty else { return nil }
+    return gloss.count > limit ? String(gloss.prefix(limit - 1)) + "…" : gloss
+  }
+
   func normalizingIdentity(
     to canonical: DictionaryEntry,
     provenances: [LanguageReferenceProvenance]

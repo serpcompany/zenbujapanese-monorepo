@@ -6,6 +6,20 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- **Reading Aids** adds **Hide Furigana on Known Words**, **Show Sentence Translations** (for
+  Player captions and example sentences), a translation language, and a choice of YouTube or
+  on-device Apple Translation for Player captions, with a button to download Apple's Japanese.
+- Player shows how much of a video's vocabulary you know above its captions, such as **38 of 52
+  words known · 73%**, and remembers it in Recent.
+- New **Show Word Meanings** reading aid (**Account → Reading Aids**) puts a short English meaning
+  under each linked word you haven't marked known, separate from any sentence translation.
+- New **Player** tab: search YouTube or paste a link to watch the video with its Japanese captions
+  as cards below the player instead of over the video. The card being spoken is highlighted and
+  scrolls along as the video plays, tapping a card jumps to that line, and tapping a word pauses the
+  video and opens it in the dictionary. English translations appear beneath each line, and recently
+  watched videos are listed on the tab. Music-app controls add a scrubber, playback speed, and a
+  repeat-line button; while paused, the previous and next line buttons play one line and pause
+  again.
 - Mark words as **Known**. Swipe a Search result or long-press it, or use the **•••** menu on a
   word's page. Known words show a green **✓ Known** capsule in Search and on the word's page,
   and **Account → Known Words** lists them with a count, search, and swipe to mark unknown.

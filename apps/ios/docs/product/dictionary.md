@@ -43,6 +43,8 @@ with the results instead of staying pinned over them.
 A word detail can present its written form and reading, ordered meanings, alternative forms,
 kanji, related words, conjugations, source-matched Example Sentences, pronunciation, and
 frequency information when the corresponding data is available.
+Below the top card, sections appear in this order: Meaning, Frequency, Alternatives (other
+written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 
 The top of a word detail shows the headword with furigana, following the Reading Aids setting.
 When furigana is off, the reading appears under the headword instead. To the right of the

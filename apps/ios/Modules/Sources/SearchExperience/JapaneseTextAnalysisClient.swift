@@ -1,5 +1,12 @@
 import Foundation
 
+extension JapaneseTextToken {
+  /// Particles, auxiliaries, and punctuation, which carry grammar rather than vocabulary.
+  var isFunctionWord: Bool {
+    ["助詞", "助動詞", "記号", "補助記号"].contains(partOfSpeech.first ?? "")
+  }
+}
+
 struct JapaneseTextToken: Identifiable, Sendable {
   let id: Int
   let surface: String

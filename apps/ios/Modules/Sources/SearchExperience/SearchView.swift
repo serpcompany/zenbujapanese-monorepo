@@ -684,7 +684,8 @@ private struct SearchResultsView: View {
               entry: entry,
               summary: results.displaySummary(for: entry),
               frequencyRanks: frequencyLoadState.results[entry.id],
-              rank: .discovered(position: index + 1, count: min(results.entries.count, 12))
+              rank: .discovered(position: index + 1, count: min(results.entries.count, 12)),
+              link: SearchExperienceRoute.word(entry, nil)
             )
           }
         }
@@ -705,7 +706,8 @@ private struct SearchResultsView: View {
               rank: .result(
                 position: index + (query.isSingleKanji ? 2 : 1),
                 count: orderedEntries.count + (query.isSingleKanji ? 1 : 0)
-              )
+              ),
+              link: SearchExperienceRoute.word(entry, nil)
             )
           }
           // Plain List headers and footers pin over scrolling rows, so the notice is a row.
@@ -826,18 +828,21 @@ private struct KanjiPrimaryRow: View {
   }
 }
 
-private struct ResultRow: View {
+/// A dictionary result: headword and reading, meaning, frequency chips, and the Known badge.
+/// Search and the word sheet's choice list share it; each chooses where a row links.
+struct ResultRow<Link: Hashable>: View {
   let entry: DictionaryEntry
   let summary: String
   let frequencyRanks: FrequencyRanks?
   let rank: ResultRank
+  let link: Link
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(WordKnowledge.self) private var wordKnowledge
   @ScaledMetric(relativeTo: .caption) private var chipSpacing = 6.0
 
   var body: some View {
     let isKnown = wordKnowledge.isKnown(entry.id)
-    NavigationLink(value: SearchExperienceRoute.word(entry, nil)) {
+    NavigationLink(value: link) {
       VStack(alignment: .leading, spacing: 6) {
         HStack(alignment: .lastTextBaseline, spacing: 8) {
           titleBlock
@@ -957,7 +962,7 @@ enum SearchFrequencyLoader {
   }
 }
 
-private enum ResultRank {
+enum ResultRank {
   case result(position: Int, count: Int)
   case discovered(position: Int, count: Int)
 
