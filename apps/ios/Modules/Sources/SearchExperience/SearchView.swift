@@ -36,7 +36,6 @@ struct SearchView: View {
 
   var body: some View {
     let taskID = searchTaskID
-    let taskQuery = SearchQuery(taskID.query)
     VStack(spacing: 0) {
       SearchBar(
         query: $query,
@@ -166,54 +165,7 @@ struct SearchView: View {
       presentationState = .idle
     }
     .task(id: taskID) {
-      guard !Task.isCancelled, searchTaskID == taskID, settledSearchTaskID != taskID else {
-        return
-      }
-      presentationState = .idle
-      guard !taskQuery.isEmpty else {
-        results = .empty
-        exampleCount = 0
-        return
-      }
-      presentationState = .loading
-      do {
-        try await Task.sleep(for: .milliseconds(100))
-        try Task.checkCancellation()
-        async let searchedResults = lookupClient.search(taskQuery)
-        async let searchedExampleCount = exampleSentenceClient.count(taskQuery)
-        let foundResults = try await searchedResults
-        try Task.checkCancellation()
-        let directExampleCount = (try? await searchedExampleCount) ?? 0
-        try Task.checkCancellation()
-        let foundExampleCount: Int
-        if foundResults.usesPrimaryEntryExamples,
-          let entry = foundResults.primaryEntry(for: taskQuery)
-        {
-          foundExampleCount = (try? await exampleSentenceClient.examples(entry).count) ?? 0
-        } else {
-          foundExampleCount = directExampleCount
-        }
-        try Task.checkCancellation()
-        guard searchTaskID == taskID, settledSearchTaskID != taskID else { return }
-        settledSearchTaskID = taskID
-        results = foundResults
-        exampleCount = foundExampleCount
-        if foundResults.isEmpty && foundExampleCount == 0 && !taskQuery.isSingleKanji {
-          presentationState = .noResults
-        } else {
-          presentationState = .results
-        }
-      } catch is CancellationError {
-        return
-      } catch {
-        guard !Task.isCancelled, searchTaskID == taskID, settledSearchTaskID != taskID else {
-          return
-        }
-        settledSearchTaskID = taskID
-        results = .empty
-        exampleCount = 0
-        presentationState = .failure
-      }
+      await search(taskID)
     }
     .confirmationDialog("Image Search", isPresented: $showsImageSources) {
       Button("Take Photo") { presentCamera() }
@@ -275,6 +227,65 @@ struct SearchView: View {
     .onDisappear {
       imageImportTask?.cancel()
       imageImportTask = nil
+    }
+  }
+
+  /// Searches for `taskID`, then again for the current query when it changed without SwiftUI
+  /// starting a newer task. SwiftUI can miss the last keystroke before Return, and without the
+  /// retry the finished search would leave Searching on screen.
+  private func search(_ taskID: SearchTaskID) async {
+    var taskID = taskID
+    while !Task.isCancelled, settledSearchTaskID != taskID {
+      if searchTaskID != taskID {
+        taskID = searchTaskID
+        continue
+      }
+      let taskQuery = SearchQuery(taskID.query)
+      presentationState = .idle
+      guard !taskQuery.isEmpty else {
+        results = .empty
+        exampleCount = 0
+        return
+      }
+      presentationState = .loading
+      do {
+        try await Task.sleep(for: .milliseconds(100))
+        try Task.checkCancellation()
+        async let searchedResults = lookupClient.search(taskQuery)
+        async let searchedExampleCount = exampleSentenceClient.count(taskQuery)
+        let foundResults = try await searchedResults
+        try Task.checkCancellation()
+        let directExampleCount = (try? await searchedExampleCount) ?? 0
+        try Task.checkCancellation()
+        let foundExampleCount: Int
+        if foundResults.usesPrimaryEntryExamples,
+          let entry = foundResults.primaryEntry(for: taskQuery)
+        {
+          foundExampleCount = (try? await exampleSentenceClient.examples(entry).count) ?? 0
+        } else {
+          foundExampleCount = directExampleCount
+        }
+        try Task.checkCancellation()
+        guard searchTaskID == taskID, settledSearchTaskID != taskID else { continue }
+        settledSearchTaskID = taskID
+        results = foundResults
+        exampleCount = foundExampleCount
+        if foundResults.isEmpty && foundExampleCount == 0 && !taskQuery.isSingleKanji {
+          presentationState = .noResults
+        } else {
+          presentationState = .results
+        }
+      } catch is CancellationError {
+        return
+      } catch {
+        guard !Task.isCancelled, searchTaskID == taskID, settledSearchTaskID != taskID else {
+          continue
+        }
+        settledSearchTaskID = taskID
+        results = .empty
+        exampleCount = 0
+        presentationState = .failure
+      }
     }
   }
 
