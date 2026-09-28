@@ -52,6 +52,11 @@ flowchart LR
 | Jiten frequency-pack builder | Python, ZIP, JSON, and SQLite | Builds the downloadable Jiten pack sources from pinned snapshots and writes their catalog manifests. | iOS development | [`build_jiten_frequency_packs.py`](../apps/ios/Tools/build_jiten_frequency_packs.py) |
 | Downloadable file hosting | Cloudflare R2 (`zenbujapanese-cdn` bucket, SERP account) at `cdn.zenbujapanese.com` | Serves byte-identical, content-addressed copies of optional frequency-pack sources so downloads do not depend on third-party hosts. | iOS | [`publish_frequency_pack_sources.py`](../apps/ios/Tools/publish_frequency_pack_sources.py), [`FrequencyPackCatalog.json`](../apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackCatalog.json) |
 | Bundled frequency and level packs | Python and SQLite | Builds the bundled TUBELEX rank pack and JLPT level pack from pinned sources, with the hashes the app verifies before use. | iOS development | [`import_frequency_pack.py`](../apps/ios/Tools/import_frequency_pack.py), [`import_jlpt_level_pack.py`](../apps/ios/Tools/import_jlpt_level_pack.py) |
+| Website | Next.js and React | Renders zenbujapanese.com pages, metadata, and sitemaps. | Website | [`apps/web/src/app`](../apps/web/src/app) |
+| Website hosting | Cloudflare Workers through OpenNext | Serves the website from staging and production Workers. | Website | [`wrangler.jsonc`](../apps/web/wrangler.jsonc), [`open-next.config.ts`](../apps/web/open-next.config.ts) |
+| Website data | Cloudflare D1 through Drizzle | Stores website data in per-environment databases with reviewed migrations. | Website | [`drizzle.config.ts`](../apps/web/drizzle.config.ts), [`src/db`](../apps/web/src/db) |
+| Website interface | Tailwind CSS and shadcn/ui | Styles website pages and provides UI components. | Website | [`components.json`](../apps/web/components.json), [`globals.css`](../apps/web/src/app/globals.css) |
+| Website analytics | Cloudflare Web Analytics and Google Tag Manager | Counts website visits in production builds when their IDs are configured. | Website | [`analytics.tsx`](../apps/web/src/components/analytics.tsx) |
 
 Sudachi is analysis technology, not Zenbu's Japanese-English dictionary. Apple
 Vision recognizes text but does not interpret its words. Apple Translation
