@@ -1,6 +1,7 @@
 // Ports the retrieval in apps/ios/Modules/Sources/SearchExperience/LookupClient.swift and the
 // result composition in DictionaryEntry.swift. Results come back in dictionary order, before
 // frequency evidence reorders them, exactly as the conformance suite pins them (ADR 0006).
+// Change the Swift search and this port in the same PR (issue 481).
 import { acceptsPartsOfSpeech, deinflect } from './deinflect'
 import {
   compareStrings,
