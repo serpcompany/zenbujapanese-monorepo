@@ -17,9 +17,9 @@ sign-in yet; the tab holds on-device content and preferences. It provides:
 - the Media Library;
 - Known Words;
 - independent Furigana and Romaji preferences;
-- management of optional frequency dictionaries;
-- Help & Support and the Privacy Policy, which open the Zenbu website; and
-- the app's name, version, and description above source credits and attributions.
+- management of optional frequency dictionaries; and
+- the app's name, version, and description, followed by Help & Support and the Privacy Policy,
+  which open the Zenbu website, and source credits and attributions.
 
 Rows use Settings-style tinted icon tiles in grouped cards without section headings.
 

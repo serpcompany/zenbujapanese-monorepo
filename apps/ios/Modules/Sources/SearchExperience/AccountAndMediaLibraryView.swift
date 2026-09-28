@@ -70,19 +70,17 @@ struct AccountRootView: View {
       }
 
       Section {
+        AccountAboutHeader()
+          .listRowBackground(Color.clear)
+          .listRowInsets(EdgeInsets(top: 24, leading: 4, bottom: 8, trailing: 4))
+      }
+
+      Section {
         AccountExternalLink(destination: AccountLinks.support) {
           AccountRowLabel("Help & Support", systemImage: "questionmark.bubble.fill", tint: .red)
         }
         .accessibilityIdentifier("account.support")
-      }
 
-      Section {
-        AccountAboutHeader()
-          .listRowBackground(Color.clear)
-          .listRowInsets(EdgeInsets(top: 8, leading: 4, bottom: 8, trailing: 4))
-      }
-
-      Section {
         AccountExternalLink(destination: AccountLinks.privacyPolicy) {
           AccountRowLabel("Privacy Policy", systemImage: "hand.raised.fill", tint: .blue)
         }
