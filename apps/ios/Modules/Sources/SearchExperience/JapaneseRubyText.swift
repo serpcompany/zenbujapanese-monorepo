@@ -2,12 +2,17 @@ import SwiftUI
 
 struct JapaneseRubyText: View {
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
+  /// Space around each reading that sits beside another, so 弱肉 reads じゃく・にく rather than
+  /// じゃくにく.
+  @ScaledMetric(relativeTo: .body) private var adjacentReadingGap = 3.0
 
   private struct Piece: Identifiable {
     let id: String
     let segment: JapaneseRubySegment
     /// Characters of `surface` before this piece.
     let offset: Int
+    /// Whether a neighboring piece also has a reading.
+    let besideAnotherReading: Bool
   }
 
   let surface: String
@@ -74,6 +79,7 @@ struct JapaneseRubyText: View {
               Text(furigana).font(rubyFont)
               Text(highlighted(piece.segment.base, at: piece.offset)).font(baseFont)
             }
+            .padding(.horizontal, piece.besideAnotherReading ? adjacentReadingGap : 0)
           } else {
             Text(highlighted(piece.segment.base, at: piece.offset)).font(baseFont)
           }
@@ -102,13 +108,18 @@ struct JapaneseRubyText: View {
   }
 
   private var pieces: [Piece] {
+    let segments = segments
     var offset = 0
     return segments.enumerated().map { index, segment in
       defer { offset += segment.base.count }
+      let hasReading = { (index: Int) in
+        segments.indices.contains(index) && segments[index].reading != nil
+      }
       return Piece(
         id: "\(surface)|\(reading)|\(index)|\(segment.base)|\(segment.reading ?? "")",
         segment: segment,
-        offset: offset
+        offset: offset,
+        besideAnotherReading: hasReading(index - 1) || hasReading(index + 1)
       )
     }
   }
