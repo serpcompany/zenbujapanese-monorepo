@@ -71,10 +71,13 @@ production`), then check the output. `scripts/smoke.sh <url> <staging|production
 search-engine rules for each environment, so CI fails if production is hidden or staging is
 exposed.
 
-Both Workers keep their workers.dev URLs: the zone's bot protection blocks CI runners, so smoke
-tests use them, while people review on the branded domains. `www.zenbujapanese.com` is a custom
-domain on the production Worker and redirects to the apex in `next.config.ts`. `/privacy` and
-`/support` must keep working: the shipped iOS app and App Store metadata link to them.
+The branded domains are canonical. `www.zenbujapanese.com` and each Worker's workers.dev URL
+permanently redirect (308) to them in one hop (`redirectHostTo` in `next.config.ts`), keeping the
+canonical trailing-slash form. The zone is on the free plan, whose Bot Fight Mode blocks CI runners
+and cannot be skipped by WAF rules, so smoke tests call the workers.dev URLs with the
+`x-zenbu-smoke-test` header, which exempts a request from that redirect. The header is not a
+secret. `/privacy` and `/support` must keep working: the shipped iOS app and App Store metadata
+link to them.
 
 Email Routing on the zone forwards `support@zenbujapanese.com` to `support+zenbujapanese@serp.co`
 and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.
