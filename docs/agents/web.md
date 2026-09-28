@@ -13,7 +13,8 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
   through `getCloudflareContext()`.
 - `pnpm preview` builds with OpenNext and serves the Worker in workerd, the production runtime.
   Check routes, redirects, and headers there before deploying.
-- `pnpm check` runs Biome, typecheck, Vitest, and `next build`. The `Web` GitHub Actions workflow
+- `pnpm check` runs Biome, typecheck, `drizzle-kit check` (migration validation), Vitest, and
+  `next build`. The `Web` GitHub Actions workflow
   runs it on pull requests that change `apps/web/**`.
 
 After changing routes, open the changed pages in `pnpm preview` and confirm `/sitemap-index.xml`
@@ -44,8 +45,11 @@ shipped iOS app and App Store metadata link to them.
 ## Database
 
 D1 follows the SERP [Drizzle + D1 standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/database-management-promotion-drizzle-d1.md).
-All three databases share the `DB` binding, the schema in `src/db/schema.ts`, and the migrations
-in `drizzle/`.
+All three databases share the `DB` binding, the schema in `src/db/schema.ts`, the migrations in
+`drizzle/`, and the `d1_migrations` ledger table. Staging and production are targeted through
+named Wrangler environments (`--env staging`, `--env production`) rather than `--preview`, so each
+has its own Worker and domain. Local uses seeded fixture data, staging controlled fixtures, and
+production real data only.
 
 1. Change `src/db/schema.ts`, then run `pnpm db:generate` and review the SQL.
 2. `pnpm db:migrate:local`, then verify with `pnpm dev` or `pnpm preview`.

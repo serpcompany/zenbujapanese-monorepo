@@ -21,7 +21,8 @@
       "binding": "DB",
       "database_name": "zenbujapanese-web-local",
       "database_id": "local-only-do-not-deploy",
-      "migrations_dir": "drizzle"
+      "migrations_dir": "drizzle",
+      "migrations_table": "d1_migrations"
     }
   ],
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web" }],
@@ -33,8 +34,9 @@
         {
           "binding": "DB",
           "database_name": "zenbujapanese-web-staging",
-          "database_id": "TODO-create-with-wrangler-d1-create",
-          "migrations_dir": "drizzle"
+          "database_id": "4af30e21-2703-4060-af22-554bffed3af9",
+          "migrations_dir": "drizzle",
+          "migrations_table": "d1_migrations"
         }
       ],
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web-staging" }]
@@ -47,8 +49,9 @@
         {
           "binding": "DB",
           "database_name": "zenbujapanese-web-production",
-          "database_id": "TODO-create-with-wrangler-d1-create",
-          "migrations_dir": "drizzle"
+          "database_id": "f40fb6bc-c5c0-4215-a78c-39253d64591d",
+          "migrations_dir": "drizzle",
+          "migrations_table": "d1_migrations"
         }
       ],
       "services": [
