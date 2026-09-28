@@ -13,6 +13,7 @@ under `apps/ios/Modules/Sources/SearchExperience/Resources/`.
 | Data | Source record | Importer |
 | --- | --- | --- |
 | Dictionary entries and examples | `JMdict_e-2026-08-10.source.json`, `UniDic-CWJ-3.1.0.source.json`, `Tatoeba-2026-08-08.source.json` | `import_jmdict.py` |
+| Examples for kana-headword words | `Tatoeba-jpn-indices-2026-09-26.source.json` | `import_example_word_index.py` |
 | Kanji reference data | `KANJIDIC2-2026-08-10.source.json` | `import_kanjidic.py` |
 | Radicals and components | `EDRDG-radicals-2026-08-10.source.json` | `import_radicals.py` |
 | Kanji elements | `Kanjium-8a0cdaa.source.json` | `import_kanji_elements.py` |

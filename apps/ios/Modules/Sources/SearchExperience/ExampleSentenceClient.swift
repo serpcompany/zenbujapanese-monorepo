@@ -182,14 +182,22 @@ private actor ExampleSentenceData {
   static let mapTable = "example_sentence_fts_map"
   static let shared = ExampleSentenceData(databaseURL: nil)
 
+  static let wordIndexSchema = "zenbu.example-word-index.v1"
+
   private let databaseURL: URL?
+  private let wordIndexURL: URL?
   private var connection: SQLiteConnection?
   private var baseIsValidated = false
   private var englishIndexIsValidated = false
   private var porterProbeIsCreated = false
+  private var wordIndexIsAttached = false
 
-  init(databaseURL: URL?) {
+  init(databaseURL: URL?, wordIndexURL: URL? = nil) {
     self.databaseURL = databaseURL
+    self.wordIndexURL =
+      wordIndexURL
+      ?? (databaseURL == nil
+        ? Bundle.module.url(forResource: "ExampleWordIndex", withExtension: "sqlite3") : nil)
   }
 
   func retrieve(_ request: ExampleSentenceRetrievalRequest) throws -> ExampleSentenceRetrievalResult {
@@ -331,7 +339,13 @@ private actor ExampleSentenceData {
     }
     try validateBaseCorpus()
     let evidence = try entryEvidence(id: id)
-    guard evidence.reading == reading, evidence.writtenForms.contains(selectedForm) else {
+    guard evidence.reading == reading else { throw invalid(.missingEntryEvidence) }
+    // A kana headword such as でも also occurs inside other words (いつでも, 何でも), so its
+    // examples come from sentences Tatoeba's word index links to the entry.
+    if selectedForm == reading {
+      return try retrieveIndexedEntry(id: id, selectedForm: selectedForm)
+    }
+    guard evidence.writtenForms.contains(selectedForm) else {
       throw invalid(.missingEntryEvidence)
     }
     guard try unambiguousEntryCount(selectedForm: selectedForm, reading: reading) == 1 else {
@@ -394,6 +408,65 @@ private actor ExampleSentenceData {
       }
     }
     return result(matches: matchesByID.values.sorted(by: ranksBefore))
+  }
+
+  private func retrieveIndexedEntry(
+    id: LanguageReferenceID,
+    selectedForm: String
+  ) throws -> ExampleSentenceRetrievalResult {
+    guard let key = id.bytes, try attachWordIndex() else { return result(matches: []) }
+    let statement = try prepare(
+      """
+      SELECT e.id, e.japanese, e.english, w.surface
+      FROM word_index.entry_sentences w
+      JOIN example_sentences e ON e.id = w.pair_id
+      WHERE w.entry_id = ?
+      """
+    )
+    defer { sqlite3_finalize(statement) }
+    sqliteBind(key, at: 1, to: statement)
+    var matches: [ExampleSentenceMatch] = []
+    while try checkedSQLiteStep(statement) == .row {
+      let sentence = try example(from: statement)
+      let surface = normalizedEntryEvidence(sqliteText(statement, 3))
+      guard let range = graphemeRange(of: surface, in: sentence.japanese) else { continue }
+      let relation: ExampleSentenceLexicalRelation =
+        surface == selectedForm ? .selectedWrittenForm : .reading
+      matches.append(
+        ExampleSentenceMatch(
+          sentence: sentence,
+          route: .dictionaryEntry,
+          lexicalRelation: relation,
+          matchedRange: range,
+          exactSurface: true,
+          rankInputs: ExampleSentenceRankInputs(
+            lexicalRelation: relation,
+            matchPosition: range.location,
+            englishTermCount: 0,
+            japaneseGraphemeCount: sentence.japanese.count,
+            pairID: sentence.id
+          )
+        )
+      )
+    }
+    return result(matches: matches.sorted(by: ranksBefore))
+  }
+
+  /// Attaches the bundled word index once. Returns false when there is no index, such as
+  /// for a test database, so kana headwords get no examples instead of substring matches.
+  private func attachWordIndex() throws -> Bool {
+    if wordIndexIsAttached { return true }
+    guard let wordIndexURL else { return false }
+    let attach = try prepare("ATTACH DATABASE ? AS word_index")
+    defer { sqlite3_finalize(attach) }
+    sqliteBind(wordIndexURL.path, at: 1, to: attach)
+    guard try checkedSQLiteStep(attach) == .done,
+      try scalarString(
+        "SELECT value FROM word_index.metadata WHERE key = 'artifact_schema'"
+      ) == Self.wordIndexSchema
+    else { throw unavailable(.invalidIndexMetadata) }
+    wordIndexIsAttached = true
+    return true
   }
 
   private func result(matches: [ExampleSentenceMatch]) -> ExampleSentenceRetrievalResult {
