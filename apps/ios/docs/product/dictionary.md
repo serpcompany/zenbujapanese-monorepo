@@ -105,28 +105,36 @@ horizontal and vertical (縦書き) Japanese; vertical columns are read top to b
 left, and English elsewhere in the image does not hide the Japanese.
 
 A segmented control switches between four views, and Image Search remembers the last one
-(**Both** at first):
+(**Both** at first). The toolbar is the same in every view: a close button and a **•••** menu
+with **Copy Text**, **Share Image**, and **Show Words on Image**, which shows or hides the word
+marks on the image.
 
 - **Photo** shows the image, aligned to the top, with every recognized word marked in the
   accent color. Words in vertical lines are tinted chips that alternate shade down each
-  column; words in horizontal lines are underlined. The toolbar button shows or hides the
-  marks.
+  column; words in horizontal lines are underlined.
 - **Both** fits the same marked, tappable image at the top and lists each recognized Japanese
-  line below it as a card in the Player's caption style, with furigana, word underlines, and,
-  once translated, the line's translation. The card at the top of the list is outlined on the
-  image; tapping a card outlines its line, and tapping a word on the image scrolls the cards
-  to its line.
-- **Text** shows the recognized Japanese as paragraph cards in the same caption style, one
-  text size larger. Lines that wrap, such as book columns, are joined; list items and lines
-  that end a sentence stay separate.
-- **Translate** translates each paragraph with Apple's on-device translation, preparing
-  Apple's language resources first when needed, and shows each translation under its
-  Japanese. Translation also fills in the line translations in Both, whose **Translate
-  Lines** button starts the same pass. Line translations follow the Translations reading-aid
-  preference. Where Apple Intelligence is available, **Notes** lists the idioms, proverbs, and
-  set expressions on the page: Apple's on-device model picks them, only phrases that are
-  dictionary entries are kept, and each shows its dictionary meaning and opens its Word
-  Detail. When Apple Intelligence is off or still downloading, Translate says so.
+  line below it in the Player's caption cards, with furigana, word underlines, and the line's
+  translation. The first card's line is outlined on the image; tapping a card outlines its
+  line, and tapping a word on the image scrolls the cards to its line.
+- **Text** shows the recognized Japanese as paragraphs in the same caption cards, one text
+  size larger. Lines that wrap, such as book columns, are joined; list items and lines that
+  end a sentence stay separate.
+- **Translate** has two sections. **Translation** shows each paragraph with its natural
+  translation. **Context** says in a few sentences what the text is and what it's for, then
+  lists its idioms, proverbs, and set expressions with their dictionary meanings; each opens
+  its Word Detail.
+
+Translation uses Apple Translation, preparing Apple's language resources first when needed.
+Where Apple Translation isn't available, Apple Intelligence's on-device model translates
+instead, and Translate says so. Both and Text show line and paragraph translations under their
+cards, following the Translations reading-aid preference, as soon as translation is ready
+without a download; choosing Translate starts a download when one is needed.
+
+Context needs Apple Intelligence; when it's off or still downloading, Translate says so, and on
+devices that can't run it the section is hidden. The on-device model only picks idioms and
+describes the text. Idioms are shown only when they're dictionary entries, with the
+dictionary's meaning, and those meanings are given to the model whenever it translates or
+describes the text, because on its own it misreads idioms word by word.
 
 Tapping a word in any view opens its Word Detail in a half-height sheet that can be dragged to
 full height, as in the Player. The view behind stays usable, so tapping another word switches

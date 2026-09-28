@@ -329,10 +329,7 @@ struct WatchSessionView: View {
         List {
           ForEach(captions.cues) { cue in
             cueRow(cue)
-              .padding(.horizontal, 8)
-              .listRowSeparator(.hidden)
-              .listRowBackground(cueBackground(isActive: cue.id == activeCueID))
-              .accessibilityAddTraits(cue.id == activeCueID ? .isSelected : [])
+              .captionCardRow(isActive: cue.id == activeCueID)
               .id(cue.id)
           }
         }
@@ -347,45 +344,17 @@ struct WatchSessionView: View {
     }
   }
 
-  /// A card behind each line; the line being spoken gets a tinted fill and an accent outline.
-  private func cueBackground(isActive: Bool) -> some View {
-    let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
-    return shape
-      .fill(isActive ? AnyShapeStyle(.tint.opacity(0.18)) : AnyShapeStyle(.fill.quaternary))
-      .overlay { shape.strokeBorder(.tint, lineWidth: isActive ? 2.5 : 0) }
-      .padding(.horizontal, 12)
-      .padding(.vertical, 5)
-      .animation(.easeInOut(duration: 0.2), value: isActive)
-  }
-
+  /// The line being spoken is the active card.
   private func cueRow(_ cue: SubtitleCue) -> some View {
-    VStack(alignment: .leading, spacing: 6) {
-      LinkedJapaneseText(
-        text: cue.text,
-        highlightedQuery: SearchQuery(""),
-        highlightedEntry: nil,
-        japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-        identifierPrefix: "watch.cue.\(cue.id)",
-        openCandidates: { surface, candidates in open(surface, candidates: candidates, from: cue) },
-        openWord: { entry in open(entry, from: cue) }
-      )
-      if readingAidPreferences.showsTranslations, let translation = cue.translation {
-        Text(translation)
-          .font(.callout)
-          .foregroundStyle(.secondary)
-          .padding(.top, 8)
-      }
-    }
-    // The time sits in the card's top corner, above the text, so it never takes a line.
-    .padding(.top, 22)
-    .padding(.bottom, 10)
-    .overlay(alignment: .topTrailing) {
-      Text(timeRange(cue))
-        .font(.caption2.monospacedDigit())
-        .foregroundStyle(.tint)
-        .padding(.top, 4)
-    }
-    .frame(maxWidth: .infinity, alignment: .leading)
+    CaptionCard(
+      text: cue.text,
+      translation: cue.translation,
+      label: timeRange(cue),
+      japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+      identifierPrefix: "watch.cue.\(cue.id)",
+      openCandidates: { surface, candidates in open(surface, candidates: candidates, from: cue) },
+      openWord: { entry in open(entry, from: cue) }
+    )
     // Tapping a line outside its words plays the video from that line.
     .contentShape(.rect)
     .onTapGesture { play(cue) }

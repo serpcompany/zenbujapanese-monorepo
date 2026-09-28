@@ -92,18 +92,20 @@ a proverb list, and a panel with an English subtitle) and a horizontal control. 
 text recognition, also open one vertical and one horizontal image in the Simulator's Image
 Search and check:
 
+- every view has the same toolbar: close, and a **•••** menu;
 - **Photo** shows blue chips down vertical columns and underlines under horizontal lines, and
   nothing moves when a word opens;
-- **Both** makes words on the image tappable and outlines the top card's line on it;
+- **Both** makes words on the image tappable, outlines the first card's line on it, and shows
+  line translations under the Player's caption cards;
 - **Text** joins the book-page columns into paragraph cards; and
-- **Translate** shows "Translation not supported" in the Simulator, because Apple's
-  on-device translation only runs on a real device. Check translations on a device.
+- **Translate** shows **Translation**, then **Context** with the proverb list's idioms.
 
-Translate's **Notes** use Apple's on-device model (Foundation Models). It runs in a Simulator
-only when the runtime matches the Mac: on an iOS 26 runtime under a newer macOS, the model's
-safety check fails and Notes shows "Notes couldn’t be written for this image." Use a Simulator
-on the runtime that matches the Mac, with Apple Intelligence on for the Mac. The
-`ImageTextExplanationTests` smoke test runs only where the model is available.
+Apple Translation doesn't run in the Simulator, so translations there come from Apple
+Intelligence's on-device model (Foundation Models), labeled as such; check Apple Translation on
+a device. The on-device model runs in a Simulator only when the runtime matches the Mac: on an
+iOS 26 runtime under a newer macOS, its safety check fails, so translation and Context fail
+there. Use a Simulator on the runtime that matches the Mac, with Apple Intelligence on for the
+Mac. `ImageTextExplanationTests` exercise the model only where it runs.
 
 ## Known words manual checks
 

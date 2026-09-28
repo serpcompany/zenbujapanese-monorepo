@@ -76,20 +76,9 @@ struct ImageTextFlowView: View {
         .accessibilityIdentifier("image-text.close")
       }
 
-      ToolbarItemGroup(placement: .topBarTrailing) {
-        if mode == .photo {
-          Button {
-            model.showsHighlights.toggle()
-          } label: {
-            Image(systemName: model.showsHighlights ? "viewfinder" : "viewfinder.circle")
-          }
-          .accessibilityLabel(
-            model.showsHighlights ? "Hide recognition highlights" : "Show recognition highlights"
-          )
-          .accessibilityIdentifier("image-text.highlights")
-        }
-
-        shareMenu
+      // One toolbar for every view, so switching views never moves or changes its buttons.
+      ToolbarItem(placement: .topBarTrailing) {
+        moreMenu
       }
     }
     .task {
@@ -207,8 +196,7 @@ struct ImageTextFlowView: View {
     .frame(maxWidth: .infinity, alignment: .leading)
   }
 
-  @ViewBuilder
-  private var shareMenu: some View {
+  private var moreMenu: some View {
     Menu {
       Button {
         let text = model.copiedText
@@ -218,24 +206,31 @@ struct ImageTextFlowView: View {
       }
       .accessibilityIdentifier("image-text.copy-text")
 
-      if let payload = model.selectedSharePayload {
-        if let sharedImage = UIImage(data: payload.data) {
-          let image = Image(uiImage: sharedImage)
-          ShareLink(
-            item: image,
-            preview: SharePreview(payload.name, image: image)
-          ) {
-            Label("Share Image", systemImage: "photo")
-          }
-          .accessibilityLabel("Share Image, selected image \(payload.name)")
-          .accessibilityIdentifier("image-text.share-image")
+      if let payload = model.selectedSharePayload,
+        let sharedImage = UIImage(data: payload.data)
+      {
+        let image = Image(uiImage: sharedImage)
+        ShareLink(
+          item: image,
+          preview: SharePreview(payload.name, image: image)
+        ) {
+          Label("Share Image", systemImage: "square.and.arrow.up")
         }
+        .accessibilityLabel("Share Image, selected image \(payload.name)")
+        .accessibilityIdentifier("image-text.share-image")
       }
+
+      Divider()
+
+      Toggle(isOn: $model.showsHighlights) {
+        Label("Show Words on Image", systemImage: "viewfinder")
+      }
+      .accessibilityIdentifier("image-text.highlights")
     } label: {
-      Image(systemName: "square.and.arrow.up")
+      Image(systemName: "ellipsis")
     }
-    .accessibilityLabel("Share")
-    .accessibilityIdentifier("image-text.share")
+    .accessibilityLabel("More")
+    .accessibilityIdentifier("image-text.more")
   }
 
   private var pages: some View {
@@ -301,6 +296,7 @@ struct ImageTextFlowView: View {
       case .text:
         ImageTextReader(
           page: page,
+          model: model,
           textAnalysisClient: textAnalysisClient,
           highlightedEntry: presentedWord?.entry,
           activeParagraphID: activeLineID,
@@ -316,25 +312,33 @@ struct ImageTextFlowView: View {
     }
   }
 
+  /// Translate: the page's natural translation, then context on what the text is.
   private func translatePage(_ page: ImageTextPage) -> some View {
     ScrollView {
-      VStack(alignment: .leading, spacing: 20) {
-        translationStatus
-        if case .translated = model.translationState {
-          ForEach(page.paragraphs) { paragraph in
-            VStack(alignment: .leading, spacing: 6) {
-              Text(paragraph.text)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-              Text(model.translation(of: paragraph.text) ?? "")
-                .accessibilityIdentifier("image-text.translation.\(paragraph.id)")
+      VStack(alignment: .leading, spacing: 32) {
+        VStack(alignment: .leading, spacing: 16) {
+          sectionHeader("Translation")
+          translationStatus
+          if case .translated = model.translationState {
+            ForEach(page.paragraphs) { paragraph in
+              VStack(alignment: .leading, spacing: 6) {
+                Text(paragraph.text)
+                  .font(.subheadline)
+                  .foregroundStyle(.secondary)
+                Text(model.translation(of: paragraph.text) ?? "")
+                  .accessibilityIdentifier("image-text.translation.\(paragraph.id)")
+              }
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .textSelection(.enabled)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .textSelection(.enabled)
+            if model.translatesOnDevice {
+              sectionFootnote("Translated on this device by Apple Intelligence.")
+            }
           }
         }
-        notes(page)
+        context(page)
       }
+      .frame(maxWidth: .infinity, alignment: .leading)
       .padding(16)
     }
     .accessibilityIdentifier("image-text.translation")
@@ -346,27 +350,32 @@ struct ImageTextFlowView: View {
   }
 
   @ViewBuilder
-  private func notes(_ page: ImageTextPage) -> some View {
+  private func context(_ page: ImageTextPage) -> some View {
     switch model.explanationState {
     case .idle, .unavailable(.available), .unavailable(.unsupported):
       EmptyView()
     case .unavailable(.appleIntelligenceNotEnabled):
-      notesFootnote("Turn on Apple Intelligence in Settings to see notes on idioms.")
-    case .unavailable(.modelNotReady):
-      notesFootnote(
-        "Notes on idioms appear once Apple Intelligence finishes downloading.")
-    case .loading:
-      VStack(alignment: .leading, spacing: 8) {
-        notesHeader
-        ProgressView("Finding idioms…")
-          .accessibilityIdentifier("image-text.notes-loading")
+      contextSection {
+        contextMessage("Turn on Apple Intelligence in Settings to see what this text is about.")
       }
-    case .loaded(let notes) where notes.isEmpty:
-      EmptyView()
-    case .loaded(let notes):
-      VStack(alignment: .leading, spacing: 14) {
-        notesHeader
-        ForEach(notes) { note in
+    case .unavailable(.modelNotReady):
+      contextSection {
+        contextMessage("Context appears once Apple Intelligence finishes downloading.")
+      }
+    case .loading:
+      contextSection {
+        ProgressView("Reading the text…")
+          .accessibilityIdentifier("image-text.context-loading")
+      }
+    case .loaded(let insights):
+      contextSection {
+        if !insights.context.isEmpty {
+          Text(insights.context)
+            .fixedSize(horizontal: false, vertical: true)
+            .textSelection(.enabled)
+            .accessibilityIdentifier("image-text.context")
+        }
+        ForEach(insights.notes) { note in
           VStack(alignment: .leading, spacing: 4) {
             Button(note.phrase) { open(note.entry, in: page, lineID: -1) }
               .font(.headline)
@@ -379,27 +388,41 @@ struct ImageTextFlowView: View {
           .accessibilityElement(children: .combine)
           .accessibilityIdentifier("image-text.note.\(note.phrase)")
         }
-        Text("Idioms picked on this device by Apple Intelligence. Meanings from Zenbu’s dictionary.")
-          .font(.caption)
-          .foregroundStyle(.tertiary)
+        sectionFootnote(
+          "Written on this device by Apple Intelligence. Idiom meanings are from Zenbu’s dictionary."
+        )
       }
     case .failed:
-      notesFootnote("Notes couldn’t be written for this image.")
+      contextSection {
+        contextMessage("Context couldn’t be written for this image.")
+      }
     }
   }
 
-  private var notesHeader: some View {
-    Text("NOTES")
-      .font(.caption.bold())
-      .foregroundStyle(.secondary)
-      .padding(.top, 8)
+  private func contextSection(@ViewBuilder content: () -> some View) -> some View {
+    VStack(alignment: .leading, spacing: 16) {
+      sectionHeader("Context")
+      content()
+    }
   }
 
-  private func notesFootnote(_ message: LocalizedStringKey) -> some View {
+  private func sectionHeader(_ title: LocalizedStringKey) -> some View {
+    Text(title)
+      .font(.caption.bold())
+      .textCase(.uppercase)
+      .foregroundStyle(.secondary)
+  }
+
+  private func sectionFootnote(_ message: LocalizedStringKey) -> some View {
+    Text(message)
+      .font(.caption)
+      .foregroundStyle(.tertiary)
+  }
+
+  private func contextMessage(_ message: LocalizedStringKey) -> some View {
     Label(message, systemImage: "sparkles")
       .font(.footnote)
       .foregroundStyle(.secondary)
-      .padding(.top, 8)
   }
 
   private func select(_ region: ImageTextRegion, in page: ImageTextPage) {
@@ -626,7 +649,7 @@ private struct ImageTextRegionButton: View {
 }
 
 /// Both: the photo on top with the current line outlined, and each recognized line below as a
-/// card in the Player's caption style.
+/// caption card, like the Player's captions.
 private struct ImageTextLineCards: View {
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   let page: ImageTextPage
@@ -639,135 +662,85 @@ private struct ImageTextLineCards: View {
   let selectRegion: (ImageTextRegion) -> Void
   let openWord: (DictionaryEntry, Int) -> Void
   let openCandidates: (String, [DictionaryEntry], Int) -> Void
-  /// The card at the top of the list. Scrolling makes it the active line; tapping a word only
-  /// changes the active line, so nothing moves under the learner's finger.
-  @State private var scrolledLineID: Int?
+  /// A line to scroll the cards to. Only a word tapped on the image sets it, so a word tapped in
+  /// a card never moves the list under the learner's finger.
+  @State private var scrollTarget: Int?
 
   var body: some View {
     GeometryReader { geometry in
       VStack(spacing: 0) {
         ImageTextCanvas(
           page: page,
-          showsRegions: true,
+          showsRegions: model.showsHighlights,
           selectedRegion: selectedRegion,
           outlinedLineID: activeLineID,
           selectRegion: { region in
-            withAnimation { scrolledLineID = region.lineID }
+            scrollTarget = region.lineID
             selectRegion(region)
           }
         )
         .frame(height: geometry.size.height * 0.38)
         .padding(.bottom, 4)
 
-        if readingAidPreferences.showsTranslations, !isWordSheetPresented {
-          translateControl
-            .padding(.horizontal, 16)
-            .padding(.bottom, 6)
-        }
-
-        ScrollView {
-          LazyVStack(spacing: 10) {
+        ScrollViewReader { proxy in
+          List {
             ForEach(page.lines) { line in
-              card(line)
-                .id(line.id)
+              let isActive = line.id == activeLineID
+              CaptionCard(
+                text: line.text,
+                translation: model.translation(of: line.text),
+                highlightedEntry: isActive ? highlightedEntry : nil,
+                japaneseTextAnalysisClient: textAnalysisClient,
+                identifierPrefix: "image-text.line.\(line.id)",
+                openCandidates: { surface, candidates in openCandidates(surface, candidates, line.id) },
+                openWord: { entry in openWord(entry, line.id) }
+              )
+              // Tapping a line outside its words outlines it on the image.
+              .contentShape(.rect)
+              .onTapGesture { activeLineID = line.id }
+              .accessibilityElement(children: .contain)
+              .accessibilityIdentifier("image-text.line.\(line.id)")
+              .captionCardRow(isActive: isActive)
+              .id(line.id)
             }
           }
-          .scrollTargetLayout()
-          .padding(.horizontal, 12)
+          .listStyle(.plain)
+          .contentMargins(.top, 8, for: .scrollContent)
+          // Room to scroll the last lines above the half-height word sheet.
+          .contentMargins(
+            .bottom, isWordSheetPresented ? geometry.size.height * 0.45 : 16, for: .scrollContent
+          )
+          .onChange(of: scrollTarget) { _, lineID in
+            guard let lineID else { return }
+            withAnimation { proxy.scrollTo(lineID, anchor: .top) }
+            scrollTarget = nil
+          }
+          .accessibilityIdentifier("image-text.lines")
         }
-        .scrollPosition(id: $scrolledLineID, anchor: .top)
-        .onChange(of: scrolledLineID) { _, lineID in
-          if let lineID { activeLineID = lineID }
-        }
-        // Room to scroll the last lines above the half-height word sheet.
-        .contentMargins(
-          .bottom, isWordSheetPresented ? geometry.size.height * 0.45 : 16, for: .scrollContent
-        )
-        .accessibilityIdentifier("image-text.lines")
       }
     }
     .onAppear {
       if activeLineID == nil { activeLineID = page.lines.first?.id }
-      scrolledLineID = activeLineID
     }
+    .task(id: page.asset.id) { translateIfReady() }
   }
 
-  @ViewBuilder
-  private var translateControl: some View {
-    switch model.translationState {
-    case .idle:
-      Button("Translate Lines", systemImage: "translate") { model.requestTranslation() }
-        .buttonStyle(.bordered)
-        .controlSize(.small)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityIdentifier("image-text.translate-lines")
-    case .checkingAvailability, .preparing, .translating:
-      ProgressView()
-        .controlSize(.small)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    case .translated:
-      EmptyView()
-    case .cancelled, .unsupported, .preparationFailed, .failed:
-      Label("Translation unavailable. See Translate for details.", systemImage: "translate")
-        .font(.footnote)
-        .foregroundStyle(.secondary)
-        .frame(maxWidth: .infinity, alignment: .leading)
+  /// Like the Player's captions, lines are translated without asking when translation is ready.
+  private func translateIfReady() {
+    guard readingAidPreferences.showsTranslations, case .idle = model.translationState else {
+      return
     }
-  }
-
-  private func card(_ line: ImageTextLine) -> some View {
-    let isActive = line.id == activeLineID
-    return VStack(alignment: .leading, spacing: 6) {
-      LinkedJapaneseText(
-        text: line.text,
-        highlightedQuery: SearchQuery(""),
-        highlightedEntry: isActive ? highlightedEntry : nil,
-        japaneseTextAnalysisClient: textAnalysisClient,
-        identifierPrefix: "image-text.line.\(line.id)",
-        highlightsCurrentEntry: true,
-        openCandidates: { surface, candidates in openCandidates(surface, candidates, line.id) },
-        openWord: { entry in openWord(entry, line.id) }
-      )
-      if readingAidPreferences.showsTranslations, let translation = model.translation(of: line.text)
-      {
-        Text(translation)
-          .font(.callout)
-          .foregroundStyle(.secondary)
-          .padding(.top, 8)
-      }
-    }
-    .padding(.horizontal, 16)
-    .padding(.vertical, 12)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .background { ImageTextCardBackground(isActive: isActive) }
-    // Tapping a line outside its words outlines it on the photo.
-    .contentShape(.rect)
-    .onTapGesture { withAnimation { activeLineID = line.id } }
-    .accessibilityElement(children: .contain)
-    .accessibilityAddTraits(isActive ? .isSelected : [])
-    .accessibilityIdentifier("image-text.line.\(line.id)")
-  }
-
-}
-
-/// Matches the Player's caption cards: the current line gets a tinted fill and an outline.
-private struct ImageTextCardBackground: View {
-  let isActive: Bool
-
-  var body: some View {
-    let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
-    shape
-      .fill(isActive ? AnyShapeStyle(.tint.opacity(0.18)) : AnyShapeStyle(.fill.quaternary))
-      .overlay { shape.strokeBorder(.tint, lineWidth: isActive ? 2.5 : 0) }
-      .animation(.easeInOut(duration: 0.2), value: isActive)
+    model.requestTranslation(preparesIfNeeded: false)
   }
 }
 
-/// Text: the recognized Japanese as paragraph cards in the caption style, one Dynamic Type step
-/// larger than Both since this view is for reading.
+/// Text: the recognized Japanese as paragraph caption cards, one Dynamic Type step larger than
+/// Both since this view is for reading.
 private struct ImageTextReader: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   let page: ImageTextPage
+  let model: ImageTextFlowModel
   let textAnalysisClient: JapaneseTextAnalysisClient
   let highlightedEntry: DictionaryEntry?
   let activeParagraphID: Int?
@@ -777,36 +750,35 @@ private struct ImageTextReader: View {
 
   var body: some View {
     GeometryReader { geometry in
-      ScrollView {
-        LazyVStack(spacing: 10) {
-          ForEach(page.paragraphs) { paragraph in
-            let isActive = isWordSheetPresented && paragraph.id == activeParagraphID
-            LinkedJapaneseText(
-              text: paragraph.text,
-              highlightedQuery: SearchQuery(""),
-              highlightedEntry: isActive ? highlightedEntry : nil,
-              japaneseTextAnalysisClient: textAnalysisClient,
-              identifierPrefix: "image-text.paragraph.\(paragraph.id)",
-              highlightsCurrentEntry: true,
-              openCandidates: { surface, candidates in
-                openCandidates(surface, candidates, paragraph.id)
-              },
-              openWord: { entry in openWord(entry, paragraph.id) }
-            )
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background { ImageTextCardBackground(isActive: isActive) }
-          }
+      List {
+        ForEach(page.paragraphs) { paragraph in
+          let isActive = isWordSheetPresented && paragraph.id == activeParagraphID
+          CaptionCard(
+            text: paragraph.text,
+            translation: model.translation(of: paragraph.text),
+            highlightedEntry: isActive ? highlightedEntry : nil,
+            japaneseTextAnalysisClient: textAnalysisClient,
+            identifierPrefix: "image-text.paragraph.\(paragraph.id)",
+            openCandidates: { surface, candidates in
+              openCandidates(surface, candidates, paragraph.id)
+            },
+            openWord: { entry in openWord(entry, paragraph.id) }
+          )
+          .captionCardRow(isActive: isActive)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
       }
+      .listStyle(.plain)
       .dynamicTypeSize(dynamicTypeSize.oneStepLarger)
+      .contentMargins(.top, 8, for: .scrollContent)
       .contentMargins(
-        .bottom, isWordSheetPresented ? geometry.size.height * 0.45 : 0, for: .scrollContent
+        .bottom, isWordSheetPresented ? geometry.size.height * 0.45 : 16, for: .scrollContent
       )
       .accessibilityIdentifier("image-text.reader")
+    }
+    .task(id: page.asset.id) {
+      if readingAidPreferences.showsTranslations, case .idle = model.translationState {
+        model.requestTranslation(preparesIfNeeded: false)
+      }
     }
   }
 }

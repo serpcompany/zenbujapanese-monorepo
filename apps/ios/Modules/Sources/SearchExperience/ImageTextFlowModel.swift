@@ -21,7 +21,7 @@ final class ImageTextFlowModel {
     case idle
     case unavailable(ImageTextExplanationAvailability)
     case loading
-    case loaded([ImageTextNote])
+    case loaded(ImageTextInsights)
     case failed
   }
   enum PageState {
@@ -43,6 +43,8 @@ final class ImageTextFlowModel {
   var showsHighlights = true
   var noTextAlertPage: Int?
   var translationState: TranslationState = .idle
+  /// The translation comes from Apple Intelligence's on-device model, not Apple Translation.
+  private(set) var translatesOnDevice = false
   private(set) var explanationState: ExplanationState = .idle
   private var explanationTask: Task<Void, Never>?
   private var translationTask: Task<Void, Never>?
@@ -131,7 +133,9 @@ final class ImageTextFlowModel {
 
   var canRequestTranslation: Bool { !translationSources.isEmpty }
 
-  func requestTranslation() {
+  /// Translates the selected page. `preparesIfNeeded: false` skips pages whose language
+  /// resources would need downloading, for views that translate without being asked.
+  func requestTranslation(preparesIfNeeded: Bool = true) {
     let source = translationSources
     guard !source.isEmpty else { return }
     guard case .idle = translationState else { return }
@@ -140,30 +144,44 @@ final class ImageTextFlowModel {
     let invocationID = UUID()
     translationInvocationID = invocationID
     translationState = .checkingAvailability
-    translationTask = Task { [translationClient] in
+    translationTask = Task { [translationClient, explanationClient] in
       do {
         let availability = try await translationClient.availability()
         try Task.checkCancellation()
         guard translationInvocationID == invocationID,
           pages.indices.contains(selectedPage), pages[selectedPage].id == pageID
         else { return }
-        guard availability == .installed else {
-          if availability == .downloadable {
-            translationState = .preparing
-            pendingTranslationPreparation = PendingTranslationPreparation(
-              id: invocationID,
-              source: source,
-              pageID: pageID
-            )
-          } else {
-            translationState = .unsupported
-          }
+        if availability == .downloadable, !preparesIfNeeded {
+          translationState = .idle
           translationTask = nil
           translationInvocationID = nil
           return
         }
+        if availability == .downloadable {
+          translationState = .preparing
+          pendingTranslationPreparation = PendingTranslationPreparation(
+            id: invocationID,
+            source: source,
+            pageID: pageID
+          )
+          translationTask = nil
+          translationInvocationID = nil
+          return
+        }
+        // Without Apple Translation, Apple Intelligence's on-device model translates instead.
+        let onDevice = availability != .installed
+        if onDevice, explanationClient.availability() != .available {
+          translationState = .unsupported
+          translationTask = nil
+          translationInvocationID = nil
+          return
+        }
+        translatesOnDevice = onDevice
         translationState = .translating
-        let translations = try await translationClient.translateAllInstalled(source)
+        let translations =
+          onDevice
+          ? try await explanationClient.translate(source)
+          : try await translationClient.translateAllInstalled(source)
         try Task.checkCancellation()
         guard translationInvocationID == invocationID,
           pages.indices.contains(selectedPage), pages[selectedPage].id == pageID
@@ -183,7 +201,7 @@ final class ImageTextFlowModel {
     }
   }
 
-  /// Writes notes on the selected page's idioms and grammar with the on-device model.
+  /// Describes the selected page and finds its idioms with the on-device model.
   func requestExplanation() {
     guard case .idle = explanationState, let page = selectedLoadedPage else { return }
     let availability = explanationClient.availability()
@@ -287,6 +305,7 @@ final class ImageTextFlowModel {
     translationInvocationID = nil
     pendingTranslationPreparation = nil
     translationState = .idle
+    translatesOnDevice = false
   }
 
   func suspendTranslation() {
