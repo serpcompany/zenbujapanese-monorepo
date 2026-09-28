@@ -356,19 +356,12 @@ struct WordHeadline<Accessory: View>: View {
     .padding(.vertical, 4)
   }
 
+  /// The headword at the largest size that fits beside the pitch accent and controls. It keeps
+  /// its furigana while a smaller size still fits, and only then moves the reading underneath.
   private var headword: some View {
     ViewThatFits(in: .horizontal) {
-      VStack(alignment: .leading, spacing: 2) {
-        JapaneseRubyText(
-          surface: surface,
-          reading: reading,
-          baseFont: .largeTitle,
-          rubyFont: .title3.weight(.semibold),
-          highlightedEnding: highlightedEnding
-        )
-        .fixedSize(horizontal: true, vertical: false)
-        readingWithoutFurigana
-      }
+      rubyHeadword(baseFont: .largeTitle, rubyFont: .title3.weight(.semibold))
+      rubyHeadword(baseFont: .title.weight(.semibold), rubyFont: .caption.weight(.semibold))
 
       VStack(alignment: .leading, spacing: 6) {
         Text(surface.highlightingEnding(highlightedEnding))
@@ -384,6 +377,20 @@ struct WordHeadline<Accessory: View>: View {
       }
       .accessibilityElement(children: .combine)
       .accessibilityIdentifier("\(identifierPrefix).identity")
+    }
+  }
+
+  private func rubyHeadword(baseFont: Font, rubyFont: Font) -> some View {
+    VStack(alignment: .leading, spacing: 2) {
+      JapaneseRubyText(
+        surface: surface,
+        reading: reading,
+        baseFont: baseFont,
+        rubyFont: rubyFont,
+        highlightedEnding: highlightedEnding
+      )
+      .fixedSize(horizontal: true, vertical: false)
+      readingWithoutFurigana
     }
   }
 
