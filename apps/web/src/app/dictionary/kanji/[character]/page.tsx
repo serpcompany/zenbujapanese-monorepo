@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const kanji = await load(params)
   const readings = kanji.readings.map(reading => reading.value).join(', ')
   return dictionaryMetadata(
-    kanjiPath(kanji.character),
+    encodeURI(kanjiPath(kanji.character)),
     `${kanji.character} kanji meaning`,
     `${kanji.character}: ${kanji.meanings.join(', ')}. Readings ${readings}. ${kanji.strokeCount} strokes.`,
     { index: kanji.meanings.length > 0 || kanji.readings.length > 0 }

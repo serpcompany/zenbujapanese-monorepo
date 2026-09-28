@@ -121,7 +121,7 @@ export async function getKanjiPage(character: string): Promise<KanjiPageData | n
 
 export async function searchDictionary(query: string): Promise<SearchData> {
   const kanji = kanjiByCharacter.get(query)
-  const ordered = fixtureSearchOrder[query]
+  const ordered = Object.hasOwn(fixtureSearchOrder, query) ? fixtureSearchOrder[query] : undefined
   const matches = ordered
     ? ordered.flatMap(entSeq => entriesBySeq.get(entSeq) ?? [])
     : fixtureEntries.filter(

@@ -14,9 +14,11 @@ import { decodeSegment, normalizeSearchQuery, searchPath } from '@/lib/dictionar
 
 type Props = PageProps<'/dictionary/search/[query]'>
 
-async function load(params: Props['params']) {
+// Next.js passes the page an encoded segment but generateMetadata a decoded one.
+async function load(params: Props['params'], decoded: boolean) {
   if (!isDictionaryAvailable()) notFound()
-  const raw = decodeSegment((await params).query)
+  const segment = (await params).query
+  const raw = decoded ? segment : decodeSegment(segment)
   const query = normalizeSearchQuery(raw)
   if (!query) permanentRedirect('/dictionary/search/')
   if (query !== raw) permanentRedirect(searchPath(query))
@@ -24,7 +26,7 @@ async function load(params: Props['params']) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const results = await load(params)
+  const results = await load(params, true)
   const found = results.words.length > 0 || results.kanji !== null
   return dictionaryMetadata(
     searchPath(results.query),
@@ -37,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function SearchResultsPage({ params }: Props) {
-  const { query, kanji, words } = await load(params)
+  const { query, kanji, words } = await load(params, false)
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8">
       <SearchForm defaultValue={query} />

@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const word = await load(params)
   const reading = word.reading === word.headword ? '' : ` (${word.reading})`
   return dictionaryMetadata(
-    word.path,
+    encodeURI(word.path),
     `${word.headword}${reading} meaning`,
     `${word.headword}${reading}: ${word.summary}. ${word.partOfSpeech}.`
   )
