@@ -89,7 +89,9 @@ learner's place in the preceding detail.
 
 ## Image Search
 
-Image Search recognizes Japanese text in one or more selected images. A learner can:
+Image Search recognizes Japanese text in one or more selected images. It reads both
+horizontal and vertical (縦書き) Japanese; vertical columns are read top to bottom, right to
+left, and English elsewhere in the image does not hide the Japanese. A learner can:
 
 - show or hide recognition underlines for every recognized Japanese token;
 - use the same Kuromoji parser family as the Zenbu browser extension and other linked

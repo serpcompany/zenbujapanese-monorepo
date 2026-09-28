@@ -84,6 +84,15 @@ When changing Search results or frequency dictionaries, also check in the Simula
   the unavailable dictionary.
 - Rapidly submitting `quiet`, `miru`, then `いる` leaves only `いる` results.
 
+## Image Search manual checks
+
+`ImageTextRecognitionTests` run Vision on the images in
+`Modules/Tests/SearchExperienceTests/Fixtures/ImageText`: vertical Japanese (a book-page photo,
+a proverb list, and a panel with an English subtitle) and a horizontal control. When changing
+text recognition, also open one vertical and one horizontal image in the Simulator's Image
+Search and check that the underlines follow each column and that copied text reads in column
+order.
+
 ## Known words manual checks
 
 `WordKnowledgeTests` cover known-word storage: persistence, unreadable and newer-version files,

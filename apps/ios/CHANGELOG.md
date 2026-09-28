@@ -25,6 +25,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Fixed
 
+- Image Search now recognizes vertical Japanese (縦書き), such as book pages and signs,
+  instead of reporting that no Japanese text was found. Columns are read right to left.
 - The Results and Discovered Words headings no longer stay pinned over results as you scroll.
 - Inflected Japanese searches such as `まけたら`, `食べなかった`, and `勉強した` now find
   their dictionary forms (負ける, 食べる, 勉強) without downloading Japanese Text Analysis.
