@@ -2,7 +2,7 @@ import { PageShell } from '@/components/page-shell'
 import { pageMetadata } from '@/lib/metadata'
 import { site } from '@/lib/site'
 
-export const metadata = pageMetadata('/legal/affiliate-disclosure')
+export const metadata = pageMetadata('/legal/affiliate-disclosure/')
 
 export default function AffiliateDisclosurePage() {
   return (

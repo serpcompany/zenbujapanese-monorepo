@@ -3,7 +3,7 @@ import { PageShell } from '@/components/page-shell'
 import { pageMetadata } from '@/lib/metadata'
 import { site } from '@/lib/site'
 
-export const metadata = pageMetadata('/legal/privacy')
+export const metadata = pageMetadata('/legal/privacy/')
 
 export default function PrivacyPage() {
   const email = <a href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a>
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
       <p>
         We update this policy when the app or website changes how it handles information; the date
         above marks the current version. Questions go to {email}. See also the{' '}
-        <Link href="/legal/terms">Terms of Use</Link>.
+        <Link href="/legal/terms/">Terms of Use</Link>.
       </p>
     </PageShell>
   )

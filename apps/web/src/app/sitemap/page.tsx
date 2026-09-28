@@ -3,7 +3,7 @@ import { PageShell } from '@/components/page-shell'
 import { pageMetadata } from '@/lib/metadata'
 import { sitePages } from '@/lib/pages'
 
-export const metadata = pageMetadata('/sitemap')
+export const metadata = pageMetadata('/sitemap/')
 
 export default function HtmlSitemapPage() {
   return (

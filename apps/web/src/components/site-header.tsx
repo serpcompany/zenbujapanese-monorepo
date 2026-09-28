@@ -9,8 +9,8 @@ export function SiteHeader() {
           {site.mark} {site.name}
         </Link>
         <div className="flex gap-4 text-sm">
-          <Link href="/about">About</Link>
-          <Link href="/support">Support</Link>
+          <Link href="/about/">About</Link>
+          <Link href="/support/">Support</Link>
         </div>
       </nav>
     </header>

@@ -3,7 +3,7 @@ import { PageShell } from '@/components/page-shell'
 import { pageMetadata } from '@/lib/metadata'
 import { legalPages } from '@/lib/pages'
 
-export const metadata = pageMetadata('/legal')
+export const metadata = pageMetadata('/legal/')
 
 export default function LegalPage() {
   return (

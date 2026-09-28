@@ -20,9 +20,20 @@ expect() {
   if [ "$got" = "$want" ]; then pass "$got $path"; else fail "$got $path (want $want)"; fi
 }
 
-for path in / /support /legal/privacy /sitemap-index.xml /sitemaps/pages.xml /robots.txt; do
+expect_redirect() {
+  local path="$1" want="$2" got
+  got="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "$base$path")"
+  if [ "$got" = "308 $base$want" ]; then pass "308 $path -> $want"; else fail "$path gave '$got' (want 308 -> $want)"; fi
+}
+
+for path in / /support/ /legal/privacy/ /sitemap-index.xml /sitemaps/pages.xml /robots.txt; do
   expect "$path" 200
 done
+# SERP trailing-slash standard: pages gain the slash, file URLs lose it.
+expect_redirect /support /support/
+expect_redirect /robots.txt/ /robots.txt
+expect_redirect /sitemaps/pages.xml/ /sitemaps/pages.xml
+# The shipped iOS app links to /privacy.
 expect /privacy 308
 
 robots="$(curl -s "$base/robots.txt")"

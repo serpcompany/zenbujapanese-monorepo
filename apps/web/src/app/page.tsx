@@ -13,7 +13,7 @@ export default function HomePage() {
     <PageShell title={site.name}>
       <p>{site.description}</p>
       <p>
-        <Link href="/support">Get support</Link>
+        <Link href="/support/">Get support</Link>
       </p>
     </PageShell>
   )

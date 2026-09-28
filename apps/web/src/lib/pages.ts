@@ -7,34 +7,36 @@ export type SitePage = {
 /** Static pages, in the order the HTML sitemap and pages sitemap list them. */
 export const sitePages = [
   { path: '/', title: 'Home', description: 'Zenbu Japanese dictionary and translator.' },
-  { path: '/about', title: 'About', description: 'About Zenbu Japanese.' },
-  { path: '/support', title: 'Support', description: 'Get help with Zenbu Japanese.' },
-  { path: '/contact', title: 'Contact', description: 'Contact the Zenbu Japanese team.' },
-  { path: '/legal', title: 'Legal', description: 'Zenbu Japanese legal policies.' },
+  { path: '/about/', title: 'About', description: 'About Zenbu Japanese.' },
+  { path: '/support/', title: 'Support', description: 'Get help with Zenbu Japanese.' },
+  { path: '/contact/', title: 'Contact', description: 'Contact the Zenbu Japanese team.' },
+  { path: '/legal/', title: 'Legal', description: 'Zenbu Japanese legal policies.' },
   {
-    path: '/legal/privacy',
+    path: '/legal/privacy/',
     title: 'Privacy Policy',
     description: 'How Zenbu Japanese handles information in the app and on this website.'
   },
   {
-    path: '/legal/terms',
+    path: '/legal/terms/',
     title: 'Terms of Use',
     description: 'Terms for using Zenbu Japanese and this website.'
   },
   {
-    path: '/legal/dmca',
+    path: '/legal/dmca/',
     title: 'DMCA Copyright Policy',
     description: 'How to report claimed copyright infringement to Zenbu Japanese.'
   },
   {
-    path: '/legal/affiliate-disclosure',
+    path: '/legal/affiliate-disclosure/',
     title: 'Affiliate Disclosure',
     description: 'How Zenbu Japanese discloses affiliate relationships.'
   },
-  { path: '/sitemap', title: 'Sitemap', description: 'Every page on zenbujapanese.com.' }
+  { path: '/sitemap/', title: 'Sitemap', description: 'Every page on zenbujapanese.com.' }
 ] as const satisfies readonly SitePage[]
 
-export const legalPages = sitePages.filter(page => page.path.startsWith('/legal/'))
+export const legalPages = sitePages.filter(
+  page => page.path.startsWith('/legal/') && page.path !== '/legal/'
+)
 
 export function pageFor(path: (typeof sitePages)[number]['path']): SitePage {
   const page = sitePages.find(candidate => candidate.path === path)

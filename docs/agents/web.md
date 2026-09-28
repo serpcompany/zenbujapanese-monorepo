@@ -4,6 +4,13 @@
 Cloudflare D1 through Drizzle. It owns its toolchain (pnpm, its own lockfile) per ADR 0005. Run
 every command below from `apps/web`. Decisions and scope live in issue #402.
 
+The website follows these SERP engineering standards:
+
+- [Drizzle + D1 data promotion](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/database-management-promotion-drizzle-d1.md)
+- [Environment configuration](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/environment-configuration.md)
+- [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md):
+  write page paths with the slash (`src/lib/pages.ts` is the single list of static pages).
+
 Before writing Next.js code, read the relevant guide in `node_modules/next/dist/docs/`; this
 Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 
