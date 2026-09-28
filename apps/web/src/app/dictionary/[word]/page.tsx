@@ -71,17 +71,19 @@ export default async function WordPage({ params }: Props) {
 
       <Section title="Meaning">
         <ol className="flex flex-col gap-3">
-          {word.senses.map((sense, position) => (
-            <li key={sense.meaning} className="flex gap-2">
-              <span className="font-medium tabular-nums">{position + 1}.</span>
-              <div>
-                <p className="font-medium">{sense.meaning}</p>
-                {sense.notes.length > 0 ? (
-                  <p className="text-muted-foreground">{sense.notes.join(' · ')}</p>
-                ) : null}
-              </div>
-            </li>
-          ))}
+          {word.senses
+            .map((sense, position) => ({ ...sense, number: position + 1 }))
+            .map(sense => (
+              <li key={sense.number} className="flex gap-2">
+                <span className="font-medium tabular-nums">{sense.number}.</span>
+                <div>
+                  <p className="font-medium">{sense.meaning}</p>
+                  {sense.notes.length > 0 ? (
+                    <p className="text-muted-foreground">{sense.notes.join(' · ')}</p>
+                  ) : null}
+                </div>
+              </li>
+            ))}
         </ol>
       </Section>
 
