@@ -331,7 +331,7 @@ struct ImageTextRegion: Identifiable {
       surface: surface,
       entry: entry,
       candidateEntries: candidateEntries,
-      asset: asset
+      encounterMedia: EncounterMediaAttachment(name: asset.name, data: asset.data)
     )
   }
 }

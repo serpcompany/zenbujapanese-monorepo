@@ -138,6 +138,7 @@ struct ExampleSentenceSections: View {
 /// Dedicated Examples expose one native word-selection menu, while Word Detail retains its
 /// evidence-backed inline current-word treatment.
 struct JapaneseExampleRowContent: View {
+  @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   enum Presentation {
     case dedicated(index: Int)
     case wordDetail(index: Int)
@@ -278,12 +279,14 @@ struct JapaneseExampleRowContent: View {
         }
       }
 
-      Text(example.english)
-        .font(.body)
-        .foregroundStyle(.secondary)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityHidden(configuration.combinesRowAccessibility)
-        .accessibilityIdentifier(configuration.englishIdentifier)
+      if readingAidPreferences.showsTranslations {
+        Text(example.english)
+          .font(.body)
+          .foregroundStyle(.secondary)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .accessibilityHidden(configuration.combinesRowAccessibility)
+          .accessibilityIdentifier(configuration.englishIdentifier)
+      }
     }
   }
 

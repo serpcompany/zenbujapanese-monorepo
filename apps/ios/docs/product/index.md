@@ -3,9 +3,11 @@
 This folder describes user-facing behavior that exists in the Zenbu Japanese iOS app.
 It is updated with the implementation and is not a roadmap or an ideas backlog.
 
-The current app has two tabs:
+The app runs in portrait on iPhone. It has three tabs:
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience.
+- **Player** opens [Player](player.md), where a learner watches YouTube
+  videos with linked Japanese captions.
 - **Account** opens personal content, preferences, language-resource management, support, and credits.
 
 ## Account
@@ -17,7 +19,10 @@ sign-in yet; the tab holds on-device content and preferences. It provides:
 - the Media Library;
 - Known Words;
 - Lists;
-- independent Furigana and Romaji preferences;
+- Reading Aids: Furigana, Romaji, and Hide Furigana on Known Words; Word Meanings (a short
+  meaning under each linked word the learner hasn't marked known); and Sentence Translations,
+  with a translation language (English so far) and who translates Player captions — YouTube, or
+  Apple Translation on the device, which Reading Aids offers to download;
 - management of optional frequency dictionaries; and
 - the app's name, version, and description, followed by Help & Support and the Privacy Policy,
   which open the Zenbu website, and source credits and attributions.

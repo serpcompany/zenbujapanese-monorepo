@@ -32,6 +32,8 @@ struct LinkedJapaneseText: View {
   let highlightsQuery: Bool
   let tokensChanged: ([JapaneseTextToken]) -> Void
   let openWord: (DictionaryEntry) -> Void
+  /// Opens a word with several possible entries. Without it, the entries appear in a menu.
+  let openCandidates: ((_ surface: String, _ candidates: [DictionaryEntry]) -> Void)?
 
   init(
     text: String,
@@ -44,6 +46,7 @@ struct LinkedJapaneseText: View {
     highlightsCurrentEntry: Bool = false,
     highlightsQuery: Bool = false,
     tokensChanged: @escaping ([JapaneseTextToken]) -> Void = { _ in },
+    openCandidates: ((_ surface: String, _ candidates: [DictionaryEntry]) -> Void)? = nil,
     openWord: @escaping (DictionaryEntry) -> Void
   ) {
     self.text = text
@@ -57,6 +60,7 @@ struct LinkedJapaneseText: View {
     self.highlightsQuery = highlightsQuery
     self.tokensChanged = tokensChanged
     self.openWord = openWord
+    self.openCandidates = openCandidates
   }
 
   var body: some View {
@@ -111,7 +115,10 @@ struct LinkedJapaneseText: View {
           .font(.title3)
       } else {
         let queryRanges = highlightsQuery ? queryScalarRanges : []
-        LinkedTokenLayout(itemSpacing: 0, lineSpacing: lineSpacing) {
+        LinkedTokenLayout(
+          itemSpacing: 0,
+          lineSpacing: readingAidPreferences.showsWordMeanings ? lineSpacing * 3 : lineSpacing
+        ) {
           ForEach(tokens) { token in
             LinkedTokenView(
               token: token,
@@ -119,7 +126,8 @@ struct LinkedJapaneseText: View {
               presentation: presentation,
               isCurrentEntry: isCurrentEntry(token),
               matchesQuery: queryRanges.contains { $0.overlaps(token.scalarRange) },
-              openWord: openWord
+              openWord: openWord,
+              openCandidates: openCandidates
             )
             .layoutValue(
               key: JapaneseTokenLineBreakBehaviorKey.self,
@@ -161,12 +169,15 @@ struct LinkedJapaneseText: View {
 }
 
 private struct LinkedTokenView: View {
+  @Environment(ReadingAidPreferences.self) private var readingAidPreferences
+  @Environment(WordKnowledge.self) private var wordKnowledge
   let token: JapaneseTextToken
   let identifier: String
   let presentation: LinkedJapaneseText.Presentation
   let isCurrentEntry: Bool
   let matchesQuery: Bool
   let openWord: (DictionaryEntry) -> Void
+  let openCandidates: ((_ surface: String, _ candidates: [DictionaryEntry]) -> Void)?
 
   private var isHighlighted: Bool { isCurrentEntry || matchesQuery }
 
@@ -180,6 +191,21 @@ private struct LinkedTokenView: View {
     return reading.applyingTransform(.hiraganaToKatakana, reverse: true) ?? reading
   }
 
+  /// The word's short meaning when Word Meanings is on, skipping particles, auxiliaries,
+  /// and words the learner already knows.
+  private func meaning(for entry: DictionaryEntry) -> String? {
+    guard readingAidPreferences.showsWordMeanings,
+      !token.isFunctionWord,
+      !wordKnowledge.isKnown(entry.id)
+    else { return nil }
+    return entry.shortMeaning
+  }
+
+  private func hidesFurigana(for entry: DictionaryEntry) -> Bool {
+    readingAidPreferences.hidesFuriganaOnKnownWords && !isHighlighted
+      && wordKnowledge.isKnown(entry.id)
+  }
+
   var body: some View {
     if let entry = token.entry {
       if presentation.usesDedicatedWordSelector {
@@ -187,7 +213,8 @@ private struct LinkedTokenView: View {
           surface: token.surface,
           reading: displayReading(for: entry),
           exposesAccessibility: false,
-          displaysRomaji: false
+          displaysRomaji: false,
+          hidesFurigana: hidesFurigana(for: entry)
         )
         .foregroundStyle(isHighlighted ? Color.accentColor : Color.primary)
         .accessibilityElement(children: .ignore)
@@ -201,13 +228,19 @@ private struct LinkedTokenView: View {
             surface: token.surface,
             reading: displayReading(for: entry),
             exposesAccessibility: false,
-            displaysRomaji: false
+            displaysRomaji: false,
+            hidesFurigana: hidesFurigana(for: entry)
           )
           // Each word's own underline carries the interactive affordance and shows where
           // one parsed word ends and the next begins. The current entry or query match is
           // accented, ruby included, so it stays associated with its base text.
           .foregroundStyle(isHighlighted ? Color.accentColor : Color.primary)
-          .wordUnderline(isHighlighted: isHighlighted)
+          // Known words drop the underline, like their meaning, so unknown words stand out.
+          .wordUnderline(
+            isHighlighted: isHighlighted,
+            isVisible: isHighlighted || !wordKnowledge.isKnown(entry.id)
+          )
+          .modifier(WordMeaning(meaning: meaning(for: entry)))
         }
         .buttonStyle(.plain)
         .frame(
@@ -225,6 +258,24 @@ private struct LinkedTokenView: View {
         Text(token.surface)
           .font(.body)
           .accessibilityIdentifier(identifier)
+      } else if let openCandidates {
+        Button {
+          openCandidates(token.surface, token.candidateEntries)
+        } label: {
+          Text(token.surface)
+            .font(.body)
+            .foregroundStyle(isHighlighted ? Color.accentColor : Color.primary)
+            .wordUnderline(isHighlighted: isHighlighted)
+            .frame(
+              minHeight: presentation.usesMinimumHitRegionHeight ? 44 : nil,
+              alignment: .bottom
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(token.surface), choose dictionary entry")
+        .accessibilityHint("Shows \(token.candidateEntries.count) possible dictionary entries")
+        .accessibilityIdentifier(identifier)
       } else {
         Menu {
           ForEach(token.candidateEntries) { candidate in
@@ -259,15 +310,56 @@ private struct LinkedTokenView: View {
   }
 }
 
+/// Shows a meaning under a word. The word keeps its baseline, so lines of linked text stay
+/// aligned, and takes the wider of its own and its meaning's width, so meanings never overlap.
+/// Long meanings are cut off at a fixed width.
+private struct WordMeaning: ViewModifier {
+  let meaning: String?
+  @ScaledMetric(relativeTo: .caption) private var maximumMeaningWidth: CGFloat = 96
+  @State private var wordWidth: CGFloat = 0
+  @State private var meaningSize = CGSize.zero
+
+  func body(content: Content) -> some View {
+    if let meaning {
+      let meaningWidth = min(meaningSize.width, maximumMeaningWidth)
+      // The word keeps its natural width; the frame below only ever widens it.
+      content
+        .fixedSize()
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { wordWidth = $0 }
+        .padding(.bottom, meaningSize.height)
+        .frame(width: max(wordWidth, meaningWidth))
+        .overlay(alignment: .bottom) {
+          // Accent-colored so word meanings read apart from the sentence translation.
+          Text(meaning)
+            .font(.caption)
+            .foregroundStyle(.tint)
+            .lineLimit(1)
+            .frame(width: meaningWidth)
+        }
+        .background {
+          Text(meaning)
+            .font(.caption)
+            .fixedSize()
+            .hidden()
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { meaningSize = $0 }
+        }
+        .padding(.horizontal, 3)
+    } else {
+      content
+    }
+  }
+}
+
 extension View {
   /// A short underline inset from both edges, so adjacent words read as separate pieces.
-  fileprivate func wordUnderline(isHighlighted: Bool) -> some View {
+  fileprivate func wordUnderline(isHighlighted: Bool, isVisible: Bool = true) -> some View {
     padding(.bottom, 3)
       .overlay(alignment: .bottom) {
         Capsule()
           .fill(isHighlighted ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.tertiary))
           .frame(height: 2)
           .padding(.horizontal, 2)
+          .opacity(isVisible ? 1 : 0)
       }
   }
 }
