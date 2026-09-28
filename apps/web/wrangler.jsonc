@@ -1,0 +1,59 @@
+/**
+ * Worker configuration for zenbujapanese.com. The top level is local development; `staging` and
+ * `production` are deployed environments. Bindings are not inherited, so each environment repeats
+ * them. Every D1 database shares the `DB` binding, schema, and migration ledger (SERP Drizzle + D1
+ * standard). See docs/agents/web.md.
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zenbujapanese-web",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-28",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+  "observability": { "enabled": true },
+  "upload_source_maps": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zenbujapanese-web-local",
+      "database_id": "local-only-do-not-deploy",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web" }],
+  "env": {
+    "staging": {
+      "workers_dev": false,
+      "routes": [{ "pattern": "staging.zenbujapanese.com", "custom_domain": true }],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "zenbujapanese-web-staging",
+          "database_id": "TODO-create-with-wrangler-d1-create",
+          "migrations_dir": "drizzle"
+        }
+      ],
+      "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web-staging" }]
+    },
+    "production": {
+      // Serves the workers.dev URL until DNS moves off GitHub Pages. At cutover, set workers_dev
+      // to false and add custom domains for zenbujapanese.com and www.zenbujapanese.com.
+      "workers_dev": true,
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "zenbujapanese-web-production",
+          "database_id": "TODO-create-with-wrangler-d1-create",
+          "migrations_dir": "drizzle"
+        }
+      ],
+      "services": [
+        { "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web-production" }
+      ]
+    }
+  }
+}
