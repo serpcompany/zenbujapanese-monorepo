@@ -126,6 +126,21 @@ final class WordListsTests {
     #expect(lists.wordCount(in: listID) == 1)
   }
 
+  @Test("a repeated list ID in the file loads once, keeping the latest copy")
+  func duplicateListsInFile() async throws {
+    let listID = UUID()
+    try writeFile("""
+      {"version":1,"lists":[
+      {"id":"\(listID)","name":"Old","position":0,"createdAt":0,"updatedAt":0},
+      {"id":"\(listID)","name":"New","position":0,"createdAt":0,"updatedAt":5}],
+      "memberships":[
+      {"listID":"\(listID)","entryID":"\(taberu.rawValue)","headword":"食べる","reading":"たべる","addedAt":0}]}
+      """)
+    let lists = await loadedLists()
+    #expect(lists.lists.map(\.name) == ["New"])
+    #expect(lists.wordCount(in: listID) == 1)
+  }
+
   @Test("deleting a list deletes its words")
   func deletingListDeletesMemberships() async throws {
     let lists = await loadedLists()

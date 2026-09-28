@@ -56,7 +56,12 @@ final class WordLists {
       let loaded = await writer.load()
       readOnlyReason = loaded.readOnlyReason
       if let contents = loaded.contents {
-        lists = contents.lists.sorted { ($0.position, $0.createdAt) < ($1.position, $1.createdAt) }
+        // A repeated list ID keeps its most recently updated copy.
+        lists = Dictionary(contents.lists.map { ($0.id, $0) }) {
+          $0.updatedAt >= $1.updatedAt ? $0 : $1
+        }
+        .values
+        .sorted { ($0.position, $0.createdAt) < ($1.position, $1.createdAt) }
         membershipsByList = Self.grouped(contents.memberships, in: lists)
       }
       isLoaded = true
