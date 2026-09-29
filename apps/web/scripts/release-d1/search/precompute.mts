@@ -2,19 +2,19 @@
 // (candidates.py) through the search core against a local search D1, and writes the results of
 // those that read more than `rowsReadThreshold` rows as SQL.
 //
-//   pnpm exec tsx scripts/search-d1/precompute.mts <persist-dir> <candidates.json> <out.sql>
+//   pnpm exec tsx scripts/release-d1/search/precompute.mts <persist-dir> <candidates.json> <out.sql>
 //
 // On D1, い reads 460,276 rows and takes 1.4–3.4 s, and a few such searches stall every other
 // query on the database; from the cache it takes about 30 ms.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { getPlatformProxy } from 'wrangler'
-import { normalizeQuery } from '../../src/lib/dictionary/search/query'
+import { normalizeQuery } from '../../../src/lib/dictionary/search/query'
 import {
   DictionarySearch,
   type SearchDatabase,
   type SearchResults
-} from '../../src/lib/dictionary/search/search'
-import { websiteCapabilities } from '../../src/lib/dictionary/search/website'
+} from '../../../src/lib/dictionary/search/search'
+import { websiteCapabilities } from '../../../src/lib/dictionary/search/website'
 
 export const rowsReadThreshold = 20_000
 

@@ -6,9 +6,9 @@ then fills the FTS5 indexes. The tables themselves come from the search database
 (drizzle/search), applied first. Language Reference IDs and semantic fingerprints become
 lowercase hex text. `dictionary_import` is written by the import once everything else is in.
 
-    python3 scripts/search-d1/build-rows.py <LanguageReferenceData.sqlite3> <out.sql>
+    python3 scripts/release-d1/search/build-rows.py <LanguageReferenceData.sqlite3> <out.sql>
 
-scripts/search-d1/load-local.sh runs it for a local D1, and ensure-release.sh for D1.
+scripts/release-d1/load-local.sh search runs it for a local D1, and ensure-release.sh for D1.
 """
 
 import sqlite3

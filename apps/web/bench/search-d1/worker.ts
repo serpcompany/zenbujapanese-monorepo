@@ -3,8 +3,8 @@
 // long each request spent in the Worker and in D1. Never deployed with the site.
 //
 // Options, so one run compares them: `cache=1` answers a query from `search_cache` when the
-// build precomputed it (scripts/search-d1/precompute.mts); `db=search` searches a second copy of
-// the tables, so searches and word pages don't share a database.
+// build precomputed it (scripts/release-d1/search/precompute.mts); `db=search` searches a second
+// copy of the tables, so searches and word pages don't share a database.
 import { normalizeQuery } from '../../src/lib/dictionary/search/query'
 import {
   DictionarySearch,

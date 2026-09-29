@@ -26,9 +26,9 @@ env:
 jobs:
   staging:
     runs-on: ubuntu-latest
-    # Shared with the manual Search database workflow, so two imports for staging never overlap.
+    # Shared with the manual Release database workflow, so two imports for staging never overlap.
     concurrency:
-      group: search-database-staging
+      group: release-database-staging
       cancel-in-progress: false
     environment:
       name: staging
@@ -51,7 +51,7 @@ jobs:
       - name: Import the search database
         # Reuses the database when this build's already imported and verified (seconds);
         # otherwise imports a new one (about 20 minutes). See docs/agents/web.md.
-        run: scripts/search-d1/ensure-release.sh staging
+        run: scripts/release-d1/ensure-release.sh search staging
       - name: Bind the search database
         run: |
           sed -i "s/\"SEARCH_DB_NAME\"/\"$SEARCH_DB_NAME\"/; s/\"SEARCH_DB_ID\"/\"$SEARCH_DB_ID\"/" wrangler.jsonc
@@ -64,7 +64,7 @@ jobs:
         run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" staging
       - name: Delete old search databases
         # Only now is the new database the live one; keeps it and the newest complete older one.
-        run: scripts/search-d1/prune.sh staging "$SEARCH_DB_NAME"
+        run: scripts/release-d1/prune.sh search staging "$SEARCH_DB_NAME"
 
   production:
     needs: staging

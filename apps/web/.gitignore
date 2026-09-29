@@ -45,9 +45,11 @@ next-env.d.ts
 /.wrangler/
 .dev.vars*
 
-# local dictionary search D1 (scripts/load-search-d1.sh)
+# local release D1s (scripts/release-d1/load-local.sh)
 /.search-d1/
 /.search-d1.building/
+/.dictionary-d1/
+/.dictionary-d1.building/
 
 # written by the search benchmark workflow
 /bench/search-d1/wrangler.json

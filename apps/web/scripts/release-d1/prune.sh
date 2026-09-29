@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
-# Deletes old search databases for an environment (issue 464). `Web deploy` runs it only after the
-# deploy that binds <current> passes its smoke test, so <current> is the live database. Keeps
-# <current> and the newest other complete one (with a dictionary_import row), for rolling back;
-# deletes the rest, including partial imports a cancelled or timed-out run left behind. Keeps any
-# database it can't check.
+# Deletes a release database's old builds for an environment (issue 464). `Web deploy` runs it
+# only after the deploy that binds <current> passes its smoke test, so <current> is the live
+# database. Keeps <current> and the newest other complete one (with a dictionary_import row), for
+# rolling back; deletes the rest, including partial imports a cancelled or timed-out run left
+# behind. Keeps any database it can't check, and never touches another database's builds.
 #
-#   scripts/search-d1/prune.sh <staging|production> <current database name>
+#   scripts/release-d1/prune.sh <search|dictionary> <staging|production> <current database name>
 #
 # Needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, and python3.
 set -euo pipefail
-env="${1:?usage: prune.sh <staging|production> <current database name>}"
-name="${2:?usage: prune.sh <staging|production> <current database name>}"
-prefix="zenbujapanese-search-$env-"
-cd "$(dirname "$0")/../.."
+usage="usage: prune.sh <search|dictionary> <staging|production> <current database name>"
+source "$(dirname "$0")/common.sh"
+load_database "${1:?$usage}"
+env="${2:?$usage}"
+name="${3:?$usage}"
+require_environment "$env"
+prefix="$name_prefix$env-"
+# The live database must be one of this database's builds for this environment, or every
+# build would count as old.
+case "$name" in "$prefix"?*) ;; *) echo "$name isn't a $database database for $env" >&2; exit 1 ;; esac
 
-wrangler() { pnpm exec wrangler "$@"; }
-# JSON on stdin -> the value of a Python expression over it (`data`).
-json() { python3 -c "import json, sys; data = json.load(sys.stdin); print($1)"; }
 list() { wrangler d1 list --json; }
 
 # Prints 1 for a complete import, 0 for a partial one (no or empty dictionary_import), and

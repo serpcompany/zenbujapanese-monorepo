@@ -5,9 +5,9 @@ import { searchFeatures } from './search'
 import { type WebsiteSearch, websiteCapabilities, websiteSearch } from './website'
 
 // The ADR 0006 conformance suite: every client must return these Language Reference IDs in
-// this order. It runs against a local search D1 built by scripts/search-d1/load-local.sh (at
-// .search-d1/, or ZENBU_SEARCH_D1_PATH), so it only runs when ZENBU_SEARCH_D1=1. It searches as
-// the website does, so precomputed broad queries answer from search_cache.
+// this order. It runs against a local search D1 built by `scripts/release-d1/load-local.sh
+// search` (at .search-d1/, or ZENBU_SEARCH_D1_PATH), so it only runs when ZENBU_SEARCH_D1=1. It
+// searches as the website does, so precomputed broad queries answer from search_cache.
 const enabled = process.env.ZENBU_SEARCH_D1 === '1'
 
 interface ConformanceCase {
@@ -62,7 +62,7 @@ describe.runIf(enabled)('search conformance on D1', () => {
       throw new Error(
         `.search-d1 holds ${loaded ? `${loaded.artifact} ${loaded.sha256}` : 'no recorded artifact'}, ` +
           `but the suite pins ${suite.artifact.name} ${suite.artifact.sha256}. Rebuild it from ` +
-          'that artifact with scripts/search-d1/load-local.sh, or record the suite again.'
+          'that artifact with scripts/release-d1/load-local.sh search, or record the suite again.'
       )
     }
     search = websiteSearch(db)

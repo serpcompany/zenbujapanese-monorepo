@@ -1,7 +1,7 @@
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 // The search database (SEARCH_DB): one D1 per build of the dictionary, imported by
-// scripts/search-d1/ensure-release.sh and read by the search core in src/lib/dictionary/search.
+// scripts/release-d1/ensure-release.sh and read by the search core in src/lib/dictionary/search.
 // These are the tables the core queries, a projection of the app's LanguageReferenceData.sqlite3
 // (issue 464): IDs are lowercase hex text. The FTS5 tables, which Drizzle can't declare, are in
 // the custom migration drizzle/search/0001_fts.sql, and src/db/search-schema.sql records the
@@ -10,7 +10,7 @@ import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlit
 
 /**
  * The release this database holds, written last, so its presence marks a complete import.
- * `buildId` hashes everything that shaped the database (scripts/search-d1/build-id.sh): the
+ * `buildId` hashes everything that shaped the database (scripts/release-d1/build-id.sh): the
  * artifact, these migrations, the import, and the search core that precomputed `search_cache`.
  * `rowCounts` is the local build's count per table, which the deploy checks D1 against.
  */
@@ -100,7 +100,7 @@ export const readingFormRestrictions = sqliteTable(
 
 /**
  * Precomputed results for broad queries, keyed by normalized query: the search core's result
- * for each query that reads more than 20,000 rows (scripts/search-d1/precompute.mts).
+ * for each query that reads more than 20,000 rows (scripts/release-d1/search/precompute.mts).
  */
 export const searchCache = sqliteTable('search_cache', {
   query: text('query').primaryKey(),

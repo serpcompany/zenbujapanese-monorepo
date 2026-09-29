@@ -36,34 +36,56 @@ lists every child sitemap and each child sitemap lists the new URLs.
 must return what the app returns: the ADR 0006 conformance suite
 (`apps/ios/LanguageData/Conformance/search-retrieval.json`) checks it.
 
-### The search database
+### Release databases
 
-Search reads its own D1, bound as `SEARCH_DB` (issue 464). Each build of the dictionary gets a
-fresh one, named `zenbujapanese-search-<env>-<build id>`. The build ID
-(`scripts/search-d1/build-id.sh`) hashes everything that shapes the database: the artifact's
-SHA-256 from its Git LFS pointer, `drizzle/search/`, the import scripts, and the search core.
-`scripts/search-d1/ensure-release.sh <env>` imports it:
+The dictionary's data lives in release databases (issue 464): D1s the website only reads, each
+imported whole for one build of the dictionary. There are two, each with its own schema,
+migrations, schema dump, binding, and import steps, described by
+`scripts/release-d1/<database>/database.sh`:
 
-1. Build a local copy with `load-local.sh`: the search migrations from empty, the rows
-   (`build-rows.py`), the precomputed broad queries, and `dictionary_import` last.
-2. Run the conformance suite against that copy. Nothing reaches D1 unless it passes.
-3. Create the D1, apply the migrations, and load the same files.
+| Database | Binding | Schema | Migrations | Local build |
+| --- | --- | --- | --- | --- |
+| `search` | `SEARCH_DB` | `src/db/search-schema.ts` | `drizzle/search/` | `.search-d1/` |
+| `dictionary` | `DICTIONARY_DB` | not yet | not yet | `.dictionary-d1/` |
+
+The dictionary database, for word and kanji pages, can't be imported yet: its scripts stop
+before touching D1.
+
+Each build gets a fresh D1, named `zenbujapanese-<database>-<env>-<build id>`. The build ID
+(`scripts/release-d1/build-id.sh <database>`) hashes everything that shapes the database: the
+artifact's SHA-256 from its Git LFS pointer, the database's migrations, schema, and other inputs
+(for search, the search core, which precomputes its cache), the shared scripts in
+`scripts/release-d1/`, and the database's own scripts, but not another database's.
+`scripts/release-d1/ensure-release.sh <database> <env>` imports it:
+
+1. Build a local copy with `load-local.sh <database>`: the migrations from empty, the
+   database's rows, and `dictionary_import` last. For search, the rows are `build-rows.py`'s and
+   the precomputed broad queries.
+2. Check that copy: for search, run the conformance suite against it. Nothing reaches D1 unless
+   it passes.
+3. Create the D1, apply the migrations, and load the same files. A failed load deletes the new
+   database.
 4. Verify it before anything binds it: `dictionary_import` names this build, `d1_migrations`
-   matches `drizzle/search/`, the schema matches `src/db/search-schema.sql`, and every table
-   holds the rows the local copy counted.
+   matches the migrations, the schema matches the schema dump (such as
+   `src/db/search-schema.sql`), and every table holds the rows the local copy counted.
 
 A database that already verifies is reused, so an unchanged build costs a deploy a few seconds.
 A partial one is deleted and imported again. Once a deploy passes its smoke test,
-`scripts/search-d1/prune.sh` deletes older databases, keeping the live one and the newest
-complete older one, so rolling back is redeploying the previous commit. `Web deploy` runs it for staging before
-each deploy and binds `SEARCH_DB` to the database it names, by replacing the `SEARCH_DB_*`
-placeholders in `wrangler.jsonc`. Production has no `SEARCH_DB` yet: it gets one once a required
-reviewer gates the `production` environment. The `Search database` workflow runs the import by
-hand for either environment.
+`scripts/release-d1/prune.sh <database> <env> <live database>` deletes that database's older
+builds, keeping the live one and the newest complete older one, so rolling back is redeploying
+the previous commit. It keeps any build whose import it can't check. The `Release database`
+workflow runs the import by hand for either database and environment.
+
+### The search database
+
+Search reads its own release database, bound as `SEARCH_DB`. `Web deploy` imports it for staging
+before each deploy and binds `SEARCH_DB` to the database it names, by replacing the
+`SEARCH_DB_*` placeholders in `wrangler.jsonc`. Production has no `SEARCH_DB` yet: it gets one
+once a required reviewer gates the `production` environment.
 
 **Broad queries are precomputed.** On D1, a query such as い reads 460,276 rows and takes 1.4–3.4
 s, and D1 runs one query at a time per database, so a few of them stall every other query. The
-import runs about 19,000 candidates (`candidates.py`) through the core on the local copy and
+import runs about 19,000 candidates (`search/candidates.py`) through the core on the local copy and
 stores the results of those that read over 20,000 rows in `search_cache` (about 280 queries, 9
 MB). `websiteSearch` reads the list of cached queries once per isolate, answers those from
 `search_cache` in about 30 ms, and runs the core for everything else. The measurements are on
@@ -85,7 +107,7 @@ build, including FTS5's shadow tables.
 `pnpm db:check` fails when the schema has changes no migration covers, or when the migrations'
 schema differs from `src/db/search-schema.sql`. Never `drizzle-kit push` or `pull` the search
 database: they don't know the FTS5 tables. The import refuses an artifact whose `transform` it
-doesn't list in `build-rows.py`.
+doesn't list in `scripts/release-d1/search/build-rows.py`.
 
 D1 rejects the app's FTS4 indexes, so they are FTS5. `fts.ts` translates the app's FTS4 queries
 so both match the same rows, and `form_chars` indexes Japanese forms by character in place of the
@@ -98,7 +120,7 @@ Build the search database into `.search-d1/` (about 8 minutes, most of it precom
 the tests:
 
 ```sh
-scripts/search-d1/load-local.sh [path/to/LanguageReferenceData.sqlite3]
+scripts/release-d1/load-local.sh search [path/to/LanguageReferenceData.sqlite3]
 ZENBU_SEARCH_D1=1 pnpm test
 ```
 
