@@ -251,6 +251,7 @@ private struct WordDetailCase: Codable {
   struct Sense: Codable {
     let meaning: String
     let notes: [String]
+    /// Not shown per sense on Word Detail, which shows only the first sense's part of speech.
     let partsOfSpeech: [String]
   }
 
@@ -270,6 +271,7 @@ private struct WordDetailCase: Codable {
 
   struct Kanji: Codable {
     let character: String
+    /// Meanings as Kanji Detail shows them; Word Detail shows only the character.
     let meanings: [String]?
   }
 
@@ -284,9 +286,10 @@ private struct WordDetailCase: Codable {
   struct Examples: Codable {
     /// How many examples Word Detail lists (at most 100).
     let listed: Int
-    /// The count retrieval reports: exact up to 50.
+    /// The count retrieval reports, exact up to 50. Not shown on Word Detail, which lists up to
+    /// 100 examples with no count.
     let reportedCount: String?
-    /// Whether more than 100 examples matched, so some aren't listed.
+    /// Whether more than 100 examples matched, so some aren't listed. Not shown on Word Detail.
     let truncated: Bool
     let error: String?
     /// The first examples, in order.
