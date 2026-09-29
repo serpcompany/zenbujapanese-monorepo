@@ -4,6 +4,7 @@ import * as schema from '@/db/dictionary-schema'
 import { examplesPerPage } from './detail/examples'
 import type {
   ExampleSentenceTokenRow,
+  FormExampleRows,
   KanjiListWordRow,
   KanjiRows,
   WordExampleRows,
@@ -17,9 +18,11 @@ import type {
 const {
   elementGlyphs,
   exampleSentences,
+  formExamples,
   kanji,
   kanjiElements,
   kanjiStrokes,
+  wordConjugations,
   wordExampleCounts,
   wordExamples,
   wordSitemaps,
@@ -43,6 +46,26 @@ export interface DictionaryWord {
 export interface DictionaryExamples {
   rows: WordExampleRows[]
   slugs: Map<number, string>
+}
+
+/** What a word's conjugation screens read: its rows without examples, and its slug. */
+export interface DictionaryConjugationWord {
+  rows: WordRows
+  slug: string
+}
+
+/** Some of a conjugated form's examples, how many it has, and the slug of each word they link to. */
+export interface DictionaryFormExamples {
+  rows: FormExampleRows[]
+  listed: number
+  slugs: Map<number, string>
+}
+
+/** A word with a conjugation table, and its form screens search engines may index. */
+export interface ConjugationSitemapWord {
+  entSeq: number
+  slug: string
+  indexedForms: string[]
 }
 
 /** A kanji page's rows, and what its links need. */
@@ -106,32 +129,67 @@ export function dictionaryDatabase(db: D1Database) {
           AND json_array_length(l.value, '$.entSeqs') = 1
       )`)
 
+  /** A conjugated form's examples from `from`, in order, with each sentence. */
+  const formExampleRows = (surface: string, from: number, limit: number) =>
+    orm
+      .select({ example: formExamples, sentence: exampleSentences })
+      .from(formExamples)
+      .innerJoin(exampleSentences, eq(exampleSentences.id, formExamples.sentenceId))
+      .where(
+        and(
+          eq(formExamples.surface, surface),
+          gte(formExamples.position, from),
+          lt(formExamples.position, from + limit)
+        )
+      )
+      .orderBy(asc(formExamples.position))
+
+  /** The slugs of the words those examples link to, as for a word's examples. */
+  const formExampleSlugs = (surface: string, from: number, limit: number) =>
+    orm
+      .select({ entSeq: words.entSeq, slug: words.slug })
+      .from(words)
+      .where(sql`${words.entSeq} IN (
+        SELECT json_extract(l.value, '$.entSeqs[0]')
+        FROM form_examples f, json_each(f.links_json) l
+        WHERE f.surface = ${surface} AND f.position >= ${from} AND f.position < ${from + limit}
+          AND json_array_length(l.value, '$.entSeqs') = 1
+      )`)
+
+  /** A word's row. */
+  const wordRow = (entSeq: number) => orm.select().from(words).where(eq(words.entSeq, entSeq))
+
+  /**
+   * The kanji in the headword and written forms: each form split into characters (SQLite's
+   * substr counts code points), looked up by primary key.
+   */
+  const wordKanji = (entSeq: number) =>
+    orm
+      .select({
+        character: kanji.character,
+        meanings: kanji.meanings,
+        readings: kanji.readings
+      })
+      .from(kanji)
+      .where(sql`${kanji.character} IN (
+        WITH RECURSIVE forms(rest) AS (
+          SELECT headword FROM words WHERE ent_seq = ${entSeq}
+          UNION ALL
+          SELECT json_extract(f.value, '$.value')
+          FROM words w, json_each(w.written_forms_json) f WHERE w.ent_seq = ${entSeq}
+        ), characters(value, rest) AS (
+          SELECT substr(rest, 1, 1), substr(rest, 2) FROM forms WHERE rest <> ''
+          UNION ALL
+          SELECT substr(rest, 1, 1), substr(rest, 2) FROM characters WHERE rest <> ''
+        )
+        SELECT value FROM characters
+      )`)
+
   return {
     async word(entSeq: number): Promise<DictionaryWord | null> {
       const [[word], glosses, related, firstExamples, [exampleCount], slugs] = await orm.batch([
-        orm.select().from(words).where(eq(words.entSeq, entSeq)),
-        // The kanji in the headword and written forms: each form split into characters (SQLite's
-        // substr counts code points), looked up by primary key.
-        orm
-          .select({
-            character: kanji.character,
-            meanings: kanji.meanings,
-            readings: kanji.readings
-          })
-          .from(kanji)
-          .where(sql`${kanji.character} IN (
-            WITH RECURSIVE forms(rest) AS (
-              SELECT headword FROM words WHERE ent_seq = ${entSeq}
-              UNION ALL
-              SELECT json_extract(f.value, '$.value')
-              FROM words w, json_each(w.written_forms_json) f WHERE w.ent_seq = ${entSeq}
-            ), characters(value, rest) AS (
-              SELECT substr(rest, 1, 1), substr(rest, 2) FROM forms WHERE rest <> ''
-              UNION ALL
-              SELECT substr(rest, 1, 1), substr(rest, 2) FROM characters WHERE rest <> ''
-            )
-            SELECT value FROM characters
-          )`),
+        wordRow(entSeq),
+        wordKanji(entSeq),
         orm
           .select({ entSeq: words.entSeq, slug: words.slug })
           .from(words)
@@ -163,6 +221,62 @@ export function dictionaryDatabase(db: D1Database) {
         kanjiPages: new Set(glosses.map(gloss => gloss.character)),
         exampleSlugs: new Map(slugs.map(row => [row.entSeq, row.slug]))
       }
+    },
+
+    /**
+     * What a word's conjugation screens read: its row and its kanji (whose readings split the
+     * forms' furigana), without examples; null for an unknown word.
+     */
+    async conjugationWord(entSeq: number): Promise<DictionaryConjugationWord | null> {
+      const [[word], glosses] = await orm.batch([wordRow(entSeq), wordKanji(entSeq)])
+      if (!word) return null
+      return {
+        rows: {
+          entry: word,
+          frequency: word.frequency,
+          kanji: glosses,
+          examples: [],
+          exampleCount: null
+        },
+        slug: word.slug
+      }
+    },
+
+    /**
+     * `limit` of a conjugated form's examples from position `from`, by the form's spelling, with
+     * how many it has in all (none for a form without examples).
+     */
+    async formExamples(
+      surface: string,
+      from: number,
+      limit: number
+    ): Promise<DictionaryFormExamples> {
+      const [rows, [count], slugs] = await orm.batch([
+        formExampleRows(surface, from, limit),
+        orm
+          .select({ listed: sql<number>`count(*)` })
+          .from(formExamples)
+          .where(eq(formExamples.surface, surface)),
+        formExampleSlugs(surface, from, limit)
+      ])
+      return {
+        rows,
+        listed: count?.listed ?? 0,
+        slugs: new Map(slugs.map(row => [row.entSeq, row.slug]))
+      }
+    },
+
+    /** Every word with a conjugation table, in `ent_seq` order, for the conjugations sitemap. */
+    async conjugationSitemap(): Promise<ConjugationSitemapWord[]> {
+      return orm
+        .select({
+          entSeq: wordConjugations.entSeq,
+          slug: words.slug,
+          indexedForms: wordConjugations.indexedForms
+        })
+        .from(wordConjugations)
+        .innerJoin(words, eq(words.entSeq, wordConjugations.entSeq))
+        .orderBy(asc(wordConjugations.entSeq))
     },
 
     /**

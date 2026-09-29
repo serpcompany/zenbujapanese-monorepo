@@ -1,7 +1,18 @@
 import type { RubySegment } from '@/lib/dictionary/detail/ruby'
 
-/** Japanese text with furigana over the segments that need it. */
-export function RubyText({ segments, className }: { segments: RubySegment[]; className?: string }) {
+/**
+ * Japanese text with furigana over the segments that need it. `pageWord` marks an example's word
+ * that the page is about, which the page accents.
+ */
+export function RubyText({
+  segments,
+  className,
+  pageWord = false
+}: {
+  segments: RubySegment[]
+  className?: string
+  pageWord?: boolean
+}) {
   let offset = 0
   const keyed = segments.map(segment => {
     const key = `${offset}`
@@ -9,7 +20,7 @@ export function RubyText({ segments, className }: { segments: RubySegment[]; cla
     return { ...segment, key }
   })
   return (
-    <span lang="ja" className={className}>
+    <span lang="ja" className={className} data-page-word={pageWord || undefined}>
       {keyed.map(segment =>
         segment.reading ? (
           <ruby key={segment.key}>

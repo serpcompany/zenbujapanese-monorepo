@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { loadedDictionary } from './data'
 import {
+  conjugationSitemapResponse,
   dictionarySitemapPaths,
   kanjiSitemapResponse,
   kanjiUrl,
@@ -37,7 +38,11 @@ function fakeDictionary(count: number, perSitemap: number) {
       wordSitemaps: async () => sitemaps,
       sitemapWords,
       // 㐂 has no meanings or readings, so the database leaves it out.
-      indexableKanji: async () => ['見', '廊', '𠀋']
+      indexableKanji: async () => ['見', '廊', '𠀋'],
+      conjugationSitemap: async () => [
+        { entSeq: 1259290, slug: '見る', indexedForms: ['plain/past', 'polite/past'] },
+        { entSeq: 1611000, slug: '静か', indexedForms: [] }
+      ]
     },
     build: 'abc123'
   }
@@ -56,17 +61,32 @@ describe('without a loaded dictionary (local fixtures)', () => {
     expect(await dictionarySitemapPaths()).toEqual([])
     expect(await wordSitemapResponse(request('/sitemaps/dictionary/1.xml'), 1)).toBeNull()
     expect(await kanjiSitemapResponse(request('/sitemaps/kanji.xml'))).toBeNull()
+    expect(await conjugationSitemapResponse(request('/sitemaps/conjugations.xml'))).toBeNull()
   })
 })
 
 describe('with a loaded dictionary', () => {
-  test('the index lists every word sitemap, then the kanji sitemap', async () => {
+  test('the index lists every word sitemap, then the kanji and conjugations sitemaps', async () => {
     vi.mocked(loadedDictionary).mockResolvedValue(fakeDictionary(5, 2) as never)
     expect(await dictionarySitemapPaths()).toEqual([
       '/sitemaps/dictionary/1.xml',
       '/sitemaps/dictionary/2.xml',
       '/sitemaps/dictionary/3.xml',
-      '/sitemaps/kanji.xml'
+      '/sitemaps/kanji.xml',
+      '/sitemaps/conjugations.xml'
+    ])
+  })
+
+  test('the conjugations sitemap lists each table, then its form pages that list examples', async () => {
+    vi.mocked(loadedDictionary).mockResolvedValue(fakeDictionary(1, 1) as never)
+    const response = await conjugationSitemapResponse(request('/sitemaps/conjugations.xml'))
+    expect(response?.headers.get('Content-Type')).toBe('application/xml; charset=utf-8')
+    const miru = 'https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/conjugations/'
+    expect(locs((await response?.text()) ?? '')).toEqual([
+      miru,
+      `${miru}plain/past/`,
+      `${miru}polite/past/`,
+      'https://zenbujapanese.com/dictionary/%E9%9D%99%E3%81%8B-1611000/conjugations/'
     ])
   })
 

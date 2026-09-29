@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import { conjugationTable, formsFor, rowShowsFurigana, sharedSpellings } from './conjugation'
+import {
+  canonicalMode,
+  conjugationTable,
+  formsFor,
+  indexedForms,
+  isConjugationKind,
+  rowShowsFurigana,
+  sharedSpellings
+} from './conjugation'
 
 // Expected values follow JapaneseConjugator in JapaneseConjugationClient.swift and
 // ConjugationsView.swift. The word-detail suite checks the port against the app for every case
@@ -69,5 +77,39 @@ describe('what the screens show', () => {
     const kuru = table('来る', 'くる', ['kuruVerb'])
     expect(kuru?.plain.every(rowShowsFurigana)).toBe(true)
     expect(table('見る', 'みる', ['ichidanVerb'])?.plain.some(rowShowsFurigana)).toBe(false)
+  })
+})
+
+describe('which form pages search engines index', () => {
+  const miru = conjugationTable({
+    headword: '見る',
+    reading: 'みる',
+    partsOfSpeech: ['ichidanVerb']
+  })
+  if (!miru) throw new Error('見る has no table')
+
+  test('a Polite form spelled as its Plain form names the Plain page (te-form, conditional)', () => {
+    const polite = (kind: string) => formsFor(miru, 'Polite').find(form => form.kind === kind)
+    const te = polite('te-form')
+    const past = polite('past')
+    if (!te || !past) throw new Error('No form')
+    expect(canonicalMode(miru.plain, 'Polite', te)).toBe('Plain')
+    expect(canonicalMode(miru.plain, 'Polite', past)).toBe('Polite')
+    expect(canonicalMode(miru.plain, 'Plain', miru.plain[0])).toBe('Plain')
+  })
+
+  test('indexes each canonical form page that lists examples', () => {
+    const withExamples = new Set(['見る', '見た', '見て', '見ました'])
+    expect(indexedForms(miru, surface => withExamples.has(surface))).toEqual([
+      'plain/present-future',
+      'plain/past',
+      'plain/te-form',
+      'polite/past'
+    ])
+  })
+
+  test('knows the app’s kinds', () => {
+    expect(isConjugationKind('past-negative')).toBe(true)
+    expect(isConjugationKind('toString')).toBe(false)
   })
 })

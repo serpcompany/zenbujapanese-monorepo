@@ -535,6 +535,51 @@ export function conjugations(
   return { rule: table.rule, modes, rows: { Plain: rows('Plain'), Polite: rows('Polite') } }
 }
 
+// Each form's screen has its own URL (see urls.ts), as the app pushes it as its own screen. The
+// import precomputes which of them search engines may index (build-examples.mts), from these.
+
+/** The registers, by the URL segment that names them. */
+export const conjugationModes: Record<string, ConjugationMode> = {
+  plain: 'Plain',
+  polite: 'Polite'
+}
+
+/** Whether a kind is one the app's conjugator names (`ConjugatedForm.Kind`). */
+export function isConjugationKind(kind: string): kind is ConjugationKind {
+  return Object.hasOwn(conjugationKinds, kind)
+}
+
+/**
+ * The register whose screen is a form's canonical URL. A Polite form spelled as the Plain form of
+ * its kind (the te-form and the conditional) shows the same form and examples, so its screen
+ * names the Plain one; every other form is its own.
+ */
+export function canonicalMode(
+  plain: readonly ConjugatedForm[],
+  mode: ConjugationMode,
+  form: ConjugatedForm
+): ConjugationMode {
+  if (mode === 'Plain') return 'Plain'
+  const same = plain.find(other => other.kind === form.kind)
+  return same?.surface === form.surface ? 'Plain' : 'Polite'
+}
+
+/**
+ * The form screens search engines may index, as `<register>/<kind>`: each canonical screen that
+ * lists examples. A screen without examples is only its explanation and the form.
+ */
+export function indexedForms(
+  table: ConjugationTable,
+  hasExamples: (surface: string) => boolean
+): string[] {
+  const modes: ConjugationMode[] = supportsModes(table) ? ['Plain', 'Polite'] : ['Plain']
+  return modes.flatMap(mode =>
+    formsFor(table, mode)
+      .filter(form => hasExamples(form.surface) && canonicalMode(table.plain, mode, form) === mode)
+      .map(form => `${mode.toLowerCase()}/${form.kind}`)
+  )
+}
+
 /** The "Same spelling as …" note: Swift's `.list(type: .and)` in English. */
 export function sharedSpellingNote(titles: readonly string[]): string {
   const list =

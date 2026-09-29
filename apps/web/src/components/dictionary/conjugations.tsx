@@ -1,8 +1,8 @@
 'use client'
 
-import { ChevronLeftIcon, ChevronRightIcon, EqualIcon } from 'lucide-react'
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { ChevronRightIcon, EqualIcon } from 'lucide-react'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   type ConjugationMode,
@@ -10,20 +10,24 @@ import {
   type Conjugations,
   sharedSpellingNote
 } from '@/lib/dictionary/detail/conjugation'
+import { noFormExamplesMessage } from '@/lib/dictionary/detail/examples'
 import type { PitchAccent as PitchAccentData } from '@/lib/dictionary/detail/pitch'
 import type { RubySegment } from '@/lib/dictionary/detail/ruby'
 import { graphemes } from '@/lib/dictionary/detail/text'
+import type { PageExample } from '@/lib/dictionary/page-example'
+import { conjugatedFormPath, politeRegisterHash } from '@/lib/dictionary/urls'
+import { ExampleList } from './example-list'
 import { accent, HeadwordRuby } from './headword-ruby'
 import { PitchAccent } from './pitch-accent'
 import { PronounceButton } from './pronounce-button'
-import { Sheet } from './sheet'
 
-// The conjugation table the part-of-speech row opens, as ConjugationsView.swift shows it: the
-// word with its reading, meaning, word class, and a one-line rule, a Plain/Polite control when
-// both registers exist, and each form with its changed ending in the accent color. Selecting a
-// form opens its screen (ConjugatedFormView): what the form means, whether another form shares its
-// spelling, and the form with furigana, its ending highlighted, and a speaker. The app pushes these
-// screens; the website opens them in one sheet, with Back from a form to the table.
+// The conjugation screens, as ConjugationsView.swift shows them. The table: the word with its
+// reading, meaning, word class, and a one-line rule, a Plain/Polite control when both registers
+// exist, and each form with its changed ending in the accent color. A form's screen
+// (ConjugatedFormView): what the form means, whether another form shares its spelling, the form
+// with furigana, its ending highlighted, and a speaker, then the Example Sentences that use it.
+// The app pushes each as its own screen, so each has its own page: the table under the word's
+// page, and each form under the table (urls.ts).
 
 export interface ConjugationWord {
   ruby: RubySegment[]
@@ -48,19 +52,22 @@ function EndingText({ surface, ending }: { surface: string; ending: string }) {
   )
 }
 
-/** ConjugationsView's list: the header, the register control, and a row per form. */
+/**
+ * ConjugationsView's list: the header, the register control, and a row per form, each opening its
+ * form's page under `wordPath`, the word page's path.
+ */
 export function ConjugationTableContent({
   word,
   conjugations,
   mode,
   onModeChange,
-  onSelect
+  wordPath
 }: {
   word: ConjugationWord
   conjugations: Conjugations
   mode: ConjugationMode
   onModeChange: (mode: ConjugationMode) => void
-  onSelect: (row: ConjugationRow) => void
+  wordPath: string
 }) {
   return (
     <div className="flex flex-col gap-4" data-conjugation-table>
@@ -98,12 +105,11 @@ export function ConjugationTableContent({
       <ul className="-mx-2 flex flex-col" data-conjugation-rows={mode}>
         {conjugations.rows[mode].map(row => (
           <li key={row.kind}>
-            <button
-              type="button"
+            <Link
+              href={conjugatedFormPath(wordPath, mode, row.kind)}
               data-conjugation-row={row.kind}
               aria-label={`${row.title}, ${row.surface}, ${row.reading}`}
-              className="flex w-full cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
-              onClick={() => onSelect(row)}
+              className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
             >
               <span className="text-muted-foreground">{row.title}</span>
               <span lang="ja" className="ml-auto text-xl" data-conjugation-surface>
@@ -118,11 +124,50 @@ export function ConjugationTableContent({
                 )}
               </span>
               <ChevronRightIcon aria-hidden className="size-4 text-muted-foreground" />
-            </button>
+            </Link>
           </li>
         ))}
       </ul>
     </div>
+  )
+}
+
+/**
+ * The conjugation table's page body: the table in the register the reader chose, which the
+ * address keeps (`#polite`, urls.ts `conjugationsHref`), so returning from a Polite form shows
+ * Polite again, as the app's Back does.
+ */
+export function ConjugationTable({
+  word,
+  conjugations,
+  wordPath
+}: {
+  word: ConjugationWord
+  conjugations: Conjugations
+  wordPath: string
+}) {
+  const [mode, setMode] = useState<ConjugationMode>('Plain')
+  useEffect(() => {
+    if (window.location.hash === politeRegisterHash && conjugations.modes.includes('Polite')) {
+      setMode('Polite')
+    }
+  }, [conjugations.modes])
+  return (
+    <ConjugationTableContent
+      word={word}
+      conjugations={conjugations}
+      mode={mode}
+      onModeChange={next => {
+        setMode(next)
+        const { pathname, search } = window.location
+        window.history.replaceState(
+          window.history.state,
+          '',
+          `${pathname}${search}${next === 'Polite' ? politeRegisterHash : ''}`
+        )
+      }}
+      wordPath={wordPath}
+    />
   )
 }
 
@@ -151,64 +196,39 @@ export function ConjugatedFormContent({ row }: { row: ConjugationRow }) {
   )
 }
 
-/** The part-of-speech row, which opens the conjugation table when the word has one. */
-export function ConjugationsButton({
-  word,
-  conjugations
+/**
+ * A form's Example Sentences, as ConjugatedFormView lists them: the first ones with the page, then
+ * more as the list scrolls, each with the form's words accented; or the screen's empty state.
+ */
+export function ConjugatedFormExamples({
+  examples,
+  listed,
+  path
 }: {
-  word: ConjugationWord
-  conjugations: Conjugations
+  examples: PageExample[]
+  listed: number
+  path: string
 }) {
-  const [open, setOpen] = useState(false)
-  const [mode, setMode] = useState<ConjugationMode>('Plain')
-  const [form, setForm] = useState<ConjugationRow | null>(null)
+  return examples.length > 0 ? (
+    <ExampleList initial={examples} listed={listed} path={path} />
+  ) : (
+    <p className="text-muted-foreground" data-no-form-examples>
+      {noFormExamplesMessage}
+    </p>
+  )
+}
+
+/** The part-of-speech row, which opens the word's conjugation table when it has one. */
+export function ConjugationsLink({ partOfSpeech, href }: { partOfSpeech: string; href: string }) {
   return (
-    <>
-      <button
-        type="button"
-        aria-haspopup="dialog"
-        data-opens-conjugations
-        className="-mx-2 flex cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-1 text-left text-sm outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
-        onClick={() => {
-          setMode('Plain')
-          setForm(null)
-          setOpen(true)
-        }}
-      >
-        <span>{word.partOfSpeech || 'Dictionary entry'}</span>
-        <span className="sr-only">, shows conjugations</span>
-        <ChevronRightIcon aria-hidden className="size-4 text-muted-foreground" />
-      </button>
-      <Sheet
-        open={open}
-        onOpenChange={setOpen}
-        wide
-        title={form ? form.title : 'Conjugations'}
-        header={
-          form ? (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Back to conjugations"
-              onClick={() => setForm(null)}
-            >
-              <ChevronLeftIcon />
-            </Button>
-          ) : null
-        }
-      >
-        {form ? (
-          <ConjugatedFormContent row={form} />
-        ) : (
-          <ConjugationTableContent
-            word={word}
-            conjugations={conjugations}
-            mode={mode}
-            onModeChange={setMode}
-            onSelect={setForm}
-          />
-        )}
-      </Sheet>
-    </>
+    <Link
+      href={href}
+      data-opens-conjugations
+      className="-mx-2 flex items-center justify-between gap-3 rounded-md px-2 py-1 text-left text-sm outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+    >
+      <span>{partOfSpeech || 'Dictionary entry'}</span>
+      <span className="sr-only">, shows conjugations</span>
+      <ChevronRightIcon aria-hidden className="size-4 text-muted-foreground" />
+    </Link>
   )
 }

@@ -181,6 +181,37 @@ export const wordExampleCounts = sqliteTable('word_example_counts', {
 })
 
 /**
+ * A conjugated form's examples in the app's order (`position` from 0), at most 100 as in the app,
+ * keyed by the form's spelling (`surface`): the form's screen lists the sentences a Japanese
+ * search for the form finds in which the parser reads the form as one word, whichever word's
+ * table it comes from. The screen has no page entry, so words link as no page sees them, with the
+ * sentence's own tokens: `links` are where each links (rows.ts `ExampleLinkRow`), and
+ * `highlights` the tokens that make up an occurrence of the form, which the screen accents.
+ */
+export const formExamples = sqliteTable(
+  'form_examples',
+  {
+    surface: text('surface').notNull(),
+    position: integer('position').notNull(),
+    sentenceId: integer('sentence_id').notNull(),
+    highlights: text('highlights_json', { mode: 'json' }).notNull().$type<number[]>(),
+    links: text('links_json', { mode: 'json' }).notNull().$type<ExampleLinkRow[]>()
+  },
+  table => [primaryKey({ columns: [table.surface, table.position] })]
+)
+
+/**
+ * Each word whose part of speech opens a conjugation table, for the conjugations sitemap, with
+ * the form screens search engines may index (`<register>/<kind>`, such as `plain/past`): those
+ * that list examples, under their canonical URL (detail/conjugation.ts `indexedForms`). The import
+ * precomputes it with the detail core's conjugator.
+ */
+export const wordConjugations = sqliteTable('word_conjugations', {
+  entSeq: integer('ent_seq').primaryKey(),
+  indexedForms: text('indexed_forms_json', { mode: 'json' }).notNull().$type<string[]>()
+})
+
+/**
  * `ent_seq`s a previous release published and this one doesn't, with the entry that replaces
  * each, if any, so their word pages can redirect or return 410.
  */

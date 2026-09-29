@@ -1,8 +1,19 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { cache } from 'react'
-import { fixtureKanjiRows, fixtureSearchOrder, fixtureWordRows } from '@/lib/dictionary/fixtures'
+import {
+  fixtureFormExamples,
+  fixtureKanjiRows,
+  fixtureSearchOrder,
+  fixtureWordRows
+} from '@/lib/dictionary/fixtures'
 import { isDeployedSite } from '@/lib/site'
-import { examplesPerPage, wordExample } from './detail/examples'
+import {
+  type ConjugationMode,
+  type ConjugationRow,
+  type Conjugations,
+  canonicalMode
+} from './detail/conjugation'
+import { examplesPerPage, formExample, wordExample } from './detail/examples'
 import {
   type KanjiDetail,
   type KanjiElement,
@@ -10,7 +21,9 @@ import {
   type KanjiWord,
   kanjiDetail
 } from './detail/kanji'
+import type { PitchAccent } from './detail/pitch'
 import type { FrequencyRow, KanjiRows, WordExampleRows, WordRows } from './detail/rows'
+import type { RubySegment } from './detail/ruby'
 import {
   type AlternativeForm,
   type RelatedWord,
@@ -27,7 +40,14 @@ import {
   type WebsiteExampleSearch,
   websiteExampleSearch
 } from './example-search'
-import { type Links, type PageExample, pageExample } from './page-example'
+import {
+  databaseLinks,
+  type Linked,
+  type Links,
+  type PageExample,
+  pageExample,
+  storedWordPath
+} from './page-example'
 import {
   linkedWords,
   linkSearchScreen,
@@ -44,7 +64,14 @@ import {
 import { isASCII, normalizeQuery } from './search/query'
 import { d1SearchDatabase, type SearchResults } from './search/search'
 import { websiteSearch } from './search/website'
-import { kanjiPath, searchPath, wordPath, wordSlug } from './urls'
+import {
+  conjugatedFormPath,
+  conjugationsPath,
+  kanjiPath,
+  searchPath,
+  wordPath,
+  wordSlug
+} from './urls'
 
 type DictionaryDatabase = ReturnType<typeof dictionaryDatabase>
 
@@ -55,8 +82,6 @@ type DictionaryDatabase = ReturnType<typeof dictionaryDatabase>
 // production, which serve the dictionary, never do (`imported`). Only the row lookups here differ
 // between the two.
 
-/** With the page it links to; null when it has no page yet. */
-type Linked<T> = T & { path: string | null }
 
 export interface WordPageData
   extends Omit<WordDetail, 'alternatives' | 'kanji' | 'alternativeKanji' | 'related' | 'examples'> {
@@ -69,6 +94,43 @@ export interface WordPageData
   related: Linked<RelatedWord>[]
   /** The first examples; the rest load from `examplesPath` as the page scrolls. */
   examples: PageExample[]
+  examplesPath: string
+  /** The conjugation table's page, which the part of speech opens; null when it opens none. */
+  conjugationsPath: string | null
+}
+
+/** A word as its conjugation screens show it: the headline, meaning, and word class. */
+export interface ConjugationWordData {
+  entSeq: number
+  /** The slug the word's pages live under (`words.slug`); another redirects. */
+  slug: string
+  headword: string
+  reading: string
+  summary: string
+  partOfSpeech: string
+  ruby: RubySegment[]
+  pitch: PitchAccent | null
+  /** The word's page, and its conjugation table's. */
+  path: string
+  conjugationsPath: string
+}
+
+/** The conjugation table's page (ConjugationsView). */
+export interface ConjugationsPageData extends ConjugationWordData {
+  conjugations: Conjugations
+}
+
+/** A conjugated form's page (ConjugatedFormView). */
+export interface ConjugatedFormPageData extends ConjugationWordData {
+  mode: ConjugationMode
+  row: ConjugationRow
+  /** Where the form's page lives, and the page search engines should index for it. */
+  formPath: string
+  canonicalPath: string
+  /** The first examples; the rest load from `examplesPath` as the page scrolls. */
+  examples: PageExample[]
+  /** How many examples the form lists, at most 100. */
+  listed: number
   examplesPath: string
 }
 
@@ -96,22 +158,6 @@ const fixtureLinks: Links = {
   },
   kanji(character) {
     return character !== null && kanjiRowsByCharacter.has(character) ? kanjiPath(character) : null
-  }
-}
-
-/** The path of a word page in the dictionary database, under its stored slug. */
-const storedWordPath = (slug: string, entSeq: number) => `/dictionary/${slug}-${entSeq}/`
-
-/** Links from a page read from the dictionary database, where every word has a page. */
-function databaseLinks(wordSlugs: Map<number, string>, kanjiPages: Set<string>): Links {
-  return {
-    word(entSeq) {
-      const slug = entSeq === null ? undefined : wordSlugs.get(entSeq)
-      return entSeq === null || slug === undefined ? null : storedWordPath(slug, entSeq)
-    },
-    kanji(character) {
-      return character !== null && kanjiPages.has(character) ? kanjiPath(character) : null
-    }
   }
 }
 
@@ -147,6 +193,10 @@ const fixtureBuild = 'fixtures'
 export const examplesPath = (entSeq: number, build: string) =>
   `/dictionary/examples/${entSeq}.json?build=${encodeURIComponent(build)}`
 
+/** Where a conjugated form's page loads more of its examples, by the form's spelling. */
+export const formExamplesPath = (surface: string, build: string) =>
+  `/dictionary/examples/forms/${encodeURIComponent(surface)}.json?build=${encodeURIComponent(build)}`
+
 function wordPage(rows: WordRows, slug: string, links: Links, build: string): WordPageData {
   const detail = wordDetail(rows)
   const linkKanji = (kanji: WordKanji) => ({ ...kanji, path: links.kanji(kanji.character) })
@@ -159,7 +209,10 @@ function wordPage(rows: WordRows, slug: string, links: Links, build: string): Wo
     alternativeKanji: detail.alternativeKanji.map(linkKanji),
     related: detail.related.map(word => ({ ...word, path: links.word(word.entSeq) })),
     examples: detail.examples.map(example => pageExample(example, links)),
-    examplesPath: examplesPath(detail.entSeq, build)
+    examplesPath: examplesPath(detail.entSeq, build),
+    conjugationsPath: detail.conjugations
+      ? conjugationsPath(storedWordPath(slug, detail.entSeq))
+      : null
   }
 }
 
@@ -232,6 +285,113 @@ export async function getWordExamples(
   return rows.examples
     .slice(from, from + examplesPerPage)
     .map((row: WordExampleRows) => pageExample(wordExample(row), fixtureLinks))
+}
+
+/** A word's conjugation screens' rows, without examples, and its slug; null for an unknown word. */
+async function conjugationWord(
+  entSeq: number,
+  db: DictionaryDatabase | null
+): Promise<{ rows: WordRows; slug: string } | null> {
+  if (db) return db.conjugationWord(entSeq)
+  const rows = wordRowsBySeq.get(entSeq)
+  if (!rows) return null
+  return {
+    rows: { ...rows, examples: [], exampleCount: null },
+    slug: wordSlug(rows.entry.headword, rows.entry.reading)
+  }
+}
+
+/**
+ * The conjugation table's page (ConjugationsView), which the part of speech opens; null for an
+ * unknown word or one whose part of speech opens none. Memoized per request, like getWordPage.
+ */
+export const getConjugationsPage = cache(
+  async (entSeq: number): Promise<ConjugationsPageData | null> => {
+    const word = await conjugationWord(entSeq, await dictionaryDb())
+    if (!word) return null
+    const detail = wordDetail(word.rows)
+    if (!detail.conjugations) return null
+    const path = storedWordPath(word.slug, detail.entSeq)
+    return {
+      entSeq: detail.entSeq,
+      slug: word.slug,
+      headword: detail.headword,
+      reading: detail.reading,
+      summary: detail.summary,
+      partOfSpeech: detail.partOfSpeech,
+      ruby: detail.ruby,
+      pitch: detail.pitch,
+      path,
+      conjugationsPath: conjugationsPath(path),
+      conjugations: detail.conjugations
+    }
+  }
+)
+
+/**
+ * A conjugated form's page (ConjugatedFormView) and its first examples; null for an unknown
+ * word, a word without a table, or a register or kind its table lacks. Memoized per request.
+ */
+export const getConjugatedFormPage = cache(
+  async (
+    entSeq: number,
+    mode: ConjugationMode,
+    kind: string
+  ): Promise<ConjugatedFormPageData | null> => {
+    const page = await getConjugationsPage(entSeq)
+    if (!page?.conjugations.modes.includes(mode)) return null
+    const row = page.conjugations.rows[mode].find(form => form.kind === kind)
+    if (!row) return null
+    const { conjugations, ...word } = page
+    const canonical = canonicalMode(conjugations.rows.Plain, mode, row)
+    const found = await formExamplePage(row.surface, 0)
+    return {
+      ...word,
+      mode,
+      row,
+      formPath: conjugatedFormPath(page.path, mode, row.kind),
+      canonicalPath: conjugatedFormPath(page.path, canonical, row.kind),
+      examples: found.examples,
+      listed: found.listed,
+      examplesPath: formExamplesPath(row.surface, await dictionaryBuild())
+    }
+  }
+)
+
+/** `examplesPerPage` of a form's examples from `from`, linked, with how many it lists. */
+async function formExamplePage(
+  surface: string,
+  from: number
+): Promise<{ examples: PageExample[]; listed: number }> {
+  const db = await dictionaryDb()
+  if (db) {
+    const found = await db.formExamples(surface, from, examplesPerPage)
+    const links = databaseLinks(found.slugs, new Set())
+    return {
+      examples: found.rows.map(row => pageExample(formExample(row), links)),
+      listed: found.listed
+    }
+  }
+  const rows = fixtureFormExamples.get(surface) ?? []
+  return {
+    examples: rows
+      .slice(from, from + examplesPerPage)
+      .map(row => pageExample(formExample(row), fixtureLinks)),
+    listed: rows.length
+  }
+}
+
+/**
+ * `examplesPerPage` of a conjugated form's examples from position `from`, by the form's spelling,
+ * as its page loads more; null when `build` isn't the build now loaded. A failing database throws.
+ */
+export async function getFormExamples(
+  surface: string,
+  from: number,
+  build: string
+): Promise<PageExample[] | null> {
+  if (build !== (await dictionaryBuild())) return null
+  return (await formExamplePage(surface, from)).examples
 }
 
 /** Memoized per request, like getWordPage. */

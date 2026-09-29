@@ -9,7 +9,9 @@ import {
   normalizedEntryEvidence,
   type RetrievalEntry,
   retrieveEntryExamples,
-  retrieveEntryExamplesByScan
+  retrieveEntryExamplesByScan,
+  retrieveJapaneseExamples,
+  retrieveJapaneseExamplesByScan
 } from './retrieval'
 
 interface TestEntry extends RetrievalEntry {
@@ -183,4 +185,56 @@ describe('retrieveEntryExamples', () => {
 test('normalizedEntryEvidence is NFKC with whitespace runs collapsed', () => {
   expect(normalizedEntryEvidence('ＣＤ　プレーヤー')).toBe('CD プレーヤー')
   expect(normalizedEntryEvidence(' ｶﾞ ')).toBe('ガ')
+})
+
+describe('retrieveJapaneseExamples (a Japanese search, as a form’s screen runs it)', () => {
+  const japanese = [
+    '猫を見た。',
+    '見た',
+    'あれを見たかった。',
+    '見た目がいい。',
+    '昨日見た。',
+    '犬を見た'
+  ]
+  const sentences: CorpusSentence[] = japanese.map((text, index) => ({
+    pairId: index.toString(16).padStart(32, '0'),
+    japanese: text,
+    graphemeCount: graphemes(text).length
+  }))
+  const occurrences = findOccurrences(sentences, ['見た'])
+  const corpus = {
+    sentences,
+    occurrences: (term: string) => occurrences.get(term) ?? { occurrences: [], total: 0 }
+  }
+
+  test('lists the sentence that is the form first, then by position, length, and pair ID', () => {
+    const found = retrieveJapaneseExamples('見た', corpus).map(index => japanese[index])
+    expect(found).toEqual([
+      '見た',
+      '見た目がいい。',
+      '犬を見た',
+      '猫を見た。',
+      '昨日見た。',
+      'あれを見たかった。'
+    ])
+    expect(found).toEqual(
+      retrieveJapaneseExamplesByScan('見た', sentences).map(index => japanese[index])
+    )
+  })
+
+  test('lists at most 100, and nothing for an empty query', () => {
+    const many: CorpusSentence[] = Array.from({ length: 150 }, (_, index) => ({
+      pairId: index.toString(16).padStart(32, '0'),
+      japanese: `見た${'。'.repeat(index % 7)}`,
+      graphemeCount: 2 + (index % 7)
+    }))
+    const found = findOccurrences(many, ['見た'])
+    const result = retrieveJapaneseExamples('見た', {
+      sentences: many,
+      occurrences: term => found.get(term) ?? { occurrences: [], total: 0 }
+    })
+    expect(result).toHaveLength(100)
+    expect(result).toEqual(retrieveJapaneseExamplesByScan('見た', many))
+    expect(retrieveJapaneseExamples('', corpus)).toEqual([])
+  })
 })

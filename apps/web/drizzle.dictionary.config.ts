@@ -18,6 +18,8 @@ export default defineConfig({
     'example_sentences',
     'word_examples',
     'word_example_counts',
-    'retired_ids'
+    'retired_ids',
+    'form_examples',
+    'word_conjugations'
   ]
 })
