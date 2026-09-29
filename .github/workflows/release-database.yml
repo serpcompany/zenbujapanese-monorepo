@@ -30,7 +30,8 @@ permissions:
 jobs:
   import:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # A new search build is about 45 minutes (docs/agents/web.md).
+    timeout-minutes: 75
     environment: ${{ inputs.environment }}
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

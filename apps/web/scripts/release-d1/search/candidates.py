@@ -5,7 +5,9 @@
 
 Every character in a written or reading form, every two-character reading prefix, every one- to
 three-letter romaji prefix, and the 3,000 most common English gloss words. precompute.mts keeps
-only the ones that read many rows.
+only the ones that read many rows, with the `^` form of each such English one, and finds the broad
+wildcard queries (`t*`, `^t*`) itself, since which it must search depends on what reads many rows
+(issue 522).
 """
 
 import collections

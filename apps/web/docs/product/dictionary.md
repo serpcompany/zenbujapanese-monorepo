@@ -57,13 +57,16 @@ each search is its own page.
 **Which words are found.** The website runs a TypeScript port of the app's search retrieval on the
 search database. It finds what the app finds for Japanese, kana, romaji, and English queries,
 including inflected queries such as `食べた` or `見ない`. It lists at most 60 words, the app's
-limit. One known difference remains: the app finds glosses for a long number such as 9999999, and
-the website doesn't (see FTS5 in [`docs/agents/web.md`](../../../../docs/agents/web.md)).
+limit. `*` after a word matches any word it starts (`t*`), as in the app. Two known differences
+remain: the app finds glosses for a long number such as 9999999, and the website doesn't (see FTS5
+in [`docs/agents/web.md`](../../../../docs/agents/web.md)); and `^` before a word, which the app
+matches only as a form's or meaning's first word, the website matches as any word, since D1's
+tokenizers drop it (`^t*` finds what `t*` does, and both list the same 60 words as the app).
 
 - Source: App docs, Search; `LookupClient.swift`; ADR 0006 and ADR 0008.
 - Check: SR `results` (the first 10 IDs, in order), `resolution`, and `presentation`, for 30
-  queries. The 60-word limit: No automated check yet (#511); SR records only the first 10
-  (`resultLimit: 10`).
+  queries; SRR's `t*` and `^t*` cases, every row. The 60-word limit: No automated check yet
+  (#511); SR records only the first 10 (`resultLimit: 10`).
 
 **No sentence search.** A Japanese sentence finds only direct, inflected, or mixed-script matches.
 The website has no Discovered Words list, because it can't analyze text at request time.
@@ -85,7 +88,7 @@ first), a ranked word before an unranked one, then the retrieval order. So い�
 - Source: App docs, Search; `SearchResultFrequencyOrdering` in `SearchView.swift`; #462 (rows in
   the order the app shows with its default dictionaries).
 - Check: SRR `results` (every row's ID, in order, with its `match` group and `retrievalOrder`) for
-  52 queries, including `iru` and いる; `src/lib/dictionary/results/results.test.ts`,
+  54 queries, including `iru` and いる; `src/lib/dictionary/results/results.test.ts`,
   "orderedItems (SearchResultFrequencyOrdering.ordered)"; smoke "iru shows the refinement and its
   first rows with their chips, as the app does", which reads the rows from SRR's `iru` case.
 
@@ -127,7 +130,7 @@ sentences, there's no row. A query that finds example sentences but no words sho
 
 - Source: App docs, Search; the examples section of `SearchResultsView` and
   `SearchResultsScreen.exampleCount` and `exampleActionTitle` in `SearchView.swift`.
-- Check: SRR `examples` (title, count, and primary entry) and `sections` for all 52 queries;
+- Check: SRR `examples` (title, count, and primary entry) and `sections` for all 54 queries;
   `search-results.test.tsx`, "shows the Example Sentences row, the reading refinement, then the
   rows in order with their chips", "shows only the Example Sentences row when only sentences
   match", and the row's title and link in the SRR cases; ES `count` and `title` for 67 queries;
@@ -176,7 +179,7 @@ rare. Screen readers hear the tier after a rank, as the app's labels speak it.
 
 - Source: App docs, Search; `SearchFrequencyRankPresentationModel` in `FrequencyPack.swift`;
   `FrequencyRankChip.swift`.
-- Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 52 queries;
+- Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 54 queries;
   `search-results.test.tsx` (the chips as rendered in the SRR cases); smoke (iru's chips);
   `src/lib/dictionary/detail/frequency.test.ts`, "shows only dictionaries that rank or list the
   word, since JLPT is a level list" and "tierForRank (FrequencyTier(rank:))";
