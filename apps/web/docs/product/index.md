@@ -42,8 +42,9 @@ check yet (#511)". The checks come in four kinds:
 - **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the
   app on the iOS Simulator: `search-retrieval.json`, `word-detail.json`, and `kanji-detail.json`.
   Each pins, by SHA-256, the app data files it was recorded from.
-  `src/lib/dictionary/search/conformance.test.ts` and `src/lib/dictionary/detail/conformance.test.ts`
-  replay them through the website's search and detail cores on a locally built release database, reading it as the pages do.
+  `src/lib/dictionary/search/conformance.test.ts` and
+  `src/lib/dictionary/detail/conformance.test.ts` replay them through the website's search and
+  detail cores on a locally built release database, reading it as the pages do.
 - **Unit tests** (Vitest) next to the code under `apps/web/src/`. `pnpm check` runs them, and the
   `Web` workflow runs it on every pull request that changes `apps/web/**`.
 - **Import gates.** Each release database import runs its conformance suite before anything
