@@ -3,8 +3,10 @@ import { drizzle } from 'drizzle-orm/d1'
 import * as schema from '@/db/dictionary-schema'
 import { examplesPerPage } from './detail/examples'
 import type {
+  ElementGlyphRow,
   ExampleSentenceTokenRow,
   FormExampleRows,
+  KanjiElementRows,
   KanjiListWordRow,
   KanjiRows,
   WordExampleRows,
@@ -20,6 +22,7 @@ const {
   exampleSentences,
   formExamples,
   kanji,
+  kanjiElementSources,
   kanjiElements,
   kanjiStrokes,
   wordConjugations,
@@ -75,6 +78,12 @@ export interface DictionaryKanji {
   /** The slug of each of its words' pages, by `ent_seq`. */
   wordSlugs: Map<number, string>
   /** Its components and element glyphs that have a kanji page. */
+  kanjiPages: Set<string>
+}
+
+/** An element page's rows, and which of its kanji have a kanji page. */
+export interface DictionaryElement {
+  rows: KanjiElementRows
   kanjiPages: Set<string>
 }
 
@@ -352,6 +361,55 @@ export function dictionaryDatabase(db: D1Database) {
         wordSlugs: new Map(listed.map(word => [word.entSeq, word.slug])),
         kanjiPages: new Set(pages.map(page => page.character))
       }
+    },
+
+    /** An element page's rows; null for a glyph that isn't an element. */
+    async element(glyph: string): Promise<DictionaryElement | null> {
+      // The element, its alternative forms, and the kanji containing it.
+      const family = sql`(
+        SELECT ${glyph}
+        UNION SELECT a.value FROM element_glyphs e, json_each(e.alternatives_json) a
+          WHERE e.glyph = ${glyph}
+        UNION SELECT c.value FROM element_glyphs e, json_each(e.containing_characters_json) c
+          WHERE e.glyph = ${glyph}
+      )`
+      const [[element], listed, pages, [sources]] = await orm.batch([
+        orm.select().from(elementGlyphs).where(eq(elementGlyphs.glyph, glyph)),
+        orm
+          .select({
+            character: kanjiElements.character,
+            meanings: kanjiElements.meanings,
+            onReadings: kanjiElements.onReadings,
+            frequencyRank: kanjiElements.frequencyRank
+          })
+          .from(kanjiElements)
+          .where(sql`${kanjiElements.character} IN ${family}`),
+        orm
+          .select({ character: kanji.character })
+          .from(kanji)
+          .where(sql`${kanji.character} IN ${family}`),
+        orm.select().from(kanjiElementSources)
+      ])
+      if (!element) return null
+      if (!sources) throw new Error('The dictionary database has no kanji element sources')
+      return {
+        rows: { element, kanji: listed, sources },
+        kanjiPages: new Set(pages.map(page => page.character))
+      }
+    },
+
+    /** Every element, in glyph order, with what decides whether search engines may index it. */
+    async elements(): Promise<
+      Pick<ElementGlyphRow, 'glyph' | 'meanings' | 'commonLinkedOnReadings'>[]
+    > {
+      return orm
+        .select({
+          glyph: elementGlyphs.glyph,
+          meanings: elementGlyphs.meanings,
+          commonLinkedOnReadings: elementGlyphs.commonLinkedOnReadings
+        })
+        .from(elementGlyphs)
+        .orderBy(asc(elementGlyphs.glyph))
     },
 
     /** The word sitemaps the import precomputed, by number. */

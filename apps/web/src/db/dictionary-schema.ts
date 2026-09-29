@@ -125,6 +125,18 @@ export const elementGlyphs = sqliteTable('element_glyphs', {
 })
 
 /**
+ * Where KanjiElementReferenceData.json comes from, which element pages credit as the app's
+ * element screen does: its one row names the structure source (Kanjium) and its snapshot, and
+ * the source of the kanji's meanings and readings (KANJIDIC2) and its snapshot.
+ */
+export const kanjiElementSources = sqliteTable('kanji_element_sources', {
+  snapshot: text('snapshot').primaryKey(),
+  structureSourceIdentity: text('structure_source_identity').notNull(),
+  metadataSourceIdentity: text('metadata_source_identity').notNull(),
+  metadataSourceSnapshot: text('metadata_source_snapshot').notNull()
+})
+
+/**
  * An example sentence pair (Tatoeba), with its neutral tokens from the app's Kuromoji build.
  * `id` is the import's own number, which keeps `word_examples` small; `pairId` is the artifact's
  * pair ID. The Japanese sentence and its English translation are separate Tatoeba sentences, so

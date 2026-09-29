@@ -46,6 +46,7 @@ build_inputs=(
   apps/web/src/components/ui/empty.tsx
   apps/web/src/components/ui/item.tsx
   apps/web/src/components/ui/separator.tsx
+  apps/web/src/lib/dictionary/detail/element.ts
   apps/web/src/lib/dictionary/detail/kanji.ts
   apps/web/src/lib/dictionary/detail/ruby.ts
   apps/web/src/lib/dictionary/detail/strokes.ts

@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
+import { KanjiElementsSection } from '@/components/dictionary/kanji-elements'
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
 import { PageToolbar } from '@/components/dictionary/page-toolbar'
 import { RubyText } from '@/components/dictionary/ruby-text'
@@ -141,23 +142,7 @@ export default async function KanjiPage({ params }: Props) {
         </Section>
       ) : null}
 
-      {kanji.elements.length > 0 ? (
-        <Section title="Elements">
-          <ul className="flex flex-col gap-3">
-            {kanji.elements.map(element => (
-              <li key={element.character} className="flex items-center gap-4">
-                <span className="grid size-14 shrink-0 place-items-center rounded-lg bg-muted text-3xl">
-                  <CharacterLink character={element.character} path={element.path} />
-                </span>
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">{element.roleLabel}</p>
-                  <p>{element.description}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Section>
-      ) : null}
+      {kanji.elements.length > 0 ? <KanjiElementsSection elements={kanji.elements} /> : null}
 
       <Section title="Lists">
         <LearnerPrompt kind="lists" />

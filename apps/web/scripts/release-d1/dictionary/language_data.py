@@ -302,6 +302,32 @@ class LanguageData:
     def elements(self):
         return self.kanji_elements["elements"]
 
+    def element_sources(self):
+        """Where KanjiElementReferenceData.json comes from, which the element screen credits
+        (`KanjiElementProvenance`)."""
+        return {
+            key: self.kanji_elements[key]
+            for key in ("snapshot", "structureSourceIdentity", "metadataSourceIdentity",
+                        "metadataSourceSnapshot")
+        }
+
+    def element_rows(self, glyph):
+        """An element page's rows (src/lib/dictionary/detail/rows.ts `KanjiElementRows`), for
+        the fixtures: the element, the reference's kanji among it, its alternatives, and the kanji
+        containing it, and the reference's sources."""
+        element = next(e for e in self.elements() if e["glyph"] == glyph)
+        structures = self.structures()
+        characters = [glyph, *element["alternatives"], *element["containingCharacters"]]
+        return {
+            "element": element,
+            "kanji": [
+                {key: structures[c][key]
+                 for key in ("character", "meanings", "onReadings", "frequencyRank")}
+                for c in dict.fromkeys(characters) if c in structures
+            ],
+            "sources": self.element_sources(),
+        }
+
     def stroke_diagrams(self):
         """KanjiStrokeData.sqlite3's diagrams (KanjiVG), by character, each checked as the app's
         KanjiStrokeOrderClient.swift decodes it: every stroke is a move then cubic curves (opcode

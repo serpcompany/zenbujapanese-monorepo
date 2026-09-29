@@ -51,6 +51,15 @@ export function kanjiPath(character: string): string {
 }
 
 /**
+ * A kanji element's page, which the app opens from a kanji's Elements, keyed like a kanji page by
+ * the exact glyph, never Unicode-normalized. The app opens an element on its own, not as part of
+ * a kanji, so its path doesn't name one.
+ */
+export function kanjiElementPath(glyph: string): string {
+  return `/dictionary/elements/${glyph}/`
+}
+
+/**
  * `.` is encoded too: a segment such as `3.14` would otherwise look like a file and lose its
  * trailing slash. A query of only dots can't be a path segment at all, since URL parsing treats
  * `.`, `..`, and their encodings as the current and parent directory; see `hasSearchPath`.

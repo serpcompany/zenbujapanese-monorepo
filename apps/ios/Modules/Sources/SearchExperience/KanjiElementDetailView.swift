@@ -116,8 +116,8 @@ private struct KanjiElementHeader: View {
       Text(elementID.rawValue)
         .font(.system(size: glyphSize, weight: .light))
         .accessibilityIdentifier("kanji-element.glyph")
-      if let entry, !entry.meanings.isEmpty {
-        Text(entry.meanings.joined(separator: ", "))
+      if let meanings = entry?.headerMeanings {
+        Text(meanings)
           .font(.title3.weight(.semibold))
           .multilineTextAlignment(.center)
       }
@@ -132,7 +132,7 @@ private struct KanjiElementContent: View {
 
   var body: some View {
     if !entry.alternatives.isEmpty {
-      Section("ALTERNATIVE FORMS") {
+      Section(KanjiElementSection.alternativeForms.title) {
         ForEach(entry.alternatives, id: \.self) { alternative in
           NavigationLink(value: SearchExperienceRoute.kanjiElement(alternative)) {
             Text(alternative.rawValue)
@@ -144,26 +144,24 @@ private struct KanjiElementContent: View {
       }
     }
 
-    if !entry.meanings.isEmpty {
+    if let explanation = entry.meaningExplanation {
       Section {
-        Text(
-          "This element contributes forms associated with \(entry.meanings.joined(separator: ", "))."
-        )
-        .accessibilityIdentifier("kanji-element.meaning-explanation")
+        Text(explanation)
+          .accessibilityIdentifier("kanji-element.meaning-explanation")
       } header: {
-        Text("MEANING / STRUCTURE")
+        Text(KanjiElementSection.meaningStructure.title)
           .accessibilityIdentifier("kanji-element.meaning-header")
       }
     }
 
-    if !entry.commonLinkedOnReadings.isEmpty {
-      Section("SOUND PATTERNS") {
-        Text("Linked on-readings: \(entry.commonLinkedOnReadings.joined(separator: ", "))")
+    if let soundPatterns = entry.soundPatterns {
+      Section(KanjiElementSection.soundPatterns.title) {
+        Text(soundPatterns)
       }
     }
 
     if let standalone = entry.standaloneKanji {
-      Section("AS A STANDALONE KANJI") {
+      Section(KanjiElementSection.standaloneKanji.title) {
         KanjiContributionRow(
           contribution: standalone,
           identifierPrefix: "kanji-element.standalone"
@@ -172,7 +170,7 @@ private struct KanjiElementContent: View {
     }
 
     if !entry.containingKanji.isEmpty {
-      Section("KANJI CONTAINING THIS ELEMENT") {
+      Section(KanjiElementSection.containingKanji.title) {
         ForEach(entry.containingKanji) { contribution in
           KanjiContributionRow(
             contribution: contribution,
@@ -182,22 +180,18 @@ private struct KanjiElementContent: View {
       }
     }
 
-    Section("SOURCE") {
+    Section(KanjiElementSection.source.title) {
       LabeledContent("Structure") {
-        Text(
-          "\(entry.structureProvenance.sourceIdentity) \(entry.structureProvenance.sourceSnapshot)"
-        )
-        .multilineTextAlignment(.trailing)
-        .accessibilityIdentifier("kanji-element.structure-source")
+        Text(entry.structureProvenance.text)
+          .multilineTextAlignment(.trailing)
+          .accessibilityIdentifier("kanji-element.structure-source")
       }
       LabeledContent("Meanings and readings") {
-        Text(
-          "\(entry.metadataProvenance.sourceIdentity) \(entry.metadataProvenance.sourceSnapshot)"
-        )
-        .multilineTextAlignment(.trailing)
-        .accessibilityIdentifier("kanji-element.metadata-source")
+        Text(entry.metadataProvenance.text)
+          .multilineTextAlignment(.trailing)
+          .accessibilityIdentifier("kanji-element.metadata-source")
       }
-      Text("Both sources are independently normalized into Zenbu Japanese Language Reference Data.")
+      Text(KanjiElementEntry.sourceNote)
         .font(.caption)
     }
   }
@@ -216,12 +210,12 @@ private struct KanjiContributionRow: View {
           .font(.system(size: glyphSize, weight: .light))
           .frame(minWidth: 64)
         VStack(alignment: .leading, spacing: 5) {
-          if !contribution.meanings.isEmpty {
-            Text(contribution.meanings.prefix(3).joined(separator: ", "))
+          if let meanings = contribution.rowMeanings {
+            Text(meanings)
               .lineLimit(2)
           }
-          if !contribution.onReadings.isEmpty {
-            Text(contribution.onReadings.joined(separator: ", "))
+          if let readings = contribution.rowReadings {
+            Text(readings)
               .font(.caption)
           }
         }
@@ -234,6 +228,76 @@ private struct KanjiContributionRow: View {
     .accessibilityIdentifier("\(identifierPrefix).\(contribution.character.rawValue)")
     .id(contribution.character)
   }
+}
+
+// The element screen's words, shared by the view and the kanji-element-detail conformance suite,
+// so the website's element pages are held to the app's (see also
+// apps/web/src/lib/dictionary/detail/element.ts).
+
+/// The element screen's sections, in order; each shows only when it has something to show.
+enum KanjiElementSection: CaseIterable {
+  case alternativeForms
+  case meaningStructure
+  case soundPatterns
+  case standaloneKanji
+  case containingKanji
+  case source
+
+  var title: String {
+    switch self {
+    case .alternativeForms: "ALTERNATIVE FORMS"
+    case .meaningStructure: "MEANING / STRUCTURE"
+    case .soundPatterns: "SOUND PATTERNS"
+    case .standaloneKanji: "AS A STANDALONE KANJI"
+    case .containingKanji: "KANJI CONTAINING THIS ELEMENT"
+    case .source: "SOURCE"
+    }
+  }
+}
+
+extension KanjiElementEntry {
+  /// The meanings under the glyph at the top of the screen.
+  var headerMeanings: String? { meanings.isEmpty ? nil : meanings.joined(separator: ", ") }
+
+  var meaningExplanation: String? {
+    meanings.isEmpty
+      ? nil : "This element contributes forms associated with \(meanings.joined(separator: ", "))."
+  }
+
+  var soundPatterns: String? {
+    commonLinkedOnReadings.isEmpty
+      ? nil : "Linked on-readings: \(commonLinkedOnReadings.joined(separator: ", "))"
+  }
+
+  /// The sections the screen shows, in order.
+  var sections: [KanjiElementSection] {
+    KanjiElementSection.allCases.filter { section in
+      switch section {
+      case .alternativeForms: !alternatives.isEmpty
+      case .meaningStructure: meaningExplanation != nil
+      case .soundPatterns: soundPatterns != nil
+      case .standaloneKanji: standaloneKanji != nil
+      case .containingKanji: !containingKanji.isEmpty
+      case .source: true
+      }
+    }
+  }
+
+  static let sourceNote =
+    "Both sources are independently normalized into Zenbu Japanese Language Reference Data."
+}
+
+extension KanjiElementProvenance {
+  /// The source and its snapshot, as the Source section names it.
+  var text: String { "\(sourceIdentity) \(sourceSnapshot)" }
+}
+
+extension KanjiElementContribution {
+  /// Up to three meanings, as a kanji's row shows them.
+  var rowMeanings: String? { meanings.isEmpty ? nil : meanings.prefix(3).joined(separator: ", ") }
+
+  /// The kanji's on-readings, under its meanings.
+  var rowReadings: String? { onReadings.isEmpty ? nil : onReadings.joined(separator: ", ") }
 }
 
 private struct KanjiElementDetailLoadRequest: Hashable {

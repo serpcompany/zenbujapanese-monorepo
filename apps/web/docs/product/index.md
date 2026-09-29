@@ -24,6 +24,8 @@ a sign-in prompt once account pages (#468) exist.
 - **Conjugated form**, `/dictionary/<slug>-<ent_seq>/conjugations/<plain|polite>/<kind>/`: one
   form and the example sentences that use it, as the app's form screen shows them.
 - **Kanji page**, `/dictionary/kanji/<character>/`: one kanji, as the app's Kanji Detail shows it.
+- **Kanji element page**, `/dictionary/elements/<element>/`: one element of kanji, as the app's
+  element screen shows it.
 
 The shared header and footer, and the URL, indexing, and sitemap rules, apply to all of them.
 [Dictionary](dictionary.md) describes every behavior, page by page.
@@ -47,7 +49,7 @@ check yet (#511)". The checks come in five kinds:
 
 - **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the
   app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
-  `word-detail.json`, and `kanji-detail.json`. Each pins, by SHA-256, the app data files it was
+  `word-detail.json`, `kanji-detail.json`, and `kanji-element-detail.json`. Each pins, by SHA-256, the app data files it was
   recorded from. The `conformance.test.ts` files under `src/lib/dictionary/` replay them through
   the website's search, results, example search, and detail cores on a locally built release
   database, reading it as the pages do.

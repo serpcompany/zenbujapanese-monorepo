@@ -1,0 +1,5557 @@
+{
+  "artifacts" : [
+    {
+      "name" : "KanjiElementReferenceData.json",
+      "sha256" : "ec160ef29ddd5bd4a81835605a8d240af31140cc695a05eaace83a79a8e8a423"
+    }
+  ],
+  "cases" : [
+    {
+      "alternatives" : [
+
+      ],
+      "codePoint" : "U+6C35",
+      "containingKanji" : [
+        {
+          "character" : "決",
+          "meanings" : "decide, fix, agree upon",
+          "readings" : "ケツ"
+        },
+        {
+          "character" : "法",
+          "meanings" : "method, law, rule",
+          "readings" : "ホウ, ハッ, ホッ, フラン"
+        },
+        {
+          "character" : "治",
+          "meanings" : "reign, be at peace, calm down",
+          "readings" : "ジ, チ"
+        },
+        {
+          "character" : "派",
+          "meanings" : "faction, group, party",
+          "readings" : "ハ"
+        },
+        {
+          "character" : "済",
+          "meanings" : "settle (debt, etc.), relieve (burden), finish",
+          "readings" : "サイ, セイ"
+        },
+        {
+          "character" : "活",
+          "meanings" : "lively, resuscitation, being helped",
+          "readings" : "カツ"
+        },
+        {
+          "character" : "海",
+          "meanings" : "sea, ocean",
+          "readings" : "カイ"
+        },
+        {
+          "character" : "減",
+          "meanings" : "dwindle, decrease, reduce",
+          "readings" : "ゲン"
+        },
+        {
+          "character" : "演",
+          "meanings" : "performance, act, play",
+          "readings" : "エン"
+        },
+        {
+          "character" : "流",
+          "meanings" : "current, a sink, flow",
+          "readings" : "リュウ, ル"
+        },
+        {
+          "character" : "沢",
+          "meanings" : "swamp, marsh, brilliance",
+          "readings" : "タク"
+        },
+        {
+          "character" : "消",
+          "meanings" : "extinguish, blow out, turn off",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "渡",
+          "meanings" : "transit, ford, ferry",
+          "readings" : "ト"
+        },
+        {
+          "character" : "深",
+          "meanings" : "deep, heighten, intensify",
+          "readings" : "シン"
+        },
+        {
+          "character" : "況",
+          "meanings" : "condition, situation",
+          "readings" : "キョウ"
+        },
+        {
+          "character" : "港",
+          "meanings" : "harbor",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "注",
+          "meanings" : "pour, irrigate, shed (tears)",
+          "readings" : "チュウ"
+        },
+        {
+          "character" : "渉",
+          "meanings" : "ford, go cross, transit",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "満",
+          "meanings" : "full, fullness, enough",
+          "readings" : "マン, バン"
+        },
+        {
+          "character" : "湾",
+          "meanings" : "gulf, bay, inlet",
+          "readings" : "ワン"
+        },
+        {
+          "character" : "激",
+          "meanings" : "violent, get excited, enraged",
+          "readings" : "ゲキ"
+        },
+        {
+          "character" : "浜",
+          "meanings" : "seacoast, beach, seashore",
+          "readings" : "ヒン"
+        },
+        {
+          "character" : "河",
+          "meanings" : "river",
+          "readings" : "カ"
+        },
+        {
+          "character" : "油",
+          "meanings" : "oil, fat",
+          "readings" : "ユ, ユウ"
+        },
+        {
+          "character" : "江",
+          "meanings" : "creek, inlet, bay",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "清",
+          "meanings" : "pure, purify, cleanse",
+          "readings" : "セイ, ショウ, シン"
+        },
+        {
+          "character" : "源",
+          "meanings" : "source, origin",
+          "readings" : "ゲン"
+        },
+        {
+          "character" : "波",
+          "meanings" : "waves, billows, Poland",
+          "readings" : "ハ"
+        },
+        {
+          "character" : "測",
+          "meanings" : "fathom, plan, scheme",
+          "readings" : "ソク"
+        },
+        {
+          "character" : "洋",
+          "meanings" : "ocean, sea, foreign",
+          "readings" : "ヨウ"
+        },
+        {
+          "character" : "浮",
+          "meanings" : "floating, float, rise to surface",
+          "readings" : "フ"
+        },
+        {
+          "character" : "混",
+          "meanings" : "mix, blend, confuse",
+          "readings" : "コン"
+        },
+        {
+          "character" : "池",
+          "meanings" : "pond, cistern, pool",
+          "readings" : "チ"
+        },
+        {
+          "character" : "染",
+          "meanings" : "dye, color, paint",
+          "readings" : "セン"
+        },
+        {
+          "character" : "温",
+          "meanings" : "warm",
+          "readings" : "オン"
+        },
+        {
+          "character" : "汚",
+          "meanings" : "dirty, pollute, disgrace",
+          "readings" : "オ"
+        },
+        {
+          "character" : "沖",
+          "meanings" : "open sea, offing, rise high into sky",
+          "readings" : "チュウ"
+        },
+        {
+          "character" : "浦",
+          "meanings" : "bay, creek, inlet",
+          "readings" : "ホ"
+        },
+        {
+          "character" : "酒",
+          "meanings" : "sake, alcohol",
+          "readings" : "シュ"
+        },
+        {
+          "character" : "渋",
+          "meanings" : "astringent, hesitate, reluctant",
+          "readings" : "ジュウ, シュウ"
+        },
+        {
+          "character" : "津",
+          "meanings" : "haven, port, harbor",
+          "readings" : "シン"
+        },
+        {
+          "character" : "漁",
+          "meanings" : "fishing, fishery",
+          "readings" : "ギョ, リョウ"
+        },
+        {
+          "character" : "滞",
+          "meanings" : "stagnate, be delayed, overdue",
+          "readings" : "タイ, テイ"
+        },
+        {
+          "character" : "沿",
+          "meanings" : "run alongside, follow along, run along",
+          "readings" : "エン"
+        },
+        {
+          "character" : "浴",
+          "meanings" : "bathe, be favored with, bask in",
+          "readings" : "ヨク"
+        },
+        {
+          "character" : "浩",
+          "meanings" : "wide expanse, abundance, vigorous",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "瀬",
+          "meanings" : "rapids, current, torrent",
+          "readings" : "ライ"
+        },
+        {
+          "character" : "洗",
+          "meanings" : "wash, inquire into, probe",
+          "readings" : "セン"
+        },
+        {
+          "character" : "濃",
+          "meanings" : "concentrated, thick, dark",
+          "readings" : "ノウ"
+        },
+        {
+          "character" : "潟",
+          "meanings" : "lagoon",
+          "readings" : "セキ"
+        },
+        {
+          "character" : "液",
+          "meanings" : "fluid, liquid, juice",
+          "readings" : "エキ"
+        },
+        {
+          "character" : "滅",
+          "meanings" : "destroy, ruin, overthrow",
+          "readings" : "メツ"
+        },
+        {
+          "character" : "泳",
+          "meanings" : "swim",
+          "readings" : "エイ"
+        },
+        {
+          "character" : "潮",
+          "meanings" : "tide, salt water, opportunity",
+          "readings" : "チョウ"
+        },
+        {
+          "character" : "泊",
+          "meanings" : "overnight stay, put up at, ride at anchor",
+          "readings" : "ハク"
+        },
+        {
+          "character" : "滑",
+          "meanings" : "slippery, slide, slip",
+          "readings" : "カツ, コツ"
+        },
+        {
+          "character" : "浅",
+          "meanings" : "shallow, superficial, frivolous",
+          "readings" : "セン"
+        },
+        {
+          "character" : "沈",
+          "meanings" : "sink, be submerged, subside",
+          "readings" : "チン, ジン"
+        },
+        {
+          "character" : "漏",
+          "meanings" : "leak, escape, time",
+          "readings" : "ロウ"
+        },
+        {
+          "character" : "潜",
+          "meanings" : "submerge, conceal, hide",
+          "readings" : "セン"
+        },
+        {
+          "character" : "湖",
+          "meanings" : "lake",
+          "readings" : "コ"
+        },
+        {
+          "character" : "湯",
+          "meanings" : "hot water, bath, hot spring",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "溶",
+          "meanings" : "melt, dissolve, thaw",
+          "readings" : "ヨウ"
+        },
+        {
+          "character" : "泣",
+          "meanings" : "cry, weep, moan",
+          "readings" : "キュウ"
+        },
+        {
+          "character" : "浄",
+          "meanings" : "clean, purify, cleanse",
+          "readings" : "ジョウ, セイ"
+        },
+        {
+          "character" : "没",
+          "meanings" : "drown, sink, hide",
+          "readings" : "ボツ, モツ"
+        },
+        {
+          "character" : "渕",
+          "meanings" : "edge",
+          "readings" : "エン, カク, コウ"
+        },
+        {
+          "character" : "漫",
+          "meanings" : "cartoon, involuntarily, unrestrained",
+          "readings" : "マン"
+        },
+        {
+          "character" : "塗",
+          "meanings" : "paint, plaster, daub",
+          "readings" : "ト"
+        },
+        {
+          "character" : "淡",
+          "meanings" : "thin, faint, pale",
+          "readings" : "タン"
+        },
+        {
+          "character" : "浸",
+          "meanings" : "immersed, soak, dip",
+          "readings" : "シン"
+        },
+        {
+          "character" : "沼",
+          "meanings" : "marsh, lake, bog",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "滝",
+          "meanings" : "waterfall, rapids, cascade",
+          "readings" : "ロウ, ソウ"
+        },
+        {
+          "character" : "漢",
+          "meanings" : "Sino-, China",
+          "readings" : "カン"
+        },
+        {
+          "character" : "漂",
+          "meanings" : "drift, float (on liquid)",
+          "readings" : "ヒョウ"
+        },
+        {
+          "character" : "添",
+          "meanings" : "annexed, accompany, marry",
+          "readings" : "テン"
+        },
+        {
+          "character" : "汗",
+          "meanings" : "sweat, perspire",
+          "readings" : "カン"
+        },
+        {
+          "character" : "浪",
+          "meanings" : "wandering, waves, billows",
+          "readings" : "ロウ"
+        },
+        {
+          "character" : "湿",
+          "meanings" : "damp, wet, moist",
+          "readings" : "シツ, シュウ"
+        },
+        {
+          "character" : "涯",
+          "meanings" : "horizon, shore, limit",
+          "readings" : "ガイ"
+        },
+        {
+          "character" : "滋",
+          "meanings" : "nourishing, more & more, be luxuriant",
+          "readings" : "ジ, シ"
+        },
+        {
+          "character" : "泥",
+          "meanings" : "mud, mire, adhere to",
+          "readings" : "デイ, ナイ, デ, ニ"
+        },
+        {
+          "character" : "淵",
+          "meanings" : "abyss, edge, deep pool",
+          "readings" : "エン, カク, コウ"
+        },
+        {
+          "character" : "潔",
+          "meanings" : "undefiled, pure, clean",
+          "readings" : "ケツ"
+        },
+        {
+          "character" : "漠",
+          "meanings" : "vague, obscure, desert",
+          "readings" : "バク"
+        },
+        {
+          "character" : "洞",
+          "meanings" : "den, cave, excavation",
+          "readings" : "ドウ"
+        },
+        {
+          "character" : "淳",
+          "meanings" : "pure",
+          "readings" : "ジュン, シュン"
+        },
+        {
+          "character" : "潤",
+          "meanings" : "wet, be watered, profit by",
+          "readings" : "ジュン"
+        },
+        {
+          "character" : "濯",
+          "meanings" : "laundry, wash, pour on",
+          "readings" : "タク"
+        },
+        {
+          "character" : "沸",
+          "meanings" : "seethe, boil, ferment",
+          "readings" : "フツ"
+        },
+        {
+          "character" : "澄",
+          "meanings" : "lucidity, be clear, clear",
+          "readings" : "チョウ"
+        },
+        {
+          "character" : "溝",
+          "meanings" : "gutter, ditch, sewer",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "洪",
+          "meanings" : "deluge, flood, vast",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "涼",
+          "meanings" : "refreshing, nice and cool",
+          "readings" : "リョウ"
+        },
+        {
+          "character" : "渦",
+          "meanings" : "whirlpool, eddy, vortex",
+          "readings" : "カ"
+        },
+        {
+          "character" : "漬",
+          "meanings" : "pickling, soak, moisten",
+          "readings" : "シ"
+        },
+        {
+          "character" : "汁",
+          "meanings" : "soup, juice, broth",
+          "readings" : "ジュウ"
+        },
+        {
+          "character" : "窪",
+          "meanings" : "depression, cave in, sink",
+          "readings" : "ワ, ア"
+        },
+        {
+          "character" : "泡",
+          "meanings" : "bubbles, foam, suds",
+          "readings" : "ホウ"
+        },
+        {
+          "character" : "濁",
+          "meanings" : "voiced, uncleanness, wrong",
+          "readings" : "ダク, ジョク"
+        },
+        {
+          "character" : "沙",
+          "meanings" : "sand",
+          "readings" : "サ, シャ"
+        },
+        {
+          "character" : "湘",
+          "meanings" : "name of Chinese river, the Sagami river",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "灘",
+          "meanings" : "open sea",
+          "readings" : "タン, ダン"
+        },
+        {
+          "character" : "淑",
+          "meanings" : "graceful, gentle, pure",
+          "readings" : "シュク"
+        },
+        {
+          "character" : "渇",
+          "meanings" : "thirst, dry up, parch",
+          "readings" : "カツ"
+        },
+        {
+          "character" : "漆",
+          "meanings" : "lacquer, varnish, seven",
+          "readings" : "シツ"
+        },
+        {
+          "character" : "洲",
+          "meanings" : "continent, sandbar, island",
+          "readings" : "シュウ, ス"
+        },
+        {
+          "character" : "淀",
+          "meanings" : "pool, eddy",
+          "readings" : "テン, デン"
+        },
+        {
+          "character" : "汎",
+          "meanings" : "pan-",
+          "readings" : "ハン, ブ, フウ, ホウ, ホン"
+        },
+        {
+          "character" : "梁",
+          "meanings" : "weir, fish trap, beam",
+          "readings" : "リョウ"
+        },
+        {
+          "character" : "滴",
+          "meanings" : "drip, drop",
+          "readings" : "テキ"
+        },
+        {
+          "character" : "汽",
+          "meanings" : "vapor, steam",
+          "readings" : "キ"
+        },
+        {
+          "character" : "漱",
+          "meanings" : "gargle, rinse mouth",
+          "readings" : "ソウ, シュウ, ス"
+        },
+        {
+          "character" : "渓",
+          "meanings" : "mountain stream, valley",
+          "readings" : "ケイ"
+        },
+        {
+          "character" : "湧",
+          "meanings" : "boil, ferment, seethe",
+          "readings" : "ユウ, ヨウ, ユ"
+        },
+        {
+          "character" : "鴻",
+          "meanings" : "large bird, wild goose, large",
+          "readings" : "コウ, ゴウ"
+        },
+        {
+          "character" : "泌",
+          "meanings" : "ooze, flow, soak in",
+          "readings" : "ヒツ, ヒ"
+        },
+        {
+          "character" : "漸",
+          "meanings" : "steadily, gradually advancing, finally",
+          "readings" : "ゼン"
+        },
+        {
+          "character" : "湛",
+          "meanings" : "fill, wear (a smile), clear",
+          "readings" : "タン, チン, ジン, セン"
+        },
+        {
+          "character" : "瀋",
+          "meanings" : "juice, broth",
+          "readings" : "シン"
+        },
+        {
+          "character" : "湊",
+          "meanings" : "port, harbor",
+          "readings" : "ソウ"
+        },
+        {
+          "character" : "渚",
+          "meanings" : "strand, beach, shore",
+          "readings" : "ショ"
+        },
+        {
+          "character" : "渥",
+          "meanings" : "kindness, moisten",
+          "readings" : "アク"
+        },
+        {
+          "character" : "濡",
+          "meanings" : "get wet, damp, make love",
+          "readings" : "ジュ, ニュ"
+        },
+        {
+          "character" : "洛",
+          "meanings" : "Kyoto, the capital",
+          "readings" : "ラク"
+        },
+        {
+          "character" : "汐",
+          "meanings" : "eventide, tide, salt water",
+          "readings" : "セキ"
+        },
+        {
+          "character" : "漕",
+          "meanings" : "rowing, scull, paddle",
+          "readings" : "ソウ"
+        },
+        {
+          "character" : "瀕",
+          "meanings" : "shore, brink, verge",
+          "readings" : "ヒン"
+        },
+        {
+          "character" : "澤",
+          "meanings" : "swamp",
+          "readings" : "タク"
+        },
+        {
+          "character" : "溥",
+          "meanings" : "far and wide",
+          "readings" : "フ, ハク"
+        },
+        {
+          "character" : "汪",
+          "meanings" : "flowing full, expanse of water, wide",
+          "readings" : "オウ"
+        },
+        {
+          "character" : "溢",
+          "meanings" : "overflow, inundate, spill",
+          "readings" : "イツ"
+        },
+        {
+          "character" : "浙",
+          "meanings" : "name of a Chinese river",
+          "readings" : "セツ"
+        },
+        {
+          "character" : "淘",
+          "meanings" : "select",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "洸",
+          "meanings" : "sparkling water",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "洒",
+          "meanings" : "wash, sprinkle",
+          "readings" : "シャ, ソン, サイ, セン, セイ"
+        },
+        {
+          "character" : "溜",
+          "meanings" : "collect, gather, be in arrears",
+          "readings" : "リュウ"
+        },
+        {
+          "character" : "氾",
+          "meanings" : "spread out, wide",
+          "readings" : "ハン"
+        },
+        {
+          "character" : "汀",
+          "meanings" : "water's edge, shore, bank",
+          "readings" : "テイ"
+        },
+        {
+          "character" : "汕",
+          "meanings" : "fish swimming, fishing with a net",
+          "readings" : "サン"
+        },
+        {
+          "character" : "汝",
+          "meanings" : "you, thou",
+          "readings" : "ジョ"
+        },
+        {
+          "character" : "汢",
+          "meanings" : "wetland, marsh, (kokuji)"
+        },
+        {
+          "character" : "汨",
+          "meanings" : "to sink, name of a Chinese river",
+          "readings" : "コツ, イツ, ベキ"
+        },
+        {
+          "character" : "汰",
+          "meanings" : "washing, sieving, filtering",
+          "readings" : "タ, タイ"
+        },
+        {
+          "character" : "汲",
+          "meanings" : "draw (water), ladle, scoop",
+          "readings" : "キュウ"
+        },
+        {
+          "character" : "汳",
+          "meanings" : "proper name",
+          "readings" : "ヘン, ベン"
+        },
+        {
+          "character" : "汾",
+          "meanings" : "name of a Chinese river",
+          "readings" : "フン"
+        },
+        {
+          "character" : "沁",
+          "meanings" : "penetrate, soak in",
+          "readings" : "シン"
+        },
+        {
+          "character" : "沂",
+          "meanings" : "name of a Chinese river",
+          "readings" : "ギ, キ, ギン"
+        },
+        {
+          "character" : "沃",
+          "meanings" : "fertility",
+          "readings" : "ヨウ, ヨク, オク"
+        },
+        {
+          "character" : "沌",
+          "meanings" : "primeval chaos",
+          "readings" : "トン"
+        },
+        {
+          "character" : "沍",
+          "meanings" : "close up, freeze over, congeal",
+          "readings" : "ゴ, コ"
+        },
+        {
+          "character" : "沐",
+          "meanings" : "wash",
+          "readings" : "モク"
+        },
+        {
+          "character" : "沒",
+          "meanings" : "not, have not, none",
+          "readings" : "ボツ, モツ"
+        },
+        {
+          "character" : "沚",
+          "meanings" : "shore, shoal",
+          "readings" : "シ"
+        },
+        {
+          "character" : "沛",
+          "meanings" : "big rain, swamp",
+          "readings" : "ハイ"
+        },
+        {
+          "character" : "沪",
+          "meanings" : "filter, Shanghai, river near Shanghai"
+        },
+        {
+          "character" : "沫",
+          "meanings" : "splash, suds",
+          "readings" : "マツ, バツ"
+        },
+        {
+          "character" : "沮",
+          "meanings" : "stop, prevent, defeated",
+          "readings" : "ソ, ショ"
+        },
+        {
+          "character" : "沱",
+          "meanings" : "flowing of tears",
+          "readings" : "タ, ダ"
+        },
+        {
+          "character" : "沺",
+          "meanings" : "vast surging waters",
+          "readings" : "デン"
+        },
+        {
+          "character" : "沽",
+          "meanings" : "price, buying & selling",
+          "readings" : "コ"
+        },
+        {
+          "character" : "沾",
+          "meanings" : "moisten, wet, soak",
+          "readings" : "セン, チョウ, テン"
+        },
+        {
+          "character" : "泄",
+          "meanings" : "leak",
+          "readings" : "セツ, エイ"
+        },
+        {
+          "character" : "泅",
+          "meanings" : "swim",
+          "readings" : "シュウ"
+        },
+        {
+          "character" : "泓",
+          "meanings" : "deep clear water",
+          "readings" : "オウ"
+        },
+        {
+          "character" : "泗",
+          "meanings" : "name of a Chinese river, snivel",
+          "readings" : "シ"
+        },
+        {
+          "character" : "泙",
+          "meanings" : "surging water",
+          "readings" : "ホウ"
+        },
+        {
+          "character" : "泛",
+          "meanings" : "to drift, float, careless",
+          "readings" : "ハン, ホウ"
+        },
+        {
+          "character" : "泝",
+          "meanings" : "go upstream",
+          "readings" : "ソ"
+        },
+        {
+          "character" : "泪",
+          "meanings" : "tears, weep, cry",
+          "readings" : "ルイ, レイ"
+        },
+        {
+          "character" : "泯",
+          "meanings" : "die out, dim",
+          "readings" : "ビン, ベン, ミン, メン"
+        },
+        {
+          "character" : "泱",
+          "meanings" : "billowy clouds, deep and broad",
+          "readings" : "オウ"
+        },
+        {
+          "character" : "洌",
+          "meanings" : "pure",
+          "readings" : "レツ, レイ"
+        },
+        {
+          "character" : "洙",
+          "meanings" : "name of a Chinese river",
+          "readings" : "シュ"
+        },
+        {
+          "character" : "洟",
+          "meanings" : "tear, nasal discharge",
+          "readings" : "イ, テイ"
+        },
+        {
+          "character" : "洩",
+          "meanings" : "leak, escape",
+          "readings" : "エイ, セツ"
+        },
+        {
+          "character" : "洫",
+          "meanings" : "ditch",
+          "readings" : "キョク"
+        },
+        {
+          "character" : "洳",
+          "meanings" : "wet",
+          "readings" : "ジュ"
+        },
+        {
+          "character" : "洵",
+          "meanings" : "alike, truth",
+          "readings" : "ジュン, シュン"
+        },
+        {
+          "character" : "洶",
+          "meanings" : "gush forth, surge",
+          "readings" : "キョウ"
+        },
+        {
+          "character" : "洽",
+          "meanings" : "far and wide",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "浚",
+          "meanings" : "dredge, drag, clean",
+          "readings" : "シュン"
+        },
+        {
+          "character" : "浣",
+          "meanings" : "wash",
+          "readings" : "カン"
+        },
+        {
+          "character" : "浤",
+          "meanings" : "rising waters, clear deep water",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "浬",
+          "meanings" : "knot, nautical mile",
+          "readings" : "リ"
+        },
+        {
+          "character" : "浹",
+          "meanings" : "far and wide, cycle, period",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "涅",
+          "meanings" : "black soil",
+          "readings" : "ネツ, デツ"
+        },
+        {
+          "character" : "涉",
+          "meanings" : "ford stream, wade across",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "涌",
+          "meanings" : "boil, ferment, seethe",
+          "readings" : "ユウ, ヨウ, ユ"
+        },
+        {
+          "character" : "涎",
+          "meanings" : "saliva, slobber",
+          "readings" : "セン, エン"
+        },
+        {
+          "character" : "涓",
+          "meanings" : "drop, pure",
+          "readings" : "ケン"
+        },
+        {
+          "character" : "涕",
+          "meanings" : "tears, sympathy",
+          "readings" : "テイ"
+        },
+        {
+          "character" : "涛",
+          "meanings" : "waves, billows",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "涜",
+          "meanings" : "defile, blaspheme, ditch",
+          "readings" : "トク, トウ"
+        },
+        {
+          "character" : "涵",
+          "meanings" : "immerse",
+          "readings" : "カン"
+        },
+        {
+          "character" : "涸",
+          "meanings" : "dry up, mature",
+          "readings" : "コ, カク"
+        },
+        {
+          "character" : "淅",
+          "meanings" : "wash rice",
+          "readings" : "セキ"
+        },
+        {
+          "character" : "淆",
+          "meanings" : "turbidity, mixing",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "淇",
+          "meanings" : "name of a Chinese river",
+          "readings" : "キ"
+        },
+        {
+          "character" : "淋",
+          "meanings" : "lonely, deserted",
+          "readings" : "リン"
+        },
+        {
+          "character" : "淌",
+          "meanings" : "flow",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "淒",
+          "meanings" : "bitter cold, miserable, dreary",
+          "readings" : "セイ, サイ"
+        },
+        {
+          "character" : "淕",
+          "meanings" : "sleet, slush, name of a wetland",
+          "readings" : "リク, ロク"
+        },
+        {
+          "character" : "淙",
+          "meanings" : "sound of running water",
+          "readings" : "ソウ"
+        },
+        {
+          "character" : "淞",
+          "meanings" : "name of a Chinese river",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "淤",
+          "meanings" : "mud, silt, clog up",
+          "readings" : "オ, ヨ"
+        },
+        {
+          "character" : "淦",
+          "meanings" : "bilge water",
+          "readings" : "カン, コン"
+        },
+        {
+          "character" : "淨",
+          "meanings" : "pure, clean, unspoiled",
+          "readings" : "ジョウ, セイ"
+        },
+        {
+          "character" : "淪",
+          "meanings" : "sink, ripple",
+          "readings" : "リン, ロン"
+        },
+        {
+          "character" : "淫",
+          "meanings" : "lewdness, licentiousness",
+          "readings" : "イン"
+        },
+        {
+          "character" : "淬",
+          "meanings" : "anneal, quench, temper",
+          "readings" : "サイ"
+        },
+        {
+          "character" : "淮",
+          "meanings" : "name of a Chinese river",
+          "readings" : "ワイ, エ, カイ"
+        },
+        {
+          "character" : "淹",
+          "meanings" : "dip, soak, immerse",
+          "readings" : "エン"
+        },
+        {
+          "character" : "淺",
+          "meanings" : "shallow, not deep, superficial",
+          "readings" : "セン"
+        },
+        {
+          "character" : "渊",
+          "meanings" : "edge",
+          "readings" : "エン, カク, コウ"
+        },
+        {
+          "character" : "渙",
+          "meanings" : "scatter",
+          "readings" : "カン"
+        },
+        {
+          "character" : "渝",
+          "meanings" : "change, be transformed",
+          "readings" : "ユ"
+        },
+        {
+          "character" : "渟",
+          "meanings" : "stop",
+          "readings" : "テイ"
+        },
+        {
+          "character" : "渠",
+          "meanings" : "ditch, canal, lock",
+          "readings" : "キョ"
+        },
+        {
+          "character" : "渣",
+          "meanings" : "dregs",
+          "readings" : "サ"
+        },
+        {
+          "character" : "渤",
+          "meanings" : "place name",
+          "readings" : "ボツ, ホツ"
+        },
+        {
+          "character" : "渫",
+          "meanings" : "dredging, cleaning out",
+          "readings" : "セツ, チョウ"
+        },
+        {
+          "character" : "渭",
+          "meanings" : "name of Chinese river",
+          "readings" : "イ"
+        },
+        {
+          "character" : "渮",
+          "meanings" : "name of Chinese river",
+          "readings" : "カ"
+        },
+        {
+          "character" : "渴",
+          "meanings" : "thirsty, parched, yearn",
+          "readings" : "カツ"
+        },
+        {
+          "character" : "游",
+          "meanings" : "float, swim",
+          "readings" : "ユウ, リュウ"
+        },
+        {
+          "character" : "渺",
+          "meanings" : "tiny, boundless",
+          "readings" : "ビョウ"
+        },
+        {
+          "character" : "渾",
+          "meanings" : "all, turbidity",
+          "readings" : "コン"
+        },
+        {
+          "character" : "湃",
+          "meanings" : "sound of waves",
+          "readings" : "ハイ"
+        },
+        {
+          "character" : "湍",
+          "meanings" : "rapids",
+          "readings" : "タン"
+        },
+        {
+          "character" : "湎",
+          "meanings" : "drown, be immersed",
+          "readings" : "メン, ベン"
+        },
+        {
+          "character" : "湟",
+          "meanings" : "moat, wetland, name of Chinese river",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "湫",
+          "meanings" : "wetlands, marsh",
+          "readings" : "シュウ, ショウ"
+        },
+        {
+          "character" : "湮",
+          "meanings" : "sink",
+          "readings" : "イン, エン"
+        },
+        {
+          "character" : "湲",
+          "meanings" : "flowing water",
+          "readings" : "エン, カン"
+        },
+        {
+          "character" : "湶",
+          "meanings" : "spring, fountain-head, source",
+          "readings" : "セン"
+        },
+        {
+          "character" : "溂",
+          "meanings" : "opposed, biased",
+          "readings" : "ラツ"
+        },
+        {
+          "character" : "溌",
+          "meanings" : "sprinkle, lively, vigorous",
+          "readings" : "ハツ"
+        },
+        {
+          "character" : "溏",
+          "meanings" : "mud",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "溘",
+          "meanings" : "sudden, unexpected",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "溟",
+          "meanings" : "dark, ocean",
+          "readings" : "メイ"
+        },
+        {
+          "character" : "溪",
+          "meanings" : "valley",
+          "readings" : "ケイ"
+        },
+        {
+          "character" : "溫",
+          "meanings" : "lukewarm, warm, tepid",
+          "readings" : "オン, ウン"
+        },
+        {
+          "character" : "溯",
+          "meanings" : "go upstream, retrace the past",
+          "readings" : "ソ, サク"
+        },
+        {
+          "character" : "溲",
+          "meanings" : "urine",
+          "readings" : "シュ, シュウ, ソウ"
+        },
+        {
+          "character" : "溷",
+          "meanings" : "get muddy",
+          "readings" : "コン"
+        },
+        {
+          "character" : "溺",
+          "meanings" : "drown, indulge",
+          "readings" : "デキ, ジョウ, ニョウ"
+        },
+        {
+          "character" : "溽",
+          "meanings" : "humid",
+          "readings" : "ヒョク, ジョク"
+        },
+        {
+          "character" : "滂",
+          "meanings" : "flowing, vast",
+          "readings" : "ホウ, ボウ"
+        },
+        {
+          "character" : "滄",
+          "meanings" : "ocean",
+          "readings" : "ソウ"
+        },
+        {
+          "character" : "滉",
+          "meanings" : "deep and broad (water)",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "滌",
+          "meanings" : "rinse, wash",
+          "readings" : "デキ, テキ, ジョウ"
+        },
+        {
+          "character" : "滓",
+          "meanings" : "dregs, grounds",
+          "readings" : "シ, サイ"
+        },
+        {
+          "character" : "滔",
+          "meanings" : "overflowing",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "滯",
+          "meanings" : "block up, obstruct, stagnant",
+          "readings" : "タイ, テイ"
+        },
+        {
+          "character" : "滲",
+          "meanings" : "imbued with",
+          "readings" : "シン"
+        },
+        {
+          "character" : "滷",
+          "meanings" : "brine",
+          "readings" : "ロ"
+        },
+        {
+          "character" : "滸",
+          "meanings" : "vicinity",
+          "readings" : "コ"
+        },
+        {
+          "character" : "滾",
+          "meanings" : "flow, boil",
+          "readings" : "コン"
+        },
+        {
+          "character" : "滿",
+          "meanings" : "fill, full, satisfied",
+          "readings" : "マン, バン"
+        },
+        {
+          "character" : "漉",
+          "meanings" : "manufacture paper, spread out thin, strain",
+          "readings" : "ロク"
+        },
+        {
+          "character" : "漑",
+          "meanings" : "pour",
+          "readings" : "ガイ, カイ"
+        },
+        {
+          "character" : "漓",
+          "meanings" : "dropping, soak in",
+          "readings" : "リ"
+        },
+        {
+          "character" : "漣",
+          "meanings" : "ripples",
+          "readings" : "レン, ラン"
+        },
+        {
+          "character" : "漲",
+          "meanings" : "overflow",
+          "readings" : "チョウ"
+        },
+        {
+          "character" : "漾",
+          "meanings" : "drift, flow",
+          "readings" : "ヨウ"
+        },
+        {
+          "character" : "潅",
+          "meanings" : "pour into, irrigate, shed (tears)",
+          "readings" : "カン"
+        },
+        {
+          "character" : "潗",
+          "readings" : "シュウ"
+        },
+        {
+          "character" : "潘",
+          "meanings" : "water in which rice has been washed",
+          "readings" : "ハン"
+        },
+        {
+          "character" : "潛",
+          "meanings" : "conceal, hide, lower (voice)",
+          "readings" : "セン"
+        },
+        {
+          "character" : "潦",
+          "meanings" : "heavy rainfall, runoff",
+          "readings" : "ロウ"
+        },
+        {
+          "character" : "潭",
+          "meanings" : "deep water, deep",
+          "readings" : "タン, ジン"
+        },
+        {
+          "character" : "潯",
+          "meanings" : "shore, banks",
+          "readings" : "ジン"
+        },
+        {
+          "character" : "潰",
+          "meanings" : "crush, smash, break",
+          "readings" : "カイ, エ"
+        },
+        {
+          "character" : "潴",
+          "meanings" : "pond, a pool",
+          "readings" : "チョ"
+        },
+        {
+          "character" : "潸",
+          "meanings" : "flowing of tears",
+          "readings" : "サン"
+        },
+        {
+          "character" : "潺",
+          "meanings" : "sound of flowing water",
+          "readings" : "セン, サン"
+        },
+        {
+          "character" : "潼",
+          "meanings" : "high",
+          "readings" : "ドウ, トウ"
+        },
+        {
+          "character" : "澀",
+          "meanings" : "astringent, harsh, uneven",
+          "readings" : "ジュウ, シュウ"
+        },
+        {
+          "character" : "澁",
+          "meanings" : "astringent, harsh, uneven",
+          "readings" : "ジュウ, シュウ"
+        },
+        {
+          "character" : "澂",
+          "meanings" : "clear and still water",
+          "readings" : "チョウ"
+        },
+        {
+          "character" : "澆",
+          "meanings" : "sprinkle, thing, shallow",
+          "readings" : "ギョウ"
+        },
+        {
+          "character" : "澎",
+          "meanings" : "turbulent water",
+          "readings" : "ホウ, ヒョウ"
+        },
+        {
+          "character" : "澑",
+          "meanings" : "slide, glide, slip",
+          "readings" : "リュウ"
+        },
+        {
+          "character" : "澗",
+          "meanings" : "valley river, 10**36",
+          "readings" : "カン, ケン"
+        },
+        {
+          "character" : "澚",
+          "readings" : "オウ, イク, オク"
+        },
+        {
+          "character" : "澡",
+          "meanings" : "wash",
+          "readings" : "ソウ"
+        },
+        {
+          "character" : "澣",
+          "meanings" : "wash",
+          "readings" : "カン"
+        },
+        {
+          "character" : "澪",
+          "meanings" : "water route, shipping channel",
+          "readings" : "レイ"
+        },
+        {
+          "character" : "澱",
+          "meanings" : "sediment, grounds, dregs",
+          "readings" : "デン, テン"
+        },
+        {
+          "character" : "澳",
+          "meanings" : "curving shoreline, bend in river",
+          "readings" : "オウ, イク, オク"
+        },
+        {
+          "character" : "澹",
+          "meanings" : "calm, quiet, bland",
+          "readings" : "タン, セン"
+        },
+        {
+          "character" : "濂",
+          "meanings" : "name of Chinese river",
+          "readings" : "レン"
+        },
+        {
+          "character" : "濆",
+          "meanings" : "gush forth",
+          "readings" : "フン, ホン"
+        },
+        {
+          "character" : "濔",
+          "meanings" : "much, many",
+          "readings" : "ビ"
+        },
+        {
+          "character" : "濕",
+          "meanings" : "wet, moist, humid",
+          "readings" : "シツ, シュウ"
+        },
+        {
+          "character" : "濘",
+          "meanings" : "muddiness",
+          "readings" : "ネイ"
+        },
+        {
+          "character" : "濛",
+          "meanings" : "dark",
+          "readings" : "モウ"
+        },
+        {
+          "character" : "濟",
+          "meanings" : "to help, aid, relieve",
+          "readings" : "サイ, セイ"
+        },
+        {
+          "character" : "濠",
+          "meanings" : "moat, ditch, canal",
+          "readings" : "ゴウ, コウ"
+        },
+        {
+          "character" : "濤",
+          "meanings" : "waves, billows",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "濫",
+          "meanings" : "excessive, overflow, spread out",
+          "readings" : "ラン"
+        },
+        {
+          "character" : "濬",
+          "meanings" : "deep, dredge",
+          "readings" : "シュン"
+        },
+        {
+          "character" : "濮",
+          "meanings" : "name of Chinese river",
+          "readings" : "ボク, ホク"
+        },
+        {
+          "character" : "濱",
+          "meanings" : "beach, sea coast, river bank",
+          "readings" : "ヒン"
+        },
+        {
+          "character" : "濳",
+          "meanings" : "hide, conceal, secrete",
+          "readings" : "セン"
+        },
+        {
+          "character" : "濶",
+          "meanings" : "wide",
+          "readings" : "カツ"
+        },
+        {
+          "character" : "濹",
+          "readings" : "ボク"
+        },
+        {
+          "character" : "濺",
+          "meanings" : "sprinkle, splash",
+          "readings" : "セン"
+        },
+        {
+          "character" : "濾",
+          "meanings" : "filter",
+          "readings" : "ロ, リョ"
+        },
+        {
+          "character" : "瀁",
+          "meanings" : "drift, flow, overflowing",
+          "readings" : "ヨウ"
+        },
+        {
+          "character" : "瀉",
+          "meanings" : "evacuation",
+          "readings" : "シャ"
+        },
+        {
+          "character" : "瀏",
+          "meanings" : "clear",
+          "readings" : "リュウ"
+        },
+        {
+          "character" : "瀑",
+          "meanings" : "waterfall",
+          "readings" : "バク, ハク, ホウ, ボウ, ホク, ボク"
+        },
+        {
+          "character" : "瀘",
+          "meanings" : "name of river in China",
+          "readings" : "ロ"
+        },
+        {
+          "character" : "瀚",
+          "meanings" : "wide & large",
+          "readings" : "カン"
+        },
+        {
+          "character" : "瀛",
+          "meanings" : "ocean, swamp",
+          "readings" : "エイ"
+        },
+        {
+          "character" : "瀝",
+          "meanings" : "dropping",
+          "readings" : "レキ"
+        },
+        {
+          "character" : "瀞",
+          "meanings" : "pure water, clear water, pool in a river",
+          "readings" : "セイ, ショウ, ジュウ"
+        },
+        {
+          "character" : "瀟",
+          "meanings" : "pure, clean",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "瀦",
+          "meanings" : "pool, puddle",
+          "readings" : "チョ"
+        },
+        {
+          "character" : "瀧",
+          "meanings" : "waterfall, rapids, cascade",
+          "readings" : "ロウ, ソウ"
+        },
+        {
+          "character" : "瀨",
+          "meanings" : "swift current, rapids",
+          "readings" : "ライ"
+        },
+        {
+          "character" : "瀰",
+          "meanings" : "copious flow, broad, extensive",
+          "readings" : "ビ, ミ"
+        },
+        {
+          "character" : "瀲",
+          "meanings" : "brimming, rippling",
+          "readings" : "レン"
+        },
+        {
+          "character" : "瀾",
+          "meanings" : "large waves",
+          "readings" : "ラン"
+        },
+        {
+          "character" : "灌",
+          "meanings" : "pour",
+          "readings" : "カン"
+        },
+        {
+          "character" : "灑",
+          "meanings" : "sprinkle, wash, free and easy",
+          "readings" : "シャ, サイ, サ, セ"
+        },
+        {
+          "character" : "灣",
+          "meanings" : "gulf, bay, inlet",
+          "readings" : "ワン"
+        },
+        {
+          "character" : "盜",
+          "meanings" : "thief, to steal",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "粱",
+          "meanings" : "high quality rice",
+          "readings" : "リョウ"
+        },
+        {
+          "character" : "羨",
+          "meanings" : "envious, be jealous, covet",
+          "readings" : "セン, エン"
+        },
+        {
+          "character" : "茫",
+          "meanings" : "wide, extensive",
+          "readings" : "ボウ"
+        },
+        {
+          "character" : "蔆",
+          "meanings" : "water chestnut",
+          "readings" : "リョウ"
+        },
+        {
+          "character" : "衍",
+          "meanings" : "overflowing",
+          "readings" : "エン"
+        },
+        {
+          "character" : "海",
+          "readings" : "カイ"
+        },
+        {
+          "character" : "渚",
+          "readings" : "ショ"
+        },
+        {
+          "character" : "漢",
+          "readings" : "カン"
+        }
+      ],
+      "covers" : "A radical form with no kanji of its own: sound patterns and 339 kanji containing it, no standalone kanji",
+      "element" : "氵",
+      "found" : true,
+      "meaningExplanation" : "This element contributes forms associated with water, water radical (no. 85).",
+      "meanings" : "water, water radical (no. 85)",
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "MEANING / STRUCTURE",
+        "SOUND PATTERNS",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: コウ, セン, カン, エン",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternatives" : [
+
+      ],
+      "codePoint" : "U+6728",
+      "containingKanji" : [
+        {
+          "character" : "本",
+          "meanings" : "book, present, main",
+          "readings" : "ホン"
+        },
+        {
+          "character" : "東",
+          "meanings" : "east",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "相",
+          "meanings" : "inter-, mutual, together",
+          "readings" : "ソウ, ショウ"
+        },
+        {
+          "character" : "来",
+          "meanings" : "come, due, next",
+          "readings" : "ライ, タイ"
+        },
+        {
+          "character" : "機",
+          "meanings" : "loom, mechanism, machine",
+          "readings" : "キ"
+        },
+        {
+          "character" : "権",
+          "meanings" : "authority, power, rights",
+          "readings" : "ケン, ゴン"
+        },
+        {
+          "character" : "査",
+          "meanings" : "investigate",
+          "readings" : "サ"
+        },
+        {
+          "character" : "案",
+          "meanings" : "plan, suggestion, draft",
+          "readings" : "アン"
+        },
+        {
+          "character" : "集",
+          "meanings" : "gather, meet, congregate",
+          "readings" : "シュウ"
+        },
+        {
+          "character" : "村",
+          "meanings" : "village, town",
+          "readings" : "ソン"
+        },
+        {
+          "character" : "果",
+          "meanings" : "fruit, reward, carry out",
+          "readings" : "カ"
+        },
+        {
+          "character" : "格",
+          "meanings" : "status, rank, capacity",
+          "readings" : "カク, コウ, キャク, ゴウ"
+        },
+        {
+          "character" : "検",
+          "meanings" : "examination, investigate",
+          "readings" : "ケン"
+        },
+        {
+          "character" : "校",
+          "meanings" : "exam, school, printing",
+          "readings" : "コウ, キョウ"
+        },
+        {
+          "character" : "構",
+          "meanings" : "posture, stance, appearance",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "条",
+          "meanings" : "article, clause, counter for articles, clauses, paragraphs, etc.",
+          "readings" : "ジョウ, チョウ, デキ"
+        },
+        {
+          "character" : "楽",
+          "meanings" : "music, comfort, ease",
+          "readings" : "ガク, ラク, ゴウ"
+        },
+        {
+          "character" : "末",
+          "meanings" : "end, close, tip",
+          "readings" : "マツ, バツ"
+        },
+        {
+          "character" : "極",
+          "meanings" : "extreme, pole, extremely",
+          "readings" : "キョク, ゴク"
+        },
+        {
+          "character" : "松",
+          "meanings" : "pine tree",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "核",
+          "meanings" : "nucleus, core, kernel",
+          "readings" : "カク"
+        },
+        {
+          "character" : "横",
+          "meanings" : "sideways, side, horizontal",
+          "readings" : "オウ"
+        },
+        {
+          "character" : "深",
+          "meanings" : "deep, heighten, intensify",
+          "readings" : "シン"
+        },
+        {
+          "character" : "様",
+          "meanings" : "Esq., way, manner",
+          "readings" : "ヨウ, ショウ"
+        },
+        {
+          "character" : "橋",
+          "meanings" : "bridge",
+          "readings" : "キョウ"
+        },
+        {
+          "character" : "材",
+          "meanings" : "lumber, log, timber",
+          "readings" : "ザイ"
+        },
+        {
+          "character" : "根",
+          "meanings" : "root, radical, head (pimple)",
+          "readings" : "コン"
+        },
+        {
+          "character" : "休",
+          "meanings" : "rest, day off, retire",
+          "readings" : "キュウ"
+        },
+        {
+          "character" : "未",
+          "meanings" : "un-, not yet, hitherto",
+          "readings" : "ミ, ビ"
+        },
+        {
+          "character" : "林",
+          "meanings" : "grove, forest",
+          "readings" : "リン"
+        },
+        {
+          "character" : "模",
+          "meanings" : "imitation, copy, mock",
+          "readings" : "モ, ボ"
+        },
+        {
+          "character" : "標",
+          "meanings" : "signpost, seal, mark",
+          "readings" : "ヒョウ"
+        },
+        {
+          "character" : "植",
+          "meanings" : "plant",
+          "readings" : "ショク"
+        },
+        {
+          "character" : "途",
+          "meanings" : "route, way, road",
+          "readings" : "ト"
+        },
+        {
+          "character" : "築",
+          "meanings" : "fabricate, build, construct",
+          "readings" : "チク"
+        },
+        {
+          "character" : "染",
+          "meanings" : "dye, color, paint",
+          "readings" : "セン"
+        },
+        {
+          "character" : "雑",
+          "meanings" : "miscellaneous",
+          "readings" : "ザツ, ゾウ"
+        },
+        {
+          "character" : "困",
+          "meanings" : "quandary, become distressed, annoyed",
+          "readings" : "コン"
+        },
+        {
+          "character" : "棄",
+          "meanings" : "abandon, throw away, discard",
+          "readings" : "キ"
+        },
+        {
+          "character" : "枚",
+          "meanings" : "sheet of..., counter for flat thin objects or sheets",
+          "readings" : "マイ, バイ"
+        },
+        {
+          "character" : "束",
+          "meanings" : "bundle, sheaf, ream",
+          "readings" : "ソク"
+        },
+        {
+          "character" : "栄",
+          "meanings" : "flourish, prosperity, honor",
+          "readings" : "エイ, ヨウ"
+        },
+        {
+          "character" : "札",
+          "meanings" : "tag, paper money, counter for bonds",
+          "readings" : "サツ"
+        },
+        {
+          "character" : "枠",
+          "meanings" : "frame, framework, spindle"
+        },
+        {
+          "character" : "板",
+          "meanings" : "plank, board, plate",
+          "readings" : "ハン, バン"
+        },
+        {
+          "character" : "探",
+          "meanings" : "grope, search, look for",
+          "readings" : "タン"
+        },
+        {
+          "character" : "析",
+          "meanings" : "chop, divide, tear",
+          "readings" : "セキ"
+        },
+        {
+          "character" : "樹",
+          "meanings" : "timber, trees, wood",
+          "readings" : "ジュ"
+        },
+        {
+          "character" : "杉",
+          "meanings" : "cedar, cryptomeria",
+          "readings" : "サン"
+        },
+        {
+          "character" : "柱",
+          "meanings" : "pillar, post, cylinder",
+          "readings" : "チュウ"
+        },
+        {
+          "character" : "柄",
+          "meanings" : "design, pattern, build",
+          "readings" : "ヘイ"
+        },
+        {
+          "character" : "李",
+          "meanings" : "plum",
+          "readings" : "リ"
+        },
+        {
+          "character" : "柳",
+          "meanings" : "willow",
+          "readings" : "リュウ"
+        },
+        {
+          "character" : "床",
+          "meanings" : "bed, counter for beds, floor",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "柔",
+          "meanings" : "tender, weakness, gentleness",
+          "readings" : "ジュウ, ニュウ"
+        },
+        {
+          "character" : "梅",
+          "meanings" : "plum",
+          "readings" : "バイ"
+        },
+        {
+          "character" : "杯",
+          "meanings" : "counter for cupfuls, wine glass, glass",
+          "readings" : "ハイ"
+        },
+        {
+          "character" : "桜",
+          "meanings" : "cherry",
+          "readings" : "オウ, ヨウ"
+        },
+        {
+          "character" : "棋",
+          "meanings" : "chess piece, Japanese chess, shogi",
+          "readings" : "キ"
+        },
+        {
+          "character" : "械",
+          "meanings" : "contraption, fetter, machine",
+          "readings" : "カイ"
+        },
+        {
+          "character" : "概",
+          "meanings" : "outline, condition, approximation",
+          "readings" : "ガイ"
+        },
+        {
+          "character" : "梶",
+          "meanings" : "sculling oar",
+          "readings" : "ビ"
+        },
+        {
+          "character" : "枝",
+          "meanings" : "bough, branch, twig",
+          "readings" : "シ"
+        },
+        {
+          "character" : "塗",
+          "meanings" : "paint, plaster, daub",
+          "readings" : "ト"
+        },
+        {
+          "character" : "栃",
+          "meanings" : "horse chestnut, (kokuji)"
+        },
+        {
+          "character" : "棒",
+          "meanings" : "rod, stick, cane",
+          "readings" : "ボウ"
+        },
+        {
+          "character" : "栽",
+          "meanings" : "plantation, planting",
+          "readings" : "サイ"
+        },
+        {
+          "character" : "栗",
+          "meanings" : "chestnut",
+          "readings" : "リツ, リ"
+        },
+        {
+          "character" : "架",
+          "meanings" : "erect, frame, mount",
+          "readings" : "カ"
+        },
+        {
+          "character" : "棚",
+          "meanings" : "shelf, ledge, rack",
+          "readings" : "ホウ"
+        },
+        {
+          "character" : "柏",
+          "meanings" : "oak, cypress",
+          "readings" : "ハク, ヒャク, ビャク"
+        },
+        {
+          "character" : "朴",
+          "meanings" : "crude, simple, plain",
+          "readings" : "ボク"
+        },
+        {
+          "character" : "柴",
+          "meanings" : "brush, firewood",
+          "readings" : "サイ, シ"
+        },
+        {
+          "character" : "桑",
+          "meanings" : "mulberry",
+          "readings" : "ソウ"
+        },
+        {
+          "character" : "桂",
+          "meanings" : "Japanese Judas-tree, cinnamon tree",
+          "readings" : "ケイ"
+        },
+        {
+          "character" : "桐",
+          "meanings" : "paulownia",
+          "readings" : "トウ, ドウ"
+        },
+        {
+          "character" : "机",
+          "meanings" : "desk, table",
+          "readings" : "キ"
+        },
+        {
+          "character" : "柿",
+          "meanings" : "persimmon",
+          "readings" : "シ"
+        },
+        {
+          "character" : "枯",
+          "meanings" : "wither, die, dry up",
+          "readings" : "コ"
+        },
+        {
+          "character" : "桃",
+          "meanings" : "peach",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "枢",
+          "meanings" : "hinge, pivot, door",
+          "readings" : "スウ, シュ"
+        },
+        {
+          "character" : "槽",
+          "meanings" : "vat, tub, tank",
+          "readings" : "ソウ"
+        },
+        {
+          "character" : "樋",
+          "meanings" : "water pipe, gutter, downspout",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "楊",
+          "meanings" : "willow",
+          "readings" : "ヨウ"
+        },
+        {
+          "character" : "椿",
+          "meanings" : "camellia",
+          "readings" : "チン, チュン"
+        },
+        {
+          "character" : "呆",
+          "meanings" : "be amazed, disgusted, shocked",
+          "readings" : "ホウ"
+        },
+        {
+          "character" : "朽",
+          "meanings" : "decay, rot, remain in seclusion",
+          "readings" : "キュウ"
+        },
+        {
+          "character" : "椎",
+          "meanings" : "chinquapin, mallet, spine",
+          "readings" : "ツイ, スイ"
+        },
+        {
+          "character" : "楠",
+          "meanings" : "camphor tree",
+          "readings" : "ナン, ダン, ゼン, ネン"
+        },
+        {
+          "character" : "榎",
+          "meanings" : "lotus tree, nettle tree, hackberry",
+          "readings" : "カ"
+        },
+        {
+          "character" : "樽",
+          "meanings" : "barrel, cask, keg",
+          "readings" : "ソン"
+        },
+        {
+          "character" : "樺",
+          "meanings" : "birch, dark red",
+          "readings" : "カ"
+        },
+        {
+          "character" : "槙",
+          "meanings" : "twig, ornamental evergreen",
+          "readings" : "テン, シン"
+        },
+        {
+          "character" : "閑",
+          "meanings" : "leisure",
+          "readings" : "カン"
+        },
+        {
+          "character" : "槻",
+          "meanings" : "Zelkova tree",
+          "readings" : "キ"
+        },
+        {
+          "character" : "梁",
+          "meanings" : "weir, fish trap, beam",
+          "readings" : "リョウ"
+        },
+        {
+          "character" : "楢",
+          "meanings" : "oak",
+          "readings" : "シュウ, ユウ"
+        },
+        {
+          "character" : "橘",
+          "meanings" : "mandarin orange",
+          "readings" : "キツ"
+        },
+        {
+          "character" : "桧",
+          "meanings" : "Japanese cypress",
+          "readings" : "カイ"
+        },
+        {
+          "character" : "宋",
+          "meanings" : "dwell, Sung dynasty",
+          "readings" : "ソウ"
+        },
+        {
+          "character" : "杜",
+          "meanings" : "woods, grove",
+          "readings" : "ト, トウ, ズ"
+        },
+        {
+          "character" : "枕",
+          "meanings" : "pillow",
+          "readings" : "チン, シン"
+        },
+        {
+          "character" : "檜",
+          "meanings" : "Japanese cypress",
+          "readings" : "カイ"
+        },
+        {
+          "character" : "桟",
+          "meanings" : "scaffold, cleat, frame",
+          "readings" : "サン, セン"
+        },
+        {
+          "character" : "榊",
+          "meanings" : "sacred Shinto tree, (kokuji)"
+        },
+        {
+          "character" : "某",
+          "meanings" : "so-and-so, one, a certain",
+          "readings" : "ボウ"
+        },
+        {
+          "character" : "杏",
+          "meanings" : "apricot",
+          "readings" : "キョウ, アン, コウ"
+        },
+        {
+          "character" : "棺",
+          "meanings" : "coffin, casket",
+          "readings" : "カン"
+        },
+        {
+          "character" : "楼",
+          "meanings" : "watchtower, lookout, high building",
+          "readings" : "ロウ"
+        },
+        {
+          "character" : "橿",
+          "meanings" : "oak",
+          "readings" : "キョウ"
+        },
+        {
+          "character" : "栓",
+          "meanings" : "plug, bolt, cork",
+          "readings" : "セン"
+        },
+        {
+          "character" : "桶",
+          "meanings" : "tub, bucket",
+          "readings" : "ヨウ, トウ"
+        },
+        {
+          "character" : "梯",
+          "meanings" : "ladder, stairs, insatiable drinking",
+          "readings" : "テイ, タイ"
+        },
+        {
+          "character" : "椅",
+          "meanings" : "chair",
+          "readings" : "イ"
+        },
+        {
+          "character" : "樟",
+          "meanings" : "camphor",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "櫛",
+          "meanings" : "comb",
+          "readings" : "シツ"
+        },
+        {
+          "character" : "槍",
+          "meanings" : "spear, lance, javelin",
+          "readings" : "ソウ, ショウ"
+        },
+        {
+          "character" : "檀",
+          "meanings" : "cedar, sandalwood, spindle tree",
+          "readings" : "ダン, タン"
+        },
+        {
+          "character" : "樫",
+          "meanings" : "evergreen oak, (kokuji)"
+        },
+        {
+          "character" : "梓",
+          "meanings" : "catalpa tree, woodblock printing",
+          "readings" : "シ"
+        },
+        {
+          "character" : "杭",
+          "meanings" : "stake, post, picket",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "杵",
+          "meanings" : "wooden pestle",
+          "readings" : "ショ, ソ"
+        },
+        {
+          "character" : "杖",
+          "meanings" : "staff, cane",
+          "readings" : "ジョウ"
+        },
+        {
+          "character" : "桝",
+          "meanings" : "measuring box, (kokuji)"
+        },
+        {
+          "character" : "檄",
+          "meanings" : "written appeal, manifesto",
+          "readings" : "ケキ"
+        },
+        {
+          "character" : "椙",
+          "meanings" : "Japanese cedar, cryptomeria, (kokuji)"
+        },
+        {
+          "character" : "槌",
+          "meanings" : "hammer, mallet",
+          "readings" : "ツイ"
+        },
+        {
+          "character" : "楕",
+          "meanings" : "ellipse",
+          "readings" : "ダ, タ"
+        },
+        {
+          "character" : "藁",
+          "meanings" : "straw",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "柚",
+          "meanings" : "citron",
+          "readings" : "ユ, ユウ, ジク"
+        },
+        {
+          "character" : "杞",
+          "meanings" : "river willow",
+          "readings" : "コ, キ"
+        },
+        {
+          "character" : "㭷"
+        },
+        {
+          "character" : "來",
+          "meanings" : "come, due, next",
+          "readings" : "ライ, タイ"
+        },
+        {
+          "character" : "凩",
+          "meanings" : "wintry wind, (kokuji)"
+        },
+        {
+          "character" : "喿",
+          "meanings" : "chirping of birds",
+          "readings" : "ソウ, ショウ"
+        },
+        {
+          "character" : "寨",
+          "meanings" : "fort",
+          "readings" : "サイ"
+        },
+        {
+          "character" : "弑",
+          "meanings" : "murder one's lord or father",
+          "readings" : "シ, シイ"
+        },
+        {
+          "character" : "憖",
+          "meanings" : "thoughtlessly",
+          "readings" : "ギン, キン"
+        },
+        {
+          "character" : "朮",
+          "meanings" : "a type of millet, a type of herb",
+          "readings" : "ジュツ, シュツ, チュツ"
+        },
+        {
+          "character" : "朶",
+          "meanings" : "branch",
+          "readings" : "ダ, タ"
+        },
+        {
+          "character" : "朷",
+          "meanings" : "type of tree",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "朸",
+          "meanings" : "carrying pole",
+          "readings" : "リョク"
+        },
+        {
+          "character" : "朿",
+          "meanings" : "thorn",
+          "readings" : "シ"
+        },
+        {
+          "character" : "杁",
+          "meanings" : "sluice, spout, floodgate"
+        },
+        {
+          "character" : "杆",
+          "meanings" : "shield, pole",
+          "readings" : "カン"
+        },
+        {
+          "character" : "杓",
+          "meanings" : "ladle, scoop",
+          "readings" : "シャク, チョウ, テキ, ヒョウ"
+        },
+        {
+          "character" : "杙",
+          "meanings" : "stake, post, picket",
+          "readings" : "ヨク"
+        },
+        {
+          "character" : "杠",
+          "meanings" : "lever, pole, crowbar",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "杢",
+          "meanings" : "woodworker, (kokuji)"
+        },
+        {
+          "character" : "杣",
+          "meanings" : "timber, lumber, woodcutter"
+        },
+        {
+          "character" : "杤",
+          "meanings" : "type of oak, stable, (kokuji)"
+        },
+        {
+          "character" : "杦"
+        },
+        {
+          "character" : "杪",
+          "meanings" : "twig, treetop",
+          "readings" : "ビョウ, ショウ"
+        },
+        {
+          "character" : "杰",
+          "meanings" : "hero, heroic, outstanding",
+          "readings" : "ケツ, ゲチ"
+        },
+        {
+          "character" : "杲",
+          "meanings" : "clear, high",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "杳",
+          "meanings" : "darkness, dimly",
+          "readings" : "ヨウ"
+        },
+        {
+          "character" : "杷",
+          "meanings" : "kind of rake, loquat",
+          "readings" : "ハ"
+        },
+        {
+          "character" : "杼",
+          "meanings" : "shuttle",
+          "readings" : "チョ, ショ"
+        },
+        {
+          "character" : "枅",
+          "meanings" : "rafter, place name",
+          "readings" : "ケイ"
+        },
+        {
+          "character" : "枇",
+          "meanings" : "loquat, spoon",
+          "readings" : "ビ, ヒ"
+        },
+        {
+          "character" : "枉",
+          "meanings" : "bend, curve, crooked",
+          "readings" : "オウ"
+        },
+        {
+          "character" : "枋",
+          "meanings" : "raft, boat",
+          "readings" : "ホウ, ヘイ"
+        },
+        {
+          "character" : "枌",
+          "meanings" : "pine tree",
+          "readings" : "ショウ, フン"
+        },
+        {
+          "character" : "枡",
+          "meanings" : "measuring box, (kokuji)"
+        },
+        {
+          "character" : "枦",
+          "meanings" : "wax tree, sumac",
+          "readings" : "ロ"
+        },
+        {
+          "character" : "枩",
+          "meanings" : "pine tree, fir tree",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "枳",
+          "meanings" : "trifoliate orange tree, thorny tree used for hedges",
+          "readings" : "キ, シ"
+        },
+        {
+          "character" : "枴",
+          "meanings" : "cane, walking stick",
+          "readings" : "カイ"
+        },
+        {
+          "character" : "枷",
+          "meanings" : "shackles, irons, handcuffs",
+          "readings" : "カ"
+        },
+        {
+          "character" : "枸",
+          "meanings" : "quince tree",
+          "readings" : "ク, コウ"
+        },
+        {
+          "character" : "枹",
+          "meanings" : "gong stick, drum stick, type of tree",
+          "readings" : "フ, ホウ"
+        },
+        {
+          "character" : "枼",
+          "meanings" : "table, flat pieces of wood, slip",
+          "readings" : "ヨウ"
+        },
+        {
+          "character" : "柁",
+          "meanings" : "rudder, helm, wheel",
+          "readings" : "ダ, タ"
+        },
+        {
+          "character" : "柆",
+          "meanings" : "bent tree, broken tree",
+          "readings" : "ロウ"
+        },
+        {
+          "character" : "柊",
+          "meanings" : "holly",
+          "readings" : "シュ, シュウ"
+        },
+        {
+          "character" : "柎",
+          "meanings" : "raft, calyx",
+          "readings" : "フ"
+        },
+        {
+          "character" : "柑",
+          "meanings" : "citrus, orange",
+          "readings" : "コン, カン"
+        },
+        {
+          "character" : "柘",
+          "meanings" : "wild mulberry",
+          "readings" : "シャ, ジャク"
+        },
+        {
+          "character" : "柝",
+          "meanings" : "sounding sticks",
+          "readings" : "タク"
+        },
+        {
+          "character" : "柞",
+          "meanings" : "type of oak",
+          "readings" : "サク"
+        },
+        {
+          "character" : "柢",
+          "meanings" : "root, founded on",
+          "readings" : "テイ"
+        },
+        {
+          "character" : "柤",
+          "meanings" : "railing",
+          "readings" : "サ"
+        },
+        {
+          "character" : "柧",
+          "meanings" : "corner, spire, goblet",
+          "readings" : "コ, カ"
+        },
+        {
+          "character" : "柩",
+          "meanings" : "bier, coffin",
+          "readings" : "キュウ, グ"
+        },
+        {
+          "character" : "柬",
+          "meanings" : "select, pick out",
+          "readings" : "カン, ケン"
+        },
+        {
+          "character" : "柮",
+          "meanings" : "to cut, a stump",
+          "readings" : "トツ"
+        },
+        {
+          "character" : "柯",
+          "meanings" : "handle",
+          "readings" : "カ"
+        },
+        {
+          "character" : "柵",
+          "meanings" : "stockade, fence, weir",
+          "readings" : "サク, サン"
+        },
+        {
+          "character" : "柾",
+          "meanings" : "straight grain, spindle tree, (kokuji)"
+        },
+        {
+          "character" : "栁"
+        },
+        {
+          "character" : "栂",
+          "meanings" : "hemlock, (kokuji)"
+        },
+        {
+          "character" : "栖",
+          "meanings" : "nest, rookery, hive",
+          "readings" : "セイ"
+        },
+        {
+          "character" : "栞",
+          "meanings" : "bookmark, guidebook",
+          "readings" : "カン"
+        },
+        {
+          "character" : "栢",
+          "meanings" : "oak",
+          "readings" : "ハク, ヒャク"
+        },
+        {
+          "character" : "栩",
+          "meanings" : "type of oak",
+          "readings" : "ク"
+        },
+        {
+          "character" : "栫",
+          "meanings" : "weir",
+          "readings" : "セン, ソン"
+        },
+        {
+          "character" : "栬",
+          "readings" : "セイ, セ"
+        },
+        {
+          "character" : "栲",
+          "meanings" : "sumac, cloth woven from tree fibres",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "栴",
+          "meanings" : "maple tree, colorful autumn foliage",
+          "readings" : "セイ, セン"
+        },
+        {
+          "character" : "桀",
+          "meanings" : "measuring box",
+          "readings" : "ケツ"
+        },
+        {
+          "character" : "桁",
+          "meanings" : "beam, girder, spar",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "框",
+          "meanings" : "framework",
+          "readings" : "キョウ"
+        },
+        {
+          "character" : "桍",
+          "meanings" : "type of tree, empty",
+          "readings" : "コ"
+        },
+        {
+          "character" : "桎",
+          "meanings" : "fetters",
+          "readings" : "シツ"
+        },
+        {
+          "character" : "桓",
+          "meanings" : "marking post",
+          "readings" : "カン"
+        },
+        {
+          "character" : "桔",
+          "meanings" : "used in plant names",
+          "readings" : "キツ, ケツ"
+        },
+        {
+          "character" : "桙",
+          "meanings" : "halberd",
+          "readings" : "ウ"
+        },
+        {
+          "character" : "桛",
+          "meanings" : "reel, hank, skein",
+          "readings" : "カセ"
+        },
+        {
+          "character" : "档",
+          "meanings" : "bookshelf, archives",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "桴",
+          "meanings" : "drumstick, raft",
+          "readings" : "フ"
+        },
+        {
+          "character" : "桷",
+          "meanings" : "rafter",
+          "readings" : "カク"
+        },
+        {
+          "character" : "桼",
+          "readings" : "シツ"
+        },
+        {
+          "character" : "桾",
+          "meanings" : "type of fruit tree",
+          "readings" : "クン"
+        },
+        {
+          "character" : "桿",
+          "meanings" : "shield, pole",
+          "readings" : "カン"
+        },
+        {
+          "character" : "梃",
+          "meanings" : "lever",
+          "readings" : "チョウ, テイ"
+        },
+        {
+          "character" : "梍",
+          "meanings" : "sickle handle, type of tree",
+          "readings" : "ユウ"
+        },
+        {
+          "character" : "梏",
+          "meanings" : "manacles",
+          "readings" : "コク, カク"
+        },
+        {
+          "character" : "梔",
+          "meanings" : "gardenia",
+          "readings" : "シ"
+        },
+        {
+          "character" : "梗",
+          "meanings" : "for the most part, close up, flower stem",
+          "readings" : "コウ, キョウ"
+        },
+        {
+          "character" : "梛",
+          "meanings" : "type of tall evergreen tree",
+          "readings" : "ダ, ナ"
+        },
+        {
+          "character" : "梟",
+          "meanings" : "owl, expose",
+          "readings" : "キョウ"
+        },
+        {
+          "character" : "梠",
+          "meanings" : "a kind of quince",
+          "readings" : "ロ, リョ"
+        },
+        {
+          "character" : "梢",
+          "meanings" : "treetops, twig",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "梧",
+          "meanings" : "Chinese parasol tree, phoenix tree",
+          "readings" : "ゴ"
+        },
+        {
+          "character" : "梭",
+          "meanings" : "shuttle",
+          "readings" : "サ"
+        },
+        {
+          "character" : "梳",
+          "meanings" : "comb (hair)",
+          "readings" : "ソ"
+        },
+        {
+          "character" : "梹",
+          "meanings" : "areca nut, betel nut",
+          "readings" : "ヒン"
+        },
+        {
+          "character" : "梻",
+          "meanings" : "grave tree, (kokuji)"
+        },
+        {
+          "character" : "梼",
+          "meanings" : "block of wood, blockhead, stupid",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "棆",
+          "meanings" : "camphor tree",
+          "readings" : "リン"
+        },
+        {
+          "character" : "棉",
+          "meanings" : "cotton",
+          "readings" : "メン"
+        },
+        {
+          "character" : "棊",
+          "meanings" : "Japanese chess",
+          "readings" : "キ"
+        },
+        {
+          "character" : "棍",
+          "meanings" : "a cane",
+          "readings" : "コン"
+        },
+        {
+          "character" : "棔",
+          "meanings" : "silk tree",
+          "readings" : "コン"
+        },
+        {
+          "character" : "棕",
+          "meanings" : "hemp palm",
+          "readings" : "シュ, ソウ"
+        },
+        {
+          "character" : "棠",
+          "meanings" : "wild pear tree, crabapple tree",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "棡",
+          "meanings" : "mast crossbeam",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "棣",
+          "meanings" : "flowering almond",
+          "readings" : "テイ, タイ"
+        },
+        {
+          "character" : "棧",
+          "meanings" : "crosspiece",
+          "readings" : "サン, セン"
+        },
+        {
+          "character" : "棯",
+          "meanings" : "type of fruit tree",
+          "readings" : "ネン"
+        },
+        {
+          "character" : "棲",
+          "meanings" : "live, dwell",
+          "readings" : "セイ"
+        },
+        {
+          "character" : "棹",
+          "meanings" : "pole a boat",
+          "readings" : "トウ, タク"
+        },
+        {
+          "character" : "椀",
+          "meanings" : "wooden or lacquered bowl",
+          "readings" : "ワン"
+        },
+        {
+          "character" : "椁",
+          "meanings" : "outer box for a coffin",
+          "readings" : "カク"
+        },
+        {
+          "character" : "椄",
+          "meanings" : "graft",
+          "readings" : "セツ, ショウ"
+        },
+        {
+          "character" : "椈",
+          "meanings" : "oak",
+          "readings" : "キク"
+        },
+        {
+          "character" : "椋",
+          "meanings" : "type of deciduous tree, grey starling",
+          "readings" : "リョウ"
+        },
+        {
+          "character" : "椌",
+          "meanings" : "type of ancient musical instrument, unadorned tool",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "椏",
+          "meanings" : "crotch of a tree"
+        },
+        {
+          "character" : "椒",
+          "meanings" : "Japanese pepper tree",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "椗",
+          "readings" : "テイ"
+        },
+        {
+          "character" : "椚",
+          "meanings" : "oak used for charcoal, (kokuji)"
+        },
+        {
+          "character" : "椛",
+          "meanings" : "autumn foliage, birch, maple"
+        },
+        {
+          "character" : "椡",
+          "meanings" : "type of oak, (kokuji)"
+        },
+        {
+          "character" : "椢",
+          "meanings" : "bottom, box, type of oak tree",
+          "readings" : "カイ"
+        },
+        {
+          "character" : "椣",
+          "meanings" : "type of deciduous birch tree, (kokuji)"
+        },
+        {
+          "character" : "椥",
+          "meanings" : "type of evergreen tree, (kokuji)"
+        },
+        {
+          "character" : "椦",
+          "meanings" : "wickerwork, (ghost kanji)",
+          "readings" : "ケン"
+        },
+        {
+          "character" : "椨",
+          "meanings" : "type of evergreen camphor tree, (kokuji)"
+        },
+        {
+          "character" : "椪",
+          "meanings" : "name of a place in India, Poona",
+          "readings" : "ポン"
+        },
+        {
+          "character" : "椰",
+          "meanings" : "coconut tree",
+          "readings" : "ヤ"
+        },
+        {
+          "character" : "椴",
+          "meanings" : "fir",
+          "readings" : "タン, ダン, トド"
+        },
+        {
+          "character" : "椶",
+          "meanings" : "hemp palm",
+          "readings" : "シュ, ソウ"
+        },
+        {
+          "character" : "椹",
+          "meanings" : "type of cypress",
+          "readings" : "ジン, チン, シン"
+        },
+        {
+          "character" : "椽",
+          "meanings" : "rafter, porch",
+          "readings" : "テン"
+        },
+        {
+          "character" : "楓",
+          "meanings" : "maple",
+          "readings" : "フウ"
+        },
+        {
+          "character" : "楔",
+          "meanings" : "wedge, arrowhead",
+          "readings" : "ケツ, セツ"
+        },
+        {
+          "character" : "楙",
+          "meanings" : "name of plant, lush",
+          "readings" : "ボウ"
+        },
+        {
+          "character" : "楜",
+          "meanings" : "pepper",
+          "readings" : "コ"
+        },
+        {
+          "character" : "楞",
+          "meanings" : "corner, protrusion",
+          "readings" : "リョウ, ロウ"
+        },
+        {
+          "character" : "楡",
+          "meanings" : "elm",
+          "readings" : "ユ"
+        },
+        {
+          "character" : "楫",
+          "meanings" : "sculling oar",
+          "readings" : "シュウ, ショウ"
+        },
+        {
+          "character" : "楮",
+          "meanings" : "paper mulberry",
+          "readings" : "チョ"
+        },
+        {
+          "character" : "楯",
+          "meanings" : "shield, buckler, pretext",
+          "readings" : "ジュン"
+        },
+        {
+          "character" : "楴",
+          "meanings" : "ornamental hairpin",
+          "readings" : "テイ"
+        },
+        {
+          "character" : "楷",
+          "meanings" : "square character style, correctness",
+          "readings" : "カイ"
+        },
+        {
+          "character" : "楹",
+          "meanings" : "pillar",
+          "readings" : "エイ"
+        },
+        {
+          "character" : "楾",
+          "meanings" : "container for pouring water, (kokuji)"
+        },
+        {
+          "character" : "榀"
+        },
+        {
+          "character" : "榁",
+          "meanings" : "needle juniper, (kokuji)"
+        },
+        {
+          "character" : "榑",
+          "meanings" : "unbarked lumber",
+          "readings" : "フ"
+        },
+        {
+          "character" : "榔",
+          "meanings" : "betel palm tree",
+          "readings" : "ロウ"
+        },
+        {
+          "character" : "榕",
+          "meanings" : "evergreen mulberry",
+          "readings" : "ヨウ"
+        },
+        {
+          "character" : "榜",
+          "meanings" : "rudder, oar, name plate",
+          "readings" : "ボウ, ホウ"
+        },
+        {
+          "character" : "榠",
+          "meanings" : "type of tree",
+          "readings" : "ベイ"
+        },
+        {
+          "character" : "榧",
+          "meanings" : "Japanese nutmeg, plum-yew",
+          "readings" : "ヒ"
+        },
+        {
+          "character" : "榮",
+          "meanings" : "flourish, prosperity, honour",
+          "readings" : "エイ, ヨウ"
+        },
+        {
+          "character" : "榱",
+          "meanings" : "rafter",
+          "readings" : "スイ"
+        },
+        {
+          "character" : "榲",
+          "meanings" : "quince",
+          "readings" : "オツ"
+        },
+        {
+          "character" : "榴",
+          "meanings" : "pomegranate",
+          "readings" : "ル, リュウ, リョウ"
+        },
+        {
+          "character" : "榻",
+          "meanings" : "chair",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "榾",
+          "meanings" : "chip (of wood)",
+          "readings" : "コツ"
+        },
+        {
+          "character" : "榿",
+          "meanings" : "alder",
+          "readings" : "ガイ, カイ"
+        },
+        {
+          "character" : "槁",
+          "meanings" : "die (vegetation)",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "槃",
+          "meanings" : "tub",
+          "readings" : "ハン"
+        },
+        {
+          "character" : "槇",
+          "meanings" : "twig, Chinese black pine",
+          "readings" : "テン, シン"
+        },
+        {
+          "character" : "槊",
+          "meanings" : "halberd",
+          "readings" : "サク"
+        },
+        {
+          "character" : "槎",
+          "meanings" : "raft, cut slantwise",
+          "readings" : "サ"
+        },
+        {
+          "character" : "槐",
+          "meanings" : "type of Japanese pagoda tree",
+          "readings" : "カイ"
+        },
+        {
+          "character" : "槓",
+          "meanings" : "lever",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "槝",
+          "meanings" : "oak, mooring pole, used in proper names"
+        },
+        {
+          "character" : "槞",
+          "meanings" : "cage, (ghost kanji)",
+          "readings" : "ロウ"
+        },
+        {
+          "character" : "槧",
+          "meanings" : "printed book",
+          "readings" : "ザン, セン, サン"
+        },
+        {
+          "character" : "槨",
+          "meanings" : "outer box for a coffin",
+          "readings" : "カク"
+        },
+        {
+          "character" : "槪",
+          "meanings" : "generally, approximately",
+          "readings" : "ガイ, カイ"
+        },
+        {
+          "character" : "槫",
+          "meanings" : "hearse",
+          "readings" : "タン, セン"
+        },
+        {
+          "character" : "槭",
+          "meanings" : "maple tree",
+          "readings" : "セキ, シュク"
+        },
+        {
+          "character" : "槲",
+          "meanings" : "oak",
+          "readings" : "コク"
+        },
+        {
+          "character" : "槹",
+          "meanings" : "well sweep",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "槿",
+          "meanings" : "rose of Sharon",
+          "readings" : "キン"
+        },
+        {
+          "character" : "樂",
+          "meanings" : "music, comfort",
+          "readings" : "ガク, ラク, ゴウ"
+        },
+        {
+          "character" : "樅",
+          "meanings" : "fir",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "樊",
+          "meanings" : "cage, fence, pen",
+          "readings" : "ハン"
+        },
+        {
+          "character" : "樌",
+          "meanings" : "grove",
+          "readings" : "カン"
+        },
+        {
+          "character" : "樒",
+          "meanings" : "tree whose branches are placed on Buddhist graves",
+          "readings" : "ミツ"
+        },
+        {
+          "character" : "樓",
+          "meanings" : "tower, turret",
+          "readings" : "ロウ"
+        },
+        {
+          "character" : "樗",
+          "meanings" : "Japanese bead tree",
+          "readings" : "チョ"
+        },
+        {
+          "character" : "樛",
+          "meanings" : "bend, droop, undulate",
+          "readings" : "キュウ"
+        },
+        {
+          "character" : "樞",
+          "meanings" : "pivot, door",
+          "readings" : "スウ, シュ"
+        },
+        {
+          "character" : "樢",
+          "meanings" : "type of bird, vine",
+          "readings" : "ト, チョウ"
+        },
+        {
+          "character" : "樣",
+          "meanings" : "Esq., way, manner",
+          "readings" : "ヨウ, ショウ"
+        },
+        {
+          "character" : "樮",
+          "meanings" : "a type of tree, (kokuji)"
+        },
+        {
+          "character" : "樰"
+        },
+        {
+          "character" : "樵",
+          "meanings" : "woodcutting, lumberjack",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "樶",
+          "meanings" : "knot in wood",
+          "readings" : "サイ"
+        },
+        {
+          "character" : "樸",
+          "meanings" : "bark of a tree",
+          "readings" : "ボク, ハク, ホク"
+        },
+        {
+          "character" : "樻",
+          "readings" : "キ"
+        },
+        {
+          "character" : "橄",
+          "meanings" : "olive",
+          "readings" : "カン"
+        },
+        {
+          "character" : "橇",
+          "meanings" : "sled, sleigh, snowshoes",
+          "readings" : "キョウ, ゼイ, セイ"
+        },
+        {
+          "character" : "橈",
+          "meanings" : "oar, scull, paddle",
+          "readings" : "ドウ, ジョウ, ニョウ"
+        },
+        {
+          "character" : "橙",
+          "meanings" : "bitter orange",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "橡",
+          "meanings" : "horse chestnut",
+          "readings" : "ショウ, ゾウ"
+        },
+        {
+          "character" : "橢",
+          "meanings" : "ellipse",
+          "readings" : "ダ"
+        },
+        {
+          "character" : "橦",
+          "meanings" : "pole",
+          "readings" : "シュ, ショウ, トウ"
+        },
+        {
+          "character" : "橧",
+          "meanings" : "hut",
+          "readings" : "ソウ, ショウ"
+        },
+        {
+          "character" : "橫",
+          "meanings" : "across, horizontal, lateral",
+          "readings" : "オウ, コウ"
+        },
+        {
+          "character" : "橲",
+          "meanings" : "Japanese storax, used in proper names",
+          "readings" : "キ"
+        },
+        {
+          "character" : "橳",
+          "readings" : "クデ"
+        },
+        {
+          "character" : "橸",
+          "meanings" : "straight grain"
+        },
+        {
+          "character" : "檍",
+          "meanings" : "ilex, holm oak, birdlime tree",
+          "readings" : "オク"
+        },
+        {
+          "character" : "檎",
+          "meanings" : "apple",
+          "readings" : "キン, ゴン, ゴ"
+        },
+        {
+          "character" : "檐",
+          "meanings" : "eaves",
+          "readings" : "エン, タン"
+        },
+        {
+          "character" : "檗",
+          "meanings" : "Amur or Chinese cork tree",
+          "readings" : "ハク, ビャク"
+        },
+        {
+          "character" : "檠",
+          "meanings" : "straighten a bow, lamp stand",
+          "readings" : "ケイ"
+        },
+        {
+          "character" : "檢",
+          "meanings" : "check, examine",
+          "readings" : "ケン"
+        },
+        {
+          "character" : "檣",
+          "meanings" : "mast",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "檬",
+          "meanings" : "lemon tree",
+          "readings" : "モウ"
+        },
+        {
+          "character" : "檮",
+          "meanings" : "stump, foolish, ignorant",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "檰",
+          "readings" : "ヘン, メン"
+        },
+        {
+          "character" : "檳",
+          "meanings" : "betel-nut palm",
+          "readings" : "ビン, ヒン"
+        },
+        {
+          "character" : "檸",
+          "meanings" : "lemon tree",
+          "readings" : "ネイ, ドウ"
+        },
+        {
+          "character" : "檻",
+          "meanings" : "pen, corral, cell",
+          "readings" : "カン"
+        },
+        {
+          "character" : "櫁",
+          "meanings" : "Japanese star anise",
+          "readings" : "ミツ"
+        },
+        {
+          "character" : "櫂",
+          "meanings" : "oar, scull, paddle",
+          "readings" : "トウ, タク"
+        },
+        {
+          "character" : "櫃",
+          "meanings" : "chest, coffer, tub",
+          "readings" : "キ"
+        },
+        {
+          "character" : "櫑",
+          "meanings" : "decorated wine cask, decorated sword hilt",
+          "readings" : "ライ"
+        },
+        {
+          "character" : "櫓",
+          "meanings" : "oar, tower",
+          "readings" : "ロ"
+        },
+        {
+          "character" : "櫚",
+          "meanings" : "kind of quince",
+          "readings" : "ロ, リョ"
+        },
+        {
+          "character" : "櫞",
+          "meanings" : "kind of lemon tree",
+          "readings" : "エン"
+        },
+        {
+          "character" : "櫤",
+          "readings" : "セン"
+        },
+        {
+          "character" : "櫨",
+          "meanings" : "wax tree, sumac",
+          "readings" : "ロ"
+        },
+        {
+          "character" : "櫺",
+          "meanings" : "latticework",
+          "readings" : "レイ, リョウ"
+        },
+        {
+          "character" : "櫻",
+          "meanings" : "cherry",
+          "readings" : "オウ, ヨウ"
+        },
+        {
+          "character" : "欅",
+          "meanings" : "keyaki, zelkova tree",
+          "readings" : "キョ"
+        },
+        {
+          "character" : "權",
+          "meanings" : "authority, power, rights",
+          "readings" : "ケン, ゴン"
+        },
+        {
+          "character" : "欒",
+          "meanings" : "chinaberry tree, round, harmonious",
+          "readings" : "ラン"
+        },
+        {
+          "character" : "欖",
+          "meanings" : "Chinese olive tree",
+          "readings" : "ラン"
+        },
+        {
+          "character" : "欝",
+          "meanings" : "gloom, depression, melancholy",
+          "readings" : "ウツ, ウン"
+        },
+        {
+          "character" : "欟",
+          "meanings" : "keyaki, zelkova tree, (kokuji)"
+        },
+        {
+          "character" : "沐",
+          "meanings" : "wash",
+          "readings" : "モク"
+        },
+        {
+          "character" : "渠",
+          "meanings" : "ditch, canal, lock",
+          "readings" : "キョ"
+        },
+        {
+          "character" : "爨",
+          "meanings" : "cook, boil",
+          "readings" : "サン"
+        },
+        {
+          "character" : "牀",
+          "meanings" : "bed, couch, bench",
+          "readings" : "ショウ, ソウ"
+        },
+        {
+          "character" : "禾",
+          "meanings" : "two-branch tree radical (no. 115)",
+          "readings" : "カ"
+        },
+        {
+          "character" : "蘂",
+          "meanings" : "pistil, stamen",
+          "readings" : "ズイ"
+        },
+        {
+          "character" : "蘖",
+          "meanings" : "sprout",
+          "readings" : "ゲツ"
+        },
+        {
+          "character" : "裹",
+          "meanings" : "wrap, pack up, cover",
+          "readings" : "ホウ, カ"
+        },
+        {
+          "character" : "采",
+          "meanings" : "dice, form, appearance",
+          "readings" : "サイ"
+        },
+        {
+          "character" : "釐",
+          "meanings" : "few, tenth of a bu",
+          "readings" : "リ"
+        },
+        {
+          "character" : "隸",
+          "meanings" : "servant, prisoner, criminal",
+          "readings" : "レイ"
+        },
+        {
+          "character" : "雜",
+          "meanings" : "mixed, blended, mix",
+          "readings" : "ザツ, ゾウ"
+        },
+        {
+          "character" : "鬱",
+          "meanings" : "gloom, depression, melancholy",
+          "readings" : "ウツ"
+        },
+        {
+          "character" : "殺",
+          "meanings" : "kill, slaughter, murder"
+        },
+        {
+          "character" : "﨓"
+        },
+        {
+          "character" : "梅",
+          "meanings" : "plum",
+          "readings" : "バイ"
+        },
+        {
+          "character" : "𡱖",
+          "meanings" : "female genitalia, vulva, (kokuji)"
+        },
+        {
+          "character" : "𣏒"
+        },
+        {
+          "character" : "𣑊"
+        },
+        {
+          "character" : "𣕚"
+        },
+        {
+          "character" : "𣖔"
+        },
+        {
+          "character" : "𣗄"
+        },
+        {
+          "character" : "𣜌"
+        },
+        {
+          "character" : "𣜜"
+        },
+        {
+          "character" : "𨺉"
+        }
+      ],
+      "covers" : "The element in the most kanji (394), in the reference's order",
+      "element" : "木",
+      "found" : true,
+      "meaningExplanation" : "This element contributes forms associated with tree, wood.",
+      "meanings" : "tree, wood",
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "MEANING / STRUCTURE",
+        "SOUND PATTERNS",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: ショウ, コウ, トウ, カン",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternatives" : [
+
+      ],
+      "codePoint" : "U+8980",
+      "containingKanji" : [
+        {
+          "character" : "要",
+          "meanings" : "need, main point, essence",
+          "readings" : "ヨウ"
+        },
+        {
+          "character" : "票",
+          "meanings" : "ballot, label, ticket",
+          "readings" : "ヒョウ"
+        },
+        {
+          "character" : "覇",
+          "meanings" : "hegemony, supremacy, leadership",
+          "readings" : "ハ, ハク"
+        },
+        {
+          "character" : "煙",
+          "meanings" : "smoke",
+          "readings" : "エン"
+        },
+        {
+          "character" : "覆",
+          "meanings" : "capsize, cover, shade",
+          "readings" : "フク"
+        },
+        {
+          "character" : "栗",
+          "meanings" : "chestnut",
+          "readings" : "リツ, リ"
+        },
+        {
+          "character" : "遷",
+          "meanings" : "transition, move, change",
+          "readings" : "セン"
+        },
+        {
+          "character" : "粟",
+          "meanings" : "millet",
+          "readings" : "ゾク, ショク, ソク"
+        },
+        {
+          "character" : "僊",
+          "meanings" : "hermit",
+          "readings" : "セン"
+        },
+        {
+          "character" : "僲"
+        },
+        {
+          "character" : "堙",
+          "meanings" : "close up, stop up",
+          "readings" : "イン"
+        },
+        {
+          "character" : "樮",
+          "meanings" : "a type of tree, (kokuji)"
+        },
+        {
+          "character" : "湮",
+          "meanings" : "sink",
+          "readings" : "イン, エン"
+        },
+        {
+          "character" : "潭",
+          "meanings" : "deep water, deep",
+          "readings" : "タン, ジン"
+        },
+        {
+          "character" : "甄",
+          "meanings" : "porcelain, make clear, distinguish between",
+          "readings" : "ケン, シン"
+        },
+        {
+          "character" : "簟",
+          "meanings" : "a type of bamboo, round bamboo lunchbox",
+          "readings" : "タン, テン"
+        },
+        {
+          "character" : "蕈",
+          "meanings" : "mushroom, toadstool, fungus",
+          "readings" : "ジン, シン"
+        },
+        {
+          "character" : "譚",
+          "meanings" : "talk",
+          "readings" : "タン"
+        },
+        {
+          "character" : "賈",
+          "meanings" : "buy, tradesman",
+          "readings" : "コ, カ"
+        },
+        {
+          "character" : "鐔",
+          "meanings" : "sword guard, hilt",
+          "readings" : "タン, シン"
+        }
+      ],
+      "covers" : "An element of 要, the fixture kanji",
+      "element" : "覀",
+      "found" : true,
+      "meaningExplanation" : "This element contributes forms associated with variant of radical 146.",
+      "meanings" : "variant of radical 146",
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "MEANING / STRUCTURE",
+        "SOUND PATTERNS",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: タン, シン, イン, エン",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternatives" : [
+
+      ],
+      "codePoint" : "U+5973",
+      "containingKanji" : [
+        {
+          "character" : "要",
+          "meanings" : "need, main point, essence",
+          "readings" : "ヨウ"
+        },
+        {
+          "character" : "安",
+          "meanings" : "relax, cheap, low",
+          "readings" : "アン"
+        },
+        {
+          "character" : "数",
+          "meanings" : "number, strength, fate",
+          "readings" : "スウ, ス, サク, ソク, シュ"
+        },
+        {
+          "character" : "委",
+          "meanings" : "committee, entrust to, leave to",
+          "readings" : "イ"
+        },
+        {
+          "character" : "始",
+          "meanings" : "commence, begin",
+          "readings" : "シ"
+        },
+        {
+          "character" : "好",
+          "meanings" : "fond, pleasing, like something",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "姿",
+          "meanings" : "figure, form, shape",
+          "readings" : "シ"
+        },
+        {
+          "character" : "婦",
+          "meanings" : "lady, woman, wife",
+          "readings" : "フ"
+        },
+        {
+          "character" : "妻",
+          "meanings" : "wife, spouse",
+          "readings" : "サイ"
+        },
+        {
+          "character" : "婚",
+          "meanings" : "marriage",
+          "readings" : "コン"
+        },
+        {
+          "character" : "妥",
+          "meanings" : "gentle, peace, satisfactory",
+          "readings" : "ダ"
+        },
+        {
+          "character" : "威",
+          "meanings" : "intimidate, dignity, majesty",
+          "readings" : "イ"
+        },
+        {
+          "character" : "妙",
+          "meanings" : "exquisite, strange, queer",
+          "readings" : "ミョウ, ビョウ"
+        },
+        {
+          "character" : "娘",
+          "meanings" : "daughter, girl",
+          "readings" : "ジョウ"
+        },
+        {
+          "character" : "嫌",
+          "meanings" : "dislike, detest, hate",
+          "readings" : "ケン, ゲン"
+        },
+        {
+          "character" : "桜",
+          "meanings" : "cherry",
+          "readings" : "オウ, ヨウ"
+        },
+        {
+          "character" : "妊",
+          "meanings" : "pregnancy",
+          "readings" : "ニン, ジン"
+        },
+        {
+          "character" : "妹",
+          "meanings" : "younger sister",
+          "readings" : "マイ"
+        },
+        {
+          "character" : "姉",
+          "meanings" : "elder sister",
+          "readings" : "シ"
+        },
+        {
+          "character" : "妨",
+          "meanings" : "disturb, prevent, hamper",
+          "readings" : "ボウ"
+        },
+        {
+          "character" : "姫",
+          "meanings" : "princess",
+          "readings" : "キ"
+        },
+        {
+          "character" : "嫁",
+          "meanings" : "marry into, bride",
+          "readings" : "カ"
+        },
+        {
+          "character" : "娠",
+          "meanings" : "with child, pregnancy",
+          "readings" : "シン"
+        },
+        {
+          "character" : "姓",
+          "meanings" : "surname",
+          "readings" : "セイ, ショウ"
+        },
+        {
+          "character" : "如",
+          "meanings" : "likeness, like, such as",
+          "readings" : "ジョ, ニョ"
+        },
+        {
+          "character" : "媛",
+          "meanings" : "beautiful woman, princess",
+          "readings" : "エン"
+        },
+        {
+          "character" : "妃",
+          "meanings" : "queen, princess",
+          "readings" : "ヒ"
+        },
+        {
+          "character" : "娯",
+          "meanings" : "recreation, pleasure",
+          "readings" : "ゴ"
+        },
+        {
+          "character" : "媒",
+          "meanings" : "mediator, go-between",
+          "readings" : "バイ"
+        },
+        {
+          "character" : "姜",
+          "meanings" : "Chinese surname, ginger",
+          "readings" : "キョウ, ガ"
+        },
+        {
+          "character" : "奴",
+          "meanings" : "guy, slave, manservant",
+          "readings" : "ド"
+        },
+        {
+          "character" : "妖",
+          "meanings" : "attractive, bewitching, calamity",
+          "readings" : "ヨウ"
+        },
+        {
+          "character" : "姻",
+          "meanings" : "matrimony, marry",
+          "readings" : "イン"
+        },
+        {
+          "character" : "姑",
+          "meanings" : "mother-in-law",
+          "readings" : "コ"
+        },
+        {
+          "character" : "嬢",
+          "meanings" : "lass, girl, Miss",
+          "readings" : "ジョウ"
+        },
+        {
+          "character" : "婿",
+          "meanings" : "bridegroom, son-in-law",
+          "readings" : "セイ"
+        },
+        {
+          "character" : "嫡",
+          "meanings" : "legitimate wife, direct descent (non-bastard)",
+          "readings" : "チャク, テキ"
+        },
+        {
+          "character" : "楼",
+          "meanings" : "watchtower, lookout, high building",
+          "readings" : "ロウ"
+        },
+        {
+          "character" : "娼",
+          "meanings" : "prostitute",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "妄",
+          "meanings" : "delusion, unnecessarily, without authority",
+          "readings" : "モウ, ボウ"
+        },
+        {
+          "character" : "嬉",
+          "meanings" : "glad, pleased, rejoice",
+          "readings" : "キ"
+        },
+        {
+          "character" : "嫉",
+          "meanings" : "jealous, envy",
+          "readings" : "シツ"
+        },
+        {
+          "character" : "姚",
+          "meanings" : "beautiful",
+          "readings" : "ヨウ, チョウ"
+        },
+        {
+          "character" : "婆",
+          "meanings" : "old woman, grandma, wet nurse",
+          "readings" : "バ"
+        },
+        {
+          "character" : "佞",
+          "meanings" : "flattery, insincerity",
+          "readings" : "ネイ"
+        },
+        {
+          "character" : "偃",
+          "meanings" : "dam, weir",
+          "readings" : "エン"
+        },
+        {
+          "character" : "奸",
+          "meanings" : "wickedness, mischief, rudeness",
+          "readings" : "カン"
+        },
+        {
+          "character" : "妁",
+          "meanings" : "go-between",
+          "readings" : "シャク"
+        },
+        {
+          "character" : "妋",
+          "meanings" : "ovetous, lustful, show an expression of deep resentment",
+          "readings" : "フ, ヨウ, ウ, ユウ"
+        },
+        {
+          "character" : "妍",
+          "meanings" : "beauty, splendor",
+          "readings" : "ケン"
+        },
+        {
+          "character" : "妓",
+          "meanings" : "stretch, singing girl, geisha",
+          "readings" : "ギ, キ"
+        },
+        {
+          "character" : "妛",
+          "meanings" : "despise, contempt, ugly",
+          "readings" : "シ"
+        },
+        {
+          "character" : "妝",
+          "meanings" : "dress up",
+          "readings" : "ソウ, ショウ"
+        },
+        {
+          "character" : "妟",
+          "meanings" : "to be at ease, clear and balmy",
+          "readings" : "アン, エン"
+        },
+        {
+          "character" : "妣",
+          "meanings" : "mother",
+          "readings" : "ヒ"
+        },
+        {
+          "character" : "妬",
+          "meanings" : "jealous, envy",
+          "readings" : "ト, ツ"
+        },
+        {
+          "character" : "妲",
+          "meanings" : "female proper name",
+          "readings" : "ダツ"
+        },
+        {
+          "character" : "妾",
+          "meanings" : "concubine",
+          "readings" : "ショウ"
+        },
+        {
+          "character" : "姆",
+          "meanings" : "wet nurse",
+          "readings" : "ボ, モ"
+        },
+        {
+          "character" : "姐",
+          "meanings" : "elder sister, maidservant",
+          "readings" : "ソ, シャ"
+        },
+        {
+          "character" : "姙",
+          "meanings" : "be(come) pregnant",
+          "readings" : "ニン, ジン"
+        },
+        {
+          "character" : "姥",
+          "meanings" : "old woman",
+          "readings" : "ボ, モ"
+        },
+        {
+          "character" : "姦",
+          "meanings" : "wicked, mischief, seduce",
+          "readings" : "カン, ケン"
+        },
+        {
+          "character" : "姨",
+          "meanings" : "younger sister",
+          "readings" : "テイ, イ"
+        },
+        {
+          "character" : "姪",
+          "meanings" : "niece",
+          "readings" : "テツ, チツ, ジチ, イツ, イチ"
+        },
+        {
+          "character" : "姶",
+          "meanings" : "good-looking, quiet",
+          "readings" : "オウ, アイ"
+        },
+        {
+          "character" : "娃",
+          "meanings" : "beautiful",
+          "readings" : "ア, アイ, ワ"
+        },
+        {
+          "character" : "娉",
+          "meanings" : "ask after a woman's name, marry a woman, good-looking",
+          "readings" : "ヘイ, ホウ"
+        },
+        {
+          "character" : "娑",
+          "meanings" : "old woman",
+          "readings" : "シャ, サ"
+        },
+        {
+          "character" : "娚",
+          "meanings" : "loud talking",
+          "readings" : "ナン, ノウ, ドウ"
+        },
+        {
+          "character" : "娜",
+          "meanings" : "graceful",
+          "readings" : "ダ, ナ"
+        },
+        {
+          "character" : "娟",
+          "meanings" : "beauty of face",
+          "readings" : "エン, ケン"
+        },
+        {
+          "character" : "娥",
+          "meanings" : "beautiful",
+          "readings" : "ガ"
+        },
+        {
+          "character" : "娩",
+          "meanings" : "bear (children)",
+          "readings" : "ベン"
+        },
+        {
+          "character" : "娵",
+          "meanings" : "marry, bride",
+          "readings" : "シュ, シュウ, ス, ソウ"
+        },
+        {
+          "character" : "娶",
+          "meanings" : "marry, arrange a marriage",
+          "readings" : "シュ"
+        },
+        {
+          "character" : "婀",
+          "meanings" : "charm, flirtation",
+          "readings" : "ア"
+        },
+        {
+          "character" : "婁",
+          "meanings" : "frequently, tie",
+          "readings" : "ル, ロウ"
+        },
+        {
+          "character" : "婇",
+          "readings" : "サイ"
+        },
+        {
+          "character" : "婉",
+          "meanings" : "graceful",
+          "readings" : "エン"
+        },
+        {
+          "character" : "婢",
+          "meanings" : "maidservant",
+          "readings" : "ヒ"
+        },
+        {
+          "character" : "婪",
+          "meanings" : "covet",
+          "readings" : "ラン"
+        },
+        {
+          "character" : "婬",
+          "meanings" : "lewdness, licentiousness",
+          "readings" : "イン"
+        },
+        {
+          "character" : "媚",
+          "meanings" : "flatter, humor, flirt",
+          "readings" : "ビ"
+        },
+        {
+          "character" : "媬",
+          "readings" : "ホ"
+        },
+        {
+          "character" : "媼",
+          "meanings" : "mother, grandma, old woman",
+          "readings" : "オウ"
+        },
+        {
+          "character" : "媽",
+          "meanings" : "mother, mare",
+          "readings" : "ボ, モ"
+        },
+        {
+          "character" : "媾",
+          "meanings" : "association, intimacy",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "嫂",
+          "meanings" : "elder brother's wife",
+          "readings" : "ソウ"
+        },
+        {
+          "character" : "嫋",
+          "meanings" : "supple, pliant, delicate",
+          "readings" : "ジョウ, ジャク, デキ"
+        },
+        {
+          "character" : "嫐",
+          "meanings" : "frolic, play with, flirt with",
+          "readings" : "ドウ, ジョウ"
+        },
+        {
+          "character" : "嫖",
+          "meanings" : "wanton, hedonistic",
+          "readings" : "ヒョウ"
+        },
+        {
+          "character" : "嫗",
+          "meanings" : "old woman, mother",
+          "readings" : "ウ, オウ"
+        },
+        {
+          "character" : "嫣",
+          "meanings" : "beauty",
+          "readings" : "エン"
+        },
+        {
+          "character" : "嫦",
+          "meanings" : "proper name",
+          "readings" : "コウ, ジョウ"
+        },
+        {
+          "character" : "嫩",
+          "meanings" : "young, weak",
+          "readings" : "ドン, ノン"
+        },
+        {
+          "character" : "嫺",
+          "meanings" : "refined, elegant, skilled",
+          "readings" : "カン"
+        },
+        {
+          "character" : "嫻",
+          "meanings" : "elegant, refined, skillful",
+          "readings" : "カン"
+        },
+        {
+          "character" : "嬋",
+          "meanings" : "beautiful",
+          "readings" : "セン"
+        },
+        {
+          "character" : "嬌",
+          "meanings" : "attractive",
+          "readings" : "キョウ"
+        },
+        {
+          "character" : "嬖",
+          "meanings" : "agreeable person",
+          "readings" : "ヘイ"
+        },
+        {
+          "character" : "嬪",
+          "meanings" : "bride, marriage",
+          "readings" : "ヒン"
+        },
+        {
+          "character" : "嬬",
+          "meanings" : "mistress, weak",
+          "readings" : "ジュ"
+        },
+        {
+          "character" : "嬰",
+          "meanings" : "sharp (music), baby",
+          "readings" : "エイ"
+        },
+        {
+          "character" : "嬲",
+          "meanings" : "sport with, ridicule, tease",
+          "readings" : "ドウ, ジョウ"
+        },
+        {
+          "character" : "嬶",
+          "meanings" : "wife (vulg), (kokuji)"
+        },
+        {
+          "character" : "嬾",
+          "meanings" : "lazy, languid",
+          "readings" : "ラン"
+        },
+        {
+          "character" : "孀",
+          "meanings" : "widow",
+          "readings" : "ソウ"
+        },
+        {
+          "character" : "孃",
+          "meanings" : "girl, Miss, daughter",
+          "readings" : "ジョウ"
+        },
+        {
+          "character" : "孅",
+          "meanings" : "delicate",
+          "readings" : "セン"
+        },
+        {
+          "character" : "屡",
+          "meanings" : "often, frequently",
+          "readings" : "ル"
+        },
+        {
+          "character" : "汝",
+          "meanings" : "you, thou",
+          "readings" : "ジョ"
+        },
+        {
+          "character" : "瀛",
+          "meanings" : "ocean, swamp",
+          "readings" : "エイ"
+        },
+        {
+          "character" : "珱",
+          "meanings" : "a necklace made of precious stones",
+          "readings" : "エイ, ヨウ"
+        },
+        {
+          "character" : "𡚴"
+        },
+        {
+          "character" : "𣍲"
+        }
+      ],
+      "covers" : "Another element of 要",
+      "element" : "女",
+      "found" : true,
+      "meaningExplanation" : "This element contributes forms associated with woman, female.",
+      "meanings" : "woman, female",
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "MEANING / STRUCTURE",
+        "SOUND PATTERNS",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: ジョウ, エン, ヨウ, オウ",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternatives" : [
+
+      ],
+      "codePoint" : "U+4EA1",
+      "containingKanji" : [
+        {
+          "character" : "望",
+          "meanings" : "ambition, full moon, hope",
+          "readings" : "ボウ, モウ"
+        },
+        {
+          "character" : "荒",
+          "meanings" : "laid waste, rough, rude",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "忘",
+          "meanings" : "forget",
+          "readings" : "ボウ"
+        },
+        {
+          "character" : "忙",
+          "meanings" : "busy, occupied, restless",
+          "readings" : "ボウ, モウ"
+        },
+        {
+          "character" : "盲",
+          "meanings" : "blind, blind man, ignoramus",
+          "readings" : "モウ"
+        },
+        {
+          "character" : "妄",
+          "meanings" : "delusion, unnecessarily, without authority",
+          "readings" : "モウ, ボウ"
+        },
+        {
+          "character" : "氓",
+          "meanings" : "people",
+          "readings" : "ボウ"
+        },
+        {
+          "character" : "罔",
+          "meanings" : "net",
+          "readings" : "モウ, ボウ"
+        },
+        {
+          "character" : "肓",
+          "meanings" : "interior region of the body too deep to be reached by acupuncture",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "芒",
+          "meanings" : "pampas grass, beard (grain)",
+          "readings" : "ボウ, コウ, モウ"
+        },
+        {
+          "character" : "虻",
+          "meanings" : "gadfly, horsefly",
+          "readings" : "ボウ"
+        }
+      ],
+      "covers" : "An element that is itself the standalone kanji, left out of the kanji containing it",
+      "element" : "亡",
+      "found" : true,
+      "meaningExplanation" : "This element contributes forms associated with deceased, the late, dying, perish.",
+      "meanings" : "deceased, the late, dying, perish",
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "MEANING / STRUCTURE",
+        "SOUND PATTERNS",
+        "AS A STANDALONE KANJI",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: ボウ, モウ, コウ",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "standaloneKanji" : {
+        "character" : "亡",
+        "meanings" : "deceased, the late, dying",
+        "readings" : "ボウ, モウ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternatives" : [
+        "萬"
+      ],
+      "codePoint" : "U+4E07",
+      "containingKanji" : [
+        {
+          "character" : "栃",
+          "meanings" : "horse chestnut, (kokuji)"
+        },
+        {
+          "character" : "敖",
+          "meanings" : "play, be proud",
+          "readings" : "ゴウ"
+        },
+        {
+          "character" : "杤",
+          "meanings" : "type of oak, stable, (kokuji)"
+        },
+        {
+          "character" : "癘",
+          "meanings" : "contagious disease, leprosy",
+          "readings" : "レイ, ライ"
+        },
+        {
+          "character" : "邁",
+          "meanings" : "go, excel",
+          "readings" : "マイ, バイ"
+        },
+        {
+          "character" : "𣜜"
+        }
+      ],
+      "covers" : "An alternative form (萬), with the element as its standalone kanji",
+      "element" : "万",
+      "found" : true,
+      "meaningExplanation" : "This element contributes forms associated with ten thousand, 10,000.",
+      "meanings" : "ten thousand, 10,000",
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "ALTERNATIVE FORMS",
+        "MEANING / STRUCTURE",
+        "SOUND PATTERNS",
+        "AS A STANDALONE KANJI",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: バン, マン",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "standaloneKanji" : {
+        "character" : "万",
+        "meanings" : "ten thousand, 10,000",
+        "readings" : "マン, バン"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternatives" : [
+        "弌"
+      ],
+      "codePoint" : "U+4E00",
+      "containingKanji" : [
+        {
+          "character" : "大",
+          "meanings" : "large, big",
+          "readings" : "ダイ, タイ"
+        },
+        {
+          "character" : "二",
+          "meanings" : "two, two radical (no. 7)",
+          "readings" : "ニ, ジ"
+        },
+        {
+          "character" : "本",
+          "meanings" : "book, present, main",
+          "readings" : "ホン"
+        },
+        {
+          "character" : "長",
+          "meanings" : "long, leader, superior",
+          "readings" : "チョウ"
+        },
+        {
+          "character" : "上",
+          "meanings" : "above, up",
+          "readings" : "ジョウ, ショウ, シャン"
+        },
+        {
+          "character" : "立",
+          "meanings" : "stand up, rise, set up",
+          "readings" : "リツ, リュウ, リットル"
+        },
+        {
+          "character" : "下",
+          "meanings" : "below, down, descend",
+          "readings" : "カ, ゲ"
+        },
+        {
+          "character" : "不",
+          "meanings" : "negative, non-, bad",
+          "readings" : "フ, ブ"
+        },
+        {
+          "character" : "正",
+          "meanings" : "correct, justice, righteous",
+          "readings" : "セイ, ショウ"
+        },
+        {
+          "character" : "百",
+          "meanings" : "hundred",
+          "readings" : "ヒャク, ビャク"
+        },
+        {
+          "character" : "面",
+          "meanings" : "mask, face, features",
+          "readings" : "メン, ベン"
+        },
+        {
+          "character" : "画",
+          "meanings" : "brush-stroke, picture",
+          "readings" : "ガ, カク, エ, カイ"
+        },
+        {
+          "character" : "両",
+          "meanings" : "both, old Japanese coin, counter for carriages (e.g., in a train)",
+          "readings" : "リョウ"
+        },
+        {
+          "character" : "西",
+          "meanings" : "west, Spain",
+          "readings" : "セイ, サイ, ス"
+        },
+        {
+          "character" : "再",
+          "meanings" : "again, twice, second time",
+          "readings" : "サイ, サ"
+        },
+        {
+          "character" : "土",
+          "meanings" : "soil, earth, ground",
+          "readings" : "ド, ト"
+        },
+        {
+          "character" : "与",
+          "meanings" : "bestow, participate in, give",
+          "readings" : "ヨ"
+        },
+        {
+          "character" : "万",
+          "meanings" : "ten thousand, 10,000",
+          "readings" : "マン, バン"
+        },
+        {
+          "character" : "末",
+          "meanings" : "end, close, tip",
+          "readings" : "マツ, バツ"
+        },
+        {
+          "character" : "士",
+          "meanings" : "gentleman, scholar, samurai",
+          "readings" : "シ"
+        },
+        {
+          "character" : "光",
+          "meanings" : "ray, light",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "戸",
+          "meanings" : "door, counter for houses, door radical (no. 63)",
+          "readings" : "コ"
+        },
+        {
+          "character" : "具",
+          "meanings" : "tool, utensil, means",
+          "readings" : "グ"
+        },
+        {
+          "character" : "益",
+          "meanings" : "benefit, gain, profit",
+          "readings" : "エキ, ヤク"
+        },
+        {
+          "character" : "興",
+          "meanings" : "entertain, revive, retrieve",
+          "readings" : "コウ, キョウ"
+        },
+        {
+          "character" : "更",
+          "meanings" : "grow late, night watch, sit up late",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "雨",
+          "meanings" : "rain",
+          "readings" : "ウ"
+        },
+        {
+          "character" : "兼",
+          "meanings" : "concurrently, and, beforehand",
+          "readings" : "ケン"
+        },
+        {
+          "character" : "丁",
+          "meanings" : "street, ward, town",
+          "readings" : "チョウ, テイ, チン, トウ, チ"
+        },
+        {
+          "character" : "冊",
+          "meanings" : "tome, counter for books, volume",
+          "readings" : "サツ, サク"
+        },
+        {
+          "character" : "賓",
+          "meanings" : "V.I.P., guest",
+          "readings" : "ヒン"
+        },
+        {
+          "character" : "垂",
+          "meanings" : "droop, suspend, hang",
+          "readings" : "スイ"
+        },
+        {
+          "character" : "呉",
+          "meanings" : "give, do something for, kingdom of Wu",
+          "readings" : "ゴ"
+        },
+        {
+          "character" : "寅",
+          "meanings" : "sign of the tiger, 3-5AM, third sign of Chinese zodiac",
+          "readings" : "イン"
+        },
+        {
+          "character" : "或",
+          "meanings" : "some, one, or",
+          "readings" : "ワク, コク, イキ"
+        },
+        {
+          "character" : "丒",
+          "meanings" : "the period from 1 to 3 am, 2nd character of the \"branches\"",
+          "readings" : "チュウ"
+        },
+        {
+          "character" : "丗",
+          "meanings" : "thirty",
+          "readings" : "セイ, セ, ソウ"
+        },
+        {
+          "character" : "丙",
+          "meanings" : "third class, 3rd, 3rd calendar sign",
+          "readings" : "ヘイ"
+        },
+        {
+          "character" : "丞",
+          "meanings" : "help",
+          "readings" : "ジョウ, ショウ"
+        },
+        {
+          "character" : "亠",
+          "meanings" : "kettle lid radical (no. 8)",
+          "readings" : "トウ"
+        },
+        {
+          "character" : "仗",
+          "meanings" : "cane, stick",
+          "readings" : "ジョウ, チョウ"
+        },
+        {
+          "character" : "兀",
+          "meanings" : "high & level, lofty, bald",
+          "readings" : "コツ"
+        },
+        {
+          "character" : "兩",
+          "meanings" : "old Japanese coin, both, counter for vehicles",
+          "readings" : "リョウ"
+        },
+        {
+          "character" : "勺",
+          "meanings" : "ladle, one tenth of a go, dip",
+          "readings" : "シャク"
+        },
+        {
+          "character" : "匕",
+          "meanings" : "spoon, spoon or katakana hi radical (no. 21)",
+          "readings" : "ヒ"
+        },
+        {
+          "character" : "卅",
+          "meanings" : "thirty",
+          "readings" : "ソウ"
+        },
+        {
+          "character" : "吏",
+          "meanings" : "officer, an official",
+          "readings" : "リ"
+        },
+        {
+          "character" : "妛",
+          "meanings" : "despise, contempt, ugly",
+          "readings" : "シ"
+        },
+        {
+          "character" : "廾",
+          "meanings" : "twenty, twenty or letter H radical (no. 55)",
+          "readings" : "キョウ, ク"
+        },
+        {
+          "character" : "弖",
+          "meanings" : "phoneme only, (kokuji)",
+          "readings" : "テ"
+        },
+        {
+          "character" : "戌",
+          "meanings" : "sign of the dog, 7-9PM, eleventh sign of Chinese zodiac",
+          "readings" : "ジュツ"
+        },
+        {
+          "character" : "无",
+          "meanings" : "nothing, not exist, crooked heaven radical (no.71)",
+          "readings" : "ブ, ム"
+        },
+        {
+          "character" : "旦",
+          "meanings" : "daybreak, dawn, morning",
+          "readings" : "タン, ダン"
+        },
+        {
+          "character" : "歹",
+          "meanings" : "bare bone, bad, wrong",
+          "readings" : "ガツ, ガチ, タイ"
+        },
+        {
+          "character" : "氐",
+          "meanings" : "name of an ancient tribe",
+          "readings" : "テイ, タイ, シ, チ"
+        },
+        {
+          "character" : "气",
+          "meanings" : "spirit, steam radical (no. 84)",
+          "readings" : "キ, ケ"
+        },
+        {
+          "character" : "爰",
+          "meanings" : "lead on to, therefore, then",
+          "readings" : "エン"
+        },
+        {
+          "character" : "爾",
+          "meanings" : "you, thou, second person",
+          "readings" : "ジ, ニ"
+        },
+        {
+          "character" : "畢",
+          "meanings" : "the end, finish",
+          "readings" : "ヒツ"
+        },
+        {
+          "character" : "而",
+          "meanings" : "and yet, and then, but",
+          "readings" : "ジ, ニ"
+        },
+        {
+          "character" : "與",
+          "meanings" : "participate in, give, award",
+          "readings" : "ヨ"
+        },
+        {
+          "character" : "豕",
+          "meanings" : "pig, hog, pig radical (no. 152)",
+          "readings" : "シ"
+        },
+        {
+          "character" : "輿",
+          "meanings" : "palanquin, bier, public opinion",
+          "readings" : "ヨ"
+        },
+        {
+          "character" : "辷",
+          "meanings" : "glide, skate, slip"
+        },
+        {
+          "character" : "閂",
+          "meanings" : "gate bar",
+          "readings" : "サン, セン"
+        },
+        {
+          "character" : "韭",
+          "meanings" : "leek radical (no. 179)",
+          "readings" : "キュウ, ク"
+        },
+        {
+          "character" : "鬲",
+          "meanings" : "tripod",
+          "readings" : "カク, レキ"
+        },
+        {
+          "character" : "黃",
+          "meanings" : "yellow, surname",
+          "readings" : "コウ, オウ"
+        },
+        {
+          "character" : "隆",
+          "meanings" : "prosperous, plentiful, abundant"
+        },
+        {
+          "character" : "賓",
+          "meanings" : "guest",
+          "readings" : "ヒン"
+        }
+      ],
+      "covers" : "The standalone kanji comes from an alternative form (弌) by frequency rank",
+      "element" : "一",
+      "found" : true,
+      "meaningExplanation" : "This element contributes forms associated with one, one radical (no.1).",
+      "meanings" : "one, one radical (no.1)",
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "ALTERNATIVE FORMS",
+        "MEANING / STRUCTURE",
+        "SOUND PATTERNS",
+        "AS A STANDALONE KANJI",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: コウ, シ, ショウ, ジ",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "standaloneKanji" : {
+        "character" : "弌",
+        "meanings" : "one",
+        "readings" : "イチ, イツ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternatives" : [
+        "喜"
+      ],
+      "codePoint" : "U+3402",
+      "containingKanji" : [
+        {
+          "character" : "嬉",
+          "meanings" : "glad, pleased, rejoice",
+          "readings" : "キ"
+        },
+        {
+          "character" : "僖",
+          "meanings" : "enjoyment, pleasure",
+          "readings" : "キ"
+        },
+        {
+          "character" : "憙",
+          "meanings" : "rejoice, like, prefer",
+          "readings" : "キ"
+        },
+        {
+          "character" : "橲",
+          "meanings" : "Japanese storax, used in proper names",
+          "readings" : "キ"
+        },
+        {
+          "character" : "熹",
+          "meanings" : "burn, faint light",
+          "readings" : "キ"
+        },
+        {
+          "character" : "禧",
+          "meanings" : "fortunate, auspicious",
+          "readings" : "キ"
+        },
+        {
+          "character" : "鱚",
+          "meanings" : "sillaginoid, (kokuji)"
+        }
+      ],
+      "covers" : "No meanings: no meanings under the glyph and no Meaning / structure section; its alternative 喜 is the standalone kanji",
+      "element" : "㐂",
+      "found" : true,
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "ALTERNATIVE FORMS",
+        "SOUND PATTERNS",
+        "AS A STANDALONE KANJI",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: キ",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "standaloneKanji" : {
+        "character" : "喜",
+        "meanings" : "rejoice, take pleasure in",
+        "readings" : "キ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternatives" : [
+        "卩"
+      ],
+      "codePoint" : "U+353E",
+      "containingKanji" : [
+        {
+          "character" : "報",
+          "meanings" : "report, news, reward",
+          "readings" : "ホウ"
+        },
+        {
+          "character" : "危",
+          "meanings" : "dangerous, fear, uneasy",
+          "readings" : "キ"
+        },
+        {
+          "character" : "迎",
+          "meanings" : "welcome, meet, greet",
+          "readings" : "ゲイ"
+        },
+        {
+          "character" : "印",
+          "meanings" : "stamp, seal, mark",
+          "readings" : "イン"
+        },
+        {
+          "character" : "令",
+          "meanings" : "orders, laws, command",
+          "readings" : "レイ"
+        },
+        {
+          "character" : "抑",
+          "meanings" : "repress, well, now",
+          "readings" : "ヨク"
+        },
+        {
+          "character" : "服",
+          "meanings" : "clothing, admit, obey",
+          "readings" : "フク"
+        },
+        {
+          "character" : "犯",
+          "meanings" : "crime, sin, offense",
+          "readings" : "ハン, ボン"
+        },
+        {
+          "character" : "却",
+          "meanings" : "instead, on the contrary, rather",
+          "readings" : "キャク"
+        },
+        {
+          "character" : "範",
+          "meanings" : "pattern, example, model",
+          "readings" : "ハン"
+        },
+        {
+          "character" : "即",
+          "meanings" : "instant, namely, as is",
+          "readings" : "ソク"
+        },
+        {
+          "character" : "卸",
+          "meanings" : "wholesale",
+          "readings" : "シャ"
+        },
+        {
+          "character" : "仰",
+          "meanings" : "face-up, look up, depend",
+          "readings" : "ギョウ, コウ"
+        },
+        {
+          "character" : "厄",
+          "meanings" : "unlucky, misfortune, bad luck",
+          "readings" : "ヤク"
+        },
+        {
+          "character" : "叩",
+          "meanings" : "strike, beat, kow tow",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "卯",
+          "meanings" : "sign of the hare or rabbit, fourth sign of Chinese zodiac, 5-7AM",
+          "readings" : "ボウ, モウ"
+        },
+        {
+          "character" : "卮",
+          "meanings" : "large goblet, apt, fitting",
+          "readings" : "シ"
+        },
+        {
+          "character" : "卷",
+          "meanings" : "volume, book, part",
+          "readings" : "カン, ケン"
+        },
+        {
+          "character" : "卻",
+          "meanings" : "instead, on the contrary, rather",
+          "readings" : "キャク"
+        },
+        {
+          "character" : "卽",
+          "meanings" : "promptly, namely",
+          "readings" : "ソク, ショク"
+        },
+        {
+          "character" : "夘",
+          "meanings" : "sign of the hare or rabbit, fourth sign of Chinese zodiac, 5-7AM",
+          "readings" : "ボウ, モウ"
+        },
+        {
+          "character" : "昂",
+          "meanings" : "rise",
+          "readings" : "コウ, ゴウ"
+        },
+        {
+          "character" : "氾",
+          "meanings" : "spread out, wide",
+          "readings" : "ハン"
+        },
+        {
+          "character" : "熈",
+          "meanings" : "shine",
+          "readings" : "キ"
+        },
+        {
+          "character" : "韆",
+          "meanings" : "swing, trapeze",
+          "readings" : "セン"
+        },
+        {
+          "character" : "節",
+          "readings" : "セチ, セツ"
+        }
+      ],
+      "covers" : "No meanings and no standalone kanji",
+      "element" : "㔾",
+      "found" : true,
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "ALTERNATIVE FORMS",
+        "SOUND PATTERNS",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: コウ, ハン, キ, キャク",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternatives" : [
+        "侯"
+      ],
+      "codePoint" : "U+3468",
+      "containingKanji" : [
+        {
+          "character" : "候",
+          "meanings" : "climate, season, weather",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "喉",
+          "meanings" : "throat, voice",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "猴",
+          "meanings" : "monkey",
+          "readings" : "コウ"
+        },
+        {
+          "character" : "篌",
+          "meanings" : "type of harp",
+          "readings" : "ゴ, コウ"
+        }
+      ],
+      "covers" : "An element no kanji names, reached as another element's alternative form",
+      "element" : "㑨",
+      "found" : true,
+      "meaningExplanation" : "This element contributes forms associated with great, big, tall, vast, noble, high in rank, very, much.",
+      "meanings" : "great, big, tall, vast, noble, high in rank, very, much",
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "ALTERNATIVE FORMS",
+        "MEANING / STRUCTURE",
+        "SOUND PATTERNS",
+        "AS A STANDALONE KANJI",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: コウ",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "standaloneKanji" : {
+        "character" : "侯",
+        "meanings" : "marquis, lord, daimyo",
+        "readings" : "コウ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternatives" : [
+        "海"
+      ],
+      "codePoint" : "U+6D77",
+      "containingKanji" : [
+        {
+          "character" : "塰",
+          "meanings" : "title of a Noh play, (kokuji)"
+        }
+      ],
+      "covers" : "海 (U+6D77), whose alternative form is the compatibility ideograph U+FA45",
+      "element" : "海",
+      "found" : true,
+      "meaningExplanation" : "This element contributes forms associated with sea, ocean.",
+      "meanings" : "sea, ocean",
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "ALTERNATIVE FORMS",
+        "MEANING / STRUCTURE",
+        "SOUND PATTERNS",
+        "AS A STANDALONE KANJI",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: カイ",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "standaloneKanji" : {
+        "character" : "海",
+        "meanings" : "sea, ocean",
+        "readings" : "カイ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternatives" : [
+        "海"
+      ],
+      "codePoint" : "U+FA45",
+      "containingKanji" : [
+        {
+          "character" : "塰",
+          "meanings" : "title of a Noh play, (kokuji)"
+        }
+      ],
+      "covers" : "The compatibility ideograph 海 (U+FA45), its own element, never normalized",
+      "element" : "海",
+      "found" : true,
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "ALTERNATIVE FORMS",
+        "SOUND PATTERNS",
+        "AS A STANDALONE KANJI",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: カイ",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "standaloneKanji" : {
+        "character" : "海",
+        "meanings" : "sea, ocean",
+        "readings" : "カイ"
+      },
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "alternatives" : [
+
+      ],
+      "codePoint" : "U+201A2",
+      "containingKanji" : [
+        {
+          "character" : "会",
+          "meanings" : "meeting, meet, party",
+          "readings" : "カイ, エ"
+        },
+        {
+          "character" : "合",
+          "meanings" : "fit, suit, join",
+          "readings" : "ゴウ, ガッ, カッ"
+        },
+        {
+          "character" : "今",
+          "meanings" : "now",
+          "readings" : "コン, キン"
+        },
+        {
+          "character" : "全",
+          "meanings" : "whole, entire, all",
+          "readings" : "ゼン"
+        },
+        {
+          "character" : "企",
+          "meanings" : "undertake, scheme, design",
+          "readings" : "キ"
+        },
+        {
+          "character" : "幹",
+          "meanings" : "tree trunk, main part, talent",
+          "readings" : "カン"
+        },
+        {
+          "character" : "命",
+          "meanings" : "fate, command, decree",
+          "readings" : "メイ, ミョウ"
+        },
+        {
+          "character" : "谷",
+          "meanings" : "valley",
+          "readings" : "コク"
+        },
+        {
+          "character" : "介",
+          "meanings" : "jammed in, shellfish, mediate",
+          "readings" : "カイ"
+        },
+        {
+          "character" : "余",
+          "meanings" : "too much, myself, surplus",
+          "readings" : "ヨ"
+        },
+        {
+          "character" : "令",
+          "meanings" : "orders, laws, command",
+          "readings" : "レイ"
+        },
+        {
+          "character" : "診",
+          "meanings" : "checkup, seeing, diagnose",
+          "readings" : "シン"
+        },
+        {
+          "character" : "倉",
+          "meanings" : "godown, warehouse, storehouse",
+          "readings" : "ソウ"
+        },
+        {
+          "character" : "茶",
+          "meanings" : "tea",
+          "readings" : "チャ, サ"
+        },
+        {
+          "character" : "舎",
+          "meanings" : "cottage, inn, hut",
+          "readings" : "シャ, セキ"
+        },
+        {
+          "character" : "珍",
+          "meanings" : "rare, curious, strange",
+          "readings" : "チン"
+        },
+        {
+          "character" : "飼",
+          "meanings" : "domesticate, raise, keep",
+          "readings" : "シ"
+        },
+        {
+          "character" : "陰",
+          "meanings" : "shade, yin, negative",
+          "readings" : "イン"
+        },
+        {
+          "character" : "鋭",
+          "meanings" : "pointed, sharpness, edge",
+          "readings" : "エイ"
+        },
+        {
+          "character" : "傘",
+          "meanings" : "umbrella",
+          "readings" : "サン"
+        },
+        {
+          "character" : "於",
+          "meanings" : "at, in, on",
+          "readings" : "オ, ヨ"
+        },
+        {
+          "character" : "脊",
+          "meanings" : "stature, height, spine",
+          "readings" : "セキ"
+        },
+        {
+          "character" : "膠",
+          "meanings" : "glue, isinglass",
+          "readings" : "コウ, キョウ"
+        },
+        {
+          "character" : "蓼",
+          "meanings" : "luxurious grass, a smartweed",
+          "readings" : "シン, リク, リョウ"
+        },
+        {
+          "character" : "个",
+          "meanings" : "counter for articles, individual",
+          "readings" : "カ, コ"
+        },
+        {
+          "character" : "仐",
+          "readings" : "サン"
+        },
+        {
+          "character" : "侖",
+          "meanings" : "think, be methodical",
+          "readings" : "リン, ロン"
+        },
+        {
+          "character" : "僉",
+          "meanings" : "all",
+          "readings" : "セン"
+        },
+        {
+          "character" : "兪",
+          "meanings" : "affirmative response, relaxed, at ease",
+          "readings" : "ユ"
+        },
+        {
+          "character" : "勠",
+          "meanings" : "combine, join forces",
+          "readings" : "リク"
+        },
+        {
+          "character" : "參",
+          "meanings" : "three, going, coming",
+          "readings" : "サン, シン"
+        },
+        {
+          "character" : "寥",
+          "meanings" : "lonely",
+          "readings" : "リョウ"
+        },
+        {
+          "character" : "廖",
+          "meanings" : "empty, name",
+          "readings" : "リョウ"
+        },
+        {
+          "character" : "戮",
+          "meanings" : "kill",
+          "readings" : "リク, リュウ, ロク, キョウ, ク"
+        },
+        {
+          "character" : "摎",
+          "meanings" : "tie into a bundle, coil around",
+          "readings" : "ク, キュウ"
+        },
+        {
+          "character" : "斡",
+          "meanings" : "go around, rule, administer",
+          "readings" : "アツ, カン, ワツ"
+        },
+        {
+          "character" : "會",
+          "meanings" : "meet, party, association",
+          "readings" : "カイ, エ"
+        },
+        {
+          "character" : "桼",
+          "readings" : "シツ"
+        },
+        {
+          "character" : "樛",
+          "meanings" : "bend, droop, undulate",
+          "readings" : "キュウ"
+        },
+        {
+          "character" : "殄",
+          "meanings" : "all, completely",
+          "readings" : "テン"
+        },
+        {
+          "character" : "畛",
+          "meanings" : "boundary between paddies",
+          "readings" : "シン"
+        },
+        {
+          "character" : "疹",
+          "meanings" : "measles, sickness",
+          "readings" : "シン, チン"
+        },
+        {
+          "character" : "睿",
+          "meanings" : "intelligence, imperial",
+          "readings" : "エイ"
+        },
+        {
+          "character" : "禽",
+          "meanings" : "bird, captive, capture",
+          "readings" : "キン"
+        },
+        {
+          "character" : "箚",
+          "meanings" : "progress report",
+          "readings" : "トウ, サツ, チョウ"
+        },
+        {
+          "character" : "籡"
+        },
+        {
+          "character" : "繆",
+          "meanings" : "error, wrap around",
+          "readings" : "ビュウ, キュウ, ボク, リョウ"
+        },
+        {
+          "character" : "翰",
+          "meanings" : "letter, writing brush",
+          "readings" : "カン"
+        },
+        {
+          "character" : "舍",
+          "meanings" : "inn, hut, house",
+          "readings" : "セキ, シャ"
+        },
+        {
+          "character" : "藜",
+          "meanings" : "goosefoot, wild spinach",
+          "readings" : "レイ"
+        },
+        {
+          "character" : "袗",
+          "meanings" : "thin kimono, embroidery",
+          "readings" : "シン"
+        },
+        {
+          "character" : "謬",
+          "meanings" : "mistake",
+          "readings" : "ビュウ, ビョウ, ミュウ"
+        },
+        {
+          "character" : "趁",
+          "meanings" : "go to, follow",
+          "readings" : "チン"
+        },
+        {
+          "character" : "軫",
+          "meanings" : "sad, revolve",
+          "readings" : "シン"
+        },
+        {
+          "character" : "醪",
+          "meanings" : "unrefined sake or shoyu",
+          "readings" : "ロウ"
+        },
+        {
+          "character" : "鋏",
+          "meanings" : "scissors",
+          "readings" : "キョウ"
+        },
+        {
+          "character" : "錵",
+          "meanings" : "holmium, pattern on sword blade",
+          "readings" : "カ"
+        },
+        {
+          "character" : "鏐",
+          "meanings" : "gold",
+          "readings" : "リュウ"
+        },
+        {
+          "character" : "鏥",
+          "meanings" : "rust, corrosion",
+          "readings" : "シュウ"
+        },
+        {
+          "character" : "飮",
+          "meanings" : "drink",
+          "readings" : "イン, オン"
+        },
+        {
+          "character" : "龠",
+          "meanings" : "flute",
+          "readings" : "ヤク"
+        }
+      ],
+      "covers" : "An element outside the Basic Multilingual Plane (U+201A2), with no meanings",
+      "element" : "𠆢",
+      "found" : true,
+      "metadataSource" : "edrdg.kanjidic2 2026-08-10",
+      "opensDetail" : true,
+      "sections" : [
+        "SOUND PATTERNS",
+        "KANJI CONTAINING THIS ELEMENT",
+        "SOURCE"
+      ],
+      "soundPatterns" : "Linked on-readings: シン, リョウ, カイ, カン",
+      "sourceNote" : "Both sources are independently normalized into Zenbu Japanese Language Reference Data.",
+      "structureSource" : "kanjium 8a0cdaa16d64a281a2048de2eee2ec5e3a440fa6"
+    },
+    {
+      "codePoint" : "U+9B31",
+      "covers" : "A kanji that isn't an element: the screen has no reference for it",
+      "element" : "鬱",
+      "found" : false,
+      "opensDetail" : true
+    },
+    {
+      "codePoint" : "U+3042",
+      "covers" : "Kana, which is never an element",
+      "element" : "あ",
+      "opensDetail" : false
+    }
+  ],
+  "formatVersion" : 1,
+  "suite" : "kanji-element-detail"
+}

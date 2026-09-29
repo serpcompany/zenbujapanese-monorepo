@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { fixtureKanjiRows, fixtureWordRows } from '@/lib/dictionary/fixtures'
+import { fixtureElementRows, fixtureKanjiRows, fixtureWordRows } from '@/lib/dictionary/fixtures'
 import {
   getConjugatedFormPage,
   getConjugationsPage,
   getFormExamples,
+  getKanjiElementPage,
   getKanjiPage,
   getMoreSearchExamples,
   getSearchExamples,
@@ -18,6 +19,7 @@ import {
 import type { FrequencyRow } from './detail/rows'
 import {
   type DictionaryConjugationWord,
+  type DictionaryElement,
   type DictionaryExamples,
   type DictionaryFormExamples,
   type DictionaryKanji,
@@ -528,6 +530,7 @@ describe('a search’s Example Sentences page', () => {
 describe('word and kanji pages', () => {
   const word = vi.fn<(entSeq: number) => Promise<DictionaryWord | null>>()
   const kanji = vi.fn<(character: string) => Promise<DictionaryKanji | null>>()
+  const element = vi.fn<(glyph: string) => Promise<DictionaryElement | null>>()
   const kanjiCard =
     vi.fn<(character: string) => Promise<{ character: string; meanings: string[] } | null>>()
   const examples =
@@ -546,7 +549,9 @@ describe('word and kanji pages', () => {
       formExamples,
       kanji,
       kanjiCard,
+      element,
       // Sitemaps have their own tests (sitemaps.test.ts).
+      elements: vi.fn(),
       wordSitemaps: vi.fn(),
       sitemapWords: vi.fn(),
       indexableKanji: vi.fn(),
@@ -571,6 +576,8 @@ describe('word and kanji pages', () => {
     // 食べる has no fixture.
     expect(await getWordPage(1358280)).toBeNull()
     expect((await getKanjiPage('要'))?.words).toHaveLength(24)
+    expect((await getKanjiElementPage('女'))?.glyph).toBe('女')
+    expect(await getKanjiElementPage('木')).toBeNull()
     expect(dictionaryDatabase).not.toHaveBeenCalled()
   })
 
@@ -677,10 +684,7 @@ describe('word and kanji pages', () => {
     const page = await getKanjiPage('要')
     expect(kanji).toHaveBeenCalledWith('要')
     expect(page?.words[2].path).toBe('/dictionary/要る-1546640/')
-    expect(page?.elements.map(element => [element.character, element.path])).toEqual([
-      ['女', '/dictionary/kanji/女/'],
-      ['覀', null]
-    ])
+    expect(page?.elements.map(element => element.character)).toEqual(['女', '覀'])
     // The stored flag decides.
     expect(page?.indexable).toBe(false)
   })
@@ -761,6 +765,22 @@ describe('word and kanji pages', () => {
     )
     conjugationWord.mockResolvedValue(null)
     expect(await getConjugationsPage(1)).toBeNull()
+  })
+
+  test('an element page reads the dictionary database, linking kanji that have a page', async () => {
+    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
+    const onna = fixtureElementRows.find(rows => rows.element.glyph === '女')
+    if (!onna) throw new Error('no fixture for 女')
+    element.mockResolvedValue({ rows: onna, kanjiPages: new Set(['要']) })
+    const page = await getKanjiElementPage('女')
+    expect(element).toHaveBeenCalledWith('女')
+    expect(page?.containingKanji.slice(0, 2).map(row => [row.character, row.path])).toEqual([
+      ['要', '/dictionary/kanji/要/'],
+      ['安', null]
+    ])
+    expect(page?.indexable).toBe(true)
+    element.mockResolvedValue(null)
+    expect(await getKanjiElementPage('あ')).toBeNull()
   })
 
   describe('deployed (SITE_ENV set)', () => {

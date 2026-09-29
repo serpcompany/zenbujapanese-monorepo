@@ -60,6 +60,14 @@ CREATE TABLE `kanji` (
 	`indexable` integer NOT NULL
 )
 
+table kanji_element_sources
+CREATE TABLE `kanji_element_sources` (
+	`snapshot` text PRIMARY KEY NOT NULL,
+	`structure_source_identity` text NOT NULL,
+	`metadata_source_identity` text NOT NULL,
+	`metadata_source_snapshot` text NOT NULL
+)
+
 table kanji_elements
 CREATE TABLE `kanji_elements` (
 	`character` text PRIMARY KEY NOT NULL,

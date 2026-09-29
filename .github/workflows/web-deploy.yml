@@ -26,6 +26,7 @@ on:
       - apps/ios/LanguageData/Conformance/example-search.json
       - apps/ios/LanguageData/Conformance/word-detail.json
       - apps/ios/LanguageData/Conformance/kanji-detail.json
+      - apps/ios/LanguageData/Conformance/kanji-element-detail.json
       - .github/workflows/web-deploy.yml
   workflow_dispatch:
 

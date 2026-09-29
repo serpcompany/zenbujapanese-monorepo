@@ -263,11 +263,12 @@ app finds glosses for a query such as 9999999 that the website doesn't.
 
 ### The dictionary database
 
-Word and kanji pages read their own release database, bound as `DICTIONARY_DB` (issue 464,
-phase 2). `src/db/dictionary-schema.ts` holds
+Word, kanji, and kanji element pages read their own release database, bound as `DICTIONARY_DB`
+(issue 464, phase 2). `src/db/dictionary-schema.ts` holds
 its tables, named for the rows the detail core reads (`src/lib/dictionary/detail/rows.ts`):
 `words` by `ent_seq`, `kanji` by the exact character, stroke order, kanji structure and
-elements, example sentences with each word's examples (at most 100, in the app's order), retired
+elements (with `kanji_element_sources`, the element reference's sources, which element pages
+credit), example sentences with each word's examples (at most 100, in the app's order), retired
 IDs, and `dictionary_import`, which also records each input file's SHA-256. Display-only data is
 JSON. It has no FTS tables.
 
@@ -293,8 +294,8 @@ and its form pages search engines may index, for the conjugations sitemap.
 
 **The import** (`scripts/release-d1/dictionary/`) reads the app's bundled files with
 `language_data.py`, the same code `scripts/export-dictionary-fixtures.py` exports fixtures with,
-and writes every word (218,382) and kanji (13,108), the kanji structures, the element glyphs,
-and stroke order for the 6,430 kanji `KanjiStrokeData.sqlite3` draws (KanjiVG), each checked as
+and writes every word (218,382) and kanji (13,108), the kanji structures, the element glyphs
+(1,698, each with a page) and their sources, and stroke order for the 6,430 kanji `KanjiStrokeData.sqlite3` draws (KanjiVG), each checked as
 the app decodes it (`KanjiStrokeOrderClient.swift`). Each word row carries its slug, forms, senses with their restrictions, related words
 resolved to `ent_seq`, UniDic and CompoundPitch pitch, and JLPT and TUBELEX frequency. Each kanji
 row carries its word list, precomputed with the app's `kanjiCandidateRowsSQL` and grouping
@@ -340,18 +341,19 @@ at about 3 GB of memory) and about 660 MB: stroke order is about 10 MB, and the 
 500 MB, 335 MB of it `word_examples` and 47 MB `form_examples` (most of it the rows' links).
 
 **The gate** (`src/lib/dictionary/detail/conformance.test.ts`) replays the app-recorded
-word-detail and kanji-detail suites (`apps/ios/LanguageData/Conformance/`) through the detail
-core on the local copy, reading it through `dictionary-db.ts` as the pages do, and checks every
+word-detail, kanji-detail, and kanji-element-detail suites (`apps/ios/LanguageData/Conformance/`)
+through the detail core on the local copy, reading it through `dictionary-db.ts` as the pages do, and checks every
 stored slug against `wordSlug`. It checks every example field the suite records (order, pair
 IDs, text, tokens, links, highlights, and counts) and that each side's attribution is intact, and stops
 at once when the copy wasn't built from the files the suites pin. It also checks the headword's
 per-kanji furigana split, the pitch graph's points, each Frequency row's details, and the
 conjugation table, form by form, with every example each form's page lists (pair IDs in order,
-and the first 3's tokens, links, and accents), and that `word_conjugations` holds exactly the
-words the core conjugates. The import then draws every word-detail case through the word
+and the first 3's tokens, links, and accents), that `word_conjugations` holds exactly the
+words the core conjugates, and each element page whole. The import then draws every word-detail case through the word
 page's components (`src/components/dictionary/word-page.test.tsx`, and `conjugations.test.tsx`
-for the conjugation table's and each form's page, with the form's first examples) and reads
-back what they draw, so a component that draws the core's values wrong fails the import too.
+for the conjugation table's and each form's page, with the form's first examples), and every
+element case and every kanji's Elements through theirs (`kanji-element.test.tsx`), and reads back
+what they draw, so a component that draws the core's values wrong fails the import too.
 
 It changes the way the search schema does, with its own commands:
 `pnpm db:generate:dictionary` generates a migration into `drizzle/dictionary/` and rewrites
@@ -400,14 +402,14 @@ dictionary database has one; otherwise only fixture words and kanji link.
 
 ## Word and kanji pages
 
-`src/lib/dictionary/detail/` is the detail core: pure functions, `wordDetail(rows)` and
-`kanjiDetail(rows)`, that turn rows shaped like the dictionary D1 (`detail/rows.ts`) into what
-the word and kanji pages render. Each function is a port of the app's Swift and names its source,
+`src/lib/dictionary/detail/` is the detail core: pure functions, `wordDetail(rows)`,
+`kanjiDetail(rows)`, and `kanjiElementDetail(rows)`, that turn rows shaped like the dictionary D1
+(`detail/rows.ts`) into what the word, kanji, and element pages render. Each function is a port of the app's Swift and names its source,
 so the pages show what the app shows (see the
 [product docs](../../apps/web/docs/product/dictionary.md)). `data.ts` runs the core and adds only
 URLs.
 
-`getWordPage` and `getKanjiPage` read `DICTIONARY_DB` through `dictionary-db.ts`, one batch (one
+`getWordPage`, `getKanjiPage`, and `getKanjiElementPage` read `DICTIONARY_DB` through `dictionary-db.ts`, one batch (one
 round trip) per page, when it holds a finished import. A word page's later examples load from
 `/dictionary/examples/<ent_seq>.json?build=<build ID>&from=<n>` (`getWordExamples`). The URL names
 the page's dictionary build, and another build's examples aren't found. Word pages live under the
@@ -552,8 +554,10 @@ per request. `/dictionary/`, the search box, is a static page in `src/lib/pages.
   stops if the indexable kanji ever outgrow one file.
 - `/sitemaps/conjugations.xml`: every conjugation table and the form pages search engines may
   index (33,532 URLs), from `word_conjugations`. The import stops if they ever outgrow one file.
+- `/sitemaps/kanji-elements.xml`: the element pages search engines may index, those with meanings
+  or linked on-readings (all 1,698).
 
-Both are kept in the Worker's edge cache (the Cache API) under the dictionary build, so a new
+All are kept in the Worker's edge cache (the Cache API) under the dictionary build, so a new
 build replaces them at once; `pnpm dev` has no such cache.
 
 ## Retired word URLs

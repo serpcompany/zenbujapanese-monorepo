@@ -5,11 +5,14 @@ Each behavior below says what the website does, where that behavior comes from, 
 check that enforces it (see [How behavior is verified](index.md#how-behavior-is-verified)).
 
 Abbreviations: **App docs** is `apps/ios/docs/product/dictionary.md`. Swift files are in
-`apps/ios/Modules/Sources/SearchExperience/`. Web paths are under `apps/web/`. **SR**, **WD**, and
-**KD** are the app-recorded suites `search-retrieval.json`, `word-detail.json`, and
-`kanji-detail.json`, with the field they record. SR is replayed by
-`src/lib/dictionary/search/conformance.test.ts` ("search conformance on D1"); WD and KD by
-`src/lib/dictionary/detail/conformance.test.ts` ("word and kanji detail conformance on D1").
+`apps/ios/Modules/Sources/SearchExperience/`. Web paths are under `apps/web/`. **SR**, **WD**,
+**KD**, and **KED** are the app-recorded suites `search-retrieval.json`, `word-detail.json`,
+`kanji-detail.json`, and `kanji-element-detail.json`, with the field they record. SR is replayed by
+`src/lib/dictionary/search/conformance.test.ts` ("search conformance on D1"); WD, KD, and KED by
+`src/lib/dictionary/detail/conformance.test.ts` ("word, kanji, and element detail conformance on
+D1"). **KED rendered** is `src/components/dictionary/kanji-element.test.tsx` ("the rendered element
+page matches the app"), which draws every KED case through the element page's components, and
+every KD case's Elements through the kanji page's, and reads back what they draw.
 **SRR** is `search-results.json`, the results screen after the frequency re-sort, replayed field
 by field by `src/lib/dictionary/results/conformance.test.ts` ("search results conformance on
 D1"), and rendered for seven of its cases by `src/components/dictionary/search-results.test.tsx`
@@ -646,15 +649,18 @@ starts with it. Each word links to its word page. The app's row opens its first 
   reading starts with the reading’s stem".
 
 **Components and Elements.** Elements list each element with its role (Meaning / structure, Sound,
-or Sound pattern) and up to three meanings, or its linked on-readings when it has none. Components
-appear only for a kanji without elements. An element or component that is a kanji links to its
-kanji page. The app also opens an element detail screen; see
-[Required, not built yet](#required-not-built-yet-511).
+or Sound pattern) and up to three meanings, or its linked on-readings when it has none. Each
+element row opens that element's page (see [Kanji element page](#kanji-element-page)), as the
+app's row opens its element screen. Components appear only for a kanji without elements; a
+component that is a kanji links to its kanji page.
 
-- Source: `KanjiDetailView.swift`; `KanjiElementLookupClient.swift`.
-- Check: KD `elements`, `components`; `src/lib/dictionary/detail/kanji.test.ts`, "kanjiElements
-  (KanjiElementReferenceData.elements)" and "a kanji without elements lists its components; one
-  stroke is singular".
+- Source: `KanjiElementsSection` in `KanjiDetailView.swift`; `KanjiElementLookupClient.swift`.
+- Check: KD `elements`, `components`; KED rendered ("kanji …’s Elements", every KD case's role,
+  meanings, and link to the element page); `src/components/dictionary/kanji-page.test.tsx`, "each
+  element shows its role and meanings, and opens its element page";
+  `src/lib/dictionary/detail/kanji.test.ts`, "kanjiElements (KanjiElementReferenceData.elements)"
+  and "a kanji without elements lists its components; one stroke is singular"; smoke "見's Elements
+  open their element pages, and 氵's page lists the app's kanji".
 
 **Lists and Notes.** Prompts that open the get-the-app prompt, as on a word page.
 
@@ -676,6 +682,80 @@ in the app.
 
 **Credits.** A kanji page ends with a Sources list: KANJIDIC2, RADKFILE, KanjiVG when it shows
 stroke order, Kanjium, and JMdict.
+
+- Source: #465; `src/lib/dictionary/sources.ts`.
+- Check: No automated check yet (#511).
+
+## Kanji element page
+
+**The page.** An element of kanji (a radical form such as 氵, or a kanji such as 女 as part of
+others) has a page at `/dictionary/elements/<element>/`, which a kanji page's Elements rows open.
+It shows what the app's element screen shows, in its order: the glyph with its meanings, then
+Alternative forms, Meaning / structure, Sound patterns, As a standalone kanji, Kanji containing this
+element, and Source. Each section shows only when it has something to show, as in the app. The app
+writes the section titles in capitals; the website writes them in sentence case, as it writes the
+kanji page's element roles. The app's screen is titled "Element"; the page's heading is "Element
+氵", after the breadcrumbs (Home › Dictionary › Element 氵). The app keeps the learner's place in
+the kanji list when they go back from a kanji; the browser's Back does.
+
+- Source: App docs, Dictionary and kanji details ("Component and element links can be followed");
+  `KanjiElementDetailView.swift` (`KanjiElementSection`, `headerMeanings`, `meaningExplanation`,
+  `soundPatterns`); `KanjiElementLookupClient.swift` (`entry(_:)`); #511 (the element screen is
+  required).
+- Check: KED `meanings` and `sections`, compared by the gate and read back from the drawn page by
+  KED rendered on every import; `src/components/dictionary/kanji-page.test.tsx`, "shows 女: its
+  meanings, sections in the app’s order, and every kanji containing it"; smoke "見's Elements open
+  their element pages, and 氵's page lists the app's kanji".
+
+**Alternative forms.** Each other form of the element (萬 for 万) opens its own element page, as
+the app's row pushes that element's screen.
+
+- Source: `KanjiElementContent` in `KanjiElementDetailView.swift`.
+- Check: KED `alternatives`, and KED rendered (each form's link);
+  `src/components/dictionary/kanji-element.test.tsx`, "an element with alternative forms links each
+  to its own element page".
+
+**Meaning / structure and Sound patterns.** "This element contributes forms associated with …"
+names the element's meanings; "Linked on-readings: …" lists the on-readings kanji with the element
+share.
+
+- Source: `meaningExplanation` and `soundPatterns` in `KanjiElementDetailView.swift`.
+- Check: KED `meaningExplanation` and `soundPatterns`, and KED rendered.
+
+**As a standalone kanji, and the kanji containing it.** The element as a kanji of its own is the
+first of the element and its alternative forms that Kanjium lists as a kanji, by frequency rank (a
+ranked kanji first), then by character, as the app picks it: 弌 for 一, 喜 for 㐂. Kanji containing
+this element lists every kanji whose structure names it, in the reference's order (394 for 木),
+leaving out the standalone kanji. Each row shows the kanji, up to three meanings, and its
+on-readings, and opens the kanji's page.
+
+- Source: `KanjiElementReferenceData.entry(_:)` and `contributionPrecedes` in
+  `KanjiElementLookupClient.swift`; `KanjiContributionRow` (`rowMeanings`, `rowReadings`) in
+  `KanjiElementDetailView.swift`.
+- Check: KED `standaloneKanji` and `containingKanji` (every row's character, meanings, and
+  readings), and KED rendered (each row and its link to a kanji page);
+  `src/components/dictionary/kanji-element.test.tsx`, "an element with alternative forms links each
+  to its own element page" (the standalone kanji is left out of the list); smoke "見's Elements open
+  their element pages, and 氵's page lists the app's kanji" (氵's rows, in order).
+
+**Source.** The Source section names the structure's source and snapshot ("kanjium 8a0cdaa…") and
+the meanings' and readings' source and snapshot ("edrdg.kanjidic2 2026-08-10"), with the app's note
+that both are normalized into Zenbu's reference data. The import stores them in
+`kanji_element_sources`.
+
+- Source: `KanjiElementProvenance` and `KanjiElementEntry.sourceNote` in
+  `KanjiElementDetailView.swift`.
+- Check: KED `structureSource`, `metadataSource`, and `sourceNote`, and KED rendered.
+
+**Not an element.** A character that isn't an element, such as 鬱 or あ, has no page (404). The app
+can only reach an element from a kanji's Elements, so it never shows its "No Element Reference"
+state for one.
+
+- Source: `KanjiElementDetailView.swift` (`.missing`).
+- Check: KED cases 鬱 (`found: false`) and あ (`opensDetail: false`), which the gate and KED
+  rendered check have no page; smoke `404 /dictionary/elements/%E9%AC%B1/`.
+
+**Credits.** An element page ends with a Sources list: Kanjium and KANJIDIC2.
 
 - Source: #465; `src/lib/dictionary/sources.ts`.
 - Check: No automated check yet (#511).
@@ -749,6 +829,17 @@ character returns 404.
 - Check: KD cases 廊 (U+5ECA and U+F928); `src/lib/dictionary/sitemaps.test.ts`, "the kanji sitemap
   lists the indexable kanji exactly, never normalized". The 404: No automated check yet (#511).
 
+**Element URLs.** An element lives at `/dictionary/elements/<element>/`, keyed like a kanji page by
+the exact glyph, never Unicode-normalized, so the compatibility ideograph 海 (U+FA45) and 海
+(U+6D77) are two elements with two pages. The app opens an element on its own, not as part of a
+kanji, so its URL names no kanji. A glyph that isn't an element returns 404.
+
+- Source: ADR 0007 (kanji URLs are the character); `SearchExperienceRoute.kanjiElement` in
+  `SearchExperienceRootView.swift`.
+- Check: KED cases 海 (U+6D77 and U+FA45) and 𠆢 (U+201A2); `src/lib/dictionary/sitemaps.test.ts`,
+  "the element sitemap lists the indexable elements exactly, never normalized"; smoke `404
+  /dictionary/elements/%E9%AC%B1/`.
+
 **Search URLs.** A search lives at `/dictionary/search/<query>/`. The query is NFKC-normalized,
 lowercased, and has whitespace runs collapsed; any other form redirects (308) to it. Dots are
 encoded, so a query never looks like a file. `.` and `..` can't be paths, so they stay on
@@ -767,7 +858,7 @@ redirects (308) to it.
   (#511).
 
 **Titles and descriptions.** A word page is titled "要る (いる) meaning", a kanji page "要 kanji
-meaning", a results page "«query» in Japanese", a conjugation table "見る (みる) conjugation", and a
+meaning", an element page "氵 kanji element meaning", a results page "«query» in Japanese", a conjugation table "見る (みる) conjugation", and a
 form's page "見ました (みました): polite past of 見る", each followed by "| Zenbu Japanese". Each
 page is its own canonical URL, except a form page that shows the same spelling, and so the same
 examples, as another: a Polite form spelled as the Plain form of its kind (the te-form and the
@@ -784,8 +875,8 @@ sitemap.
   earlier one in its register names it as canonical"; smoke "a form's page is noindex without
   examples, and names its spelling's first page". The titles: No automated check yet (#511).
 
-**Indexing.** The dictionary home, word pages, kanji pages with meanings or readings, results
-pages that list a word, or whose kanji row opens a kanji page, a direct Japanese search's
+**Indexing.** The dictionary home, word pages, kanji pages with meanings or readings, element
+pages with meanings or linked on-readings (all 1,698 today), results pages that list a word, or whose kanji row opens a kanji page, a direct Japanese search's
 Example Sentences page, conjugation tables, and form pages that list examples are indexable. A
 kanji with no meanings or readings (about 475 of 13,108, such as 㐂), a search that finds nothing
 or only example sentences, an English, romaji, or deinflected search's Example Sentences page (a
@@ -800,7 +891,8 @@ indexed at all; staging sends `X-Robots-Tag: noindex` and disallows crawling (se
   searches only); the owner's decision on #524 (form pages are indexed when they list examples,
   following the search pages' rule).
 - Check: smoke "a kanji without meanings or readings is noindex"; the conformance test checks each
-  kanji's `indexable` against its meanings and readings; the JSON routes' `route.test.ts` files
+  kanji's `indexable` against its meanings and readings, and each KED case's against its meanings
+  and linked on-readings; the JSON routes' `route.test.ts` files
   (`X-Robots-Tag: noindex`), including `src/app/dictionary/examples/forms/[file]/route.test.ts`;
   search pages: `src/lib/dictionary/results/links.test.ts`, "isIndexable"; Example Sentences
   pages: `data.test.ts` (`indexable` for 食べた, eat, and taberu); form pages: smoke "a form's
@@ -809,8 +901,9 @@ indexed at all; staging sends `X-Robots-Tag: noindex` and disallows crawling (se
 **Sitemaps.** The pages sitemap lists the dictionary home. The sitemap index also lists the word
 sitemaps, with every word page's canonical URL, the kanji sitemap, with every indexable kanji
 page, and the conjugations sitemap, with every conjugation table (20,364) and each form page
-search engines may index (13,168: those that list examples, under their canonical URL). Search
-pages aren't in any sitemap yet.
+search engines may index (13,168: those that list examples, under their canonical URL), and the
+element sitemap (`/sitemaps/kanji-elements.xml`), with every indexable element page. Search pages
+aren't in any sitemap yet.
 
 - Source: ADR 0007; #465; #511.
 - Check: `src/lib/dictionary/sitemaps.test.ts`; the gate's "every word with a conjugation table is
@@ -818,7 +911,8 @@ pages aren't in any sitemap yet.
   (`detail/conformance.test.ts`), which recomputes every word's table; smoke "$index lists the
   dictionary, kanji, and conjugations sitemaps" (for `/sitemap-index.xml` and `/sitemap.xml`),
   "word sitemap lists 1 to 50,000 canonical URLs", "kanji sitemap lists indexable kanji only", and
-  "conjugations sitemap lists tables and the form pages that list examples".
+  "conjugations sitemap lists tables and the form pages that list examples", and "the element
+  sitemap lists 氵, and the index lists it".
 
 **Structured data.** Each dictionary page carries `BreadcrumbList` structured data for its trail.
 
@@ -862,11 +956,6 @@ its leading group of equally strong matches, as the app limits it (`rankedEntryL
 
 - App source: `KanjiReadingsSection` in `KanjiDetailView.swift`.
 - Check it will get: a rendered-page check against KD `readings`.
-
-**Kanji element detail.** An element opens its element detail screen, as in the app.
-
-- App source: `KanjiElementDetailView.swift`; `KanjiElementLookupClient.swift`.
-- Check it will get: an app-recorded element-detail suite, and a rendered-page check.
 
 ### Header and footer
 

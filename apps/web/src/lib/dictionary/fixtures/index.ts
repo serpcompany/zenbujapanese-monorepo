@@ -4,11 +4,13 @@ import type {
   ExampleSentenceRow,
   FormExampleRow,
   FormExampleRows,
+  KanjiElementRows,
   KanjiRows,
   KanjiWordRow,
   WordExampleRow,
   WordRows
 } from '@/lib/dictionary/detail/rows'
+import elements from './elements.json'
 import exampleCounts from './example-counts.json'
 import exampleSentences from './example-sentences.json'
 import formExamples from './form-examples.json'
@@ -18,7 +20,7 @@ import wordExamples from './word-examples.json'
 import words from './words.json'
 
 /**
- * Local fixture rows, never used in production: twelve words and the kanji 要, exported from the
+ * Local fixture rows, never used in production: twelve words, the kanji 要, and its elements, exported from the
  * app's bundled data by scripts/export-dictionary-fixtures.py in the detail core's row shapes,
  * with each word's first 50 examples, and each of its conjugated forms' first 50, from the
  * import's own precompute.
@@ -78,3 +80,6 @@ export const fixtureSearchOrder: Record<string, number[]> = {
   iru: [1546640, 1577980, 1391500, 1465580, 1322180, 1587780],
   要: [1609600, 2188720, 1546640, 1546750, 1546680, 1546850, 1612150]
 }
+
+/** The elements of the fixture kanji, whose pages it links to. */
+export const fixtureElementRows = elements as KanjiElementRows[]

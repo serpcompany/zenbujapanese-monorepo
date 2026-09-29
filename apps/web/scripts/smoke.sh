@@ -423,6 +423,52 @@ lists_conjugations() {
 eventually 'conjugations sitemap lists tables and the form pages that list examples' \
   "conjugations sitemap is missing 見る's pages or lists one it shouldn't" lists_conjugations
 
+# Kanji element pages show what the app's element screen shows, read from the app-recorded suites
+# at run time: 見's Elements each open their element page, and 氵's page has its meanings and every
+# kanji containing it, in the app's order. A kanji that isn't an element (鬱) has no page, and the
+# element sitemap lists 氵.
+water=/dictionary/elements/%E6%B0%B5/
+element_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/kanji-element-detail.json"
+kanji_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/kanji-detail.json"
+expect "$water" 200
+expect /dictionary/elements/%E9%AC%B1/ 404
+element_expected="$(python3 -c '
+import json, sys
+kanji = next(c for c in json.load(open(sys.argv[2]))["cases"] if c["character"] == "見")
+print(" ".join("/dictionary/elements/%s/" % e["glyph"] for e in kanji["elements"]))
+water = next(c for c in json.load(open(sys.argv[1]))["cases"] if c["element"] == "氵")
+print(water["meanings"])
+print(" ".join(k["character"] for k in water["containingKanji"]))
+' "$element_suite" "$kanji_suite")"
+miru_elements="$(sed -n 1p <<<"$element_expected")"
+water_meanings="$(sed -n 2p <<<"$element_expected")"
+water_kanji="$(sed -n 3p <<<"$element_expected")"
+elements_seen=""
+elements_like_the_app() {
+  local html linked listed
+  html="$(body "$kanji")"
+  # Where each element row links, in order.
+  linked="$(grep -oE '<a [^>]*data-kanji-element="[^>]*>' <<<"$html" |
+    grep -oE 'href="[^"]+"' | sed -E 's/href="([^"]+)"/\1/' | paste -sd' ' -)"
+  html="$(body "$water")"
+  listed="$(grep -oE 'data-element-kanji="[^"]+"' <<<"$html" | sed -E 's/.*="([^"]+)"/\1/' |
+    paste -sd' ' -)"
+  elements_seen="見 links ${linked:-nothing}; 氵 lists $(wc -w <<<"$listed" | tr -d ' ') kanji"
+  [ "$linked" = "$miru_elements" ] && [ "$listed" = "$water_kanji" ] &&
+    grep -q "data-element-meanings=\"true\">$water_meanings<" <<<"$html"
+}
+show_elements_seen() {
+  echo "$elements_seen (want 見 links $miru_elements; 氵 lists $(wc -w <<<"$water_kanji" | tr -d ' ') kanji)"
+}
+eventually "見's Elements open their element pages, and 氵's page lists the app's kanji" \
+  "見's Elements or 氵's element page differ from the app" elements_like_the_app show_elements_seen
+lists_water() {
+  grep -q "<loc>https://zenbujapanese.com$water</loc>" <<<"$(body /sitemaps/kanji-elements.xml)" &&
+    grep -q '<loc>https://zenbujapanese.com/sitemaps/kanji-elements.xml</loc>' <<<"$(body /sitemap-index.xml)"
+}
+eventually 'the element sitemap lists 氵, and the index lists it' \
+  'the element sitemap is missing 氵, or the index is missing it' lists_water
+
 # The X-Robots-Tag header a path sends, if any.
 robots_tag() { curl -sI "${smoke[@]}" "$base$1" | tr -d '\r' | grep -i '^x-robots-tag:' || true; }
 robots() { body /robots.txt; }

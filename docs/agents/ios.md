@@ -90,14 +90,20 @@ conjugation table its part of speech opens (each form with the words `Conjugatio
 `ConjugatedForm.examples`, and the first 3 with their linked tokens and which of them
 `LinkedJapaneseText.matchesQuery` accents), kanji, and its first 25 examples with their linked tokens; for
 a kanji, its metrics, meanings, readings with their words, elements, 24 words, and whether it
-has stroke data (not its JLPT metric, which the suites don't record). The views and the suite
-share those helpers, so the suite records what the views draw. Each file pins the SHA-256 of
+has stroke data (not its JLPT metric, which the suites don't record).
+`KanjiElementDetailConformanceTests` records the element screen in `kanji-element-detail.json`:
+for each element, its meanings, sections, alternative forms, texts, standalone kanji, the kanji
+containing it, and its sources, through the helpers `KanjiElementDetailView` shares
+(`KanjiElementSection`, `headerMeanings`, `meaningExplanation`, `soundPatterns`, `rowMeanings`,
+`rowReadings`). The views and the suites share those helpers, so the suites record what the views
+draw. Each file pins the SHA-256 of
 every bundled artifact it was recorded against. After an intended
 change to either screen or its data, record them again with the same
 `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` prefix and
-`-only-testing:SearchExperienceTests/WordDetailConformanceTests` or
-`-only-testing:SearchExperienceTests/KanjiDetailConformanceTests`, and review the diff.
-Recording keeps each case's `id` or `character` and its `covers` note, so add a case by
+`-only-testing:SearchExperienceTests/WordDetailConformanceTests`,
+`-only-testing:SearchExperienceTests/KanjiDetailConformanceTests`, or
+`-only-testing:SearchExperienceTests/KanjiElementDetailConformanceTests`, and review the diff.
+Recording keeps each case's `id`, `character`, or `element` and its `covers` note, so add a case by
 adding those two fields and recording.
 
 The iOS app has no CI workflow. Verify ordinary app changes by also building,

@@ -309,3 +309,52 @@ export interface KanjiStrokesRow {
   strokeCount: number
   strokes: number[][]
 }
+
+/**
+ * An element from `KanjiElementReferenceData.json`'s `elements` list, whole, as its element page
+ * reads it (`element_glyphs`).
+ */
+export interface ElementGlyphRow {
+  glyph: string
+  /** Other forms of the element, each an element with its own page. */
+  alternatives: string[]
+  meanings: string[]
+  onReadings: string[]
+  commonLinkedOnReadings: string[]
+  /** The kanji whose structure names the element, in the reference's order. */
+  containingCharacters: string[]
+}
+
+/**
+ * A kanji from `KanjiElementReferenceData.json`'s `kanji` list (`kanji_elements`), as an element
+ * page lists it.
+ */
+export interface ElementKanjiRow {
+  character: string
+  meanings: string[]
+  onReadings: string[]
+  frequencyRank: number | null
+}
+
+/**
+ * Where `KanjiElementReferenceData.json` comes from (`kanji_element_sources`): the structure
+ * source, the snapshot it was taken at, and the source of the kanji's meanings and readings, with
+ * its own snapshot.
+ */
+export interface ElementSourcesRow {
+  snapshot: string
+  structureSourceIdentity: string
+  metadataSourceIdentity: string
+  metadataSourceSnapshot: string
+}
+
+/** Everything an element page reads. */
+export interface KanjiElementRows {
+  element: ElementGlyphRow
+  /**
+   * The reference's kanji among the element, its alternatives, and the kanji containing it, in
+   * any order.
+   */
+  kanji: ElementKanjiRow[]
+  sources: ElementSourcesRow
+}

@@ -159,6 +159,14 @@ def main(source, resources, destination):
                 for e in data.elements()
             ),
         )
+        sources = data.element_sources()
+        counts["kanji_element_sources"] = write_rows(
+            out, "kanji_element_sources",
+            ["snapshot", "structure_source_identity", "metadata_source_identity",
+             "metadata_source_snapshot"],
+            [(sources["snapshot"], sources["structureSourceIdentity"],
+              sources["metadataSourceIdentity"], sources["metadataSourceSnapshot"])],
+        )
     print(f"Wrote {counts} in {time.monotonic() - started:.0f} s", file=sys.stderr)
     # Every entry and kanji becomes a page.
     expected = {

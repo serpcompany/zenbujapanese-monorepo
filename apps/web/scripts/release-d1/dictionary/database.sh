@@ -61,20 +61,27 @@ build_inputs=(
   apps/web/src/components/dictionary/sheet.tsx
   apps/web/src/components/dictionary/rendered-word.ts
   apps/web/src/components/dictionary/rendered.ts
+  apps/web/src/components/dictionary/kanji-element.tsx
+  apps/web/src/components/dictionary/kanji-elements.tsx
+  apps/web/src/components/dictionary/section.tsx
+  apps/web/src/components/dictionary/rendered-element.ts
   apps/web/src/components/ui/badge.tsx
   apps/web/src/components/ui/button.tsx
   apps/web/src/components/ui/card.tsx
   apps/web/src/components/ui/dialog.tsx
   apps/web/src/components/ui/drawer.tsx
+  apps/web/src/components/ui/item.tsx
   apps/web/src/components/ui/separator.tsx
   apps/web/src/components/ui/tabs.tsx
   apps/web/src/hooks/use-media-query.ts
   # The app-recorded suites the gate checks, so a re-recorded suite checks the next deploy.
   apps/ios/LanguageData/Conformance/word-detail.json
   apps/ios/LanguageData/Conformance/kanji-detail.json
+  apps/ios/LanguageData/Conformance/kanji-element-detail.json
 )
-tables=(words kanji kanji_strokes kanji_elements element_glyphs example_sentences word_examples
-  word_example_counts form_examples word_conjugations retired_ids word_sitemaps)
+tables=(words kanji kanji_strokes kanji_elements element_glyphs kanji_element_sources
+  example_sentences word_examples word_example_counts form_examples word_conjugations retired_ids
+  word_sitemaps)
 # examples-NN.sql: as many as build-examples.mts writes, each under 100 MB (a glob, in order).
 upload_files=(rows.sql 'examples-*.sql')
 
@@ -120,13 +127,15 @@ if loaded != expected:
 # example each conjugated form's screen lists, and the word-detail suite drawn by the word page's
 # components (word-page.test.tsx): the furigana's per-kanji split, the pitch graph's dots, each
 # Frequency row's details, and the conjugation table's page with each form's page and its
-# examples (conjugations.test.tsx).
+# examples (conjugations.test.tsx); and the kanji-element-detail suite, with each kanji's
+# Elements, drawn by the element page's components (kanji-element.test.tsx).
 check_local() {
   # vitest.config.ts runs these one at a time: each opens the same local D1.
   ZENBU_DICTIONARY_D1=1 ZENBU_DICTIONARY_D1_PATH="$1" \
     pnpm exec vitest run src/lib/dictionary/detail/conformance.test.ts \
     src/components/dictionary/word-page.test.tsx \
-    src/components/dictionary/conjugations.test.tsx
+    src/components/dictionary/conjugations.test.tsx \
+    src/components/dictionary/kanji-element.test.tsx
 }
 
 # The SHA-256 of each input file, for dictionary_import's `sources` column.

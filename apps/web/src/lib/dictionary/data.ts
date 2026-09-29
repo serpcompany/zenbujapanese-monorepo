@@ -1,6 +1,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { cache } from 'react'
 import {
+  fixtureElementRows,
   fixtureFormExamples,
   fixtureKanjiRows,
   fixtureSearchOrder,
@@ -13,6 +14,11 @@ import {
   type Conjugations,
   canonicalForm
 } from './detail/conjugation'
+import {
+  kanjiElementDetail,
+  type LinkedKanjiElementDetail,
+  linkKanjiElement
+} from './detail/element'
 import { examplesPerPage, formExample, wordExample } from './detail/examples'
 import {
   type KanjiDetail,
@@ -22,7 +28,13 @@ import {
   kanjiDetail
 } from './detail/kanji'
 import type { PitchAccent } from './detail/pitch'
-import type { FrequencyRow, KanjiRows, WordExampleRows, WordRows } from './detail/rows'
+import type {
+  FrequencyRow,
+  KanjiElementRows,
+  KanjiRows,
+  WordExampleRows,
+  WordRows
+} from './detail/rows'
 import type { RubySegment } from './detail/ruby'
 import {
   type AlternativeForm,
@@ -137,17 +149,22 @@ export interface KanjiPageData
   extends Omit<KanjiDetail, 'readings' | 'components' | 'elements' | 'words'> {
   readings: (Omit<KanjiReading, 'words'> & { words: Linked<KanjiWord>[] })[]
   components: Linked<{ character: string }>[]
-  elements: Linked<KanjiElement>[]
+  elements: KanjiElement[]
   words: Linked<KanjiWord>[]
   /** A kanji with no meanings or readings stays out of search engines (#465). */
   indexable: boolean
 }
 
 export type { PageExample, PageExampleToken } from './page-example'
+
+/** An element page: each kanji links to its kanji page, when it has one. */
+export type KanjiElementPageData = LinkedKanjiElementDetail
+
 export type { SearchData, SearchWord } from './results/links'
 
 const wordRowsBySeq = new Map(fixtureWordRows.map(rows => [rows.entry.entSeq, rows]))
 const kanjiRowsByCharacter = new Map(fixtureKanjiRows.map(rows => [rows.kanji.character, rows]))
+const elementRowsByGlyph = new Map(fixtureElementRows.map(rows => [rows.element.glyph, rows]))
 
 /** The fixtures' links: only fixture words and kanji have pages. */
 const fixtureLinks: Links = {
@@ -224,10 +241,6 @@ function kanjiPage(rows: KanjiRows, indexable: boolean, links: Links): KanjiPage
     components: detail.components.map(component => ({
       character: component,
       path: links.kanji(component)
-    })),
-    elements: detail.elements.map(element => ({
-      ...element,
-      path: links.kanji(element.character)
     })),
     words: detail.words.map(linkWord),
     indexable
@@ -413,6 +426,23 @@ export const getKanjiPage = cache(async (character: string): Promise<KanjiPageDa
   const { meanings, readings } = rows.kanji
   return kanjiPage(rows, meanings.length > 0 || readings.length > 0, fixtureLinks)
 })
+
+const kanjiElementPage = (rows: KanjiElementRows, links: Links): KanjiElementPageData =>
+  linkKanjiElement(kanjiElementDetail(rows), character => links.kanji(character))
+
+/** An element's page, by its exact glyph; null for one that isn't an element. Memoized per request. */
+export const getKanjiElementPage = cache(
+  async (glyph: string): Promise<KanjiElementPageData | null> => {
+    const db = await dictionaryDb()
+    if (db) {
+      const element = await db.element(glyph)
+      if (!element) return null
+      return kanjiElementPage(element.rows, databaseLinks(new Map(), element.kanjiPages))
+    }
+    const rows = elementRowsByGlyph.get(glyph)
+    return rows ? kanjiElementPage(rows, fixtureLinks) : null
+  }
+)
 
 // Release databases known to hold an import, with the build each holds. Only a finished import is
 // remembered, so a database that has none yet is checked again on the next request.

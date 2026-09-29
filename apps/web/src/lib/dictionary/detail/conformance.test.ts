@@ -4,6 +4,7 @@ import { getPlatformProxy } from 'wrangler'
 import { type DictionaryWord, dictionaryDatabase } from '../dictionary-db'
 import { wordSlug } from '../urls'
 import { conjugationTable, indexedForms } from './conjugation'
+import { appSectionTitles, type ElementKanji, kanjiElementDetail } from './element'
 import { licenseUrl } from './examples'
 import { tierLabels } from './frequency'
 import { kanjiDetail } from './kanji'
@@ -21,7 +22,7 @@ import {
 } from './suite'
 import { wordDetail } from './word'
 
-// The word-detail and kanji-detail conformance suites, recorded from the app on the iOS
+// The word-detail, kanji-detail, and kanji-element-detail conformance suites, recorded from the app on the iOS
 // Simulator (apps/ios/LanguageData/Conformance), replayed through the detail core against a local
 // dictionary D1 built by `scripts/release-d1/load-local.sh dictionary` (at .dictionary-d1/, or
 // ZENBU_DICTIONARY_D1_PATH). The import runs it before anything reaches D1, so it only runs when
@@ -34,7 +35,9 @@ import { wordDetail } from './word'
 // conjugation table the part of speech opens, form by form, with every example each form's screen
 // lists (its pair IDs in order, and the first few's words, links, and accents), and that every
 // word with a table is in the conjugations sitemap. The app's kanji cases don't record JLPT, so it
-// isn't compared.
+// isn't compared. Each element case is
+// compared whole: its header, sections, alternative forms, texts, standalone kanji, the kanji
+// containing it, and its sources.
 const enabled = process.env.ZENBU_DICTIONARY_D1 === '1'
 
 interface Artifact {
@@ -121,6 +124,30 @@ interface KanjiCase {
   components?: string[]
 }
 
+interface ElementKanjiCase {
+  character: string
+  meanings?: string
+  readings?: string
+}
+
+interface ElementCase {
+  element: string
+  codePoint: string
+  covers: string
+  opensDetail: boolean
+  found?: boolean
+  meanings?: string
+  sections?: string[]
+  alternatives?: string[]
+  meaningExplanation?: string
+  soundPatterns?: string
+  standaloneKanji?: ElementKanjiCase
+  containingKanji?: ElementKanjiCase[]
+  structureSource?: string
+  metadataSource?: string
+  sourceNote?: string
+}
+
 interface Suite<Case> {
   artifacts: Artifact[]
   cases: Case[]
@@ -143,6 +170,7 @@ function readSuite<Case>(name: string): Suite<Case> {
 
 const wordSuite = readSuite<WordCase>('word-detail')
 const kanjiSuite = readSuite<KanjiCase>('kanji-detail')
+const elementSuite = readSuite<ElementCase>('kanji-element-detail')
 
 /** The app's pack IDs for the website's default frequency dictionaries, by short name. */
 const packIds: Record<string, string> = {
@@ -158,9 +186,19 @@ function covered<Case extends object>(expected: Case, skipped: string[]): Partia
 }
 
 const codePoint = (character: string) =>
-  `U+${(character.codePointAt(0) ?? 0).toString(16).toUpperCase().padStart(4, '0')}`
+  Array.from(
+    character,
+    scalar => `U+${(scalar.codePointAt(0) ?? 0).toString(16).toUpperCase().padStart(4, '0')}`
+  ).join(' ')
 
-describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
+/** A kanji row as the element suite records it: nil fields are left out. */
+const suiteElementKanji = ({ character, meanings, readings }: ElementKanji): ElementKanjiCase => ({
+  character,
+  ...(meanings === null ? {} : { meanings }),
+  ...(readings === null ? {} : { readings })
+})
+
+describe.runIf(enabled)('word, kanji, and element detail conformance on D1', () => {
   let proxy: Awaited<ReturnType<typeof getPlatformProxy<CloudflareEnv>>>
   let db: D1Database
   let dictionary: ReturnType<typeof dictionaryDatabase>
@@ -185,7 +223,11 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
     const sources: Record<string, string> = JSON.parse(loaded.sources)
     const built = (name: string) =>
       Object.entries(sources).find(([path]) => path.endsWith(`/Resources/${name}`))?.[1]
-    const mismatched = [...wordSuite.artifacts, ...kanjiSuite.artifacts].filter(
+    const mismatched = [
+      ...wordSuite.artifacts,
+      ...kanjiSuite.artifacts,
+      ...elementSuite.artifacts
+    ].filter(
       artifact =>
         (artifact.name === loaded.artifact && artifact.sha256 !== loaded.sha256) ||
         (built(artifact.name) !== undefined && built(artifact.name) !== artifact.sha256)
@@ -511,6 +553,51 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
       entSeq => JSON.stringify(expected.get(entSeq)) !== JSON.stringify(stored.get(entSeq))
     )
     expect(differing.slice(0, 10)).toEqual([])
+  })
+
+  test.each(elementSuite.cases)('element $codePoint $element: $covers', async expected => {
+    const found = await dictionary.element(expected.element)
+    // A glyph that isn't an element has no page; the app shows No Element Reference for it.
+    if (!expected.opensDetail || !expected.found) {
+      expect(found).toBeNull()
+      return
+    }
+    expect(found, 'no element row').not.toBeNull()
+    if (!found) return
+    const detail = kanjiElementDetail(found.rows)
+    const observed: Omit<ElementCase, 'covers'> = {
+      element: detail.glyph,
+      codePoint: codePoint(detail.glyph),
+      opensDetail: true,
+      found: true,
+      ...(detail.meanings === null ? {} : { meanings: detail.meanings }),
+      sections: detail.sections.map(section => appSectionTitles[section]),
+      alternatives: detail.alternatives,
+      ...(detail.meaningExplanation === null
+        ? {}
+        : { meaningExplanation: detail.meaningExplanation }),
+      ...(detail.soundPatterns === null ? {} : { soundPatterns: detail.soundPatterns }),
+      ...(detail.standaloneKanji
+        ? { standaloneKanji: suiteElementKanji(detail.standaloneKanji) }
+        : {}),
+      containingKanji: detail.containingKanji.map(suiteElementKanji),
+      structureSource: detail.structureSource,
+      metadataSource: detail.metadataSource,
+      sourceNote: detail.sourceNote
+    }
+    expect(observed).toEqual(covered(expected, ['covers']))
+    // Search engines index an element with meanings or linked on-readings.
+    expect(detail.indexable).toBe(detail.meanings !== null || detail.soundPatterns !== null)
+  })
+
+  test('every element a kanji lists has a page', async () => {
+    const { results } = await db
+      .prepare(
+        `SELECT DISTINCT g.value AS glyph FROM kanji_elements e, json_each(e.element_glyphs_json) g
+         WHERE g.value NOT IN (SELECT glyph FROM element_glyphs)`
+      )
+      .all<{ glyph: string }>()
+    expect(results).toEqual([])
   })
 
   test('every word is stored under the slug its URL uses', async () => {

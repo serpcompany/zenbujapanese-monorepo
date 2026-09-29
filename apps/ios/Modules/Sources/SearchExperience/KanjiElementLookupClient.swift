@@ -57,6 +57,8 @@ struct KanjiElementEntry: Codable, Hashable, Identifiable, Sendable {
   let metadataProvenance: KanjiElementProvenance
 }
 
+/// Looks up a kanji's elements and an element's entry. The website ports `entry(_:)` (see also
+/// apps/web/src/lib/dictionary/detail/element.ts); change both together.
 struct KanjiElementLookupClient: Sendable {
   var elements: @Sendable (KanjiCharacter) async throws -> [KanjiElementSummary]
   var entry: @Sendable (KanjiElementID) async throws -> KanjiElementEntry?

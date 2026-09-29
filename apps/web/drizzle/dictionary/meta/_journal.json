@@ -29,6 +29,13 @@
       "when": 1790714403700,
       "tag": "0003_form_examples",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1790721517842,
+      "tag": "0004_kanji_element_sources",
+      "breakpoints": true
     }
   ]
 }

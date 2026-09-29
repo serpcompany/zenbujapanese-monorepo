@@ -2,13 +2,15 @@ import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { absoluteUrl } from '@/lib/site'
 import { type SitemapEntry, urlSetStream, urlSetXml, xmlResponse } from '@/lib/sitemap'
 import { loadedDictionary } from './data'
-import { conjugationsPath, kanjiPath } from './urls'
+import { isIndexableElement } from './detail/element'
+import { conjugationsPath, kanjiElementPath, kanjiPath } from './urls'
 
 // The dictionary's sitemaps (ADR 0007, #465): `/sitemaps/dictionary/<n>.xml` for word pages, 50,000
 // canonical URLs to a file in `ent_seq` order, `/sitemaps/kanji.xml` for the kanji pages search
-// engines may index, and `/sitemaps/conjugations.xml` for every conjugation table and the form
-// pages search engines may index (#511). They exist wherever the dictionary database is loaded:
-// staging and production, not local fixtures. URLs are percent-encoded UTF-8.
+// engines may index, `/sitemaps/conjugations.xml` for every conjugation table and the form pages
+// search engines may index (#511), and `/sitemaps/kanji-elements.xml` for the element pages they
+// may index. They exist wherever the dictionary database is loaded: staging and production, not
+// local fixtures. URLs are percent-encoded UTF-8.
 
 /** How many words each query reads while a word sitemap streams. */
 const wordsPerQuery = 10_000
@@ -21,7 +23,8 @@ export async function dictionarySitemapPaths(): Promise<string[]> {
   return [
     ...sitemaps.map(sitemap => `/sitemaps/dictionary/${sitemap.number}.xml`),
     '/sitemaps/kanji.xml',
-    '/sitemaps/conjugations.xml'
+    '/sitemaps/conjugations.xml',
+    '/sitemaps/kanji-elements.xml'
   ]
 }
 
@@ -31,6 +34,9 @@ export const wordUrl = (entSeq: number, slug: string) =>
 
 /** A kanji page's canonical URL: the exact character, percent-encoded, never normalized. */
 export const kanjiUrl = (character: string) => absoluteUrl(encodeURI(kanjiPath(character)))
+
+/** An element page's canonical URL: the exact glyph, percent-encoded, never normalized. */
+export const kanjiElementUrl = (glyph: string) => absoluteUrl(encodeURI(kanjiElementPath(glyph)))
 
 /** Word sitemap `number`, streamed a query at a time; null when there's no such sitemap. */
 export async function wordSitemapResponse(request: Request, number: number) {
@@ -59,6 +65,22 @@ export async function kanjiSitemapResponse(request: Request) {
   return cached(request, dictionary.build, async () => {
     const characters = await dictionary.db.indexableKanji()
     return xmlResponse(urlSetXml(characters.map(character => ({ url: kanjiUrl(character) }))))
+  })
+}
+
+/** The element sitemap: every indexable element (1,698); null without a loaded dictionary. */
+export async function kanjiElementSitemapResponse(request: Request) {
+  const dictionary = await loadedDictionary()
+  if (!dictionary) return null
+  return cached(request, dictionary.build, async () => {
+    const elements = await dictionary.db.elements()
+    return xmlResponse(
+      urlSetXml(
+        elements
+          .filter(isIndexableElement)
+          .map(element => ({ url: kanjiElementUrl(element.glyph) }))
+      )
+    )
   })
 }
 

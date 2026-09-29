@@ -93,6 +93,8 @@ export const pageSources = {
   conjugations: [sources.jmdict, sources.unidic, sources.kanjidic2],
   /** A conjugated form's screen: the form's furigana, and its examples and their words. */
   conjugatedForm: [sources.jmdict, sources.kanjidic2, sources.tatoeba],
+  /** An element page: its structure from Kanjium, and its kanji's meanings and readings. */
+  element: [sources.kanjium, sources.kanjidic2],
   /** A kanji page that shows stroke order also credits KanjiVG, after RADKFILE as the app does. */
   kanjiWithStrokes: [
     sources.kanjidic2,

@@ -3,6 +3,8 @@ import { loadedDictionary } from './data'
 import {
   conjugationSitemapResponse,
   dictionarySitemapPaths,
+  kanjiElementSitemapResponse,
+  kanjiElementUrl,
   kanjiSitemapResponse,
   kanjiUrl,
   wordSitemapResponse,
@@ -42,6 +44,12 @@ function fakeDictionary(count: number, perSitemap: number) {
       conjugationSitemap: async () => [
         { entSeq: 1259290, slug: '見る', indexedForms: ['plain/past', 'polite/past'] },
         { entSeq: 1611000, slug: '静か', indexedForms: [] }
+      ],
+      // In glyph order; one without meanings or linked on-readings stays out.
+      elements: async () => [
+        { glyph: '氵', meanings: ['water'], commonLinkedOnReadings: ['コウ'] },
+        { glyph: '海', meanings: [], commonLinkedOnReadings: ['カイ'] },
+        { glyph: '𠆢', meanings: [], commonLinkedOnReadings: [] }
       ]
     },
     build: 'abc123'
@@ -62,18 +70,20 @@ describe('without a loaded dictionary (local fixtures)', () => {
     expect(await wordSitemapResponse(request('/sitemaps/dictionary/1.xml'), 1)).toBeNull()
     expect(await kanjiSitemapResponse(request('/sitemaps/kanji.xml'))).toBeNull()
     expect(await conjugationSitemapResponse(request('/sitemaps/conjugations.xml'))).toBeNull()
+    expect(await kanjiElementSitemapResponse(request('/sitemaps/kanji-elements.xml'))).toBeNull()
   })
 })
 
 describe('with a loaded dictionary', () => {
-  test('the index lists every word sitemap, then the kanji and conjugations sitemaps', async () => {
+  test('the index lists every word sitemap, then the kanji, conjugations, and element sitemaps', async () => {
     vi.mocked(loadedDictionary).mockResolvedValue(fakeDictionary(5, 2) as never)
     expect(await dictionarySitemapPaths()).toEqual([
       '/sitemaps/dictionary/1.xml',
       '/sitemaps/dictionary/2.xml',
       '/sitemaps/dictionary/3.xml',
       '/sitemaps/kanji.xml',
-      '/sitemaps/conjugations.xml'
+      '/sitemaps/conjugations.xml',
+      '/sitemaps/kanji-elements.xml'
     ])
   })
 
@@ -120,11 +130,22 @@ describe('with a loaded dictionary', () => {
       'https://zenbujapanese.com/dictionary/kanji/%F0%A0%80%8B/'
     ])
   })
+
+  test('the element sitemap lists the indexable elements exactly, never normalized', async () => {
+    vi.mocked(loadedDictionary).mockResolvedValue(fakeDictionary(1, 1) as never)
+    const response = await kanjiElementSitemapResponse(request('/sitemaps/kanji-elements.xml'))
+    expect(locs((await response?.text()) ?? '')).toEqual([
+      'https://zenbujapanese.com/dictionary/elements/%E6%B0%B5/',
+      // The compatibility ideograph U+FA45, not 海 (U+6D77).
+      'https://zenbujapanese.com/dictionary/elements/%EF%A9%85/'
+    ])
+  })
 })
 
 test('canonical URLs match the pages', () => {
   expect(wordUrl(1259290, '見る')).toBe(
     'https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/'
   )
+  expect(kanjiElementUrl('氵')).toBe('https://zenbujapanese.com/dictionary/elements/%E6%B0%B5/')
   expect(kanjiUrl('廊')).toBe('https://zenbujapanese.com/dictionary/kanji/%E5%BB%8A/')
 })

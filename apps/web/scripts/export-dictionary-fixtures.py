@@ -99,6 +99,13 @@ def main(resources):
         "kanji-words.json",
         [{"kanji": rows["kanji"]["character"], **word} for rows in kanji for word in rows["words"]],
     )
+    # The fixture kanji's elements, whose pages the kanji pages link to.
+    structures = data.structures()
+    glyphs = dict.fromkeys(
+        glyph for character in KANJI if character in structures
+        for glyph in structures[character]["elementGlyphs"]
+    )
+    write("elements.json", [data.element_rows(glyph) for glyph in glyphs])
 
 
 if __name__ == "__main__":
