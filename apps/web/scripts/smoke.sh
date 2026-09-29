@@ -91,6 +91,43 @@ header_has_dictionary() {
 }
 eventually 'the header links to the dictionary and has search' \
   'the header is missing the Dictionary link or search' header_has_dictionary
+# Search results show what the app shows (apps/ios/LanguageData/Conformance/search-results.json):
+# for iru, the "Search for「いる」" refinement, then the English matches, then the verbs re-sorted by
+# JLPT and YouTube, each row's entry number and chips in order.
+iru=/dictionary/search/iru/
+expect "$iru" 200
+# Each result row as "<entry number> <chips>", from the row's marker to the next, tags removed.
+result_rows() {
+  body "$iru" | awk 'BEGIN { RS = "data-result-row=\"" } NR > 1 {
+      gsub(/<span class="sr-only">[^<]*<\/span>/, "")
+      gsub(/<[^>]*>/, " ")
+      entry = $0; sub(/".*/, "", entry)
+      chips = ""
+      rest = $0
+      while (match(rest, /(JLPT|YouTube) +[^ ]+/)) {
+        chip = substr(rest, RSTART, RLENGTH); gsub(/ +/, " ", chip)
+        chips = chips " " chip
+        rest = substr(rest, RSTART + RLENGTH)
+      }
+      print entry chips
+    }' | head -n 7
+}
+iru_matches_the_app() {
+  local html
+  html="$(body "$iru")"
+  grep -q 'Search for「<span lang="ja">いる</span>」' <<<"$html" &&
+    grep -q 'href="/dictionary/search/%E3%81%84%E3%82%8B/"' <<<"$html" &&
+    [ "$(result_rows)" = "2729160
+2458150
+2146090
+1546640 JLPT N5 YouTube 949
+1577980 JLPT N5
+1391500 JLPT N2 YouTube 14,572
+1465580 JLPT N1" ]
+}
+eventually 'iru lists 上一, 上一段, 上一段活用, 要る, いる, 炒る, 入る with their chips, as the app does' \
+  "iru differs from the app: $(result_rows | paste -sd, -)" iru_matches_the_app
+
 # A stale or missing slug redirects to the word's one URL; an unknown number doesn't exist.
 expect_redirect /dictionary/1259290/ "$word"
 expect /dictionary/999999999/ 404

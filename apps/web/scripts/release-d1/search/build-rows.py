@@ -2,18 +2,25 @@
 """Write the dictionary search rows as D1-compatible SQL.
 
 Reads the app's LanguageReferenceData.sqlite3 and writes INSERTs for the tables Search needs,
-then fills the FTS5 indexes. The tables themselves come from the search database's migrations
+then fills the FTS5 indexes. `entry_frequency` comes from the app's default frequency packs (JLPT
+and TUBELEX, in `resources dir`), read with the dictionary import's language_data.py, so search
+results are ordered, and draw their chips, from the evidence word pages show. The tables themselves come from the search database's migrations
 (drizzle/search), applied first. Language Reference IDs and semantic fingerprints become
 lowercase hex text. `dictionary_import` is written by the import once everything else is in.
 
-    python3 scripts/release-d1/search/build-rows.py <LanguageReferenceData.sqlite3> <out.sql>
+    python3 scripts/release-d1/search/build-rows.py <LanguageReferenceData.sqlite3> <resources dir> <out.sql>
 
 scripts/release-d1/load-local.sh search runs it for a local D1, and ensure-release.sh for D1.
 """
 
+import json
 import sqlite3
 import sys
 import unicodedata
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "dictionary"))
+from language_data import FREQUENCY_PACKS, attach_packs, read_frequency, sha256  # noqa: E402
 
 MAX_STATEMENT_BYTES = 90_000  # D1 rejects statements over 100 KB.
 
@@ -52,13 +59,15 @@ def write_rows(out, table, columns, rows):
 
 
 
-def main(source, destination):
+def main(source, resources, destination):
     db = sqlite3.connect(f"file:{source}?mode=ro", uri=True)
     # Fail before writing anything when the source isn't the dictionary, such as an LFS pointer.
     db.execute("SELECT 1 FROM entries LIMIT 1").fetchone()
     (transform,) = db.execute("SELECT value FROM metadata WHERE key = 'transform'").fetchone()
     if transform not in SUPPORTED_TRANSFORMS:
         sys.exit(f"Unsupported artifact transform {transform}; this import reads {SUPPORTED_TRANSFORMS}.")
+    # Refuses a pack built for another LanguageReferenceData.sqlite3, as the dictionary import does.
+    attach_packs(db, resources, sha256(source), FREQUENCY_PACKS)
     with open(destination, "w", encoding="utf-8") as out:
         write_rows(
             out,
@@ -140,10 +149,19 @@ def main(source, destination):
                 "SELECT lower(hex(entry_id)), reading, written_form FROM reading_form_restrictions"
             ),
         )
+        write_rows(
+            out,
+            "entry_frequency",
+            ["entry_id", "frequency_json"],
+            (
+                (entry_id, json.dumps(rows, separators=(",", ":")))
+                for entry_id, rows in sorted(read_frequency(db).items())
+            ),
+        )
         out.write(FILL_FTS)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         sys.exit(__doc__)
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2], sys.argv[3])

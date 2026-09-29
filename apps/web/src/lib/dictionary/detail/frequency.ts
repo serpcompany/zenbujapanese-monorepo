@@ -95,11 +95,11 @@ export function frequencyResults(rows: readonly FrequencyRow[]): FrequencyResult
 /**
  * `SearchFrequencyRankPresentationModel.chips`: the first dictionary always, then each other one
  * that ranks the word. A level dictionary such as JLPT is left out when it doesn't list the word,
- * even when first.
+ * even when first. A first dictionary without a rank reads "—" (`inlineText`).
  */
 export function frequencyChips(rows: readonly FrequencyRow[]): FrequencyResult[] {
   const [first] = defaultFrequencyPacks
-  return frequencyResults(rows).filter(
-    (result, index) => result.tier !== null || (index === 0 && first.kind !== 'level')
-  )
+  return frequencyResults(rows)
+    .filter((result, index) => result.tier !== null || (index === 0 && first.kind !== 'level'))
+    .map(result => (result.tier === null ? { ...result, value: '—' } : result))
 }

@@ -1,0 +1,231 @@
+import { readFileSync } from 'node:fs'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { getPlatformProxy } from 'wrangler'
+import type { SearchData, SearchWord } from '@/lib/dictionary/data'
+import { rubySegments } from '@/lib/dictionary/detail/ruby'
+import { loadFrequency, searchResultsScreen } from '@/lib/dictionary/results/results'
+import { d1SearchDatabase } from '@/lib/dictionary/search/search'
+import { websiteSearch } from '@/lib/dictionary/search/website'
+import { searchPath, wordPath } from '@/lib/dictionary/urls'
+import { readRenderedPage } from './rendered'
+import { SearchResults } from './search-results'
+
+// Renders the search results page's component to HTML, as the server does, and reads back what a
+// reader sees: the sections in order, the reading refinement, the kanji row, each row's headword,
+// meaning, and chips, and the no-results state. The first tests render fixed data; the last runs
+// cases of the app-recorded search-results.json suite through the search database and the results
+// core into the page (ZENBU_SEARCH_D1=1, part of the search import's gate).
+
+const render = (data: SearchData) => renderToStaticMarkup(<SearchResults data={data} />)
+
+function word(
+  entSeq: number,
+  headword: string,
+  reading: string,
+  summary: string,
+  chips: [string, string][]
+): SearchWord {
+  return {
+    id: String(entSeq),
+    entSeq,
+    headword,
+    reading,
+    ruby: rubySegments(headword, reading),
+    summary,
+    chips: chips.map(([source, value]) => ({
+      source,
+      value,
+      tier: 'veryCommon',
+      spokenTier: null
+    })),
+    retrievalOrder: 0,
+    path: `/dictionary/${headword}-${entSeq}/`
+  }
+}
+
+describe('the search results page', () => {
+  test('shows the reading refinement first, then the rows in order with their chips', () => {
+    const html = render({
+      state: 'results',
+      query: 'iru',
+      sections: ['readingRefinement', 'results'],
+      readingRefinement: {
+        query: 'いる',
+        title: 'Search for「いる」',
+        path: '/dictionary/search/いる/'
+      },
+      kanji: null,
+      rows: [
+        word(1546640, '要る', 'いる', 'to be needed', [
+          ['JLPT', 'N5'],
+          ['YouTube', '949']
+        ]),
+        word(1577980, 'いる', 'いる', 'to be (of animate objects)', [['JLPT', 'N5']])
+      ],
+      resultCount: 2
+    })
+    const page = readRenderedPage(html)
+    expect(page.sections).toEqual(['readingRefinement', 'results'])
+    expect(page.refinement).toBe('Search for「いる」')
+    expect(html).toContain('href="/dictionary/search/いる')
+    expect(page.kanji).toBeNull()
+    expect(page.rows).toEqual([
+      {
+        entSeq: 1546640,
+        headword: '要る',
+        summary: 'to be needed',
+        chips: ['JLPT N5', 'YouTube 949']
+      },
+      {
+        entSeq: 1577980,
+        headword: 'いる',
+        summary: 'to be (of animate objects)',
+        chips: ['JLPT N5']
+      }
+    ])
+  })
+
+  test('leads a one-kanji query with the KANJI row and its primary entry’s meaning', () => {
+    const html = render({
+      state: 'results',
+      query: '要',
+      sections: ['results'],
+      readingRefinement: null,
+      kanji: {
+        character: '要',
+        label: 'KANJI',
+        summary: 'pivot, vital point, key point',
+        entryId: 'x',
+        path: '/dictionary/kanji/要/'
+      },
+      rows: [word(1609600, '必要', 'ひつよう', 'necessary', [['JLPT', 'N4']])],
+      resultCount: 2
+    })
+    const page = readRenderedPage(html)
+    expect(page.kanji).toEqual({ character: '要', text: 'KANJI pivot, vital point, key point' })
+    // The kanji row comes before the first word.
+    expect(html.indexOf('data-kanji-row')).toBeLessThan(html.indexOf('data-result-row'))
+    expect(page.rows.map(row => row.headword)).toEqual(['必要'])
+  })
+
+  test('says No Dictionary Matches, as the app does, when nothing matches', () => {
+    const page = readRenderedPage(render({ state: 'noResults', query: 'qzxvkj' }))
+    expect(page.noResults).toBe(
+      'No Dictionary Matches Try another Japanese or English Search query.'
+    )
+    expect(page.rows).toEqual([])
+  })
+
+  test('clamps each meaning to two lines, as the app does', () => {
+    const html = render({
+      state: 'results',
+      query: 'x',
+      sections: ['results'],
+      readingRefinement: null,
+      kanji: null,
+      rows: [word(1, '語', 'ご', 'word', [])],
+      resultCount: 1
+    })
+    expect(html).toContain('<p class="line-clamp-2 text-sm">word</p>')
+  })
+})
+
+const enabled = process.env.ZENBU_SEARCH_D1 === '1'
+
+interface SuiteCase {
+  query: string
+  state?: string
+  sections?: string[]
+  readingRefinement?: { title: string }
+  kanji?: { character: string; label: string; summary: string }
+  results?: {
+    entSeq: string[]
+    headword: string
+    summary: string
+    chips: { name: string; text: string }[]
+  }[]
+}
+
+/** The rendered cases: romaji with a refinement, a kanji, English, kana, and no results. */
+const renderedQueries = ['iru', 'いる', '日', 'eat', 'かえる', 'qzxvkj']
+
+const suiteCases: SuiteCase[] = enabled
+  ? (
+      JSON.parse(
+        readFileSync(
+          new URL('../../../../ios/LanguageData/Conformance/search-results.json', import.meta.url),
+          'utf8'
+        )
+      ) as { cases: SuiteCase[] }
+    ).cases.filter(expected => renderedQueries.includes(expected.query))
+  : []
+
+describe.runIf(enabled)('the rendered search results page matches the app', () => {
+  let proxy: Awaited<ReturnType<typeof getPlatformProxy<CloudflareEnv>>>
+  let db: D1Database
+
+  beforeAll(async () => {
+    proxy = await getPlatformProxy<CloudflareEnv>({
+      persist: { path: `${process.env.ZENBU_SEARCH_D1_PATH ?? '.search-d1'}/v3` }
+    })
+    if (!proxy.env.SEARCH_DB) throw new Error('wrangler.jsonc has no local SEARCH_DB binding')
+    db = proxy.env.SEARCH_DB
+  })
+
+  afterAll(async () => {
+    await proxy?.dispose()
+  })
+
+  test('renders every chosen case', () => {
+    expect(suiteCases.map(expected => expected.query).sort()).toEqual([...renderedQueries].sort())
+  })
+
+  test.each(suiteCases)('「$query」', async expected => {
+    const results = await websiteSearch(db).search(expected.query)
+    const screen = searchResultsScreen(
+      expected.query,
+      results,
+      await loadFrequency(d1SearchDatabase(db), results)
+    )
+    // Linked as data.ts links them once the dictionary database is loaded.
+    const data: SearchData =
+      screen.state === 'noResults'
+        ? screen
+        : {
+            ...screen,
+            kanji: screen.kanji ? { ...screen.kanji, path: null } : null,
+            readingRefinement: screen.readingRefinement
+              ? { ...screen.readingRefinement, path: searchPath(screen.readingRefinement.query) }
+              : null,
+            rows: screen.rows.map(row => ({ ...row, path: wordPath(row) }))
+          }
+    const page = readRenderedPage(render(data))
+
+    if (expected.state === 'noResults') {
+      expect(page.noResults).toMatch(/^No Dictionary Matches/)
+      return
+    }
+    // The Example Sentences row needs sentence search, which the website doesn't have yet (#511).
+    expect(page.sections).toEqual(
+      (expected.sections ?? []).filter(section => section !== 'examples')
+    )
+    expect(page.refinement).toBe(expected.readingRefinement?.title ?? null)
+    expect(page.kanji).toEqual(
+      expected.kanji
+        ? {
+            character: expected.kanji.character,
+            text: `${expected.kanji.label} ${expected.kanji.summary}`
+          }
+        : null
+    )
+    expect(page.rows).toEqual(
+      (expected.results ?? []).map(row => ({
+        entSeq: Number(row.entSeq[0]),
+        headword: row.headword,
+        summary: row.summary,
+        chips: row.chips.map(chip => `${chip.name} ${chip.text}`)
+      }))
+    )
+  })
+})

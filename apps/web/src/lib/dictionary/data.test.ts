@@ -5,8 +5,8 @@ import {
   getWordExamples,
   getWordPage,
   isUnreadableQuery,
-  searchDictionary,
-  summarizeSearchEntry
+  type SearchData,
+  searchDictionary
 } from './data'
 import type { FrequencyRow } from './detail/rows'
 import {
@@ -61,21 +61,66 @@ const iru: SearchEntry = {
   partsOfSpeech: ['v5r']
 }
 
+/** The core's results for these entries, in this order, each its own match group. */
 function results(entries: SearchEntry[]): SearchResults {
-  return { items: entries.map(entry => ({ entry })) } as unknown as SearchResults
+  return {
+    items: entries.map((entry, position) => ({
+      ...eat,
+      entry,
+      sourceOrder: position,
+      fallbackOrder: position,
+      matchedSummary: null
+    })),
+    leadingLexicalEntryCount: entries.length,
+    presentation: 'ranked',
+    resolution: 'direct',
+    readingRefinement: null,
+    usesPrimaryEntryExamples: false,
+    hasExactOrPrefixMatch: true
+  }
 }
 
-/** A search D1 that has the import's tables when `tables` and a finished import when `imported`. */
-function fakeD1({ tables, imported }: { tables: boolean; imported: boolean }) {
+/** The rows of a results screen; fails for no results. */
+function rowsOf(data: SearchData) {
+  if (data.state !== 'results') throw new Error(`no results for ${data.query}`)
+  return data.rows
+}
+
+/**
+ * A search D1 that has the import's tables when `tables` and a finished import when `imported`,
+ * with `entry_frequency` rows by Language Reference ID.
+ */
+function fakeD1({
+  tables,
+  imported,
+  frequency = {}
+}: {
+  tables: boolean
+  imported: boolean
+  frequency?: Record<string, FrequencyRow[]>
+}) {
   const state = { tables, imported }
+  const frequencyQueries: (string | number)[][] = []
   const db = {
     state,
+    frequencyQueries,
     prepare: vi.fn((sql: string) => ({
       first: async () => {
         if (sql.includes('sqlite_master')) return state.tables ? { 1: 1 } : null
         if (!state.tables) throw new Error('D1_ERROR: no such table: dictionary_import')
         return state.imported ? { build_id: 'build-1' } : null
-      }
+      },
+      bind: (...params: (string | number)[]) => ({
+        all: async () => {
+          if (!sql.includes('entry_frequency')) throw new Error(`unexpected query: ${sql}`)
+          frequencyQueries.push(params)
+          return {
+            results: params.flatMap(id =>
+              frequency[id] ? [{ entry_id: id, frequency_json: JSON.stringify(frequency[id]) }] : []
+            )
+          }
+        }
+      })
     }))
   }
   return db as typeof db & D1Database
@@ -91,29 +136,6 @@ function failingD1() {
     })
   } as unknown as D1Database
 }
-
-describe('summarizeSearchEntry', () => {
-  test("maps the core's result to a word by its JMdict entry number", () => {
-    expect(summarizeSearchEntry(eat.entry)).toEqual({
-      entSeq: 1358280,
-      headword: '食べる',
-      reading: 'たべる',
-      ruby: [{ text: '食', reading: 'た' }, { text: 'べる' }],
-      summary: 'to eat',
-      // No word page for 食べる until #465.
-      path: null,
-      frequency: []
-    })
-  })
-
-  test('links a word that has a page', () => {
-    expect(summarizeSearchEntry(iru).path).toBe('/dictionary/要る-1546640/')
-  })
-
-  test('links every word once the dictionary database is loaded', () => {
-    expect(summarizeSearchEntry(eat.entry, true).path).toBe('/dictionary/食べる-1358280/')
-  })
-})
 
 describe('isUnreadableQuery', () => {
   test.each([
@@ -152,19 +174,80 @@ describe('searchDictionary', () => {
     search.mockResolvedValue(results([eat.entry, iru]))
     const data = await searchDictionary('eat')
     expect(search).toHaveBeenCalledWith('eat')
-    expect(data.words.map(word => [word.entSeq, word.path])).toEqual([
+    // Without the dictionary database, only fixture words have pages: none for 食べる.
+    expect(rowsOf(data).map(word => [word.entSeq, word.path])).toEqual([
       [1358280, null],
       [1546640, '/dictionary/要る-1546640/']
     ])
-    expect(data.kanji).toBeNull()
+    expect(data).toMatchObject({ kanji: null, readingRefinement: null })
   })
 
-  test('keeps the fixture kanji card with results from the search database', async () => {
+  test('shows the meaning an English query matched, and links the reading refinement', async () => {
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    const found = results([iru])
+    search.mockResolvedValue({
+      ...found,
+      items: [{ ...found.items[0], matchedSummary: 'to need' }],
+      readingRefinement: 'いる'
+    })
+    const data = await searchDictionary('iru')
+    expect(rowsOf(data)[0].summary).toBe('to need')
+    expect(data).toMatchObject({
+      readingRefinement: {
+        query: 'いる',
+        title: 'Search for「いる」',
+        path: '/dictionary/search/%E3%81%84%E3%82%8B/'
+      }
+    })
+  })
+
+  test('re-sorts equally strong matches by frequency from the search database, in one query', async () => {
+    const db = fakeD1({
+      tables: true,
+      imported: true,
+      frequency: {
+        [eat.entry.id]: [{ pack: 'jlpt', level: 1 }],
+        // Not in JLPT: SearchFrequencyRankPresentationModel leaves a level dictionary out.
+        [iru.id]: [
+          { pack: 'jlpt', level: 5 },
+          { pack: 'tubelex', rank: 949 }
+        ]
+      }
+    })
+    env.SEARCH_DB = db
+    const found = results([eat.entry, iru])
+    // One match group, so frequency decides: 要る (N5) before 食べる (N1).
+    search.mockResolvedValue({
+      ...found,
+      items: found.items.map(item => ({ ...item, sourceOrder: 0 }))
+    })
+    const data = await searchDictionary('eat')
+    expect(db.frequencyQueries).toEqual([[eat.entry.id, iru.id]])
+    expect(
+      rowsOf(data).map(row => [
+        row.headword,
+        row.chips.map(chip => `${chip.source} ${chip.value} ${chip.tier}`)
+      ])
+    ).toEqual([
+      ['要る', ['JLPT N5 veryCommon', 'YouTube 949 veryCommon']],
+      ['食べる', ['JLPT N1 moderate']]
+    ])
+  })
+
+  test('leads a one-kanji query with the kanji row, linked to its fixture page', async () => {
     env.SEARCH_DB = fakeD1({ tables: true, imported: true })
     search.mockResolvedValue(results([eat.entry]))
     const data = await searchDictionary('要')
-    expect(data.kanji?.path).toBe('/dictionary/kanji/要/')
-    expect(data.words.map(word => word.entSeq)).toEqual([1358280])
+    expect(data).toMatchObject({
+      kanji: { character: '要', label: 'KANJI', summary: 'to eat', path: '/dictionary/kanji/要/' }
+    })
+    expect(rowsOf(data).map(word => word.entSeq)).toEqual([1358280])
+  })
+
+  test('shows No Dictionary Matches when nothing matches', async () => {
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    search.mockResolvedValue(results([]))
+    expect(await searchDictionary('qzxvkj')).toEqual({ state: 'noResults', query: 'qzxvkj' })
   })
 
   test.each([
@@ -175,7 +258,7 @@ describe('searchDictionary', () => {
     env.SEARCH_DB = db
     const data = await searchDictionary('いる')
     expect(websiteSearch).not.toHaveBeenCalled()
-    expect(data.words.map(word => word.entSeq)).toEqual([
+    expect(rowsOf(data).map(word => word.entSeq)).toEqual([
       1546640, 1577980, 1391500, 1465580, 1322180, 1587780
     ])
   })
@@ -193,14 +276,17 @@ describe('searchDictionary', () => {
     // Once found, the import isn't checked again.
     db.prepare.mockClear()
     await searchDictionary('eat')
-    expect(db.prepare).not.toHaveBeenCalled()
+    // Only the results' frequency is read.
+    expect(db.prepare.mock.calls.map(([sql]) => sql)).toEqual([
+      expect.stringContaining('FROM entry_frequency')
+    ])
     expect(websiteSearch).toHaveBeenCalledTimes(2)
   })
 
   test('shows a query full-text search cannot read as no results', async () => {
     env.SEARCH_DB = fakeD1({ tables: true, imported: true })
     search.mockRejectedValue(new Error('D1_ERROR: fts5: syntax error near "\u0000"'))
-    expect((await searchDictionary('a\u0000b')).words).toEqual([])
+    expect(await searchDictionary('a\u0000b')).toEqual({ state: 'noResults', query: 'a\u0000b' })
   })
 
   test('fails when the search itself fails', async () => {
@@ -220,7 +306,6 @@ describe('searchDictionary', () => {
 describe('word and kanji pages', () => {
   const word = vi.fn<(entSeq: number) => Promise<DictionaryWord | null>>()
   const kanji = vi.fn<(character: string) => Promise<DictionaryKanji | null>>()
-  const frequency = vi.fn<(entSeqs: readonly number[]) => Promise<Map<number, FrequencyRow[]>>>()
   const kanjiCard =
     vi.fn<(character: string) => Promise<{ character: string; meanings: string[] } | null>>()
   const examples =
@@ -229,13 +314,11 @@ describe('word and kanji pages', () => {
   const kanameRows = fixtureKanjiRows.find(rows => rows.kanji.character === '要')
 
   beforeEach(() => {
-    frequency.mockResolvedValue(new Map())
     vi.mocked(dictionaryDatabase).mockReturnValue({
       word,
       examples,
       kanji,
       kanjiCard,
-      frequency,
       // Sitemaps have their own tests (sitemaps.test.ts).
       wordSitemaps: vi.fn(),
       sitemapWords: vi.fn(),
@@ -419,7 +502,7 @@ describe('word and kanji pages', () => {
     await expect(getKanjiPage('要')).rejects.toThrow('Network connection lost')
   })
 
-  test('search links every word and reads the kanji card from the dictionary database', async () => {
+  test('search links every word and the kanji row once the dictionary database is loaded', async () => {
     env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
     env.SEARCH_DB = fakeD1({ tables: true, imported: true })
     const search = vi.fn(async () => results([eat.entry]))
@@ -427,49 +510,24 @@ describe('word and kanji pages', () => {
     kanjiCard.mockResolvedValue({ character: '食', meanings: ['eat', 'food'] })
     const data = await searchDictionary('食')
     expect(kanjiCard).toHaveBeenCalledWith('食')
-    expect(data.kanji).toEqual({
-      character: '食',
-      meanings: ['eat', 'food'],
-      path: '/dictionary/kanji/食/'
+    // The row shows the primary entry's meaning, as the app's KanjiPrimaryRow does.
+    expect(data).toMatchObject({
+      kanji: { character: '食', label: 'KANJI', summary: 'to eat', path: '/dictionary/kanji/食/' }
     })
-    expect(data.words.map(result => result.path)).toEqual(['/dictionary/食べる-1358280/'])
-    // Only a one-character query can be a kanji.
+    expect(rowsOf(data).map(result => result.path)).toEqual(['/dictionary/食べる-1358280/'])
+    // Only a one-kanji query has a kanji row.
     await searchDictionary('食べる')
     expect(kanjiCard).toHaveBeenCalledTimes(1)
   })
 
-  test('search results show frequency chips from the dictionary database, in one query', async () => {
+  test("a kanji without a page shows its row without a link, as the app's does", async () => {
     env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
     env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    vi.mocked(websiteSearch).mockReturnValue({ search: async () => results([eat.entry, iru]) })
-    frequency.mockResolvedValue(
-      new Map([
-        [
-          1358280,
-          [
-            { pack: 'jlpt', level: 5 },
-            { pack: 'tubelex', rank: 189 }
-          ]
-        ],
-        // Not in JLPT: SearchFrequencyRankPresentationModel leaves a level dictionary out.
-        [1546640, [{ pack: 'tubelex', rank: 15_752 }]]
-      ])
-    )
-    const data = await searchDictionary('eat')
-    expect(frequency).toHaveBeenCalledTimes(1)
-    expect(frequency).toHaveBeenCalledWith([1358280, 1546640])
-    expect(
-      data.words.map(result =>
-        result.frequency.map(chip => `${chip.source} ${chip.value} ${chip.tier}`)
-      )
-    ).toEqual([['JLPT N5 veryCommon', 'YouTube 189 veryCommon'], ['YouTube 15,752 uncommon']])
-  })
-
-  test('search results have no chips without the dictionary database', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    vi.mocked(websiteSearch).mockReturnValue({ search: async () => results([eat.entry]) })
-    const data = await searchDictionary('eat')
-    expect(frequency).not.toHaveBeenCalled()
-    expect(data.words[0].frequency).toEqual([])
+    vi.mocked(websiteSearch).mockReturnValue({ search: async () => results([]) })
+    kanjiCard.mockResolvedValue(null)
+    expect(await searchDictionary('㐂')).toMatchObject({
+      kanji: { character: '㐂', summary: 'Kanji detail', path: null },
+      rows: []
+    })
   })
 })

@@ -106,3 +106,16 @@ export const searchCache = sqliteTable('search_cache', {
   query: text('query').primaryKey(),
   results: text('results').notNull()
 })
+
+/**
+ * Each entry's evidence in the website's frequency dictionaries, the app's default packs in
+ * catalog order (JLPT levels, then TUBELEX ranks), as JSON `FrequencyRow`s
+ * (src/lib/dictionary/detail/rows.ts). Only entries a pack ranks or lists have a row. Search
+ * results read it to re-sort equally strong matches and to draw their chips, as SearchView.swift's
+ * `SearchResultFrequencyOrdering` and `SearchFrequencyRankPresentationModel` do, so the search
+ * database alone decides the results page and its import gate checks all of it.
+ */
+export const entryFrequency = sqliteTable('entry_frequency', {
+  entryId: text('entry_id').primaryKey(),
+  frequencyJson: text('frequency_json').notNull()
+})
