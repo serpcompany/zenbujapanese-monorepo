@@ -8,6 +8,7 @@ import { PageToolbar } from '@/components/dictionary/page-toolbar'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { Section } from '@/components/dictionary/section'
 import { SourceCredits } from '@/components/dictionary/source-credits'
+import { StrokeOrder } from '@/components/dictionary/stroke-order'
 import { Card, CardContent } from '@/components/ui/card'
 import { Item, ItemActions, ItemContent } from '@/components/ui/item'
 import { getKanjiPage, isDictionaryAvailable } from '@/lib/dictionary/data'
@@ -66,9 +67,15 @@ export default async function KanjiPage({ params }: Props) {
       <Card>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-6">
-            <span lang="ja" className="text-8xl leading-none">
-              {kanji.character}
-            </span>
+            <div className="flex flex-col items-center gap-2">
+              <span lang="ja" className="text-8xl leading-none">
+                {kanji.character}
+              </span>
+              {/* KanjiDetailView's stroke-order button, under the glyph; none without a diagram. */}
+              {kanji.strokeOrder ? (
+                <StrokeOrder character={kanji.character} order={kanji.strokeOrder} />
+              ) : null}
+            </div>
             <dl className="flex flex-1 justify-around gap-4">
               {kanji.stats.map(stat => (
                 <div key={stat.label} className="flex flex-col-reverse items-center">
@@ -190,7 +197,9 @@ export default async function KanjiPage({ params }: Props) {
         </Section>
       ) : null}
 
-      <SourceCredits sources={pageSources.kanji} />
+      <SourceCredits
+        sources={kanji.strokeOrder ? pageSources.kanjiWithStrokes : pageSources.kanji}
+      />
     </main>
   )
 }

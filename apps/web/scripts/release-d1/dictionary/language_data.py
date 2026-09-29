@@ -37,6 +37,7 @@ PACKS = (
 KANJI_REFERENCE_SOURCES = {"metadataSourceIdentity": "edrdg.kanjidic2",
                            "componentSourceIdentity": "edrdg.kradfile"}
 KANJI_ELEMENTS_SCHEMA = "zenbu.kanji-elements.v1"
+KANJI_STROKES = ("KanjiStrokeData.sqlite3", "zenbu.kanji-stroke-diagrams.v1", "kanjivg")
 
 
 def refuse(message):
@@ -74,6 +75,26 @@ def word_slug(headword, reading):
     """urls.ts's wordSlug. The dictionary conformance gate checks every stored slug against it."""
     slug = _SLUG_BREAKS.sub("-", unicodedata.normalize("NFC", headword)).strip("-")
     return slug or reading
+
+
+def stroke_problem(stroke):
+    """Why KanjiStrokeOrderClient.swift's `decodeStroke` would reject a compact stroke, or None.
+    Opcode 0 is followed by a point to move to, opcode 1 by the three points of a cubic curve;
+    the stroke must begin with a move, so an empty one is rejected too."""
+    index, commands = 0, 0
+    while index < len(stroke):
+        opcode, width = stroke[index], {0: 2, 1: 6}.get(stroke[index])
+        if width is None:
+            return "has an unknown path opcode"
+        if index + width >= len(stroke):
+            return "has an incomplete command"
+        if commands == 0 and opcode != 0:
+            return "doesn't begin with a move"
+        index += 1 + width
+        commands += 1
+    if commands == 0:
+        return "doesn't begin with a move"
+    return None
 
 
 class LanguageData:
@@ -116,6 +137,14 @@ class LanguageData:
             refuse(f"KanjiElementReferenceData.json is {self.kanji_elements.get('schema')}; "
                    f"this import reads {KANJI_ELEMENTS_SCHEMA}")
         self.kanji_by_character = {k["character"]: k for k in self.kanji_reference["entries"]}
+        name, schema, source = KANJI_STROKES
+        path = self.resources / name
+        require_file(path)
+        self.db.execute("ATTACH DATABASE ? AS strokes", (f"file:{path}?mode=ro",))
+        metadata = dict(self.db.execute("SELECT key, value FROM strokes.metadata"))
+        if metadata.get("artifact_schema") != schema or metadata.get("source_identity") != source:
+            refuse(f"{name} is {metadata.get('artifact_schema')} from "
+                   f"{metadata.get('source_identity')}; this import reads {schema} from {source}")
         self._restrictions = None
         self._ent_seqs = None
         self._frequency = None
@@ -248,6 +277,28 @@ class LanguageData:
     def elements(self):
         return self.kanji_elements["elements"]
 
+    def stroke_diagrams(self):
+        """KanjiStrokeData.sqlite3's diagrams (KanjiVG), by character, each checked as the app's
+        KanjiStrokeOrderClient.swift decodes it: every stroke is a move then cubic curves (opcode
+        0 with a point, opcode 1 with three), and the count matches `stroke_count`. The app shows
+        no stroke order for a diagram it can't decode, so the import refuses one."""
+        diagrams = {}
+        for character, viewport_size, stroke_count, strokes_json in self.db.execute(
+            "SELECT character, viewport_size, stroke_count, strokes_json FROM strokes.stroke_diagrams"
+            " ORDER BY character"
+        ):
+            strokes = json.loads(strokes_json)
+            if not strokes or len(strokes) != stroke_count:
+                refuse(f"{character}'s stroke diagram has {len(strokes)} strokes, not {stroke_count}")
+            for stroke in strokes:
+                problem = stroke_problem(stroke)
+                if problem:
+                    refuse(f"a stroke of {character} {problem}: {stroke}")
+            diagrams[character] = {
+                "viewportSize": viewport_size, "strokeCount": stroke_count, "strokes": strokes
+            }
+        return diagrams
+
     def kanji_rows(self, character):
         """Everything a fixture kanji page reads, with `words` as the candidate rows."""
         structure = self.structures().get(character)
@@ -270,6 +321,7 @@ class LanguageData:
                 if glyph in element_by_glyph
             ],
             "words": self.kanji_candidate_rows(character),
+            "strokes": self.stroke_diagrams().get(character),
         }
 
     def kanji_candidate_rows(self, character):

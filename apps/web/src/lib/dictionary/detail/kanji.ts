@@ -10,6 +10,7 @@ import type {
   KanjiWordRow
 } from './rows'
 import { type RubySegment, rubySegments } from './ruby'
+import { type StrokeOrder, strokeOrder } from './strokes'
 import { hiragana, isKanjiCharacter } from './text'
 
 /** How many words the app lists for a kanji (`entries(containingKanji:)` binds 24). */
@@ -54,6 +55,8 @@ export interface KanjiDetail {
   components: string[]
   elements: KanjiElement[]
   words: KanjiWord[]
+  /** The stroke order KanjiStrokeOrderView draws; null when there's none, and no control shows. */
+  strokeOrder: StrokeOrder | null
   /** What Share sends: the kanji, its readings, and its meanings. */
   shareText: string
 }
@@ -165,6 +168,19 @@ export function kanjiShareText(
   return [heading, kanji.meanings.join(', ')].filter(Boolean).join('\n')
 }
 
+/**
+ * The stroke order, or null when the data can't be decoded: the app then shows no stroke order
+ * (KanjiDetailView's `strokeOrderAction`), and the page must still render. The import refuses such
+ * data, so this is only a safeguard.
+ */
+function drawableStrokeOrder(row: NonNullable<KanjiRows['strokes']>): StrokeOrder | null {
+  try {
+    return strokeOrder(row)
+  } catch {
+    return null
+  }
+}
+
 /** Everything the kanji page shows, in the app's section order. */
 export function kanjiDetail(rows: KanjiRows): KanjiDetail {
   const { kanji } = rows
@@ -192,6 +208,7 @@ export function kanjiDetail(rows: KanjiRows): KanjiDetail {
     components: elements.length === 0 ? kanji.components : [],
     elements,
     words,
+    strokeOrder: rows.strokes ? drawableStrokeOrder(rows.strokes) : null,
     shareText: kanjiShareText(kanji)
   }
 }

@@ -173,7 +173,8 @@ describe('kanjiDetail', () => {
       },
       structure: null,
       elements: [],
-      words: []
+      words: [],
+      strokes: null
     })
     expect(detail.stats).toEqual([{ label: 'Stroke', value: 1 }])
     expect(detail.components).toEqual(['ノ'])
