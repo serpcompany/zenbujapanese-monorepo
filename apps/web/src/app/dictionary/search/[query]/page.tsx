@@ -6,11 +6,13 @@ import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadc
 import { FrequencyBadges } from '@/components/dictionary/frequency'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { SearchForm } from '@/components/dictionary/search-form'
+import { SourceCredits } from '@/components/dictionary/source-credits'
 import { Card } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Item, ItemActions, ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
 import { isDictionaryAvailable, searchDictionary } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
+import { pageSources } from '@/lib/dictionary/sources'
 import { decodeSegment, normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
 
 type Props = PageProps<'/dictionary/search/[query]'>
@@ -22,7 +24,8 @@ async function load(params: Props['params'], decoded: boolean) {
   const raw = decoded ? segment : decodeSegment(segment)
   const query = normalizeSearchQuery(raw)
   if (!query) permanentRedirect('/dictionary/search/')
-  if (query !== raw) permanentRedirect(searchPath(query))
+  // A literal dot (3.14) redirects to its encoded form (3%2E14), which keeps the trailing slash.
+  if (query !== raw || (!decoded && segment.includes('.'))) permanentRedirect(searchPath(query))
   return searchDictionary(query)
 }
 
@@ -105,6 +108,7 @@ export default async function SearchResultsPage({ params }: Props) {
               ))}
             </ItemGroup>
           </Card>
+          <SourceCredits sources={pageSources.search} />
         </>
       )}
     </main>

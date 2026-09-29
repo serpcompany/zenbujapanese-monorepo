@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { furigana, partOfSpeechPhrase, pitchMorae } from './display'
+import { furigana, partOfSpeechPhrase, pitchMorae, primaryKanji } from './display'
 
 describe('partOfSpeechPhrase', () => {
   test('names one word class, then its modifiers', () => {
@@ -35,5 +35,18 @@ describe('pitchMorae', () => {
       { mora: 'リョ', high: true },
       { mora: 'ウ', high: false }
     ])
+  })
+})
+
+describe('primaryKanji (DictionaryEntry.primaryKanji)', () => {
+  test('lists each CJK unified ideograph once, in order', () => {
+    expect(primaryKanji('要る')).toEqual(['要'])
+    expect(primaryKanji('日本語の日')).toEqual(['日', '本', '語'])
+  })
+
+  test('leaves out iteration marks and 〇, which the app excludes', () => {
+    expect(primaryKanji('人々')).toEqual(['人'])
+    expect(primaryKanji('時々')).toEqual(['時'])
+    expect(primaryKanji('〇〻')).toEqual([])
   })
 })

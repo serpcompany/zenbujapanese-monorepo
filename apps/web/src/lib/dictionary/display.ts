@@ -127,3 +127,25 @@ export function pitchMorae(reading: string, downstep: number): { mora: string; h
     high: downstep === 0 ? index > 0 : downstep === 1 ? index === 0 : index > 0 && index < downstep
   }))
 }
+
+const graphemes = new Intl.Segmenter('ja', { granularity: 'grapheme' })
+
+/**
+ * Ports DictionaryEntry.primaryKanji: the headword's characters in CJK Unified Ideographs
+ * (U+3400–U+9FFF), each once, in order. 々, 〇, and 〻 are outside it, as in the app.
+ */
+export function primaryKanji(headword: string): string[] {
+  const seen = new Set<string>()
+  const kanji: string[] = []
+  for (const { segment } of graphemes.segment(headword)) {
+    const isKanji = [...segment].some(scalar => {
+      const code = scalar.codePointAt(0) ?? 0
+      return code >= 0x3400 && code <= 0x9fff
+    })
+    if (isKanji && !seen.has(segment)) {
+      seen.add(segment)
+      kanji.push(segment)
+    }
+  }
+  return kanji
+}

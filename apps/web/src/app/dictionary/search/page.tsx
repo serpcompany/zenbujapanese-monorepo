@@ -3,7 +3,7 @@ import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadc
 import { SearchForm } from '@/components/dictionary/search-form'
 import { isDictionaryAvailable } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
-import { normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
+import { hasSearchPath, normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
 
 export const metadata = dictionaryMetadata(
   '/dictionary/search/',
@@ -17,12 +17,14 @@ export default async function SearchIndexPage({ searchParams }: PageProps<'/dict
   if (!isDictionaryAvailable()) notFound()
   const { q } = await searchParams
   const query = normalizeSearchQuery(typeof q === 'string' ? q : '')
-  if (query) permanentRedirect(searchPath(query))
+  if (query && hasSearchPath(query)) permanentRedirect(searchPath(query))
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-4 pb-6">
       <DictionaryBreadcrumbs page={{ label: 'Search', path: '/dictionary/search/' }} />
-      <SearchForm autoFocus />
+      <SearchForm autoFocus defaultValue={query || undefined} />
       <h1 className="text-2xl font-semibold tracking-tight">Search the dictionary</h1>
+      {/* `.` and `..` can't have a path of their own, so they stay here as finding nothing. */}
+      {query ? <p className="text-muted-foreground">No words match “{query}”.</p> : null}
     </main>
   )
 }
