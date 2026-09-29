@@ -1,9 +1,9 @@
 name: Search D1 benchmark
 
-# Times the website's search core on a real D1 (issue 464). Each run creates a throwaway D1 and
-# Worker, loads the search tables from the app's bundled database, measures, and deletes both.
-# Nothing touches the staging or production databases. Run it by hand; compare regions and read
-# replication by running it more than once.
+# Times the website's search core on a real D1 (issue 464). Each run precomputes the broad
+# queries on a local D1, creates two throwaway D1s (one for searches only) and a Worker, loads the
+# search tables into both, measures, and deletes them. Nothing touches the staging or production
+# databases. Run it by hand; compare regions and read replication by running it more than once.
 on:
   workflow_dispatch:
     inputs:
@@ -33,7 +33,7 @@ env:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     defaults:
       run:
         shell: bash
@@ -55,11 +55,36 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build the search tables
         run: python3 scripts/build-search-d1.py "../../$SOURCE_DB" "$RUNNER_TEMP/search.sql"
-      - name: Create a throwaway D1
+      - name: Precompute the broad queries
         run: |
-          pnpm exec wrangler d1 create "$BENCH_NAME" --location "${{ inputs.location }}" | tee "$RUNNER_TEMP/create.log"
-          database_id=$(grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' "$RUNNER_TEMP/create.log" | head -1)
-          echo "DATABASE_ID=$database_id" >> "$GITHUB_ENV"
+          python3 bench/search-d1/candidates.py "../../$SOURCE_DB" "$RUNNER_TEMP/candidates.json"
+          local_d1="$RUNNER_TEMP/local-d1"
+          pnpm exec wrangler d1 execute zenbujapanese-web-local --local --persist-to "$local_d1" \
+            --file "$RUNNER_TEMP/search.sql" --yes > /dev/null
+          cat > bench/search-d1/wrangler.json <<JSON
+          {
+            "name": "zenbu-search-bench-local",
+            "main": "worker.ts",
+            "compatibility_date": "2026-09-28",
+            "vars": { "READ_REPLICATION": "off" },
+            "d1_databases": [
+              { "binding": "DB", "database_name": "zenbujapanese-web-local", "database_id": "local-only-do-not-deploy" }
+            ]
+          }
+          JSON
+          pnpm exec wrangler dev --config bench/search-d1/wrangler.json --persist-to "$local_d1" --port 8799 > "$RUNNER_TEMP/dev.log" 2>&1 &
+          dev_pid=$!
+          for _ in $(seq 1 60); do curl -sf "http://localhost:8799/sample?n=1" > /dev/null && break; sleep 2; done
+          node bench/search-d1/precompute.mjs http://localhost:8799 "$RUNNER_TEMP/candidates.json" "$RUNNER_TEMP/cache.sql" | tee "$RUNNER_TEMP/precompute.log"
+          kill "$dev_pid"
+      - name: Create two throwaway D1s
+        run: |
+          for suffix in "" "-search"; do
+            pnpm exec wrangler d1 create "$BENCH_NAME$suffix" --location "${{ inputs.location }}" | tee "$RUNNER_TEMP/create$suffix.log"
+          done
+          uuid='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+          echo "DATABASE_ID=$(grep -oE "$uuid" "$RUNNER_TEMP/create.log" | head -1)" >> "$GITHUB_ENV"
+          echo "SEARCH_DATABASE_ID=$(grep -oE "$uuid" "$RUNNER_TEMP/create-search.log" | head -1)" >> "$GITHUB_ENV"
       - name: Write the Worker's config
         run: |
           cat > bench/search-d1/wrangler.json <<JSON
@@ -70,23 +95,30 @@ jobs:
             "workers_dev": true,
             "vars": { "READ_REPLICATION": "${{ inputs.read_replication && 'on' || 'off' }}" },
             "d1_databases": [
-              { "binding": "DB", "database_name": "$BENCH_NAME", "database_id": "$DATABASE_ID" }
+              { "binding": "DB", "database_name": "$BENCH_NAME", "database_id": "$DATABASE_ID" },
+              { "binding": "DB_SEARCH", "database_name": "$BENCH_NAME-search", "database_id": "$SEARCH_DATABASE_ID" }
             ]
           }
           JSON
-      - name: Load the search tables
+      - name: Load the search tables and the precomputed queries
         run: |
           start=$SECONDS
-          pnpm exec wrangler d1 execute DB --remote --config bench/search-d1/wrangler.json \
-            --file "$RUNNER_TEMP/search.sql" --yes
-          echo "LOAD_SECONDS=$((SECONDS - start))" >> "$GITHUB_ENV"
+          for binding in DB DB_SEARCH; do
+            for file in search.sql cache.sql; do
+              pnpm exec wrangler d1 execute "$binding" --remote --config bench/search-d1/wrangler.json \
+                --file "$RUNNER_TEMP/$file" --yes
+            done
+            [ "$binding" = DB ] && echo "LOAD_SECONDS=$((SECONDS - start))" >> "$GITHUB_ENV"
+          done
       - name: Enable read replication
         if: inputs.read_replication
         run: |
-          curl --fail-with-body -sS -X PUT \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database/$DATABASE_ID" \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'Content-Type: application/json' \
-            --data '{"read_replication":{"mode":"auto"}}'
+          for id in "$DATABASE_ID" "$SEARCH_DATABASE_ID"; do
+            curl --fail-with-body -sS -X PUT \
+              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database/$id" \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'Content-Type: application/json' \
+              --data '{"read_replication":{"mode":"auto"}}'
+          done
       - name: Deploy the Worker
         run: pnpm exec wrangler deploy --config bench/search-d1/wrangler.json 2>&1 | tee "$RUNNER_TEMP/deploy.log"
       - name: Measure
@@ -96,6 +128,7 @@ jobs:
           {
             echo "Location \`${{ inputs.location }}\`, read replication \`${{ inputs.read_replication }}\`."
             echo "Loaded in ${LOAD_SECONDS} s; database size ${size} bytes."
+            cat "$RUNNER_TEMP/precompute.log"
             echo
             node bench/search-d1/run.mjs "$url"
           } | tee -a "$GITHUB_STEP_SUMMARY"
@@ -104,3 +137,4 @@ jobs:
         run: |
           pnpm exec wrangler delete "$BENCH_NAME" --force || true
           pnpm exec wrangler d1 delete "$BENCH_NAME" --skip-confirmation || true
+          pnpm exec wrangler d1 delete "$BENCH_NAME-search" --skip-confirmation || true

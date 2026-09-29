@@ -1,5 +1,7 @@
 // Drives the benchmark Worker and prints a Markdown report for the workflow summary.
 //   node bench/search-d1/run.mjs <worker-url>
+// Compares the search core as is with precomputed broad queries (`cache=1`) and with searches
+// on their own database (`db=search`).
 import { readFileSync } from 'node:fs'
 
 const base = process.argv[2]
@@ -23,7 +25,7 @@ async function call(path) {
   return response.json()
 }
 
-const search = query => call(`/search?q=${encodeURIComponent(query)}`)
+const search = (query, options = '') => call(`/search?q=${encodeURIComponent(query)}${options}`)
 
 function percentile(values, p) {
   const sorted = [...values].sort((a, b) => a - b)
@@ -31,25 +33,30 @@ function percentile(values, p) {
 }
 
 const ms = value => Math.round(value).toLocaleString('en-US')
+const count = value => value.toLocaleString('en-US')
 
-async function timeQuery(query) {
+/** A new workers.dev URL answers "Script not found" for a short while after deploying. */
+async function waitUntilLive(seconds) {
+  const until = Date.now() + seconds * 1000
+  for (;;) {
+    try {
+      return await call('/sample?n=200')
+    } catch (error) {
+      if (Date.now() > until) throw error
+      await new Promise(resolve => setTimeout(resolve, 5000))
+    }
+  }
+}
+
+async function timeQuery(query, options) {
   const samples = []
-  for (let run = 0; run < runs; run += 1) samples.push(await search(query))
-  const last = samples.at(-1)
+  for (let run = 0; run < runs; run += 1) samples.push(await search(query, options))
   return {
-    query,
     p50: percentile(
       samples.map(s => s.ms),
       50
     ),
-    max: Math.max(...samples.map(s => s.ms)),
-    sql: percentile(
-      samples.map(s => s.sqlMs),
-      50
-    ),
-    queries: last.queries,
-    rowsRead: last.rowsRead,
-    results: last.results
+    last: samples.at(-1)
   }
 }
 
@@ -65,24 +72,6 @@ async function load(seconds, concurrency, worker) {
   return samples
 }
 
-function loadRow(label, samples) {
-  const times = samples.map(s => s.ms)
-  return `| ${label} | ${samples.length} | ${ms(percentile(times, 50))} | ${ms(percentile(times, 95))} | ${ms(Math.max(...times))} |`
-}
-
-/** A new workers.dev URL answers "Script not found" for a short while after deploying. */
-async function waitUntilLive(seconds) {
-  const until = Date.now() + seconds * 1000
-  for (;;) {
-    try {
-      return await call('/sample?n=200')
-    } catch (error) {
-      if (Date.now() > until) throw error
-      await new Promise(resolve => setTimeout(resolve, 5000))
-    }
-  }
-}
-
 const entryIds = await waitUntilLive(180)
 await search('warm up')
 const first = await call(`/word?id=${encodeURIComponent(entryIds[0])}`)
@@ -91,40 +80,52 @@ const lines = [
   '## Search on D1',
   '',
   `Worker colo ${first.colo}; D1 regions ${first.regions.join(', ') || 'not reported'}. ` +
-    `${runs} runs per query, run one at a time. Times are milliseconds measured in the Worker; ` +
-    'SQL is the D1-reported time summed over the request’s statements.',
+    `${runs} runs per query, run one at a time. Times are milliseconds measured in the Worker. ` +
+    '*Precomputed* answers a broad query from `search_cache` and costs other queries one extra ' +
+    'lookup.',
   '',
-  '| Query | p50 | max | SQL p50 | D1 queries | Rows read | Results |',
-  '| --- | ---: | ---: | ---: | ---: | ---: | ---: |'
+  '| Query | As is, p50 | SQL | D1 queries | Rows read | Precomputed, p50 | D1 queries | Rows read |',
+  '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |'
 ]
 for (const query of [...broadQueries, ...suiteQueries]) {
-  const row = await timeQuery(query)
+  const plain = await timeQuery(query, '')
+  const cached = await timeQuery(query, '&cache=1')
   lines.push(
-    `| ${row.query} | ${ms(row.p50)} | ${ms(row.max)} | ${ms(row.sql)} | ${row.queries} | ` +
-      `${row.rowsRead.toLocaleString('en-US')} | ${row.results} |`
+    `| ${query} | ${ms(plain.p50)} | ${ms(plain.last.sqlMs)} | ${plain.last.queries} | ` +
+      `${count(plain.last.rowsRead)} | ${ms(cached.p50)} | ${cached.last.queries} | ` +
+      `${count(cached.last.rowsRead)} |`
   )
 }
 
 const word = i => call(`/word?id=${encodeURIComponent(entryIds[i % entryIds.length])}`)
-const alone = await load(loadSeconds, wordConcurrency, word)
-let contended = []
-await Promise.all([
-  load(loadSeconds, wordConcurrency, word).then(samples => {
-    contended = samples
-  }),
-  load(loadSeconds, searchConcurrency, i => search(broadQueries[i % broadQueries.length]))
-])
+const broad = options => i => search(broadQueries[i % broadQueries.length], options)
+const variants = [
+  ['Word pages alone', null],
+  ['With broad searches, as is', broad('')],
+  ['With broad searches, precomputed', broad('&cache=1')],
+  ['With broad searches on their own database', broad('&db=search')],
+  ['With broad searches, precomputed, on their own database', broad('&cache=1&db=search')]
+]
 
 lines.push(
   '',
-  `## Word-page reads under load`,
+  '## Word-page reads under load',
   '',
   `${wordConcurrency} concurrent word-page requests for ${loadSeconds} s, alone and alongside ` +
     `${searchConcurrency} concurrent broad searches (${broadQueries.join(', ')}).`,
   '',
-  '| Word pages | Requests | p50 | p95 | max |',
-  '| --- | ---: | ---: | ---: | ---: |',
-  loadRow('Alone', alone),
-  loadRow('With broad searches', contended)
+  '| Word pages | Requests | p50 | p95 | max | Searches done |',
+  '| --- | ---: | ---: | ---: | ---: | ---: |'
 )
+for (const [label, searcher] of variants) {
+  const [words, searches = []] = await Promise.all([
+    load(loadSeconds, wordConcurrency, word),
+    ...(searcher ? [load(loadSeconds, searchConcurrency, searcher)] : [])
+  ])
+  const times = words.map(s => s.ms)
+  lines.push(
+    `| ${label} | ${count(words.length)} | ${ms(percentile(times, 50))} | ` +
+      `${ms(percentile(times, 95))} | ${ms(Math.max(...times))} | ${count(searches.length)} |`
+  )
+}
 console.log(lines.join('\n'))
