@@ -107,7 +107,9 @@ describe('isUnreadableQuery', () => {
 
   test.each([
     'D1_ERROR: Network connection lost.',
-    'D1_ERROR: no such table: entries'
+    'D1_ERROR: no such table: entries',
+    // A SQL bug in the core must fail loudly, not show as no results.
+    'D1_ERROR: near "SELEC": syntax error'
   ])('reads %s as a database failure', message => {
     expect(isUnreadableQuery(new Error(message))).toBe(false)
   })

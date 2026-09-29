@@ -167,7 +167,9 @@ async function holdsImport(db: D1Database): Promise<boolean> {
  * FTS5's errors, passed on by D1. Any other failure is the database's.
  */
 export function isUnreadableQuery(error: unknown): boolean {
-  const unreadable = /fts5|syntax error|unterminated string|malformed MATCH/i
+  // FTS5's own parser errors only (checked against SQLite): a bare "syntax error" would also hide
+  // a real SQL bug in the core as "no results".
+  const unreadable = /fts5: syntax error|unterminated string|malformed MATCH/i
   for (let cause = error; cause instanceof Error; cause = cause.cause) {
     if (unreadable.test(cause.message)) return true
   }
