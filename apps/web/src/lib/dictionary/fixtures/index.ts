@@ -1,3 +1,4 @@
+import { kanjiWords as orderKanjiWords } from '@/lib/dictionary/detail/kanji'
 import type {
   ExampleRow,
   ExampleTokenRow,
@@ -83,10 +84,20 @@ export const fixtureWordRows: WordRows[] = (words as WordRows[]).map(rows => ({
   examples: fixtureExamples[rows.entry.entSeq] ?? []
 }))
 
+/**
+ * Every entry in the fingerprint groups `kanjiCandidateRowsSQL` reads for each fixture kanji,
+ * which `kanjiWords` orders; the dictionary database stores the ordered list instead.
+ */
+export const fixtureKanjiCandidates = new Map<string, KanjiWordRow[]>()
+for (const { kanji: character, ...word } of kanjiWords as (KanjiWordRow & { kanji: string })[]) {
+  fixtureKanjiCandidates.set(character, [...(fixtureKanjiCandidates.get(character) ?? []), word])
+}
+
 export const fixtureKanjiRows: KanjiRows[] = (kanji as Omit<KanjiRows, 'words'>[]).map(rows => ({
   ...rows,
-  words: (kanjiWords as (KanjiWordRow & { kanji: string })[]).filter(
-    word => word.kanji === rows.kanji.character
+  words: orderKanjiWords(
+    rows.kanji.character,
+    fixtureKanjiCandidates.get(rows.kanji.character) ?? []
   )
 }))
 

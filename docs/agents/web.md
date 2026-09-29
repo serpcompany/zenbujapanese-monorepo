@@ -48,9 +48,6 @@ migrations, schema dump, binding, and import steps, described by
 | `search` | `SEARCH_DB` | `src/db/search-schema.ts` | `drizzle/search/` | `.search-d1/` |
 | `dictionary` | `DICTIONARY_DB` | `src/db/dictionary-schema.ts` | `drizzle/dictionary/` | `.dictionary-d1/` |
 
-The dictionary database, for word and kanji pages, has its schema but can't be imported yet:
-its scripts stop before touching D1, and only local development binds `DICTIONARY_DB`.
-
 Each build gets a fresh D1, named `zenbujapanese-<database>-<env>-<build id>`. The build ID
 (`scripts/release-d1/build-id.sh <database>`) hashes everything that shapes the database: the
 artifact's SHA-256 from its Git LFS pointer, the database's migrations, schema, and other inputs
@@ -60,9 +57,10 @@ artifact's SHA-256 from its Git LFS pointer, the database's migrations, schema, 
 
 1. Build a local copy with `load-local.sh <database>`: the migrations from empty, the
    database's rows, and `dictionary_import` last. For search, the rows are `build-rows.py`'s and
-   the precomputed broad queries.
-2. Check that copy: for search, run the conformance suite against it. Nothing reaches D1 unless
-   it passes.
+   the precomputed broad queries; for the dictionary, every word and kanji
+   (`dictionary/build-rows.py`).
+2. Check that copy against its app-recorded conformance suites: search retrieval for search,
+   word detail and kanji detail for the dictionary. Nothing reaches D1 unless it passes.
 3. Create the D1, apply the migrations, and load the same files. A failed load deletes the new
    database.
 4. Verify it before anything binds it: `dictionary_import` names this build, `d1_migrations`
@@ -76,12 +74,18 @@ builds, keeping the live one and the newest complete older one, so rolling back 
 the previous commit. It keeps any build whose import it can't check. The `Release database`
 workflow runs the import by hand for either database and environment.
 
+`Web deploy` imports both for staging before each deploy, binds `SEARCH_DB` and `DICTIONARY_DB`
+to the databases it names by replacing the `*_DB_NAME` and `*_DB_ID` placeholders in
+`wrangler.jsonc`, and checks that both were built from the same `LanguageReferenceData.sqlite3`
+(`dictionary_import.sha256`) before deploying, since search results link to word pages. It runs
+when any release database's input changes, not only `apps/web/**`. Production binds neither yet:
+it gets them once a required reviewer gates the `production` environment, and until then its
+dictionary pages return 404.
+
 ### The search database
 
-Search reads its own release database, bound as `SEARCH_DB`. `Web deploy` imports it for staging
-before each deploy and binds `SEARCH_DB` to the database it names, by replacing the
-`SEARCH_DB_*` placeholders in `wrangler.jsonc`. Production has no `SEARCH_DB` yet: it gets one
-once a required reviewer gates the `production` environment.
+Search reads its own release database, bound as `SEARCH_DB`, so broad searches never queue in
+front of word and kanji pages.
 
 **Broad queries are precomputed.** On D1, a query such as い reads 460,276 rows and takes 1.4–3.4
 s, and D1 runs one query at a time per database, so a few of them stall every other query. The
@@ -116,8 +120,8 @@ app finds glosses for a query such as 9999999 that the website doesn't.
 
 ### The dictionary database
 
-Word and kanji pages will read their own release database, bound as `DICTIONARY_DB` (issue 464,
-phase 2), so broad searches never queue in front of them. `src/db/dictionary-schema.ts` holds
+Word and kanji pages read their own release database, bound as `DICTIONARY_DB` (issue 464,
+phase 2). `src/db/dictionary-schema.ts` holds
 its tables, named for the rows the detail core reads (`src/lib/dictionary/detail/rows.ts`):
 `words` by `ent_seq`, `kanji` by the exact character, stroke order, kanji structure and
 elements, example sentences with each word's examples (at most 100, in the app's order), retired
@@ -132,6 +136,25 @@ and where each word token links (`links`, `{ token, entSeqs }`). A token that re
 entry has one `ent_seq`; a token the app can't resolve, such as だ, keeps all its candidates, as
 the word-detail conformance suite records them. `dictionary-schema.test.ts` stores and reads
 back every token in that suite.
+
+**The import** (`scripts/release-d1/dictionary/`) reads the app's bundled files with
+`language_data.py`, the same code `scripts/export-dictionary-fixtures.py` exports fixtures with,
+and writes every word (218,382) and kanji (13,108), the kanji structures, and the element
+glyphs. Each word row carries its slug, forms, senses with their restrictions, related words
+resolved to `ent_seq`, UniDic and CompoundPitch pitch, and JLPT and TUBELEX frequency. Each kanji
+row carries its word list, precomputed with the app's `kanjiCandidateRowsSQL` and grouping
+(`entries(containingKanji:)`), and whether search engines may index it. It refuses an artifact
+whose `transform` or `artifact_schema` it doesn't list, or a pack built for another
+`LanguageReferenceData.sqlite3`, and records every input's SHA-256 in
+`dictionary_import.sources`. Stroke order and examples are left empty until their imports (#465);
+`retired_ids` stays empty until #463 records retired entries. A local build takes about 25
+seconds and 145 MB.
+
+**The gate** (`src/lib/dictionary/detail/conformance.test.ts`) replays the app-recorded
+word-detail and kanji-detail suites (`apps/ios/LanguageData/Conformance/`) through the detail
+core on the local copy, reading it through `dictionary-db.ts` as the pages do, and checks every
+stored slug against `wordSlug`. It skips the fields this import doesn't cover yet (examples and
+stroke order) and stops at once when the copy wasn't built from the files the suites pin.
 
 It changes the way the search schema does, with its own commands:
 `pnpm db:generate:dictionary` generates a migration into `drizzle/dictionary/` and rewrites
@@ -151,6 +174,15 @@ The script defaults to the app's bundled database and replaces `.search-d1/` onl
 succeeds. The suite stops at once when `.search-d1/` wasn't built from the artifact it pins.
 Without `ZENBU_SEARCH_D1=1`, `pnpm test` skips the suite.
 
+The dictionary database builds the same way into `.dictionary-d1/` (about 25 seconds; it needs
+the Git LFS inputs listed in `scripts/release-d1/dictionary/database.sh`), and its gate runs with
+`ZENBU_DICTIONARY_D1=1`:
+
+```sh
+scripts/release-d1/load-local.sh dictionary
+ZENBU_DICTIONARY_D1=1 pnpm test
+```
+
 The search core takes capabilities a client supplies (ADR 0008). The website, configured in
 `website.ts`, supplies none, so it has no sentence search. Like the app, `search()` throws when
 the database fails or an English query can't be read as full text, such as one with a NUL.
@@ -159,22 +191,42 @@ The search results page reads it through `searchDictionary` in `src/lib/dictiona
 query full-text search can't read (an FTS5 error, `isUnreadableQuery`) shows no results; any other
 failure fails the request, so an outage never renders as an empty, noindexed page. When
 `SEARCH_DB` is unbound or holds no finished import (no `dictionary_import` row), as in `pnpm dev`,
-it searches the fixtures instead. `load-local.sh` builds into `.search-d1/`, which `pnpm dev`
-doesn't read. Until word pages read D1 (#465), only results with a fixture word page link.
+it searches the fixtures instead. Once `DICTIONARY_DB` holds an import, every result links to its
+word page, and a one-character query shows its kanji card from the dictionary database;
+otherwise only fixture words and kanji link.
 
 ## Word and kanji pages
 
 `src/lib/dictionary/detail/` is the detail core: pure functions, `wordDetail(rows)` and
-`kanjiDetail(rows)`, that turn rows shaped like the planned dictionary D1 (`detail/rows.ts`)
-into what the word and kanji pages render. Each function is a port of the app's Swift and names
+`kanjiDetail(rows)`, that turn rows shaped like the dictionary D1 (`detail/rows.ts`) into what
+the word and kanji pages render. Each function is a port of the app's Swift and names
 its source, so the pages show what the app shows: furigana, pitch, the first sense's part of
 speech, frequency from the app's default dictionaries (JLPT and TUBELEX), a kanji's 24 words and
 their order, and element roles. `data.ts` runs the core and adds only URLs.
 
-Until the dictionary D1 exists (#465), the rows are local fixtures in
+`getWordPage` and `getKanjiPage` read `DICTIONARY_DB` through `dictionary-db.ts`, one batch (one
+round trip) per page, when it holds a finished import. Word pages live under the stored slug
+(`words.slug`), so a stale slug redirects (308) to it and an unknown number returns 404. A failing
+database fails the request rather than rendering a 404.
+
+Without an import, as in `pnpm dev` by default, the rows are local fixtures in
 `src/lib/dictionary/fixtures/`, exported from the app's bundled data by
-`scripts/export-dictionary-fixtures.py` so their shapes can't drift. Rerun it after changing a
-row shape; the fixture JSON is generated, so Biome skips it.
+`scripts/export-dictionary-fixtures.py` with the import's own code, so their shapes can't drift.
+Rerun it after changing a row shape; the fixture JSON is generated, so Biome skips it.
+
+To run `pnpm dev` on the whole dictionary, build it and copy it into Wrangler's local state (the
+file is named for the local `DICTIONARY_DB` ID in `wrangler.jsonc`; search works the same way from
+`.search-d1/`):
+
+```sh
+scripts/release-d1/load-local.sh dictionary
+d1=v3/d1/miniflare-D1DatabaseObject
+mkdir -p ".wrangler/state/$d1"
+for file in .dictionary-d1/$d1/*.sqlite; do
+  [ "$(basename "$file")" = metadata.sqlite ] ||
+    sqlite3 "$file" "VACUUM INTO '.wrangler/state/$d1/$(basename "$file")'"
+done
+```
 
 ## Environments and deploys
 
@@ -251,8 +303,9 @@ and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.
 ## Database
 
 D1 follows the SERP [Drizzle + D1 standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/database-management-promotion-drizzle-d1.md).
-This section covers the site's database, `DB`; the dictionary search database, `SEARCH_DB`, has
-its own schema and migrations and is imported per build (see Dictionary search). All three
+This section covers the site's database, `DB`; the release databases, `SEARCH_DB` and
+`DICTIONARY_DB`, have their own schemas and migrations and are imported per build (see
+Dictionary search). All three
 environments' site databases share the `DB` binding, the schema in `src/db/schema.ts`, the
 migrations in `drizzle/`, and the `d1_migrations` ledger table. Staging and production are targeted through
 named Wrangler environments (`--env staging`, `--env production`) rather than `--preview`, so each

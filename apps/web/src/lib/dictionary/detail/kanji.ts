@@ -61,7 +61,7 @@ export interface KanjiDetail {
 const compareText = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0)
 
 /**
- * `entries(containingKanji:)`: `kanjiCandidateRowsSQL` groups the entries written with the kanji
+ * `entries(containingKanji:)`, over the candidate rows fixtures hold: `kanjiCandidateRowsSQL` groups the entries written with the kanji
  * by semantic fingerprint and orders the groups by, in turn: a headword starting with the kanji,
  * the shortest headword, any common entry, the highest rank score, then the fingerprint. Each of
  * the first 24 groups shows as its entry with the smallest ID (`normalizedEntry`).
@@ -168,7 +168,7 @@ export function kanjiShareText(
 /** Everything the kanji page shows, in the app's section order. */
 export function kanjiDetail(rows: KanjiRows): KanjiDetail {
   const { kanji } = rows
-  const words: KanjiWord[] = kanjiWords(kanji.character, rows.words).map(row => ({
+  const words: KanjiWord[] = rows.words.map(row => ({
     entSeq: row.entSeq,
     headword: row.headword,
     reading: row.reading,

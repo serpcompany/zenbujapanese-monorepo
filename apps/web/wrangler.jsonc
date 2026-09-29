@@ -12,8 +12,9 @@
  *   with it. Production binds it once its import is gated by a required reviewer (issue 464).
  * - `DICTIONARY_DB`, the dictionary database for word and kanji pages: a release database like
  *   SEARCH_DB, with its own schema (src/db/dictionary-schema.ts) and migrations
- *   (drizzle/dictionary/). Local only until its import exists; the deployed environments bind
- *   it the way they bind SEARCH_DB.
+ *   (drizzle/dictionary/), imported by `scripts/release-d1/ensure-release.sh dictionary`. Staging
+ *   binds it the way it binds SEARCH_DB, through the DICTIONARY_DB_* placeholders. Production has
+ *   neither yet, so its dictionary pages return 404.
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -69,6 +70,13 @@
           "database_name": "SEARCH_DB_NAME",
           "database_id": "SEARCH_DB_ID",
           "migrations_dir": "drizzle/search",
+          "migrations_table": "d1_migrations"
+        },
+        {
+          "binding": "DICTIONARY_DB",
+          "database_name": "DICTIONARY_DB_NAME",
+          "database_id": "DICTIONARY_DB_ID",
+          "migrations_dir": "drizzle/dictionary",
           "migrations_table": "d1_migrations"
         }
       ],

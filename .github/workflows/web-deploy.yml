@@ -6,9 +6,20 @@ name: Web deploy
 on:
   push:
     branches: [main]
+    # Every input of a release database (scripts/release-d1/<database>/database.sh), so a new
+    # build of the dictionary imports and deploys.
     paths:
       - apps/web/**
       - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3
+      - apps/ios/Modules/Sources/SearchExperience/Resources/CompoundPitch.sqlite3
+      - apps/ios/Modules/Sources/SearchExperience/Resources/ExampleWordIndex.sqlite3
+      - apps/ios/Modules/Sources/SearchExperience/Resources/JLPTLevelPack.sqlite3
+      - apps/ios/Modules/Sources/SearchExperience/Resources/TUBELEXFrequencyPack.sqlite3
+      - apps/ios/Modules/Sources/SearchExperience/Resources/KanjiStrokeData.sqlite3
+      - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
+      - apps/ios/Modules/Sources/SearchExperience/Resources/KanjiReferenceData.json
+      - apps/ios/Modules/Sources/SearchExperience/Resources/KanjiElementReferenceData.json
+      - apps/ios/Modules/Sources/SearchExperience/Resources/RadicalReferenceData.json
       - .github/workflows/web-deploy.yml
   workflow_dispatch:
 
@@ -52,19 +63,42 @@ jobs:
         # Reuses the database when this build's already imported and verified (seconds);
         # otherwise imports a new one (about 20 minutes). See docs/agents/web.md.
         run: scripts/release-d1/ensure-release.sh search staging
-      - name: Bind the search database
+      - name: Import the dictionary database
+        # Words and kanji for word and kanji pages; reused or imported like the search database.
+        run: scripts/release-d1/ensure-release.sh dictionary staging
+      - name: Bind the release databases
         run: |
-          sed -i "s/\"SEARCH_DB_NAME\"/\"$SEARCH_DB_NAME\"/; s/\"SEARCH_DB_ID\"/\"$SEARCH_DB_ID\"/" wrangler.jsonc
-          grep -q "\"$SEARCH_DB_ID\"" wrangler.jsonc
+          for binding in SEARCH_DB DICTIONARY_DB; do
+            name_var="${binding}_NAME" id_var="${binding}_ID"
+            sed -i "s/\"${binding}_NAME\"/\"${!name_var}\"/; s/\"${binding}_ID\"/\"${!id_var}\"/" wrangler.jsonc
+            grep -q "\"${!id_var}\"" wrangler.jsonc
+          done
+      - name: Check both release databases hold the same artifact
+        # Search results link to word pages, so both must come from the same
+        # LanguageReferenceData.sqlite3 (dictionary_import.sha256) before the deploy binds them.
+        run: |
+          artifact() {
+            pnpm exec wrangler d1 execute "$1" --remote --env staging --json \
+              --command "SELECT sha256 FROM dictionary_import" |
+              python3 -c 'import json, sys; print(json.load(sys.stdin)[0]["results"][0]["sha256"])'
+          }
+          search=$(artifact SEARCH_DB)
+          dictionary=$(artifact DICTIONARY_DB)
+          echo "SEARCH_DB: $search; DICTIONARY_DB: $dictionary"
+          [ -n "$search" ] && [ "$search" = "$dictionary" ] ||
+            { echo "::error::SEARCH_DB and DICTIONARY_DB hold different artifacts"; exit 1; }
       - run: pnpm db:migrate:staging
       - name: Deploy
         run: pnpm deploy:staging 2>&1 | tee deploy.log
       - name: Smoke test
         # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
         run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" staging
-      - name: Delete old search databases
-        # Only now is the new database the live one; keeps it and the newest complete older one.
-        run: scripts/release-d1/prune.sh search staging "$SEARCH_DB_NAME"
+      - name: Delete old release databases
+        # Only now are the new databases the live ones; keeps each and its newest complete older
+        # build.
+        run: |
+          scripts/release-d1/prune.sh search staging "$SEARCH_DB_NAME"
+          scripts/release-d1/prune.sh dictionary staging "$DICTIONARY_DB_NAME"
 
   production:
     needs: staging

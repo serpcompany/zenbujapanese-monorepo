@@ -5,8 +5,7 @@ name: Release database
 # script for staging before each deploy; this runs it by hand, for either environment. Reuses the
 # database when it already verifies, so a second run only checks it. It never deletes other
 # builds' databases: Web deploy prunes them after a successful deploy. Its concurrency group is
-# shared with Web deploy's staging job, so two staging imports never overlap. The dictionary
-# database can't be imported yet: the script stops before touching D1.
+# shared with Web deploy's staging job, so two staging imports never overlap.
 on:
   workflow_dispatch:
     inputs:
