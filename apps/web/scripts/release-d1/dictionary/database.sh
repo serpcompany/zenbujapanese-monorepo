@@ -9,6 +9,13 @@ schema_dump=src/db/dictionary-schema.sql
 persist_dir=.dictionary-d1
 resources=apps/ios/Modules/Sources/SearchExperience/Resources
 source_db=$resources/LanguageReferenceData.sqlite3
+# build-id.sh names each input file by its path under the longest of these roots that holds it,
+# after the root's name, so moving a root's files and updating its path here keeps the build ID.
+input_roots=(
+  "resources=$resources"
+  conformance=apps/ios/LanguageData/Conformance
+  web=apps/web
+)
 lfs_inputs=(
   "$source_db"
   "$resources/CompoundPitch.sqlite3"
@@ -80,8 +87,12 @@ build_rows() {
   local_d1 execute "$local_name" --file "$build/rows.sql" --yes > /dev/null
   # node:sqlite still warns that it's experimental on Node 22.
   # The build ID seeds which entries it checks against the app's scan, so each build draws anew.
+  # Its own line, not inside the assignment below, so a failing build-id.sh stops the build
+  # instead of seeding with ''.
+  local seed
+  seed=$(scripts/release-d1/build-id.sh dictionary) || return
   NODE_OPTIONS="${NODE_OPTIONS:-} --disable-warning=ExperimentalWarning" \
-    ZENBU_EXAMPLES_SEED="$(scripts/release-d1/build-id.sh dictionary)" \
+    ZENBU_EXAMPLES_SEED="$seed" \
     pnpm exec tsx scripts/release-d1/dictionary/build-examples.mts "$source" \
     "$repo_root/$resources" "$build/examples"
   local file

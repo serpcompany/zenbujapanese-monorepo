@@ -54,12 +54,21 @@ Each build gets a fresh D1, named `zenbujapanese-<database>-<env>-<build id>`. T
 (`scripts/release-d1/build-id.sh <database>`) hashes everything that shapes the database: the
 artifact's SHA-256 from its Git LFS pointer, the database's migrations, schema, and other inputs
 (for search, the search core, which precomputes its cache), the shared scripts in
-`scripts/release-d1/`, and the database's own scripts, but not another database's. Tests
+`scripts/release-d1/`, and the database's own scripts, but not another database's. It hashes
+contents, not paths: each file counts by its Git blob SHA (a Git LFS file by the SHA-256 in its
+pointer, so nothing downloads) under a logical name, its path within the longest of the
+database's `input_roots` that holds it, after that root's name (such as
+`resources/Kuromoji/base.dat.gz`). `database.sh` itself is hashed with each root's directory
+written as the root's name. So moving a root's files with `git mv` and updating its paths in
+`database.sh` keeps the build ID, and no new build imports (the kept build's `dictionary_import`
+still names the old paths in `sources`); editing, adding, removing, or renaming
+a file within a root changes it. A declared input missing at HEAD fails the script. Tests
 (`*.test.ts`, `*.test.tsx`) are left out, so changing a gate's test alone doesn't import a new
 build. Anything a gate's tests run or draw (the cores, the components a rendered-page test renders,
 its reader, and the app-recorded suites) is a build input, so changing it does; and every build
 input outside `apps/web/`, such as a re-recorded suite, is in the `Web deploy` workflow's `paths`.
-`src/lib/dictionary/gate-inputs.test.ts` checks both from each database's `check_local`.
+`src/lib/dictionary/gate-inputs.test.ts` checks both from each database's `check_local`, and
+that moving a root keeps the build ID while editing a file changes it.
 `scripts/release-d1/ensure-release.sh <database> <env>` imports it:
 
 1. Build a local copy with `load-local.sh <database>`: the migrations from empty, the

@@ -9,7 +9,11 @@
 #   source_db       the artifact recorded in dictionary_import, relative to the repository root;
 #                   it must be a Git LFS file
 #   lfs_inputs      every Git LFS file the import reads, relative to the repository root
-#   build_inputs    everything else that shapes the database, relative to the repository root
+#   build_inputs    everything that shapes the database, relative to the repository root; each
+#                   must exist at HEAD, or build-id.sh fails
+#   input_roots     `<name>=<directory>` entries, relative to the repository root: build-id.sh
+#                   hashes each input file under its path in the longest root that holds it,
+#                   after that root's name, so moving a root keeps the build ID
 #   tables          the tables whose row counts the deploy checks
 #   upload_files    the SQL files the local build writes and the import uploads, in order; an
 #                   entry may be a glob (quoted), which uploads every file it matches in order

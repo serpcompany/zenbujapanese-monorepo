@@ -10,6 +10,13 @@ schema_dump=src/db/search-schema.sql
 persist_dir=.search-d1
 resources=apps/ios/Modules/Sources/SearchExperience/Resources
 source_db=$resources/LanguageReferenceData.sqlite3
+# build-id.sh names each input file by its path under the longest of these roots that holds it,
+# after the root's name, so moving a root's files and updating its path here keeps the build ID.
+input_roots=(
+  "resources=$resources"
+  conformance=apps/ios/LanguageData/Conformance
+  web=apps/web
+)
 # The default frequency packs fill entry_frequency, which orders search results. Example search
 # reads ExampleWordIndex (a kana headword's examples) and splits sentences with Kuromoji.
 lfs_inputs=("$source_db" "$resources/JLPTLevelPack.sqlite3" "$resources/TUBELEXFrequencyPack.sqlite3"
@@ -96,8 +103,12 @@ build_rows() {
   fi
   # node:sqlite still warns that it's experimental on Node 22. The build ID seeds the samples it
   # checks against the app's code, so each build draws anew.
+  # Its own line, not inside the assignment below, so a failing build-id.sh stops the build
+  # instead of seeding with ''.
+  local seed
+  seed=$(scripts/release-d1/build-id.sh search) || return
   NODE_OPTIONS="${NODE_OPTIONS:-} --disable-warning=ExperimentalWarning" \
-    ZENBU_EXAMPLES_SEED="$(scripts/release-d1/build-id.sh search)" \
+    ZENBU_EXAMPLES_SEED="$seed" \
     pnpm exec tsx scripts/release-d1/search/build-examples.mts "$source" "$repo_root/$resources" \
     "$build/examples"
   local file
