@@ -90,7 +90,7 @@ kanji page. A query full-text search can't read is answered as finding nothing b
 With Sudachi, the service analyzes a sentence as the app does and lists its Discovered Words.
 The Example Sentences row opens `/dictionary/search/<query>/examples/`: the query's sentences, or
 its primary entry's for a romaji or deinflected query, 25 at first and the rest from
-`examples.json` beside it. That page is kept out of search engines.
+`examples.json` beside it. That page is indexed, like every dictionary page with content.
 
 A broad query (い, "to") takes the service one to two seconds the first time, most of it the
 app's own SQL; the service and the edge cache keep the answer after that.

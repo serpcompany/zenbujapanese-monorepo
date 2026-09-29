@@ -271,6 +271,9 @@ noindex_follows_meanings() {
 }
 eventually 'a kanji without meanings or readings is noindex' 'noindex is wrong on 㐂 or 見' \
   noindex_follows_meanings
+# A search's examples page is indexable, as every dictionary page with content is.
+examples_indexable() { ! grep -q "$noindex" <<<"$(body "${eat}examples/")"; }
+eventually "a search's examples page is indexable" "${eat}examples/ is noindex" examples_indexable
 
 # The X-Robots-Tag header a path sends, if any.
 robots_tag() { curl -sI "${smoke[@]}" "$base$1" | tr -d '\r' | grep -i '^x-robots-tag:' || true; }
@@ -278,7 +281,7 @@ robots() { body /robots.txt; }
 
 if [ "$env" = production ]; then
   # Production's dictionary is indexable: its pages send no X-Robots-Tag, like the rest of the site.
-  for path in / "$word" "$kanji" /sitemaps/kanji.xml; do
+  for path in / "$word" "$kanji" "${eat}examples/" /sitemaps/kanji.xml; do
     has_no_robots_tag() { [ -z "$(robots_tag "$path")" ]; }
     eventually "no X-Robots-Tag on $path" "unexpected X-Robots-Tag on $path" has_no_robots_tag
   done

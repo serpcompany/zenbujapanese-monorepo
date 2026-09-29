@@ -568,20 +568,22 @@ is its own canonical URL.
 - Source: #465 (metadata).
 - Check: No automated check yet (#511).
 
-**Indexing.** The dictionary home, word pages, kanji pages with meanings or readings, and results
-pages that list a word, or whose kanji row opens a kanji page, are indexable. A kanji with no meanings or readings (about 475 of 13,108,
-such as 㐂), a search that finds nothing, `/dictionary/search/` itself, a search's examples page,
-and the endpoints that load examples are `noindex`. Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows
-crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
+**Indexing.** The dictionary home, word pages, kanji pages with meanings or readings, results
+pages that list a word, or whose kanji row opens a kanji page, and a search's examples page are
+indexable. A kanji with no meanings or readings (about 475 of 13,108, such as 㐂), a search that
+finds nothing, `/dictionary/search/` itself, and the endpoints that load examples are `noindex`.
+Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows crawling
+(see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
 
-- Source: #465; #466.
-- Check: smoke "a kanji without meanings or readings is noindex"; the conformance test checks each
+- Source: #465; #466; the owner's decision of 2026-09-29 (a new dictionary page is indexed, and the
+  SEO review decides what to take out).
+- Check: smoke "a kanji without meanings or readings is noindex" and "a search's examples page is
+  indexable", and in production, no `X-Robots-Tag` on it; the conformance test checks each
   kanji's `indexable` against its meanings and readings;
   `src/app/dictionary/examples/[file]/route.test.ts`, "returns the next 25 of a word's examples";
   `src/app/dictionary/search/[query]/examples.json/route.test.ts` and
   `src/app/dictionary/conjugations/[file]/route.test.ts`; search pages:
-  `src/lib/dictionary/results/links.test.ts`, "isIndexable". The examples page's `noindex`: No
-  automated check yet (#511).
+  `src/lib/dictionary/results/links.test.ts`, "isIndexable".
 
 **Sitemaps.** The pages sitemap lists the dictionary home. The sitemap index also lists the word
 sitemaps, with every word page's canonical URL, and the kanji sitemap, with every indexable kanji

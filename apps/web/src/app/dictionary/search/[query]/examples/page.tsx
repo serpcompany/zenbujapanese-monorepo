@@ -26,12 +26,12 @@ async function load(params: Props['params'], decoded: boolean) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { query } = await load(params, true)
-  // Kept out of search engines: they index the results page, and the words' own pages.
+  // Indexed, as every dictionary page with content is, by the owner's decision: what to take out
+  // of search engines is decided separately (SEO review).
   return dictionaryMetadata(
     searchExamplesPath(query),
     `${query} in Japanese example sentences`,
-    `Japanese example sentences for “${query}”, with English translations.`,
-    { index: false }
+    `Japanese example sentences for “${query}”, with English translations.`
   )
 }
 
