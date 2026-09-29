@@ -37,6 +37,70 @@ CREATE TABLE `entry_frequency` (
 	`frequency_json` text NOT NULL
 )
 
+table example_english_fts
+CREATE VIRTUAL TABLE example_english_fts USING fts5(stems, content='', tokenize='ascii')
+
+table example_english_fts_config
+CREATE TABLE 'example_english_fts_config'(k PRIMARY KEY, v) WITHOUT ROWID
+
+table example_english_fts_data
+CREATE TABLE 'example_english_fts_data'(id INTEGER PRIMARY KEY, block BLOB)
+
+table example_english_fts_docsize
+CREATE TABLE 'example_english_fts_docsize'(id INTEGER PRIMARY KEY, sz BLOB)
+
+table example_english_fts_idx
+CREATE TABLE 'example_english_fts_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID
+
+table example_entries
+CREATE TABLE `example_entries` (
+	`entry_id` text PRIMARY KEY NOT NULL,
+	`ent_seq` integer NOT NULL,
+	`written_forms_json` text NOT NULL,
+	`reading_forms_json` text NOT NULL,
+	`sentence_ids_json` text
+)
+
+table example_japanese_chars
+CREATE VIRTUAL TABLE example_japanese_chars USING fts5(
+  chars, content='', tokenize="unicode61 remove_diacritics 0 categories 'L* M* N* P* S* Co'"
+)
+
+table example_japanese_chars_config
+CREATE TABLE 'example_japanese_chars_config'(k PRIMARY KEY, v) WITHOUT ROWID
+
+table example_japanese_chars_data
+CREATE TABLE 'example_japanese_chars_data'(id INTEGER PRIMARY KEY, block BLOB)
+
+table example_japanese_chars_docsize
+CREATE TABLE 'example_japanese_chars_docsize'(id INTEGER PRIMARY KEY, sz BLOB)
+
+table example_japanese_chars_idx
+CREATE TABLE 'example_japanese_chars_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID
+
+table example_search_cache
+CREATE TABLE `example_search_cache` (
+	`key` text PRIMARY KEY NOT NULL,
+	`count` integer NOT NULL,
+	`truncated` integer NOT NULL,
+	`sentence_ids_json` text NOT NULL
+)
+
+table example_sentences
+CREATE TABLE `example_sentences` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`pair_id` text NOT NULL,
+	`japanese` text NOT NULL,
+	`english` text NOT NULL,
+	`words_json` text NOT NULL,
+	`japanese_tatoeba_id` integer NOT NULL,
+	`japanese_contributor` text,
+	`japanese_license` text NOT NULL,
+	`english_tatoeba_id` integer NOT NULL,
+	`english_contributor` text,
+	`english_license` text NOT NULL
+)
+
 table form_chars
 CREATE VIRTUAL TABLE form_chars USING fts5(
   chars, content='', tokenize="unicode61 remove_diacritics 0 categories 'L* M* N* P* S* Co'"

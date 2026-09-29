@@ -161,6 +161,29 @@ export interface WordExampleRows {
   example: WordExampleRow
 }
 
+/**
+ * A word of an example sentence in the search database (`example_sentences.words_json`), as
+ * the app's example links resolve it with no page's entry (`PlannedWord`), in short keys: the
+ * search database holds every sentence the app searches. The words tile the sentence, so each
+ * stores only its length.
+ */
+export interface ExampleWordRow {
+  /** Its length in UTF-16 code units. */
+  n: number
+  /** Kuromoji's reading in hiragana, when the word has kanji (the default furigana). */
+  r?: string
+  /** Kuromoji's dictionary form, when it isn't the word. */
+  d?: string
+  /** Its entries' `ent_seq`s, when it has any: one when it resolves to one entry. */
+  e?: number[]
+  /** The furigana over its one entry, when it isn't `r` (LinkedTokenView's `displayReading`). */
+  f?: string
+  /** Its pieces, which it splits into when it resolves to nothing but a piece does. */
+  p?: ExampleWordRow[]
+  /** The whole sentence, which the app's analysis couldn't split: never linked. */
+  u?: 1
+}
+
 /** `word_example_counts`: how many examples a word has, as the app's retrieval reports them. */
 export interface ExampleCountRow {
   /** How many examples the page lists, at most 100. */

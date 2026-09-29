@@ -2,11 +2,12 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { getPlatformProxy } from 'wrangler'
+import { searchOn } from '../data'
 import { tierLabels } from '../detail/frequency'
 import { EvidenceLane, FormRelation, GlossRelation, type Rank } from '../search/rank'
-import { d1SearchDatabase, type SearchResultItem, searchFeatures } from '../search/search'
-import { type WebsiteSearch, websiteCapabilities, websiteSearch } from '../search/website'
-import { loadFrequency, type SearchResultsScreen, searchResultsScreen } from './results'
+import { type SearchResultItem, searchFeatures } from '../search/search'
+import { websiteCapabilities } from '../search/website'
+import type { SearchResultsScreen } from './results'
 
 // The search results suite, recorded from the app on the iOS Simulator
 // (apps/ios/LanguageData/Conformance/search-results.json, SearchResultsConformanceTests.swift):
@@ -16,10 +17,11 @@ import { loadFrequency, type SearchResultsScreen, searchResultsScreen } from './
 // (at .search-d1/, or ZENBU_SEARCH_D1_PATH). The search import runs it before anything reaches D1
 // (scripts/release-d1/search/database.sh's check_local), so it only runs when ZENBU_SEARCH_D1=1.
 //
-// Compared: the state, resolution, presentation, sections, the reading refinement, the kanji row,
-// every row (ID, entry number, headword, reading, meaning, chips, match group, and retrieval
-// position, in order), and the count VoiceOver reads. Not compared, since the website has no
-// sentence search yet (#511): the `examples` section, "View N Example Sentences".
+// Compared: the state, resolution, presentation, sections, the "View N Example Sentences" row (its
+// title, count, and the primary entry it opens), the reading refinement, the kanji row, every row
+// (ID, entry number, headword, reading, meaning, chips, match group, and retrieval position, in
+// order), and the count VoiceOver reads. The Example Sentences page's list is the example-search
+// suite's (examples/conformance.test.ts).
 const enabled = process.env.ZENBU_SEARCH_D1 === '1'
 
 interface SuiteChip {
@@ -81,9 +83,6 @@ const packIds: Record<string, string> = {
 const resources = '../../../../../ios/Modules/Sources/SearchExperience/Resources/'
 const frequencyPackFiles = ['JLPTLevelPack.sqlite3', 'TUBELEXFrequencyPack.sqlite3']
 
-/** Fields the website can't show yet (#511): the Example Sentences row needs sentence search. */
-const pendingSections = new Set(['examples'])
-
 const name = (values: Record<string, number>, value: number) =>
   Object.keys(values).find(key => values[key] === value) ?? String(value)
 
@@ -112,6 +111,15 @@ function observed(
     ...base,
     state: 'results',
     sections: screen.sections,
+    ...(screen.examples
+      ? {
+          examples: {
+            title: screen.examples.title,
+            count: screen.examples.count,
+            ...(screen.examples.primaryEntry ? { primaryEntry: screen.examples.primaryEntry } : {})
+          }
+        }
+      : {}),
     ...(screen.readingRefinement
       ? {
           readingRefinement: {
@@ -149,14 +157,11 @@ function observed(
   }
 }
 
-/** The recorded case without what the website can't show yet. */
+/** The recorded case as the website compares it. */
 function comparable(expected: SuiteCase): SuiteCase {
-  const { covers: _covers, examples: _examples, ...rest } = expected
+  const { covers: _covers, ...rest } = expected
   return {
     ...rest,
-    ...(rest.sections
-      ? { sections: rest.sections.filter(section => !pendingSections.has(section)) }
-      : {}),
     ...(rest.results
       ? {
           // The website keeps the entry number of the row's Language Reference ID, the first of
@@ -185,7 +190,6 @@ const describeRows = (rows: SuiteRow[] = []) =>
 describe.runIf(enabled)('search results conformance on D1', () => {
   let proxy: Awaited<ReturnType<typeof getPlatformProxy<CloudflareEnv>>>
   let db: D1Database
-  let search: WebsiteSearch
 
   beforeAll(async () => {
     proxy = await getPlatformProxy<CloudflareEnv>({
@@ -220,7 +224,6 @@ describe.runIf(enabled)('search results conformance on D1', () => {
         )
       }
     }
-    search = websiteSearch(db)
   })
 
   afterAll(async () => {
@@ -233,9 +236,8 @@ describe.runIf(enabled)('search results conformance on D1', () => {
 
   if (supportedCases.length > 0) {
     test.each(supportedCases)('「$query」', async expected => {
-      const results = await search.search(expected.query)
-      const frequency = await loadFrequency(d1SearchDatabase(db), results)
-      const screen = searchResultsScreen(expected.query, results, frequency)
+      // As data.ts's searchScreen reads them.
+      const { results, screen } = await searchOn(db, expected.query)
       const actual = observed(
         expected,
         screen,

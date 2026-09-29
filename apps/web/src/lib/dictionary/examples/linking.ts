@@ -165,6 +165,21 @@ function preferredEntries(
   return filtered
 }
 
+/** How a word resolves by its own forms, when no page's entry claims it. */
+function resolveWord(candidate: MorphologyCandidate, lookup: EntriesMatchingForm): Resolution {
+  if (!isJapaneseOnly(normalizeQuery(candidate.surface))) {
+    return { entry: null, candidates: [], lookupForm: null }
+  }
+  for (const form of lookupForms(candidate)) {
+    const family = lookup(form)
+    if (family.length === 0) continue
+    const preferred = preferredEntries(family, candidate, form === candidate.surface)
+    const found = preferred.length > 0 ? preferred : family
+    return { entry: found.length === 1 ? found[0] : null, candidates: found, lookupForm: form }
+  }
+  return { entry: null, candidates: [], lookupForm: null }
+}
+
 /**
  * Links a sentence's words for one page, from its Kuromoji candidates (null when the app's
  * analysis fails, which shows the sentence as one unlinked word). `lookup` should cache by form,
@@ -199,17 +214,7 @@ export function linkedTokens(
         return { entry: highlighted.entry, candidates: [highlighted.entry], lookupForm: null }
       }
     }
-    if (!isJapaneseOnly(normalizeQuery(candidate.surface))) {
-      return { entry: null, candidates: [], lookupForm: null }
-    }
-    for (const form of lookupForms(candidate)) {
-      const family = lookup(form)
-      if (family.length === 0) continue
-      const preferred = preferredEntries(family, candidate, form === candidate.surface)
-      const found = preferred.length > 0 ? preferred : family
-      return { entry: found.length === 1 ? found[0] : null, candidates: found, lookupForm: form }
-    }
-    return { entry: null, candidates: [], lookupForm: null }
+    return resolveWord(candidate, lookup)
   }
 
   const token = (candidate: MorphologyCandidate, resolution: Resolution): LinkedToken => ({
@@ -249,4 +254,102 @@ export function displayReading(
   const forms = [entry.headword, ...entry.writtenForms, ...entry.readingForms]
   if (forms.includes(token.surface) || token.reading === '') return entry.reading
   return toHiragana(token.reading)
+}
+
+/**
+ * A word of a sentence as `linkedTokens` resolves it with no page's entry, with what a page's
+ * entry can change: its forms, and the pieces it falls back to when it resolves to nothing.
+ * Example search stores these once per sentence (scripts/release-d1/search/build-examples.mts)
+ * and links them for the query's entry when its page shows them (`linkPlanned`).
+ */
+export interface PlannedWord {
+  surface: string
+  /** The parser's reading, in katakana. */
+  reading: string
+  dictionaryForm: string
+  normalizedForm: string
+  /** Its entries when no page's entry claims it: one when it resolves to one. */
+  candidates: LinkEntry[]
+  /** Its pieces, each planned, when it resolves to nothing and has more than one. */
+  pieces: PlannedWord[] | null
+  /** The whole sentence as one word, when the app's analysis fails: never linked. */
+  unanalyzed?: true
+}
+
+/** A sentence's planned words, from the candidates `linkedTokens` reads. */
+export function plannedWords(
+  text: string,
+  candidates: MorphologyCandidate[] | null,
+  lookup: EntriesMatchingForm
+): PlannedWord[] {
+  if (candidates === null) {
+    return text === ''
+      ? []
+      : [
+          {
+            surface: text,
+            reading: text,
+            dictionaryForm: text,
+            normalizedForm: text,
+            candidates: [],
+            pieces: null,
+            unanalyzed: true
+          }
+        ]
+  }
+  const plan = (candidate: MorphologyCandidate, pieces: boolean): PlannedWord => {
+    const { candidates: resolved } = resolveWord(candidate, lookup)
+    return {
+      surface: candidate.surface,
+      reading: candidate.reading,
+      dictionaryForm: candidate.dictionaryForm,
+      normalizedForm: candidate.normalizedForm,
+      candidates: resolved,
+      pieces:
+        pieces && resolved.length === 0 && candidate.children.length > 1
+          ? candidate.children.map(child => plan(child, false))
+          : null
+    }
+  }
+  return groupInflections(candidates).map(candidate => plan(candidate, true))
+}
+
+/**
+ * `linkedTokens` for a page's entry, from a sentence's planned words: a word written as one of
+ * the entry's forms is that entry, and every other word resolves as planned.
+ */
+export function linkPlanned(
+  words: PlannedWord[],
+  highlighted: { entry: HighlightedEntry; query: string } | null
+): LinkedToken[] {
+  const forms = highlighted ? highlightedForms(highlighted.entry, highlighted.query) : null
+  const token = (word: PlannedWord): LinkedToken => {
+    const claimed =
+      !word.unanalyzed &&
+      forms !== null &&
+      [word.surface, word.dictionaryForm, word.normalizedForm].some(form => forms.has(form))
+    const candidates = claimed && highlighted ? [highlighted.entry] : word.candidates
+    return {
+      surface: word.surface,
+      entry: candidates.length === 1 ? candidates[0] : null,
+      candidates,
+      reading: word.reading,
+      dictionaryForm: word.dictionaryForm,
+      lookupForm: null
+    }
+  }
+  const tokens: LinkedToken[] = []
+  for (const word of words) {
+    const whole = token(word)
+    // A joined word that resolves to nothing falls back to its pieces, when one of them does.
+    if (whole.candidates.length === 0 && word.pieces) {
+      const pieces = word.pieces.map(token)
+      if (pieces.some(piece => piece.candidates.length > 0)) {
+        tokens.push(...pieces)
+        continue
+      }
+    }
+    tokens.push(whole)
+  }
+  return tokens
 }

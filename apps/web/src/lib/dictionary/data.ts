@@ -2,7 +2,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { cache } from 'react'
 import { fixtureKanjiRows, fixtureSearchOrder, fixtureWordRows } from '@/lib/dictionary/fixtures'
 import { isDeployedSite } from '@/lib/site'
-import { type Example, type ExampleToken, examplesPerPage, wordExample } from './detail/examples'
+import { examplesPerPage, wordExample } from './detail/examples'
 import {
   type KanjiDetail,
   type KanjiElement,
@@ -19,16 +19,32 @@ import {
   wordDetail
 } from './detail/word'
 import { dictionaryDatabase } from './dictionary-db'
-import { linkSearchScreen, type SearchData } from './results/links'
+import {
+  resultsExampleCount,
+  type SearchExampleList,
+  searchExampleList,
+  searchExamplePage,
+  type WebsiteExampleSearch,
+  websiteExampleSearch
+} from './example-search'
+import { type Links, type PageExample, pageExample } from './page-example'
+import {
+  linkedWords,
+  linkSearchScreen,
+  resultsPerPage,
+  type SearchData,
+  type SearchWord
+} from './results/links'
 import {
   isSingleKanji,
   loadFrequency,
   type SearchResultsScreen,
   searchResultsScreen
 } from './results/results'
+import { isASCII, normalizeQuery } from './search/query'
 import { d1SearchDatabase, type SearchResults } from './search/search'
 import { websiteSearch } from './search/website'
-import { hasSearchPath, kanjiPath, searchPath, wordPath, wordSlug } from './urls'
+import { kanjiPath, searchPath, wordPath, wordSlug } from './urls'
 
 type DictionaryDatabase = ReturnType<typeof dictionaryDatabase>
 
@@ -41,13 +57,6 @@ type DictionaryDatabase = ReturnType<typeof dictionaryDatabase>
 
 /** With the page it links to; null when it has no page yet. */
 type Linked<T> = T & { path: string | null }
-
-/** An example's word with where it links: its word page, or a search for an ambiguous word. */
-export type PageExampleToken = Linked<ExampleToken>
-
-export interface PageExample extends Omit<Example, 'tokens'> {
-  tokens: PageExampleToken[]
-}
 
 export interface WordPageData
   extends Omit<WordDetail, 'alternatives' | 'kanji' | 'alternativeKanji' | 'related' | 'examples'> {
@@ -73,16 +82,11 @@ export interface KanjiPageData
   indexable: boolean
 }
 
+export type { PageExample, PageExampleToken } from './page-example'
 export type { SearchData, SearchWord } from './results/links'
 
 const wordRowsBySeq = new Map(fixtureWordRows.map(rows => [rows.entry.entSeq, rows]))
 const kanjiRowsByCharacter = new Map(fixtureKanjiRows.map(rows => [rows.kanji.character, rows]))
-
-/** Where a page's links go: a path, or null for a word or kanji without a page. */
-interface Links {
-  word(entSeq: number | null): string | null
-  kanji(character: string | null): string | null
-}
 
 /** The fixtures' links: only fixture words and kanji have pages. */
 const fixtureLinks: Links = {
@@ -142,23 +146,6 @@ const fixtureBuild = 'fixtures'
  */
 export const examplesPath = (entSeq: number, build: string) =>
   `/dictionary/examples/${entSeq}.json?build=${encodeURIComponent(build)}`
-
-/** An example with its links: a word to its page, an ambiguous word to a search for it. */
-function pageExample(example: Example, links: Links): PageExample {
-  return {
-    ...example,
-    tokens: example.tokens.map(token => ({
-      ...token,
-      path: !token.link
-        ? null
-        : 'entSeq' in token.link
-          ? links.word(token.link.entSeq)
-          : hasSearchPath(token.link.query)
-            ? searchPath(token.link.query)
-            : null
-    }))
-  }
-}
 
 function wordPage(rows: WordRows, slug: string, links: Links, build: string): WordPageData {
   const detail = wordDetail(rows)
@@ -364,30 +351,70 @@ function fixtureResults(query: string) {
   return { results, frequency }
 }
 
-/**
- * The search core's results for the query and their frequency evidence, both from the search
- * database, so its import gate (results/conformance.test.ts) checks everything the page orders
- * and shows; the fixtures without one.
- */
-async function searchScreen(query: string): Promise<SearchResultsScreen> {
+/** The search database, when it holds a finished import; null when local development reads fixtures. */
+async function searchDb(): Promise<D1Database | null> {
   const { env } = await getCloudflareContext({ async: true })
   // A failing database throws, so the request fails rather than rendering an empty page.
-  const db = await imported(env.SEARCH_DB, 'SEARCH_DB')
+  return imported(env.SEARCH_DB, 'SEARCH_DB')
+}
+
+/** The build a search page's rows come from: the search database's, or the fixtures'. */
+async function searchBuild(): Promise<string> {
+  const db = await searchDb()
+  return db ? (importedBuilds.get(db) ?? '') : fixtureBuild
+}
+
+/** The search core's results for the query; a query full-text search can't read finds nothing. */
+async function searchResultsFor(db: D1Database, query: string): Promise<SearchResults | null> {
+  try {
+    return await websiteSearch(db).search(query)
+  } catch (error) {
+    // Like the app, a query full-text search can't read shows no results.
+    if (isUnreadableQuery(error)) return null
+    throw error
+  }
+}
+
+/**
+ * The search core's results for the query, their frequency evidence, and the Example Sentences
+ * row's count, all from the search database, so its import gate (results/conformance.test.ts)
+ * checks everything the page orders and shows; the fixtures without one, which have no example
+ * sentences.
+ */
+async function searchScreen(
+  query: string,
+  options: { examples: boolean } = { examples: true }
+): Promise<SearchResultsScreen> {
+  const db = await searchDb()
   if (!db) {
     const { results, frequency } = fixtureResults(query)
     return searchResultsScreen(query, results, frequency)
   }
-  let results: SearchResults
-  try {
-    results = await websiteSearch(db).search(query)
-  } catch (error) {
-    // Like the app, a query full-text search can't read shows no results.
-    if (isUnreadableQuery(error)) return searchResultsScreen(query, searchResults([]), new Map())
-    throw error
+  return (await searchOn(db, query, options)).screen
+}
+
+/**
+ * A query's search on a search database, and the results screen it makes: the search, its
+ * frequency evidence, and, unless `examples` is false, the Example Sentences row's count. A query
+ * full-text search can't read finds nothing. The page and the search import's gate and
+ * rendered-page tests all read it through here.
+ */
+export async function searchOn(
+  db: D1Database,
+  query: string,
+  { examples }: { examples: boolean } = { examples: true }
+): Promise<{ results: SearchResults; screen: SearchResultsScreen }> {
+  const results = await searchResultsFor(db, query)
+  if (!results) {
+    const none = searchResults([])
+    return { results: none, screen: searchResultsScreen(query, none, new Map()) }
   }
   // One query for every result, as the app loads frequency after the results.
-  const frequency = await loadFrequency(d1SearchDatabase(db), results)
-  return searchResultsScreen(query, results, frequency)
+  const [frequency, count] = await Promise.all([
+    loadFrequency(d1SearchDatabase(db), results),
+    examples ? resultsExampleCount(websiteExampleSearch(db), results, query) : 0
+  ])
+  return { results, screen: searchResultsScreen(query, results, frequency, count) }
 }
 
 /** Whether a searched kanji has a page: in the dictionary database, or a fixture kanji. */
@@ -396,16 +423,145 @@ async function hasKanjiPage(character: string, db: DictionaryDatabase | null): P
 }
 
 /**
- * The search results screen with its links. Every word links once the dictionary database is
- * loaded; before that, only fixture words have pages. Memoized per request, so the page and its
- * metadata search once.
+ * The search results screen with its links, and its first `resultsPerPage` words. Every word
+ * links once the dictionary database is loaded; before that, only fixture words have pages.
+ * Memoized per request, so the page and its metadata search once.
  */
 export const searchDictionary = cache(async (query: string): Promise<SearchData> => {
   const dictionary = dictionaryDb()
-  const [db, screen, kanjiHasPage] = await Promise.all([
+  const [db, screen, kanjiHasPage, build] = await Promise.all([
     dictionary,
     searchScreen(query),
-    isSingleKanji(query) ? dictionary.then(db => hasKanjiPage(query, db)) : false
+    isSingleKanji(query) ? dictionary.then(db => hasKanjiPage(query, db)) : false,
+    searchBuild()
   ])
-  return linkSearchScreen(screen, { dictionaryLoaded: db !== null, kanjiHasPage })
+  return linkSearchScreen(screen, { dictionaryLoaded: db !== null, kanjiHasPage, build })
 })
+
+/**
+ * `resultsPerPage` of a search's words from position `from`, as its page loads more; null when
+ * `build` isn't the search build now loaded (the page is from an earlier deploy).
+ */
+export async function getSearchRows(
+  query: string,
+  from: number,
+  build: string
+): Promise<SearchWord[] | null> {
+  if (build !== (await searchBuild())) return null
+  // The rows don't depend on example sentences, so the route doesn't count them.
+  const [screen, db] = await Promise.all([searchScreen(query, { examples: false }), dictionaryDb()])
+  return linkedWords(screen, db !== null).slice(from, from + resultsPerPage)
+}
+
+/** A search's Example Sentences page (ExampleSentencesView.swift). */
+export interface SearchExamplesData {
+  query: string
+  /** How many examples it lists, at most the app's 100. */
+  listed: number
+  /** Whether search engines may index it (`searchExamplesIndexable`). */
+  indexable: boolean
+  /** The first examples; the rest load from `examplesPath` as the page scrolls. */
+  examples: PageExample[]
+  examplesPath: string
+}
+
+/** Where a search's Example Sentences page loads more, for the search build it came from. */
+export const searchExamplesJsonPath = (query: string, build: string) =>
+  `${searchPath(query)}examples.json?build=${encodeURIComponent(build)}`
+
+/** A search's Example Sentences: the list, and what reads its sentences. */
+export interface SearchExamplesOn {
+  search: WebsiteExampleSearch
+  list: SearchExampleList
+  /** Whether it lists the primary entry's examples, for a deinflected or romaji search. */
+  usesPrimaryEntryExamples: boolean
+}
+
+/**
+ * A search's Example Sentences from a search database; null for a query full-text search can't
+ * read. The page and the search import's gate and rendered-page test all read it through here.
+ */
+export async function searchExamplesOn(
+  db: D1Database,
+  query: string
+): Promise<SearchExamplesOn | null> {
+  const results = await searchResultsFor(db, query)
+  if (!results) return null
+  const search = websiteExampleSearch(db)
+  return {
+    search,
+    list: await searchExampleList(search, results, query),
+    usesPrimaryEntryExamples: results.usesPrimaryEntryExamples
+  }
+}
+
+/**
+ * `examplesPerPage` of a search's examples from position `from`, as the page shows them, linking
+ * words to the pages `links` gives for their entries.
+ */
+export async function searchExamplePageOn(
+  found: SearchExamplesOn,
+  query: string,
+  from: number,
+  links: (entSeqs: number[]) => Promise<Links>
+): Promise<PageExample[]> {
+  const rows = await searchExamplePage(found.search, found.list, query, from, examplesPerPage)
+  const entSeqs = rows.flatMap(({ example }) =>
+    example.links.flatMap(link => (link.entSeqs.length === 1 ? link.entSeqs : []))
+  )
+  const linked = await links(entSeqs)
+  return rows.map(row => pageExample(wordExample(row), linked))
+}
+
+/** Word pages from the dictionary database, or the fixtures'. */
+async function exampleWordLinks(entSeqs: number[]): Promise<Links> {
+  const dictionary = await dictionaryDb()
+  return dictionary ? databaseLinks(await dictionary.wordSlugs(entSeqs), new Set()) : fixtureLinks
+}
+
+/**
+ * A search's Example Sentences page: the primary entry's examples for a deinflected or romaji
+ * search, otherwise the sentences that contain the query, each word linked as the app links it
+ * there; null without any, which the app never opens, so the page answers 404. Local fixtures
+ * have none. Memoized per request.
+ */
+export const getSearchExamples = cache(
+  async (query: string): Promise<SearchExamplesData | null> => {
+    const db = await searchDb()
+    if (!db) return null
+    const found = await searchExamplesOn(db, query)
+    if (!found || found.list.ids.length === 0) return null
+    return {
+      query,
+      listed: found.list.ids.length,
+      indexable: searchExamplesIndexable(query, found.usesPrimaryEntryExamples),
+      examples: await searchExamplePageOn(found, query, 0, exampleWordLinks),
+      examplesPath: searchExamplesJsonPath(query, await searchBuild())
+    }
+  }
+)
+
+/**
+ * Whether search engines may index a search's Example Sentences page: only a direct Japanese
+ * search's, by the owner's decision on #511. A romaji or deinflected search lists its primary
+ * entry's examples, which that entry's word page already has.
+ */
+export const searchExamplesIndexable = (query: string, usesPrimaryEntryExamples: boolean) =>
+  !isASCII(normalizeQuery(query)) && !usesPrimaryEntryExamples
+
+/**
+ * `examplesPerPage` of a search's examples from position `from`, as its page loads more; null
+ * when `build` isn't the search build now loaded. A failing database throws.
+ */
+export async function getMoreSearchExamples(
+  query: string,
+  from: number,
+  build: string
+): Promise<PageExample[] | null> {
+  if (build !== (await searchBuild())) return null
+  const db = await searchDb()
+  if (!db) return []
+  const found = await searchExamplesOn(db, query)
+  if (!found) return []
+  return searchExamplePageOn(found, query, from, exampleWordLinks)
+}

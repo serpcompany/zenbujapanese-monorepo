@@ -119,3 +119,50 @@ export const entryFrequency = sqliteTable('entry_frequency', {
   entryId: text('entry_id').primaryKey(),
   frequencyJson: text('frequency_json').notNull()
 })
+
+/**
+ * Every Tatoeba pair the app's example search reads (#511), numbered from 1 in pair ID order,
+ * with each side's attribution. `wordsJson` holds its words as the app links them with no page's
+ * entry (`ExampleWordRow`s), so the Example Sentences page links them for its query's entry.
+ * The FTS5 indexes that find a search's candidates, example_english_fts and
+ * example_japanese_chars, are in the custom migration drizzle/search/0004_example_fts.sql.
+ */
+export const exampleSentences = sqliteTable('example_sentences', {
+  id: integer('id').primaryKey(),
+  pairId: text('pair_id').notNull(),
+  japanese: text('japanese').notNull(),
+  english: text('english').notNull(),
+  wordsJson: text('words_json').notNull(),
+  japaneseTatoebaId: integer('japanese_tatoeba_id').notNull(),
+  japaneseContributor: text('japanese_contributor'),
+  japaneseLicense: text('japanese_license').notNull(),
+  englishTatoebaId: integer('english_tatoeba_id').notNull(),
+  englishContributor: text('english_contributor'),
+  englishLicense: text('english_license').notNull()
+})
+
+/**
+ * Every entry, with what example search needs of it: its written and reading forms as the app's
+ * entry holds them (not normalized, unlike `forms`), which link a sentence's words to the entry,
+ * and its examples as its word page lists them (`example_sentences` IDs in the app's order, at
+ * most 100; null without any), which a deinflected or romaji search opens.
+ */
+export const exampleEntries = sqliteTable('example_entries', {
+  entryId: text('entry_id').primaryKey(),
+  entSeq: integer('ent_seq').notNull(),
+  writtenFormsJson: text('written_forms_json').notNull(),
+  readingFormsJson: text('reading_forms_json').notNull(),
+  sentenceIdsJson: text('sentence_ids_json')
+})
+
+/**
+ * Precomputed example searches: every search with more candidates than the website reads per
+ * request (`exampleCandidateLimit`) that can list anything, keyed by `exampleSearchKey`, with the
+ * count the row shows and the listed `example_sentences` IDs.
+ */
+export const exampleSearchCache = sqliteTable('example_search_cache', {
+  key: text('key').primaryKey(),
+  count: integer('count').notNull(),
+  truncated: integer('truncated').notNull(),
+  sentenceIdsJson: text('sentence_ids_json').notNull()
+})

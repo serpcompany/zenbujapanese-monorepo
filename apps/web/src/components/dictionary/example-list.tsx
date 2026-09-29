@@ -1,10 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment } from 'react'
+import { LoadMoreFooter, useLoadMore } from '@/components/dictionary/load-more'
 import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
-import { Button } from '@/components/ui/button'
 import type { PageExample, PageExampleToken } from '@/lib/dictionary/data'
 import {
   licenseUrl,
@@ -78,7 +78,10 @@ function Attribution({ example }: { example: PageExample }) {
 function ExampleItem({ example }: { example: PageExample }) {
   let offset = 0
   return (
-    <li className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+    <li
+      className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+      data-example={example.position}
+    >
       <div className="flex flex-1 flex-col gap-1">
         <p lang="ja" className="text-xl leading-[2.2]">
           {example.tokens.map(token => {
@@ -99,9 +102,18 @@ function ExampleItem({ example }: { example: PageExample }) {
   )
 }
 
+const readExamples = (response: unknown) => (response as { examples: PageExample[] }).examples
+
+const exampleLabels = {
+  more: 'Load more examples',
+  loading: 'Loading examples…',
+  stale: 'These examples have been updated since the page loaded.',
+  reload: 'Reload for more examples'
+}
+
 /**
- * A word's examples: the first ones rendered with the page, then more loaded from `path` as the
- * list scrolls into view (or with the button), up to the `listed` the app shows.
+ * A word's or a search's examples: the first ones rendered with the page, then more loaded from
+ * `path` as the list scrolls into view (or with the button), up to the `listed` the app shows.
  */
 export function ExampleList({
   initial,
@@ -112,69 +124,15 @@ export function ExampleList({
   listed: number
   path: string
 }) {
-  const [examples, setExamples] = useState(initial)
-  const [loading, setLoading] = useState(false)
-  const [failed, setFailed] = useState(false)
-  // The dictionary was updated since the page loaded, so its next examples are another list's.
-  const [stale, setStale] = useState(false)
-  const end = useRef<HTMLDivElement>(null)
-  const hasMore = examples.length < listed
-
-  const loadMore = useCallback(async () => {
-    if (loading || !hasMore || stale) return
-    setLoading(true)
-    setFailed(false)
-    try {
-      const response = await fetch(`${path}&from=${examples.length}`)
-      if (response.status === 404) {
-        setStale(true)
-        return
-      }
-      if (!response.ok) throw new Error(`${response.status}`)
-      const { examples: more } = (await response.json()) as { examples: PageExample[] }
-      if (more.length === 0) setStale(true)
-      else setExamples(current => [...current, ...more])
-    } catch {
-      setFailed(true)
-    } finally {
-      setLoading(false)
-    }
-  }, [examples.length, hasMore, loading, path, stale])
-
-  useEffect(() => {
-    const target = end.current
-    if (!target || !hasMore || failed || stale) return
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries.some(entry => entry.isIntersecting)) void loadMore()
-      },
-      { rootMargin: '400px' }
-    )
-    observer.observe(target)
-    return () => observer.disconnect()
-  }, [failed, hasMore, loadMore, stale])
-
+  const list = useLoadMore({ initial, total: listed, path, read: readExamples })
   return (
     <div className="flex flex-col gap-3">
       <ul className="flex flex-col divide-y">
-        {examples.map(example => (
+        {list.items.map(example => (
           <ExampleItem key={example.position} example={example} />
         ))}
       </ul>
-      {hasMore && stale ? (
-        <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
-          <p>These examples have been updated since the page loaded.</p>
-          <Button variant="outline" onClick={() => window.location.reload()}>
-            Reload for more examples
-          </Button>
-        </div>
-      ) : hasMore ? (
-        <div ref={end} className="flex justify-center">
-          <Button variant="outline" onClick={() => void loadMore()} disabled={loading}>
-            {loading ? 'Loading examples…' : failed ? 'Try again' : 'Load more examples'}
-          </Button>
-        </div>
-      ) : null}
+      <LoadMoreFooter state={list} labels={exampleLabels} />
     </div>
   )
 }

@@ -145,13 +145,7 @@ struct LinkedJapaneseText: View {
 
   /// Unicode-scalar ranges of every occurrence of the query, matching token scalar ranges.
   private var queryScalarRanges: [Range<Int>] {
-    let scalars = Array(text.unicodeScalars)
-    let query = Array(highlightedQuery.value.unicodeScalars)
-    guard !query.isEmpty, query.count <= scalars.count else { return [] }
-    return (0...(scalars.count - query.count)).compactMap { start in
-      scalars[start..<(start + query.count)].elementsEqual(query)
-        ? start..<(start + query.count) : nil
-    }
+    ExampleSentencesScreen.queryScalarRanges(in: text, query: highlightedQuery.value)
   }
 
   private func isCurrentEntry(_ token: JapaneseTextToken) -> Bool {

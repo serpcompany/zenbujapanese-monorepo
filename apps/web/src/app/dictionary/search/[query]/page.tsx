@@ -28,8 +28,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return dictionaryMetadata(
     searchPath(results.query),
     `${results.query} in Japanese`,
-    results.state === 'results' && results.rows.length > 0
-      ? `${results.rows.length} Japanese words for “${results.query}”, with readings and meanings.`
+    results.state === 'results' && results.wordCount > 0
+      ? `${results.wordCount} Japanese words for “${results.query}”, with readings and meanings.`
       : `No Japanese words match “${results.query}”.`,
     { index: isIndexable(results) }
   )

@@ -284,6 +284,19 @@ export function dictionaryDatabase(db: D1Database) {
       return rows.map(row => row.character)
     },
 
+    /** The slug of each word's page, by `ent_seq`, for words a search's examples link to. */
+    async wordSlugs(entSeqs: number[]): Promise<Map<number, string>> {
+      if (entSeqs.length === 0) return new Map()
+      // One JSON parameter: a page's examples can link more words than D1 binds parameters.
+      const rows = await orm
+        .select({ entSeq: words.entSeq, slug: words.slug })
+        .from(words)
+        .where(
+          sql`${words.entSeq} IN (SELECT value FROM json_each(${JSON.stringify([...new Set(entSeqs)])}))`
+        )
+      return new Map(rows.map(row => [row.entSeq, row.slug]))
+    },
+
     /** The kanji a search for one character shows as a card, if it has a page. */
     async kanjiCard(character: string): Promise<{ character: string; meanings: string[] } | null> {
       const [card] = await orm
