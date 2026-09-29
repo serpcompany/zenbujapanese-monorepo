@@ -2,7 +2,6 @@
 
 import {
   CheckCircle2Icon,
-  ChevronLeftIcon,
   ImagePlusIcon,
   LinkIcon,
   ListPlusIcon,
@@ -11,7 +10,6 @@ import {
   ShareIcon,
   SmartphoneIcon
 } from 'lucide-react'
-import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -41,16 +39,8 @@ async function copyLink() {
   }
 }
 
-/** The word and kanji detail toolbar, as in the app: back, title, Share, and a ••• menu. */
-export function PageToolbar({
-  back,
-  title,
-  shareText
-}: {
-  back: { href: string; label: string }
-  title: string
-  shareText: string
-}) {
+/** The word and kanji detail toolbar, as in the app: title, Share, and a ••• menu. */
+export function PageToolbar({ title, shareText }: { title: string; shareText: string }) {
   const [action, setAction] = useState<string | null>(null)
 
   async function share() {
@@ -66,20 +56,11 @@ export function PageToolbar({
   }
 
   return (
-    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-      <Button
-        variant="ghost"
-        className="justify-self-start px-1.5"
-        nativeButton={false}
-        render={<Link href={back.href} />}
-      >
-        <ChevronLeftIcon />
-        <span lang="ja">{back.label}</span>
-      </Button>
-      <h1 lang="ja" className="font-semibold">
+    <div className="flex items-center justify-between gap-2">
+      <h1 lang="ja" className="text-2xl font-semibold tracking-tight">
         {title}
       </h1>
-      <ButtonGroup className="justify-self-end">
+      <ButtonGroup>
         <Button variant="outline" size="icon" aria-label="Share" onClick={share}>
           <ShareIcon />
         </Button>

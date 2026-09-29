@@ -1,10 +1,6 @@
-import { SearchIcon } from 'lucide-react'
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput
-} from '@/components/ui/input-group'
+import { Button } from '@/components/ui/button'
+import { ButtonGroup } from '@/components/ui/button-group'
+import { Input } from '@/components/ui/input'
 
 /** Submits to /dictionary/search/?q=, which redirects to the query's own page. */
 export function SearchForm({
@@ -17,25 +13,22 @@ export function SearchForm({
   return (
     <search>
       <form action="/dictionary/search/" method="get">
-        <InputGroup className="h-11 bg-background shadow-xs">
-          <InputGroupAddon>
-            <SearchIcon />
-          </InputGroupAddon>
-          <InputGroupInput
+        {/* A text input, not type="search", so browsers don't add their own clear button. */}
+        <ButtonGroup className="w-full">
+          <Input
             name="q"
-            type="search"
+            type="text"
+            enterKeyHint="search"
             defaultValue={defaultValue}
             placeholder="Search Japanese or English"
             aria-label="Search Japanese or English"
             autoFocus={autoFocus}
-            className="text-base"
+            className="h-11 bg-background text-base"
           />
-          <InputGroupAddon align="inline-end">
-            <InputGroupButton type="submit" variant="secondary">
-              Search
-            </InputGroupButton>
-          </InputGroupAddon>
-        </InputGroup>
+          <Button type="submit" variant="outline" className="h-11">
+            Search
+          </Button>
+        </ButtonGroup>
       </form>
     </search>
   )

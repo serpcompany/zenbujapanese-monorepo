@@ -2,19 +2,21 @@ import { ChevronRightIcon } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
+import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { FrequencyDot } from '@/components/dictionary/frequency'
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
 import { PageToolbar } from '@/components/dictionary/page-toolbar'
 import { PitchAccent } from '@/components/dictionary/pitch-accent'
 import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
+import { SearchForm } from '@/components/dictionary/search-form'
 import { Section } from '@/components/dictionary/section'
 import { Card, CardContent } from '@/components/ui/card'
 import { Item, ItemActions, ItemContent } from '@/components/ui/item'
 import { Separator } from '@/components/ui/separator'
 import { getWordPage, isDictionaryAvailable } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
-import { parseWordSegment, searchPath } from '@/lib/dictionary/urls'
+import { parseWordSegment } from '@/lib/dictionary/urls'
 
 type Props = PageProps<'/dictionary/[word]'>
 
@@ -43,9 +45,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function WordPage({ params }: Props) {
   const word = await load(params)
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-6">
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-4 pb-6">
+      <DictionaryBreadcrumbs page={{ label: word.headword, path: word.path, lang: 'ja' }} />
+      <SearchForm />
       <PageToolbar
-        back={{ href: searchPath(word.reading), label: word.reading }}
         title={word.headword}
         shareText={`${word.headword}（${word.reading}）: ${word.summary}`}
       />

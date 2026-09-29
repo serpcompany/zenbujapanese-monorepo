@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { isDictionaryAvailable } from '@/lib/dictionary/data'
 import { site } from '@/lib/site'
 
 export function SiteHeader() {
@@ -9,6 +10,7 @@ export function SiteHeader() {
           {site.mark} {site.name}
         </Link>
         <div className="flex gap-4 text-sm">
+          {isDictionaryAvailable() ? <Link href="/dictionary/">Dictionary</Link> : null}
           <Link href="/about/">About</Link>
           <Link href="/support/">Support</Link>
         </div>
