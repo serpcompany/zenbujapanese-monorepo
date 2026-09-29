@@ -87,12 +87,22 @@ describe('routes', () => {
 
   test.each([
     ['a word number that is not a number', '/v1/words/abc'],
-    ['word number 0', '/v1/words/0'],
-    ['a kanji of two characters', `/v1/kanji/${encodeURIComponent('要る')}`],
     ['an examples offset past the 100 listed', '/v1/words/1358280/examples?from=100'],
     ['a query over 200 characters', `/v1/search/${'a'.repeat(201)}`]
   ])('400s %s', async (_, path) => {
     expect((await app().request(get(path))).status).toBe(400)
+  })
+
+  test.each([
+    ['word number 0', '/v1/words/0'],
+    ['a word number past any JMdict entry', '/v1/words/999999999'],
+    ["such a word's examples", '/v1/words/999999999/examples?from=25'],
+    ['a kanji of two characters', `/v1/kanji/${encodeURIComponent('要る')}`]
+  ])('404s %s, which names nothing, as for an unknown one', async (_, path) => {
+    const word = vi.fn(fakeService().word)
+    const response = await app(fakeService({ word })).request(get(path))
+    expect(response.status).toBe(404)
+    expect(word).not.toHaveBeenCalled()
   })
 
   test('passes the examples offset on', async () => {

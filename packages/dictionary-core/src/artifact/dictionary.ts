@@ -102,11 +102,11 @@ export interface DictionaryOptions {
 }
 
 /**
- * Whether a search failed because SQLite's full-text search couldn't read the query. Only its
- * own parser errors: a bare "syntax error" would also hide a real SQL bug as "no results".
+ * Whether a search failed because the artifact's full-text search (FTS4) couldn't read the query.
+ * Only its own parser errors: a bare "syntax error" would also hide a real SQL bug as "no results".
  */
 export function isUnreadableQuery(error: unknown): boolean {
-  const unreadable = /malformed MATCH|fts5: syntax error|unterminated string/i
+  const unreadable = /malformed MATCH|unterminated string/i
   for (let cause = error; cause instanceof Error; cause = cause.cause) {
     if (unreadable.test(cause.message)) return true
   }
@@ -122,6 +122,18 @@ interface QueryExamples {
 
 /** The sitemap protocol's limit per file. */
 export const sitemapUrlLimit = 50_000
+
+/**
+ * The longest query or conjugated form the service reads, in code points. The website answers a
+ * longer one itself: a search that finds nothing.
+ */
+export const maximumQueryLength = 200
+
+/** Whether a query or form is within `maximumQueryLength`. */
+export const isReadableLength = (text: string) => Array.from(text).length <= maximumQueryLength
+
+/** The highest JMdict entry number the service looks up; any higher number names no word. */
+export const maximumEntSeq = 99_999_999
 
 const toRecord = (slugs: Map<number, string>): Slugs => Object.fromEntries(slugs)
 
@@ -211,7 +223,8 @@ export class Dictionary {
 
   /**
    * What a search's Example Sentences row opens, from position `from`: the primary entry's
-   * examples, accenting its words, or the sentences containing the query, accenting the query.
+   * examples for a romaji or deinflected query, otherwise the sentences containing the query. As
+   * in the app's ExampleSentencesView, each occurrence of the query is accented.
    */
   async searchExamples(
     rawQuery: string,

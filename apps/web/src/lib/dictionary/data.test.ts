@@ -197,6 +197,15 @@ describe('searchDictionary', () => {
     serve({ '/v1/search/eat': 503 })
     await expect(searchDictionary('eat')).rejects.toThrow('answered 503')
   })
+
+  test('finds nothing for a query past the service’s 200 characters, without asking it', async () => {
+    const requests = serve({})
+    const long = 'a'.repeat(201)
+    expect(await searchDictionary(long)).toEqual({ state: 'noResults', query: long })
+    expect(await getSearchExamples(long)).toBeNull()
+    expect(await getConjugationExamples('た'.repeat(201))).toEqual([])
+    expect(requests).toEqual([])
+  })
 })
 
 describe('word and kanji pages', () => {

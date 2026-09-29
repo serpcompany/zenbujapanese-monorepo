@@ -2,17 +2,18 @@
 // bearer token; /healthz, for the host, doesn't. docs/agents/dictionary-api.md lists the routes.
 
 import { timingSafeEqual } from 'node:crypto'
+import { maximumEntSeq, maximumQueryLength } from '@zenbu/dictionary-core/artifact/dictionary'
 import { Hono } from 'hono'
 import { routePath } from 'hono/route'
 import { errorFields, log } from './log'
 import type { DictionaryService } from './service'
 
-/** The longest query or form the service reads, in code points. */
-const maximumQueryLength = 200
 /** How many sitemap words one request returns at most. */
 const maximumSitemapPage = 10_000
 
 class BadRequest extends Error {}
+/** A well-formed request for something that can't exist, such as word 0: the same as unknown. */
+class NotFound extends Error {}
 
 function tokenMatches(header: string | undefined, token: string): boolean {
   const presented = Buffer.from(header?.replace(/^Bearer /, '') ?? '')
@@ -89,8 +90,9 @@ export function createApp({ service, token, ready }: AppOptions) {
   })
 
   const entSeq = (value: string) => {
-    const number = integer(value, 'entry number', 0, 99_999_999)
-    if (number === 0) throw new BadRequest('entry number must be positive')
+    if (!/^\d+$/.test(value)) throw new BadRequest('entry number must be a whole number')
+    const number = Number(value)
+    if (number === 0 || number > maximumEntSeq) throw new NotFound('no such word')
     return number
   }
 
@@ -113,7 +115,7 @@ export function createApp({ service, token, ready }: AppOptions) {
 
   app.get('/v1/kanji/:character', async context => {
     const character = context.req.param('character')
-    if (Array.from(character).length !== 1) throw new BadRequest('a kanji is one character')
+    if (Array.from(character).length !== 1) throw new NotFound('no such kanji')
     const kanji = await service.kanji(character)
     return kanji ? context.json(kanji) : context.json({ error: 'no such kanji' }, 404)
   })
@@ -137,6 +139,7 @@ export function createApp({ service, token, ready }: AppOptions) {
 
   app.onError((error, context) => {
     if (error instanceof BadRequest) return context.json({ error: error.message }, 400)
+    if (error instanceof NotFound) return context.json({ error: error.message }, 404)
     log('error', 'request failed', { route: routePath(context), ...errorFields(error) })
     return context.json({ error: 'internal error' }, 500)
   })

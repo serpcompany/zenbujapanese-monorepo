@@ -1,5 +1,5 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
-import type { Slugs } from '@zenbu/dictionary-core/artifact/dictionary'
+import { isReadableLength, type Slugs } from '@zenbu/dictionary-core/artifact/dictionary'
 import {
   type Example,
   type ExampleToken,
@@ -325,6 +325,8 @@ function fixtureScreen(query: string): SearchResultsScreen {
  */
 export const searchDictionary = cache(async (query: string): Promise<SearchData> => {
   const api = await dictionaryService()
+  // Past the service's limit (`maximumQueryLength`), a query finds nothing.
+  if (!isReadableLength(query)) return { state: 'noResults', query }
   if (api) {
     const { screen, kanjiHasPage } = (await api.search(query)).data
     return linkSearchScreen(screen, { dictionaryLoaded: true, kanjiHasPage })
@@ -341,7 +343,7 @@ export const searchDictionary = cache(async (query: string): Promise<SearchData>
 export const getSearchExamples = cache(
   async (query: string, from = 0, build?: string): Promise<SearchExamplesData | null> => {
     const api = await dictionaryService()
-    if (!api) return null
+    if (!api || !isReadableLength(query)) return null
     const found = await api.searchExamples(query, from)
     if (!found || (build !== undefined && found.build !== build)) return null
     const links = serviceLinks(found.data.slugs, [])
@@ -361,7 +363,7 @@ export const getSearchExamples = cache(
  */
 export async function getConjugationExamples(form: string): Promise<PageExample[]> {
   const api = await dictionaryService()
-  if (!api) return []
+  if (!api || !isReadableLength(form)) return []
   const found = await api.conjugationExamples(form)
   const links = serviceLinks(found.data.slugs, [])
   return found.data.rows.map(row => pageExample(wordExample(row), links))
