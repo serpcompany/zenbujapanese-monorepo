@@ -5,23 +5,34 @@
 /** Text only screen readers get, such as a chip's spoken tier. */
 const srOnly = /<span class="sr-only">[\s\S]*?<\/span>/g
 
-/** Visible text: furigana (`<rt>`) and screen-reader-only text left out, entities decoded. */
+/** Applies `pattern` until nothing changes, so a removal can't leave a new match behind. */
+function removeAll(text: string, pattern: RegExp, replacement = ''): string {
+  let previous: string
+  let current = text
+  do {
+    previous = current
+    current = current.replace(pattern, replacement)
+  } while (current !== previous)
+  return current
+}
+
+/**
+ * Visible text: furigana (`<rt>`) and screen-reader-only text left out, tags removed, and quotes
+ * and ampersands decoded. `&lt;` and `&gt;` stay encoded, so the result never holds a tag; no
+ * suite text has either.
+ */
 export function visibleText(html: string): string {
-  return (
-    html
-      .replace(/<rt\b[^>]*>[\s\S]*?<\/rt>/g, '')
-      .replace(srOnly, '')
-      // A block ends a line.
-      .replace(/<\/(?:p|div|h\d)>/g, ' ')
-      .replace(/<[^>]+>/g, '')
-      .replace(/&quot;/g, '"')
-      .replace(/&#x27;/g, "'")
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .replace(/\s+/g, ' ')
-      .trim()
-  )
+  let text = removeAll(html, /<rt\b[^>]*>[\s\S]*?<\/rt>/g)
+  text = removeAll(text, srOnly)
+  // A block ends a line.
+  text = removeAll(text, /<\/(?:p|div|h\d)>/g, ' ')
+  text = removeAll(text, /<[^>]+>/g)
+  return text
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&amp;(?!lt;|gt;)/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 /** The HTML from each match of `marker` to the next, with the marker's captured value. */
@@ -59,7 +70,7 @@ export function readRenderedPage(html: string): RenderedPage {
   const rows = segments(html, /data-result-row="(\d+)"/g).map(({ value, html: row }) => {
     const headword = row.match(/<span lang="ja"[^>]*>([\s\S]*?)<\/span>\s*<p/)?.[1] ?? ''
     const summary = row.match(/<p class="line-clamp-2[^"]*">([\s\S]*?)<\/p>/)?.[1] ?? ''
-    const shown = row.replace(srOnly, '')
+    const shown = removeAll(row, srOnly)
     const chips = segments(shown, /data-chip="([^"]+)"/g).map(chip =>
       visibleText(`<x ${chip.html.split('</span></span>')[0]}`)
     )
