@@ -9,7 +9,6 @@ import { PageToolbar } from '@/components/dictionary/page-toolbar'
 import { PitchAccent } from '@/components/dictionary/pitch-accent'
 import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
-import { SearchForm } from '@/components/dictionary/search-form'
 import { Section } from '@/components/dictionary/section'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { Card, CardContent } from '@/components/ui/card'
@@ -53,7 +52,6 @@ export default async function WordPage({ params }: Props) {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-4 pb-6">
       <DictionaryBreadcrumbs page={{ label: word.headword, path: word.path, lang: 'ja' }} />
-      <SearchForm />
       <PageToolbar
         title={word.headword}
         shareText={`${word.headword}（${word.reading}）: ${word.summary}`}
