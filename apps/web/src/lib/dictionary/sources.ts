@@ -73,7 +73,8 @@ export const sources = {
   }
 } satisfies Record<string, Source>
 
-const frequency = [sources.jlpt, sources.tubelex, sources.jiten]
+/** The app's default frequency dictionaries, the only ones the website shows. */
+const frequency = [sources.jlpt, sources.tubelex]
 
 /** What each kind of page can show. */
 export const pageSources = {

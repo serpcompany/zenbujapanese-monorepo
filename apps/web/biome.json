@@ -16,7 +16,8 @@
       "!dist",
       "!build",
       "!cloudflare-env.d.ts",
-      "!drizzle"
+      "!drizzle",
+      "!src/lib/dictionary/fixtures/*.json"
     ]
   },
   "formatter": {
