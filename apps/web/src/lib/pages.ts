@@ -31,6 +31,11 @@ export const sitePages = [
     title: 'Affiliate Disclosure',
     description: 'How Zenbu Japanese discloses affiliate relationships.'
   },
+  {
+    path: '/sources/',
+    title: 'Sources',
+    description: 'The open data behind the Zenbu Japanese dictionary, with credits and licences.'
+  },
   { path: '/sitemap/', title: 'Sitemap', description: 'Every page on zenbujapanese.com.' }
 ] as const satisfies readonly SitePage[]
 
