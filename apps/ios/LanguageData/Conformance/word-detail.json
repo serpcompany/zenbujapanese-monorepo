@@ -1412,12 +1412,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#41"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.01%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "41",
@@ -1454,6 +1490,26 @@
       "partOfSpeech" : "Ichidan verb (transitive)",
       "pitch" : {
         "downstep" : 1,
+        "graph" : {
+          "morae" : [
+            "ミ",
+            "ル"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "H",
+              "x" : 50
+            },
+            {
+              "level" : "L",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "HL",
         "moraCount" : 2,
         "particle" : "L",
@@ -2598,12 +2654,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#165"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.05%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "165",
@@ -2635,6 +2727,31 @@
       "partOfSpeech" : "Ichidan verb (transitive)",
       "pitch" : {
         "downstep" : 2,
+        "graph" : {
+          "morae" : [
+            "タ",
+            "ベ",
+            "ル"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 330
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "L",
+              "x" : 250
+            }
+          ]
+        },
         "levels" : "LHL",
         "moraCount" : 3,
         "particle" : "L",
@@ -3761,12 +3878,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#949"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.27%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "949",
@@ -3801,6 +3954,26 @@
       "partOfSpeech" : "Godan verb (intransitive)",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "イ",
+            "ル"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "LH",
         "moraCount" : 2,
         "particle" : "H",
@@ -4726,12 +4899,42 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "No rank"
@@ -4752,6 +4955,26 @@
       "partOfSpeech" : "Ichidan verb (intransitive)",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "イ",
+            "ル"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "LH",
         "moraCount" : 2,
         "particle" : "H",
@@ -6355,12 +6578,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#189"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.05%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "189",
@@ -6393,6 +6652,31 @@
       "partOfSpeech" : "I-adjective",
       "pitch" : {
         "downstep" : 2,
+        "graph" : {
+          "morae" : [
+            "タ",
+            "カ",
+            "イ"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 330
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "L",
+              "x" : 250
+            }
+          ]
+        },
         "levels" : "LHL",
         "moraCount" : 3,
         "particle" : "L",
@@ -7753,12 +8037,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#210"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.06%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "210",
@@ -7790,6 +8110,36 @@
       "partOfSpeech" : "I-adjective",
       "pitch" : {
         "downstep" : 3,
+        "graph" : {
+          "morae" : [
+            "オ",
+            "オ",
+            "キ",
+            "イ"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 430
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 250
+            },
+            {
+              "level" : "L",
+              "x" : 350
+            }
+          ]
+        },
         "levels" : "LHHL",
         "moraCount" : 4,
         "particle" : "L",
@@ -8586,12 +8936,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#1,939"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.55%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "1,939",
@@ -8622,6 +9008,31 @@
       "partOfSpeech" : "Na-adjective",
       "pitch" : {
         "downstep" : 1,
+        "graph" : {
+          "morae" : [
+            "シ",
+            "ズ",
+            "カ"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 330
+          },
+          "points" : [
+            {
+              "level" : "H",
+              "x" : 50
+            },
+            {
+              "level" : "L",
+              "x" : 150
+            },
+            {
+              "level" : "L",
+              "x" : 250
+            }
+          ]
+        },
         "levels" : "HLL",
         "moraCount" : 3,
         "particle" : "L",
@@ -9587,12 +9998,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#31"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.01%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "31",
@@ -9630,6 +10077,26 @@
       "partOfSpeech" : "Godan verb (intransitive)",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "イ",
+            "ク"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "LH",
         "moraCount" : 2,
         "particle" : "H",
@@ -11052,12 +11519,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#40"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.01%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "40",
@@ -11092,6 +11595,26 @@
       "partOfSpeech" : "Irregular verb (intransitive)",
       "pitch" : {
         "downstep" : 1,
+        "graph" : {
+          "morae" : [
+            "ク",
+            "ル"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "H",
+              "x" : 50
+            },
+            {
+              "level" : "L",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "HL",
         "moraCount" : 2,
         "particle" : "L",
@@ -12450,12 +12973,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N1"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N1",
           "tier" : "moderately common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#11,502"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 3.27%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "11,502",
@@ -12490,6 +13049,31 @@
       "partOfSpeech" : "Pre-noun adjective",
       "pitch" : {
         "downstep" : 2,
+        "graph" : {
+          "morae" : [
+            "キ",
+            "タ",
+            "ル"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 330
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "L",
+              "x" : 250
+            }
+          ]
+        },
         "levels" : "LHL",
         "moraCount" : 3,
         "particle" : "L",
@@ -13250,12 +13834,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#10"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.00%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "10",
@@ -13277,6 +13897,26 @@
       "partOfSpeech" : "する verb",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "ス",
+            "ル"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "LH",
         "moraCount" : 2,
         "particle" : "H",
@@ -14600,12 +15240,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#78"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.02%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "78",
@@ -14648,6 +15324,31 @@
       "partOfSpeech" : "Godan verb (intransitive)",
       "pitch" : {
         "downstep" : 2,
+        "graph" : {
+          "morae" : [
+            "ワ",
+            "カ",
+            "ル"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 330
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "L",
+              "x" : 250
+            }
+          ]
+        },
         "levels" : "LHL",
         "moraCount" : 3,
         "particle" : "L",
@@ -15889,12 +16590,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#396"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.11%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "396",
@@ -15927,6 +16664,26 @@
       "partOfSpeech" : "Godan verb (transitive)",
       "pitch" : {
         "downstep" : 1,
+        "graph" : {
+          "morae" : [
+            "ノ",
+            "ム"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "H",
+              "x" : 50
+            },
+            {
+              "level" : "L",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "HL",
         "moraCount" : 2,
         "particle" : "L",
@@ -16759,12 +17516,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N3"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N3",
           "tier" : "common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#115"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.03%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "115",
@@ -16807,6 +17600,31 @@
       "partOfSpeech" : "Noun",
       "pitch" : {
         "downstep" : 2,
+        "graph" : {
+          "morae" : [
+            "ニ",
+            "ホ",
+            "ン"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 330
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "L",
+              "x" : 250
+            }
+          ]
+        },
         "levels" : "LHL",
         "moraCount" : 3,
         "particle" : "L",
@@ -17600,12 +18418,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#359"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.10%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "359",
@@ -17615,6 +18469,10 @@
       "furigana" : [
         {
           "base" : "先生",
+          "kanjiReadings" : [
+            "せん",
+            "せい"
+          ],
           "reading" : "せんせい"
         }
       ],
@@ -17645,6 +18503,36 @@
       "partOfSpeech" : "Noun",
       "pitch" : {
         "downstep" : 3,
+        "graph" : {
+          "morae" : [
+            "セ",
+            "ン",
+            "セ",
+            "イ"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 430
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 250
+            },
+            {
+              "level" : "L",
+              "x" : 350
+            }
+          ]
+        },
         "levels" : "LHHL",
         "moraCount" : 4,
         "particle" : "L",
@@ -18467,11 +19355,39 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "explanation" : "JLPT Levels does not list this entry. JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.",
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "Not listed"
         },
         {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "No rank"
@@ -19239,12 +20155,42 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "No rank"
@@ -19271,6 +20217,26 @@
       "partOfSpeech" : "Noun",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "ミ",
+            "ズ"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "LH",
         "moraCount" : 2,
         "particle" : "H",
@@ -20121,12 +21087,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#412"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.12%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "412",
@@ -20136,6 +21138,10 @@
       "furigana" : [
         {
           "base" : "学校",
+          "kanjiReadings" : [
+            "がっ",
+            "こう"
+          ],
           "reading" : "がっこう"
         }
       ],
@@ -20166,6 +21172,36 @@
       "partOfSpeech" : "Noun",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "ガ",
+            "ッ",
+            "コ",
+            "ウ"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 430
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 250
+            },
+            {
+              "level" : "H",
+              "x" : 350
+            }
+          ]
+        },
         "levels" : "LHHH",
         "moraCount" : 4,
         "particle" : "H",
@@ -20907,12 +21943,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#583"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.17%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "583",
@@ -20940,6 +22012,26 @@
       "partOfSpeech" : "Noun",
       "pitch" : {
         "downstep" : 1,
+        "graph" : {
+          "morae" : [
+            "ネ",
+            "コ"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "H",
+              "x" : 50
+            },
+            {
+              "level" : "L",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "HL",
         "moraCount" : 2,
         "particle" : "L",
@@ -21692,12 +22784,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#754"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.21%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "754",
@@ -21727,6 +22855,31 @@
       "partOfSpeech" : "Pronoun",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "ワ",
+            "タ",
+            "シ"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 330
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 250
+            }
+          ]
+        },
         "levels" : "LHH",
         "moraCount" : 3,
         "particle" : "H",
@@ -22458,12 +23611,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#117"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.03%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "117",
@@ -22500,6 +23689,26 @@
       "partOfSpeech" : "Noun · Adverb",
       "pitch" : {
         "downstep" : 1,
+        "graph" : {
+          "morae" : [
+            "キョ",
+            "ウ"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 280
+          },
+          "points" : [
+            {
+              "level" : "H",
+              "x" : 75
+            },
+            {
+              "level" : "L",
+              "x" : 200
+            }
+          ]
+        },
         "levels" : "HL",
         "moraCount" : 2,
         "particle" : "L",
@@ -23682,12 +24891,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#117,001"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 33.29%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "117,001",
@@ -23722,6 +24967,31 @@
       "partOfSpeech" : "Noun (の) · Na-adjective",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "オ",
+            "ト",
+            "ナ"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 330
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 250
+            }
+          ]
+        },
         "levels" : "LHH",
         "moraCount" : 3,
         "particle" : "H",
@@ -24586,12 +25856,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#601"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.17%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "601",
@@ -24601,6 +25907,10 @@
       "furigana" : [
         {
           "base" : "勉強",
+          "kanjiReadings" : [
+            "べん",
+            "きょう"
+          ],
           "reading" : "べんきょう"
         }
       ],
@@ -24630,6 +25940,36 @@
       "partOfSpeech" : "Noun · する verb (transitive)",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "ベ",
+            "ン",
+            "キョ",
+            "ウ"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 480
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 275
+            },
+            {
+              "level" : "H",
+              "x" : 400
+            }
+          ]
+        },
         "levels" : "LHHH",
         "moraCount" : 4,
         "particle" : "H",
@@ -25711,12 +27051,42 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "No rank"
@@ -25725,6 +27095,10 @@
       "furigana" : [
         {
           "base" : "一日",
+          "kanjiReadings" : [
+            "いち",
+            "にち"
+          ],
           "reading" : "いちにち"
         }
       ],
@@ -27120,12 +28494,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#114"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.03%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "114",
@@ -27158,6 +28568,26 @@
       "partOfSpeech" : "Godan verb (transitive)",
       "pitch" : {
         "downstep" : 1,
+        "graph" : {
+          "morae" : [
+            "ト",
+            "ル"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "H",
+              "x" : 50
+            },
+            {
+              "level" : "L",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "HL",
         "moraCount" : 2,
         "particle" : "L",
@@ -28571,12 +30001,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#230"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.07%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "230",
@@ -28612,6 +30078,31 @@
       "partOfSpeech" : "Ichidan verb (transitive)",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "カ",
+            "ケ",
+            "ル"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 330
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 250
+            }
+          ]
+        },
         "levels" : "LHH",
         "moraCount" : 3,
         "particle" : "H",
@@ -29794,12 +31285,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N3"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N3",
           "tier" : "common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#118"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.03%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "118",
@@ -29845,6 +31372,41 @@
       "partOfSpeech" : "Interjection",
       "pitch" : {
         "downstep" : 2,
+        "graph" : {
+          "morae" : [
+            "ア",
+            "リ",
+            "ガ",
+            "ト",
+            "ウ"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 530
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "L",
+              "x" : 250
+            },
+            {
+              "level" : "L",
+              "x" : 350
+            },
+            {
+              "level" : "L",
+              "x" : 450
+            }
+          ]
+        },
         "levels" : "LHLLL",
         "moraCount" : 5,
         "particle" : "L",
@@ -30543,12 +32105,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#287,946"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 81.93%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "287,946",
@@ -30582,6 +32180,36 @@
       "partOfSpeech" : "Noun",
       "pitch" : {
         "downstep" : 3,
+        "graph" : {
+          "morae" : [
+            "コ",
+            "ー",
+            "ヒ",
+            "ー"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 430
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 250
+            },
+            {
+              "level" : "L",
+              "x" : 350
+            }
+          ]
+        },
         "levels" : "LHHL",
         "moraCount" : 4,
         "particle" : "L",
@@ -31502,12 +33130,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#190,921"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 54.32%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "190,921",
@@ -31529,6 +33193,31 @@
       "partOfSpeech" : "Noun",
       "pitch" : {
         "downstep" : 1,
+        "graph" : {
+          "morae" : [
+            "テ",
+            "レ",
+            "ビ"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 330
+          },
+          "points" : [
+            {
+              "level" : "H",
+              "x" : 50
+            },
+            {
+              "level" : "L",
+              "x" : 150
+            },
+            {
+              "level" : "L",
+              "x" : 250
+            }
+          ]
+        },
         "levels" : "HLL",
         "moraCount" : 3,
         "particle" : "L",
@@ -32251,12 +33940,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#47"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.01%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "47",
@@ -32278,6 +34003,31 @@
       "partOfSpeech" : "Adverb",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "チョ",
+            "ッ",
+            "ト"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 380
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 75
+            },
+            {
+              "level" : "H",
+              "x" : 200
+            },
+            {
+              "level" : "H",
+              "x" : 300
+            }
+          ]
+        },
         "levels" : "LHH",
         "moraCount" : 3,
         "particle" : "H",
@@ -33088,12 +34838,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#273"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.08%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "273",
@@ -33115,6 +34901,31 @@
       "partOfSpeech" : "Adverb",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "ト",
+            "テ",
+            "モ"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 330
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 250
+            }
+          ]
+        },
         "levels" : "LHH",
         "moraCount" : 3,
         "particle" : "H",
@@ -33846,12 +35657,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N1"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N1",
           "tier" : "moderately common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#42"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.01%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "42",
@@ -33873,6 +35720,26 @@
       "partOfSpeech" : "Pronoun",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "ソ",
+            "レ"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "LH",
         "moraCount" : 2,
         "particle" : "H",
@@ -33970,12 +35837,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#15,752"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 4.48%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "15,752",
@@ -33997,6 +35900,26 @@
       "partOfSpeech" : "Interjection",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "ソ",
+            "レ"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "LH",
         "moraCount" : 2,
         "particle" : "H",
@@ -34654,12 +36577,42 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N5"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N5",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "No rank"
@@ -35673,11 +37626,45 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "explanation" : "JLPT Levels does not list this entry. JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.",
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "Not listed"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#1,017"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.29%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "1,017",
@@ -35687,6 +37674,10 @@
       "furigana" : [
         {
           "base" : "人々",
+          "kanjiReadings" : [
+            "ひと",
+            "びと"
+          ],
           "reading" : "ひとびと"
         }
       ],
@@ -35705,6 +37696,36 @@
       "partOfSpeech" : "Noun",
       "pitch" : {
         "downstep" : 2,
+        "graph" : {
+          "morae" : [
+            "ヒ",
+            "ト",
+            "ビ",
+            "ト"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 430
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "L",
+              "x" : 250
+            },
+            {
+              "level" : "L",
+              "x" : 350
+            }
+          ]
+        },
         "levels" : "LHLL",
         "moraCount" : 4,
         "particle" : "L",
@@ -36187,11 +38208,39 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "explanation" : "JLPT Levels does not list this entry. JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.",
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "Not listed"
         },
         {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "No rank"
@@ -36200,6 +38249,12 @@
       "furigana" : [
         {
           "base" : "記者会見",
+          "kanjiReadings" : [
+            "き",
+            "しゃ",
+            "かい",
+            "けん"
+          ],
           "reading" : "きしゃかいけん"
         }
       ],
@@ -36250,6 +38305,46 @@
       "partOfSpeech" : "Noun · する verb (intransitive)",
       "pitch" : {
         "downstep" : 3,
+        "graph" : {
+          "morae" : [
+            "キ",
+            "シャ",
+            "カ",
+            "イ",
+            "ケ",
+            "ン"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 680
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 175
+            },
+            {
+              "level" : "H",
+              "x" : 300
+            },
+            {
+              "level" : "L",
+              "x" : 400
+            },
+            {
+              "level" : "L",
+              "x" : 500
+            },
+            {
+              "level" : "L",
+              "x" : 600
+            }
+          ]
+        },
         "levels" : "LHHLLL",
         "moraCount" : 6,
         "particle" : "L",
@@ -36310,12 +38405,42 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N4"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N4",
           "tier" : "very common"
         },
         {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "No rank"
@@ -36343,6 +38468,26 @@
       "partOfSpeech" : "Noun",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "ツ",
+            "マ"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "LH",
         "moraCount" : 2,
         "particle" : "H",
@@ -36462,12 +38607,42 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N3"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N3",
           "tier" : "common"
         },
         {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "No rank"
@@ -36496,6 +38671,26 @@
       "partOfSpeech" : "Noun",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "モ",
+            "ト"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            }
+          ]
+        },
         "levels" : "LH",
         "moraCount" : 2,
         "particle" : "H",
@@ -36665,11 +38860,45 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "explanation" : "JLPT Levels does not list this entry. JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.",
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "Not listed"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#12,842"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 3.65%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "12,842",
@@ -36705,6 +38934,36 @@
       "partOfSpeech" : "Noun",
       "pitch" : {
         "downstep" : 1,
+        "graph" : {
+          "morae" : [
+            "コ",
+            "オ",
+            "ロ",
+            "ギ"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 430
+          },
+          "points" : [
+            {
+              "level" : "H",
+              "x" : 50
+            },
+            {
+              "level" : "L",
+              "x" : 150
+            },
+            {
+              "level" : "L",
+              "x" : 250
+            },
+            {
+              "level" : "L",
+              "x" : 350
+            }
+          ]
+        },
         "levels" : "HLLL",
         "moraCount" : 4,
         "particle" : "L",
@@ -37764,12 +40023,48 @@
       },
       "frequency" : [
         {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N3"
+              }
+            ],
+            "section" : "Level"
+          },
           "name" : "JLPT",
           "pack" : "zenbu.jlpt.waller.levels",
           "text" : "N3",
           "tier" : "common"
         },
         {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#11,816"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 3.36%"
+              }
+            ],
+            "section" : "Frequency"
+          },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
           "text" : "11,816",
@@ -37806,6 +40101,36 @@
       "partOfSpeech" : "Na-adjective · Adverb · Noun (の)",
       "pitch" : {
         "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "ア",
+            "イ",
+            "ニ",
+            "ク"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 430
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 250
+            },
+            {
+              "level" : "H",
+              "x" : 350
+            }
+          ]
+        },
         "levels" : "LHHH",
         "moraCount" : 4,
         "particle" : "H",
@@ -37826,6 +40151,2952 @@
             "adverb",
             "noun",
             "noAdjective"
+          ]
+        }
+      ]
+    },
+    {
+      "alternativeForms" : [
+
+      ],
+      "alternativeKanji" : [
+
+      ],
+      "covers" : "弱肉強食: each kanji highlights its own reading (じゃく・にく・きょう・しょく)",
+      "entSeq" : [
+        "1324880"
+      ],
+      "examples" : {
+        "listed" : 2,
+        "reportedCount" : "2",
+        "shown" : [
+          {
+            "english" : "The weak are food for the strong.",
+            "id" : "esp1_5c98706497f272bb3176cf17951c476a",
+            "japanese" : "弱肉強食。",
+            "tokens" : [
+              {
+                "entry" : "b6932cd1e3ffa8d30451994712a1ad0b",
+                "pageWord" : true,
+                "surface" : "弱肉強食"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Only the strong will survive.",
+            "id" : "esp1_004efc1d32ab79b458fe3b8cad46539e",
+            "japanese" : "弱肉強食だろうね。",
+            "tokens" : [
+              {
+                "entry" : "b6932cd1e3ffa8d30451994712a1ad0b",
+                "pageWord" : true,
+                "surface" : "弱肉強食"
+              },
+              {
+                "entry" : "427bac3e7d4ecf9f9f6afa55b5d39ed1",
+                "surface" : "だろ"
+              },
+              {
+                "entry" : "a8967217d2cad158aa9f502a1a4df4ad",
+                "surface" : "う"
+              },
+              {
+                "entry" : "aaa66189b5c4e83950d90bd7e49f069b",
+                "surface" : "ね"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          }
+        ],
+        "truncated" : false
+      },
+      "frequency" : [
+        {
+          "details" : {
+            "explanation" : "JLPT Levels does not list this entry. JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.",
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "JLPT",
+          "pack" : "zenbu.jlpt.waller.levels",
+          "text" : "Not listed"
+        },
+        {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "YouTube",
+          "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+          "text" : "No rank"
+        }
+      ],
+      "furigana" : [
+        {
+          "base" : "弱肉強食",
+          "kanjiReadings" : [
+            "じゃく",
+            "にく",
+            "きょう",
+            "しょく"
+          ],
+          "reading" : "じゃくにくきょうしょく"
+        }
+      ],
+      "headword" : "弱肉強食",
+      "id" : "b6932cd1e3ffa8d30451994712a1ad0b",
+      "kanji" : [
+        {
+          "character" : "弱",
+          "meanings" : [
+            "weak",
+            "frail"
+          ]
+        },
+        {
+          "character" : "肉",
+          "meanings" : [
+            "meat"
+          ]
+        },
+        {
+          "character" : "強",
+          "meanings" : [
+            "strong"
+          ]
+        },
+        {
+          "character" : "食",
+          "meanings" : [
+            "eat",
+            "food"
+          ]
+        }
+      ],
+      "languageReferenceID" : "b6932cd1e3ffa8d30451994712a1ad0b",
+      "opensConjugations" : false,
+      "partOfSpeech" : "Noun",
+      "pitch" : {
+        "downstep" : 5,
+        "graph" : {
+          "morae" : [
+            "ジャ",
+            "ク",
+            "ニ",
+            "ク",
+            "キョ",
+            "ウ",
+            "ショ",
+            "ク"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 980
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 75
+            },
+            {
+              "level" : "H",
+              "x" : 200
+            },
+            {
+              "level" : "H",
+              "x" : 300
+            },
+            {
+              "level" : "H",
+              "x" : 400
+            },
+            {
+              "level" : "H",
+              "x" : 525
+            },
+            {
+              "level" : "L",
+              "x" : 650
+            },
+            {
+              "level" : "L",
+              "x" : 775
+            },
+            {
+              "level" : "L",
+              "x" : 900
+            }
+          ]
+        },
+        "levels" : "LHHHHLLL",
+        "moraCount" : 8,
+        "particle" : "L",
+        "source" : "UniDic 3.1.0 compound accent rule (C2)"
+      },
+      "reading" : "じゃくにくきょうしょく",
+      "relatedWords" : [
+
+      ],
+      "senses" : [
+        {
+          "meaning" : "the law of the jungle, the strong prey on the weak, the weak become the victim of the strong",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "noun"
+          ]
+        }
+      ]
+    },
+    {
+      "alternativeForms" : [
+
+      ],
+      "alternativeKanji" : [
+
+      ],
+      "covers" : "発表: half-voicing and a small っ split the reading (はっ・ぴょう)",
+      "entSeq" : [
+        "1477840"
+      ],
+      "examples" : {
+        "listed" : 100,
+        "reportedCount" : "more than 50",
+        "shown" : [
+          {
+            "english" : "The announcement was a surprise and very exciting.",
+            "id" : "esp1_e7ebe90a0a0a31c0ee353ba8d1c99d65",
+            "japanese" : "発表会はサプライズで沸き立った。",
+            "tokens" : [
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "c0508719fd45dff59d60e2ee59d2afdd",
+                "surface" : "会"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "7c4603a1a58973ead87d2296dd04cddb",
+                "surface" : "サプライズ"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "0c8db2068a629c4089a36e3d3c06f688",
+                "surface" : "沸き立った"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Please limit your presentation to 30 minutes.",
+            "id" : "esp1_2404f053ed1a3aded1d77405ba157284",
+            "japanese" : "発表は３０分以内に制限して下さい。",
+            "tokens" : [
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "３"
+              },
+              {
+                "surface" : "０"
+              },
+              {
+                "entry" : "611cff21c6baf4c231e226c8aa244357",
+                "surface" : "分"
+              },
+              {
+                "entry" : "0b16adf6b9bb43ac924d827037ba77ff",
+                "surface" : "以内"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "b2ac58f09364e1da5afd8e5c4447c5a7",
+                "surface" : "制限"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "して下さい"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Please limit your presentation to 30 minutes.",
+            "id" : "esp1_e21dd32f7f810e06d596ae10e129c803",
+            "japanese" : "発表の時間は三十分でお願いします。",
+            "tokens" : [
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "05bdb8e2a85ec93ecc4ce862072329b5",
+                "surface" : "時間"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "candidates" : [
+                  "e57ff57281ef816b1673f2361388adf0",
+                  "985aab7a0d6408cd53578724e54cf611"
+                ],
+                "surface" : "三"
+              },
+              {
+                "entry" : "b20d047d143f1b42aaf9694bae2a06c7",
+                "surface" : "十"
+              },
+              {
+                "entry" : "611cff21c6baf4c231e226c8aa244357",
+                "surface" : "分"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "89fb6dad30b623021d0992360636a50a",
+                "surface" : "お願い"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "します"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Please limit your presentation to 30 minutes.",
+            "id" : "esp1_b222732bd1772df5c6d1afdc96d32c8c",
+            "japanese" : "発表の時間は３０分に収めてください。",
+            "tokens" : [
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "05bdb8e2a85ec93ecc4ce862072329b5",
+                "surface" : "時間"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "３"
+              },
+              {
+                "surface" : "０"
+              },
+              {
+                "entry" : "611cff21c6baf4c231e226c8aa244357",
+                "surface" : "分"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "18c5a15a97d273c2833eb4fe8e513a43",
+                "surface" : "収めてください"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "My voice shook from nerves while I gave the presentation.",
+            "id" : "esp1_6a3ba7a41e3ebe403d2bce2e042f5af9",
+            "japanese" : "発表のとき、緊張で声が震えてしまった。",
+            "tokens" : [
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "candidates" : [
+                  "54631efa14b97ca18161409867b9dc73",
+                  "4d7f94070e44531e802b082a76372c72",
+                  "0cee67705d5e1b0a9fd0650ebdb3e72b",
+                  "5519062ea4ef171c0b1068ed5ed70e9d",
+                  "648c696a3d92afe8b29cf7ee1023bc08"
+                ],
+                "surface" : "とき"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "0ccf0bbdac8b88d8a5c259818f503d05",
+                "surface" : "緊張"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "0858990324d81965a6ca7a0545c9ffce",
+                "surface" : "声"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "4008648640d130d5445c896f6232bce7",
+                "surface" : "震えてしまった"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Rumors about unannounced gaming consoles are common.",
+            "id" : "esp1_161dc30ecd4691558843080714d0e57d",
+            "japanese" : "発表されていないゲーム機のうわさが立つのはよくあることです。",
+            "tokens" : [
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "されていない"
+              },
+              {
+                "entry" : "d4b8f51c451c9328bcadbab9b504c1d2",
+                "surface" : "ゲーム"
+              },
+              {
+                "entry" : "e85c36e30a75f785a02f168bc5e8546c",
+                "surface" : "機"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "f2fce3e0caa139341921797e70a8c986",
+                "surface" : "うわさ"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "fefbaf2c551410f8d2c0180c44a5e5c4",
+                "surface" : "立つ"
+              },
+              {
+                "candidates" : [
+                  "3040e40d02d889316af08f4dd14a15f9",
+                  "132012aaec93e930fd3b41c16f423ca2",
+                  "07d411d1300b50be3e31ed93ab8ed445"
+                ],
+                "surface" : "の"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "a6c28430dd5d3942b6cc1b8532a0315f",
+                "surface" : "よく"
+              },
+              {
+                "entry" : "45eefee1383a89cb3c6287032622e6fa",
+                "surface" : "ある"
+              },
+              {
+                "candidates" : [
+                  "5c0efc251cbe41f69b8db2fe9a922225",
+                  "64fe9ec2d25c902f29eb0ad2b6d29245",
+                  "7dbe422ef145cd408b39631c76bc759e",
+                  "20b044e781944803031ae6a90d3126b3",
+                  "93b995b604b6a56822930e33a719e591"
+                ],
+                "surface" : "こと"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The announcement brought him to his feet.",
+            "id" : "esp1_4feec960af5852c8c8012dcc9c3cc8b5",
+            "japanese" : "その発表を聞いて彼は飛び上がった。",
+            "tokens" : [
+              {
+                "entry" : "1cc9a84b606c82ec5a77ca0497e28107",
+                "surface" : "その"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "ac0944d2570e80751633fb2802e23c4c",
+                "surface" : "聞いて"
+              },
+              {
+                "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
+                "surface" : "彼"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "b656d3f10e8f8e7dedf4be51c7f1f459",
+                "surface" : "飛び上がった"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The announcement exaggerated the number of casualties.",
+            "id" : "esp1_40a38a4ac46727e27af0cf686794961b",
+            "japanese" : "その発表は死傷者の数を誇張していた。",
+            "tokens" : [
+              {
+                "entry" : "1cc9a84b606c82ec5a77ca0497e28107",
+                "surface" : "その"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "175d2857e275f5b258d8b36648e9d396",
+                "surface" : "死傷"
+              },
+              {
+                "entry" : "ac73a4323e31c2c7bd08e4c0180f32b2",
+                "surface" : "者"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "1cb57ee2755a26b03512d8b390a8d25e",
+                "surface" : "数"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "b9e7367cd6d3069b855ee07669a87201",
+                "surface" : "誇張"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "していた"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Instead of holding an announcement, we will send the prizes directly to the winners.",
+            "id" : "esp1_169de5852a7316d3c74a922521118eda",
+            "japanese" : "当選者の発表は、賞品の発送をもって代えさせていただきます。",
+            "tokens" : [
+              {
+                "entry" : "bae9d6d7394aa0ce3ff9bbbf24ac4006",
+                "surface" : "当選"
+              },
+              {
+                "entry" : "ac73a4323e31c2c7bd08e4c0180f32b2",
+                "surface" : "者"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "3dddb630b3b91c4cefeaee568af72df2",
+                "surface" : "賞品"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "31c201d892280f241ec6b0e5c2abefea",
+                "surface" : "発送"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "candidates" : [
+                  "8733544dc988feb1ec23f180ed1110c8",
+                  "e7239a5ae8b1f37fd80dc3087be98da9"
+                ],
+                "surface" : "もって"
+              },
+              {
+                "entry" : "4b280151503bb838cd7246d34beb3e56",
+                "surface" : "代えさせていただきます"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The plan announced Tuesday calls for $54 billion in tax cuts.",
+            "id" : "esp1_7c6b47cb5eea21948190871175c159d0",
+            "japanese" : "火曜日に発表されたこの方針は、５４０億ドルの減税を求めています。",
+            "tokens" : [
+              {
+                "entry" : "cc360323d42b96f4a1ebdacf5677ff7c",
+                "surface" : "火曜日"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "された"
+              },
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "f2d5156e342c957ee6c20a908b309120",
+                "surface" : "方針"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "surface" : "５"
+              },
+              {
+                "surface" : "４"
+              },
+              {
+                "surface" : "０"
+              },
+              {
+                "entry" : "cb81d202b1f16342b94a10b7447952c9",
+                "surface" : "億"
+              },
+              {
+                "entry" : "8da392ac83e213a0ca4bfa128b643510",
+                "surface" : "ドル"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "e6749163485ab6d161f90ac09d2397fc",
+                "surface" : "減税"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "bc7748b0d5c9006afb2bec7dd67a3016",
+                "surface" : "求めています"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The publication of the exam results over without incident, for the time being attention is naturally going to focus on the summer break, right?",
+            "id" : "esp1_b62d9fc7ee12b31c2654c3cf16312da6",
+            "japanese" : "試験結果発表もつつがなく終わって、当面の視点が自然と夏休みに集まってくるでしょ？",
+            "tokens" : [
+              {
+                "entry" : "e694092441d572782f564797cdd1bc0f",
+                "surface" : "試験"
+              },
+              {
+                "entry" : "3fe2761040b9694a35680ad1852c8692",
+                "surface" : "結果"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "30701592e9873c43b883e1d3510287f4",
+                "surface" : "も"
+              },
+              {
+                "entry" : "e7abd614aff4160d516cb5d16087251c",
+                "surface" : "つつがなく"
+              },
+              {
+                "entry" : "4d123bc63ebf22f9d6158356b9173750",
+                "surface" : "終わって"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "575b05b02895d4ddae1fcaef2e912a04",
+                "surface" : "当面"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "284010985032f8b4c4048fc79fae3242",
+                "surface" : "視点"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "091e002a6ce4b573f943ba930c7a4789",
+                "surface" : "自然"
+              },
+              {
+                "entry" : "d005d8641e912ee4b72714255428699d",
+                "surface" : "と"
+              },
+              {
+                "entry" : "cf50784499bb65be1a1d770ca87ce24a",
+                "surface" : "夏休み"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "2a38bfd5e512e03c6054597d9b4a37c5",
+                "surface" : "集まってくるでしょ"
+              },
+              {
+                "surface" : "？"
+              }
+            ]
+          },
+          {
+            "english" : "I think the time is right to introduce this product.",
+            "id" : "esp1_da8449c1eba0500d4073f9a3a6c3d4b4",
+            "japanese" : "この製品を発表するときが来た。",
+            "tokens" : [
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "abcd69f340f5da103d3c3efe92fcd6bd",
+                "surface" : "製品"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "する"
+              },
+              {
+                "candidates" : [
+                  "54631efa14b97ca18161409867b9dc73",
+                  "4d7f94070e44531e802b082a76372c72",
+                  "0cee67705d5e1b0a9fd0650ebdb3e72b",
+                  "5519062ea4ef171c0b1068ed5ed70e9d",
+                  "648c696a3d92afe8b29cf7ee1023bc08"
+                ],
+                "surface" : "とき"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "candidates" : [
+                  "16db9637a938ad5a41287787d44a7231",
+                  "66b7d9751add2319712f1b459418e4bf"
+                ],
+                "surface" : "来た"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "We should have paid attention to the announcement.",
+            "id" : "esp1_5157fa380a5baccd6cdc551f3a59cd06",
+            "japanese" : "私達はその発表に注意を払うべきだった。",
+            "tokens" : [
+              {
+                "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
+                "surface" : "私"
+              },
+              {
+                "entry" : "1e360486904e7699f744ea6fc23ebb14",
+                "surface" : "達"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "1cc9a84b606c82ec5a77ca0497e28107",
+                "surface" : "その"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "a8a5cf09fd0f33e97a0defeafbed4276",
+                "surface" : "注意"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "c5a3e01242a69c0ad8750e39f576cea3",
+                "surface" : "払うべきだった"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The information was given away to the newspaper prior to the announcement.",
+            "id" : "esp1_b2ce576a43cd3fbe99e58b36f2897a5a",
+            "japanese" : "その情報は発表するより先に新聞に漏れた。",
+            "tokens" : [
+              {
+                "entry" : "1cc9a84b606c82ec5a77ca0497e28107",
+                "surface" : "その"
+              },
+              {
+                "entry" : "ca9e9a5ed3c2d739f2a6aee4d1972b45",
+                "surface" : "情報"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "する"
+              },
+              {
+                "entry" : "1c29a23694a09ce68a18764faecd0adc",
+                "surface" : "より"
+              },
+              {
+                "entry" : "118bf52e46d534ec8008e7dbff9dcbe2",
+                "surface" : "先"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "1c6fac2f93907f024f1a685ae22b1b9b",
+                "surface" : "新聞"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "bbaa8fca05ac701570d6bd48c84b407f",
+                "surface" : "漏れた"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Publication of the article was timed to coincide with the professor's birthday.",
+            "id" : "esp1_03bf08b38aa4fc33872cd7c4d4b2bd3f",
+            "japanese" : "その記事の発表は教授の誕生日に一致するように行われた。",
+            "tokens" : [
+              {
+                "entry" : "1cc9a84b606c82ec5a77ca0497e28107",
+                "surface" : "その"
+              },
+              {
+                "entry" : "8e39173546c03219d2e585895c6b2bf1",
+                "surface" : "記事"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "46eb451d7f2159b53f0f8bdb5057f631",
+                "surface" : "教授"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "5f4449f33268579a8dfb247142e2d450",
+                "surface" : "誕生"
+              },
+              {
+                "candidates" : [
+                  "ad7071d79b9e8e3719514d8121d3699f",
+                  "18399f7f189dcda4fd8b38c5ab602488",
+                  "98b6ceb0c72b73c0db41303b72b8a735"
+                ],
+                "surface" : "日"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "30f951ecd4fb5ea72f67896c88cf7d68",
+                "surface" : "一致"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "する"
+              },
+              {
+                "candidates" : [
+                  "bf46d6a5495acc3bcb4d32f95d7caef0",
+                  "b8ee6c2c6366d9c748a2472377444e93",
+                  "4c20c294ca73e3e1a6716f8bf50d5e83",
+                  "b33284fbcd35ad91bcaa8b253f08a80e",
+                  "50c98c58446fe231fd100da02f9495c8",
+                  "d75a638350f275893a252e8aa5da4f2f",
+                  "45e1dd5f93593242694c93cc202d7d93",
+                  "745158029a09a9fb16618f290b075a42",
+                  "c118750ea524692a6b9a008886880343"
+                ],
+                "surface" : "よう"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "8671f59d3dca0719b99a35172182d622",
+                "surface" : "行われた"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "In reports in America, guerrilla resistance by the Iraq military is called terrorism.",
+            "id" : "esp1_a92d442981a34d67d78f48504cbaf3b7",
+            "japanese" : "アメリカは発表するたびに、イラク軍のゲリラ抵抗を「テロ」と呼んでおります。",
+            "tokens" : [
+              {
+                "entry" : "9922e68730b40949f8b88d72054bb15a",
+                "surface" : "アメリカ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "する"
+              },
+              {
+                "candidates" : [
+                  "7521de92af4f3f280417f820b20ae29e",
+                  "48c06e169cd8aed96e6b46a216bf82af",
+                  "42daf1f36b1c8f6bae1552880386e401"
+                ],
+                "surface" : "たび"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "94e0d915737db52c17e26361fe3f8d23",
+                "surface" : "イラク"
+              },
+              {
+                "entry" : "36c7b75da32e16ee12b2d9275a677a96",
+                "surface" : "軍"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "e4fb5c1c3d841b37050a2cc94864b582",
+                "surface" : "ゲリラ"
+              },
+              {
+                "entry" : "872a68cc86a50d646fcacb170f69e26c",
+                "surface" : "抵抗"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "surface" : "「"
+              },
+              {
+                "entry" : "18f799829d780e6669d6d0ec4a0e67d4",
+                "surface" : "テロ"
+              },
+              {
+                "surface" : "」"
+              },
+              {
+                "entry" : "d005d8641e912ee4b72714255428699d",
+                "surface" : "と"
+              },
+              {
+                "entry" : "e6e78fbd2e612f150d8de055b63ce757",
+                "surface" : "呼んでおります"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "They have announced their engagement.",
+            "id" : "esp1_6ded1cf11e7ce502ac12c0f914cb0bb9",
+            "japanese" : "２人は婚約を発表した。",
+            "tokens" : [
+              {
+                "surface" : "２"
+              },
+              {
+                "entry" : "2e2360526d3d5fa30239db0f6498fb5e",
+                "surface" : "人"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "845fbd7e77c30ab8279b748605b6e87e",
+                "surface" : "婚約"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "した"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Unexpected results were announced.",
+            "id" : "esp1_d887c591a880450e935088d949b761e6",
+            "japanese" : "意外な結果が発表された。",
+            "tokens" : [
+              {
+                "entry" : "97b5f5b2642ade95a42b3d8dfb83080b",
+                "surface" : "意外な"
+              },
+              {
+                "entry" : "3fe2761040b9694a35680ad1852c8692",
+                "surface" : "結果"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "された"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I made them look good at the big presentation.",
+            "id" : "esp1_3bee7735d661836e9d2178831dfdfeda",
+            "japanese" : "注目を集めた発表会で彼らに花を持たせた。",
+            "tokens" : [
+              {
+                "entry" : "da3cd581e9272966840015ba00199ba2",
+                "surface" : "注目"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "c7da86c42393725b6d08068cf9886708",
+                "surface" : "集めた"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "c0508719fd45dff59d60e2ee59d2afdd",
+                "surface" : "会"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "f6a28233eb213e303425e6acbf32cbe0",
+                "surface" : "彼ら"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "9061127f381d4c2c1666bd910556c0e0",
+                "surface" : "花"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "8733544dc988feb1ec23f180ed1110c8",
+                "surface" : "持たせた"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I'll let you know the results of the examination after they are announced.",
+            "id" : "esp1_fa09ec77ed7215d494afb06679143bf4",
+            "japanese" : "試験の結果が発表されたら知らせてあげよう。",
+            "tokens" : [
+              {
+                "entry" : "e694092441d572782f564797cdd1bc0f",
+                "surface" : "試験"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "3fe2761040b9694a35680ad1852c8692",
+                "surface" : "結果"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "されたら"
+              },
+              {
+                "entry" : "560572d1e534e69e71cdc40c3e0981d3",
+                "surface" : "知らせてあげよう"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Stock prices soared in active trading as corporations announced good financial results.",
+            "id" : "esp1_fa539b6067cbabf85b091d3c3bdc491a",
+            "japanese" : "企業の好業績発表を受けて株価は活発な取引の中で値を上げた。",
+            "tokens" : [
+              {
+                "entry" : "398e92cc7fdd319f9104ee7a23857f00",
+                "surface" : "企業"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "d945051ab33028f5af2628ccacdeeeeb",
+                "surface" : "好"
+              },
+              {
+                "entry" : "ad301acf0321e197f34abf2aeee0c459",
+                "surface" : "業績"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "e83f4fbf1710f3066504a002c6d18fcc",
+                "surface" : "受けて"
+              },
+              {
+                "entry" : "098690f0fa6fde2bdf6309bd0e4a843b",
+                "surface" : "株価"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "8437c3eeca2597e8dc19375c3afd1fe4",
+                "surface" : "活発な"
+              },
+              {
+                "entry" : "61070db0d9c199d2e9417fef992c777c",
+                "surface" : "取引"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "d9d10ab3bdcb0d06f7088cc50bfa1c69",
+                "surface" : "中"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "5024577bf3cb79827e168318f7e4d5d4",
+                "surface" : "値"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "10c0fd2dd945cbd6907559788a73dbce",
+                "surface" : "上げた"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "He looked blank when he heard the announcement of his promotion.",
+            "id" : "esp1_8bea4d00ec614dcd39756ac3bf9cac29",
+            "japanese" : "突然の昇進の発表で、彼、鳩が豆鉄砲を食らったような顔をしていたよ。",
+            "tokens" : [
+              {
+                "entry" : "2966cec3a3d9b4c1b687bafa9d9aeff2",
+                "surface" : "突然"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "935e1f94a7056653269221fbaa1f4215",
+                "surface" : "昇進"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
+                "surface" : "彼"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "fb3e35d0ee46d68842c7a4fdb50d8598",
+                "surface" : "鳩"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "4d6ff0b4a0522f512b95a2f19bbad261",
+                "surface" : "豆鉄砲"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "f9a691f77cf128c4a71c1aa197408a49",
+                "surface" : "食らった"
+              },
+              {
+                "candidates" : [
+                  "bf46d6a5495acc3bcb4d32f95d7caef0",
+                  "b8ee6c2c6366d9c748a2472377444e93",
+                  "4c20c294ca73e3e1a6716f8bf50d5e83",
+                  "b33284fbcd35ad91bcaa8b253f08a80e",
+                  "50c98c58446fe231fd100da02f9495c8",
+                  "d75a638350f275893a252e8aa5da4f2f",
+                  "45e1dd5f93593242694c93cc202d7d93",
+                  "745158029a09a9fb16618f290b075a42",
+                  "c118750ea524692a6b9a008886880343"
+                ],
+                "surface" : "よう"
+              },
+              {
+                "candidates" : [
+                  "6ccb3397987eac083e3d6f48bd2466b9",
+                  "7945a1c66702d2c57b8c0adb7299da70",
+                  "8c3e93df5a904011c581dc8c3fd65e8c",
+                  "ac6acb5880c20a4c250060b31f3690d1",
+                  "6d57dd245b88858a3ae84bb5c1071721"
+                ],
+                "surface" : "な"
+              },
+              {
+                "entry" : "ed2b679d22c67b0c026faceffb4fb011",
+                "surface" : "顔"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "していた"
+              },
+              {
+                "entry" : "1ed4ef65dcfeec365691493eaedfc44b",
+                "surface" : "よ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "News of his death wasn't published for several weeks.",
+            "id" : "esp1_b020587128ac355a1c26e94d9ca5366f",
+            "japanese" : "彼の死は数週間発表されなかった。",
+            "tokens" : [
+              {
+                "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
+                "surface" : "彼"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "642baab1ac4550db1762efa3831eb8b1",
+                "surface" : "死"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "0de9e74a0d1c8b8b4e5945b17778d86a",
+                "surface" : "数"
+              },
+              {
+                "entry" : "3ccb7c144b401be82c6fad62c922ad2a",
+                "surface" : "週間"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "されなかった"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Even though the announcement of his new work has been long awaited, I'm not the least excited by it.",
+            "id" : "esp1_b2c5c0b9195fc57cf895de503ff377d3",
+            "japanese" : "せっかくの新作発表会なのに、まったくワクワクしない。",
+            "tokens" : [
+              {
+                "entry" : "8c40034e67ff4ae7068a4b8250d338e1",
+                "surface" : "せっかく"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "4641994d49cc6d4eb04b13ae8a34f88f",
+                "surface" : "新作"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "c0508719fd45dff59d60e2ee59d2afdd",
+                "surface" : "会"
+              },
+              {
+                "candidates" : [
+                  "6ccb3397987eac083e3d6f48bd2466b9",
+                  "7945a1c66702d2c57b8c0adb7299da70",
+                  "8c3e93df5a904011c581dc8c3fd65e8c",
+                  "ac6acb5880c20a4c250060b31f3690d1",
+                  "6d57dd245b88858a3ae84bb5c1071721"
+                ],
+                "surface" : "な"
+              },
+              {
+                "entry" : "323b0fbddedf5f1afce96d889e376175",
+                "surface" : "のに"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "bfccc49fb9f5bab3bdd8808c0a77bfa0",
+                "surface" : "まったく"
+              },
+              {
+                "entry" : "301ec8c50aa8617c0b9562d2fe6580d9",
+                "surface" : "ワクワク"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "しない"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "You should have Mr Brown correct your speech before the presentation.",
+            "id" : "esp1_ab2d690ac53740c2a17944e0b08ecc52",
+            "japanese" : "ブラウン先生に発表の前にスピーチを直してもらうべきです。",
+            "tokens" : [
+              {
+                "entry" : "3450498426c5f9207ddf08e7ce06154b",
+                "surface" : "ブラウン"
+              },
+              {
+                "entry" : "72309de2d19aa24aa677dfba2428ff13",
+                "surface" : "先生"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "c9318d5bdde0dc3473696e86810e81e5",
+                "pageWord" : true,
+                "surface" : "発表"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "e407cd7d59cb9766a7640cd0a5a29bfe",
+                "surface" : "前"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "439a66872f7f6d4d5644dfcbb4efdd47",
+                "surface" : "スピーチ"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "edaf61dcfe2bd520d93f01a7634d44ac",
+                "surface" : "直してもらうべきです"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          }
+        ],
+        "truncated" : true
+      },
+      "frequency" : [
+        {
+          "details" : {
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+              {
+                "label" : "JLPT Level",
+                "value" : "N3"
+              }
+            ],
+            "section" : "Level"
+          },
+          "name" : "JLPT",
+          "pack" : "zenbu.jlpt.waller.levels",
+          "text" : "N3",
+          "tier" : "common"
+        },
+        {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#688"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.20%"
+              }
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "YouTube",
+          "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+          "text" : "688",
+          "tier" : "very common"
+        }
+      ],
+      "furigana" : [
+        {
+          "base" : "発表",
+          "kanjiReadings" : [
+            "はっ",
+            "ぴょう"
+          ],
+          "reading" : "はっぴょう"
+        }
+      ],
+      "headword" : "発表",
+      "id" : "c9318d5bdde0dc3473696e86810e81e5",
+      "kanji" : [
+        {
+          "character" : "発",
+          "meanings" : [
+            "departure",
+            "discharge",
+            "publish",
+            "emit",
+            "start from",
+            "disclose",
+            "counter for gunshots"
+          ]
+        },
+        {
+          "character" : "表",
+          "meanings" : [
+            "surface",
+            "table",
+            "chart",
+            "diagram"
+          ]
+        }
+      ],
+      "languageReferenceID" : "c9318d5bdde0dc3473696e86810e81e5",
+      "opensConjugations" : false,
+      "partOfSpeech" : "Noun · する verb (transitive)",
+      "pitch" : {
+        "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "ハ",
+            "ッ",
+            "ピョ",
+            "ウ"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 480
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 275
+            },
+            {
+              "level" : "H",
+              "x" : 400
+            }
+          ]
+        },
+        "levels" : "LHHH",
+        "moraCount" : 4,
+        "particle" : "H",
+        "source" : "UniDic for Contemporary Written Japanese 3.1.0"
+      },
+      "reading" : "はっぴょう",
+      "relatedWords" : [
+
+      ],
+      "senses" : [
+        {
+          "meaning" : "announcement, publication, presenting, statement, communique, making known, breaking (news story), expressing (one's opinion), releasing, unveiling",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "noun",
+            "takesSuru",
+            "transitive"
+          ]
+        }
+      ]
+    },
+    {
+      "alternativeForms" : [
+        {
+          "kind" : "written",
+          "labels" : [
+            "Rare"
+          ],
+          "value" : "東亰"
+        },
+        {
+          "kind" : "reading",
+          "labels" : [
+            "Obsolete"
+          ],
+          "value" : "とうけい"
+        }
+      ],
+      "alternativeKanji" : [
+        {
+          "character" : "亰",
+          "meanings" : [
+            "capital city"
+          ]
+        }
+      ],
+      "covers" : "東京: a combined mora (キョ) is drawn wider in the pitch graph",
+      "entSeq" : [
+        "1447690"
+      ],
+      "examples" : {
+        "listed" : 100,
+        "reportedCount" : "more than 50",
+        "shown" : [
+          {
+            "english" : "I'm at Tokyo Station now.",
+            "id" : "esp1_5cd27b71d96240436414ec18d08afd87",
+            "japanese" : "東京駅なう。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "d49b2f3c5cbf3002ebf317043cbebdad",
+                "surface" : "駅"
+              },
+              {
+                "entry" : "d82666d286c499bbc3fe5b4f8a4f966b",
+                "surface" : "なう"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I live in Tokyo.",
+            "id" : "esp1_19b0d87533454c0cd253708fbad7411d",
+            "japanese" : "東京に住んでいる。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "23b385beb0ff3bb5a472c989c80b3edc",
+                "surface" : "住んでいる"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Tokyo is a big city.",
+            "id" : "esp1_2dc38de49c08df38ea0fee0bb1e78517",
+            "japanese" : "東京は大都市です。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "d7a57ccbce2d82aab13632a307f49d6d",
+                "surface" : "大都市"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Tokyo is a very big city.",
+            "id" : "esp1_f99acaa57fafc262ef07d192a7505dc3",
+            "japanese" : "東京は巨大都市だ。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "e0f3e2a0ac78bd524df0102433c167c9",
+                "surface" : "巨大"
+              },
+              {
+                "entry" : "50621d96842e92d5d7ae0ff9ab1aaa40",
+                "surface" : "都市"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "It's smaller than in Tokyo.",
+            "id" : "esp1_51d8d9a8508765f26d8898f737bcf967",
+            "japanese" : "東京より狭いですね。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "1c29a23694a09ce68a18764faecd0adc",
+                "surface" : "より"
+              },
+              {
+                "entry" : "35e6000fc7661423db08eab36ef01528",
+                "surface" : "狭いです"
+              },
+              {
+                "entry" : "aaa66189b5c4e83950d90bd7e49f069b",
+                "surface" : "ね"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "What time is it in Tokyo?",
+            "id" : "esp1_59fdea4529085054a2b72b6399d97dfa",
+            "japanese" : "東京は今何時ですか。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "8663228a2d9e6fbda5923f927d844d7c",
+                "surface" : "今"
+              },
+              {
+                "entry" : "9bfc3adbfaef4e83e82cbf9ecd93e795",
+                "surface" : "何"
+              },
+              {
+                "entry" : "5f28ee2a9c9644c4d908b0005ad5fb94",
+                "surface" : "時"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "She lives in Tokyo.",
+            "id" : "esp1_8149a41960086828c33c018c8b3fd455",
+            "japanese" : "東京にお住まいです。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "candidates" : [
+                  "aaf8bdc6758cb9d4d9a7a29a4fee98be",
+                  "0c0e780d265e3a560d3270332554e48c",
+                  "1cd97d33c18101c8b05531a73d66ee50",
+                  "e3fa23da368051f2b816683df256747e",
+                  "81e3d0acc22391b5b3e89453b3befa9b",
+                  "0ca032bd5b17d885f606f010505ff7e9",
+                  "6ee082c655af5e02af613465019a49e4"
+                ],
+                "surface" : "お"
+              },
+              {
+                "entry" : "796f0788b3c1283a08212f9b98d9b0fe",
+                "surface" : "住まい"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I live in Tokyo.",
+            "id" : "esp1_892ae79968099628c8fbe01f7cc11c16",
+            "japanese" : "東京に住んでいます。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "23b385beb0ff3bb5a472c989c80b3edc",
+                "surface" : "住んでいます"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Tokyo is the capital of Japan.",
+            "id" : "esp1_c7d854e621c95a2857b287e50878e71f",
+            "japanese" : "東京は日本の首都だ。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "6342bfc30de4f6cc49b6c2db81692c98",
+                "surface" : "日本"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "ae5ca4bef88d580368ade16414f709e1",
+                "surface" : "首都"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Tokyo Station is the third stop.",
+            "id" : "esp1_cbefc1322c08b913f88c29f22d6a96e0",
+            "japanese" : "東京駅は三つ目です。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "d49b2f3c5cbf3002ebf317043cbebdad",
+                "surface" : "駅"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "36bd30a2fea17569d8ddd8aca5c81ac4",
+                "surface" : "三つ"
+              },
+              {
+                "entry" : "70ac68cb314b451e454bae957074c6a1",
+                "surface" : "目"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I saw a kabuki play in Tokyo.",
+            "id" : "esp1_e7d9c0300c733765974f8758a6aa2027",
+            "japanese" : "東京で歌舞伎を見た。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "87de8093e64e4a5e0acafd1f055e4ab9",
+                "surface" : "歌舞伎"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
+                "surface" : "見た"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Tokyo is a huge city.",
+            "id" : "esp1_5ce1361eeb7c28902544ad965cd17aeb",
+            "japanese" : "東京は巨大な都市です。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "e0f3e2a0ac78bd524df0102433c167c9",
+                "surface" : "巨大な"
+              },
+              {
+                "entry" : "50621d96842e92d5d7ae0ff9ab1aaa40",
+                "surface" : "都市"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I met him in Tokyo by chance.",
+            "id" : "esp1_64efd0e9e81139a7991fa3acf1263ca8",
+            "japanese" : "東京で偶然彼に会った。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "62574b1053c87806adc2927c8a314b5b",
+                "surface" : "偶然"
+              },
+              {
+                "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
+                "surface" : "彼"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "5a238575a0b37a31bff65148e1092c72",
+                "surface" : "会った"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "In Tokyo, the cherry blossoms are in full bloom.",
+            "id" : "esp1_683be16da9b0a7430d3a88c075058249",
+            "japanese" : "東京では、桜が満開だ。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "267a28ae21d9b49d68b0b573eaa008f6",
+                "surface" : "桜"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "c597300eb4a3ddceea04533c95d0e907",
+                "surface" : "満開"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The train leaves Tokyo Station at 7.",
+            "id" : "esp1_92057b1a51691726524656493f2841e3",
+            "japanese" : "東京駅を７時に出ます。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "d49b2f3c5cbf3002ebf317043cbebdad",
+                "surface" : "駅"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "surface" : "７"
+              },
+              {
+                "entry" : "5f28ee2a9c9644c4d908b0005ad5fb94",
+                "surface" : "時"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "f22271434f621f1ba9af286dc296b53e",
+                "surface" : "出ます"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Tokyo is bigger than Yokohama.",
+            "id" : "esp1_99e4c78cafba16f56405d62d8a80d367",
+            "japanese" : "東京は横浜より大きい。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "ada84ca521702c5c33e74d70f6d1fc9f",
+                "surface" : "横浜"
+              },
+              {
+                "entry" : "1c29a23694a09ce68a18764faecd0adc",
+                "surface" : "より"
+              },
+              {
+                "entry" : "3b149744f4f2de0083f4f74e71b52323",
+                "surface" : "大きい"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Tokyo is the capital of Japan.",
+            "id" : "esp1_9dd1dc343658673aa3372fe91f1a6c6c",
+            "japanese" : "東京は日本の首都です。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "6342bfc30de4f6cc49b6c2db81692c98",
+                "surface" : "日本"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "ae5ca4bef88d580368ade16414f709e1",
+                "surface" : "首都"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Tokyo was really wonderful.",
+            "id" : "esp1_a06190a74acd927e1142c6d3f4e8c85b",
+            "japanese" : "東京はすばらしかった。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "6a8b074cd3be3e311679901e4ec8c924",
+                "surface" : "すばらしかった"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "It's smaller than in Tokyo.",
+            "id" : "esp1_a45b0c2bbb12dbb2cc1d8bc6b5644955",
+            "japanese" : "東京より小さいですね。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "1c29a23694a09ce68a18764faecd0adc",
+                "surface" : "より"
+              },
+              {
+                "entry" : "0eb3d750cc304efe56e34c841789e557",
+                "surface" : "小さいです"
+              },
+              {
+                "entry" : "aaa66189b5c4e83950d90bd7e49f069b",
+                "surface" : "ね"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "What are you going to Tokyo for?",
+            "id" : "esp1_b8af3f1286fb603ff5e4035c4e1011bb",
+            "japanese" : "東京へなにしに行くの？",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "cc5250789a3cec30278757d722eae89f",
+                "surface" : "へ"
+              },
+              {
+                "entry" : "9686ab4fa9cef25605421475ea3dc063",
+                "surface" : "なに"
+              },
+              {
+                "entry" : "02522f52db8dc1475d371146c5a0d313",
+                "surface" : "し"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "02b555a06b217e79bca2d442a5a03d86",
+                "surface" : "行く"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "surface" : "？"
+              }
+            ]
+          },
+          {
+            "english" : "Here we are at Tokyo Station.",
+            "id" : "esp1_c0f3d3b1038e032f75c7d1a12035b87b",
+            "japanese" : "東京駅に着きましたよ。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "d49b2f3c5cbf3002ebf317043cbebdad",
+                "surface" : "駅"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "candidates" : [
+                  "7ed78f06b3bd6d69dccbdf75ce3657c2",
+                  "82e61bc20bf9e90a1c767869a5248e64"
+                ],
+                "surface" : "着きました"
+              },
+              {
+                "entry" : "1ed4ef65dcfeec365691493eaedfc44b",
+                "surface" : "よ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The cost of living is very high in Tokyo.",
+            "id" : "esp1_c436a2e4a8c9e3e7ffe368946c19043f",
+            "japanese" : "東京での生活費は高い。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "c921e70a3bf993156c1c0e77ca3b3830",
+                "surface" : "生活"
+              },
+              {
+                "entry" : "4cf63b4f622df98a77d12865983a991f",
+                "surface" : "費"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "380d957d6f36dc2e2aacdb743198d104",
+                "surface" : "高い"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "It's really hot in Tokyo during the summer.",
+            "id" : "esp1_c57a09c35c0ad35d749194c381181212",
+            "japanese" : "東京の夏はマジで暑い。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "ab9da6b7da871d3354e99896d9e4211d",
+                "surface" : "夏"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "f652fafe7018ce7c64afbf128f5c1b52",
+                "surface" : "マジで"
+              },
+              {
+                "entry" : "2237cc84c3d1ab52ec3086dce23da3d3",
+                "surface" : "暑い"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Do you live in Tokyo?",
+            "id" : "esp1_d0f28d0353180b8d61435c3d761ed584",
+            "japanese" : "東京にお住まいですか。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "candidates" : [
+                  "aaf8bdc6758cb9d4d9a7a29a4fee98be",
+                  "0c0e780d265e3a560d3270332554e48c",
+                  "1cd97d33c18101c8b05531a73d66ee50",
+                  "e3fa23da368051f2b816683df256747e",
+                  "81e3d0acc22391b5b3e89453b3befa9b",
+                  "0ca032bd5b17d885f606f010505ff7e9",
+                  "6ee082c655af5e02af613465019a49e4"
+                ],
+                "surface" : "お"
+              },
+              {
+                "entry" : "796f0788b3c1283a08212f9b98d9b0fe",
+                "surface" : "住まい"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Tokyo is in Japan.",
+            "id" : "esp1_e108990aaaa9aaef2afdba6bc8430c34",
+            "japanese" : "東京は日本にあるんだ。",
+            "tokens" : [
+              {
+                "entry" : "700295bbd9adcb6d441d5b325ab67854",
+                "pageWord" : true,
+                "surface" : "東京"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "6342bfc30de4f6cc49b6c2db81692c98",
+                "surface" : "日本"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "45eefee1383a89cb3c6287032622e6fa",
+                "surface" : "ある"
+              },
+              {
+                "entry" : "8f56c1b057a85aee7857f7dbca279a7d",
+                "surface" : "ん"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          }
+        ],
+        "truncated" : true
+      },
+      "frequency" : [
+        {
+          "details" : {
+            "explanation" : "JLPT Levels does not list this entry. JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.",
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "JLPT",
+          "pack" : "zenbu.jlpt.waller.levels",
+          "text" : "Not listed"
+        },
+        {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "YouTube",
+          "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+          "text" : "No rank"
+        }
+      ],
+      "furigana" : [
+        {
+          "base" : "東京",
+          "kanjiReadings" : [
+            "とう",
+            "きょう"
+          ],
+          "reading" : "とうきょう"
+        }
+      ],
+      "headword" : "東京",
+      "id" : "700295bbd9adcb6d441d5b325ab67854",
+      "kanji" : [
+        {
+          "character" : "東",
+          "meanings" : [
+            "east"
+          ]
+        },
+        {
+          "character" : "京",
+          "meanings" : [
+            "capital",
+            "10**16"
+          ]
+        }
+      ],
+      "languageReferenceID" : "700295bbd9adcb6d441d5b325ab67854",
+      "opensConjugations" : false,
+      "partOfSpeech" : "Noun",
+      "pitch" : {
+        "downstep" : 0,
+        "graph" : {
+          "morae" : [
+            "ト",
+            "ウ",
+            "キョ",
+            "ウ"
+          ],
+          "particle" : {
+            "level" : "H",
+            "x" : 480
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 275
+            },
+            {
+              "level" : "H",
+              "x" : 400
+            }
+          ]
+        },
+        "levels" : "LHHH",
+        "moraCount" : 4,
+        "particle" : "H",
+        "source" : "UniDic for Contemporary Written Japanese 3.1.0"
+      },
+      "reading" : "とうきょう",
+      "relatedWords" : [
+
+      ],
+      "senses" : [
+        {
+          "meaning" : "Tokyo",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "noun"
           ]
         }
       ]

@@ -4,17 +4,14 @@ import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { ExampleList } from '@/components/dictionary/example-list'
-import { FrequencyDot, SpokenTier } from '@/components/dictionary/frequency'
+import { FrequencySection } from '@/components/dictionary/frequency-section'
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
 import { PageToolbar } from '@/components/dictionary/page-toolbar'
-import { PitchAccent } from '@/components/dictionary/pitch-accent'
-import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { Section } from '@/components/dictionary/section'
 import { SourceCredits } from '@/components/dictionary/source-credits'
-import { Card, CardContent } from '@/components/ui/card'
+import { WordHeader } from '@/components/dictionary/word-header'
 import { Item, ItemActions, ItemContent } from '@/components/ui/item'
-import { Separator } from '@/components/ui/separator'
 import { getWordPage, type WordPageData } from '@/lib/dictionary/data'
 import { exampleCountText, noExamplesMessage } from '@/lib/dictionary/detail/examples'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
@@ -120,28 +117,12 @@ export default async function WordPage({ params }: Props) {
       <DictionaryBreadcrumbs page={{ label: word.headword, path: word.path, lang: 'ja' }} />
       <PageToolbar title={word.headword} shareText={word.shareText} />
 
-      <Card>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <RubyText segments={word.ruby} className="text-5xl font-medium leading-tight" />
-            {word.pitch ? (
-              <PitchAccent
-                morae={word.pitch.morae}
-                downstep={word.pitch.downstep}
-                text={word.reading}
-              />
-            ) : (
-              <PronounceButton text={word.reading} />
-            )}
-          </div>
-          {word.partOfSpeech ? (
-            <>
-              <Separator />
-              <p className="text-sm">{word.partOfSpeech}</p>
-            </>
-          ) : null}
-        </CardContent>
-      </Card>
+      <WordHeader
+        ruby={word.ruby}
+        reading={word.reading}
+        pitch={word.pitch}
+        partOfSpeech={word.partOfSpeech}
+      />
 
       <Section title="Meaning">
         <ol className="flex flex-col gap-3">
@@ -160,18 +141,7 @@ export default async function WordPage({ params }: Props) {
       </Section>
 
       <Section title="Frequency">
-        <ul className="flex flex-col divide-y">
-          {word.frequencyRows.map(rank => (
-            <li key={rank.source} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
-              <FrequencyDot tier={rank.tier} />
-              {rank.source}
-              <span className="ml-auto text-muted-foreground tabular-nums">
-                {rank.value}
-                <SpokenTier result={rank} />
-              </span>
-            </li>
-          ))}
-        </ul>
+        <FrequencySection rows={word.frequencyRows} />
       </Section>
 
       {word.alternatives.length > 0 ? (

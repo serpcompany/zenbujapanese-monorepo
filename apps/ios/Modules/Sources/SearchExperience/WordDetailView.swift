@@ -518,15 +518,13 @@ private struct PitchAccentBadge: View {
   @ScaledMetric(relativeTo: .body) private var horizontalPadding = 10.0
 
   var body: some View {
-    let morae = reading.katakana.morae
-    // A combined mora such as キョ needs more room than a single kana.
-    let widths = morae.map { moraWidth * ($0.count > 1 ? 1.5 : 1) }
+    let layout = PitchContourLayout(reading: reading, pitch: pitch)
     Button(action: pronounce) {
       HStack(spacing: 6) {
         Image(systemName: "speaker.wave.2.fill")
           .font(.subheadline)
           .foregroundStyle(.tint)
-        contour(morae: morae, widths: widths)
+        contour(layout)
       }
       .padding(.horizontal, horizontalPadding)
       .padding(.vertical, 2)
@@ -539,48 +537,78 @@ private struct PitchAccentBadge: View {
     .accessibilityValue("Pitch accent, downstep \(pitch.downstep), \(pitch.moraCount) mora")
   }
 
-  private func contour(morae: [String], widths: [CGFloat]) -> some View {
+  private func contour(_ layout: PitchContourLayout) -> some View {
     HStack(spacing: 0) {
-      ForEach(morae.enumerated(), id: \.offset) { index, mora in
+      ForEach(layout.morae.enumerated(), id: \.offset) { index, mora in
         Text(mora)
           .font(.body)
           .lineLimit(1)
           .fixedSize()
-          .frame(width: widths[index])
+          .frame(width: moraWidth * layout.widths[index])
       }
       // Room for the particle dot after the last mora.
-      Color.clear.frame(width: moraWidth * 0.6, height: 1)
+      Color.clear.frame(width: moraWidth * PitchContourLayout.particleWidth, height: 1)
     }
     .padding(.vertical, contourSpace)
     .overlay {
-      PitchContour(
-        levels: pitch.levels(moraCount: morae.count), moraWidths: widths,
-        particleWidth: moraWidth * 0.6)
+      PitchContour(layout: layout, moraWidth: moraWidth)
         .foregroundStyle(ZenbuTheme.pitchDownstep)
     }
   }
 }
 
-/// Draws pitch levels across evenly spaced morae: high points at the top edge, low points at the
-/// bottom edge, and a hollow point for the following particle.
+/// Where PitchAccentBadge draws the contour, in mora widths: the reading's morae in katakana,
+/// each one mora wide, or 1.5 for a combined mora such as キョ, then room for the particle. Each
+/// mora's point is at its center, high or low; the particle's point is centered in its room.
+/// The word-detail conformance suite records it, so the website's graph is held to the app's
+/// (see also apps/web/src/lib/dictionary/detail/pitch.ts).
+struct PitchContourLayout: Equatable {
+  struct Point: Equatable {
+    /// From the left edge of the first mora, in mora widths.
+    let x: Double
+    let high: Bool
+  }
+
+  /// The room after the last mora for the particle's hollow dot, in mora widths.
+  static let particleWidth = 0.6
+
+  let morae: [String]
+  let widths: [Double]
+  let points: [Point]
+  let particle: Point
+
+  init(reading: String, pitch: PitchAccent) {
+    morae = reading.katakana.morae
+    // A combined mora such as キョ needs more room than a single kana.
+    widths = morae.map { $0.count > 1 ? 1.5 : 1 }
+    let levels = pitch.levels(moraCount: morae.count)
+    var x = 0.0
+    var points: [Point] = []
+    for (width, high) in zip(widths, levels.morae) {
+      points.append(Point(x: x + width / 2, high: high))
+      x += width
+    }
+    self.points = points
+    particle = Point(x: x + Self.particleWidth / 2, high: levels.particle)
+  }
+}
+
+/// Draws pitch levels across the morae: high points at the top edge, low points at the bottom
+/// edge, and a hollow point for the following particle.
 private struct PitchContour: View {
-  let levels: (morae: [Bool], particle: Bool)
-  let moraWidths: [CGFloat]
-  let particleWidth: CGFloat
+  let layout: PitchContourLayout
+  let moraWidth: CGFloat
   @ScaledMetric(relativeTo: .body) private var dotSize: CGFloat = 5
 
   var body: some View {
     Canvas { context, size in
       let inset = dotSize / 2 + 1
-      func y(_ high: Bool) -> CGFloat { high ? inset : size.height - inset }
-      var x: CGFloat = 0
-      var moraPoints: [CGPoint] = []
-      for (width, high) in zip(moraWidths, levels.morae) {
-        moraPoints.append(CGPoint(x: x + width / 2, y: y(high)))
-        x += width
+      func point(_ point: PitchContourLayout.Point) -> CGPoint {
+        CGPoint(x: point.x * moraWidth, y: point.high ? inset : size.height - inset)
       }
+      let moraPoints = layout.points.map(point)
       guard !moraPoints.isEmpty else { return }
-      let particlePoint = CGPoint(x: x + particleWidth / 2, y: y(levels.particle))
+      let particlePoint = point(layout.particle)
       var line = Path()
       line.addLines(moraPoints + [particlePoint])
       context.stroke(line, with: .foreground, lineWidth: 1.5)
@@ -758,32 +786,74 @@ private struct FrequencyDisclosureItem: Identifiable {
   }
 }
 
+/// What Frequency Details shows for one dictionary's result: the dictionary, then the entry's
+/// JLPT level, or its rank and percentile, or why there is neither. The word-detail conformance
+/// suite records it, so the website's sheet is held to the app's (see also
+/// apps/web/src/lib/dictionary/detail/frequency.ts).
+struct FrequencyDisclosurePresentation: Equatable {
+  struct Pack: Equatable {
+    let name: String
+    let domain: String
+    let description: String
+    let version: String
+    let source: String
+  }
+
+  struct Row: Equatable {
+    let label: String
+    let value: String
+  }
+
+  let pack: Pack?
+  /// The second section's title: Level for a JLPT level, otherwise Frequency.
+  let section: String
+  let rows: [Row]
+  /// Shown only when there are no rows.
+  let explanation: String?
+
+  init(result: FrequencyLookupResult) {
+    let presentation = FrequencyPresentationModel(result: result)
+    pack = presentation.pack.map {
+      Pack(
+        name: $0.displayName, domain: $0.domain, description: $0.domainDescription,
+        version: $0.version, source: $0.attribution)
+    }
+    section = presentation.levelText == nil ? "Frequency" : "Level"
+    if let levelText = presentation.levelText {
+      rows = [Row(label: "JLPT Level", value: levelText)]
+    } else if let rankText = presentation.rankText,
+      let percentileText = presentation.percentileText
+    {
+      rows = [Row(label: "Rank", value: rankText), Row(label: "Percentile", value: percentileText)]
+    } else {
+      rows = []
+    }
+    explanation = rows.isEmpty ? presentation.explanation : nil
+  }
+}
+
 private struct FrequencyDisclosureView: View {
   @Environment(\.dismiss) private var dismiss
   let item: FrequencyDisclosureItem
   let manage: () -> Void
 
   var body: some View {
-    let presentation = FrequencyPresentationModel(result: item.result)
+    let details = FrequencyDisclosurePresentation(result: item.result)
     NavigationStack {
       List {
-        if let pack = presentation.pack {
-          Section(pack.displayName) {
+        if let pack = details.pack {
+          Section(pack.name) {
             LabeledContent("Domain", value: pack.domain)
-            Text(pack.domainDescription)
+            Text(pack.description)
             LabeledContent("Version", value: pack.version)
-            LabeledContent("Source", value: pack.attribution)
+            LabeledContent("Source", value: pack.source)
           }
         }
-        Section(presentation.levelText == nil ? "Frequency" : "Level") {
-          if let levelText = presentation.levelText {
-            LabeledContent("JLPT Level", value: levelText)
-          } else if let rankText = presentation.rankText,
-            let percentileText = presentation.percentileText
-          {
-            LabeledContent("Rank", value: rankText)
-            LabeledContent("Percentile", value: percentileText)
-          } else if let explanation = presentation.explanation {
+        Section(details.section) {
+          ForEach(details.rows, id: \.label) { row in
+            LabeledContent(row.label, value: row.value)
+          }
+          if let explanation = details.explanation {
             Text(explanation)
           }
         }

@@ -3,6 +3,9 @@ import Foundation
 /// Splits a kanji run's reading into one reading per kanji, using each kanji's KANJIDIC on and
 /// kun readings with the sound changes compounds make: voicing (人々 ひとびと), half-voicing
 /// (発表 はっぴょう), and a small っ (学校 がっこう).
+///
+/// The website ports it (see also apps/web/src/lib/dictionary/detail/kanji-split.ts); change
+/// both together.
 enum KanjiReadingSplitter {
   /// One reading per character of `kanji`, or nil when no split or more than one split fits.
   static func split(_ kanji: String, reading: String) -> [String]? {

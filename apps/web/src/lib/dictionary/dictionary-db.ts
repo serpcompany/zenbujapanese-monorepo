@@ -113,7 +113,11 @@ export function dictionaryDatabase(db: D1Database) {
         // The kanji in the headword and written forms: each form split into characters (SQLite's
         // substr counts code points), looked up by primary key.
         orm
-          .select({ character: kanji.character, meanings: kanji.meanings })
+          .select({
+            character: kanji.character,
+            meanings: kanji.meanings,
+            readings: kanji.readings
+          })
           .from(kanji)
           .where(sql`${kanji.character} IN (
             WITH RECURSIVE forms(rest) AS (

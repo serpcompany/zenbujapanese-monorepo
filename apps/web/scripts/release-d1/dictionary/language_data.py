@@ -267,13 +267,20 @@ class LanguageData:
         }
 
     def word_kanji(self, entry):
-        """KANJIDIC2 meanings for the CJK unified ideographs in the headword and written forms,
-        for the fixtures' word rows (D1 looks them up in its kanji table)."""
+        """KANJIDIC2 meanings and readings for the CJK unified ideographs in the headword and
+        written forms, for the fixtures' word rows (D1 looks them up in its kanji table)."""
         characters = []
         for form in [entry["headword"]] + [form["value"] for form in entry["writtenForms"]]:
             characters += [c for c in form if is_cjk_unified(c) and c not in characters]
         return [
-            {"character": c, "meanings": self.kanji_by_character[c]["meanings"]}
+            {
+                "character": c,
+                "meanings": self.kanji_by_character[c]["meanings"],
+                "readings": [
+                    {"value": r["value"], "kind": r["kind"]}
+                    for r in self.kanji_by_character[c]["readings"]
+                ],
+            }
             for c in characters
             if c in self.kanji_by_character
         ]

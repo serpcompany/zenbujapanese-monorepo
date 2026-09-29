@@ -1,7 +1,13 @@
 // The word page, as the app's word detail shows it (WordDetailView.swift, DictionaryEntry.swift).
 
 import { type Example, wordExample } from './examples'
-import { type FrequencyResult, frequencyChips, frequencyResults } from './frequency'
+import {
+  type FrequencyResult,
+  type FrequencyRowDetail,
+  frequencyChips,
+  frequencyRowDetails
+} from './frequency'
+import { withKanjiReadings } from './kanji-split'
 import { partOfSpeechPhrase } from './part-of-speech'
 import { type PitchAccent, pitchAccent } from './pitch'
 import type {
@@ -55,7 +61,7 @@ export interface WordDetail extends WordSummary {
   pitch: PitchAccent | null
   senses: { number: number; meaning: string; notes: string[] }[]
   /** One row per default dictionary, including those without the word. */
-  frequencyRows: FrequencyResult[]
+  frequencyRows: FrequencyRowDetail[]
   alternatives: AlternativeForm[]
   kanji: WordKanji[]
   alternativeKanji: WordKanji[]
@@ -150,8 +156,14 @@ function wordKanji(characters: string[], glosses: readonly KanjiGlossRow[]): Wor
 export function wordDetail(rows: WordRows): WordDetail {
   const { entry } = rows
   const pitch = entry.pitch ?? entry.compoundPitch
+  const summary = wordSummary(entry, rows.frequency)
   return {
-    ...wordSummary(entry, rows.frequency),
+    ...summary,
+    // The headword's kanji highlight their own part of the furigana when tapped.
+    ruby: withKanjiReadings(
+      summary.ruby,
+      new Map(rows.kanji.map(({ character, readings }) => [character, readings]))
+    ),
     partOfSpeech: displayPartOfSpeech(entry),
     pitch: pitch ? pitchAccent(entry.reading, pitch) : null,
     senses: entry.senses.map((sense, index) => ({
@@ -159,7 +171,7 @@ export function wordDetail(rows: WordRows): WordDetail {
       meaning: sense.meaning,
       notes: sense.notes
     })),
-    frequencyRows: frequencyResults(rows.frequency),
+    frequencyRows: frequencyRowDetails(rows.frequency),
     alternatives: alternativeForms(entry).map(form => ({
       value: form.value,
       kind: form.kind,

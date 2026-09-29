@@ -53,9 +53,11 @@ check yet (#511)". The checks come in four kinds:
 - **Smoke checks** in `apps/web/scripts/smoke.sh`, run against staging and production after each
   deploy. Each is named here by the message it prints.
 
-The suites and the unit tests check the data a page is built from, not the rendered page. No test
-renders a page component yet, so layout, toolbar, and wording rows say "No automated check yet
-(#511)". #511 plans an app-recorded suite for the search results screen, rendered-page checks
-against the suites, rendered-HTML checks for the designs, and more smoke checks.
+The suites and most unit tests check the data a page is built from. Rendered-page tests
+(`*.test.tsx`) render a page's components to HTML with `renderToStaticMarkup`, as the server does,
+and read back what a reader sees; the search results and word pages' run the app-recorded suites
+through the components on every import. Interaction tests (`*.interaction.test.tsx`) click through
+a component in a DOM (happy-dom). Rows without either say "No automated check yet (#511)". #511
+plans more rendered-HTML checks for the designs, and more smoke checks.
 
 When a behavior changes, update its entry here and its check in the same PR.
