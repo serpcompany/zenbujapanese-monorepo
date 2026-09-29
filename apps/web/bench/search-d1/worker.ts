@@ -3,8 +3,8 @@
 // long each request spent in the Worker and in D1. Never deployed with the site.
 //
 // Options, so one run compares them: `cache=1` answers a query from `search_cache` when the
-// build precomputed it (precompute.mjs); `db=search` searches a second copy of the tables, so
-// searches and word pages don't share a database.
+// build precomputed it (scripts/search-d1/precompute.mts); `db=search` searches a second copy of
+// the tables, so searches and word pages don't share a database.
 import { normalizeQuery } from '../../src/lib/dictionary/search/query'
 import {
   DictionarySearch,
@@ -105,11 +105,7 @@ export default {
       rowsRead: measurement.rowsRead,
       regions: [...measurement.regions],
       colo: (request.cf as { colo?: string } | undefined)?.colo ?? null,
-      results: results?.items.length,
-      // precompute.mjs stores the whole result under the normalized query.
-      ...(url.searchParams.get('full') === '1'
-        ? { query: normalizeQuery(url.searchParams.get('q') ?? ''), full: results }
-        : {})
+      results: results?.items.length
     })
   }
 }

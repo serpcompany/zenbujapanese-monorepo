@@ -1,4 +1,10 @@
-import { DictionarySearch, d1SearchDatabase, type SearchCapabilities } from './search'
+import { normalizeQuery } from './query'
+import {
+  DictionarySearch,
+  d1SearchDatabase,
+  type SearchCapabilities,
+  type SearchResults
+} from './search'
 
 /**
  * The capabilities the website supplies: none. Sentence search needs the app's Japanese
@@ -7,6 +13,40 @@ import { DictionarySearch, d1SearchDatabase, type SearchCapabilities } from './s
  */
 export const websiteCapabilities: SearchCapabilities = {}
 
-export function websiteSearch(db: D1Database): DictionarySearch {
-  return new DictionarySearch(d1SearchDatabase(db), websiteCapabilities)
+export interface WebsiteSearch {
+  search(rawQuery: string): Promise<SearchResults>
+}
+
+// The precomputed queries, read once per isolate: 281 short strings.
+const cachedQueries = new WeakMap<D1Database, Promise<Set<string>>>()
+
+/**
+ * Search on the search database (SEARCH_DB). Broad queries, which read too many rows to run on
+ * D1 per request, answer from `search_cache`, precomputed by the import with this same core
+ * (scripts/search-d1/precompute.mts). Every other query runs the core.
+ */
+export function websiteSearch(db: D1Database): WebsiteSearch {
+  const core = new DictionarySearch(d1SearchDatabase(db), websiteCapabilities)
+  return {
+    async search(rawQuery) {
+      let keys = cachedQueries.get(db)
+      if (!keys) {
+        keys = db
+          .prepare('SELECT query FROM search_cache')
+          .all<{ query: string }>()
+          .then(({ results }) => new Set(results.map(row => row.query)))
+        keys.catch(() => cachedQueries.delete(db))
+        cachedQueries.set(db, keys)
+      }
+      const query = normalizeQuery(rawQuery)
+      if ((await keys).has(query)) {
+        const hit = await db
+          .prepare('SELECT results FROM search_cache WHERE query = ?')
+          .bind(query)
+          .first<{ results: string }>()
+        if (hit) return JSON.parse(hit.results)
+      }
+      return core.search(rawQuery)
+    }
+  }
 }

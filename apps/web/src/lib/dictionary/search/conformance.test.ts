@@ -1,12 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { getPlatformProxy } from 'wrangler'
-import { type DictionarySearch, searchFeatures } from './search'
-import { websiteCapabilities, websiteSearch } from './website'
+import { searchFeatures } from './search'
+import { type WebsiteSearch, websiteCapabilities, websiteSearch } from './website'
 
 // The ADR 0006 conformance suite: every client must return these Language Reference IDs in
-// this order. It runs against a local D1 built by scripts/load-search-d1.sh, so it only runs
-// when ZENBU_SEARCH_D1=1.
+// this order. It runs against a local search D1 built by scripts/search-d1/load-local.sh (at
+// .search-d1/, or ZENBU_SEARCH_D1_PATH), so it only runs when ZENBU_SEARCH_D1=1. It searches as
+// the website does, so precomputed broad queries answer from search_cache.
 const enabled = process.env.ZENBU_SEARCH_D1 === '1'
 
 interface ConformanceCase {
@@ -45,21 +46,26 @@ const unsupportedCases = suite.cases.filter(needsSentenceSearch)
 
 describe.runIf(enabled)('search conformance on D1', () => {
   let proxy: Awaited<ReturnType<typeof getPlatformProxy<CloudflareEnv>>>
-  let search: DictionarySearch
+  let search: WebsiteSearch
 
   beforeAll(async () => {
-    proxy = await getPlatformProxy<CloudflareEnv>({ persist: { path: '.search-d1/v3' } })
-    const loaded = await proxy.env.DB.prepare('SELECT artifact, sha256 FROM dictionary_import')
+    proxy = await getPlatformProxy<CloudflareEnv>({
+      persist: { path: `${process.env.ZENBU_SEARCH_D1_PATH ?? '.search-d1'}/v3` }
+    })
+    const db = proxy.env.SEARCH_DB
+    if (!db) throw new Error('wrangler.jsonc has no local SEARCH_DB binding')
+    const loaded = await db
+      .prepare('SELECT artifact, sha256 FROM dictionary_import')
       .first<{ artifact: string; sha256: string }>()
       .catch(() => null)
     if (loaded?.sha256 !== suite.artifact.sha256) {
       throw new Error(
         `.search-d1 holds ${loaded ? `${loaded.artifact} ${loaded.sha256}` : 'no recorded artifact'}, ` +
           `but the suite pins ${suite.artifact.name} ${suite.artifact.sha256}. Rebuild it from ` +
-          'that artifact with scripts/load-search-d1.sh, or record the suite again.'
+          'that artifact with scripts/search-d1/load-local.sh, or record the suite again.'
       )
     }
-    search = websiteSearch(proxy.env.DB)
+    search = websiteSearch(db)
   })
 
   afterAll(async () => {

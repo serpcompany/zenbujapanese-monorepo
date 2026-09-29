@@ -173,9 +173,9 @@ const readingRestrictionFilter = `(
 /**
  * The forms that contain `query`, as the app's `instr(form, ?)` scan over every form finds them.
  * form_chars narrows the scan to forms with the query's characters, and instr() keeps the app's
- * exact semantics. Null when no form can contain the query: build-search-d1.py checks that
- * form_chars indexes every character in a form, so a query of only other characters, such as a
- * zero-width space, can't be in one.
+ * exact semantics. Null when no form can contain the query: scripts/search-d1/build-rows.py
+ * checks that form_chars indexes every character in a form, so a query of only other
+ * characters, such as a zero-width space, can't be in one.
  */
 function containsFilter(query: string): { sql: string; params: string[] } | null {
   const characters = Array.from(query).filter(character =>

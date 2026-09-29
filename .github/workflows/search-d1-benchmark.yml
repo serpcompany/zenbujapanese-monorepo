@@ -1,8 +1,8 @@
 name: Search D1 benchmark
 
-# Times the website's search core on a real D1 (issue 464). Each run precomputes the broad
-# queries on a local D1, creates two throwaway D1s (one for searches only) and a Worker, loads the
-# search tables into both, measures, and deletes them. Nothing touches the staging or production
+# Times the website's search core on a real D1 (issue 464). Each run builds the search database
+# locally as the import does, creates two throwaway D1s (one for searches only) and a Worker,
+# loads both through the migrations, measures, and deletes them. Nothing touches the staging or production
 # databases. Run it by hand; compare regions and read replication by running it more than once.
 on:
   workflow_dispatch:
@@ -53,30 +53,9 @@ jobs:
           cache: pnpm
           cache-dependency-path: apps/web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - name: Build the search tables
-        run: python3 scripts/build-search-d1.py "../../$SOURCE_DB" "$RUNNER_TEMP/search.sql"
-      - name: Precompute the broad queries
-        run: |
-          python3 bench/search-d1/candidates.py "../../$SOURCE_DB" "$RUNNER_TEMP/candidates.json"
-          local_d1="$RUNNER_TEMP/local-d1"
-          pnpm exec wrangler d1 execute zenbujapanese-web-local --local --persist-to "$local_d1" \
-            --file "$RUNNER_TEMP/search.sql" --yes > /dev/null
-          cat > bench/search-d1/wrangler.json <<JSON
-          {
-            "name": "zenbu-search-bench-local",
-            "main": "worker.ts",
-            "compatibility_date": "2026-09-28",
-            "vars": { "READ_REPLICATION": "off" },
-            "d1_databases": [
-              { "binding": "DB", "database_name": "zenbujapanese-web-local", "database_id": "local-only-do-not-deploy" }
-            ]
-          }
-          JSON
-          pnpm exec wrangler dev --config bench/search-d1/wrangler.json --persist-to "$local_d1" --port 8799 > "$RUNNER_TEMP/dev.log" 2>&1 &
-          dev_pid=$!
-          for _ in $(seq 1 60); do curl -sf "http://localhost:8799/sample?n=1" > /dev/null && break; sleep 2; done
-          node bench/search-d1/precompute.mjs http://localhost:8799 "$RUNNER_TEMP/candidates.json" "$RUNNER_TEMP/cache.sql" | tee "$RUNNER_TEMP/precompute.log"
-          kill "$dev_pid"
+      - name: Build the search database locally
+        # Migrations, rows, and precomputed broad queries, as the import builds each release.
+        run: scripts/search-d1/load-local.sh "../../$SOURCE_DB" "$RUNNER_TEMP/local" | tee "$RUNNER_TEMP/precompute.log"
       - name: Create two throwaway D1s
         run: |
           for suffix in "" "-search"; do
@@ -95,8 +74,8 @@ jobs:
             "workers_dev": true,
             "vars": { "READ_REPLICATION": "${{ inputs.read_replication && 'on' || 'off' }}" },
             "d1_databases": [
-              { "binding": "DB", "database_name": "$BENCH_NAME", "database_id": "$DATABASE_ID" },
-              { "binding": "DB_SEARCH", "database_name": "$BENCH_NAME-search", "database_id": "$SEARCH_DATABASE_ID" }
+              { "binding": "DB", "database_name": "$BENCH_NAME", "database_id": "$DATABASE_ID", "migrations_dir": "$PWD/drizzle/search" },
+              { "binding": "DB_SEARCH", "database_name": "$BENCH_NAME-search", "database_id": "$SEARCH_DATABASE_ID", "migrations_dir": "$PWD/drizzle/search" }
             ]
           }
           JSON
@@ -104,9 +83,10 @@ jobs:
         run: |
           start=$SECONDS
           for binding in DB DB_SEARCH; do
-            for file in search.sql cache.sql; do
+            pnpm exec wrangler d1 migrations apply "$binding" --remote --config bench/search-d1/wrangler.json
+            for file in rows.sql cache.sql import.sql; do
               pnpm exec wrangler d1 execute "$binding" --remote --config bench/search-d1/wrangler.json \
-                --file "$RUNNER_TEMP/$file" --yes
+                --file "$RUNNER_TEMP/local/$file" --yes
             done
             if [ "$binding" = DB ]; then echo "LOAD_SECONDS=$((SECONDS - start))" >> "$GITHUB_ENV"; fi
           done
@@ -128,7 +108,7 @@ jobs:
           {
             echo "Location \`${{ inputs.location }}\`, read replication \`${{ inputs.read_replication }}\`."
             echo "Loaded in ${LOAD_SECONDS} s; database size ${size} bytes."
-            cat "$RUNNER_TEMP/precompute.log"
+            grep '^Precomputed' "$RUNNER_TEMP/precompute.log"
             echo
             node bench/search-d1/run.mjs "$url"
           } | tee -a "$GITHUB_STEP_SUMMARY"
