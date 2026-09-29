@@ -403,12 +403,14 @@ is known, and has no icon.
 - Check: smoke "the header links to the dictionary and has search". The rest: No automated check
   yet (#511).
 
-**Footer.** The footer links Dictionary, About and Support (on phones only), Contact, Privacy
-Policy, Terms of Use, DMCA Copyright Policy, Affiliate Disclosure, Sources, and Sitemap, then the
-copyright line.
+**Footer.** The footer links Dictionary, About and Support (on phones only), Contact, Legal
+(`/legal/`), Privacy Policy, Terms of Use, DMCA Copyright Policy, Affiliate Disclosure, Sources,
+and Sitemap, then the copyright line. Legal follows Contact, as in the #462 design.
 
 - Source: #462 design (Contact, Legal, Privacy, Terms, Sources, Sitemap).
-- Check: No automated check yet (#511).
+- Check: the Legal link: `src/components/site-footer.test.tsx`, "the footer links Legal after
+  Contact, before the legal pages, as the #462 design does"; smoke "the footer links Legal". The
+  other links: No automated check yet (#511).
 
 **Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
 its defaults: headwords and linked example words have furigana, examples show their translation,
@@ -592,13 +594,6 @@ Dictionary as current.
 
 - Source: #462 design.
 - Check it will get: a rendered-HTML check.
-
-**Legal link.** The footer links Legal (`/legal/`), as the #462 design's footer does. Today it
-links each legal page but not Legal itself.
-
-- Source: #462 design (footer: Contact, Legal, Privacy, Terms, Sources, Sitemap).
-- Check it will get: a rendered-HTML check that the footer links `/legal/`, and a smoke check that
-  the home page's footer does.
 
 **Other footer links.** The footer lists what the #462 design lists: Contact, Legal, Privacy,
 Terms, Sources, and Sitemap. The website adds Dictionary, DMCA, Affiliate Disclosure, and About and

@@ -16,6 +16,8 @@ export function SiteFooter() {
             Support
           </Link>
           <Link href="/contact/">Contact</Link>
+          {/* The #462 design's footer links Legal, the index of the legal pages that follow. */}
+          <Link href="/legal/">Legal</Link>
           {legalPages.map(page => (
             <Link key={page.path} href={page.path}>
               {page.title}

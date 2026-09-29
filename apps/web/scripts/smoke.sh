@@ -143,6 +143,12 @@ show_iru_seen() { echo "$iru_seen (want refinement yes; rows $(paste -sd, - <<<"
 eventually 'iru shows the refinement and its first rows with their chips, as the app does' \
   'iru differs from the app' iru_matches_the_app show_iru_seen
 
+# The footer links Legal, as the #462 design's footer does.
+footer_has_legal() {
+  grep -qE '<footer[^>]*>.*href="/legal/"[^>]*>Legal</a>' <<<"$(body / | tr -d '\n')"
+}
+eventually 'the footer links Legal' 'the footer is missing the Legal link' footer_has_legal
+
 # A stale or missing slug redirects to the word's one URL; an unknown number doesn't exist.
 expect_redirect /dictionary/1259290/ "$word"
 expect /dictionary/999999999/ 404
