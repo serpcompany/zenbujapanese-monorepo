@@ -34,6 +34,8 @@ Logic moves into the artifact as precomputed rows wherever it can, such as examp
 ranking inputs, and related words, so clients only run queries. Only the logic that can't be
 precomputed needs a shared runtime. The choice between a TypeScript core and a Rust core is
 treated as a tokenizer decision, made by whichever candidate passes the conformance suite.
+[ADR 0008](0008-share-one-typescript-search-core-built-for-the-most-constrained-client.md) makes
+search one TypeScript core, built for the most constrained client.
 
 The suite is [`search-retrieval.json`](../../apps/ios/LanguageData/Conformance/search-retrieval.json).
 Each case maps a query to the Language Reference IDs Search returns, in order, before
