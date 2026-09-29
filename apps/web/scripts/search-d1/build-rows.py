@@ -1,103 +1,32 @@
 #!/usr/bin/env python3
-"""Write the dictionary search tables as D1-compatible SQL.
+"""Write the dictionary search rows as D1-compatible SQL.
 
-Reads the app's LanguageReferenceData.sqlite3 and writes only the tables Search needs, with
-FTS5 indexes in place of the app's FTS4 ones (D1 rejects FTS4). Language Reference IDs and
-semantic fingerprints become lowercase hex text. `dictionary_import` records the source file's
-SHA-256, so the conformance suite can check it runs against the artifact it pins.
+Reads the app's LanguageReferenceData.sqlite3 and writes INSERTs for the tables Search needs,
+then fills the FTS5 indexes. The tables themselves come from the search database's migrations
+(drizzle/search), applied first. Language Reference IDs and semantic fingerprints become
+lowercase hex text. `dictionary_import` is written by the import once everything else is in.
 
-    python3 scripts/build-search-d1.py <LanguageReferenceData.sqlite3> <out.sql>
+    python3 scripts/search-d1/build-rows.py <LanguageReferenceData.sqlite3> <out.sql>
 
-Load the result into a local D1 with `scripts/load-search-d1.sh`.
+scripts/search-d1/load-local.sh runs it for a local D1, and ensure-release.sh for D1.
 """
 
-import hashlib
 import sqlite3
 import sys
 import unicodedata
-from pathlib import Path
 
 MAX_STATEMENT_BYTES = 90_000  # D1 rejects statements over 100 KB.
 
-SCHEMA = """
-CREATE TABLE dictionary_import (
-  artifact TEXT NOT NULL,
-  sha256 TEXT NOT NULL
-);
-CREATE TABLE entries (
-  id TEXT PRIMARY KEY,
-  source_record_id INTEGER NOT NULL,
-  headword TEXT NOT NULL,
-  reading TEXT NOT NULL,
-  summary TEXT NOT NULL,
-  parts_of_speech_json TEXT NOT NULL,
-  is_common INTEGER NOT NULL,
-  rank_score INTEGER NOT NULL,
-  semantic_fingerprint TEXT NOT NULL
-);
-CREATE TABLE forms (
-  id INTEGER PRIMARY KEY,
-  entry_id TEXT NOT NULL,
-  form TEXT NOT NULL,
-  kind INTEGER NOT NULL
-);
-CREATE TABLE form_priority_profiles (
-  entry_id TEXT NOT NULL,
-  form TEXT NOT NULL,
-  kind INTEGER NOT NULL,
-  primary_mask INTEGER NOT NULL,
-  secondary_mask INTEGER NOT NULL,
-  news_frequency_band INTEGER,
-  PRIMARY KEY(entry_id, form, kind)
-) WITHOUT ROWID;
-CREATE TABLE canonical_senses (
-  entry_id TEXT NOT NULL,
-  sense_order INTEGER NOT NULL,
-  parts_of_speech_json TEXT NOT NULL,
-  PRIMARY KEY(entry_id, sense_order)
-) WITHOUT ROWID;
-CREATE TABLE gloss_atoms (
-  id INTEGER PRIMARY KEY,
-  entry_id TEXT NOT NULL,
-  sense_order INTEGER NOT NULL,
-  gloss_order INTEGER NOT NULL,
-  text TEXT NOT NULL,
-  normalized_text TEXT NOT NULL
-);
-CREATE TABLE sense_form_restrictions (
-  entry_id TEXT NOT NULL,
-  sense_order INTEGER NOT NULL,
-  kind INTEGER NOT NULL,
-  form TEXT NOT NULL,
-  PRIMARY KEY(entry_id, sense_order, kind, form)
-) WITHOUT ROWID;
-CREATE TABLE reading_form_restrictions (
-  entry_id TEXT NOT NULL,
-  reading TEXT NOT NULL,
-  written_form TEXT NOT NULL,
-  PRIMARY KEY(entry_id, reading, written_form)
-) WITHOUT ROWID;
-CREATE VIRTUAL TABLE form_chars USING fts5(
-  chars, content='', tokenize="unicode61 remove_diacritics 0 categories 'L* M* N* P* S* Co'"
-);
+
+# Filled once their tables are loaded: romaji_fts from the romaji forms, and gloss_fts, an
+# external-content index over gloss_atoms, by a rebuild. drizzle/search/0001_fts.sql creates them.
+FILL_FTS = """
+INSERT INTO romaji_fts(rowid, form) SELECT id, form FROM forms WHERE kind = 2;
+INSERT INTO gloss_fts(gloss_fts) VALUES('rebuild');
 """
 
-# The app's FTS4 tables: gloss_fts used `porter` (over the simple tokenizer) and form_fts used
-# `simple`. FTS5's `porter ascii` and `ascii` tokenizers split and fold the same way, and
-# search.ts translates the app's FTS4 query syntax. One difference remains: FTS4's porter keeps
-# only the first and last 3 characters of a token with digits that is longer than 6, so the app
-# matches some long numbers that D1 doesn't (9999999 finds 99.99999999% only in the app).
-# form_chars is new: every written or reading form with a space between characters, so a phrase
-# query finds any substring, replacing the app's `instr(form, ?)` scan over every form.
-INDEXES = """
-CREATE INDEX forms_form_index ON forms(form, entry_id);
-CREATE VIRTUAL TABLE gloss_fts USING fts5(
-  normalized_text, content='gloss_atoms', content_rowid='id', tokenize='porter ascii'
-);
-INSERT INTO gloss_fts(gloss_fts) VALUES('rebuild');
-CREATE VIRTUAL TABLE romaji_fts USING fts5(form, content='', tokenize='ascii');
-INSERT INTO romaji_fts(rowid, form) SELECT id, form FROM forms WHERE kind = 2;
-"""
+# The artifact formats this import reads, from its `metadata` table's `transform`.
+SUPPORTED_TRANSFORMS = {'"jmdict-to-zenbu-language-reference-data-v2"'}
 
 
 def literal(value):
@@ -122,26 +51,15 @@ def write_rows(out, table, columns, rows):
         out.write(head + ",".join(batch) + ";\n")
 
 
-def file_sha256(path):
-    digest = hashlib.sha256()
-    with open(path, "rb") as file:
-        for chunk in iter(lambda: file.read(1 << 20), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
 
 def main(source, destination):
     db = sqlite3.connect(f"file:{source}?mode=ro", uri=True)
     # Fail before writing anything when the source isn't the dictionary, such as an LFS pointer.
     db.execute("SELECT 1 FROM entries LIMIT 1").fetchone()
+    (transform,) = db.execute("SELECT value FROM metadata WHERE key = 'transform'").fetchone()
+    if transform not in SUPPORTED_TRANSFORMS:
+        sys.exit(f"Unsupported artifact transform {transform}; this import reads {SUPPORTED_TRANSFORMS}.")
     with open(destination, "w", encoding="utf-8") as out:
-        out.write(SCHEMA)
-        write_rows(
-            out,
-            "dictionary_import",
-            ["artifact", "sha256"],
-            [(Path(source).name, file_sha256(source))],
-        )
         write_rows(
             out,
             "entries",
@@ -222,7 +140,7 @@ def main(source, destination):
                 "SELECT lower(hex(entry_id)), reading, written_form FROM reading_form_restrictions"
             ),
         )
-        out.write(INDEXES)
+        out.write(FILL_FTS)
 
 
 if __name__ == "__main__":

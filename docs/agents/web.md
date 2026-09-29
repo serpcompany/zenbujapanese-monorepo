@@ -34,23 +34,73 @@ lists every child sitemap and each child sitemap lists the new URLs.
 
 `src/lib/dictionary/search/` ports the app's Search retrieval to TypeScript and runs on D1. It
 must return what the app returns: the ADR 0006 conformance suite
-(`apps/ios/LanguageData/Conformance/search-retrieval.json`) checks it. To run the suite, load the
-search tables into a local D1 at `.search-d1/` (about a minute), then run the tests:
+(`apps/ios/LanguageData/Conformance/search-retrieval.json`) checks it.
+
+### The search database
+
+Search reads its own D1, bound as `SEARCH_DB` (issue 464). Each build of the dictionary gets a
+fresh one, named `zenbujapanese-search-<env>-<build id>`. The build ID
+(`scripts/search-d1/build-id.sh`) hashes everything that shapes the database: the artifact's
+SHA-256 from its Git LFS pointer, `drizzle/search/`, the import scripts, and the search core.
+`scripts/search-d1/ensure-release.sh <env>` imports it:
+
+1. Build a local copy with `load-local.sh`: the search migrations from empty, the rows
+   (`build-rows.py`), the precomputed broad queries, and `dictionary_import` last.
+2. Run the conformance suite against that copy. Nothing reaches D1 unless it passes.
+3. Create the D1, apply the migrations, and load the same files.
+4. Verify it before anything binds it: `dictionary_import` names this build, `d1_migrations`
+   matches `drizzle/search/`, the schema matches `src/db/search-schema.sql`, and every table
+   holds the rows the local copy counted.
+
+A database that already verifies is reused, so an unchanged build costs a deploy a few seconds.
+A partial one is deleted and imported again. The two newest databases per environment are kept,
+so rolling back is redeploying the previous commit. The `Search database` workflow runs the
+import by hand; `Web deploy` doesn't run it or bind `SEARCH_DB` yet.
+
+**Broad queries are precomputed.** On D1, a query such as い reads 460,276 rows and takes 1.4–3.4
+s, and D1 runs one query at a time per database, so a few of them stall every other query. The
+import runs about 19,000 candidates (`candidates.py`) through the core on the local copy and
+stores the results of those that read over 20,000 rows in `search_cache` (about 280 queries, 9
+MB). `websiteSearch` reads the list of cached queries once per isolate, answers those from
+`search_cache` in about 30 ms, and runs the core for everything else. The measurements are on
+issue 464, from the `Search D1 benchmark` workflow.
+
+### Schema and migrations
+
+`src/db/search-schema.ts` holds the search tables, a projection of the app's database: IDs are
+lowercase hex text. `drizzle.search.config.ts` generates migrations into `drizzle/search/`. The
+FTS5 indexes, which Drizzle can't declare, are in the custom migration
+`drizzle/search/0001_fts.sql`. `src/db/search-schema.sql` records the whole schema the migrations
+build, including FTS5's shadow tables.
+
+1. Change `src/db/search-schema.ts`, or add a custom migration with `pnpm exec drizzle-kit
+   generate --config drizzle.search.config.ts --custom`.
+2. Run `pnpm db:generate:search`, which also rewrites `src/db/search-schema.sql`. Review both.
+3. Rebuild locally and run the suite.
+
+`pnpm db:check` fails when the schema has changes no migration covers, or when the migrations'
+schema differs from `src/db/search-schema.sql`. Never `drizzle-kit push` or `pull` the search
+database: they don't know the FTS5 tables. The import refuses an artifact whose `transform` it
+doesn't list in `build-rows.py`.
+
+D1 rejects the app's FTS4 indexes, so they are FTS5. `fts.ts` translates the app's FTS4 queries
+so both match the same rows, and `form_chars` indexes Japanese forms by character in place of the
+app's scan over every form. One difference remains: FTS4's stemmer shortens long numbers, so the
+app finds glosses for a query such as 9999999 that the website doesn't.
+
+### Run the suite locally
+
+Build the search database into `.search-d1/` (about 8 minutes, most of it precomputing), then run
+the tests:
 
 ```sh
-scripts/load-search-d1.sh [path/to/LanguageReferenceData.sqlite3]
+scripts/search-d1/load-local.sh [path/to/LanguageReferenceData.sqlite3]
 ZENBU_SEARCH_D1=1 pnpm test
 ```
 
-The load script defaults to the app's bundled database and replaces `.search-d1/` only after a
-build succeeds. The suite stops at once when `.search-d1/` wasn't built from the artifact it pins.
+The script defaults to the app's bundled database and replaces `.search-d1/` only after a build
+succeeds. The suite stops at once when `.search-d1/` wasn't built from the artifact it pins.
 Without `ZENBU_SEARCH_D1=1`, `pnpm test` skips the suite.
-
-`scripts/build-search-d1.py` defines the search tables. D1 rejects the app's FTS4 indexes, so
-they are FTS5. `fts.ts` translates the app's FTS4 queries so both match the same rows, and
-`form_chars` indexes Japanese forms by character in place of the app's scan over every form. One
-difference remains: FTS4's stemmer shortens long numbers, so the app finds glosses for a query
-such as 9999999 that the website doesn't.
 
 The search core takes capabilities a client supplies (ADR 0008). The website, configured in
 `website.ts`, supplies none, so it has no sentence search. Like the app, `search()` throws when
@@ -132,8 +182,10 @@ and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.
 ## Database
 
 D1 follows the SERP [Drizzle + D1 standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/database-management-promotion-drizzle-d1.md).
-All three databases share the `DB` binding, the schema in `src/db/schema.ts`, the migrations in
-`drizzle/`, and the `d1_migrations` ledger table. Staging and production are targeted through
+This section covers the site's database, `DB`; the dictionary search database, `SEARCH_DB`, has
+its own schema and migrations and is imported per build (see Dictionary search). All three
+environments' site databases share the `DB` binding, the schema in `src/db/schema.ts`, the
+migrations in `drizzle/`, and the `d1_migrations` ledger table. Staging and production are targeted through
 named Wrangler environments (`--env staging`, `--env production`) rather than `--preview`, so each
 has its own Worker and domain. Local uses seeded fixture data, staging controlled fixtures, and
 production real data only.

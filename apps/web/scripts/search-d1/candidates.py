@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""List queries that might be broad enough to precompute, for the search benchmark.
+"""List queries that might be broad enough to precompute (issue 464).
 
-    python3 bench/search-d1/candidates.py <LanguageReferenceData.sqlite3> <out.json>
+    python3 scripts/search-d1/candidates.py <LanguageReferenceData.sqlite3> <out.json>
 
 Every character in a written or reading form, every two-character reading prefix, every one- to
-three-letter romaji prefix, and the 3,000 most common English gloss words. precompute.mjs keeps
+three-letter romaji prefix, and the 3,000 most common English gloss words. precompute.mts keeps
 only the ones that read many rows.
 """
 
