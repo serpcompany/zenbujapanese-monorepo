@@ -198,8 +198,10 @@ failure fails the request, so an outage never renders as an empty, noindexed pag
 database without a finished import (no `dictionary_import` row) falls back to fixtures only in
 local development; in staging and production (`SITE_ENV` set) it fails the request, so a database
 bound by mistake can't pass as working. `DICTIONARY_DB` works the same way. Once `DICTIONARY_DB` holds an import, every result links to its
-word page, and a one-character query shows its kanji card from the dictionary database;
-otherwise only fixture words and kanji link.
+word page, a one-character query shows its kanji card from the dictionary database, and each
+result shows the app's frequency chips (JLPT and YouTube, `frequencyChips`, as
+SearchView.swift's `SearchFrequencyRankPresentationModel` picks them), read for all results in
+one query outside the search core; otherwise only fixture words and kanji link.
 
 ## Word and kanji pages
 

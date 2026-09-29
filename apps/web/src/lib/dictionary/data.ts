@@ -9,7 +9,7 @@ import {
   type KanjiWord,
   kanjiDetail
 } from './detail/kanji'
-import type { KanjiRows, WordRows } from './detail/rows'
+import type { FrequencyRow, KanjiRows, WordRows } from './detail/rows'
 import {
   type AlternativeForm,
   type RelatedWord,
@@ -23,6 +23,8 @@ import { dictionaryDatabase } from './dictionary-db'
 import type { SearchEntry } from './search/search'
 import { websiteSearch } from './search/website'
 import { kanjiPath, wordPath, wordSlug } from './urls'
+
+type DictionaryDatabase = ReturnType<typeof dictionaryDatabase>
 
 // Pages read the dictionary only through this module. It runs the detail core (./detail) over
 // rows and adds only the site's URLs. Word and kanji rows come from the dictionary database
@@ -175,12 +177,17 @@ export const getKanjiPage = cache(async (character: string): Promise<KanjiPageDa
 })
 
 /**
- * A search result as a word. The search database has no frequency yet. Every word links once the
- * dictionary database is loaded (`linked`); before that, only fixture words have pages.
+ * A search result as a word. Every word links once the dictionary database is loaded (`linked`);
+ * before that, only fixture words have pages. `frequency` comes from the dictionary database too,
+ * since the search database has none, and becomes the chips SearchView.swift shows on each row.
  */
-export function summarizeSearchEntry(entry: SearchEntry, linked = false): SearchWord {
+export function summarizeSearchEntry(
+  entry: SearchEntry,
+  linked = false,
+  frequency: readonly FrequencyRow[] = []
+): SearchWord {
   const entSeq = entry.sourceRecordId
-  const word = wordSummary({ ...entry, entSeq }, [])
+  const word = wordSummary({ ...entry, entSeq }, frequency)
   return { ...word, path: linked ? wordPath(word) : fixtureLinks.word(entSeq) }
 }
 
@@ -246,25 +253,33 @@ function fixtureWords(query: string): SearchWord[] {
   }))
 }
 
-async function searchWords(query: string, linked: boolean): Promise<SearchWord[]> {
+async function searchWords(query: string, dictionary: DictionaryDatabase | null) {
   const { env } = await getCloudflareContext({ async: true })
   // A failing database throws, so the request fails rather than rendering an empty page.
   const db = await imported(env.SEARCH_DB, 'SEARCH_DB')
   if (!db) return fixtureWords(query)
+  let entries: SearchEntry[]
   try {
-    const { items } = await websiteSearch(db).search(query)
-    return items.map(item => summarizeSearchEntry(item.entry, linked))
+    entries = (await websiteSearch(db).search(query)).items.map(item => item.entry)
   } catch (error) {
     // Like the app, a query full-text search can't read shows no results.
     if (isUnreadableQuery(error)) return []
     throw error
   }
+  // The frequency chips: one query for every result, on the dictionary database, outside the
+  // search core (presentation, which the app also loads after the results).
+  const frequency = dictionary
+    ? await dictionary.frequency(entries.map(entry => entry.sourceRecordId))
+    : new Map<number, FrequencyRow[]>()
+  return entries.map(entry =>
+    summarizeSearchEntry(entry, !!dictionary, frequency.get(entry.sourceRecordId))
+  )
 }
 
 /** The kanji card for a search for one kanji. */
 async function searchKanji(
   query: string,
-  db: Awaited<ReturnType<typeof dictionaryDb>>
+  db: DictionaryDatabase | null
 ): Promise<SearchData['kanji']> {
   const kanji = db
     ? [...query].length === 1
@@ -279,6 +294,6 @@ async function searchKanji(
 /** Memoized per request, so the page and its metadata search once. */
 export const searchDictionary = cache(async (query: string): Promise<SearchData> => {
   const db = await dictionaryDb()
-  const [kanji, words] = await Promise.all([searchKanji(query, db), searchWords(query, !!db)])
+  const [kanji, words] = await Promise.all([searchKanji(query, db), searchWords(query, db)])
   return { query, kanji, words }
 })
