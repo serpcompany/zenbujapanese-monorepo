@@ -38,7 +38,17 @@ describe('pitchAccent', () => {
         { mora: 'ル', high: true }
       ],
       downstep: 0,
-      particleHigh: true
+      moraCount: 2,
+      particleHigh: true,
+      graph: {
+        widths: [1, 1],
+        points: [
+          { x: 0.5, high: false },
+          { x: 1.5, high: true }
+        ],
+        particle: { x: 2.3, high: true },
+        width: 2.6
+      }
     })
     // 要領 (1546850), downstep 3.
     expect(
@@ -55,5 +65,19 @@ describe('pitchAccent', () => {
         mora => mora.high
       )
     ).toEqual([false, true, true, false])
+  })
+})
+
+describe('pitchGraph (PitchContourLayout)', () => {
+  test('gives a combined mora one and a half widths, and the particle 0.6 after the last', () => {
+    // 今日 (1579110), atamadaka: キョ is wider, so its point is at 0.75.
+    const { graph } = pitchAccent('きょう', { downstep: 1, moraCount: 2, sourceIdentity: unidic })
+    expect(graph.widths).toEqual([1.5, 1])
+    expect(graph.points).toEqual([
+      { x: 0.75, high: true },
+      { x: 2, high: false }
+    ])
+    expect(graph.particle).toEqual({ x: 2.8, high: false })
+    expect(graph.width).toBeCloseTo(3.1)
   })
 })

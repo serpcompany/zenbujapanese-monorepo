@@ -66,7 +66,7 @@ describe('wordDetail', () => {
     const detail = wordDetail(rows(1546640))
     expect(detail.ruby).toEqual([{ text: '要', reading: 'い' }, { text: 'る' }])
     expect(detail.partOfSpeech).toBe('Godan verb (intransitive)')
-    expect(detail.pitch).toEqual({
+    expect(detail.pitch).toMatchObject({
       morae: [
         { mora: 'イ', high: false },
         { mora: 'ル', high: true }
@@ -81,7 +81,7 @@ describe('wordDetail', () => {
         notes: ['Usually written in kana']
       }
     ])
-    expect(detail.frequencyRows).toEqual([
+    expect(detail.frequencyRows.map(({ details: _, ...row }) => row)).toEqual([
       { source: 'JLPT', value: 'N5', tier: 'veryCommon', spokenTier: null },
       { source: 'YouTube', value: '949', tier: 'veryCommon', spokenTier: 'very common' }
     ])
@@ -126,10 +126,18 @@ describe('wordDetail', () => {
         entSeq: 1296400
       }
     ])
-    expect(detail.frequencyRows).toEqual([
+    expect(detail.frequencyRows.map(({ details: _, ...row }) => row)).toEqual([
       { source: 'JLPT', value: 'N5', tier: 'veryCommon', spokenTier: null },
       { source: 'YouTube', value: 'No rank', tier: null, spokenTier: null }
     ])
+    // Frequency Details: the JLPT level, and why YouTube has no rank.
+    expect(detail.frequencyRows.map(row => [row.details.section, row.details.rows])).toEqual([
+      ['Level', [{ label: 'JLPT Level', value: 'N5' }]],
+      ['Frequency', []]
+    ])
+    expect(detail.frequencyRows[1].details.explanation).toBe(
+      'YouTube has no mapped frequency rank for this entry.'
+    )
     // A kana headword shares without a reading.
     expect(detail.shareText.split('\n')[0]).toBe('いる')
   })

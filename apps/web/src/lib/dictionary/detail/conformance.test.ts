@@ -6,6 +6,14 @@ import { wordSlug } from '../urls'
 import { licenseUrl } from './examples'
 import { tierLabels } from './frequency'
 import { kanjiDetail } from './kanji'
+import {
+  type SuiteFrequencyDetails,
+  type SuiteFurigana,
+  type SuitePitchGraph,
+  suiteFrequencyDetails,
+  suiteFurigana,
+  suitePitchGraph
+} from './suite'
 import { wordDetail } from './word'
 
 // The word-detail and kanji-detail conformance suites, recorded from the app on the iOS
@@ -15,7 +23,9 @@ import { wordDetail } from './word'
 // ZENBU_DICTIONARY_D1=1. It reads the database through dictionary-db.ts, as the pages do.
 //
 // Every example field is checked: the order, pair IDs, text, tokens, links, highlights, and counts
-// (the import precomputes them, scripts/release-d1/dictionary/build-examples.mts). The app-only
+// (the import precomputes them, scripts/release-d1/dictionary/build-examples.mts). So are the
+// headword's per-kanji furigana split, the pitch graph's points, and each Frequency row's details,
+// in the shapes suite.ts shares with the rendered page's test (word-page.test.tsx). The app-only
 // `opensConjugations` is skipped; the app's kanji cases don't record JLPT, so it isn't compared.
 const enabled = process.env.ZENBU_DICTIONARY_D1 === '1'
 
@@ -53,11 +63,24 @@ interface WordCase {
   languageReferenceID: string
   headword: string
   reading: string
-  furigana: { base: string; reading?: string }[]
+  furigana: SuiteFurigana[]
   partOfSpeech: string
   senses: { meaning: string; notes: string[]; partsOfSpeech: string[] }[]
-  pitch?: { downstep: number; levels: string; moraCount: number; particle: string; source: string }
-  frequency: { name: string; pack: string; text: string; tier?: string }[]
+  pitch?: {
+    downstep: number
+    levels: string
+    moraCount: number
+    particle: string
+    source: string
+    graph: SuitePitchGraph
+  }
+  frequency: {
+    name: string
+    pack: string
+    text: string
+    tier?: string
+    details: SuiteFrequencyDetails
+  }[]
   alternativeForms: { kind: string; labels: string[]; value: string }[]
   kanji: { character: string; meanings: string[] }[]
   alternativeKanji: { character: string; meanings: string[] }[]
@@ -253,9 +276,8 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
       languageReferenceID: entry.id,
       headword: detail.headword,
       reading: detail.reading,
-      furigana: detail.ruby.map(({ text, reading }) =>
-        reading === undefined ? { base: text } : { base: text, reading }
-      ),
+      // With each kanji run's per-kanji split, which the headword's highlight uses.
+      furigana: suiteFurigana(detail.ruby),
       partOfSpeech: detail.partOfSpeech,
       senses: detail.senses.map((sense, index) => ({
         meaning: sense.meaning,
@@ -269,7 +291,9 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
               levels: detail.pitch.morae.map(mora => (mora.high ? 'H' : 'L')).join(''),
               moraCount: detail.pitch.morae.length,
               particle: detail.pitch.particleHigh ? 'H' : 'L',
-              source: pitch.sourceIdentity
+              source: pitch.sourceIdentity,
+              // The dot-and-line contour the word card draws.
+              graph: suitePitchGraph(detail.pitch)
             }
           }
         : {}),
@@ -277,7 +301,9 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
         name: row.source,
         pack: packIds[row.source],
         text: row.value,
-        ...(row.tier ? { tier: tierLabels[row.tier] } : {})
+        ...(row.tier ? { tier: tierLabels[row.tier] } : {}),
+        // What the row opens: Frequency Details.
+        details: suiteFrequencyDetails(row.details)
       })),
       alternativeForms: detail.alternatives.map(({ kind, labels, value }) => ({
         kind,

@@ -149,6 +149,46 @@ footer_has_legal() {
 }
 eventually 'the footer links Legal' 'the footer is missing the Legal link' footer_has_legal
 
+# Word pages draw what the app draws, read from the app-recorded word-detail suite at run time:
+# 学校's kanji each highlight their own part of the furigana (がっ・こう), 見る's pitch graph puts
+# each dot where the app does, and each Frequency row opens its details.
+gakkou=/dictionary/%E5%AD%A6%E6%A0%A1-1206730/
+word_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/word-detail.json"
+expect "$gakkou" 200
+# 学校's split, joined with ・; 見る's dots' x positions, the particle's last; its dictionaries.
+word_expected="$(python3 -c '
+import json, sys
+cases = {c["entSeq"][0]: c for c in json.load(open(sys.argv[1]))["cases"]}
+print("・".join(cases["1206730"]["furigana"][0]["kanjiReadings"]))
+graph = cases["1259290"]["pitch"]["graph"]
+print(" ".join(str(p["x"]) for p in graph["points"] + [graph["particle"]]))
+print(" ".join(row["name"] for row in cases["1259290"]["frequency"]))
+' "$word_suite")"
+gakkou_split="$(sed -n 1p <<<"$word_expected")"
+miru_dots="$(sed -n 2p <<<"$word_expected")"
+miru_rows="$(sed -n 3p <<<"$word_expected")"
+highlights_kanji() { grep -q "data-kanji-split=\"$gakkou_split\"" <<<"$(body "$gakkou")"; }
+eventually "学校's kanji each highlight their part of the furigana ($gakkou_split)" \
+  "学校 has no per-kanji highlight of $gakkou_split" highlights_kanji
+# The page's dots' cx values in order, and the Frequency rows that open details.
+miru_seen=""
+draws_like_the_app() {
+  local html dots rows
+  html="$(body "$word")"
+  # Only the pitch graph's circles: icons elsewhere on the page draw circles too.
+  dots="$(tr -d '\n' <<<"$html" | grep -oE 'data-pitch-graph[^>]*>.*</svg>' | sed 's|</svg>.*||' |
+    grep -oE '<circle[^>]* cx="[0-9]+"' | grep -oE 'cx="[0-9]+"' | tr -dc '0-9\n' |
+    paste -sd' ' -)"
+  rows="$(grep -oE 'aria-haspopup="dialog" aria-label="[^"]*" data-frequency-row="[^"]+"' <<<"$html" |
+    sed -E 's/.*data-frequency-row="([^"]+)"/\1/' | paste -sd' ' -)"
+  miru_seen="dots $dots; rows $rows"
+  [ "$dots" = "$miru_dots" ] && [ "$rows" = "$miru_rows" ] &&
+    grep -q '<circle data-particle' <<<"$html"
+}
+show_miru_seen() { echo "$miru_seen (want dots $miru_dots; rows $miru_rows)"; }
+eventually "見る's pitch graph and Frequency rows match the app" \
+  "見る's pitch graph or Frequency rows differ from the app" draws_like_the_app show_miru_seen
+
 # A stale or missing slug redirects to the word's one URL; an unknown number doesn't exist.
 expect_redirect /dictionary/1259290/ "$word"
 expect /dictionary/999999999/ 404

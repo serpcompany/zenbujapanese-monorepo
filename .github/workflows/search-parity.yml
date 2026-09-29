@@ -1,14 +1,18 @@
 name: Search parity
 
-# Search retrieval and word pages' examples exist twice until issue 481 makes TypeScript the single
-# core (ADR 0008): Swift for the iOS app and a TypeScript port for the website. Each pair below is
-# a Swift source and its port; a PR that changes one side of a pair must change the other, or carry
-# the search-parity-reviewed label to say the change only applies to one side.
+# Search retrieval, word pages' examples, and parts of the word page's detail (the furigana kanji
+# highlight, the pitch graph, and Frequency Details) exist twice until issue 481 makes TypeScript
+# the single core (ADR 0008): Swift for the iOS app and a TypeScript port for the website. Each
+# pair below is a Swift source and its port; a PR that changes one side of a pair must change the
+# other, or carry the search-parity-reviewed label to say the change only applies to one side.
 #
 #   search:   LookupClient, SearchQuery, DictionaryRanking, JapaneseDeinflection, DictionaryEntry,
 #             JapaneseTextAnalysisClient <-> apps/web/src/lib/dictionary/search/
 #   examples: ExampleSentenceClient, JapaneseTextAnalysisClient, JapaneseInflectionGrouping,
 #             KuromojiMorphologyClient <-> apps/web/src/lib/dictionary/examples/*.ts
+#   detail:   KanjiReadingSplitter, JapaneseRubyText (the per-kanji furigana highlight),
+#             WordDetailView (PitchContourLayout, FrequencyDisclosurePresentation), FrequencyPack
+#             <-> apps/web/src/lib/dictionary/detail/{kanji-split,pitch,frequency}.ts
 
 on:
   pull_request:
@@ -23,8 +27,15 @@ on:
       - apps/ios/Modules/Sources/SearchExperience/ExampleSentenceClient.swift
       - apps/ios/Modules/Sources/SearchExperience/JapaneseInflectionGrouping.swift
       - apps/ios/Modules/Sources/SearchExperience/KuromojiMorphologyClient.swift
+      - apps/ios/Modules/Sources/SearchExperience/KanjiReadingSplitter.swift
+      - apps/ios/Modules/Sources/SearchExperience/JapaneseRubyText.swift
+      - apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift
+      - apps/ios/Modules/Sources/SearchExperience/FrequencyPack.swift
       - apps/web/src/lib/dictionary/search/**
       - apps/web/src/lib/dictionary/examples/*.ts
+      - apps/web/src/lib/dictionary/detail/kanji-split.ts
+      - apps/web/src/lib/dictionary/detail/pitch.ts
+      - apps/web/src/lib/dictionary/detail/frequency.ts
 
 permissions:
   contents: read
@@ -67,5 +78,9 @@ jobs:
           check examples \
             "${swift_dir}(ExampleSentenceClient|JapaneseTextAnalysisClient|JapaneseInflectionGrouping|KuromojiMorphologyClient)\.swift$" \
             '^apps/web/src/lib/dictionary/examples/[^/]+\.ts$' 'apps/web/src/lib/dictionary/examples/'
+          check detail \
+            "${swift_dir}(KanjiReadingSplitter|JapaneseRubyText|WordDetailView|FrequencyPack)\.swift$" \
+            '^apps/web/src/lib/dictionary/detail/(kanji-split|pitch|frequency)\.ts$' \
+            'apps/web/src/lib/dictionary/detail/{kanji-split,pitch,frequency}.ts'
           [ "$status" -eq 0 ] && echo "Search parity OK."
           exit "$status"

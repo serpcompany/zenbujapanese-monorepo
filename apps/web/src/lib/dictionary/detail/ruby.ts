@@ -8,6 +8,11 @@ export interface RubySegment {
   text: string
   /** Furigana, only over kanji runs. */
   reading?: string
+  /**
+   * Each kanji's part of `reading`, which tapping that kanji highlights (kanji-split.ts). Only on
+   * a word page's headword, and only where the kanji's readings split it one way.
+   */
+  kanjiReadings?: string[]
 }
 
 /** `Character.isKanjiOrIterationMark`: 々, or a scalar in U+3400–U+9FFF. */

@@ -109,10 +109,17 @@ struct JapaneseRubyText: View {
 
   /// Each kanji's part of the piece's reading, when tapping kanji highlights them.
   private func kanjiSplit(_ piece: Piece) -> [String]? {
-    guard highlightsKanjiOnTap, let reading = piece.segment.reading,
-      piece.segment.base.count > 1
-    else { return nil }
-    return KanjiReadingSplitter.split(piece.segment.base, reading: reading)
+    guard highlightsKanjiOnTap else { return nil }
+    return Self.kanjiReadings(piece.segment)
+  }
+
+  /// Each kanji's part of a furigana segment's reading, which tapping that kanji highlights: nil
+  /// for a segment without furigana, a single kanji, or a run whose kanji readings don't split
+  /// its reading exactly one way. The word-detail conformance suite records it, so the website's
+  /// highlight is held to the app's (see also apps/web/src/lib/dictionary/detail/kanji-split.ts).
+  static func kanjiReadings(_ segment: JapaneseRubySegment) -> [String]? {
+    guard let reading = segment.reading, segment.base.count > 1 else { return nil }
+    return KanjiReadingSplitter.split(segment.base, reading: reading)
   }
 
   private func selectableReading(_ split: [String], piece: Int) -> AttributedString {

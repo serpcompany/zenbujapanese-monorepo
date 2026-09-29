@@ -54,7 +54,12 @@ Each build gets a fresh D1, named `zenbujapanese-<database>-<env>-<build id>`. T
 (`scripts/release-d1/build-id.sh <database>`) hashes everything that shapes the database: the
 artifact's SHA-256 from its Git LFS pointer, the database's migrations, schema, and other inputs
 (for search, the search core, which precomputes its cache), the shared scripts in
-`scripts/release-d1/`, and the database's own scripts, but not another database's.
+`scripts/release-d1/`, and the database's own scripts, but not another database's. Tests
+(`*.test.ts`, `*.test.tsx`) are left out, so changing a gate's test alone doesn't import a new
+build. Anything a gate's tests run or draw (the cores, the components a rendered-page test renders,
+its reader, and the app-recorded suites) is a build input, so changing it does; and every build
+input outside `apps/web/`, such as a re-recorded suite, is in the `Web deploy` workflow's `paths`.
+`src/lib/dictionary/gate-inputs.test.ts` checks both from each database's `check_local`.
 `scripts/release-d1/ensure-release.sh <database> <env>` imports it:
 
 1. Build a local copy with `load-local.sh <database>`: the migrations from empty, the
@@ -234,7 +239,11 @@ word-detail and kanji-detail suites (`apps/ios/LanguageData/Conformance/`) throu
 core on the local copy, reading it through `dictionary-db.ts` as the pages do, and checks every
 stored slug against `wordSlug`. It checks every example field the suite records (order, pair
 IDs, text, tokens, links, highlights, and counts) and that each side's attribution is intact, and stops
-at once when the copy wasn't built from the files the suites pin.
+at once when the copy wasn't built from the files the suites pin. It also checks the headword's
+per-kanji furigana split, the pitch graph's points, and each Frequency row's details. The import
+then draws every word-detail case through the word page's components
+(`src/components/dictionary/word-page.test.tsx`) and reads back what they draw, so a component
+that draws the core's values wrong fails the import too.
 
 It changes the way the search schema does, with its own commands:
 `pnpm db:generate:dictionary` generates a migration into `drizzle/dictionary/` and rewrites

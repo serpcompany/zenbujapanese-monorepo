@@ -71,10 +71,14 @@ export interface EntryRow {
  */
 export type FrequencyRow = { pack: 'jlpt'; level: number } | { pack: 'tubelex'; rank: number }
 
-/** A kanji's KANJIDIC2 meanings, for the word page's Kanji sections. */
+/**
+ * A kanji's KANJIDIC2 meanings, for the word page's Kanji sections, and its readings, which
+ * split the headword's furigana kanji by kanji (kanji-split.ts).
+ */
 export interface KanjiGlossRow {
   character: string
   meanings: string[]
+  readings: KanjiReadingRow[]
 }
 
 /**

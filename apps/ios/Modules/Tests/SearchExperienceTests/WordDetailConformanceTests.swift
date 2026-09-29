@@ -87,7 +87,11 @@ private struct WordDetailObserver {
     observed.reading = entry.reading
     observed.furigana = JapaneseRubyAnnotation.segments(
       surface: entry.headword, reading: entry.reading
-    ).map { WordDetailCase.Furigana(base: $0.base, reading: $0.reading) }
+    ).map {
+      WordDetailCase.Furigana(
+        base: $0.base, reading: $0.reading,
+        kanjiReadings: JapaneseRubyText.kanjiReadings($0))
+    }
     observed.partOfSpeech = entry.displayPartOfSpeech
     observed.opensConjugations = conjugationClient.table(entry) != nil
     observed.pitch = entry.pitchAccent.map { pitch in
@@ -99,7 +103,8 @@ private struct WordDetailObserver {
         moraCount: pitch.moraCount,
         levels: levels.morae.map { $0 ? "H" : "L" }.joined(),
         particle: levels.particle ? "H" : "L",
-        source: pitch.sourceIdentity
+        source: pitch.sourceIdentity,
+        graph: WordDetailCase.PitchGraph(PitchContourLayout(reading: entry.reading, pitch: pitch))
       )
     }
     observed.senses = entry.senses.map {
@@ -127,7 +132,8 @@ private struct WordDetailObserver {
       pack: presentation.pack?.id.rawValue,
       name: presentation.packName,
       text: presentation.tier == nil ? presentation.missingText : presentation.inlineText,
-      tier: presentation.tier?.label
+      tier: presentation.tier?.label,
+      details: WordDetailCase.FrequencyDetails(FrequencyDisclosurePresentation(result: result))
     )
   }
 
@@ -236,6 +242,9 @@ private struct WordDetailCase: Codable {
   struct Furigana: Codable {
     let base: String
     let reading: String?
+    /// Each kanji's part of `reading`, which tapping that kanji highlights on the headword; nil
+    /// when the run has no per-kanji highlight.
+    let kanjiReadings: [String]?
   }
 
   struct Pitch: Codable {
@@ -246,6 +255,31 @@ private struct WordDetailCase: Codable {
     /// The pitch of a following particle.
     let particle: String
     let source: String
+    /// The contour PitchAccentBadge draws.
+    let graph: PitchGraph?
+  }
+
+  /// PitchContourLayout: the morae drawn, in katakana, and each point of the contour, then the
+  /// particle's hollow point. `x` is in hundredths of a mora width from the first mora's left
+  /// edge, which records every point exactly (widths are 1 or 1.5, the particle's room 0.6).
+  struct PitchGraph: Codable {
+    let morae: [String]
+    let points: [Point]
+    let particle: Point
+
+    struct Point: Codable {
+      let x: Int
+      let level: String
+    }
+
+    init(_ layout: PitchContourLayout) {
+      func point(_ point: PitchContourLayout.Point) -> Point {
+        Point(x: Int((point.x * 100).rounded()), level: point.high ? "H" : "L")
+      }
+      morae = layout.morae
+      points = layout.points.map(point)
+      particle = point(layout.particle)
+    }
   }
 
   struct Sense: Codable {
@@ -261,6 +295,40 @@ private struct WordDetailCase: Codable {
     /// The row's value: a rank, a JLPT level, or the missing text.
     let text: String
     let tier: String?
+    /// What selecting the row opens: Frequency Details.
+    let details: FrequencyDetails?
+  }
+
+  /// FrequencyDisclosurePresentation, which FrequencyDisclosureView draws.
+  struct FrequencyDetails: Codable {
+    let pack: Pack?
+    let section: String
+    let rows: [Row]
+    let explanation: String?
+
+    struct Pack: Codable {
+      let name: String
+      let domain: String
+      let description: String
+      let version: String
+      let source: String
+    }
+
+    struct Row: Codable {
+      let label: String
+      let value: String
+    }
+
+    init(_ presentation: FrequencyDisclosurePresentation) {
+      pack = presentation.pack.map {
+        Pack(
+          name: $0.name, domain: $0.domain, description: $0.description, version: $0.version,
+          source: $0.source)
+      }
+      section = presentation.section
+      rows = presentation.rows.map { Row(label: $0.label, value: $0.value) }
+      explanation = presentation.explanation
+    }
   }
 
   struct Form: Codable {

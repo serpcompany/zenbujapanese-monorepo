@@ -13,8 +13,10 @@ Abbreviations: **App docs** is `apps/ios/docs/product/dictionary.md`. Swift file
 **SRR** is `search-results.json`, the results screen after the frequency re-sort, replayed field
 by field by `src/lib/dictionary/results/conformance.test.ts` ("search results conformance on
 D1"), and rendered for six of its cases by `src/components/dictionary/search-results.test.tsx`
-("the rendered search results page matches the app"). All of these run on every import of their
-release database. Unit tests are named by file and test title.
+("the rendered search results page matches the app"). **WD rendered** is
+`src/components/dictionary/word-page.test.tsx` ("the rendered word page matches the app"), which
+draws every WD case through the word page's components and reads back what they draw. All of
+these run on every import of their release database. Unit tests are named by file and test title.
 
 ## Dictionary home
 
@@ -186,36 +188,61 @@ it.
   menu, and prompt: No automated check yet (#511).
 
 **Header card.** The card shows the headword with furigana, and beside it the pitch accent in a
-capsule with a speaker, or a standalone speaker when the word has no pitch. The speaker uses the
-browser's Japanese voice. Under a separator, the part-of-speech row names one word class and its
-modifiers, such as "Godan verb (intransitive)", and is left out when no class has a name. It
+capsule that pronounces the word, or a standalone speaker when the word has no pitch. Either uses
+the browser's Japanese voice. Under a separator, the part-of-speech row names one word class and
+its modifiers, such as "Godan verb (intransitive)", and is left out when no class has a name. It
 comes from the first sense's parts of speech, falling back to the entry's. The row doesn't open a
 conjugation table yet.
 
-- Source: App docs, Dictionary and kanji details; `WordDetailView.swift`;
-  `PartOfSpeechFormatter.swift`; `DictionaryEntry.displayPartOfSpeech`; #462.
+- Source: App docs, Dictionary and kanji details; `WordHeadline` and `PitchAccentBadge` in
+  `WordDetailView.swift`; `PartOfSpeechFormatter.swift`; `DictionaryEntry.displayPartOfSpeech`;
+  #462.
 - Check: WD `furigana`, `partOfSpeech`; `src/lib/dictionary/detail/word.test.ts`, "names one word
-  class, then its modifiers" and "shows no part of speech when no class has a name". The speaker:
-  No automated check yet (#511).
+  class, then its modifiers" and "shows no part of speech when no class has a name";
+  `src/components/dictionary/word-page.test.tsx`, "shows a standalone speaker for a word without
+  pitch". Speaking: No automated check yet (#511).
 
 **Furigana.** Furigana places each kanji run's part of the reading over it, as the app does,
 including the app's current split for 黄色い声. Words read as a whole, such as 今日, carry the
 reading over the whole word.
 
 - Source: App docs; `JapaneseRubyText.swift`; #499 (keep the app's furigana, including 黄色い声).
-- Check: WD `furigana`; `src/lib/dictionary/detail/ruby.test.ts`, "rubySegments".
+- Check: WD `furigana`, and WD rendered; `src/lib/dictionary/detail/ruby.test.ts`,
+  "rubySegments".
+
+**Per-kanji furigana highlight.** In the headword, each kanji of a run whose kanji readings split
+its furigana exactly one way is a toggle: selecting it colors the kanji and its part of the
+furigana in the app's blue accent color, not the site's primary (肉 and にく in 弱肉強食; #511
+review). Selecting it again clears the highlight; selecting another kanji moves it. The split uses each kanji's KANJIDIC2 on and kun
+readings with the sound changes compounds make (学校 is がっ・こう, 人々 is ひと・びと, 発表 is
+はっ・ぴょう). A single kanji and a word read as a whole, such as 大人 or 今日, have no highlight.
+Other furigana on the page (related words, examples) links instead, as in the app. Each toggle is a
+button labeled with its kanji and reading (学, がっ), reachable by keyboard, and the color change
+doesn't animate when the reader prefers reduced motion.
+
+- Source: App docs index, Furigana kanji highlight; `KanjiReadingSplitter.swift`;
+  `JapaneseRubyText.kanjiReadings`.
+- Check: WD `furigana[].kanjiReadings` (the gate compares the detail core's split, and WD rendered
+  compares each toggle and its part of the drawn furigana); `src/lib/dictionary/detail/
+  kanji-split.test.ts`; `src/components/dictionary/word-page.interaction.test.tsx`, "selecting a
+  kanji highlights it and its kana; again clears it, another moves it"; smoke "学校's kanji each
+  highlight their part of the furigana".
 
 **Pitch accent.** Pitch comes from UniDic, or for a two-part compound UniDic doesn't list whole,
-such as 記者会見, from CompoundPitch; a word with neither shows no pitch. The reading is drawn in
-katakana with a line over the high morae and a hook where pitch falls. The app draws a
-dot-and-line contour with a mark for the following particle; see
-[Required, not built yet](#required-not-built-yet-511).
+such as 記者会見, from CompoundPitch; a word with neither shows no pitch. It is drawn as the app
+draws it: the reading in katakana, one mora wide each (one and a half for a combined mora such as
+キョ), with a dot per mora at the top when high and the bottom when low, joined by a line, and a
+hollow dot for the following particle. The capsule is one button that pronounces the word; screen
+readers hear "Pronounce «reading». Pitch accent, downstep N, M mora", as the app's label and value
+say it: M is the source's mora count, even where it differs from the morae drawn (#511 review).
 
-- Source: App docs, Dictionary and kanji details; `PitchAccentBadge` in `WordDetailView.swift`.
-- Check: WD `pitch` (downstep, levels, mora count, particle, source);
+- Source: App docs, Dictionary and kanji details; `PitchAccentBadge` and `PitchContourLayout` in
+  `WordDetailView.swift`; #462 design.
+- Check: WD `pitch` (downstep, levels, mora count, particle, source, and `graph`: the morae and
+  each dot's position and level); WD rendered reads each dot's position from the drawn SVG;
   `src/lib/dictionary/detail/pitch.test.ts`; `src/lib/dictionary/detail/word.test.ts`, "shows
-  CompoundPitch when UniDic has no pitch, and none when neither has". The drawing: No automated
-  check yet (#511).
+  CompoundPitch when UniDic has no pitch, and none when neither has"; smoke "見る's pitch graph and
+  Frequency rows match the app".
 
 **Section order.** Below the header card, sections appear in the app's order: Meaning, Frequency,
 Alternatives, Kanji, Alternative kanji, Related words, Lists, Notes, and Examples. A section with
@@ -230,14 +257,33 @@ nothing to show is left out, except Meaning, Frequency, Lists, Notes, and Exampl
 - Check: WD `senses`.
 
 **Frequency.** One row per default dictionary, JLPT then YouTube, with its dot and its level or
-rank. A dictionary without the word says "Not listed" (JLPT) or "No rank" (YouTube). The rows
-don't open anything yet; the app opens Frequency Details. JLPT levels are unofficial estimates, as
-the Sources list says.
+rank. A dictionary without the word says "Not listed" (JLPT) or "No rank" (YouTube). JLPT levels
+are unofficial estimates, as the Sources list says.
 
 - Source: App docs, Dictionary and kanji details; `FrequencyPresentationModel` in
   `FrequencyPack.swift`; #464 (JLPT and TUBELEX only).
-- Check: WD `frequency`; `src/lib/dictionary/detail/frequency.test.ts`, "lists each default
-  dictionary, JLPT then YouTube" and "says what a dictionary lacks".
+- Check: WD `frequency`, and WD rendered (each row's name and value as listed);
+  `src/lib/dictionary/detail/frequency.test.ts`, "lists each default dictionary, JLPT then
+  YouTube" and "says what a dictionary lacks".
+
+**Frequency Details.** Each Frequency row is a button that opens Frequency Details, as the app's
+row does: a dialog on wide screens and a drawer on phones, closed with Done. It shows the
+dictionary's name, domain, description, version, and source (from the app's
+`FrequencyPackCatalog.json`), then a Level section with the word's JLPT level, or a Frequency
+section with its rank and percentile ("#949", "Top 0.27%"), or, when the dictionary lacks the
+word, why ("YouTube has no mapped frequency rank for this entry."). The app's Manage Frequency
+Dictionaries button is left out, since the website uses the default dictionaries only.
+
+- Source: App docs, Dictionary and kanji details; `FrequencyDisclosureView` and
+  `FrequencyDisclosurePresentation` in `WordDetailView.swift`; `FrequencyPack.swift`; #464 (the
+  default dictionaries only).
+- Check: WD `frequency[].details` (the gate compares the detail core's, and WD rendered reads them
+  back from the drawn details); `src/lib/dictionary/detail/frequency.test.ts`,
+  "frequencyRowDetails (FrequencyDisclosurePresentation)", including "each pack’s disclosure is
+  its manifest in the app’s FrequencyPackCatalog.json";
+  `src/components/dictionary/word-page.interaction.test.tsx`, "selecting a row opens Frequency
+  Details for that dictionary"; smoke "見る's pitch graph and Frequency rows match the app" (the
+  rows open a dialog).
 
 **Alternatives.** The other written forms on one line, then the other readings on another, with
 their labels, leaving out Search only forms and repeats. A form with a kanji links to its first
@@ -550,25 +596,6 @@ with its meaning and examples.
   `ConjugationsView.swift`, `JapaneseConjugationClient.swift`.
 - Check it will get: WD `opensConjugations`, which the gate now skips, and an app-recorded
   conjugation suite.
-
-**Frequency details sheet.** Selecting a Frequency row opens that dictionary's details: its name,
-domain, description, version, and source, then the word's JLPT level, or its rank and percentile.
-
-- App source: App docs, Dictionary and kanji details; `FrequencyDisclosureView` in
-  `WordDetailView.swift`.
-- Check it will get: the details' fields in the word-detail suite, and a rendered-page check.
-
-**Per-kanji furigana highlight.** Tapping one kanji in the headword shows which part of the reading
-belongs to it, as in the app (学校 is がっ・こう; 大人 has none).
-
-- App source: App docs index, Furigana kanji highlight; `KanjiReadingSplitter.swift`.
-- Check it will get: a per-kanji split field in the word-detail suite, and a rendered-page check.
-
-**Pitch graph style.** The pitch accent is drawn as the app draws it: a dot-and-line contour over
-the morae, with a hollow dot for the following particle.
-
-- App source: `PitchAccentBadge` in `WordDetailView.swift`; #462 design.
-- Check it will get: a rendered-SVG check against WD `pitch` (`levels`, `particle`).
 
 ### Kanji page
 

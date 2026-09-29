@@ -34,6 +34,30 @@ build_inputs=(
   # they look example words up with (`rankJapanese`, query normalization).
   apps/web/src/lib/dictionary/examples
   apps/web/src/lib/dictionary/search
+  # Everything else check_local's tests run or draw, but not the tests themselves (build-id.sh
+  # leaves out *.test.ts and *.test.tsx): how the gate reads the database, and the word page's
+  # components the rendered-page test draws, with how it reads them back. gate-inputs.test.ts
+  # checks this list covers every file those tests import.
+  apps/web/src/lib/dictionary/dictionary-db.ts
+  apps/web/src/lib/dictionary/urls.ts
+  apps/web/src/components/dictionary/word-header.tsx
+  apps/web/src/components/dictionary/headword-ruby.tsx
+  apps/web/src/components/dictionary/pitch-accent.tsx
+  apps/web/src/components/dictionary/pronounce-button.tsx
+  apps/web/src/components/dictionary/frequency-section.tsx
+  apps/web/src/components/dictionary/frequency.tsx
+  apps/web/src/components/dictionary/sheet.tsx
+  apps/web/src/components/dictionary/rendered-word.ts
+  apps/web/src/components/ui/badge.tsx
+  apps/web/src/components/ui/button.tsx
+  apps/web/src/components/ui/card.tsx
+  apps/web/src/components/ui/dialog.tsx
+  apps/web/src/components/ui/drawer.tsx
+  apps/web/src/components/ui/separator.tsx
+  apps/web/src/hooks/use-media-query.ts
+  # The app-recorded suites the gate checks, so a re-recorded suite checks the next deploy.
+  apps/ios/LanguageData/Conformance/word-detail.json
+  apps/ios/LanguageData/Conformance/kanji-detail.json
 )
 tables=(words kanji kanji_strokes kanji_elements element_glyphs example_sentences word_examples
   word_example_counts retired_ids word_sitemaps)
@@ -72,10 +96,14 @@ if loaded != expected:
 }
 
 # The app-recorded word-detail and kanji-detail suites, run through the detail core on the local
-# copy built through the migrations (src/lib/dictionary/detail/conformance.test.ts).
+# copy built through the migrations (src/lib/dictionary/detail/conformance.test.ts), and the
+# word-detail suite drawn by the word page's components (word-page.test.tsx): the furigana's
+# per-kanji split, the pitch graph's dots, and each Frequency row's details.
 check_local() {
+  # vitest.config.ts runs these one at a time: each opens the same local D1.
   ZENBU_DICTIONARY_D1=1 ZENBU_DICTIONARY_D1_PATH="$1" \
-    pnpm exec vitest run src/lib/dictionary/detail/conformance.test.ts
+    pnpm exec vitest run src/lib/dictionary/detail/conformance.test.ts \
+    src/components/dictionary/word-page.test.tsx
 }
 
 # The SHA-256 of each input file, for dictionary_import's `sources` column.
