@@ -815,8 +815,8 @@ number redirects (308) to the canonical URL in one hop, as a word's does. A word
 a register or kind the table lacks (an adjective's Polite forms), and `…/conjugations/plain/`
 return 404.
 
-- Source: ADR 0007 (permanent URLs keyed on `ent_seq`); #511 (conjugation screens get their own
-  URLs, as the app pushes them).
+- Source: ADR 0007 (permanent URLs keyed on `ent_seq`) and its #511 amendment; #511 (conjugation
+  screens get their own URLs, as the app pushes them).
 - Check: `src/lib/dictionary/urls.test.ts`, "conjugation URLs"; `src/lib/dictionary/data.test.ts`,
   "a word with a conjugation table has its page, and each form its own"; smoke `200`, `404`, and
   `308 /dictionary/1259290/conjugations/plain/past/ -> …`.
@@ -832,13 +832,15 @@ character returns 404.
 **Element URLs.** An element lives at `/dictionary/elements/<element>/`, keyed like a kanji page by
 the exact glyph, never Unicode-normalized, so the compatibility ideograph 海 (U+FA45) and 海
 (U+6D77) are two elements with two pages. The app opens an element on its own, not as part of a
-kanji, so its URL names no kanji. A glyph that isn't an element returns 404.
+kanji, so its URL names no kanji. A glyph that isn't an element returns 404. An element a later
+release removes will return 410, as a retired word does, once releases record removed elements.
 
-- Source: ADR 0007 (kanji URLs are the character); `SearchExperienceRoute.kanjiElement` in
-  `SearchExperienceRootView.swift`.
+- Source: ADR 0007 and its #511 amendment (element URLs are the glyph);
+  `SearchExperienceRoute.kanjiElement` in `SearchExperienceRootView.swift`.
 - Check: KED cases 海 (U+6D77 and U+FA45) and 𠆢 (U+201A2); `src/lib/dictionary/sitemaps.test.ts`,
-  "the element sitemap lists the indexable elements exactly, never normalized"; smoke `404
-  /dictionary/elements/%E9%AC%B1/`.
+  "the element sitemap lists the indexable elements exactly, never normalized"; smoke "… serves its
+  own glyph under a self-canonical URL" for U+FA45 and U+201A2, and `404` for the KED case that
+  isn't an element (鬱), each read from KED.
 
 **Search URLs.** A search lives at `/dictionary/search/<query>/`. The query is NFKC-normalized,
 lowercased, and has whitespace runs collapsed; any other form redirects (308) to it. Dots are

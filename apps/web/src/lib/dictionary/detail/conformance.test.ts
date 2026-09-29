@@ -586,8 +586,11 @@ describe.runIf(enabled)('word, kanji, and element detail conformance on D1', () 
       sourceNote: detail.sourceNote
     }
     expect(observed).toEqual(covered(expected, ['covers']))
-    // Search engines index an element with meanings or linked on-readings.
-    expect(detail.indexable).toBe(detail.meanings !== null || detail.soundPatterns !== null)
+    // Search engines index an element with meanings or linked on-readings, as the app recorded
+    // them: its header meanings and its Sound patterns line.
+    expect(detail.indexable).toBe(
+      expected.meanings !== undefined || expected.soundPatterns !== undefined
+    )
   })
 
   test('every element a kanji lists has a page', async () => {

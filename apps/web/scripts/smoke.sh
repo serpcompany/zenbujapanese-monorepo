@@ -425,24 +425,43 @@ eventually 'conjugations sitemap lists tables and the form pages that list examp
 
 # Kanji element pages show what the app's element screen shows, read from the app-recorded suites
 # at run time: 見's Elements each open their element page, and 氵's page has its meanings and every
-# kanji containing it, in the app's order. A kanji that isn't an element (鬱) has no page, and the
-# element sitemap lists 氵.
+# kanji containing it, in the app's order. The suite's non-element (found: false) has no page. The
+# compatibility ideograph U+FA45 and the supplementary-plane U+201A2 each serve their own glyph
+# under a self-canonical URL, never normalized. The element sitemap lists 氵.
 water=/dictionary/elements/%E6%B0%B5/
 element_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/kanji-element-detail.json"
 kanji_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/kanji-detail.json"
-expect "$water" 200
-expect /dictionary/elements/%E9%AC%B1/ 404
 element_expected="$(python3 -c '
-import json, sys
+import json, sys, urllib.parse
+cases = json.load(open(sys.argv[1]))["cases"]
 kanji = next(c for c in json.load(open(sys.argv[2]))["cases"] if c["character"] == "見")
 print(" ".join("/dictionary/elements/%s/" % e["glyph"] for e in kanji["elements"]))
-water = next(c for c in json.load(open(sys.argv[1]))["cases"] if c["element"] == "氵")
+water = next(c for c in cases if c["element"] == "氵")
 print(water["meanings"])
 print(" ".join(k["character"] for k in water["containingKanji"]))
+missing = next(c for c in cases if c.get("opensDetail") and c.get("found") is False)
+print("/dictionary/elements/%s/" % urllib.parse.quote(missing["element"]))
+for point in ("U+FA45", "U+201A2"):
+    case = next(c for c in cases if c["codePoint"] == point and c.get("found"))
+    print("%s /dictionary/elements/%s/" % (case["element"], urllib.parse.quote(case["element"])))
 ' "$element_suite" "$kanji_suite")"
 miru_elements="$(sed -n 1p <<<"$element_expected")"
 water_meanings="$(sed -n 2p <<<"$element_expected")"
 water_kanji="$(sed -n 3p <<<"$element_expected")"
+missing_element="$(sed -n 4p <<<"$element_expected")"
+exact_elements="$(sed -n '5,$p' <<<"$element_expected")"
+expect "$water" 200
+expect "$missing_element" 404
+# Only the Kanji containing this element section's rows, not the standalone kanji's.
+containing_kanji() {
+  python3 -c '
+import re, sys
+html = sys.stdin.read()
+section = html.split("data-element-section=\"containingKanji\"", 1)[-1] if "data-element-section=\"containingKanji\"" in html else ""
+section = section.split("data-element-section=\"source\"", 1)[0]
+print(" ".join(re.findall(r"data-element-kanji=\"([^\"]+)\"", section)))
+'
+}
 elements_seen=""
 elements_like_the_app() {
   local html linked listed
@@ -451,8 +470,7 @@ elements_like_the_app() {
   linked="$(grep -oE '<a [^>]*data-kanji-element="[^>]*>' <<<"$html" |
     grep -oE 'href="[^"]+"' | sed -E 's/href="([^"]+)"/\1/' | paste -sd' ' -)"
   html="$(body "$water")"
-  listed="$(grep -oE 'data-element-kanji="[^"]+"' <<<"$html" | sed -E 's/.*="([^"]+)"/\1/' |
-    paste -sd' ' -)"
+  listed="$(containing_kanji <<<"$html")"
   elements_seen="見 links ${linked:-nothing}; 氵 lists $(wc -w <<<"$listed" | tr -d ' ') kanji"
   [ "$linked" = "$miru_elements" ] && [ "$listed" = "$water_kanji" ] &&
     grep -q "data-element-meanings=\"true\">$water_meanings<" <<<"$html"
@@ -462,6 +480,17 @@ show_elements_seen() {
 }
 eventually "見's Elements open their element pages, and 氵's page lists the app's kanji" \
   "見's Elements or 氵's element page differ from the app" elements_like_the_app show_elements_seen
+while read -r glyph path; do
+  expect "$path" 200
+  serves_its_own_glyph() {
+    local html
+    html="$(body "$path")"
+    grep -qF "data-element-glyph=\"true\">$glyph</span>" <<<"$html" &&
+      grep -oE '<link rel="canonical" href="[^"]+"' <<<"$html" | grep -qF "$path\""
+  }
+  eventually "$path serves its own glyph under a self-canonical URL" \
+    "$path serves another glyph or another canonical URL" serves_its_own_glyph
+done <<<"$exact_elements"
 lists_water() {
   grep -q "<loc>https://zenbujapanese.com$water</loc>" <<<"$(body /sitemaps/kanji-elements.xml)" &&
     grep -q '<loc>https://zenbujapanese.com/sitemaps/kanji-elements.xml</loc>' <<<"$(body /sitemap-index.xml)"

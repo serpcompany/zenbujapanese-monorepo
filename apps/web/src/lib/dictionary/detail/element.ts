@@ -100,6 +100,9 @@ function swiftCompare(left: string, right: string): number {
 
 const swiftEqual = (left: string, right: string) => swiftCompare(left, right) === 0
 
+/** `glyphKey`: a glyph's first Unicode scalar, which the element reference keys by. */
+const glyphKey = (value: string) => value.codePointAt(0) ?? 0
+
 /** `contributionPrecedes`: a lower frequency rank first, a ranked kanji before an unranked one, then the character. */
 function contributionOrder(left: ElementKanjiRow, right: ElementKanjiRow): number {
   if (left.frequencyRank !== null && right.frequencyRank !== null) {
@@ -131,10 +134,13 @@ export function kanjiElementDetail({
   kanji,
   sources
 }: KanjiElementRows): KanjiElementDetail {
-  // The reference looks kanji up by exact code point (`glyphKey`).
-  const byCharacter = new Map(kanji.map(row => [row.character, row]))
-  const lookUp = (character: string) =>
-    isKanjiCharacter(character) ? byCharacter.get(character) : undefined
+  // The reference keys kanji by their first scalar (`glyphKey`), and a record counts only when
+  // its own character is a kanji (`KanjiCharacter(record.character)`).
+  const byScalar = new Map(kanji.map(row => [glyphKey(row.character), row]))
+  const lookUp = (character: string) => {
+    const row = byScalar.get(glyphKey(character))
+    return row && isKanjiCharacter(row.character) ? row : undefined
+  }
   const family = [element.glyph, ...element.alternatives].flatMap(glyph => lookUp(glyph) ?? [])
   const standalone = [...family].sort(contributionOrder)[0] ?? null
   const containing = element.containingCharacters

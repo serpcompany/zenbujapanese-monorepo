@@ -50,6 +50,34 @@ self-canonical, including an exact match, which stays a results page like the ap
 without results is `noindex`. Search sitemaps list a query set that the artifact precomputes,
 not every possible query.
 
+## Amendment (#511): element and conjugation pages
+
+The website also publishes a page per kanji element and per conjugation screen, as the app opens
+each as its own screen. Their URLs follow the rules above.
+
+**Element URLs are the glyph.** An element of kanji, such as 氵 or 女 as part of other kanji, is
+`/dictionary/elements/<glyph>/`, for example `/dictionary/elements/氵/`. The app opens an element
+on its own, not as part of a kanji, so the URL names no kanji. The glyph is the element's
+permanent ID, as the character is a kanji's: the exact code point, never Unicode-normalized, so
+the compatibility ideograph 海 (U+FA45) and 海 (U+6D77) are two elements with two pages. A glyph
+that was never an element returns 404. An element that a published artifact had and a later one
+removes returns 410, as a retired word does; no release records removed elements yet, so until
+one does, such an element answers 404. An element page with meanings or linked on-readings is
+indexable, as a kanji page with meanings or readings is.
+
+**Conjugation URLs are under the word.** A word's conjugation table is
+`/dictionary/<slug>-<ent_seq>/conjugations/`, and each form is
+`/dictionary/<slug>-<ent_seq>/conjugations/<register>/<kind>/`, with the register (`plain` or
+`polite`) and the kind as the app names them (`past`, `te-form`). They are keyed on the word's
+`ent_seq`, so a stale or missing slug redirects (308) to the canonical URL, as a word's does, and
+a retired word's conjugation pages go with it. A form spelled as another in the same table names
+that one as canonical rather than duplicating it.
+
+**Reserved segments.** A word's segment always ends in `-<ent_seq>`, so the dictionary's own
+segments can never collide with a word: `/dictionary/kanji/`, `/dictionary/elements/`,
+`/dictionary/search/`, and `/dictionary/examples/` are reserved for kanji, element, search, and
+example pages, and a new kind of page takes a new reserved segment of its own.
+
 ## The website publishes; it is not a lookup service
 
 ADR 0006 says no client sends dictionary lookups to a server. The apps still don't. The website
