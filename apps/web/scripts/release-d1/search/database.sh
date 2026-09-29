@@ -52,8 +52,19 @@ build_inputs=(
   apps/web/scripts/release-d1/dictionary/examples-corpus.ts
   apps/web/src/lib/dictionary/detail/examples.ts
   apps/web/src/lib/dictionary/example-search.ts
-  # data.ts builds the results and Example Sentences pages' data, which the gate reads through it.
+  # data.ts builds the results and Example Sentences pages' data, which the gate reads through it,
+  # with what it imports for the other pages.
   apps/web/src/lib/dictionary/data.ts
+  apps/web/src/lib/dictionary/dictionary-db.ts
+  apps/web/src/db/dictionary-schema.ts
+  apps/web/src/lib/dictionary/detail/word.ts
+  apps/web/src/lib/dictionary/detail/conjugation.ts
+  apps/web/src/lib/dictionary/detail/kanji-split.ts
+  apps/web/src/lib/dictionary/detail/part-of-speech.ts
+  apps/web/src/lib/dictionary/detail/pitch.ts
+  apps/web/src/lib/site.ts
+  apps/web/src/components/ui/button.tsx
+  apps/web/src/components/dictionary/pronounce-button.tsx
   apps/web/src/lib/dictionary/page-example.ts
   apps/web/src/components/dictionary/search-result-rows.tsx
   apps/web/src/components/dictionary/search-examples.tsx

@@ -110,8 +110,9 @@ loaded." and offers a reload.
   "renders the first 25 words and loads the rest from the build’s rows route";
   `src/lib/dictionary/data.test.ts`, "renders the first 25 words; the rows route serves the rest of
   this build only" (which also checks the route counts no example sentences);
-  `src/components/dictionary/load-more.test.ts`, "a click and the observer at once fetch the next
-  page once"; smoke "iru renders 25 words and its rows route serves the rest, in the app's
+  `src/components/dictionary/load-more.interaction.test.tsx`, "a click and scrolling into view at
+  once load the next page once", and `load-more.test.ts`, "a click and the observer at once fetch
+  the next page once"; smoke "iru renders 25 words and its rows route serves the rest, in the app's
   order", which reads iru's rows from SRR. The stale message: No automated check yet (#511).
 
 **Example Sentences row.** The results start with the app's "View N Example Sentences" row ("View
@@ -290,8 +291,8 @@ reload.
 - Check: `search-examples.test.tsx`, the ES cases (the first 25 rendered, then every later page
   the route serves, against ES `ids`); `data.test.ts`, "loads the next 25 without repeating or
   skipping any, for its build only"; `src/app/dictionary/search/[query]/examples.json/route.test.ts`;
-  `src/components/dictionary/load-more.test.ts`, "a click and the observer at once fetch the next
-  page once"; smoke "見る lists its example sentences as the app does, 25 at a time", which reads
+  `src/components/dictionary/load-more.interaction.test.tsx` and `load-more.test.ts` (one request
+  per page when a click and scrolling coincide); smoke "見る lists its example sentences as the app does, 25 at a time", which reads
   the first sentence from ES.
 
 **Title, and no count.** The page is titled with the query, as the app's screen is, with no count
