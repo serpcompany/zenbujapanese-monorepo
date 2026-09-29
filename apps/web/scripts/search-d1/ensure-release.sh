@@ -95,15 +95,26 @@ import_release() {
   id=$(database_id "$name")
   [ -n "$id" ] || { echo "couldn't create $name"; exit 1; }
   write_config "$id"
-  wrangler d1 migrations apply SEARCH_DB --remote --config "$config"
+  # A failed import deletes its database, so no partial one outranks the live one when pruning.
+  load_remote || {
+    echo "Importing $name failed; deleting it"
+    wrangler d1 delete "$name" --skip-confirmation
+    exit 1
+  }
+}
+
+# Called in an || list, where set -e doesn't apply, so each step returns on failure itself.
+load_remote() {
+  local file
+  wrangler d1 migrations apply SEARCH_DB --remote --config "$config" || return 1
   for file in rows.sql cache.sql; do
     [ -s "$scratch/local/$file" ] || continue
-    remote --file "$scratch/local/$file" --yes
+    remote --file "$scratch/local/$file" --yes || return 1
   done
   # dictionary_import goes last: it marks the import complete. One statement, so a query rather
   # than D1's bulk import.
-  remote --command "$(cat "$scratch/local/import.sql")"
-  verify || { echo "$name didn't verify after import"; exit 1; }
+  remote --command "$(cat "$scratch/local/import.sql")" || return 1
+  verify || { echo "$name didn't verify after import"; return 1; }
 }
 
 id=$(database_id "$name")
@@ -122,11 +133,33 @@ if [ -z "$id" ]; then
   id=$(database_id "$name")
 fi
 
-# Keep this database and the newest other one, which the environment runs until this deploy.
-list | json "'\n'.join([d['name'] for d in sorted(data, key=lambda d: d['created_at'], reverse=True)
-  if d['name'].startswith('$prefix') and d['name'] != '$name'][1:])" |
-  while read -r old; do
-    [ -n "$old" ] && echo "Deleting old $old" && wrangler d1 delete "$old" --skip-confirmation
+# Keep this database and the newest other complete one (with a dictionary_import row), which
+# the environment runs until this deploy. Others, including partial imports a cancelled or timed-out
+# run left behind, are deleted, so a partial database never outranks the live one.
+# Prints 1 for a complete import, 0 for a partial one (no or empty dictionary_import), and
+# anything else when it can't tell, which keeps the database.
+completed() {
+  curl -sS -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database/$1/query" \
+    -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'Content-Type: application/json' \
+    --data '{"sql": "SELECT count(*) AS n FROM dictionary_import"}' |
+    json "data['result'][0]['results'][0]['n'] if data.get('success') else
+      0 if 'no such table' in json.dumps(data.get('errors')) else 'unknown'" || echo unknown
+}
+kept=""
+list | json "'\n'.join(f\"{d['uuid']} {d['name']}\" for d in sorted(data, key=lambda d: d['created_at'], reverse=True)
+  if d['name'].startswith('$prefix') and d['name'] != '$name')" |
+  while read -r uuid old; do
+    [ -n "$old" ] || continue
+    state=$(completed "$uuid")
+    if [ "$state" = 1 ] && [ -z "$kept" ]; then
+      kept=$old
+      echo "Keeping $old"
+    elif [ "$state" = 1 ] || [ "$state" = 0 ]; then
+      echo "Deleting old $old"
+      wrangler d1 delete "$old" --skip-confirmation
+    else
+      echo "Keeping $old: couldn't tell whether its import completed"
+    fi
   done
 
 echo "SEARCH_DB_NAME=$name SEARCH_DB_ID=$id"
