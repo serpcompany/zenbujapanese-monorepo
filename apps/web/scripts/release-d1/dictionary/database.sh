@@ -9,6 +9,13 @@ schema_dump=src/db/dictionary-schema.sql
 persist_dir=.dictionary-d1
 resources=apps/ios/Modules/Sources/SearchExperience/Resources
 source_db=$resources/LanguageReferenceData.sqlite3
+# build-id.sh names each input file by its path under the longest of these roots that holds it,
+# after the root's name, so moving a root's files and updating its path here keeps the build ID.
+input_roots=(
+  "resources=$resources"
+  conformance=apps/ios/LanguageData/Conformance
+  web=apps/web
+)
 lfs_inputs=(
   "$source_db"
   "$resources/CompoundPitch.sqlite3"
