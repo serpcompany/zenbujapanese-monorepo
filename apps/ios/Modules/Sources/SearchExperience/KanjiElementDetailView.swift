@@ -130,9 +130,19 @@ private struct KanjiElementHeader: View {
 private struct KanjiElementContent: View {
   let entry: KanjiElementEntry
 
+  // The sections come from `entry.sections`, which the conformance suite records, so the suite
+  // records the order and choice of sections this view draws.
   var body: some View {
-    if !entry.alternatives.isEmpty {
-      Section(KanjiElementSection.alternativeForms.title) {
+    ForEach(entry.sections, id: \.self) { section in
+      content(for: section)
+    }
+  }
+
+  @ViewBuilder
+  private func content(for section: KanjiElementSection) -> some View {
+    switch section {
+    case .alternativeForms:
+      Section(section.title) {
         ForEach(entry.alternatives, id: \.self) { alternative in
           NavigationLink(value: SearchExperienceRoute.kanjiElement(alternative)) {
             Text(alternative.rawValue)
@@ -142,35 +152,33 @@ private struct KanjiElementContent: View {
           .accessibilityIdentifier("kanji-element.alternative.\(alternative.rawValue)")
         }
       }
-    }
-
-    if let explanation = entry.meaningExplanation {
-      Section {
-        Text(explanation)
-          .accessibilityIdentifier("kanji-element.meaning-explanation")
-      } header: {
-        Text(KanjiElementSection.meaningStructure.title)
-          .accessibilityIdentifier("kanji-element.meaning-header")
+    case .meaningStructure:
+      if let explanation = entry.meaningExplanation {
+        Section {
+          Text(explanation)
+            .accessibilityIdentifier("kanji-element.meaning-explanation")
+        } header: {
+          Text(section.title)
+            .accessibilityIdentifier("kanji-element.meaning-header")
+        }
       }
-    }
-
-    if let soundPatterns = entry.soundPatterns {
-      Section(KanjiElementSection.soundPatterns.title) {
-        Text(soundPatterns)
+    case .soundPatterns:
+      if let soundPatterns = entry.soundPatterns {
+        Section(section.title) {
+          Text(soundPatterns)
+        }
       }
-    }
-
-    if let standalone = entry.standaloneKanji {
-      Section(KanjiElementSection.standaloneKanji.title) {
-        KanjiContributionRow(
-          contribution: standalone,
-          identifierPrefix: "kanji-element.standalone"
-        )
+    case .standaloneKanji:
+      if let standalone = entry.standaloneKanji {
+        Section(section.title) {
+          KanjiContributionRow(
+            contribution: standalone,
+            identifierPrefix: "kanji-element.standalone"
+          )
+        }
       }
-    }
-
-    if !entry.containingKanji.isEmpty {
-      Section(KanjiElementSection.containingKanji.title) {
+    case .containingKanji:
+      Section(section.title) {
         ForEach(entry.containingKanji) { contribution in
           KanjiContributionRow(
             contribution: contribution,
@@ -178,21 +186,21 @@ private struct KanjiElementContent: View {
           )
         }
       }
-    }
-
-    Section(KanjiElementSection.source.title) {
-      LabeledContent("Structure") {
-        Text(entry.structureProvenance.text)
-          .multilineTextAlignment(.trailing)
-          .accessibilityIdentifier("kanji-element.structure-source")
+    case .source:
+      Section(section.title) {
+        LabeledContent("Structure") {
+          Text(entry.structureProvenance.text)
+            .multilineTextAlignment(.trailing)
+            .accessibilityIdentifier("kanji-element.structure-source")
+        }
+        LabeledContent("Meanings and readings") {
+          Text(entry.metadataProvenance.text)
+            .multilineTextAlignment(.trailing)
+            .accessibilityIdentifier("kanji-element.metadata-source")
+        }
+        Text(KanjiElementEntry.sourceNote)
+          .font(.caption)
       }
-      LabeledContent("Meanings and readings") {
-        Text(entry.metadataProvenance.text)
-          .multilineTextAlignment(.trailing)
-          .accessibilityIdentifier("kanji-element.metadata-source")
-      }
-      Text(KanjiElementEntry.sourceNote)
-        .font(.caption)
     }
   }
 }
@@ -235,7 +243,7 @@ private struct KanjiContributionRow: View {
 // apps/web/src/lib/dictionary/detail/element.ts).
 
 /// The element screen's sections, in order; each shows only when it has something to show.
-enum KanjiElementSection: CaseIterable {
+enum KanjiElementSection: CaseIterable, Hashable {
   case alternativeForms
   case meaningStructure
   case soundPatterns
