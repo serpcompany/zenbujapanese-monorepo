@@ -252,25 +252,23 @@ struct SearchView: View {
         try await Task.sleep(for: .milliseconds(100))
         try Task.checkCancellation()
         async let searchedResults = lookupClient.search(taskQuery)
-        async let searchedExampleCount = exampleSentenceClient.count(taskQuery)
+        async let searchedExampleCount = SearchResultsScreen.directExampleCount(
+          taskQuery, using: exampleSentenceClient)
         let foundResults = try await searchedResults
         try Task.checkCancellation()
-        let directExampleCount = (try? await searchedExampleCount) ?? 0
+        let directExampleCount = await searchedExampleCount
         try Task.checkCancellation()
-        let foundExampleCount: Int
-        if foundResults.usesPrimaryEntryExamples,
-          let entry = foundResults.primaryEntry(for: taskQuery)
-        {
-          foundExampleCount = (try? await exampleSentenceClient.examples(entry).count) ?? 0
-        } else {
-          foundExampleCount = directExampleCount
-        }
+        let foundExampleCount = await SearchResultsScreen.exampleCount(
+          foundResults, query: taskQuery, directCount: directExampleCount,
+          using: exampleSentenceClient)
         try Task.checkCancellation()
         guard searchTaskID == taskID, settledSearchTaskID != taskID else { continue }
         settledSearchTaskID = taskID
         results = foundResults
         exampleCount = foundExampleCount
-        if foundResults.isEmpty && foundExampleCount == 0 && !taskQuery.isSingleKanji {
+        if SearchResultsScreen.showsNoResults(
+          foundResults, exampleCount: foundExampleCount, query: taskQuery)
+        {
           presentationState = .noResults
         } else {
           presentationState = .results
@@ -665,7 +663,7 @@ private struct SearchResultsView: View {
               results.usesPrimaryEntryExamples
             )
           ) {
-            Text(exampleActionTitle)
+            Text(SearchResultsScreen.exampleActionTitle(count: exampleCount))
               .font(.headline)
           }
           .accessibilityIdentifier("search.examples")
@@ -677,7 +675,7 @@ private struct SearchResultsView: View {
           Button {
             selectRefinement(refinement)
           } label: {
-            Text("Search for「\(refinement.query.value)」")
+            Text(SearchResultsScreen.readingRefinementTitle(refinement))
               .font(.headline)
           }
           .accessibilityLabel("Search for Japanese reading \(refinement.query.value)")
@@ -685,38 +683,37 @@ private struct SearchResultsView: View {
         }
       }
 
-      if results.presentation == .discoveredWords {
+      switch SearchResultsScreen.list(query: query, results: results, ordered: orderedEntries) {
+      case .discoveredWords(let entries):
         Section {
-          SearchListHeading("Discovered Words")
-          ForEach(
-            results.entries.prefix(12).enumerated(), id: \.element.id
-          ) { index, entry in
+          SearchListHeading(LocalizedStringKey(SearchResultsScreen.discoveredWordsHeading))
+          ForEach(entries.enumerated(), id: \.element.id) { index, entry in
             ResultRow(
               entry: entry,
               summary: results.displaySummary(for: entry),
               frequencyRanks: frequencyLoadState.results[entry.id],
-              rank: .discovered(position: index + 1, count: min(results.entries.count, 12)),
+              rank: .discovered(position: index + 1, count: entries.count),
               link: SearchExperienceRoute.word(entry, nil)
             )
           }
         }
-      } else if query.isSingleKanji || !results.entries.isEmpty {
+      case .ranked(let kanji, let entries):
         Section {
-          if let character = KanjiCharacter(query.value) {
+          if let kanji {
             KanjiPrimaryRow(
-              character: character,
+              character: kanji,
               entry: primaryKanjiEntry,
-              resultCount: orderedEntries.count + 1
+              resultCount: SearchResultsScreen.rankedCount(query: query, entries: entries)
             )
           }
-          ForEach(orderedEntries.enumerated(), id: \.element.id) { index, entry in
+          ForEach(entries.enumerated(), id: \.element.id) { index, entry in
             ResultRow(
               entry: entry,
               summary: results.displaySummary(for: entry),
               frequencyRanks: frequencyLoadState.results[entry.id],
               rank: .result(
-                position: index + (query.isSingleKanji ? 2 : 1),
-                count: orderedEntries.count + (query.isSingleKanji ? 1 : 0)
+                position: index + (kanji == nil ? 1 : 2),
+                count: SearchResultsScreen.rankedCount(query: query, entries: entries)
               ),
               link: SearchExperienceRoute.word(entry, nil)
             )
@@ -730,6 +727,8 @@ private struct SearchResultsView: View {
               .accessibilityIdentifier("search.frequency-ordering-unavailable")
           }
         }
+      case .none:
+        EmptyView()
       }
     }
     .listStyle(.plain)
@@ -760,22 +759,12 @@ private struct SearchResultsView: View {
     results.primaryEntry(for: query)
   }
 
-  private var exampleActionTitle: String {
-    if exampleCount > 50 { return "View 50+ Example Sentences" }
-    return "View \(exampleCount) Example \(exampleCount == 1 ? "Sentence" : "Sentences")"
-  }
-
   private var displayedEntryIDs: [LanguageReferenceID] {
-    var seen = Set<LanguageReferenceID>()
-    return presentedEntries.compactMap { seen.insert($0.id).inserted ? $0.id : nil }
+    SearchResultsScreen.displayedEntryIDs(presentedEntries)
   }
 
   private var presentedEntries: [DictionaryEntry] {
-    if results.presentation == .discoveredWords {
-      return Array(results.entries.prefix(12))
-    }
-    guard let rankedEntryLimit else { return results.entries }
-    return Array(results.entries.prefix(rankedEntryLimit))
+    SearchResultsScreen.presentedEntries(results, rankedEntryLimit: rankedEntryLimit)
   }
 
   private var frequencyTaskID: SearchFrequencyTaskID {
@@ -785,6 +774,99 @@ private struct SearchResultsView: View {
   private var frequencyUnavailableNotice: String? {
     SearchFrequencyUnavailableNotice.text(
       for: displayedEntryIDs.compactMap { frequencyLoadState.results[$0] })
+  }
+}
+
+/// What the Search results screen shows for a finished search. `SearchView` and the search-results
+/// conformance suite both use it, so the suite follows any change to the screen.
+enum SearchResultsScreen {
+  /// Discovered Words lists at most this many words.
+  static let discoveredWordLimit = 12
+  static let discoveredWordsHeading = "Discovered Words"
+  static let kanjiLabel = "KANJI"
+
+  /// The rows below the Example Sentences and refinement rows.
+  enum List {
+    case discoveredWords([DictionaryEntry])
+    /// A single-kanji query's kanji row, then the entries in frequency order.
+    case ranked(kanji: KanjiCharacter?, entries: [DictionaryEntry])
+    case none
+  }
+
+  /// Example sentences containing the query itself.
+  static func directExampleCount(
+    _ query: SearchQuery, using client: ExampleSentenceClient
+  ) async -> Int {
+    (try? await client.count(query)) ?? 0
+  }
+
+  /// The Example Sentences row's count: the primary entry's examples when the results use
+  /// them, otherwise sentences containing the query.
+  static func exampleCount(
+    _ results: LookupSearchResults, query: SearchQuery, directCount: Int,
+    using client: ExampleSentenceClient
+  ) async -> Int {
+    if results.usesPrimaryEntryExamples, let entry = results.primaryEntry(for: query) {
+      return (try? await client.examples(entry).count) ?? 0
+    }
+    return directCount
+  }
+
+  /// Whether Search shows No Dictionary Matches instead of a list. A single kanji always has
+  /// its kanji row.
+  static func showsNoResults(
+    _ results: LookupSearchResults, exampleCount: Int, query: SearchQuery
+  ) -> Bool {
+    results.isEmpty && exampleCount == 0 && !query.isSingleKanji
+  }
+
+  static func exampleActionTitle(count: Int) -> String {
+    if count > 50 { return "View 50+ Example Sentences" }
+    return "View \(count) Example \(count == 1 ? "Sentence" : "Sentences")"
+  }
+
+  static func readingRefinementTitle(_ refinement: SearchRefinement) -> String {
+    "Search for「\(refinement.query.value)」"
+  }
+
+  static func kanjiSummary(_ entry: DictionaryEntry?) -> String {
+    entry?.summary ?? "Kanji detail"
+  }
+
+  /// The entries Search looks up frequency for and lists. Radical-origin searches keep only
+  /// their leading lexical-rank group.
+  static func presentedEntries(
+    _ results: LookupSearchResults, rankedEntryLimit: Int?
+  ) -> [DictionaryEntry] {
+    if results.presentation == .discoveredWords {
+      return Array(results.entries.prefix(discoveredWordLimit))
+    }
+    guard let rankedEntryLimit else { return results.entries }
+    return Array(results.entries.prefix(rankedEntryLimit))
+  }
+
+  static func displayedEntryIDs(_ entries: [DictionaryEntry]) -> [LanguageReferenceID] {
+    var seen = Set<LanguageReferenceID>()
+    return entries.compactMap { seen.insert($0.id).inserted ? $0.id : nil }
+  }
+
+  /// `ordered` is the presented entries after `SearchResultFrequencyOrdering`. Discovered Words
+  /// keeps dictionary order.
+  static func list(
+    query: SearchQuery, results: LookupSearchResults, ordered: [DictionaryEntry]
+  ) -> List {
+    if results.presentation == .discoveredWords {
+      return .discoveredWords(Array(results.entries.prefix(discoveredWordLimit)))
+    }
+    if query.isSingleKanji || !results.entries.isEmpty {
+      return .ranked(kanji: KanjiCharacter(query.value), entries: ordered)
+    }
+    return .none
+  }
+
+  /// The count VoiceOver reads with each ranked row ("Result 1 of N"), including the kanji row.
+  static func rankedCount(query: SearchQuery, entries: [DictionaryEntry]) -> Int {
+    entries.count + (query.isSingleKanji ? 1 : 0)
   }
 }
 
@@ -822,10 +904,10 @@ private struct KanjiPrimaryRow: View {
         Text(character.rawValue)
           .font(.title.weight(.light))
         VStack(alignment: .leading, spacing: 3) {
-          Text("KANJI")
+          Text(SearchResultsScreen.kanjiLabel)
             .font(.caption2.weight(.bold))
             .foregroundStyle(.primary)
-          Text(entry?.summary ?? "Kanji detail")
+          Text(SearchResultsScreen.kanjiSummary(entry))
             .foregroundStyle(.primary)
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -833,7 +915,9 @@ private struct KanjiPrimaryRow: View {
       }
       .contentShape(Rectangle())
     }
-    .accessibilityLabel("\(character.rawValue), KANJI, \(entry?.summary ?? "Kanji detail")")
+    .accessibilityLabel(
+      "\(character.rawValue), \(SearchResultsScreen.kanjiLabel), "
+        + SearchResultsScreen.kanjiSummary(entry))
     .accessibilityValue("Result 1 of \(resultCount), Kanji primary")
     .accessibilityIdentifier("result.kanji-primary.\(character.rawValue)")
   }

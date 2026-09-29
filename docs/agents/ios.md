@@ -49,6 +49,23 @@ change to Search results or a dictionary rebuild, record it again by adding
 `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` before the test command above, add
 `-only-testing:SearchExperienceTests/SearchConformanceTests` after it, and review the diff.
 
+That suite records order before frequency evidence re-sorts it. `SearchResultsConformanceTests`
+records the results screen as the app shows it, in `search-results.json`: for each query, the
+rows after `SearchResultFrequencyOrdering` re-sorts them with a fresh install's frequency
+dictionaries (JLPT, then TUBELEX), each with its Language Reference ID, ent_seq, headword,
+reading, summary, frequency chips (dictionary, value, tier), match group, and retrieval position;
+the kanji row; the Example Sentences and reading-refinement rows; the frequency notice; and the
+No Dictionary Matches state. It pins the SHA-256 of every bundled artifact it reads and the
+dictionaries a fresh install enables. Recent searches and known words don't change the list. The suite covers queries that match
+directly, deinflected queries (食べた, 見ない), romaji and English queries, and queries with no
+matches that aren't Japanese. It doesn't cover Japanese queries with no direct match or
+Discovered Words: Search splits those into words with the Sudachi dictionary the app bundles,
+which the package's test host lacks, so recording fails on them. Check those in the Simulator.
+The screen's titles, counts, and which rows it shows come from `SearchResultsScreen` in
+`SearchView.swift`, which the view and the suite share. Record it with
+`-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
+`query` and `covers` fields and recording.
+
 `WordDetailConformanceTests` and `KanjiDetailConformanceTests` do the same for the detail
 screens, so the website's word and kanji pages can be checked against the app. They check
 `word-detail.json` and `kanji-detail.json` in the same folder, reading each case from the
