@@ -95,15 +95,26 @@ import_release() {
   id=$(database_id "$name")
   [ -n "$id" ] || { echo "couldn't create $name"; exit 1; }
   write_config "$id"
-  wrangler d1 migrations apply SEARCH_DB --remote --config "$config"
+  # A failed import deletes its database, so no partial one outranks the live one when pruning.
+  load_remote || {
+    echo "Importing $name failed; deleting it"
+    wrangler d1 delete "$name" --skip-confirmation
+    exit 1
+  }
+}
+
+# Called in an || list, where set -e doesn't apply, so each step returns on failure itself.
+load_remote() {
+  local file
+  wrangler d1 migrations apply SEARCH_DB --remote --config "$config" || return 1
   for file in rows.sql cache.sql; do
     [ -s "$scratch/local/$file" ] || continue
-    remote --file "$scratch/local/$file" --yes
+    remote --file "$scratch/local/$file" --yes || return 1
   done
   # dictionary_import goes last: it marks the import complete. One statement, so a query rather
   # than D1's bulk import.
-  remote --command "$(cat "$scratch/local/import.sql")"
-  verify || { echo "$name didn't verify after import"; exit 1; }
+  remote --command "$(cat "$scratch/local/import.sql")" || return 1
+  verify || { echo "$name didn't verify after import"; return 1; }
 }
 
 id=$(database_id "$name")
@@ -126,7 +137,10 @@ fi
 list | json "'\n'.join([d['name'] for d in sorted(data, key=lambda d: d['created_at'], reverse=True)
   if d['name'].startswith('$prefix') and d['name'] != '$name'][1:])" |
   while read -r old; do
-    [ -n "$old" ] && echo "Deleting old $old" && wrangler d1 delete "$old" --skip-confirmation
+    if [ -n "$old" ]; then
+      echo "Deleting old $old"
+      wrangler d1 delete "$old" --skip-confirmation
+    fi
   done
 
 echo "SEARCH_DB_NAME=$name SEARCH_DB_ID=$id"
