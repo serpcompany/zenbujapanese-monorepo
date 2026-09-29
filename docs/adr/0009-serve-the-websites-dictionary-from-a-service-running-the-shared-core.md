@@ -45,10 +45,11 @@ its build, tests, and deploys (ADR 0005); the iOS app keeps its own toolchain.
 
 ## Costs
 
-- A service to run: deploys, uptime, and a host. Every uncached dictionary page depends on it,
-  so Cloudflare caches its pages.
-- Node's SQLite is synchronous, and the broadest queries (い) take about a second, so the service
-  runs the core in worker threads and caches recent results.
+- A service to run: deploys, uptime, and a host. Every dictionary page depends on it, so the
+  Worker keeps its answers in the edge cache, and the website can't deploy an environment until
+  that environment's service answers.
+- Node's SQLite is synchronous, and the broadest queries (い) take one to two seconds the first
+  time, so the service runs the core in worker threads and caches recent results.
 - The Worker's requests to the service add a round trip to wherever the service runs.
 
 This decision refines ADR 0006 and changes parts of ADR 0007 and ADR 0008, as listed above. It is

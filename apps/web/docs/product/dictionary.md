@@ -5,18 +5,21 @@ Each behavior below says what the website does, where that behavior comes from, 
 check that enforces it (see [How behavior is verified](index.md#how-behavior-is-verified)).
 
 Abbreviations: **App docs** is `apps/ios/docs/product/dictionary.md`. Swift files are in
-`apps/ios/Modules/Sources/SearchExperience/`. Web paths are under `apps/web/`. **SR**, **WD**, and
-**KD** are the app-recorded suites `search-retrieval.json`, `word-detail.json`, and
-`kanji-detail.json`, with the field they record. SR is replayed by
-`src/lib/dictionary/search/conformance.test.ts` ("search conformance on D1"); WD and KD by
-`src/lib/dictionary/detail/conformance.test.ts` ("word and kanji detail conformance on D1").
-**SRR** is `search-results.json`, the results screen after the frequency re-sort, replayed field
-by field by `src/lib/dictionary/results/conformance.test.ts` ("search results conformance on
-D1"), and rendered for six of its cases by `src/components/dictionary/search-results.test.tsx`
-("the rendered search results page matches the app"). **WD rendered** is
-`src/components/dictionary/word-page.test.tsx` ("the rendered word page matches the app"), which
-draws every WD case through the word page's components and reads back what they draw. All of
-these run on every import of their release database. Unit tests are named by file and test title.
+`apps/ios/Modules/Sources/SearchExperience/`. Web paths are under `apps/web/`; paths that start
+with `packages/` or `apps/` are from the repository root. **SR**, **WD**, and **KD** are the
+app-recorded suites `search-retrieval.json`, `word-detail.json`, and `kanji-detail.json`, with the
+field they record. The dictionary service replays them on the app's own data: SR by
+`apps/dictionary-api/src/conformance/search.conformance.test.ts` ("search conformance"), WD and KD
+by `apps/dictionary-api/src/conformance/detail.conformance.test.ts` ("word and kanji detail
+conformance"). **SRR** is `search-results.json`, the results screen after the frequency re-sort,
+replayed field by field by `apps/dictionary-api/src/conformance/results.conformance.test.ts`
+("search results conformance"), and rendered for six of its cases by
+`src/components/dictionary/search-results.test.tsx` ("the rendered search results page matches the
+app"). **WD rendered** is `src/components/dictionary/word-page.test.tsx` ("the rendered word page
+matches the app"), which draws every WD case through the word page's components and reads back
+what they draw. The `Dictionary API` workflow runs the suites, then the rendered tests against the
+service it builds, on every pull request that touches the dictionary. Unit tests are named by file
+and test title.
 
 ## Dictionary home
 
@@ -47,24 +50,29 @@ each search is its own page.
   and encoded into its path. Searching on Enter, the redirect from `?q=`, and the prefilled box:
   No automated check yet (#511).
 
-**Which words are found.** The website runs a TypeScript port of the app's search retrieval on the
-search database. It finds what the app finds for Japanese, kana, romaji, and English queries,
-including inflected queries such as `食べた` or `見ない`. It lists at most 60 words, the app's
-limit. One known difference remains: the app finds glosses for a long number such as 9999999, and
-the website doesn't (see FTS5 in [`docs/agents/web.md`](../../../../docs/agents/web.md)).
+**Which words are found.** The website runs a TypeScript port of the app's search retrieval, with
+the app's own queries and full-text indexes, on the app's own data in the dictionary service. It
+finds what the app finds for Japanese, kana, romaji, and English queries, including inflected
+queries such as `食べた` or `見ない`, and glosses for a long number such as 9999999, which the
+app's stemmer shortens. It lists at most 60 words, the app's limit.
 
-- Source: App docs, Search; `LookupClient.swift`; ADR 0006 and ADR 0008.
+- Source: App docs, Search; `LookupClient.swift`; ADR 0006, ADR 0008, and ADR 0009.
 - Check: SR `results` (the first 10 IDs, in order), `resolution`, and `presentation`, for 30
-  queries. The 60-word limit: No automated check yet (#511); SR records only the first 10
-  (`resultLimit: 10`).
+  queries; `apps/dictionary-api/src/conformance/full-text.test.ts`, "a long number finds glosses,
+  as FTS4 stems it". The 60-word limit: No automated check yet (#511); SR records only the first
+  10 (`resultLimit: 10`).
 
-**No sentence search.** A Japanese sentence finds only direct, inflected, or mixed-script matches.
-The website has no Discovered Words list, because it can't analyze text at request time.
+**Sentence search.** A Japanese sentence that isn't a word the dictionary holds, such as
+日本語を勉強する, lists its Discovered Words: each word the app's Sudachi finds in it, in order, as
+the app does with its Japanese Text Analysis pack. The dictionary service runs the same Sudachi,
+with the dictionary the app pins.
 
-- Source: ADR 0008; #466 (comment of 2026-09-29).
-- Check: `src/lib/dictionary/search/search.test.ts`, "sentence search is on only with an analyzer,
-  and the website has none". SR records no sentence cases (none with the `analyzed`
-  resolution).
+- Source: App docs, Search (Discovered Words); `SearchView.swift`; `JapaneseMorphologyClient.swift`;
+  ADR 0009 (the owner's decision to build what the website couldn't analyze before).
+- Check: `apps/dictionary-api/src/conformance/sentence-search.test.ts`, "「日本語を勉強する」 lists
+  its words as Discovered Words" and "a word the dictionary holds is still searched as itself". SR
+  records no sentence cases yet (none with the `analyzed` resolution): recording them needs the
+  app's Japanese Text Analysis pack in the Simulator.
 
 **Result order.** Words appear in the app's order: its retrieval, then equally strong matches
 re-sorted by the default dictionaries, as `SearchResultFrequencyOrdering` sorts them. Within each
@@ -72,13 +80,13 @@ match group (the result's source, then its coarse match rank), the more common t
 dictionary that has one comes first, then JLPT's level (N5 first), then YouTube's rank (lower
 first), a ranked word before an unranked one, then the retrieval order. So いる lists 要る, いる,
 炒る, 入る, 射る, 鋳る, and `iru` lists 上一, 上一段, 上一段活用 (English matches for "iru"), then 要る,
-いる, 炒る, 入る, as the app and the #462 design do. The frequency comes from the search database
-(`entry_frequency`), read for all of a search's results in one query.
+いる, 炒る, 入る, as the app and the #462 design do. The frequency comes from the app's JLPT and
+TUBELEX packs, read by the dictionary service for all of a search's results in one query.
 
 - Source: App docs, Search; `SearchResultFrequencyOrdering` in `SearchView.swift`; #462 (rows in
   the order the app shows with its default dictionaries).
 - Check: SRR `results` (every row's ID, in order, with its `match` group and `retrievalOrder`) for
-  52 queries, including `iru` and いる; `src/lib/dictionary/results/results.test.ts`,
+  52 queries, including `iru` and いる; `packages/dictionary-core/src/results/results.test.ts`,
   "orderedItems (SearchResultFrequencyOrdering.ordered)"; smoke "iru shows the refinement and its
   first rows with their chips, as the app does", which reads the rows from SRR's `iru` case.
 
@@ -89,6 +97,26 @@ line follows the #462 design's wording.
 - Source: #462 design.
 - Check: No automated check yet (#511). SRR `voiceOverCount` (the count VoiceOver reads, including
   the kanji row) is checked against the core's `resultCount`, which the page doesn't show.
+
+**Example Sentences row.** When the query has example sentences, the results list starts with
+the app's row, "View 3 Example Sentences", or "View 50+ Example Sentences" over 50. It opens the
+query's examples page, `/dictionary/search/<query>/examples/`, titled with the query: the
+sentences that contain it, or the primary entry's for a romaji or deinflected query, in the app's
+order, with the query accented in each. The page shows 25 first and loads the rest as it scrolls,
+up to the app's 100, and ends with a Sources list: Tatoeba and JMdict. A query with sentences but
+no words shows the row alone.
+
+- Source: App docs, Search; the examples section of `SearchResultsView` in `SearchView.swift`;
+  `ExampleSentencesView.swift`; `ExampleSentenceClient.swift` (`count`, `search`, and `examples`
+  for the primary entry).
+- Check: SRR `examples` (title, count, and primary entry) and the `examples` entry of SRR
+  `sections`; `search-results.test.tsx`, "leads with the Example Sentences row, linked to the
+  search’s examples page", and the row in the SRR cases;
+  `src/components/dictionary/search-examples.test.tsx` ("the search examples page matches its
+  Example Sentences row"), which holds every SRR row to the page it opens: as many examples as
+  its count promises, 25 first, and a Japanese query accented in each;
+  `src/app/dictionary/search/[query]/examples.json/route.test.ts`; smoke (eat's row and its page).
+  The page's layout: No automated check yet (#511).
 
 **Reading refinement.** When an English-looking query also spells a Japanese reading the app
 offers ("Search for「いる」" for `iru`), the page shows that row in its own section above the
@@ -122,7 +150,7 @@ query (`displaySummary`), and the word's summary otherwise.
 - Check: SRR `results[].headword`, `reading`, and `summary`; `search-results.test.tsx` (each row's
   headword, meaning, and link in the SRR cases, and "clamps each meaning to two lines");
   `results.test.ts`, "shows the meaning an English query matched"; headword furigana:
-  `src/lib/dictionary/detail/ruby.test.ts`, "rubySegments"; the links: `links.test.ts`.
+  `packages/dictionary-core/src/detail/ruby.test.ts`, "rubySegments"; the links: `links.test.ts`.
 
 **Frequency chips.** A row has one chip per default dictionary that ranks or lists the word, as the
 app picks them: `JLPT N5` when the JLPT list has it, and `YouTube 812` when TUBELEX ranks it. Each
@@ -133,17 +161,15 @@ rare. Screen readers hear the tier after a rank, as the app's labels speak it.
   `FrequencyRankChip.swift`.
 - Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 52 queries;
   `search-results.test.tsx` (the chips as rendered in the SRR cases); smoke (iru's chips);
-  `src/lib/dictionary/detail/frequency.test.ts`, "shows only dictionaries that rank or list the
-  word, since JLPT is a level list" and "tierForRank (FrequencyTier(rank:))";
-  `src/lib/dictionary/data.test.ts`, "re-sorts equally strong matches by frequency from the search
-  database, in one query".
+  `packages/dictionary-core/src/detail/frequency.test.ts`, "shows only dictionaries that rank or list the
+  word, since JLPT is a level list" and "tierForRank (FrequencyTier(rank:))".
 
 **Frequency is JLPT and YouTube only.** The website uses the app's default frequency dictionaries,
 JLPT Levels then YouTube (TUBELEX), and has no way to choose others. The #462 design's Anime chip
 is left out.
 
 - Source: #464 (phase 2 plan: frequency is JLPT and TUBELEX only, the app's default packs).
-- Check: `src/lib/dictionary/detail/frequency.test.ts`, "lists each default dictionary, JLPT then
+- Check: `packages/dictionary-core/src/detail/frequency.test.ts`, "lists each default dictionary, JLPT then
   YouTube"; WD `frequency`.
 
 **No results.** When nothing matches and the query isn't one kanji, the page shows the app's "No
@@ -153,8 +179,8 @@ full-text search can't read, such as one with a NUL, shows the same page.
 - Source: App docs, Search; `SearchView.swift` (`search.no-results`); #462 (`Empty` for no
   results).
 - Check: SRR `state` (`qzxvkj`); `search-results.test.tsx`, "says No Dictionary Matches, as the app
-  does, when nothing matches"; `src/lib/dictionary/data.test.ts`, "shows a query full-text search
-  cannot read as no results".
+  does, when nothing matches"; `apps/dictionary-api/src/conformance/full-text.test.ts`, "a query
+  full-text search cannot read finds nothing, rather than failing".
 
 **Credits.** A results page that finds something ends with a Sources list: JMdict, KANJIDIC2, JLPT
 levels, and TUBELEX, each with its licence.
@@ -164,8 +190,7 @@ levels, and TUBELEX, each with its licence.
 
 **Left out on purpose.** The website has no Recent list, camera button, or Image Search. It also
 has no ✓ Known capsule and no swipe or long-press to mark a word known, since learner data lives in
-the app. The "View N Example Sentences" row is required but not built yet (see
-[Required, not built yet](#required-not-built-yet-511)).
+the app.
 
 - Source: #462 (Recent list and camera button left out; learner actions open a get-the-app
   prompt).
@@ -184,7 +209,7 @@ it.
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `SavedItemActions.swift`;
   #462 (toolbar and menu items, get-the-app prompt, `Sonner` for Link copied); #484 (breadcrumbs
   in place of the back button).
-- Check: the share text: `src/lib/dictionary/detail/word.test.ts`, "要る (1546640)". The toolbar,
+- Check: the share text: `packages/dictionary-core/src/detail/word.test.ts`, "要る (1546640)". The toolbar,
   menu, and prompt: No automated check yet (#511).
 
 **Header card.** The card shows the headword with furigana, and beside it the pitch accent in a
@@ -197,7 +222,7 @@ conjugation table the row is a button that opens it (see Conjugation table).
 - Source: App docs, Dictionary and kanji details; `WordHeadline` and `PitchAccentBadge` in
   `WordDetailView.swift`; `PartOfSpeechFormatter.swift`; `DictionaryEntry.displayPartOfSpeech`;
   #462.
-- Check: WD `furigana`, `partOfSpeech`; `src/lib/dictionary/detail/word.test.ts`, "names one word
+- Check: WD `furigana`, `partOfSpeech`; `packages/dictionary-core/src/detail/word.test.ts`, "names one word
   class, then its modifiers" and "shows no part of speech when no class has a name";
   `src/components/dictionary/word-page.test.tsx`, "shows a standalone speaker for a word without
   pitch". Speaking: No automated check yet (#511).
@@ -211,8 +236,11 @@ form and shows it with the changed ending in the accent color, with furigana onl
 has kanji (来させる). Selecting a row opens that form's screen in the same sheet, titled with the
 form, with Back to the table: what the form means, "Same spelling as …" when another form in the
 register shares its spelling (potential and passive 見られる), and the form with furigana, its
-ending highlighted, and a speaker. The app pushes these screens instead of opening a sheet. The
-form's examples aren't shown yet; see [Required, not built yet](#required-not-built-yet-511).
+ending highlighted, and a speaker, then its Examples: every example sentence that uses the
+complete form, as the app's does (the first 100 sentences containing the form, in the app's
+Japanese retrieval order, in which Kuromoji with the app's inflection grouping finds the form as
+one word), with the form accented, or "No example sentences use this form yet." They load when
+the screen opens. The app pushes these screens instead of opening a sheet.
 The website copies the app's forms exactly, including its する rule, which appends できる to the
 noun for the potential (愛する gives 愛できる); that is filed as app bug #521, and the website
 changes with the app when it is fixed.
@@ -223,9 +251,13 @@ changes with the app when it is fixed.
   (`JapaneseConjugator`).
 - Check: WD `opensConjugations` and `conjugations` (the summary, rule, registers, and each form's
   kind, title, explanation, surface, reading, ending, row furigana, headline furigana, and shared
-  spellings), compared by the gate, and drawn by `src/components/dictionary/conjugations.test.tsx`
-  ("the rendered conjugation table matches the app") on every import, which reads back each row
-  and each form's screen; the fixed-data tests in the same file;
+  spellings), compared by the service's WD replay, and drawn by
+  `src/components/dictionary/conjugations.test.tsx` ("the rendered conjugation table matches the
+  app") from the service, which reads back each row and each form's screen; the fixed-data tests
+  in the same file; the form's examples:
+  `apps/dictionary-api/src/conformance/conjugation-examples.test.ts` ("a conjugated form's
+  examples") and `src/app/dictionary/conjugations/[file]/route.test.ts`, as WD doesn't record
+  them yet;
   `src/components/dictionary/word-page.interaction.test.tsx`, "the part of speech opens it; Polite
   switches register; a row opens its form; Back returns"; smoke "the part of speech opens
   conjugations where the app's does".
@@ -235,7 +267,7 @@ including the app's current split for 黄色い声. Words read as a whole, such 
 reading over the whole word.
 
 - Source: App docs; `JapaneseRubyText.swift`; #499 (keep the app's furigana, including 黄色い声).
-- Check: WD `furigana`, and WD rendered; `src/lib/dictionary/detail/ruby.test.ts`,
+- Check: WD `furigana`, and WD rendered; `packages/dictionary-core/src/detail/ruby.test.ts`,
   "rubySegments".
 
 **Per-kanji furigana highlight.** In the headword, each kanji of a run whose kanji readings split
@@ -251,8 +283,7 @@ doesn't animate when the reader prefers reduced motion.
 - Source: App docs index, Furigana kanji highlight; `KanjiReadingSplitter.swift`;
   `JapaneseRubyText.kanjiReadings`.
 - Check: WD `furigana[].kanjiReadings` (the gate compares the detail core's split, and WD rendered
-  compares each toggle and its part of the drawn furigana); `src/lib/dictionary/detail/
-  kanji-split.test.ts`; `src/components/dictionary/word-page.interaction.test.tsx`, "selecting a
+  compares each toggle and its part of the drawn furigana); `packages/dictionary-core/src/detail/kanji-split.test.ts`; `src/components/dictionary/word-page.interaction.test.tsx`, "selecting a
   kanji highlights it and its kana; again clears it, another moves it"; smoke "学校's kanji each
   highlight their part of the furigana".
 
@@ -268,7 +299,7 @@ say it: M is the source's mora count, even where it differs from the morae drawn
   `WordDetailView.swift`; #462 design.
 - Check: WD `pitch` (downstep, levels, mora count, particle, source, and `graph`: the morae and
   each dot's position and level); WD rendered reads each dot's position from the drawn SVG;
-  `src/lib/dictionary/detail/pitch.test.ts`; `src/lib/dictionary/detail/word.test.ts`, "shows
+  `packages/dictionary-core/src/detail/pitch.test.ts`; `packages/dictionary-core/src/detail/word.test.ts`, "shows
   CompoundPitch when UniDic has no pitch, and none when neither has"; smoke "見る's pitch graph and
   Frequency rows match the app".
 
@@ -291,7 +322,7 @@ are unofficial estimates, as the Sources list says.
 - Source: App docs, Dictionary and kanji details; `FrequencyPresentationModel` in
   `FrequencyPack.swift`; #464 (JLPT and TUBELEX only).
 - Check: WD `frequency`, and WD rendered (each row's name and value as listed);
-  `src/lib/dictionary/detail/frequency.test.ts`, "lists each default dictionary, JLPT then
+  `packages/dictionary-core/src/detail/frequency.test.ts`, "lists each default dictionary, JLPT then
   YouTube" and "says what a dictionary lacks".
 
 **Frequency Details.** Each Frequency row is a button that opens Frequency Details, as the app's
@@ -306,7 +337,7 @@ Dictionaries button is left out, since the website uses the default dictionaries
   `FrequencyDisclosurePresentation` in `WordDetailView.swift`; `FrequencyPack.swift`; #464 (the
   default dictionaries only).
 - Check: WD `frequency[].details` (the gate compares the detail core's, and WD rendered reads them
-  back from the drawn details); `src/lib/dictionary/detail/frequency.test.ts`,
+  back from the drawn details); `packages/dictionary-core/src/detail/frequency.test.ts`,
   "frequencyRowDetails (FrequencyDisclosurePresentation)", including "each pack’s disclosure is
   its manifest in the app’s FrequencyPackCatalog.json";
   `src/components/dictionary/word-page.interaction.test.tsx`, "selecting a row opens Frequency
@@ -318,7 +349,7 @@ their labels, leaving out Search only forms and repeats. A form with a kanji lin
 kanji's page, as the app's form line opens that kanji.
 
 - Source: `DictionaryEntry.alternativeForms`; `AlternativeFormsSection` in `WordDetailView.swift`.
-- Check: WD `alternativeForms`; `src/lib/dictionary/detail/word.test.ts`, "leaves out Search only
+- Check: WD `alternativeForms`; `packages/dictionary-core/src/detail/word.test.ts`, "leaves out Search only
   forms and repeats from the alternatives". The link: No automated check yet (#511).
 
 **Kanji and Alternative kanji.** Kanji lists each kanji of the headword once; Alternative kanji
@@ -328,7 +359,7 @@ the meanings follow the #462 design.
 
 - Source: `DictionaryEntry.primaryKanji` and `alternativeKanji`; #462 design.
 - Check: WD `kanji`, `alternativeKanji` (the conformance test also checks the two meanings shown);
-  `src/lib/dictionary/detail/word.test.ts`, "primaryKanji (DictionaryEntry.primaryKanji)" and
+  `packages/dictionary-core/src/detail/word.test.ts`, "primaryKanji (DictionaryEntry.primaryKanji)" and
   "alternativeKanji (DictionaryEntry.alternativeKanji)".
 
 **Related words.** Each related word shows its headword with furigana, the relation, and its
@@ -356,7 +387,7 @@ examples says "No source-matched examples".
   `src/lib/dictionary/data.test.ts`, "a word page shows its first 25 examples, and the rest load 25
   at a time"; `src/app/dictionary/examples/[file]/route.test.ts`, "returns the next 25 of a word's
   examples" and "is not found for %s" (a position past the app’s 100);
-  `src/lib/dictionary/detail/examples.test.ts`, "exampleCountText". The empty message: No
+  `packages/dictionary-core/src/detail/examples.test.ts`, "exampleCountText". The empty message: No
   automated check yet (#511).
 
 **Example words.** Each sentence shows each word underlined, as the app splits it; an inflected
@@ -368,7 +399,7 @@ color. Split compounds such as 一日 have no marked word, as in the app.
 - Source: App docs, Dictionary and kanji details; `LinkedJapaneseText.swift`;
   `JapaneseTextAnalysisClient.swift`; #499 (split compounds don't highlight).
 - Check: WD `examples.shown[].tokens` (`surface`, `entry`, `candidates`, `pageWord`);
-  `src/lib/dictionary/examples/linking.test.ts`; `src/lib/dictionary/detail/examples.test.ts`,
+  `packages/dictionary-core/src/examples/linking.test.ts`; `packages/dictionary-core/src/detail/examples.test.ts`,
   "links each word, with furigana over linked kanji only". The underline style: No automated check
   yet (#511).
 
@@ -378,7 +409,7 @@ sentence ID, linking to Tatoeba, its contributor, and its licence. The app doesn
 sentence.
 
 - Source: #465 (per-sentence attribution).
-- Check: `src/lib/dictionary/detail/examples.test.ts`, "keeps the position, text, translation, and
+- Check: `packages/dictionary-core/src/detail/examples.test.ts`, "keeps the position, text, translation, and
   both sides’ attribution"; the conformance test checks each side's attribution is intact.
 
 **Examples across a deploy.** A page loads later examples only from the dictionary build it was
@@ -402,7 +433,7 @@ and Tatoeba.
 sends the kanji, its readings, and its meanings, as the app's does.
 
 - Source: App docs, Dictionary and kanji details; `KanjiDetailView.swift`; #462.
-- Check: the share text: `src/lib/dictionary/detail/kanji.test.ts`, "要". The toolbar: No
+- Check: the share text: `packages/dictionary-core/src/detail/kanji.test.ts`, "要". The toolbar: No
   automated check yet (#511).
 
 **Header card.** The kanji, then its metrics: strokes ("Stroke" for one), and the grade and JLPT
@@ -410,7 +441,7 @@ level when KANJIDIC2 has them. JLPT reads as the app writes it, `N` and KANJIDIC
 shows N2. The meanings follow on one line.
 
 - Source: `KanjiDetailView.swift`; #485 (the website shows JLPT as the app does).
-- Check: KD `strokeCount`, `grade`, `meanings`; `src/lib/dictionary/detail/kanji.test.ts`, "要"
+- Check: KD `strokeCount`, `grade`, `meanings`; `packages/dictionary-core/src/detail/kanji.test.ts`, "要"
   and "a kanji without elements lists its components; one stroke is singular". KD doesn't record
   JLPT.
 
@@ -419,7 +450,7 @@ opens a dialog, or a drawer on phones, that draws the strokes on a dashed grid a
 or steps through them. A kanji without a diagram has no button. The page then credits KanjiVG.
 
 - Source: `KanjiStrokeOrderView.swift`; `components/dictionary/stroke-order.tsx`.
-- Check: KD `hasStrokeOrder`, `strokeOrderStrokes`; `src/lib/dictionary/detail/strokes.test.ts`.
+- Check: KD `hasStrokeOrder`, `strokeOrderStrokes`; `packages/dictionary-core/src/detail/strokes.test.ts`.
   The player: No automated check yet (#511).
 
 **Readings.** On, Kun, and Name readings, each with up to three of the kanji's words whose reading
@@ -427,7 +458,7 @@ starts with it. Each word links to its word page. The app's row opens its first 
 [Required, not built yet](#required-not-built-yet-511).
 
 - Source: `KanjiReadingsSection` in `KanjiDetailView.swift`.
-- Check: KD `readings`; `src/lib/dictionary/detail/kanji.test.ts`, "lists up to three words whose
+- Check: KD `readings`; `packages/dictionary-core/src/detail/kanji.test.ts`, "lists up to three words whose
   reading starts with the reading’s stem".
 
 **Components and Elements.** Elements list each element with its role (Meaning / structure, Sound,
@@ -437,7 +468,7 @@ kanji page. The app also opens an element detail screen; see
 [Required, not built yet](#required-not-built-yet-511).
 
 - Source: `KanjiDetailView.swift`; `KanjiElementLookupClient.swift`.
-- Check: KD `elements`, `components`; `src/lib/dictionary/detail/kanji.test.ts`, "kanjiElements
+- Check: KD `elements`, `components`; `packages/dictionary-core/src/detail/kanji.test.ts`, "kanjiElements
   (KanjiElementReferenceData.elements)" and "a kanji without elements lists its components; one
   stroke is singular".
 
@@ -450,7 +481,7 @@ kanji page. The app also opens an element detail screen; see
 summary, opening its word page.
 
 - Source: `entries(containingKanji:)` in `LookupClient.swift`; `KanjiDetailView.swift`.
-- Check: KD `words`; `src/lib/dictionary/detail/kanji.test.ts`, "lists the app’s 24 words for 要,
+- Check: KD `words`; `packages/dictionary-core/src/detail/kanji.test.ts`, "lists the app’s 24 words for 要,
   in its order"; the conformance test checks every listed word links to its page.
 
 **々 and other characters without a kanji screen.** 々 has no kanji page, as it has no Kanji Detail
@@ -502,12 +533,12 @@ redirects (308) to the canonical URL in one hop. An unknown number returns 404.
 
 - Source: ADR 0007; #465.
 - Check: `src/lib/dictionary/urls.test.ts`, "word URLs (ADR 0007)"; smoke `308
-  /dictionary/1259290/ -> …` and `404 /dictionary/999999999/`;
-  `src/lib/dictionary/detail/conformance.test.ts`, "every word is stored under the slug its URL
-  uses".
+  /dictionary/1259290/ -> …` and `404 /dictionary/999999999/`. The service names each word's slug
+  with the same `wordSlug` when it answers, so a page and its links always agree.
 
 **Retired word URLs.** A word whose entry was retired returns 410 Gone, or redirects (308) to its
-replacement in one hop. No entry is recorded as retired until #463 fills `retired_ids`.
+replacement in one hop. No entry is recorded as retired until #463 records retired entries in
+the app's data.
 
 - Source: ADR 0007; #465.
 - Check: `src/lib/dictionary/retired.test.ts`, "retiredWordResponse".
@@ -530,7 +561,8 @@ encoded, so a query never looks like a file. `.` and `..` can't be paths, so the
   (#511).
 
 **Titles and descriptions.** A word page is titled "要る (いる) meaning", a kanji page "要 kanji
-meaning", and a results page "«query» in Japanese", each followed by "| Zenbu Japanese". Each page
+meaning", a results page "«query» in Japanese", and a search's examples page "«query» in Japanese
+example sentences", each followed by "| Zenbu Japanese". Each page
 is its own canonical URL.
 
 - Source: #465 (metadata).
@@ -538,15 +570,18 @@ is its own canonical URL.
 
 **Indexing.** The dictionary home, word pages, kanji pages with meanings or readings, and results
 pages that list a word, or whose kanji row opens a kanji page, are indexable. A kanji with no meanings or readings (about 475 of 13,108,
-such as 㐂), a search that finds nothing, `/dictionary/search/` itself, and the examples endpoint are
-`noindex`. Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows
+such as 㐂), a search that finds nothing, `/dictionary/search/` itself, a search's examples page,
+and the endpoints that load examples are `noindex`. Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows
 crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
 
 - Source: #465; #466.
 - Check: smoke "a kanji without meanings or readings is noindex"; the conformance test checks each
   kanji's `indexable` against its meanings and readings;
   `src/app/dictionary/examples/[file]/route.test.ts`, "returns the next 25 of a word's examples";
-  search pages: `src/lib/dictionary/results/links.test.ts`, "isIndexable".
+  `src/app/dictionary/search/[query]/examples.json/route.test.ts` and
+  `src/app/dictionary/conjugations/[file]/route.test.ts`; search pages:
+  `src/lib/dictionary/results/links.test.ts`, "isIndexable". The examples page's `noindex`: No
+  automated check yet (#511).
 
 **Sitemaps.** The pages sitemap lists the dictionary home. The sitemap index also lists the word
 sitemaps, with every word page's canonical URL, and the kanji sitemap, with every indexable kanji
@@ -585,20 +620,6 @@ app does at standard sizes. At the app's accessibility text sizes the meaning is
 - App source: `ResultRow` in `SearchView.swift`.
 - Check it will get: a rendered-HTML check that the clamp lifts with large text.
 
-**"View N Example Sentences".** The results list starts with the app's Example Sentences row
-("View 3 Example Sentences", or "View 50+ Example Sentences" over 50), which opens the query's
-example sentences, or the primary entry's for a deinflected or romaji query. What it needs: an
-example search on the website like the app's, which matches all 232,703 Tatoeba pairs by English
-phrase (FTS4 Porter, with an exact-phrase check) or Japanese substring, where the dictionary
-database holds only the 203,727 sentences its words use, with no such index; then a
-`/dictionary/search/<query>/examples/` page listing them in the app's order.
-
-- App source: the examples section of `SearchResultsView` in `SearchView.swift`;
-  `ExampleSentenceClient.swift` (`count`, `search`, and `examples` for the primary entry).
-- Check it will get: SRR `examples` (title, count, and primary entry) and the `examples` entry of
-  SRR `sections`, which `results/conformance.test.ts` and `search-results.test.tsx` skip until
-  then (`pendingSections`); a rendered-page check of the examples page.
-
 **Handwriting and radical input.** The search box offers handwriting and radical selection, as the
 app does.
 
@@ -613,20 +634,6 @@ its leading group of equally strong matches, as the app limits it (`rankedEntryL
 - App source: `SearchResultsView` and its `rankedEntryLimit` in `SearchView.swift`.
 - Check it will get: radical-origin cases in the planned search results suite, recording the rows
   the app lists.
-
-### Word page
-
-**Conjugated form examples.** A conjugated form's screen ends with every Example Sentence that
-uses the complete form, as the app's does: the first 100 sentences containing the form, in the
-app's Japanese retrieval order, whose words (Kuromoji with the app's inflection grouping) include
-the form. The website has no text analysis at request time (ADR 0008), so this needs the import
-to precompute each form's examples, or an index of each sentence's grouped words; which one is
-open.
-
-- App source: `ConjugatedFormView.loadExamples` in `ConjugationsView.swift`;
-  `ExampleSentenceClient.search`; `JapaneseTextAnalysisClient.words`.
-- Check it will get: each form's example IDs in WD `conjugations`, compared by the import's gate,
-  and a rendered-page check of the form's screen.
 
 ### Kanji page
 

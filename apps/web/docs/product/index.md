@@ -14,7 +14,8 @@ a sign-in prompt once account pages (#468) exist.
 ## Pages
 
 - **Dictionary home**, `/dictionary/`: a search box.
-- **Search results**, `/dictionary/search/<query>/`: the words, and the kanji, a query finds.
+- **Search results**, `/dictionary/search/<query>/`: the words, and the kanji, a query finds,
+  and its example sentences at `/dictionary/search/<query>/examples/`.
 - **Word page**, `/dictionary/<slug>-<ent_seq>/`: one JMdict entry, as the app's Word Detail
   shows it.
 - **Kanji page**, `/dictionary/kanji/<character>/`: one kanji, as the app's Kanji Detail shows it.
@@ -40,23 +41,23 @@ Each behavior in [Dictionary](dictionary.md) names its automated check, or says 
 check yet (#511)". The checks come in four kinds:
 
 - **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the
-  app on the iOS Simulator: `search-retrieval.json`, `word-detail.json`, and `kanji-detail.json`.
-  Each pins, by SHA-256, the app data files it was recorded from.
-  `src/lib/dictionary/search/conformance.test.ts` and
-  `src/lib/dictionary/detail/conformance.test.ts` replay them through the website's search and
-  detail cores on a locally built release database, reading it as the pages do.
-- **Unit tests** (Vitest) next to the code under `apps/web/src/`. `pnpm check` runs them, and the
-  `Web` workflow runs it on every pull request that changes `apps/web/**`.
-- **Import gates.** Each release database import runs its conformance suite before anything
-  reaches D1; `pnpm check` skips the suites. [`docs/agents/web.md`](../../../../docs/agents/web.md)
-  describes the gates and how to run the suites locally.
+  app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `word-detail.json`,
+  and `kanji-detail.json`. Each pins, by SHA-256, the app data files it was recorded from. The
+  dictionary service's tests (`apps/dictionary-api/src/conformance/`) replay them through the
+  shared core on the app's own data, as the service answers the pages.
+- **Unit tests** (Vitest) next to the code, under `apps/web/src/`, `packages/dictionary-core/src/`,
+  and `apps/dictionary-api/src/`. Each one's `pnpm check` runs them; the `Web`, `Dictionary core`,
+  and `Dictionary API` workflows run them on pull requests.
+- **The rendered-page gate.** The `Dictionary API` workflow starts the service it built and renders
+  what it answers for the suites' cases through the pages' components; `pnpm test` skips it.
+  [`docs/agents/web.md`](../../../../docs/agents/web.md) describes it and how to run it locally.
 - **Smoke checks** in `apps/web/scripts/smoke.sh`, run against staging and production after each
   deploy. Each is named here by the message it prints.
 
 The suites and most unit tests check the data a page is built from. Rendered-page tests
 (`*.test.tsx`) render a page's components to HTML with `renderToStaticMarkup`, as the server does,
 and read back what a reader sees; the search results and word pages' run the app-recorded suites
-through the components on every import. Interaction tests (`*.interaction.test.tsx`) click through
+through the components from the service. Interaction tests (`*.interaction.test.tsx`) click through
 a component in a DOM (happy-dom). Rows without either say "No automated check yet (#511)". #511
 plans more rendered-HTML checks for the designs, and more smoke checks.
 
