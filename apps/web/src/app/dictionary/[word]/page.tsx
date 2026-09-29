@@ -11,24 +11,30 @@ import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { SearchForm } from '@/components/dictionary/search-form'
 import { Section } from '@/components/dictionary/section'
+import { SourceCredits } from '@/components/dictionary/source-credits'
 import { Card, CardContent } from '@/components/ui/card'
 import { Item, ItemActions, ItemContent } from '@/components/ui/item'
 import { Separator } from '@/components/ui/separator'
 import { getWordPage, isDictionaryAvailable } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
-import { parseWordSegment } from '@/lib/dictionary/urls'
+import { pageSources } from '@/lib/dictionary/sources'
+import { decodeSegment, parseWordSegment } from '@/lib/dictionary/urls'
 
 type Props = PageProps<'/dictionary/[word]'>
 
 /** `/dictionary/<slug>-<ent_seq>/`: the number decides the word; any other slug redirects. */
 async function load(params: Props['params']) {
   if (!isDictionaryAvailable()) notFound()
-  const parsed = parseWordSegment((await params).word)
+  const segment = (await params).word
+  const parsed = parseWordSegment(segment)
   if (!parsed) notFound()
   const word = await getWordPage(parsed.entSeq)
   if (!word) notFound()
-  // Location headers are ASCII, so the Japanese slug is percent-encoded.
-  if (parsed.slug !== word.slug) permanentRedirect(encodeURI(word.path))
+  // Any other slug, a bare number, or a padded one (要る-01546640) redirects, so each word has
+  // one URL. Location headers are ASCII, so the Japanese slug is percent-encoded.
+  if (decodeSegment(segment) !== `${word.slug}-${word.entSeq}`) {
+    permanentRedirect(encodeURI(word.path))
+  }
   return word
 }
 
@@ -190,10 +196,7 @@ export default async function WordPage({ params }: Props) {
         </Section>
       ) : null}
 
-      <p className="text-xs text-muted-foreground">
-        Dictionary data from JMdict (EDRDG, CC BY-SA 4.0). Example sentences from Tatoeba (CC BY 2.0
-        FR).
-      </p>
+      <SourceCredits sources={pageSources.word} />
     </main>
   )
 }

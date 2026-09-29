@@ -8,10 +8,12 @@ import { PageToolbar } from '@/components/dictionary/page-toolbar'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { SearchForm } from '@/components/dictionary/search-form'
 import { Section } from '@/components/dictionary/section'
+import { SourceCredits } from '@/components/dictionary/source-credits'
 import { Card, CardContent } from '@/components/ui/card'
 import { Item, ItemActions, ItemContent } from '@/components/ui/item'
 import { getKanjiPage, isDictionaryAvailable } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
+import { pageSources } from '@/lib/dictionary/sources'
 import { decodeSegment, kanjiPath } from '@/lib/dictionary/urls'
 
 type Props = PageProps<'/dictionary/kanji/[character]'>
@@ -156,9 +158,7 @@ export default async function KanjiPage({ params }: Props) {
         </Section>
       ) : null}
 
-      <p className="text-xs text-muted-foreground">
-        Kanji data from KANJIDIC2 (EDRDG, CC BY-SA 4.0).
-      </p>
+      <SourceCredits sources={pageSources.kanji} />
     </main>
   )
 }

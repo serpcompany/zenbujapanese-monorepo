@@ -6,7 +6,7 @@ import {
   fixtureSearchOrder
 } from '@/lib/dictionary/fixtures'
 import { isProductionSite } from '@/lib/site'
-import { furigana, partOfSpeechPhrase, pitchMorae, type RubySegment } from './display'
+import { furigana, partOfSpeechPhrase, pitchMorae, primaryKanji, type RubySegment } from './display'
 import type {
   EntryRecord,
   ExampleRecord,
@@ -76,11 +76,12 @@ function summarize(entry: EntryRecord): WordSummary {
 export async function getWordPage(entSeq: number): Promise<WordPageData | null> {
   const entry = entriesBySeq.get(entSeq)
   if (!entry) return null
-  const characters = [...new Set(entry.headword.match(/\p{Script=Han}/gu) ?? [])]
+  const characters = primaryKanji(entry.headword)
   return {
     ...summarize(entry),
     slug: wordSlug(entry.headword, entry.reading),
-    partOfSpeech: partOfSpeechPhrase(entry.partsOfSpeech),
+    // The first sense's word class, as the app's displayPartOfSpeech.
+    partOfSpeech: partOfSpeechPhrase(entry.senses[0]?.partsOfSpeech ?? entry.partsOfSpeech),
     pitch: entry.pitch
       ? { morae: pitchMorae(entry.reading, entry.pitch.downstep), downstep: entry.pitch.downstep }
       : null,
