@@ -133,13 +133,32 @@ if [ -z "$id" ]; then
   id=$(database_id "$name")
 fi
 
-# Keep this database and the newest other one, which the environment runs until this deploy.
-list | json "'\n'.join([d['name'] for d in sorted(data, key=lambda d: d['created_at'], reverse=True)
-  if d['name'].startswith('$prefix') and d['name'] != '$name'][1:])" |
-  while read -r old; do
-    if [ -n "$old" ]; then
+# Keep this database and the newest other complete one (with a dictionary_import row), which
+# the environment runs until this deploy. Others, including partial imports a cancelled or timed-out
+# run left behind, are deleted, so a partial database never outranks the live one.
+# Prints 1 for a complete import, 0 for a partial one (no or empty dictionary_import), and
+# anything else when it can't tell, which keeps the database.
+completed() {
+  curl -sS -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database/$1/query" \
+    -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'Content-Type: application/json' \
+    --data '{"sql": "SELECT count(*) AS n FROM dictionary_import"}' |
+    json "data['result'][0]['results'][0]['n'] if data.get('success') else
+      0 if 'no such table' in json.dumps(data.get('errors')) else 'unknown'" || echo unknown
+}
+kept=""
+list | json "'\n'.join(f\"{d['uuid']} {d['name']}\" for d in sorted(data, key=lambda d: d['created_at'], reverse=True)
+  if d['name'].startswith('$prefix') and d['name'] != '$name')" |
+  while read -r uuid old; do
+    [ -n "$old" ] || continue
+    state=$(completed "$uuid")
+    if [ "$state" = 1 ] && [ -z "$kept" ]; then
+      kept=$old
+      echo "Keeping $old"
+    elif [ "$state" = 1 ] || [ "$state" = 0 ]; then
       echo "Deleting old $old"
       wrangler d1 delete "$old" --skip-confirmation
+    else
+      echo "Keeping $old: couldn't tell whether its import completed"
     fi
   done
 
