@@ -53,6 +53,7 @@ build_inputs=(
   apps/web/src/components/dictionary/frequency.tsx
   apps/web/src/components/dictionary/sheet.tsx
   apps/web/src/components/dictionary/rendered-word.ts
+  apps/web/src/components/dictionary/rendered.ts
   apps/web/src/components/ui/badge.tsx
   apps/web/src/components/ui/button.tsx
   apps/web/src/components/ui/card.tsx
