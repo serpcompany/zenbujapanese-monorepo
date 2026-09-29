@@ -61,7 +61,7 @@ database's `input_roots` that holds it, after that root's name (such as
 `resources/Kuromoji/base.dat.gz`). `database.sh` itself is hashed with each root's directory
 written as the root's name. So moving a root's files with `git mv` and updating its paths in
 `database.sh` keeps the build ID, and no new build imports (the kept build's `dictionary_import`
-still names the old paths in `artifact` and `sources`); editing, adding, removing, or renaming
+still names the old paths in `sources`); editing, adding, removing, or renaming
 a file within a root changes it. A declared input missing at HEAD fails the script. Tests
 (`*.test.ts`, `*.test.tsx`) are left out, so changing a gate's test alone doesn't import a new
 build. Anything a gate's tests run or draw (the cores, the components a rendered-page test renders,

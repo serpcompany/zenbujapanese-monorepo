@@ -37,11 +37,13 @@ row_counts=$(local_d1 execute "$local_name" --command "SELECT json_object(${pair
   python3 -c 'import json, sys; print(json.load(sys.stdin)[0]["results"][0]["counts"])')
 
 transform=$(python3 -c "import sqlite3,sys; print(sqlite3.connect(f'file:{sys.argv[1]}?mode=ro', uri=True).execute(\"SELECT value FROM metadata WHERE key = 'transform'\").fetchone()[0])" "$source")
+# Computed on its own under set -e: inside the values below, a failing build-id.sh would record ''.
+build_id=$(scripts/release-d1/build-id.sh "$database")
 columns="artifact, sha256, transform, build_id, row_counts"
 values="$(sql_text "$(basename "$source")"),
   $(sql_text "$(sha256sum "$source" | cut -d' ' -f1)"),
   $(sql_text "$transform"),
-  $(sql_text "$(scripts/release-d1/build-id.sh "$database")"),
+  $(sql_text "$build_id"),
   $(sql_text "$row_counts")"
 if declare -F import_sources > /dev/null; then
   columns+=", sources"

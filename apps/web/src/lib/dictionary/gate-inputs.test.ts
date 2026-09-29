@@ -136,8 +136,8 @@ source_db=$resources/Reference.sqlite3
 input_roots=("resources=$resources" web=apps/web)
 build_inputs=("$source_db" "$resources/Kanji.json" apps/web/src/core.ts${extra})
 `
-  const pointer = (oid: string) =>
-    `version https://git-lfs.github.com/spec/v1\noid sha256:${oid}\nsize 1024\n`
+  const pointer = (oid: string, size = 1024) =>
+    `version https://git-lfs.github.com/spec/v1\noid sha256:${oid}\nsize ${size}\n`
 
   const scratches: string[] = []
   afterAll(() => {
@@ -203,10 +203,30 @@ build_inputs=("$source_db" "$resources/Kanji.json" apps/web/src/core.ts${extra})
     const edited = repo.id()
     expect(edited).not.toBe(before)
 
-    // A Git LFS file counts by the SHA-256 in its pointer.
+    // A Git LFS file counts by the SHA-256 in its pointer, not the pointer's blob: another size
+    // line keeps the ID, and another oid changes it.
+    repo.write('language-data/Reference.sqlite3', pointer('a'.repeat(64), 2048))
+    repo.commit()
+    expect(repo.id()).toBe(edited)
+
     repo.write('language-data/Reference.sqlite3', pointer('b'.repeat(64)))
     repo.commit()
     expect(repo.id()).not.toBe(edited)
+  })
+
+  // So an input outside every root, or one that's gone, fails here rather than in the deploy.
+  test.each(['search', 'dictionary'])('builds the %s ID from its real settings', database => {
+    const result = spawnSync(
+      'bash',
+      [join(web, scripts.slice('apps/web/'.length), 'build-id.sh'), database],
+      {
+        cwd: repo,
+        encoding: 'utf8'
+      }
+    )
+    expect(result.stderr).toBe('')
+    expect(result.status).toBe(0)
+    expect(result.stdout).toMatch(/^[0-9a-f]{12}\n$/)
   })
 
   test('fails on a declared input that does not exist', () => {
