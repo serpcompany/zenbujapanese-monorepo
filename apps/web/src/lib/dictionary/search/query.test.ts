@@ -5,6 +5,14 @@ import { isJapaneseOnly, isMixedScript, normalizeQuery, romajiDeinflectedCandida
 describe('normalizeQuery', () => {
   test('folds width and case and collapses whitespace', () => {
     expect(normalizeQuery('  Ｔａｂｅｒｕ   Ｎｏｗ ')).toBe('taberu now')
+    expect(normalizeQuery('食べ　る')).toBe('食べ る')
+  })
+
+  test('splits words where Swift does, by grapheme', () => {
+    // NFKC turns ゛ into a space and a combining mark, one grapheme that starts with whitespace.
+    expect(normalizeQuery('あ゛')).toBe('あ')
+    expect(normalizeQuery('eat\u0085now')).toBe('eat now')
+    expect(normalizeQuery('﻿taberu')).toBe('﻿taberu')
   })
 })
 

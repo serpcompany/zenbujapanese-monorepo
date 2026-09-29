@@ -3,19 +3,27 @@
 
 Reads the app's LanguageReferenceData.sqlite3 and writes only the tables Search needs, with
 FTS5 indexes in place of the app's FTS4 ones (D1 rejects FTS4). Language Reference IDs and
-semantic fingerprints become lowercase hex text.
+semantic fingerprints become lowercase hex text. `dictionary_import` records the source file's
+SHA-256, so the conformance suite can check it runs against the artifact it pins.
 
     python3 scripts/build-search-d1.py <LanguageReferenceData.sqlite3> <out.sql>
 
 Load the result into a local D1 with `scripts/load-search-d1.sh`.
 """
 
+import hashlib
 import sqlite3
 import sys
+import unicodedata
+from pathlib import Path
 
 MAX_STATEMENT_BYTES = 90_000  # D1 rejects statements over 100 KB.
 
 SCHEMA = """
+CREATE TABLE dictionary_import (
+  artifact TEXT NOT NULL,
+  sha256 TEXT NOT NULL
+);
 CREATE TABLE entries (
   id TEXT PRIMARY KEY,
   source_record_id INTEGER NOT NULL,
@@ -75,14 +83,14 @@ CREATE VIRTUAL TABLE form_chars USING fts5(
 """
 
 # The app's FTS4 tables: gloss_fts used `porter` (over the simple tokenizer) and form_fts used
-# `simple`. FTS5's `ascii` tokenizer splits and folds the same way. form_chars is new: every
-# written or reading form with a space between characters, so a phrase query finds any
-# substring, replacing the app's `instr(form, ?)` scan over every form.
+# `simple`. FTS5's `porter ascii` and `ascii` tokenizers split and fold the same way, and
+# search.ts translates the app's FTS4 query syntax. One difference remains: FTS4's porter keeps
+# only the first and last 3 characters of a token with digits that is longer than 6, so the app
+# matches some long numbers that D1 doesn't (9999999 finds 99.99999999% only in the app).
+# form_chars is new: every written or reading form with a space between characters, so a phrase
+# query finds any substring, replacing the app's `instr(form, ?)` scan over every form.
 INDEXES = """
-CREATE INDEX entries_semantic_fingerprint_index ON entries(semantic_fingerprint);
 CREATE INDEX forms_form_index ON forms(form, entry_id);
-CREATE INDEX forms_entry_index ON forms(entry_id);
-CREATE INDEX gloss_atoms_entry_index ON gloss_atoms(entry_id, sense_order);
 CREATE VIRTUAL TABLE gloss_fts USING fts5(
   normalized_text, content='gloss_atoms', content_rowid='id', tokenize='porter ascii'
 );
@@ -114,10 +122,26 @@ def write_rows(out, table, columns, rows):
         out.write(head + ",".join(batch) + ";\n")
 
 
+def file_sha256(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as file:
+        for chunk in iter(lambda: file.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def main(source, destination):
     db = sqlite3.connect(f"file:{source}?mode=ro", uri=True)
+    # Fail before writing anything when the source isn't the dictionary, such as an LFS pointer.
+    db.execute("SELECT 1 FROM entries LIMIT 1").fetchone()
     with open(destination, "w", encoding="utf-8") as out:
         out.write(SCHEMA)
+        write_rows(
+            out,
+            "dictionary_import",
+            ["artifact", "sha256"],
+            [(Path(source).name, file_sha256(source))],
+        )
         write_rows(
             out,
             "entries",
@@ -132,6 +156,22 @@ def main(source, destination):
         forms = db.execute(
             "SELECT rowid, lower(hex(entry_id)), form, kind FROM forms ORDER BY rowid"
         ).fetchall()
+        # search.ts finds nothing for a Japanese query with no character form_chars indexes, which
+        # is only right while every written or reading form is made of such characters (or spaces,
+        # which a query never keeps).
+        unindexed = {
+            character
+            for _, _, form, kind in forms
+            if kind in (0, 1)
+            for character in form
+            if unicodedata.category(character)[0] not in "LMNPSZ"
+            and unicodedata.category(character) != "Co"
+        }
+        if unindexed:
+            sys.exit(
+                "form_chars can't index these characters in forms: "
+                + ", ".join(f"U+{ord(character):04X}" for character in sorted(unindexed))
+            )
         write_rows(out, "forms", ["id", "entry_id", "form", "kind"], forms)
         write_rows(
             out,

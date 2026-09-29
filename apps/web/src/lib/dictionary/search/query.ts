@@ -18,9 +18,27 @@ export function compareStrings(lhs: string, rhs: string): number {
   return left.length - right.length
 }
 
-/** Compatibility-composed, lowercased, and with whitespace runs collapsed to one space. */
+/**
+ * Compatibility-composed, lowercased, and with whitespace runs collapsed to one space. Like
+ * Swift's `split(whereSeparator: \.isWhitespace)`, a grapheme whose first scalar is whitespace
+ * separates words and is dropped whole, so ゛ (a space and a combining mark after NFKC) goes
+ * with it, and U+FEFF, which isn't whitespace, stays.
+ */
 export function normalizeQuery(raw: string): string {
-  return raw.normalize('NFKC').toLowerCase().split(/\s+/u).filter(Boolean).join(' ')
+  const folded = raw.normalize('NFKC').toLowerCase()
+  if (/^[\x20-\x7e]*$/.test(folded)) return folded.split(' ').filter(Boolean).join(' ')
+  const words: string[] = []
+  let word = ''
+  for (const grapheme of graphemes(folded)) {
+    if (/^\p{White_Space}/u.test(grapheme)) {
+      if (word) words.push(word)
+      word = ''
+    } else {
+      word += grapheme
+    }
+  }
+  if (word) words.push(word)
+  return words.join(' ')
 }
 
 export function isASCII(value: string): boolean {

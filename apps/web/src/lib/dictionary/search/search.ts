@@ -1,8 +1,10 @@
 // Ports the retrieval in apps/ios/Modules/Sources/SearchExperience/LookupClient.swift and the
 // result composition in DictionaryEntry.swift. Results come back in dictionary order, before
 // frequency evidence reorders them, exactly as the conformance suite pins them (ADR 0006).
-// Change the Swift search and this port in the same PR (issue 481).
+// Change the Swift search and this port in the same PR (issue 481, ADR 0008).
 import { acceptsPartsOfSpeech, deinflect } from './deinflect'
+import { fts4Phrase, fts4Prefix, fts5Phrase } from './fts'
+import { lookupSegments, type MorphologyAnalyzer, type MorphologyWord } from './morphology'
 import {
   compareStrings,
   graphemes,
@@ -31,7 +33,12 @@ import {
   sameLexicalGroup
 } from './rank'
 
-/** The only database access Search needs, so it runs on D1 or any SQLite. */
+export type { MorphologyAnalyzer, MorphologyWord } from './morphology'
+
+/**
+ * The only database access Search needs, so it runs on D1 or any SQLite. Parameters bind to
+ * anonymous `?` placeholders in the order they appear.
+ */
 export interface SearchDatabase {
   all<Row>(sql: string, params: readonly (string | number)[]): Promise<Row[]>
 }
@@ -46,6 +53,27 @@ export function d1SearchDatabase(db: D1Database): SearchDatabase {
       return results
     }
   }
+}
+
+/**
+ * Capabilities a client supplies. A feature whose capability is missing is off and the rest of
+ * Search is unchanged, so a client that can't run one leaves it out (ADR 0008).
+ */
+export interface SearchCapabilities {
+  /**
+   * Sentence search: listing the words of a Japanese phrase that isn't one dictionary word, as
+   * the app's Discovered Words. The app's analyzer, Sudachi, needs a 217 MB dictionary.
+   */
+  morphology?: MorphologyAnalyzer
+}
+
+/** The features a client's capabilities turn on. */
+export interface SearchFeatures {
+  sentenceSearch: boolean
+}
+
+export function searchFeatures(capabilities: SearchCapabilities): SearchFeatures {
+  return { sentenceSearch: capabilities.morphology !== undefined }
 }
 
 export interface SearchEntry {
@@ -77,16 +105,21 @@ export interface SearchResults {
 }
 
 const resultLimit = 60
+/** D1 binds at most 100 parameters per query. */
+const maximumParameters = 100
 const FormKind = { written: 0, reading: 1, romaji: 2 } as const
 
-const emptyResults: SearchResults = {
-  items: [],
-  leadingLexicalEntryCount: 0,
-  presentation: 'ranked',
-  resolution: 'direct',
-  readingRefinement: null,
-  usesPrimaryEntryExamples: false,
-  hasExactOrPrefixMatch: false
+/** New empty results each time, so a caller that changes them can't affect later searches. */
+function noResults(): SearchResults {
+  return {
+    items: [],
+    leadingLexicalEntryCount: 0,
+    presentation: 'ranked',
+    resolution: 'direct',
+    readingRefinement: null,
+    usesPrimaryEntryExamples: false,
+    hasExactOrPrefixMatch: false
+  }
 }
 
 interface RankedEntry {
@@ -113,6 +146,12 @@ interface EntryRow {
   news_frequency_band: number | null
 }
 
+interface JapaneseRow extends EntryRow {
+  form: string
+  kind: number
+  sense_count: number
+}
+
 const entryColumns = `e.id, e.source_record_id, e.headword, e.reading, e.summary,
   e.parts_of_speech_json, e.semantic_fingerprint`
 
@@ -130,6 +169,24 @@ const readingRestrictionFilter = `(
     WHERE r.entry_id = f.entry_id AND r.reading = f.form AND r.written_form = e.headword
   )
 )`
+
+/**
+ * The forms that contain `query`, as the app's `instr(form, ?)` scan over every form finds them.
+ * form_chars narrows the scan to forms with the query's characters, and instr() keeps the app's
+ * exact semantics. Null when no form can contain the query: build-search-d1.py checks that
+ * form_chars indexes every character in a form, so a query of only other characters, such as a
+ * zero-width space, can't be in one.
+ */
+function containsFilter(query: string): { sql: string; params: string[] } | null {
+  const characters = Array.from(query).filter(character =>
+    /[\p{L}\p{M}\p{N}\p{P}\p{S}\p{Co}]/u.test(character)
+  )
+  if (characters.length === 0) return null
+  return {
+    sql: 'f.id IN (SELECT rowid FROM form_chars WHERE form_chars MATCH ?) AND instr(f.form, ?) > 0',
+    params: [fts5Phrase(characters.join(' ')), query]
+  }
+}
 
 function decodeEntry(row: EntryRow): SearchEntry {
   return {
@@ -150,9 +207,6 @@ function profile(row: EntryRow): PriorityProfile {
   }
 }
 
-const ftsPhrase = (value: string) => `"${value.replaceAll('"', '""')}"`
-const ftsPrefix = (value: string) =>
-  /^[\p{L}\p{M}\p{N}]+$/u.test(value) ? `${value}*` : ftsPhrase(value)
 const hasSearchTerms = (value: string) => /[\p{L}\p{M}\p{N}]/u.test(value)
 const escapeRegExp = (value: string) => value.replace(/[\\^$.*+?()[\]{}|/]/g, '\\$&')
 
@@ -191,7 +245,11 @@ function minimum<Value>(values: Value[], compare: (lhs: Value, rhs: Value) => nu
   return best
 }
 
-/** Collapses entries that share a semantic fingerprint into the lowest Language Reference ID. */
+/**
+ * Collapses entries that share a semantic fingerprint into the lowest Language Reference ID. The
+ * JMdict entry number comes from the entry that owns that ID, so the ID and the number always
+ * name the same entry, whatever the query or row order.
+ */
 function deduplicated(ranked: RankedEntry[]): RankedEntry[] {
   const groups = new Map<string, RankedEntry[]>()
   for (const entry of ranked) {
@@ -204,9 +262,14 @@ function deduplicated(ranked: RankedEntry[]): RankedEntry[] {
     const strongest = minimum(group, (lhs, rhs) =>
       comparePresentationRanks(lhs.presentationRank, rhs.presentationRank)
     )
-    const canonicalID = group.map(ranked => ranked.entry.id).sort(compareStrings)[0]
+    const canonical =
+      minimum(group, (lhs, rhs) => compareStrings(lhs.entry.id, rhs.entry.id)) ?? leading
     return {
-      entry: { ...leading.entry, id: canonicalID },
+      entry: {
+        ...leading.entry,
+        id: canonical.entry.id,
+        sourceRecordId: canonical.entry.sourceRecordId
+      },
       rank: leading.rank,
       hasExactOrPrefixMatch: group.some(ranked => ranked.hasExactOrPrefixMatch),
       semanticFingerprint: leading.semanticFingerprint,
@@ -214,6 +277,62 @@ function deduplicated(ranked: RankedEntry[]): RankedEntry[] {
       matchedSummary: strongest?.matchedSummary ?? null
     }
   })
+}
+
+/** Ranks the Japanese form rows that matched `query`, one result per entry. */
+function rankJapanese(query: string, rows: JapaneseRow[]): RankedEntry[] {
+  const byEntry = new Map<
+    string,
+    {
+      entry: SearchEntry
+      fingerprint: string
+      senseCount: number
+      evidence: { relation: number; form: string; profile: PriorityProfile }[]
+    }
+  >()
+  for (const row of rows) {
+    const exact = row.form === query
+    const prefix = row.form.startsWith(query)
+    const relation = (row.kind === FormKind.written ? 0 : 1) + (exact ? 0 : prefix ? 2 : 4)
+    const current = byEntry.get(row.id) ?? {
+      entry: decodeEntry(row),
+      fingerprint: row.semantic_fingerprint,
+      senseCount: row.sense_count,
+      evidence: []
+    }
+    current.evidence.push({ relation, form: row.form, profile: profile(row) })
+    byEntry.set(row.id, current)
+  }
+
+  const ranked: RankedEntry[] = []
+  for (const { entry, fingerprint, senseCount, evidence } of byEntry.values()) {
+    const selected = minimum(evidence, (lhs, rhs) => {
+      if (lhs.relation !== rhs.relation) return lhs.relation - rhs.relation
+      const profiles = compareProfiles(lhs.profile, rhs.profile)
+      return profiles || compareStrings(lhs.form, rhs.form)
+    })
+    if (!selected) continue
+    const rank: JapaneseRank = {
+      kind: 'japanese',
+      relation: selected.relation,
+      priorityProfile: selected.profile,
+      senseBreadthRank: -senseCount,
+      headwordLength: graphemes(entry.headword).length,
+      semanticFingerprint: fingerprint
+    }
+    ranked.push({
+      entry,
+      rank,
+      presentationRank: rank,
+      hasExactOrPrefixMatch: selected.relation < FormRelation.writtenContains,
+      semanticFingerprint: fingerprint,
+      matchedSummary: null
+    })
+  }
+  ranked.sort((lhs, rhs) =>
+    compareJapaneseRanks(lhs.rank as JapaneseRank, rhs.rank as JapaneseRank)
+  )
+  return deduplicated(ranked)
 }
 
 function resultItems(ranked: RankedEntry[]): SearchResultItem[] {
@@ -248,7 +367,7 @@ function composing(
     }
   }
   return {
-    ...emptyResults,
+    ...noResults(),
     items,
     leadingLexicalEntryCount: Math.min(options.leadingLexicalEntryCount, items.length),
     resolution: options.resolution ?? 'direct',
@@ -258,9 +377,14 @@ function composing(
 }
 
 export class DictionarySearch {
-  private senseRestrictionCache?: Map<string, Set<string>>
+  readonly features: SearchFeatures
 
-  constructor(private readonly db: SearchDatabase) {}
+  constructor(
+    private readonly db: SearchDatabase,
+    private readonly capabilities: SearchCapabilities = {}
+  ) {
+    this.features = searchFeatures(capabilities)
+  }
 
   /** Search the dictionary for a Japanese, kana, romaji, or English query. */
   async search(rawQuery: string): Promise<SearchResults> {
@@ -269,23 +393,24 @@ export class DictionarySearch {
       isASCII(query) && query !== '' ? (await this.rankedEnglish(query, true))[0]?.entry : undefined
     if (exactFormEntry) {
       const refinement = normalizeQuery(exactFormEntry.reading)
-      const refinedResults = await this.searchOnce(refinement)
-      let literalResults = await this.searchOnce(literalQuery(query))
-      if (refinedResults.items.length > 0 && literalResults.items.length > 0) {
-        if (literalResults.items.some(item => item.entry.id === exactFormEntry.id)) {
-          literalResults = { ...literalResults, usesPrimaryEntryExamples: true }
-        }
-        return { ...literalResults, readingRefinement: refinement }
+      const [hasRefinedResults, literalResults] = await Promise.all([
+        this.hasResults(refinement),
+        this.searchOnce(literalQuery(query))
+      ])
+      if (hasRefinedResults && literalResults.items.length > 0) {
+        const usesPrimaryEntryExamples =
+          literalResults.usesPrimaryEntryExamples ||
+          literalResults.items.some(item => item.entry.id === exactFormEntry.id)
+        return { ...literalResults, usesPrimaryEntryExamples, readingRefinement: refinement }
       }
     }
 
     const directResults = await this.searchOnce(query)
     const romajiCandidates = romajiDeinflectedCandidates(query)
     if (!directResults.hasExactOrPrefixMatch && romajiCandidates.length > 0) {
-      const deinflectedResults: SearchResults[] = []
-      for (const candidate of romajiCandidates) {
-        deinflectedResults.push(await this.searchOnce(candidate))
-      }
+      const deinflectedResults = await Promise.all(
+        romajiCandidates.map(candidate => this.searchOnce(candidate))
+      )
       const primaryIndex = deinflectedResults.findIndex(results => results.items.length > 0)
       if (primaryIndex >= 0) {
         const primary = deinflectedResults[primaryIndex]
@@ -343,8 +468,25 @@ export class DictionarySearch {
     }
     if (directResults.items.length > 0) return directResults
 
-    // The app next splits the query with its Japanese text analyzer (Sudachi); that step is
-    // not ported yet, so analyzed results fall through to the mixed-script segments.
+    // Sentence search: the app splits the query with its Japanese text analyzer and lists an
+    // entry for each word. Without that capability it finds nothing here, as in the app when
+    // its analyzer is unavailable, and the mixed-script segments below still apply.
+    const analyzed = await this.analyzedItems(query)
+    if (analyzed.length > 1 || (isMixedScript(query) && analyzed.length > 0)) {
+      return {
+        ...composing(
+          analyzed.map(item => [item]),
+          {
+            leadingLexicalEntryCount: analyzed.length,
+            usesPrimaryEntryExamples: false,
+            hasExactOrPrefixMatch: false,
+            resolution: 'analyzed',
+            limit: analyzed.length
+          }
+        ),
+        presentation: 'discoveredWords'
+      }
+    }
     if (isMixedScript(query)) {
       for (const segment of japaneseSegments(query)) {
         const results = await this.searchOnce(segment)
@@ -353,15 +495,26 @@ export class DictionarySearch {
         }
       }
     }
-    return emptyResults
+    return noResults()
+  }
+
+  /**
+   * The app binds text as C strings (`sqlite3_bind_text` with length -1), so SQLite reads each
+   * up to its first NUL. Binding the same way keeps a query that contains one in step with it.
+   */
+  private all<Row>(sql: string, params: readonly (string | number)[]): Promise<Row[]> {
+    return this.db.all<Row>(
+      sql,
+      params.map(param => (typeof param === 'string' ? param.split('\0', 1)[0] : param))
+    )
   }
 
   private async searchOnce(query: string): Promise<SearchResults> {
-    if (query === '') return emptyResults
+    if (query === '') return noResults()
     const ranked = isASCII(query)
       ? await this.rankedEnglish(query)
       : await this.rankedJapanese(query)
-    if (ranked.length === 0) return emptyResults
+    if (ranked.length === 0) return noResults()
     let leadingLexicalEntryCount = 0
     while (
       leadingLexicalEntryCount < ranked.length &&
@@ -370,23 +523,64 @@ export class DictionarySearch {
       leadingLexicalEntryCount++
     }
     return {
-      ...emptyResults,
+      ...noResults(),
       items: resultItems(ranked.slice(0, resultLimit)),
       leadingLexicalEntryCount: Math.min(leadingLexicalEntryCount, resultLimit),
       hasExactOrPrefixMatch: ranked.some(entry => entry.hasExactOrPrefixMatch)
     }
   }
 
+  /** Whether `searchOnce(query)` finds anything, without ranking every match. */
+  private async hasResults(query: string): Promise<boolean> {
+    if (query === '') return false
+    if (isASCII(query)) return (await this.searchOnce(query)).items.length > 0
+    const filter = containsFilter(query)
+    if (!filter) return false
+    const rows = await this.all(
+      `SELECT 1 FROM forms f JOIN entries e ON e.id = f.entry_id
+       WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
+         AND ${filter.sql}
+         AND ${readingRestrictionFilter}
+       LIMIT 1`,
+      filter.params
+    )
+    return rows.length > 0
+  }
+
+  /** The entry for each word the analyzer finds: the one written as that word, else the first. */
+  private async analyzedItems(query: string): Promise<SearchResultItem[]> {
+    const morphology = this.capabilities.morphology
+    if (!morphology || query === '') return []
+    let words: MorphologyWord[]
+    try {
+      words = await morphology.analyze(query)
+    } catch {
+      return [] // The app treats an analysis that fails as finding no words.
+    }
+    const segments = lookupSegments(words)
+    const results = await Promise.all(segments.map(segment => this.searchOnce(segment)))
+    return results.flatMap(({ items }, index) => {
+      const item = items.find(candidate => candidate.entry.headword === segments[index]) ?? items[0]
+      return item ? [item] : []
+    })
+  }
+
   /** Dictionary entries for kana and kanji inflections, grouped by deinflection chain length. */
   private async japaneseDeinflectedSources(query: string): Promise<SearchResultItem[][]> {
+    const candidates = deinflect(query).map(candidate => ({
+      ...candidate,
+      term: normalizeQuery(candidate.term)
+    }))
+    const matchesByTerm = await this.rankedJapaneseForms(
+      candidates.map(candidate => candidate.term)
+    )
     const sourcesByDepth = new Map<number, RankedEntry[]>()
     const seen = new Set<string>()
-    for (const candidate of deinflect(query)) {
-      const matches = (await this.rankedJapanese(normalizeQuery(candidate.term), true)).filter(
-        ranked =>
-          candidate.wordClasses.some(wordClass =>
-            acceptsPartsOfSpeech(wordClass, ranked.entry.partsOfSpeech)
-          )
+    for (const candidate of candidates) {
+      const matches = (matchesByTerm.get(candidate.term) ?? []).filter(ranked =>
+        candidate.wordClasses.some(wordClass =>
+          acceptsPartsOfSpeech(wordClass, ranked.entry.partsOfSpeech)
+        )
       )
       for (const match of matches) {
         if (seen.has(match.entry.id)) continue
@@ -401,36 +595,61 @@ export class DictionarySearch {
       .map(depth => resultItems(sourcesByDepth.get(depth) ?? []))
   }
 
+  private async rankedJapanese(query: string): Promise<RankedEntry[]> {
+    const filter = containsFilter(query)
+    return filter ? rankJapanese(query, await this.japaneseRows(filter.sql, filter.params)) : []
+  }
+
+  /** Entries with a form equal to each term, looked up together rather than one term at a time. */
+  private async rankedJapaneseForms(terms: string[]): Promise<Map<string, RankedEntry[]>> {
+    const distinct = [...new Set(terms)].filter(term => term !== '')
+    const batches: string[][] = []
+    for (let start = 0; start < distinct.length; start += maximumParameters) {
+      batches.push(distinct.slice(start, start + maximumParameters))
+    }
+    const rowsByTerm = new Map<string, JapaneseRow[]>()
+    const rows = await Promise.all(
+      batches.map(batch =>
+        this.japaneseRows(`f.form IN (${batch.map(() => '?').join(', ')})`, batch)
+      )
+    )
+    for (const row of rows.flat()) {
+      const termRows = rowsByTerm.get(row.form) ?? []
+      termRows.push(row)
+      rowsByTerm.set(row.form, termRows)
+    }
+    return new Map(distinct.map(term => [term, rankJapanese(term, rowsByTerm.get(term) ?? [])]))
+  }
+
+  private japaneseRows(where: string, params: readonly string[]): Promise<JapaneseRow[]> {
+    return this.all<JapaneseRow>(
+      `SELECT ${entryColumns}, f.form, f.kind,
+         (SELECT count(*) FROM canonical_senses s WHERE s.entry_id = e.id) AS sense_count,
+         p.primary_mask, p.secondary_mask, p.news_frequency_band
+       FROM forms f
+       JOIN entries e ON e.id = f.entry_id
+       LEFT JOIN form_priority_profiles p
+         ON p.entry_id = f.entry_id AND p.form = f.form AND p.kind = f.kind
+       WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
+         AND ${where}
+         AND ${readingRestrictionFilter}`,
+      params
+    )
+  }
+
   private async rankedEnglish(query: string, exactFormOnly = false): Promise<RankedEntry[]> {
-    if (!exactFormOnly && !hasSearchTerms(query)) return []
-    const glossMatches = exactFormOnly ? new Map() : await this.glossEvidence(query)
-    const romajiMatches = await this.romajiEvidence(query, exactFormOnly)
-    const rows = exactFormOnly
-      ? await this.db.all<EntryRow>(
-          `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
-           FROM forms f JOIN entries e ON e.id = f.entry_id ${displayedFormProfileJoin}
-           WHERE f.kind = ${FormKind.romaji} AND f.form = ?`,
-          [query]
-        )
-      : await this.db.all<EntryRow>(
-          `WITH candidates AS (
-             SELECT g.entry_id FROM gloss_fts x JOIN gloss_atoms g ON g.id = x.rowid
-             WHERE gloss_fts MATCH ?
-             UNION
-             SELECT f.entry_id FROM romaji_fts x JOIN forms f ON f.id = x.rowid
-             WHERE romaji_fts MATCH ? AND f.kind = ${FormKind.romaji}
-           )
-           SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
-           FROM candidates c JOIN entries e ON e.id = c.entry_id ${displayedFormProfileJoin}`,
-          [ftsPhrase(query), ftsPrefix(query)]
-        )
+    const evidence = exactFormOnly
+      ? await this.exactRomajiEvidence(query)
+      : await this.englishEvidence(query)
+    if (!evidence) return []
+    const { rows, glossMatches, romajiMatches } = evidence
 
     const ranked: RankedEntry[] = []
     for (const row of rows) {
       const entry = decodeEntry(row)
       const displayedFormPriority = profile(row)
-      const gloss: GlossEvidence[] = glossMatches.get(entry.id) ?? []
-      const romaji: number[] = romajiMatches.get(entry.id) ?? []
+      const gloss = glossMatches.get(entry.id) ?? []
+      const romaji = romajiMatches.get(entry.id) ?? []
       const selectedGloss = minimum(gloss, glossEvidencePrecedes)
       const shared = {
         priorityPresenceRank: isMarked(displayedFormPriority) ? 0 : 1,
@@ -493,31 +712,91 @@ export class DictionarySearch {
     return deduplicated(ranked)
   }
 
-  private async glossEvidence(query: string): Promise<Map<string, GlossEvidence[]>> {
-    const restrictions = await this.senseRestrictions()
-    const rows = await this.db.all<{
+  /** Entries with a romaji form equal to `query`, the only evidence exact lookups use. */
+  private async exactRomajiEvidence(query: string) {
+    const rows = await this.all<EntryRow>(
+      `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
+       FROM forms f JOIN entries e ON e.id = f.entry_id ${displayedFormProfileJoin}
+       WHERE f.kind = ${FormKind.romaji} AND f.form = ?`,
+      [query]
+    )
+    return {
+      rows,
+      glossMatches: new Map<string, GlossEvidence[]>(),
+      romajiMatches: new Map<string, number[]>(rows.map(row => [row.id, [RomajiRelation.exact]]))
+    }
+  }
+
+  /** Entries whose English meanings or romaji forms match `query`, with that evidence. */
+  private async englishEvidence(query: string) {
+    if (!hasSearchTerms(query)) return null
+    const glossMatch = fts4Phrase(query)
+    const romajiMatch = fts4Prefix(query)
+    const candidates: string[] = []
+    const params: string[] = []
+    if (glossMatch !== null) {
+      candidates.push(
+        'SELECT g.entry_id FROM gloss_fts x JOIN gloss_atoms g ON g.id = x.rowid WHERE gloss_fts MATCH ?'
+      )
+      params.push(glossMatch)
+    }
+    if (romajiMatch !== null) {
+      candidates.push(
+        `SELECT f.entry_id FROM romaji_fts x JOIN forms f ON f.id = x.rowid
+         WHERE romaji_fts MATCH ? AND f.kind = ${FormKind.romaji}`
+      )
+      params.push(romajiMatch)
+    }
+    if (candidates.length === 0) return null
+    const [rows, glossMatches, romajiMatches] = await Promise.all([
+      this.all<EntryRow>(
+        `WITH candidates AS (${candidates.join(' UNION ')})
+         SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
+         FROM candidates c JOIN entries e ON e.id = c.entry_id ${displayedFormProfileJoin}`,
+        params
+      ),
+      glossMatch === null
+        ? new Map<string, GlossEvidence[]>()
+        : this.glossEvidence(query, glossMatch),
+      romajiMatch === null ? new Map<string, number[]>() : this.romajiEvidence(query, romajiMatch)
+    ])
+    return { rows, glossMatches, romajiMatches }
+  }
+
+  private async glossEvidence(query: string, match: string): Promise<Map<string, GlossEvidence[]>> {
+    // A sense restricted to some written forms or readings applies only when the entry is shown
+    // with one of them.
+    const rows = await this.all<{
       entry_id: string
       sense_order: number
       gloss_order: number
       text: string
       headword: string
       reading: string
+      written_forms: string
+      readings: string
     }>(
-      `SELECT g.entry_id, g.sense_order, g.gloss_order, g.text, e.headword, e.reading
+      `SELECT g.entry_id, g.sense_order, g.gloss_order, g.text, e.headword, e.reading,
+         (SELECT json_group_array(r.form) FROM sense_form_restrictions r
+          WHERE r.entry_id = g.entry_id AND r.sense_order = g.sense_order
+            AND r.kind = ${FormKind.written}) AS written_forms,
+         (SELECT json_group_array(r.form) FROM sense_form_restrictions r
+          WHERE r.entry_id = g.entry_id AND r.sense_order = g.sense_order
+            AND r.kind = ${FormKind.reading}) AS readings
        FROM gloss_fts x
        JOIN gloss_atoms g ON g.id = x.rowid
        JOIN canonical_senses s ON s.entry_id = g.entry_id AND s.sense_order = g.sense_order
        JOIN entries e ON e.id = g.entry_id
        WHERE gloss_fts MATCH ?`,
-      [ftsPhrase(query)]
+      [match]
     )
     const token = new RegExp(`(?:^|[^a-z])${escapeRegExp(query)}(?:$|[^a-z])`, 'u')
     const result = new Map<string, GlossEvidence[]>()
     for (const row of rows) {
-      const written = restrictions.get(`${row.entry_id}|${row.sense_order}|${FormKind.written}`)
-      const reading = restrictions.get(`${row.entry_id}|${row.sense_order}|${FormKind.reading}`)
-      if (written && !written.has(normalizeQuery(row.headword))) continue
-      if (reading && !reading.has(normalizeQuery(row.reading))) continue
+      const writtenForms: string[] = JSON.parse(row.written_forms)
+      const readings: string[] = JSON.parse(row.readings)
+      if (writtenForms.length > 0 && !writtenForms.includes(normalizeQuery(row.headword))) continue
+      if (readings.length > 0 && !readings.includes(normalizeQuery(row.reading))) continue
       const relation = glossRelation(query, row.text, token)
       if (relation === null) continue
       const evidence = result.get(row.entry_id) ?? []
@@ -532,17 +811,12 @@ export class DictionarySearch {
     return result
   }
 
-  private async romajiEvidence(query: string, exactFormOnly: boolean) {
-    const rows = exactFormOnly
-      ? await this.db.all<{ entry_id: string; form: string }>(
-          `SELECT entry_id, form FROM forms WHERE kind = ${FormKind.romaji} AND form = ?`,
-          [query]
-        )
-      : await this.db.all<{ entry_id: string; form: string }>(
-          `SELECT f.entry_id, f.form FROM romaji_fts x JOIN forms f ON f.id = x.rowid
-           WHERE romaji_fts MATCH ? AND f.kind = ${FormKind.romaji}`,
-          [ftsPrefix(query)]
-        )
+  private async romajiEvidence(query: string, match: string): Promise<Map<string, number[]>> {
+    const rows = await this.all<{ entry_id: string; form: string }>(
+      `SELECT f.entry_id, f.form FROM romaji_fts x JOIN forms f ON f.id = x.rowid
+       WHERE romaji_fts MATCH ? AND f.kind = ${FormKind.romaji}`,
+      [match]
+    )
     const result = new Map<string, number[]>()
     for (const row of rows) {
       const relation =
@@ -556,106 +830,5 @@ export class DictionarySearch {
       result.set(row.entry_id, relations)
     }
     return result
-  }
-
-  private async rankedJapanese(query: string, exactFormOnly = false): Promise<RankedEntry[]> {
-    // The app scans every form with instr(); form_chars is an index of forms split into
-    // characters, so a phrase query finds the same substrings. The instr() check below keeps
-    // the app's exact semantics.
-    const characters = Array.from(query).filter(character =>
-      /[\p{L}\p{M}\p{N}\p{P}\p{S}\p{Co}]/u.test(character)
-    )
-    const candidates = exactFormOnly
-      ? 'f.form = ?1'
-      : characters.length > 0
-        ? `f.id IN (SELECT rowid FROM form_chars WHERE form_chars MATCH ?2) AND instr(f.form, ?1) > 0`
-        : 'instr(f.form, ?1) > 0'
-    const params: (string | number)[] = [query]
-    if (!exactFormOnly && characters.length > 0) params.push(ftsPhrase(characters.join(' ')))
-    const rows = await this.db.all<EntryRow & { form: string; kind: number; sense_count: number }>(
-      `SELECT ${entryColumns}, f.form, f.kind,
-         (SELECT count(*) FROM canonical_senses s WHERE s.entry_id = e.id) AS sense_count,
-         p.primary_mask, p.secondary_mask, p.news_frequency_band
-       FROM forms f
-       JOIN entries e ON e.id = f.entry_id
-       LEFT JOIN form_priority_profiles p
-         ON p.entry_id = f.entry_id AND p.form = f.form AND p.kind = f.kind
-       WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
-         AND ${candidates}
-         AND ${readingRestrictionFilter}`,
-      params
-    )
-
-    const byEntry = new Map<
-      string,
-      {
-        entry: SearchEntry
-        fingerprint: string
-        senseCount: number
-        evidence: { relation: number; form: string; profile: PriorityProfile }[]
-      }
-    >()
-    for (const row of rows) {
-      const exact = row.form === query
-      const prefix = row.form.startsWith(query)
-      const relation = (row.kind === FormKind.written ? 0 : 1) + (exact ? 0 : prefix ? 2 : 4)
-      const current = byEntry.get(row.id) ?? {
-        entry: decodeEntry(row),
-        fingerprint: row.semantic_fingerprint,
-        senseCount: row.sense_count,
-        evidence: []
-      }
-      current.evidence.push({ relation, form: row.form, profile: profile(row) })
-      byEntry.set(row.id, current)
-    }
-
-    const ranked: RankedEntry[] = []
-    for (const { entry, fingerprint, senseCount, evidence } of byEntry.values()) {
-      const selected = minimum(evidence, (lhs, rhs) => {
-        if (lhs.relation !== rhs.relation) return lhs.relation - rhs.relation
-        const profiles = compareProfiles(lhs.profile, rhs.profile)
-        return profiles || compareStrings(lhs.form, rhs.form)
-      })
-      if (!selected) continue
-      const rank: JapaneseRank = {
-        kind: 'japanese',
-        relation: selected.relation,
-        priorityProfile: selected.profile,
-        senseBreadthRank: -senseCount,
-        headwordLength: graphemes(entry.headword).length,
-        semanticFingerprint: fingerprint
-      }
-      ranked.push({
-        entry,
-        rank,
-        presentationRank: rank,
-        hasExactOrPrefixMatch: selected.relation < FormRelation.writtenContains,
-        semanticFingerprint: fingerprint,
-        matchedSummary: null
-      })
-    }
-    ranked.sort((lhs, rhs) =>
-      compareJapaneseRanks(lhs.rank as JapaneseRank, rhs.rank as JapaneseRank)
-    )
-    return deduplicated(ranked)
-  }
-
-  private async senseRestrictions(): Promise<Map<string, Set<string>>> {
-    if (this.senseRestrictionCache) return this.senseRestrictionCache
-    const rows = await this.db.all<{
-      entry_id: string
-      sense_order: number
-      kind: number
-      form: string
-    }>('SELECT entry_id, sense_order, kind, form FROM sense_form_restrictions', [])
-    const restrictions = new Map<string, Set<string>>()
-    for (const row of rows) {
-      const key = `${row.entry_id}|${row.sense_order}|${row.kind}`
-      const forms = restrictions.get(key) ?? new Set<string>()
-      forms.add(row.form)
-      restrictions.set(key, forms)
-    }
-    this.senseRestrictionCache = restrictions
-    return restrictions
   }
 }

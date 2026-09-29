@@ -47,3 +47,4 @@ next-env.d.ts
 
 # local dictionary search D1 (scripts/load-search-d1.sh)
 /.search-d1/
+/.search-d1.building/

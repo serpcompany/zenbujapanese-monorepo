@@ -35,16 +35,27 @@ lists every child sitemap and each child sitemap lists the new URLs.
 `src/lib/dictionary/search/` ports the app's Search retrieval to TypeScript and runs on D1. It
 must return what the app returns: the ADR 0006 conformance suite
 (`apps/ios/LanguageData/Conformance/search-retrieval.json`) checks it. To run the suite, load the
-search tables into a local D1 at `.search-d1/` (about 20 seconds), then run the tests:
+search tables into a local D1 at `.search-d1/` (about a minute), then run the tests:
 
 ```sh
-scripts/load-search-d1.sh
+scripts/load-search-d1.sh [path/to/LanguageReferenceData.sqlite3]
 ZENBU_SEARCH_D1=1 pnpm test
 ```
 
+The load script defaults to the app's bundled database and replaces `.search-d1/` only after a
+build succeeds. The suite stops at once when `.search-d1/` wasn't built from the artifact it pins.
+Without `ZENBU_SEARCH_D1=1`, `pnpm test` skips the suite.
+
 `scripts/build-search-d1.py` defines the search tables. D1 rejects the app's FTS4 indexes, so
-they are FTS5, and `form_chars` indexes Japanese forms by character in place of the app's scan
-over every form. Without `ZENBU_SEARCH_D1=1`, `pnpm test` skips the suite.
+they are FTS5. `fts.ts` translates the app's FTS4 queries so both match the same rows, and
+`form_chars` indexes Japanese forms by character in place of the app's scan over every form. One
+difference remains: FTS4's stemmer shortens long numbers, so the app finds glosses for a query
+such as 9999999 that the website doesn't.
+
+The search core takes capabilities a client supplies (ADR 0008). The website, configured in
+`website.ts`, supplies none, so it has no sentence search. Like the app, `search()` throws when
+the database fails or an English query can't be read as full text, such as one with a NUL, so a
+search page shows a thrown search as no results.
 
 ## Environments and deploys
 

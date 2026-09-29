@@ -231,7 +231,8 @@ export function deinflect(text: string): Deinflection[] {
         const key = `${base}|${[...rule.output].sort().join(',')}`
         if (base === text || seen.has(key)) continue
         seen.add(key)
-        results.push({ term: base, wordClasses: rule.output, depth })
+        // A copy, so a caller that changes it can't change the rule for later searches.
+        results.push({ term: base, wordClasses: [...rule.output], depth })
         next.push({ term: base, classes: rule.output })
         if (rule.output.includes('suru') && base.endsWith('する') && length(base) > 2) {
           results.push({ term: base.slice(0, -2), wordClasses: ['suruNoun'], depth })
