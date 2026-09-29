@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths:
       - apps/web/**
+      - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3
       - .github/workflows/web-deploy.yml
   workflow_dispatch:
 
@@ -43,6 +44,14 @@ jobs:
           cache: pnpm
           cache-dependency-path: apps/web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - name: Import the search database
+        # Reuses the database when this build's already imported and verified (seconds);
+        # otherwise imports a new one (about 20 minutes). See docs/agents/web.md.
+        run: scripts/search-d1/ensure-release.sh staging
+      - name: Bind the search database
+        run: |
+          sed -i "s/\"SEARCH_DB_NAME\"/\"$SEARCH_DB_NAME\"/; s/\"SEARCH_DB_ID\"/\"$SEARCH_DB_ID\"/" wrangler.jsonc
+          grep -q "\"$SEARCH_DB_ID\"" wrangler.jsonc
       - run: pnpm db:migrate:staging
       - name: Deploy
         run: pnpm deploy:staging 2>&1 | tee deploy.log
