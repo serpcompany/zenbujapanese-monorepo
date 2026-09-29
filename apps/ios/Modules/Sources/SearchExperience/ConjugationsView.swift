@@ -169,31 +169,40 @@ struct ConjugatedFormView: View {
     .navigationBarTitleDisplayMode(.inline)
     .accessibilityIdentifier("conjugations.form.\(form.id.rawValue)")
     .task(id: form) {
-      examples = await loadExamples()
+      examples = await form.examples(
+        exampleSentenceClient: exampleSentenceClient,
+        japaneseTextAnalysisClient: japaneseTextAnalysisClient
+      )
       isLoadingExamples = false
     }
   }
 
   private var sharedSpellings: [String] { table.sharedSpellings(of: form, in: mode) }
+}
 
+// The conjugation screens' words and examples, shared by the views and the word-detail
+// conformance suite, so the website's conjugation screens are held to the app's (see also
+// apps/web/src/lib/dictionary/detail/conjugation.ts, and apps/web/scripts/release-d1/dictionary/
+// build-examples.mts, which precomputes each form's examples).
+
+extension ConjugatedForm {
   /// Every retrieved Example Sentence in which the parser reads this exact form as one word,
   /// in retrieval order. Word boundaries come from the same inflection grouping linked text
   /// uses, so 見たかった (wanted to see) and 見た目 (appearance) are not examples of past 見た.
-  private func loadExamples() async -> [ExampleSentence] {
-    let sentences = (try? await exampleSentenceClient.search(SearchQuery(form.surface))) ?? []
+  func examples(
+    exampleSentenceClient: ExampleSentenceClient,
+    japaneseTextAnalysisClient: JapaneseTextAnalysisClient
+  ) async -> [ExampleSentence] {
+    let sentences = (try? await exampleSentenceClient.search(SearchQuery(surface))) ?? []
     var examples: [ExampleSentence] = []
-    for sentence in sentences where sentence.japanese.contains(form.surface) {
-      if await japaneseTextAnalysisClient.words(sentence.japanese).contains(form.surface) {
+    for sentence in sentences where sentence.japanese.contains(surface) {
+      if await japaneseTextAnalysisClient.words(sentence.japanese).contains(surface) {
         examples.append(sentence)
       }
     }
     return examples
   }
 }
-
-// The conjugation screens' words, shared by the views and the word-detail conformance suite, so
-// the website's conjugation table is held to the app's (see also
-// apps/web/src/lib/dictionary/detail/conjugation.ts).
 
 extension ConjugationTable {
   /// Other forms in `mode` with the same spelling as `form`, such as potential and passive
