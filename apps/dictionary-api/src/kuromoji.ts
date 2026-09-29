@@ -1,7 +1,7 @@
-// The app's Kuromoji tokenizer in Node, for the import (never the Worker): the same kuromoji.js
-// build and IPADIC files the app bundles (SearchExperience/Resources/Kuromoji), each pinned by
-// SHA-256, loaded through the app's XMLHttpRequest shim (KuromojiMorphologyClient.swift) in a
-// bare V8 context, as the app runs them in a bare JavaScriptCore one.
+// The app's Kuromoji tokenizer in Node, the dictionary core's `tokenize` capability: the same
+// kuromoji.js build and IPADIC files the app bundles (SearchExperience/Resources/Kuromoji), each
+// pinned by SHA-256, loaded through the app's XMLHttpRequest shim (KuromojiMorphologyClient.swift)
+// in a bare V8 context, as the app runs them in a bare JavaScriptCore one.
 // Change the Swift and this port in the same PR, and re-record the word-detail suite; the
 // Search parity workflow checks that both change (issue 464).
 
@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import vm from 'node:vm'
-import type { KuromojiToken } from '@zenbu/dictionary-core/examples/morphology'
+import type { KuromojiToken, Tokenize } from '@zenbu/dictionary-core/examples/morphology'
 
 /**
  * KuromojiContract's engine and dictionary files, by SHA-256 (as the word-detail conformance
@@ -61,8 +61,6 @@ kuromoji.builder({ dicPath: 'bundle://' }).build((error, tokenizer) => {
   __zenbuKuromojiTokenizer = tokenizer;
 });
 `
-
-export type Tokenize = (text: string) => KuromojiToken[]
 
 /**
  * Loads the tokenizer from `directory` (the app's Resources/Kuromoji). Throws when a file is

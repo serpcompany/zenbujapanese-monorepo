@@ -1,5 +1,6 @@
 packages:
   - apps/web
+  - apps/dictionary-api
   - packages/*
 
 ignoredBuiltDependencies:

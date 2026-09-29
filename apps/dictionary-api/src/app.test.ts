@@ -1,0 +1,121 @@
+import { describe, expect, test, vi } from 'vitest'
+import { createApp } from './app'
+import type { DictionaryService } from './service'
+
+const token = 'test-token-0123456789'
+const info = {
+  build: 'e13452e70d34-test',
+  artifact: { name: 'LanguageReferenceData.sqlite3', sha256: 'e13452e70d34' },
+  features: { sentenceSearch: true }
+}
+
+/** A service whose every call resolves to a recognizable value. */
+function fakeService(overrides: Partial<DictionaryService> = {}): DictionaryService {
+  return {
+    info: async () => info,
+    search: async query => ({ screen: { state: 'noResults', query }, kanjiHasPage: false }),
+    searchExamples: async () => null,
+    word: async entSeq => (entSeq === 1358280 ? ({ slug: '食べる' } as never) : null),
+    wordExamples: async () => ({ rows: [], slugs: {} }),
+    conjugationExamples: async () => ({ rows: [], slugs: {} }),
+    kanji: async character => (character === '要' ? ({ indexable: true } as never) : null),
+    wordSitemaps: async () => [],
+    sitemapWords: async () => null,
+    indexableKanji: async () => ['要'],
+    retired: async () => ({}),
+    ...overrides
+  }
+}
+
+function app(service = fakeService(), ready = true) {
+  vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+  vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+  return createApp({ service, token, ready: () => ready })
+}
+
+const get = (path: string, auth = `Bearer ${token}`) =>
+  new Request(`http://localhost${path}`, { headers: auth ? { authorization: auth } : {} })
+
+describe('/healthz', () => {
+  test('answers 503 until every worker has loaded, then ok with the build', async () => {
+    expect((await app(fakeService(), false).request(get('/healthz', ''))).status).toBe(503)
+    const response = await app().request(get('/healthz', ''))
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({
+      status: 'ok',
+      build: info.build,
+      features: info.features
+    })
+  })
+})
+
+describe('/v1 needs the token', () => {
+  test.each([
+    ['no header', ''],
+    ['another token', 'Bearer not-the-token-0123456'],
+    ['the token without Bearer and a character more', `${token}x`]
+  ])('refuses %s', async (_, header) => {
+    const response = await app().request(get('/v1/info', header))
+    expect(response.status).toBe(401)
+  })
+
+  test('answers with it, naming the build', async () => {
+    const response = await app().request(get('/v1/info'))
+    expect(response.status).toBe(200)
+    expect(response.headers.get('x-dictionary-build')).toBe(info.build)
+    expect(await response.json()).toEqual(info)
+  })
+
+  test('answers 503 while starting, even with the token', async () => {
+    expect((await app(fakeService(), false).request(get('/v1/info'))).status).toBe(503)
+  })
+})
+
+describe('routes', () => {
+  test('passes the decoded query to search', async () => {
+    const search = vi.fn(fakeService().search)
+    await app(fakeService({ search })).request(get(`/v1/search/${encodeURIComponent('食べる')}`))
+    expect(search).toHaveBeenCalledWith('食べる')
+  })
+
+  test('404s a word or kanji the artifact lacks, and answers one it holds', async () => {
+    expect((await app().request(get('/v1/words/9'))).status).toBe(404)
+    expect((await app().request(get('/v1/words/1358280'))).status).toBe(200)
+    expect((await app().request(get(`/v1/kanji/${encodeURIComponent('生')}`))).status).toBe(404)
+    expect((await app().request(get(`/v1/kanji/${encodeURIComponent('要')}`))).status).toBe(200)
+  })
+
+  test.each([
+    ['a word number that is not a number', '/v1/words/abc'],
+    ['word number 0', '/v1/words/0'],
+    ['a kanji of two characters', `/v1/kanji/${encodeURIComponent('要る')}`],
+    ['an examples offset past the 100 listed', '/v1/words/1358280/examples?from=100'],
+    ['a query over 200 characters', `/v1/search/${'a'.repeat(201)}`]
+  ])('400s %s', async (_, path) => {
+    expect((await app().request(get(path))).status).toBe(400)
+  })
+
+  test('passes the examples offset on', async () => {
+    const wordExamples = vi.fn(fakeService().wordExamples)
+    await app(fakeService({ wordExamples })).request(get('/v1/words/1358280/examples?from=25'))
+    expect(wordExamples).toHaveBeenCalledWith(1358280, 25)
+  })
+
+  test('answers 500 without detail when the dictionary fails, and logs it', async () => {
+    const failing = app(
+      fakeService({
+        search: async () => {
+          throw new Error('database is locked')
+        }
+      })
+    )
+    const response = await failing.request(get('/v1/search/x'))
+    expect(response.status).toBe(500)
+    expect(await response.json()).toEqual({ error: 'internal error' })
+    expect(process.stderr.write).toHaveBeenCalledWith(expect.stringContaining('database is locked'))
+  })
+
+  test('404s an unknown route', async () => {
+    expect((await app().request(get('/v1/nothing'))).status).toBe(404)
+  })
+})
