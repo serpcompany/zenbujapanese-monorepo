@@ -1,13 +1,14 @@
 // Ports the retrieval in apps/ios/Modules/Sources/SearchExperience/LookupClient.swift and the
-// result composition in DictionaryEntry.swift. Results come back in dictionary order, before
-// frequency evidence reorders them, exactly as the conformance suite pins them (ADR 0006).
+// result composition in DictionaryEntry.swift, running the app's own queries on the artifact
+// (ADR 0009). Results come back in dictionary order, before frequency evidence reorders them,
+// exactly as the conformance suite pins them (ADR 0006).
 // Change the Swift search and this port in the same PR (issue 481, ADR 0008).
+import { graphemeCount } from '../detail/text'
 import { acceptsPartsOfSpeech, deinflect } from './deinflect'
-import { fts4Phrase, fts4Prefix, fts5Phrase } from './fts'
+import { ftsPhrase, ftsPrefix } from './fts'
 import { lookupSegments, type MorphologyAnalyzer, type MorphologyWord } from './morphology'
 import {
   compareStrings,
-  graphemes,
   isASCII,
   isJapaneseOnly,
   isMixedScript,
@@ -36,8 +37,8 @@ import {
 export type { MorphologyAnalyzer, MorphologyWord } from './morphology'
 
 /**
- * The only database access Search needs, so it runs on D1 or any SQLite. Parameters bind to
- * anonymous `?` placeholders in the order they appear.
+ * The only database access Search needs: the artifact, in any SQLite (../artifact/database.ts).
+ * Parameters bind to anonymous `?` placeholders in the order they appear.
  */
 export interface SearchDatabase {
   all<Row>(sql: string, params: readonly (string | number)[]): Promise<Row[]>
@@ -93,7 +94,7 @@ export interface SearchResults {
 }
 
 const resultLimit = 60
-/** D1 binds at most 100 parameters per query. */
+/** Exact forms are looked up at most this many to a query. */
 const maximumParameters = 100
 const FormKind = { written: 0, reading: 1, romaji: 2 } as const
 
@@ -140,8 +141,8 @@ export interface JapaneseRow extends EntryRow {
   sense_count: number
 }
 
-const entryColumns = `e.id, e.source_record_id, e.headword, e.reading, e.summary,
-  e.parts_of_speech_json, e.semantic_fingerprint`
+const entryColumns = `lower(hex(e.id)) AS id, e.source_record_id, e.headword, e.reading,
+  e.summary, e.parts_of_speech_json, lower(hex(e.semantic_fingerprint)) AS semantic_fingerprint`
 
 const displayedFormProfileJoin = `LEFT JOIN form_priority_profiles p
   ON p.entry_id = e.id AND p.form = e.headword
@@ -158,22 +159,9 @@ const readingRestrictionFilter = `(
   )
 )`
 
-/**
- * The forms that contain `query`, as the app's `instr(form, ?)` scan over every form finds them.
- * form_chars narrows the scan to forms with the query's characters, and instr() keeps the app's
- * exact semantics. Null when no form can contain the query:
- * scripts/release-d1/search/build-rows.py checks that form_chars indexes every character in a
- * form, so a query of only other characters, such as a zero-width space, can't be in one.
- */
-function containsFilter(query: string): { sql: string; params: string[] } | null {
-  const characters = Array.from(query).filter(character =>
-    /[\p{L}\p{M}\p{N}\p{P}\p{S}\p{Co}]/u.test(character)
-  )
-  if (characters.length === 0) return null
-  return {
-    sql: 'f.id IN (SELECT rowid FROM form_chars WHERE form_chars MATCH ?) AND instr(f.form, ?) > 0',
-    params: [fts5Phrase(characters.join(' ')), query]
-  }
+/** The forms that contain `query`: the app's `instr(form, ?)` scan over every form. */
+function containsFilter(query: string): { sql: string; params: string[] } {
+  return { sql: 'instr(f.form, ?) > 0', params: [query] }
 }
 
 function decodeEntry(row: EntryRow): SearchEntry {
@@ -305,7 +293,7 @@ export function rankJapanese(query: string, rows: JapaneseRow[]): RankedEntry[] 
       relation: selected.relation,
       priorityProfile: selected.profile,
       senseBreadthRank: -senseCount,
-      headwordLength: graphemes(entry.headword).length,
+      headwordLength: graphemeCount(entry.headword),
       semanticFingerprint: fingerprint
     }
     ranked.push({
@@ -523,7 +511,6 @@ export class DictionarySearch {
     if (query === '') return false
     if (isASCII(query)) return (await this.searchOnce(query)).items.length > 0
     const filter = containsFilter(query)
-    if (!filter) return false
     const rows = await this.all(
       `SELECT 1 FROM forms f JOIN entries e ON e.id = f.entry_id
        WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
@@ -585,7 +572,7 @@ export class DictionarySearch {
 
   private async rankedJapanese(query: string): Promise<RankedEntry[]> {
     const filter = containsFilter(query)
-    return filter ? rankJapanese(query, await this.japaneseRows(filter.sql, filter.params)) : []
+    return rankJapanese(query, await this.japaneseRows(filter.sql, filter.params))
   }
 
   /** Entries with a form equal to each term, looked up together rather than one term at a time. */
@@ -642,7 +629,7 @@ export class DictionarySearch {
       const shared = {
         priorityPresenceRank: isMarked(displayedFormPriority) ? 0 : 1,
         priorityProfile: displayedFormPriority,
-        headwordLength: graphemes(entry.headword).length,
+        headwordLength: graphemeCount(entry.headword),
         semanticFingerprint: row.semantic_fingerprint
       }
       if (!selectedGloss) {
@@ -718,35 +705,23 @@ export class DictionarySearch {
   /** Entries whose English meanings or romaji forms match `query`, with that evidence. */
   private async englishEvidence(query: string) {
     if (!hasSearchTerms(query)) return null
-    const glossMatch = fts4Phrase(query)
-    const romajiMatch = fts4Prefix(query)
-    const candidates: string[] = []
-    const params: string[] = []
-    if (glossMatch !== null) {
-      candidates.push(
-        'SELECT g.entry_id FROM gloss_fts x JOIN gloss_atoms g ON g.id = x.rowid WHERE gloss_fts MATCH ?'
-      )
-      params.push(glossMatch)
-    }
-    if (romajiMatch !== null) {
-      candidates.push(
-        `SELECT f.entry_id FROM romaji_fts x JOIN forms f ON f.id = x.rowid
-         WHERE romaji_fts MATCH ? AND f.kind = ${FormKind.romaji}`
-      )
-      params.push(romajiMatch)
-    }
-    if (candidates.length === 0) return null
+    const glossMatch = ftsPhrase(query)
+    const romajiMatch = ftsPrefix(query)
     const [rows, glossMatches, romajiMatches] = await Promise.all([
       this.all<EntryRow>(
-        `WITH candidates AS (${candidates.join(' UNION ')})
+        `WITH candidates AS (
+           SELECT g.entry_id FROM dictionary_gloss_fts x JOIN gloss_atoms g ON g.rowid = x.docid
+           WHERE dictionary_gloss_fts MATCH ?
+           UNION
+           SELECT f.entry_id FROM dictionary_form_fts x JOIN forms f ON f.rowid = x.docid
+           WHERE dictionary_form_fts MATCH ? AND f.kind = ${FormKind.romaji}
+         )
          SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
          FROM candidates c JOIN entries e ON e.id = c.entry_id ${displayedFormProfileJoin}`,
-        params
+        [glossMatch, romajiMatch]
       ),
-      glossMatch === null
-        ? new Map<string, GlossEvidence[]>()
-        : this.glossEvidence(query, glossMatch),
-      romajiMatch === null ? new Map<string, number[]>() : this.romajiEvidence(query, romajiMatch)
+      this.glossEvidence(query, glossMatch),
+      this.romajiEvidence(query, romajiMatch)
     ])
     return { rows, glossMatches, romajiMatches }
   }
@@ -764,18 +739,19 @@ export class DictionarySearch {
       written_forms: string
       readings: string
     }>(
-      `SELECT g.entry_id, g.sense_order, g.gloss_order, g.text, e.headword, e.reading,
+      `SELECT lower(hex(g.entry_id)) AS entry_id, g.sense_order, g.gloss_order, g.text,
+         e.headword, e.reading,
          (SELECT json_group_array(r.form) FROM sense_form_restrictions r
           WHERE r.entry_id = g.entry_id AND r.sense_order = g.sense_order
             AND r.kind = ${FormKind.written}) AS written_forms,
          (SELECT json_group_array(r.form) FROM sense_form_restrictions r
           WHERE r.entry_id = g.entry_id AND r.sense_order = g.sense_order
             AND r.kind = ${FormKind.reading}) AS readings
-       FROM gloss_fts x
-       JOIN gloss_atoms g ON g.id = x.rowid
+       FROM dictionary_gloss_fts x
+       JOIN gloss_atoms g ON g.rowid = x.docid
        JOIN canonical_senses s ON s.entry_id = g.entry_id AND s.sense_order = g.sense_order
        JOIN entries e ON e.id = g.entry_id
-       WHERE gloss_fts MATCH ?`,
+       WHERE dictionary_gloss_fts MATCH ?`,
       [match]
     )
     const token = new RegExp(`(?:^|[^a-z])${escapeRegExp(query)}(?:$|[^a-z])`, 'u')
@@ -801,8 +777,9 @@ export class DictionarySearch {
 
   private async romajiEvidence(query: string, match: string): Promise<Map<string, number[]>> {
     const rows = await this.all<{ entry_id: string; form: string }>(
-      `SELECT f.entry_id, f.form FROM romaji_fts x JOIN forms f ON f.id = x.rowid
-       WHERE romaji_fts MATCH ? AND f.kind = ${FormKind.romaji}`,
+      `SELECT lower(hex(f.entry_id)) AS entry_id, f.form
+       FROM dictionary_form_fts x JOIN forms f ON f.rowid = x.docid
+       WHERE dictionary_form_fts MATCH ? AND f.kind = ${FormKind.romaji}`,
       [match]
     )
     const result = new Map<string, number[]>()

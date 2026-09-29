@@ -228,18 +228,37 @@ describe('searchResultsScreen (SearchResultsView)', () => {
 })
 
 describe('loadFrequency', () => {
-  test("reads every result's evidence from entry_frequency in one query", async () => {
-    const all = vi.fn(async () => [
-      { entry_id: 'a', frequency_json: '[{"pack":"jlpt","level":5}]' }
-    ])
+  test("reads every result's evidence from the JLPT and TUBELEX packs, in catalog order", async () => {
+    const all = vi.fn(async (sql: string, _params: readonly string[]) =>
+      sql.includes('jlpt.level_evidence')
+        ? [{ id: 'a', level: 5 }]
+        : [
+            { id: 'a', rank: 120 },
+            { id: 'b', rank: 9000 }
+          ]
+    )
     const db: SearchDatabase = { all: all as SearchDatabase['all'] }
     const frequency = await loadFrequency(
       db,
       results([item('一', { id: 'a' }), item('二', { id: 'b' })])
     )
-    expect(all).toHaveBeenCalledTimes(1)
-    expect(all.mock.calls[0]).toEqual([expect.stringContaining('entry_frequency'), ['a', 'b']])
-    expect(frequency).toEqual(new Map([['a', [{ pack: 'jlpt', level: 5 }]]]))
+    expect(all).toHaveBeenCalledTimes(2)
+    expect(all.mock.calls.map(([, params]) => params)).toEqual([
+      ['a', 'b'],
+      ['a', 'b']
+    ])
+    expect(frequency).toEqual(
+      new Map([
+        [
+          'a',
+          [
+            { pack: 'jlpt', level: 5 },
+            { pack: 'tubelex', rank: 120 }
+          ]
+        ],
+        ['b', [{ pack: 'tubelex', rank: 9000 }]]
+      ])
+    )
   })
 
   test('reads nothing without results', async () => {

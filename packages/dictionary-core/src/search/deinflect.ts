@@ -1,4 +1,5 @@
 // Ports apps/ios/Modules/Sources/SearchExperience/JapaneseDeinflection.swift.
+import { graphemeCount } from '../detail/text'
 import { graphemes } from './query'
 
 export type WordClass = 'ichidan' | 'godan' | 'kuru' | 'suru' | 'suruNoun' | 'iAdjective'
@@ -49,7 +50,7 @@ interface VerbPattern {
 
 const maximumDepth = 6
 
-const length = (value: string) => graphemes(value).length
+const length = graphemeCount
 const dropLast = (value: string) => graphemes(value).slice(0, -1).join('')
 const pastForm = (te: string) => dropLast(te) + (te.endsWith('で') ? 'だ' : 'た')
 

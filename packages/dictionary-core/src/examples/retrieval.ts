@@ -10,7 +10,7 @@
 // in rank order. The ranking, the tiers, and the rules are the app's, unchanged;
 // `retrieveEntryExamplesByScan` is the app's scan, kept to check the fast path against.
 
-import { graphemes } from '../detail/text'
+import { graphemeCount, graphemes } from '../detail/text'
 
 /** How many examples the app lists at most (`result(matches:)`). */
 export const exampleLimit = 100
@@ -120,7 +120,7 @@ export function normalizedEntryEvidence(value: string): string {
 export function graphemePosition(term: string, text: string): number | null {
   const index = text.indexOf(term)
   if (index < 0) return null
-  return graphemes(text.slice(0, index)).length
+  return graphemeCount(text.slice(0, index))
 }
 
 interface Ranked {

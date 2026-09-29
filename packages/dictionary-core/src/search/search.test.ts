@@ -59,7 +59,7 @@ function fakeDatabase() {
       if (!sql.includes('FROM forms f') || !sql.includes('f.kind IN (0, 1)')) return []
       const matches = sql.includes('f.form IN')
         ? (form: string) => bound.includes(form)
-        : (form: string) => form.includes(String(bound[1]))
+        : (form: string) => form.includes(String(bound[0]))
       const rows = dictionary.flatMap(candidate =>
         candidate.forms
           .filter(({ form }) => matches(form))

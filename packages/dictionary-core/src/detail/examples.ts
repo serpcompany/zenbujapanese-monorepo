@@ -1,8 +1,9 @@
 // A word page's examples, as the app's Word Detail shows them (ExampleSentencesView.swift's
 // `.wordDetail` presentation, LinkedJapaneseText.swift): each word of the sentence underlined and
 // linked, the page's own word accented, furigana over linked words only, a speaker button, and
-// the translation. The import precomputes which entry each word links to on each page
-// (scripts/release-d1/dictionary/build-examples.mts); this only shapes those rows.
+// the translation. The artifact layer works out which entry each word links to and which words
+// are accented (../artifact/word-examples.ts); this only shapes those rows. A search's examples and
+// a conjugated form's use the same shape, accenting the query instead of the page's word.
 
 import type { ExampleCountRow, WordExampleRows } from './rows'
 import { type RubySegment, rubySegments } from './ruby'
@@ -21,7 +22,7 @@ export interface ExampleToken {
   /** Furigana only over a word linked to one entry, as the app draws it. */
   ruby: RubySegment[]
   link: ExampleLink | null
-  /** The page's own word, which the app accents. */
+  /** What the app accents: the page's own word, or on a search's examples, the query. */
   isPageWord: boolean
 }
 
@@ -86,7 +87,9 @@ export function wordExample({ sentence, example }: WordExampleRows): Example {
  * How many examples the word has, in words: the number the page lists, noting when the app
  * found more than it lists (it lists at most 100). Null for a word without examples.
  */
-export function exampleCountText(count: ExampleCountRow | null): string | null {
+export function exampleCountText(
+  count: Pick<ExampleCountRow, 'listed' | 'truncated'> | null
+): string | null {
   if (!count || count.listed === 0) return null
   if (count.truncated) return `The first ${count.listed} of more than ${count.listed} examples`
   return count.listed === 1 ? '1 example' : `${count.listed} examples`

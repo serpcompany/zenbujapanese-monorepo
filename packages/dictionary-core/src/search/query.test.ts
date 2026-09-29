@@ -1,6 +1,29 @@
 import { describe, expect, test } from 'vitest'
 import { deinflect } from './deinflect'
-import { isJapaneseOnly, isMixedScript, normalizeQuery, romajiDeinflectedCandidates } from './query'
+import {
+  compareStrings,
+  isJapaneseOnly,
+  isMixedScript,
+  normalizeQuery,
+  romajiDeinflectedCandidates
+} from './query'
+
+describe('compareStrings', () => {
+  const sign = (lhs: string, rhs: string) => Math.sign(compareStrings(lhs, rhs))
+
+  test('orders by Unicode scalar, as Swift does', () => {
+    expect(sign('0a1b', '0a1c')).toBe(-1)
+    expect(sign('食べる', '食べ')).toBe(1)
+    expect(sign('abc', 'abc')).toBe(0)
+    // U+FF21 (Ａ) is a smaller scalar than U+20000 (𠀀), though its UTF-16 unit is larger than the
+    // high surrogate that starts 𠀀.
+    const fullwidthA = String.fromCodePoint(0xff21)
+    const supplementary = String.fromCodePoint(0x20000)
+    expect(sign(`x${fullwidthA}`, `x${supplementary}`)).toBe(-1)
+    expect(sign(`x${supplementary}`, `x${fullwidthA}`)).toBe(1)
+    expect(sign(supplementary, `${supplementary}a`)).toBe(-1)
+  })
+})
 
 describe('normalizeQuery', () => {
   test('folds width and case and collapses whitespace', () => {

@@ -80,9 +80,9 @@ describe('wordExample', () => {
 
 test('exampleCountText', () => {
   expect(exampleCountText(null)).toBeNull()
-  expect(exampleCountText({ listed: 1, count: 1, truncated: false })).toBe('1 example')
-  expect(exampleCountText({ listed: 55, count: 51, truncated: false })).toBe('55 examples')
-  expect(exampleCountText({ listed: 100, count: 51, truncated: true })).toBe(
+  expect(exampleCountText({ listed: 1, truncated: false })).toBe('1 example')
+  expect(exampleCountText({ listed: 55, truncated: false })).toBe('55 examples')
+  expect(exampleCountText({ listed: 100, truncated: true })).toBe(
     'The first 100 of more than 100 examples'
   )
 })

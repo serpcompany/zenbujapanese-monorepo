@@ -8,6 +8,7 @@
 // See also: apps/ios/Modules/Sources/SearchExperience/SearchView.swift and FrequencyPack.swift.
 // Change the Swift and this port together, and record the suite again.
 
+import { frequencyByEntry, frequencyQueries } from '../artifact/frequency'
 import {
   defaultFrequencyPacks,
   type FrequencyResult,
@@ -26,9 +27,9 @@ import type { SearchDatabase, SearchResultItem, SearchResults } from '../search/
 export type FrequencyByEntry = ReadonlyMap<string, readonly FrequencyRow[]>
 
 /**
- * The results' frequency evidence from the search database's `entry_frequency`, in one query,
- * as `SearchFrequencyLoader` loads it for the displayed entries. Results are at most 60, under
- * D1's 100 bound parameters.
+ * The results' evidence in the default frequency dictionaries, from the artifact's packs
+ * (../artifact/frequency.ts), as `SearchFrequencyLoader` loads it for the displayed entries.
+ * Results are at most 60 entries.
  */
 export async function loadFrequency(
   db: SearchDatabase,
@@ -36,12 +37,12 @@ export async function loadFrequency(
 ): Promise<Map<string, FrequencyRow[]>> {
   const ids = [...new Set(results.items.map(item => item.entry.id))]
   if (ids.length === 0) return new Map()
-  const rows = await db.all<{ entry_id: string; frequency_json: string }>(
-    `SELECT entry_id, frequency_json FROM entry_frequency
-     WHERE entry_id IN (${ids.map(() => '?').join(', ')})`,
-    ids
-  )
-  return new Map(rows.map(row => [row.entry_id, JSON.parse(row.frequency_json)]))
+  const queries = frequencyQueries(ids)
+  const [levels, ranks] = await Promise.all([
+    db.all<{ id: string; level: number }>(queries.levels, queries.params),
+    db.all<{ id: string; rank: number }>(queries.ranks, queries.params)
+  ])
+  return frequencyByEntry(levels, ranks)
 }
 
 /** `FrequencyTier`'s raw values: a more common tier is greater. */
@@ -147,11 +148,28 @@ export interface KanjiRow {
 }
 
 /**
- * The list's sections, in order. The app's first, `examples` ("View N Example Sentences"), needs
- * sentence search, which the website doesn't have yet (#511). `discoveredWords` lists a mixed-script
- * query's first Japanese words under a "Discovered Words" heading, unsorted, at most 12.
+ * The list's sections, in order: `examples` ("View N Example Sentences"), the reading
+ * refinement, then the results, or `discoveredWords`, a sentence's or mixed-script query's words
+ * under a "Discovered Words" heading, unsorted, at most 12.
  */
-export type ResultsSection = 'readingRefinement' | 'results' | 'discoveredWords'
+export type ResultsSection = 'examples' | 'readingRefinement' | 'results' | 'discoveredWords'
+
+/**
+ * The Example Sentences row (SearchResultsScreen.exampleCount): how many examples it offers, and
+ * the entry whose examples it opens when the results use the primary entry's (a romaji or
+ * deinflected query), else null for the sentences containing the query.
+ */
+export interface ExamplesRow {
+  count: number
+  title: string
+  primaryEntry: string | null
+}
+
+/** `SearchResultsScreen.exampleActionTitle`. */
+export function exampleActionTitle(count: number): string {
+  if (count > 50) return 'View 50+ Example Sentences'
+  return `View ${count} Example ${count === 1 ? 'Sentence' : 'Sentences'}`
+}
 
 /** SearchView.swift lists at most 12 discovered words. */
 export const discoveredWordLimit = 12
@@ -163,6 +181,8 @@ export type SearchResultsScreen =
       state: 'results'
       query: string
       sections: ResultsSection[]
+      /** The Example Sentences row, when there are any. */
+      examples: ExamplesRow | null
       /** "Search for「…」": the Japanese reading an English-looking query also spells. */
       readingRefinement: { query: string; title: string } | null
       kanji: KanjiRow | null
@@ -175,25 +195,34 @@ export type SearchResultsScreen =
 export const isSingleKanji = (query: string) => isKanjiCharacter(query)
 
 /** `LookupSearchResults.primaryEntry(for:)`: the entry written as the query, else the first. */
-function primaryItem(results: SearchResults, query: string): SearchResultItem | undefined {
+export function primaryItem(results: SearchResults, query: string): SearchResultItem | undefined {
   return results.items.find(item => item.entry.headword === query) ?? results.items[0]
 }
 
 /**
  * `SearchResultsView` for a typed query, and SearchView.swift's no-results state. The app shows
  * "No Dictionary Matches" only when there are no results, no example sentences, and the query
- * isn't one kanji; the website has no sentence search (#511), so only the first and last apply.
+ * isn't one kanji. `examples` is the Example Sentences row's count and entry
+ * (../artifact/search-examples.ts), or null without one.
  */
 export function searchResultsScreen(
   rawQuery: string,
   results: SearchResults,
-  frequency: FrequencyByEntry
+  frequency: FrequencyByEntry,
+  examples: { count: number; primaryEntry: string | null } | null = null
 ): SearchResultsScreen {
   const query = normalizeQuery(rawQuery)
   const singleKanji = isSingleKanji(query)
-  if (results.items.length === 0 && !singleKanji) return { state: 'noResults', query }
+  const exampleCount = examples?.count ?? 0
+  // `showsNoResults`: a single kanji always has its kanji row.
+  if (results.items.length === 0 && exampleCount === 0 && !singleKanji) {
+    return { state: 'noResults', query }
+  }
 
   const sections: ResultsSection[] = []
+  const examplesRow =
+    examples && exampleCount > 0 ? { ...examples, title: exampleActionTitle(exampleCount) } : null
+  if (examplesRow) sections.push('examples')
   const readingRefinement = results.readingRefinement
     ? {
         query: results.readingRefinement,
@@ -233,6 +262,7 @@ export function searchResultsScreen(
     state: 'results',
     query,
     sections,
+    examples: examplesRow,
     readingRefinement,
     kanji,
     rows,

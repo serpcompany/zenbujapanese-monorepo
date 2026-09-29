@@ -17,6 +17,13 @@ export interface KuromojiToken {
   reading?: string
 }
 
+/**
+ * The app's Kuromoji tokenizer, a capability a client supplies: kuromoji.js with the IPADIC files
+ * the app bundles (SearchExperience/Resources/Kuromoji), as KuromojiMorphologyClient.swift runs
+ * them. It returns tokens as kuromoji.js's `tokenize` does.
+ */
+export type Tokenize = (text: string) => KuromojiToken[]
+
 /** JapaneseMorphologyCandidate. */
 export interface MorphologyCandidate {
   surface: string

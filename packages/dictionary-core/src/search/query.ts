@@ -7,8 +7,7 @@ export function graphemes(value: string): string[] {
   return Array.from(graphemeSegmenter.segment(value), segment => segment.segment)
 }
 
-/** Swift's `String <`: compares by Unicode scalar, not UTF-16 code unit. */
-export function compareStrings(lhs: string, rhs: string): number {
+function compareScalars(lhs: string, rhs: string): number {
   const left = Array.from(lhs)
   const right = Array.from(rhs)
   for (let index = 0; index < Math.min(left.length, right.length); index++) {
@@ -16,6 +15,24 @@ export function compareStrings(lhs: string, rhs: string): number {
     if (difference !== 0) return difference
   }
   return left.length - right.length
+}
+
+const isSurrogate = (unit: number) => unit >= 0xd800 && unit <= 0xdfff
+
+/**
+ * Swift's `String <`: compares by Unicode scalar, not UTF-16 code unit. Code units that aren't
+ * surrogates are scalars, so text compares unit by unit until a surrogate differs. Ranking
+ * compares every result's fingerprint this way.
+ */
+export function compareStrings(lhs: string, rhs: string): number {
+  const length = Math.min(lhs.length, rhs.length)
+  for (let index = 0; index < length; index++) {
+    const left = lhs.charCodeAt(index)
+    const right = rhs.charCodeAt(index)
+    if (left === right) continue
+    return isSurrogate(left) || isSurrogate(right) ? compareScalars(lhs, rhs) : left - right
+  }
+  return lhs.length - rhs.length
 }
 
 /**
