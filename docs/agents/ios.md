@@ -57,7 +57,7 @@ reading, summary, frequency chips (dictionary, value, tier), match group, and re
 the kanji row; the Example Sentences and reading-refinement rows; the frequency notice; and the
 No Dictionary Matches state. It pins the SHA-256 of every bundled artifact it reads and the
 dictionaries a fresh install enables. Recent searches and known words don't change the list. The suite covers queries that match
-directly, deinflected queries (食べた, 見ない), romaji and English queries, and queries with no
+directly, deinflected queries (食べた, 見ない), romaji and English queries, wildcards (`t*`, `^t*`), and queries with no
 matches that aren't Japanese. It doesn't cover Japanese queries with no direct match or
 Discovered Words: Search splits those into words with the Sudachi dictionary the app bundles,
 which the package's test host lacks, so recording fails on them. Check those in the Simulator.

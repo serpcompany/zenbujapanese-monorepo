@@ -94,8 +94,9 @@ search results link to word pages. After each environment's smoke test it prunes
 environment's old builds. It runs when any release database's input changes, not only
 `apps/web/**`. The production job runs once staging passes; the `production` GitHub environment
 has no required reviewer (the owner approved launching without one). A new build's first
-production import is about 1 GB of SQL for both databases (the search database's 360 MB of it)
-and takes about 35 minutes; an unchanged build is reused in seconds.
+production import is about 1 GB of SQL for both databases (the search database's 380 MB of it)
+and takes about 50 minutes (wildcards, #522, added about 10 minutes to building the search
+database's local copy, 4 to its gate, and 17 MB); an unchanged build is reused in seconds.
 
 ### The search database
 
@@ -104,11 +105,30 @@ front of word and kanji pages.
 
 **Broad queries are precomputed.** On D1, a query such as い reads 460,276 rows and takes 1.4–3.4
 s, and D1 runs one query at a time per database, so a few of them stall every other query. The
-import runs about 19,000 candidates (`search/candidates.py`) through the core on the local copy and
-stores the results of those that read over 20,000 rows in `search_cache` (about 280 queries, 9
-MB). `websiteSearch` reads the list of cached queries once per isolate, answers those from
+import (`search/precompute.mts`) runs queries through the core on the local copy and stores the
+results of those that read over 20,000 rows in `search_cache` (about 1,540 queries, 26 MB):
+
+- about 19,000 candidates (`search/candidates.py`: characters, reading and romaji prefixes, and
+  common English words; about 280 are broad), and the `^` form of each broad English one (`^to`);
+- wildcards (#522): `p*` and `^p*` for every prefix `p` of a romaji or English word whose
+  wildcard reads over the threshold (about 600 prefixes, such as `t*`, `ta*`, `ties*`, and
+  `personalization*`). `src/lib/dictionary/search/broad.ts` finds them without searching all
+  1.1 million prefixes. A wildcard runs the same statements for any prefix, each reading a fixed
+  number of rows per match, and matches the romaji forms with a word starting with `p` and the
+  meanings with a word whose Porter stem starts with `p`'s stem (FTS5 stems a prefix, so
+  `ties*` matches what `ti*` does). So a prefix reads no more than a shorter one whose stem its
+  own stem starts with; a narrow such prefix proves it narrow unsearched, and every other prefix
+  is searched (about 6,400). D1's tokenizers drop `^`, so `^p*` reads what `p*` does, which the
+  import checks on every broad one.
+
+`websiteSearch` reads the list of cached queries once per isolate, answers those from
 `search_cache` in about 30 ms, and runs the core for everything else. The measurements are on
 issue 464, from the `Search D1 benchmark` workflow.
+
+Queries of other shapes aren't covered, so some read over the threshold per request: a phrase
+(`to be`, 47,000 rows; `to b*`, 70,000), a word or prefix that no romaji or English word starts
+with whose stem one does (`ths*` reads what `th*` does), other punctuation (`t**`, `-t*`), and
+quoted phrases (`a"t*`).
 
 **Frequency lives here too.** `entry_frequency` holds each entry's evidence in the app's default
 frequency dictionaries (JLPT levels, then TUBELEX ranks; 59,430 entries), keyed by Language
@@ -188,7 +208,7 @@ lists, and the rows route doesn't count example sentences. `data.ts`'s `searchOn
 `searchExamplesOn`, and `searchExamplePageOn` build both pages' data, and the gate and
 rendered-page tests read the local copy through them. Local fixtures have no example search.
 
-**The gate.** The search import runs five files on its local copy (`check_local`): the retrieval
+**The gate.** The search import runs six files on its local copy (`check_local`): the retrieval
 suite (`search/conformance.test.ts`); the search results suite
 (`apps/ios/LanguageData/Conformance/search-results.json`, `results/conformance.test.ts`), which
 compares every case's state, sections, Example Sentences row (title, count, and primary entry),
@@ -200,7 +220,10 @@ rows route; the example-search suite (`example-search.json`, `examples/conforman
 which compares, for 67 queries, the row's count and title, the primary entry, every listed pair ID
 in order, and the first five sentences' words, links, and marks; and a rendered-page test of the
 Example Sentences page (`components/dictionary/search-examples.test.tsx`) for eight of its cases,
-paging through each whole list. The cores, the pages' components and `rendered.ts`, the
+paging through each whole list; and the broad-search check (`search/broad.test.ts`), which finds
+the broad wildcards again as the website searches, counting a cached one as broad and failing on
+any other that reads over 20,000 rows or any cached `p*` without its `^p*`, and compares a sample
+of cached wildcards with the core's results. The cores, the pages' components and `rendered.ts`, the
 frequency packs, and the suites themselves are search build inputs, so a change to any of them
 imports a new build and runs the gate. `smoke.sh` reads the suites at run time and checks the
 deployed iru page's refinement, first rows, Example Sentences row, and paging, and 見る's Example
@@ -309,8 +332,8 @@ It changes the way the search schema does, with its own commands:
 
 ### Run the suite locally
 
-Build the search database into `.search-d1/` (about 13 minutes, most of it precomputing broad
-searches and example search), then run the tests:
+Build the search database into `.search-d1/` (about 23 minutes, most of it precomputing broad
+searches, 10 minutes of that wildcards, and example search), then run the tests:
 
 ```sh
 scripts/release-d1/load-local.sh search [path/to/LanguageReferenceData.sqlite3]

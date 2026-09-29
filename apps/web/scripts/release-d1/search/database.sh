@@ -90,7 +90,10 @@ build_rows() {
   python3 scripts/release-d1/search/build-rows.py "$source" "$repo_root/$resources" "$build/rows.sql"
   local_d1 execute "$local_name" --file "$build/rows.sql" --yes > /dev/null
   python3 scripts/release-d1/search/candidates.py "$source" "$build/candidates.json"
-  pnpm exec tsx scripts/release-d1/search/precompute.mts "$build" "$build/candidates.json" "$build/cache.sql"
+  # precompute.mts stems wildcard prefixes with node:sqlite, which warns that it's experimental.
+  NODE_OPTIONS="${NODE_OPTIONS:-} --disable-warning=ExperimentalWarning" \
+    pnpm exec tsx scripts/release-d1/search/precompute.mts "$build" "$build/candidates.json" \
+    "$build/cache.sql"
   if [ -s "$build/cache.sql" ]; then
     local_d1 execute "$local_name" --file "$build/cache.sql" --yes > /dev/null
   fi
@@ -124,13 +127,16 @@ if loaded != expected:
 # The app-recorded search suites, on the local copy built through the migrations: retrieval
 # (ADR 0006), the results screen after the frequency re-sort (search-results.json), both as data
 # and rendered by the results page's component, and example search (example-search.json), as
-# data and rendered by the Example Sentences page's component.
+# data and rendered by the Example Sentences page's component. Then that no wildcard search
+# reads over the threshold uncached (search/broad.test.ts).
 check_local() {
   # vitest.config.ts runs these one at a time: each opens the same local D1.
   ZENBU_SEARCH_D1=1 ZENBU_SEARCH_D1_PATH="$1" \
+    NODE_OPTIONS="${NODE_OPTIONS:-} --disable-warning=ExperimentalWarning" \
     pnpm exec vitest run src/lib/dictionary/search/conformance.test.ts \
     src/lib/dictionary/results/conformance.test.ts \
     src/components/dictionary/search-results.test.tsx \
     src/lib/dictionary/examples/conformance.test.ts \
-    src/components/dictionary/search-examples.test.tsx
+    src/components/dictionary/search-examples.test.tsx \
+    src/lib/dictionary/search/broad.test.ts
 }

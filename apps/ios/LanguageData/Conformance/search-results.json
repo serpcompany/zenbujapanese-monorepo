@@ -42744,6 +42744,2316 @@
       "voiceOverCount" : 60
     },
     {
+      "covers" : "A broad wildcard: every word with a romaji form starting with t",
+      "examples" : {
+        "count" : 51,
+        "title" : "View 50+ Example Sentences"
+      },
+      "presentation" : "ranked",
+      "query" : "t*",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "197",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1495740"
+          ],
+          "headword" : "付く",
+          "languageReferenceID" : "d288749512ac75f452f7628076d34d3a",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つく",
+          "retrievalOrder" : 43,
+          "summary" : "to be attached, to be connected with, to adhere, to stick, to cling"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "776",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1551530"
+          ],
+          "headword" : "立てる",
+          "languageReferenceID" : "4e3e8bed76300db26e5524473fcd3134",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たてる",
+          "retrievalOrder" : 18,
+          "summary" : "to stand (something) up, to put upright, to set up, to erect, to raise, to turn up, to plant"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "29",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2086960"
+          ],
+          "headword" : "って",
+          "languageReferenceID" : "4dc69a7fe4306cf80cd8208337551951",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "って",
+          "retrievalOrder" : 36,
+          "summary" : "you said, he said, she said, they said"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "52",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2017560"
+          ],
+          "headword" : "たい",
+          "languageReferenceID" : "a848c40bd5168f8fc4aa08705686993b",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たい",
+          "retrievalOrder" : 24,
+          "summary" : "want to do ..., would like to do ..."
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "81",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2029060"
+          ],
+          "headword" : "たり",
+          "languageReferenceID" : "a607dd988e4d251ded3703f7737adac0",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たり",
+          "retrievalOrder" : 31,
+          "summary" : "-ing and -ing (e.g. \"coming and going\")"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "432",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2108590"
+          ],
+          "headword" : "とく",
+          "languageReferenceID" : "d569445d945ff026d249763d35f8277e",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とく",
+          "retrievalOrder" : 49,
+          "summary" : "to do something in readiness for, to get something (needful) done"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "730",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1008120"
+          ],
+          "headword" : "つつ",
+          "languageReferenceID" : "592ad46e836364832c68dcbb3d1b59e9",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つつ",
+          "retrievalOrder" : 23,
+          "summary" : "while"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "855",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1432900"
+          ],
+          "headword" : "通す",
+          "languageReferenceID" : "0800fc347e14f1d71501e463722e0cb6",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とおす",
+          "retrievalOrder" : 16,
+          "summary" : "to let pass, to allow through, to let through, to make way (for)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N2",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "611",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1251880"
+          ],
+          "headword" : "繋がる",
+          "languageReferenceID" : "f4584d06c91cc6ad5f450510eaab6181",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つながる",
+          "retrievalOrder" : 17,
+          "summary" : "to be connected (to), to be joined together, to be linked, to be tied together, to lead (to)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N2",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "8,553",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1597190"
+          ],
+          "headword" : "ため息",
+          "languageReferenceID" : "bb16bc170693adb071f4c7c7ad5ecd71",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "ためいき",
+          "retrievalOrder" : 56,
+          "summary" : "sigh"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N2",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "14,901",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1598400"
+          ],
+          "headword" : "手ぬぐい",
+          "languageReferenceID" : "d9f9e12be22faa3e16826bfcd97c1103",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "てぬぐい",
+          "retrievalOrder" : 7,
+          "summary" : "tenugui, (hand) towel (usu. thin cotton cloth)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N2",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "81,588",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1598960"
+          ],
+          "headword" : "捉える",
+          "languageReferenceID" : "baf8797a373e1f78e8d356ecce6b33e9",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とらえる",
+          "retrievalOrder" : 14,
+          "summary" : "to catch, to capture, to seize, to arrest, to grab, to catch hold of"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "1,932",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1632180"
+          ],
+          "headword" : "とも",
+          "languageReferenceID" : "c213324f1b5a1527ca87a6019ca4d40e",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とも",
+          "retrievalOrder" : 35,
+          "summary" : "certainly, of course, to be sure, surely"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "2,738",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "2029050"
+          ],
+          "headword" : "たら",
+          "languageReferenceID" : "e9f59398bab53115e1f35bb6cdf49bea",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たら",
+          "retrievalOrder" : 39,
+          "summary" : "if, when, after"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "3,759",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1638070"
+          ],
+          "headword" : "定番",
+          "languageReferenceID" : "bd012420c0362c17a978c2d7c955d6ac",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "ていばん",
+          "retrievalOrder" : 45,
+          "summary" : "standard item, usual thing, (a) classic, go-to choice, staple, regular fixture, standard procedure, convention"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "3,986",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1297300"
+          ],
+          "headword" : "作り出す",
+          "languageReferenceID" : "ead3234c56f77b8600990c9acfd9083d",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つくりだす",
+          "retrievalOrder" : 9,
+          "summary" : "to manufacture, to produce, to raise (crops)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "4,724",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1437030"
+          ],
+          "headword" : "摘み",
+          "languageReferenceID" : "d1208f7d58340abc5759af4fa041199c",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つまみ",
+          "retrievalOrder" : 44,
+          "summary" : "knob, handle, button"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "4",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1008490"
+          ],
+          "headword" : "と",
+          "languageReferenceID" : "d005d8641e912ee4b72714255428699d",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "と",
+          "retrievalOrder" : 21,
+          "summary" : "if, when"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "377",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1578040"
+          ],
+          "headword" : "共",
+          "languageReferenceID" : "dfda4ceaee180c961c9b9bb3465e6cf3",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とも",
+          "retrievalOrder" : 20,
+          "summary" : "together with"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "4,183",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1433870"
+          ],
+          "headword" : "壺",
+          "languageReferenceID" : "d418e58c46f0e84a6df458e97e0502a2",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つぼ",
+          "retrievalOrder" : 0,
+          "summary" : "pot, jar, vase"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "11,818",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1306630"
+          ],
+          "headword" : "司る",
+          "languageReferenceID" : "21ba6572185469c006fca40d3f42d7a5",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つかさどる",
+          "retrievalOrder" : 33,
+          "summary" : "to be in charge of, to manage, to direct, to administer, to preside over"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "47,203",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1598710"
+          ],
+          "headword" : "刺",
+          "languageReferenceID" : "5440bfa9b1ea8c223089b59b3edae756",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とげ",
+          "retrievalOrder" : 19,
+          "summary" : "thorn, spine, prickle"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "6,026",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1441250"
+          ],
+          "headword" : "転送",
+          "languageReferenceID" : "64612bef12b4909e8f51ec68389d5611",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "てんそう",
+          "retrievalOrder" : 1,
+          "summary" : "transfer (of a call, patient, etc.), forwarding (a letter, email, etc.), redirection"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "6,904",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1416770"
+          ],
+          "headword" : "狸",
+          "languageReferenceID" : "fcce99a7cc579ba0309ce3a3253c425a",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たぬき",
+          "retrievalOrder" : 6,
+          "summary" : "tanuki (Nyctereutes procyonoides), raccoon dog"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "8,188",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1382950"
+          ],
+          "headword" : "積立",
+          "languageReferenceID" : "4f0249c00c89e202e7169587b0ac465e",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つみたて",
+          "retrievalOrder" : 38,
+          "summary" : "saving, savings, accumulation, putting aside, reserving"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "8,873",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1438850"
+          ],
+          "headword" : "天狗",
+          "languageReferenceID" : "12723224fe71cf25f488d6138b7952e2",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "てんぐ",
+          "retrievalOrder" : 2,
+          "summary" : "tengu, red-faced and long-nosed goblin said to reside deep in the mountains"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "10,112",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1433780"
+          ],
+          "headword" : "綴る",
+          "languageReferenceID" : "f06eb9b97205074a58ccbc002fb676fe",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つづる",
+          "retrievalOrder" : 15,
+          "summary" : "to spell"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "10,137",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1450060"
+          ],
+          "headword" : "豆乳",
+          "languageReferenceID" : "ab1ba96a20ac7f9c21eff8831ec4b425",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とうにゅう",
+          "retrievalOrder" : 12,
+          "summary" : "soy milk"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "11,446",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1449200"
+          ],
+          "headword" : "当店",
+          "languageReferenceID" : "43ba773c9548873958d54b53716abfeb",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とうてん",
+          "retrievalOrder" : 22,
+          "summary" : "this store"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "11,557",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1837710"
+          ],
+          "headword" : "立会い",
+          "languageReferenceID" : "3bbffecbf6d07d2aca933285f7d69506",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たちあい",
+          "retrievalOrder" : 55,
+          "summary" : "presence (e.g. of an observer), observation, observer, witness"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "13,196",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1008730"
+          ],
+          "headword" : "とろ",
+          "languageReferenceID" : "6cdceb34b7e76070faaf72d3e0c4d1ee",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とろ",
+          "retrievalOrder" : 42,
+          "summary" : "fatty cut (esp. of tuna belly)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "13,800",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1408130"
+          ],
+          "headword" : "多用",
+          "languageReferenceID" : "2976c59d4723f225e3715f00196a9bb2",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たよう",
+          "retrievalOrder" : 8,
+          "summary" : "busyness, a lot of things to do"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "15,572",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1839570"
+          ],
+          "headword" : "食べ歩き",
+          "languageReferenceID" : "0f234ba585a8bfdd55c22940ea104334",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たべあるき",
+          "retrievalOrder" : 13,
+          "summary" : "trying the food at various restaurants, eating tour"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "16,341",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "2116270"
+          ],
+          "headword" : "対中",
+          "languageReferenceID" : "fef06e458c85ef34dd6489c429cb548d",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たいちゅう",
+          "retrievalOrder" : 32,
+          "summary" : "relating to China"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "16,689",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1367880"
+          ],
+          "headword" : "人事",
+          "languageReferenceID" : "07138c49a9fa3389410bf6a7ab4048f3",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "ひとごと",
+          "retrievalOrder" : 37,
+          "summary" : "other people's affairs, someone else's problem"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "18,208",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "2656450"
+          ],
+          "headword" : "店名",
+          "languageReferenceID" : "a639ae2508baa3d371bec0891a02a47c",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "てんめい",
+          "retrievalOrder" : 34,
+          "summary" : "store name, shop name, restaurant name"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "18,526",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1409790"
+          ],
+          "headword" : "堆肥",
+          "languageReferenceID" : "4aef249db6bc29a34a9d80b8300ea334",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たいひ",
+          "retrievalOrder" : 3,
+          "summary" : "compost, manure"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25,690",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1597290"
+          ],
+          "headword" : "淡白",
+          "languageReferenceID" : "4a45f5fbb0b85382d3d144eaf36cf364",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たんぱく",
+          "retrievalOrder" : 51,
+          "summary" : "light (flavor, color, etc.), simple, plain"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25,845",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1427290"
+          ],
+          "headword" : "丁重",
+          "languageReferenceID" : "da321551ec859828bd719f495580ec70",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "ていちょう",
+          "retrievalOrder" : 4,
+          "summary" : "polite, courteous, hospitable"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "28,489",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1447310"
+          ],
+          "headword" : "投函",
+          "languageReferenceID" : "234ec94427c2c4343a53441f16116a1a",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とうかん",
+          "retrievalOrder" : 48,
+          "summary" : "mailing, posting"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "39,682",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1596820"
+          ],
+          "headword" : "炊き出し",
+          "languageReferenceID" : "fa26c8e2a822d8929eb792fe33e0b3c7",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たきだし",
+          "retrievalOrder" : 10,
+          "summary" : "food distribution (esp. cooked rice)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "42,127",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1770360"
+          ],
+          "headword" : "得々",
+          "languageReferenceID" : "3ee7a02f97b1955a575164a382ecff1c",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とくとく",
+          "retrievalOrder" : 50,
+          "summary" : "triumphantly, proudly"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "49,658",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1440960"
+          ],
+          "headword" : "貼付",
+          "languageReferenceID" : "594e0589e5d1f852fe2c116b49f1bfc4",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "ちょうふ",
+          "retrievalOrder" : 47,
+          "summary" : "pasting, sticking, attaching, affixing, appending"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "50,526",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1457290"
+          ],
+          "headword" : "酉",
+          "languageReferenceID" : "87b455cf255ef58431f83ea6137b8d09",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とり",
+          "retrievalOrder" : 5,
+          "summary" : "the Rooster (tenth sign of the Chinese zodiac), the Cock, the Chicken, the Bird"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "112,509",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1416050"
+          ],
+          "headword" : "叩き",
+          "languageReferenceID" : "c473c394f064ed0a9b543515fcf6ed78",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たたき",
+          "retrievalOrder" : 28,
+          "summary" : "finely chopped fish or meat (sometimes seared first), mince"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1328220"
+          ],
+          "headword" : "手当たり次第",
+          "languageReferenceID" : "8fd7f7562d02d342e2279328f2dba95d",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "てあたりしだい",
+          "retrievalOrder" : 11,
+          "summary" : "using anything one can lay one's hands on, haphazardly, on the rebound, at random, indiscriminately"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1076390"
+          ],
+          "headword" : "タブ",
+          "languageReferenceID" : "9af57aa1a714f5bfccb987f000cbd3db",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "タブ",
+          "retrievalOrder" : 25,
+          "summary" : "tab (character, key)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1577830"
+          ],
+          "headword" : "戯言",
+          "languageReferenceID" : "5ef60d1a70bf79d44322478e6701f726",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たわごと",
+          "retrievalOrder" : 26,
+          "summary" : "nonsense, silly talk, drivel, rubbish"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1007270"
+          ],
+          "headword" : "度に",
+          "languageReferenceID" : "714249bc39d7a63013bbc8b45454c8cc",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たびに",
+          "retrievalOrder" : 27,
+          "summary" : "each time, every time, whenever (something happens), on the occasion of"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2021030"
+          ],
+          "headword" : "摂る",
+          "languageReferenceID" : "d54065984da2cc95de117b5dfce062ec",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とる",
+          "retrievalOrder" : 29,
+          "summary" : "to have (e.g. lunch), to take (e.g. vitamins)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1157150"
+          ],
+          "headword" : "為に",
+          "languageReferenceID" : "94b27d3d05b82dfa5e0535d683af0389",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "ために",
+          "retrievalOrder" : 30,
+          "summary" : "for, for the sake of, to one's advantage, in favor of, in favour of, on behalf of"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1008530"
+          ],
+          "headword" : "とか",
+          "languageReferenceID" : "29b077042598793f3573f6db428c5bb6",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とか",
+          "retrievalOrder" : 40,
+          "summary" : "and the like, such as, among other things, and so on"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2092660"
+          ],
+          "headword" : "たる",
+          "languageReferenceID" : "e201378bbe7b72feea51947ab96ee6ba",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たる",
+          "retrievalOrder" : 41,
+          "summary" : "(those) who are, (that) which is, in the capacity of"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2028950"
+          ],
+          "headword" : "とは",
+          "languageReferenceID" : "d9190a45d1eb602a567eff47ecbb100b",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とは",
+          "retrievalOrder" : 46,
+          "summary" : "indicates word or phrase being defined"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2244810"
+          ],
+          "headword" : "天満宮",
+          "languageReferenceID" : "b0e84bfaa21c85da12cfc1a604a48f11",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "てんまんぐう",
+          "retrievalOrder" : 52,
+          "summary" : "Tenmangu shrine (shrine dedicated to Sugawara no Michizane's spirit)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2131450"
+          ],
+          "headword" : "統一感",
+          "languageReferenceID" : "2edbffe1673647d2d7978f82ecfe954f",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とういつかん",
+          "retrievalOrder" : 53,
+          "summary" : "sense of unity, sense of oneness"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2100900"
+          ],
+          "headword" : "となる",
+          "languageReferenceID" : "ace347d82427c448451ae8459861a6a8",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "となる",
+          "retrievalOrder" : 54,
+          "summary" : "to become, to be"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1408120"
+          ],
+          "headword" : "多様性",
+          "languageReferenceID" : "6a4409ddd25f76b3ce1b09c4ba473854",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たようせい",
+          "retrievalOrder" : 57,
+          "summary" : "diversity, variety"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1418300"
+          ],
+          "headword" : "探検隊",
+          "languageReferenceID" : "e7101fa492118ae08771cd43232d04db",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たんけんたい",
+          "retrievalOrder" : 58,
+          "summary" : "exploration party, expedition team"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1599130"
+          ],
+          "headword" : "取引先",
+          "languageReferenceID" : "ce708bd5dab187c0f0a40197be1fa97c",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とりひきさき",
+          "retrievalOrder" : 59,
+          "summary" : "customer, client, client company, business connection, trade partner"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 60
+    },
+    {
+      "covers" : "A broad wildcard from a form's first word (FTS4's ^)",
+      "examples" : {
+        "count" : 51,
+        "title" : "View 50+ Example Sentences"
+      },
+      "presentation" : "ranked",
+      "query" : "^t*",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "197",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1495740"
+          ],
+          "headword" : "付く",
+          "languageReferenceID" : "d288749512ac75f452f7628076d34d3a",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つく",
+          "retrievalOrder" : 43,
+          "summary" : "to be attached, to be connected with, to adhere, to stick, to cling"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "776",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1551530"
+          ],
+          "headword" : "立てる",
+          "languageReferenceID" : "4e3e8bed76300db26e5524473fcd3134",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たてる",
+          "retrievalOrder" : 18,
+          "summary" : "to stand (something) up, to put upright, to set up, to erect, to raise, to turn up, to plant"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "29",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2086960"
+          ],
+          "headword" : "って",
+          "languageReferenceID" : "4dc69a7fe4306cf80cd8208337551951",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "って",
+          "retrievalOrder" : 36,
+          "summary" : "you said, he said, she said, they said"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "52",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2017560"
+          ],
+          "headword" : "たい",
+          "languageReferenceID" : "a848c40bd5168f8fc4aa08705686993b",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たい",
+          "retrievalOrder" : 24,
+          "summary" : "want to do ..., would like to do ..."
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "81",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2029060"
+          ],
+          "headword" : "たり",
+          "languageReferenceID" : "a607dd988e4d251ded3703f7737adac0",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たり",
+          "retrievalOrder" : 31,
+          "summary" : "-ing and -ing (e.g. \"coming and going\")"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "432",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2108590"
+          ],
+          "headword" : "とく",
+          "languageReferenceID" : "d569445d945ff026d249763d35f8277e",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とく",
+          "retrievalOrder" : 49,
+          "summary" : "to do something in readiness for, to get something (needful) done"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "730",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1008120"
+          ],
+          "headword" : "つつ",
+          "languageReferenceID" : "592ad46e836364832c68dcbb3d1b59e9",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つつ",
+          "retrievalOrder" : 23,
+          "summary" : "while"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "855",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1432900"
+          ],
+          "headword" : "通す",
+          "languageReferenceID" : "0800fc347e14f1d71501e463722e0cb6",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とおす",
+          "retrievalOrder" : 16,
+          "summary" : "to let pass, to allow through, to let through, to make way (for)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N2",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "611",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1251880"
+          ],
+          "headword" : "繋がる",
+          "languageReferenceID" : "f4584d06c91cc6ad5f450510eaab6181",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つながる",
+          "retrievalOrder" : 17,
+          "summary" : "to be connected (to), to be joined together, to be linked, to be tied together, to lead (to)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N2",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "8,553",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1597190"
+          ],
+          "headword" : "ため息",
+          "languageReferenceID" : "bb16bc170693adb071f4c7c7ad5ecd71",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "ためいき",
+          "retrievalOrder" : 56,
+          "summary" : "sigh"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N2",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "14,901",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1598400"
+          ],
+          "headword" : "手ぬぐい",
+          "languageReferenceID" : "d9f9e12be22faa3e16826bfcd97c1103",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "てぬぐい",
+          "retrievalOrder" : 7,
+          "summary" : "tenugui, (hand) towel (usu. thin cotton cloth)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N2",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "81,588",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1598960"
+          ],
+          "headword" : "捉える",
+          "languageReferenceID" : "baf8797a373e1f78e8d356ecce6b33e9",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とらえる",
+          "retrievalOrder" : 14,
+          "summary" : "to catch, to capture, to seize, to arrest, to grab, to catch hold of"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "1,932",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1632180"
+          ],
+          "headword" : "とも",
+          "languageReferenceID" : "c213324f1b5a1527ca87a6019ca4d40e",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とも",
+          "retrievalOrder" : 35,
+          "summary" : "certainly, of course, to be sure, surely"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "2,738",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "2029050"
+          ],
+          "headword" : "たら",
+          "languageReferenceID" : "e9f59398bab53115e1f35bb6cdf49bea",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たら",
+          "retrievalOrder" : 39,
+          "summary" : "if, when, after"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "3,759",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1638070"
+          ],
+          "headword" : "定番",
+          "languageReferenceID" : "bd012420c0362c17a978c2d7c955d6ac",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "ていばん",
+          "retrievalOrder" : 45,
+          "summary" : "standard item, usual thing, (a) classic, go-to choice, staple, regular fixture, standard procedure, convention"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "3,986",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1297300"
+          ],
+          "headword" : "作り出す",
+          "languageReferenceID" : "ead3234c56f77b8600990c9acfd9083d",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つくりだす",
+          "retrievalOrder" : 9,
+          "summary" : "to manufacture, to produce, to raise (crops)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "4,724",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1437030"
+          ],
+          "headword" : "摘み",
+          "languageReferenceID" : "d1208f7d58340abc5759af4fa041199c",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つまみ",
+          "retrievalOrder" : 44,
+          "summary" : "knob, handle, button"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "4",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1008490"
+          ],
+          "headword" : "と",
+          "languageReferenceID" : "d005d8641e912ee4b72714255428699d",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "と",
+          "retrievalOrder" : 21,
+          "summary" : "if, when"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "377",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1578040"
+          ],
+          "headword" : "共",
+          "languageReferenceID" : "dfda4ceaee180c961c9b9bb3465e6cf3",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とも",
+          "retrievalOrder" : 20,
+          "summary" : "together with"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "4,183",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1433870"
+          ],
+          "headword" : "壺",
+          "languageReferenceID" : "d418e58c46f0e84a6df458e97e0502a2",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つぼ",
+          "retrievalOrder" : 0,
+          "summary" : "pot, jar, vase"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "11,818",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1306630"
+          ],
+          "headword" : "司る",
+          "languageReferenceID" : "21ba6572185469c006fca40d3f42d7a5",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つかさどる",
+          "retrievalOrder" : 33,
+          "summary" : "to be in charge of, to manage, to direct, to administer, to preside over"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "47,203",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1598710"
+          ],
+          "headword" : "刺",
+          "languageReferenceID" : "5440bfa9b1ea8c223089b59b3edae756",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とげ",
+          "retrievalOrder" : 19,
+          "summary" : "thorn, spine, prickle"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "6,026",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1441250"
+          ],
+          "headword" : "転送",
+          "languageReferenceID" : "64612bef12b4909e8f51ec68389d5611",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "てんそう",
+          "retrievalOrder" : 1,
+          "summary" : "transfer (of a call, patient, etc.), forwarding (a letter, email, etc.), redirection"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "6,904",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1416770"
+          ],
+          "headword" : "狸",
+          "languageReferenceID" : "fcce99a7cc579ba0309ce3a3253c425a",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たぬき",
+          "retrievalOrder" : 6,
+          "summary" : "tanuki (Nyctereutes procyonoides), raccoon dog"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "8,188",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1382950"
+          ],
+          "headword" : "積立",
+          "languageReferenceID" : "4f0249c00c89e202e7169587b0ac465e",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つみたて",
+          "retrievalOrder" : 38,
+          "summary" : "saving, savings, accumulation, putting aside, reserving"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "8,873",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1438850"
+          ],
+          "headword" : "天狗",
+          "languageReferenceID" : "12723224fe71cf25f488d6138b7952e2",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "てんぐ",
+          "retrievalOrder" : 2,
+          "summary" : "tengu, red-faced and long-nosed goblin said to reside deep in the mountains"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "10,112",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1433780"
+          ],
+          "headword" : "綴る",
+          "languageReferenceID" : "f06eb9b97205074a58ccbc002fb676fe",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "つづる",
+          "retrievalOrder" : 15,
+          "summary" : "to spell"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "10,137",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1450060"
+          ],
+          "headword" : "豆乳",
+          "languageReferenceID" : "ab1ba96a20ac7f9c21eff8831ec4b425",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とうにゅう",
+          "retrievalOrder" : 12,
+          "summary" : "soy milk"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "11,446",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1449200"
+          ],
+          "headword" : "当店",
+          "languageReferenceID" : "43ba773c9548873958d54b53716abfeb",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とうてん",
+          "retrievalOrder" : 22,
+          "summary" : "this store"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "11,557",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1837710"
+          ],
+          "headword" : "立会い",
+          "languageReferenceID" : "3bbffecbf6d07d2aca933285f7d69506",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たちあい",
+          "retrievalOrder" : 55,
+          "summary" : "presence (e.g. of an observer), observation, observer, witness"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "13,196",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1008730"
+          ],
+          "headword" : "とろ",
+          "languageReferenceID" : "6cdceb34b7e76070faaf72d3e0c4d1ee",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とろ",
+          "retrievalOrder" : 42,
+          "summary" : "fatty cut (esp. of tuna belly)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "13,800",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1408130"
+          ],
+          "headword" : "多用",
+          "languageReferenceID" : "2976c59d4723f225e3715f00196a9bb2",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たよう",
+          "retrievalOrder" : 8,
+          "summary" : "busyness, a lot of things to do"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "15,572",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1839570"
+          ],
+          "headword" : "食べ歩き",
+          "languageReferenceID" : "0f234ba585a8bfdd55c22940ea104334",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たべあるき",
+          "retrievalOrder" : 13,
+          "summary" : "trying the food at various restaurants, eating tour"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "16,341",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "2116270"
+          ],
+          "headword" : "対中",
+          "languageReferenceID" : "fef06e458c85ef34dd6489c429cb548d",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たいちゅう",
+          "retrievalOrder" : 32,
+          "summary" : "relating to China"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "16,689",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1367880"
+          ],
+          "headword" : "人事",
+          "languageReferenceID" : "07138c49a9fa3389410bf6a7ab4048f3",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "ひとごと",
+          "retrievalOrder" : 37,
+          "summary" : "other people's affairs, someone else's problem"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "18,208",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "2656450"
+          ],
+          "headword" : "店名",
+          "languageReferenceID" : "a639ae2508baa3d371bec0891a02a47c",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "てんめい",
+          "retrievalOrder" : 34,
+          "summary" : "store name, shop name, restaurant name"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "18,526",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1409790"
+          ],
+          "headword" : "堆肥",
+          "languageReferenceID" : "4aef249db6bc29a34a9d80b8300ea334",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たいひ",
+          "retrievalOrder" : 3,
+          "summary" : "compost, manure"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25,690",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1597290"
+          ],
+          "headword" : "淡白",
+          "languageReferenceID" : "4a45f5fbb0b85382d3d144eaf36cf364",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たんぱく",
+          "retrievalOrder" : 51,
+          "summary" : "light (flavor, color, etc.), simple, plain"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "25,845",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1427290"
+          ],
+          "headword" : "丁重",
+          "languageReferenceID" : "da321551ec859828bd719f495580ec70",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "ていちょう",
+          "retrievalOrder" : 4,
+          "summary" : "polite, courteous, hospitable"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "28,489",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1447310"
+          ],
+          "headword" : "投函",
+          "languageReferenceID" : "234ec94427c2c4343a53441f16116a1a",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とうかん",
+          "retrievalOrder" : 48,
+          "summary" : "mailing, posting"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "39,682",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1596820"
+          ],
+          "headword" : "炊き出し",
+          "languageReferenceID" : "fa26c8e2a822d8929eb792fe33e0b3c7",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たきだし",
+          "retrievalOrder" : 10,
+          "summary" : "food distribution (esp. cooked rice)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "42,127",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1770360"
+          ],
+          "headword" : "得々",
+          "languageReferenceID" : "3ee7a02f97b1955a575164a382ecff1c",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とくとく",
+          "retrievalOrder" : 50,
+          "summary" : "triumphantly, proudly"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "49,658",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1440960"
+          ],
+          "headword" : "貼付",
+          "languageReferenceID" : "594e0589e5d1f852fe2c116b49f1bfc4",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "ちょうふ",
+          "retrievalOrder" : 47,
+          "summary" : "pasting, sticking, attaching, affixing, appending"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "50,526",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1457290"
+          ],
+          "headword" : "酉",
+          "languageReferenceID" : "87b455cf255ef58431f83ea6137b8d09",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とり",
+          "retrievalOrder" : 5,
+          "summary" : "the Rooster (tenth sign of the Chinese zodiac), the Cock, the Chicken, the Bird"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "112,509",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1416050"
+          ],
+          "headword" : "叩き",
+          "languageReferenceID" : "c473c394f064ed0a9b543515fcf6ed78",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たたき",
+          "retrievalOrder" : 28,
+          "summary" : "finely chopped fish or meat (sometimes seared first), mince"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1328220"
+          ],
+          "headword" : "手当たり次第",
+          "languageReferenceID" : "8fd7f7562d02d342e2279328f2dba95d",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "てあたりしだい",
+          "retrievalOrder" : 11,
+          "summary" : "using anything one can lay one's hands on, haphazardly, on the rebound, at random, indiscriminately"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1076390"
+          ],
+          "headword" : "タブ",
+          "languageReferenceID" : "9af57aa1a714f5bfccb987f000cbd3db",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "タブ",
+          "retrievalOrder" : 25,
+          "summary" : "tab (character, key)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1577830"
+          ],
+          "headword" : "戯言",
+          "languageReferenceID" : "5ef60d1a70bf79d44322478e6701f726",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たわごと",
+          "retrievalOrder" : 26,
+          "summary" : "nonsense, silly talk, drivel, rubbish"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1007270"
+          ],
+          "headword" : "度に",
+          "languageReferenceID" : "714249bc39d7a63013bbc8b45454c8cc",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たびに",
+          "retrievalOrder" : 27,
+          "summary" : "each time, every time, whenever (something happens), on the occasion of"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2021030"
+          ],
+          "headword" : "摂る",
+          "languageReferenceID" : "d54065984da2cc95de117b5dfce062ec",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とる",
+          "retrievalOrder" : 29,
+          "summary" : "to have (e.g. lunch), to take (e.g. vitamins)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1157150"
+          ],
+          "headword" : "為に",
+          "languageReferenceID" : "94b27d3d05b82dfa5e0535d683af0389",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "ために",
+          "retrievalOrder" : 30,
+          "summary" : "for, for the sake of, to one's advantage, in favor of, in favour of, on behalf of"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1008530"
+          ],
+          "headword" : "とか",
+          "languageReferenceID" : "29b077042598793f3573f6db428c5bb6",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とか",
+          "retrievalOrder" : 40,
+          "summary" : "and the like, such as, among other things, and so on"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2092660"
+          ],
+          "headword" : "たる",
+          "languageReferenceID" : "e201378bbe7b72feea51947ab96ee6ba",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たる",
+          "retrievalOrder" : 41,
+          "summary" : "(those) who are, (that) which is, in the capacity of"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2028950"
+          ],
+          "headword" : "とは",
+          "languageReferenceID" : "d9190a45d1eb602a567eff47ecbb100b",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とは",
+          "retrievalOrder" : 46,
+          "summary" : "indicates word or phrase being defined"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2244810"
+          ],
+          "headword" : "天満宮",
+          "languageReferenceID" : "b0e84bfaa21c85da12cfc1a604a48f11",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "てんまんぐう",
+          "retrievalOrder" : 52,
+          "summary" : "Tenmangu shrine (shrine dedicated to Sugawara no Michizane's spirit)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2131450"
+          ],
+          "headword" : "統一感",
+          "languageReferenceID" : "2edbffe1673647d2d7978f82ecfe954f",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とういつかん",
+          "retrievalOrder" : 53,
+          "summary" : "sense of unity, sense of oneness"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2100900"
+          ],
+          "headword" : "となる",
+          "languageReferenceID" : "ace347d82427c448451ae8459861a6a8",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "となる",
+          "retrievalOrder" : 54,
+          "summary" : "to become, to be"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1408120"
+          ],
+          "headword" : "多様性",
+          "languageReferenceID" : "6a4409ddd25f76b3ce1b09c4ba473854",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たようせい",
+          "retrievalOrder" : 57,
+          "summary" : "diversity, variety"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1418300"
+          ],
+          "headword" : "探検隊",
+          "languageReferenceID" : "e7101fa492118ae08771cd43232d04db",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "たんけんたい",
+          "retrievalOrder" : 58,
+          "summary" : "exploration party, expedition team"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1599130"
+          ],
+          "headword" : "取引先",
+          "languageReferenceID" : "ce708bd5dab187c0f0a40197be1fa97c",
+          "match" : "source=0 english romajiOnly corroboration=0 romaji=2 sense=0 glossToken",
+          "reading" : "とりひきさき",
+          "retrievalOrder" : 59,
+          "summary" : "customer, client, client company, business connection, trade partner"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 60
+    },
+    {
       "covers" : "A query with no results",
       "presentation" : "ranked",
       "query" : "qzxvkj",

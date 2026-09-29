@@ -17,7 +17,7 @@ export interface WebsiteSearch {
   search(rawQuery: string): Promise<SearchResults>
 }
 
-// The precomputed queries, read once per isolate: 281 short strings.
+// The precomputed queries, read once per isolate: about 1,540 short strings.
 const cachedQueries = new WeakMap<D1Database, Promise<Set<string>>>()
 
 /**
