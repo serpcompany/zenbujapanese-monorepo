@@ -7,6 +7,7 @@ import {
   searchDictionary,
   summarizeSearchEntry
 } from './data'
+import type { FrequencyRow } from './detail/rows'
 import { type DictionaryKanji, type DictionaryWord, dictionaryDatabase } from './dictionary-db'
 import type { SearchEntry, SearchResultItem, SearchResults } from './search/search'
 import { websiteSearch } from './search/website'
@@ -213,13 +214,15 @@ describe('searchDictionary', () => {
 describe('word and kanji pages', () => {
   const word = vi.fn<(entSeq: number) => Promise<DictionaryWord | null>>()
   const kanji = vi.fn<(character: string) => Promise<DictionaryKanji | null>>()
+  const frequency = vi.fn<(entSeqs: readonly number[]) => Promise<Map<number, FrequencyRow[]>>>()
   const kanjiCard =
     vi.fn<(character: string) => Promise<{ character: string; meanings: string[] } | null>>()
   const iruRows = fixtureWordRows.find(rows => rows.entry.entSeq === 1546640)
   const kanameRows = fixtureKanjiRows.find(rows => rows.kanji.character === '要')
 
   beforeEach(() => {
-    vi.mocked(dictionaryDatabase).mockReturnValue({ word, kanji, kanjiCard })
+    frequency.mockResolvedValue(new Map())
+    vi.mocked(dictionaryDatabase).mockReturnValue({ word, kanji, kanjiCard, frequency })
   })
 
   afterEach(() => {
@@ -358,5 +361,40 @@ describe('word and kanji pages', () => {
     // Only a one-character query can be a kanji.
     await searchDictionary('食べる')
     expect(kanjiCard).toHaveBeenCalledTimes(1)
+  })
+
+  test('search results show frequency chips from the dictionary database, in one query', async () => {
+    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    vi.mocked(websiteSearch).mockReturnValue({ search: async () => results([eat.entry, iru]) })
+    frequency.mockResolvedValue(
+      new Map([
+        [
+          1358280,
+          [
+            { pack: 'jlpt', level: 5 },
+            { pack: 'tubelex', rank: 189 }
+          ]
+        ],
+        // Not in JLPT: SearchFrequencyRankPresentationModel leaves a level dictionary out.
+        [1546640, [{ pack: 'tubelex', rank: 15_752 }]]
+      ])
+    )
+    const data = await searchDictionary('eat')
+    expect(frequency).toHaveBeenCalledTimes(1)
+    expect(frequency).toHaveBeenCalledWith([1358280, 1546640])
+    expect(
+      data.words.map(result =>
+        result.frequency.map(chip => `${chip.source} ${chip.value} ${chip.tier}`)
+      )
+    ).toEqual([['JLPT N5 veryCommon', 'YouTube 189 veryCommon'], ['YouTube 15,752 uncommon']])
+  })
+
+  test('search results have no chips without the dictionary database', async () => {
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    vi.mocked(websiteSearch).mockReturnValue({ search: async () => results([eat.entry]) })
+    const data = await searchDictionary('eat')
+    expect(frequency).not.toHaveBeenCalled()
+    expect(data.words[0].frequency).toEqual([])
   })
 })

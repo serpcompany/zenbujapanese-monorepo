@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import * as schema from '@/db/dictionary-schema'
-import type { KanjiListWordRow, KanjiRows, WordRows } from './detail/rows'
+import type { FrequencyRow, KanjiListWordRow, KanjiRows, WordRows } from './detail/rows'
 
 // Reads the detail core's rows from the dictionary database (DICTIONARY_DB, issue 464): one
 // batch, so one round trip, per page. Pages read it through data.ts; the import's conformance
@@ -124,6 +124,20 @@ export function dictionaryDatabase(db: D1Database) {
         wordSlugs: new Map(listed.map(word => [word.entSeq, word.slug])),
         kanjiPages: new Set(pages.map(page => page.character))
       }
+    },
+
+    /**
+     * Each word's evidence in the website's frequency dictionaries, by `ent_seq`, for search
+     * results: one query however many results, with the numbers passed as one JSON array (D1
+     * binds at most 100 parameters).
+     */
+    async frequency(entSeqs: readonly number[]): Promise<Map<number, FrequencyRow[]>> {
+      if (entSeqs.length === 0) return new Map()
+      const rows = await orm
+        .select({ entSeq: words.entSeq, frequency: words.frequency })
+        .from(words)
+        .where(sql`${words.entSeq} IN (SELECT value FROM json_each(${JSON.stringify(entSeqs)}))`)
+      return new Map(rows.map(row => [row.entSeq, row.frequency]))
     },
 
     /** The kanji a search for one character shows as a card, if it has a page. */
