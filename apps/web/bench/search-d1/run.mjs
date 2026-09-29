@@ -70,7 +70,20 @@ function loadRow(label, samples) {
   return `| ${label} | ${samples.length} | ${ms(percentile(times, 50))} | ${ms(percentile(times, 95))} | ${ms(Math.max(...times))} |`
 }
 
-const entryIds = await call('/sample?n=200')
+/** A new workers.dev URL answers "Script not found" for a short while after deploying. */
+async function waitUntilLive(seconds) {
+  const until = Date.now() + seconds * 1000
+  for (;;) {
+    try {
+      return await call('/sample?n=200')
+    } catch (error) {
+      if (Date.now() > until) throw error
+      await new Promise(resolve => setTimeout(resolve, 5000))
+    }
+  }
+}
+
+const entryIds = await waitUntilLive(180)
 await search('warm up')
 const first = await call(`/word?id=${encodeURIComponent(entryIds[0])}`)
 
