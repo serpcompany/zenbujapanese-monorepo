@@ -188,3 +188,15 @@ export const retiredIds = sqliteTable('retired_ids', {
   entSeq: integer('ent_seq').primaryKey(),
   replacementEntSeq: integer('replacement_ent_seq')
 })
+
+/**
+ * The word sitemaps, `/sitemaps/dictionary/<number>.xml`: each lists the words from
+ * `firstEntSeq` to `lastEntSeq`, at most 50,000 (`urlCount`), so a sitemap reads only its own
+ * range of `words`, and the sitemap index only this table. The import precomputes it.
+ */
+export const wordSitemaps = sqliteTable('word_sitemaps', {
+  number: integer('number').primaryKey(),
+  firstEntSeq: integer('first_ent_seq').notNull(),
+  lastEntSeq: integer('last_ent_seq').notNull(),
+  urlCount: integer('url_count').notNull()
+})

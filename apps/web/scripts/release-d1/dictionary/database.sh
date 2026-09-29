@@ -36,7 +36,7 @@ build_inputs=(
   apps/web/src/lib/dictionary/search
 )
 tables=(words kanji kanji_strokes kanji_elements element_glyphs example_sentences word_examples
-  word_example_counts retired_ids)
+  word_example_counts retired_ids word_sitemaps)
 # examples-NN.sql: as many as build-examples.mts writes, each under 100 MB (a glob, in order).
 upload_files=(rows.sql 'examples-*.sql')
 

@@ -19,7 +19,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "zenbujapanese-web",
-  "main": ".open-next/worker.js",
+  // worker.ts wraps OpenNext's .open-next/worker.js to answer retired word URLs with 410.
+  "main": "worker.ts",
   "compatibility_date": "2026-09-28",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {

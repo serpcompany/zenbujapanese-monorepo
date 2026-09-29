@@ -156,7 +156,10 @@ row carries its word list, precomputed with the app's `kanjiCandidateRowsSQL` an
 (`entries(containingKanji:)`), and whether search engines may index it. It refuses an artifact
 whose `transform` or `artifact_schema` it doesn't list, or a pack built for another
 `LanguageReferenceData.sqlite3`, and records every input's SHA-256 in
-`dictionary_import.sources`. `retired_ids` stays empty until #463 records retired entries.
+`dictionary_import.sources`. It also writes `word_sitemaps`, the `ent_seq` range of each word
+sitemap (see Sitemaps). `retired_ids` stays empty until #463 records retired entries: the
+artifact's prior-snapshot fields are placeholders, so no release knows yet which entries it
+retired.
 
 **Examples** are precomputed by `dictionary/build-examples.mts` (tsx), which runs TypeScript ports
 of the app's code over every entry: retrieval (`src/lib/dictionary/examples/retrieval.ts`, from
@@ -376,3 +379,28 @@ the index (`/sitemap.xml` serves the same document) and lists every child sitema
 `/sitemaps/`. A child sitemap holds at most 50,000 URLs. Add a new section's sitemap to
 `childSitemaps`. Static pages are listed once, in `src/lib/pages.ts`, which also feeds the HTML
 sitemap at `/sitemap`.
+
+The dictionary's sitemaps (`src/lib/dictionary/sitemaps.ts`, ADR 0007) exist only where the site
+shows the dictionary and `DICTIONARY_DB` holds an import, so production lists none until launch
+and the index renders per request:
+
+- `/sitemaps/dictionary/<n>.xml`: every word page's canonical URL, percent-encoded, 50,000 to a
+  file in `ent_seq` order (five files for 218,382 words). The import precomputes each file's
+  `ent_seq` range into `word_sitemaps`, so a file reads only its own words, by primary key, and
+  streams them 10,000 at a time; the index reads only `word_sitemaps`.
+- `/sitemaps/kanji.xml`: the kanji pages search engines may index (`kanji.indexable`: 12,633 of
+  13,108). A kanji with no meanings or readings is `noindex` and left out. The import stops if the
+  indexable kanji ever outgrow one file.
+
+Both are kept in the Worker's edge cache (the Cache API) under the dictionary build, so a new
+build replaces them at once; `pnpm dev` has no such cache. Search sitemaps (#466) wait for the
+precomputed query set #463 will add.
+
+## Retired word URLs
+
+A word URL whose `ent_seq` is in `retired_ids` returns 410 Gone, or redirects (308) to its
+replacement's canonical URL in one hop (ADR 0007). Next.js pages can't answer 410, so `worker.ts`,
+the Worker's entry in `wrangler.jsonc`, answers these before OpenNext's worker and passes every
+other request on (`src/lib/dictionary/retired.ts`). It reads `retired_ids` once per isolate, and
+only where the site shows the dictionary. `pnpm dev` runs Next.js alone, so check retired URLs in
+`pnpm preview`. The table is empty until #463 records retired entries.

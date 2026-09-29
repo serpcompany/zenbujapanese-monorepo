@@ -23,6 +23,7 @@ const {
   kanjiStrokes,
   wordExampleCounts,
   wordExamples,
+  wordSitemaps,
   words
 } = schema
 
@@ -248,6 +249,50 @@ export function dictionaryDatabase(db: D1Database) {
         .from(words)
         .where(sql`${words.entSeq} IN (SELECT value FROM json_each(${JSON.stringify(entSeqs)}))`)
       return new Map(rows.map(row => [row.entSeq, row.frequency]))
+    },
+
+    /** The word sitemaps the import precomputed, by number. */
+    async wordSitemaps(): Promise<{ number: number; firstEntSeq: number; lastEntSeq: number }[]> {
+      return orm
+        .select({
+          number: wordSitemaps.number,
+          firstEntSeq: wordSitemaps.firstEntSeq,
+          lastEntSeq: wordSitemaps.lastEntSeq
+        })
+        .from(wordSitemaps)
+        .orderBy(asc(wordSitemaps.number))
+    },
+
+    /**
+     * Up to `limit` words of a sitemap's range after `after`, in `ent_seq` order, for writing it
+     * a page at a time: each query reads only its rows, by primary key.
+     */
+    async sitemapWords(
+      range: { firstEntSeq: number; lastEntSeq: number },
+      after: number,
+      limit: number
+    ): Promise<{ entSeq: number; slug: string }[]> {
+      return orm
+        .select({ entSeq: words.entSeq, slug: words.slug })
+        .from(words)
+        .where(
+          and(
+            gte(words.entSeq, Math.max(range.firstEntSeq, after + 1)),
+            sql`${words.entSeq} <= ${range.lastEntSeq}`
+          )
+        )
+        .orderBy(asc(words.entSeq))
+        .limit(limit)
+    },
+
+    /** Every kanji whose page search engines may index, in character order. */
+    async indexableKanji(): Promise<string[]> {
+      const rows = await orm
+        .select({ character: kanji.character })
+        .from(kanji)
+        .where(eq(kanji.indexable, true))
+        .orderBy(asc(kanji.character))
+      return rows.map(row => row.character)
     },
 
     /** The kanji a search for one character shows as a card, if it has a page. */

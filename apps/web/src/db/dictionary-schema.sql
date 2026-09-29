@@ -92,6 +92,14 @@ CREATE TABLE `word_examples` (
 	PRIMARY KEY(`ent_seq`, `position`)
 )
 
+table word_sitemaps
+CREATE TABLE `word_sitemaps` (
+	`number` integer PRIMARY KEY NOT NULL,
+	`first_ent_seq` integer NOT NULL,
+	`last_ent_seq` integer NOT NULL,
+	`url_count` integer NOT NULL
+)
+
 table words
 CREATE TABLE `words` (
 	`ent_seq` integer PRIMARY KEY NOT NULL,
