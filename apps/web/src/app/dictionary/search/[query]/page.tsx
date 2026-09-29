@@ -2,6 +2,7 @@ import { ChevronRightIcon, SearchXIcon } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
+import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { FrequencyBadges } from '@/components/dictionary/frequency'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { SearchForm } from '@/components/dictionary/search-form'
@@ -41,7 +42,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SearchResultsPage({ params }: Props) {
   const { query, kanji, words } = await load(params, false)
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8">
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-4 pb-6">
+      <DictionaryBreadcrumbs
+        page={{ label: `Search: ${query}`, path: searchPath(query), lang: 'ja' }}
+      />
       <SearchForm defaultValue={query} />
       {words.length === 0 && !kanji ? (
         <Empty>

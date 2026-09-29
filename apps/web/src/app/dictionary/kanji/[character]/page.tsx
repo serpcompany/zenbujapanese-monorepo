@@ -2,15 +2,17 @@ import { ChevronRightIcon } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
 import { PageToolbar } from '@/components/dictionary/page-toolbar'
 import { RubyText } from '@/components/dictionary/ruby-text'
+import { SearchForm } from '@/components/dictionary/search-form'
 import { Section } from '@/components/dictionary/section'
 import { Card, CardContent } from '@/components/ui/card'
 import { Item, ItemActions, ItemContent } from '@/components/ui/item'
 import { getKanjiPage, isDictionaryAvailable } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
-import { decodeSegment, kanjiPath, searchPath } from '@/lib/dictionary/urls'
+import { decodeSegment, kanjiPath } from '@/lib/dictionary/urls'
 
 type Props = PageProps<'/dictionary/kanji/[character]'>
 
@@ -43,9 +45,12 @@ export default async function KanjiPage({ params }: Props) {
     { label: 'JLPT', value: kanji.jlpt ? `N${kanji.jlpt}` : null }
   ].filter(stat => stat.value !== null)
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-6">
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-4 pb-6">
+      <DictionaryBreadcrumbs
+        page={{ label: `Kanji ${kanji.character}`, path: kanjiPath(kanji.character), lang: 'ja' }}
+      />
+      <SearchForm />
       <PageToolbar
-        back={{ href: searchPath(kanji.character), label: kanji.character }}
         title={kanji.character}
         shareText={`${kanji.character}: ${kanji.meanings.join(', ')}`}
       />
