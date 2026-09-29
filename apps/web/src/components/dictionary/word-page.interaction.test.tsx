@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { conjugations } from '@/lib/dictionary/detail/conjugation'
 import { frequencyRowDetails } from '@/lib/dictionary/detail/frequency'
 import { rubySegments } from '@/lib/dictionary/detail/ruby'
@@ -158,6 +158,36 @@ describe('the conjugation table', () => {
     ])
     // The address keeps the register, so returning from a Polite form shows Polite.
     expect(window.location.hash).toBe('#polite')
+  })
+
+  test('the register goes into the address with null state, so the router keeps it', async () => {
+    window.history.replaceState(
+      { __NA: true, tree: [] },
+      '',
+      '/dictionary/見る-1259290/conjugations/'
+    )
+    const replace = vi.spyOn(window.history, 'replaceState')
+    renderTable()
+    const click = async (mode: string) => {
+      const tab = document.querySelector<HTMLElement>(`[data-conjugation-mode="${mode}"]`)
+      await act(async () => tab?.click())
+    }
+    await click('Polite')
+    expect(replace).toHaveBeenLastCalledWith(
+      null,
+      '',
+      `${encodeURI('/dictionary/見る-1259290/conjugations/')}#polite`
+    )
+    expect(window.history.state).toBeNull()
+    expect(window.location.hash).toBe('#polite')
+    await click('Plain')
+    expect(replace).toHaveBeenLastCalledWith(
+      null,
+      '',
+      encodeURI('/dictionary/見る-1259290/conjugations/')
+    )
+    expect(window.location.hash).toBe('')
+    replace.mockRestore()
   })
 
   test('opens in Polite when the address names it, as Back from a Polite form does', () => {

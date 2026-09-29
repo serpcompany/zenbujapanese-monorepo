@@ -114949,6 +114949,759 @@
           ]
         }
       ]
+    },
+    {
+      "alternativeForms" : [
+        {
+          "kind" : "written",
+          "labels" : [
+
+          ],
+          "value" : "ｈ"
+        },
+        {
+          "kind" : "reading",
+          "labels" : [
+
+          ],
+          "value" : "エイチ"
+        },
+        {
+          "kind" : "reading",
+          "labels" : [
+
+          ],
+          "value" : "えっち"
+        }
+      ],
+      "alternativeKanji" : [
+
+      ],
+      "conjugations" : {
+        "modes" : [
+          "Plain"
+        ],
+        "plain" : [
+          {
+            "ending" : "",
+            "examples" : {
+              "ids" : [
+                "esp1_38a92be4175faf7137096a80a0e2ce67",
+                "esp1_afc782e4bf94c79ff3e47e0bd7a7d9aa",
+                "esp1_65111ffcf19b61e8c467e32370cc18d2"
+              ],
+              "shown" : [
+                {
+                  "english" : "D.H. Lawrence is a novelist and poet.",
+                  "id" : "esp1_38a92be4175faf7137096a80a0e2ce67",
+                  "japanese" : "Ｄ．Ｈ．ロレンスは小説家でもあり詩人でもある。",
+                  "tokens" : [
+                    {
+                      "surface" : "Ｄ"
+                    },
+                    {
+                      "surface" : "．"
+                    },
+                    {
+                      "surface" : "Ｈ"
+                    },
+                    {
+                      "surface" : "．"
+                    },
+                    {
+                      "surface" : "ロレンス"
+                    },
+                    {
+                      "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                      "surface" : "は"
+                    },
+                    {
+                      "entry" : "0cfcb6f283838d3302423477ccd70093",
+                      "surface" : "小説"
+                    },
+                    {
+                      "candidates" : [
+                        "6f54be67247dcd72328d454c302c328a",
+                        "11f59f15bcbbd9324880efb97d43df2b",
+                        "8e98db8b38eb85164c0d5b96e90316c6",
+                        "89e0002aea24586730b828bf87fe22d4"
+                      ],
+                      "surface" : "家"
+                    },
+                    {
+                      "candidates" : [
+                        "4102685c5ecb52e7276d68ab0ff59f29",
+                        "3906187791ec20829976c57d3c59727d"
+                      ],
+                      "surface" : "で"
+                    },
+                    {
+                      "entry" : "30701592e9873c43b883e1d3510287f4",
+                      "surface" : "も"
+                    },
+                    {
+                      "entry" : "c9728ce7b0ec2814c8daaeaca88b1d90",
+                      "surface" : "あり"
+                    },
+                    {
+                      "entry" : "d9c7a18f17eb37eff2191cb14c02b6e5",
+                      "surface" : "詩人"
+                    },
+                    {
+                      "candidates" : [
+                        "4102685c5ecb52e7276d68ab0ff59f29",
+                        "3906187791ec20829976c57d3c59727d"
+                      ],
+                      "surface" : "で"
+                    },
+                    {
+                      "entry" : "30701592e9873c43b883e1d3510287f4",
+                      "surface" : "も"
+                    },
+                    {
+                      "entry" : "45eefee1383a89cb3c6287032622e6fa",
+                      "surface" : "ある"
+                    },
+                    {
+                      "surface" : "。"
+                    }
+                  ]
+                },
+                {
+                  "english" : "The chemical symbol H indicates hydrogen.",
+                  "id" : "esp1_afc782e4bf94c79ff3e47e0bd7a7d9aa",
+                  "japanese" : "元素記号Ｈは水素をあらわす。",
+                  "tokens" : [
+                    {
+                      "entry" : "0c1058c9cae71f7bbeb86425223592bf",
+                      "surface" : "元素"
+                    },
+                    {
+                      "entry" : "900b7b546adf000337946cf0e3a39071",
+                      "surface" : "記号"
+                    },
+                    {
+                      "surface" : "Ｈ"
+                    },
+                    {
+                      "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                      "surface" : "は"
+                    },
+                    {
+                      "entry" : "0256dcda588f1493d2d938ce6f081fd8",
+                      "surface" : "水素"
+                    },
+                    {
+                      "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                      "surface" : "を"
+                    },
+                    {
+                      "candidates" : [
+                        "336194fd44cf23f4d4d85694fa4a1f42",
+                        "3c0fdafb7a683133ea1d2f3477906706"
+                      ],
+                      "surface" : "あらわす"
+                    },
+                    {
+                      "surface" : "。"
+                    }
+                  ]
+                },
+                {
+                  "english" : "The chemical formula for water is H-O-H.",
+                  "id" : "esp1_65111ffcf19b61e8c467e32370cc18d2",
+                  "japanese" : "水の化学式は、Ｈ—Ｏ—Ｈである。",
+                  "tokens" : [
+                    {
+                      "entry" : "722c94624b09c10ca07a96c1cb03701f",
+                      "surface" : "水"
+                    },
+                    {
+                      "entry" : "08c0172000564955c420c01ddadc4b63",
+                      "surface" : "の"
+                    },
+                    {
+                      "entry" : "e3d8daca7af9d251e20120a6118fb335",
+                      "surface" : "化学"
+                    },
+                    {
+                      "entry" : "0134d4373b14a226398957743958dded",
+                      "surface" : "式"
+                    },
+                    {
+                      "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                      "surface" : "は"
+                    },
+                    {
+                      "surface" : "、"
+                    },
+                    {
+                      "surface" : "Ｈ"
+                    },
+                    {
+                      "surface" : "—"
+                    },
+                    {
+                      "surface" : "Ｏ"
+                    },
+                    {
+                      "surface" : "—"
+                    },
+                    {
+                      "surface" : "Ｈ"
+                    },
+                    {
+                      "candidates" : [
+                        "0739533096c82fb9c8aa0ba7c26c9324",
+                        "3906187791ec20829976c57d3c59727d"
+                      ],
+                      "surface" : "で"
+                    },
+                    {
+                      "entry" : "45eefee1383a89cb3c6287032622e6fa",
+                      "surface" : "ある"
+                    },
+                    {
+                      "surface" : "。"
+                    }
+                  ]
+                }
+              ]
+            },
+            "explanation" : "The adjective's base form, shown on its own rather than attached to a noun or verb.",
+            "furigana" : [
+              {
+                "base" : "Ｈ"
+              }
+            ],
+            "kind" : "standalone",
+            "reading" : "エッチ",
+            "rowFurigana" : false,
+            "surface" : "Ｈ",
+            "title" : "Standalone"
+          },
+          {
+            "ending" : "な",
+            "examples" : {
+              "ids" : [
+
+              ],
+              "shown" : [
+
+              ]
+            },
+            "explanation" : "Places the adjective before a noun to describe that noun.",
+            "furigana" : [
+              {
+                "base" : "Ｈな"
+              }
+            ],
+            "kind" : "modifying-a-noun",
+            "reading" : "エッチな",
+            "rowFurigana" : false,
+            "surface" : "Ｈな",
+            "title" : "Modifying a Noun"
+          },
+          {
+            "ending" : "で",
+            "examples" : {
+              "ids" : [
+
+              ],
+              "shown" : [
+
+              ]
+            },
+            "explanation" : "A connecting form. It can link actions or descriptions and, depending on context, show sequence, cause, or reason.",
+            "furigana" : [
+              {
+                "base" : "Ｈで"
+              }
+            ],
+            "kind" : "te-form",
+            "reading" : "エッチで",
+            "rowFurigana" : false,
+            "surface" : "Ｈで",
+            "title" : "Te-Form"
+          },
+          {
+            "ending" : "に",
+            "examples" : {
+              "ids" : [
+
+              ],
+              "shown" : [
+
+              ]
+            },
+            "explanation" : "Places the adjective form before a verb to describe how an action is done.",
+            "furigana" : [
+              {
+                "base" : "Ｈに"
+              }
+            ],
+            "kind" : "adverb",
+            "reading" : "エッチに",
+            "rowFurigana" : false,
+            "surface" : "Ｈに",
+            "title" : "Adverb"
+          },
+          {
+            "ending" : "さ",
+            "examples" : {
+              "ids" : [
+
+              ],
+              "shown" : [
+
+              ]
+            },
+            "explanation" : "Turns the adjective into a noun that names the quality or its degree.",
+            "furigana" : [
+              {
+                "base" : "Ｈさ"
+              }
+            ],
+            "kind" : "noun",
+            "reading" : "エッチさ",
+            "rowFurigana" : false,
+            "surface" : "Ｈさ",
+            "title" : "Noun"
+          }
+        ],
+        "rule" : "Keep the word as is and add な, で, or に.",
+        "summary" : "H, h"
+      },
+      "covers" : "Ｈ: na-adjective whose standalone form is ASCII once normalized, so its screen searches English",
+      "entSeq" : [
+        "1029150"
+      ],
+      "examples" : {
+        "error" : "invalidQuery(SearchExperience.ExampleSentenceInvalidQueryReason.missingEntryEvidence)",
+        "listed" : 0,
+        "shown" : [
+
+        ],
+        "truncated" : false
+      },
+      "frequency" : [
+        {
+          "details" : {
+            "explanation" : "JLPT Levels does not list this entry. JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.",
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "JLPT",
+          "pack" : "zenbu.jlpt.waller.levels",
+          "text" : "Not listed"
+        },
+        {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#2,188"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.62%"
+              }
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "YouTube",
+          "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+          "text" : "2,188",
+          "tier" : "common"
+        }
+      ],
+      "furigana" : [
+        {
+          "base" : "Ｈ"
+        }
+      ],
+      "headword" : "Ｈ",
+      "id" : "e02e7d90d7a7c235d0e60a9458041bab",
+      "kanji" : [
+
+      ],
+      "languageReferenceID" : "e02e7d90d7a7c235d0e60a9458041bab",
+      "opensConjugations" : true,
+      "partOfSpeech" : "Noun",
+      "pitch" : {
+        "downstep" : 1,
+        "graph" : {
+          "morae" : [
+            "エ",
+            "ッ",
+            "チ"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 330
+          },
+          "points" : [
+            {
+              "level" : "H",
+              "x" : 50
+            },
+            {
+              "level" : "L",
+              "x" : 150
+            },
+            {
+              "level" : "L",
+              "x" : 250
+            }
+          ]
+        },
+        "levels" : "HLL",
+        "moraCount" : 3,
+        "particle" : "L",
+        "source" : "UniDic for Contemporary Written Japanese 3.1.0"
+      },
+      "reading" : "エッチ",
+      "relatedWords" : [
+        {
+          "headword" : "変態",
+          "reading" : "へんたい",
+          "relation" : "See also",
+          "summary" : "sexual perversion, pervert",
+          "targetID" : "fe67c8503bb27aa5d6dccb9e15b48e43"
+        },
+        {
+          "headword" : "平成",
+          "reading" : "へいせい",
+          "relation" : "See also",
+          "summary" : "Heisei era (1989.1.8-2019.4.30)",
+          "targetID" : "f5349467578d50c1abc65839c847b7e6"
+        },
+        {
+          "headword" : "ホール",
+          "reading" : "ホール",
+          "relation" : "See also",
+          "summary" : "dining area of a restaurant",
+          "targetID" : "09341cf1943b7d2b12b6ced55cde1612"
+        }
+      ],
+      "senses" : [
+        {
+          "meaning" : "H, h",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "noun"
+          ]
+        },
+        {
+          "meaning" : "indecent, lewd, sexy, dirty, obscene",
+          "notes" : [
+            "Usually written in kana",
+            "from 変態"
+          ],
+          "partsOfSpeech" : [
+            "naAdjective",
+            "noun"
+          ]
+        },
+        {
+          "meaning" : "(having) sex",
+          "notes" : [
+            "Usually written in kana"
+          ],
+          "partsOfSpeech" : [
+            "noun",
+            "takesSuru",
+            "intransitive"
+          ]
+        },
+        {
+          "meaning" : "pervert",
+          "notes" : [
+            "Usually written in kana"
+          ],
+          "partsOfSpeech" : [
+            "noun"
+          ]
+        },
+        {
+          "meaning" : "nth year in the Heisei era (1989.1.8-2019.4.30)",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "prefix"
+          ]
+        },
+        {
+          "meaning" : "hour",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "noun"
+          ]
+        },
+        {
+          "meaning" : "hydrogen (H)",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "noun"
+          ]
+        },
+        {
+          "meaning" : "hole",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "noun"
+          ]
+        }
+      ]
+    },
+    {
+      "alternativeForms" : [
+
+      ],
+      "alternativeKanji" : [
+
+      ],
+      "conjugations" : {
+        "modes" : [
+          "Plain"
+        ],
+        "plain" : [
+          {
+            "ending" : "",
+            "examples" : {
+              "ids" : [
+
+              ],
+              "shown" : [
+
+              ]
+            },
+            "explanation" : "The adjective's base form, shown on its own rather than attached to a noun or verb.",
+            "furigana" : [
+              {
+                "base" : "ＮＧ"
+              }
+            ],
+            "kind" : "standalone",
+            "reading" : "エヌ・ジー",
+            "rowFurigana" : false,
+            "surface" : "ＮＧ",
+            "title" : "Standalone"
+          },
+          {
+            "ending" : "な",
+            "examples" : {
+              "ids" : [
+
+              ],
+              "shown" : [
+
+              ]
+            },
+            "explanation" : "Places the adjective before a noun to describe that noun.",
+            "furigana" : [
+              {
+                "base" : "ＮＧな"
+              }
+            ],
+            "kind" : "modifying-a-noun",
+            "reading" : "エヌ・ジーな",
+            "rowFurigana" : false,
+            "surface" : "ＮＧな",
+            "title" : "Modifying a Noun"
+          },
+          {
+            "ending" : "で",
+            "examples" : {
+              "ids" : [
+
+              ],
+              "shown" : [
+
+              ]
+            },
+            "explanation" : "A connecting form. It can link actions or descriptions and, depending on context, show sequence, cause, or reason.",
+            "furigana" : [
+              {
+                "base" : "ＮＧで"
+              }
+            ],
+            "kind" : "te-form",
+            "reading" : "エヌ・ジーで",
+            "rowFurigana" : false,
+            "surface" : "ＮＧで",
+            "title" : "Te-Form"
+          },
+          {
+            "ending" : "に",
+            "examples" : {
+              "ids" : [
+
+              ],
+              "shown" : [
+
+              ]
+            },
+            "explanation" : "Places the adjective form before a verb to describe how an action is done.",
+            "furigana" : [
+              {
+                "base" : "ＮＧに"
+              }
+            ],
+            "kind" : "adverb",
+            "reading" : "エヌ・ジーに",
+            "rowFurigana" : false,
+            "surface" : "ＮＧに",
+            "title" : "Adverb"
+          },
+          {
+            "ending" : "さ",
+            "examples" : {
+              "ids" : [
+
+              ],
+              "shown" : [
+
+              ]
+            },
+            "explanation" : "Turns the adjective into a noun that names the quality or its degree.",
+            "furigana" : [
+              {
+                "base" : "ＮＧさ"
+              }
+            ],
+            "kind" : "noun",
+            "reading" : "エヌ・ジーさ",
+            "rowFurigana" : false,
+            "surface" : "ＮＧさ",
+            "title" : "Noun"
+          }
+        ],
+        "rule" : "Keep the word as is and add な, で, or に.",
+        "summary" : "no good, not allowed, not acceptable"
+      },
+      "covers" : "ＮＧ: na-adjective whose English search for its standalone form finds no example",
+      "entSeq" : [
+        "1029390"
+      ],
+      "examples" : {
+        "error" : "invalidQuery(SearchExperience.ExampleSentenceInvalidQueryReason.missingEntryEvidence)",
+        "listed" : 0,
+        "shown" : [
+
+        ],
+        "truncated" : false
+      },
+      "frequency" : [
+        {
+          "details" : {
+            "explanation" : "JLPT Levels does not list this entry. JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.",
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "JLPT",
+          "pack" : "zenbu.jlpt.waller.levels",
+          "text" : "Not listed"
+        },
+        {
+          "details" : {
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+              {
+                "label" : "Rank",
+                "value" : "#5,330"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 1.52%"
+              }
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "YouTube",
+          "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+          "text" : "5,330",
+          "tier" : "moderately common"
+        }
+      ],
+      "furigana" : [
+        {
+          "base" : "ＮＧ"
+        }
+      ],
+      "headword" : "ＮＧ",
+      "id" : "b797b22ddfa7195186b76162aa1d3f17",
+      "kanji" : [
+
+      ],
+      "languageReferenceID" : "b797b22ddfa7195186b76162aa1d3f17",
+      "opensConjugations" : true,
+      "partOfSpeech" : "Na-adjective · Noun",
+      "reading" : "エヌ・ジー",
+      "relatedWords" : [
+
+      ],
+      "senses" : [
+        {
+          "meaning" : "no good, not allowed, not acceptable",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "naAdjective",
+            "noun"
+          ]
+        },
+        {
+          "meaning" : "outtake, blooper, retake",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "noun"
+          ]
+        }
+      ]
     }
   ],
   "exampleLimit" : 25,

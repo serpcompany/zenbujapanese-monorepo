@@ -44,6 +44,7 @@ build_inputs=(
   apps/web/src/components/dictionary/word-header.tsx
   apps/web/src/components/dictionary/conjugations.tsx
   apps/web/src/components/dictionary/example-list.tsx
+  apps/web/src/components/dictionary/load-more.tsx
   apps/web/src/components/dictionary/ruby-text.tsx
   apps/web/src/components/dictionary/headword-ruby.tsx
   apps/web/src/components/dictionary/pitch-accent.tsx

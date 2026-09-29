@@ -422,7 +422,11 @@ export function englishSearch(
       offsets: string
       lengths: Uint8Array
     }[]
+    const seen = new Set<string>()
     for (const row of rows) {
+      // A pair already listed that the index returns again makes the app's search throw
+      // (`invalidIndexMetadata`), and the form's screen then lists nothing.
+      if (seen.has(row.pair_id)) return []
       const porterLocation = phraseLocation(row.english, ftsOffsets(row.offsets))
       if (porterLocation === null) continue
       const sentence = byPairId.get(row.pair_id)
@@ -437,6 +441,7 @@ export function englishSearch(
         graphemeCount: sentences[sentence].graphemeCount,
         pairId: row.pair_id
       })
+      seen.add(row.pair_id)
     }
     if (!candidates.some(candidate => candidate.relation === 0)) return []
     candidates.sort(

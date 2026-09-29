@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
-  canonicalMode,
+  canonicalForm,
   conjugationTable,
   formsFor,
   indexedForms,
@@ -88,23 +88,51 @@ describe('which form pages search engines index', () => {
   })
   if (!miru) throw new Error('見る has no table')
 
+  const form = (mode: 'Plain' | 'Polite', kind: string) => {
+    const found = formsFor(miru, mode).find(candidate => candidate.kind === kind)
+    if (!found) throw new Error(`No ${mode} ${kind}`)
+    return found
+  }
+
   test('a Polite form spelled as its Plain form names the Plain page (te-form, conditional)', () => {
-    const polite = (kind: string) => formsFor(miru, 'Polite').find(form => form.kind === kind)
-    const te = polite('te-form')
-    const past = polite('past')
-    if (!te || !past) throw new Error('No form')
-    expect(canonicalMode(miru.plain, 'Polite', te)).toBe('Plain')
-    expect(canonicalMode(miru.plain, 'Polite', past)).toBe('Polite')
-    expect(canonicalMode(miru.plain, 'Plain', miru.plain[0])).toBe('Plain')
+    expect(canonicalForm(miru, 'Polite', form('Polite', 'te-form'))).toEqual({
+      mode: 'Plain',
+      kind: 'te-form'
+    })
+    expect(canonicalForm(miru, 'Polite', form('Polite', 'past'))).toEqual({
+      mode: 'Polite',
+      kind: 'past'
+    })
+    expect(canonicalForm(miru, 'Plain', form('Plain', 'past'))).toEqual({
+      mode: 'Plain',
+      kind: 'past'
+    })
+  })
+
+  test('a form spelled as an earlier one in its register names it (passive 見られる)', () => {
+    expect(canonicalForm(miru, 'Plain', form('Plain', 'passive'))).toEqual({
+      mode: 'Plain',
+      kind: 'potential'
+    })
+    expect(canonicalForm(miru, 'Plain', form('Plain', 'potential'))).toEqual({
+      mode: 'Plain',
+      kind: 'potential'
+    })
+    expect(canonicalForm(miru, 'Polite', form('Polite', 'passive'))).toEqual({
+      mode: 'Polite',
+      kind: 'potential'
+    })
   })
 
   test('indexes each canonical form page that lists examples', () => {
-    const withExamples = new Set(['見る', '見た', '見て', '見ました'])
+    const withExamples = new Set(['見る', '見た', '見て', '見ました', '見られる', '見られます'])
     expect(indexedForms(miru, surface => withExamples.has(surface))).toEqual([
       'plain/present-future',
       'plain/past',
       'plain/te-form',
-      'polite/past'
+      'plain/potential',
+      'polite/past',
+      'polite/potential'
     ])
   })
 

@@ -83,10 +83,10 @@ describe('the Example Sentences page', () => {
     expect(first).toEqual({
       position: 0,
       words: [
-        { text: 'パン', furigana: '', href: '/dictionary/w-1049020', marked: false },
+        { text: 'パン', furigana: '', href: '/dictionary/w-1049020/', marked: false },
         // A word with several entries searches for its dictionary form.
-        { text: 'を', furigana: '', href: '/dictionary/search/%E3%82%92', marked: false },
-        { text: '食べた', furigana: '食(た)', href: '/dictionary/w-1358280', marked: true },
+        { text: 'を', furigana: '', href: '/dictionary/search/%E3%82%92/', marked: false },
+        { text: '食べた', furigana: '食(た)', href: '/dictionary/w-1358280/', marked: true },
         { text: '。', furigana: '', href: null, marked: false }
       ],
       translation: 'I ate bread.',

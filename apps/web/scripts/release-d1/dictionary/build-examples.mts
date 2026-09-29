@@ -56,6 +56,7 @@ import {
 } from '../../../src/lib/dictionary/examples/morphology'
 import {
   entryTerms,
+  exampleLimit,
   findOccurrences,
   type RetrievedExamples,
   retrieveEntryExamples,
@@ -231,19 +232,41 @@ log(
   `found examples for ${formExamples.size} of ${formQueries.size} forms ` +
     `(${englishForms} search English)`
 )
-// The fast search must list exactly what the app's scan lists, on a sample drawn per build.
-const formSample = [...formQueries.values()].filter(query => !isASCII(query)).sort()
-const checkedForms = new Set<string>()
-while (checkedForms.size < Math.min(checkedPerPath, formSample.length)) {
-  checkedForms.add(formSample[Math.floor(random() * formSample.length)])
+// The fast search must list exactly what the app's scan lists, on a sample drawn per build from
+// each kind of search: a form some sentence is exactly, one found 1 to 100 times, one found more
+// than 100 times (where the cap cuts the list), and one found nowhere.
+const sentenceTexts = new Set(sentences.map(sentence => sentence.japanese))
+const formBuckets = new Map<string, string[]>()
+for (const query of [...new Set(formQueries.values())].sort()) {
+  if (isASCII(query)) continue
+  const { total } = exampleCorpus.occurrences(query)
+  const bucket = sentenceTexts.has(query)
+    ? 'a sentence is the form'
+    : total > exampleLimit
+      ? 'over 100'
+      : total > 0
+        ? '1 to 100'
+        : 'none'
+  const list = formBuckets.get(bucket)
+  if (list) list.push(query)
+  else formBuckets.set(bucket, [query])
 }
-for (const query of checkedForms) {
-  const fast = JSON.stringify(retrieveJapaneseExamples(query, exampleCorpus))
-  if (fast !== JSON.stringify(retrieveJapaneseExamplesByScan(query, sentences))) {
-    throw new Error(`The search for the form ${query} differs from the app's scan`)
+let checkedForms = 0
+for (const [bucket, queries] of [...formBuckets].sort(([a], [b]) => (a < b ? -1 : 1))) {
+  const drawn = new Set<string>()
+  while (drawn.size < Math.min(checkedPerPath, queries.length)) {
+    drawn.add(queries[Math.floor(random() * queries.length)])
   }
+  for (const query of drawn) {
+    const fast = JSON.stringify(retrieveJapaneseExamples(query, exampleCorpus))
+    if (fast !== JSON.stringify(retrieveJapaneseExamplesByScan(query, sentences))) {
+      throw new Error(`The search for the form ${query} differs from the app's scan`)
+    }
+  }
+  checkedForms += drawn.size
+  log(`checked ${drawn.size} of ${queries.length} forms' search (${bucket}) against the app's scan`)
 }
-log(`checked ${checkedForms.size} forms' search against the app's scan`)
+log(`checked ${checkedForms} forms' search against the app's scan`)
 
 // Tokens: every listed sentence, on a word page or a form's screen.
 const listed = [

@@ -292,7 +292,8 @@ from its build ID. 48,169 words have examples: 902,279 word examples over
 It also conjugates every word with the detail core's port of the app's conjugator (20,364 tables,
 281,435 spellings) and lists each spelling's examples as the form's screen does
 (`ConjugatedForm.examples`): the first 100 sentences the app's search for the form finds
-(`retrieveJapaneseExamples`, checked against the app's scan on 80 forms per build; the 4 forms
+(`retrieveJapaneseExamples`, checked against the app's scan on up to 80 forms per build from each
+kind of search: a sentence is the form, 1 to 100 matches, over 100, and none; the 4 forms
 that are ASCII once normalized, such as Ｈ, search the artifact's English FTS4 indexes as the app
 does, `englishSearch` in `examples-corpus.ts`), keeping those whose Kuromoji words, grouped as the
 app groups inflections, include the form (`examples/forms.ts`). 12,311 spellings have examples:
@@ -518,7 +519,7 @@ per request. `/dictionary/`, the search box, is a static page in `src/lib/pages.
 - `/sitemaps/kanji.xml`: the kanji pages search engines may index (`kanji.indexable`). The import
   stops if the indexable kanji ever outgrow one file.
 - `/sitemaps/conjugations.xml`: every conjugation table and the form pages search engines may
-  index (33,705 URLs), from `word_conjugations`. The import stops if they ever outgrow one file.
+  index (33,532 URLs), from `word_conjugations`. The import stops if they ever outgrow one file.
 
 Both are kept in the Worker's edge cache (the Cache API) under the dictionary build, so a new
 build replaces them at once; `pnpm dev` has no such cache.

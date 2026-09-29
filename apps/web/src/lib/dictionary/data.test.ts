@@ -718,6 +718,15 @@ describe('word and kanji pages', () => {
     expect(te?.canonicalPath).toBe('/dictionary/要る-1546640/conjugations/plain/te-form/')
   })
 
+  test('a form spelled as an earlier one in its register names it as canonical', async () => {
+    // いる's passive いられる is spelled as its potential, which the app lists first.
+    const passive = await getConjugatedFormPage(1577980, 'Plain', 'passive')
+    expect(passive?.row.surface).toBe('いられる')
+    expect(passive?.canonicalPath).toBe('/dictionary/いる-1577980/conjugations/plain/potential/')
+    const potential = await getConjugatedFormPage(1577980, 'Plain', 'potential')
+    expect(potential?.canonicalPath).toBe(potential?.formPath)
+  })
+
   test('a form page shows its first 25 examples, and the rest load 25 at a time', async () => {
     // 入る's fixture keeps 50 examples: two pages' worth.
     const form = await getConjugatedFormPage(1465580, 'Plain', 'present-future')

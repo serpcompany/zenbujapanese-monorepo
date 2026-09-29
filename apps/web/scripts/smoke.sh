@@ -257,13 +257,16 @@ show_conjugations_seen() {
 eventually "見る's conjugations and its past's examples match the app" \
   "見る's conjugations or its past's examples differ from the app" conjugations_like_the_app \
   show_conjugations_seen
-# A form's page without examples is noindex; one with examples isn't, and a Polite form spelled
-# as its Plain one (the te-form) names the Plain page as canonical.
+# A form's page without examples is noindex; one with examples isn't. A Polite form spelled as its
+# Plain one (the te-form) names the Plain page as canonical, and a form spelled as an earlier one
+# in its register (the passive, as the potential) names that one.
 form_indexing_follows_examples() {
   grep -q "$noindex" <<<"$(body "${conjugations}plain/$miru_empty_form/")" &&
     ! grep -q "$noindex" <<<"$(body "${conjugations}plain/past/")" &&
     grep -q "<link rel=\"canonical\" href=\"[^\"]*${conjugations}plain/te-form/\"" \
-      <<<"$(body "${conjugations}polite/te-form/")"
+      <<<"$(body "${conjugations}polite/te-form/")" &&
+    grep -q "<link rel=\"canonical\" href=\"[^\"]*${conjugations}plain/potential/\"" \
+      <<<"$(body "${conjugations}plain/passive/")"
 }
 
 # iru leads with the app's "View N Example Sentences" row (the suite's title), opening its Example
@@ -402,17 +405,20 @@ noindex_follows_meanings() {
 }
 eventually 'a kanji without meanings or readings is noindex' 'noindex is wrong on 㐂 or 見' \
   noindex_follows_meanings
-eventually "a form's page is noindex without examples, and polite te-form names the plain one" \
+eventually "a form's page is noindex without examples, and names its spelling's first page" \
   "noindex or canonical is wrong on 見る's form pages" form_indexing_follows_examples
-# The conjugations sitemap lists 見る's table and its past, which lists examples, and neither the
-# form without examples nor the polite te-form, whose canonical page is the plain one.
+# The conjugations sitemap lists 見る's table, its past, and its potential, which list examples,
+# and not the form without examples, the polite te-form (canonically the plain one), or the passive
+# (canonically the potential, spelled the same).
 lists_conjugations() {
   local locs
   locs="$(body /sitemaps/conjugations.xml | grep -oE '<loc>[^<]+</loc>' || true)"
   grep -q "<loc>https://zenbujapanese.com$conjugations</loc>" <<<"$locs" &&
     grep -q "<loc>https://zenbujapanese.com${conjugations}plain/past/</loc>" <<<"$locs" &&
     ! grep -q "<loc>https://zenbujapanese.com${conjugations}plain/$miru_empty_form/</loc>" <<<"$locs" &&
-    ! grep -q "<loc>https://zenbujapanese.com${conjugations}polite/te-form/</loc>" <<<"$locs"
+    ! grep -q "<loc>https://zenbujapanese.com${conjugations}polite/te-form/</loc>" <<<"$locs" &&
+    grep -q "<loc>https://zenbujapanese.com${conjugations}plain/potential/</loc>" <<<"$locs" &&
+    ! grep -q "<loc>https://zenbujapanese.com${conjugations}plain/passive/</loc>" <<<"$locs"
 }
 eventually 'conjugations sitemap lists tables and the form pages that list examples' \
   "conjugations sitemap is missing 見る's pages or lists one it shouldn't" lists_conjugations

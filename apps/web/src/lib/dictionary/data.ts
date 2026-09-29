@@ -11,7 +11,7 @@ import {
   type ConjugationMode,
   type ConjugationRow,
   type Conjugations,
-  canonicalMode
+  canonicalForm
 } from './detail/conjugation'
 import { examplesPerPage, formExample, wordExample } from './detail/examples'
 import {
@@ -81,7 +81,6 @@ type DictionaryDatabase = ReturnType<typeof dictionaryDatabase>
 // import. Only local development falls back to fixtures (as in `pnpm dev` by default); staging and
 // production, which serve the dictionary, never do (`imported`). Only the row lookups here differ
 // between the two.
-
 
 export interface WordPageData
   extends Omit<WordDetail, 'alternatives' | 'kanji' | 'alternativeKanji' | 'related' | 'examples'> {
@@ -343,14 +342,21 @@ export const getConjugatedFormPage = cache(
     const row = page.conjugations.rows[mode].find(form => form.kind === kind)
     if (!row) return null
     const { conjugations, ...word } = page
-    const canonical = canonicalMode(conjugations.rows.Plain, mode, row)
+    const canonical = canonicalForm(
+      {
+        plain: conjugations.rows.Plain,
+        polite: conjugations.modes.includes('Polite') ? conjugations.rows.Polite : []
+      },
+      mode,
+      row
+    )
     const found = await formExamplePage(row.surface, 0)
     return {
       ...word,
       mode,
       row,
       formPath: conjugatedFormPath(page.path, mode, row.kind),
-      canonicalPath: conjugatedFormPath(page.path, canonical, row.kind),
+      canonicalPath: conjugatedFormPath(page.path, canonical.mode, canonical.kind),
       examples: found.examples,
       listed: found.listed,
       examplesPath: formExamplesPath(row.surface, await dictionaryBuild())

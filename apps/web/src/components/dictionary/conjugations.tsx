@@ -160,8 +160,10 @@ export function ConjugationTable({
       onModeChange={next => {
         setMode(next)
         const { pathname, search } = window.location
+        // Null state: Next.js's router then adopts the new address as its own, rather than
+        // restoring the previous one from the state it keeps.
         window.history.replaceState(
-          window.history.state,
+          null,
           '',
           `${pathname}${search}${next === 'Polite' ? politeRegisterHash : ''}`
         )

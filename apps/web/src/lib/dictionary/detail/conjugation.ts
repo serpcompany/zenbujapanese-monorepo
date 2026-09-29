@@ -550,18 +550,23 @@ export function isConjugationKind(kind: string): kind is ConjugationKind {
 }
 
 /**
- * The register whose screen is a form's canonical URL. A Polite form spelled as the Plain form of
- * its kind (the te-form and the conditional) shows the same form and examples, so its screen
- * names the Plain one; every other form is its own.
+ * The screen that is a form's canonical URL, among screens showing the same spelling and so the
+ * same examples. A Polite form spelled as the Plain form of its kind (the te-form and the
+ * conditional) names that Plain screen. Then, within the register, a form spelled as an earlier
+ * form in the app's order (passive 見られる, after potential 見られる) names that earlier form.
+ * Every other form is its own.
  */
-export function canonicalMode(
-  plain: readonly ConjugatedForm[],
+export function canonicalForm(
+  table: Pick<ConjugationTable, 'plain' | 'polite'>,
   mode: ConjugationMode,
   form: ConjugatedForm
-): ConjugationMode {
-  if (mode === 'Plain') return 'Plain'
-  const same = plain.find(other => other.kind === form.kind)
-  return same?.surface === form.surface ? 'Plain' : 'Polite'
+): { mode: ConjugationMode; kind: ConjugationKind } {
+  const plainSame = table.plain.find(other => other.kind === form.kind)
+  const register: ConjugationMode =
+    mode === 'Polite' && plainSame?.surface === form.surface ? 'Plain' : mode
+  const forms = register === 'Polite' && table.polite.length > 0 ? table.polite : table.plain
+  const first = forms.find(other => other.surface === form.surface)
+  return { mode: register, kind: first?.kind ?? form.kind }
 }
 
 /**
@@ -575,7 +580,11 @@ export function indexedForms(
   const modes: ConjugationMode[] = supportsModes(table) ? ['Plain', 'Polite'] : ['Plain']
   return modes.flatMap(mode =>
     formsFor(table, mode)
-      .filter(form => hasExamples(form.surface) && canonicalMode(table.plain, mode, form) === mode)
+      .filter(form => {
+        if (!hasExamples(form.surface)) return false
+        const canonical = canonicalForm(table, mode, form)
+        return canonical.mode === mode && canonical.kind === form.kind
+      })
       .map(form => `${mode.toLowerCase()}/${form.kind}`)
   )
 }

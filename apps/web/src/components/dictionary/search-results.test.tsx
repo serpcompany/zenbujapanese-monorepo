@@ -76,7 +76,7 @@ describe('the search results page', () => {
     expect(page.sections).toEqual(['examples', 'readingRefinement', 'results'])
     expect(page.examples).toEqual({
       text: 'View 3 Example Sentences',
-      href: '/dictionary/search/iru/examples'
+      href: '/dictionary/search/iru/examples/'
     })
     expect(page.refinement).toBe('Search for「いる」')
     expect(html).toContain('href="/dictionary/search/いる')
@@ -256,7 +256,7 @@ describe.runIf(enabled)('the rendered search results page matches the app', () =
     const html = render(data)
     const page = readRenderedPage(html)
     for (const row of data.state === 'results' ? data.rows : []) {
-      expect(html).toContain(`href="${(row.path ?? '').replace(/\/$/, '')}`)
+      expect(html).toContain(`href="${row.path ?? ''}"`)
     }
 
     if (expected.state === 'noResults') {
@@ -268,7 +268,7 @@ describe.runIf(enabled)('the rendered search results page matches the app', () =
       expected.examples
         ? {
             text: expected.examples.title,
-            href: searchExamplesPath(normalizeSearchQuery(expected.query)).replace(/\/$/, '')
+            href: searchExamplesPath(normalizeSearchQuery(expected.query))
           }
         : null
     )
