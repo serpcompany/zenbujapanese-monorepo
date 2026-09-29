@@ -2,8 +2,9 @@
 // retrieved results re-sorted by the default frequency dictionaries, each row's meaning and
 // chips, the kanji row, the "Search for「…」" reading refinement, and the no-results state. Pure
 // functions over the search core's results (../search) and each entry's frequency evidence, so
-// the app-recorded search-results.json suite checks them without rendering
-// (./conformance.test.ts), and the page only adds links (../data.ts).
+// the app-recorded search-results.json suite checks them without rendering (the dictionary
+// service's results.conformance.test.ts), and the website only adds links
+// (apps/web/src/lib/dictionary/results/links.ts).
 //
 // See also: apps/ios/Modules/Sources/SearchExperience/SearchView.swift and FrequencyPack.swift.
 // Change the Swift and this port together, and record the suite again.

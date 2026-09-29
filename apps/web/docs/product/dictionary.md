@@ -18,8 +18,9 @@ replayed field by field by `apps/dictionary-api/src/conformance/results.conforma
 app"). **WD rendered** is `src/components/dictionary/word-page.test.tsx` ("the rendered word page
 matches the app"), which draws every WD case through the word page's components and reads back
 what they draw. The `Dictionary API` workflow runs the suites, then the rendered tests against the
-service it builds, on every pull request that touches the dictionary. Unit tests are named by file
-and test title.
+service it builds, on pull requests that change the service, the core, the website's dictionary
+components or data code, the app's bundled data, or the suites. Unit tests are named by file and
+test title.
 
 ## Dictionary home
 
@@ -81,7 +82,7 @@ dictionary that has one comes first, then JLPT's level (N5 first), then YouTube'
 first), a ranked word before an unranked one, then the retrieval order. So いる lists 要る, いる,
 炒る, 入る, 射る, 鋳る, and `iru` lists 上一, 上一段, 上一段活用 (English matches for "iru"), then 要る,
 いる, 炒る, 入る, as the app and the #462 design do. The frequency comes from the app's JLPT and
-TUBELEX packs, read by the dictionary service for all of a search's results in one query.
+TUBELEX packs, read by the dictionary service for all of a search's results, one query per pack.
 
 - Source: App docs, Search; `SearchResultFrequencyOrdering` in `SearchView.swift`; #462 (rows in
   the order the app shows with its default dictionaries).
@@ -102,7 +103,8 @@ line follows the #462 design's wording.
 the app's row, "View 3 Example Sentences", or "View 50+ Example Sentences" over 50. It opens the
 query's examples page, `/dictionary/search/<query>/examples/`, titled with the query: the
 sentences that contain it, or the primary entry's for a romaji or deinflected query, in the app's
-order, with the query accented in each. The page shows 25 first and loads the rest as it scrolls,
+order, with each occurrence of the query accented, as the app's are (so a romaji query's
+sentences have no accent). The page shows 25 first and loads the rest as it scrolls,
 up to the app's 100, and ends with a Sources list: Tatoeba and JMdict. A query with sentences but
 no words shows the row alone.
 
@@ -114,7 +116,7 @@ no words shows the row alone.
   search’s examples page", and the row in the SRR cases;
   `src/components/dictionary/search-examples.test.tsx` ("the search examples page matches its
   Example Sentences row"), which holds every SRR row to the page it opens: as many examples as
-  its count promises, 25 first, and a Japanese query accented in each;
+  its count promises, 25 first, and a Japanese query accented in each of its own sentences;
   `src/app/dictionary/search/[query]/examples.json/route.test.ts`; smoke (eat's row and its page).
   The page's layout: No automated check yet (#511).
 
@@ -125,8 +127,8 @@ results, and it opens that search.
 - Source: App docs, Search ("a Japanese-reading refinement"); the reading-refinement section of
   `SearchResultsView` in `SearchView.swift` (`search.reading-refinement`).
 - Check: SR and SRR `readingRefinement`, SRR `sections`; `search-results.test.tsx`, "shows the
-  reading refinement first, then the rows in order with their chips" and the SRR cases (title and
-  link); smoke (the row and its link).
+  reading refinement first, then the rows in order with their chips" (title and link) and the SRR
+  cases (title); smoke (the row and its link).
 
 **Kanji row.** A one-kanji query leads the list with a KANJI row: the kanji, the label "KANJI",
 and the summary of the entry written as that kanji (the first result if none is), chosen before
@@ -173,14 +175,18 @@ is left out.
   YouTube"; WD `frequency`.
 
 **No results.** When nothing matches and the query isn't one kanji, the page shows the app's "No
-Dictionary Matches" with its hint, "Try another Japanese or English Search query." A query
-full-text search can't read, such as one with a NUL, shows the same page.
+Dictionary Matches" with its hint, "Try another Japanese or English Search query." A query of
+punctuation full-text search treats specially, such as a stray double quote (`eat"`), shows the
+same page rather than an error. So does a query over 200 characters, without searching: that is
+the dictionary service's limit, and the app has none.
 
 - Source: App docs, Search; `SearchView.swift` (`search.no-results`); #462 (`Empty` for no
-  results).
+  results); the 200-character limit: the dictionary service's request limit
+  (`maximumQueryLength` in `packages/dictionary-core/src/artifact/dictionary.ts`).
 - Check: SRR `state` (`qzxvkj`); `search-results.test.tsx`, "says No Dictionary Matches, as the app
-  does, when nothing matches"; `apps/dictionary-api/src/conformance/full-text.test.ts`, "a query
-  full-text search cannot read finds nothing, rather than failing".
+  does, when nothing matches"; `apps/dictionary-api/src/conformance/full-text.test.ts`, "a stray
+  double quote finds nothing, rather than failing"; `src/lib/dictionary/data.test.ts`, "finds
+  nothing for a query past the service’s 200 characters, without asking it".
 
 **Credits.** A results page that finds something ends with a Sources list: JMdict, KANJIDIC2, JLPT
 levels, and TUBELEX, each with its licence.
@@ -529,11 +535,14 @@ and there is no romaji and no word meanings under example words. The settings ar
 
 **Word URLs.** A word lives at `/dictionary/<slug>-<ent_seq>/`, where the slug is the headword and
 the JMdict entry number decides the word. Any other slug, a bare number, or a padded number
-redirects (308) to the canonical URL in one hop. An unknown number returns 404.
+redirects (308) to the canonical URL in one hop. An unknown number returns 404, as do 0 and a
+number past any JMdict entry.
 
 - Source: ADR 0007; #465.
 - Check: `src/lib/dictionary/urls.test.ts`, "word URLs (ADR 0007)"; smoke `308
-  /dictionary/1259290/ -> …` and `404 /dictionary/999999999/`. The service names each word's slug
+  /dictionary/1259290/ -> …` and `404 /dictionary/999999999/`; `apps/dictionary-api/src/app.test.ts`,
+  "404s %s, which names nothing, as for an unknown one" (word 0, and a number past any entry).
+  The service names each word's slug
   with the same `wordSlug` when it answers, so a page and its links always agree.
 
 **Retired word URLs.** A word whose entry was retired returns 410 Gone, or redirects (308) to its
@@ -545,11 +554,13 @@ the app's data.
 
 **Kanji URLs.** A kanji lives at `/dictionary/kanji/<character>/`, with the exact character, never
 Unicode-normalized, so a compatibility ideograph such as U+F928 (廊) has its own page. An unknown
-character returns 404.
+character, or more than one, returns 404.
 
 - Source: ADR 0007; #465.
 - Check: KD cases 廊 (U+5ECA and U+F928); `src/lib/dictionary/sitemaps.test.ts`, "the kanji sitemap
-  lists the indexable kanji exactly, never normalized". The 404: No automated check yet (#511).
+  lists the indexable kanji exactly, never normalized"; the 404 for more than one character:
+  `apps/dictionary-api/src/app.test.ts`, "404s %s, which names nothing, as for an unknown one".
+  The 404 for an unknown kanji: No automated check yet (#511).
 
 **Search URLs.** A search lives at `/dictionary/search/<query>/`. The query is NFKC-normalized,
 lowercased, and has whitespace runs collapsed; any other form redirects (308) to it. Dots are
@@ -700,8 +711,8 @@ marks it, so Word Meanings shows under every linked word.
 
 ### URLs and SEO
 
-**Search sitemaps.** Child sitemaps list the canonical search URLs of the precomputed query set,
-and the sitemap index lists them.
+**Search sitemaps.** Child sitemaps list the canonical search URLs of a chosen query set (ADR
+0007), and the sitemap index lists them.
 
 - Source: #466; #463 (the query set).
 - Check it will get: a `sitemaps.test.ts` case and a smoke check.

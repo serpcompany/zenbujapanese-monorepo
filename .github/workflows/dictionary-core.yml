@@ -1,8 +1,9 @@
 name: Dictionary core
 
 # The shared dictionary core (packages/dictionary-core, ADR 0009): Biome with its rule that keeps
-# runtimes and frameworks out, typecheck, and Vitest. The website's own workflow checks the site
-# built with it.
+# runtimes and frameworks out, typecheck, and Vitest. The Dictionary API workflow replays the
+# app-recorded suites through it on the app's data, and the Web workflow builds the site with it.
+# See docs/agents/dictionary-core.md.
 on:
   pull_request:
     paths:

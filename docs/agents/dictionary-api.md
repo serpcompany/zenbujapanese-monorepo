@@ -30,8 +30,9 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   `LanguageTechnologyPackCatalog.json`. `pnpm sudachi` downloads it into `.sudachi/`, checking
   the download and `system.dic` against the catalog's SHA-256s. `@nikkei/napi-sudachi` 0.12.0
   builds the same sudachi.rs commit the app pins, and the service checks that commit and the
-  app's `char.def` and `unk.def` before it loads. Without the dictionary, sentence search is off
-  and a sentence finds only direct matches.
+  app's `char.def` and `unk.def` before it loads. Without the dictionary the service won't
+  start; set `SUDACHI_DICTIONARY=` (empty) to run it with sentence search off, where a sentence
+  finds only direct matches.
 
 ## Run it
 
@@ -61,8 +62,12 @@ artifact's SHA-256 prefix and the release: a new artifact or new code is a new b
 ## Routes
 
 Every `/v1` route needs `Authorization: Bearer <token>` and answers JSON; a query or form is one
-URL-encoded path segment of at most 200 characters. A 404 means the dictionary has no such word,
-kanji, or sitemap; a 400 names what was malformed; a 500 says nothing more and logs the error.
+URL-encoded path segment of at most 200 characters (`maximumQueryLength`, which the website
+checks too). A 404 means there's no such thing: no such word, kanji, or sitemap, a query without
+examples, or an unknown route. A word number or kanji that can't exist, such as word 0, a number
+past any JMdict entry, or two characters, is a 404 too. A 400 names what was malformed; a 401
+means the token is missing or wrong; a 503 means the service is still starting; a 500 says
+nothing more and logs the error.
 
 | Route | Answer |
 | --- | --- |
@@ -81,9 +86,10 @@ kanji, or sitemap; a 400 names what was malformed; a 500 says nothing more and l
 
 ## How it runs
 
-The main thread checks the files once and serves HTTP (Hono on Node's HTTP server). Worker threads
-each open the artifact read-only and answer calls; each call goes to the thread with the fewest in
-flight, and a thread that dies is replaced. Each thread keeps recent searches, word examples, a
+The main thread hashes the artifact and Sudachi's dictionary once, checks Sudachi's pins, and
+serves HTTP (Hono on Node's HTTP server). Worker threads each open the artifact read-only, checking
+it, its packs, and Kuromoji's pinned files as they load, and answer calls; each call goes to the
+thread with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent searches, word examples, a
 query's examples, kanji pages, and word lookups in LRU caches, so a page's first request pays for
 a broad query and the rest don't. The website's edge cache keeps answers for 10 minutes on top.
 
@@ -104,11 +110,12 @@ pnpm check
 runs Biome, typecheck, Vitest, and the bundle. The tests replay the app-recorded suites
 (`apps/ios/LanguageData/Conformance/`, ADR 0006) through the service's dictionary on the real
 files: search retrieval, search results (every row, chip, and special row, the Example Sentences
-row included), word detail (every example's order, tokens, links, highlights, and counts), and
-kanji detail. Without the files they skip; `ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead,
+row included), word detail (the first 25 examples' order, tokens, links, and highlights, and the
+counts), and kanji detail. Without the files they skip; `ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead,
 as CI does. No suite records sentence search or a conjugated form's examples yet (recording them
 needs the app in the Simulator), so `sentence-search.test.ts` checks the cases the app's manual
-checks name.
+checks name, and `conjugation-examples.test.ts` checks a form's examples by the app's rule.
+`full-text.test.ts` checks English search where FTS4 differs from other engines.
 
 The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LFS files and
 Sudachi's dictionary cached, then the website's rendered-page gate against the built service, then
@@ -140,7 +147,8 @@ The host isn't chosen yet (ADR 0009). Whatever it is, each environment needs:
 - The same token in the service's `DICTIONARY_API_TOKEN` and the Worker's `DICTIONARY_API_TOKEN`
   secret.
 - A new image for each new artifact or service change, deployed before any website change that
-  needs it. The website shows a new build within 10 minutes, as its edge cache expires.
+  needs it. The website shows a new build within 10 minutes, as its edge cache expires; a
+  conjugated form's examples, which name no build, can stay in a browser's cache for an hour.
 
 Staging and production can't deploy the website until their service exists: `Web deploy` stops
 when the service's URL, token, or health check is missing.

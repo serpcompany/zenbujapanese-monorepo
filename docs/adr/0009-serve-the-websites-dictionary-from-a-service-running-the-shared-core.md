@@ -39,6 +39,8 @@ its build, tests, and deploys (ADR 0005); the iOS app keeps its own toolchain.
 - **ADR 0007:** the website no longer reads its own D1 copy of the artifact. It reads the
   service, which reads one pinned artifact version. The website is still a publisher and not a
   lookup service: no app queries it, and apps keep working offline (ADR 0006). URLs don't change.
+  A word's slug comes from the shared core (`wordSlug`), which every client runs, rather than
+  from the artifact, so the app's share links and the website still build the same URL.
 - **ADR 0008:** the core is no longer built for the website as the most constrained client. It
   still has to run on the constrained ones (the extension, and the app's JavaScriptCore), and
   what they can't run stays a capability. The website gets sentence search.

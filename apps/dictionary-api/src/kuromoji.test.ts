@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest'
 import { loadKuromoji } from './kuromoji'
 
 // The app's bundled Kuromoji. Its dictionary files are Git LFS objects, so without `git lfs pull`
-// (as in CI's Web workflow) this is skipped; the import's conformance gate runs it for real.
+// this is skipped; the Dictionary API workflow pulls them and runs it for real.
 const directory = fileURLToPath(
   new URL('../../ios/Modules/Sources/SearchExperience/Resources/Kuromoji', import.meta.url)
 )

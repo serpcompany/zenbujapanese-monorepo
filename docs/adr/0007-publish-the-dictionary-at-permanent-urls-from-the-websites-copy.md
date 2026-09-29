@@ -21,7 +21,8 @@ would need its own URL form. Learner data keeps using Language Reference IDs (AD
 The slug is only for reading. It is the headword as the app displays it, NFC-normalized, with
 `/ ? # % \` and whitespace replaced by `-`, falling back to the reading if nothing is left. It
 is percent-encoded UTF-8 in canonical URLs and sitemaps. The artifact precomputes it, so the
-app's share links and the website build the same URL. A request with a stale or missing slug
+app's share links and the website build the same URL. ([ADR 0009](0009-serve-the-websites-dictionary-from-a-service-running-the-shared-core.md),
+proposed, has the shared core compute it instead, with the same result.) A request with a stale or missing slug
 (`/dictionary/1546640/`) redirects (308) to the current one. An `ent_seq` that a published
 artifact once held returns 410, or 308 when a replacement is recorded. Any other unknown number
 returns 404.
@@ -55,7 +56,10 @@ not every possible query.
 ADR 0006 says no client sends dictionary lookups to a server. The apps still don't. The website
 is a publisher: its server reads its own D1 copy of the artifact to render pages, and no app
 queries it. That D1 database holds only what one pinned artifact version reproduces, plus a
-record of which version is loaded, and the website never writes to it at runtime. Accounts and
+record of which version is loaded, and the website never writes to it at runtime.
+[ADR 0009](0009-serve-the-websites-dictionary-from-a-service-running-the-shared-core.md),
+proposed, replaces the D1 copy with a service that reads one pinned artifact version itself; the
+website is still a publisher that no app queries. Accounts and
 learner data live in the backend and are reached only through its `/v1` API.
 
 The discussion is in [issue 461](https://github.com/serpcompany/zenbujapanese-monorepo/issues/461).

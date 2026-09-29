@@ -51,8 +51,10 @@ a bearer token to `DICTIONARY_API_URL` and keeps each answer in the Worker's edg
 API) for 10 minutes, keyed without the token; `pnpm dev` has no such cache. The service names the
 build that answered (`X-Dictionary-Build`: the artifact's SHA-256 prefix and the service's
 release), and URLs that load more of a page's list carry it, so a page open across a new build
-never mixes two builds' lists. A 404 is "no such word or kanji"; any other failure fails the
-request, so an outage never renders as an empty or noindexed page.
+never mixes two builds' lists. A 404 means "not there" (no such word, kanji, or sitemap, or a
+search without examples); any other failure fails the request, so an outage never renders as an
+empty or noindexed page. A query or form over the service's 200 characters
+(`maximumQueryLength`) finds nothing without asking it.
 
 Only local development falls back to fixtures, when no `DICTIONARY_API_URL` is set, as in
 `pnpm dev` by default. Staging and production (`SITE_ENV` set) always name a service, and there a
@@ -268,8 +270,9 @@ request. `/dictionary/`, the search box, is a static page in `src/lib/pages.ts`:
 - `/sitemaps/kanji.xml`: the kanji pages search engines may index: those with meanings or
   readings.
 
-Both are kept in the Worker's edge cache (the Cache API) under the dictionary build, so a new
-build replaces them at once; `pnpm dev` has no such cache.
+Both are kept in the Worker's edge cache (the Cache API) under the dictionary build the service
+names, so they change with the build, within the 10 minutes its answers stay cached; `pnpm dev`
+has no such cache.
 
 ## Retired word URLs
 

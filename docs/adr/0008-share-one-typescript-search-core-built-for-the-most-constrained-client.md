@@ -25,7 +25,10 @@ already works when its analyzer is unavailable.
 Sentence search is the first capability. Listing the words of a Japanese phrase that isn't one
 dictionary word needs a morphological analyzer, and the app's, Sudachi, loads a 217 MB
 dictionary. The website supplies no analyzer, so it has no sentence search and is a glossary of
-words and kanji. The conformance suite skips cases the app records as sentence search for a
+words and kanji.
+[ADR 0009](0009-serve-the-websites-dictionary-from-a-service-running-the-shared-core.md),
+proposed, runs the website's core in a service that supplies Sudachi, so the website gets
+sentence search, and nothing is precomputed for it. The conformance suite skips cases the app records as sentence search for a
 client without it.
 
 ADR 0006 left TypeScript or Rust to whichever passed the conformance suite. TypeScript wins

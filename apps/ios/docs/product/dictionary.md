@@ -14,7 +14,7 @@ A learner can search in Japanese or English using:
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
 among equally good matches, the enabled frequency dictionaries decide the order, in the
-learner's priority order (see [Frequency Dictionaries](index.md#you)). Frequency never adds a
+learner's priority order (see [Frequency Dictionaries](index.md#account)). Frequency never adds a
 result the query did not match or lifts an incidental match above a direct one. English rows
 show the meaning that matched.
 

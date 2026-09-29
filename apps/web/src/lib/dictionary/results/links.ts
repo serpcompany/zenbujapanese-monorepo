@@ -1,4 +1,5 @@
-// Where the search results page's rows go, added to the results screen (./results.ts). Shared by
+// Where the search results page's rows go, added to the results screen (the core's
+// results/results.ts). Shared by
 // data.ts's `searchDictionary` and the rendered-page test, so the test renders the page's real
 // links.
 

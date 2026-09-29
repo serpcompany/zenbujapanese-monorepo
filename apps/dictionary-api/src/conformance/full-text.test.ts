@@ -4,7 +4,8 @@ import { artifactAvailable, dictionary } from './support'
 
 // The service runs the app's FTS4 queries on the artifact's own FTS4 indexes, so English search
 // matches what the app matches, including where FTS4's Porter stemmer differs from other full-text
-// engines. The D1 search database used FTS5 and missed these. No app-recorded case covers them.
+// engines: the FTS5 copy the website searched before the service (ADR 0009) missed these. No
+// app-recorded case covers them.
 
 describe.runIf(artifactAvailable)('full-text search as the app runs it', () => {
   let service: Dictionary
@@ -22,7 +23,7 @@ describe.runIf(artifactAvailable)('full-text search as the app runs it', () => {
     )
   })
 
-  test('a query full-text search cannot read finds nothing, rather than failing', async () => {
+  test('a stray double quote finds nothing, rather than failing', async () => {
     const { screen } = await service.search('eat"')
     expect(screen.state).toBe('noResults')
     expect(await service.searchExamples('eat"')).toBeNull()

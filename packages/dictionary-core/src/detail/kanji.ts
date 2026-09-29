@@ -173,8 +173,9 @@ export function kanjiShareText(
 
 /**
  * The stroke order, or null when the data can't be decoded: the app then shows no stroke order
- * (KanjiDetailView's `strokeOrderAction`), and the page must still render. The import refuses such
- * data, so this is only a safeguard.
+ * (KanjiDetailView's `strokeOrderAction`), and the page must still render. Clients read
+ * KanjiStrokeData as the app ships it, so this is what keeps a bad row from failing the page;
+ * the kanji-detail suite checks the recorded kanji's strokes.
  */
 function drawableStrokeOrder(row: NonNullable<KanjiRows['strokes']>): StrokeOrder | null {
   try {

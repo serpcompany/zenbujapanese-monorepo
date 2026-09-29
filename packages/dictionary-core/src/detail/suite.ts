@@ -1,6 +1,7 @@
-// The word-detail conformance suite's shapes for what the detail core computes, so the import's
-// gate (conformance.test.ts) and the rendered word page's test (word-page.test.tsx) compare the
-// same fields the app records in WordDetailConformanceTests.swift. Test-only.
+// The word-detail conformance suite's shapes for what the detail core computes, so the dictionary
+// service's replay (apps/dictionary-api/src/conformance/detail.conformance.test.ts) and the
+// website's rendered word page test (word-page.test.tsx) compare the same fields the app records
+// in WordDetailConformanceTests.swift. Test-only.
 
 import type { ConjugationRow, Conjugations } from './conjugation'
 import type { FrequencyDetails } from './frequency'
