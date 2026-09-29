@@ -38,7 +38,7 @@ interface SuiteCase {
   highlightedEntry?: string
   usesPrimaryEntryExamples?: boolean
   ids?: string[]
-  shown?: { id: string; japanese: string; english: string; tokens: SuiteToken[] }[]
+  shown?: { id: string; japanese: string; english: string; romaji?: string; tokens: SuiteToken[] }[]
 }
 
 interface Suite {
@@ -167,6 +167,8 @@ describe.runIf(enabled)('example search conformance on D1', () => {
         id: appPairId(listed[index].pairId),
         japanese: example.text,
         english: example.translation,
+        // The sentence in romaji with Romaji on; none where the screen says it's unavailable.
+        ...(example.romaji === null ? {} : { romaji: example.romaji }),
         tokens: example.tokens.map(token => ({
           surface: token.text,
           ...(token.link && 'entSeq' in token.link ? { entry: token.link.entSeq } : {}),

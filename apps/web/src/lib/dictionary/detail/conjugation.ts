@@ -5,6 +5,8 @@
 // `opensConjugations` and `conjugations` check this port against the app.
 
 import { type KanjiReadings, withKanjiReadings } from './kanji-split'
+import { readingWithoutFurigana } from './reading-aids'
+import { romanizeTrustedReading } from './romaji'
 import type { EntryRow } from './rows'
 import { type RubySegment, rubySegments } from './ruby'
 import { graphemes } from './text'
@@ -504,6 +506,13 @@ export interface ConjugationRow extends ConjugatedForm {
   ruby: RubySegment[]
   /** Whether the row itself shows furigana. */
   rowFurigana: boolean
+  /**
+   * The form's reading in romaji, with Romaji on: under the form's headline, and under a row
+   * with furigana (a row without furigana is plain text in the app, with none).
+   */
+  romaji: string | null
+  /** The reading under the form's headline with Furigana off; null when it's the surface. */
+  readingWithoutFurigana: string | null
   /** Other forms' titles in the register with the same spelling. */
   sharedSpellings: string[]
 }
@@ -530,6 +539,8 @@ export function conjugations(
       ...conjugationKinds[form.kind],
       ruby: withKanjiReadings(rubySegments(form.surface, form.reading), readings),
       rowFurigana: rowShowsFurigana(form),
+      romaji: romanizeTrustedReading(form.reading),
+      readingWithoutFurigana: readingWithoutFurigana(form.surface, form.reading),
       sharedSpellings: sharedSpellings(table, form, mode)
     }))
   return { rule: table.rule, modes, rows: { Plain: rows('Plain'), Polite: rows('Polite') } }

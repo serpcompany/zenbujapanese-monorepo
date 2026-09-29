@@ -603,7 +603,8 @@ describe('word and kanji pages', () => {
       slug: '要る',
       relatedSlugs: new Map([[1577980, 'いる']]),
       kanjiPages: new Set(['要']),
-      exampleSlugs: new Map([[1546640, '要る']])
+      exampleSlugs: new Map([[1546640, '要る']]),
+      exampleMeanings: new Map([[1546640, 'to be needed, to be wanted']])
     })
     const page = await getWordPage(1546640)
     expect(word).toHaveBeenCalledWith(1546640)
@@ -642,7 +643,8 @@ describe('word and kanji pages', () => {
     if (!iruRows) throw new Error('no fixture for 要る')
     examples.mockResolvedValue({
       rows: iruRows.examples.slice(0, 2),
-      slugs: new Map([[1546640, '要る']])
+      slugs: new Map([[1546640, '要る']]),
+      meanings: new Map()
     })
     const more = await getWordExamples(1546640, 25, 'build-1')
     expect(examples).toHaveBeenCalledWith(1546640, 25, 25)

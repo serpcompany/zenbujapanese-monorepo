@@ -312,6 +312,8 @@ function plannedWord(text: string, start: number, row: ExampleWordRow): PlannedW
     reading: row.r ?? '',
     dictionaryForm: row.d ?? surface,
     normalizedForm: row.d ?? surface,
+    // Only builds read it; a page reads `c` instead.
+    partOfSpeech: [],
     candidates: (row.e ?? []).map(entSeq => ({
       id: String(entSeq),
       reading: '',
@@ -405,6 +407,7 @@ export function searchExampleRows(
     const row: ExampleSentenceTokenRow = { text: token.surface }
     if (source.r !== undefined) row.reading = source.r
     if (source.d !== undefined) row.dictionaryForm = source.d
+    if (source.k !== undefined) row.kana = source.k
     tokens.push(row)
     if (token.candidates.length > 0) {
       const link: ExampleLinkRow = {

@@ -31,6 +31,7 @@ function word(
     headword,
     reading,
     ruby: rubySegments(headword, reading),
+    romaji: null,
     summary,
     chips: chips.map(([source, value]) => ({
       source,

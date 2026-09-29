@@ -63,6 +63,8 @@ const miru = conjugations(
 const miruWord: ConjugationWord = {
   ruby: rubySegments('見る', 'みる'),
   reading: 'みる',
+  romaji: 'miru',
+  readingWithoutFurigana: 'みる',
   summary: 'to see, to look, to watch, to view, to observe',
   partOfSpeech: 'Ichidan verb (transitive)',
   pitch: null
@@ -224,6 +226,8 @@ describe('the conjugation table', () => {
         <WordHeader
           ruby={miruWord.ruby}
           reading="みる"
+          romaji="miru"
+          readingWithoutFurigana="みる"
           pitch={null}
           partOfSpeech="Ichidan verb (transitive)"
           conjugationsPath={path}
@@ -304,6 +308,8 @@ describe.runIf(enabled)('the rendered conjugation pages match the app', () => {
       <WordHeader
         ruby={detail.ruby}
         reading={detail.reading}
+        romaji={detail.romaji}
+        readingWithoutFurigana={detail.readingWithoutFurigana}
         pitch={detail.pitch}
         partOfSpeech={detail.partOfSpeech}
         conjugationsPath={detail.conjugations ? conjugationsPath(path) : null}
@@ -319,6 +325,8 @@ describe.runIf(enabled)('the rendered conjugation pages match the app', () => {
     const word_: ConjugationWord = {
       ruby: detail.ruby,
       reading: detail.reading,
+      romaji: detail.romaji,
+      readingWithoutFurigana: detail.readingWithoutFurigana,
       summary: detail.summary,
       partOfSpeech: detail.partOfSpeech,
       pitch: detail.pitch

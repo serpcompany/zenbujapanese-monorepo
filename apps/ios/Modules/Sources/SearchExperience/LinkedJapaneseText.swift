@@ -86,7 +86,7 @@ struct LinkedJapaneseText: View {
             .accessibilityLabel("Romaji, \(romaji)")
             .accessibilityIdentifier("\(identifierPrefix).romaji")
         } else if !text.isEmpty {
-          Text("Romaji unavailable for this text")
+          Text(ReadingAidPresentation.romajiUnavailable)
             .font(.caption)
             .foregroundStyle(.secondary)
             .accessibilityIdentifier("\(identifierPrefix).romaji-unavailable")
@@ -197,11 +197,12 @@ private struct LinkedTokenView: View {
   /// The word's short meaning when Word Meanings is on, skipping particles, auxiliaries,
   /// and words the learner already knows.
   private func meaning(for entry: DictionaryEntry) -> String? {
-    guard readingAidPreferences.showsWordMeanings,
-      !token.isFunctionWord,
-      !wordKnowledge.isKnown(entry.id)
-    else { return nil }
-    return entry.shortMeaning
+    ReadingAidPresentation.wordMeaning(
+      token: token,
+      entry: entry,
+      showsWordMeanings: readingAidPreferences.showsWordMeanings,
+      isKnown: wordKnowledge.isKnown(entry.id)
+    )
   }
 
   private func hidesFurigana(for entry: DictionaryEntry) -> Bool {

@@ -4,9 +4,10 @@ import { getPlatformProxy } from 'wrangler'
 import { type DictionaryWord, dictionaryDatabase } from '../dictionary-db'
 import { wordSlug } from '../urls'
 import { conjugationTable, indexedForms } from './conjugation'
-import { licenseUrl } from './examples'
+import { licenseUrl, wordExample } from './examples'
 import { tierLabels } from './frequency'
 import { kanjiDetail } from './kanji'
+import { wordMeaning } from './reading-aids'
 import {
   type SuiteConjugationForm,
   type SuiteConjugations,
@@ -33,8 +34,10 @@ import { wordDetail } from './word'
 // in the shapes suite.ts shares with the rendered page's test (word-page.test.tsx), and the
 // conjugation table the part of speech opens, form by form, with every example each form's screen
 // lists (its pair IDs in order, and the first few's words, links, and accents), and that every
-// word with a table is in the conjugations sitemap. The app's kanji cases don't record JLPT, so it
-// isn't compared.
+// word with a table is in the conjugations sitemap; and what Reading Aids add: romaji under the
+// headword, alternative readings, related words, each example, each kanji reading, and each kanji
+// word; the reading under the headword with furigana off; and each example word's meaning with
+// Word Meanings on. The app's kanji cases don't record JLPT, so it isn't compared.
 const enabled = process.env.ZENBU_DICTIONARY_D1 === '1'
 
 interface Artifact {
@@ -54,6 +57,7 @@ interface SuiteToken {
   entry?: string
   candidates?: string[]
   pageWord?: boolean
+  meaning?: string
 }
 
 interface SuiteExamples {
@@ -61,7 +65,13 @@ interface SuiteExamples {
   reportedCount?: string
   truncated: boolean
   error?: string
-  shown: { id: string; japanese: string; english: string; tokens: SuiteToken[] }[]
+  shown: {
+    id: string
+    japanese: string
+    english: string
+    romaji?: string
+    tokens: SuiteToken[]
+  }[]
 }
 
 interface WordCase {
@@ -91,7 +101,8 @@ interface WordCase {
     tier?: string
     details: SuiteFrequencyDetails
   }[]
-  alternativeForms: { kind: string; labels: string[]; value: string }[]
+  readingAids: { romaji?: string; readingWithoutFurigana?: string }
+  alternativeForms: { kind: string; labels: string[]; value: string; romaji?: string }[]
   kanji: { character: string; meanings: string[] }[]
   alternativeKanji: { character: string; meanings: string[] }[]
   relatedWords: {
@@ -100,6 +111,7 @@ interface WordCase {
     relation: string
     summary: string
     targetID?: string
+    romaji?: string
   }[]
   examples: SuiteExamples
 }
@@ -115,8 +127,9 @@ interface KanjiCase {
   strokeCount?: number
   grade?: number
   meanings?: string[]
-  readings?: { kind: string; value: string; words: SuiteWord[] }[]
+  readings?: { kind: string; value: string; romaji?: string; words: SuiteWord[] }[]
   words?: SuiteWord[]
+  wordsRomaji?: (string | null)[]
   elements?: { glyph: string; meanings: string[]; linkedOnReadings?: string[]; role: string }[]
   components?: string[]
 }
@@ -247,7 +260,10 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
       listed: count?.listed ?? 0,
       reportedCount: count && count.count > 50 ? 'more than 50' : String(count?.count ?? 0),
       truncated: count?.truncated === 1,
-      shown: found.rows.map(({ sentence, example }) => {
+      shown: found.rows.map(row => {
+        const { sentence, example } = row
+        // What the page draws from the same rows: the sentence's romaji and each word's meaning.
+        const shown = wordExample(row)
         // The suite doesn't record attribution; each side must still have its own, read intact.
         for (const side of ['japanese', 'english'] as const) {
           expect(Number.isInteger(sentence[`${side}TatoebaId`])).toBe(true)
@@ -262,13 +278,19 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
           id: `esp1_${sentence.pairId}`,
           japanese: sentence.japanese,
           english: sentence.english,
+          ...(shown.romaji === null ? {} : { romaji: shown.romaji }),
           tokens: (example.tokens ?? sentence.tokens).map((token, index): SuiteToken => {
             const entSeqs = links.get(index) ?? []
+            const meaning =
+              entSeqs.length === 1
+                ? wordMeaning(shown.tokens[index], found.meanings.get(entSeqs[0]))
+                : null
             return {
               surface: token.text,
               ...(entSeqs.length === 1 ? { entry: id(entSeqs[0]) } : {}),
               ...(entSeqs.length > 1 ? { candidates: entSeqs.map(id) } : {}),
-              ...(highlights.has(index) ? { pageWord: true } : {})
+              ...(highlights.has(index) ? { pageWord: true } : {}),
+              ...(meaning === null ? {} : { meaning })
             }
           })
         }
@@ -390,20 +412,30 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
         // What the row opens: Frequency Details.
         details: suiteFrequencyDetails(row.details)
       })),
-      alternativeForms: detail.alternatives.map(({ kind, labels, value }) => ({
+      readingAids: {
+        ...(detail.romaji === null ? {} : { romaji: detail.romaji }),
+        ...(detail.readingWithoutFurigana === null
+          ? {}
+          : { readingWithoutFurigana: detail.readingWithoutFurigana })
+      },
+      alternativeForms: detail.alternatives.map(({ kind, labels, value, romaji }) => ({
         kind,
         labels,
-        value
+        value,
+        ...(romaji === null ? {} : { romaji })
       })),
       kanji: kanji(detail.kanji),
       alternativeKanji: kanji(detail.alternativeKanji),
-      relatedWords: detail.related.map(({ headword, reading, relation, summary, entSeq }) => ({
-        headword,
-        reading,
-        relation,
-        summary,
-        ...(entSeq === null ? {} : { targetID: targetIds.get(entSeq) })
-      })),
+      relatedWords: detail.related.map(
+        ({ headword, reading, relation, summary, entSeq, romaji }) => ({
+          headword,
+          reading,
+          relation,
+          summary,
+          ...(entSeq === null ? {} : { targetID: targetIds.get(entSeq) }),
+          ...(romaji === null ? {} : { romaji })
+        })
+      ),
       examples: await examples(entry.entSeq, wordSuite.exampleLimit ?? 0, expected.examples)
     }
     expect(observed).toEqual(covered(expected, ['covers', 'entSeq']))
@@ -441,12 +473,14 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
       strokeCount: rows.kanji.strokeCount,
       ...(rows.kanji.grade === null ? {} : { grade: rows.kanji.grade }),
       meanings: detail.meanings,
-      readings: detail.readings.map(({ kind, value, words }) => ({
+      readings: detail.readings.map(({ kind, value, romaji, words }) => ({
         kind,
         value,
+        ...(romaji === null ? {} : { romaji }),
         words: words.map(suiteWord)
       })),
       words: detail.words.map(suiteWord),
+      wordsRomaji: detail.words.map(word => word.romaji),
       // The app records what KanjiElementsSection shows: up to three meanings, else the
       // element's linked on-readings. The page shows the same, as `description`.
       elements: detail.elements.map(({ character, role, description }) => {

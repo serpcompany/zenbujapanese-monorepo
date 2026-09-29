@@ -2,6 +2,7 @@
 // LookupClient.swift's `entries(containingKanji:)` and its elements from
 // KanjiElementLookupClient.swift.
 
+import { romanizeTrustedReading } from './romaji'
 import type {
   KanjiElementRow,
   KanjiReadingRow,
@@ -21,6 +22,8 @@ export interface KanjiWord {
   headword: string
   reading: string
   ruby: RubySegment[]
+  /** Under the word, with Romaji on. */
+  romaji: string | null
   summary: string
 }
 
@@ -29,6 +32,8 @@ export interface KanjiReading {
   /** On, Kun, or Name. */
   label: string
   value: string
+  /** Under the reading, with Romaji on (い.る is "i.ru"). */
+  romaji: string | null
   /** Up to three of the kanji's words read this way. */
   words: KanjiWord[]
 }
@@ -192,6 +197,7 @@ export function kanjiDetail(rows: KanjiRows): KanjiDetail {
     headword: row.headword,
     reading: row.reading,
     ruby: rubySegments(row.headword, row.reading),
+    romaji: romanizeTrustedReading(row.reading),
     summary: row.summary
   }))
   const elements = kanjiElements(rows.structure, rows.elements)
@@ -207,6 +213,7 @@ export function kanjiDetail(rows: KanjiRows): KanjiDetail {
       kind: reading.kind,
       label: readingLabels[reading.kind],
       value: reading.value,
+      romaji: romanizeTrustedReading(reading.value),
       words: wordsForReading(reading, words)
     })),
     components: elements.length === 0 ? kanji.components : [],

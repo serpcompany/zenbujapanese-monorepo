@@ -7,7 +7,8 @@ import Testing
 /// `apps/ios/LanguageData/Conformance/kanji-detail.json`, so the website's kanji pages can be
 /// held to the app. Each case is read from the clients `KanjiDetailView` uses, opened on its own
 /// rather than from a word. JLPT is left out while its old KANJIDIC2 scale is undecided
-/// (issue 485).
+/// (issue 485). It also records the romaji Reading Aids add, with Romaji on, under each reading
+/// and each word (`AppleJapaneseRomanization`, which the views share).
 ///
 /// After an intended change to Kanji Detail or its data, record it again by running this suite
 /// with `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1`, and review the diff. Recording keeps each
@@ -78,6 +79,7 @@ private struct KanjiDetailObserver {
         KanjiDetailCase.Reading(
           kind: reading.kind.rawValue,
           value: reading.value,
+          romaji: AppleJapaneseRomanization.romanizeTrustedReading(reading.value),
           words: reading.words(in: relatedWords).map(KanjiDetailCase.Word.init)
         )
       }
@@ -95,6 +97,9 @@ private struct KanjiDetailObserver {
       )
     }
     observed.words = relatedWords.map(KanjiDetailCase.Word.init)
+    observed.wordsRomaji = relatedWords.map {
+      AppleJapaneseRomanization.romanizeTrustedReading($0.reading)
+    }
     observed.hasStrokeOrder = diagram != nil
     observed.strokeOrderStrokes = diagram?.strokes.count
     return observed
@@ -129,6 +134,8 @@ private struct KanjiDetailCase: Codable {
   var components: [String]?
   /// The Words section: up to 24 words containing the kanji, in order.
   var words: [Word]?
+  /// The romaji under each of those words, with Romaji on.
+  var wordsRomaji: [String?]?
   /// Whether there's stroke data, which offers the stroke order diagram.
   var hasStrokeOrder: Bool?
   /// The number of strokes the diagram draws.
@@ -142,6 +149,8 @@ private struct KanjiDetailCase: Codable {
   struct Reading: Codable {
     let kind: String
     let value: String
+    /// Under the reading, with Romaji on.
+    let romaji: String?
     let words: [Word]
   }
 

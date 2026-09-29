@@ -48,6 +48,7 @@ const word = (entSeq: number): SearchWord => ({
   headword: '語',
   reading: 'ご',
   ruby: rubySegments('語', 'ご'),
+  romaji: 'go',
   summary: `word ${entSeq}`,
   chips: [],
   retrievalOrder: entSeq,

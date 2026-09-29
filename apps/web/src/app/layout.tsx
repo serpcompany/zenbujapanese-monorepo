@@ -4,6 +4,7 @@ import { Analytics } from '@/components/analytics'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { Toaster } from '@/components/ui/sonner'
+import { readingAidsScript } from '@/lib/reading-aids'
 import { site } from '@/lib/site'
 import './globals.css'
 
@@ -19,7 +20,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    // The Reading Aids script sets its attributes on <html> before hydration.
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script
+          // Reading Aids apply before the page paints (lib/reading-aids.ts).
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: a constant script of our own
+          dangerouslySetInnerHTML={{ __html: readingAidsScript }}
+        />
+      </head>
       <body className="flex min-h-full flex-col">
         <SiteHeader />
         {children}

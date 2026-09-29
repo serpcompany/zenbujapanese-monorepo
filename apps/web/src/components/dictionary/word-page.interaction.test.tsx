@@ -124,6 +124,8 @@ describe('the conjugation table', () => {
           word={{
             ruby: rubySegments('見る', 'みる'),
             reading: 'みる',
+            romaji: 'miru',
+            readingWithoutFurigana: 'みる',
             summary: 'to see',
             partOfSpeech: 'Ichidan verb (transitive)',
             pitch: null

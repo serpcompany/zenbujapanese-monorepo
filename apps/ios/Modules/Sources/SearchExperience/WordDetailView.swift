@@ -417,7 +417,9 @@ struct WordHeadline<Accessory: View>: View {
   /// turns furigana off.
   @ViewBuilder
   private var readingWithoutFurigana: some View {
-    if !readingAidPreferences.showsFurigana, reading != surface {
+    if let reading = ReadingAidPresentation.readingWithoutFurigana(
+      surface: surface, reading: reading, showsFurigana: readingAidPreferences.showsFurigana)
+    {
       Text(reading)
         .font(.title3)
         .foregroundStyle(.secondary)

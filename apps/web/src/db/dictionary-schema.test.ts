@@ -48,6 +48,8 @@ interface SuiteToken {
   entry?: string
   candidates?: string[]
   pageWord?: boolean
+  /** Word Meanings' text, which the links don't store. */
+  meaning?: string
 }
 
 interface WordDetailSuite {
@@ -101,7 +103,7 @@ describe('word_examples links', () => {
           ...(highlights.includes(index) ? { pageWord: true } : {})
         }
       })
-      expect(read).toEqual(sentence.tokens)
+      expect(read).toEqual(sentence.tokens.map(({ meaning: _, ...token }) => token))
     }
   })
 })

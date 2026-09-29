@@ -174,6 +174,7 @@
           "english" : "It's obvious.",
           "id" : "esp1_4dbf806c17dfcd0ff6d355f71abb46ba",
           "japanese" : "見るからに明らかだよ。",
+          "romaji" : "miru kara ni akiraka da yo。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -212,6 +213,7 @@
           "english" : "I couldn't abide looking at it.",
           "id" : "esp1_7d23f09c267a1593361eb443a33106e2",
           "japanese" : "見るのもいやなほどだ。",
+          "romaji" : "miru no mo iyana hodo da。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -259,6 +261,7 @@
           "english" : "Seeing is believing.",
           "id" : "esp1_1576faa95e7033f3002dd3444bc29b94",
           "japanese" : "見ることは信ずることなり。",
+          "romaji" : "miru koto ha shinzuru koto nari。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -306,6 +309,7 @@
           "english" : "To see is to believe.",
           "id" : "esp1_365f2d1697df0aef7344859ead37c32e",
           "japanese" : "見ることは信じることである。",
+          "romaji" : "miru koto ha shinjiru koto de aru。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -360,6 +364,7 @@
           "english" : "They say that to see is to believe.",
           "id" : "esp1_dab15e25ca5239b149f93cc13ebd4fe9",
           "japanese" : "見る事は信じる事だといわれる。",
+          "romaji" : "miru koto ha shinjiru koto da to iwareru。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -521,6 +526,7 @@
           "english" : "Do you want to eat?",
           "id" : "esp1_101c1072091d90ca232c113d205029ee",
           "japanese" : "食べる？",
+          "romaji" : "taberu？",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -536,6 +542,7 @@
           "english" : "I will eat.",
           "id" : "esp1_3fddeda051b871d19e947e032b96afbe",
           "japanese" : "食べる。",
+          "romaji" : "taberu。",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -551,6 +558,7 @@
           "english" : "Don't eat!",
           "id" : "esp1_2038ea2b909faba97e5bed4e21148bcc",
           "japanese" : "食べるな！",
+          "romaji" : "taberu na！",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -570,6 +578,7 @@
           "english" : "Is there anything to eat?",
           "id" : "esp1_c90415c2481d15c01501a531f5dcbf83",
           "japanese" : "食べる物ある？",
+          "romaji" : "taberu mono aru？",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -593,6 +602,7 @@
           "english" : "Before eating here's a small tip.",
           "id" : "esp1_7efa3b5276e490d426106dd74ea47cf7",
           "japanese" : "食べる前にひと工夫！",
+          "romaji" : "taberu mae ni hito kufuu！",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -742,6 +752,7 @@
           "english" : "Japan is an island country.",
           "id" : "esp1_26eca3a26a50e24802ba895b18629618",
           "japanese" : "日本は島国だ。",
+          "romaji" : "nippon ha shimaguni da。",
           "tokens" : [
             {
               "entry" : "6342bfc30de4f6cc49b6c2db81692c98",
@@ -772,6 +783,7 @@
           "english" : "Japan is a mighty nation.",
           "id" : "esp1_5b3b045fe22221e5f6e7cd51a5fae39f",
           "japanese" : "日本は強国だ。",
+          "romaji" : "nippon ha kyoukoku da。",
           "tokens" : [
             {
               "entry" : "6342bfc30de4f6cc49b6c2db81692c98",
@@ -802,6 +814,7 @@
           "english" : "Are you a Japanese citizen?",
           "id" : "esp1_9087ba1dd8bf435741c774549bbd9d49",
           "japanese" : "日本人ですか。",
+          "romaji" : "nipponjin desu ka。",
           "tokens" : [
             {
               "entry" : "3cebd1af63a8cf36414d0d5778d78d23",
@@ -825,6 +838,7 @@
           "english" : "Are you Japanese?",
           "id" : "esp1_1953b7f0b90b3471303b94aaf9eba029",
           "japanese" : "日本の方ですか？",
+          "romaji" : "nippon no hou desu ka？",
           "tokens" : [
             {
               "entry" : "6342bfc30de4f6cc49b6c2db81692c98",
@@ -856,6 +870,7 @@
           "english" : "Welcome to Japan!",
           "id" : "esp1_366ae51a87980c59d25967cb01bce989",
           "japanese" : "日本へようこそ！",
+          "romaji" : "nippon he youkoso！",
           "tokens" : [
             {
               "entry" : "6342bfc30de4f6cc49b6c2db81692c98",
@@ -991,6 +1006,7 @@
           "english" : "Are you a teacher?",
           "id" : "esp1_e02327d7a8d2388533bcba08e4dab923",
           "japanese" : "先生なの？",
+          "romaji" : "sensei na no？",
           "tokens" : [
             {
               "entry" : "72309de2d19aa24aa677dfba2428ff13",
@@ -1020,6 +1036,7 @@
           "english" : "There comes our teacher.",
           "id" : "esp1_932417bc93d73a4081abb470b82d2bf0",
           "japanese" : "先生が来る。",
+          "romaji" : "sensei ga kuru。",
           "tokens" : [
             {
               "entry" : "72309de2d19aa24aa677dfba2428ff13",
@@ -1046,6 +1063,7 @@
           "english" : "Let's ask the teacher.",
           "id" : "esp1_1f13a69600eaa6a1b1cded8150225298",
           "japanese" : "先生に頼もう。",
+          "romaji" : "sensei ni tanomou。",
           "tokens" : [
             {
               "entry" : "72309de2d19aa24aa677dfba2428ff13",
@@ -1069,6 +1087,7 @@
           "english" : "The teacher teaches.",
           "id" : "esp1_8404c2f0f74f3987002a71364050f6ed",
           "japanese" : "先生が教える。",
+          "romaji" : "sensei ga oshieru。",
           "tokens" : [
             {
               "entry" : "72309de2d19aa24aa677dfba2428ff13",
@@ -1095,6 +1114,7 @@
           "english" : "The teacher taught that.",
           "id" : "esp1_fdafc3b41dbdd050c7738bb105618671",
           "japanese" : "先生が教えた。",
+          "romaji" : "sensei ga oshieta。",
           "tokens" : [
             {
               "entry" : "72309de2d19aa24aa677dfba2428ff13",
@@ -1233,6 +1253,7 @@
           "english" : "Be quiet!",
           "id" : "esp1_15e434580ce12f222f51326b198cb80a",
           "japanese" : "静かに！",
+          "romaji" : "shizukani！",
           "tokens" : [
             {
               "entry" : "657d72cf95a8d0510ef6464fc032bae0",
@@ -1248,6 +1269,7 @@
           "english" : "Be quiet!",
           "id" : "esp1_d3e6752e362ee8394f636eec00c96633",
           "japanese" : "静かに。",
+          "romaji" : "shizukani。",
           "tokens" : [
             {
               "entry" : "657d72cf95a8d0510ef6464fc032bae0",
@@ -1263,6 +1285,7 @@
           "english" : "It's too quiet.",
           "id" : "esp1_e3b85d113d15a44a14259365d8f27d71",
           "japanese" : "静か過ぎる。",
+          "romaji" : "shizuka sugiru。",
           "tokens" : [
             {
               "entry" : "657d72cf95a8d0510ef6464fc032bae0",
@@ -1282,6 +1305,7 @@
           "english" : "Keep quiet.",
           "id" : "esp1_452f10c7b36675170a76081dbb15fa35",
           "japanese" : "静かにしてくれ。",
+          "romaji" : "shizukani shitekure。",
           "tokens" : [
             {
               "entry" : "657d72cf95a8d0510ef6464fc032bae0",
@@ -1307,6 +1331,7 @@
           "english" : "Be quiet!",
           "id" : "esp1_e1ff210da689b9a57e2a512b527997ff",
           "japanese" : "静かにしなさい。",
+          "romaji" : "shizukani shi nasai。",
           "tokens" : [
             {
               "entry" : "657d72cf95a8d0510ef6464fc032bae0",
@@ -1442,6 +1467,7 @@
           "english" : "It grew dark.",
           "id" : "esp1_9ec01075c1ad06968ca73d9e6f266b94",
           "japanese" : "日が暮れた。",
+          "romaji" : "hi ga kureta。",
           "tokens" : [
             {
               "entry" : "ad7071d79b9e8e3719514d8121d3699f",
@@ -1468,6 +1494,7 @@
           "english" : "Are you free on Sunday?",
           "id" : "esp1_d32e1bbefde0a061ad5c4b8ae5672f4f",
           "japanese" : "日曜日、暇？",
+          "romaji" : "nichiyoubi、 hima？",
           "tokens" : [
             {
               "entry" : "e00b47e7c2184a64f302434a4e75120d",
@@ -1490,6 +1517,7 @@
           "english" : "The sun sets in the west.",
           "id" : "esp1_08df2a03fcbd9619907ce6af4f83069f",
           "japanese" : "日は西に沈む。",
+          "romaji" : "hi ha nishi ni shizumu。",
           "tokens" : [
             {
               "entry" : "ad7071d79b9e8e3719514d8121d3699f",
@@ -1521,6 +1549,7 @@
           "english" : "Japan is an island country.",
           "id" : "esp1_26eca3a26a50e24802ba895b18629618",
           "japanese" : "日本は島国だ。",
+          "romaji" : "nippon ha shimaguni da。",
           "tokens" : [
             {
               "entry" : "6342bfc30de4f6cc49b6c2db81692c98",
@@ -1551,6 +1580,7 @@
           "english" : "My sunburn hurts.",
           "id" : "esp1_2bcfd87ccf1ac6d3c2d410a13ed9e494",
           "japanese" : "日焼けが痛い。",
+          "romaji" : "hiyake ga itai。",
           "tokens" : [
             {
               "entry" : "11f8dd7ec283c191366899b86e893426",
@@ -1689,6 +1719,7 @@
           "english" : "Do you want it?",
           "id" : "esp1_a7c154c6d74acab4f7141573ddcf14d2",
           "japanese" : "いる？",
+          "romaji" : "iru？",
           "tokens" : [
             {
               "entry" : "8647047758cffbea50d72922fad277e0",
@@ -1704,6 +1735,7 @@
           "english" : "I know you're in here.",
           "id" : "esp1_9c79ef618d751e8ff755113350971836",
           "japanese" : "いるんだろ？",
+          "romaji" : "iru n daro？",
           "tokens" : [
             {
               "entry" : "8647047758cffbea50d72922fad277e0",
@@ -1727,6 +1759,7 @@
           "english" : "Please take with you as much as you need.",
           "id" : "esp1_65b1bccb62ac8a14d43adc80f2e2ed0a",
           "japanese" : "いるだけ持っていらっしゃい。",
+          "romaji" : "iru dake motteirasshai。",
           "tokens" : [
             {
               "entry" : "8647047758cffbea50d72922fad277e0",
@@ -1750,6 +1783,7 @@
           "english" : "Do you have a boyfriend?",
           "id" : "esp1_2cfd4da023c459523fb1f309945f17aa",
           "japanese" : "彼いるの？",
+          "romaji" : "kare iru no？",
           "tokens" : [
             {
               "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
@@ -1773,6 +1807,7 @@
           "english" : "Stay where you are.",
           "id" : "esp1_a23b345c0ccd45af1c683ddc687f4a02",
           "japanese" : "今いるところにいなさい。",
+          "romaji" : "ima iru tokoro ni i nasai。",
           "tokens" : [
             {
               "entry" : "8663228a2d9e6fbda5923f927d844d7c",
@@ -1826,6 +1861,7 @@
           "english" : "The problem was where to eat lunch.",
           "id" : "esp1_87e690329a3b5bb2d42d8af569cfd2ae",
           "japanese" : "問題はどこで昼食をたべるかだった。",
+          "romaji" : "mondai ha doko de chuushoku wo taberu ka da~tsu ta。",
           "tokens" : [
             {
               "entry" : "2ca83d20a0dc1df54579c64949413e36",
@@ -1884,6 +1920,7 @@
           "english" : "We eat butter on bread.",
           "id" : "esp1_1b5c71be20113fe02c6b297855e8492b",
           "japanese" : "私達は、バターをパンにつけてたべる。",
+          "romaji" : "watashi tachi ha、 batā wo pan ni tsukete taberu。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -1944,6 +1981,7 @@
           "english" : "My grandfather usually eats breakfast at six.",
           "id" : "esp1_ae699c9f4e05c035ee34a9ca87eb0555",
           "japanese" : "僕のおじいちゃんは、ふつうは６時に朝食をたべる。",
+          "romaji" : "boku no ojiichan ha、 futsuu ha roku ji ni choushoku wo taberu。",
           "tokens" : [
             {
               "entry" : "a6af8452cff4495733137e23d2332f7a",
@@ -2035,6 +2073,7 @@
           "english" : "Sushi is good, but Thai dishes are better.",
           "id" : "esp1_17e0e89d40581a7f549b929355359545",
           "japanese" : "すしもいいけど、タイ料理のほうがもっといいなぁ。",
+          "romaji" : "sushi mo ii kedo、 tai ryouri no hou ga motto ii na~a。",
           "tokens" : [
             {
               "entry" : "850bc3ac4ddbe2a4bc8cb2e2d1270dfa",
@@ -2128,6 +2167,7 @@
           "english" : "We have no choice but to kill.",
           "id" : "esp1_9d0b34e698aa50cf01d78da2fdad8b68",
           "japanese" : "殺すしかない。",
+          "romaji" : "korosu shika nai。",
           "tokens" : [
             {
               "entry" : "3200a31c8c6d94a2ff51e42ac3e231e2",
@@ -2157,6 +2197,7 @@
           "english" : "I would like to eat sushi.",
           "id" : "esp1_d293362825cc26000a609dd60d7a6fd2",
           "japanese" : "私はすしを食べたい。",
+          "romaji" : "watashi ha sushi wo tabetai。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -2188,6 +2229,7 @@
           "english" : "This sushi is seasoned with plenty of horse-radish.",
           "id" : "esp1_89fc447651434ef41571d6075146b477",
           "japanese" : "このすしはわさびがよく効いている。",
+          "romaji" : "kono sushi ha wasabi ga yoku kiiteiru。",
           "tokens" : [
             {
               "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
@@ -2230,6 +2272,7 @@
           "english" : "Tom likes sushi rice.",
           "id" : "esp1_c5e3c52445b75af058e77d51ff0b6efd",
           "japanese" : "トムは、すし飯が好きなんだよ。",
+          "romaji" : "tomu ha、 sushimeshi ga sukina n da yo。",
           "tokens" : [
             {
               "entry" : "db52f445ee12ba0b3079cd20ed7925a3",
@@ -2316,6 +2359,7 @@
           "english" : "Frogs are slimy.",
           "id" : "esp1_f7fc98c51b33cdceae4b258bb9440062",
           "japanese" : "かえるはヌメヌメしてる。",
+          "romaji" : "kaeru ha numenume shi teru。",
           "tokens" : [
             {
               "entry" : "8d8af9d02a7d3de3d1c6da26be309061",
@@ -2350,6 +2394,7 @@
           "english" : "In other words, he is a man of faith.",
           "id" : "esp1_826df3f45a8c094d66d7348204fd1c15",
           "japanese" : "言いかえると、彼は信念の人です。",
+          "romaji" : "ii kaeru to、 kare ha shin'nen no hito desu。",
           "tokens" : [
             {
               "entry" : "f29080a71f7c90fd3a74d41ae1cac271",
@@ -2400,6 +2445,7 @@
           "english" : "Don't count your chickens before they are hatched.",
           "id" : "esp1_6289b94aaf62e36af6da9dc55fb9907a",
           "japanese" : "卵がかえる前にひよこの数を数えるな。",
+          "romaji" : "tamago ga kaeru mae ni hiyoko no kazu wo kazoeru na。",
           "tokens" : [
             {
               "entry" : "9d8f4ce1d618d84960ded7c47fb23d1f",
@@ -2458,6 +2504,7 @@
           "english" : "Looking back, it was a life full of lies.",
           "id" : "esp1_cd38e1a9539a811c5f98e30e2628d051",
           "japanese" : "振りかえるとウソで塗り固めた人生だった。",
+          "romaji" : "furi kaeru to uso de nuri katameta jinsei da~tsu ta。",
           "tokens" : [
             {
               "entry" : "c5e28b9654fe63b9dd726e34cef5c6c6",
@@ -2519,6 +2566,7 @@
           "english" : "In other words, reliability is impossible unless there is a natural warmth.",
           "id" : "esp1_4bfde90e6d7f614ac6c4be37c7317c06",
           "japanese" : "言いかえると、生来の温かさがない限り信頼性は不可能だ。",
+          "romaji" : "ii kaeru to、 seirai no atataka sa ga nai kagiri shinrai sei ha fukanou da。",
           "tokens" : [
             {
               "entry" : "f29080a71f7c90fd3a74d41ae1cac271",
@@ -2719,6 +2767,7 @@
           "english" : "Thank you!",
           "id" : "esp1_0501606eba04fb9cf32a1cbaaf2a840d",
           "japanese" : "ありがとう。",
+          "romaji" : "arigatou。",
           "tokens" : [
             {
               "entry" : "aead518e84274687eaf56db5618ffd7f",
@@ -2734,6 +2783,7 @@
           "english" : "Thank you!",
           "id" : "esp1_0a523622ea470bcd4fe3301e5cbf71d7",
           "japanese" : "ありがとう！",
+          "romaji" : "arigatou！",
           "tokens" : [
             {
               "entry" : "aead518e84274687eaf56db5618ffd7f",
@@ -2749,6 +2799,7 @@
           "english" : "Thanks, Yukina.",
           "id" : "esp1_1d639f6e37ad6fdf681607b0512c442b",
           "japanese" : "ありがとう、雪名。",
+          "romaji" : "arigatou、 yuki mei。",
           "tokens" : [
             {
               "entry" : "aead518e84274687eaf56db5618ffd7f",
@@ -2775,6 +2826,7 @@
           "english" : "Thank you, brothers.",
           "id" : "esp1_2ef538f854bf9b6b7831fa772f728940",
           "japanese" : "ありがとうブラザー。",
+          "romaji" : "arigatou burazā。",
           "tokens" : [
             {
               "entry" : "aead518e84274687eaf56db5618ffd7f",
@@ -2797,6 +2849,7 @@
           "english" : "Thanks, I'm fine.",
           "id" : "esp1_948839da8e67608cb940e5b2bf5577e0",
           "japanese" : "ありがとう。大丈夫。",
+          "romaji" : "arigatou。 daijoubu。",
           "tokens" : [
             {
               "entry" : "aead518e84274687eaf56db5618ffd7f",
@@ -2931,6 +2984,7 @@
           "english" : "Do you watch television?",
           "id" : "esp1_1dd41554cbda992479cf7d5d3851c07c",
           "japanese" : "テレビって見る？",
+          "romaji" : "terebi tte miru？",
           "tokens" : [
             {
               "entry" : "8fba7d1668c6ef8b821ac01d5071b24c",
@@ -2954,6 +3008,7 @@
           "english" : "Don't you have a television?",
           "id" : "esp1_1f0872079c4d6cc72b3409e7e42709ad",
           "japanese" : "テレビがないの？",
+          "romaji" : "terebi ga nai no？",
           "tokens" : [
             {
               "entry" : "8fba7d1668c6ef8b821ac01d5071b24c",
@@ -2989,6 +3044,7 @@
           "english" : "Let's watch TV.",
           "id" : "esp1_399065de3d6eeda66a9654de26cfe320",
           "japanese" : "テレビみようよ。",
+          "romaji" : "terebi miyou yo。",
           "tokens" : [
             {
               "entry" : "8fba7d1668c6ef8b821ac01d5071b24c",
@@ -3017,6 +3073,7 @@
           "english" : "I watch television.",
           "id" : "esp1_462393dd53dff719711334b7864b5812",
           "japanese" : "テレビは見るよ。",
+          "romaji" : "terebi ha miru yo。",
           "tokens" : [
             {
               "entry" : "8fba7d1668c6ef8b821ac01d5071b24c",
@@ -3044,6 +3101,7 @@
           "english" : "Did you turn off the TV?",
           "id" : "esp1_4f4d36c262c297f9ff9d050bbf732777",
           "japanese" : "テレビは消した？",
+          "romaji" : "terebi ha keshita？",
           "tokens" : [
             {
               "entry" : "8fba7d1668c6ef8b821ac01d5071b24c",
@@ -3179,6 +3237,7 @@
           "english" : "Is that okay?",
           "id" : "esp1_03fa5df596950d54f9bc86b64c11cc3c",
           "japanese" : "いい？",
+          "romaji" : "ii？",
           "tokens" : [
             {
               "candidates" : [
@@ -3201,6 +3260,7 @@
           "english" : "Nevermind.",
           "id" : "esp1_9491f1ef0cfa0e99dc60bc95bb3d16bf",
           "japanese" : "いい。",
+          "romaji" : "ii。",
           "tokens" : [
             {
               "candidates" : [
@@ -3223,6 +3283,7 @@
           "english" : "Do you want it?",
           "id" : "esp1_a7c154c6d74acab4f7141573ddcf14d2",
           "japanese" : "いる？",
+          "romaji" : "iru？",
           "tokens" : [
             {
               "candidates" : [
@@ -3249,6 +3310,7 @@
           "english" : "When?",
           "id" : "esp1_c14c5cb511822eaa3b8a0fe7618c54ef",
           "japanese" : "いつ？",
+          "romaji" : "itsu？",
           "tokens" : [
             {
               "candidates" : [
@@ -3275,6 +3337,7 @@
           "english" : "No.",
           "id" : "esp1_d197b08ff23fc9d562c0630241f0797a",
           "japanese" : "いや。",
+          "romaji" : "iya。",
           "tokens" : [
             {
               "candidates" : [
@@ -3406,6 +3469,7 @@
           "english" : "I'm thirsty.",
           "id" : "esp1_2d1b608ecea0b1fd374c96959e2fc510",
           "japanese" : "のど渇いた。",
+          "romaji" : "nodo kawaita。",
           "tokens" : [
             {
               "entry" : "fe73c3b30294e75af1605a29ce8e146f",
@@ -3425,6 +3489,7 @@
           "english" : "I'm thirsty.",
           "id" : "esp1_d52f17e2dad849fa90664fe98e6ecae2",
           "japanese" : "のどが渇いた。",
+          "romaji" : "nodo ga kawaita。",
           "tokens" : [
             {
               "entry" : "fe73c3b30294e75af1605a29ce8e146f",
@@ -3451,6 +3516,7 @@
           "english" : "I have a sore throat.",
           "id" : "esp1_609a630a79b199924e4d6ffae1cfe3ab",
           "japanese" : "のどが痛いです。",
+          "romaji" : "nodo ga itaidesu。",
           "tokens" : [
             {
               "entry" : "fe73c3b30294e75af1605a29ce8e146f",
@@ -3477,6 +3543,7 @@
           "english" : "Take it easy.",
           "id" : "esp1_691ce970ddafce23aa8ae7863bd1b85a",
           "japanese" : "のんびり行こう。",
+          "romaji" : "nonbiri ikou。",
           "tokens" : [
             {
               "entry" : "f03a07fc8b796a2ea7f49b1deb425292",
@@ -3496,6 +3563,7 @@
           "english" : "I'm taking it easy.",
           "id" : "esp1_13f043a1f676f28d81471d7d361061f8",
           "japanese" : "のんびりしてるよ。",
+          "romaji" : "nonbiri shi teru yo。",
           "tokens" : [
             {
               "entry" : "f03a07fc8b796a2ea7f49b1deb425292",
@@ -3638,6 +3706,7 @@
           "english" : "I'm just looking around.",
           "id" : "esp1_9a8ffecbf04ca625bbc1bb93f5b98f17",
           "japanese" : "見ているだけだ。",
+          "romaji" : "miteiru dake da。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -3664,6 +3733,7 @@
           "english" : "I'm just looking.",
           "id" : "esp1_59c3352c2775726229e68ab84528c867",
           "japanese" : "見ているだけです。",
+          "romaji" : "miteiru dake desu。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -3687,6 +3757,7 @@
           "english" : "Let sleeping dogs lie.",
           "id" : "esp1_9c44de22faa9d54b7ac39562ed60c41c",
           "japanese" : "寝ている子は起こすな。",
+          "romaji" : "neteiru ko ha okosu na。",
           "tokens" : [
             {
               "entry" : "3ee73bc74b631954edbad00428460bd4",
@@ -3718,6 +3789,7 @@
           "english" : "Don't wake up the sleeping child.",
           "id" : "esp1_1e87c74b914e06a88dfec1f8dd3f9724",
           "japanese" : "寝ている子供を起こすな。",
+          "romaji" : "neteiru kodomo wo okosu na。",
           "tokens" : [
             {
               "entry" : "3ee73bc74b631954edbad00428460bd4",
@@ -3749,6 +3821,7 @@
           "english" : "Nothing is so appealing as the innocent face of a sleeping baby.",
           "id" : "esp1_dfcf10c21e335a797434d2fd3dfac372",
           "japanese" : "寝ている赤ん坊の無邪気な顔ほどかわいいものはない。",
+          "romaji" : "neteiru akanbou no mujakina kao hodo kawaii mono ha nai。",
           "tokens" : [
             {
               "entry" : "3ee73bc74b631954edbad00428460bd4",
@@ -3921,6 +3994,7 @@
           "english" : "Oh.",
           "id" : "esp1_c3deb27a3369216adaf0f1edaec85e93",
           "japanese" : "あ。",
+          "romaji" : "a。",
           "tokens" : [
             {
               "entry" : "bf97e10bc9c91218a5490e84b46a8e2c",
@@ -3937,6 +4011,7 @@
           "english" : "Add a period, please.",
           "id" : "esp1_7c7b96127cd2dcda9d87a292d7c0de81",
           "japanese" : "「。」をつけてください。",
+          "romaji" : "「。」 wo tsuketekudasai。",
           "tokens" : [
             {
               "surface" : "「"
@@ -3974,6 +4049,7 @@
           "english" : "Speak.",
           "id" : "esp1_0419b7b59bea1668a52918106fe19cd9",
           "japanese" : "話す。",
+          "romaji" : "hanasu。",
           "tokens" : [
             {
               "entry" : "4f6dd65aeb7d4e8fbba112ceacf6163c",
@@ -3990,6 +4066,7 @@
           "english" : "It is a book.",
           "id" : "esp1_08acd03e3356662a7bd89373b1286f08",
           "japanese" : "本だ。",
+          "romaji" : "hon da。",
           "tokens" : [
             {
               "entry" : "6245b12a543fe049cb5c9e623e12fb75",
@@ -4013,6 +4090,7 @@
           "english" : "I'm for it.",
           "id" : "esp1_16dc511b66360474cfd329727dc53178",
           "japanese" : "賛成。",
+          "romaji" : "sansei。",
           "tokens" : [
             {
               "entry" : "536a0aec4d9727987192e5680e32b2d0",
@@ -4056,6 +4134,7 @@
           "english" : "I like cats.",
           "id" : "esp1_8847f6b5d63a32b2242e5a5bcfa4ba18",
           "japanese" : "猫が好きです。",
+          "romaji" : "neko ga suki desu。",
           "tokens" : [
             {
               "entry" : "59e7e7802475b49cbe31f60aff9187af",
@@ -4088,6 +4167,7 @@
           "english" : "Some people like cats, and others prefer dogs.",
           "id" : "esp1_865f7a506c985a37ec0e17e16ed572b2",
           "japanese" : "猫が好きな人もいれば、犬が好きな人もいる。",
+          "romaji" : "neko ga sukina hito mo ireba、 inu ga sukina hito mo iru。",
           "tokens" : [
             {
               "entry" : "59e7e7802475b49cbe31f60aff9187af",
@@ -4180,6 +4260,7 @@
           "english" : "Some people like cats, others prefer dogs.",
           "id" : "esp1_f1f5662377831c23588c94c9a1356753",
           "japanese" : "猫が好きな人もいれば、犬のほうが好きな人もいます。",
+          "romaji" : "neko ga sukina hito mo ireba、 inu no hou ga sukina hito mo imasu。",
           "tokens" : [
             {
               "entry" : "59e7e7802475b49cbe31f60aff9187af",
@@ -4290,6 +4371,7 @@
           "english" : "I am a cat person.",
           "id" : "esp1_59720250ba4cdbbe1ecdb230953f4fa2",
           "japanese" : "私は猫が好きだ。",
+          "romaji" : "watashi ha neko ga suki da。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -4333,6 +4415,7 @@
           "english" : "He does not like cats.",
           "id" : "esp1_424f488a9ed34bd13f39d521fb22ab20",
           "japanese" : "彼は猫が好きじゃない。",
+          "romaji" : "kare ha neko ga suki ja nai。",
           "tokens" : [
             {
               "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
@@ -4420,6 +4503,7 @@
           "english" : "Yes.",
           "id" : "esp1_be42fb1b8e8151193a562e8f9b6d5c6c",
           "japanese" : "はい。",
+          "romaji" : "hai。",
           "tokens" : [
             {
               "entry" : "a4f80246ab8a717bd00557c2de706799",
@@ -4436,6 +4520,7 @@
           "english" : "Yes, with pleasure.",
           "id" : "esp1_cc026491f6a2892598a97db3ce84489f",
           "japanese" : "はい。喜んで。",
+          "romaji" : "hai。 yorokonde。",
           "tokens" : [
             {
               "entry" : "a4f80246ab8a717bd00557c2de706799",
@@ -4459,6 +4544,7 @@
           "english" : "Yes, I can.",
           "id" : "esp1_7f8ee1ba2a88de40c5a5c2a805583e7a",
           "japanese" : "はい。できます。",
+          "romaji" : "hai。 dekimasu。",
           "tokens" : [
             {
               "entry" : "a4f80246ab8a717bd00557c2de706799",
@@ -4485,6 +4571,7 @@
           "english" : "Yes, I made mistakes.",
           "id" : "esp1_07a866c7caa7d1458729408201d6fccb",
           "japanese" : "はい。間違えました。",
+          "romaji" : "hai。 machigaemashita。",
           "tokens" : [
             {
               "entry" : "a4f80246ab8a717bd00557c2de706799",
@@ -4508,6 +4595,7 @@
           "english" : "Yes. This one I can sing from memory.",
           "id" : "esp1_8865ff5eb2d11c6587f1c82250499d8b",
           "japanese" : "はい。これならそらで歌えます。",
+          "romaji" : "hai。 kore nara sora de utae masu。",
           "tokens" : [
             {
               "entry" : "a4f80246ab8a717bd00557c2de706799",
@@ -4690,6 +4778,7 @@
           "english" : "I'm at Tokyo Station now.",
           "id" : "esp1_5cd27b71d96240436414ec18d08afd87",
           "japanese" : "東京駅なう。",
+          "romaji" : "toukyou eki nau。",
           "tokens" : [
             {
               "entry" : "700295bbd9adcb6d441d5b325ab67854",
@@ -4713,6 +4802,7 @@
           "english" : "I live in Tokyo.",
           "id" : "esp1_19b0d87533454c0cd253708fbad7411d",
           "japanese" : "東京に住んでいる。",
+          "romaji" : "toukyou ni sundeiru。",
           "tokens" : [
             {
               "entry" : "700295bbd9adcb6d441d5b325ab67854",
@@ -4736,6 +4826,7 @@
           "english" : "Tokyo is a big city.",
           "id" : "esp1_2dc38de49c08df38ea0fee0bb1e78517",
           "japanese" : "東京は大都市です。",
+          "romaji" : "toukyou ha daitoshi desu。",
           "tokens" : [
             {
               "entry" : "700295bbd9adcb6d441d5b325ab67854",
@@ -4763,6 +4854,7 @@
           "english" : "Tokyo is a very big city.",
           "id" : "esp1_f99acaa57fafc262ef07d192a7505dc3",
           "japanese" : "東京は巨大都市だ。",
+          "romaji" : "toukyou ha kyodai toshi da。",
           "tokens" : [
             {
               "entry" : "700295bbd9adcb6d441d5b325ab67854",
@@ -4797,6 +4889,7 @@
           "english" : "It's smaller than in Tokyo.",
           "id" : "esp1_51d8d9a8508765f26d8898f737bcf967",
           "japanese" : "東京より狭いですね。",
+          "romaji" : "toukyou yori semaidesu ne。",
           "tokens" : [
             {
               "entry" : "700295bbd9adcb6d441d5b325ab67854",
@@ -4948,6 +5041,7 @@
           "english" : "Do you want to eat?",
           "id" : "esp1_101c1072091d90ca232c113d205029ee",
           "japanese" : "食べる？",
+          "romaji" : "taberu？",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -4962,6 +5056,7 @@
           "english" : "I will eat.",
           "id" : "esp1_3fddeda051b871d19e947e032b96afbe",
           "japanese" : "食べる。",
+          "romaji" : "taberu。",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -4976,6 +5071,7 @@
           "english" : "Don't eat!",
           "id" : "esp1_2038ea2b909faba97e5bed4e21148bcc",
           "japanese" : "食べるな！",
+          "romaji" : "taberu na！",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -4994,6 +5090,7 @@
           "english" : "Is there anything to eat?",
           "id" : "esp1_c90415c2481d15c01501a531f5dcbf83",
           "japanese" : "食べる物ある？",
+          "romaji" : "taberu mono aru？",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -5016,6 +5113,7 @@
           "english" : "Before eating here's a small tip.",
           "id" : "esp1_7efa3b5276e490d426106dd74ea47cf7",
           "japanese" : "食べる前にひと工夫！",
+          "romaji" : "taberu mae ni hito kufuu！",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -5164,6 +5262,7 @@
           "english" : "It's obvious.",
           "id" : "esp1_4dbf806c17dfcd0ff6d355f71abb46ba",
           "japanese" : "見るからに明らかだよ。",
+          "romaji" : "miru kara ni akiraka da yo。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -5201,6 +5300,7 @@
           "english" : "I couldn't abide looking at it.",
           "id" : "esp1_7d23f09c267a1593361eb443a33106e2",
           "japanese" : "見るのもいやなほどだ。",
+          "romaji" : "miru no mo iyana hodo da。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -5247,6 +5347,7 @@
           "english" : "Seeing is believing.",
           "id" : "esp1_1576faa95e7033f3002dd3444bc29b94",
           "japanese" : "見ることは信ずることなり。",
+          "romaji" : "miru koto ha shinzuru koto nari。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -5293,6 +5394,7 @@
           "english" : "To see is to believe.",
           "id" : "esp1_365f2d1697df0aef7344859ead37c32e",
           "japanese" : "見ることは信じることである。",
+          "romaji" : "miru koto ha shinjiru koto de aru。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -5346,6 +5448,7 @@
           "english" : "They say that to see is to believe.",
           "id" : "esp1_dab15e25ca5239b149f93cc13ebd4fe9",
           "japanese" : "見る事は信じる事だといわれる。",
+          "romaji" : "miru koto ha shinjiru koto da to iwareru。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -5506,6 +5609,7 @@
           "english" : "I'm going to go.",
           "id" : "esp1_011b7119a0126ae038c3d28c97c6e8cd",
           "japanese" : "行くよ。",
+          "romaji" : "iku yo。",
           "tokens" : [
             {
               "entry" : "02b555a06b217e79bca2d442a5a03d86",
@@ -5524,6 +5628,7 @@
           "english" : "Are you going?",
           "id" : "esp1_027fcf7659e94ee263046a9558e5a3cf",
           "japanese" : "行くの？",
+          "romaji" : "iku no？",
           "tokens" : [
             {
               "entry" : "02b555a06b217e79bca2d442a5a03d86",
@@ -5542,6 +5647,7 @@
           "english" : "I ought to go.",
           "id" : "esp1_3fd14f4669f050e4f06277ccab383546",
           "japanese" : "行くべきだ。",
+          "romaji" : "ikubekida。",
           "tokens" : [
             {
               "entry" : "02b555a06b217e79bca2d442a5a03d86",
@@ -5556,6 +5662,7 @@
           "english" : "I think I'll go.",
           "id" : "esp1_763306237b515ec9c3396a416b9fd97e",
           "japanese" : "行くと思う。",
+          "romaji" : "iku to omou。",
           "tokens" : [
             {
               "entry" : "02b555a06b217e79bca2d442a5a03d86",
@@ -5578,6 +5685,7 @@
           "english" : "Are you going to go?",
           "id" : "esp1_2302257ab433da146a9325f40d184a38",
           "japanese" : "行くつもりなの？",
+          "romaji" : "iku tsumori na no？",
           "tokens" : [
             {
               "entry" : "02b555a06b217e79bca2d442a5a03d86",
@@ -5722,6 +5830,7 @@
           "english" : "It's too expensive.",
           "id" : "esp1_3b57f4ffc060fd9505ac93837f6392d5",
           "japanese" : "高いですね。",
+          "romaji" : "takaidesu ne。",
           "tokens" : [
             {
               "entry" : "380d957d6f36dc2e2aacdb743198d104",
@@ -5740,6 +5849,7 @@
           "english" : "That is a high building, is it not?",
           "id" : "esp1_02c78f010b3e31e7b30bd8aa9b9f7806",
           "japanese" : "高い建物ですね。",
+          "romaji" : "takai tatemono desu ne。",
           "tokens" : [
             {
               "entry" : "380d957d6f36dc2e2aacdb743198d104",
@@ -5766,6 +5876,7 @@
           "english" : "Are you afraid of heights?",
           "id" : "esp1_5a4b94b71fc7251e4239185fcf36273f",
           "japanese" : "高いところが怖いの？",
+          "romaji" : "takai tokoro ga kowai no？",
           "tokens" : [
             {
               "entry" : "380d957d6f36dc2e2aacdb743198d104",
@@ -5802,6 +5913,7 @@
           "english" : "I don't like heights.",
           "id" : "esp1_8135ddef8d80fedd26e0beaf80bc30d9",
           "japanese" : "高いところが苦手で。",
+          "romaji" : "takai tokoro ga nigatede。",
           "tokens" : [
             {
               "entry" : "380d957d6f36dc2e2aacdb743198d104",
@@ -5834,6 +5946,7 @@
           "english" : "I'm sure it costs a pretty penny. I'll pass.",
           "id" : "esp1_4dc16b23b863207b384ed735a4c2e850",
           "japanese" : "高いんだろ。やめとくよ。",
+          "romaji" : "takai n daro。 yame toku yo。",
           "tokens" : [
             {
               "entry" : "380d957d6f36dc2e2aacdb743198d104",
@@ -5992,6 +6105,7 @@
           "english" : "It's obvious.",
           "id" : "esp1_4dbf806c17dfcd0ff6d355f71abb46ba",
           "japanese" : "見るからに明らかだよ。",
+          "romaji" : "miru kara ni akiraka da yo。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -6029,6 +6143,7 @@
           "english" : "I couldn't abide looking at it.",
           "id" : "esp1_7d23f09c267a1593361eb443a33106e2",
           "japanese" : "見るのもいやなほどだ。",
+          "romaji" : "miru no mo iyana hodo da。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -6075,6 +6190,7 @@
           "english" : "Seeing is believing.",
           "id" : "esp1_1576faa95e7033f3002dd3444bc29b94",
           "japanese" : "見ることは信ずることなり。",
+          "romaji" : "miru koto ha shinzuru koto nari。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -6121,6 +6237,7 @@
           "english" : "To see is to believe.",
           "id" : "esp1_365f2d1697df0aef7344859ead37c32e",
           "japanese" : "見ることは信じることである。",
+          "romaji" : "miru koto ha shinjiru koto de aru。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -6174,6 +6291,7 @@
           "english" : "They say that to see is to believe.",
           "id" : "esp1_dab15e25ca5239b149f93cc13ebd4fe9",
           "japanese" : "見る事は信じる事だといわれる。",
+          "romaji" : "miru koto ha shinjiru koto da to iwareru。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -6334,6 +6452,7 @@
           "english" : "Do you want to eat?",
           "id" : "esp1_101c1072091d90ca232c113d205029ee",
           "japanese" : "食べる？",
+          "romaji" : "taberu？",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -6348,6 +6467,7 @@
           "english" : "I will eat.",
           "id" : "esp1_3fddeda051b871d19e947e032b96afbe",
           "japanese" : "食べる。",
+          "romaji" : "taberu。",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -6362,6 +6482,7 @@
           "english" : "Don't eat!",
           "id" : "esp1_2038ea2b909faba97e5bed4e21148bcc",
           "japanese" : "食べるな！",
+          "romaji" : "taberu na！",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -6380,6 +6501,7 @@
           "english" : "Is there anything to eat?",
           "id" : "esp1_c90415c2481d15c01501a531f5dcbf83",
           "japanese" : "食べる物ある？",
+          "romaji" : "taberu mono aru？",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -6402,6 +6524,7 @@
           "english" : "Before eating here's a small tip.",
           "id" : "esp1_7efa3b5276e490d426106dd74ea47cf7",
           "japanese" : "食べる前にひと工夫！",
+          "romaji" : "taberu mae ni hito kufuu！",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -6453,6 +6576,7 @@
           "english" : "It is hard for the couple to live together any longer.",
           "id" : "esp1_c179baa881029c80c2d88063e6b5b098",
           "japanese" : "その夫婦がこれ以上一緒に暮らすのは難しい。",
+          "romaji" : "sono fuufu ga kore ijou issho ni kurasu no ha muzukashii。",
           "tokens" : [
             {
               "entry" : "1cc9a84b606c82ec5a77ca0497e28107",
@@ -6514,6 +6638,7 @@
           "english" : "As long as I'm going to be in London, I ought to see a play or two.",
           "id" : "esp1_d153d86a29291b3e246dd882120c0d58",
           "japanese" : "ロンドンに行く以上一つや二つの芝居を見なければ。",
+          "romaji" : "rondon ni iku ijou hitotsu ya futatsu no shibai wo minakereba。",
           "tokens" : [
             {
               "entry" : "17bd72f21bb67fa630518ced405f0f33",
@@ -6568,6 +6693,7 @@
           "english" : "I thought you didn't want to be with me anymore.",
           "id" : "esp1_ed9088dd4b79ccc8114a06bc80e4a5ca",
           "japanese" : "私なんかと、もうこれ以上一緒にいたくないんだと思ってたわ。",
+          "romaji" : "watashi nanka to、 mou kore ijou issho ni itakunai n da to omo~tsu teta wa。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -6759,6 +6885,7 @@
           "english" : "I didn't know he had decided to leave.",
           "id" : "esp1_da597e4226ff7bef36be7b07d8c47408",
           "japanese" : "彼が変える決心をしたなんて知らなかったよ。",
+          "romaji" : "kare ga kaeru kesshin wo shita nante shiranakatta yo。",
           "tokens" : [
             {
               "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
@@ -6814,6 +6941,7 @@
           "english" : "Courage is needed to change a custom.",
           "id" : "esp1_06712da8f2f853e68cb33b8327ce1852",
           "japanese" : "習慣を変えるには勇気が必要だ。",
+          "romaji" : "shuukan wo kaeru ni ha yuuki ga hitsuyou da。",
           "tokens" : [
             {
               "entry" : "eded611187e93cde7073c3b8e203d32f",
@@ -6866,6 +6994,7 @@
           "english" : "I'll marry you if you change your hair color.",
           "id" : "esp1_9b081ad573519c4c0997bf59d2c994ae",
           "japanese" : "髪の色変えるんなら、結婚するよ。",
+          "romaji" : "kami no iro kaeru n nara、 kekkon suru yo。",
           "tokens" : [
             {
               "entry" : "b82dd3f16deb0088cc7bf65d8d06c365",
@@ -6920,6 +7049,7 @@
           "english" : "If you want to change your opinion, then go right ahead.",
           "id" : "esp1_38f0fd1ed6de4c08f7e1e450b0d455fb",
           "japanese" : "意見を変えるのならお好きにどうぞ。",
+          "romaji" : "iken wo kaeru no nara o sukini douzo。",
           "tokens" : [
             {
               "entry" : "7ffaf443d22906d32fc81c0e7ccd2988",
@@ -6974,6 +7104,7 @@
           "english" : "How can we make a difference in the world?",
           "id" : "esp1_9914d3fc85f856f37f8e03faa010d768",
           "japanese" : "世界を変えるためには、どうしたらいいですか。",
+          "romaji" : "sekai wo kaeru tame ni ha、 dou shitara iidesu ka。",
           "tokens" : [
             {
               "entry" : "1df14e83a0beefaa84f74720312222e4",
@@ -7156,6 +7287,7 @@
           "english" : "Stand in the corner!",
           "id" : "esp1_4269b725bd8cfc6692e10b2bfb1fef4e",
           "japanese" : "端っこに立ってろ！",
+          "romaji" : "hajikko ni tatte ro！",
           "tokens" : [
             {
               "entry" : "efc0e5efc3eac69225ca94289b37a2d9",
@@ -7191,6 +7323,7 @@
           "english" : "To make a long story short, he was fired.",
           "id" : "esp1_7c071d73c0de114c362a4636599f3718",
           "japanese" : "端的に言って、彼は首になったのだ。",
+          "romaji" : "tantekini itte、 kare ha kubi ni natta no da。",
           "tokens" : [
             {
               "entry" : "48718a4b52c4ab72e93088367f2086a0",
@@ -7251,6 +7384,7 @@
           "english" : "To put it briefly, he lacks musical ability.",
           "id" : "esp1_815ea3ad3e17c463af560c10c26a807f",
           "japanese" : "端的に言って、彼には音楽の才能がない。",
+          "romaji" : "tantekini itte、 kare ni ha ongaku no sainou ga nai。",
           "tokens" : [
             {
               "entry" : "48718a4b52c4ab72e93088367f2086a0",
@@ -7312,6 +7446,7 @@
           "english" : "In short, I don't want you to work for that company.",
           "id" : "esp1_4178fc0432ed9d09b95e16984ce8757b",
           "japanese" : "端的に言うと、私はあなたにその会社で働いて欲しくない。",
+          "romaji" : "tantekini iu to、 watashi ha anata ni sono kaisha de hataraite hoshikunai。",
           "tokens" : [
             {
               "entry" : "48718a4b52c4ab72e93088367f2086a0",
@@ -7376,6 +7511,7 @@
           "english" : "Don't go to extremes.",
           "id" : "esp1_e40989a528595003137a99f430329230",
           "japanese" : "極端に走ってはならない。",
+          "romaji" : "kyokutan'ni hashitte ha naranai。",
           "tokens" : [
             {
               "entry" : "ae79c810f78ff9e1149898ecb47a1317",
@@ -7531,6 +7667,7 @@
           "english" : "Eat!",
           "id" : "esp1_eda100bbafd77ac8a735e36314c41e51",
           "japanese" : "食べなさい！",
+          "romaji" : "tabe nasai！",
           "tokens" : [
             {
               "entry" : "042e07f7052f611fed33ddddf37f55fd",
@@ -7549,6 +7686,7 @@
           "english" : "Eat something.",
           "id" : "esp1_66dfaf5095e3c3bd726b01c50f38eb78",
           "japanese" : "何か食べて。",
+          "romaji" : "nani ka tabete。",
           "tokens" : [
             {
               "entry" : "9686ab4fa9cef25605421475ea3dc063",
@@ -7571,6 +7709,7 @@
           "english" : "Eat shit!",
           "id" : "esp1_750a29fcc246dcf72de14d11201a68df",
           "japanese" : "くそ食らえ！",
+          "romaji" : "kuso kurae！",
           "tokens" : [
             {
               "candidates" : [
@@ -7592,6 +7731,7 @@
           "english" : "Eat slowly.",
           "id" : "esp1_047638054c2494647340db033663af7c",
           "japanese" : "ゆっくり食べて。",
+          "romaji" : "yukkuri tabete。",
           "tokens" : [
             {
               "entry" : "df6f92f3a708f194560eeec5dbdc30ae",
@@ -7610,6 +7750,7 @@
           "english" : "Eat everything.",
           "id" : "esp1_36ccc8897d205b4b3a6fc60af2914512",
           "japanese" : "全部食べなさい。",
+          "romaji" : "zenbu tabe nasai。",
           "tokens" : [
             {
               "entry" : "3550199fdf357c0b0d27f76a4c0436df",
@@ -7744,6 +7885,7 @@
           "english" : "Quiet down.",
           "id" : "esp1_d63223e43954ed978c64ca1350a1c287",
           "japanese" : "お静かに。",
+          "romaji" : "o shizukani。",
           "tokens" : [
             {
               "candidates" : [
@@ -7770,6 +7912,7 @@
           "english" : "Quiet down, please.",
           "id" : "esp1_0184de0faf907449c3ac4eb4db043e27",
           "japanese" : "静かにして下さいな。",
+          "romaji" : "shizukani shitekudasai na。",
           "tokens" : [
             {
               "entry" : "657d72cf95a8d0510ef6464fc032bae0",
@@ -7798,6 +7941,7 @@
           "english" : "Quiet him down, will you?",
           "id" : "esp1_74471dfd42ec6f85456db4b18fbe077e",
           "japanese" : "彼をなだめてくれませんか。",
+          "romaji" : "kare wo nadametekuremasen ka。",
           "tokens" : [
             {
               "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
@@ -7824,6 +7968,7 @@
           "english" : "Quiet! Everybody stay where they are, there will now be a possessions check.",
           "id" : "esp1_5aee9b455064d23fa9548822a29821e6",
           "japanese" : "静かに！みんなその場を動かないで。これから持ち物検査をはじめます。",
+          "romaji" : "shizukani！ min'na sono ba wo ugokanaide。 korekara mochimono kensa wo hajimemasu。",
           "tokens" : [
             {
               "entry" : "657d72cf95a8d0510ef6464fc032bae0",
@@ -7884,6 +8029,7 @@
           "english" : "A quiet place to sit and rest would be nice.",
           "id" : "esp1_ce8fc303831e7158624106e90ad8e730",
           "japanese" : "座って休める静かな場所だけで良いのです。",
+          "romaji" : "suwatte yasumeru shizukana basho dake de yoi no desu。",
           "tokens" : [
             {
               "entry" : "45a98e61b8c293c35a3a16a2a88f96da",
@@ -8049,6 +8195,7 @@
           "english" : "He was in prison for life.",
           "id" : "esp1_684abcf59063821b6c241fc176820809",
           "japanese" : "彼は死ぬまで刑務所にいた。",
+          "romaji" : "kare ha shinu made keimusho ni ita。",
           "tokens" : [
             {
               "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
@@ -8098,6 +8245,7 @@
           "english" : "He was in prison on a charge of robbery.",
           "id" : "esp1_dc83dbaa223a333dd8ca9d76bc321a9a",
           "japanese" : "彼は強盗の罪で刑務所に入っていた。",
+          "romaji" : "kare ha goutou no tsumi de keimusho ni haitteita。",
           "tokens" : [
             {
               "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
@@ -8150,6 +8298,7 @@
           "english" : "Denmark’s a prison.",
           "id" : "esp1_00aa7de976989066321ce783510353dd",
           "japanese" : "デンマークは監獄だ。",
+          "romaji" : "denmāku ha kangoku da。",
           "tokens" : [
             {
               "entry" : "030dfb38486362cceed78b0703995313",
@@ -8179,6 +8328,7 @@
           "english" : "It's like a prison here.",
           "id" : "esp1_f138745cb2bb786dc5d8dc9bfc01acb5",
           "japanese" : "ここはまるで刑務所のようだな。",
+          "romaji" : "koko ha marude keimusho no you da na。",
           "tokens" : [
             {
               "candidates" : [
@@ -8239,6 +8389,7 @@
           "english" : "He was put in prison.",
           "id" : "esp1_ffb410ab794a85351556589421feddc5",
           "japanese" : "彼は刑務所に入れられた。",
+          "romaji" : "kare ha keimusho ni irerareta。",
           "tokens" : [
             {
               "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
@@ -8381,6 +8532,7 @@
           "english" : "Water is life.",
           "id" : "esp1_8c50f89da104764ae99246cf7fd9bc66",
           "japanese" : "水は生命です。",
+          "romaji" : "mizu ha seimei desu。",
           "tokens" : [
             {
               "entry" : "722c94624b09c10ca07a96c1cb03701f",
@@ -8407,6 +8559,7 @@
           "english" : "Water reflects light.",
           "id" : "esp1_867483d740fddb04da0b035fbd60dafb",
           "japanese" : "水は光を反射する。",
+          "romaji" : "mizu ha hikari wo hansha suru。",
           "tokens" : [
             {
               "entry" : "722c94624b09c10ca07a96c1cb03701f",
@@ -8446,6 +8599,7 @@
           "english" : "Water the plants.",
           "id" : "esp1_d7a10cf02d8fd4150ed56574d81e4659",
           "japanese" : "植物にお水あげて。",
+          "romaji" : "shokubutsu ni o mizuage te。",
           "tokens" : [
             {
               "entry" : "6e28deaee86110eebd0efbac06baac48",
@@ -8484,6 +8638,7 @@
           "english" : "Water the plants.",
           "id" : "esp1_02deb86528b1e6d5c10951d66994b148",
           "japanese" : "植木にお水をあげてきてちょうだい。",
+          "romaji" : "ueki ni o mizu wo agetekite choudai。",
           "tokens" : [
             {
               "entry" : "742bbfc754670a9894369d73d90f6ac4",
@@ -8541,6 +8696,7 @@
           "english" : "Water is a liquid.",
           "id" : "esp1_1c9f9914e507923b1a6610dcd44c6db7",
           "japanese" : "水は液体である。",
+          "romaji" : "mizu ha ekitai de aru。",
           "tokens" : [
             {
               "entry" : "722c94624b09c10ca07a96c1cb03701f",
@@ -8686,6 +8842,7 @@
           "english" : "To see is to believe.",
           "id" : "esp1_1a37d206cfbf47b9baa7f2cef2d0577c",
           "japanese" : "百聞は一見にしかず。",
+          "romaji" : "hyakubun ha ikken ni shikazu。",
           "tokens" : [
             {
               "entry" : "acb9217a5ebcd5ce1104288d9b24ac73",
@@ -8720,6 +8877,7 @@
           "english" : "To see is to believe.",
           "id" : "esp1_365f2d1697df0aef7344859ead37c32e",
           "japanese" : "見ることは信じることである。",
+          "romaji" : "miru koto ha shinjiru koto de aru。",
           "tokens" : [
             {
               "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
@@ -8773,6 +8931,7 @@
           "english" : "To see her is to love her.",
           "id" : "esp1_743da09b2b73c598e2d01e84c1a1ef8a",
           "japanese" : "彼女を見れば、好きになる。",
+          "romaji" : "kanojo wo mireba、 sukini naru。",
           "tokens" : [
             {
               "entry" : "edaa373c8957b703565ae24d79c4021d",
@@ -8810,6 +8969,7 @@
           "english" : "To see you is always a great pleasure.",
           "id" : "esp1_d635a0929d845a6bafbc36fa6db018f5",
           "japanese" : "君に会うのはいつだってうれしいことです。",
+          "romaji" : "kimi ni au no ha itsu datte ureshii koto desu。",
           "tokens" : [
             {
               "entry" : "1802b4366cfd987d2b2ae8b7bcfe8daa",
@@ -8874,6 +9034,7 @@
           "english" : "To see her smile, you would be charmed.",
           "id" : "esp1_6d394f4ddab7c7ec54c9f435c54e1aa5",
           "japanese" : "彼女の微笑を見れば、君は魅了されるだろうに。",
+          "romaji" : "kanojo no bishou wo mireba、 kimi ha miryou sarerudarou ni。",
           "tokens" : [
             {
               "entry" : "edaa373c8957b703565ae24d79c4021d",
@@ -9045,6 +9206,7 @@
           "english" : "Thank you!",
           "id" : "esp1_4482c853c9a0d7b375ebad8886274bcc",
           "japanese" : "おおきに！",
+          "romaji" : "ookini！",
           "tokens" : [
             {
               "entry" : "3b2fac56c503cfdb71a2f196b08c7693",
@@ -9059,6 +9221,7 @@
           "english" : "Thank you!",
           "id" : "esp1_afbdea89b37cf5a3221a06704374d949",
           "japanese" : "あざっす！",
+          "romaji" : "aza ssu！",
           "tokens" : [
             {
               "candidates" : [
@@ -9081,6 +9244,7 @@
           "english" : "Thank you!",
           "id" : "esp1_0501606eba04fb9cf32a1cbaaf2a840d",
           "japanese" : "ありがとう。",
+          "romaji" : "arigatou。",
           "tokens" : [
             {
               "entry" : "aead518e84274687eaf56db5618ffd7f",
@@ -9095,6 +9259,7 @@
           "english" : "Thank you!",
           "id" : "esp1_0a523622ea470bcd4fe3301e5cbf71d7",
           "japanese" : "ありがとう！",
+          "romaji" : "arigatou！",
           "tokens" : [
             {
               "entry" : "aead518e84274687eaf56db5618ffd7f",
@@ -9109,6 +9274,7 @@
           "english" : "Thank you!",
           "id" : "esp1_be0565278da5af252df3b65ec08b4c14",
           "japanese" : "お疲れさまでした。",
+          "romaji" : "otsukaresama deshi ta。",
           "tokens" : [
             {
               "entry" : "aa1c5f33bcf41bc13396af00c056fc87",
@@ -9243,6 +9409,7 @@
           "english" : "To be continued.",
           "id" : "esp1_b6a437186e5bd11dd5050b22e40d83e2",
           "japanese" : "つづく。",
+          "romaji" : "tsudzuku。",
           "tokens" : [
             {
               "entry" : "a8835c1a8a34400768e77ae9e7fd1941",
@@ -9257,6 +9424,7 @@
           "english" : "To your future!",
           "id" : "esp1_260172f9f318e235cb09d16c43d238d8",
           "japanese" : "あなたの未来に乾杯！",
+          "romaji" : "anata no mirai ni kanpai！",
           "tokens" : [
             {
               "entry" : "8b1433c550e5f65ce7f35b08d7c6042e",
@@ -9287,6 +9455,7 @@
           "english" : "To each their own.",
           "id" : "esp1_c634b6aad03370ebe686e6ee3d9f1468",
           "japanese" : "人それぞれだよ。",
+          "romaji" : "hito sorezore da yo。",
           "tokens" : [
             {
               "entry" : "2e2360526d3d5fa30239db0f6498fb5e",
@@ -9316,6 +9485,7 @@
           "english" : "To change the subject.",
           "id" : "esp1_9f88c49a71f16933de62a3bd9a73c204",
           "japanese" : "話はかわりますが。",
+          "romaji" : "hanashi ha kawarimasu ga。",
           "tokens" : [
             {
               "entry" : "499e91699369ccd6583ea6115938edab",
@@ -9348,6 +9518,7 @@
           "english" : "To the airport, please.",
           "id" : "esp1_fdee44701e6e1a32a1e6ba307a42cc18",
           "japanese" : "空港まで、お願いします。",
+          "romaji" : "kuukou made、 onegai shimasu。",
           "tokens" : [
             {
               "entry" : "8f72256602d11fbabd2f12767d5d55d5",
@@ -9495,6 +9666,7 @@
           "english" : "Of course.",
           "id" : "esp1_c606fbf62593a8496c52e48966b7ceb8",
           "japanese" : "もちろん。",
+          "romaji" : "mochiron。",
           "tokens" : [
             {
               "entry" : "47f93362529df2b2f688dd9d13be02c3",
@@ -9509,6 +9681,7 @@
           "english" : "Of course.",
           "id" : "esp1_888832df4a6d0fa43983441d5e3899d1",
           "japanese" : "当たり前だ。",
+          "romaji" : "atarimae da。",
           "tokens" : [
             {
               "entry" : "ee131008a18615687f8f80b505293e46",
@@ -9530,6 +9703,7 @@
           "english" : "Of course.",
           "id" : "esp1_ad5dc595a3ff268765247627210a0c3a",
           "japanese" : "もちろんさ。",
+          "romaji" : "mochiron sa。",
           "tokens" : [
             {
               "entry" : "47f93362529df2b2f688dd9d13be02c3",
@@ -9548,6 +9722,7 @@
           "english" : "Of course.",
           "id" : "esp1_e41ee2b9fa56f6cc7c8744612e94757c",
           "japanese" : "もちろんです。",
+          "romaji" : "mochiron desu。",
           "tokens" : [
             {
               "entry" : "47f93362529df2b2f688dd9d13be02c3",
@@ -9566,6 +9741,7 @@
           "english" : "Of course not.",
           "id" : "esp1_313a6f5d60d9a096f1fe20cf7b0c2700",
           "japanese" : "そんなことないでしょ。",
+          "romaji" : "son'na koto naidesho。",
           "tokens" : [
             {
               "entry" : "0946ecde65bc660bc155bf20c5509c67",
@@ -9711,6 +9887,7 @@
           "english" : "The wind blows.",
           "id" : "esp1_a525e1605167d0427816f3e4364200b6",
           "japanese" : "風が吹く。",
+          "romaji" : "kaze ga fuku。",
           "tokens" : [
             {
               "entry" : "0c93a5d757ebf72736b7a71d6eba0e07",
@@ -9736,6 +9913,7 @@
           "english" : "The dog sleeps.",
           "id" : "esp1_dc06476078f6f87b429631c5792e65b6",
           "japanese" : "犬が寝る。",
+          "romaji" : "inu ga neru。",
           "tokens" : [
             {
               "entry" : "681bff8274391329f3ce9ca80a4e04b0",
@@ -9761,6 +9939,7 @@
           "english" : "The leaves fell.",
           "id" : "esp1_01217c1fc780a87ffad2718c0c29ae7b",
           "japanese" : "葉が落ちた。",
+          "romaji" : "ha ga ochita。",
           "tokens" : [
             {
               "entry" : "45efec9bb825e890d54344e7825b15e9",
@@ -9786,6 +9965,7 @@
           "english" : "The mirror broke.",
           "id" : "esp1_29dd00eb60546f7fc13cc03bd693496a",
           "japanese" : "鏡が壊れた。",
+          "romaji" : "kagami ga kowareta。",
           "tokens" : [
             {
               "candidates" : [
@@ -9814,6 +9994,7 @@
           "english" : "The dog barked.",
           "id" : "esp1_445c737b1b89d279891034d00f0fba28",
           "japanese" : "犬が吠えた。",
+          "romaji" : "inu ga hoeta。",
           "tokens" : [
             {
               "entry" : "681bff8274391329f3ce9ca80a4e04b0",
@@ -9951,6 +10132,7 @@
           "english" : "Run!",
           "id" : "esp1_35cf2e06a80707d851af9b832bf42d19",
           "japanese" : "走れ！",
+          "romaji" : "hashire！",
           "tokens" : [
             {
               "entry" : "a89e3599bd864035f2098d6688c307e9",
@@ -9965,6 +10147,7 @@
           "english" : "Run.",
           "id" : "esp1_53004e1940970cb1ddb23fef5cfaddbe",
           "japanese" : "走れ。",
+          "romaji" : "hashire。",
           "tokens" : [
             {
               "entry" : "a89e3599bd864035f2098d6688c307e9",
@@ -9979,6 +10162,7 @@
           "english" : "Run.",
           "id" : "esp1_5eb384e43bb8bc1e07a140ad4ec8c384",
           "japanese" : "走って！",
+          "romaji" : "hashitte！",
           "tokens" : [
             {
               "entry" : "a89e3599bd864035f2098d6688c307e9",
@@ -9993,6 +10177,7 @@
           "english" : "Run!",
           "id" : "esp1_6608b0c545c58c7b9971de58c61ab173",
           "japanese" : "逃げろ！",
+          "romaji" : "nigero！",
           "tokens" : [
             {
               "entry" : "fba8e4619f1b6bebe71eb597839cbb64",
@@ -10007,6 +10192,7 @@
           "english" : "Run pipes under the floor.",
           "id" : "esp1_82382b99677c45b9440e54493d9f43ea",
           "japanese" : "床下にパイプを通す。",
+          "romaji" : "yukashita ni paipu wo toosu。",
           "tokens" : [
             {
               "entry" : "ab7d3425b12fb3be0f0098633aa9b1f0",
@@ -10149,6 +10335,7 @@
           "english" : "Running is good exercise.",
           "id" : "esp1_a5cabedba04b3b467cc516496b23ccf1",
           "japanese" : "走る事はよい運動だ。",
+          "romaji" : "hashiru koto ha yoi undou da。",
           "tokens" : [
             {
               "entry" : "a89e3599bd864035f2098d6688c307e9",
@@ -10186,6 +10373,7 @@
           "english" : "Running is good for the health.",
           "id" : "esp1_e1d00a74709745a5385193de4804d805",
           "japanese" : "走ることは健康に良い。",
+          "romaji" : "hashiru koto ha kenkouni yoi。",
           "tokens" : [
             {
               "entry" : "a89e3599bd864035f2098d6688c307e9",
@@ -10222,6 +10410,7 @@
           "english" : "Running hard is important for you.",
           "id" : "esp1_e1713f4e39522d81ac8382fef07c9b0f",
           "japanese" : "熱心に走ることはあなたにとって重要です。",
+          "romaji" : "nesshin'ni hashiru koto ha anata nitotte juuyou desu。",
           "tokens" : [
             {
               "entry" : "fe7d4c7f859d5397d13b5ebb56e5abc6",
@@ -10270,6 +10459,7 @@
           "english" : "Running so fast is impossible for me.",
           "id" : "esp1_1a7205bc7fdd645b91630f80844b712e",
           "japanese" : "そんなに速く走るなんてできません。",
+          "romaji" : "son'nani hayaku hashiru nante dekimasen。",
           "tokens" : [
             {
               "entry" : "7c53e8f1a7652a782c67df8c70591f27",
@@ -10303,6 +10493,7 @@
           "english" : "Running a car is a great expense.",
           "id" : "esp1_dd07c04150f27d078a812d8341331002",
           "japanese" : "車を維持するのはとても経費がかかる。",
+          "romaji" : "kuruma wo iji suru no ha totemo keihi ga kakaru。",
           "tokens" : [
             {
               "entry" : "77f7e3b032090284623ed627e35cf16a",
@@ -10496,6 +10687,7 @@
           "english" : "Take care.",
           "id" : "esp1_01cc3cef514873f6c073bb57b5750c55",
           "japanese" : "元気でね！",
+          "romaji" : "genkide ne！",
           "tokens" : [
             {
               "entry" : "d3450f6ef9378b5fc4dc7a9a673ecd72",
@@ -10514,6 +10706,7 @@
           "english" : "Take care.",
           "id" : "esp1_ec7007118ef490701091e94a258b4e00",
           "japanese" : "気をつけて！",
+          "romaji" : "ki wo tsukete！",
           "tokens" : [
             {
               "entry" : "3508cf7b2d013def5ddf79d2c0f08c7f",
@@ -10542,6 +10735,7 @@
           "english" : "Take mine.",
           "id" : "esp1_2d158f8272dbe74b9286fff15ff4485f",
           "japanese" : "私のをどうぞ。",
+          "romaji" : "watashi no wo douzo。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -10572,6 +10766,7 @@
           "english" : "Take note.",
           "id" : "esp1_4b5dded6c18c3e09f5c71ac67a0bea78",
           "japanese" : "メモしなさい。",
+          "romaji" : "memo shi nasai。",
           "tokens" : [
             {
               "entry" : "fd1cf4a483f7b46e837868e597d1b2b0",
@@ -10594,6 +10789,7 @@
           "english" : "Take care.",
           "id" : "esp1_6d1d7eb1a7698f2a8d7fbe180b59d1d5",
           "japanese" : "お気をつけて。",
+          "romaji" : "oki wo tsukete。",
           "tokens" : [
             {
               "surface" : "お気"
@@ -10733,6 +10929,7 @@
           "english" : "Good!",
           "id" : "esp1_45d07724baca2b40cdd8a72a6905bdfc",
           "japanese" : "よし！",
+          "romaji" : "yoshi！",
           "tokens" : [
             {
               "entry" : "98c8d50dd1aac48dba1079cd777df6e7",
@@ -10747,6 +10944,7 @@
           "english" : "Good luck.",
           "id" : "esp1_aeb2fc4f3b8f8c5330e406d1c03a3d7f",
           "japanese" : "頑張れ。",
+          "romaji" : "ganbare。",
           "tokens" : [
             {
               "entry" : "addef334d68a2924d49ccc035c97de60",
@@ -10761,6 +10959,7 @@
           "english" : "Good luck.",
           "id" : "esp1_3af002f94d952b71c6e238d89e13303b",
           "japanese" : "元気でね。",
+          "romaji" : "genkide ne。",
           "tokens" : [
             {
               "entry" : "d3450f6ef9378b5fc4dc7a9a673ecd72",
@@ -10779,6 +10978,7 @@
           "english" : "Good luck.",
           "id" : "esp1_501a433063c6bbaee5be6ab3ec6bb825",
           "japanese" : "頑張って。",
+          "romaji" : "ganbatte。",
           "tokens" : [
             {
               "entry" : "f86bf286b218c29c8cca0692df7aafb6",
@@ -10793,6 +10993,7 @@
           "english" : "Good night!",
           "id" : "esp1_525b76cbb687c3dc5e060e4917a90491",
           "japanese" : "おやすみ。",
+          "romaji" : "oyasumi。",
           "tokens" : [
             {
               "entry" : "3836990b63bced854052f659bad02f97",
@@ -10919,6 +11120,7 @@
           "english" : "It is strange.",
           "id" : "esp1_40811f1c86b0293019940b243af7ddf2",
           "japanese" : "変ね。",
+          "romaji" : "hen ne。",
           "tokens" : [
             {
               "entry" : "19f0a4af18c0e7b1bbb2121a30897709",
@@ -10937,6 +11139,7 @@
           "english" : "It is strange.",
           "id" : "esp1_994042d36c182637de37ffe3cc1b7d65",
           "japanese" : "不思議ね。",
+          "romaji" : "fushigi ne。",
           "tokens" : [
             {
               "entry" : "7821cfc8ebf9281a710dbb9edf8f2f7e",
@@ -10955,6 +11158,7 @@
           "english" : "It is Saturday.",
           "id" : "esp1_478393d83327e10748bd6eb378eb59e6",
           "japanese" : "土曜日だよ。",
+          "romaji" : "doyoubi da yo。",
           "tokens" : [
             {
               "entry" : "88c9e2b5a077263293480c93c0b0710e",
@@ -10980,6 +11184,7 @@
           "english" : "It is he.",
           "id" : "esp1_85ff52ce48363d60fe0032a86dd0cde7",
           "japanese" : "それは彼だ。",
+          "romaji" : "sore ha kare da。",
           "tokens" : [
             {
               "entry" : "1dd06ede325b321de11e918788c2896c",
@@ -11009,6 +11214,7 @@
           "english" : "It is necessary.",
           "id" : "esp1_64aad446b12fb794d94578e40ce1af25",
           "japanese" : "それは必要だ。",
+          "romaji" : "sore ha hitsuyou da。",
           "tokens" : [
             {
               "entry" : "1dd06ede325b321de11e918788c2896c",
@@ -11150,6 +11356,7 @@
           "english" : "Don't die.",
           "id" : "esp1_1397ed9053fbe06e5376cd569afba304",
           "japanese" : "死ぬな！",
+          "romaji" : "shinu na！",
           "tokens" : [
             {
               "entry" : "7c68aaffa26d428cd17281c58600141b",
@@ -11168,6 +11375,7 @@
           "english" : "Don't laugh.",
           "id" : "esp1_3f982d6f3cbd6f633a8da8e6b1a6830b",
           "japanese" : "笑うな。",
+          "romaji" : "warau na。",
           "tokens" : [
             {
               "entry" : "3d820648625a4027ac8e3ea5f3430a40",
@@ -11186,6 +11394,7 @@
           "english" : "Don't move.",
           "id" : "esp1_7b5f369dedceafce77b538c1bd998c9f",
           "japanese" : "動くな！",
+          "romaji" : "ugoku na！",
           "tokens" : [
             {
               "entry" : "6bd8ea1781c7df540aa8af163f70fe72",
@@ -11204,6 +11413,7 @@
           "english" : "Don't cry.",
           "id" : "esp1_c5de49a0ada4e82cb0fe9222be194de1",
           "japanese" : "泣くな。",
+          "romaji" : "naku na。",
           "tokens" : [
             {
               "entry" : "02e929fdbab022412942f7c1e3db49a1",
@@ -11222,6 +11432,7 @@
           "english" : "Don't wait.",
           "id" : "esp1_e9830167528491903aa2cdd5d8fb80c9",
           "japanese" : "待つな。",
+          "romaji" : "matsu na。",
           "tokens" : [
             {
               "entry" : "4695f3aa1165c3989791f9ff9515bd86",
@@ -11352,6 +11563,7 @@
           "english" : "I'm tired.",
           "id" : "esp1_2a54a5b25e568d920cc38c3b5602c106",
           "japanese" : "眠い。",
+          "romaji" : "nemui。",
           "tokens" : [
             {
               "entry" : "9c5805cdd6b99d41516ad3b9fb145dcd",
@@ -11366,6 +11578,7 @@
           "english" : "I'm scared.",
           "id" : "esp1_328d3ef29e54e6b4e37df2d8e99851c0",
           "japanese" : "怖い。",
+          "romaji" : "kowai。",
           "tokens" : [
             {
               "entry" : "81feea913be8cfc862acee3a1c60d3b9",
@@ -11380,6 +11593,7 @@
           "english" : "I'm sleepy!",
           "id" : "esp1_3e064d2fb3c659d22b3424d6e7dd9726",
           "japanese" : "眠い！",
+          "romaji" : "nemui！",
           "tokens" : [
             {
               "entry" : "9c5805cdd6b99d41516ad3b9fb145dcd",
@@ -11394,6 +11608,7 @@
           "english" : "I'm tired.",
           "id" : "esp1_52e55c53bf1973b83634305f095194b7",
           "japanese" : "疲れた！",
+          "romaji" : "tsukareta！",
           "tokens" : [
             {
               "entry" : "5bb6d49d29929dd7c8a5a5cd44ebac32",
@@ -11408,6 +11623,7 @@
           "english" : "I'm alone.",
           "id" : "esp1_6ce0955fdd361a76f22aa563856bc62c",
           "japanese" : "一人だ。",
+          "romaji" : "ichi nin da。",
           "tokens" : [
             {
               "entry" : "dc589b305a8ec7669e47014820550c45",
@@ -11545,6 +11761,7 @@
           "english" : "Two o'clock would be OK.",
           "id" : "esp1_39b1480407a1502f9bb4624e6db5fba2",
           "japanese" : "２時でいい。",
+          "romaji" : "ni ji de ii。",
           "tokens" : [
             {
               "surface" : "２"
@@ -11580,6 +11797,7 @@
           "english" : "Six o'clock will suit me very well.",
           "id" : "esp1_73f85acab96c4bbe2d957356ae11214f",
           "japanese" : "６時ならとても都合がいい。",
+          "romaji" : "roku ji nara totemo tsugou ga ii。",
           "tokens" : [
             {
               "surface" : "６"
@@ -11627,6 +11845,7 @@
           "english" : "At 10 o'clock yesterday, there were hundreds of people outside.",
           "id" : "esp1_ecd2d2a265d95ec781c99a8bd30fb8ab",
           "japanese" : "昨日の１０時、外には何百人もの人がいた。",
+          "romaji" : "kinou no ichi zero ji、 soto ni ha nan hyaku nin mo no hito ga ita。",
           "tokens" : [
             {
               "entry" : "92193288617652476df21b92364504bd",
@@ -11716,6 +11935,7 @@
           "english" : "Eleven o'clock is good for me.",
           "id" : "esp1_a3b7b363ce3d30959f17ff89290420ec",
           "japanese" : "１１時でしたら行けます。",
+          "romaji" : "ichi ichi ji deshi tara ikemasu。",
           "tokens" : [
             {
               "surface" : "１"
@@ -11752,6 +11972,7 @@
           "english" : "Eleven o'clock is my regular time for going to bed.",
           "id" : "esp1_ecc6614e1f86339b3f55d90707185c88",
           "japanese" : "私はいつも１１時に就寝します。",
+          "romaji" : "watashi ha itsumo ichi ichi ji ni shuushin shimasu。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -11854,6 +12075,7 @@
           "english" : "My e-mail address has been changed.",
           "id" : "esp1_7f378d0a274c5c33d4924841bfc05632",
           "japanese" : "俺のメアド、変わったんだ。",
+          "romaji" : "ore no meado、 kawatta n da。",
           "tokens" : [
             {
               "entry" : "e81d0e09e9f806179411eb76ae898466",
@@ -11894,6 +12116,7 @@
           "english" : "My e-mail address has been changed.",
           "id" : "esp1_23c53e18ee6158fd6f5cc9a957231a2a",
           "japanese" : "私のアドレス、変わったのよ。",
+          "romaji" : "watashi no adoresu、 kawatta no yo。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -11931,6 +12154,7 @@
           "english" : "My e-mail address has been changed.",
           "id" : "esp1_6fbfc8ad46d46fc63c9e401fb153352e",
           "japanese" : "私のE-mailアドレスが変わりました。",
+          "romaji" : "watashi no E - mail adoresu ga kawarimashita。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -11973,6 +12197,7 @@
           "english" : "My e-mail address has been changed as follows.",
           "id" : "esp1_61f0bff7e2f8c257e71cf07e64249aef",
           "japanese" : "私のｅ—ｍａｉｌアドレスは下記に変わりました。",
+          "romaji" : "watashi no ī — ｍａｉｌ adoresu ha kaki ni kawarimashita。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -12020,6 +12245,7 @@
           "english" : "My e-mail address will be as follows effective April 1.",
           "id" : "esp1_aca50a2125f60b96b8c4959cee8e66f3",
           "japanese" : "私のｅ—ｍａｉｌアドレスは４月１日より下記になります。",
+          "romaji" : "watashi no ī — ｍａｉｌ adoresu ha shigatsu ichi nichi yori kaki ni narimasu。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -12196,6 +12422,7 @@
           "english" : "Mr Smith is drinking coffee.",
           "id" : "esp1_6e0223864479abdc1931a76e9c1283c9",
           "japanese" : "スミスさんはコーヒーを飲んでいます。",
+          "romaji" : "sumisu san ha kōhī wo nondeimasu。",
           "tokens" : [
             {
               "surface" : "スミス"
@@ -12237,6 +12464,7 @@
           "english" : "Mr Smith teaches me English.",
           "id" : "esp1_32e14f2138f1159eb57375367455212d",
           "japanese" : "スミス先生は私に英語を教えてくれます。",
+          "romaji" : "sumisu sensei ha watashi ni eigo wo oshietekuremasu。",
           "tokens" : [
             {
               "surface" : "スミス"
@@ -12278,6 +12506,7 @@
           "english" : "Mr Smith studied Chinese history.",
           "id" : "esp1_7004bc628065caed278867da4611fe1c",
           "japanese" : "スミスさんは、中国史を勉強していました。",
+          "romaji" : "sumisu san ha、 chuugoku shi wo benkyou shiteimashita。",
           "tokens" : [
             {
               "surface" : "スミス"
@@ -12336,6 +12565,7 @@
           "english" : "Mr Smith is now on duty.",
           "id" : "esp1_1a51aa3ca94136fa39cd54da6d822406",
           "japanese" : "スミスさんは今勤務中です。",
+          "romaji" : "sumisu san ha kon kinmu chuu desu。",
           "tokens" : [
             {
               "surface" : "スミス"
@@ -12381,6 +12611,7 @@
           "english" : "Mr Smith made him a doctor.",
           "id" : "esp1_8fcaecda6098957c432016306973cf70",
           "japanese" : "スミスさんは彼を医者にした。",
+          "romaji" : "sumisu san ha kare wo isha ni shita。",
           "tokens" : [
             {
               "surface" : "スミス"
@@ -12548,6 +12779,7 @@
           "english" : "Tom listens.",
           "id" : "esp1_75ddae0c64a5d93a19d67196878cb40c",
           "japanese" : "トムは聞く。",
+          "romaji" : "tomu ha kiku。",
           "tokens" : [
             {
               "entry" : "db52f445ee12ba0b3079cd20ed7925a3",
@@ -12570,6 +12802,7 @@
           "english" : "Tom looked.",
           "id" : "esp1_c6b35b7737fdad0362ea6b7c6ed7be88",
           "japanese" : "トムは見た。",
+          "romaji" : "tomu ha mita。",
           "tokens" : [
             {
               "entry" : "db52f445ee12ba0b3079cd20ed7925a3",
@@ -12592,6 +12825,7 @@
           "english" : "Tom won.",
           "id" : "esp1_c78ca71b01172af5e7e6ac4d8c59cca0",
           "japanese" : "トムの勝ち。",
+          "romaji" : "tomu no kachi。",
           "tokens" : [
             {
               "entry" : "db52f445ee12ba0b3079cd20ed7925a3",
@@ -12614,6 +12848,7 @@
           "english" : "Tom smiles.",
           "id" : "esp1_ede3eeca3824e5a552e03a5238ce1711",
           "japanese" : "トムが笑う。",
+          "romaji" : "tomu ga warau。",
           "tokens" : [
             {
               "entry" : "db52f445ee12ba0b3079cd20ed7925a3",
@@ -12639,6 +12874,7 @@
           "english" : "Tom came.",
           "id" : "esp1_eed4d7810e6302df5933bcd0f70eb524",
           "japanese" : "トムが来た。",
+          "romaji" : "tomu ga kita。",
           "tokens" : [
             {
               "entry" : "db52f445ee12ba0b3079cd20ed7925a3",
@@ -12779,6 +13015,7 @@
           "english" : "Kyoto is worth visiting.",
           "id" : "esp1_210f72c240db599a07277ddb659abdfb",
           "japanese" : "京都は訪れる価値がある。",
+          "romaji" : "kyouto ha otozureru kachi ga aru。",
           "tokens" : [
             {
               "entry" : "feeade436a71761cb76b16e147f19f73",
@@ -12816,6 +13053,7 @@
           "english" : "Kyoto is worth visiting.",
           "id" : "esp1_930658b156da788bcb14080feccf91d8",
           "japanese" : "京都は見物する価値がある。",
+          "romaji" : "kyouto ha kenbutsu suru kachi ga aru。",
           "tokens" : [
             {
               "entry" : "feeade436a71761cb76b16e147f19f73",
@@ -12862,6 +13100,7 @@
           "english" : "Kyoto has many universities.",
           "id" : "esp1_a5bcbc7702cf38be557a6ce3420c88a6",
           "japanese" : "京都には多くの大学がある。",
+          "romaji" : "kyouto ni ha ooku no daigaku ga aru。",
           "tokens" : [
             {
               "entry" : "feeade436a71761cb76b16e147f19f73",
@@ -12907,6 +13146,7 @@
           "english" : "Kyoto is worth visiting.",
           "id" : "esp1_292e6e1d0a0b20de454a4f746e142442",
           "japanese" : "京都は行ってみる価値があるよ。",
+          "romaji" : "kyouto ha okonattemiru kachi ga aru yo。",
           "tokens" : [
             {
               "entry" : "feeade436a71761cb76b16e147f19f73",
@@ -12948,6 +13188,7 @@
           "english" : "Kyoto is worth visiting once.",
           "id" : "esp1_5bd6b8bff60929a5e933f1f14729a1fa",
           "japanese" : "京都は、１度は行ってみる価値がある。",
+          "romaji" : "kyouto ha、 ichi do ha okonattemiru kachi ga aru。",
           "tokens" : [
             {
               "entry" : "feeade436a71761cb76b16e147f19f73",
@@ -13058,6 +13299,7 @@
           "english" : "I own 1,000 shares of NTT stock.",
           "id" : "esp1_8d293c6257b5ba4db9109b4d69aa499a",
           "japanese" : "私はＮＴＴの株を1,000株持っている。",
+          "romaji" : "watashi ha enutītī no kabu wo 1, 000 kabu motteiru。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -13111,6 +13353,7 @@
           "english" : "I paid 1,000 yen on account.",
           "id" : "esp1_bba0892ad3e611b7966f998b12c2dac0",
           "japanese" : "私は内金として千円支払った。",
+          "romaji" : "watashi ha uchikin toshite sen en shiharatta。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -13149,6 +13392,7 @@
           "english" : "He paid 1,000 yen for this book.",
           "id" : "esp1_6e085cae316a5342ac20c142ec240be5",
           "japanese" : "彼はこの本に千円払った。",
+          "romaji" : "kare ha kono hon ni sen en haratta。",
           "tokens" : [
             {
               "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
@@ -13191,6 +13435,7 @@
           "english" : "I owe him 1,000 dollars.",
           "id" : "esp1_cc9620ade9e74e11721b12aacb729a8c",
           "japanese" : "彼に１０００ドル借りている。",
+          "romaji" : "kare ni ichi zero zero zero doru kariteiru。",
           "tokens" : [
             {
               "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
@@ -13229,6 +13474,7 @@
           "english" : "I borrowed 1,000 yen from my cousin.",
           "id" : "esp1_643c944b43b663d4e07fdfa94d3e8f73",
           "japanese" : "私は従弟から１０００円借りた。",
+          "romaji" : "watashi ha juutei kara ichi zero zero zero en karita。",
           "tokens" : [
             {
               "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
@@ -13287,6 +13533,7 @@
           "english" : "The number 2015 is represented as 11111011111 in binary.",
           "id" : "esp1_de596149bbdf2537b866669af30eb23f",
           "japanese" : "2015という数は二進法で表すと11111011111となる。",
+          "romaji" : "2015 toiu kazu ha nishinhou de arawasu to 11111011111 to naru。",
           "tokens" : [
             {
               "surface" : "2015"
@@ -13471,6 +13718,7 @@
           "english" : "Run!",
           "id" : "esp1_35cf2e06a80707d851af9b832bf42d19",
           "japanese" : "走れ！",
+          "romaji" : "hashire！",
           "tokens" : [
             {
               "entry" : "a89e3599bd864035f2098d6688c307e9",
@@ -13485,6 +13733,7 @@
           "english" : "Run.",
           "id" : "esp1_53004e1940970cb1ddb23fef5cfaddbe",
           "japanese" : "走れ。",
+          "romaji" : "hashire。",
           "tokens" : [
             {
               "entry" : "a89e3599bd864035f2098d6688c307e9",
@@ -13499,6 +13748,7 @@
           "english" : "Run.",
           "id" : "esp1_5eb384e43bb8bc1e07a140ad4ec8c384",
           "japanese" : "走って！",
+          "romaji" : "hashitte！",
           "tokens" : [
             {
               "entry" : "a89e3599bd864035f2098d6688c307e9",
@@ -13513,6 +13763,7 @@
           "english" : "Run!",
           "id" : "esp1_6608b0c545c58c7b9971de58c61ab173",
           "japanese" : "逃げろ！",
+          "romaji" : "nigero！",
           "tokens" : [
             {
               "entry" : "fba8e4619f1b6bebe71eb597839cbb64",
@@ -13527,6 +13778,7 @@
           "english" : "Running is good exercise.",
           "id" : "esp1_a5cabedba04b3b467cc516496b23ccf1",
           "japanese" : "走る事はよい運動だ。",
+          "romaji" : "hashiru koto ha yoi undou da。",
           "tokens" : [
             {
               "entry" : "a89e3599bd864035f2098d6688c307e9",
@@ -13676,6 +13928,7 @@
           "english" : "Translate!",
           "id" : "esp1_fc6b0fdd7962f4adbb6846f2cddb3530",
           "japanese" : "翻訳!",
+          "romaji" : "hon'yaku!",
           "tokens" : [
             {
               "entry" : "d36ffa419d2b23137df124fda035950e",
@@ -13690,6 +13943,7 @@
           "english" : "Thanks!",
           "id" : "esp1_40ba0fc96405a024e2832ed22b13994e",
           "japanese" : "どうも。",
+          "romaji" : "doumo。",
           "tokens" : [
             {
               "entry" : "241d53310b1bebfc437f26a0f88a0cc8",
@@ -13704,6 +13958,7 @@
           "english" : "Tsk!",
           "id" : "esp1_49692deb1c5073eb2bd8b20092fd1afe",
           "japanese" : "ちぇっ！",
+          "romaji" : "chi ~e~tsu！",
           "tokens" : [
             {
               "candidates" : [
@@ -13733,6 +13988,7 @@
           "english" : "Thanks!",
           "id" : "esp1_d1601e27fd6235e8fd2273022bd3a7e4",
           "japanese" : "どうも！",
+          "romaji" : "doumo！",
           "tokens" : [
             {
               "entry" : "241d53310b1bebfc437f26a0f88a0cc8",
@@ -13747,6 +14003,7 @@
           "english" : "Think!",
           "id" : "esp1_e4951a3c826d1d4f03be2ec82edefd91",
           "japanese" : "考えろ！",
+          "romaji" : "kangaero！",
           "tokens" : [
             {
               "entry" : "3defc048e38c8b47e1c7cd7bfd44aa78",
@@ -13872,6 +14129,7 @@
           "english" : "The wind blows.",
           "id" : "esp1_a525e1605167d0427816f3e4364200b6",
           "japanese" : "風が吹く。",
+          "romaji" : "kaze ga fuku。",
           "tokens" : [
             {
               "entry" : "0c93a5d757ebf72736b7a71d6eba0e07",
@@ -13897,6 +14155,7 @@
           "english" : "The dog sleeps.",
           "id" : "esp1_dc06476078f6f87b429631c5792e65b6",
           "japanese" : "犬が寝る。",
+          "romaji" : "inu ga neru。",
           "tokens" : [
             {
               "entry" : "681bff8274391329f3ce9ca80a4e04b0",
@@ -13922,6 +14181,7 @@
           "english" : "The leaves fell.",
           "id" : "esp1_01217c1fc780a87ffad2718c0c29ae7b",
           "japanese" : "葉が落ちた。",
+          "romaji" : "ha ga ochita。",
           "tokens" : [
             {
               "entry" : "45efec9bb825e890d54344e7825b15e9",
@@ -13947,6 +14207,7 @@
           "english" : "The mirror broke.",
           "id" : "esp1_29dd00eb60546f7fc13cc03bd693496a",
           "japanese" : "鏡が壊れた。",
+          "romaji" : "kagami ga kowareta。",
           "tokens" : [
             {
               "candidates" : [
@@ -13975,6 +14236,7 @@
           "english" : "The dog barked.",
           "id" : "esp1_445c737b1b89d279891034d00f0fba28",
           "japanese" : "犬が吠えた。",
+          "romaji" : "inu ga hoeta。",
           "tokens" : [
             {
               "entry" : "681bff8274391329f3ce9ca80a4e04b0",
@@ -14112,6 +14374,7 @@
           "english" : "Translate!",
           "id" : "esp1_fc6b0fdd7962f4adbb6846f2cddb3530",
           "japanese" : "翻訳!",
+          "romaji" : "hon'yaku!",
           "tokens" : [
             {
               "entry" : "d36ffa419d2b23137df124fda035950e",
@@ -14126,6 +14389,7 @@
           "english" : "Thanks!",
           "id" : "esp1_40ba0fc96405a024e2832ed22b13994e",
           "japanese" : "どうも。",
+          "romaji" : "doumo。",
           "tokens" : [
             {
               "entry" : "241d53310b1bebfc437f26a0f88a0cc8",
@@ -14140,6 +14404,7 @@
           "english" : "Tsk!",
           "id" : "esp1_49692deb1c5073eb2bd8b20092fd1afe",
           "japanese" : "ちぇっ！",
+          "romaji" : "chi ~e~tsu！",
           "tokens" : [
             {
               "candidates" : [
@@ -14169,6 +14434,7 @@
           "english" : "Thanks!",
           "id" : "esp1_d1601e27fd6235e8fd2273022bd3a7e4",
           "japanese" : "どうも！",
+          "romaji" : "doumo！",
           "tokens" : [
             {
               "entry" : "241d53310b1bebfc437f26a0f88a0cc8",
@@ -14183,6 +14449,7 @@
           "english" : "Think!",
           "id" : "esp1_e4951a3c826d1d4f03be2ec82edefd91",
           "japanese" : "考えろ！",
+          "romaji" : "kangaero！",
           "tokens" : [
             {
               "entry" : "3defc048e38c8b47e1c7cd7bfd44aa78",
@@ -14308,6 +14575,7 @@
           "english" : "Thank you!",
           "id" : "esp1_4482c853c9a0d7b375ebad8886274bcc",
           "japanese" : "おおきに！",
+          "romaji" : "ookini！",
           "tokens" : [
             {
               "entry" : "3b2fac56c503cfdb71a2f196b08c7693",
@@ -14322,6 +14590,7 @@
           "english" : "Thank you!",
           "id" : "esp1_afbdea89b37cf5a3221a06704374d949",
           "japanese" : "あざっす！",
+          "romaji" : "aza ssu！",
           "tokens" : [
             {
               "candidates" : [
@@ -14344,6 +14613,7 @@
           "english" : "Thank you!",
           "id" : "esp1_0501606eba04fb9cf32a1cbaaf2a840d",
           "japanese" : "ありがとう。",
+          "romaji" : "arigatou。",
           "tokens" : [
             {
               "entry" : "aead518e84274687eaf56db5618ffd7f",
@@ -14358,6 +14628,7 @@
           "english" : "Thank you!",
           "id" : "esp1_0a523622ea470bcd4fe3301e5cbf71d7",
           "japanese" : "ありがとう！",
+          "romaji" : "arigatou！",
           "tokens" : [
             {
               "entry" : "aead518e84274687eaf56db5618ffd7f",
@@ -14372,6 +14643,7 @@
           "english" : "Thank you!",
           "id" : "esp1_be0565278da5af252df3b65ec08b4c14",
           "japanese" : "お疲れさまでした。",
+          "romaji" : "otsukaresama deshi ta。",
           "tokens" : [
             {
               "entry" : "aa1c5f33bcf41bc13396af00c056fc87",
@@ -14505,6 +14777,7 @@
           "english" : "Tom listens.",
           "id" : "esp1_75ddae0c64a5d93a19d67196878cb40c",
           "japanese" : "トムは聞く。",
+          "romaji" : "tomu ha kiku。",
           "tokens" : [
             {
               "entry" : "db52f445ee12ba0b3079cd20ed7925a3",
@@ -14527,6 +14800,7 @@
           "english" : "Tom looked.",
           "id" : "esp1_c6b35b7737fdad0362ea6b7c6ed7be88",
           "japanese" : "トムは見た。",
+          "romaji" : "tomu ha mita。",
           "tokens" : [
             {
               "entry" : "db52f445ee12ba0b3079cd20ed7925a3",
@@ -14549,6 +14823,7 @@
           "english" : "Tom won.",
           "id" : "esp1_c78ca71b01172af5e7e6ac4d8c59cca0",
           "japanese" : "トムの勝ち。",
+          "romaji" : "tomu no kachi。",
           "tokens" : [
             {
               "entry" : "db52f445ee12ba0b3079cd20ed7925a3",
@@ -14571,6 +14846,7 @@
           "english" : "Tom smiles.",
           "id" : "esp1_ede3eeca3824e5a552e03a5238ce1711",
           "japanese" : "トムが笑う。",
+          "romaji" : "tomu ga warau。",
           "tokens" : [
             {
               "entry" : "db52f445ee12ba0b3079cd20ed7925a3",
@@ -14596,6 +14872,7 @@
           "english" : "Tom came.",
           "id" : "esp1_eed4d7810e6302df5933bcd0f70eb524",
           "japanese" : "トムが来た。",
+          "romaji" : "tomu ga kita。",
           "tokens" : [
             {
               "entry" : "db52f445ee12ba0b3079cd20ed7925a3",

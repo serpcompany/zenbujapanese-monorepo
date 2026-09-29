@@ -33,6 +33,7 @@ build_inputs=(
   apps/web/src/components/dictionary/search-results.tsx
   apps/web/src/components/dictionary/frequency.tsx
   apps/web/src/components/dictionary/ruby-text.tsx
+  apps/web/src/components/dictionary/reading-aid.tsx
   apps/web/src/components/dictionary/rendered.ts
   apps/web/src/components/ui/badge.tsx
   apps/web/src/components/ui/card.tsx
@@ -40,6 +41,8 @@ build_inputs=(
   apps/web/src/components/ui/item.tsx
   apps/web/src/components/ui/separator.tsx
   apps/web/src/lib/dictionary/detail/kanji.ts
+  apps/web/src/lib/dictionary/detail/romaji.ts
+  apps/web/src/lib/dictionary/detail/reading-aids.ts
   apps/web/src/lib/dictionary/detail/ruby.ts
   apps/web/src/lib/dictionary/detail/strokes.ts
   apps/web/src/lib/dictionary/detail/text.ts

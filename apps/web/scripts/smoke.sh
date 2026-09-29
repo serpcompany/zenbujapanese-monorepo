@@ -352,12 +352,44 @@ except Exception:
     print("unreadable")
 ')"
   miru_examples_seen="$shown in the page; next positions ${next:-none} from ${examples_path:-no examples route}"
-  [ "$shown" = 25 ] && grep -qF "<p class=\"text-muted-foreground\">$miru_first_english</p>" <<<"$html" &&
+  [ "$shown" = 25 ] && grep -qF "translations-off:hidden\">$miru_first_english</p>" <<<"$html" &&
     [ "$next" = "$(echo {25..49})" ]
 }
 show_miru_examples() { echo "$miru_examples_seen (want 25, the suite's first sentence, then 25 to 49)"; }
 eventually '見る lists its example sentences as the app does, 25 at a time' \
   "見る's Example Sentences page differs from the app" miru_examples_match_the_app show_miru_examples
+
+# Reading Aids: every page carries the script that applies the stored settings before paint and
+# the header's settings menu, and 見る's page renders what each aid shows, as the app recorded it:
+# the headword's romaji and its reading without furigana, the first example's romaji, a word's
+# meaning, and the translation, each marked with its aid (hidden or shown by the setting).
+aids_expected="$(python3 -c '
+import json, sys
+case = next(c for c in json.load(open(sys.argv[1]))["cases"] if c["entSeq"][0] == "1259290")
+example = case["examples"]["shown"][0]
+print(case["readingAids"]["romaji"])
+print(case["readingAids"]["readingWithoutFurigana"])
+print(example["romaji"])
+print(next(t["meaning"] for t in example["tokens"] if t.get("meaning")))
+' "$word_suite")"
+aids_seen=""
+aids_like_the_app() {
+  local html missing=() line kind
+  html="$(body "$word")"
+  grep -q 'zenbu.reading-aids.v1' <<<"$html" || missing+=(script)
+  grep -q 'data-reading-aids-menu' <<<"$html" || missing+=(menu)
+  for kind in romaji readingWithoutFurigana romaji wordMeaning; do
+    IFS= read -r line
+    grep -qF "data-reading-aid=\"$kind\"" <<<"$html" &&
+      grep -qF ">$line</span>" <<<"$html" || missing+=("$kind $line")
+  done <<<"$aids_expected"
+  grep -q 'data-reading-aid="translation"' <<<"$html" || missing+=(translation)
+  aids_seen="missing ${missing[*]:-nothing}"
+  [ "${#missing[@]}" -eq 0 ]
+}
+show_aids_seen() { echo "$aids_seen"; }
+eventually "見る's page renders each Reading Aid as the app shows it" \
+  "見る's page is missing a Reading Aid" aids_like_the_app show_aids_seen
 
 # A stale or missing slug redirects to the word's one URL; an unknown number doesn't exist.
 expect_redirect /dictionary/1259290/ "$word"

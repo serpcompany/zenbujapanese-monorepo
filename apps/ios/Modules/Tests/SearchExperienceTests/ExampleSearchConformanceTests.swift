@@ -105,6 +105,8 @@ private struct ExampleSearchObserver {
           id: example.id.rawValue,
           japanese: example.japanese,
           english: example.english,
+          // With Romaji on (LinkedJapaneseText); nil where the screen says it's unavailable.
+          romaji: AppleJapaneseRomanization.romanizeCompleteSentence(tokens),
           tokens: tokens.map { token in
             ExampleSearchCase.Token(
               surface: token.surface,
@@ -162,6 +164,7 @@ private struct ExampleSearchCase: Codable {
     let id: String
     let japanese: String
     let english: String
+    let romaji: String?
     let tokens: [Token]
   }
 

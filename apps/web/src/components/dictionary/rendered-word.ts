@@ -9,7 +9,7 @@ import type {
   SuiteFurigana,
   SuitePitchGraph
 } from '@/lib/dictionary/detail/suite'
-import { htmlText, withoutScreenReaderText } from './rendered'
+import { asShown, htmlText, withoutScreenReaderText } from './rendered'
 
 /** Text with tags removed, furigana kept, trimmed (rendered.ts `htmlText`). */
 function text(html: string): string {
@@ -25,8 +25,10 @@ function attribute(tag: string, name: string): string | null {
  * `<ruby>` whose kanji are toggles, each with its own part of the reading.
  */
 export function readFurigana(html: string, size = 'text-5xl'): SuiteFurigana[] {
-  const headword = html.match(
-    new RegExp(`<span lang="ja" class="[^"]*${size}[^"]*">([\\s\\S]*?)</span><(?:button|div)`)
+  const headword = asShown(html).match(
+    new RegExp(
+      `<span lang="ja" class="[^"]*${size}[^"]*">([\\s\\S]*?)</span>(?:</div>)?<(?:button|div)`
+    )
   )
   if (!headword) throw new Error('No headword in the rendered header')
   // A highlighted ending is its own span; its text reads as part of its segment.
@@ -142,7 +144,8 @@ export interface RenderedConjugationTable {
 }
 
 /** The conjugation table as drawn: its header, the register control, and each row. */
-export function readConjugationTable(html: string): RenderedConjugationTable {
+export function readConjugationTable(shownHtml: string): RenderedConjugationTable {
+  const html = asShown(shownHtml)
   const field = (name: string) =>
     text(html.match(new RegExp(`${name}="true">([\\s\\S]*?)</p>`))?.[1] ?? '')
   const modes = [...html.matchAll(/data-conjugation-mode="([^"]+)"/g)].map(([, mode]) => mode)
@@ -167,14 +170,17 @@ export function readConjugationTable(html: string): RenderedConjugationTable {
 }
 
 /** A conjugated form's screen as drawn. */
-export function readConjugatedForm(html: string): {
+export function readConjugatedForm(shownHtml: string): {
   explanation: string
   sharedSpelling: string | null
   furigana: SuiteFurigana[]
   ending: string
 } {
+  const html = asShown(shownHtml)
   const shared = html.match(/data-shared-spelling="true">(?:<svg[\s\S]*?<\/svg>)?([\s\S]*?)<\/p>/)
-  const headline = html.match(/<span lang="ja" class="[^"]*text-4xl[^"]*">[\s\S]*?<\/span><button/)
+  const headline = html.match(
+    /<span lang="ja" class="[^"]*text-4xl[^"]*">[\s\S]*?<\/span>(?:<\/div>)?<button/
+  )
   return {
     explanation: text(html.match(/data-conjugation-explanation="true">([\s\S]*?)<\/p>/)?.[1] ?? ''),
     sharedSpelling: shared ? text(shared[1]) : null,

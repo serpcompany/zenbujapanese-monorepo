@@ -4,6 +4,27 @@
 // each word row's headword, meaning, and chips; and each example's words, links, marked words,
 // furigana, translation, and credit, as a reader sees them. Test-only.
 
+import { type ReadingAidSettings, readingAidDefaults } from '@/lib/dictionary/detail/reading-aids'
+
+/**
+ * The HTML as a reader sees it under Reading Aids `settings`: each aid's text that its setting
+ * hides is removed (reading-aid.tsx marks each with `data-reading-aid` and the class that hides it;
+ * reading-aids.test.tsx checks the two agree). Aid text is plain text, except furigana, whose
+ * `<rt>` can hold a span per kanji.
+ */
+export function asShown(html: string, settings: ReadingAidSettings = readingAidDefaults): string {
+  const remove = (kind: string, tag = 'span') =>
+    new RegExp(`<${tag} data-reading-aid="${kind}"[^>]*>[\\s\\S]*?</${tag}>`, 'g')
+  let shown = html
+  if (!settings.romaji) shown = shown.replace(remove('romaji'), '')
+  if (!settings.wordMeanings) shown = shown.replace(remove('wordMeaning'), '')
+  if (!settings.translations) shown = shown.replace(remove('translation', 'p'), '')
+  shown = settings.furigana
+    ? shown.replace(remove('readingWithoutFurigana'), '')
+    : shown.replace(remove('furigana', 'rt'), '')
+  return shown
+}
+
 /** Text only screen readers get, such as a chip's spoken tier. */
 const srOnly = /<span class="sr-only">[\s\S]*?<\/span>/g
 
@@ -81,7 +102,8 @@ export interface RenderedPage {
   noResults: string | null
 }
 
-export function readRenderedPage(html: string): RenderedPage {
+export function readRenderedPage(shownHtml: string): RenderedPage {
+  const html = asShown(shownHtml)
   const sections = [...html.matchAll(/data-section="([^"]+)"/g)].map(match => match[1])
   const refinement = html.match(/data-section="readingRefinement"[\s\S]*?<\/p>/)
   const examples = html.match(/data-section="examples"[\s\S]*?<\/p>/)
@@ -154,7 +176,8 @@ export interface RenderedExample {
 }
 
 /** Each example's words, translation, and credit, in document order. */
-export function readRenderedExamples(html: string): RenderedExample[] {
+export function readRenderedExamples(shownHtml: string): RenderedExample[] {
+  const html = asShown(shownHtml)
   return segments(html, /data-example="(\d+)"/g).map(({ value, html: item }) => {
     const japanese = item.match(/<p lang="ja"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? ''
     const words = topLevelElements(japanese).map(element => ({
@@ -165,7 +188,8 @@ export function readRenderedExamples(html: string): RenderedExample[] {
       href: element.startsWith('<a ') ? (element.match(/href="([^"]*)"/)?.[1] ?? null) : null,
       marked: /class="[^"]*border-b-2/.test(element)
     }))
-    const translation = item.match(/<p class="text-muted-foreground">([\s\S]*?)<\/p>/)?.[1] ?? ''
+    const translation =
+      item.match(/<p data-reading-aid="translation"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? ''
     const credit = item.match(/<p class="text-xs text-muted-foreground">([\s\S]*?)<\/p>/)?.[1] ?? ''
     return {
       position: Number(value),

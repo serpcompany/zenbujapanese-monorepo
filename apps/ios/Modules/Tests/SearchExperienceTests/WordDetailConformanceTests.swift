@@ -7,7 +7,11 @@ import Testing
 /// `apps/ios/LanguageData/Conformance/word-detail.json`, so the website's word pages can be held
 /// to the app. Each case is read from the models and clients `WordDetailView` uses, with the
 /// app's defaults: the Kuromoji text analysis, and the frequency dictionaries a new install
-/// enables (JLPT, then TUBELEX).
+/// enables (JLPT, then TUBELEX). It also records what each Reading Aid adds where Word Detail
+/// applies it, through the helpers the views share (`ReadingAidPresentation`,
+/// `AppleJapaneseRomanization`): romaji under the headword, alternative readings, related words,
+/// and each example; the reading under the headword with furigana off; and each linked word's
+/// meaning with Word Meanings on. `readingAidDefaults` records a new install's settings.
 ///
 /// After an intended change to Word Detail or its data, record it again by running this suite
 /// with `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1`, and review the diff. Recording keeps each
@@ -28,8 +32,11 @@ struct WordDetailConformanceTests {
     let artifacts = try DetailConformance.artifacts(Self.artifactNames)
     let observer = try await WordDetailObserver()
 
+    let defaults = await MainActor.run { WordDetailSuite.ReadingAidDefaults.newInstall() }
+
     if DetailConformance.isRecording {
       suite.artifacts = artifacts
+      suite.readingAidDefaults = defaults
       for index in suite.cases.indices {
         suite.cases[index] = try await observer.observe(
           suite.cases[index], exampleLimit: suite.exampleLimit,
@@ -42,6 +49,7 @@ struct WordDetailConformanceTests {
     #expect(
       suite.artifacts == artifacts,
       "The suite was recorded against different artifacts; record it again")
+    #expect(suite.readingAidDefaults == defaults, "A new install's Reading Aids differ")
     for expected in suite.cases {
       let observed = try await observer.observe(
         expected, exampleLimit: suite.exampleLimit, formExampleLimit: suite.formExampleLimit)
@@ -96,6 +104,11 @@ private struct WordDetailObserver {
         base: $0.base, reading: $0.reading,
         kanjiReadings: JapaneseRubyText.kanjiReadings($0))
     }
+    observed.readingAids = WordDetailCase.ReadingAids(
+      romaji: AppleJapaneseRomanization.romanizeTrustedReading(entry.reading),
+      readingWithoutFurigana: ReadingAidPresentation.readingWithoutFurigana(
+        surface: entry.headword, reading: entry.reading, showsFurigana: false)
+    )
     observed.partOfSpeech = entry.displayPartOfSpeech
     let conjugationTable = conjugationClient.table(entry)
     observed.opensConjugations = conjugationTable != nil
@@ -128,14 +141,19 @@ private struct WordDetailObserver {
     }
     observed.frequency = try await frequency.evidence(for: entry.id).map(Self.frequency)
     observed.alternativeForms = entry.alternativeForms.map {
-      WordDetailCase.Form(value: $0.value, kind: $0.kind.rawValue, labels: $0.labels)
+      WordDetailCase.Form(
+        value: $0.value, kind: $0.kind.rawValue, labels: $0.labels,
+        // formLabel shows romaji under a reading only.
+        romaji: $0.kind == .reading
+          ? AppleJapaneseRomanization.romanizeTrustedReading($0.value) : nil)
     }
     observed.kanji = try await kanji(entry.primaryKanji)
     observed.alternativeKanji = try await kanji(entry.alternativeKanji)
     observed.relatedWords = entry.relationships.map {
       WordDetailCase.Related(
         headword: $0.headword, reading: $0.reading, relation: $0.relation,
-        summary: $0.summary, targetID: $0.targetID)
+        summary: $0.summary, targetID: $0.targetID,
+        romaji: AppleJapaneseRomanization.romanizeTrustedReading($0.reading))
     }
     observed.examples = try await examples(entry, limit: exampleLimit)
     return observed
@@ -223,13 +241,20 @@ private struct WordDetailObserver {
           id: sentence.id.rawValue,
           japanese: sentence.japanese,
           english: sentence.english,
+          // With Romaji on; nil where the view says Romaji is unavailable.
+          romaji: AppleJapaneseRomanization.romanizeCompleteSentence(tokens),
           tokens: tokens.map { token in
             WordDetailCase.Token(
               surface: token.surface,
               entry: token.entry?.id.rawValue,
               candidates: token.entry == nil && !token.candidateEntries.isEmpty
                 ? token.candidateEntries.map(\.id.rawValue) : nil,
-              pageWord: token.represents(entry) ? true : nil
+              pageWord: token.represents(entry) ? true : nil,
+              // With Word Meanings on, for a learner who hasn't marked the word known.
+              meaning: token.entry.flatMap {
+                ReadingAidPresentation.wordMeaning(
+                  token: token, entry: $0, showsWordMeanings: true, isKnown: false)
+              }
             )
           }
         ))
@@ -261,7 +286,29 @@ private struct WordDetailSuite: Codable {
   let exampleLimit: Int
   /// How many of each conjugated form's examples, in order, the suite records with their tokens.
   let formExampleLimit: Int
+  /// The Reading Aids a new install shows.
+  var readingAidDefaults: ReadingAidDefaults?
   var cases: [WordDetailCase]
+
+  struct ReadingAidDefaults: Codable, Equatable {
+    let showsFurigana: Bool
+    let showsRomaji: Bool
+    let showsWordMeanings: Bool
+    let showsTranslations: Bool
+    let hidesFuriganaOnKnownWords: Bool
+
+    @MainActor static func newInstall() -> ReadingAidDefaults {
+      let preferences = ReadingAidPreferences(
+        defaults: UserDefaults(suiteName: "WordDetailConformance-\(UUID().uuidString)")!)
+      return ReadingAidDefaults(
+        showsFurigana: preferences.showsFurigana,
+        showsRomaji: preferences.showsRomaji,
+        showsWordMeanings: preferences.showsWordMeanings,
+        showsTranslations: preferences.showsTranslations,
+        hidesFuriganaOnKnownWords: preferences.hidesFuriganaOnKnownWords
+      )
+    }
+  }
 }
 
 /// One entry's Word Detail. Only `id` and `covers` are written by hand.
@@ -279,6 +326,8 @@ private struct WordDetailCase: Codable {
   var furigana: [Furigana]?
   /// The part of speech under the headword; empty when the view shows none.
   var partOfSpeech: String?
+  /// What Reading Aids add to the headword.
+  var readingAids: ReadingAids?
   /// Whether the part of speech opens a conjugation table.
   var opensConjugations: Bool?
   /// The conjugation table it opens, and each form's screen.
@@ -454,6 +503,15 @@ private struct WordDetailCase: Codable {
     let value: String
     let kind: String
     let labels: [String]
+    /// Under a reading, with Romaji on.
+    let romaji: String?
+  }
+
+  struct ReadingAids: Codable {
+    /// Under the headword, with Romaji on; nil when the reading can't be romanized.
+    let romaji: String?
+    /// Under the headword, with Furigana off; nil when the headword is its reading.
+    let readingWithoutFurigana: String?
   }
 
   struct Kanji: Codable {
@@ -468,6 +526,8 @@ private struct WordDetailCase: Codable {
     let relation: String
     let summary: String
     let targetID: String?
+    /// Under the related word, with Romaji on.
+    let romaji: String?
   }
 
   struct Examples: Codable {
@@ -487,6 +547,7 @@ private struct WordDetailCase: Codable {
     let id: String
     let japanese: String
     let english: String
+    let romaji: String?
     let tokens: [Token]
   }
 
@@ -522,5 +583,7 @@ private struct WordDetailCase: Codable {
     let candidates: [String]?
     /// Whether the view highlights the word as the page's own entry.
     let pageWord: Bool?
+    /// The short meaning under the word, with Word Meanings on.
+    let meaning: String?
   }
 }

@@ -101,7 +101,8 @@ describe('wordDetail', () => {
       text: '要る',
       ruby: [{ text: '要', reading: 'い' }, { text: 'る' }],
       link: { entSeq: 1546640 },
-      isPageWord: true
+      isPageWord: true,
+      functionWord: false
     })
     expect(detail.exampleCount?.listed).toBe(detail.examples.length)
   })
@@ -113,7 +114,7 @@ describe('wordDetail', () => {
     expect(detail.ruby).toEqual([{ text: 'いる' }])
     expect(detail.kanji).toEqual([])
     expect(detail.alternatives).toEqual([
-      { value: '居る', kind: 'written', labels: ['Rare'], kanji: '居' }
+      { value: '居る', kind: 'written', labels: ['Rare'], kanji: '居', romaji: null }
     ])
     expect(detail.alternativeKanji).toEqual([{ character: '居', meaning: 'reside, to be' }])
     expect(detail.related).toEqual([
@@ -123,6 +124,7 @@ describe('wordDetail', () => {
         ruby: [{ text: '有', reading: 'あ' }, { text: 'る' }],
         relation: 'See also',
         summary: 'to be, to exist, to live',
+        romaji: 'aru',
         entSeq: 1296400
       }
     ])
@@ -197,6 +199,7 @@ describe('wordSummary', () => {
       headword: '射る',
       reading: 'いる',
       ruby: [{ text: '射', reading: 'い' }, { text: 'る' }],
+      romaji: 'iru',
       summary: 'to shoot (arrow, bolt, dart)',
       frequency: [{ source: 'YouTube', value: '20,940', tier: 'uncommon', spokenTier: 'uncommon' }]
     })

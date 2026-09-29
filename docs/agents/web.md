@@ -242,7 +242,11 @@ JSON. It has no FTS tables.
 Examples are stored in two parts. `example_sentences` holds each Tatoeba pair once, with tokens
 that are the same on every page and attribution for each side: the Japanese sentence and its
 English translation are separate Tatoeba sentences with their own ID, contributor, and license.
-`word_examples` holds what depends on the page's word: which tokens are the word (`highlights`)
+Each token also marks a particle, auxiliary, or symbol (`functionWord`), which shows no meaning
+with Word Meanings on, and keeps Kuromoji's own reading (`kana`) where sentence romaji would
+otherwise read it differently (a number such as ３ read サン). A page reads the first meaning of
+each word its examples link to, for Word Meanings. `word_examples` holds what depends on the
+page's word: which tokens are the word (`highlights`)
 and where each word token links (`links`, `{ token, entSeqs }`). A token that resolves to one
 entry has one `ent_seq`; a token the app can't resolve, such as だ, keeps all its candidates, as
 the word-detail conformance suite records them. A link also carries the furigana the app shows
@@ -316,9 +320,11 @@ at once when the copy wasn't built from the files the suites pin. It also checks
 per-kanji furigana split, the pitch graph's points, each Frequency row's details, and the
 conjugation table, form by form, with every example each form's page lists (pair IDs in order,
 and the first 3's tokens, links, and accents), and that `word_conjugations` holds exactly the
-words the core conjugates. The import then draws every word-detail case through the word
-page's components (`src/components/dictionary/word-page.test.tsx`, and `conjugations.test.tsx`
-for the conjugation table's and each form's page, with the form's first examples) and reads
+words the core conjugates, and what Reading Aids add (romaji, the reading without furigana, and
+each example word's meaning). The import then draws every word-detail case through the word
+page's components (`src/components/dictionary/word-page.test.tsx`, `conjugations.test.tsx` for the
+conjugation table's and each form's page, with the form's first examples, and
+`reading-aids.test.tsx`, under each Reading Aids setting) and reads
 back what they draw, so a component that draws the core's values wrong fails the import too.
 
 It changes the way the search schema does, with its own commands:

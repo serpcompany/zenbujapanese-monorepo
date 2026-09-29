@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Fragment, type ReactNode } from 'react'
 import { FrequencyBadges } from '@/components/dictionary/frequency'
 import { LoadMoreFooter, useLoadMore } from '@/components/dictionary/load-more'
+import { Romaji } from '@/components/dictionary/reading-aid'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { Item, ItemActions, ItemContent, ItemSeparator } from '@/components/ui/item'
 import type { SearchWord } from '@/lib/dictionary/data'
@@ -34,12 +35,16 @@ export function Row({
   )
 }
 
-/** `ResultRow`: headword with furigana, the meaning clamped to two lines, and the chips. */
+/**
+ * `ResultRow`: headword with furigana (and its romaji with Romaji on), the meaning clamped to two
+ * lines, and the chips.
+ */
 function WordRow({ word }: { word: SearchWord }) {
   return (
     <Row path={word.path}>
       <ItemContent className="gap-1.5" data-result-row={word.entSeq}>
         <RubyText segments={word.ruby} className="text-2xl font-medium leading-tight" />
+        <Romaji text={word.romaji} />
         <p className="line-clamp-2 text-sm">{word.summary}</p>
         <FrequencyBadges frequency={word.chips} />
       </ItemContent>

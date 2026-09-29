@@ -105,6 +105,36 @@ struct RomajiReadingAidText: View {
   }
 }
 
+/// What each Reading Aid adds where the app applies it, shared by the views and the word-detail
+/// and kanji-detail conformance suites, so the website's Reading Aids are held to the app's (see
+/// also apps/web/src/lib/dictionary/detail/romaji.ts and reading-aids.ts).
+enum ReadingAidPresentation {
+  /// A headword always needs its reading, so with furigana off it shows the reading under
+  /// itself, unless the headword is written in its reading.
+  static func readingWithoutFurigana(surface: String, reading: String, showsFurigana: Bool)
+    -> String?
+  {
+    !showsFurigana && reading != surface ? reading : nil
+  }
+
+  /// The short meaning a linked word shows under itself with Word Meanings on, skipping
+  /// particles, auxiliaries, and words the learner already knows.
+  static func wordMeaning(
+    token: JapaneseTextToken,
+    entry: DictionaryEntry,
+    showsWordMeanings: Bool,
+    isKnown: Bool
+  ) -> String? {
+    guard showsWordMeanings, !token.isFunctionWord, !isKnown else { return nil }
+    return entry.shortMeaning
+  }
+
+  /// What a sentence shows under itself with Romaji on when one of its words can't be romanized.
+  static let romajiUnavailable = "Romaji unavailable for this text"
+}
+
+/// Romaji. The website ports `.toLatin` on Japanese and `romanizeCompleteSentence` (see also
+/// apps/web/src/lib/dictionary/detail/romaji.ts); change both together.
 enum AppleJapaneseRomanization {
   // The accepted learner-visible candidate deliberately exposes Foundation/ICU's
   // orthographic output without app-owned particle or long-vowel corrections.

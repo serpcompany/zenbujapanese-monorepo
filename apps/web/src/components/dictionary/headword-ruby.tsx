@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { RubySegment } from '@/lib/dictionary/detail/ruby'
 import { graphemes } from '@/lib/dictionary/detail/text'
+import { rtClass } from './reading-aid'
 
 // A headword with furigana and the app's Furigana kanji highlight (JapaneseRubyText.swift): in a
 // kanji run whose kanji readings split it one way, each kanji is a toggle that colors it and its
@@ -80,7 +81,9 @@ export function HeadwordRuby({
           return (
             <ruby key={key}>
               {text}
-              <rt className="text-[0.45em] font-normal text-muted-foreground">{segment.reading}</rt>
+              <rt data-reading-aid="furigana" className={rtClass}>
+                {segment.reading}
+              </rt>
             </ruby>
           )
         }
@@ -106,7 +109,7 @@ export function HeadwordRuby({
                 {character}
               </button>
             ))}
-            <rt className="text-[0.45em] font-normal text-muted-foreground">
+            <rt data-reading-aid="furigana" className={rtClass}>
               {split.map((part, position) => (
                 <span
                   // biome-ignore lint/suspicious/noArrayIndexKey: parts can repeat, as kanji can.

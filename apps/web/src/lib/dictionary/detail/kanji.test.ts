@@ -154,8 +154,16 @@ describe('kanjiDetail', () => {
       headword: '要る',
       reading: 'いる',
       ruby: [{ text: '要', reading: 'い' }, { text: 'る' }],
+      romaji: 'iru',
       summary: 'to be needed, to be necessary, to be required, to be wanted, to need, to want'
     })
+    // Romaji under each reading, as the app's RomajiReadingAidText writes it.
+    expect(detail.readings.map(reading => reading.romaji)).toEqual([
+      'you',
+      'i.ru',
+      'kaname',
+      'toshi'
+    ])
     expect(detail.shareText).toBe(
       '要【ヨウ、い.る、かなめ、とし】\nneed, main point, essence, pivot, key to'
     )

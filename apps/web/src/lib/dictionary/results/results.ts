@@ -15,6 +15,7 @@ import {
   tierForLevel,
   tierForRank
 } from '../detail/frequency'
+import { romanizeTrustedReading } from '../detail/romaji'
 import type { FrequencyRow } from '../detail/rows'
 import { type RubySegment, rubySegments } from '../detail/ruby'
 import { isKanjiCharacter } from '../detail/text'
@@ -128,6 +129,8 @@ export interface ResultRow {
   headword: string
   reading: string
   ruby: RubySegment[]
+  /** The reading in romaji, under the headword with Romaji on; null when it has kanji. */
+  romaji: string | null
   /** `displaySummary`: the meaning an English query matched, else the entry's summary. */
   summary: string
   /** `SearchFrequencyRankPresentationModel.chips`. */
@@ -259,6 +262,7 @@ export function searchResultsScreen(
     headword: item.entry.headword,
     reading: item.entry.reading,
     ruby: rubySegments(item.entry.headword, item.entry.reading),
+    romaji: romanizeTrustedReading(item.entry.reading),
     summary: item.matchedSummary ?? item.entry.summary,
     chips: frequencyChips(frequency.get(item.entry.id) ?? []),
     retrievalOrder: item.fallbackOrder

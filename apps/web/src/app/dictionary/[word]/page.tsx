@@ -7,10 +7,10 @@ import { ExampleList } from '@/components/dictionary/example-list'
 import { FrequencySection } from '@/components/dictionary/frequency-section'
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
 import { PageToolbar } from '@/components/dictionary/page-toolbar'
-import { RubyText } from '@/components/dictionary/ruby-text'
 import { Section } from '@/components/dictionary/section'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordHeader } from '@/components/dictionary/word-header'
+import { AlternativeForms, RelatedWords } from '@/components/dictionary/word-sections'
 import { Item, ItemActions, ItemContent } from '@/components/ui/item'
 import { getWordPage, type WordPageData } from '@/lib/dictionary/data'
 import { exampleCountText, noExamplesMessage } from '@/lib/dictionary/detail/examples'
@@ -76,40 +76,6 @@ function KanjiItems({ kanji }: { kanji: WordPageData['kanji'] }) {
   )
 }
 
-/** One line of alternative forms, written or reading, as the app's AlternativeFormLine. */
-function AlternativeForms({ forms }: { forms: WordPageData['alternatives'] }) {
-  if (forms.length === 0) return null
-  return (
-    <p lang="ja" className="text-lg">
-      {forms.map((form, index) => {
-        const label = (
-          <span className={form.labels.length > 0 ? 'text-muted-foreground' : undefined}>
-            {form.value}
-            {form.labels.length > 0 ? (
-              <span lang="en" className="text-sm">
-                {' '}
-                ({form.labels.join(', ')})
-              </span>
-            ) : null}
-          </span>
-        )
-        return (
-          <span key={form.value}>
-            {index > 0 ? ', ' : null}
-            {form.path ? (
-              <Link href={form.path} className="underline-offset-4 hover:underline">
-                {label}
-              </Link>
-            ) : (
-              label
-            )}
-          </span>
-        )
-      })}
-    </p>
-  )
-}
-
 export default async function WordPage({ params }: Props) {
   const word = await load(params)
   return (
@@ -120,6 +86,8 @@ export default async function WordPage({ params }: Props) {
       <WordHeader
         ruby={word.ruby}
         reading={word.reading}
+        romaji={word.romaji}
+        readingWithoutFurigana={word.readingWithoutFurigana}
         pitch={word.pitch}
         partOfSpeech={word.partOfSpeech}
         conjugationsPath={word.conjugationsPath}
@@ -168,25 +136,7 @@ export default async function WordPage({ params }: Props) {
 
       {word.related.length > 0 ? (
         <Section title="Related words">
-          <ul className="flex flex-col divide-y">
-            {word.related.map(related => (
-              <li
-                key={`${related.headword}|${related.reading}|${related.entSeq}|${related.relation}`}
-                className="py-2 first:pt-0 last:pb-0"
-              >
-                {related.path ? (
-                  <Link href={related.path} className="underline-offset-4 hover:underline">
-                    <RubyText segments={related.ruby} className="text-lg font-medium" />
-                  </Link>
-                ) : (
-                  <RubyText segments={related.ruby} className="text-lg font-medium" />
-                )}
-                <p className="text-sm text-muted-foreground">
-                  {related.relation} · {related.summary}
-                </p>
-              </li>
-            ))}
-          </ul>
+          <RelatedWords related={word.related} />
         </Section>
       ) : null}
 

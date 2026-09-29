@@ -53,6 +53,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "you",
           "value" : "ヨウ",
           "words" : [
             {
@@ -77,6 +78,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "i.ru",
           "value" : "い.る",
           "words" : [
             {
@@ -89,6 +91,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "kaname",
           "value" : "かなめ",
           "words" : [
             {
@@ -101,6 +104,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "toshi",
           "value" : "とし",
           "words" : [
 
@@ -254,6 +258,32 @@
           "reading" : "ようこう",
           "summary" : "important port"
         }
+      ],
+      "wordsRomaji" : [
+        "kaname",
+        "you",
+        "iru",
+        "youkou",
+        "youkyuu",
+        "youryou",
+        "yousho",
+        "youin",
+        "youbou",
+        "youso",
+        "youten",
+        "youshi",
+        "youyaku",
+        "yousei",
+        "youken",
+        "youjin",
+        "youkou",
+        "youshou",
+        "youshoku",
+        "youha",
+        "youin",
+        "yousai",
+        "youran",
+        "youkou"
       ]
     },
     {
@@ -279,6 +309,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "nichi",
           "value" : "ニチ",
           "words" : [
             {
@@ -303,6 +334,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "jitsu",
           "value" : "ジツ",
           "words" : [
 
@@ -310,6 +342,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "hi",
           "value" : "ひ",
           "words" : [
             {
@@ -334,6 +367,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "-bi",
           "value" : "-び",
           "words" : [
 
@@ -341,6 +375,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "-ka",
           "value" : "-か",
           "words" : [
             {
@@ -353,6 +388,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "a",
           "value" : "あ",
           "words" : [
 
@@ -360,6 +396,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "aki",
           "value" : "あき",
           "words" : [
 
@@ -367,6 +404,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "iru",
           "value" : "いる",
           "words" : [
 
@@ -374,6 +412,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ku",
           "value" : "く",
           "words" : [
 
@@ -381,6 +420,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "kusa",
           "value" : "くさ",
           "words" : [
 
@@ -388,6 +428,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "kou",
           "value" : "こう",
           "words" : [
 
@@ -395,6 +436,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "su",
           "value" : "す",
           "words" : [
 
@@ -402,6 +444,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "tachi",
           "value" : "たち",
           "words" : [
 
@@ -409,6 +452,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ni",
           "value" : "に",
           "words" : [
             {
@@ -433,6 +477,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ni~tsu",
           "value" : "にっ",
           "words" : [
             {
@@ -457,6 +502,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "nitsu",
           "value" : "につ",
           "words" : [
 
@@ -464,6 +510,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "he",
           "value" : "へ",
           "words" : [
 
@@ -617,6 +664,32 @@
           "reading" : "にっか",
           "summary" : "daily routine, daily work, daily lesson"
         }
+      ],
+      "wordsRomaji" : [
+        "nichi",
+        "hi",
+        "ka",
+        "nchi",
+        "nihon",
+        "nikkou",
+        "nichibei",
+        "nikkyuu",
+        "nisshoku",
+        "hibi",
+        "nikkan",
+        "nitchuu",
+        "nissuu",
+        "hidzuke",
+        "nikki",
+        "hikage",
+        "nichijou",
+        "hiyori",
+        "nichiji",
+        "hinata",
+        "nichiyou",
+        "nisshi",
+        "nikkan",
+        "nikka"
       ]
     },
     {
@@ -657,6 +730,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "hon",
           "value" : "ホン",
           "words" : [
             {
@@ -681,6 +755,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "moto",
           "value" : "もと",
           "words" : [
 
@@ -688,6 +763,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "mato",
           "value" : "まと",
           "words" : [
 
@@ -695,6 +771,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "gou",
           "value" : "ごう",
           "words" : [
 
@@ -848,6 +925,32 @@
           "reading" : "ほんだな",
           "summary" : "bookshelves, bookshelf, bookcase"
         }
+      ],
+      "wordsRomaji" : [
+        "hon",
+        "hondai",
+        "honkou",
+        "honten",
+        "hontai",
+        "honba",
+        "honshin",
+        "hon'nin",
+        "hon'ya",
+        "honmono",
+        "honjitsu",
+        "hongoku",
+        "honbu",
+        "honsha",
+        "honki",
+        "honshitsu",
+        "honban",
+        "honbun",
+        "hon'ne",
+        "honbako",
+        "honrai",
+        "honmyou",
+        "hon'nen",
+        "hondana"
       ]
     },
     {
@@ -870,6 +973,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "jin",
           "value" : "ジン",
           "words" : [
             {
@@ -894,6 +998,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "nin",
           "value" : "ニン",
           "words" : [
             {
@@ -918,6 +1023,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "hito",
           "value" : "ひと",
           "words" : [
             {
@@ -942,6 +1048,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "-ri",
           "value" : "-り",
           "words" : [
 
@@ -949,6 +1056,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "-to",
           "value" : "-と",
           "words" : [
             {
@@ -961,6 +1069,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ji",
           "value" : "じ",
           "words" : [
             {
@@ -985,6 +1094,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "to",
           "value" : "と",
           "words" : [
             {
@@ -997,6 +1107,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ne",
           "value" : "ね",
           "words" : [
 
@@ -1004,6 +1115,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "hiko",
           "value" : "ひこ",
           "words" : [
 
@@ -1011,6 +1123,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "fumi",
           "value" : "ふみ",
           "words" : [
 
@@ -1164,6 +1277,32 @@
           "reading" : "じんめい",
           "summary" : "person's name"
         }
+      ],
+      "wordsRomaji" : [
+        "jin",
+        "nin",
+        "hito",
+        "to",
+        "hitosama",
+        "hitogoto",
+        "hitojichi",
+        "ninsou",
+        "ninzuu",
+        "ningyou",
+        "jinrui",
+        "jintai",
+        "hitobito",
+        "ningen",
+        "hitogara",
+        "ninmae",
+        "hitome",
+        "jinkou",
+        "jinken",
+        "ninjou",
+        "jinzou",
+        "jinmin",
+        "jinkaku",
+        "jinmei"
       ]
     },
     {
@@ -1200,6 +1339,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "gaku",
           "value" : "ガク",
           "words" : [
             {
@@ -1224,6 +1364,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "mana.bu",
           "value" : "まな.ぶ",
           "words" : [
             {
@@ -1236,6 +1377,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "taka",
           "value" : "たか",
           "words" : [
 
@@ -1243,6 +1385,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "nori",
           "value" : "のり",
           "words" : [
 
@@ -1396,6 +1539,32 @@
           "reading" : "がっく",
           "summary" : "school district, school area"
         }
+      ],
+      "wordsRomaji" : [
+        "gaku",
+        "gakkou",
+        "gakkai",
+        "gakushuu",
+        "gakusei",
+        "gakki",
+        "gakui",
+        "gakusetsu",
+        "gakuhi",
+        "gakka",
+        "gakkai",
+        "gakumon",
+        "gakunen",
+        "gakuchou",
+        "gakubu",
+        "gakuen",
+        "gakureki",
+        "manabu",
+        "gakuwari",
+        "gakuryoku",
+        "gakusha",
+        "gakkyuu",
+        "gakusotsu",
+        "gakku"
       ]
     },
     {
@@ -1422,6 +1591,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "sui",
           "value" : "スイ",
           "words" : [
             {
@@ -1446,6 +1616,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "mizu",
           "value" : "みず",
           "words" : [
             {
@@ -1470,6 +1641,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "mizu-",
           "value" : "みず-",
           "words" : [
             {
@@ -1494,6 +1666,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "uzu",
           "value" : "うず",
           "words" : [
 
@@ -1501,6 +1674,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "zumi",
           "value" : "ずみ",
           "words" : [
 
@@ -1508,6 +1682,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "tsu",
           "value" : "つ",
           "words" : [
 
@@ -1515,6 +1690,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "do",
           "value" : "ど",
           "words" : [
 
@@ -1522,6 +1698,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "mi",
           "value" : "み",
           "words" : [
             {
@@ -1546,6 +1723,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "misa",
           "value" : "みさ",
           "words" : [
 
@@ -1553,6 +1731,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "mitsu",
           "value" : "みつ",
           "words" : [
 
@@ -1560,6 +1739,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "mina",
           "value" : "みな",
           "words" : [
 
@@ -1567,6 +1747,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "min",
           "value" : "みん",
           "words" : [
 
@@ -1720,6 +1901,32 @@
           "reading" : "すいいき",
           "summary" : "waters, water area"
         }
+      ],
+      "wordsRomaji" : [
+        "mizu",
+        "sui",
+        "mizugi",
+        "suimen",
+        "suijun",
+        "suiteki",
+        "suiyou",
+        "suibaku",
+        "suiryoku",
+        "suiden",
+        "suisen",
+        "mizuiro",
+        "suichuu",
+        "suitou",
+        "suibun",
+        "suiei",
+        "suiso",
+        "suihei",
+        "suisan",
+        "suidou",
+        "suigai",
+        "suishin",
+        "mizuguchi",
+        "suiiki"
       ]
     },
     {
@@ -1760,6 +1967,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "ken",
           "value" : "ケン",
           "words" : [
             {
@@ -1784,6 +1992,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "mi.ru",
           "value" : "み.る",
           "words" : [
             {
@@ -1796,6 +2005,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "mi.eru",
           "value" : "み.える",
           "words" : [
 
@@ -1803,6 +2013,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "mi.seru",
           "value" : "み.せる",
           "words" : [
 
@@ -1956,6 +2167,32 @@
           "reading" : "けんしん",
           "summary" : "beatific vision"
         }
+      ],
+      "wordsRomaji" : [
+        "ken",
+        "mi",
+        "miru",
+        "mie",
+        "mihon",
+        "migoto",
+        "kenbutsu",
+        "kenkai",
+        "kenchi",
+        "kentou",
+        "mikata",
+        "kengaku",
+        "kenbun",
+        "kenshiki",
+        "mitsuke",
+        "mimono",
+        "miseyagura",
+        "miba",
+        "kenshou",
+        "miyu",
+        "kendaka",
+        "kenbutsu",
+        "kensha",
+        "kenshin"
       ]
     },
     {
@@ -1992,6 +2229,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "shoku",
           "value" : "ショク",
           "words" : [
             {
@@ -2016,6 +2254,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "jiki",
           "value" : "ジキ",
           "words" : [
 
@@ -2023,6 +2262,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "ku.u",
           "value" : "く.う",
           "words" : [
             {
@@ -2035,6 +2275,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "ku.rau",
           "value" : "く.らう",
           "words" : [
 
@@ -2042,6 +2283,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "ta.beru",
           "value" : "た.べる",
           "words" : [
 
@@ -2049,6 +2291,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "ha.mu",
           "value" : "は.む",
           "words" : [
 
@@ -2056,6 +2299,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "gui",
           "value" : "ぐい",
           "words" : [
 
@@ -2209,6 +2453,32 @@
           "reading" : "くい",
           "summary" : "eating"
         }
+      ],
+      "wordsRomaji" : [
+        "shoku",
+        "shoku",
+        "kuu",
+        "shokuzai",
+        "shokudou",
+        "shokumotsu",
+        "shokutaku",
+        "shokuhin",
+        "shokuji",
+        "shokuhi",
+        "shokki",
+        "shokuyoku",
+        "shokuryou",
+        "shokuen",
+        "shokuniku",
+        "shokudou",
+        "shokuyou",
+        "shokuryou",
+        "shokugo",
+        "shokken",
+        "shokutsuu",
+        "shokushi",
+        "shokuzen",
+        "kui"
       ]
     },
     {
@@ -2250,6 +2520,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "kou",
           "value" : "コウ",
           "words" : [
             {
@@ -2274,6 +2545,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "taka.i",
           "value" : "たか.い",
           "words" : [
             {
@@ -2286,6 +2558,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "taka",
           "value" : "たか",
           "words" : [
             {
@@ -2310,6 +2583,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "-daka",
           "value" : "-だか",
           "words" : [
 
@@ -2317,6 +2591,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "taka.maru",
           "value" : "たか.まる",
           "words" : [
 
@@ -2324,6 +2599,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "taka.meru",
           "value" : "たか.める",
           "words" : [
 
@@ -2331,6 +2607,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ka",
           "value" : "か",
           "words" : [
 
@@ -2338,6 +2615,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ko",
           "value" : "こ",
           "words" : [
             {
@@ -2362,6 +2640,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "joi",
           "value" : "じょい",
           "words" : [
 
@@ -2369,6 +2648,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ta",
           "value" : "た",
           "words" : [
             {
@@ -2393,6 +2673,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "haka",
           "value" : "はか",
           "words" : [
 
@@ -2546,6 +2827,32 @@
           "reading" : "こうい",
           "summary" : "dignity, eminent, high ranking"
         }
+      ],
+      "wordsRomaji" : [
+        "taka",
+        "kou",
+        "kousoku",
+        "kouon",
+        "kounetsu",
+        "koutou",
+        "takasa",
+        "kouchi",
+        "koukou",
+        "koudo",
+        "koumei",
+        "kougen",
+        "takai",
+        "koukyuu",
+        "koutei",
+        "kouon",
+        "kousou",
+        "kourei",
+        "kouka",
+        "kouzan",
+        "kousai",
+        "takadai",
+        "kousho",
+        "koui"
       ]
     },
     {
@@ -2570,6 +2877,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "sei",
           "value" : "セイ",
           "words" : [
             {
@@ -2594,6 +2902,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "shou",
           "value" : "ショウ",
           "words" : [
             {
@@ -2612,6 +2921,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "i.kiru",
           "value" : "い.きる",
           "words" : [
 
@@ -2619,6 +2929,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "i.kasu",
           "value" : "い.かす",
           "words" : [
 
@@ -2626,6 +2937,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "i.keru",
           "value" : "い.ける",
           "words" : [
 
@@ -2633,6 +2945,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "u.mareru",
           "value" : "う.まれる",
           "words" : [
 
@@ -2640,6 +2953,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "uma.reru",
           "value" : "うま.れる",
           "words" : [
 
@@ -2647,6 +2961,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "u.mare",
           "value" : "う.まれ",
           "words" : [
 
@@ -2654,6 +2969,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "umare",
           "value" : "うまれ",
           "words" : [
 
@@ -2661,6 +2977,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "u.mu",
           "value" : "う.む",
           "words" : [
             {
@@ -2673,6 +2990,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "o.u",
           "value" : "お.う",
           "words" : [
 
@@ -2680,6 +2998,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "ha.eru",
           "value" : "は.える",
           "words" : [
 
@@ -2687,6 +3006,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "ha.yasu",
           "value" : "は.やす",
           "words" : [
 
@@ -2694,6 +3014,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "ki",
           "value" : "き",
           "words" : [
             {
@@ -2712,6 +3033,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "nama",
           "value" : "なま",
           "words" : [
             {
@@ -2724,6 +3046,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "nama-",
           "value" : "なま-",
           "words" : [
             {
@@ -2736,6 +3059,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "na.ru",
           "value" : "な.る",
           "words" : [
             {
@@ -2748,6 +3072,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "na.su",
           "value" : "な.す",
           "words" : [
 
@@ -2755,6 +3080,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "mu.su",
           "value" : "む.す",
           "words" : [
 
@@ -2762,6 +3088,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "-u",
           "value" : "-う",
           "words" : [
             {
@@ -2774,6 +3101,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "asa",
           "value" : "あさ",
           "words" : [
 
@@ -2781,6 +3109,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "iki",
           "value" : "いき",
           "words" : [
 
@@ -2788,6 +3117,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "iku",
           "value" : "いく",
           "words" : [
             {
@@ -2800,6 +3130,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ike",
           "value" : "いけ",
           "words" : [
 
@@ -2807,6 +3138,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ubu",
           "value" : "うぶ",
           "words" : [
 
@@ -2814,6 +3146,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "umai",
           "value" : "うまい",
           "words" : [
 
@@ -2821,6 +3154,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "e",
           "value" : "え",
           "words" : [
 
@@ -2828,6 +3162,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "oi",
           "value" : "おい",
           "words" : [
 
@@ -2835,6 +3170,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "gyuu",
           "value" : "ぎゅう",
           "words" : [
 
@@ -2842,6 +3178,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "kurumi",
           "value" : "くるみ",
           "words" : [
 
@@ -2849,6 +3186,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "gose",
           "value" : "ごせ",
           "words" : [
 
@@ -2856,6 +3194,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "sa",
           "value" : "さ",
           "words" : [
 
@@ -2863,6 +3202,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "jou",
           "value" : "じょう",
           "words" : [
 
@@ -2870,6 +3210,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "sugi",
           "value" : "すぎ",
           "words" : [
 
@@ -2877,6 +3218,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "so",
           "value" : "そ",
           "words" : [
 
@@ -2884,6 +3226,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "sou",
           "value" : "そう",
           "words" : [
 
@@ -2891,6 +3234,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "chiru",
           "value" : "ちる",
           "words" : [
 
@@ -2898,6 +3242,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "naba",
           "value" : "なば",
           "words" : [
 
@@ -2905,6 +3250,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "niu",
           "value" : "にう",
           "words" : [
 
@@ -2912,6 +3258,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "nyuu",
           "value" : "にゅう",
           "words" : [
 
@@ -2919,6 +3266,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "fu",
           "value" : "ふ",
           "words" : [
             {
@@ -2931,6 +3279,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "mi",
           "value" : "み",
           "words" : [
 
@@ -2938,6 +3287,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "mou",
           "value" : "もう",
           "words" : [
 
@@ -2945,6 +3295,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "yoi",
           "value" : "よい",
           "words" : [
 
@@ -2952,6 +3303,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ryuu",
           "value" : "りゅう",
           "words" : [
 
@@ -3105,6 +3457,32 @@
           "reading" : "せいめい",
           "summary" : "life, existence"
         }
+      ],
+      "wordsRomaji" : [
+        "nama",
+        "sei",
+        "ki",
+        "fu",
+        "iku",
+        "shouga",
+        "kiji",
+        "seishi",
+        "shougai",
+        "seikei",
+        "ainiku",
+        "seiri",
+        "seichou",
+        "seikatsu",
+        "seibutsu",
+        "seitai",
+        "seito",
+        "seisan",
+        "seitan",
+        "seizen",
+        "umu",
+        "seizon",
+        "naru",
+        "seimei"
       ]
     },
     {
@@ -3139,6 +3517,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "kou",
           "value" : "コウ",
           "words" : [
             {
@@ -3163,6 +3542,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "gyou",
           "value" : "ギョウ",
           "words" : [
             {
@@ -3187,6 +3567,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "an",
           "value" : "アン",
           "words" : [
             {
@@ -3199,6 +3580,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "i.ku",
           "value" : "い.く",
           "words" : [
             {
@@ -3211,6 +3593,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "yu.ku",
           "value" : "ゆ.く",
           "words" : [
             {
@@ -3223,6 +3606,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "-yu.ki",
           "value" : "-ゆ.き",
           "words" : [
 
@@ -3230,6 +3614,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "-yuki",
           "value" : "-ゆき",
           "words" : [
 
@@ -3237,6 +3622,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "-i.ki",
           "value" : "-い.き",
           "words" : [
             {
@@ -3249,6 +3635,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "-iki",
           "value" : "-いき",
           "words" : [
             {
@@ -3261,6 +3648,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "okona.u",
           "value" : "おこな.う",
           "words" : [
             {
@@ -3273,6 +3661,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "oko.nau",
           "value" : "おこ.なう",
           "words" : [
             {
@@ -3285,6 +3674,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "iku",
           "value" : "いく",
           "words" : [
             {
@@ -3297,6 +3687,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "nami",
           "value" : "なみ",
           "words" : [
 
@@ -3304,6 +3695,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "name",
           "value" : "なめ",
           "words" : [
 
@@ -3311,6 +3703,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "michi",
           "value" : "みち",
           "words" : [
 
@@ -3318,6 +3711,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "yuki",
           "value" : "ゆき",
           "words" : [
 
@@ -3325,6 +3719,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "yuku",
           "value" : "ゆく",
           "words" : [
             {
@@ -3483,6 +3878,32 @@
           "reading" : "ぎょうじょう",
           "summary" : "behavior, behaviour, conduct"
         }
+      ],
+      "wordsRomaji" : [
+        "gyou",
+        "kou",
+        "kouraku",
+        "koutei",
+        "yukue",
+        "iki",
+        "gyougi",
+        "gyouji",
+        "koudou",
+        "koushi",
+        "gyouretsu",
+        "koui",
+        "koushin",
+        "okonau",
+        "gyousei",
+        "iku",
+        "angya",
+        "kouin",
+        "gyouji",
+        "gyoukaku",
+        "okonai",
+        "gyoukan",
+        "gyouja",
+        "gyoujou"
       ]
     },
     {
@@ -3517,6 +3938,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "dai",
           "value" : "ダイ",
           "words" : [
             {
@@ -3541,6 +3963,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "tai",
           "value" : "タイ",
           "words" : [
             {
@@ -3565,6 +3988,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "oo-",
           "value" : "おお-",
           "words" : [
             {
@@ -3589,6 +4013,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "oo.kii",
           "value" : "おお.きい",
           "words" : [
 
@@ -3596,6 +4021,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "-oo.ini",
           "value" : "-おお.いに",
           "words" : [
 
@@ -3603,6 +4029,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ufu",
           "value" : "うふ",
           "words" : [
 
@@ -3610,6 +4037,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "o",
           "value" : "お",
           "words" : [
             {
@@ -3634,6 +4062,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ou",
           "value" : "おう",
           "words" : [
 
@@ -3641,6 +4070,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ta",
           "value" : "た",
           "words" : [
             {
@@ -3665,6 +4095,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "takashi",
           "value" : "たかし",
           "words" : [
 
@@ -3672,6 +4103,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "tomo",
           "value" : "とも",
           "words" : [
 
@@ -3679,6 +4111,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "hajime",
           "value" : "はじめ",
           "words" : [
 
@@ -3686,6 +4119,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "hiro",
           "value" : "ひろ",
           "words" : [
 
@@ -3693,6 +4127,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "hiroshi",
           "value" : "ひろし",
           "words" : [
 
@@ -3700,6 +4135,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "masa",
           "value" : "まさ",
           "words" : [
 
@@ -3707,6 +4143,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "masaru",
           "value" : "まさる",
           "words" : [
 
@@ -3714,6 +4151,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "moto",
           "value" : "もと",
           "words" : [
 
@@ -3721,6 +4159,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "wa",
           "value" : "わ",
           "words" : [
 
@@ -3874,6 +4313,32 @@
           "reading" : "だいち",
           "summary" : "earth, ground, the solid earth, the (vast) land"
         }
+      ],
+      "wordsRomaji" : [
+        "oo",
+        "dai",
+        "tai",
+        "ooya",
+        "ootsubu",
+        "oosaka",
+        "taikin",
+        "oozei",
+        "tairyou",
+        "daibutsu",
+        "taibetsu",
+        "taishuu",
+        "ooyuki",
+        "oote",
+        "taikoku",
+        "ookura",
+        "taihen",
+        "dainou",
+        "daiben",
+        "taisou",
+        "daiku",
+        "oogata",
+        "taishou",
+        "daichi"
       ]
     },
     {
@@ -3911,6 +4376,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "go",
           "value" : "ゴ",
           "words" : [
             {
@@ -3935,6 +4401,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "kata.ru",
           "value" : "かた.る",
           "words" : [
             {
@@ -3947,6 +4414,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "kata.rau",
           "value" : "かた.らう",
           "words" : [
 
@@ -4100,6 +4568,32 @@
           "reading" : "ごい",
           "summary" : "meaning of a word"
         }
+      ],
+      "wordsRomaji" : [
+        "go",
+        "goi",
+        "gogaku",
+        "kataru",
+        "gogen",
+        "katari",
+        "goki",
+        "goku",
+        "gosuu",
+        "gohou",
+        "gobi",
+        "goroku",
+        "gokan",
+        "gogi",
+        "gorei",
+        "gomyaku",
+        "gojo",
+        "gohei",
+        "gozoku",
+        "gochuu",
+        "goshu",
+        "gochou",
+        "gokei",
+        "goi"
       ]
     },
     {
@@ -4135,6 +4629,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "sei",
           "value" : "セイ",
           "words" : [
             {
@@ -4159,6 +4654,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "jou",
           "value" : "ジョウ",
           "words" : [
             {
@@ -4171,6 +4667,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "shizu-",
           "value" : "しず-",
           "words" : [
             {
@@ -4195,6 +4692,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "shizu.ka",
           "value" : "しず.か",
           "words" : [
             {
@@ -4207,6 +4705,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "shizu.maru",
           "value" : "しず.まる",
           "words" : [
 
@@ -4214,6 +4713,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "shizu.meru",
           "value" : "しず.める",
           "words" : [
 
@@ -4221,6 +4721,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "shidzu",
           "value" : "しづ",
           "words" : [
 
@@ -4374,6 +4875,32 @@
           "reading" : "せいざ",
           "summary" : "sitting calmly and quietly (i.e. in order to meditate)"
         }
+      ],
+      "wordsRomaji" : [
+        "shizu",
+        "sei",
+        "shizuoka",
+        "seishi",
+        "seijaku",
+        "shizuka",
+        "seishuku",
+        "joumyaku",
+        "seikan",
+        "seiyou",
+        "seibutsu",
+        "seiteki",
+        "seion",
+        "seitei",
+        "seishin",
+        "seion",
+        "seiya",
+        "seichi",
+        "seihitsu",
+        "seichou",
+        "seikin",
+        "seiatsu",
+        "seishi",
+        "seiza"
       ]
     },
     {
@@ -4414,6 +4941,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "ka",
           "value" : "カ",
           "words" : [
             {
@@ -4438,6 +4966,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "ke",
           "value" : "ケ",
           "words" : [
             {
@@ -4450,6 +4979,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "ie",
           "value" : "いえ",
           "words" : [
             {
@@ -4474,6 +5004,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "ya",
           "value" : "や",
           "words" : [
             {
@@ -4492,6 +5023,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "uchi",
           "value" : "うち",
           "words" : [
             {
@@ -4504,6 +5036,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ari",
           "value" : "あり",
           "words" : [
 
@@ -4511,6 +5044,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "e",
           "value" : "え",
           "words" : [
 
@@ -4518,6 +5052,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ku",
           "value" : "く",
           "words" : [
 
@@ -4525,6 +5060,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "tsuka",
           "value" : "つか",
           "words" : [
 
@@ -4532,6 +5068,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "be",
           "value" : "べ",
           "words" : [
 
@@ -4685,6 +5222,32 @@
           "reading" : "いえもと",
           "summary" : "head of a school (of music, dance), head family of a school"
         }
+      ],
+      "wordsRomaji" : [
+        "ke",
+        "uchi",
+        "ie",
+        "chi",
+        "ka",
+        "kachiku",
+        "kakei",
+        "iede",
+        "kanai",
+        "yanushi",
+        "kakei",
+        "kaoku",
+        "iegara",
+        "kaji",
+        "kagu",
+        "yachin",
+        "kazoku",
+        "katei",
+        "kazai",
+        "kasai",
+        "kaden",
+        "kataku",
+        "kagyou",
+        "iemoto"
       ]
     },
     {
@@ -4720,6 +5283,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "zen",
           "value" : "ゼン",
           "words" : [
             {
@@ -4744,6 +5308,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "mae",
           "value" : "まえ",
           "words" : [
             {
@@ -4768,6 +5333,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "-mae",
           "value" : "-まえ",
           "words" : [
             {
@@ -4792,6 +5358,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "saki",
           "value" : "さき",
           "words" : [
 
@@ -4799,6 +5366,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "sato",
           "value" : "さと",
           "words" : [
 
@@ -4806,6 +5374,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "mai",
           "value" : "まい",
           "words" : [
 
@@ -4959,6 +5528,32 @@
           "reading" : "ぜんしん",
           "summary" : "antecedents, ancestor, previous position, previous existence, predecessor organization, predecessor organisation"
         }
+      ],
+      "wordsRomaji" : [
+        "mae",
+        "zen",
+        "maegami",
+        "zensha",
+        "zengo",
+        "zenki",
+        "zenryaku",
+        "zenshin",
+        "zenhan",
+        "zenpou",
+        "zen'ya",
+        "zentei",
+        "zenrei",
+        "zenkai",
+        "zento",
+        "zen'nen",
+        "zenki",
+        "zenjitsu",
+        "maemae",
+        "zenbun",
+        "zen'ei",
+        "zensen",
+        "zenchou",
+        "zenshin"
       ]
     },
     {
@@ -4995,6 +5590,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "shi",
           "value" : "シ",
           "words" : [
             {
@@ -5019,6 +5615,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "watakushi",
           "value" : "わたくし",
           "words" : [
             {
@@ -5031,6 +5628,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "watashi",
           "value" : "わたし",
           "words" : [
             {
@@ -5189,6 +5787,32 @@
           "reading" : "しご",
           "summary" : "whispering, private talk, talking (during a class, lecture, etc.)"
         }
+      ],
+      "wordsRomaji" : [
+        "atashi",
+        "watashi",
+        "watakushi",
+        "wachiki",
+        "atai",
+        "wai",
+        "shi",
+        "watai",
+        "wate",
+        "ate",
+        "shiyou",
+        "shitetsu",
+        "shiritsu",
+        "shihi",
+        "shian",
+        "shidai",
+        "shiyuu",
+        "shitei",
+        "shiteki",
+        "shifuku",
+        "shiken",
+        "shigaku",
+        "shisetsu",
+        "shigo"
       ]
     },
     {
@@ -5224,6 +5848,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "byou",
           "value" : "ビョウ",
           "words" : [
             {
@@ -5242,6 +5867,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "neko",
           "value" : "ねこ",
           "words" : [
             {
@@ -5412,6 +6038,32 @@
           "reading" : "ねこくさ",
           "summary" : "cat grass (often Avena sativa), catgrass"
         }
+      ],
+      "wordsRomaji" : [
+        "neko",
+        "nekoma",
+        "nekojita",
+        "nekoze",
+        "nekoha",
+        "nekomusume",
+        "nekozame",
+        "nekomanma",
+        "nekokan",
+        "nekojima",
+        "nekoita",
+        "nekomimi",
+        "nekoguruma",
+        "nekosuna",
+        "nekoza",
+        "nekonomi",
+        "nekoniku",
+        "byougaku",
+        "nekoitachi",
+        "nekoyanagi",
+        "byoushu",
+        "nekoashi",
+        "nekomata",
+        "nekokusa"
       ]
     },
     {
@@ -5442,6 +6094,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "ki",
           "value" : "キ",
           "words" : [
             {
@@ -5466,6 +6119,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "ke",
           "value" : "ケ",
           "words" : [
             {
@@ -5484,6 +6138,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "iki",
           "value" : "いき",
           "words" : [
 
@@ -5491,6 +6146,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "ki",
           "value" : "き",
           "words" : [
             {
@@ -5661,6 +6317,32 @@
           "reading" : "きとう",
           "summary" : "cylinder"
         }
+      ],
+      "wordsRomaji" : [
+        "ki",
+        "ge",
+        "gi",
+        "ke",
+        "gimi",
+        "kikou",
+        "kitai",
+        "kimi",
+        "kion",
+        "kishou",
+        "kizetsu",
+        "kishitsu",
+        "kiryoku",
+        "kiatsu",
+        "kishou",
+        "kibun",
+        "kigaru",
+        "kehai",
+        "kiza",
+        "kigokoro",
+        "kimae",
+        "kiraku",
+        "kiai",
+        "kitou"
       ]
     },
     {
@@ -5704,6 +6386,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "kai",
           "value" : "カイ",
           "words" : [
             {
@@ -5728,6 +6411,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "e",
           "value" : "エ",
           "words" : [
             {
@@ -5746,6 +6430,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "a.u",
           "value" : "あ.う",
           "words" : [
             {
@@ -5758,6 +6443,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "a.waseru",
           "value" : "あ.わせる",
           "words" : [
 
@@ -5765,6 +6451,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "atsu.maru",
           "value" : "あつ.まる",
           "words" : [
 
@@ -5772,6 +6459,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ai",
           "value" : "あい",
           "words" : [
 
@@ -5779,6 +6467,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "i",
           "value" : "い",
           "words" : [
 
@@ -5932,6 +6621,32 @@
           "reading" : "かいせき",
           "summary" : "meeting place, seats for the public"
         }
+      ],
+      "wordsRomaji" : [
+        "kai",
+        "e",
+        "kaiwa",
+        "kaishoku",
+        "kaiken",
+        "au",
+        "kaichou",
+        "eshaku",
+        "kaihi",
+        "kaidan",
+        "kaijou",
+        "kaigou",
+        "kaikei",
+        "kaisha",
+        "kaiin",
+        "kaishin",
+        "kaigi",
+        "kaiki",
+        "kaihou",
+        "kaikan",
+        "kaidou",
+        "kaitou",
+        "kaisoku",
+        "kaiseki"
       ]
     },
     {
@@ -5955,6 +6670,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "ichi",
           "value" : "イチ",
           "words" : [
             {
@@ -5979,6 +6695,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "itsu",
           "value" : "イツ",
           "words" : [
             {
@@ -5991,6 +6708,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "hito-",
           "value" : "ひと-",
           "words" : [
             {
@@ -6015,6 +6733,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "hito.tsu",
           "value" : "ひと.つ",
           "words" : [
             {
@@ -6027,6 +6746,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "kazu",
           "value" : "かず",
           "words" : [
 
@@ -6034,6 +6754,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "i",
           "value" : "い",
           "words" : [
             {
@@ -6058,6 +6779,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "i~tsu",
           "value" : "いっ",
           "words" : [
             {
@@ -6082,6 +6804,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "iru",
           "value" : "いる",
           "words" : [
 
@@ -6089,6 +6812,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "katsu",
           "value" : "かつ",
           "words" : [
 
@@ -6096,6 +6820,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "kadzu",
           "value" : "かづ",
           "words" : [
 
@@ -6103,6 +6828,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "ten",
           "value" : "てん",
           "words" : [
 
@@ -6110,6 +6836,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "hajime",
           "value" : "はじめ",
           "words" : [
 
@@ -6117,6 +6844,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "hi",
           "value" : "ひ",
           "words" : [
             {
@@ -6141,6 +6869,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "hitotsu",
           "value" : "ひとつ",
           "words" : [
             {
@@ -6153,6 +6882,7 @@
         },
         {
           "kind" : "name",
+          "romaji" : "makoto",
           "value" : "まこと",
           "words" : [
 
@@ -6306,6 +7036,32 @@
           "reading" : "ひとあし",
           "summary" : "a step"
         }
+      ],
+      "wordsRomaji" : [
+        "hito",
+        "ichi",
+        "ī",
+        "itchi",
+        "itsu",
+        "hitotsuki",
+        "ichigeki",
+        "issatsu",
+        "hitoiki",
+        "ichinichi",
+        "ichidai",
+        "ikken",
+        "ikkai",
+        "hitori",
+        "ippiki",
+        "ichinen",
+        "ichiji",
+        "isshou",
+        "hitoe",
+        "issho",
+        "ittou",
+        "ichiou",
+        "ittai",
+        "hitoashi"
       ]
     },
     {
@@ -6332,6 +7088,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "otsu",
           "value" : "オツ",
           "words" : [
             {
@@ -6356,6 +7113,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "itsu",
           "value" : "イツ",
           "words" : [
             {
@@ -6368,6 +7126,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "oto-",
           "value" : "おと-",
           "words" : [
             {
@@ -6392,6 +7151,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "kinoto",
           "value" : "きのと",
           "words" : [
             {
@@ -6562,6 +7322,32 @@
           "reading" : "オツなもの",
           "summary" : "quite a thing, something with a unique charm"
         }
+      ],
+      "wordsRomaji" : [
+        "otsu",
+        "kinoto",
+        "otsujun",
+        "itsuya",
+        "kinotoi",
+        "otogo",
+        "otome",
+        "otoya",
+        "otsunaka",
+        "kinotomi",
+        "otohime",
+        "kinotoushi",
+        "kinotohitsuji",
+        "otsushu",
+        "kinotou",
+        "kinototori",
+        "otsuran",
+        "otometsubaki",
+        "otomego",
+        "otomegokoro",
+        "otomeza",
+        "otomezakura",
+        "otomeyuri",
+        "otsunamono"
       ]
     },
     {
@@ -6625,6 +7411,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "utsu",
           "value" : "ウツ",
           "words" : [
             {
@@ -6649,6 +7436,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "u~tsu.suru",
           "value" : "うっ.する",
           "words" : [
 
@@ -6656,6 +7444,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "fusa.gu",
           "value" : "ふさ.ぐ",
           "words" : [
             {
@@ -6668,6 +7457,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "shige.ru",
           "value" : "しげ.る",
           "words" : [
 
@@ -6821,6 +7611,32 @@
           "reading" : "そううつ",
           "summary" : "manic depression, mood swing"
         }
+      ],
+      "wordsRomaji" : [
+        "utsu",
+        "uppun",
+        "ussou",
+        "usseki",
+        "ukketsu",
+        "utsuzen",
+        "fusagu",
+        "ukki",
+        "utsuutsu",
+        "utsurin",
+        "utsubotsu",
+        "ukkutsu",
+        "ukon",
+        "ukkonkou",
+        "ukon'iro",
+        "utsugē",
+        "uttoushii",
+        "utsuendo",
+        "uppunbarashi",
+        "utsuwosanjiru",
+        "uppunwoharasu",
+        "yuuutsu",
+        "chin'utsu",
+        "souutsu"
       ]
     },
     {
@@ -6855,6 +7671,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "ba",
           "value" : "バ",
           "words" : [
             {
@@ -6879,6 +7696,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "shou",
           "value" : "ショウ",
           "words" : [
 
@@ -6886,6 +7704,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "shoku",
           "value" : "ショク",
           "words" : [
 
@@ -6893,6 +7712,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "sou",
           "value" : "ソウ",
           "words" : [
 
@@ -6900,6 +7720,7 @@
         },
         {
           "kind" : "kun",
+          "romaji" : "mizutade",
           "value" : "みずたで",
           "words" : [
 
@@ -7053,6 +7874,32 @@
           "reading" : "おおばらいちご",
           "summary" : "Rubus croceacanthus (species of raspberry)"
         }
+      ],
+      "wordsRomaji" : [
+        "bara",
+        "baratanago",
+        "barazoku",
+        "baramutsu",
+        "barafuedai",
+        "barakiseki",
+        "barahata",
+        "barasensou",
+        "barajuujidan",
+        "baranonamae",
+        "baranotsubomi",
+        "barairo",
+        "noibara",
+        "fuyusoubi",
+        "nobara",
+        "baramado",
+        "barashin",
+        "baraen",
+        "barayu",
+        "barabara",
+        "mokkoubara",
+        "koushinbara",
+        "tsurubara",
+        "oobaraichigo"
       ]
     },
     {
@@ -7088,6 +7935,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "rou",
           "value" : "ロウ",
           "words" : [
             {
@@ -7252,6 +8100,32 @@
           "reading" : "ポーランドかいろう",
           "summary" : "Polish Corridor"
         }
+      ],
+      "wordsRomaji" : [
+        "rou",
+        "rouka",
+        "kairou",
+        "garou",
+        "hairou",
+        "chuurou",
+        "sanrou",
+        "zenrou",
+        "sokurou",
+        "shinrou",
+        "yokurou",
+        "monrou",
+        "horou",
+        "zairou",
+        "chuumonrou",
+        "nakarouka",
+        "sotorouka",
+        "uchirouka",
+        "watarirouka",
+        "jindoukairou",
+        "kairouchitai",
+        "kairoujikan",
+        "nippongaroukyoukai",
+        "pōrandokairou"
       ]
     },
     {
@@ -7288,6 +8162,9 @@
       ],
       "strokeCount" : 12,
       "words" : [
+
+      ],
+      "wordsRomaji" : [
 
       ]
     },
@@ -7327,6 +8204,9 @@
           "reading" : "きじゅ",
           "summary" : "77th birthday"
         }
+      ],
+      "wordsRomaji" : [
+        "kiju"
       ]
     },
     {
@@ -7352,6 +8232,9 @@
       ],
       "strokeCount" : 6,
       "words" : [
+
+      ],
+      "wordsRomaji" : [
 
       ]
     },
@@ -7401,6 +8284,9 @@
       "strokeOrderStrokes" : 7,
       "words" : [
 
+      ],
+      "wordsRomaji" : [
+
       ]
     },
     {
@@ -7442,6 +8328,9 @@
       "strokeCount" : 13,
       "words" : [
 
+      ],
+      "wordsRomaji" : [
+
       ]
     },
     {
@@ -7460,6 +8349,7 @@
       "readings" : [
         {
           "kind" : "on",
+          "romaji" : "jou",
           "value" : "ジョウ",
           "words" : [
 
@@ -7467,6 +8357,7 @@
         },
         {
           "kind" : "on",
+          "romaji" : "sei",
           "value" : "セイ",
           "words" : [
 
@@ -7475,6 +8366,9 @@
       ],
       "strokeCount" : 4,
       "words" : [
+
+      ],
+      "wordsRomaji" : [
 
       ]
     }

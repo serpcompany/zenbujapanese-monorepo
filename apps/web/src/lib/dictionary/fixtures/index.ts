@@ -10,6 +10,7 @@ import type {
   WordRows
 } from '@/lib/dictionary/detail/rows'
 import exampleCounts from './example-counts.json'
+import exampleMeanings from './example-meanings.json'
 import exampleSentences from './example-sentences.json'
 import formExamples from './form-examples.json'
 import kanji from './kanji.json'
@@ -78,3 +79,8 @@ export const fixtureSearchOrder: Record<string, number[]> = {
   iru: [1546640, 1577980, 1391500, 1465580, 1322180, 1587780],
   要: [1609600, 2188720, 1546640, 1546750, 1546680, 1546850, 1612150]
 }
+
+/** The first meaning of each word the fixture examples link to, for Word Meanings. */
+export const fixtureExampleMeanings = new Map(
+  (exampleMeanings as { entSeq: number; meaning: string }[]).map(row => [row.entSeq, row.meaning])
+)

@@ -4,6 +4,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Reading Aids (components/reading-aids.tsx): the inline script in the root layout sets each
+   setting on <html> before the page paints, and these variants show or hide each aid's text. The
+   page renders every aid's text, so nothing moves or re-renders when a setting applies. */
+@custom-variant furigana-off (&:where([data-furigana="off"] *));
+@custom-variant romaji-on (&:where([data-romaji="on"] *));
+@custom-variant word-meanings-on (&:where([data-word-meanings="on"] *));
+@custom-variant translations-off (&:where([data-translations="off"] *));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

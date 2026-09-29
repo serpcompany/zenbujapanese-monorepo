@@ -47,6 +47,16 @@ build_inputs=(
   apps/web/src/components/dictionary/load-more.tsx
   apps/web/src/components/dictionary/ruby-text.tsx
   apps/web/src/components/dictionary/headword-ruby.tsx
+  apps/web/src/components/dictionary/reading-aid.tsx
+  apps/web/src/components/dictionary/example-list.tsx
+  apps/web/src/components/dictionary/load-more.tsx
+  apps/web/src/components/dictionary/ruby-text.tsx
+  apps/web/src/components/dictionary/word-sections.tsx
+  apps/web/src/components/dictionary/rendered-aids.ts
+  apps/web/src/components/dictionary/rendered.ts
+  apps/web/src/lib/reading-aids.ts
+  # reading-aids.test.tsx reads the variants that show and hide each aid.
+  apps/web/src/app/globals.css
   apps/web/src/components/dictionary/pitch-accent.tsx
   apps/web/src/components/dictionary/pronounce-button.tsx
   apps/web/src/components/dictionary/frequency-section.tsx
@@ -109,13 +119,15 @@ if loaded != expected:
 # example each conjugated form's screen lists, and the word-detail suite drawn by the word page's
 # components (word-page.test.tsx): the furigana's per-kanji split, the pitch graph's dots, each
 # Frequency row's details, and the conjugation table's page with each form's page and its
-# examples (conjugations.test.tsx).
+# examples (conjugations.test.tsx); and what Reading Aids show on the word
+# page under each setting (reading-aids.test.tsx).
 check_local() {
   # vitest.config.ts runs these one at a time: each opens the same local D1.
   ZENBU_DICTIONARY_D1=1 ZENBU_DICTIONARY_D1_PATH="$1" \
     pnpm exec vitest run src/lib/dictionary/detail/conformance.test.ts \
     src/components/dictionary/word-page.test.tsx \
-    src/components/dictionary/conjugations.test.tsx
+    src/components/dictionary/conjugations.test.tsx \
+    src/components/dictionary/reading-aids.test.tsx
 }
 
 # The SHA-256 of each input file, for dictionary_import's `sources` column.

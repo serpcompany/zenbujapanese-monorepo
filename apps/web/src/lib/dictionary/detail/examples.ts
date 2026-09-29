@@ -4,6 +4,7 @@
 // the translation. The import precomputes which entry each word links to on each page
 // (scripts/release-d1/dictionary/build-examples.mts); this only shapes those rows.
 
+import { type RomajiToken, romanizeCompleteSentence, toLatin } from './romaji'
 import type {
   ExampleCountRow,
   ExampleSentenceRow,
@@ -13,6 +14,7 @@ import type {
   WordExampleRows
 } from './rows'
 import { type RubySegment, rubySegments } from './ruby'
+import { katakana } from './text'
 
 /** How many examples a page shows at first, and loads at a time as it scrolls. */
 export const examplesPerPage = 25
@@ -33,6 +35,8 @@ export interface ExampleToken {
    * up the form on a conjugated form's screen.
    */
   isPageWord: boolean
+  /** A particle, auxiliary, or symbol, which shows no meaning under itself. */
+  functionWord: boolean
 }
 
 /** One side of a Tatoeba pair: each sentence has its own ID, contributor, and license. */
@@ -51,6 +55,11 @@ export interface Example {
   /** The sentence as plain text, for speech. */
   text: string
   tokens: ExampleToken[]
+  /**
+   * The sentence in romaji, shown under it with Romaji on; null when a word can't be romanized,
+   * and the page says so instead (`romajiUnavailable`).
+   */
+  romaji: string | null
   translation: string
   japanese: TatoebaSentence
   english: TatoebaSentence
@@ -101,9 +110,11 @@ function example({
             ? { entSeq: entry }
             : { entSeqs: link.entSeqs, query: token.dictionaryForm ?? token.text }
           : null,
-        isPageWord: highlights.has(index)
+        isPageWord: highlights.has(index),
+        functionWord: token.functionWord === true
       }
     }),
+    romaji: romanizeCompleteSentence(tokens.map(romajiReading)),
     translation: sentence.english,
     japanese: {
       id: sentence.japaneseTatoebaId,
@@ -117,6 +128,41 @@ function example({
     }
   }
 }
+
+/**
+ * The reading `romanizeCompleteSentence` reads for a token: Kuromoji's, which the row keeps as
+ * `kana` where it romanizes differently from the furigana (`reading`, in hiragana), or, for a
+ * word without kanji, from the surface.
+ */
+export function romajiReading(row: ExampleSentenceTokenRow): RomajiToken {
+  return {
+    surface: row.text,
+    reading: row.kana ?? (row.reading === undefined ? undefined : katakana(row.reading))
+  }
+}
+
+/** `JapaneseTextToken.isFunctionWord`: particles, auxiliaries, and symbols. */
+export function isFunctionWord(partOfSpeech: readonly string[]): boolean {
+  return ['助詞', '助動詞', '記号', '補助記号'].includes(partOfSpeech[0] ?? '')
+}
+
+/**
+ * Kuromoji's reading (the surface when it has none), for a token to keep as `kana` because the
+ * furigana `reading`, or without one the surface, would romanize differently; undefined when it
+ * wouldn't. The imports store it, so sentence romaji reads what the app reads.
+ */
+export function keptKana(
+  surface: string,
+  parserReading: string,
+  reading: string | undefined
+): string | undefined {
+  const kana = parserReading && parserReading !== '*' ? parserReading : surface
+  const implied = romajiReading({ text: surface, reading })
+  return toLatin(kana) !== toLatin(implied.reading ?? implied.surface) ? kana : undefined
+}
+
+/** What a sentence shows under itself, with Romaji on, when a word can't be romanized. */
+export const romajiUnavailable = 'Romaji unavailable for this text'
 
 /**
  * How many examples the word has, in words: the number the page lists, noting when the app

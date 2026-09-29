@@ -27,6 +27,7 @@ const iru: SearchResultsScreen = {
       headword: '要る',
       reading: 'いる',
       ruby: [],
+      romaji: null,
       summary: 'to be needed',
       chips: [],
       retrievalOrder: 3
@@ -37,6 +38,7 @@ const iru: SearchResultsScreen = {
       headword: '食べる',
       reading: 'たべる',
       ruby: [],
+      romaji: null,
       summary: 'to eat',
       chips: [],
       retrievalOrder: 0

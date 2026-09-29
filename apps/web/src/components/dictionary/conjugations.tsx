@@ -20,6 +20,7 @@ import { ExampleList } from './example-list'
 import { accent, HeadwordRuby } from './headword-ruby'
 import { PitchAccent } from './pitch-accent'
 import { PronounceButton } from './pronounce-button'
+import { HeadlineAids, Romaji } from './reading-aid'
 
 // The conjugation screens, as ConjugationsView.swift shows them. The table: the word with its
 // reading, meaning, word class, and a one-line rule, a Plain/Polite control when both registers
@@ -32,6 +33,10 @@ import { PronounceButton } from './pronounce-button'
 export interface ConjugationWord {
   ruby: RubySegment[]
   reading: string
+  /** Under the headword with Romaji on. */
+  romaji: string | null
+  /** Under the headword with Furigana off. */
+  readingWithoutFurigana: string | null
   summary: string
   partOfSpeech: string
   pitch: PitchAccentData | null
@@ -73,7 +78,13 @@ export function ConjugationTableContent({
     <div className="flex flex-col gap-4" data-conjugation-table>
       <div className="flex flex-col gap-2" data-conjugation-header>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <HeadwordRuby segments={word.ruby} className="text-4xl font-medium leading-tight" />
+          <div className="flex flex-col gap-1" data-headline>
+            <HeadwordRuby segments={word.ruby} className="text-4xl font-medium leading-tight" />
+            <HeadlineAids
+              romaji={word.romaji}
+              readingWithoutFurigana={word.readingWithoutFurigana}
+            />
+          </div>
           {word.pitch ? (
             <PitchAccent pitch={word.pitch} reading={word.reading} />
           ) : (
@@ -114,11 +125,15 @@ export function ConjugationTableContent({
               <span className="text-muted-foreground">{row.title}</span>
               <span lang="ja" className="ml-auto text-xl" data-conjugation-surface>
                 {row.rowFurigana ? (
-                  <HeadwordRuby
-                    segments={row.ruby}
-                    highlightedEnding={row.ending}
-                    highlightsKanji={false}
-                  />
+                  // A row with furigana is the app's JapaneseRubyText, with romaji under it.
+                  <>
+                    <HeadwordRuby
+                      segments={row.ruby}
+                      highlightedEnding={row.ending}
+                      highlightsKanji={false}
+                    />
+                    <Romaji text={row.romaji} className="text-right" />
+                  </>
                 ) : (
                   <EndingText surface={row.surface} ending={row.ending} />
                 )}
@@ -187,11 +202,14 @@ export function ConjugatedFormContent({ row }: { row: ConjugationRow }) {
         </p>
       ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
-        <HeadwordRuby
-          segments={row.ruby}
-          highlightedEnding={row.ending}
-          className="text-4xl font-medium leading-tight"
-        />
+        <div className="flex flex-col gap-1" data-headline>
+          <HeadwordRuby
+            segments={row.ruby}
+            highlightedEnding={row.ending}
+            className="text-4xl font-medium leading-tight"
+          />
+          <HeadlineAids romaji={row.romaji} readingWithoutFurigana={row.readingWithoutFurigana} />
+        </div>
         <PronounceButton text={row.reading} label={`Pronounce ${row.reading}`} />
       </div>
     </div>

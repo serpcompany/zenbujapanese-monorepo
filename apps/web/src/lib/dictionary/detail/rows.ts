@@ -96,6 +96,16 @@ export interface ExampleSentenceTokenRow {
   reading?: string
   /** Kuromoji's dictionary form, when it differs from the surface: what an ambiguous word searches for. */
   dictionaryForm?: string
+  /**
+   * Kuromoji's own reading, in katakana, when romaji from it differs from romaji from `reading`
+   * (or, without one, the surface): a number such as ３ read サン. Sentence romaji reads it.
+   */
+  kana?: string
+  /**
+   * A particle, auxiliary, or symbol (`JapaneseTextToken.isFunctionWord`), which shows no meaning
+   * under itself with Word Meanings on.
+   */
+  functionWord?: true
 }
 
 /**
@@ -182,6 +192,8 @@ export interface ExampleWordRow {
   p?: ExampleWordRow[]
   /** The whole sentence, which the app's analysis couldn't split: never linked. */
   u?: 1
+  /** Kuromoji's reading, for romaji, where `r` or the word would read differently (`kana`). */
+  k?: string
 }
 
 /**

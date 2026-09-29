@@ -33,6 +33,7 @@ import {
   conjugationTable,
   indexedForms
 } from '../../../src/lib/dictionary/detail/conjugation'
+import { isFunctionWord, keptKana } from '../../../src/lib/dictionary/detail/examples'
 import type {
   ExampleCountRow,
   ExampleLinkRow,
@@ -358,6 +359,10 @@ function tokenRows(tokens: LinkedToken[]): ExampleSentenceTokenRow[] {
     const row: ExampleSentenceTokenRow = { text: token.surface }
     if (hasKanji(token.surface)) row.reading = toHiragana(token.reading)
     if (token.dictionaryForm !== token.surface) row.dictionaryForm = token.dictionaryForm
+    // Sentence romaji reads Kuromoji's reading, kept where the row's own would read differently.
+    const kana = keptKana(token.surface, token.reading, row.reading)
+    if (kana !== undefined) row.kana = kana
+    if (isFunctionWord(token.partOfSpeech)) row.functionWord = true
     return row
   })
 }

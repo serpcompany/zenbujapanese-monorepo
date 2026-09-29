@@ -11,6 +11,8 @@ import {
 import { withKanjiReadings } from './kanji-split'
 import { partOfSpeechPhrase } from './part-of-speech'
 import { type PitchAccent, pitchAccent } from './pitch'
+import { readingWithoutFurigana } from './reading-aids'
+import { romanizeTrustedReading } from './romaji'
 import type {
   EntryRow,
   ExampleCountRow,
@@ -28,6 +30,8 @@ export interface WordSummary {
   headword: string
   reading: string
   ruby: RubySegment[]
+  /** The reading in romaji, shown under the headword with Romaji on; null when it has kanji. */
+  romaji: string | null
   summary: string
   /** Chips for the dictionaries that rank or list the word. */
   frequency: FrequencyResult[]
@@ -45,6 +49,8 @@ export interface AlternativeForm {
   labels: string[]
   /** The form's first kanji, which the app opens when the form is selected. */
   kanji: string | null
+  /** Under a reading, with Romaji on (the app's formLabel); null for a written form. */
+  romaji: string | null
 }
 
 export interface RelatedWord {
@@ -54,9 +60,13 @@ export interface RelatedWord {
   relation: string
   summary: string
   entSeq: number | null
+  /** Under the related word, with Romaji on. */
+  romaji: string | null
 }
 
 export interface WordDetail extends WordSummary {
+  /** The reading under the headword with Furigana off; null when the headword is its reading. */
+  readingWithoutFurigana: string | null
   /** The first sense's word class; empty when none has a name, and the page shows no row. */
   partOfSpeech: string
   /** The conjugation table the part-of-speech row opens; null when it opens none. */
@@ -86,6 +96,7 @@ export function wordSummary(
     headword: entry.headword,
     reading: entry.reading,
     ruby: rubySegments(entry.headword, entry.reading),
+    romaji: romanizeTrustedReading(entry.reading),
     summary: entry.summary,
     frequency: frequencyChips(frequency)
   }
@@ -165,6 +176,7 @@ export function wordDetail(rows: WordRows): WordDetail {
     ...summary,
     // The headword's kanji highlight their own part of the furigana when tapped.
     ruby: withKanjiReadings(summary.ruby, readings),
+    readingWithoutFurigana: readingWithoutFurigana(entry.headword, entry.reading),
     partOfSpeech: displayPartOfSpeech(entry),
     conjugations: conjugations(entry, readings),
     pitch: pitch ? pitchAccent(entry.reading, pitch) : null,
@@ -178,7 +190,8 @@ export function wordDetail(rows: WordRows): WordDetail {
       value: form.value,
       kind: form.kind,
       labels: form.labels,
-      kanji: formKanji(form.value)
+      kanji: formKanji(form.value),
+      romaji: form.kind === 'reading' ? romanizeTrustedReading(form.value) : null
     })),
     kanji: wordKanji(primaryKanji(entry.headword), rows.kanji),
     alternativeKanji: wordKanji(alternativeKanji(entry), rows.kanji),
@@ -188,7 +201,8 @@ export function wordDetail(rows: WordRows): WordDetail {
       ruby: rubySegments(relationship.headword, relationship.reading),
       relation: relationship.relation,
       summary: relationship.summary,
-      entSeq: relationship.targetEntSeq
+      entSeq: relationship.targetEntSeq,
+      romaji: romanizeTrustedReading(relationship.reading)
     })),
     examples: rows.examples.map(wordExample),
     exampleCount: rows.exampleCount,

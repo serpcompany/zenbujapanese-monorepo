@@ -7,17 +7,21 @@ import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import {
   licenseUrl,
+  romajiUnavailable,
   type TatoebaSentence,
   tatoebaSentenceUrl
 } from '@/lib/dictionary/detail/examples'
 import type { PageExample, PageExampleToken } from '@/lib/dictionary/page-example'
+import { AidText, aidClasses, Romaji } from './reading-aid'
 
 const linkClass = 'underline-offset-4 hover:text-muted-foreground'
 
 /**
  * One word of a sentence, as the app's LinkedTokenView draws it: a word with an entry is
  * underlined and links to it (the page's own word stands out), a word with several possible
- * entries links to a search for it, and anything else is plain text.
+ * entries links to a search for it, and anything else is plain text. With Word Meanings on, a
+ * word linked to one entry shows its short meaning under itself, in the accent color, keeping its
+ * baseline and taking the wider of the two widths, as the app's WordMeaning does.
  */
 function Token({ token }: { token: PageExampleToken }) {
   const className = token.isPageWord
@@ -25,7 +29,19 @@ function Token({ token }: { token: PageExampleToken }) {
     : token.link
       ? 'mr-0.5 border-b border-border'
       : undefined
-  const text = <RubyText segments={token.ruby} className={className} pageWord={token.isPageWord} />
+  const word = <RubyText segments={token.ruby} className={className} pageWord={token.isPageWord} />
+  const text = token.meaning ? (
+    <span className="word-meanings-on:inline-flex word-meanings-on:flex-col word-meanings-on:items-start">
+      {word}
+      <AidText
+        kind="wordMeaning"
+        text={token.meaning}
+        className="max-w-24 truncate text-xs leading-tight text-blue-600 dark:text-blue-400"
+      />
+    </span>
+  ) : (
+    word
+  )
   if (!token.path || !token.link) return text
   const title =
     'entSeqs' in token.link ? `${token.link.entSeqs.length} possible entries` : undefined
@@ -84,7 +100,7 @@ function ExampleItem({ example }: { example: PageExample }) {
       data-example-pair={example.pairId}
     >
       <div className="flex flex-1 flex-col gap-1">
-        <p lang="ja" className="text-xl leading-[2.2]">
+        <p lang="ja" className="text-xl leading-[2.2] word-meanings-on:leading-[2.6]">
           {example.tokens.map(token => {
             const key = offset
             offset += token.text.length
@@ -95,7 +111,22 @@ function ExampleItem({ example }: { example: PageExample }) {
             )
           })}
         </p>
-        <p className="text-muted-foreground">{example.translation}</p>
+        {/* The sentence in romaji with Romaji on, or why it has none, as LinkedJapaneseText. */}
+        {example.romaji === null ? (
+          <AidText
+            kind="romaji"
+            text={romajiUnavailable}
+            className="text-xs text-muted-foreground"
+          />
+        ) : (
+          <Romaji text={example.romaji} className="text-base" />
+        )}
+        <p
+          data-reading-aid="translation"
+          className={`text-muted-foreground ${aidClasses.translation}`}
+        >
+          {example.translation}
+        </p>
         <Attribution example={example} />
       </div>
       <PronounceButton text={example.text} label="Pronounce sentence" />

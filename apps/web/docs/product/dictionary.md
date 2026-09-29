@@ -283,6 +283,18 @@ credits both sides of its Tatoeba pair, as a word page's examples do.
 - Source: `ExampleSentencesView.swift`; #465 (per-sentence attribution).
 - Check: ES `shown[].english`; `search-examples.test.tsx` (the translation and credit).
 
+**Reading Aids.** The page follows the Reading Aids settings (see
+[Reading Aids settings](#reading-aids-settings)) as the app's screen does: Furigana, each
+sentence's Romaji, and Sentence Translations. Word Meanings don't show here, as the app's
+`.dedicated` presentation draws none. The search import keeps Kuromoji's reading where romaji needs
+it (`k` in `words_json`).
+
+- Source: `LinkedJapaneseText.swift` (romaji, and `WordMeaning` only in the linked, non-dedicated
+  presentation); `ExampleSentencesView.swift` (translations).
+- Check: ES `shown[].romaji`, compared by the search import's gate
+  (`src/lib/dictionary/examples/conformance.test.ts`); the classes that show and hide each aid:
+  `reading-aids.test.tsx`.
+
 **Paging.** The page renders its first 25 sentences, then loads 25 more at a time as the learner
 scrolls, or with the Load more examples button, from
 `/dictionary/search/<query>/examples.json?build=<build>&from=<n>`, named for the search database
@@ -682,8 +694,9 @@ stroke order, Kanjium, and JMdict.
 **Header.** The 全 mark links home, with the site name beside it on wide screens. A header search
 field appears on wide screens, and a search button on phones, except on the dictionary home and
 search pages, which have their own box. The nav links Dictionary, About, and Support on wide
-screens, with no current-page state. "Get the app" leads to the home page until the App Store link
-is known, and has no icon.
+screens, with no current-page state. A Reading Aids button (see Reading Aids) comes before the
+search button. "Get the app" leads to the home page until the App Store link is known, and has no
+icon.
 
 - Source: #462 design; #484.
 - Check: smoke "the header links to the dictionary and has search". The rest: No automated check
@@ -698,13 +711,97 @@ and Sitemap, then the copyright line. Legal follows Contact, as in the #462 desi
   Contact, before the legal pages, as the #462 design does"; smoke "the footer links Legal". The
   other links: No automated check yet (#511).
 
-**Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
-its defaults: headwords and linked example words have furigana, examples show their translation,
-and there is no romaji and no word meanings under example words. The settings are required; see
-[Required, not built yet](#required-not-built-yet-511).
+**Reading Aids settings.** The header's Reading Aids button (a book icon, on every page) opens a
+menu with the app's settings, grouped as its Reading Aids screen groups them: Show Furigana and Show
+Romaji, then Show Word Meanings and Show Sentence Translations, each a checkbox. The defaults are
+the app's: Furigana and Sentence Translations on, Romaji and Word Meanings off. The app keeps the
+settings on the device; the website keeps them in the browser (`localStorage`) until accounts
+exist, and a change applies at once. Hide Furigana on Known Words depends on which words the
+learner knows, so it waits for accounts (#468); until then every word counts as unknown, as it does
+in the app until the learner marks it, so Word Meanings shows under every linked word. The app's
+translation language and Player caption translator aren't offered: the website shows English only
+and has no Player.
 
-- Source: App docs index, Account (Reading Aids); `ReadingAidPreferences.swift` (the defaults).
-- Check: No automated check yet (#511).
+- Source: App docs index, Account (Reading Aids); `ReadingAidSettingsView` in
+  `AccountAndMediaLibraryView.swift`; `ReadingAidPreferences.swift`; #511.
+- Check: WD `readingAidDefaults` (a new install's settings, recorded from `ReadingAidPreferences`),
+  which `src/components/dictionary/reading-aids.test.tsx`, "default to the app’s: Furigana and
+  Sentence Translations on, the rest off", holds `detail/reading-aids.ts` to;
+  `src/components/reading-aids-menu.interaction.test.tsx` ("lists the app’s settings with their
+  defaults checked", "toggling a setting stores it and applies it to the page at once", "shows the
+  stored settings"); smoke "見る's page renders each Reading Aid as the app shows it" (the menu).
+
+**Reading Aids without a flash.** Every page renders every aid's text in its HTML, each marked with
+its aid and a class that shows or hides it by the setting (`components/dictionary/reading-aid.tsx`,
+`globals.css`'s `furigana-off`, `romaji-on`, `word-meanings-on`, and `translations-off` variants).
+An inline script in the root layout's `<head>` reads the stored settings and sets one attribute per
+aid on `<html>` before the body paints, so a stored setting applies with no flash, no layout shift,
+and no hydration mismatch; the server renders the defaults. Storage the browser blocks leaves the
+defaults.
+
+- Source: #511 (the settings are required; no layout shift).
+- Check: `reading-aids.test.tsx`, "every aid carries the class that hides it, and globals.css keys
+  each to its setting" and "the inline script sets each aid on <html> before paint" (nothing
+  stored, some settings, all changed, unreadable, and wrong types); smoke "見る's page renders each
+  Reading Aid as the app shows it" (the script).
+
+**Furigana.** With Furigana off, furigana disappears everywhere the app draws it with
+`JapaneseRubyText`: headwords, conjugation headwords and rows, search results, a kanji's words,
+related words, and linked words in examples. A headword (on the word page, and the conjugation
+table's and each form's) then shows its reading under itself, unless it's written in its reading,
+as the app's WordHeadline does. The per-kanji highlight's kanji stay selectable, as plain text.
+
+- Source: App docs, Dictionary and kanji details ("When furigana is off, the reading appears under
+  the headword instead"); `JapaneseRubyText.swift`; `ReadingAidPresentation.readingWithoutFurigana`
+  and `readingWithoutFurigana` in `WordDetailView.swift`.
+- Check: WD `readingAids.readingWithoutFurigana`, compared by the gate, and read back from the drawn
+  headline under each setting by `reading-aids.test.tsx` ("the rendered word page’s Reading Aids
+  match the app") on every import; "the headline and an example under Furigana off"; smoke "見る's
+  page renders each Reading Aid as the app shows it".
+
+**Romaji.** With Romaji on, romaji appears under the Japanese wherever the app shows it: under the
+word page's headword, each alternative reading, each related word, each example sentence (on word
+pages and Example Sentences pages), the
+conjugation table's and each form's headword, a conjugation row with furigana (来させる), each
+search result, each kanji reading (い.る is "i.ru"), and each of a kanji's words. It is the app's:
+Apple's `.toLatin` (ICU's Any-Latin) without corrections, so は is "ha", おう is "ou", ー is a
+macron (コーヒー is "kōhī"), and ん before a vowel is "n'" (kin'youbi). A reading with kanji has
+none. An example's romaji joins its words' readings with spaces, except around punctuation; when a
+word can't be romanized, the example says "Romaji unavailable for this text", as the app does.
+`detail/romaji.ts` ports the transform for Japanese. Checked on macOS against the transform itself,
+it matches all 516,072 distinct strings the dictionary romanizes (every reading, form, kanji reading,
+and example word); its tests pin the rules' edges.
+
+- Source: App docs index, Account (Reading Aids); `RomajiReadingAidText` and
+  `AppleJapaneseRomanization` in `ReadingAidPresentation.swift`; `LinkedJapaneseText.swift`.
+- Check: WD `readingAids.romaji`, `alternativeForms[].romaji`, `relatedWords[].romaji`, and
+  `examples.shown[].romaji`; KD `readings[].romaji` and `wordsRomaji`; ES `shown[].romaji`; all
+  compared by the gates,
+  and the word page's read back from the drawn page under each setting by `reading-aids.test.tsx`;
+  `src/lib/dictionary/detail/romaji.test.ts`; smoke "見る's page renders each Reading Aid as the
+  app shows it".
+
+**Word Meanings.** With Word Meanings on, each example word linked to one entry shows a short
+meaning under itself in the accent color: the first meaning without notes in parentheses, up to
+its first comma, without a leading "to ", and cut to 17 characters and an ellipsis past 18
+(`shortMeaning`). Particles, auxiliaries, and symbols show none. The word keeps its baseline and
+takes the wider of its own and its meaning's width, and lines of the sentence spread apart to fit.
+
+- Source: App docs, Dictionary and kanji details ("With Show Word Meanings on…");
+  `ReadingAidPresentation.wordMeaning`; `DictionaryEntry.shortMeaning`; `WordMeaning` in
+  `LinkedJapaneseText.swift`.
+- Check: WD `examples.shown[].tokens[].meaning`, compared by the gate (the import stores which words
+  are function words; each page reads its linked words' first meanings), and read back under each
+  setting by `reading-aids.test.tsx`; `src/lib/dictionary/detail/reading-aids.test.ts`,
+  "shortMeaning (DictionaryEntry.shortMeaning)".
+
+**Sentence Translations.** With Sentence Translations off, examples hide their English. Each
+example's credits stay.
+
+- Source: App docs, Dictionary and kanji details ("Show Sentence Translations controls whether
+  example sentences show their English"); `ExampleSentencesView.swift`.
+- Check: `reading-aids.test.tsx`, under each setting, for every word-detail case's examples, and
+  "the headline and an example under Sentence Translations off".
 
 ## URLs, SEO, and indexing
 
@@ -884,35 +981,6 @@ Support on phones; keeping any of these differences needs a decision on file.
 
 - Source: #462 design.
 - Check it will get: a rendered-HTML check of the footer's links.
-
-### Site-wide
-
-**Reading Aids.** The website offers the app's Reading Aids settings and applies them wherever the
-app does:
-
-- **Furigana** over headwords and linked words. With it off, a word page shows the reading under
-  the headword instead, as in the app.
-- **Romaji** alongside the Japanese on word pages, kanji pages, and example sentences.
-- **Word Meanings:** a short meaning under each linked word the learner hasn't marked known.
-- **Sentence Translations:** whether examples show their English.
-- **Hide Furigana on Known Words:** known words in examples lose their furigana.
-
-The defaults are the app's: Furigana and Sentence Translations on, Romaji, Word Meanings, and Hide
-Furigana on Known Words off. The app keeps the settings on the device; the website keeps them in
-the browser until accounts exist.
-
-Hide Furigana on Known Words depends on which words the learner knows, so it needs accounts (#468)
-and ships with them. Furigana, Romaji, Word Meanings, and Sentence Translations can ship before
-then: without an account every word counts as unknown, as it does in the app until the learner
-marks it, so Word Meanings shows under every linked word.
-
-- App source: App docs index, Account (Reading Aids); App docs, Dictionary and kanji details
-  (furigana off, Word Meanings, Sentence Translations); `ReadingAidPreferences.swift`,
-  `ReadingAidPresentation.swift`.
-- Check it will get: a unit test pinning the defaults to `ReadingAidPreferences.swift`'s, and a
-  rendered-page check of a word page (such as 見る) under each setting: ruby present or absent, the
-  reading under the headword, romaji, meanings under example words, and translations. Hide Furigana
-  on Known Words gets its check with #468.
 
 ### URLs and SEO
 

@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
 import { PageToolbar } from '@/components/dictionary/page-toolbar'
+import { Romaji } from '@/components/dictionary/reading-aid'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { Section } from '@/components/dictionary/section'
 import { SourceCredits } from '@/components/dictionary/source-credits'
@@ -99,8 +100,11 @@ export default async function KanjiPage({ params }: Props) {
                 className="grid grid-cols-[3.5rem_1fr] gap-x-3 gap-y-1 py-3 first:pt-0 last:pb-0"
               >
                 <span className="font-medium">{reading.label}</span>
-                <span lang="ja" className="text-lg">
-                  {reading.value}
+                <span className="flex flex-col">
+                  <span lang="ja" className="text-lg">
+                    {reading.value}
+                  </span>
+                  <Romaji text={reading.romaji} />
                 </span>
                 {reading.words.length > 0 ? (
                   <ul className="col-start-2 flex flex-col text-muted-foreground">
@@ -172,7 +176,10 @@ export default async function KanjiPage({ params }: Props) {
             {kanji.words.map(word => {
               const content = (
                 <>
-                  <RubyText segments={word.ruby} className="text-xl" />
+                  <span className="flex flex-col">
+                    <RubyText segments={word.ruby} className="text-xl" />
+                    <Romaji text={word.romaji} />
+                  </span>
                   <ItemContent className="text-right text-muted-foreground">
                     {word.summary}
                   </ItemContent>

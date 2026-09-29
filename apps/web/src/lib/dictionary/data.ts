@@ -1,6 +1,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { cache } from 'react'
 import {
+  fixtureExampleMeanings,
   fixtureFormExamples,
   fixtureKanjiRows,
   fixtureSearchOrder,
@@ -157,6 +158,9 @@ const fixtureLinks: Links = {
   },
   kanji(character) {
     return character !== null && kanjiRowsByCharacter.has(character) ? kanjiPath(character) : null
+  },
+  meaning(entSeq) {
+    return fixtureExampleMeanings.get(entSeq) ?? null
   }
 }
 
@@ -247,7 +251,7 @@ export const getWordPage = cache(async (entSeq: number): Promise<WordPageData | 
     return wordPage(
       word.rows,
       word.slug,
-      databaseLinks(slugs, word.kanjiPages),
+      databaseLinks(slugs, word.kanjiPages, word.exampleMeanings),
       await dictionaryBuild()
     )
   }
@@ -276,7 +280,7 @@ export async function getWordExamples(
   if (db) {
     const found = await db.examples(entSeq, from, examplesPerPage)
     if (!found) return null
-    const links = databaseLinks(found.slugs, new Set())
+    const links = databaseLinks(found.slugs, new Set(), found.meanings)
     return found.rows.map(row => pageExample(wordExample(row), links))
   }
   const rows = wordRowsBySeq.get(entSeq)
@@ -682,7 +686,10 @@ export async function searchExamplePageOn(
 /** Word pages from the dictionary database, or the fixtures'. */
 async function exampleWordLinks(entSeqs: number[]): Promise<Links> {
   const dictionary = await dictionaryDb()
-  return dictionary ? databaseLinks(await dictionary.wordSlugs(entSeqs), new Set()) : fixtureLinks
+  // The Example Sentences screen's words show no meanings (LinkedTokenView's dedicated
+  // presentation), so a search's examples read no meanings.
+  if (!dictionary) return { ...fixtureLinks, meaning: undefined }
+  return databaseLinks(await dictionary.wordSlugs(entSeqs), new Set())
 }
 
 /**

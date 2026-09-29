@@ -71,7 +71,8 @@ that Search's "View N Example Sentences" row opens: for each query, the row's co
 the entry the screen links words to, whether it lists that entry's examples (a deinflected or
 romaji query) or the sentences that contain the query, every listed sentence's pair ID in order,
 and the first five sentences' words with their entry, candidates, and whether the screen accents
-them as the query's, read with the app's Kuromoji analysis. What the screen lists and accents
+them as the query's, and each sentence's romaji (`AppleJapaneseRomanization`), read with the app's
+Kuromoji analysis. What the screen lists and accents
 comes from `ExampleSentencesScreen` in `ExampleSentencesView.swift`, which the view,
 `LinkedJapaneseText`, and the suite share. It pins `LanguageReferenceData.sqlite3`,
 `ExampleWordIndex.sqlite3`, and the Kuromoji files. Record it with
@@ -90,7 +91,11 @@ conjugation table its part of speech opens (each form with the words `Conjugatio
 `ConjugatedForm.examples`, and the first 3 with their linked tokens and which of them
 `LinkedJapaneseText.matchesQuery` accents), kanji, and its first 25 examples with their linked tokens; for
 a kanji, its metrics, meanings, readings with their words, elements, 24 words, and whether it
-has stroke data (not its JLPT metric, which the suites don't record). The views and the suite
+has stroke data (not its JLPT metric, which the suites don't record). Both also record what
+Reading Aids add, through `ReadingAidPresentation` and `AppleJapaneseRomanization`: romaji under
+the headword, alternative readings, related words, examples, kanji readings, and kanji words; the
+reading under the headword with furigana off; and each example word's meaning with Word Meanings
+on. `word-detail.json`'s `readingAidDefaults` records a new install's Reading Aids. The views and the suite
 share those helpers, so the suite records what the views draw. Each file pins the SHA-256 of
 every bundled artifact it was recorded against. After an intended
 change to either screen or its data, record them again with the same

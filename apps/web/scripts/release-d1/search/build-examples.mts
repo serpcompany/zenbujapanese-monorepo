@@ -28,6 +28,7 @@ import { createHash } from 'node:crypto'
 import { closeSync, openSync, writeFileSync, writeSync } from 'node:fs'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
+import { keptKana } from '../../../src/lib/dictionary/detail/examples'
 import type { ExampleWordRow } from '../../../src/lib/dictionary/detail/rows'
 import { type Fts4Tokenizer, tokenize } from '../../../src/lib/dictionary/examples/fts4'
 import { toHiragana } from '../../../src/lib/dictionary/examples/kana'
@@ -245,6 +246,10 @@ function wordRow(word: PlannedWord): ExampleWordRow {
   }
   if (word.pieces) row.p = word.pieces.map(wordRow)
   if (word.unanalyzed) row.u = 1
+  // For Reading Aids: the reading sentence romaji needs. The Example Sentences screen shows no
+  // word meanings, so a search's words don't say which are function words.
+  const kana = keptKana(word.surface, word.reading, row.r)
+  if (kana !== undefined) row.k = kana
   return row
 }
 

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { HeaderSearchField, HeaderSearchLink } from '@/components/header-search'
+import { ReadingAidsMenu } from '@/components/reading-aids-menu'
 import { Button } from '@/components/ui/button'
 import { site } from '@/lib/site'
 
@@ -33,6 +34,7 @@ export function SiteHeader() {
           </Link>
         </nav>
         <div className="flex shrink-0 items-center gap-1">
+          <ReadingAidsMenu />
           <HeaderSearchLink />
           <Button size="lg" nativeButton={false} render={<Link href={site.appUrl} />}>
             Get the app

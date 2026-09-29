@@ -43,6 +43,8 @@ export interface LinkedToken {
   /** The parser's reading, in katakana as Kuromoji gives it (the surface when it has none). */
   reading: string
   dictionaryForm: string
+  /** The parser's part of speech, most general first; empty when the analysis failed. */
+  partOfSpeech: string[]
   /** The form the candidates were found by, when there are any and no highlight chose them. */
   lookupForm: string | null
 }
@@ -201,6 +203,7 @@ export function linkedTokens(
             candidates: [],
             reading: text,
             dictionaryForm: text,
+            partOfSpeech: [],
             lookupForm: null
           }
         ]
@@ -223,6 +226,7 @@ export function linkedTokens(
     candidates: resolution.candidates,
     reading: candidate.reading,
     dictionaryForm: candidate.dictionaryForm,
+    partOfSpeech: candidate.partOfSpeech,
     lookupForm: resolution.lookupForm
   })
 
@@ -268,6 +272,8 @@ export interface PlannedWord {
   reading: string
   dictionaryForm: string
   normalizedForm: string
+  /** The parser's part of speech, most general first. */
+  partOfSpeech: string[]
   /** Its entries when no page's entry claims it: one when it resolves to one. */
   candidates: LinkEntry[]
   /** Its pieces, each planned, when it resolves to nothing and has more than one. */
@@ -291,6 +297,7 @@ export function plannedWords(
             reading: text,
             dictionaryForm: text,
             normalizedForm: text,
+            partOfSpeech: [],
             candidates: [],
             pieces: null,
             unanalyzed: true
@@ -304,6 +311,7 @@ export function plannedWords(
       reading: candidate.reading,
       dictionaryForm: candidate.dictionaryForm,
       normalizedForm: candidate.normalizedForm,
+      partOfSpeech: candidate.partOfSpeech,
       candidates: resolved,
       pieces:
         pieces && resolved.length === 0 && candidate.children.length > 1
@@ -335,6 +343,7 @@ export function linkPlanned(
       candidates,
       reading: word.reading,
       dictionaryForm: word.dictionaryForm,
+      partOfSpeech: word.partOfSpeech,
       lookupForm: null
     }
   }

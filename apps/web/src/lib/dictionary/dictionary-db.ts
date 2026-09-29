@@ -40,12 +40,16 @@ export interface DictionaryWord {
   kanjiPages: Set<string>
   /** The slug of each word its first examples link to, by `ent_seq`. */
   exampleSlugs: Map<number, string>
+  /** The first meaning of each of those words, for Word Meanings, by `ent_seq`. */
+  exampleMeanings: Map<number, string>
 }
 
 /** Some of a word's examples, and the slug of each word they link to. */
 export interface DictionaryExamples {
   rows: WordExampleRows[]
   slugs: Map<number, string>
+  /** The first meaning of each word they link to, for Word Meanings. */
+  meanings: Map<number, string>
 }
 
 /** What a word's conjugation screens read: its rows without examples, and its slug. */
@@ -77,6 +81,10 @@ export interface DictionaryKanji {
   /** Its components and element glyphs that have a kanji page. */
   kanjiPages: Set<string>
 }
+
+/** Each linked word's first meaning, by `ent_seq`. */
+const meaningsOf = (rows: { entSeq: number; meaning: string | null }[]) =>
+  new Map(rows.flatMap(row => (row.meaning === null ? [] : [[row.entSeq, row.meaning] as const])))
 
 export function dictionaryDatabase(db: D1Database) {
   const orm = drizzle(db, { schema })
@@ -117,10 +125,17 @@ export function dictionaryDatabase(db: D1Database) {
       }
     }))
 
-  /** The slugs of the words those examples link to (a word with one entry has a page link). */
+  /**
+   * The slugs of the words those examples link to (a word with one entry has a page link), and
+   * each one's first meaning, which Word Meanings shortens under the word.
+   */
   const exampleSlugs = (entSeq: number, from: number, limit: number) =>
     orm
-      .select({ entSeq: words.entSeq, slug: words.slug })
+      .select({
+        entSeq: words.entSeq,
+        slug: words.slug,
+        meaning: sql<string | null>`json_extract(${words.senses}, '$[0].meaning')`
+      })
       .from(words)
       .where(sql`${words.entSeq} IN (
         SELECT json_extract(l.value, '$.entSeqs[0]')
@@ -219,7 +234,8 @@ export function dictionaryDatabase(db: D1Database) {
         slug: word.slug,
         relatedSlugs: new Map(related.map(row => [row.entSeq, row.slug])),
         kanjiPages: new Set(glosses.map(gloss => gloss.character)),
-        exampleSlugs: new Map(slugs.map(row => [row.entSeq, row.slug]))
+        exampleSlugs: new Map(slugs.map(row => [row.entSeq, row.slug])),
+        exampleMeanings: meaningsOf(slugs)
       }
     },
 
@@ -294,7 +310,11 @@ export function dictionaryDatabase(db: D1Database) {
         exampleSlugs(entSeq, from, limit)
       ])
       if (!word) return null
-      return { rows: exampleRows(rows), slugs: new Map(slugs.map(row => [row.entSeq, row.slug])) }
+      return {
+        rows: exampleRows(rows),
+        slugs: new Map(slugs.map(row => [row.entSeq, row.slug])),
+        meanings: meaningsOf(slugs)
+      }
     },
 
     async kanji(character: string): Promise<DictionaryKanji | null> {

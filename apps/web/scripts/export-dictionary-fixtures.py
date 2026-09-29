@@ -43,6 +43,25 @@ def write(name, rows):
     (OUTPUT / name).write_text(f"[\n{lines}\n]\n", encoding="utf-8")
 
 
+def export_example_meanings(data):
+    """`example-meanings.json`: the first meaning of each word the fixture examples link to one
+    entry, which Word Meanings shortens under the word, as the dictionary database reads it."""
+    examples = json.loads((OUTPUT / "word-examples.json").read_text(encoding="utf-8"))
+    linked = sorted({
+        link["entSeqs"][0]
+        for example in examples for link in example["links"] if len(link["entSeqs"]) == 1
+    })
+    rows = data.db.execute(
+        f"SELECT CAST(source_record_id AS INTEGER), json_extract(senses_json, '$[0].meaning')"
+        f" FROM entries WHERE CAST(source_record_id AS INTEGER) IN ({','.join('?' * len(linked))})",
+        linked,
+    ).fetchall()
+    write("example-meanings.json", [
+        {"entSeq": ent_seq, "meaning": meaning}
+        for ent_seq, meaning in sorted(rows) if meaning is not None
+    ])
+
+
 def export_examples(resources):
     """The fixture words' examples, from the import's own precompute (build-examples.mts):
     `example-sentences.json`, `word-examples.json` (the first EXAMPLES_PER_WORD of each word),
@@ -87,6 +106,7 @@ def main(resources):
         })
     write("words.json", words)
     export_examples(resources)
+    export_example_meanings(data)
     kanji = []
     for character in KANJI:
         if character not in data.kanji_by_character:
