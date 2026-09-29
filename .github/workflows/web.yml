@@ -27,3 +27,10 @@ jobs:
           cache-dependency-path: apps/web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
+      # pnpm check builds without SITE_ENV. Build as each deployed environment does too, since
+      # static pages and prerendering differ by environment: a route that reads a binding at
+      # build time fails only there. Neither build has a dictionary database, as in a deploy.
+      - name: Build for staging
+        run: SITE_ENV=staging pnpm build
+      - name: Build for production
+        run: SITE_ENV=production pnpm build

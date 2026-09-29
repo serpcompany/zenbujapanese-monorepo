@@ -63,13 +63,15 @@ kanji=/dictionary/kanji/%E8%A6%8B/
 if [ "$env" = production ]; then
   expect "$word" 404
   expect "$kanji" 404
-  # No dictionary sitemaps before launch.
+  # No dictionary sitemaps before launch, in either sitemap index.
   expect /sitemaps/kanji.xml 404
-  if grep -q '/sitemaps/dictionary/\|/sitemaps/kanji\.xml' <<<"$index_locs"; then
-    fail 'sitemap index lists dictionary sitemaps before launch'
-  else
-    pass 'sitemap index lists no dictionary sitemaps'
-  fi
+  for index in /sitemap-index.xml /sitemap.xml; do
+    if curl -s "${smoke[@]}" "$base$index" | grep -q '/sitemaps/dictionary/\|/sitemaps/kanji\.xml'; then
+      fail "$index lists dictionary sitemaps before launch"
+    else
+      pass "$index lists no dictionary sitemaps"
+    fi
+  done
 else
   expect "$word" 200
   expect "$kanji" 200
@@ -77,13 +79,17 @@ else
   expect_redirect /dictionary/1259290/ "$word"
   expect /dictionary/999999999/ 404
 
-  # The sitemap index lists the word and kanji sitemaps (ADR 0007).
-  if grep -q '<loc>https://zenbujapanese.com/sitemaps/dictionary/1.xml</loc>' <<<"$index_locs" &&
-    grep -q '<loc>https://zenbujapanese.com/sitemaps/kanji.xml</loc>' <<<"$index_locs"; then
-    pass 'sitemap index lists the dictionary and kanji sitemaps'
-  else
-    fail 'sitemap index is missing the dictionary or kanji sitemap'
-  fi
+  # Both sitemap indexes list the word and kanji sitemaps (ADR 0007): /sitemap.xml serves the same
+  # index, and neither may be a copy frozen at build time.
+  for index in /sitemap-index.xml /sitemap.xml; do
+    locs="$(curl -s "${smoke[@]}" "$base$index" | grep -oE '<loc>[^<]+</loc>' || true)"
+    if grep -q '<loc>https://zenbujapanese.com/sitemaps/dictionary/1.xml</loc>' <<<"$locs" &&
+      grep -q '<loc>https://zenbujapanese.com/sitemaps/kanji.xml</loc>' <<<"$locs"; then
+      pass "$index lists the dictionary and kanji sitemaps"
+    else
+      fail "$index is missing the dictionary or kanji sitemap"
+    fi
+  done
   # A word sitemap holds 1 to 50,000 canonical word URLs, percent-encoded (ASCII only).
   expect /sitemaps/dictionary/1.xml 200
   word_locs="$(curl -s "${smoke[@]}" "$base/sitemaps/dictionary/1.xml" | grep -oE '<loc>[^<]+</loc>' || true)"
