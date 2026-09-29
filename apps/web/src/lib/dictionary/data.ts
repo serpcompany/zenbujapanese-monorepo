@@ -16,12 +16,17 @@ import {
   type RelatedWord,
   type WordDetail,
   type WordKanji,
-  type WordSummary,
-  wordDetail,
-  wordSummary
+  wordDetail
 } from './detail/word'
 import { dictionaryDatabase } from './dictionary-db'
-import type { SearchEntry } from './search/search'
+import { linkSearchScreen, type SearchData } from './results/links'
+import {
+  isSingleKanji,
+  loadFrequency,
+  type SearchResultsScreen,
+  searchResultsScreen
+} from './results/results'
+import { d1SearchDatabase, type SearchResults } from './search/search'
 import { websiteSearch } from './search/website'
 import { hasSearchPath, kanjiPath, searchPath, wordPath, wordSlug } from './urls'
 
@@ -68,14 +73,7 @@ export interface KanjiPageData
   indexable: boolean
 }
 
-/** A search result; `path` is null when the word has no page yet (#465). */
-export type SearchWord = Linked<WordSummary>
-
-export interface SearchData {
-  query: string
-  kanji: { character: string; meanings: string[]; path: string } | null
-  words: SearchWord[]
-}
+export type { SearchData, SearchWord } from './results/links'
 
 const wordRowsBySeq = new Map(fixtureWordRows.map(rows => [rows.entry.entSeq, rows]))
 const kanjiRowsByCharacter = new Map(fixtureKanjiRows.map(rows => [rows.kanji.character, rows]))
@@ -263,21 +261,6 @@ export const getKanjiPage = cache(async (character: string): Promise<KanjiPageDa
   return kanjiPage(rows, meanings.length > 0 || readings.length > 0, fixtureLinks)
 })
 
-/**
- * A search result as a word. Every word links once the dictionary database is loaded (`linked`);
- * before that, only fixture words have pages. `frequency` comes from the dictionary database too,
- * since the search database has none, and becomes the chips SearchView.swift shows on each row.
- */
-export function summarizeSearchEntry(
-  entry: SearchEntry,
-  linked = false,
-  frequency: readonly FrequencyRow[] = []
-): SearchWord {
-  const entSeq = entry.sourceRecordId
-  const word = wordSummary({ ...entry, entSeq }, frequency)
-  return { ...word, path: linked ? wordPath(word) : fixtureLinks.word(entSeq) }
-}
-
 // Release databases known to hold an import, with the build each holds. Only a finished import is
 // remembered, so a database that has none yet is checked again on the next request.
 const importedBuilds = new WeakMap<D1Database, string>()
@@ -332,7 +315,24 @@ export function isUnreadableQuery(error: unknown): boolean {
   return false
 }
 
-function fixtureWords(query: string): SearchWord[] {
+/** Results as the search core returns them, for `searchResultsScreen`. */
+function searchResults(items: SearchResults['items']): SearchResults {
+  return {
+    items,
+    leadingLexicalEntryCount: items.length,
+    presentation: 'ranked',
+    resolution: 'direct',
+    readingRefinement: null,
+    usesPrimaryEntryExamples: false,
+    hasExactOrPrefixMatch: items.length > 0
+  }
+}
+
+/**
+ * The fixtures' results, in the order the app lists them (`fixtureSearchOrder`), with their
+ * frequency. Each is its own match group, so the re-sort keeps that order.
+ */
+function fixtureResults(query: string) {
   const ordered = Object.hasOwn(fixtureSearchOrder, query) ? fixtureSearchOrder[query] : undefined
   const matches: WordRows[] = ordered
     ? ordered.flatMap(entSeq => wordRowsBySeq.get(entSeq) ?? [])
@@ -342,53 +342,70 @@ function fixtureWords(query: string): SearchWord[] {
           entry.reading === query ||
           entry.summary.toLowerCase().split(/[,;] /).includes(query)
       )
-  return matches.map(rows => ({
-    ...wordSummary(rows.entry, rows.frequency),
-    path: wordPath(rows.entry)
-  }))
+  const results = searchResults(
+    matches.map(({ entry }, position) => ({
+      entry: { ...entry, sourceRecordId: entry.entSeq },
+      sourceOrder: position,
+      matchRank: {
+        kind: 'japanese',
+        relation: 0,
+        priorityProfile: { primaryMask: 0, secondaryMask: 0, newsFrequencyBand: null },
+        senseBreadthRank: 0,
+        headwordLength: 0,
+        semanticFingerprint: ''
+      },
+      fallbackOrder: position,
+      matchedSummary: null
+    }))
+  )
+  const frequency = new Map<string, FrequencyRow[]>(
+    matches.map(rows => [rows.entry.id, rows.frequency])
+  )
+  return { results, frequency }
 }
 
-async function searchWords(query: string, dictionary: DictionaryDatabase | null) {
+/**
+ * The search core's results for the query and their frequency evidence, both from the search
+ * database, so its import gate (results/conformance.test.ts) checks everything the page orders
+ * and shows; the fixtures without one.
+ */
+async function searchScreen(query: string): Promise<SearchResultsScreen> {
   const { env } = await getCloudflareContext({ async: true })
   // A failing database throws, so the request fails rather than rendering an empty page.
   const db = await imported(env.SEARCH_DB, 'SEARCH_DB')
-  if (!db) return fixtureWords(query)
-  let entries: SearchEntry[]
+  if (!db) {
+    const { results, frequency } = fixtureResults(query)
+    return searchResultsScreen(query, results, frequency)
+  }
+  let results: SearchResults
   try {
-    entries = (await websiteSearch(db).search(query)).items.map(item => item.entry)
+    results = await websiteSearch(db).search(query)
   } catch (error) {
     // Like the app, a query full-text search can't read shows no results.
-    if (isUnreadableQuery(error)) return []
+    if (isUnreadableQuery(error)) return searchResultsScreen(query, searchResults([]), new Map())
     throw error
   }
-  // The frequency chips: one query for every result, on the dictionary database, outside the
-  // search core (presentation, which the app also loads after the results).
-  const frequency = dictionary
-    ? await dictionary.frequency(entries.map(entry => entry.sourceRecordId))
-    : new Map<number, FrequencyRow[]>()
-  return entries.map(entry =>
-    summarizeSearchEntry(entry, !!dictionary, frequency.get(entry.sourceRecordId))
-  )
+  // One query for every result, as the app loads frequency after the results.
+  const frequency = await loadFrequency(d1SearchDatabase(db), results)
+  return searchResultsScreen(query, results, frequency)
 }
 
-/** The kanji card for a search for one kanji. */
-async function searchKanji(
-  query: string,
-  db: DictionaryDatabase | null
-): Promise<SearchData['kanji']> {
-  const kanji = db
-    ? [...query].length === 1
-      ? await db.kanjiCard(query)
-      : null
-    : (kanjiRowsByCharacter.get(query)?.kanji ?? null)
-  return kanji
-    ? { character: kanji.character, meanings: kanji.meanings, path: kanjiPath(kanji.character) }
-    : null
+/** Whether a searched kanji has a page: in the dictionary database, or a fixture kanji. */
+async function hasKanjiPage(character: string, db: DictionaryDatabase | null): Promise<boolean> {
+  return db ? (await db.kanjiCard(character)) !== null : kanjiRowsByCharacter.has(character)
 }
 
-/** Memoized per request, so the page and its metadata search once. */
+/**
+ * The search results screen with its links. Every word links once the dictionary database is
+ * loaded; before that, only fixture words have pages. Memoized per request, so the page and its
+ * metadata search once.
+ */
 export const searchDictionary = cache(async (query: string): Promise<SearchData> => {
-  const db = await dictionaryDb()
-  const [kanji, words] = await Promise.all([searchKanji(query, db), searchWords(query, db)])
-  return { query, kanji, words }
+  const dictionary = dictionaryDb()
+  const [db, screen, kanjiHasPage] = await Promise.all([
+    dictionary,
+    searchScreen(query),
+    isSingleKanji(query) ? dictionary.then(db => hasKanjiPage(query, db)) : false
+  ])
+  return linkSearchScreen(screen, { dictionaryLoaded: db !== null, kanjiHasPage })
 })

@@ -27,14 +27,15 @@ expect() {
 }
 
 # Content checks retry like expect: for a few seconds after a deploy, some requests still reach the
-# previous Worker version. eventually <pass message> <fail message> <check function>
+# previous Worker version. eventually <pass message> <fail message> <check function> [detail
+# function], where the detail function prints what the last, failed check saw.
 eventually() {
-  local ok="$1" bad="$2" check="$3"
+  local ok="$1" bad="$2" check="$3" detail="${4:-}"
   for _ in 1 2 3 4 5; do
     "$check" && { pass "$ok"; return; }
     sleep 3
   done
-  fail "$bad"
+  fail "$bad${detail:+: $("$detail")}"
 }
 
 # The response body, fetched whole: `curl | grep -q` fails under pipefail when grep exits early.
@@ -91,6 +92,57 @@ header_has_dictionary() {
 }
 eventually 'the header links to the dictionary and has search' \
   'the header is missing the Dictionary link or search' header_has_dictionary
+# Search results show what the app shows: the iru case of the app-recorded suite, read at run time
+# so a re-recorded suite (which the search import's gate checks) never leaves this check stale.
+# For iru, that's the "Search for「いる」" refinement, then the first rows' entry numbers and chips,
+# in order.
+iru=/dictionary/search/iru/
+suite="$(dirname "$0")/../../ios/LanguageData/Conformance/search-results.json"
+expect "$iru" 200
+# The iru case: the refinement's query, its search path, then "<entry number> <chips>" per row.
+iru_expected="$(python3 -c '
+import json, sys, urllib.parse
+case = next(c for c in json.load(open(sys.argv[1]))["cases"] if c["query"] == "iru")
+query = case["readingRefinement"]["query"]
+print(query)
+print("/dictionary/search/%s/" % urllib.parse.quote(query, safe=""))
+for row in case["results"][:7]:
+    print(" ".join([row["entSeq"][0]] + ["%s %s" % (c["name"], c["text"]) for c in row["chips"]]))
+' "$suite")"
+iru_refinement="$(sed -n 1p <<<"$iru_expected")"
+iru_refinement_path="$(sed -n 2p <<<"$iru_expected")"
+iru_rows="$(sed -n '3,$p' <<<"$iru_expected")"
+# A page's first result rows as "<entry number> <chips>", from each row's marker to the next, tags
+# removed.
+result_rows() {
+  awk 'BEGIN { RS = "data-result-row=\"" } NR > 1 {
+      gsub(/<span class="sr-only">[^<]*<\/span>/, "")
+      gsub(/<[^>]*>/, " ")
+      entry = $0; sub(/".*/, "", entry)
+      chips = ""
+      rest = $0
+      while (match(rest, /(JLPT|YouTube) +[^ ]+/)) {
+        chip = substr(rest, RSTART, RLENGTH); gsub(/ +/, " ", chip)
+        chips = chips " " chip
+        rest = substr(rest, RSTART + RLENGTH)
+      }
+      print entry chips
+    }' | head -n 7
+}
+# What the last fetch of iru showed, for the failure message.
+iru_seen=""
+iru_matches_the_app() {
+  local html refinement=no
+  html="$(body "$iru")"
+  grep -q "Search for「<span lang=\"ja\">$iru_refinement</span>」" <<<"$html" &&
+    grep -q "href=\"$iru_refinement_path\"" <<<"$html" && refinement=yes
+  iru_seen="refinement $refinement; rows $(result_rows <<<"$html" | paste -sd, -)"
+  [ "$refinement" = yes ] && [ "$(result_rows <<<"$html")" = "$iru_rows" ]
+}
+show_iru_seen() { echo "$iru_seen (want refinement yes; rows $(paste -sd, - <<<"$iru_rows"))"; }
+eventually 'iru shows the refinement and its first rows with their chips, as the app does' \
+  'iru differs from the app' iru_matches_the_app show_iru_seen
+
 # A stale or missing slug redirects to the word's one URL; an unknown number doesn't exist.
 expect_redirect /dictionary/1259290/ "$word"
 expect /dictionary/999999999/ 404

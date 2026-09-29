@@ -61,8 +61,9 @@ artifact's SHA-256 from its Git LFS pointer, the database's migrations, schema, 
    database's rows, and `dictionary_import` last. For search, the rows are `build-rows.py`'s and
    the precomputed broad queries; for the dictionary, every word and kanji
    (`dictionary/build-rows.py`).
-2. Check that copy against its app-recorded conformance suites: search retrieval for search,
-   word detail and kanji detail for the dictionary. Nothing reaches D1 unless it passes.
+2. Check that copy against its app-recorded conformance suites: search retrieval and search
+   results for search, word detail and kanji detail for the dictionary. Nothing reaches D1
+   unless it passes.
 3. Create the D1, apply the migrations, and load the same files. A failed load deletes the new
    database.
 4. Verify it before anything binds it: `dictionary_import` names this build, `d1_migrations`
@@ -103,6 +104,45 @@ stores the results of those that read over 20,000 rows in `search_cache` (about 
 MB). `websiteSearch` reads the list of cached queries once per isolate, answers those from
 `search_cache` in about 30 ms, and runs the core for everything else. The measurements are on
 issue 464, from the `Search D1 benchmark` workflow.
+
+**Frequency lives here too.** `entry_frequency` holds each entry's evidence in the app's default
+frequency dictionaries (JLPT levels, then TUBELEX ranks; 59,430 entries), keyed by Language
+Reference ID, which `build-rows.py` reads from `JLPTLevelPack.sqlite3` and
+`TUBELEXFrequencyPack.sqlite3` with the dictionary import's `language_data.py`. The results page
+reads it for all of a search's results in one query, so the search database alone decides what
+the page lists and in what order, and its import gate checks all of it.
+
+### Search results
+
+`src/lib/dictionary/results/` is the results screen's core, ported from SearchView.swift and
+FrequencyPack.swift: pure functions over the search core's results and their frequency.
+`orderedItems` is `SearchResultFrequencyOrdering.ordered`: within each match group (the result's
+source, then its coarse match rank), the more common tier from the first dictionary that has one,
+then each dictionary's value in priority order (lower first, ranked before unranked), then the
+retrieval order, then the Language Reference ID. Discovered Words keep their order.
+`searchResultsScreen` adds what `SearchResultsView` shows: each row's meaning (the matched meaning
+for an English query), its chips, the "Search for「…」" reading refinement, the KANJI row that
+leads a one-kanji query with the meaning of the entry written as that kanji (chosen before the
+re-sort, "Kanji detail" without one), and No Dictionary Matches. The page's component,
+`components/dictionary/search-results.tsx`, only renders it. `results/links.ts` adds links
+(`linkSearchScreen`, shared by `data.ts` and the rendered-page test) and decides indexing: a page
+is indexed only when it lists a word or its kanji row opens a kanji page.
+
+The app's "View N Example Sentences" row is left out until the website has example search: the
+app searches all 232,703 Tatoeba pairs by English phrase (FTS4 Porter) or Japanese substring, and
+the dictionary database holds only the 203,727 its words use, with no such index (#511).
+
+**The gate.** The search import runs three files on its local copy (`check_local`): the retrieval
+suite (`search/conformance.test.ts`), the search results suite
+(`apps/ios/LanguageData/Conformance/search-results.json`, `results/conformance.test.ts`), which
+compares every case's state, sections, refinement, kanji row, and every row's ID, entry number,
+headword, reading, meaning, chips, match group, and retrieval position, and a rendered-page test
+(`components/dictionary/search-results.test.tsx`) that renders six of its cases with React's
+server renderer and reads the visible order, meanings, chips, links, and special rows back from
+the HTML. The results core, `detail/frequency.ts`, the page's component and `rendered.ts`, the
+frequency packs, and the suite itself are search build inputs, so a change to any of them imports
+a new build and runs the gate. `smoke.sh` reads the suite's `iru` case at run time and checks the
+deployed page's refinement and first rows against it.
 
 ### Schema and migrations
 
@@ -211,8 +251,10 @@ ZENBU_SEARCH_D1=1 pnpm test
 ```
 
 The script defaults to the app's bundled database and replaces `.search-d1/` only after a build
-succeeds. The suite stops at once when `.search-d1/` wasn't built from the artifact it pins.
-Without `ZENBU_SEARCH_D1=1`, `pnpm test` skips the suite.
+succeeds. The suites stop at once when `.search-d1/` wasn't built from the artifact they pin, or
+the frequency packs differ from the ones the search results suite pins. Without
+`ZENBU_SEARCH_D1=1`, `pnpm test` skips them. With either variable set, test files run one at a
+time (`vitest.config.ts`), since a local D1 can't serve two processes at once.
 
 The dictionary database builds the same way into `.dictionary-d1/` (about 3.5 minutes; it needs
 the Git LFS inputs listed in `scripts/release-d1/dictionary/database.sh`), and its gate runs with
@@ -234,9 +276,10 @@ page. Only local development falls back to fixtures, when `SEARCH_DB` is unbound
 finished import (no `dictionary_import` row), as in `pnpm dev`. Staging and production (`SITE_ENV`
 set) serve the dictionary, so there a missing binding, or one bound to a database without an
 import, fails the request rather than passing fixtures off as the dictionary. `DICTIONARY_DB`
-works the same way. Once `DICTIONARY_DB` holds an import, results link to word pages, and the
-kanji card and frequency chips are read from it, the chips for all results in one query outside
-the search core; otherwise only fixture words and kanji link.
+works the same way. The results are ordered and drawn by the results core (see Search results),
+with frequency from the search database's `entry_frequency`. Once `DICTIONARY_DB` holds an
+import, every result links to its word page, and the kanji row links to its kanji page when the
+dictionary database has one; otherwise only fixture words and kanji link.
 
 ## Word and kanji pages
 

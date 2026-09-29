@@ -34,7 +34,12 @@ export function FrequencyBadges({ frequency }: { frequency: FrequencyResult[] })
   return (
     <div className="flex flex-wrap gap-1.5">
       {frequency.map(rank => (
-        <Badge key={rank.source} variant="outline" className="gap-1.5 text-muted-foreground">
+        <Badge
+          key={rank.source}
+          variant="outline"
+          className="gap-1.5 text-muted-foreground"
+          data-chip={rank.source}
+        >
           <FrequencyDot tier={rank.tier} />
           {rank.source}{' '}
           <span className="text-foreground tabular-nums">

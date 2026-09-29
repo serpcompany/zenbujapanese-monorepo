@@ -61,6 +61,44 @@ def require_file(path):
             refuse(f"{path.name} is a Git LFS pointer; run git lfs pull first")
 
 
+def attach_packs(db, resources, source_sha256, packs=PACKS):
+    """Attaches each pack to `db` under its alias, refusing one of another schema or pack, or
+    one built for another LanguageReferenceData.sqlite3."""
+    for alias, name, schema, pack_id in packs:
+        path = Path(resources) / name
+        require_file(path)
+        db.execute(f"ATTACH DATABASE ? AS {alias}", (f"file:{path}?mode=ro",))
+        metadata = dict(db.execute(f"SELECT key, value FROM {alias}.metadata"))
+        if metadata.get("artifact_schema") != schema:
+            refuse(f"{name} is {metadata.get('artifact_schema')}; this import reads {schema}")
+        if pack_id and metadata.get("pack_id") != pack_id:
+            refuse(f"{name} is pack {metadata.get('pack_id')}, not {pack_id}")
+        # Packs map entries by Language Reference ID, so each is built for one database.
+        if metadata.get("language_data_sha256") != source_sha256:
+            refuse(f"{name} was built for LanguageReferenceData "
+                   f"{metadata.get('language_data_sha256')}, not {source_sha256}")
+
+
+# The default frequency packs alone, for the search database (search/build-rows.py).
+FREQUENCY_PACKS = tuple(pack for pack in PACKS if pack[0] in ("jlpt", "tubelex"))
+
+
+def read_frequency(db):
+    """The default packs' evidence by entry (lowercase hex Language Reference ID), in the app's
+    catalog order (FrequencyPackCatalog.json): JLPT levels, then TUBELEX ranks. `db` has the
+    packs attached as `jlpt` and `tubelex`."""
+    frequency = {}
+    for id_, level in db.execute(
+        "SELECT lower(hex(language_reference_id)), level FROM jlpt.level_evidence"
+    ):
+        frequency.setdefault(id_, []).append({"pack": "jlpt", "level": level})
+    for id_, rank in db.execute(
+        "SELECT lower(hex(language_reference_id)), rank FROM tubelex.frequency_evidence"
+    ):
+        frequency.setdefault(id_, []).append({"pack": "tubelex", "rank": rank})
+    return frequency
+
+
 def is_cjk_unified(character):
     """DictionaryEntry.swift's isCJKUnifiedIdeograph, for one code point."""
     return 0x3400 <= ord(character) <= 0x9FFF
@@ -113,19 +151,7 @@ class LanguageData:
             refuse(f"unsupported artifact transform {transform}; this import reads "
                    f"{sorted(SUPPORTED_TRANSFORMS)}")
         self.source_sha256 = sha256(self.source)
-        for alias, name, schema, pack_id in PACKS:
-            path = self.resources / name
-            require_file(path)
-            self.db.execute(f"ATTACH DATABASE ? AS {alias}", (f"file:{path}?mode=ro",))
-            metadata = dict(self.db.execute(f"SELECT key, value FROM {alias}.metadata"))
-            if metadata.get("artifact_schema") != schema:
-                refuse(f"{name} is {metadata.get('artifact_schema')}; this import reads {schema}")
-            if pack_id and metadata.get("pack_id") != pack_id:
-                refuse(f"{name} is pack {metadata.get('pack_id')}, not {pack_id}")
-            # Packs map entries by Language Reference ID, so each is built for one database.
-            if metadata.get("language_data_sha256") != self.source_sha256:
-                refuse(f"{name} was built for LanguageReferenceData "
-                       f"{metadata.get('language_data_sha256')}, not {self.source_sha256}")
+        attach_packs(self.db, self.resources, self.source_sha256)
 
         self.kanji_reference = self._json("KanjiReferenceData.json")
         for key, value in KANJI_REFERENCE_SOURCES.items():
@@ -181,15 +207,7 @@ class LanguageData:
         """The default packs' evidence by entry, in the app's catalog order
         (FrequencyPackCatalog.json): JLPT levels, then TUBELEX ranks."""
         if self._frequency is None:
-            self._frequency = {}
-            for id_, level in self.db.execute(
-                "SELECT lower(hex(language_reference_id)), level FROM jlpt.level_evidence"
-            ):
-                self._frequency.setdefault(id_, []).append({"pack": "jlpt", "level": level})
-            for id_, rank in self.db.execute(
-                "SELECT lower(hex(language_reference_id)), rank FROM tubelex.frequency_evidence"
-            ):
-                self._frequency.setdefault(id_, []).append({"pack": "tubelex", "rank": rank})
+            self._frequency = read_frequency(self.db)
         return self._frequency
 
     ENTRY_COLUMNS = (

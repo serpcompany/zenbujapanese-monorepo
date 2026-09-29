@@ -31,6 +31,12 @@ CREATE TABLE `entries` (
 	`semantic_fingerprint` text NOT NULL
 )
 
+table entry_frequency
+CREATE TABLE `entry_frequency` (
+	`entry_id` text PRIMARY KEY NOT NULL,
+	`frequency_json` text NOT NULL
+)
+
 table form_chars
 CREATE VIRTUAL TABLE form_chars USING fts5(
   chars, content='', tokenize="unicode61 remove_diacritics 0 categories 'L* M* N* P* S* Co'"

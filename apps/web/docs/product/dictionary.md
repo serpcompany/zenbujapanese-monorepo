@@ -9,8 +9,12 @@ Abbreviations: **App docs** is `apps/ios/docs/product/dictionary.md`. Swift file
 **KD** are the app-recorded suites `search-retrieval.json`, `word-detail.json`, and
 `kanji-detail.json`, with the field they record. SR is replayed by
 `src/lib/dictionary/search/conformance.test.ts` ("search conformance on D1"); WD and KD by
-`src/lib/dictionary/detail/conformance.test.ts` ("word and kanji detail conformance on D1"). Unit
-tests are named by file and test title.
+`src/lib/dictionary/detail/conformance.test.ts` ("word and kanji detail conformance on D1").
+**SRR** is `search-results.json`, the results screen after the frequency re-sort, replayed field
+by field by `src/lib/dictionary/results/conformance.test.ts` ("search results conformance on
+D1"), and rendered for six of its cases by `src/components/dictionary/search-results.test.tsx`
+("the rendered search results page matches the app"). All of these run on every import of their
+release database. Unit tests are named by file and test title.
 
 ## Dictionary home
 
@@ -60,40 +64,63 @@ The website has no Discovered Words list, because it can't analyze text at reque
   and the website has none". SR records no sentence cases (none with the `analyzed`
   resolution).
 
-**Result order.** Words appear in the order the app's retrieval returns them. The app then
-re-sorts equally strong matches by the enabled frequency dictionaries; the website doesn't yet, so
-it differs from the app and the #462 design, most visibly for いる and `iru`. See
-[Required, not built yet](#required-not-built-yet-511).
+**Result order.** Words appear in the app's order: its retrieval, then equally strong matches
+re-sorted by the default dictionaries, as `SearchResultFrequencyOrdering` sorts them. Within each
+match group (the result's source, then its coarse match rank), the more common tier from the first
+dictionary that has one comes first, then JLPT's level (N5 first), then YouTube's rank (lower
+first), a ranked word before an unranked one, then the retrieval order. So いる lists 要る, いる,
+炒る, 入る, 射る, 鋳る, and `iru` lists 上一, 上一段, 上一段活用 (English matches for "iru"), then 要る,
+いる, 炒る, 入る, as the app and the #462 design do. The frequency comes from the search database
+(`entry_frequency`), read for all of a search's results in one query.
 
 - Source: App docs, Search; `SearchResultFrequencyOrdering` in `SearchView.swift`; #462 (rows in
   the order the app shows with its default dictionaries).
-- Check: SR `results` checks the order before the re-sort only. The re-sorted order: No automated
-  check yet (#511).
+- Check: SRR `results` (every row's ID, in order, with its `match` group and `retrievalOrder`) for
+  52 queries, including `iru` and いる; `src/lib/dictionary/results/results.test.ts`,
+  "orderedItems (SearchResultFrequencyOrdering.ordered)"; smoke "iru shows the refinement and its
+  first rows with their chips, as the app does", which reads the rows from SRR's `iru` case.
 
 **Result count.** Above the results, a line reads "N words for «query»" (one word: "1 word"). N is
-the number of words listed, at most 60; the kanji card isn't counted. The app shows no count; the
+the number of words listed, at most 60; the kanji row isn't counted. The app shows no count; the
 line follows the #462 design's wording.
 
 - Source: #462 design.
-- Check: No automated check yet (#511).
+- Check: No automated check yet (#511). SRR `voiceOverCount` (the count VoiceOver reads, including
+  the kanji row) is checked against the core's `resultCount`, which the page doesn't show.
 
-**Kanji card.** A one-character query that is a kanji in the dictionary also shows a card above the
-word list, labeled "Kanji", with the kanji's KANJIDIC2 meanings. It opens the kanji page. The app
-shows it differently; see [Required, not built yet](#required-not-built-yet-511).
+**Reading refinement.** When an English-looking query also spells a Japanese reading the app
+offers ("Search for「いる」" for `iru`), the page shows that row in its own section above the
+results, and it opens that search.
 
-- Source: App docs, Search ("a dedicated Kanji result for a single-kanji query"); #466.
-- Check: `src/lib/dictionary/data.test.ts`, "search links every word and reads the kanji card from
-  the dictionary database" (that the card is read, not how it looks).
+- Source: App docs, Search ("a Japanese-reading refinement"); the reading-refinement section of
+  `SearchResultsView` in `SearchView.swift` (`search.reading-refinement`).
+- Check: SR and SRR `readingRefinement`, SRR `sections`; `search-results.test.tsx`, "shows the
+  reading refinement first, then the rows in order with their chips" and the SRR cases (title and
+  link); smoke (the row and its link).
 
-**Result rows.** Each row shows the headword with furigana, the word's summary meaning, and its
-frequency chips, and opens the word page. The meaning is not clamped to two lines, and English
-queries show the summary rather than the meaning that matched; both differ from the app (see
-[Required, not built yet](#required-not-built-yet-511)).
+**Kanji row.** A one-kanji query leads the list with a KANJI row: the kanji, the label "KANJI",
+and the summary of the entry written as that kanji (the first result if none is), chosen before
+the re-sort, or "Kanji detail" without results. It opens the kanji page when the kanji has one;
+otherwise it shows without a link.
 
-- Source: App docs, Search; `ResultRow` in `SearchView.swift`; #462.
-- Check: headword furigana: `src/lib/dictionary/detail/ruby.test.ts`, "rubySegments"; the link:
-  `src/lib/dictionary/data.test.ts`, "links every word once the dictionary database is loaded".
-  The row layout: No automated check yet (#511).
+- Source: App docs, Search ("a dedicated Kanji result for a single-kanji query");
+  `KanjiPrimaryRow` and `primaryEntry(for:)` in `SearchView.swift` and `DictionaryEntry.swift`.
+- Check: SRR `kanji` (character, label, summary, and entry) for 8 kanji; `search-results.test.tsx`,
+  "leads a one-kanji query with the KANJI row and its primary entry’s meaning" and the 日 case;
+  `results.test.ts`, "leads a one-kanji query with the kanji row, from the entry written as the
+  kanji"; `src/lib/dictionary/results/links.test.ts`, "links the kanji row only to a kanji page
+  that exists".
+
+**Result rows.** Each row shows the headword with furigana, its meaning clamped to two lines, and
+its frequency chips, and opens the word page. The meaning is the one that matched for an English
+query (`displaySummary`), and the word's summary otherwise.
+
+- Source: App docs, Search ("English rows show the meaning that matched"); `ResultRow` in
+  `SearchView.swift`; `displaySummary` in `DictionaryEntry.swift`; #462.
+- Check: SRR `results[].headword`, `reading`, and `summary`; `search-results.test.tsx` (each row's
+  headword, meaning, and link in the SRR cases, and "clamps each meaning to two lines");
+  `results.test.ts`, "shows the meaning an English query matched"; headword furigana:
+  `src/lib/dictionary/detail/ruby.test.ts`, "rubySegments"; the links: `links.test.ts`.
 
 **Frequency chips.** A row has one chip per default dictionary that ranks or lists the word, as the
 app picks them: `JLPT N5` when the JLPT list has it, and `YouTube 812` when TUBELEX ranks it. Each
@@ -102,10 +129,11 @@ rare. Screen readers hear the tier after a rank, as the app's labels speak it.
 
 - Source: App docs, Search; `SearchFrequencyRankPresentationModel` in `FrequencyPack.swift`;
   `FrequencyRankChip.swift`.
-- Check: `src/lib/dictionary/detail/frequency.test.ts`, "shows only dictionaries that rank or list
-  the word, since JLPT is a level list" and "tierForRank (FrequencyTier(rank:))";
-  `src/lib/dictionary/detail/word.test.ts`, "a search result with its frequency chips";
-  `src/lib/dictionary/data.test.ts`, "search results show frequency chips from the dictionary
+- Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 52 queries;
+  `search-results.test.tsx` (the chips as rendered in the SRR cases); smoke (iru's chips);
+  `src/lib/dictionary/detail/frequency.test.ts`, "shows only dictionaries that rank or list the
+  word, since JLPT is a level list" and "tierForRank (FrequencyTier(rank:))";
+  `src/lib/dictionary/data.test.ts`, "re-sorts equally strong matches by frequency from the search
   database, in one query".
 
 **Frequency is JLPT and YouTube only.** The website uses the app's default frequency dictionaries,
@@ -116,14 +144,15 @@ is left out.
 - Check: `src/lib/dictionary/detail/frequency.test.ts`, "lists each default dictionary, JLPT then
   YouTube"; WD `frequency`.
 
-**No results.** When nothing matches, the page shows "No words match “«query»”" with the hint "Try
-the dictionary form, kana, romaji, or an English meaning." A query full-text search can't read,
-such as one with a NUL, shows the same page. The app says "No Dictionary Matches"; see
-[Required, not built yet](#required-not-built-yet-511).
+**No results.** When nothing matches and the query isn't one kanji, the page shows the app's "No
+Dictionary Matches" with its hint, "Try another Japanese or English Search query." A query
+full-text search can't read, such as one with a NUL, shows the same page.
 
-- Source: App docs, Search; `SearchView.swift`; #462 (`Empty` for no results).
-- Check: `src/lib/dictionary/data.test.ts`, "shows a query full-text search cannot read as no
-  results". The wording: No automated check yet (#511).
+- Source: App docs, Search; `SearchView.swift` (`search.no-results`); #462 (`Empty` for no
+  results).
+- Check: SRR `state` (`qzxvkj`); `search-results.test.tsx`, "says No Dictionary Matches, as the app
+  does, when nothing matches"; `src/lib/dictionary/data.test.ts`, "shows a query full-text search
+  cannot read as no results".
 
 **Credits.** A results page that finds something ends with a Sources list: JMdict, KANJIDIC2, JLPT
 levels, and TUBELEX, each with its licence.
@@ -131,13 +160,13 @@ levels, and TUBELEX, each with its licence.
 - Source: #465 (credit every source a page shows, on every page); `src/lib/dictionary/sources.ts`.
 - Check: No automated check yet (#511).
 
-**Left out on purpose.** The website has no Recent list, camera button, or Image Search, and no
-"View N Example Sentences" row, because examples have no route of their own yet. It also has no
-✓ Known capsule and no swipe or long-press to mark a word known, since learner data lives in the
-app.
+**Left out on purpose.** The website has no Recent list, camera button, or Image Search. It also
+has no ✓ Known capsule and no swipe or long-press to mark a word known, since learner data lives in
+the app. The "View N Example Sentences" row is required but not built yet (see
+[Required, not built yet](#required-not-built-yet-511)).
 
-- Source: #462 (Recent list, camera button, and "View 50+ Example Sentences" left out; learner
-  actions open a get-the-app prompt).
+- Source: #462 (Recent list and camera button left out; learner actions open a get-the-app
+  prompt).
 - Check: not applicable.
 
 ## Word page
@@ -432,7 +461,7 @@ is its own canonical URL.
 - Check: No automated check yet (#511).
 
 **Indexing.** The dictionary home, word pages, kanji pages with meanings or readings, and results
-pages that find something are indexable. A kanji with no meanings or readings (about 475 of 13,108,
+pages that list a word, or whose kanji row opens a kanji page, are indexable. A kanji with no meanings or readings (about 475 of 13,108,
 such as 㐂), a search that finds nothing, `/dictionary/search/` itself, and the examples endpoint are
 `noindex`. Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows
 crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
@@ -440,8 +469,8 @@ crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
 - Source: #465; #466.
 - Check: smoke "a kanji without meanings or readings is noindex"; the conformance test checks each
   kanji's `indexable` against its meanings and readings;
-  `src/app/dictionary/examples/[file]/route.test.ts`, "returns the next 25 of a word's examples".
-  Search pages: No automated check yet (#511).
+  `src/app/dictionary/examples/[file]/route.test.ts`, "returns the next 25 of a word's examples";
+  search pages: `src/lib/dictionary/results/links.test.ts`, "isIndexable".
 
 **Sitemaps.** The pages sitemap lists the dictionary home. The sitemap index also lists the word
 sitemaps, with every word page's canonical URL, and the kanji sitemap, with every indexable kanji
@@ -466,23 +495,6 @@ page's section above, with its check, in the same PR.
 
 ### Search results
 
-**Frequency re-sort.** Equally strong matches are re-sorted by the default dictionaries, JLPT then
-YouTube, as the app sorts them, so いる lists 要る, いる, 炒る, 入る, 射る, 鋳る first, as the #462
-design shows.
-
-- App source: App docs, Search; `SearchResultFrequencyOrdering` in `SearchView.swift`.
-- Check it will get: the planned app-recorded search results suite (#511), which records the order
-  after the re-sort, replayed against the rendered results page; a smoke check for
-  `/dictionary/search/iru/`.
-
-**Order for `iru`.** `/dictionary/search/iru/` lists what the app lists, in the app's order. Today
-it leads with 上一, 上一段, and 上一段活用 (English matches for "iru"), then the verbs in the pre-sort
-order.
-
-- App source: `SearchResultFrequencyOrdering` in `SearchView.swift`; the app's results for `iru`,
-  which no suite records yet.
-- Check it will get: an `iru` case in the planned search results suite, and a smoke check.
-
 **Paging.** A results page renders about 25 words in its HTML, then loads more, up to the app's 60.
 Today it renders all 60.
 
@@ -490,40 +502,26 @@ Today it renders all 60.
 - Check it will get: a rendered-page test of the first page and the load-more request, like the
   examples endpoint's `route.test.ts`.
 
-**Meaning clamp.** A row's meaning is clamped to two lines, as the app clamps it. At the app's
-accessibility text sizes the meaning isn't clamped (`ResultRow`'s `lineLimit`); the website needs
-the same exception for large text.
+**Meaning clamp at large text sizes.** The website clamps a row's meaning to two lines, as the
+app does at standard sizes. At the app's accessibility text sizes the meaning isn't clamped
+(`ResultRow`'s `lineLimit`); the website needs the same exception for large text.
 
 - App source: `ResultRow` in `SearchView.swift`.
-- Check it will get: a rendered-HTML check of the row.
+- Check it will get: a rendered-HTML check that the clamp lifts with large text.
 
-**Matched meaning for English results.** An English query shows the meaning that matched, not the
-word's summary, as the app does. The search core already returns it; the page drops it.
+**"View N Example Sentences".** The results list starts with the app's Example Sentences row
+("View 3 Example Sentences", or "View 50+ Example Sentences" over 50), which opens the query's
+example sentences, or the primary entry's for a deinflected or romaji query. What it needs: an
+example search on the website like the app's, which matches all 232,703 Tatoeba pairs by English
+phrase (FTS4 Porter, with an exact-phrase check) or Japanese substring, where the dictionary
+database holds only the 203,727 sentences its words use, with no such index; then a
+`/dictionary/search/<query>/examples/` page listing them in the app's order.
 
-- App source: App docs, Search ("English rows show the meaning that matched");
-  `displaySummary` in `DictionaryEntry.swift`.
-- Check it will get: a `displaySummary` field in the planned search results suite.
-
-**Kanji row.** The kanji result is the first row of the list, labeled "KANJI", with its primary
-entry's summary (要 shows "pivot"), as the app's row presents it.
-
-- App source: `KanjiPrimaryRow` in `SearchView.swift`.
-- Check it will get: the kanji row in the planned search results suite, and a rendered-page check.
-
-**"Search for「…」" reading suggestion.** When the app offers a Japanese-reading refinement, the
-results page offers "Search for「…」" in its own section above the result rows, which opens that
-search. The core already computes it.
-
-- App source: App docs, Search ("a Japanese-reading refinement"); the reading-refinement section of
-  `SearchResultsView` in `SearchView.swift` (`search.reading-refinement`).
-- Check it will get: SR `readingRefinement` already checks the core's value; a rendered-page check
-  that the page shows and links it.
-
-**No results wording.** A search that finds nothing says what the app says, "No Dictionary
-Matches", unless a decision keeps the website's wording.
-
-- App source: `SearchView.swift`.
-- Check it will get: a rendered-HTML check of the empty page.
+- App source: the examples section of `SearchResultsView` in `SearchView.swift`;
+  `ExampleSentenceClient.swift` (`count`, `search`, and `examples` for the primary entry).
+- Check it will get: SRR `examples` (title, count, and primary entry) and the `examples` entry of
+  SRR `sections`, which `results/conformance.test.ts` and `search-results.test.tsx` skip until
+  then (`pendingSections`); a rendered-page check of the examples page.
 
 **Handwriting and radical input.** The search box offers handwriting and radical selection, as the
 app does.
