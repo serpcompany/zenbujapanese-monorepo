@@ -77,6 +77,26 @@ def word_slug(headword, reading):
     return slug or reading
 
 
+def stroke_problem(stroke):
+    """Why KanjiStrokeOrderClient.swift's `decodeStroke` would reject a compact stroke, or None.
+    Opcode 0 is followed by a point to move to, opcode 1 by the three points of a cubic curve;
+    the stroke must begin with a move, so an empty one is rejected too."""
+    index, commands = 0, 0
+    while index < len(stroke):
+        opcode, width = stroke[index], {0: 2, 1: 6}.get(stroke[index])
+        if width is None:
+            return "has an unknown path opcode"
+        if index + width >= len(stroke):
+            return "has an incomplete command"
+        if commands == 0 and opcode != 0:
+            return "doesn't begin with a move"
+        index += 1 + width
+        commands += 1
+    if commands == 0:
+        return "doesn't begin with a move"
+    return None
+
+
 class LanguageData:
     """LanguageReferenceData.sqlite3 with its packs attached, and the kanji JSON files."""
 
@@ -271,15 +291,9 @@ class LanguageData:
             if not strokes or len(strokes) != stroke_count:
                 refuse(f"{character}'s stroke diagram has {len(strokes)} strokes, not {stroke_count}")
             for stroke in strokes:
-                index, commands = 0, 0
-                while index < len(stroke):
-                    opcode, width = stroke[index], {0: 2, 1: 6}.get(stroke[index])
-                    if width is None or index + width >= len(stroke):
-                        refuse(f"{character}'s stroke diagram has a bad path: {stroke}")
-                    if commands == 0 and opcode != 0:
-                        refuse(f"a stroke of {character} doesn't begin with a move")
-                    index += 1 + width
-                    commands += 1
+                problem = stroke_problem(stroke)
+                if problem:
+                    refuse(f"a stroke of {character} {problem}: {stroke}")
             diagrams[character] = {
                 "viewportSize": viewport_size, "strokeCount": stroke_count, "strokes": strokes
             }

@@ -168,6 +168,19 @@ export function kanjiShareText(
   return [heading, kanji.meanings.join(', ')].filter(Boolean).join('\n')
 }
 
+/**
+ * The stroke order, or null when the data can't be decoded: the app then shows no stroke order
+ * (KanjiDetailView's `strokeOrderAction`), and the page must still render. The import refuses such
+ * data, so this is only a safeguard.
+ */
+function drawableStrokeOrder(row: NonNullable<KanjiRows['strokes']>): StrokeOrder | null {
+  try {
+    return strokeOrder(row)
+  } catch {
+    return null
+  }
+}
+
 /** Everything the kanji page shows, in the app's section order. */
 export function kanjiDetail(rows: KanjiRows): KanjiDetail {
   const { kanji } = rows
@@ -195,7 +208,7 @@ export function kanjiDetail(rows: KanjiRows): KanjiDetail {
     components: elements.length === 0 ? kanji.components : [],
     elements,
     words,
-    strokeOrder: rows.strokes ? strokeOrder(rows.strokes) : null,
+    strokeOrder: rows.strokes ? drawableStrokeOrder(rows.strokes) : null,
     shareText: kanjiShareText(kanji)
   }
 }

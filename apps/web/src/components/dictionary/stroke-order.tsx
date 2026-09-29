@@ -31,19 +31,26 @@ interface Progress {
 /** The button under the glyph, and the sheet it opens: a dialog on wide screens, a drawer on phones. */
 export function StrokeOrder({ character, order }: { character: string; order: StrokeOrderData }) {
   const [open, setOpen] = useState(false)
+  // Each opening is a new session, so the player starts again from the first stroke, as the
+  // app's sheet does.
+  const [session, setSession] = useState(0)
   const wide = useMediaQuery('(min-width: 768px)')
   const trigger = (
     <Button
       variant="outline"
       size="icon-sm"
       aria-label={`Show stroke order for ${character}`}
-      onClick={() => setOpen(true)}
+      onClick={() => {
+        setSession(value => value + 1)
+        setOpen(true)
+      }}
     >
       <PencilLineIcon />
     </Button>
   )
-  // The sheet's content mounts only while open, so each opening starts from the first stroke.
-  const content = open ? <StrokeOrderPlayer character={character} order={order} /> : null
+  // Stays mounted while the sheet animates out; the dialog and drawer unmount it once closed,
+  // which also stops its animation.
+  const content = <StrokeOrderPlayer key={session} character={character} order={order} />
   if (wide) {
     return (
       <>
