@@ -1,13 +1,8 @@
 // Dictionary URL rules from ADR 0007 (issue 461).
 
-/** A word's readable slug: its headword, with characters that break paths replaced by `-`. */
-export function wordSlug(headword: string, reading: string): string {
-  const slug = headword
-    .normalize('NFC')
-    .replace(/[/?#%\\\s]+/gu, '-')
-    .replace(/^-+|-+$/g, '')
-  return slug || reading
-}
+import { wordSlug } from '@zenbu/dictionary-core/detail/slug'
+
+export { wordSlug }
 
 export function wordPath(entry: { headword: string; reading: string; entSeq: number }): string {
   return `/dictionary/${wordSlug(entry.headword, entry.reading)}-${entry.entSeq}/`
@@ -25,6 +20,11 @@ export function kanjiPath(character: string): string {
  */
 export function searchPath(query: string): string {
   return `/dictionary/search/${encodeURIComponent(query).replaceAll('.', '%2E')}/`
+}
+
+/** A search's examples page: what the results' Example Sentences row opens. */
+export function searchExamplesPath(query: string): string {
+  return `${searchPath(query)}examples/`
 }
 
 /** Whether a search can live at its own path; `.` and `..` can't. */

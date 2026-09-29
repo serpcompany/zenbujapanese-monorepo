@@ -5,17 +5,13 @@
  *
  * - `DB`, the site's database: every environment shares its schema (src/db/schema.ts),
  *   migrations (drizzle/), and ledger (SERP Drizzle + D1 standard).
- * - `SEARCH_DB`, the dictionary search database: a release database, one D1 per build of the
- *   dictionary, with its own schema (src/db/search-schema.ts) and migrations (drizzle/search/),
- *   imported by `scripts/release-d1/ensure-release.sh search`. Each deployed environment names
- *   it at deploy time: `Web deploy` imports and verifies the environment's database, then
- *   replaces that environment's SEARCH_DB_* placeholders with it.
- * - `DICTIONARY_DB`, the dictionary database for word and kanji pages: a release database like
- *   SEARCH_DB, with its own schema (src/db/dictionary-schema.ts) and migrations
- *   (drizzle/dictionary/), imported by `scripts/release-d1/ensure-release.sh dictionary`, and bound
- *   the same way through the DICTIONARY_DB_* placeholders.
- * A deployed environment never falls back to local fixtures: a missing or empty release database
- * fails the request (src/lib/dictionary/data.ts).
+ * - `DICTIONARY_API_URL`, the dictionary service every dictionary page reads (apps/dictionary-api,
+ *   ADR 0009), with the `DICTIONARY_API_TOKEN` secret. Local development leaves it empty and reads
+ *   fixtures, unless .dev.vars names a service. Each deployed environment names its service at
+ *   deploy time: `Web deploy` replaces that environment's DICTIONARY_API_URL placeholder with the
+ *   GitHub environment's DICTIONARY_API_URL variable.
+ * A deployed environment never falls back to local fixtures: a missing or failing service fails
+ * the request (src/lib/dictionary/data.ts).
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -29,6 +25,7 @@
     "directory": ".open-next/assets"
   },
   "observability": { "enabled": true },
+  "vars": { "DICTIONARY_API_URL": "" },
   "upload_source_maps": true,
   "d1_databases": [
     {
@@ -37,26 +34,12 @@
       "database_id": "local-only-do-not-deploy",
       "migrations_dir": "drizzle",
       "migrations_table": "d1_migrations"
-    },
-    {
-      "binding": "SEARCH_DB",
-      "database_name": "zenbujapanese-search-local",
-      "database_id": "local-search-only-do-not-deploy",
-      "migrations_dir": "drizzle/search",
-      "migrations_table": "d1_migrations"
-    },
-    {
-      "binding": "DICTIONARY_DB",
-      "database_name": "zenbujapanese-dictionary-local",
-      "database_id": "local-dictionary-only-do-not-deploy",
-      "migrations_dir": "drizzle/dictionary",
-      "migrations_table": "d1_migrations"
     }
   ],
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web" }],
   "env": {
     "staging": {
-      "vars": { "SITE_ENV": "staging" },
+      "vars": { "SITE_ENV": "staging", "DICTIONARY_API_URL": "DICTIONARY_API_URL" },
       "workers_dev": true,
       "routes": [{ "pattern": "staging.zenbujapanese.com", "custom_domain": true }],
       "d1_databases": [
@@ -66,26 +49,12 @@
           "database_id": "4af30e21-2703-4060-af22-554bffed3af9",
           "migrations_dir": "drizzle",
           "migrations_table": "d1_migrations"
-        },
-        {
-          "binding": "SEARCH_DB",
-          "database_name": "SEARCH_DB_NAME",
-          "database_id": "SEARCH_DB_ID",
-          "migrations_dir": "drizzle/search",
-          "migrations_table": "d1_migrations"
-        },
-        {
-          "binding": "DICTIONARY_DB",
-          "database_name": "DICTIONARY_DB_NAME",
-          "database_id": "DICTIONARY_DB_ID",
-          "migrations_dir": "drizzle/dictionary",
-          "migrations_table": "d1_migrations"
         }
       ],
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web-staging" }]
     },
     "production": {
-      "vars": { "SITE_ENV": "production" },
+      "vars": { "SITE_ENV": "production", "DICTIONARY_API_URL": "DICTIONARY_API_URL" },
       // Keep workers_dev: CI smoke-tests the workers.dev URL, which skips the zone's bot
       // protection. www redirects to the apex in next.config.ts.
       "workers_dev": true,
@@ -99,20 +68,6 @@
           "database_name": "zenbujapanese-web-production",
           "database_id": "f40fb6bc-c5c0-4215-a78c-39253d64591d",
           "migrations_dir": "drizzle",
-          "migrations_table": "d1_migrations"
-        },
-        {
-          "binding": "SEARCH_DB",
-          "database_name": "SEARCH_DB_NAME",
-          "database_id": "SEARCH_DB_ID",
-          "migrations_dir": "drizzle/search",
-          "migrations_table": "d1_migrations"
-        },
-        {
-          "binding": "DICTIONARY_DB",
-          "database_name": "DICTIONARY_DB_NAME",
-          "database_id": "DICTIONARY_DB_ID",
-          "migrations_dir": "drizzle/dictionary",
           "migrations_table": "d1_migrations"
         }
       ],

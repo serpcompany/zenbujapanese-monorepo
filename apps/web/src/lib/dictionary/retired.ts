@@ -3,6 +3,7 @@
 // 410, so the Worker (worker.ts) answers these before the app; everything else goes on to it.
 // Relative imports only: worker.ts bundles this outside Next.js.
 
+import { type DictionaryApi, type DictionaryApiEnvironment, dictionaryApi } from './api'
 import { parseWordSegment } from './urls'
 
 export interface RetiredWord {
@@ -39,43 +40,43 @@ export async function retiredWordResponse(
   })
 }
 
-// Retired entries by database, read once per isolate: a release retires a few hundred at most.
-const retiredByDatabase = new WeakMap<D1Database, Promise<Map<number, number | null>>>()
+// Retired entries, read from the dictionary service once per isolate (keyed by the Worker's
+// environment, which an isolate keeps): a release retires a few hundred at most. None until the
+// artifact records retired entries (#463).
+const retiredByEnvironment = new WeakMap<object, Promise<Map<number, number | null>>>()
 
 /**
- * The dictionary database's `retired_ids`. A database that can't answer (no import yet, or an
- * outage) retires nothing here, and the app then answers the request itself: it 404s, or fails
- * the request when the database fails.
+ * The service's retired entries (./api.ts), remembered under `key`. A service that can't answer
+ * retires nothing here, and the app then answers the request itself: it 404s, or fails the
+ * request when the service fails.
  */
-export function d1RetiredLookup(db: D1Database): RetiredLookup {
+export function apiRetiredLookup(api: DictionaryApi, key: object = api): RetiredLookup {
   return {
     async retired(entSeq) {
-      let all = retiredByDatabase.get(db)
+      let all = retiredByEnvironment.get(key)
       if (!all) {
-        all = db
-          .prepare('SELECT ent_seq, replacement_ent_seq FROM retired_ids')
-          .all<{ ent_seq: number; replacement_ent_seq: number | null }>()
+        all = api
+          .retired()
           .then(
-            ({ results }) => new Map(results.map(row => [row.ent_seq, row.replacement_ent_seq]))
+            ({ data }) =>
+              new Map(Object.entries(data).map(([number, value]) => [Number(number), value]))
           )
-        all.catch(() => retiredByDatabase.delete(db))
-        retiredByDatabase.set(db, all)
+        all.catch(() => retiredByEnvironment.delete(key))
+        retiredByEnvironment.set(key, all)
       }
       const retired = await all.catch(() => new Map<number, number | null>())
       if (!retired.has(entSeq)) return null
       const replacement = retired.get(entSeq) ?? null
       if (replacement === null) return { replacement: null }
-      const row = await db
-        .prepare('SELECT slug FROM words WHERE ent_seq = ?')
-        .bind(replacement)
-        .first<{ slug: string }>()
+      const word = await api.word(replacement)
       // A replacement the release doesn't hold can't be redirected to, so the word is gone.
-      return { replacement: row ? { entSeq: replacement, slug: row.slug } : null }
+      return { replacement: word ? { entSeq: replacement, slug: word.data.slug } : null }
     }
   }
 }
 
-/** The Worker answers retired words wherever a dictionary database is bound. */
-export function retiredWordsLookup(env: { DICTIONARY_DB?: D1Database }): RetiredLookup | null {
-  return env.DICTIONARY_DB ? d1RetiredLookup(env.DICTIONARY_DB) : null
+/** The Worker answers retired words wherever the site has a dictionary service. */
+export function retiredWordsLookup(env: DictionaryApiEnvironment): RetiredLookup | null {
+  const api = dictionaryApi(env)
+  return api ? apiRetiredLookup(api, env) : null
 }

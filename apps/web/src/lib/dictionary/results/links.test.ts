@@ -6,6 +6,7 @@ const kanjiOnly: SearchResultsScreen = {
   state: 'results',
   query: '㐂',
   sections: ['results'],
+  examples: null,
   readingRefinement: null,
   kanji: { character: '㐂', label: 'KANJI', summary: 'Kanji detail', entryId: null },
   rows: [],

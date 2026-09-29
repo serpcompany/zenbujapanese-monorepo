@@ -9,9 +9,10 @@ import { Item, ItemActions, ItemContent, ItemGroup, ItemSeparator } from '@/comp
 import type { SearchData, SearchWord } from '@/lib/dictionary/data'
 
 // The search results screen as SearchView.swift's `SearchResultsView` lays it out: the
-// "Search for「…」" reading refinement, then one list whose first row is the kanji row for a
-// one-kanji query, then the words in the app's order. It only renders `SearchData`
-// (src/lib/dictionary/results), so search-results.test.tsx renders it without a server.
+// "View N Example Sentences" row, the "Search for「…」" reading refinement, then one list whose
+// first row is the kanji row for a one-kanji query, then the words in the app's order, or a
+// sentence's Discovered Words. It only renders `SearchData` (src/lib/dictionary/results), so
+// search-results.test.tsx renders it without a server.
 
 /** A row that opens `path`, or plain text when there is no page yet (#465). */
 function Row({
@@ -68,7 +69,7 @@ function NoResults() {
 
 export function SearchResults({ data }: { data: SearchData }) {
   if (data.state === 'noResults') return <NoResults />
-  const { query, kanji, rows, readingRefinement } = data
+  const { query, kanji, rows, readingRefinement, examples } = data
   const discovered = data.sections.includes('discoveredWords')
   return (
     <>
@@ -78,6 +79,15 @@ export function SearchResults({ data }: { data: SearchData }) {
           {query}
         </span>
       </p>
+      {examples ? (
+        <Card className="py-0" data-section="examples">
+          <Row path={examples.path}>
+            <ItemContent>
+              <p className="font-semibold">{examples.title}</p>
+            </ItemContent>
+          </Row>
+        </Card>
+      ) : null}
       {readingRefinement ? (
         <Card className="py-0" data-section="readingRefinement">
           <Row

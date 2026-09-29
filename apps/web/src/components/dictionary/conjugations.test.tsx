@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs'
 import {
   type ConjugationMode,
   type Conjugations,
@@ -9,23 +8,21 @@ import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import type { SuiteConjugations } from '@zenbu/dictionary-core/detail/suite'
 import { wordDetail } from '@zenbu/dictionary-core/detail/word'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { getPlatformProxy } from 'wrangler'
-import { dictionaryDatabase } from '@/lib/dictionary/dictionary-db'
+import { describe, expect, test } from 'vitest'
 import {
   ConjugatedFormContent,
   ConjugationTableContent,
   type ConjugationWord
 } from './conjugations'
+import { gateEnabled, gateService, recordedCases } from './gate'
 import { readConjugatedForm, readConjugationTable } from './rendered-word'
 import { WordHeader } from './word-header'
 
 // Renders the conjugation table and each form's screen to HTML, as the server does, and reads
 // back what a reader sees: the header's meaning and rule, the Plain/Polite control, each row's
 // title, form, and highlighted ending, and each form's meaning, shared spelling, and furigana. The
-// first tests render fixed data; the last runs every word-detail.json case with a table through
-// the dictionary database and the detail core into the components (ZENBU_DICTIONARY_D1=1, part of
-// the dictionary import's gate).
+// first tests render fixed data; the last renders what the dictionary service answers for every
+// word-detail.json case (./gate.ts).
 
 const noReadings = new Map()
 
@@ -147,8 +144,6 @@ describe('the conjugation table', () => {
   })
 })
 
-const enabled = process.env.ZENBU_DICTIONARY_D1 === '1'
-
 interface SuiteCase {
   covers: string
   entSeq: string[]
@@ -156,38 +151,13 @@ interface SuiteCase {
   conjugations?: SuiteConjugations
 }
 
-const suiteCases: SuiteCase[] = enabled
-  ? (
-      JSON.parse(
-        readFileSync(
-          new URL('../../../../ios/LanguageData/Conformance/word-detail.json', import.meta.url),
-          'utf8'
-        )
-      ) as { cases: SuiteCase[] }
-    ).cases
-  : []
+const suiteCases = recordedCases<SuiteCase>('word-detail.json')
 
-describe.runIf(enabled)('the rendered conjugation table matches the app', () => {
-  let proxy: Awaited<ReturnType<typeof getPlatformProxy<CloudflareEnv>>>
-  let dictionary: ReturnType<typeof dictionaryDatabase>
-
-  beforeAll(async () => {
-    proxy = await getPlatformProxy<CloudflareEnv>({
-      persist: { path: `${process.env.ZENBU_DICTIONARY_D1_PATH ?? '.dictionary-d1'}/v3` }
-    })
-    if (!proxy.env.DICTIONARY_DB)
-      throw new Error('wrangler.jsonc has no local DICTIONARY_DB binding')
-    dictionary = dictionaryDatabase(proxy.env.DICTIONARY_DB)
-  })
-
-  afterAll(async () => {
-    await proxy?.dispose()
-  })
-
+describe.runIf(gateEnabled)('the rendered conjugation table matches the app', () => {
   test.each(suiteCases)('$covers', async expected => {
-    const word = await dictionary.word(Number(expected.entSeq[0]))
+    const word = await gateService().word(Number(expected.entSeq[0]))
     if (!word) throw new Error(`No word ${expected.entSeq[0]}`)
-    const detail = wordDetail(word.rows)
+    const detail = wordDetail(word.data.rows)
     // The part-of-speech row opens the table exactly when the app's does.
     const header = renderToStaticMarkup(
       <WordHeader

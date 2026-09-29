@@ -1,29 +1,29 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { absoluteUrl } from '@/lib/site'
 import { type SitemapEntry, urlSetStream, urlSetXml, xmlResponse } from '@/lib/sitemap'
-import { loadedDictionary } from './data'
+import { dictionaryService } from './data'
 import { kanjiPath } from './urls'
 
 // The dictionary's sitemaps (ADR 0007, #465): `/sitemaps/dictionary/<n>.xml` for word pages, 50,000
 // canonical URLs to a file in `ent_seq` order, and `/sitemaps/kanji.xml` for the kanji pages
-// search engines may index. They exist wherever the dictionary database is loaded: staging and
-// production, not local fixtures. URLs are percent-encoded UTF-8.
+// search engines may index, from the dictionary service (./api.ts). They exist wherever the site
+// has a service: staging and production, not local fixtures. URLs are percent-encoded UTF-8.
 
 /** How many words each query reads while a word sitemap streams. */
 const wordsPerQuery = 10_000
 
-/** The dictionary's child sitemaps for the sitemap index; none without a loaded dictionary. */
+/** The dictionary's child sitemaps for the sitemap index; none on local fixtures. */
 export async function dictionarySitemapPaths(): Promise<string[]> {
-  const dictionary = await loadedDictionary()
-  if (!dictionary) return []
-  const sitemaps = await dictionary.db.wordSitemaps()
+  const api = await dictionaryService()
+  if (!api) return []
+  const sitemaps = (await api.wordSitemaps()).data
   return [
     ...sitemaps.map(sitemap => `/sitemaps/dictionary/${sitemap.number}.xml`),
     '/sitemaps/kanji.xml'
   ]
 }
 
-/** A word page's canonical URL, under the slug the database stores. */
+/** A word page's canonical URL, under its slug. */
 export const wordUrl = (entSeq: number, slug: string) =>
   absoluteUrl(encodeURI(`/dictionary/${slug}-${entSeq}/`))
 
@@ -32,32 +32,31 @@ export const kanjiUrl = (character: string) => absoluteUrl(encodeURI(kanjiPath(c
 
 /** Word sitemap `number`, streamed a query at a time; null when there's no such sitemap. */
 export async function wordSitemapResponse(request: Request, number: number) {
-  const dictionary = await loadedDictionary()
-  if (!dictionary) return null
-  const { db, build } = dictionary
-  const range = (await db.wordSitemaps()).find(sitemap => sitemap.number === number)
+  const api = await dictionaryService()
+  if (!api) return null
+  const sitemaps = await api.wordSitemaps()
+  const range = sitemaps.data.find(sitemap => sitemap.number === number)
   if (!range) return null
-  const { firstEntSeq, lastEntSeq } = range
   async function* pages(): AsyncGenerator<SitemapEntry[]> {
-    let after = firstEntSeq - 1
+    let after = range ? range.firstEntSeq - 1 : 0
     for (;;) {
-      const rows = await db.sitemapWords({ firstEntSeq, lastEntSeq }, after, wordsPerQuery)
+      const rows = (await api?.sitemapWords(number, after, wordsPerQuery))?.data ?? []
       if (rows.length === 0) return
       yield rows.map(row => ({ url: wordUrl(row.entSeq, row.slug) }))
       after = rows[rows.length - 1].entSeq
     }
   }
-  return cached(request, build, () => xmlResponse(urlSetStream(pages())))
+  return cached(request, sitemaps.build, () => xmlResponse(urlSetStream(pages())))
 }
 
-/** The kanji sitemap: every indexable kanji; null without a loaded dictionary. */
+/** The kanji sitemap: every indexable kanji; null on local fixtures. */
 export async function kanjiSitemapResponse(request: Request) {
-  const dictionary = await loadedDictionary()
-  if (!dictionary) return null
-  return cached(request, dictionary.build, async () => {
-    const characters = await dictionary.db.indexableKanji()
-    return xmlResponse(urlSetXml(characters.map(character => ({ url: kanjiUrl(character) }))))
-  })
+  const api = await dictionaryService()
+  if (!api) return null
+  const { data: characters, build } = await api.indexableKanji()
+  return cached(request, build, () =>
+    xmlResponse(urlSetXml(characters.map(character => ({ url: kanjiUrl(character) }))))
+  )
 }
 
 /**
