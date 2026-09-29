@@ -2,7 +2,9 @@
 
 `apps/web` is zenbujapanese.com: Next.js served from Cloudflare Workers through OpenNext, with
 Cloudflare D1 through Drizzle. It owns its toolchain (pnpm, its own lockfile) per ADR 0005. Run
-every command below from `apps/web`. Decisions and scope live in issue #402.
+every command below from `apps/web`. Decisions and scope live in issue #402. What the dictionary
+pages show, and the check that enforces each behavior, is in
+[`apps/web/docs/product/`](../../apps/web/docs/product/index.md).
 
 The website follows these SERP engineering standards:
 
@@ -226,48 +228,36 @@ The search core takes capabilities a client supplies (ADR 0008). The website, co
 the database fails or an English query can't be read as full text, such as one with a NUL.
 
 The search results page reads it through `searchDictionary` in `src/lib/dictionary/data.ts`. A
-query full-text search can't read (an FTS5 error, `isUnreadableQuery`) shows no results; any other
-failure fails the request, so an outage never renders as an empty, noindexed page. Only
-local development falls back to fixtures, when `SEARCH_DB` is unbound or holds no finished import
-(no `dictionary_import` row), as in `pnpm dev`. Staging and production (`SITE_ENV` set) serve the
-dictionary, so there a missing binding, or one bound to a database without an import, fails the
-request rather than passing fixtures off as the dictionary. `DICTIONARY_DB` works the same way. Once `DICTIONARY_DB` holds an import, every result links to its
-word page, a one-character query shows its kanji card from the dictionary database, and each
-result shows the app's frequency chips (JLPT and YouTube, `frequencyChips`, as
-SearchView.swift's `SearchFrequencyRankPresentationModel` picks them), read for all results in
-one query outside the search core; otherwise only fixture words and kanji link.
+query full-text search can't read (an FTS5 error, `isUnreadableQuery`) is treated as finding
+nothing; any other failure fails the request, so an outage never renders as an empty, noindexed
+page. Only local development falls back to fixtures, when `SEARCH_DB` is unbound or holds no
+finished import (no `dictionary_import` row), as in `pnpm dev`. Staging and production (`SITE_ENV`
+set) serve the dictionary, so there a missing binding, or one bound to a database without an
+import, fails the request rather than passing fixtures off as the dictionary. `DICTIONARY_DB`
+works the same way. Once `DICTIONARY_DB` holds an import, results link to word pages, and the
+kanji card and frequency chips are read from it, the chips for all results in one query outside
+the search core; otherwise only fixture words and kanji link.
 
 ## Word and kanji pages
 
 `src/lib/dictionary/detail/` is the detail core: pure functions, `wordDetail(rows)` and
 `kanjiDetail(rows)`, that turn rows shaped like the dictionary D1 (`detail/rows.ts`) into what
-the word and kanji pages render. Each function is a port of the app's Swift and names
-its source, so the pages show what the app shows: furigana, pitch, the first sense's part of
-speech, frequency from the app's default dictionaries (JLPT and TUBELEX), a kanji's metrics
-(strokes, grade, and KANJIDIC2's JLPT level as the app writes it, such as N2 for 要), its 24 words
-and their order, and element roles. `data.ts` runs the core and adds only URLs.
+the word and kanji pages render. Each function is a port of the app's Swift and names its source,
+so the pages show what the app shows (see the
+[product docs](../../apps/web/docs/product/dictionary.md)). `data.ts` runs the core and adds only
+URLs.
 
 `getWordPage` and `getKanjiPage` read `DICTIONARY_DB` through `dictionary-db.ts`, one batch (one
-round trip) per page, when it holds a finished import. A word page renders its first 25 examples
-and loads 25 more at a time as it scrolls, up to the app's 100, from
-`/dictionary/examples/<ent_seq>.json?build=<build ID>&from=<n>` (`getWordExamples`, noindex). The
-URL names the page's dictionary build, and another build's examples aren't found, so a page open
-across a deploy offers a reload instead of mixing two builds' lists. Each example credits
-both Tatoeba sentences with their IDs, contributors, and licenses. Words link to their pages; a
-word the app can't resolve to one entry links to a search for its dictionary form. Word pages live under the stored slug
-(`words.slug`), so a stale slug redirects (308) to it and an unknown number returns 404. A failing
-database fails the request rather than rendering a 404.
+round trip) per page, when it holds a finished import. A word page's later examples load from
+`/dictionary/examples/<ent_seq>.json?build=<build ID>&from=<n>` (`getWordExamples`). The URL names
+the page's dictionary build, and another build's examples aren't found. Word pages live under the
+stored slug (`words.slug`). A failing database fails the request rather than rendering a 404.
 
 Without an import, as in `pnpm dev` by default, the rows are local fixtures in
 `src/lib/dictionary/fixtures/`, exported from the app's bundled data by
 `scripts/export-dictionary-fixtures.py` with the import's own code, so their shapes can't drift;
 each fixture word keeps its first 50 examples, from `build-examples.mts` given the words' numbers.
 Rerun it after changing a row shape; the fixture JSON is generated, so Biome skips it.
-
-A kanji page with stroke order shows the app's stroke-order button under the glyph
-(`components/dictionary/stroke-order.tsx`). It opens a dialog, or a drawer on phones, that draws
-the strokes on a dashed grid and plays or steps through them as `KanjiStrokeOrderView.swift`
-does, and the page credits KanjiVG. A kanji without a diagram shows no button.
 
 To run `pnpm dev` on the whole dictionary, build it and copy it into Wrangler's local state (the
 file is named for the local `DICTIONARY_DB` ID in `wrangler.jsonc`; search works the same way from
@@ -393,8 +383,7 @@ per request. `/dictionary/`, the search box, is a static page in `src/lib/pages.
   `ent_seq` range into `word_sitemaps`, so a file reads only its own words, by primary key, and
   streams them 10,000 at a time; the index reads only `word_sitemaps`.
 - `/sitemaps/kanji.xml`: the kanji pages search engines may index (`kanji.indexable`: 12,633 of
-  13,108). A kanji with no meanings or readings is `noindex` and left out. The import stops if the
-  indexable kanji ever outgrow one file.
+  13,108). The import stops if the indexable kanji ever outgrow one file.
 
 Both are kept in the Worker's edge cache (the Cache API) under the dictionary build, so a new
 build replaces them at once; `pnpm dev` has no such cache. Search sitemaps (#466) wait for the
@@ -402,9 +391,9 @@ precomputed query set #463 will add.
 
 ## Retired word URLs
 
-A word URL whose `ent_seq` is in `retired_ids` returns 410 Gone, or redirects (308) to its
-replacement's canonical URL in one hop (ADR 0007). Next.js pages can't answer 410, so `worker.ts`,
-the Worker's entry in `wrangler.jsonc`, answers these before OpenNext's worker and passes every
-other request on (`src/lib/dictionary/retired.ts`). It reads `retired_ids` once per isolate,
+A word URL whose `ent_seq` is in `retired_ids` answers 410 or 308 (ADR 0007; the behavior is in
+the [product docs](../../apps/web/docs/product/dictionary.md#urls-seo-and-indexing)). Next.js
+pages can't answer 410, so `worker.ts`, the Worker's entry in `wrangler.jsonc`, answers these
+before OpenNext's worker and passes every other request on (`src/lib/dictionary/retired.ts`). It reads `retired_ids` once per isolate,
 wherever `DICTIONARY_DB` is bound. `pnpm dev` runs Next.js alone, so check retired URLs in
 `pnpm preview`. The table is empty until #463 records retired entries.
