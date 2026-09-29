@@ -26,6 +26,20 @@ expect() {
   if [ "$got" = "$want" ]; then pass "$got $path"; else fail "$got $path (want $want)"; fi
 }
 
+# Content checks retry like expect: for a few seconds after a deploy, some requests still reach the
+# previous Worker version. eventually <pass message> <fail message> <check function>
+eventually() {
+  local ok="$1" bad="$2" check="$3"
+  for _ in 1 2 3 4 5; do
+    "$check" && { pass "$ok"; return; }
+    sleep 3
+  done
+  fail "$bad"
+}
+
+# The response body, fetched whole: `curl | grep -q` fails under pipefail when grep exits early.
+body() { curl -s "${smoke[@]}" "$base$1"; }
+
 expect_redirect() {
   local path="$1" want="$2" got
   got="$(curl -s "${smoke[@]}" -o /dev/null -w '%{http_code} %{redirect_url}' "$base$path")"
@@ -66,7 +80,7 @@ if [ "$env" = production ]; then
   # No dictionary sitemaps before launch, in either sitemap index.
   expect /sitemaps/kanji.xml 404
   for index in /sitemap-index.xml /sitemap.xml; do
-    if curl -s "${smoke[@]}" "$base$index" | grep -q '/sitemaps/dictionary/\|/sitemaps/kanji\.xml'; then
+    if grep -q '/sitemaps/dictionary/\|/sitemaps/kanji\.xml' <<<"$(body "$index")"; then
       fail "$index lists dictionary sitemaps before launch"
     else
       pass "$index lists no dictionary sitemaps"
@@ -81,14 +95,15 @@ else
 
   # Both sitemap indexes list the word and kanji sitemaps (ADR 0007): /sitemap.xml serves the same
   # index, and neither may be a copy frozen at build time.
+  lists_release_sitemaps() {
+    local locs
+    locs="$(body "$index" | grep -oE '<loc>[^<]+</loc>' || true)"
+    grep -q '<loc>https://zenbujapanese.com/sitemaps/dictionary/1.xml</loc>' <<<"$locs" &&
+      grep -q '<loc>https://zenbujapanese.com/sitemaps/kanji.xml</loc>' <<<"$locs"
+  }
   for index in /sitemap-index.xml /sitemap.xml; do
-    locs="$(curl -s "${smoke[@]}" "$base$index" | grep -oE '<loc>[^<]+</loc>' || true)"
-    if grep -q '<loc>https://zenbujapanese.com/sitemaps/dictionary/1.xml</loc>' <<<"$locs" &&
-      grep -q '<loc>https://zenbujapanese.com/sitemaps/kanji.xml</loc>' <<<"$locs"; then
-      pass "$index lists the dictionary and kanji sitemaps"
-    else
-      fail "$index is missing the dictionary or kanji sitemap"
-    fi
+    eventually "$index lists the dictionary and kanji sitemaps" \
+      "$index is missing the dictionary or kanji sitemap" lists_release_sitemaps
   done
   # A word sitemap holds 1 to 50,000 canonical word URLs, percent-encoded (ASCII only).
   expect /sitemaps/dictionary/1.xml 200
@@ -101,17 +116,18 @@ else
     fail "word sitemap has $word_count URLs or a non-canonical one"
   fi
   # The kanji sitemap lists indexable kanji only: 見, but not 㐂, which has no meanings or readings.
-  kanji_sitemap="$(curl -s "${smoke[@]}" "$base/sitemaps/kanji.xml")"
-  if grep -q "<loc>https://zenbujapanese.com$kanji</loc>" <<<"$kanji_sitemap" &&
-    ! grep -q '/dictionary/kanji/%E3%90%82/' <<<"$kanji_sitemap"; then
-    pass 'kanji sitemap lists indexable kanji only'
-  else
-    fail 'kanji sitemap is missing 見 or lists 㐂'
-  fi
+  lists_indexable_kanji() {
+    local kanji_sitemap
+    kanji_sitemap="$(body /sitemaps/kanji.xml)"
+    grep -q "<loc>https://zenbujapanese.com$kanji</loc>" <<<"$kanji_sitemap" &&
+      ! grep -q '/dictionary/kanji/%E3%90%82/' <<<"$kanji_sitemap"
+  }
+  eventually 'kanji sitemap lists indexable kanji only' 'kanji sitemap is missing 見 or lists 㐂' \
+    lists_indexable_kanji
   # 㐂's page is noindex on its own, not only through staging's X-Robots-Tag; 見's isn't.
   noindex='<meta name="robots" content="noindex'
-  if curl -s "${smoke[@]}" "$base/dictionary/kanji/%E3%90%82/" | grep -q "$noindex" &&
-    ! curl -s "${smoke[@]}" "$base$kanji" | grep -q "$noindex"; then
+  if grep -q "$noindex" <<<"$(body /dictionary/kanji/%E3%90%82/)" &&
+    ! grep -q "$noindex" <<<"$(body "$kanji")"; then
     pass 'a kanji without meanings or readings is noindex'
   else
     fail 'noindex is wrong on 㐂 or 見'
