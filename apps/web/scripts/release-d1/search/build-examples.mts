@@ -59,7 +59,8 @@ import {
   japaneseCharacters,
   type SearchSentence,
   searchExamples,
-  stemsDocument
+  stemsDocument,
+  unindexedCharacters
 } from '../../../src/lib/dictionary/examples/search'
 import { normalizeQuery } from '../../../src/lib/dictionary/search/query'
 import {
@@ -278,16 +279,53 @@ for (const index of sample(
 }
 log(`checked planned links against linkedTokens on ${checkedSentences} sentences`)
 
-// The broad searches: every query that can list anything and has more candidates than the
-// website reads per request. An English query can list only when some sentence has its exact
-// words, so every such query is a run of a sentence's words; a Japanese one is a substring.
+// The Japanese index holds every character but spaces: a query of none can't be in a sentence.
+for (const { japanese } of sentences) {
+  const unindexed = unindexedCharacters(japanese)
+  if (unindexed.length > 0) {
+    throw new Error(
+      `example_japanese_chars can't index ${unindexed
+        .map(character => `U+${(character.codePointAt(0) ?? 0).toString(16).toUpperCase()}`)
+        .join(', ')} in "${japanese}"`
+    )
+  }
+}
+
+// The broad searches: every search the website can list that has more candidates than it reads
+// per request (`exampleCandidateLimit`). An English search lists only when some sentence has its
+// exact words, so each is a run of a sentence's words (a phrase, or one from the sentence's first
+// word, `^`), or a prefix of one word (`p*`, `^p*`). A multi-word phrase with a prefix isn't
+// covered: the website lists nothing for one with more candidates. A Japanese search is a
+// substring.
+const porterStems = searchSentences.map(sentence =>
+  englishTokens(sentence).porter.map(token => token.term)
+)
 const byStem = new Map<string, number[]>()
-for (const [index, sentence] of searchSentences.entries()) {
-  for (const term of new Set(englishTokens(sentence).porter.map(token => token.term))) {
+for (const [index, stems] of porterStems.entries()) {
+  for (const term of new Set(stems)) {
     const list = byStem.get(term)
     if (list) list.push(index)
     else byStem.set(term, [index])
   }
+}
+const sortedStems = [...byStem.keys()].sort()
+/** Sentences with a Porter term starting with `prefix`, each once, in order. */
+function prefixSentences(prefix: string): number[] {
+  let low = 0
+  let high = sortedStems.length
+  while (low < high) {
+    const middle = (low + high) >> 1
+    if (sortedStems[middle] < prefix) low = middle + 1
+    else high = middle
+  }
+  const found = new Uint8Array(searchSentences.length)
+  for (let index = low; index < sortedStems.length; index++) {
+    if (!sortedStems[index].startsWith(prefix)) break
+    for (const sentence of byStem.get(sortedStems[index]) ?? []) found[sentence] = 1
+  }
+  const list: number[] = []
+  for (const [sentence, flag] of found.entries()) if (flag) list.push(sentence)
+  return list
 }
 const byCharacter = new Map<string, number[]>()
 for (const [index, { japanese }] of searchSentences.entries()) {
@@ -299,11 +337,18 @@ for (const [index, { japanese }] of searchSentences.entries()) {
 }
 const memory: ExampleSearchSource = {
   async english(phrase) {
-    // Sentences with the phrase's rarest whole word; any word when every one is a prefix.
-    const whole = phrase.filter(token => !token.isPrefix)
-    if (whole.length === 0) return searchSentences
-    const lists = whole.map(token => byStem.get(token.term) ?? [])
-    const rarest = lists.reduce((min, list) => (list.length < min.length ? list : min))
+    // The sentences of the phrase's rarest word, or of its first word's prefix.
+    const lists = phrase.map(token =>
+      token.isPrefix ? prefixSentences(token.term) : (byStem.get(token.term) ?? [])
+    )
+    let rarest = lists.reduce((min, list) => (list.length < min.length ? list : min))
+    if (phrase[0].isFirst) {
+      const first = phrase[0]
+      rarest = rarest.filter(index => {
+        const term = porterStems[index][0] ?? ''
+        return first.isPrefix ? term.startsWith(first.term) : term === first.term
+      })
+    }
     return rarest.map(index => searchSentences[index])
   },
   async japanese(text) {
@@ -315,21 +360,31 @@ const memory: ExampleSearchSource = {
   }
 }
 
+// An underscore is part of a Porter word but not an exact one, so the runs below can't find a
+// search with one; each is bounded instead, by the few sentences that have one at all.
+const underscored = porterStems.filter(stems => stems.some(term => term.includes('_'))).length
+if (underscored > exampleCandidateLimit) {
+  throw new Error(`${underscored} sentences have a word with _, more than the website reads`)
+}
+
 /** Sentences holding each run of `n` items, for every run whose shorter runs are frequent. */
 function frequentRuns<T>(
   sequences: T[][],
   key: (items: T[]) => string,
   frequentShorter: Set<string> | null,
-  n: number
+  n: number,
+  fromStart: boolean
 ): Map<string, number> {
   const counts = new Map<string, number>()
   for (const items of sequences) {
     const seen = new Set<string>()
-    for (let start = 0; start + n <= items.length; start++) {
+    const last = fromStart ? Math.min(0, items.length - n) : items.length - n
+    for (let start = 0; start <= last; start++) {
       const run = items.slice(start, start + n)
       if (
         frequentShorter &&
-        (!frequentShorter.has(key(run.slice(0, -1))) || !frequentShorter.has(key(run.slice(1))))
+        (!frequentShorter.has(key(run.slice(0, -1))) ||
+          (!fromStart && !frequentShorter.has(key(run.slice(1)))))
       ) {
         continue
       }
@@ -340,12 +395,19 @@ function frequentRuns<T>(
   return counts
 }
 
-/** Every run of items, of any length, held by more than `exampleCandidateLimit` sentences. */
-function frequent<T>(sequences: T[][], key: (items: T[]) => string): Set<string> {
+/**
+ * Every run of items, of any length, held by more than `exampleCandidateLimit` sentences; with
+ * `fromStart`, only runs that start a sequence.
+ */
+function frequent<T>(
+  sequences: T[][],
+  key: (items: T[]) => string,
+  fromStart = false
+): Set<string> {
   const all = new Set<string>()
   let previous: Set<string> | null = null
   for (let n = 1; ; n++) {
-    const counts: Map<string, number> = frequentRuns(sequences, key, previous, n)
+    const counts: Map<string, number> = frequentRuns(sequences, key, previous, n, fromStart)
     const found: Set<string> = new Set(
       [...counts].filter(([, count]) => count > exampleCandidateLimit).map(([run]) => run)
     )
@@ -357,26 +419,98 @@ function frequent<T>(sequences: T[][], key: (items: T[]) => string): Set<string>
 }
 
 const stemKey = (terms: string[]) => terms.join(' ')
-const porterStems = searchSentences.map(sentence =>
-  englishTokens(sentence).porter.map(token => token.term)
-)
 const frequentStems = frequent(porterStems, stemKey)
-// The runs of a sentence's exact words whose stems are frequent, as queries.
-const broadQueries = new Set<string>()
+const frequentFirstStems = frequent(porterStems, stemKey, true)
 const stemOf = (term: string) => tokenize(term, 'porter')[0]?.term ?? ''
+// Only ASCII words, without NUL, can be an English query's.
+const asciiWord = (word: string) =>
+  word !== '' && [...word].every(byte => byte.charCodeAt(0) > 0 && byte.charCodeAt(0) < 0x80)
+const broadQueries = new Set<string>()
+// Phrases, and phrases from a sentence's first word, whose terms are frequent.
 for (const sentence of searchSentences) {
   const words = englishTokens(sentence).simple.map(token => token.term)
   for (let start = 0; start < words.length; start++) {
-    for (let end = start + 1; end <= words.length; end++) {
-      const run = words.slice(start, end)
-      // Only ASCII words, without NUL, can be a plain English query.
-      const ascii = (word: string) =>
-        [...word].every(byte => byte.charCodeAt(0) > 0 && byte.charCodeAt(0) < 0x80)
-      if (!run.every(ascii)) break
-      if (!frequentStems.has(stemKey(run.map(stemOf)))) break
-      broadQueries.add(run.join(' '))
+    const runSets = start === 0 ? [frequentStems, frequentFirstStems] : [frequentStems]
+    for (const [kind, runs] of runSets.entries()) {
+      for (let end = start + 1; end <= words.length; end++) {
+        const run = words.slice(start, end)
+        if (!run.every(asciiWord) || !runs.has(stemKey(run.map(stemOf)))) break
+        broadQueries.add(`${kind === 1 ? '^' : ''}${run.join(' ')}`)
+      }
     }
   }
+}
+// Prefixes: a word's prefix alone, or after a phrase, anywhere or from a sentence's first word
+// (`t*`, `thank y*`, `^t*`). Each count is of the sentences whose Porter terms hold the phrase's
+// then a term starting with the prefix's; a prefix after a phrase can only be frequent where the
+// phrase and the prefix alone are. A prefix before another word (`t* the`) isn't covered.
+const prefixCounts = new Map<string, number>()
+for (const stems of porterStems) {
+  const prefixes = new Set<string>()
+  for (const term of stems) {
+    for (let end = 1; end <= term.length; end++) prefixes.add(term.slice(0, end))
+  }
+  for (const prefix of prefixes) prefixCounts.set(prefix, (prefixCounts.get(prefix) ?? 0) + 1)
+}
+const frequentPrefix = (prefix: string) => (prefixCounts.get(prefix) ?? 0) > exampleCandidateLimit
+const patternKey = (first: boolean, run: string[], prefix: string) =>
+  `${first ? '^' : ''}${stemKey(run)}|${prefix}`
+/**
+ * Calls `visit` with each phrase, from its start, that a sequence of words holds whose terms are
+ * frequent (the empty phrase included), and the word after it.
+ */
+function phrasesBeforeWords<T>(
+  items: T[],
+  term: (item: T) => string,
+  visit: (first: boolean, run: T[], next: T) => void
+) {
+  for (let start = 0; start < items.length; start++) {
+    for (const first of start === 0 ? [false, true] : [false]) {
+      const runs = first ? frequentFirstStems : frequentStems
+      for (let end = start; end < items.length; end++) {
+        const run = items.slice(start, end)
+        if (run.length > 0 && !runs.has(stemKey(run.map(term)))) break
+        visit(first, run, items[end])
+      }
+    }
+  }
+}
+const patternCounts = new Map<string, number>()
+for (const stems of porterStems) {
+  const seen = new Set<string>()
+  phrasesBeforeWords(
+    stems,
+    term => term,
+    (first, run, next) => {
+      for (let end = 1; end <= next.length; end++) {
+        const prefix = next.slice(0, end)
+        if (frequentPrefix(prefix)) seen.add(patternKey(first, run, prefix))
+      }
+    }
+  )
+  for (const key of seen) patternCounts.set(key, (patternCounts.get(key) ?? 0) + 1)
+}
+const stems = new Map<string, string>()
+const cachedStemOf = (word: string) => {
+  let stem = stems.get(word)
+  if (stem === undefined) {
+    stem = stemOf(word)
+    stems.set(word, stem)
+  }
+  return stem
+}
+for (const sentence of searchSentences) {
+  const words = englishTokens(sentence).simple.map(token => token.term)
+  phrasesBeforeWords(words, cachedStemOf, (first, run, next) => {
+    if (!run.every(asciiWord) || !asciiWord(next)) return
+    for (let end = 1; end <= next.length; end++) {
+      const prefix = next.slice(0, end)
+      const key = patternKey(first, run.map(cachedStemOf), cachedStemOf(prefix))
+      if ((patternCounts.get(key) ?? 0) > exampleCandidateLimit) {
+        broadQueries.add(`${first ? '^' : ''}${[...run, `${prefix}*`].join(' ')}`)
+      }
+    }
+  })
 }
 const englishBroad = broadQueries.size
 for (const run of frequent(

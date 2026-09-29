@@ -13566,6 +13566,836 @@
     },
     {
       "count" : 51,
+      "covers" : "A one-letter prefix: over 100,000 candidates, which the website answers from the precomputed searches",
+      "highlightedEntry" : "d418e58c46f0e84a6df458e97e0502a2",
+      "ids" : [
+        "esp1_fc6b0fdd7962f4adbb6846f2cddb3530",
+        "esp1_40ba0fc96405a024e2832ed22b13994e",
+        "esp1_49692deb1c5073eb2bd8b20092fd1afe",
+        "esp1_d1601e27fd6235e8fd2273022bd3a7e4",
+        "esp1_e4951a3c826d1d4f03be2ec82edefd91",
+        "esp1_2f40c72f951070117ffb5f096467951f",
+        "esp1_c6dbff5c617badfcd593abe127a473c9",
+        "esp1_f39235e89f76df52f7497c44e61c16a6",
+        "esp1_1d7cae763847ef5a964ac940e582b0bd",
+        "esp1_3a6dfdf2b59a1be93b39012d4581c9d5",
+        "esp1_5ea89435d8f005786ff3131abb4e1c40",
+        "esp1_562c720542a668dd1f4ecd8880874fcf",
+        "esp1_820d93763746ca596a0dfc604a3fda7b",
+        "esp1_7821aed53c26f866a228d7c1173dec58",
+        "esp1_01cc3cef514873f6c073bb57b5750c55",
+        "esp1_1b1fed77ba1aff0454eaf33194d1eff8",
+        "esp1_4482c853c9a0d7b375ebad8886274bcc",
+        "esp1_822acb4a094268b6105c7c2606905576",
+        "esp1_a1d2625ed03548682d80e12afe371245",
+        "esp1_a507346dbf69fedd6427a9bb8a913bc4",
+        "esp1_afbdea89b37cf5a3221a06704374d949",
+        "esp1_0501606eba04fb9cf32a1cbaaf2a840d",
+        "esp1_0a523622ea470bcd4fe3301e5cbf71d7",
+        "esp1_464657d84836d50e117c3f5ebe9432b1",
+        "esp1_6e92062c7c783117bad54cb6b1422814",
+        "esp1_7497a288ac23f8766a016f30c53eb541",
+        "esp1_75ddae0c64a5d93a19d67196878cb40c",
+        "esp1_a87b5faabe024c1c7b4bfc609eace44c",
+        "esp1_c6b35b7737fdad0362ea6b7c6ed7be88",
+        "esp1_c78ca71b01172af5e7e6ac4d8c59cca0",
+        "esp1_ec7007118ef490701091e94a258b4e00",
+        "esp1_ede3eeca3824e5a552e03a5238ce1711",
+        "esp1_eed4d7810e6302df5933bcd0f70eb524",
+        "esp1_0130db0c18de567a2bca111e935fd5e1",
+        "esp1_01b53642d0982d8e84a8e396892c835d",
+        "esp1_0389f55bbb38dda5485a917046a30521",
+        "esp1_0d8021e1b5d7dfc98a61da7f0c0d7111",
+        "esp1_0e04fd1fe0c531e3e2a67ed710830f6b",
+        "esp1_12a960b3ccf11ec2dc714b5937704550",
+        "esp1_25aa20ea670e349076ba716ee153be52",
+        "esp1_2d158f8272dbe74b9286fff15ff4485f",
+        "esp1_2e0467d567810ad8d945bb4a080ad8fe",
+        "esp1_3995497aaa3de56ddaeba2c2f2fc63a0",
+        "esp1_46393cd5a16d43da6509482e7088cd70",
+        "esp1_4b5dded6c18c3e09f5c71ac67a0bea78",
+        "esp1_56bccadb7aef0d1ef9a249d409ac807b",
+        "esp1_6cce89f3a41b9356a90ce56a7016d58c",
+        "esp1_6d1d7eb1a7698f2a8d7fbe180b59d1d5",
+        "esp1_7408bcd140d80b4f5e7c876e0aab806c",
+        "esp1_75ced5c2a3b5f0cc3061b1ab25a6019a",
+        "esp1_784b967029209b0a3e2e987233263164",
+        "esp1_7921eca705a48512b93230535785f7ae",
+        "esp1_7dcec4dfc321c937e290386259647ed5",
+        "esp1_828e969f111459f9139d5caa0cd7c7d7",
+        "esp1_83c565890a8e08add4e5c20fa1099f42",
+        "esp1_84c14feeb77bcd1978210186167d54c9",
+        "esp1_871ab2b96faf0f9571edcfed5ce239b1",
+        "esp1_90012a1f6e8edde9fe3186c9697b03d4",
+        "esp1_9530c5399b14d647af9a562004d009cc",
+        "esp1_95e7065f9ee4d1970d63f8e312e50af7",
+        "esp1_9e66cf22865626895ed3262c509d6aed",
+        "esp1_a8b4cd90341f1090d95b2d8ea40e7db1",
+        "esp1_adecae54e2300410b04247399a90ae2f",
+        "esp1_b02f77a384a7646ded2c156d09ebffa5",
+        "esp1_b328fee26c6a6af2334f4c20092eb73f",
+        "esp1_bb75a5ccf5976e2b9edfdd82cfa6118b",
+        "esp1_be107b51913b7bb66ea4ba85bcdeed79",
+        "esp1_c0ac3de1aa068d9bd8f7b83227603e42",
+        "esp1_c3e8699ea7f065d4780aa70c8e5c60db",
+        "esp1_c63931b66134da16caec2c509f5f89d1",
+        "esp1_c8bb3592755048f1004b1a2c1d8d8fe9",
+        "esp1_c9cf5624f477b9ebb613054afa08c488",
+        "esp1_c9df3608fec8e20f67c6e92a090ca93f",
+        "esp1_ce8393a1489a15a24443886390146dc3",
+        "esp1_d0e88b34020604df725e4abda07e4ee6",
+        "esp1_d66ff248c9ca3bf548d9131141f87d9d",
+        "esp1_da11ded0f13eb4814a43e101d909fa58",
+        "esp1_e682b9c9b35ab46f7da333eeb3dfb421",
+        "esp1_ea0cbeccf127382faa8ad8246c627102",
+        "esp1_ebf3daaf1603bc8f0c21916e9d584a2f",
+        "esp1_efcf8dd986d50eff5c10473d8e5eff06",
+        "esp1_f586f0ca03e8590a94cf592e6dc69344",
+        "esp1_fe67f61807225ef1a9168dd6005ed01a",
+        "esp1_fe91168935c6625b96c8fc1729eb56f5",
+        "esp1_09a9507aec0da41c039685fa24032dad",
+        "esp1_1281c9ede5a52dd412626d5570e0ad67",
+        "esp1_18756187c6c30c2d252cec8a25da46e9",
+        "esp1_1be9084035aa190ecc842e830cd3f1b7",
+        "esp1_2015f663d66601e86317b5a221f8fd56",
+        "esp1_280dc2ca1215db04000975c1202f149f",
+        "esp1_2d7f65858b975910a2b3232a54b44f9b",
+        "esp1_38a0ceee2566beb56fc2cfdbad19f043",
+        "esp1_40fb000d9c5716e2e62602edc4b88678",
+        "esp1_464ccbfcbda6de49cbf4c95516311296",
+        "esp1_5633d8d204b80de5214ec368def2f456",
+        "esp1_58b4bf39f74286ee3e672f13562fa142",
+        "esp1_5a8ff2ce2b81f3901db9d86226b12ca0",
+        "esp1_6092a543f52bf8752cbcc837faf3b2fd",
+        "esp1_61dcbd9c634fcc44691fb81e0eb98db5",
+        "esp1_65ce2145902d2a318aa6d052b822069a"
+      ],
+      "query" : "t*",
+      "shown" : [
+        {
+          "english" : "Translate!",
+          "id" : "esp1_fc6b0fdd7962f4adbb6846f2cddb3530",
+          "japanese" : "翻訳!",
+          "tokens" : [
+            {
+              "entry" : "d36ffa419d2b23137df124fda035950e",
+              "surface" : "翻訳"
+            },
+            {
+              "surface" : "!"
+            }
+          ]
+        },
+        {
+          "english" : "Thanks!",
+          "id" : "esp1_40ba0fc96405a024e2832ed22b13994e",
+          "japanese" : "どうも。",
+          "tokens" : [
+            {
+              "entry" : "241d53310b1bebfc437f26a0f88a0cc8",
+              "surface" : "どうも"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "Tsk!",
+          "id" : "esp1_49692deb1c5073eb2bd8b20092fd1afe",
+          "japanese" : "ちぇっ！",
+          "tokens" : [
+            {
+              "candidates" : [
+                "8d72e1bc3945b8f3579d26dc2049745d",
+                "78a5bc7c084c501df320d04ccba8eacf",
+                "1adcddee0a72da672154a9f65ba943df",
+                "8bf17b0082c86762cb0a3203bdb1135a",
+                "6251f14549bef95848b731d95ae657ee",
+                "e2b63a37431d1a605eae5df15fd7aee9",
+                "d1bf53f7e4dd4170afcd8811bb87ecb8",
+                "9e71f08316fd0ae2657c0f8ed0101903",
+                "a57ac55fed77b0a34a4281da84419725",
+                "48454b3ee99d241a4b18e450afa71b09",
+                "ca26f6a38bac7b95e67d29047fd3f4f0"
+              ],
+              "surface" : "ち"
+            },
+            {
+              "surface" : "ぇっ"
+            },
+            {
+              "surface" : "！"
+            }
+          ]
+        },
+        {
+          "english" : "Thanks!",
+          "id" : "esp1_d1601e27fd6235e8fd2273022bd3a7e4",
+          "japanese" : "どうも！",
+          "tokens" : [
+            {
+              "entry" : "241d53310b1bebfc437f26a0f88a0cc8",
+              "surface" : "どうも"
+            },
+            {
+              "surface" : "！"
+            }
+          ]
+        },
+        {
+          "english" : "Think!",
+          "id" : "esp1_e4951a3c826d1d4f03be2ec82edefd91",
+          "japanese" : "考えろ！",
+          "tokens" : [
+            {
+              "entry" : "3defc048e38c8b47e1c7cd7bfd44aa78",
+              "surface" : "考えろ"
+            },
+            {
+              "surface" : "！"
+            }
+          ]
+        }
+      ],
+      "title" : "View 50+ Example Sentences",
+      "usesPrimaryEntryExamples" : false
+    },
+    {
+      "count" : 51,
+      "covers" : "A first-word query with about 70,000 candidates",
+      "ids" : [
+        "esp1_a525e1605167d0427816f3e4364200b6",
+        "esp1_dc06476078f6f87b429631c5792e65b6",
+        "esp1_01217c1fc780a87ffad2718c0c29ae7b",
+        "esp1_29dd00eb60546f7fc13cc03bd693496a",
+        "esp1_445c737b1b89d279891034d00f0fba28",
+        "esp1_61384f06526039f1a280c58266aa191a",
+        "esp1_8174446592f02e9b302c478a16eab07a",
+        "esp1_cc7f07322db72edc1e6160541c83136e",
+        "esp1_e8e4e66e875a6a80c3c6818e5a87c107",
+        "esp1_0189ac024adfaad11aec7fde57293684",
+        "esp1_063405dd01f57740af15fbcb6fde8779",
+        "esp1_1832369990d901b266afa4be138622f9",
+        "esp1_34c2bce26b1e5dc0e2f8bac11cf10410",
+        "esp1_3bca1db552f328cebe6e505600fcfd1f",
+        "esp1_4938727f5445b7c8d6d17db06c2ad0aa",
+        "esp1_597e18dee09e1c7c2c246b68d7ca359f",
+        "esp1_76e01ee6af8c92a280e87d79ff5c27dc",
+        "esp1_8299f0c940a56bee2bd9b9750a158250",
+        "esp1_8404c2f0f74f3987002a71364050f6ed",
+        "esp1_8c2e849d4e92b565c7b30fa860dfd7ba",
+        "esp1_96b21d2400e8470770ab1da96609d179",
+        "esp1_9bf3da9e100f58f468f5d4e39e17b51c",
+        "esp1_a71e053c9570f182b70018a4b4766adb",
+        "esp1_adc8ec6bf31b4520f9d8ef99707b7c7e",
+        "esp1_b988ba1761d99a1579ca976d1a9dfb11",
+        "esp1_ba244bc957ea2db852ffc3e31e06fcba",
+        "esp1_d3aabfdb65d0fd4b2841c6ec766f20bb",
+        "esp1_14d204440055aa88794e0502d78d35e3",
+        "esp1_3341de7692fe88c56a79fcf3ec4566d9",
+        "esp1_5335f4fee7594590651a78a094b8f91f",
+        "esp1_5d41e47510a0da0c9290332faee8e6ed",
+        "esp1_5ea7b3d47bd4ac759b88db837da5e876",
+        "esp1_68e2147976df74bc938cf892008483ca",
+        "esp1_78fb2bedaef1bb9598c9ee764b8aec48",
+        "esp1_7952f408fcb4e368986e24b6f671a77a",
+        "esp1_8fdf9a0356a6bc99d29f32f8931a0259",
+        "esp1_9a57d48c83f60d3f9b51ac3b45ff851a",
+        "esp1_a729acb4dbc18ee87467f07c06f3ff0e",
+        "esp1_d8f79d93666b6eb9ff53fce0e8d0f89f",
+        "esp1_dbe66d76dfe63a28ed21cfdc0347a25f",
+        "esp1_e6a5f356660f9833d2263945090f3fb5",
+        "esp1_132218493abcca70f930468df1838b04",
+        "esp1_273cbb4fd715f2d03a01622cb5392605",
+        "esp1_30b6eeb3be635e20c5e25721c57ae6fd",
+        "esp1_34a9dcedee7957ed32ea03bddd0b091b",
+        "esp1_3785420b9a628efdaa3683b94b3e12e2",
+        "esp1_542e07c7f53b5f9fd98006e2bbac9255",
+        "esp1_5c51a0b135e438b09f1bd2e360f6e8cf",
+        "esp1_5cc85c24c17bd54bc46af8db2e202455",
+        "esp1_5d6a2b7a4b272d90e0c5d6763cf2d06e",
+        "esp1_6847f474c662cc5b6b95b8b3b6b87076",
+        "esp1_9cb673d0d2ea2a8de49b65cb979a338c",
+        "esp1_a4c3a102e9313aaa6029fa8b2b110a64",
+        "esp1_c339e5b6ecef2dd50ffc3e1865d5f52a",
+        "esp1_e49f3a34b51cfaa6e90dd00f6dc88c95",
+        "esp1_ecbcb80b6a02a3ae8e5aa58c7e4466ea",
+        "esp1_f247116d3bb8a7f039287a7b6a11ade7",
+        "esp1_0646a9fb9707f5e91b3b06227f1142f5",
+        "esp1_1120953368fe4daa4b7ac5f0a7ad5c50",
+        "esp1_12a80ffdb1d05412b3cfed8e8de94a17",
+        "esp1_13a5889e504f501d125309ebe0fff49c",
+        "esp1_65e41190b2ed311800275d1246cb142e",
+        "esp1_835560e428d3f487c7fecce7ab6202c6",
+        "esp1_9aef35b669c9d86de7842e8b9680786c",
+        "esp1_b8e32d0647ea4d08e319e67fdbb9f368",
+        "esp1_c9ffe982b174e1269eb8ef09f75c4d64",
+        "esp1_4b0025e3c13fc4d66f825ba304468e6c",
+        "esp1_6ba1640cf17dcf96884ffd69a9feced3",
+        "esp1_72bbe504f4eb464d773086163602cd96",
+        "esp1_9e4f80552177fbfbf7fba8ac031ff636",
+        "esp1_ac5d6c48e0257ff66de6ee1d4de5f0a0",
+        "esp1_b3d33d3784e12a0f53c3d8f580942e18",
+        "esp1_e11e6121f0ae8d366aea1cf640967726",
+        "esp1_ef369ef99b961ea1b916f0cb037a0254",
+        "esp1_0bbd38012f30de219c2ffc94793a5912",
+        "esp1_43c4836f4780ba89ce4098e8629b8c9e",
+        "esp1_c12c872328b081b68aee8329deb9c17b",
+        "esp1_c37d19309857a267244dd24cc0bbd151",
+        "esp1_dd50cfa17bba7307a32764ec502403bd",
+        "esp1_f4a4476b56d2da1314187ecc12a97c45",
+        "esp1_0d9d7e44f5c7a774cbf0ae70d9e0c5a1",
+        "esp1_811fb30afc9dcfda604640bec2cfc23f",
+        "esp1_3bab25eea4d28f03abe6c19bbcf9d571",
+        "esp1_7e82ed50a46f732ca7238cb7f1cd1037",
+        "esp1_29566d96925e48a4448b3b7bd52c6693",
+        "esp1_f4ed3e52a5ac760dab8f9c0ec2900bbe",
+        "esp1_06f17162b6c7387398f95114517d68ae",
+        "esp1_35d4bc6f38250c4c0f1d98a29c50ed56",
+        "esp1_136a74dc56ff696d08822ab1628d598e",
+        "esp1_36363988a4022a7f2a19f29e79cd8c53",
+        "esp1_48d53baa2899d0529c613d53e4662bd9",
+        "esp1_4caf8db3a71919b2e241c73e09a14c2e",
+        "esp1_52cbb85f98f68e1b9f2d008715b6ee3b",
+        "esp1_911560ee1fb3dfc9a84ee5f9844e2a9b",
+        "esp1_97242d5db1d892512475f4a0b8ccee62",
+        "esp1_9767c15ec724fa7161a1ffe28c62a14e",
+        "esp1_9aecc205855cd39ccbece4e3da4abac4",
+        "esp1_b45c60b628840a54d0b660fba071f4ae",
+        "esp1_baa12315418a7decaf0ef4fdb703c85d",
+        "esp1_cda94c347d13c07b4a4d3e76964a7232"
+      ],
+      "query" : "^the",
+      "shown" : [
+        {
+          "english" : "The wind blows.",
+          "id" : "esp1_a525e1605167d0427816f3e4364200b6",
+          "japanese" : "風が吹く。",
+          "tokens" : [
+            {
+              "entry" : "0c93a5d757ebf72736b7a71d6eba0e07",
+              "surface" : "風"
+            },
+            {
+              "candidates" : [
+                "525af7a87097616e431ac3a1e524f37f",
+                "6e965c8d5bfa8eb14fc4179abb44aeed"
+              ],
+              "surface" : "が"
+            },
+            {
+              "entry" : "0e497fbc4983505899e546a9301335dd",
+              "surface" : "吹く"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "The dog sleeps.",
+          "id" : "esp1_dc06476078f6f87b429631c5792e65b6",
+          "japanese" : "犬が寝る。",
+          "tokens" : [
+            {
+              "entry" : "681bff8274391329f3ce9ca80a4e04b0",
+              "surface" : "犬"
+            },
+            {
+              "candidates" : [
+                "525af7a87097616e431ac3a1e524f37f",
+                "6e965c8d5bfa8eb14fc4179abb44aeed"
+              ],
+              "surface" : "が"
+            },
+            {
+              "entry" : "3ee73bc74b631954edbad00428460bd4",
+              "surface" : "寝る"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "The leaves fell.",
+          "id" : "esp1_01217c1fc780a87ffad2718c0c29ae7b",
+          "japanese" : "葉が落ちた。",
+          "tokens" : [
+            {
+              "entry" : "45efec9bb825e890d54344e7825b15e9",
+              "surface" : "葉"
+            },
+            {
+              "candidates" : [
+                "525af7a87097616e431ac3a1e524f37f",
+                "6e965c8d5bfa8eb14fc4179abb44aeed"
+              ],
+              "surface" : "が"
+            },
+            {
+              "entry" : "8652eb87cbbf71b5dd9105504daf2d73",
+              "surface" : "落ちた"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "The mirror broke.",
+          "id" : "esp1_29dd00eb60546f7fc13cc03bd693496a",
+          "japanese" : "鏡が壊れた。",
+          "tokens" : [
+            {
+              "candidates" : [
+                "014938f2724225ad4cebfecac4aaa784",
+                "cad49c0d20f3f0ba35205f77bac372ee"
+              ],
+              "surface" : "鏡"
+            },
+            {
+              "candidates" : [
+                "525af7a87097616e431ac3a1e524f37f",
+                "6e965c8d5bfa8eb14fc4179abb44aeed"
+              ],
+              "surface" : "が"
+            },
+            {
+              "entry" : "a628eedb591670d4e4d935022e00af78",
+              "surface" : "壊れた"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "The dog barked.",
+          "id" : "esp1_445c737b1b89d279891034d00f0fba28",
+          "japanese" : "犬が吠えた。",
+          "tokens" : [
+            {
+              "entry" : "681bff8274391329f3ce9ca80a4e04b0",
+              "surface" : "犬"
+            },
+            {
+              "candidates" : [
+                "525af7a87097616e431ac3a1e524f37f",
+                "6e965c8d5bfa8eb14fc4179abb44aeed"
+              ],
+              "surface" : "が"
+            },
+            {
+              "entry" : "f29411d798656f63e75fe961c4c38a49",
+              "surface" : "吠えた"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        }
+      ],
+      "title" : "View 50+ Example Sentences",
+      "usesPrimaryEntryExamples" : false
+    },
+    {
+      "count" : 51,
+      "covers" : "A first-word prefix",
+      "highlightedEntry" : "d418e58c46f0e84a6df458e97e0502a2",
+      "ids" : [
+        "esp1_fc6b0fdd7962f4adbb6846f2cddb3530",
+        "esp1_40ba0fc96405a024e2832ed22b13994e",
+        "esp1_49692deb1c5073eb2bd8b20092fd1afe",
+        "esp1_d1601e27fd6235e8fd2273022bd3a7e4",
+        "esp1_e4951a3c826d1d4f03be2ec82edefd91",
+        "esp1_2f40c72f951070117ffb5f096467951f",
+        "esp1_c6dbff5c617badfcd593abe127a473c9",
+        "esp1_f39235e89f76df52f7497c44e61c16a6",
+        "esp1_1d7cae763847ef5a964ac940e582b0bd",
+        "esp1_3a6dfdf2b59a1be93b39012d4581c9d5",
+        "esp1_5ea89435d8f005786ff3131abb4e1c40",
+        "esp1_562c720542a668dd1f4ecd8880874fcf",
+        "esp1_820d93763746ca596a0dfc604a3fda7b",
+        "esp1_7821aed53c26f866a228d7c1173dec58",
+        "esp1_01cc3cef514873f6c073bb57b5750c55",
+        "esp1_1b1fed77ba1aff0454eaf33194d1eff8",
+        "esp1_4482c853c9a0d7b375ebad8886274bcc",
+        "esp1_822acb4a094268b6105c7c2606905576",
+        "esp1_a1d2625ed03548682d80e12afe371245",
+        "esp1_a507346dbf69fedd6427a9bb8a913bc4",
+        "esp1_afbdea89b37cf5a3221a06704374d949",
+        "esp1_0501606eba04fb9cf32a1cbaaf2a840d",
+        "esp1_0a523622ea470bcd4fe3301e5cbf71d7",
+        "esp1_464657d84836d50e117c3f5ebe9432b1",
+        "esp1_6e92062c7c783117bad54cb6b1422814",
+        "esp1_7497a288ac23f8766a016f30c53eb541",
+        "esp1_75ddae0c64a5d93a19d67196878cb40c",
+        "esp1_a87b5faabe024c1c7b4bfc609eace44c",
+        "esp1_c6b35b7737fdad0362ea6b7c6ed7be88",
+        "esp1_c78ca71b01172af5e7e6ac4d8c59cca0",
+        "esp1_ec7007118ef490701091e94a258b4e00",
+        "esp1_ede3eeca3824e5a552e03a5238ce1711",
+        "esp1_eed4d7810e6302df5933bcd0f70eb524",
+        "esp1_0130db0c18de567a2bca111e935fd5e1",
+        "esp1_01b53642d0982d8e84a8e396892c835d",
+        "esp1_0389f55bbb38dda5485a917046a30521",
+        "esp1_0d8021e1b5d7dfc98a61da7f0c0d7111",
+        "esp1_0e04fd1fe0c531e3e2a67ed710830f6b",
+        "esp1_12a960b3ccf11ec2dc714b5937704550",
+        "esp1_25aa20ea670e349076ba716ee153be52",
+        "esp1_2d158f8272dbe74b9286fff15ff4485f",
+        "esp1_2e0467d567810ad8d945bb4a080ad8fe",
+        "esp1_3995497aaa3de56ddaeba2c2f2fc63a0",
+        "esp1_46393cd5a16d43da6509482e7088cd70",
+        "esp1_4b5dded6c18c3e09f5c71ac67a0bea78",
+        "esp1_56bccadb7aef0d1ef9a249d409ac807b",
+        "esp1_6cce89f3a41b9356a90ce56a7016d58c",
+        "esp1_6d1d7eb1a7698f2a8d7fbe180b59d1d5",
+        "esp1_7408bcd140d80b4f5e7c876e0aab806c",
+        "esp1_75ced5c2a3b5f0cc3061b1ab25a6019a",
+        "esp1_784b967029209b0a3e2e987233263164",
+        "esp1_7921eca705a48512b93230535785f7ae",
+        "esp1_7dcec4dfc321c937e290386259647ed5",
+        "esp1_828e969f111459f9139d5caa0cd7c7d7",
+        "esp1_83c565890a8e08add4e5c20fa1099f42",
+        "esp1_84c14feeb77bcd1978210186167d54c9",
+        "esp1_871ab2b96faf0f9571edcfed5ce239b1",
+        "esp1_90012a1f6e8edde9fe3186c9697b03d4",
+        "esp1_9530c5399b14d647af9a562004d009cc",
+        "esp1_95e7065f9ee4d1970d63f8e312e50af7",
+        "esp1_9e66cf22865626895ed3262c509d6aed",
+        "esp1_a8b4cd90341f1090d95b2d8ea40e7db1",
+        "esp1_adecae54e2300410b04247399a90ae2f",
+        "esp1_b02f77a384a7646ded2c156d09ebffa5",
+        "esp1_b328fee26c6a6af2334f4c20092eb73f",
+        "esp1_bb75a5ccf5976e2b9edfdd82cfa6118b",
+        "esp1_be107b51913b7bb66ea4ba85bcdeed79",
+        "esp1_c0ac3de1aa068d9bd8f7b83227603e42",
+        "esp1_c3e8699ea7f065d4780aa70c8e5c60db",
+        "esp1_c63931b66134da16caec2c509f5f89d1",
+        "esp1_c8bb3592755048f1004b1a2c1d8d8fe9",
+        "esp1_c9cf5624f477b9ebb613054afa08c488",
+        "esp1_c9df3608fec8e20f67c6e92a090ca93f",
+        "esp1_ce8393a1489a15a24443886390146dc3",
+        "esp1_d0e88b34020604df725e4abda07e4ee6",
+        "esp1_d66ff248c9ca3bf548d9131141f87d9d",
+        "esp1_da11ded0f13eb4814a43e101d909fa58",
+        "esp1_e682b9c9b35ab46f7da333eeb3dfb421",
+        "esp1_ea0cbeccf127382faa8ad8246c627102",
+        "esp1_ebf3daaf1603bc8f0c21916e9d584a2f",
+        "esp1_efcf8dd986d50eff5c10473d8e5eff06",
+        "esp1_f586f0ca03e8590a94cf592e6dc69344",
+        "esp1_fe67f61807225ef1a9168dd6005ed01a",
+        "esp1_fe91168935c6625b96c8fc1729eb56f5",
+        "esp1_09a9507aec0da41c039685fa24032dad",
+        "esp1_1281c9ede5a52dd412626d5570e0ad67",
+        "esp1_18756187c6c30c2d252cec8a25da46e9",
+        "esp1_1be9084035aa190ecc842e830cd3f1b7",
+        "esp1_2015f663d66601e86317b5a221f8fd56",
+        "esp1_280dc2ca1215db04000975c1202f149f",
+        "esp1_2d7f65858b975910a2b3232a54b44f9b",
+        "esp1_38a0ceee2566beb56fc2cfdbad19f043",
+        "esp1_40fb000d9c5716e2e62602edc4b88678",
+        "esp1_464ccbfcbda6de49cbf4c95516311296",
+        "esp1_5633d8d204b80de5214ec368def2f456",
+        "esp1_58b4bf39f74286ee3e672f13562fa142",
+        "esp1_5a8ff2ce2b81f3901db9d86226b12ca0",
+        "esp1_6092a543f52bf8752cbcc837faf3b2fd",
+        "esp1_61dcbd9c634fcc44691fb81e0eb98db5",
+        "esp1_65ce2145902d2a318aa6d052b822069a"
+      ],
+      "query" : "^t*",
+      "shown" : [
+        {
+          "english" : "Translate!",
+          "id" : "esp1_fc6b0fdd7962f4adbb6846f2cddb3530",
+          "japanese" : "翻訳!",
+          "tokens" : [
+            {
+              "entry" : "d36ffa419d2b23137df124fda035950e",
+              "surface" : "翻訳"
+            },
+            {
+              "surface" : "!"
+            }
+          ]
+        },
+        {
+          "english" : "Thanks!",
+          "id" : "esp1_40ba0fc96405a024e2832ed22b13994e",
+          "japanese" : "どうも。",
+          "tokens" : [
+            {
+              "entry" : "241d53310b1bebfc437f26a0f88a0cc8",
+              "surface" : "どうも"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "Tsk!",
+          "id" : "esp1_49692deb1c5073eb2bd8b20092fd1afe",
+          "japanese" : "ちぇっ！",
+          "tokens" : [
+            {
+              "candidates" : [
+                "8d72e1bc3945b8f3579d26dc2049745d",
+                "78a5bc7c084c501df320d04ccba8eacf",
+                "1adcddee0a72da672154a9f65ba943df",
+                "8bf17b0082c86762cb0a3203bdb1135a",
+                "6251f14549bef95848b731d95ae657ee",
+                "e2b63a37431d1a605eae5df15fd7aee9",
+                "d1bf53f7e4dd4170afcd8811bb87ecb8",
+                "9e71f08316fd0ae2657c0f8ed0101903",
+                "a57ac55fed77b0a34a4281da84419725",
+                "48454b3ee99d241a4b18e450afa71b09",
+                "ca26f6a38bac7b95e67d29047fd3f4f0"
+              ],
+              "surface" : "ち"
+            },
+            {
+              "surface" : "ぇっ"
+            },
+            {
+              "surface" : "！"
+            }
+          ]
+        },
+        {
+          "english" : "Thanks!",
+          "id" : "esp1_d1601e27fd6235e8fd2273022bd3a7e4",
+          "japanese" : "どうも！",
+          "tokens" : [
+            {
+              "entry" : "241d53310b1bebfc437f26a0f88a0cc8",
+              "surface" : "どうも"
+            },
+            {
+              "surface" : "！"
+            }
+          ]
+        },
+        {
+          "english" : "Think!",
+          "id" : "esp1_e4951a3c826d1d4f03be2ec82edefd91",
+          "japanese" : "考えろ！",
+          "tokens" : [
+            {
+              "entry" : "3defc048e38c8b47e1c7cd7bfd44aa78",
+              "surface" : "考えろ"
+            },
+            {
+              "surface" : "！"
+            }
+          ]
+        }
+      ],
+      "title" : "View 50+ Example Sentences",
+      "usesPrimaryEntryExamples" : false
+    },
+    {
+      "count" : 51,
+      "covers" : "A phrase ending in a prefix",
+      "ids" : [
+        "esp1_4482c853c9a0d7b375ebad8886274bcc",
+        "esp1_afbdea89b37cf5a3221a06704374d949",
+        "esp1_0501606eba04fb9cf32a1cbaaf2a840d",
+        "esp1_0a523622ea470bcd4fe3301e5cbf71d7",
+        "esp1_be0565278da5af252df3b65ec08b4c14",
+        "esp1_28c33921b1259933389b381d96e42a5a",
+        "esp1_a6def9b1ae2bec704aa2b3360333a6bb",
+        "esp1_a727ba1d80abfffcf6781cefead5425a",
+        "esp1_2ef538f854bf9b6b7831fa772f728940",
+        "esp1_0fb1a12ecc7d5b719e1b408d9052f481",
+        "esp1_db4ffa70a76ccf6116befd8c96d62eb6",
+        "esp1_9454efbcf54f05f57a7f117055ed3f37",
+        "esp1_1bb34f7749240a06b1e590269cbac686",
+        "esp1_052a316d19ad69a07b7f408f4ec82149",
+        "esp1_d493a99a61661e75d9f5bb1ac68ece27",
+        "esp1_e4521b72b5855b3460bcaf5c74a6a7ad",
+        "esp1_12c091e3014d77d16618873e6cc1d6bc",
+        "esp1_4b516cb2facc45b95c4024428bf90bd2",
+        "esp1_ef6eae4be175f800ac5886be87561203",
+        "esp1_08a015d82c30ccf6b895895ab71a6db6",
+        "esp1_3a3f71a38e694a035b969253d6f127d8",
+        "esp1_6e159b90047115e1384b26d1374033a4",
+        "esp1_077e1aaf358c0e914129e24716752ff9",
+        "esp1_1dc9cf3a16a8956e9d147083a5f1a4b0",
+        "esp1_4e5c774b19dd857df237f967c1ed304d",
+        "esp1_87fb6bc1b4e7ad3f5a84369dd0716d6e",
+        "esp1_d47f0bb81b4eba132520f16e3605d95b",
+        "esp1_dff57770e8a79f4f8ea8802544e061fd",
+        "esp1_6c293eb15ca9de9724d70054c620de11",
+        "esp1_9a44b2dfe2c6a9cd4064ea089e113e97",
+        "esp1_c85891e8ea2b40896c2d05625e99ec80",
+        "esp1_06ec0822a8a1ec7b9e26c902ad4cc8c3",
+        "esp1_18f19a69a77219ef247428986351de76",
+        "esp1_3bca20234c321cef823a121bfced13c2",
+        "esp1_75f87ae66c0f3d818ff82069f60d20d0",
+        "esp1_b4d220e6267aab3c8e9d664276abac69",
+        "esp1_d394b7483458997d98637a9cdc1552c9",
+        "esp1_3acd12ea86e20cdb3f2c4e05ec6f777c",
+        "esp1_9672d0b799cbb3718c137f0aaa816d72",
+        "esp1_2a5f2583159e52d7b2f3f858b8683553",
+        "esp1_56419826cf8f0df65e45d4432bca59f8",
+        "esp1_ce4506c7593ba969d5cea15d80e6495f",
+        "esp1_e343d7cd12daec0fcbf0e9d0bd8065a3",
+        "esp1_094b483922fc151ad007e4debae4df58",
+        "esp1_3481eba27360262df967166179fa3dfc",
+        "esp1_8e25036182ae23ff207942c536d5f1b3",
+        "esp1_b1a4608edea2a1771b49ebd0db1582d1",
+        "esp1_e62180a2cedf980b07311f061dfac3d8",
+        "esp1_f8d0575a9a6926d20883fe49c45f21f1",
+        "esp1_2ba137fdcfeeebcbfa251c54fff7bba4",
+        "esp1_2d62e89f626cce6332a12cac6ec6cf18",
+        "esp1_8f25b12ac6736cb50984525be0b22f1d",
+        "esp1_39b47b59948fb646c640b9c55c41d781",
+        "esp1_9ac23edde7886d2145fb3b5ebbca57d9",
+        "esp1_c4c2009428e4939efddd0c8a7f74c674",
+        "esp1_ff8bc857b287e75341ce52aaddee1b0e",
+        "esp1_2dcac455d87727e920161a35cd9045bc",
+        "esp1_83ec1627f3590b00c8804023661209b1",
+        "esp1_875d1246a0a3855be6b91b5d244c2589",
+        "esp1_9ca7299460900375ede3b522865f60e0",
+        "esp1_cf2d717fa401812e902dc2c2359f8b6f",
+        "esp1_f4ed6dd2324d32ef2b721d27f7d7d9a6",
+        "esp1_f70deeac0b22281b21573c84d87b1540",
+        "esp1_fe89923834e22c94a3b8ad72789814a5",
+        "esp1_3789dfe84651f72dc5db2d4cff46c1d1",
+        "esp1_76477ad43dfd40b2a9e96c23e725a353",
+        "esp1_ce93a60a564524d0360a5e2932566788",
+        "esp1_025ccc64059e9d4c7a186763409f8580",
+        "esp1_1cef530d3d203987aa4bd2fe39736d66",
+        "esp1_21dd399e4d4a9551d2cd10d4facdff5b",
+        "esp1_34748f36638eac8f55b63a16b8bd1902",
+        "esp1_3cf299ced4388bb3ceb59d0c466605e9",
+        "esp1_4729fd20d0027ddee61838bcb8edb022",
+        "esp1_57a4e854fbebe1206536628cd91e8e07",
+        "esp1_66a20ca97fd0cc05fffd521fac11dabc",
+        "esp1_7ddb980610e1440b89cb5b0b345d2082",
+        "esp1_9f241f0f5e3714357cd4bcad2856fb5d",
+        "esp1_a0d3d875f5a6498b3fc8b71ee2e354dc",
+        "esp1_a91ded23aff345104c95ac5935133fca",
+        "esp1_bd18cb1564a49c1763334511e95248a1",
+        "esp1_c79efe95ef8d9de1fd273a01fbb47f51",
+        "esp1_ce861deb54c3f6efb8c1862bb37a4ad9",
+        "esp1_d1cf2075b60555d4d891fbe2bd8e3fcb",
+        "esp1_eb7fc576fd16f2c565c6de5f837953bc",
+        "esp1_f4d4b50713a2d0e4c648aee2e6a7fedb",
+        "esp1_12e3ed402634fce022a3b3c911306d56",
+        "esp1_1743b892b61d858693ed8493cfbf9278",
+        "esp1_5b6bc36e64ea1fe8f2e81771b443e046",
+        "esp1_6d8101c33901f7c05d106644b8133b3b",
+        "esp1_907cc493ba3a02b1bda41dc4c710f35d",
+        "esp1_b3553c53301f19c86da4e883e2229c38",
+        "esp1_c112685eee792efbf2e3071cd1671e99",
+        "esp1_c8efc67686df45d4db2c7c7b83456257",
+        "esp1_d81c5cf375209e10a3b4efb505eb2ea0",
+        "esp1_02924690ee00b8ed91284d3a91caa271",
+        "esp1_0a3fbb8feb200491f601ef176dcb3873",
+        "esp1_9c03fe81b70ff985eb0341ec847fa045",
+        "esp1_a20572e995303d97e933354dff6728aa",
+        "esp1_af6535afdf07e2345e63e4201d7b5947",
+        "esp1_b3375e609d1b88112eee8d42c634a0b5"
+      ],
+      "query" : "thank y*",
+      "shown" : [
+        {
+          "english" : "Thank you!",
+          "id" : "esp1_4482c853c9a0d7b375ebad8886274bcc",
+          "japanese" : "おおきに！",
+          "tokens" : [
+            {
+              "entry" : "3b2fac56c503cfdb71a2f196b08c7693",
+              "surface" : "おおきに"
+            },
+            {
+              "surface" : "！"
+            }
+          ]
+        },
+        {
+          "english" : "Thank you!",
+          "id" : "esp1_afbdea89b37cf5a3221a06704374d949",
+          "japanese" : "あざっす！",
+          "tokens" : [
+            {
+              "candidates" : [
+                "333902b59b9733fb2ffe30a8815a3b6e",
+                "8bbf41b1ebd629d2b062469b83d64c6f",
+                "3a3c62aad2b160a4d31501075440da41"
+              ],
+              "surface" : "あざ"
+            },
+            {
+              "entry" : "c7066578ab29482ad8a6136979f7c742",
+              "surface" : "っす"
+            },
+            {
+              "surface" : "！"
+            }
+          ]
+        },
+        {
+          "english" : "Thank you!",
+          "id" : "esp1_0501606eba04fb9cf32a1cbaaf2a840d",
+          "japanese" : "ありがとう。",
+          "tokens" : [
+            {
+              "entry" : "aead518e84274687eaf56db5618ffd7f",
+              "surface" : "ありがとう"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "Thank you!",
+          "id" : "esp1_0a523622ea470bcd4fe3301e5cbf71d7",
+          "japanese" : "ありがとう！",
+          "tokens" : [
+            {
+              "entry" : "aead518e84274687eaf56db5618ffd7f",
+              "surface" : "ありがとう"
+            },
+            {
+              "surface" : "！"
+            }
+          ]
+        },
+        {
+          "english" : "Thank you!",
+          "id" : "esp1_be0565278da5af252df3b65ec08b4c14",
+          "japanese" : "お疲れさまでした。",
+          "tokens" : [
+            {
+              "entry" : "aa1c5f33bcf41bc13396af00c056fc87",
+              "surface" : "お疲れさま"
+            },
+            {
+              "entry" : "b7bb449048fb4eeff1373d35b8a034b3",
+              "surface" : "でし"
+            },
+            {
+              "entry" : "a7b2505ddb948d3f18aa52ca154c82e1",
+              "surface" : "た"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        }
+      ],
+      "title" : "View 50+ Example Sentences",
+      "usesPrimaryEntryExamples" : false
+    },
+    {
+      "count" : 51,
       "covers" : "A first-word query",
       "ids" : [
         "esp1_75ddae0c64a5d93a19d67196878cb40c",

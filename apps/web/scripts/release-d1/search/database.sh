@@ -52,6 +52,8 @@ build_inputs=(
   apps/web/scripts/release-d1/dictionary/examples-corpus.ts
   apps/web/src/lib/dictionary/detail/examples.ts
   apps/web/src/lib/dictionary/example-search.ts
+  # data.ts builds the results and Example Sentences pages' data, which the gate reads through it.
+  apps/web/src/lib/dictionary/data.ts
   apps/web/src/lib/dictionary/page-example.ts
   apps/web/src/components/dictionary/search-result-rows.tsx
   apps/web/src/components/dictionary/search-examples.tsx
@@ -62,9 +64,11 @@ build_inputs=(
   apps/ios/LanguageData/Conformance/search-results.json
   apps/ios/LanguageData/Conformance/example-search.json
 )
+# The contentless example FTS5 indexes are counted by their `_docsize` shadow tables, one row per
+# indexed sentence.
 tables=(entries forms form_priority_profiles canonical_senses gloss_atoms sense_form_restrictions
   reading_form_restrictions search_cache entry_frequency example_sentences example_entries
-  example_search_cache)
+  example_search_cache example_english_fts_docsize example_japanese_chars_docsize)
 # examples-NN.sql: as many as build-examples.mts writes, each under 100 MB (a glob, in order).
 upload_files=(rows.sql cache.sql 'examples-*.sql')
 

@@ -213,8 +213,10 @@ export function searchExamples(
 }
 
 /**
- * How many candidate sentences the website reads for a search per request. The import
- * precomputes every search with more that can list anything (example_search_cache).
+ * How many candidate sentences the website reads for a search per request, at most. A search with
+ * more lists what the import precomputed for it (example_search_cache), or nothing. The import
+ * precomputes every such search that can list anything, except an English phrase of more than one
+ * word with a prefix (`thank y*`), which the website can't list (see docs/agents/web.md).
  */
 export const exampleCandidateLimit = 1_000
 
@@ -231,35 +233,42 @@ const hexTerm = (term: string) =>
   `x${Array.from(term, character => character.charCodeAt(0).toString(16).padStart(2, '0')).join('')}`
 
 /**
- * The FTS5 query that finds at least every sentence an FTS4 Porter phrase matches in
- * `example_english_fts`: the phrase itself, or, with a prefix before its last term, every term.
- * First-token marks (`^`) aren't enforced here; the search checks them.
+ * The FTS5 query that finds exactly the sentences an FTS4 Porter phrase matches in
+ * `example_english_fts`: the phrase, split after each prefix term into strings joined by `+`
+ * (FTS5 allows a prefix only at a string's end), marked `^` when its first term must be the
+ * sentence's first. Null when no sentence can match: FTS4 requires a later `^` term to be first.
  */
-export function englishFtsQuery(phrase: Fts4QueryToken[]): string {
-  const prefixBeforeLast = phrase.slice(0, -1).some(token => token.isPrefix)
-  if (prefixBeforeLast) {
-    return phrase.map(token => `"${hexTerm(token.term)}"${token.isPrefix ? '*' : ''}`).join(' AND ')
+export function englishFtsQuery(phrase: Fts4QueryToken[]): string | null {
+  if (phrase.length === 0 || phrase.slice(1).some(token => token.isFirst)) return null
+  const strings: string[] = []
+  let terms: string[] = []
+  for (const token of phrase) {
+    terms.push(hexTerm(token.term))
+    if (token.isPrefix) {
+      strings.push(`"${terms.join(' ')}"*`)
+      terms = []
+    }
   }
-  const last = phrase[phrase.length - 1]
-  return `"${phrase.map(token => hexTerm(token.term)).join(' ')}"${last?.isPrefix ? '*' : ''}`
+  if (terms.length > 0) strings.push(`"${terms.join(' ')}"`)
+  return `${phrase[0].isFirst ? '^' : ''}${strings.join(' + ')}`
 }
 
+/** Letters, marks, numbers, punctuation, symbols, and private use. */
+const indexedCharacter = /[\p{L}\p{M}\p{N}\p{P}\p{S}\p{Co}]/u
+
 /**
- * The characters `example_japanese_chars` indexes: letters, marks, numbers, punctuation,
- * symbols, and private use. The import checks that sentences hold no others but spaces.
+ * The characters `example_japanese_chars` indexes. The search import fails if a sentence holds
+ * any other character but a space (`unindexedCharacters`), so a query of none can't be in one.
  */
 export function japaneseCharacters(text: string): string[] {
-  return Array.from(text).filter(character => /[\p{L}\p{M}\p{N}\p{P}\p{S}\p{Co}]/u.test(character))
+  return Array.from(text).filter(character => indexedCharacter.test(character))
 }
 
-/**
- * Whether an English query can list anything only when the import precomputed it, once it has
- * more than `exampleCandidateLimit` candidates: a query of plain words, whose Porter terms are its
- * exact words' stems. A prefix (`*`), a first-word mark (`^`), an underscore (a Porter word
- * character, but a delimiter for exact words), or a NUL breaks that.
- */
-export function isPlainEnglishQuery(query: string): boolean {
-  return !/[*^_\0]/.test(query)
+/** The characters of a text `example_japanese_chars` can't index, other than spaces. */
+export function unindexedCharacters(text: string): string[] {
+  return Array.from(text).filter(
+    character => !indexedCharacter.test(character) && !/\p{Zs}/u.test(character)
+  )
 }
 
 /**

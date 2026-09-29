@@ -2,13 +2,9 @@ import { readFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { getPlatformProxy } from 'wrangler'
-import type { SearchData, SearchWord } from '@/lib/dictionary/data'
+import { type SearchData, type SearchWord, searchOn } from '@/lib/dictionary/data'
 import { rubySegments } from '@/lib/dictionary/detail/ruby'
-import { resultsExampleCount, websiteExampleSearch } from '@/lib/dictionary/example-search'
 import { linkedWords, linkSearchScreen, resultsPerPage } from '@/lib/dictionary/results/links'
-import { loadFrequency, searchResultsScreen } from '@/lib/dictionary/results/results'
-import { d1SearchDatabase } from '@/lib/dictionary/search/search'
-import { websiteSearch } from '@/lib/dictionary/search/website'
 import { normalizeSearchQuery, searchExamplesPath } from '@/lib/dictionary/urls'
 import { readRenderedPage, visibleText } from './rendered'
 import { SearchResults } from './search-results'
@@ -253,12 +249,7 @@ describe.runIf(enabled)('the rendered search results page matches the app', () =
 
   test.each(suiteCases)('「$query」', async expected => {
     // As data.ts's searchDictionary reads it.
-    const results = await websiteSearch(db).search(expected.query)
-    const [frequency, exampleCount] = await Promise.all([
-      loadFrequency(d1SearchDatabase(db), results),
-      resultsExampleCount(websiteExampleSearch(db), results, expected.query)
-    ])
-    const screen = searchResultsScreen(expected.query, results, frequency, exampleCount)
+    const { screen } = await searchOn(db, expected.query)
     // Linked as searchDictionary links them once the dictionary database is loaded.
     const links = { dictionaryLoaded: true, kanjiHasPage: true, build: 'build' }
     const data = linkSearchScreen(screen, links)
@@ -299,8 +290,12 @@ describe.runIf(enabled)('the rendered search results page matches the app', () =
     // The page renders the first 25 words and counts them all.
     expect(page.rows).toEqual(expectedRows.slice(0, resultsPerPage))
     expect(visibleText(html)).toMatch(new RegExp(`^${expectedRows.length} words? for `))
-    // The rows route serves the rest, 25 at a time, as the page asks for them.
-    const words = linkedWords(screen, true)
+    // The rows route serves the rest, 25 at a time, as the page asks for them: getSearchRows
+    // searches without counting example sentences.
+    const words = linkedWords(
+      (await searchOn(db, expected.query, { examples: false })).screen,
+      true
+    )
     const loaded = [...page.rows.map(row => row.entSeq)]
     for (let from = resultsPerPage; from < words.length; from += resultsPerPage) {
       loaded.push(...words.slice(from, from + resultsPerPage).map(row => row.entSeq))

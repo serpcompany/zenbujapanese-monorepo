@@ -9,6 +9,7 @@ import {
   getWordPage,
   isUnreadableQuery,
   type SearchData,
+  type SearchExamplesData,
   searchDictionary
 } from './data'
 import type { FrequencyRow } from './detail/rows'
@@ -400,8 +401,13 @@ describe('searchDictionary', () => {
       wordCount: 60,
       rowsPath: '/dictionary/search/%E3%81%84/results.json?build=build-1'
     })
+    exampleSearch.mockClear()
+    exampleEntry.mockClear()
     const second = await getSearchRows('い', 25, 'build-1')
     const third = await getSearchRows('い', 50, 'build-1')
+    // The rows route never counts example sentences.
+    expect(exampleSearch).not.toHaveBeenCalled()
+    expect(exampleEntry).not.toHaveBeenCalled()
     const listed = [...rowsOf(data), ...(second ?? []), ...(third ?? [])].map(row => row.entSeq)
     expect(listed).toEqual(entries.map(entry => entry.sourceRecordId))
     expect(await getSearchRows('い', 25, 'build-0')).toBeNull()
@@ -427,6 +433,12 @@ describe('searchDictionary', () => {
   })
 })
 
+/** An Example Sentences page's data; fails without one. */
+function page(data: SearchExamplesData | null): SearchExamplesData {
+  if (!data) throw new Error('no Example Sentences page')
+  return data
+}
+
 describe('a search’s Example Sentences page', () => {
   const search = vi.fn<(query: string) => Promise<SearchResults>>()
 
@@ -445,10 +457,12 @@ describe('a search’s Example Sentences page', () => {
     exampleEntry.mockResolvedValue(exampleEntryOf(eat.entry, 0))
     const ids = Array.from({ length: 60 }, (_, index) => index + 1)
     exampleSearch.mockResolvedValue({ ids, count: 51, truncated: false })
-    const data = await getSearchExamples('食べた')
+    const data = page(await getSearchExamples('食べた'))
     expect(data).toMatchObject({
       query: '食べた',
       listed: 60,
+      // A direct Japanese search's page is indexed.
+      indexable: true,
       examplesPath: '/dictionary/search/%E9%A3%9F%E3%81%B9%E3%81%9F/examples.json?build=build-1'
     })
     expect(data.examples.map(example => example.position)).toEqual(
@@ -472,7 +486,9 @@ describe('a search’s Example Sentences page', () => {
     search.mockResolvedValue(results([eat.entry]))
     const ids = Array.from({ length: 60 }, (_, index) => 1000 + index)
     exampleSearch.mockResolvedValue({ ids, count: 51, truncated: false })
-    const first = await getSearchExamples('eat')
+    const first = page(await getSearchExamples('eat'))
+    // Only a direct Japanese search's page is indexed.
+    expect(first.indexable).toBe(false)
     const second = await getMoreSearchExamples('eat', 25, 'build-1')
     const third = await getMoreSearchExamples('eat', 50, 'build-1')
     const listed = [...first.examples, ...(second ?? []), ...(third ?? [])]
@@ -485,15 +501,22 @@ describe('a search’s Example Sentences page', () => {
     env.SEARCH_DB = fakeD1({ tables: true, imported: true })
     search.mockResolvedValue({ ...results([eat.entry]), usesPrimaryEntryExamples: true })
     exampleEntry.mockResolvedValue(exampleEntryOf(eat.entry, 3))
-    const data = await getSearchExamples('taberu')
+    const data = page(await getSearchExamples('taberu'))
     expect(exampleSearch).not.toHaveBeenCalled()
     expect(data.listed).toBe(3)
     expect(data.examples.map(example => example.japanese.id)).toEqual([1, 2, 3])
+    // Its word page has these examples already.
+    expect(data.indexable).toBe(false)
   })
 
-  test('lists none without a search database', async () => {
-    const data = await getSearchExamples('eat')
-    expect(data).toMatchObject({ listed: 0, examples: [] })
+  test('has no page without any sentence, which the app never opens', async () => {
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    search.mockResolvedValue(results([]))
+    expect(await getSearchExamples('qzxvkj')).toBeNull()
+  })
+
+  test('has no page without a search database', async () => {
+    expect(await getSearchExamples('eat')).toBeNull()
   })
 })
 

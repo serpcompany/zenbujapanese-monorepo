@@ -25,7 +25,6 @@ import {
   englishFtsQuery,
   exampleCandidateLimit,
   exampleSearchKey,
-  isPlainEnglishQuery,
   japaneseCharacters,
   noExamples,
   type SearchSentence,
@@ -86,37 +85,39 @@ const candidate = (row: CandidateRow): SearchSentence => ({
 class TooBroad extends Error {}
 
 /**
- * Candidates from the search database's full-text indexes. A plain English query with more than
- * `exampleCandidateLimit` candidates stops there: the import precomputed every such search that
- * can list anything, so an uncached one lists nothing.
+ * Candidates from the search database's full-text indexes, never more than
+ * `exampleCandidateLimit`: a search with more stops there and lists nothing, since the import
+ * precomputed every such search it can list (see `exampleCandidateLimit`).
  */
-function d1Source(db: D1Database, plain: boolean): ExampleSearchSource {
+export function d1ExampleSource(db: D1Database): ExampleSearchSource {
   return {
     async english(phrase) {
-      const limit = plain ? exampleCandidateLimit + 1 : -1
+      const query = englishFtsQuery(phrase)
+      if (query === null) return []
       const { results } = await db
         .prepare(
           `SELECT ${candidateColumns} FROM example_sentences s WHERE s.id IN (
              SELECT rowid FROM example_english_fts WHERE example_english_fts MATCH ? LIMIT ?)`
         )
-        .bind(englishFtsQuery(phrase), limit)
+        .bind(query, exampleCandidateLimit + 1)
         .all<CandidateRow>()
-      if (plain && results.length > exampleCandidateLimit) throw new TooBroad()
+      if (results.length > exampleCandidateLimit) throw new TooBroad()
       return results.map(candidate)
     },
     async japanese(text) {
       const characters = japaneseCharacters(text)
-      // The import checks that sentences hold no other characters but spaces, which a query
+      // The import fails if a sentence holds any other character but a space, which a query
       // never keeps, so a query without any can't be in one.
       if (characters.length === 0) return []
       const { results } = await db
         .prepare(
           `SELECT ${candidateColumns} FROM example_sentences s WHERE s.id IN (
              SELECT rowid FROM example_japanese_chars WHERE example_japanese_chars MATCH ?)
-           AND instr(s.japanese, ?) > 0`
+           AND instr(s.japanese, ?) > 0 LIMIT ?`
         )
-        .bind(fts5Phrase(characters.join(' ')), text)
+        .bind(fts5Phrase(characters.join(' ')), text, exampleCandidateLimit + 1)
         .all<CandidateRow>()
+      if (results.length > exampleCandidateLimit) throw new TooBroad()
       return results.map(candidate)
     }
   }
@@ -140,7 +141,7 @@ export function websiteExampleSearch(db: D1Database): WebsiteExampleSearch {
         }
       }
       try {
-        return await searchExamples(query, d1Source(db, isPlainEnglishQuery(query)))
+        return await searchExamples(query, d1ExampleSource(db))
       } catch (error) {
         if (error instanceof TooBroad) return noExamples
         throw error

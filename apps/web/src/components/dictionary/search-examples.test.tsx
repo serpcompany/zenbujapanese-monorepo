@@ -2,16 +2,14 @@ import { readFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { getPlatformProxy } from 'wrangler'
-import type { SearchExamplesData } from '@/lib/dictionary/data'
-import { examplesPerPage, wordExample } from '@/lib/dictionary/detail/examples'
 import {
-  searchExampleList,
-  searchExamplePage,
-  websiteExampleSearch
-} from '@/lib/dictionary/example-search'
+  type SearchExamplesData,
+  searchExamplePageOn,
+  searchExamplesIndexable,
+  searchExamplesOn
+} from '@/lib/dictionary/data'
+import { examplesPerPage, wordExample } from '@/lib/dictionary/detail/examples'
 import { type Links, type PageExample, pageExample } from '@/lib/dictionary/page-example'
-import type { SearchResults } from '@/lib/dictionary/search/search'
-import { websiteSearch } from '@/lib/dictionary/search/website'
 import { normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
 import { readRenderedExamples, visibleText } from './rendered'
 import { SearchExamples } from './search-examples'
@@ -70,15 +68,16 @@ const example = (position: number): PageExample =>
   )
 
 describe('the Example Sentences page', () => {
-  test('titles the page with the query, counts its examples, and shows each one', () => {
+  test('titles the page with the query, with no count as in the app, and shows each one', () => {
     const html = render({
       query: '食べた',
       listed: 60,
-      truncated: false,
+      indexable: true,
       examples: Array.from({ length: 25 }, (_, position) => example(position)),
       examplesPath: '/dictionary/search/%E9%A3%9F%E3%81%B9%E3%81%9F/examples.json?build=b'
     })
-    expect(visibleText(html)).toMatch(/^食べた 60 examples /)
+    expect(visibleText(html)).toMatch(/^食べた パン/)
+    expect(visibleText(html)).not.toMatch(/\d+ examples/)
     const [first, ...rest] = readRenderedExamples(html)
     expect(rest).toHaveLength(24)
     expect(first).toEqual({
@@ -94,19 +93,6 @@ describe('the Example Sentences page', () => {
       credit: 'Tatoeba: Japanese #100; English #200 by CK, CC BY 2.0 FR'
     })
     expect(visibleText(html)).toContain('Load more examples')
-  })
-
-  test('says so when no example sentence contains the query', () => {
-    const html = render({
-      query: 'qzxvkj',
-      listed: 0,
-      truncated: false,
-      examples: [],
-      examplesPath: '/x'
-    })
-    expect(visibleText(html)).toBe(
-      'qzxvkj No Example Sentences No example sentence contains qzxvkj.'
-    )
   })
 })
 
@@ -126,7 +112,7 @@ interface SuiteCase {
  * The rendered cases: a direct Japanese search (100 examples, over four loads), a deinflected
  * one and a romaji one (the primary entry's examples), English, kana with few, and none.
  */
-const renderedQueries = ['見る', '食べた', 'miru', 'eat', 'すし', 'qzxvkj']
+const renderedQueries = ['見る', '食べた', 'miru', 'eat', 'すし', 't*', '^the', 'qzxvkj']
 
 const suiteCases: SuiteCase[] = enabled
   ? (
@@ -162,23 +148,24 @@ describe.runIf(enabled)('the rendered Example Sentences page matches the app', (
   test.each(suiteCases)('「$query」', async expected => {
     // As data.ts's getSearchExamples and getMoreSearchExamples read them.
     const query = normalizeSearchQuery(expected.query)
-    const results: SearchResults = await websiteSearch(db).search(query)
-    const search = websiteExampleSearch(db)
-    const list = await searchExampleList(search, results, query)
-    const page = async (from: number) =>
-      (await searchExamplePage(search, list, query, from, examplesPerPage)).map(row =>
-        pageExample(wordExample(row), links)
-      )
+    const found = await searchExamplesOn(db, query)
+    const ids = expected.ids ?? []
+    // A search without sentences has no page (404), as the app never opens one.
+    if (ids.length === 0) {
+      expect(found?.list.ids ?? []).toEqual([])
+      return
+    }
+    if (!found) throw new Error(`「${query}」 has no Example Sentences`)
+    const page = (from: number) => searchExamplePageOn(found, query, from, async () => links)
     const data: SearchExamplesData = {
       query,
-      listed: list.ids.length,
-      truncated: list.truncated,
+      listed: found.list.ids.length,
+      indexable: searchExamplesIndexable(query, found.usesPrimaryEntryExamples),
       examples: await page(0),
       examplesPath: `${searchPath(query)}examples.json?build=build`
     }
     const html = render(data)
     const rendered = readRenderedExamples(html)
-    const ids = expected.ids ?? []
 
     // The page renders the first 25, then the route serves 25 at a time, each once, in order.
     expect(rendered.map(example => example.position)).toEqual(
@@ -188,14 +175,12 @@ describe.runIf(enabled)('the rendered Example Sentences page matches the app', (
     for (let from = examplesPerPage; from < data.listed; from += examplesPerPage) {
       loaded.push(...(await page(from)))
     }
-    const pairIds = (await search.sentences(list.ids)).map(sentence => `esp1_${sentence.pairId}`)
+    const pairIds = (await found.search.sentences(found.list.ids)).map(
+      sentence => `esp1_${sentence.pairId}`
+    )
     expect(pairIds).toEqual(ids)
     expect(loaded.map(example => example.position)).toEqual(ids.map((_, position) => position))
     expect(visibleText(html)).toContain(ids.length > examplesPerPage ? 'Load more examples' : query)
-    if (ids.length === 0) {
-      expect(visibleText(html)).toContain('No Example Sentences')
-      return
-    }
 
     // The first sentences read as the app shows them: its words, with the query's marked.
     for (const [index, shown] of (expected.shown ?? []).entries()) {
@@ -214,5 +199,5 @@ describe.runIf(enabled)('the rendered Example Sentences page matches the app', (
         expect(word.furigana, word.text).not.toBe('')
       }
     }
-  })
+  }, 30_000)
 })

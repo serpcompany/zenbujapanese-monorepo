@@ -133,8 +133,9 @@ candidates a source supplies, and `example-search.ts` reads them from D1. The im
   D1 rejects the app's FTS4 tables, and FTS5's Porter stems long words and numbers differently,
   so the import computes the terms with `examples/fts4.ts`, a byte-for-byte port of SQLite's FTS4
   `simple` and `porter` tokenizers, and checks it against SQLite's own (`fts3tokenize`) on every
-  sentence. A phrase of the query's terms finds every candidate FTS4 would; `searchExamples`
-  keeps what FTS4's phrase match, `offsets()`, and the app's `phraseRange` keep.
+  sentence. `englishFtsQuery` spells a query as the FTS5 phrase that matches exactly what FTS4's
+  does, prefixes (`+` after each) and a first word (`^`) included; `searchExamples` then keeps
+  what FTS4's `offsets()` and the app's `phraseRange` keep.
 - `example_japanese_chars`: each sentence with a space between characters, as `form_chars` is
   for forms, in place of the app's `instr(japanese, ?)` scan. The import fails if a sentence
   holds a character it can't index other than a space.
@@ -142,15 +143,22 @@ candidates a source supplies, and `example-search.ts` reads them from D1. The im
   link words to the search's primary entry, and its examples (`retrieveEntryExamples`, as its
   word page lists them), which a deinflected or romaji search opens.
 - `example_search_cache`: every search with more than 1,000 candidate sentences that can list
-  anything (about 700 English and 1,300 Japanese), precomputed with the same core. An English
-  search lists anything only when some sentence has its exact words, so the import enumerates
-  every run of a sentence's words whose Porter terms more than 1,000 sentences hold; a Japanese one
-  every substring that many hold. Queries are keyed by `exampleSearchKey`, so `i'm` and `i m`
-  share one. The website reads at most 1,001 candidates per uncached search: a plain English
-  query with more lists nothing, since it would have been cached.
+  anything (about 4,470: 3,170 English and 1,300 Japanese), precomputed with the same core. An
+  English search lists anything only when some sentence has its exact words, so the import
+  enumerates, from every sentence's words, each phrase, phrase from the first word (`^the`), and
+  phrase ending in a prefix (`t*`, `thank y*`, `^t*`) whose Porter terms more than 1,000 sentences
+  hold; a Japanese one, every substring that many hold. A prefix before another word (`t* the`)
+  isn't enumerated. Queries are keyed by `exampleSearchKey`, so `i'm` and `i m` share one.
 
-The import adds about 4.5 minutes (peaking at about 3.4 GB of memory) to a local search build,
-about 185 MB of SQL to upload, and about 185 MB to the database.
+The website never reads more than 1,001 candidates for a search (`d1ExampleSource`, which
+`example-search.test.ts` holds to that for prefixes, first words, underscores, and Japanese): an
+uncached search with more lists nothing. That is the app's answer for every such search but a
+prefix before another word, since the cache holds the rest. An underscore is a Porter word
+character but not an exact one, so the enumeration can't find searches with one; the import fails
+unless fewer than 1,000 sentences have such a word, which bounds them all.
+
+The import adds about 4 minutes (peaking at about 3.4 GB of memory) to a local search build, about
+185 MB of SQL to upload, and about 185 MB to the database.
 
 ### Search results
 
@@ -174,9 +182,11 @@ when it lists a word or its kanji row opens a kanji page.
 The row opens `/dictionary/search/<query>/examples/`, which lists the Example Sentences screen's
 sentences (`searchExampleList`), 25 at a time from
 `/dictionary/search/<query>/examples.json?build=<search build>&from=<n>`, with each word's page
-from the dictionary database (`wordSlugs`). Both routes are keyed by the search database's build,
-so a page open across a deploy never mixes two builds' lists. Local fixtures have no example
-search.
+from the dictionary database (`wordSlugs`); a search without sentences answers 404. Both routes
+are keyed by the search database's build, so a page open across a deploy never mixes two builds'
+lists, and the rows route doesn't count example sentences. `data.ts`'s `searchOn`,
+`searchExamplesOn`, and `searchExamplePageOn` build both pages' data, and the gate and
+rendered-page tests read the local copy through them. Local fixtures have no example search.
 
 **The gate.** The search import runs five files on its local copy (`check_local`): the retrieval
 suite (`search/conformance.test.ts`); the search results suite
@@ -187,9 +197,9 @@ group, and retrieval position; a rendered-page test (`components/dictionary/sear
 that renders seven of its cases with React's server renderer and reads the visible order,
 meanings, chips, links, and special rows back from the HTML, and the rest of each list from the
 rows route; the example-search suite (`example-search.json`, `examples/conformance.test.ts`),
-which compares, for 63 queries, the row's count and title, the primary entry, every listed pair ID
+which compares, for 67 queries, the row's count and title, the primary entry, every listed pair ID
 in order, and the first five sentences' words, links, and marks; and a rendered-page test of the
-Example Sentences page (`components/dictionary/search-examples.test.tsx`) for six of its cases,
+Example Sentences page (`components/dictionary/search-examples.test.tsx`) for eight of its cases,
 paging through each whole list. The cores, the pages' components and `rendered.ts`, the
 frequency packs, and the suites themselves are search build inputs, so a change to any of them
 imports a new build and runs the gate. `smoke.sh` reads the suites at run time and checks the

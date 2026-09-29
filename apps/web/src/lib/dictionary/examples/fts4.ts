@@ -403,7 +403,11 @@ export interface MatchedRange {
 }
 
 /** The grapheme clusters of a text with the byte offset each starts at, and the text's end. */
-function graphemeBoundaries(text: string): Map<number, number> {
+function graphemeBoundaries(text: string): Pick<Map<number, number>, 'get'> {
+  // Every ASCII character but CR before LF is its own grapheme and byte.
+  if (/^[\0-\x7f]*$/.test(text) && !text.includes('\r\n')) {
+    return { get: offset => (offset >= 0 && offset <= text.length ? offset : undefined) }
+  }
   const boundaries = new Map<number, number>()
   let offset = 0
   const clusters = graphemes(text)
@@ -430,7 +434,7 @@ export function phraseRange(text: string, offsets: Fts4Offset[]): MatchedRange |
   )
   const bytes = encoder.encode(text)
   const decoder = new TextDecoder('utf-8', { fatal: true })
-  let boundaries: Map<number, number> | null = null
+  let boundaries: Pick<Map<number, number>, 'get'> | null = null
   for (const [startIndex, first] of ordered.entries()) {
     if (first.term !== 0) continue
     const phrase = ordered.slice(startIndex, startIndex + termCount)

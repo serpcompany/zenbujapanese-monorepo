@@ -2,16 +2,9 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { getPlatformProxy } from 'wrangler'
-import {
-  resultsExampleCount,
-  searchExampleList,
-  searchExamplePage,
-  type WebsiteExampleSearch,
-  websiteExampleSearch
-} from '../example-search'
-import { exampleActionTitle, primaryItem } from '../results/results'
-import type { SearchResults } from '../search/search'
-import { websiteSearch } from '../search/website'
+import { searchExamplePageOn, searchExamplesOn, searchOn } from '../data'
+import type { Links } from '../page-example'
+import { primaryItem } from '../results/results'
 import { kuromojiFiles } from './kuromoji'
 import { exampleLimit } from './retrieval'
 
@@ -69,13 +62,15 @@ const resources = new URL(
   import.meta.url
 )
 
+/** The suite records entries, not pages, so no word links anywhere here. */
+const noLinks: Links = { word: () => null, kanji: () => null }
+
 /** The app's pair IDs: `esp1_` and the pair's 16 bytes in hex. */
 const appPairId = (pairId: string) => `esp1_${pairId}`
 
 describe.runIf(enabled)('example search conformance on D1', () => {
   let proxy: Awaited<ReturnType<typeof getPlatformProxy<CloudflareEnv>>>
   let db: D1Database
-  let examples: WebsiteExampleSearch
   /** Each entry the suite names, by Language Reference ID, to its `ent_seq`. */
   let entSeqs: Map<string, number>
 
@@ -115,7 +110,6 @@ describe.runIf(enabled)('example search conformance on D1', () => {
         throw new Error(`${file} is ${actual}, but the suite pins ${recorded}. Record it again.`)
       }
     }
-    examples = websiteExampleSearch(db)
     const ids = new Set(
       suite.cases.flatMap(expected => [
         ...(expected.highlightedEntry ? [expected.highlightedEntry] : []),
@@ -148,47 +142,37 @@ describe.runIf(enabled)('example search conformance on D1', () => {
     expect(suite.tokenLimit).toBeGreaterThan(0)
   })
 
+  // The word search for a prefix such as t* takes a few seconds on a local D1.
   test.each(suite.cases)('「$query」', async expected => {
-    // As data.ts reads them: the search, then the row's count and the page's list.
-    let results: SearchResults
-    try {
-      results = await websiteSearch(db).search(expected.query)
-    } catch {
-      results = {
-        items: [],
-        leadingLexicalEntryCount: 0,
-        presentation: 'ranked',
-        resolution: 'direct',
-        readingRefinement: null,
-        usesPrimaryEntryExamples: false,
-        hasExactOrPrefixMatch: false
-      }
-    }
-    const count = await resultsExampleCount(examples, results, expected.query)
-    const list = await searchExampleList(examples, results, expected.query)
-    const listed = await examples.sentences(list.ids)
-    const shown = await searchExamplePage(examples, list, expected.query, 0, suite.tokenLimit)
+    // As data.ts reads them: the search and the row's count, then the page's list.
+    const { results, screen } = await searchOn(db, expected.query)
+    const row = screen.state === 'results' ? screen.examples : null
+    const found = await searchExamplesOn(db, expected.query)
+    const listed = found ? await found.search.sentences(found.list.ids) : []
+    const shown = found
+      ? (await searchExamplePageOn(found, expected.query, 0, async () => noLinks)).slice(
+          0,
+          suite.tokenLimit
+        )
+      : []
     const entSeqOf = (id: string) => entSeqs.get(id) as number
 
     const actual = {
-      count,
-      title: count > 0 ? exampleActionTitle(count) : undefined,
+      count: row?.count ?? 0,
+      title: row?.title,
       highlightedEntry: primaryItem(results, expected.query)?.entry.id,
       usesPrimaryEntryExamples: results.usesPrimaryEntryExamples,
       ids: listed.map(sentence => appPairId(sentence.pairId)),
-      shown: shown.map(({ sentence, example }) => ({
-        id: appPairId(sentence.pairId),
-        japanese: sentence.japanese,
-        english: sentence.english,
-        tokens: sentence.tokens.map((token, index) => {
-          const link = example.links.find(candidate => candidate.token === index)
-          return {
-            surface: token.text,
-            ...(link?.entSeqs.length === 1 ? { entry: link.entSeqs[0] } : {}),
-            ...(link && link.entSeqs.length > 1 ? { candidates: link.entSeqs } : {}),
-            ...(example.highlights.includes(index) ? { queryMatch: true } : {})
-          }
-        })
+      shown: shown.map((example, index) => ({
+        id: appPairId(listed[index].pairId),
+        japanese: example.text,
+        english: example.translation,
+        tokens: example.tokens.map(token => ({
+          surface: token.text,
+          ...(token.link && 'entSeq' in token.link ? { entry: token.link.entSeq } : {}),
+          ...(token.link && 'entSeqs' in token.link ? { candidates: token.link.entSeqs } : {}),
+          ...(token.isPageWord ? { queryMatch: true } : {})
+        }))
       }))
     }
     const wanted = {
@@ -210,5 +194,5 @@ describe.runIf(enabled)('example search conformance on D1', () => {
     expect(actual.ids, `「${expected.query}」 lists different sentences`).toEqual(wanted.ids)
     expect(actual).toEqual(wanted)
     expect(actual.ids.length).toBeLessThanOrEqual(exampleLimit)
-  })
+  }, 30_000)
 })

@@ -17,6 +17,40 @@ export interface LoadMoreLabels {
   reload: string
 }
 
+/** What a request for the next page found. */
+export type NextPage<T> =
+  | { kind: 'items'; items: T[] }
+  /** The route no longer knows the page's build, or has nothing more for it. */
+  | { kind: 'stale' }
+  | { kind: 'failed' }
+  /** Another request for the list is still running, so this one asked for nothing. */
+  | { kind: 'busy' }
+
+/**
+ * Fetches a list's next page, unless one is already on its way: a click on Load more and the
+ * list scrolling into view can ask at once, for the same position, and only the first may fetch.
+ */
+export async function loadNextPage<T>(
+  inFlight: { current: boolean },
+  url: string,
+  read: (response: unknown) => T[],
+  fetcher: (url: string) => Promise<Response> = fetch
+): Promise<NextPage<T>> {
+  if (inFlight.current) return { kind: 'busy' }
+  inFlight.current = true
+  try {
+    const response = await fetcher(url)
+    if (response.status === 404) return { kind: 'stale' }
+    if (!response.ok) return { kind: 'failed' }
+    const items = read(await response.json())
+    return items.length === 0 ? { kind: 'stale' } : { kind: 'items', items }
+  } catch {
+    return { kind: 'failed' }
+  } finally {
+    inFlight.current = false
+  }
+}
+
 export function useLoadMore<T>({
   initial,
   total,
@@ -37,28 +71,21 @@ export function useLoadMore<T>({
   // The dictionary was updated since the page loaded, so its next items are another list's.
   const [stale, setStale] = useState(false)
   const end = useRef<HTMLDivElement>(null)
+  // Set synchronously, unlike `loading`, so a click and the observer can't both fetch.
+  const inFlight = useRef(false)
   const hasMore = items.length < total
 
   const loadMore = useCallback(async () => {
-    if (loading || !hasMore || stale) return
+    if (inFlight.current || !hasMore || stale) return
     setLoading(true)
     setFailed(false)
-    try {
-      const response = await fetch(`${path}&from=${items.length}`)
-      if (response.status === 404) {
-        setStale(true)
-        return
-      }
-      if (!response.ok) throw new Error(`${response.status}`)
-      const more = read(await response.json())
-      if (more.length === 0) setStale(true)
-      else setItems(current => [...current, ...more])
-    } catch {
-      setFailed(true)
-    } finally {
-      setLoading(false)
-    }
-  }, [items.length, hasMore, loading, path, read, stale])
+    const page = await loadNextPage(inFlight, `${path}&from=${items.length}`, read)
+    if (page.kind === 'busy') return
+    if (page.kind === 'items') setItems(current => [...current, ...page.items])
+    else if (page.kind === 'stale') setStale(true)
+    else setFailed(true)
+    setLoading(false)
+  }, [items.length, hasMore, path, read, stale])
 
   useEffect(() => {
     const target = end.current

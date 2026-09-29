@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { permanentRedirect } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SearchExamples } from '@/components/dictionary/search-examples'
 import { SourceCredits } from '@/components/dictionary/source-credits'
@@ -17,7 +17,8 @@ type Props = PageProps<'/dictionary/search/[query]/examples'>
 
 /**
  * `/dictionary/search/<query>/examples/`: the Example Sentences page a search's "View N Example
- * Sentences" row opens. Its query follows the search page's URL rules (ADR 0007, #466).
+ * Sentences" row opens. Its query follows the search page's URL rules (ADR 0007, #466). A search
+ * without example sentences has none (404): the app never opens an empty screen.
  */
 async function load(params: Props['params'], decoded: boolean) {
   const segment = (await params).query
@@ -27,7 +28,9 @@ async function load(params: Props['params'], decoded: boolean) {
   if (query !== raw || (!decoded && segment.includes('.'))) {
     permanentRedirect(searchExamplesPath(query))
   }
-  return getSearchExamples(query)
+  const data = await getSearchExamples(query)
+  if (!data) notFound()
+  return data
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -35,11 +38,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return dictionaryMetadata(
     searchExamplesPath(data.query),
     `${data.query} example sentences`,
-    data.listed > 0
-      ? `${data.listed} Japanese example sentences for “${data.query}”, with translations.`
-      : `No Japanese example sentences contain “${data.query}”.`,
-    // Indexed when it lists examples, as a search page with results is (ADR 0007).
-    { index: data.listed > 0 }
+    `${data.listed} Japanese example sentences for “${data.query}”, with translations.`,
+    { index: data.indexable }
   )
 }
 
@@ -52,7 +52,7 @@ export default async function SearchExamplesPage({ params }: Props) {
         page={{ label: 'Example sentences', path: searchExamplesPath(data.query) }}
       />
       <SearchExamples data={data} />
-      {data.listed > 0 ? <SourceCredits sources={pageSources.searchExamples} /> : null}
+      <SourceCredits sources={pageSources.searchExamples} />
     </main>
   )
 }

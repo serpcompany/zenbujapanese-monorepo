@@ -1,9 +1,9 @@
+import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, test } from 'vitest'
-import { phraseQuery } from './fts4'
+import { phraseOffsets, phraseQuery, tokenize } from './fts4'
 import {
   englishFtsQuery,
   exampleSearchKey,
-  isPlainEnglishQuery,
   type SearchSentence,
   searchExamples,
   stemsDocument
@@ -81,22 +81,42 @@ describe('searchExamples', () => {
 })
 
 describe('the website’s index', () => {
-  test('spells each Porter term in hex, and a query finds its phrase or its words', () => {
+  test('spells each Porter term in hex, and a query finds exactly its phrase', () => {
     expect(stemsDocument([{ term: 'eat' }, { term: 'fish' }])).toBe('x656174 x66697368')
     expect(englishFtsQuery(phraseQuery('eating fish', 'porter'))).toBe('"x656174 x66697368"')
     expect(englishFtsQuery(phraseQuery('fish eat*', 'porter'))).toBe('"x66697368 x656174"*')
-    expect(englishFtsQuery(phraseQuery('ea* fish', 'porter'))).toBe('"x6561"* AND "x66697368"')
+    // FTS5 allows a prefix only at a string's end; `+` joins the next.
+    expect(englishFtsQuery(phraseQuery('ea* fish', 'porter'))).toBe('"x6561"* + "x66697368"')
+    expect(englishFtsQuery(phraseQuery('^the cat', 'porter'))).toBe('^"x746865 x636174"')
+    // FTS4 requires a later ^ word to be first, which no sentence has.
+    expect(englishFtsQuery(phraseQuery('the ^cat', 'porter'))).toBeNull()
+  })
+
+  test('the FTS5 query matches what FTS4 matches, first words and prefixes included', () => {
+    const sqlite = new DatabaseSync(':memory:')
+    sqlite.exec("CREATE VIRTUAL TABLE f USING fts5(stems, content='', tokenize='ascii')")
+    const texts = ['The cat eats.', 'A cat, the eater.', 'The cats ate the eel.', 'Eat the cat!']
+    for (const [index, text] of texts.entries()) {
+      sqlite
+        .prepare('INSERT INTO f(rowid, stems) VALUES (?, ?)')
+        .run(index, stemsDocument(tokenize(text, 'porter')))
+    }
+    for (const query of ['the cat', '^the', '^the cat*', 'ea*', 'the ea*', 'ca* the', 'cat']) {
+      const phrase = phraseQuery(query, 'porter')
+      const fts5 = sqlite
+        .prepare('SELECT rowid FROM f WHERE f MATCH ? ORDER BY rowid')
+        .all(englishFtsQuery(phrase) ?? '')
+        .map(row => Number(row.rowid))
+      const fts4 = texts.flatMap((text, index) =>
+        phraseOffsets(phrase, tokenize(text, 'porter')).length > 0 ? [index] : []
+      )
+      expect(fts5, query).toEqual(fts4)
+    }
   })
 
   test('precomputes queries that tokenize alike under one key', () => {
     expect(exampleSearchKey("I'm")).toBe(exampleSearchKey('i m'))
     expect(exampleSearchKey('eating')).not.toBe(exampleSearchKey('eat'))
     expect(exampleSearchKey('食べる')).toBe('食べる')
-  })
-
-  test('knows which English queries only list what the import precomputed', () => {
-    expect(isPlainEnglishQuery('thank you')).toBe(true)
-    for (const query of ['run*', '^tom', 'snake_case'])
-      expect(isPlainEnglishQuery(query)).toBe(false)
   })
 })

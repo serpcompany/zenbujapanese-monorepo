@@ -2,12 +2,12 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { getPlatformProxy } from 'wrangler'
+import { searchOn } from '../data'
 import { tierLabels } from '../detail/frequency'
-import { resultsExampleCount, websiteExampleSearch } from '../example-search'
 import { EvidenceLane, FormRelation, GlossRelation, type Rank } from '../search/rank'
-import { d1SearchDatabase, type SearchResultItem, searchFeatures } from '../search/search'
-import { type WebsiteSearch, websiteCapabilities, websiteSearch } from '../search/website'
-import { loadFrequency, type SearchResultsScreen, searchResultsScreen } from './results'
+import { type SearchResultItem, searchFeatures } from '../search/search'
+import { websiteCapabilities } from '../search/website'
+import type { SearchResultsScreen } from './results'
 
 // The search results suite, recorded from the app on the iOS Simulator
 // (apps/ios/LanguageData/Conformance/search-results.json, SearchResultsConformanceTests.swift):
@@ -190,7 +190,6 @@ const describeRows = (rows: SuiteRow[] = []) =>
 describe.runIf(enabled)('search results conformance on D1', () => {
   let proxy: Awaited<ReturnType<typeof getPlatformProxy<CloudflareEnv>>>
   let db: D1Database
-  let search: WebsiteSearch
 
   beforeAll(async () => {
     proxy = await getPlatformProxy<CloudflareEnv>({
@@ -225,7 +224,6 @@ describe.runIf(enabled)('search results conformance on D1', () => {
         )
       }
     }
-    search = websiteSearch(db)
   })
 
   afterAll(async () => {
@@ -239,12 +237,7 @@ describe.runIf(enabled)('search results conformance on D1', () => {
   if (supportedCases.length > 0) {
     test.each(supportedCases)('「$query」', async expected => {
       // As data.ts's searchScreen reads them.
-      const results = await search.search(expected.query)
-      const [frequency, exampleCount] = await Promise.all([
-        loadFrequency(d1SearchDatabase(db), results),
-        resultsExampleCount(websiteExampleSearch(db), results, expected.query)
-      ])
-      const screen = searchResultsScreen(expected.query, results, frequency, exampleCount)
+      const { results, screen } = await searchOn(db, expected.query)
       const actual = observed(
         expected,
         screen,

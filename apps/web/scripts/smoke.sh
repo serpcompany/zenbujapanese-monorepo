@@ -261,6 +261,10 @@ eventually "iru renders 25 words and its rows route serves the rest, in the app'
 # the example-search suite recorded it (its translation), 25 in the page, and its examples route,
 # named for the page's search build, serves the next 25 from position 25.
 examples_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/example-search.json"
+# A search without example sentences has no Example Sentences page; t*, with over 100,000
+# candidates, answers from the precomputed searches.
+expect /dictionary/search/qzxvkj/examples/ 404
+expect '/dictionary/search/t*/examples/' 200
 miru_examples=/dictionary/search/%E8%A6%8B%E3%82%8B/examples/
 expect "$miru_examples" 200
 miru_first_english="$(python3 -c '

@@ -41,6 +41,7 @@ import {
   type SearchResultsScreen,
   searchResultsScreen
 } from './results/results'
+import { isASCII, normalizeQuery } from './search/query'
 import { d1SearchDatabase, type SearchResults } from './search/search'
 import { websiteSearch } from './search/website'
 import { kanjiPath, searchPath, wordPath, wordSlug } from './urls'
@@ -380,20 +381,40 @@ async function searchResultsFor(db: D1Database, query: string): Promise<SearchRe
  * checks everything the page orders and shows; the fixtures without one, which have no example
  * sentences.
  */
-async function searchScreen(query: string): Promise<SearchResultsScreen> {
+async function searchScreen(
+  query: string,
+  options: { examples: boolean } = { examples: true }
+): Promise<SearchResultsScreen> {
   const db = await searchDb()
   if (!db) {
     const { results, frequency } = fixtureResults(query)
     return searchResultsScreen(query, results, frequency)
   }
+  return (await searchOn(db, query, options)).screen
+}
+
+/**
+ * A query's search on a search database, and the results screen it makes: the search, its
+ * frequency evidence, and, unless `examples` is false, the Example Sentences row's count. A query
+ * full-text search can't read finds nothing. The page and the search import's gate and
+ * rendered-page tests all read it through here.
+ */
+export async function searchOn(
+  db: D1Database,
+  query: string,
+  { examples }: { examples: boolean } = { examples: true }
+): Promise<{ results: SearchResults; screen: SearchResultsScreen }> {
   const results = await searchResultsFor(db, query)
-  if (!results) return searchResultsScreen(query, searchResults([]), new Map())
+  if (!results) {
+    const none = searchResults([])
+    return { results: none, screen: searchResultsScreen(query, none, new Map()) }
+  }
   // One query for every result, as the app loads frequency after the results.
   const [frequency, count] = await Promise.all([
     loadFrequency(d1SearchDatabase(db), results),
-    resultsExampleCount(websiteExampleSearch(db), results, query)
+    examples ? resultsExampleCount(websiteExampleSearch(db), results, query) : 0
   ])
-  return searchResultsScreen(query, results, frequency, count)
+  return { results, screen: searchResultsScreen(query, results, frequency, count) }
 }
 
 /** Whether a searched kanji has a page: in the dictionary database, or a fixture kanji. */
@@ -427,7 +448,8 @@ export async function getSearchRows(
   build: string
 ): Promise<SearchWord[] | null> {
   if (build !== (await searchBuild())) return null
-  const [screen, db] = await Promise.all([searchScreen(query), dictionaryDb()])
+  // The rows don't depend on example sentences, so the route doesn't count them.
+  const [screen, db] = await Promise.all([searchScreen(query, { examples: false }), dictionaryDb()])
   return linkedWords(screen, db !== null).slice(from, from + resultsPerPage)
 }
 
@@ -436,8 +458,8 @@ export interface SearchExamplesData {
   query: string
   /** How many examples it lists, at most the app's 100. */
   listed: number
-  /** Whether more than 100 matched, so some aren't listed. */
-  truncated: boolean
+  /** Whether search engines may index it (`searchExamplesIndexable`). */
+  indexable: boolean
   /** The first examples; the rest load from `examplesPath` as the page scrolls. */
   examples: PageExample[]
   examplesPath: string
@@ -447,57 +469,85 @@ export interface SearchExamplesData {
 export const searchExamplesJsonPath = (query: string, build: string) =>
   `${searchPath(query)}examples.json?build=${encodeURIComponent(build)}`
 
-/** A search's Example Sentences list; null for a query full-text search can't read. */
-async function exampleListFor(db: D1Database, query: string) {
+/** A search's Example Sentences: the list, and what reads its sentences. */
+export interface SearchExamplesOn {
+  search: WebsiteExampleSearch
+  list: SearchExampleList
+  /** Whether it lists the primary entry's examples, for a deinflected or romaji search. */
+  usesPrimaryEntryExamples: boolean
+}
+
+/**
+ * A search's Example Sentences from a search database; null for a query full-text search can't
+ * read. The page and the search import's gate and rendered-page test all read it through here.
+ */
+export async function searchExamplesOn(
+  db: D1Database,
+  query: string
+): Promise<SearchExamplesOn | null> {
   const results = await searchResultsFor(db, query)
   if (!results) return null
   const search = websiteExampleSearch(db)
-  return { search, list: await searchExampleList(search, results, query) }
+  return {
+    search,
+    list: await searchExampleList(search, results, query),
+    usesPrimaryEntryExamples: results.usesPrimaryEntryExamples
+  }
 }
 
-/** Examples from the search database, with their words' pages from the dictionary database. */
-async function pageSearchExamples(
-  search: WebsiteExampleSearch,
-  list: SearchExampleList,
+/**
+ * `examplesPerPage` of a search's examples from position `from`, as the page shows them, linking
+ * words to the pages `links` gives for their entries.
+ */
+export async function searchExamplePageOn(
+  found: SearchExamplesOn,
   query: string,
-  from: number
+  from: number,
+  links: (entSeqs: number[]) => Promise<Links>
 ): Promise<PageExample[]> {
-  const rows = await searchExamplePage(search, list, query, from, examplesPerPage)
-  const dictionary = await dictionaryDb()
+  const rows = await searchExamplePage(found.search, found.list, query, from, examplesPerPage)
   const entSeqs = rows.flatMap(({ example }) =>
     example.links.flatMap(link => (link.entSeqs.length === 1 ? link.entSeqs : []))
   )
-  const links = dictionary
-    ? databaseLinks(await dictionary.wordSlugs(entSeqs), new Set())
-    : fixtureLinks
-  return rows.map(row => pageExample(wordExample(row), links))
+  const linked = await links(entSeqs)
+  return rows.map(row => pageExample(wordExample(row), linked))
+}
+
+/** Word pages from the dictionary database, or the fixtures'. */
+async function exampleWordLinks(entSeqs: number[]): Promise<Links> {
+  const dictionary = await dictionaryDb()
+  return dictionary ? databaseLinks(await dictionary.wordSlugs(entSeqs), new Set()) : fixtureLinks
 }
 
 /**
  * A search's Example Sentences page: the primary entry's examples for a deinflected or romaji
  * search, otherwise the sentences that contain the query, each word linked as the app links it
- * there. Without a search database (local fixtures) it lists none. Memoized per request.
+ * there; null without any, which the app never opens, so the page answers 404. Local fixtures
+ * have none. Memoized per request.
  */
-export const getSearchExamples = cache(async (query: string): Promise<SearchExamplesData> => {
-  const db = await searchDb()
-  const build = await searchBuild()
-  const empty = {
-    query,
-    listed: 0,
-    truncated: false,
-    examples: [],
-    examplesPath: searchExamplesJsonPath(query, build)
+export const getSearchExamples = cache(
+  async (query: string): Promise<SearchExamplesData | null> => {
+    const db = await searchDb()
+    if (!db) return null
+    const found = await searchExamplesOn(db, query)
+    if (!found || found.list.ids.length === 0) return null
+    return {
+      query,
+      listed: found.list.ids.length,
+      indexable: searchExamplesIndexable(query, found.usesPrimaryEntryExamples),
+      examples: await searchExamplePageOn(found, query, 0, exampleWordLinks),
+      examplesPath: searchExamplesJsonPath(query, await searchBuild())
+    }
   }
-  if (!db) return empty
-  const found = await exampleListFor(db, query)
-  if (!found) return empty
-  return {
-    ...empty,
-    listed: found.list.ids.length,
-    truncated: found.list.truncated,
-    examples: await pageSearchExamples(found.search, found.list, query, 0)
-  }
-})
+)
+
+/**
+ * Whether search engines may index a search's Example Sentences page: only a direct Japanese
+ * search's, by the owner's decision on #511. A romaji or deinflected search lists its primary
+ * entry's examples, which that entry's word page already has.
+ */
+export const searchExamplesIndexable = (query: string, usesPrimaryEntryExamples: boolean) =>
+  !isASCII(normalizeQuery(query)) && !usesPrimaryEntryExamples
 
 /**
  * `examplesPerPage` of a search's examples from position `from`, as its page loads more; null
@@ -511,7 +561,7 @@ export async function getMoreSearchExamples(
   if (build !== (await searchBuild())) return null
   const db = await searchDb()
   if (!db) return []
-  const found = await exampleListFor(db, query)
+  const found = await searchExamplesOn(db, query)
   if (!found) return []
-  return pageSearchExamples(found.search, found.list, query, from)
+  return searchExamplePageOn(found, query, from, exampleWordLinks)
 }
