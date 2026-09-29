@@ -55,7 +55,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build the search database locally
         # Migrations, rows, and precomputed broad queries, as the import builds each release.
-        run: scripts/search-d1/load-local.sh "../../$SOURCE_DB" "$RUNNER_TEMP/local" | tee "$RUNNER_TEMP/precompute.log"
+        run: scripts/release-d1/load-local.sh search "../../$SOURCE_DB" "$RUNNER_TEMP/local" | tee "$RUNNER_TEMP/precompute.log"
       - name: Create two throwaway D1s
         run: |
           for suffix in "" "-search"; do

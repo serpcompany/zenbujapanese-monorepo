@@ -23,7 +23,7 @@ const cachedQueries = new WeakMap<D1Database, Promise<Set<string>>>()
 /**
  * Search on the search database (SEARCH_DB). Broad queries, which read too many rows to run on
  * D1 per request, answer from `search_cache`, precomputed by the import with this same core
- * (scripts/search-d1/precompute.mts). Every other query runs the core.
+ * (scripts/release-d1/search/precompute.mts). Every other query runs the core.
  */
 export function websiteSearch(db: D1Database): WebsiteSearch {
   const core = new DictionarySearch(d1SearchDatabase(db), websiteCapabilities)

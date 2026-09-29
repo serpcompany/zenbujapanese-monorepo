@@ -129,7 +129,8 @@ const importedDatabases = new WeakSet<D1Database>()
 
 /**
  * Whether the search database holds a complete import; the import writes `dictionary_import`
- * last. The local SEARCH_DB has no tables until scripts/search-d1/load-local.sh loads one.
+ * last. The local SEARCH_DB has no tables until `scripts/release-d1/load-local.sh search` loads
+ * one.
  */
 async function holdsImport(db: D1Database): Promise<boolean> {
   if (importedDatabases.has(db)) return true

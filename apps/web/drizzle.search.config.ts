@@ -1,7 +1,7 @@
 import { defineConfig } from 'drizzle-kit'
 
 // The search database (SEARCH_DB): one D1 per build of the dictionary, migrated from empty by
-// the import (scripts/search-d1/ensure-release.sh). Generates SQL migrations only; see
+// the import (scripts/release-d1/ensure-release.sh). Generates SQL migrations only; see
 // docs/agents/web.md.
 export default defineConfig({
   dialect: 'sqlite',
