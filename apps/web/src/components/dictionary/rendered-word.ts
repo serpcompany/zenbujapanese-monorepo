@@ -10,13 +10,22 @@ import type {
   SuitePitchGraph
 } from '@/lib/dictionary/detail/suite'
 
-/** Text with tags removed and the entities React writes decoded. */
+/**
+ * Text with tags removed and the entities React writes decoded. Tags are stripped until none
+ * remain, so a removal can't leave a new tag behind. `&lt;` and `&gt;` stay encoded, so the result
+ * never holds a tag.
+ */
 function text(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, '')
+  let stripped = html
+  let previous: string
+  do {
+    previous = stripped
+    stripped = stripped.replace(/<[^>]*>/g, '')
+  } while (stripped !== previous)
+  return stripped
     .replace(/&quot;/g, '"')
     .replace(/&#x27;/g, "'")
-    .replace(/&amp;/g, '&')
+    .replace(/&amp;(?!lt;|gt;)/g, '&')
     .trim()
 }
 
