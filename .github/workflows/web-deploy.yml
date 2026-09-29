@@ -1,8 +1,9 @@
 name: Web deploy
 
 # Promotes merged website code through staging, then production, per the SERP Drizzle + D1
-# standard. Production runs once staging passes; add a required reviewer on the `production`
-# GitHub environment to gate it manually.
+# standard. Each environment imports, verifies, and binds its own release databases (search and
+# dictionary) before deploying, and prunes their old builds after its smoke test. Production runs
+# once staging passes, behind the required reviewer on the `production` GitHub environment.
 on:
   push:
     branches: [main]
@@ -102,6 +103,10 @@ jobs:
   production:
     needs: staging
     runs-on: ubuntu-latest
+    # Shared with the manual Release database workflow, so two imports for production never overlap.
+    concurrency:
+      group: release-database-production
+      cancel-in-progress: false
     environment:
       name: production
       url: ${{ vars.WEB_PRODUCTION_URL }}
@@ -120,6 +125,32 @@ jobs:
           cache: pnpm
           cache-dependency-path: apps/web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - name: Import the search database
+        # As for staging: reuses a verified database for this build, or imports a new one. The
+        # first import of both databases for production is about 850 MB, about 30 minutes.
+        run: scripts/release-d1/ensure-release.sh search production
+      - name: Import the dictionary database
+        run: scripts/release-d1/ensure-release.sh dictionary production
+      - name: Bind the release databases
+        # The production block of wrangler.jsonc has its own *_DB_NAME and *_DB_ID placeholders.
+        run: |
+          for binding in SEARCH_DB DICTIONARY_DB; do
+            name_var="${binding}_NAME" id_var="${binding}_ID"
+            sed -i "s/\"${binding}_NAME\"/\"${!name_var}\"/; s/\"${binding}_ID\"/\"${!id_var}\"/" wrangler.jsonc
+            grep -q "\"${!id_var}\"" wrangler.jsonc
+          done
+      - name: Check both release databases hold the same artifact
+        run: |
+          artifact() {
+            pnpm exec wrangler d1 execute "$1" --remote --env production --json \
+              --command "SELECT sha256 FROM dictionary_import" |
+              python3 -c 'import json, sys; print(json.load(sys.stdin)[0]["results"][0]["sha256"])'
+          }
+          search=$(artifact SEARCH_DB)
+          dictionary=$(artifact DICTIONARY_DB)
+          echo "SEARCH_DB: $search; DICTIONARY_DB: $dictionary"
+          [ -n "$search" ] && [ "$search" = "$dictionary" ] ||
+            { echo "::error::SEARCH_DB and DICTIONARY_DB hold different artifacts"; exit 1; }
       - run: pnpm db:migrate:production
       - name: Deploy
         run: pnpm deploy:production 2>&1 | tee deploy.log
@@ -129,3 +160,9 @@ jobs:
       - name: Smoke test
         # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
         run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" production
+      - name: Delete old release databases
+        # Only now are the new databases the live ones; keeps each and its newest complete older
+        # build, for rolling back.
+        run: |
+          scripts/release-d1/prune.sh search production "$SEARCH_DB_NAME"
+          scripts/release-d1/prune.sh dictionary production "$DICTIONARY_DB_NAME"

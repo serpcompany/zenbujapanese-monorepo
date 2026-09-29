@@ -389,14 +389,27 @@ describe('word and kanji pages', () => {
       env.DICTIONARY_DB = db
       await expect(getWordPage(1546640)).rejects.toThrow('DICTIONARY_DB is bound but holds no')
       await expect(getKanjiPage('要')).rejects.toThrow('DICTIONARY_DB is bound but holds no')
-      delete env.DICTIONARY_DB
+      env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
       env.SEARCH_DB = db
       await expect(searchDictionary('いる')).rejects.toThrow('SEARCH_DB is bound but holds no')
     })
 
-    test('without the bindings, pages still read the fixtures', async () => {
-      expect((await getWordPage(1546640))?.path).toBe('/dictionary/要る-1546640/')
-      expect((await searchDictionary('いる')).words).toHaveLength(6)
+    test('a missing binding fails the request instead of showing fixtures', async () => {
+      await expect(getWordPage(1546640)).rejects.toThrow("DICTIONARY_DB isn't bound")
+      await expect(getKanjiPage('要')).rejects.toThrow("DICTIONARY_DB isn't bound")
+      env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
+      await expect(searchDictionary('いる')).rejects.toThrow("SEARCH_DB isn't bound")
+    })
+
+    test.each([
+      'staging',
+      'production'
+    ])('%s serves the dictionary from its databases', async site => {
+      vi.stubEnv('SITE_ENV', site)
+      env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
+      word.mockResolvedValue(null)
+      expect(await getWordPage(1546640)).toBeNull()
+      expect(word).toHaveBeenCalledWith(1546640)
     })
   })
 

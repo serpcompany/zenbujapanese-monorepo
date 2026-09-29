@@ -1,7 +1,6 @@
-import { notFound, permanentRedirect } from 'next/navigation'
+import { permanentRedirect } from 'next/navigation'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SearchForm } from '@/components/dictionary/search-form'
-import { isDictionaryAvailable } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { hasSearchPath, normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
 
@@ -14,7 +13,6 @@ export const metadata = dictionaryMetadata(
 
 /** The search box submits here with ?q=; each search then lives at its own path. */
 export default async function SearchIndexPage({ searchParams }: PageProps<'/dictionary/search'>) {
-  if (!isDictionaryAvailable()) notFound()
   const { q } = await searchParams
   const query = normalizeSearchQuery(typeof q === 'string' ? q : '')
   if (query && hasSearchPath(query)) permanentRedirect(searchPath(query))

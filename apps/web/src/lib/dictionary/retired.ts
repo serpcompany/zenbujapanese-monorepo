@@ -75,14 +75,7 @@ export function d1RetiredLookup(db: D1Database): RetiredLookup {
   }
 }
 
-/**
- * Whether the Worker answers retired words for this environment: wherever the site shows the
- * dictionary (not production before launch) and a dictionary database is bound.
- */
-export function retiredWordsLookup(env: {
-  SITE_ENV?: string
-  DICTIONARY_DB?: D1Database
-}): RetiredLookup | null {
-  if (env.SITE_ENV === 'production' || !env.DICTIONARY_DB) return null
-  return d1RetiredLookup(env.DICTIONARY_DB)
+/** The Worker answers retired words wherever a dictionary database is bound. */
+export function retiredWordsLookup(env: { DICTIONARY_DB?: D1Database }): RetiredLookup | null {
+  return env.DICTIONARY_DB ? d1RetiredLookup(env.DICTIONARY_DB) : null
 }

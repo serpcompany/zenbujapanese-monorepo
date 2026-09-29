@@ -70,68 +70,69 @@ fi
 # The shipped iOS app links to /privacy.
 expect /privacy 308
 
-# Dictionary pages: staging reads its dictionary database (DICTIONARY_DB), so a word and a kanji
-# without local fixtures (見る, 見) have pages; production has no dictionary pages yet.
+# Dictionary pages: each environment reads its own release databases (SEARCH_DB and
+# DICTIONARY_DB), so a word and a kanji without local fixtures (見る, 見) have pages.
 word=/dictionary/%E8%A6%8B%E3%82%8B-1259290/
 kanji=/dictionary/kanji/%E8%A6%8B/
-if [ "$env" = production ]; then
-  expect "$word" 404
-  expect "$kanji" 404
-  # No dictionary sitemaps before launch, in either sitemap index.
-  expect /sitemaps/kanji.xml 404
-  for index in /sitemap-index.xml /sitemap.xml; do
-    if grep -q '/sitemaps/dictionary/\|/sitemaps/kanji\.xml' <<<"$(body "$index")"; then
-      fail "$index lists dictionary sitemaps before launch"
-    else
-      pass "$index lists no dictionary sitemaps"
-    fi
-  done
+expect /dictionary/ 200
+expect "$word" 200
+expect "$kanji" 200
+# Every page links to the dictionary and has the header search.
+if grep -q 'href="/dictionary/"' <<<"$(body /)" && grep -q '<search' <<<"$(body /)"; then
+  pass 'the header links to the dictionary and has search'
 else
-  expect "$word" 200
-  expect "$kanji" 200
-  # A stale or missing slug redirects to the word's one URL; an unknown number doesn't exist.
-  expect_redirect /dictionary/1259290/ "$word"
-  expect /dictionary/999999999/ 404
+  fail 'the header is missing the Dictionary link or search'
+fi
+# A stale or missing slug redirects to the word's one URL; an unknown number doesn't exist.
+expect_redirect /dictionary/1259290/ "$word"
+expect /dictionary/999999999/ 404
 
-  # Both sitemap indexes list the word and kanji sitemaps (ADR 0007): /sitemap.xml serves the same
-  # index, and neither may be a copy frozen at build time.
-  lists_release_sitemaps() {
-    local locs
-    locs="$(body "$index" | grep -oE '<loc>[^<]+</loc>' || true)"
-    grep -q '<loc>https://zenbujapanese.com/sitemaps/dictionary/1.xml</loc>' <<<"$locs" &&
-      grep -q '<loc>https://zenbujapanese.com/sitemaps/kanji.xml</loc>' <<<"$locs"
-  }
-  for index in /sitemap-index.xml /sitemap.xml; do
-    eventually "$index lists the dictionary and kanji sitemaps" \
-      "$index is missing the dictionary or kanji sitemap" lists_release_sitemaps
+# Both sitemap indexes list the word and kanji sitemaps (ADR 0007): /sitemap.xml serves the same
+# index, and neither may be a copy frozen at build time.
+lists_release_sitemaps() {
+  local locs
+  locs="$(body "$index" | grep -oE '<loc>[^<]+</loc>' || true)"
+  grep -q '<loc>https://zenbujapanese.com/sitemaps/dictionary/1.xml</loc>' <<<"$locs" &&
+    grep -q '<loc>https://zenbujapanese.com/sitemaps/kanji.xml</loc>' <<<"$locs"
+}
+for index in /sitemap-index.xml /sitemap.xml; do
+  eventually "$index lists the dictionary and kanji sitemaps" \
+    "$index is missing the dictionary or kanji sitemap" lists_release_sitemaps
+done
+# A word sitemap holds 1 to 50,000 canonical word URLs, percent-encoded (ASCII only).
+expect /sitemaps/dictionary/1.xml 200
+word_locs="$(curl -s "${smoke[@]}" "$base/sitemaps/dictionary/1.xml" | grep -oE '<loc>[^<]+</loc>' || true)"
+word_count="$(grep -c . <<<"$word_locs" || true)"
+if [ "$word_count" -ge 1 ] && [ "$word_count" -le 50000 ] &&
+  ! LC_ALL=C grep -vqE '^<loc>https://zenbujapanese\.com/dictionary/[!-~]+-[0-9]+/</loc>$' <<<"$word_locs"; then
+  pass "word sitemap lists $word_count canonical URLs"
+else
+  fail "word sitemap has $word_count URLs or a non-canonical one"
+fi
+# The kanji sitemap lists indexable kanji only: 見, but not 㐂, which has no meanings or readings.
+lists_indexable_kanji() {
+  local kanji_sitemap
+  kanji_sitemap="$(body /sitemaps/kanji.xml)"
+  grep -q "<loc>https://zenbujapanese.com$kanji</loc>" <<<"$kanji_sitemap" &&
+    ! grep -q '/dictionary/kanji/%E3%90%82/' <<<"$kanji_sitemap"
+}
+eventually 'kanji sitemap lists indexable kanji only' 'kanji sitemap is missing 見 or lists 㐂' \
+  lists_indexable_kanji
+# 㐂's page is noindex on its own, not only through staging's X-Robots-Tag; 見's isn't.
+noindex='<meta name="robots" content="noindex'
+if grep -q "$noindex" <<<"$(body /dictionary/kanji/%E3%90%82/)" &&
+  ! grep -q "$noindex" <<<"$(body "$kanji")"; then
+  pass 'a kanji without meanings or readings is noindex'
+else
+  fail 'noindex is wrong on 㐂 or 見'
+fi
+# Production's dictionary is indexable: its pages send no X-Robots-Tag (staging's all send noindex,
+# checked below for /).
+if [ "$env" = production ]; then
+  for path in "$word" "$kanji" /sitemaps/kanji.xml; do
+    header="$(curl -sI "${smoke[@]}" "$base$path" | tr -d '\r' | grep -i '^x-robots-tag:' || true)"
+    [ -z "$header" ] && pass "no X-Robots-Tag on $path" || fail "unexpected $header on $path"
   done
-  # A word sitemap holds 1 to 50,000 canonical word URLs, percent-encoded (ASCII only).
-  expect /sitemaps/dictionary/1.xml 200
-  word_locs="$(curl -s "${smoke[@]}" "$base/sitemaps/dictionary/1.xml" | grep -oE '<loc>[^<]+</loc>' || true)"
-  word_count="$(grep -c . <<<"$word_locs" || true)"
-  if [ "$word_count" -ge 1 ] && [ "$word_count" -le 50000 ] &&
-    ! LC_ALL=C grep -vqE '^<loc>https://zenbujapanese\.com/dictionary/[!-~]+-[0-9]+/</loc>$' <<<"$word_locs"; then
-    pass "word sitemap lists $word_count canonical URLs"
-  else
-    fail "word sitemap has $word_count URLs or a non-canonical one"
-  fi
-  # The kanji sitemap lists indexable kanji only: 見, but not 㐂, which has no meanings or readings.
-  lists_indexable_kanji() {
-    local kanji_sitemap
-    kanji_sitemap="$(body /sitemaps/kanji.xml)"
-    grep -q "<loc>https://zenbujapanese.com$kanji</loc>" <<<"$kanji_sitemap" &&
-      ! grep -q '/dictionary/kanji/%E3%90%82/' <<<"$kanji_sitemap"
-  }
-  eventually 'kanji sitemap lists indexable kanji only' 'kanji sitemap is missing 見 or lists 㐂' \
-    lists_indexable_kanji
-  # 㐂's page is noindex on its own, not only through staging's X-Robots-Tag; 見's isn't.
-  noindex='<meta name="robots" content="noindex'
-  if grep -q "$noindex" <<<"$(body /dictionary/kanji/%E3%90%82/)" &&
-    ! grep -q "$noindex" <<<"$(body "$kanji")"; then
-    pass 'a kanji without meanings or readings is noindex'
-  else
-    fail 'noindex is wrong on 㐂 or 見'
-  fi
 fi
 
 robots="$(curl -s "${smoke[@]}" "$base/robots.txt")"

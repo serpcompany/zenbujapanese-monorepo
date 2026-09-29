@@ -1,12 +1,9 @@
 import { NextRequest } from 'next/server'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { getWordExamples, isDictionaryAvailable, type PageExample } from '@/lib/dictionary/data'
+import { getWordExamples, type PageExample } from '@/lib/dictionary/data'
 import { GET } from './route'
 
-vi.mock('@/lib/dictionary/data', () => ({
-  getWordExamples: vi.fn(),
-  isDictionaryAvailable: vi.fn(() => true)
-}))
+vi.mock('@/lib/dictionary/data', () => ({ getWordExamples: vi.fn() }))
 
 const example = { position: 25, text: '見る。', tokens: [] } as unknown as PageExample
 
@@ -46,10 +43,5 @@ describe('GET /dictionary/examples/<ent_seq>.json', () => {
   test('is not found for an unknown word or another build', async () => {
     vi.mocked(getWordExamples).mockResolvedValue(null)
     expect((await get('1.json', '?from=25')).status).toBe(404)
-  })
-
-  test('is not found where the dictionary is unavailable (production for now)', async () => {
-    vi.mocked(isDictionaryAvailable).mockReturnValueOnce(false)
-    expect((await get('1259290.json', '?from=25')).status).toBe(404)
   })
 })

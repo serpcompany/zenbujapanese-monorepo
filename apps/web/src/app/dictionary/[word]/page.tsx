@@ -15,7 +15,7 @@ import { SourceCredits } from '@/components/dictionary/source-credits'
 import { Card, CardContent } from '@/components/ui/card'
 import { Item, ItemActions, ItemContent } from '@/components/ui/item'
 import { Separator } from '@/components/ui/separator'
-import { getWordPage, isDictionaryAvailable, type WordPageData } from '@/lib/dictionary/data'
+import { getWordPage, type WordPageData } from '@/lib/dictionary/data'
 import { exampleCountText, noExamplesMessage } from '@/lib/dictionary/detail/examples'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { pageSources } from '@/lib/dictionary/sources'
@@ -25,7 +25,6 @@ type Props = PageProps<'/dictionary/[word]'>
 
 /** `/dictionary/<slug>-<ent_seq>/`: the number decides the word; any other slug redirects. */
 async function load(params: Props['params']) {
-  if (!isDictionaryAvailable()) notFound()
   const segment = (await params).word
   const parsed = parseWordSegment(segment)
   if (!parsed) notFound()

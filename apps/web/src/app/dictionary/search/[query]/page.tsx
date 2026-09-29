@@ -1,7 +1,7 @@
 import { ChevronRightIcon, SearchXIcon } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound, permanentRedirect } from 'next/navigation'
+import { permanentRedirect } from 'next/navigation'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { FrequencyBadges } from '@/components/dictionary/frequency'
 import { RubyText } from '@/components/dictionary/ruby-text'
@@ -10,7 +10,7 @@ import { SourceCredits } from '@/components/dictionary/source-credits'
 import { Card } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Item, ItemActions, ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
-import { isDictionaryAvailable, searchDictionary } from '@/lib/dictionary/data'
+import { searchDictionary } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { pageSources } from '@/lib/dictionary/sources'
 import { decodeSegment, normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
@@ -19,7 +19,6 @@ type Props = PageProps<'/dictionary/search/[query]'>
 
 // Next.js passes the page an encoded segment but generateMetadata a decoded one.
 async function load(params: Props['params'], decoded: boolean) {
-  if (!isDictionaryAvailable()) notFound()
   const segment = (await params).query
   const raw = decoded ? segment : decodeSegment(segment)
   const query = normalizeSearchQuery(raw)

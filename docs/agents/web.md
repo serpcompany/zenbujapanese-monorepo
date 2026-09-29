@@ -78,13 +78,15 @@ builds, keeping the live one and the newest complete older one, so rolling back 
 the previous commit. It keeps any build whose import it can't check. The `Release database`
 workflow runs the import by hand for either database and environment.
 
-`Web deploy` imports both for staging before each deploy, binds `SEARCH_DB` and `DICTIONARY_DB`
-to the databases it names by replacing the `*_DB_NAME` and `*_DB_ID` placeholders in
-`wrangler.jsonc`, and checks that both were built from the same `LanguageReferenceData.sqlite3`
-(`dictionary_import.sha256`) before deploying, since search results link to word pages. It runs
-when any release database's input changes, not only `apps/web/**`. Production binds neither yet:
-it gets them once a required reviewer gates the `production` environment, and until then its
-dictionary pages return 404.
+`Web deploy` imports both for each environment before deploying it, staging then production,
+binds `SEARCH_DB` and `DICTIONARY_DB` to the databases it names by replacing that environment's
+`*_DB_NAME` and `*_DB_ID` placeholders in `wrangler.jsonc`, and checks that both were built from
+the same `LanguageReferenceData.sqlite3` (`dictionary_import.sha256`) before deploying, since
+search results link to word pages. After each environment's smoke test it prunes that
+environment's old builds. It runs when any release database's input changes, not only
+`apps/web/**`. The production job waits for the required reviewer on the `production` GitHub
+environment. A new build's first production import is about 850 MB for both databases and takes
+about 30 minutes; an unchanged build is reused in seconds.
 
 ### The search database
 
@@ -224,11 +226,11 @@ the database fails or an English query can't be read as full text, such as one w
 
 The search results page reads it through `searchDictionary` in `src/lib/dictionary/data.ts`. A
 query full-text search can't read (an FTS5 error, `isUnreadableQuery`) shows no results; any other
-failure fails the request, so an outage never renders as an empty, noindexed page. When
-`SEARCH_DB` is unbound, as in `pnpm dev`, it searches the fixtures instead. A bound release
-database without a finished import (no `dictionary_import` row) falls back to fixtures only in
-local development; in staging and production (`SITE_ENV` set) it fails the request, so a database
-bound by mistake can't pass as working. `DICTIONARY_DB` works the same way. Once `DICTIONARY_DB` holds an import, every result links to its
+failure fails the request, so an outage never renders as an empty, noindexed page. Only
+local development falls back to fixtures, when `SEARCH_DB` is unbound or holds no finished import
+(no `dictionary_import` row), as in `pnpm dev`. Staging and production (`SITE_ENV` set) serve the
+dictionary, so there a missing binding, or one bound to a database without an import, fails the
+request rather than passing fixtures off as the dictionary. `DICTIONARY_DB` works the same way. Once `DICTIONARY_DB` holds an import, every result links to its
 word page, a one-character query shows its kanji card from the dictionary database, and each
 result shows the app's frequency chips (JLPT and YouTube, `frequencyChips`, as
 SearchView.swift's `SearchFrequencyRankPresentationModel` picks them), read for all results in
@@ -292,10 +294,9 @@ Deploys and remote migrations run only through the `Web deploy` GitHub Actions w
 from an agent's machine. Each merge to `main` that changes `apps/web/**` applies staging
 migrations, deploys staging, and smoke-tests its workers.dev URL (`scripts/smoke.sh`). The production job then
 runs automatically once staging passes: it applies production migrations, deploys the same commit,
-and smoke-tests its workers.dev URL. Staging's smoke tests are the gate; the `production` GitHub
-environment has no required reviewer for now. Add one (Settings → Environments → production) once
-production data migrations begin, such as with the dictionary. Both environments deploy only from
-`main`.
+and smoke-tests its workers.dev URL. Staging's smoke tests are the first gate; the `production`
+GitHub environment's required reviewer is the second, since production imports the dictionary's
+release databases (see Release databases). Both environments deploy only from `main`.
 The workflow uses the `CLOUDFLARE_API_TOKEN` secret (the "Edit Cloudflare Workers" template plus D1 Edit, limited
 to the SERP account and the zenbujapanese.com zone) and the `CLOUDFLARE_ACCOUNT_ID` variable.
 
@@ -381,9 +382,9 @@ the index (`/sitemap.xml` serves the same document) and lists every child sitema
 `childSitemaps`. Static pages are listed once, in `src/lib/pages.ts`, which also feeds the HTML
 sitemap at `/sitemap`.
 
-The dictionary's sitemaps (`src/lib/dictionary/sitemaps.ts`, ADR 0007) exist only where the site
-shows the dictionary and `DICTIONARY_DB` holds an import, so production lists none until launch
-and the index renders per request:
+The dictionary's sitemaps (`src/lib/dictionary/sitemaps.ts`, ADR 0007) exist wherever
+`DICTIONARY_DB` holds an import, staging and production, not local fixtures, so the index renders
+per request. `/dictionary/`, the search box, is a static page in `src/lib/pages.ts`:
 
 - `/sitemaps/dictionary/<n>.xml`: every word page's canonical URL, percent-encoded, 50,000 to a
   file in `ent_seq` order (five files for 218,382 words). The import precomputes each file's
@@ -402,6 +403,6 @@ precomputed query set #463 will add.
 A word URL whose `ent_seq` is in `retired_ids` returns 410 Gone, or redirects (308) to its
 replacement's canonical URL in one hop (ADR 0007). Next.js pages can't answer 410, so `worker.ts`,
 the Worker's entry in `wrangler.jsonc`, answers these before OpenNext's worker and passes every
-other request on (`src/lib/dictionary/retired.ts`). It reads `retired_ids` once per isolate, and
-only where the site shows the dictionary. `pnpm dev` runs Next.js alone, so check retired URLs in
+other request on (`src/lib/dictionary/retired.ts`). It reads `retired_ids` once per isolate,
+wherever `DICTIONARY_DB` is bound. `pnpm dev` runs Next.js alone, so check retired URLs in
 `pnpm preview`. The table is empty until #463 records retired entries.
