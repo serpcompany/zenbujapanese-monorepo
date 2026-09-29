@@ -10,6 +10,10 @@
  *   imported by `scripts/release-d1/ensure-release.sh search`. Staging names it at deploy time:
  *   `Web deploy` imports and verifies the database, then replaces the SEARCH_DB_* placeholders
  *   with it. Production binds it once its import is gated by a required reviewer (issue 464).
+ * - `DICTIONARY_DB`, the dictionary database for word and kanji pages: a release database like
+ *   SEARCH_DB, with its own schema (src/db/dictionary-schema.ts) and migrations
+ *   (drizzle/dictionary/). Local only until its import exists; the deployed environments bind
+ *   it the way they bind SEARCH_DB.
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -36,6 +40,13 @@
       "database_name": "zenbujapanese-search-local",
       "database_id": "local-search-only-do-not-deploy",
       "migrations_dir": "drizzle/search",
+      "migrations_table": "d1_migrations"
+    },
+    {
+      "binding": "DICTIONARY_DB",
+      "database_name": "zenbujapanese-dictionary-local",
+      "database_id": "local-dictionary-only-do-not-deploy",
+      "migrations_dir": "drizzle/dictionary",
       "migrations_table": "d1_migrations"
     }
   ],

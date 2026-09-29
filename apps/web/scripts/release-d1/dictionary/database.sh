@@ -1,6 +1,6 @@
 # The dictionary database (DICTIONARY_DB): what word and kanji pages read (issue 464, phase 2).
-# Sourced by ../common.sh's load_database; see there for what each setting means. Its schema
-# and import come in later PRs, so it can't be imported yet.
+# Sourced by ../common.sh's load_database; see there for what each setting means. Its import
+# comes in a later PR, so it can't be imported yet.
 # shellcheck shell=bash disable=SC2034,SC2154 # Settings for, and names from, ../common.sh.
 
 binding=DICTIONARY_DB
@@ -29,7 +29,8 @@ build_inputs=(
   # The detail core, which the import runs to precompute page rows.
   apps/web/src/lib/dictionary/detail
 )
-tables=()
+tables=(words kanji kanji_strokes kanji_elements element_glyphs example_sentences word_examples
+  retired_ids)
 upload_files=(rows.sql)
 unimplemented="its import comes with issue 464's words and kanji import"
 

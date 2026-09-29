@@ -46,10 +46,10 @@ migrations, schema dump, binding, and import steps, described by
 | Database | Binding | Schema | Migrations | Local build |
 | --- | --- | --- | --- | --- |
 | `search` | `SEARCH_DB` | `src/db/search-schema.ts` | `drizzle/search/` | `.search-d1/` |
-| `dictionary` | `DICTIONARY_DB` | not yet | not yet | `.dictionary-d1/` |
+| `dictionary` | `DICTIONARY_DB` | `src/db/dictionary-schema.ts` | `drizzle/dictionary/` | `.dictionary-d1/` |
 
-The dictionary database, for word and kanji pages, can't be imported yet: its scripts stop
-before touching D1.
+The dictionary database, for word and kanji pages, has its schema but can't be imported yet:
+its scripts stop before touching D1, and only local development binds `DICTIONARY_DB`.
 
 Each build gets a fresh D1, named `zenbujapanese-<database>-<env>-<build id>`. The build ID
 (`scripts/release-d1/build-id.sh <database>`) hashes everything that shapes the database: the
@@ -113,6 +113,29 @@ D1 rejects the app's FTS4 indexes, so they are FTS5. `fts.ts` translates the app
 so both match the same rows, and `form_chars` indexes Japanese forms by character in place of the
 app's scan over every form. One difference remains: FTS4's stemmer shortens long numbers, so the
 app finds glosses for a query such as 9999999 that the website doesn't.
+
+### The dictionary database
+
+Word and kanji pages will read their own release database, bound as `DICTIONARY_DB` (issue 464,
+phase 2), so broad searches never queue in front of them. `src/db/dictionary-schema.ts` holds
+its tables, named for the rows the detail core reads (`src/lib/dictionary/detail/rows.ts`):
+`words` by `ent_seq`, `kanji` by the exact character, stroke order, kanji structure and
+elements, example sentences with each word's examples (at most 100, in the app's order), retired
+IDs, and `dictionary_import`, which also records each input file's SHA-256. Display-only data is
+JSON. It has no FTS tables.
+
+Examples are stored in two parts. `example_sentences` holds each Tatoeba pair once, with tokens
+that are the same on every page and attribution for each side: the Japanese sentence and its
+English translation are separate Tatoeba sentences with their own ID, contributor, and license.
+`word_examples` holds what depends on the page's word: which tokens are the word (`highlights`)
+and where each word token links (`links`, `{ token, entSeqs }`). A token that resolves to one
+entry has one `ent_seq`; a token the app can't resolve, such as だ, keeps all its candidates, as
+the word-detail conformance suite records them. `dictionary-schema.test.ts` stores and reads
+back every token in that suite.
+
+It changes the way the search schema does, with its own commands:
+`pnpm db:generate:dictionary` generates a migration into `drizzle/dictionary/` and rewrites
+`src/db/dictionary-schema.sql`, and `pnpm db:check` checks it too.
 
 ### Run the suite locally
 
