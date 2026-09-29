@@ -124,7 +124,9 @@ retrieval order, then the Language Reference ID. Discovered Words keep their ord
 for an English query), its chips, the "Search for「…」" reading refinement, the KANJI row that
 leads a one-kanji query with the meaning of the entry written as that kanji (chosen before the
 re-sort, "Kanji detail" without one), and No Dictionary Matches. The page's component,
-`components/dictionary/search-results.tsx`, only renders it; `data.ts` adds links.
+`components/dictionary/search-results.tsx`, only renders it. `results/links.ts` adds links
+(`linkSearchScreen`, shared by `data.ts` and the rendered-page test) and decides indexing: a page
+is indexed only when it lists a word or its kanji row opens a kanji page.
 
 The app's "View N Example Sentences" row is left out until the website has example search: the
 app searches all 232,703 Tatoeba pairs by English phrase (FTS4 Porter) or Japanese substring, and
@@ -136,9 +138,11 @@ suite (`search/conformance.test.ts`), the search results suite
 compares every case's state, sections, refinement, kanji row, and every row's ID, entry number,
 headword, reading, meaning, chips, match group, and retrieval position, and a rendered-page test
 (`components/dictionary/search-results.test.tsx`) that renders six of its cases with React's
-server renderer and reads the visible order, meanings, chips, and special rows back from the HTML.
-The results core, `detail/frequency.ts`, the frequency packs, and the suite itself are search
-build inputs, so a change to any of them imports a new build and runs the gate.
+server renderer and reads the visible order, meanings, chips, links, and special rows back from
+the HTML. The results core, `detail/frequency.ts`, the page's component and `rendered.ts`, the
+frequency packs, and the suite itself are search build inputs, so a change to any of them imports
+a new build and runs the gate. `smoke.sh` reads the suite's `iru` case at run time and checks the
+deployed page's refinement and first rows against it.
 
 ### Schema and migrations
 

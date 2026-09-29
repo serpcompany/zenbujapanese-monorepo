@@ -6,6 +6,7 @@ import { SearchResults } from '@/components/dictionary/search-results'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { searchDictionary } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
+import { isIndexable } from '@/lib/dictionary/results/links'
 import { pageSources } from '@/lib/dictionary/sources'
 import { decodeSegment, normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
 
@@ -24,14 +25,13 @@ async function load(params: Props['params'], decoded: boolean) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const results = await load(params, true)
-  const found = results.state === 'results'
   return dictionaryMetadata(
     searchPath(results.query),
     `${results.query} in Japanese`,
-    found
+    results.state === 'results' && results.rows.length > 0
       ? `${results.rows.length} Japanese words for “${results.query}”, with readings and meanings.`
       : `No Japanese words match “${results.query}”.`,
-    { index: found }
+    { index: isIndexable(results) }
   )
 }
 

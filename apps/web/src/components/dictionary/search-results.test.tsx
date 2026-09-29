@@ -4,10 +4,10 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { getPlatformProxy } from 'wrangler'
 import type { SearchData, SearchWord } from '@/lib/dictionary/data'
 import { rubySegments } from '@/lib/dictionary/detail/ruby'
+import { linkSearchScreen } from '@/lib/dictionary/results/links'
 import { loadFrequency, searchResultsScreen } from '@/lib/dictionary/results/results'
 import { d1SearchDatabase } from '@/lib/dictionary/search/search'
 import { websiteSearch } from '@/lib/dictionary/search/website'
-import { searchPath, wordPath } from '@/lib/dictionary/urls'
 import { readRenderedPage } from './rendered'
 import { SearchResults } from './search-results'
 
@@ -188,19 +188,13 @@ describe.runIf(enabled)('the rendered search results page matches the app', () =
       results,
       await loadFrequency(d1SearchDatabase(db), results)
     )
-    // Linked as data.ts links them once the dictionary database is loaded.
-    const data: SearchData =
-      screen.state === 'noResults'
-        ? screen
-        : {
-            ...screen,
-            kanji: screen.kanji ? { ...screen.kanji, path: null } : null,
-            readingRefinement: screen.readingRefinement
-              ? { ...screen.readingRefinement, path: searchPath(screen.readingRefinement.query) }
-              : null,
-            rows: screen.rows.map(row => ({ ...row, path: wordPath(row) }))
-          }
-    const page = readRenderedPage(render(data))
+    // Linked as searchDictionary links them once the dictionary database is loaded.
+    const data = linkSearchScreen(screen, { dictionaryLoaded: true, kanjiHasPage: true })
+    const html = render(data)
+    const page = readRenderedPage(html)
+    for (const row of data.state === 'results' ? data.rows : []) {
+      expect(html).toContain(`href="${(row.path ?? '').replace(/\/$/, '')}`)
+    }
 
     if (expected.state === 'noResults') {
       expect(page.noResults).toMatch(/^No Dictionary Matches/)

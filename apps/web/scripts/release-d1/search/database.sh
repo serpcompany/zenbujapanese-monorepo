@@ -22,6 +22,9 @@ build_inputs=(
   apps/web/src/lib/dictionary/results
   apps/web/src/lib/dictionary/detail/frequency.ts
   apps/web/scripts/release-d1/dictionary/language_data.py
+  # The page's component and how the rendered-page test reads it back.
+  apps/web/src/components/dictionary/search-results.tsx
+  apps/web/src/components/dictionary/rendered.ts
   # The app-recorded suite the gate checks, so a re-recorded suite checks the next deploy.
   apps/ios/LanguageData/Conformance/search-results.json
 )

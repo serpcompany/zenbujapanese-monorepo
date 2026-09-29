@@ -19,11 +19,10 @@ import {
   wordDetail
 } from './detail/word'
 import { dictionaryDatabase } from './dictionary-db'
+import { linkSearchScreen, type SearchData } from './results/links'
 import {
   isSingleKanji,
-  type KanjiRow,
   loadFrequency,
-  type ResultRow,
   type SearchResultsScreen,
   searchResultsScreen
 } from './results/results'
@@ -74,21 +73,7 @@ export interface KanjiPageData
   indexable: boolean
 }
 
-/** A search result; `path` is null when the word has no page yet (#465). */
-export type SearchWord = Linked<ResultRow>
-
-/** The search results screen (./results), with where each row goes. */
-export type SearchData =
-  | Extract<SearchResultsScreen, { state: 'noResults' }>
-  | (Omit<
-      Extract<SearchResultsScreen, { state: 'results' }>,
-      'rows' | 'kanji' | 'readingRefinement'
-    > & {
-      rows: SearchWord[]
-      /** Null path when the kanji has no page. */
-      kanji: Linked<KanjiRow> | null
-      readingRefinement: Linked<{ query: string; title: string }> | null
-    })
+export type { SearchData, SearchWord } from './results/links'
 
 const wordRowsBySeq = new Map(fixtureWordRows.map(rows => [rows.entry.entSeq, rows]))
 const kanjiRowsByCharacter = new Map(fixtureKanjiRows.map(rows => [rows.kanji.character, rows]))
@@ -422,23 +407,5 @@ export const searchDictionary = cache(async (query: string): Promise<SearchData>
     searchScreen(query),
     isSingleKanji(query) ? dictionary.then(db => hasKanjiPage(query, db)) : false
   ])
-  if (screen.state === 'noResults') return screen
-  const kanji = screen.kanji
-    ? { ...screen.kanji, path: kanjiHasPage ? kanjiPath(screen.kanji.character) : null }
-    : null
-  const refinement = screen.readingRefinement
-  return {
-    ...screen,
-    kanji,
-    readingRefinement: refinement
-      ? {
-          ...refinement,
-          path: hasSearchPath(refinement.query) ? searchPath(refinement.query) : null
-        }
-      : null,
-    rows: screen.rows.map(row => ({
-      ...row,
-      path: db ? wordPath(row) : fixtureLinks.word(row.entSeq)
-    }))
-  }
+  return linkSearchScreen(screen, { dictionaryLoaded: db !== null, kanjiHasPage })
 })
