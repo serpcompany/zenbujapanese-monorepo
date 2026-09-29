@@ -53,9 +53,13 @@ SHA-256 from its Git LFS pointer, `drizzle/search/`, the import scripts, and the
    holds the rows the local copy counted.
 
 A database that already verifies is reused, so an unchanged build costs a deploy a few seconds.
-A partial one is deleted and imported again. The two newest databases per environment are kept,
-so rolling back is redeploying the previous commit. The `Search database` workflow runs the
-import by hand; `Web deploy` doesn't run it or bind `SEARCH_DB` yet.
+A partial one is deleted and imported again. Once a deploy passes its smoke test,
+`scripts/search-d1/prune.sh` deletes older databases, keeping the live one and the newest
+complete older one, so rolling back is redeploying the previous commit. `Web deploy` runs it for staging before
+each deploy and binds `SEARCH_DB` to the database it names, by replacing the `SEARCH_DB_*`
+placeholders in `wrangler.jsonc`. Production has no `SEARCH_DB` yet: it gets one once a required
+reviewer gates the `production` environment. The `Search database` workflow runs the import by
+hand for either environment.
 
 **Broad queries are precomputed.** On D1, a query such as い reads 460,276 rows and takes 1.4–3.4
 s, and D1 runs one query at a time per database, so a few of them stall every other query. The

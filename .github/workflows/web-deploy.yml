@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths:
       - apps/web/**
+      - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3
       - .github/workflows/web-deploy.yml
   workflow_dispatch:
 
@@ -25,6 +26,10 @@ env:
 jobs:
   staging:
     runs-on: ubuntu-latest
+    # Shared with the manual Search database workflow, so two imports for staging never overlap.
+    concurrency:
+      group: search-database-staging
+      cancel-in-progress: false
     environment:
       name: staging
       url: https://staging.zenbujapanese.com
@@ -43,12 +48,23 @@ jobs:
           cache: pnpm
           cache-dependency-path: apps/web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - name: Import the search database
+        # Reuses the database when this build's already imported and verified (seconds);
+        # otherwise imports a new one (about 20 minutes). See docs/agents/web.md.
+        run: scripts/search-d1/ensure-release.sh staging
+      - name: Bind the search database
+        run: |
+          sed -i "s/\"SEARCH_DB_NAME\"/\"$SEARCH_DB_NAME\"/; s/\"SEARCH_DB_ID\"/\"$SEARCH_DB_ID\"/" wrangler.jsonc
+          grep -q "\"$SEARCH_DB_ID\"" wrangler.jsonc
       - run: pnpm db:migrate:staging
       - name: Deploy
         run: pnpm deploy:staging 2>&1 | tee deploy.log
       - name: Smoke test
         # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
         run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" staging
+      - name: Delete old search databases
+        # Only now is the new database the live one; keeps it and the newest complete older one.
+        run: scripts/search-d1/prune.sh staging "$SEARCH_DB_NAME"
 
   production:
     needs: staging

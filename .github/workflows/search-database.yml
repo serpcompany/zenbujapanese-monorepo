@@ -1,9 +1,11 @@
 name: Search database
 
 # Imports and verifies the dictionary search database for this commit in one environment
-# (issue 464): scripts/search-d1/ensure-release.sh. Run by hand for now; `Web deploy` will run it
-# before each deploy once it has run cleanly here. Reuses the database when it already verifies,
-# so a second run only checks it.
+# (issue 464): scripts/search-d1/ensure-release.sh. `Web deploy` runs the same script for staging
+# before each deploy; this runs it by hand, for either environment. Reuses the database when it
+# already verifies, so a second run only checks it. It never deletes other builds' databases:
+# Web deploy prunes them after a successful deploy. Its concurrency group is shared with Web
+# deploy's staging job, so two staging imports never overlap.
 on:
   workflow_dispatch:
     inputs:
