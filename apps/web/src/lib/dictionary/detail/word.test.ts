@@ -82,8 +82,8 @@ describe('wordDetail', () => {
       }
     ])
     expect(detail.frequencyRows).toEqual([
-      { source: 'JLPT', value: 'N5', tier: 'veryCommon' },
-      { source: 'YouTube', value: '949', tier: 'veryCommon' }
+      { source: 'JLPT', value: 'N5', tier: 'veryCommon', spokenTier: null },
+      { source: 'YouTube', value: '949', tier: 'veryCommon', spokenTier: 'very common' }
     ])
     expect(detail.kanji).toEqual([{ character: '要', meaning: 'need, main point' }])
     expect(detail.alternatives).toEqual([])
@@ -115,6 +115,7 @@ describe('wordDetail', () => {
     expect(detail.related).toEqual([
       {
         headword: '有る',
+        reading: 'ある',
         ruby: [{ text: '有', reading: 'あ' }, { text: 'る' }],
         relation: 'See also',
         summary: 'to be, to exist, to live',
@@ -122,8 +123,8 @@ describe('wordDetail', () => {
       }
     ])
     expect(detail.frequencyRows).toEqual([
-      { source: 'JLPT', value: 'N5', tier: 'veryCommon' },
-      { source: 'YouTube', value: 'No rank', tier: null }
+      { source: 'JLPT', value: 'N5', tier: 'veryCommon', spokenTier: null },
+      { source: 'YouTube', value: 'No rank', tier: null, spokenTier: null }
     ])
     // A kana headword shares without a reading.
     expect(detail.shareText.split('\n')[0]).toBe('いる')
@@ -185,7 +186,7 @@ describe('wordSummary', () => {
       reading: 'いる',
       ruby: [{ text: '射', reading: 'い' }, { text: 'る' }],
       summary: 'to shoot (arrow, bolt, dart)',
-      frequency: [{ source: 'YouTube', value: '20,940', tier: 'uncommon' }]
+      frequency: [{ source: 'YouTube', value: '20,940', tier: 'uncommon', spokenTier: 'uncommon' }]
     })
   })
 })

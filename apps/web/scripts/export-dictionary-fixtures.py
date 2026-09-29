@@ -117,6 +117,9 @@ def word_rows(db, kanji_by_character):
     by_number = {row[1]: row for row in rows}
     words = []
     for number in ENTRY_NUMBERS:
+        if number not in by_number:
+            print(f"Skipping entry {number}: not in LanguageReferenceData", file=sys.stderr)
+            continue
         entry = entry_row(db, by_number[number])
         characters = []
         for form in [entry["headword"]] + [form["value"] for form in entry["writtenForms"]]:
@@ -223,7 +226,12 @@ def main(resources):
         (resources / "KanjiElementReferenceData.json").read_text(encoding="utf-8")
     )
     write("words.json", word_rows(db, kanji_by_character))
-    kanji = [kanji_rows(db, c, kanji_by_character, elements) for c in KANJI]
+    kanji = []
+    for character in KANJI:
+        if character not in kanji_by_character:
+            print(f"Skipping kanji {character}: not in KanjiReferenceData", file=sys.stderr)
+            continue
+        kanji.append(kanji_rows(db, character, kanji_by_character, elements))
     # Word rows, most of the data, go one per line in their own file, keyed by their kanji.
     write("kanji.json", [{k: v for k, v in rows.items() if k != "words"} for rows in kanji])
     write(

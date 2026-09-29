@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
-import { FrequencyDot } from '@/components/dictionary/frequency'
+import { FrequencyDot, SpokenTier } from '@/components/dictionary/frequency'
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
 import { PageToolbar } from '@/components/dictionary/page-toolbar'
 import { PitchAccent } from '@/components/dictionary/pitch-accent'
@@ -164,7 +164,10 @@ export default async function WordPage({ params }: Props) {
             <li key={rank.source} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
               <FrequencyDot tier={rank.tier} />
               {rank.source}
-              <span className="ml-auto text-muted-foreground tabular-nums">{rank.value}</span>
+              <span className="ml-auto text-muted-foreground tabular-nums">
+                {rank.value}
+                <SpokenTier result={rank} />
+              </span>
             </li>
           ))}
         </ul>
@@ -196,7 +199,7 @@ export default async function WordPage({ params }: Props) {
           <ul className="flex flex-col divide-y">
             {word.related.map(related => (
               <li
-                key={`${related.headword}${related.relation}`}
+                key={`${related.headword}|${related.reading}|${related.entSeq}|${related.relation}`}
                 className="py-2 first:pt-0 last:pb-0"
               >
                 {related.path ? (

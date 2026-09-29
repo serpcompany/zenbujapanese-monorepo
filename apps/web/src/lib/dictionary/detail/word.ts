@@ -34,6 +34,7 @@ export interface AlternativeForm {
 
 export interface RelatedWord {
   headword: string
+  reading: string
   ruby: RubySegment[]
   relation: string
   summary: string
@@ -173,6 +174,7 @@ export function wordDetail(rows: WordRows): WordDetail {
     alternativeKanji: wordKanji(alternativeKanji(entry), rows.kanji),
     related: entry.relationships.map(relationship => ({
       headword: relationship.headword,
+      reading: relationship.reading,
       ruby: rubySegments(relationship.headword, relationship.reading),
       relation: relationship.relation,
       summary: relationship.summary,

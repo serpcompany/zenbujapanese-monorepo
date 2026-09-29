@@ -48,6 +48,20 @@ export interface FrequencyResult {
   value: string
   /** Null when the dictionary has nothing for the word. */
   tier: FrequencyTier | null
+  /**
+   * The tier as the app's accessibility labels speak it after a rank ("YouTube frequency rank
+   * 949, very common"). Null for a level, which the app reads as the level alone.
+   */
+  spokenTier: string | null
+}
+
+/** `FrequencyTier.label`. */
+export const tierLabels: Record<FrequencyTier, string> = {
+  veryCommon: 'very common',
+  common: 'common',
+  moderate: 'moderately common',
+  uncommon: 'uncommon',
+  rare: 'rare'
 }
 
 const formatRank = new Intl.NumberFormat('en-US')
@@ -57,12 +71,24 @@ export function frequencyResults(rows: readonly FrequencyRow[]): FrequencyResult
   return defaultFrequencyPacks.map(({ pack, shortName, kind }) => {
     const row = rows.find(candidate => candidate.pack === pack)
     if (row?.pack === 'jlpt') {
-      return { source: shortName, value: `N${row.level}`, tier: tierForLevel(row.level) }
+      const tier = tierForLevel(row.level)
+      return { source: shortName, value: `N${row.level}`, tier, spokenTier: null }
     }
     if (row?.pack === 'tubelex') {
-      return { source: shortName, value: formatRank.format(row.rank), tier: tierForRank(row.rank) }
+      const tier = tierForRank(row.rank)
+      return {
+        source: shortName,
+        value: formatRank.format(row.rank),
+        tier,
+        spokenTier: tierLabels[tier]
+      }
     }
-    return { source: shortName, value: kind === 'level' ? 'Not listed' : 'No rank', tier: null }
+    return {
+      source: shortName,
+      value: kind === 'level' ? 'Not listed' : 'No rank',
+      tier: null,
+      spokenTier: null
+    }
   })
 }
 
