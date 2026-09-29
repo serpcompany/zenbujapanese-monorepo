@@ -65,7 +65,16 @@ export interface SuiteFormExamples {
     id: string
     japanese: string
     english: string
-    tokens: { surface: string; entry?: string; candidates?: string[]; highlighted?: boolean }[]
+    /** With Romaji on; none where the screen says it's unavailable. */
+    romaji?: string
+    tokens: {
+      surface: string
+      entry?: string
+      candidates?: string[]
+      highlighted?: boolean
+      /** The short meaning under the word, with Word Meanings on. */
+      meaning?: string
+    }[]
   }[]
 }
 

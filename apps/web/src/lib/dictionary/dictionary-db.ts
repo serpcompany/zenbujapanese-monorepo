@@ -63,6 +63,8 @@ export interface DictionaryFormExamples {
   rows: FormExampleRows[]
   listed: number
   slugs: Map<number, string>
+  /** The first meaning of each word they link to, for Word Meanings. */
+  meanings: Map<number, string>
 }
 
 /** A word with a conjugation table, and its form screens search engines may index. */
@@ -160,9 +162,17 @@ export function dictionaryDatabase(db: D1Database) {
       .orderBy(asc(formExamples.position))
 
   /** The slugs of the words those examples link to, as for a word's examples. */
+  /**
+   * The slugs of the words a form's examples link to, and each one's first meaning, which Word
+   * Meanings shortens under the word, as a word page's examples read them.
+   */
   const formExampleSlugs = (surface: string, from: number, limit: number) =>
     orm
-      .select({ entSeq: words.entSeq, slug: words.slug })
+      .select({
+        entSeq: words.entSeq,
+        slug: words.slug,
+        meaning: sql<string | null>`json_extract(${words.senses}, '$[0].meaning')`
+      })
       .from(words)
       .where(sql`${words.entSeq} IN (
         SELECT json_extract(l.value, '$.entSeqs[0]')
@@ -278,7 +288,8 @@ export function dictionaryDatabase(db: D1Database) {
       return {
         rows,
         listed: count?.listed ?? 0,
-        slugs: new Map(slugs.map(row => [row.entSeq, row.slug]))
+        slugs: new Map(slugs.map(row => [row.entSeq, row.slug])),
+        meanings: meaningsOf(slugs)
       }
     },
 

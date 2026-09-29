@@ -30,27 +30,43 @@ function Token({ token }: { token: PageExampleToken }) {
       ? 'mr-0.5 border-b border-border'
       : undefined
   const word = <RubyText segments={token.ruby} className={className} pageWord={token.isPageWord} />
-  const text = token.meaning ? (
-    <span className="word-meanings-on:inline-flex word-meanings-on:flex-col word-meanings-on:items-start">
-      {word}
-      <AidText
-        kind="wordMeaning"
-        text={token.meaning}
-        className="max-w-24 truncate text-xs leading-tight text-blue-600 dark:text-blue-400"
-      />
-    </span>
-  ) : (
-    word
-  )
-  if (!token.path || !token.link) return text
+  // With Word Meanings on, the word and its meaning stack in one inline box: the link itself,
+  // or a span for a word without a page.
+  const stacked = token.meaning ? meaningStack : undefined
+  const meaning = token.meaning ? (
+    <AidText
+      kind="wordMeaning"
+      text={token.meaning}
+      className="max-w-24 truncate text-xs leading-tight text-blue-600 dark:text-blue-400"
+    />
+  ) : null
+  if (!token.path || !token.link) {
+    return meaning ? (
+      <span className={stacked}>
+        {word}
+        {meaning}
+      </span>
+    ) : (
+      word
+    )
+  }
   const title =
     'entSeqs' in token.link ? `${token.link.entSeqs.length} possible entries` : undefined
   return (
-    <Link href={token.path} className={linkClass} title={title}>
-      {text}
+    <Link
+      href={token.path}
+      className={stacked ? `${linkClass} ${stacked}` : linkClass}
+      title={title}
+    >
+      {word}
+      {meaning}
     </Link>
   )
 }
+
+/** A word and its meaning under it, keeping the word's baseline, as the app's WordMeaning. */
+const meaningStack =
+  'word-meanings-on:inline-flex word-meanings-on:flex-col word-meanings-on:items-start'
 
 function Source({ sentence, label }: { sentence: TatoebaSentence; label: string }) {
   return (

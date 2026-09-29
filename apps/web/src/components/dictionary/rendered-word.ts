@@ -200,7 +200,9 @@ const exampleToken =
   /(<a([^>]*)>)?<span lang="ja"([^>]*)>((?:<span>[^<]*<\/span>|<ruby>[^<]*<rt[^>]*>[^<]*<\/rt><\/ruby>)*)<\/span>(?:<\/a>)?/g
 
 /** The examples a drawn list shows, in order (ExampleList). */
-export function readExamples(html: string): RenderedExample[] {
+export function readExamples(shownHtml: string): RenderedExample[] {
+  // As shown with the default Reading Aids: no meanings under the words.
+  const html = asShown(shownHtml)
   const items = [...html.matchAll(/<li[^>]*data-example-pair="([^"]+)"[^>]*>([\s\S]*?)<\/li>/g)]
   return items.map(([, pairId, item]) => {
     const sentence = item.match(/<p lang="ja"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? ''

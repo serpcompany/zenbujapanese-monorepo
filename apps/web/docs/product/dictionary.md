@@ -716,7 +716,8 @@ menu with the app's settings, grouped as its Reading Aids screen groups them: Sh
 Romaji, then Show Word Meanings and Show Sentence Translations, each a checkbox. The defaults are
 the app's: Furigana and Sentence Translations on, Romaji and Word Meanings off. The app keeps the
 settings on the device; the website keeps them in the browser (`localStorage`) until accounts
-exist, and a change applies at once. Hide Furigana on Known Words depends on which words the
+exist, and a change applies at once, in other open tabs too. When the browser blocks storage,
+changes still apply for as long as the page is open. Hide Furigana on Known Words depends on which words the
 learner knows, so it waits for accounts (#468); until then every word counts as unknown, as it does
 in the app until the learner marks it, so Word Meanings shows under every linked word. The app's
 translation language and Player caption translator aren't offered: the website shows English only
@@ -729,7 +730,8 @@ and has no Player.
   Sentence Translations on, the rest off", holds `detail/reading-aids.ts` to;
   `src/components/reading-aids-menu.interaction.test.tsx` ("lists the app’s settings with their
   defaults checked", "toggling a setting stores it and applies it to the page at once", "shows the
-  stored settings"); smoke "見る's page renders each Reading Aid as the app shows it" (the menu).
+  stored settings", "toggles still work when the browser blocks storage", "another tab’s change
+  applies to this page"); smoke "見る's page renders each Reading Aid as the app shows it" (the menu).
 
 **Reading Aids without a flash.** Every page renders every aid's text in its HTML, each marked with
 its aid and a class that shows or hides it by the setting (`components/dictionary/reading-aid.tsx`,
@@ -761,7 +763,7 @@ as the app's WordHeadline does. The per-kanji highlight's kanji stay selectable,
 
 **Romaji.** With Romaji on, romaji appears under the Japanese wherever the app shows it: under the
 word page's headword, each alternative reading, each related word, each example sentence (on word
-pages and Example Sentences pages), the
+pages, conjugated forms' pages, and Example Sentences pages), the
 conjugation table's and each form's headword, a conjugation row with furigana (来させる), each
 search result, each kanji reading (い.る is "i.ru"), and each of a kanji's words. It is the app's:
 Apple's `.toLatin` (ICU's Any-Latin) without corrections, so は is "ha", おう is "ou", ー is a
@@ -775,14 +777,15 @@ and example word); its tests pin the rules' edges.
 - Source: App docs index, Account (Reading Aids); `RomajiReadingAidText` and
   `AppleJapaneseRomanization` in `ReadingAidPresentation.swift`; `LinkedJapaneseText.swift`.
 - Check: WD `readingAids.romaji`, `alternativeForms[].romaji`, `relatedWords[].romaji`, and
-  `examples.shown[].romaji`; KD `readings[].romaji` and `wordsRomaji`; ES `shown[].romaji`; all
-  compared by the gates,
+  `examples.shown[].romaji`, and `conjugations[].examples.shown[].romaji`; KD `readings[].romaji`
+  and `wordsRomaji`; ES `shown[].romaji`; all compared by the gates,
   and the word page's read back from the drawn page under each setting by `reading-aids.test.tsx`;
   `src/lib/dictionary/detail/romaji.test.ts`; smoke "見る's page renders each Reading Aid as the
   app shows it".
 
-**Word Meanings.** With Word Meanings on, each example word linked to one entry shows a short
-meaning under itself in the accent color: the first meaning without notes in parentheses, up to
+**Word Meanings.** With Word Meanings on, each example word linked to one entry (on word pages and
+conjugated forms' pages, whose examples the app draws the same way) shows a short meaning under
+itself in the accent color: the first meaning without notes in parentheses, up to
 its first comma, without a leading "to ", and cut to 17 characters and an ellipsis past 18
 (`shortMeaning`). Particles, auxiliaries, and symbols show none. The word keeps its baseline and
 takes the wider of its own and its meaning's width, and lines of the sentence spread apart to fit.
@@ -790,10 +793,13 @@ takes the wider of its own and its meaning's width, and lines of the sentence sp
 - Source: App docs, Dictionary and kanji details ("With Show Word Meanings on…");
   `ReadingAidPresentation.wordMeaning`; `DictionaryEntry.shortMeaning`; `WordMeaning` in
   `LinkedJapaneseText.swift`.
-- Check: WD `examples.shown[].tokens[].meaning`, compared by the gate (the import stores which words
-  are function words; each page reads its linked words' first meanings), and read back under each
-  setting by `reading-aids.test.tsx`; `src/lib/dictionary/detail/reading-aids.test.ts`,
-  "shortMeaning (DictionaryEntry.shortMeaning)".
+- Check: WD `examples.shown[].tokens[].meaning` and `conjugations[].examples.shown[].tokens[].meaning`,
+  compared by the gate (the import stores which words are function words; each page reads its
+  linked words' first meanings), and read back from the drawn page by `reading-aids.test.tsx` (a
+  word page's, under each setting) and `conjugations.test.tsx` (a form's, with Word Meanings on);
+  `data.test.ts`, "a form page shows the meanings of its examples’ words, as a word page does";
+  `src/lib/dictionary/detail/reading-aids.test.ts`, "shortMeaning (DictionaryEntry.shortMeaning)".
+  Every page passes its meanings, or none, explicitly (`Links.meaning` is required).
 
 **Sentence Translations.** With Sentence Translations off, examples hide their English. Each
 example's credits stay.

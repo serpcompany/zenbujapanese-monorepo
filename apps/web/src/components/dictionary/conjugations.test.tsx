@@ -11,8 +11,10 @@ import {
 import {
   examplesPerPage,
   formExample,
-  noFormExamplesMessage
+  noFormExamplesMessage,
+  romajiUnavailable
 } from '@/lib/dictionary/detail/examples'
+import { readingAidDefaults } from '@/lib/dictionary/detail/reading-aids'
 import type { ExampleSentenceRow, FormExampleRow } from '@/lib/dictionary/detail/rows'
 import { rubySegments } from '@/lib/dictionary/detail/ruby'
 import type {
@@ -30,6 +32,7 @@ import {
   ConjugationTableContent,
   type ConjugationWord
 } from './conjugations'
+import { readExampleAids } from './rendered-aids'
 import { readConjugatedForm, readConjugationTable, readExamples } from './rendered-word'
 import { WordHeader } from './word-header'
 
@@ -185,7 +188,7 @@ describe('the conjugation table', () => {
         { token: 1, entSeqs: [2028970, 2028980] }
       ]
     }
-    const links = databaseLinks(new Map([[1259290, '見る']]), new Set())
+    const links = databaseLinks(new Map([[1259290, '見る']]), new Set(), undefined)
     const html = renderToStaticMarkup(
       <ConjugatedFormExamples
         examples={[pageExample(formExample({ sentence, example }), links)]}
@@ -367,7 +370,7 @@ describe.runIf(enabled)('the rendered conjugation pages match the app', () => {
         // the app links it and the form's words accented.
         const found = await dictionary.formExamples(row.surface, 0, examplesPerPage)
         expect(found.listed).toBe(recorded.examples.ids.length)
-        const links = databaseLinks(found.slugs, new Set())
+        const links = databaseLinks(found.slugs, new Set(), found.meanings)
         const html = renderToStaticMarkup(
           <ConjugatedFormExamples
             examples={found.rows.map(rows => pageExample(formExample(rows), links))}
@@ -400,6 +403,19 @@ describe.runIf(enabled)('the rendered conjugation pages match the app', () => {
             }))
           )
         }
+        // Reading Aids on the form's examples, as the app draws them (`.standard`): each word's
+        // meaning with Word Meanings on, and each sentence's romaji with Romaji on.
+        const shownAids = readExampleAids(html, {
+          ...readingAidDefaults,
+          romaji: true,
+          wordMeanings: true
+        }).slice(0, recorded.examples.shown.length)
+        expect(shownAids.map(({ romaji, meanings }) => ({ romaji, meanings }))).toEqual(
+          recorded.examples.shown.map(shown => ({
+            romaji: shown.romaji ?? romajiUnavailable,
+            meanings: shown.tokens.flatMap(token => (token.meaning ? [token.meaning] : []))
+          }))
+        )
       }
     }
   })

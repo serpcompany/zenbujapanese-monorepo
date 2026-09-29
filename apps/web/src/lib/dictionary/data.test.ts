@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { fixtureKanjiRows, fixtureWordRows } from '@/lib/dictionary/fixtures'
+import { fixtureFormExamples, fixtureKanjiRows, fixtureWordRows } from '@/lib/dictionary/fixtures'
 import {
   getConjugatedFormPage,
   getConjugationsPage,
@@ -754,7 +754,7 @@ describe('word and kanji pages', () => {
       rows: { ...iruRows, examples: [], exampleCount: null },
       slug: '要る'
     })
-    formExamples.mockResolvedValue({ rows: [], listed: 0, slugs: new Map() })
+    formExamples.mockResolvedValue({ rows: [], listed: 0, slugs: new Map(), meanings: new Map() })
     const form = await getConjugatedFormPage(1546640, 'Plain', 'past')
     expect(conjugationWord).toHaveBeenCalledWith(1546640)
     expect(formExamples).toHaveBeenCalledWith('要った', 0, 25)
@@ -763,6 +763,37 @@ describe('word and kanji pages', () => {
     )
     conjugationWord.mockResolvedValue(null)
     expect(await getConjugationsPage(1)).toBeNull()
+  })
+
+  test('a form page shows the meanings of its examples’ words, as a word page does', async () => {
+    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
+    if (!iruRows) throw new Error('no fixture for 要る')
+    conjugationWord.mockResolvedValue({
+      rows: { ...iruRows, examples: [], exampleCount: null },
+      slug: '要る'
+    })
+    const rows = fixtureFormExamples.get('入る') ?? []
+    // Words the examples link to one entry, other than particles and other function words.
+    const linked = rows
+      .flatMap(({ sentence, example }) =>
+        example.links.filter(
+          link => link.entSeqs.length === 1 && !sentence.tokens[link.token].functionWord
+        )
+      )
+      .map(link => link.entSeqs[0])
+    expect(linked.length).toBeGreaterThan(0)
+    formExamples.mockResolvedValue({
+      rows: rows.slice(0, 25),
+      listed: rows.length,
+      slugs: new Map(),
+      meanings: new Map(linked.map(entSeq => [entSeq, 'to test, to check']))
+    })
+    const form = await getConjugatedFormPage(1546640, 'Plain', 'past')
+    const meanings = (form?.examples ?? []).flatMap(example =>
+      example.tokens.flatMap(token => (token.meaning ? [token.meaning] : []))
+    )
+    expect(meanings.length).toBeGreaterThan(0)
+    expect(new Set(meanings)).toEqual(new Set(['test']))
   })
 
   describe('deployed (SITE_ENV set)', () => {

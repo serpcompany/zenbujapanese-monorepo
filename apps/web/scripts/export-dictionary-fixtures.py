@@ -44,9 +44,14 @@ def write(name, rows):
 
 
 def export_example_meanings(data):
-    """`example-meanings.json`: the first meaning of each word the fixture examples link to one
-    entry, which Word Meanings shortens under the word, as the dictionary database reads it."""
-    examples = json.loads((OUTPUT / "word-examples.json").read_text(encoding="utf-8"))
+    """`example-meanings.json`: the first meaning of each word the fixture examples (a word's, and
+    a conjugated form's) link to one entry, which Word Meanings shortens under the word, as the
+    dictionary database reads it."""
+    examples = [
+        example
+        for name in ("word-examples.json", "form-examples.json")
+        for example in json.loads((OUTPUT / name).read_text(encoding="utf-8"))
+    ]
     linked = sorted({
         link["entSeqs"][0]
         for example in examples for link in example["links"] if len(link["entSeqs"]) == 1

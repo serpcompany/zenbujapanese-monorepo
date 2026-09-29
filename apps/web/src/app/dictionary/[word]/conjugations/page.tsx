@@ -56,6 +56,8 @@ export default async function ConjugationsPage({ params }: Props) {
             word={{
               ruby: page.ruby,
               reading: page.reading,
+              romaji: page.romaji,
+              readingWithoutFurigana: page.readingWithoutFurigana,
               summary: page.summary,
               partOfSpeech: page.partOfSpeech,
               pitch: page.pitch

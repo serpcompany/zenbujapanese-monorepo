@@ -56,10 +56,12 @@ const miru = {
   pitch: null
 }
 
-const miruHeader = renderToStaticMarkup(<WordHeader {...miru} conjugations={null} />)
+const { summary: _, ...miruHeadline } = miru
+const miruHeader = renderToStaticMarkup(<WordHeader {...miruHeadline} conjugationsPath={null} />)
 
 const example = {
   position: 0,
+  pairId: '0024282378eec512c18c7e257bd4dd42',
   text: '見るからに明らかだよ。',
   romaji: 'miru kara ni akiraka da yo。',
   translation: "It's obvious at a glance.",
@@ -140,7 +142,7 @@ describe('Reading Aids', () => {
           conjugations={table}
           mode="Plain"
           onModeChange={() => {}}
-          onSelect={() => {}}
+          wordPath="/dictionary/見る-1259290/"
         />
       )
     ].join('')
@@ -273,7 +275,15 @@ describe.runIf(enabled)('the rendered word page’s Reading Aids match the app',
     if (!word) throw new Error(`No word ${expected.entSeq[0]}`)
     const detail = wordDetail(word.rows)
     const header = renderToStaticMarkup(
-      <WordHeader {...detail} conjugations={detail.conjugations} />
+      <WordHeader
+        ruby={detail.ruby}
+        reading={detail.reading}
+        romaji={detail.romaji}
+        readingWithoutFurigana={detail.readingWithoutFurigana}
+        pitch={detail.pitch}
+        partOfSpeech={detail.partOfSpeech}
+        conjugationsPath={null}
+      />
     )
     const related = renderToStaticMarkup(
       <RelatedWords related={detail.related.map(item => ({ ...item, path: null }))} />

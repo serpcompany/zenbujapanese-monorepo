@@ -4,7 +4,7 @@ import { getPlatformProxy } from 'wrangler'
 import { type DictionaryWord, dictionaryDatabase } from '../dictionary-db'
 import { wordSlug } from '../urls'
 import { conjugationTable, indexedForms } from './conjugation'
-import { licenseUrl, wordExample } from './examples'
+import { formExample, licenseUrl, wordExample } from './examples'
 import { tierLabels } from './frequency'
 import { kanjiDetail } from './kanji'
 import { wordMeaning } from './reading-aids'
@@ -313,20 +313,30 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
     const id = (number: number) => ids.get(number) ?? `missing ${number}`
     return {
       ids: found.rows.map(({ sentence }) => `esp1_${sentence.pairId}`),
-      shown: shown.map(({ sentence, example }) => {
+      shown: shown.map(row => {
+        const { sentence, example } = row
         const links = new Map(example.links.map(link => [link.token, link.entSeqs]))
         const highlights = new Set(example.highlights)
+        // What the form's page draws from the same rows: the romaji, and each word's meaning
+        // from the meanings the database reads with the examples.
+        const drawn = formExample(row)
         return {
           id: `esp1_${sentence.pairId}`,
           japanese: sentence.japanese,
           english: sentence.english,
+          ...(drawn.romaji === null ? {} : { romaji: drawn.romaji }),
           tokens: sentence.tokens.map((token, index) => {
             const entSeqs = links.get(index) ?? []
+            const meaning =
+              entSeqs.length === 1
+                ? wordMeaning(drawn.tokens[index], found.meanings.get(entSeqs[0]))
+                : null
             return {
               surface: token.text,
               ...(entSeqs.length === 1 ? { entry: id(entSeqs[0]) } : {}),
               ...(entSeqs.length > 1 ? { candidates: entSeqs.map(id) } : {}),
-              ...(highlights.has(index) ? { highlighted: true } : {})
+              ...(highlights.has(index) ? { highlighted: true } : {}),
+              ...(meaning === null ? {} : { meaning })
             }
           })
         }

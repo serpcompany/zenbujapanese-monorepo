@@ -193,6 +193,8 @@ private struct WordDetailObserver {
             id: sentence.id.rawValue,
             japanese: sentence.japanese,
             english: sentence.english,
+            // With Romaji on; nil where the screen says it's unavailable.
+            romaji: AppleJapaneseRomanization.romanizeCompleteSentence(tokens),
             tokens: tokens.map { token in
               WordDetailCase.FormToken(
                 surface: token.surface,
@@ -200,7 +202,13 @@ private struct WordDetailObserver {
                 candidates: token.entry == nil && !token.candidateEntries.isEmpty
                   ? token.candidateEntries.map(\.id.rawValue) : nil,
                 highlighted: LinkedJapaneseText.matchesQuery(token, queryRanges: ranges)
-                  ? true : nil
+                  ? true : nil,
+                // The form's screen draws its words as Word Detail does (`.standard`), so with
+                // Word Meanings on, for a learner who hasn't marked the word known.
+                meaning: token.entry.flatMap {
+                  ReadingAidPresentation.wordMeaning(
+                    token: token, entry: $0, showsWordMeanings: true, isKnown: false)
+                }
               )
             }
           ))
@@ -562,6 +570,7 @@ private struct WordDetailCase: Codable {
     let id: String
     let japanese: String
     let english: String
+    let romaji: String?
     let tokens: [FormToken]
   }
 
@@ -573,6 +582,8 @@ private struct WordDetailCase: Codable {
     let candidates: [String]?
     /// Whether the screen accents the word as part of the form.
     let highlighted: Bool?
+    /// The short meaning under the word, with Word Meanings on.
+    let meaning: String?
   }
 
   struct Token: Codable {

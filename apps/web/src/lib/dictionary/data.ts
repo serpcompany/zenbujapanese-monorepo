@@ -106,6 +106,9 @@ export interface ConjugationWordData {
   slug: string
   headword: string
   reading: string
+  /** Under the headword with Romaji on, and with Furigana off, as on the word page. */
+  romaji: string | null
+  readingWithoutFurigana: string | null
   summary: string
   partOfSpeech: string
   ruby: RubySegment[]
@@ -320,6 +323,8 @@ export const getConjugationsPage = cache(
       slug: word.slug,
       headword: detail.headword,
       reading: detail.reading,
+      romaji: detail.romaji,
+      readingWithoutFurigana: detail.readingWithoutFurigana,
       summary: detail.summary,
       partOfSpeech: detail.partOfSpeech,
       ruby: detail.ruby,
@@ -376,7 +381,9 @@ async function formExamplePage(
   const db = await dictionaryDb()
   if (db) {
     const found = await db.formExamples(surface, from, examplesPerPage)
-    const links = databaseLinks(found.slugs, new Set())
+    // The form's screen draws its examples' words as a word page does (`.standard`), with
+    // Word Meanings.
+    const links = databaseLinks(found.slugs, new Set(), found.meanings)
     return {
       examples: found.rows.map(row => pageExample(formExample(row), links)),
       listed: found.listed
