@@ -7,7 +7,7 @@
 
 Release 1 packages the files exactly as committed; nothing is rebuilt. `build` refuses any file
 whose bytes differ from HEAD (a Git LFS file's oid and size, or any other file's Git blob), from
-a conformance suite's pin, or from a pin in another release file. What goes in the release is
+a conformance suite's pin, or from a pin in another file it reads. What goes in the release is
 language-data/release-inputs.json; the release ID is language-data/release.json.
 
 `build` needs only the standard library. `validate` needs `jsonschema` (requirements.txt).
@@ -20,20 +20,28 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import sqlite3
 import subprocess
 import sys
 import tempfile
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import quote
 
 MANIFEST_SCHEMA = "zenbu.language-data-manifest.v1"
 LANGUAGE_REFERENCE_SCHEMA = re.compile(r"^zenbu\.language-reference\.v[1-9][0-9]*$")
+RANKING_CONTRACT_SCHEMA = "zenbu.dictionary-ranking-contract.v1"
 ARTIFACT_SCHEMA = re.compile(r"^zenbu\.[a-z0-9]+(-[a-z0-9]+)*\.v[1-9][0-9]*$")
+# The schema's `name` pattern: one or two segments, none of them `.` or `..`.
+NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)?$")
+RELEASE = re.compile(r"^[0-9]{4}\.(0[1-9]|1[0-2])\.[1-9][0-9]*$")
 ENT_SEQ_DIGEST = "sha256-ascending-decimal-lf"
 LFS_HEADER = b"version https://git-lfs.github.com/spec/v1\n"
 SQLITE_HEADER = b"SQLite format 3\x00"
+# The tables SQLite's FTS3/4 and FTS5 modules keep for a virtual table named <name>_<suffix>.
+FTS_SHADOW_SUFFIXES = ("content", "docsize", "segdir", "segments", "stat", "data", "idx", "config")
 CHUNK = 1 << 20
 
 LANGUAGE_DATA = Path(__file__).resolve().parent.parent
@@ -56,8 +64,32 @@ class Inputs:
     conformance: list[str]
 
 
+def check_name(name: object, what: str) -> str:
+    if (
+        not isinstance(name, str)
+        or not NAME.match(name)
+        or any(segment in (".", "..") for segment in name.split("/"))
+    ):
+        raise Refusal(f"{what} {name!r} isn't a release name (one or two plain path segments)")
+    return name
+
+
+def check_relative(path: object, what: str) -> str:
+    """A repository-relative path: not absolute, no empty, `.`, or `..` segments."""
+    if (
+        not isinstance(path, str)
+        or not path
+        or path.startswith("/")
+        or "\\" in path
+        or any(segment in ("", ".", "..") for segment in path.rstrip("/").split("/"))
+    ):
+        raise Refusal(f"{what} {path!r} must be a plain path relative to the repository root")
+    return path
+
+
 def resolve(roots: dict[str, str], path: str) -> str:
     """`resources/x.json` -> the `resources` root's directory joined with `x.json`."""
+    check_relative(path, "release-inputs.json path")
     root, _, rest = path.partition("/")
     if root not in roots or not rest:
         raise Refusal(f"{path} doesn't start with one of the roots {sorted(roots)}")
@@ -67,7 +99,12 @@ def resolve(roots: dict[str, str], path: str) -> str:
 def load_inputs(path: Path) -> Inputs:
     config = json.loads(path.read_text())
     roots = config["roots"]
-    files = [dict(entry, path=resolve(roots, entry["path"])) for entry in config["files"]]
+    for root, directory in roots.items():
+        check_relative(directory, f"root {root}")
+    files = []
+    for entry in config["files"]:
+        check_name(entry.get("name"), "file name")
+        files.append(dict(entry, path=resolve(roots, entry["path"])))
     names = [entry["name"] for entry in files]
     duplicates = sorted({name for name in names if names.count(name) > 1})
     if duplicates:
@@ -77,7 +114,7 @@ def load_inputs(path: Path) -> Inputs:
         files=files,
         catalog=resolve(roots, catalog) if catalog else None,
         source_archives={
-            pack: resolve(roots, archive)
+            check_name(pack, "source"): resolve(roots, archive)
             for pack, archive in config.get("source_archives", {}).items()
         },
         conformance=[resolve(roots, suite) for suite in config["conformance"]],
@@ -85,11 +122,11 @@ def load_inputs(path: Path) -> Inputs:
 
 
 def load_release(path: Path) -> dict:
+    """The release ID. The previous release and its manifest come from releases.json, which the
+    publish job writes (step 3); until then every build is a first release."""
     release = json.loads(path.read_text())
-    if bool(release.get("previous_release")) != bool(release.get("previous_manifest_sha256")):
-        raise Refusal(
-            "release.json needs both previous_release and previous_manifest_sha256, or neither"
-        )
+    if not isinstance(release.get("release"), str) or not RELEASE.match(release["release"]):
+        raise Refusal(f"release.json's release {release.get('release')!r} isn't YYYY.MM.N")
     return release
 
 
@@ -143,6 +180,10 @@ def lfs_paths(repo: Path, inputs: Inputs) -> list[str]:
     return [entry["path"] for entry in inputs.files if heads[entry["path"]].lfs_oid]
 
 
+def git_blob(data: bytes) -> str:
+    return hashlib.sha1(f"blob {len(data)}\0".encode() + data).hexdigest()
+
+
 # --- Hashing and staging -----------------------------------------------------------------------
 
 
@@ -194,9 +235,9 @@ def check_committed(entry: dict, head: Committed, staged: Staged) -> None:
 # --- Reading the files -------------------------------------------------------------------------
 
 
-def open_sqlite(path: Path) -> sqlite3.Connection:
+def open_sqlite(path: Path) -> closing[sqlite3.Connection]:
     # immutable=1: never write a journal, WAL, or anything else beside the file.
-    return sqlite3.connect(f"file:{quote(str(path))}?mode=ro&immutable=1", uri=True)
+    return closing(sqlite3.connect(f"file:{quote(str(path))}?mode=ro&immutable=1", uri=True))
 
 
 def is_sqlite(path: Path) -> bool:
@@ -204,23 +245,43 @@ def is_sqlite(path: Path) -> bool:
         return file.read(len(SQLITE_HEADER)) == SQLITE_HEADER
 
 
+def quoted(identifier: str) -> str:
+    return '"' + identifier.replace('"', '""') + '"'
+
+
+def count(connection: sqlite3.Connection, table: str) -> int:
+    return connection.execute(f"SELECT count(*) FROM {quoted(table)}").fetchone()[0]
+
+
 def sqlite_facts(path: Path) -> tuple[dict[str, int], dict[str, str]]:
-    """Every ordinary table's row count, and the `metadata` table (key -> value) if it has one."""
+    """Row counts and the `metadata` table (key -> raw value), if it has one.
+
+    Counts cover every ordinary table, and each virtual table's documents, read from its
+    `_docsize` or `_content` shadow table where it has one (so no FTS module is needed). The
+    other shadow tables (`_segdir`, `_segments`, `_stat`, ...) are storage, not rows, and are
+    left out."""
     with open_sqlite(path) as connection:
-        tables = [
-            name
+        tables = {
+            name: (sql or "")
             for name, sql in connection.execute(
-                "SELECT name, sql FROM sqlite_master WHERE type = 'table' ORDER BY name"
+                "SELECT name, sql FROM sqlite_master WHERE type = 'table'"
             )
             if not name.startswith("sqlite_")
-            and not (sql or "").upper().startswith("CREATE VIRTUAL TABLE")
-        ]
-        counts = {
-            name: connection.execute(
-                f'SELECT count(*) FROM "{name.replace(chr(34), chr(34) * 2)}"'
-            ).fetchone()[0]
-            for name in tables
         }
+        virtual = sorted(
+            name for name, sql in tables.items() if sql.upper().startswith("CREATE VIRTUAL TABLE")
+        )
+        shadows = {f"{name}_{suffix}" for name in virtual for suffix in FTS_SHADOW_SUFFIXES}
+        counts = {}
+        for name in sorted(tables):
+            if name in virtual:
+                source = next(
+                    (f"{name}_{s}" for s in ("docsize", "content") if f"{name}_{s}" in tables),
+                    name,
+                )
+                counts[name] = count(connection, source)
+            elif name not in shadows:
+                counts[name] = count(connection, name)
         metadata = {}
         if "metadata" in tables:
             metadata = {
@@ -230,12 +291,21 @@ def sqlite_facts(path: Path) -> tuple[dict[str, int], dict[str, str]]:
     return counts, metadata
 
 
+def json_value(metadata_value: str) -> object:
+    """A metadata value: import_jmdict.py stores them as JSON (strings quoted), the pack
+    importers as bare text."""
+    try:
+        return json.loads(metadata_value)
+    except json.JSONDecodeError:
+        return metadata_value
+
+
 def ent_seq_ids(path: Path) -> tuple[int, str]:
     with open_sqlite(path) as connection:
         rows = connection.execute(
             "SELECT source_record_id FROM entries WHERE source_identity = 'edrdg.jmdict'"
         ).fetchall()
-        total = connection.execute("SELECT count(*) FROM entries").fetchone()[0]
+        total = count(connection, "entries")
     ids = sorted(row[0] for row in rows)
     if len(rows) != total:
         raise Refusal(f"{path.name}: {total - len(rows)} entries aren't JMdict entries")
@@ -245,12 +315,89 @@ def ent_seq_ids(path: Path) -> tuple[int, str]:
     return len(ids), digest
 
 
-def json_value(metadata_value: str) -> object:
-    """import_jmdict.py stores most metadata values as JSON (strings quoted); others are bare."""
-    try:
-        return json.loads(metadata_value)
-    except json.JSONDecodeError:
-        return metadata_value
+# The keys the app decodes (DictionaryRankingArtifactContract.swift's CodingKeys). Decoding
+# ignores any other key, so the comparison covers exactly these.
+EVIDENCE_KEYS = (
+    "form_priority_profiles",
+    "canonical_senses",
+    "gloss_atoms",
+    "sense_form_restrictions",
+    "reading_form_restrictions",
+)
+SEARCH_INDEX_KEYS = ("schema", "technology", "gloss_rows", "form_rows")
+TOOL_KEYS = (
+    "import_tool_sha256",
+    "dictionary_ranking_adapter_sha256",
+    "dictionary_ranking_contract_sha256",
+    "shared_tooling_sha256",
+    "unidic_adapter_sha256",
+    "tatoeba_adapter_sha256",
+)
+
+
+def check_ranking_contract(name: str, contract: dict, database: Path, metadata: dict) -> None:
+    """What the app checks at launch before it opens the dictionary:
+    LookupClient.validateDictionaryRankingMetadata, mirrored check for check."""
+
+    def refuse(what: str) -> None:
+        raise Refusal(f"{name}: {what} disagrees with {database.name}")
+
+    def meta(key: str) -> object:
+        if key not in metadata:
+            refuse(f"metadata {key} (missing)")
+        return json_value(metadata[key])
+
+    def fields(value: object, keys: tuple[str, ...]) -> dict | None:
+        if not isinstance(value, dict) or any(key not in value for key in keys):
+            return None
+        return {key: value[key] for key in keys}
+
+    if database.stat().st_size != contract.get("databaseBytes"):
+        refuse("databaseBytes")
+    if meta("dictionary_ranking_policy") != contract.get("policy"):
+        refuse("policy")
+    if meta("dictionary_ranking_schema_version") != contract.get("schemaVersion"):
+        refuse("schemaVersion")
+    if meta("dictionary_ranking_mapping_sha256") != contract.get("mappingSHA256"):
+        refuse("mappingSHA256")
+    evidence = fields(contract.get("evidenceCounts"), EVIDENCE_KEYS)
+    if evidence is None or fields(meta("dictionary_ranking_evidence"), EVIDENCE_KEYS) != evidence:
+        refuse("evidenceCounts")
+    search_index = fields(contract.get("searchIndex"), SEARCH_INDEX_KEYS)
+    if (
+        search_index is None
+        or fields(meta("dictionary_search_index"), SEARCH_INDEX_KEYS) != search_index
+    ):
+        refuse("searchIndex")
+    if search_index["schema"] != "zenbu.dictionary-search-index.v1":
+        refuse("searchIndex.schema")
+    if search_index["technology"] != "sqlite-fts4":
+        refuse("searchIndex.technology")
+    equivalence = contract.get("semanticEquivalence") or {}
+    if equivalence.get("normalization") != "opaque-app-id-lexicographic-min-v1":
+        refuse("semanticEquivalence.normalization")
+    tools = fields(contract.get("toolSHA256"), TOOL_KEYS)
+    if tools is None:
+        refuse("toolSHA256")
+    for key, expected in tools.items():
+        if meta(key) != expected:
+            refuse(f"toolSHA256.{key}")
+
+    with open_sqlite(database) as connection:
+        groups, rows = connection.execute(
+            "SELECT count(*), total(group_size) FROM (SELECT count(*) AS group_size FROM entries "
+            "GROUP BY semantic_fingerprint HAVING count(*) > 1)"
+        ).fetchone()
+        if (groups, rows) != (equivalence.get("duplicate_groups"), equivalence.get("source_rows")):
+            refuse("semanticEquivalence")
+        # Counted directly, as the app does, including the two FTS4 tables.
+        tables = [(key, evidence[key]) for key in EVIDENCE_KEYS] + [
+            ("dictionary_gloss_fts", search_index["gloss_rows"]),
+            ("dictionary_form_fts", search_index["form_rows"]),
+        ]
+        for table, expected in tables:
+            if count(connection, table) != expected:
+                refuse(f"the row count of {table}")
 
 
 # --- Building ----------------------------------------------------------------------------------
@@ -260,9 +407,8 @@ def workflow_run() -> dict | None:
     env = os.environ
     if env.get("GITHUB_ACTIONS") != "true" or not env.get("GITHUB_RUN_ID"):
         return None
-    repository, server = env["GITHUB_REPOSITORY"], env.get(
-        "GITHUB_SERVER_URL", "https://github.com"
-    )
+    repository = env["GITHUB_REPOSITORY"]
+    server = env.get("GITHUB_SERVER_URL", "https://github.com")
     return {
         "repository": repository,
         "workflow": env.get("GITHUB_WORKFLOW", ""),
@@ -292,7 +438,7 @@ def conformance_pins(
             pins.setdefault(name, (sha, Path(path).name))
         entries.append(
             {
-                "name": Path(path).name,
+                "name": check_name(Path(path).name, "conformance suite"),
                 "suite": suite["suite"],
                 "sha256": hashlib.sha256(data).hexdigest(),
                 "bytes": len(data),
@@ -305,47 +451,59 @@ def conformance_pins(
 
 
 def build(repo: Path, inputs: Inputs, release: dict, out: Path, log=print) -> dict:
+    """Package the release into `out`, which must be empty or missing. A refused build leaves
+    `out` as it found it."""
     if out.exists() and any(out.iterdir()):
         raise Refusal(f"{out} isn't empty")
+    created = not out.exists()
     out.mkdir(parents=True, exist_ok=True)
+    try:
+        return build_into(repo, inputs, release, out, log)
+    except BaseException:
+        for child in out.iterdir():
+            shutil.rmtree(child) if child.is_dir() else child.unlink()
+        if created:
+            out.rmdir()
+        raise
+
+
+def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log) -> dict:
     conformance, pins = conformance_pins(repo, inputs.conformance)
-    extra = [inputs.catalog] if inputs.catalog else []
+    file_paths = [entry["path"] for entry in inputs.files]
+    catalog_only = [inputs.catalog] if inputs.catalog and inputs.catalog not in file_paths else []
     heads = committed(
         repo,
-        [entry["path"] for entry in inputs.files]
-        + extra
-        + list(inputs.source_archives.values())
-        + inputs.conformance,
+        file_paths + catalog_only + list(inputs.source_archives.values()) + inputs.conformance,
     )
-    for path in extra + inputs.conformance:
+    # Files read but not packaged, by the name a suite would pin them under.
+    read_only: dict[str, str] = {}
+    for path in catalog_only + inputs.conformance:
+        data = (repo / path).read_bytes()
         if heads[path].lfs_oid:
             raise Refusal(f"{path} is a Git LFS file; the packager reads it as committed text")
-        if git_blob(repo / path) != heads[path].blob:
+        if git_blob(data) != heads[path].blob:
             raise Refusal(f"{path} differs from HEAD; commit or restore it")
+        if path in catalog_only:
+            read_only[Path(path).name] = hashlib.sha256(data).hexdigest()
 
     files: list[dict] = []
-    by_sha: dict[str, str] = {}
-    sqlite_counts: dict[str, dict[str, int]] = {}
+    by_sha: dict[str, list[str]] = {}
     metadata_by_name: dict[str, dict[str, str]] = {}
     json_by_name: dict[str, object] = {}
     for entry in inputs.files:
         name, path = entry["name"], entry["path"]
         staged = stage(repo / path, out, name)
         check_committed(entry, heads[path], staged)
-        if name in pins and pins[name][0] != staged.sha256:
-            raise Refusal(
-                f"{name}: SHA-256 {staged.sha256}, but {pins[name][1]} pins {pins[name][0]}"
-            )
-        by_sha.setdefault(staged.sha256, name)
+        by_sha.setdefault(staged.sha256, []).append(name)
 
-        declared = None
-        record: dict = {"name": name}
+        declared, record = None, {"name": name}
         if name.endswith(".sqlite3"):
             if not is_sqlite(staged.path):
                 raise Refusal(f"{name} isn't a SQLite database")
             counts, metadata = sqlite_facts(staged.path)
-            sqlite_counts[name], metadata_by_name[name] = counts, metadata
-            declared = metadata.get("artifact_schema")
+            metadata_by_name[name] = metadata
+            if "artifact_schema" in metadata:
+                declared = json_value(metadata["artifact_schema"])
         elif name.endswith(".json"):
             document = json.loads(staged.path.read_bytes())
             json_by_name[name] = document
@@ -357,7 +515,7 @@ def build(repo: Path, inputs: Inputs, release: dict, out: Path, log=print) -> di
                 f"{name} declares {declared}; release-inputs.json mustn't name one too ({planned})"
             )
         schema = declared or planned
-        if schema and not ARTIFACT_SCHEMA.match(schema):
+        if schema and (not isinstance(schema, str) or not ARTIFACT_SCHEMA.match(schema)):
             raise Refusal(f"{name}: artifact_schema {schema!r} isn't zenbu.<name>.v<N>")
         record.update(
             artifact_schema=schema,
@@ -366,124 +524,142 @@ def build(repo: Path, inputs: Inputs, release: dict, out: Path, log=print) -> di
             bytes=staged.bytes,
             depends_on=[],
         )
-        if name in sqlite_counts:
-            record["row_counts"] = sqlite_counts[name]
+        if name.endswith(".sqlite3"):
+            record["row_counts"] = counts
         files.append(record)
-        log(
-            f"{staged.sha256}  {staged.bytes:>10}  {name}  ({record['artifact_schema'] or 'undeclared'})"
-        )
+        log(f"{staged.sha256}  {staged.bytes:>10}  {name}  ({schema or 'undeclared'})")
 
     records = {record["name"]: record for record in files}
 
-    def pinned(owner: str, sha: str, what: str) -> str:
-        if sha not in by_sha:
-            raise Refusal(f"{owner}: {what} pins {sha}, which is no file in the release")
-        return by_sha[sha]
+    # Every conformance pin, against every file the packager reads.
+    for name, (sha, suite) in sorted(pins.items()):
+        actual = records[name]["sha256"] if name in records else read_only.get(name)
+        if actual is not None and actual != sha:
+            raise Refusal(f"{name}: SHA-256 {actual}, but {suite} pins {sha}")
+    unread = sorted(name for name in pins if name not in records and name not in read_only)
 
-    # Dependencies are the SHA-256 pins a file carries: a pack's `language_data_sha256` metadata,
-    # the ranking contract's `databaseSHA256` (with its size and evidence counts).
-    for name, metadata in metadata_by_name.items():
-        if "language_data_sha256" in metadata:
-            records[name]["depends_on"].append(
-                pinned(name, metadata["language_data_sha256"], "language_data_sha256")
-            )
-    for name, document in json_by_name.items():
-        if isinstance(document, dict) and "databaseSHA256" in document:
-            target = pinned(name, document["databaseSHA256"], "databaseSHA256")
-            records[name]["depends_on"].append(target)
-            if (
-                "databaseBytes" in document
-                and document["databaseBytes"] != records[target]["bytes"]
-            ):
-                raise Refusal(
-                    f"{name}: databaseBytes {document['databaseBytes']}, but {target} has {records[target]['bytes']}"
-                )
-            for table, count in (document.get("evidenceCounts") or {}).items():
-                if sqlite_counts.get(target, {}).get(table) != count:
-                    raise Refusal(f"{name}: {table} should hold {count} rows in {target}")
-
-    sources = frequency_sources(repo, inputs, heads, records, by_sha, pinned)
-
-    language_references = [
+    references = [
         r
         for r in files
         if r["artifact_schema"] and LANGUAGE_REFERENCE_SCHEMA.match(r["artifact_schema"])
     ]
-    if len(language_references) != 1:
+    if len(references) != 1:
         raise Refusal(
-            f"the release needs exactly one zenbu.language-reference file, not {len(language_references)}"
+            f"the release needs exactly one zenbu.language-reference file, not {len(references)}"
         )
-    reference = language_references[0]
-    count, digest = ent_seq_ids(out / "files" / reference["sha256"] / reference["name"])
+    reference = references[0]
+    reference_path = out / "files" / reference["sha256"] / reference["name"]
+
+    def language_reference(owner: str, sha: object, what: str) -> str:
+        """A pin on the language reference database: it must name that file."""
+        if sha != reference["sha256"]:
+            raise Refusal(
+                f"{owner}: {what} pins {sha}, not {reference['name']} ({reference['sha256']})"
+            )
+        return reference["name"]
+
+    def depend(record: dict, target: str) -> None:
+        if target != record["name"] and target not in record["depends_on"]:
+            record["depends_on"].append(target)
+
+    # Dependencies are the SHA-256 pins a file carries.
+    for name, metadata in metadata_by_name.items():
+        if "language_data_sha256" in metadata:
+            sha = json_value(metadata["language_data_sha256"])
+            depend(records[name], language_reference(name, sha, "language_data_sha256"))
+        if "mapping_policy_sha256" in metadata:
+            # A frequency pack's mapping policy: a release file when it's one of the mapping SQLs.
+            for target in by_sha.get(json_value(metadata["mapping_policy_sha256"]), []):
+                depend(records[name], target)
+    for name, document in json_by_name.items():
+        if records[name]["artifact_schema"] == RANKING_CONTRACT_SCHEMA:
+            sha = document.get("databaseSHA256")
+            depend(records[name], language_reference(name, sha, "databaseSHA256"))
+            check_ranking_contract(
+                name, document, reference_path, metadata_by_name[reference["name"]]
+            )
+
+    sources = frequency_sources(repo, inputs, heads, records, by_sha, language_reference, depend)
+    count_, digest = ent_seq_ids(reference_path)
 
     manifest = {
         "manifest_schema": MANIFEST_SCHEMA,
         "release": release["release"],
         "git_commit": git(repo, "rev-parse", "HEAD").decode().strip(),
         "workflow_run": workflow_run(),
-        "previous_release": release.get("previous_release"),
-        "previous_manifest_sha256": release.get("previous_manifest_sha256"),
+        # From releases.json once the publish job writes it (step 3); release 1 is the first.
+        "previous_release": None,
+        "previous_manifest_sha256": None,
         "sources": sources,
         "files": files,
         "ids": {
             "file": reference["name"],
-            "ent_seq_count": count,
+            "ent_seq_count": count_,
             "ent_seq_digest": ENT_SEQ_DIGEST,
             "ent_seq_sha256": digest,
         },
         "conformance": conformance,
         "core_sha256": None,
     }
-    unpackaged = sorted(set(pins) - set(records))
-    if unpackaged:
-        log(f"Pinned by a conformance suite but not in the release: {', '.join(unpackaged)}")
+    if unread:
+        log(f"Pinned by a conformance suite, but not read or packaged: {', '.join(unread)}")
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
     return manifest
 
 
-def frequency_sources(repo, inputs, heads, records, by_sha, pinned) -> list[dict]:
+def frequency_sources(repo, inputs, heads, records, by_sha, language_reference, depend):
     """Check the catalog's bundled packs against the release, and list its CDN-only packs."""
     if not inputs.catalog:
         return []
+    catalog_name = next((f["name"] for f in inputs.files if f["path"] == inputs.catalog), None)
     catalog = json.loads((repo / inputs.catalog).read_bytes())
     sources = []
     for pack in catalog["packs"]:
-        pack_id = pack["packID"]
+        pack_id = check_name(pack["packID"], "frequency pack")
+        reference = language_reference(
+            pack_id, pack.get("languageDataSHA256"), "languageDataSHA256"
+        )
+        policies = by_sha.get(pack.get("mappingPolicySHA256"), [])
         if pack.get("bundled"):
             resource = f"{pack['bundledResource']}.sqlite3"
-            if resource in records and records[resource]["sha256"] != pack["bundledArtifactSHA256"]:
+            if resource not in records:
+                raise Refusal(f"{pack_id} is bundled as {resource}, which isn't in the release")
+            if records[resource]["sha256"] != pack["bundledArtifactSHA256"]:
                 raise Refusal(
-                    f"{inputs.catalog}: {pack_id} pins {resource} at {pack['bundledArtifactSHA256']}, not {records[resource]['sha256']}"
+                    f"{inputs.catalog}: {pack_id} pins {resource} at "
+                    f"{pack['bundledArtifactSHA256']}, not {records[resource]['sha256']}"
                 )
-            if resource in records and pack.get("languageDataSHA256"):
-                pinned(pack_id, pack["languageDataSHA256"], "languageDataSHA256")
+            if catalog_name:
+                for target in [reference, resource, *policies]:
+                    depend(records[catalog_name], target)
             continue
         archive = inputs.source_archives.get(pack_id)
         if archive:
             head = heads[archive]
             if head.lfs_oid != pack["sourceSHA256"] or head.lfs_size != pack["sourceBytes"]:
                 raise Refusal(
-                    f"{pack_id}: the catalog names {pack['sourceSHA256']} ({pack['sourceBytes']} bytes), but {archive} at HEAD is {head.lfs_oid} ({head.lfs_size} bytes)"
+                    f"{pack_id}: the catalog names {pack['sourceSHA256']} "
+                    f"({pack['sourceBytes']} bytes), but {archive} at HEAD is {head.lfs_oid} "
+                    f"({head.lfs_size} bytes)"
                 )
-        sources.append(
-            {
-                "name": pack_id,
-                "version": pack["packVersion"],
-                "url": pack["downloadURL"],
-                "sha256": pack["sourceSHA256"],
-                "bytes": pack["sourceBytes"],
-                "depends_on": [pinned(pack_id, pack["languageDataSHA256"], "languageDataSHA256")],
-            }
-        )
+        source = {
+            "name": pack_id,
+            "version": pack["packVersion"],
+            "url": pack["downloadURL"],
+            "sha256": pack["sourceSHA256"],
+            "bytes": pack["sourceBytes"],
+            "depends_on": [],
+        }
+        for target in [reference, *policies]:
+            depend(source, target)
+        if catalog_name:
+            for target in [reference, *policies]:
+                depend(records[catalog_name], target)
+        sources.append(source)
     unknown = sorted(set(inputs.source_archives) - {source["name"] for source in sources})
     if unknown:
         raise Refusal(f"source_archives names packs the catalog doesn't download: {unknown}")
     return sources
-
-
-def git_blob(path: Path) -> str:
-    data = path.read_bytes()
-    return hashlib.sha1(f"blob {len(data)}\0".encode() + data).hexdigest()
 
 
 # --- Validating --------------------------------------------------------------------------------
@@ -516,7 +692,8 @@ def validate(out: Path, schema_path: Path = SCHEMA_PATH) -> dict:
         unknown = [name for name in item["depends_on"] if name not in names or name == item["name"]]
         if unknown:
             raise Refusal(
-                f"{item['name']} depends on {unknown}, which aren't other files or sources in the release"
+                f"{item['name']} depends on {unknown}, which aren't other files or sources in "
+                "the release"
             )
     if manifest["ids"]["file"] not in [f["name"] for f in manifest["files"]]:
         raise Refusal(f"ids.file {manifest['ids']['file']} isn't a file in the release")
@@ -529,7 +706,8 @@ def validate(out: Path, schema_path: Path = SCHEMA_PATH) -> dict:
     )
     if present != set(expected):
         raise Refusal(
-            f"staged files differ from the manifest: missing {sorted(set(expected) - present)}, extra {sorted(present - set(expected))}"
+            f"staged files differ from the manifest: missing {sorted(set(expected) - present)}, "
+            f"extra {sorted(present - set(expected))}"
         )
     for relative, record in expected.items():
         path = out / relative

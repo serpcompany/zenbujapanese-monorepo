@@ -16,7 +16,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import closing, redirect_stdout
 from pathlib import Path
 
 import jsonschema
@@ -36,10 +36,9 @@ def sha256(data: bytes) -> str:
 def sqlite_bytes(statements: list[str]) -> bytes:
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "db.sqlite3"
-        connection = sqlite3.connect(path)
-        connection.executescript(";\n".join(statements))
-        connection.commit()
-        connection.close()
+        with closing(sqlite3.connect(path)) as connection:
+            connection.executescript(";\n".join(statements))
+            connection.commit()
         return path.read_bytes()
 
 
@@ -47,6 +46,86 @@ def pointer(data: bytes) -> bytes:
     return (
         f"version https://git-lfs.github.com/spec/v1\noid sha256:{sha256(data)}\nsize {len(data)}\n"
     ).encode()
+
+
+def sql_text(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
+
+
+EVIDENCE = {
+    "form_priority_profiles": 1,
+    "canonical_senses": 1,
+    "gloss_atoms": 2,
+    "sense_form_restrictions": 0,
+    "reading_form_restrictions": 0,
+}
+SEARCH_INDEX = {
+    "schema": "zenbu.dictionary-search-index.v1",
+    "technology": "sqlite-fts4",
+    "gloss_rows": 2,
+    "form_rows": 2,
+}
+TOOLS = {key: f"{i}" * 64 for i, key in enumerate(package.TOOL_KEYS)}
+
+
+def language_database() -> bytes:
+    """A small zenbu.language-reference database with what the ranking contract checks.
+    Metadata values are JSON, as import_jmdict.py writes them."""
+    metadata = {
+        "dictionary_ranking_policy": "dictionary-best-match-v1",
+        "dictionary_ranking_schema_version": "zenbu.dictionary-ranking.v1",
+        "dictionary_ranking_mapping_sha256": "a" * 64,
+        # A key the app doesn't decode, which it ignores.
+        "dictionary_ranking_evidence": {**EVIDENCE, "ignored": 7},
+        "dictionary_search_index": SEARCH_INDEX,
+        **TOOLS,
+    }
+    return sqlite_bytes(
+        [
+            "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
+            *[
+                f"INSERT INTO metadata VALUES ({sql_text(k)}, {sql_text(json.dumps(v))})"
+                for k, v in metadata.items()
+            ],
+            "CREATE TABLE entries (id BLOB PRIMARY KEY, source_identity TEXT, "
+            "source_record_id INTEGER, semantic_fingerprint BLOB)",
+            *[
+                f"INSERT INTO entries VALUES (x'{i:02x}', 'edrdg.jmdict', {seq}, x'{min(i, 1):02x}')"
+                for i, seq in enumerate(Scratch.ENT_SEQS)
+            ],
+            "CREATE TABLE forms (form TEXT)",
+            "INSERT INTO forms VALUES ('a'), ('b')",
+            "CREATE TABLE gloss_atoms (normalized_text TEXT)",
+            "INSERT INTO gloss_atoms VALUES ('to eat'), ('to drink')",
+            "CREATE TABLE form_priority_profiles (x)",
+            "INSERT INTO form_priority_profiles VALUES (1)",
+            "CREATE TABLE canonical_senses (x)",
+            "INSERT INTO canonical_senses VALUES (1)",
+            "CREATE TABLE sense_form_restrictions (x)",
+            "CREATE TABLE reading_form_restrictions (x)",
+            "CREATE VIRTUAL TABLE dictionary_form_fts USING fts4(form, content='forms')",
+            "INSERT INTO dictionary_form_fts(dictionary_form_fts) VALUES ('rebuild')",
+            "CREATE VIRTUAL TABLE dictionary_gloss_fts USING "
+            "fts4(normalized_text, content='gloss_atoms')",
+            "INSERT INTO dictionary_gloss_fts(dictionary_gloss_fts) VALUES ('rebuild')",
+            "CREATE VIRTUAL TABLE example_fts USING fts4(english)",
+            "INSERT INTO example_fts VALUES ('one sentence')",
+        ]
+    )
+
+
+def pack_database(language_sha: str, mapping_sha: str) -> bytes:
+    # The pack importers write bare metadata values.
+    return sqlite_bytes(
+        [
+            "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
+            "INSERT INTO metadata VALUES ('artifact_schema', 'zenbu.frequency-pack.v1'), "
+            f"('language_data_sha256', '{language_sha}'), "
+            f"('mapping_policy_sha256', '{mapping_sha}')",
+            "CREATE TABLE frequency_evidence (entry_id BLOB, rank INTEGER)",
+            "INSERT INTO frequency_evidence VALUES (x'00', 1)",
+        ]
+    )
 
 
 class Scratch:
@@ -57,95 +136,74 @@ class Scratch:
 
     def __init__(self, root: Path):
         self.root = root
-        self.lfs: dict[str, bytes] = {}
-        self.plain: dict[str, bytes] = {}
-        language = sqlite_bytes(
-            [
-                "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
-                "INSERT INTO metadata VALUES ('transform', '\"x-v2\"')",
-                "CREATE TABLE entries (id BLOB PRIMARY KEY, source_identity TEXT, "
-                "source_record_id INTEGER)",
-                *[
-                    f"INSERT INTO entries VALUES (x'{i:02x}', 'edrdg.jmdict', {seq})"
-                    for i, seq in enumerate(self.ENT_SEQS)
-                ],
-                "CREATE TABLE forms (entry_id BLOB, text TEXT)",
-                "INSERT INTO forms VALUES (x'00', 'a'), (x'01', 'b')",
-                "CREATE VIRTUAL TABLE forms_fts USING fts4(text)",
-                "INSERT INTO forms_fts VALUES ('a')",
-            ]
-        )
+        language = language_database()
         self.language_sha = sha256(language)
-        pack = sqlite_bytes(
-            [
-                "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
-                "INSERT INTO metadata VALUES ('artifact_schema', 'zenbu.frequency-pack.v1'), "
-                f"('language_data_sha256', '{self.language_sha}')",
-                "CREATE TABLE frequency_evidence (entry_id BLOB, rank INTEGER)",
-                "INSERT INTO frequency_evidence VALUES (x'00', 1)",
-            ]
-        )
+        mapping = b"-- mapping policy\n"
+        self.mapping_sha = sha256(mapping)
+        pack = pack_database(self.language_sha, self.mapping_sha)
+        self.pack_sha = sha256(pack)
         archive = b"source archive bytes"
-        self.lfs = {
+        self.lfs: dict[str, bytes] = {
             "data/res/Language.sqlite3": language,
             "data/res/Pack.sqlite3": pack,
             "data/src/Wiki.tsv.xz": archive,
         }
-        self.plain = {
+        self.catalog = {
+            "packs": [
+                {
+                    "packID": "zenbu.pack",
+                    "packVersion": "1",
+                    "bundled": True,
+                    "bundledResource": "Pack",
+                    "bundledArtifactSHA256": self.pack_sha,
+                    "languageDataSHA256": self.language_sha,
+                    "mappingPolicySHA256": self.mapping_sha,
+                    "downloadURL": "https://example.com/pack",
+                    "sourceSHA256": "0" * 64,
+                    "sourceBytes": 1,
+                },
+                {
+                    "packID": "zenbu.wiki",
+                    "packVersion": "2022-10-20",
+                    "bundled": False,
+                    "languageDataSHA256": self.language_sha,
+                    "mappingPolicySHA256": "b" * 64,  # not a release file, as JLPT's isn't
+                    "downloadURL": "https://cdn.example.com/wiki.tsv.xz",
+                    "sourceSHA256": sha256(archive),
+                    "sourceBytes": len(archive),
+                },
+            ]
+        }
+        self.contract = {
+            "policy": "dictionary-best-match-v1",
+            "schemaVersion": "zenbu.dictionary-ranking.v1",
+            "databaseSHA256": self.language_sha,
+            "databaseBytes": len(language),
+            "mappingSHA256": "a" * 64,
+            "evidenceCounts": EVIDENCE,
+            "semanticEquivalence": {
+                "normalization": "opaque-app-id-lexicographic-min-v1",
+                "duplicate_groups": 1,
+                "source_rows": 2,
+            },
+            "searchIndex": SEARCH_INDEX,
+            "toolSHA256": TOOLS,
+        }
+        self.plain: dict[str, bytes] = {
             "data/res/Elements.json": json.dumps({"schema": "zenbu.kanji-elements.v1"}).encode(),
             "data/res/Radicals.json": json.dumps({"snapshot": "x"}).encode(),
             "data/res/NOTICE.txt": b"notice\n",
-            "data/res/Contract.json": json.dumps(
-                {
-                    "schemaVersion": "zenbu.dictionary-ranking.v1",
-                    "databaseSHA256": self.language_sha,
-                    "databaseBytes": len(language),
-                    "evidenceCounts": {"forms": 2},
-                }
-            ).encode(),
-            "data/res/Catalog.json": json.dumps(
-                {
-                    "packs": [
-                        {
-                            "packID": "zenbu.pack",
-                            "packVersion": "1",
-                            "bundled": True,
-                            "bundledResource": "Pack",
-                            "bundledArtifactSHA256": sha256(pack),
-                            "languageDataSHA256": self.language_sha,
-                            "downloadURL": "https://example.com/pack",
-                            "sourceSHA256": "0" * 64,
-                            "sourceBytes": 1,
-                        },
-                        {
-                            "packID": "zenbu.wiki",
-                            "packVersion": "2022-10-20",
-                            "bundled": False,
-                            "languageDataSHA256": self.language_sha,
-                            "downloadURL": "https://cdn.example.com/wiki.tsv.xz",
-                            "sourceSHA256": sha256(archive),
-                            "sourceBytes": len(archive),
-                        },
-                    ]
-                }
-            ).encode(),
+            "data/res/Mapping.sql": mapping,
             "data/conf/one.json": json.dumps(
                 {
                     "suite": "one",
                     "artifact": {"name": "Language.sqlite3", "sha256": self.language_sha},
                 }
             ).encode(),
-            "data/conf/two.json": json.dumps(
-                {
-                    "suite": "two",
-                    "artifacts": [
-                        {"name": "Language.sqlite3", "sha256": self.language_sha},
-                        {"name": "Pack.sqlite3", "sha256": sha256(pack)},
-                        {"name": "Unpackaged.json", "sha256": "1" * 64},
-                    ],
-                }
-            ).encode(),
         }
+        self.set_contract()
+        self.set_catalog()
+        self.set_suite_two()
         self.inputs = {
             "roots": {"res": "data/res", "src": "data/src", "conf": "data/conf"},
             "files": [
@@ -156,24 +214,54 @@ class Scratch:
                 },
                 {"name": "Pack.sqlite3", "path": "res/Pack.sqlite3"},
                 {"name": "Elements.json", "path": "res/Elements.json"},
-                {"name": "Radicals.json", "path": "res/Radicals.json"},
-                {"name": "Contract.json", "path": "res/Contract.json"},
+                {
+                    "name": "Radicals.json",
+                    "path": "res/Radicals.json",
+                    "artifact_schema": "zenbu.radical-reference.v1",
+                },
+                {
+                    "name": "Contract.json",
+                    "path": "res/Contract.json",
+                    "artifact_schema": "zenbu.dictionary-ranking-contract.v1",
+                },
+                {"name": "Catalog.json", "path": "res/Catalog.json"},
+                {"name": "Mapping.sql", "path": "res/Mapping.sql"},
                 {"name": "Notices/NOTICE.txt", "path": "res/NOTICE.txt"},
             ],
             "frequency_pack_catalog": "res/Catalog.json",
             "source_archives": {"zenbu.wiki": "src/Wiki.tsv.xz"},
             "conformance": ["conf/one.json", "conf/two.json"],
         }
-        self.release = {
-            "release": "2026.10.1",
-            "previous_release": None,
-            "previous_manifest_sha256": None,
-        }
+        self.release = {"release": "2026.10.1"}
         self.root.mkdir(parents=True)
         self.git("init", "-q")
         self.git("config", "user.email", "test@example.com")
         self.git("config", "user.name", "Test")
+        self.git("config", "commit.gpgsign", "false")
         self.commit()
+
+    def set_contract(self) -> None:
+        self.plain["data/res/Contract.json"] = json.dumps(self.contract).encode()
+
+    def set_catalog(self) -> None:
+        self.plain["data/res/Catalog.json"] = json.dumps(self.catalog).encode()
+
+    def set_suite_two(self, extra: list[dict] | None = None) -> None:
+        self.plain["data/conf/two.json"] = json.dumps(
+            {
+                "suite": "two",
+                "artifacts": [
+                    {"name": "Language.sqlite3", "sha256": self.language_sha},
+                    {"name": "Pack.sqlite3", "sha256": self.pack_sha},
+                    {"name": "Catalog.json", "sha256": sha256(self.plain["data/res/Catalog.json"])},
+                    {"name": "Unread.json", "sha256": "1" * 64},
+                    *(extra or []),
+                ],
+            }
+        ).encode()
+
+    def drop(self, name: str) -> None:
+        self.inputs["files"] = [f for f in self.inputs["files"] if f["name"] != name]
 
     def git(self, *args: str) -> None:
         subprocess.run(["git", "-C", str(self.root), *args], check=True, capture_output=True)
@@ -194,12 +282,14 @@ class Scratch:
         for path, data in self.lfs.items():
             self.write(path, data)
 
+    def inputs_path(self) -> Path:
+        path = self.root.parent / "inputs.json"
+        path.write_text(json.dumps(self.inputs))
+        return path
+
     def build(self, out: Path) -> dict:
-        inputs_path = self.root.parent / "inputs.json"
-        inputs_path.write_text(json.dumps(self.inputs))
-        return package.build(
-            self.root, package.load_inputs(inputs_path), self.release, out, log=QUIET
-        )
+        inputs = package.load_inputs(self.inputs_path())
+        return package.build(self.root, inputs, self.release, out, log=QUIET)
 
 
 class PackagerTests(unittest.TestCase):
@@ -212,6 +302,8 @@ class PackagerTests(unittest.TestCase):
     def refused(self, pattern: str) -> None:
         with self.assertRaisesRegex(package.Refusal, pattern):
             self.scratch.build(self.out)
+        # A refused build leaves no output behind.
+        self.assertFalse(self.out.exists())
 
     def test_builds_the_manifest_and_the_staging_directory(self):
         manifest = self.scratch.build(self.out)
@@ -223,27 +315,43 @@ class PackagerTests(unittest.TestCase):
             (language["artifact_schema"], language["schema_source"]),
             ("zenbu.language-reference.v2", "plan"),
         )
-        # Ordinary tables, including the FTS shadow tables, but not the virtual table itself.
-        self.assertEqual(language["row_counts"]["entries"], 3)
-        self.assertEqual(language["row_counts"]["forms"], 2)
-        self.assertEqual(language["row_counts"]["forms_fts_docsize"], 1)
-        self.assertNotIn("forms_fts", language["row_counts"])
+        # Ordinary tables, and each virtual table's documents, but no other shadow table.
+        self.assertEqual(
+            language["row_counts"],
+            {
+                "canonical_senses": 1,
+                "dictionary_form_fts": 2,
+                "dictionary_gloss_fts": 2,
+                "entries": 3,
+                "example_fts": 1,
+                "form_priority_profiles": 1,
+                "forms": 2,
+                "gloss_atoms": 2,
+                "metadata": len(package.TOOL_KEYS) + 5,
+                "reading_form_restrictions": 0,
+                "sense_form_restrictions": 0,
+            },
+        )
         self.assertEqual(language["depends_on"], [])
 
         pack = files["Pack.sqlite3"]
         self.assertEqual(
             (pack["artifact_schema"], pack["schema_source"]), ("zenbu.frequency-pack.v1", "file")
         )
-        self.assertEqual(pack["depends_on"], ["Language.sqlite3"])
+        self.assertEqual(pack["depends_on"], ["Language.sqlite3", "Mapping.sql"])
         self.assertEqual(files["Elements.json"]["schema_source"], "file")
+        self.assertEqual(
+            (files["Contract.json"]["artifact_schema"], files["Contract.json"]["schema_source"]),
+            ("zenbu.dictionary-ranking-contract.v1", "plan"),
+        )
         self.assertEqual(files["Contract.json"]["depends_on"], ["Language.sqlite3"])
-        # schemaVersion names what the contract checks, not the contract file's own format.
-        self.assertIsNone(files["Contract.json"]["artifact_schema"])
-        for name in ("Radicals.json", "Notices/NOTICE.txt"):
-            self.assertEqual(
-                (files[name]["artifact_schema"], files[name]["schema_source"]), (None, "undeclared")
-            )
-            self.assertNotIn("row_counts", files[name])
+        self.assertEqual(
+            files["Catalog.json"]["depends_on"], ["Language.sqlite3", "Pack.sqlite3", "Mapping.sql"]
+        )
+        self.assertEqual(files["Radicals.json"]["schema_source"], "plan")
+        notice = files["Notices/NOTICE.txt"]
+        self.assertEqual((notice["artifact_schema"], notice["schema_source"]), (None, "undeclared"))
+        self.assertNotIn("row_counts", notice)
 
         expected_ids = "".join(f"{seq}\n" for seq in sorted(Scratch.ENT_SEQS)).encode()
         self.assertEqual(
@@ -274,6 +382,7 @@ class PackagerTests(unittest.TestCase):
         )
         self.assertIsNone(manifest["core_sha256"])
         self.assertIsNone(manifest["previous_release"])
+        self.assertIsNone(manifest["previous_manifest_sha256"])
         self.assertRegex(manifest["git_commit"], r"^[0-9a-f]{40}$")
 
         # Each file at files/<sha256>/<name>, byte for byte, and the manifest beside them.
@@ -314,13 +423,19 @@ class PackagerTests(unittest.TestCase):
         self.scratch.inputs["files"].append({"name": "Missing.json", "path": "res/Missing.json"})
         self.refused(r"not committed at HEAD: \['data/res/Missing\.json'\]")
 
-    def test_refuses_a_conformance_pin_mismatch(self):
+    def test_keeps_an_existing_empty_output_directory_after_a_refusal(self):
+        self.out.mkdir()
+        self.scratch.write("data/res/NOTICE.txt", b"edited\n")
+        with self.assertRaises(package.Refusal):
+            self.scratch.build(self.out)
+        self.assertEqual(list(self.out.iterdir()), [])
+
+    def test_refuses_suites_that_pin_a_file_differently(self):
         suite = json.loads(self.scratch.plain["data/conf/one.json"])
         suite["artifact"]["sha256"] = "2" * 64
         self.scratch.plain["data/conf/one.json"] = json.dumps(suite).encode()
         self.scratch.commit()
-        # two.json still pins the real SHA-256, so the suites disagree first.
-        self.refused(r"pins Language\.sqlite3 at")
+        self.refused(r"two\.json pins Language\.sqlite3 at .* but one\.json pins it at 2{64}")
 
     def test_refuses_a_file_that_differs_from_every_suites_pin(self):
         for path in ("data/conf/one.json", "data/conf/two.json"):
@@ -330,40 +445,105 @@ class PackagerTests(unittest.TestCase):
         self.scratch.commit()
         self.refused(r"Language\.sqlite3: SHA-256 .* but one\.json pins 3{64}")
 
-    def test_refuses_a_dependency_outside_the_release(self):
-        self.scratch.inputs["files"] = [
-            f for f in self.scratch.inputs["files"] if f["name"] != "Contract.json"
-        ]
-        self.scratch.lfs["data/res/Pack.sqlite3"] = sqlite_bytes(
-            [
-                "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
-                f"INSERT INTO metadata VALUES ('language_data_sha256', '{'4' * 64}')",
-            ]
-        )
-        self.scratch.plain["data/conf/two.json"] = json.dumps(
-            {
-                "suite": "two",
-                "artifacts": [{"name": "Language.sqlite3", "sha256": self.scratch.language_sha}],
-            }
-        ).encode()
+    def test_refuses_a_pin_on_a_file_read_but_not_packaged(self):
+        # The catalog is read for sources even when it isn't in the release: its pin still counts.
+        self.scratch.drop("Catalog.json")
+        self.scratch.set_suite_two()
+        suite = json.loads(self.scratch.plain["data/conf/two.json"])
+        next(a for a in suite["artifacts"] if a["name"] == "Catalog.json")["sha256"] = "c" * 64
+        self.scratch.plain["data/conf/two.json"] = json.dumps(suite).encode()
         self.scratch.commit()
-        self.refused(r"Pack\.sqlite3: language_data_sha256 pins 4{64}, which is no file")
+        self.refused(r"Catalog\.json: SHA-256 .* but two\.json pins c{64}")
+
+    def test_accepts_a_catalog_read_but_not_packaged_that_matches_its_pin(self):
+        self.scratch.drop("Catalog.json")
+        manifest = self.scratch.build(self.out)
+        self.assertNotIn("Catalog.json", [f["name"] for f in manifest["files"]])
+        self.assertEqual(len(manifest["sources"]), 1)
+
+    def test_refuses_a_bundled_pack_outside_the_release(self):
+        self.scratch.drop("Pack.sqlite3")
+        self.refused(r"zenbu\.pack is bundled as Pack\.sqlite3, which isn't in the release")
+
+    def test_refuses_a_language_data_pin_on_another_release_file(self):
+        # Mapping.sql is in the release, but it isn't the language reference database.
+        pack = pack_database(self.scratch.mapping_sha, self.scratch.mapping_sha)
+        self.scratch.lfs["data/res/Pack.sqlite3"] = pack
+        self.scratch.pack_sha = sha256(pack)
+        self.scratch.catalog["packs"][0]["bundledArtifactSHA256"] = sha256(pack)
+        self.scratch.set_catalog()
+        self.scratch.set_suite_two()
+        self.scratch.commit()
+        self.refused(r"Pack\.sqlite3: language_data_sha256 pins [0-9a-f]{64}, not Language")
+
+    def test_refuses_a_catalog_language_data_pin_on_another_file(self):
+        self.scratch.catalog["packs"][1]["languageDataSHA256"] = self.scratch.pack_sha
+        self.scratch.set_catalog()
+        self.scratch.set_suite_two()
+        self.scratch.commit()
+        self.refused(r"zenbu\.wiki: languageDataSHA256 pins [0-9a-f]{64}, not Language")
 
     def test_refuses_a_planned_schema_for_a_file_that_declares_one(self):
         self.scratch.inputs["files"][1]["artifact_schema"] = "zenbu.frequency-pack.v2"
         self.refused(r"Pack\.sqlite3 declares zenbu\.frequency-pack\.v1")
 
     def test_refuses_a_ranking_contract_that_disagrees_with_the_database(self):
-        contract = json.loads(self.scratch.plain["data/res/Contract.json"])
-        contract["evidenceCounts"]["forms"] = 3
-        self.scratch.plain["data/res/Contract.json"] = json.dumps(contract).encode()
+        changes = {
+            "databaseBytes": lambda c: c.update(databaseBytes=1),
+            "policy": lambda c: c.update(policy="other"),
+            "schemaVersion": lambda c: c.update(schemaVersion="zenbu.dictionary-ranking.v2"),
+            "mappingSHA256": lambda c: c.update(mappingSHA256="d" * 64),
+            "evidenceCounts": lambda c: c["evidenceCounts"].update(gloss_atoms=3),
+            "searchIndex": lambda c: c["searchIndex"].update(form_rows=3),
+            r"toolSHA256\.shared_tooling_sha256": lambda c: c["toolSHA256"].update(
+                shared_tooling_sha256="e" * 64
+            ),
+            "semanticEquivalence": lambda c: c["semanticEquivalence"].update(source_rows=3),
+            r"semanticEquivalence\.normalization": lambda c: c["semanticEquivalence"].update(
+                normalization="other"
+            ),
+        }
+        original = copy.deepcopy(self.scratch.contract)
+        for what, change in changes.items():
+            with self.subTest(what):
+                self.scratch.contract = copy.deepcopy(original)
+                change(self.scratch.contract)
+                self.scratch.set_contract()
+                self.scratch.commit()
+                self.refused(rf"Contract\.json: {what} disagrees with Language\.sqlite3")
+
+    def test_refuses_a_ranking_contract_whose_counts_differ_from_the_tables(self):
+        # Metadata and contract agree, but the tables hold other counts.
+        language = self.scratch.lfs["data/res/Language.sqlite3"]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "db.sqlite3"
+            path.write_bytes(language)
+            with closing(sqlite3.connect(path)) as connection:
+                connection.execute("INSERT INTO canonical_senses VALUES (2)")
+                connection.commit()
+            changed = path.read_bytes()
+        self.scratch.lfs["data/res/Language.sqlite3"] = changed
+        self.scratch.language_sha = sha256(changed)
+        self.scratch.contract.update(databaseSHA256=sha256(changed), databaseBytes=len(changed))
+        self.scratch.set_contract()
+        for pack in self.scratch.catalog["packs"]:
+            pack["languageDataSHA256"] = sha256(changed)
+        pack = pack_database(sha256(changed), self.scratch.mapping_sha)
+        self.scratch.lfs["data/res/Pack.sqlite3"] = pack
+        self.scratch.pack_sha = sha256(pack)
+        self.scratch.catalog["packs"][0]["bundledArtifactSHA256"] = sha256(pack)
+        self.scratch.set_catalog()
+        self.scratch.plain["data/conf/one.json"] = json.dumps(
+            {"suite": "one", "artifact": {"name": "Language.sqlite3", "sha256": sha256(changed)}}
+        ).encode()
+        self.scratch.set_suite_two()
         self.scratch.commit()
-        self.refused(r"Contract\.json: forms should hold 3 rows")
+        self.refused(r"the row count of canonical_senses disagrees")
 
     def test_refuses_a_catalog_that_disagrees_with_the_bundled_pack(self):
-        catalog = json.loads(self.scratch.plain["data/res/Catalog.json"])
-        catalog["packs"][0]["bundledArtifactSHA256"] = "5" * 64
-        self.scratch.plain["data/res/Catalog.json"] = json.dumps(catalog).encode()
+        self.scratch.catalog["packs"][0]["bundledArtifactSHA256"] = "5" * 64
+        self.scratch.set_catalog()
+        self.scratch.set_suite_two()
         self.scratch.commit()
         self.refused(r"zenbu\.pack pins Pack\.sqlite3 at 5{64}")
 
@@ -375,7 +555,9 @@ class PackagerTests(unittest.TestCase):
     def test_refuses_a_non_empty_output_directory(self):
         self.out.mkdir()
         (self.out / "stale").write_text("x")
-        self.refused(r"isn't empty")
+        with self.assertRaisesRegex(package.Refusal, r"isn't empty"):
+            self.scratch.build(self.out)
+        self.assertTrue((self.out / "stale").exists())
 
     def test_validate_refuses_tampered_or_extra_staged_files(self):
         manifest = self.scratch.build(self.out)
@@ -398,6 +580,80 @@ class PackagerTests(unittest.TestCase):
             package.validate(self.out)
 
 
+class InputValidationTests(unittest.TestCase):
+    """release-inputs.json is checked when it loads, before anything is staged."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.path = Path(tmp.name) / "inputs.json"
+        self.inputs = {
+            "roots": {"res": "data/res", "conf": "data/conf"},
+            "files": [{"name": "A.json", "path": "res/A.json"}],
+            "conformance": ["conf/one.json"],
+        }
+
+    def load(self):
+        self.path.write_text(json.dumps(self.inputs))
+        return package.load_inputs(self.path)
+
+    def test_accepts_plain_names_and_paths(self):
+        self.inputs["files"].append({"name": "Kuromoji/base.dat.gz", "path": "res/K/base.dat.gz"})
+        self.assertEqual(self.load().files[1]["path"], "data/res/K/base.dat.gz")
+
+    def test_refuses_bad_names(self):
+        for name in ("../A.json", "a/../b", "./A.json", "/A.json", "a/b/c.json", ".hidden", "", 3):
+            with self.subTest(name):
+                self.inputs["files"] = [{"name": name, "path": "res/A.json"}]
+                with self.assertRaisesRegex(package.Refusal, r"isn't a release name"):
+                    self.load()
+
+    def test_refuses_bad_paths(self):
+        for path in (
+            "res/../../etc/passwd",
+            "res/./A.json",
+            "/res/A.json",
+            "res//A.json",
+            "res\\A",
+        ):
+            with self.subTest(path):
+                self.inputs["files"] = [{"name": "A.json", "path": path}]
+                with self.assertRaisesRegex(package.Refusal, r"must be a plain path"):
+                    self.load()
+
+    def test_refuses_bad_roots_and_other_paths(self):
+        cases = {
+            "an absolute root": lambda i: i["roots"].update(res="/etc"),
+            "a climbing root": lambda i: i["roots"].update(res="../outside"),
+            "a climbing suite": lambda i: i.update(conformance=["conf/../../x.json"]),
+            "a climbing catalog": lambda i: i.update(frequency_pack_catalog="res/../../x.json"),
+        }
+        original = copy.deepcopy(self.inputs)
+        for label, change in cases.items():
+            with self.subTest(label):
+                self.inputs = copy.deepcopy(original)
+                change(self.inputs)
+                with self.assertRaisesRegex(package.Refusal, r"must be a plain path"):
+                    self.load()
+
+    def test_refuses_an_unknown_root_and_a_bad_source_name(self):
+        self.inputs["files"] = [{"name": "A.json", "path": "other/A.json"}]
+        with self.assertRaisesRegex(package.Refusal, r"doesn't start with one of the roots"):
+            self.load()
+        self.inputs["files"] = [{"name": "A.json", "path": "res/A.json"}]
+        self.inputs["source_archives"] = {"../pack": "res/x.xz"}
+        with self.assertRaisesRegex(package.Refusal, r"isn't a release name"):
+            self.load()
+
+    def test_refuses_a_malformed_release_id(self):
+        path = self.path.with_name("release.json")
+        for release in ("2026.13.1", "2026.10.0", "latest"):
+            with self.subTest(release):
+                path.write_text(json.dumps({"release": release}))
+                with self.assertRaisesRegex(package.Refusal, r"isn't YYYY\.MM\.N"):
+                    package.load_release(path)
+
+
 class SchemaTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -413,6 +669,10 @@ class SchemaTests(unittest.TestCase):
 
     def test_the_schema_is_valid_draft_2020_12(self):
         jsonschema.Draft202012Validator.check_schema(SCHEMA)
+
+    def test_the_packager_and_the_schema_share_the_name_pattern(self):
+        self.assertEqual(SCHEMA["$defs"]["name"]["pattern"], package.NAME.pattern)
+        self.assertEqual(SCHEMA["properties"]["release"]["pattern"], package.RELEASE.pattern)
 
     def test_accepts_a_packaged_manifest(self):
         self.validator.validate(self.manifest)
@@ -434,8 +694,8 @@ class SchemaTests(unittest.TestCase):
         def sqlite_file(m):
             return next(f for f in m["files"] if f["name"].endswith(".sqlite3"))
 
-        def json_file(m):
-            return next(f for f in m["files"] if f["name"] == "Radicals.json")
+        def text_file(m):
+            return next(f for f in m["files"] if f["name"] == "Notices/NOTICE.txt")
 
         cases = {
             "an unknown manifest schema": lambda m: m.update(
@@ -452,17 +712,17 @@ class SchemaTests(unittest.TestCase):
             ),
             "an uppercase SHA-256": lambda m: sqlite_file(m).update(sha256="A" * 64),
             "a SQLite file without row counts": lambda m: sqlite_file(m).pop("row_counts"),
-            "row counts on a JSON file": lambda m: json_file(m).update(row_counts={"x": 1}),
-            "an undeclared file with a schema": lambda m: json_file(m).update(
+            "row counts on a text file": lambda m: text_file(m).update(row_counts={"x": 1}),
+            "an undeclared file with a schema": lambda m: text_file(m).update(
                 artifact_schema="zenbu.x.v1"
             ),
             "a declared file without one": lambda m: sqlite_file(m).update(artifact_schema=None),
             "a malformed artifact schema": lambda m: sqlite_file(m).update(
                 artifact_schema="zenbu.Pack.1"
             ),
-            "a name that climbs out": lambda m: json_file(m).update(name="../x.json"),
-            "a three-segment name": lambda m: json_file(m).update(name="a/b/c.json"),
-            "a negative size": lambda m: json_file(m).update(bytes=-1),
+            "a name that climbs out": lambda m: text_file(m).update(name="../x.json"),
+            "a three-segment name": lambda m: text_file(m).update(name="a/b/c.json"),
+            "a negative size": lambda m: text_file(m).update(bytes=-1),
             "repeated dependencies": lambda m: sqlite_file(m).update(depends_on=["a", "a"]),
             "another ent_seq digest": lambda m: m["ids"].update(ent_seq_digest="sha256-file-order"),
             "no files": lambda m: m.update(files=[]),
@@ -502,18 +762,31 @@ class RealInputsTests(unittest.TestCase):
             "KanjiElementReferenceData.json",
             "RadicalReferenceData.json",
             "DictionaryRankingArtifactContract.json",
+            "FrequencyPackCatalog.json",
+            "FrequencyPackMappingV1.sql",
+            "FrequencyPackMappingV2.sql",
             "EDRDG-ATTRIBUTION.md",
             "TATOEBA-NOTICE.txt",
             "KANJIVG-CC-BY-SA-3.0.txt",
             "Kuromoji/NOTICE.md",
+            "KANJIUM-NOTICE.txt",
         ):
             self.assertIn(name, names)
+        self.assertNotIn("LanguageTechnologyPackCatalog.json", names)
         planned = {
             f["name"]: f.get("artifact_schema")
             for f in self.inputs.files
             if f.get("artifact_schema")
         }
-        self.assertEqual(planned, {"LanguageReferenceData.sqlite3": "zenbu.language-reference.v2"})
+        self.assertEqual(
+            planned,
+            {
+                "LanguageReferenceData.sqlite3": "zenbu.language-reference.v2",
+                "KanjiReferenceData.json": "zenbu.kanji-reference.v1",
+                "RadicalReferenceData.json": "zenbu.radical-reference.v1",
+                "DictionaryRankingArtifactContract.json": "zenbu.dictionary-ranking-contract.v1",
+            },
+        )
 
     def test_the_lfs_files_are_the_databases_and_the_kuromoji_dictionary(self):
         paths = package.lfs_paths(REPO, self.inputs)
@@ -522,9 +795,10 @@ class RealInputsTests(unittest.TestCase):
             all(re.search(r"(\.sqlite3|/Kuromoji/[a-z_]+\.dat\.gz)$", p) for p in paths)
         )
 
-    def test_release_json_names_a_release(self):
-        release = package.load_release(REPO / "language-data" / "release.json")
-        self.assertRegex(release["release"], SCHEMA["properties"]["release"]["pattern"])
+    def test_release_json_names_only_the_release(self):
+        release = json.loads((REPO / "language-data" / "release.json").read_text())
+        self.assertEqual(list(release), ["release"])
+        self.assertEqual(package.load_release(REPO / "language-data" / "release.json"), release)
 
     def test_the_build_workflow_runs_when_any_input_changes(self):
         workflow = (REPO / ".github" / "workflows" / "language-data-build.yml").read_text()

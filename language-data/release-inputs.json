@@ -2,7 +2,8 @@
   "roots": {
     "resources": "apps/ios/Modules/Sources/SearchExperience/Resources",
     "sources": "apps/ios/LanguageData/Sources",
-    "conformance": "apps/ios/LanguageData/Conformance"
+    "conformance": "apps/ios/LanguageData/Conformance",
+    "notices": "language-data/notices"
   },
   "files": [
     {
@@ -15,9 +16,17 @@
     { "name": "JLPTLevelPack.sqlite3", "path": "resources/JLPTLevelPack.sqlite3" },
     { "name": "TUBELEXFrequencyPack.sqlite3", "path": "resources/TUBELEXFrequencyPack.sqlite3" },
     { "name": "KanjiStrokeData.sqlite3", "path": "resources/KanjiStrokeData.sqlite3" },
-    { "name": "KanjiReferenceData.json", "path": "resources/KanjiReferenceData.json" },
+    {
+      "name": "KanjiReferenceData.json",
+      "path": "resources/KanjiReferenceData.json",
+      "artifact_schema": "zenbu.kanji-reference.v1"
+    },
     { "name": "KanjiElementReferenceData.json", "path": "resources/KanjiElementReferenceData.json" },
-    { "name": "RadicalReferenceData.json", "path": "resources/RadicalReferenceData.json" },
+    {
+      "name": "RadicalReferenceData.json",
+      "path": "resources/RadicalReferenceData.json",
+      "artifact_schema": "zenbu.radical-reference.v1"
+    },
     { "name": "Kuromoji/kuromoji.js", "path": "resources/Kuromoji/kuromoji.js" },
     { "name": "Kuromoji/base.dat.gz", "path": "resources/Kuromoji/base.dat.gz" },
     { "name": "Kuromoji/cc.dat.gz", "path": "resources/Kuromoji/cc.dat.gz" },
@@ -34,15 +43,20 @@
     { "name": "Kuromoji/LICENSE-2.0.txt", "path": "resources/Kuromoji/LICENSE-2.0.txt" },
     {
       "name": "DictionaryRankingArtifactContract.json",
-      "path": "resources/DictionaryRankingArtifactContract.json"
+      "path": "resources/DictionaryRankingArtifactContract.json",
+      "artifact_schema": "zenbu.dictionary-ranking-contract.v1"
     },
+    { "name": "FrequencyPackCatalog.json", "path": "resources/FrequencyPackCatalog.json" },
+    { "name": "FrequencyPackMappingV1.sql", "path": "resources/FrequencyPackMappingV1.sql" },
+    { "name": "FrequencyPackMappingV2.sql", "path": "resources/FrequencyPackMappingV2.sql" },
     { "name": "EDRDG-ATTRIBUTION.md", "path": "sources/EDRDG-ATTRIBUTION.md" },
     { "name": "TATOEBA-NOTICE.txt", "path": "resources/TATOEBA-NOTICE.txt" },
     { "name": "KANJIVG-CC-BY-SA-3.0.txt", "path": "resources/KANJIVG-CC-BY-SA-3.0.txt" },
     { "name": "Kuromoji/NOTICE.md", "path": "resources/Kuromoji/NOTICE.md" },
     { "name": "UNIDIC-NEW-BSD.txt", "path": "resources/UNIDIC-NEW-BSD.txt" },
     { "name": "JLPT-VOCABULARY-CC-BY-SA-4.0.txt", "path": "resources/JLPT-VOCABULARY-CC-BY-SA-4.0.txt" },
-    { "name": "TUBELEX-BSD-3-CLAUSE.txt", "path": "resources/TUBELEX-BSD-3-CLAUSE.txt" }
+    { "name": "TUBELEX-BSD-3-CLAUSE.txt", "path": "resources/TUBELEX-BSD-3-CLAUSE.txt" },
+    { "name": "KANJIUM-NOTICE.txt", "path": "notices/KANJIUM-NOTICE.txt" }
   ],
   "frequency_pack_catalog": "resources/FrequencyPackCatalog.json",
   "source_archives": {

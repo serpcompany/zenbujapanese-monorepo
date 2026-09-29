@@ -48,7 +48,7 @@
       ]
     },
     "previous_release": {
-      "description": "The release this one follows, or null for the first.",
+      "description": "The release this one follows, from releases.json, or null for the first.",
       "oneOf": [{ "type": "null" }, { "$ref": "#/properties/release" }]
     },
     "previous_manifest_sha256": {
@@ -147,7 +147,7 @@
         "bytes": { "type": "integer", "minimum": 0 },
         "depends_on": { "$ref": "#/$defs/depends_on" },
         "row_counts": {
-          "description": "SQLite files only: the row count of every ordinary table (not virtual tables, whose shadow tables are counted instead), by table name.",
+          "description": "SQLite files only, by table name: the row count of every ordinary table, and each virtual (full-text) table's document count, read from its _docsize or _content shadow table where it has one. The other shadow tables (_segdir, _segments, _stat, ...) are left out.",
           "type": "object",
           "minProperties": 1,
           "additionalProperties": { "type": "integer", "minimum": 0 }

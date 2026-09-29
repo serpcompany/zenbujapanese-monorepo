@@ -1,0 +1,8 @@
+Kanjium
+
+Kanji structure data by Uros O.
+License: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+Project: https://github.com/mifunetoshiro/kanjium
+
+KanjiElementReferenceData.json contains Kanjium data. The license's full text is
+JLPT-VOCABULARY-CC-BY-SA-4.0.txt in this release, the same CC BY-SA 4.0 text.
