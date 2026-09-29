@@ -2,6 +2,8 @@
 // build and IPADIC files the app bundles (SearchExperience/Resources/Kuromoji), each pinned by
 // SHA-256, loaded through the app's XMLHttpRequest shim (KuromojiMorphologyClient.swift) in a
 // bare V8 context, as the app runs them in a bare JavaScriptCore one.
+// Change the Swift and this port in the same PR, and re-record the word-detail suite; the
+// Search parity workflow checks that both change (issue 464).
 
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'

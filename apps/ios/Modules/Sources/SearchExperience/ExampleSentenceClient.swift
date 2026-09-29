@@ -1,3 +1,6 @@
+// The website runs a TypeScript port of this entry retrieval (retrieveEntry,
+// retrieveIndexedEntry): apps/web/src/lib/dictionary/examples/retrieval.ts.
+// Change both in the same PR and re-record the word-detail conformance suite (issue 464).
 import Foundation
 import SQLite3
 

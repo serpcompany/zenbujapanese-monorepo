@@ -1,6 +1,8 @@
 // The app's Kuromoji morphology as its example links see it: KuromojiMorphologyClient.swift's
 // conversion of kuromoji.js tokens into candidates, and JapaneseInflectionGrouping.swift, which
 // joins a verb or adjective with its inflection pieces.
+// Change the Swift and this port in the same PR, and re-record the word-detail suite; the
+// Search parity workflow checks that both change (issue 464).
 
 /** A token as kuromoji.js's `tokenize` returns it (the fields the app decodes). */
 export interface KuromojiToken {

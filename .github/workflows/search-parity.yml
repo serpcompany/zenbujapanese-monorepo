@@ -1,8 +1,14 @@
 name: Search parity
 
-# Search retrieval exists twice until issue 481 makes TypeScript the single core (ADR 0008):
-# Swift for the iOS app and a TypeScript port for the website. A PR that changes one must change
-# the other, or carry the search-parity-reviewed label to say the change only applies to one side.
+# Search retrieval and word pages' examples exist twice until issue 481 makes TypeScript the single
+# core (ADR 0008): Swift for the iOS app and a TypeScript port for the website. Each pair below is
+# a Swift source and its port; a PR that changes one side of a pair must change the other, or carry
+# the search-parity-reviewed label to say the change only applies to one side.
+#
+#   search:   LookupClient, SearchQuery, DictionaryRanking, JapaneseDeinflection, DictionaryEntry,
+#             JapaneseTextAnalysisClient <-> apps/web/src/lib/dictionary/search/
+#   examples: ExampleSentenceClient, JapaneseTextAnalysisClient, JapaneseInflectionGrouping,
+#             KuromojiMorphologyClient <-> apps/web/src/lib/dictionary/examples/*.ts
 
 on:
   pull_request:
@@ -14,7 +20,11 @@ on:
       - apps/ios/Modules/Sources/SearchExperience/JapaneseDeinflection.swift
       - apps/ios/Modules/Sources/SearchExperience/DictionaryEntry.swift
       - apps/ios/Modules/Sources/SearchExperience/JapaneseTextAnalysisClient.swift
+      - apps/ios/Modules/Sources/SearchExperience/ExampleSentenceClient.swift
+      - apps/ios/Modules/Sources/SearchExperience/JapaneseInflectionGrouping.swift
+      - apps/ios/Modules/Sources/SearchExperience/KuromojiMorphologyClient.swift
       - apps/web/src/lib/dictionary/search/**
+      - apps/web/src/lib/dictionary/examples/*.ts
 
 permissions:
   contents: read
@@ -27,22 +37,35 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Require both search implementations to change together
+      - name: Require both implementations of each pair to change together
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           changed=$(git diff --name-only "$BASE...$HEAD")
-          swift=$(echo "$changed" | grep -E '^apps/ios/Modules/Sources/SearchExperience/(LookupClient|SearchQuery|DictionaryRanking|JapaneseDeinflection|DictionaryEntry|JapaneseTextAnalysisClient)\.swift$' || true)
-          typescript=$(echo "$changed" | grep -E '^apps/web/src/lib/dictionary/search/' || true)
-          if [ -n "$swift" ] && [ -z "$typescript" ]; then
-            echo "::error::Swift search changed without the TypeScript port (apps/web/src/lib/dictionary/search/). Change both and re-record the conformance suite, or add the search-parity-reviewed label if the change only applies to iOS."
-            echo "$swift"
-            exit 1
-          fi
-          if [ -n "$typescript" ] && [ -z "$swift" ]; then
-            echo "::error::The TypeScript search port changed without the Swift search (apps/ios/Modules/Sources/SearchExperience/). Change both and re-record the conformance suite, or add the search-parity-reviewed label if the change only applies to the website."
-            echo "$typescript"
-            exit 1
-          fi
-          echo "Search parity OK."
+          swift_dir='^apps/ios/Modules/Sources/SearchExperience/'
+          status=0
+          # check <pair> <Swift pattern> <TypeScript pattern> <TypeScript location>
+          check() {
+            local swift typescript
+            swift=$(echo "$changed" | grep -E "$2" || true)
+            typescript=$(echo "$changed" | grep -E "$3" || true)
+            if [ -n "$swift" ] && [ -z "$typescript" ]; then
+              echo "::error::The Swift $1 changed without its TypeScript port ($4). Change both and re-record the conformance suite, or add the search-parity-reviewed label if the change only applies to iOS."
+              echo "$swift"
+              status=1
+            fi
+            if [ -n "$typescript" ] && [ -z "$swift" ]; then
+              echo "::error::The TypeScript $1 port ($4) changed without the Swift. Change both and re-record the conformance suite, or add the search-parity-reviewed label if the change only applies to the website."
+              echo "$typescript"
+              status=1
+            fi
+          }
+          check search \
+            "${swift_dir}(LookupClient|SearchQuery|DictionaryRanking|JapaneseDeinflection|DictionaryEntry|JapaneseTextAnalysisClient)\.swift$" \
+            '^apps/web/src/lib/dictionary/search/' 'apps/web/src/lib/dictionary/search/'
+          check examples \
+            "${swift_dir}(ExampleSentenceClient|JapaneseTextAnalysisClient|JapaneseInflectionGrouping|KuromojiMorphologyClient)\.swift$" \
+            '^apps/web/src/lib/dictionary/examples/[^/]+\.ts$' 'apps/web/src/lib/dictionary/examples/'
+          [ "$status" -eq 0 ] && echo "Search parity OK."
+          exit "$status"

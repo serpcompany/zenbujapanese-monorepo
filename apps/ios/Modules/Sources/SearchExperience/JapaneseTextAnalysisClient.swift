@@ -1,3 +1,7 @@
+// The website runs TypeScript ports of this analyzer: lookupSegments in
+// apps/web/src/lib/dictionary/search/morphology.ts, and the example word links
+// (JapaneseTextAnalyzer) in apps/web/src/lib/dictionary/examples/linking.ts.
+// Change both in the same PR and re-record the word-detail conformance suite (issue 464).
 import Foundation
 
 extension JapaneseTextToken {

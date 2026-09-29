@@ -1,6 +1,8 @@
 // Ports the app's example retrieval for a dictionary entry (ExampleSentenceData.retrieveEntry and
 // retrieveIndexedEntry in apps/ios/Modules/Sources/SearchExperience/ExampleSentenceClient.swift):
 // which Tatoeba sentences a word page lists, in which order, and the count the app reports.
+// Change the Swift and this port in the same PR, and re-record the word-detail suite; the
+// Search parity workflow checks that both change (issue 464).
 //
 // The app scans every sentence per entry (`instr(japanese, ?)`), which would take days for
 // 218,382 entries. The import instead finds every sentence each term occurs in once
