@@ -4,7 +4,7 @@ import Foundation
 /// kun readings with the sound changes compounds make: voicing (人々 ひとびと), half-voicing
 /// (発表 はっぴょう), and a small っ (学校 がっこう).
 ///
-/// The website ports it (see also apps/web/src/lib/dictionary/detail/kanji-split.ts); change
+/// The website ports it (see also packages/dictionary-core/src/detail/kanji-split.ts); change
 /// both together.
 enum KanjiReadingSplitter {
   /// One reading per character of `kanji`, or nil when no split or more than one split fits.

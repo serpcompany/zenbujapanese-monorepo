@@ -44,7 +44,7 @@ const iru: SearchResultsScreen = {
 }
 
 describe('linkSearchScreen', () => {
-  test('links every word once the dictionary database is loaded, and the refinement', () => {
+  test('links every word when the dictionary service answers, and the refinement', () => {
     const data = linkSearchScreen(iru, { dictionaryLoaded: true, kanjiHasPage: false })
     expect(data).toMatchObject({
       readingRefinement: { path: '/dictionary/search/%E3%81%84%E3%82%8B/' },
@@ -52,7 +52,7 @@ describe('linkSearchScreen', () => {
     })
   })
 
-  test('links only fixture words without the dictionary database', () => {
+  test('links only fixture words without the dictionary service', () => {
     const data = linkSearchScreen(iru, { dictionaryLoaded: false, kanjiHasPage: false })
     expect(data.state === 'results' && data.rows.map(row => row.path)).toEqual([
       '/dictionary/要る-1546640/',

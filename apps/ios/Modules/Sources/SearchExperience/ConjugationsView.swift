@@ -193,7 +193,7 @@ struct ConjugatedFormView: View {
 
 // The conjugation screens' words, shared by the views and the word-detail conformance suite, so
 // the website's conjugation table is held to the app's (see also
-// apps/web/src/lib/dictionary/detail/conjugation.ts).
+// packages/dictionary-core/src/detail/conjugation.ts).
 
 extension ConjugationTable {
   /// Other forms in `mode` with the same spelling as `form`, such as potential and passive

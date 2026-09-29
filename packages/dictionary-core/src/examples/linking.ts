@@ -2,8 +2,8 @@
 // JapaneseTextAnalysisClient.swift): which dictionary entry each word of an example sentence links
 // to on a word page. A word the page's entry was written with is that entry; any other word is
 // looked up by its forms, narrowed by part of speech and reading, and links to its one entry or
-// lists its candidates. The import runs it for every example (scripts/release-d1/dictionary/
-// build-examples.mts); the word-detail conformance suite checks it.
+// lists its candidates. The artifact layer runs it on each example a page shows
+// (../artifact/word-examples.ts); the word-detail conformance suite checks it.
 // Change the Swift and this port in the same PR, and re-record the word-detail suite; the
 // Search parity workflow checks that both change (issue 464).
 

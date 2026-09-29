@@ -82,8 +82,8 @@ export interface KanjiGlossRow {
 }
 
 /**
- * A token of an example sentence as the dictionary database stores it
- * (`example_sentences.tokens_json`): the same on every word page that shows the sentence.
+ * A token of an example sentence as Kuromoji reads it, with the app's inflection grouping: the
+ * same on every page that shows the sentence.
  */
 export interface ExampleSentenceTokenRow {
   /** The token's surface, as the word-detail suite's `surface`. */
@@ -234,9 +234,8 @@ export interface KanjiWordRow {
 }
 
 /**
- * One of a kanji page's words, the entry `normalizedEntry` shows for its fingerprint group. The
- * dictionary database stores the list in order (`kanji.word_ent_seqs_json`); fixtures order their
- * candidate rows with `kanjiWords`.
+ * One of a kanji page's words, the entry `normalizedEntry` shows for its fingerprint group, in the
+ * order `kanjiWords` gives the candidate rows (../artifact/kanji.ts, and the fixtures).
  */
 export type KanjiListWordRow = Pick<
   KanjiWordRow,
