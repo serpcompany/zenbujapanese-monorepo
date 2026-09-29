@@ -1,11 +1,22 @@
 // A throwaway Worker for the search benchmark (.github/workflows/search-d1-benchmark.yml). It
 // runs the website's search core against a D1 loaded with the search tables and reports how
 // long each request spent in the Worker and in D1. Never deployed with the site.
-import { DictionarySearch, type SearchDatabase } from '../../src/lib/dictionary/search/search'
+//
+// Options, so one run compares them: `cache=1` answers a query from `search_cache` when the
+// build precomputed it (precompute.mjs); `db=search` searches a second copy of the tables, so
+// searches and word pages don't share a database.
+import { normalizeQuery } from '../../src/lib/dictionary/search/query'
+import {
+  DictionarySearch,
+  type SearchDatabase,
+  type SearchResults
+} from '../../src/lib/dictionary/search/search'
 import { websiteCapabilities } from '../../src/lib/dictionary/search/website'
 
 interface Env {
   DB: D1Database
+  /** A second copy of the tables, for searches only. Absent in local runs. */
+  DB_SEARCH?: D1Database
   /** "on" reads through a D1 session, so reads may go to a replica. */
   READ_REPLICATION: string
 }
@@ -37,8 +48,20 @@ function measuredDatabase(db: Queryable, measurement: Measurement): SearchDataba
   }
 }
 
-function database(env: Env): Queryable {
-  return env.READ_REPLICATION === 'on' ? env.DB.withSession('first-unconstrained') : env.DB
+function database(env: Env, name: string | null): Queryable {
+  const db = name === 'search' && env.DB_SEARCH ? env.DB_SEARCH : env.DB
+  return env.READ_REPLICATION === 'on' ? db.withSession('first-unconstrained') : db
+}
+
+async function search(db: SearchDatabase, query: string, cache: boolean): Promise<SearchResults> {
+  if (cache) {
+    const [hit] = await db.all<{ results: string }>(
+      'SELECT results FROM search_cache WHERE query = ?',
+      [normalizeQuery(query)]
+    )
+    if (hit) return JSON.parse(hit.results)
+  }
+  return new DictionarySearch(db, websiteCapabilities).search(query)
 }
 
 // A word page's reads, approximated by indexed lookups on the search tables: the entry, its
@@ -55,12 +78,12 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
     const measurement: Measurement = { queries: 0, sqlMs: 0, rowsRead: 0, regions: new Set() }
-    const db = measuredDatabase(database(env), measurement)
+    const db = measuredDatabase(database(env, url.searchParams.get('db')), measurement)
     const started = performance.now()
-    let results: number | undefined
+    let results: SearchResults | undefined
     if (url.pathname === '/search') {
-      const search = new DictionarySearch(db, websiteCapabilities)
-      results = (await search.search(url.searchParams.get('q') ?? '')).items.length
+      const query = url.searchParams.get('q') ?? ''
+      results = await search(db, query, url.searchParams.get('cache') === '1')
     } else if (url.pathname === '/word') {
       await wordPage(db, url.searchParams.get('id') ?? '')
     } else if (url.pathname === '/sample') {
@@ -82,7 +105,11 @@ export default {
       rowsRead: measurement.rowsRead,
       regions: [...measurement.regions],
       colo: (request.cf as { colo?: string } | undefined)?.colo ?? null,
-      results
+      results: results?.items.length,
+      // precompute.mjs stores the whole result under the normalized query.
+      ...(url.searchParams.get('full') === '1'
+        ? { query: normalizeQuery(url.searchParams.get('q') ?? ''), full: results }
+        : {})
     })
   }
 }
