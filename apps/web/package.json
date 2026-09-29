@@ -50,6 +50,7 @@
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.11",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.2",
     "wrangler": "^4.143.0"
