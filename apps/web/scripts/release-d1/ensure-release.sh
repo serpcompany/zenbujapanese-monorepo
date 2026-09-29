@@ -57,23 +57,27 @@ JSON
 # A database is complete when its import record names this build, its migrations and schema
 # match this commit, and every table holds the rows the local build counted.
 verify() {
-  local imported expected_migrations applied_migrations pairs counts expected_counts
+  # verify runs where set -e doesn't apply (`if verify`, `verify ||`), so every query returns on
+  # failure itself: otherwise a failed query leaves both sides of a comparison empty, and equal.
+  local imported expected_migrations applied_migrations pairs counts expected_counts actual expected
   imported=$(remote --command "SELECT count(*) AS n, max(build_id) AS build_id FROM dictionary_import" --json |
     json "'%s %s' % (data[0]['results'][0]['n'], data[0]['results'][0]['build_id'])") || return 1
   [ "$imported" = "1 $build_id" ] || { echo "dictionary_import: $imported, expected 1 $build_id"; return 1; }
-  expected_migrations=$(cd "$migrations_dir" && ls -1 ./*.sql | sed 's|^\./||' | sort | paste -sd, -)
+  expected_migrations=$(cd "$migrations_dir" && ls -1 ./*.sql | sed 's|^\./||' | sort | paste -sd, -) ||
+    return 1
   applied_migrations=$(remote --command "SELECT name FROM d1_migrations ORDER BY name" --json |
-    json "','.join(r['name'] for r in data[0]['results'])")
+    json "','.join(r['name'] for r in data[0]['results'])") || return 1
   [ "$applied_migrations" = "$expected_migrations" ] ||
     { echo "migrations: $applied_migrations, expected $expected_migrations"; return 1; }
   scripts/release-d1/schema.sh "$database" "$config" | diff "$schema_dump" - ||
     { echo "schema differs from $schema_dump"; return 1; }
-  expected_counts=$(query "SELECT row_counts FROM dictionary_import" row_counts)
-  pairs=$(echo "$expected_counts" | json "', '.join(f\"'{t}', (SELECT count(*) FROM {t})\" for t in data)")
-  counts=$(query "SELECT json_object($pairs) AS counts" counts)
-  [ "$(echo "$counts" | json 'json.dumps(data, sort_keys=True)')" = \
-    "$(echo "$expected_counts" | json 'json.dumps(data, sort_keys=True)')" ] ||
-    { echo "row counts: $counts, expected $expected_counts"; return 1; }
+  expected_counts=$(query "SELECT row_counts FROM dictionary_import" row_counts) || return 1
+  pairs=$(echo "$expected_counts" | json "', '.join(f\"'{t}', (SELECT count(*) FROM {t})\" for t in data)") ||
+    return 1
+  counts=$(query "SELECT json_object($pairs) AS counts" counts) || return 1
+  actual=$(echo "$counts" | json 'json.dumps(data, sort_keys=True)') || return 1
+  expected=$(echo "$expected_counts" | json 'json.dumps(data, sort_keys=True)') || return 1
+  [ "$actual" = "$expected" ] || { echo "row counts: $counts, expected $expected_counts"; return 1; }
 }
 
 import_release() {
