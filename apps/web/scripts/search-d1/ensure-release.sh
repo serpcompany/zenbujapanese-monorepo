@@ -96,11 +96,13 @@ import_release() {
   [ -n "$id" ] || { echo "couldn't create $name"; exit 1; }
   write_config "$id"
   wrangler d1 migrations apply SEARCH_DB --remote --config "$config"
-  # dictionary_import goes last: it marks the import complete.
-  for file in rows.sql cache.sql import.sql; do
+  for file in rows.sql cache.sql; do
     [ -s "$scratch/local/$file" ] || continue
-    remote --file "$scratch/local/$file" --yes > /dev/null
+    remote --file "$scratch/local/$file" --yes
   done
+  # dictionary_import goes last: it marks the import complete. One statement, so a query rather
+  # than D1's bulk import.
+  remote --command "$(cat "$scratch/local/import.sql")"
   verify || { echo "$name didn't verify after import"; exit 1; }
 }
 
