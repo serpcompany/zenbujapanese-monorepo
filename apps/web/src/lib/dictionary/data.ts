@@ -1,3 +1,5 @@
+import { getCloudflareContext } from '@opennextjs/cloudflare'
+import { cache } from 'react'
 import {
   fixtureEntries,
   fixtureExamples,
@@ -15,10 +17,13 @@ import type {
   KanjiRecord,
   SenseRecord
 } from './records'
+import type { SearchEntry } from './search/search'
+import { websiteSearch } from './search/website'
 import { kanjiPath, wordPath, wordSlug } from './urls'
 
-// Pages read the dictionary only through this module. It serves local fixtures until the D1
-// copy exists (#464); then only these functions change.
+// Pages read the dictionary only through this module. Search runs on the search database
+// (SEARCH_DB) when it holds an import; everything else serves local fixtures until its data is
+// in D1 (#465). Only these functions change as it moves.
 
 /** Production shows no dictionary pages until real data is loaded, so fixtures are never indexed. */
 export function isDictionaryAvailable(): boolean {
@@ -52,10 +57,15 @@ export interface KanjiPageData extends Omit<KanjiRecord, 'readings' | 'words'> {
   words: WordSummary[]
 }
 
+/** A search result; `path` is null when the word has no page yet (#465). */
+export interface SearchWord extends Omit<WordSummary, 'path'> {
+  path: string | null
+}
+
 export interface SearchData {
   query: string
   kanji: { character: string; meanings: string[]; path: string } | null
-  words: WordSummary[]
+  words: SearchWord[]
 }
 
 const entriesBySeq = new Map(fixtureEntries.map(entry => [entry.entSeq, entry]))
@@ -120,8 +130,53 @@ export async function getKanjiPage(character: string): Promise<KanjiPageData | n
   }
 }
 
-export async function searchDictionary(query: string): Promise<SearchData> {
-  const kanji = kanjiByCharacter.get(query)
+/** A search result as a word. The search database has no frequency yet. */
+export function summarizeSearchEntry(entry: SearchEntry): SearchWord {
+  const word = { entSeq: entry.sourceRecordId, headword: entry.headword, reading: entry.reading }
+  return {
+    ...word,
+    ruby: furigana(entry.headword, entry.reading),
+    summary: entry.summary,
+    // Word pages serve only fixture entries, so only those link until #465 removes this.
+    path: entriesBySeq.has(word.entSeq) ? wordPath(word) : null,
+    frequency: []
+  }
+}
+
+// Search databases known to hold an import. Only a finished import is remembered, so a
+// database that has none yet is checked again on the next request.
+const importedDatabases = new WeakSet<D1Database>()
+
+/**
+ * Whether the search database holds a complete import; the import writes `dictionary_import`
+ * last. The local SEARCH_DB has no tables until scripts/search-d1/load-local.sh loads one.
+ */
+async function holdsImport(db: D1Database): Promise<boolean> {
+  if (importedDatabases.has(db)) return true
+  const table = await db
+    .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'dictionary_import'")
+    .first()
+  if (!table || (await db.prepare('SELECT 1 FROM dictionary_import').first()) === null) return false
+  importedDatabases.add(db)
+  return true
+}
+
+/**
+ * Whether a search failed because SQLite's full-text search couldn't read the query, such as an
+ * English query with a NUL or an unbalanced quote. The core throws nothing itself; these are
+ * FTS5's errors, passed on by D1. Any other failure is the database's.
+ */
+export function isUnreadableQuery(error: unknown): boolean {
+  // FTS5's own parser errors only (checked against SQLite): a bare "syntax error" would also hide
+  // a real SQL bug in the core as "no results".
+  const unreadable = /fts5: syntax error|unterminated string|malformed MATCH/i
+  for (let cause = error; cause instanceof Error; cause = cause.cause) {
+    if (unreadable.test(cause.message)) return true
+  }
+  return false
+}
+
+function fixtureWords(query: string): WordSummary[] {
   const ordered = Object.hasOwn(fixtureSearchOrder, query) ? fixtureSearchOrder[query] : undefined
   const matches = ordered
     ? ordered.flatMap(entSeq => entriesBySeq.get(entSeq) ?? [])
@@ -131,11 +186,33 @@ export async function searchDictionary(query: string): Promise<SearchData> {
           entry.reading === query ||
           entry.summary.toLowerCase().split(/[,;] /).includes(query)
       )
+  return matches.map(summarize)
+}
+
+async function searchWords(query: string): Promise<SearchWord[]> {
+  const { env } = await getCloudflareContext({ async: true })
+  const db = env.SEARCH_DB
+  // A failing database throws, so the request fails rather than rendering an empty page.
+  if (!db || !(await holdsImport(db))) return fixtureWords(query)
+  try {
+    const { items } = await websiteSearch(db).search(query)
+    return items.map(item => summarizeSearchEntry(item.entry))
+  } catch (error) {
+    // Like the app, a query full-text search can't read shows no results.
+    if (isUnreadableQuery(error)) return []
+    throw error
+  }
+}
+
+/** Memoized per request, so the page and its metadata search once. */
+export const searchDictionary = cache(async (query: string): Promise<SearchData> => {
+  // No kanji in the search database yet, so the kanji card still comes from the fixtures.
+  const kanji = kanjiByCharacter.get(query)
   return {
     query,
     kanji: kanji
       ? { character: kanji.character, meanings: kanji.meanings, path: kanjiPath(kanji.character) }
       : null,
-    words: matches.map(summarize)
+    words: await searchWords(query)
   }
-}
+})
