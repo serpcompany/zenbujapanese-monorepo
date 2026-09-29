@@ -5,12 +5,12 @@
 // Options, so one run compares them: `cache=1` answers a query from `search_cache` when the
 // build precomputed it (scripts/release-d1/search/precompute.mts); `db=search` searches a second
 // copy of the tables, so searches and word pages don't share a database.
-import { normalizeQuery } from '../../src/lib/dictionary/search/query'
+import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import {
   DictionarySearch,
   type SearchDatabase,
   type SearchResults
-} from '../../src/lib/dictionary/search/search'
+} from '@zenbu/dictionary-core/search/search'
 import { websiteCapabilities } from '../../src/lib/dictionary/search/website'
 
 interface Env {

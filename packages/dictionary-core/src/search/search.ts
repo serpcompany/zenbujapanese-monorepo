@@ -43,18 +43,6 @@ export interface SearchDatabase {
   all<Row>(sql: string, params: readonly (string | number)[]): Promise<Row[]>
 }
 
-export function d1SearchDatabase(db: D1Database): SearchDatabase {
-  return {
-    async all<Row>(sql: string, params: readonly (string | number)[]) {
-      const { results } = await db
-        .prepare(sql)
-        .bind(...params)
-        .all<Row>()
-      return results
-    }
-  }
-}
-
 /**
  * Capabilities a client supplies. A feature whose capability is missing is off and the rest of
  * Search is unchanged, so a client that can't run one leaves it out (ADR 0008).

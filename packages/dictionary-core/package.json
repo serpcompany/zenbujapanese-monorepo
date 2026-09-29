@@ -1,0 +1,28 @@
+{
+  "name": "@zenbu/dictionary-core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The shared dictionary core every Zenbu client runs: search, results, detail, and examples over the language-data artifact (ADR 0009).",
+  "type": "module",
+  "exports": {
+    "./fixtures": "./src/fixtures/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "format": "biome format --write",
+    "lint": "biome check",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.2",
+    "@types/node": "^22.20.4",
+    "typescript": "^5",
+    "vitest": "^5.0.2"
+  },
+  "packageManager": "pnpm@10.17.0",
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

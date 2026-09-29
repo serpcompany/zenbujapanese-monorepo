@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
+import { searchFeatures } from '@zenbu/dictionary-core/search/search'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { getPlatformProxy } from 'wrangler'
-import { searchFeatures } from './search'
 import { type WebsiteSearch, websiteCapabilities, websiteSearch } from './website'
 
 // The ADR 0006 conformance suite: every client must return these Language Reference IDs in

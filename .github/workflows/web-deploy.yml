@@ -12,6 +12,10 @@ on:
     # build of the dictionary imports and deploys.
     paths:
       - apps/web/**
+      - packages/dictionary-core/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
       - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3
       - apps/ios/Modules/Sources/SearchExperience/Resources/CompoundPitch.sqlite3
       - apps/ios/Modules/Sources/SearchExperience/Resources/ExampleWordIndex.sqlite3
@@ -57,12 +61,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          package_json_file: apps/web/package.json
+          package_json_file: package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: apps/web/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Import the search database
         # Reuses the database when this build's already imported and verified (seconds);
@@ -123,12 +127,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          package_json_file: apps/web/package.json
+          package_json_file: package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: apps/web/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Import the search database
         # As for staging: reuses a verified database for this build, or imports a new one. The

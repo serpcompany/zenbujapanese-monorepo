@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import vm from 'node:vm'
-import type { KuromojiToken } from './morphology'
+import type { KuromojiToken } from '@zenbu/dictionary-core/examples/morphology'
 
 /**
  * KuromojiContract's engine and dictionary files, by SHA-256 (as the word-detail conformance

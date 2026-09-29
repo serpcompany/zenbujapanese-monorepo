@@ -1,8 +1,8 @@
 'use client'
 
+import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
+import { graphemes } from '@zenbu/dictionary-core/detail/text'
 import { useState } from 'react'
-import type { RubySegment } from '@/lib/dictionary/detail/ruby'
-import { graphemes } from '@/lib/dictionary/detail/text'
 
 // A headword with furigana and the app's Furigana kanji highlight (JapaneseRubyText.swift): in a
 // kanji run whose kanji readings split it one way, each kanji is a toggle that colors it and its

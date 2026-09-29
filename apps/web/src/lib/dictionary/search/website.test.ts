@@ -1,6 +1,10 @@
+import {
+  DictionarySearch,
+  type SearchResults,
+  searchFeatures
+} from '@zenbu/dictionary-core/search/search'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { DictionarySearch, type SearchResults } from './search'
-import { websiteSearch } from './website'
+import { websiteCapabilities, websiteSearch } from './website'
 
 const cachedResults = { items: [], resultLimit: 'cached' } as unknown as SearchResults
 const coreResults = { items: [], resultLimit: 'core' } as unknown as SearchResults
@@ -22,6 +26,10 @@ function fakeD1(statements: string[]) {
     }
   } as unknown as D1Database
 }
+
+test('the website supplies no analyzer, so it has no sentence search', () => {
+  expect(searchFeatures(websiteCapabilities).sentenceSearch).toBe(false)
+})
 
 describe('websiteSearch', () => {
   afterEach(() => vi.restoreAllMocks())

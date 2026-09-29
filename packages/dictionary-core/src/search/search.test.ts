@@ -1,8 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { deinflect } from './deinflect'
 import { lookupSegments, type MorphologyWord } from './morphology'
-import { DictionarySearch, type SearchDatabase, searchFeatures } from './search'
-import { websiteCapabilities } from './website'
+import { DictionarySearch, type SearchDatabase } from './search'
 
 interface FakeEntry {
   id: string
@@ -95,13 +94,12 @@ const words: MorphologyWord[] = [
 ]
 
 describe('capabilities', () => {
-  test('sentence search is on only with an analyzer, and the website has none', () => {
+  test('sentence search is on only with an analyzer', () => {
     const analyze = async () => words
     expect(new DictionarySearch(fakeDatabase().db).features.sentenceSearch).toBe(false)
     expect(new DictionarySearch(fakeDatabase().db, { morphology: { analyze } }).features).toEqual({
       sentenceSearch: true
     })
-    expect(searchFeatures(websiteCapabilities).sentenceSearch).toBe(false)
   })
 
   test('with an analyzer, a sentence lists its words as Discovered Words', async () => {

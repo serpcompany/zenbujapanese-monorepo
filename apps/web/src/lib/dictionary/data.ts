@@ -1,33 +1,47 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
-import { cache } from 'react'
-import { fixtureKanjiRows, fixtureSearchOrder, fixtureWordRows } from '@/lib/dictionary/fixtures'
-import { isDeployedSite } from '@/lib/site'
-import { type Example, type ExampleToken, examplesPerPage, wordExample } from './detail/examples'
+import {
+  type Example,
+  type ExampleToken,
+  examplesPerPage,
+  wordExample
+} from '@zenbu/dictionary-core/detail/examples'
 import {
   type KanjiDetail,
   type KanjiElement,
   type KanjiReading,
   type KanjiWord,
   kanjiDetail
-} from './detail/kanji'
-import type { FrequencyRow, KanjiRows, WordExampleRows, WordRows } from './detail/rows'
+} from '@zenbu/dictionary-core/detail/kanji'
+import type {
+  FrequencyRow,
+  KanjiRows,
+  WordExampleRows,
+  WordRows
+} from '@zenbu/dictionary-core/detail/rows'
 import {
   type AlternativeForm,
   type RelatedWord,
   type WordDetail,
   type WordKanji,
   wordDetail
-} from './detail/word'
-import { dictionaryDatabase } from './dictionary-db'
-import { linkSearchScreen, type SearchData } from './results/links'
+} from '@zenbu/dictionary-core/detail/word'
+import {
+  fixtureKanjiRows,
+  fixtureSearchOrder,
+  fixtureWordRows
+} from '@zenbu/dictionary-core/fixtures'
 import {
   isSingleKanji,
   loadFrequency,
   type SearchResultsScreen,
   searchResultsScreen
-} from './results/results'
-import { d1SearchDatabase, type SearchResults } from './search/search'
-import { websiteSearch } from './search/website'
+} from '@zenbu/dictionary-core/results/results'
+import type { SearchResults } from '@zenbu/dictionary-core/search/search'
+import { cache } from 'react'
+import { isDeployedSite } from '@/lib/site'
+import { dictionaryDatabase } from './dictionary-db'
+import { linkSearchScreen, type SearchData } from './results/links'
+import { d1SearchDatabase, websiteSearch } from './search/website'
 import { hasSearchPath, kanjiPath, searchPath, wordPath, wordSlug } from './urls'
 
 type DictionaryDatabase = ReturnType<typeof dictionaryDatabase>

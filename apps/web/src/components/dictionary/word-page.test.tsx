@@ -1,17 +1,17 @@
 import { readFileSync } from 'node:fs'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { getPlatformProxy } from 'wrangler'
-import { frequencyRowDetails } from '@/lib/dictionary/detail/frequency'
-import { pitchAccent } from '@/lib/dictionary/detail/pitch'
-import { rubySegments } from '@/lib/dictionary/detail/ruby'
+import { frequencyRowDetails } from '@zenbu/dictionary-core/detail/frequency'
+import { pitchAccent } from '@zenbu/dictionary-core/detail/pitch'
+import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import {
   type SuiteFrequencyDetails,
   type SuiteFurigana,
   type SuitePitchGraph,
   suiteFrequencyDetails
-} from '@/lib/dictionary/detail/suite'
-import { wordDetail } from '@/lib/dictionary/detail/word'
+} from '@zenbu/dictionary-core/detail/suite'
+import { wordDetail } from '@zenbu/dictionary-core/detail/word'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { getPlatformProxy } from 'wrangler'
 import { dictionaryDatabase } from '@/lib/dictionary/dictionary-db'
 import { FrequencyDetailsContent, FrequencySection } from './frequency-section'
 import {

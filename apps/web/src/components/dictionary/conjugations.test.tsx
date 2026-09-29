@@ -1,16 +1,16 @@
 import { readFileSync } from 'node:fs'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { getPlatformProxy } from 'wrangler'
 import {
   type ConjugationMode,
   type Conjugations,
   conjugations,
   sharedSpellingNote
-} from '@/lib/dictionary/detail/conjugation'
-import { rubySegments } from '@/lib/dictionary/detail/ruby'
-import type { SuiteConjugations } from '@/lib/dictionary/detail/suite'
-import { wordDetail } from '@/lib/dictionary/detail/word'
+} from '@zenbu/dictionary-core/detail/conjugation'
+import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
+import type { SuiteConjugations } from '@zenbu/dictionary-core/detail/suite'
+import { wordDetail } from '@zenbu/dictionary-core/detail/word'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { getPlatformProxy } from 'wrangler'
 import { dictionaryDatabase } from '@/lib/dictionary/dictionary-db'
 import {
   ConjugatedFormContent,

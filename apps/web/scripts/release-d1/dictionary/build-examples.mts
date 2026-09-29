@@ -30,27 +30,27 @@ import type {
   ExampleSentenceRow,
   ExampleSentenceTokenRow,
   WordExampleRow
-} from '../../../src/lib/dictionary/detail/rows'
-import { toHiragana } from '../../../src/lib/dictionary/examples/kana'
-import { loadKuromoji } from '../../../src/lib/dictionary/examples/kuromoji'
+} from '@zenbu/dictionary-core/detail/rows'
+import { toHiragana } from '@zenbu/dictionary-core/examples/kana'
 import {
   displayReading,
   type HighlightedEntry,
   type LinkedToken,
   linkedTokens
-} from '../../../src/lib/dictionary/examples/linking'
+} from '@zenbu/dictionary-core/examples/linking'
 import {
   kuromojiCandidates,
   type MorphologyCandidate
-} from '../../../src/lib/dictionary/examples/morphology'
+} from '@zenbu/dictionary-core/examples/morphology'
 import {
   entryTerms,
   findOccurrences,
   type RetrievedExamples,
   retrieveEntryExamples,
   retrieveEntryExamplesByScan
-} from '../../../src/lib/dictionary/examples/retrieval'
-import { normalizeQuery } from '../../../src/lib/dictionary/search/query'
+} from '@zenbu/dictionary-core/examples/retrieval'
+import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
+import { loadKuromoji } from '../../../src/lib/dictionary/examples/kuromoji'
 import {
   canonicalEntries,
   corpus,

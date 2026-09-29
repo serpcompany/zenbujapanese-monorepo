@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { groupInflections, kuromojiCandidates } from '@zenbu/dictionary-core/examples/morphology'
 import { describe, expect, test } from 'vitest'
 import { loadKuromoji } from './kuromoji'
-import { groupInflections, kuromojiCandidates } from './morphology'
 
 // The app's bundled Kuromoji. Its dictionary files are Git LFS objects, so without `git lfs pull`
 // (as in CI's Web workflow) this is skipped; the import's conformance gate runs it for real.

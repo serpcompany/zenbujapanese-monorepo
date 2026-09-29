@@ -1,11 +1,7 @@
 import { readFileSync } from 'node:fs'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { getPlatformProxy } from 'wrangler'
-import { type DictionaryWord, dictionaryDatabase } from '../dictionary-db'
-import { wordSlug } from '../urls'
-import { licenseUrl } from './examples'
-import { tierLabels } from './frequency'
-import { kanjiDetail } from './kanji'
+import { licenseUrl } from '@zenbu/dictionary-core/detail/examples'
+import { tierLabels } from '@zenbu/dictionary-core/detail/frequency'
+import { kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
 import {
   type SuiteConjugations,
   type SuiteFrequencyDetails,
@@ -15,8 +11,12 @@ import {
   suiteFrequencyDetails,
   suiteFurigana,
   suitePitchGraph
-} from './suite'
-import { wordDetail } from './word'
+} from '@zenbu/dictionary-core/detail/suite'
+import { wordDetail } from '@zenbu/dictionary-core/detail/word'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { getPlatformProxy } from 'wrangler'
+import { type DictionaryWord, dictionaryDatabase } from '../dictionary-db'
+import { wordSlug } from '../urls'
 
 // The word-detail and kanji-detail conformance suites, recorded from the app on the iOS
 // Simulator (apps/ios/LanguageData/Conformance), replayed through the detail core against a local

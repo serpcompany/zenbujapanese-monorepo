@@ -1,4 +1,4 @@
-import type { RubySegment } from '@/lib/dictionary/detail/ruby'
+import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 
 /** Japanese text with furigana over the segments that need it. */
 export function RubyText({ segments, className }: { segments: RubySegment[]; className?: string }) {

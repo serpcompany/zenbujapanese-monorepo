@@ -1,16 +1,16 @@
 'use client'
 
+import {
+  licenseUrl,
+  type TatoebaSentence,
+  tatoebaSentenceUrl
+} from '@zenbu/dictionary-core/detail/examples'
 import Link from 'next/link'
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { Button } from '@/components/ui/button'
 import type { PageExample, PageExampleToken } from '@/lib/dictionary/data'
-import {
-  licenseUrl,
-  type TatoebaSentence,
-  tatoebaSentenceUrl
-} from '@/lib/dictionary/detail/examples'
 
 const linkClass = 'underline-offset-4 hover:text-muted-foreground'
 

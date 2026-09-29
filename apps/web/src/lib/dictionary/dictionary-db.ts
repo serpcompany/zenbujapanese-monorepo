@@ -1,14 +1,14 @@
-import { and, asc, eq, getTableColumns, gte, lt, sql } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/d1'
-import * as schema from '@/db/dictionary-schema'
-import { examplesPerPage } from './detail/examples'
+import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import type {
   ExampleSentenceTokenRow,
   KanjiListWordRow,
   KanjiRows,
   WordExampleRows,
   WordRows
-} from './detail/rows'
+} from '@zenbu/dictionary-core/detail/rows'
+import { and, asc, eq, getTableColumns, gte, lt, sql } from 'drizzle-orm'
+import { drizzle } from 'drizzle-orm/d1'
+import * as schema from '@/db/dictionary-schema'
 
 // Reads the detail core's rows from the dictionary database (DICTIONARY_DB, issue 464): one
 // batch, so one round trip, per page. Pages read it through data.ts; the import's conformance

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { fixtureKanjiCandidates, fixtureKanjiRows } from '@/lib/dictionary/fixtures'
+import { fixtureKanjiCandidates, fixtureKanjiRows } from '../fixtures'
 import { kanjiDetail, kanjiElements, kanjiWords, wordsForReading } from './kanji'
 import type { KanjiRows, KanjiWordRow } from './rows'
 

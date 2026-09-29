@@ -15,12 +15,14 @@ build_inputs=(
   "${lfs_inputs[@]}"
   apps/web/drizzle/search
   apps/web/src/db/search-schema.ts
-  # The search core, which precomputes search_cache.
-  apps/web/src/lib/dictionary/search
+  # The search core, which precomputes search_cache, and the website's search over it.
+  packages/dictionary-core/src/search
+  apps/web/src/lib/dictionary/search/website.ts
   # What check_local runs the search results suite through: the results page's core, the chips
   # it draws (detail/frequency.ts), and the pack reader build-rows.py shares.
-  apps/web/src/lib/dictionary/results
-  apps/web/src/lib/dictionary/detail/frequency.ts
+  packages/dictionary-core/src/results
+  apps/web/src/lib/dictionary/results/links.ts
+  packages/dictionary-core/src/detail/frequency.ts
   apps/web/scripts/release-d1/dictionary/language_data.py
   # Everything else check_local's tests run or draw, but not the tests themselves (build-id.sh
   # leaves out *.test.ts and *.test.tsx): the page's component and what it draws, how the
@@ -35,11 +37,11 @@ build_inputs=(
   apps/web/src/components/ui/empty.tsx
   apps/web/src/components/ui/item.tsx
   apps/web/src/components/ui/separator.tsx
-  apps/web/src/lib/dictionary/detail/kanji.ts
-  apps/web/src/lib/dictionary/detail/ruby.ts
-  apps/web/src/lib/dictionary/detail/strokes.ts
-  apps/web/src/lib/dictionary/detail/text.ts
-  apps/web/src/lib/dictionary/fixtures
+  packages/dictionary-core/src/detail/kanji.ts
+  packages/dictionary-core/src/detail/ruby.ts
+  packages/dictionary-core/src/detail/strokes.ts
+  packages/dictionary-core/src/detail/text.ts
+  packages/dictionary-core/src/fixtures
   apps/web/src/lib/dictionary/urls.ts
   # The app-recorded suites the gate checks, so a re-recorded suite checks the next deploy.
   apps/ios/LanguageData/Conformance/search-retrieval.json

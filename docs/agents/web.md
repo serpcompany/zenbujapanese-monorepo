@@ -1,7 +1,9 @@
 # Website working guide
 
 `apps/web` is zenbujapanese.com: Next.js served from Cloudflare Workers through OpenNext, with
-Cloudflare D1 through Drizzle. It owns its toolchain (pnpm, its own lockfile) per ADR 0005. Run
+Cloudflare D1 through Drizzle. It builds with pnpm in the repository's workspace (the root
+`pnpm-workspace.yaml` and lockfile), which it shares with the dictionary core
+(`packages/dictionary-core`), and still owns its build, tests, and deploys (ADR 0005). Run
 every command below from `apps/web`. Decisions and scope live in issue #402. What the dictionary
 pages show, and the check that enforces each behavior, is in
 [`apps/web/docs/product/`](../../apps/web/docs/product/index.md).

@@ -1,6 +1,6 @@
+import type { SearchResultsScreen } from '@zenbu/dictionary-core/results/results'
 import { describe, expect, test } from 'vitest'
 import { isIndexable, linkSearchScreen } from './links'
-import type { SearchResultsScreen } from './results'
 
 const kanjiOnly: SearchResultsScreen = {
   state: 'results',

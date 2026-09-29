@@ -30,6 +30,10 @@ and later the browser extension and the apps, offline, against the same artifact
 Node, Next.js, or Workers code, and takes its database, files, and capabilities from the client.
 A client without a capability has that feature off, as ADR 0008 decided.
 
+The JavaScript apps and packages share one pnpm workspace at the repository root, so the website's
+bundler and OpenNext build the core in, and one lockfile pins what they share. Each app still owns
+its build, tests, and deploys (ADR 0005); the iOS app keeps its own toolchain.
+
 ## What this changes
 
 - **ADR 0007:** the website no longer reads its own D1 copy of the artifact. It reads the

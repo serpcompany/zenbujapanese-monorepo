@@ -1,5 +1,11 @@
+import type { FrequencyRow } from '@zenbu/dictionary-core/detail/rows'
+import { fixtureKanjiRows, fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
+import type {
+  SearchEntry,
+  SearchResultItem,
+  SearchResults
+} from '@zenbu/dictionary-core/search/search'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { fixtureKanjiRows, fixtureWordRows } from '@/lib/dictionary/fixtures'
 import {
   getKanjiPage,
   getWordExamples,
@@ -8,19 +14,20 @@ import {
   type SearchData,
   searchDictionary
 } from './data'
-import type { FrequencyRow } from './detail/rows'
 import {
   type DictionaryExamples,
   type DictionaryKanji,
   type DictionaryWord,
   dictionaryDatabase
 } from './dictionary-db'
-import type { SearchEntry, SearchResultItem, SearchResults } from './search/search'
 import { websiteSearch } from './search/website'
 
 const env: { SEARCH_DB?: D1Database; DICTIONARY_DB?: D1Database } = {}
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ env }) }))
-vi.mock('./search/website', () => ({ websiteSearch: vi.fn() }))
+vi.mock('./search/website', async importOriginal => ({
+  ...(await importOriginal<typeof import('./search/website')>()),
+  websiteSearch: vi.fn()
+}))
 vi.mock('./dictionary-db', () => ({ dictionaryDatabase: vi.fn() }))
 
 /** 食べる as the core returns it for "eat", with its Language Reference ID. */

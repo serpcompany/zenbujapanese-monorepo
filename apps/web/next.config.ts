@@ -1,3 +1,4 @@
+import { join } from 'node:path'
 import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
 import type { NextConfig } from 'next'
 import type { Redirect } from 'next/dist/lib/load-custom-routes'
@@ -42,10 +43,12 @@ function redirectHostTo(
 const nextConfig: NextConfig = {
   // SERP URL trailing-slash standard: pages end in / (/about/); files never do (/robots.txt).
   trailingSlash: true,
-  turbopack: {
-    // Keep lockfiles outside apps/web from changing the workspace root.
-    root: process.cwd()
-  },
+  // The shared dictionary core (@zenbu/dictionary-core, packages/dictionary-core) is TypeScript
+  // source, compiled with the site.
+  transpilePackages: ['@zenbu/dictionary-core'],
+  // The pnpm workspace's root, where its lockfile is: Turbopack reads the core from there, and
+  // OpenNext finds the site's standalone build under it (.next/standalone/apps/web).
+  turbopack: { root: join(process.cwd(), '../..') },
   async redirects() {
     const canonicalOrigin = isProductionSite()
       ? 'https://zenbujapanese.com'

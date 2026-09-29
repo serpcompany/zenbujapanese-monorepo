@@ -1,7 +1,7 @@
+import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
+import { exampleLimit } from '@zenbu/dictionary-core/examples/retrieval'
 import type { NextRequest } from 'next/server'
 import { getWordExamples } from '@/lib/dictionary/data'
-import { examplesPerPage } from '@/lib/dictionary/detail/examples'
-import { exampleLimit } from '@/lib/dictionary/examples/retrieval'
 
 /**
  * `/dictionary/examples/<ent_seq>.json?build=<build>&from=<n>`: the next `examplesPerPage` of a

@@ -1,10 +1,10 @@
-import { normalizeQuery } from './query'
+import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import {
   DictionarySearch,
-  d1SearchDatabase,
   type SearchCapabilities,
+  type SearchDatabase,
   type SearchResults
-} from './search'
+} from '@zenbu/dictionary-core/search/search'
 
 /**
  * The capabilities the website supplies: none. Sentence search needs the app's Japanese
@@ -12,6 +12,19 @@ import {
  * website leaves it off and is a glossary of words and kanji (ADR 0008).
  */
 export const websiteCapabilities: SearchCapabilities = {}
+
+/** The search core's database access, on D1. */
+export function d1SearchDatabase(db: D1Database): SearchDatabase {
+  return {
+    async all<Row>(sql: string, params: readonly (string | number)[]) {
+      const { results } = await db
+        .prepare(sql)
+        .bind(...params)
+        .all<Row>()
+      return results
+    }
+  }
+}
 
 export interface WebsiteSearch {
   search(rawQuery: string): Promise<SearchResults>

@@ -1,12 +1,26 @@
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
+import { tierLabels } from '@zenbu/dictionary-core/detail/frequency'
+import {
+  loadFrequency,
+  type SearchResultsScreen,
+  searchResultsScreen
+} from '@zenbu/dictionary-core/results/results'
+import {
+  EvidenceLane,
+  FormRelation,
+  GlossRelation,
+  type Rank
+} from '@zenbu/dictionary-core/search/rank'
+import { type SearchResultItem, searchFeatures } from '@zenbu/dictionary-core/search/search'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { getPlatformProxy } from 'wrangler'
-import { tierLabels } from '../detail/frequency'
-import { EvidenceLane, FormRelation, GlossRelation, type Rank } from '../search/rank'
-import { d1SearchDatabase, type SearchResultItem, searchFeatures } from '../search/search'
-import { type WebsiteSearch, websiteCapabilities, websiteSearch } from '../search/website'
-import { loadFrequency, type SearchResultsScreen, searchResultsScreen } from './results'
+import {
+  d1SearchDatabase,
+  type WebsiteSearch,
+  websiteCapabilities,
+  websiteSearch
+} from '../search/website'
 
 // The search results suite, recorded from the app on the iOS Simulator
 // (apps/ios/LanguageData/Conformance/search-results.json, SearchResultsConformanceTests.swift):

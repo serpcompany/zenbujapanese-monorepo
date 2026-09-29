@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
 import { describe, expect, test } from 'vitest'
@@ -12,6 +12,9 @@ import { describe, expect, test } from 'vitest'
 
 const web = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
 const repo = resolve(web, '../..')
+/** The shared core (packages/dictionary-core), imported as @zenbu/dictionary-core/<path>. */
+const core = join(repo, 'packages/dictionary-core/src')
+const corePackage = '@zenbu/dictionary-core/'
 const resources = 'apps/ios/Modules/Sources/SearchExperience/Resources'
 
 /** The words of a bash array's body, without comments, quotes, or the lfs_inputs expansion. */
@@ -33,9 +36,11 @@ function runtimeImports(entry: string): string[] {
   const resolveSpecifier = (from: string, specifier: string) => {
     const base = specifier.startsWith('@/')
       ? join(web, 'src', specifier.slice(2))
-      : specifier.startsWith('.')
-        ? resolve(dirname(from), specifier)
-        : null
+      : specifier.startsWith(corePackage)
+        ? join(core, specifier.slice(corePackage.length))
+        : specifier.startsWith('.')
+          ? resolve(dirname(from), specifier)
+          : null
     if (!base) return null
     return (
       ['', '.ts', '.tsx', '/index.ts']
@@ -62,7 +67,8 @@ function runtimeImports(entry: string): string[] {
     })
   }
   walk(entry)
-  return [...seen].map(file => relative(repo, file))
+  // As the build inputs list them: from the repository root, with forward slashes.
+  return [...seen].map(file => relative(repo, file).split(sep).join('/'))
 }
 
 const covers = (inputs: string[], path: string) =>

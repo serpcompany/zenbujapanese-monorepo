@@ -8,7 +8,7 @@ import type {
   SuiteFrequencyDetails,
   SuiteFurigana,
   SuitePitchGraph
-} from '@/lib/dictionary/detail/suite'
+} from '@zenbu/dictionary-core/detail/suite'
 
 /**
  * Text with tags removed and the entities React writes decoded. Tags are stripped until none

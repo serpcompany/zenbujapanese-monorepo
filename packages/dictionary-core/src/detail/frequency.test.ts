@@ -155,7 +155,7 @@ describe('frequencyRowDetails (FrequencyDisclosurePresentation)', () => {
     const catalog: { packs: Record<string, unknown>[] } = JSON.parse(
       readFileSync(
         new URL(
-          '../../../../../ios/Modules/Sources/SearchExperience/Resources/FrequencyPackCatalog.json',
+          '../../../../apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackCatalog.json',
           import.meta.url
         ),
         'utf8'

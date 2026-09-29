@@ -7,13 +7,13 @@
 // On D1, い reads 460,276 rows and takes 1.4–3.4 s, and a few such searches stall every other
 // query on the database; from the cache it takes about 30 ms.
 import { readFileSync, writeFileSync } from 'node:fs'
-import { getPlatformProxy } from 'wrangler'
-import { normalizeQuery } from '../../../src/lib/dictionary/search/query'
+import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import {
   DictionarySearch,
   type SearchDatabase,
   type SearchResults
-} from '../../../src/lib/dictionary/search/search'
+} from '@zenbu/dictionary-core/search/search'
+import { getPlatformProxy } from 'wrangler'
 import { websiteCapabilities } from '../../../src/lib/dictionary/search/website'
 
 export const rowsReadThreshold = 20_000

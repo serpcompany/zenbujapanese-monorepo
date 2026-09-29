@@ -3,16 +3,16 @@
 // resolves words with.
 
 import { DatabaseSync } from 'node:sqlite'
-import { graphemes } from '../../../src/lib/dictionary/detail/text'
-import type { LinkEntry } from '../../../src/lib/dictionary/examples/linking'
+import { graphemes } from '@zenbu/dictionary-core/detail/text'
+import type { LinkEntry } from '@zenbu/dictionary-core/examples/linking'
 import type {
   CorpusSentence,
   EntryEvidence,
   ExampleCorpus,
   TermOccurrences
-} from '../../../src/lib/dictionary/examples/retrieval'
-import { isASCII, normalizeQuery } from '../../../src/lib/dictionary/search/query'
-import { type JapaneseRow, rankJapanese } from '../../../src/lib/dictionary/search/search'
+} from '@zenbu/dictionary-core/examples/retrieval'
+import { isASCII, normalizeQuery } from '@zenbu/dictionary-core/search/query'
+import { type JapaneseRow, rankJapanese } from '@zenbu/dictionary-core/search/search'
 
 /** ExampleSentenceData.wordIndexSchema: the ExampleWordIndex the app reads. */
 export const wordIndexSchema = 'zenbu.example-word-index.v1'

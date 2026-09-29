@@ -1,5 +1,6 @@
 'use client'
 
+import type { StrokeOrder as StrokeOrderData } from '@zenbu/dictionary-core/detail/strokes'
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -12,7 +13,6 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useMediaQuery } from '@/hooks/use-media-query'
-import type { StrokeOrder as StrokeOrderData } from '@/lib/dictionary/detail/strokes'
 
 // The kanji page's stroke order, ported from the app: KanjiDetailView.swift's `strokeOrderAction`
 // (a small bordered button under the glyph) opens KanjiStrokeOrderSheet, whose

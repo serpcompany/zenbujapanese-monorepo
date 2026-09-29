@@ -1,5 +1,4 @@
 import { readFileSync } from 'node:fs'
-import { describe, expect, test } from 'vitest'
 import type {
   EntryRow,
   ExampleLinkRow,
@@ -11,7 +10,8 @@ import type {
   KanjiStructureRow,
   KanjiWordRow,
   WordExampleRow
-} from '../lib/dictionary/detail/rows'
+} from '@zenbu/dictionary-core/detail/rows'
+import { describe, expect, test } from 'vitest'
 import type {
   elementGlyphs,
   exampleSentences,

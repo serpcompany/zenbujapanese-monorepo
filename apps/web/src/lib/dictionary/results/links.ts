@@ -2,9 +2,13 @@
 // data.ts's `searchDictionary` and the rendered-page test, so the test renders the page's real
 // links.
 
-import { fixtureWordRows } from '@/lib/dictionary/fixtures'
+import { fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
+import type {
+  KanjiRow,
+  ResultRow,
+  SearchResultsScreen
+} from '@zenbu/dictionary-core/results/results'
 import { hasSearchPath, kanjiPath, searchPath, wordPath } from '../urls'
-import type { KanjiRow, ResultRow, SearchResultsScreen } from './results'
 
 /** With the page it links to; null when it has no page yet. */
 type Linked<T> = T & { path: string | null }

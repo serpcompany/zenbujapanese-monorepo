@@ -1,4 +1,4 @@
-import { kanjiWords as orderKanjiWords } from '@/lib/dictionary/detail/kanji'
+import { kanjiWords as orderKanjiWords } from '../detail/kanji'
 import type {
   ExampleCountRow,
   ExampleSentenceRow,
@@ -6,7 +6,7 @@ import type {
   KanjiWordRow,
   WordExampleRow,
   WordRows
-} from '@/lib/dictionary/detail/rows'
+} from '../detail/rows'
 import exampleCounts from './example-counts.json'
 import exampleSentences from './example-sentences.json'
 import kanji from './kanji.json'

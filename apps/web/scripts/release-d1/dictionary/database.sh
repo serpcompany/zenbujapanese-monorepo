@@ -29,11 +29,12 @@ build_inputs=(
   apps/web/src/db/dictionary-schema.ts
   # The detail core: its conformance gate (check_local) must pass on every import, so a change
   # to the core re-runs the gate by importing a new build on the next deploy.
-  apps/web/src/lib/dictionary/detail
+  packages/dictionary-core/src/detail
   # The example ports that precompute word_examples (build-examples.mts), and the search core
   # they look example words up with (`rankJapanese`, query normalization).
-  apps/web/src/lib/dictionary/examples
-  apps/web/src/lib/dictionary/search
+  packages/dictionary-core/src/examples
+  apps/web/src/lib/dictionary/examples/kuromoji.ts
+  packages/dictionary-core/src/search
   # Everything else check_local's tests run or draw, but not the tests themselves (build-id.sh
   # leaves out *.test.ts and *.test.tsx): how the gate reads the database, and the word page's
   # components the rendered-page test draws, with how it reads them back. gate-inputs.test.ts

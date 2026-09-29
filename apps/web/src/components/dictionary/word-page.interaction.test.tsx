@@ -1,10 +1,11 @@
 // @vitest-environment happy-dom
+
+import { conjugations } from '@zenbu/dictionary-core/detail/conjugation'
+import { frequencyRowDetails } from '@zenbu/dictionary-core/detail/frequency'
+import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { conjugations } from '@/lib/dictionary/detail/conjugation'
-import { frequencyRowDetails } from '@/lib/dictionary/detail/frequency'
-import { rubySegments } from '@/lib/dictionary/detail/ruby'
 import { ConjugationsButton } from './conjugations'
 import { FrequencySection } from './frequency-section'
 import { HeadwordRuby } from './headword-ruby'

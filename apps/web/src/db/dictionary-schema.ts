@@ -1,4 +1,3 @@
-import { integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 import type {
   ExampleLinkRow,
   ExampleSentenceTokenRow,
@@ -8,7 +7,8 @@ import type {
   PitchRow,
   RelationshipRow,
   SenseRow
-} from '../lib/dictionary/detail/rows'
+} from '@zenbu/dictionary-core/detail/rows'
+import { integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 // The dictionary database (DICTIONARY_DB): one D1 per build of the dictionary, imported by
 // `scripts/release-d1/ensure-release.sh dictionary` and read by word and kanji pages (issue 464,

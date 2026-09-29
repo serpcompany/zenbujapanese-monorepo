@@ -1,18 +1,18 @@
 'use client'
 
-import { ChevronLeftIcon, ChevronRightIcon, EqualIcon } from 'lucide-react'
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   type ConjugationMode,
   type ConjugationRow,
   type Conjugations,
   sharedSpellingNote
-} from '@/lib/dictionary/detail/conjugation'
-import type { PitchAccent as PitchAccentData } from '@/lib/dictionary/detail/pitch'
-import type { RubySegment } from '@/lib/dictionary/detail/ruby'
-import { graphemes } from '@/lib/dictionary/detail/text'
+} from '@zenbu/dictionary-core/detail/conjugation'
+import type { PitchAccent as PitchAccentData } from '@zenbu/dictionary-core/detail/pitch'
+import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
+import { graphemes } from '@zenbu/dictionary-core/detail/text'
+import { ChevronLeftIcon, ChevronRightIcon, EqualIcon } from 'lucide-react'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { accent, HeadwordRuby } from './headword-ruby'
 import { PitchAccent } from './pitch-accent'
 import { PronounceButton } from './pronounce-button'

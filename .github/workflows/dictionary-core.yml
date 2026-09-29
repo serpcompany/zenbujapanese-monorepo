@@ -1,14 +1,16 @@
-name: Web
+name: Dictionary core
 
+# The shared dictionary core (packages/dictionary-core, ADR 0009): Biome with its rule that keeps
+# runtimes and frameworks out, typecheck, and Vitest. The website's own workflow checks the site
+# built with it.
 on:
   pull_request:
     paths:
-      - apps/web/**
       - packages/dictionary-core/**
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
-      - .github/workflows/web.yml
+      - .github/workflows/dictionary-core.yml
 
 permissions:
   contents: read
@@ -18,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps/web
+        working-directory: packages/dictionary-core
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -31,10 +33,3 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
-      # pnpm check builds without SITE_ENV. Build as each deployed environment does too, since
-      # static pages and prerendering differ by environment: a route that reads a binding at
-      # build time fails only there. Neither build has a dictionary database, as in a deploy.
-      - name: Build for staging
-        run: SITE_ENV=staging pnpm build
-      - name: Build for production
-        run: SITE_ENV=production pnpm build

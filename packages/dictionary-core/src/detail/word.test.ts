@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { fixtureWordRows } from '@/lib/dictionary/fixtures'
+import { fixtureWordRows } from '../fixtures'
 import { partOfSpeechPhrase } from './part-of-speech'
 import type { EntryRow, WordRows } from './rows'
 import { alternativeKanji, primaryKanji, wordDetail, wordSummary } from './word'
