@@ -168,10 +168,14 @@ bare V8 context, `examples/kuromoji.ts`), and linking (`examples/linking.ts`, fr
 `JapaneseTextAnalysisClient.swift` and `JapaneseInflectionGrouping.swift`, looking words up with the
 search core's `rankJapanese`). The app scans every sentence per entry; the import instead finds
 every term's occurrences in one pass and merges them in rank order, and checks that against the
-app's scan on 400 entries on every build. 48,169 words have examples: 902,279 word examples over
+app's scan on every build: 80 entries from each retrieval path (kana headwords, ambiguous forms,
+refused entries, and written headwords with and without over 100 matches), drawn afresh per build
+from its build ID. 48,169 words have examples: 902,279 word examples over
 203,727 sentences. As in the app, 2,043 words whose headword changes under NFKC (Ｔシャツ) have none.
 The rows are written as SQL files of at most 100 MB (`examples-NN.sql`) and 500 rows per INSERT,
-since a local D1 fails on larger ones.
+since a local D1 fails on larger ones. The local build then checks that every example table holds
+the rows the precompute wrote (`examples-counts.json`), so a file Wrangler drops without failing
+stops the import before the row counts are recorded or anything is uploaded.
 
 A local build takes about 3.5 minutes (2 minutes 40 of it the example precompute, which peaks
 at about 2.5 GB of memory) and about 610 MB: stroke order is about 10 MB, and the examples add about 450 MB, 335 MB of it
@@ -239,7 +243,9 @@ their order, and element roles. `data.ts` runs the core and adds only URLs.
 `getWordPage` and `getKanjiPage` read `DICTIONARY_DB` through `dictionary-db.ts`, one batch (one
 round trip) per page, when it holds a finished import. A word page renders its first 25 examples
 and loads 25 more at a time as it scrolls, up to the app's 100, from
-`/dictionary/examples/<ent_seq>.json?from=<n>` (`getWordExamples`, noindex). Each example credits
+`/dictionary/examples/<ent_seq>.json?build=<build ID>&from=<n>` (`getWordExamples`, noindex). The
+URL names the page's dictionary build, and another build's examples aren't found, so a page open
+across a deploy offers a reload instead of mixing two builds' lists. Each example credits
 both Tatoeba sentences with their IDs, contributors, and licenses. Words link to their pages; a
 word the app can't resolve to one entry links to a search for its dictionary form. Word pages live under the stored slug
 (`words.slug`), so a stale slug redirects (308) to it and an unknown number returns 404. A failing

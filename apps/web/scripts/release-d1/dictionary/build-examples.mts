@@ -10,15 +10,18 @@
 // 100 MB (Wrangler drops larger ones locally), with INSERTs for example_sentences (each
 // listed Tatoeba pair once, with its Kuromoji tokens and both sides' attribution), word_examples
 // (per entry and position: which tokens are the entry, and where each word links on its page),
-// and word_example_counts. Given entry numbers, it writes only their rows, as JSON, for the local
-// fixtures (scripts/export-dictionary-fixtures.py).
+// and word_example_counts, and `<out prefix>-counts.json`, the rows each table should then hold.
+// Given entry numbers, it writes only their rows, as JSON, for the local fixtures
+// (scripts/export-dictionary-fixtures.py).
 //
 // Everything is the app's logic, ported: retrieval (src/lib/dictionary/examples/retrieval.ts,
 // from ExampleSentenceClient.swift), the tokenizer (the app's pinned kuromoji.js and IPADIC,
 // examples/kuromoji.ts), and linking (examples/linking.ts, from JapaneseTextAnalysisClient.swift).
-// It checks the fast retrieval against the app's own scan on a sample of entries and fails on
-// any difference; the word-detail conformance gate then checks the result against the app.
+// It checks the fast retrieval against the app's own scan on a sample of entries from every
+// retrieval path, drawn per build, and fails on any difference; the word-detail conformance gate
+// then checks the result against the app.
 
+import { createHash } from 'node:crypto'
 import { closeSync, openSync, writeFileSync, writeSync } from 'node:fs'
 import { join } from 'node:path'
 import type {
@@ -66,8 +69,11 @@ const maxStatementBytes = 90_000
 const maxStatementRows = 500
 /** Wrangler drops a local D1 file of 400 MB; 130 MB loads. */
 const maxFileBytes = 100_000_000
-/** How many entries, spread evenly, have their retrieval checked against the app's scan. */
-const checkedSample = 400
+/**
+ * How many entries of each retrieval path have their retrieval checked against the app's scan,
+ * drawn afresh for each build (seeded by ZENBU_EXAMPLES_SEED, the build ID).
+ */
+const checkedPerPath = 80
 
 const [source, resources, outPath, only] = process.argv.slice(2)
 if (!outPath) {
@@ -119,9 +125,43 @@ for (const entry of pages) {
 }
 log(`retrieved examples for ${retrieved.size} pages`)
 
-// The fast path must list exactly what the app's scan lists.
-const step = Math.max(1, Math.floor(pages.length / checkedSample))
-const checked = pages.filter((_, index) => index % step === 0)
+// The fast path must list exactly what the app's scan lists. The sample covers every path:
+// kana headwords (ExampleWordIndex), ambiguous forms, entries the app refuses, and written
+// headwords with and without more than 100 matches.
+const paths = new Map<string, Entry[]>()
+for (const entry of pages) {
+  const terms = entryTerms(entry, forms)
+  const path =
+    typeof terms === 'string'
+      ? terms
+      : retrieved.get(entry.id)?.truncated
+        ? 'written, over 100'
+        : 'written'
+  const list = paths.get(path)
+  if (list) list.push(entry)
+  else paths.set(path, [entry])
+}
+let seed = createHash('sha256')
+  .update(process.env.ZENBU_EXAMPLES_SEED ?? 'local')
+  .digest()
+  .readUInt32BE(0)
+/** A seeded xorshift generator, so a build's sample can be drawn again. */
+function random(): number {
+  seed ^= seed << 13
+  seed ^= seed >>> 17
+  seed ^= seed << 5
+  seed >>>= 0
+  return seed / 2 ** 32
+}
+const checked: Entry[] = []
+for (const [path, candidates] of [...paths].sort(([a], [b]) => (a < b ? -1 : 1))) {
+  const drawn = new Set<Entry>()
+  while (drawn.size < Math.min(checkedPerPath, candidates.length)) {
+    drawn.add(candidates[Math.floor(random() * candidates.length)])
+  }
+  checked.push(...drawn)
+  log(`checking ${drawn.size} of ${candidates.length} pages retrieved as ${path}`)
+}
 for (const entry of checked) {
   const fast = JSON.stringify(retrieveEntryExamples(entry, exampleCorpus))
   if (fast !== JSON.stringify(retrieveEntryExamplesByScan(entry, exampleCorpus))) {
@@ -369,6 +409,8 @@ exampleWriter.flush()
 countWriter.flush()
 if (out !== null) closeSync(out)
 if (fixtureEntSeqs) writeFileSync(outPath, JSON.stringify(fixtures))
+// The rows each table should hold once every file is loaded, which the local build checks.
+else writeFileSync(`${outPath}-counts.json`, JSON.stringify(counts))
 db.close()
 // The app looks an ASCII form up in English, which linking doesn't port; no example needs it.
 if (asciiForms.size > 0) {

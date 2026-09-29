@@ -23,12 +23,12 @@ describe('GET /dictionary/examples/<ent_seq>.json', () => {
 
   test("returns the next 25 of a word's examples", async () => {
     vi.mocked(getWordExamples).mockResolvedValue([example])
-    const response = await get('1259290.json', '?from=25')
+    const response = await get('1259290.json', '?build=b1&from=25')
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ examples: [example] })
-    expect(getWordExamples).toHaveBeenCalledWith(1259290, 25)
+    expect(getWordExamples).toHaveBeenCalledWith(1259290, 25, 'b1')
     expect(response.headers.get('X-Robots-Tag')).toBe('noindex')
-    expect(response.headers.get('Cache-Control')).toBe('public, max-age=3600')
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=86400')
   })
 
   test.each([
@@ -43,7 +43,7 @@ describe('GET /dictionary/examples/<ent_seq>.json', () => {
     expect(getWordExamples).not.toHaveBeenCalled()
   })
 
-  test('is not found for an unknown word', async () => {
+  test('is not found for an unknown word or another build', async () => {
     vi.mocked(getWordExamples).mockResolvedValue(null)
     expect((await get('1.json', '?from=25')).status).toBe(404)
   })

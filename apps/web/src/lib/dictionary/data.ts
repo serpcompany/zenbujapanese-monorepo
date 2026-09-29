@@ -124,8 +124,21 @@ async function dictionaryDb() {
   return db ? dictionaryDatabase(db) : null
 }
 
-/** Where the page loads more of a word's examples (src/app/dictionary/examples). */
-export const examplesPath = (entSeq: number) => `/dictionary/examples/${entSeq}.json`
+/** The build the page's rows come from: the dictionary database's, or the fixtures'. */
+async function dictionaryBuild(): Promise<string> {
+  const { env } = await getCloudflareContext({ async: true })
+  const db = await imported(env.DICTIONARY_DB, 'DICTIONARY_DB')
+  return db ? (importedBuilds.get(db) ?? '') : fixtureBuild
+}
+
+const fixtureBuild = 'fixtures'
+
+/**
+ * Where the page loads more of a word's examples (src/app/dictionary/examples), for the build the
+ * page came from, so a page never mixes its first examples with another build's next ones.
+ */
+export const examplesPath = (entSeq: number, build: string) =>
+  `/dictionary/examples/${entSeq}.json?build=${encodeURIComponent(build)}`
 
 /** An example with its links: a word to its page, an ambiguous word to a search for it. */
 function pageExample(example: Example, links: Links): PageExample {
@@ -144,7 +157,7 @@ function pageExample(example: Example, links: Links): PageExample {
   }
 }
 
-function wordPage(rows: WordRows, slug: string, links: Links): WordPageData {
+function wordPage(rows: WordRows, slug: string, links: Links, build: string): WordPageData {
   const detail = wordDetail(rows)
   const linkKanji = (kanji: WordKanji) => ({ ...kanji, path: links.kanji(kanji.character) })
   return {
@@ -156,7 +169,7 @@ function wordPage(rows: WordRows, slug: string, links: Links): WordPageData {
     alternativeKanji: detail.alternativeKanji.map(linkKanji),
     related: detail.related.map(word => ({ ...word, path: links.word(word.entSeq) })),
     examples: detail.examples.map(example => pageExample(example, links)),
-    examplesPath: examplesPath(detail.entSeq)
+    examplesPath: examplesPath(detail.entSeq, build)
   }
 }
 
@@ -189,22 +202,34 @@ export const getWordPage = cache(async (entSeq: number): Promise<WordPageData | 
     const word = await db.word(entSeq)
     if (!word) return null
     const slugs = new Map([...word.relatedSlugs, ...word.exampleSlugs])
-    return wordPage(word.rows, word.slug, databaseLinks(slugs, word.kanjiPages))
+    return wordPage(
+      word.rows,
+      word.slug,
+      databaseLinks(slugs, word.kanjiPages),
+      await dictionaryBuild()
+    )
   }
   const rows = wordRowsBySeq.get(entSeq)
   if (!rows) return null
   return wordPage(
     { ...rows, examples: rows.examples.slice(0, examplesPerPage) },
     wordSlug(rows.entry.headword, rows.entry.reading),
-    fixtureLinks
+    fixtureLinks,
+    fixtureBuild
   )
 })
 
 /**
  * `examplesPerPage` of a word's examples from position `from`, as its page loads more; null for
- * an unknown word. A failing database throws.
+ * an unknown word, or when `build` isn't the build now loaded (the page is from an earlier
+ * deploy). A failing database throws.
  */
-export async function getWordExamples(entSeq: number, from: number): Promise<PageExample[] | null> {
+export async function getWordExamples(
+  entSeq: number,
+  from: number,
+  build: string
+): Promise<PageExample[] | null> {
+  if (build !== (await dictionaryBuild())) return null
   const db = await dictionaryDb()
   if (db) {
     const found = await db.examples(entSeq, from, examplesPerPage)
@@ -248,9 +273,9 @@ export function summarizeSearchEntry(
   return { ...word, path: linked ? wordPath(word) : fixtureLinks.word(entSeq) }
 }
 
-// Release databases known to hold an import. Only a finished import is remembered, so a
-// database that has none yet is checked again on the next request.
-const importedDatabases = new WeakSet<D1Database>()
+// Release databases known to hold an import, with the build each holds. Only a finished import is
+// remembered, so a database that has none yet is checked again on the next request.
+const importedBuilds = new WeakMap<D1Database, string>()
 
 /**
  * Whether a release database (SEARCH_DB or DICTIONARY_DB) holds a complete import; the import
@@ -258,12 +283,16 @@ const importedDatabases = new WeakSet<D1Database>()
  * `scripts/release-d1/load-local.sh` loads one.
  */
 async function holdsImport(db: D1Database): Promise<boolean> {
-  if (importedDatabases.has(db)) return true
+  if (importedBuilds.has(db)) return true
   const table = await db
     .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'dictionary_import'")
     .first()
-  if (!table || (await db.prepare('SELECT 1 FROM dictionary_import').first()) === null) return false
-  importedDatabases.add(db)
+  if (!table) return false
+  const row = await db
+    .prepare('SELECT build_id FROM dictionary_import')
+    .first<{ build_id: string }>()
+  if (!row) return false
+  importedBuilds.set(db, row.build_id)
   return true
 }
 

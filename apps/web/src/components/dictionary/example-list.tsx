@@ -115,30 +115,35 @@ export function ExampleList({
   const [examples, setExamples] = useState(initial)
   const [loading, setLoading] = useState(false)
   const [failed, setFailed] = useState(false)
+  // The dictionary was updated since the page loaded, so its next examples are another list's.
+  const [stale, setStale] = useState(false)
   const end = useRef<HTMLDivElement>(null)
   const hasMore = examples.length < listed
 
   const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return
+    if (loading || !hasMore || stale) return
     setLoading(true)
     setFailed(false)
     try {
-      const response = await fetch(`${path}?from=${examples.length}`)
+      const response = await fetch(`${path}&from=${examples.length}`)
+      if (response.status === 404) {
+        setStale(true)
+        return
+      }
       if (!response.ok) throw new Error(`${response.status}`)
       const { examples: more } = (await response.json()) as { examples: PageExample[] }
-      // A deploy can change the list under an open page; stop rather than repeat.
-      if (more.length === 0) setFailed(true)
+      if (more.length === 0) setStale(true)
       else setExamples(current => [...current, ...more])
     } catch {
       setFailed(true)
     } finally {
       setLoading(false)
     }
-  }, [examples.length, hasMore, loading, path])
+  }, [examples.length, hasMore, loading, path, stale])
 
   useEffect(() => {
     const target = end.current
-    if (!target || !hasMore || failed) return
+    if (!target || !hasMore || failed || stale) return
     const observer = new IntersectionObserver(
       entries => {
         if (entries.some(entry => entry.isIntersecting)) void loadMore()
@@ -147,7 +152,7 @@ export function ExampleList({
     )
     observer.observe(target)
     return () => observer.disconnect()
-  }, [failed, hasMore, loadMore])
+  }, [failed, hasMore, loadMore, stale])
 
   return (
     <div className="flex flex-col gap-3">
@@ -156,7 +161,14 @@ export function ExampleList({
           <ExampleItem key={example.position} example={example} />
         ))}
       </ul>
-      {hasMore ? (
+      {hasMore && stale ? (
+        <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+          <p>These examples have been updated since the page loaded.</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Reload for more examples
+          </Button>
+        </div>
+      ) : hasMore ? (
         <div ref={end} className="flex justify-center">
           <Button variant="outline" onClick={() => void loadMore()} disabled={loading}>
             {loading ? 'Loading examples…' : failed ? 'Try again' : 'Load more examples'}

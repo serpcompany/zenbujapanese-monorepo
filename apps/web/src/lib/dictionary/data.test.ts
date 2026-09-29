@@ -74,7 +74,7 @@ function fakeD1({ tables, imported }: { tables: boolean; imported: boolean }) {
       first: async () => {
         if (sql.includes('sqlite_master')) return state.tables ? { 1: 1 } : null
         if (!state.tables) throw new Error('D1_ERROR: no such table: dictionary_import')
-        return state.imported ? { 1: 1 } : null
+        return state.imported ? { build_id: 'build-1' } : null
       }
     }))
   }
@@ -300,18 +300,19 @@ describe('word and kanji pages', () => {
     )
     const choice = tokens.find(token => token.link && 'entSeqs' in token.link)
     expect(choice?.path).toMatch(/^\/dictionary\/search\//)
-    expect(page?.examplesPath).toBe('/dictionary/examples/1546640.json')
+    expect(page?.examplesPath).toBe('/dictionary/examples/1546640.json?build=build-1')
   })
 
   test('a word page shows its first 25 examples, and the rest load 25 at a time', async () => {
     const page = await getWordPage(1546640)
     expect(page?.examples).toHaveLength(25)
     expect(page?.exampleCount?.listed).toBeGreaterThan(25)
-    const more = await getWordExamples(1546640, 25)
+    expect(page?.examplesPath).toBe('/dictionary/examples/1546640.json?build=fixtures')
+    const more = await getWordExamples(1546640, 25, 'fixtures')
     expect(more?.map(example => example.position)).toEqual(
       Array.from({ length: more?.length ?? 0 }, (_, index) => 25 + index)
     )
-    expect(await getWordExamples(1358280, 25)).toBeNull()
+    expect(await getWordExamples(1358280, 25, 'fixtures')).toBeNull()
   })
 
   test('more examples come from the dictionary database, linked by its slugs', async () => {
@@ -321,12 +322,19 @@ describe('word and kanji pages', () => {
       rows: iruRows.examples.slice(0, 2),
       slugs: new Map([[1546640, '要る']])
     })
-    const more = await getWordExamples(1546640, 25)
+    const more = await getWordExamples(1546640, 25, 'build-1')
     expect(examples).toHaveBeenCalledWith(1546640, 25, 25)
     expect(more).toHaveLength(2)
     expect(more?.[0].tokens.find(token => token.isPageWord)?.path).toBe('/dictionary/要る-1546640/')
     examples.mockResolvedValue(null)
-    expect(await getWordExamples(1, 25)).toBeNull()
+    expect(await getWordExamples(1, 25, 'build-1')).toBeNull()
+  })
+
+  test("a page from another build doesn't load this build's examples", async () => {
+    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
+    expect(await getWordExamples(1546640, 25, 'build-0')).toBeNull()
+    expect(await getWordExamples(1546640, 25, 'fixtures')).toBeNull()
+    expect(examples).not.toHaveBeenCalled()
   })
 
   test('an unknown number has no word page, even when a fixture has it', async () => {
