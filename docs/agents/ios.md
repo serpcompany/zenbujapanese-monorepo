@@ -49,6 +49,21 @@ change to Search results or a dictionary rebuild, record it again by adding
 `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` before the test command above, add
 `-only-testing:SearchExperienceTests/SearchConformanceTests` after it, and review the diff.
 
+`WordDetailConformanceTests` and `KanjiDetailConformanceTests` do the same for the detail
+screens, so the website's word and kanji pages can be checked against the app. They check
+`word-detail.json` and `kanji-detail.json` in the same folder, reading each case from the
+models and clients the views use: for a word, its headword, furigana, part of speech, pitch,
+senses, default frequency packs (JLPT and TUBELEX), kanji, and its first 25 examples with
+their linked tokens; for a kanji, its metrics, meanings, readings with their words, elements,
+24 words, and whether it has stroke data (JLPT is left out until issue 485 is decided). Each
+file pins the SHA-256 of every bundled artifact it was recorded against. After an intended
+change to either screen or its data, record them again with the same
+`TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` prefix and
+`-only-testing:SearchExperienceTests/WordDetailConformanceTests` or
+`-only-testing:SearchExperienceTests/KanjiDetailConformanceTests`, and review the diff.
+Recording keeps each case's `id` or `character` and its `covers` note, so add a case by
+adding those two fields and recording.
+
 The iOS app has no CI workflow. Verify ordinary app changes by also building,
 launching, and inspecting the real app.
 

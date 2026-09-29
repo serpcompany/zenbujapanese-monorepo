@@ -521,7 +521,7 @@ private struct KanjiReadingsSection: View {
   var body: some View {
     Section("READINGS") {
       ForEach(reference.readings, id: \.self) { reading in
-        let matches = words(matching: reading)
+        let matches = reading.words(in: relatedWords)
         if let destination = matches.first {
           NavigationLink(value: SearchExperienceRoute.word(destination, nil)) {
             KanjiReadingRow(reading: reading, words: matches)
@@ -540,9 +540,13 @@ private struct KanjiReadingsSection: View {
       }
     }
   }
+}
 
-  private func words(matching reading: KanjiReading) -> [DictionaryEntry] {
-    let stem = reading.value
+extension KanjiReading {
+  /// Up to three of the kanji's words, in their order, whose reading starts with this reading;
+  /// the Readings section shows them beside it.
+  func words(in relatedWords: [DictionaryEntry]) -> [DictionaryEntry] {
+    let stem = value
       .replacingOccurrences(of: ".", with: "")
       .replacingOccurrences(of: "-", with: "")
       .hiragana
