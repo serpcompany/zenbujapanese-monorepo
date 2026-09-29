@@ -8,6 +8,7 @@ Routing only. Open the smallest source matching the task.
 - [`docs/data-sources.md`](docs/data-sources.md) — supplied information, source roles, and current consumers.
 - [`docs/agents/ios.md`](docs/agents/ios.md) — Xcode build and launch, Simulator verification, and the current iOS test and CI boundary.
 - [`docs/agents/web.md`](docs/agents/web.md) — zenbujapanese.com: run, verify, environments, deploys, D1 migrations, and sitemaps.
+- [`language-data/README.md`](language-data/README.md) — language-data releases: the manifest, what a release packages, and the build workflow.
 - [`apps/ios/docs/product/index.md`](apps/ios/docs/product/index.md) — durable current iOS behavior. Open only the relevant linked document. Update applicable product documentation and verification in the same PR as a behavior change.
 - [`apps/web/docs/product/index.md`](apps/web/docs/product/index.md) — durable current website behavior and the automated check for each. Open only the relevant page's section. Update the behavior and its check in the same PR as a behavior change.
 
