@@ -6,7 +6,6 @@ import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadc
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
 import { PageToolbar } from '@/components/dictionary/page-toolbar'
 import { RubyText } from '@/components/dictionary/ruby-text'
-import { SearchForm } from '@/components/dictionary/search-form'
 import { Section } from '@/components/dictionary/section'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { Card, CardContent } from '@/components/ui/card'
@@ -51,7 +50,6 @@ export default async function KanjiPage({ params }: Props) {
       <DictionaryBreadcrumbs
         page={{ label: `Kanji ${kanji.character}`, path: kanjiPath(kanji.character), lang: 'ja' }}
       />
-      <SearchForm />
       <PageToolbar
         title={kanji.character}
         shareText={`${kanji.character}: ${kanji.meanings.join(', ')}`}
