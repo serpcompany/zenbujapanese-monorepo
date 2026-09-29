@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { fixtureKanjiRows } from '@/lib/dictionary/fixtures'
+import { fixtureKanjiCandidates, fixtureKanjiRows } from '@/lib/dictionary/fixtures'
 import { kanjiDetail, kanjiElements, kanjiWords, wordsForReading } from './kanji'
 import type { KanjiRows, KanjiWordRow } from './rows'
 
@@ -7,6 +7,7 @@ import type { KanjiRows, KanjiWordRow } from './rows'
 // and KanjiElementLookupClient.swift, over the app's bundled data for 要 (the fixtures).
 
 const kaname = fixtureKanjiRows.find(rows => rows.kanji.character === '要') as KanjiRows
+const kanameCandidates = fixtureKanjiCandidates.get('要') ?? []
 
 /**
  * The app's 24 words for 要, from kanjiCandidateRowsSQL (LIMIT 24) run on the bundled
@@ -34,7 +35,7 @@ function word(overrides: Partial<KanjiWordRow> & Pick<KanjiWordRow, 'id'>): Kanj
 
 describe('kanjiWords (entries(containingKanji:))', () => {
   test('lists the app’s 24 words for 要, in its order', () => {
-    expect(kanjiWords('要', kaname.words).map(row => row.entSeq)).toEqual(appWords)
+    expect(kanjiWords('要', kanameCandidates).map(row => row.entSeq)).toEqual(appWords)
   })
 
   test('orders by leading kanji, headword length, commonness, rank score, then fingerprint', () => {
@@ -65,7 +66,7 @@ describe('kanjiWords (entries(containingKanji:))', () => {
 })
 
 describe('wordsForReading (KanjiReadingsSection)', () => {
-  const words = kanjiWords('要', kaname.words)
+  const words = kanjiWords('要', kanameCandidates)
 
   test('lists up to three words whose reading starts with the reading’s stem', () => {
     const headwords = (value: string, kind: 'on' | 'kun' | 'name') =>

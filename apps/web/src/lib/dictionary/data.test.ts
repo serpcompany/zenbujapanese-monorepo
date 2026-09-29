@@ -1,11 +1,20 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { isUnreadableQuery, searchDictionary, summarizeSearchEntry } from './data'
+import { fixtureKanjiRows, fixtureWordRows } from '@/lib/dictionary/fixtures'
+import {
+  getKanjiPage,
+  getWordPage,
+  isUnreadableQuery,
+  searchDictionary,
+  summarizeSearchEntry
+} from './data'
+import { type DictionaryKanji, type DictionaryWord, dictionaryDatabase } from './dictionary-db'
 import type { SearchEntry, SearchResultItem, SearchResults } from './search/search'
 import { websiteSearch } from './search/website'
 
-const env: { SEARCH_DB?: D1Database } = {}
+const env: { SEARCH_DB?: D1Database; DICTIONARY_DB?: D1Database } = {}
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ env }) }))
 vi.mock('./search/website', () => ({ websiteSearch: vi.fn() }))
+vi.mock('./dictionary-db', () => ({ dictionaryDatabase: vi.fn() }))
 
 /** 食べる as the core returns it for "eat", with its Language Reference ID. */
 const eat: SearchResultItem = {
@@ -92,6 +101,10 @@ describe('summarizeSearchEntry', () => {
 
   test('links a word that has a page', () => {
     expect(summarizeSearchEntry(iru).path).toBe('/dictionary/要る-1546640/')
+  })
+
+  test('links every word once the dictionary database is loaded', () => {
+    expect(summarizeSearchEntry(eat.entry, true).path).toBe('/dictionary/食べる-1358280/')
   })
 })
 
@@ -194,5 +207,156 @@ describe('searchDictionary', () => {
     env.SEARCH_DB = failingD1()
     await expect(searchDictionary('要')).rejects.toThrow('Network connection lost')
     expect(websiteSearch).not.toHaveBeenCalled()
+  })
+})
+
+describe('word and kanji pages', () => {
+  const word = vi.fn<(entSeq: number) => Promise<DictionaryWord | null>>()
+  const kanji = vi.fn<(character: string) => Promise<DictionaryKanji | null>>()
+  const kanjiCard =
+    vi.fn<(character: string) => Promise<{ character: string; meanings: string[] } | null>>()
+  const iruRows = fixtureWordRows.find(rows => rows.entry.entSeq === 1546640)
+  const kanameRows = fixtureKanjiRows.find(rows => rows.kanji.character === '要')
+
+  beforeEach(() => {
+    vi.mocked(dictionaryDatabase).mockReturnValue({ word, kanji, kanjiCard })
+  })
+
+  afterEach(() => {
+    delete env.DICTIONARY_DB
+    delete env.SEARCH_DB
+    vi.clearAllMocks()
+  })
+
+  test.each([
+    ['without a dictionary database', undefined],
+    ['when it has no tables', fakeD1({ tables: false, imported: false })],
+    ['before its import finishes', fakeD1({ tables: true, imported: false })]
+  ])('read the fixtures %s', async (_, db) => {
+    env.DICTIONARY_DB = db
+    expect((await getWordPage(1546640))?.path).toBe('/dictionary/要る-1546640/')
+    // 食べる has no fixture.
+    expect(await getWordPage(1358280)).toBeNull()
+    expect((await getKanjiPage('要'))?.words).toHaveLength(24)
+    expect(dictionaryDatabase).not.toHaveBeenCalled()
+  })
+
+  test('a word page reads the dictionary database and links by stored slugs', async () => {
+    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
+    if (!iruRows) throw new Error('no fixture for 要る')
+    word.mockResolvedValue({
+      rows: {
+        ...iruRows,
+        entry: {
+          ...iruRows.entry,
+          relationships: [
+            {
+              headword: '居る',
+              reading: 'いる',
+              summary: 'to be',
+              relation: 'See also',
+              targetEntSeq: 1577980
+            },
+            {
+              headword: '無い',
+              reading: 'ない',
+              summary: 'none',
+              relation: 'Antonym',
+              targetEntSeq: null
+            }
+          ]
+        }
+      },
+      slug: '要る',
+      relatedSlugs: new Map([[1577980, 'いる']]),
+      kanjiPages: new Set(['要'])
+    })
+    const page = await getWordPage(1546640)
+    expect(word).toHaveBeenCalledWith(1546640)
+    expect(page?.path).toBe('/dictionary/要る-1546640/')
+    expect(page?.slug).toBe('要る')
+    expect(page?.kanji).toEqual([
+      { character: '要', meaning: 'need, main point', path: '/dictionary/kanji/要/' }
+    ])
+    // A related word links under its own page's slug, not the relationship's headword.
+    expect(page?.related.map(related => related.path)).toEqual(['/dictionary/いる-1577980/', null])
+  })
+
+  test('an unknown number has no word page, even when a fixture has it', async () => {
+    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
+    word.mockResolvedValue(null)
+    expect(await getWordPage(1546640)).toBeNull()
+  })
+
+  test('a kanji page reads the dictionary database', async () => {
+    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
+    if (!kanameRows) throw new Error('no fixture for 要')
+    kanji.mockResolvedValue({
+      rows: kanameRows,
+      indexable: false,
+      wordSlugs: new Map(kanameRows.words.map(row => [row.entSeq, row.headword])),
+      kanjiPages: new Set(['女'])
+    })
+    const page = await getKanjiPage('要')
+    expect(kanji).toHaveBeenCalledWith('要')
+    expect(page?.words[2].path).toBe('/dictionary/要る-1546640/')
+    expect(page?.elements.map(element => [element.character, element.path])).toEqual([
+      ['女', '/dictionary/kanji/女/'],
+      ['覀', null]
+    ])
+    // The stored flag decides.
+    expect(page?.indexable).toBe(false)
+  })
+
+  describe('deployed (SITE_ENV set)', () => {
+    beforeEach(() => {
+      vi.stubEnv('SITE_ENV', 'staging')
+    })
+
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
+    test.each([
+      ['has no tables', fakeD1({ tables: false, imported: false })],
+      ['has no finished import', fakeD1({ tables: true, imported: false })]
+    ])('a bound database that %s fails the request instead of showing fixtures', async (_, db) => {
+      env.DICTIONARY_DB = db
+      await expect(getWordPage(1546640)).rejects.toThrow('DICTIONARY_DB is bound but holds no')
+      await expect(getKanjiPage('要')).rejects.toThrow('DICTIONARY_DB is bound but holds no')
+      delete env.DICTIONARY_DB
+      env.SEARCH_DB = db
+      await expect(searchDictionary('いる')).rejects.toThrow('SEARCH_DB is bound but holds no')
+    })
+
+    test('without the bindings, pages still read the fixtures', async () => {
+      expect((await getWordPage(1546640))?.path).toBe('/dictionary/要る-1546640/')
+      expect((await searchDictionary('いる')).words).toHaveLength(6)
+    })
+  })
+
+  test('a failing dictionary database fails the request', async () => {
+    env.DICTIONARY_DB = failingD1()
+    await expect(getWordPage(1546640)).rejects.toThrow('Network connection lost')
+    await expect(getKanjiPage('要')).rejects.toThrow('Network connection lost')
+  })
+
+  test('search links every word and reads the kanji card from the dictionary database', async () => {
+    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    const search = vi.fn(async () => results([eat.entry]))
+    vi.mocked(websiteSearch).mockReturnValue({ search })
+    kanjiCard.mockResolvedValue({ character: '食', meanings: ['eat', 'food'] })
+    const data = await searchDictionary('食')
+    expect(kanjiCard).toHaveBeenCalledWith('食')
+    expect(data.kanji).toEqual({
+      character: '食',
+      meanings: ['eat', 'food'],
+      path: '/dictionary/kanji/食/'
+    })
+    expect(data.words.map(result => result.path)).toEqual(['/dictionary/食べる-1358280/'])
+    // Only a one-character query can be a kanji.
+    await searchDictionary('食べる')
+    expect(kanjiCard).toHaveBeenCalledTimes(1)
   })
 })

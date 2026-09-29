@@ -209,6 +209,16 @@ export interface KanjiWordRow {
   containsKanji: boolean
 }
 
+/**
+ * One of a kanji page's words, the entry `normalizedEntry` shows for its fingerprint group. The
+ * dictionary database stores the list in order (`kanji.word_ent_seqs_json`); fixtures order their
+ * candidate rows with `kanjiWords`.
+ */
+export type KanjiListWordRow = Pick<
+  KanjiWordRow,
+  'id' | 'entSeq' | 'headword' | 'reading' | 'summary'
+>
+
 /** Everything a kanji page reads. */
 export interface KanjiRows {
   kanji: KanjiRow
@@ -216,5 +226,6 @@ export interface KanjiRows {
   structure: KanjiStructureRow | null
   /** The elements `structure` names. */
   elements: KanjiElementRow[]
-  words: KanjiWordRow[]
+  /** The kanji's words (at most 24), in the app's order. */
+  words: KanjiListWordRow[]
 }

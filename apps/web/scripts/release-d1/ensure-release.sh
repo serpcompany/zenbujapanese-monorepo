@@ -55,29 +55,62 @@ JSON
 }
 
 # A database is complete when its import record names this build, its migrations and schema
-# match this commit, and every table holds the rows the local build counted.
+# match this commit, and every table holds the rows the local build counted. verify returns 0
+# when it is, 1 when it definitely isn't (the check ran and found a difference or a missing
+# table), and 2 when it couldn't tell (a command or query failed). Only 1 may delete the
+# database: it is usually the one the live site is bound to, so a D1 or network error must never
+# cost it its database.
 verify() {
-  # verify runs where set -e doesn't apply (`if verify`, `verify ||`), so every query returns on
+  # verify runs where set -e doesn't apply (`verify || status=$?`), so every step returns on
   # failure itself: otherwise a failed query leaves both sides of a comparison empty, and equal.
-  local imported expected_migrations applied_migrations pairs counts expected_counts actual expected
-  imported=$(remote --command "SELECT count(*) AS n, max(build_id) AS build_id FROM dictionary_import" --json |
-    json "'%s %s' % (data[0]['results'][0]['n'], data[0]['results'][0]['build_id'])") || return 1
+  # `|| return` passes on checked_query's 1 or 2.
+  local imported expected_migrations applied_migrations schema pairs counts expected_counts
+  local actual expected
+  imported=$(checked_query "SELECT count(*) AS n, max(build_id) AS build_id FROM dictionary_import" \
+    "'%s %s' % (data[0]['results'][0]['n'], data[0]['results'][0]['build_id'])") || return
   [ "$imported" = "1 $build_id" ] || { echo "dictionary_import: $imported, expected 1 $build_id"; return 1; }
   expected_migrations=$(cd "$migrations_dir" && ls -1 ./*.sql | sed 's|^\./||' | sort | paste -sd, -) ||
-    return 1
-  applied_migrations=$(remote --command "SELECT name FROM d1_migrations ORDER BY name" --json |
-    json "','.join(r['name'] for r in data[0]['results'])") || return 1
+    return 2
+  applied_migrations=$(checked_query "SELECT name FROM d1_migrations ORDER BY name" \
+    "','.join(r['name'] for r in data[0]['results'])") || return
   [ "$applied_migrations" = "$expected_migrations" ] ||
     { echo "migrations: $applied_migrations, expected $expected_migrations"; return 1; }
-  scripts/release-d1/schema.sh "$database" "$config" | diff "$schema_dump" - ||
-    { echo "schema differs from $schema_dump"; return 1; }
-  expected_counts=$(query "SELECT row_counts FROM dictionary_import" row_counts) || return 1
+  schema=$(scripts/release-d1/schema.sh "$database" "$config") ||
+    { echo "couldn't read the schema"; return 2; }
+  printf '%s\n' "$schema" | diff "$schema_dump" - || { echo "schema differs from $schema_dump"; return 1; }
+  expected_counts=$(checked_query "SELECT row_counts FROM dictionary_import" \
+    "data[0]['results'][0]['row_counts']") || return
   pairs=$(echo "$expected_counts" | json "', '.join(f\"'{t}', (SELECT count(*) FROM {t})\" for t in data)") ||
-    return 1
-  counts=$(query "SELECT json_object($pairs) AS counts" counts) || return 1
-  actual=$(echo "$counts" | json 'json.dumps(data, sort_keys=True)') || return 1
-  expected=$(echo "$expected_counts" | json 'json.dumps(data, sort_keys=True)') || return 1
+    return 2
+  counts=$(checked_query "SELECT json_object($pairs) AS counts" "data[0]['results'][0]['counts']") ||
+    return
+  actual=$(echo "$counts" | json 'json.dumps(data, sort_keys=True)') || return 2
+  expected=$(echo "$expected_counts" | json 'json.dumps(data, sort_keys=True)') || return 2
   [ "$actual" = "$expected" ] || { echo "row counts: $counts, expected $expected_counts"; return 1; }
+}
+
+# A query's result through a Python expression over its JSON (`data`), for verify. Returns 1
+# when D1 answers that a table doesn't exist, as in a partial import cancelled before its
+# migrations or its dictionary_import row (the database is definitely incomplete), and 2 for any
+# other failure.
+checked_query() {
+  local out status=0 err
+  err=$(mktemp)
+  out=$(remote --command "$1" --json 2> "$err") || status=$?
+  if [ "$status" -ne 0 ]; then
+    if grep -qi 'no such table' <<<"$out $(cat "$err")"; then
+      echo "incomplete: no such table ($1)" >&2
+      status=1
+    else
+      echo "couldn't query D1 ($1):" >&2
+      cat "$err" >&2
+      status=2
+    fi
+    rm -f "$err"
+    return "$status"
+  fi
+  rm -f "$err"
+  echo "$out" | json "$2" || return 2
 }
 
 import_release() {
@@ -124,13 +157,22 @@ load_remote() {
 id=$(database_id "$name")
 if [ -n "$id" ]; then
   write_config "$id"
-  if verify; then
-    echo "$name is already imported and verified"
-  else
-    echo "Deleting incomplete $name"
-    wrangler d1 delete "$name" --skip-confirmation
-    id=""
-  fi
+  status=0
+  verify || status=$?
+  case "$status" in
+    0) echo "$name is already imported and verified" ;;
+    1)
+      echo "Deleting $name: it isn't a complete import of this build"
+      wrangler d1 delete "$name" --skip-confirmation
+      id=""
+      ;;
+    *)
+      # Keep it: it may be the live database, and nothing says it's wrong. Stop the deploy
+      # instead, so the live site keeps its database and a rerun checks again.
+      echo "Couldn't check $name, so it's left as it is; rerun once D1 answers" >&2
+      exit 1
+      ;;
+  esac
 fi
 if [ -z "$id" ]; then
   import_release

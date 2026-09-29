@@ -56,6 +56,21 @@ fi
 # The shipped iOS app links to /privacy.
 expect /privacy 308
 
+# Dictionary pages: staging reads its dictionary database (DICTIONARY_DB), so a word and a kanji
+# without local fixtures (見る, 見) have pages; production has no dictionary pages yet.
+word=/dictionary/%E8%A6%8B%E3%82%8B-1259290/
+kanji=/dictionary/kanji/%E8%A6%8B/
+if [ "$env" = production ]; then
+  expect "$word" 404
+  expect "$kanji" 404
+else
+  expect "$word" 200
+  expect "$kanji" 200
+  # A stale or missing slug redirects to the word's one URL; an unknown number doesn't exist.
+  expect_redirect /dictionary/1259290/ "$word"
+  expect /dictionary/999999999/ 404
+fi
+
 robots="$(curl -s "${smoke[@]}" "$base/robots.txt")"
 robots_header="$(curl -sI "${smoke[@]}" "$base/" | tr -d '\r' | grep -i '^x-robots-tag:' || true)"
 

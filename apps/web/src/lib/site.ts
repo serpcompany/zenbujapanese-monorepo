@@ -18,6 +18,11 @@ export function isProductionSite() {
   return process.env.SITE_ENV === 'production'
 }
 
+/** A deployed environment, staging or production (SITE_ENV set), rather than local development. */
+export function isDeployedSite() {
+  return process.env.SITE_ENV === 'staging' || process.env.SITE_ENV === 'production'
+}
+
 export function absoluteUrl(path: string) {
   return new URL(path, site.url).toString()
 }

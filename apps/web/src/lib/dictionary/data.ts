@@ -1,7 +1,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { cache } from 'react'
 import { fixtureKanjiRows, fixtureSearchOrder, fixtureWordRows } from '@/lib/dictionary/fixtures'
-import { isProductionSite } from '@/lib/site'
+import { isDeployedSite, isProductionSite } from '@/lib/site'
 import {
   type KanjiDetail,
   type KanjiElement,
@@ -9,7 +9,7 @@ import {
   type KanjiWord,
   kanjiDetail
 } from './detail/kanji'
-import type { WordRows } from './detail/rows'
+import type { KanjiRows, WordRows } from './detail/rows'
 import {
   type AlternativeForm,
   type RelatedWord,
@@ -19,14 +19,16 @@ import {
   wordDetail,
   wordSummary
 } from './detail/word'
+import { dictionaryDatabase } from './dictionary-db'
 import type { SearchEntry } from './search/search'
 import { websiteSearch } from './search/website'
 import { kanjiPath, wordPath, wordSlug } from './urls'
 
 // Pages read the dictionary only through this module. It runs the detail core (./detail) over
-// rows and adds only the site's URLs. Search runs on the search database (SEARCH_DB) when it
-// holds an import; word and kanji rows come from local fixtures until their data is in D1
-// (#465). Only the row lookups here change as it moves.
+// rows and adds only the site's URLs. Word and kanji rows come from the dictionary database
+// (DICTIONARY_DB), and search from the search database (SEARCH_DB), each when it holds a finished
+// import; otherwise, as in `pnpm dev` by default, from local fixtures. Only the row lookups here
+// differ between the two.
 
 /** Production shows no dictionary pages until real data is loaded, so fixtures are never indexed. */
 export function isDictionaryAvailable(): boolean {
@@ -69,68 +71,127 @@ export interface SearchData {
 const wordRowsBySeq = new Map(fixtureWordRows.map(rows => [rows.entry.entSeq, rows]))
 const kanjiRowsByCharacter = new Map(fixtureKanjiRows.map(rows => [rows.kanji.character, rows]))
 
-/** The word's page, when it has one, under the slug of its own headword. */
-function wordPagePath(entSeq: number | null): string | null {
-  const rows = entSeq === null ? undefined : wordRowsBySeq.get(entSeq)
-  return rows ? wordPath(rows.entry) : null
+/** Where a page's links go: a path, or null for a word or kanji without a page. */
+interface Links {
+  word(entSeq: number | null): string | null
+  kanji(character: string | null): string | null
 }
 
-/** The kanji's page, when it has one. */
-function kanjiPagePath(character: string | null): string | null {
-  return character !== null && kanjiRowsByCharacter.has(character) ? kanjiPath(character) : null
-}
-
-export async function getWordPage(entSeq: number): Promise<WordPageData | null> {
-  const rows = wordRowsBySeq.get(entSeq)
-  if (!rows) return null
-  const detail = wordDetail(rows)
-  const linkKanji = (kanji: WordKanji) => ({ ...kanji, path: kanjiPagePath(kanji.character) })
-  return {
-    ...detail,
-    slug: wordSlug(detail.headword, detail.reading),
-    path: wordPath(rows.entry),
-    alternatives: detail.alternatives.map(form => ({ ...form, path: kanjiPagePath(form.kanji) })),
-    kanji: detail.kanji.map(linkKanji),
-    alternativeKanji: detail.alternativeKanji.map(linkKanji),
-    related: detail.related.map(word => ({ ...word, path: wordPagePath(word.entSeq) }))
+/** The fixtures' links: only fixture words and kanji have pages. */
+const fixtureLinks: Links = {
+  word(entSeq) {
+    const rows = entSeq === null ? undefined : wordRowsBySeq.get(entSeq)
+    return rows ? wordPath(rows.entry) : null
+  },
+  kanji(character) {
+    return character !== null && kanjiRowsByCharacter.has(character) ? kanjiPath(character) : null
   }
 }
 
-export async function getKanjiPage(character: string): Promise<KanjiPageData | null> {
-  const rows = kanjiRowsByCharacter.get(character)
-  if (!rows) return null
+/** The path of a word page in the dictionary database, under its stored slug. */
+const storedWordPath = (slug: string, entSeq: number) => `/dictionary/${slug}-${entSeq}/`
+
+/** Links from a page read from the dictionary database, where every word has a page. */
+function databaseLinks(wordSlugs: Map<number, string>, kanjiPages: Set<string>): Links {
+  return {
+    word(entSeq) {
+      const slug = entSeq === null ? undefined : wordSlugs.get(entSeq)
+      return entSeq === null || slug === undefined ? null : storedWordPath(slug, entSeq)
+    },
+    kanji(character) {
+      return character !== null && kanjiPages.has(character) ? kanjiPath(character) : null
+    }
+  }
+}
+
+/** The dictionary database, when it holds a finished import. */
+async function dictionaryDb() {
+  const { env } = await getCloudflareContext({ async: true })
+  const db = await imported(env.DICTIONARY_DB, 'DICTIONARY_DB')
+  return db ? dictionaryDatabase(db) : null
+}
+
+function wordPage(rows: WordRows, slug: string, links: Links): WordPageData {
+  const detail = wordDetail(rows)
+  const linkKanji = (kanji: WordKanji) => ({ ...kanji, path: links.kanji(kanji.character) })
+  return {
+    ...detail,
+    slug,
+    path: storedWordPath(slug, detail.entSeq),
+    alternatives: detail.alternatives.map(form => ({ ...form, path: links.kanji(form.kanji) })),
+    kanji: detail.kanji.map(linkKanji),
+    alternativeKanji: detail.alternativeKanji.map(linkKanji),
+    related: detail.related.map(word => ({ ...word, path: links.word(word.entSeq) }))
+  }
+}
+
+function kanjiPage(rows: KanjiRows, indexable: boolean, links: Links): KanjiPageData {
   const detail = kanjiDetail(rows)
-  const linkWord = (word: KanjiWord) => ({ ...word, path: wordPagePath(word.entSeq) })
+  const linkWord = (word: KanjiWord) => ({ ...word, path: links.word(word.entSeq) })
   return {
     ...detail,
     readings: detail.readings.map(reading => ({ ...reading, words: reading.words.map(linkWord) })),
     components: detail.components.map(component => ({
       character: component,
-      path: kanjiPagePath(component)
+      path: links.kanji(component)
     })),
     elements: detail.elements.map(element => ({
       ...element,
-      path: kanjiPagePath(element.character)
+      path: links.kanji(element.character)
     })),
     words: detail.words.map(linkWord),
-    indexable: detail.meanings.length > 0 || detail.readings.length > 0
+    indexable
   }
 }
 
-/** A search result as a word. The search database has no frequency yet. */
-export function summarizeSearchEntry(entry: SearchEntry): SearchWord {
+/**
+ * A failing dictionary database throws, so the request fails rather than rendering a 404.
+ * Memoized per request, so the page and its metadata read the database once.
+ */
+export const getWordPage = cache(async (entSeq: number): Promise<WordPageData | null> => {
+  const db = await dictionaryDb()
+  if (db) {
+    const word = await db.word(entSeq)
+    if (!word) return null
+    return wordPage(word.rows, word.slug, databaseLinks(word.relatedSlugs, word.kanjiPages))
+  }
+  const rows = wordRowsBySeq.get(entSeq)
+  if (!rows) return null
+  return wordPage(rows, wordSlug(rows.entry.headword, rows.entry.reading), fixtureLinks)
+})
+
+/** Memoized per request, like getWordPage. */
+export const getKanjiPage = cache(async (character: string): Promise<KanjiPageData | null> => {
+  const db = await dictionaryDb()
+  if (db) {
+    const kanji = await db.kanji(character)
+    if (!kanji) return null
+    return kanjiPage(kanji.rows, kanji.indexable, databaseLinks(kanji.wordSlugs, kanji.kanjiPages))
+  }
+  const rows = kanjiRowsByCharacter.get(character)
+  if (!rows) return null
+  const { meanings, readings } = rows.kanji
+  return kanjiPage(rows, meanings.length > 0 || readings.length > 0, fixtureLinks)
+})
+
+/**
+ * A search result as a word. The search database has no frequency yet. Every word links once the
+ * dictionary database is loaded (`linked`); before that, only fixture words have pages.
+ */
+export function summarizeSearchEntry(entry: SearchEntry, linked = false): SearchWord {
   const entSeq = entry.sourceRecordId
-  return { ...wordSummary({ ...entry, entSeq }, []), path: wordPagePath(entSeq) }
+  const word = wordSummary({ ...entry, entSeq }, [])
+  return { ...word, path: linked ? wordPath(word) : fixtureLinks.word(entSeq) }
 }
 
-// Search databases known to hold an import. Only a finished import is remembered, so a
+// Release databases known to hold an import. Only a finished import is remembered, so a
 // database that has none yet is checked again on the next request.
 const importedDatabases = new WeakSet<D1Database>()
 
 /**
- * Whether the search database holds a complete import; the import writes `dictionary_import`
- * last. The local SEARCH_DB has no tables until `scripts/release-d1/load-local.sh search` loads
- * one.
+ * Whether a release database (SEARCH_DB or DICTIONARY_DB) holds a complete import; the import
+ * writes `dictionary_import` last. A local one has no tables until
+ * `scripts/release-d1/load-local.sh` loads one.
  */
 async function holdsImport(db: D1Database): Promise<boolean> {
   if (importedDatabases.has(db)) return true
@@ -140,6 +201,18 @@ async function holdsImport(db: D1Database): Promise<boolean> {
   if (!table || (await db.prepare('SELECT 1 FROM dictionary_import').first()) === null) return false
   importedDatabases.add(db)
   return true
+}
+
+/**
+ * A bound release database, when it holds a finished import; null for fixtures. Only local
+ * development (no SITE_ENV) falls back to fixtures from a bound database without one: staging and
+ * production fail the request instead, so a database bound by mistake can't pass as working.
+ */
+async function imported(db: D1Database | undefined, binding: string) {
+  if (!db) return null
+  if (await holdsImport(db)) return db
+  if (isDeployedSite()) throw new Error(`${binding} is bound but holds no finished import`)
+  return null
 }
 
 /**
@@ -173,14 +246,14 @@ function fixtureWords(query: string): SearchWord[] {
   }))
 }
 
-async function searchWords(query: string): Promise<SearchWord[]> {
+async function searchWords(query: string, linked: boolean): Promise<SearchWord[]> {
   const { env } = await getCloudflareContext({ async: true })
-  const db = env.SEARCH_DB
   // A failing database throws, so the request fails rather than rendering an empty page.
-  if (!db || !(await holdsImport(db))) return fixtureWords(query)
+  const db = await imported(env.SEARCH_DB, 'SEARCH_DB')
+  if (!db) return fixtureWords(query)
   try {
     const { items } = await websiteSearch(db).search(query)
-    return items.map(item => summarizeSearchEntry(item.entry))
+    return items.map(item => summarizeSearchEntry(item.entry, linked))
   } catch (error) {
     // Like the app, a query full-text search can't read shows no results.
     if (isUnreadableQuery(error)) return []
@@ -188,15 +261,24 @@ async function searchWords(query: string): Promise<SearchWord[]> {
   }
 }
 
+/** The kanji card for a search for one kanji. */
+async function searchKanji(
+  query: string,
+  db: Awaited<ReturnType<typeof dictionaryDb>>
+): Promise<SearchData['kanji']> {
+  const kanji = db
+    ? [...query].length === 1
+      ? await db.kanjiCard(query)
+      : null
+    : (kanjiRowsByCharacter.get(query)?.kanji ?? null)
+  return kanji
+    ? { character: kanji.character, meanings: kanji.meanings, path: kanjiPath(kanji.character) }
+    : null
+}
+
 /** Memoized per request, so the page and its metadata search once. */
 export const searchDictionary = cache(async (query: string): Promise<SearchData> => {
-  // No kanji in the search database yet, so the kanji card still comes from the fixtures.
-  const kanji = kanjiRowsByCharacter.get(query)?.kanji
-  return {
-    query,
-    kanji: kanji
-      ? { character: kanji.character, meanings: kanji.meanings, path: kanjiPath(kanji.character) }
-      : null,
-    words: await searchWords(query)
-  }
+  const db = await dictionaryDb()
+  const [kanji, words] = await Promise.all([searchKanji(query, db), searchWords(query, !!db)])
+  return { query, kanji, words }
 })
