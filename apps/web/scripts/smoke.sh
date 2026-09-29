@@ -208,6 +208,92 @@ show_opens_seen() { echo "見る, 学校 open conjugations: $opens_seen (want $o
 eventually "the part of speech opens conjugations where the app's does ($opens_expected)" \
   'the part of speech opens conjugations where the app does not' opens_like_the_app show_opens_seen
 
+# iru leads with the app's "View N Example Sentences" row (the suite's title), opening its Example
+# Sentences page.
+iru_examples_title="$(python3 -c '
+import json, sys
+case = next(c for c in json.load(open(sys.argv[1]))["cases"] if c["query"] == "iru")
+print(case["examples"]["title"])
+' "$suite")"
+iru_has_examples_row() {
+  local html
+  html="$(body "$iru")"
+  grep -q "<p class=\"font-semibold\">$iru_examples_title</p>" <<<"$html" &&
+    grep -q 'href="/dictionary/search/iru/examples/"' <<<"$html"
+}
+eventually "iru shows \"$iru_examples_title\", as the app does" \
+  'iru is missing the Example Sentences row' iru_has_examples_row
+
+# Paging (#466): a search renders its first 25 words, and its rows route, named for the page's
+# search build, serves the rest 25 at a time. Together they list the suite's iru rows exactly once,
+# in order.
+iru_all_rows="$(python3 -c '
+import json, sys
+case = next(c for c in json.load(open(sys.argv[1]))["cases"] if c["query"] == "iru")
+print(" ".join(row["entSeq"][0] for row in case["results"]))
+' "$suite")"
+iru_paged=""
+iru_pages_as_the_app_lists() {
+  local html rows_path first rest=""
+  html="$(body "$iru")"
+  first="$(grep -oE 'data-result-row="[0-9]+"' <<<"$html" | grep -oE '[0-9]+' | paste -sd' ' -)"
+  rows_path="$(grep -oE '/dictionary/search/iru/results\.json\?build=[0-9a-f]+' <<<"$html" | head -n 1)"
+  if [ -n "$rows_path" ]; then
+    for from in 25 50; do
+      rest+=" $(body "$rows_path&from=$from" | python3 -c '
+import json, sys
+try:
+    print(" ".join(str(row["entSeq"]) for row in json.load(sys.stdin)["rows"]))
+except Exception:
+    print("unreadable")
+')"
+    done
+  fi
+  iru_paged="$(wc -w <<<"$first" | tr -d ' ') in the page, then $(wc -w <<<"$rest" | tr -d ' ') from ${rows_path:-no rows route}"
+  [ "$(wc -w <<<"$first" | tr -d ' ')" = 25 ] &&
+    [ "$(xargs <<<"$first $rest")" = "$iru_all_rows" ]
+}
+show_iru_paged() { echo "$iru_paged (want $(wc -w <<<"$iru_all_rows" | tr -d ' ') rows in the suite's order)"; }
+eventually "iru renders 25 words and its rows route serves the rest, in the app's order" \
+  "iru's words page differently from the app" iru_pages_as_the_app_lists show_iru_paged
+
+# A search's Example Sentences page (#511): 見る lists the sentences that contain it, the first as
+# the example-search suite recorded it (its translation), 25 in the page, and its examples route,
+# named for the page's search build, serves the next 25 from position 25.
+examples_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/example-search.json"
+miru_examples=/dictionary/search/%E8%A6%8B%E3%82%8B/examples/
+expect "$miru_examples" 200
+miru_first_english="$(python3 -c '
+import json, sys
+case = next(c for c in json.load(open(sys.argv[1]))["cases"] if c["query"] == "見る")
+english = case["shown"][0]["english"]
+# As React escapes text.
+for plain, escaped in (("&", "&amp;"), ("<", "&lt;"), (">", "&gt;"), ("\"", "&quot;"), ("'"'"'", "&#x27;")):
+    english = english.replace(plain, escaped)
+print(english)
+' "$examples_suite")"
+miru_examples_seen=""
+miru_examples_match_the_app() {
+  local html shown examples_path next
+  html="$(body "$miru_examples")"
+  shown="$(grep -oE 'data-example="[0-9]+"' <<<"$html" | wc -l | tr -d ' ')"
+  examples_path="$(grep -oE '/dictionary/search/%E8%A6%8B%E3%82%8B/examples\.json\?build=[0-9a-f]+' <<<"$html" | head -n 1)"
+  next=""
+  [ -n "$examples_path" ] && next="$(body "$examples_path&from=25" | python3 -c '
+import json, sys
+try:
+    print(" ".join(str(example["position"]) for example in json.load(sys.stdin)["examples"]))
+except Exception:
+    print("unreadable")
+')"
+  miru_examples_seen="$shown in the page; next positions ${next:-none} from ${examples_path:-no examples route}"
+  [ "$shown" = 25 ] && grep -qF "<p class=\"text-muted-foreground\">$miru_first_english</p>" <<<"$html" &&
+    [ "$next" = "$(echo {25..49})" ]
+}
+show_miru_examples() { echo "$miru_examples_seen (want 25, the suite's first sentence, then 25 to 49)"; }
+eventually '見る lists its example sentences as the app does, 25 at a time' \
+  "見る's Example Sentences page differs from the app" miru_examples_match_the_app show_miru_examples
+
 # A stale or missing slug redirects to the word's one URL; an unknown number doesn't exist.
 expect_redirect /dictionary/1259290/ "$word"
 expect /dictionary/999999999/ 404

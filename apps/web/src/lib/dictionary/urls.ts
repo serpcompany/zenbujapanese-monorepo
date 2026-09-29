@@ -27,6 +27,11 @@ export function searchPath(query: string): string {
   return `/dictionary/search/${encodeURIComponent(query).replaceAll('.', '%2E')}/`
 }
 
+/** A search's Example Sentences page, which its "View N Example Sentences" row opens. */
+export function searchExamplesPath(query: string): string {
+  return `${searchPath(query)}examples/`
+}
+
 /** Whether a search can live at its own path; `.` and `..` can't. */
 export function hasSearchPath(query: string): boolean {
   return query !== '.' && query !== '..'

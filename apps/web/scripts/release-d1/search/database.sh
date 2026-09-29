@@ -1,5 +1,7 @@
-# The search database (SEARCH_DB): the tables the search core reads, and precomputed broad
-# queries. Sourced by ../common.sh's load_database; see there for what each setting means.
+# The search database (SEARCH_DB): the tables the search core reads, precomputed broad
+# queries, and example search (#511): every Tatoeba pair, its full-text indexes, each entry's
+# examples, and precomputed broad example searches. Sourced by ../common.sh's load_database; see
+# there for what each setting means.
 # shellcheck shell=bash disable=SC2034,SC2154 # Settings for, and names from, ../common.sh.
 
 binding=SEARCH_DB
@@ -8,8 +10,10 @@ schema_dump=src/db/search-schema.sql
 persist_dir=.search-d1
 resources=apps/ios/Modules/Sources/SearchExperience/Resources
 source_db=$resources/LanguageReferenceData.sqlite3
-# The default frequency packs fill entry_frequency, which orders search results.
-lfs_inputs=("$source_db" "$resources/JLPTLevelPack.sqlite3" "$resources/TUBELEXFrequencyPack.sqlite3")
+# The default frequency packs fill entry_frequency, which orders search results. Example search
+# reads ExampleWordIndex (a kana headword's examples) and splits sentences with Kuromoji.
+lfs_inputs=("$source_db" "$resources/JLPTLevelPack.sqlite3" "$resources/TUBELEXFrequencyPack.sqlite3"
+  "$resources/ExampleWordIndex.sqlite3" "$resources/Kuromoji")
 build_inputs=(
   # Their pointers name their SHA-256.
   "${lfs_inputs[@]}"
@@ -41,16 +45,31 @@ build_inputs=(
   apps/web/src/lib/dictionary/detail/text.ts
   apps/web/src/lib/dictionary/fixtures
   apps/web/src/lib/dictionary/urls.ts
+  # Example search: the ports that precompute it (retrieval, Kuromoji, linking, FTS4, and the
+  # search itself, in examples/), the corpus reader it shares with the dictionary import, and
+  # what the example-search gate reads and renders.
+  apps/web/src/lib/dictionary/examples
+  apps/web/scripts/release-d1/dictionary/examples-corpus.ts
+  apps/web/src/lib/dictionary/detail/examples.ts
+  apps/web/src/lib/dictionary/example-search.ts
+  apps/web/src/lib/dictionary/page-example.ts
+  apps/web/src/components/dictionary/search-result-rows.tsx
+  apps/web/src/components/dictionary/search-examples.tsx
+  apps/web/src/components/dictionary/example-list.tsx
+  apps/web/src/components/dictionary/load-more.tsx
   # The app-recorded suites the gate checks, so a re-recorded suite checks the next deploy.
   apps/ios/LanguageData/Conformance/search-retrieval.json
   apps/ios/LanguageData/Conformance/search-results.json
+  apps/ios/LanguageData/Conformance/example-search.json
 )
 tables=(entries forms form_priority_profiles canonical_senses gloss_atoms sense_form_restrictions
-  reading_form_restrictions search_cache entry_frequency)
-upload_files=(rows.sql cache.sql)
+  reading_form_restrictions search_cache entry_frequency example_sentences example_entries
+  example_search_cache)
+# examples-NN.sql: as many as build-examples.mts writes, each under 100 MB (a glob, in order).
+upload_files=(rows.sql cache.sql 'examples-*.sql')
 
 # The rows (build-rows.py), then the broad queries they make slow, precomputed through the
-# search core into search_cache.
+# search core into search_cache, then example search (build-examples.mts).
 build_rows() {
   local source="$1" build="$2"
   python3 scripts/release-d1/search/build-rows.py "$source" "$repo_root/$resources" "$build/rows.sql"
@@ -60,15 +79,43 @@ build_rows() {
   if [ -s "$build/cache.sql" ]; then
     local_d1 execute "$local_name" --file "$build/cache.sql" --yes > /dev/null
   fi
+  # node:sqlite still warns that it's experimental on Node 22. The build ID seeds the samples it
+  # checks against the app's code, so each build draws anew.
+  NODE_OPTIONS="${NODE_OPTIONS:-} --disable-warning=ExperimentalWarning" \
+    ZENBU_EXAMPLES_SEED="$(scripts/release-d1/build-id.sh search)" \
+    pnpm exec tsx scripts/release-d1/search/build-examples.mts "$source" "$repo_root/$resources" \
+    "$build/examples"
+  local file
+  for file in "$build"/examples-*.sql; do
+    local_d1 execute "$local_name" --file "$file" --yes > /dev/null
+  done
+  # A file Wrangler drops without failing would leave a gap the row counts, and so the deploy's
+  # verification, would inherit: every table must hold what build-examples.mts wrote.
+  local_d1 execute "$local_name" --json --command "SELECT json_object(
+      'example_sentences', (SELECT count(*) FROM example_sentences),
+      'example_english_fts', (SELECT count(*) FROM example_english_fts_docsize),
+      'example_japanese_chars', (SELECT count(*) FROM example_japanese_chars_docsize),
+      'example_entries', (SELECT count(*) FROM example_entries),
+      'example_search_cache', (SELECT count(*) FROM example_search_cache)) AS counts" |
+    python3 -c '
+import json, sys
+loaded = json.loads(json.load(sys.stdin)[0]["results"][0]["counts"])
+expected = json.load(open(sys.argv[1]))
+if loaded != expected:
+    sys.exit(f"The local build holds {loaded} example rows, but build-examples.mts wrote {expected}")
+' "$build/examples-counts.json"
 }
 
 # The app-recorded search suites, on the local copy built through the migrations: retrieval
-# (ADR 0006), and the results screen after the frequency re-sort (search-results.json), both as
-# data and rendered by the results page's component.
+# (ADR 0006), the results screen after the frequency re-sort (search-results.json), both as data
+# and rendered by the results page's component, and example search (example-search.json), as
+# data and rendered by the Example Sentences page's component.
 check_local() {
   # vitest.config.ts runs these one at a time: each opens the same local D1.
   ZENBU_SEARCH_D1=1 ZENBU_SEARCH_D1_PATH="$1" \
     pnpm exec vitest run src/lib/dictionary/search/conformance.test.ts \
     src/lib/dictionary/results/conformance.test.ts \
-    src/components/dictionary/search-results.test.tsx
+    src/components/dictionary/search-results.test.tsx \
+    src/lib/dictionary/examples/conformance.test.ts \
+    src/components/dictionary/search-examples.test.tsx
 }

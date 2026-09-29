@@ -21,10 +21,11 @@ const dictionary: Crumb = { label: 'Dictionary', path: '/dictionary/' }
 
 /**
  * The trail from Home through Dictionary to the current page, plus its BreadcrumbList
- * structured data. `page` is omitted on the dictionary page itself.
+ * structured data. `page` is omitted on the dictionary page itself; `parent` comes between
+ * Dictionary and the page, as a search does before its Example Sentences page.
  */
-export function DictionaryBreadcrumbs({ page }: { page?: Crumb }) {
-  const trail = page ? [home, dictionary, page] : [home, dictionary]
+export function DictionaryBreadcrumbs({ page, parent }: { page?: Crumb; parent?: Crumb }) {
+  const trail = [home, dictionary, ...(parent ? [parent] : []), ...(page ? [page] : [])]
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',

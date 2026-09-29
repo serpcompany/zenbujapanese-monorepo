@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { fixtureKanjiRows, fixtureWordRows } from '@/lib/dictionary/fixtures'
 import {
   getKanjiPage,
+  getMoreSearchExamples,
+  getSearchExamples,
+  getSearchRows,
   getWordExamples,
   getWordPage,
   isUnreadableQuery,
@@ -15,6 +18,13 @@ import {
   type DictionaryWord,
   dictionaryDatabase
 } from './dictionary-db'
+import {
+  type ExampleEntry,
+  type SearchSentenceRow,
+  type WebsiteExampleSearch,
+  websiteExampleSearch
+} from './example-search'
+import type { ExampleSearchResult } from './examples/search'
 import type { SearchEntry, SearchResultItem, SearchResults } from './search/search'
 import { websiteSearch } from './search/website'
 
@@ -22,6 +32,10 @@ const env: { SEARCH_DB?: D1Database; DICTIONARY_DB?: D1Database } = {}
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ env }) }))
 vi.mock('./search/website', () => ({ websiteSearch: vi.fn() }))
 vi.mock('./dictionary-db', () => ({ dictionaryDatabase: vi.fn() }))
+vi.mock('./example-search', async original => ({
+  ...(await original<typeof import('./example-search')>()),
+  websiteExampleSearch: vi.fn()
+}))
 
 /** 食べる as the core returns it for "eat", with its Language Reference ID. */
 const eat: SearchResultItem = {
@@ -157,6 +171,52 @@ describe('isUnreadableQuery', () => {
   })
 })
 
+/** Example search on a search database: each query's result, and each entry's examples. */
+const exampleSearch = vi.fn<WebsiteExampleSearch['search']>()
+const exampleEntry = vi.fn<WebsiteExampleSearch['entry']>()
+const exampleSentences = vi.fn<WebsiteExampleSearch['sentences']>()
+const noExampleResult: ExampleSearchResult = { ids: [], count: 0, truncated: false }
+
+/** An entry as example search reads it, with `listed` examples numbered from 1. */
+const exampleEntryOf = (entry: SearchEntry, listed: number): ExampleEntry => ({
+  id: entry.id,
+  entSeq: entry.sourceRecordId,
+  writtenForms: [entry.headword],
+  readingForms: [entry.reading],
+  sentenceIds: Array.from({ length: listed }, (_, index) => index + 1)
+})
+
+/** A sentence 食べる appears in, split into its words as the import stores them. */
+const sentence = (id: number): SearchSentenceRow => ({
+  id,
+  pairId: String(id).padStart(32, '0'),
+  japanese: 'パンを食べた。',
+  english: `I ate bread (${id}).`,
+  words: [
+    { n: 2, e: [1049020] },
+    { n: 1, e: [2029010] },
+    { n: 3, r: 'たべた', d: '食べる', e: [1358280], f: 'たべ' },
+    { n: 1 }
+  ],
+  japaneseTatoebaId: id,
+  japaneseContributor: null,
+  japaneseLicense: 'CC BY 2.0 FR',
+  englishTatoebaId: 100_000 + id,
+  englishContributor: 'CK',
+  englishLicense: 'CC BY 2.0 FR'
+})
+
+beforeEach(() => {
+  vi.mocked(websiteExampleSearch).mockReturnValue({
+    search: exampleSearch,
+    entry: exampleEntry,
+    sentences: exampleSentences
+  })
+  exampleSearch.mockResolvedValue(noExampleResult)
+  exampleEntry.mockResolvedValue(null)
+  exampleSentences.mockImplementation(async ids => ids.map(sentence))
+})
+
 describe('searchDictionary', () => {
   const search = vi.fn<(query: string) => Promise<SearchResults>>()
 
@@ -283,6 +343,70 @@ describe('searchDictionary', () => {
     expect(websiteSearch).toHaveBeenCalledTimes(2)
   })
 
+  test('leads with the Example Sentences row and the app’s count, 50+ over 50', async () => {
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    search.mockResolvedValue(results([eat.entry]))
+    exampleSearch.mockResolvedValue({ ids: [1, 2], count: 51, truncated: true })
+    const data = await searchDictionary('eat')
+    expect(exampleSearch).toHaveBeenCalledWith('eat')
+    expect(data).toMatchObject({
+      sections: ['examples', 'results'],
+      examples: {
+        title: 'View 50+ Example Sentences',
+        count: 51,
+        primaryEntry: null,
+        path: '/dictionary/search/eat/examples/'
+      }
+    })
+  })
+
+  test('counts the primary entry’s examples for a deinflected or romaji search', async () => {
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    search.mockResolvedValue({ ...results([iru, eat.entry]), usesPrimaryEntryExamples: true })
+    exampleEntry.mockResolvedValue(exampleEntryOf(iru, 3))
+    const data = await searchDictionary('iru')
+    // The primary entry: none is written "iru", so the first.
+    expect(exampleEntry).toHaveBeenCalledWith(iru.id)
+    expect(exampleSearch).not.toHaveBeenCalled()
+    expect(data).toMatchObject({
+      examples: { title: 'View 3 Example Sentences', count: 3, primaryEntry: iru.id }
+    })
+  })
+
+  test('shows only the Example Sentences row when only sentences match', async () => {
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    search.mockResolvedValue(results([]))
+    exampleSearch.mockResolvedValue({ ids: [1], count: 1, truncated: false })
+    expect(await searchDictionary('it is')).toMatchObject({
+      state: 'results',
+      sections: ['examples'],
+      examples: { title: 'View 1 Example Sentence' },
+      rows: [],
+      wordCount: 0
+    })
+  })
+
+  test('renders the first 25 words; the rows route serves the rest of this build only', async () => {
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    const entries = Array.from({ length: 60 }, (_, index) => ({
+      ...iru,
+      id: `id${index}`,
+      sourceRecordId: 2_000_000 + index
+    }))
+    search.mockResolvedValue(results(entries))
+    const data = await searchDictionary('い')
+    expect(rowsOf(data)).toHaveLength(25)
+    expect(data).toMatchObject({
+      wordCount: 60,
+      rowsPath: '/dictionary/search/%E3%81%84/results.json?build=build-1'
+    })
+    const second = await getSearchRows('い', 25, 'build-1')
+    const third = await getSearchRows('い', 50, 'build-1')
+    const listed = [...rowsOf(data), ...(second ?? []), ...(third ?? [])].map(row => row.entSeq)
+    expect(listed).toEqual(entries.map(entry => entry.sourceRecordId))
+    expect(await getSearchRows('い', 25, 'build-0')).toBeNull()
+  })
+
   test('shows a query full-text search cannot read as no results', async () => {
     env.SEARCH_DB = fakeD1({ tables: true, imported: true })
     search.mockRejectedValue(new Error('D1_ERROR: fts5: syntax error near "\u0000"'))
@@ -300,6 +424,76 @@ describe('searchDictionary', () => {
     env.SEARCH_DB = failingD1()
     await expect(searchDictionary('要')).rejects.toThrow('Network connection lost')
     expect(websiteSearch).not.toHaveBeenCalled()
+  })
+})
+
+describe('a search’s Example Sentences page', () => {
+  const search = vi.fn<(query: string) => Promise<SearchResults>>()
+
+  beforeEach(() => {
+    vi.mocked(websiteSearch).mockReturnValue({ search })
+  })
+
+  afterEach(() => {
+    delete env.SEARCH_DB
+    vi.clearAllMocks()
+  })
+
+  test('lists the sentences that contain the query, 25 at first, with each word linked', async () => {
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    search.mockResolvedValue(results([eat.entry]))
+    exampleEntry.mockResolvedValue(exampleEntryOf(eat.entry, 0))
+    const ids = Array.from({ length: 60 }, (_, index) => index + 1)
+    exampleSearch.mockResolvedValue({ ids, count: 51, truncated: false })
+    const data = await getSearchExamples('食べた')
+    expect(data).toMatchObject({
+      query: '食べた',
+      listed: 60,
+      examplesPath: '/dictionary/search/%E9%A3%9F%E3%81%B9%E3%81%9F/examples.json?build=build-1'
+    })
+    expect(data.examples.map(example => example.position)).toEqual(
+      ids.slice(0, 25).map(id => id - 1)
+    )
+    const [first] = data.examples
+    // 食べた is 食べる, the primary entry, with furigana over 食 and the query's words marked.
+    expect(first.tokens.map(token => [token.text, token.link, token.isPageWord])).toEqual([
+      ['パン', { entSeq: 1049020 }, false],
+      ['を', { entSeq: 2029010 }, false],
+      ['食べた', { entSeq: 1358280 }, true],
+      ['。', null, false]
+    ])
+    expect(first.tokens[2].ruby).toEqual([{ text: '食', reading: 'た' }, { text: 'べた' }])
+    expect(first.japanese).toEqual({ id: 1, contributor: null, license: 'CC BY 2.0 FR' })
+    expect(first.english).toEqual({ id: 100_001, contributor: 'CK', license: 'CC BY 2.0 FR' })
+  })
+
+  test('loads the next 25 without repeating or skipping any, for its build only', async () => {
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    search.mockResolvedValue(results([eat.entry]))
+    const ids = Array.from({ length: 60 }, (_, index) => 1000 + index)
+    exampleSearch.mockResolvedValue({ ids, count: 51, truncated: false })
+    const first = await getSearchExamples('eat')
+    const second = await getMoreSearchExamples('eat', 25, 'build-1')
+    const third = await getMoreSearchExamples('eat', 50, 'build-1')
+    const listed = [...first.examples, ...(second ?? []), ...(third ?? [])]
+    expect(listed.map(example => example.japanese.id)).toEqual(ids)
+    expect(listed.map(example => example.position)).toEqual(ids.map((_, index) => index))
+    expect(await getMoreSearchExamples('eat', 25, 'build-0')).toBeNull()
+  })
+
+  test('lists the primary entry’s examples for a deinflected or romaji search', async () => {
+    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
+    search.mockResolvedValue({ ...results([eat.entry]), usesPrimaryEntryExamples: true })
+    exampleEntry.mockResolvedValue(exampleEntryOf(eat.entry, 3))
+    const data = await getSearchExamples('taberu')
+    expect(exampleSearch).not.toHaveBeenCalled()
+    expect(data.listed).toBe(3)
+    expect(data.examples.map(example => example.japanese.id)).toEqual([1, 2, 3])
+  })
+
+  test('lists none without a search database', async () => {
+    const data = await getSearchExamples('eat')
+    expect(data).toMatchObject({ listed: 0, examples: [] })
   })
 })
 
@@ -322,7 +516,8 @@ describe('word and kanji pages', () => {
       // Sitemaps have their own tests (sitemaps.test.ts).
       wordSitemaps: vi.fn(),
       sitemapWords: vi.fn(),
-      indexableKanji: vi.fn()
+      indexableKanji: vi.fn(),
+      wordSlugs: vi.fn()
     })
   })
 

@@ -15,6 +15,8 @@ a sign-in prompt once account pages (#468) exist.
 
 - **Dictionary home**, `/dictionary/`: a search box.
 - **Search results**, `/dictionary/search/<query>/`: the words, and the kanji, a query finds.
+- **Example Sentences**, `/dictionary/search/<query>/examples/`: the example sentences a search's
+  "View N Example Sentences" row opens.
 - **Word page**, `/dictionary/<slug>-<ent_seq>/`: one JMdict entry, as the app's Word Detail
   shows it.
 - **Kanji page**, `/dictionary/kanji/<character>/`: one kanji, as the app's Kanji Detail shows it.
@@ -37,27 +39,32 @@ its app source and planned check, and is then built with its check in the same P
 ## How behavior is verified
 
 Each behavior in [Dictionary](dictionary.md) names its automated check, or says "No automated
-check yet (#511)". The checks come in four kinds:
+check yet (#511)". The checks come in five kinds:
 
 - **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the
-  app on the iOS Simulator: `search-retrieval.json`, `word-detail.json`, and `kanji-detail.json`.
-  Each pins, by SHA-256, the app data files it was recorded from.
-  `src/lib/dictionary/search/conformance.test.ts` and
-  `src/lib/dictionary/detail/conformance.test.ts` replay them through the website's search and
-  detail cores on a locally built release database, reading it as the pages do.
+  app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
+  `word-detail.json`, and `kanji-detail.json`. Each pins, by SHA-256, the app data files it was
+  recorded from. The `conformance.test.ts` files under `src/lib/dictionary/` replay them through
+  the website's search, results, example search, and detail cores on a locally built release
+  database, reading it as the pages do.
+- **Rendered-page tests** (`search-results.test.tsx`, `search-examples.test.tsx`) render a page's
+  component with React's server renderer, from fixed data and from suite cases, and read back
+  what a reader sees.
 - **Unit tests** (Vitest) next to the code under `apps/web/src/`. `pnpm check` runs them, and the
   `Web` workflow runs it on every pull request that changes `apps/web/**`.
-- **Import gates.** Each release database import runs its conformance suite before anything
-  reaches D1; `pnpm check` skips the suites. [`docs/agents/web.md`](../../../../docs/agents/web.md)
-  describes the gates and how to run the suites locally.
+- **Import gates.** Each release database import runs its conformance suites and rendered-page
+  tests before anything reaches D1; `pnpm check` skips the suites.
+  [`docs/agents/web.md`](../../../../docs/agents/web.md) describes the gates and how to run the
+  suites locally.
 - **Smoke checks** in `apps/web/scripts/smoke.sh`, run against staging and production after each
   deploy. Each is named here by the message it prints.
 
 The suites and most unit tests check the data a page is built from. Rendered-page tests
 (`*.test.tsx`) render a page's components to HTML with `renderToStaticMarkup`, as the server does,
-and read back what a reader sees; the search results and word pages' run the app-recorded suites
-through the components on every import. Interaction tests (`*.interaction.test.tsx`) click through
-a component in a DOM (happy-dom). Rows without either say "No automated check yet (#511)". #511
-plans more rendered-HTML checks for the designs, and more smoke checks.
+and read back what a reader sees; the search results, Example Sentences, and word pages' run the
+app-recorded suites through the components on every import. Interaction tests
+(`*.interaction.test.tsx`) click through a component in a DOM (happy-dom). Rows without either say
+"No automated check yet (#511)". #511 plans more rendered-HTML checks for the designs, and more
+smoke checks.
 
 When a behavior changes, update its entry here and its check in the same PR.

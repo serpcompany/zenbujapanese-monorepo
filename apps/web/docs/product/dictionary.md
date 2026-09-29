@@ -12,8 +12,12 @@ Abbreviations: **App docs** is `apps/ios/docs/product/dictionary.md`. Swift file
 `src/lib/dictionary/detail/conformance.test.ts` ("word and kanji detail conformance on D1").
 **SRR** is `search-results.json`, the results screen after the frequency re-sort, replayed field
 by field by `src/lib/dictionary/results/conformance.test.ts` ("search results conformance on
-D1"), and rendered for six of its cases by `src/components/dictionary/search-results.test.tsx`
-("the rendered search results page matches the app"). **WD rendered** is
+D1"), and rendered for seven of its cases by `src/components/dictionary/search-results.test.tsx`
+("the rendered search results page matches the app"). **ES** is `example-search.json`, what the
+Example Sentences screen that Search's examples row opens lists for 67 queries, replayed by
+`src/lib/dictionary/examples/conformance.test.ts` ("example search conformance on D1") and
+rendered for eight of its cases by `src/components/dictionary/search-examples.test.tsx` ("the
+rendered Example Sentences page matches the app"). **WD rendered** is
 `src/components/dictionary/word-page.test.tsx` ("the rendered word page matches the app"), which
 draws every WD case through the word page's components and reads back what they draw. All of
 these run on every import of their release database. Unit tests are named by file and test title.
@@ -83,12 +87,47 @@ first), a ranked word before an unranked one, then the retrieval order. So い�
   first rows with their chips, as the app does", which reads the rows from SRR's `iru` case.
 
 **Result count.** Above the results, a line reads "N words for «query»" (one word: "1 word"). N is
-the number of words listed, at most 60; the kanji row isn't counted. The app shows no count; the
-line follows the #462 design's wording.
+the number of words the search lists, at most 60, including those not loaded yet; the kanji row
+isn't counted. The app shows no count; the line follows the #462 design's wording.
 
 - Source: #462 design.
-- Check: No automated check yet (#511). SRR `voiceOverCount` (the count VoiceOver reads, including
-  the kanji row) is checked against the core's `resultCount`, which the page doesn't show.
+- Check: `search-results.test.tsx`, "renders the first 25 of 60 words, counts all 60, and offers
+  the rest", and the count line in the SRR cases. SRR `voiceOverCount` (the count VoiceOver reads,
+  including the kanji row) is checked against the core's `resultCount`, which the page doesn't
+  show.
+
+**Paging.** A results page renders its first 25 words in its HTML, then loads 25 more at a time,
+up to the app's 60, as the learner scrolls, or with the Load more words button. The page loads
+them from `/dictionary/search/<query>/results.json?build=<build>&from=<n>`, named for the search
+database build it was rendered from, so every word appears once, in order. When the search
+database has been updated since, the page says "These results have been updated since the page
+loaded." and offers a reload.
+
+- Source: #466 (about 25 in the page, then load more, up to 60); the word page's examples (#464)
+  for how more load.
+- Check: `search-results.test.tsx`, the SRR cases (the first 25 rows rendered, then the rest as
+  the rows route serves them, against every SRR row); `src/lib/dictionary/results/links.test.ts`,
+  "renders the first 25 words and loads the rest from the build’s rows route";
+  `src/lib/dictionary/data.test.ts`, "renders the first 25 words; the rows route serves the rest of
+  this build only"; smoke "iru renders 25 words and its rows route serves the rest, in the app's
+  order", which reads iru's rows from SRR. The stale message: No automated check yet (#511).
+
+**Example Sentences row.** The results start with the app's "View N Example Sentences" row ("View
+1 Example Sentence"; "View 50+ Example Sentences" over 50), which opens the search's
+[Example Sentences page](#example-sentences-page). N counts the sentences that contain the query
+(see that page), or, for a deinflected or romaji query such as `食べた` or `miru`, the examples of
+the primary entry (the result written as the query, else the first), at most 100. With no example
+sentences, there's no row. A query that finds example sentences but no words shows only this row.
+
+- Source: App docs, Search; the examples section of `SearchResultsView` and
+  `SearchResultsScreen.exampleCount` and `exampleActionTitle` in `SearchView.swift`.
+- Check: SRR `examples` (title, count, and primary entry) and `sections` for all 52 queries;
+  `search-results.test.tsx`, "shows the Example Sentences row, the reading refinement, then the
+  rows in order with their chips", "shows only the Example Sentences row when only sentences
+  match", and the row's title and link in the SRR cases; ES `count` and `title` for 63 queries;
+  `data.test.ts`, "leads with the Example Sentences row and the app’s count, 50+ over 50" and
+  "counts the primary entry’s examples for a deinflected or romaji search"; smoke "iru shows
+  "View 3 Example Sentences", as the app does", which reads the title from SRR.
 
 **Reading refinement.** When an English-looking query also spells a Japanese reading the app
 offers ("Search for「いる」" for `iru`), the page shows that row in its own section above the
@@ -146,9 +185,9 @@ is left out.
 - Check: `src/lib/dictionary/detail/frequency.test.ts`, "lists each default dictionary, JLPT then
   YouTube"; WD `frequency`.
 
-**No results.** When nothing matches and the query isn't one kanji, the page shows the app's "No
-Dictionary Matches" with its hint, "Try another Japanese or English Search query." A query
-full-text search can't read, such as one with a NUL, shows the same page.
+**No results.** When no word and no example sentence matches and the query isn't one kanji, the
+page shows the app's "No Dictionary Matches" with its hint, "Try another Japanese or English
+Search query." A query full-text search can't read, such as one with a NUL, shows the same page.
 
 - Source: App docs, Search; `SearchView.swift` (`search.no-results`); #462 (`Empty` for no
   results).
@@ -164,12 +203,90 @@ levels, and TUBELEX, each with its licence.
 
 **Left out on purpose.** The website has no Recent list, camera button, or Image Search. It also
 has no ✓ Known capsule and no swipe or long-press to mark a word known, since learner data lives in
-the app. The "View N Example Sentences" row is required but not built yet (see
-[Required, not built yet](#required-not-built-yet-511)).
+the app.
 
 - Source: #462 (Recent list and camera button left out; learner actions open a get-the-app
   prompt).
 - Check: not applicable.
+
+## Example Sentences page
+
+A search's "View N Example Sentences" row opens `/dictionary/search/<query>/examples/`, the app's
+Example Sentences screen for that search.
+
+**Which sentences.** An ASCII query matches the English side of every Tatoeba pair the app has
+(232,703) as a phrase of stemmed words, so `eat` finds "eats" and "eating", never across the end of
+a sentence, and only when some sentence has the query's exact words. Any other query matches the
+Japanese side as a substring. A deinflected or romaji query (`食べた`, `miru`) lists its primary
+entry's examples instead, the ones its word page lists. At most the app's 100 are listed.
+
+- Source: App docs, Search; `ExampleSentenceClient.swift` (`search`, `retrieveEnglish`,
+  `retrieveJapanese`, `examples`); `ExampleSentencesScreen.examples` in
+  `ExampleSentencesView.swift`; ADR 0008 (FTS5 on D1 in place of the app's FTS4).
+- Check: ES `ids` (every listed pair ID, in order) and `usesPrimaryEntryExamples` for 63 queries,
+  including phrases, apostrophes, hyphens, prefixes (`run*`), a first word (`^tom`), long numbers
+  that FTS4's stemmer shortens, and refused queries; `src/lib/dictionary/examples/search.test.ts`;
+  `src/lib/dictionary/examples/fts4.test.ts` (the FTS4 tokenizers, stemmer, and `offsets()` against
+  SQLite's), which the search import also checks against SQLite on every sentence.
+
+**Order.** English matches with the exact words come first, then those that match only once
+stemmed; within each, by where the match starts, then the English sentence's length in words, the
+Japanese sentence's length, and the pair ID. A Japanese query lists a sentence that is exactly the
+query first, then the others by where the query starts, their length, and the pair ID.
+
+- Source: `ExampleSentenceClient.swift` (`RankTuple`).
+- Check: ES `ids`; `search.test.ts`, "lists exact English words first, then Porter matches, each
+  by where they match" and "lists a whole Japanese sentence first, then others by where the query
+  is".
+
+**Words.** Each sentence's words are underlined and linked as the app links them on this screen:
+a word written as one of the primary entry's forms, or as the query, is that entry; any other word
+resolves by its own forms, and one the app can't resolve to one entry opens a search for its
+dictionary form. Words with one entry have furigana. The words that make up an occurrence of the
+query are marked with the thicker underline; the app accents them in color. The app lists a
+sentence's words in a Words menu beside it; the website links them in the sentence, as its word
+pages do.
+
+- Source: `LinkedJapaneseText.swift` and `JapaneseExampleRowContent`'s `.dedicated` presentation
+  in `ExampleSentencesView.swift` (`ExampleSentencesScreen.queryScalarRanges`);
+  `JapaneseTextAnalysisClient.swift`; the word page's examples (#499) for inline links.
+- Check: ES `shown[].tokens` (`surface`, `entry`, `candidates`, `queryMatch`) for the first 5
+  sentences of each query; `search-examples.test.tsx` (each word, its mark, and furigana over
+  linked kanji, in the ES cases, and "titles the page with the query, counts its examples, and
+  shows each one"); the search import checks its stored links against `linkedTokens` on 2,000
+  sentences per build; `data.test.ts`, "lists the sentences that contain the query, 25 at first,
+  with each word linked".
+
+**Translation, speaker, and credits.** Each sentence shows its translation and a speaker, and
+credits both sides of its Tatoeba pair, as a word page's examples do.
+
+- Source: `ExampleSentencesView.swift`; #465 (per-sentence attribution).
+- Check: ES `shown[].english`; `search-examples.test.tsx` (the translation and credit).
+
+**Paging.** The page renders its first 25 sentences, then loads 25 more at a time as the learner
+scrolls, or with the Load more examples button, from
+`/dictionary/search/<query>/examples.json?build=<build>&from=<n>`, named for the search database
+build it was rendered from. A line above the list gives the count, as on a word page: "N examples",
+or "The first 100 of more than 100 examples". When the search database has been updated since the
+page loaded, it says so and offers a reload.
+
+- Source: #464 (25, then load more as you scroll, plus the total), as on word pages.
+- Check: `search-examples.test.tsx`, the ES cases (the first 25 rendered, then every later page
+  the route serves, against ES `ids`); `data.test.ts`, "loads the next 25 without repeating or
+  skipping any, for its build only"; `src/app/dictionary/search/[query]/examples.json/route.test.ts`;
+  smoke "見る lists its example sentences as the app does, 25 at a time", which reads the first
+  sentence from ES.
+
+**Title and no sentences.** The page is titled with the query, as the app's screen is. Reached
+without any example sentence, which the app never opens, it says "No Example Sentences".
+
+- Source: `ExampleSentencesView.swift` (`navigationTitle(query.value)`).
+- Check: `search-examples.test.tsx`, "says so when no example sentence contains the query".
+
+**Credits.** The page ends with a Sources list: Tatoeba and JMdict.
+
+- Source: #465; `src/lib/dictionary/sources.ts`.
+- Check: No automated check yet (#511).
 
 ## Word page
 
@@ -529,6 +646,14 @@ encoded, so a query never looks like a file. `.` and `..` can't be paths, so the
 - Check: `src/lib/dictionary/urls.test.ts`, "search URLs". The redirects: No automated check yet
   (#511).
 
+**Example Sentences URLs.** A search's Example Sentences page is
+`/dictionary/search/<query>/examples/`, with the query as its search page has it; any other form
+redirects (308) to it.
+
+- Source: ADR 0007 and #466 (a search's URL), extended to its Example Sentences page (#511).
+- Check: `urls.test.ts`, "search URLs" (the query's path). The redirect: No automated check yet
+  (#511).
+
 **Titles and descriptions.** A word page is titled "要る (いる) meaning", a kanji page "要 kanji
 meaning", and a results page "«query» in Japanese", each followed by "| Zenbu Japanese". Each page
 is its own canonical URL.
@@ -536,17 +661,21 @@ is its own canonical URL.
 - Source: #465 (metadata).
 - Check: No automated check yet (#511).
 
-**Indexing.** The dictionary home, word pages, kanji pages with meanings or readings, and results
-pages that list a word, or whose kanji row opens a kanji page, are indexable. A kanji with no meanings or readings (about 475 of 13,108,
-such as 㐂), a search that finds nothing, `/dictionary/search/` itself, and the examples endpoint are
-`noindex`. Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows
-crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
+**Indexing.** The dictionary home, word pages, kanji pages with meanings or readings, results
+pages that list a word, or whose kanji row opens a kanji page, and Example Sentences pages that
+list a sentence are indexable. A kanji with no meanings or readings (about 475 of 13,108, such as
+㐂), a search that finds nothing or only example sentences, an Example Sentences page without any,
+`/dictionary/search/` itself, and the JSON routes pages load more from (a word's examples, and a
+search's words and example sentences) are `noindex`. Only production is indexed at all; staging
+sends `X-Robots-Tag: noindex` and disallows crawling (see
+[`docs/agents/web.md`](../../../../docs/agents/web.md)).
 
-- Source: #465; #466.
+- Source: #465; #466; ADR 0007 (a search page with results is indexed), for Example Sentences
+  pages (#511).
 - Check: smoke "a kanji without meanings or readings is noindex"; the conformance test checks each
-  kanji's `indexable` against its meanings and readings;
-  `src/app/dictionary/examples/[file]/route.test.ts`, "returns the next 25 of a word's examples";
-  search pages: `src/lib/dictionary/results/links.test.ts`, "isIndexable".
+  kanji's `indexable` against its meanings and readings; the JSON routes' `route.test.ts` files
+  (`X-Robots-Tag: noindex`); search pages: `src/lib/dictionary/results/links.test.ts`,
+  "isIndexable". Example Sentences pages: No automated check yet (#511).
 
 **Sitemaps.** The pages sitemap lists the dictionary home. The sitemap index also lists the word
 sitemaps, with every word page's canonical URL, and the kanji sitemap, with every indexable kanji
@@ -571,33 +700,12 @@ page's section above, with its check, in the same PR.
 
 ### Search results
 
-**Paging.** A results page renders about 25 words in its HTML, then loads more, up to the app's 60.
-Today it renders all 60.
-
-- Source: #466 (page the results: about 25, then load more, up to 60).
-- Check it will get: a rendered-page test of the first page and the load-more request, like the
-  examples endpoint's `route.test.ts`.
-
 **Meaning clamp at large text sizes.** The website clamps a row's meaning to two lines, as the
 app does at standard sizes. At the app's accessibility text sizes the meaning isn't clamped
 (`ResultRow`'s `lineLimit`); the website needs the same exception for large text.
 
 - App source: `ResultRow` in `SearchView.swift`.
 - Check it will get: a rendered-HTML check that the clamp lifts with large text.
-
-**"View N Example Sentences".** The results list starts with the app's Example Sentences row
-("View 3 Example Sentences", or "View 50+ Example Sentences" over 50), which opens the query's
-example sentences, or the primary entry's for a deinflected or romaji query. What it needs: an
-example search on the website like the app's, which matches all 232,703 Tatoeba pairs by English
-phrase (FTS4 Porter, with an exact-phrase check) or Japanese substring, where the dictionary
-database holds only the 203,727 sentences its words use, with no such index; then a
-`/dictionary/search/<query>/examples/` page listing them in the app's order.
-
-- App source: the examples section of `SearchResultsView` in `SearchView.swift`;
-  `ExampleSentenceClient.swift` (`count`, `search`, and `examples` for the primary entry).
-- Check it will get: SRR `examples` (title, count, and primary entry) and the `examples` entry of
-  SRR `sections`, which `results/conformance.test.ts` and `search-results.test.tsx` skip until
-  then (`pendingSections`); a rendered-page check of the examples page.
 
 **Handwriting and radical input.** The search box offers handwriting and radical selection, as the
 app does.

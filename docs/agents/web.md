@@ -94,8 +94,8 @@ search results link to word pages. After each environment's smoke test it prunes
 environment's old builds. It runs when any release database's input changes, not only
 `apps/web/**`. The production job runs once staging passes; the `production` GitHub environment
 has no required reviewer (the owner approved launching without one). A new build's first
-production import is about 850 MB for both databases and takes
-about 30 minutes; an unchanged build is reused in seconds.
+production import is about 1 GB of SQL for both databases (the search database's 360 MB of it)
+and takes about 35 minutes; an unchanged build is reused in seconds.
 
 ### The search database
 
@@ -117,6 +117,41 @@ Reference ID, which `build-rows.py` reads from `JLPTLevelPack.sqlite3` and
 reads it for all of a search's results in one query, so the search database alone decides what
 the page lists and in what order, and its import gate checks all of it.
 
+**Example search lives here too** (#511): what the results page's "View N Example Sentences" row
+counts and the Example Sentences page it opens lists. `examples/search.ts` ports the app's direct
+example search (`retrieveEnglish` and `retrieveJapanese` in `ExampleSentenceClient.swift`) over
+candidates a source supplies, and `example-search.ts` reads them from D1. The import
+(`search/build-examples.mts`, after `search_cache`) writes:
+
+- `example_sentences`: all 232,703 Tatoeba pairs the app searches, numbered in pair ID order, with
+  both sides' attribution and `words_json`, each sentence's words as the app's Kuromoji splits
+  them and its linking resolves them with no page's entry (`plannedWords`, stored as
+  `ExampleWordRow`s: each word's length, reading, dictionary form, entries, and the pieces it
+  can fall back to). `linkPlanned` links them for the search's primary entry per request, as
+  `linkedTokens` would; the import checks that on 2,000 sentences per build.
+- `example_english_fts`: each sentence's FTS4 Porter terms, each spelled in hex, in an FTS5 table.
+  D1 rejects the app's FTS4 tables, and FTS5's Porter stems long words and numbers differently,
+  so the import computes the terms with `examples/fts4.ts`, a byte-for-byte port of SQLite's FTS4
+  `simple` and `porter` tokenizers, and checks it against SQLite's own (`fts3tokenize`) on every
+  sentence. A phrase of the query's terms finds every candidate FTS4 would; `searchExamples`
+  keeps what FTS4's phrase match, `offsets()`, and the app's `phraseRange` keep.
+- `example_japanese_chars`: each sentence with a space between characters, as `form_chars` is
+  for forms, in place of the app's `instr(japanese, ?)` scan. The import fails if a sentence
+  holds a character it can't index other than a space.
+- `example_entries`: every entry's written and reading forms as the app's entry holds them, which
+  link words to the search's primary entry, and its examples (`retrieveEntryExamples`, as its
+  word page lists them), which a deinflected or romaji search opens.
+- `example_search_cache`: every search with more than 1,000 candidate sentences that can list
+  anything (about 700 English and 1,300 Japanese), precomputed with the same core. An English
+  search lists anything only when some sentence has its exact words, so the import enumerates
+  every run of a sentence's words whose Porter terms more than 1,000 sentences hold; a Japanese one
+  every substring that many hold. Queries are keyed by `exampleSearchKey`, so `i'm` and `i m`
+  share one. The website reads at most 1,001 candidates per uncached search: a plain English
+  query with more lists nothing, since it would have been cached.
+
+The import adds about 4.5 minutes (peaking at about 3.4 GB of memory) to a local search build,
+about 185 MB of SQL to upload, and about 185 MB to the database.
+
 ### Search results
 
 `src/lib/dictionary/results/` is the results screen's core, ported from SearchView.swift and
@@ -125,36 +160,48 @@ FrequencyPack.swift: pure functions over the search core's results and their fre
 source, then its coarse match rank), the more common tier from the first dictionary that has one,
 then each dictionary's value in priority order (lower first, ranked before unranked), then the
 retrieval order, then the Language Reference ID. Discovered Words keep their order.
-`searchResultsScreen` adds what `SearchResultsView` shows: each row's meaning (the matched meaning
-for an English query), its chips, the "Search for「…」" reading refinement, the KANJI row that
-leads a one-kanji query with the meaning of the entry written as that kanji (chosen before the
-re-sort, "Kanji detail" without one), and No Dictionary Matches. The page's component,
+`searchResultsScreen` adds what `SearchResultsView` shows: the "View N Example Sentences" row
+(its count from `example-search.ts`'s `resultsExampleCount`), each row's meaning (the matched
+meaning for an English query), its chips, the "Search for「…」" reading refinement, the KANJI row
+that leads a one-kanji query with the meaning of the entry written as that kanji (chosen before
+the re-sort, "Kanji detail" without one), and No Dictionary Matches. The page's component,
 `components/dictionary/search-results.tsx`, only renders it. `results/links.ts` adds links
-(`linkSearchScreen`, shared by `data.ts` and the rendered-page test) and decides indexing: a page
-is indexed only when it lists a word or its kanji row opens a kanji page.
+(`linkSearchScreen`, shared by `data.ts` and the rendered-page test), splits the words into pages
+(the first 25 in the HTML; `/dictionary/search/<query>/results.json?build=<search build>&from=<n>`
+serves the rest, as a word page's examples load), and decides indexing: a page is indexed only
+when it lists a word or its kanji row opens a kanji page.
 
-The app's "View N Example Sentences" row is left out until the website has example search: the
-app searches all 232,703 Tatoeba pairs by English phrase (FTS4 Porter) or Japanese substring, and
-the dictionary database holds only the 203,727 its words use, with no such index (#511).
+The row opens `/dictionary/search/<query>/examples/`, which lists the Example Sentences screen's
+sentences (`searchExampleList`), 25 at a time from
+`/dictionary/search/<query>/examples.json?build=<search build>&from=<n>`, with each word's page
+from the dictionary database (`wordSlugs`). Both routes are keyed by the search database's build,
+so a page open across a deploy never mixes two builds' lists. Local fixtures have no example
+search.
 
-**The gate.** The search import runs three files on its local copy (`check_local`): the retrieval
-suite (`search/conformance.test.ts`), the search results suite
+**The gate.** The search import runs five files on its local copy (`check_local`): the retrieval
+suite (`search/conformance.test.ts`); the search results suite
 (`apps/ios/LanguageData/Conformance/search-results.json`, `results/conformance.test.ts`), which
-compares every case's state, sections, refinement, kanji row, and every row's ID, entry number,
-headword, reading, meaning, chips, match group, and retrieval position, and a rendered-page test
-(`components/dictionary/search-results.test.tsx`) that renders six of its cases with React's
-server renderer and reads the visible order, meanings, chips, links, and special rows back from
-the HTML. The results core, `detail/frequency.ts`, the page's component and `rendered.ts`, the
-frequency packs, and the suite itself are search build inputs, so a change to any of them imports
-a new build and runs the gate. `smoke.sh` reads the suite's `iru` case at run time and checks the
-deployed page's refinement and first rows against it.
+compares every case's state, sections, Example Sentences row (title, count, and primary entry),
+refinement, kanji row, and every row's ID, entry number, headword, reading, meaning, chips, match
+group, and retrieval position; a rendered-page test (`components/dictionary/search-results.test.tsx`)
+that renders seven of its cases with React's server renderer and reads the visible order,
+meanings, chips, links, and special rows back from the HTML, and the rest of each list from the
+rows route; the example-search suite (`example-search.json`, `examples/conformance.test.ts`),
+which compares, for 63 queries, the row's count and title, the primary entry, every listed pair ID
+in order, and the first five sentences' words, links, and marks; and a rendered-page test of the
+Example Sentences page (`components/dictionary/search-examples.test.tsx`) for six of its cases,
+paging through each whole list. The cores, the pages' components and `rendered.ts`, the
+frequency packs, and the suites themselves are search build inputs, so a change to any of them
+imports a new build and runs the gate. `smoke.sh` reads the suites at run time and checks the
+deployed iru page's refinement, first rows, Example Sentences row, and paging, and 見る's Example
+Sentences page, against them.
 
 ### Schema and migrations
 
 `src/db/search-schema.ts` holds the search tables, a projection of the app's database: IDs are
 lowercase hex text. `drizzle.search.config.ts` generates migrations into `drizzle/search/`. The
-FTS5 indexes, which Drizzle can't declare, are in the custom migration
-`drizzle/search/0001_fts.sql`. `src/db/search-schema.sql` records the whole schema the migrations
+FTS5 indexes, which Drizzle can't declare, are in the custom migrations
+`drizzle/search/0001_fts.sql` and `0004_example_fts.sql`. `src/db/search-schema.sql` records the whole schema the migrations
 build, including FTS5's shadow tables.
 
 1. Change `src/db/search-schema.ts`, or add a custom migration with `pnpm exec drizzle-kit
@@ -252,8 +299,8 @@ It changes the way the search schema does, with its own commands:
 
 ### Run the suite locally
 
-Build the search database into `.search-d1/` (about 8 minutes, most of it precomputing), then run
-the tests:
+Build the search database into `.search-d1/` (about 13 minutes, most of it precomputing broad
+searches and example search), then run the tests:
 
 ```sh
 scripts/release-d1/load-local.sh search [path/to/LanguageReferenceData.sqlite3]
@@ -262,7 +309,7 @@ ZENBU_SEARCH_D1=1 pnpm test
 
 The script defaults to the app's bundled database and replaces `.search-d1/` only after a build
 succeeds. The suites stop at once when `.search-d1/` wasn't built from the artifact they pin, or
-the frequency packs differ from the ones the search results suite pins. Without
+the frequency packs, ExampleWordIndex, or Kuromoji differ from the ones the suites pin. Without
 `ZENBU_SEARCH_D1=1`, `pnpm test` skips them. With either variable set, test files run one at a
 time (`vitest.config.ts`), since a local D1 can't serve two processes at once.
 

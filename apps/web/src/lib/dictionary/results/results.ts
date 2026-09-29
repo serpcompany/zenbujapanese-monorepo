@@ -147,11 +147,26 @@ export interface KanjiRow {
 }
 
 /**
- * The list's sections, in order. The app's first, `examples` ("View N Example Sentences"), needs
- * sentence search, which the website doesn't have yet (#511). `discoveredWords` lists a mixed-script
- * query's first Japanese words under a "Discovered Words" heading, unsorted, at most 12.
+ * The list's sections, in order: `examples` ("View N Example Sentences"), the reading
+ * refinement, then the words. `discoveredWords` lists a mixed-script query's first Japanese words
+ * under a "Discovered Words" heading, unsorted, at most 12.
  */
-export type ResultsSection = 'readingRefinement' | 'results' | 'discoveredWords'
+export type ResultsSection = 'examples' | 'readingRefinement' | 'results' | 'discoveredWords'
+
+/** The "View N Example Sentences" row, which opens the query's Example Sentences page. */
+export interface ExamplesRow {
+  title: string
+  /** `SearchResultsScreen.exampleCount`: 51 means more than 50. */
+  count: number
+  /** The entry whose examples it opens, when not the sentences that contain the query. */
+  primaryEntry: string | null
+}
+
+/** `SearchResultsScreen.exampleActionTitle`. */
+export function exampleActionTitle(count: number): string {
+  if (count > 50) return 'View 50+ Example Sentences'
+  return `View ${count} Example ${count === 1 ? 'Sentence' : 'Sentences'}`
+}
 
 /** SearchView.swift lists at most 12 discovered words. */
 export const discoveredWordLimit = 12
@@ -163,6 +178,8 @@ export type SearchResultsScreen =
       state: 'results'
       query: string
       sections: ResultsSection[]
+      /** "View N Example Sentences", when any sentence matches. */
+      examples: ExamplesRow | null
       /** "Search for「…」": the Japanese reading an English-looking query also spells. */
       readingRefinement: { query: string; title: string } | null
       kanji: KanjiRow | null
@@ -175,25 +192,40 @@ export type SearchResultsScreen =
 export const isSingleKanji = (query: string) => isKanjiCharacter(query)
 
 /** `LookupSearchResults.primaryEntry(for:)`: the entry written as the query, else the first. */
-function primaryItem(results: SearchResults, query: string): SearchResultItem | undefined {
-  return results.items.find(item => item.entry.headword === query) ?? results.items[0]
+export function primaryItem(results: SearchResults, query: string): SearchResultItem | undefined {
+  const normalized = normalizeQuery(query)
+  return results.items.find(item => item.entry.headword === normalized) ?? results.items[0]
 }
 
 /**
- * `SearchResultsView` for a typed query, and SearchView.swift's no-results state. The app shows
- * "No Dictionary Matches" only when there are no results, no example sentences, and the query
- * isn't one kanji; the website has no sentence search (#511), so only the first and last apply.
+ * `SearchResultsView` for a typed query, and SearchView.swift's no-results state, which the app
+ * shows only when there are no results, no example sentences, and the query isn't one kanji.
+ * `exampleCount` is the Example Sentences row's (example-search.ts's `exampleCount`).
  */
 export function searchResultsScreen(
   rawQuery: string,
   results: SearchResults,
-  frequency: FrequencyByEntry
+  frequency: FrequencyByEntry,
+  exampleCount = 0
 ): SearchResultsScreen {
   const query = normalizeQuery(rawQuery)
   const singleKanji = isSingleKanji(query)
-  if (results.items.length === 0 && !singleKanji) return { state: 'noResults', query }
+  if (results.items.length === 0 && exampleCount === 0 && !singleKanji) {
+    return { state: 'noResults', query }
+  }
 
   const sections: ResultsSection[] = []
+  const examples: ExamplesRow | null =
+    exampleCount > 0
+      ? {
+          title: exampleActionTitle(exampleCount),
+          count: exampleCount,
+          primaryEntry: results.usesPrimaryEntryExamples
+            ? (primaryItem(results, query)?.entry.id ?? null)
+            : null
+        }
+      : null
+  if (examples) sections.push('examples')
   const readingRefinement = results.readingRefinement
     ? {
         query: results.readingRefinement,
@@ -202,8 +234,10 @@ export function searchResultsScreen(
     : null
   if (readingRefinement) sections.push('readingRefinement')
 
+  // `SearchResultsScreen.list`: no list of words when only example sentences match.
   const discovered = results.presentation === 'discoveredWords'
-  sections.push(discovered ? 'discoveredWords' : 'results')
+  if (discovered) sections.push('discoveredWords')
+  else if (singleKanji || results.items.length > 0) sections.push('results')
 
   const primary = singleKanji && !discovered ? primaryItem(results, query) : undefined
   const kanji: KanjiRow | null =
@@ -233,6 +267,7 @@ export function searchResultsScreen(
     state: 'results',
     query,
     sections,
+    examples,
     readingRefinement,
     kanji,
     rows,
