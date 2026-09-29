@@ -92,14 +92,18 @@ describe('wordDetail', () => {
     expect(detail.shareText).toBe(
       '要る【いる】\n1. to be needed, to be necessary, to be required, to be wanted, to need, to want'
     )
-    // Example furigana goes over the kanji only (#479 review item 11).
-    expect(detail.examples[0].tokens[0]).toEqual({
+    // Example furigana goes over the kanji only (#479 review item 11), and the page's word links
+    // to itself.
+    const pageWord = detail.examples
+      .flatMap(example => example.tokens)
+      .find(token => token.isPageWord && token.text === '要る')
+    expect(pageWord).toEqual({
       text: '要る',
       ruby: [{ text: '要', reading: 'い' }, { text: 'る' }],
-      isWord: true,
-      isMatch: true
+      link: { entSeq: 1546640 },
+      isPageWord: true
     })
-    expect(detail.examples[0].text).toBe('要る？')
+    expect(detail.exampleCount?.listed).toBe(detail.examples.length)
   })
 
   test('いる (1577980): the first sense’s word class, kana only, a rare written form', () => {

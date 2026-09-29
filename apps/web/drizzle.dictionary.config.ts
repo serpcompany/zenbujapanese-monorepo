@@ -17,6 +17,7 @@ export default defineConfig({
     'element_glyphs',
     'example_sentences',
     'word_examples',
+    'word_example_counts',
     'retired_ids'
   ]
 })

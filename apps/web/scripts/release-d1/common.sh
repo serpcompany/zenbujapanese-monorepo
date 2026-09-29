@@ -11,7 +11,8 @@
 #   lfs_inputs      every Git LFS file the import reads, relative to the repository root
 #   build_inputs    everything else that shapes the database, relative to the repository root
 #   tables          the tables whose row counts the deploy checks
-#   upload_files    the SQL files the local build writes and the import uploads, in order
+#   upload_files    the SQL files the local build writes and the import uploads, in order; an
+#                   entry may be a glob (quoted), which uploads every file it matches in order
 #   build_rows      function <source_db> <build dir>: writes upload_files into <build dir>,
 #                   loading each into the local D1 there with `local_d1 execute --file`
 #   check_local     function <persist dir>: checks a finished local build before it reaches D1

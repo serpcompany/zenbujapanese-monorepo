@@ -13,8 +13,9 @@ import { wordDetail } from './word'
 // ZENBU_DICTIONARY_D1_PATH). The import runs it before anything reaches D1, so it only runs when
 // ZENBU_DICTIONARY_D1=1. It reads the database through dictionary-db.ts, as the pages do.
 //
-// Examples (#465 PR 6) aren't imported yet, so their fields are skipped, as is the app-only
-// `opensConjugations`; the app's kanji cases leave out KANJIDIC2's old-scale JLPT.
+// Every example field is checked: the order, pair IDs, text, tokens, links, highlights, and counts
+// (the import precomputes them, scripts/release-d1/dictionary/build-examples.mts). The app-only
+// `opensConjugations` is skipped; the app's kanji cases leave out KANJIDIC2's old-scale JLPT.
 const enabled = process.env.ZENBU_DICTIONARY_D1 === '1'
 
 interface Artifact {
@@ -27,6 +28,21 @@ interface SuiteWord {
   id: string
   reading: string
   summary: string
+}
+
+interface SuiteToken {
+  surface: string
+  entry?: string
+  candidates?: string[]
+  pageWord?: boolean
+}
+
+interface SuiteExamples {
+  listed: number
+  reportedCount?: string
+  truncated: boolean
+  error?: string
+  shown: { id: string; japanese: string; english: string; tokens: SuiteToken[] }[]
 }
 
 interface WordCase {
@@ -51,6 +67,7 @@ interface WordCase {
     summary: string
     targetID?: string
   }[]
+  examples: SuiteExamples
 }
 
 interface KanjiCase {
@@ -73,6 +90,8 @@ interface KanjiCase {
 interface Suite<Case> {
   artifacts: Artifact[]
   cases: Case[]
+  /** How many of each word's examples the suite records with their tokens. */
+  exampleLimit?: number
 }
 
 // Read only when the gate runs, so moving the files (#469) can't break `pnpm test`.
@@ -151,12 +170,57 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
 
   /** Language Reference IDs by `ent_seq`. */
   async function idsOf(entSeqs: number[]): Promise<Map<number, string>> {
-    if (entSeqs.length === 0) return new Map()
-    const { results } = await db
-      .prepare(`SELECT ent_seq, id FROM words WHERE ent_seq IN (${entSeqs.map(() => '?')})`)
-      .bind(...entSeqs)
-      .all<{ ent_seq: number; id: string }>()
-    return new Map(results.map(row => [row.ent_seq, row.id]))
+    const ids = new Map<number, string>()
+    // D1 binds at most 100 parameters per query.
+    for (let start = 0; start < entSeqs.length; start += 100) {
+      const batch = entSeqs.slice(start, start + 100)
+      const { results } = await db
+        .prepare(`SELECT ent_seq, id FROM words WHERE ent_seq IN (${batch.map(() => '?')})`)
+        .bind(...batch)
+        .all<{ ent_seq: number; id: string }>()
+      for (const row of results) ids.set(row.ent_seq, row.id)
+    }
+    return ids
+  }
+
+  /**
+   * A word's examples as the suite records them: the first `exampleLimit`, with each token's
+   * entry (one link) or candidates (several) as Language Reference IDs, and the counts.
+   */
+  async function examples(entSeq: number, limit: number): Promise<SuiteExamples> {
+    const count = await db
+      .prepare('SELECT listed, count, truncated FROM word_example_counts WHERE ent_seq = ?')
+      .bind(entSeq)
+      .first<{ listed: number; count: number; truncated: number }>()
+    const found = await dictionary.examples(entSeq, 0, limit)
+    if (!found) throw new Error(`No word ${entSeq}`)
+    const ids = await idsOf([
+      ...new Set(found.rows.flatMap(({ example }) => example.links.flatMap(link => link.entSeqs)))
+    ])
+    const id = (number: number) => ids.get(number) ?? `missing ${number}`
+    return {
+      listed: count?.listed ?? 0,
+      reportedCount: count && count.count > 50 ? 'more than 50' : String(count?.count ?? 0),
+      truncated: count?.truncated === 1,
+      shown: found.rows.map(({ sentence, example }) => {
+        const links = new Map(example.links.map(link => [link.token, link.entSeqs]))
+        const highlights = new Set(example.highlights)
+        return {
+          id: `esp1_${sentence.pairId}`,
+          japanese: sentence.japanese,
+          english: sentence.english,
+          tokens: (example.tokens ?? sentence.tokens).map((token, index): SuiteToken => {
+            const entSeqs = links.get(index) ?? []
+            return {
+              surface: token.text,
+              ...(entSeqs.length === 1 ? { entry: id(entSeqs[0]) } : {}),
+              ...(entSeqs.length > 1 ? { candidates: entSeqs.map(id) } : {}),
+              ...(highlights.has(index) ? { pageWord: true } : {})
+            }
+          })
+        }
+      })
+    }
   }
 
   test.each(wordSuite.cases)('word: $covers', async expected => {
@@ -219,10 +283,13 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
         relation,
         summary,
         ...(entSeq === null ? {} : { targetID: targetIds.get(entSeq) })
-      }))
+      })),
+      examples: await examples(entry.entSeq, wordSuite.exampleLimit ?? 0)
     }
-    expect(observed).toEqual(
-      covered(expected, ['covers', 'entSeq', 'examples', 'opensConjugations'])
+    expect(observed).toEqual(covered(expected, ['covers', 'entSeq', 'opensConjugations']))
+    // The page's first examples are the suite's, from the same rows.
+    expect(detail.examples.map(example => example.text)).toEqual(
+      expected.examples.shown.slice(0, detail.examples.length).map(example => example.japanese)
     )
     // Every related word links to its page.
     expect(related.filter(entSeq => !word.relatedSlugs.has(entSeq))).toEqual([])

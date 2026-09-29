@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
+import { ExampleList } from '@/components/dictionary/example-list'
 import { FrequencyDot, SpokenTier } from '@/components/dictionary/frequency'
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
 import { PageToolbar } from '@/components/dictionary/page-toolbar'
@@ -15,6 +16,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Item, ItemActions, ItemContent } from '@/components/ui/item'
 import { Separator } from '@/components/ui/separator'
 import { getWordPage, isDictionaryAvailable, type WordPageData } from '@/lib/dictionary/data'
+import { exampleCountText, noExamplesMessage } from '@/lib/dictionary/detail/examples'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { pageSources } from '@/lib/dictionary/sources'
 import { decodeSegment, parseWordSegment } from '@/lib/dictionary/urls'
@@ -225,43 +227,20 @@ export default async function WordPage({ params }: Props) {
         <LearnerPrompt kind="notes" />
       </Section>
 
-      {word.examples.length > 0 ? (
-        <Section title="Examples">
-          <ul className="flex flex-col divide-y">
-            {word.examples.map(example => {
-              let offset = 0
-              const tokens = example.tokens.map(token => {
-                const key = `${offset}`
-                offset += token.text.length
-                return { ...token, key }
-              })
-              return (
-                <li key={example.text} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                  <div className="flex-1">
-                    <p lang="ja" className="text-xl leading-[2.2]">
-                      {tokens.map(token => (
-                        <RubyText
-                          key={token.key}
-                          segments={token.ruby}
-                          className={
-                            token.isMatch
-                              ? 'mr-0.5 border-b-2 border-foreground font-medium'
-                              : token.isWord
-                                ? 'mr-0.5 border-b border-border'
-                                : undefined
-                          }
-                        />
-                      ))}
-                    </p>
-                    <p className="text-muted-foreground">{example.translation}</p>
-                  </div>
-                  <PronounceButton text={example.text} label="Pronounce sentence" />
-                </li>
-              )
-            })}
-          </ul>
-        </Section>
-      ) : null}
+      <Section title="Examples">
+        {word.exampleCount && word.examples.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-muted-foreground">{exampleCountText(word.exampleCount)}</p>
+            <ExampleList
+              initial={word.examples}
+              listed={word.exampleCount.listed}
+              path={word.examplesPath}
+            />
+          </div>
+        ) : (
+          <p className="text-muted-foreground">{noExamplesMessage}</p>
+        )}
+      </Section>
 
       <SourceCredits sources={pageSources.word} />
     </main>

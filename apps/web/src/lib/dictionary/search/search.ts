@@ -122,7 +122,7 @@ function noResults(): SearchResults {
   }
 }
 
-interface RankedEntry {
+export interface RankedEntry {
   entry: SearchEntry
   /** Orders entries and sets the leading lexical group (the app's legacy rank). */
   rank: Rank
@@ -133,7 +133,7 @@ interface RankedEntry {
   matchedSummary: string | null
 }
 
-interface EntryRow {
+export interface EntryRow {
   id: string
   source_record_id: number
   headword: string
@@ -146,7 +146,7 @@ interface EntryRow {
   news_frequency_band: number | null
 }
 
-interface JapaneseRow extends EntryRow {
+export interface JapaneseRow extends EntryRow {
   form: string
   kind: number
   sense_count: number
@@ -280,7 +280,7 @@ function deduplicated(ranked: RankedEntry[]): RankedEntry[] {
 }
 
 /** Ranks the Japanese form rows that matched `query`, one result per entry. */
-function rankJapanese(query: string, rows: JapaneseRow[]): RankedEntry[] {
+export function rankJapanese(query: string, rows: JapaneseRow[]): RankedEntry[] {
   const byEntry = new Map<
     string,
     {

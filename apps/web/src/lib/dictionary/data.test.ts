@@ -2,13 +2,19 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { fixtureKanjiRows, fixtureWordRows } from '@/lib/dictionary/fixtures'
 import {
   getKanjiPage,
+  getWordExamples,
   getWordPage,
   isUnreadableQuery,
   searchDictionary,
   summarizeSearchEntry
 } from './data'
 import type { FrequencyRow } from './detail/rows'
-import { type DictionaryKanji, type DictionaryWord, dictionaryDatabase } from './dictionary-db'
+import {
+  type DictionaryExamples,
+  type DictionaryKanji,
+  type DictionaryWord,
+  dictionaryDatabase
+} from './dictionary-db'
 import type { SearchEntry, SearchResultItem, SearchResults } from './search/search'
 import { websiteSearch } from './search/website'
 
@@ -217,12 +223,14 @@ describe('word and kanji pages', () => {
   const frequency = vi.fn<(entSeqs: readonly number[]) => Promise<Map<number, FrequencyRow[]>>>()
   const kanjiCard =
     vi.fn<(character: string) => Promise<{ character: string; meanings: string[] } | null>>()
+  const examples =
+    vi.fn<(entSeq: number, from: number, limit: number) => Promise<DictionaryExamples | null>>()
   const iruRows = fixtureWordRows.find(rows => rows.entry.entSeq === 1546640)
   const kanameRows = fixtureKanjiRows.find(rows => rows.kanji.character === '要')
 
   beforeEach(() => {
     frequency.mockResolvedValue(new Map())
-    vi.mocked(dictionaryDatabase).mockReturnValue({ word, kanji, kanjiCard, frequency })
+    vi.mocked(dictionaryDatabase).mockReturnValue({ word, examples, kanji, kanjiCard, frequency })
   })
 
   afterEach(() => {
@@ -272,7 +280,8 @@ describe('word and kanji pages', () => {
       },
       slug: '要る',
       relatedSlugs: new Map([[1577980, 'いる']]),
-      kanjiPages: new Set(['要'])
+      kanjiPages: new Set(['要']),
+      exampleSlugs: new Map([[1546640, '要る']])
     })
     const page = await getWordPage(1546640)
     expect(word).toHaveBeenCalledWith(1546640)
@@ -283,6 +292,41 @@ describe('word and kanji pages', () => {
     ])
     // A related word links under its own page's slug, not the relationship's headword.
     expect(page?.related.map(related => related.path)).toEqual(['/dictionary/いる-1577980/', null])
+    // Example words link to their pages when the database names their slugs, and an ambiguous
+    // word to a search for its dictionary form.
+    const tokens = page?.examples.flatMap(example => example.tokens) ?? []
+    expect(tokens.filter(token => token.isPageWord).map(token => token.path)).toContain(
+      '/dictionary/要る-1546640/'
+    )
+    const choice = tokens.find(token => token.link && 'entSeqs' in token.link)
+    expect(choice?.path).toMatch(/^\/dictionary\/search\//)
+    expect(page?.examplesPath).toBe('/dictionary/examples/1546640.json')
+  })
+
+  test('a word page shows its first 25 examples, and the rest load 25 at a time', async () => {
+    const page = await getWordPage(1546640)
+    expect(page?.examples).toHaveLength(25)
+    expect(page?.exampleCount?.listed).toBeGreaterThan(25)
+    const more = await getWordExamples(1546640, 25)
+    expect(more?.map(example => example.position)).toEqual(
+      Array.from({ length: more?.length ?? 0 }, (_, index) => 25 + index)
+    )
+    expect(await getWordExamples(1358280, 25)).toBeNull()
+  })
+
+  test('more examples come from the dictionary database, linked by its slugs', async () => {
+    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
+    if (!iruRows) throw new Error('no fixture for 要る')
+    examples.mockResolvedValue({
+      rows: iruRows.examples.slice(0, 2),
+      slugs: new Map([[1546640, '要る']])
+    })
+    const more = await getWordExamples(1546640, 25)
+    expect(examples).toHaveBeenCalledWith(1546640, 25, 25)
+    expect(more).toHaveLength(2)
+    expect(more?.[0].tokens.find(token => token.isPageWord)?.path).toBe('/dictionary/要る-1546640/')
+    examples.mockResolvedValue(null)
+    expect(await getWordExamples(1, 25)).toBeNull()
   })
 
   test('an unknown number has no word page, even when a fixture has it', async () => {

@@ -2,6 +2,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { cache } from 'react'
 import { fixtureKanjiRows, fixtureSearchOrder, fixtureWordRows } from '@/lib/dictionary/fixtures'
 import { isDeployedSite, isProductionSite } from '@/lib/site'
+import { type Example, type ExampleToken, examplesPerPage, wordExample } from './detail/examples'
 import {
   type KanjiDetail,
   type KanjiElement,
@@ -9,7 +10,7 @@ import {
   type KanjiWord,
   kanjiDetail
 } from './detail/kanji'
-import type { FrequencyRow, KanjiRows, WordRows } from './detail/rows'
+import type { FrequencyRow, KanjiRows, WordExampleRows, WordRows } from './detail/rows'
 import {
   type AlternativeForm,
   type RelatedWord,
@@ -22,7 +23,7 @@ import {
 import { dictionaryDatabase } from './dictionary-db'
 import type { SearchEntry } from './search/search'
 import { websiteSearch } from './search/website'
-import { kanjiPath, wordPath, wordSlug } from './urls'
+import { hasSearchPath, kanjiPath, searchPath, wordPath, wordSlug } from './urls'
 
 type DictionaryDatabase = ReturnType<typeof dictionaryDatabase>
 
@@ -40,8 +41,15 @@ export function isDictionaryAvailable(): boolean {
 /** With the page it links to; null when it has no page yet. */
 type Linked<T> = T & { path: string | null }
 
+/** An example's word with where it links: its word page, or a search for an ambiguous word. */
+export type PageExampleToken = Linked<ExampleToken>
+
+export interface PageExample extends Omit<Example, 'tokens'> {
+  tokens: PageExampleToken[]
+}
+
 export interface WordPageData
-  extends Omit<WordDetail, 'alternatives' | 'kanji' | 'alternativeKanji' | 'related'> {
+  extends Omit<WordDetail, 'alternatives' | 'kanji' | 'alternativeKanji' | 'related' | 'examples'> {
   /** Where the word's page lives now; a request under another slug redirects here. */
   slug: string
   path: string
@@ -49,6 +57,9 @@ export interface WordPageData
   kanji: Linked<WordKanji>[]
   alternativeKanji: Linked<WordKanji>[]
   related: Linked<RelatedWord>[]
+  /** The first examples; the rest load from `examplesPath` as the page scrolls. */
+  examples: PageExample[]
+  examplesPath: string
 }
 
 export interface KanjiPageData
@@ -113,6 +124,26 @@ async function dictionaryDb() {
   return db ? dictionaryDatabase(db) : null
 }
 
+/** Where the page loads more of a word's examples (src/app/dictionary/examples). */
+export const examplesPath = (entSeq: number) => `/dictionary/examples/${entSeq}.json`
+
+/** An example with its links: a word to its page, an ambiguous word to a search for it. */
+function pageExample(example: Example, links: Links): PageExample {
+  return {
+    ...example,
+    tokens: example.tokens.map(token => ({
+      ...token,
+      path: !token.link
+        ? null
+        : 'entSeq' in token.link
+          ? links.word(token.link.entSeq)
+          : hasSearchPath(token.link.query)
+            ? searchPath(token.link.query)
+            : null
+    }))
+  }
+}
+
 function wordPage(rows: WordRows, slug: string, links: Links): WordPageData {
   const detail = wordDetail(rows)
   const linkKanji = (kanji: WordKanji) => ({ ...kanji, path: links.kanji(kanji.character) })
@@ -123,7 +154,9 @@ function wordPage(rows: WordRows, slug: string, links: Links): WordPageData {
     alternatives: detail.alternatives.map(form => ({ ...form, path: links.kanji(form.kanji) })),
     kanji: detail.kanji.map(linkKanji),
     alternativeKanji: detail.alternativeKanji.map(linkKanji),
-    related: detail.related.map(word => ({ ...word, path: links.word(word.entSeq) }))
+    related: detail.related.map(word => ({ ...word, path: links.word(word.entSeq) })),
+    examples: detail.examples.map(example => pageExample(example, links)),
+    examplesPath: examplesPath(detail.entSeq)
   }
 }
 
@@ -155,12 +188,36 @@ export const getWordPage = cache(async (entSeq: number): Promise<WordPageData | 
   if (db) {
     const word = await db.word(entSeq)
     if (!word) return null
-    return wordPage(word.rows, word.slug, databaseLinks(word.relatedSlugs, word.kanjiPages))
+    const slugs = new Map([...word.relatedSlugs, ...word.exampleSlugs])
+    return wordPage(word.rows, word.slug, databaseLinks(slugs, word.kanjiPages))
   }
   const rows = wordRowsBySeq.get(entSeq)
   if (!rows) return null
-  return wordPage(rows, wordSlug(rows.entry.headword, rows.entry.reading), fixtureLinks)
+  return wordPage(
+    { ...rows, examples: rows.examples.slice(0, examplesPerPage) },
+    wordSlug(rows.entry.headword, rows.entry.reading),
+    fixtureLinks
+  )
 })
+
+/**
+ * `examplesPerPage` of a word's examples from position `from`, as its page loads more; null for
+ * an unknown word. A failing database throws.
+ */
+export async function getWordExamples(entSeq: number, from: number): Promise<PageExample[] | null> {
+  const db = await dictionaryDb()
+  if (db) {
+    const found = await db.examples(entSeq, from, examplesPerPage)
+    if (!found) return null
+    const links = databaseLinks(found.slugs, new Set())
+    return found.rows.map(row => pageExample(wordExample(row), links))
+  }
+  const rows = wordRowsBySeq.get(entSeq)
+  if (!rows) return null
+  return rows.examples
+    .slice(from, from + examplesPerPage)
+    .map((row: WordExampleRows) => pageExample(wordExample(row), fixtureLinks))
+}
 
 /** Memoized per request, like getWordPage. */
 export const getKanjiPage = cache(async (character: string): Promise<KanjiPageData | null> => {
