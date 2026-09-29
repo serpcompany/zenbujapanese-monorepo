@@ -63,7 +63,7 @@ const resources = new URL(
 )
 
 /** The suite records entries, not pages, so no word links anywhere here. */
-const noLinks: Links = { word: () => null, kanji: () => null }
+const noLinks: Links = { word: () => null, kanji: () => null, meaning: undefined }
 
 /** The app's pair IDs: `esp1_` and the pair's 16 bytes in hex. */
 const appPairId = (pairId: string) => `esp1_${pairId}`

@@ -26,7 +26,9 @@ const render = (data: SearchExamplesData) => renderToStaticMarkup(<SearchExample
 /** Every word page under a slug the test can read back. */
 const links: Links = {
   word: entSeq => (entSeq === null ? null : `/dictionary/w-${entSeq}/`),
-  kanji: () => null
+  kanji: () => null,
+  // The Example Sentences screen shows no word meanings.
+  meaning: undefined
 }
 
 /** パンを食べた。 as the page shows it on the search for 食べた. */

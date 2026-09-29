@@ -1,9 +1,10 @@
 name: Search parity
 
 # Search retrieval, word pages' examples, and parts of the word page's detail (the furigana kanji
-# highlight, the pitch graph, Frequency Details, and the conjugation table) and Reading Aids
-# (romaji and word meanings) exist twice until issue 481 makes TypeScript the single core (ADR 0008): Swift for the iOS app and a TypeScript port for
-# the website. Each pair below is a Swift source and its port; a PR that changes one side of a
+# highlight, the pitch graph, Frequency Details, and the conjugation table), the linked text of
+# examples, and Reading Aids (romaji and word meanings) exist twice until issue 481 makes
+# TypeScript the single core (ADR 0008): Swift for the iOS app and a TypeScript port for the
+# website. Each pair below is a Swift source and its port; a PR that changes one side of a
 # pair must change the other, or carry the search-parity-reviewed label to say the change only
 # applies to one side.
 #
@@ -17,6 +18,8 @@ name: Search parity
 #             JapaneseConjugationClient, ConjugationsView, ReadingAidPresentation
 #             <-> apps/web/src/lib/dictionary/detail/{kanji-split,pitch,frequency,conjugation,
 #                 romaji,reading-aids}.ts
+#   linked:   LinkedJapaneseText (each example's words, their meanings, and its romaji)
+#             <-> apps/web/src/lib/dictionary/{detail/examples,page-example}.ts
 
 on:
   pull_request:
@@ -39,6 +42,7 @@ on:
       - apps/ios/Modules/Sources/SearchExperience/JapaneseConjugationClient.swift
       - apps/ios/Modules/Sources/SearchExperience/ConjugationsView.swift
       - apps/ios/Modules/Sources/SearchExperience/ReadingAidPresentation.swift
+      - apps/ios/Modules/Sources/SearchExperience/LinkedJapaneseText.swift
       - apps/web/src/lib/dictionary/search/**
       - apps/web/src/lib/dictionary/examples/*.ts
       - apps/web/src/lib/dictionary/detail/kanji-split.ts
@@ -47,6 +51,8 @@ on:
       - apps/web/src/lib/dictionary/detail/conjugation.ts
       - apps/web/src/lib/dictionary/detail/romaji.ts
       - apps/web/src/lib/dictionary/detail/reading-aids.ts
+      - apps/web/src/lib/dictionary/detail/examples.ts
+      - apps/web/src/lib/dictionary/page-example.ts
 
 permissions:
   contents: read
@@ -93,5 +99,9 @@ jobs:
             "${swift_dir}(KanjiReadingSplitter|JapaneseRubyText|WordDetailView|FrequencyPack|JapaneseConjugationClient|ConjugationsView|ReadingAidPresentation)\.swift$" \
             '^apps/web/src/lib/dictionary/detail/(kanji-split|pitch|frequency|conjugation|romaji|reading-aids)\.ts$' \
             'apps/web/src/lib/dictionary/detail/{kanji-split,pitch,frequency,conjugation,romaji,reading-aids}.ts'
+          check 'linked text' \
+            "${swift_dir}LinkedJapaneseText\.swift$" \
+            '^apps/web/src/lib/dictionary/(detail/examples|page-example)\.ts$' \
+            'apps/web/src/lib/dictionary/{detail/examples,page-example}.ts'
           [ "$status" -eq 0 ] && echo "Search parity OK."
           exit "$status"

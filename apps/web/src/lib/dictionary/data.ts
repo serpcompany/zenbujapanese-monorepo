@@ -410,7 +410,11 @@ export const getKanjiPage = cache(async (character: string): Promise<KanjiPageDa
   if (db) {
     const kanji = await db.kanji(character)
     if (!kanji) return null
-    return kanjiPage(kanji.rows, kanji.indexable, databaseLinks(kanji.wordSlugs, kanji.kanjiPages))
+    return kanjiPage(
+      kanji.rows,
+      kanji.indexable,
+      databaseLinks(kanji.wordSlugs, kanji.kanjiPages, undefined)
+    )
   }
   const rows = kanjiRowsByCharacter.get(character)
   if (!rows) return null
@@ -689,7 +693,7 @@ async function exampleWordLinks(entSeqs: number[]): Promise<Links> {
   // The Example Sentences screen's words show no meanings (LinkedTokenView's dedicated
   // presentation), so a search's examples read no meanings.
   if (!dictionary) return { ...fixtureLinks, meaning: undefined }
-  return databaseLinks(await dictionary.wordSlugs(entSeqs), new Set())
+  return databaseLinks(await dictionary.wordSlugs(entSeqs), new Set(), undefined)
 }
 
 /**

@@ -20,12 +20,13 @@ export interface PageExample extends Omit<Example, 'tokens'> {
 
 /**
  * Where a page's links go: a path, or null for a word or kanji without a page; and a linked word's
- * first meaning, for Word Meanings (none without it).
+ * first meaning, for Word Meanings. `meaning` is required, and undefined only where the app shows
+ * no meanings (the Example Sentences screen), so a page can't leave meanings out by omission.
  */
 export interface Links {
   word(entSeq: number | null): string | null
   kanji(character: string | null): string | null
-  meaning?(entSeq: number): string | null
+  meaning: ((entSeq: number) => string | null) | undefined
 }
 
 /** The path of a word page in the dictionary database, under its stored slug. */

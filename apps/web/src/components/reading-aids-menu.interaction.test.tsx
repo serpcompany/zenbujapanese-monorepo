@@ -73,4 +73,33 @@ describe('the Reading Aids menu', () => {
     expect(item('translations')?.getAttribute('aria-checked')).toBe('false')
     expect(item('wordMeanings')?.getAttribute('aria-checked')).toBe('true')
   })
+
+  test('toggles still work when the browser blocks storage', async () => {
+    const setItem = Storage.prototype.setItem
+    Storage.prototype.setItem = () => {
+      throw new DOMException('blocked', 'SecurityError')
+    }
+    try {
+      act(() => root.render(<ReadingAidsMenu />))
+      await open()
+      await act(async () => item('translations')?.click())
+      expect(document.documentElement.getAttribute('data-translations')).toBe('off')
+      expect(item('translations')?.getAttribute('aria-checked')).toBe('false')
+      await act(async () => item('translations')?.click())
+      expect(document.documentElement.getAttribute('data-translations')).toBe('on')
+    } finally {
+      Storage.prototype.setItem = setItem
+    }
+  })
+
+  test('another tab’s change applies to this page', async () => {
+    act(() => root.render(<ReadingAidsMenu />))
+    localStorage.setItem(readingAidStorageKey, '{"romaji":true}')
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent('storage', { key: readingAidStorageKey }))
+    })
+    expect(document.documentElement.getAttribute('data-romaji')).toBe('on')
+    await open()
+    expect(item('romaji')?.getAttribute('aria-checked')).toBe('true')
+  })
 })

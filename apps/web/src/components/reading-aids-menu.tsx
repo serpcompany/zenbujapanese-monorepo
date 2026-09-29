@@ -22,20 +22,49 @@ import { applyReadingAids, parseReadingAids, readingAidStorageKey } from '@/lib/
 
 const changed = 'zenbu:reading-aids'
 
-function subscribe(onChange: () => void) {
-  window.addEventListener('storage', onChange)
-  window.addEventListener(changed, onChange)
-  return () => {
-    window.removeEventListener('storage', onChange)
-    window.removeEventListener(changed, onChange)
-  }
-}
+/**
+ * The settings this page last saved, for when the browser blocks storage: toggles then still work
+ * for as long as the page stays open. Undefined until a save fails.
+ */
+let unsaved: string | undefined
 
+/** The stored settings, or this page's own when storage is blocked. */
 function stored(): string | null {
+  if (unsaved !== undefined) return unsaved
   try {
     return window.localStorage.getItem(readingAidStorageKey)
   } catch {
     return null
+  }
+}
+
+/** Saves the settings; when storage is blocked, keeps them for this page instead. */
+function save(value: string) {
+  try {
+    window.localStorage.setItem(readingAidStorageKey, value)
+    unsaved = undefined
+  } catch {
+    unsaved = value
+  }
+}
+
+/**
+ * Follows changes from this page and from other tabs. Another tab's change also applies to this
+ * page's <html>, so its aids show or hide as the menu now says.
+ */
+function subscribe(onChange: () => void) {
+  const fromAnotherTab = (event: StorageEvent) => {
+    if (event.key !== readingAidStorageKey && event.key !== null) return
+    // Another tab saved, so storage works: read it rather than this page's own copy.
+    unsaved = undefined
+    applyReadingAids(document.documentElement, parseReadingAids(stored()))
+    onChange()
+  }
+  window.addEventListener('storage', fromAnotherTab)
+  window.addEventListener(changed, onChange)
+  return () => {
+    window.removeEventListener('storage', fromAnotherTab)
+    window.removeEventListener(changed, onChange)
   }
 }
 
@@ -63,11 +92,7 @@ export function ReadingAidsMenu() {
 
   const set = (aid: ReadingAid, value: boolean) => {
     const next = { ...settings, [aid]: value }
-    try {
-      window.localStorage.setItem(readingAidStorageKey, JSON.stringify(next))
-    } catch {
-      // Storage can be blocked; the setting still applies to this page.
-    }
+    save(JSON.stringify(next))
     applyReadingAids(document.documentElement, next)
     window.dispatchEvent(new Event(changed))
   }
