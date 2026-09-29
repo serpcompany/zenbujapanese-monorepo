@@ -1,0 +1,24 @@
+'use client'
+
+import { Volume2Icon } from 'lucide-react'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+
+/** Speaks Japanese text with the browser's voice, as the app's speaker buttons do. */
+export function PronounceButton({ text, label = 'Pronounce' }: { text: string; label?: string }) {
+  function speak() {
+    if (!('speechSynthesis' in window)) {
+      toast.error("This browser can't pronounce Japanese.")
+      return
+    }
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'ja-JP'
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(utterance)
+  }
+  return (
+    <Button variant="ghost" size="icon-sm" aria-label={label} onClick={speak}>
+      <Volume2Icon />
+    </Button>
+  )
+}

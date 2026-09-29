@@ -4,7 +4,9 @@ export const site = {
   description:
     'An offline-first Japanese dictionary, image-text reader, and translator for iPhone.',
   url: 'https://zenbujapanese.com',
-  supportEmail: 'support@zenbujapanese.com'
+  supportEmail: 'support@zenbujapanese.com',
+  /** Where "Get the app" leads. The home page until the App Store link is known. */
+  appUrl: '/'
 } as const
 
 /**
