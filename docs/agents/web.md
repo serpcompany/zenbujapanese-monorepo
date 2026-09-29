@@ -117,6 +117,20 @@ failure fails the request, so an outage never renders as an empty, noindexed pag
 it searches the fixtures instead. `load-local.sh` builds into `.search-d1/`, which `pnpm dev`
 doesn't read. Until word pages read D1 (#465), only results with a fixture word page link.
 
+## Word and kanji pages
+
+`src/lib/dictionary/detail/` is the detail core: pure functions, `wordDetail(rows)` and
+`kanjiDetail(rows)`, that turn rows shaped like the planned dictionary D1 (`detail/rows.ts`)
+into what the word and kanji pages render. Each function is a port of the app's Swift and names
+its source, so the pages show what the app shows: furigana, pitch, the first sense's part of
+speech, frequency from the app's default dictionaries (JLPT and TUBELEX), a kanji's 24 words and
+their order, and element roles. `data.ts` runs the core and adds only URLs.
+
+Until the dictionary D1 exists (#465), the rows are local fixtures in
+`src/lib/dictionary/fixtures/`, exported from the app's bundled data by
+`scripts/export-dictionary-fixtures.py` so their shapes can't drift. Rerun it after changing a
+row shape; the fixture JSON is generated, so Biome skips it.
+
 ## Environments and deploys
 
 | Environment | Worker | Domain | D1 database |

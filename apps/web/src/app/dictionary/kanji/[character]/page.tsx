@@ -17,8 +17,6 @@ import { decodeSegment, kanjiPath } from '@/lib/dictionary/urls'
 
 type Props = PageProps<'/dictionary/kanji/[character]'>
 
-const readingKinds = { on: 'On', kun: 'Kun', name: 'Name' } as const
-
 /** `/dictionary/kanji/<character>/`: the exact character, never Unicode-normalized. */
 async function load(params: Props['params']) {
   if (!isDictionaryAvailable()) notFound()
@@ -30,30 +28,40 @@ async function load(params: Props['params']) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const kanji = await load(params)
   const readings = kanji.readings.map(reading => reading.value).join(', ')
+  const description = [
+    kanji.meanings.length > 0
+      ? `${kanji.character}: ${kanji.meanings.join(', ')}.`
+      : kanji.character,
+    readings ? `Readings ${readings}.` : '',
+    kanji.stats.map(stat => `${stat.value} ${stat.label.toLowerCase()}.`)[0] ?? ''
+  ]
   return dictionaryMetadata(
     encodeURI(kanjiPath(kanji.character)),
     `${kanji.character} kanji meaning`,
-    `${kanji.character}: ${kanji.meanings.join(', ')}. Readings ${readings}. ${kanji.strokeCount} strokes.`,
-    { index: kanji.meanings.length > 0 || kanji.readings.length > 0 }
+    description.filter(Boolean).join(' '),
+    { index: kanji.indexable }
+  )
+}
+
+/** A character, linking to its kanji page when it has one. */
+function CharacterLink({ character, path }: { character: string; path: string | null }) {
+  return path ? (
+    <Link href={path} lang="ja" className="underline-offset-4 hover:underline">
+      {character}
+    </Link>
+  ) : (
+    <span lang="ja">{character}</span>
   )
 }
 
 export default async function KanjiPage({ params }: Props) {
   const kanji = await load(params)
-  const stats = [
-    { label: 'Strokes', value: kanji.strokeCount },
-    { label: 'Grade', value: kanji.grade },
-    { label: 'JLPT', value: kanji.jlpt ? `N${kanji.jlpt}` : null }
-  ].filter(stat => stat.value !== null)
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-4 pb-6">
       <DictionaryBreadcrumbs
         page={{ label: `Kanji ${kanji.character}`, path: kanjiPath(kanji.character), lang: 'ja' }}
       />
-      <PageToolbar
-        title={kanji.character}
-        shareText={`${kanji.character}: ${kanji.meanings.join(', ')}`}
-      />
+      <PageToolbar title={kanji.character} shareText={kanji.shareText} />
 
       <Card>
         <CardContent className="flex flex-col gap-4">
@@ -62,7 +70,7 @@ export default async function KanjiPage({ params }: Props) {
               {kanji.character}
             </span>
             <dl className="flex flex-1 justify-around gap-4">
-              {stats.map(stat => (
+              {kanji.stats.map(stat => (
                 <div key={stat.label} className="flex flex-col-reverse items-center">
                   <dt className="text-xs text-muted-foreground">{stat.label}</dt>
                   <dd className="text-2xl font-semibold tabular-nums">{stat.value}</dd>
@@ -70,60 +78,74 @@ export default async function KanjiPage({ params }: Props) {
               ))}
             </dl>
           </div>
-          <p className="text-lg font-medium">{kanji.meanings.join(', ')}</p>
+          {kanji.meanings.length > 0 ? (
+            <p className="text-lg font-medium">{kanji.meanings.join(', ')}</p>
+          ) : null}
         </CardContent>
       </Card>
 
-      <Section title="Readings">
-        <ul className="flex flex-col divide-y">
-          {kanji.readings.map(reading => (
-            <li
-              key={`${reading.kind}${reading.value}`}
-              className="grid grid-cols-[3.5rem_1fr] gap-x-3 gap-y-1 py-3 first:pt-0 last:pb-0"
-            >
-              <span className="font-medium">{readingKinds[reading.kind]}</span>
-              <span lang="ja" className="text-lg">
-                {reading.value}
+      {kanji.readings.length > 0 ? (
+        <Section title="Readings">
+          <ul className="flex flex-col divide-y">
+            {kanji.readings.map(reading => (
+              <li
+                key={`${reading.kind}${reading.value}`}
+                className="grid grid-cols-[3.5rem_1fr] gap-x-3 gap-y-1 py-3 first:pt-0 last:pb-0"
+              >
+                <span className="font-medium">{reading.label}</span>
+                <span lang="ja" className="text-lg">
+                  {reading.value}
+                </span>
+                {reading.words.length > 0 ? (
+                  <ul className="col-start-2 flex flex-col text-muted-foreground">
+                    {reading.words.map(word => (
+                      <li key={word.entSeq}>
+                        {word.path ? (
+                          <Link
+                            href={word.path}
+                            lang="ja"
+                            className="text-foreground underline-offset-4 hover:underline"
+                          >
+                            {word.headword}
+                          </Link>
+                        ) : (
+                          <span lang="ja">{word.headword}</span>
+                        )}{' '}
+                        · {word.summary}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
+
+      {kanji.components.length > 0 ? (
+        <Section title="Components">
+          <p className="text-xl">
+            {kanji.components.map((component, index) => (
+              <span key={component.character}>
+                {index > 0 ? ' · ' : null}
+                <CharacterLink {...component} />
               </span>
-              {reading.words.length > 0 ? (
-                <ul className="col-start-2 flex flex-col text-muted-foreground">
-                  {reading.words.map(word => (
-                    <li key={`${word.headword}${word.summary}`}>
-                      {word.path ? (
-                        <Link
-                          href={word.path}
-                          lang="ja"
-                          className="text-foreground underline-offset-4 hover:underline"
-                        >
-                          {word.headword}
-                        </Link>
-                      ) : (
-                        <span lang="ja">{word.headword}</span>
-                      )}{' '}
-                      · {word.summary}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </Section>
+            ))}
+          </p>
+        </Section>
+      ) : null}
 
       {kanji.elements.length > 0 ? (
         <Section title="Elements">
           <ul className="flex flex-col gap-3">
             {kanji.elements.map(element => (
               <li key={element.character} className="flex items-center gap-4">
-                <span
-                  lang="ja"
-                  className="grid size-14 shrink-0 place-items-center rounded-lg bg-muted text-3xl"
-                >
-                  {element.character}
+                <span className="grid size-14 shrink-0 place-items-center rounded-lg bg-muted text-3xl">
+                  <CharacterLink character={element.character} path={element.path} />
                 </span>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">{element.role}</p>
-                  <p>{element.meaning}</p>
+                  <p className="text-xs font-medium text-muted-foreground">{element.roleLabel}</p>
+                  <p>{element.description}</p>
                 </div>
               </li>
             ))}
@@ -141,17 +163,29 @@ export default async function KanjiPage({ params }: Props) {
       {kanji.words.length > 0 ? (
         <Section title="Words">
           <div className="-mx-3 flex flex-col">
-            {kanji.words.map(word => (
-              <Item key={word.entSeq} render={<Link href={word.path} />}>
-                <RubyText segments={word.ruby} className="text-xl" />
-                <ItemContent className="text-right text-muted-foreground">
-                  {word.summary}
-                </ItemContent>
-                <ItemActions>
-                  <ChevronRightIcon className="size-4 text-muted-foreground" />
-                </ItemActions>
-              </Item>
-            ))}
+            {kanji.words.map(word => {
+              const content = (
+                <>
+                  <RubyText segments={word.ruby} className="text-xl" />
+                  <ItemContent className="text-right text-muted-foreground">
+                    {word.summary}
+                  </ItemContent>
+                  {word.path ? (
+                    <ItemActions>
+                      <ChevronRightIcon className="size-4 text-muted-foreground" />
+                    </ItemActions>
+                  ) : null}
+                </>
+              )
+              // A word without a page yet (#465) shows without a link.
+              return word.path ? (
+                <Item key={word.entSeq} render={<Link href={word.path} />}>
+                  {content}
+                </Item>
+              ) : (
+                <Item key={word.entSeq}>{content}</Item>
+              )
+            })}
           </div>
         </Section>
       ) : null}
