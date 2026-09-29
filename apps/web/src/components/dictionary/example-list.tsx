@@ -100,8 +100,9 @@ function ExampleItem({ example }: { example: PageExample }) {
 }
 
 /**
- * A word's examples: the first ones rendered with the page, then more loaded from `path` as the
- * list scrolls into view (or with the button), up to the `listed` the app shows.
+ * Examples: the first ones rendered with the page, then more loaded from `path` as the list
+ * scrolls into view (or with the button), up to the `listed` the app shows. Without a `path`, the
+ * list is complete.
  */
 export function ExampleList({
   initial,
@@ -110,7 +111,7 @@ export function ExampleList({
 }: {
   initial: PageExample[]
   listed: number
-  path: string
+  path: string | null
 }) {
   const [examples, setExamples] = useState(initial)
   const [loading, setLoading] = useState(false)
@@ -118,10 +119,10 @@ export function ExampleList({
   // The dictionary was updated since the page loaded, so its next examples are another list's.
   const [stale, setStale] = useState(false)
   const end = useRef<HTMLDivElement>(null)
-  const hasMore = examples.length < listed
+  const hasMore = path !== null && examples.length < listed
 
   const loadMore = useCallback(async () => {
-    if (loading || !hasMore || stale) return
+    if (loading || !hasMore || stale || path === null) return
     setLoading(true)
     setFailed(false)
     try {

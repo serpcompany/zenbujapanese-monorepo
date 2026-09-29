@@ -86,6 +86,8 @@ const frequency = [sources.jlpt, sources.tubelex]
 export const pageSources = {
   search: [sources.jmdict, sources.kanjidic2, ...frequency],
   word: [sources.jmdict, sources.unidic, sources.kanjidic2, ...frequency, sources.tatoeba],
+  /** A search's examples page: the sentences, and the words they link to. */
+  examples: [sources.tatoeba, sources.jmdict],
   kanji: [sources.kanjidic2, sources.radkfile, sources.kanjium, sources.jmdict],
   /** A kanji page that shows stroke order also credits KanjiVG, after RADKFILE as the app does. */
   kanjiWithStrokes: [

@@ -10,9 +10,11 @@ import type { PitchAccent as PitchAccentData } from '@zenbu/dictionary-core/deta
 import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 import { graphemes } from '@zenbu/dictionary-core/detail/text'
 import { ChevronLeftIcon, ChevronRightIcon, EqualIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import type { PageExample } from '@/lib/dictionary/data'
+import { ExampleList } from './example-list'
 import { accent, HeadwordRuby } from './headword-ruby'
 import { PitchAccent } from './pitch-accent'
 import { PronounceButton } from './pronounce-button'
@@ -22,8 +24,9 @@ import { Sheet } from './sheet'
 // word with its reading, meaning, word class, and a one-line rule, a Plain/Polite control when
 // both registers exist, and each form with its changed ending in the accent color. Selecting a
 // form opens its screen (ConjugatedFormView): what the form means, whether another form shares its
-// spelling, and the form with furigana, its ending highlighted, and a speaker. The app pushes these
-// screens; the website opens them in one sheet, with Back from a form to the table.
+// spelling, the form with furigana, its ending highlighted, and a speaker, then the examples that
+// use the complete form. The app pushes these screens; the website opens them in one sheet, with
+// Back from a form to the table.
 
 export interface ConjugationWord {
   ruby: RubySegment[]
@@ -126,7 +129,53 @@ export function ConjugationTableContent({
   )
 }
 
-/** ConjugatedFormView: what the form means, a shared spelling, and the form itself. */
+type FormExamples =
+  | { state: 'loading' }
+  | { state: 'loaded'; examples: PageExample[] }
+  | { state: 'failed' }
+
+/**
+ * ConjugatedFormView's examples: every example sentence that uses the complete form, loaded when
+ * the form's screen opens (src/app/dictionary/conjugations).
+ */
+function ConjugatedFormExamples({ surface }: { surface: string }) {
+  const [loaded, setLoaded] = useState<FormExamples>({ state: 'loading' })
+  useEffect(() => {
+    let current = true
+    setLoaded({ state: 'loading' })
+    fetch(`/dictionary/conjugations/${encodeURIComponent(surface)}.json`)
+      .then(async response => {
+        if (!response.ok) throw new Error(`${response.status}`)
+        const { examples } = (await response.json()) as { examples: PageExample[] }
+        if (current) setLoaded({ state: 'loaded', examples })
+      })
+      .catch(() => {
+        if (current) setLoaded({ state: 'failed' })
+      })
+    return () => {
+      current = false
+    }
+  }, [surface])
+  return (
+    <section className="flex flex-col gap-3" data-conjugation-examples={loaded.state}>
+      <h3 className="text-sm font-medium text-muted-foreground">Examples</h3>
+      {loaded.state === 'loading' ? (
+        <p className="text-sm text-muted-foreground">Loading examples</p>
+      ) : loaded.state === 'failed' ? (
+        <p className="text-sm text-muted-foreground">Examples couldn’t load. Try again later.</p>
+      ) : loaded.examples.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No example sentences use this form yet.</p>
+      ) : (
+        <ExampleList initial={loaded.examples} listed={loaded.examples.length} path={null} />
+      )}
+    </section>
+  )
+}
+
+/**
+ * ConjugatedFormView: what the form means, a shared spelling, the form itself, and the examples
+ * that use it.
+ */
 export function ConjugatedFormContent({ row }: { row: ConjugationRow }) {
   return (
     <div className="flex flex-col gap-4" data-conjugated-form={row.kind}>
@@ -147,6 +196,7 @@ export function ConjugatedFormContent({ row }: { row: ConjugationRow }) {
         />
         <PronounceButton text={row.reading} label={`Pronounce ${row.reading}`} />
       </div>
+      <ConjugatedFormExamples surface={row.surface} />
     </div>
   )
 }
