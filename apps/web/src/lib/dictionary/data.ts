@@ -1,3 +1,5 @@
+import { getCloudflareContext } from '@opennextjs/cloudflare'
+import { cache } from 'react'
 import {
   fixtureEntries,
   fixtureExamples,
@@ -15,10 +17,13 @@ import type {
   KanjiRecord,
   SenseRecord
 } from './records'
+import type { SearchEntry } from './search/search'
+import { websiteSearch } from './search/website'
 import { kanjiPath, wordPath, wordSlug } from './urls'
 
-// Pages read the dictionary only through this module. It serves local fixtures until the D1
-// copy exists (#464); then only these functions change.
+// Pages read the dictionary only through this module. Search runs on the search database
+// (SEARCH_DB) when it holds an import; everything else serves local fixtures until its data is
+// in D1 (#465). Only these functions change as it moves.
 
 /** Production shows no dictionary pages until real data is loaded, so fixtures are never indexed. */
 export function isDictionaryAvailable(): boolean {
@@ -120,8 +125,42 @@ export async function getKanjiPage(character: string): Promise<KanjiPageData | n
   }
 }
 
-export async function searchDictionary(query: string): Promise<SearchData> {
-  const kanji = kanjiByCharacter.get(query)
+/** A search result as a word. The search database has no frequency yet. */
+export function summarizeSearchEntry(entry: SearchEntry): WordSummary {
+  const word = { entSeq: entry.sourceRecordId, headword: entry.headword, reading: entry.reading }
+  return {
+    ...word,
+    ruby: furigana(entry.headword, entry.reading),
+    summary: entry.summary,
+    path: wordPath(word),
+    frequency: []
+  }
+}
+
+// Whether each search database holds an import, read once per isolate.
+const importedDatabases = new WeakMap<D1Database, Promise<boolean>>()
+
+/**
+ * Whether the search database holds a complete import; the import writes `dictionary_import`
+ * last. The local SEARCH_DB has no tables until scripts/search-d1/load-local.sh loads one.
+ */
+function holdsImport(db: D1Database): Promise<boolean> {
+  let imported = importedDatabases.get(db)
+  if (!imported) {
+    imported = (async () => {
+      const table = await db
+        .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'dictionary_import'")
+        .first()
+      if (!table) return false
+      return (await db.prepare('SELECT 1 FROM dictionary_import').first()) !== null
+    })()
+    imported.catch(() => importedDatabases.delete(db))
+    importedDatabases.set(db, imported)
+  }
+  return imported
+}
+
+function fixtureWords(query: string): WordSummary[] {
   const ordered = Object.hasOwn(fixtureSearchOrder, query) ? fixtureSearchOrder[query] : undefined
   const matches = ordered
     ? ordered.flatMap(entSeq => entriesBySeq.get(entSeq) ?? [])
@@ -131,11 +170,33 @@ export async function searchDictionary(query: string): Promise<SearchData> {
           entry.reading === query ||
           entry.summary.toLowerCase().split(/[,;] /).includes(query)
       )
+  return matches.map(summarize)
+}
+
+async function searchWords(query: string): Promise<WordSummary[]> {
+  const { env } = await getCloudflareContext({ async: true })
+  const db = env.SEARCH_DB
+  try {
+    if (!db || !(await holdsImport(db))) return fixtureWords(query)
+    const { items } = await websiteSearch(db).search(query)
+    return items.map(item => summarizeSearchEntry(item.entry))
+  } catch (error) {
+    // Like the app, a search that throws (the database failed, or an English query can't be
+    // read as full text) shows no results.
+    console.error('Dictionary search failed', { query, error })
+    return []
+  }
+}
+
+/** Memoized per request, so the page and its metadata search once. */
+export const searchDictionary = cache(async (query: string): Promise<SearchData> => {
+  // No kanji in the search database yet, so the kanji card still comes from the fixtures.
+  const kanji = kanjiByCharacter.get(query)
   return {
     query,
     kanji: kanji
       ? { character: kanji.character, meanings: kanji.meanings, path: kanjiPath(kanji.character) }
       : null,
-    words: matches.map(summarize)
+    words: await searchWords(query)
   }
-}
+})

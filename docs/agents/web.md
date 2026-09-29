@@ -107,6 +107,11 @@ The search core takes capabilities a client supplies (ADR 0008). The website, co
 the database fails or an English query can't be read as full text, such as one with a NUL, so a
 search page shows a thrown search as no results.
 
+The search results page reads it through `searchDictionary` in `src/lib/dictionary/data.ts`. When
+`SEARCH_DB` is unbound or holds no finished import (no `dictionary_import` row), as in `pnpm dev`,
+it searches the fixtures instead. `load-local.sh` builds into `.search-d1/`, which `pnpm dev`
+doesn't read.
+
 ## Environments and deploys
 
 | Environment | Worker | Domain | D1 database |
