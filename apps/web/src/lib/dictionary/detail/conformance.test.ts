@@ -3,11 +3,14 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { getPlatformProxy } from 'wrangler'
 import { type DictionaryWord, dictionaryDatabase } from '../dictionary-db'
 import { wordSlug } from '../urls'
+import { conjugationTable, indexedForms } from './conjugation'
 import { licenseUrl } from './examples'
 import { tierLabels } from './frequency'
 import { kanjiDetail } from './kanji'
 import {
+  type SuiteConjugationForm,
   type SuiteConjugations,
+  type SuiteFormExamples,
   type SuiteFrequencyDetails,
   type SuiteFurigana,
   type SuitePitchGraph,
@@ -28,8 +31,10 @@ import { wordDetail } from './word'
 // (the import precomputes them, scripts/release-d1/dictionary/build-examples.mts). So are the
 // headword's per-kanji furigana split, the pitch graph's points, and each Frequency row's details,
 // in the shapes suite.ts shares with the rendered page's test (word-page.test.tsx), and the
-// conjugation table the part of speech opens, form by form. The app's kanji cases don't record
-// JLPT, so it isn't compared.
+// conjugation table the part of speech opens, form by form, with every example each form's screen
+// lists (its pair IDs in order, and the first few's words, links, and accents), and that every
+// word with a table is in the conjugations sitemap. The app's kanji cases don't record JLPT, so it
+// isn't compared.
 const enabled = process.env.ZENBU_DICTIONARY_D1 === '1'
 
 interface Artifact {
@@ -121,6 +126,8 @@ interface Suite<Case> {
   cases: Case[]
   /** How many of each word's examples the suite records with their tokens. */
   exampleLimit?: number
+  /** How many of each conjugated form's examples the suite records with their tokens. */
+  formExampleLimit?: number
 }
 
 // Read only when the gate runs, so moving the files (#469) can't break `pnpm test`.
@@ -216,13 +223,22 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
    * A word's examples as the suite records them: the first `exampleLimit`, with each token's
    * entry (one link) or candidates (several) as Language Reference IDs, and the counts.
    */
-  async function examples(entSeq: number, limit: number): Promise<SuiteExamples> {
+  async function examples(
+    entSeq: number,
+    limit: number,
+    recorded: SuiteExamples
+  ): Promise<SuiteExamples> {
     const count = await db
       .prepare('SELECT listed, count, truncated FROM word_example_counts WHERE ent_seq = ?')
       .bind(entSeq)
       .first<{ listed: number; count: number; truncated: number }>()
     const found = await dictionary.examples(entSeq, 0, limit)
     if (!found) throw new Error(`No word ${entSeq}`)
+    // When the app's retrieval throws (a headword that changes under NFKC, such as Ｈ), Word
+    // Detail lists nothing, and so does the page: no count and no rows.
+    if (recorded.error !== undefined && count === null && found.rows.length === 0) {
+      return { listed: 0, truncated: false, error: recorded.error, shown: [] }
+    }
     const ids = await idsOf([
       ...new Set(found.rows.flatMap(({ example }) => example.links.flatMap(link => link.entSeqs)))
     ])
@@ -260,6 +276,61 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
     }
   }
 
+  /**
+   * A conjugated form's examples as the suite records them: every pair ID the form's screen lists,
+   * in order, and the first `limit` with each word's entry or candidates, and whether it's
+   * accented.
+   */
+  async function formExamples(surface: string, limit: number): Promise<SuiteFormExamples> {
+    const found = await dictionary.formExamples(surface, 0, 100)
+    expect(found.rows.length).toBe(found.listed)
+    const shown = found.rows.slice(0, limit)
+    const ids = await idsOf([
+      ...new Set(shown.flatMap(({ example }) => example.links.flatMap(link => link.entSeqs)))
+    ])
+    const id = (number: number) => ids.get(number) ?? `missing ${number}`
+    return {
+      ids: found.rows.map(({ sentence }) => `esp1_${sentence.pairId}`),
+      shown: shown.map(({ sentence, example }) => {
+        const links = new Map(example.links.map(link => [link.token, link.entSeqs]))
+        const highlights = new Set(example.highlights)
+        return {
+          id: `esp1_${sentence.pairId}`,
+          japanese: sentence.japanese,
+          english: sentence.english,
+          tokens: sentence.tokens.map((token, index) => {
+            const entSeqs = links.get(index) ?? []
+            return {
+              surface: token.text,
+              ...(entSeqs.length === 1 ? { entry: id(entSeqs[0]) } : {}),
+              ...(entSeqs.length > 1 ? { candidates: entSeqs.map(id) } : {}),
+              ...(highlights.has(index) ? { highlighted: true } : {})
+            }
+          })
+        }
+      })
+    }
+  }
+
+  /** The table as the suite records it, with each form's examples. */
+  async function conjugations(
+    conjugations: SuiteConjugations,
+    limit: number
+  ): Promise<SuiteConjugations> {
+    const withExamples = async (forms: SuiteConjugationForm[]) => {
+      const result: SuiteConjugationForm[] = []
+      for (const form of forms) {
+        result.push({ ...form, examples: await formExamples(form.surface, limit) })
+      }
+      return result
+    }
+    return {
+      ...conjugations,
+      plain: await withExamples(conjugations.plain),
+      ...(conjugations.polite ? { polite: await withExamples(conjugations.polite) } : {})
+    }
+  }
+
   test.each(wordSuite.cases)('word: $covers', async expected => {
     const word = (await dictionary.word(Number(expected.entSeq[0]))) as DictionaryWord
     expect(word, 'no word row').not.toBeNull()
@@ -286,7 +357,12 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
       partOfSpeech: detail.partOfSpeech,
       opensConjugations: detail.conjugations !== null,
       ...(detail.conjugations
-        ? { conjugations: suiteConjugations(detail.conjugations, entry.summary) }
+        ? {
+            conjugations: await conjugations(
+              suiteConjugations(detail.conjugations, entry.summary),
+              wordSuite.formExampleLimit ?? 0
+            )
+          }
         : {}),
       senses: detail.senses.map((sense, index) => ({
         meaning: sense.meaning,
@@ -328,7 +404,7 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
         summary,
         ...(entSeq === null ? {} : { targetID: targetIds.get(entSeq) })
       })),
-      examples: await examples(entry.entSeq, wordSuite.exampleLimit ?? 0)
+      examples: await examples(entry.entSeq, wordSuite.exampleLimit ?? 0, expected.examples)
     }
     expect(observed).toEqual(covered(expected, ['covers', 'entSeq']))
     // The page's first examples are the suite's, from the same rows.
@@ -400,6 +476,41 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
     expect(found.indexable).toBe(detail.meanings.length > 0 || detail.readings.length > 0)
     // Every listed word links to its page.
     expect(detail.words.filter(word => !found.wordSlugs.has(word.entSeq))).toEqual([])
+  })
+
+  test('every word with a conjugation table is in the conjugations sitemap, with each form page that lists examples', async () => {
+    const [{ results: rows }, { results: listed }, { results: surfaces }] = await Promise.all([
+      db.prepare('SELECT ent_seq, headword, reading, parts_of_speech_json FROM words').all<{
+        ent_seq: number
+        headword: string
+        reading: string
+        parts_of_speech_json: string
+      }>(),
+      db
+        .prepare('SELECT ent_seq, indexed_forms_json FROM word_conjugations')
+        .all<{ ent_seq: number; indexed_forms_json: string }>(),
+      db.prepare('SELECT DISTINCT surface FROM form_examples').all<{ surface: string }>()
+    ])
+    const withExamples = new Set(surfaces.map(row => row.surface))
+    const expected = new Map<number, string[]>()
+    for (const row of rows) {
+      const table = conjugationTable({
+        headword: row.headword,
+        reading: row.reading,
+        partsOfSpeech: JSON.parse(row.parts_of_speech_json)
+      })
+      if (table)
+        expected.set(
+          row.ent_seq,
+          indexedForms(table, surface => withExamples.has(surface))
+        )
+    }
+    expect(expected.size).toBeGreaterThan(0)
+    const stored = new Map(listed.map(row => [row.ent_seq, JSON.parse(row.indexed_forms_json)]))
+    const differing = [...new Set([...expected.keys(), ...stored.keys()])].filter(
+      entSeq => JSON.stringify(expected.get(entSeq)) !== JSON.stringify(stored.get(entSeq))
+    )
+    expect(differing.slice(0, 10)).toEqual([])
   })
 
   test('every word is stored under the slug its URL uses', async () => {

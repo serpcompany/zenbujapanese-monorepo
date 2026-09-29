@@ -45,8 +45,9 @@ def write(name, rows):
 
 def export_examples(resources):
     """The fixture words' examples, from the import's own precompute (build-examples.mts):
-    `example-sentences.json`, `word-examples.json` (the first EXAMPLES_PER_WORD of each word), and
-    `example-counts.json`, whose `listed` counts only the examples kept."""
+    `example-sentences.json`, `word-examples.json` (the first EXAMPLES_PER_WORD of each word),
+    `example-counts.json`, whose `listed` counts only the examples kept, and `form-examples.json`
+    (the first EXAMPLES_PER_WORD of each of their conjugated forms)."""
     with tempfile.TemporaryDirectory() as scratch:
         out = Path(scratch) / "examples.json"
         subprocess.run(
@@ -58,9 +59,11 @@ def export_examples(resources):
         )
         rows = json.loads(out.read_text(encoding="utf-8"))
     examples = [row for row in rows["word_examples"] if row["position"] < EXAMPLES_PER_WORD]
-    used = {row["sentenceId"] for row in examples}
+    forms = [row for row in rows["form_examples"] if row["position"] < EXAMPLES_PER_WORD]
+    used = {row["sentenceId"] for row in examples + forms}
     write("example-sentences.json", [row for row in rows["example_sentences"] if row["id"] in used])
     write("word-examples.json", examples)
+    write("form-examples.json", forms)
     write("example-counts.json", [
         {**row, "listed": min(row["listed"], EXAMPLES_PER_WORD)}
         for row in rows["word_example_counts"]

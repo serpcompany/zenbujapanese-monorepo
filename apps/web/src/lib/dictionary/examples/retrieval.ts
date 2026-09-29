@@ -315,6 +315,60 @@ export function retrieveEntryExamplesByScan(
   )
 }
 
+/** ExampleSentenceLexicalRelation, for the relations a direct Japanese search uses. */
+const JapaneseRelation = { entireJapaneseSentence: 2, containedJapaneseSurface: 3 } as const
+
+/**
+ * `retrieveJapanese`, which `search` runs for a Japanese query and a conjugated form's screen
+ * reads (ConjugatedForm.examples in ConjugationsView.swift): every sentence containing the query,
+ * a sentence that is exactly the query first, then each by where the query first occurs, the
+ * sentence's length, and its pair ID; at most 100. `query` is already normalized (SearchQuery).
+ * The corpus gives the query's occurrences in rank order, as for an entry's terms.
+ */
+export function retrieveJapaneseExamples(
+  query: string,
+  corpus: Pick<ExampleCorpus, 'sentences' | 'occurrences'>
+): number[] {
+  // The app throws for an empty query, and the screen then lists nothing.
+  if (query === '') return []
+  const { occurrences } = corpus.occurrences(query)
+  const relation = (sentence: number) =>
+    corpus.sentences[sentence].japanese === query
+      ? JapaneseRelation.entireJapaneseSentence
+      : JapaneseRelation.containedJapaneseSurface
+  // A sentence that is the query sorts first by position and length already; the sort states it.
+  const ranked = occurrences
+    .map((occurrence, order) => ({ ...occurrence, order }))
+    .sort(
+      (left, right) =>
+        relation(left.sentence) - relation(right.sentence) || left.order - right.order
+    )
+  return ranked.slice(0, exampleLimit).map(occurrence => occurrence.sentence)
+}
+
+/**
+ * The app's `retrieveJapanese` as written: every sentence ranked, then sorted. Too slow for the
+ * import; its self-check compares it with `retrieveJapaneseExamples`.
+ */
+export function retrieveJapaneseExamplesByScan(
+  query: string,
+  sentences: CorpusSentence[]
+): number[] {
+  if (query === '') return []
+  const matches: (Ranked & { sentence: number })[] = []
+  for (const [sentence, { japanese, graphemeCount, pairId }] of sentences.entries()) {
+    const position = graphemePosition(query, japanese)
+    if (position === null) continue
+    const relation =
+      japanese === query
+        ? JapaneseRelation.entireJapaneseSentence
+        : JapaneseRelation.containedJapaneseSurface
+    matches.push({ sentence, relation, position, graphemeCount, pairId })
+  }
+  matches.sort(compareRanks)
+  return matches.slice(0, exampleLimit).map(match => match.sentence)
+}
+
 /**
  * Every sentence each term occurs in, with where it first occurs, found in one pass over the
  * corpus: each position is extended only while the text so far is the start of some term.

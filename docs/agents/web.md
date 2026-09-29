@@ -253,6 +253,12 @@ written as (おせじに on お世辞's page) stays whole there and falls back t
 `word_example_counts` holds each word's listed count and the count the app's retrieval reports.
 `dictionary-schema.test.ts` stores and reads back every token in that suite.
 
+Conjugated forms' examples (#511) are keyed by the form's spelling, since the app's form screen
+finds them by spelling alone: `form_examples` holds each form's examples in order, with the words
+linked as no page sees them (the sentence's own tokens) and `highlights`, the tokens that make up
+the form, which the screen accents. `word_conjugations` lists each word with a conjugation table
+and its form pages search engines may index, for the conjugations sitemap.
+
 **The import** (`scripts/release-d1/dictionary/`) reads the app's bundled files with
 `language_data.py`, the same code `scripts/export-dictionary-fixtures.py` exports fixtures with,
 and writes every word (218,382) and kanji (13,108), the kanji structures, the element glyphs,
@@ -282,14 +288,24 @@ app's scan on every build: 80 entries from each retrieval path (kana headwords, 
 refused entries, and written headwords with and without over 100 matches), drawn afresh per build
 from its build ID. 48,169 words have examples: 902,279 word examples over
 203,727 sentences. As in the app, 2,043 words whose headword changes under NFKC (Ｔシャツ) have none.
+
+It also conjugates every word with the detail core's port of the app's conjugator (20,364 tables,
+281,435 spellings) and lists each spelling's examples as the form's screen does
+(`ConjugatedForm.examples`): the first 100 sentences the app's search for the form finds
+(`retrieveJapaneseExamples`, checked against the app's scan on up to 80 forms per build from each
+kind of search: a sentence is the form, 1 to 100 matches, over 100, and none; the 4 forms
+that are ASCII once normalized, such as Ｈ, search the artifact's English FTS4 indexes as the app
+does, `englishSearch` in `examples-corpus.ts`), keeping those whose Kuromoji words, grouped as the
+app groups inflections, include the form (`examples/forms.ts`). 12,311 spellings have examples:
+116,098 rows, which add 7,793 sentences no word page lists (211,520 in all).
 The rows are written as SQL files of at most 100 MB (`examples-NN.sql`) and 500 rows per INSERT,
 since a local D1 fails on larger ones. The local build then checks that every example table holds
 the rows the precompute wrote (`examples-counts.json`), so a file Wrangler drops without failing
 stops the import before the row counts are recorded or anything is uploaded.
 
-A local build takes about 3.5 minutes (2 minutes 40 of it the example precompute, which peaks
-at about 2.5 GB of memory) and about 610 MB: stroke order is about 10 MB, and the examples add about 450 MB, 335 MB of it
-`word_examples`.
+A local build takes about 4 minutes (3 minutes 20 of it the example precompute, which peaks
+at about 3 GB of memory) and about 660 MB: stroke order is about 10 MB, and the examples add about
+500 MB, 335 MB of it `word_examples` and 47 MB `form_examples` (most of it the rows' links).
 
 **The gate** (`src/lib/dictionary/detail/conformance.test.ts`) replays the app-recorded
 word-detail and kanji-detail suites (`apps/ios/LanguageData/Conformance/`) through the detail
@@ -298,10 +314,12 @@ stored slug against `wordSlug`. It checks every example field the suite records 
 IDs, text, tokens, links, highlights, and counts) and that each side's attribution is intact, and stops
 at once when the copy wasn't built from the files the suites pin. It also checks the headword's
 per-kanji furigana split, the pitch graph's points, each Frequency row's details, and the
-conjugation table, form by form. The import then draws every word-detail case through the word
+conjugation table, form by form, with every example each form's page lists (pair IDs in order,
+and the first 3's tokens, links, and accents), and that `word_conjugations` holds exactly the
+words the core conjugates. The import then draws every word-detail case through the word
 page's components (`src/components/dictionary/word-page.test.tsx`, and `conjugations.test.tsx`
-for the conjugation table) and reads back what they draw, so a component that draws the core's
-values wrong fails the import too.
+for the conjugation table's and each form's page, with the form's first examples) and reads
+back what they draw, so a component that draws the core's values wrong fails the import too.
 
 It changes the way the search schema does, with its own commands:
 `pnpm db:generate:dictionary` generates a migration into `drizzle/dictionary/` and rewrites
@@ -362,6 +380,12 @@ round trip) per page, when it holds a finished import. A word page's later examp
 `/dictionary/examples/<ent_seq>.json?build=<build ID>&from=<n>` (`getWordExamples`). The URL names
 the page's dictionary build, and another build's examples aren't found. Word pages live under the
 stored slug (`words.slug`). A failing database fails the request rather than rendering a 404.
+
+A word's conjugation table and each form have their own pages under the word's
+(`/dictionary/<slug>-<ent_seq>/conjugations/` and `…/conjugations/<plain|polite>/<kind>/`,
+`getConjugationsPage` and `getConjugatedFormPage`): the detail core conjugates the word row, and a
+form's page reads its examples by spelling, loading more from
+`/dictionary/examples/forms/<form>.json?build=<build ID>&from=<n>` (`getFormExamples`).
 
 Without an import, as in `pnpm dev` by default, the rows are local fixtures in
 `src/lib/dictionary/fixtures/`, exported from the app's bundled data by
@@ -494,6 +518,8 @@ per request. `/dictionary/`, the search box, is a static page in `src/lib/pages.
   streams them 10,000 at a time; the index reads only `word_sitemaps`.
 - `/sitemaps/kanji.xml`: the kanji pages search engines may index (`kanji.indexable`). The import
   stops if the indexable kanji ever outgrow one file.
+- `/sitemaps/conjugations.xml`: every conjugation table and the form pages search engines may
+  index (33,532 URLs), from `word_conjugations`. The import stops if they ever outgrow one file.
 
 Both are kept in the Worker's edge cache (the Cache API) under the dictionary build, so a new
 build replaces them at once; `pnpm dev` has no such cache.

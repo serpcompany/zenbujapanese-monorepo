@@ -535,6 +535,60 @@ export function conjugations(
   return { rule: table.rule, modes, rows: { Plain: rows('Plain'), Polite: rows('Polite') } }
 }
 
+// Each form's screen has its own URL (see urls.ts), as the app pushes it as its own screen. The
+// import precomputes which of them search engines may index (build-examples.mts), from these.
+
+/** The registers, by the URL segment that names them. */
+export const conjugationModes: Record<string, ConjugationMode> = {
+  plain: 'Plain',
+  polite: 'Polite'
+}
+
+/** Whether a kind is one the app's conjugator names (`ConjugatedForm.Kind`). */
+export function isConjugationKind(kind: string): kind is ConjugationKind {
+  return Object.hasOwn(conjugationKinds, kind)
+}
+
+/**
+ * The screen that is a form's canonical URL, among screens showing the same spelling and so the
+ * same examples. A Polite form spelled as the Plain form of its kind (the te-form and the
+ * conditional) names that Plain screen. Then, within the register, a form spelled as an earlier
+ * form in the app's order (passive 見られる, after potential 見られる) names that earlier form.
+ * Every other form is its own.
+ */
+export function canonicalForm(
+  table: Pick<ConjugationTable, 'plain' | 'polite'>,
+  mode: ConjugationMode,
+  form: ConjugatedForm
+): { mode: ConjugationMode; kind: ConjugationKind } {
+  const plainSame = table.plain.find(other => other.kind === form.kind)
+  const register: ConjugationMode =
+    mode === 'Polite' && plainSame?.surface === form.surface ? 'Plain' : mode
+  const forms = register === 'Polite' && table.polite.length > 0 ? table.polite : table.plain
+  const first = forms.find(other => other.surface === form.surface)
+  return { mode: register, kind: first?.kind ?? form.kind }
+}
+
+/**
+ * The form screens search engines may index, as `<register>/<kind>`: each canonical screen that
+ * lists examples. A screen without examples is only its explanation and the form.
+ */
+export function indexedForms(
+  table: ConjugationTable,
+  hasExamples: (surface: string) => boolean
+): string[] {
+  const modes: ConjugationMode[] = supportsModes(table) ? ['Plain', 'Polite'] : ['Plain']
+  return modes.flatMap(mode =>
+    formsFor(table, mode)
+      .filter(form => {
+        if (!hasExamples(form.surface)) return false
+        const canonical = canonicalForm(table, mode, form)
+        return canonical.mode === mode && canonical.kind === form.kind
+      })
+      .map(form => `${mode.toLowerCase()}/${form.kind}`)
+  )
+}
+
 /** The "Same spelling as …" note: Swift's `.list(type: .and)` in English. */
 export function sharedSpellingNote(titles: readonly string[]): string {
   const list =

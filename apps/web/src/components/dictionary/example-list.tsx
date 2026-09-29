@@ -5,12 +5,12 @@ import { Fragment } from 'react'
 import { LoadMoreFooter, useLoadMore } from '@/components/dictionary/load-more'
 import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
-import type { PageExample, PageExampleToken } from '@/lib/dictionary/data'
 import {
   licenseUrl,
   type TatoebaSentence,
   tatoebaSentenceUrl
 } from '@/lib/dictionary/detail/examples'
+import type { PageExample, PageExampleToken } from '@/lib/dictionary/page-example'
 
 const linkClass = 'underline-offset-4 hover:text-muted-foreground'
 
@@ -25,7 +25,7 @@ function Token({ token }: { token: PageExampleToken }) {
     : token.link
       ? 'mr-0.5 border-b border-border'
       : undefined
-  const text = <RubyText segments={token.ruby} className={className} />
+  const text = <RubyText segments={token.ruby} className={className} pageWord={token.isPageWord} />
   if (!token.path || !token.link) return text
   const title =
     'entSeqs' in token.link ? `${token.link.entSeqs.length} possible entries` : undefined
@@ -81,6 +81,7 @@ function ExampleItem({ example }: { example: PageExample }) {
     <li
       className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
       data-example={example.position}
+      data-example-pair={example.pairId}
     >
       <div className="flex flex-1 flex-col gap-1">
         <p lang="ja" className="text-xl leading-[2.2]">
@@ -112,8 +113,9 @@ const exampleLabels = {
 }
 
 /**
- * A word's or a search's examples: the first ones rendered with the page, then more loaded from
- * `path` as the list scrolls into view (or with the button), up to the `listed` the app shows.
+ * A word's, a search's, or a conjugated form's examples: the first ones rendered with the page,
+ * then more loaded from `path` as the list scrolls into view (or with the button), up to the
+ * `listed` the app shows.
  */
 export function ExampleList({
   initial,

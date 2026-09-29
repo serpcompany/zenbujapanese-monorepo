@@ -89,6 +89,10 @@ export const pageSources = {
   searchExamples: [sources.tatoeba, sources.jmdict],
   word: [sources.jmdict, sources.unidic, sources.kanjidic2, ...frequency, sources.tatoeba],
   kanji: [sources.kanjidic2, sources.radkfile, sources.kanjium, sources.jmdict],
+  /** A conjugation table: the word, its pitch, and its forms' per-kanji furigana. */
+  conjugations: [sources.jmdict, sources.unidic, sources.kanjidic2],
+  /** A conjugated form's screen: the form's furigana, and its examples and their words. */
+  conjugatedForm: [sources.jmdict, sources.kanjidic2, sources.tatoeba],
   /** A kanji page that shows stroke order also credits KanjiVG, after RADKFILE as the app does. */
   kanjiWithStrokes: [
     sources.kanjidic2,

@@ -85,8 +85,10 @@ models and clients the views use: for a word, its headword, furigana (with each 
 per-kanji split, `JapaneseRubyText.kanjiReadings`), part of speech, pitch (with the contour
 `PitchContourLayout` lays out for `PitchAccentBadge`), senses, default frequency packs (JLPT and
 TUBELEX, each with the Frequency Details it opens, `FrequencyDisclosurePresentation`), the
-conjugation table its part of speech opens (each form with the words `ConjugationsView` shows
-and `sharedSpellings(of:in:)`), kanji, and its first 25 examples with their linked tokens; for
+conjugation table its part of speech opens (each form with the words `ConjugationsView` shows,
+`sharedSpellings(of:in:)`, and the examples its screen lists: every pair ID, in order, from
+`ConjugatedForm.examples`, and the first 3 with their linked tokens and which of them
+`LinkedJapaneseText.matchesQuery` accents), kanji, and its first 25 examples with their linked tokens; for
 a kanji, its metrics, meanings, readings with their words, elements, 24 words, and whether it
 has stroke data (not its JLPT metric, which the suites don't record). The views and the suite
 share those helpers, so the suite records what the views draw. Each file pins the SHA-256 of

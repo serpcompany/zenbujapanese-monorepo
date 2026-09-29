@@ -32,7 +32,8 @@ struct WordDetailConformanceTests {
       suite.artifacts = artifacts
       for index in suite.cases.indices {
         suite.cases[index] = try await observer.observe(
-          suite.cases[index], exampleLimit: suite.exampleLimit)
+          suite.cases[index], exampleLimit: suite.exampleLimit,
+          formExampleLimit: suite.formExampleLimit)
       }
       try DetailConformance.write(suite, to: url)
       return
@@ -42,7 +43,8 @@ struct WordDetailConformanceTests {
       suite.artifacts == artifacts,
       "The suite was recorded against different artifacts; record it again")
     for expected in suite.cases {
-      let observed = try await observer.observe(expected, exampleLimit: suite.exampleLimit)
+      let observed = try await observer.observe(
+        expected, exampleLimit: suite.exampleLimit, formExampleLimit: suite.formExampleLimit)
       let differences = try DetailConformance.differences(expected, observed)
       #expect(
         differences.isEmpty,
@@ -76,7 +78,9 @@ private struct WordDetailObserver {
     guard availability == .full else { throw WordDetailObserverError.textAnalysisUnavailable }
   }
 
-  func observe(_ recorded: WordDetailCase, exampleLimit: Int) async throws -> WordDetailCase {
+  func observe(_ recorded: WordDetailCase, exampleLimit: Int, formExampleLimit: Int) async throws
+    -> WordDetailCase
+  {
     var observed = WordDetailCase(id: recorded.id, covers: recorded.covers)
     guard let entry = try await lookupClient.entry(LanguageReferenceID(rawValue: recorded.id))
     else { return observed }
@@ -95,8 +99,15 @@ private struct WordDetailObserver {
     observed.partOfSpeech = entry.displayPartOfSpeech
     let conjugationTable = conjugationClient.table(entry)
     observed.opensConjugations = conjugationTable != nil
-    observed.conjugations = conjugationTable.map {
-      WordDetailCase.Conjugations(entry: entry, table: $0)
+    if let conjugationTable {
+      var conjugations = WordDetailCase.Conjugations(entry: entry, table: conjugationTable)
+      conjugations.plain = await formExamples(
+        conjugations.plain, conjugationTable.forms(for: .plain), limit: formExampleLimit)
+      if let polite = conjugations.polite {
+        conjugations.polite = await formExamples(
+          polite, conjugationTable.forms(for: .polite), limit: formExampleLimit)
+      }
+      observed.conjugations = conjugations
     }
     observed.pitch = entry.pitchAccent.map { pitch in
       // The view draws one level per mora of the reading (in katakana, which splits into the
@@ -139,6 +150,47 @@ private struct WordDetailObserver {
       tier: presentation.tier?.label,
       details: WordDetailCase.FrequencyDetails(FrequencyDisclosurePresentation(result: result))
     )
+  }
+
+  /// Each form's screen's examples, as ConjugatedFormView lists them: every pair ID in order, and
+  /// the first `limit` with their words, each word's link, and whether the screen accents it as
+  /// part of the form.
+  private func formExamples(
+    _ recorded: [WordDetailCase.Conjugations.Form], _ forms: [ConjugatedForm], limit: Int
+  ) async -> [WordDetailCase.Conjugations.Form] {
+    var result = recorded
+    for (index, form) in forms.enumerated() {
+      let examples = await form.examples(
+        exampleSentenceClient: exampleSentenceClient,
+        japaneseTextAnalysisClient: textAnalysisClient)
+      let query = SearchQuery(form.surface)
+      var shown: [WordDetailCase.FormExample] = []
+      for sentence in examples.prefix(limit) {
+        // The screen's rows link words with no page entry, and accent the form's words.
+        let tokens = await textAnalysisClient.linkedTokens(sentence.japanese, query, nil)
+        let ranges = ExampleSentencesScreen.queryScalarRanges(
+          in: sentence.japanese, query: query.value)
+        shown.append(
+          WordDetailCase.FormExample(
+            id: sentence.id.rawValue,
+            japanese: sentence.japanese,
+            english: sentence.english,
+            tokens: tokens.map { token in
+              WordDetailCase.FormToken(
+                surface: token.surface,
+                entry: token.entry?.id.rawValue,
+                candidates: token.entry == nil && !token.candidateEntries.isEmpty
+                  ? token.candidateEntries.map(\.id.rawValue) : nil,
+                highlighted: LinkedJapaneseText.matchesQuery(token, queryRanges: ranges)
+                  ? true : nil
+              )
+            }
+          ))
+      }
+      result[index].examples = WordDetailCase.FormExamples(
+        ids: examples.map(\.id.rawValue), shown: shown)
+    }
+    return result
   }
 
   private func kanji(_ characters: [String]) async throws -> [WordDetailCase.Kanji] {
@@ -207,6 +259,8 @@ private struct WordDetailSuite: Codable {
   var artifacts: [ConformanceArtifact]?
   /// How many of an entry's examples, in order, the suite records with their tokens.
   let exampleLimit: Int
+  /// How many of each conjugated form's examples, in order, the suite records with their tokens.
+  let formExampleLimit: Int
   var cases: [WordDetailCase]
 }
 
@@ -252,9 +306,9 @@ private struct WordDetailCase: Codable {
     let rule: String
     /// Plain alone, or Plain and Polite when the control shows.
     let modes: [String]
-    let plain: [Form]
+    var plain: [Form]
     /// Nil when the table has no Polite register.
-    let polite: [Form]?
+    var polite: [Form]?
 
     struct Form: Codable {
       let kind: String
@@ -270,6 +324,8 @@ private struct WordDetailCase: Codable {
       let furigana: [Furigana]
       /// Other forms in the register with the same spelling, which the form's screen names.
       let sharedSpellings: [String]?
+      /// The Example Sentences the form's screen lists.
+      var examples: FormExamples?
     }
 
     init(entry: DictionaryEntry, table: ConjugationTable) {
@@ -432,6 +488,30 @@ private struct WordDetailCase: Codable {
     let japanese: String
     let english: String
     let tokens: [Token]
+  }
+
+  /// ConjugatedFormView's examples: every one it lists, and the first few with their words.
+  struct FormExamples: Codable {
+    /// Each example's pair ID, in the order the screen lists them.
+    let ids: [String]
+    let shown: [FormExample]
+  }
+
+  struct FormExample: Codable {
+    let id: String
+    let japanese: String
+    let english: String
+    let tokens: [FormToken]
+  }
+
+  struct FormToken: Codable {
+    let surface: String
+    /// The entry the word links to.
+    let entry: String?
+    /// The possible entries when the word has no single one.
+    let candidates: [String]?
+    /// Whether the screen accents the word as part of the form.
+    let highlighted: Bool?
   }
 
   struct Token: Codable {

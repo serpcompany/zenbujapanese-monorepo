@@ -10,27 +10,38 @@
 // 100 MB (Wrangler drops larger ones locally), with INSERTs for example_sentences (each
 // listed Tatoeba pair once, with its Kuromoji tokens and both sides' attribution), word_examples
 // (per entry and position: which tokens are the entry, and where each word links on its page),
-// and word_example_counts, and `<out prefix>-counts.json`, the rows each table should then hold.
-// Given entry numbers, it writes only their rows, as JSON, for the local fixtures
-// (scripts/export-dictionary-fixtures.py).
+// word_example_counts, form_examples (per conjugated form's spelling and position: which tokens
+// make up the form, and where each word links on the form's screen), and word_conjugations (each
+// word with a conjugation table, and which of its form screens search engines may index), and
+// `<out prefix>-counts.json`, the rows each table should then hold. Given entry numbers, it writes
+// only their rows, as JSON, for the local fixtures (scripts/export-dictionary-fixtures.py).
 //
 // Everything is the app's logic, ported: retrieval (src/lib/dictionary/examples/retrieval.ts,
 // from ExampleSentenceClient.swift), the tokenizer (the app's pinned kuromoji.js and IPADIC,
-// examples/kuromoji.ts), and linking (examples/linking.ts, from JapaneseTextAnalysisClient.swift).
-// It checks the fast retrieval against the app's own scan on a sample of entries from every
-// retrieval path, drawn per build, and fails on any difference; the word-detail conformance gate
-// then checks the result against the app.
+// examples/kuromoji.ts), linking (examples/linking.ts, from JapaneseTextAnalysisClient.swift), the
+// conjugator (detail/conjugation.ts, from JapaneseConjugationClient.swift), and which sentences a
+// form's screen lists and accents (examples/forms.ts, from ConjugationsView.swift). It checks the
+// fast retrieval against the app's own scan on a sample of entries from every retrieval path, and
+// of forms, drawn per build, and fails on any difference; the word-detail conformance gate then
+// checks the result against the app.
 
 import { createHash } from 'node:crypto'
 import { closeSync, openSync, writeFileSync, writeSync } from 'node:fs'
 import { join } from 'node:path'
+import {
+  type ConjugationTable,
+  conjugationTable,
+  indexedForms
+} from '../../../src/lib/dictionary/detail/conjugation'
 import type {
   ExampleCountRow,
   ExampleLinkRow,
   ExampleSentenceRow,
   ExampleSentenceTokenRow,
+  FormExampleRow,
   WordExampleRow
 } from '../../../src/lib/dictionary/detail/rows'
+import { queryHighlights, usesForm } from '../../../src/lib/dictionary/examples/forms'
 import { toHiragana } from '../../../src/lib/dictionary/examples/kana'
 import { loadKuromoji } from '../../../src/lib/dictionary/examples/kuromoji'
 import {
@@ -45,16 +56,20 @@ import {
 } from '../../../src/lib/dictionary/examples/morphology'
 import {
   entryTerms,
+  exampleLimit,
   findOccurrences,
   type RetrievedExamples,
   retrieveEntryExamples,
-  retrieveEntryExamplesByScan
+  retrieveEntryExamplesByScan,
+  retrieveJapaneseExamples,
+  retrieveJapaneseExamplesByScan
 } from '../../../src/lib/dictionary/examples/retrieval'
-import { normalizeQuery } from '../../../src/lib/dictionary/search/query'
+import { isASCII, normalizeQuery } from '../../../src/lib/dictionary/search/query'
 import {
   canonicalEntries,
   corpus,
   type Entry,
+  englishSearch,
   formLookup,
   openArtifact,
   readEntries,
@@ -114,6 +129,25 @@ for (const entry of pages) {
   for (const form of found.alternateForms) terms.add(form)
   terms.add(found.reading)
 }
+
+// Conjugated forms: every form of every word's table, as its page conjugates it. A form's screen
+// searches for the form's spelling (`SearchQuery(form.surface)`), so its examples depend on the
+// spelling alone, whichever word it comes from.
+const tables = new Map<number, ConjugationTable>()
+const formQueries = new Map<string, string>()
+for (const entry of entries) {
+  if (fixtureEntSeqs && !fixtureEntSeqs.has(entry.entSeq)) continue
+  const table = conjugationTable(entry)
+  if (!table) continue
+  tables.set(entry.entSeq, table)
+  for (const form of [...table.plain, ...table.polite]) {
+    const query = normalizeQuery(form.surface)
+    formQueries.set(form.surface, query)
+    // A form whose spelling is ASCII once normalized, such as Ｈ, searches English.
+    if (!isASCII(query)) terms.add(query)
+  }
+}
+
 const exampleCorpus = corpus(sentences, forms, findOccurrences(sentences, terms), wordIndex)
 log(`found where ${terms.size} terms occur`)
 
@@ -170,17 +204,79 @@ for (const entry of checked) {
 }
 log(`checked ${checked.length} pages' retrieval against the app's scan`)
 
-// Tokens: every listed sentence through the app's Kuromoji.
+// Every sentence through the app's Kuromoji, once.
 const tokenize = loadKuromoji(join(resources, 'Kuromoji'))
-const listed = [...new Set([...retrieved.values()].flatMap(result => result.sentences))].sort(
-  (a, b) => a - b
-)
 const analyses = new Map<number, MorphologyCandidate[] | null>()
-for (const sentence of listed) {
-  const { japanese } = sentences[sentence]
-  analyses.set(sentence, kuromojiCandidates(japanese, tokenize(japanese)))
+function analysis(sentence: number): MorphologyCandidate[] | null {
+  if (!analyses.has(sentence)) {
+    const { japanese } = sentences[sentence]
+    analyses.set(sentence, kuromojiCandidates(japanese, tokenize(japanese)))
+  }
+  return analyses.get(sentence) ?? null
 }
-log(`tokenized ${listed.length} sentences`)
+
+// Each form's examples (ConjugatedForm.examples): the first 100 sentences its search finds, then
+// those in which the parser reads the form as one whole word.
+const searchEnglish = englishSearch(db, sentences)
+const formExamples = new Map<string, number[]>()
+let englishForms = 0
+for (const [surface, query] of formQueries) {
+  const english = isASCII(query)
+  if (english) englishForms += 1
+  const found = (
+    english ? searchEnglish(query) : retrieveJapaneseExamples(query, exampleCorpus)
+  ).filter(sentence => usesForm(sentences[sentence].japanese, analysis(sentence), surface))
+  if (found.length > 0) formExamples.set(surface, found)
+}
+log(
+  `found examples for ${formExamples.size} of ${formQueries.size} forms ` +
+    `(${englishForms} search English)`
+)
+// The fast search must list exactly what the app's scan lists, on a sample drawn per build from
+// each kind of search: a form some sentence is exactly, one found 1 to 100 times, one found more
+// than 100 times (where the cap cuts the list), and one found nowhere.
+const sentenceTexts = new Set(sentences.map(sentence => sentence.japanese))
+const formBuckets = new Map<string, string[]>()
+for (const query of [...new Set(formQueries.values())].sort()) {
+  if (isASCII(query)) continue
+  const { total } = exampleCorpus.occurrences(query)
+  const bucket = sentenceTexts.has(query)
+    ? 'a sentence is the form'
+    : total > exampleLimit
+      ? 'over 100'
+      : total > 0
+        ? '1 to 100'
+        : 'none'
+  const list = formBuckets.get(bucket)
+  if (list) list.push(query)
+  else formBuckets.set(bucket, [query])
+}
+let checkedForms = 0
+for (const [bucket, queries] of [...formBuckets].sort(([a], [b]) => (a < b ? -1 : 1))) {
+  const drawn = new Set<string>()
+  while (drawn.size < Math.min(checkedPerPath, queries.length)) {
+    drawn.add(queries[Math.floor(random() * queries.length)])
+  }
+  for (const query of drawn) {
+    const fast = JSON.stringify(retrieveJapaneseExamples(query, exampleCorpus))
+    if (fast !== JSON.stringify(retrieveJapaneseExamplesByScan(query, sentences))) {
+      throw new Error(`The search for the form ${query} differs from the app's scan`)
+    }
+  }
+  checkedForms += drawn.size
+  log(`checked ${drawn.size} of ${queries.length} forms' search (${bucket}) against the app's scan`)
+}
+log(`checked ${checkedForms} forms' search against the app's scan`)
+
+// Tokens: every listed sentence, on a word page or a form's screen.
+const listed = [
+  ...new Set([
+    ...[...retrieved.values()].flatMap(result => result.sentences),
+    ...[...formExamples.values()].flat()
+  ])
+].sort((a, b) => a - b)
+for (const sentence of listed) analysis(sentence)
+log(`tokenized ${analyses.size} sentences, of which ${listed.length} are listed`)
 
 // Output: SQL, written as it's made with each INSERT under D1's statement limit, or fixture JSON.
 type Value = string | number | boolean | null
@@ -300,9 +396,14 @@ const sentenceWriter = writer('example_sentences', [
   'english_contributor',
   'english_license'
 ])
+// The words as no page sees them, which a form's screen links as they are.
+const formSentences = new Set([...formExamples.values()].flat())
+const neutralTokens = new Map<number, LinkedToken[]>()
 for (const [sentence, id] of sentenceIds) {
   const { japanese, english, pairId, ...row } = sentences[sentence]
-  const tokens = tokenRows(linkedTokens(japanese, analyses.get(sentence) ?? null, null, lookup))
+  const linked = linkedTokens(japanese, analyses.get(sentence) ?? null, null, lookup)
+  if (formSentences.has(sentence)) neutralTokens.set(sentence, linked)
+  const tokens = tokenRows(linked)
   sentenceRows.set(sentence, tokens)
   const fixture: ExampleSentenceRow = {
     id,
@@ -407,6 +508,58 @@ for (const [id, result] of retrieved) {
 }
 exampleWriter.flush()
 countWriter.flush()
+
+// Each form's examples as its screen shows them: the sentence's own words, linked as no page
+// sees them, with the words that make up the form accented.
+const formWriter = writer('form_examples', [
+  'surface',
+  'position',
+  'sentence_id',
+  'highlights_json',
+  'links_json'
+])
+for (const [surface, list] of formExamples) {
+  const query = formQueries.get(surface) as string
+  for (const [position, sentence] of list.entries()) {
+    const tokens = neutralTokens.get(sentence) as LinkedToken[]
+    const example: FormExampleRow = {
+      surface,
+      position,
+      sentenceId: sentenceIds.get(sentence) as number,
+      highlights: queryHighlights(
+        sentences[sentence].japanese,
+        tokens.map(token => token.surface),
+        query
+      ),
+      links: linkRows(tokens, sentenceRows.get(sentence) as ExampleSentenceTokenRow[])
+    }
+    formWriter.add(
+      [
+        surface,
+        position,
+        example.sentenceId,
+        JSON.stringify(example.highlights),
+        JSON.stringify(example.links)
+      ],
+      example
+    )
+  }
+}
+formWriter.flush()
+
+// Each word's table, and which of its form screens search engines may index, for the
+// conjugations sitemap: one file, like the kanji sitemap.
+const conjugationWriter = writer('word_conjugations', ['ent_seq', 'indexed_forms_json'])
+let conjugationUrls = 0
+for (const [entSeq, table] of [...tables].sort(([a], [b]) => a - b)) {
+  const indexed = indexedForms(table, surface => formExamples.has(surface))
+  conjugationUrls += 1 + indexed.length
+  conjugationWriter.add([entSeq, JSON.stringify(indexed)], { entSeq, indexedForms: indexed })
+}
+conjugationWriter.flush()
+if (conjugationUrls > 50_000) {
+  throw new Error(`${conjugationUrls} conjugation pages outgrow one sitemap of 50,000 URLs`)
+}
 if (out !== null) closeSync(out)
 if (fixtureEntSeqs) writeFileSync(outPath, JSON.stringify(fixtures))
 // The rows each table should hold once every file is loaded, which the local build checks.
@@ -418,6 +571,6 @@ if (asciiForms.size > 0) {
 }
 log(
   `wrote ${JSON.stringify(counts)} in ${parts} files (${splitOnPage} examples split on their ` +
-    'own page); ' +
+    `own page; ${conjugationUrls} conjugation pages to index); ` +
     `peak ${Math.round(peakRss / 2 ** 20)} MB`
 )

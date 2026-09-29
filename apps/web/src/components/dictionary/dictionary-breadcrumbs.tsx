@@ -13,6 +13,8 @@ import { absoluteUrl } from '@/lib/site'
 export interface Crumb {
   label: string
   path: string
+  /** Where the visible link goes, when not `path`, such as a table in the register just left. */
+  href?: string
   lang?: 'ja'
 }
 
@@ -22,10 +24,24 @@ const dictionary: Crumb = { label: 'Dictionary', path: '/dictionary/' }
 /**
  * The trail from Home through Dictionary to the current page, plus its BreadcrumbList
  * structured data. `page` is omitted on the dictionary page itself; `parent` comes between
- * Dictionary and the page, as a search does before its Example Sentences page.
+ * Dictionary and the page, as a search does before its Example Sentences page. `pages` is the
+ * whole trail below Dictionary for a deeper page, such as a word's conjugations, the current
+ * page last.
  */
-export function DictionaryBreadcrumbs({ page, parent }: { page?: Crumb; parent?: Crumb }) {
-  const trail = [home, dictionary, ...(parent ? [parent] : []), ...(page ? [page] : [])]
+export function DictionaryBreadcrumbs({
+  page,
+  parent,
+  pages
+}: {
+  page?: Crumb
+  parent?: Crumb
+  pages?: Crumb[]
+}) {
+  const trail = [
+    home,
+    dictionary,
+    ...(pages ?? [...(parent ? [parent] : []), ...(page ? [page] : [])])
+  ]
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -48,7 +64,9 @@ export function DictionaryBreadcrumbs({ page, parent }: { page?: Crumb; parent?:
                   {crumb.label}
                 </BreadcrumbPage>
               ) : (
-                <BreadcrumbLink render={<Link href={crumb.path} />}>{crumb.label}</BreadcrumbLink>
+                <BreadcrumbLink render={<Link href={crumb.href ?? crumb.path} />} lang={crumb.lang}>
+                  {crumb.label}
+                </BreadcrumbLink>
               )}
             </BreadcrumbItem>
           </Fragment>

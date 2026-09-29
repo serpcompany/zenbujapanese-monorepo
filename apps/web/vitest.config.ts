@@ -7,5 +7,10 @@ const readsLocalD1 = process.env.ZENBU_SEARCH_D1 === '1' || process.env.ZENBU_DI
 
 export default defineConfig({
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
-  test: { include: ['src/**/*.test.{ts,tsx}'], fileParallelism: !readsLocalD1 }
+  test: {
+    include: ['src/**/*.test.{ts,tsx}'],
+    fileParallelism: !readsLocalD1,
+    // Links keep their trailing slash, as next.config.ts's `trailingSlash` has the build draw them.
+    env: { __NEXT_TRAILING_SLASH: 'true' }
+  }
 })

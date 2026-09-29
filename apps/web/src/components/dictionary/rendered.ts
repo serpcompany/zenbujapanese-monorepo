@@ -18,23 +18,40 @@ function removeAll(text: string, pattern: RegExp, replacement = ''): string {
   return current
 }
 
+/** The HTML without text only screen readers get, removed until none remains. */
+export function withoutScreenReaderText(html: string): string {
+  return removeAll(html, srOnly)
+}
+
+/** Furigana: a `<ruby>`'s reading. */
+const furiganaTag = /<rt\b[^>]*>[\s\S]*?<\/rt>/g
+
 /**
- * Visible text: furigana (`<rt>`) and screen-reader-only text left out, tags removed, and quotes
- * and ampersands decoded. `&lt;` and `&gt;` stay encoded, so the result never holds a tag; no
- * suite text has either.
+ * The one text extractor every rendered-page reader uses: tags removed until none remain, so a
+ * removal can't leave a new tag behind (`<scr<script>ipt>`), then any `<` an unfinished tag left,
+ * and quotes and ampersands decoded. `&lt;` and `&gt;` stay encoded, so the result never holds a
+ * `<`; React encodes every one in text, so no suite text loses one. Furigana is left out unless
+ * `furigana` keeps it. Whitespace is kept as written.
  */
-export function visibleText(html: string): string {
-  let text = removeAll(html, /<rt\b[^>]*>[\s\S]*?<\/rt>/g)
-  text = removeAll(text, srOnly)
-  // A block ends a line.
-  text = removeAll(text, /<\/(?:p|div|h\d)>/g, ' ')
-  text = removeAll(text, /<[^>]+>/g)
-  return text
+export function htmlText(html: string, { furigana = false }: { furigana?: boolean } = {}): string {
+  const text = furigana ? html : removeAll(html, furiganaTag)
+  return removeAll(text, /<[^>]*>/g)
+    .replace(/</g, '')
     .replace(/&quot;/g, '"')
     .replace(/&#x27;/g, "'")
     .replace(/&amp;(?!lt;|gt;)/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim()
+}
+
+/**
+ * Visible text: furigana (`<rt>`) and screen-reader-only text left out, tags removed, quotes and
+ * ampersands decoded (`htmlText`), and whitespace collapsed.
+ */
+export function visibleText(html: string): string {
+  let text = removeAll(html, furiganaTag)
+  text = removeAll(text, srOnly)
+  // A block ends a line.
+  text = removeAll(text, /<\/(?:p|div|h\d)>/g, ' ')
+  return htmlText(text).replace(/\s+/g, ' ').trim()
 }
 
 /** The HTML from each match of `marker` to the next, with the marker's captured value. */
@@ -75,7 +92,7 @@ export function readRenderedPage(html: string): RenderedPage {
   const rows = segments(html, /data-result-row="(\d+)"/g).map(({ value, html: row }) => {
     const headword = row.match(/<span lang="ja"[^>]*>([\s\S]*?)<\/span>\s*<p/)?.[1] ?? ''
     const summary = row.match(/<p class="line-clamp-2[^"]*">([\s\S]*?)<\/p>/)?.[1] ?? ''
-    const shown = removeAll(row, srOnly)
+    const shown = withoutScreenReaderText(row)
     const chips = segments(shown, /data-chip="([^"]+)"/g).map(chip =>
       visibleText(`<x ${chip.html.split('</span></span>')[0]}`)
     )

@@ -36,6 +36,16 @@ CREATE TABLE `example_sentences` (
 	`english_license` text NOT NULL
 )
 
+table form_examples
+CREATE TABLE `form_examples` (
+	`surface` text NOT NULL,
+	`position` integer NOT NULL,
+	`sentence_id` integer NOT NULL,
+	`highlights_json` text NOT NULL,
+	`links_json` text NOT NULL,
+	PRIMARY KEY(`surface`, `position`)
+)
+
 table kanji
 CREATE TABLE `kanji` (
 	`character` text PRIMARY KEY NOT NULL,
@@ -72,6 +82,12 @@ table retired_ids
 CREATE TABLE `retired_ids` (
 	`ent_seq` integer PRIMARY KEY NOT NULL,
 	`replacement_ent_seq` integer
+)
+
+table word_conjugations
+CREATE TABLE `word_conjugations` (
+	`ent_seq` integer PRIMARY KEY NOT NULL,
+	`indexed_forms_json` text NOT NULL
 )
 
 table word_example_counts

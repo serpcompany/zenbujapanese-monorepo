@@ -4,7 +4,14 @@
 // the translation. The import precomputes which entry each word links to on each page
 // (scripts/release-d1/dictionary/build-examples.mts); this only shapes those rows.
 
-import type { ExampleCountRow, WordExampleRows } from './rows'
+import type {
+  ExampleCountRow,
+  ExampleSentenceRow,
+  ExampleSentenceTokenRow,
+  FormExampleRows,
+  WordExampleRow,
+  WordExampleRows
+} from './rows'
 import { type RubySegment, rubySegments } from './ruby'
 
 /** How many examples a page shows at first, and loads at a time as it scrolls. */
@@ -21,7 +28,10 @@ export interface ExampleToken {
   /** Furigana only over a word linked to one entry, as the app draws it. */
   ruby: RubySegment[]
   link: ExampleLink | null
-  /** The page's own word, which the app accents. */
+  /**
+   * The page's own word, which the app accents: the word on its word page, and the words that make
+   * up the form on a conjugated form's screen.
+   */
   isPageWord: boolean
 }
 
@@ -36,6 +46,8 @@ export interface TatoebaSentence {
 export interface Example {
   /** The example's place in the word's list, from 0. */
   position: number
+  /** The Tatoeba pair's ID in the artifact, lowercase hex (the app's ID is `esp1_` and this). */
+  pairId: string
   /** The sentence as plain text, for speech. */
   text: string
   tokens: ExampleToken[]
@@ -44,13 +56,37 @@ export interface Example {
   english: TatoebaSentence
 }
 
+/** What an example's page adds to its sentence: a word page's or a form screen's row. */
+type ExampleRow = Pick<WordExampleRow, 'position' | 'highlights' | 'links'> & {
+  tokens?: ExampleSentenceTokenRow[] | null
+}
+
 /** One example as its page shows it. */
-export function wordExample({ sentence, example }: WordExampleRows): Example {
+export function wordExample(rows: WordExampleRows): Example {
+  return example(rows)
+}
+
+/**
+ * One of a conjugated form's examples as its screen shows it (ConjugatedFormView's examples, the
+ * `.conjugatedForm` presentation): the same row, with the form's words accented.
+ */
+export function formExample(rows: FormExampleRows): Example {
+  return example(rows)
+}
+
+function example({
+  sentence,
+  example
+}: {
+  sentence: ExampleSentenceRow
+  example: ExampleRow
+}): Example {
   const tokens = example.tokens ?? sentence.tokens
   const links = new Map(example.links.map(link => [link.token, link]))
   const highlights = new Set(example.highlights)
   return {
     position: example.position,
+    pairId: sentence.pairId,
     text: sentence.japanese,
     tokens: tokens.map((token, index) => {
       const link = links.get(index)
@@ -94,6 +130,9 @@ export function exampleCountText(count: ExampleCountRow | null): string | null {
 
 /** The app's empty state (WordDetailView's ExampleSentenceSections). */
 export const noExamplesMessage = 'No source-matched examples'
+
+/** A conjugated form's screen's empty state (ConjugatedFormView's ExampleSentenceSections). */
+export const noFormExamplesMessage = 'No example sentences use this form yet.'
 
 /** A Tatoeba sentence's own page. */
 export const tatoebaSentenceUrl = (id: number) => `https://tatoeba.org/en/sentences/show/${id}`

@@ -39,9 +39,13 @@ build_inputs=(
   # components the rendered-page test draws, with how it reads them back. gate-inputs.test.ts
   # checks this list covers every file those tests import.
   apps/web/src/lib/dictionary/dictionary-db.ts
+  apps/web/src/lib/dictionary/page-example.ts
   apps/web/src/lib/dictionary/urls.ts
   apps/web/src/components/dictionary/word-header.tsx
   apps/web/src/components/dictionary/conjugations.tsx
+  apps/web/src/components/dictionary/example-list.tsx
+  apps/web/src/components/dictionary/load-more.tsx
+  apps/web/src/components/dictionary/ruby-text.tsx
   apps/web/src/components/dictionary/headword-ruby.tsx
   apps/web/src/components/dictionary/pitch-accent.tsx
   apps/web/src/components/dictionary/pronounce-button.tsx
@@ -49,6 +53,7 @@ build_inputs=(
   apps/web/src/components/dictionary/frequency.tsx
   apps/web/src/components/dictionary/sheet.tsx
   apps/web/src/components/dictionary/rendered-word.ts
+  apps/web/src/components/dictionary/rendered.ts
   apps/web/src/components/ui/badge.tsx
   apps/web/src/components/ui/button.tsx
   apps/web/src/components/ui/card.tsx
@@ -62,7 +67,7 @@ build_inputs=(
   apps/ios/LanguageData/Conformance/kanji-detail.json
 )
 tables=(words kanji kanji_strokes kanji_elements element_glyphs example_sentences word_examples
-  word_example_counts retired_ids word_sitemaps)
+  word_example_counts form_examples word_conjugations retired_ids word_sitemaps)
 # examples-NN.sql: as many as build-examples.mts writes, each under 100 MB (a glob, in order).
 upload_files=(rows.sql 'examples-*.sql')
 
@@ -87,7 +92,9 @@ build_rows() {
   local_d1 execute "$local_name" --json --command "SELECT json_object(
       'example_sentences', (SELECT count(*) FROM example_sentences),
       'word_examples', (SELECT count(*) FROM word_examples),
-      'word_example_counts', (SELECT count(*) FROM word_example_counts)) AS counts" |
+      'word_example_counts', (SELECT count(*) FROM word_example_counts),
+      'form_examples', (SELECT count(*) FROM form_examples),
+      'word_conjugations', (SELECT count(*) FROM word_conjugations)) AS counts" |
     python3 -c '
 import json, sys
 loaded = json.loads(json.load(sys.stdin)[0]["results"][0]["counts"])
@@ -98,10 +105,11 @@ if loaded != expected:
 }
 
 # The app-recorded word-detail and kanji-detail suites, run through the detail core on the local
-# copy built through the migrations (src/lib/dictionary/detail/conformance.test.ts), and the
-# word-detail suite drawn by the word page's components (word-page.test.tsx): the furigana's
-# per-kanji split, the pitch graph's dots, each Frequency row's details, and the conjugation
-# table with each form's screen (conjugations.test.tsx).
+# copy built through the migrations (src/lib/dictionary/detail/conformance.test.ts), with every
+# example each conjugated form's screen lists, and the word-detail suite drawn by the word page's
+# components (word-page.test.tsx): the furigana's per-kanji split, the pitch graph's dots, each
+# Frequency row's details, and the conjugation table's page with each form's page and its
+# examples (conjugations.test.tsx).
 check_local() {
   # vitest.config.ts runs these one at a time: each opens the same local D1.
   ZENBU_DICTIONARY_D1=1 ZENBU_DICTIONARY_D1_PATH="$1" \

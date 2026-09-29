@@ -280,3 +280,178 @@ export function formLookup(db: DatabaseSync): {
     }
   }
 }
+
+interface FtsOffset {
+  term: number
+  byteOffset: number
+  byteLength: number
+}
+
+/** FTS4 `offsets()`: column, term, byte offset, and byte length per match. */
+function ftsOffsets(value: string): FtsOffset[] {
+  const numbers = value.split(' ').map(Number)
+  if (numbers.length % 4 !== 0) throw new Error(`Unreadable FTS offsets: ${value}`)
+  const offsets: FtsOffset[] = []
+  for (let index = 0; index < numbers.length; index += 4) {
+    offsets.push({
+      term: numbers[index + 1],
+      byteOffset: numbers[index + 2],
+      byteLength: numbers[index + 3]
+    })
+  }
+  return offsets
+}
+
+/**
+ * The grapheme index at each UTF-8 byte offset that starts a grapheme (and at the end), as
+ * Swift's `String.Index(_:within:)` accepts only offsets on a Character boundary.
+ */
+function graphemeBoundaries(text: string): Map<number, number> {
+  const boundaries = new Map<number, number>()
+  let bytes = 0
+  const clusters = graphemes(text)
+  for (const [index, cluster] of clusters.entries()) {
+    boundaries.set(bytes, index)
+    bytes += Buffer.byteLength(cluster)
+  }
+  boundaries.set(bytes, clusters.length)
+  return boundaries
+}
+
+/**
+ * `phraseRange(in:offsets:)`: where the phrase first occurs with its terms in order and no
+ * sentence-ending punctuation between them, in graphemes (its location); null when it doesn't.
+ */
+function phraseLocation(text: string, offsets: FtsOffset[]): number | null {
+  if (offsets.length === 0) return null
+  const termCount = Math.max(...offsets.map(offset => offset.term)) + 1
+  const ordered = [...offsets].sort((a, b) => a.byteOffset - b.byteOffset || a.term - b.term)
+  const bytes = Buffer.from(text)
+  const boundaries = graphemeBoundaries(text)
+  for (const [start, first] of ordered.entries()) {
+    if (first.term !== 0 || start + termCount > ordered.length) continue
+    const phrase = ordered.slice(start, start + termCount)
+    if (phrase.some((offset, index) => offset.term !== index)) continue
+    let crosses = false
+    for (let index = 1; index < phrase.length; index++) {
+      const from = phrase[index - 1].byteOffset + phrase[index - 1].byteLength
+      const to = phrase[index].byteOffset
+      if (!boundaries.has(from) || !boundaries.has(to) || to < from) {
+        crosses = true
+        break
+      }
+      if (/[.?!]\s/.test(bytes.subarray(from, to).toString())) {
+        crosses = true
+        break
+      }
+    }
+    const last = phrase[phrase.length - 1]
+    const location = boundaries.get(first.byteOffset)
+    if (crosses || location === undefined || !boundaries.has(last.byteOffset + last.byteLength)) {
+      continue
+    }
+    return location
+  }
+  return null
+}
+
+/**
+ * `retrieveEnglish`: the sentences an English search lists (ExampleSentenceClient.search for an
+ * ASCII query), from the artifact's FTS4 indexes, which only the import can read, in the app's
+ * order, at most 100. A conjugated form whose spelling is ASCII once normalized, such as Ｈ,
+ * searches this way. Every sentence Porter stemming matches as a phrase ranks: an exact phrase
+ * first, then by where it occurs, the translation's length in terms, the sentence's length, and
+ * its pair ID; nothing is listed unless one is exact.
+ */
+export function englishSearch(
+  db: DatabaseSync,
+  sentences: CorpusSentence[]
+): (query: string) => number[] {
+  const byPairId = new Map(sentences.map((sentence, index) => [sentence.pairId, index]))
+  const probe = new DatabaseSync(':memory:')
+  probe.exec('CREATE VIRTUAL TABLE probe USING fts4(value, tokenize=porter)')
+  const porter = db.prepare(
+    `SELECT lower(hex(e.id)) AS pair_id, e.english,
+       offsets(example_sentence_english_porter_fts) AS offsets,
+       matchinfo(example_sentence_english_porter_fts, 'l') AS lengths
+     FROM example_sentence_english_porter_fts p
+     JOIN example_sentence_fts_map m ON m.fts_rowid = p.docid
+     JOIN example_sentences e ON e.id = m.pair_id
+     WHERE example_sentence_english_porter_fts MATCH ?`
+  )
+  const exact = db.prepare(
+    `SELECT lower(hex(m.pair_id)) AS pair_id, e.english,
+       offsets(example_sentence_english_exact_fts) AS offsets
+     FROM example_sentence_english_exact_fts x
+     JOIN example_sentence_fts_map m ON m.fts_rowid = x.docid
+     JOIN example_sentences e ON e.id = m.pair_id
+     WHERE example_sentence_english_exact_fts MATCH ?`
+  )
+  return query => {
+    // The app throws for these, and the screen lists nothing.
+    if (query === '' || !isASCII(query) || query.includes('"')) return []
+    const expression = `"${query}"`
+    // `porterEmitsTerms`: the query must stem to terms that match itself.
+    probe.exec('DELETE FROM probe')
+    probe.prepare('INSERT INTO probe(value) VALUES (?)').run(query)
+    const emitted = probe
+      .prepare('SELECT count(*) AS n FROM probe WHERE probe MATCH ?')
+      .get(expression) as { n: number }
+    if (emitted.n !== 1) return []
+    const exactLocations = new Map<string, number>()
+    const exactRows = exact.all(expression) as {
+      pair_id: string
+      english: string
+      offsets: string
+    }[]
+    for (const row of exactRows) {
+      const location = phraseLocation(row.english, ftsOffsets(row.offsets))
+      if (location !== null) exactLocations.set(row.pair_id, location)
+    }
+    const candidates: {
+      sentence: number
+      relation: number
+      position: number
+      terms: number
+      graphemeCount: number
+      pairId: string
+    }[] = []
+    const rows = porter.all(expression) as {
+      pair_id: string
+      english: string
+      offsets: string
+      lengths: Uint8Array
+    }[]
+    const seen = new Set<string>()
+    for (const row of rows) {
+      // A pair already listed that the index returns again makes the app's search throw
+      // (`invalidIndexMetadata`), and the form's screen then lists nothing.
+      if (seen.has(row.pair_id)) return []
+      const porterLocation = phraseLocation(row.english, ftsOffsets(row.offsets))
+      if (porterLocation === null) continue
+      const sentence = byPairId.get(row.pair_id)
+      if (sentence === undefined) throw new Error(`No sentence ${row.pair_id}`)
+      const exactLocation = exactLocations.get(row.pair_id)
+      candidates.push({
+        sentence,
+        // exactSurfacePhrase, then porterEquivalentPhrase.
+        relation: exactLocation === undefined ? 1 : 0,
+        position: exactLocation ?? porterLocation,
+        terms: Buffer.from(row.lengths).readUInt32LE(0),
+        graphemeCount: sentences[sentence].graphemeCount,
+        pairId: row.pair_id
+      })
+      seen.add(row.pair_id)
+    }
+    if (!candidates.some(candidate => candidate.relation === 0)) return []
+    candidates.sort(
+      (a, b) =>
+        a.relation - b.relation ||
+        a.position - b.position ||
+        a.terms - b.terms ||
+        a.graphemeCount - b.graphemeCount ||
+        (a.pairId < b.pairId ? -1 : a.pairId > b.pairId ? 1 : 0)
+    )
+    return candidates.slice(0, 100).map(candidate => candidate.sentence)
+  }
+}

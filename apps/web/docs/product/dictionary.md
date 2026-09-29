@@ -19,8 +19,11 @@ Example Sentences screen that Search's examples row opens lists for 67 queries, 
 rendered for eight of its cases by `src/components/dictionary/search-examples.test.tsx` ("the
 rendered Example Sentences page matches the app"). **WD rendered** is
 `src/components/dictionary/word-page.test.tsx` ("the rendered word page matches the app"), which
-draws every WD case through the word page's components and reads back what they draw. All of
-these run on every import of their release database. Unit tests are named by file and test title.
+draws every WD case through the word page's components and reads back what they draw.
+**Conjugations rendered** is `src/components/dictionary/conjugations.test.tsx` ("the rendered
+conjugation pages match the app"), which does the same for every WD case's conjugation table and
+form pages. All of these run on every import of their release database. Unit tests are named by
+file and test title.
 
 ## Dictionary home
 
@@ -336,7 +339,8 @@ capsule that pronounces the word, or a standalone speaker when the word has no p
 the browser's Japanese voice. Under a separator, the part-of-speech row names one word class and
 its modifiers, such as "Godan verb (intransitive)", and is left out when no class has a name. It
 comes from the first sense's parts of speech, falling back to the entry's. For a word with a
-conjugation table the row is a button that opens it (see Conjugation table).
+conjugation table the row links to the table's page (see
+[Conjugation pages](#conjugation-pages)).
 
 - Source: App docs, Dictionary and kanji details; `WordHeadline` and `PitchAccentBadge` in
   `WordDetailView.swift`; `PartOfSpeechFormatter.swift`; `DictionaryEntry.displayPartOfSpeech`;
@@ -346,33 +350,19 @@ conjugation table the row is a button that opens it (see Conjugation table).
   `src/components/dictionary/word-page.test.tsx`, "shows a standalone speaker for a word without
   pitch". Speaking: No automated check yet (#511).
 
-**Conjugation table.** For a verb or adjective the app conjugates (ichidan, godan, する, 来る, i-
-and na-adjectives, but not いい), the part-of-speech row opens Conjugations: a dialog on wide
-screens and a drawer on phones. It starts with the word (furigana with the kanji highlight, and
-the pitch accent or speaker), its meaning, its word class, and a one-line rule for how the class
-conjugates. A Plain/Polite control switches register when both exist (verbs). Each row names the
-form and shows it with the changed ending in the accent color, with furigana only when the ending
-has kanji (来させる). Selecting a row opens that form's screen in the same sheet, titled with the
-form, with Back to the table: what the form means, "Same spelling as …" when another form in the
-register shares its spelling (potential and passive 見られる), and the form with furigana, its
-ending highlighted, and a speaker. The app pushes these screens instead of opening a sheet. The
-form's examples aren't shown yet; see [Required, not built yet](#required-not-built-yet-511).
-The website copies the app's forms exactly, including its する rule, which appends できる to the
-noun for the potential (愛する gives 愛できる); that is filed as app bug #521, and the website
-changes with the app when it is fixed.
+**Conjugations.** For a verb or adjective the app conjugates (ichidan, godan, する, 来る, i- and
+na-adjectives, but not いい), the part-of-speech row links to the word's conjugation table, which
+has its own page, as the app pushes it as its own screen (see
+[Conjugation pages](#conjugation-pages)). A word the app doesn't conjugate has a plain row.
 
 - Source: App docs, Dictionary and kanji details (the conjugation table); `PartOfSpeechRow` in
-  `WordDetailView.swift`; `ConjugationsView.swift` (`ConjugationsView`, `ConjugatedFormView`,
-  `sharedSpellings(of:in:)`, `rowShowsFurigana`); `JapaneseConjugationClient.swift`
+  `WordDetailView.swift` (a `NavigationLink`); `JapaneseConjugationClient.swift`
   (`JapaneseConjugator`).
-- Check: WD `opensConjugations` and `conjugations` (the summary, rule, registers, and each form's
-  kind, title, explanation, surface, reading, ending, row furigana, headline furigana, and shared
-  spellings), compared by the gate, and drawn by `src/components/dictionary/conjugations.test.tsx`
-  ("the rendered conjugation table matches the app") on every import, which reads back each row
-  and each form's screen; the fixed-data tests in the same file;
-  `src/components/dictionary/word-page.interaction.test.tsx`, "the part of speech opens it; Polite
-  switches register; a row opens its form; Back returns"; smoke "the part of speech opens
-  conjugations where the app's does".
+- Check: WD `opensConjugations`, compared by the gate, and drawn by Conjugations rendered, which
+  checks the row links to the table exactly where the app opens one;
+  `src/components/dictionary/conjugations.test.tsx`, "the part-of-speech row opens the table’s
+  page only when the word has one"; smoke "the part of speech opens conjugations where the app's
+  does".
 
 **Furigana.** Furigana places each kanji run's part of the reading over it, as the app does,
 including the app's current split for 黄色い声. Words read as a whole, such as 今日, carry the
@@ -540,6 +530,84 @@ and Tatoeba.
 - Source: #465; `src/lib/dictionary/sources.ts`.
 - Check: No automated check yet (#511).
 
+## Conjugation pages
+
+The app pushes the conjugation table from Word Detail, and each form's screen from the table, so
+each has its own page: the table at `/dictionary/<slug>-<ent_seq>/conjugations/`, and each form at
+`…/conjugations/<plain|polite>/<kind>/` (see [Conjugation URLs](#urls-seo-and-indexing)). The
+breadcrumbs, Home › Dictionary › the word › Conjugations › the form ("Past (Polite)" for a Polite
+form, so the two registers' pages can be told apart; the page itself is titled "Past", as the
+app's screen is), replace the app's Back.
+
+**Conjugation table.** The page is titled Conjugations. It starts with the word (furigana with
+the kanji highlight, and the pitch accent or speaker), its meaning, its word class, and a
+one-line rule for how the class conjugates. A Plain/Polite control switches register when both
+exist (verbs), and the address keeps the register (`#polite`), so returning from a Polite form
+shows Polite again, as the app's Back does. The Polite table has no URL of its own: the app
+switches register on the same screen. Each row names the form and shows it with the changed
+ending in the accent color, with furigana only when the ending has kanji (来させる), and opens
+that form's page in the register shown. The website copies the app's forms exactly, including its
+する rule, which appends できる to the noun for the potential (愛する gives 愛できる); that is
+filed as app bug #521, and the website changes with the app when it is fixed.
+
+- Source: App docs, Dictionary and kanji details (the conjugation table); `ConjugationsView` in
+  `ConjugationsView.swift` (`rowShowsFurigana`); `JapaneseConjugationClient.swift`
+  (`JapaneseConjugator`); the owner's decision on #524 (`#polite`, not a Polite URL; the
+  breadcrumb's "Past (Polite)").
+- Check: WD `conjugations` (the summary, rule, registers, and each form's kind, title, surface,
+  reading, ending, and row furigana), compared by the gate, and drawn by Conjugations rendered,
+  which reads back each row and the page it opens; the fixed-data tests in
+  `src/components/dictionary/conjugations.test.tsx`;
+  `src/components/dictionary/word-page.interaction.test.tsx`, "Polite switches register, and each
+  row opens its form in that register", "the register goes into the address with null state, so
+  the router keeps it", and "opens in Polite when the address names it, as Back from a Polite form
+  does"; smoke "見る's conjugations and its past's examples match the app".
+
+**Conjugated form.** The page is titled with the form (Past). It says what the form means, then
+"Same spelling as …" when another form in the register shares its spelling (potential and passive
+見られる), then the form with furigana, its ending highlighted, and a speaker.
+
+- Source: `ConjugatedFormView` and `sharedSpellings(of:in:)` in `ConjugationsView.swift`.
+- Check: WD `conjugations` (each form's explanation, headline furigana, and shared spellings),
+  compared by the gate and drawn by Conjugations rendered; `conjugations.test.tsx`, "a form’s page
+  says what it means, and which forms share its spelling".
+
+**Conjugated form examples.** A form's page ends with Examples: every Example Sentence that uses
+the complete form, as the app's screen lists them. That is the first 100 sentences the app's
+search for the form finds (the sentence that is exactly the form first, then by where the form
+first occurs, the sentence's length, and pair ID; a form that is ASCII once normalized, such as
+Ｈ, searches the English translations, as the app does), keeping those whose words, as Kuromoji
+and the app's inflection grouping split them, include the form: 見たかった and 見た目 aren't
+examples of 見た. The page renders the first 25 and loads 25 more at a time as the learner
+scrolls, as a word page does. Each example links its words as the app's screen does, with no page
+entry, and accents the words that make up the form with the thicker underline; the translation,
+speaker, and per-sentence credits are a word page's. A form without examples says "No example
+sentences use this form yet." The website can't analyze text at request time (ADR 0008), so the
+import precomputes each form's examples by spelling, since the app finds them by spelling alone.
+
+- Source: `ConjugatedForm.examples` in `ConjugationsView.swift`; `ExampleSentenceClient.search`
+  (`retrieveJapanese`, `retrieveEnglish`); `JapaneseTextAnalysisClient.words`;
+  `LinkedJapaneseText.queryScalarRanges` and `matchesQuery` (the `.conjugatedForm` presentation);
+  ADR 0008 (precompute what a Worker can't do); #464 (25, then load more).
+- Check: WD `conjugations[].examples` (every example's pair ID in order, and the first 3 with each
+  word's entry or candidates and whether it's accented), recorded with the helpers the screen uses
+  and compared by the gate (`detail/conformance.test.ts`), and drawn by Conjugations rendered,
+  which reads back the first 25 pair IDs and the first 3's words, links, and accents;
+  `src/lib/dictionary/examples/retrieval.test.ts`, "retrieveJapaneseExamples (a Japanese search, as
+  a form’s screen runs it)"; `src/lib/dictionary/examples/forms.test.ts`;
+  `src/lib/dictionary/data.test.ts`, "a form page shows its first 25 examples, and the rest load
+  25 at a time"; `src/app/dictionary/examples/forms/[file]/route.test.ts`; smoke "見る's
+  conjugations and its past's examples match the app". The import also checks its search against
+  the app's scan on up to 80 forms of each kind of search per build (a sentence is the form, 1
+  to 100 matches, over 100, and none). WD has two forms that search English, Ｈ (which finds 3
+  examples) and ＮＧ (which finds none).
+
+**Credits.** A table's page ends with JMdict, UniDic, and KANJIDIC2; a form's page with JMdict,
+KANJIDIC2, and Tatoeba.
+
+- Source: #465; `src/lib/dictionary/sources.ts`.
+- Check: No automated check yet (#511).
+
 ## Kanji page
 
 **Toolbar.** The title is the kanji, followed by Share and the same ••• menu as a word page. Share
@@ -656,6 +724,20 @@ replacement in one hop. No entry is recorded as retired until #463 fills `retire
 - Source: ADR 0007; #465.
 - Check: `src/lib/dictionary/retired.test.ts`, "retiredWordResponse".
 
+**Conjugation URLs.** A word's conjugation table lives under its page, at
+`/dictionary/<slug>-<ent_seq>/conjugations/`, and each form under the table, named by its register
+and kind as the app names them: `…/conjugations/plain/past/`, `…/conjugations/polite/te-form/`.
+Each register has its own page, as the app's route carries the register. Another slug or a bare
+number redirects (308) to the canonical URL in one hop, as a word's does. A word without a table,
+a register or kind the table lacks (an adjective's Polite forms), and `…/conjugations/plain/`
+return 404.
+
+- Source: ADR 0007 (permanent URLs keyed on `ent_seq`); #511 (conjugation screens get their own
+  URLs, as the app pushes them).
+- Check: `src/lib/dictionary/urls.test.ts`, "conjugation URLs"; `src/lib/dictionary/data.test.ts`,
+  "a word with a conjugation table has its page, and each form its own"; smoke `200`, `404`, and
+  `308 /dictionary/1259290/conjugations/plain/past/ -> …`.
+
 **Kanji URLs.** A kanji lives at `/dictionary/kanji/<character>/`, with the exact character, never
 Unicode-normalized, so a compatibility ideograph such as U+F928 (廊) has its own page. An unknown
 character returns 404.
@@ -682,38 +764,58 @@ redirects (308) to it.
   (#511).
 
 **Titles and descriptions.** A word page is titled "要る (いる) meaning", a kanji page "要 kanji
-meaning", and a results page "«query» in Japanese", each followed by "| Zenbu Japanese". Each page
-is its own canonical URL.
+meaning", a results page "«query» in Japanese", a conjugation table "見る (みる) conjugation", and a
+form's page "見ました (みました): polite past of 見る", each followed by "| Zenbu Japanese". Each
+page is its own canonical URL, except a form page that shows the same spelling, and so the same
+examples, as another: a Polite form spelled as the Plain form of its kind (the te-form and the
+conditional) names the Plain page, and a form spelled as an earlier one in its register, in the
+app's order (passive 見られる, after potential 見られる), names that one. Neither is in the
+sitemap.
 
-- Source: #465 (metadata).
-- Check: No automated check yet (#511).
+- Source: #465 (metadata); #511 (conjugation pages); the owner's decisions on #524 (the Polite
+  te-form and conditional name the Plain page; a repeated spelling names its first form).
+- Check: the canonicals: `src/lib/dictionary/detail/conjugation.test.ts`, "a Polite form spelled
+  as its Plain form names the Plain page (te-form, conditional)" and "a form spelled as an earlier
+  one in its register names it (passive 見られる)"; `src/lib/dictionary/data.test.ts`, "a Polite
+  form spelled as its Plain form names the Plain page as canonical" and "a form spelled as an
+  earlier one in its register names it as canonical"; smoke "a form's page is noindex without
+  examples, and names its spelling's first page". The titles: No automated check yet (#511).
 
 **Indexing.** The dictionary home, word pages, kanji pages with meanings or readings, results
-pages that list a word, or whose kanji row opens a kanji page, and a direct Japanese search's
-Example Sentences page are indexable. A kanji with no meanings or readings (about 475 of 13,108,
-such as 㐂), a search that finds nothing or only example sentences, an English, romaji, or
-deinflected search's Example Sentences page (a romaji or deinflected one lists the examples its
-primary entry's word page has), `/dictionary/search/` itself, and the JSON routes pages load more
-from (a word's examples, and a search's words and example sentences) are `noindex`. Only
-production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows crawling (see
+pages that list a word, or whose kanji row opens a kanji page, a direct Japanese search's
+Example Sentences page, conjugation tables, and form pages that list examples are indexable. A
+kanji with no meanings or readings (about 475 of 13,108, such as 㐂), a search that finds nothing
+or only example sentences, an English, romaji, or deinflected search's Example Sentences page (a
+romaji or deinflected one lists the examples its primary entry's word page has), a form's page
+without examples (only the form and what it means, like a search that finds nothing),
+`/dictionary/search/` itself, and the JSON routes pages load more from (a word's examples, a
+search's words and example sentences, and a form's examples) are `noindex`. Only production is
+indexed at all; staging sends `X-Robots-Tag: noindex` and disallows crawling (see
 [`docs/agents/web.md`](../../../../docs/agents/web.md)).
 
 - Source: #465; #466; the owner's decision on #511 (Example Sentences pages: direct Japanese
-  searches only).
+  searches only); the owner's decision on #524 (form pages are indexed when they list examples,
+  following the search pages' rule).
 - Check: smoke "a kanji without meanings or readings is noindex"; the conformance test checks each
   kanji's `indexable` against its meanings and readings; the JSON routes' `route.test.ts` files
-  (`X-Robots-Tag: noindex`); search pages: `src/lib/dictionary/results/links.test.ts`,
-  "isIndexable"; Example Sentences pages: `data.test.ts` (`indexable` for 食べた, eat, and
-  taberu).
+  (`X-Robots-Tag: noindex`), including `src/app/dictionary/examples/forms/[file]/route.test.ts`;
+  search pages: `src/lib/dictionary/results/links.test.ts`, "isIndexable"; Example Sentences
+  pages: `data.test.ts` (`indexable` for 食べた, eat, and taberu); form pages: smoke "a form's
+  page is noindex without examples, and names its spelling's first page".
 
 **Sitemaps.** The pages sitemap lists the dictionary home. The sitemap index also lists the word
-sitemaps, with every word page's canonical URL, and the kanji sitemap, with every indexable kanji
-page. Search pages aren't in any sitemap yet.
+sitemaps, with every word page's canonical URL, the kanji sitemap, with every indexable kanji
+page, and the conjugations sitemap, with every conjugation table (20,364) and each form page
+search engines may index (13,168: those that list examples, under their canonical URL). Search
+pages aren't in any sitemap yet.
 
-- Source: ADR 0007; #465.
-- Check: `src/lib/dictionary/sitemaps.test.ts`; smoke "$index lists the dictionary and kanji
-  sitemaps" (for `/sitemap-index.xml` and `/sitemap.xml`), "word sitemap lists 1 to 50,000
-  canonical URLs", and "kanji sitemap lists indexable kanji only".
+- Source: ADR 0007; #465; #511.
+- Check: `src/lib/dictionary/sitemaps.test.ts`; the gate's "every word with a conjugation table is
+  in the conjugations sitemap, with each form page that lists examples"
+  (`detail/conformance.test.ts`), which recomputes every word's table; smoke "$index lists the
+  dictionary, kanji, and conjugations sitemaps" (for `/sitemap-index.xml` and `/sitemap.xml`),
+  "word sitemap lists 1 to 50,000 canonical URLs", "kanji sitemap lists indexable kanji only", and
+  "conjugations sitemap lists tables and the form pages that list examples".
 
 **Structured data.** Each dictionary page carries `BreadcrumbList` structured data for its trail.
 
@@ -750,20 +852,6 @@ its leading group of equally strong matches, as the app limits it (`rankedEntryL
 - App source: `SearchResultsView` and its `rankedEntryLimit` in `SearchView.swift`.
 - Check it will get: radical-origin cases in the planned search results suite, recording the rows
   the app lists.
-
-### Word page
-
-**Conjugated form examples.** A conjugated form's screen ends with every Example Sentence that
-uses the complete form, as the app's does: the first 100 sentences containing the form, in the
-app's Japanese retrieval order, whose words (Kuromoji with the app's inflection grouping) include
-the form. The website has no text analysis at request time (ADR 0008), so this needs the import
-to precompute each form's examples, or an index of each sentence's grouped words; which one is
-open.
-
-- App source: `ConjugatedFormView.loadExamples` in `ConjugationsView.swift`;
-  `ExampleSentenceClient.search`; `JapaneseTextAnalysisClient.words`.
-- Check it will get: each form's example IDs in WD `conjugations`, compared by the import's gate,
-  and a rendered-page check of the form's screen.
 
 ### Kanji page
 

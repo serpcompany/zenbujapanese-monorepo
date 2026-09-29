@@ -188,8 +188,10 @@ draws_like_the_app() {
 show_miru_seen() { echo "$miru_seen (want dots $miru_dots; rows $miru_rows)"; }
 eventually "見る's pitch graph and Frequency rows match the app" \
   "見る's pitch graph or Frequency rows differ from the app" draws_like_the_app show_miru_seen
-# The part-of-speech row opens a conjugation table exactly where the app's does: 見る's does, and
-# 学校's (a noun) doesn't.
+# The part-of-speech row opens a conjugation table exactly where the app's does: 見る's links to
+# its table's page, and 学校's (a noun) doesn't. Each table and form has its own page (#511).
+conjugations="${word}conjugations/"
+miru_table='/dictionary/見る-1259290/conjugations/'
 opens_expected="$(python3 -c '
 import json, sys
 cases = {c["entSeq"][0]: c for c in json.load(open(sys.argv[1]))["cases"]}
@@ -199,7 +201,11 @@ opens_seen=""
 opens_like_the_app() {
   local path opens=()
   for path in "$word" "$gakkou"; do
-    if grep -q 'data-opens-conjugations' <<<"$(body "$path")"; then opens+=(yes); else opens+=(no); fi
+    if grep -qE "<a [^>]*data-opens-conjugations[^>]*href=\"$miru_table\"|<a [^>]*href=\"$miru_table\"[^>]*data-opens-conjugations" <<<"$(body "$path")"; then
+      opens+=(yes)
+    else
+      opens+=(no)
+    fi
   done
   opens_seen="${opens[*]}"
   [ "$opens_seen" = "$opens_expected" ]
@@ -207,6 +213,61 @@ opens_like_the_app() {
 show_opens_seen() { echo "見る, 学校 open conjugations: $opens_seen (want $opens_expected)"; }
 eventually "the part of speech opens conjugations where the app's does ($opens_expected)" \
   'the part of speech opens conjugations where the app does not' opens_like_the_app show_opens_seen
+expect "$conjugations" 200
+expect "${conjugations}plain/past/" 200
+expect "${conjugations}polite/te-form/" 200
+# A word without a table, and a register or kind the table lacks, have no page; a stale slug
+# redirects, as the word's page does.
+expect "${gakkou}conjugations/" 404
+expect "${conjugations}plain/standalone/" 404
+expect "${conjugations}formal/past/" 404
+expect "${conjugations}plain/" 404
+expect_redirect /dictionary/1259290/conjugations/plain/past/ "${conjugations}plain/past/"
+# 見る's table lists the app's forms in order, and its past lists the app's first examples in
+# order, each read from the word-detail suite at run time.
+conjugation_expected="$(python3 -c '
+import json, sys
+case = next(c for c in json.load(open(sys.argv[1]))["cases"] if c["entSeq"][0] == "1259290")
+print(" ".join(form["kind"] for form in case["conjugations"]["plain"]))
+past = next(form for form in case["conjugations"]["plain"] if form["kind"] == "past")
+print(" ".join(i.removeprefix("esp1_") for i in past["examples"]["ids"][:25]))
+empty = next(form["kind"] for form in case["conjugations"]["plain"] if not form["examples"]["ids"])
+print(empty)
+' "$word_suite")"
+miru_kinds="$(sed -n 1p <<<"$conjugation_expected")"
+miru_past_pairs="$(sed -n 2p <<<"$conjugation_expected")"
+miru_empty_form="$(sed -n 3p <<<"$conjugation_expected")"
+conjugations_seen=""
+conjugations_like_the_app() {
+  local table past kinds pairs
+  table="$(body "$conjugations")"
+  past="$(body "${conjugations}plain/past/")"
+  kinds="$(grep -oE 'data-conjugation-row="[^"]+"' <<<"$table" | sed -E 's/.*="([^"]+)"/\1/' |
+    paste -sd' ' -)"
+  pairs="$(grep -oE 'data-example-pair="[^"]+"' <<<"$past" | sed -E 's/.*="([^"]+)"/\1/' |
+    paste -sd' ' -)"
+  conjugations_seen="forms $kinds; past's examples $pairs"
+  [ "$kinds" = "$miru_kinds" ] && [ "$pairs" = "$miru_past_pairs" ] &&
+    grep -q "href=\"${miru_table}plain/past/\"" <<<"$table" &&
+    grep -q 'data-page-word="true"' <<<"$past"
+}
+show_conjugations_seen() {
+  echo "$conjugations_seen (want forms $miru_kinds; past's examples $miru_past_pairs)"
+}
+eventually "見る's conjugations and its past's examples match the app" \
+  "見る's conjugations or its past's examples differ from the app" conjugations_like_the_app \
+  show_conjugations_seen
+# A form's page without examples is noindex; one with examples isn't. A Polite form spelled as its
+# Plain one (the te-form) names the Plain page as canonical, and a form spelled as an earlier one
+# in its register (the passive, as the potential) names that one.
+form_indexing_follows_examples() {
+  grep -q "$noindex" <<<"$(body "${conjugations}plain/$miru_empty_form/")" &&
+    ! grep -q "$noindex" <<<"$(body "${conjugations}plain/past/")" &&
+    grep -q "<link rel=\"canonical\" href=\"[^\"]*${conjugations}plain/te-form/\"" \
+      <<<"$(body "${conjugations}polite/te-form/")" &&
+    grep -q "<link rel=\"canonical\" href=\"[^\"]*${conjugations}plain/potential/\"" \
+      <<<"$(body "${conjugations}plain/passive/")"
+}
 
 # iru leads with the app's "View N Example Sentences" row (the suite's title), opening its Example
 # Sentences page.
@@ -302,17 +363,18 @@ eventually '見る lists its example sentences as the app does, 25 at a time' \
 expect_redirect /dictionary/1259290/ "$word"
 expect /dictionary/999999999/ 404
 
-# Both sitemap indexes list the word and kanji sitemaps (ADR 0007): /sitemap.xml serves the same
-# index, and neither may be a copy frozen at build time.
+# Both sitemap indexes list the word, kanji, and conjugations sitemaps (ADR 0007): /sitemap.xml
+# serves the same index, and neither may be a copy frozen at build time.
 lists_release_sitemaps() {
   local locs
   locs="$(body "$index" | grep -oE '<loc>[^<]+</loc>' || true)"
   grep -q '<loc>https://zenbujapanese.com/sitemaps/dictionary/1.xml</loc>' <<<"$locs" &&
-    grep -q '<loc>https://zenbujapanese.com/sitemaps/kanji.xml</loc>' <<<"$locs"
+    grep -q '<loc>https://zenbujapanese.com/sitemaps/kanji.xml</loc>' <<<"$locs" &&
+    grep -q '<loc>https://zenbujapanese.com/sitemaps/conjugations.xml</loc>' <<<"$locs"
 }
 for index in /sitemap-index.xml /sitemap.xml; do
-  eventually "$index lists the dictionary and kanji sitemaps" \
-    "$index is missing the dictionary or kanji sitemap" lists_release_sitemaps
+  eventually "$index lists the dictionary, kanji, and conjugations sitemaps" \
+    "$index is missing the dictionary, kanji, or conjugations sitemap" lists_release_sitemaps
 done
 # A word sitemap holds 1 to 50,000 canonical word URLs, percent-encoded (ASCII only).
 expect /sitemaps/dictionary/1.xml 200
@@ -343,6 +405,23 @@ noindex_follows_meanings() {
 }
 eventually 'a kanji without meanings or readings is noindex' 'noindex is wrong on 㐂 or 見' \
   noindex_follows_meanings
+eventually "a form's page is noindex without examples, and names its spelling's first page" \
+  "noindex or canonical is wrong on 見る's form pages" form_indexing_follows_examples
+# The conjugations sitemap lists 見る's table, its past, and its potential, which list examples,
+# and not the form without examples, the polite te-form (canonically the plain one), or the passive
+# (canonically the potential, spelled the same).
+lists_conjugations() {
+  local locs
+  locs="$(body /sitemaps/conjugations.xml | grep -oE '<loc>[^<]+</loc>' || true)"
+  grep -q "<loc>https://zenbujapanese.com$conjugations</loc>" <<<"$locs" &&
+    grep -q "<loc>https://zenbujapanese.com${conjugations}plain/past/</loc>" <<<"$locs" &&
+    ! grep -q "<loc>https://zenbujapanese.com${conjugations}plain/$miru_empty_form/</loc>" <<<"$locs" &&
+    ! grep -q "<loc>https://zenbujapanese.com${conjugations}polite/te-form/</loc>" <<<"$locs" &&
+    grep -q "<loc>https://zenbujapanese.com${conjugations}plain/potential/</loc>" <<<"$locs" &&
+    ! grep -q "<loc>https://zenbujapanese.com${conjugations}plain/passive/</loc>" <<<"$locs"
+}
+eventually 'conjugations sitemap lists tables and the form pages that list examples' \
+  "conjugations sitemap is missing 見る's pages or lists one it shouldn't" lists_conjugations
 
 # The X-Robots-Tag header a path sends, if any.
 robots_tag() { curl -sI "${smoke[@]}" "$base$1" | tr -d '\r' | grep -i '^x-robots-tag:' || true; }
@@ -350,7 +429,8 @@ robots() { body /robots.txt; }
 
 if [ "$env" = production ]; then
   # Production's dictionary is indexable: its pages send no X-Robots-Tag, like the rest of the site.
-  for path in / "$word" "$kanji" /sitemaps/kanji.xml; do
+  for path in / "$word" "$kanji" "$conjugations" "${conjugations}plain/past/" \
+    /sitemaps/kanji.xml /sitemaps/conjugations.xml; do
     has_no_robots_tag() { [ -z "$(robots_tag "$path")" ]; }
     eventually "no X-Robots-Tag on $path" "unexpected X-Robots-Tag on $path" has_no_robots_tag
   done
