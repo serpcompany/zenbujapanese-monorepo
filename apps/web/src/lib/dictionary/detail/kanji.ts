@@ -10,6 +10,7 @@ import type {
   KanjiWordRow
 } from './rows'
 import { type RubySegment, rubySegments } from './ruby'
+import { type StrokeOrder, strokeOrder } from './strokes'
 import { hiragana, isKanjiCharacter } from './text'
 
 /** How many words the app lists for a kanji (`entries(containingKanji:)` binds 24). */
@@ -54,6 +55,8 @@ export interface KanjiDetail {
   components: string[]
   elements: KanjiElement[]
   words: KanjiWord[]
+  /** The stroke order KanjiStrokeOrderView draws; null when there's none, and no control shows. */
+  strokeOrder: StrokeOrder | null
   /** What Share sends: the kanji, its readings, and its meanings. */
   shareText: string
 }
@@ -192,6 +195,7 @@ export function kanjiDetail(rows: KanjiRows): KanjiDetail {
     components: elements.length === 0 ? kanji.components : [],
     elements,
     words,
+    strokeOrder: rows.strokes ? strokeOrder(rows.strokes) : null,
     shareText: kanjiShareText(kanji)
   }
 }

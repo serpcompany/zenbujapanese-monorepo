@@ -7,6 +7,7 @@ import type {
   KanjiElementRow,
   KanjiGlossRow,
   KanjiRow,
+  KanjiStrokesRow,
   KanjiStructureRow,
   KanjiWordRow,
   WordExampleRow
@@ -16,6 +17,7 @@ import type {
   exampleSentences,
   kanji,
   kanjiElements,
+  kanjiStrokes,
   wordExamples,
   words
 } from './dictionary-schema'
@@ -30,13 +32,14 @@ const fills = {
   kanji: (row: typeof kanji.$inferSelect): KanjiRow => row,
   kanjiGloss: (row: typeof kanji.$inferSelect): KanjiGlossRow => row,
   structure: (row: typeof kanjiElements.$inferSelect): KanjiStructureRow => row,
+  strokes: (row: typeof kanjiStrokes.$inferSelect): KanjiStrokesRow => row,
   element: (row: typeof elementGlyphs.$inferSelect): KanjiElementRow => row,
   exampleSentence: (row: typeof exampleSentences.$inferSelect): ExampleSentenceRow => row,
   wordExample: (row: typeof wordExamples.$inferSelect): WordExampleRow => row
 }
 
 test('dictionary database rows fill the detail core rows', () => {
-  expect(Object.keys(fills)).toHaveLength(8)
+  expect(Object.keys(fills)).toHaveLength(9)
 })
 
 /** A token as the app records it in the word-detail conformance suite. */

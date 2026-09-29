@@ -2,16 +2,16 @@
 """Write the dictionary database's rows as D1-compatible SQL (issue 464, phase 2).
 
 Reads the app's bundled language data (language_data.py) and writes INSERTs for every word
-(218,382), every kanji (13,108) with its word list precomputed, the kanji structures, and the
-element glyphs. The tables come from the dictionary database's migrations (drizzle/dictionary),
-applied first; `dictionary_import` is written by the import once everything else is in. Stroke
-order (kanji_strokes) and examples (example_sentences, word_examples) come in later PRs, and
-retired_ids stays empty until the pipeline (#463) records retired entries.
+(218,382), every kanji (13,108) with its word list precomputed, the kanji structures, the
+element glyphs, and stroke order (6,430 KanjiVG diagrams). The tables come from the dictionary
+database's migrations (drizzle/dictionary), applied first; `dictionary_import` is written by the
+import once everything else is in. Examples (example_sentences, word_examples) come in a later
+PR, and retired_ids stays empty until the pipeline (#463) records retired entries.
 
     python3 scripts/release-d1/dictionary/build-rows.py <LanguageReferenceData.sqlite3> <resources dir> <out.sql>
 
-`resources dir` holds the other inputs (CompoundPitch, the JLPT and TUBELEX packs, and the kanji
-JSON files): the app's SearchExperience/Resources. scripts/release-d1/load-local.sh dictionary
+`resources dir` holds the other inputs (CompoundPitch, the JLPT and TUBELEX packs, the kanji
+JSON files, and KanjiStrokeData): the app's SearchExperience/Resources. scripts/release-d1/load-local.sh dictionary
 runs it for a local D1, and ensure-release.sh for D1.
 """
 
@@ -30,8 +30,8 @@ def literal(value):
         return "NULL"
     if isinstance(value, bool):
         return "1" if value else "0"
-    if isinstance(value, int):
-        return str(value)
+    if isinstance(value, (int, float)):
+        return repr(value)
     return "'" + str(value).replace("'", "''") + "'"
 
 
@@ -106,6 +106,15 @@ def main(source, resources, destination):
             ["character", "stroke_count", "grade", "jlpt", "frequency_rank", "meanings_json",
              "readings_json", "components_json", "word_ent_seqs_json", "indexable"],
             kanji_values(data, words),
+        )
+        counts["kanji_strokes"] = write_rows(
+            out, "kanji_strokes",
+            ["character", "viewport_size", "stroke_count", "strokes_json"],
+            (
+                (character, diagram["viewportSize"], diagram["strokeCount"],
+                 as_json(diagram["strokes"]))
+                for character, diagram in data.stroke_diagrams().items()
+            ),
         )
         counts["kanji_elements"] = write_rows(
             out, "kanji_elements",

@@ -13,9 +13,8 @@ import { wordDetail } from './word'
 // ZENBU_DICTIONARY_D1_PATH). The import runs it before anything reaches D1, so it only runs when
 // ZENBU_DICTIONARY_D1=1. It reads the database through dictionary-db.ts, as the pages do.
 //
-// Examples (#465 PR 6) and stroke order (PR 5) aren't imported yet, so their fields are skipped,
-// as are the app-only `opensConjugations` and KANJIDIC2's old-scale JLPT, which the app's kanji
-// cases leave out.
+// Examples (#465 PR 6) aren't imported yet, so their fields are skipped, as is the app-only
+// `opensConjugations`; the app's kanji cases leave out KANJIDIC2's old-scale JLPT.
 const enabled = process.env.ZENBU_DICTIONARY_D1 === '1'
 
 interface Artifact {
@@ -60,6 +59,8 @@ interface KanjiCase {
   covers: string
   opensDetail: boolean
   hasReference?: boolean
+  hasStrokeOrder?: boolean
+  strokeOrderStrokes?: number
   strokeCount?: number
   grade?: number
   meanings?: string[]
@@ -279,9 +280,12 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
           role
         }
       }),
-      ...(detail.components.length > 0 ? { components: detail.components } : {})
+      ...(detail.components.length > 0 ? { components: detail.components } : {}),
+      // The stroke-order control shows only for a kanji with a diagram, as the app's does.
+      hasStrokeOrder: detail.strokeOrder !== null,
+      ...(detail.strokeOrder ? { strokeOrderStrokes: detail.strokeOrder.strokes.length } : {})
     }
-    expect(observed).toEqual(covered(expected, ['covers', 'hasStrokeOrder', 'strokeOrderStrokes']))
+    expect(observed).toEqual(covered(expected, ['covers']))
     expect(found.indexable).toBe(detail.meanings.length > 0 || detail.readings.length > 0)
     // Every listed word links to its page.
     expect(detail.words.filter(word => !found.wordSlugs.has(word.entSeq))).toEqual([])

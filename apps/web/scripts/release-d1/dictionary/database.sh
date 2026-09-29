@@ -1,6 +1,6 @@
 # The dictionary database (DICTIONARY_DB): what word and kanji pages read (issue 464, phase 2).
 # Sourced by ../common.sh's load_database; see there for what each setting means. It holds every
-# word and kanji; stroke order and examples come in later PRs.
+# word and kanji, with stroke order; examples come in a later PR.
 # shellcheck shell=bash disable=SC2034,SC2154 # Settings for, and names from, ../common.sh.
 
 binding=DICTIONARY_DB

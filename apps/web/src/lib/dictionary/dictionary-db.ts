@@ -7,7 +7,7 @@ import type { FrequencyRow, KanjiListWordRow, KanjiRows, WordRows } from './deta
 // batch, so one round trip, per page. Pages read it through data.ts; the import's conformance
 // gate (detail/conformance.test.ts) reads its local copy through the same functions.
 
-const { elementGlyphs, kanji, kanjiElements, words } = schema
+const { elementGlyphs, kanji, kanjiElements, kanjiStrokes, words } = schema
 
 /** A word page's rows, and what its links need: which kanji have pages, and each related word's slug. */
 export interface DictionaryWord {
@@ -72,7 +72,7 @@ export function dictionaryDatabase(db: D1Database) {
     },
 
     async kanji(character: string): Promise<DictionaryKanji | null> {
-      const [[row], [structure], elements, listed, pages] = await orm.batch([
+      const [[row], [structure], elements, listed, pages, [strokes]] = await orm.batch([
         orm.select().from(kanji).where(eq(kanji.character, character)),
         orm.select().from(kanjiElements).where(eq(kanjiElements.character, character)),
         orm
@@ -105,7 +105,8 @@ export function dictionaryDatabase(db: D1Database) {
             UNION
             SELECT g.value FROM kanji_elements e, json_each(e.element_glyphs_json) g
             WHERE e.character = ${character}
-          )`)
+          )`),
+        orm.select().from(kanjiStrokes).where(eq(kanjiStrokes.character, character))
       ])
       if (!row) return null
       const byEntSeq = new Map(listed.map(word => [word.entSeq, word]))
@@ -118,7 +119,8 @@ export function dictionaryDatabase(db: D1Database) {
           kanji: row,
           structure: structure ?? null,
           elements,
-          words: ordered.map(({ slug: _, ...word }): KanjiListWordRow => word)
+          words: ordered.map(({ slug: _, ...word }): KanjiListWordRow => word),
+          strokes: strokes ?? null
         },
         indexable: row.indexable,
         wordSlugs: new Map(listed.map(word => [word.entSeq, word.slug])),

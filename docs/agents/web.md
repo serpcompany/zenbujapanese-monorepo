@@ -143,22 +143,23 @@ back every token in that suite.
 
 **The import** (`scripts/release-d1/dictionary/`) reads the app's bundled files with
 `language_data.py`, the same code `scripts/export-dictionary-fixtures.py` exports fixtures with,
-and writes every word (218,382) and kanji (13,108), the kanji structures, and the element
-glyphs. Each word row carries its slug, forms, senses with their restrictions, related words
+and writes every word (218,382) and kanji (13,108), the kanji structures, the element glyphs,
+and stroke order for the 6,430 kanji `KanjiStrokeData.sqlite3` draws (KanjiVG), each checked as
+the app decodes it (`KanjiStrokeOrderClient.swift`). Each word row carries its slug, forms, senses with their restrictions, related words
 resolved to `ent_seq`, UniDic and CompoundPitch pitch, and JLPT and TUBELEX frequency. Each kanji
 row carries its word list, precomputed with the app's `kanjiCandidateRowsSQL` and grouping
 (`entries(containingKanji:)`), and whether search engines may index it. It refuses an artifact
 whose `transform` or `artifact_schema` it doesn't list, or a pack built for another
 `LanguageReferenceData.sqlite3`, and records every input's SHA-256 in
-`dictionary_import.sources`. Stroke order and examples are left empty until their imports (#465);
-`retired_ids` stays empty until #463 records retired entries. A local build takes about 25
-seconds and 145 MB.
+`dictionary_import.sources`. Examples are left empty until their import (#465); `retired_ids`
+stays empty until #463 records retired entries. A local build takes about 25 seconds and 154 MB
+(stroke order is about 10 MB of it).
 
 **The gate** (`src/lib/dictionary/detail/conformance.test.ts`) replays the app-recorded
 word-detail and kanji-detail suites (`apps/ios/LanguageData/Conformance/`) through the detail
 core on the local copy, reading it through `dictionary-db.ts` as the pages do, and checks every
-stored slug against `wordSlug`. It skips the fields this import doesn't cover yet (examples and
-stroke order) and stops at once when the copy wasn't built from the files the suites pin.
+stored slug against `wordSlug`. It skips the fields this import doesn't cover yet (examples) and
+stops at once when the copy wasn't built from the files the suites pin.
 
 It changes the way the search schema does, with its own commands:
 `pnpm db:generate:dictionary` generates a migration into `drizzle/dictionary/` and rewrites
@@ -221,6 +222,11 @@ Without an import, as in `pnpm dev` by default, the rows are local fixtures in
 `src/lib/dictionary/fixtures/`, exported from the app's bundled data by
 `scripts/export-dictionary-fixtures.py` with the import's own code, so their shapes can't drift.
 Rerun it after changing a row shape; the fixture JSON is generated, so Biome skips it.
+
+A kanji page with stroke order shows the app's stroke-order button under the glyph
+(`components/dictionary/stroke-order.tsx`). It opens a dialog, or a drawer on phones, that draws
+the strokes on a dashed grid and plays or steps through them as `KanjiStrokeOrderView.swift`
+does, and the page credits KanjiVG. A kanji without a diagram shows no button.
 
 To run `pnpm dev` on the whole dictionary, build it and copy it into Wrangler's local state (the
 file is named for the local `DICTIONARY_DB` ID in `wrangler.jsonc`; search works the same way from

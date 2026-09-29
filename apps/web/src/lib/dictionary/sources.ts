@@ -34,6 +34,12 @@ export const sources = {
     credit: 'Radical data by the Electronic Dictionary Research and Development Group.',
     license: edrdgLicence
   },
+  kanjivg: {
+    name: 'KanjiVG',
+    url: 'https://kanjivg.tagaini.net/',
+    credit: 'Kanji stroke data by Ulrich Apel.',
+    license: { name: 'CC BY-SA 3.0', url: 'https://creativecommons.org/licenses/by-sa/3.0/' }
+  },
   kanjium: {
     name: 'Kanjium',
     url: 'https://github.com/mifunetoshiro/kanjium',
@@ -80,5 +86,13 @@ const frequency = [sources.jlpt, sources.tubelex]
 export const pageSources = {
   search: [sources.jmdict, sources.kanjidic2, ...frequency],
   word: [sources.jmdict, sources.unidic, sources.kanjidic2, ...frequency, sources.tatoeba],
-  kanji: [sources.kanjidic2, sources.radkfile, sources.kanjium, sources.jmdict]
+  kanji: [sources.kanjidic2, sources.radkfile, sources.kanjium, sources.jmdict],
+  /** A kanji page that shows stroke order also credits KanjiVG, after RADKFILE as the app does. */
+  kanjiWithStrokes: [
+    sources.kanjidic2,
+    sources.radkfile,
+    sources.kanjivg,
+    sources.kanjium,
+    sources.jmdict
+  ]
 }

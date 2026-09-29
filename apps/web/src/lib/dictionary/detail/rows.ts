@@ -228,4 +228,17 @@ export interface KanjiRows {
   elements: KanjiElementRow[]
   /** The kanji's words (at most 24), in the app's order. */
   words: KanjiListWordRow[]
+  /** Its stroke order from KanjiVG; null for the kanji KanjiStrokeData.sqlite3 doesn't draw. */
+  strokes: KanjiStrokesRow | null
+}
+
+/**
+ * A kanji's stroke order (`kanji_strokes`, from KanjiStrokeData.sqlite3's `stroke_diagrams`):
+ * each stroke is a compact path, opcode 0 then a point to move to, opcode 1 then three points of
+ * a cubic curve, in a square of `viewportSize` (109, KanjiVG's).
+ */
+export interface KanjiStrokesRow {
+  viewportSize: number
+  strokeCount: number
+  strokes: number[][]
 }

@@ -23,7 +23,7 @@ Licenses screen, and point the source record at that file instead of keeping a s
 | Kanji and handwriting | [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project) | Kanji meanings, readings, stroke counts, school grade, frequency, and JLPT classification. | iOS, Website |
 | Kanji and handwriting | [KRADFILE and RADKFILE](https://www.edrdg.org/krad/kradinf.html) | Visible component membership and component stroke-count evidence. | iOS, Website |
 | Kanji and handwriting | [Kanjium](https://github.com/mifunetoshiro/kanjium) | Structural membership, variants, and source phonetic annotations used with app-owned kanji facts. | iOS, Website |
-| Kanji and handwriting | [KanjiVG](https://kanjivg.tagaini.net/) | Ordered vector paths for writing kanji. | iOS |
+| Kanji and handwriting | [KanjiVG](https://kanjivg.tagaini.net/) | Ordered vector paths for writing kanji. | iOS, Website |
 | Kanji and handwriting | [DaKanji](https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition) | A model that predicts candidate Japanese characters from a completed drawing. | iOS |
 | Study levels | [JLPT vocabulary lists with JMdict IDs](https://github.com/stephenmk/yomitan-jlpt-vocab) | Unofficial JLPT level estimates (N5–N1) from Jonathan Waller's lists. | iOS, Website |
 | Frequency data | [TUBELEX](https://github.com/naist-nlp/tubelex) | Japanese word frequency data from occurrences across YouTube. | iOS, Website |
