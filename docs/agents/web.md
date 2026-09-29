@@ -382,12 +382,11 @@ per request. `/dictionary/`, the search box, is a static page in `src/lib/pages.
   file in `ent_seq` order (five files for 218,382 words). The import precomputes each file's
   `ent_seq` range into `word_sitemaps`, so a file reads only its own words, by primary key, and
   streams them 10,000 at a time; the index reads only `word_sitemaps`.
-- `/sitemaps/kanji.xml`: the kanji pages search engines may index (`kanji.indexable`: 12,633 of
-  13,108). The import stops if the indexable kanji ever outgrow one file.
+- `/sitemaps/kanji.xml`: the kanji pages search engines may index (`kanji.indexable`). The import
+  stops if the indexable kanji ever outgrow one file.
 
 Both are kept in the Worker's edge cache (the Cache API) under the dictionary build, so a new
-build replaces them at once; `pnpm dev` has no such cache. Search sitemaps (#466) wait for the
-precomputed query set #463 will add.
+build replaces them at once; `pnpm dev` has no such cache.
 
 ## Retired word URLs
 

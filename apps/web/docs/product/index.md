@@ -1,9 +1,9 @@
 # Website product documentation
 
-This folder describes user-facing behavior that exists on zenbujapanese.com, and the automated
-check that enforces each behavior. It is updated with the implementation and is not a roadmap.
-Features the website must have but doesn't yet are listed separately, with the check each will
-get.
+This folder describes user-facing behavior that is built and live on zenbujapanese.com, and the
+automated check that enforces each behavior. It is updated with the implementation and is not a
+roadmap. The one exception is [Required, not built yet](dictionary.md#required-not-built-yet-511),
+which lists features the website must have but doesn't yet, with the check each will get.
 
 The website is a public mirror of the app's dictionary. Its pages show what the app's Search tab
 shows for the same word or kanji, laid out as the #462 designs chose: stock shadcn components in
@@ -41,16 +41,14 @@ check yet (#511)". The checks come in four kinds:
 
 - **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the
   app on the iOS Simulator: `search-retrieval.json`, `word-detail.json`, and `kanji-detail.json`.
-  Each pins the app files it was recorded from. `src/lib/dictionary/search/conformance.test.ts`
-  and `src/lib/dictionary/detail/conformance.test.ts` replay them through the website's search and
-  detail cores on a locally built release database, reading it as the pages do.
+  Each pins, by SHA-256, the app data files it was recorded from.
+  `src/lib/dictionary/search/conformance.test.ts` and `src/lib/dictionary/detail/conformance.test.ts`
+  replay them through the website's search and detail cores on a locally built release database, reading it as the pages do.
 - **Unit tests** (Vitest) next to the code under `apps/web/src/`. `pnpm check` runs them, and the
   `Web` workflow runs it on every pull request that changes `apps/web/**`.
-- **Import gates.** Each release database import runs its conformance suite on the local copy
-  before anything reaches D1 (`check_local` in `scripts/release-d1/<database>/database.sh`). A
-  change to the search or detail core changes the build ID, so the next deploy imports a new build
-  and runs the gate. `pnpm check` skips the suites; run them locally with `ZENBU_SEARCH_D1=1` or
-  `ZENBU_DICTIONARY_D1=1` (see [`docs/agents/web.md`](../../../../docs/agents/web.md)).
+- **Import gates.** Each release database import runs its conformance suite before anything
+  reaches D1; `pnpm check` skips the suites. [`docs/agents/web.md`](../../../../docs/agents/web.md)
+  describes the gates and how to run the suites locally.
 - **Smoke checks** in `apps/web/scripts/smoke.sh`, run against staging and production after each
   deploy. Each is named here by the message it prints.
 

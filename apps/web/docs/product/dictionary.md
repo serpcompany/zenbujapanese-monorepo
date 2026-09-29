@@ -37,8 +37,9 @@ the header's search. The app searches as the learner types; the website searches
 each search is its own page.
 
 - Source: #466 (search on Enter, not as you type).
-- Check: `src/lib/dictionary/urls.test.ts`, "search URLs". The redirect from `?q=`: No automated
-  check yet (#511).
+- Check: `src/lib/dictionary/urls.test.ts`, "search URLs", checks only how a query is normalized
+  and encoded into its path. Searching on Enter, the redirect from `?q=`, and the prefilled box:
+  No automated check yet (#511).
 
 **Which words are found.** The website runs a TypeScript port of the app's search retrieval on the
 search database. It finds what the app finds for Japanese, kana, romaji, and English queries,
@@ -56,8 +57,8 @@ The website has no Discovered Words list, because it can't analyze text at reque
 
 - Source: ADR 0008; #466 (comment of 2026-09-29).
 - Check: `src/lib/dictionary/search/search.test.ts`, "sentence search is on only with an analyzer,
-  and the website has none". SR cases with the `analyzed` resolution are skipped
-  ("needs sentence search").
+  and the website has none". SR records no sentence cases (none with the `analyzed`
+  resolution).
 
 **Result order.** Words appear in the order the app's retrieval returns them. The app then
 re-sorts equally strong matches by the enabled frequency dictionaries; the website doesn't yet, so
@@ -158,11 +159,12 @@ it.
 **Header card.** The card shows the headword with furigana, and beside it the pitch accent in a
 capsule with a speaker, or a standalone speaker when the word has no pitch. The speaker uses the
 browser's Japanese voice. Under a separator, the part-of-speech row names one word class and its
-modifiers, such as "Godan verb (intransitive)", and is left out when no class has a name. The row
-doesn't open a conjugation table yet.
+modifiers, such as "Godan verb (intransitive)", and is left out when no class has a name. It
+comes from the first sense's parts of speech, falling back to the entry's. The row doesn't open a
+conjugation table yet.
 
 - Source: App docs, Dictionary and kanji details; `WordDetailView.swift`;
-  `PartOfSpeechFormatter.swift`; #462.
+  `PartOfSpeechFormatter.swift`; `DictionaryEntry.displayPartOfSpeech`; #462.
 - Check: WD `furigana`, `partOfSpeech`; `src/lib/dictionary/detail/word.test.ts`, "names one word
   class, then its modifiers" and "shows no part of speech when no class has a name". The speaker:
   No automated check yet (#511).
@@ -484,11 +486,13 @@ order.
 **Paging.** A results page renders about 25 words in its HTML, then loads more, up to the app's 60.
 Today it renders all 60.
 
-- App source: #466 (page the results: about 25, then load more, up to 60).
+- Source: #466 (page the results: about 25, then load more, up to 60).
 - Check it will get: a rendered-page test of the first page and the load-more request, like the
   examples endpoint's `route.test.ts`.
 
-**Meaning clamp.** A row's meaning is clamped to two lines, as the app clamps it.
+**Meaning clamp.** A row's meaning is clamped to two lines, as the app clamps it. At the app's
+accessibility text sizes the meaning isn't clamped (`ResultRow`'s `lineLimit`); the website needs
+the same exception for large text.
 
 - App source: `ResultRow` in `SearchView.swift`.
 - Check it will get: a rendered-HTML check of the row.
@@ -507,9 +511,11 @@ entry's summary (要 shows "pivot"), as the app's row presents it.
 - Check it will get: the kanji row in the planned search results suite, and a rendered-page check.
 
 **"Search for「…」" reading suggestion.** When the app offers a Japanese-reading refinement, the
-results page offers "Search for「…」", which opens that search. The core already computes it.
+results page offers "Search for「…」" in its own section above the result rows, which opens that
+search. The core already computes it.
 
-- App source: App docs, Search ("a Japanese-reading refinement"); `SearchView.swift`.
+- App source: App docs, Search ("a Japanese-reading refinement"); the reading-refinement section of
+  `SearchResultsView` in `SearchView.swift` (`search.reading-refinement`).
 - Check it will get: SR `readingRefinement` already checks the core's value; a rendered-page check
   that the page shows and links it.
 
@@ -526,6 +532,13 @@ app does.
   `RadicalInputView.swift`, `RadicalLookupClient.swift`.
 - Check it will get: an app-recorded suite of radical selections and their candidate kanji, and
   handwriting samples and their candidates, replayed against the website.
+
+**Radical searches keep the strongest matches.** A search started from radical input lists only
+its leading group of equally strong matches, as the app limits it (`rankedEntryLimit`).
+
+- App source: `SearchResultsView` and its `rankedEntryLimit` in `SearchView.swift`.
+- Check it will get: radical-origin cases in the planned search results suite, recording the rows
+  the app lists.
 
 ### Word page
 
