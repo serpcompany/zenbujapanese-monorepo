@@ -82,8 +82,12 @@ build_rows() {
   local_d1 execute "$local_name" --file "$build/rows.sql" --yes > /dev/null
   # node:sqlite still warns that it's experimental on Node 22.
   # The build ID seeds which entries it checks against the app's scan, so each build draws anew.
+  # Its own line, not inside the assignment below, so a failing build-id.sh stops the build
+  # instead of seeding with ''.
+  local seed
+  seed=$(scripts/release-d1/build-id.sh dictionary) || return
   NODE_OPTIONS="${NODE_OPTIONS:-} --disable-warning=ExperimentalWarning" \
-    ZENBU_EXAMPLES_SEED="$(scripts/release-d1/build-id.sh dictionary)" \
+    ZENBU_EXAMPLES_SEED="$seed" \
     pnpm exec tsx scripts/release-d1/dictionary/build-examples.mts "$source" \
     "$repo_root/$resources" "$build/examples"
   local file
