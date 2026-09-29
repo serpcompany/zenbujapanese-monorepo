@@ -37,12 +37,14 @@ function attribute(tag: string, name: string): string | null {
  * The headword's furigana, segment by segment: a plain run, a `<ruby>` with its reading, or a
  * `<ruby>` whose kanji are toggles, each with its own part of the reading.
  */
-export function readFurigana(html: string): SuiteFurigana[] {
+export function readFurigana(html: string, size = 'text-5xl'): SuiteFurigana[] {
   const headword = html.match(
-    /<span lang="ja" class="[^"]*text-5xl[^"]*">([\s\S]*?)<\/span><(?:button|div)/
+    new RegExp(`<span lang="ja" class="[^"]*${size}[^"]*">([\\s\\S]*?)</span><(?:button|div)`)
   )
   if (!headword) throw new Error('No headword in the rendered header')
-  const segments = headword[1].matchAll(/<span>([^<]*)<\/span>|<ruby([^>]*)>([\s\S]*?)<\/ruby>/g)
+  // A highlighted ending is its own span; its text reads as part of its segment.
+  const unhighlighted = headword[1].replace(endingSpan, '$1')
+  const segments = unhighlighted.matchAll(/<span>([^<]*)<\/span>|<ruby([^>]*)>([\s\S]*?)<\/ruby>/g)
   return [...segments].map(([, plain, rubyAttributes, ruby]): SuiteFurigana => {
     if (plain !== undefined) return { base: text(plain) }
     const [, base, reading] = ruby.match(/^([\s\S]*)<rt[^>]*>([\s\S]*)<\/rt>$/) ?? []
@@ -121,6 +123,73 @@ export function readFrequencyDetails(html: string): SuiteFrequencyDetails {
     section: text(sectionHtml.match(/<h3[^>]*>([\s\S]*?)<\/h3>/)?.[1] ?? ''),
     rows,
     ...(explanation === undefined ? {} : { explanation: text(explanation) })
+  }
+}
+
+/** A highlighted ending, drawn in the accent color. */
+const endingSpan = /<span class="[^"]*" data-ending="true">([^<]*)<\/span>/g
+
+/** The text drawn in the accent color as a changed ending. */
+function endings(html: string): string {
+  return [...html.matchAll(endingSpan)].map(([, ending]) => ending).join('')
+}
+
+/** Visible text: furigana left out. */
+function visible(html: string): string {
+  return text(html.replace(/<rt[^>]*>[\s\S]*?<\/rt>/g, ''))
+}
+
+export interface RenderedConjugationTable {
+  summary: string
+  rule: string
+  modes: string[]
+  rows: {
+    kind: string
+    title: string
+    surface: string
+    ending: string
+    rowFurigana: boolean
+  }[]
+}
+
+/** The conjugation table as drawn: its header, the register control, and each row. */
+export function readConjugationTable(html: string): RenderedConjugationTable {
+  const field = (name: string) =>
+    text(html.match(new RegExp(`${name}="true">([\\s\\S]*?)</p>`))?.[1] ?? '')
+  const modes = [...html.matchAll(/data-conjugation-mode="([^"]+)"/g)].map(([, mode]) => mode)
+  const rows = [
+    ...html.matchAll(
+      /data-conjugation-row="([^"]+)"[^>]*><span class="text-muted-foreground">([^<]*)<\/span><span[^>]*data-conjugation-surface="true">([\s\S]*?)<\/span><svg/g
+    )
+  ].map(([, kind, title, surface]) => ({
+    kind,
+    title,
+    surface: visible(surface),
+    ending: endings(surface),
+    rowFurigana: surface.includes('<ruby')
+  }))
+  return {
+    summary: field('data-conjugation-summary'),
+    rule: field('data-conjugation-rule'),
+    modes: modes.length > 0 ? modes : ['Plain'],
+    rows
+  }
+}
+
+/** A conjugated form's screen as drawn. */
+export function readConjugatedForm(html: string): {
+  explanation: string
+  sharedSpelling: string | null
+  furigana: SuiteFurigana[]
+  ending: string
+} {
+  const shared = html.match(/data-shared-spelling="true">(?:<svg[\s\S]*?<\/svg>)?([\s\S]*?)<\/p>/)
+  const headline = html.match(/<span lang="ja" class="[^"]*text-4xl[^"]*">[\s\S]*?<\/span><button/)
+  return {
+    explanation: text(html.match(/data-conjugation-explanation="true">([\s\S]*?)<\/p>/)?.[1] ?? ''),
+    sharedSpelling: shared ? text(shared[1]) : null,
+    furigana: readFurigana(html, 'text-4xl'),
+    ending: endings(headline?.[0] ?? '')
   }
 }
 

@@ -174,12 +174,7 @@ struct ConjugatedFormView: View {
     }
   }
 
-  /// Other forms with the same spelling, such as potential and passive 見られる.
-  private var sharedSpellings: [String] {
-    table.forms(for: mode)
-      .filter { $0.id != form.id && $0.surface == form.surface }
-      .map(\.id.presentation.title)
-  }
+  private var sharedSpellings: [String] { table.sharedSpellings(of: form, in: mode) }
 
   /// Every retrieved Example Sentence in which the parser reads this exact form as one word,
   /// in retrieval order. Word boundaries come from the same inflection grouping linked text
@@ -196,14 +191,34 @@ struct ConjugatedFormView: View {
   }
 }
 
-private struct ConjugationKindPresentation: Identifiable {
+// The conjugation screens' words, shared by the views and the word-detail conformance suite, so
+// the website's conjugation table is held to the app's (see also
+// apps/web/src/lib/dictionary/detail/conjugation.ts).
+
+extension ConjugationTable {
+  /// Other forms in `mode` with the same spelling as `form`, such as potential and passive
+  /// 見られる, which the form's screen names.
+  func sharedSpellings(of form: ConjugatedForm, in mode: ConjugationMode) -> [String] {
+    forms(for: mode)
+      .filter { $0.id != form.id && $0.surface == form.surface }
+      .map(\.id.presentation.title)
+  }
+}
+
+extension ConjugatedForm {
+  /// Whether the table's row shows furigana: the stem's reading is already in the header, so
+  /// only when the ending itself has kanji, as in 来させる, whose reading changes.
+  var rowShowsFurigana: Bool { ending.contains(where: \.isKanji) }
+}
+
+struct ConjugationKindPresentation: Identifiable {
   let id: ConjugatedForm.Kind
   let title: String
   let explanation: String
 }
 
 extension ConjugatedForm.Kind {
-  fileprivate var presentation: ConjugationKindPresentation {
+  var presentation: ConjugationKindPresentation {
     switch self {
     case .presentFuture:
       ConjugationKindPresentation(
@@ -314,9 +329,7 @@ private struct ConjugatedSurface: View {
   let rubyFont: Font
 
   var body: some View {
-    // The stem reading is already in the header, so rows show furigana only when the
-    // ending itself contains kanji, as in 来させる, whose reading changes.
-    if form.ending.contains(where: \.isKanji) {
+    if form.rowShowsFurigana {
       JapaneseRubyText(
         surface: form.surface,
         reading: form.reading,

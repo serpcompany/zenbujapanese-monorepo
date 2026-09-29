@@ -41,6 +41,7 @@ build_inputs=(
   apps/web/src/lib/dictionary/dictionary-db.ts
   apps/web/src/lib/dictionary/urls.ts
   apps/web/src/components/dictionary/word-header.tsx
+  apps/web/src/components/dictionary/conjugations.tsx
   apps/web/src/components/dictionary/headword-ruby.tsx
   apps/web/src/components/dictionary/pitch-accent.tsx
   apps/web/src/components/dictionary/pronounce-button.tsx
@@ -54,6 +55,7 @@ build_inputs=(
   apps/web/src/components/ui/dialog.tsx
   apps/web/src/components/ui/drawer.tsx
   apps/web/src/components/ui/separator.tsx
+  apps/web/src/components/ui/tabs.tsx
   apps/web/src/hooks/use-media-query.ts
   # The app-recorded suites the gate checks, so a re-recorded suite checks the next deploy.
   apps/ios/LanguageData/Conformance/word-detail.json
@@ -98,12 +100,14 @@ if loaded != expected:
 # The app-recorded word-detail and kanji-detail suites, run through the detail core on the local
 # copy built through the migrations (src/lib/dictionary/detail/conformance.test.ts), and the
 # word-detail suite drawn by the word page's components (word-page.test.tsx): the furigana's
-# per-kanji split, the pitch graph's dots, and each Frequency row's details.
+# per-kanji split, the pitch graph's dots, each Frequency row's details, and the conjugation
+# table with each form's screen (conjugations.test.tsx).
 check_local() {
   # vitest.config.ts runs these one at a time: each opens the same local D1.
   ZENBU_DICTIONARY_D1=1 ZENBU_DICTIONARY_D1_PATH="$1" \
     pnpm exec vitest run src/lib/dictionary/detail/conformance.test.ts \
-    src/components/dictionary/word-page.test.tsx
+    src/components/dictionary/word-page.test.tsx \
+    src/components/dictionary/conjugations.test.tsx
 }
 
 # The SHA-256 of each input file, for dictionary_import's `sources` column.

@@ -7,9 +7,11 @@ import { licenseUrl } from './examples'
 import { tierLabels } from './frequency'
 import { kanjiDetail } from './kanji'
 import {
+  type SuiteConjugations,
   type SuiteFrequencyDetails,
   type SuiteFurigana,
   type SuitePitchGraph,
+  suiteConjugations,
   suiteFrequencyDetails,
   suiteFurigana,
   suitePitchGraph
@@ -25,8 +27,9 @@ import { wordDetail } from './word'
 // Every example field is checked: the order, pair IDs, text, tokens, links, highlights, and counts
 // (the import precomputes them, scripts/release-d1/dictionary/build-examples.mts). So are the
 // headword's per-kanji furigana split, the pitch graph's points, and each Frequency row's details,
-// in the shapes suite.ts shares with the rendered page's test (word-page.test.tsx). The app-only
-// `opensConjugations` is skipped; the app's kanji cases don't record JLPT, so it isn't compared.
+// in the shapes suite.ts shares with the rendered page's test (word-page.test.tsx), and the
+// conjugation table the part of speech opens, form by form. The app's kanji cases don't record
+// JLPT, so it isn't compared.
 const enabled = process.env.ZENBU_DICTIONARY_D1 === '1'
 
 interface Artifact {
@@ -65,6 +68,8 @@ interface WordCase {
   reading: string
   furigana: SuiteFurigana[]
   partOfSpeech: string
+  opensConjugations: boolean
+  conjugations?: SuiteConjugations
   senses: { meaning: string; notes: string[]; partsOfSpeech: string[] }[]
   pitch?: {
     downstep: number
@@ -279,6 +284,10 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
       // With each kanji run's per-kanji split, which the headword's highlight uses.
       furigana: suiteFurigana(detail.ruby),
       partOfSpeech: detail.partOfSpeech,
+      opensConjugations: detail.conjugations !== null,
+      ...(detail.conjugations
+        ? { conjugations: suiteConjugations(detail.conjugations, entry.summary) }
+        : {}),
       senses: detail.senses.map((sense, index) => ({
         meaning: sense.meaning,
         notes: sense.notes,
@@ -321,7 +330,7 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
       })),
       examples: await examples(entry.entSeq, wordSuite.exampleLimit ?? 0)
     }
-    expect(observed).toEqual(covered(expected, ['covers', 'entSeq', 'opensConjugations']))
+    expect(observed).toEqual(covered(expected, ['covers', 'entSeq']))
     // The page's first examples are the suite's, from the same rows.
     expect(detail.examples.map(example => example.text)).toEqual(
       expected.examples.shown.slice(0, detail.examples.length).map(example => example.japanese)

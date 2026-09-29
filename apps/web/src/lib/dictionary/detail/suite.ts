@@ -2,6 +2,7 @@
 // gate (conformance.test.ts) and the rendered word page's test (word-page.test.tsx) compare the
 // same fields the app records in WordDetailConformanceTests.swift. Test-only.
 
+import type { ConjugationRow, Conjugations } from './conjugation'
 import type { FrequencyDetails } from './frequency'
 import type { PitchAccent } from './pitch'
 import type { RubySegment } from './ruby'
@@ -29,6 +30,49 @@ export interface SuiteFrequencyDetails {
   section: string
   rows: { label: string; value: string }[]
   explanation?: string
+}
+
+/** `conjugations`: the table the part-of-speech row opens, and each form's screen. */
+export interface SuiteConjugations {
+  summary: string
+  rule: string
+  modes: string[]
+  plain: SuiteConjugationForm[]
+  polite?: SuiteConjugationForm[]
+}
+
+export interface SuiteConjugationForm {
+  kind: string
+  title: string
+  explanation: string
+  surface: string
+  reading: string
+  ending: string
+  rowFurigana: boolean
+  furigana: SuiteFurigana[]
+  sharedSpellings?: string[]
+}
+
+export function suiteConjugations(conjugations: Conjugations, summary: string): SuiteConjugations {
+  const forms = (rows: ConjugationRow[]): SuiteConjugationForm[] =>
+    rows.map(row => ({
+      kind: row.kind,
+      title: row.title,
+      explanation: row.explanation,
+      surface: row.surface,
+      reading: row.reading,
+      ending: row.ending,
+      rowFurigana: row.rowFurigana,
+      furigana: suiteFurigana(row.ruby),
+      ...(row.sharedSpellings.length > 0 ? { sharedSpellings: row.sharedSpellings } : {})
+    }))
+  return {
+    summary,
+    rule: conjugations.rule,
+    modes: conjugations.modes,
+    plain: forms(conjugations.rows.Plain),
+    ...(conjugations.modes.includes('Polite') ? { polite: forms(conjugations.rows.Polite) } : {})
+  }
 }
 
 export function suiteFurigana(ruby: readonly RubySegment[]): SuiteFurigana[] {

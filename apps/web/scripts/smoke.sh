@@ -188,6 +188,25 @@ draws_like_the_app() {
 show_miru_seen() { echo "$miru_seen (want dots $miru_dots; rows $miru_rows)"; }
 eventually "見る's pitch graph and Frequency rows match the app" \
   "見る's pitch graph or Frequency rows differ from the app" draws_like_the_app show_miru_seen
+# The part-of-speech row opens a conjugation table exactly where the app's does: 見る's does, and
+# 学校's (a noun) doesn't.
+opens_expected="$(python3 -c '
+import json, sys
+cases = {c["entSeq"][0]: c for c in json.load(open(sys.argv[1]))["cases"]}
+print(" ".join("yes" if cases[n]["opensConjugations"] else "no" for n in ("1259290", "1206730")))
+' "$word_suite")"
+opens_seen=""
+opens_like_the_app() {
+  local path opens=()
+  for path in "$word" "$gakkou"; do
+    if grep -q 'data-opens-conjugations' <<<"$(body "$path")"; then opens+=(yes); else opens+=(no); fi
+  done
+  opens_seen="${opens[*]}"
+  [ "$opens_seen" = "$opens_expected" ]
+}
+show_opens_seen() { echo "見る, 学校 open conjugations: $opens_seen (want $opens_expected)"; }
+eventually "the part of speech opens conjugations where the app's does ($opens_expected)" \
+  'the part of speech opens conjugations where the app does not' opens_like_the_app show_opens_seen
 
 # A stale or missing slug redirects to the word's one URL; an unknown number doesn't exist.
 expect_redirect /dictionary/1259290/ "$word"

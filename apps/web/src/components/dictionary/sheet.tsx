@@ -30,12 +30,15 @@ export function Sheet({
   onOpenChange,
   title,
   header,
+  wide: wideDialog = false,
   children
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
   header?: ReactNode
+  /** A wider dialog, for a table. */
+  wide?: boolean
   children: ReactNode
 }) {
   const wide = useMediaQuery('(min-width: 768px)')
@@ -44,7 +47,7 @@ export function Sheet({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           showCloseButton={false}
-          className="max-h-[85vh] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-md"
+          className={`max-h-[85vh] grid-rows-[auto_minmax(0,1fr)_auto] ${wideDialog ? 'sm:max-w-lg' : 'sm:max-w-md'}`}
         >
           <DialogHeader className="flex-row items-center gap-2">
             {header}
