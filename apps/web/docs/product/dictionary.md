@@ -213,6 +213,9 @@ form, with Back to the table: what the form means, "Same spelling as …" when a
 register shares its spelling (potential and passive 見られる), and the form with furigana, its
 ending highlighted, and a speaker. The app pushes these screens instead of opening a sheet. The
 form's examples aren't shown yet; see [Required, not built yet](#required-not-built-yet-511).
+The website copies the app's forms exactly, including its する rule, which appends できる to the
+noun for the potential (愛する gives 愛できる); that is filed as app bug #521, and the website
+changes with the app when it is fixed.
 
 - Source: App docs, Dictionary and kanji details (the conjugation table); `PartOfSpeechRow` in
   `WordDetailView.swift`; `ConjugationsView.swift` (`ConjugationsView`, `ConjugatedFormView`,

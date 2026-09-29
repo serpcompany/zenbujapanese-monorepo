@@ -27,6 +27,7 @@ describe('conjugationTable (JapaneseConjugator.table)', () => {
   })
 
   test('する verbs keep the noun; 来る changes its reading', () => {
+    // The app's rule appends できる to the noun (app bug #521); the port copies it.
     expect(surfaces('愛する', 'あいする', ['suruVerb'], 'Plain')?.[5]).toBe('愛できる')
     const kuru = table('来る', 'くる', ['kuruVerb'])
     expect(kuru?.plain[2]).toEqual({

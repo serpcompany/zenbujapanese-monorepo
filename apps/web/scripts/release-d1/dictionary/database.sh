@@ -42,7 +42,6 @@ build_inputs=(
   apps/web/src/lib/dictionary/urls.ts
   apps/web/src/components/dictionary/word-header.tsx
   apps/web/src/components/dictionary/conjugations.tsx
-  apps/web/src/components/dictionary/conjugations.test.tsx
   apps/web/src/components/dictionary/headword-ruby.tsx
   apps/web/src/components/dictionary/pitch-accent.tsx
   apps/web/src/components/dictionary/pronounce-button.tsx
@@ -56,6 +55,7 @@ build_inputs=(
   apps/web/src/components/ui/dialog.tsx
   apps/web/src/components/ui/drawer.tsx
   apps/web/src/components/ui/separator.tsx
+  apps/web/src/components/ui/tabs.tsx
   apps/web/src/hooks/use-media-query.ts
   # The app-recorded suites the gate checks, so a re-recorded suite checks the next deploy.
   apps/ios/LanguageData/Conformance/word-detail.json
