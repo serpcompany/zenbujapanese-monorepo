@@ -1,7 +1,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { cache } from 'react'
 import { fixtureKanjiRows, fixtureSearchOrder, fixtureWordRows } from '@/lib/dictionary/fixtures'
-import { isProductionSite } from '@/lib/site'
+import { isDeployedSite, isProductionSite } from '@/lib/site'
 import {
   type KanjiDetail,
   type KanjiElement,
@@ -107,8 +107,8 @@ function databaseLinks(wordSlugs: Map<number, string>, kanjiPages: Set<string>):
 /** The dictionary database, when it holds a finished import. */
 async function dictionaryDb() {
   const { env } = await getCloudflareContext({ async: true })
-  const db = env.DICTIONARY_DB
-  return db && (await holdsImport(db)) ? dictionaryDatabase(db) : null
+  const db = await imported(env.DICTIONARY_DB, 'DICTIONARY_DB')
+  return db ? dictionaryDatabase(db) : null
 }
 
 function wordPage(rows: WordRows, slug: string, links: Links): WordPageData {
@@ -144,8 +144,11 @@ function kanjiPage(rows: KanjiRows, indexable: boolean, links: Links): KanjiPage
   }
 }
 
-/** A failing dictionary database throws, so the request fails rather than rendering a 404. */
-export async function getWordPage(entSeq: number): Promise<WordPageData | null> {
+/**
+ * A failing dictionary database throws, so the request fails rather than rendering a 404.
+ * Memoized per request, so the page and its metadata read the database once.
+ */
+export const getWordPage = cache(async (entSeq: number): Promise<WordPageData | null> => {
   const db = await dictionaryDb()
   if (db) {
     const word = await db.word(entSeq)
@@ -155,9 +158,10 @@ export async function getWordPage(entSeq: number): Promise<WordPageData | null> 
   const rows = wordRowsBySeq.get(entSeq)
   if (!rows) return null
   return wordPage(rows, wordSlug(rows.entry.headword, rows.entry.reading), fixtureLinks)
-}
+})
 
-export async function getKanjiPage(character: string): Promise<KanjiPageData | null> {
+/** Memoized per request, like getWordPage. */
+export const getKanjiPage = cache(async (character: string): Promise<KanjiPageData | null> => {
   const db = await dictionaryDb()
   if (db) {
     const kanji = await db.kanji(character)
@@ -168,7 +172,7 @@ export async function getKanjiPage(character: string): Promise<KanjiPageData | n
   if (!rows) return null
   const { meanings, readings } = rows.kanji
   return kanjiPage(rows, meanings.length > 0 || readings.length > 0, fixtureLinks)
-}
+})
 
 /**
  * A search result as a word. The search database has no frequency yet. Every word links once the
@@ -197,6 +201,18 @@ async function holdsImport(db: D1Database): Promise<boolean> {
   if (!table || (await db.prepare('SELECT 1 FROM dictionary_import').first()) === null) return false
   importedDatabases.add(db)
   return true
+}
+
+/**
+ * A bound release database, when it holds a finished import; null for fixtures. Only local
+ * development (no SITE_ENV) falls back to fixtures from a bound database without one: staging and
+ * production fail the request instead, so a database bound by mistake can't pass as working.
+ */
+async function imported(db: D1Database | undefined, binding: string) {
+  if (!db) return null
+  if (await holdsImport(db)) return db
+  if (isDeployedSite()) throw new Error(`${binding} is bound but holds no finished import`)
+  return null
 }
 
 /**
@@ -232,9 +248,9 @@ function fixtureWords(query: string): SearchWord[] {
 
 async function searchWords(query: string, linked: boolean): Promise<SearchWord[]> {
   const { env } = await getCloudflareContext({ async: true })
-  const db = env.SEARCH_DB
   // A failing database throws, so the request fails rather than rendering an empty page.
-  if (!db || !(await holdsImport(db))) return fixtureWords(query)
+  const db = await imported(env.SEARCH_DB, 'SEARCH_DB')
+  if (!db) return fixtureWords(query)
   try {
     const { items } = await websiteSearch(db).search(query)
     return items.map(item => summarizeSearchEntry(item.entry, linked))

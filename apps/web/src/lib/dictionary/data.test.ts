@@ -308,6 +308,33 @@ describe('word and kanji pages', () => {
     expect(page?.indexable).toBe(false)
   })
 
+  describe('deployed (SITE_ENV set)', () => {
+    beforeEach(() => {
+      vi.stubEnv('SITE_ENV', 'staging')
+    })
+
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
+    test.each([
+      ['has no tables', fakeD1({ tables: false, imported: false })],
+      ['has no finished import', fakeD1({ tables: true, imported: false })]
+    ])('a bound database that %s fails the request instead of showing fixtures', async (_, db) => {
+      env.DICTIONARY_DB = db
+      await expect(getWordPage(1546640)).rejects.toThrow('DICTIONARY_DB is bound but holds no')
+      await expect(getKanjiPage('要')).rejects.toThrow('DICTIONARY_DB is bound but holds no')
+      delete env.DICTIONARY_DB
+      env.SEARCH_DB = db
+      await expect(searchDictionary('いる')).rejects.toThrow('SEARCH_DB is bound but holds no')
+    })
+
+    test('without the bindings, pages still read the fixtures', async () => {
+      expect((await getWordPage(1546640))?.path).toBe('/dictionary/要る-1546640/')
+      expect((await searchDictionary('いる')).words).toHaveLength(6)
+    })
+  })
+
   test('a failing dictionary database fails the request', async () => {
     env.DICTIONARY_DB = failingD1()
     await expect(getWordPage(1546640)).rejects.toThrow('Network connection lost')
