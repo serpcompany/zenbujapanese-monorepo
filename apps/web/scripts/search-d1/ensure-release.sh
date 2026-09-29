@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # Makes sure the search database for this commit exists in D1 and is complete, importing it if
-# not (issue 464). `Web deploy` runs it for each environment before deploying, then binds
-# SEARCH_DB to the database it names.
+# not (issue 464). `Web deploy` runs it for staging before deploying, then binds SEARCH_DB to the
+# database it names, and runs prune.sh once the deploy passes its smoke test.
 #
 #   scripts/search-d1/ensure-release.sh <staging|production>
 #
 # Each build of the dictionary gets its own D1, `zenbujapanese-search-<env>-<build id>`
 # (build-id.sh), imported from empty and verified before anything binds it, so a deploy
 # switches databases atomically and rolling back is redeploying the previous commit. An existing
-# database is reused only when it verifies; a partial one is deleted and imported again. The two
-# newest databases per environment are kept, the one deployed now and the one before it.
+# database is reused only when it verifies; a partial one is deleted and imported again. This
+# script never deletes another build's database: prune.sh does, after a deploy succeeds.
 #
 # Needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, Git LFS, and python3. Writes
 # SEARCH_DB_NAME and SEARCH_DB_ID to $GITHUB_ENV when set.
@@ -24,7 +24,6 @@ mkdir -p "$scratch"
 
 build_id=$(scripts/search-d1/build-id.sh)
 name="zenbujapanese-search-$env-$build_id"
-prefix="zenbujapanese-search-$env-"
 echo "Search database: $name"
 
 wrangler() { pnpm exec wrangler "$@"; }
@@ -132,35 +131,6 @@ if [ -z "$id" ]; then
   import_release
   id=$(database_id "$name")
 fi
-
-# Keep this database and the newest other complete one (with a dictionary_import row), which
-# the environment runs until this deploy. Others, including partial imports a cancelled or timed-out
-# run left behind, are deleted, so a partial database never outranks the live one.
-# Prints 1 for a complete import, 0 for a partial one (no or empty dictionary_import), and
-# anything else when it can't tell, which keeps the database.
-completed() {
-  curl -sS -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database/$1/query" \
-    -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'Content-Type: application/json' \
-    --data '{"sql": "SELECT count(*) AS n FROM dictionary_import"}' |
-    json "data['result'][0]['results'][0]['n'] if data.get('success') else
-      0 if 'no such table' in json.dumps(data.get('errors')) else 'unknown'" || echo unknown
-}
-kept=""
-list | json "'\n'.join(f\"{d['uuid']} {d['name']}\" for d in sorted(data, key=lambda d: d['created_at'], reverse=True)
-  if d['name'].startswith('$prefix') and d['name'] != '$name')" |
-  while read -r uuid old; do
-    [ -n "$old" ] || continue
-    state=$(completed "$uuid")
-    if [ "$state" = 1 ] && [ -z "$kept" ]; then
-      kept=$old
-      echo "Keeping $old"
-    elif [ "$state" = 1 ] || [ "$state" = 0 ]; then
-      echo "Deleting old $old"
-      wrangler d1 delete "$old" --skip-confirmation
-    else
-      echo "Keeping $old: couldn't tell whether its import completed"
-    fi
-  done
 
 echo "SEARCH_DB_NAME=$name SEARCH_DB_ID=$id"
 if [ -n "${GITHUB_ENV:-}" ]; then

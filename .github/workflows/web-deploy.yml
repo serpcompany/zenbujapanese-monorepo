@@ -26,6 +26,10 @@ env:
 jobs:
   staging:
     runs-on: ubuntu-latest
+    # Shared with the manual Search database workflow, so two imports for staging never overlap.
+    concurrency:
+      group: search-database-staging
+      cancel-in-progress: false
     environment:
       name: staging
       url: https://staging.zenbujapanese.com
@@ -58,6 +62,9 @@ jobs:
       - name: Smoke test
         # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
         run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" staging
+      - name: Delete old search databases
+        # Only now is the new database the live one; keeps it and the newest complete older one.
+        run: scripts/search-d1/prune.sh staging "$SEARCH_DB_NAME"
 
   production:
     needs: staging
