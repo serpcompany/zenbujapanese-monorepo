@@ -108,7 +108,7 @@ jobs:
               pnpm exec wrangler d1 execute "$binding" --remote --config bench/search-d1/wrangler.json \
                 --file "$RUNNER_TEMP/$file" --yes
             done
-            [ "$binding" = DB ] && echo "LOAD_SECONDS=$((SECONDS - start))" >> "$GITHUB_ENV"
+            if [ "$binding" = DB ]; then echo "LOAD_SECONDS=$((SECONDS - start))" >> "$GITHUB_ENV"; fi
           done
       - name: Enable read replication
         if: inputs.read_replication
