@@ -16,7 +16,7 @@ import { wordDetail } from './word'
 //
 // Every example field is checked: the order, pair IDs, text, tokens, links, highlights, and counts
 // (the import precomputes them, scripts/release-d1/dictionary/build-examples.mts). The app-only
-// `opensConjugations` is skipped; the app's kanji cases leave out KANJIDIC2's old-scale JLPT.
+// `opensConjugations` is skipped; the app's kanji cases don't record JLPT, so it isn't compared.
 const enabled = process.env.ZENBU_DICTIONARY_D1 === '1'
 
 interface Artifact {

@@ -47,8 +47,11 @@ export interface KanjiElement {
 
 export interface KanjiDetail {
   character: string
-  /** Strokes and grade. KANJIDIC2's JLPT is the pre-2010 scale, so it's left out (#485). */
-  stats: { label: string; value: number }[]
+  /**
+   * KanjiOverview's metrics, as the app shows them: strokes, then grade and JLPT when KANJIDIC2
+   * has them. JLPT reads as the app writes it, `N` and KANJIDIC2's level (要 is N2).
+   */
+  stats: { label: string; value: string }[]
   meanings: string[]
   readings: KanjiReading[]
   /** KRADFILE's components, which the app lists only when Kanjium has no elements. */
@@ -195,8 +198,9 @@ export function kanjiDetail(rows: KanjiRows): KanjiDetail {
   return {
     character: kanji.character,
     stats: [
-      { label: kanji.strokeCount === 1 ? 'Stroke' : 'Strokes', value: kanji.strokeCount },
-      ...(kanji.grade === null ? [] : [{ label: 'Grade', value: kanji.grade }])
+      { label: kanji.strokeCount === 1 ? 'Stroke' : 'Strokes', value: `${kanji.strokeCount}` },
+      ...(kanji.grade === null ? [] : [{ label: 'Grade', value: `${kanji.grade}` }]),
+      ...(kanji.jlpt === null ? [] : [{ label: 'JLPT', value: `N${kanji.jlpt}` }])
     ],
     meanings: kanji.meanings,
     readings: kanji.readings.map(reading => ({

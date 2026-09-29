@@ -72,7 +72,7 @@ export const words = sqliteTable(
 
 /**
  * A kanji from KanjiReferenceData.json (KANJIDIC2 and KRADFILE), keyed by the exact character,
- * never Unicode-normalized. `jlpt` is KANJIDIC2's old four-level scale, never shown (#485).
+ * never Unicode-normalized. `jlpt` is KANJIDIC2's level, shown as the app shows it.
  * `wordEntSeqs` is the kanji page's word list, in the app's order. `indexable` is whether
  * search engines may index its page.
  */
