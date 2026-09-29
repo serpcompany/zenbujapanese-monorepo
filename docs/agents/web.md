@@ -84,8 +84,9 @@ binds `SEARCH_DB` and `DICTIONARY_DB` to the databases it names by replacing tha
 the same `LanguageReferenceData.sqlite3` (`dictionary_import.sha256`) before deploying, since
 search results link to word pages. After each environment's smoke test it prunes that
 environment's old builds. It runs when any release database's input changes, not only
-`apps/web/**`. The production job waits for the required reviewer on the `production` GitHub
-environment. A new build's first production import is about 850 MB for both databases and takes
+`apps/web/**`. The production job runs once staging passes; the `production` GitHub environment
+has no required reviewer (the owner approved launching without one). A new build's first
+production import is about 850 MB for both databases and takes
 about 30 minutes; an unchanged build is reused in seconds.
 
 ### The search database
@@ -294,9 +295,10 @@ Deploys and remote migrations run only through the `Web deploy` GitHub Actions w
 from an agent's machine. Each merge to `main` that changes `apps/web/**` applies staging
 migrations, deploys staging, and smoke-tests its workers.dev URL (`scripts/smoke.sh`). The production job then
 runs automatically once staging passes: it applies production migrations, deploys the same commit,
-and smoke-tests its workers.dev URL. Staging's smoke tests are the first gate; the `production`
-GitHub environment's required reviewer is the second, since production imports the dictionary's
-release databases (see Release databases). Both environments deploy only from `main`.
+and smoke-tests its workers.dev URL. Staging's smoke tests are the gate: the `production` GitHub
+environment has no required reviewer, by the owner's decision, even though production imports the
+dictionary's release databases (see Release databases). Add one (Settings → Environments →
+production) to review production imports by hand. Both environments deploy only from `main`.
 The workflow uses the `CLOUDFLARE_API_TOKEN` secret (the "Edit Cloudflare Workers" template plus D1 Edit, limited
 to the SERP account and the zenbujapanese.com zone) and the `CLOUDFLARE_ACCOUNT_ID` variable.
 

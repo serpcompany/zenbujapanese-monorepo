@@ -3,7 +3,8 @@ name: Web deploy
 # Promotes merged website code through staging, then production, per the SERP Drizzle + D1
 # standard. Each environment imports, verifies, and binds its own release databases (search and
 # dictionary) before deploying, and prunes their old builds after its smoke test. Production runs
-# once staging passes, behind the required reviewer on the `production` GitHub environment.
+# once staging passes; add a required reviewer on the `production` GitHub environment to gate it
+# manually (it has none, by the owner's decision).
 on:
   push:
     branches: [main]
