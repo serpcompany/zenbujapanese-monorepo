@@ -51,14 +51,44 @@ struct ExampleSentencesView: View {
     .task(id: query) {
       isLoading = true
       analysisAvailability = await japaneseTextAnalysisClient.availability()
-      let loadedExamples: [ExampleSentence]
-      if usesHighlightedEntryExamples, let highlightedEntry {
-        loadedExamples = (try? await exampleSentenceClient.examples(highlightedEntry)) ?? []
-      } else {
-        loadedExamples = (try? await exampleSentenceClient.search(query)) ?? []
-      }
-      examples = loadedExamples
+      examples = await ExampleSentencesScreen.examples(
+        query: query,
+        highlightedEntry: highlightedEntry,
+        usesHighlightedEntryExamples: usesHighlightedEntryExamples,
+        using: exampleSentenceClient
+      )
       isLoading = false
+    }
+  }
+}
+
+/// What the Example Sentences screen that Search's examples row opens lists, and which words it
+/// accents. `ExampleSentencesView`, `LinkedJapaneseText`, and the example-search conformance suite
+/// all use it, so the suite follows any change to the screen.
+enum ExampleSentencesScreen {
+  /// The primary entry's examples when the results use them (a deinflected or romaji query),
+  /// otherwise the sentences that contain the query. A failed retrieval lists nothing.
+  static func examples(
+    query: SearchQuery,
+    highlightedEntry: DictionaryEntry?,
+    usesHighlightedEntryExamples: Bool,
+    using client: ExampleSentenceClient
+  ) async -> [ExampleSentence] {
+    if usesHighlightedEntryExamples, let highlightedEntry {
+      return (try? await client.examples(highlightedEntry)) ?? []
+    }
+    return (try? await client.search(query)) ?? []
+  }
+
+  /// Unicode-scalar ranges of every occurrence of the query in `text`, which the screen compares
+  /// with each word's scalar range to accent the words that make up the query.
+  static func queryScalarRanges(in text: String, query: String) -> [Range<Int>] {
+    let scalars = Array(text.unicodeScalars)
+    let query = Array(query.unicodeScalars)
+    guard !query.isEmpty, query.count <= scalars.count else { return [] }
+    return (0...(scalars.count - query.count)).compactMap { start in
+      scalars[start..<(start + query.count)].elementsEqual(query)
+        ? start..<(start + query.count) : nil
     }
   }
 }

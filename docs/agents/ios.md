@@ -66,6 +66,18 @@ The screen's titles, counts, and which rows it shows come from `SearchResultsScr
 `-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
 `query` and `covers` fields and recording.
 
+`ExampleSearchConformanceTests` records, in `example-search.json`, the Example Sentences screen
+that Search's "View N Example Sentences" row opens: for each query, the row's count and title,
+the entry the screen links words to, whether it lists that entry's examples (a deinflected or
+romaji query) or the sentences that contain the query, every listed sentence's pair ID in order,
+and the first five sentences' words with their entry, candidates, and whether the screen accents
+them as the query's, read with the app's Kuromoji analysis. What the screen lists and accents
+comes from `ExampleSentencesScreen` in `ExampleSentencesView.swift`, which the view,
+`LinkedJapaneseText`, and the suite share. It pins `LanguageReferenceData.sqlite3`,
+`ExampleWordIndex.sqlite3`, and the Kuromoji files. Record it with
+`-only-testing:SearchExperienceTests/ExampleSearchConformanceTests`; add a query by adding its
+`query` and `covers` fields and recording.
+
 `WordDetailConformanceTests` and `KanjiDetailConformanceTests` do the same for the detail
 screens, so the website's word and kanji pages can be checked against the app. They check
 `word-detail.json` and `kanji-detail.json` in the same folder, reading each case from the
