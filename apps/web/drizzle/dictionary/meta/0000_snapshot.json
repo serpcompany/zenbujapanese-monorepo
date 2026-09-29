@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "876be94e-7ad3-420c-b7fd-8aa4c15e3741",
+  "id": "00b7815d-09cc-4310-9a3a-60cc8bc6ba73",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "dictionary_import": {
@@ -146,22 +146,43 @@
           "notNull": true,
           "autoincrement": false
         },
-        "tatoeba_id": {
-          "name": "tatoeba_id",
+        "japanese_tatoeba_id": {
+          "name": "japanese_tatoeba_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "contributor": {
-          "name": "contributor",
+        "japanese_contributor": {
+          "name": "japanese_contributor",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "license": {
-          "name": "license",
+        "japanese_license": {
+          "name": "japanese_license",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "english_tatoeba_id": {
+          "name": "english_tatoeba_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "english_contributor": {
+          "name": "english_contributor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "english_license": {
+          "name": "english_license",
           "type": "text",
           "primaryKey": false,
           "notNull": true,

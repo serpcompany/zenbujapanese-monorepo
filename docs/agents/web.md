@@ -124,6 +124,15 @@ elements, example sentences with each word's examples (at most 100, in the app's
 IDs, and `dictionary_import`, which also records each input file's SHA-256. Display-only data is
 JSON. It has no FTS tables.
 
+Examples are stored in two parts. `example_sentences` holds each Tatoeba pair once, with tokens
+that are the same on every page and attribution for each side: the Japanese sentence and its
+English translation are separate Tatoeba sentences with their own ID, contributor, and license.
+`word_examples` holds what depends on the page's word: which tokens are the word (`highlights`)
+and where each word token links (`links`, `{ token, entSeqs }`). A token that resolves to one
+entry has one `ent_seq`; a token the app can't resolve, such as だ, keeps all its candidates, as
+the word-detail conformance suite records them. `dictionary-schema.test.ts` stores and reads
+back every token in that suite.
+
 It changes the way the search schema does, with its own commands:
 `pnpm db:generate:dictionary` generates a migration into `drizzle/dictionary/` and rewrites
 `src/db/dictionary-schema.sql`, and `pnpm db:check` checks it too.

@@ -28,9 +28,12 @@ CREATE TABLE `example_sentences` (
 	`japanese` text NOT NULL,
 	`english` text NOT NULL,
 	`tokens_json` text NOT NULL,
-	`tatoeba_id` integer NOT NULL,
-	`contributor` text,
-	`license` text NOT NULL
+	`japanese_tatoeba_id` integer NOT NULL,
+	`japanese_contributor` text,
+	`japanese_license` text NOT NULL,
+	`english_tatoeba_id` integer NOT NULL,
+	`english_contributor` text,
+	`english_license` text NOT NULL
 )
 
 table kanji

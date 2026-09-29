@@ -1,5 +1,7 @@
 import { integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 import type {
+  ExampleLinkRow,
+  ExampleSentenceTokenRow,
   FormRow,
   FrequencyRow,
   KanjiReadingRow,
@@ -19,20 +21,6 @@ import type {
 // Columns are named and typed for the rows the detail core reads (src/lib/dictionary/detail/
 // rows.ts), so a select fills them directly. Display-only data is JSON; only what a page looks up
 // by is a column.
-
-/** A token of an example sentence, the same for every entry the sentence illustrates. */
-export interface ExampleTokenJson {
-  text: string
-  /** The token's full reading, when it has kanji. */
-  reading?: string
-}
-
-/** A token of an example sentence that links to a dictionary word, for one entry's page. */
-export interface ExampleLinkJson {
-  /** The token's index in `example_sentences.tokens_json`. */
-  token: number
-  entSeq: number
-}
 
 /**
  * The release this database holds, written last, so its presence marks a complete import.
@@ -137,25 +125,32 @@ export const elementGlyphs = sqliteTable('element_glyphs', {
 })
 
 /**
- * An example sentence (Tatoeba), with its neutral tokens from the app's Kuromoji build.
+ * An example sentence pair (Tatoeba), with its neutral tokens from the app's Kuromoji build.
  * `id` is the import's own number, which keeps `word_examples` small; `pairId` is the artifact's
- * pair ID. `tatoebaId`, `contributor`, and `license` attribute the Japanese sentence.
+ * pair ID. The Japanese sentence and its English translation are separate Tatoeba sentences, so
+ * each side has its own attribution, from the artifact's `example_sentence_provenance`
+ * (`source_<side>_record_id`, `<side>_contributor`, `<side>_license`). A contributor is null when
+ * Tatoeba names none; the licenses can differ (some English sides are CC0).
  */
 export const exampleSentences = sqliteTable('example_sentences', {
   id: integer('id').primaryKey(),
   pairId: text('pair_id').notNull(),
   japanese: text('japanese').notNull(),
   english: text('english').notNull(),
-  tokens: text('tokens_json', { mode: 'json' }).notNull().$type<ExampleTokenJson[]>(),
-  tatoebaId: integer('tatoeba_id').notNull(),
-  contributor: text('contributor'),
-  license: text('license').notNull()
+  tokens: text('tokens_json', { mode: 'json' }).notNull().$type<ExampleSentenceTokenRow[]>(),
+  japaneseTatoebaId: integer('japanese_tatoeba_id').notNull(),
+  japaneseContributor: text('japanese_contributor'),
+  japaneseLicense: text('japanese_license').notNull(),
+  englishTatoebaId: integer('english_tatoeba_id').notNull(),
+  englishContributor: text('english_contributor'),
+  englishLicense: text('english_license').notNull()
 })
 
 /**
  * A word's examples in the app's order (`position` from 0), at most 100 per word as in the app.
- * `highlights` are the indexes of the tokens that are the word; `links` are where the other
- * word tokens link on this word's page, since the entry a token resolves to depends on it.
+ * `highlights` are the indexes of the tokens that are the word; `links` are where each word
+ * token links on this word's page, since the entry a token resolves to depends on the page: one
+ * `ent_seq` for a resolved token, several for an ambiguous one (rows.ts `ExampleLinkRow`).
  */
 export const wordExamples = sqliteTable(
   'word_examples',
@@ -164,7 +159,7 @@ export const wordExamples = sqliteTable(
     position: integer('position').notNull(),
     sentenceId: integer('sentence_id').notNull(),
     highlights: text('highlights_json', { mode: 'json' }).notNull().$type<number[]>(),
-    links: text('links_json', { mode: 'json' }).notNull().$type<ExampleLinkJson[]>()
+    links: text('links_json', { mode: 'json' }).notNull().$type<ExampleLinkRow[]>()
   },
   table => [primaryKey({ columns: [table.entSeq, table.position] })]
 )

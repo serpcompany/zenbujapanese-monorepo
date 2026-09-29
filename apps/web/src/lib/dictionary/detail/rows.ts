@@ -93,6 +93,63 @@ export interface ExampleRow {
   translation: string
 }
 
+/**
+ * A token of an example sentence as the dictionary database stores it
+ * (`example_sentences.tokens_json`): the same on every word page that shows the sentence.
+ */
+export interface ExampleSentenceTokenRow {
+  /** The token's surface, as the word-detail suite's `surface`. */
+  text: string
+  /** The token's full reading, when it has one. */
+  reading?: string
+}
+
+/**
+ * Where a token of an example sentence links on one word's page (`word_examples.links_json`),
+ * which depends on the page's entry. It mirrors the word-detail suite's tokens: one `ent_seq` is
+ * the suite's `entry`, a token that resolves to one entry; two or more are its `candidates`, a
+ * token the app can't resolve to one entry (such as だ). The app records `entry` exactly when a
+ * token has one candidate, so the count tells them apart. A token with no dictionary word has no
+ * link.
+ */
+export interface ExampleLinkRow {
+  /** The token's index in `ExampleSentenceRow.tokens`. */
+  token: number
+  entSeqs: number[]
+}
+
+/**
+ * An example sentence pair from Tatoeba (`example_sentences`). The Japanese sentence and its
+ * English translation are separate Tatoeba sentences, each with its own ID, contributor (null
+ * when Tatoeba names none), and license.
+ */
+export interface ExampleSentenceRow {
+  id: number
+  /** The artifact's pair ID, lowercase hex. */
+  pairId: string
+  japanese: string
+  english: string
+  tokens: ExampleSentenceTokenRow[]
+  japaneseTatoebaId: number
+  japaneseContributor: string | null
+  japaneseLicense: string
+  englishTatoebaId: number
+  englishContributor: string | null
+  englishLicense: string
+}
+
+/**
+ * One of a word's examples (`word_examples`), in the app's order. `highlights` are the indexes
+ * of the tokens that are the page's word (the suite's `pageWord`).
+ */
+export interface WordExampleRow {
+  entSeq: number
+  position: number
+  sentenceId: number
+  highlights: number[]
+  links: ExampleLinkRow[]
+}
+
 /** Everything a word page reads. */
 export interface WordRows {
   entry: EntryRow
