@@ -138,8 +138,13 @@ English translation are separate Tatoeba sentences with their own ID, contributo
 `word_examples` holds what depends on the page's word: which tokens are the word (`highlights`)
 and where each word token links (`links`, `{ token, entSeqs }`). A token that resolves to one
 entry has one `ent_seq`; a token the app can't resolve, such as だ, keeps all its candidates, as
-the word-detail conformance suite records them. `dictionary-schema.test.ts` stores and reads
-back every token in that suite.
+the word-detail conformance suite records them. A link also carries the furigana the app shows
+over the word when it isn't Kuromoji's reading (the app shows the entry's reading when the word is
+written as one of the entry's forms). `word_examples.tokens` replaces the sentence's tokens on the
+few pages (30 examples) where the app splits it differently: a joined word the page's entry is
+written as (おせじに on お世辞's page) stays whole there and falls back to its pieces elsewhere.
+`word_example_counts` holds each word's listed count and the count the app's retrieval reports.
+`dictionary-schema.test.ts` stores and reads back every token in that suite.
 
 **The import** (`scripts/release-d1/dictionary/`) reads the app's bundled files with
 `language_data.py`, the same code `scripts/export-dictionary-fixtures.py` exports fixtures with,
@@ -151,15 +156,33 @@ row carries its word list, precomputed with the app's `kanjiCandidateRowsSQL` an
 (`entries(containingKanji:)`), and whether search engines may index it. It refuses an artifact
 whose `transform` or `artifact_schema` it doesn't list, or a pack built for another
 `LanguageReferenceData.sqlite3`, and records every input's SHA-256 in
-`dictionary_import.sources`. Examples are left empty until their import (#465); `retired_ids`
-stays empty until #463 records retired entries. A local build takes about 25 seconds and 154 MB
-(stroke order is about 10 MB of it).
+`dictionary_import.sources`. `retired_ids` stays empty until #463 records retired entries.
+
+**Examples** are precomputed by `dictionary/build-examples.mts` (tsx), which runs TypeScript ports
+of the app's code over every entry: retrieval (`src/lib/dictionary/examples/retrieval.ts`, from
+`ExampleSentenceClient.swift`: the selected form, other written forms, then the reading, each by
+first position in graphemes, then length and pair ID; ExampleWordIndex for kana headwords;
+`unambiguousEntryCount`; at most 100 with the app's count), tokens from the app's own
+`kuromoji.js` and IPADIC files (pinned by SHA-256, loaded through the app's XMLHttpRequest shim in a
+bare V8 context, `examples/kuromoji.ts`), and linking (`examples/linking.ts`, from
+`JapaneseTextAnalysisClient.swift` and `JapaneseInflectionGrouping.swift`, looking words up with the
+search core's `rankJapanese`). The app scans every sentence per entry; the import instead finds
+every term's occurrences in one pass and merges them in rank order, and checks that against the
+app's scan on 400 entries on every build. 48,169 words have examples: 902,279 word examples over
+203,727 sentences. As in the app, 2,043 words whose headword changes under NFKC (Ｔシャツ) have none.
+The rows are written as SQL files of at most 100 MB (`examples-NN.sql`) and 500 rows per INSERT,
+since a local D1 fails on larger ones.
+
+A local build takes about 3.5 minutes (2 minutes 40 of it the example precompute, which peaks
+at about 2.5 GB of memory) and about 610 MB: stroke order is about 10 MB, and the examples add about 450 MB, 335 MB of it
+`word_examples`.
 
 **The gate** (`src/lib/dictionary/detail/conformance.test.ts`) replays the app-recorded
 word-detail and kanji-detail suites (`apps/ios/LanguageData/Conformance/`) through the detail
 core on the local copy, reading it through `dictionary-db.ts` as the pages do, and checks every
-stored slug against `wordSlug`. It skips the fields this import doesn't cover yet (examples) and
-stops at once when the copy wasn't built from the files the suites pin.
+stored slug against `wordSlug`. It checks every example field the suite records (order, pair
+IDs, text, tokens, links, highlights, and counts) and that each side's attribution is intact, and stops
+at once when the copy wasn't built from the files the suites pin.
 
 It changes the way the search schema does, with its own commands:
 `pnpm db:generate:dictionary` generates a migration into `drizzle/dictionary/` and rewrites
@@ -179,7 +202,7 @@ The script defaults to the app's bundled database and replaces `.search-d1/` onl
 succeeds. The suite stops at once when `.search-d1/` wasn't built from the artifact it pins.
 Without `ZENBU_SEARCH_D1=1`, `pnpm test` skips the suite.
 
-The dictionary database builds the same way into `.dictionary-d1/` (about 25 seconds; it needs
+The dictionary database builds the same way into `.dictionary-d1/` (about 3.5 minutes; it needs
 the Git LFS inputs listed in `scripts/release-d1/dictionary/database.sh`), and its gate runs with
 `ZENBU_DICTIONARY_D1=1`:
 
@@ -214,13 +237,18 @@ speech, frequency from the app's default dictionaries (JLPT and TUBELEX), a kanj
 their order, and element roles. `data.ts` runs the core and adds only URLs.
 
 `getWordPage` and `getKanjiPage` read `DICTIONARY_DB` through `dictionary-db.ts`, one batch (one
-round trip) per page, when it holds a finished import. Word pages live under the stored slug
+round trip) per page, when it holds a finished import. A word page renders its first 25 examples
+and loads 25 more at a time as it scrolls, up to the app's 100, from
+`/dictionary/examples/<ent_seq>.json?from=<n>` (`getWordExamples`, noindex). Each example credits
+both Tatoeba sentences with their IDs, contributors, and licenses. Words link to their pages; a
+word the app can't resolve to one entry links to a search for its dictionary form. Word pages live under the stored slug
 (`words.slug`), so a stale slug redirects (308) to it and an unknown number returns 404. A failing
 database fails the request rather than rendering a 404.
 
 Without an import, as in `pnpm dev` by default, the rows are local fixtures in
 `src/lib/dictionary/fixtures/`, exported from the app's bundled data by
-`scripts/export-dictionary-fixtures.py` with the import's own code, so their shapes can't drift.
+`scripts/export-dictionary-fixtures.py` with the import's own code, so their shapes can't drift;
+each fixture word keeps its first 50 examples, from `build-examples.mts` given the words' numbers.
 Rerun it after changing a row shape; the fixture JSON is generated, so Biome skips it.
 
 A kanji page with stroke order shows the app's stroke-order button under the glyph

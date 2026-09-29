@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { getPlatformProxy } from 'wrangler'
 import { type DictionaryWord, dictionaryDatabase } from '../dictionary-db'
 import { wordSlug } from '../urls'
+import { licenseUrl } from './examples'
 import { tierLabels } from './frequency'
 import { kanjiDetail } from './kanji'
 import { wordDetail } from './word'
@@ -203,6 +204,14 @@ describe.runIf(enabled)('word and kanji detail conformance on D1', () => {
       reportedCount: count && count.count > 50 ? 'more than 50' : String(count?.count ?? 0),
       truncated: count?.truncated === 1,
       shown: found.rows.map(({ sentence, example }) => {
+        // The suite doesn't record attribution; each side must still have its own, read intact.
+        for (const side of ['japanese', 'english'] as const) {
+          expect(Number.isInteger(sentence[`${side}TatoebaId`])).toBe(true)
+          expect(licenseUrl(sentence[`${side}License`])).not.toBeNull()
+          expect([null, 'string']).toContain(
+            sentence[`${side}Contributor`] === null ? null : typeof sentence[`${side}Contributor`]
+          )
+        }
         const links = new Map(example.links.map(link => [link.token, link.entSeqs]))
         const highlights = new Set(example.highlights)
         return {

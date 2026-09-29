@@ -1,8 +1,9 @@
-import { and, asc, eq, gte, lt, sql } from 'drizzle-orm'
+import { and, asc, eq, getTableColumns, gte, lt, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import * as schema from '@/db/dictionary-schema'
 import { examplesPerPage } from './detail/examples'
 import type {
+  ExampleSentenceTokenRow,
   FrequencyRow,
   KanjiListWordRow,
   KanjiRows,
@@ -58,9 +59,19 @@ export function dictionaryDatabase(db: D1Database) {
   const orm = drizzle(db, { schema })
 
   /** A word's examples from `from`, in order, with each sentence. */
+  // Both tables have a tokens_json column. D1 returns rows keyed by column name, so selecting
+  // both under the same name drops one and shifts every later column: the page's tokens are
+  // selected under their own name.
+  const { tokens: _, ...exampleColumns } = getTableColumns(wordExamples)
   const examples = (entSeq: number, from: number, limit: number) =>
     orm
-      .select({ example: wordExamples, sentence: exampleSentences })
+      .select({
+        example: {
+          ...exampleColumns,
+          tokens: sql<string | null>`${wordExamples.tokens}`.as('page_tokens_json')
+        },
+        sentence: exampleSentences
+      })
       .from(wordExamples)
       .innerJoin(exampleSentences, eq(exampleSentences.id, wordExamples.sentenceId))
       .where(
@@ -71,6 +82,17 @@ export function dictionaryDatabase(db: D1Database) {
         )
       )
       .orderBy(asc(wordExamples.position))
+
+  /** The rows as the detail core reads them, with the page's tokens parsed. */
+  const exampleRows = (rows: Awaited<ReturnType<typeof examples>>): WordExampleRows[] =>
+    rows.map(({ example, sentence }) => ({
+      sentence,
+      example: {
+        ...example,
+        tokens:
+          example.tokens === null ? null : (JSON.parse(example.tokens) as ExampleSentenceTokenRow[])
+      }
+    }))
 
   /** The slugs of the words those examples link to (a word with one entry has a page link). */
   const exampleSlugs = (entSeq: number, from: number, limit: number) =>
@@ -123,7 +145,7 @@ export function dictionaryDatabase(db: D1Database) {
           entry: word,
           frequency: word.frequency,
           kanji: glosses,
-          examples: firstExamples,
+          examples: exampleRows(firstExamples),
           exampleCount: exampleCount
             ? {
                 listed: exampleCount.listed,
@@ -154,7 +176,7 @@ export function dictionaryDatabase(db: D1Database) {
         exampleSlugs(entSeq, from, limit)
       ])
       if (!word) return null
-      return { rows, slugs: new Map(slugs.map(row => [row.entSeq, row.slug])) }
+      return { rows: exampleRows(rows), slugs: new Map(slugs.map(row => [row.entSeq, row.slug])) }
     },
 
     async kanji(character: string): Promise<DictionaryKanji | null> {
