@@ -117,6 +117,16 @@ function databaseLinks(wordSlugs: Map<number, string>, kanjiPages: Set<string>):
   }
 }
 
+/**
+ * The dictionary database, when the site shows the dictionary and the database holds a finished
+ * import, with the build it holds; null otherwise (production before launch, or fixtures).
+ */
+export async function loadedDictionary() {
+  if (!isDictionaryAvailable()) return null
+  const db = await dictionaryDb()
+  return db ? { db, build: await dictionaryBuild() } : null
+}
+
 /** The dictionary database, when it holds a finished import. */
 async function dictionaryDb() {
   const { env } = await getCloudflareContext({ async: true })

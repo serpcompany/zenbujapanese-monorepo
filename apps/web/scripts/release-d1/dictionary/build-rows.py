@@ -3,7 +3,7 @@
 
 Reads the app's bundled language data (language_data.py) and writes INSERTs for every word
 (218,382), every kanji (13,108) with its word list precomputed, the kanji structures, the
-element glyphs, and stroke order (6,430 KanjiVG diagrams). The tables come from the dictionary
+element glyphs, stroke order (6,430 KanjiVG diagrams), and the word sitemaps' ranges. The tables come from the dictionary
 database's migrations (drizzle/dictionary), applied first; `dictionary_import` is written by the
 import once everything else is in. Examples (example_sentences, word_examples) come in a later
 PR, and retired_ids stays empty until the pipeline (#463) records retired entries.
@@ -23,6 +23,17 @@ from pathlib import Path
 from language_data import LanguageData, word_slug
 
 MAX_STATEMENT_BYTES = 90_000  # D1 rejects statements over 100 KB.
+SITEMAP_URLS = 50_000  # The sitemap protocol's limit per file.
+# The kanji sitemap is one file; the import stops before the kanji outgrow it.
+KANJI_SITEMAP_URLS = SITEMAP_URLS
+
+
+def word_sitemaps(ent_seqs):
+    """`word_sitemaps`: the words in `ent_seq` order, 50,000 to a sitemap, numbered from 1."""
+    ordered = sorted(ent_seqs)
+    for number, start in enumerate(range(0, len(ordered), SITEMAP_URLS), 1):
+        chunk = ordered[start:start + SITEMAP_URLS]
+        yield number, chunk[0], chunk[-1], len(chunk)
 
 
 def literal(value):
@@ -93,13 +104,24 @@ def main(source, resources, destination):
     print(f"Ordered every kanji's words in {time.monotonic() - started:.0f} s", file=sys.stderr)
     counts = {}
     with open(destination, "w", encoding="utf-8") as out:
+        ent_seqs = []
+
+        def recorded(rows):
+            for row in rows:
+                ent_seqs.append(row[0])
+                yield row
+
         counts["words"] = write_rows(
             out, "words",
             ["ent_seq", "id", "slug", "headword", "reading", "summary", "parts_of_speech_json",
              "written_forms_json", "reading_forms_json", "senses_json", "relationships_json",
              "pitch_json", "compound_pitch_json", "frequency_json", "semantic_fingerprint",
              "is_common", "rank_score"],
-            word_values(data),
+            recorded(word_values(data)),
+        )
+        counts["word_sitemaps"] = write_rows(
+            out, "word_sitemaps", ["number", "first_ent_seq", "last_ent_seq", "url_count"],
+            word_sitemaps(ent_seqs),
         )
         counts["kanji"] = write_rows(
             out, "kanji",
@@ -146,6 +168,9 @@ def main(source, resources, destination):
     for table, count in expected.items():
         if counts[table] != count:
             sys.exit(f"Wrote {counts[table]} {table} rows, expected {count}")
+    indexable = sum(1 for k in data.kanji_reference["entries"] if k["meanings"] or k["readings"])
+    if indexable > KANJI_SITEMAP_URLS:
+        sys.exit(f"{indexable} indexable kanji are more than one sitemap holds; split kanji.xml")
 
 
 if __name__ == "__main__":

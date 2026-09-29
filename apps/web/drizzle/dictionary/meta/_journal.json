@@ -15,6 +15,13 @@
       "when": 1790683924974,
       "tag": "0001_examples",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790686886319,
+      "tag": "0002_word_sitemaps",
+      "breakpoints": true
     }
   ]
 }

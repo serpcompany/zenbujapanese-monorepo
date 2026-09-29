@@ -230,7 +230,17 @@ describe('word and kanji pages', () => {
 
   beforeEach(() => {
     frequency.mockResolvedValue(new Map())
-    vi.mocked(dictionaryDatabase).mockReturnValue({ word, examples, kanji, kanjiCard, frequency })
+    vi.mocked(dictionaryDatabase).mockReturnValue({
+      word,
+      examples,
+      kanji,
+      kanjiCard,
+      frequency,
+      // Sitemaps have their own tests (sitemaps.test.ts).
+      wordSitemaps: vi.fn(),
+      sitemapWords: vi.fn(),
+      indexableKanji: vi.fn()
+    })
   })
 
   afterEach(() => {
