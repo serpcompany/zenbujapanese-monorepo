@@ -68,7 +68,11 @@ artifact's SHA-256 from its Git LFS pointer, the database's migrations, schema, 
    `src/db/search-schema.sql`), and every table holds the rows the local copy counted.
 
 A database that already verifies is reused, so an unchanged build costs a deploy a few seconds.
-A partial one is deleted and imported again. Once a deploy passes its smoke test,
+One that definitely isn't a complete import of this build (a check ran and found a different
+build, migrations, schema, or row counts, or a missing table, as a cancelled import leaves) is
+deleted and imported again. When a check can't run at all, because a Wrangler or D1 call failed,
+the step fails and the database is kept, since it is usually the live one: rerun the deploy
+once D1 answers. Once a deploy passes its smoke test,
 `scripts/release-d1/prune.sh <database> <env> <live database>` deletes that database's older
 builds, keeping the live one and the newest complete older one, so rolling back is redeploying
 the previous commit. It keeps any build whose import it can't check. The `Release database`
@@ -190,8 +194,10 @@ the database fails or an English query can't be read as full text, such as one w
 The search results page reads it through `searchDictionary` in `src/lib/dictionary/data.ts`. A
 query full-text search can't read (an FTS5 error, `isUnreadableQuery`) shows no results; any other
 failure fails the request, so an outage never renders as an empty, noindexed page. When
-`SEARCH_DB` is unbound or holds no finished import (no `dictionary_import` row), as in `pnpm dev`,
-it searches the fixtures instead. Once `DICTIONARY_DB` holds an import, every result links to its
+`SEARCH_DB` is unbound, as in `pnpm dev`, it searches the fixtures instead. A bound release
+database without a finished import (no `dictionary_import` row) falls back to fixtures only in
+local development; in staging and production (`SITE_ENV` set) it fails the request, so a database
+bound by mistake can't pass as working. `DICTIONARY_DB` works the same way. Once `DICTIONARY_DB` holds an import, every result links to its
 word page, and a one-character query shows its kanji card from the dictionary database;
 otherwise only fixture words and kanji link.
 
