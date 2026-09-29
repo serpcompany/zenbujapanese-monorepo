@@ -69,6 +69,13 @@ struct SearchResultsConformanceTests {
         「\(expected.query)」 expected \(Self.describe(expectedResults)) \
         but found \(Self.describe(observedResults))
         """)
+      let rows = try Self.rowDifferences(expectedResults, observedResults)
+      for row in rows.prefix(10) {
+        Issue.record("「\(expected.query)」 \(row)")
+      }
+      if rows.count > 10 {
+        Issue.record("「\(expected.query)」 and \(rows.count - 10) more rows differ")
+      }
     }
   }
 
@@ -86,6 +93,36 @@ struct SearchResultsConformanceTests {
     if reachedAnalysis {
       throw SearchResultsObserverError.dependsOnTextAnalysis(observed.query)
     }
+  }
+
+  /// Each position whose row differs, with its ID and the fields that changed.
+  private static func rowDifferences(
+    _ expected: [SearchResultsCase.Row], _ observed: [SearchResultsCase.Row]
+  ) throws -> [String] {
+    var rows: [String] = []
+    for index in 0..<max(expected.count, observed.count) {
+      let expectedRow = expected.indices.contains(index) ? expected[index] : nil
+      let observedRow = observed.indices.contains(index) ? observed[index] : nil
+      switch (expectedRow, observedRow) {
+      case let (.some(expectedRow), .some(observedRow)):
+        let fields = try DetailConformance.differences(expectedRow, observedRow)
+        guard !fields.isEmpty else { continue }
+        let id =
+          expectedRow.languageReferenceID == observedRow.languageReferenceID
+          ? expectedRow.languageReferenceID
+          : "\(expectedRow.languageReferenceID) → \(observedRow.languageReferenceID)"
+        rows.append("row \(index + 1) \(expectedRow.headword) (\(id)) differs in \(fields)")
+      case let (.some(expectedRow), .none):
+        rows.append(
+          "row \(index + 1) \(expectedRow.headword) (\(expectedRow.languageReferenceID)) is missing")
+      case let (.none, .some(observedRow)):
+        rows.append(
+          "row \(index + 1) \(observedRow.headword) (\(observedRow.languageReferenceID)) is new")
+      case (.none, .none):
+        continue
+      }
+    }
+    return rows
   }
 
   private static func describe(_ results: [SearchResultsCase.Row]) -> String {
@@ -129,12 +166,11 @@ private struct SearchResultsObserver {
 
     // SearchView.search(_:)
     let results = try await lookupClient.search(query)
-    let exampleCount: Int
-    if results.usesPrimaryEntryExamples, let entry = results.primaryEntry(for: query) {
-      exampleCount = (try? await exampleSentenceClient.examples(entry).count) ?? 0
-    } else {
-      exampleCount = (try? await exampleSentenceClient.count(query)) ?? 0
-    }
+    let exampleCount = await SearchResultsScreen.exampleCount(
+      results, query: query,
+      directCount: await SearchResultsScreen.directExampleCount(
+        query, using: exampleSentenceClient),
+      using: exampleSentenceClient)
     observed.resolution =
       switch results.resolution {
       case .direct: "direct"
@@ -146,18 +182,16 @@ private struct SearchResultsObserver {
       case .ranked: "ranked"
       case .discoveredWords: "discoveredWords"
       }
-    guard !(results.isEmpty && exampleCount == 0 && !query.isSingleKanji) else {
+    guard !SearchResultsScreen.showsNoResults(results, exampleCount: exampleCount, query: query)
+    else {
       observed.state = "noResults"
       return observed
     }
     observed.state = "results"
 
-    // SearchResultsView, for a typed query (radical input alone limits the list).
-    let presentedEntries =
-      results.presentation == .discoveredWords
-      ? Array(results.entries.prefix(12)) : results.entries
-    var seen = Set<LanguageReferenceID>()
-    let displayedIDs = presentedEntries.compactMap { seen.insert($0.id).inserted ? $0.id : nil }
+    // SearchResultsView, for a typed query (only radical input limits the list).
+    let presentedEntries = SearchResultsScreen.presentedEntries(results, rankedEntryLimit: nil)
+    let displayedIDs = SearchResultsScreen.displayedEntryIDs(presentedEntries)
     let capability = FrequencyCapability(batchLookup: { [frequency] ids in
       try await frequency.evidence(for: ids)
     })
@@ -171,9 +205,7 @@ private struct SearchResultsObserver {
     if exampleCount > 0 {
       sections.append("examples")
       observed.examples = SearchResultsCase.Examples(
-        title: exampleCount > 50
-          ? "View 50+ Example Sentences"
-          : "View \(exampleCount) Example \(exampleCount == 1 ? "Sentence" : "Sentences")",
+        title: SearchResultsScreen.exampleActionTitle(count: exampleCount),
         count: exampleCount,
         primaryEntry: results.usesPrimaryEntryExamples
           ? results.primaryEntry(for: query)?.id.rawValue : nil
@@ -182,29 +214,31 @@ private struct SearchResultsObserver {
     if let refinement = results.readingRefinement {
       sections.append("readingRefinement")
       observed.readingRefinement = SearchResultsCase.Refinement(
-        title: "Search for「\(refinement.query.value)」", query: refinement.query.value)
+        title: SearchResultsScreen.readingRefinementTitle(refinement),
+        query: refinement.query.value)
     }
 
     let shownEntries: [DictionaryEntry]
-    if results.presentation == .discoveredWords {
+    switch SearchResultsScreen.list(query: query, results: results, ordered: orderedEntries) {
+    case .discoveredWords(let entries):
       sections.append("discoveredWords")
-      observed.heading = "Discovered Words"
-      shownEntries = Array(results.entries.prefix(12))
-      observed.voiceOverCount = min(results.entries.count, 12)
-    } else if query.isSingleKanji || !results.entries.isEmpty {
+      observed.heading = SearchResultsScreen.discoveredWordsHeading
+      shownEntries = entries
+      observed.voiceOverCount = entries.count
+    case .ranked(let kanji, let entries):
       sections.append("results")
-      if let character = KanjiCharacter(query.value) {
+      if let kanji {
         let entry = results.primaryEntry(for: query)
         observed.kanji = SearchResultsCase.Kanji(
-          character: character.rawValue,
-          label: "KANJI",
-          summary: entry?.summary ?? "Kanji detail",
+          character: kanji.rawValue,
+          label: SearchResultsScreen.kanjiLabel,
+          summary: SearchResultsScreen.kanjiSummary(entry),
           entry: entry?.id.rawValue
         )
       }
-      shownEntries = orderedEntries
-      observed.voiceOverCount = orderedEntries.count + (query.isSingleKanji ? 1 : 0)
-    } else {
+      shownEntries = entries
+      observed.voiceOverCount = SearchResultsScreen.rankedCount(query: query, entries: entries)
+    case .none:
       shownEntries = []
     }
 
