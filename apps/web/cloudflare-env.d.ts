@@ -23,6 +23,8 @@ declare namespace Cloudflare {
 	}
 	interface ProductionEnv {
 		DB: D1Database;
+		SEARCH_DB: D1Database;
+		DICTIONARY_DB: D1Database;
 		ASSETS: Fetcher;
 		SITE_ENV: "production";
 		WORKER_SELF_REFERENCE: Fetcher /* zenbujapanese-web-production */;

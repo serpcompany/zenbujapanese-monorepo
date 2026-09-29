@@ -6,8 +6,8 @@ import { kanjiPath } from './urls'
 
 // The dictionary's sitemaps (ADR 0007, #465): `/sitemaps/dictionary/<n>.xml` for word pages, 50,000
 // canonical URLs to a file in `ent_seq` order, and `/sitemaps/kanji.xml` for the kanji pages
-// search engines may index. They exist only where the dictionary database is loaded and the site
-// shows the dictionary, so production lists none until launch. URLs are percent-encoded UTF-8.
+// search engines may index. They exist wherever the dictionary database is loaded: staging and
+// production, not local fixtures. URLs are percent-encoded UTF-8.
 
 /** How many words each query reads while a word sitemap streams. */
 const wordsPerQuery = 10_000

@@ -92,11 +92,8 @@ describe('retiredWordResponse', () => {
 })
 
 describe('retiredWordsLookup', () => {
-  test('only where the site shows the dictionary and a dictionary database is bound', () => {
-    const db = fakeD1()
-    expect(retiredWordsLookup({ SITE_ENV: 'staging', DICTIONARY_DB: db })).not.toBeNull()
-    expect(retiredWordsLookup({ DICTIONARY_DB: db })).not.toBeNull()
-    expect(retiredWordsLookup({ SITE_ENV: 'production', DICTIONARY_DB: db })).toBeNull()
-    expect(retiredWordsLookup({ SITE_ENV: 'staging' })).toBeNull()
+  test('wherever a dictionary database is bound, production included', () => {
+    expect(retiredWordsLookup({ DICTIONARY_DB: fakeD1() })).not.toBeNull()
+    expect(retiredWordsLookup({})).toBeNull()
   })
 })

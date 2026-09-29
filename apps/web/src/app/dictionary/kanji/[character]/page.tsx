@@ -11,7 +11,7 @@ import { SourceCredits } from '@/components/dictionary/source-credits'
 import { StrokeOrder } from '@/components/dictionary/stroke-order'
 import { Card, CardContent } from '@/components/ui/card'
 import { Item, ItemActions, ItemContent } from '@/components/ui/item'
-import { getKanjiPage, isDictionaryAvailable } from '@/lib/dictionary/data'
+import { getKanjiPage } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { pageSources } from '@/lib/dictionary/sources'
 import { decodeSegment, kanjiPath } from '@/lib/dictionary/urls'
@@ -20,7 +20,6 @@ type Props = PageProps<'/dictionary/kanji/[character]'>
 
 /** `/dictionary/kanji/<character>/`: the exact character, never Unicode-normalized. */
 async function load(params: Props['params']) {
-  if (!isDictionaryAvailable()) notFound()
   const kanji = await getKanjiPage(decodeSegment((await params).character))
   if (!kanji) notFound()
   return kanji

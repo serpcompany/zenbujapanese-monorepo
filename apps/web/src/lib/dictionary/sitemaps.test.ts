@@ -50,7 +50,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-describe('without a loaded dictionary (production before launch, or fixtures)', () => {
+describe('without a loaded dictionary (local fixtures)', () => {
   test('there are no dictionary sitemaps', async () => {
     vi.mocked(loadedDictionary).mockResolvedValue(null)
     expect(await dictionarySitemapPaths()).toEqual([])

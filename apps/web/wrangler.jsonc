@@ -7,14 +7,15 @@
  *   migrations (drizzle/), and ledger (SERP Drizzle + D1 standard).
  * - `SEARCH_DB`, the dictionary search database: a release database, one D1 per build of the
  *   dictionary, with its own schema (src/db/search-schema.ts) and migrations (drizzle/search/),
- *   imported by `scripts/release-d1/ensure-release.sh search`. Staging names it at deploy time:
- *   `Web deploy` imports and verifies the database, then replaces the SEARCH_DB_* placeholders
- *   with it. Production binds it once its import is gated by a required reviewer (issue 464).
+ *   imported by `scripts/release-d1/ensure-release.sh search`. Each deployed environment names
+ *   it at deploy time: `Web deploy` imports and verifies the environment's database, then
+ *   replaces that environment's SEARCH_DB_* placeholders with it.
  * - `DICTIONARY_DB`, the dictionary database for word and kanji pages: a release database like
  *   SEARCH_DB, with its own schema (src/db/dictionary-schema.ts) and migrations
- *   (drizzle/dictionary/), imported by `scripts/release-d1/ensure-release.sh dictionary`. Staging
- *   binds it the way it binds SEARCH_DB, through the DICTIONARY_DB_* placeholders. Production has
- *   neither yet, so its dictionary pages return 404.
+ *   (drizzle/dictionary/), imported by `scripts/release-d1/ensure-release.sh dictionary`, and bound
+ *   the same way through the DICTIONARY_DB_* placeholders.
+ * A deployed environment never falls back to local fixtures: a missing or empty release database
+ * fails the request (src/lib/dictionary/data.ts).
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -98,6 +99,20 @@
           "database_name": "zenbujapanese-web-production",
           "database_id": "f40fb6bc-c5c0-4215-a78c-39253d64591d",
           "migrations_dir": "drizzle",
+          "migrations_table": "d1_migrations"
+        },
+        {
+          "binding": "SEARCH_DB",
+          "database_name": "SEARCH_DB_NAME",
+          "database_id": "SEARCH_DB_ID",
+          "migrations_dir": "drizzle/search",
+          "migrations_table": "d1_migrations"
+        },
+        {
+          "binding": "DICTIONARY_DB",
+          "database_name": "DICTIONARY_DB_NAME",
+          "database_id": "DICTIONARY_DB_ID",
+          "migrations_dir": "drizzle/dictionary",
           "migrations_table": "d1_migrations"
         }
       ],

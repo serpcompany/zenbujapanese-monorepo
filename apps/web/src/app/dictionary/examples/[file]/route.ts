@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import { getWordExamples, isDictionaryAvailable } from '@/lib/dictionary/data'
+import { getWordExamples } from '@/lib/dictionary/data'
 import { examplesPerPage } from '@/lib/dictionary/detail/examples'
 import { exampleLimit } from '@/lib/dictionary/examples/retrieval'
 
@@ -18,7 +18,6 @@ export async function GET(
   const match = /^(\d+)\.json$/.exec(file)
   const from = Number(request.nextUrl.searchParams.get('from') ?? examplesPerPage)
   if (
-    !isDictionaryAvailable() ||
     !match ||
     !Number.isInteger(from) ||
     from < 0 ||

@@ -1,7 +1,5 @@
-import { notFound } from 'next/navigation'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SearchForm } from '@/components/dictionary/search-form'
-import { isDictionaryAvailable } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 
 export const metadata = dictionaryMetadata(
@@ -11,7 +9,6 @@ export const metadata = dictionaryMetadata(
 )
 
 export default function DictionaryPage() {
-  if (!isDictionaryAvailable()) notFound()
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 pt-4 pb-6">
       <DictionaryBreadcrumbs />

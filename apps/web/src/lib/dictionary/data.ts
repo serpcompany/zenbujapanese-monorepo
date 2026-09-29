@@ -1,7 +1,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { cache } from 'react'
 import { fixtureKanjiRows, fixtureSearchOrder, fixtureWordRows } from '@/lib/dictionary/fixtures'
-import { isDeployedSite, isProductionSite } from '@/lib/site'
+import { isDeployedSite } from '@/lib/site'
 import { type Example, type ExampleToken, examplesPerPage, wordExample } from './detail/examples'
 import {
   type KanjiDetail,
@@ -30,13 +30,9 @@ type DictionaryDatabase = ReturnType<typeof dictionaryDatabase>
 // Pages read the dictionary only through this module. It runs the detail core (./detail) over
 // rows and adds only the site's URLs. Word and kanji rows come from the dictionary database
 // (DICTIONARY_DB), and search from the search database (SEARCH_DB), each when it holds a finished
-// import; otherwise, as in `pnpm dev` by default, from local fixtures. Only the row lookups here
-// differ between the two.
-
-/** Production shows no dictionary pages until real data is loaded, so fixtures are never indexed. */
-export function isDictionaryAvailable(): boolean {
-  return !isProductionSite()
-}
+// import. Only local development falls back to fixtures (as in `pnpm dev` by default); staging and
+// production, which serve the dictionary, never do (`imported`). Only the row lookups here differ
+// between the two.
 
 /** With the page it links to; null when it has no page yet. */
 type Linked<T> = T & { path: string | null }
@@ -118,11 +114,10 @@ function databaseLinks(wordSlugs: Map<number, string>, kanjiPages: Set<string>):
 }
 
 /**
- * The dictionary database, when the site shows the dictionary and the database holds a finished
- * import, with the build it holds; null otherwise (production before launch, or fixtures).
+ * The dictionary database, when it holds a finished import, with the build it holds; null when
+ * local development reads fixtures.
  */
 export async function loadedDictionary() {
-  if (!isDictionaryAvailable()) return null
   const db = await dictionaryDb()
   return db ? { db, build: await dictionaryBuild() } : null
 }
@@ -308,11 +303,15 @@ async function holdsImport(db: D1Database): Promise<boolean> {
 
 /**
  * A bound release database, when it holds a finished import; null for fixtures. Only local
- * development (no SITE_ENV) falls back to fixtures from a bound database without one: staging and
- * production fail the request instead, so a database bound by mistake can't pass as working.
+ * development (no SITE_ENV) falls back to fixtures: staging and production serve the dictionary,
+ * so a missing binding, or one bound to a database without an import, fails the request instead
+ * of showing fixtures, and can't pass as working.
  */
 async function imported(db: D1Database | undefined, binding: string) {
-  if (!db) return null
+  if (!db) {
+    if (isDeployedSite()) throw new Error(`${binding} isn't bound`)
+    return null
+  }
   if (await holdsImport(db)) return db
   if (isDeployedSite()) throw new Error(`${binding} is bound but holds no finished import`)
   return null

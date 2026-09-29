@@ -7,6 +7,11 @@ export type SitePage = {
 /** Static pages, in the order the HTML sitemap and pages sitemap list them. */
 export const sitePages = [
   { path: '/', title: 'Home', description: 'Zenbu Japanese dictionary and translator.' },
+  {
+    path: '/dictionary/',
+    title: 'Japanese dictionary',
+    description: 'Look up Japanese words and kanji in Japanese, kana, romaji, or English.'
+  },
   { path: '/about/', title: 'About', description: 'About Zenbu Japanese.' },
   { path: '/support/', title: 'Support', description: 'Get help with Zenbu Japanese.' },
   { path: '/contact/', title: 'Contact', description: 'Contact the Zenbu Japanese team.' },
