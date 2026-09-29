@@ -86,8 +86,8 @@ export interface BroadPrefixes {
  * a query ending in `*`, and it isn't Japanese. Each statement reads a fixed number of rows for
  * each match, so it reads no more rows when its matches are a subset. romaji_fts matches the forms
  * with a word starting with `p`, and gloss_fts the meanings with a word whose stem starts with
- * `stem(p)`. So when `q` is a shorter prefix of `p` and `stem(q)` starts `stem(p)`, `p*` matches
- * a subset of what `q*` matches and reads no more rows. A prefix with such a `q` that reads at
+ * `stem(p)`. So when `q` is a shorter prefix of `p` and `stem(p)` starts with `stem(q)`, `p*`
+ * matches a subset of what `q*` matches and reads no more rows. A prefix with such a `q` that reads at
  * most `threshold` rows needs no search: it is proven narrow, and can prove longer prefixes
  * narrow in turn. Every other prefix is searched. `^p*` matches exactly what `p*` does.
  *

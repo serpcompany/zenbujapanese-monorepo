@@ -119,16 +119,16 @@ results of those that read over 20,000 rows in `search_cache` (about 1,540 queri
   `ties*` matches what `ti*` does). So a prefix reads no more than a shorter one whose stem its
   own stem starts with; a narrow such prefix proves it narrow unsearched, and every other prefix
   is searched (about 6,400). D1's tokenizers drop `^`, so `^p*` reads what `p*` does, which the
-  import checks on every broad one.
+  import checks on every broad one (the app anchors `^` to the first word; #530).
 
 `websiteSearch` reads the list of cached queries once per isolate, answers those from
 `search_cache` in about 30 ms, and runs the core for everything else. The measurements are on
 issue 464, from the `Search D1 benchmark` workflow.
 
 Queries of other shapes aren't covered, so some read over the threshold per request: a phrase
-(`to be`, 47,000 rows; `to b*`, 70,000), a word or prefix that no romaji or English word starts
-with whose stem one does (`ths*` reads what `th*` does), other punctuation (`t**`, `-t*`), and
-quoted phrases (`a"t*`).
+(`to be`, 47,000 rows; `to b*`, 70,000; #531), a word or prefix that no romaji or English word
+starts with whose stem one does (`ths*` reads what `th*` does), other punctuation (`t**`, `-t*`,
+`^ t*`), and quoted phrases (`a"t*`).
 
 **Frequency lives here too.** `entry_frequency` holds each entry's evidence in the app's default
 frequency dictionaries (JLPT levels, then TUBELEX ranks; 59,430 entries), keyed by Language

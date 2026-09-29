@@ -67,7 +67,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Import the search database
         # Reuses the database when this build's already imported and verified (seconds);
-        # otherwise imports a new one (about 20 minutes). See docs/agents/web.md.
+        # otherwise builds, gates, and imports a new one (about 45 minutes, most of it
+        # precomputing broad searches and example search). See docs/agents/web.md.
+        timeout-minutes: 75
         run: scripts/release-d1/ensure-release.sh search staging
       - name: Import the dictionary database
         # Words and kanji for word and kanji pages; reused or imported like the search database.
@@ -132,8 +134,9 @@ jobs:
           cache-dependency-path: apps/web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Import the search database
-        # As for staging: reuses a verified database for this build, or imports a new one. The
-        # first import of both databases for production is about 850 MB, about 30 minutes.
+        # As for staging: reuses a verified database for this build, or imports a new one
+        # (about 45 minutes). The first import of both databases for production is about 1 GB.
+        timeout-minutes: 75
         run: scripts/release-d1/ensure-release.sh search production
       - name: Import the dictionary database
         run: scripts/release-d1/ensure-release.sh dictionary production
