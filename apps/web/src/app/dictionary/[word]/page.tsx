@@ -122,6 +122,8 @@ export default async function WordPage({ params }: Props) {
         reading={word.reading}
         pitch={word.pitch}
         partOfSpeech={word.partOfSpeech}
+        summary={word.summary}
+        conjugations={word.conjugations}
       />
 
       <Section title="Meaning">

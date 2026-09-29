@@ -93,7 +93,11 @@ private struct WordDetailObserver {
         kanjiReadings: JapaneseRubyText.kanjiReadings($0))
     }
     observed.partOfSpeech = entry.displayPartOfSpeech
-    observed.opensConjugations = conjugationClient.table(entry) != nil
+    let conjugationTable = conjugationClient.table(entry)
+    observed.opensConjugations = conjugationTable != nil
+    observed.conjugations = conjugationTable.map {
+      WordDetailCase.Conjugations(entry: entry, table: $0)
+    }
     observed.pitch = entry.pitchAccent.map { pitch in
       // The view draws one level per mora of the reading (in katakana, which splits into the
       // same morae), which can differ from the source's mora count.
@@ -223,6 +227,8 @@ private struct WordDetailCase: Codable {
   var partOfSpeech: String?
   /// Whether the part of speech opens a conjugation table.
   var opensConjugations: Bool?
+  /// The conjugation table it opens, and each form's screen.
+  var conjugations: Conjugations?
   var pitch: Pitch?
   var senses: [Sense]?
   var frequency: [Frequency]?
@@ -237,6 +243,63 @@ private struct WordDetailCase: Codable {
   init(id: String, covers: String?) {
     self.id = id
     self.covers = covers
+  }
+
+  /// ConjugationsView and ConjugatedFormView: the header's summary and rule, the registers the
+  /// Plain/Polite control offers, and each register's rows, with what each row's screen shows.
+  struct Conjugations: Codable {
+    let summary: String
+    let rule: String
+    /// Plain alone, or Plain and Polite when the control shows.
+    let modes: [String]
+    let plain: [Form]
+    /// Nil when the table has no Polite register.
+    let polite: [Form]?
+
+    struct Form: Codable {
+      let kind: String
+      let title: String
+      let explanation: String
+      let surface: String
+      let reading: String
+      /// The changed ending, drawn in the accent color.
+      let ending: String
+      /// Whether the row shows furigana, which it does only when the ending has kanji.
+      let rowFurigana: Bool
+      /// The form's headline furigana, with each kanji run's per-kanji split.
+      let furigana: [Furigana]
+      /// Other forms in the register with the same spelling, which the form's screen names.
+      let sharedSpellings: [String]?
+    }
+
+    init(entry: DictionaryEntry, table: ConjugationTable) {
+      func forms(_ mode: ConjugationMode) -> [Form] {
+        table.forms(for: mode).map { form in
+          let shared = table.sharedSpellings(of: form, in: mode)
+          return Form(
+            kind: form.id.rawValue,
+            title: form.id.presentation.title,
+            explanation: form.id.presentation.explanation,
+            surface: form.surface,
+            reading: form.reading,
+            ending: form.ending,
+            rowFurigana: form.rowShowsFurigana,
+            furigana: JapaneseRubyAnnotation.segments(surface: form.surface, reading: form.reading)
+              .map {
+                Furigana(
+                  base: $0.base, reading: $0.reading,
+                  kanjiReadings: JapaneseRubyText.kanjiReadings($0))
+              },
+            sharedSpellings: shared.isEmpty ? nil : shared
+          )
+        }
+      }
+      summary = entry.summary
+      rule = table.rule
+      modes = table.supportsModes ? ConjugationMode.allCases.map(\.rawValue) : ["Plain"]
+      plain = forms(.plain)
+      polite = table.supportsModes ? forms(.polite) : nil
+    }
   }
 
   struct Furigana: Codable {

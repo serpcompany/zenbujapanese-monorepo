@@ -72,12 +72,13 @@ screens, so the website's word and kanji pages can be checked against the app. T
 models and clients the views use: for a word, its headword, furigana (with each kanji run's
 per-kanji split, `JapaneseRubyText.kanjiReadings`), part of speech, pitch (with the contour
 `PitchContourLayout` lays out for `PitchAccentBadge`), senses, default frequency packs (JLPT and
-TUBELEX, each with the Frequency Details it opens, `FrequencyDisclosurePresentation`), kanji, and
-its first 25 examples with their linked tokens; for a kanji, its metrics, meanings, readings
-with their words, elements, 24 words, and whether it has stroke data (not its JLPT metric, which
-the suites don't record). The view and the suite share those three helpers, so the suite records
-what the view draws. Each file pins the SHA-256 of every bundled artifact it was recorded
-against. After an intended
+TUBELEX, each with the Frequency Details it opens, `FrequencyDisclosurePresentation`), the
+conjugation table its part of speech opens (each form with the words `ConjugationsView` shows
+and `sharedSpellings(of:in:)`), kanji, and its first 25 examples with their linked tokens; for
+a kanji, its metrics, meanings, readings with their words, elements, 24 words, and whether it
+has stroke data (not its JLPT metric, which the suites don't record). The views and the suite
+share those helpers, so the suite records what the views draw. Each file pins the SHA-256 of
+every bundled artifact it was recorded against. After an intended
 change to either screen or its data, record them again with the same
 `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` prefix and
 `-only-testing:SearchExperienceTests/WordDetailConformanceTests` or

@@ -1,5 +1,6 @@
 // The word page, as the app's word detail shows it (WordDetailView.swift, DictionaryEntry.swift).
 
+import { type Conjugations, conjugations } from './conjugation'
 import { type Example, wordExample } from './examples'
 import {
   type FrequencyResult,
@@ -58,6 +59,8 @@ export interface RelatedWord {
 export interface WordDetail extends WordSummary {
   /** The first sense's word class; empty when none has a name, and the page shows no row. */
   partOfSpeech: string
+  /** The conjugation table the part-of-speech row opens; null when it opens none. */
+  conjugations: Conjugations | null
   pitch: PitchAccent | null
   senses: { number: number; meaning: string; notes: string[] }[]
   /** One row per default dictionary, including those without the word. */
@@ -157,14 +160,13 @@ export function wordDetail(rows: WordRows): WordDetail {
   const { entry } = rows
   const pitch = entry.pitch ?? entry.compoundPitch
   const summary = wordSummary(entry, rows.frequency)
+  const readings = new Map(rows.kanji.map(({ character, readings }) => [character, readings]))
   return {
     ...summary,
     // The headword's kanji highlight their own part of the furigana when tapped.
-    ruby: withKanjiReadings(
-      summary.ruby,
-      new Map(rows.kanji.map(({ character, readings }) => [character, readings]))
-    ),
+    ruby: withKanjiReadings(summary.ruby, readings),
     partOfSpeech: displayPartOfSpeech(entry),
+    conjugations: conjugations(entry, readings),
     pitch: pitch ? pitchAccent(entry.reading, pitch) : null,
     senses: entry.senses.map((sense, index) => ({
       number: index + 1,

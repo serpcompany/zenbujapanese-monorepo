@@ -2,7 +2,10 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { conjugations } from '@/lib/dictionary/detail/conjugation'
 import { frequencyRowDetails } from '@/lib/dictionary/detail/frequency'
+import { rubySegments } from '@/lib/dictionary/detail/ruby'
+import { ConjugationsButton } from './conjugations'
 import { FrequencySection } from './frequency-section'
 import { HeadwordRuby } from './headword-ruby'
 
@@ -105,5 +108,49 @@ describe('the Frequency section', () => {
     expect(details?.querySelector('h3')?.textContent).toBe('YouTube')
     expect(details?.textContent).toContain('#949')
     expect(details?.textContent).toContain('Top 0.27%')
+  })
+})
+
+describe('the conjugation table', () => {
+  test('the part of speech opens it; Polite switches register; a row opens its form; Back returns', async () => {
+    const data = conjugations(
+      { headword: '見る', reading: 'みる', partsOfSpeech: ['ichidanVerb', 'transitive'] },
+      new Map()
+    )
+    if (!data) throw new Error('見る has no table')
+    act(() =>
+      root.render(
+        <ConjugationsButton
+          word={{
+            ruby: rubySegments('見る', 'みる'),
+            reading: 'みる',
+            summary: 'to see',
+            partOfSpeech: 'Ichidan verb (transitive)',
+            pitch: null
+          }}
+          conjugations={data}
+        />
+      )
+    )
+    const click = async (selector: string) => {
+      const element = document.querySelector<HTMLElement>(selector)
+      if (!element) throw new Error(`Nothing matches ${selector}`)
+      await act(async () => element.click())
+    }
+    const surfaces = () =>
+      [...document.querySelectorAll('[data-conjugation-surface]')].map(node => node.textContent)
+    await click('[data-opens-conjugations]')
+    expect(document.body.textContent).toContain('Conjugations')
+    expect(surfaces().slice(0, 2)).toEqual(['見る', '見た'])
+    await click('[data-conjugation-mode="Polite"]')
+    expect(surfaces().slice(0, 2)).toEqual(['見ます', '見ました'])
+    await click('[data-conjugation-row="potential"]')
+    expect(document.querySelector('[data-conjugated-form]')?.textContent).toContain(
+      'Same spelling as Passive.'
+    )
+    await click('[aria-label="Back to conjugations"]')
+    expect(document.querySelector('[data-conjugated-form]')).toBeNull()
+    // Back keeps the register the reader chose.
+    expect(surfaces()[0]).toBe('見ます')
   })
 })

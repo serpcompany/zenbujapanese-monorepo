@@ -191,8 +191,8 @@ it.
 capsule that pronounces the word, or a standalone speaker when the word has no pitch. Either uses
 the browser's Japanese voice. Under a separator, the part-of-speech row names one word class and
 its modifiers, such as "Godan verb (intransitive)", and is left out when no class has a name. It
-comes from the first sense's parts of speech, falling back to the entry's. The row doesn't open a
-conjugation table yet.
+comes from the first sense's parts of speech, falling back to the entry's. For a word with a
+conjugation table the row is a button that opens it (see Conjugation table).
 
 - Source: App docs, Dictionary and kanji details; `WordHeadline` and `PitchAccentBadge` in
   `WordDetailView.swift`; `PartOfSpeechFormatter.swift`; `DictionaryEntry.displayPartOfSpeech`;
@@ -201,6 +201,31 @@ conjugation table yet.
   class, then its modifiers" and "shows no part of speech when no class has a name";
   `src/components/dictionary/word-page.test.tsx`, "shows a standalone speaker for a word without
   pitch". Speaking: No automated check yet (#511).
+
+**Conjugation table.** For a verb or adjective the app conjugates (ichidan, godan, する, 来る, i-
+and na-adjectives, but not いい), the part-of-speech row opens Conjugations: a dialog on wide
+screens and a drawer on phones. It starts with the word (furigana with the kanji highlight, and
+the pitch accent or speaker), its meaning, its word class, and a one-line rule for how the class
+conjugates. A Plain/Polite control switches register when both exist (verbs). Each row names the
+form and shows it with the changed ending in the accent color, with furigana only when the ending
+has kanji (来させる). Selecting a row opens that form's screen in the same sheet, titled with the
+form, with Back to the table: what the form means, "Same spelling as …" when another form in the
+register shares its spelling (potential and passive 見られる), and the form with furigana, its
+ending highlighted, and a speaker. The app pushes these screens instead of opening a sheet. The
+form's examples aren't shown yet; see [Required, not built yet](#required-not-built-yet-511).
+
+- Source: App docs, Dictionary and kanji details (the conjugation table); `PartOfSpeechRow` in
+  `WordDetailView.swift`; `ConjugationsView.swift` (`ConjugationsView`, `ConjugatedFormView`,
+  `sharedSpellings(of:in:)`, `rowShowsFurigana`); `JapaneseConjugationClient.swift`
+  (`JapaneseConjugator`).
+- Check: WD `opensConjugations` and `conjugations` (the summary, rule, registers, and each form's
+  kind, title, explanation, surface, reading, ending, row furigana, headline furigana, and shared
+  spellings), compared by the gate, and drawn by `src/components/dictionary/conjugations.test.tsx`
+  ("the rendered conjugation table matches the app") on every import, which reads back each row
+  and each form's screen; the fixed-data tests in the same file;
+  `src/components/dictionary/word-page.interaction.test.tsx`, "the part of speech opens it; Polite
+  switches register; a row opens its form; Back returns"; smoke "the part of speech opens
+  conjugations where the app's does".
 
 **Furigana.** Furigana places each kanji run's part of the reading over it, as the app does,
 including the app's current split for 黄色い声. Words read as a whole, such as 今日, carry the
@@ -588,14 +613,17 @@ its leading group of equally strong matches, as the app limits it (`rankedEntryL
 
 ### Word page
 
-**Conjugation table.** The part-of-speech row opens the conjugation table: the word's class and
-rule, a Plain/Polite control, each form with its changed ending highlighted, and each form's screen
-with its meaning and examples.
+**Conjugated form examples.** A conjugated form's screen ends with every Example Sentence that
+uses the complete form, as the app's does: the first 100 sentences containing the form, in the
+app's Japanese retrieval order, whose words (Kuromoji with the app's inflection grouping) include
+the form. The website has no text analysis at request time (ADR 0008), so this needs the import
+to precompute each form's examples, or an index of each sentence's grouped words; which one is
+open.
 
-- App source: App docs, Dictionary and kanji details (the conjugation table);
-  `ConjugationsView.swift`, `JapaneseConjugationClient.swift`.
-- Check it will get: WD `opensConjugations`, which the gate now skips, and an app-recorded
-  conjugation suite.
+- App source: `ConjugatedFormView.loadExamples` in `ConjugationsView.swift`;
+  `ExampleSentenceClient.search`; `JapaneseTextAnalysisClient.words`.
+- Check it will get: each form's example IDs in WD `conjugations`, compared by the import's gate,
+  and a rendered-page check of the form's screen.
 
 ### Kanji page
 

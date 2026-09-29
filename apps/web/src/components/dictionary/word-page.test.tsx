@@ -31,8 +31,10 @@ import { WordHeader } from './word-header'
 
 const unidic = 'UniDic for Contemporary Written Japanese 3.1.0'
 
-function header(props: Parameters<typeof WordHeader>[0]) {
-  return renderToStaticMarkup(<WordHeader {...props} />)
+type HeaderProps = Parameters<typeof WordHeader>[0]
+
+function header(props: Omit<HeaderProps, 'summary' | 'conjugations'> & Partial<HeaderProps>) {
+  return renderToStaticMarkup(<WordHeader summary="" conjugations={null} {...props} />)
 }
 
 describe('the word header', () => {
