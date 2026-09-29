@@ -57,10 +57,15 @@ export interface KanjiPageData extends Omit<KanjiRecord, 'readings' | 'words'> {
   words: WordSummary[]
 }
 
+/** A search result; `path` is null when the word has no page yet (#465). */
+export interface SearchWord extends Omit<WordSummary, 'path'> {
+  path: string | null
+}
+
 export interface SearchData {
   query: string
   kanji: { character: string; meanings: string[]; path: string } | null
-  words: WordSummary[]
+  words: SearchWord[]
 }
 
 const entriesBySeq = new Map(fixtureEntries.map(entry => [entry.entSeq, entry]))
@@ -126,38 +131,47 @@ export async function getKanjiPage(character: string): Promise<KanjiPageData | n
 }
 
 /** A search result as a word. The search database has no frequency yet. */
-export function summarizeSearchEntry(entry: SearchEntry): WordSummary {
+export function summarizeSearchEntry(entry: SearchEntry): SearchWord {
   const word = { entSeq: entry.sourceRecordId, headword: entry.headword, reading: entry.reading }
   return {
     ...word,
     ruby: furigana(entry.headword, entry.reading),
     summary: entry.summary,
-    path: wordPath(word),
+    // Word pages serve only fixture entries, so only those link until #465 removes this.
+    path: entriesBySeq.has(word.entSeq) ? wordPath(word) : null,
     frequency: []
   }
 }
 
-// Whether each search database holds an import, read once per isolate.
-const importedDatabases = new WeakMap<D1Database, Promise<boolean>>()
+// Search databases known to hold an import. Only a finished import is remembered, so a
+// database that has none yet is checked again on the next request.
+const importedDatabases = new WeakSet<D1Database>()
 
 /**
  * Whether the search database holds a complete import; the import writes `dictionary_import`
  * last. The local SEARCH_DB has no tables until scripts/search-d1/load-local.sh loads one.
  */
-function holdsImport(db: D1Database): Promise<boolean> {
-  let imported = importedDatabases.get(db)
-  if (!imported) {
-    imported = (async () => {
-      const table = await db
-        .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'dictionary_import'")
-        .first()
-      if (!table) return false
-      return (await db.prepare('SELECT 1 FROM dictionary_import').first()) !== null
-    })()
-    imported.catch(() => importedDatabases.delete(db))
-    importedDatabases.set(db, imported)
+async function holdsImport(db: D1Database): Promise<boolean> {
+  if (importedDatabases.has(db)) return true
+  const table = await db
+    .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'dictionary_import'")
+    .first()
+  if (!table || (await db.prepare('SELECT 1 FROM dictionary_import').first()) === null) return false
+  importedDatabases.add(db)
+  return true
+}
+
+/**
+ * Whether a search failed because SQLite's full-text search couldn't read the query, such as an
+ * English query with a NUL or an unbalanced quote. The core throws nothing itself; these are
+ * FTS5's errors, passed on by D1. Any other failure is the database's.
+ */
+export function isUnreadableQuery(error: unknown): boolean {
+  const unreadable = /fts5|syntax error|unterminated string|malformed MATCH/i
+  for (let cause = error; cause instanceof Error; cause = cause.cause) {
+    if (unreadable.test(cause.message)) return true
   }
-  return imported
+  return false
 }
 
 function fixtureWords(query: string): WordSummary[] {
@@ -173,18 +187,18 @@ function fixtureWords(query: string): WordSummary[] {
   return matches.map(summarize)
 }
 
-async function searchWords(query: string): Promise<WordSummary[]> {
+async function searchWords(query: string): Promise<SearchWord[]> {
   const { env } = await getCloudflareContext({ async: true })
   const db = env.SEARCH_DB
+  // A failing database throws, so the request fails rather than rendering an empty page.
+  if (!db || !(await holdsImport(db))) return fixtureWords(query)
   try {
-    if (!db || !(await holdsImport(db))) return fixtureWords(query)
     const { items } = await websiteSearch(db).search(query)
     return items.map(item => summarizeSearchEntry(item.entry))
   } catch (error) {
-    // Like the app, a search that throws (the database failed, or an English query can't be
-    // read as full text) shows no results.
-    console.error('Dictionary search failed', { query, error })
-    return []
+    // Like the app, a query full-text search can't read shows no results.
+    if (isUnreadableQuery(error)) return []
+    throw error
   }
 }
 

@@ -104,13 +104,14 @@ Without `ZENBU_SEARCH_D1=1`, `pnpm test` skips the suite.
 
 The search core takes capabilities a client supplies (ADR 0008). The website, configured in
 `website.ts`, supplies none, so it has no sentence search. Like the app, `search()` throws when
-the database fails or an English query can't be read as full text, such as one with a NUL, so a
-search page shows a thrown search as no results.
+the database fails or an English query can't be read as full text, such as one with a NUL.
 
-The search results page reads it through `searchDictionary` in `src/lib/dictionary/data.ts`. When
+The search results page reads it through `searchDictionary` in `src/lib/dictionary/data.ts`. A
+query full-text search can't read (an FTS5 error, `isUnreadableQuery`) shows no results; any other
+failure fails the request, so an outage never renders as an empty, noindexed page. When
 `SEARCH_DB` is unbound or holds no finished import (no `dictionary_import` row), as in `pnpm dev`,
 it searches the fixtures instead. `load-local.sh` builds into `.search-d1/`, which `pnpm dev`
-doesn't read.
+doesn't read. Until word pages read D1 (#465), only results with a fixture word page link.
 
 ## Environments and deploys
 

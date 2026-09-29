@@ -91,7 +91,11 @@ export default async function SearchResultsPage({ params }: Props) {
               {words.map((word, position) => (
                 <div key={word.entSeq}>
                   {position > 0 ? <ItemSeparator className="my-0" /> : null}
-                  <Item render={<Link href={word.path} />} className="rounded-none px-4">
+                  {/* A word without a page (#465) shows without a link. */}
+                  <Item
+                    render={word.path ? <Link href={word.path} /> : undefined}
+                    className="rounded-none px-4"
+                  >
                     <ItemContent className="gap-1.5">
                       <RubyText
                         segments={word.ruby}
@@ -100,9 +104,11 @@ export default async function SearchResultsPage({ params }: Props) {
                       <p className="text-sm">{word.summary}</p>
                       <FrequencyBadges frequency={word.frequency} />
                     </ItemContent>
-                    <ItemActions>
-                      <ChevronRightIcon className="size-4 text-muted-foreground" />
-                    </ItemActions>
+                    {word.path ? (
+                      <ItemActions>
+                        <ChevronRightIcon className="size-4 text-muted-foreground" />
+                      </ItemActions>
+                    ) : null}
                   </Item>
                 </div>
               ))}
