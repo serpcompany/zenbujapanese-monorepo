@@ -131,10 +131,11 @@ describe('kanjiElements (KanjiElementReferenceData.elements)', () => {
 describe('kanjiDetail', () => {
   test('要', () => {
     const detail = kanjiDetail(kaname)
-    // KANJIDIC2's JLPT (2, the pre-2010 scale) is left out (#485).
+    // KanjiOverview: strokes, grade, then JLPT as the app writes it.
     expect(detail.stats).toEqual([
-      { label: 'Strokes', value: 9 },
-      { label: 'Grade', value: 4 }
+      { label: 'Strokes', value: '9' },
+      { label: 'Grade', value: '4' },
+      { label: 'JLPT', value: 'N2' }
     ])
     expect(detail.meanings).toEqual(['need', 'main point', 'essence', 'pivot', 'key to'])
     expect(
@@ -176,7 +177,8 @@ describe('kanjiDetail', () => {
       words: [],
       strokes: null
     })
-    expect(detail.stats).toEqual([{ label: 'Stroke', value: 1 }])
+    // No grade or JLPT: only the strokes show.
+    expect(detail.stats).toEqual([{ label: 'Stroke', value: '1' }])
     expect(detail.components).toEqual(['ノ'])
     expect(detail.shareText).toBe('乁')
   })

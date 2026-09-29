@@ -55,7 +55,7 @@ screens, so the website's word and kanji pages can be checked against the app. T
 models and clients the views use: for a word, its headword, furigana, part of speech, pitch,
 senses, default frequency packs (JLPT and TUBELEX), kanji, and its first 25 examples with
 their linked tokens; for a kanji, its metrics, meanings, readings with their words, elements,
-24 words, and whether it has stroke data (JLPT is left out until issue 485 is decided). Each
+24 words, and whether it has stroke data (not its JLPT metric, which the suites don't record). Each
 file pins the SHA-256 of every bundled artifact it was recorded against. After an intended
 change to either screen or its data, record them again with the same
 `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` prefix and

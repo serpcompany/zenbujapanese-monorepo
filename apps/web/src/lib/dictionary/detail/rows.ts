@@ -190,7 +190,7 @@ export interface KanjiRow {
   character: string
   strokeCount: number
   grade: number | null
-  /** KANJIDIC2's pre-2010 four-level scale, not an N-level; never shown (#485). */
+  /** KANJIDIC2's JLPT level, which the kanji page shows as the app does (`N` and the level). */
   jlpt: number | null
   meanings: string[]
   readings: KanjiReadingRow[]

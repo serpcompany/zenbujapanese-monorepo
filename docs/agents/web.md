@@ -240,8 +240,9 @@ one query outside the search core; otherwise only fixture words and kanji link.
 `kanjiDetail(rows)`, that turn rows shaped like the dictionary D1 (`detail/rows.ts`) into what
 the word and kanji pages render. Each function is a port of the app's Swift and names
 its source, so the pages show what the app shows: furigana, pitch, the first sense's part of
-speech, frequency from the app's default dictionaries (JLPT and TUBELEX), a kanji's 24 words and
-their order, and element roles. `data.ts` runs the core and adds only URLs.
+speech, frequency from the app's default dictionaries (JLPT and TUBELEX), a kanji's metrics
+(strokes, grade, and KANJIDIC2's JLPT level as the app writes it, such as N2 for 要), its 24 words
+and their order, and element roles. `data.ts` runs the core and adds only URLs.
 
 `getWordPage` and `getKanjiPage` read `DICTIONARY_DB` through `dictionary-db.ts`, one batch (one
 round trip) per page, when it holds a finished import. A word page renders its first 25 examples
