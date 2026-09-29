@@ -1,0 +1,58 @@
+{
+  "roots": {
+    "resources": "apps/ios/Modules/Sources/SearchExperience/Resources",
+    "sources": "apps/ios/LanguageData/Sources",
+    "conformance": "apps/ios/LanguageData/Conformance"
+  },
+  "files": [
+    {
+      "name": "LanguageReferenceData.sqlite3",
+      "path": "resources/LanguageReferenceData.sqlite3",
+      "artifact_schema": "zenbu.language-reference.v2"
+    },
+    { "name": "CompoundPitch.sqlite3", "path": "resources/CompoundPitch.sqlite3" },
+    { "name": "ExampleWordIndex.sqlite3", "path": "resources/ExampleWordIndex.sqlite3" },
+    { "name": "JLPTLevelPack.sqlite3", "path": "resources/JLPTLevelPack.sqlite3" },
+    { "name": "TUBELEXFrequencyPack.sqlite3", "path": "resources/TUBELEXFrequencyPack.sqlite3" },
+    { "name": "KanjiStrokeData.sqlite3", "path": "resources/KanjiStrokeData.sqlite3" },
+    { "name": "KanjiReferenceData.json", "path": "resources/KanjiReferenceData.json" },
+    { "name": "KanjiElementReferenceData.json", "path": "resources/KanjiElementReferenceData.json" },
+    { "name": "RadicalReferenceData.json", "path": "resources/RadicalReferenceData.json" },
+    { "name": "Kuromoji/kuromoji.js", "path": "resources/Kuromoji/kuromoji.js" },
+    { "name": "Kuromoji/base.dat.gz", "path": "resources/Kuromoji/base.dat.gz" },
+    { "name": "Kuromoji/cc.dat.gz", "path": "resources/Kuromoji/cc.dat.gz" },
+    { "name": "Kuromoji/check.dat.gz", "path": "resources/Kuromoji/check.dat.gz" },
+    { "name": "Kuromoji/tid.dat.gz", "path": "resources/Kuromoji/tid.dat.gz" },
+    { "name": "Kuromoji/tid_map.dat.gz", "path": "resources/Kuromoji/tid_map.dat.gz" },
+    { "name": "Kuromoji/tid_pos.dat.gz", "path": "resources/Kuromoji/tid_pos.dat.gz" },
+    { "name": "Kuromoji/unk.dat.gz", "path": "resources/Kuromoji/unk.dat.gz" },
+    { "name": "Kuromoji/unk_char.dat.gz", "path": "resources/Kuromoji/unk_char.dat.gz" },
+    { "name": "Kuromoji/unk_compat.dat.gz", "path": "resources/Kuromoji/unk_compat.dat.gz" },
+    { "name": "Kuromoji/unk_invoke.dat.gz", "path": "resources/Kuromoji/unk_invoke.dat.gz" },
+    { "name": "Kuromoji/unk_map.dat.gz", "path": "resources/Kuromoji/unk_map.dat.gz" },
+    { "name": "Kuromoji/unk_pos.dat.gz", "path": "resources/Kuromoji/unk_pos.dat.gz" },
+    { "name": "Kuromoji/LICENSE-2.0.txt", "path": "resources/Kuromoji/LICENSE-2.0.txt" },
+    {
+      "name": "DictionaryRankingArtifactContract.json",
+      "path": "resources/DictionaryRankingArtifactContract.json"
+    },
+    { "name": "EDRDG-ATTRIBUTION.md", "path": "sources/EDRDG-ATTRIBUTION.md" },
+    { "name": "TATOEBA-NOTICE.txt", "path": "resources/TATOEBA-NOTICE.txt" },
+    { "name": "KANJIVG-CC-BY-SA-3.0.txt", "path": "resources/KANJIVG-CC-BY-SA-3.0.txt" },
+    { "name": "Kuromoji/NOTICE.md", "path": "resources/Kuromoji/NOTICE.md" },
+    { "name": "UNIDIC-NEW-BSD.txt", "path": "resources/UNIDIC-NEW-BSD.txt" },
+    { "name": "JLPT-VOCABULARY-CC-BY-SA-4.0.txt", "path": "resources/JLPT-VOCABULARY-CC-BY-SA-4.0.txt" },
+    { "name": "TUBELEX-BSD-3-CLAUSE.txt", "path": "resources/TUBELEX-BSD-3-CLAUSE.txt" }
+  ],
+  "frequency_pack_catalog": "resources/FrequencyPackCatalog.json",
+  "source_archives": {
+    "zenbu.wikipedia.written.ja.unidic-3.1": "sources/Wikipedia-ja-20221020-310-nfkc.tsv.xz"
+  },
+  "conformance": [
+    "conformance/search-retrieval.json",
+    "conformance/search-results.json",
+    "conformance/example-search.json",
+    "conformance/word-detail.json",
+    "conformance/kanji-detail.json"
+  ]
+}
