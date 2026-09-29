@@ -1,9 +1,17 @@
 // The word page, as the app's word detail shows it (WordDetailView.swift, DictionaryEntry.swift).
 
+import { type Example, wordExample } from './examples'
 import { type FrequencyResult, frequencyChips, frequencyResults } from './frequency'
 import { partOfSpeechPhrase } from './part-of-speech'
 import { type PitchAccent, pitchAccent } from './pitch'
-import type { EntryRow, FormRow, FrequencyRow, KanjiGlossRow, WordRows } from './rows'
+import type {
+  EntryRow,
+  ExampleCountRow,
+  FormRow,
+  FrequencyRow,
+  KanjiGlossRow,
+  WordRows
+} from './rows'
 import { type RubySegment, rubySegments } from './ruby'
 import { graphemes, isCJKUnifiedIdeograph, isKanjiCharacter } from './text'
 
@@ -41,20 +49,6 @@ export interface RelatedWord {
   entSeq: number | null
 }
 
-export interface ExampleToken {
-  text: string
-  ruby: RubySegment[]
-  isWord: boolean
-  isMatch: boolean
-}
-
-export interface Example {
-  /** The sentence as plain text, for speech. */
-  text: string
-  tokens: ExampleToken[]
-  translation: string
-}
-
 export interface WordDetail extends WordSummary {
   /** The first sense's word class; empty when none has a name, and the page shows no row. */
   partOfSpeech: string
@@ -66,7 +60,9 @@ export interface WordDetail extends WordSummary {
   kanji: WordKanji[]
   alternativeKanji: WordKanji[]
   related: RelatedWord[]
+  /** The first examples; the page loads the rest (up to the app's 100) as it scrolls. */
   examples: Example[]
+  exampleCount: ExampleCountRow | null
   /** What Share sends: the headword, its reading, and the numbered meanings. */
   shareText: string
 }
@@ -180,16 +176,8 @@ export function wordDetail(rows: WordRows): WordDetail {
       summary: relationship.summary,
       entSeq: relationship.targetEntSeq
     })),
-    examples: rows.examples.map(example => ({
-      text: example.tokens.map(token => token.text).join(''),
-      tokens: example.tokens.map(token => ({
-        text: token.text,
-        ruby: token.reading ? rubySegments(token.text, token.reading) : [{ text: token.text }],
-        isWord: token.isWord ?? false,
-        isMatch: token.isMatch ?? false
-      })),
-      translation: example.translation
-    })),
+    examples: rows.examples.map(wordExample),
+    exampleCount: rows.exampleCount,
     shareText: wordShareText(entry)
   }
 }

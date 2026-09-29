@@ -151,6 +151,9 @@ export const exampleSentences = sqliteTable('example_sentences', {
  * `highlights` are the indexes of the tokens that are the word; `links` are where each word
  * token links on this word's page, since the entry a token resolves to depends on the page: one
  * `ent_seq` for a resolved token, several for an ambiguous one (rows.ts `ExampleLinkRow`).
+ * `tokens` replaces the sentence's tokens on the few pages where the app splits it differently:
+ * a joined word such as おせじに stays whole on the page of the entry it's written as (about
+ * 30 examples), where elsewhere it falls back to its pieces. It is null everywhere else.
  */
 export const wordExamples = sqliteTable(
   'word_examples',
@@ -159,10 +162,23 @@ export const wordExamples = sqliteTable(
     position: integer('position').notNull(),
     sentenceId: integer('sentence_id').notNull(),
     highlights: text('highlights_json', { mode: 'json' }).notNull().$type<number[]>(),
-    links: text('links_json', { mode: 'json' }).notNull().$type<ExampleLinkRow[]>()
+    links: text('links_json', { mode: 'json' }).notNull().$type<ExampleLinkRow[]>(),
+    tokens: text('tokens_json', { mode: 'json' }).$type<ExampleSentenceTokenRow[]>()
   },
   table => [primaryKey({ columns: [table.entSeq, table.position] })]
 )
+
+/**
+ * How many examples a word has, for each word with any: `listed` rows in word_examples, and the
+ * count the app's retrieval reports (`count`, exact up to 50; 51 means more than 50), and
+ * whether more than 100 matched (`truncated`), so some aren't listed.
+ */
+export const wordExampleCounts = sqliteTable('word_example_counts', {
+  entSeq: integer('ent_seq').primaryKey(),
+  listed: integer('listed').notNull(),
+  count: integer('count').notNull(),
+  truncated: integer('truncated', { mode: 'boolean' }).notNull()
+})
 
 /**
  * `ent_seq`s a previous release published and this one doesn't, with the entry that replaces

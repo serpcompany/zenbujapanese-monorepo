@@ -1,6 +1,7 @@
 // Ports the word selection in lookupSegments
 // (apps/ios/Modules/Sources/SearchExperience/JapaneseTextAnalysisClient.swift). The analyzer
 // itself is a capability each client supplies or leaves out; this selection is shared.
+// Change the Swift and this port in the same PR (issue 481); the Search parity workflow checks it.
 import { isJapaneseOnly, normalizeQuery } from './query'
 
 /** One word from a Japanese morphological analyzer such as the app's Sudachi. */

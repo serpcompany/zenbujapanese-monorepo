@@ -77,22 +77,6 @@ export interface KanjiGlossRow {
   meanings: string[]
 }
 
-/** A token of an example sentence. Until the example pipeline (#465 PR 6), fixtures only. */
-export interface ExampleTokenRow {
-  text: string
-  /** The token's full reading; furigana is placed over its kanji only. */
-  reading?: string
-  /** A dictionary word the learner can look up, drawn with an underline. */
-  isWord?: boolean
-  /** Part of the entry the example illustrates. */
-  isMatch?: boolean
-}
-
-export interface ExampleRow {
-  tokens: ExampleTokenRow[]
-  translation: string
-}
-
 /**
  * A token of an example sentence as the dictionary database stores it
  * (`example_sentences.tokens_json`): the same on every word page that shows the sentence.
@@ -100,8 +84,14 @@ export interface ExampleRow {
 export interface ExampleSentenceTokenRow {
   /** The token's surface, as the word-detail suite's `surface`. */
   text: string
-  /** The token's full reading, when it has one. */
+  /**
+   * Kuromoji's reading of the token, in hiragana, when the token has kanji: the furigana the app
+   * shows over a word the entry isn't written as (an inflected 見なかった), and the default
+   * otherwise. A link's `reading` replaces it on pages where the app shows another.
+   */
   reading?: string
+  /** Kuromoji's dictionary form, when it differs from the surface: what an ambiguous word searches for. */
+  dictionaryForm?: string
 }
 
 /**
@@ -116,6 +106,12 @@ export interface ExampleLinkRow {
   /** The token's index in `ExampleSentenceRow.tokens`. */
   token: number
   entSeqs: number[]
+  /**
+   * The furigana over a word linked to one entry, when it isn't the token's `reading`: the
+   * entry's own reading, which the app shows when the word is written as one of the entry's
+   * forms (LinkedTokenView's `displayReading`).
+   */
+  reading?: string
 }
 
 /**
@@ -148,6 +144,27 @@ export interface WordExampleRow {
   sentenceId: number
   highlights: number[]
   links: ExampleLinkRow[]
+  /**
+   * The sentence's tokens on this page, when the app splits them differently here than
+   * everywhere else (a joined word the page's entry is written as stays whole); null otherwise.
+   */
+  tokens: ExampleSentenceTokenRow[] | null
+}
+
+/** One of a word's examples as its page reads it: the sentence, and what this page adds. */
+export interface WordExampleRows {
+  sentence: ExampleSentenceRow
+  example: WordExampleRow
+}
+
+/** `word_example_counts`: how many examples a word has, as the app's retrieval reports them. */
+export interface ExampleCountRow {
+  /** How many examples the page lists, at most 100. */
+  listed: number
+  /** `ExampleSentenceResultCount`: exact up to 50; 51 means more than 50. */
+  count: number
+  /** Whether more than 100 matched, so some aren't listed. */
+  truncated: boolean
 }
 
 /** Everything a word page reads. */
@@ -156,7 +173,10 @@ export interface WordRows {
   frequency: FrequencyRow[]
   /** Meanings for the kanji in the entry's written forms, where KANJIDIC2 has them. */
   kanji: KanjiGlossRow[]
-  examples: ExampleRow[]
+  /** The first examples, in order (the page shows 25 and loads the rest as it scrolls). */
+  examples: WordExampleRows[]
+  /** Null when the word has no examples. */
+  exampleCount: ExampleCountRow | null
 }
 
 /** A reading from `KanjiReferenceData.json`. */

@@ -144,9 +144,14 @@ import_release() {
 load_remote() {
   local file
   wrangler d1 migrations apply "$binding" --remote --config "$config" || return 1
-  for file in "${upload_files[@]}"; do
-    [ -s "$scratch/local/$file" ] || continue
-    remote --file "$scratch/local/$file" --yes || return 1
+  local pattern
+  for pattern in "${upload_files[@]}"; do
+    # Unquoted, so an entry such as examples-*.sql expands, in order; a pattern that matches
+    # nothing stays as written and is skipped.
+    for file in "$scratch/local/"$pattern; do
+      [ -s "$file" ] || continue
+      remote --file "$file" --yes || return 1
+    done
   done
   # dictionary_import goes last: it marks the import complete. One statement, so a query rather
   # than D1's bulk import.

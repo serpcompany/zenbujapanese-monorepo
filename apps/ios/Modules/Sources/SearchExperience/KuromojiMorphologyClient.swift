@@ -1,3 +1,6 @@
+// The website runs this Kuromoji setup in Node (apps/web/src/lib/dictionary/examples/kuromoji.ts)
+// and ports its token conversion (apps/web/src/lib/dictionary/examples/morphology.ts).
+// Change both in the same PR and re-record the word-detail conformance suite (issue 464).
 import Foundation
 import JavaScriptCore
 

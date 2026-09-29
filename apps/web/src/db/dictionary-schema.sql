@@ -74,13 +74,21 @@ CREATE TABLE `retired_ids` (
 	`replacement_ent_seq` integer
 )
 
+table word_example_counts
+CREATE TABLE `word_example_counts` (
+	`ent_seq` integer PRIMARY KEY NOT NULL,
+	`listed` integer NOT NULL,
+	`count` integer NOT NULL,
+	`truncated` integer NOT NULL
+)
+
 table word_examples
 CREATE TABLE `word_examples` (
 	`ent_seq` integer NOT NULL,
 	`position` integer NOT NULL,
 	`sentence_id` integer NOT NULL,
 	`highlights_json` text NOT NULL,
-	`links_json` text NOT NULL,
+	`links_json` text NOT NULL, `tokens_json` text,
 	PRIMARY KEY(`ent_seq`, `position`)
 )
 

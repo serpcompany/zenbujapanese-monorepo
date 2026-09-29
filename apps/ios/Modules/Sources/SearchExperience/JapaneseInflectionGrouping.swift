@@ -1,3 +1,6 @@
+// The website runs a TypeScript port of this grouping:
+// apps/web/src/lib/dictionary/examples/morphology.ts.
+// Change both in the same PR and re-record the word-detail conformance suite (issue 464).
 import Foundation
 
 /// Joins a verb or adjective with the inflection pieces a parser splits off, so 見なかった reads

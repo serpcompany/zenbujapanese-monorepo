@@ -13,7 +13,10 @@ LFS pointers (`git lfs pull`).
 """
 
 import json
+import os
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -30,12 +33,38 @@ ENTRY_NUMBERS = [
 ]
 # Kanji with a fixture page.
 KANJI = ["要"]
+# Each fixture word's first examples: two pages' worth, so the page can load more.
+EXAMPLES_PER_WORD = 50
 
 
 def write(name, rows):
     """One row per line, so a regenerated fixture diffs by row. Biome leaves these files alone."""
     lines = ",\n".join(json.dumps(row, ensure_ascii=False, separators=(",", ":")) for row in rows)
     (OUTPUT / name).write_text(f"[\n{lines}\n]\n", encoding="utf-8")
+
+
+def export_examples(resources):
+    """The fixture words' examples, from the import's own precompute (build-examples.mts):
+    `example-sentences.json`, `word-examples.json` (the first EXAMPLES_PER_WORD of each word), and
+    `example-counts.json`, whose `listed` counts only the examples kept."""
+    with tempfile.TemporaryDirectory() as scratch:
+        out = Path(scratch) / "examples.json"
+        subprocess.run(
+            ["pnpm", "exec", "tsx", "scripts/release-d1/dictionary/build-examples.mts",
+             str(resources / "LanguageReferenceData.sqlite3"), str(resources), str(out),
+             ",".join(map(str, ENTRY_NUMBERS))],
+            cwd=ROOT, check=True,
+            env={**os.environ, "NODE_OPTIONS": "--disable-warning=ExperimentalWarning"},
+        )
+        rows = json.loads(out.read_text(encoding="utf-8"))
+    examples = [row for row in rows["word_examples"] if row["position"] < EXAMPLES_PER_WORD]
+    used = {row["sentenceId"] for row in examples}
+    write("example-sentences.json", [row for row in rows["example_sentences"] if row["id"] in used])
+    write("word-examples.json", examples)
+    write("example-counts.json", [
+        {**row, "listed": min(row["listed"], EXAMPLES_PER_WORD)}
+        for row in rows["word_example_counts"]
+    ])
 
 
 def main(resources):
@@ -52,9 +81,9 @@ def main(resources):
             "entry": entry,
             "frequency": frequency.get(entry["id"], []),
             "kanji": data.word_kanji(entry),
-            "examples": [],
         })
     write("words.json", words)
+    export_examples(resources)
     kanji = []
     for character in KANJI:
         if character not in data.kanji_by_character:
