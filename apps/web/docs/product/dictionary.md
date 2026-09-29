@@ -379,11 +379,12 @@ copyright line.
 - Source: #462 design (Contact, Legal, Privacy, Terms, Sources, Sitemap).
 - Check: No automated check yet (#511).
 
-**No Reading Aids settings.** The website has no settings: headwords and linked example words
-always show furigana, and examples always show their translation. The app lets the learner change
-these in Reading Aids. This isn't in the #511 inventory and no decision covers it.
+**Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
+its defaults: headwords and linked example words have furigana, examples show their translation,
+and there is no romaji and no word meanings under example words. The settings are required; see
+[Required, not built yet](#required-not-built-yet-511).
 
-- Source: App docs index, Account (Reading Aids).
+- Source: App docs index, Account (Reading Aids); `ReadingAidPreferences.swift` (the defaults).
 - Check: No automated check yet (#511).
 
 ## URLs, SEO, and indexing
@@ -581,13 +582,48 @@ Dictionary as current.
 - Source: #462 design.
 - Check it will get: a rendered-HTML check.
 
-**Footer links.** The footer lists what the #462 design lists: Contact, Legal, Privacy, Terms,
-Sources, and Sitemap. The website has no Legal link and adds Dictionary, DMCA, Affiliate
-Disclosure, and About and Support on phones; keeping any of these differences needs a decision on
-file.
+**Legal link.** The footer links Legal (`/legal/`), as the #462 design's footer does. Today it
+links each legal page but not Legal itself.
+
+- Source: #462 design (footer: Contact, Legal, Privacy, Terms, Sources, Sitemap).
+- Check it will get: a rendered-HTML check that the footer links `/legal/`, and a smoke check that
+  the home page's footer does.
+
+**Other footer links.** The footer lists what the #462 design lists: Contact, Legal, Privacy,
+Terms, Sources, and Sitemap. The website adds Dictionary, DMCA, Affiliate Disclosure, and About and
+Support on phones; keeping any of these differences needs a decision on file.
 
 - Source: #462 design.
-- Check it will get: a rendered-HTML check.
+- Check it will get: a rendered-HTML check of the footer's links.
+
+### Site-wide
+
+**Reading Aids.** The website offers the app's Reading Aids settings and applies them wherever the
+app does:
+
+- **Furigana** over headwords and linked words. With it off, a word page shows the reading under
+  the headword instead, as in the app.
+- **Romaji** alongside the Japanese on word pages, kanji pages, and example sentences.
+- **Word Meanings:** a short meaning under each linked word the learner hasn't marked known.
+- **Sentence Translations:** whether examples show their English.
+- **Hide Furigana on Known Words:** known words in examples lose their furigana.
+
+The defaults are the app's: Furigana and Sentence Translations on, Romaji, Word Meanings, and Hide
+Furigana on Known Words off. The app keeps the settings on the device; the website keeps them in
+the browser until accounts exist.
+
+Hide Furigana on Known Words depends on which words the learner knows, so it needs accounts (#468)
+and ships with them. Furigana, Romaji, Word Meanings, and Sentence Translations can ship before
+then: without an account every word counts as unknown, as it does in the app until the learner
+marks it, so Word Meanings shows under every linked word.
+
+- App source: App docs index, Account (Reading Aids); App docs, Dictionary and kanji details
+  (furigana off, Word Meanings, Sentence Translations); `ReadingAidPreferences.swift`,
+  `ReadingAidPresentation.swift`.
+- Check it will get: a unit test pinning the defaults to `ReadingAidPreferences.swift`'s, and a
+  rendered-page check of a word page (such as 見る) under each setting: ruby present or absent, the
+  reading under the headword, romaji, meanings under example words, and translations. Hide Furigana
+  on Known Words gets its check with #468.
 
 ### URLs and SEO
 
