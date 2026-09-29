@@ -19,7 +19,6 @@ on:
       - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
       - apps/ios/Modules/Sources/SearchExperience/Resources/KanjiReferenceData.json
       - apps/ios/Modules/Sources/SearchExperience/Resources/KanjiElementReferenceData.json
-      - apps/ios/Modules/Sources/SearchExperience/Resources/RadicalReferenceData.json
       - .github/workflows/web-deploy.yml
   workflow_dispatch:
 

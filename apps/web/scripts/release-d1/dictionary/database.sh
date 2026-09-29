@@ -23,11 +23,13 @@ build_inputs=(
   "${lfs_inputs[@]}"
   "$resources/KanjiReferenceData.json"
   "$resources/KanjiElementReferenceData.json"
-  "$resources/RadicalReferenceData.json"
+  # Not RadicalReferenceData.json: the app reads it only for radical search input, and nothing
+  # here does. PR 5 or later adds it back if the kanji page starts using it.
   apps/web/drizzle/dictionary
   apps/web/src/db/dictionary-schema.ts
-  # The detail core, which the import's conformance gate runs (check_local) and later imports
-  # run to precompute page rows.
+  # The detail core: its conformance gate (check_local) must pass on every import, so a change
+  # to the core re-runs the gate by importing a new build on the next deploy. Later imports also
+  # run it to precompute page rows.
   apps/web/src/lib/dictionary/detail
 )
 tables=(words kanji kanji_strokes kanji_elements element_glyphs example_sentences word_examples
@@ -53,7 +55,7 @@ check_local() {
 import_sources() {
   local file
   for file in "${lfs_inputs[@]}" "$resources/KanjiReferenceData.json" \
-    "$resources/KanjiElementReferenceData.json" "$resources/RadicalReferenceData.json"; do
+    "$resources/KanjiElementReferenceData.json"; do
     if [ -d "$repo_root/$file" ]; then
       (cd "$repo_root" && find "$file" -type f | LC_ALL=C sort | xargs sha256sum)
     else
