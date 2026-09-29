@@ -33,7 +33,8 @@ jobs:
       - run: pnpm check
       # pnpm check builds without SITE_ENV. Build as each deployed environment does too, since
       # static pages and prerendering differ by environment: a route that reads a binding at
-      # build time fails only there. Neither build has a dictionary database, as in a deploy.
+      # build time fails only there. Neither build reaches the dictionary service, as in a deploy,
+      # where pages read it only at request time.
       - name: Build for staging
         run: SITE_ENV=staging pnpm build
       - name: Build for production

@@ -1,34 +1,24 @@
 name: Web deploy
 
 # Promotes merged website code through staging, then production, per the SERP Drizzle + D1
-# standard. Each environment imports, verifies, and binds its own release databases (search and
-# dictionary) before deploying, and prunes their old builds after its smoke test. Production runs
-# once staging passes; add a required reviewer on the `production` GitHub environment to gate it
-# manually (it has none, by the owner's decision).
+# standard. Each environment reads the dictionary from its own dictionary service (ADR 0009):
+# the job checks that the service answers, points the site at it, deploys, and smoke-tests.
+# Production runs once staging passes; add a required reviewer on the `production` GitHub
+# environment to gate it manually (it has none, by the owner's decision).
+#
+# Each GitHub environment holds the service's URL (the DICTIONARY_API_URL variable), and each
+# Worker environment the DICTIONARY_API_TOKEN secret the service expects (docs/agents/web.md,
+# Dictionary service). A new build of the dictionary is a new service image, deployed with the
+# service (docs/agents/dictionary-api.md); the site needs no deploy for it.
 on:
   push:
     branches: [main]
-    # Every input of a release database (scripts/release-d1/<database>/database.sh), so a new
-    # build of the dictionary imports and deploys.
     paths:
       - apps/web/**
       - packages/dictionary-core/**
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
-      - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3
-      - apps/ios/Modules/Sources/SearchExperience/Resources/CompoundPitch.sqlite3
-      - apps/ios/Modules/Sources/SearchExperience/Resources/ExampleWordIndex.sqlite3
-      - apps/ios/Modules/Sources/SearchExperience/Resources/JLPTLevelPack.sqlite3
-      - apps/ios/Modules/Sources/SearchExperience/Resources/TUBELEXFrequencyPack.sqlite3
-      - apps/ios/Modules/Sources/SearchExperience/Resources/KanjiStrokeData.sqlite3
-      - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
-      - apps/ios/Modules/Sources/SearchExperience/Resources/KanjiReferenceData.json
-      - apps/ios/Modules/Sources/SearchExperience/Resources/KanjiElementReferenceData.json
-      - apps/ios/LanguageData/Conformance/search-retrieval.json
-      - apps/ios/LanguageData/Conformance/search-results.json
-      - apps/ios/LanguageData/Conformance/word-detail.json
-      - apps/ios/LanguageData/Conformance/kanji-detail.json
       - .github/workflows/web-deploy.yml
   workflow_dispatch:
 
@@ -46,13 +36,12 @@ env:
 jobs:
   staging:
     runs-on: ubuntu-latest
-    # Shared with the manual Release database workflow, so two imports for staging never overlap.
-    concurrency:
-      group: release-database-staging
-      cancel-in-progress: false
     environment:
       name: staging
       url: https://staging.zenbujapanese.com
+    env:
+      SITE: staging
+      DICTIONARY_API_URL: ${{ vars.DICTIONARY_API_URL }}
     defaults:
       run:
         shell: bash
@@ -68,57 +57,24 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - name: Import the search database
-        # Reuses the database when this build's already imported and verified (seconds);
-        # otherwise imports a new one (about 20 minutes). See docs/agents/web.md.
-        run: scripts/release-d1/ensure-release.sh search staging
-      - name: Import the dictionary database
-        # Words and kanji for word and kanji pages; reused or imported like the search database.
-        run: scripts/release-d1/ensure-release.sh dictionary staging
-      - name: Bind the release databases
-        run: |
-          for binding in SEARCH_DB DICTIONARY_DB; do
-            name_var="${binding}_NAME" id_var="${binding}_ID"
-            sed -i "s/\"${binding}_NAME\"/\"${!name_var}\"/; s/\"${binding}_ID\"/\"${!id_var}\"/" wrangler.jsonc
-            grep -q "\"${!id_var}\"" wrangler.jsonc
-          done
-      - name: Check both release databases hold the same artifact
-        # Search results link to word pages, so both must come from the same
-        # LanguageReferenceData.sqlite3 (dictionary_import.sha256) before the deploy binds them.
-        run: |
-          artifact() {
-            pnpm exec wrangler d1 execute "$1" --remote --env staging --json \
-              --command "SELECT sha256 FROM dictionary_import" |
-              python3 -c 'import json, sys; print(json.load(sys.stdin)[0]["results"][0]["sha256"])'
-          }
-          search=$(artifact SEARCH_DB)
-          dictionary=$(artifact DICTIONARY_DB)
-          echo "SEARCH_DB: $search; DICTIONARY_DB: $dictionary"
-          [ -n "$search" ] && [ "$search" = "$dictionary" ] ||
-            { echo "::error::SEARCH_DB and DICTIONARY_DB hold different artifacts"; exit 1; }
+      - name: Point the site at the dictionary service
+        run: ./scripts/use-dictionary-service.sh "$SITE" "$DICTIONARY_API_URL"
       - run: pnpm db:migrate:staging
       - name: Deploy
         run: pnpm deploy:staging 2>&1 | tee deploy.log
       - name: Smoke test
         # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
         run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" staging
-      - name: Delete old release databases
-        # Only now are the new databases the live ones; keeps each and its newest complete older
-        # build.
-        run: |
-          scripts/release-d1/prune.sh search staging "$SEARCH_DB_NAME"
-          scripts/release-d1/prune.sh dictionary staging "$DICTIONARY_DB_NAME"
 
   production:
     needs: staging
     runs-on: ubuntu-latest
-    # Shared with the manual Release database workflow, so two imports for production never overlap.
-    concurrency:
-      group: release-database-production
-      cancel-in-progress: false
     environment:
       name: production
       url: ${{ vars.WEB_PRODUCTION_URL }}
+    env:
+      SITE: production
+      DICTIONARY_API_URL: ${{ vars.DICTIONARY_API_URL }}
     defaults:
       run:
         shell: bash
@@ -134,32 +90,8 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - name: Import the search database
-        # As for staging: reuses a verified database for this build, or imports a new one. The
-        # first import of both databases for production is about 850 MB, about 30 minutes.
-        run: scripts/release-d1/ensure-release.sh search production
-      - name: Import the dictionary database
-        run: scripts/release-d1/ensure-release.sh dictionary production
-      - name: Bind the release databases
-        # The production block of wrangler.jsonc has its own *_DB_NAME and *_DB_ID placeholders.
-        run: |
-          for binding in SEARCH_DB DICTIONARY_DB; do
-            name_var="${binding}_NAME" id_var="${binding}_ID"
-            sed -i "s/\"${binding}_NAME\"/\"${!name_var}\"/; s/\"${binding}_ID\"/\"${!id_var}\"/" wrangler.jsonc
-            grep -q "\"${!id_var}\"" wrangler.jsonc
-          done
-      - name: Check both release databases hold the same artifact
-        run: |
-          artifact() {
-            pnpm exec wrangler d1 execute "$1" --remote --env production --json \
-              --command "SELECT sha256 FROM dictionary_import" |
-              python3 -c 'import json, sys; print(json.load(sys.stdin)[0]["results"][0]["sha256"])'
-          }
-          search=$(artifact SEARCH_DB)
-          dictionary=$(artifact DICTIONARY_DB)
-          echo "SEARCH_DB: $search; DICTIONARY_DB: $dictionary"
-          [ -n "$search" ] && [ "$search" = "$dictionary" ] ||
-            { echo "::error::SEARCH_DB and DICTIONARY_DB hold different artifacts"; exit 1; }
+      - name: Point the site at the dictionary service
+        run: ./scripts/use-dictionary-service.sh "$SITE" "$DICTIONARY_API_URL"
       - run: pnpm db:migrate:production
       - name: Deploy
         run: pnpm deploy:production 2>&1 | tee deploy.log
@@ -169,9 +101,3 @@ jobs:
       - name: Smoke test
         # The workers.dev URL skips the zone's bot protection, which blocks CI runners.
         run: ./scripts/smoke.sh "$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" production
-      - name: Delete old release databases
-        # Only now are the new databases the live ones; keeps each and its newest complete older
-        # build, for rolling back.
-        run: |
-          scripts/release-d1/prune.sh search production "$SEARCH_DB_NAME"
-          scripts/release-d1/prune.sh dictionary production "$DICTIONARY_DB_NAME"

@@ -77,8 +77,8 @@ eventually 'pages sitemap lists slashed page URLs' 'pages sitemap has a non-cano
 # The shipped iOS app links to /privacy.
 expect /privacy 308
 
-# Dictionary pages: each environment reads its own release databases (SEARCH_DB and
-# DICTIONARY_DB), so a word and a kanji without local fixtures (見る, 見) have pages.
+# Dictionary pages: each environment reads its own dictionary service (DICTIONARY_API_URL), so a
+# word and a kanji without local fixtures (見る, 見) have pages.
 word=/dictionary/%E8%A6%8B%E3%82%8B-1259290/
 kanji=/dictionary/kanji/%E8%A6%8B/
 expect /dictionary/ 200
@@ -93,7 +93,7 @@ header_has_dictionary() {
 eventually 'the header links to the dictionary and has search' \
   'the header is missing the Dictionary link or search' header_has_dictionary
 # Search results show what the app shows: the iru case of the app-recorded suite, read at run time
-# so a re-recorded suite (which the search import's gate checks) never leaves this check stale.
+# so a re-recorded suite (which the dictionary service's gate checks) never leaves this check stale.
 # For iru, that's the "Search for「いる」" refinement, then the first rows' entry numbers and chips,
 # in order.
 iru=/dictionary/search/iru/
@@ -142,6 +142,24 @@ iru_matches_the_app() {
 show_iru_seen() { echo "$iru_seen (want refinement yes; rows $(paste -sd, - <<<"$iru_rows"))"; }
 eventually 'iru shows the refinement and its first rows with their chips, as the app does' \
   'iru differs from the app' iru_matches_the_app show_iru_seen
+
+# The results list starts with the app's Example Sentences row, which opens the search's examples
+# page: eat's recorded title, read from the suite, and the page it links to.
+eat=/dictionary/search/eat/
+eat_examples="$(python3 -c '
+import json, sys
+case = next(c for c in json.load(open(sys.argv[1]))["cases"] if c["query"] == "eat")
+print(case["examples"]["title"])
+' "$suite")"
+shows_examples_row() {
+  local html
+  html="$(body "$eat")"
+  grep -q 'data-section="examples"' <<<"$html" && grep -qF "$eat_examples" <<<"$html" &&
+    grep -q "href=\"${eat}examples/\"" <<<"$html"
+}
+eventually "eat leads with '$eat_examples', as the app does" \
+  "eat has no '$eat_examples' row linked to its examples page" shows_examples_row
+expect "${eat}examples/" 200
 
 # The footer links Legal, as the #462 design's footer does.
 footer_has_legal() {

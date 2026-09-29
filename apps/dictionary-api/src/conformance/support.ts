@@ -9,7 +9,13 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/search'
-import { artifactFile, fileSha256, type OpenedArtifact, openArtifact } from '../artifact'
+import {
+  artifactFile,
+  fileSha256,
+  type OpenedArtifact,
+  openArtifact,
+  requireContent
+} from '../artifact'
 import { loadKuromoji } from '../kuromoji'
 import { loadSudachi, prepareSudachi, sudachiContract } from '../sudachi'
 
@@ -21,10 +27,8 @@ const sudachiDictionary = join(repository, 'apps/dictionary-api/.sudachi/system_
 /** Whether the app's bundled files are here, not Git LFS pointers. */
 export const artifactAvailable = (() => {
   try {
-    return !readFileSync(join(resources, artifactFile))
-      .subarray(0, 7)
-      .toString()
-      .startsWith('version')
+    requireContent(join(resources, artifactFile))
+    return true
   } catch {
     return false
   }
@@ -32,6 +36,14 @@ export const artifactAvailable = (() => {
 
 /** Whether Sudachi's dictionary has been fetched (`pnpm sudachi`). */
 export const sudachiAvailable = existsSync(sudachiDictionary)
+
+// CI fetches both first and sets ZENBU_REQUIRE_ARTIFACT=1, so there a missing file fails the run
+// instead of skipping the suites.
+if (process.env.ZENBU_REQUIRE_ARTIFACT === '1' && !(artifactAvailable && sudachiAvailable)) {
+  throw new Error(
+    `ZENBU_REQUIRE_ARTIFACT is set, but ${artifactAvailable ? "Sudachi's dictionary is missing (pnpm sudachi)" : `${artifactFile} is a Git LFS pointer or missing (git lfs pull)`}`
+  )
+}
 
 export function readSuite<Suite>(name: string): Suite {
   return JSON.parse(readFileSync(join(suites, `${name}.json`), 'utf8')) as Suite
