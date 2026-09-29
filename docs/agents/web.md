@@ -54,7 +54,12 @@ Each build gets a fresh D1, named `zenbujapanese-<database>-<env>-<build id>`. T
 (`scripts/release-d1/build-id.sh <database>`) hashes everything that shapes the database: the
 artifact's SHA-256 from its Git LFS pointer, the database's migrations, schema, and other inputs
 (for search, the search core, which precomputes its cache), the shared scripts in
-`scripts/release-d1/`, and the database's own scripts, but not another database's.
+`scripts/release-d1/`, and the database's own scripts, but not another database's. Tests
+(`*.test.ts`, `*.test.tsx`) are left out, so changing a gate's test alone doesn't import a new
+build. Anything a gate's tests run or draw (the cores, the components a rendered-page test renders,
+its reader, and the app-recorded suites) is a build input, so changing it does; and every build
+input outside `apps/web/`, such as a re-recorded suite, is in the `Web deploy` workflow's `paths`.
+`src/lib/dictionary/gate-inputs.test.ts` checks both from each database's `check_local`.
 `scripts/release-d1/ensure-release.sh <database> <env>` imports it:
 
 1. Build a local copy with `load-local.sh <database>`: the migrations from empty, the

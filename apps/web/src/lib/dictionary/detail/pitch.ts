@@ -33,6 +33,8 @@ export interface PitchAccent {
   morae: { mora: string; high: boolean }[]
   /** 0 for flat; otherwise the mora after which pitch falls. */
   downstep: number
+  /** The source's mora count, which the app's accessibility value speaks. */
+  moraCount: number
   /** The pitch of a following particle such as が: high only when flat. */
   particleHigh: boolean
   /** The dot-and-line contour the app draws over the morae. */
@@ -98,6 +100,7 @@ export function pitchAccent(reading: string, pitch: PitchRow): PitchAccent {
   return {
     morae: kana.map((mora, index) => ({ mora, high: levels.morae[index] })),
     downstep: pitch.downstep,
+    moraCount: pitch.moraCount,
     particleHigh: levels.particle,
     graph: pitchGraph(kana, levels)
   }

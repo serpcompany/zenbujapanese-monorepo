@@ -22,10 +22,27 @@ build_inputs=(
   apps/web/src/lib/dictionary/results
   apps/web/src/lib/dictionary/detail/frequency.ts
   apps/web/scripts/release-d1/dictionary/language_data.py
-  # The page's component and how the rendered-page test reads it back.
+  # Everything else check_local's tests run or draw, but not the tests themselves (build-id.sh
+  # leaves out *.test.ts and *.test.tsx): the page's component and what it draws, how the
+  # rendered-page test reads it back, and the results core's links and fixtures.
+  # gate-inputs.test.ts checks this list covers every file those tests import.
   apps/web/src/components/dictionary/search-results.tsx
+  apps/web/src/components/dictionary/frequency.tsx
+  apps/web/src/components/dictionary/ruby-text.tsx
   apps/web/src/components/dictionary/rendered.ts
-  # The app-recorded suite the gate checks, so a re-recorded suite checks the next deploy.
+  apps/web/src/components/ui/badge.tsx
+  apps/web/src/components/ui/card.tsx
+  apps/web/src/components/ui/empty.tsx
+  apps/web/src/components/ui/item.tsx
+  apps/web/src/components/ui/separator.tsx
+  apps/web/src/lib/dictionary/detail/kanji.ts
+  apps/web/src/lib/dictionary/detail/ruby.ts
+  apps/web/src/lib/dictionary/detail/strokes.ts
+  apps/web/src/lib/dictionary/detail/text.ts
+  apps/web/src/lib/dictionary/fixtures
+  apps/web/src/lib/dictionary/urls.ts
+  # The app-recorded suites the gate checks, so a re-recorded suite checks the next deploy.
+  apps/ios/LanguageData/Conformance/search-retrieval.json
   apps/ios/LanguageData/Conformance/search-results.json
 )
 tables=(entries forms form_priority_profiles canonical_senses gloss_atoms sense_form_restrictions

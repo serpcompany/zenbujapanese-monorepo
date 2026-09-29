@@ -93,6 +93,16 @@ describe('the word header', () => {
     expect(html).toContain('<polyline points="75,17.5 200,174.5 280,174.5"')
     // One button pronounces the word, and says its pitch.
     expect(html).toContain('Pronounce きょう. Pitch accent, downstep 1, 2 mora')
+    // The mora count spoken is the source's, as the app's accessibility value says it, even where
+    // it differs from the morae drawn.
+    const counted = header({
+      ruby: rubySegments('今日', 'きょう'),
+      reading: 'きょう',
+      pitch: pitchAccent('きょう', { downstep: 1, moraCount: 3, sourceIdentity: unidic }),
+      partOfSpeech: 'Noun'
+    })
+    expect(counted).toContain('downstep 1, 3 mora')
+    expect(readPitchGraph(counted)?.morae).toEqual(['キョ', 'ウ'])
   })
 
   test('shows a standalone speaker for a word without pitch', () => {

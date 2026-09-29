@@ -38,6 +38,7 @@ describe('pitchAccent', () => {
         { mora: 'ル', high: true }
       ],
       downstep: 0,
+      moraCount: 2,
       particleHigh: true,
       graph: {
         widths: [1, 1],

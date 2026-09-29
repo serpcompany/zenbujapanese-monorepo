@@ -40,7 +40,7 @@ export function PitchAccent({ pitch, reading }: { pitch: PitchAccentData; readin
     >
       <Volume2Icon aria-hidden className="size-4 shrink-0 text-blue-600 dark:text-blue-400" />
       <span className="sr-only">
-        Pronounce {reading}. Pitch accent, downstep {pitch.downstep}, {pitch.morae.length} mora
+        Pronounce {reading}. Pitch accent, downstep {pitch.downstep}, {pitch.moraCount} mora
       </span>
       <span
         aria-hidden

@@ -212,8 +212,8 @@ reading over the whole word.
 
 **Per-kanji furigana highlight.** In the headword, each kanji of a run whose kanji readings split
 its furigana exactly one way is a toggle: selecting it colors the kanji and its part of the
-furigana in the app's accent color (肉 and にく in 弱肉強食). Selecting it again clears the
-highlight; selecting another kanji moves it. The split uses each kanji's KANJIDIC2 on and kun
+furigana in the app's blue accent color, not the site's primary (肉 and にく in 弱肉強食; #511
+review). Selecting it again clears the highlight; selecting another kanji moves it. The split uses each kanji's KANJIDIC2 on and kun
 readings with the sound changes compounds make (学校 is がっ・こう, 人々 is ひと・びと, 発表 is
 はっ・ぴょう). A single kanji and a word read as a whole, such as 大人 or 今日, have no highlight.
 Other furigana on the page (related words, examples) links instead, as in the app. Each toggle is a
@@ -234,7 +234,7 @@ draws it: the reading in katakana, one mora wide each (one and a half for a comb
 キョ), with a dot per mora at the top when high and the bottom when low, joined by a line, and a
 hollow dot for the following particle. The capsule is one button that pronounces the word; screen
 readers hear "Pronounce «reading». Pitch accent, downstep N, M mora", as the app's label and value
-say it.
+say it: M is the source's mora count, even where it differs from the morae drawn (#511 review).
 
 - Source: App docs, Dictionary and kanji details; `PitchAccentBadge` and `PitchContourLayout` in
   `WordDetailView.swift`; #462 design.
