@@ -9,6 +9,7 @@
     "start": "node dist/server.mjs",
     "build": "node scripts/build.mjs",
     "sudachi": "node scripts/fetch-sudachi.mjs",
+    "fixtures": "node --import tsx scripts/export-fixtures.ts",
     "format": "biome format --write",
     "lint": "biome check",
     "typecheck": "tsc --noEmit",

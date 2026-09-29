@@ -1,9 +1,9 @@
 /**
- * The rows the detail core reads, shaped like the planned dictionary D1 (#464 phase 2, #465).
- * Local fixtures hold the same rows, exported from the app's bundled data by
- * scripts/export-dictionary-fixtures.py, so the shapes can't drift from the app's.
+ * The rows the detail core reads, as the artifact layer (../artifact) reads them from the app's
+ * data and the dictionary service answers with them. Local fixtures hold the same rows, exported
+ * by the same code (apps/dictionary-api/scripts/export-fixtures.ts), so the shapes can't drift.
  *
- * Every ID is a lowercase hex Language Reference ID, as in the search database.
+ * Every ID is a lowercase hex Language Reference ID, as the artifact's BLOB IDs read in hex.
  */
 
 /** A written or reading form, as `written_forms_json` and `reading_forms_json` store it. */

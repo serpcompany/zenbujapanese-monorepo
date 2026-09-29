@@ -16,8 +16,8 @@ import words from './words.json'
 
 /**
  * Local fixture rows, never used in production: twelve words and the kanji 要, exported from the
- * app's bundled data by scripts/export-dictionary-fixtures.py in the detail core's row shapes,
- * with each word's first 50 examples from the import's own precompute.
+ * app's bundled data in the detail core's row shapes, with each word's first 50 examples, by the
+ * code the dictionary service answers with (apps/dictionary-api/scripts/export-fixtures.ts).
  */
 
 const sentencesById = new Map(
@@ -44,8 +44,8 @@ export const fixtureWordRows: WordRows[] = (
 }))
 
 /**
- * Every entry in the fingerprint groups `kanjiCandidateRowsSQL` reads for each fixture kanji,
- * which `kanjiWords` orders; the dictionary database stores the ordered list instead.
+ * Every entry in the fingerprint groups `kanjiCandidateRows` reads for each fixture kanji, which
+ * `kanjiWords` orders, as the service's `readKanji` does.
  */
 export const fixtureKanjiCandidates = new Map<string, KanjiWordRow[]>()
 for (const { kanji: character, ...word } of kanjiWords as (KanjiWordRow & { kanji: string })[]) {
