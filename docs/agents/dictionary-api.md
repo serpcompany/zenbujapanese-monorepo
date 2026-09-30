@@ -177,7 +177,7 @@ holds (the service, the core, the lockfile, or the app's files it copies), and b
    `ghcr.io/serpcompany/zenbujapanese-dictionary-api:sha-<commit>` and `:main`. A pull request
    that changes the image runs only this build and check.
 2. **`staging`** signs the image's digest with cosign, then moves the `:staging` tag to it, and
-   waits, up to 20 minutes, until the environment's service answers with the new build
+   waits, up to 10 minutes, until the environment's service answers with the new build
    (`deploy/await-build.sh`). It asks through the environment's website,
    `/dictionary/service.json` at its workers.dev address (`WEB_WORKERS_DEV_URL`), since Bot Fight
    Mode on the zone challenges CI runners that ask the service directly. A site deployed before
@@ -250,7 +250,7 @@ deploy: it gives it the alias and restart policy, then stops the other slot.
   touched this workflow's push paths. A site change whose service is already current deploys at
   once, however the service got there. While it waits, a service deploy of a commit that includes
   the change and that ended without deploying the environment (failed, skipped, or cancelled)
-  stops the site's deploy, and so does an hour without one.
+  stops the site's deploy, and so do 20 minutes without one.
 - **Moving to the slots' network.** A slot on `web_network`, which an earlier deployer started, is
   never taken as current: the next deploy of a signed image replaces it with one on the slots'
   network. Docker's DNS answers nginx from `web_network` while the old slot is there, so nginx

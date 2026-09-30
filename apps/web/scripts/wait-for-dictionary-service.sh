@@ -9,7 +9,7 @@
 # service directly). The last change to the image is the last commit, up to this one, that touched
 # the `Dictionary API deploy` workflow's push paths. While it waits, a service deploy of a commit
 # that includes that change, and that ended without bringing this environment up to date, stops
-# the site's deploy too; so does an hour without one.
+# the site's deploy too; so do 20 minutes without one.
 #
 #   scripts/wait-for-dictionary-service.sh <staging|production>
 #
@@ -29,7 +29,7 @@ fi
 site="${site%/}"
 root="$(git rev-parse --show-toplevel)"
 workflow=dictionary-api-deploy.yml
-service_deploy_timeout_seconds=3600
+service_deploy_timeout_seconds=1200
 poll_seconds=30
 
 # What the image holds: the deploy workflow's push paths, as git pathspecs.
@@ -121,5 +121,5 @@ while [ "$SECONDS" -lt "$deadline" ]; do
   fi
   sleep "$poll_seconds"
 done
-echo "::error::After an hour, the $env service still runs ${build:-nothing the site can name}, not a release that includes $needed: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/workflows/$workflow"
+echo "::error::After 20 minutes, the $env service still runs ${build:-nothing the site can name}, not a release that includes $needed: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/workflows/$workflow"
 exit 1

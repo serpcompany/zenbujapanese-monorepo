@@ -200,7 +200,7 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     # The deployer checks the tag every 5 minutes, then pulls and starts the image.
-    timeout-minutes: 25
+    timeout-minutes: 15
     environment: staging
     permissions:
       contents: read
@@ -245,7 +245,7 @@ jobs:
         env:
           # The site, which asks its service (Bot Fight Mode challenges runners asking it).
           WEB_WORKERS_DEV_URL: ${{ vars.WEB_WORKERS_DEV_URL }}
-        run: apps/dictionary-api/deploy/await-build.sh staging "$BUILD" 1200
+        run: apps/dictionary-api/deploy/await-build.sh staging "$BUILD" 600
 
   production:
     needs: [image, staging]
@@ -256,7 +256,7 @@ jobs:
       (vars.DEPLOY_PRODUCTION != 'false' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     # The deployer checks the tag every 5 minutes, then pulls and starts the image.
-    timeout-minutes: 25
+    timeout-minutes: 15
     environment: production
     permissions:
       contents: read
@@ -283,4 +283,4 @@ jobs:
           # The site, which asks its service (Bot Fight Mode challenges runners asking it).
           WEB_WORKERS_DEV_URL: ${{ vars.WEB_WORKERS_DEV_URL }}
           SITE_WITHOUT_STATUS_ROUTE: ${{ inputs.site_without_status_route }}
-        run: apps/dictionary-api/deploy/await-build.sh production "$BUILD" 1200
+        run: apps/dictionary-api/deploy/await-build.sh production "$BUILD" 600
