@@ -214,7 +214,7 @@ repository's images, and never nginx.
 ### Set up the server
 
 Staging and production share one server: the Linux x86-64 server whose nginx container, on the
-`web_network` Docker network, fronts serpcompany's `*.serp.co` sites through Cloudflare. The two
+`web_network` Docker network, fronts serpcompany's other sites through Cloudflare. The two
 services need about 1.5 GB of memory between them, plus about 1.4 GB more for the half minute after
 a deploy starts one, and 5 GB of disk for images. A person with root sets it up once:
 
@@ -240,23 +240,27 @@ a deploy starts one, and 5 GB of disk for images. A person with root sets it up 
    ```
    Set each environment's Worker to its token ([`web.md`](web.md), Dictionary service).
 3. **nginx.** The nginx repository holds each environment's site,
-   `nginx/zenbu-dictionary-staging.serp.co.conf` and `nginx/zenbu-dictionary.serp.co.conf`: the
-   `*.serp.co` origin certificate and Cloudflare's client certificate, as the other sites have,
-   the network alias resolved every 5 seconds, and failover to the other slot. Adding them is the
-   one change nginx ever needs: pull them on the server, then check and reload it, which keeps the
-   container and every other site running:
+   `nginx/dictionary-api-staging.zenbujapanese.com.conf` and
+   `nginx/dictionary-api.zenbujapanese.com.conf`: the `zenbujapanese.com` Cloudflare origin
+   certificate (`nginx_certs/zenbujapanese_com_cert.pem` and `_key.pem`) and Cloudflare's client
+   certificate, as the other sites have, the network alias resolved every 5 seconds, and failover
+   to the other slot. Adding them is the one change nginx ever needs: pull them on the server, then
+   check and reload it, which keeps the container and every other site running:
    ```sh
    docker exec nginx nginx -t && docker exec nginx nginx -s reload
    ```
-   A staging host name has one level (`zenbu-dictionary-staging.serp.co`), since the origin
-   certificate covers `*.serp.co` alone.
-4. **Cloudflare.** Proxied DNS records for both host names, pointing at the server as the other
-   `*.serp.co` sites do. The zone's bot protection must let the website's Worker and GitHub's
-   runners reach them (the workflow checks `/healthz`); every `/v1` route needs the token anyway.
+   A staging host name has one level (`dictionary-api-staging.zenbujapanese.com`), since the
+   origin certificate covers `*.zenbujapanese.com` alone.
+4. **Cloudflare**, in the `zenbujapanese.com` zone: proxied DNS records for
+   `dictionary-api.zenbujapanese.com` and `dictionary-api-staging.zenbujapanese.com`, pointing at
+   the server, and Authenticated Origin Pulls on (SSL/TLS → Origin Server), since the sites accept
+   only Cloudflare's client certificate. The zone's bot protection must let the website's Worker and
+   GitHub's runners reach them (the workflow checks `/healthz`); every `/v1` route needs the token
+   anyway.
 5. **The GitHub environments**, which hold only the services' URLs:
    ```sh
-   gh variable set DICTIONARY_API_URL --env staging --body https://zenbu-dictionary-staging.serp.co
-   gh variable set DICTIONARY_API_URL --env production --body https://zenbu-dictionary.serp.co
+   gh variable set DICTIONARY_API_URL --env staging --body https://dictionary-api-staging.zenbujapanese.com
+   gh variable set DICTIONARY_API_URL --env production --body https://dictionary-api.zenbujapanese.com
    ```
 6. **The first deploy.** Run the workflow by hand (Actions → Dictionary API deploy → Run
    workflow); the deployer starts each image within 5 minutes of its tag moving. Then run
