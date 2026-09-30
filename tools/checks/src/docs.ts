@@ -86,6 +86,25 @@ function isEntryPoint(path: string): boolean {
   )
 }
 
+export function isOwnedDoc(path: string): boolean {
+  const kind = classify(path).kind
+  return path.endsWith('.md') && kind !== 'third-party' && kind !== 'written-by-a-tool'
+}
+
+export function referencedFiles(path: string, text: string): string[] {
+  if (isDecisionRecord(path)) return []
+  const linked = markdownLinks(text)
+    .filter(({ target }) => !isExternal(target))
+    .map(({ target }) => resolveLink(path, target))
+  const named = codePaths(text).map(({ target }) =>
+    existsSync(join(root, target)) ? target : posix.join(posix.dirname(path), target)
+  )
+  return [...new Set([...linked, ...named])]
+    .filter(target => !target.endsWith('.md') && existsSync(join(root, target)))
+    .filter(target => statSync(join(root, target)).isFile())
+    .sort()
+}
+
 function markdownFilesIn(folder: string): string[] {
   const absolute = join(root, folder)
   if (!existsSync(absolute) || !statSync(absolute).isDirectory()) return []
@@ -95,11 +114,7 @@ function markdownFilesIn(folder: string): string[] {
 }
 
 export function checkDocs(files: readonly string[]): DocProblem[] {
-  const docs = files.filter(path => path.endsWith('.md'))
-  const owned = docs.filter(path => {
-    const kind = classify(path).kind
-    return kind !== 'third-party' && kind !== 'written-by-a-tool'
-  })
+  const owned = files.filter(isOwnedDoc)
   const problems: DocProblem[] = []
   const linkedFrom = new Map<string, string[]>()
 

@@ -50,3 +50,6 @@ Fix what it finds that holds up, then repeat from step 1 until a review finds no
 Write the description for a reviewer who hasn't seen the work: what changed and why, what step 2
 showed, which checks ran and passed, and what was left and who can finish it (for example, Swift
 that needs a Mac). Show it to the person before pushing or opening anything.
+
+Once it's open, the `Code review` workflow reviews every push with the `pr-review` skill. Answer
+each finding (fix it, or reply with why not), then run this skill again before the next push.

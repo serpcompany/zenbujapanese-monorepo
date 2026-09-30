@@ -7,6 +7,7 @@
   "scripts": {
     "verify": "tsx src/cli.ts",
     "hook": "tsx src/hook.ts",
+    "report": "tsx src/report.ts",
     "format": "biome format --write",
     "lint": "biome check",
     "typecheck": "tsc --noEmit",

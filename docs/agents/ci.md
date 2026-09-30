@@ -13,7 +13,7 @@ with `pnpm install --frozen-lockfile`.
 | --- | --- | --- |
 | `Repository` | `.github/workflows/repository.yml` | Every pull request |
 | `Code review` | `.github/workflows/code-review.yml` | Every pull request that isn't a draft |
-| `Doc gardening` | `.github/workflows/doc-gardening.yml` | Mondays at 14:00 UTC; by hand |
+| `Weekly maintenance` | `.github/workflows/maintenance.yml` | Mondays at 14:00 UTC; by hand |
 | `Web` | `.github/workflows/web.yml` | Pull requests that change the site or the core |
 | `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site or the core; by hand |
 | `Dictionary core` | `.github/workflows/dictionary-core.yml` | Pull requests that change the core |
@@ -36,27 +36,61 @@ comments, docs, file sizes, and the linters. What each enforces is in [`code.md`
 
 ## Code review
 
-`.github/workflows/code-review.yml` has Claude review each pull request that isn't a draft or
-opened by a bot, with the `code-review` plugin from `anthropics/claude-code`. The plugin reads its
-review rules from a `CLAUDE.md`, so the job writes one on the runner from `AGENTS.md`,
-[`code.md`](code.md), and `CONTEXT.md`. Claude posts an inline comment per problem it finds, or one
-summary comment when it finds none. The review is advisory: it doesn't block merging, but its check
-fails when Claude couldn't finish (no execution log, a tool it was denied, or an error), so a review
-that stopped early isn't mistaken for a clean one. A denied tool goes in the step's
-`--allowedTools`.
+`.github/workflows/code-review.yml` has Claude review every push to a pull request that isn't a
+draft or opened by a bot, with the repository's `pr-review` skill
+(`.claude/skills/pr-review/SKILL.md`): three reviewers in parallel (bugs, rules, and tests and
+docs), each new finding as an inline comment, and one summary comment it updates on every review.
+It's advisory, and never blocks merging. How it's built, and why:
+
+- **The skill and the rules come from the base branch.** The action replaces `CLAUDE.md`,
+  `.claude/`, and `.mcp.json` with the base branch's copies before Claude starts, so a pull request
+  can't rewrite its own review, and a `CLAUDE.md` written on the runner is lost. The job copies
+  `AGENTS.md`, `ARCHITECTURE.md`, [`code.md`](code.md), and `CONTEXT.md` from the base branch into
+  a file outside the checkout and hands it to Claude and every subagent
+  (`--append-system-prompt-file`, `--append-subagent-system-prompt-file`), so a pull request can't
+  weaken the rules it's reviewed against either.
+- **A re-review raises only what's new.** Before Claude starts, the job reads what `claude[bot]`
+  posted on the pull request and adds it to that file; the summary says whether each earlier
+  finding is fixed.
+- **Subagents stay in the foreground** (`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`). Claude Code runs
+  them in the background by default, and the action stops at Claude's first result, so a review
+  would end green having posted nothing (anthropics/claude-code-action#1646).
+- **The model is pinned** (`--model`), and `--strict-mcp-config` keeps `.mcp.json`'s servers, such
+  as Chrome, out of CI. `--allowedTools` lists every tool in the skill's `allowed-tools`.
+- **The check fails unless Claude posted.** After the review, a script fails the job when Claude
+  left no log, ended in an error, ended with subagents still running, or posted and updated
+  nothing during the run; a denied tool fails it only when nothing was posted. It runs inline
+  because the job can mint an OIDC token, so it runs no script from the pull request.
+- **The transcript is kept** for a week as the `claude-review-transcript` artifact: the action's
+  own log shows counts only.
+
+The inline scripts are tested by running them as the workflow does, against a stand-in for the
+GitHub API (`tools/checks/src/agents/code-review.test.ts`).
 
 It's off until the owners set the `CLAUDE_CODE_OAUTH_TOKEN` repository secret: until then the job
 only notes that it skipped. The action skips a pull request that changes this workflow, which must
 match `main`'s. Making merges wait for the review is a branch rule the owners decide.
 
-## Doc gardening
+## Weekly maintenance
 
-`.github/workflows/doc-gardening.yml` runs every Monday, and by hand. Claude reads what changed on
-`main` in the last seven days, checks up to eight docs that describe it against the code, fixes
-what's no longer true in Markdown only (never an ADR, code, or a workflow), updates
-[`quality.md`](../quality.md) and [`tech-debt.md`](../tech-debt.md) where the week changed them,
-runs `pnpm verify docs`, and opens one pull request, "Weekly doc gardening", unless one is already
-open. Like the code review, it's off until `CLAUDE_CODE_OAUTH_TOKEN` is set.
+`.github/workflows/maintenance.yml` runs every Monday, and by hand. Both jobs start from
+`pnpm maintenance:report` (`tools/checks/src/report.ts`), a Markdown report built only from the
+repository: the checks' failures, the docs whose named or linked files changed after the doc was
+last edited, the known debt and size exceptions, and how many commits have changed code since
+[`quality.md`](../quality.md) was last graded.
+
+- **`doc-gardening`**: unless a "Weekly doc gardening" pull request is already open, Claude takes up
+  to eight docs from the report, checks each against the code, fixes what's no longer true in
+  Markdown only (never an ADR, code, or a workflow), updates [`quality.md`](../quality.md) and
+  [`tech-debt.md`](../tech-debt.md), runs `pnpm verify docs`, and opens one pull request into
+  `main`. Like the review, it keeps subagents in the foreground, leaves the MCP servers out, and
+  keeps its transcript (`doc-gardening-transcript`); a script then fails the job unless it opened a
+  gardening pull request, said "No doc drift found", or left an open one alone
+  (`tools/checks/src/agents/maintenance-workflow.test.ts`).
+- **`report`** posts the report as one open issue, "Weekly repository maintenance", labelled
+  `ready-for-agent`, and edits it each week rather than opening another.
+
+Doc gardening is off until `CLAUDE_CODE_OAUTH_TOKEN` is set; the report runs regardless.
 
 ## Web
 
