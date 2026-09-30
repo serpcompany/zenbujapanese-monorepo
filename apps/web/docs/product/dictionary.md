@@ -165,10 +165,20 @@ otherwise it shows without a link.
 its frequency chips, and opens the word page. The meaning is the one that matched for an English
 query (`displaySummary`), and the word's summary otherwise.
 
+At the app's accessibility text sizes the meaning isn't clamped (`ResultRow`'s `lineLimit`). The
+browser's text size stands in for Dynamic Type: it sets the root font size (16px by default) as
+Dynamic Type sets the app's body (17 pt by default). Every size past the app's largest standard
+one (a 23 pt body) is an accessibility size, so the clamp lifts once the root font size passes
+16px × 23 / 17, about 21.6px (Chrome's "Very large", 24px, lifts it; "Large", 20px, doesn't). The
+`meaning-clamp` rule in `globals.css` computes this with CSS `sign()`; a browser without it keeps
+two lines. Page zoom isn't text size and keeps the clamp.
+
 - Source: App docs, Search ("English rows show the meaning that matched"); `ResultRow` in
   `SearchView.swift`; `displaySummary` in `DictionaryEntry.swift`; #462.
 - Check: SRR `results[].headword`, `reading`, and `summary`; `search-results.test.tsx` (each row's
-  headword, meaning, and link in the SRR cases, and "clamps each meaning to two lines");
+  headword, meaning, and link in the SRR cases, and "clamps each meaning to two lines, and lifts
+  the clamp with large text, as the app does", which evaluates the `meaning-clamp` rule at root
+  font sizes on each side of the threshold);
   `results.test.ts`, "shows the meaning an English query matched"; headword furigana:
   `src/lib/dictionary/detail/ruby.test.ts`, "rubySegments"; the links: `links.test.ts`.
 
@@ -638,12 +648,19 @@ or steps through them. A kanji without a diagram has no button. The page then cr
   The player: No automated check yet (#511).
 
 **Readings.** On, Kun, and Name readings, each with up to three of the kanji's words whose reading
-starts with it. Each word links to its word page. The app's row opens its first word instead; see
-[Required, not built yet](#required-not-built-yet-511).
+starts with it, as "headword · summary". A row with words opens its first word's page, with a
+chevron, as the app's row does; screen readers hear the app's label for it ("Kun reading い.る,
+要る, to be needed, …"). A row without words opens nothing. The words aren't links of their own,
+as in the app.
 
-- Source: `KanjiReadingsSection` in `KanjiDetailView.swift`.
+- Source: `KanjiReadingsSection` and `KanjiReadingRow` in `KanjiDetailView.swift`; #462 (the row
+  layout).
 - Check: KD `readings`; `src/lib/dictionary/detail/kanji.test.ts`, "lists up to three words whose
-  reading starts with the reading’s stem".
+  reading starts with the reading’s stem"; the rows:
+  `src/components/dictionary/kanji-readings.test.tsx` ("the rendered kanji Readings rows match the
+  app"), which draws every KD case's readings through the page's component and reads back each
+  row's link, spoken label, and text. It reads the suite from the repository with no database, so
+  `pnpm check` runs it; the dictionary gate's KD check ties the page's readings to the suite's.
 
 **Components and Elements.** Elements list each element with its role (Meaning / structure, Sound,
 or Sound pattern) and up to three meanings, or its linked on-readings when it has none. Components
@@ -685,21 +702,40 @@ stroke order, Kanjium, and JMdict.
 **Header.** The 全 mark links home, with the site name beside it on wide screens. A header search
 field appears on wide screens, and a search button on phones, except on the dictionary home and
 search pages, which have their own box. The nav links Dictionary, About, and Support on wide
-screens, with no current-page state. "Get the app" leads to the home page until the App Store link
-is known, and has no icon.
+screens.
 
 - Source: #462 design; #484.
-- Check: smoke "the header links to the dictionary and has search". The rest: No automated check
+- Check: smoke "the header links to the dictionary and has search". The layout: No automated check
   yet (#511).
 
-**Footer.** The footer links Dictionary, About and Support (on phones only), Contact, Legal
-(`/legal/`), Privacy Policy, Terms of Use, DMCA Copyright Policy, Affiliate Disclosure, Sources,
-and Sitemap, then the copyright line. Legal follows Contact, as in the #462 design.
+**Current section.** The nav marks the section the page is in, as the #462 design marks
+Dictionary: in the foreground color and medium weight, where the others are muted. Every page
+under `/dictionary/` (search, word, conjugation, and kanji pages) is in Dictionary; `/about/` and
+`/support/` are their own. Home, the legal pages, and the other pages are in none. Screen readers
+hear the link as the current page on the section's own page (`aria-current="page"`) and as current
+on the pages under it (`aria-current="true"`).
 
-- Source: #462 design (Contact, Legal, Privacy, Terms, Sources, Sitemap).
-- Check: the Legal link: `src/components/site-footer.test.tsx`, "the footer links Legal after
-  Contact, before the legal pages, as the #462 design does"; smoke "the footer links Legal". The
-  other links: No automated check yet (#511).
+- Source: #462 design; `components/site-nav.tsx`.
+- Check: `src/components/site-header.test.tsx`, "the header nav marks the current section, as the
+  #462 design does", which renders the header for dictionary, About, Support, and other paths;
+  smoke "the header marks Dictionary current on a kanji page".
+
+**Get the app.** The button leads with a phone icon (lucide `Smartphone`, as the toolbar menu's
+Open in App draws it), then "Get the app". It leads to the home page until the App Store link is
+known.
+
+- Source: #462 design; #511 (the phone icon).
+- Check: `src/components/site-header.test.tsx`, "the Get the app button leads with a phone icon".
+
+**Footer.** The footer links what the #462 design lists, in its order and with its labels:
+Contact, Legal (`/legal/`), Privacy, Terms, Sources, and Sitemap, then the copyright line. Every
+one is a page the site has. The legal index lists the DMCA Copyright Policy and Affiliate
+Disclosure with the others, and the sitemap lists every page, About and Support among them.
+
+- Source: #462 design.
+- Check: `src/components/site-footer.test.tsx`, "the footer links what the #462 design lists, in
+  its order" and "every footer link is a page the site has"; smoke "the footer links what the #462
+  design lists".
 
 **Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
 its defaults: headwords and linked example words have furigana, examples show their translation,
@@ -834,13 +870,6 @@ page's section above, with its check, in the same PR.
 
 ### Search results
 
-**Meaning clamp at large text sizes.** The website clamps a row's meaning to two lines, as the
-app does at standard sizes. At the app's accessibility text sizes the meaning isn't clamped
-(`ResultRow`'s `lineLimit`); the website needs the same exception for large text.
-
-- App source: `ResultRow` in `SearchView.swift`.
-- Check it will get: a rendered-HTML check that the clamp lifts with large text.
-
 **Handwriting and radical input.** The search box offers handwriting and radical selection, as the
 app does.
 
@@ -858,35 +887,10 @@ its leading group of equally strong matches, as the app limits it (`rankedEntryL
 
 ### Kanji page
 
-**Reading rows.** A reading row opens its first word, as the app's row does.
-
-- App source: `KanjiReadingsSection` in `KanjiDetailView.swift`.
-- Check it will get: a rendered-page check against KD `readings`.
-
 **Kanji element detail.** An element opens its element detail screen, as in the app.
 
 - App source: `KanjiElementDetailView.swift`; `KanjiElementLookupClient.swift`.
 - Check it will get: an app-recorded element-detail suite, and a rendered-page check.
-
-### Header and footer
-
-**Current page in the nav.** The header nav marks the current section, as the #462 design shows
-Dictionary as current.
-
-- Source: #462 design.
-- Check it will get: a rendered-HTML check.
-
-**"Get the app" icon.** The header's Get the app button has the design's phone icon.
-
-- Source: #462 design.
-- Check it will get: a rendered-HTML check.
-
-**Other footer links.** The footer lists what the #462 design lists: Contact, Legal, Privacy,
-Terms, Sources, and Sitemap. The website adds Dictionary, DMCA, Affiliate Disclosure, and About and
-Support on phones; keeping any of these differences needs a decision on file.
-
-- Source: #462 design.
-- Check it will get: a rendered-HTML check of the footer's links.
 
 ### Site-wide
 

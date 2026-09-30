@@ -92,6 +92,14 @@ header_has_dictionary() {
 }
 eventually 'the header links to the dictionary and has search' \
   'the header is missing the Dictionary link or search' header_has_dictionary
+# The header nav marks the current section, as the #462 design marks Dictionary.
+header_marks_dictionary() {
+  local links
+  links="$(body "$kanji" | grep -oE '<a [^>]*>Dictionary</a>' || true)"
+  grep 'aria-current="true"' <<<"$links" | grep -q 'href="/dictionary/"'
+}
+eventually 'the header marks Dictionary current on a kanji page' \
+  'the header does not mark Dictionary current on a kanji page' header_marks_dictionary
 # Search results show what the app shows: the iru case of the app-recorded suite, read at run time
 # so a re-recorded suite (which the search import's gate checks) never leaves this check stale.
 # For iru, that's the "Search for「いる」" refinement, then the first rows' entry numbers and chips,
@@ -143,11 +151,17 @@ show_iru_seen() { echo "$iru_seen (want refinement yes; rows $(paste -sd, - <<<"
 eventually 'iru shows the refinement and its first rows with their chips, as the app does' \
   'iru differs from the app' iru_matches_the_app show_iru_seen
 
-# The footer links Legal, as the #462 design's footer does.
-footer_has_legal() {
-  grep -qE '<footer[^>]*>.*href="/legal/"[^>]*>Legal</a>' <<<"$(body / | tr -d '\n')"
+# The footer links what the #462 design's footer lists, in its order.
+footer_links_seen=""
+footer_matches_the_design() {
+  footer_links_seen="$(body / | tr -d '\n' | grep -oE '<footer.*</footer>' |
+    grep -oE 'href="[^"]*"[^>]*>[^<]+</a>' | sed -E 's/href="([^"]*)"[^>]*>([^<]+)<\/a>/\2 \1/' |
+    paste -sd, -)"
+  [ "$footer_links_seen" = 'Contact /contact/,Legal /legal/,Privacy /legal/privacy/,Terms /legal/terms/,Sources /sources/,Sitemap /sitemap/' ]
 }
-eventually 'the footer links Legal' 'the footer is missing the Legal link' footer_has_legal
+show_footer_seen() { echo "$footer_links_seen"; }
+eventually 'the footer links what the #462 design lists' \
+  'the footer differs from the #462 design' footer_matches_the_design show_footer_seen
 
 # Word pages draw what the app draws, read from the app-recorded word-detail suite at run time:
 # 学校's kanji each highlight their own part of the furigana (がっ・こう), 見る's pitch graph puts

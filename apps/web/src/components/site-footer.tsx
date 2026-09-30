@@ -1,30 +1,33 @@
 import Link from 'next/link'
-import { legalPages } from '@/lib/pages'
 import { site } from '@/lib/site'
+
+/**
+ * The #462 design's footer links, in its order and with its labels. The legal index (`/legal/`)
+ * lists every legal page, the DMCA policy and Affiliate Disclosure among them, and the sitemap
+ * lists every page.
+ */
+export const footerLinks = [
+  { path: '/contact/', label: 'Contact' },
+  { path: '/legal/', label: 'Legal' },
+  { path: '/legal/privacy/', label: 'Privacy' },
+  { path: '/legal/terms/', label: 'Terms' },
+  { path: '/sources/', label: 'Sources' },
+  { path: '/sitemap/', label: 'Sitemap' }
+] as const
 
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t">
       <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-6 text-sm text-muted-foreground md:px-5">
-        <nav className="flex flex-wrap gap-x-4 gap-y-1.5 [&_a:hover]:text-foreground">
-          <Link href="/dictionary/">Dictionary</Link>
-          {/* The header hides these on phones. */}
-          <Link href="/about/" className="md:hidden">
-            About
-          </Link>
-          <Link href="/support/" className="md:hidden">
-            Support
-          </Link>
-          <Link href="/contact/">Contact</Link>
-          {/* The #462 design's footer links Legal, the index of the legal pages that follow. */}
-          <Link href="/legal/">Legal</Link>
-          {legalPages.map(page => (
-            <Link key={page.path} href={page.path}>
-              {page.title}
+        <nav
+          aria-label="Footer"
+          className="flex flex-wrap gap-x-4 gap-y-1.5 [&_a:hover]:text-foreground"
+        >
+          {footerLinks.map(link => (
+            <Link key={link.path} href={link.path}>
+              {link.label}
             </Link>
           ))}
-          <Link href="/sources/">Sources</Link>
-          <Link href="/sitemap/">Sitemap</Link>
         </nav>
         <p>
           © {new Date().getFullYear()} {site.name}
