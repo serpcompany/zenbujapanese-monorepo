@@ -8,9 +8,11 @@
 # input and reads no environment variable, so nothing outside the server can make it do anything
 # else: changing what it does takes root on the server.
 #
-# Each environment runs on web_network in one of two slots, both answering to its network alias,
-# zenbujapanese-dictionary-api-<environment>, which the server's nginx resolves per request, sending
-# a request one slot can't answer to the other. A deploy starts the new image in the free slot
+# Each environment runs in one of two slots on the zenbujapanese-dictionary-api Docker network, an
+# internal network only the slots and the server's nginx are on, so a slot can reach nothing else:
+# not the server's other containers, and not the internet. Both slots answer to the environment's
+# network alias, zenbujapanese-dictionary-api-<environment>, which nginx resolves per request,
+# sending a request one slot can't answer to the other. A deploy starts the new image in the free slot
 # without the alias, waits until its /healthz names the image's release, gives it the alias, waits
 # until nginx has seen it, then stops the old one. A new image that doesn't come up is removed, the
 # old one keeps serving, and that image isn't tried again until the tag moves or someone deletes
@@ -21,7 +23,8 @@ set -uo pipefail
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 readonly repository=ghcr.io/serpcompany/zenbujapanese-dictionary-api
-readonly network=web_network
+readonly network=zenbujapanese-dictionary-api
+readonly nginx_container=nginx
 readonly config_dir=/etc/zenbujapanese-dictionary-api
 readonly registry_file="$config_dir/registry.env"
 readonly state_dir=/var/lib/zenbujapanese-dictionary-api
@@ -110,6 +113,19 @@ digest_reference_of() {
 signed_on_main() {
   cosign verify --certificate-identity "$signer_identity" \
     --certificate-oidc-issuer "$signer_issuer" "$1" >/dev/null 2>&1
+}
+
+# Whether the slots' network exists, is internal, and has nginx on it, so a slot there can serve.
+network_ready() {
+  [ "$(docker network inspect --format '{{.Internal}}' "$network" 2>/dev/null)" = true ] &&
+    docker network inspect --format '{{range .Containers}}{{.Name}}{{println}}{{end}}' "$network" |
+    grep --quiet --line-regexp --fixed-strings "$nginx_container"
+}
+
+# Whether a container is on the slots' network. One that isn't predates it, on web_network.
+on_network() {
+  docker inspect --format '{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$1" 2>/dev/null |
+    grep --quiet --line-regexp --fixed-strings "$network"
 }
 
 # Whether a container has the environment's network alias yet.
@@ -272,7 +288,10 @@ check() {
   }
 
   running="$(running_slots "$environment")"
+  # A slot on web_network, from before the slots had a network of their own, is never current: a
+  # deploy replaces it with one on the slots' network.
   for container in $running; do
+    on_network "$container" || continue
     [ "$(docker inspect --format '{{.Image}}' "$container")" = "$image" ] && current="$container"
   done
   if [ -n "$current" ]; then
@@ -305,6 +324,10 @@ check() {
   fi
   if [ "$(docker image inspect --format '{{len .Config.Volumes}}' "$image")" != 0 ]; then
     log "$environment: $reference declares volumes, which a slot never needs; not deploying it"
+    return 1
+  fi
+  if ! network_ready; then
+    log "$environment: the $network network is missing, isn't internal, or doesn't have $nginx_container on it, so a slot there couldn't serve; not deploying (docs/agents/dictionary-api.md, Set up the server)"
     return 1
   fi
 

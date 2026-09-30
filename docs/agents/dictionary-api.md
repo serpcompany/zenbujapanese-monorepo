@@ -203,11 +203,15 @@ runs. A rollback signs its image again only after checking that main signed it b
 On the server, cron runs `deploy/deployer.sh` as root every 5 minutes. It asks the registry which
 image each tag names, and when one changed, deploys it. It takes no input, so changing what it does
 takes root on the server; a change to the script in this repository reaches the server only when
-someone installs it there. Each environment runs on the `web_network` Docker network in one of two
-slots, both answering to the environment's network alias (`zenbujapanese-dictionary-api-staging`
-or `-production`). The server's nginx, which fronts the server's other sites too (serpcompany's
-nginx repository), resolves the alias every 5 seconds and sends a request one slot can't answer,
-because it's stopped, to the other. A deploy starts the new image in the free slot without the
+someone installs it there. Each environment runs in one of two slots on the
+`zenbujapanese-dictionary-api` Docker network, both answering to the environment's network alias
+(`zenbujapanese-dictionary-api-staging` or `-production`). That network is internal and holds only
+the slots and the server's nginx, which is on `web_network` too: a slot reaches nginx and nothing
+else, neither the server's other containers nor the internet, since the service parses untrusted
+input with native code (Sudachi, SQLite). nginx, which fronts the server's other sites too
+(serpcompany's nginx repository), resolves the alias every 5 seconds and sends a request one slot
+can't answer, because it's stopped, to the other. The deployer deploys nothing while the network is
+missing, isn't internal, or doesn't have nginx on it, since a slot there couldn't serve. A deploy starts the new image in the free slot without the
 alias, so nginx sends it nothing while it starts; waits until its `/healthz` names the image's
 release (each check may take 3 seconds, and the whole wait 3 minutes); gives it the alias, by
 reconnecting it to the network; waits until nginx has seen it; then stops the old one. That's about
@@ -234,18 +238,30 @@ deploy: it gives it the alias and restart policy, then stops the other slot.
 - **Production's first switch.** Production's website still predates `/dictionary/service.json`,
   so nothing in CI can confirm production's service before its site switches to it. Confirm it by
   hand first: `https://dictionary-api.zenbujapanese.com/healthz` answers 200 with a build (from a
-  browser, if Bot Fight Mode challenges `curl`). Then run the workflow by hand with
-  `site_without_status_route` checked, and then `Web deploy`. Every later deploy confirms it
-  through the site.
+  browser, if Bot Fight Mode challenges `curl`). Then run this workflow by hand with
+  `site_without_status_route` checked, and then `Web deploy` by hand with the same box checked.
+  Every later deploy confirms it through the site.
 - **The service ships before the site.** The website reads whatever its environment's service
-  answers, so before `Web deploy` deploys an environment, it waits for the same commit's service
-  deploy to that environment (`apps/web/scripts/wait-for-dictionary-service.sh`), and stops if that
-  failed or skipped it. A commit that doesn't change the service deploys the site at once.
+  answers, so before `Web deploy` deploys an environment, it waits until that environment's service
+  runs a release that includes every change to the image up to the commit it deploys
+  (`apps/web/scripts/wait-for-dictionary-service.sh`). It reads the release from the site's
+  `/dictionary/service.json` and checks, with git, that it descends from the last commit that
+  touched this workflow's push paths. A site change whose service is already current deploys at
+  once, however the service got there. While it waits, a service deploy of a commit that includes
+  the change and that ended without deploying the environment (failed, skipped, or cancelled)
+  stops the site's deploy, and so does an hour without one.
+- **Moving to the slots' network.** A slot on `web_network`, which an earlier deployer started, is
+  never taken as current: the next deploy of a signed image replaces it with one on the slots'
+  network. Docker's DNS answers nginx from `web_network` while the old slot is there, so nginx
+  learns the new slot only once the old one stops, so that one deploy answers 502 or 504 for about
+  10 seconds while nginx gives up the old address. It happens once, on staging; production's first
+  deploy starts on the slots' network.
 
 ### Set up the server
 
 Staging and production share one server: the Linux x86-64 server whose nginx container, on the
-`web_network` Docker network, fronts serpcompany's other sites through Cloudflare. The two
+`web_network` Docker network, fronts serpcompany's other sites through Cloudflare. The slots run on
+a network of their own that nginx joins as well (step 4). The two
 services need about 1.5 GB of memory between them, plus about 1.4 GB more for the half minute after
 a deploy starts one, and 5 GB of disk for images. A person with root sets it up once:
 
@@ -292,6 +308,16 @@ a deploy starts one, and 5 GB of disk for images. A person with root sets it up 
    ```
    A staging host name has one level (`dictionary-api-staging.zenbujapanese.com`), since the
    origin certificate covers `*.zenbujapanese.com` alone.
+
+   **The slots' network.** Create it, internal, and connect the running nginx to it. Connecting
+   adds a second network: nginx keeps `web_network` and every other site, and doesn't restart.
+   ```sh
+   docker network create --internal zenbujapanese-dictionary-api
+   docker network connect zenbujapanese-dictionary-api nginx
+   ```
+   The nginx repository's `docker-compose.yml` lists it for nginx too (as an external network), so a
+   recreated nginx joins both. Docker's DNS still resolves the other sites' containers on
+   `web_network`, and the slots' aliases on the slots' network.
 5. **Cloudflare**, in the `zenbujapanese.com` zone: proxied DNS records for
    `dictionary-api.zenbujapanese.com` and `dictionary-api-staging.zenbujapanese.com`, pointing at
    the server, and Authenticated Origin Pulls on (SSL/TLS → Origin Server), since the sites accept
