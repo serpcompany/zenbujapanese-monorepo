@@ -19,6 +19,11 @@ test('asks to drop a listed file that no longer exists', () => {
   ])
 })
 
+test('leaves a listed file alone when a run checks other files', () => {
+  const large = 'apps/ios/Modules/Sources/SearchExperience/SearchView.swift'
+  expect(checkSizes([small], { [large]: { lines: 5000, reason: 'a test' } })).toEqual([])
+})
+
 test('refuses an exception without a reason', () => {
   const large = 'apps/ios/Modules/Sources/SearchExperience/SearchView.swift'
   expect(checkSizes([large], { [large]: { lines: 5000, reason: ' ' } })).toEqual([

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Language } from './files'
 import { classify, root } from './files'
@@ -77,7 +77,6 @@ export function checkSizes(
   known: Readonly<Record<string, SizeException>> = knownLargeFiles
 ): SizeProblem[] {
   const problems: SizeProblem[] = []
-  const present = new Set(files)
   for (const path of files) {
     const kind = classify(path)
     if (kind.kind !== 'code' || !measured.has(kind.language)) continue
@@ -107,7 +106,7 @@ export function checkSizes(
     }
   }
   for (const path of Object.keys(known)) {
-    if (!present.has(path)) {
+    if (!existsSync(join(root, path))) {
       problems.push({ path, problem: 'no longer exists: remove it from knownLargeFiles' })
     }
   }
