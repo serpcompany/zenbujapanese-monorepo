@@ -1,24 +1,5 @@
 name: Search parity
 
-# Search retrieval, word pages' examples, and parts of the word page's detail (the furigana kanji
-# highlight, the pitch graph, Frequency Details, and the conjugation table) exist twice until issue
-# 481 makes TypeScript the single core (ADR 0008): Swift for the iOS app and a TypeScript port for
-# the website. Each pair below is a Swift source and its port; a PR that changes one side of a
-# pair must change the other, or carry the search-parity-reviewed label to say the change only
-# applies to one side.
-#
-#   search:   LookupClient, SearchQuery, DictionaryRanking, JapaneseDeinflection, DictionaryEntry,
-#             JapaneseTextAnalysisClient <-> packages/dictionary-core/src/search/
-#   examples: ExampleSentenceClient, JapaneseTextAnalysisClient, JapaneseInflectionGrouping,
-#             KuromojiMorphologyClient, LinkedJapaneseText (the conjugated form's highlight)
-#             <-> packages/dictionary-core/src/examples/*.ts,
-#             packages/dictionary-core/src/artifact/{example-retrieval,example-search,word-examples,
-#             search-examples,lookup}.ts, apps/dictionary-api/src/kuromoji.ts
-#   detail:   KanjiReadingSplitter, JapaneseRubyText (the per-kanji furigana highlight),
-#             WordDetailView (PitchContourLayout, FrequencyDisclosurePresentation), FrequencyPack,
-#             JapaneseConjugationClient, ConjugationsView
-#             <-> packages/dictionary-core/src/detail/{kanji-split,pitch,frequency,conjugation}.ts
-
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
@@ -71,18 +52,18 @@ jobs:
           changed=$(git diff --name-only "$BASE...$HEAD")
           swift_dir='^apps/ios/Modules/Sources/SearchExperience/'
           status=0
-          # check <pair> <Swift pattern> <TypeScript pattern> <TypeScript location>
           check() {
+            local pair="$1" swift_pattern="$2" typescript_pattern="$3" typescript_location="$4"
             local swift typescript
-            swift=$(echo "$changed" | grep -E "$2" || true)
-            typescript=$(echo "$changed" | grep -E "$3" || true)
+            swift=$(echo "$changed" | grep -E "$swift_pattern" || true)
+            typescript=$(echo "$changed" | grep -E "$typescript_pattern" || true)
             if [ -n "$swift" ] && [ -z "$typescript" ]; then
-              echo "::error::The Swift $1 changed without its TypeScript port ($4). Change both and re-record the conformance suite, or add the search-parity-reviewed label if the change only applies to iOS."
+              echo "::error::The Swift $pair changed without its TypeScript port ($typescript_location). Change both and re-record the conformance suite, or add the search-parity-reviewed label if the change only applies to iOS."
               echo "$swift"
               status=1
             fi
             if [ -n "$typescript" ] && [ -z "$swift" ]; then
-              echo "::error::The TypeScript $1 port ($4) changed without the Swift. Change both and re-record the conformance suite, or add the search-parity-reviewed label if the change only applies to the website."
+              echo "::error::The TypeScript $pair port ($typescript_location) changed without the Swift. Change both and re-record the conformance suite, or add the search-parity-reviewed label if the change only applies to the website."
               echo "$typescript"
               status=1
             fi

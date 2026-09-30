@@ -1,14 +1,5 @@
 name: Dictionary API
 
-# The dictionary service (apps/dictionary-api, ADR 0009) on pull requests: Biome, typecheck, and
-# its tests, which replay the app-recorded suites on the app's real files; then the website's
-# rendered-page gate, rendering what the built service answers. The `Dictionary API deploy`
-# workflow builds and checks its Docker image. See docs/agents/dictionary-api.md.
-#
-# The Git LFS files (about 520 MB) are cached under a hash of their pointers, so a run downloads
-# them only when they change. A pull request's cache is visible only to that pull request, so a
-# push to main that changes them builds the cache every later pull request restores. Sudachi's
-# dictionary is cached under the app's pin the same way.
 on:
   pull_request:
     paths:
@@ -25,7 +16,6 @@ on:
       - .github/workflows/dictionary-api.yml
   push:
     branches: [main]
-    # The Git LFS files and Sudachi's pin, so main holds the caches for their current versions.
     paths:
       - apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3
       - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
@@ -50,7 +40,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: ShellCheck the deploy scripts
-        # ShellCheck 0.11, pinned: the runner's own is older.
         run: >-
           docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0
           apps/dictionary-api/deploy/deployer.sh
@@ -59,9 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      # The suites fail, rather than skip, without the app's files or Sudachi's dictionary.
       ZENBU_REQUIRE_ARTIFACT: '1'
-      # Only this job's service and the gate use it.
       DICTIONARY_API_TOKEN: ci-only-dictionary-api-token
     steps:
       - uses: actions/checkout@v4
@@ -71,7 +58,6 @@ jobs:
           path: .git/lfs/objects
           key: lfs-resources-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**') }}
       - name: Fetch the Git LFS files
-        # The app's bundled data the service reads; downloads only what the cache didn't restore.
         run: git lfs pull --include="$RESOURCES/*.sqlite3,$RESOURCES/Kuromoji/*"
       - uses: pnpm/action-setup@v4
         with:
@@ -88,11 +74,9 @@ jobs:
           path: apps/dictionary-api/.sudachi
           key: sudachi-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json') }}
       - name: Fetch Sudachi's dictionary
-        # Keeps a cached copy that matches the app's pin, or downloads and checks it.
         working-directory: apps/dictionary-api
         run: pnpm sudachi
       - name: Check the service
-        # Lint, typecheck, the conformance suites, and the bundle.
         working-directory: apps/dictionary-api
         run: pnpm check
       - name: Start the service

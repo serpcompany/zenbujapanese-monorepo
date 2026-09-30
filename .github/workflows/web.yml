@@ -31,16 +31,10 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: ShellCheck the scripts
-        # ShellCheck 0.11, pinned: the runner's own is older. At warning level, since its info
-        # SC2329 misreads smoke.sh's checks, which `eventually` calls by name, as never called.
         run: >-
           docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0 --severity=warning
           scripts/smoke.sh scripts/use-dictionary-service.sh scripts/wait-for-dictionary-service.sh
       - run: pnpm check
-      # pnpm check builds without SITE_ENV. Build as each deployed environment does too, since
-      # static pages and prerendering differ by environment: a route that reads a binding at
-      # build time fails only there. Neither build reaches the dictionary service, as in a deploy,
-      # where pages read it only at request time.
       - name: Build for staging
         run: SITE_ENV=staging pnpm build
       - name: Build for production

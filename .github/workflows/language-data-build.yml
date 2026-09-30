@@ -1,11 +1,5 @@
 name: Language data build
 
-# Packages the next language-data release from the committed files (issue 463, step 2):
-# language-data/pipeline/package.py writes manifest.json and files/<sha256>/<name>, refusing any
-# file that differs from its Git LFS pointer, a conformance suite's pin, or another file's pin.
-# It has no credentials and publishes nothing: only the manifest and a listing are kept as an
-# Actions artifact. The Language data release workflow (language-data-release.yml) publishes,
-# and rebuilds rather than trusting this output.
 on:
   pull_request:
     paths:
@@ -37,15 +31,12 @@ jobs:
     timeout-minutes: 30
     defaults:
       run:
-        # Named explicitly so pipefail is on.
         shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/package-language-data
         with:
           out: ${{ runner.temp }}/language-data
-      # Only the manifest and a listing of the staged files (size and path), not the files
-      # themselves: the publish job rebuilds them, and they're 516 MiB.
       - name: List the staged files
         working-directory: ${{ runner.temp }}/language-data
         run: |

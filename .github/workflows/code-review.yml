@@ -1,0 +1,77 @@
+name: Code review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+concurrency:
+  group: code-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: ${{ !github.event.pull_request.draft && github.event.pull_request.user.type != 'Bot' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+    env:
+      HAS_REVIEW_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+    steps:
+      - name: Skip while the CLAUDE_CODE_OAUTH_TOKEN secret isn't set
+        if: env.HAS_REVIEW_TOKEN != 'true'
+        run: echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so Claude doesn't review this pull request (docs/agents/ci.md, Code review)."
+
+      - uses: actions/checkout@v4
+        if: env.HAS_REVIEW_TOKEN == 'true'
+        with:
+          fetch-depth: 1
+
+      - name: Give the reviewer the repository's rules as CLAUDE.md
+        if: env.HAS_REVIEW_TOKEN == 'true'
+        run: cat AGENTS.md docs/agents/code.md CONTEXT.md >CLAUDE.md
+
+      - name: Review with Claude
+        id: review
+        if: env.HAS_REVIEW_TOKEN == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: "https://github.com/anthropics/claude-code.git"
+          plugins: "code-review@claude-code-plugins"
+          prompt: "/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
+          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(gh pr comment:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh search:*),Task"'
+
+      - name: Fail when Claude couldn't finish the review
+        if: env.HAS_REVIEW_TOKEN == 'true'
+        env:
+          EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+        shell: node {0}
+        run: |
+          const fs = require('node:fs')
+          const oneLine = (value, max = 300) => String(value).replace(/[\r\n%]+/g, ' ').slice(0, max)
+          const fail = message => {
+            console.log(`::error title=Claude review didn't finish::${oneLine(message, 600)}`)
+            process.exit(1)
+          }
+          const file = process.env.EXECUTION_FILE
+          if (!file || !fs.existsSync(file)) {
+            fail("The review wrote no execution log, so no review happened. The action skips a pull request that changes this workflow, which must match main's.")
+          }
+          let messages
+          try {
+            messages = JSON.parse(fs.readFileSync(file, 'utf8'))
+          } catch (error) {
+            fail(`The review's execution log isn't JSON: ${error.message}`)
+          }
+          const result = (Array.isArray(messages) ? messages : []).filter(entry => entry?.type === 'result').at(-1)
+          if (!result) fail("The review's execution log has no result, so the review didn't finish.")
+          const denied = [...new Set((result.permission_denials ?? []).map(denial =>
+            denial?.tool_input?.command ? `${denial.tool_name} (${oneLine(denial.tool_input.command, 120)})` : String(denial?.tool_name)
+          ))]
+          if (denied.length) fail(`Claude was denied ${denied.join(', ')}, so the review stopped early. Allow it in claude_args (docs/agents/ci.md, Code review).`)
+          if (result.is_error) fail(`The review ended with ${result.subtype ?? 'an error'}.`)
+          console.log(`Claude's review finished in ${result.num_turns} turns.`)
