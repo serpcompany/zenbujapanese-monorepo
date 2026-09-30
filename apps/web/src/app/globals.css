@@ -128,3 +128,20 @@
     @apply font-sans;
   }
 }
+
+/* A search result's meaning (ResultRow in SearchView.swift): two lines, and unclamped at the app's
+   accessibility text sizes (`lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)`). The
+   browser's text size sets the root font size (16px by default), as Dynamic Type sets the app's
+   (17 pt body at the default size). The app's largest standard size has a 23 pt body, and every
+   larger one is an accessibility size, so the clamp lifts once the root font size passes
+   16px × 23 / 17 (about 21.6px): 998 more lines is no clamp. A browser without `sign()` keeps two
+   lines. search-results.test.tsx evaluates this rule. */
+@utility meaning-clamp {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  @supports (-webkit-line-clamp: calc(2 + sign(1rem - 1px))) {
+    -webkit-line-clamp: calc(2 + 998 * max(0, sign(1rem - 16px * 23 / 17)));
+  }
+}

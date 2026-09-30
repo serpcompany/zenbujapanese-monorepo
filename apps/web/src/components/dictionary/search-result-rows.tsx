@@ -34,13 +34,16 @@ export function Row({
   )
 }
 
-/** `ResultRow`: headword with furigana, the meaning clamped to two lines, and the chips. */
+/**
+ * `ResultRow`: headword with furigana, the meaning clamped to two lines (unclamped with large text,
+ * `meaning-clamp` in globals.css), and the chips.
+ */
 function WordRow({ word }: { word: SearchWord }) {
   return (
     <Row path={word.path}>
       <ItemContent className="gap-1.5" data-result-row={word.entSeq}>
         <RubyText segments={word.ruby} className="text-2xl font-medium leading-tight" />
-        <p className="line-clamp-2 text-sm">{word.summary}</p>
+        <p className="meaning-clamp text-sm">{word.summary}</p>
         <FrequencyBadges frequency={word.chips} />
       </ItemContent>
     </Row>

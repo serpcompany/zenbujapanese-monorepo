@@ -18,6 +18,27 @@ import { SearchResults } from './search-results'
 
 const render = (data: SearchData) => renderToStaticMarkup(<SearchResults data={data} />)
 
+/**
+ * globals.css's `meaning-clamp` rule, which the meaning's class names: the lines it clamps to
+ * without `sign()`, and, as a browser computes its `calc()`, the lines at a root font size.
+ */
+function meaningClamp(): { fallback: number; lines: (rootPx: number) => number } {
+  const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8')
+  const rule = css.match(/@utility meaning-clamp \{([\s\S]*?)\n\}/)?.[1] ?? ''
+  const [fallback, computed] = [...rule.matchAll(/-webkit-line-clamp: ([^;{]+);/g)].map(
+    ([, value]) => value
+  )
+  expect(rule).toMatch(/@supports[^{]*\{\s*-webkit-line-clamp: calc/)
+  // Only numbers, lengths, arithmetic, and the calc(), max(), and sign() functions.
+  expect(computed).toMatch(/^calc\((?:[\d.\s+*/()-]|px|rem|max|sign|,)+\)$/)
+  const lines = (rootPx: number) => {
+    const expression = computed.replaceAll('1rem', `${rootPx}px`).replaceAll('px', '')
+    const evaluate = new Function('calc', 'max', 'sign', `return ${expression}`)
+    return evaluate((value: number) => value, Math.max, Math.sign) as number
+  }
+  return { fallback: Number(fallback), lines }
+}
+
 function word(
   entSeq: number,
   headword: string,
@@ -131,7 +152,7 @@ describe('the search results page', () => {
     expect(page.rows).toEqual([])
   })
 
-  test('clamps each meaning to two lines, as the app does', () => {
+  test('clamps each meaning to two lines, and lifts the clamp with large text, as the app does', () => {
     const html = render({
       state: 'results',
       query: 'x',
@@ -144,7 +165,16 @@ describe('the search results page', () => {
       rowsPath: null,
       resultCount: 1
     })
-    expect(html).toContain('<p class="line-clamp-2 text-sm">word</p>')
+    expect(html).toContain('<p class="meaning-clamp text-sm">word</p>')
+    // `ResultRow`'s `lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)`: the lines the
+    // meaning-clamp rule allows at each root font size, the browser's text size.
+    const rule = meaningClamp()
+    expect(rule.fallback).toBe(2)
+    // The default, and the app's standard sizes up to its largest (23 pt of the default 17 pt).
+    for (const rootPx of [12, 16, 20, (16 * 23) / 17]) expect(rule.lines(rootPx)).toBe(2)
+    // Past it, the app's accessibility sizes (its smallest has a 28 pt body): no clamp.
+    for (const rootPx of [22, 24, (16 * 28) / 17, 32])
+      expect(rule.lines(rootPx)).toBeGreaterThan(900)
   })
 
   test('renders the first 25 of 60 words, counts all 60, and offers the rest', () => {

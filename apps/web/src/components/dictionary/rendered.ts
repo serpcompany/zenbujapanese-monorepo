@@ -91,7 +91,7 @@ export function readRenderedPage(html: string): RenderedPage {
   )
   const rows = segments(html, /data-result-row="(\d+)"/g).map(({ value, html: row }) => {
     const headword = row.match(/<span lang="ja"[^>]*>([\s\S]*?)<\/span>\s*<p/)?.[1] ?? ''
-    const summary = row.match(/<p class="line-clamp-2[^"]*">([\s\S]*?)<\/p>/)?.[1] ?? ''
+    const summary = row.match(/<p class="meaning-clamp[^"]*">([\s\S]*?)<\/p>/)?.[1] ?? ''
     const shown = withoutScreenReaderText(row)
     const chips = segments(shown, /data-chip="([^"]+)"/g).map(chip =>
       visibleText(`<x ${chip.html.split('</span></span>')[0]}`)
