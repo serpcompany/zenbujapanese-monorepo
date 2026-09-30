@@ -28,7 +28,7 @@ Licenses screen, and point the source record at that file instead of keeping a s
 | Study levels | [JLPT vocabulary lists with JMdict IDs](https://github.com/stephenmk/yomitan-jlpt-vocab) | Unofficial JLPT level estimates (N5–N1) from Jonathan Waller's lists. | iOS, Website |
 | Frequency data | [TUBELEX](https://github.com/naist-nlp/tubelex) | Japanese word frequency data from occurrences across YouTube. | iOS, Website |
 | Frequency data | [Wikipedia Word Frequency Clean](https://github.com/adno/wikipedia-word-frequency-clean) | Japanese word frequency data from occurrences across Wikipedia. | iOS |
-| Frequency data | [Jiten](https://jiten.moe/frequency-dictionaries) | Optional domain frequency lists for TV and film, anime, manga, novels, visual novels, and video games, keyed by dictionary form and reading (CC BY-SA 4.0), downloaded on demand. | iOS, Website |
+| Frequency data | [Jiten](https://jiten.moe/frequency-dictionaries) | Optional domain frequency lists for TV and film, anime, manga, novels, visual novels, and video games, keyed by dictionary form and reading (CC BY-SA 4.0), downloaded on demand. | iOS (the website credits it on `/sources/` but shows no Jiten data) |
 | Video captions | [YouTube](https://www.youtube.com/) | Japanese captions for the video a learner opens in Player, and YouTube's English translation of them, fetched when the video opens and not stored. | iOS |
 | Unverified app-owned data | [`Zenbu Word Relationships`](../apps/ios/LanguageData/Sources/Zenbu-Word-Relationships-v1.json) | Two uncited relationships between dictionary entries. No source or reviewer is recorded, so the file is pending a separate removal decision. | iOS |
 

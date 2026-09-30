@@ -132,10 +132,11 @@ fixture JSON is generated, so Biome skips it.
 ### The rendered-page gate
 
 The service's own tests replay the app-recorded suites (`apps/ios/LanguageData/Conformance/`)
-through the core on the real artifact: search retrieval, search results, word detail, and kanji
-detail, every example field included (see [`dictionary-api.md`](dictionary-api.md)). The site's
-gate then renders what a running service answers through the pages' components with React's
-server renderer, and reads back what a reader sees:
+through the core on the real artifact: search retrieval, search results, example search, word
+detail, and kanji detail, every example field included (see
+[`dictionary-api.md`](dictionary-api.md)). The site's gate then renders what a running service
+answers through the pages' components with React's server renderer, and reads back what a reader
+sees:
 
 - `components/dictionary/search-results.test.tsx` renders seven search-results cases: sections,
   the Example Sentences row, the refinement, the kanji row, and each row's headword, meaning,
@@ -208,12 +209,12 @@ Each value that differs by environment lives where the code that reads it runs:
 - **`wrangler secret put --env <env>`** for secrets. **`.dev.vars`** holds local values only and is
   never committed.
 
-`SITE_ENV=production` is set in both the production Worker `vars` and the `deploy:production`
-build. Anything else is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that
-disallows everything. Analytics load only in production and only when their build-time IDs are
-set: `NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable that
-the `Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare Web
-Analytics).
+`SITE_ENV=production` is set in both the production Worker `vars` and the `deploy:production` build.
+Anything else is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that disallows
+everything. Analytics load only in production and only when their build-time IDs are set:
+`NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable that the
+`Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare
+Web Analytics).
 
 Before merging a change to environment configuration, build without the variable and run the
 Worker with the target environment's `vars` (`pnpm exec opennextjs-cloudflare preview --env

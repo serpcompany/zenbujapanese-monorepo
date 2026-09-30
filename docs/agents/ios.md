@@ -100,13 +100,13 @@ change to either screen or its data, record them again with the same
 Recording keeps each case's `id` or `character` and its `covers` note, so add a case by
 adding those two fields and recording.
 
-The website's dictionary service replays all four suites through the shared TypeScript core on
+The website's dictionary service replays all five suites through the shared TypeScript core on
 the same data ([`dictionary-api.md`](dictionary-api.md)), and the `Dictionary API` workflow runs
 them on pull requests that change a suite, so commit a re-recorded suite with the change to the
 core it needs. A change to a Swift file the core ports needs its port changed in the same PR
-([`dictionary-core.md`](dictionary-core.md)). Two things the website does aren't recorded yet:
-sentence search (Discovered Words, above) and a conjugated form's examples. The service checks
-them with its own tests until the suites record them.
+([`dictionary-core.md`](dictionary-core.md)). One thing the website does isn't recorded yet:
+sentence search (Discovered Words, above). The service checks it with its own test
+(`sentence-search.test.ts`) until a suite records it.
 
 The iOS app has no CI workflow. Verify ordinary app changes by also building,
 launching, and inspecting the real app.

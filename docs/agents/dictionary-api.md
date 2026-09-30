@@ -1,11 +1,11 @@
 # Dictionary service working guide
 
-`apps/dictionary-api` is the website's dictionary service (ADR 0009): a Node service that runs
-the shared core (`packages/dictionary-core`) on the app's own bundled data and answers every
-search, word, kanji, example, conjugation, sitemap, and retired-entry request the website makes.
-Nothing is precomputed for a release: it reads `LanguageReferenceData.sqlite3` and its packs with
-the app's own SQL when a page asks, and works out the conjugations sitemap once when it starts. Only the website calls it, with a bearer token. The website's side is in
-[`web.md`](web.md), Dictionary.
+`apps/dictionary-api` is the website's dictionary service (ADR 0009): a Node service that runs the
+shared core (`packages/dictionary-core`) on the app's own bundled data and answers every search,
+word, kanji, example, conjugation, sitemap, and retired-entry request the website makes. Nothing is
+precomputed for a release: it reads `LanguageReferenceData.sqlite3` and its packs with the app's own
+SQL when a page asks, and works out the conjugations sitemap once when it starts. Only the website
+calls it, with a bearer token. The website's side is in [`web.md`](web.md), Dictionary.
 
 Run every command below from `apps/dictionary-api`, after `pnpm install` at the repository root.
 
@@ -89,12 +89,13 @@ the error.
 
 ## How it runs
 
-The main thread hashes the artifact and Sudachi's dictionary once, checks Sudachi's pins, and
-serves HTTP (Hono on Node's HTTP server). Worker threads each open the artifact read-only, checking
-it, its packs, and Kuromoji's pinned files as they load, and answer calls; each call goes to the
-thread with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent searches, word examples, a
-query's examples, kanji pages, and word lookups in LRU caches, so a page's first request pays for
-a broad query and the rest don't. The website's edge cache keeps answers for 10 minutes on top.
+The main thread hashes the artifact and Sudachi's dictionary once, checks Sudachi's pins, and serves
+HTTP (Hono on Node's HTTP server). Worker threads each open the artifact read-only, checking it, its
+packs, and Kuromoji's pinned files as they load, and answer calls; each call goes to the thread with
+the fewest in flight, and a thread that dies is replaced. Each thread keeps recent searches, word
+examples, a query's examples, kanji pages, and word lookups in LRU caches, so a page's first request
+pays for a broad query and the rest don't. The website's edge cache keeps answers for 10 minutes on
+top.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route
 pattern, status, and time. Queries never appear in the logs.
@@ -106,7 +107,7 @@ examples (13,168). Asking each form as its page does would take hours, so
 spelling's sentences in one pass over all of them, with a trie of the spellings, ranks each
 spelling's as the app's Japanese search does, and runs Kuromoji on them until one reads the form
 as one word. It takes about half a minute and about 800 MB more memory, then the thread exits; a
-failure retries up to three times. The main thread keeps the answer.
+failure is tried again a minute later, three attempts in all. The main thread keeps the answer.
 
 A broad query takes one to two seconds the first time: い reads 73,000 entries with the app's own
 SQL, and "to" matches 50,000 Tatoeba pairs. A one-letter wildcard's examples take longer: `a*`,

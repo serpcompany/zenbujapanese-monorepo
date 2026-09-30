@@ -27,14 +27,14 @@ dictionary word needs a morphological analyzer, and the app's, Sudachi, loads a 
 dictionary. The website supplies no analyzer, so it has no sentence search and is a glossary of
 words and kanji.
 [ADR 0009](0009-serve-the-websites-dictionary-from-a-service-running-the-shared-core.md)
-runs the website's core in a service that supplies Sudachi, so the website gets
-sentence search, and nothing is precomputed for it. The conformance suite skips cases the app records as sentence search for a
-client without it.
+runs the website's core in a service that supplies Sudachi, so the website gets sentence search,
+and nothing is precomputed for it. The conformance suite skips cases the app records as sentence
+search for a client without it.
 
 ADR 0006 left TypeScript or Rust to whichever passed the conformance suite. TypeScript wins
 because the website and the extension run JavaScript and the app already embeds JavaScriptCore.
 The costs are that search on iOS runs in JavaScriptCore, whose speed issue 481 measures, and
-that the website has no sentence search.
+that the website has no sentence search (until ADR 0009, whose service supplies it).
 
 The discussion is in [issue 481](https://github.com/serpcompany/zenbujapanese-monorepo/issues/481)
 and [PR 478](https://github.com/serpcompany/zenbujapanese-monorepo/pull/478). This decision

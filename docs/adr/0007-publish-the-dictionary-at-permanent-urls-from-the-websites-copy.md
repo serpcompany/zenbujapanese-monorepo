@@ -49,7 +49,8 @@ A search is `/dictionary/search/<normalized query>/`, in Japanese, kana, romaji,
 `?q=` and non-normalized forms redirect (308) to it. A page with results is indexable and
 self-canonical, including an exact match, which stays a results page like the app's. A page
 without results is `noindex`. Search sitemaps list a query set that the artifact precomputes,
-not every possible query.
+not every possible query. (Under ADR 0009 nothing is precomputed for the website; the query set is
+still to be chosen.)
 
 ## The website publishes; it is not a lookup service
 
