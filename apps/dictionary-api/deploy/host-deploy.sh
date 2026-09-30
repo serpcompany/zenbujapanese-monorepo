@@ -1,37 +1,53 @@
 #!/usr/bin/env bash
-# Deploys an image of the dictionary service on this server, without downtime. The `Dictionary API
-# deploy` workflow runs it over SSH (ci-deploy.sh) as the deploy user, whose key is restricted to
-# this script, so the workflow can ask for only:
+# Deploys an image of the dictionary service to one environment on this server, without downtime.
+# The `Dictionary API deploy` workflow runs it over SSH (ci-deploy.sh) as the deploy user. Each
+# environment's key is restricted to this script and its environment, in authorized_keys:
+#
+#   restrict,command="/usr/local/bin/zenbujapanese-dictionary-api-deploy staging" ssh-ed25519 …
+#
+# so the workflow can ask for only:
 #
 #   deploy ghcr.io/serpcompany/zenbujapanese-dictionary-api@sha256:<digest>
 #   status
 #
-# The service runs in one of two slots, 127.0.0.1:8788 and 127.0.0.1:8789, and the reverse proxy
-# sends each request to whichever answers /healthz (./Caddyfile). A deploy starts the new image in
-# the free slot and waits until its /healthz names the image's release, then stops the old one. If
-# the new one doesn't come up, it's removed and the old one keeps serving. The image it replaced is
-# kept, so deploying that again is a rollback; the repository's other images are removed.
-# Installing it is in docs/agents/dictionary-api.md, Ship it.
+# The service runs on the server's Docker network (web_network) in one of two slots, both answering
+# to the environment's network alias, zenbujapanese-dictionary-api-<environment>. The server's nginx
+# resolves that alias per request and sends a request the one slot can't answer to the other
+# (docs/agents/dictionary-api.md, Ship it). A deploy starts the new image in the free slot, waits
+# until its /healthz names the image's release and nginx has seen it, then stops the old one. If
+# the new one doesn't come up, it's removed and the old one keeps serving. Nothing here touches
+# nginx.
 
 set -euo pipefail
 
 repository="${DICTIONARY_API_REPOSITORY:-ghcr.io/serpcompany/zenbujapanese-dictionary-api}"
-env_file="${DICTIONARY_API_ENV_FILE:-/etc/zenbujapanese-dictionary-api/env}"
-name=zenbujapanese-dictionary-api
-label=zenbujapanese.dictionary-api.slot
-slots=(8788 8789)
+network="${DICTIONARY_API_NETWORK:-web_network}"
+config_dir="${DICTIONARY_API_CONFIG_DIR:-/etc/zenbujapanese-dictionary-api}"
+slot_label=zenbujapanese.dictionary-api.slot
+environment_label=zenbujapanese.dictionary-api.environment
 # How long a new container may take to answer /healthz: it hashes the app's data and loads its
 # worker threads first, a few seconds on a small server.
 ready_seconds=180
+# nginx keeps the alias's addresses this long (resolver valid=5s in its site); wait past it before
+# stopping the old slot, so nginx knows the new one.
+nginx_resolve_seconds=10
 
 fail() {
   echo "error: $*" >&2
   exit 1
 }
 
-# The slot containers, running or not.
+environment="${1:-}"
+case "$environment" in
+  staging | production) ;;
+  *) fail "usage: host-deploy.sh <staging|production> [deploy <image>|status]" ;;
+esac
+name="zenbujapanese-dictionary-api-$environment"
+env_file="$config_dir/$environment.env"
+
+# This environment's slot containers, running or not.
 slot_containers() {
-  docker ps --all --filter "label=$label" --format '{{.Names}}'
+  docker ps --all --filter "label=$environment_label=$environment" --format '{{.Names}}'
 }
 
 # The build a container's /healthz names; fails while it isn't ready.
@@ -50,14 +66,15 @@ status() {
   done
 }
 
-# Removes this repository's images, but those a slot uses and the ones given: the images a deploy
-# replaced, which a rollback deploys again. Each goes by its references in this repository, so an
-# image another repository also names stays.
+# Removes this repository's images, but those any environment's slot uses and the ones given: the
+# images a deploy replaced, which a rollback deploys again (a later deploy of the other environment
+# may remove them; a rollback then pulls them again). Each goes by its references in this
+# repository, so an image another repository also names stays.
 prune() {
   local keep id repository_name tag digest
   keep="$(
     printf '%s\n' "$@"
-    docker ps --all --quiet --filter "label=$label" |
+    docker ps --all --quiet --filter "label=$slot_label" |
       xargs --no-run-if-empty docker inspect --format '{{.Image}}'
   )"
   # Every image, not `--filter reference=`, which leaves out an image pulled by digest alone: how
@@ -76,7 +93,7 @@ prune() {
 deploy() {
   local image="$1" release container slot="" candidate new build waited=0
   local running=() replaced=()
-  [ -r "$env_file" ] || fail "$env_file, which holds DICTIONARY_API_TOKEN, is missing"
+  [ -r "$env_file" ] || fail "$env_file, which holds the $environment DICTIONARY_API_TOKEN, is missing"
   docker pull --quiet "$image" >/dev/null
   release="$(docker image inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$image" |
     sed -n 's/^DICTIONARY_API_RELEASE=//p')"
@@ -90,7 +107,7 @@ deploy() {
       docker rm "$container" >/dev/null
     fi
   done
-  for candidate in "${slots[@]}"; do
+  for candidate in a b; do
     if ! printf '%s\n' "${running[@]}" | grep --quiet --line-regexp "$name-$candidate"; then
       slot="$candidate"
       break
@@ -100,8 +117,9 @@ deploy() {
 
   new="$name-$slot"
   # No restart policy until it answers, so a crash shows at once rather than as a restart loop.
-  docker run --detach --name "$new" --label "$label=$slot" \
-    --env-file "$env_file" --publish "127.0.0.1:$slot:8788" "$image" >/dev/null
+  docker run --detach --name "$new" \
+    --label "$environment_label=$environment" --label "$slot_label=$slot" \
+    --network "$network" --network-alias "$name" --env-file "$env_file" "$image" >/dev/null
   until build="$(build_of "$new")"; do
     if [ "$(docker inspect --format '{{.State.Running}}' "$new")" != true ] ||
       [ "$waited" -ge "$ready_seconds" ]; then
@@ -119,23 +137,23 @@ deploy() {
   fi
   docker update --restart unless-stopped "$new" >/dev/null
 
-  # The proxy checks /healthz every 2 seconds; once it has seen the new slot answer, stopping the
-  # old one moves every request there. A stopped container finishes its requests first (SIGTERM).
-  sleep 5
+  # Once nginx has resolved the alias to both slots, stopping the old one moves every request to
+  # the new one. A stopped container finishes its requests first (SIGTERM).
+  [ "${#running[@]}" -eq 0 ] || sleep "$nginx_resolve_seconds"
   for container in "${running[@]}"; do
     replaced+=("$(docker inspect --format '{{.Image}}' "$container")")
     docker stop --time 30 "$container" >/dev/null
     docker rm "$container" >/dev/null
   done
   prune "${replaced[@]}"
-  echo "deployed $image as $build in slot $slot"
+  echo "deployed $image to $environment as $build in slot $slot"
 }
 
-# One deploy at a time.
-exec 9>"/tmp/$name-deploy.lock"
+# One deploy at a time on this server.
+exec 9>"/tmp/zenbujapanese-dictionary-api-deploy.lock"
 flock --nonblock 9 || fail "another deploy is running on this server"
 
-request="${SSH_ORIGINAL_COMMAND:-$*}"
+request="${SSH_ORIGINAL_COMMAND:-${*:2}}"
 case "$request" in
   status)
     status

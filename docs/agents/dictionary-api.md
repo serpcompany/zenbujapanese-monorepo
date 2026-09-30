@@ -185,64 +185,87 @@ holds (the service, the core, the lockfile, or the app's files it copies), and b
 An environment without a server yet (no `DICTIONARY_API_SSH_HOST`) is skipped with a warning, and
 production runs only after staging deployed.
 
-On the server, the service runs in one of two slots, `127.0.0.1:8788` and `127.0.0.1:8789`, and
-Caddy sends each request to whichever answers `/healthz` (`deploy/Caddyfile`). A deploy starts the
-new image in the free slot, waits until its `/healthz` names the image's release, then stops the old
-one; it takes about 10 seconds and drops no request. A new image that doesn't come up is removed
-and the old one keeps serving. The image the deploy replaced stays on the server, and the
-repository's other images are removed.
+On the server, each environment's service runs on the `web_network` Docker network in one of two
+slots, both answering to the environment's network alias (`zenbujapanese-dictionary-api-staging`
+or `-production`). The server's nginx, which fronts the server's other sites too
+(serpcompany's nginx repository), resolves the alias every 5 seconds and sends a request one slot
+can't answer, because it's stopped or still starting, to the other. A deploy starts the new image
+in the free slot, waits until its `/healthz` names the image's release and nginx has seen it, then
+stops the old one; it takes about 20 seconds and drops no request, and nginx is never reloaded.
+For those seconds nginx spreads requests over both versions. A new image that doesn't come up is
+removed and the old one keeps serving. The image the deploy replaced stays on the server for a
+rollback, until the other environment's next deploy, and the repository's other images are
+removed.
 
 - **Roll back** by running the workflow by hand with `tag` set to the version to go back to, such
   as `sha-0123456789ab`: it deploys that image without building.
-- **See what runs** with `ssh -i <deploy key> deploy@<server> status`, which prints each slot's
-  image and build.
+- **See what runs** with `ssh -i <deploy key> deploy@<server> status`, which prints the
+  environment's slots with their image and build.
 - **Ship the service before the site.** The website reads whatever its environment's service
   answers. A change that needs both goes out in a pull request that changes the service first, or
   keeps the service answering what the current website asks for.
 
-### Set up a server
+### Set up the server
 
-Each environment (staging, production) needs a Linux x86-64 server (Ubuntu or Debian) with 4 GB
-of memory, since the old and new containers overlap during a deploy, and 20 GB of disk.
+Staging and production share one server: the Linux x86-64 server whose nginx container, on the
+`web_network` Docker network, fronts serpcompany's `*.serp.co` sites through Cloudflare. The two
+services need about 1.5 GB of memory between them, plus about 1.4 GB more for the half minute
+after a deploy starts one, and 5 GB of disk for images. Its one-time setup:
 
-1. **Install** [Docker Engine](https://docs.docker.com/engine/install/) and
-   [Caddy](https://caddyserver.com/docs/install).
-2. **The deploy user and its script.** Copy `deploy/host-deploy.sh` to the server, then:
+1. **The deploy user and its script.** Copy `deploy/host-deploy.sh` to the server, then:
    ```sh
    sudo useradd --create-home --shell /bin/bash deploy
    sudo usermod --append --groups docker deploy
    sudo install -m 755 host-deploy.sh /usr/local/bin/zenbujapanese-dictionary-api-deploy
    ```
-   The workflow can't change the script (its key runs only the script), so reinstall it this way
+   The workflow can't change the script (its keys run only the script), so reinstall it this way
    after changing it.
-3. **The token**, which the service reads when it starts:
+2. **Each environment's token**, which its service reads when it starts. Staging runs one worker
+   thread, production two:
    ```sh
    sudo install -d -m 750 -g deploy /etc/zenbujapanese-dictionary-api
-   echo "DICTIONARY_API_TOKEN=$(openssl rand -hex 24)" | sudo tee /etc/zenbujapanese-dictionary-api/env
-   echo "DICTIONARY_API_WORKERS=2" | sudo tee -a /etc/zenbujapanese-dictionary-api/env
-   sudo chmod 640 /etc/zenbujapanese-dictionary-api/env
-   sudo chgrp deploy /etc/zenbujapanese-dictionary-api/env
+   for environment in staging production; do
+     workers=$([ "$environment" = production ] && echo 2 || echo 1)
+     printf 'DICTIONARY_API_TOKEN=%s\nDICTIONARY_API_WORKERS=%s\n' "$(openssl rand -hex 24)" "$workers" |
+       sudo tee /etc/zenbujapanese-dictionary-api/$environment.env >/dev/null
+     sudo chmod 640 /etc/zenbujapanese-dictionary-api/$environment.env
+     sudo chgrp deploy /etc/zenbujapanese-dictionary-api/$environment.env
+   done
    ```
-   Set the environment's Worker to the same token ([`web.md`](web.md), Dictionary service).
-4. **A deploy key**, made on your machine (`ssh-keygen -t ed25519 -N '' -f dictionary-api-staging`)
-   and allowed to run only the script: in `/home/deploy/.ssh/authorized_keys` (the directory mode
-   700, the file 600, both owned by `deploy`), add
+   Set each environment's Worker to its token ([`web.md`](web.md), Dictionary service).
+3. **A deploy key per environment**, made on your machine (`ssh-keygen -t ed25519 -N '' -f
+   dictionary-api-staging`, and the same for production), each allowed to run only the script,
+   for its environment: in `/home/deploy/.ssh/authorized_keys` (the directory mode 700, the file
+   600, both owned by `deploy`), add
    ```
-   restrict,command="/usr/local/bin/zenbujapanese-dictionary-api-deploy" ssh-ed25519 AAAA… dictionary-api-staging
+   restrict,command="/usr/local/bin/zenbujapanese-dictionary-api-deploy staging" ssh-ed25519 AAAA… dictionary-api-staging
+   restrict,command="/usr/local/bin/zenbujapanese-dictionary-api-deploy production" ssh-ed25519 AAAA… dictionary-api-production
    ```
-5. **HTTPS.** Point the service's host name (such as `dictionary-staging.zenbujapanese.com`) at the
-   server, open ports 80 and 443 (and 22 for SSH), install `deploy/Caddyfile` as
-   `/etc/caddy/Caddyfile` with that host name, and `sudo systemctl reload caddy`. Caddy gets the
-   certificate. If Cloudflare proxies the name, set its SSL/TLS mode to Full (strict).
-6. **The GitHub environment** (Settings → Environments → staging or production):
+4. **nginx.** The nginx repository holds each environment's site,
+   `nginx/zenbu-dictionary-staging.serp.co.conf` and `nginx/zenbu-dictionary.serp.co.conf`: the
+   `*.serp.co` origin certificate and Cloudflare's client certificate, as the other sites have,
+   the network alias resolved every 5 seconds, and failover to the other slot. Adding them is the
+   one change nginx ever needs: pull them on the server, then check and reload it, which keeps the
+   container and every other site running:
    ```sh
-   gh variable set DICTIONARY_API_URL --env staging --body https://dictionary-staging.zenbujapanese.com
+   docker exec nginx nginx -t && docker exec nginx nginx -s reload
+   ```
+   A staging host name has one level (`zenbu-dictionary-staging.serp.co`), since the origin
+   certificate covers `*.serp.co` alone.
+5. **Cloudflare.** Proxied DNS records for both host names, pointing at the server as the other
+   `*.serp.co` sites do. The zone's bot protection must let the website's Worker and GitHub's
+   runners reach them (the deploys check `/healthz`); every `/v1` route needs the token anyway.
+6. **The GitHub environments** (Settings → Environments → staging or production). The deploy
+   connects over SSH from GitHub's runners, so the server's SSH port must be reachable from them:
+   ```sh
+   gh variable set DICTIONARY_API_URL --env staging --body https://zenbu-dictionary-staging.serp.co
    gh variable set DICTIONARY_API_SSH_HOST --env staging --body <server address>
    ssh-keyscan -t ed25519 <server address> | gh variable set DICTIONARY_API_SSH_KNOWN_HOSTS --env staging
    gh secret set DICTIONARY_API_SSH_KEY --env staging < dictionary-api-staging
    ```
-   `DICTIONARY_API_SSH_USER` (default `deploy`) and `DICTIONARY_API_SSH_PORT` (default 22) are
-   optional. With a port other than 22, run `ssh-keyscan -p <port>`.
+   Production is the same with `--env production`, `https://zenbu-dictionary.serp.co`, and its own
+   key. `DICTIONARY_API_SSH_USER` (default `deploy`) and `DICTIONARY_API_SSH_PORT` (default 22) are
+   optional; with another port, run `ssh-keyscan -p <port>`.
 7. **The first deploy.** Run the workflow by hand (Actions → Dictionary API deploy → Run
    workflow), then `Web deploy`.
 
