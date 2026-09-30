@@ -209,11 +209,12 @@ else, neither the server's other containers nor the internet, since the service 
 input with native code (Sudachi, SQLite). nginx, which fronts the server's other sites too
 (serpcompany's nginx repository), resolves the alias every 5 seconds and sends a request one slot
 can't answer, because it's stopped, to the other. The deployer deploys nothing while the network is
-missing, isn't internal, or doesn't have nginx on it, since a slot there couldn't serve. A deploy starts the new image in the free slot without the
-alias, so nginx sends it nothing while it starts; waits until its `/healthz` names the image's
-release (each check may take 3 seconds, and the whole wait 3 minutes); gives it the alias, by
-reconnecting it to the network; waits until nginx has seen it; then stops the old one. That's about
-20 seconds, with no request dropped and nginx never reloaded. A new image that doesn't come up is
+missing, isn't internal, or doesn't have nginx on it, since a slot there couldn't serve. A deploy
+starts the new image in the free slot without the alias, so nginx sends it nothing while it
+starts; waits until its `/healthz` names the image's release (each check may take 3 seconds, and
+the whole wait 3 minutes); gives it the alias, by reconnecting it to the network; waits until
+nginx has seen it; then stops the old one. That's about 20 seconds, with no request dropped and
+nginx never reloaded. A new image that doesn't come up is
 removed, the old one keeps serving, and that image isn't tried again until the tag moves (below).
 Every container is capped (4 GB of memory, 4 CPUs, 512 processes, 30 MB of logs) and runs as user
 1000 (the node image's `node`), whatever the image says, with no capabilities and a read-only file
