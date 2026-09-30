@@ -207,9 +207,10 @@ repository's images, and never nginx.
   as `sha-0123456789ab`: it moves the tags to that image without building.
 - **See what runs** on the server: `docker ps --filter label=zenbujapanese.dictionary-api.slot`,
   and what the deployer did: `journalctl -t zenbujapanese-dictionary-api`.
-- **Ship the service before the site.** The website reads whatever its environment's service
-  answers. A change that needs both goes out in a pull request that changes the service first, or
-  keeps the service answering what the current website asks for.
+- **The service ships before the site.** The website reads whatever its environment's service
+  answers, so before `Web deploy` deploys an environment, it waits for the same commit's service
+  deploy to that environment (`apps/web/scripts/wait-for-dictionary-service.sh`), and stops if that
+  failed or skipped it. A commit that doesn't change the service deploys the site at once.
 
 ### Set up the server
 

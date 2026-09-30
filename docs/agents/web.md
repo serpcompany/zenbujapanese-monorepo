@@ -198,7 +198,9 @@ Each deployed environment reads its own dictionary service:
 the deploy; the smoke test's dictionary pages then prove the token works. Deploy a new service
 before a site change that needs it: the site reads whatever service its environment names. The
 `Dictionary API deploy` workflow deploys the service itself
-([`dictionary-api.md`](dictionary-api.md), Ship it).
+([`dictionary-api.md`](dictionary-api.md), Ship it), and `Web deploy` waits for the same commit's
+service deploy to an environment before deploying the site there
+(`scripts/wait-for-dictionary-service.sh`).
 
 ### Environment configuration
 
