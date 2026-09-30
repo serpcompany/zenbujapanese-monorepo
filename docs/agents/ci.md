@@ -42,7 +42,8 @@ review rules from a `CLAUDE.md`, so the job writes one on the runner from `AGENT
 [`code.md`](code.md), and `CONTEXT.md`. Claude posts an inline comment per problem it finds, or one
 summary comment when it finds none. The review is advisory: it doesn't block merging, but its check
 fails when Claude couldn't finish (no execution log, a tool it was denied, or an error), so a review
-that stopped early isn't mistaken for a clean one. A denied tool goes in the step's `--allowedTools`.
+that stopped early isn't mistaken for a clean one. A denied tool goes in the step's
+`--allowedTools`.
 
 It's off until the owners set the `CLAUDE_CODE_OAUTH_TOKEN` repository secret: until then the job
 only notes that it skipped. The action skips a pull request that changes this workflow, which must
