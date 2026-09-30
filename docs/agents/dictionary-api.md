@@ -236,11 +236,12 @@ deploy: it gives it the alias and restart policy, then stops the other slot.
   When it failed for a reason that wasn't the image's (the server restarting Docker mid-deploy),
   delete that file to try it again on the next run.
 - **Production's first switch.** Production's website still predates `/dictionary/service.json`,
-  so nothing in CI can confirm production's service before its site switches to it. Confirm it by
-  hand first: `https://dictionary-api.zenbujapanese.com/healthz` answers 200 with a build (from a
-  browser, if Bot Fight Mode challenges `curl`). Then run this workflow by hand with
-  `site_without_status_route` checked, and then `Web deploy` by hand with the same box checked.
-  Every later deploy confirms it through the site.
+  so nothing in CI can confirm production's service before its site switches to it; check it by
+  hand in between. Run this workflow by hand with `site_without_status_route` checked, which moves
+  `:production` and accepts the missing route. Within about 5 minutes, the deployer starts
+  production: wait until `https://dictionary-api.zenbujapanese.com/healthz` answers 200 with the
+  new build (in a browser, if Bot Fight Mode challenges `curl`). Then run `Web deploy` by hand with
+  the same box checked. Every later deploy confirms it through the site.
 - **The service ships before the site.** The website reads whatever its environment's service
   answers, so before `Web deploy` deploys an environment, it waits until that environment's service
   runs a release that includes every change to the image up to the commit it deploys

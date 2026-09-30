@@ -46,7 +46,7 @@ while [ $((SECONDS - started)) -lt "$timeout" ]; do
       echo "deployed=true" >>"$output"
       exit 0
     fi
-    echo "::error::The $env site has no /dictionary/service.json, so nothing confirms its service runs $build. For production's first switch, confirm its /healthz by hand, then run this workflow by hand with site_without_status_route (docs/agents/dictionary-api.md, Ship it)."
+    echo "::error::The $env site has no /dictionary/service.json, so nothing confirms its service runs $build. For production's first switch, run this workflow by hand with site_without_status_route, and check its /healthz by hand before Web deploy (docs/agents/dictionary-api.md, Ship it)."
     exit 1
   fi
   seen="$(jq -r '.build // empty' "$body" 2>/dev/null || true)"

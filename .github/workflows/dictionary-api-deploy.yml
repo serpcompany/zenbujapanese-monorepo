@@ -59,8 +59,9 @@ on:
       site_without_status_route:
         description: >-
           Production's first switch only. Its site predates /dictionary/service.json, so nothing
-          can confirm the new build through it; confirm
-          https://dictionary-api.zenbujapanese.com/healthz by hand first, then set this.
+          can confirm the new build through it; check
+          https://dictionary-api.zenbujapanese.com/healthz by hand once the deployer starts it,
+          before Web deploy.
         type: boolean
         required: false
         default: false
