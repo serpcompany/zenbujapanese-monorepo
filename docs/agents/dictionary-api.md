@@ -147,7 +147,8 @@ with the service's readers, for `pnpm dev` without a service.
 
 The service ships as one Docker image holding the bundled code, the app's files it reads, and
 Sudachi's checked dictionary. The `Dictionary API deploy` workflow builds it, pushes it to the
-GitHub Container Registry, and deploys it to a Docker server per environment over SSH.
+GitHub Container Registry, and points each environment's tag at it; a cron job on the server
+deploys what the tags name. Nothing outside the server can act on it.
 
 ### The image
 
@@ -175,32 +176,37 @@ holds (the service, the core, the lockfile, or the app's files it copies), and b
    doesn't without one). It then pushes it as
    `ghcr.io/serpcompany/zenbujapanese-dictionary-api:sha-<commit>` and `:main`. A pull request
    that changes the image runs only this build and check.
-2. **`staging`** runs `deploy/ci-deploy.sh`, which runs `deploy/host-deploy.sh` on the staging
-   server over SSH, then waits until the environment's `DICTIONARY_API_URL` answers `/healthz` with
-   the new build, and tags the image `:staging`.
-3. **`production`** does the same once staging answers with the image, and tags it
-   `:production`. The repository variable `DEPLOY_PRODUCTION` set to `false` stops at staging, as
-   for the website; a run by hand still deploys production.
+2. **`staging`** moves the `:staging` tag to the image, then waits, up to 20 minutes, until the
+   environment's `DICTIONARY_API_URL` answers `/healthz` with the new build
+   (`deploy/await-build.sh`).
+3. **`production`** does the same with `:production`, once staging answers with the image. The
+   repository variable `DEPLOY_PRODUCTION` set to `false` stops at staging, as for the website; a
+   run by hand still deploys production.
 
-An environment without a server yet (no `DICTIONARY_API_SSH_HOST`) is skipped with a warning, and
-production runs only after staging deployed.
+GitHub holds no access to the server: all the workflow can do is publish an image and move a tag.
+An environment without a `DICTIONARY_API_URL` yet isn't checked, and production waits for a
+checked staging.
 
-On the server, each environment's service runs on the `web_network` Docker network in one of two
+On the server, cron runs `deploy/deployer.sh` as root every 5 minutes. It asks the registry which
+image each tag names, and when one changed, deploys it. It takes no input, so changing what it does
+takes root on the server; a change to the script in this repository reaches the server only when
+someone installs it there. Each environment runs on the `web_network` Docker network in one of two
 slots, both answering to the environment's network alias (`zenbujapanese-dictionary-api-staging`
-or `-production`). The server's nginx, which fronts the server's other sites too
-(serpcompany's nginx repository), resolves the alias every 5 seconds and sends a request one slot
-can't answer, because it's stopped or still starting, to the other. A deploy starts the new image
-in the free slot, waits until its `/healthz` names the image's release and nginx has seen it, then
-stops the old one; it takes about 20 seconds and drops no request, and nginx is never reloaded.
-For those seconds nginx spreads requests over both versions. A new image that doesn't come up is
-removed and the old one keeps serving. The image the deploy replaced stays on the server for a
-rollback, until the other environment's next deploy, and the repository's other images are
-removed.
+or `-production`). The server's nginx, which fronts the server's other sites too (serpcompany's
+nginx repository), resolves the alias every 5 seconds and sends a request one slot can't answer,
+because it's stopped or still starting, to the other. A deploy starts the new image in the free
+slot, waits until its `/healthz` names the image's release and nginx has seen it, then stops the old
+one: about 20 seconds, with no request dropped and nginx never reloaded. A new image that doesn't
+come up is removed, the old one keeps serving, and that image isn't tried again until the tag moves.
+Every container is capped (2 GB of memory, 2 CPUs, 512 processes, 30 MB of logs) and runs as the
+image's non-root user with no capabilities and a read-only file system, so no image can starve the
+server's other services or change the server. The deployer touches only its own containers and this
+repository's images, and never nginx.
 
 - **Roll back** by running the workflow by hand with `tag` set to the version to go back to, such
-  as `sha-0123456789ab`: it deploys that image without building.
-- **See what runs** with `ssh -i <deploy key> deploy@<server> status`, which prints the
-  environment's slots with their image and build.
+  as `sha-0123456789ab`: it moves the tags to that image without building.
+- **See what runs** on the server: `docker ps --filter label=zenbujapanese.dictionary-api.slot`,
+  and what the deployer did: `journalctl -t zenbujapanese-dictionary-api`.
 - **Ship the service before the site.** The website reads whatever its environment's service
   answers. A change that needs both goes out in a pull request that changes the service first, or
   keeps the service answering what the current website asks for.
@@ -209,39 +215,31 @@ removed.
 
 Staging and production share one server: the Linux x86-64 server whose nginx container, on the
 `web_network` Docker network, fronts serpcompany's `*.serp.co` sites through Cloudflare. The two
-services need about 1.5 GB of memory between them, plus about 1.4 GB more for the half minute
-after a deploy starts one, and 5 GB of disk for images. Its one-time setup:
+services need about 1.5 GB of memory between them, plus about 1.4 GB more for the half minute after
+a deploy starts one, and 5 GB of disk for images. A person with root sets it up once:
 
-1. **The deploy user and its script.** Copy `deploy/host-deploy.sh` to the server, then:
+1. **The deployer**, from `deploy/deployer.sh`, run every 5 minutes. It needs `logger` and
+   `flock`, which Ubuntu and Debian have:
    ```sh
-   sudo useradd --create-home --shell /bin/bash deploy
-   sudo usermod --append --groups docker deploy
-   sudo install -m 755 host-deploy.sh /usr/local/bin/zenbujapanese-dictionary-api-deploy
+   sudo install -m 755 deployer.sh /usr/local/bin/zenbujapanese-dictionary-api-deployer
+   echo '*/5 * * * * root /usr/local/bin/zenbujapanese-dictionary-api-deployer >/dev/null 2>&1' |
+     sudo tee /etc/cron.d/zenbujapanese-dictionary-api >/dev/null
+   sudo chmod 644 /etc/cron.d/zenbujapanese-dictionary-api
    ```
-   The workflow can't change the script (its keys run only the script), so reinstall it this way
-   after changing it.
-2. **Each environment's token**, which its service reads when it starts. Staging runs one worker
-   thread, production two:
+   Reinstall it this way after changing it; nothing else updates it.
+2. **Each environment's token**, which its service reads when it starts. An environment without
+   its file isn't deployed. Staging runs one worker thread, production two:
    ```sh
-   sudo install -d -m 750 -g deploy /etc/zenbujapanese-dictionary-api
+   sudo install -d -m 700 /etc/zenbujapanese-dictionary-api
    for environment in staging production; do
      workers=$([ "$environment" = production ] && echo 2 || echo 1)
      printf 'DICTIONARY_API_TOKEN=%s\nDICTIONARY_API_WORKERS=%s\n' "$(openssl rand -hex 24)" "$workers" |
        sudo tee /etc/zenbujapanese-dictionary-api/$environment.env >/dev/null
-     sudo chmod 640 /etc/zenbujapanese-dictionary-api/$environment.env
-     sudo chgrp deploy /etc/zenbujapanese-dictionary-api/$environment.env
+     sudo chmod 600 /etc/zenbujapanese-dictionary-api/$environment.env
    done
    ```
    Set each environment's Worker to its token ([`web.md`](web.md), Dictionary service).
-3. **A deploy key per environment**, made on your machine (`ssh-keygen -t ed25519 -N '' -f
-   dictionary-api-staging`, and the same for production), each allowed to run only the script,
-   for its environment: in `/home/deploy/.ssh/authorized_keys` (the directory mode 700, the file
-   600, both owned by `deploy`), add
-   ```
-   restrict,command="/usr/local/bin/zenbujapanese-dictionary-api-deploy staging" ssh-ed25519 AAAA… dictionary-api-staging
-   restrict,command="/usr/local/bin/zenbujapanese-dictionary-api-deploy production" ssh-ed25519 AAAA… dictionary-api-production
-   ```
-4. **nginx.** The nginx repository holds each environment's site,
+3. **nginx.** The nginx repository holds each environment's site,
    `nginx/zenbu-dictionary-staging.serp.co.conf` and `nginx/zenbu-dictionary.serp.co.conf`: the
    `*.serp.co` origin certificate and Cloudflare's client certificate, as the other sites have,
    the network alias resolved every 5 seconds, and failover to the other slot. Adding them is the
@@ -252,22 +250,17 @@ after a deploy starts one, and 5 GB of disk for images. Its one-time setup:
    ```
    A staging host name has one level (`zenbu-dictionary-staging.serp.co`), since the origin
    certificate covers `*.serp.co` alone.
-5. **Cloudflare.** Proxied DNS records for both host names, pointing at the server as the other
+4. **Cloudflare.** Proxied DNS records for both host names, pointing at the server as the other
    `*.serp.co` sites do. The zone's bot protection must let the website's Worker and GitHub's
-   runners reach them (the deploys check `/healthz`); every `/v1` route needs the token anyway.
-6. **The GitHub environments** (Settings → Environments → staging or production). The deploy
-   connects over SSH from GitHub's runners, so the server's SSH port must be reachable from them:
+   runners reach them (the workflow checks `/healthz`); every `/v1` route needs the token anyway.
+5. **The GitHub environments**, which hold only the services' URLs:
    ```sh
    gh variable set DICTIONARY_API_URL --env staging --body https://zenbu-dictionary-staging.serp.co
-   gh variable set DICTIONARY_API_SSH_HOST --env staging --body <server address>
-   ssh-keyscan -t ed25519 <server address> | gh variable set DICTIONARY_API_SSH_KNOWN_HOSTS --env staging
-   gh secret set DICTIONARY_API_SSH_KEY --env staging < dictionary-api-staging
+   gh variable set DICTIONARY_API_URL --env production --body https://zenbu-dictionary.serp.co
    ```
-   Production is the same with `--env production`, `https://zenbu-dictionary.serp.co`, and its own
-   key. `DICTIONARY_API_SSH_USER` (default `deploy`) and `DICTIONARY_API_SSH_PORT` (default 22) are
-   optional; with another port, run `ssh-keyscan -p <port>`.
-7. **The first deploy.** Run the workflow by hand (Actions → Dictionary API deploy → Run
-   workflow), then `Web deploy`.
+6. **The first deploy.** Run the workflow by hand (Actions → Dictionary API deploy → Run
+   workflow); the deployer starts each image within 5 minutes of its tag moving. Then run
+   `Web deploy`.
 
 The image's package is public, as the repository and the app's data are, so servers pull it
 without a login. The first push creates it private: set it to public once, in the package's

@@ -1,11 +1,11 @@
 name: Dictionary API deploy
 
 # Ships the dictionary service (apps/dictionary-api, ADR 0009). It builds the Docker image, checks
-# that the image starts and answers, and pushes it to the GitHub Container Registry. Then it
-# deploys it to staging and, once staging answers with it, to production. Each deploy runs
-# apps/dictionary-api/deploy/host-deploy.sh on the environment's server over SSH: the new image
-# starts beside the old one, which stops once the new one answers, and a new image that doesn't
-# come up is removed while the old one keeps serving. See docs/agents/dictionary-api.md, Ship it.
+# that the image starts and answers, and pushes it to the GitHub Container Registry. Then it moves
+# the :staging tag to it and waits until staging answers with it, then does the same for
+# :production. Nothing here reaches the server: its deployer (apps/dictionary-api/deploy/
+# deployer.sh, run by cron every 5 minutes) sees the tag move and swaps the image in, keeping the
+# old one if the new one doesn't come up. See docs/agents/dictionary-api.md, Ship it.
 #
 # A pull request that changes the image only builds and checks it. A manual run can deploy an image
 # already pushed, by its tag (sha-<commit>), to roll back. Set the repository variable
@@ -28,7 +28,6 @@ on:
       - .github/workflows/dictionary-api-deploy.yml
       - '!**/*.test.ts'
       - '!apps/dictionary-api/src/conformance/**'
-      - '!apps/dictionary-api/deploy/**'
   pull_request:
     paths:
       - apps/dictionary-api/**
@@ -183,37 +182,29 @@ jobs:
     needs: image
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The deployer checks the tag every 5 minutes, then pulls and starts the image.
+    timeout-minutes: 25
     environment: staging
     permissions:
       contents: read
       packages: write
     outputs:
-      deployed: ${{ steps.deploy.outputs.deployed }}
+      deployed: ${{ steps.await.outputs.deployed }}
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy the image
-        id: deploy
-        env:
-          DICTIONARY_API_URL: ${{ vars.DICTIONARY_API_URL }}
-          DICTIONARY_API_SSH_HOST: ${{ vars.DICTIONARY_API_SSH_HOST }}
-          DICTIONARY_API_SSH_USER: ${{ vars.DICTIONARY_API_SSH_USER }}
-          DICTIONARY_API_SSH_PORT: ${{ vars.DICTIONARY_API_SSH_PORT }}
-          DICTIONARY_API_SSH_KNOWN_HOSTS: ${{ vars.DICTIONARY_API_SSH_KNOWN_HOSTS }}
-          DICTIONARY_API_SSH_KEY: ${{ secrets.DICTIONARY_API_SSH_KEY }}
-        run: >-
-          apps/dictionary-api/deploy/ci-deploy.sh staging
-          "${{ needs.image.outputs.image }}" "${{ needs.image.outputs.build }}"
       - name: Log in to the GitHub Container Registry
-        if: steps.deploy.outputs.deployed == 'true'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Tag the image as staging's
-        if: steps.deploy.outputs.deployed == 'true'
+      - name: Move the :staging tag to the image
         run: docker buildx imagetools create --tag "$IMAGE:staging" "${{ needs.image.outputs.image }}"
+      - name: Wait until staging answers with it
+        id: await
+        env:
+          DICTIONARY_API_URL: ${{ vars.DICTIONARY_API_URL }}
+        run: apps/dictionary-api/deploy/await-build.sh staging "${{ needs.image.outputs.build }}" 1200
 
   production:
     needs: [image, staging]
@@ -223,32 +214,26 @@ jobs:
       needs.staging.outputs.deployed == 'true' &&
       (vars.DEPLOY_PRODUCTION != 'false' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The deployer checks the tag every 5 minutes, then pulls and starts the image.
+    timeout-minutes: 25
     environment: production
     permissions:
       contents: read
       packages: write
+    outputs:
+      deployed: ${{ steps.await.outputs.deployed }}
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy the image
-        id: deploy
-        env:
-          DICTIONARY_API_URL: ${{ vars.DICTIONARY_API_URL }}
-          DICTIONARY_API_SSH_HOST: ${{ vars.DICTIONARY_API_SSH_HOST }}
-          DICTIONARY_API_SSH_USER: ${{ vars.DICTIONARY_API_SSH_USER }}
-          DICTIONARY_API_SSH_PORT: ${{ vars.DICTIONARY_API_SSH_PORT }}
-          DICTIONARY_API_SSH_KNOWN_HOSTS: ${{ vars.DICTIONARY_API_SSH_KNOWN_HOSTS }}
-          DICTIONARY_API_SSH_KEY: ${{ secrets.DICTIONARY_API_SSH_KEY }}
-        run: >-
-          apps/dictionary-api/deploy/ci-deploy.sh production
-          "${{ needs.image.outputs.image }}" "${{ needs.image.outputs.build }}"
       - name: Log in to the GitHub Container Registry
-        if: steps.deploy.outputs.deployed == 'true'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Tag the image as production's
-        if: steps.deploy.outputs.deployed == 'true'
+      - name: Move the :production tag to the image
         run: docker buildx imagetools create --tag "$IMAGE:production" "${{ needs.image.outputs.image }}"
+      - name: Wait until production answers with it
+        id: await
+        env:
+          DICTIONARY_API_URL: ${{ vars.DICTIONARY_API_URL }}
+        run: apps/dictionary-api/deploy/await-build.sh production "${{ needs.image.outputs.build }}" 1200
