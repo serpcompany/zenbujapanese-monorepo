@@ -9,7 +9,9 @@
 # gets. The site is reached at its workers.dev address (WEB_WORKERS_DEV_URL), which the zone doesn't
 # cover, with the smoke-test header that keeps workers.dev from redirecting to the branded domain.
 # An environment without WEB_WORKERS_DEV_URL is skipped with a warning. A site deployed before
-# /dictionary/service.json existed can't tell, so then the wait ends with a warning.
+# /dictionary/service.json existed can't tell, so the wait fails there, unless
+# SITE_WITHOUT_STATUS_ROUTE is true: a manual run's word that the service's /healthz was confirmed
+# by hand, for production's first switch.
 #
 #   await-build.sh <staging|production> <build> [timeout seconds]
 set -euo pipefail
@@ -28,9 +30,9 @@ smoke=(-H 'x-zenbu-smoke-test: 1')
 body="$(mktemp)"
 trap 'rm -f "$body"' EXIT
 
-page="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${smoke[@]}" "$site/dictionary/")"
+page="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${smoke[@]}" "$site/dictionary/" || true)"
 if [ "$page" != 200 ]; then
-  echo "::error::$site/dictionary/ answers $page: WEB_WORKERS_DEV_URL should be the $env site's workers.dev address"
+  echo "::error::$site/dictionary/ answers ${page:-nothing} (000 is no answer): WEB_WORKERS_DEV_URL should be the $env site's workers.dev address"
   exit 1
 fi
 
@@ -39,9 +41,13 @@ started=$SECONDS
 while [ $((SECONDS - started)) -lt "$timeout" ]; do
   code="$(curl -s -o "$body" -w '%{http_code}' --max-time 20 "${smoke[@]}" "$site/dictionary/service.json" || true)"
   if [ "$code" = 404 ]; then
-    echo "::warning::The $env site predates /dictionary/service.json, so nothing confirms its service runs $build; the next deploy will."
-    echo "deployed=true" >>"$output"
-    exit 0
+    if [ "${SITE_WITHOUT_STATUS_ROUTE:-false}" = true ]; then
+      echo "::warning::The $env site predates /dictionary/service.json, so nothing here confirms its service runs $build; this run says its /healthz was confirmed by hand."
+      echo "deployed=true" >>"$output"
+      exit 0
+    fi
+    echo "::error::The $env site has no /dictionary/service.json, so nothing confirms its service runs $build. For production's first switch, confirm its /healthz by hand, then run this workflow by hand with site_without_status_route (docs/agents/dictionary-api.md, Ship it)."
+    exit 1
   fi
   seen="$(jq -r '.build // empty' "$body" 2>/dev/null || true)"
   if [ "$seen" = "$build" ]; then

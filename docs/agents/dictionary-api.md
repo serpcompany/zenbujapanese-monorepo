@@ -176,12 +176,13 @@ holds (the service, the core, the lockfile, or the app's files it copies), and b
    doesn't without one). It then pushes it as
    `ghcr.io/serpcompany/zenbujapanese-dictionary-api:sha-<commit>` and `:main`. A pull request
    that changes the image runs only this build and check.
-2. **`staging`** moves the `:staging` tag to the image, then waits, up to 20 minutes, until the
-   environment's service answers with the new build (`deploy/await-build.sh`). It asks through the
-   environment's website, `/dictionary/service.json` at its workers.dev address
-   (`WEB_WORKERS_DEV_URL`), since Bot Fight Mode on the zone challenges CI runners that ask the
-   service directly. A site deployed before that route existed can't tell, so the first deploy's
-   wait ends with a warning.
+2. **`staging`** signs the image's digest with cosign, then moves the `:staging` tag to it, and
+   waits, up to 20 minutes, until the environment's service answers with the new build
+   (`deploy/await-build.sh`). It asks through the environment's website,
+   `/dictionary/service.json` at its workers.dev address (`WEB_WORKERS_DEV_URL`), since Bot Fight
+   Mode on the zone challenges CI runners that ask the service directly. A site deployed before
+   that route existed can't tell, so the wait fails there, unless a run by hand says the service
+   was checked by hand (production's first switch, below).
 3. **`production`** does the same with `:production`, once staging answers with the image. The
    repository variable `DEPLOY_PRODUCTION` set to `false` stops at staging, as for the website; a
    run by hand still deploys production.
@@ -190,6 +191,15 @@ GitHub holds no access to the server: all the workflow can do is publish an imag
 An environment without a `WEB_WORKERS_DEV_URL` yet isn't checked, and production waits for a
 checked staging.
 
+**Only main's images run.** Anyone who can push to the package can push an image and move a tag,
+including a workflow run from any branch, so the tag alone decides nothing. The `staging` job signs
+the digest keylessly: cosign gets a certificate for the run's GitHub identity, which names this
+workflow and the branch it ran from, and records the signature in Sigstore's public transparency
+log. The `staging` environment only accepts `main`, and the deployer runs an image only when
+`cosign verify` finds a signature from
+`.github/workflows/dictionary-api-deploy.yml@refs/heads/main`, so an image a branch pushed never
+runs. A rollback signs its image again only after checking that main signed it before.
+
 On the server, cron runs `deploy/deployer.sh` as root every 5 minutes. It asks the registry which
 image each tag names, and when one changed, deploys it. It takes no input, so changing what it does
 takes root on the server; a change to the script in this repository reaches the server only when
@@ -197,19 +207,36 @@ someone installs it there. Each environment runs on the `web_network` Docker net
 slots, both answering to the environment's network alias (`zenbujapanese-dictionary-api-staging`
 or `-production`). The server's nginx, which fronts the server's other sites too (serpcompany's
 nginx repository), resolves the alias every 5 seconds and sends a request one slot can't answer,
-because it's stopped or still starting, to the other. A deploy starts the new image in the free
-slot, waits until its `/healthz` names the image's release and nginx has seen it, then stops the old
-one: about 20 seconds, with no request dropped and nginx never reloaded. A new image that doesn't
-come up is removed, the old one keeps serving, and that image isn't tried again until the tag moves.
-Every container is capped (4 GB of memory, 4 CPUs, 512 processes, 30 MB of logs) and runs as the
-image's non-root user with no capabilities and a read-only file system, so no image can starve the
-server's other services or change the server. The deployer touches only its own containers and this
-repository's images, and never nginx.
+because it's stopped, to the other. A deploy starts the new image in the free slot without the
+alias, so nginx sends it nothing while it starts; waits until its `/healthz` names the image's
+release (each check may take 3 seconds, and the whole wait 3 minutes); gives it the alias, by
+reconnecting it to the network; waits until nginx has seen it; then stops the old one. That's about
+20 seconds, with no request dropped and nginx never reloaded. A new image that doesn't come up is
+removed, the old one keeps serving, and that image isn't tried again until the tag moves (below).
+Every container is capped (4 GB of memory, 4 CPUs, 512 processes, 30 MB of logs) and runs as user
+1000 (the node image's `node`), whatever the image says, with no capabilities and a read-only file
+system; an image that declares a volume is refused, and a removed container's volumes go with it.
+So no image can starve the server's other services or change the server. The deployer touches only
+the containers it started, by the ID Docker gave it, and this repository's images, and never
+nginx. A run that finds a container of the tag's image a deploy was cut short on finishes the
+deploy: it gives it the alias and restart policy, then stops the other slot.
 
 - **Roll back** by running the workflow by hand with `tag` set to the version to go back to, such
   as `sha-0123456789ab`: it moves the tags to that image without building.
 - **See what runs** on the server: `docker ps --filter label=zenbujapanese.dictionary-api.slot`,
-  and what the deployer did: `journalctl -t zenbujapanese-dictionary-api`.
+  and what the deployer did: `journalctl -t zenbujapanese-dictionary-api`. It logs every run that
+  skips something: an environment that isn't set up, an image main didn't sign, an image that
+  failed before, and a run that found an earlier one still deploying.
+- **Retry a failed image.** An image that didn't come up is recorded, with when and why, in
+  `/var/lib/zenbujapanese-dictionary-api/failed-<environment>`, and skipped until the tag moves.
+  When it failed for a reason that wasn't the image's (the server restarting Docker mid-deploy),
+  delete that file to try it again on the next run.
+- **Production's first switch.** Production's website still predates `/dictionary/service.json`,
+  so nothing in CI can confirm production's service before its site switches to it. Confirm it by
+  hand first: `https://dictionary-api.zenbujapanese.com/healthz` answers 200 with a build (from a
+  browser, if Bot Fight Mode challenges `curl`). Then run the workflow by hand with
+  `site_without_status_route` checked, and then `Web deploy`. Every later deploy confirms it
+  through the site.
 - **The service ships before the site.** The website reads whatever its environment's service
   answers, so before `Web deploy` deploys an environment, it waits for the same commit's service
   deploy to that environment (`apps/web/scripts/wait-for-dictionary-service.sh`), and stops if that
@@ -222,16 +249,26 @@ Staging and production share one server: the Linux x86-64 server whose nginx con
 services need about 1.5 GB of memory between them, plus about 1.4 GB more for the half minute after
 a deploy starts one, and 5 GB of disk for images. A person with root sets it up once:
 
-1. **The deployer**, from `deploy/deployer.sh`, run every 5 minutes. It needs `logger` and
-   `flock`, which Ubuntu and Debian have:
+1. **cosign**, which the deployer verifies each image's signature with: the version the workflow
+   signs with, checked against its release's SHA-256 (for an arm64 server, `cosign-linux-arm64`
+   and `c5d324e091826b0d7a78eb16fef316450b4eb9aaec045611c08ba06f5e73220a`). The server needs
+   outbound HTTPS to Sigstore (`tuf-repo-cdn.sigstore.dev`) for its trust root:
+   ```sh
+   curl -fsSLo cosign https://github.com/sigstore/cosign/releases/download/v3.1.3/cosign-linux-amd64
+   echo '4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71  cosign' | sha256sum --check
+   sudo install -m 755 cosign /usr/local/bin/cosign && rm cosign
+   ```
+   Without it, the deployer deploys nothing, and says so.
+2. **The deployer**, from `deploy/deployer.sh`, run every 5 minutes and stopped after 25. It needs
+   `logger`, `flock`, and `timeout`, which Ubuntu and Debian have:
    ```sh
    sudo install -m 755 deployer.sh /usr/local/bin/zenbujapanese-dictionary-api-deployer
-   echo '*/5 * * * * root /usr/local/bin/zenbujapanese-dictionary-api-deployer >/dev/null 2>&1' |
+   echo '*/5 * * * * root timeout 25m /usr/local/bin/zenbujapanese-dictionary-api-deployer >/dev/null 2>&1' |
      sudo tee /etc/cron.d/zenbujapanese-dictionary-api >/dev/null
    sudo chmod 644 /etc/cron.d/zenbujapanese-dictionary-api
    ```
    Reinstall it this way after changing it; nothing else updates it.
-2. **Each environment's token**, which its service reads when it starts. An environment without
+3. **Each environment's token**, which its service reads when it starts. An environment without
    its file isn't deployed. Staging runs one worker thread, production two:
    ```sh
    sudo install -d -m 700 /etc/zenbujapanese-dictionary-api
@@ -243,7 +280,7 @@ a deploy starts one, and 5 GB of disk for images. A person with root sets it up 
    done
    ```
    Set each environment's Worker to its token ([`web.md`](web.md), Dictionary service).
-3. **nginx.** The nginx repository holds each environment's site,
+4. **nginx.** The nginx repository holds each environment's site,
    `nginx/dictionary-api-staging.zenbujapanese.com.conf` and
    `nginx/dictionary-api.zenbujapanese.com.conf`: the `zenbujapanese.com` Cloudflare origin
    certificate (`nginx_certs/zenbujapanese_com_cert.pem` and `_key.pem`) and Cloudflare's client
@@ -255,14 +292,14 @@ a deploy starts one, and 5 GB of disk for images. A person with root sets it up 
    ```
    A staging host name has one level (`dictionary-api-staging.zenbujapanese.com`), since the
    origin certificate covers `*.zenbujapanese.com` alone.
-4. **Cloudflare**, in the `zenbujapanese.com` zone: proxied DNS records for
+5. **Cloudflare**, in the `zenbujapanese.com` zone: proxied DNS records for
    `dictionary-api.zenbujapanese.com` and `dictionary-api-staging.zenbujapanese.com`, pointing at
    the server, and Authenticated Origin Pulls on (SSL/TLS → Origin Server), since the sites accept
    only Cloudflare's client certificate. The zone's Bot Fight Mode, which can't be turned off or
    skipped per host name, challenges CI runners, so CI asks the service through the website
    instead; the website's Worker must not be challenged, which the smoke test checks
    (`/dictionary/service.json`).
-5. **The GitHub environments**, which hold only URLs: each service's, and each website's
+6. **The GitHub environments**, which hold only URLs: each service's, and each website's
    workers.dev address, which CI reaches past Bot Fight Mode:
    ```sh
    gh variable set DICTIONARY_API_URL --env staging --body https://dictionary-api-staging.zenbujapanese.com
@@ -270,9 +307,9 @@ a deploy starts one, and 5 GB of disk for images. A person with root sets it up 
    gh variable set WEB_WORKERS_DEV_URL --env staging --body https://zenbujapanese-web-staging.serpcompany.workers.dev
    gh variable set WEB_WORKERS_DEV_URL --env production --body https://zenbujapanese-web-production.serpcompany.workers.dev
    ```
-6. **The first deploy.** Run the workflow by hand (Actions → Dictionary API deploy → Run
+7. **The first deploy.** Run the workflow by hand (Actions → Dictionary API deploy → Run
    workflow); the deployer starts each image within 5 minutes of its tag moving. Then run
-   `Web deploy`.
+   `Web deploy`. For production, see its first switch, above.
 
 The workflow's first push creates the image's package in the serpcompany organization
 (github.com/orgs/serpcompany/packages), private, as new packages are. The deployer pulls it with a
@@ -280,10 +317,15 @@ GitHub token (classic) with only the `read:packages` scope, authorized for the o
 if it has one, which it reads from a root-only file on every run:
 
 ```sh
-printf 'GHCR_USERNAME=%s\nGHCR_TOKEN=%s\n' <github user> <token> |
+read -rsp 'Token: ' token && echo
+printf 'GHCR_USERNAME=%s\nGHCR_TOKEN=%s\n' <github user> "$token" |
   sudo tee /etc/zenbujapanese-dictionary-api/registry.env >/dev/null
 sudo chmod 600 /etc/zenbujapanese-dictionary-api/registry.env
+unset token
 ```
+
+`read -s` takes the token without echoing it, so it stays out of the terminal and the shell's
+history.
 
 It logs in for that run only, from a folder only root can open that's removed when the run ends,
 so no login stays on the server. Replace the file to change the token. If the token expires or
