@@ -2,9 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { htmlText, visibleText, withoutScreenReaderText } from './rendered'
 import { readExamples } from './rendered-word'
 
-// The one text extractor every rendered-page reader uses must never leave a tag behind, however
-// the markup nests, so a test can't be fooled into reading markup as text.
-
 describe('htmlText, the rendered-page readers’ text extractor', () => {
   test.each([
     '<scr<script>ipt>alert(1)</script>',

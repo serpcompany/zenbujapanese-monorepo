@@ -54,6 +54,131 @@
           }
         }
       }
+    },
+    {
+      "includes": ["src/components/dictionary/dictionary-breadcrumbs.tsx"],
+      "linter": {
+        "rules": {
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/lib/**",
+        "src/db/**",
+        "!src/lib/dictionary/data.ts",
+        "!src/lib/dictionary/retired.ts",
+        "!**/*.test.ts",
+        "!**/*.test.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components",
+                      "@/components/**",
+                      "@/app",
+                      "@/app/**",
+                      "@/hooks",
+                      "@/hooks/**"
+                    ],
+                    "message": "src/lib and src/db hold the site's data and logic, which components (src/components), hooks (src/hooks), and routes (src/app) build on, so they never import those (docs/agents/web.md, Code layout). Move what both sides need into src/lib."
+                  },
+                  {
+                    "group": ["@/lib/dictionary/api", "./api"],
+                    "message": "Pages read the dictionary service only through src/lib/dictionary/data.ts, which adds the site's URLs and falls back to fixtures in local development; only src/lib/dictionary/retired.ts, which worker.ts runs before Next.js, calls the client too (docs/agents/web.md, Code layout). Add a function to data.ts instead."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/lib/dictionary/data.ts", "src/lib/dictionary/retired.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/components",
+                      "@/components/**",
+                      "@/app",
+                      "@/app/**",
+                      "@/hooks",
+                      "@/hooks/**"
+                    ],
+                    "message": "src/lib and src/db hold the site's data and logic, which components (src/components), hooks (src/hooks), and routes (src/app) build on, so they never import those (docs/agents/web.md, Code layout). Move what both sides need into src/lib."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/components/**",
+        "src/hooks/**",
+        "!src/components/dictionary/gate.ts",
+        "!**/*.test.ts",
+        "!**/*.test.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/app", "@/app/**"],
+                    "message": "Routes (src/app) import components and hooks, never the reverse (docs/agents/web.md, Code layout). Pass what a component needs from its route as a prop, or move shared code into src/lib."
+                  },
+                  {
+                    "group": ["@/lib/dictionary/api", "./api"],
+                    "message": "Pages read the dictionary service only through src/lib/dictionary/data.ts, which adds the site's URLs and falls back to fixtures in local development; only src/lib/dictionary/retired.ts, which worker.ts runs before Next.js, calls the client too (docs/agents/web.md, Code layout). Add a function to data.ts instead."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/app/**", "!**/*.test.ts", "!**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/lib/dictionary/api", "./api"],
+                    "message": "Pages read the dictionary service only through src/lib/dictionary/data.ts, which adds the site's URLs and falls back to fixtures in local development; only src/lib/dictionary/retired.ts, which worker.ts runs before Next.js, calls the client too (docs/agents/web.md, Code layout). Add a function to data.ts instead."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "assist": {

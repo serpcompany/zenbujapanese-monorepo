@@ -1,6 +1,5 @@
 import type { Source } from '@/lib/dictionary/sources'
 
-/** Credits each source a page shows, with links to the project and its licence. */
 export function SourceCredits({ sources }: { sources: Source[] }) {
   return (
     <footer className="flex flex-col gap-1 border-t pt-4 text-xs text-muted-foreground">

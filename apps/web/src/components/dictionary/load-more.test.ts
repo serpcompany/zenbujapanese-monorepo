@@ -1,9 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { loadNextPage } from './load-more'
 
-// How a paged list (a word's or a search's examples, a search's words) asks for its next page:
-// the Load more button and the list scrolling into view share one in-flight flag.
-
 const read = (response: unknown) => (response as { items: number[] }).items
 
 describe('loadNextPage', () => {
@@ -16,14 +13,12 @@ describe('loadNextPage', () => {
         })
     )
     const inFlight = { current: false }
-    // The click, then the observer before the first request answers, both for position 25.
     const click = loadNextPage(inFlight, '/x.json?build=b&from=25', read, fetcher)
     const observer = loadNextPage(inFlight, '/x.json?build=b&from=25', read, fetcher)
     answer(Response.json({ items: [25, 26] }))
     expect(await click).toEqual({ kind: 'items', items: [25, 26] })
     expect(await observer).toEqual({ kind: 'busy' })
     expect(fetcher).toHaveBeenCalledTimes(1)
-    // Once it has answered, the next page may load.
     expect(inFlight.current).toBe(false)
   })
 

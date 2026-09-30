@@ -8,13 +8,6 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/
 import { Item, ItemActions, ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
 import type { SearchData, SearchWord } from '@/lib/dictionary/data'
 
-// The search results screen as SearchView.swift's `SearchResultsView` lays it out: the
-// "View N Example Sentences" row, the "Search for「…」" reading refinement, then one list whose
-// first row is the kanji row for a one-kanji query, then the words in the app's order, or a
-// sentence's Discovered Words. It only renders `SearchData` (src/lib/dictionary/results), so
-// search-results.test.tsx renders it without a server.
-
-/** A row that opens `path`, or plain text when there is no page yet (#465). */
 function Row({
   path,
   label,
@@ -39,7 +32,6 @@ function Row({
   )
 }
 
-/** `ResultRow`: headword with furigana, the meaning clamped to two lines, and the chips. */
 function WordRow({ word }: { word: SearchWord }) {
   return (
     <Row path={word.path}>
@@ -52,7 +44,6 @@ function WordRow({ word }: { word: SearchWord }) {
   )
 }
 
-/** SearchView.swift's no-results state. */
 function NoResults() {
   return (
     <Empty>
@@ -71,7 +62,6 @@ export function SearchResults({ data }: { data: SearchData }) {
   if (data.state === 'noResults') return <NoResults />
   const { query, kanji, rows, readingRefinement, examples } = data
   const discovered = data.sections.includes('discoveredWords')
-  // A search that finds only example sentences lists no words, and shows no empty list.
   const listed = data.sections.includes('results') || discovered
   return (
     <>

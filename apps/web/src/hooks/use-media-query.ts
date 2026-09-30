@@ -2,7 +2,6 @@
 
 import { useSyncExternalStore } from 'react'
 
-/** Whether a CSS media query matches; false during server rendering. */
 export function useMediaQuery(query: string): boolean {
   return useSyncExternalStore(
     onChange => {

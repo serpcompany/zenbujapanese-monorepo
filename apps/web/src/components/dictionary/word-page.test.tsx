@@ -20,12 +20,6 @@ import {
 } from './rendered-word'
 import { WordHeader } from './word-header'
 
-// Renders the word page's header card and Frequency section to HTML, as the server does, and
-// reads back what a reader sees: the headword's furigana and which kanji highlight which part of
-// it, the pitch graph's dots, and each Frequency row's details. The first tests render fixed data;
-// the last renders what the dictionary service answers for every case of the app-recorded
-// word-detail.json suite (./gate.ts).
-
 const unidic = 'UniDic for Contemporary Written Japanese 3.1.0'
 
 type HeaderProps = Parameters<typeof WordHeader>[0]
@@ -49,14 +43,12 @@ describe('the word header', () => {
     expect(readFurigana(html)).toEqual([
       { base: '学校', reading: 'がっこう', kanjiReadings: ['がっ', 'こう'] }
     ])
-    // Nothing is selected until the reader selects a kanji; each is a labeled toggle.
     expect(html).toContain('aria-pressed="false" aria-label="学, がっ"')
     expect(html).toContain('aria-pressed="false" aria-label="校, こう"')
     expect(html).not.toContain('aria-pressed="true"')
   })
 
   test('keeps a single kanji and a word read as a whole as plain furigana', () => {
-    // 要る: 要 alone; 大人 (おとな): no split.
     expect(
       readFurigana(
         header({
@@ -78,7 +70,6 @@ describe('the word header', () => {
   })
 
   test('draws the pitch as dots joined by a line, with a hollow dot for the particle', () => {
-    // 今日 (きょう), atamadaka: キョ is one and a half morae wide.
     const html = header({
       ruby: rubySegments('今日', 'きょう'),
       reading: 'きょう',
@@ -94,10 +85,7 @@ describe('the word header', () => {
       particle: { x: 280, level: 'L' }
     })
     expect(html).toContain('<polyline points="75,17.5 200,174.5 280,174.5"')
-    // One button pronounces the word, and says its pitch.
     expect(html).toContain('Pronounce きょう. Pitch accent, downstep 1, 2 mora')
-    // The mora count spoken is the source's, as the app's accessibility value says it, even where
-    // it differs from the morae drawn.
     const counted = header({
       ruby: rubySegments('今日', 'きょう'),
       reading: 'きょう',
@@ -174,11 +162,8 @@ describe.runIf(gateEnabled)('the rendered word page matches the app', () => {
       pitch: detail.pitch,
       partOfSpeech: detail.partOfSpeech
     })
-    // The furigana as drawn, with each toggle's part of the reading.
     expect(readFurigana(html)).toEqual(expected.furigana)
-    // Each dot where the app draws it, and the particle's hollow dot.
     expect(readPitchGraph(html)).toEqual(expected.pitch?.graph ?? null)
-    // The rows as listed, and what each opens.
     const section = renderToStaticMarkup(<FrequencySection rows={detail.frequencyRows} />)
     expect(readFrequencyRows(section)).toEqual(
       expected.frequency.map(({ name, text }) => ({ name, text }))

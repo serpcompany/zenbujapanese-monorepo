@@ -2,11 +2,10 @@ import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { Input } from '@/components/ui/input'
 
-/** Where every dictionary search box submits, as ?q=; it redirects to the query's own page. */
 export const searchAction = '/dictionary/search/'
 export const searchPlaceholder = 'Search Japanese or English'
+export const typeWithoutBrowserClearButton = 'text'
 
-/** Submits to /dictionary/search/?q=, which redirects to the query's own page. */
 export function SearchForm({
   defaultValue,
   autoFocus
@@ -17,11 +16,10 @@ export function SearchForm({
   return (
     <search>
       <form action={searchAction} method="get">
-        {/* A text input, not type="search", so browsers don't add their own clear button. */}
         <ButtonGroup className="w-full">
           <Input
             name="q"
-            type="text"
+            type={typeWithoutBrowserClearButton}
             enterKeyHint="search"
             defaultValue={defaultValue}
             placeholder={searchPlaceholder}

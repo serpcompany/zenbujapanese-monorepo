@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import { wordSitemapResponse } from '@/lib/dictionary/sitemaps'
 
-/** `/sitemaps/dictionary/<n>.xml`: up to 50,000 word pages, in `ent_seq` order. */
 export async function GET(
   request: Request,
   { params }: RouteContext<'/sitemaps/dictionary/[file]'>

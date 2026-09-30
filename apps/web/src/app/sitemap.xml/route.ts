@@ -1,10 +1,6 @@
 import { dictionarySitemapPaths } from '@/lib/dictionary/sitemaps'
 import { childSitemaps, sitemapIndexXml, xmlResponse } from '@/lib/sitemap'
 
-// Crawlers look for /sitemap.xml by default; it serves the same index as /sitemap-index.xml.
-// Never prerendered: the dictionary's sitemaps come from the dictionary service at request time,
-// and a build can't reach it (with SITE_ENV=staging, prerendering would fail the build or freeze
-// an index without them).
 export const dynamic = 'force-dynamic'
 
 export async function GET() {

@@ -11,7 +11,6 @@ export const metadata = dictionaryMetadata(
   { index: false }
 )
 
-/** The search box submits here with ?q=; each search then lives at its own path. */
 export default async function SearchIndexPage({ searchParams }: PageProps<'/dictionary/search'>) {
   const { q } = await searchParams
   const query = normalizeSearchQuery(typeof q === 'string' ? q : '')
@@ -21,7 +20,6 @@ export default async function SearchIndexPage({ searchParams }: PageProps<'/dict
       <DictionaryBreadcrumbs page={{ label: 'Search', path: '/dictionary/search/' }} />
       <SearchForm autoFocus defaultValue={query || undefined} />
       <h1 className="text-2xl font-semibold tracking-tight">Search the dictionary</h1>
-      {/* `.` and `..` can't have a path of their own, so they stay here as finding nothing. */}
       {query ? <p className="text-muted-foreground">No words match “{query}”.</p> : null}
     </main>
   )

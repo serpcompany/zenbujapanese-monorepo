@@ -1,7 +1,6 @@
 import type { FrequencyResult, FrequencyTier } from '@zenbu/dictionary-core/detail/frequency'
 import { Badge } from '@/components/ui/badge'
 
-/** The app's traffic-light scale (FrequencyRankChip.swift), gray for rare words. */
 const tierColor: Record<FrequencyTier, string> = {
   veryCommon: 'bg-green-500',
   common: 'bg-yellow-500',
@@ -10,7 +9,6 @@ const tierColor: Record<FrequencyTier, string> = {
   rare: 'bg-neutral-400'
 }
 
-/** How common a rank is; a dictionary without the word gets the secondary color. */
 export function FrequencyDot({ tier }: { tier: FrequencyTier | null }) {
   return (
     <span
@@ -20,15 +18,10 @@ export function FrequencyDot({ tier }: { tier: FrequencyTier | null }) {
   )
 }
 
-/**
- * The dot's meaning for screen readers, after the rank as the app's accessibility label puts it
- * ("YouTube frequency rank 949, very common").
- */
 export function SpokenTier({ result }: { result: FrequencyResult }) {
   return result.spokenTier ? <span className="sr-only">, {result.spokenTier}</span> : null
 }
 
-/** One chip per frequency dictionary that ranks or lists the word. */
 export function FrequencyBadges({ frequency }: { frequency: FrequencyResult[] }) {
   if (frequency.length === 0) return null
   return (

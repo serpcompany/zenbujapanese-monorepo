@@ -24,12 +24,10 @@ import { site } from '@/lib/site'
 const description =
   'Save words to lists, mark them known, and add notes and photos in the Zenbu app. Signing in on the web comes later.'
 
-/** Explains that a learner action lives in the app: a dialog on wide screens, a drawer on phones. */
 export function GetAppDialog({
   action,
   onOpenChange
 }: {
-  /** The action the reader chose, such as "Add to List"; null when closed. */
   action: string | null
   onOpenChange: (open: boolean) => void
 }) {

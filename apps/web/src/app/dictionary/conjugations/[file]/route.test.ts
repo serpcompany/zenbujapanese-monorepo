@@ -22,7 +22,6 @@ describe('GET /dictionary/conjugations/<form>.json', () => {
     expect(await response.json()).toEqual({ examples: [example] })
     expect(getConjugationExamples).toHaveBeenCalledWith('食べた')
     expect(response.headers.get('X-Robots-Tag')).toBe('noindex')
-    // It names no build, so it's kept only an hour.
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=3600')
   })
 
@@ -34,7 +33,6 @@ describe('GET /dictionary/conjugations/<form>.json', () => {
   })
 
   test('reads the form as written, not normalized', async () => {
-    // The app's form screen searches Ｈした normalized but matches it as written.
     vi.mocked(getConjugationExamples).mockResolvedValue([])
     await get(`${encodeURIComponent('Ｈした')}.json`)
     expect(getConjugationExamples).toHaveBeenCalledWith('Ｈした')

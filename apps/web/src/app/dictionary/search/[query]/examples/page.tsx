@@ -10,12 +10,6 @@ import { pageSources } from '@/lib/dictionary/sources'
 import { searchExamplesPath, searchPath } from '@/lib/dictionary/urls'
 import { searchQuery } from '../query'
 
-// `/dictionary/search/<query>/examples/`: what a search's "View N Example Sentences" row opens,
-// as the app's ExampleSentencesView: the query's sentences, or its primary entry's for a romaji or
-// deinflected query, with each occurrence of the query accented. Its query follows the search
-// page's URL rules (ADR 0007, #466). A search without example sentences has none (404): the app
-// never opens an empty screen.
-
 type Props = PageProps<'/dictionary/search/[query]/examples'>
 
 async function load(params: Props['params'], decoded: boolean) {

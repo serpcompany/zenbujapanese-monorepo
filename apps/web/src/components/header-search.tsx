@@ -3,11 +3,14 @@
 import { SearchIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { searchAction, searchPlaceholder } from '@/components/dictionary/search-form'
+import {
+  searchAction,
+  searchPlaceholder,
+  typeWithoutBrowserClearButton
+} from '@/components/dictionary/search-form'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 
-/** The dictionary page and the search pages have a search box of their own. */
 function useHasOwnSearch() {
   const path = usePathname().replace(/\/$/, '')
   return (
@@ -17,17 +20,15 @@ function useHasOwnSearch() {
   )
 }
 
-/** The header's search field, on wide screens. Submits like the dictionary's search box. */
 export function HeaderSearchField() {
   if (useHasOwnSearch()) return null
   return (
     <search className="hidden w-full max-w-md md:block">
       <form action={searchAction} method="get">
         <InputGroup className="h-9 bg-background shadow-xs">
-          {/* A text input, not type="search", so browsers don't add their own clear button. */}
           <InputGroupInput
             name="q"
-            type="text"
+            type={typeWithoutBrowserClearButton}
             enterKeyHint="search"
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
@@ -41,7 +42,6 @@ export function HeaderSearchField() {
   )
 }
 
-/** On phones, a search button in place of the field. */
 export function HeaderSearchLink() {
   if (useHasOwnSearch()) return null
   return (

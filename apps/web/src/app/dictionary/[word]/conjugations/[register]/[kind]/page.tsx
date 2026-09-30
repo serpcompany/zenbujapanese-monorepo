@@ -13,11 +13,6 @@ import { conjugationsHref, decodeSegment, parseWordSegment } from '@/lib/diction
 
 type Props = PageProps<'/dictionary/[word]/conjugations/[register]/[kind]'>
 
-/**
- * `/dictionary/<slug>-<ent_seq>/conjugations/<plain|polite>/<kind>/`: one conjugated form's
- * screen (ConjugatedFormView), which the app pushes from the table. A register or kind the word's
- * table lacks isn't found; any other slug redirects.
- */
 async function load(params: Props['params']) {
   const { word: segment, register, kind } = await params
   const parsed = parseWordSegment(segment)
@@ -40,7 +35,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     encodeURI(page.canonicalPath),
     `${row.surface}${reading}: ${register}${row.title.toLowerCase()} of ${page.headword}`,
     `${row.surface}${reading} is the ${register}${row.title.toLowerCase()} form of ${page.headword}. ${row.explanation}`,
-    // A screen without examples is only the form and what it means.
     { index: page.listed > 0 }
   )
 }

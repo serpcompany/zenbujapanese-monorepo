@@ -5,7 +5,6 @@ import { isProductionSite } from '@/lib/site'
 const gtmId = process.env.NEXT_PUBLIC_GTM_ID
 const cloudflareBeaconToken = process.env.NEXT_PUBLIC_CF_BEACON_TOKEN
 
-/** Production-only analytics. Each tool stays off until its ID is set at build time. */
 export function Analytics() {
   if (!isProductionSite()) return null
   return (

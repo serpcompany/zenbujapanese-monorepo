@@ -11,11 +11,6 @@ import { decodeSegment, parseWordSegment } from '@/lib/dictionary/urls'
 
 type Props = PageProps<'/dictionary/[word]/conjugations'>
 
-/**
- * `/dictionary/<slug>-<ent_seq>/conjugations/`: the table the word's part of speech opens
- * (ConjugationsView), which the app pushes as its own screen. A word whose part of speech opens
- * none has no such page; any other slug redirects, as the word's page does.
- */
 async function load(params: Props['params']) {
   const segment = (await params).word
   const parsed = parseWordSegment(segment)

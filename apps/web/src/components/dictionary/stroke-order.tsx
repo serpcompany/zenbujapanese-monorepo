@@ -14,26 +14,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useMediaQuery } from '@/hooks/use-media-query'
 
-// The kanji page's stroke order, ported from the app: KanjiDetailView.swift's `strokeOrderAction`
-// (a small bordered button under the glyph) opens KanjiStrokeOrderSheet, whose
-// KanjiStrokeOrderView.swift draws the strokes on a dashed grid and animates them one at a time.
-
-/** How long one stroke takes to draw: 8 steps of 60 ms when playing, 12 of 80 ms when stepping. */
-const strokeDuration = { play: 480, step: 960 } as const
+const strokeDurationMs = { play: 8 * 60, step: 12 * 80 } as const
+const appGridPoints = 350
+const appStrokeWidthPoints = 7
+const strokeWidthPerSide = appStrokeWidthPoints / appGridPoints
+const startDotRadiusPerSide = 0.04
 
 interface Progress {
-  /** Strokes fully drawn. */
   completed: number
-  /** How much of the next stroke is drawn, from 0 to 1. */
   active: number
 }
 
-/** The button under the glyph, and the sheet it opens: a dialog on wide screens, a drawer on phones. */
 export function StrokeOrder({ character, order }: { character: string; order: StrokeOrderData }) {
   const [open, setOpen] = useState(false)
-  // Each opening is a new session, so the player starts again from the first stroke, as the
-  // app's sheet does.
-  const [session, setSession] = useState(0)
+  const [opening, setOpening] = useState(0)
   const wide = useMediaQuery('(min-width: 768px)')
   const trigger = (
     <Button
@@ -41,16 +35,14 @@ export function StrokeOrder({ character, order }: { character: string; order: St
       size="icon-sm"
       aria-label={`Show stroke order for ${character}`}
       onClick={() => {
-        setSession(value => value + 1)
+        setOpening(value => value + 1)
         setOpen(true)
       }}
     >
       <PencilLineIcon />
     </Button>
   )
-  // Stays mounted while the sheet animates out; the dialog and drawer unmount it once closed,
-  // which also stops its animation.
-  const content = <StrokeOrderPlayer key={session} character={character} order={order} />
+  const content = <StrokeOrderPlayer key={opening} character={character} order={order} />
   if (wide) {
     return (
       <>
@@ -81,7 +73,6 @@ export function StrokeOrder({ character, order }: { character: string; order: St
   )
 }
 
-/** KanjiStrokeOrderView: the grid, previous / play / next, and which stroke is next. */
 export function StrokeOrderPlayer({
   character,
   order
@@ -91,29 +82,26 @@ export function StrokeOrderPlayer({
 }) {
   const count = order.strokes.length
   const [progress, setProgress] = useState<Progress>({ completed: 0, active: 0 })
-  const [mode, setMode] = useState<keyof typeof strokeDuration | null>(null)
-  // Each press restarts the animation, even in the same mode.
-  const [run, setRun] = useState(0)
-  // The animation reads and writes progress between renders, so it's kept in a ref too.
-  const current = useRef(progress)
+  const [mode, setMode] = useState<keyof typeof strokeDurationMs | null>(null)
+  const [presses, setPresses] = useState(0)
+  const latestProgress = useRef(progress)
   const update = useCallback((next: Progress) => {
-    current.current = next
+    latestProgress.current = next
     setProgress(next)
   }, [])
 
   useEffect(() => {
     if (!mode) return
-    // `run` restarts the animation for a new press in the same mode.
-    void run
+    void presses
     let frame = 0
     let last = performance.now()
     const tick = (now: number) => {
-      const { completed, active } = current.current
+      const { completed, active } = latestProgress.current
       if (completed >= count) {
         setMode(null)
         return
       }
-      const drawn = active + (now - last) / strokeDuration[mode]
+      const drawn = active + (now - last) / strokeDurationMs[mode]
       last = now
       if (drawn < 1) {
         update({ completed, active: drawn })
@@ -126,14 +114,14 @@ export function StrokeOrderPlayer({
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [mode, run, count, update])
+  }, [mode, presses, count, update])
 
   const playing = mode === 'play'
   const pause = () => setMode(null)
 
   function previous() {
     pause()
-    const { completed, active } = current.current
+    const { completed, active } = latestProgress.current
     update(
       active > 0 ? { completed, active: 0 } : { completed: Math.max(0, completed - 1), active: 0 }
     )
@@ -141,18 +129,18 @@ export function StrokeOrderPlayer({
 
   function next() {
     pause()
-    const { completed } = current.current
+    const { completed } = latestProgress.current
     if (completed >= count) return
     update({ completed, active: 0.001 })
     setMode('step')
-    setRun(value => value + 1)
+    setPresses(value => value + 1)
   }
 
   function playOrPause() {
     if (playing) return pause()
-    if (current.current.completed >= count) update({ completed: 0, active: 0 })
+    if (latestProgress.current.completed >= count) update({ completed: 0, active: 0 })
     setMode('play')
-    setRun(value => value + 1)
+    setPresses(value => value + 1)
   }
 
   const status =
@@ -201,11 +189,6 @@ export function StrokeOrderPlayer({
   )
 }
 
-/**
- * StrokeDrawingGrid: a dashed frame with center lines; drawn strokes in the foreground color, the
- * rest in the secondary color, the stroke being drawn traced over in the progress color, and a
- * dot where the next stroke starts.
- */
 function StrokeGrid({
   character,
   order,
@@ -218,6 +201,10 @@ function StrokeGrid({
   const size = order.viewportSize
   const next = order.strokes[progress.completed]
   const line = { vectorEffect: 'non-scaling-stroke' as const }
+  const numberedStrokes = order.strokes.map((stroke, index) => ({
+    stroke,
+    strokeNumber: index + 1
+  }))
   return (
     <svg
       viewBox={`0 0 ${size} ${size}`}
@@ -230,15 +217,20 @@ function StrokeGrid({
         <line x1={size / 2} y1={0} x2={size / 2} y2={size} {...line} />
         <line x1={0} y1={size / 2} x2={size} y2={size / 2} {...line} />
       </g>
-      {/* The app's 7-point strokes on a grid about 350 points wide: 2.2 of the viewport's 109. */}
-      <g fill="none" strokeWidth={size * 0.02} strokeLinecap="round" strokeLinejoin="round">
-        {order.strokes.map((stroke, index) => (
+      <g
+        fill="none"
+        strokeWidth={size * strokeWidthPerSide}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {numberedStrokes.map(({ stroke, strokeNumber }) => (
           <path
-            // biome-ignore lint/suspicious/noArrayIndexKey: strokes never reorder; the index is the stroke
-            key={index}
+            key={strokeNumber}
             d={stroke.path}
             className={
-              index < progress.completed ? 'stroke-foreground' : 'stroke-muted-foreground/50'
+              strokeNumber <= progress.completed
+                ? 'stroke-foreground'
+                : 'stroke-muted-foreground/50'
             }
           />
         ))}
@@ -253,7 +245,12 @@ function StrokeGrid({
         ) : null}
       </g>
       {next && progress.active === 0 ? (
-        <circle cx={next.start.x} cy={next.start.y} r={size * 0.04} className="fill-destructive" />
+        <circle
+          cx={next.start.x}
+          cy={next.start.y}
+          r={size * startDotRadiusPerSide}
+          className="fill-destructive"
+        />
       ) : null}
     </svg>
   )

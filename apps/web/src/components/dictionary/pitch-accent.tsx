@@ -4,28 +4,24 @@ import type { PitchAccent as PitchAccentData } from '@zenbu/dictionary-core/deta
 import { Volume2Icon } from 'lucide-react'
 import { speakJapanese } from './pronounce-button'
 
-// The word card's pitch accent, drawn as the app's PitchAccentBadge (WordDetailView.swift) draws
-// it: the reading in katakana, one mora wide each (1.5 for a combined mora such as キョ), with a
-// dot per mora at the top edge when high and the bottom edge when low, joined by a line, and a
-// hollow dot for the following particle. The capsule is one button that pronounces the word.
-// Where each point goes is the detail core's `graph` (PitchContourLayout).
-
-/** A mora's width in em, as the app's 20 pt at body size. */
-const moraWidth = 1.25
-/** The contour's height in em: a line of text with room above and below for the dots. */
-const height = 2.4
-/** The SVG draws 100 units per mora width, so a point's `cx` is its x in hundredths. */
-const unit = 100
+const moraWidthEm = 1.25
+const contourHeightEm = 2.4
+const svgUnitsPerMora = 100
 const dotRadius = 12.5
-/** High points sit this far below the top edge, and low points above the bottom. */
-const inset = dotRadius + 5
+const dotInsetFromEdge = dotRadius + 5
 
 export function PitchAccent({ pitch, reading }: { pitch: PitchAccentData; reading: string }) {
   const { graph } = pitch
-  const viewHeight = (height / moraWidth) * unit
-  const y = (high: boolean) => (high ? inset : viewHeight - inset)
-  const points = graph.points.map(point => ({ cx: Math.round(point.x * unit), cy: y(point.high) }))
-  const particle = { cx: Math.round(graph.particle.x * unit), cy: y(graph.particle.high) }
+  const viewHeight = (contourHeightEm / moraWidthEm) * svgUnitsPerMora
+  const y = (high: boolean) => (high ? dotInsetFromEdge : viewHeight - dotInsetFromEdge)
+  const points = graph.points.map(point => ({
+    cx: Math.round(point.x * svgUnitsPerMora),
+    cy: y(point.high)
+  }))
+  const particle = {
+    cx: Math.round(graph.particle.x * svgUnitsPerMora),
+    cy: y(graph.particle.high)
+  }
   let offset = 0
   const morae = pitch.morae.map((mora, index) => {
     const key = `${offset}`
@@ -47,20 +43,20 @@ export function PitchAccent({ pitch, reading }: { pitch: PitchAccentData; readin
         lang="ja"
         data-pitch-graph
         className="relative inline-flex items-center text-lg"
-        style={{ height: `${height}em`, width: `${graph.width * moraWidth}em` }}
+        style={{ height: `${contourHeightEm}em`, width: `${graph.width * moraWidthEm}em` }}
       >
         {morae.map(mora => (
           <span
             key={mora.key}
             className="text-center leading-none"
-            style={{ width: `${mora.width * moraWidth}em` }}
+            style={{ width: `${mora.width * moraWidthEm}em` }}
           >
             {mora.mora}
           </span>
         ))}
         <svg
           className="absolute inset-0 size-full overflow-visible text-red-600 dark:text-red-400"
-          viewBox={`0 0 ${Math.round(graph.width * unit)} ${viewHeight}`}
+          viewBox={`0 0 ${Math.round(graph.width * svgUnitsPerMora)} ${viewHeight}`}
           role="presentation"
         >
           <polyline
