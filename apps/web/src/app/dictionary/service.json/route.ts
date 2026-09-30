@@ -10,8 +10,8 @@ const headers = { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' }
  * build the service answers with. CI reads it through the site's workers.dev address (smoke.sh,
  * and the Dictionary API deploy workflow's await-build.sh), since Bot Fight Mode on the zone
  * challenges CI runners that ask the service directly; it also proves the Worker isn't
- * challenged. It answers 502 when the Worker can't reach the service, with what it got, and 404
- * where the site reads no service (local fixtures). Search engines skip it.
+ * challenged. It answers 502 when the Worker can't reach the service, with the kind of failure,
+ * and 404 where the site reads no service (local fixtures). Search engines skip it.
  */
 export async function GET() {
   try {
@@ -25,7 +25,9 @@ export async function GET() {
     const health = await api.health()
     return Response.json(health, { status: health.status === 200 ? 200 : 502, headers })
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    return Response.json({ status: 0, build: null, error: message }, { status: 502, headers })
+    // Only the kind of failure (a TypeError for no connection, a TimeoutError), never its message,
+    // which can name internal detail.
+    const kind = error instanceof Error ? error.name : 'Error'
+    return Response.json({ status: 0, build: null, error: kind }, { status: 502, headers })
   }
 }

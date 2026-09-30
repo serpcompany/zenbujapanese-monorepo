@@ -35,9 +35,14 @@ deadline=$((SECONDS + 3600))
 while [ "$SECONDS" -lt "$deadline" ]; do
   job="$(gh run view "$run" --json jobs \
     --jq ".jobs[] | select(.name == \"$env\") | \"\(.status) \(.conclusion)\"")"
-  if [ -z "$job" ] && [ "$(gh run view "$run" --json status --jq .status)" = completed ]; then
-    echo "The dictionary service's run for $sha has no $env job: nothing to wait for."
-    exit 0
+  # A run that ended without the job never deployed this environment, such as one cancelled while
+  # it waited in the concurrency queue.
+  if [ -z "$job" ]; then
+    run_state="$(gh run view "$run" --json status,conclusion --jq '"\(.status) \(.conclusion)"')"
+    if [ "${run_state%% *}" = completed ]; then
+      echo "::error::The dictionary service's run for $sha ended ($run_state) without a $env job, so its site isn't deployed either. Run Dictionary API deploy by hand, then this: $url"
+      exit 1
+    fi
   fi
   case "$job" in
     "completed success")

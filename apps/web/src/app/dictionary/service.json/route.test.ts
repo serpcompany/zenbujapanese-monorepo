@@ -36,15 +36,17 @@ describe('GET /dictionary/service.json', () => {
     expect(await response.json()).toMatchObject({ status: 403, mitigated: 'challenge' })
   })
 
-  test('answers 502 when the service is unreachable, with why', async () => {
+  test('answers 502 when the service is unreachable, with the kind of failure but not its message', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(
       service(async () => {
-        throw new Error('connection refused')
+        throw new TypeError('fetch failed: connect ECONNREFUSED 10.0.0.5:8788')
       })
     )
     const response = await GET()
     expect(response.status).toBe(502)
-    expect(await response.json()).toMatchObject({ error: 'connection refused' })
+    const body = await response.json()
+    expect(body).toEqual({ status: 0, build: null, error: 'TypeError' })
+    expect(JSON.stringify(body)).not.toContain('10.0.0.5')
   })
 
   test('is not found where the site reads no service', async () => {
