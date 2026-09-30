@@ -9,7 +9,6 @@ const info = {
   features: { sentenceSearch: true }
 }
 
-/** A service whose every call resolves to a recognizable value. */
 function fakeService(overrides: Partial<DictionaryService> = {}): DictionaryService {
   return {
     info: async () => info,

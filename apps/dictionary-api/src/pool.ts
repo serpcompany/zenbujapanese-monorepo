@@ -1,7 +1,3 @@
-// A pool of worker threads (./worker.ts), each with its own dictionary, answering as one
-// `DictionaryService`. Each call goes to the thread with the fewest calls in flight; a thread
-// that dies fails its calls and is replaced.
-
 import { Worker } from 'node:worker_threads'
 import type { ConjugationSitemapWord } from '@zenbu/dictionary-core/artifact/conjugation-sitemap'
 import type { VerifiedFiles } from './load'
@@ -15,10 +11,6 @@ interface Thread {
   pending: Map<number, { resolve(value: unknown): void; reject(error: Error): void }>
 }
 
-/**
- * Works out the conjugations sitemap in a worker thread of its own, which exits when done, so it
- * takes no answering thread; a few minutes of one core after the service starts.
- */
 export function computeConjugationSitemap(files: VerifiedFiles): Promise<ConjugationSitemapWord[]> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(workerUrl(), {
@@ -36,22 +28,15 @@ export function computeConjugationSitemap(files: VerifiedFiles): Promise<Conjuga
 }
 
 export interface Pool extends DictionaryService {
-  /** Resolves once every thread has loaded its dictionary. */
   ready: Promise<void>
-  /** How many threads are loaded. */
   readyCount(): number
   close(): Promise<void>
 }
 
-/**
- * The worker script: the bundled one beside the server in production; in development, a shim
- * that loads the TypeScript source through tsx.
- */
 function workerUrl(): URL {
   const here = new URL(import.meta.url)
-  return here.pathname.endsWith('.ts')
-    ? new URL('./worker-dev.mjs', here)
-    : new URL('./worker.mjs', here)
+  const runningTypeScriptSource = here.pathname.endsWith('.ts')
+  return runningTypeScriptSource ? new URL('./worker-dev.mjs', here) : new URL('./worker.mjs', here)
 }
 
 export function createPool(files: VerifiedFiles, size: number): Pool {

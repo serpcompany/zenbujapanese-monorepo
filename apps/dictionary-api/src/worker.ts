@@ -1,8 +1,3 @@
-// A worker thread: loads the dictionary, then answers the pool's calls one at a time. SQLite is
-// synchronous, so a slow query (the broadest searches take seconds) holds only its own thread.
-// Started with the `conjugation-sitemap` task instead, it works out the conjugations sitemap once
-// (the core's conjugation-sitemap.ts), sends it, and exits, so requests never wait on it.
-
 import { join } from 'node:path'
 import { parentPort, workerData } from 'node:worker_threads'
 import { conjugationSitemap } from '@zenbu/dictionary-core/artifact/conjugation-sitemap'
@@ -20,7 +15,6 @@ export interface Call {
 
 export type Reply = { id: number; result: unknown } | { id: number; error: string }
 
-/** What the sitemap task sends back. */
 export type SitemapReply = { sitemap: ReturnType<typeof conjugationSitemap> }
 
 const port = parentPort

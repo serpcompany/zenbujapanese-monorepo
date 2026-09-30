@@ -10,11 +10,6 @@ import {
   sudachiAvailable
 } from './support'
 
-// The ADR 0006 search retrieval suite (search-retrieval.json, SearchConformanceTests.swift):
-// every client returns these Language Reference IDs in this order. It runs the search core on
-// the artifact with Sudachi, as the service does, so the sentence-search cases the app records
-// (`analyzed`) count too; without Sudachi's dictionary (`pnpm sudachi`) they are skipped.
-
 interface ConformanceCase {
   query: string
   resolution?: string
@@ -62,9 +57,7 @@ describe.runIf(artifactAvailable)('search conformance', () => {
     test.skip.each(skipped)('「$query」 needs Sudachi (pnpm sudachi)', () => {})
   }
 
-  test('a duplicated word keeps the entry number of its Language Reference ID', async () => {
-    // 欧州経済領域 is two JMdict entries with the same meaning. The lower Language Reference ID,
-    // 4e9c02…, is entry 5149361, whichever query finds it and whichever row comes first.
+  test("a word JMdict lists twice, as 欧州経済領域, keeps its lower Language Reference ID's entry number, whichever query finds it", async () => {
     for (const query of ['欧州経済領域', 'european economic area']) {
       const item = (await search.search(query)).items.find(
         candidate => candidate.entry.headword === '欧州経済領域'

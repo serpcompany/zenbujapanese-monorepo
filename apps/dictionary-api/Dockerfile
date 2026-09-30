@@ -1,15 +1,3 @@
-# syntax=docker/dockerfile:1
-# The dictionary service's image (ADR 0009): the bundled service, the app's language data it
-# reads, and Sudachi's dictionary, pinned and checked. It runs anywhere a container does: a VM,
-# bare metal, or Cloudflare Containers. Build it from the repository root, with the app's Git LFS
-# files pulled:
-#
-#   git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources"
-#   docker build -f apps/dictionary-api/Dockerfile -t zenbujapanese-dictionary-api .
-#
-# The image holds one build of the data: a new artifact is a new image. The `Dictionary API deploy`
-# workflow builds it, pushes it to ghcr.io/serpcompany/zenbujapanese-dictionary-api, and deploys it.
-
 ARG NODE_IMAGE=node:22.16.0-bookworm-slim
 
 FROM ${NODE_IMAGE} AS build
@@ -26,7 +14,6 @@ COPY apps/dictionary-api apps/dictionary-api
 RUN pnpm --filter zenbujapanese-dictionary-api build \
   && pnpm --filter zenbujapanese-dictionary-api deploy --legacy --prod /service
 
-# Sudachi's dictionary: the app's pinned SudachiDict Core, checked against its SHA-256s.
 FROM ${NODE_IMAGE} AS sudachi
 WORKDIR /fetch
 COPY apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json resources/
@@ -34,7 +21,6 @@ COPY apps/dictionary-api/scripts/fetch-sudachi.mjs .
 RUN node fetch-sudachi.mjs resources /sudachi/system_core.dic
 
 FROM ${NODE_IMAGE}
-# Links the GitHub Container Registry package to this repository.
 LABEL org.opencontainers.image.source="https://github.com/serpcompany/zenbujapanese-monorepo" \
   org.opencontainers.image.description="The zenbujapanese.com dictionary service (apps/dictionary-api)"
 ENV NODE_ENV=production \
@@ -45,7 +31,6 @@ WORKDIR /service
 COPY --from=build /service/node_modules node_modules
 COPY --from=build /repo/apps/dictionary-api/dist dist
 COPY --from=sudachi /sudachi sudachi
-# The app's bundled language data the core reads (./src/artifact.ts, ./src/sudachi.ts).
 COPY apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3 \
   apps/ios/Modules/Sources/SearchExperience/Resources/CompoundPitch.sqlite3 \
   apps/ios/Modules/Sources/SearchExperience/Resources/JLPTLevelPack.sqlite3 \

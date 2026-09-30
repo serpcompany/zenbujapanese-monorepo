@@ -24,15 +24,24 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   expects (`checkArtifact`); every pack but the stroke data must be built for this
   `LanguageReferenceData.sqlite3`.
 - `KanjiReferenceData.json` and `KanjiElementReferenceData.json`.
-- Kuromoji's files, pinned by SHA-256 and loaded through the app's XMLHttpRequest shim
-  (`src/kuromoji.ts`), for example word links and conjugated form examples.
+- Kuromoji's files, for example word links and conjugated form examples. `src/kuromoji.ts` ports
+  `apps/ios/Modules/Sources/SearchExperience/KuromojiMorphologyClient.swift`: it runs the app's
+  kuromoji.js build in a bare V8 context, as the app runs it in a bare JavaScriptCore one, and
+  hands it each dictionary file, still gzipped, through the app's XMLHttpRequest shim. Tokens
+  come back through JSON, as the app decodes them, so an absent reading stays absent. The files
+  are pinned by SHA-256, as the word-detail suite records them: new files are a new tokenizer, so
+  record the suite again. The `Search parity` workflow fails a pull request that changes the port
+  or the Swift without the other.
 - Sudachi's dictionary, for sentence search: the SudachiDict Core the app pins in
   `LanguageTechnologyPackCatalog.json`. `pnpm sudachi` downloads it into `.sudachi/`, checking
-  the download and `system.dic` against the catalog's SHA-256s. `@nikkei/napi-sudachi` 0.12.0
-  builds the same sudachi.rs commit the app pins, and the service checks that commit and the
-  app's `char.def` and `unk.def` before it loads. Without the dictionary the service won't
-  start; set `SUDACHI_DICTIONARY=` (empty) to run it with sentence search off, where a sentence
-  finds only direct matches.
+  the download and `system.dic` against the catalog's SHA-256s, and keeps a dictionary already
+  there that checks out (`scripts/fetch-sudachi.mjs` also takes the resources folder and the
+  output path, which the image's build passes). `@nikkei/napi-sudachi` 0.12.0 builds the same
+  sudachi.rs commit the app pins, and the service checks that commit and the app's `char.def` and
+  `unk.def` before it loads. Sentence search looks up Sudachi's Mode C words, as the app's
+  `SudachiJapaneseMorphologyAdapter` does. Without the dictionary the service won't start; set
+  `SUDACHI_DICTIONARY=` (empty) to run it with sentence search off, where a sentence finds only
+  direct matches.
 
 ## Run it
 
@@ -42,10 +51,12 @@ echo "DICTIONARY_API_TOKEN=$(openssl rand -hex 24)" > .env
 pnpm dev
 ```
 
-`pnpm dev` restarts on changes and reads `.env`, which is never committed. The service hashes the
-artifact and Sudachi's dictionary, starts its worker threads, and answers `/healthz` with 503
-until every thread has loaded, then with its build. To run the website against it, name it in
-`apps/web/.dev.vars` (see [`web.md`](web.md), Dictionary).
+`pnpm dev` restarts on changes and reads `.env`, which is never committed. It runs the TypeScript
+through tsx, whose loader doesn't reach worker threads by itself, so there each thread starts from
+`src/worker-dev.mjs`, which registers the loader first; the image runs the bundle. The service
+hashes the artifact and Sudachi's dictionary, starts its worker threads, and answers `/healthz`
+with 503 until every thread has loaded, then with its build. To run the website against it, name
+it in `apps/web/.dev.vars` (see [`web.md`](web.md), Dictionary).
 
 | Variable | Default | What it sets |
 | --- | --- | --- |
@@ -90,12 +101,15 @@ the error.
 ## How it runs
 
 The main thread hashes the artifact and Sudachi's dictionary once, checks Sudachi's pins, and serves
-HTTP (Hono on Node's HTTP server). Worker threads each open the artifact read-only, checking it, its
-packs, and Kuromoji's pinned files as they load, and answer calls; each call goes to the thread with
-the fewest in flight, and a thread that dies is replaced. Each thread keeps recent searches, word
-examples, a query's examples, kanji pages, and word lookups in LRU caches, so a page's first request
-pays for a broad query and the rest don't. The website's edge cache keeps answers for 10 minutes on
-top.
+HTTP (Hono on Node's HTTP server). Sudachi's native module reads its configuration from the
+process's environment, which only the main thread can set, so the main thread sets it
+(`prepareSudachi`) before any worker thread starts. Worker threads each open the artifact
+read-only, checking it, its packs, and Kuromoji's pinned files as they load, and answer calls one
+at a time: SQLite is synchronous, so a slow query holds only its own thread. Each call goes to the
+thread with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent
+searches, word examples, a query's examples, kanji pages, and word lookups in LRU caches, so a
+page's first request pays for a broad query and the rest don't. The website's edge cache keeps
+answers for 10 minutes on top.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route
 pattern, status, and time. Queries never appear in the logs.
@@ -127,10 +141,21 @@ runs Biome, typecheck, Vitest, and the bundle. The tests replay the app-recorded
 files: search retrieval, search results (every row, chip, and special row, the Example Sentences
 row included), example search (every listed pair ID for 67 queries, and the first 5 sentences'
 words, links, and marks), word detail (the first 25 examples' order, tokens, links, and
-highlights, the counts, and every conjugated form's examples), and kanji detail. Without the files
-they skip; `ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does. No suite records
-sentence search yet (recording it needs the app's Japanese Text Analysis pack in the Simulator),
-so `sentence-search.test.ts` checks the cases the app's manual checks name.
+highlights, the counts, the furigana split, the pitch graph, each frequency row's details, and
+every conjugated form's examples), and kanji detail (all but JLPT, which the app's cases don't
+record). The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
+the shapes in `packages/dictionary-core/src/detail/suite.ts`, which the website's rendered-page
+test (`apps/web/src/components/dictionary/word-page.test.tsx`) shares. Each suite pins the files
+it was recorded from, and fails on others (`requirePinnedArtifacts`), since it would compare
+nothing useful. A suite the app recorded with reduced text analysis runs without Sudachi, as the
+app did. The results suite compares a row's first entry number only: the service keeps its
+Language Reference ID's, the first of the entries the app merged into the row. Where the app's
+example retrieval throws, on a headword NFKC changes such as Ｈ, the suite records the error: Word
+Detail lists no examples, and neither does the page. Without the files the suites skip;
+`ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary
+the retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording
+it needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts`
+checks the cases the app's manual checks name.
 `conjugation-examples.test.ts` pages a form's examples, and `conjugation-sitemap.test.ts` holds
 the sitemap's one pass to each form's own list on every form the word-detail suite records.
 `full-text.test.ts` checks English search where FTS4 differs from other engines.
@@ -140,8 +165,12 @@ Sudachi's dictionary cached, then the website's rendered-page gate against the b
 `Dictionary API deploy` workflow builds the Docker image and checks that it starts and answers
 (see Ship it). The `Search parity` workflow pairs the core's ports with their Swift sources.
 
-`pnpm fixtures` regenerates the core's local fixtures (`packages/dictionary-core/src/fixtures/`)
-with the service's readers, for `pnpm dev` without a service.
+`pnpm fixtures` regenerates the core's local fixtures (`packages/dictionary-core/src/fixtures/`),
+for `pnpm dev` without a service: the いる homographs and the words written with 要, with two
+pages of examples for each and for each of their conjugated forms, and the kanji 要. The code the
+service answers with reads them from the app's files (or the `Resources` folder given), so their
+shapes can't drift from what staging and production render. It writes one row per line, so a
+regenerated fixture diffs by row.
 
 ## Ship it
 
@@ -165,6 +194,12 @@ The image is about 1 GB, and uses about 750 MiB of memory with two worker thread
 kernel's cache of the files it reads comes on top (about 600 MB once the sitemap has read every
 sentence); a container's memory reading, such as `docker stats`, counts it, but it can be
 reclaimed. It has a health check on `/healthz` and stops cleanly on SIGTERM.
+
+It holds one build of the data, so a new artifact is a new image. `scripts/build.mjs` bundles
+`src/server.ts` and `src/worker.ts`, with the core and Hono; Sudachi's native module stays outside
+the bundle, among the production dependencies the image installs. The build
+context is the repository root, and `Dockerfile.dockerignore` lets in only what the `Dockerfile`
+copies, so a file the image needs goes in both.
 
 ### How a deploy works
 
@@ -199,9 +234,10 @@ log. The `staging` environment only accepts `main`, and the deployer runs an ima
 runs. A rollback signs its image again only after checking that main signed it before.
 
 On the server, cron runs `deploy/deployer.sh` as root every 5 minutes. It asks the registry which
-image each tag names, and when one changed, deploys it. It takes no input, so changing what it does
-takes root on the server; a change to the script in this repository reaches the server only when
-someone installs it there. Each environment runs in one of two slots on the
+image each tag names (`docker pull`, which fetches only the tag's manifest unless it names a new
+image), and when one changed, deploys it. It takes no input and reads no environment variable, so
+changing what it does takes root on the server; a change to the script in this repository reaches
+the server only when someone installs it there. Each environment runs in one of two slots on the
 `zenbujapanese-dictionary-api` Docker network, both answering to the environment's network alias
 (`zenbujapanese-dictionary-api-staging` or `-production`). That network is internal and holds only
 the slots and the server's nginx, which is on `web_network` too: a slot reaches nginx and nothing
@@ -212,17 +248,32 @@ can't answer, because it's stopped, to the other. The deployer deploys nothing w
 missing, isn't internal, or doesn't have nginx on it, since a slot there couldn't serve. A deploy
 starts the new image in the free slot without the alias, so nginx sends it nothing while it
 starts; waits until its `/healthz` names the image's release (each check may take 3 seconds, and
-the whole wait 3 minutes); gives it the alias, by reconnecting it to the network; waits until
-nginx has seen it; then stops the old one. That's about 20 seconds, with no request dropped and
-nginx never reloaded. A new image that doesn't come up is
-removed, the old one keeps serving, and that image isn't tried again until the tag moves (below).
-Every container is capped (4 GB of memory, 4 CPUs, 512 processes, 30 MB of logs) and runs as user
-1000 (the node image's `node`), whatever the image says, with no capabilities and a read-only file
-system; an image that declares a volume is refused, and a removed container's volumes go with it.
-So no image can starve the server's other services or change the server. The deployer touches only
-the containers it started, by the ID Docker gave it, and this repository's images, and never
-nginx. A run that finds a container of the tag's image a deploy was cut short on finishes the
-deploy: it gives it the alias and restart policy, then stops the other slot.
+the whole wait 3 minutes); gives it the alias, by reconnecting it to the network, since Docker
+can't add an alias to a connected container; waits 10 seconds more, past nginx's 5-second resolver
+cache, so nginx has seen it; then stops the old one. That's about 20 seconds, with no request
+dropped and nginx never reloaded. A new image that doesn't come up is removed, the old one keeps
+serving, and that image isn't tried again until the tag moves (below). Every container is capped
+(4 GB of memory, 4 CPUs, 512 processes, 30 MB of logs) and runs as user 1000 (the node image's
+`node`), whatever the image says, with no capabilities and a read-only file system; an image that
+declares a volume is refused, and a removed container's volumes go with it. So no image can starve
+the server's other services or change the server. The deployer touches only the containers it
+started, by the ID Docker gave it, and this repository's images, and never nginx.
+
+A few details keep a deploy safe. Runs take a lock in `/run`, where only root can create one, since
+a deploy can outlast 5 minutes; a run that finds it taken logs that and skips. Each run keeps the
+registry login and the IDs of the containers it starts in a folder only root can open, removed when
+the run ends. A deploy first removes the environment's stopped slot containers, freeing their
+slots, and treats any container with a slot's name as taking it. It runs the new container by its
+image's digest, the one cosign verified, and gives it a restart policy only once it answers, so a
+crash shows at once rather than as a restart loop. The old slot gets SIGTERM and 30 seconds to
+finish its requests. A run that finds the tag's image in a slot a deploy was cut short on finishes
+the deploy: once it answers as the tag's release, it gets the alias and the restart policy, and the
+other slot stops; one that doesn't answer is removed, unless it has the alias, since it's serving.
+After a deploy, the deployer removes this repository's images that no slot uses, except the ones
+the deploy replaced, which a rollback deploys again, and the ones the tags name. It removes an
+image by its references in this repository, so an image another repository also names stays, and
+it lists every image rather than filtering them by reference, since `--filter reference=` leaves
+out an image pulled by digest alone.
 
 - **Roll back** by running the workflow by hand with `tag` set to the version to go back to, such
   as `sha-0123456789ab`: it moves the tags to that image without building.
@@ -329,7 +380,8 @@ a deploy starts one, and 5 GB of disk for images. A person with root sets it up 
    `Web deploy`. For production, see its first switch, above.
 
 The workflow's first push creates the image's package in the serpcompany organization
-(github.com/orgs/serpcompany/packages), private, as new packages are. The deployer pulls it with a
+(github.com/orgs/serpcompany/packages), private, as new packages are, and the image's
+`org.opencontainers.image.source` label links it to this repository. The deployer pulls it with a
 GitHub token (classic) with only the `read:packages` scope, authorized for the organization's SSO
 if it has one, which it reads from a root-only file on every run:
 

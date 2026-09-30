@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-// Bundles the service into dist/: server.mjs and worker.mjs, which the server starts as worker
-// threads. The shared core and Hono are bundled in; Sudachi's native module stays external, so
-// the image installs it (Dockerfile).
 
 import { build } from 'esbuild'
 

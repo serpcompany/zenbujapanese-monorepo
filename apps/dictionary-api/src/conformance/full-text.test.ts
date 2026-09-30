@@ -2,11 +2,6 @@ import type { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { artifactAvailable, dictionary } from './support'
 
-// The service runs the app's FTS4 queries on the artifact's own FTS4 indexes, so English search
-// matches what the app matches, including where FTS4's Porter stemmer differs from other full-text
-// engines: the FTS5 copy the website searched before the service (ADR 0009) missed these. No
-// app-recorded case covers them.
-
 describe.runIf(artifactAvailable)('full-text search as the app runs it', () => {
   let service: Dictionary
 

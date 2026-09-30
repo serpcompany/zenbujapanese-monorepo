@@ -1,6 +1,3 @@
-// What the HTTP layer asks of the dictionary: the core's `Dictionary`, asynchronous so that it
-// can run in worker threads (./pool.ts), and loaded from the app's files (./load.ts).
-
 import type {
   ConjugationWordResponse,
   Dictionary,
@@ -13,9 +10,7 @@ import type {
   WordSitemap
 } from '@zenbu/dictionary-core/artifact/dictionary'
 
-/** Which data and code answer: the artifact, and the build the service runs. */
 export interface ServiceInfo {
-  /** Names this build of the data and code, for pages that must not mix builds. */
   build: string
   artifact: { name: string; sha256: string }
   features: { sentenceSearch: boolean }
@@ -42,7 +37,6 @@ export interface DictionaryService {
 
 export type ServiceMethod = keyof DictionaryService
 
-/** The service over a dictionary in this thread. */
 export function inProcessService(dictionary: Dictionary, info: ServiceInfo): DictionaryService {
   return {
     info: async () => info,

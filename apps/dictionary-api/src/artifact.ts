@@ -1,7 +1,3 @@
-// Opens the language-data artifact the app bundles (its SearchExperience/Resources) for the
-// dictionary core: LanguageReferenceData.sqlite3 read-only, with the other bundled databases
-// attached as the core expects, every file checked before anything is read.
-
 import { createHash } from 'node:crypto'
 import { closeSync, createReadStream, openSync, readFileSync, readSync } from 'node:fs'
 import { join } from 'node:path'
@@ -20,15 +16,13 @@ import {
 
 export const artifactFile = 'LanguageReferenceData.sqlite3'
 
-/** A file's SHA-256, read in chunks: the dictionary is about 480 MB. */
 export async function fileSha256(path: string): Promise<string> {
   const hash = createHash('sha256')
   for await (const chunk of createReadStream(path)) hash.update(chunk as Buffer)
   return hash.digest('hex')
 }
 
-/** Throws when a file is a Git LFS pointer rather than its content. */
-export function requireContent(path: string): void {
+export function rejectGitLfsPointer(path: string): void {
   const head = Buffer.alloc(40)
   const file = openSync(path, 'r')
   try {
@@ -41,7 +35,6 @@ export function requireContent(path: string): void {
   }
 }
 
-/** SQLite's own accessor, with each statement prepared once. */
 class SqliteArtifact implements ArtifactDatabase {
   private readonly statements = new Map<string, StatementSync>()
 
@@ -63,24 +56,20 @@ export interface OpenedArtifact {
   close(): void
 }
 
-/**
- * The artifact in `resources` (the app's SearchExperience/Resources), checked against
- * `sourceSha256`, the SHA-256 of its LanguageReferenceData.sqlite3.
- */
-export function openArtifact(resources: string, sourceSha256: string): OpenedArtifact {
-  const source = join(resources, artifactFile)
-  requireContent(source)
-  const database = new DatabaseSync(source, { readOnly: true })
+export function openArtifact(resources: string, artifactSha256: string): OpenedArtifact {
+  const artifactPath = join(resources, artifactFile)
+  rejectGitLfsPointer(artifactPath)
+  const database = new DatabaseSync(artifactPath, { readOnly: true })
   for (const [name, attachment] of Object.entries(attachments)) {
     const path = join(resources, attachment.file)
-    requireContent(path)
+    rejectGitLfsPointer(path)
     database.exec(`ATTACH DATABASE 'file:${path.replaceAll("'", "''")}?mode=ro' AS ${name}`)
   }
   const db = new SqliteArtifact(database)
-  checkArtifact(db, sourceSha256)
+  checkArtifact(db, artifactSha256)
   const json = <T>(name: string): T => {
     const path = join(resources, name)
-    requireContent(path)
+    rejectGitLfsPointer(path)
     return JSON.parse(readFileSync(path, 'utf8')) as T
   }
   const kanji = new KanjiData(
