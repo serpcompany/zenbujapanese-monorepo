@@ -4,8 +4,9 @@
 // website renders them (apps/web/src/lib/dictionary/data.ts). Responses are plain JSON: maps are
 // records keyed by JMdict entry number.
 
+import { conjugationTable } from '../detail/conjugation'
 import { examplesPerPage } from '../detail/examples'
-import type { KanjiRows, WordExampleRows, WordRows } from '../detail/rows'
+import type { FormExampleRows, KanjiRows, WordExampleRows, WordRows } from '../detail/rows'
 import { wordSlug } from '../detail/slug'
 import type { LinkEntry } from '../examples/linking'
 import type { Tokenize } from '../examples/morphology'
@@ -19,7 +20,11 @@ import {
 } from '../search/search'
 import { type Cache, LruCache } from './cache'
 import { type ArtifactDatabase, searchDatabase } from './database'
-import { type EntryExamples, retrieveEntryExamples } from './example-retrieval'
+import {
+  type EntryExamples,
+  type ExampleSentence,
+  retrieveEntryExamples
+} from './example-retrieval'
 import { searchExamples } from './example-search'
 import { readKanji } from './kanji'
 import type { KanjiData } from './kanji-data'
@@ -59,6 +64,20 @@ export interface ExamplesResponse {
   slugs: Slugs
 }
 
+/** A word's conjugation screens: its rows without examples, and the slug its pages live under. */
+export interface ConjugationWordResponse {
+  rows: WordRows
+  slug: string
+}
+
+/** A conjugated form's examples, by its spelling: a page of them, and how many it lists. */
+export interface FormExamplesResponse {
+  rows: FormExampleRows[]
+  /** How many examples the form lists, at most 100. */
+  listed: number
+  slugs: Slugs
+}
+
 /** A search's examples page: what the Example Sentences row opens. */
 export interface SearchExamplesResponse extends ExamplesResponse {
   /** The query, as normalized. */
@@ -67,6 +86,8 @@ export interface SearchExamplesResponse extends ExamplesResponse {
   listed: number
   /** Whether more than 100 matched, so some aren't listed. */
   truncated: boolean
+  /** Whether it lists the primary entry's examples (a romaji or deinflected query). */
+  usesPrimaryEntryExamples: boolean
 }
 
 export interface KanjiResponse {
@@ -115,7 +136,10 @@ export function isUnreadableQuery(error: unknown): boolean {
 
 /** A query's Example Sentences: the primary entry's, or the sentences containing the query. */
 interface QueryExamples {
+  /** The entry the screen highlights, whose words link to it. */
   primary: ExamplesEntry | null
+  /** Whether it lists the primary entry's examples, for a romaji or deinflected query. */
+  usesPrimaryEntryExamples: boolean
   /** Null where the app's retrieval throws, so it offers none. */
   examples: EntryExamples | null
 }
@@ -146,6 +170,7 @@ export class Dictionary {
   private readonly lookup: ReturnType<typeof formLookup>
   private readonly searches: Cache<string, SearchResponse>
   private readonly queryExamples: Cache<string, QueryExamples>
+  private readonly forms: Cache<string, ExampleSentence[]>
   private readonly retrieved: Cache<string, EntryExamples | null>
   private readonly kanjiPages: Cache<string, KanjiResponse | null>
   private sitemaps: WordSitemap[] | null = null
@@ -163,6 +188,7 @@ export class Dictionary {
     this.searches = new LruCache(size)
     // Each holds up to 100 sentences, so fewer are kept.
     this.queryExamples = new LruCache(Math.max(1, Math.floor(size / 4)))
+    this.forms = new LruCache(Math.max(1, Math.floor(size / 4)))
     this.retrieved = new LruCache(size)
     this.kanjiPages = new LruCache(size)
   }
@@ -196,7 +222,12 @@ export class Dictionary {
     if (cached) return cached
     const results = found ?? (await this.readableResults(query))
     const primary = primaryExamplesEntry(this.db, query, results)
-    const examples = { primary, examples: resultsExamples(this.db, query, primary) }
+    const { usesPrimaryEntryExamples } = results
+    const examples = {
+      primary,
+      usesPrimaryEntryExamples,
+      examples: resultsExamples(this.db, query, primary, usesPrimaryEntryExamples)
+    }
     this.queryExamples.set(query, examples)
     return examples
   }
@@ -208,13 +239,10 @@ export class Dictionary {
     if (cached) return cached
     const results = await this.readableResults(query)
     const frequency = await loadFrequency(searchDatabase(this.db), results)
-    const { primary, examples } = await this.examplesFor(query, results)
-    const count = resultsExampleCount(primary, examples)
+    const { usesPrimaryEntryExamples, examples } = await this.examplesFor(query, results)
+    const count = resultsExampleCount(usesPrimaryEntryExamples, examples)
     const response: SearchResponse = {
-      screen: searchResultsScreen(query, results, frequency, {
-        count,
-        primaryEntry: primary?.id ?? null
-      }),
+      screen: searchResultsScreen(query, results, frequency, count),
       kanjiHasPage: this.kanjiData.has(query)
     }
     this.searches.set(query, response)
@@ -232,7 +260,7 @@ export class Dictionary {
     limit = examplesPerPage
   ): Promise<SearchExamplesResponse | null> {
     const query = normalizeQuery(rawQuery)
-    const { primary, examples } = await this.examplesFor(query)
+    const { primary, usesPrimaryEntryExamples, examples } = await this.examplesFor(query)
     if (!examples || examples.sentences.length === 0) return null
     const rows = exampleRows(
       this.db,
@@ -245,6 +273,7 @@ export class Dictionary {
       query,
       listed: examples.sentences.length,
       truncated: examples.truncated,
+      usesPrimaryEntryExamples,
       rows,
       slugs: toRecord(slugsByEntSeq(this.db, exampleLinkEntSeqs(rows)))
     }
@@ -331,24 +360,70 @@ export class Dictionary {
   }
 
   /**
-   * A conjugated form's examples (`ConjugatedFormView`), accenting the form: those of the first
-   * 100 sentences containing it in which it is one word.
+   * What a word's conjugation table and form screens show: its rows without examples, which they
+   * don't list, and its slug; null for an unknown word, or one whose part of speech opens no table.
    */
-  conjugationExamples(form: string): ExamplesResponse {
-    const surface = normalizeQuery(form)
-    const searched = searchExamples(this.db, surface)
+  conjugationWord(entSeq: number): ConjugationWordResponse | null {
+    const word = readWord(this.db, this.kanjiData, entSeq)
+    if (!word || !conjugationTable(word.entry)) return null
+    return {
+      rows: {
+        entry: word.entry,
+        frequency: word.frequency,
+        kanji: word.kanji,
+        examples: [],
+        exampleCount: null
+      },
+      slug: word.slug
+    }
+  }
+
+  /**
+   * The sentences a conjugated form's screen lists (`ConjugatedFormView.loadExamples`), by its
+   * spelling: the app's search for it, normalized as the search normalizes it (so a full-width Ｈ
+   * searches English), then those whose text contains the form as written and in which Kuromoji
+   * reads it as one word, at most 100.
+   */
+  formSentences(form: string): ExampleSentence[] {
+    const cached = this.forms.get(form)
+    if (cached) return cached
+    const searched = searchExamples(this.db, form)
     const sentences =
       typeof searched === 'string'
         ? []
-        : conjugatedFormExamples(searched, surface, this.capabilities.tokenize)
+        : conjugatedFormExamples(searched, form, this.capabilities.tokenize)
+    this.forms.set(form, sentences)
+    return sentences
+  }
+
+  /**
+   * `limit` of a conjugated form's examples from position `from`, accenting the form, with how
+   * many it lists. The screen has no page entry, so words link as no word page sees them.
+   */
+  formExamples(form: string, from = 0, limit = examplesPerPage): FormExamplesResponse {
+    const sentences = this.formSentences(form)
+    // The screen accents the query it searched, as normalized (`SearchQuery(form.surface)`).
     const rows = exampleRows(
       this.db,
-      sentences,
-      0,
-      { entry: null, query: surface, accent: 'query' },
+      sentences.slice(from, from + limit),
+      from,
+      { entry: null, query: normalizeQuery(form), accent: 'query' },
       this.linking
-    )
-    return { rows, slugs: toRecord(slugsByEntSeq(this.db, exampleLinkEntSeqs(rows))) }
+    ).map(({ sentence, example }) => ({
+      sentence,
+      example: {
+        surface: form,
+        position: example.position,
+        sentenceId: example.sentenceId,
+        highlights: example.highlights,
+        links: example.links
+      }
+    }))
+    return {
+      rows,
+      listed: sentences.length,
+      slugs: toRecord(slugsByEntSeq(this.db, exampleLinkEntSeqs(rows)))
+    }
   }
 
   /** A kanji page, or null for a character without one. */

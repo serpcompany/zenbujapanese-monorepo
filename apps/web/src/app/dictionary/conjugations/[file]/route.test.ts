@@ -33,10 +33,16 @@ describe('GET /dictionary/conjugations/<form>.json', () => {
     })
   })
 
+  test('reads the form as written, not normalized', async () => {
+    // The app's form screen searches Ｈした normalized but matches it as written.
+    vi.mocked(getConjugationExamples).mockResolvedValue([])
+    await get(`${encodeURIComponent('Ｈした')}.json`)
+    expect(getConjugationExamples).toHaveBeenCalledWith('Ｈした')
+  })
+
   test.each([
     ['a file that is not JSON', encodeURIComponent('食べた')],
-    ['an empty form', '.json'],
-    ['a form not in its normal form (half-width タベタ)', `${encodeURIComponent('ﾀﾍﾞﾀ')}.json`]
+    ['an empty form', '.json']
   ])('is not found for %s', async (_, file) => {
     expect((await get(file)).status).toBe(404)
     expect(getConjugationExamples).not.toHaveBeenCalled()

@@ -12,6 +12,7 @@ import type {
   ExampleSentenceTokenRow,
   WordExampleRows
 } from '../detail/rows'
+import { usesForm } from '../examples/forms'
 import { toHiragana } from '../examples/kana'
 import {
   displayReading,
@@ -19,7 +20,7 @@ import {
   type LinkedToken,
   linkedTokens
 } from '../examples/linking'
-import { groupInflections, kuromojiCandidates, type Tokenize } from '../examples/morphology'
+import { kuromojiCandidates, type Tokenize } from '../examples/morphology'
 import { normalizeQuery } from '../search/query'
 import type { ArtifactDatabase } from './database'
 import type { EntryExamples, ExampleSentence } from './example-retrieval'
@@ -287,12 +288,12 @@ export function conjugatedFormExamples(
   form: string,
   tokenize: Tokenize
 ): ExampleSentence[] {
-  return searched.sentences.filter(sentence => {
-    if (!sentence.japanese.includes(form)) return false
-    const analysis = kuromojiCandidates(sentence.japanese, tokenize(sentence.japanese))
-    // Where the app's analysis fails, it finds no words.
-    return analysis !== null && groupInflections(analysis).some(word => word.surface === form)
-  })
+  return searched.sentences.filter(sentence => usesFormIn(sentence.japanese, form, tokenize))
+}
+
+/** `usesForm` (../examples/forms.ts) with the app's Kuromoji analysis of the text. */
+export function usesFormIn(japanese: string, form: string, tokenize: Tokenize): boolean {
+  return usesForm(japanese, kuromojiCandidates(japanese, tokenize(japanese)), form)
 }
 
 function exampleSentenceRow(
@@ -321,7 +322,9 @@ function exampleSentenceRow(
 }
 
 /** The entry numbers an example's words link to one entry each (the pages the links open). */
-export function exampleLinkEntSeqs(examples: readonly WordExampleRows[]): number[] {
+export function exampleLinkEntSeqs(
+  examples: readonly { example: Pick<WordExampleRows['example'], 'links'> }[]
+): number[] {
   return [
     ...new Set(
       examples.flatMap(({ example }) =>

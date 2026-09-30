@@ -5,14 +5,15 @@ import { frequencyRowDetails } from '@zenbu/dictionary-core/detail/frequency'
 import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { ConjugationsButton } from './conjugations'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { ConjugationsButton, ConjugationTable } from './conjugations'
 import { FrequencySection } from './frequency-section'
 import { HeadwordRuby } from './headword-ruby'
 
 // What selecting does on the word page, in a DOM: a headword kanji highlights itself and its part
-// of the furigana, as the app's Furigana kanji highlight does, and a Frequency row opens its
-// details as a sheet.
+// of the furigana, as the app's Furigana kanji highlight does, a Frequency row opens its details
+// as a sheet, the part of speech opens the conjugation table as a sheet, and the table's register
+// control switches the forms its rows open.
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -112,13 +113,15 @@ describe('the Frequency section', () => {
   })
 })
 
-describe('the conjugation table', () => {
+describe('the conjugations sheet', () => {
   test('the part of speech opens it; Polite switches register; a row opens its form; Back returns', async () => {
     const data = conjugations(
       { headword: '見る', reading: 'みる', partsOfSpeech: ['ichidanVerb', 'transitive'] },
       new Map()
     )
     if (!data) throw new Error('見る has no table')
+    const fetcher = vi.fn(async (_url: string) => Response.json({ examples: [] }))
+    vi.stubGlobal('fetch', fetcher)
     act(() =>
       root.render(
         <ConjugationsButton
@@ -130,6 +133,7 @@ describe('the conjugation table', () => {
             pitch: null
           }}
           conjugations={data}
+          wordPath="/dictionary/見る-1259290/"
         />
       )
     )
@@ -140,18 +144,117 @@ describe('the conjugation table', () => {
     }
     const surfaces = () =>
       [...document.querySelectorAll('[data-conjugation-surface]')].map(node => node.textContent)
+    const pageLink = () =>
+      decodeURI(document.querySelector('[data-conjugation-page-link]')?.getAttribute('href') ?? '')
     await click('[data-opens-conjugations]')
     expect(document.body.textContent).toContain('Conjugations')
     expect(surfaces().slice(0, 2)).toEqual(['見る', '見た'])
+    expect(pageLink()).toBe('/dictionary/見る-1259290/conjugations/')
     await click('[data-conjugation-mode="Polite"]')
     expect(surfaces().slice(0, 2)).toEqual(['見ます', '見ました'])
+    expect(pageLink()).toBe('/dictionary/見る-1259290/conjugations/#polite')
     await click('[data-conjugation-row="potential"]')
     expect(document.querySelector('[data-conjugated-form]')?.textContent).toContain(
       'Same spelling as Passive.'
     )
+    // The form's screen loads its examples, and links to the form's own page.
+    expect(fetcher).toHaveBeenCalledWith(
+      `/dictionary/conjugations/${encodeURIComponent('見られます')}.json`
+    )
+    expect(document.querySelector('[data-conjugation-examples]')?.textContent).toContain(
+      'No example sentences use this form yet.'
+    )
+    expect(pageLink()).toBe('/dictionary/見る-1259290/conjugations/polite/potential/')
     await click('[aria-label="Back to conjugations"]')
     expect(document.querySelector('[data-conjugated-form]')).toBeNull()
     // Back keeps the register the reader chose.
     expect(surfaces()[0]).toBe('見ます')
+    vi.unstubAllGlobals()
+  })
+})
+
+describe('the conjugation table’s page', () => {
+  const data = conjugations(
+    { headword: '見る', reading: 'みる', partsOfSpeech: ['ichidanVerb', 'transitive'] },
+    new Map()
+  )
+  const renderTable = () => {
+    if (!data) throw new Error('見る has no table')
+    act(() =>
+      root.render(
+        <ConjugationTable
+          word={{
+            ruby: rubySegments('見る', 'みる'),
+            reading: 'みる',
+            summary: 'to see',
+            partOfSpeech: 'Ichidan verb (transitive)',
+            pitch: null
+          }}
+          conjugations={data}
+          wordPath="/dictionary/見る-1259290/"
+        />
+      )
+    )
+  }
+  const rows = () =>
+    [...document.querySelectorAll<HTMLAnchorElement>('[data-conjugation-row]')].map(row => ({
+      surface: row.querySelector('[data-conjugation-surface]')?.textContent,
+      href: decodeURI(row.getAttribute('href') ?? '')
+    }))
+
+  afterEach(() => {
+    window.history.replaceState(null, '', '/')
+  })
+
+  test('Polite switches register, and each row opens its form in that register', async () => {
+    renderTable()
+    expect(rows().slice(0, 2)).toEqual([
+      { surface: '見る', href: '/dictionary/見る-1259290/conjugations/plain/present-future/' },
+      { surface: '見た', href: '/dictionary/見る-1259290/conjugations/plain/past/' }
+    ])
+    const polite = document.querySelector<HTMLElement>('[data-conjugation-mode="Polite"]')
+    await act(async () => polite?.click())
+    expect(rows().slice(0, 2)).toEqual([
+      { surface: '見ます', href: '/dictionary/見る-1259290/conjugations/polite/present-future/' },
+      { surface: '見ました', href: '/dictionary/見る-1259290/conjugations/polite/past/' }
+    ])
+    // The address keeps the register, so returning from a Polite form shows Polite.
+    expect(window.location.hash).toBe('#polite')
+  })
+
+  test('the register goes into the address with null state, so the router keeps it', async () => {
+    window.history.replaceState(
+      { __NA: true, tree: [] },
+      '',
+      '/dictionary/見る-1259290/conjugations/'
+    )
+    const replace = vi.spyOn(window.history, 'replaceState')
+    renderTable()
+    const click = async (mode: string) => {
+      const tab = document.querySelector<HTMLElement>(`[data-conjugation-mode="${mode}"]`)
+      await act(async () => tab?.click())
+    }
+    await click('Polite')
+    expect(replace).toHaveBeenLastCalledWith(
+      null,
+      '',
+      `${encodeURI('/dictionary/見る-1259290/conjugations/')}#polite`
+    )
+    expect(window.history.state).toBeNull()
+    expect(window.location.hash).toBe('#polite')
+    await click('Plain')
+    expect(replace).toHaveBeenLastCalledWith(
+      null,
+      '',
+      encodeURI('/dictionary/見る-1259290/conjugations/')
+    )
+    expect(window.location.hash).toBe('')
+    replace.mockRestore()
+  })
+
+  test('opens in Polite when the address names it, as Back from a Polite form does', () => {
+    window.history.replaceState(null, '', '/dictionary/見る-1259290/conjugations/#polite')
+    renderTable()
+    expect(rows()[0].surface).toBe('見ます')
   })
 })

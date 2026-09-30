@@ -125,7 +125,7 @@ struct LinkedJapaneseText: View {
               identifier: "\(identifierPrefix).\(token.id).\(token.surface)",
               presentation: presentation,
               isCurrentEntry: isCurrentEntry(token),
-              matchesQuery: queryRanges.contains { $0.overlaps(token.scalarRange) },
+              matchesQuery: Self.matchesQuery(token, queryRanges: queryRanges),
               openWord: openWord,
               openCandidates: openCandidates
             )
@@ -145,13 +145,16 @@ struct LinkedJapaneseText: View {
 
   /// Unicode-scalar ranges of every occurrence of the query, matching token scalar ranges.
   private var queryScalarRanges: [Range<Int>] {
-    let scalars = Array(text.unicodeScalars)
-    let query = Array(highlightedQuery.value.unicodeScalars)
-    guard !query.isEmpty, query.count <= scalars.count else { return [] }
-    return (0...(scalars.count - query.count)).compactMap { start in
-      scalars[start..<(start + query.count)].elementsEqual(query)
-        ? start..<(start + query.count) : nil
-    }
+    ExampleSentencesScreen.queryScalarRanges(in: text, query: highlightedQuery.value)
+  }
+
+  /// Whether the token is part of an occurrence of the query, so the view accents it. Shared with
+  /// the word-detail conformance suite, which records the words a conjugated form's screen
+  /// accents (see also apps/web/src/lib/dictionary/examples/forms.ts).
+  nonisolated static func matchesQuery(
+    _ token: JapaneseTextToken, queryRanges: [Range<Int>]
+  ) -> Bool {
+    queryRanges.contains { $0.overlaps(token.scalarRange) }
   }
 
   private func isCurrentEntry(_ token: JapaneseTextToken) -> Bool {

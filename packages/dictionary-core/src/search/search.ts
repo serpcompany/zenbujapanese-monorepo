@@ -93,7 +93,9 @@ export interface SearchResults {
   hasExactOrPrefixMatch: boolean
 }
 
-const resultLimit = 60
+/** How many words a search lists at most, as the app does. */
+export const searchResultLimit = 60
+const resultLimit = searchResultLimit
 /** Exact forms are looked up at most this many to a query. */
 const maximumParameters = 100
 const FormKind = { written: 0, reading: 1, romaji: 2 } as const

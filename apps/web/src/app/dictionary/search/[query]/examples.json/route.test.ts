@@ -11,6 +11,7 @@ const found: SearchExamplesData = {
   examples: [example],
   listed: 100,
   truncated: true,
+  indexable: true,
   examplesPath: '/dictionary/search/%E9%A3%9F%E3%81%B9%E3%82%8B/examples.json?build=b1'
 }
 

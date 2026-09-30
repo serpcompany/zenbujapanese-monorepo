@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:zenbu:schema:language-data-releases:v1",
+  "title": "zenbu.language-data-releases.v1",
+  "description": "The bucket's releases.json: every published language-data release, oldest first (issue 463). Written by language-data/pipeline/publish.py after a release's files and manifest are uploaded. Entries are only ever appended. Release IDs increasing in order is checked by publish.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["index_schema", "releases"],
+  "properties": {
+    "index_schema": { "const": "zenbu.language-data-releases.v1" },
+    "releases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["release", "manifest_sha256", "git_commit", "published_at"],
+        "properties": {
+          "release": {
+            "description": "The release ID, YYYY.MM.N. Its manifest is releases/<release>/manifest.json.",
+            "type": "string",
+            "pattern": "^[0-9]{4}\\.(0[1-9]|1[0-2])\\.[1-9][0-9]*$"
+          },
+          "manifest_sha256": {
+            "description": "The SHA-256 of the manifest.json bytes as published.",
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "git_commit": {
+            "description": "The commit the release was packaged from: the manifest's git_commit.",
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$"
+          },
+          "published_at": {
+            "description": "When the entry was added, in UTC.",
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+          }
+        }
+      }
+    }
+  }
+}

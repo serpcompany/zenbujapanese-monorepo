@@ -1,0 +1,60 @@
+name: Language data build
+
+# Packages the next language-data release from the committed files (issue 463, step 2):
+# language-data/pipeline/package.py writes manifest.json and files/<sha256>/<name>, refusing any
+# file that differs from its Git LFS pointer, a conformance suite's pin, or another file's pin.
+# It has no credentials and publishes nothing: only the manifest and a listing are kept as an
+# Actions artifact. The Language data release workflow (language-data-release.yml) publishes,
+# and rebuilds rather than trusting this output.
+on:
+  pull_request:
+    paths:
+      - 'language-data/**'
+      - '.github/workflows/language-data-build.yml'
+      - '.github/workflows/language-data-release.yml'
+      - '.github/actions/package-language-data/**'
+      - 'apps/ios/Modules/Sources/SearchExperience/Resources/**'
+      - 'apps/ios/LanguageData/**'
+  push:
+    branches: [main]
+    paths:
+      - 'language-data/**'
+      - '.github/workflows/language-data-build.yml'
+      - '.github/actions/package-language-data/**'
+      - 'apps/ios/Modules/Sources/SearchExperience/Resources/**'
+      - 'apps/ios/LanguageData/**'
+
+concurrency:
+  group: language-data-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        # Named explicitly so pipefail is on.
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/package-language-data
+        with:
+          out: ${{ runner.temp }}/language-data
+      # Only the manifest and a listing of the staged files (size and path), not the files
+      # themselves: the publish job rebuilds them, and they're 516 MiB.
+      - name: List the staged files
+        working-directory: ${{ runner.temp }}/language-data
+        run: |
+          mkdir -p "$RUNNER_TEMP/language-data-summary"
+          cp manifest.json "$RUNNER_TEMP/language-data-summary/"
+          find files -type f -printf '%s\t%p\n' | LC_ALL=C sort -k2 > "$RUNNER_TEMP/language-data-summary/files.tsv"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: language-data-manifest-${{ github.sha }}
+          path: ${{ runner.temp }}/language-data-summary
+          if-no-files-found: error
+          retention-days: 7

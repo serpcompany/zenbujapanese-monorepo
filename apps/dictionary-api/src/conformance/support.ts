@@ -108,3 +108,8 @@ export async function dictionary(options: { morphology: boolean }): Promise<Dict
 export async function artifactDatabase() {
   return (await open()).artifact.db
 }
+
+/** The app's Kuromoji, as the service loads it. */
+export async function tokenizer() {
+  return (await open()).tokenize
+}

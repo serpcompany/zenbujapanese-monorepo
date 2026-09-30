@@ -14,10 +14,15 @@ a sign-in prompt once account pages (#468) exist.
 ## Pages
 
 - **Dictionary home**, `/dictionary/`: a search box.
-- **Search results**, `/dictionary/search/<query>/`: the words, and the kanji, a query finds,
-  and its example sentences at `/dictionary/search/<query>/examples/`.
+- **Search results**, `/dictionary/search/<query>/`: the words, and the kanji, a query finds.
+- **Example Sentences**, `/dictionary/search/<query>/examples/`: the example sentences a search's
+  "View N Example Sentences" row opens.
 - **Word page**, `/dictionary/<slug>-<ent_seq>/`: one JMdict entry, as the app's Word Detail
   shows it.
+- **Conjugation table**, `/dictionary/<slug>-<ent_seq>/conjugations/`: a verb's or adjective's
+  forms, as the app's Conjugations screen shows them.
+- **Conjugated form**, `/dictionary/<slug>-<ent_seq>/conjugations/<plain|polite>/<kind>/`: one
+  form and the example sentences that use it, as the app's form screen shows them.
 - **Kanji page**, `/dictionary/kanji/<character>/`: one kanji, as the app's Kanji Detail shows it.
 
 The shared header and footer, and the URL, indexing, and sitemap rules, apply to all of them.
@@ -41,10 +46,10 @@ Each behavior in [Dictionary](dictionary.md) names its automated check, or says 
 check yet (#511)". The checks come in four kinds:
 
 - **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the
-  app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `word-detail.json`,
-  and `kanji-detail.json`. Each pins, by SHA-256, the app data files it was recorded from. The
-  dictionary service's tests (`apps/dictionary-api/src/conformance/`) replay them through the
-  shared core on the app's own data, as the service answers the pages.
+  app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
+  `word-detail.json`, and `kanji-detail.json`. Each pins, by SHA-256, the app data files it was
+  recorded from. The dictionary service's tests (`apps/dictionary-api/src/conformance/`) replay
+  them through the shared core on the app's own data, as the service answers the pages.
 - **Unit tests** (Vitest) next to the code, under `apps/web/src/`, `packages/dictionary-core/src/`,
   and `apps/dictionary-api/src/`. Each one's `pnpm check` runs them; the `Web`, `Dictionary core`,
   and `Dictionary API` workflows run them on pull requests.
@@ -56,9 +61,10 @@ check yet (#511)". The checks come in four kinds:
 
 The suites and most unit tests check the data a page is built from. Rendered-page tests
 (`*.test.tsx`) render a page's components to HTML with `renderToStaticMarkup`, as the server does,
-and read back what a reader sees; the search results and word pages' run the app-recorded suites
-through the components from the service. Interaction tests (`*.interaction.test.tsx`) click through
-a component in a DOM (happy-dom). Rows without either say "No automated check yet (#511)". #511
-plans more rendered-HTML checks for the designs, and more smoke checks.
+and read back what a reader sees; the search results, Example Sentences, word, and conjugation
+pages' run the app-recorded suites through the components from the service. Interaction tests
+(`*.interaction.test.tsx`) click through a component in a DOM (happy-dom). Rows without either say
+"No automated check yet (#511)". #511 plans more rendered-HTML checks for the designs, and more
+smoke checks.
 
 When a behavior changes, update its entry here and its check in the same PR.

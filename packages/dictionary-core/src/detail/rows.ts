@@ -161,6 +161,26 @@ export interface WordExampleRows {
   example: WordExampleRow
 }
 
+/**
+ * One of a conjugated form's examples, in the app's order, keyed by the form's spelling, since the
+ * form's screen finds its examples by spelling alone. The screen has no page
+ * entry, so its words link as no word page sees them (the sentence's own tokens), and
+ * `highlights` are the tokens that make up an occurrence of the form, which the screen accents.
+ */
+export interface FormExampleRow {
+  surface: string
+  position: number
+  sentenceId: number
+  highlights: number[]
+  links: ExampleLinkRow[]
+}
+
+/** One of a conjugated form's examples as its screen reads it. */
+export interface FormExampleRows {
+  sentence: ExampleSentenceRow
+  example: FormExampleRow
+}
+
 /** `word_example_counts`: how many examples a word has, as the app's retrieval reports them. */
 export interface ExampleCountRow {
   /** How many examples the page lists, at most 100. */

@@ -5,7 +5,9 @@ import { tierLabels } from '@zenbu/dictionary-core/detail/frequency'
 import { kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
 import type { ExampleCountRow } from '@zenbu/dictionary-core/detail/rows'
 import {
+  type SuiteConjugationForm,
   type SuiteConjugations,
+  type SuiteFormExamples,
   type SuiteFrequencyDetails,
   type SuiteFurigana,
   type SuitePitchGraph,
@@ -30,8 +32,9 @@ import {
 // when asked. Every example field is checked: the order, pair IDs, text, tokens, links,
 // highlights, and counts. So are the headword's per-kanji furigana split, the pitch graph's
 // points, each Frequency row's details, in the shapes suite.ts shares with the rendered page's
-// test (word-page.test.tsx), and the conjugation table the part of speech opens, form by form.
-// The app's kanji cases don't record JLPT, so it isn't compared.
+// test (word-page.test.tsx), and the conjugation table the part of speech opens, form by form,
+// with every example each form's screen lists (its pair IDs in order, and the first few's words,
+// links, and accents). The app's kanji cases don't record JLPT, so it isn't compared.
 
 interface Artifact {
   name: string
@@ -122,6 +125,8 @@ interface Suite<Case> {
   cases: Case[]
   /** How many of each word's examples the suite records with their tokens. */
   exampleLimit?: number
+  /** How many of each conjugated form's examples the suite records with their tokens. */
+  formExampleLimit?: number
 }
 
 const wordSuite = readSuite<Suite<WordCase>>('word-detail')
@@ -168,9 +173,19 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
    * A word's examples as the suite records them: the first `exampleLimit`, with each token's
    * entry (one link) or candidates (several) as Language Reference IDs, and the counts.
    */
-  function examples(entSeq: number, count: ExampleCountRow | null, limit: number): SuiteExamples {
+  function examples(
+    entSeq: number,
+    count: ExampleCountRow | null,
+    limit: number,
+    recorded: SuiteExamples
+  ): SuiteExamples {
     const found = service.wordExamples(entSeq, 0, limit)
     if (!found) throw new Error(`No word ${entSeq}`)
+    // When the app's retrieval throws (a headword that changes under NFKC, such as Ｈ), Word
+    // Detail lists nothing, and so does the page: no count and no rows.
+    if (recorded.error !== undefined && count === null && found.rows.length === 0) {
+      return { listed: 0, truncated: false, error: recorded.error, shown: [] }
+    }
     const ids = idsOf([
       ...new Set(found.rows.flatMap(({ example }) => example.links.flatMap(link => link.entSeqs)))
     ])
@@ -208,6 +223,53 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
     }
   }
 
+  /**
+   * A conjugated form's examples as the suite records them: every pair ID the form's screen lists,
+   * in order, and the first `limit` with each word's entry or candidates, and whether it's
+   * accented.
+   */
+  function formExamples(surface: string, limit: number): SuiteFormExamples {
+    const found = service.formExamples(surface, 0, 100)
+    expect(found.rows.length).toBe(found.listed)
+    const shown = found.rows.slice(0, limit)
+    const ids = idsOf([
+      ...new Set(shown.flatMap(({ example }) => example.links.flatMap(link => link.entSeqs)))
+    ])
+    const id = (number: number) => ids.get(number) ?? `missing ${number}`
+    return {
+      ids: found.rows.map(({ sentence }) => `esp1_${sentence.pairId}`),
+      shown: shown.map(({ sentence, example }) => {
+        const links = new Map(example.links.map(link => [link.token, link.entSeqs]))
+        const highlights = new Set(example.highlights)
+        return {
+          id: `esp1_${sentence.pairId}`,
+          japanese: sentence.japanese,
+          english: sentence.english,
+          tokens: sentence.tokens.map((token, index) => {
+            const entSeqs = links.get(index) ?? []
+            return {
+              surface: token.text,
+              ...(entSeqs.length === 1 ? { entry: id(entSeqs[0]) } : {}),
+              ...(entSeqs.length > 1 ? { candidates: entSeqs.map(id) } : {}),
+              ...(highlights.has(index) ? { highlighted: true } : {})
+            }
+          })
+        }
+      })
+    }
+  }
+
+  /** The table as the suite records it, with each form's examples. */
+  function conjugations(conjugations: SuiteConjugations, limit: number): SuiteConjugations {
+    const withExamples = (forms: SuiteConjugationForm[]) =>
+      forms.map(form => ({ ...form, examples: formExamples(form.surface, limit) }))
+    return {
+      ...conjugations,
+      plain: withExamples(conjugations.plain),
+      ...(conjugations.polite ? { polite: withExamples(conjugations.polite) } : {})
+    }
+  }
+
   test.each(wordSuite.cases)('word: $covers', async expected => {
     const word = service.word(Number(expected.entSeq[0])) as WordResponse
     expect(word, 'no word').not.toBeNull()
@@ -234,7 +296,12 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
       partOfSpeech: detail.partOfSpeech,
       opensConjugations: detail.conjugations !== null,
       ...(detail.conjugations
-        ? { conjugations: suiteConjugations(detail.conjugations, entry.summary) }
+        ? {
+            conjugations: conjugations(
+              suiteConjugations(detail.conjugations, entry.summary),
+              wordSuite.formExampleLimit ?? 0
+            )
+          }
         : {}),
       senses: detail.senses.map((sense, index) => ({
         meaning: sense.meaning,
@@ -276,7 +343,12 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
         summary,
         ...(entSeq === null ? {} : { targetID: targetIds.get(entSeq) })
       })),
-      examples: examples(entry.entSeq, word.rows.exampleCount, wordSuite.exampleLimit ?? 0)
+      examples: examples(
+        entry.entSeq,
+        word.rows.exampleCount,
+        wordSuite.exampleLimit ?? 0,
+        expected.examples
+      )
     }
     expect(observed).toEqual(covered(expected, ['covers', 'entSeq']))
     // The page's first examples are the suite's, from the same rows.

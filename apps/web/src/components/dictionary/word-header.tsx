@@ -13,7 +13,7 @@ import { PronounceButton } from './pronounce-button'
  * highlight their part of the reading when selected, and beside it the pitch accent capsule that
  * pronounces the word, or a standalone speaker when the word has no pitch. The part of speech
  * follows under a separator, and opens the conjugation table when the word has one
- * (PartOfSpeechRow).
+ * (PartOfSpeechRow), in a sheet that links to the table's page under `path`.
  */
 export function WordHeader({
   ruby,
@@ -21,7 +21,8 @@ export function WordHeader({
   summary,
   pitch,
   partOfSpeech,
-  conjugations
+  conjugations,
+  path
 }: {
   ruby: RubySegment[]
   reading: string
@@ -29,6 +30,8 @@ export function WordHeader({
   pitch: PitchAccentData | null
   partOfSpeech: string
   conjugations: Conjugations | null
+  /** The word page's path. */
+  path: string
 }) {
   return (
     <Card>
@@ -47,6 +50,7 @@ export function WordHeader({
             <ConjugationsButton
               word={{ ruby, reading, summary, partOfSpeech, pitch }}
               conjugations={conjugations}
+              wordPath={path}
             />
           </>
         ) : partOfSpeech ? (

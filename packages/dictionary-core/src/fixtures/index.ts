@@ -2,6 +2,8 @@ import { kanjiWords as orderKanjiWords } from '../detail/kanji'
 import type {
   ExampleCountRow,
   ExampleSentenceRow,
+  FormExampleRow,
+  FormExampleRows,
   KanjiRows,
   KanjiWordRow,
   WordExampleRow,
@@ -9,6 +11,7 @@ import type {
 } from '../detail/rows'
 import exampleCounts from './example-counts.json'
 import exampleSentences from './example-sentences.json'
+import formExamples from './form-examples.json'
 import kanji from './kanji.json'
 import kanjiWords from './kanji-words.json'
 import wordExamples from './word-examples.json'
@@ -16,8 +19,9 @@ import words from './words.json'
 
 /**
  * Local fixture rows, never used in production: twelve words and the kanji 要, exported from the
- * app's bundled data in the detail core's row shapes, with each word's first 50 examples, by the
- * code the dictionary service answers with (apps/dictionary-api/scripts/export-fixtures.ts).
+ * app's bundled data in the detail core's row shapes, with each word's first 50 examples and each
+ * of its conjugated forms' first 50, by the code the dictionary service answers with
+ * (apps/dictionary-api/scripts/export-fixtures.ts).
  */
 
 const sentencesById = new Map(
@@ -42,6 +46,14 @@ export const fixtureWordRows: WordRows[] = (
     })),
   exampleCount: countsBySeq.get(rows.entry.entSeq) ?? null
 }))
+
+/** The fixture words' conjugated forms' examples, in order, by the form's spelling. */
+export const fixtureFormExamples = new Map<string, FormExampleRows[]>()
+for (const example of formExamples as FormExampleRow[]) {
+  const rows = fixtureFormExamples.get(example.surface) ?? []
+  rows.push({ example, sentence: sentencesById.get(example.sentenceId) as ExampleSentenceRow })
+  fixtureFormExamples.set(example.surface, rows)
+}
 
 /**
  * Every entry in the fingerprint groups `kanjiCandidateRows` reads for each fixture kanji, which

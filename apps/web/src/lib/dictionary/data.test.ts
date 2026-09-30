@@ -1,10 +1,13 @@
 import type {
+  ConjugationWordResponse,
   ExamplesResponse,
+  FormExamplesResponse,
   KanjiResponse,
   SearchExamplesResponse,
   SearchResponse,
   WordResponse
 } from '@zenbu/dictionary-core/artifact/dictionary'
+import type { FormExampleRows } from '@zenbu/dictionary-core/detail/rows'
 import { fixtureKanjiRows, fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
 import { searchResultsScreen } from '@zenbu/dictionary-core/results/results'
 import type {
@@ -14,7 +17,10 @@ import type {
 } from '@zenbu/dictionary-core/search/search'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
+  getConjugatedFormPage,
   getConjugationExamples,
+  getConjugationsPage,
+  getFormExamples,
   getKanjiPage,
   getSearchExamples,
   getWordExamples,
@@ -121,12 +127,7 @@ function searchAnswer(
   { examples = 0, kanjiHasPage = false } = {}
 ): SearchResponse {
   return {
-    screen: searchResultsScreen(
-      query,
-      results(entries),
-      new Map(),
-      examples ? { count: examples, primaryEntry: null } : null
-    ),
+    screen: searchResultsScreen(query, results(entries), new Map(), examples),
     kanjiHasPage
   }
 }
@@ -140,6 +141,19 @@ function rowsOf(data: SearchData) {
 const iruRows = fixtureWordRows.find(rows => rows.entry.entSeq === 1546640)
 const kanameRows = fixtureKanjiRows.find(rows => rows.kanji.character === '要')
 if (!iruRows || !kanameRows) throw new Error('no fixtures for 要る and 要')
+
+/** 要る's first examples, as a conjugated form's screen lists them. */
+const formRows = (surface: string, count: number): FormExampleRows[] =>
+  iruRows.examples.slice(0, count).map(({ sentence, example }) => ({
+    sentence,
+    example: {
+      surface,
+      position: example.position,
+      sentenceId: example.sentenceId,
+      highlights: example.highlights,
+      links: example.links
+    }
+  }))
 
 describe('searchDictionary', () => {
   test('searches the dictionary service, and links every word to its page', async () => {
@@ -338,10 +352,11 @@ describe('word and kanji pages', () => {
 })
 
 describe('example sentence pages', () => {
-  const sentences = (): SearchExamplesResponse => ({
-    query: 'eat',
+  const sentences = (query = 'eat', usesPrimaryEntryExamples = false): SearchExamplesResponse => ({
+    query,
     listed: 100,
     truncated: true,
+    usesPrimaryEntryExamples,
     rows: iruRows.examples.slice(0, 2),
     slugs: { 1546640: '要る' }
   })
@@ -353,12 +368,24 @@ describe('example sentence pages', () => {
       query: 'eat',
       listed: 100,
       truncated: true,
+      // An English search's page stays out of search engines (searchExamplesIndexable).
+      indexable: false,
       examplesPath: '/dictionary/search/eat/examples.json?build=build-1'
     })
     expect(page?.examples).toHaveLength(2)
     expect(page?.examples[0].tokens.find(token => token.isPageWord)?.path).toBe(
       '/dictionary/要る-1546640/'
     )
+  })
+
+  test('only a direct Japanese search’s examples page is indexed', async () => {
+    serve({
+      '/v1/search/要る/examples?from=0': sentences('要る'),
+      '/v1/search/要った/examples?from=0': sentences('要った', true)
+    })
+    expect((await getSearchExamples('要る'))?.indexable).toBe(true)
+    // A deinflected search lists its primary entry's examples, which its word page has.
+    expect((await getSearchExamples('要った'))?.indexable).toBe(false)
   })
 
   test('a search’s examples page from another build loads no more', async () => {
@@ -373,22 +400,114 @@ describe('example sentence pages', () => {
     expect(await getSearchExamples('qzxvkj')).toBeNull()
   })
 
-  test('a conjugated form’s examples come from the service', async () => {
-    serve({
-      '/v1/conjugations/要ります/examples': {
-        rows: iruRows.examples.slice(0, 1),
-        slugs: { 1546640: '要る' }
-      }
-    })
+  test('a conjugated form’s examples come from the service, all at once for the sheet', async () => {
+    const answer: FormExamplesResponse = {
+      rows: formRows('要ります', 1),
+      listed: 1,
+      slugs: { 1546640: '要る' }
+    }
+    const requests = serve({ '/v1/conjugations/要ります/examples?from=0&limit=100': answer })
     const examples = await getConjugationExamples('要ります')
+    expect(requests).toEqual(['/v1/conjugations/要ります/examples?from=0&limit=100'])
     expect(examples).toHaveLength(1)
     expect(examples[0].tokens.find(token => token.isPageWord)?.path).toBe(
       '/dictionary/要る-1546640/'
     )
   })
+})
 
-  test('there are none on fixtures', async () => {
-    expect(await getConjugationExamples('食べた')).toEqual([])
+describe('conjugation pages', () => {
+  test('a word with a conjugation table has its page, and each form its own', async () => {
+    // 要る (godan) conjugates; 要 (a noun) doesn't, so its page links no table and has none.
+    expect((await getWordPage(1546640))?.conjugationsPath).toBe(
+      '/dictionary/要る-1546640/conjugations/'
+    )
+    expect((await getWordPage(1609600))?.conjugationsPath).toBeNull()
+    expect(await getConjugationsPage(1609600)).toBeNull()
+    expect(await getConjugationsPage(1358280)).toBeNull()
+    const table = await getConjugationsPage(1546640)
+    expect(table?.conjugationsPath).toBe('/dictionary/要る-1546640/conjugations/')
+    expect(table?.conjugations.rows.Plain.map(row => row.surface).slice(0, 2)).toEqual([
+      '要る',
+      '要った'
+    ])
+    const past = await getConjugatedFormPage(1546640, 'Polite', 'past')
+    expect(past).toMatchObject({
+      mode: 'Polite',
+      row: { surface: '要りました' },
+      formPath: '/dictionary/要る-1546640/conjugations/polite/past/',
+      canonicalPath: '/dictionary/要る-1546640/conjugations/polite/past/'
+    })
+    // A register or kind the table lacks has no page.
+    expect(await getConjugatedFormPage(1546640, 'Plain', 'standalone')).toBeNull()
+    expect(await getConjugatedFormPage(1609600, 'Plain', 'past')).toBeNull()
+  })
+
+  test('a Polite form spelled as its Plain form names the Plain page as canonical', async () => {
+    const te = await getConjugatedFormPage(1546640, 'Polite', 'te-form')
+    expect(te?.row.surface).toBe('要って')
+    expect(te?.formPath).toBe('/dictionary/要る-1546640/conjugations/polite/te-form/')
+    expect(te?.canonicalPath).toBe('/dictionary/要る-1546640/conjugations/plain/te-form/')
+  })
+
+  test('a form spelled as an earlier one in its register names it as canonical', async () => {
+    // いる's passive いられる is spelled as its potential, which the app lists first.
+    const passive = await getConjugatedFormPage(1577980, 'Plain', 'passive')
+    expect(passive?.row.surface).toBe('いられる')
+    expect(passive?.canonicalPath).toBe('/dictionary/いる-1577980/conjugations/plain/potential/')
+    const potential = await getConjugatedFormPage(1577980, 'Plain', 'potential')
+    expect(potential?.canonicalPath).toBe(potential?.formPath)
+  })
+
+  test('a form page shows its first 25 examples, and the rest load 25 at a time', async () => {
+    // 入る's fixture keeps 50 examples: two pages' worth.
+    const form = await getConjugatedFormPage(1465580, 'Plain', 'present-future')
+    expect(form?.examples).toHaveLength(25)
+    expect(form?.listed).toBe(50)
+    expect(form?.examples[0].tokens.some(token => token.isPageWord)).toBe(true)
+    expect(form?.examplesPath).toBe(
+      `/dictionary/examples/forms/${encodeURIComponent('入る')}.json?build=fixtures`
+    )
+    const more = await getFormExamples('入る', 25, 'fixtures')
+    expect(more?.map(example => example.position)).toEqual(
+      Array.from({ length: 25 }, (_, index) => 25 + index)
+    )
+    expect(await getFormExamples('入る', 25, 'build-0')).toBeNull()
+    // A form without examples lists none.
+    expect((await getConjugatedFormPage(1546640, 'Plain', 'imperative'))?.listed).toBe(0)
+  })
+
+  test('conjugation pages read the service', async () => {
+    const word: ConjugationWordResponse = {
+      rows: { ...iruRows, examples: [], exampleCount: null },
+      slug: '要る'
+    }
+    const examples: FormExamplesResponse = {
+      rows: formRows('要った', 2),
+      listed: 30,
+      slugs: { 1546640: '要る' }
+    }
+    const requests = serve({
+      '/v1/words/1546640/conjugations': word,
+      '/v1/conjugations/要った/examples?from=0&limit=25': examples,
+      '/v1/conjugations/要った/examples?from=25&limit=25': examples
+    })
+    const form = await getConjugatedFormPage(1546640, 'Plain', 'past')
+    expect(requests).toEqual([
+      '/v1/words/1546640/conjugations',
+      '/v1/conjugations/要った/examples?from=0&limit=25'
+    ])
+    expect(form?.listed).toBe(30)
+    expect(form?.examples[0].tokens.find(token => token.isPageWord)?.path).toBe(
+      '/dictionary/要る-1546640/'
+    )
+    expect(form?.examplesPath).toBe(
+      `/dictionary/examples/forms/${encodeURIComponent('要った')}.json?build=build-1`
+    )
+    expect(await getFormExamples('要った', 25, 'build-1')).toHaveLength(2)
+    expect(await getFormExamples('要った', 25, 'build-0')).toBeNull()
+    // The service has no table for a word without one.
+    expect(await getConjugationsPage(1609600)).toBeNull()
   })
 })
 

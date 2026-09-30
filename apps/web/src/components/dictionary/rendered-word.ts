@@ -9,24 +9,11 @@ import type {
   SuiteFurigana,
   SuitePitchGraph
 } from '@zenbu/dictionary-core/detail/suite'
+import { htmlText, withoutScreenReaderText } from './rendered'
 
-/**
- * Text with tags removed and the entities React writes decoded. Tags are stripped until none
- * remain, so a removal can't leave a new tag behind. `&lt;` and `&gt;` stay encoded, so the result
- * never holds a tag.
- */
+/** Text with tags removed, furigana kept, trimmed (rendered.ts `htmlText`). */
 function text(html: string): string {
-  let stripped = html
-  let previous: string
-  do {
-    previous = stripped
-    stripped = stripped.replace(/<[^>]*>/g, '')
-  } while (stripped !== previous)
-  return stripped
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'")
-    .replace(/&amp;(?!lt;|gt;)/g, '&')
-    .trim()
+  return htmlText(html, { furigana: true }).trim()
 }
 
 function attribute(tag: string, name: string): string | null {
@@ -134,9 +121,9 @@ function endings(html: string): string {
   return [...html.matchAll(endingSpan)].map(([, ending]) => ending).join('')
 }
 
-/** Visible text: furigana left out. */
+/** Visible text: furigana left out, trimmed. */
 function visible(html: string): string {
-  return text(html.replace(/<rt[^>]*>[\s\S]*?<\/rt>/g, ''))
+  return htmlText(html).trim()
 }
 
 export interface RenderedConjugationTable {
@@ -149,6 +136,8 @@ export interface RenderedConjugationTable {
     surface: string
     ending: string
     rowFurigana: boolean
+    /** The form's page the row opens. */
+    href: string
   }[]
 }
 
@@ -159,14 +148,15 @@ export function readConjugationTable(html: string): RenderedConjugationTable {
   const modes = [...html.matchAll(/data-conjugation-mode="([^"]+)"/g)].map(([, mode]) => mode)
   const rows = [
     ...html.matchAll(
-      /data-conjugation-row="([^"]+)"[^>]*><span class="text-muted-foreground">([^<]*)<\/span><span[^>]*data-conjugation-surface="true">([\s\S]*?)<\/span><svg/g
+      /<a([^>]*data-conjugation-row="([^"]+)"[^>]*)><span class="text-muted-foreground">([^<]*)<\/span><span[^>]*data-conjugation-surface="true">([\s\S]*?)<\/span><svg/g
     )
-  ].map(([, kind, title, surface]) => ({
+  ].map(([, tag, kind, title, surface]) => ({
     kind,
     title,
     surface: visible(surface),
     ending: endings(surface),
-    rowFurigana: surface.includes('<ruby')
+    rowFurigana: surface.includes('<ruby'),
+    href: attribute(tag, 'href') ?? ''
   }))
   return {
     summary: field('data-conjugation-summary'),
@@ -193,10 +183,37 @@ export function readConjugatedForm(html: string): {
   }
 }
 
+/** An example as a list draws it: its pair, and each word with its link and accent. */
+export interface RenderedExample {
+  pairId: string
+  tokens: { surface: string; href: string | null; highlighted: boolean }[]
+}
+
+/** A word of a drawn sentence: an optional link around its text, with furigana inside. */
+const exampleToken =
+  /(<a([^>]*)>)?<span lang="ja"([^>]*)>((?:<span>[^<]*<\/span>|<ruby>[^<]*<rt[^>]*>[^<]*<\/rt><\/ruby>)*)<\/span>(?:<\/a>)?/g
+
+/** The examples a drawn list shows, in order (ExampleList). */
+export function readExamples(html: string): RenderedExample[] {
+  const items = [...html.matchAll(/<li[^>]*data-example-pair="([^"]+)"[^>]*>([\s\S]*?)<\/li>/g)]
+  return items.map(([, pairId, item]) => {
+    const sentence = item.match(/<p lang="ja"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? ''
+    const tokens = [...sentence.matchAll(exampleToken)].map(([, link, linkTag, span, inner]) => ({
+      surface: htmlText(inner),
+      href: link ? attribute(linkTag, 'href') : null,
+      highlighted: attribute(span, 'data-page-word') === 'true'
+    }))
+    if (tokens.map(token => token.surface).join('') !== htmlText(sentence)) {
+      throw new Error(`Could not read the words of ${htmlText(sentence)}`)
+    }
+    return { pairId, tokens }
+  })
+}
+
 /** The Frequency rows as listed: each dictionary's name and value, as a reader sees them. */
 export function readFrequencyRows(html: string): { name: string; text: string }[] {
   // Screen-reader-only text, such as a rank's spoken tier, is left out first.
-  const shown = html.replace(/<span class="sr-only">[^<]*<\/span>/g, '')
+  const shown = withoutScreenReaderText(html)
   return [...shown.matchAll(/data-frequency-row="([^"]+)"[^>]*>([\s\S]*?)<\/button>/g)].map(
     ([, name, row]) => ({
       name,

@@ -11,13 +11,16 @@ import { type EntryExamples, retrieveEntryExamples } from './example-retrieval'
 import { searchExamples } from './example-search'
 import type { ExamplesEntry } from './word-examples'
 
-/** The primary entry whose examples the results open, with what linking needs of it; or null. */
+/**
+ * The results' primary entry (`primaryEntry(for:)`), with what linking needs of it; null without
+ * results. The Example Sentences screen highlights it for every search, so words written as it
+ * link to it, and lists its examples for a romaji or deinflected one.
+ */
 export function primaryExamplesEntry(
   db: ArtifactDatabase,
   rawQuery: string,
   results: SearchResults
 ): ExamplesEntry | null {
-  if (!results.usesPrimaryEntryExamples) return null
   const item = primaryItem(results, normalizeQuery(rawQuery))
   if (!item) return null
   const [row] = db.all<{ written_forms_json: string; reading_forms_json: string }>(
@@ -43,9 +46,13 @@ export function primaryExamplesEntry(
 export function resultsExamples(
   db: ArtifactDatabase,
   rawQuery: string,
-  primary: ExamplesEntry | null
+  primary: ExamplesEntry | null,
+  usesPrimaryEntryExamples: boolean
 ): EntryExamples | null {
-  const found = primary ? retrieveEntryExamples(db, primary) : searchExamples(db, rawQuery)
+  const found =
+    usesPrimaryEntryExamples && primary
+      ? retrieveEntryExamples(db, primary)
+      : searchExamples(db, rawQuery)
   return typeof found === 'string' ? null : found
 }
 
@@ -53,7 +60,10 @@ export function resultsExamples(
  * The Example Sentences row's count: the primary entry's listed examples (at most 100), or the
  * sentences containing the query (`count(_:)`: exact up to 50, then 51).
  */
-export function resultsExampleCount(primary: ExamplesEntry | null, examples: EntryExamples | null) {
+export function resultsExampleCount(
+  usesPrimaryEntryExamples: boolean,
+  examples: EntryExamples | null
+) {
   if (!examples) return 0
-  return primary ? examples.sentences.length : examples.count
+  return usesPrimaryEntryExamples ? examples.sentences.length : examples.count
 }

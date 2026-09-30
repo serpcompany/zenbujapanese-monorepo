@@ -3,8 +3,9 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import type { SearchData, SearchWord } from '@/lib/dictionary/data'
 import { linkSearchScreen } from '@/lib/dictionary/results/links'
+import { normalizeSearchQuery, searchExamplesPath } from '@/lib/dictionary/urls'
 import { gateEnabled, gateService, recordedCases } from './gate'
-import { readRenderedPage } from './rendered'
+import { readRenderedPage, visibleText } from './rendered'
 import { SearchResults } from './search-results'
 
 // Renders the search results page's component to HTML, as the server does, and reads back what a
@@ -41,12 +42,17 @@ function word(
 }
 
 describe('the search results page', () => {
-  test('shows the reading refinement first, then the rows in order with their chips', () => {
+  test('shows the Example Sentences row, the reading refinement, then the rows in order with their chips', () => {
     const html = render({
       state: 'results',
       query: 'iru',
-      sections: ['readingRefinement', 'results'],
-      examples: null,
+      sections: ['examples', 'readingRefinement', 'results'],
+      examples: {
+        title: 'View 3 Example Sentences',
+        count: 3,
+        primaryEntry: 'x',
+        path: '/dictionary/search/iru/examples/'
+      },
       readingRefinement: {
         query: 'いる',
         title: 'Search for「いる」',
@@ -63,8 +69,11 @@ describe('the search results page', () => {
       resultCount: 2
     })
     const page = readRenderedPage(html)
-    expect(page.sections).toEqual(['readingRefinement', 'results'])
-    expect(page.examples).toBeNull()
+    expect(page.sections).toEqual(['examples', 'readingRefinement', 'results'])
+    expect(page.examples).toEqual({
+      text: 'View 3 Example Sentences',
+      href: '/dictionary/search/iru/examples/'
+    })
     expect(page.refinement).toBe('Search for「いる」')
     expect(html).toContain('href="/dictionary/search/いる')
     expect(page.kanji).toBeNull()
@@ -130,6 +139,28 @@ describe('the search results page', () => {
     expect(html).toContain('<p class="line-clamp-2 text-sm">word</p>')
   })
 
+  test('shows only the Example Sentences row when only sentences match', () => {
+    const page = readRenderedPage(
+      render({
+        state: 'results',
+        query: 'it is',
+        sections: ['examples'],
+        examples: {
+          title: 'View 50+ Example Sentences',
+          count: 51,
+          primaryEntry: null,
+          path: '/dictionary/search/it%20is/examples/'
+        },
+        readingRefinement: null,
+        kanji: null,
+        rows: [],
+        resultCount: 0
+      })
+    )
+    expect(page.sections).toEqual(['examples'])
+    expect(page.rows).toEqual([])
+  })
+
   test('leads with the Example Sentences row, linked to the search’s examples page', () => {
     const html = render({
       state: 'results',
@@ -148,8 +179,10 @@ describe('the search results page', () => {
     })
     const page = readRenderedPage(html)
     expect(page.sections).toEqual(['examples', 'results'])
-    expect(page.examples).toBe('View 50+ Example Sentences')
-    expect(html).toContain('href="/dictionary/search/eat/examples')
+    expect(page.examples).toEqual({
+      text: 'View 50+ Example Sentences',
+      href: '/dictionary/search/eat/examples/'
+    })
   })
 
   test('lists a sentence’s Discovered Words, below its Example Sentences row', () => {
@@ -173,7 +206,7 @@ interface SuiteCase {
   query: string
   state?: string
   sections?: string[]
-  examples?: { title: string }
+  examples?: { title: string; count: number }
   readingRefinement?: { title: string }
   kanji?: { character: string; label: string; summary: string }
   results?: {
@@ -184,8 +217,11 @@ interface SuiteCase {
   }[]
 }
 
-/** The rendered cases: romaji with a refinement, a kanji, English, kana, and no results. */
-const renderedQueries = ['iru', 'いる', '日', 'eat', 'かえる', 'qzxvkj']
+/**
+ * The rendered cases: romaji with a refinement and its primary entry's examples, a kanji, English,
+ * kana, 60 words, and no results.
+ */
+const renderedQueries = ['iru', 'いる', '日', 'eat', 'かえる', 'い', 'qzxvkj']
 
 const suiteCases = recordedCases<SuiteCase>('search-results.json').filter(expected =>
   renderedQueries.includes(expected.query)
@@ -203,7 +239,7 @@ describe.runIf(gateEnabled)('the rendered search results page matches the app', 
     const html = render(data)
     const page = readRenderedPage(html)
     for (const row of data.state === 'results' ? data.rows : []) {
-      expect(html).toContain(`href="${(row.path ?? '').replace(/\/$/, '')}`)
+      expect(html).toContain(`href="${row.path ?? ''}"`)
     }
 
     if (expected.state === 'noResults') {
@@ -211,7 +247,14 @@ describe.runIf(gateEnabled)('the rendered search results page matches the app', 
       return
     }
     expect(page.sections).toEqual(expected.sections ?? [])
-    expect(page.examples).toBe(expected.examples?.title ?? null)
+    expect(page.examples).toEqual(
+      expected.examples
+        ? {
+            text: expected.examples.title,
+            href: searchExamplesPath(normalizeSearchQuery(expected.query))
+          }
+        : null
+    )
     expect(page.refinement).toBe(expected.readingRefinement?.title ?? null)
     expect(page.kanji).toEqual(
       expected.kanji
@@ -221,13 +264,14 @@ describe.runIf(gateEnabled)('the rendered search results page matches the app', 
           }
         : null
     )
-    expect(page.rows).toEqual(
-      (expected.results ?? []).map(row => ({
-        entSeq: Number(row.entSeq[0]),
-        headword: row.headword,
-        summary: row.summary,
-        chips: row.chips.map(chip => `${chip.name} ${chip.text}`)
-      }))
-    )
+    const expectedRows = (expected.results ?? []).map(row => ({
+      entSeq: Number(row.entSeq[0]),
+      headword: row.headword,
+      summary: row.summary,
+      chips: row.chips.map(chip => `${chip.name} ${chip.text}`)
+    }))
+    // The page renders every word at once, and counts them.
+    expect(page.rows).toEqual(expectedRows)
+    expect(visibleText(html)).toMatch(new RegExp(`^${expectedRows.length} words? for `))
   })
 })

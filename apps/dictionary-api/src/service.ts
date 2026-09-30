@@ -2,8 +2,10 @@
 // can run in worker threads (./pool.ts), and loaded from the app's files (./load.ts).
 
 import type {
+  ConjugationWordResponse,
   Dictionary,
   ExamplesResponse,
+  FormExamplesResponse,
   KanjiResponse,
   SearchExamplesResponse,
   SearchResponse,
@@ -25,7 +27,8 @@ export interface DictionaryService {
   searchExamples(query: string, from: number): Promise<SearchExamplesResponse | null>
   word(entSeq: number): Promise<WordResponse | null>
   wordExamples(entSeq: number, from: number): Promise<ExamplesResponse | null>
-  conjugationExamples(form: string): Promise<ExamplesResponse>
+  conjugationWord(entSeq: number): Promise<ConjugationWordResponse | null>
+  formExamples(form: string, from: number, limit: number): Promise<FormExamplesResponse>
   kanji(character: string): Promise<KanjiResponse | null>
   wordSitemaps(): Promise<WordSitemap[]>
   sitemapWords(
@@ -47,7 +50,8 @@ export function inProcessService(dictionary: Dictionary, info: ServiceInfo): Dic
     searchExamples: (query, from) => dictionary.searchExamples(query, from),
     word: async entSeq => dictionary.word(entSeq),
     wordExamples: async (entSeq, from) => dictionary.wordExamples(entSeq, from),
-    conjugationExamples: async form => dictionary.conjugationExamples(form),
+    conjugationWord: async entSeq => dictionary.conjugationWord(entSeq),
+    formExamples: async (form, from, limit) => dictionary.formExamples(form, from, limit),
     kanji: async character => dictionary.kanji(character),
     wordSitemaps: async () => dictionary.wordSitemaps(),
     sitemapWords: async (number, after, limit) => {

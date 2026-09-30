@@ -52,6 +52,22 @@ export interface SuiteConjugationForm {
   rowFurigana: boolean
   furigana: SuiteFurigana[]
   sharedSpellings?: string[]
+  /** The Example Sentences the form's screen lists. */
+  examples?: SuiteFormExamples
+}
+
+/**
+ * `conjugations.<register>[].examples`: every example's pair ID in order, and the first few with
+ * each word's entry (one link) or candidates (several), and whether the screen accents it.
+ */
+export interface SuiteFormExamples {
+  ids: string[]
+  shown: {
+    id: string
+    japanese: string
+    english: string
+    tokens: { surface: string; entry?: string; candidates?: string[]; highlighted?: boolean }[]
+  }[]
 }
 
 export function suiteConjugations(conjugations: Conjugations, summary: string): SuiteConjugations {

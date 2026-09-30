@@ -2,12 +2,14 @@ import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { absoluteUrl } from '@/lib/site'
 import { type SitemapEntry, urlSetStream, urlSetXml, xmlResponse } from '@/lib/sitemap'
 import { dictionaryService } from './data'
-import { kanjiPath } from './urls'
+import { conjugationsPath, kanjiPath } from './urls'
 
 // The dictionary's sitemaps (ADR 0007, #465): `/sitemaps/dictionary/<n>.xml` for word pages, 50,000
-// canonical URLs to a file in `ent_seq` order, and `/sitemaps/kanji.xml` for the kanji pages
-// search engines may index, from the dictionary service (./api.ts). They exist wherever the site
-// has a service: staging and production, not local fixtures. URLs are percent-encoded UTF-8.
+// canonical URLs to a file in `ent_seq` order, `/sitemaps/kanji.xml` for the kanji pages search
+// engines may index, and `/sitemaps/conjugations.xml` for every conjugation table and the form
+// pages search engines may index (#511), all from the dictionary service (./api.ts). They exist
+// wherever the site has a service: staging and production, not local fixtures. URLs are
+// percent-encoded UTF-8.
 
 /** How many words each query reads while a word sitemap streams. */
 const wordsPerQuery = 10_000
@@ -19,7 +21,8 @@ export async function dictionarySitemapPaths(): Promise<string[]> {
   const sitemaps = (await api.wordSitemaps()).data
   return [
     ...sitemaps.map(sitemap => `/sitemaps/dictionary/${sitemap.number}.xml`),
-    '/sitemaps/kanji.xml'
+    '/sitemaps/kanji.xml',
+    '/sitemaps/conjugations.xml'
   ]
 }
 
@@ -56,6 +59,36 @@ export async function kanjiSitemapResponse(request: Request) {
   const { data: characters, build } = await api.indexableKanji()
   return cached(request, build, () =>
     xmlResponse(urlSetXml(characters.map(character => ({ url: kanjiUrl(character) }))))
+  )
+}
+
+/**
+ * The conjugations sitemap: each word's conjugation table, then its form pages search engines may
+ * index (those that list examples, under their canonical URL), in `ent_seq` order; null on local
+ * fixtures. The service works out which forms list examples in the minutes after it starts, and
+ * until then the sitemap answers 503, which search engines retry.
+ */
+export async function conjugationSitemapResponse(request: Request) {
+  const api = await dictionaryService()
+  if (!api) return null
+  const answer = await api.conjugationSitemap()
+  if (!answer) {
+    return new Response('The conjugations sitemap is still being worked out.', {
+      status: 503,
+      headers: { 'Retry-After': '60', 'Cache-Control': 'no-store' }
+    })
+  }
+  return cached(request, answer.build, () =>
+    xmlResponse(
+      urlSetXml(
+        answer.data.flatMap(({ entSeq, slug, forms }) => {
+          const table = conjugationsPath(`/dictionary/${slug}-${entSeq}/`)
+          return [table, ...forms.map(form => `${table}${form}/`)].map(path => ({
+            url: absoluteUrl(encodeURI(path))
+          }))
+        })
+      )
+    )
   )
 }
 

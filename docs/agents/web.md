@@ -84,15 +84,18 @@ row's meaning (the matched meaning for an English query), its chips, the "Search
 refinement, the KANJI row that leads a one-kanji query with the meaning of the entry written as
 that kanji (chosen before the re-sort, "Kanji detail" without one), and No Dictionary Matches.
 
-The page's component, `components/dictionary/search-results.tsx`, only renders it.
-`results/links.ts` adds links (`linkSearchScreen`, shared by `data.ts` and the rendered-page
-test) and decides indexing: a page is indexed only when it lists a word or its kanji row opens a
-kanji page. A query full-text search can't read is answered as finding nothing by the service.
+The page's component, `components/dictionary/search-results.tsx`, only renders it, every word at
+once (at most the app's 60). `results/links.ts` adds links (`linkSearchScreen`, shared by
+`data.ts` and the rendered-page test) and decides indexing: a page is indexed only when it lists
+a word or its kanji row opens a kanji page. A query full-text search can't read is answered as
+finding nothing by the service.
 
 With Sudachi, the service analyzes a sentence as the app does and lists its Discovered Words.
 The Example Sentences row opens `/dictionary/search/<query>/examples/`: the query's sentences, or
 its primary entry's for a romaji or deinflected query, 25 at first and the rest from
-`examples.json` beside it. That page is indexed, like every dictionary page with content.
+`examples.json` beside it. It's indexed only for a direct Japanese search
+(`searchExamplesIndexable`, the SEO owner's decision on #511): a romaji or deinflected search lists
+its primary entry's examples, which that word's page already has.
 
 A broad query (い, "to") takes the service one to two seconds the first time, most of it the
 app's own SQL; the service and the edge cache keep the answer after that.
@@ -107,14 +110,23 @@ what the app shows (see the [product docs](../../apps/web/docs/product/dictionar
 `getWordPage` and `getKanjiPage` ask the service once per page. The answer names the slug of
 every word the page links to and which kanji have pages, so every link goes to a page that
 exists. Word pages live under the slug the service names. A word page's later examples load from
-`/dictionary/examples/<ent_seq>.json?build=<build>&from=<n>` (`getWordExamples`). A conjugated
-form's screen loads its examples from `/dictionary/conjugations/<form>.json` when it opens.
+`/dictionary/examples/<ent_seq>.json?build=<build>&from=<n>` (`getWordExamples`).
+
+The part of speech opens the word's conjugation table in a sheet, as the app pushes it, and a
+form's screen there loads all its examples from `/dictionary/conjugations/<form>.json` when it
+opens. The table and each form also have their own pages, which the sheet links to
+(`/dictionary/<slug>-<ent_seq>/conjugations/` and `…/conjugations/<plain|polite>/<kind>/`,
+`getConjugationsPage` and `getConjugatedFormPage`): the service answers the word's rows without
+examples, the detail core conjugates them, and a form's page lists its examples by spelling, 25
+at first and the rest from `/dictionary/examples/forms/<form>.json?build=<build>&from=<n>`
+(`getFormExamples`). The form routes read the spelling as written, since the app's form screen
+searches it normalized but matches it as written (a full-width Ｈ).
 
 Without a service, the rows are local fixtures in `packages/dictionary-core/src/fixtures/`,
 exported from the app's bundled data by the service's own readers (`pnpm --filter
-zenbujapanese-dictionary-api fixtures`), so their shapes can't drift; each fixture word keeps its
-first 50 examples. Rerun it after changing a row shape; the fixture JSON is generated, so Biome
-skips it.
+zenbujapanese-dictionary-api fixtures`), so their shapes can't drift; each fixture word and each
+of its conjugated forms keeps its first 50 examples. Rerun it after changing a row shape; the
+fixture JSON is generated, so Biome skips it.
 
 ### The rendered-page gate
 
@@ -124,15 +136,16 @@ detail, every example field included (see [`dictionary-api.md`](dictionary-api.m
 gate then renders what a running service answers through the pages' components with React's
 server renderer, and reads back what a reader sees:
 
-- `components/dictionary/search-results.test.tsx` renders six search-results cases: sections,
+- `components/dictionary/search-results.test.tsx` renders seven search-results cases: sections,
   the Example Sentences row, the refinement, the kanji row, and each row's headword, meaning,
   chips, and link.
 - `components/dictionary/search-examples.test.tsx` holds every recorded Example Sentences row to
-  the page it opens: as many examples as its count promises, 25 first, and a Japanese query
-  accented in each sentence.
+  the page it opens (as many examples as its count promises, 25 first, and a Japanese query
+  accented in each sentence), and renders eight example-search cases: every listed pair ID in
+  order, loading each whole list as the page does, and the first sentences' words and marks.
 - `components/dictionary/word-page.test.tsx` and `conjugations.test.tsx` draw every word-detail
   case: the per-kanji furigana split, the pitch graph's points, each Frequency row's details, and
-  the conjugation table, form by form.
+  the conjugation table and each form's page, form by form, with the form's first examples.
 
 `pnpm test` skips the gate. To run it, start the service and point the tests at it:
 
@@ -142,8 +155,8 @@ ZENBU_DICTIONARY_API=1 ZENBU_DICTIONARY_API_TOKEN=<token> pnpm exec vitest run s
 
 `ZENBU_DICTIONARY_API_URL` names another service (default `http://localhost:8788`). The
 `Dictionary API` workflow runs the gate on pull requests against the service it builds, and
-`smoke.sh` checks the deployed pages against the suites' `iru` and `eat` cases and the word-detail
-suite at run time.
+`smoke.sh` checks the deployed pages against the search-results suite's `iru` and `eat` cases, the
+example-search suite's 見る, and the word-detail suite's 見る and 学校 at run time.
 
 ## Environments and deploys
 
@@ -160,7 +173,9 @@ its workers.dev URL (`scripts/smoke.sh`). The production job then runs automatic
 passes: it does the same for production with the same commit. Staging's smoke tests are the gate:
 the `production` GitHub environment has no required reviewer, by the owner's decision. Add one
 (Settings → Environments → production) to review production deploys by hand. Both environments
-deploy only from `main`. The workflow uses the `CLOUDFLARE_API_TOKEN` secret (the "Edit
+deploy only from `main`. Setting the repository variable `DEPLOY_PRODUCTION` to `false` pauses the
+production job on pushes, so `main` deploys staging only; a manual run of `Web deploy` still
+deploys production. The workflow uses the `CLOUDFLARE_API_TOKEN` secret (the "Edit
 Cloudflare Workers" template plus D1 Edit, limited to the SERP account and the zenbujapanese.com
 zone) and the `CLOUDFLARE_ACCOUNT_ID` variable.
 
@@ -269,8 +284,13 @@ request. `/dictionary/`, the search box, is a static page in `src/lib/pages.ts`:
   10,000 at a time.
 - `/sitemaps/kanji.xml`: the kanji pages search engines may index: those with meanings or
   readings.
+- `/sitemaps/conjugations.xml`: every conjugation table, then the form pages search engines may
+  index: those that list examples, each under its canonical URL (33,532 URLs: 20,364 tables and
+  13,168 forms, in one file). Which forms list examples, the service works out for every spelling
+  at once when it starts, in the background (about half a minute); until then the sitemap answers
+  503 with `Retry-After`, which search engines retry.
 
-Both are kept in the Worker's edge cache (the Cache API) under the dictionary build the service
+All three are kept in the Worker's edge cache (the Cache API) under the dictionary build the service
 names, so they change with the build, within the 10 minutes its answers stay cached; `pnpm dev`
 has no such cache.
 

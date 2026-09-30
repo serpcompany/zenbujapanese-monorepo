@@ -10,7 +10,8 @@ name: Search parity
 #   search:   LookupClient, SearchQuery, DictionaryRanking, JapaneseDeinflection, DictionaryEntry,
 #             JapaneseTextAnalysisClient <-> packages/dictionary-core/src/search/
 #   examples: ExampleSentenceClient, JapaneseTextAnalysisClient, JapaneseInflectionGrouping,
-#             KuromojiMorphologyClient <-> packages/dictionary-core/src/examples/*.ts,
+#             KuromojiMorphologyClient, LinkedJapaneseText (the conjugated form's highlight)
+#             <-> packages/dictionary-core/src/examples/*.ts,
 #             packages/dictionary-core/src/artifact/{example-retrieval,example-search,word-examples,
 #             search-examples,lookup}.ts, apps/dictionary-api/src/kuromoji.ts
 #   detail:   KanjiReadingSplitter, JapaneseRubyText (the per-kanji furigana highlight),
@@ -31,6 +32,7 @@ on:
       - apps/ios/Modules/Sources/SearchExperience/ExampleSentenceClient.swift
       - apps/ios/Modules/Sources/SearchExperience/JapaneseInflectionGrouping.swift
       - apps/ios/Modules/Sources/SearchExperience/KuromojiMorphologyClient.swift
+      - apps/ios/Modules/Sources/SearchExperience/LinkedJapaneseText.swift
       - apps/ios/Modules/Sources/SearchExperience/KanjiReadingSplitter.swift
       - apps/ios/Modules/Sources/SearchExperience/JapaneseRubyText.swift
       - apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift
@@ -89,7 +91,7 @@ jobs:
             "${swift_dir}(LookupClient|SearchQuery|DictionaryRanking|JapaneseDeinflection|DictionaryEntry|JapaneseTextAnalysisClient)\.swift$" \
             '^packages/dictionary-core/src/search/' 'packages/dictionary-core/src/search/'
           check examples \
-            "${swift_dir}(ExampleSentenceClient|JapaneseTextAnalysisClient|JapaneseInflectionGrouping|KuromojiMorphologyClient)\.swift$" \
+            "${swift_dir}(ExampleSentenceClient|JapaneseTextAnalysisClient|JapaneseInflectionGrouping|KuromojiMorphologyClient|LinkedJapaneseText)\.swift$" \
             '^(packages/dictionary-core/src/examples/[^/]+|packages/dictionary-core/src/artifact/(example-retrieval|example-search|word-examples|search-examples|lookup)|apps/dictionary-api/src/kuromoji)\.ts$' \
             'packages/dictionary-core/src/examples/ and its artifact/ example files'
           check detail \

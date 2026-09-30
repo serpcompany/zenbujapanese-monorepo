@@ -3,15 +3,36 @@
 // that dies fails its calls and is replaced.
 
 import { Worker } from 'node:worker_threads'
+import type { ConjugationSitemapWord } from '@zenbu/dictionary-core/artifact/conjugation-sitemap'
 import type { VerifiedFiles } from './load'
 import { log } from './log'
 import type { DictionaryService, ServiceMethod } from './service'
-import type { Call, Reply } from './worker'
+import type { Call, Reply, SitemapReply } from './worker'
 
 interface Thread {
   worker: Worker
   ready: Promise<void>
   pending: Map<number, { resolve(value: unknown): void; reject(error: Error): void }>
+}
+
+/**
+ * Works out the conjugations sitemap in a worker thread of its own, which exits when done, so it
+ * takes no answering thread; a few minutes of one core after the service starts.
+ */
+export function computeConjugationSitemap(files: VerifiedFiles): Promise<ConjugationSitemapWord[]> {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(workerUrl(), {
+      workerData: { ...files, task: 'conjugation-sitemap' }
+    })
+    worker.once('message', (message: SitemapReply) => {
+      resolve(message.sitemap)
+      void worker.terminate()
+    })
+    worker.once('error', reject)
+    worker.once('exit', code => {
+      if (code !== 0) reject(new Error(`The conjugations sitemap worker exited (${code})`))
+    })
+  })
 }
 
 export interface Pool extends DictionaryService {
@@ -102,7 +123,8 @@ export function createPool(files: VerifiedFiles, size: number): Pool {
     searchExamples: (query, from) => call('searchExamples', [query, from]),
     word: entSeq => call('word', [entSeq]),
     wordExamples: (entSeq, from) => call('wordExamples', [entSeq, from]),
-    conjugationExamples: form => call('conjugationExamples', [form]),
+    conjugationWord: entSeq => call('conjugationWord', [entSeq]),
+    formExamples: (form, from, limit) => call('formExamples', [form, from, limit]),
     kanji: character => call('kanji', [character]),
     wordSitemaps: () => call('wordSitemaps', []),
     sitemapWords: (number, after, limit) => call('sitemapWords', [number, after, limit]),

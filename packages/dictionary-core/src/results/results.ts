@@ -155,14 +155,12 @@ export interface KanjiRow {
  */
 export type ResultsSection = 'examples' | 'readingRefinement' | 'results' | 'discoveredWords'
 
-/**
- * The Example Sentences row (SearchResultsScreen.exampleCount): how many examples it offers, and
- * the entry whose examples it opens when the results use the primary entry's (a romaji or
- * deinflected query), else null for the sentences containing the query.
- */
+/** The "View N Example Sentences" row, which opens the query's Example Sentences page. */
 export interface ExamplesRow {
-  count: number
   title: string
+  /** `SearchResultsScreen.exampleCount`: 51 means more than 50. */
+  count: number
+  /** The entry whose examples it opens, when not the sentences that contain the query. */
   primaryEntry: string | null
 }
 
@@ -182,7 +180,7 @@ export type SearchResultsScreen =
       state: 'results'
       query: string
       sections: ResultsSection[]
-      /** The Example Sentences row, when there are any. */
+      /** "View N Example Sentences", when any sentence matches. */
       examples: ExamplesRow | null
       /** "Search for「…」": the Japanese reading an English-looking query also spells. */
       readingRefinement: { query: string; title: string } | null
@@ -197,33 +195,39 @@ export const isSingleKanji = (query: string) => isKanjiCharacter(query)
 
 /** `LookupSearchResults.primaryEntry(for:)`: the entry written as the query, else the first. */
 export function primaryItem(results: SearchResults, query: string): SearchResultItem | undefined {
-  return results.items.find(item => item.entry.headword === query) ?? results.items[0]
+  const normalized = normalizeQuery(query)
+  return results.items.find(item => item.entry.headword === normalized) ?? results.items[0]
 }
 
 /**
- * `SearchResultsView` for a typed query, and SearchView.swift's no-results state. The app shows
- * "No Dictionary Matches" only when there are no results, no example sentences, and the query
- * isn't one kanji. `examples` is the Example Sentences row's count and entry
- * (../artifact/search-examples.ts), or null without one.
+ * `SearchResultsView` for a typed query, and SearchView.swift's no-results state, which the app
+ * shows only when there are no results, no example sentences, and the query isn't one kanji.
+ * `exampleCount` is the Example Sentences row's count (../artifact/search-examples.ts).
  */
 export function searchResultsScreen(
   rawQuery: string,
   results: SearchResults,
   frequency: FrequencyByEntry,
-  examples: { count: number; primaryEntry: string | null } | null = null
+  exampleCount = 0
 ): SearchResultsScreen {
   const query = normalizeQuery(rawQuery)
   const singleKanji = isSingleKanji(query)
-  const exampleCount = examples?.count ?? 0
-  // `showsNoResults`: a single kanji always has its kanji row.
   if (results.items.length === 0 && exampleCount === 0 && !singleKanji) {
     return { state: 'noResults', query }
   }
 
   const sections: ResultsSection[] = []
-  const examplesRow =
-    examples && exampleCount > 0 ? { ...examples, title: exampleActionTitle(exampleCount) } : null
-  if (examplesRow) sections.push('examples')
+  const examples: ExamplesRow | null =
+    exampleCount > 0
+      ? {
+          title: exampleActionTitle(exampleCount),
+          count: exampleCount,
+          primaryEntry: results.usesPrimaryEntryExamples
+            ? (primaryItem(results, query)?.entry.id ?? null)
+            : null
+        }
+      : null
+  if (examples) sections.push('examples')
   const readingRefinement = results.readingRefinement
     ? {
         query: results.readingRefinement,
@@ -232,8 +236,10 @@ export function searchResultsScreen(
     : null
   if (readingRefinement) sections.push('readingRefinement')
 
+  // `SearchResultsScreen.list`: no list of words when only example sentences match.
   const discovered = results.presentation === 'discoveredWords'
-  sections.push(discovered ? 'discoveredWords' : 'results')
+  if (discovered) sections.push('discoveredWords')
+  else if (singleKanji || results.items.length > 0) sections.push('results')
 
   const primary = singleKanji && !discovered ? primaryItem(results, query) : undefined
   const kanji: KanjiRow | null =
@@ -263,7 +269,7 @@ export function searchResultsScreen(
     state: 'results',
     query,
     sections,
-    examples: examplesRow,
+    examples,
     readingRefinement,
     kanji,
     rows,

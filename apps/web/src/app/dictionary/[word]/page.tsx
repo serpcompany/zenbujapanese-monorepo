@@ -120,10 +120,11 @@ export default async function WordPage({ params }: Props) {
       <WordHeader
         ruby={word.ruby}
         reading={word.reading}
+        summary={word.summary}
         pitch={word.pitch}
         partOfSpeech={word.partOfSpeech}
-        summary={word.summary}
         conjugations={word.conjugations}
+        path={word.path}
       />
 
       <Section title="Meaning">

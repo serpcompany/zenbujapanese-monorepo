@@ -17,7 +17,8 @@ function fakeService(overrides: Partial<DictionaryService> = {}): DictionaryServ
     searchExamples: async () => null,
     word: async entSeq => (entSeq === 1358280 ? ({ slug: '食べる' } as never) : null),
     wordExamples: async () => ({ rows: [], slugs: {} }),
-    conjugationExamples: async () => ({ rows: [], slugs: {} }),
+    conjugationWord: async entSeq => (entSeq === 1358280 ? ({ slug: '食べる' } as never) : null),
+    formExamples: async () => ({ rows: [], listed: 0, slugs: {} }),
     kanji: async character => (character === '要' ? ({ indexable: true } as never) : null),
     wordSitemaps: async () => [],
     sitemapWords: async () => null,
@@ -27,10 +28,15 @@ function fakeService(overrides: Partial<DictionaryService> = {}): DictionaryServ
   }
 }
 
-function app(service = fakeService(), ready = true) {
+function app(service = fakeService(), ready = true, sitemap: unknown[] | null = []) {
   vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
   vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
-  return createApp({ service, token, ready: () => ready })
+  return createApp({
+    service,
+    token,
+    ready: () => ready,
+    conjugationSitemap: () => sitemap as never
+  })
 }
 
 const get = (path: string, auth = `Bearer ${token}`) =>
@@ -123,6 +129,29 @@ describe('routes', () => {
     expect(response.status).toBe(500)
     expect(await response.json()).toEqual({ error: 'internal error' })
     expect(process.stderr.write).toHaveBeenCalledWith(expect.stringContaining('database is locked'))
+  })
+
+  test('passes a form and its page of examples on', async () => {
+    const formExamples = vi.fn(fakeService().formExamples)
+    await app(fakeService({ formExamples })).request(
+      get(`/v1/conjugations/${encodeURIComponent('食べた')}/examples?from=25&limit=100`)
+    )
+    expect(formExamples).toHaveBeenCalledWith('食べた', 25, 100)
+  })
+
+  test("404s a word's conjugations when it has no table", async () => {
+    expect((await app().request(get('/v1/words/1358280/conjugations'))).status).toBe(200)
+    expect((await app().request(get('/v1/words/1206730/conjugations'))).status).toBe(404)
+  })
+
+  test('answers 503 for the conjugations sitemap until it has been worked out', async () => {
+    const pending = await app(fakeService(), true, null).request(get('/v1/sitemaps/conjugations'))
+    expect(pending.status).toBe(503)
+    expect(pending.headers.get('retry-after')).toBe('60')
+    const done = await app(fakeService(), true, [{ entSeq: 1, slug: 'x', forms: [] }]).request(
+      get('/v1/sitemaps/conjugations')
+    )
+    expect(await done.json()).toEqual([{ entSeq: 1, slug: 'x', forms: [] }])
   })
 
   test('404s an unknown route', async () => {

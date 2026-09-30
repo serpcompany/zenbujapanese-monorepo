@@ -1,9 +1,8 @@
-import { exampleCountText } from '@zenbu/dictionary-core/detail/examples'
 import { japaneseSegments } from '@zenbu/dictionary-core/search/query'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
-import { ExampleList } from '@/components/dictionary/example-list'
+import { SearchExamples } from '@/components/dictionary/search-examples'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { getSearchExamples } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
@@ -11,9 +10,11 @@ import { pageSources } from '@/lib/dictionary/sources'
 import { searchExamplesPath, searchPath } from '@/lib/dictionary/urls'
 import { searchQuery } from '../query'
 
-// What a search's Example Sentences row opens, as the app's ExampleSentencesView: the query's
-// sentences, or its primary entry's for a romaji or deinflected query, with each occurrence of the
-// query accented. The first ones render with the page; the rest load as it scrolls.
+// `/dictionary/search/<query>/examples/`: what a search's "View N Example Sentences" row opens,
+// as the app's ExampleSentencesView: the query's sentences, or its primary entry's for a romaji or
+// deinflected query, with each occurrence of the query accented. Its query follows the search
+// page's URL rules (ADR 0007, #466). A search without example sentences has none (404): the app
+// never opens an empty screen.
 
 type Props = PageProps<'/dictionary/search/[query]/examples'>
 
@@ -25,19 +26,17 @@ async function load(params: Props['params'], decoded: boolean) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { query } = await load(params, true)
-  // Indexed, as every dictionary page with content is, by the owner's decision: what to take out
-  // of search engines is decided separately (SEO review).
+  const data = await load(params, true)
   return dictionaryMetadata(
-    searchExamplesPath(query),
-    `${query} in Japanese example sentences`,
-    `Japanese example sentences for “${query}”, with English translations.`
+    searchExamplesPath(data.query),
+    `${data.query} example sentences`,
+    `${data.listed} Japanese example sentences for “${data.query}”, with translations.`,
+    { index: data.indexable }
   )
 }
 
 export default async function SearchExamplesPage({ params }: Props) {
   const data = await load(params, false)
-  // Marked as Japanese only when it has Japanese in it: "eat" is read as English.
   const lang = japaneseSegments(data.query).length > 0 ? 'ja' : undefined
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-4 pb-6">
@@ -45,14 +44,8 @@ export default async function SearchExamplesPage({ params }: Props) {
         parent={{ label: `Search: ${data.query}`, path: searchPath(data.query), lang }}
         page={{ label: 'Example sentences', path: searchExamplesPath(data.query) }}
       />
-      <div className="flex flex-col gap-1">
-        <h1 lang={lang} className="text-2xl font-semibold">
-          {data.query}
-        </h1>
-        <p className="text-sm text-muted-foreground">{exampleCountText(data)}</p>
-      </div>
-      <ExampleList initial={data.examples} listed={data.listed} path={data.examplesPath} />
-      <SourceCredits sources={pageSources.examples} />
+      <SearchExamples data={data} />
+      <SourceCredits sources={pageSources.searchExamples} />
     </main>
   )
 }

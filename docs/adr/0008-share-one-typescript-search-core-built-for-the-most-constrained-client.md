@@ -26,8 +26,8 @@ Sentence search is the first capability. Listing the words of a Japanese phrase 
 dictionary word needs a morphological analyzer, and the app's, Sudachi, loads a 217 MB
 dictionary. The website supplies no analyzer, so it has no sentence search and is a glossary of
 words and kanji.
-[ADR 0009](0009-serve-the-websites-dictionary-from-a-service-running-the-shared-core.md),
-proposed, runs the website's core in a service that supplies Sudachi, so the website gets
+[ADR 0009](0009-serve-the-websites-dictionary-from-a-service-running-the-shared-core.md)
+runs the website's core in a service that supplies Sudachi, so the website gets
 sentence search, and nothing is precomputed for it. The conformance suite skips cases the app records as sentence search for a
 client without it.
 

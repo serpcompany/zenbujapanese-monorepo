@@ -71,6 +71,8 @@ export function SearchResults({ data }: { data: SearchData }) {
   if (data.state === 'noResults') return <NoResults />
   const { query, kanji, rows, readingRefinement, examples } = data
   const discovered = data.sections.includes('discoveredWords')
+  // A search that finds only example sentences lists no words, and shows no empty list.
+  const listed = data.sections.includes('results') || discovered
   return (
     <>
       <p className="text-sm text-muted-foreground">
@@ -102,28 +104,30 @@ export function SearchResults({ data }: { data: SearchData }) {
           </Row>
         </Card>
       ) : null}
-      <Card className="py-2" data-section={discovered ? 'discoveredWords' : 'results'}>
-        <ItemGroup className="gap-0">
-          {discovered ? <h2 className="px-4 py-2 font-semibold">Discovered Words</h2> : null}
-          {kanji ? (
-            <Row path={kanji.path}>
-              <span lang="ja" className="text-4xl font-light">
-                {kanji.character}
-              </span>
-              <ItemContent className="gap-0.5" data-kanji-row={kanji.character}>
-                <p className="text-xs font-bold">{kanji.label}</p>
-                <p>{kanji.summary}</p>
-              </ItemContent>
-            </Row>
-          ) : null}
-          {rows.map((word, position) => (
-            <Fragment key={word.id}>
-              {position > 0 || kanji ? <ItemSeparator className="my-0" /> : null}
-              <WordRow word={word} />
-            </Fragment>
-          ))}
-        </ItemGroup>
-      </Card>
+      {listed ? (
+        <Card className="py-2" data-section={discovered ? 'discoveredWords' : 'results'}>
+          <ItemGroup className="gap-0">
+            {discovered ? <h2 className="px-4 py-2 font-semibold">Discovered Words</h2> : null}
+            {kanji ? (
+              <Row path={kanji.path}>
+                <span lang="ja" className="text-4xl font-light">
+                  {kanji.character}
+                </span>
+                <ItemContent className="gap-0.5" data-kanji-row={kanji.character}>
+                  <p className="text-xs font-bold">{kanji.label}</p>
+                  <p>{kanji.summary}</p>
+                </ItemContent>
+              </Row>
+            ) : null}
+            {rows.map((word, position) => (
+              <Fragment key={word.id}>
+                {position > 0 || kanji ? <ItemSeparator className="my-0" /> : null}
+                <WordRow word={word} />
+              </Fragment>
+            ))}
+          </ItemGroup>
+        </Card>
+      ) : null}
     </>
   )
 }

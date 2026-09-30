@@ -57,13 +57,25 @@ reading, summary, frequency chips (dictionary, value, tier), match group, and re
 the kanji row; the Example Sentences and reading-refinement rows; the frequency notice; and the
 No Dictionary Matches state. It pins the SHA-256 of every bundled artifact it reads and the
 dictionaries a fresh install enables. Recent searches and known words don't change the list. The suite covers queries that match
-directly, deinflected queries (食べた, 見ない), romaji and English queries, and queries with no
+directly, deinflected queries (食べた, 見ない), romaji and English queries, wildcards (`t*`, `^t*`), and queries with no
 matches that aren't Japanese. It doesn't cover Japanese queries with no direct match or
 Discovered Words: Search splits those into words with the Sudachi dictionary the app bundles,
 which the package's test host lacks, so recording fails on them. Check those in the Simulator.
 The screen's titles, counts, and which rows it shows come from `SearchResultsScreen` in
 `SearchView.swift`, which the view and the suite share. Record it with
 `-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
+`query` and `covers` fields and recording.
+
+`ExampleSearchConformanceTests` records, in `example-search.json`, the Example Sentences screen
+that Search's "View N Example Sentences" row opens: for each query, the row's count and title,
+the entry the screen links words to, whether it lists that entry's examples (a deinflected or
+romaji query) or the sentences that contain the query, every listed sentence's pair ID in order,
+and the first five sentences' words with their entry, candidates, and whether the screen accents
+them as the query's, read with the app's Kuromoji analysis. What the screen lists and accents
+comes from `ExampleSentencesScreen` in `ExampleSentencesView.swift`, which the view,
+`LinkedJapaneseText`, and the suite share. It pins `LanguageReferenceData.sqlite3`,
+`ExampleWordIndex.sqlite3`, and the Kuromoji files. Record it with
+`-only-testing:SearchExperienceTests/ExampleSearchConformanceTests`; add a query by adding its
 `query` and `covers` fields and recording.
 
 `WordDetailConformanceTests` and `KanjiDetailConformanceTests` do the same for the detail
@@ -73,8 +85,10 @@ models and clients the views use: for a word, its headword, furigana (with each 
 per-kanji split, `JapaneseRubyText.kanjiReadings`), part of speech, pitch (with the contour
 `PitchContourLayout` lays out for `PitchAccentBadge`), senses, default frequency packs (JLPT and
 TUBELEX, each with the Frequency Details it opens, `FrequencyDisclosurePresentation`), the
-conjugation table its part of speech opens (each form with the words `ConjugationsView` shows
-and `sharedSpellings(of:in:)`), kanji, and its first 25 examples with their linked tokens; for
+conjugation table its part of speech opens (each form with the words `ConjugationsView` shows,
+`sharedSpellings(of:in:)`, and the examples its screen lists: every pair ID, in order, from
+`ConjugatedForm.examples`, and the first 3 with their linked tokens and which of them
+`LinkedJapaneseText.matchesQuery` accents), kanji, and its first 25 examples with their linked tokens; for
 a kanji, its metrics, meanings, readings with their words, elements, 24 words, and whether it
 has stroke data (not its JLPT metric, which the suites don't record). The views and the suite
 share those helpers, so the suite records what the views draw. Each file pins the SHA-256 of

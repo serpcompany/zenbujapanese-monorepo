@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { dictionaryService } from './data'
 import {
+  conjugationSitemapResponse,
   dictionarySitemapPaths,
   kanjiSitemapResponse,
   kanjiUrl,
@@ -40,7 +41,14 @@ function fakeService(count: number, perSitemap: number) {
     sitemapWords,
     // 㐂 has no meanings or readings, so the service leaves it out. U+F928 is the compatibility
     // ideograph 廊, which must keep its own URL.
-    indexableKanji: async () => ({ data: ['見', '廊', '𠀋'], build })
+    indexableKanji: async () => ({ data: ['見', '廊', '𠀋'], build }),
+    conjugationSitemap: async () => ({
+      data: [
+        { entSeq: 1259290, slug: '見る', forms: ['plain/past', 'polite/past'] },
+        { entSeq: 1611000, slug: '静か', forms: [] }
+      ],
+      build
+    })
   }
 }
 
@@ -57,18 +65,43 @@ describe('without a dictionary service (local fixtures)', () => {
     expect(await dictionarySitemapPaths()).toEqual([])
     expect(await wordSitemapResponse(request('/sitemaps/dictionary/1.xml'), 1)).toBeNull()
     expect(await kanjiSitemapResponse(request('/sitemaps/kanji.xml'))).toBeNull()
+    expect(await conjugationSitemapResponse(request('/sitemaps/conjugations.xml'))).toBeNull()
   })
 })
 
 describe('with a dictionary service', () => {
-  test('the index lists every word sitemap, then the kanji sitemap', async () => {
+  test('the index lists every word sitemap, then the kanji and conjugations sitemaps', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
     expect(await dictionarySitemapPaths()).toEqual([
       '/sitemaps/dictionary/1.xml',
       '/sitemaps/dictionary/2.xml',
       '/sitemaps/dictionary/3.xml',
-      '/sitemaps/kanji.xml'
+      '/sitemaps/kanji.xml',
+      '/sitemaps/conjugations.xml'
     ])
+  })
+
+  test('the conjugations sitemap lists each table, then its form pages that list examples', async () => {
+    vi.mocked(dictionaryService).mockResolvedValue(fakeService(1, 1) as never)
+    const response = await conjugationSitemapResponse(request('/sitemaps/conjugations.xml'))
+    expect(response?.headers.get('Content-Type')).toBe('application/xml; charset=utf-8')
+    const miru = 'https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/conjugations/'
+    expect(locs((await response?.text()) ?? '')).toEqual([
+      miru,
+      `${miru}plain/past/`,
+      `${miru}polite/past/`,
+      'https://zenbujapanese.com/dictionary/%E9%9D%99%E3%81%8B-1611000/conjugations/'
+    ])
+  })
+
+  test('the conjugations sitemap answers 503 until the service has worked it out', async () => {
+    vi.mocked(dictionaryService).mockResolvedValue({
+      ...fakeService(1, 1),
+      conjugationSitemap: async () => null
+    } as never)
+    const response = await conjugationSitemapResponse(request('/sitemaps/conjugations.xml'))
+    expect(response?.status).toBe(503)
+    expect(response?.headers.get('Retry-After')).toBe('60')
   })
 
   test('a word sitemap streams its range of canonical, percent-encoded, escaped URLs', async () => {

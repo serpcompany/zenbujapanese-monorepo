@@ -68,6 +68,10 @@ jobs:
 
   production:
     needs: staging
+    # Set the repository variable DEPLOY_PRODUCTION to false to deploy staging only, such as while a
+    # batch of data changes is still being checked there. A manual run of this workflow still deploys
+    # production, and so does every push once the variable is unset.
+    if: vars.DEPLOY_PRODUCTION != 'false' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment:
       name: production

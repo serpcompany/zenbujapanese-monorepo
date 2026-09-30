@@ -204,6 +204,11 @@ function documentTermCount(matchinfo: Uint8Array): number {
 
 const sentenceColumns = 'e.rowid AS rowid, lower(hex(e.id)) AS pairId, e.japanese, e.english'
 
+/** Every Tatoeba pair the app searches, as the searches read them. */
+export function allExampleSentences(db: ArtifactDatabase): ExampleSentence[] {
+  return db.all<ExampleSentence>(`SELECT ${sentenceColumns} FROM example_sentences e`)
+}
+
 function retrieveEnglish(db: ArtifactDatabase, query: string): EntryExamples | ExampleSearchError {
   if (query.includes('"')) return 'embeddedQuote'
   const matchExpression = `"${query}"`
@@ -257,11 +262,23 @@ function retrieveEnglish(db: ArtifactDatabase, query: string): EntryExamples | E
 }
 
 function retrieveJapanese(db: ArtifactDatabase, query: string): EntryExamples {
+  return rankJapanese(
+    query,
+    db.all<ExampleSentence>(
+      `SELECT ${sentenceColumns} FROM example_sentences e WHERE instr(e.japanese, ?) > 0`,
+      [query]
+    )
+  )
+}
+
+/**
+ * `retrieveJapanese`'s ranking of the sentences that contain `query`: a sentence that is exactly
+ * the query first, then each by where it first occurs, the sentence's length, and its pair ID; at
+ * most 100. Sentences that don't contain it are left out.
+ */
+export function rankJapanese(query: string, sentences: readonly ExampleSentence[]): EntryExamples {
   const matches: Match[] = []
-  for (const sentence of db.all<ExampleSentence>(
-    `SELECT ${sentenceColumns} FROM example_sentences e WHERE instr(e.japanese, ?) > 0`,
-    [query]
-  )) {
+  for (const sentence of sentences) {
     const index = sentence.japanese.indexOf(query)
     if (index < 0) continue
     matches.push({

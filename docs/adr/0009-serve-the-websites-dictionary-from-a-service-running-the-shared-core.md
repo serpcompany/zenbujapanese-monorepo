@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Serve the website's dictionary from a service running the shared core
@@ -54,5 +54,6 @@ its build, tests, and deploys (ADR 0005); the iOS app keeps its own toolchain.
   time, so the service runs the core in worker threads and caches recent results.
 - The Worker's requests to the service add a round trip to wherever the service runs.
 
-This decision refines ADR 0006 and changes parts of ADR 0007 and ADR 0008, as listed above. It is
-proposed until the owner approves the service route; the D1 route stays on `main` until then.
+This decision refines ADR 0006 and changes parts of ADR 0007 and ADR 0008, as listed above. The
+owner approved the service route on 2026-09-29 (PR #532), which removed the D1 route: the release
+databases, their imports and workflows, and everything they precomputed.

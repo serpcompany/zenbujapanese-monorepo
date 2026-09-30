@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:zenbu:schema:language-data-manifest:v1",
+  "title": "zenbu.language-data-manifest.v1",
+  "description": "One language-data release: every file it contains, the CDN sources it names, its IDs, and the conformance suites it was checked against (issue 463). Written by language-data/pipeline/package.py. Cross-field rules JSON Schema can't express (unique names, depends_on naming a file or source in the release) are checked by `package.py validate`.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest_schema",
+    "release",
+    "git_commit",
+    "workflow_run",
+    "previous_release",
+    "previous_manifest_sha256",
+    "sources",
+    "files",
+    "ids",
+    "conformance",
+    "core_sha256"
+  ],
+  "properties": {
+    "manifest_schema": { "const": "zenbu.language-data-manifest.v1" },
+    "release": {
+      "description": "The release ID, YYYY.MM.N: the year and month it was cut, then a counter from 1 within that month.",
+      "type": "string",
+      "pattern": "^[0-9]{4}\\.(0[1-9]|1[0-2])\\.[1-9][0-9]*$"
+    },
+    "git_commit": {
+      "description": "The commit the release was packaged from.",
+      "$ref": "#/$defs/git_sha"
+    },
+    "workflow_run": {
+      "description": "The GitHub Actions run that packaged it, or null outside Actions.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repository", "workflow", "run_id", "run_attempt", "url"],
+          "properties": {
+            "repository": { "type": "string", "pattern": "^[^/\\s]+/[^/\\s]+$" },
+            "workflow": { "type": "string", "minLength": 1 },
+            "run_id": { "type": "integer", "minimum": 1 },
+            "run_attempt": { "type": "integer", "minimum": 1 },
+            "url": { "type": "string", "pattern": "^https://" }
+          }
+        }
+      ]
+    },
+    "previous_release": {
+      "description": "The release this one follows, from releases.json, or null for the first.",
+      "oneOf": [{ "type": "null" }, { "$ref": "#/properties/release" }]
+    },
+    "previous_manifest_sha256": {
+      "description": "The SHA-256 of the previous release's manifest.json bytes, or null for the first.",
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+    },
+    "sources": {
+      "description": "Archives a client downloads from the CDN itself, which the release names but doesn't contain: today the Wikipedia and Jiten frequency-pack sources.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "files": {
+      "description": "Every file in the release, stored at files/<sha256>/<name>.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/file" }
+    },
+    "ids": {
+      "description": "The dictionary's JMdict entry IDs (ent_seq), from the release's zenbu.language-reference file.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "ent_seq_count", "ent_seq_digest", "ent_seq_sha256"],
+      "properties": {
+        "file": { "$ref": "#/$defs/name" },
+        "ent_seq_count": { "type": "integer", "minimum": 0 },
+        "ent_seq_digest": {
+          "description": "How ent_seq_sha256 is computed: SHA-256 over every ent_seq in ascending numeric order, each written in decimal ASCII and followed by a line feed.",
+          "const": "sha256-ascending-decimal-lf"
+        },
+        "ent_seq_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "conformance": {
+      "description": "The conformance suites the release was checked against: every pin in them that names a file in the release matched its SHA-256.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "suite", "sha256", "bytes"],
+        "properties": {
+          "name": { "$ref": "#/$defs/name" },
+          "suite": { "type": "string", "minLength": 1 },
+          "sha256": { "$ref": "#/$defs/sha256" },
+          "bytes": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "core_sha256": {
+      "description": "The shared core's hash. Null until the core exists (step 6 of the plan on issue 463).",
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+    }
+  },
+  "allOf": [
+    {
+      "description": "A first release has neither a previous release nor its manifest; a later one has both.",
+      "if": { "properties": { "previous_release": { "type": "null" } } },
+      "then": { "properties": { "previous_manifest_sha256": { "type": "null" } } },
+      "else": { "properties": { "previous_manifest_sha256": { "$ref": "#/$defs/sha256" } } }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "git_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "name": {
+      "description": "A file's name in the release: one or two path segments, such as Kuromoji/base.dat.gz.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)?$",
+      "not": { "pattern": "(^|/)\\.\\.?(/|$)" }
+    },
+    "artifact_schema": { "type": "string", "pattern": "^zenbu\\.[a-z0-9]+(-[a-z0-9]+)*\\.v[1-9][0-9]*$" },
+    "depends_on": {
+      "description": "The files or sources in this release whose SHA-256 this file pins, by name.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/name" }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "artifact_schema", "schema_source", "sha256", "bytes", "depends_on"],
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "artifact_schema": {
+          "description": "The file's format and version, or null when nothing declares one.",
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/artifact_schema" }]
+        },
+        "schema_source": {
+          "description": "Where artifact_schema comes from: `file`, the file's own metadata (a SQLite `metadata` row or a JSON `schema` key); `plan`, named in language-data/release-inputs.json because the file declares none; `undeclared`, nothing (artifact_schema is null).",
+          "enum": ["file", "plan", "undeclared"]
+        },
+        "sha256": {
+          "description": "The SHA-256 of the file's bytes as committed, before any transport compression. For a Git LFS file, its LFS oid.",
+          "$ref": "#/$defs/sha256"
+        },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "depends_on": { "$ref": "#/$defs/depends_on" },
+        "row_counts": {
+          "description": "SQLite files only, by table name: the row count of every ordinary table, and each virtual (full-text) table's document count, read from its _docsize or _content shadow table where it has one. The other shadow tables (_segdir, _segments, _stat, ...) are left out.",
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "name": { "pattern": "\\.sqlite3$" } } },
+          "then": { "required": ["row_counts"] },
+          "else": { "not": { "required": ["row_counts"] } }
+        },
+        {
+          "if": { "properties": { "schema_source": { "const": "undeclared" } } },
+          "then": { "properties": { "artifact_schema": { "type": "null" } } },
+          "else": { "properties": { "artifact_schema": { "$ref": "#/$defs/artifact_schema" } } }
+        }
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "url", "sha256", "bytes", "depends_on"],
+      "properties": {
+        "name": { "$ref": "#/$defs/name" },
+        "version": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "pattern": "^https://" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "depends_on": { "$ref": "#/$defs/depends_on" }
+      }
+    }
+  }
+}

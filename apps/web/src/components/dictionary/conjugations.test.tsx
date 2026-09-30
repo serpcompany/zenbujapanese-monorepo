@@ -4,36 +4,51 @@ import {
   conjugations,
   sharedSpellingNote
 } from '@zenbu/dictionary-core/detail/conjugation'
+import {
+  examplesPerPage,
+  formExample,
+  noFormExamplesMessage
+} from '@zenbu/dictionary-core/detail/examples'
+import type { ExampleSentenceRow, FormExampleRow } from '@zenbu/dictionary-core/detail/rows'
 import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
-import type { SuiteConjugations } from '@zenbu/dictionary-core/detail/suite'
+import type {
+  SuiteConjugationForm,
+  SuiteConjugations,
+  SuiteFormExamples
+} from '@zenbu/dictionary-core/detail/suite'
 import { wordDetail } from '@zenbu/dictionary-core/detail/word'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { pageExample, serviceLinks, storedWordPath } from '@/lib/dictionary/page-example'
+import { conjugatedFormPath } from '@/lib/dictionary/urls'
 import {
   ConjugatedFormContent,
+  ConjugatedFormExamples,
   ConjugationTableContent,
   type ConjugationWord
 } from './conjugations'
 import { gateEnabled, gateService, recordedCases } from './gate'
-import { readConjugatedForm, readConjugationTable } from './rendered-word'
+import { readConjugatedForm, readConjugationTable, readExamples } from './rendered-word'
 import { WordHeader } from './word-header'
 
-// Renders the conjugation table and each form's screen to HTML, as the server does, and reads
+// Renders the conjugation table's page and each form's page to HTML, as the server does, and reads
 // back what a reader sees: the header's meaning and rule, the Plain/Polite control, each row's
-// title, form, and highlighted ending, and each form's meaning, shared spelling, and furigana. The
-// first tests render fixed data; the last renders what the dictionary service answers for every
+// title, form, highlighted ending, and the form page it opens, and each form's meaning, shared
+// spelling, furigana, and examples, with each example's words, links, and accented form. The first
+// tests render fixed data; the last renders what the dictionary service answers for every
 // word-detail.json case (./gate.ts).
 
 const noReadings = new Map()
+const miruPath = '/dictionary/見る-1259290/'
 
-function table(word: ConjugationWord, data: Conjugations, mode: ConjugationMode) {
+function table(word: ConjugationWord, data: Conjugations, mode: ConjugationMode, path = miruPath) {
   return renderToStaticMarkup(
     <ConjugationTableContent
       word={word}
       conjugations={data}
       mode={mode}
       onModeChange={() => {}}
-      onSelect={() => {}}
+      wordPath={path}
     />
   )
 }
@@ -51,7 +66,7 @@ const miruWord: ConjugationWord = {
 }
 
 describe('the conjugation table', () => {
-  test('shows the word, its rule, the register control, and each form with its ending', () => {
+  test('shows the word, its rule, the register control, and each form, opening its page', () => {
     const plain = readConjugationTable(table(miruWord, miru, 'Plain'))
     expect(plain.summary).toBe('to see, to look, to watch, to view, to observe')
     expect(plain.rule).toBe('Drop る, then add the ending.')
@@ -62,13 +77,32 @@ describe('the conjugation table', () => {
         title: 'Present/Future',
         surface: '見る',
         ending: 'る',
-        rowFurigana: false
+        rowFurigana: false,
+        href: '/dictionary/見る-1259290/conjugations/plain/present-future/'
       },
-      { kind: 'past', title: 'Past', surface: '見た', ending: 'た', rowFurigana: false },
-      { kind: 'negative', title: 'Negative', surface: '見ない', ending: 'ない', rowFurigana: false }
+      {
+        kind: 'past',
+        title: 'Past',
+        surface: '見た',
+        ending: 'た',
+        rowFurigana: false,
+        href: '/dictionary/見る-1259290/conjugations/plain/past/'
+      },
+      {
+        kind: 'negative',
+        title: 'Negative',
+        surface: '見ない',
+        ending: 'ない',
+        rowFurigana: false,
+        href: '/dictionary/見る-1259290/conjugations/plain/negative/'
+      }
     ])
     const polite = readConjugationTable(table(miruWord, miru, 'Polite'))
-    expect(polite.rows[0]).toMatchObject({ surface: '見ます', ending: 'ます' })
+    expect(polite.rows[0]).toMatchObject({
+      surface: '見ます',
+      ending: 'ます',
+      href: '/dictionary/見る-1259290/conjugations/polite/present-future/'
+    })
   })
 
   test('an adjective has no register control', () => {
@@ -92,17 +126,20 @@ describe('the conjugation table', () => {
       { headword: '来る', reading: 'くる', partsOfSpeech: ['kuruVerb'] },
       noReadings
     ) as Conjugations
-    const rows = readConjugationTable(table(miruWord, kuru, 'Plain')).rows
+    const rows = readConjugationTable(
+      table(miruWord, kuru, 'Plain', '/dictionary/来る-1547720/')
+    ).rows
     expect(rows.find(row => row.kind === 'causative')).toEqual({
       kind: 'causative',
       title: 'Causative',
       surface: '来させる',
       ending: '来させる',
-      rowFurigana: true
+      rowFurigana: true,
+      href: '/dictionary/来る-1547720/conjugations/plain/causative/'
     })
   })
 
-  test('a form’s screen says what it means, and which forms share its spelling', () => {
+  test('a form’s page says what it means, and which forms share its spelling', () => {
     const potential = miru.rows.Plain.find(row => row.kind === 'potential')
     if (!potential) throw new Error('No potential form')
     const form = readConjugatedForm(renderToStaticMarkup(<ConjugatedFormContent row={potential} />))
@@ -113,6 +150,57 @@ describe('the conjugation table', () => {
       furigana: [{ base: '見', reading: 'み' }, { base: 'られる' }],
       ending: 'られる'
     })
+  })
+
+  test('a form’s examples link each word and accent the form’s words', () => {
+    const sentence: ExampleSentenceRow = {
+      id: 7,
+      pairId: '1bead88e1efe242f0f44bce34ab169d7',
+      japanese: '見たか？',
+      english: 'Did you see it?',
+      tokens: [
+        { text: '見た', reading: 'みた', dictionaryForm: '見る' },
+        { text: 'か' },
+        { text: '？' }
+      ],
+      japaneseTatoebaId: 1,
+      japaneseContributor: null,
+      japaneseLicense: 'CC BY 2.0 FR',
+      englishTatoebaId: 2,
+      englishContributor: null,
+      englishLicense: 'CC BY 2.0 FR'
+    }
+    const example: FormExampleRow = {
+      surface: '見た',
+      position: 0,
+      sentenceId: 7,
+      highlights: [0],
+      links: [
+        { token: 0, entSeqs: [1259290] },
+        { token: 1, entSeqs: [2028970, 2028980] }
+      ]
+    }
+    const links = serviceLinks({ 1259290: '見る' }, [])
+    const html = renderToStaticMarkup(
+      <ConjugatedFormExamples
+        examples={[pageExample(formExample({ sentence, example }), links)]}
+        listed={1}
+        path="/dictionary/examples/forms/%E8%A6%8B%E3%81%9F.json?build=b"
+      />
+    )
+    expect(readExamples(html)).toEqual([
+      {
+        pairId: '1bead88e1efe242f0f44bce34ab169d7',
+        tokens: [
+          { surface: '見た', href: '/dictionary/見る-1259290/', highlighted: true },
+          { surface: 'か', href: '/dictionary/search/%E3%81%8B/', highlighted: false },
+          { surface: '？', href: null, highlighted: false }
+        ]
+      }
+    ])
+    const none = renderToStaticMarkup(<ConjugatedFormExamples examples={[]} listed={0} path="" />)
+    expect(none).toContain(noFormExamplesMessage)
+    expect(noFormExamplesMessage).toBe('No example sentences use this form yet.')
   })
 
   test('sharedSpellingNote lists titles as the app’s list format does', () => {
@@ -133,43 +221,61 @@ describe('the conjugation table', () => {
         <WordHeader
           ruby={miruWord.ruby}
           reading="みる"
-          summary=""
+          summary={miruWord.summary}
           pitch={null}
           partOfSpeech="Ichidan verb (transitive)"
           conjugations={data}
+          path={miruPath}
         />
       )
-    expect(header(miru)).toContain('data-opens-conjugations')
+    expect(header(miru)).toMatch(/<button[^>]* data-opens-conjugations="true"/)
     expect(header(null)).not.toContain('data-opens-conjugations')
   })
 })
+
+/** A form as the suite records it, with the examples its screen lists. */
+interface SuiteForm extends SuiteConjugationForm {
+  examples: SuiteFormExamples
+}
 
 interface SuiteCase {
   covers: string
   entSeq: string[]
   opensConjugations: boolean
-  conjugations?: SuiteConjugations
+  conjugations?: SuiteConjugations & { plain: SuiteForm[]; polite?: SuiteForm[] }
 }
 
 const suiteCases = recordedCases<SuiteCase>('word-detail.json')
 
-describe.runIf(gateEnabled)('the rendered conjugation table matches the app', () => {
+describe.runIf(gateEnabled)('the rendered conjugation pages match the app', () => {
   test.each(suiteCases)('$covers', async expected => {
-    const word = await gateService().word(Number(expected.entSeq[0]))
-    if (!word) throw new Error(`No word ${expected.entSeq[0]}`)
-    const detail = wordDetail(word.data.rows)
+    const service = gateService()
+    const entSeq = Number(expected.entSeq[0])
+    const page = await service.word(entSeq)
+    if (!page) throw new Error(`No word ${entSeq}`)
     // The part-of-speech row opens the table exactly when the app's does.
+    const pageDetail = wordDetail(page.data.rows)
     const header = renderToStaticMarkup(
       <WordHeader
-        ruby={detail.ruby}
-        reading={detail.reading}
-        summary={detail.summary}
-        pitch={detail.pitch}
-        partOfSpeech={detail.partOfSpeech}
-        conjugations={detail.conjugations}
+        ruby={pageDetail.ruby}
+        reading={pageDetail.reading}
+        summary={pageDetail.summary}
+        pitch={pageDetail.pitch}
+        partOfSpeech={pageDetail.partOfSpeech}
+        conjugations={pageDetail.conjugations}
+        path={storedWordPath(page.data.slug, entSeq)}
       />
     )
     expect(header.includes('data-opens-conjugations')).toBe(expected.opensConjugations)
+    // The table's and forms' pages read the word without its examples.
+    const word = await service.conjugationWord(entSeq)
+    if (!word) {
+      expect(expected.conjugations).toBeUndefined()
+      expect(pageDetail.conjugations).toBeNull()
+      return
+    }
+    const detail = wordDetail(word.data.rows)
+    const path = storedWordPath(word.data.slug, detail.entSeq)
     const suite = expected.conjugations
     if (!suite || !detail.conjugations) {
       expect(detail.conjugations).toBeNull()
@@ -183,14 +289,12 @@ describe.runIf(gateEnabled)('the rendered conjugation table matches the app', ()
       partOfSpeech: detail.partOfSpeech,
       pitch: detail.pitch
     }
-    const registers: [ConjugationMode, SuiteConjugations['plain']][] = [
+    const registers: [ConjugationMode, SuiteForm[]][] = [
       ['Plain', suite.plain],
-      ...(suite.polite
-        ? [['Polite', suite.polite] as [ConjugationMode, SuiteConjugations['plain']]]
-        : [])
+      ...(suite.polite ? [['Polite', suite.polite] as [ConjugationMode, SuiteForm[]]] : [])
     ]
     for (const [mode, forms] of registers) {
-      const drawn = readConjugationTable(table(word_, data, mode))
+      const drawn = readConjugationTable(table(word_, data, mode, path))
       expect({ summary: drawn.summary, rule: drawn.rule, modes: drawn.modes }).toEqual({
         summary: suite.summary,
         rule: suite.rule,
@@ -202,12 +306,13 @@ describe.runIf(gateEnabled)('the rendered conjugation table matches the app', ()
           title,
           surface,
           ending,
-          rowFurigana
+          rowFurigana,
+          href: conjugatedFormPath(path, mode, kind)
         }))
       )
       for (const [index, row] of data.rows[mode].entries()) {
-        const form = readConjugatedForm(renderToStaticMarkup(<ConjugatedFormContent row={row} />))
         const recorded = forms[index]
+        const form = readConjugatedForm(renderToStaticMarkup(<ConjugatedFormContent row={row} />))
         expect(form).toEqual({
           explanation: recorded.explanation,
           sharedSpelling: recorded.sharedSpellings
@@ -216,6 +321,38 @@ describe.runIf(gateEnabled)('the rendered conjugation table matches the app', ()
           furigana: recorded.furigana,
           ending: recorded.ending
         })
+        // The form's page draws its first examples, in the app's order, each word linked where
+        // the app links it and the form's words accented.
+        const { data: found } = await service.formExamples(row.surface, 0, examplesPerPage)
+        expect(found.listed).toBe(recorded.examples.ids.length)
+        const links = serviceLinks(found.slugs, [])
+        const html = renderToStaticMarkup(
+          <ConjugatedFormExamples
+            examples={found.rows.map(rows => pageExample(formExample(rows), links))}
+            listed={found.listed}
+            path="/dictionary/examples/forms/form.json?build=b"
+          />
+        )
+        const examples = readExamples(html)
+        expect(examples.map(example => `esp1_${example.pairId}`)).toEqual(
+          recorded.examples.ids.slice(0, examplesPerPage)
+        )
+        if (recorded.examples.ids.length === 0) expect(html).toContain(noFormExamplesMessage)
+        // Which entry each word links to, the service's conformance suite checks
+        // (apps/dictionary-api); here, that a word with one entry opens a word page.
+        for (const [position, shown] of recorded.examples.shown.entries()) {
+          expect(examples[position].tokens).toEqual(
+            shown.tokens.map(token => ({
+              surface: token.surface,
+              href: token.entry
+                ? expect.stringMatching(/^\/dictionary\/[^/]+-\d+\/$/)
+                : token.candidates
+                  ? expect.stringMatching(/^\/dictionary\/search\/[^/]+\/$/)
+                  : null,
+              highlighted: token.highlighted === true
+            }))
+          )
+        }
       }
     }
   })

@@ -2,7 +2,9 @@
 // bearer token; /healthz, for the host, doesn't. docs/agents/dictionary-api.md lists the routes.
 
 import { timingSafeEqual } from 'node:crypto'
+import type { ConjugationSitemapWord } from '@zenbu/dictionary-core/artifact/conjugation-sitemap'
 import { maximumEntSeq, maximumQueryLength } from '@zenbu/dictionary-core/artifact/dictionary'
+import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import { Hono } from 'hono'
 import { routePath } from 'hono/route'
 import { errorFields, log } from './log'
@@ -42,9 +44,11 @@ export interface AppOptions {
   token: string
   /** Whether the service can answer yet (every worker loaded). */
   ready(): boolean
+  /** The conjugations sitemap, or null while it's still being worked out after startup. */
+  conjugationSitemap(): ConjugationSitemapWord[] | null
 }
 
-export function createApp({ service, token, ready }: AppOptions) {
+export function createApp({ service, token, ready, conjugationSitemap }: AppOptions) {
   const app = new Hono()
 
   app.use(async (context, next) => {
@@ -109,8 +113,19 @@ export function createApp({ service, token, ready }: AppOptions) {
     return examples ? context.json(examples) : context.json({ error: 'no such word' }, 404)
   })
 
+  app.get('/v1/words/:entSeq/conjugations', async context => {
+    const word = await service.conjugationWord(entSeq(context.req.param('entSeq')))
+    return word ? context.json(word) : context.json({ error: 'no conjugation table' }, 404)
+  })
+
   app.get('/v1/conjugations/:form/examples', async context =>
-    context.json(await service.conjugationExamples(text(context.req.param('form'), 'form')))
+    context.json(
+      await service.formExamples(
+        text(context.req.param('form'), 'form'),
+        integer(context.req.query('from'), 'from', 0, 99),
+        integer(context.req.query('limit'), 'limit', examplesPerPage, 100)
+      )
+    )
   )
 
   app.get('/v1/kanji/:character', async context => {
@@ -132,6 +147,13 @@ export function createApp({ service, token, ready }: AppOptions) {
   })
 
   app.get('/v1/sitemaps/kanji', async context => context.json(await service.indexableKanji()))
+
+  app.get('/v1/sitemaps/conjugations', context => {
+    const sitemap = conjugationSitemap()
+    if (sitemap) return context.json(sitemap)
+    context.header('Retry-After', '60')
+    return context.json({ error: 'the conjugations sitemap is still being worked out' }, 503)
+  })
 
   app.get('/v1/retired', async context => context.json(await service.retired()))
 
