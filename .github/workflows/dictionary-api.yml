@@ -44,6 +44,17 @@ env:
   RESOURCES: apps/ios/Modules/Sources/SearchExperience/Resources
 
 jobs:
+  scripts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: ShellCheck the deploy scripts
+        # ShellCheck 0.11, pinned: the runner's own is older.
+        run: >-
+          docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0
+          apps/dictionary-api/deploy/deployer.sh apps/dictionary-api/deploy/await-build.sh
+
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 30
