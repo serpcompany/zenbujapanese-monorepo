@@ -136,9 +136,9 @@ the sitemap's one pass to each form's own list on every form the word-detail sui
 `full-text.test.ts` checks English search where FTS4 differs from other engines.
 
 The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LFS files and
-Sudachi's dictionary cached, then the website's rendered-page gate against the built service, then
-the Docker image build. The `Search parity` workflow pairs the core's ports with their Swift
-sources.
+Sudachi's dictionary cached, then the website's rendered-page gate against the built service. The
+`Dictionary API deploy` workflow builds the Docker image and checks that it starts and answers
+(see Ship it). The `Search parity` workflow pairs the core's ports with their Swift sources.
 
 `pnpm fixtures` regenerates the core's local fixtures (`packages/dictionary-core/src/fixtures/`)
 with the service's readers, for `pnpm dev` without a service.
@@ -146,8 +146,12 @@ with the service's readers, for `pnpm dev` without a service.
 ## Ship it
 
 The service ships as one Docker image holding the bundled code, the app's files it reads, and
-Sudachi's checked dictionary, so it runs on any container host: a VM, bare metal, or Cloudflare
-Containers. Build it from the repository root with the Git LFS files pulled:
+Sudachi's checked dictionary. The `Dictionary API deploy` workflow builds it, pushes it to the
+GitHub Container Registry, and deploys it to a Docker server per environment over SSH.
+
+### The image
+
+Build and run it by hand from the repository root, with the Git LFS files pulled:
 
 ```sh
 docker build -f apps/dictionary-api/Dockerfile --build-arg RELEASE=$(git rev-parse --short HEAD) \
@@ -159,19 +163,89 @@ The image is about 1 GB, and uses about 750 MiB of memory with two worker thread
 1.4 GB for the half minute after it starts, while it works out the conjugations sitemap. The
 kernel's cache of the files it reads comes on top (about 600 MB once the sitemap has read every
 sentence); a container's memory reading, such as `docker stats`, counts it, but it can be
-reclaimed. It has a
-health check on `/healthz` and stops cleanly on SIGTERM.
+reclaimed. It has a health check on `/healthz` and stops cleanly on SIGTERM.
 
-The host isn't chosen yet (ADR 0009). Whatever it is, each environment needs:
+### How a deploy works
 
-- The service at an HTTPS origin the website's Worker can reach, which the environment's
-  `DICTIONARY_API_URL` GitHub variable names.
-- The same token in the service's `DICTIONARY_API_TOKEN` and the Worker's `DICTIONARY_API_TOKEN`
-  secret.
-- A new image for each new artifact or service change, deployed before any website change that
-  needs it. The website shows a new build within 10 minutes, as its edge cache expires; a
-  conjugated form's examples in the word page's sheet, which name no build, can stay in a
-  browser's cache for an hour.
+`.github/workflows/dictionary-api-deploy.yml` runs on a push to `main` that changes what the image
+holds (the service, the core, the lockfile, or the app's files it copies), and by hand:
 
-Staging and production can't deploy the website until their service exists: `Web deploy` stops
-when the service's URL, token, or health check is missing.
+1. **`image`** builds the image, starts it, and checks that `/healthz` names this commit's release
+   and that a search, a word, a kanji, and a search's examples answer with a token (and `/v1/info`
+   doesn't without one). It then pushes it as
+   `ghcr.io/serpcompany/zenbujapanese-dictionary-api:sha-<commit>` and `:main`. A pull request
+   that changes the image runs only this build and check.
+2. **`staging`** runs `deploy/ci-deploy.sh`, which runs `deploy/host-deploy.sh` on the staging
+   server over SSH, then waits until the environment's `DICTIONARY_API_URL` answers `/healthz` with
+   the new build, and tags the image `:staging`.
+3. **`production`** does the same once staging answers with the image, and tags it
+   `:production`. The repository variable `DEPLOY_PRODUCTION` set to `false` stops at staging, as
+   for the website; a run by hand still deploys production.
+
+An environment without a server yet (no `DICTIONARY_API_SSH_HOST`) is skipped with a warning, and
+production runs only after staging deployed.
+
+On the server, the service runs in one of two slots, `127.0.0.1:8788` and `127.0.0.1:8789`, and
+Caddy sends each request to whichever answers `/healthz` (`deploy/Caddyfile`). A deploy starts the
+new image in the free slot, waits until its `/healthz` names the image's release, then stops the old
+one; it takes about 10 seconds and drops no request. A new image that doesn't come up is removed
+and the old one keeps serving. The image the deploy replaced stays on the server, and the
+repository's other images are removed.
+
+- **Roll back** by running the workflow by hand with `tag` set to the version to go back to, such
+  as `sha-0123456789ab`: it deploys that image without building.
+- **See what runs** with `ssh -i <deploy key> deploy@<server> status`, which prints each slot's
+  image and build.
+- **Ship the service before the site.** The website reads whatever its environment's service
+  answers. A change that needs both goes out in a pull request that changes the service first, or
+  keeps the service answering what the current website asks for.
+
+### Set up a server
+
+Each environment (staging, production) needs a Linux x86-64 server (Ubuntu or Debian) with 4 GB
+of memory, since the old and new containers overlap during a deploy, and 20 GB of disk.
+
+1. **Install** [Docker Engine](https://docs.docker.com/engine/install/) and
+   [Caddy](https://caddyserver.com/docs/install).
+2. **The deploy user and its script.** Copy `deploy/host-deploy.sh` to the server, then:
+   ```sh
+   sudo useradd --create-home --shell /bin/bash deploy
+   sudo usermod --append --groups docker deploy
+   sudo install -m 755 host-deploy.sh /usr/local/bin/zenbujapanese-dictionary-api-deploy
+   ```
+   The workflow can't change the script (its key runs only the script), so reinstall it this way
+   after changing it.
+3. **The token**, which the service reads when it starts:
+   ```sh
+   sudo install -d -m 750 -g deploy /etc/zenbujapanese-dictionary-api
+   echo "DICTIONARY_API_TOKEN=$(openssl rand -hex 24)" | sudo tee /etc/zenbujapanese-dictionary-api/env
+   echo "DICTIONARY_API_WORKERS=2" | sudo tee -a /etc/zenbujapanese-dictionary-api/env
+   sudo chmod 640 /etc/zenbujapanese-dictionary-api/env
+   sudo chgrp deploy /etc/zenbujapanese-dictionary-api/env
+   ```
+   Set the environment's Worker to the same token ([`web.md`](web.md), Dictionary service).
+4. **A deploy key**, made on your machine (`ssh-keygen -t ed25519 -N '' -f dictionary-api-staging`)
+   and allowed to run only the script: in `/home/deploy/.ssh/authorized_keys` (the directory mode
+   700, the file 600, both owned by `deploy`), add
+   ```
+   restrict,command="/usr/local/bin/zenbujapanese-dictionary-api-deploy" ssh-ed25519 AAAA… dictionary-api-staging
+   ```
+5. **HTTPS.** Point the service's host name (such as `dictionary-staging.zenbujapanese.com`) at the
+   server, open ports 80 and 443 (and 22 for SSH), install `deploy/Caddyfile` as
+   `/etc/caddy/Caddyfile` with that host name, and `sudo systemctl reload caddy`. Caddy gets the
+   certificate. If Cloudflare proxies the name, set its SSL/TLS mode to Full (strict).
+6. **The GitHub environment** (Settings → Environments → staging or production):
+   ```sh
+   gh variable set DICTIONARY_API_URL --env staging --body https://dictionary-staging.zenbujapanese.com
+   gh variable set DICTIONARY_API_SSH_HOST --env staging --body <server address>
+   ssh-keyscan -t ed25519 <server address> | gh variable set DICTIONARY_API_SSH_KNOWN_HOSTS --env staging
+   gh secret set DICTIONARY_API_SSH_KEY --env staging < dictionary-api-staging
+   ```
+   `DICTIONARY_API_SSH_USER` (default `deploy`) and `DICTIONARY_API_SSH_PORT` (default 22) are
+   optional. With a port other than 22, run `ssh-keyscan -p <port>`.
+7. **The first deploy.** Run the workflow by hand (Actions → Dictionary API deploy → Run
+   workflow), then `Web deploy`.
+
+The image's package is public, as the repository and the app's data are, so servers pull it
+without a login. The first push creates it private: set it to public once, in the package's
+settings on GitHub (Package settings → Change visibility).

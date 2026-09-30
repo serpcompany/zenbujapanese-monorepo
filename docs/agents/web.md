@@ -196,7 +196,9 @@ Each deployed environment reads its own dictionary service:
 
 `scripts/use-dictionary-service.sh` checks both, and that the service answers `/healthz`, before
 the deploy; the smoke test's dictionary pages then prove the token works. Deploy a new service
-before a site change that needs it: the site reads whatever service its environment names.
+before a site change that needs it: the site reads whatever service its environment names. The
+`Dictionary API deploy` workflow deploys the service itself
+([`dictionary-api.md`](dictionary-api.md), Ship it).
 
 ### Environment configuration
 

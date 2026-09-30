@@ -1,0 +1,254 @@
+name: Dictionary API deploy
+
+# Ships the dictionary service (apps/dictionary-api, ADR 0009). It builds the Docker image, checks
+# that the image starts and answers, and pushes it to the GitHub Container Registry. Then it
+# deploys it to staging and, once staging answers with it, to production. Each deploy runs
+# apps/dictionary-api/deploy/host-deploy.sh on the environment's server over SSH: the new image
+# starts beside the old one, which stops once the new one answers, and a new image that doesn't
+# come up is removed while the old one keeps serving. See docs/agents/dictionary-api.md, Ship it.
+#
+# A pull request that changes the image only builds and checks it. A manual run can deploy an image
+# already pushed, by its tag (sha-<commit>), to roll back. Set the repository variable
+# DEPLOY_PRODUCTION to false to stop at staging, as for the website (web-deploy.yml).
+on:
+  push:
+    branches: [main]
+    # What the image holds.
+    paths:
+      - apps/dictionary-api/**
+      - packages/dictionary-core/**
+      - apps/web/package.json
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3
+      - apps/ios/Modules/Sources/SearchExperience/Resources/Kanji*ReferenceData.json
+      - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json
+      - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
+      - .github/workflows/dictionary-api-deploy.yml
+      - '!**/*.test.ts'
+      - '!apps/dictionary-api/src/conformance/**'
+      - '!apps/dictionary-api/deploy/**'
+  pull_request:
+    paths:
+      - apps/dictionary-api/**
+      - packages/dictionary-core/**
+      - apps/web/package.json
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3
+      - apps/ios/Modules/Sources/SearchExperience/Resources/Kanji*ReferenceData.json
+      - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json
+      - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
+      - .github/workflows/dictionary-api-deploy.yml
+      - '!**/*.test.ts'
+      - '!apps/dictionary-api/src/conformance/**'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: >-
+          Deploy an image already pushed instead of building this commit, by its tag, such as
+          sha-0123456789ab (a rollback). Empty builds the commit.
+        required: false
+        default: ''
+
+concurrency:
+  group: dictionary-api-deploy-${{ github.event.pull_request.number || 'main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/serpcompany/zenbujapanese-dictionary-api
+  RESOURCES: apps/ios/Modules/Sources/SearchExperience/Resources
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.push.outputs.image }}
+      build: ${{ steps.check.outputs.build }}
+    env:
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Name the release
+        id: release
+        run: |
+          if [ -n "$TAG" ] && ! [[ "$TAG" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "::error::Not an image tag: $TAG"
+            exit 1
+          fi
+          echo "release=${GITHUB_SHA::12}" >>"$GITHUB_OUTPUT"
+      - name: Restore the Git LFS files
+        if: env.TAG == ''
+        uses: actions/cache@v4
+        with:
+          path: .git/lfs/objects
+          # The Dictionary API workflow's key, so the two share the cache.
+          key: lfs-resources-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**') }}
+      - name: Fetch the Git LFS files
+        if: env.TAG == ''
+        run: git lfs pull --include="$RESOURCES/*.sqlite3,$RESOURCES/Kuromoji/*"
+      - uses: docker/setup-buildx-action@v3
+        if: env.TAG == ''
+      - name: Build the image
+        if: env.TAG == ''
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/dictionary-api/Dockerfile
+          build-args: RELEASE=${{ steps.release.outputs.release }}
+          load: true
+          tags: zenbujapanese-dictionary-api:candidate
+          cache-from: type=gha,scope=dictionary-api-image
+          cache-to: type=gha,scope=dictionary-api-image,mode=max
+      - name: Log in to the GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull the image to deploy again
+        if: env.TAG != ''
+        run: |
+          docker pull "$IMAGE:$TAG"
+          docker tag "$IMAGE:$TAG" zenbujapanese-dictionary-api:candidate
+      - name: Check that the image starts and answers
+        id: check
+        env:
+          RELEASE: ${{ steps.release.outputs.release }}
+        run: |
+          token=ci-only-dictionary-api-token
+          docker run --detach --name candidate --publish 8788:8788 \
+            --env DICTIONARY_API_TOKEN="$token" --env DICTIONARY_API_WORKERS=2 \
+            zenbujapanese-dictionary-api:candidate
+          curl -fsS --retry 60 --retry-delay 2 --retry-connrefused --retry-all-errors \
+            http://localhost:8788/healthz >health.json
+          build="$(jq -r .build health.json)"
+          echo "The image answers as $build: $(cat health.json)"
+          if [ -z "$TAG" ] && [[ "$build" != *"-$RELEASE" ]]; then
+            echo "::error::The image answers as $build, not release $RELEASE"
+            exit 1
+          fi
+          code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
+          if [ "$(code http://localhost:8788/v1/info)" != 401 ]; then
+            echo "::error::/v1/info answers without the token"
+            exit 1
+          fi
+          # A search, a word, a kanji, and examples: 見る and 見.
+          for path in /v1/info /v1/search/%E8%A6%8B%E3%82%8B '/v1/search/%E8%A6%8B%E3%82%8B/examples?from=0' \
+            /v1/words/1259290 /v1/kanji/%E8%A6%8B; do
+            got="$(code -H "Authorization: Bearer $token" "http://localhost:8788$path")"
+            if [ "$got" != 200 ]; then
+              echo "::error::$path answers $got"
+              exit 1
+            fi
+          done
+          echo "build=$build" >>"$GITHUB_OUTPUT"
+      - name: Show the image's log
+        if: failure()
+        run: docker logs candidate || true
+      - name: Push the image
+        id: push
+        if: github.event_name != 'pull_request'
+        env:
+          RELEASE: ${{ steps.release.outputs.release }}
+        run: |
+          if [ -z "$TAG" ]; then
+            docker tag zenbujapanese-dictionary-api:candidate "$IMAGE:sha-$RELEASE"
+            docker push "$IMAGE:sha-$RELEASE" | tee push.log
+            digest="$(grep -oE 'digest: sha256:[0-9a-f]{64}' push.log | cut -d' ' -f2)"
+            docker tag zenbujapanese-dictionary-api:candidate "$IMAGE:main"
+            docker push --quiet "$IMAGE:main"
+          else
+            digest="$(docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$IMAGE:$TAG" |
+              sed -n "s|^$IMAGE@||p" | head -n 1)"
+          fi
+          if ! [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::No digest for the image"
+            exit 1
+          fi
+          echo "image=$IMAGE@$digest" >>"$GITHUB_OUTPUT"
+          echo "Deploying $IMAGE@$digest"
+
+  staging:
+    needs: image
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      deployed: ${{ steps.deploy.outputs.deployed }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy the image
+        id: deploy
+        env:
+          DICTIONARY_API_URL: ${{ vars.DICTIONARY_API_URL }}
+          DICTIONARY_API_SSH_HOST: ${{ vars.DICTIONARY_API_SSH_HOST }}
+          DICTIONARY_API_SSH_USER: ${{ vars.DICTIONARY_API_SSH_USER }}
+          DICTIONARY_API_SSH_PORT: ${{ vars.DICTIONARY_API_SSH_PORT }}
+          DICTIONARY_API_SSH_KNOWN_HOSTS: ${{ vars.DICTIONARY_API_SSH_KNOWN_HOSTS }}
+          DICTIONARY_API_SSH_KEY: ${{ secrets.DICTIONARY_API_SSH_KEY }}
+        run: >-
+          apps/dictionary-api/deploy/ci-deploy.sh staging
+          "${{ needs.image.outputs.image }}" "${{ needs.image.outputs.build }}"
+      - name: Log in to the GitHub Container Registry
+        if: steps.deploy.outputs.deployed == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tag the image as staging's
+        if: steps.deploy.outputs.deployed == 'true'
+        run: docker buildx imagetools create --tag "$IMAGE:staging" "${{ needs.image.outputs.image }}"
+
+  production:
+    needs: [image, staging]
+    # Only an image staging answers with, and not while DEPLOY_PRODUCTION is false, unless run by
+    # hand.
+    if: >-
+      needs.staging.outputs.deployed == 'true' &&
+      (vars.DEPLOY_PRODUCTION != 'false' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy the image
+        id: deploy
+        env:
+          DICTIONARY_API_URL: ${{ vars.DICTIONARY_API_URL }}
+          DICTIONARY_API_SSH_HOST: ${{ vars.DICTIONARY_API_SSH_HOST }}
+          DICTIONARY_API_SSH_USER: ${{ vars.DICTIONARY_API_SSH_USER }}
+          DICTIONARY_API_SSH_PORT: ${{ vars.DICTIONARY_API_SSH_PORT }}
+          DICTIONARY_API_SSH_KNOWN_HOSTS: ${{ vars.DICTIONARY_API_SSH_KNOWN_HOSTS }}
+          DICTIONARY_API_SSH_KEY: ${{ secrets.DICTIONARY_API_SSH_KEY }}
+        run: >-
+          apps/dictionary-api/deploy/ci-deploy.sh production
+          "${{ needs.image.outputs.image }}" "${{ needs.image.outputs.build }}"
+      - name: Log in to the GitHub Container Registry
+        if: steps.deploy.outputs.deployed == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tag the image as production's
+        if: steps.deploy.outputs.deployed == 'true'
+        run: docker buildx imagetools create --tag "$IMAGE:production" "${{ needs.image.outputs.image }}"

@@ -1,9 +1,9 @@
 name: Dictionary API
 
 # The dictionary service (apps/dictionary-api, ADR 0009) on pull requests: Biome, typecheck, and
-# its tests, which replay the app-recorded search, results, word, and kanji suites on the app's
-# real files; then the website's rendered-page gate, rendering what the built service answers;
-# then its Docker image. See docs/agents/dictionary-api.md.
+# its tests, which replay the app-recorded suites on the app's real files; then the website's
+# rendered-page gate, rendering what the built service answers. The `Dictionary API deploy`
+# workflow builds and checks its Docker image. See docs/agents/dictionary-api.md.
 #
 # The Git LFS files (about 520 MB) are cached under a hash of their pointers, so a run downloads
 # them only when they change. A pull request's cache is visible only to that pull request, so a
@@ -99,8 +99,3 @@ jobs:
       - name: Show the service's log
         if: failure()
         run: cat apps/dictionary-api/service.log || true
-      - name: Build the image
-        # Publishing it waits on the choice of host (docs/agents/dictionary-api.md).
-        run: >-
-          docker build -f apps/dictionary-api/Dockerfile --build-arg RELEASE=${{ github.sha }}
-          -t zenbujapanese-dictionary-api .
