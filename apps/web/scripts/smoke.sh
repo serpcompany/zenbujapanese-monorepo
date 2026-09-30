@@ -77,9 +77,36 @@ eventually 'pages sitemap lists slashed page URLs' 'pages sitemap has a non-cano
 # The shipped iOS app links to /privacy.
 expect /privacy 308
 
-# The site's Worker reaches its dictionary service: /dictionary/service.json asks it. Nothing asks
-# before the deploy, since Bot Fight Mode on the zone challenges CI runners that ask the service
-# directly, so this also shows whether it challenges the Worker.
+# Every page links to the dictionary and has the header search, and the footer links Legal. Both
+# read the home page, which doesn't need the dictionary service.
+header_has_dictionary() {
+  local home
+  home="$(body /)"
+  grep -q 'href="/dictionary/"' <<<"$home" && grep -q '<search' <<<"$home"
+}
+eventually 'the header links to the dictionary and has search' \
+  'the header is missing the Dictionary link or search' header_has_dictionary
+footer_has_legal() {
+  grep -qE '<footer[^>]*>.*href="/legal/"[^>]*>Legal</a>' <<<"$(body / | tr -d '\n')"
+}
+eventually 'the footer links Legal' 'the footer is missing the Legal link' footer_has_legal
+
+# The dictionary pages the checks below and production's search-engine rules read.
+word=/dictionary/%E8%A6%8B%E3%82%8B-1259290/
+kanji=/dictionary/kanji/%E8%A6%8B/
+conjugations="${word}conjugations/"
+miru_examples=/dictionary/search/%E8%A6%8B%E3%82%8B/examples/
+
+# The checks from here to the search-engine rules need the site's Worker to reach its dictionary
+# service. The zone's Bot Fight Mode challenges that request when a machine Cloudflare scores as a
+# bot (such as a CI runner, whatever headers it sends) set it off, and /dictionary/service.json
+# then says so: the checks are skipped with a warning rather than failed. Run this script from a
+# machine Cloudflare doesn't challenge to run them.
+if grep -qE '"mitigated": *"challenge"' <<<"$(body /dictionary/service.json)"; then
+  echo "::warning::Cloudflare's Bot Fight Mode challenges this machine's requests to the dictionary service, so the dictionary checks were skipped. Run apps/web/scripts/smoke.sh from a machine it doesn't challenge to check them."
+else
+
+# The site's Worker reaches its dictionary service: /dictionary/service.json asks it.
 service_seen=""
 reaches_service() {
   service_seen="$(body /dictionary/service.json)"
@@ -91,19 +118,9 @@ eventually 'the site reaches its dictionary service' \
 
 # Dictionary pages: each environment reads its own dictionary service (DICTIONARY_API_URL), so a
 # word and a kanji without local fixtures (見る, 見) have pages.
-word=/dictionary/%E8%A6%8B%E3%82%8B-1259290/
-kanji=/dictionary/kanji/%E8%A6%8B/
 expect /dictionary/ 200
 expect "$word" 200
 expect "$kanji" 200
-# Every page links to the dictionary and has the header search.
-header_has_dictionary() {
-  local home
-  home="$(body /)"
-  grep -q 'href="/dictionary/"' <<<"$home" && grep -q '<search' <<<"$home"
-}
-eventually 'the header links to the dictionary and has search' \
-  'the header is missing the Dictionary link or search' header_has_dictionary
 # Search results show what the app shows: the iru case of the app-recorded suite, read at run time
 # so a re-recorded suite (which the dictionary service's gate checks) never leaves this check stale.
 # For iru, that's the "Search for「いる」" refinement, then the first rows' entry numbers and chips,
@@ -173,12 +190,6 @@ eventually "eat leads with '$eat_examples', as the app does" \
   "eat has no '$eat_examples' row linked to its examples page" shows_examples_row
 expect "${eat}examples/" 200
 
-# The footer links Legal, as the #462 design's footer does.
-footer_has_legal() {
-  grep -qE '<footer[^>]*>.*href="/legal/"[^>]*>Legal</a>' <<<"$(body / | tr -d '\n')"
-}
-eventually 'the footer links Legal' 'the footer is missing the Legal link' footer_has_legal
-
 # Word pages draw what the app draws, read from the app-recorded word-detail suite at run time:
 # 学校's kanji each highlight their own part of the furigana (がっ・こう), 見る's pitch graph puts
 # each dot where the app does, and each Frequency row opens its details.
@@ -221,7 +232,6 @@ eventually "見る's pitch graph and Frequency rows match the app" \
 # The part-of-speech row opens a conjugation table exactly where the app's does: 見る's does, and
 # 学校's (a noun) doesn't. The table opens in a sheet that links to its own page, and each form
 # has its own page too (#511).
-conjugations="${word}conjugations/"
 miru_table='/dictionary/見る-1259290/conjugations/'
 opens_expected="$(python3 -c '
 import json, sys
@@ -335,7 +345,6 @@ examples_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/example-searc
 # candidates, answers too.
 expect /dictionary/search/qzxvkj/examples/ 404
 expect '/dictionary/search/t*/examples/' 200
-miru_examples=/dictionary/search/%E8%A6%8B%E3%82%8B/examples/
 expect "$miru_examples" 200
 miru_first_english="$(python3 -c '
 import json, sys
@@ -446,6 +455,7 @@ if [ "$conjugations_status" = 503 ]; then
 else
   eventually 'conjugations sitemap lists tables and the form pages that list examples' \
     "conjugations sitemap is missing 見る's pages or lists one it shouldn't" lists_conjugations
+fi
 fi
 
 # The X-Robots-Tag header a path sends, if any.

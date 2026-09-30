@@ -2,12 +2,14 @@ name: Dictionary API deploy
 
 # Ships the dictionary service (apps/dictionary-api, ADR 0009). It builds the Docker image, checks
 # that the image starts and answers, and pushes it to the GitHub Container Registry. Then it moves
-# the :staging tag to it and waits until staging answers with it, then does the same for
-# :production. Nothing here reaches the server: its deployer (apps/dictionary-api/deploy/
-# deployer.sh, run by cron every 5 minutes) sees the tag move and swaps the image in, keeping the
-# old one if the new one doesn't come up. It runs only an image this workflow signed from main:
-# the staging job signs the image's digest with cosign, keylessly, before moving the tag, and only
-# main can deploy to staging. See docs/agents/dictionary-api.md, Ship it.
+# the :staging tag to it, then the :production tag. Nothing here reaches the server: its deployer
+# (apps/dictionary-api/deploy/deployer.sh, run by cron every 5 minutes) sees a tag move and swaps
+# the image in, keeping the old one if the new one doesn't come up. It runs only an image this
+# workflow signed from main: the staging job signs the image's digest with cosign, keylessly,
+# before moving the tag, and only main can deploy to staging. The workflow doesn't wait to see the
+# server deploy: Bot Fight Mode on the zone challenges CI runners, so they can't ask the service,
+# or the website about it. The server's journal says what it deployed (journalctl -t
+# zenbujapanese-dictionary-api). See docs/agents/dictionary-api.md, Ship it.
 #
 # A pull request that changes the image only builds and checks it. A manual run can deploy an image
 # already pushed, by its tag (sha-<commit>), to roll back, if main signed it before. Set the
@@ -56,15 +58,6 @@ on:
           sha-0123456789ab (a rollback). Empty builds the commit.
         required: false
         default: ''
-      site_without_status_route:
-        description: >-
-          Production's first switch only. Its site predates /dictionary/service.json, so nothing
-          can confirm the new build through it; check
-          https://dictionary-api.zenbujapanese.com/healthz by hand once the deployer starts it,
-          before Web deploy.
-        type: boolean
-        required: false
-        default: false
 
 concurrency:
   group: dictionary-api-deploy-${{ github.event.pull_request.number || 'main' }}
@@ -86,7 +79,6 @@ jobs:
       packages: write
     outputs:
       image: ${{ steps.push.outputs.image }}
-      build: ${{ steps.check.outputs.build }}
     env:
       TAG: ${{ inputs.tag }}
     steps:
@@ -165,7 +157,6 @@ jobs:
               exit 1
             fi
           done
-          echo "build=$build" >>"$GITHUB_OUTPUT"
       - name: Show the image's log
         if: failure()
         run: docker logs candidate || true
@@ -199,8 +190,7 @@ jobs:
     needs: image
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    # The deployer checks the tag every 5 minutes, then pulls and starts the image.
-    timeout-minutes: 15
+    timeout-minutes: 10
     environment: staging
     permissions:
       contents: read
@@ -208,14 +198,10 @@ jobs:
       # Keyless signing: cosign signs with this run's GitHub identity, which names the workflow and
       # the branch it ran from.
       id-token: write
-    outputs:
-      deployed: ${{ steps.await.outputs.deployed }}
     env:
       IMAGE_REFERENCE: ${{ needs.image.outputs.image }}
-      BUILD: ${{ needs.image.outputs.build }}
       SIGNER: https://github.com/${{ github.repository }}/.github/workflows/dictionary-api-deploy.yml@refs/heads/main
     steps:
-      - uses: actions/checkout@v4
       - name: Log in to the GitHub Container Registry
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
@@ -240,34 +226,22 @@ jobs:
         # imagetools wraps it in a new image index, whose digest nothing signed, so the deployer
         # would refuse it.
         run: docker buildx imagetools create --prefer-index=false --tag "$IMAGE:staging" "$IMAGE_REFERENCE"
-      - name: Wait until staging answers with it
-        id: await
-        env:
-          # The site, which asks its service (Bot Fight Mode challenges runners asking it).
-          WEB_WORKERS_DEV_URL: ${{ vars.WEB_WORKERS_DEV_URL }}
-        run: apps/dictionary-api/deploy/await-build.sh staging "$BUILD" 600
 
   production:
     needs: [image, staging]
-    # Only an image staging answers with, and not while DEPLOY_PRODUCTION is false, unless run by
-    # hand.
-    if: >-
-      needs.staging.outputs.deployed == 'true' &&
-      (vars.DEPLOY_PRODUCTION != 'false' || github.event_name == 'workflow_dispatch')
+    # Only an image the staging job signed and tagged, and not while DEPLOY_PRODUCTION is false,
+    # unless run by hand. Nothing confirms staging runs it first: with DEPLOY_PRODUCTION false, a
+    # person checks staging, then runs this by hand.
+    if: vars.DEPLOY_PRODUCTION != 'false' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    # The deployer checks the tag every 5 minutes, then pulls and starts the image.
-    timeout-minutes: 15
+    timeout-minutes: 5
     environment: production
     permissions:
       contents: read
       packages: write
-    outputs:
-      deployed: ${{ steps.await.outputs.deployed }}
     env:
       IMAGE_REFERENCE: ${{ needs.image.outputs.image }}
-      BUILD: ${{ needs.image.outputs.build }}
     steps:
-      - uses: actions/checkout@v4
       - name: Log in to the GitHub Container Registry
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
@@ -277,10 +251,3 @@ jobs:
       - name: Move the :production tag to the image
         # The signed manifest itself, not a new index around it (see the staging job).
         run: docker buildx imagetools create --prefer-index=false --tag "$IMAGE:production" "$IMAGE_REFERENCE"
-      - name: Wait until production answers with it
-        id: await
-        env:
-          # The site, which asks its service (Bot Fight Mode challenges runners asking it).
-          WEB_WORKERS_DEV_URL: ${{ vars.WEB_WORKERS_DEV_URL }}
-          SITE_WITHOUT_STATUS_ROUTE: ${{ inputs.site_without_status_route }}
-        run: apps/dictionary-api/deploy/await-build.sh production "$BUILD" 600
