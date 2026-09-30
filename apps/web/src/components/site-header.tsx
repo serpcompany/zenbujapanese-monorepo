@@ -1,5 +1,7 @@
+import { SmartphoneIcon } from 'lucide-react'
 import Link from 'next/link'
 import { HeaderSearchField, HeaderSearchLink } from '@/components/header-search'
+import { SiteNav } from '@/components/site-nav'
 import { Button } from '@/components/ui/button'
 import { site } from '@/lib/site'
 
@@ -21,20 +23,12 @@ export function SiteHeader() {
         <div className="flex min-w-0 flex-1">
           <HeaderSearchField />
         </div>
-        <nav className="flex items-center gap-5 text-sm text-muted-foreground max-md:hidden">
-          <Link href="/dictionary/" className="hover:text-foreground">
-            Dictionary
-          </Link>
-          <Link href="/about/" className="hover:text-foreground">
-            About
-          </Link>
-          <Link href="/support/" className="hover:text-foreground">
-            Support
-          </Link>
-        </nav>
+        <SiteNav />
         <div className="flex shrink-0 items-center gap-1">
           <HeaderSearchLink />
           <Button size="lg" nativeButton={false} render={<Link href={site.appUrl} />}>
+            {/* A phone, as the toolbar menu's Open in App draws it (#511). */}
+            <SmartphoneIcon data-icon="inline-start" aria-hidden="true" />
             Get the app
           </Button>
         </div>
