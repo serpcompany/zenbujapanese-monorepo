@@ -36,5 +36,112 @@
       "trailingCommas": "none",
       "arrowParentheses": "asNeeded"
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/app.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "./artifact",
+                      "./kuromoji",
+                      "./sudachi",
+                      "./load",
+                      "./pool",
+                      "./worker",
+                      "./server",
+                      "./config",
+                      "node:sqlite",
+                      "node:worker_threads",
+                      "node:fs"
+                    ],
+                    "message": "src/app.ts is the HTTP layer: it answers from the DictionaryService interface (src/service.ts) that src/server.ts hands it, and reads nothing itself (docs/agents/dictionary-api.md, Code layout). Put reading code behind the service, in src/load.ts or a reader."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/artifact.ts",
+        "src/kuromoji.ts",
+        "src/sudachi.ts",
+        "src/config.ts",
+        "src/log.ts",
+        "src/service.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "./app",
+                      "./server",
+                      "./pool",
+                      "./worker",
+                      "./load",
+                      "hono",
+                      "hono/**",
+                      "@hono/**"
+                    ],
+                    "message": "The readers (src/artifact.ts, src/kuromoji.ts, src/sudachi.ts) and the shared modules (src/config.ts, src/log.ts, src/service.ts) are the bottom layer: the worker threads and the HTTP layer build on them, so they import neither (docs/agents/dictionary-api.md, Code layout)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/load.ts", "src/worker.ts", "src/pool.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./app", "./server", "hono", "hono/**", "@hono/**"],
+                    "message": "src/load.ts, src/worker.ts, and src/pool.ts run the dictionary in worker threads and know nothing of HTTP: src/app.ts is the HTTP layer, and src/server.ts wires the two together (docs/agents/dictionary-api.md, Code layout)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/**", "!src/log.ts", "!**/*.test.ts", "!**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "console": "The service logs JSON lines through log() in src/log.ts (a level, a message naming the event, and fields), which the server's journal and Docker keep; call it instead of console (docs/agents/dictionary-api.md, Code layout)."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

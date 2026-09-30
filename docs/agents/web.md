@@ -81,6 +81,11 @@ fixtures; the one other caller is `src/lib/dictionary/retired.ts`, which `worker
 Next.js. The rendered-page gate's `src/components/dictionary/gate.ts` is test tooling and calls it
 directly.
 
+The site logs JSON lines through `log()` in `apps/web/src/lib/log.ts`: a level, a message that
+names the event (`dictionary_service_unreachable`), and fields. Workers Logs keep them. Nothing
+else calls `console`, which Biome's `noRestrictedGlobals` enforces outside tests, so every line an
+agent reads there has the same shape.
+
 ## Dictionary
 
 Every search, word, kanji, example, sitemap, and retired entry comes from the dictionary service,

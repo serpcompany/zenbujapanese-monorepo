@@ -9,6 +9,7 @@ const service = (health: () => Promise<ServiceHealth>) => ({ health }) as unknow
 
 describe('GET /dictionary/service.json', () => {
   afterEach(() => {
+    vi.restoreAllMocks()
     vi.clearAllMocks()
   })
 
@@ -31,9 +32,16 @@ describe('GET /dictionary/service.json', () => {
     vi.mocked(dictionaryService).mockResolvedValue(
       service(async () => ({ status: 403, build: null, mitigated: 'challenge' }))
     )
+    const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
     const response = await GET()
     expect(response.status).toBe(502)
     expect(await response.json()).toMatchObject({ status: 403, mitigated: 'challenge' })
+    expect(JSON.parse(logged.mock.calls[0][0] as string)).toMatchObject({
+      level: 'warn',
+      message: 'dictionary_service_unhealthy',
+      status: 403,
+      mitigated: 'challenge'
+    })
   })
 
   test('answers 502 when the service is unreachable, with the kind of failure but not its message', async () => {
@@ -42,11 +50,17 @@ describe('GET /dictionary/service.json', () => {
         throw new TypeError('fetch failed: connect ECONNREFUSED 10.0.0.5:8788')
       })
     )
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
     const response = await GET()
     expect(response.status).toBe(502)
     const body = await response.json()
     expect(body).toEqual({ status: 0, build: null, error: 'TypeError' })
     expect(JSON.stringify(body)).not.toContain('10.0.0.5')
+    expect(JSON.parse(logged.mock.calls[0][0] as string)).toMatchObject({
+      level: 'error',
+      message: 'dictionary_service_unreachable',
+      error: 'fetch failed: connect ECONNREFUSED 10.0.0.5:8788'
+    })
   })
 
   test('is not found where the site reads no service', async () => {

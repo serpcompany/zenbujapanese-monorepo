@@ -179,6 +179,23 @@
           }
         }
       }
+    },
+    {
+      "includes": ["src/**", "worker.ts", "!src/lib/log.ts", "!**/*.test.ts", "!**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "console": "The site logs JSON lines through log() in src/lib/log.ts (a level, a message naming the event, and fields), which Workers Logs keep; call it instead of console (docs/agents/web.md, Code layout)."
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "assist": {

@@ -130,6 +130,26 @@ full. Grapheme counts and string comparisons take exact
 fast paths (`packages/dictionary-core/src/detail/text.ts`, `search/query.ts`); what remains is
 the app's SQL.
 
+## Code layout
+
+`apps/dictionary-api/src` has three layers, and imports point down only. Biome's
+`noRestrictedImports` enforces each rule (`apps/dictionary-api/biome.json`), with a message that
+says where the code belongs; tests may import anything.
+
+- The readers (`src/artifact.ts`, `src/kuromoji.ts`, `src/sudachi.ts`) and the shared modules
+  (`src/config.ts`, `src/log.ts`, `src/service.ts`, the `DictionaryService` interface) are the
+  bottom layer. They import neither of the others, nor Hono.
+- The worker layer (`src/load.ts`, `src/worker.ts`, `src/pool.ts`) runs the dictionary in worker
+  threads, and knows nothing of HTTP.
+- The HTTP layer, `src/app.ts`, answers from the `DictionaryService` that `src/server.ts` hands it,
+  and reads nothing itself: no reader, no worker, no SQLite, no file.
+
+`src/server.ts` wires the three together and is imported by nothing. The service logs JSON lines
+through `log()` in `src/log.ts` (a level, a message naming the event, and fields), which the
+server's journal and Docker keep; nothing else calls `console`, which Biome's
+`noRestrictedGlobals` enforces outside tests. The scripts in `apps/dictionary-api/scripts/` print
+progress to a person, so they may.
+
 ## Check it
 
 ```sh
