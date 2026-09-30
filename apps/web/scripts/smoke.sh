@@ -51,7 +51,7 @@ expect_redirect() {
   if [ "$got" = "308 $base$want" ]; then pass "308 $path -> $want"; else fail "$path gave '$got' (want 308 -> $want)"; fi
 }
 
-for path in / /support/ /legal/privacy/ /sitemap-index.xml /sitemaps/pages.xml /robots.txt; do
+for path in / /support/ /legal/privacy/ /sitemaps/pages.xml /robots.txt; do
   expect "$path" 200
 done
 # SERP trailing-slash standard: pages end in a slash, files never do. The other form redirects.
@@ -59,14 +59,8 @@ expect_redirect /support /support/
 expect_redirect /robots.txt/ /robots.txt
 expect_redirect /sitemaps/pages.xml/ /sitemaps/pages.xml
 
-# Sitemaps list only canonical URLs: child sitemaps are unslashed files, pages end in a slash.
-index_lists_files() {
-  local locs
-  locs="$(body /sitemap-index.xml | grep -oE '<loc>[^<]+</loc>' || true)"
-  [ -n "$locs" ] && ! grep -vqE '\.xml</loc>$' <<<"$locs"
-}
-eventually 'sitemap index lists unslashed .xml files' 'sitemap index has a non-canonical URL' \
-  index_lists_files
+# Sitemaps list only canonical URLs: pages end in a slash, and child sitemaps (checked with the
+# dictionary below, since the sitemap index reads the dictionary service) are unslashed files.
 pages_list_pages() {
   local locs
   locs="$(body /sitemaps/pages.xml | grep -oE '<loc>[^<]+</loc>' || true)"
@@ -395,6 +389,13 @@ for index in /sitemap-index.xml /sitemap.xml; do
   eventually "$index lists the dictionary, kanji, and conjugations sitemaps" \
     "$index is missing the dictionary, kanji, or conjugations sitemap" lists_release_sitemaps
 done
+index_lists_files() {
+  local locs
+  locs="$(body /sitemap-index.xml | grep -oE '<loc>[^<]+</loc>' || true)"
+  [ -n "$locs" ] && ! grep -vqE '\.xml</loc>$' <<<"$locs"
+}
+eventually 'sitemap index lists unslashed .xml files' 'sitemap index has a non-canonical URL' \
+  index_lists_files
 # A word sitemap holds 1 to 50,000 canonical word URLs, percent-encoded (ASCII only).
 expect /sitemaps/dictionary/1.xml 200
 word_count=0
