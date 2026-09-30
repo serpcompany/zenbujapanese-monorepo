@@ -61,7 +61,12 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 
 | Module | Ports |
 | --- | --- |
-| `search/search.ts` | The retrieval in `LookupClient.swift` and the result composition in `DictionaryEntry.swift`. Results come back in dictionary order, before the frequency re-sort, as the suite pins them (ADR 0006). |
+| `search/search.ts` | `searchUncached`, `searchOnce`, and `japaneseDeinflectedSources` in `LookupClient.swift`: the order in which a query tries its searches, from the reading refinement through deinflection to the analyzed segments. Results come back in dictionary order, before the frequency re-sort, as the suite pins them (ADR 0006). |
+| `search/database.ts` | `SearchFormKind`, `decodeEntry`, and `priorityProfile` in `LookupClient.swift`, with the entry columns its candidate queries select. `withParametersTruncatedAtNul` reads parameters as the app binds them ([Matching the Swift](#matching-the-swift), Bound text). |
+| `search/japanese.ts` | `rankedJapanese` in `LookupClient.swift`, with `japaneseCandidateSQL` and `exactJapaneseCandidateSQL`. |
+| `search/english.ts` | `rankedEnglish`, `glossEvidence`, `romajiEvidence`, `glossRelation`, `glossEvidencePrecedes`, `glossTokenPattern`, and `hasSearchTerms` in `LookupClient.swift`, with `asciiCandidateSQL` and `exactASCIICandidateSQL`. |
+| `search/ranked-entries.ts` | `RankedDictionaryEntry` and `deduplicated` in `LookupClient.swift`. |
+| `search/composition.ts` | `LookupSearchResults` (`composing`, and `empty` as `noResults`) and `LookupSearchResultItem` in `DictionaryEntry.swift`, and `resultItems` in `LookupClient.swift`. |
 | `search/query.ts` | `SearchQuery.swift` |
 | `search/rank.ts` | `DictionaryRanking.swift` |
 | `search/deinflect.ts` | `JapaneseDeinflection.swift` |
@@ -70,7 +75,8 @@ the app-recorded suites (`apps/ios/LanguageData/Conformance/`) check the port ag
 | `results/results.ts` | `SearchResultsView` in `SearchView.swift` (`orderedItems` is `SearchResultFrequencyOrdering.ordered`, `primaryItem` is `LookupSearchResults.primaryEntry(for:)`), with `FrequencyPack.swift`. |
 | `detail/word.ts` | `WordDetailView.swift` and `DictionaryEntry.swift` |
 | `detail/kanji.ts` | `KanjiDetailView.swift`, with its words from `entries(containingKanji:)` in `LookupClient.swift` and its elements from `KanjiElementLookupClient.swift`. |
-| `detail/conjugation.ts` | `JapaneseConjugator` in `JapaneseConjugationClient.swift`, and what `ConjugationsView.swift` shows for it; the suite's `opensConjugations` and `conjugations` check it. |
+| `detail/conjugation-table.ts` | `JapaneseConjugator`, `ConjugationTable`, `ConjugationMode`, and `ConjugatedForm` in `JapaneseConjugationClient.swift`. |
+| `detail/conjugation.ts` | What `ConjugationsView.swift` shows for a `detail/conjugation-table.ts` table: `ConjugatedForm.Kind.presentation`, `sharedSpellings(of:in:)`, and `rowShowsFurigana`. The suite's `opensConjugations` and `conjugations` check both modules. |
 | `detail/frequency.ts` | `FrequencyTier`, `FrequencyPresentationModel`, and `SearchFrequencyRankPresentationModel` in `FrequencyPack.swift`, and `FrequencyDisclosurePresentation` in `WordDetailView.swift`. |
 | `detail/pitch.ts` | `String.morae` and `PitchAccent.levels` in `DictionaryEntry.swift`, and `PitchContourLayout` in `WordDetailView.swift`. |
 | `detail/ruby.ts` | `JapaneseRubyAnnotation` in `JapaneseTextAnalysisClient.swift`, which `JapaneseRubyText.swift` draws. |

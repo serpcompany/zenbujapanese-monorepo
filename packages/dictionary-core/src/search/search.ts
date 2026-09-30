@@ -1,9 +1,18 @@
-import { graphemeCount } from '../detail/text'
+import {
+  composing,
+  leadingExactFormCount,
+  noResults,
+  resultItems,
+  type SearchResultItem,
+  type SearchResults,
+  searchResultLimit
+} from './composition'
+import { type SearchDatabase, withParametersTruncatedAtNul } from './database'
 import { acceptsPartsOfSpeech, deinflect } from './deinflect'
-import { ftsPhrase, ftsPrefix } from './fts'
+import { rankedEnglish } from './english'
+import { hasFormContaining, rankedJapanese, rankedJapaneseForms } from './japanese'
 import { lookupSegments, type MorphologyAnalyzer, type MorphologyWord } from './morphology'
 import {
-  compareStrings,
   isASCII,
   isJapaneseOnly,
   isMixedScript,
@@ -12,28 +21,16 @@ import {
   normalizeQuery,
   romajiDeinflectedCandidates
 } from './query'
-import {
-  compareEnglishRanks,
-  compareJapaneseRanks,
-  comparePresentationRanks,
-  compareProfiles,
-  type EnglishRank,
-  EvidenceLane,
-  FormRelation,
-  GlossRelation,
-  isMarked,
-  type JapaneseRank,
-  type PriorityProfile,
-  type Rank,
-  RomajiRelation,
-  sameLexicalGroup
-} from './rank'
+import { sameLexicalGroup } from './rank'
+import type { RankedEntry } from './ranked-entries'
 
+export type { SearchResultItem, SearchResults } from './composition'
+export { searchResultLimit } from './composition'
+export type { EntryRow, SearchDatabase, SearchEntry } from './database'
+export type { JapaneseRow } from './japanese'
+export { rankJapanese } from './japanese'
 export type { MorphologyAnalyzer, MorphologyWord } from './morphology'
-
-export interface SearchDatabase {
-  all<Row>(sql: string, params: readonly (string | number)[]): Promise<Row[]>
-}
+export type { RankedEntry } from './ranked-entries'
 
 export interface SearchCapabilities {
   morphology?: MorphologyAnalyzer
@@ -47,309 +44,24 @@ export function searchFeatures(capabilities: SearchCapabilities): SearchFeatures
   return { sentenceSearch: capabilities.morphology !== undefined }
 }
 
-export interface SearchEntry {
-  id: string
-  sourceRecordId: number
-  headword: string
-  reading: string
-  summary: string
-  partsOfSpeech: string[]
-}
-
-export interface SearchResultItem {
-  entry: SearchEntry
-  sourceOrder: number
-  matchRank: Rank
-  fallbackOrder: number
-  matchedSummary: string | null
-}
-
-export interface SearchResults {
-  items: SearchResultItem[]
-  leadingLexicalEntryCount: number
-  presentation: 'ranked' | 'discoveredWords'
-  resolution: 'direct' | 'deinflected' | 'analyzed'
-  readingRefinement: string | null
-  usesPrimaryEntryExamples: boolean
-  hasExactOrPrefixMatch: boolean
-}
-
-export const searchResultLimit = 60
-const resultLimit = searchResultLimit
-const maximumFormsPerQuery = 100
-const FormKind = { written: 0, reading: 1, romaji: 2 } as const
-
-function truncatedAtNul(param: string | number): string | number {
-  return typeof param === 'string' ? param.split('\0', 1)[0] : param
-}
-
-function noResults(): SearchResults {
-  return {
-    items: [],
-    leadingLexicalEntryCount: 0,
-    presentation: 'ranked',
-    resolution: 'direct',
-    readingRefinement: null,
-    usesPrimaryEntryExamples: false,
-    hasExactOrPrefixMatch: false
-  }
-}
-
-export interface RankedEntry {
-  entry: SearchEntry
-  rank: Rank
-  presentationRank: Rank
-  hasExactOrPrefixMatch: boolean
-  semanticFingerprint: string
-  matchedSummary: string | null
-}
-
-export interface EntryRow {
-  id: string
-  source_record_id: number
-  headword: string
-  reading: string
-  summary: string
-  parts_of_speech_json: string
-  semantic_fingerprint: string
-  primary_mask: number | null
-  secondary_mask: number | null
-  news_frequency_band: number | null
-}
-
-export interface JapaneseRow extends EntryRow {
-  form: string
-  kind: number
-  sense_count: number
-}
-
-const entryColumns = `lower(hex(e.id)) AS id, e.source_record_id, e.headword, e.reading,
-  e.summary, e.parts_of_speech_json, lower(hex(e.semantic_fingerprint)) AS semantic_fingerprint`
-
-const displayedFormProfileJoin = `LEFT JOIN form_priority_profiles p
-  ON p.entry_id = e.id AND p.form = e.headword
-  AND p.kind = CASE WHEN e.headword = e.reading THEN ${FormKind.reading} ELSE ${FormKind.written} END`
-
-const readingRestrictionFilter = `(
-  f.kind != ${FormKind.reading}
-  OR NOT EXISTS (
-    SELECT 1 FROM reading_form_restrictions r WHERE r.entry_id = f.entry_id AND r.reading = f.form
-  )
-  OR EXISTS (
-    SELECT 1 FROM reading_form_restrictions r
-    WHERE r.entry_id = f.entry_id AND r.reading = f.form AND r.written_form = e.headword
-  )
-)`
-
-function containsFilter(query: string): { sql: string; params: string[] } {
-  return { sql: 'instr(f.form, ?) > 0', params: [query] }
-}
-
-function decodeEntry(row: EntryRow): SearchEntry {
-  return {
-    id: row.id,
-    sourceRecordId: row.source_record_id,
-    headword: row.headword,
-    reading: row.reading,
-    summary: row.summary,
-    partsOfSpeech: JSON.parse(row.parts_of_speech_json)
-  }
-}
-
-function profile(row: EntryRow): PriorityProfile {
-  return {
-    primaryMask: row.primary_mask ?? 0,
-    secondaryMask: row.secondary_mask ?? 0,
-    newsFrequencyBand: row.news_frequency_band
-  }
-}
-
-const hasSearchTerms = (value: string) => /[\p{L}\p{M}\p{N}]/u.test(value)
-const escapeRegExp = (value: string) => value.replace(/[\\^$.*+?()[\]{}|/]/g, '\\$&')
-
-function glossRelation(query: string, gloss: string, token: RegExp): number | null {
-  const value = normalizeQuery(gloss)
-  if (value === query) return GlossRelation.exactGloss
-  if (value.startsWith(`${query} (`)) return GlossRelation.qualifiedGloss
-  if (value === `to ${query}`) return GlossRelation.exactInfinitive
-  if (value.startsWith(`to ${query} (`)) return GlossRelation.qualifiedInfinitive
-  return token.test(value) ? GlossRelation.glossToken : null
-}
-
-interface GlossEvidence {
-  relation: number
-  senseOrder: number
-  glossOrder: number
-  meaning: string
-}
-
-function glossEvidencePrecedes(lhs: GlossEvidence, rhs: GlossEvidence): number {
-  const lane = (evidence: GlossEvidence) => (evidence.relation === GlossRelation.glossToken ? 1 : 0)
-  return (
-    lane(lhs) - lane(rhs) ||
-    lhs.senseOrder - rhs.senseOrder ||
-    lhs.relation - rhs.relation ||
-    lhs.glossOrder - rhs.glossOrder
-  )
-}
-
-function minimum<Value>(values: Value[], compare: (lhs: Value, rhs: Value) => number) {
-  let best: Value | undefined
-  for (const value of values) {
-    if (best === undefined || compare(value, best) < 0) best = value
-  }
-  return best
-}
-
-function deduplicated(ranked: RankedEntry[]): RankedEntry[] {
-  const groups = new Map<string, RankedEntry[]>()
-  for (const entry of ranked) {
-    const group = groups.get(entry.semanticFingerprint)
-    if (group) group.push(entry)
-    else groups.set(entry.semanticFingerprint, [entry])
-  }
-  return [...groups.values()].map(group => {
-    const leading = group[0]
-    const strongest = minimum(group, (lhs, rhs) =>
-      comparePresentationRanks(lhs.presentationRank, rhs.presentationRank)
-    )
-    const canonical =
-      minimum(group, (lhs, rhs) => compareStrings(lhs.entry.id, rhs.entry.id)) ?? leading
-    return {
-      entry: {
-        ...leading.entry,
-        id: canonical.entry.id,
-        sourceRecordId: canonical.entry.sourceRecordId
-      },
-      rank: leading.rank,
-      hasExactOrPrefixMatch: group.some(ranked => ranked.hasExactOrPrefixMatch),
-      semanticFingerprint: leading.semanticFingerprint,
-      presentationRank: strongest?.presentationRank ?? leading.presentationRank,
-      matchedSummary: strongest?.matchedSummary ?? null
-    }
-  })
-}
-
-export function rankJapanese(query: string, rows: JapaneseRow[]): RankedEntry[] {
-  const byEntry = new Map<
-    string,
-    {
-      entry: SearchEntry
-      fingerprint: string
-      senseCount: number
-      evidence: { relation: number; form: string; profile: PriorityProfile }[]
-    }
-  >()
-  for (const row of rows) {
-    const exact = row.form === query
-    const prefix = row.form.startsWith(query)
-    const relation = (row.kind === FormKind.written ? 0 : 1) + (exact ? 0 : prefix ? 2 : 4)
-    const current = byEntry.get(row.id) ?? {
-      entry: decodeEntry(row),
-      fingerprint: row.semantic_fingerprint,
-      senseCount: row.sense_count,
-      evidence: []
-    }
-    current.evidence.push({ relation, form: row.form, profile: profile(row) })
-    byEntry.set(row.id, current)
-  }
-
-  const ranked: RankedEntry[] = []
-  for (const { entry, fingerprint, senseCount, evidence } of byEntry.values()) {
-    const selected = minimum(evidence, (lhs, rhs) => {
-      if (lhs.relation !== rhs.relation) return lhs.relation - rhs.relation
-      const profiles = compareProfiles(lhs.profile, rhs.profile)
-      return profiles || compareStrings(lhs.form, rhs.form)
-    })
-    if (!selected) continue
-    const rank: JapaneseRank = {
-      kind: 'japanese',
-      relation: selected.relation,
-      priorityProfile: selected.profile,
-      senseBreadthRank: -senseCount,
-      headwordLength: graphemeCount(entry.headword),
-      semanticFingerprint: fingerprint
-    }
-    ranked.push({
-      entry,
-      rank,
-      presentationRank: rank,
-      hasExactOrPrefixMatch: selected.relation < FormRelation.writtenContains,
-      semanticFingerprint: fingerprint,
-      matchedSummary: null
-    })
-  }
-  ranked.sort((lhs, rhs) =>
-    compareJapaneseRanks(lhs.rank as JapaneseRank, rhs.rank as JapaneseRank)
-  )
-  return deduplicated(ranked)
-}
-
-function resultItems(ranked: RankedEntry[]): SearchResultItem[] {
-  return ranked.map((entry, fallbackOrder) => ({
-    entry: entry.entry,
-    sourceOrder: 0,
-    matchRank: entry.presentationRank,
-    fallbackOrder,
-    matchedSummary: entry.matchedSummary
-  }))
-}
-
-function leadingExactFormCount(items: readonly SearchResultItem[]): number {
-  let count = 0
-  for (const item of items) {
-    if (item.matchRank.kind !== 'japanese') break
-    if (item.matchRank.relation > FormRelation.readingExact) break
-    count++
-  }
-  return count
-}
-
-function composing(
-  sources: SearchResultItem[][],
-  options: {
-    leadingLexicalEntryCount: number
-    usesPrimaryEntryExamples: boolean
-    hasExactOrPrefixMatch?: boolean
-    resolution?: SearchResults['resolution']
-    limit?: number
-  }
-): SearchResults {
-  const limit = options.limit ?? resultLimit
-  const items: SearchResultItem[] = []
-  const seen = new Set<string>()
-  compose: for (const [sourceOrder, source] of sources.entries()) {
-    for (const item of source) {
-      if (seen.has(item.entry.id)) continue
-      seen.add(item.entry.id)
-      items.push({ ...item, sourceOrder, fallbackOrder: items.length })
-      if (items.length === limit) break compose
-    }
-  }
-  return {
-    ...noResults(),
-    items,
-    leadingLexicalEntryCount: Math.min(options.leadingLexicalEntryCount, items.length),
-    resolution: options.resolution ?? 'direct',
-    usesPrimaryEntryExamples: options.usesPrimaryEntryExamples,
-    hasExactOrPrefixMatch: options.hasExactOrPrefixMatch ?? true
-  }
-}
-
 export class DictionarySearch {
   readonly features: SearchFeatures
+  private readonly db: SearchDatabase
 
   constructor(
-    private readonly db: SearchDatabase,
+    db: SearchDatabase,
     private readonly capabilities: SearchCapabilities = {}
   ) {
+    this.db = withParametersTruncatedAtNul(db)
     this.features = searchFeatures(capabilities)
   }
 
   async search(rawQuery: string): Promise<SearchResults> {
     const query = normalizeQuery(rawQuery)
     const exactFormEntry =
-      isASCII(query) && query !== '' ? (await this.rankedEnglish(query, true))[0]?.entry : undefined
+      isASCII(query) && query !== ''
+        ? (await rankedEnglish(this.db, query, true))[0]?.entry
+        : undefined
     if (exactFormEntry) {
       const refinement = normalizeQuery(exactFormEntry.reading)
       const [hasRefinedResults, literalResults] = await Promise.all([
@@ -447,15 +159,11 @@ export class DictionarySearch {
     return noResults()
   }
 
-  private all<Row>(sql: string, params: readonly (string | number)[]): Promise<Row[]> {
-    return this.db.all<Row>(sql, params.map(truncatedAtNul))
-  }
-
   private async searchOnce(query: string): Promise<SearchResults> {
     if (query === '') return noResults()
     const ranked = isASCII(query)
-      ? await this.rankedEnglish(query)
-      : await this.rankedJapanese(query)
+      ? await rankedEnglish(this.db, query)
+      : await rankedJapanese(this.db, query)
     if (ranked.length === 0) return noResults()
     let leadingLexicalEntryCount = 0
     while (
@@ -466,8 +174,8 @@ export class DictionarySearch {
     }
     return {
       ...noResults(),
-      items: resultItems(ranked.slice(0, resultLimit)),
-      leadingLexicalEntryCount: Math.min(leadingLexicalEntryCount, resultLimit),
+      items: resultItems(ranked.slice(0, searchResultLimit)),
+      leadingLexicalEntryCount: Math.min(leadingLexicalEntryCount, searchResultLimit),
       hasExactOrPrefixMatch: ranked.some(entry => entry.hasExactOrPrefixMatch)
     }
   }
@@ -475,16 +183,7 @@ export class DictionarySearch {
   private async hasResults(query: string): Promise<boolean> {
     if (query === '') return false
     if (isASCII(query)) return (await this.searchOnce(query)).items.length > 0
-    const filter = containsFilter(query)
-    const rows = await this.all(
-      `SELECT 1 FROM forms f JOIN entries e ON e.id = f.entry_id
-       WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
-         AND ${filter.sql}
-         AND ${readingRestrictionFilter}
-       LIMIT 1`,
-      filter.params
-    )
-    return rows.length > 0
+    return hasFormContaining(this.db, query)
   }
 
   private async analyzedItems(query: string): Promise<SearchResultItem[]> {
@@ -509,7 +208,8 @@ export class DictionarySearch {
       ...candidate,
       term: normalizeQuery(candidate.term)
     }))
-    const matchesByTerm = await this.rankedJapaneseForms(
+    const matchesByTerm = await rankedJapaneseForms(
+      this.db,
       candidates.map(candidate => candidate.term)
     )
     const sourcesByDepth = new Map<number, RankedEntry[]>()
@@ -531,230 +231,5 @@ export class DictionarySearch {
     return [...sourcesByDepth.keys()]
       .sort((lhs, rhs) => lhs - rhs)
       .map(depth => resultItems(sourcesByDepth.get(depth) ?? []))
-  }
-
-  private async rankedJapanese(query: string): Promise<RankedEntry[]> {
-    const filter = containsFilter(query)
-    return rankJapanese(query, await this.japaneseRows(filter.sql, filter.params))
-  }
-
-  private async rankedJapaneseForms(terms: string[]): Promise<Map<string, RankedEntry[]>> {
-    const distinct = [...new Set(terms)].filter(term => term !== '')
-    const batches: string[][] = []
-    for (let start = 0; start < distinct.length; start += maximumFormsPerQuery) {
-      batches.push(distinct.slice(start, start + maximumFormsPerQuery))
-    }
-    const rowsByTerm = new Map<string, JapaneseRow[]>()
-    const rows = await Promise.all(
-      batches.map(batch =>
-        this.japaneseRows(`f.form IN (${batch.map(() => '?').join(', ')})`, batch)
-      )
-    )
-    for (const row of rows.flat()) {
-      const termRows = rowsByTerm.get(row.form) ?? []
-      termRows.push(row)
-      rowsByTerm.set(row.form, termRows)
-    }
-    return new Map(distinct.map(term => [term, rankJapanese(term, rowsByTerm.get(term) ?? [])]))
-  }
-
-  private japaneseRows(where: string, params: readonly string[]): Promise<JapaneseRow[]> {
-    return this.all<JapaneseRow>(
-      `SELECT ${entryColumns}, f.form, f.kind,
-         (SELECT count(*) FROM canonical_senses s WHERE s.entry_id = e.id) AS sense_count,
-         p.primary_mask, p.secondary_mask, p.news_frequency_band
-       FROM forms f
-       JOIN entries e ON e.id = f.entry_id
-       LEFT JOIN form_priority_profiles p
-         ON p.entry_id = f.entry_id AND p.form = f.form AND p.kind = f.kind
-       WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
-         AND ${where}
-         AND ${readingRestrictionFilter}`,
-      params
-    )
-  }
-
-  private async rankedEnglish(query: string, exactFormOnly = false): Promise<RankedEntry[]> {
-    const evidence = exactFormOnly
-      ? await this.exactRomajiEvidence(query)
-      : await this.englishEvidence(query)
-    if (!evidence) return []
-    const { rows, glossMatches, romajiMatches } = evidence
-
-    const ranked: RankedEntry[] = []
-    for (const row of rows) {
-      const entry = decodeEntry(row)
-      const displayedFormPriority = profile(row)
-      const gloss = glossMatches.get(entry.id) ?? []
-      const romaji = romajiMatches.get(entry.id) ?? []
-      const selectedGloss = minimum(gloss, glossEvidencePrecedes)
-      const shared = {
-        priorityPresenceRank: isMarked(displayedFormPriority) ? 0 : 1,
-        priorityProfile: displayedFormPriority,
-        headwordLength: graphemeCount(entry.headword),
-        semanticFingerprint: row.semantic_fingerprint
-      }
-      if (!selectedGloss) {
-        const romajiRelation = romaji.length > 0 ? Math.min(...romaji) : undefined
-        if (romajiRelation === undefined) continue
-        const rank: EnglishRank = {
-          kind: 'english',
-          lane: EvidenceLane.romajiOnly,
-          corroborationRank: 0,
-          romajiSpecificityRank: romajiRelation,
-          senseOrder: 0,
-          relation: GlossRelation.glossToken,
-          glossOrder: 0,
-          ...shared
-        }
-        ranked.push({
-          entry,
-          rank,
-          presentationRank: rank,
-          hasExactOrPrefixMatch: romajiRelation !== RomajiRelation.contains,
-          semanticFingerprint: row.semantic_fingerprint,
-          matchedSummary: null
-        })
-        continue
-      }
-      const lane =
-        selectedGloss.relation === GlossRelation.glossToken
-          ? EvidenceLane.tokenGloss
-          : EvidenceLane.strongGloss
-      const corroborated =
-        lane === EvidenceLane.strongGloss &&
-        romaji.some(
-          relation => relation === RomajiRelation.exact || relation === RomajiRelation.prefix
-        )
-      const rank: EnglishRank = {
-        kind: 'english',
-        lane,
-        corroborationRank: corroborated ? 0 : 1,
-        romajiSpecificityRank: 0,
-        senseOrder: selectedGloss.senseOrder,
-        relation: selectedGloss.relation,
-        glossOrder: selectedGloss.glossOrder,
-        ...shared
-      }
-      ranked.push({
-        entry,
-        rank,
-        presentationRank: rank,
-        hasExactOrPrefixMatch: lane === EvidenceLane.strongGloss || corroborated,
-        semanticFingerprint: row.semantic_fingerprint,
-        matchedSummary: selectedGloss.meaning
-      })
-    }
-    ranked.sort((lhs, rhs) => compareEnglishRanks(lhs.rank as EnglishRank, rhs.rank as EnglishRank))
-    return deduplicated(ranked)
-  }
-
-  private async exactRomajiEvidence(query: string) {
-    const rows = await this.all<EntryRow>(
-      `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
-       FROM forms f JOIN entries e ON e.id = f.entry_id ${displayedFormProfileJoin}
-       WHERE f.kind = ${FormKind.romaji} AND f.form = ?`,
-      [query]
-    )
-    return {
-      rows,
-      glossMatches: new Map<string, GlossEvidence[]>(),
-      romajiMatches: new Map<string, number[]>(rows.map(row => [row.id, [RomajiRelation.exact]]))
-    }
-  }
-
-  private async englishEvidence(query: string) {
-    if (!hasSearchTerms(query)) return null
-    const glossMatch = ftsPhrase(query)
-    const romajiMatch = ftsPrefix(query)
-    const [rows, glossMatches, romajiMatches] = await Promise.all([
-      this.all<EntryRow>(
-        `WITH candidates AS (
-           SELECT g.entry_id FROM dictionary_gloss_fts x JOIN gloss_atoms g ON g.rowid = x.docid
-           WHERE dictionary_gloss_fts MATCH ?
-           UNION
-           SELECT f.entry_id FROM dictionary_form_fts x JOIN forms f ON f.rowid = x.docid
-           WHERE dictionary_form_fts MATCH ? AND f.kind = ${FormKind.romaji}
-         )
-         SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
-         FROM candidates c JOIN entries e ON e.id = c.entry_id ${displayedFormProfileJoin}`,
-        [glossMatch, romajiMatch]
-      ),
-      this.glossEvidence(query, glossMatch),
-      this.romajiEvidence(query, romajiMatch)
-    ])
-    return { rows, glossMatches, romajiMatches }
-  }
-
-  private async glossEvidence(query: string, match: string): Promise<Map<string, GlossEvidence[]>> {
-    const rows = await this.all<{
-      entry_id: string
-      sense_order: number
-      gloss_order: number
-      text: string
-      headword: string
-      reading: string
-      written_forms: string
-      readings: string
-    }>(
-      `SELECT lower(hex(g.entry_id)) AS entry_id, g.sense_order, g.gloss_order, g.text,
-         e.headword, e.reading,
-         (SELECT json_group_array(r.form) FROM sense_form_restrictions r
-          WHERE r.entry_id = g.entry_id AND r.sense_order = g.sense_order
-            AND r.kind = ${FormKind.written}) AS written_forms,
-         (SELECT json_group_array(r.form) FROM sense_form_restrictions r
-          WHERE r.entry_id = g.entry_id AND r.sense_order = g.sense_order
-            AND r.kind = ${FormKind.reading}) AS readings
-       FROM dictionary_gloss_fts x
-       JOIN gloss_atoms g ON g.rowid = x.docid
-       JOIN canonical_senses s ON s.entry_id = g.entry_id AND s.sense_order = g.sense_order
-       JOIN entries e ON e.id = g.entry_id
-       WHERE dictionary_gloss_fts MATCH ?`,
-      [match]
-    )
-    const token = new RegExp(`(?:^|[^a-z])${escapeRegExp(query)}(?:$|[^a-z])`, 'u')
-    const result = new Map<string, GlossEvidence[]>()
-    for (const row of rows) {
-      const senseWrittenForms: string[] = JSON.parse(row.written_forms)
-      const senseReadings: string[] = JSON.parse(row.readings)
-      const appliesToShownForms =
-        (senseWrittenForms.length === 0 ||
-          senseWrittenForms.includes(normalizeQuery(row.headword))) &&
-        (senseReadings.length === 0 || senseReadings.includes(normalizeQuery(row.reading)))
-      if (!appliesToShownForms) continue
-      const relation = glossRelation(query, row.text, token)
-      if (relation === null) continue
-      const evidence = result.get(row.entry_id) ?? []
-      evidence.push({
-        relation,
-        senseOrder: row.sense_order,
-        glossOrder: row.gloss_order,
-        meaning: row.text
-      })
-      result.set(row.entry_id, evidence)
-    }
-    return result
-  }
-
-  private async romajiEvidence(query: string, match: string): Promise<Map<string, number[]>> {
-    const rows = await this.all<{ entry_id: string; form: string }>(
-      `SELECT lower(hex(f.entry_id)) AS entry_id, f.form
-       FROM dictionary_form_fts x JOIN forms f ON f.rowid = x.docid
-       WHERE dictionary_form_fts MATCH ? AND f.kind = ${FormKind.romaji}`,
-      [match]
-    )
-    const result = new Map<string, number[]>()
-    for (const row of rows) {
-      const relation =
-        row.form === query
-          ? RomajiRelation.exact
-          : row.form.startsWith(query)
-            ? RomajiRelation.prefix
-            : RomajiRelation.contains
-      const relations = result.get(row.entry_id) ?? []
-      if (!relations.includes(relation)) relations.push(relation)
-      result.set(row.entry_id, relations)
-    }
-    return result
   }
 }

@@ -206,7 +206,7 @@ and skips the check.
 | --- | --- | --- |
 | search | `LookupClient`, `SearchQuery`, `DictionaryRanking`, `JapaneseDeinflection`, `DictionaryEntry`, `JapaneseTextAnalysisClient` | Everything in `packages/dictionary-core/src/search/` |
 | examples | `ExampleSentenceClient`, `JapaneseTextAnalysisClient`, `JapaneseInflectionGrouping`, `KuromojiMorphologyClient`, `LinkedJapaneseText` (the conjugated form's highlight) | The `.ts` files in `packages/dictionary-core/src/examples/`; `example-retrieval.ts`, `example-search.ts`, `word-examples.ts`, `search-examples.ts`, and `lookup.ts` in `packages/dictionary-core/src/artifact/`; `apps/dictionary-api/src/kuromoji.ts` |
-| detail | `KanjiReadingSplitter`, `JapaneseRubyText` (the per-kanji furigana highlight), `WordDetailView` (`PitchContourLayout`, `FrequencyDisclosurePresentation`), `FrequencyPack`, `JapaneseConjugationClient`, `ConjugationsView` | `kanji-split.ts`, `pitch.ts`, `frequency.ts`, and `conjugation.ts` in `packages/dictionary-core/src/detail/` |
+| detail | `KanjiReadingSplitter`, `JapaneseRubyText` (the per-kanji furigana highlight), `WordDetailView` (`PitchContourLayout`, `FrequencyDisclosurePresentation`), `FrequencyPack`, `JapaneseConjugationClient`, `ConjugationsView` | `kanji-split.ts`, `pitch.ts`, `frequency.ts`, `conjugation.ts`, and `conjugation-table.ts` in `packages/dictionary-core/src/detail/` |
 
 Each pair is one `check` call in the workflow's script: the pair's name, a pattern for its Swift
 files, a pattern for its TypeScript files, and where the port is, which the error names. To change

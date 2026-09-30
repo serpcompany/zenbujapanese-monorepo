@@ -32,6 +32,7 @@ on:
       - packages/dictionary-core/src/detail/pitch.ts
       - packages/dictionary-core/src/detail/frequency.ts
       - packages/dictionary-core/src/detail/conjugation.ts
+      - packages/dictionary-core/src/detail/conjugation-table.ts
 
 permissions:
   contents: read
@@ -77,7 +78,7 @@ jobs:
             'packages/dictionary-core/src/examples/ and its artifact/ example files'
           check detail \
             "${swift_dir}(KanjiReadingSplitter|JapaneseRubyText|WordDetailView|FrequencyPack|JapaneseConjugationClient|ConjugationsView)\.swift$" \
-            '^packages/dictionary-core/src/detail/(kanji-split|pitch|frequency|conjugation)\.ts$' \
-            'packages/dictionary-core/src/detail/{kanji-split,pitch,frequency,conjugation}.ts'
+            '^packages/dictionary-core/src/detail/(kanji-split|pitch|frequency|conjugation|conjugation-table)\.ts$' \
+            'packages/dictionary-core/src/detail/{kanji-split,pitch,frequency,conjugation,conjugation-table}.ts'
           [ "$status" -eq 0 ] && echo "Search parity OK."
           exit "$status"
