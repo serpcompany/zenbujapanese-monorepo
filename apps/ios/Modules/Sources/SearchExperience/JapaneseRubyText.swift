@@ -2,7 +2,6 @@ import SwiftUI
 
 struct JapaneseRubyText: View {
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
-  /// The tapped kanji, as its piece and its position in that piece.
   @State private var selectedKanji: SelectedKanji?
 
   private struct SelectedKanji: Equatable {
@@ -13,9 +12,7 @@ struct JapaneseRubyText: View {
   private struct Piece: Identifiable {
     let id: String
     let segment: JapaneseRubySegment
-    /// Characters of `surface` before this piece.
     let offset: Int
-    /// This piece's position among the pieces.
     let index: Int
   }
 
@@ -23,15 +20,10 @@ struct JapaneseRubyText: View {
   let reading: String
   let baseFont: Font
   let rubyFont: Font
-  /// A trailing part of `surface` drawn in the accent color, such as the ending of a conjugation.
   let highlightedEnding: String
   let exposesAccessibility: Bool
   let displaysRomaji: Bool
-  /// Hides furigana here even when the Furigana preference is on, such as over a known word.
   let hidesFurigana: Bool
-  /// Tapping a kanji in a run such as 弱肉強食 colors it and its part of the reading (じゃく),
-  /// when the kanji's own readings split the run's reading one way. On everywhere except where
-  /// tapping the text already does something, such as a row that opens the word.
   let highlightsKanjiOnTap: Bool
 
   init(
@@ -107,16 +99,11 @@ struct JapaneseRubyText: View {
     }
   }
 
-  /// Each kanji's part of the piece's reading, when tapping kanji highlights them.
   private func kanjiSplit(_ piece: Piece) -> [String]? {
     guard highlightsKanjiOnTap else { return nil }
     return Self.kanjiReadings(piece.segment)
   }
 
-  /// Each kanji's part of a furigana segment's reading, which tapping that kanji highlights: nil
-  /// for a segment without furigana, a single kanji, or a run whose kanji readings don't split
-  /// its reading exactly one way. The word-detail conformance suite records it, so the website's
-  /// highlight is held to the app's (see also packages/dictionary-core/src/detail/kanji-split.ts).
   static func kanjiReadings(_ segment: JapaneseRubySegment) -> [String]? {
     guard let reading = segment.reading, segment.base.count > 1 else { return nil }
     return KanjiReadingSplitter.split(segment.base, reading: reading)
@@ -161,8 +148,6 @@ struct JapaneseRubyText: View {
     return text
   }
 
-  /// `text` starts `offset` characters into `surface`; its characters within the highlighted
-  /// ending take the accent color.
   private func highlighted(_ text: String, at offset: Int) -> AttributedString {
     var result = AttributedString(text)
     let highlightStart = surface.count - highlightedEnding.count

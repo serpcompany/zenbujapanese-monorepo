@@ -1,6 +1,3 @@
-// The website runs a TypeScript port of this entry retrieval (retrieveEntry,
-// retrieveIndexedEntry): packages/dictionary-core/src/examples/retrieval.ts.
-// Change both in the same PR and re-record the word-detail conformance suite (issue 464).
 import Foundation
 import SQLite3
 
@@ -343,8 +340,6 @@ private actor ExampleSentenceData {
     try validateBaseCorpus()
     let evidence = try entryEvidence(id: id)
     guard evidence.reading == reading else { throw invalid(.missingEntryEvidence) }
-    // A kana headword such as でも also occurs inside other words (いつでも, 何でも), so its
-    // examples come from sentences Tatoeba's word index links to the entry.
     if selectedForm == reading {
       return try retrieveIndexedEntry(id: id, selectedForm: selectedForm)
     }
@@ -455,8 +450,6 @@ private actor ExampleSentenceData {
     return result(matches: matches.sorted(by: ranksBefore))
   }
 
-  /// Attaches the bundled word index once. Returns false when there is no index, such as
-  /// for a test database, so kana headwords get no examples instead of substring matches.
   private func attachWordIndex() throws -> Bool {
     if wordIndexIsAttached { return true }
     guard let wordIndexURL else { return false }

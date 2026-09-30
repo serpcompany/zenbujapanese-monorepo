@@ -61,8 +61,6 @@ struct JapaneseMorphologyCandidate: Equatable, Sendable {
   let partOfSpeech: [String]
   let isOutOfVocabulary: Bool
   let children: [JapaneseMorphologyCandidate]
-  /// A word joined from a head and its inflection pieces by `JapaneseInflectionGrouping`,
-  /// such as 見なかった; its surface is not a dictionary form.
   var joinsInflection = false
 
 }

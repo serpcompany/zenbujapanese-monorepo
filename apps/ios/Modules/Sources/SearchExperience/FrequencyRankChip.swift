@@ -1,7 +1,5 @@
 import SwiftUI
 
-/// A dictionary name and its rank, such as "Netflix 449", marked with how common the rank is.
-/// At accessibility sizes the rank moves under the name instead of truncating it.
 struct FrequencyRankChip: View {
   let presentation: FrequencyPresentationModel
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -36,8 +34,6 @@ struct FrequencyRankChip: View {
   }
 }
 
-/// How common a rank is: a colored dot, or a star count such as "5★" when Differentiate Without
-/// Color is on. Draws nothing for a dictionary with no rank when color can't be used.
 struct FrequencyTierMarker: View {
   let tier: FrequencyTier?
   @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
@@ -58,7 +54,6 @@ struct FrequencyTierMarker: View {
   }
 }
 
-/// A "+N" chip counting enabled dictionaries whose chips are hidden to save space.
 struct FrequencyAdditionalRanksChip: View {
   let count: Int
   @ScaledMetric(relativeTo: .caption) private var horizontalPadding = 6.0
@@ -80,8 +75,6 @@ struct FrequencyAdditionalRanksChip: View {
 }
 
 extension FrequencyTier {
-  /// A traffic-light scale from green for the words to learn first to red for uncommon words,
-  /// with gray for rare ones. System colors adapt to dark mode and Increase Contrast.
   var color: Color {
     switch self {
     case .veryCommon: .green
@@ -93,7 +86,6 @@ extension FrequencyTier {
   }
 }
 
-/// Places chips left to right, wrapping to a new line when the row is full.
 struct FrequencyChipFlowLayout: Layout {
   var spacing: CGFloat = 6
 
@@ -127,8 +119,6 @@ struct FrequencyChipFlowLayout: Layout {
     var height: CGFloat = 0
   }
 
-  /// A chip wider than the whole row (large Dynamic Type sizes) is offered the row width so it
-  /// truncates instead of widening the layout past its container.
   private func size(of subview: LayoutSubview, maxWidth: CGFloat) -> CGSize {
     let ideal = subview.sizeThatFits(.unspecified)
     guard ideal.width > maxWidth else { return ideal }

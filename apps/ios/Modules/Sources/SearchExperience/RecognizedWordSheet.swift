@@ -6,13 +6,9 @@ struct RecognizedWordSheetRequest: Identifiable {
   let surface: String
   let entry: DictionaryEntry?
   let candidateEntries: [DictionaryEntry]
-  /// The image the word was found in, offered as the word's encounter media.
   let encounterMedia: EncounterMediaAttachment?
 }
 
-/// Which word the half-height word sheet shows. Tapping another word while the sheet is open
-/// swaps the word in the same sheet and returns it to half height: with `sheet(item:)` the new
-/// word dismissed and re-presented the sheet, which reopened at full height.
 @MainActor
 @Observable
 final class WordSheetPresentation {
@@ -24,14 +20,11 @@ final class WordSheetPresentation {
       }
     }
   }
-  /// The word the sheet shows. It keeps the last word after `request` clears, so the sheet
-  /// doesn't go blank while it animates away.
   private(set) var displayedRequest: RecognizedWordSheetRequest?
   var detent: PresentationDetent = .medium
 
   var isPresented: Bool { request != nil }
 
-  /// For `sheet(isPresented:)`, which stays presented while `request` changes.
   var isPresentedBinding: Binding<Bool> {
     Binding(
       get: { self.request != nil },
@@ -49,8 +42,6 @@ struct RecognizedWordSheet<EntryContent: View>: View {
   @State private var candidateRanks: [LanguageReferenceID: FrequencyRanks] = [:]
 
   let request: RecognizedWordSheetRequest
-  /// Half or full height. The sheet opens at half height and leaves the screen behind usable, so
-  /// a playing video or the tapped word in an image stays visible and another word can be tapped.
   @Binding var detent: PresentationDetent
   let openFullEntry: (DictionaryEntry) -> Void
   private let entryContent: (DictionaryEntry, EncounterMediaAttachment?) -> EntryContent
@@ -71,7 +62,6 @@ struct RecognizedWordSheet<EntryContent: View>: View {
     NavigationStack {
       content
     }
-    // A new word starts a fresh stack, so a candidate chosen for the last word doesn't linger.
     .id(request.id)
     .presentationDetents([.medium, .large], selection: $detent)
     .presentationBackgroundInteraction(.enabled(upThrough: .medium))
@@ -101,7 +91,6 @@ struct RecognizedWordSheet<EntryContent: View>: View {
     }
   }
 
-  /// The possible entries, shown with the same rows as Search results.
   private var candidateList: some View {
     List(request.candidateEntries.enumerated(), id: \.element.id) { index, candidate in
       ResultRow(
@@ -136,11 +125,8 @@ struct RecognizedWordSheet<EntryContent: View>: View {
 
   private func presentedEntry(_ entry: DictionaryEntry) -> some View {
     entryContent(entry, request.encounterMedia)
-      // The headword card right below already names the word.
       .toolbar(removing: .title)
       .toolbar {
-        // Next to the word's title, so it reads as "open this word".
-        // Close first, then Open Full Entry beside it; the word's own actions sit trailing.
         ToolbarItemGroup(placement: .topBarLeading) {
           closeButton
           Button("Open Full Entry", systemImage: "arrow.up.left.and.arrow.down.right") {

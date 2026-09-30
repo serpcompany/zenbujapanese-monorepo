@@ -50,7 +50,6 @@ final class WordListsTests {
     let drop = try #require(lists.createList(named: "Scratch"))
     lists.renameList(jlpt.id, to: "JLPT N5")
     lists.deleteList(drop.id)
-    // Favorites, Anime, JLPT → JLPT, Favorites, Anime
     lists.moveLists(fromOffsets: [2], toOffset: 0)
     await lists.flush()
 
@@ -236,7 +235,6 @@ final class WordListsTests {
   func retryAfterFailedWrite() async throws {
     let lists = await loadedLists()
     try FileManager.default.removeItem(at: directory)
-    // A regular file where the directory should be makes the write fail.
     try Data().write(to: directory)
     lists.createList(named: "Anime")
     await lists.flush()

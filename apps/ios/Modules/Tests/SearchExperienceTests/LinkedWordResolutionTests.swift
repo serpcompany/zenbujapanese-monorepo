@@ -5,7 +5,6 @@ import Testing
 struct LinkedWordResolutionTests {
   @Test("a joined verb links to its dictionary form, not a same-spelled headword")
   func joinedVerbPrefersDictionaryForm() async {
-    // しまった is both the past of しまう and an interjection headword ("darn it!").
     let tokens = await linkedTokens(
       "本をしまった",
       parts: [
@@ -52,8 +51,6 @@ struct LinkedWordResolutionTests {
       dictionary: [:])
     #expect(await client.words("時計見なかった") == ["時計", "見なかった"])
   }
-
-  // MARK: - Fixtures
 
   private typealias Part = (surface: String, base: String, pos: [String])
 

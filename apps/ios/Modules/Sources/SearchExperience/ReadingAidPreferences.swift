@@ -23,23 +23,18 @@ final class ReadingAidPreferences {
   var showsRomaji = false {
     didSet { persist() }
   }
-  /// A short English meaning under each linked word, separate from any sentence translation.
   var showsWordMeanings = false {
     didSet { persist() }
   }
-  /// A natural translation under each Japanese sentence, separate from word meanings.
   var showsTranslations = true {
     didSet { persist() }
   }
-  /// The language sentence translations are shown in. Only English is offered so far.
   var translationLanguage = TranslationLanguage.english {
     didSet { persist() }
   }
-  /// Who translates Player captions.
   var translationSource = TranslationSource.youTube {
     didSet { persist() }
   }
-  /// Furigana only over words the learner hasn't marked known.
   var hidesFuriganaOnKnownWords = false {
     didSet { persist() }
   }
@@ -76,7 +71,6 @@ final class ReadingAidPreferences {
   }
 }
 
-/// A language sentence translations can be shown in.
 enum TranslationLanguage: String, CaseIterable, Identifiable, Sendable {
   case english = "en"
 
@@ -86,11 +80,8 @@ enum TranslationLanguage: String, CaseIterable, Identifiable, Sendable {
   }
 }
 
-/// Who translates Player captions.
 enum TranslationSource: String, CaseIterable, Identifiable, Sendable {
-  /// YouTube's translation of the captions, with Apple Translation filling lines it leaves out.
   case youTube
-  /// Apple Translation on the device, line by line, so each translation matches its line.
   case apple
 
   var id: String { rawValue }

@@ -1,8 +1,6 @@
 import SwiftUI
 import WebKit
 
-/// Where Player searches for videos. Each provider is a results page shown in an in-app browser;
-/// choosing a YouTube video from it opens the video in Player.
 enum VideoSearchProvider: String, Hashable, CaseIterable, Sendable {
   case youTube
   case googleVideos
@@ -35,7 +33,6 @@ struct VideoSearch: Hashable, Sendable {
   let provider: VideoSearchProvider
 }
 
-/// Shows a provider's results page and hands any chosen YouTube video to Player.
 struct VideoSearchView: View {
   let search: VideoSearch
   let openVideo: (YouTubeVideoID) -> Void
@@ -63,7 +60,6 @@ private struct VideoSearchWebView: UIViewRepresentable {
 
   func makeUIView(context: Context) -> WKWebView {
     let configuration = WKWebViewConfiguration()
-    // Results pages preview videos; only Player should play them.
     configuration.mediaTypesRequiringUserActionForPlayback = .all
     let webView = WKWebView(frame: .zero, configuration: configuration)
     webView.navigationDelegate = context.coordinator
@@ -86,7 +82,6 @@ private struct VideoSearchWebView: UIViewRepresentable {
       self.openVideo = openVideo
     }
 
-    /// YouTube's mobile site changes pages without loading them, so watch the URL as well.
     func observe(_ webView: WKWebView) {
       urlObservation = webView.observe(\.url, options: .new) { [weak self] webView, _ in
         MainActor.assumeIsolated {

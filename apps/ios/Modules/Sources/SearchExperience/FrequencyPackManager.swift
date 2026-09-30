@@ -43,8 +43,6 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
     guard catalog.schemaVersion == 1, catalog.packs.count >= 2,
       catalog.packs.contains(where: \.bundled),
       Set(catalog.packs.map(\.packID)).count == catalog.packs.count,
-      // A historical manifest may share its pack version with the current one when only
-      // derived hashes changed, such as after a language-data rebuild.
       Set(
         try catalog.allTrustedManifests.map {
           "\($0.packID.rawValue)@\($0.packVersion)@\(try $0.trustSHA256())"
@@ -65,7 +63,6 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
     return catalog
   }
 
-  /// The artifact shipped in the app for each bundled pack.
   func bundledArtifactURLs() throws -> [FrequencyPackID: URL] {
     try Dictionary(
       uniqueKeysWithValues: packs.filter(\.bundled).map { manifest in
@@ -82,8 +79,6 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
   }
 }
 
-/// What a pack's value measures. Rank packs order words by corpus frequency; level packs place
-/// words in coarse study levels such as JLPT N5–N1.
 enum FrequencyPackKind: String, Codable, Sendable {
   case rank
   case level
@@ -92,8 +87,6 @@ enum FrequencyPackKind: String, Codable, Sendable {
 struct FrequencyPackManifest: Codable, Equatable, Sendable {
   let packID: FrequencyPackID
   let packVersion: String
-  /// Absent for rank packs so their encoded manifests, and the trust hashes of installed
-  /// records, stay unchanged.
   let kind: FrequencyPackKind?
   let displayName: String
   let domain: String
@@ -123,7 +116,6 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
   let presentationCapabilities: [String]
   let languageDataSHA256: String
   let bundledArtifactSHA256: String?
-  /// The app resource name of a bundled pack's artifact.
   let bundledResource: String?
   let corpusDocuments: Int?
   let corpusVideos: Int?
@@ -178,7 +170,6 @@ struct FrequencyPackOrderedJSONSource: Codable, Equatable, Sendable {
 
 struct FrequencyPackSmokeTest: Codable, Equatable, Sendable {
   let languageReferenceID: String
-  /// The expected rank, or for a level pack the expected level number (5 for N5).
   let rank: Int
 }
 
@@ -191,10 +182,6 @@ struct FrequencyPackDisclosure: Equatable, Sendable {
   let version: String
   let attribution: String
 
-  /// A compact label for rank chips.
-  /// Matched by pack family (the ID's first three parts) rather than the versioned ID, so a
-  /// rebuilt pack keeps its label. It stays out of the manifest because manifest changes alter
-  /// installed packs' trust hashes.
   var shortName: String {
     switch id.rawValue.split(separator: ".").prefix(3).joined(separator: ".") {
     case "zenbu.tubelex.youtube": "YouTube"
@@ -207,7 +194,6 @@ struct FrequencyPackDisclosure: Equatable, Sendable {
 }
 
 struct FrequencyPackSnapshot: Equatable, Sendable {
-  /// Enabled packs in the learner's priority order. The first pack orders search results.
   let enabledPackIDs: [FrequencyPackID]
   let packs: [FrequencyPackState]
 
@@ -270,8 +256,6 @@ actor FrequencyPackManager {
   private var enabledPackIDs: [FrequencyPackID]
   private var installedRecords: [FrequencyPackID: InstalledFrequencyPackRecord]
   private var failures: [FrequencyPackID: String] = [:]
-  /// Artifacts already verified against their manifest. Verification scans and hashes every
-  /// row, so lookups reuse these instead of re-verifying on every search.
   private var verifiedArtifacts: [FrequencyPackID: FrequencyPackArtifact] = [:]
 
   init(
@@ -339,13 +323,9 @@ actor FrequencyPackManager {
         at: Self.artifactURL(for: record.packID, in: storageDirectory))
     }
     installedRecords = validatedRecords
-    // State saved before multiple enabled packs stored one active pack; it becomes the only
-    // enabled pack. A new install enables every bundled pack in catalog order.
     let bundledIDs = bundledPacks.map(\.packID)
     let savedIDs = saved.map { $0.enabledPackIDs ?? $0.activePackID.map { [$0] } ?? [] }
     var ids = savedIDs ?? bundledIDs
-    // A bundled pack added in an app update is enabled once, ahead of the learner's packs.
-    // Later disabling it sticks because it is then remembered as known.
     let knownBundledIDs = Set(
       saved.map { $0.knownBundledPackIDs ?? Self.legacyBundledPackIDs } ?? bundledIDs)
     ids.insert(contentsOf: bundledIDs.filter { !knownBundledIDs.contains($0) }, at: 0)
@@ -358,7 +338,6 @@ actor FrequencyPackManager {
     try Self.persist(enabledPackIDs, installedRecords, bundledIDs, in: storageDirectory)
   }
 
-  /// Bundled packs in state saved before bundled packs were tracked.
   private static let legacyBundledPackIDs = [
     FrequencyPackID(rawValue: "zenbu.tubelex.youtube.ja.unidic-3.1")
   ]
@@ -400,8 +379,6 @@ actor FrequencyPackManager {
     return result
   }
 
-  /// Returns one result per enabled pack for each entry, in priority order. With no enabled
-  /// packs, every entry has an empty list.
   func evidence(for ids: [LanguageReferenceID]) throws -> [LanguageReferenceID: FrequencyRanks] {
     var ranks = Dictionary(uniqueKeysWithValues: ids.map { ($0, FrequencyRanks()) })
     for packID in enabledPackIDs {
@@ -456,7 +433,6 @@ actor FrequencyPackManager {
     }
   }
 
-  /// Appends an installed pack to the end of the enabled priority order.
   func enable(_ packID: FrequencyPackID) throws {
     guard let manifest = catalog.packs.first(where: { $0.packID == packID }) else {
       throw FrequencyPackError.packNotInstalled
@@ -486,7 +462,6 @@ actor FrequencyPackManager {
     try persist()
   }
 
-  /// Replaces the priority order. The new order must contain exactly the enabled packs.
   func reorderEnabled(_ packIDs: [FrequencyPackID]) throws {
     guard packIDs.count == enabledPackIDs.count, Set(packIDs) == Set(enabledPackIDs) else {
       throw FrequencyPackError.invalidPack
@@ -518,7 +493,6 @@ actor FrequencyPackManager {
   }
 
   private func artifactURL(for manifest: FrequencyPackManifest) -> URL {
-    // Bundled packs read their shipped artifact; downloaded packs live in storage.
     bundledArtifactURLs[manifest.packID]
       ?? Self.artifactURL(for: manifest.packID, in: storageDirectory)
   }
@@ -605,9 +579,7 @@ actor FrequencyPackManager {
 
 private struct PersistedFrequencyPackState: Codable {
   let enabledPackIDs: [FrequencyPackID]?
-  /// Written by versions that supported one active pack; read only for migration.
   let activePackID: FrequencyPackID?
-  /// Bundled packs this state has already seen, so a newly bundled pack is enabled only once.
   let knownBundledPackIDs: [FrequencyPackID]?
   let installedRecords: [InstalledFrequencyPackRecord]
 }

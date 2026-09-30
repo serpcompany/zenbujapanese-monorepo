@@ -106,8 +106,6 @@ struct RomajiReadingAidText: View {
 }
 
 enum AppleJapaneseRomanization {
-  // The accepted learner-visible candidate deliberately exposes Foundation/ICU's
-  // orthographic output without app-owned particle or long-vowel corrections.
   static func romanizeTrustedReading(_ reading: String) -> String? {
     guard !reading.isEmpty, !reading.unicodeScalars.contains(where: \.isHanOrIterationMark)
     else { return nil }

@@ -17,14 +17,12 @@ struct FrequencyLookupPerformanceTests {
     let capability = try FrequencyCapability.freshBundledTUBELEX()
     let results = try await LookupClient.live.search(SearchQuery("いる"))
     let ids = Array(results.entries.prefix(60).map(\.id))
-    _ = try await capability.evidence(for: ids)  // Warm the file cache.
+    _ = try await capability.evidence(for: ids)
 
     let clock = ContinuousClock()
     let elapsed = try await clock.measure {
       _ = try await capability.evidence(for: ids)
     }
-    // A full scan per identifier takes over half a second here; primary-key lookups take a
-    // few milliseconds. The generous bound only catches a return to scanning.
     #expect(elapsed < .milliseconds(150), "60 lookups took \(elapsed)")
   }
 }

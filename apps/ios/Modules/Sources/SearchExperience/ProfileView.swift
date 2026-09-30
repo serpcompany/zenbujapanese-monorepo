@@ -162,7 +162,6 @@ struct ProfileView: View {
     }
   }
 
-  /// Saves a field when the learner leaves it. An invalid email stays in the field, unsaved.
   private func commit(_ field: Field) {
     switch field {
     case .name:

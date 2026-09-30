@@ -13,7 +13,6 @@ public struct SearchExperienceRootView: View {
   @State private var query = ""
   @State private var imageTextSessionStore = ImageTextSessionStore()
   @State private var imageWordSheet = WordSheetPresentation()
-  /// Player's stack holds Player routes and, after Open Full Entry, dictionary routes.
   @State private var watchPath = NavigationPath()
   @State private var watchWordSheet = WordSheetPresentation()
   @State private var watchHistory = WatchHistory()
@@ -100,9 +99,6 @@ public struct SearchExperienceRootView: View {
     }
     .scrollEdgeEffectStyle(.hard, for: .bottom)
     .task {
-      // Loading kanji readings for furigana and opening the pack store (which verifies every
-      // installed pack once) at launch, off the main actor, keeps that work out of the first
-      // search.
       await Task.detached(priority: .utility) {
         KanjiReadingSplitter.prepare()
         _ = try? await FrequencyPackClient.live.snapshot()
@@ -155,7 +151,6 @@ public struct SearchExperienceRootView: View {
     }
   }
 
-  /// The dictionary pages, shared by Search and by Player after Open Full Entry.
   @ViewBuilder
   private func dictionaryDestination(
     _ route: SearchExperienceRoute,
@@ -283,7 +278,6 @@ public struct SearchExperienceRootView: View {
     push(.word(entry, nil), in: stack)
   }
 
-  /// Pushes a dictionary page onto the stack it was opened from, so Back returns there.
   private func push(_ route: SearchExperienceRoute, in stack: DictionaryStack) {
     switch stack {
     case .search: searchPath.wrappedValue = path + [route]
@@ -388,8 +382,6 @@ public struct SearchExperienceRootView: View {
     }
   }
 
-  /// Opens a saved word's entry. When its ID is no longer found, opens the entry with the same
-  /// headword and reading, and only when there is none, searches the headword.
   private func openSavedItem(_ storedID: String, headword: String, reading: String) {
     selectedTab = .search
     if let kanji = SavedItem.kanji(storedID: storedID) {
@@ -437,7 +429,6 @@ struct ImageWordContext: Hashable {
   let assetID: UUID
 }
 
-/// The tab a dictionary page was opened from, which its links and Back button stay in.
 enum DictionaryStack {
   case search
   case player

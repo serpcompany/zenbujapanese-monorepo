@@ -49,7 +49,6 @@ struct KanjiDetailView: View {
     self.openList = openList
   }
 
-  /// The kanji as Known Words and Lists save it, with its first reading shown under it there.
   private var item: SavedItem {
     .kanji(character, reading: reference?.readings.first?.value ?? "")
   }
@@ -543,8 +542,6 @@ private struct KanjiReadingsSection: View {
 }
 
 extension KanjiReading {
-  /// Up to three of the kanji's words, in their order, whose reading starts with this reading;
-  /// the Readings section shows them beside it.
   func words(in relatedWords: [DictionaryEntry]) -> [DictionaryEntry] {
     let stem = value
       .replacingOccurrences(of: ".", with: "")

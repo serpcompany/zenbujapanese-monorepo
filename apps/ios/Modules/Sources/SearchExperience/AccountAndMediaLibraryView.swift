@@ -5,8 +5,6 @@ import UIKit
 struct AccountNavigationView: View {
   @Binding var path: [AccountRoute]
   let store: EncounterMediaStore
-  /// Opens a saved word or kanji by its `SavedItem.storedID`, falling back to its headword and
-  /// reading.
   let openItem: (String, String, String) -> Void
 
   var body: some View {
@@ -119,7 +117,6 @@ struct AccountRootView: View {
   }
 }
 
-/// A Settings-style row: a white symbol on a rounded, tinted tile, then the title.
 private struct AccountRowLabel: View {
   let title: LocalizedStringKey
   let systemImage: String
@@ -146,7 +143,6 @@ private struct AccountRowLabel: View {
   }
 }
 
-/// A row that opens a web page, marked the way Settings marks rows that leave the app.
 private struct AccountExternalLink<Label: View>: View {
   let destination: URL
   @ViewBuilder let label: Label
@@ -170,7 +166,6 @@ private struct AccountAboutHeader: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
   var body: some View {
-    // At accessibility sizes the name needs the full width rather than a column beside the icon.
     let layout =
       dynamicTypeSize.isAccessibilitySize
       ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
@@ -204,7 +199,6 @@ private struct AccountAboutHeader: View {
 }
 
 private enum AccountLinks {
-  // Kept in step with apps/ios/metadata App Store listing URLs.
   static let support = URL(string: "https://zenbujapanese.com/support")!
   static let privacyPolicy = URL(string: "https://zenbujapanese.com/privacy")!
 }
@@ -220,7 +214,6 @@ private enum AppBundleInfo {
     Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
   }
 
-  /// The compiled asset catalog exposes the app icon only through its Info.plist file names.
   static let icon: UIImage? = {
     guard
       let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
@@ -296,7 +289,6 @@ private struct ReadingAidSettingsView: View {
     }
     .task { appleTranslation = try? await NaturalTranslationClient.live.availability() }
     .translationTask(downloadRequest) { session in
-      // Apple's own sheet asks before downloading the language.
       try? await session.prepareTranslation()
       appleTranslation = try? await NaturalTranslationClient.live.availability()
       downloadRequest = nil
@@ -308,7 +300,6 @@ private struct ReadingAidSettingsView: View {
 }
 
 extension ReadingAidSettingsView {
-  /// Whether Apple Translation can translate Japanese yet, with a way to download it.
   @ViewBuilder
   fileprivate var appleTranslationRow: some View {
     switch appleTranslation {

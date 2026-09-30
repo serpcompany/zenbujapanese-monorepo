@@ -1,7 +1,5 @@
 import SwiftUI
 
-/// Word or Kanji Detail → ••• → Add to List…: every list, with a checkmark on the ones holding
-/// the item. Tapping a list adds or removes it at once.
 struct WordListPickerView: View {
   @Environment(WordLists.self) private var wordLists
   @Environment(\.dismiss) private var dismiss
@@ -75,7 +73,6 @@ struct WordListPickerView: View {
   }
 }
 
-/// Account → Lists: every list in the learner's order, with its word count.
 struct WordListsView: View {
   @Environment(WordLists.self) private var wordLists
   @State private var namePrompt: WordListNamePrompt?
@@ -158,10 +155,8 @@ struct WordListsView: View {
       namePrompt = .rename(list)
     }
     .accessibilityIdentifier("word-lists.list.\(list.id)")
-    // No full swipe, so a list is never deleted by swiping too far.
     .swipeActions(allowsFullSwipe: false) {
       if !wordLists.isReadOnly {
-        // Not a destructive role, so the row stays while deletion is confirmed.
         Button("Delete", systemImage: "trash") {
           if wordLists.wordCount(in: list.id) == 0 {
             wordLists.deleteList(list.id)
@@ -190,7 +185,6 @@ struct WordListsView: View {
   }
 }
 
-/// A list in Account → Lists. It opens the list, or while editing, renames it.
 private struct WordListIndexRow: View {
   @Environment(\.editMode) private var editMode
   let list: WordList
@@ -220,8 +214,6 @@ private struct WordListIndexRow: View {
   }
 }
 
-/// One list's words, most recently added first, with a menu to rename or delete the list and
-/// to select words to remove.
 struct WordListView: View {
   @Environment(WordLists.self) private var wordLists
   @Environment(WordKnowledge.self) private var wordKnowledge
@@ -241,7 +233,6 @@ struct WordListView: View {
     content
       .navigationTitle(list?.name ?? "")
       .toolbar { toolbar }
-      // Select All takes the back button's place while selecting.
       .navigationBarBackButtonHidden(isSelecting)
       .environment(\.editMode, $editMode)
       .onChange(of: isSelecting) {
@@ -297,7 +288,6 @@ struct WordListView: View {
       isKnown: wordKnowledge.isKnown(storedID: word.entryID))
     Group {
       if isSelecting {
-        // While selecting, a tap selects the row instead of opening the word.
         label
       } else {
         Button {
@@ -366,7 +356,6 @@ struct WordListView: View {
     }
   }
 
-  /// The selected words still shown, so a search never removes words it hides.
   private var selectedWords: [WordListMembership] {
     filteredWords.filter { selection.contains($0.entryID) }
   }
@@ -408,7 +397,6 @@ extension WordLists {
   }
 }
 
-/// Asking for a list's name, to create a list or rename one.
 enum WordListNamePrompt: Identifiable {
   case create
   case rename(WordList)
@@ -422,8 +410,6 @@ enum WordListNamePrompt: Identifiable {
 }
 
 extension View {
-  /// Shows an alert asking for a list name. `create` runs for a new list; a rename is saved to
-  /// the list directly.
   func wordListNamePrompt(
     _ prompt: Binding<WordListNamePrompt?>, create: @escaping (String) -> Void
   ) -> some View {

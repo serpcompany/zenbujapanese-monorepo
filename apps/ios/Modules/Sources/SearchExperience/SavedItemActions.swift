@@ -4,15 +4,10 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-// What Word Detail and Kanji Detail share for a `SavedItem`: the ••• menu, its Lists and Notes
-// sections, and the photos attached to it.
-
-/// The learner's notes on one word or kanji, and the note being edited.
 @MainActor
 @Observable
 final class SavedItemNotes {
   private(set) var notes: [LearnerWordNote] = []
-  /// The note being edited, or a new note's ID while one is being added.
   private(set) var editingNoteID: String?
   var draft = ""
   @ObservationIgnored private var noteID: WordNoteID?
@@ -25,7 +20,6 @@ final class SavedItemNotes {
 
   var isEditing: Bool { editingNoteID != nil }
 
-  /// Shows the notes saved for `noteID`, dropping any edit in progress.
   func load(_ noteID: WordNoteID) async {
     let loaded = await store.load(noteID)
     guard !Task.isCancelled else { return }
@@ -40,7 +34,6 @@ final class SavedItemNotes {
     draft = note.text
   }
 
-  /// Saves the note being edited, if any, and starts a new one.
   func beginAdding() {
     if let editingNoteID {
       notes = notesApplyingDraft(noteID: editingNoteID)
@@ -50,7 +43,6 @@ final class SavedItemNotes {
     draft = ""
   }
 
-  /// Saves the note being edited. An emptied note is deleted.
   func finishEditing() {
     guard let editingNoteID else { return }
     notes = notesApplyingDraft(noteID: editingNoteID)
@@ -85,7 +77,6 @@ final class SavedItemNotes {
   }
 }
 
-/// The photos attached to one word or kanji, and the camera and photo picker that add them.
 @MainActor
 @Observable
 final class SavedItemPhotos {
@@ -104,12 +95,10 @@ final class SavedItemPhotos {
     self.cameraAuthorizationClient = cameraAuthorizationClient
   }
 
-  /// Photos the device can display.
   var displayable: [EncounterMedia] {
     media.filter { UIImage(data: $0.data) != nil }
   }
 
-  /// Shows the photos saved for `item`, first saving `initial` to it when given.
   func load(_ item: SavedItem, saving initial: EncounterMediaAttachment? = nil) async {
     let reference = item.encounterReference
     self.reference = reference
@@ -185,7 +174,6 @@ final class SavedItemPhotos {
 }
 
 extension View {
-  /// Adds the photo picker, camera, and their alerts that `photos` presents.
   func savedItemPhotoPresentation(_ photos: SavedItemPhotos) -> some View {
     modifier(SavedItemPhotoPresentation(photos: photos))
   }
@@ -221,10 +209,8 @@ private struct SavedItemPhotoPresentation: ViewModifier {
   }
 }
 
-/// The ••• menu: Known, Add to List, Add Note, and photos.
 struct SavedItemMenu: View {
   let item: SavedItem
-  /// The accessibility identifier prefix of the screen showing the menu.
   let identifierPrefix: String
   let addToList: () -> Void
   let addNote: () -> Void
@@ -254,7 +240,6 @@ struct SavedItemMenu: View {
   }
 }
 
-/// The lists holding the item, each opening its list, and Add to List.
 struct SavedItemListsSection: View {
   @Environment(WordLists.self) private var wordLists
   let item: SavedItem
@@ -286,7 +271,6 @@ struct SavedItemListsSection: View {
   }
 }
 
-/// Each note, the one being edited as a text field, and Add Note.
 struct SavedItemNotesSection: View {
   @Bindable var notes: SavedItemNotes
   let editorFocused: FocusState<Bool>.Binding

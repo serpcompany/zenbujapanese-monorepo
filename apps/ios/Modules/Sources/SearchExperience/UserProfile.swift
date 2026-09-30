@@ -65,7 +65,6 @@ final class UserProfile {
       try? jpeg.write(to: url, options: .atomic)
       return scaled
     }.value
-    // An undecodable pick keeps the current photo.
     if let scaled { photo = scaled }
   }
 
@@ -76,16 +75,12 @@ final class UserProfile {
 
   nonisolated static let usernameLengthLimit = 30
 
-  /// Normalizes what the learner typed into the stored username: lowercase `a–z`, `0–9`, `_`, and
-  /// `.`, without a leading `@`. Other scripts belong in the name, which keeps usernames typeable
-  /// and free of look-alike full-width forms.
   nonisolated static func normalizedUsername(_ input: String) -> String {
     let allowed = Set("abcdefghijklmnopqrstuvwxyz0123456789_.")
     let characters = input.drop(while: { $0 == "@" }).lowercased().filter(allowed.contains)
     return String(characters.prefix(usernameLengthLimit))
   }
 
-  /// Whether the text is exactly one email address, as recognized by Foundation's data detector.
   nonisolated static func isValidEmail(_ input: String) -> Bool {
     guard
       !input.isEmpty,
@@ -103,7 +98,6 @@ final class UserProfile {
     defaults.set(data, forKey: Self.storageKey)
   }
 
-  /// Decodes a downsampled image with ImageIO so a full-resolution photo never lands in memory.
   private nonisolated static func squareThumbnail(from data: Data) -> UIImage? {
     let options: [CFString: Any] = [
       kCGImageSourceCreateThumbnailFromImageAlways: true,

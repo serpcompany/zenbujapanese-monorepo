@@ -13,13 +13,10 @@ import Testing
     let examples = try await ExampleSentenceClient.live.examples(entry("でも"))
     let sentences = Set(examples.map(\.japanese))
     #expect(sentences.allSatisfy { $0.contains("でも") })
-    // でも only occurs inside いつでも (何時でも) here.
     #expect(!sentences.contains("必要な物や欲しい物があったら、いつでも電話してね。"))
   }
 
   @Test func kanaSharedByTwoWordsIsNotGuessed() async throws {
-    // Tatoeba writes both the adverb 然う and the suffix そう as bare そう, so those
-    // sentences belong to neither entry.
     let entries = try await LookupClient.live.entriesMatchingForm("そう")
     let suffix = try #require(entries.first { $0.summary.hasPrefix("appearing that") })
     let examples = try await ExampleSentenceClient.live.examples(suffix)

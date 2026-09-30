@@ -18,12 +18,10 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
 
   var sourceProvenance: LanguageReferenceProvenance { sourceProvenances[0] }
 
-  /// A few words of the first meaning, short enough to sit under the word in running text.
   var shortMeaning: String? { Self.shortMeaning(from: meanings) }
 
   static func shortMeaning(from meanings: [String], limit: Int = 18) -> String? {
     guard let first = meanings.first else { return nil }
-    // Drop notes such as "(clothes, etc.)" before splitting, so a comma inside one can't cut it.
     let withoutNotes = first.replacing(/\s*\([^)]*\)/, with: "")
     var gloss = (withoutNotes.split(separator: ",").first.map(String.init) ?? withoutNotes)
       .trimmingCharacters(in: .whitespaces)
@@ -86,7 +84,6 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
       }
   }
 
-  /// The first sense's part of speech (falling back to the entry's), worded for display.
   var displayPartOfSpeech: String {
     PartOfSpeechFormatter.phrase(for: senses.first?.partsOfSpeech ?? partsOfSpeech)
   }
@@ -115,18 +112,13 @@ struct PartOfSpeech: RawRepresentable, Hashable, Sendable, Codable {
   }
 }
 
-/// Stable category identifiers written by the JMdict importer. `PartOfSpeechFormatter` owns
-/// every learner-facing word, so these values never change for wording reasons.
 extension PartOfSpeech {
   static let noun = Self(rawValue: "noun")
   static let pronoun = Self(rawValue: "pronoun")
   static let nounPrefix = Self(rawValue: "nounPrefix")
   static let nounSuffix = Self(rawValue: "nounSuffix")
-  /// A noun that may take the genitive particle の.
   static let noAdjective = Self(rawValue: "noAdjective")
-  /// A noun or verb acting prenominally.
   static let prenominal = Self(rawValue: "prenominal")
-  /// A rentaishi such as この or 大きな.
   static let preNounAdjective = Self(rawValue: "preNounAdjective")
   static let iAdjective = Self(rawValue: "iAdjective")
   static let naAdjective = Self(rawValue: "naAdjective")
@@ -134,7 +126,6 @@ extension PartOfSpeech {
   static let archaicAdjective = Self(rawValue: "archaicAdjective")
   static let archaicNaAdjective = Self(rawValue: "archaicNaAdjective")
   static let adverb = Self(rawValue: "adverb")
-  /// An adverb taking the particle と.
   static let adverbTo = Self(rawValue: "adverbTo")
   static let auxiliary = Self(rawValue: "auxiliary")
   static let auxiliaryAdjective = Self(rawValue: "auxiliaryAdjective")
@@ -149,17 +140,13 @@ extension PartOfSpeech {
   static let suffix = Self(rawValue: "suffix")
   static let particle = Self(rawValue: "particle")
   static let unclassified = Self(rawValue: "unclassified")
-  /// A verb with no specified conjugation class.
   static let verb = Self(rawValue: "verb")
   static let ichidanVerb = Self(rawValue: "ichidanVerb")
   static let godanVerb = Self(rawValue: "godanVerb")
   static let suruVerb = Self(rawValue: "suruVerb")
-  /// 来る, the only kuru verb.
   static let kuruVerb = Self(rawValue: "kuruVerb")
   static let zuruVerb = Self(rawValue: "zuruVerb")
-  /// Nidan, yodan, and other classical conjugations.
   static let archaicVerb = Self(rawValue: "archaicVerb")
-  /// A noun or participle that takes する, such as 経験.
   static let takesSuru = Self(rawValue: "takesSuru")
   static let transitive = Self(rawValue: "transitive")
   static let intransitive = Self(rawValue: "intransitive")
@@ -201,10 +188,6 @@ struct PitchAccent: Hashable, Sendable, Codable {
 }
 
 extension PitchAccent {
-  /// High (true) or low pitch for each mora, then for a following particle such as が.
-  /// Heiban (0) rises after the first mora and stays high into the particle; atamadaka (1) is
-  /// high on the first mora only; otherwise pitch is high from the second mora through the
-  /// downstep mora and low afterward, including the particle.
   func levels(moraCount count: Int) -> (morae: [Bool], particle: Bool) {
     let morae = (0..<count).map { index in
       switch downstep {
@@ -218,8 +201,6 @@ extension PitchAccent {
 }
 
 extension String {
-  /// Splits kana into morae: small ya/yu/yo and small vowels join the preceding kana, while ッ,
-  /// ン, and ー each count as their own mora.
   var morae: [String] {
     let combining = Set("ゃゅょぁぃぅぇぉゎャュョァィゥェォヮ")
     var result: [String] = []
@@ -237,7 +218,6 @@ extension String {
 struct LanguageReferenceID: Hashable, Sendable {
   let rawValue: String
 
-  /// The 16 raw bytes behind the 32-character hex identifier, or nil when it is malformed.
   var bytes: Data? {
     guard rawValue.utf8.count == 32 else { return nil }
     var data = Data(capacity: 16)
@@ -327,12 +307,7 @@ struct LookupSearchResultItem: Sendable {
 }
 
 struct LookupSearchResults: Sendable {
-  /// The relevance-filtered, deduplicated candidate set in deterministic dictionary order.
-  /// Frequency is deliberately not part of retrieval; the presentation layer reorders this
-  /// bounded set with evidence from the active frequency pack.
   let items: [LookupSearchResultItem]
-  /// Count of the leading equivalent lexical-rank group. Radical-origin presentation uses
-  /// this bound to preserve its intentionally narrow candidate list without restoring buckets.
   let leadingLexicalEntryCount: Int
   let presentation: Presentation
   let resolution: Resolution

@@ -1,11 +1,6 @@
-// The website runs TypeScript ports of this analyzer: lookupSegments in
-// packages/dictionary-core/src/search/morphology.ts, and the example word links
-// (JapaneseTextAnalyzer) in packages/dictionary-core/src/examples/linking.ts.
-// Change both in the same PR and re-record the word-detail conformance suite (issue 464).
 import Foundation
 
 extension JapaneseTextToken {
-  /// Particles, auxiliaries, and punctuation, which carry grammar rather than vocabulary.
   var isFunctionWord: Bool {
     ["助詞", "助動詞", "記号", "補助記号"].contains(partOfSpeech.first ?? "")
   }
@@ -160,8 +155,6 @@ struct JapaneseTextAnalysisClient: Sendable {
       _ highlightedQuery: SearchQuery,
       _ highlightedEntry: DictionaryEntry?
     ) async -> [JapaneseTextToken]
-  /// The text's words as linked text shows them, with inflections joined (見なかった), and
-  /// without dictionary resolution.
   var words: @Sendable (_ text: String) async -> [String]
 
   static let characterFallback = JapaneseTextAnalysisClient(
@@ -359,9 +352,6 @@ private actor JapaneseTextAnalyzer {
       guard !value.isEmpty, value != "*", seen.insert(value).inserted else { return }
       forms.append(value)
     }
-    // A joined inflection's surface is never its dictionary form, and it can collide with an
-    // unrelated headword: しまった (past of しまう) is also the interjection "darn it!". Look up
-    // only its head's forms; an unresolved joined word falls back to its pieces.
     let evidence =
       candidate.joinsInflection
       ? [candidate.dictionaryForm, candidate.normalizedForm]

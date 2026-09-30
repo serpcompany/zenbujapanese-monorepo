@@ -3,15 +3,6 @@ import Testing
 
 @testable import SearchExperience
 
-/// Checks what Kanji Detail shows against the app-recorded suite in
-/// `apps/ios/LanguageData/Conformance/kanji-detail.json`, so the website's kanji pages can be
-/// held to the app. Each case is read from the clients `KanjiDetailView` uses, opened on its own
-/// rather than from a word. JLPT is left out while its old KANJIDIC2 scale is undecided
-/// (issue 485).
-///
-/// After an intended change to Kanji Detail or its data, record it again by running this suite
-/// with `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1`, and review the diff. Recording keeps each
-/// case's `character` and `covers` and rewrites the rest.
 @Suite("Kanji detail conformance suite")
 struct KanjiDetailConformanceTests {
   static let artifactNames = [
@@ -46,7 +37,6 @@ struct KanjiDetailConformanceTests {
   }
 }
 
-/// Reads one kanji's detail from the same clients the app gives `KanjiDetailView`.
 private struct KanjiDetailObserver {
   let kanjiLookupClient = KanjiLookupClient.live(lookupClient: .live)
   let kanjiElementLookupClient = KanjiElementLookupClient.live
@@ -57,7 +47,6 @@ private struct KanjiDetailObserver {
     observed.codePoint = recorded.character.unicodeScalars
       .map { "U+" + String($0.value, radix: 16, uppercase: true) }
       .joined(separator: " ")
-    // Only a single ideograph opens Kanji Detail.
     guard let character = KanjiCharacter(recorded.character) else {
       observed.opensDetail = false
       return observed
@@ -81,7 +70,6 @@ private struct KanjiDetailObserver {
           words: reading.words(in: relatedWords).map(KanjiDetailCase.Word.init)
         )
       }
-      // Components show only when there are no elements.
       if elements.isEmpty, !reference.components.isEmpty {
         observed.components = reference.components
       }
@@ -108,30 +96,20 @@ private struct KanjiDetailSuite: Codable {
   var cases: [KanjiDetailCase]
 }
 
-/// One character's Kanji Detail. Only `character` and `covers` are written by hand.
 private struct KanjiDetailCase: Codable {
   let character: String
-  /// Why the case is in the suite.
   let covers: String?
   var codePoint: String?
-  /// Whether the app opens Kanji Detail for the character at all.
   var opensDetail: Bool?
-  /// Whether KANJIDIC2 has the character; without it the page shows no metrics, meanings, or
-  /// readings.
   var hasReference: Bool?
   var strokeCount: Int?
   var grade: Int?
   var meanings: [String]?
-  /// In the reference's order, each with the words the Readings section shows beside it.
   var readings: [Reading]?
   var elements: [Element]?
-  /// Shown instead of elements when the character has none.
   var components: [String]?
-  /// The Words section: up to 24 words containing the kanji, in order.
   var words: [Word]?
-  /// Whether there's stroke data, which offers the stroke order diagram.
   var hasStrokeOrder: Bool?
-  /// The number of strokes the diagram draws.
   var strokeOrderStrokes: Int?
 
   init(character: String, covers: String?) {
@@ -148,9 +126,7 @@ private struct KanjiDetailCase: Codable {
   struct Element: Codable {
     let glyph: String
     let role: String
-    /// Up to three meanings, as shown.
     let meanings: [String]
-    /// Shown when the element has no meanings.
     let linkedOnReadings: [String]?
   }
 

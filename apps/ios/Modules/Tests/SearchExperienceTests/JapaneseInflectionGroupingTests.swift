@@ -3,7 +3,6 @@ import Testing
 
 @Suite("Inflection grouping")
 struct JapaneseInflectionGroupingTests {
-  /// Builds IPADIC-style candidates from (surface, base, part of speech) triples.
   private func candidates(_ parts: [(String, String, [String])]) -> [JapaneseMorphologyCandidate] {
     var offset = 0
     return parts.map { surface, base, pos in
@@ -41,21 +40,17 @@ struct JapaneseInflectionGroupingTests {
 
   @Test("na-adjective stems join な, で, or に, but not the copula")
   func naAdjectives() {
-    // IPADIC tags the stem as a noun with 形容動詞語幹 and に as an adverbializing particle.
     let ipadicStem: (String, String, [String]) = ("静か", "静か", ["名詞", "形容動詞語幹"])
     #expect(surfaces([ipadicStem, ("な", "だ", ["助動詞"]), ("人", "人", ["名詞", "一般"])])
       == ["静かな", "人"])
     #expect(surfaces([ipadicStem, ("に", "に", ["助詞", "副詞化"])]) == ["静かに"])
     #expect(surfaces([ipadicStem, ("で", "だ", ["助動詞"])]) == ["静かで"])
-    // The predicate copula stays separate, so standalone 静か still matches 静かだ.
     #expect(surfaces([ipadicStem, ("だ", "だ", ["助動詞"])]) == ["静か", "だ"])
     #expect(surfaces([ipadicStem, ("でし", "です", ["助動詞"]), ("た", "た", ["助動詞"])])
       == ["静か", "でし", "た"])
-    // UniDic (Sudachi) tags the stem 形状詞 and な, で, and に as auxiliaries.
     let unidicStem: (String, String, [String]) = ("静か", "静か", ["形状詞", "一般"])
     #expect(surfaces([unidicStem, ("な", "だ", ["助動詞"])]) == ["静かな"])
     #expect(surfaces([unidicStem, ("に", "だ", ["助動詞"])]) == ["静かに"])
-    // An ordinary noun never joins な.
     #expect(surfaces([("学生", "学生", ["名詞", "一般"]), ("な", "だ", ["助動詞"])]) == ["学生", "な"])
   }
 

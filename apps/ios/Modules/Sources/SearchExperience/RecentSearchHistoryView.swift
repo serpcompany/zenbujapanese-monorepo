@@ -30,7 +30,6 @@ struct RecentSearchHistoryView: View {
                 remove(search)
               }
             }
-            // Swipe actions are hard to discover, so removal is also on long press.
             .contextMenu {
               Button("Remove from Recent", systemImage: "trash", role: .destructive) {
                 remove(search)

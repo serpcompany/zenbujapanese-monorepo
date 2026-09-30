@@ -6,7 +6,6 @@ struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
   @AppStorage("image-text.view-mode") private var mode = ImageTextViewMode.both
-  /// The line (or, in Text, the paragraph) the learner is on: outlined on the photo in Both.
   @State private var activeLineID: Int?
   @Binding private var presentedWord: RecognizedWordSheetRequest?
   let textAnalysisClient: JapaneseTextAnalysisClient
@@ -76,7 +75,6 @@ struct ImageTextFlowView: View {
         .accessibilityIdentifier("image-text.close")
       }
 
-      // One toolbar for every view, so switching views never moves or changes its buttons.
       ToolbarItem(placement: .topBarTrailing) {
         moreMenu
       }
@@ -108,8 +106,6 @@ struct ImageTextFlowView: View {
     }
   }
 
-  /// Download, progress, and failure states for the natural translation. A finished translation
-  /// is shown by each mode itself.
   @ViewBuilder
   private var translationStatus: some View {
     switch model.translationState {
@@ -312,7 +308,6 @@ struct ImageTextFlowView: View {
     }
   }
 
-  /// Translate: the page's natural translation, then context on what the text is.
   private func translatePage(_ page: ImageTextPage) -> some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 32) {
@@ -348,9 +343,6 @@ struct ImageTextFlowView: View {
       .padding(16)
     }
     .accessibilityIdentifier("image-text.translation")
-    // Choosing Translate is the request, so it starts without another tap. Keyed to the
-    // selection because a neighboring page's view appears before `selectPage` runs, and
-    // `selectPage` cancels whatever was started for the old page.
     .task(id: model.selectedPage) {
       guard model.isSelected(page) else { return }
       if case .idle = model.translationState { model.requestTranslation() }
@@ -443,8 +435,6 @@ struct ImageTextFlowView: View {
     presentedWord = region.sheetRequest(asset: page.asset)
   }
 
-  /// `lineID` is nil for words outside any line, such as idioms under Context, which leave the
-  /// current line as it is.
   private func open(_ entry: DictionaryEntry, in page: ImageTextPage, lineID: Int?) {
     if let lineID { activeLineID = lineID }
     presentedWord = RecognizedWordSheetRequest(
@@ -473,7 +463,6 @@ struct ImageTextFlowView: View {
   }
 }
 
-/// How Image Search shows a recognized page.
 enum ImageTextViewMode: String, CaseIterable, Identifiable {
   case photo
   case both
@@ -534,7 +523,6 @@ private struct ImageTextCanvas: View {
       if let image = UIImage(data: page.asset.data) {
         let imageRect = aspectFitRect(imageSize: image.size, container: geometry.size)
         ZStack(alignment: .topLeading) {
-          // Top-aligned so a wide photo stays above the half-height word sheet without moving.
           Image(uiImage: image)
             .resizable()
             .scaledToFit()
@@ -609,8 +597,6 @@ private struct ImageTextCanvas: View {
     )
   }
 
-  /// Vertical chips nearly touch, since alternating shades already mark word boundaries;
-  /// horizontal underlines keep a gap between words.
   private func interactiveTokenRect(_ recognizedRect: CGRect, isVertical: Bool) -> CGRect {
     if isVertical {
       let gap = min(1.5, recognizedRect.height * 0.08)
@@ -621,9 +607,6 @@ private struct ImageTextCanvas: View {
   }
 }
 
-/// A recognized word over the photo, in the accent color linked words use elsewhere. Words in
-/// vertical lines are tinted chips that alternate shade along the column, because an underline
-/// beside a column reads as a ruling line; horizontal words keep an underline.
 private struct ImageTextRegionButton: View {
   let region: ImageTextRegion
   let isSelected: Bool
@@ -662,8 +645,6 @@ private struct ImageTextRegionButton: View {
   }
 }
 
-/// Both: the photo on top with the current line outlined, and each recognized line below as a
-/// caption card, like the Player's captions.
 private struct ImageTextLineCards: View {
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   let page: ImageTextPage
@@ -676,8 +657,6 @@ private struct ImageTextLineCards: View {
   let selectRegion: (ImageTextRegion) -> Void
   let openWord: (DictionaryEntry, Int) -> Void
   let openCandidates: (String, [DictionaryEntry], Int) -> Void
-  /// A line to scroll the cards to. Only a word tapped on the image sets it, so a word tapped in
-  /// a card never moves the list under the learner's finger.
   @State private var scrollTarget: Int?
 
   var body: some View {
@@ -709,7 +688,6 @@ private struct ImageTextLineCards: View {
                 openCandidates: { surface, candidates in openCandidates(surface, candidates, line.id) },
                 openWord: { entry in openWord(entry, line.id) }
               )
-              // Tapping a line outside its words outlines it on the image.
               .contentShape(.rect)
               .onTapGesture { activeLineID = line.id }
               .accessibilityElement(children: .contain)
@@ -720,7 +698,6 @@ private struct ImageTextLineCards: View {
           }
           .listStyle(.plain)
           .contentMargins(.top, 8, for: .scrollContent)
-          // Room to scroll the last lines above the half-height word sheet.
           .contentMargins(
             .bottom, isWordSheetPresented ? geometry.size.height * 0.45 : 16, for: .scrollContent
           )
@@ -739,7 +716,6 @@ private struct ImageTextLineCards: View {
     .task(id: model.selectedPage) { translateIfReady() }
   }
 
-  /// Like the Player's captions, lines are translated without asking when translation is ready.
   private func translateIfReady() {
     guard model.isSelected(page), readingAidPreferences.showsTranslations,
       case .idle = model.translationState
@@ -748,8 +724,6 @@ private struct ImageTextLineCards: View {
   }
 }
 
-/// Text: the recognized Japanese as paragraph caption cards, one Dynamic Type step larger than
-/// Both since this view is for reading.
 private struct ImageTextReader: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences

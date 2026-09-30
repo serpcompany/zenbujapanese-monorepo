@@ -9,28 +9,28 @@ struct PitchAccentTests {
 
   @Test("heiban rises after the first mora and stays high into the particle")
   func heiban() {
-    let levels = accent(0, 2).levels(moraCount: 2)  // いる (要る)
+    let levels = accent(0, 2).levels(moraCount: 2)
     #expect(levels.morae == [false, true])
     #expect(levels.particle)
   }
 
   @Test("atamadaka is high on the first mora only")
   func atamadaka() {
-    let levels = accent(1, 3).levels(moraCount: 3)  // いのち
+    let levels = accent(1, 3).levels(moraCount: 3)
     #expect(levels.morae == [true, false, false])
     #expect(!levels.particle)
   }
 
   @Test("nakadaka is high from the second mora through the downstep")
   func nakadaka() {
-    let levels = accent(2, 3).levels(moraCount: 3)  // たまご
+    let levels = accent(2, 3).levels(moraCount: 3)
     #expect(levels.morae == [false, true, false])
     #expect(!levels.particle)
   }
 
   @Test("odaka stays high on every later mora and drops for the particle")
   func odaka() {
-    let levels = accent(2, 2).levels(moraCount: 2)  // はな (花)
+    let levels = accent(2, 2).levels(moraCount: 2)
     #expect(levels.morae == [false, true])
     #expect(!levels.particle)
   }

@@ -44,7 +44,9 @@ xcodebuild -scheme ZenbuJapaneseModules \
 ```
 
 `SearchConformanceTests` checks Search against the shared conformance suite in
-`apps/ios/LanguageData/Conformance/search-retrieval.json` (see ADR 0006). After an intended
+`apps/ios/LanguageData/Conformance/search-retrieval.json` (see ADR 0006). Only each result's
+Language Reference ID and position are the contract; its headword and reading are there to make
+the file and failures readable. After an intended
 change to Search results or a dictionary rebuild, record it again by adding
 `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` before the test command above, add
 `-only-testing:SearchExperienceTests/SearchConformanceTests` after it, and review the diff.
@@ -90,7 +92,8 @@ conjugation table its part of speech opens (each form with the words `Conjugatio
 `ConjugatedForm.examples`, and the first 3 with their linked tokens and which of them
 `LinkedJapaneseText.matchesQuery` accents), kanji, and its first 25 examples with their linked tokens; for
 a kanji, its metrics, meanings, readings with their words, elements, 24 words, and whether it
-has stroke data (not its JLPT metric, which the suites don't record). The views and the suite
+has stroke data (not its JLPT metric, which the suites leave out until KANJIDIC2's old JLPT
+scale is decided, issue 485). The views and the suite
 share those helpers, so the suite records what the views draw. Each file pins the SHA-256 of
 every bundled artifact it was recorded against. After an intended
 change to either screen or its data, record them again with the same
@@ -104,12 +107,14 @@ The website's dictionary service replays all five suites through the shared Type
 the same data ([`dictionary-api.md`](dictionary-api.md)), and the `Dictionary API` workflow runs
 them on pull requests that change a suite, so commit a re-recorded suite with the change to the
 core it needs. A change to a Swift file the core ports needs its port changed in the same PR
-([`dictionary-core.md`](dictionary-core.md)). One thing the website does isn't recorded yet:
-sentence search (Discovered Words, above). The service checks it with its own test
-(`sentence-search.test.ts`) until a suite records it.
+([`dictionary-core.md`](dictionary-core.md), and Swift the shared core ports, below). One thing
+the website does isn't recorded yet: sentence search (Discovered Words, above). The service
+checks it with its own test (`sentence-search.test.ts`) until a suite records it.
 
-The iOS app has no CI workflow. Verify ordinary app changes by also building,
-launching, and inspecting the real app.
+The `iOS` workflow ([`ci.md`](ci.md), iOS) runs the data tools' contract tests on pull requests
+that change `apps/ios`, and `SearchExperienceTests` on a macOS runner only once the owners turn
+that on. Until then, run `SearchExperienceTests` on a Mac, and verify ordinary app changes by also
+building, launching, and inspecting the real app.
 
 Frequency-pack selection has one repo-local Python contract test. Run
 `python3 -m unittest apps/ios/Tools/tests/test_frequency_pack_runtime_contract.py` to verify
@@ -122,16 +127,19 @@ and copy the reported hashes into its catalog manifest.
 Examples for kana-headword words come from `ExampleWordIndex.sqlite3`, which is built against the
 bundled `LanguageReferenceData.sqlite3`. Run
 `python3 -m unittest apps/ios/Tools/tests/test_example_word_index_contract.py` to verify that it
-matches that database, its pinned source, and its import report.
+matches that database, its pinned source, and its import report. Without the index, as with a
+test database, kana headwords get no examples rather than substring matches. Tatoeba's index
+writes both the adverb 然う and the suffix そう as bare そう, so those sentences link to neither.
 
 Pitch for two-part compounds UniDic doesn't list whole, such as 記者会見, comes from
 `CompoundPitch.sqlite3`, also built against that database. Run
 `python3 -m unittest apps/ios/Tools/tests/test_compound_pitch_contract.py` to verify it.
 
 Every frequency pack pins the SHA-256 of `LanguageReferenceData.sqlite3`. After rebuilding it
-with `import_jmdict.py` (inputs are listed in `LanguageData/Sources/README.md`), also copy its
-ranking contract into `DictionaryRankingArtifactContract.json`, rebuild the TUBELEX and Wikipedia
-packs with `import_frequency_pack.py` (TUBELEX also needs `--unidic apps/ios/LanguageData/Sources/unidic-cwj-3.1.0.zip`), rebuild the Jiten packs with
+with `import_jmdict.py` (inputs are listed in `LanguageData/Sources/README.md`; large ones other
+than JMdict's `.gz` are git-ignored, so download them again from their source records), also
+copy its ranking contract into `DictionaryRankingArtifactContract.json`, rebuild the TUBELEX and
+Wikipedia packs with `import_frequency_pack.py` (TUBELEX also needs `--unidic apps/ios/LanguageData/Sources/unidic-cwj-3.1.0.zip`), rebuild the Jiten packs with
 `build_jiten_frequency_packs.py --out-dir <dir>` (it rewrites their manifests and keeps changed
 ones trusted) and publish the new ZIPs, rebuild the JLPT pack, rebuild the example word index with `import_example_word_index.py`, rebuild the compound pitch estimates with `import_compound_pitch.py`
 (inputs in `LanguageData/Sources/Tatoeba-jpn-indices-2026-09-26.source.json`), and update each catalog manifest. Move the previous manifests of downloadable
@@ -144,6 +152,150 @@ verified source file with
 `CLOUDFLARE_ACCOUNT_ID=<SERP account> python3 apps/ios/Tools/publish_frequency_pack_sources.py <file>…`.
 The tool matches files by size and SHA-256 and re-downloads each public URL to verify it. Never
 overwrite or delete an object: trusted historical manifests still reference it.
+
+## Swift the shared core ports
+
+`packages/dictionary-core/src/` ports parts of `apps/ios/Modules/Sources/SearchExperience/`: the
+Swift sources section of [`dictionary-core.md`](dictionary-core.md) maps each module to the Swift
+it ports. The `Search parity` workflow ([`ci.md`](ci.md)) fails a pull request that changes one
+side of a pair without the other; change both, and re-record the suite that covers the change.
+
+## Search and linked text
+
+`LookupClient` retrieves a relevance-filtered, deduplicated set in dictionary order and never
+reads frequency; `SearchResultFrequencyOrdering` (`SearchView.swift`) reorders only that bounded
+set. An exact dictionary form stays first (した is 下 and 舌 before する), then deinflected lemmas
+by chain length, so a direct conjugation (まけたら → 負ける) outranks a longer chain, then prefix
+and contains matches. Radical searches keep only the leading lexical-rank group.
+
+`JapaneseDeinflector` rewrites suffixes in chains: after the first rule, a rule applies only when
+its input classes include the class the previous one produced (ない is an i-adjective, so
+なかった → ない → the base). Its candidates are hypotheses, kept only when an entry with that exact
+form has a matching part of speech. Romaji can't tell which godan base a past or te-form had, so
+`SearchQuery` offers every dictionary-form candidate, irregular verbs first (kita is also the past
+of kiru), and -sete gives both -seru and -su (makasete: 任せる, 任す, 負かす).
+
+`JapaneseInflectionGrouping` joins a verb or adjective with the pieces both parsers split off, so
+見なかった links as one word: auxiliaries, the connectives て, で, and ば, IPADIC's suffix verbs
+(れる, られる, せる, させる, tagged 接尾), and helper verbs after て (tagged 非自立). A na-adjective
+stem (IPADIC: a noun tagged 形容動詞語幹; UniDic: 形状詞) joins one following な, で, or に, but not
+the copula, so 静かだ stays 静か + だ. A joined word resolves through its head's forms only, since
+its surface can match an unrelated headword (しまった is also the interjection "darn it!"), and
+falls back to its pieces when the head resolves to nothing.
+
+`PartOfSpeech` raw values are stable identifiers the JMdict importer writes, and
+`PartOfSpeechFormatter` owns every learner-facing word for them, so rewording needs no
+language-data rebuild. Romaji is Foundation's ICU transliteration as is
+(`ReadingAidPresentation.swift`), deliberately without app-owned corrections for particles or
+long vowels.
+
+## Frequency packs
+
+`FrequencyPackManager` trusts a pack only while its files match what its manifest pins: the
+artifact, `languageDataSHA256`, and `mappingPolicySHA256`, the bundled mapping SQL the installer
+runs on the device. `FrequencyPackMappingV1.sql` matches forms only; `FrequencyPackMappingV2.sql`
+also requires a row's reading when it has one, honoring JMdict's reading restrictions, and maps
+rows without one as V1 does. The catalog, the `search-results.json` suite, the analysis reports,
+and the language-data release all pin those files byte for byte, so never edit one in place, not
+even a comment: every pack that pins it would fail verification.
+
+A manifest's encoding also feeds the trust hashes of installed packs, so anything outside a
+pack's contract stays out of it: `kind` is omitted for rank packs, and chip names (`shortName`)
+are matched by pack family, the ID's first three parts, so a rebuilt pack keeps its label. A
+historical manifest can share its pack version with the current one when only derived hashes
+changed, as after a language-data rebuild.
+
+An artifact's content digest (`FrequencyPackArtifactContent` in `FrequencyPack.swift`, matched by
+`import_frequency_pack.py`) hashes `zenbu.frequency-pack-content.v1` and a NUL byte, then the
+metadata sorted by key, each UTF-8 key and value prefixed with its byte length as an unsigned
+64-bit big-endian integer; `FrequencyPackContentDigestV1.json` is a test vector. Its
+`mapping_sha256` hashes every evidence row in ID order (a level pack's: each ID's 16 bytes, then
+its level as an unsigned 64-bit big-endian integer), so SQLite's page layout never changes it.
+
+Verification hashes every row, so the manager keeps verified artifacts for later lookups, and
+`SearchExperienceRootView` opens the store and loads kanji readings at launch, off the main
+actor, to keep that work out of the first search. Lookups bind the raw 16-byte ID so SQLite uses
+the primary key; `FrequencyLookupPerformanceTests` fails if they go back to scanning.
+
+## Local stores
+
+Known words (`WordKnowledge.swift`) and word lists (`WordLists.swift`) each keep one versioned
+JSON file through `LocalJSONFile`, loaded once off the main actor and rewritten in full, with
+dates in milliseconds since 1970. `LocalFileWriteQueue` runs the load and then each write in
+order, so a write never races the load. A file this version can't read in full is copied aside
+(the newest few copies are kept) before its readable records replace it, and records decode one
+at a time (`LossyDecodable`), so one bad record doesn't lose the rest. A file from a newer
+version, or one that can't be read at launch (before the device's first unlock), is never written
+over; the store is read-only instead.
+
+Both files are at version 2, which added kanji; a version 1 app would read kanji as words, so it
+opens a version 2 file read-only. A word is keyed by its Language Reference ID and a kanji by
+`kanji:` and the character (`SavedItem.storedID`), which can't collide with the hexadecimal ID.
+Marking a word unknown keeps its record, so a later sync can tell a removal from no status. List
+records are shaped to become database rows, and a membership keeps its headword so the word can
+still be found if its entry's ID changes.
+
+## Image Search and Apple Intelligence
+
+`ImageTextRecognitionClient` uses Swift Vision's `RecognizeTextRequest`, which reads vertical
+Japanese right to left; `VNRecognizeTextRequest` returns nothing for vertical Japanese. A line is
+vertical when its characters advance downward, measured in image pixels so a wide or tall image
+doesn't skew it; a single character falls back to its box's shape. Vision's y axis points up, so
+a later piece of a column sits lower.
+
+`ImageTextExplanationClient` runs Apple's on-device model with the
+`.permissiveContentTransformations` guardrails, because the default ones refused an ordinary novel
+page about illness. Those cover plain-text responses only, so translation and Context ask for
+plain text (translation parses numbered lines) rather than guided generation. The model's context
+is small: Context reads a page's first 1,200 characters, and translation goes in batches under
+that. The model only picks idioms, since it confidently misread them (背水の陣 as "a surprise
+attack") and translated them word by word (木を見て森を見ず). A pick is kept only when its entry
+is tagged as an expression or it's a phrase of four or more characters, such as 背水の陣: single
+words such as する matched unrelated entries (擦る, "to rub").
+
+## Player and YouTube
+
+`YouTubePlayer` loads YouTube's IFrame player with `https://zenbujapanese.com` as its origin and
+referrer, which YouTube requires for embedded playback; error 101 or 150 means the owner
+disallows embedding. While one line plays, time reports from before its seek landed are ignored.
+
+`YouTubeCaptionClient` fetches timed text in its default `<transcript><text start dur>` XML, so it
+drops any `fmt` from the track URL; the text escapes HTML entities twice (`&amp;#39;`). Automatic
+captions overlap, so each line ends when the next begins. YouTube's translated track keeps the
+Japanese track's time slots, leaves them empty while a sentence continues, and puts the whole
+sentence in its last slot; `YouTubeCaptionParsing` rebuilds sentences from that, rejoining words
+split across slots ("Do" and "n't"), before pairing them with lines.
+
+`VideoSearchView` watches the web view's URL as well as its loads, because YouTube's mobile site
+changes pages without loading them, and requires a tap before any media plays, so results pages'
+previews stay still.
+
+## SwiftUI notes
+
+- A plain `List` pins section headers and footers over scrolling rows, so Search's headings
+  (`SearchListHeading`) and frequency notice are rows.
+- SwiftUI can miss the last keystroke before Return, so `SearchView` searches again when the query
+  changed without SwiftUI starting a newer task; otherwise Searching stays on screen.
+- `ExampleSentenceSections` keeps loaded rows while refreshing, so a Back transition doesn't
+  collapse the `List` and lose its scroll position.
+- The word sheet (`WordSheetPresentation` in `RecognizedWordSheet.swift`) swaps the word inside a
+  `sheet(isPresented:)`: with `sheet(item:)`, each new word dismissed and re-presented the sheet,
+  which reopened at full height.
+- Image Search's Translate view starts from `.task(id: model.selectedPage)`, because a neighboring
+  page's view appears before `selectPage` runs, and `selectPage` cancels what the old page started.
+- Lists' swipe actions allow no full swipe, and Delete has no destructive role, so a list is never
+  deleted by swiping too far and its row stays while the deletion is confirmed.
+- The compiled asset catalog exposes the app icon only through the `CFBundleIcons` file names in
+  Info.plist, which Account reads to show it.
+
+## App conventions
+
+- `ZenbuTheme` holds the only app-owned colors, for learning evidence: radical selection, the
+  animated stroke, and the pitch downstep. Everything else uses SwiftUI's system styles.
+- Account's support and privacy URLs (`AccountAndMediaLibraryView.swift`) match the App Store
+  listing's in `apps/ios/metadata/`; change both together.
+- `CreditsView` links the documentation of each EDRDG file (JMdict, KANJIDIC2, RADKFILE), as the
+  EDRDG licence requires.
 
 ## Search manual checks
 

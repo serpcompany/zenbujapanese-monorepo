@@ -2,9 +2,6 @@ import CryptoKit
 import Foundation
 import SQLite3
 
-/// One lookup result per enabled frequency dictionary, in the learner's priority order. Search
-/// orders by the first result, then each next one breaks ties; an empty list means no dictionary
-/// is enabled.
 typealias FrequencyRanks = [FrequencyLookupResult]
 
 struct FrequencyCapability: Sendable {
@@ -87,10 +84,8 @@ enum FrequencyLookupResult: Equatable, Sendable {
   case noEvidence(pack: FrequencyPackDisclosure)
   case unavailable(FrequencyPackUnavailable)
 
-  /// Whether the dictionary has a rank or level for the entry.
   var hasEvidence: Bool { sortValue != nil }
 
-  /// Smaller values sort first: a rank, or a level ordered from N5 to N1.
   var sortValue: Int? {
     switch self {
     case .evidence(let evidence): evidence.rank
@@ -99,7 +94,6 @@ enum FrequencyLookupResult: Equatable, Sendable {
     }
   }
 
-  /// How common the rank or level says the entry is, or nil without either.
   var tier: FrequencyTier? {
     switch self {
     case .evidence(let evidence): FrequencyTier(rank: evidence.rank)
@@ -155,7 +149,6 @@ struct FrequencyEvidence: Equatable, Sendable {
   }
 }
 
-/// A JLPT level; the raw value is the level number, so N5 (the easiest) is 5.
 enum JLPTLevel: Int, CaseIterable, Sendable {
   case n1 = 1
   case n2
@@ -165,7 +158,6 @@ enum JLPTLevel: Int, CaseIterable, Sendable {
 
   var label: String { "N\(rawValue)" }
 
-  /// Learners study from N5 up, so N5 sorts first.
   var sortValue: Int { 6 - rawValue }
 }
 
@@ -179,8 +171,6 @@ struct FrequencyLevelEvidence: Equatable, Sendable {
     + "published no official vocabulary list since 2010."
 }
 
-/// How common a ranked word is, using Migaku's star cutoffs so learners who know that scale
-/// read Zenbu's chips the same way.
 enum FrequencyTier: Int, Comparable, Sendable {
   case rare = 1
   case uncommon
@@ -208,8 +198,6 @@ enum FrequencyTier: Int, Comparable, Sendable {
     }
   }
 
-  /// JLPT levels on the same scale: N5 and N4 read as very common, N3 and N2 as common, and
-  /// N1 as moderately common.
   init(level: JLPTLevel) {
     switch level {
     case .n5, .n4: self = .veryCommon
@@ -224,7 +212,6 @@ enum FrequencyTier: Int, Comparable, Sendable {
 struct FrequencyPresentationModel: Equatable, Sendable {
   let result: FrequencyLookupResult
   let packName: String
-  /// Nil when the dictionary has no rank for the entry.
   let tier: FrequencyTier?
   let inlineText: String
   let inlineAccessibilityLabel: String
@@ -233,7 +220,6 @@ struct FrequencyPresentationModel: Equatable, Sendable {
   let percentileText: String?
   let levelText: String?
   let explanation: String?
-  /// Row text when the dictionary has nothing for the entry.
   let missingText: String
 
   init(result: FrequencyLookupResult) {
@@ -302,10 +288,6 @@ struct FrequencyPresentationModel: Equatable, Sendable {
 }
 
 struct SearchFrequencyRankPresentationModel: Equatable, Sendable {
-  /// Chips in priority order: the first enabled dictionary always, because it orders the
-  /// results, then each other dictionary that ranks the entry. A level dictionary such as JLPT
-  /// is left out when it does not list the entry, even when first. Empty while evidence loads
-  /// or when no dictionary is enabled.
   let chips: [FrequencyPresentationModel]
   let accessibilityValue: String
 
@@ -338,8 +320,6 @@ struct SearchFrequencyRankPresentationModel: Equatable, Sendable {
     }.joined(separator: ", ")
   }
 
-  /// The first `limit` chips and how many were left out, for layouts with too little room to
-  /// show every dictionary (such as accessibility text sizes). VoiceOver still reads all ranks.
   func collapsed(to limit: Int) -> (chips: [FrequencyPresentationModel], hiddenCount: Int) {
     (Array(chips.prefix(limit)), max(chips.count - limit, 0))
   }
@@ -359,9 +339,6 @@ enum FrequencyPackError: Error, Equatable {
 }
 
 enum FrequencyPackArtifactContent {
-  /// V1 hashes its UTF-8 domain separator, then key-sorted metadata. Every UTF-8 key
-  /// and value has an unsigned 64-bit big-endian byte-length prefix. `mapping_sha256`
-  /// transitively covers every ordered evidence row, so SQLite page layout is excluded.
   static func sha256(metadata: [String: String]) -> String {
     var digest = SHA256()
     digest.update(data: Data("zenbu.frequency-pack-content.v1\0".utf8))
@@ -411,8 +388,6 @@ enum FrequencyPackArtifactContent {
     return digest.finalize().hexString
   }
 
-  /// Every (ID, level) row in ID order: the 16 ID bytes, then the level as an unsigned 64-bit
-  /// big-endian integer.
   static func levelMappingSHA256(_ database: OpaquePointer) throws -> String {
     var statement: OpaquePointer?
     guard
@@ -617,7 +592,6 @@ struct FrequencyPackArtifact: Sendable {
     for id in ids {
       sqlite3_reset(statement)
       sqlite3_clear_bindings(statement)
-      // Bind the raw 16-byte key so SQLite can use the primary key instead of scanning.
       guard let key = id.bytes else {
         results[id] = .noEvidence(pack: manifest.disclosure)
         continue

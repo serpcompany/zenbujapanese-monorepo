@@ -251,7 +251,6 @@ extension FrequencyPackState {
     }
   }
 
-  /// The row subtitle: domain plus "Included" or the installed size.
   fileprivate var detailSummary: String {
     let detail = manifest.bundled ? "Included" : storageText
     return [manifest.domain, detail].compactMap { $0 }.joined(separator: " · ")
@@ -259,7 +258,6 @@ extension FrequencyPackState {
 }
 
 extension FrequencyPackSnapshot {
-  /// An optimistic copy that reflects a new enabled order before the store confirms it.
   fileprivate func withEnabledPackIDs(_ ids: [FrequencyPackID]) -> FrequencyPackSnapshot {
     FrequencyPackSnapshot(
       enabledPackIDs: ids,

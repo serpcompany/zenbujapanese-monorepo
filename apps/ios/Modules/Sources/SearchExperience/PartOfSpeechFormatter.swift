@@ -1,8 +1,3 @@
-/// Turns dictionary part-of-speech categories into one readable phrase, such as
-/// "Godan verb (intransitive)" instead of "Godan Verb · Intransitive Verb".
-///
-/// All part-of-speech wording lives here. The importer only supplies stable category
-/// identifiers, so wording can change without regenerating language data.
 enum PartOfSpeechFormatter {
   static func phrase(for parts: [PartOfSpeech]) -> String {
     let transitive = parts.contains(.transitive)
@@ -16,13 +11,10 @@ enum PartOfSpeechFormatter {
       if let verb = verbClassNames[part] {
         phrases.append(verb)
       } else if part == .verb {
-        // A generic "Verb" adds nothing beside a specific class such as "Godan verb".
         if !hasVerbClass { phrases.append("Verb") }
       } else if part == .noun {
-        // "Noun (の)" already says noun.
         if !takesNo { phrases.append("Noun") }
       } else if part == .adverb {
-        // "Adverb (と)" already says adverb.
         if !takesTo { phrases.append("Adverb") }
       } else if let name = otherNames[part] {
         phrases.append(name)
@@ -56,7 +48,6 @@ enum PartOfSpeechFormatter {
     phrase == "Verb" || phrase.hasSuffix(" verb")
   }
 
-  /// Verb classes. A noun that takes する reads as "する verb" beside its noun class.
   private static let verbClassNames: [PartOfSpeech: String] = [
     .godanVerb: "Godan verb",
     .ichidanVerb: "Ichidan verb",
@@ -68,7 +59,6 @@ enum PartOfSpeechFormatter {
     .auxiliaryVerb: "Auxiliary verb",
   ]
 
-  /// Everything else in sentence case. "Unclassified" is left out: it tells a learner nothing.
   private static let otherNames: [PartOfSpeech: String] = [
     .pronoun: "Pronoun",
     .nounPrefix: "Prefix",

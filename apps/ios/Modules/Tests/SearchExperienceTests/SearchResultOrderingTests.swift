@@ -163,7 +163,6 @@ struct SearchResultOrderingTests {
 
   @Test("an entry the first dictionary misses places by the next dictionary, not last")
   func unrankedInFirstDictionaryUsesTheNext() {
-    // Search "house": YouTube has no rank for 家 (いえ), which JLPT lists at N5.
     let ie = fixtureEntry(id: "00000000000000000000000000000001", headword: "家")
     let sumai = fixtureEntry(id: "00000000000000000000000000000002", headword: "住まい")
     let okusha = fixtureEntry(id: "00000000000000000000000000000003", headword: "屋舎")

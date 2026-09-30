@@ -55,8 +55,9 @@ the player shows **Video Unavailable**.
   YouTube shows it, so no card grows taller than the screen. Apple Translation runs only once its Japanese language is downloaded, and Player
   never interrupts playback to ask.
 - **Comprehension.** Every caption line is analyzed when the video opens. The known share counts
-  each occurrence of a dictionary word, leaving out particles, auxiliaries, and punctuation, and
-  updates as words are marked known. Recent shows the last figure as a pill on each thumbnail.
+  each occurrence of a dictionary word, leaving out particles, auxiliaries, punctuation, and text
+  the dictionary doesn't recognize, and updates as words are marked known. Recent shows the last
+  figure as a pill on each thumbnail.
 - **Playback controls.** A compact bar on its own background sits between the player and the
   caption cards. A thin scrubber along its top edge can be dragged to any point. Below it, the
   elapsed and total time sit beside buttons that go to the previous line, play or pause, and go

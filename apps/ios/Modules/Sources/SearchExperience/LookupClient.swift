@@ -1,5 +1,3 @@
-// The website runs a TypeScript port of this search logic: packages/dictionary-core/src/search/search.ts.
-// Change both in the same PR and re-record the conformance suite (issue 481).
 import Foundation
 import SQLite3
 
@@ -72,7 +70,6 @@ private actor LanguageReferenceData {
   }
 
   private func searchUncached(_ query: SearchQuery) async throws -> LookupSearchResults {
-    // Same lookup as `entry(matchingForm: query.value)`, run once for both uses below.
     let exactFormEntry =
       query.isASCII && !query.isEmpty
       ? try rankedEnglish(query, exactFormOnly: true).first?.entry : nil
@@ -114,8 +111,6 @@ private actor LanguageReferenceData {
     if query.isJapaneseOnly {
       let deinflectedSources = try japaneseDeinflectedSources(for: query)
       if !deinflectedSources.isEmpty {
-        // An exact dictionary form stays first (した is 下 and 舌 before する); the
-        // deinflected lemmas follow it ahead of prefix and contains matches.
         let exactItems = directResults.items.prefix { item in
           guard case .japanese(let rank) = item.relevance.matchRank else { return false }
           return rank.relation <= .readingExact
@@ -240,8 +235,6 @@ private actor LanguageReferenceData {
     try searchOnce(query)
   }
 
-  /// Dictionary entries for kana and kanji inflections, grouped by deinflection chain length
-  /// so a direct conjugation (まけたら → 負ける) outranks a longer, less plausible chain.
   private func japaneseDeinflectedSources(
     for query: SearchQuery
   ) throws -> [[LookupSearchResultItem]] {
@@ -588,8 +581,6 @@ private actor LanguageReferenceData {
     return opened
   }
 
-  /// Attaches the estimated pitch of compounds UniDic doesn't list whole, which
-  /// `selectedColumns` falls back to. Without the bundled file an empty table stands in.
   private static func attachCompoundPitch(_ database: OpaquePointer) throws {
     let url = Bundle.module.url(forResource: "CompoundPitch", withExtension: "sqlite3")
     var statement: OpaquePointer?
@@ -765,7 +756,6 @@ private actor LanguageReferenceData {
   private static let decoder = JSONDecoder()
   private static let searchCacheCapacity = 32
 
-  /// Matches `query` as a whole token: not preceded or followed by another ASCII letter.
   private static func glossTokenPattern(_ query: String) throws -> NSRegularExpression {
     let escaped = NSRegularExpression.escapedPattern(for: query)
     return try NSRegularExpression(pattern: "(?:^|[^a-z])\(escaped)(?:$|[^a-z])")

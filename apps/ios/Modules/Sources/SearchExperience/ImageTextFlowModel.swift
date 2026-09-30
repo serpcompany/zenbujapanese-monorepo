@@ -10,7 +10,6 @@ final class ImageTextFlowModel {
     case checkingAvailability
     case preparing
     case translating
-    /// Natural translations keyed by their Japanese source text.
     case translated([String: String])
     case cancelled
     case unsupported
@@ -43,7 +42,6 @@ final class ImageTextFlowModel {
   var showsHighlights = true
   var noTextAlertPage: Int?
   var translationState: TranslationState = .idle
-  /// The translation comes from Apple Intelligence's on-device model, not Apple Translation.
   private(set) var translatesOnDevice = false
   private(set) var explanationState: ExplanationState = .idle
   private var explanationTask: Task<Void, Never>?
@@ -117,8 +115,6 @@ final class ImageTextFlowModel {
     return page
   }
 
-  /// Every paragraph and line of the selected page, so Translate and the line cards share one
-  /// translation pass.
   var translationSources: [String] {
     guard let page = selectedLoadedPage else { return [] }
     var seen = Set<String>()
@@ -135,8 +131,6 @@ final class ImageTextFlowModel {
     return pages[selectedPage].asset
   }
 
-  /// Translates the selected page. `preparesIfNeeded: false` skips pages whose language
-  /// resources would need downloading, for views that translate without being asked.
   func requestTranslation(preparesIfNeeded: Bool = true) {
     let source = translationSources
     guard !source.isEmpty else { return }
@@ -170,7 +164,6 @@ final class ImageTextFlowModel {
           translationInvocationID = nil
           return
         }
-        // Without Apple Translation, Apple Intelligence's on-device model translates instead.
         let onDevice = availability != .installed
         if onDevice, explanationClient.availability() != .available {
           translationState = .unsupported
@@ -203,7 +196,6 @@ final class ImageTextFlowModel {
     }
   }
 
-  /// Describes the selected page and finds its idioms with the on-device model.
   func requestExplanation() {
     guard case .idle = explanationState, let page = selectedLoadedPage else { return }
     let availability = explanationClient.availability()
@@ -395,7 +387,6 @@ struct ImageTextPage {
   let asset: ImageTextAsset
   let observations: [RecognizedImageTextObservation]
   let regions: [ImageTextRegion]
-  /// Recognized lines that contain Japanese, in reading order.
   let lines: [ImageTextLine]
   let paragraphs: [ImageTextParagraph]
 
@@ -455,14 +446,10 @@ struct ImageTextLine: Identifiable, Equatable {
     self.isVertical = isVertical
   }
 
-  /// Length along the reading direction, in normalized image coordinates.
   var extent: CGFloat { isVertical ? boundingBox.height : boundingBox.width }
-  /// Size across the reading direction, which tracks the font size.
   var thickness: CGFloat { isVertical ? boundingBox.width : boundingBox.height }
   var endsSentence: Bool { text.last.map { "。．！？!?」』".contains($0) } ?? false }
 
-  /// Whether `next` carries on in the same column or row, as when recognition splits one line
-  /// in two. Vision's y axis points up, so a later piece of a column sits lower.
   func isContinued(by next: ImageTextLine) -> Bool {
     guard next.isVertical == isVertical else { return false }
     let box = boundingBox
@@ -482,11 +469,6 @@ struct ImageTextParagraph: Identifiable, Equatable {
   var id: Int { lines[0].id }
   var text: String { lines.map(\.text).joined() }
 
-  /// Joins lines that wrap, as columns on a book page do. A line wraps into the next when it
-  /// runs the full length of the text block, doesn't end a sentence, and the next line has the
-  /// same direction and font size. Blocks with fewer than two full-length lines are treated as
-  /// lists, so a list whose longest item reaches the edge keeps every item separate. Pieces of
-  /// one column or row that recognition split apart are always joined.
   static func group(_ lines: [ImageTextLine]) -> [ImageTextParagraph] {
     let longest = lines.map(\.extent).max() ?? 0
     let isFullLength = { (line: ImageTextLine) in line.extent >= longest * 0.9 }

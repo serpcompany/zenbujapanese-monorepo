@@ -4,7 +4,6 @@ import Observation
 enum WordKnowledgeStatus: Codable, Hashable, Sendable {
   case known
   case unknown
-  /// A status written by a newer version. It reads as unknown and is saved back unchanged.
   case unrecognized(String)
 
   init(from decoder: Decoder) throws {
@@ -26,9 +25,6 @@ enum WordKnowledgeStatus: Codable, Hashable, Sendable {
   }
 }
 
-/// One learner judgement about a dictionary word or kanji, keyed by `SavedItem.storedID`: a
-/// word's stable Language Reference ID, or `kanji:` and the character.
-/// Marking a word unknown keeps its record, so a later sync can tell a removal from no status.
 struct WordKnowledgeRecord: Codable, Hashable, Identifiable, Sendable {
   let entryID: String
   let headword: String
@@ -37,27 +33,18 @@ struct WordKnowledgeRecord: Codable, Hashable, Identifiable, Sendable {
   var updatedAt: Date
 
   var id: String { entryID }
-  /// The kanji this record is about, or nil for a word.
   var kanji: KanjiCharacter? { SavedItem.kanji(storedID: entryID) }
 }
 
-/// Which words and kanji the learner knows. A word without a record is unknown.
-///
-/// Records are held in memory for fast lookups and saved as one JSON file on the device. The
-/// file loads off the main actor.
 @MainActor
 @Observable
 final class WordKnowledge {
   static let shared = WordKnowledge()
 
-  /// False until the file has loaded. Until then every word reads as unknown and changes are
-  /// ignored, so callers showing or acting on known state should wait for it.
   private(set) var isLoaded = false
-  /// Set when changes can't be saved; they are then ignored.
   private(set) var readOnlyReason: LocalFileReadOnlyReason?
   var isReadOnly: Bool { readOnlyReason != nil }
   private(set) var records: [String: WordKnowledgeRecord] = [:]
-  /// Known words, most recently marked first.
   private(set) var knownRecords: [WordKnowledgeRecord] = []
   @ObservationIgnored private let writer: WordKnowledgeWriter
   @ObservationIgnored private let writes = LocalFileWriteQueue()
@@ -73,7 +60,6 @@ final class WordKnowledge {
         .filter { $0.status == .known }
         .sorted { $0.updatedAt > $1.updatedAt }
       isLoaded = true
-      // Replaces a partly unreadable file, already kept aside, so it isn't copied every launch.
       if needsRewrite { persist() }
     }
   }
@@ -134,12 +120,10 @@ final class WordKnowledge {
     persist()
   }
 
-  /// Tries again to save changes whose last write failed.
   func saveIfNeeded() {
     if writes.hasUnsavedChanges { persist() }
   }
 
-  /// Waits until the file has loaded and every change so far has been written.
   func flush() async {
     await writes.flush()
   }
@@ -159,8 +143,6 @@ final class WordKnowledge {
 
 private actor WordKnowledgeWriter {
   private struct StoredFile: Codable {
-    /// Version 2 adds kanji records, which a version 1 app would open as words; it opens a
-    /// version 2 file read-only instead.
     static let currentVersion = 2
     var version = currentVersion
     var records: [WordKnowledgeRecord]
@@ -178,8 +160,6 @@ private actor WordKnowledgeWriter {
       description: "known words", logCategory: "WordKnowledge")
   }
 
-  /// A missing file loads as no records. A file that can't be read in full is kept beside it,
-  /// and `needsRewrite` asks for the readable records to replace it once that copy exists.
   func load() async -> (
     records: [String: WordKnowledgeRecord], needsRewrite: Bool,
     readOnlyReason: LocalFileReadOnlyReason?
@@ -210,7 +190,6 @@ private actor WordKnowledgeWriter {
     Dictionary(records.map { ($0.entryID, $0) }) { _, latest in latest }
   }
 
-  /// Returns whether the records reached the disk.
   func write(_ records: [WordKnowledgeRecord]) async -> Bool {
     guard let data = try? JSONEncoder.localStore.encode(StoredFile(records: records)) else {
       return false

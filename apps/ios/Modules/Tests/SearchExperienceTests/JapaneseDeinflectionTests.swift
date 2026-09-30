@@ -3,8 +3,6 @@ import Testing
 
 @Suite("Japanese-script deinflection")
 struct JapaneseDeinflectionTests {
-  // Issue #356: まけたら returned no dictionary results because only romaji queries
-  // were deinflected; kana and kanji inflections depended on the optional Sudachi pack.
   @Test("まけたら resolves to 負ける without the optional analysis pack")
   func maketara() async throws {
     let query = SearchQuery("まけたら")
@@ -18,19 +16,15 @@ struct JapaneseDeinflectionTests {
   @Test(
     "common kana and kanji inflections lead with their dictionary form",
     arguments: [
-      // Ichidan
       ("負けたら", "負ける"), ("まけた", "負ける"), ("たべなかった", "食べる"),
       ("食べさせられなかったら", "食べる"), ("見ている", "見る"),
       ("食べちゃった", "食べる"), ("食べよう", "食べる"),
-      // Godan, one per row
       ("書いて", "書く"), ("泳いだ", "泳ぐ"), ("話しました", "話す"),
       ("待って", "待つ"), ("死んだ", "死ぬ"), ("呼んだら", "呼ぶ"), ("読みます", "読む"),
       ("帰った", "帰る"), ("買わない", "買う"), ("書けば", "書く"), ("飲みたい", "飲む"),
       ("書かれた", "書く"), ("行った", "行く"), ("書いちゃった", "書く"), ("読んじゃう", "読む"),
-      // Irregular
       ("来ます", "来る"), ("こなかった", "来る"), ("しなかった", "する"),
       ("勉強した", "勉強"),
-      // I-adjective
       ("高かった", "高い"), ("高くない", "高い"), ("たかくて", "高い"), ("高ければ", "高い"),
     ]
   )
@@ -45,7 +39,6 @@ struct JapaneseDeinflectionTests {
     "an inflection that is also a dictionary word keeps it first, then its lemmas",
     arguments: [
       ("きた", "来る"), ("こない", "来る"), ("した", "する"), ("食べられる", "食べる"),
-      // Ambiguous kana: every valid reading is offered, not one parser guess.
       ("かって", "買う"), ("かって", "勝つ"), ("いって", "行く"), ("いって", "言う"),
     ]
   )

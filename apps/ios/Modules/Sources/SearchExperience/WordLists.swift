@@ -1,36 +1,25 @@
 import Foundation
 import Observation
 
-/// A learner's named list of dictionary words and kanji, such as Favorites.
 struct WordList: Codable, Hashable, Identifiable, Sendable {
   let id: UUID
   var name: String
-  /// Where the list appears in Account → Lists, lowest first.
   var position: Int
   let createdAt: Date
   var updatedAt: Date
 }
 
-/// One word or kanji in one list. An item appears in a list at most once.
 struct WordListMembership: Codable, Hashable, Identifiable, Sendable {
   let listID: UUID
-  /// `SavedItem.storedID`: the word's Language Reference ID, or `kanji:` and the character.
   let entryID: String
-  /// Kept so the word can still be found if its entry's ID changes.
   let headword: String
   let reading: String
   let addedAt: Date
 
   var id: String { entryID }
-  /// The kanji this membership holds, or nil for a word.
   var kanji: KanjiCharacter? { SavedItem.kanji(storedID: entryID) }
 }
 
-/// The learner's word lists and the words in each.
-///
-/// Lists and memberships are held in memory and saved as one JSON file on the device, shaped so
-/// each record can later become a database row. The file loads off the main actor. A new install
-/// starts with one list, Favorites.
 @MainActor
 @Observable
 final class WordLists {
@@ -38,14 +27,10 @@ final class WordLists {
 
   static let defaultListName = String(localized: "Favorites")
 
-  /// False until the file has loaded. Until then there are no lists and changes are ignored.
   private(set) var isLoaded = false
-  /// Set when changes can't be saved; they are then ignored.
   private(set) var readOnlyReason: LocalFileReadOnlyReason?
   var isReadOnly: Bool { readOnlyReason != nil }
-  /// Every list, in the learner's order.
   private(set) var lists: [WordList] = []
-  /// Each list's words, most recently added first.
   private(set) var membershipsByList: [UUID: [WordListMembership]] = [:]
   @ObservationIgnored private let writer: WordListsWriter
   @ObservationIgnored private let writes = LocalFileWriteQueue()
@@ -57,7 +42,6 @@ final class WordLists {
       let loaded = await writer.load()
       readOnlyReason = loaded.readOnlyReason
       if let contents = loaded.contents {
-        // A repeated list ID keeps its most recently updated copy.
         lists = Dictionary(contents.lists.map { ($0.id, $0) }) {
           $0.updatedAt >= $1.updatedAt ? $0 : $1
         }
@@ -67,10 +51,8 @@ final class WordLists {
       }
       isLoaded = true
       if loaded.contents == nil {
-        // No file yet: a new install starts with Favorites.
         createList(named: Self.defaultListName)
       } else if loaded.needsRewrite {
-        // Replaces a partly unreadable file, already kept aside, so it isn't copied every launch.
         persist()
       }
     }
@@ -98,7 +80,6 @@ final class WordLists {
     membershipsByList[listID]?.contains { $0.entryID == storedID } == true
   }
 
-  /// Adds a list at the end, or does nothing when the trimmed name is empty.
   @discardableResult
   func createList(named name: String) -> WordList? {
     guard canChange, let name = Self.validName(name) else { return nil }
@@ -111,7 +92,6 @@ final class WordLists {
     return list
   }
 
-  /// Renames a list, or does nothing when the trimmed name is empty.
   func renameList(_ listID: UUID, to name: String) {
     guard canChange, let name = Self.validName(name),
       let index = lists.firstIndex(where: { $0.id == listID }), lists[index].name != name
@@ -121,7 +101,6 @@ final class WordLists {
     persist()
   }
 
-  /// Deletes a list and every word in it.
   func deleteList(_ listID: UUID) {
     guard canChange, lists.contains(where: { $0.id == listID }) else { return }
     lists.removeAll { $0.id == listID }
@@ -164,7 +143,6 @@ final class WordLists {
     remove(storedID: id.rawValue, from: listID)
   }
 
-  /// Removes a word or kanji by `SavedItem.storedID`.
   func remove(storedID: String, from listID: UUID) {
     guard canChange, contains(storedID: storedID, in: listID) else { return }
     membershipsByList[listID]?.removeAll { $0.entryID == storedID }
@@ -181,12 +159,10 @@ final class WordLists {
     persist()
   }
 
-  /// Tries again to save changes whose last write failed.
   func saveIfNeeded() {
     if writes.hasUnsavedChanges { persist() }
   }
 
-  /// Waits until the file has loaded and every change so far has been written.
   func flush() async {
     await writes.flush()
   }
@@ -198,8 +174,6 @@ final class WordLists {
     }
   }
 
-  /// Groups memberships by list, most recent first, dropping any whose list is gone and any
-  /// repeat of a word in the same list.
   private static func grouped(
     _ memberships: [WordListMembership], in lists: [WordList]
   ) -> [UUID: [WordListMembership]] {
@@ -229,8 +203,6 @@ final class WordLists {
 
 private actor WordListsWriter {
   private struct StoredFile: Codable {
-    /// Version 2 adds kanji memberships, which a version 1 app would open as words; it opens a
-    /// version 2 file read-only instead.
     static let currentVersion = 2
     var version = currentVersion
     var lists: [WordList]
@@ -248,7 +220,6 @@ private actor WordListsWriter {
   }
 
   struct Loaded: Sendable {
-    /// Nil when there is no file yet.
     var contents: Contents?
     var needsRewrite = false
     var readOnlyReason: LocalFileReadOnlyReason?
@@ -262,8 +233,6 @@ private actor WordListsWriter {
       description: "word lists", logCategory: "WordLists")
   }
 
-  /// A file that can't be read in full is kept beside it, and `needsRewrite` asks for the
-  /// readable records to replace it once that copy exists.
   func load() async -> Loaded {
     let data: Data
     switch await file.read() {
@@ -301,7 +270,6 @@ private actor WordListsWriter {
       memberships: stored.memberships.compactMap(\.value))
   }
 
-  /// Returns whether the records reached the disk.
   func write(lists: [WordList], memberships: [WordListMembership]) async -> Bool {
     let stored = StoredFile(lists: lists, memberships: memberships)
     guard let data = try? JSONEncoder.localStore.encode(stored) else { return false }
