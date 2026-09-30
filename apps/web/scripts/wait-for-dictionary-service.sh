@@ -15,11 +15,11 @@ sha="${GITHUB_SHA:?}"
 workflow=dictionary-api-deploy.yml
 
 # The service's run, if the commit has one: the push that started this run started it too, so give
-# it a moment to appear.
+# it a moment to appear. A pull request's run only builds and checks the image, so it doesn't count.
 run=""
 for _ in 1 2 3 4 5 6; do
-  run="$(gh run list --workflow "$workflow" --commit "$sha" --limit 1 --json databaseId \
-    --jq '.[0].databaseId // empty')"
+  run="$(gh run list --workflow "$workflow" --commit "$sha" --limit 20 --json databaseId,event \
+    --jq '[.[] | select(.event != "pull_request")][0].databaseId // empty')"
   [ -n "$run" ] && break
   sleep 10
 done
