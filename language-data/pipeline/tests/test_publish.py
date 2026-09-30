@@ -14,7 +14,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -39,12 +39,15 @@ class FakeStore:
         self.puts: list[str] = []
         self.version = 0
         self.before_put = None  # a hook to simulate another writer
+        self.after_put = None  # a hook to simulate a lost response
+        self.checksums = False  # whether head returns ChecksumSHA256, as R2 may
 
     def head(self, key):
         obj = self.objects.get(key)
         if obj is None:
             return None
-        return Head(len(obj["body"]), obj["sha256"], obj["etag"])
+        checksum = sha256(obj["body"]) if self.checksums else None
+        return Head(len(obj["body"]), obj["sha256"], obj["etag"], checksum)
 
     def get(self, key):
         obj = self.objects.get(key)
@@ -74,6 +77,8 @@ class FakeStore:
             "cache_control": cache_control,
         }
         self.puts.append(key)
+        if self.after_put:
+            self.after_put(key)
 
     def index(self):
         return json.loads(self.objects["releases.json"]["body"])
@@ -297,20 +302,106 @@ class PublishTests(unittest.TestCase):
                 self.store.objects["releases.json"]["etag"] = '"changed"'
 
         self.store.before_put = another_writer
-        with self.assertRaisesRegex(Refusal, "releases.json changed while"):
+        with self.assertRaisesRegex(Refusal, "changed after .* won't list it.*bump"):
             self.publish(self.staged("2026.11.1", FILES_2))
         self.assertEqual([r["release"] for r in self.store.index()["releases"]], ["2026.10.1"])
 
     def test_releases_json_created_by_another_writer_is_refused(self):
         def another_writer(key):
             if key == "releases.json":
+                body = publish.index_bytes(publish.empty_index())
                 self.store.objects["releases.json"] = {
-                    "body": b"{}", "sha256": sha256(b"{}"), "etag": '"other"'
+                    "body": body, "sha256": sha256(body), "etag": '"other"'
                 }  # fmt: skip
 
         self.store.before_put = another_writer
-        with self.assertRaisesRegex(Refusal, "releases.json changed while"):
+        with self.assertRaisesRegex(Refusal, "releases.json changed after"):
             self.publish(self.staged())
+
+    def _append_to_index(self, release):
+        """Another publish lists `release`."""
+        index = self.store.index()
+        index["releases"].append(
+            {
+                "release": release,
+                "manifest_sha256": "e" * 64,
+                "git_commit": COMMIT_B,
+                "published_at": "2026-10-15T00:00:00Z",
+            }
+        )
+        body = publish.index_bytes(index)
+        self.store.objects["releases.json"].update(body=body, sha256=sha256(body), etag='"other"')
+
+    def test_releases_json_changing_before_the_manifest_stops_short_of_writing_it(self):
+        self.publish(self.staged())
+        last_file = f"files/{sha256(FILES_2['NOTICE.txt'])}/NOTICE.txt"
+        data_file = f"files/{sha256(FILES_2['Data.json'])}/Data.json"
+
+        def another_publish(key):
+            if key == data_file:
+                self._append_to_index("2026.10.2")
+
+        self.store.before_put = another_publish
+        with self.assertRaisesRegex(Refusal, "before its manifest was written.*again"):
+            self.publish(self.staged("2026.11.1", FILES_2))
+        self.assertIn(data_file, self.store.objects)
+        self.assertIn(last_file, self.store.objects)
+        self.assertNotIn("releases/2026.11.1/manifest.json", self.store.objects)
+
+        # As the message says, running it again links to the release listed meanwhile.
+        self.store.before_put = None
+        self.publish(self.staged("2026.11.1", FILES_2))
+        manifest = json.loads(self.store.objects["releases/2026.11.1/manifest.json"]["body"])
+        self.assertEqual(manifest["previous_release"], "2026.10.2")
+        self.assertEqual(
+            [r["release"] for r in self.store.index()["releases"]],
+            ["2026.10.1", "2026.10.2", "2026.11.1"],
+        )
+
+    def test_a_lost_response_to_the_releases_json_put_counts_as_listed(self):
+        def lost_response(key):
+            if key == "releases.json":
+                raise PreconditionFailed(key)  # the retry of a put that already succeeded
+
+        self.store.after_put = lost_response
+        result = self.publish(self.staged())
+        self.assertTrue(result["listed"])
+        releases = self.store.index()["releases"]
+        self.assertEqual([r["release"] for r in releases], ["2026.10.1"])
+        self.assertEqual(releases[0]["manifest_sha256"], result["manifest_sha256"])
+
+    def test_a_listing_of_another_manifest_under_this_release_is_not_success(self):
+        def another_listing(key):
+            if key == "releases/2026.10.1/manifest.json":
+                body = publish.index_bytes(publish.empty_index())
+                self.store.objects["releases.json"] = {"body": body, "sha256": sha256(body)}
+                self._append_to_index("2026.10.1")  # with another manifest_sha256
+
+        self.store.after_put = another_listing
+        with self.assertRaisesRegex(Refusal, "releases.json changed after"):
+            self.publish(self.staged())
+
+    def test_r2s_checksum_is_trusted_over_the_metadata(self):
+        self.store.checksums = True
+        data = FILES_1["Data.json"]
+        key = f"files/{sha256(data)}/Data.json"
+        # Right bytes, wrong metadata: R2's checksum says it's fine.
+        self.store.objects[key] = {"body": data, "sha256": "0" * 64, "etag": '"x"'}
+        self.publish(self.staged())
+        self.assertNotIn(key, self.store.puts)
+
+    def test_r2s_checksum_catches_bytes_the_metadata_vouches_for(self):
+        data = FILES_1["Data.json"]
+        key = f"files/{sha256(data)}/Data.json"
+        other = b'{"a": 9}\n'  # the same size
+        self.store.objects[key] = {"body": other, "sha256": sha256(data), "etag": '"x"'}
+        self.store.checksums = True
+        with self.assertRaisesRegex(Refusal, "ChecksumSHA256"):
+            self.publish(self.staged())
+        # Without R2's checksum, only the metadata is there to read: the fallback.
+        self.store.checksums = False
+        self.store.objects = {key: self.store.objects[key]}
+        self.publish(self.staged())
 
     def test_an_object_another_writer_uploads_first_is_accepted_when_identical(self):
         data = FILES_1["Data.json"]
@@ -463,6 +554,79 @@ class CommandLineTests(unittest.TestCase):
                 self.assertEqual(status, 1)
                 self.assertIn(message, stderr.getvalue())
 
+    def run_main(self, argv, store):
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            status = publish.main(argv, env={}, store=store)
+        return status, stderr.getvalue()
+
+    def test_a_missing_staged_directory_is_refused_without_a_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, stderr = self.run_main(["publish", str(Path(tmp) / "missing")], FakeStore())
+        self.assertEqual(status, 1)
+        self.assertTrue(stderr.startswith("Refused: "), stderr)
+
+    def test_an_object_deleted_during_verify_is_refused_without_a_traceback(self):
+        store = FakeStore()
+        with tempfile.TemporaryDirectory() as tmp:
+            publish.publish(store, stage(Path(tmp) / "a", "2026.10.1", FILES_1), log=QUIET)
+
+        def download(key, path):
+            raise FileNotFoundError("An error occurred (NoSuchKey)")
+
+        store.download = download
+        with redirect_stdout(io.StringIO()):
+            status, stderr = self.run_main(["verify", "--release", "2026.10.1"], store)
+        self.assertEqual(status, 1)
+        self.assertIn("Refused: files/", stderr)
+
+    def test_store_errors_are_refused_without_a_traceback(self):
+        class Broken(FakeStore):
+            def get(self, key):
+                raise publish.StoreError("aws s3api get-object failed: AccessDenied")
+
+        status, stderr = self.run_main(["verify", "--release", "2026.10.1"], Broken())
+        self.assertEqual(
+            (status, stderr.strip()), (1, "Refused: aws s3api get-object failed: AccessDenied")
+        )
+
+
+def push_paths(workflow: Path) -> list[str]:
+    """The `on.push.paths` filters of a workflow, read without a YAML parser."""
+    lines = workflow.read_text().splitlines()
+    start = lines.index("  push:")
+    paths, in_paths = [], False
+    for line in lines[start + 1 :]:
+        if line and not line.startswith("    "):
+            break  # the next trigger, or the end of `on`
+        stripped = line.strip()
+        if stripped == "paths:":
+            in_paths = True
+        elif in_paths and stripped.startswith("- "):
+            paths.append(stripped[2:].strip("'\""))
+        elif in_paths and stripped and not stripped.startswith("#"):
+            in_paths = False
+    return paths
+
+
+class WorkflowTriggerTests(unittest.TestCase):
+    def test_every_release_input_root_triggers_both_workflows(self):
+        """A change to any file a release packages starts the build and the publish on main, so
+        changed content never sits unpublished. A root counts as covered by `<root>/**` or by
+        `<ancestor>/**`."""
+        roots = json.loads((package.LANGUAGE_DATA / "release-inputs.json").read_text())["roots"]
+        workflows = package.REPO_ROOT / ".github" / "workflows"
+        for name in ("language-data-build.yml", "language-data-release.yml"):
+            filters = push_paths(workflows / name)
+            self.assertTrue(filters, name)
+            prefixes = [f[: -len("/**")] for f in filters if f.endswith("/**")]
+            for root, path in roots.items():
+                with self.subTest(workflow=name, root=root):
+                    self.assertTrue(
+                        any(path == p or path.startswith(p + "/") for p in prefixes),
+                        f"{name} doesn't trigger on {path}/** ({root}): {filters}",
+                    )
+
 
 class AwsCliStoreTests(unittest.TestCase):
     def setUp(self):
@@ -525,6 +689,26 @@ class AwsCliStoreTests(unittest.TestCase):
             (0, json.dumps({"ContentLength": 5, "ETag": '"e"', "Metadata": {"sha256": "ab"}}), "")
         )
         self.assertEqual(self.store.head("k"), Head(5, "ab", '"e"'))
+        options = dict(zip(self.calls[0][3::2], self.calls[0][4::2]))
+        self.assertEqual(options["--checksum-mode"], "ENABLED")
+
+    def test_head_reads_r2s_checksum_when_it_returns_one(self):
+        digest = hashlib.sha256(b"body").digest()
+        response = {
+            "ContentLength": 4,
+            "ETag": '"e"',
+            "ChecksumSHA256": base64.b64encode(digest).decode(),
+            "Metadata": {"sha256": "ab"},
+        }
+        self.replies.append((0, json.dumps(response), ""))
+        head = self.store.head("k")
+        self.assertEqual(head.checksum_sha256, digest.hex())
+        self.assertEqual(head.reported_sha256(), (digest.hex(), "ChecksumSHA256"))
+
+    def test_a_checksum_of_checksums_isnt_taken_for_the_objects(self):
+        self.assertIsNone(publish.checksum_hex("abcd-3"))
+        self.assertIsNone(publish.checksum_hex(None))
+        self.assertIsNone(publish.checksum_hex(base64.b64encode(b"short").decode()))
 
     def test_get_puts_the_outfile_last(self):
         def reply(command, capture_output, text):

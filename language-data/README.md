@@ -104,8 +104,9 @@ The `zenbujapanese-language-data` R2 bucket, in the SERP Cloudflare account. It 
 | `releases.json` | Every release, oldest first: `release`, `manifest_sha256`, `git_commit` (the manifest's), and `published_at` (UTC). The schema is `zenbu.language-data-releases.v1`. | Last. Only ever appended to. |
 
 There's no `latest` pointer: a client pins a release ID and checks the manifest's SHA-256 against
-`releases.json`, then each file's against the manifest. Each object carries its SHA-256 in
-`x-amz-meta-sha256`. Files and manifests are served `immutable`, and `releases.json` `no-cache`.
+`releases.json`, then each file's against the manifest. Each object also records the SHA-256 its
+uploader sent in `x-amz-meta-sha256`. That's a label, not a check. Files and manifests are served
+`immutable`, and `releases.json` `no-cache`.
 The bucket has no public domain yet.
 
 ## Publishing a release
@@ -113,8 +114,9 @@ The bucket has no public domain yet.
 1. Bump [`release.json`](release.json) to the next ID: `YYYY.MM.N` for the month it's cut,
    counting from 1. It must come after the latest release in `releases.json`.
 2. Merge to `main`. The [`Language data release`](../.github/workflows/language-data-release.yml)
-   workflow runs on every push to `main` that changes `language-data/**`, or by hand
-   (Actions → Language data release → Run workflow). It:
+   workflow runs on every push to `main` that changes `language-data/**` or any other root in
+   `release-inputs.json` (a test keeps the two in step), or by hand (Actions → Language data
+   release → Run workflow). It:
    1. fails straight away, naming them, when the `language-data-release` environment has no
       `R2_ACCESS_KEY_ID` or `R2_SECRET_ACCESS_KEY` secret;
    2. rebuilds the release from the commit, with the tests and every check the build makes;
@@ -125,8 +127,10 @@ The bucket has no public domain yet.
    5. reads it all back: `releases.json`, the manifest's SHA-256 and links, and every file's size
       and SHA-256 (downloading and hashing each one).
 
-Only this workflow publishes. It runs in the `language-data-release` environment, which deploys
-only from `main` and has no required reviewer, by the owner's decision: add one in Settings →
+Only this workflow publishes. In the job that holds the token, every action is pinned by commit
+SHA, and Python packages are installed with `--require-hashes` from the hashed
+[`requirements.txt`](pipeline/requirements.txt). It runs in the `language-data-release`
+environment, which deploys only from `main` and has no required reviewer, by the owner's decision: add one in Settings →
 Environments to review each release by hand. Its token is an R2 S3-API token for this bucket
 alone, reached at `https://<CLOUDFLARE_ACCOUNT_ID>.r2.cloudflarestorage.com` through the AWS CLI.
 It doesn't use the repository's `CLOUDFLARE_API_TOKEN`. Never upload from a workstation.
@@ -134,20 +138,31 @@ It doesn't use the repository's `CLOUDFLARE_API_TOKEN`. Never upload from a work
 ### Immutability
 
 - **A file or manifest is never overwritten.** Each upload is conditional (`If-None-Match: *`)
-  and carries its SHA-256, which R2 checks. When the key already exists, the object must have the
-  same size and SHA-256, or the publish fails. After each upload, the object is read back for
-  both.
-- **A published release doesn't change.** When `releases/<release>/manifest.json` already
-  exists, the new manifest must match it in everything but `git_commit` and `workflow_run`. Then
-  the run is a no-op, and the published manifest stays as it is, so rerunning or merging an
-  unrelated `language-data/**` change publishes nothing. When the content differs, the publish
-  fails before uploading anything: bump `release.json` to publish it.
-- **`releases.json` is only appended to,** under `If-Match` on the ETag it read. When another
-  write got there first, the publish fails without overwriting anything; run it again. If a run
-  stops after the manifest but before `releases.json`, the next run lists the release.
+  and sends its SHA-256 (`x-amz-checksum-sha256`), which R2 checks against the bytes it
+  receives. If the key already exists, the object must have the same size and SHA-256, or the
+  publish fails. After each upload, the object is read back for its size and SHA-256.
+  - The SHA-256 read back is R2's `ChecksumSHA256` when R2 returns one.
+  - Otherwise it's the `x-amz-meta-sha256` label, which only says what was meant to be sent.
 
-A change to the release's inputs outside `language-data/**`, such as `apps/ios` resources,
-doesn't start a publish. The next one that runs fails until `release.json` is bumped.
+  The `Verify` step downloads and hashes every file, so it doesn't rely on either.
+- **A published release doesn't change.** If `releases/<release>/manifest.json` already
+  exists, the new manifest must match it in everything but `git_commit` and `workflow_run`.
+  - If it matches, the run is a no-op and the published manifest stays as it is. So rerunning,
+    or merging a change that leaves the release's content alone, publishes nothing.
+  - If the content differs, including a changed input under `apps/ios`, the publish fails before
+    uploading anything. Bump `release.json` to publish it.
+- **`releases.json` is only appended to,** under `If-Match` on the ETag read at the start.
+  - **Changed before the manifest is written:** releases.json is read again just before the
+    manifest upload. If it changed, the publish stops, with only content-addressed files
+    uploaded. Running it again links the manifest to the new latest release.
+  - **Changed after the manifest is written:** the append fails. The manifest can't be replaced,
+    and its `previous_release` may be stale, so a rerun won't list it. It stays in the bucket,
+    unlisted and unused. Bump `release.json` to publish again. The workflow's concurrency group
+    keeps this from happening between its own runs.
+  - **Response to the append lost:** if the append succeeded but its response was lost, the run
+    re-reads `releases.json`. If it lists this release with this manifest, the run succeeds.
+  - **Run stopped between the manifest and `releases.json`:** the next run lists the release,
+    provided no other release was listed in between.
 
 ## Changing what's in a release
 

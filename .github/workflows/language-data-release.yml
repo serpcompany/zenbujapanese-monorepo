@@ -10,10 +10,14 @@ name: Language data release
 on:
   push:
     branches: [main]
+    # Every input of a release (each root in language-data/release-inputs.json; a test checks),
+    # so changed content can't sit unpublished: it publishes, or fails until release.json is bumped.
     paths:
       - 'language-data/**'
       - '.github/workflows/language-data-release.yml'
       - '.github/actions/package-language-data/**'
+      - 'apps/ios/Modules/Sources/SearchExperience/Resources/**'
+      - 'apps/ios/LanguageData/**'
   workflow_dispatch:
 
 # One publish at a time, and never cancelled halfway.
@@ -28,7 +32,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    # Deploys only from protected branches (main). It has no required reviewer, by the owner's
+    # Deploys only from main. It has no required reviewer, by the owner's
     # decision; add one in Settings → Environments to review each release by hand.
     environment: language-data-release
     defaults:
@@ -59,7 +63,7 @@ jobs:
             done
             exit 1
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: ./.github/actions/package-language-data
         with:
           out: ${{ runner.temp }}/language-data

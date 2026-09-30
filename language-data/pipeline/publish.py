@@ -14,8 +14,11 @@ The bucket holds, in the order they're written:
 in releases.json, then uploads. It never overwrites a file or a manifest. When the release is
 already published with the same content (everything but git_commit and workflow_run), it's a
 no-op; when the content differs, it refuses: bump language-data/release.json to publish new
-content. Each upload is conditional (If-None-Match: *), carries its SHA-256 for R2 to check, and
-is read back for its size and SHA-256.
+content. Each upload is conditional (If-None-Match: *) and sends its SHA-256
+(x-amz-checksum-sha256), which R2 checks against the bytes it receives. Each object is then read
+back for its size and SHA-256: R2's ChecksumSHA256 when it returns one, otherwise the
+x-amz-meta-sha256 the upload recorded, which only says what the uploader meant to send. `verify
+--hash all` downloads and hashes every file, which is the check that doesn't rely on either.
 
 The bucket is reached through the AWS CLI at R2's S3 endpoint, with AWS_ACCESS_KEY_ID and
 AWS_SECRET_ACCESS_KEY set from the R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY secrets. Only the
@@ -68,8 +71,16 @@ CREDENTIALS = {
 @dataclass(frozen=True)
 class Head:
     size: int
-    sha256: str | None  # the x-amz-meta-sha256 the object was uploaded with
+    sha256: str | None  # x-amz-meta-sha256: what the uploader said it sent; R2 doesn't check it
     etag: str
+    # ChecksumSHA256, in hex: the SHA-256 R2 checked on upload and stored, when it returns one.
+    checksum_sha256: str | None = None
+
+    def reported_sha256(self) -> tuple[str | None, str]:
+        """The SHA-256 to trust, and where it came from: R2's checksum, else the metadata."""
+        if self.checksum_sha256 is not None:
+            return self.checksum_sha256, "ChecksumSHA256"
+        return self.sha256, "x-amz-meta-sha256"
 
 
 class PreconditionFailed(Exception):
@@ -102,6 +113,18 @@ class Store(Protocol):
         """Raises PreconditionFailed when a condition fails."""
 
 
+def checksum_hex(value: str | None) -> str | None:
+    """A full-object ChecksumSHA256 (base64) in hex. None when there's none, or when it isn't one
+    (a multipart upload's checksum of checksums ends in -<parts>)."""
+    if not value:
+        return None
+    try:
+        digest = base64.b64decode(value, validate=True)
+    except ValueError:
+        return None
+    return digest.hex() if len(digest) == 32 else None
+
+
 class AwsCliStore:
     """An R2 bucket through `aws s3api`, at the account's S3 endpoint."""
 
@@ -126,12 +149,15 @@ class AwsCliStore:
 
     def head(self, key: str) -> Head | None:
         try:
-            response = self._call("head-object", "--key", key)
+            response = self._call("head-object", "--key", key, "--checksum-mode", "ENABLED")
         except FileNotFoundError:
             return None
         metadata = {name.lower(): value for name, value in (response.get("Metadata") or {}).items()}
         return Head(
-            int(response["ContentLength"]), metadata.get("sha256"), response.get("ETag", "")
+            int(response["ContentLength"]),
+            metadata.get("sha256"),
+            response.get("ETag", ""),
+            checksum_hex(response.get("ChecksumSHA256")),
         )
 
     def download(self, key: str, path: Path) -> None:
@@ -256,9 +282,10 @@ def utc_now() -> str:
 
 
 def check_object(key: str, head: Head, sha256: str, size: int, what: str) -> None:
-    if head.size != size or head.sha256 != sha256:
+    reported, source = head.reported_sha256()
+    if head.size != size or reported != sha256:
         raise Refusal(
-            f"{key} {what} with {head.size} bytes and sha256 {head.sha256}, not {size} bytes and "
+            f"{key} {what} with {head.size} bytes and {source} {reported}, not {size} bytes and "
             f"sha256 {sha256}. Published objects are never overwritten: find out how it got there."
         )
 
@@ -365,6 +392,15 @@ def publish(store: Store, staged: Path, *, now: Callable[[], str] = utc_now, log
         else:
             log(f"Already there: {object_key}")
     if published is None:
+        # The manifest's previous_release came from the releases.json read at the start. If another
+        # publish listed a release since, this manifest would link to the wrong one, and once
+        # written it can't be replaced, so stop while nothing but content-addressed files is up.
+        if read_index(store)[1] != etag:
+            raise Refusal(
+                "releases.json changed while this release was publishing, before its manifest "
+                f"was written. Only content-addressed files were uploaded, and {key} wasn't, so "
+                "running the workflow again links the manifest to the new latest release."
+            )
         put_immutable(store, key, body, manifest_sha256, len(body))
         uploaded.append(key)
         log(f"Uploaded {key}")
@@ -391,16 +427,29 @@ def publish(store: Store, staged: Path, *, now: Callable[[], str] = utc_now, log
                 if_match=etag,
             )
         except PreconditionFailed:
-            raise Refusal(
-                "releases.json changed while this release was publishing. Nothing was "
-                "overwritten; run the workflow again."
-            ) from None
-        head = store.head(INDEX_KEY)
-        if head is None:
-            raise StoreError("releases.json is missing after its upload")
-        check_object(INDEX_KEY, head, sha256_of(data), len(data), "reads back")
-        after = previous["release"] if previous else "nothing"
-        log(f"Listed {release} in releases.json, after {after}")
+            # Either this put succeeded and its response was lost (a retry then fails its own
+            # condition), or another write got in after the check before the manifest.
+            current, _ = read_index(store)
+            if any(
+                e["release"] == release and e["manifest_sha256"] == manifest_sha256
+                for e in current["releases"]
+            ):
+                log(f"releases.json already lists {release} with this manifest.")
+            else:
+                raise Refusal(
+                    f"releases.json changed after {key} was written, so {release} isn't listed. "
+                    "The manifest can't be replaced, and its previous_release may not be the "
+                    "latest release any more, so running the workflow again won't list it. It "
+                    "stays in the bucket, unlisted and unused: bump language-data/release.json "
+                    "to publish this content under a new ID."
+                ) from None
+        else:
+            head = store.head(INDEX_KEY)
+            if head is None:
+                raise StoreError("releases.json is missing after its upload")
+            check_object(INDEX_KEY, head, sha256_of(data), len(data), "reads back")
+            after = previous["release"] if previous else "nothing"
+            log(f"Listed {release} in releases.json, after {after}")
     else:
         log(f"releases.json already lists {release}.")
     return {
@@ -459,7 +508,10 @@ def verify(store: Store, release: str, *, hash_files: bool, workdir: Path, log=p
         check_object(object_key, head, record["sha256"], record["bytes"], "reads back")
         if hash_files:
             path = workdir / "object"
-            store.download(object_key, path)
+            try:
+                store.download(object_key, path)
+            except FileNotFoundError:
+                raise Refusal(f"{object_key} disappeared while it was being verified") from None
             try:
                 if path.stat().st_size != record["bytes"] or sha256_of(path) != record["sha256"]:
                     raise Refusal(f"{object_key}'s bytes don't match its manifest entry")
@@ -526,7 +578,8 @@ def main(argv: list[str] | None = None, env=os.environ, store: Store | None = No
             )
             with tempfile.TemporaryDirectory() as tmp:
                 verify(store, release, hash_files=args.hash == "all", workdir=Path(tmp))
-    except (Refusal, StoreError) as refusal:
+    # OSError covers FileNotFoundError: a missing staged file, or an object deleted mid-run.
+    except (Refusal, StoreError, PreconditionFailed, OSError, json.JSONDecodeError) as refusal:
         print(f"Refused: {refusal}", file=sys.stderr)
         return 1
     return 0
