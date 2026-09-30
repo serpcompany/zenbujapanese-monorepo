@@ -15,8 +15,9 @@ moves them.
 | [`notices/`](notices/) | Notices the release needs that the app has no file for. Kanjium's is worded as the app's Credits screen words it. |
 | [`schemas/language-data-manifest.v1.schema.json`](schemas/language-data-manifest.v1.schema.json) | The manifest's JSON Schema, `zenbu.language-data-manifest.v1`. |
 | [`schemas/language-data-releases.v1.schema.json`](schemas/language-data-releases.v1.schema.json) | The JSON Schema of the bucket's `releases.json`, `zenbu.language-data-releases.v1`. |
-| [`pipeline/package.py`](pipeline/package.py) | The packager. |
-| [`pipeline/publish.py`](pipeline/publish.py) | The publisher, and the check that reads a published release back. |
+| [`pipeline/package.py`](pipeline/package.py) | The packager's command line: `build`, `lfs-paths`, and `validate`. |
+| [`pipeline/publish.py`](pipeline/publish.py) | The publisher's command line: `publish`, and `verify`, the check that reads a published release back. |
+| [`pipeline/`](pipeline/) | The modules the two command lines run, one for each job (see [The pipeline](#the-pipeline)). |
 | [`pipeline/tests/`](pipeline/tests/) | Tests for the packager (on a scratch Git repository with its LFS files committed as pointers, as after `git lfs pull`), the publisher (against a fake bucket), the schemas, and the committed inputs. |
 
 ## A release
@@ -103,6 +104,33 @@ on pull requests, and on `main`, when language data or the pipeline changes. It 
 It keeps only `manifest.json` and a listing of the staged files (`files.tsv`) as an Actions
 artifact, for 7 days. Both workflows package through the
 [`package-language-data`](../.github/actions/package-language-data/action.yml) action.
+
+## The pipeline
+
+`package.py` and `publish.py` only read their arguments and call the modules beside them, which
+import one another by name:
+
+| Module | What it does |
+| --- | --- |
+| [`release_inputs.py`](pipeline/release_inputs.py) | Loads `release-inputs.json` and `release.json`, checking their names, paths, and release ID. |
+| [`committed_files.py`](pipeline/committed_files.py) | Reads what HEAD commits (blobs and Git LFS pointers), and stages each file, checked against it. |
+| [`sqlite_files.py`](pipeline/sqlite_files.py) | Opens a SQLite file read-only and immutable, for its row counts, its metadata, and its JMdict entry numbers. |
+| [`ranking_contract.py`](pipeline/ranking_contract.py) | Checks the ranking contract against the language-reference database. |
+| [`conformance_suites.py`](pipeline/conformance_suites.py) | Reads the SHA-256 each conformance suite pins. |
+| [`frequency_catalog.py`](pipeline/frequency_catalog.py) | Checks the frequency-pack catalog against the release, and lists its CDN sources. |
+| [`release_build.py`](pipeline/release_build.py) | Builds a release: stages its files, makes every check above, and writes its manifest. |
+| [`release_manifest.py`](pipeline/release_manifest.py) | Writes `manifest.json`, and validates it against its schema and the staged files. |
+| [`object_store.py`](pipeline/object_store.py) | The bucket, through the AWS CLI's S3 API. The publisher's tests put a fake bucket in its place. |
+| [`bucket_objects.py`](pipeline/bucket_objects.py) | Object keys, content types, and cache headers, and the upload that never overwrites an object. |
+| [`releases_index.py`](pipeline/releases_index.py) | Reads, checks, and writes the bucket's `releases.json`. |
+| [`publish_release.py`](pipeline/publish_release.py) | Publishes a staged release (see Publishing a release). |
+| [`verify_release.py`](pipeline/verify_release.py) | Reads a published release back and checks it. |
+| [`refusal.py`](pipeline/refusal.py), [`locations.py`](pipeline/locations.py) | `Refusal`, the error a failed check raises, and where this folder and the repository are. |
+
+Each test file in [`pipeline/tests/`](pipeline/tests/) is named for what it checks. Two modules
+there hold what they share: `scratch_release.py` builds the scratch Git repository the packager's
+tests package, and `publish_fixtures.py` holds the fake bucket and the staged releases the
+publisher's tests publish.
 
 ## Where releases live
 

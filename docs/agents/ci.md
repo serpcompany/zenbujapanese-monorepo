@@ -246,7 +246,8 @@ each release by hand). It:
    manifest back, and downloads and hashes every file. Both write to the job summary.
 
 `AWS_REQUEST_CHECKSUM_CALCULATION` and `AWS_RESPONSE_CHECKSUM_VALIDATION` are `WHEN_REQUIRED` so
-the AWS CLI sends only the checksum `publish.py` gives (SHA-256), not its default CRC trailers.
+the AWS CLI sends only the checksum the publisher gives (SHA-256, in `object_store.py`), not its
+default CRC trailers.
 This is the only workflow with the bucket's token, so every action its job runs, the shared
 action's included, is pinned by commit SHA (see Pinned actions). What a publish writes, and why
 nothing published is overwritten, is in [`language-data/README.md`](../../language-data/README.md),
