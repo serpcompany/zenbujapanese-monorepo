@@ -198,7 +198,7 @@ because it's stopped or still starting, to the other. A deploy starts the new im
 slot, waits until its `/healthz` names the image's release and nginx has seen it, then stops the old
 one: about 20 seconds, with no request dropped and nginx never reloaded. A new image that doesn't
 come up is removed, the old one keeps serving, and that image isn't tried again until the tag moves.
-Every container is capped (2 GB of memory, 2 CPUs, 512 processes, 30 MB of logs) and runs as the
+Every container is capped (4 GB of memory, 4 CPUs, 512 processes, 30 MB of logs) and runs as the
 image's non-root user with no capabilities and a read-only file system, so no image can starve the
 server's other services or change the server. The deployer touches only its own containers and this
 repository's images, and never nginx.

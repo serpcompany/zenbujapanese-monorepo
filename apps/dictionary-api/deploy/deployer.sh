@@ -25,10 +25,10 @@ readonly state_dir=/var/lib/zenbujapanese-dictionary-api
 readonly lock_file=/run/zenbujapanese-dictionary-api.lock
 readonly slot_label=zenbujapanese.dictionary-api.slot
 readonly environment_label=zenbujapanese.dictionary-api.environment
-# What a container may use, so it can't starve the server's other services: about 1.4 GB at its
-# peak, the half minute after it starts.
+# What a container may use, so it can't starve the server's other services. It needs about 1.4 GB
+# at its peak, the half minute after it starts, and about 750 MiB after.
 readonly container_limits=(
-  --memory 2g --memory-swap 2g --cpus 2 --pids-limit 512
+  --memory 4g --memory-swap 4g --cpus 4 --pids-limit 512
   --log-driver json-file --log-opt max-size=10m --log-opt max-file=3
 )
 # What it may do: nothing it doesn't need. It runs as the image's non-root user and writes nothing.
