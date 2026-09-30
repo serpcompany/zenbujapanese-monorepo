@@ -66,7 +66,7 @@ jobs:
     env:
       TAG: ${{ inputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Name the release
         id: release
         run: |
@@ -77,18 +77,18 @@ jobs:
           echo "release=${GITHUB_SHA::12}" >>"$GITHUB_OUTPUT"
       - name: Restore the Git LFS files
         if: env.TAG == ''
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .git/lfs/objects
           key: lfs-resources-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**') }}
       - name: Fetch the Git LFS files
         if: env.TAG == ''
         run: git lfs pull --include="$RESOURCES/*.sqlite3,$RESOURCES/Kuromoji/*"
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
         if: env.TAG == ''
       - name: Build the image
         if: env.TAG == ''
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
         with:
           context: .
           file: apps/dictionary-api/Dockerfile
@@ -99,7 +99,7 @@ jobs:
           cache-to: type=gha,scope=dictionary-api-image,mode=max
       - name: Log in to the GitHub Container Registry
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -182,7 +182,7 @@ jobs:
       SIGNER: https://github.com/${{ github.repository }}/.github/workflows/dictionary-api-deploy.yml@refs/heads/main
     steps:
       - name: Log in to the GitHub Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -213,7 +213,7 @@ jobs:
       IMAGE_REFERENCE: ${{ needs.image.outputs.image }}
     steps:
       - name: Log in to the GitHub Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

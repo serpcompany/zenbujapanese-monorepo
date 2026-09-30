@@ -311,15 +311,15 @@ needs a checkout. It:
 
 The release job holds the bucket's token, and the image's jobs can push to the package and sign,
 so the actions they run are pinned by commit SHA; elsewhere, actions are named by major-version
-tag, such as `actions/checkout@v4`. To update a
+tag, such as `actions/checkout@v5`. To update a
 pinned one, pin the new release's commit and change this table in the same pull request.
 
 | Action | Commit | Version | Used in |
 | --- | --- | --- | --- |
-| `actions/checkout` | `11d5960a326750d5838078e36cf38b85af677262` | v4.4.0 | `.github/workflows/language-data-release.yml` |
-| `actions/setup-python` | `a26af69be951a213d495a4c3e4e4022e16d87065` | v5.6.0 | `.github/actions/package-language-data/action.yml` |
-| `actions/cache` | `0057852bfaa89a56745cba8c7296529d2fc39830` | v4.3.0 | `.github/actions/package-language-data/action.yml` |
-| `docker/setup-buildx-action` | `8d2750c68a42422c14e847fe6c8ac0403b4cbd6f` | v3.12.0 | `.github/workflows/dictionary-api-deploy.yml` |
-| `docker/build-push-action` | `10e90e3645eae34f1e60eeb005ba3a3d33f178e8` | v6.19.2 | `.github/workflows/dictionary-api-deploy.yml` |
-| `docker/login-action` | `c94ce9fb468520275223c153574b00df6fe4bcc9` | v3.7.0 | `.github/workflows/dictionary-api-deploy.yml` |
+| `actions/checkout` | `fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09` | v5.1.0 | `.github/workflows/language-data-release.yml` |
+| `actions/setup-python` | `ece7cb06caefa5fff74198d8649806c4678c61a1` | v6.3.0 | `.github/actions/package-language-data/action.yml` |
+| `actions/cache` | `caa296126883cff596d87d8935842f9db880ef25` | v5.1.0 | `.github/actions/package-language-data/action.yml` |
+| `docker/setup-buildx-action` | `f87e5991a6d7451dcb8d9637bfbc97413f497069` | v4.4.1 | `.github/workflows/dictionary-api-deploy.yml` |
+| `docker/build-push-action` | `c3c9e263c25d99ce0380d002d59b67737d91b0dc` | v7.4.0 | `.github/workflows/dictionary-api-deploy.yml` |
+| `docker/login-action` | `dbcb813823bdd20940b903addbd779551569679f` | v4.6.0 | `.github/workflows/dictionary-api-deploy.yml` |
 | `sigstore/cosign-installer` | `6f9f17788090df1f26f669e9d70d6ae9567deba6` | v4.1.2, installing cosign v3.1.3 | `.github/workflows/dictionary-api-deploy.yml` |

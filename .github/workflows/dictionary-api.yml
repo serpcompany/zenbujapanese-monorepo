@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: ShellCheck the deploy scripts
         run: >-
           docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0
@@ -51,25 +51,25 @@ jobs:
       ZENBU_REQUIRE_ARTIFACT: '1'
       DICTIONARY_API_TOKEN: ci-only-dictionary-api-token
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Restore the Git LFS files
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .git/lfs/objects
           key: lfs-resources-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**') }}
       - name: Fetch the Git LFS files
         run: git lfs pull --include="$RESOURCES/*.sqlite3,$RESOURCES/Kuromoji/*"
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           package_json_file: package.json
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Restore Sudachi's dictionary
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: apps/dictionary-api/.sudachi
           key: sudachi-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json') }}

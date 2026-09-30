@@ -33,7 +33,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/package-language-data
         with:
           out: ${{ runner.temp }}/language-data
@@ -43,7 +43,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/language-data-summary"
           cp manifest.json "$RUNNER_TEMP/language-data-summary/"
           find files -type f -printf '%s\t%p\n' | LC_ALL=C sort -k2 > "$RUNNER_TEMP/language-data-summary/files.tsv"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: language-data-manifest-${{ github.sha }}
           path: ${{ runner.temp }}/language-data-summary
