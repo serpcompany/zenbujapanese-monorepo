@@ -735,7 +735,6 @@ private actor LanguageReferenceData {
       : try Self.decode(column: 13, statement: statement)
     return DictionaryEntry(
       id: LanguageReferenceID(rawValue: sqliteText(statement, 0)),
-      noteID: WordNoteID(rawValue: sqliteText(statement, 1)),
       sourceProvenances: [
         LanguageReferenceProvenance(
           sourceIdentity: sqliteText(statement, 2),
@@ -866,6 +865,7 @@ private actor LanguageReferenceData {
     }
   }
 
+  // Column 1 (note_identity) is no longer read; it leaves the artifact with the CI rebuild (#463).
   private static let selectedColumns = """
     lower(hex(e.id)), e.note_identity, e.source_identity, CAST(e.source_record_id AS TEXT), e.headword, e.reading, e.summary,
     e.meanings_json, e.parts_of_speech_json, e.written_forms_json, e.reading_forms_json,

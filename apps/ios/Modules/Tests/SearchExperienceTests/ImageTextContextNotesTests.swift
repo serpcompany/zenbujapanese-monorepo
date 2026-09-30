@@ -17,7 +17,6 @@ struct ImageTextContextNotesTests {
       phrase: phrase,
       entry: DictionaryEntry(
         id: LanguageReferenceID(rawValue: phrase),
-        noteID: WordNoteID(rawValue: phrase),
         sourceProvenances: [
           LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: phrase)
         ],

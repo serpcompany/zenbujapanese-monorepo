@@ -102,7 +102,8 @@ Notes names every list holding the word, each opening that list in Account, foll
 **Add to List**, which opens the same sheet. Search results don't show which lists a word is in.
 
 A learner can write notes for a word and associate photos with it. Notes and associated
-photos persist on the device.
+photos persist on the device, keyed by the word's stable identifier, so they stay attached
+when a dictionary update changes the word's meanings.
 
 A kanji detail can present readings, meanings, stroke order, components, elements, and words
 that contain the kanji. Component and element links can be followed without losing the

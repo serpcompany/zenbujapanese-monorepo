@@ -253,7 +253,6 @@ final class WordListsTests {
   ) -> DictionaryEntry {
     DictionaryEntry(
       id: id,
-      noteID: WordNoteID(rawValue: id.rawValue),
       sourceProvenances: [
         LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: id.rawValue)
       ],

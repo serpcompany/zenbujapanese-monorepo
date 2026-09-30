@@ -2,7 +2,6 @@ import Foundation
 
 struct DictionaryEntry: Hashable, Identifiable, Sendable {
   let id: LanguageReferenceID
-  let noteID: WordNoteID
   let sourceProvenances: [LanguageReferenceProvenance]
   let reading: String
   let headword: String
@@ -38,7 +37,6 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
   ) -> DictionaryEntry {
     DictionaryEntry(
       id: canonical.id,
-      noteID: canonical.noteID,
       sourceProvenances: LanguageReferenceIdentity.sortedProvenances(provenances),
       reading: reading,
       headword: headword,
@@ -252,7 +250,9 @@ struct LanguageReferenceID: Hashable, Sendable {
   }
 }
 
-struct WordNoteID: Codable, Hashable, Sendable {
+/// The key a word's or kanji's notes and photos are saved under: `SavedItem.storedID`, so a
+/// word's is its Language Reference ID and survives dictionary updates (ADR 0006).
+struct SavedItemID: Codable, Hashable, Sendable {
   let rawValue: String
 }
 

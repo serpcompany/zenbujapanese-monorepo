@@ -1,8 +1,8 @@
 import Foundation
 
 struct WordNoteStore: Sendable {
-  var load: @Sendable (WordNoteID) async -> [LearnerWordNote]
-  var save: @Sendable ([LearnerWordNote], WordNoteID) async -> Void
+  var load: @Sendable (SavedItemID) async -> [LearnerWordNote]
+  var save: @Sendable ([LearnerWordNote], SavedItemID) async -> Void
 
   static let live = WordNoteStore(
     load: { id in await WordNoteStorage.shared.load(id) },
@@ -23,13 +23,14 @@ struct LearnerWordNote: Codable, Hashable, Identifiable, Sendable {
 private actor WordNoteStorage {
   static let shared = WordNoteStorage()
   private let defaults = UserDefaults.standard
-  private let storageKey = "lookup.word-notes.v4"
+  // v5 keys notes by `SavedItem.storedID`; v4 used a hash of the meanings.
+  private let storageKey = "lookup.word-notes.v5"
 
-  func load(_ id: WordNoteID) -> [LearnerWordNote] {
+  func load(_ id: SavedItemID) -> [LearnerWordNote] {
     return notes()[id.rawValue] ?? []
   }
 
-  func save(_ incomingNotes: [LearnerWordNote], for id: WordNoteID) {
+  func save(_ incomingNotes: [LearnerWordNote], for id: SavedItemID) {
     var stored = notes()
     let normalized = incomingNotes.compactMap { note -> LearnerWordNote? in
       let text = note.text.trimmingCharacters(in: .whitespacesAndNewlines)
