@@ -21,6 +21,7 @@ export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 readonly repository=ghcr.io/serpcompany/zenbujapanese-dictionary-api
 readonly network=web_network
 readonly config_dir=/etc/zenbujapanese-dictionary-api
+readonly registry_file="$config_dir/registry.env"
 readonly state_dir=/var/lib/zenbujapanese-dictionary-api
 readonly lock_file=/run/zenbujapanese-dictionary-api.lock
 readonly slot_label=zenbujapanese.dictionary-api.slot
@@ -45,6 +46,27 @@ readonly nginx_resolve_seconds=10
 log() {
   logger --tag zenbujapanese-dictionary-api -- "$*" 2>/dev/null || true
   echo "$*" >&2
+}
+
+# The registry login for this run only, from registry.env (GHCR_USERNAME, and GHCR_TOKEN: a token
+# with only the read:packages scope). Docker reads it from a folder only root can open, removed when
+# the run ends, so no login stays on the server. Without the file, pulls go without a login, which a
+# public package allows.
+use_registry_login() {
+  local username token docker_config
+  [ -e "$registry_file" ] || return 0
+  username="$(sed -n 's/^GHCR_USERNAME=//p' "$registry_file" | tail -n 1 | tr -d '\r[:space:]')"
+  token="$(sed -n 's/^GHCR_TOKEN=//p' "$registry_file" | tail -n 1 | tr -d '\r[:space:]')"
+  if [ -z "$username" ] || [ -z "$token" ]; then
+    log "$registry_file needs both GHCR_USERNAME and GHCR_TOKEN"
+    return 1
+  fi
+  docker_config="$(mktemp -d)" || return 1
+  # shellcheck disable=SC2064 # The folder's name is known now.
+  trap "rm -rf '$docker_config'" EXIT
+  printf '{"auths":{"%s":{"auth":"%s"}}}\n' "${repository%%/*}" \
+    "$(printf '%s:%s' "$username" "$token" | base64 --wrap 0)" >"$docker_config/config.json"
+  export DOCKER_CONFIG="$docker_config"
 }
 
 # One environment's slot containers that are running.
@@ -200,6 +222,7 @@ mkdir -p "$state_dir"
 # plant the lock file.
 exec 9>>"$lock_file"
 flock --nonblock 9 || exit 0
+use_registry_login || exit 1
 
 status=0
 for environment in staging production; do

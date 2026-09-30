@@ -267,15 +267,18 @@ a deploy starts one, and 5 GB of disk for images. A person with root sets it up 
    `Web deploy`.
 
 The workflow's first push creates the image's package in the serpcompany organization
-(github.com/orgs/serpcompany/packages), private, as new packages are. The server pulls it with a
-read-only login: a GitHub token (classic) with only the `read:packages` scope, authorized for the
-organization's SSO if it has one, entered once for root's Docker, which the deployer runs as:
+(github.com/orgs/serpcompany/packages), private, as new packages are. The deployer pulls it with a
+GitHub token (classic) with only the `read:packages` scope, authorized for the organization's SSO
+if it has one, which it reads from a root-only file on every run:
 
 ```sh
-sudo docker login ghcr.io -u <github user>   # paste the token at the password prompt
+printf 'GHCR_USERNAME=%s\nGHCR_TOKEN=%s\n' <github user> <token> |
+  sudo tee /etc/zenbujapanese-dictionary-api/registry.env >/dev/null
+sudo chmod 600 /etc/zenbujapanese-dictionary-api/registry.env
 ```
 
-The login lives in `/root/.docker/config.json`, and can only download packages. If the token
-expires or its account loses access, the deployer's journal says it couldn't read the tag from
-the registry. An organization owner can instead make the package public (Package settings →
-Change visibility), which needs no login.
+It logs in for that run only, from a folder only root can open that's removed when the run ends,
+so no login stays on the server. Replace the file to change the token. If the token expires or
+its account loses access, the deployer's journal says it couldn't read the tag from the registry.
+Without the file it pulls without a login, which works once an organization owner makes the
+package public (Package settings → Change visibility).
