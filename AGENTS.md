@@ -4,10 +4,11 @@ Routing only. Open the smallest source matching the task.
 
 ## Every change
 
-- [`docs/agents/code.md`](docs/agents/code.md) — the rules all code follows, with no exceptions (no comments, a file size limit, docs that stay reachable), the checks behind them, and when a change is done. Run `pnpm verify` before a pull request.
+- [`docs/agents/code.md`](docs/agents/code.md) — the rules all code follows, with no exceptions (no comments, a file size limit, docs that stay reachable), the checks behind them, and when a change is done. Run `pnpm check` before a pull request.
 
 ## Codebase
 
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — the repository's parts, how data moves between them, and each part's enforced layers. Start here for anything that crosses parts.
 - [`docs/technologies.md`](docs/technologies.md) — technology implementations, roles, and current consumers.
 - [`docs/data-sources.md`](docs/data-sources.md) — supplied information, source roles, and current consumers.
 - [`docs/agents/ios.md`](docs/agents/ios.md) — Xcode build and launch, Simulator verification, and the current iOS test and CI boundary.

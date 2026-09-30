@@ -65,8 +65,8 @@ jobs:
                a doc is still accurate, change nothing in it.
             4. Update docs/quality.md where the week changed an area's tests, CI, or docs, and
                docs/tech-debt.md where it paid off or added known debt.
-            5. Edit only Markdown: AGENTS.md, README.md, docs/ except docs/adr/ (ADRs record
-               decisions; never rewrite them), and apps/*/docs/. Never touch code, tests,
+            5. Edit only Markdown: AGENTS.md, ARCHITECTURE.md, README.md files, docs/ except
+               docs/adr/ (ADRs record decisions; never rewrite them), and apps/*/docs/. Never touch code, tests,
                workflows, or anything a tool generates.
             6. Run `pnpm -s verify docs`; it must pass.
             7. If you changed nothing, stop and say "No doc drift found". Otherwise, unless

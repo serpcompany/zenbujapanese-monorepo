@@ -3,7 +3,8 @@
   "private": true,
   "description": "The Zenbu Japanese product family. The JavaScript apps and packages share this pnpm workspace; each still owns its build, tests, and deploys (ADR 0005).",
   "scripts": {
-    "verify": "pnpm --filter zenbujapanese-checks verify"
+    "verify": "pnpm --filter zenbujapanese-checks verify",
+    "check": "pnpm verify && pnpm --recursive --workspace-concurrency=1 check"
   },
   "packageManager": "pnpm@10.17.0",
   "engines": {

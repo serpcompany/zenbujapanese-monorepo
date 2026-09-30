@@ -3,12 +3,15 @@
 The rules every change in this repository follows, whatever the language, and the checks that
 enforce them. Each rule is checked mechanically, and each check's failure says how to fix it.
 
-Before opening a pull request, run `pnpm verify` from the repository root, and `pnpm check` in each
-package you changed (`apps/web`, `apps/dictionary-api`, `packages/dictionary-core`,
-`tools/checks`). A change is done when both pass and the docs say what changed: the product docs
-for a behavior (in the same pull request), the area's doc for how it works. Check a website change
-in a real browser with the `verify-web` skill (`.claude/skills/verify-web/`), and put what it
-showed in the pull request.
+Before opening a pull request, run `pnpm check` from the repository root: `pnpm verify`, then each
+package's `pnpm check` (`apps/web`, `apps/dictionary-api`, `packages/dictionary-core`,
+`tools/checks`), one after another. A change to `language-data` also runs the pipeline's tests
+([`language-data/README.md`](../../language-data/README.md)). A change is done when these pass and
+the docs say what changed: the product docs for a behavior (in the same pull request), the area's
+doc for how it works. Check a website change in a real browser with the `verify-web` skill
+(`.claude/skills/verify-web/`), and put what it showed in the pull request. The `finish-change`
+skill (`.claude/skills/finish-change/`) walks an agent through all of this, with a fresh agent
+reviewing the diff, before it drafts the pull request.
 
 ## No comments
 
@@ -70,7 +73,8 @@ The docs are the map agents work from, so they stay correct and reachable:
 | `pnpm verify` | No comments, docs, and file size ([`tools/checks`](../../tools/checks/)), then ShellCheck, actionlint, and Ruff | The `Repository` workflow, on every pull request |
 | `pnpm verify <check> [paths]` | One check (`comments`, `docs`, `sizes`, or `linters`), on the given repository paths or on every file | By hand |
 | The edit hook | No comments and file size, on each file Claude Code writes, as it writes it (`.claude/settings.json`) | Claude Code sessions in this repository |
-| `pnpm check` in a package | Biome (with the package's import rules), typecheck, tests, and its build | The package's workflow, on pull requests that change it |
+| `pnpm check` | `pnpm verify`, then `pnpm check` in every package | By hand, before a pull request |
+| `pnpm check` in a package | Biome (with the package's import and logging rules), typecheck, tests, and its build | The package's workflow, on pull requests that change it |
 
 `pnpm verify` lists files with `git ls-files`, so it checks new files before they're committed, and
 skips ignored ones. It runs ShellCheck, actionlint, and Ruff in Docker, at the versions pinned in

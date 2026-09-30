@@ -23,7 +23,8 @@
       "Bash(rsync *)",
       "PowerShell(ssh *)",
       "PowerShell(scp *)",
-      "PowerShell(sftp *)"
+      "PowerShell(sftp *)",
+      "PowerShell(rsync *)"
     ],
     "ask": [
       "Bash(*wrangler deploy*)",

@@ -30,6 +30,8 @@ Each module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience
   `ArtifactDatabase` (synchronous `all(sql, params)`), the kanji files as `KanjiData`, and its
   capabilities: `tokenize` (the app's Kuromoji) and `morphology` (the app's Sudachi). Without
   `morphology`, sentence search is off and the rest of Search is unchanged (ADR 0008).
+- **It logs nothing.** It returns what happened, as a result or an error, and the client logs it
+  its own way; Biome refuses `console` in `src` (tests aside).
 - **Change a port and its Swift together.** The `Search parity` workflow fails a pull request that
   changes one side of a pair it lists (`.github/workflows/search-parity.yml`) without the other.
   The `search-parity-reviewed` label says the change applies to one side only.
