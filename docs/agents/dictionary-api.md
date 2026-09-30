@@ -152,8 +152,11 @@ docker build -f apps/dictionary-api/Dockerfile --build-arg RELEASE=$(git rev-par
 docker run -p 8788:8788 -e DICTIONARY_API_TOKEN=<token> zenbujapanese-dictionary-api
 ```
 
-The image is about 1 GB, and uses about 700 MiB of memory with two worker threads, and about
-1.4 GB for the half minute after it starts, while it works out the conjugations sitemap. It has a
+The image is about 1 GB, and uses about 750 MiB of memory with two worker threads, and about
+1.4 GB for the half minute after it starts, while it works out the conjugations sitemap. The
+kernel's cache of the files it reads comes on top (about 600 MB once the sitemap has read every
+sentence); a container's memory reading, such as `docker stats`, counts it, but it can be
+reclaimed. It has a
 health check on `/healthz` and stops cleanly on SIGTERM.
 
 The host isn't chosen yet (ADR 0009). Whatever it is, each environment needs:
