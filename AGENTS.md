@@ -7,7 +7,9 @@ Routing only. Open the smallest source matching the task.
 - [`docs/technologies.md`](docs/technologies.md) — technology implementations, roles, and current consumers.
 - [`docs/data-sources.md`](docs/data-sources.md) — supplied information, source roles, and current consumers.
 - [`docs/agents/ios.md`](docs/agents/ios.md) — Xcode build and launch, Simulator verification, and the current iOS test and CI boundary.
-- [`docs/agents/web.md`](docs/agents/web.md) — zenbujapanese.com: run, verify, environments, deploys, D1 migrations, and sitemaps.
+- [`docs/agents/web.md`](docs/agents/web.md) — zenbujapanese.com: run, verify, the dictionary service it reads, environments, deploys, D1 migrations, and sitemaps.
+- [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) — the website's dictionary service: run, check, routes, and the Docker image.
+- [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) — the shared TypeScript dictionary core: what it ports, its rules, and its checks.
 - [`language-data/README.md`](language-data/README.md) — language-data releases: the manifest, what a release packages, the build workflow, and publishing to R2.
 - [`apps/ios/docs/product/index.md`](apps/ios/docs/product/index.md) — durable current iOS behavior. Open only the relevant linked document. Update applicable product documentation and verification in the same PR as a behavior change.
 - [`apps/web/docs/product/index.md`](apps/web/docs/product/index.md) — durable current website behavior and the automated check for each. Open only the relevant page's section. Update the behavior and its check in the same PR as a behavior change.

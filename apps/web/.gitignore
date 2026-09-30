@@ -45,11 +45,8 @@ next-env.d.ts
 /.wrangler/
 .dev.vars*
 
-# local release D1s (scripts/release-d1/load-local.sh)
+# local D1 copies of the dictionary from before the dictionary service (ADR 0009); safe to delete
 /.search-d1/
 /.search-d1.building/
 /.dictionary-d1/
 /.dictionary-d1.building/
-
-# written by the search benchmark workflow
-/bench/search-d1/wrangler.json

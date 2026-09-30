@@ -1,19 +1,17 @@
-import { readFileSync } from 'node:fs'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { getPlatformProxy } from 'wrangler'
-import { frequencyRowDetails } from '@/lib/dictionary/detail/frequency'
-import { pitchAccent } from '@/lib/dictionary/detail/pitch'
-import { rubySegments } from '@/lib/dictionary/detail/ruby'
+import { frequencyRowDetails } from '@zenbu/dictionary-core/detail/frequency'
+import { pitchAccent } from '@zenbu/dictionary-core/detail/pitch'
+import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import {
   type SuiteFrequencyDetails,
   type SuiteFurigana,
   type SuitePitchGraph,
   suiteFrequencyDetails
-} from '@/lib/dictionary/detail/suite'
-import { wordDetail } from '@/lib/dictionary/detail/word'
-import { dictionaryDatabase } from '@/lib/dictionary/dictionary-db'
+} from '@zenbu/dictionary-core/detail/suite'
+import { wordDetail } from '@zenbu/dictionary-core/detail/word'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, test } from 'vitest'
 import { FrequencyDetailsContent, FrequencySection } from './frequency-section'
+import { gateEnabled, gateService, recordedCases } from './gate'
 import {
   readFrequencyDetails,
   readFrequencyRows,
@@ -25,16 +23,19 @@ import { WordHeader } from './word-header'
 // Renders the word page's header card and Frequency section to HTML, as the server does, and
 // reads back what a reader sees: the headword's furigana and which kanji highlight which part of
 // it, the pitch graph's dots, and each Frequency row's details. The first tests render fixed data;
-// the last runs every case of the app-recorded word-detail.json suite through the dictionary
-// database and the detail core into the components (ZENBU_DICTIONARY_D1=1, part of the
-// dictionary import's gate).
+// the last renders what the dictionary service answers for every case of the app-recorded
+// word-detail.json suite (./gate.ts).
 
 const unidic = 'UniDic for Contemporary Written Japanese 3.1.0'
 
 type HeaderProps = Parameters<typeof WordHeader>[0]
 
-function header(props: Omit<HeaderProps, 'conjugationsPath'> & Partial<HeaderProps>) {
-  return renderToStaticMarkup(<WordHeader conjugationsPath={null} {...props} />)
+function header(
+  props: Omit<HeaderProps, 'summary' | 'conjugations' | 'path'> & Partial<HeaderProps>
+) {
+  return renderToStaticMarkup(
+    <WordHeader summary="" conjugations={null} path="/dictionary/w-1/" {...props} />
+  )
 }
 
 describe('the word header', () => {
@@ -152,8 +153,6 @@ describe('the Frequency section', () => {
   })
 })
 
-const enabled = process.env.ZENBU_DICTIONARY_D1 === '1'
-
 interface SuiteCase {
   covers: string
   entSeq: string[]
@@ -162,38 +161,13 @@ interface SuiteCase {
   frequency: { name: string; text: string; details: SuiteFrequencyDetails }[]
 }
 
-const suiteCases: SuiteCase[] = enabled
-  ? (
-      JSON.parse(
-        readFileSync(
-          new URL('../../../../ios/LanguageData/Conformance/word-detail.json', import.meta.url),
-          'utf8'
-        )
-      ) as { cases: SuiteCase[] }
-    ).cases
-  : []
+const suiteCases = recordedCases<SuiteCase>('word-detail.json')
 
-describe.runIf(enabled)('the rendered word page matches the app', () => {
-  let proxy: Awaited<ReturnType<typeof getPlatformProxy<CloudflareEnv>>>
-  let dictionary: ReturnType<typeof dictionaryDatabase>
-
-  beforeAll(async () => {
-    proxy = await getPlatformProxy<CloudflareEnv>({
-      persist: { path: `${process.env.ZENBU_DICTIONARY_D1_PATH ?? '.dictionary-d1'}/v3` }
-    })
-    if (!proxy.env.DICTIONARY_DB)
-      throw new Error('wrangler.jsonc has no local DICTIONARY_DB binding')
-    dictionary = dictionaryDatabase(proxy.env.DICTIONARY_DB)
-  })
-
-  afterAll(async () => {
-    await proxy?.dispose()
-  })
-
+describe.runIf(gateEnabled)('the rendered word page matches the app', () => {
   test.each(suiteCases)('$covers', async expected => {
-    const word = await dictionary.word(Number(expected.entSeq[0]))
+    const word = await gateService().word(Number(expected.entSeq[0]))
     if (!word) throw new Error(`No word ${expected.entSeq[0]}`)
-    const detail = wordDetail(word.rows)
+    const detail = wordDetail(word.data.rows)
     const html = header({
       ruby: detail.ruby,
       reading: detail.reading,

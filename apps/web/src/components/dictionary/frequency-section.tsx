@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import {
   type FrequencyDetails,
   type FrequencyRowDetail,
   frequencyRowLabel
-} from '@/lib/dictionary/detail/frequency'
+} from '@zenbu/dictionary-core/detail/frequency'
+import { useState } from 'react'
 import { FrequencyDot, SpokenTier } from './frequency'
 import { Sheet } from './sheet'
 

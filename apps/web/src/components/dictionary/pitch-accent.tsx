@@ -1,7 +1,7 @@
 'use client'
 
+import type { PitchAccent as PitchAccentData } from '@zenbu/dictionary-core/detail/pitch'
 import { Volume2Icon } from 'lucide-react'
-import type { PitchAccent as PitchAccentData } from '@/lib/dictionary/detail/pitch'
 import { speakJapanese } from './pronounce-button'
 
 // The word card's pitch accent, drawn as the app's PitchAccentBadge (WordDetailView.swift) draws

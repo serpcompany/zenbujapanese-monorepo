@@ -43,30 +43,26 @@ its app source and planned check, and is then built with its check in the same P
 ## How behavior is verified
 
 Each behavior in [Dictionary](dictionary.md) names its automated check, or says "No automated
-check yet (#511)". The checks come in five kinds:
+check yet (#511)". The checks come in four kinds:
 
 - **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the
   app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
   `word-detail.json`, and `kanji-detail.json`. Each pins, by SHA-256, the app data files it was
-  recorded from. The `conformance.test.ts` files under `src/lib/dictionary/` replay them through
-  the website's search, results, example search, and detail cores on a locally built release
-  database, reading it as the pages do.
-- **Rendered-page tests** (`search-results.test.tsx`, `search-examples.test.tsx`) render a page's
-  component with React's server renderer, from fixed data and from suite cases, and read back
-  what a reader sees.
-- **Unit tests** (Vitest) next to the code under `apps/web/src/`. `pnpm check` runs them, and the
-  `Web` workflow runs it on every pull request that changes `apps/web/**`.
-- **Import gates.** Each release database import runs its conformance suites and rendered-page
-  tests before anything reaches D1; `pnpm check` skips the suites.
-  [`docs/agents/web.md`](../../../../docs/agents/web.md) describes the gates and how to run the
-  suites locally.
+  recorded from. The dictionary service's tests (`apps/dictionary-api/src/conformance/`) replay
+  them through the shared core on the app's own data, as the service answers the pages.
+- **Unit tests** (Vitest) next to the code, under `apps/web/src/`, `packages/dictionary-core/src/`,
+  and `apps/dictionary-api/src/`. Each one's `pnpm check` runs them; the `Web`, `Dictionary core`,
+  and `Dictionary API` workflows run them on pull requests.
+- **The rendered-page gate.** The `Dictionary API` workflow starts the service it built and renders
+  what it answers for the suites' cases through the pages' components; `pnpm test` skips it.
+  [`docs/agents/web.md`](../../../../docs/agents/web.md) describes it and how to run it locally.
 - **Smoke checks** in `apps/web/scripts/smoke.sh`, run against staging and production after each
   deploy. Each is named here by the message it prints.
 
 The suites and most unit tests check the data a page is built from. Rendered-page tests
 (`*.test.tsx`) render a page's components to HTML with `renderToStaticMarkup`, as the server does,
 and read back what a reader sees; the search results, Example Sentences, word, and conjugation
-pages' run the app-recorded suites through the components on every import. Interaction tests
+pages' run the app-recorded suites through the components from the service. Interaction tests
 (`*.interaction.test.tsx`) click through a component in a DOM (happy-dom). Rows without either say
 "No automated check yet (#511)". #511 plans more rendered-HTML checks for the designs, and more
 smoke checks.

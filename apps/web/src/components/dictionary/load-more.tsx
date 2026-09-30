@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 
 // A list that renders its first items with the page, then loads the next ones from a JSON route
 // named for the dictionary build the page came from, as the list scrolls into view or with the
-// button: a word page's examples, a search's words, and a search's example sentences. Each
+// button: a word page's, a search's, and a conjugated form's example sentences. Each
 // request asks for the items from the number it already shows, so none repeats or is skipped. A
 // route that no longer knows the build (a deploy since the page loaded) answers 404, and the list
 // offers a reload instead.

@@ -182,8 +182,9 @@ struct ConjugatedFormView: View {
 
 // The conjugation screens' words and examples, shared by the views and the word-detail
 // conformance suite, so the website's conjugation screens are held to the app's (see also
-// apps/web/src/lib/dictionary/detail/conjugation.ts, and apps/web/scripts/release-d1/dictionary/
-// build-examples.mts, which precomputes each form's examples).
+// packages/dictionary-core/src/detail/conjugation.ts, and
+// packages/dictionary-core/src/examples/forms.ts, which the dictionary service lists each form's
+// examples with).
 
 extension ConjugatedForm {
   /// Every retrieved Example Sentence in which the parser reads this exact form as one word,

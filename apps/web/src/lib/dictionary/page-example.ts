@@ -1,7 +1,8 @@
 // An example as a page links it: shared by data.ts, which reads the rows, and the rendered-page
 // tests, so they render the page's real links.
 
-import type { Example, ExampleToken } from './detail/examples'
+import type { Slugs } from '@zenbu/dictionary-core/artifact/dictionary'
+import type { Example, ExampleToken } from '@zenbu/dictionary-core/detail/examples'
 import { hasSearchPath, kanjiPath, searchPath } from './urls'
 
 /** With the page it links to; null when it has no page yet. */
@@ -20,18 +21,19 @@ export interface Links {
   kanji(character: string | null): string | null
 }
 
-/** The path of a word page in the dictionary database, under its stored slug. */
+/** A word page's path, under its slug. */
 export const storedWordPath = (slug: string, entSeq: number) => `/dictionary/${slug}-${entSeq}/`
 
-/** Links from a page read from the dictionary database, where every word has a page. */
-export function databaseLinks(wordSlugs: Map<number, string>, kanjiPages: Set<string>): Links {
+/** Links from a service answer, which names the slug of every word it links to. */
+export function serviceLinks(slugs: Slugs, kanjiPages: readonly string[]): Links {
+  const pages = new Set(kanjiPages)
   return {
     word(entSeq) {
-      const slug = entSeq === null ? undefined : wordSlugs.get(entSeq)
+      const slug = entSeq === null ? undefined : slugs[entSeq]
       return entSeq === null || slug === undefined ? null : storedWordPath(slug, entSeq)
     },
     kanji(character) {
-      return character !== null && kanjiPages.has(character) ? kanjiPath(character) : null
+      return character !== null && pages.has(character) ? kanjiPath(character) : null
     }
   }
 }

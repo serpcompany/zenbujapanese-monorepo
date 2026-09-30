@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { permanentRedirect } from 'next/navigation'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SearchForm } from '@/components/dictionary/search-form'
 import { SearchResults } from '@/components/dictionary/search-results'
@@ -8,19 +7,13 @@ import { searchDictionary } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { isIndexable } from '@/lib/dictionary/results/links'
 import { pageSources } from '@/lib/dictionary/sources'
-import { decodeSegment, normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
+import { searchPath } from '@/lib/dictionary/urls'
+import { searchQuery } from './query'
 
 type Props = PageProps<'/dictionary/search/[query]'>
 
-// Next.js passes the page an encoded segment but generateMetadata a decoded one.
 async function load(params: Props['params'], decoded: boolean) {
-  const segment = (await params).query
-  const raw = decoded ? segment : decodeSegment(segment)
-  const query = normalizeSearchQuery(raw)
-  if (!query) permanentRedirect('/dictionary/search/')
-  // A literal dot (3.14) redirects to its encoded form (3%2E14), which keeps the trailing slash.
-  if (query !== raw || (!decoded && segment.includes('.'))) permanentRedirect(searchPath(query))
-  return searchDictionary(query)
+  return searchDictionary(await searchQuery(params, decoded, searchPath))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -28,8 +21,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return dictionaryMetadata(
     searchPath(results.query),
     `${results.query} in Japanese`,
-    results.state === 'results' && results.wordCount > 0
-      ? `${results.wordCount} Japanese words for “${results.query}”, with readings and meanings.`
+    results.state === 'results' && results.rows.length > 0
+      ? `${results.rows.length} Japanese words for “${results.query}”, with readings and meanings.`
       : `No Japanese words match “${results.query}”.`,
     { index: isIndexable(results) }
   )

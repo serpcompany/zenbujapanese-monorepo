@@ -1,5 +1,5 @@
+import type { FrequencyResult, FrequencyTier } from '@zenbu/dictionary-core/detail/frequency'
 import { Badge } from '@/components/ui/badge'
-import type { FrequencyResult, FrequencyTier } from '@/lib/dictionary/detail/frequency'
 
 /** The app's traffic-light scale (FrequencyRankChip.swift), gray for rare words. */
 const tierColor: Record<FrequencyTier, string> = {

@@ -116,7 +116,7 @@ struct JapaneseRubyText: View {
   /// Each kanji's part of a furigana segment's reading, which tapping that kanji highlights: nil
   /// for a segment without furigana, a single kanji, or a run whose kanji readings don't split
   /// its reading exactly one way. The word-detail conformance suite records it, so the website's
-  /// highlight is held to the app's (see also apps/web/src/lib/dictionary/detail/kanji-split.ts).
+  /// highlight is held to the app's (see also packages/dictionary-core/src/detail/kanji-split.ts).
   static func kanjiReadings(_ segment: JapaneseRubySegment) -> [String]? {
     guard let reading = segment.reading, segment.base.count > 1 else { return nil }
     return KanjiReadingSplitter.split(segment.base, reading: reading)

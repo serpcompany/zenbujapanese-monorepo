@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { loadedDictionary } from './data'
+import { dictionaryService } from './data'
 import {
   conjugationSitemapResponse,
   dictionarySitemapPaths,
@@ -10,41 +10,45 @@ import {
 } from './sitemaps'
 
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ ctx: {} }) }))
-vi.mock('./data', () => ({ loadedDictionary: vi.fn() }))
+vi.mock('./data', () => ({ dictionaryService: vi.fn() }))
 
-/** A dictionary database with `count` words numbered from 1, in sitemaps of `perSitemap`. */
-function fakeDictionary(count: number, perSitemap: number) {
+/** A dictionary service with `count` words numbered from 1, in sitemaps of `perSitemap`. */
+function fakeService(count: number, perSitemap: number) {
+  const build = 'abc123'
   const entSeqs = Array.from({ length: count }, (_, index) => index + 1)
-  const sitemaps: { number: number; firstEntSeq: number; lastEntSeq: number }[] = []
+  const sitemaps: { number: number; firstEntSeq: number; lastEntSeq: number; urlCount: number }[] =
+    []
   for (let start = 0; start < count; start += perSitemap) {
     const chunk = entSeqs.slice(start, start + perSitemap)
     sitemaps.push({
       number: sitemaps.length + 1,
       firstEntSeq: chunk[0],
-      lastEntSeq: chunk.at(-1) ?? 0
+      lastEntSeq: chunk.at(-1) ?? 0,
+      urlCount: chunk.length
     })
   }
-  const sitemapWords = vi.fn(
-    async (range: { firstEntSeq: number; lastEntSeq: number }, after: number, limit: number) =>
-      entSeqs
-        .filter(
-          entSeq => entSeq > after && entSeq >= range.firstEntSeq && entSeq <= range.lastEntSeq
-        )
-        .slice(0, limit)
-        .map(entSeq => ({ entSeq, slug: entSeq === 1 ? '見る' : `w&${entSeq}` }))
-  )
+  const sitemapWords = vi.fn(async (number: number, after: number, limit: number) => {
+    const range = sitemaps.find(sitemap => sitemap.number === number)
+    if (!range) return null
+    const data = entSeqs
+      .filter(entSeq => entSeq > after && entSeq >= range.firstEntSeq && entSeq <= range.lastEntSeq)
+      .slice(0, limit)
+      .map(entSeq => ({ entSeq, slug: entSeq === 1 ? '見る' : `w&${entSeq}` }))
+    return { data, build }
+  })
   return {
-    db: {
-      wordSitemaps: async () => sitemaps,
-      sitemapWords,
-      // 㐂 has no meanings or readings, so the database leaves it out.
-      indexableKanji: async () => ['見', '廊', '𠀋'],
-      conjugationSitemap: async () => [
-        { entSeq: 1259290, slug: '見る', indexedForms: ['plain/past', 'polite/past'] },
-        { entSeq: 1611000, slug: '静か', indexedForms: [] }
-      ]
-    },
-    build: 'abc123'
+    wordSitemaps: async () => ({ data: sitemaps, build }),
+    sitemapWords,
+    // 㐂 has no meanings or readings, so the service leaves it out. U+F928 is the compatibility
+    // ideograph 廊, which must keep its own URL.
+    indexableKanji: async () => ({ data: ['見', '廊', '𠀋'], build }),
+    conjugationSitemap: async () => ({
+      data: [
+        { entSeq: 1259290, slug: '見る', forms: ['plain/past', 'polite/past'] },
+        { entSeq: 1611000, slug: '静か', forms: [] }
+      ],
+      build
+    })
   }
 }
 
@@ -55,9 +59,9 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-describe('without a loaded dictionary (local fixtures)', () => {
+describe('without a dictionary service (local fixtures)', () => {
   test('there are no dictionary sitemaps', async () => {
-    vi.mocked(loadedDictionary).mockResolvedValue(null)
+    vi.mocked(dictionaryService).mockResolvedValue(null)
     expect(await dictionarySitemapPaths()).toEqual([])
     expect(await wordSitemapResponse(request('/sitemaps/dictionary/1.xml'), 1)).toBeNull()
     expect(await kanjiSitemapResponse(request('/sitemaps/kanji.xml'))).toBeNull()
@@ -65,9 +69,9 @@ describe('without a loaded dictionary (local fixtures)', () => {
   })
 })
 
-describe('with a loaded dictionary', () => {
+describe('with a dictionary service', () => {
   test('the index lists every word sitemap, then the kanji and conjugations sitemaps', async () => {
-    vi.mocked(loadedDictionary).mockResolvedValue(fakeDictionary(5, 2) as never)
+    vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
     expect(await dictionarySitemapPaths()).toEqual([
       '/sitemaps/dictionary/1.xml',
       '/sitemaps/dictionary/2.xml',
@@ -78,7 +82,7 @@ describe('with a loaded dictionary', () => {
   })
 
   test('the conjugations sitemap lists each table, then its form pages that list examples', async () => {
-    vi.mocked(loadedDictionary).mockResolvedValue(fakeDictionary(1, 1) as never)
+    vi.mocked(dictionaryService).mockResolvedValue(fakeService(1, 1) as never)
     const response = await conjugationSitemapResponse(request('/sitemaps/conjugations.xml'))
     expect(response?.headers.get('Content-Type')).toBe('application/xml; charset=utf-8')
     const miru = 'https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/conjugations/'
@@ -90,9 +94,19 @@ describe('with a loaded dictionary', () => {
     ])
   })
 
+  test('the conjugations sitemap answers 503 until the service has worked it out', async () => {
+    vi.mocked(dictionaryService).mockResolvedValue({
+      ...fakeService(1, 1),
+      conjugationSitemap: async () => null
+    } as never)
+    const response = await conjugationSitemapResponse(request('/sitemaps/conjugations.xml'))
+    expect(response?.status).toBe(503)
+    expect(response?.headers.get('Retry-After')).toBe('60')
+  })
+
   test('a word sitemap streams its range of canonical, percent-encoded, escaped URLs', async () => {
-    const dictionary = fakeDictionary(25_000, 20_000)
-    vi.mocked(loadedDictionary).mockResolvedValue(dictionary as never)
+    const service = fakeService(25_000, 20_000)
+    vi.mocked(dictionaryService).mockResolvedValue(service as never)
     const response = await wordSitemapResponse(request('/sitemaps/dictionary/1.xml'), 1)
     expect(response?.headers.get('Content-Type')).toBe('application/xml; charset=utf-8')
     const xml = (await response?.text()) ?? ''
@@ -103,8 +117,9 @@ describe('with a loaded dictionary', () => {
     expect(urls[0]).toBe('https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1/')
     expect(urls[1]).toBe('https://zenbujapanese.com/dictionary/w&amp;2-2/')
     expect(urls.at(-1)).toBe('https://zenbujapanese.com/dictionary/w&amp;20000-20000/')
-    // Two queries of 10,000, then one that finds nothing more.
-    expect(dictionary.db.sitemapWords).toHaveBeenCalledTimes(3)
+    // Two requests of 10,000, then one that finds nothing more.
+    expect(service.sitemapWords).toHaveBeenCalledTimes(3)
+    expect(service.sitemapWords).toHaveBeenNthCalledWith(2, 1, 10_000, 10_000)
 
     const second = await wordSitemapResponse(request('/sitemaps/dictionary/2.xml'), 2)
     expect(locs((await second?.text()) ?? '')).toHaveLength(5_000)
@@ -112,7 +127,7 @@ describe('with a loaded dictionary', () => {
   })
 
   test('the kanji sitemap lists the indexable kanji exactly, never normalized', async () => {
-    vi.mocked(loadedDictionary).mockResolvedValue(fakeDictionary(1, 1) as never)
+    vi.mocked(dictionaryService).mockResolvedValue(fakeService(1, 1) as never)
     const response = await kanjiSitemapResponse(request('/sitemaps/kanji.xml'))
     expect(locs((await response?.text()) ?? '')).toEqual([
       'https://zenbujapanese.com/dictionary/kanji/%E8%A6%8B/',

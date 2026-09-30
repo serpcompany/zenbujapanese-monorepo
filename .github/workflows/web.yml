@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - apps/web/**
+      - packages/dictionary-core/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
       - .github/workflows/web.yml
 
 permissions:
@@ -19,17 +23,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          package_json_file: apps/web/package.json
+          package_json_file: package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: apps/web/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
       # pnpm check builds without SITE_ENV. Build as each deployed environment does too, since
       # static pages and prerendering differ by environment: a route that reads a binding at
-      # build time fails only there. Neither build has a dictionary database, as in a deploy.
+      # build time fails only there. Neither build reaches the dictionary service, as in a deploy,
+      # where pages read it only at request time.
       - name: Build for staging
         run: SITE_ENV=staging pnpm build
       - name: Build for production

@@ -1,0 +1,36 @@
+name: Dictionary core
+
+# The shared dictionary core (packages/dictionary-core, ADR 0009): Biome with its rule that keeps
+# runtimes and frameworks out, typecheck, and Vitest. The Dictionary API workflow replays the
+# app-recorded suites through it on the app's data, and the Web workflow builds the site with it.
+# See docs/agents/dictionary-core.md.
+on:
+  pull_request:
+    paths:
+      - packages/dictionary-core/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .github/workflows/dictionary-core.yml
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/dictionary-core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check

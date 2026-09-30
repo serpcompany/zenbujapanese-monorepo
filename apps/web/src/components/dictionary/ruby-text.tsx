@@ -1,4 +1,4 @@
-import type { RubySegment } from '@/lib/dictionary/detail/ruby'
+import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 
 /**
  * Japanese text with furigana over the segments that need it. `pageWord` marks an example's word

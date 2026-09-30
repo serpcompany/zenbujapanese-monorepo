@@ -1,20 +1,18 @@
-import { readFileSync } from 'node:fs'
+import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { getPlatformProxy } from 'wrangler'
-import { type SearchData, type SearchWord, searchOn } from '@/lib/dictionary/data'
-import { rubySegments } from '@/lib/dictionary/detail/ruby'
-import { linkedWords, linkSearchScreen, resultsPerPage } from '@/lib/dictionary/results/links'
+import { describe, expect, test } from 'vitest'
+import type { SearchData, SearchWord } from '@/lib/dictionary/data'
+import { linkSearchScreen } from '@/lib/dictionary/results/links'
 import { normalizeSearchQuery, searchExamplesPath } from '@/lib/dictionary/urls'
+import { gateEnabled, gateService, recordedCases } from './gate'
 import { readRenderedPage, visibleText } from './rendered'
 import { SearchResults } from './search-results'
 
 // Renders the search results page's component to HTML, as the server does, and reads back what a
 // reader sees: the sections in order, the Example Sentences row, the reading refinement, the kanji
-// row, each row's headword, meaning, and chips, the first 25 words and the rest the rows route
-// serves, and the no-results state. The first tests render fixed data; the last runs cases of the
-// app-recorded search-results.json suite through the search database and the results core into
-// the page (ZENBU_SEARCH_D1=1, part of the search import's gate).
+// row, each row's headword, meaning, and chips, and the no-results state. The first tests render
+// fixed data; the last renders what the dictionary service answers for cases of the app-recorded
+// search-results.json suite (./gate.ts).
 
 const render = (data: SearchData) => renderToStaticMarkup(<SearchResults data={data} />)
 
@@ -68,8 +66,6 @@ describe('the search results page', () => {
         ]),
         word(1577980, 'いる', 'いる', 'to be (of animate objects)', [['JLPT', 'N5']])
       ],
-      wordCount: 2,
-      rowsPath: null,
       resultCount: 2
     })
     const page = readRenderedPage(html)
@@ -112,8 +108,6 @@ describe('the search results page', () => {
         path: '/dictionary/kanji/要/'
       },
       rows: [word(1609600, '必要', 'ひつよう', 'necessary', [['JLPT', 'N4']])],
-      wordCount: 1,
-      rowsPath: null,
       resultCount: 2
     })
     const page = readRenderedPage(html)
@@ -140,32 +134,9 @@ describe('the search results page', () => {
       readingRefinement: null,
       kanji: null,
       rows: [word(1, '語', 'ご', 'word', [])],
-      wordCount: 1,
-      rowsPath: null,
       resultCount: 1
     })
     expect(html).toContain('<p class="line-clamp-2 text-sm">word</p>')
-  })
-
-  test('renders the first 25 of 60 words, counts all 60, and offers the rest', () => {
-    const rows = Array.from({ length: 25 }, (_, index) => word(index + 1, '語', 'ご', 'word', []))
-    const html = render({
-      state: 'results',
-      query: 'い',
-      sections: ['results'],
-      examples: null,
-      readingRefinement: null,
-      kanji: null,
-      rows,
-      wordCount: 60,
-      rowsPath: '/dictionary/search/%E3%81%84/results.json?build=b',
-      resultCount: 60
-    })
-    const page = readRenderedPage(html)
-    expect(page.rows.map(row => row.entSeq)).toEqual(rows.map(row => row.entSeq))
-    expect(visibleText(html)).toMatch(/^60 words for い /)
-    // Without JavaScript, the button loads the rest; with it, scrolling does.
-    expect(visibleText(html)).toContain('Load more words')
   })
 
   test('shows only the Example Sentences row when only sentences match', () => {
@@ -183,17 +154,53 @@ describe('the search results page', () => {
         readingRefinement: null,
         kanji: null,
         rows: [],
-        wordCount: 0,
-        rowsPath: null,
         resultCount: 0
       })
     )
     expect(page.sections).toEqual(['examples'])
     expect(page.rows).toEqual([])
   })
-})
 
-const enabled = process.env.ZENBU_SEARCH_D1 === '1'
+  test('leads with the Example Sentences row, linked to the search’s examples page', () => {
+    const html = render({
+      state: 'results',
+      query: 'eat',
+      sections: ['examples', 'results'],
+      examples: {
+        count: 51,
+        title: 'View 50+ Example Sentences',
+        primaryEntry: null,
+        path: '/dictionary/search/eat/examples/'
+      },
+      readingRefinement: null,
+      kanji: null,
+      rows: [word(1358280, '食べる', 'たべる', 'to eat', [])],
+      resultCount: 1
+    })
+    const page = readRenderedPage(html)
+    expect(page.sections).toEqual(['examples', 'results'])
+    expect(page.examples).toEqual({
+      text: 'View 50+ Example Sentences',
+      href: '/dictionary/search/eat/examples/'
+    })
+  })
+
+  test('lists a sentence’s Discovered Words, below its Example Sentences row', () => {
+    const html = render({
+      state: 'results',
+      query: '日本語を勉強する',
+      sections: ['examples', 'discoveredWords'],
+      examples: { count: 3, title: 'View 3 Example Sentences', primaryEntry: null, path: null },
+      readingRefinement: null,
+      kanji: null,
+      rows: [word(1464530, '日本語', 'にほんご', 'Japanese (language)', [])],
+      resultCount: 1
+    })
+    const page = readRenderedPage(html)
+    expect(page.sections).toEqual(['examples', 'discoveredWords'])
+    expect(page.rows.map(row => row.headword)).toEqual(['日本語'])
+  })
+})
 
 interface SuiteCase {
   query: string
@@ -216,43 +223,19 @@ interface SuiteCase {
  */
 const renderedQueries = ['iru', 'いる', '日', 'eat', 'かえる', 'い', 'qzxvkj']
 
-const suiteCases: SuiteCase[] = enabled
-  ? (
-      JSON.parse(
-        readFileSync(
-          new URL('../../../../ios/LanguageData/Conformance/search-results.json', import.meta.url),
-          'utf8'
-        )
-      ) as { cases: SuiteCase[] }
-    ).cases.filter(expected => renderedQueries.includes(expected.query))
-  : []
+const suiteCases = recordedCases<SuiteCase>('search-results.json').filter(expected =>
+  renderedQueries.includes(expected.query)
+)
 
-describe.runIf(enabled)('the rendered search results page matches the app', () => {
-  let proxy: Awaited<ReturnType<typeof getPlatformProxy<CloudflareEnv>>>
-  let db: D1Database
-
-  beforeAll(async () => {
-    proxy = await getPlatformProxy<CloudflareEnv>({
-      persist: { path: `${process.env.ZENBU_SEARCH_D1_PATH ?? '.search-d1'}/v3` }
-    })
-    if (!proxy.env.SEARCH_DB) throw new Error('wrangler.jsonc has no local SEARCH_DB binding')
-    db = proxy.env.SEARCH_DB
-  })
-
-  afterAll(async () => {
-    await proxy?.dispose()
-  })
-
+describe.runIf(gateEnabled)('the rendered search results page matches the app', () => {
   test('renders every chosen case', () => {
     expect(suiteCases.map(expected => expected.query).sort()).toEqual([...renderedQueries].sort())
   })
 
   test.each(suiteCases)('「$query」', async expected => {
-    // As data.ts's searchDictionary reads it.
-    const { screen } = await searchOn(db, expected.query)
-    // Linked as searchDictionary links them once the dictionary database is loaded.
-    const links = { dictionaryLoaded: true, kanjiHasPage: true, build: 'build' }
-    const data = linkSearchScreen(screen, links)
+    const { screen, kanjiHasPage } = (await gateService().search(expected.query)).data
+    // Linked as searchDictionary links them.
+    const data = linkSearchScreen(screen, { dictionaryLoaded: true, kanjiHasPage })
     const html = render(data)
     const page = readRenderedPage(html)
     for (const row of data.state === 'results' ? data.rows : []) {
@@ -287,20 +270,8 @@ describe.runIf(enabled)('the rendered search results page matches the app', () =
       summary: row.summary,
       chips: row.chips.map(chip => `${chip.name} ${chip.text}`)
     }))
-    // The page renders the first 25 words and counts them all.
-    expect(page.rows).toEqual(expectedRows.slice(0, resultsPerPage))
+    // The page renders every word at once, and counts them.
+    expect(page.rows).toEqual(expectedRows)
     expect(visibleText(html)).toMatch(new RegExp(`^${expectedRows.length} words? for `))
-    // The rows route serves the rest, 25 at a time, as the page asks for them: getSearchRows
-    // searches without counting example sentences.
-    const words = linkedWords(
-      (await searchOn(db, expected.query, { examples: false })).screen,
-      true
-    )
-    const loaded = [...page.rows.map(row => row.entSeq)]
-    for (let from = resultsPerPage; from < words.length; from += resultsPerPage) {
-      loaded.push(...words.slice(from, from + resultsPerPage).map(row => row.entSeq))
-    }
-    expect(loaded).toEqual(expectedRows.map(row => row.entSeq))
-    expect(data.state === 'results' && data.rowsPath !== null).toBe(expectedRows.length > 25)
   })
 })

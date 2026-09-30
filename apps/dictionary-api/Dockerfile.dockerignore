@@ -1,0 +1,22 @@
+# The build context is the repository root; only what the Dockerfile copies goes in.
+**
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!apps/web/package.json
+!packages/dictionary-core/**
+!apps/dictionary-api/**
+!apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3
+!apps/ios/Modules/Sources/SearchExperience/Resources/CompoundPitch.sqlite3
+!apps/ios/Modules/Sources/SearchExperience/Resources/JLPTLevelPack.sqlite3
+!apps/ios/Modules/Sources/SearchExperience/Resources/TUBELEXFrequencyPack.sqlite3
+!apps/ios/Modules/Sources/SearchExperience/Resources/KanjiStrokeData.sqlite3
+!apps/ios/Modules/Sources/SearchExperience/Resources/ExampleWordIndex.sqlite3
+!apps/ios/Modules/Sources/SearchExperience/Resources/KanjiReferenceData.json
+!apps/ios/Modules/Sources/SearchExperience/Resources/KanjiElementReferenceData.json
+!apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json
+!apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
+**/node_modules
+apps/dictionary-api/dist
+apps/dictionary-api/.sudachi
+apps/dictionary-api/.env

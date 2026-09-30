@@ -1,29 +1,26 @@
 import { describe, expect, test, vi } from 'vitest'
-import { d1RetiredLookup, retiredWordResponse, retiredWordsLookup } from './retired'
+import type { DictionaryApi } from './api'
+import { apiRetiredLookup, retiredWordResponse, retiredWordsLookup } from './retired'
 
-// Fixture rows for `retired_ids` until the pipeline (#463) records real ones: 1000010 is retired
-// with no replacement, 1000020 is replaced by 1259290 (見る), and 1000030's replacement isn't in
-// this release.
-const retiredIds = [
-  { ent_seq: 1000010, replacement_ent_seq: null },
-  { ent_seq: 1000020, replacement_ent_seq: 1259290 },
-  { ent_seq: 1000030, replacement_ent_seq: 9999999 }
-]
+// Fixture retired entries until the pipeline (#463) records real ones: 1000010 is retired with no
+// replacement, 1000020 is replaced by 1259290 (見る), and 1000030's replacement isn't in this
+// release.
+const retired = { 1000010: null, 1000020: 1259290, 1000030: 9999999 }
 const slugs = new Map([[1259290, '見る']])
 
-/** A dictionary D1 holding the fixture rows; `failing` makes every query fail. */
-function fakeD1({ failing = false } = {}) {
-  const prepare = vi.fn((sql: string) => ({
-    all: async () => {
-      if (failing) throw new Error('D1_ERROR: Network connection lost.')
-      if (!sql.includes('retired_ids')) throw new Error(`unexpected ${sql}`)
-      return { results: retiredIds }
-    },
-    bind: (entSeq: number) => ({
-      first: async () => (slugs.has(entSeq) ? { slug: slugs.get(entSeq) } : null)
+/** A dictionary service holding the fixture entries; `failing` makes every call fail. */
+function fakeApi({ failing = false } = {}) {
+  const api = {
+    retired: vi.fn(async () => {
+      if (failing) throw new Error('The dictionary service answered 503 for /v1/retired')
+      return { data: retired, build: 'test' }
+    }),
+    word: vi.fn(async (entSeq: number) => {
+      const slug = slugs.get(entSeq)
+      return slug ? { data: { slug }, build: 'test' } : null
     })
-  }))
-  return { prepare } as unknown as D1Database & { prepare: typeof prepare }
+  }
+  return api as unknown as DictionaryApi & typeof api
 }
 
 const at = (path: string) => new URL(`https://staging.zenbujapanese.com${path}`)
@@ -32,7 +29,7 @@ describe('retiredWordResponse', () => {
   test('a retired word with no replacement is gone (410), and kept out of search engines', async () => {
     const response = await retiredWordResponse(
       at('/dictionary/1000010/'),
-      d1RetiredLookup(fakeD1())
+      apiRetiredLookup(fakeApi())
     )
     expect(response?.status).toBe(410)
     expect(response?.headers.get('X-Robots-Tag')).toBe('noindex')
@@ -41,7 +38,7 @@ describe('retiredWordResponse', () => {
   test('under any slug', async () => {
     const response = await retiredWordResponse(
       at(`/dictionary/${encodeURIComponent('旧')}-1000010/`),
-      d1RetiredLookup(fakeD1())
+      apiRetiredLookup(fakeApi())
     )
     expect(response?.status).toBe(410)
   })
@@ -49,7 +46,7 @@ describe('retiredWordResponse', () => {
   test('a replaced word redirects (308) to its replacement, in one hop to the canonical URL', async () => {
     const response = await retiredWordResponse(
       at('/dictionary/old-1000020/'),
-      d1RetiredLookup(fakeD1())
+      apiRetiredLookup(fakeApi())
     )
     expect(response?.status).toBe(308)
     expect(response?.headers.get('Location')).toBe(
@@ -60,7 +57,7 @@ describe('retiredWordResponse', () => {
   test('a replacement this release lacks leaves the word gone', async () => {
     const response = await retiredWordResponse(
       at('/dictionary/1000030/'),
-      d1RetiredLookup(fakeD1())
+      apiRetiredLookup(fakeApi())
     )
     expect(response?.status).toBe(410)
   })
@@ -73,27 +70,35 @@ describe('retiredWordResponse', () => {
     '/dictionary/',
     '/sitemaps/dictionary/1.xml'
   ])('leaves %s to the app', async path => {
-    expect(await retiredWordResponse(at(path), d1RetiredLookup(fakeD1()))).toBeNull()
+    expect(await retiredWordResponse(at(path), apiRetiredLookup(fakeApi()))).toBeNull()
   })
 
-  test('reads retired_ids once per database', async () => {
-    const db = fakeD1()
-    const lookup = d1RetiredLookup(db)
+  test('asks the service for retired entries once per isolate', async () => {
+    const api = fakeApi()
+    const lookup = apiRetiredLookup(api)
     await retiredWordResponse(at('/dictionary/1000010/'), lookup)
     await retiredWordResponse(at('/dictionary/1259290/'), lookup)
-    const reads = db.prepare.mock.calls.filter(([sql]) => sql.includes('retired_ids'))
-    expect(reads).toHaveLength(1)
+    expect(api.retired).toHaveBeenCalledTimes(1)
   })
 
-  test('a database that fails leaves the request to the app, which reports the failure', async () => {
-    const db = fakeD1({ failing: true })
-    expect(await retiredWordResponse(at('/dictionary/1000010/'), d1RetiredLookup(db))).toBeNull()
+  test('a service that fails leaves the request to the app, which reports the failure', async () => {
+    expect(
+      await retiredWordResponse(
+        at('/dictionary/1000010/'),
+        apiRetiredLookup(fakeApi({ failing: true }))
+      )
+    ).toBeNull()
   })
 })
 
 describe('retiredWordsLookup', () => {
-  test('wherever a dictionary database is bound, production included', () => {
-    expect(retiredWordsLookup({ DICTIONARY_DB: fakeD1() })).not.toBeNull()
+  test('wherever the site has a dictionary service, production included', () => {
+    expect(
+      retiredWordsLookup({
+        DICTIONARY_API_URL: 'https://dictionary.example',
+        DICTIONARY_API_TOKEN: 'token'
+      })
+    ).not.toBeNull()
     expect(retiredWordsLookup({})).toBeNull()
   })
 })

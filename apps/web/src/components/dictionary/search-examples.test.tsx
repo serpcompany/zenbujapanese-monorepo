@@ -1,25 +1,21 @@
-import { readFileSync } from 'node:fs'
+import { examplesPerPage, wordExample } from '@zenbu/dictionary-core/detail/examples'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { getPlatformProxy } from 'wrangler'
-import {
-  type SearchExamplesData,
-  searchExamplePageOn,
-  searchExamplesIndexable,
-  searchExamplesOn
-} from '@/lib/dictionary/data'
-import { examplesPerPage, wordExample } from '@/lib/dictionary/detail/examples'
-import { type Links, type PageExample, pageExample } from '@/lib/dictionary/page-example'
+import { describe, expect, test } from 'vitest'
+import type { PageExample, SearchExamplesData } from '@/lib/dictionary/data'
+import { searchExamplesIndexable } from '@/lib/dictionary/data'
+import { type Links, pageExample, serviceLinks } from '@/lib/dictionary/page-example'
 import { normalizeSearchQuery, searchPath } from '@/lib/dictionary/urls'
+import { gateEnabled, gateService, recordedCases } from './gate'
 import { readRenderedExamples, visibleText } from './rendered'
 import { SearchExamples } from './search-examples'
 
 // Renders a search's Example Sentences page component to HTML, as the server does, and reads back
 // what a reader sees: the title and count, each sentence's words with their links, furigana, and
 // the query's words marked, its translation and Tatoeba credit, and the Load more button. The
-// first tests render fixed data; the last runs cases of the app-recorded example-search.json
-// suite through the search database into the page, and loads the rest of each list as the page
-// does (ZENBU_SEARCH_D1=1, part of the search import's gate).
+// first test renders fixed data. The last ones render what the dictionary service answers
+// (./gate.ts): for every search-results.json case with an Example Sentences row, as many examples
+// as the row's count promises; and for cases of example-search.json, the sentences the app lists,
+// in its order, read as the app shows them, loading the rest of each list as the page does.
 
 const render = (data: SearchExamplesData) => renderToStaticMarkup(<SearchExamples data={data} />)
 
@@ -68,16 +64,17 @@ const example = (position: number): PageExample =>
   )
 
 describe('the Example Sentences page', () => {
-  test('titles the page with the query, with no count as in the app, and shows each one', () => {
+  test('titles the page with the query and its count, and shows each one', () => {
     const html = render({
       query: '食べた',
       listed: 60,
+      truncated: false,
       indexable: true,
       examples: Array.from({ length: 25 }, (_, position) => example(position)),
       examplesPath: '/dictionary/search/%E9%A3%9F%E3%81%B9%E3%81%9F/examples.json?build=b'
     })
-    expect(visibleText(html)).toMatch(/^食べた パン/)
-    expect(visibleText(html)).not.toMatch(/\d+ examples/)
+    expect(visibleText(html)).toMatch(/^食べた 60 examples パン/)
+    expect(html).toContain('<h1 lang="ja"')
     const [first, ...rest] = readRenderedExamples(html)
     expect(rest).toHaveLength(24)
     expect(first).toEqual({
@@ -94,11 +91,75 @@ describe('the Example Sentences page', () => {
     })
     expect(visibleText(html)).toContain('Load more examples')
   })
+
+  test('reads an English query as English', () => {
+    const html = render({
+      query: 'eat',
+      listed: 100,
+      truncated: true,
+      indexable: false,
+      examples: [example(0)],
+      examplesPath: '/dictionary/search/eat/examples.json?build=b'
+    })
+    expect(html).toContain('<h1 class=')
+    expect(visibleText(html)).toMatch(/^eat The first 100 of more than 100 examples/)
+  })
 })
 
-const enabled = process.env.ZENBU_SEARCH_D1 === '1'
+describe('whether search engines may index the page', () => {
+  test('only a direct Japanese search’s', () => {
+    expect(searchExamplesIndexable('食べた', false)).toBe(true)
+    expect(searchExamplesIndexable('食べた', true)).toBe(false)
+    expect(searchExamplesIndexable('miru', true)).toBe(false)
+    expect(searchExamplesIndexable('eat', false)).toBe(false)
+    // A full-width query searches as the ASCII it normalizes to.
+    expect(searchExamplesIndexable('ｅａｔ', false)).toBe(false)
+  })
+})
 
-interface SuiteCase {
+interface ResultsCase {
+  query: string
+  examples?: { title: string; count: number; primaryEntry?: string }
+}
+
+const rowCases = recordedCases<ResultsCase>('search-results.json').filter(
+  expected => expected.examples
+)
+
+const japanese = /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u
+
+describe.runIf(gateEnabled)('the search examples page matches its Example Sentences row', () => {
+  test.each(rowCases)('「$query」', async expected => {
+    const row = expected.examples
+    if (!row) throw new Error('no examples row')
+    const found = await gateService().searchExamples(expected.query)
+    if (!found) throw new Error(`No examples for ${expected.query}`)
+    const { listed, rows } = found.data
+    // ExampleSentenceResultCount: exact up to 50, and 51 for more.
+    if (row.count > 50) expect(listed).toBeGreaterThan(50)
+    else expect(listed).toBe(row.count)
+
+    const examples: PageExample[] = rows.map(rows => {
+      const example = wordExample(rows)
+      return { ...example, tokens: example.tokens.map(token => ({ ...token, path: null })) }
+    })
+    expect(examples.map(example => example.position)).toEqual(
+      Array.from({ length: Math.min(listed, examplesPerPage) }, (_, index) => index)
+    )
+
+    if (!row.primaryEntry && japanese.test(expected.query)) {
+      for (const example of examples) {
+        expect(
+          example.tokens.some(token => token.isPageWord),
+          example.text
+        ).toBe(true)
+      }
+    }
+    // A one-letter wildcard's examples (t*) take the service seconds the first time.
+  }, 30_000)
+})
+
+interface ExampleSearchCase {
   query: string
   ids?: string[]
   shown?: {
@@ -114,55 +175,46 @@ interface SuiteCase {
  */
 const renderedQueries = ['見る', '食べた', 'miru', 'eat', 'すし', 't*', '^the', 'qzxvkj']
 
-const suiteCases: SuiteCase[] = enabled
-  ? (
-      JSON.parse(
-        readFileSync(
-          new URL('../../../../ios/LanguageData/Conformance/example-search.json', import.meta.url),
-          'utf8'
-        )
-      ) as { cases: SuiteCase[] }
-    ).cases.filter(expected => renderedQueries.includes(expected.query))
-  : []
+const exampleSearchCases = recordedCases<ExampleSearchCase>('example-search.json').filter(
+  expected => renderedQueries.includes(expected.query)
+)
 
-describe.runIf(enabled)('the rendered Example Sentences page matches the app', () => {
-  let proxy: Awaited<ReturnType<typeof getPlatformProxy<CloudflareEnv>>>
-  let db: D1Database
-
-  beforeAll(async () => {
-    proxy = await getPlatformProxy<CloudflareEnv>({
-      persist: { path: `${process.env.ZENBU_SEARCH_D1_PATH ?? '.search-d1'}/v3` }
-    })
-    if (!proxy.env.SEARCH_DB) throw new Error('wrangler.jsonc has no local SEARCH_DB binding')
-    db = proxy.env.SEARCH_DB
-  })
-
-  afterAll(async () => {
-    await proxy?.dispose()
-  })
-
+describe.runIf(gateEnabled)('the rendered Example Sentences page matches the app', () => {
   test('renders every chosen case', () => {
-    expect(suiteCases.map(expected => expected.query).sort()).toEqual([...renderedQueries].sort())
+    expect(exampleSearchCases.map(expected => expected.query).sort()).toEqual(
+      [...renderedQueries].sort()
+    )
   })
 
-  test.each(suiteCases)('「$query」', async expected => {
-    // As data.ts's getSearchExamples and getMoreSearchExamples read them.
+  test.each(exampleSearchCases)('「$query」', async expected => {
+    // As data.ts's getSearchExamples reads them, and the examples.json route the rest.
     const query = normalizeSearchQuery(expected.query)
-    const found = await searchExamplesOn(db, query)
+    const service = gateService()
+    const found = await service.searchExamples(query)
     const ids = expected.ids ?? []
     // A search without sentences has no page (404), as the app never opens one.
     if (ids.length === 0) {
-      expect(found?.list.ids ?? []).toEqual([])
+      expect(found).toBeNull()
       return
     }
     if (!found) throw new Error(`「${query}」 has no Example Sentences`)
-    const page = (from: number) => searchExamplePageOn(found, query, from, async () => links)
+    const page = async (from: number) => {
+      const answer = from === 0 ? found : await service.searchExamples(query, from)
+      if (!answer) throw new Error(`「${query}」 has no examples from ${from}`)
+      const linked = serviceLinks(answer.data.slugs, [])
+      return {
+        examples: answer.data.rows.map(row => pageExample(wordExample(row), linked)),
+        pairIds: answer.data.rows.map(row => `esp1_${row.sentence.pairId}`)
+      }
+    }
+    const first = await page(0)
     const data: SearchExamplesData = {
-      query,
-      listed: found.list.ids.length,
-      indexable: searchExamplesIndexable(query, found.usesPrimaryEntryExamples),
-      examples: await page(0),
-      examplesPath: `${searchPath(query)}examples.json?build=build`
+      query: found.data.query,
+      listed: found.data.listed,
+      truncated: found.data.truncated,
+      indexable: searchExamplesIndexable(query, found.data.usesPrimaryEntryExamples),
+      examples: first.examples,
+      examplesPath: `${searchPath(query)}examples.json?build=${found.build}`
     }
     const html = render(data)
     const rendered = readRenderedExamples(html)
@@ -171,13 +223,13 @@ describe.runIf(enabled)('the rendered Example Sentences page matches the app', (
     expect(rendered.map(example => example.position)).toEqual(
       ids.slice(0, examplesPerPage).map((_, position) => position)
     )
-    const loaded = [...data.examples]
+    const loaded = [...first.examples]
+    const pairIds = [...first.pairIds]
     for (let from = examplesPerPage; from < data.listed; from += examplesPerPage) {
-      loaded.push(...(await page(from)))
+      const next = await page(from)
+      loaded.push(...next.examples)
+      pairIds.push(...next.pairIds)
     }
-    const pairIds = (await found.search.sentences(found.list.ids)).map(
-      sentence => `esp1_${sentence.pairId}`
-    )
     expect(pairIds).toEqual(ids)
     expect(loaded.map(example => example.position)).toEqual(ids.map((_, position) => position))
     expect(visibleText(html)).toContain(ids.length > examplesPerPage ? 'Load more examples' : query)
@@ -195,7 +247,8 @@ describe.runIf(enabled)('the rendered Example Sentences page matches the app', (
     }
     // Every word linked to one entry has its page; a word with kanji, furigana.
     for (const word of rendered.flatMap(example => example.words)) {
-      if (word.href?.startsWith('/dictionary/w-') && /[㐀-鿿々]/u.test(word.text)) {
+      const wordPage = word.href !== null && !word.href.startsWith('/dictionary/search/')
+      if (wordPage && /[㐀-鿿々]/u.test(word.text)) {
         expect(word.furigana, word.text).not.toBe('')
       }
     }

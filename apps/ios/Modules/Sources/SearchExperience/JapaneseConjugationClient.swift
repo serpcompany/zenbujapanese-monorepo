@@ -1,7 +1,7 @@
 import Foundation
 
 /// Builds a word's conjugation table. The website ports `JapaneseConjugator` (see also
-/// apps/web/src/lib/dictionary/detail/conjugation.ts); change both together.
+/// packages/dictionary-core/src/detail/conjugation.ts); change both together.
 struct JapaneseConjugationClient: Sendable {
   var table: @Sendable (DictionaryEntry) -> ConjugationTable?
 

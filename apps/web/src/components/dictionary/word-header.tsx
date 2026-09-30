@@ -1,8 +1,9 @@
+import type { Conjugations } from '@zenbu/dictionary-core/detail/conjugation'
+import type { PitchAccent as PitchAccentData } from '@zenbu/dictionary-core/detail/pitch'
+import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import type { PitchAccent as PitchAccentData } from '@/lib/dictionary/detail/pitch'
-import type { RubySegment } from '@/lib/dictionary/detail/ruby'
-import { ConjugationsLink } from './conjugations'
+import { ConjugationsButton } from './conjugations'
 import { HeadwordRuby } from './headword-ruby'
 import { PitchAccent } from './pitch-accent'
 import { PronounceButton } from './pronounce-button'
@@ -11,22 +12,26 @@ import { PronounceButton } from './pronounce-button'
  * The word page's header card, as the app's WordHeadline: the headword with furigana, whose kanji
  * highlight their part of the reading when selected, and beside it the pitch accent capsule that
  * pronounces the word, or a standalone speaker when the word has no pitch. The part of speech
- * follows under a separator, and opens the conjugation table's page when the word has one
- * (PartOfSpeechRow, which pushes ConjugationsView).
+ * follows under a separator, and opens the conjugation table when the word has one
+ * (PartOfSpeechRow), in a sheet that links to the table's page under `path`.
  */
 export function WordHeader({
   ruby,
   reading,
+  summary,
   pitch,
   partOfSpeech,
-  conjugationsPath
+  conjugations,
+  path
 }: {
   ruby: RubySegment[]
   reading: string
+  summary: string
   pitch: PitchAccentData | null
   partOfSpeech: string
-  /** The conjugation table's page; null when the word has none. */
-  conjugationsPath: string | null
+  conjugations: Conjugations | null
+  /** The word page's path. */
+  path: string
 }) {
   return (
     <Card>
@@ -39,10 +44,14 @@ export function WordHeader({
             <PronounceButton text={reading} label={`Pronounce ${reading}`} />
           )}
         </div>
-        {conjugationsPath ? (
+        {conjugations ? (
           <>
             <Separator />
-            <ConjugationsLink partOfSpeech={partOfSpeech} href={conjugationsPath} />
+            <ConjugationsButton
+              word={{ ruby, reading, summary, partOfSpeech, pitch }}
+              conjugations={conjugations}
+              wordPath={path}
+            />
           </>
         ) : partOfSpeech ? (
           <>

@@ -1,35 +1,33 @@
-import { readFileSync } from 'node:fs'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { getPlatformProxy } from 'wrangler'
 import {
   type ConjugationMode,
   type Conjugations,
   conjugations,
   sharedSpellingNote
-} from '@/lib/dictionary/detail/conjugation'
+} from '@zenbu/dictionary-core/detail/conjugation'
 import {
   examplesPerPage,
   formExample,
   noFormExamplesMessage
-} from '@/lib/dictionary/detail/examples'
-import type { ExampleSentenceRow, FormExampleRow } from '@/lib/dictionary/detail/rows'
-import { rubySegments } from '@/lib/dictionary/detail/ruby'
+} from '@zenbu/dictionary-core/detail/examples'
+import type { ExampleSentenceRow, FormExampleRow } from '@zenbu/dictionary-core/detail/rows'
+import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import type {
   SuiteConjugationForm,
   SuiteConjugations,
   SuiteFormExamples
-} from '@/lib/dictionary/detail/suite'
-import { wordDetail } from '@/lib/dictionary/detail/word'
-import { dictionaryDatabase } from '@/lib/dictionary/dictionary-db'
-import { databaseLinks, pageExample, storedWordPath } from '@/lib/dictionary/page-example'
-import { conjugatedFormPath, conjugationsPath } from '@/lib/dictionary/urls'
+} from '@zenbu/dictionary-core/detail/suite'
+import { wordDetail } from '@zenbu/dictionary-core/detail/word'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, test } from 'vitest'
+import { pageExample, serviceLinks, storedWordPath } from '@/lib/dictionary/page-example'
+import { conjugatedFormPath } from '@/lib/dictionary/urls'
 import {
   ConjugatedFormContent,
   ConjugatedFormExamples,
   ConjugationTableContent,
   type ConjugationWord
 } from './conjugations'
+import { gateEnabled, gateService, recordedCases } from './gate'
 import { readConjugatedForm, readConjugationTable, readExamples } from './rendered-word'
 import { WordHeader } from './word-header'
 
@@ -37,9 +35,8 @@ import { WordHeader } from './word-header'
 // back what a reader sees: the header's meaning and rule, the Plain/Polite control, each row's
 // title, form, highlighted ending, and the form page it opens, and each form's meaning, shared
 // spelling, furigana, and examples, with each example's words, links, and accented form. The first
-// tests render fixed data; the last runs every word-detail.json case with a table through the
-// dictionary database and the detail core into the components (ZENBU_DICTIONARY_D1=1, part of the
-// dictionary import's gate).
+// tests render fixed data; the last renders what the dictionary service answers for every
+// word-detail.json case (./gate.ts).
 
 const noReadings = new Map()
 const miruPath = '/dictionary/見る-1259290/'
@@ -183,7 +180,7 @@ describe('the conjugation table', () => {
         { token: 1, entSeqs: [2028970, 2028980] }
       ]
     }
-    const links = databaseLinks(new Map([[1259290, '見る']]), new Set())
+    const links = serviceLinks({ 1259290: '見る' }, [])
     const html = renderToStaticMarkup(
       <ConjugatedFormExamples
         examples={[pageExample(formExample({ sentence, example }), links)]}
@@ -218,25 +215,23 @@ describe('the conjugation table', () => {
     )
   })
 
-  test('the part-of-speech row opens the table’s page only when the word has one', () => {
-    const header = (path: string | null) =>
+  test('the part-of-speech row opens the table only when the word has one', () => {
+    const header = (data: Conjugations | null) =>
       renderToStaticMarkup(
         <WordHeader
           ruby={miruWord.ruby}
           reading="みる"
+          summary={miruWord.summary}
           pitch={null}
           partOfSpeech="Ichidan verb (transitive)"
-          conjugationsPath={path}
+          conjugations={data}
+          path={miruPath}
         />
       )
-    expect(header(conjugationsPath(miruPath))).toMatch(
-      /<a data-opens-conjugations="true"[^>]* href="\/dictionary\/見る-1259290\/conjugations\/"/
-    )
+    expect(header(miru)).toMatch(/<button[^>]* data-opens-conjugations="true"/)
     expect(header(null)).not.toContain('data-opens-conjugations')
   })
 })
-
-const enabled = process.env.ZENBU_DICTIONARY_D1 === '1'
 
 /** A form as the suite records it, with the examples its screen lists. */
 interface SuiteForm extends SuiteConjugationForm {
@@ -250,66 +245,37 @@ interface SuiteCase {
   conjugations?: SuiteConjugations & { plain: SuiteForm[]; polite?: SuiteForm[] }
 }
 
-const suiteCases: SuiteCase[] = enabled
-  ? (
-      JSON.parse(
-        readFileSync(
-          new URL('../../../../ios/LanguageData/Conformance/word-detail.json', import.meta.url),
-          'utf8'
-        )
-      ) as { cases: SuiteCase[] }
-    ).cases
-  : []
+const suiteCases = recordedCases<SuiteCase>('word-detail.json')
 
-describe.runIf(enabled)('the rendered conjugation pages match the app', () => {
-  let proxy: Awaited<ReturnType<typeof getPlatformProxy<CloudflareEnv>>>
-  let db: D1Database
-  let dictionary: ReturnType<typeof dictionaryDatabase>
-
-  beforeAll(async () => {
-    proxy = await getPlatformProxy<CloudflareEnv>({
-      persist: { path: `${process.env.ZENBU_DICTIONARY_D1_PATH ?? '.dictionary-d1'}/v3` }
-    })
-    if (!proxy.env.DICTIONARY_DB)
-      throw new Error('wrangler.jsonc has no local DICTIONARY_DB binding')
-    db = proxy.env.DICTIONARY_DB
-    dictionary = dictionaryDatabase(db)
-  })
-
-  afterAll(async () => {
-    await proxy?.dispose()
-  })
-
-  /** Each word page's path, by the Language Reference ID the suite records. */
-  async function wordPaths(ids: string[]): Promise<Map<string, string>> {
-    const paths = new Map<string, string>()
-    for (let start = 0; start < ids.length; start += 100) {
-      const batch = ids.slice(start, start + 100)
-      const { results } = await db
-        .prepare(`SELECT id, ent_seq, slug FROM words WHERE id IN (${batch.map(() => '?')})`)
-        .bind(...batch)
-        .all<{ id: string; ent_seq: number; slug: string }>()
-      for (const row of results) paths.set(row.id, storedWordPath(row.slug, row.ent_seq))
-    }
-    return paths
-  }
-
+describe.runIf(gateEnabled)('the rendered conjugation pages match the app', () => {
   test.each(suiteCases)('$covers', async expected => {
-    const word = await dictionary.conjugationWord(Number(expected.entSeq[0]))
-    if (!word) throw new Error(`No word ${expected.entSeq[0]}`)
-    const detail = wordDetail(word.rows)
-    const path = storedWordPath(word.slug, detail.entSeq)
-    // The part-of-speech row opens the table's page exactly when the app's opens the table.
+    const service = gateService()
+    const entSeq = Number(expected.entSeq[0])
+    const page = await service.word(entSeq)
+    if (!page) throw new Error(`No word ${entSeq}`)
+    // The part-of-speech row opens the table exactly when the app's does.
+    const pageDetail = wordDetail(page.data.rows)
     const header = renderToStaticMarkup(
       <WordHeader
-        ruby={detail.ruby}
-        reading={detail.reading}
-        pitch={detail.pitch}
-        partOfSpeech={detail.partOfSpeech}
-        conjugationsPath={detail.conjugations ? conjugationsPath(path) : null}
+        ruby={pageDetail.ruby}
+        reading={pageDetail.reading}
+        summary={pageDetail.summary}
+        pitch={pageDetail.pitch}
+        partOfSpeech={pageDetail.partOfSpeech}
+        conjugations={pageDetail.conjugations}
+        path={storedWordPath(page.data.slug, entSeq)}
       />
     )
     expect(header.includes('data-opens-conjugations')).toBe(expected.opensConjugations)
+    // The table's and forms' pages read the word without its examples.
+    const word = await service.conjugationWord(entSeq)
+    if (!word) {
+      expect(expected.conjugations).toBeUndefined()
+      expect(pageDetail.conjugations).toBeNull()
+      return
+    }
+    const detail = wordDetail(word.data.rows)
+    const path = storedWordPath(word.data.slug, detail.entSeq)
     const suite = expected.conjugations
     if (!suite || !detail.conjugations) {
       expect(detail.conjugations).toBeNull()
@@ -357,9 +323,9 @@ describe.runIf(enabled)('the rendered conjugation pages match the app', () => {
         })
         // The form's page draws its first examples, in the app's order, each word linked where
         // the app links it and the form's words accented.
-        const found = await dictionary.formExamples(row.surface, 0, examplesPerPage)
+        const { data: found } = await service.formExamples(row.surface, 0, examplesPerPage)
         expect(found.listed).toBe(recorded.examples.ids.length)
-        const links = databaseLinks(found.slugs, new Set())
+        const links = serviceLinks(found.slugs, [])
         const html = renderToStaticMarkup(
           <ConjugatedFormExamples
             examples={found.rows.map(rows => pageExample(formExample(rows), links))}
@@ -372,19 +338,14 @@ describe.runIf(enabled)('the rendered conjugation pages match the app', () => {
           recorded.examples.ids.slice(0, examplesPerPage)
         )
         if (recorded.examples.ids.length === 0) expect(html).toContain(noFormExamplesMessage)
-        const paths = await wordPaths([
-          ...new Set(
-            recorded.examples.shown.flatMap(shown =>
-              shown.tokens.flatMap(token => (token.entry ? [token.entry] : []))
-            )
-          )
-        ])
+        // Which entry each word links to, the service's conformance suite checks
+        // (apps/dictionary-api); here, that a word with one entry opens a word page.
         for (const [position, shown] of recorded.examples.shown.entries()) {
           expect(examples[position].tokens).toEqual(
             shown.tokens.map(token => ({
               surface: token.surface,
               href: token.entry
-                ? (paths.get(token.entry) ?? `missing ${token.entry}`)
+                ? expect.stringMatching(/^\/dictionary\/[^/]+-\d+\/$/)
                 : token.candidates
                   ? expect.stringMatching(/^\/dictionary\/search\/[^/]+\/$/)
                   : null,

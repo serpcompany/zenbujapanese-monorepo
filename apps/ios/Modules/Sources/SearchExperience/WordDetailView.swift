@@ -561,7 +561,7 @@ private struct PitchAccentBadge: View {
 /// each one mora wide, or 1.5 for a combined mora such as キョ, then room for the particle. Each
 /// mora's point is at its center, high or low; the particle's point is centered in its room.
 /// The word-detail conformance suite records it, so the website's graph is held to the app's
-/// (see also apps/web/src/lib/dictionary/detail/pitch.ts).
+/// (see also packages/dictionary-core/src/detail/pitch.ts).
 struct PitchContourLayout: Equatable {
   struct Point: Equatable {
     /// From the left edge of the first mora, in mora widths.
@@ -789,7 +789,7 @@ private struct FrequencyDisclosureItem: Identifiable {
 /// What Frequency Details shows for one dictionary's result: the dictionary, then the entry's
 /// JLPT level, or its rank and percentile, or why there is neither. The word-detail conformance
 /// suite records it, so the website's sheet is held to the app's (see also
-/// apps/web/src/lib/dictionary/detail/frequency.ts).
+/// packages/dictionary-core/src/detail/frequency.ts).
 struct FrequencyDisclosurePresentation: Equatable {
   struct Pack: Equatable {
     let name: String

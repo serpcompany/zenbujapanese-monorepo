@@ -1,4 +1,4 @@
-// The website runs a TypeScript port of this search logic: apps/web/src/lib/dictionary/search/deinflect.ts.
+// The website runs a TypeScript port of this search logic: packages/dictionary-core/src/search/deinflect.ts.
 // Change both in the same PR and re-record the conformance suite (issue 481).
 import Foundation
 

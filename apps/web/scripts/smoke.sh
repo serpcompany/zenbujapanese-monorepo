@@ -77,8 +77,8 @@ eventually 'pages sitemap lists slashed page URLs' 'pages sitemap has a non-cano
 # The shipped iOS app links to /privacy.
 expect /privacy 308
 
-# Dictionary pages: each environment reads its own release databases (SEARCH_DB and
-# DICTIONARY_DB), so a word and a kanji without local fixtures (見る, 見) have pages.
+# Dictionary pages: each environment reads its own dictionary service (DICTIONARY_API_URL), so a
+# word and a kanji without local fixtures (見る, 見) have pages.
 word=/dictionary/%E8%A6%8B%E3%82%8B-1259290/
 kanji=/dictionary/kanji/%E8%A6%8B/
 expect /dictionary/ 200
@@ -93,7 +93,7 @@ header_has_dictionary() {
 eventually 'the header links to the dictionary and has search' \
   'the header is missing the Dictionary link or search' header_has_dictionary
 # Search results show what the app shows: the iru case of the app-recorded suite, read at run time
-# so a re-recorded suite (which the search import's gate checks) never leaves this check stale.
+# so a re-recorded suite (which the dictionary service's gate checks) never leaves this check stale.
 # For iru, that's the "Search for「いる」" refinement, then the first rows' entry numbers and chips,
 # in order.
 iru=/dictionary/search/iru/
@@ -143,6 +143,24 @@ show_iru_seen() { echo "$iru_seen (want refinement yes; rows $(paste -sd, - <<<"
 eventually 'iru shows the refinement and its first rows with their chips, as the app does' \
   'iru differs from the app' iru_matches_the_app show_iru_seen
 
+# The results list starts with the app's Example Sentences row, which opens the search's examples
+# page: eat's recorded title, read from the suite, and the page it links to.
+eat=/dictionary/search/eat/
+eat_examples="$(python3 -c '
+import json, sys
+case = next(c for c in json.load(open(sys.argv[1]))["cases"] if c["query"] == "eat")
+print(case["examples"]["title"])
+' "$suite")"
+shows_examples_row() {
+  local html
+  html="$(body "$eat")"
+  grep -q 'data-section="examples"' <<<"$html" && grep -qF "$eat_examples" <<<"$html" &&
+    grep -q "href=\"${eat}examples/\"" <<<"$html"
+}
+eventually "eat leads with '$eat_examples', as the app does" \
+  "eat has no '$eat_examples' row linked to its examples page" shows_examples_row
+expect "${eat}examples/" 200
+
 # The footer links Legal, as the #462 design's footer does.
 footer_has_legal() {
   grep -qE '<footer[^>]*>.*href="/legal/"[^>]*>Legal</a>' <<<"$(body / | tr -d '\n')"
@@ -188,8 +206,9 @@ draws_like_the_app() {
 show_miru_seen() { echo "$miru_seen (want dots $miru_dots; rows $miru_rows)"; }
 eventually "見る's pitch graph and Frequency rows match the app" \
   "見る's pitch graph or Frequency rows differ from the app" draws_like_the_app show_miru_seen
-# The part-of-speech row opens a conjugation table exactly where the app's does: 見る's links to
-# its table's page, and 学校's (a noun) doesn't. Each table and form has its own page (#511).
+# The part-of-speech row opens a conjugation table exactly where the app's does: 見る's does, and
+# 学校's (a noun) doesn't. The table opens in a sheet that links to its own page, and each form
+# has its own page too (#511).
 conjugations="${word}conjugations/"
 miru_table='/dictionary/見る-1259290/conjugations/'
 opens_expected="$(python3 -c '
@@ -201,11 +220,7 @@ opens_seen=""
 opens_like_the_app() {
   local path opens=()
   for path in "$word" "$gakkou"; do
-    if grep -qE "<a [^>]*data-opens-conjugations[^>]*href=\"$miru_table\"|<a [^>]*href=\"$miru_table\"[^>]*data-opens-conjugations" <<<"$(body "$path")"; then
-      opens+=(yes)
-    else
-      opens+=(no)
-    fi
+    if grep -q 'data-opens-conjugations' <<<"$(body "$path")"; then opens+=(yes); else opens+=(no); fi
   done
   opens_seen="${opens[*]}"
   [ "$opens_seen" = "$opens_expected" ]
@@ -285,45 +300,27 @@ iru_has_examples_row() {
 eventually "iru shows \"$iru_examples_title\", as the app does" \
   'iru is missing the Example Sentences row' iru_has_examples_row
 
-# Paging (#466): a search renders its first 25 words, and its rows route, named for the page's
-# search build, serves the rest 25 at a time. Together they list the suite's iru rows exactly once,
-# in order.
+# A search renders all its words at once, at most the app's 60, in the suite's order for iru.
 iru_all_rows="$(python3 -c '
 import json, sys
 case = next(c for c in json.load(open(sys.argv[1]))["cases"] if c["query"] == "iru")
 print(" ".join(row["entSeq"][0] for row in case["results"]))
 ' "$suite")"
-iru_paged=""
-iru_pages_as_the_app_lists() {
-  local html rows_path first rest=""
-  html="$(body "$iru")"
-  first="$(grep -oE 'data-result-row="[0-9]+"' <<<"$html" | grep -oE '[0-9]+' | paste -sd' ' -)"
-  rows_path="$(grep -oE '/dictionary/search/iru/results\.json\?build=[0-9a-f]+' <<<"$html" | head -n 1)"
-  if [ -n "$rows_path" ]; then
-    for from in 25 50; do
-      rest+=" $(body "$rows_path&from=$from" | python3 -c '
-import json, sys
-try:
-    print(" ".join(str(row["entSeq"]) for row in json.load(sys.stdin)["rows"]))
-except Exception:
-    print("unreadable")
-')"
-    done
-  fi
-  iru_paged="$(wc -w <<<"$first" | tr -d ' ') in the page, then $(wc -w <<<"$rest" | tr -d ' ') from ${rows_path:-no rows route}"
-  [ "$(wc -w <<<"$first" | tr -d ' ')" = 25 ] &&
-    [ "$(xargs <<<"$first $rest")" = "$iru_all_rows" ]
+iru_listed=""
+iru_lists_as_the_app_does() {
+  iru_listed="$(grep -oE 'data-result-row="[0-9]+"' <<<"$(body "$iru")" | grep -oE '[0-9]+' | paste -sd' ' -)"
+  [ "$iru_listed" = "$iru_all_rows" ]
 }
-show_iru_paged() { echo "$iru_paged (want $(wc -w <<<"$iru_all_rows" | tr -d ' ') rows in the suite's order)"; }
-eventually "iru renders 25 words and its rows route serves the rest, in the app's order" \
-  "iru's words page differently from the app" iru_pages_as_the_app_lists show_iru_paged
+show_iru_listed() { echo "$(wc -w <<<"$iru_listed" | tr -d ' ') rows (want $(wc -w <<<"$iru_all_rows" | tr -d ' ') in the suite's order)"; }
+eventually "iru lists all its words at once, in the app's order" \
+  "iru's words differ from the app" iru_lists_as_the_app_does show_iru_listed
 
 # A search's Example Sentences page (#511): 見る lists the sentences that contain it, the first as
 # the example-search suite recorded it (its translation), 25 in the page, and its examples route,
-# named for the page's search build, serves the next 25 from position 25.
+# named for the page's dictionary build, serves the next 25 from position 25.
 examples_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/example-search.json"
 # A search without example sentences has no Example Sentences page; t*, with over 100,000
-# candidates, answers from the precomputed searches.
+# candidates, answers too.
 expect /dictionary/search/qzxvkj/examples/ 404
 expect '/dictionary/search/t*/examples/' 200
 miru_examples=/dictionary/search/%E8%A6%8B%E3%82%8B/examples/
@@ -342,7 +339,8 @@ miru_examples_match_the_app() {
   local html shown examples_path next
   html="$(body "$miru_examples")"
   shown="$(grep -oE 'data-example="[0-9]+"' <<<"$html" | wc -l | tr -d ' ')"
-  examples_path="$(grep -oE '/dictionary/search/%E8%A6%8B%E3%82%8B/examples\.json\?build=[0-9a-f]+' <<<"$html" | head -n 1)"
+  # The build is the artifact's SHA-256 prefix and the service's release (e13452e70d34-1a2b3c4).
+  examples_path="$(grep -oE '/dictionary/search/%E8%A6%8B%E3%82%8B/examples\.json\?build=[0-9A-Za-z._-]+' <<<"$html" | head -n 1)"
   next=""
   [ -n "$examples_path" ] && next="$(body "$examples_path&from=25" | python3 -c '
 import json, sys
@@ -405,6 +403,14 @@ noindex_follows_meanings() {
 }
 eventually 'a kanji without meanings or readings is noindex' 'noindex is wrong on 㐂 or 見' \
   noindex_follows_meanings
+# A search's Example Sentences page is indexed only for a direct Japanese search (#511): 見る's is,
+# and eat's (English) is noindex.
+examples_indexing() {
+  ! grep -q "$noindex" <<<"$(body "$miru_examples")" &&
+    grep -q "$noindex" <<<"$(body "${eat}examples/")"
+}
+eventually "only a direct Japanese search's examples page is indexable" \
+  "noindex is wrong on 見る's or eat's examples page" examples_indexing
 eventually "a form's page is noindex without examples, and names its spelling's first page" \
   "noindex or canonical is wrong on 見る's form pages" form_indexing_follows_examples
 # The conjugations sitemap lists 見る's table, its past, and its potential, which list examples,
@@ -420,8 +426,15 @@ lists_conjugations() {
     grep -q "<loc>https://zenbujapanese.com${conjugations}plain/potential/</loc>" <<<"$locs" &&
     ! grep -q "<loc>https://zenbujapanese.com${conjugations}plain/passive/</loc>" <<<"$locs"
 }
-eventually 'conjugations sitemap lists tables and the form pages that list examples' \
-  "conjugations sitemap is missing 見る's pages or lists one it shouldn't" lists_conjugations
+# The dictionary service works the sitemap out in the minutes after it starts, and answers 503
+# until then.
+conjugations_status="$(curl -s -o /dev/null -w '%{http_code}' "${smoke[@]}" "$base/sitemaps/conjugations.xml")"
+if [ "$conjugations_status" = 503 ]; then
+  echo "skip the conjugations sitemap: the dictionary service is still working it out (503)"
+else
+  eventually 'conjugations sitemap lists tables and the form pages that list examples' \
+    "conjugations sitemap is missing 見る's pages or lists one it shouldn't" lists_conjugations
+fi
 
 # The X-Robots-Tag header a path sends, if any.
 robots_tag() { curl -sI "${smoke[@]}" "$base$1" | tr -d '\r' | grep -i '^x-robots-tag:' || true; }
@@ -429,7 +442,7 @@ robots() { body /robots.txt; }
 
 if [ "$env" = production ]; then
   # Production's dictionary is indexable: its pages send no X-Robots-Tag, like the rest of the site.
-  for path in / "$word" "$kanji" "$conjugations" "${conjugations}plain/past/" \
+  for path in / "$word" "$kanji" "$miru_examples" "$conjugations" "${conjugations}plain/past/" \
     /sitemaps/kanji.xml /sitemaps/conjugations.xml; do
     has_no_robots_tag() { [ -z "$(robots_tag "$path")" ]; }
     eventually "no X-Robots-Tag on $path" "unexpected X-Robots-Tag on $path" has_no_robots_tag

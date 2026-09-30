@@ -1,3 +1,4 @@
+import { exampleCountText, noExamplesMessage } from '@zenbu/dictionary-core/detail/examples'
 import { ChevronRightIcon } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -13,7 +14,6 @@ import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordHeader } from '@/components/dictionary/word-header'
 import { Item, ItemActions, ItemContent } from '@/components/ui/item'
 import { getWordPage, type WordPageData } from '@/lib/dictionary/data'
-import { exampleCountText, noExamplesMessage } from '@/lib/dictionary/detail/examples'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { pageSources } from '@/lib/dictionary/sources'
 import { decodeSegment, parseWordSegment } from '@/lib/dictionary/urls'
@@ -120,9 +120,11 @@ export default async function WordPage({ params }: Props) {
       <WordHeader
         ruby={word.ruby}
         reading={word.reading}
+        summary={word.summary}
         pitch={word.pitch}
         partOfSpeech={word.partOfSpeech}
-        conjugationsPath={word.conjugationsPath}
+        conjugations={word.conjugations}
+        path={word.path}
       />
 
       <Section title="Meaning">

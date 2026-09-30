@@ -8,14 +8,16 @@ name: Search parity
 # applies to one side.
 #
 #   search:   LookupClient, SearchQuery, DictionaryRanking, JapaneseDeinflection, DictionaryEntry,
-#             JapaneseTextAnalysisClient <-> apps/web/src/lib/dictionary/search/
+#             JapaneseTextAnalysisClient <-> packages/dictionary-core/src/search/
 #   examples: ExampleSentenceClient, JapaneseTextAnalysisClient, JapaneseInflectionGrouping,
 #             KuromojiMorphologyClient, LinkedJapaneseText (the conjugated form's highlight)
-#             <-> apps/web/src/lib/dictionary/examples/*.ts
+#             <-> packages/dictionary-core/src/examples/*.ts,
+#             packages/dictionary-core/src/artifact/{example-retrieval,example-search,word-examples,
+#             search-examples,lookup}.ts, apps/dictionary-api/src/kuromoji.ts
 #   detail:   KanjiReadingSplitter, JapaneseRubyText (the per-kanji furigana highlight),
 #             WordDetailView (PitchContourLayout, FrequencyDisclosurePresentation), FrequencyPack,
 #             JapaneseConjugationClient, ConjugationsView
-#             <-> apps/web/src/lib/dictionary/detail/{kanji-split,pitch,frequency,conjugation}.ts
+#             <-> packages/dictionary-core/src/detail/{kanji-split,pitch,frequency,conjugation}.ts
 
 on:
   pull_request:
@@ -37,12 +39,18 @@ on:
       - apps/ios/Modules/Sources/SearchExperience/FrequencyPack.swift
       - apps/ios/Modules/Sources/SearchExperience/JapaneseConjugationClient.swift
       - apps/ios/Modules/Sources/SearchExperience/ConjugationsView.swift
-      - apps/web/src/lib/dictionary/search/**
-      - apps/web/src/lib/dictionary/examples/*.ts
-      - apps/web/src/lib/dictionary/detail/kanji-split.ts
-      - apps/web/src/lib/dictionary/detail/pitch.ts
-      - apps/web/src/lib/dictionary/detail/frequency.ts
-      - apps/web/src/lib/dictionary/detail/conjugation.ts
+      - packages/dictionary-core/src/search/**
+      - packages/dictionary-core/src/examples/*.ts
+      - packages/dictionary-core/src/artifact/example-retrieval.ts
+      - packages/dictionary-core/src/artifact/example-search.ts
+      - packages/dictionary-core/src/artifact/word-examples.ts
+      - packages/dictionary-core/src/artifact/search-examples.ts
+      - packages/dictionary-core/src/artifact/lookup.ts
+      - apps/dictionary-api/src/kuromoji.ts
+      - packages/dictionary-core/src/detail/kanji-split.ts
+      - packages/dictionary-core/src/detail/pitch.ts
+      - packages/dictionary-core/src/detail/frequency.ts
+      - packages/dictionary-core/src/detail/conjugation.ts
 
 permissions:
   contents: read
@@ -81,13 +89,14 @@ jobs:
           }
           check search \
             "${swift_dir}(LookupClient|SearchQuery|DictionaryRanking|JapaneseDeinflection|DictionaryEntry|JapaneseTextAnalysisClient)\.swift$" \
-            '^apps/web/src/lib/dictionary/search/' 'apps/web/src/lib/dictionary/search/'
+            '^packages/dictionary-core/src/search/' 'packages/dictionary-core/src/search/'
           check examples \
             "${swift_dir}(ExampleSentenceClient|JapaneseTextAnalysisClient|JapaneseInflectionGrouping|KuromojiMorphologyClient|LinkedJapaneseText)\.swift$" \
-            '^apps/web/src/lib/dictionary/examples/[^/]+\.ts$' 'apps/web/src/lib/dictionary/examples/'
+            '^(packages/dictionary-core/src/examples/[^/]+|packages/dictionary-core/src/artifact/(example-retrieval|example-search|word-examples|search-examples|lookup)|apps/dictionary-api/src/kuromoji)\.ts$' \
+            'packages/dictionary-core/src/examples/ and its artifact/ example files'
           check detail \
             "${swift_dir}(KanjiReadingSplitter|JapaneseRubyText|WordDetailView|FrequencyPack|JapaneseConjugationClient|ConjugationsView)\.swift$" \
-            '^apps/web/src/lib/dictionary/detail/(kanji-split|pitch|frequency|conjugation)\.ts$' \
-            'apps/web/src/lib/dictionary/detail/{kanji-split,pitch,frequency,conjugation}.ts'
+            '^packages/dictionary-core/src/detail/(kanji-split|pitch|frequency|conjugation)\.ts$' \
+            'packages/dictionary-core/src/detail/{kanji-split,pitch,frequency,conjugation}.ts'
           [ "$status" -eq 0 ] && echo "Search parity OK."
           exit "$status"

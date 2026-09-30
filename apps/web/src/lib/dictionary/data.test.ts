@@ -1,47 +1,67 @@
+import type {
+  ConjugationWordResponse,
+  ExamplesResponse,
+  FormExamplesResponse,
+  KanjiResponse,
+  SearchExamplesResponse,
+  SearchResponse,
+  WordResponse
+} from '@zenbu/dictionary-core/artifact/dictionary'
+import type { FormExampleRows } from '@zenbu/dictionary-core/detail/rows'
+import { fixtureKanjiRows, fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
+import { searchResultsScreen } from '@zenbu/dictionary-core/results/results'
+import type {
+  SearchEntry,
+  SearchResultItem,
+  SearchResults
+} from '@zenbu/dictionary-core/search/search'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { fixtureKanjiRows, fixtureWordRows } from '@/lib/dictionary/fixtures'
 import {
   getConjugatedFormPage,
+  getConjugationExamples,
   getConjugationsPage,
   getFormExamples,
   getKanjiPage,
-  getMoreSearchExamples,
   getSearchExamples,
-  getSearchRows,
   getWordExamples,
   getWordPage,
-  isUnreadableQuery,
   type SearchData,
-  type SearchExamplesData,
   searchDictionary
 } from './data'
-import type { FrequencyRow } from './detail/rows'
-import {
-  type DictionaryConjugationWord,
-  type DictionaryExamples,
-  type DictionaryFormExamples,
-  type DictionaryKanji,
-  type DictionaryWord,
-  dictionaryDatabase
-} from './dictionary-db'
-import {
-  type ExampleEntry,
-  type SearchSentenceRow,
-  type WebsiteExampleSearch,
-  websiteExampleSearch
-} from './example-search'
-import type { ExampleSearchResult } from './examples/search'
-import type { SearchEntry, SearchResultItem, SearchResults } from './search/search'
-import { websiteSearch } from './search/website'
 
-const env: { SEARCH_DB?: D1Database; DICTIONARY_DB?: D1Database } = {}
+const env: { DICTIONARY_API_URL?: string; DICTIONARY_API_TOKEN?: string } = {}
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ env }) }))
-vi.mock('./search/website', () => ({ websiteSearch: vi.fn() }))
-vi.mock('./dictionary-db', () => ({ dictionaryDatabase: vi.fn() }))
-vi.mock('./example-search', async original => ({
-  ...(await original<typeof import('./example-search')>()),
-  websiteExampleSearch: vi.fn()
-}))
+
+const token = 'test-token-0123456789'
+
+/**
+ * The dictionary service, answering each path (decoded, with its query string) from `answers`
+ * as build `build-1`: a body, or a status for a failure. Any other path is a 404.
+ */
+function serve(answers: Record<string, unknown>) {
+  env.DICTIONARY_API_URL = 'https://dictionary.test'
+  env.DICTIONARY_API_TOKEN = token
+  const requests: string[] = []
+  const fetch = vi.fn(async (request: Request) => {
+    expect(request.headers.get('authorization')).toBe(`Bearer ${token}`)
+    const url = new URL(request.url)
+    const path = decodeURIComponent(url.pathname) + url.search
+    requests.push(path)
+    const answer = answers[path]
+    if (typeof answer === 'number') return new Response('{}', { status: answer })
+    if (answer === undefined) return new Response('{"error":"not found"}', { status: 404 })
+    return Response.json(answer, { headers: { 'X-Dictionary-Build': 'build-1' } })
+  })
+  vi.stubGlobal('fetch', fetch)
+  return requests
+}
+
+afterEach(() => {
+  delete env.DICTIONARY_API_URL
+  delete env.DICTIONARY_API_TOKEN
+  vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
+})
 
 /** 食べる as the core returns it for "eat", with its Language Reference ID. */
 const eat: SearchResultItem = {
@@ -100,484 +120,118 @@ function results(entries: SearchEntry[]): SearchResults {
   }
 }
 
+/** The service's answer for a search: the results screen, as the core makes it. */
+function searchAnswer(
+  query: string,
+  entries: SearchEntry[],
+  { examples = 0, kanjiHasPage = false } = {}
+): SearchResponse {
+  return {
+    screen: searchResultsScreen(query, results(entries), new Map(), examples),
+    kanjiHasPage
+  }
+}
+
 /** The rows of a results screen; fails for no results. */
 function rowsOf(data: SearchData) {
   if (data.state !== 'results') throw new Error(`no results for ${data.query}`)
   return data.rows
 }
 
-/**
- * A search D1 that has the import's tables when `tables` and a finished import when `imported`,
- * with `entry_frequency` rows by Language Reference ID.
- */
-function fakeD1({
-  tables,
-  imported,
-  frequency = {}
-}: {
-  tables: boolean
-  imported: boolean
-  frequency?: Record<string, FrequencyRow[]>
-}) {
-  const state = { tables, imported }
-  const frequencyQueries: (string | number)[][] = []
-  const db = {
-    state,
-    frequencyQueries,
-    prepare: vi.fn((sql: string) => ({
-      first: async () => {
-        if (sql.includes('sqlite_master')) return state.tables ? { 1: 1 } : null
-        if (!state.tables) throw new Error('D1_ERROR: no such table: dictionary_import')
-        return state.imported ? { build_id: 'build-1' } : null
-      },
-      bind: (...params: (string | number)[]) => ({
-        all: async () => {
-          if (!sql.includes('entry_frequency')) throw new Error(`unexpected query: ${sql}`)
-          frequencyQueries.push(params)
-          return {
-            results: params.flatMap(id =>
-              frequency[id] ? [{ entry_id: id, frequency_json: JSON.stringify(frequency[id]) }] : []
-            )
-          }
-        }
-      })
-    }))
-  }
-  return db as typeof db & D1Database
-}
+const iruRows = fixtureWordRows.find(rows => rows.entry.entSeq === 1546640)
+const kanameRows = fixtureKanjiRows.find(rows => rows.kanji.character === '要')
+if (!iruRows || !kanameRows) throw new Error('no fixtures for 要る and 要')
 
-/** A D1 whose every query fails. */
-function failingD1() {
-  return {
-    prepare: () => ({
-      first: async () => {
-        throw new Error('D1_ERROR: Network connection lost.')
-      }
-    })
-  } as unknown as D1Database
-}
-
-describe('isUnreadableQuery', () => {
-  test.each([
-    'D1_ERROR: fts5: syntax error near "\u0000"',
-    'D1_ERROR: unterminated string',
-    'D1_ERROR: malformed MATCH expression: [eat"]'
-  ])('reads %s as an unreadable query', message => {
-    expect(isUnreadableQuery(new Error(message))).toBe(true)
-    expect(isUnreadableQuery(new Error('D1_ERROR', { cause: new Error(message) }))).toBe(true)
-  })
-
-  test.each([
-    'D1_ERROR: Network connection lost.',
-    'D1_ERROR: no such table: entries',
-    // A SQL bug in the core must fail loudly, not show as no results.
-    'D1_ERROR: near "SELEC": syntax error'
-  ])('reads %s as a database failure', message => {
-    expect(isUnreadableQuery(new Error(message))).toBe(false)
-  })
-})
-
-/** Example search on a search database: each query's result, and each entry's examples. */
-const exampleSearch = vi.fn<WebsiteExampleSearch['search']>()
-const exampleEntry = vi.fn<WebsiteExampleSearch['entry']>()
-const exampleSentences = vi.fn<WebsiteExampleSearch['sentences']>()
-const noExampleResult: ExampleSearchResult = { ids: [], count: 0, truncated: false }
-
-/** An entry as example search reads it, with `listed` examples numbered from 1. */
-const exampleEntryOf = (entry: SearchEntry, listed: number): ExampleEntry => ({
-  id: entry.id,
-  entSeq: entry.sourceRecordId,
-  writtenForms: [entry.headword],
-  readingForms: [entry.reading],
-  sentenceIds: Array.from({ length: listed }, (_, index) => index + 1)
-})
-
-/** A sentence 食べる appears in, split into its words as the import stores them. */
-const sentence = (id: number): SearchSentenceRow => ({
-  id,
-  pairId: String(id).padStart(32, '0'),
-  japanese: 'パンを食べた。',
-  english: `I ate bread (${id}).`,
-  words: [
-    { n: 2, e: [1049020] },
-    { n: 1, e: [2029010] },
-    { n: 3, r: 'たべた', d: '食べる', e: [1358280], f: 'たべ' },
-    { n: 1 }
-  ],
-  japaneseTatoebaId: id,
-  japaneseContributor: null,
-  japaneseLicense: 'CC BY 2.0 FR',
-  englishTatoebaId: 100_000 + id,
-  englishContributor: 'CK',
-  englishLicense: 'CC BY 2.0 FR'
-})
-
-beforeEach(() => {
-  vi.mocked(websiteExampleSearch).mockReturnValue({
-    search: exampleSearch,
-    entry: exampleEntry,
-    sentences: exampleSentences
-  })
-  exampleSearch.mockResolvedValue(noExampleResult)
-  exampleEntry.mockResolvedValue(null)
-  exampleSentences.mockImplementation(async ids => ids.map(sentence))
-})
+/** 要る's first examples, as a conjugated form's screen lists them. */
+const formRows = (surface: string, count: number): FormExampleRows[] =>
+  iruRows.examples.slice(0, count).map(({ sentence, example }) => ({
+    sentence,
+    example: {
+      surface,
+      position: example.position,
+      sentenceId: example.sentenceId,
+      highlights: example.highlights,
+      links: example.links
+    }
+  }))
 
 describe('searchDictionary', () => {
-  const search = vi.fn<(query: string) => Promise<SearchResults>>()
-
-  beforeEach(() => {
-    vi.mocked(websiteSearch).mockReturnValue({ search })
-  })
-
-  afterEach(() => {
-    delete env.SEARCH_DB
-    vi.clearAllMocks()
-  })
-
-  test('searches the search database when it holds an import', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    search.mockResolvedValue(results([eat.entry, iru]))
+  test('searches the dictionary service, and links every word to its page', async () => {
+    const requests = serve({ '/v1/search/eat': searchAnswer('eat', [eat.entry, iru]) })
     const data = await searchDictionary('eat')
-    expect(search).toHaveBeenCalledWith('eat')
-    // Without the dictionary database, only fixture words have pages: none for 食べる.
+    expect(requests).toEqual(['/v1/search/eat'])
     expect(rowsOf(data).map(word => [word.entSeq, word.path])).toEqual([
-      [1358280, null],
+      [1358280, '/dictionary/食べる-1358280/'],
       [1546640, '/dictionary/要る-1546640/']
     ])
-    expect(data).toMatchObject({ kanji: null, readingRefinement: null })
+    expect(data).toMatchObject({ kanji: null, readingRefinement: null, examples: null })
   })
 
-  test('shows the meaning an English query matched, and links the reading refinement', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    const found = results([iru])
-    search.mockResolvedValue({
-      ...found,
-      items: [{ ...found.items[0], matchedSummary: 'to need' }],
-      readingRefinement: 'いる'
-    })
-    const data = await searchDictionary('iru')
-    expect(rowsOf(data)[0].summary).toBe('to need')
-    expect(data).toMatchObject({
-      readingRefinement: {
-        query: 'いる',
-        title: 'Search for「いる」',
-        path: '/dictionary/search/%E3%81%84%E3%82%8B/'
-      }
-    })
-  })
-
-  test('re-sorts equally strong matches by frequency from the search database, in one query', async () => {
-    const db = fakeD1({
-      tables: true,
-      imported: true,
-      frequency: {
-        [eat.entry.id]: [{ pack: 'jlpt', level: 1 }],
-        // Not in JLPT: SearchFrequencyRankPresentationModel leaves a level dictionary out.
-        [iru.id]: [
-          { pack: 'jlpt', level: 5 },
-          { pack: 'tubelex', rank: 949 }
-        ]
-      }
-    })
-    env.SEARCH_DB = db
-    const found = results([eat.entry, iru])
-    // One match group, so frequency decides: 要る (N5) before 食べる (N1).
-    search.mockResolvedValue({
-      ...found,
-      items: found.items.map(item => ({ ...item, sourceOrder: 0 }))
-    })
+  test('leads with the Example Sentences row, which opens the search’s examples page', async () => {
+    serve({ '/v1/search/eat': searchAnswer('eat', [eat.entry], { examples: 51 }) })
     const data = await searchDictionary('eat')
-    expect(db.frequencyQueries).toEqual([[eat.entry.id, iru.id]])
-    expect(
-      rowsOf(data).map(row => [
-        row.headword,
-        row.chips.map(chip => `${chip.source} ${chip.value} ${chip.tier}`)
-      ])
-    ).toEqual([
-      ['要る', ['JLPT N5 veryCommon', 'YouTube 949 veryCommon']],
-      ['食べる', ['JLPT N1 moderate']]
-    ])
-  })
-
-  test('leads a one-kanji query with the kanji row, linked to its fixture page', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    search.mockResolvedValue(results([eat.entry]))
-    const data = await searchDictionary('要')
-    expect(data).toMatchObject({
-      kanji: { character: '要', label: 'KANJI', summary: 'to eat', path: '/dictionary/kanji/要/' }
-    })
-    expect(rowsOf(data).map(word => word.entSeq)).toEqual([1358280])
-  })
-
-  test('shows No Dictionary Matches when nothing matches', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    search.mockResolvedValue(results([]))
-    expect(await searchDictionary('qzxvkj')).toEqual({ state: 'noResults', query: 'qzxvkj' })
-  })
-
-  test.each([
-    ['without a search database', undefined],
-    ['when the search database has no tables', fakeD1({ tables: false, imported: false })],
-    ['before the import finishes', fakeD1({ tables: true, imported: false })]
-  ])('searches the fixtures %s', async (_, db) => {
-    env.SEARCH_DB = db
-    const data = await searchDictionary('いる')
-    expect(websiteSearch).not.toHaveBeenCalled()
-    expect(rowsOf(data).map(word => word.entSeq)).toEqual([
-      1546640, 1577980, 1391500, 1465580, 1322180, 1587780
-    ])
-  })
-
-  test('remembers only a finished import', async () => {
-    const db = fakeD1({ tables: true, imported: false })
-    env.SEARCH_DB = db
-    search.mockResolvedValue(results([eat.entry]))
-    await searchDictionary('eat')
-    expect(websiteSearch).not.toHaveBeenCalled()
-    // The import finishes; the next request checks again and searches it.
-    db.state.imported = true
-    await searchDictionary('eat')
-    expect(websiteSearch).toHaveBeenCalledTimes(1)
-    // Once found, the import isn't checked again.
-    db.prepare.mockClear()
-    await searchDictionary('eat')
-    // Only the results' frequency is read.
-    expect(db.prepare.mock.calls.map(([sql]) => sql)).toEqual([
-      expect.stringContaining('FROM entry_frequency')
-    ])
-    expect(websiteSearch).toHaveBeenCalledTimes(2)
-  })
-
-  test('leads with the Example Sentences row and the app’s count, 50+ over 50', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    search.mockResolvedValue(results([eat.entry]))
-    exampleSearch.mockResolvedValue({ ids: [1, 2], count: 51, truncated: true })
-    const data = await searchDictionary('eat')
-    expect(exampleSearch).toHaveBeenCalledWith('eat')
     expect(data).toMatchObject({
       sections: ['examples', 'results'],
       examples: {
-        title: 'View 50+ Example Sentences',
         count: 51,
-        primaryEntry: null,
+        title: 'View 50+ Example Sentences',
         path: '/dictionary/search/eat/examples/'
       }
     })
   })
 
-  test('counts the primary entry’s examples for a deinflected or romaji search', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    search.mockResolvedValue({ ...results([iru, eat.entry]), usesPrimaryEntryExamples: true })
-    exampleEntry.mockResolvedValue(exampleEntryOf(iru, 3))
-    const data = await searchDictionary('iru')
-    // The primary entry: none is written "iru", so the first.
-    expect(exampleEntry).toHaveBeenCalledWith(iru.id)
-    expect(exampleSearch).not.toHaveBeenCalled()
-    expect(data).toMatchObject({
-      examples: { title: 'View 3 Example Sentences', count: 3, primaryEntry: iru.id }
+  test('links the kanji row when the service says the kanji has a page', async () => {
+    serve({
+      '/v1/search/要': searchAnswer('要', [iru], { kanjiHasPage: true }),
+      '/v1/search/㐂': searchAnswer('㐂', [])
+    })
+    expect(await searchDictionary('要')).toMatchObject({
+      kanji: { character: '要', label: 'KANJI', path: '/dictionary/kanji/要/' }
+    })
+    // As the app's, the row shows without a link when the kanji has no page.
+    expect(await searchDictionary('㐂')).toMatchObject({
+      kanji: { character: '㐂', summary: 'Kanji detail', path: null },
+      rows: []
     })
   })
 
-  test('shows only the Example Sentences row when only sentences match', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    search.mockResolvedValue(results([]))
-    exampleSearch.mockResolvedValue({ ids: [1], count: 1, truncated: false })
-    expect(await searchDictionary('it is')).toMatchObject({
-      state: 'results',
-      sections: ['examples'],
-      examples: { title: 'View 1 Example Sentence' },
-      rows: [],
-      wordCount: 0
-    })
+  test('shows No Dictionary Matches when nothing matches', async () => {
+    serve({ '/v1/search/qzxvkj': searchAnswer('qzxvkj', []) })
+    expect(await searchDictionary('qzxvkj')).toEqual({ state: 'noResults', query: 'qzxvkj' })
   })
 
-  test('renders the first 25 words; the rows route serves the rest of this build only', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    const entries = Array.from({ length: 60 }, (_, index) => ({
-      ...iru,
-      id: `id${index}`,
-      sourceRecordId: 2_000_000 + index
-    }))
-    search.mockResolvedValue(results(entries))
-    const data = await searchDictionary('い')
-    expect(rowsOf(data)).toHaveLength(25)
-    expect(data).toMatchObject({
-      wordCount: 60,
-      rowsPath: '/dictionary/search/%E3%81%84/results.json?build=build-1'
-    })
-    exampleSearch.mockClear()
-    exampleEntry.mockClear()
-    const second = await getSearchRows('い', 25, 'build-1')
-    const third = await getSearchRows('い', 50, 'build-1')
-    // The rows route never counts example sentences.
-    expect(exampleSearch).not.toHaveBeenCalled()
-    expect(exampleEntry).not.toHaveBeenCalled()
-    const listed = [...rowsOf(data), ...(second ?? []), ...(third ?? [])].map(row => row.entSeq)
-    expect(listed).toEqual(entries.map(entry => entry.sourceRecordId))
-    expect(await getSearchRows('い', 25, 'build-0')).toBeNull()
-  })
-
-  test('shows a query full-text search cannot read as no results', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    search.mockRejectedValue(new Error('D1_ERROR: fts5: syntax error near "\u0000"'))
-    expect(await searchDictionary('a\u0000b')).toEqual({ state: 'noResults', query: 'a\u0000b' })
-  })
-
-  test('fails when the search itself fails', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    search.mockRejectedValue(new Error('D1_ERROR: Network connection lost.'))
-    await expect(searchDictionary('eat')).rejects.toThrow('Network connection lost')
-  })
-
-  test('fails when the database fails before searching, even for a fixture kanji', async () => {
-    // Otherwise 要 would render its kanji card with no words: an indexable empty page.
-    env.SEARCH_DB = failingD1()
-    await expect(searchDictionary('要')).rejects.toThrow('Network connection lost')
-    expect(websiteSearch).not.toHaveBeenCalled()
-  })
-})
-
-/** An Example Sentences page's data; fails without one. */
-function page(data: SearchExamplesData | null): SearchExamplesData {
-  if (!data) throw new Error('no Example Sentences page')
-  return data
-}
-
-describe('a search’s Example Sentences page', () => {
-  const search = vi.fn<(query: string) => Promise<SearchResults>>()
-
-  beforeEach(() => {
-    vi.mocked(websiteSearch).mockReturnValue({ search })
-  })
-
-  afterEach(() => {
-    delete env.SEARCH_DB
-    vi.clearAllMocks()
-  })
-
-  test('lists the sentences that contain the query, 25 at first, with each word linked', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    search.mockResolvedValue(results([eat.entry]))
-    exampleEntry.mockResolvedValue(exampleEntryOf(eat.entry, 0))
-    const ids = Array.from({ length: 60 }, (_, index) => index + 1)
-    exampleSearch.mockResolvedValue({ ids, count: 51, truncated: false })
-    const data = page(await getSearchExamples('食べた'))
-    expect(data).toMatchObject({
-      query: '食べた',
-      listed: 60,
-      // A direct Japanese search's page is indexed.
-      indexable: true,
-      examplesPath: '/dictionary/search/%E9%A3%9F%E3%81%B9%E3%81%9F/examples.json?build=build-1'
-    })
-    expect(data.examples.map(example => example.position)).toEqual(
-      ids.slice(0, 25).map(id => id - 1)
-    )
-    const [first] = data.examples
-    // 食べた is 食べる, the primary entry, with furigana over 食 and the query's words marked.
-    expect(first.tokens.map(token => [token.text, token.link, token.isPageWord])).toEqual([
-      ['パン', { entSeq: 1049020 }, false],
-      ['を', { entSeq: 2029010 }, false],
-      ['食べた', { entSeq: 1358280 }, true],
-      ['。', null, false]
+  test('searches the fixtures without a service, in the app’s order', async () => {
+    const data = await searchDictionary('いる')
+    expect(rowsOf(data).map(word => word.entSeq)).toEqual([
+      1546640, 1577980, 1391500, 1465580, 1322180, 1587780
     ])
-    expect(first.tokens[2].ruby).toEqual([{ text: '食', reading: 'た' }, { text: 'べた' }])
-    expect(first.japanese).toEqual({ id: 1, contributor: null, license: 'CC BY 2.0 FR' })
-    expect(first.english).toEqual({ id: 100_001, contributor: 'CK', license: 'CC BY 2.0 FR' })
   })
 
-  test('loads the next 25 without repeating or skipping any, for its build only', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    search.mockResolvedValue(results([eat.entry]))
-    const ids = Array.from({ length: 60 }, (_, index) => 1000 + index)
-    exampleSearch.mockResolvedValue({ ids, count: 51, truncated: false })
-    const first = page(await getSearchExamples('eat'))
-    // Only a direct Japanese search's page is indexed.
-    expect(first.indexable).toBe(false)
-    const second = await getMoreSearchExamples('eat', 25, 'build-1')
-    const third = await getMoreSearchExamples('eat', 50, 'build-1')
-    const listed = [...first.examples, ...(second ?? []), ...(third ?? [])]
-    expect(listed.map(example => example.japanese.id)).toEqual(ids)
-    expect(listed.map(example => example.position)).toEqual(ids.map((_, index) => index))
-    expect(await getMoreSearchExamples('eat', 25, 'build-0')).toBeNull()
+  test('fails when the service fails, rather than showing no results', async () => {
+    serve({ '/v1/search/eat': 503 })
+    await expect(searchDictionary('eat')).rejects.toThrow('answered 503')
   })
 
-  test('lists the primary entry’s examples for a deinflected or romaji search', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    search.mockResolvedValue({ ...results([eat.entry]), usesPrimaryEntryExamples: true })
-    exampleEntry.mockResolvedValue(exampleEntryOf(eat.entry, 3))
-    const data = page(await getSearchExamples('taberu'))
-    expect(exampleSearch).not.toHaveBeenCalled()
-    expect(data.listed).toBe(3)
-    expect(data.examples.map(example => example.japanese.id)).toEqual([1, 2, 3])
-    // Its word page has these examples already.
-    expect(data.indexable).toBe(false)
-  })
-
-  test('has no page without any sentence, which the app never opens', async () => {
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    search.mockResolvedValue(results([]))
-    expect(await getSearchExamples('qzxvkj')).toBeNull()
-  })
-
-  test('has no page without a search database', async () => {
-    expect(await getSearchExamples('eat')).toBeNull()
+  test('finds nothing for a query past the service’s 200 characters, without asking it', async () => {
+    const requests = serve({})
+    const long = 'a'.repeat(201)
+    expect(await searchDictionary(long)).toEqual({ state: 'noResults', query: long })
+    expect(await getSearchExamples(long)).toBeNull()
+    expect(await getConjugationExamples('た'.repeat(201))).toEqual([])
+    expect(requests).toEqual([])
   })
 })
 
 describe('word and kanji pages', () => {
-  const word = vi.fn<(entSeq: number) => Promise<DictionaryWord | null>>()
-  const kanji = vi.fn<(character: string) => Promise<DictionaryKanji | null>>()
-  const kanjiCard =
-    vi.fn<(character: string) => Promise<{ character: string; meanings: string[] } | null>>()
-  const examples =
-    vi.fn<(entSeq: number, from: number, limit: number) => Promise<DictionaryExamples | null>>()
-  const conjugationWord = vi.fn<(entSeq: number) => Promise<DictionaryConjugationWord | null>>()
-  const formExamples =
-    vi.fn<(surface: string, from: number, limit: number) => Promise<DictionaryFormExamples>>()
-  const iruRows = fixtureWordRows.find(rows => rows.entry.entSeq === 1546640)
-  const kanameRows = fixtureKanjiRows.find(rows => rows.kanji.character === '要')
-
-  beforeEach(() => {
-    vi.mocked(dictionaryDatabase).mockReturnValue({
-      word,
-      examples,
-      conjugationWord,
-      formExamples,
-      kanji,
-      kanjiCard,
-      // Sitemaps have their own tests (sitemaps.test.ts).
-      wordSitemaps: vi.fn(),
-      sitemapWords: vi.fn(),
-      indexableKanji: vi.fn(),
-      wordSlugs: vi.fn(),
-      conjugationSitemap: vi.fn()
-    })
-  })
-
-  afterEach(() => {
-    delete env.DICTIONARY_DB
-    delete env.SEARCH_DB
-    vi.clearAllMocks()
-  })
-
-  test.each([
-    ['without a dictionary database', undefined],
-    ['when it has no tables', fakeD1({ tables: false, imported: false })],
-    ['before its import finishes', fakeD1({ tables: true, imported: false })]
-  ])('read the fixtures %s', async (_, db) => {
-    env.DICTIONARY_DB = db
+  test('read the fixtures without a service', async () => {
     expect((await getWordPage(1546640))?.path).toBe('/dictionary/要る-1546640/')
     // 食べる has no fixture.
     expect(await getWordPage(1358280)).toBeNull()
     expect((await getKanjiPage('要'))?.words).toHaveLength(24)
-    expect(dictionaryDatabase).not.toHaveBeenCalled()
   })
 
-  test('a word page reads the dictionary database and links by stored slugs', async () => {
-    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
-    if (!iruRows) throw new Error('no fixture for 要る')
-    word.mockResolvedValue({
+  test('a word page reads the service and links by the slugs it names', async () => {
+    const answer: WordResponse = {
       rows: {
         ...iruRows,
         entry: {
@@ -601,12 +255,11 @@ describe('word and kanji pages', () => {
         }
       },
       slug: '要る',
-      relatedSlugs: new Map([[1577980, 'いる']]),
-      kanjiPages: new Set(['要']),
-      exampleSlugs: new Map([[1546640, '要る']])
-    })
+      slugs: { 1577980: 'いる', 1546640: '要る' },
+      kanjiPages: ['要']
+    }
+    serve({ '/v1/words/1546640': answer })
     const page = await getWordPage(1546640)
-    expect(word).toHaveBeenCalledWith(1546640)
     expect(page?.path).toBe('/dictionary/要る-1546640/')
     expect(page?.slug).toBe('要る')
     expect(page?.kanji).toEqual([
@@ -614,14 +267,15 @@ describe('word and kanji pages', () => {
     ])
     // A related word links under its own page's slug, not the relationship's headword.
     expect(page?.related.map(related => related.path)).toEqual(['/dictionary/いる-1577980/', null])
-    // Example words link to their pages when the database names their slugs, and an ambiguous
-    // word to a search for its dictionary form.
+    // Example words link to their pages, and an ambiguous word to a search for its dictionary
+    // form.
     const tokens = page?.examples.flatMap(example => example.tokens) ?? []
     expect(tokens.filter(token => token.isPageWord).map(token => token.path)).toContain(
       '/dictionary/要る-1546640/'
     )
     const choice = tokens.find(token => token.link && 'entSeqs' in token.link)
     expect(choice?.path).toMatch(/^\/dictionary\/search\//)
+    // More examples load for the build that answered.
     expect(page?.examplesPath).toBe('/dictionary/examples/1546640.json?build=build-1')
   })
 
@@ -637,54 +291,132 @@ describe('word and kanji pages', () => {
     expect(await getWordExamples(1358280, 25, 'fixtures')).toBeNull()
   })
 
-  test('more examples come from the dictionary database, linked by its slugs', async () => {
-    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
-    if (!iruRows) throw new Error('no fixture for 要る')
-    examples.mockResolvedValue({
+  test('more examples come from the service, linked by its slugs', async () => {
+    const answer: ExamplesResponse = {
       rows: iruRows.examples.slice(0, 2),
-      slugs: new Map([[1546640, '要る']])
-    })
+      slugs: { 1546640: '要る' }
+    }
+    const requests = serve({ '/v1/words/1546640/examples?from=25': answer })
     const more = await getWordExamples(1546640, 25, 'build-1')
-    expect(examples).toHaveBeenCalledWith(1546640, 25, 25)
+    expect(requests).toEqual(['/v1/words/1546640/examples?from=25'])
     expect(more).toHaveLength(2)
     expect(more?.[0].tokens.find(token => token.isPageWord)?.path).toBe('/dictionary/要る-1546640/')
-    examples.mockResolvedValue(null)
     expect(await getWordExamples(1, 25, 'build-1')).toBeNull()
   })
 
   test("a page from another build doesn't load this build's examples", async () => {
-    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
+    serve({ '/v1/words/1546640/examples?from=25': { rows: [], slugs: {} } })
     expect(await getWordExamples(1546640, 25, 'build-0')).toBeNull()
     expect(await getWordExamples(1546640, 25, 'fixtures')).toBeNull()
-    expect(examples).not.toHaveBeenCalled()
   })
 
-  test('an unknown number has no word page, even when a fixture has it', async () => {
-    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
-    word.mockResolvedValue(null)
+  test('a number the service lacks has no word page, even when a fixture has it', async () => {
+    serve({})
     expect(await getWordPage(1546640)).toBeNull()
+    expect(await getKanjiPage('要')).toBeNull()
   })
 
-  test('a kanji page reads the dictionary database', async () => {
-    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
-    if (!kanameRows) throw new Error('no fixture for 要')
-    kanji.mockResolvedValue({
+  test('a kanji page reads the service', async () => {
+    const answer: KanjiResponse = {
       rows: kanameRows,
       indexable: false,
-      wordSlugs: new Map(kanameRows.words.map(row => [row.entSeq, row.headword])),
-      kanjiPages: new Set(['女'])
-    })
+      slugs: Object.fromEntries(kanameRows.words.map(row => [row.entSeq, row.headword])),
+      kanjiPages: ['女']
+    }
+    serve({ '/v1/kanji/要': answer })
     const page = await getKanjiPage('要')
-    expect(kanji).toHaveBeenCalledWith('要')
     expect(page?.words[2].path).toBe('/dictionary/要る-1546640/')
     expect(page?.elements.map(element => [element.character, element.path])).toEqual([
       ['女', '/dictionary/kanji/女/'],
       ['覀', null]
     ])
-    // The stored flag decides.
+    // The service's flag decides.
     expect(page?.indexable).toBe(false)
   })
 
+  test('a failing service fails the request', async () => {
+    serve({ '/v1/words/1546640': 500, '/v1/kanji/要': 500 })
+    await expect(getWordPage(1546640)).rejects.toThrow('answered 500')
+    await expect(getKanjiPage('要')).rejects.toThrow('answered 500')
+  })
+
+  test.each([
+    'staging',
+    'production'
+  ])('%s fails without a service instead of showing fixtures', async site => {
+    vi.stubEnv('SITE_ENV', site)
+    await expect(getWordPage(1546640)).rejects.toThrow('DICTIONARY_API_URL isn’t set')
+    await expect(getKanjiPage('要')).rejects.toThrow('DICTIONARY_API_URL isn’t set')
+    await expect(searchDictionary('いる')).rejects.toThrow('DICTIONARY_API_URL isn’t set')
+  })
+})
+
+describe('example sentence pages', () => {
+  const sentences = (query = 'eat', usesPrimaryEntryExamples = false): SearchExamplesResponse => ({
+    query,
+    listed: 100,
+    truncated: true,
+    usesPrimaryEntryExamples,
+    rows: iruRows.examples.slice(0, 2),
+    slugs: { 1546640: '要る' }
+  })
+
+  test('a search’s examples page reads the service, and loads more for the same build', async () => {
+    serve({ '/v1/search/eat/examples?from=0': sentences() })
+    const page = await getSearchExamples('eat')
+    expect(page).toMatchObject({
+      query: 'eat',
+      listed: 100,
+      truncated: true,
+      // An English search's page stays out of search engines (searchExamplesIndexable).
+      indexable: false,
+      examplesPath: '/dictionary/search/eat/examples.json?build=build-1'
+    })
+    expect(page?.examples).toHaveLength(2)
+    expect(page?.examples[0].tokens.find(token => token.isPageWord)?.path).toBe(
+      '/dictionary/要る-1546640/'
+    )
+  })
+
+  test('only a direct Japanese search’s examples page is indexed', async () => {
+    serve({
+      '/v1/search/要る/examples?from=0': sentences('要る'),
+      '/v1/search/要った/examples?from=0': sentences('要った', true)
+    })
+    expect((await getSearchExamples('要る'))?.indexable).toBe(true)
+    // A deinflected search lists its primary entry's examples, which its word page has.
+    expect((await getSearchExamples('要った'))?.indexable).toBe(false)
+  })
+
+  test('a search’s examples page from another build loads no more', async () => {
+    serve({ '/v1/search/eat/examples?from=25': sentences() })
+    expect(await getSearchExamples('eat', 25, 'build-0')).toBeNull()
+    expect(await getSearchExamples('eat', 25, 'build-1')).not.toBeNull()
+  })
+
+  test('a search without examples, or without a service, has no examples page', async () => {
+    expect(await getSearchExamples('eat')).toBeNull()
+    serve({})
+    expect(await getSearchExamples('qzxvkj')).toBeNull()
+  })
+
+  test('a conjugated form’s examples come from the service, all at once for the sheet', async () => {
+    const answer: FormExamplesResponse = {
+      rows: formRows('要ります', 1),
+      listed: 1,
+      slugs: { 1546640: '要る' }
+    }
+    const requests = serve({ '/v1/conjugations/要ります/examples?from=0&limit=100': answer })
+    const examples = await getConjugationExamples('要ります')
+    expect(requests).toEqual(['/v1/conjugations/要ります/examples?from=0&limit=100'])
+    expect(examples).toHaveLength(1)
+    expect(examples[0].tokens.find(token => token.isPageWord)?.path).toBe(
+      '/dictionary/要る-1546640/'
+    )
+  })
+})
+
+describe('conjugation pages', () => {
   test('a word with a conjugation table has its page, and each form its own', async () => {
     // 要る (godan) conjugates; 要 (a noun) doesn't, so its page links no table and has none.
     expect((await getWordPage(1546640))?.conjugationsPath).toBe(
@@ -745,96 +477,46 @@ describe('word and kanji pages', () => {
     expect((await getConjugatedFormPage(1546640, 'Plain', 'imperative'))?.listed).toBe(0)
   })
 
-  test('conjugation pages read the dictionary database', async () => {
-    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
-    if (!iruRows) throw new Error('no fixture for 要る')
-    conjugationWord.mockResolvedValue({
+  test('conjugation pages read the service', async () => {
+    const word: ConjugationWordResponse = {
       rows: { ...iruRows, examples: [], exampleCount: null },
       slug: '要る'
+    }
+    const examples: FormExamplesResponse = {
+      rows: formRows('要った', 2),
+      listed: 30,
+      slugs: { 1546640: '要る' }
+    }
+    const requests = serve({
+      '/v1/words/1546640/conjugations': word,
+      '/v1/conjugations/要った/examples?from=0&limit=25': examples,
+      '/v1/conjugations/要った/examples?from=25&limit=25': examples
     })
-    formExamples.mockResolvedValue({ rows: [], listed: 0, slugs: new Map() })
     const form = await getConjugatedFormPage(1546640, 'Plain', 'past')
-    expect(conjugationWord).toHaveBeenCalledWith(1546640)
-    expect(formExamples).toHaveBeenCalledWith('要った', 0, 25)
+    expect(requests).toEqual([
+      '/v1/words/1546640/conjugations',
+      '/v1/conjugations/要った/examples?from=0&limit=25'
+    ])
+    expect(form?.listed).toBe(30)
+    expect(form?.examples[0].tokens.find(token => token.isPageWord)?.path).toBe(
+      '/dictionary/要る-1546640/'
+    )
     expect(form?.examplesPath).toBe(
       `/dictionary/examples/forms/${encodeURIComponent('要った')}.json?build=build-1`
     )
-    conjugationWord.mockResolvedValue(null)
-    expect(await getConjugationsPage(1)).toBeNull()
+    expect(await getFormExamples('要った', 25, 'build-1')).toHaveLength(2)
+    expect(await getFormExamples('要った', 25, 'build-0')).toBeNull()
+    // The service has no table for a word without one.
+    expect(await getConjugationsPage(1609600)).toBeNull()
+  })
+})
+
+describe('the dictionary service', () => {
+  beforeEach(() => {
+    env.DICTIONARY_API_URL = 'https://dictionary.test'
   })
 
-  describe('deployed (SITE_ENV set)', () => {
-    beforeEach(() => {
-      vi.stubEnv('SITE_ENV', 'staging')
-    })
-
-    afterEach(() => {
-      vi.unstubAllEnvs()
-    })
-
-    test.each([
-      ['has no tables', fakeD1({ tables: false, imported: false })],
-      ['has no finished import', fakeD1({ tables: true, imported: false })]
-    ])('a bound database that %s fails the request instead of showing fixtures', async (_, db) => {
-      env.DICTIONARY_DB = db
-      await expect(getWordPage(1546640)).rejects.toThrow('DICTIONARY_DB is bound but holds no')
-      await expect(getKanjiPage('要')).rejects.toThrow('DICTIONARY_DB is bound but holds no')
-      env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
-      env.SEARCH_DB = db
-      await expect(searchDictionary('いる')).rejects.toThrow('SEARCH_DB is bound but holds no')
-    })
-
-    test('a missing binding fails the request instead of showing fixtures', async () => {
-      await expect(getWordPage(1546640)).rejects.toThrow("DICTIONARY_DB isn't bound")
-      await expect(getKanjiPage('要')).rejects.toThrow("DICTIONARY_DB isn't bound")
-      env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
-      await expect(searchDictionary('いる')).rejects.toThrow("SEARCH_DB isn't bound")
-    })
-
-    test.each([
-      'staging',
-      'production'
-    ])('%s serves the dictionary from its databases', async site => {
-      vi.stubEnv('SITE_ENV', site)
-      env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
-      word.mockResolvedValue(null)
-      expect(await getWordPage(1546640)).toBeNull()
-      expect(word).toHaveBeenCalledWith(1546640)
-    })
-  })
-
-  test('a failing dictionary database fails the request', async () => {
-    env.DICTIONARY_DB = failingD1()
-    await expect(getWordPage(1546640)).rejects.toThrow('Network connection lost')
-    await expect(getKanjiPage('要')).rejects.toThrow('Network connection lost')
-  })
-
-  test('search links every word and the kanji row once the dictionary database is loaded', async () => {
-    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    const search = vi.fn(async () => results([eat.entry]))
-    vi.mocked(websiteSearch).mockReturnValue({ search })
-    kanjiCard.mockResolvedValue({ character: '食', meanings: ['eat', 'food'] })
-    const data = await searchDictionary('食')
-    expect(kanjiCard).toHaveBeenCalledWith('食')
-    // The row shows the primary entry's meaning, as the app's KanjiPrimaryRow does.
-    expect(data).toMatchObject({
-      kanji: { character: '食', label: 'KANJI', summary: 'to eat', path: '/dictionary/kanji/食/' }
-    })
-    expect(rowsOf(data).map(result => result.path)).toEqual(['/dictionary/食べる-1358280/'])
-    // Only a one-kanji query has a kanji row.
-    await searchDictionary('食べる')
-    expect(kanjiCard).toHaveBeenCalledTimes(1)
-  })
-
-  test("a kanji without a page shows its row without a link, as the app's does", async () => {
-    env.DICTIONARY_DB = fakeD1({ tables: true, imported: true })
-    env.SEARCH_DB = fakeD1({ tables: true, imported: true })
-    vi.mocked(websiteSearch).mockReturnValue({ search: async () => results([]) })
-    kanjiCard.mockResolvedValue(null)
-    expect(await searchDictionary('㐂')).toMatchObject({
-      kanji: { character: '㐂', summary: 'Kanji detail', path: null },
-      rows: []
-    })
+  test('needs its token wherever it is named', async () => {
+    await expect(getWordPage(1546640)).rejects.toThrow('DICTIONARY_API_TOKEN is not')
   })
 })

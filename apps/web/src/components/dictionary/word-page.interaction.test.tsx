@@ -1,17 +1,19 @@
 // @vitest-environment happy-dom
+
+import { conjugations } from '@zenbu/dictionary-core/detail/conjugation'
+import { frequencyRowDetails } from '@zenbu/dictionary-core/detail/frequency'
+import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { conjugations } from '@/lib/dictionary/detail/conjugation'
-import { frequencyRowDetails } from '@/lib/dictionary/detail/frequency'
-import { rubySegments } from '@/lib/dictionary/detail/ruby'
-import { ConjugationTable } from './conjugations'
+import { ConjugationsButton, ConjugationTable } from './conjugations'
 import { FrequencySection } from './frequency-section'
 import { HeadwordRuby } from './headword-ruby'
 
 // What selecting does on the word page, in a DOM: a headword kanji highlights itself and its part
 // of the furigana, as the app's Furigana kanji highlight does, a Frequency row opens its details
-// as a sheet, and the conjugation table's register control switches the forms its rows open.
+// as a sheet, the part of speech opens the conjugation table as a sheet, and the table's register
+// control switches the forms its rows open.
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -111,7 +113,67 @@ describe('the Frequency section', () => {
   })
 })
 
-describe('the conjugation table', () => {
+describe('the conjugations sheet', () => {
+  test('the part of speech opens it; Polite switches register; a row opens its form; Back returns', async () => {
+    const data = conjugations(
+      { headword: '見る', reading: 'みる', partsOfSpeech: ['ichidanVerb', 'transitive'] },
+      new Map()
+    )
+    if (!data) throw new Error('見る has no table')
+    const fetcher = vi.fn(async (_url: string) => Response.json({ examples: [] }))
+    vi.stubGlobal('fetch', fetcher)
+    act(() =>
+      root.render(
+        <ConjugationsButton
+          word={{
+            ruby: rubySegments('見る', 'みる'),
+            reading: 'みる',
+            summary: 'to see',
+            partOfSpeech: 'Ichidan verb (transitive)',
+            pitch: null
+          }}
+          conjugations={data}
+          wordPath="/dictionary/見る-1259290/"
+        />
+      )
+    )
+    const click = async (selector: string) => {
+      const element = document.querySelector<HTMLElement>(selector)
+      if (!element) throw new Error(`Nothing matches ${selector}`)
+      await act(async () => element.click())
+    }
+    const surfaces = () =>
+      [...document.querySelectorAll('[data-conjugation-surface]')].map(node => node.textContent)
+    const pageLink = () =>
+      decodeURI(document.querySelector('[data-conjugation-page-link]')?.getAttribute('href') ?? '')
+    await click('[data-opens-conjugations]')
+    expect(document.body.textContent).toContain('Conjugations')
+    expect(surfaces().slice(0, 2)).toEqual(['見る', '見た'])
+    expect(pageLink()).toBe('/dictionary/見る-1259290/conjugations/')
+    await click('[data-conjugation-mode="Polite"]')
+    expect(surfaces().slice(0, 2)).toEqual(['見ます', '見ました'])
+    expect(pageLink()).toBe('/dictionary/見る-1259290/conjugations/#polite')
+    await click('[data-conjugation-row="potential"]')
+    expect(document.querySelector('[data-conjugated-form]')?.textContent).toContain(
+      'Same spelling as Passive.'
+    )
+    // The form's screen loads its examples, and links to the form's own page.
+    expect(fetcher).toHaveBeenCalledWith(
+      `/dictionary/conjugations/${encodeURIComponent('見られます')}.json`
+    )
+    expect(document.querySelector('[data-conjugation-examples]')?.textContent).toContain(
+      'No example sentences use this form yet.'
+    )
+    expect(pageLink()).toBe('/dictionary/見る-1259290/conjugations/polite/potential/')
+    await click('[aria-label="Back to conjugations"]')
+    expect(document.querySelector('[data-conjugated-form]')).toBeNull()
+    // Back keeps the register the reader chose.
+    expect(surfaces()[0]).toBe('見ます')
+    vi.unstubAllGlobals()
+  })
+})
+
+describe('the conjugation table’s page', () => {
   const data = conjugations(
     { headword: '見る', reading: 'みる', partsOfSpeech: ['ichidanVerb', 'transitive'] },
     new Map()

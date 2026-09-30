@@ -9,10 +9,7 @@ const example = { position: 25, text: '見たか？', tokens: [] } as unknown as
 const mita = encodeURIComponent('見た')
 
 function get(file: string, query = '') {
-  return GET(
-    new NextRequest(`https://zenbujapanese.com/dictionary/examples/forms/${file}${query}`),
-    { params: Promise.resolve({ file }) }
-  )
+  return GET(new NextRequest(`https://zenbujapanese.com/dictionary/examples/forms/${file}${query}`))
 }
 
 describe('GET /dictionary/examples/forms/<form>.json', () => {
@@ -28,6 +25,12 @@ describe('GET /dictionary/examples/forms/<form>.json', () => {
     expect(getFormExamples).toHaveBeenCalledWith('見た', 25, 'b1')
     expect(response.headers.get('X-Robots-Tag')).toBe('noindex')
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=86400')
+  })
+
+  test('reads the form as written, not normalized', async () => {
+    vi.mocked(getFormExamples).mockResolvedValue([])
+    await get(`${encodeURIComponent('Ｈした')}.json`, '?build=b1&from=25')
+    expect(getFormExamples).toHaveBeenCalledWith('Ｈした', 25, 'b1')
   })
 
   test.each([

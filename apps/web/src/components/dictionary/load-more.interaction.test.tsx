@@ -2,12 +2,11 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { SearchWord } from '@/lib/dictionary/data'
-import { rubySegments } from '@/lib/dictionary/detail/ruby'
-import { ResultRows } from './search-result-rows'
+import type { PageExample } from '@/lib/dictionary/page-example'
+import { ExampleList } from './example-list'
 
 // A paged list in a DOM: the Load more button and the list scrolling into view (the
-// IntersectionObserver) at once load the next page once, and every word shows once, in order.
+// IntersectionObserver) at once load the next page once, and every example shows once, in order.
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -42,21 +41,19 @@ afterEach(() => {
   intersect = null
 })
 
-const word = (entSeq: number): SearchWord => ({
-  id: String(entSeq),
-  entSeq,
-  headword: '語',
-  reading: 'ご',
-  ruby: rubySegments('語', 'ご'),
-  summary: `word ${entSeq}`,
-  chips: [],
-  retrievalOrder: entSeq,
-  path: null
+const example = (position: number): PageExample => ({
+  position,
+  pairId: position.toString(16),
+  text: '見る。',
+  tokens: [],
+  translation: `Example ${position}.`,
+  japanese: { id: position, contributor: null, license: 'CC BY 2.0 FR' },
+  english: { id: 1_000 + position, contributor: null, license: 'CC BY 2.0 FR' }
 })
 
 const shown = () =>
-  [...container.querySelectorAll('[data-result-row]')].map(row =>
-    Number(row.getAttribute('data-result-row'))
+  [...container.querySelectorAll('[data-example]')].map(row =>
+    Number(row.getAttribute('data-example'))
   )
 
 describe('a paged list', () => {
@@ -69,14 +66,10 @@ describe('a paged list', () => {
         })
     )
     vi.stubGlobal('fetch', fetcher)
-    const initial = Array.from({ length: 25 }, (_, index) => word(index))
-    act(() =>
-      root.render(
-        <ResultRows initial={initial} total={30} path="/r.json?build=b" afterKanji={false} />
-      )
-    )
+    const initial = Array.from({ length: 25 }, (_, index) => example(index))
+    act(() => root.render(<ExampleList initial={initial} listed={30} path="/e.json?build=b" />))
     const button = [...container.querySelectorAll('button')].find(
-      candidate => candidate.textContent === 'Load more words'
+      candidate => candidate.textContent === 'Load more examples'
     )
     if (!button || !intersect) throw new Error('No Load more button or observer')
     const scroll = intersect
@@ -85,12 +78,12 @@ describe('a paged list', () => {
       scroll()
     })
     expect(fetcher).toHaveBeenCalledTimes(1)
-    expect(fetcher).toHaveBeenCalledWith('/r.json?build=b&from=25')
+    expect(fetcher).toHaveBeenCalledWith('/e.json?build=b&from=25')
     await act(async () => {
-      answer(Response.json({ rows: [25, 26, 27, 28, 29].map(word) }))
+      answer(Response.json({ examples: [25, 26, 27, 28, 29].map(example) }))
     })
     expect(shown()).toEqual(Array.from({ length: 30 }, (_, index) => index))
-    // Every word is shown, so there is nothing more to load.
-    expect(container.textContent).not.toContain('Load more words')
+    // Every example is shown, so there is nothing more to load.
+    expect(container.textContent).not.toContain('Load more examples')
   })
 })

@@ -1,15 +1,15 @@
 'use client'
 
+import {
+  licenseUrl,
+  type TatoebaSentence,
+  tatoebaSentenceUrl
+} from '@zenbu/dictionary-core/detail/examples'
 import Link from 'next/link'
 import { Fragment } from 'react'
 import { LoadMoreFooter, useLoadMore } from '@/components/dictionary/load-more'
 import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
-import {
-  licenseUrl,
-  type TatoebaSentence,
-  tatoebaSentenceUrl
-} from '@/lib/dictionary/detail/examples'
 import type { PageExample, PageExampleToken } from '@/lib/dictionary/page-example'
 
 const linkClass = 'underline-offset-4 hover:text-muted-foreground'
@@ -115,7 +115,7 @@ const exampleLabels = {
 /**
  * A word's, a search's, or a conjugated form's examples: the first ones rendered with the page,
  * then more loaded from `path` as the list scrolls into view (or with the button), up to the
- * `listed` the app shows.
+ * `listed` the app shows. Without a `path`, the list is complete, as in the conjugation sheet.
  */
 export function ExampleList({
   initial,
@@ -124,9 +124,14 @@ export function ExampleList({
 }: {
   initial: PageExample[]
   listed: number
-  path: string
+  path: string | null
 }) {
-  const list = useLoadMore({ initial, total: listed, path, read: readExamples })
+  const list = useLoadMore({
+    initial,
+    total: path === null ? initial.length : listed,
+    path: path ?? '',
+    read: readExamples
+  })
   return (
     <div className="flex flex-col gap-3">
       <ul className="flex flex-col divide-y">

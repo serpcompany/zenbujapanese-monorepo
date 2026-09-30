@@ -8,7 +8,7 @@ import type {
   SuiteFrequencyDetails,
   SuiteFurigana,
   SuitePitchGraph
-} from '@/lib/dictionary/detail/suite'
+} from '@zenbu/dictionary-core/detail/suite'
 import { htmlText, withoutScreenReaderText } from './rendered'
 
 /** Text with tags removed, furigana kept, trimmed (rendered.ts `htmlText`). */

@@ -4,8 +4,8 @@ Every Zenbu app will read one versioned language-data release from R2
 ([ADR 0006](../docs/adr/0006-share-language-data-as-a-versioned-artifact.md),
 [issue 463](https://github.com/serpcompany/zenbujapanese-monorepo/issues/463)). This folder
 holds the pipeline that packages a release and publishes it to the `zenbujapanese-language-data`
-R2 bucket. No app reads the bucket yet: the website switches to it in step 4 of the plan on
-#463. The source data, tools, and conformance suites still live under `apps/ios` until #469
+R2 bucket. No app reads the bucket yet. Step 4 of the plan on #463 had the website's D1 import
+read it; ADR 0009's dictionary service replaced that import and reads the app's bundled files. The source data, tools, and conformance suites still live under `apps/ios` until #469
 moves them.
 
 | File | What it is |
@@ -47,9 +47,10 @@ content-addressed, so an unchanged file keeps its object across releases. The ma
   `FrequencyPackCatalog.json`.
 - **`ids`:** the count of JMdict entry numbers (`ent_seq`), and a SHA-256 over them, sorted
   ascending, in decimal, each followed by a line feed. The digest doesn't depend on file order,
-  so it can be recomputed from any copy, such as D1.
+  so it can be recomputed from any copy, such as the one in the dictionary service's image.
 - **`conformance`:** each conformance suite's SHA-256.
-- **`core_sha256`:** the shared core's hash. `null` until the core exists (step 6).
+- **`core_sha256`:** the shared core's hash. `null`: the core exists (`packages/dictionary-core`),
+  but releases don't record its hash until step 6.
 - **`release`, `git_commit`, `workflow_run`.**
 - **`previous_release`, `previous_manifest_sha256`:** the latest release in the bucket's
   `releases.json` when this one was published. `build` leaves them `null`; `publish.py` fills
