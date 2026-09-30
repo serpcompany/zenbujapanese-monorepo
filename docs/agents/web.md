@@ -98,7 +98,8 @@ its primary entry's for a romaji or deinflected query, 25 at first and the rest 
 its primary entry's examples, which that word's page already has.
 
 A broad query (い, "to") takes the service one to two seconds the first time, most of it the
-app's own SQL; the service and the edge cache keep the answer after that.
+app's own SQL, and a one-letter wildcard's Example Sentences (`t*`, over 100,000 sentences) up to
+about five; the service and the edge cache keep the answer after that.
 
 ### Word and kanji pages
 

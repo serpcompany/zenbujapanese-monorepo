@@ -155,7 +155,8 @@ describe.runIf(gateEnabled)('the search examples page matches its Example Senten
         ).toBe(true)
       }
     }
-  })
+    // A one-letter wildcard's examples (t*) take the service seconds the first time.
+  }, 30_000)
 })
 
 interface ExampleSearchCase {

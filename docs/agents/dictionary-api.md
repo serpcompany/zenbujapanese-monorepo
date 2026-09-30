@@ -109,7 +109,9 @@ as one word. It takes about half a minute and about 800 MB more memory, then the
 failure retries up to three times. The main thread keeps the answer.
 
 A broad query takes one to two seconds the first time: い reads 73,000 entries with the app's own
-SQL, and "to" matches 50,000 Tatoeba pairs. Grapheme counts and string comparisons take exact
+SQL, and "to" matches 50,000 Tatoeba pairs. A one-letter wildcard's examples take longer: `a*`,
+`s*`, and `t*` take 3.5 to 5 seconds, `t*` matching over 100,000 pairs, which the app ranks in
+full. Grapheme counts and string comparisons take exact
 fast paths (`packages/dictionary-core/src/detail/text.ts`, `search/query.ts`); what remains is
 the app's SQL.
 
