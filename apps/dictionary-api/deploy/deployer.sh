@@ -180,14 +180,14 @@ deploy() {
 
 # Deploys the image the environment's tag names, if it isn't what runs and hasn't failed.
 check() {
-  local environment="$1" image running container current="" failed_file
+  local environment="$1" image running container current="" failed_file error
   [ -r "$config_dir/$environment.env" ] || return 0 # Not set up on this server.
   failed_file="$state_dir/failed-$environment"
   # Fetches only the tag's manifest unless it names a new image.
-  docker pull --quiet "$repository:$environment" >/dev/null 2>&1 || {
-    log "$environment: couldn't read $repository:$environment from the registry"
+  if ! error="$(docker pull --quiet "$repository:$environment" 2>&1 >/dev/null)"; then
+    log "$environment: couldn't read $repository:$environment from the registry: $(tr '\n' ' ' <<<"$error")"
     return 1
-  }
+  fi
   image="$(docker image inspect --format '{{.Id}}' "$repository:$environment")" || return 1
   running="$(running_slots "$environment")"
   for container in $running; do

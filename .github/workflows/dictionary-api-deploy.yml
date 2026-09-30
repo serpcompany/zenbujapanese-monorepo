@@ -30,6 +30,7 @@ on:
       - .github/workflows/dictionary-api-deploy.yml
       - '!**/*.test.ts'
       - '!apps/dictionary-api/src/conformance/**'
+      - '!apps/dictionary-api/deploy/**'
   pull_request:
     paths:
       - apps/dictionary-api/**
@@ -45,6 +46,7 @@ on:
       - .github/workflows/dictionary-api-deploy.yml
       - '!**/*.test.ts'
       - '!apps/dictionary-api/src/conformance/**'
+      - '!apps/dictionary-api/deploy/**'
   workflow_dispatch:
     inputs:
       tag:
