@@ -198,9 +198,10 @@ Each deployed environment reads its own dictionary service:
 itself, since Bot Fight Mode on the zone challenges CI runners: the smoke test asks through the
 deployed site instead, at `/dictionary/service.json` (whether the site's Worker reaches its service,
 and the service's build; `Cache-Control: no-store`, `noindex`), and its dictionary pages then prove
-the token works. Deploy a new service
-before a site change that needs it: the site reads whatever service its environment names. The
-`Dictionary API deploy` workflow deploys the service itself
+the token works.
+
+The site reads whatever service its environment names, so a new service deploys before a site
+change that needs it. The `Dictionary API deploy` workflow deploys the service itself
 ([`dictionary-api.md`](dictionary-api.md), Ship it), and `Web deploy` waits for the same commit's
 service deploy to an environment before deploying the site there
 (`scripts/wait-for-dictionary-service.sh`).

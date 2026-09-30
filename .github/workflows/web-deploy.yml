@@ -2,14 +2,16 @@ name: Web deploy
 
 # Promotes merged website code through staging, then production, per the SERP Drizzle + D1
 # standard. Each environment reads the dictionary from its own dictionary service (ADR 0009):
-# the job checks that the service answers, points the site at it, deploys, and smoke-tests.
+# the job waits for this commit's deploy of the service to the environment, if it has one, points
+# the site at the service, deploys, and smoke-tests, which checks that the site reaches it.
 # Production runs once staging passes; add a required reviewer on the `production` GitHub
 # environment to gate it manually (it has none, by the owner's decision).
 #
 # Each GitHub environment holds the service's URL (the DICTIONARY_API_URL variable), and each
 # Worker environment the DICTIONARY_API_TOKEN secret the service expects (docs/agents/web.md,
-# Dictionary service). A new build of the dictionary is a new service image, deployed with the
-# service (docs/agents/dictionary-api.md); the site needs no deploy for it.
+# Dictionary service). A new build of the dictionary is a new service image, which the
+# `Dictionary API deploy` workflow deploys (docs/agents/dictionary-api.md); the site needs no
+# deploy for it.
 on:
   push:
     branches: [main]
