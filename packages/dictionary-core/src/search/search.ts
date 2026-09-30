@@ -1,8 +1,3 @@
-// Ports the retrieval in apps/ios/Modules/Sources/SearchExperience/LookupClient.swift and the
-// result composition in DictionaryEntry.swift, running the app's own queries on the artifact
-// (ADR 0009). Results come back in dictionary order, before frequency evidence reorders them,
-// exactly as the conformance suite pins them (ADR 0006).
-// Change the Swift search and this port in the same PR (issue 481, ADR 0008).
 import { graphemeCount } from '../detail/text'
 import { acceptsPartsOfSpeech, deinflect } from './deinflect'
 import { ftsPhrase, ftsPrefix } from './fts'
@@ -36,27 +31,14 @@ import {
 
 export type { MorphologyAnalyzer, MorphologyWord } from './morphology'
 
-/**
- * The only database access Search needs: the artifact, in any SQLite (../artifact/database.ts).
- * Parameters bind to anonymous `?` placeholders in the order they appear.
- */
 export interface SearchDatabase {
   all<Row>(sql: string, params: readonly (string | number)[]): Promise<Row[]>
 }
 
-/**
- * Capabilities a client supplies. A feature whose capability is missing is off and the rest of
- * Search is unchanged, so a client that can't run one leaves it out (ADR 0008).
- */
 export interface SearchCapabilities {
-  /**
-   * Sentence search: listing the words of a Japanese phrase that isn't one dictionary word, as
-   * the app's Discovered Words. The app's analyzer, Sudachi, needs a 217 MB dictionary.
-   */
   morphology?: MorphologyAnalyzer
 }
 
-/** The features a client's capabilities turn on. */
 export interface SearchFeatures {
   sentenceSearch: boolean
 }
@@ -79,7 +61,6 @@ export interface SearchResultItem {
   sourceOrder: number
   matchRank: Rank
   fallbackOrder: number
-  /** The English meaning that matched, when an English query matched a gloss. */
   matchedSummary: string | null
 }
 
@@ -93,14 +74,15 @@ export interface SearchResults {
   hasExactOrPrefixMatch: boolean
 }
 
-/** How many words a search lists at most, as the app does. */
 export const searchResultLimit = 60
 const resultLimit = searchResultLimit
-/** Exact forms are looked up at most this many to a query. */
-const maximumParameters = 100
+const maximumFormsPerQuery = 100
 const FormKind = { written: 0, reading: 1, romaji: 2 } as const
 
-/** New empty results each time, so a caller that changes them can't affect later searches. */
+function truncatedAtNul(param: string | number): string | number {
+  return typeof param === 'string' ? param.split('\0', 1)[0] : param
+}
+
 function noResults(): SearchResults {
   return {
     items: [],
@@ -115,9 +97,7 @@ function noResults(): SearchResults {
 
 export interface RankedEntry {
   entry: SearchEntry
-  /** Orders entries and sets the leading lexical group (the app's legacy rank). */
   rank: Rank
-  /** The coarse rank shown with each result; after merging, the group's strongest. */
   presentationRank: Rank
   hasExactOrPrefixMatch: boolean
   semanticFingerprint: string
@@ -161,7 +141,6 @@ const readingRestrictionFilter = `(
   )
 )`
 
-/** The forms that contain `query`: the app's `instr(form, ?)` scan over every form. */
 function containsFilter(query: string): { sql: string; params: string[] } {
   return { sql: 'instr(f.form, ?) > 0', params: [query] }
 }
@@ -214,7 +193,6 @@ function glossEvidencePrecedes(lhs: GlossEvidence, rhs: GlossEvidence): number {
   )
 }
 
-/** Swift's `min(by:)`: the first element nothing precedes. */
 function minimum<Value>(values: Value[], compare: (lhs: Value, rhs: Value) => number) {
   let best: Value | undefined
   for (const value of values) {
@@ -223,11 +201,6 @@ function minimum<Value>(values: Value[], compare: (lhs: Value, rhs: Value) => nu
   return best
 }
 
-/**
- * Collapses entries that share a semantic fingerprint into the lowest Language Reference ID. The
- * JMdict entry number comes from the entry that owns that ID, so the ID and the number always
- * name the same entry, whatever the query or row order.
- */
 function deduplicated(ranked: RankedEntry[]): RankedEntry[] {
   const groups = new Map<string, RankedEntry[]>()
   for (const entry of ranked) {
@@ -257,7 +230,6 @@ function deduplicated(ranked: RankedEntry[]): RankedEntry[] {
   })
 }
 
-/** Ranks the Japanese form rows that matched `query`, one result per entry. */
 export function rankJapanese(query: string, rows: JapaneseRow[]): RankedEntry[] {
   const byEntry = new Map<
     string,
@@ -323,6 +295,16 @@ function resultItems(ranked: RankedEntry[]): SearchResultItem[] {
   }))
 }
 
+function leadingExactFormCount(items: readonly SearchResultItem[]): number {
+  let count = 0
+  for (const item of items) {
+    if (item.matchRank.kind !== 'japanese') break
+    if (item.matchRank.relation > FormRelation.readingExact) break
+    count++
+  }
+  return count
+}
+
 function composing(
   sources: SearchResultItem[][],
   options: {
@@ -364,7 +346,6 @@ export class DictionarySearch {
     this.features = searchFeatures(capabilities)
   }
 
-  /** Search the dictionary for a Japanese, kana, romaji, or English query. */
   async search(rawQuery: string): Promise<SearchResults> {
     const query = normalizeQuery(rawQuery)
     const exactFormEntry =
@@ -411,14 +392,7 @@ export class DictionarySearch {
     if (isJapaneseOnly(query)) {
       const deinflectedSources = await this.japaneseDeinflectedSources(query)
       if (deinflectedSources.length > 0) {
-        // An exact dictionary form stays first (した is 下 and 舌 before する); the
-        // deinflected lemmas follow it ahead of prefix and contains matches.
-        let exactCount = 0
-        for (const item of directResults.items) {
-          if (item.matchRank.kind !== 'japanese') break
-          if (item.matchRank.relation > FormRelation.readingExact) break
-          exactCount++
-        }
+        const exactCount = leadingExactFormCount(directResults.items)
         if (exactCount > 0) {
           return composing(
             [
@@ -446,9 +420,6 @@ export class DictionarySearch {
     }
     if (directResults.items.length > 0) return directResults
 
-    // Sentence search: the app splits the query with its Japanese text analyzer and lists an
-    // entry for each word. Without that capability it finds nothing here, as in the app when
-    // its analyzer is unavailable, and the mixed-script segments below still apply.
     const analyzed = await this.analyzedItems(query)
     if (analyzed.length > 1 || (isMixedScript(query) && analyzed.length > 0)) {
       return {
@@ -476,15 +447,8 @@ export class DictionarySearch {
     return noResults()
   }
 
-  /**
-   * The app binds text as C strings (`sqlite3_bind_text` with length -1), so SQLite reads each
-   * up to its first NUL. Binding the same way keeps a query that contains one in step with it.
-   */
   private all<Row>(sql: string, params: readonly (string | number)[]): Promise<Row[]> {
-    return this.db.all<Row>(
-      sql,
-      params.map(param => (typeof param === 'string' ? param.split('\0', 1)[0] : param))
-    )
+    return this.db.all<Row>(sql, params.map(truncatedAtNul))
   }
 
   private async searchOnce(query: string): Promise<SearchResults> {
@@ -508,7 +472,6 @@ export class DictionarySearch {
     }
   }
 
-  /** Whether `searchOnce(query)` finds anything, without ranking every match. */
   private async hasResults(query: string): Promise<boolean> {
     if (query === '') return false
     if (isASCII(query)) return (await this.searchOnce(query)).items.length > 0
@@ -524,7 +487,6 @@ export class DictionarySearch {
     return rows.length > 0
   }
 
-  /** The entry for each word the analyzer finds: the one written as that word, else the first. */
   private async analyzedItems(query: string): Promise<SearchResultItem[]> {
     const morphology = this.capabilities.morphology
     if (!morphology || query === '') return []
@@ -532,7 +494,7 @@ export class DictionarySearch {
     try {
       words = await morphology.analyze(query)
     } catch {
-      return [] // The app treats an analysis that fails as finding no words.
+      return []
     }
     const segments = lookupSegments(words)
     const results = await Promise.all(segments.map(segment => this.searchOnce(segment)))
@@ -542,7 +504,6 @@ export class DictionarySearch {
     })
   }
 
-  /** Dictionary entries for kana and kanji inflections, grouped by deinflection chain length. */
   private async japaneseDeinflectedSources(query: string): Promise<SearchResultItem[][]> {
     const candidates = deinflect(query).map(candidate => ({
       ...candidate,
@@ -577,12 +538,11 @@ export class DictionarySearch {
     return rankJapanese(query, await this.japaneseRows(filter.sql, filter.params))
   }
 
-  /** Entries with a form equal to each term, looked up together rather than one term at a time. */
   private async rankedJapaneseForms(terms: string[]): Promise<Map<string, RankedEntry[]>> {
     const distinct = [...new Set(terms)].filter(term => term !== '')
     const batches: string[][] = []
-    for (let start = 0; start < distinct.length; start += maximumParameters) {
-      batches.push(distinct.slice(start, start + maximumParameters))
+    for (let start = 0; start < distinct.length; start += maximumFormsPerQuery) {
+      batches.push(distinct.slice(start, start + maximumFormsPerQuery))
     }
     const rowsByTerm = new Map<string, JapaneseRow[]>()
     const rows = await Promise.all(
@@ -689,7 +649,6 @@ export class DictionarySearch {
     return deduplicated(ranked)
   }
 
-  /** Entries with a romaji form equal to `query`, the only evidence exact lookups use. */
   private async exactRomajiEvidence(query: string) {
     const rows = await this.all<EntryRow>(
       `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
@@ -704,7 +663,6 @@ export class DictionarySearch {
     }
   }
 
-  /** Entries whose English meanings or romaji forms match `query`, with that evidence. */
   private async englishEvidence(query: string) {
     if (!hasSearchTerms(query)) return null
     const glossMatch = ftsPhrase(query)
@@ -729,8 +687,6 @@ export class DictionarySearch {
   }
 
   private async glossEvidence(query: string, match: string): Promise<Map<string, GlossEvidence[]>> {
-    // A sense restricted to some written forms or readings applies only when the entry is shown
-    // with one of them.
     const rows = await this.all<{
       entry_id: string
       sense_order: number
@@ -759,10 +715,13 @@ export class DictionarySearch {
     const token = new RegExp(`(?:^|[^a-z])${escapeRegExp(query)}(?:$|[^a-z])`, 'u')
     const result = new Map<string, GlossEvidence[]>()
     for (const row of rows) {
-      const writtenForms: string[] = JSON.parse(row.written_forms)
-      const readings: string[] = JSON.parse(row.readings)
-      if (writtenForms.length > 0 && !writtenForms.includes(normalizeQuery(row.headword))) continue
-      if (readings.length > 0 && !readings.includes(normalizeQuery(row.reading))) continue
+      const senseWrittenForms: string[] = JSON.parse(row.written_forms)
+      const senseReadings: string[] = JSON.parse(row.readings)
+      const appliesToShownForms =
+        (senseWrittenForms.length === 0 ||
+          senseWrittenForms.includes(normalizeQuery(row.headword))) &&
+        (senseReadings.length === 0 || senseReadings.includes(normalizeQuery(row.reading)))
+      if (!appliesToShownForms) continue
       const relation = glossRelation(query, row.text, token)
       if (relation === null) continue
       const evidence = result.get(row.entry_id) ?? []

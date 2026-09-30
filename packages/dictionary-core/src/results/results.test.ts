@@ -74,7 +74,6 @@ const headwords = (ordered: { entry: { headword: string } }[]) =>
 
 describe('orderedItems (SearchResultFrequencyOrdering.ordered)', () => {
   test('orders equal matches by tier, then JLPT, then YouTube, as the app orders いる', () => {
-    // Retrieval order, before the re-sort: 入る, 要る, いる, 炒る.
     const hairu = item('入る')
     const iru = item('要る')
     const kana = item('いる')
@@ -93,22 +92,22 @@ describe('orderedItems (SearchResultFrequencyOrdering.ordered)', () => {
     ])
   })
 
-  test('keeps stronger matches first, whatever their frequency', () => {
-    // iru: the English gloss matches 上一 lead the romaji matches, as in the app.
+  test('keeps a stronger English gloss match first, whatever the frequency', () => {
     const gloss = item('上一', { rank: strongGloss })
     const verb = item('要る', { sourceOrder: 0 })
     const frequency = frequencyOf([[verb, [jlpt(5), youtube(1)]]])
     expect(headwords(orderedItems(results([verb, gloss]), frequency))).toEqual(['上一', '要る'])
-    // A later source (a deinflected lemma after the exact form) stays after it.
+  })
+
+  test('keeps a later source, such as a deinflected lemma, after the exact form', () => {
+    const verb = item('要る', { sourceOrder: 0 })
     const later = item('後', { sourceOrder: 1 })
     expect(
       headwords(orderedItems(results([later, verb]), frequencyOf([[later, [jlpt(5)]]])))
     ).toEqual(['要る', '後'])
   })
 
-  test('takes the tier from the first dictionary that has one', () => {
-    // 家 isn't in YouTube but is JLPT N5; a YouTube-only rank of 100 is very common too, and
-    // then JLPT's value decides: a ranked entry before an unranked one.
+  test('takes the tier from the first dictionary that has one, then puts the entry JLPT lists first', () => {
     const listed = item('家')
     const ranked = item('ランク')
     const rare = item('稀')
@@ -177,7 +176,6 @@ describe('searchResultsScreen (SearchResultsView)', () => {
       'JLPT N5',
       'YouTube 949'
     ])
-    // Not in YouTube: only the first dictionary always shows, and JLPT is a level list.
     expect(screen.rows[1].chips.map(chip => `${chip.source} ${chip.value}`)).toEqual(['JLPT N1'])
   })
 
@@ -187,8 +185,7 @@ describe('searchResultsScreen (SearchResultsView)', () => {
     expect(screen.state === 'results' && screen.rows[0].summary).toBe('to eat')
   })
 
-  test('leads a one-kanji query with the kanji row, from the entry written as the kanji', () => {
-    // The primary entry is chosen before the re-sort; the re-sort can move it down the list.
+  test('leads a one-kanji query with the kanji row, from the entry written as the kanji before the re-sort', () => {
     const compound = item('要点')
     const kanji = item('要', { id: 'f'.repeat(32) })
     const screen = searchResultsScreen(

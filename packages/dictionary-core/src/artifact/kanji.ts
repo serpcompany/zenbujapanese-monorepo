@@ -1,17 +1,8 @@
-// A kanji page's rows, read when the page is asked for (ADR 0009): the kanji and its structure
-// from the kanji files (./kanji-data.ts), its stroke order from the attached KanjiStrokeData
-// (KanjiVG), and its words as `entries(containingKanji:)` in LookupClient.swift finds them.
-
 import { kanjiWords } from '../detail/kanji'
 import type { KanjiRows, KanjiStrokesRow, KanjiWordRow } from '../detail/rows'
 import type { ArtifactDatabase } from './database'
 import type { KanjiData } from './kanji-data'
 
-/**
- * Every entry in the semantic-fingerprint groups `kanjiCandidateRowsSQL` reads for the kanji:
- * the groups of entries with a written form containing it (`instr(f.form, ?)`, the app's scan).
- * `kanjiWords` orders the groups and picks each group's entry.
- */
 export function kanjiCandidateRows(db: ArtifactDatabase, character: string): KanjiWordRow[] {
   const rows = db.all<{
     id: string
@@ -50,7 +41,6 @@ export function kanjiCandidateRows(db: ArtifactDatabase, character: string): Kan
   }))
 }
 
-/** The kanji's stroke order (KanjiVG); null for a kanji KanjiStrokeData.sqlite3 doesn't draw. */
 export function kanjiStrokes(db: ArtifactDatabase, character: string): KanjiStrokesRow | null {
   const [row] = db.all<{ viewport_size: number; stroke_count: number; strokes_json: string }>(
     'SELECT viewport_size, stroke_count, strokes_json FROM strokes.stroke_diagrams WHERE character = ?',
@@ -65,7 +55,6 @@ export function kanjiStrokes(db: ArtifactDatabase, character: string): KanjiStro
     : null
 }
 
-/** Everything a kanji page reads, or null for a character with no page. */
 export function readKanji(
   db: ArtifactDatabase,
   data: KanjiData,

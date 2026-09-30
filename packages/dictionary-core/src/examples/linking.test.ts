@@ -40,7 +40,6 @@ const iru: HighlightedEntry = {
   readingForms: ['いる']
 }
 
-/** A lookup over a fixed dictionary, by exact form. */
 function dictionary(forms: Record<string, LinkEntry[]>) {
   return vi.fn((form: string) => forms[form] ?? [])
 }
@@ -86,7 +85,7 @@ describe('linkedTokens', () => {
     expect(lookup).not.toHaveBeenCalled()
   })
 
-  test('other words resolve by part of speech, then by reading, or list their candidates', () => {
+  test('other words resolve by part of speech, then by reading, or list the candidates neither tells apart', () => {
     const lookup = dictionary({ いる: [needs, be, shoot], か: [entry('q', 'か', ['particle'])] })
     const [verb, particle] = linkedTokens(
       'いるか',
@@ -94,7 +93,6 @@ describe('linkedTokens', () => {
       null,
       lookup
     )
-    // Two godan and one ichidan entry: the parser can't tell them apart by part of speech.
     expect(verb.entry).toBeNull()
     expect(verb.candidates.map(c => c.id)).toEqual(['need', 'be', 'shoot'])
     expect(verb.lookupForm).toBe('いる')
@@ -117,11 +115,14 @@ describe('linkedTokens', () => {
   })
 
   test('a joined word that resolves to nothing falls back to its pieces', () => {
-    // Kuromoji's pieces, which the grouping joins into おせじ (dictionary form おせる).
     const pieces = [candidate('おせ', ['動詞'], 'おせる'), candidate('じ', ['助動詞'], 'じ')]
     const lookup = dictionary({ じ: [entry('ji', 'じ', ['auxiliary'])] })
     expect(linkedTokens('おせじ', pieces, null, lookup).map(t => t.surface)).toEqual(['おせ', 'じ'])
-    // On the page of an entry written おせじ, the joined word is that entry and stays whole.
+  })
+
+  test('a joined word stays whole on the page of an entry written as it', () => {
+    const pieces = [candidate('おせ', ['動詞'], 'おせる'), candidate('じ', ['助動詞'], 'じ')]
+    const lookup = dictionary({ じ: [entry('ji', 'じ', ['auxiliary'])] })
     const oseji: HighlightedEntry = {
       ...entry('oseji', 'おせじ', ['noun']),
       headword: 'お世辞',

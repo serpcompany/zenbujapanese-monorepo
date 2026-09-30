@@ -1,49 +1,27 @@
-// Ports JapaneseTextAnalyzer (apps/ios/Modules/Sources/SearchExperience/
-// JapaneseTextAnalysisClient.swift): which dictionary entry each word of an example sentence links
-// to on a word page. A word the page's entry was written with is that entry; any other word is
-// looked up by its forms, narrowed by part of speech and reading, and links to its one entry or
-// lists its candidates. The artifact layer runs it on each example a page shows
-// (../artifact/word-examples.ts); the word-detail conformance suite checks it.
-// Change the Swift and this port in the same PR, and re-record the word-detail suite; the
-// Search parity workflow checks that both change (issue 464).
-
 import { isJapaneseOnly, normalizeQuery } from '../search/query'
 import { toHiragana, toKatakana } from './kana'
 import { groupInflections, type MorphologyCandidate } from './morphology'
 
-/** What linking reads of an entry the lookup returns: the app's deduplicated search result. */
 export interface LinkEntry {
-  /** The Language Reference ID of the entry's equivalence group (its lowest). */
   id: string
   reading: string
-  /** The entry's parts of speech (`parts_of_speech_json`), as PartOfSpeech raw values. */
   partsOfSpeech: string[]
 }
 
-/** The page's entry, with the forms the app matches words against. */
 export interface HighlightedEntry extends LinkEntry {
   headword: string
   writtenForms: string[]
   readingForms: string[]
 }
 
-/**
- * `LookupClient.entriesMatchingForm`: entries with a written or reading form equal to the
- * normalized form, in search order, one per equivalence group.
- */
 export type EntriesMatchingForm = (form: string) => LinkEntry[]
 
-/** JapaneseTextToken, with what links and furigana need. */
 export interface LinkedToken {
   surface: string
-  /** The entry the word links to. */
   entry: LinkEntry | null
-  /** Its possible entries; one when `entry` is set. */
   candidates: LinkEntry[]
-  /** The parser's reading, in katakana as Kuromoji gives it (the surface when it has none). */
   reading: string
   dictionaryForm: string
-  /** The form the candidates were found by, when there are any and no highlight chose them. */
   lookupForm: string | null
 }
 
@@ -81,7 +59,6 @@ const nouns = new Set([
   'takesSuru'
 ])
 
-/** `isCompatible(_:with:)`: whether an entry's part of speech fits the parser's. */
 export function isCompatible(part: string, providerPOS: string): boolean {
   switch (providerPOS) {
     case '動詞':
@@ -116,7 +93,6 @@ export function isCompatible(part: string, providerPOS: string): boolean {
   }
 }
 
-/** `forms(for:preferred:)`: the page entry's forms, which a word matches to be that entry. */
 export function highlightedForms(entry: HighlightedEntry, preferred: string): Set<string> {
   return new Set(
     [preferred, entry.headword, entry.reading, ...entry.writtenForms, ...entry.readingForms].filter(
@@ -125,14 +101,11 @@ export function highlightedForms(entry: HighlightedEntry, preferred: string): Se
   )
 }
 
-/** `lookupForms(for:)`: the forms a word is looked up by, in order. */
 export function lookupForms(candidate: MorphologyCandidate): string[] {
   const forms: string[] = []
   const append = (value: string) => {
     if (value !== '' && value !== '*' && !forms.includes(value)) forms.push(value)
   }
-  // A joined inflection's surface is never its dictionary form, and it can collide with an
-  // unrelated headword: しまった (past of しまう) is also the interjection "darn it!".
   const evidence = candidate.joinsInflection
     ? [candidate.dictionaryForm, candidate.normalizedForm]
     : [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm]
@@ -144,7 +117,6 @@ export function lookupForms(candidate: MorphologyCandidate): string[] {
   return forms
 }
 
-/** `preferredEntries(_:candidate:matchesSurfaceReading:)`. */
 function preferredEntries(
   entries: LinkEntry[],
   candidate: MorphologyCandidate,
@@ -165,11 +137,6 @@ function preferredEntries(
   return filtered
 }
 
-/**
- * Links a sentence's words for one page, from its Kuromoji candidates (null when the app's
- * analysis fails, which shows the sentence as one unlinked word). `lookup` should cache by form,
- * as the app's analyzer does.
- */
 export function linkedTokens(
   text: string,
   candidates: MorphologyCandidate[] | null,
@@ -224,7 +191,6 @@ export function linkedTokens(
   const tokens: LinkedToken[] = []
   for (const candidate of groupInflections(candidates)) {
     const resolution = resolve(candidate)
-    // A joined word that resolves to nothing falls back to its pieces, when one of them does.
     if (resolution.candidates.length === 0 && candidate.children.length > 1) {
       const children = candidate.children.map(child => token(child, resolve(child)))
       if (children.some(child => child.candidates.length > 0)) {
@@ -237,11 +203,6 @@ export function linkedTokens(
   return tokens
 }
 
-/**
- * LinkedTokenView's `displayReading(for:)`: the furigana over a linked word. The entry's reading
- * when the word is written in one of the entry's forms; otherwise the word's own parsed reading,
- * so an inflected 見なかった gets furigana for 見, not 見る.
- */
 export function displayReading(
   token: Pick<LinkedToken, 'surface' | 'reading'>,
   entry: { headword: string; reading: string; writtenForms: string[]; readingForms: string[] }

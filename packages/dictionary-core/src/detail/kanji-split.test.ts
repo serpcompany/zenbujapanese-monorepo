@@ -2,9 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { type KanjiReadings, kanjiReadings, splitKanjiReading } from './kanji-split'
 import type { KanjiReadingRow } from './rows'
 
-// Expected values follow KanjiReadingSplitter.swift and the app's Furigana kanji highlight
-// (apps/ios/docs/product/index.md), over KANJIDIC2 readings as KanjiReferenceData.json has them.
-
 const on = (value: string): KanjiReadingRow => ({ value, kind: 'on' })
 const kun = (value: string): KanjiReadingRow => ({ value, kind: 'kun' })
 const name = (value: string): KanjiReadingRow => ({ value, kind: 'name' })
@@ -26,7 +23,6 @@ const readings: KanjiReadings = new Map([
 
 describe('splitKanjiReading (KanjiReadingSplitter.split)', () => {
   test('uses the sound changes compounds make', () => {
-    // A small っ (学校 がっこう), voicing (人々 ひとびと), and half-voicing (発表 はっぴょう).
     expect(splitKanjiReading('学校', 'がっこう', readings)).toEqual(['がっ', 'こう'])
     expect(splitKanjiReading('人々', 'ひとびと', readings)).toEqual(['ひと', 'びと'])
     expect(splitKanjiReading('発表', 'はっぴょう', readings)).toEqual(['はっ', 'ぴょう'])
@@ -45,7 +41,6 @@ describe('splitKanjiReading (KanjiReadingSplitter.split)', () => {
 
   test('has no split when a kanji has no readings, or more than one split fits', () => {
     expect(splitKanjiReading('学校', 'がっこう', new Map())).toBeNull()
-    // Invented readings. An empty reading takes no kana, so あい・(nothing) doesn't fit.
     const ambiguous: KanjiReadings = new Map([
       ['甲', [kun('あ'), kun('あい')]],
       ['乙', [kun('い'), kun('')]]
@@ -55,7 +50,6 @@ describe('splitKanjiReading (KanjiReadingSplitter.split)', () => {
       ['甲', [kun('あ'), kun('あい')]],
       ['乙', [kun('い'), kun('う'), kun('いう')]]
     ])
-    // あ・いう and あい・う both fit.
     expect(splitKanjiReading('甲乙', 'あいう', twoWays)).toBeNull()
   })
 

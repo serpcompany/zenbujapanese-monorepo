@@ -24,14 +24,15 @@ describe('pitchLevels (PitchAccent.levels)', () => {
 
   test('otherwise high from the second mora through the downstep', () => {
     expect(pitchLevels(3, 4)).toEqual({ morae: [false, true, true, false], particle: false })
-    // Odaka: high to the end, low on the particle.
+  })
+
+  test('odaka is high to the end and low on the particle', () => {
     expect(pitchLevels(2, 2)).toEqual({ morae: [false, true], particle: false })
   })
 })
 
 describe('pitchAccent', () => {
   test('draws the reading in katakana', () => {
-    // 要る (1546640), heiban.
     expect(pitchAccent('いる', { downstep: 0, moraCount: 2, sourceIdentity: unidic })).toEqual({
       morae: [
         { mora: 'イ', high: false },
@@ -50,7 +51,6 @@ describe('pitchAccent', () => {
         width: 2.6
       }
     })
-    // 要領 (1546850), downstep 3.
     expect(
       pitchAccent('ようりょう', { downstep: 3, moraCount: 4, sourceIdentity: unidic }).morae
     ).toEqual([
@@ -59,7 +59,6 @@ describe('pitchAccent', () => {
       { mora: 'リョ', high: true },
       { mora: 'ウ', high: false }
     ])
-    // 珈琲 (1049180): a katakana reading stays as it is.
     expect(
       pitchAccent('コーヒー', { downstep: 3, moraCount: 4, sourceIdentity: unidic }).morae.map(
         mora => mora.high
@@ -70,7 +69,6 @@ describe('pitchAccent', () => {
 
 describe('pitchGraph (PitchContourLayout)', () => {
   test('gives a combined mora one and a half widths, and the particle 0.6 after the last', () => {
-    // 今日 (1579110), atamadaka: キョ is wider, so its point is at 0.75.
     const { graph } = pitchAccent('きょう', { downstep: 1, moraCount: 2, sourceIdentity: unidic })
     expect(graph.widths).toEqual([1.5, 1])
     expect(graph.points).toEqual([

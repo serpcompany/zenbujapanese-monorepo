@@ -1,14 +1,7 @@
-// Foundation's `applyingTransform(.hiraganaToKatakana, reverse:)`, which the app's example links
-// use (JapaneseTextAnalysisClient.swift, LinkedJapaneseText.swift). It is ICU's
-// Hiragana-Katakana transliterator, which does more than shift U+3041–U+3096 by 0x60: it folds
-// halfwidth and circled katakana first, spells ヿ and ゟ out, maps the iteration marks, and
-// composes the result. The cases below were read from Foundation on macOS (kana.test.ts pins them).
-
-/** Halfwidth (U+FF61–U+FF9F) and circled (U+32D0–U+32FE) katakana, which ICU folds first. */
-const foldedFirst = /[｡-ﾟ㋐-㋾]/gu
+const halfwidthAndCircledKatakana = /[｡-ﾟ㋐-㋾]/gu
 
 function fold(value: string): string {
-  return value.replace(foldedFirst, character => character.normalize('NFKC'))
+  return value.replace(halfwidthAndCircledKatakana, character => character.normalize('NFKC'))
 }
 
 const toHiraganaSpecial: Record<string, string> = {
@@ -30,7 +23,6 @@ const toKatakanaSpecial: Record<string, string> = {
   ゟ: 'ヨリ'
 }
 
-/** `applyingTransform(.hiraganaToKatakana, reverse: true)`: katakana to hiragana. */
 export function toHiragana(value: string): string {
   return fold(value)
     .replace(/[ァ-ヿゟ]/gu, character => {
@@ -42,7 +34,6 @@ export function toHiragana(value: string): string {
     .normalize('NFC')
 }
 
-/** `applyingTransform(.hiraganaToKatakana, reverse: false)`: hiragana to katakana. */
 export function toKatakana(value: string): string {
   return fold(value)
     .replace(/[ぁ-ゔゝ-ゟ]/gu, character => {

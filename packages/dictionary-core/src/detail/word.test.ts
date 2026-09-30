@@ -4,9 +4,6 @@ import { partOfSpeechPhrase } from './part-of-speech'
 import type { EntryRow, WordRows } from './rows'
 import { alternativeKanji, primaryKanji, wordDetail, wordSummary } from './word'
 
-// Expected values follow DictionaryEntry.swift, PartOfSpeechFormatter.swift, and
-// WordDetailView.swift, over real entries from the app's bundled data (the fixtures).
-
 function rows(entSeq: number): WordRows {
   const found = fixtureWordRows.find(candidate => candidate.entry.entSeq === entSeq)
   if (!found) throw new Error(`No fixture for ${entSeq}`)
@@ -49,14 +46,11 @@ describe('primaryKanji (DictionaryEntry.primaryKanji)', () => {
 
 describe('alternativeKanji (DictionaryEntry.alternativeKanji)', () => {
   test('lists kanji from the other written forms that the headword lacks', () => {
-    // 炒る (1391500), also written 煎る and 熬る.
     expect(alternativeKanji(rows(1391500).entry)).toEqual(['煎', '熬'])
-    // いる (1577980), rarely written 居る.
     expect(alternativeKanji(rows(1577980).entry)).toEqual(['居'])
   })
 
   test('includes Search only forms, as the app does', () => {
-    // 要項 (1546750) has the Search only form 要頂.
     expect(alternativeKanji(rows(1546750).entry)).toEqual(['頂'])
   })
 })
@@ -92,8 +86,10 @@ describe('wordDetail', () => {
     expect(detail.shareText).toBe(
       '要る【いる】\n1. to be needed, to be necessary, to be required, to be wanted, to need, to want'
     )
-    // Example furigana goes over the kanji only (#479 review item 11), and the page's word links
-    // to itself.
+  })
+
+  test('要る: example furigana goes over the kanji only (#479), and the page word links to itself', () => {
+    const detail = wordDetail(rows(1546640))
     const pageWord = detail.examples
       .flatMap(example => example.tokens)
       .find(token => token.isPageWord && token.text === '要る')
@@ -106,9 +102,8 @@ describe('wordDetail', () => {
     expect(detail.exampleCount?.listed).toBe(detail.examples.length)
   })
 
-  test('いる (1577980): the first sense’s word class, kana only, a rare written form', () => {
+  test('いる (1577980): the first sense’s word class, kana only, a rare written form, shared without a reading', () => {
     const detail = wordDetail(rows(1577980))
-    // Not "Ichidan verb (intransitive) · Auxiliary verb", which unions every sense.
     expect(detail.partOfSpeech).toBe('Ichidan verb (intransitive)')
     expect(detail.ruby).toEqual([{ text: 'いる' }])
     expect(detail.kanji).toEqual([])
@@ -130,7 +125,6 @@ describe('wordDetail', () => {
       { source: 'JLPT', value: 'N5', tier: 'veryCommon', spokenTier: null },
       { source: 'YouTube', value: 'No rank', tier: null, spokenTier: null }
     ])
-    // Frequency Details: the JLPT level, and why YouTube has no rank.
     expect(detail.frequencyRows.map(row => [row.details.section, row.details.rows])).toEqual([
       ['Level', [{ label: 'JLPT Level', value: 'N5' }]],
       ['Frequency', []]
@@ -138,14 +132,11 @@ describe('wordDetail', () => {
     expect(detail.frequencyRows[1].details.explanation).toBe(
       'YouTube has no mapped frequency rank for this entry.'
     )
-    // A kana headword shares without a reading.
     expect(detail.shareText.split('\n')[0]).toBe('いる')
   })
 
   test('leaves out Search only forms and repeats from the alternatives', () => {
-    // 要項 (1546750): 要頂 is Search only.
     expect(wordDetail(rows(1546750)).alternatives).toEqual([])
-    // 炒る (1391500)
     expect(wordDetail(rows(1391500)).alternatives.map(form => form.value)).toEqual(['煎る', '熬る'])
   })
 
@@ -191,7 +182,6 @@ describe('wordDetail', () => {
 
 describe('wordSummary', () => {
   test('a search result with its frequency chips', () => {
-    // 射る (1322180): not in the JLPT list, so only YouTube shows.
     expect(wordSummary(rows(1322180).entry, rows(1322180).frequency)).toEqual({
       entSeq: 1322180,
       headword: '射る',

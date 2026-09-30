@@ -1,10 +1,8 @@
-/** What the core's readers cache with: a Map, or a bounded `LruCache`. */
 export interface Cache<Key, Value> {
   get(key: Key): Value | undefined
   set(key: Key, value: Value): unknown
 }
 
-/** A cache that forgets the least recently used entry once it holds `capacity`. */
 export class LruCache<Key, Value> implements Cache<Key, Value> {
   private readonly entries = new Map<Key, Value>()
 

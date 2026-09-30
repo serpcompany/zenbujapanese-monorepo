@@ -1,10 +1,5 @@
-// Entries' evidence in the default frequency dictionaries, from the artifact's attached packs
-// (`jlpt` and `tubelex`, ./database.ts), in the app's catalog order (FrequencyPackCatalog.json):
-// JLPT levels, then TUBELEX ranks.
-
 import type { FrequencyRow } from '../detail/rows'
 
-/** The two queries, for `ids` (lowercase hex Language Reference IDs), with their parameters. */
 export function frequencyQueries(ids: readonly string[]) {
   const placeholders = ids.map(() => 'unhex(?)').join(', ')
   return {
@@ -16,7 +11,6 @@ export function frequencyQueries(ids: readonly string[]) {
   }
 }
 
-/** Each entry's rows, in catalog order. */
 export function frequencyByEntry(
   levels: readonly { id: string; level: number }[],
   ranks: readonly { id: string; rank: number }[]

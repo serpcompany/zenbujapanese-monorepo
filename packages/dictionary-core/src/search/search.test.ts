@@ -42,16 +42,11 @@ const dictionary = [
   entry('a1', 1, '日本語', 'にほんご', ['noun']),
   entry('a2', 2, '勉強', 'べんきょう', ['noun', 'takesSuru']),
   entry('a3', 3, 'する', 'する', ['suruVerb']),
-  // One word in two JMdict entries: the higher ID has more senses, so it ranks first.
   entry('b2', 20, '閻魔', 'えんま', ['noun'], { fingerprint: 'enma', senseCount: 3 }),
   entry('b1', 10, '閻魔', 'えんま', ['noun'], { fingerprint: 'enma' })
 ]
 
-/**
- * Answers the Japanese form queries Search makes, from `dictionary`; English queries find
- * nothing. It reads each query's shape from its SQL, so it only suits Japanese searches.
- */
-function fakeDatabase() {
+function japaneseFormsDatabase() {
   const params: (string | number)[][] = []
   const db: SearchDatabase = {
     async all<Row>(sql: string, bound: readonly (string | number)[]) {
@@ -96,14 +91,16 @@ const words: MorphologyWord[] = [
 describe('capabilities', () => {
   test('sentence search is on only with an analyzer', () => {
     const analyze = async () => words
-    expect(new DictionarySearch(fakeDatabase().db).features.sentenceSearch).toBe(false)
-    expect(new DictionarySearch(fakeDatabase().db, { morphology: { analyze } }).features).toEqual({
+    expect(new DictionarySearch(japaneseFormsDatabase().db).features.sentenceSearch).toBe(false)
+    expect(
+      new DictionarySearch(japaneseFormsDatabase().db, { morphology: { analyze } }).features
+    ).toEqual({
       sentenceSearch: true
     })
   })
 
   test('with an analyzer, a sentence lists its words as Discovered Words', async () => {
-    const search = new DictionarySearch(fakeDatabase().db, {
+    const search = new DictionarySearch(japaneseFormsDatabase().db, {
       morphology: { analyze: async () => words }
     })
     const results = await search.search('日本語を勉強した')
@@ -112,7 +109,9 @@ describe('capabilities', () => {
   })
 
   test('without an analyzer, the same sentence finds nothing', async () => {
-    const results = await new DictionarySearch(fakeDatabase().db).search('日本語を勉強した')
+    const results = await new DictionarySearch(japaneseFormsDatabase().db).search(
+      '日本語を勉強した'
+    )
     expect(results.items).toEqual([])
     expect(results.presentation).toBe('ranked')
   })
@@ -121,7 +120,7 @@ describe('capabilities', () => {
     const analyze = vi.fn(async (): Promise<MorphologyWord[]> => {
       throw new Error('analyzer unavailable')
     })
-    const search = new DictionarySearch(fakeDatabase().db, { morphology: { analyze } })
+    const search = new DictionarySearch(japaneseFormsDatabase().db, { morphology: { analyze } })
     expect((await search.search('日本語')).items.map(item => item.entry.headword)).toEqual([
       '日本語'
     ])
@@ -136,13 +135,13 @@ describe('capabilities', () => {
 })
 
 describe('results', () => {
-  test('a duplicated word takes its entry number from the entry that owns its ID', async () => {
-    const [item] = (await new DictionarySearch(fakeDatabase().db).search('えんま')).items
+  test('a duplicated word takes its entry number from the entry that owns its lowest ID, though the other has more senses and ranks first', async () => {
+    const [item] = (await new DictionarySearch(japaneseFormsDatabase().db).search('えんま')).items
     expect(item.entry).toMatchObject({ id: 'b1', sourceRecordId: 10 })
   })
 
   test('text binds up to its first NUL, as the app binds it', async () => {
-    const { db, params } = fakeDatabase()
+    const { db, params } = japaneseFormsDatabase()
     await new DictionarySearch(db).search('日本語\u0000を')
     expect(params.flat().some(param => typeof param === 'string' && param.includes('\u0000'))).toBe(
       false
@@ -150,7 +149,7 @@ describe('results', () => {
   })
 
   test('changing one result leaves later searches alone', async () => {
-    const search = new DictionarySearch(fakeDatabase().db)
+    const search = new DictionarySearch(japaneseFormsDatabase().db)
     const first = await search.search('ぞ')
     first.items.push((await search.search('日本語')).items[0])
     first.presentation = 'discoveredWords'

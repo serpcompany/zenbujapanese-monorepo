@@ -6,8 +6,9 @@ import {
   type MorphologyCandidate
 } from './morphology'
 
-/** Kuromoji tokens for `pieces` ([surface, pos, pos_detail_1, basic_form, reading]), in order. */
-function tokens(pieces: [string, string, string, string, string?][]): KuromojiToken[] {
+function tokens(
+  pieces: [surface: string, pos: string, posDetail: string, basicForm: string, reading?: string][]
+): KuromojiToken[] {
   let position = 1
   return pieces.map(([surface, pos, detail, basic, reading]) => {
     const token: KuromojiToken = {

@@ -1,8 +1,3 @@
-// The Example Sentences row's count on the search results screen (SearchView.swift's
-// SearchResultsScreen.exampleCount and directExampleCount), and the examples it opens
-// (ExampleSentencesView): the primary entry's when the results use them (a romaji or deinflected
-// query), otherwise the sentences containing the query.
-
 import { primaryItem } from '../results/results'
 import { normalizeQuery } from '../search/query'
 import type { SearchResults } from '../search/search'
@@ -11,11 +6,6 @@ import { type EntryExamples, retrieveEntryExamples } from './example-retrieval'
 import { searchExamples } from './example-search'
 import type { ExamplesEntry } from './word-examples'
 
-/**
- * The results' primary entry (`primaryEntry(for:)`), with what linking needs of it; null without
- * results. The Example Sentences screen highlights it for every search, so words written as it
- * link to it, and lists its examples for a romaji or deinflected one.
- */
 export function primaryExamplesEntry(
   db: ArtifactDatabase,
   rawQuery: string,
@@ -39,10 +29,6 @@ export function primaryExamplesEntry(
   }
 }
 
-/**
- * The examples the Example Sentences row opens, or null where the app's retrieval throws (it then
- * offers none).
- */
 export function resultsExamples(
   db: ArtifactDatabase,
   rawQuery: string,
@@ -56,10 +42,6 @@ export function resultsExamples(
   return typeof found === 'string' ? null : found
 }
 
-/**
- * The Example Sentences row's count: the primary entry's listed examples (at most 100), or the
- * sentences containing the query (`count(_:)`: exact up to 50, then 51).
- */
 export function resultsExampleCount(
   usesPrimaryEntryExamples: boolean,
   examples: EntryExamples | null

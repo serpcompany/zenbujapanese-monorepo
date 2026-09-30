@@ -1,10 +1,3 @@
-// A word page's examples as the detail core reads them (../detail/rows.ts), made from the
-// sentences the app's retrieval lists (./example-retrieval.ts) when the page asks for them: each
-// sentence's Kuromoji tokens with its words linked as no page sees them, and on this page, which
-// words are the page's entry, where each word links, and the furigana over it. Each pair credits
-// both Tatoeba sentences. The linking is the app's (../examples/linking.ts, from
-// JapaneseTextAnalysisClient.swift and JapaneseInflectionGrouping.swift).
-
 import type {
   ExampleCountRow,
   ExampleLinkRow,
@@ -26,14 +19,11 @@ import type { ArtifactDatabase } from './database'
 import type { EntryExamples, ExampleSentence } from './example-retrieval'
 import type { FormLookup } from './lookup'
 
-/** The page's entry: the one its examples were retrieved for and whose words it highlights. */
 export type ExamplesEntry = HighlightedEntry
 
-/** A contributor Tatoeba names; null when the export has none. */
 const contributor = (name: string | null, status: string) =>
   status === 'named' && name ? name : null
 
-/** A word with furigana: one with kanji or 々 (JapaneseRubyAnnotation). */
 const hasKanji = (text: string) => /[㐀-鿿々]/u.test(text)
 
 interface Provenance {
@@ -60,7 +50,6 @@ function provenance(db: ArtifactDatabase, pairIds: readonly string[]): Map<strin
   return new Map(rows.map(row => [row.pair_id, row]))
 }
 
-/** What linking needs of each entry a word links to: its number and forms. */
 interface LinkedEntry {
   entSeq: number
   headword: string
@@ -108,7 +97,6 @@ function tokenRows(tokens: LinkedToken[]): ExampleSentenceTokenRow[] {
   })
 }
 
-/** How many examples a word has, as its page shows them; null for a word without any. */
 export function exampleCount(retrieved: EntryExamples): ExampleCountRow | null {
   if (retrieved.sentences.length === 0) return null
   return {
@@ -118,24 +106,12 @@ export function exampleCount(retrieved: EntryExamples): ExampleCountRow | null {
   }
 }
 
-/**
- * How a list of examples highlights, as the app's example rows do (JapaneseExampleRowContent's
- * presentations in ExampleSentencesView.swift): which entry words resolve to first (the
- * analyzer's `highlightedEntry`), the highlighted query, and what is accented.
- */
 export interface ExampleHighlight {
-  /** A word page's entry, or a search's primary entry; null for a conjugated form's examples. */
   entry: ExamplesEntry | null
-  /** The page's headword, the searched text, or the conjugated form. */
   query: string
-  /**
-   * `entry`: the entry's own words, as Word Detail accents them. `query`: the words each
-   * occurrence of the query spans, as the example list and a conjugated form's screen do.
-   */
   accent: 'entry' | 'query'
 }
 
-/** Each token's span in the text, in code points; the tokens tile it. */
 function tokenSpans(tokens: readonly LinkedToken[]): { start: number; end: number }[] {
   let start = 0
   return tokens.map(token => {
@@ -146,7 +122,6 @@ function tokenSpans(tokens: readonly LinkedToken[]): { start: number; end: numbe
   })
 }
 
-/** Every occurrence of `query` in `text`, in code points (`queryScalarRanges`). */
 function occurrences(text: string, query: string): { start: number; end: number }[] {
   const scalars = Array.from(text)
   const needle = Array.from(query)
@@ -160,11 +135,6 @@ function occurrences(text: string, query: string): { start: number; end: number 
   return found
 }
 
-/**
- * Example rows as the detail core reads them, for `sentences` in order from `firstPosition`,
- * linked and highlighted as `highlight` says. `entSeq` is the word page's number, when the list
- * is a word's.
- */
 export function exampleRows(
   db: ArtifactDatabase,
   sentences: readonly ExampleSentence[],
@@ -205,12 +175,10 @@ export function exampleRows(
 
   return linked.map(({ sentence, shared, page }, index): WordExampleRows => {
     const sharedRows = tokenRows(shared)
-    // The words are the same on every page, except where a joined word the page's entry is
-    // written as stays whole where elsewhere it falls back to its pieces.
-    const same =
+    const sameWordsAsElsewhere =
       page.length === shared.length &&
       page.every((token, position) => token.surface === shared[position].surface)
-    const rows = same ? sharedRows : tokenRows(page)
+    const rows = sameWordsAsElsewhere ? sharedRows : tokenRows(page)
     const links: ExampleLinkRow[] = []
     for (const [position, token] of page.entries()) {
       if (token.entry) {
@@ -248,17 +216,12 @@ export function exampleRows(
         sentenceId: sentence.rowid,
         highlights,
         links,
-        tokens: same ? null : rows
+        tokens: sameWordsAsElsewhere ? null : rows
       }
     }
   })
 }
 
-/**
- * A word page's examples from position `from`, at most `limit` of them. `entry` is the entry
- * they were retrieved for, the word's equivalence group's (`canonicalEntryId` in ./words.ts),
- * whose words they accent, as Word Detail does.
- */
 export function wordExampleRows(
   db: ArtifactDatabase,
   entSeq: number,
@@ -278,11 +241,6 @@ export function wordExampleRows(
   )
 }
 
-/**
- * `ConjugatedFormView.loadExamples`: every retrieved example in which the parser reads `form`
- * as one word, in retrieval order. Words come from the same inflection grouping linked text uses,
- * so 見たかった (wanted to see) and 見た目 (appearance) aren't examples of past 見た.
- */
 export function conjugatedFormExamples(
   searched: EntryExamples,
   form: string,
@@ -291,7 +249,6 @@ export function conjugatedFormExamples(
   return searched.sentences.filter(sentence => usesFormIn(sentence.japanese, form, tokenize))
 }
 
-/** `usesForm` (../examples/forms.ts) with the app's Kuromoji analysis of the text. */
 export function usesFormIn(japanese: string, form: string, tokenize: Tokenize): boolean {
   return usesForm(japanese, kuromojiCandidates(japanese, tokenize(japanese)), form)
 }
@@ -301,7 +258,6 @@ function exampleSentenceRow(
   tokens: ExampleSentenceTokenRow[],
   credit: Provenance | undefined
 ): ExampleSentenceRow {
-  // The app's validateBaseCorpus: every pair has one provenance row.
   if (!credit) throw new Error(`Example pair ${sentence.pairId} has no provenance`)
   return {
     id: sentence.rowid,
@@ -321,7 +277,6 @@ function exampleSentenceRow(
   }
 }
 
-/** The entry numbers an example's words link to one entry each (the pages the links open). */
 export function exampleLinkEntSeqs(
   examples: readonly { example: Pick<WordExampleRows['example'], 'links'> }[]
 ): number[] {

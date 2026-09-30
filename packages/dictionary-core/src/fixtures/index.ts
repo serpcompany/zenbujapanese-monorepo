@@ -17,13 +17,6 @@ import kanjiWords from './kanji-words.json'
 import wordExamples from './word-examples.json'
 import words from './words.json'
 
-/**
- * Local fixture rows, never used in production: twelve words and the kanji 要, exported from the
- * app's bundled data in the detail core's row shapes, with each word's first 50 examples and each
- * of its conjugated forms' first 50, by the code the dictionary service answers with
- * (apps/dictionary-api/scripts/export-fixtures.ts).
- */
-
 const sentencesById = new Map(
   (exampleSentences as ExampleSentenceRow[]).map(sentence => [sentence.id, sentence])
 )
@@ -47,7 +40,6 @@ export const fixtureWordRows: WordRows[] = (
   exampleCount: countsBySeq.get(rows.entry.entSeq) ?? null
 }))
 
-/** The fixture words' conjugated forms' examples, in order, by the form's spelling. */
 export const fixtureFormExamples = new Map<string, FormExampleRows[]>()
 for (const example of formExamples as FormExampleRow[]) {
   const rows = fixtureFormExamples.get(example.surface) ?? []
@@ -55,10 +47,6 @@ for (const example of formExamples as FormExampleRow[]) {
   fixtureFormExamples.set(example.surface, rows)
 }
 
-/**
- * Every entry in the fingerprint groups `kanjiCandidateRows` reads for each fixture kanji, which
- * `kanjiWords` orders, as the service's `readKanji` does.
- */
 export const fixtureKanjiCandidates = new Map<string, KanjiWordRow[]>()
 for (const { kanji: character, ...word } of kanjiWords as (KanjiWordRow & { kanji: string })[]) {
   fixtureKanjiCandidates.set(character, [...(fixtureKanjiCandidates.get(character) ?? []), word])
@@ -72,7 +60,6 @@ export const fixtureKanjiRows: KanjiRows[] = (kanji as Omit<KanjiRows, 'words'>[
   )
 }))
 
-/** The order the app lists these words for a search, with its default frequency dictionaries. */
 export const fixtureSearchOrder: Record<string, number[]> = {
   いる: [1546640, 1577980, 1391500, 1465580, 1322180, 1587780],
   iru: [1546640, 1577980, 1391500, 1465580, 1322180, 1587780],

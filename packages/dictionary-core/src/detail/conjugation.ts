@@ -1,9 +1,3 @@
-// Ports the conjugation table: `JapaneseConjugator` in JapaneseConjugationClient.swift, and what
-// ConjugationsView.swift shows for it (each kind's title and explanation, the forms that share a
-// spelling, and which rows show furigana). See also those files; .github/workflows/
-// search-parity.yml makes the two sides change together, and the word-detail suite's
-// `opensConjugations` and `conjugations` check this port against the app.
-
 import { type KanjiReadings, withKanjiReadings } from './kanji-split'
 import type { EntryRow } from './rows'
 import { type RubySegment, rubySegments } from './ruby'
@@ -11,7 +5,6 @@ import { graphemes } from './text'
 
 export type ConjugationMode = 'Plain' | 'Polite'
 
-/** `ConjugatedForm.Kind`, by raw value. */
 export type ConjugationKind =
   | 'present-future'
   | 'past'
@@ -33,19 +26,15 @@ export interface ConjugatedForm {
   kind: ConjugationKind
   surface: string
   reading: string
-  /** The part of `surface` added after the unchanging stem, such as させる in 見させる. */
   ending: string
 }
 
 export interface ConjugationTable {
-  /** One line on how this word class forms its conjugations. */
   rule: string
   plain: ConjugatedForm[]
-  /** Empty for a class without a Polite register (adjectives). */
   polite: ConjugatedForm[]
 }
 
-/** `ConjugationKindPresentation`: each kind's row title and what the form's screen says it means. */
 export const conjugationKinds: Record<ConjugationKind, { title: string; explanation: string }> = {
   'present-future': {
     title: 'Present/Future',
@@ -113,7 +102,6 @@ export const conjugationKinds: Record<ConjugationKind, { title: string; explanat
   }
 }
 
-/** `VerbSuffixes`, in `verbRules` order. */
 type VerbSuffixes = [
   presentFuture: string,
   past: string,
@@ -165,7 +153,6 @@ function forms(surfaceStem: string, readingStem: string, rules: Rule[]): Conjuga
   }))
 }
 
-/** Drops the last `count` Characters, as Swift's `dropLast`. */
 function dropLast(value: string, count = 1): string {
   return graphemes(value).slice(0, -count).join('')
 }
@@ -374,7 +361,6 @@ function ichidanTable(entry: Pick<EntryRow, 'headword' | 'reading'>): Conjugatio
   }
 }
 
-/** `GodanEnding`: a final kana's a, i, e, and o rows, and its past and te-form endings. */
 const godanEndings: Record<
   string,
   [a: string, i: string, e: string, o: string, past: string, te: string]
@@ -447,10 +433,6 @@ function godanTable(entry: Pick<EntryRow, 'headword' | 'reading'>): ConjugationT
   }
 }
 
-/**
- * `JapaneseConjugator.table(for:)`: the table for the entry's first conjugating class among its
- * parts of speech (the entry's, not the first sense's), or null when it has none.
- */
 export function conjugationTable(
   entry: Pick<EntryRow, 'headword' | 'reading' | 'partsOfSpeech'>
 ): ConjugationTable | null {
@@ -464,17 +446,14 @@ export function conjugationTable(
   return null
 }
 
-/** `ConjugationTable.supportsModes`: whether the Plain/Polite control shows. */
 export function supportsModes(table: ConjugationTable): boolean {
   return table.polite.length > 0
 }
 
-/** `ConjugationTable.forms(for:)`: Polite falls back to Plain for a class without it. */
 export function formsFor(table: ConjugationTable, mode: ConjugationMode): ConjugatedForm[] {
   return mode === 'Polite' && table.polite.length > 0 ? table.polite : table.plain
 }
 
-/** `ConjugationTable.sharedSpellings(of:in:)`: other forms' titles with the same spelling. */
 export function sharedSpellings(
   table: ConjugationTable,
   form: ConjugatedForm,
@@ -485,10 +464,6 @@ export function sharedSpellings(
     .map(other => conjugationKinds[other.kind].title)
 }
 
-/**
- * `ConjugatedForm.rowShowsFurigana`: only when the ending has kanji (U+4E00–U+9FFF, or 々), as in
- * 来させる; the header already gives the stem's reading.
- */
 export function rowShowsFurigana(form: ConjugatedForm): boolean {
   return Array.from(form.ending).some(scalar => {
     const code = scalar.codePointAt(0) ?? 0
@@ -496,27 +471,20 @@ export function rowShowsFurigana(form: ConjugatedForm): boolean {
   })
 }
 
-/** A row of the table, with what its form's screen shows. */
 export interface ConjugationRow extends ConjugatedForm {
   title: string
   explanation: string
-  /** The form's furigana, with each kanji run's per-kanji split, as its headline shows it. */
   ruby: RubySegment[]
-  /** Whether the row itself shows furigana. */
   rowFurigana: boolean
-  /** Other forms' titles in the register with the same spelling. */
   sharedSpellings: string[]
 }
 
-/** What the part-of-speech row opens: ConjugationsView, and each row's ConjugatedFormView. */
 export interface Conjugations {
   rule: string
-  /** Plain alone, or Plain and Polite when the control shows. */
   modes: ConjugationMode[]
   rows: Record<ConjugationMode, ConjugationRow[]>
 }
 
-/** The entry's conjugation screens, or null when its part of speech opens none. */
 export function conjugations(
   entry: Pick<EntryRow, 'headword' | 'reading' | 'partsOfSpeech'>,
   readings: KanjiReadings
@@ -535,28 +503,15 @@ export function conjugations(
   return { rule: table.rule, modes, rows: { Plain: rows('Plain'), Polite: rows('Polite') } }
 }
 
-// Each form's screen has its own URL (the website's urls.ts), as the app pushes it as its own
-// screen. The conjugations sitemap lists which of them search engines may index
-// (../artifact/conjugation-sitemap.ts), from these.
-
-/** The registers, by the URL segment that names them. */
 export const conjugationModes: Record<string, ConjugationMode> = {
   plain: 'Plain',
   polite: 'Polite'
 }
 
-/** Whether a kind is one the app's conjugator names (`ConjugatedForm.Kind`). */
 export function isConjugationKind(kind: string): kind is ConjugationKind {
   return Object.hasOwn(conjugationKinds, kind)
 }
 
-/**
- * The screen that is a form's canonical URL, among screens showing the same spelling and so the
- * same examples. A Polite form spelled as the Plain form of its kind (the te-form and the
- * conditional) names that Plain screen. Then, within the register, a form spelled as an earlier
- * form in the app's order (passive 見られる, after potential 見られる) names that earlier form.
- * Every other form is its own.
- */
 export function canonicalForm(
   table: Pick<ConjugationTable, 'plain' | 'polite'>,
   mode: ConjugationMode,
@@ -570,10 +525,6 @@ export function canonicalForm(
   return { mode: register, kind: first?.kind ?? form.kind }
 }
 
-/**
- * The form screens search engines may index, as `<register>/<kind>`: each canonical screen that
- * lists examples. A screen without examples is only its explanation and the form.
- */
 export function indexedForms(
   table: ConjugationTable,
   hasExamples: (surface: string) => boolean
@@ -590,7 +541,6 @@ export function indexedForms(
   )
 }
 
-/** The "Same spelling as …" note: Swift's `.list(type: .and)` in English. */
 export function sharedSpellingNote(titles: readonly string[]): string {
   const list =
     titles.length <= 2

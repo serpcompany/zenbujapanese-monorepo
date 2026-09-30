@@ -1,10 +1,3 @@
-// The app's example retrieval for a dictionary entry, on the artifact when a page asks for it
-// (ADR 0009): ExampleSentenceData.retrieveEntry and retrieveIndexedEntry in
-// apps/ios/Modules/Sources/SearchExperience/ExampleSentenceClient.swift, with its queries. Which
-// Tatoeba sentences a word page lists, in which order, and the count the app reports.
-// Change the Swift and this port in the same PR, and re-record the word-detail suite; the Search
-// parity workflow checks that both change.
-
 import { graphemeCount } from '../detail/text'
 import {
   compareRanks,
@@ -13,26 +6,21 @@ import {
   LexicalRelation,
   normalizedEntryEvidence,
   type RetrievalEntry,
-  type RetrievalError
+  type RetrievalError,
+  reportedExampleCount
 } from '../examples/retrieval'
 import type { ArtifactDatabase } from './database'
 
-/** A Tatoeba pair from `example_sentences`. */
 export interface ExampleSentence {
-  /** Its rowid: stable within one artifact. */
   rowid: number
-  /** The pair ID's 16 bytes, lowercase hex. */
   pairId: string
   japanese: string
   english: string
 }
 
 export interface EntryExamples {
-  /** At most 100, in the app's order. */
   sentences: ExampleSentence[]
-  /** `ExampleSentenceResultCount`: the exact count up to 50; 51 means more than 50. */
   count: number
-  /** Whether more than 100 matched, so some aren't listed. */
   truncated: boolean
 }
 
@@ -46,16 +34,14 @@ interface Match {
 
 const sentenceColumns = 'e.rowid AS rowid, lower(hex(e.id)) AS pairId, e.japanese, e.english'
 
-/** `result(matches:)`: the first 100, with the count the app reports. */
 function result(matches: Match[]): EntryExamples {
   return {
     sentences: matches.slice(0, exampleLimit).map(match => match.sentence),
-    count: matches.length > 50 ? 51 : matches.length,
+    count: reportedExampleCount(matches.length),
     truncated: matches.length > exampleLimit
   }
 }
 
-/** `entryEvidence(id:)`: the entry's stored reading and written forms, or null without them. */
 function entryEvidence(
   db: ArtifactDatabase,
   id: string
@@ -75,7 +61,6 @@ function entryEvidence(
   return { reading, writtenForms }
 }
 
-/** `unambiguousEntryCount`: entries with this written form and this reading form. */
 function unambiguousEntryCount(
   db: ArtifactDatabase,
   selectedForm: string,
@@ -91,7 +76,6 @@ function unambiguousEntryCount(
   return row?.count ?? 0
 }
 
-/** `retrieveIndexedEntry`: a kana headword's sentences from ExampleWordIndex. */
 function retrieveIndexedEntry(
   db: ArtifactDatabase,
   id: string,
@@ -121,12 +105,6 @@ function retrieveIndexedEntry(
   return result(matches.sort(compareRanks))
 }
 
-/**
- * `retrieveEntry`: a written headword's sentences, those containing its selected form, then its
- * other written forms, then its reading, each tier by where the form first occurs;
- * `retrieveIndexedEntry` for a kana headword. An error where the app throws, so Word Detail shows
- * no examples.
- */
 export function retrieveEntryExamples(
   db: ArtifactDatabase,
   entry: RetrievalEntry
@@ -136,9 +114,8 @@ export function retrieveEntryExamples(
   if (entry.id === '' || selectedForm === '' || reading === '') return 'missingEntryEvidence'
   const evidence = entryEvidence(db, entry.id)
   if (!evidence || evidence.reading !== reading) return 'missingEntryEvidence'
-  // A kana headword such as でも also occurs inside other words (いつでも, 何でも), so its
-  // examples come from sentences Tatoeba's word index links to the entry.
-  if (selectedForm === reading) return retrieveIndexedEntry(db, entry.id, selectedForm)
+  const isKanaHeadword = selectedForm === reading
+  if (isKanaHeadword) return retrieveIndexedEntry(db, entry.id, selectedForm)
   if (!evidence.writtenForms.has(selectedForm)) return 'missingEntryEvidence'
   if (unambiguousEntryCount(db, selectedForm, reading) !== 1) return result([])
 
