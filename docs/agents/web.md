@@ -300,7 +300,9 @@ change that needs it. The `Dictionary API deploy` workflow deploys the service i
 ([`dictionary-api.md`](dictionary-api.md), Ship it), and `Web deploy` waits for the same commit's
 service deploy to an environment to sign and tag its image, before deploying the site there
 (`apps/web/scripts/wait-for-dictionary-service.sh`, which needs `GH_TOKEN` with read access to the
-repository's Actions).
+repository's Actions). The server pulls a tagged image on its own schedule, so for a few minutes
+either one can be live without the other; the contract number makes a mismatch in that window
+visible (Dictionary, above).
 
 ### Environment configuration
 
