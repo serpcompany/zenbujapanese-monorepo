@@ -12,7 +12,9 @@ name: Dictionary API deploy
 # DEPLOY_PRODUCTION to false to stop at staging, as for the website (web-deploy.yml).
 on:
   push:
-    branches: [main]
+    # TEMPORARY: feat/dictionary-api-deploy publishes too, to test staging before #539 merges.
+    # Remove it before merging.
+    branches: [main, feat/dictionary-api-deploy]
     # What the image holds.
     paths:
       - apps/dictionary-api/**
@@ -165,8 +167,11 @@ jobs:
             docker tag zenbujapanese-dictionary-api:candidate "$IMAGE:sha-$RELEASE"
             docker push "$IMAGE:sha-$RELEASE" | tee push.log
             digest="$(grep -oE 'digest: sha256:[0-9a-f]{64}' push.log | cut -d' ' -f2)"
-            docker tag zenbujapanese-dictionary-api:candidate "$IMAGE:main"
-            docker push --quiet "$IMAGE:main"
+            # :main names the latest build of main only.
+            if [ "$GITHUB_REF" = refs/heads/main ]; then
+              docker tag zenbujapanese-dictionary-api:candidate "$IMAGE:main"
+              docker push --quiet "$IMAGE:main"
+            fi
           else
             digest="$(docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$IMAGE:$TAG" |
               sed -n "s|^$IMAGE@||p" | head -n 1)"
