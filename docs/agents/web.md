@@ -200,9 +200,10 @@ deployed site, at `/dictionary/service.json` (whether the site's Worker reaches 
 the service's build; `Cache-Control: no-store`, `noindex`), and its dictionary pages then prove the
 token works. Bot Fight Mode challenges the Worker's request too when a CI runner sets it off,
 whatever headers the runner sends, and `/dictionary/service.json` then reports the challenge: the
-smoke test skips its dictionary checks with a warning, and runs them in full from a machine
-Cloudflare doesn't challenge, such as your own. Visitors Cloudflare scores as bots get a 500 on
-dictionary pages for the same reason.
+smoke test skips its dictionary checks with a warning, `/sitemap-index.xml` among them since it
+lists the service's sitemaps, and runs them in full from a machine Cloudflare doesn't challenge,
+such as your own. Visitors Cloudflare scores as bots get a 500 on dictionary pages and the sitemap
+index for the same reason.
 
 The site reads whatever service its environment names, so a new service deploys before a site
 change that needs it. The `Dictionary API deploy` workflow deploys the service itself
