@@ -1,5 +1,9 @@
 import { timingSafeEqual } from 'node:crypto'
 import type { ConjugationSitemapWord } from '@zenbu/dictionary-core/artifact/conjugation-sitemap'
+import {
+  dictionaryContract,
+  dictionaryContractHeader
+} from '@zenbu/dictionary-core/artifact/contract'
 import { maximumEntSeq, maximumQueryLength } from '@zenbu/dictionary-core/artifact/dictionary'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import { Hono } from 'hono'
@@ -57,7 +61,12 @@ export function createApp({ service, token, ready, conjugationSitemap }: AppOpti
   app.get('/healthz', async context => {
     if (!ready()) return context.json({ status: 'starting' }, 503)
     const info = await service.info()
-    return context.json({ status: 'ok', build: info.build, features: info.features })
+    return context.json({
+      status: 'ok',
+      build: info.build,
+      contract: dictionaryContract,
+      features: info.features
+    })
   })
 
   app.use('/v1/*', async (context, next) => {
@@ -68,6 +77,7 @@ export function createApp({ service, token, ready, conjugationSitemap }: AppOpti
     await next()
     const info = await service.info()
     context.header('X-Dictionary-Build', info.build)
+    context.header(dictionaryContractHeader, String(dictionaryContract))
   })
 
   app.get('/v1/info', async context => context.json(await service.info()))

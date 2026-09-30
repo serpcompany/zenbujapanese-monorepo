@@ -1,3 +1,4 @@
+import type { SitemapWord } from '@zenbu/dictionary-core/artifact/contract'
 import type {
   ConjugationWordResponse,
   Dictionary,
@@ -26,11 +27,7 @@ export interface DictionaryService {
   formExamples(form: string, from: number, limit: number): Promise<FormExamplesResponse>
   kanji(character: string): Promise<KanjiResponse | null>
   wordSitemaps(): Promise<WordSitemap[]>
-  sitemapWords(
-    number: number,
-    after: number,
-    limit: number
-  ): Promise<{ entSeq: number; slug: string }[] | null>
+  sitemapWords(number: number, after: number, limit: number): Promise<SitemapWord[] | null>
   indexableKanji(): Promise<string[]>
   retired(): Promise<Record<number, number | null>>
 }

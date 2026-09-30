@@ -1,3 +1,4 @@
+import { dictionaryContract } from '@zenbu/dictionary-core/artifact/contract'
 import { dictionaryService } from '@/lib/dictionary/data'
 import { errorFields, log } from '@/lib/log'
 
@@ -20,8 +21,16 @@ export async function GET() {
         status: health.status,
         mitigated: health.mitigated
       })
+    } else if (health.contract !== dictionaryContract) {
+      log('warn', 'dictionary_contract_mismatch', {
+        service: health.contract,
+        site: dictionaryContract
+      })
     }
-    return Response.json(health, { status: health.status === 200 ? 200 : 502, headers })
+    return Response.json(
+      { ...health, siteContract: dictionaryContract },
+      { status: health.status === 200 ? 200 : 502, headers }
+    )
   } catch (error) {
     log('error', 'dictionary_service_unreachable', errorFields(error))
     const kind = error instanceof Error ? error.name : 'Error'

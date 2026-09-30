@@ -1,14 +1,10 @@
-import type { ConjugationSitemapWord } from '@zenbu/dictionary-core/artifact/conjugation-sitemap'
-import type {
-  ConjugationWordResponse,
-  ExamplesResponse,
-  FormExamplesResponse,
-  KanjiResponse,
-  SearchExamplesResponse,
-  SearchResponse,
-  WordResponse,
-  WordSitemap
-} from '@zenbu/dictionary-core/artifact/dictionary'
+import {
+  answeredContract,
+  type DictionaryContract,
+  dictionaryContract,
+  dictionaryContractHeader
+} from '@zenbu/dictionary-core/artifact/contract'
+import { log } from '@/lib/log'
 
 export interface DictionaryApiEnvironment {
   DICTIONARY_API_URL?: string
@@ -26,15 +22,22 @@ export class DictionaryApiError extends Error {}
 
 type Fetch = (input: Request) => Promise<Response>
 
+function answeredBy(response: Response): number {
+  return answeredContract(response.headers.get(dictionaryContractHeader))
+}
+
 async function cachedGet(fetcher: Fetch, url: string, token: string): Promise<Response> {
   const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default
-  const tokenlessKey = new Request(url, { method: 'GET' })
+  const key = new URL(url)
+  key.searchParams.set('contract', String(dictionaryContract))
+  const tokenlessKey = new Request(key.toString(), { method: 'GET' })
   const hit = cache ? await cache.match(tokenlessKey) : undefined
   if (hit) return hit
   const response = await fetcher(
     new Request(url, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
   )
-  if (cache && (response.ok || response.status === 404)) {
+  const cacheable = response.ok || response.status === 404
+  if (cache && cacheable && answeredBy(response) === dictionaryContract) {
     const copy = new Response(response.clone().body, response)
     copy.headers.set('Cache-Control', `public, max-age=${edgeCacheSeconds}`)
     await cache.put(tokenlessKey, copy)
@@ -61,6 +64,14 @@ export function dictionaryApi(
     if (!response.ok) {
       throw new DictionaryApiError(`The dictionary service answered ${response.status} for ${path}`)
     }
+    const contract = answeredBy(response)
+    if (contract !== dictionaryContract) {
+      log('warn', 'dictionary_contract_mismatch', {
+        path,
+        service: contract,
+        site: dictionaryContract
+      })
+    }
     return {
       data: (await response.json()) as T,
       build: response.headers.get('x-dictionary-build') ?? ''
@@ -74,27 +85,32 @@ export function dictionaryApi(
   const segment = encodeURIComponent
 
   return {
-    search: (query: string) => required<SearchResponse>(`/v1/search/${segment(query)}`),
+    search: (query: string) =>
+      required<DictionaryContract['search']>(`/v1/search/${segment(query)}`),
     searchExamples: (query: string, from = 0) =>
-      get<SearchExamplesResponse>(`/v1/search/${segment(query)}/examples?from=${from}`),
-    word: (entSeq: number) => get<WordResponse>(`/v1/words/${entSeq}`),
+      get<DictionaryContract['searchExamples']>(
+        `/v1/search/${segment(query)}/examples?from=${from}`
+      ),
+    word: (entSeq: number) => get<DictionaryContract['word']>(`/v1/words/${entSeq}`),
     wordExamples: (entSeq: number, from: number) =>
-      get<ExamplesResponse>(`/v1/words/${entSeq}/examples?from=${from}`),
+      get<DictionaryContract['wordExamples']>(`/v1/words/${entSeq}/examples?from=${from}`),
     conjugationWord: (entSeq: number) =>
-      get<ConjugationWordResponse>(`/v1/words/${entSeq}/conjugations`),
+      get<DictionaryContract['conjugationWord']>(`/v1/words/${entSeq}/conjugations`),
     formExamples: (form: string, from: number, limit: number) =>
-      required<FormExamplesResponse>(
+      required<DictionaryContract['formExamples']>(
         `/v1/conjugations/${segment(form)}/examples?from=${from}&limit=${limit}`
       ),
-    kanji: (character: string) => get<KanjiResponse>(`/v1/kanji/${segment(character)}`),
-    wordSitemaps: () => required<WordSitemap[]>('/v1/sitemaps/words'),
+    kanji: (character: string) =>
+      get<DictionaryContract['kanji']>(`/v1/kanji/${segment(character)}`),
+    wordSitemaps: () => required<DictionaryContract['wordSitemaps']>('/v1/sitemaps/words'),
     sitemapWords: (number: number, after: number, limit: number) =>
-      get<{ entSeq: number; slug: string }[]>(
+      get<DictionaryContract['sitemapWords']>(
         `/v1/sitemaps/words/${number}?after=${after}&limit=${limit}`
       ),
-    indexableKanji: () => required<string[]>('/v1/sitemaps/kanji'),
-    conjugationSitemap: () => get<ConjugationSitemapWord[]>('/v1/sitemaps/conjugations', true),
-    retired: () => required<Record<string, number | null>>('/v1/retired'),
+    indexableKanji: () => required<DictionaryContract['indexableKanji']>('/v1/sitemaps/kanji'),
+    conjugationSitemap: () =>
+      get<DictionaryContract['conjugationSitemap']>('/v1/sitemaps/conjugations', true),
+    retired: () => required<DictionaryContract['retired']>('/v1/retired'),
     health: async (): Promise<ServiceHealth> => {
       const response = await fetcher(
         new Request(new URL('/healthz', base).toString(), {
@@ -102,11 +118,12 @@ export function dictionaryApi(
         })
       )
       const json = response.headers.get('content-type')?.includes('application/json')
-        ? ((await response.json()) as { build?: string })
+        ? ((await response.json()) as { build?: string; contract?: number })
         : null
       return {
         status: response.status,
         build: json?.build ?? null,
+        contract: json?.build ? answeredContract(json.contract) : null,
         mitigated: response.headers.get('cf-mitigated')
       }
     }
@@ -116,5 +133,6 @@ export function dictionaryApi(
 export interface ServiceHealth {
   status: number
   build: string | null
+  contract: number | null
   mitigated: string | null
 }

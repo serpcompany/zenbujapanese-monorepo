@@ -1,3 +1,4 @@
+import { dictionaryContract } from '@zenbu/dictionary-core/artifact/contract'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { DictionaryApi, ServiceHealth } from '@/lib/dictionary/api'
 import { dictionaryService } from '@/lib/dictionary/data'
@@ -15,22 +16,55 @@ describe('GET /dictionary/service.json', () => {
 
   test('names the build the service answers with, uncached and out of search engines', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(
-      service(async () => ({ status: 200, build: 'e13452e70d34-0123456789ab', mitigated: null }))
+      service(async () => ({
+        status: 200,
+        build: 'e13452e70d34-0123456789ab',
+        contract: dictionaryContract,
+        mitigated: null
+      }))
     )
+    const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
     const response = await GET()
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
       status: 200,
       build: 'e13452e70d34-0123456789ab',
-      mitigated: null
+      contract: dictionaryContract,
+      mitigated: null,
+      siteContract: dictionaryContract
     })
     expect(response.headers.get('Cache-Control')).toBe('no-store')
     expect(response.headers.get('X-Robots-Tag')).toBe('noindex')
+    expect(logged).not.toHaveBeenCalled()
+  })
+
+  test('still answers 200 when the service answers another contract, and logs it', async () => {
+    vi.mocked(dictionaryService).mockResolvedValue(
+      service(async () => ({
+        status: 200,
+        build: 'e13452e70d34-0123456789ab',
+        contract: dictionaryContract + 1,
+        mitigated: null
+      }))
+    )
+    const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const response = await GET()
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({
+      contract: dictionaryContract + 1,
+      siteContract: dictionaryContract
+    })
+    expect(JSON.parse(logged.mock.calls[0][0] as string)).toMatchObject({
+      level: 'warn',
+      message: 'dictionary_contract_mismatch',
+      service: dictionaryContract + 1,
+      site: dictionaryContract
+    })
   })
 
   test('answers 502 when Cloudflare challenges the Worker, saying so', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(
-      service(async () => ({ status: 403, build: null, mitigated: 'challenge' }))
+      service(async () => ({ status: 403, build: null, contract: null, mitigated: 'challenge' }))
     )
     const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
     const response = await GET()

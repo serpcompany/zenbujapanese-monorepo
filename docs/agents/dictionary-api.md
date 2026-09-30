@@ -68,7 +68,10 @@ it in `apps/web/.dev.vars` (see [`web.md`](web.md), Dictionary).
 | `DICTIONARY_API_RELEASE` | `local` | A name for this build of the code, such as its commit. |
 
 The build it reports (`X-Dictionary-Build` on every `/v1` answer, and `/healthz`) is the
-artifact's SHA-256 prefix and the release: a new artifact or new code is a new build.
+artifact's SHA-256 prefix and the release: a new artifact or new code is a new build. It reports
+its contract too (`X-Dictionary-Contract` and `/healthz`): the number of its answers' shapes, from
+the core, which the website compares with its own ([`dictionary-core.md`](dictionary-core.md),
+Rules).
 
 ## Routes
 
@@ -83,7 +86,7 @@ the error.
 
 | Route | Answer |
 | --- | --- |
-| `GET /healthz` | No token. 503 while starting; then the build and features. |
+| `GET /healthz` | No token. 503 while starting; then the build, contract, and features. |
 | `GET /v1/info` | The build, the artifact's name and SHA-256, and the features. |
 | `GET /v1/search/<query>` | The results screen, and whether a one-kanji query's kanji has a page. |
 | `GET /v1/search/<query>/examples?from=` | 25 of the examples the Example Sentences row opens, from `from`. |

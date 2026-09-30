@@ -40,6 +40,15 @@ Each module ports the app's Swift, in `apps/ios/Modules/Sources/SearchExperience
 - **Rows are a contract.** `detail/rows.ts` is what the service answers with and the fixtures
   hold. After changing a row shape, regenerate the fixtures with
   `pnpm --filter zenbujapanese-dictionary-api fixtures`.
+- **Every response shape has a contract number.** `artifact/contract.ts` names each answer the
+  service gives (`DictionaryContract`) and the number of their current shapes
+  (`dictionaryContract`), which the service sends and the website compares with its own. The site
+  and the service deploy separately, in either order, so a shape change makes them disagree for
+  a few minutes. A mismatch is logged, never refused: make a change the older side can still
+  read, such as adding a field that the newer side doesn't yet rely on. `artifact/contract.test.ts`
+  expands every shape with the TypeScript compiler and fails when one changes without a new
+  contract number: raise it by one and record the new shape under it, never changing a recorded
+  one.
 
 ## What a client passes in
 

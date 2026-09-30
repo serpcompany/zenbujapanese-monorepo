@@ -1,3 +1,4 @@
+import { dictionaryContract } from '@zenbu/dictionary-core/artifact/contract'
 import { describe, expect, test, vi } from 'vitest'
 import { createApp } from './app'
 import type { DictionaryService } from './service'
@@ -49,6 +50,7 @@ describe('/healthz', () => {
     expect(await response.json()).toEqual({
       status: 'ok',
       build: info.build,
+      contract: dictionaryContract,
       features: info.features
     })
   })
@@ -64,10 +66,11 @@ describe('/v1 needs the token', () => {
     expect(response.status).toBe(401)
   })
 
-  test('answers with it, naming the build', async () => {
+  test('answers with it, naming the build and the contract', async () => {
     const response = await app().request(get('/v1/info'))
     expect(response.status).toBe(200)
     expect(response.headers.get('x-dictionary-build')).toBe(info.build)
+    expect(response.headers.get('x-dictionary-contract')).toBe(String(dictionaryContract))
     expect(await response.json()).toEqual(info)
   })
 

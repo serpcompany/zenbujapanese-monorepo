@@ -104,7 +104,16 @@ load more of a page's list carry it, so a page open across a new build never mix
 lists. Such a list (`apps/web/src/components/dictionary/load-more.tsx`) asks for the items from
 the number it shows, so none repeats or is skipped; a route that no longer knows the page's build
 answers 404, and the list offers a reload. Since those URLs name their build, browsers and the
-edge keep their answers for a day. A 404 from the service means "not there" (no such word, kanji,
+edge keep their answers for a day.
+
+The service names its contract too (`X-Dictionary-Contract`), the number of its answers' shapes
+([`dictionary-core.md`](dictionary-core.md), Rules). The site and the service deploy separately,
+in either order, so after a change to a shape they can disagree until the other deploys. The site
+still serves then: it logs `dictionary_contract_mismatch` (a warning, with both numbers), and
+leaves that answer out of the edge cache, whose key names the contract, so it reads the matching
+answer as soon as the service has it. A service that names no contract answers the first one.
+`/dictionary/service.json` shows both (`contract` and `siteContract`), and the smoke test warns
+when they differ. A 404 from the service means "not there" (no such word, kanji,
 or sitemap, or a search without examples); any other failure fails the request, so an outage never
 renders as an empty or noindexed page. A query or form over the service's 200 characters
 (`maximumQueryLength`) finds nothing without asking it.

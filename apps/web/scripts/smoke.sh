@@ -89,6 +89,11 @@ reaches_service() {
 show_service_seen() { echo "$service_seen"; }
 eventually 'the site reaches its dictionary service' \
   "the site can't reach its dictionary service" reaches_service show_service_seen
+if python3 -c 'import json, sys; seen = json.loads(sys.argv[1]); sys.exit(seen.get("contract") != seen.get("siteContract"))' "$service_seen"; then
+  pass 'the site and its dictionary service answer the same contract'
+else
+  echo "::warning::The site and its dictionary service answer different contracts ($service_seen). The site still serves, and the pages whose response shape changed may be wrong until the other one deploys (docs/agents/web.md, Dictionary)."
+fi
 
 expect /dictionary/ 200
 expect "$word" 200
