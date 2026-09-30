@@ -21,10 +21,11 @@ test('finds repository paths in code spans, skipping patterns and placeholders',
   const text = [
     'Run `apps/web/scripts/smoke.sh`, then `pnpm check`.',
     'Not `apps/web/src/**/*.ts`, `apps/<surface>/`, or `/etc/hosts`.',
-    'But `./tools/checks/src/cli.ts:` is one.'
+    'But `./tools/checks/src/cli.ts:` is one, and `.github/workflows/web.yml@refs/heads/main` names a file.'
   ].join('\n')
   expect(codePaths(text)).toEqual([
     { target: 'apps/web/scripts/smoke.sh', line: 1 },
-    { target: 'tools/checks/src/cli.ts', line: 3 }
+    { target: 'tools/checks/src/cli.ts', line: 3 },
+    { target: '.github/workflows/web.yml', line: 3 }
   ])
 })

@@ -13,7 +13,7 @@ export const docsRule =
   'Docs are the map agents work from (docs/agents/code.md, Docs): every link and repository path in them exists, and AGENTS.md reaches every doc. Fix or remove the link or path; link a new doc from the doc that routes to its area.'
 
 export const sizeRule =
-  'Code files stay under the line limit (docs/agents/code.md, File size). Split a file that outgrows it by responsibility, into files named for what each does. Files that were over the limit when it began are listed in tools/checks/src/sizes.ts with their size then, and may only shrink.'
+  'Code files stay under the line limit (docs/agents/code.md, File size). Split a file that outgrows it by responsibility, into files named for what each does. There are no exceptions without a reason that makes splitting unsafe now; the only ones, Swift files nothing here can build or test, are listed in tools/checks/src/sizes.ts with their size and reason, and may only shrink.'
 
 export const linterRule =
   'ShellCheck, actionlint, and Ruff run at the versions in tools/checks/src/linters.ts, in Docker, locally and in CI (docs/agents/code.md, Checks). Fix what they report. Without Docker, an installed copy runs instead; with neither, the linter is skipped here and still runs in CI.'

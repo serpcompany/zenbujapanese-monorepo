@@ -86,7 +86,7 @@ A change is checked by hand in a browser with the `verify-web` skill
 | Area | Grade | Tests | CI before merge | Docs | By hand |
 | --- | --- | --- | --- | --- | --- |
 | Language-data pipeline, `language-data/pipeline` | B | `language-data/pipeline/tests/`: the packager, the publisher against a fake bucket, and the schemas | `Language data build`: the tests, then packaging and validating the release | [`language-data/README.md`](../language-data/README.md), ADR 0006 | `package.py build` and `validate` on a workstation |
-| iOS data tools, `apps/ios/Tools` | B | `apps/ios/Tools/tests/`: contract tests for the frequency packs, the example word index, and compound pitch | `iOS` runs the contract tests on pull requests that change `apps/ios`; Ruff lints the tools in `pnpm verify`. `Language data build` checks the pins between the files they write, when those files change | [`apps/ios/Tools/README.md`](../apps/ios/Tools/README.md), [`ios.md`](agents/ios.md), [`data-sources.md`](data-sources.md) | Rebuild on a workstation, then run the contract tests |
+| iOS data tools, `apps/ios/Tools` | B | `apps/ios/Tools/tests/`: contract tests for the frequency packs, the example word index, and compound pitch | `iOS` runs the contract tests on pull requests that change `apps/ios`; Ruff lints the tools in `pnpm verify`. `Language data build` checks the pins between the files they write, when those files change | [`apps/ios/LanguageData/Sources/README.md`](../apps/ios/LanguageData/Sources/README.md), [`ios.md`](agents/ios.md), [`data-sources.md`](data-sources.md) | Rebuild on a workstation, then run the contract tests |
 
 - **Language-data pipeline, B.** Every pull request that changes the data or the pipeline
   rebuilds and validates the release. Main gap: publishing has run only against the fake bucket,
@@ -100,14 +100,15 @@ A change is checked by hand in a browser with the `verify-web` skill
 
 | Area | Grade | Tests | CI before merge | Docs | By hand |
 | --- | --- | --- | --- | --- | --- |
-| Website and service deploys | B | `apps/web/scripts/smoke.sh` after each deploy, where staging's run gates production; the image check in `Dictionary API deploy`; `apps/web/scripts/wait-for-dictionary-service.sh` and `apps/dictionary-api/deploy/await-build.sh`, which deploy the service before the site | The image check, and ShellCheck and actionlint in `Repository`. `Web deploy` and `Dictionary API deploy` run after merge | [`web.md`](agents/web.md), Environments and deploys; [`dictionary-api.md`](agents/dictionary-api.md), Ship it | `verify-web` on staging; the server's deployer was checked by hand on staging |
+| Website and service deploys | C | `apps/web/scripts/smoke.sh` after each deploy, where staging's run gates production, though from CI it skips its dictionary checks; the image check in `Dictionary API deploy`; `apps/web/scripts/wait-for-dictionary-service.sh`, which ships the service's image before the site | The image check, and ShellCheck and actionlint in `Repository`. `Web deploy` and `Dictionary API deploy` run after merge | [`web.md`](agents/web.md), Environments and deploys; [`dictionary-api.md`](agents/dictionary-api.md), Ship it | `verify-web` on staging; the server's deployer was checked by hand on staging |
 | iOS releases | D | None | None | None: no doc says how a build reaches TestFlight or the App Store | Outside the repository |
 
-- **Website and service deploys, B.** Staging's smoke test gates production, and the image is
-  checked before it's published. Main gap: a change to the deploy path is first exercised on
-  `main` (`Web deploy` failed on both of its runs there after #532 merged), and the server runs
-  whichever `apps/dictionary-api/deploy/deployer.sh` someone last installed, which nothing
-  compares with the repository's.
+- **Website and service deploys, C.** The image is checked and signed before it's published, and
+  the server runs only images main signed. But Bot Fight Mode challenges CI runners, so nothing in
+  CI sees the server deploy, and the smoke test skips its dictionary checks there. Main gaps: no
+  alert when a deploy fails on the server (#542); a change to the deploy path is first exercised
+  on `main`; and the server runs whichever `apps/dictionary-api/deploy/deployer.sh` someone last
+  installed, which nothing compares with the repository's.
 - **iOS releases, D.** Nothing in the repository builds, checks, or documents a release. Main
   gap: #381.
 

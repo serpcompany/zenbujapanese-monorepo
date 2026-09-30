@@ -48,7 +48,12 @@ export function markdownLinks(text: string): Reference[] {
 export function codePaths(text: string): Reference[] {
   return eachLine(text, line =>
     [...line.matchAll(/`([^`\s]+)`/g)]
-      .map(match => match[1].replace(/^\.\//, '').replace(/[/:.,]+$/, ''))
+      .map(match =>
+        match[1]
+          .replace(/^\.\//, '')
+          .replace(/@refs\/.*$/, '')
+          .replace(/[/:.,]+$/, '')
+      )
       .filter(path => repositoryPath.test(path))
       .map(target => ({ target }))
   )
