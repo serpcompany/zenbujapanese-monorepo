@@ -202,9 +202,9 @@ the token works.
 
 The site reads whatever service its environment names, so a new service deploys before a site
 change that needs it. The `Dictionary API deploy` workflow deploys the service itself
-([`dictionary-api.md`](dictionary-api.md), Ship it), and `Web deploy` waits for the same commit's
-service deploy to an environment before deploying the site there
-(`scripts/wait-for-dictionary-service.sh`).
+([`dictionary-api.md`](dictionary-api.md), Ship it), and `Web deploy` waits until an
+environment's service runs a release that includes every change to the image up to the commit it
+deploys, before deploying the site there (`scripts/wait-for-dictionary-service.sh`).
 
 ### Environment configuration
 
