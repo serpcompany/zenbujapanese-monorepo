@@ -455,6 +455,8 @@ and smoke-tests its workers.dev URL. Staging's smoke tests are the gate: the `pr
 environment has no required reviewer, by the owner's decision, even though production imports the
 dictionary's release databases (see Release databases). Add one (Settings → Environments →
 production) to review production imports by hand. Both environments deploy only from `main`.
+Setting the repository variable `DEPLOY_PRODUCTION` to `false` pauses the production job on pushes,
+so `main` deploys staging only; a manual run of `Web deploy` still deploys production.
 The workflow uses the `CLOUDFLARE_API_TOKEN` secret (the "Edit Cloudflare Workers" template plus D1 Edit, limited
 to the SERP account and the zenbujapanese.com zone) and the `CLOUDFLARE_ACCOUNT_ID` variable.
 
