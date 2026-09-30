@@ -18,8 +18,15 @@ as `apps/extension/` and replaces its Jitendex data with the shared artifact.
 Artifacts are published to a public Cloudflare R2 bucket behind a Zenbu-owned domain, and
 published objects are never overwritten. Only CI publishes. A build job with no credentials
 produces the artifact, then a publish job runs from `main` behind a protected environment with
-required reviewers and a token scoped to the bucket. Frequency-pack sources are still uploaded
+a token scoped to the bucket. Frequency-pack sources are still uploaded
 with `publish_frequency_pack_sources.py` until this pipeline exists.
+
+Amended (issue 463, step 3): the `language-data-release` environment has no required reviewer,
+by the owner's decision, as for website production deploys; a reviewer can be added without
+changing the workflow. The index of releases, `releases.json`, lives in the bucket beside them
+rather than in the repository, and is only ever appended to. The bucket is
+`zenbujapanese-language-data`; its public domain isn't set up yet. The layout and rules are in
+[`language-data/README.md`](../../language-data/README.md).
 
 ## Language Reference IDs are permanent
 

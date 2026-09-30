@@ -122,8 +122,8 @@ def load_inputs(path: Path) -> Inputs:
 
 
 def load_release(path: Path) -> dict:
-    """The release ID. The previous release and its manifest come from releases.json, which the
-    publish job writes (step 3); until then every build is a first release."""
+    """The release ID. The previous release and its manifest come from the bucket's releases.json:
+    `build` leaves them null, and publish.py fills them in before it uploads anything."""
     release = json.loads(path.read_text())
     if not isinstance(release.get("release"), str) or not RELEASE.match(release["release"]):
         raise Refusal(f"release.json's release {release.get('release')!r} isn't YYYY.MM.N")
@@ -587,7 +587,7 @@ def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log) -> dic
         "release": release["release"],
         "git_commit": git(repo, "rev-parse", "HEAD").decode().strip(),
         "workflow_run": workflow_run(),
-        # From releases.json once the publish job writes it (step 3); release 1 is the first.
+        # Filled in from the bucket's releases.json by publish.py, before anything is uploaded.
         "previous_release": None,
         "previous_manifest_sha256": None,
         "sources": sources,
@@ -603,8 +603,17 @@ def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log) -> dic
     }
     if unread:
         log(f"Pinned by a conformance suite, but not read or packaged: {', '.join(unread)}")
-    (out / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+    write_manifest(out, manifest)
     return manifest
+
+
+def manifest_bytes(manifest: dict) -> bytes:
+    """manifest.json's bytes, as `build` writes them and publish.py uploads them."""
+    return (json.dumps(manifest, indent=2, ensure_ascii=False) + "\n").encode()
+
+
+def write_manifest(out: Path, manifest: dict) -> None:
+    (out / "manifest.json").write_bytes(manifest_bytes(manifest))
 
 
 def frequency_sources(repo, inputs, heads, records, by_sha, language_reference, depend):
@@ -667,9 +676,35 @@ def frequency_sources(repo, inputs, heads, records, by_sha, language_reference, 
 
 def validate(out: Path, schema_path: Path = SCHEMA_PATH) -> dict:
     """The manifest against the schema, the rules the schema can't express, and the staged files."""
+    manifest = json.loads((out / "manifest.json").read_text())
+    validate_manifest(manifest, schema_path)
+
+    expected = {f"files/{f['sha256']}/{f['name']}": f for f in manifest["files"]}
+    present = (
+        {p.relative_to(out).as_posix() for p in (out / "files").rglob("*") if p.is_file()}
+        if (out / "files").exists()
+        else set()
+    )
+    if present != set(expected):
+        raise Refusal(
+            f"staged files differ from the manifest: missing {sorted(set(expected) - present)}, "
+            f"extra {sorted(present - set(expected))}"
+        )
+    for relative, record in expected.items():
+        path = out / relative
+        digest = hashlib.sha256()
+        with path.open("rb") as file:
+            while chunk := file.read(CHUNK):
+                digest.update(chunk)
+        if digest.hexdigest() != record["sha256"] or path.stat().st_size != record["bytes"]:
+            raise Refusal(f"{relative} doesn't match its manifest entry")
+    return manifest
+
+
+def validate_manifest(manifest: dict, schema_path: Path = SCHEMA_PATH) -> None:
+    """The manifest against the schema, and the rules the schema can't express."""
     import jsonschema
 
-    manifest = json.loads((out / "manifest.json").read_text())
     schema = json.loads(schema_path.read_text())
     jsonschema.Draft202012Validator.check_schema(schema)
     errors = sorted(
@@ -697,27 +732,6 @@ def validate(out: Path, schema_path: Path = SCHEMA_PATH) -> dict:
             )
     if manifest["ids"]["file"] not in [f["name"] for f in manifest["files"]]:
         raise Refusal(f"ids.file {manifest['ids']['file']} isn't a file in the release")
-
-    expected = {f"files/{f['sha256']}/{f['name']}": f for f in manifest["files"]}
-    present = (
-        {p.relative_to(out).as_posix() for p in (out / "files").rglob("*") if p.is_file()}
-        if (out / "files").exists()
-        else set()
-    )
-    if present != set(expected):
-        raise Refusal(
-            f"staged files differ from the manifest: missing {sorted(set(expected) - present)}, "
-            f"extra {sorted(present - set(expected))}"
-        )
-    for relative, record in expected.items():
-        path = out / relative
-        digest = hashlib.sha256()
-        with path.open("rb") as file:
-            while chunk := file.read(CHUNK):
-                digest.update(chunk)
-        if digest.hexdigest() != record["sha256"] or path.stat().st_size != record["bytes"]:
-            raise Refusal(f"{relative} doesn't match its manifest entry")
-    return manifest
 
 
 # --- Command line ------------------------------------------------------------------------------

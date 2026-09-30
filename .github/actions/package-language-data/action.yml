@@ -1,0 +1,53 @@
+name: Package language data
+description: >-
+  Tests the pipeline, fetches the Git LFS files the release holds, then packages and validates the
+  next language-data release into `out` (language-data/pipeline/package.py). Needs a checkout.
+  Shared by the Language data build and Language data release workflows.
+inputs:
+  out:
+    description: An empty or missing directory for manifest.json and files/<sha256>/<name>.
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: pip
+        cache-dependency-path: language-data/pipeline/requirements.txt
+    - shell: bash
+      run: pip install -r language-data/pipeline/requirements.txt
+    - name: Test the pipeline and its schemas
+      shell: bash
+      run: python -m unittest discover -s language-data/pipeline/tests -v
+    - name: List the Git LFS files the release holds
+      id: lfs
+      shell: bash
+      # On its own line so a failure stops the step, and never empty: an empty --include would
+      # pull every LFS file in the repository.
+      run: |
+        paths=$(python language-data/pipeline/package.py lfs-paths)
+        test -n "$paths"
+        echo "paths=$paths" >> "$GITHUB_OUTPUT"
+    # Their pointers are in the checkout until the pull, so this key is their oids. A restored
+    # object can't change a release: the build checks every file against its pointer's oid.
+    - uses: actions/cache@v4
+      with:
+        path: .git/lfs/objects
+        key: language-data-lfs-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz') }}
+    - name: Fetch only those files
+      shell: bash
+      env:
+        LFS_PATHS: ${{ steps.lfs.outputs.paths }}
+      run: git lfs pull --include="$LFS_PATHS"
+    - name: Package
+      shell: bash
+      env:
+        OUT: ${{ inputs.out }}
+      # `shell: bash` runs with pipefail, so `| tee` doesn't hide a refusal.
+      run: python language-data/pipeline/package.py build --out "$OUT" | tee -a "$GITHUB_STEP_SUMMARY"
+    - name: Validate the manifest and the staged files
+      shell: bash
+      env:
+        OUT: ${{ inputs.out }}
+      run: python language-data/pipeline/package.py validate "$OUT"
