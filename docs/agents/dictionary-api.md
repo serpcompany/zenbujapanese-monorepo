@@ -177,14 +177,17 @@ holds (the service, the core, the lockfile, or the app's files it copies), and b
    `ghcr.io/serpcompany/zenbujapanese-dictionary-api:sha-<commit>` and `:main`. A pull request
    that changes the image runs only this build and check.
 2. **`staging`** moves the `:staging` tag to the image, then waits, up to 20 minutes, until the
-   environment's `DICTIONARY_API_URL` answers `/healthz` with the new build
-   (`deploy/await-build.sh`).
+   environment's service answers with the new build (`deploy/await-build.sh`). It asks through the
+   environment's website, `/dictionary/service.json` at its workers.dev address
+   (`WEB_WORKERS_DEV_URL`), since Bot Fight Mode on the zone challenges CI runners that ask the
+   service directly. A site deployed before that route existed can't tell, so the first deploy's
+   wait ends with a warning.
 3. **`production`** does the same with `:production`, once staging answers with the image. The
    repository variable `DEPLOY_PRODUCTION` set to `false` stops at staging, as for the website; a
    run by hand still deploys production.
 
 GitHub holds no access to the server: all the workflow can do is publish an image and move a tag.
-An environment without a `DICTIONARY_API_URL` yet isn't checked, and production waits for a
+An environment without a `WEB_WORKERS_DEV_URL` yet isn't checked, and production waits for a
 checked staging.
 
 On the server, cron runs `deploy/deployer.sh` as root every 5 minutes. It asks the registry which
@@ -255,13 +258,17 @@ a deploy starts one, and 5 GB of disk for images. A person with root sets it up 
 4. **Cloudflare**, in the `zenbujapanese.com` zone: proxied DNS records for
    `dictionary-api.zenbujapanese.com` and `dictionary-api-staging.zenbujapanese.com`, pointing at
    the server, and Authenticated Origin Pulls on (SSL/TLS → Origin Server), since the sites accept
-   only Cloudflare's client certificate. The zone's bot protection must let the website's Worker and
-   GitHub's runners reach them (the workflow checks `/healthz`); every `/v1` route needs the token
-   anyway.
-5. **The GitHub environments**, which hold only the services' URLs:
+   only Cloudflare's client certificate. The zone's Bot Fight Mode, which can't be turned off or
+   skipped per host name, challenges CI runners, so CI asks the service through the website
+   instead; the website's Worker must not be challenged, which the smoke test checks
+   (`/dictionary/service.json`).
+5. **The GitHub environments**, which hold only URLs: each service's, and each website's
+   workers.dev address, which CI reaches past Bot Fight Mode:
    ```sh
    gh variable set DICTIONARY_API_URL --env staging --body https://dictionary-api-staging.zenbujapanese.com
    gh variable set DICTIONARY_API_URL --env production --body https://dictionary-api.zenbujapanese.com
+   gh variable set WEB_WORKERS_DEV_URL --env staging --body https://zenbujapanese-web-staging.serpcompany.workers.dev
+   gh variable set WEB_WORKERS_DEV_URL --env production --body https://zenbujapanese-web-production.serpcompany.workers.dev
    ```
 6. **The first deploy.** Run the workflow by hand (Actions → Dictionary API deploy → Run
    workflow); the deployer starts each image within 5 minutes of its tag moving. Then run

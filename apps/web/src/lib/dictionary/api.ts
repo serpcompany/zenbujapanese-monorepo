@@ -115,6 +115,32 @@ export function dictionaryApi(
     indexableKanji: () => required<string[]>('/v1/sitemaps/kanji'),
     /** Null while the service is still working it out, in the minutes after it starts. */
     conjugationSitemap: () => get<ConjugationSitemapWord[]>('/v1/sitemaps/conjugations', true),
-    retired: () => required<Record<string, number | null>>('/v1/retired')
+    retired: () => required<Record<string, number | null>>('/v1/retired'),
+    /** What the service's /healthz answers now, never from the edge cache. */
+    health: async (): Promise<ServiceHealth> => {
+      const response = await fetcher(
+        new Request(new URL('/healthz', base).toString(), {
+          headers: { Accept: 'application/json' }
+        })
+      )
+      const json = response.headers.get('content-type')?.includes('application/json')
+        ? ((await response.json()) as { build?: string })
+        : null
+      return {
+        status: response.status,
+        build: json?.build ?? null,
+        mitigated: response.headers.get('cf-mitigated')
+      }
+    }
   }
+}
+
+/** The service's /healthz, as the site reaches it. */
+export interface ServiceHealth {
+  /** The HTTP status: 200 once it's up, 503 while it starts. */
+  status: number
+  /** The build it answers with. */
+  build: string | null
+  /** Cloudflare's `cf-mitigated`, when Cloudflare challenged the request rather than passing it. */
+  mitigated: string | null
 }

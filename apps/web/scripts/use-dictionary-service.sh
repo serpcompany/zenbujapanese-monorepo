@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Points a deployed environment at its dictionary service (ADR 0009), before `Web deploy` deploys
-# it: checks the service's URL is an HTTPS origin, that the Worker holds the DICTIONARY_API_TOKEN
-# secret the service expects, and that the service is up, then writes the URL over the
-# environment's DICTIONARY_API_URL placeholder in wrangler.jsonc.
+# it: checks the service's URL is an HTTPS origin and that the Worker holds the DICTIONARY_API_TOKEN
+# secret the service expects, then writes the URL over the environment's DICTIONARY_API_URL
+# placeholder in wrangler.jsonc. It doesn't ask the service itself: Bot Fight Mode on the zone
+# challenges CI runners. The smoke test asks through the deployed site instead
+# (/dictionary/service.json), which also proves the site's Worker reaches the service.
 #
 #   scripts/use-dictionary-service.sh <staging|production> <https://service-origin>
 set -euo pipefail
@@ -24,13 +26,6 @@ if ! grep -q '"DICTIONARY_API_TOKEN"' <<<"$secrets"; then
   echo "::error::The $env Worker has no DICTIONARY_API_TOKEN secret: set it to the service's token with 'pnpm exec wrangler secret put DICTIONARY_API_TOKEN --env $env' (docs/agents/web.md)"
   exit 1
 fi
-
-# /healthz needs no token and names the build the service answers with.
-health="$(curl -fsS --retry 5 --retry-delay 5 --retry-all-errors "$url/healthz")" || {
-  echo "::error::The dictionary service at $url isn't answering /healthz"
-  exit 1
-}
-echo "Dictionary service: $health"
 
 placeholder="\"SITE_ENV\": \"$env\", \"DICTIONARY_API_URL\": \"DICTIONARY_API_URL\""
 grep -qF "$placeholder" wrangler.jsonc || {

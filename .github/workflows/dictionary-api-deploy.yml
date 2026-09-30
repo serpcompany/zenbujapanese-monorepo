@@ -208,7 +208,8 @@ jobs:
       - name: Wait until staging answers with it
         id: await
         env:
-          DICTIONARY_API_URL: ${{ vars.DICTIONARY_API_URL }}
+          # The site, which asks its service (Bot Fight Mode challenges runners asking it).
+          WEB_WORKERS_DEV_URL: ${{ vars.WEB_WORKERS_DEV_URL }}
         run: apps/dictionary-api/deploy/await-build.sh staging "${{ needs.image.outputs.build }}" 1200
 
   production:
@@ -240,5 +241,6 @@ jobs:
       - name: Wait until production answers with it
         id: await
         env:
-          DICTIONARY_API_URL: ${{ vars.DICTIONARY_API_URL }}
+          # The site, which asks its service (Bot Fight Mode challenges runners asking it).
+          WEB_WORKERS_DEV_URL: ${{ vars.WEB_WORKERS_DEV_URL }}
         run: apps/dictionary-api/deploy/await-build.sh production "${{ needs.image.outputs.build }}" 1200
