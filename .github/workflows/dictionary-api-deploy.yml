@@ -236,7 +236,10 @@ jobs:
         # Before the tag moves, so the deployer never sees the tag name an image it would refuse.
         run: cosign sign --yes "$IMAGE_REFERENCE"
       - name: Move the :staging tag to the image
-        run: docker buildx imagetools create --tag "$IMAGE:staging" "$IMAGE_REFERENCE"
+        # --prefer-index=false copies the tag onto the very manifest that was signed. By default
+        # imagetools wraps it in a new image index, whose digest nothing signed, so the deployer
+        # would refuse it.
+        run: docker buildx imagetools create --prefer-index=false --tag "$IMAGE:staging" "$IMAGE_REFERENCE"
       - name: Wait until staging answers with it
         id: await
         env:
@@ -272,7 +275,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Move the :production tag to the image
-        run: docker buildx imagetools create --tag "$IMAGE:production" "$IMAGE_REFERENCE"
+        # The signed manifest itself, not a new index around it (see the staging job).
+        run: docker buildx imagetools create --prefer-index=false --tag "$IMAGE:production" "$IMAGE_REFERENCE"
       - name: Wait until production answers with it
         id: await
         env:
