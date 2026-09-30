@@ -4,8 +4,12 @@
 // straight to the app. `pnpm dev` runs Next.js without this file, so there a retired word's page
 // is a 404.
 //
-// tsconfig.json leaves this file out: .open-next/worker.js only exists after a build.
+// .open-next/worker.js only exists after a build, and the generated cloudflare-env.d.ts imports
+// this file's type, so a fresh checkout's typecheck reads this file without it: the import is
+// untyped.
 
+// biome-ignore lint/suspicious/noTsIgnore: @ts-expect-error would fail once .open-next/ is built.
+// @ts-ignore
 import openNext from './.open-next/worker.js'
 import { retiredWordResponse, retiredWordsLookup } from './src/lib/dictionary/retired'
 
