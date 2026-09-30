@@ -134,6 +134,7 @@ const fixtureLinks: Links = {
 }
 
 export async function dictionaryService(): Promise<DictionaryApi | null> {
+  if (process.env.ZENBU_DICTIONARY_FIXTURES === '1' && !isDeployedSite()) return null
   const { env } = await getCloudflareContext({ async: true })
   const api = dictionaryApi(env)
   if (!api && isDeployedSite()) throw new Error('DICTIONARY_API_URL isn’t set')

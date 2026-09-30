@@ -5,6 +5,9 @@ description: Check a zenbujapanese.com change in a real browser. Runs the site l
 
 # Check a website change in the browser
 
+This is the look an agent takes by hand. What should keep working goes in a browser test that
+runs on every pull request (the `browser-tests` skill).
+
 The `chrome-devtools` MCP server in `.mcp.json` opens its own Chrome with a temporary profile
 (`--isolated`), so sessions in different worktrees never share state. Every page tool takes a
 `pageId`, which `list_pages` and `new_page` return. Give tools absolute paths.

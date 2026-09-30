@@ -48,20 +48,23 @@ are sections of `ios.md`.
 
 ## Website
 
-The website's tests are Vitest files beside its code in `apps/web/src/`. The `Web` workflow runs
-`pnpm check` (Biome, typecheck, tests, and the build) on pull requests that change `apps/web/**`
-or the core. The product docs are in [`apps/web/docs/product/`](../apps/web/docs/product/index.md).
+The website's tests are Vitest files beside its code in `apps/web/src/`, and Playwright browser
+tests in `apps/web/e2e/` that drive its pages at a desktop and a phone width on the dictionary
+fixtures. The `Web` workflow runs `pnpm check` (Biome, typecheck, tests, and the build), then the
+browser tests on the production build in workerd, on pull requests that change `apps/web/**` or
+the core. The product docs are in [`apps/web/docs/product/`](../apps/web/docs/product/index.md).
 A change is checked by hand in a browser with the `verify-web` skill
 ([`SKILL.md`](../.claude/skills/verify-web/SKILL.md)).
 
 | Area | Grade | Tests | CI before merge | Product docs | By hand |
 | --- | --- | --- | --- | --- | --- |
-| Dictionary pages | B | The rendered-page gate in `apps/web/src/components/dictionary/` (`search-results.test.tsx`, `search-examples.test.tsx`, `word-page.test.tsx`, `conjugations.test.tsx`) and its interaction tests, unit tests in `apps/web/src/lib/dictionary/`, route tests under `apps/web/src/app/dictionary/`, and `apps/web/scripts/smoke.sh` after each deploy | `Web`; `Dictionary API` runs the gate against the service it builds | [Dictionary](../apps/web/docs/product/dictionary.md), which names the check for each behavior | `verify-web`, on the fixtures or the whole dictionary |
+| Dictionary pages | B | The rendered-page gate in `apps/web/src/components/dictionary/` (`search-results.test.tsx`, `search-examples.test.tsx`, `word-page.test.tsx`, `conjugations.test.tsx`) and its interaction tests, unit tests in `apps/web/src/lib/dictionary/`, route tests under `apps/web/src/app/dictionary/`, the browser tests in `apps/web/e2e/` (search, word, conjugation, and kanji pages, URLs, and layout, failing on any console error), and `apps/web/scripts/smoke.sh` after each deploy | `Web` (`check` and `e2e`); `Dictionary API` runs the gate against the service it builds | [Dictionary](../apps/web/docs/product/dictionary.md), which names the check for each behavior | `verify-web`, on the fixtures or the whole dictionary |
 | Other pages | C | `apps/web/src/lib/pages.test.ts`, `apps/web/src/lib/sitemap.test.ts`, `apps/web/src/components/site-footer.test.tsx`; `smoke.sh` asks for `/`, `/support/`, and `/legal/privacy/`, the `/privacy` redirect, and each environment's search-engine rules | `Web` | None for the home, about, support, contact, legal, sources, and sitemap pages. The header, footer, and URL rules are in [Dictionary](../apps/web/docs/product/dictionary.md#header-footer-and-site-wide) | `verify-web` |
 
 - **Dictionary pages, B.** What each page shows is held to the app's recorded suites before
-  merge, and every behavior names its check. Main gap: 11 of the 70 behaviors have no automated
-  check, 13 more have a part without one (mostly layout, menus, and redirects), and some app
+  merge, every behavior names its check, and the browser tests drive the pages as a learner does.
+  Main gap: 10 of the 70 behaviors have no automated check, 13 more have a part without one (mostly
+  layout, sheets, and speech), the browser tests see only the fixtures' 12 words, and some app
   behaviors aren't built yet (#511).
 - **Other pages, C.** Tests check their paths, the sitemaps, and the footer's Legal link, and the
   smoke test checks that three of them answer. Main gap: no product doc says what these pages
