@@ -12,9 +12,7 @@ name: Dictionary API deploy
 # DEPLOY_PRODUCTION to false to stop at staging, as for the website (web-deploy.yml).
 on:
   push:
-    # TEMPORARY: feat/dictionary-api-deploy publishes too, to test staging before #539 merges.
-    # Remove it before merging.
-    branches: [main, feat/dictionary-api-deploy]
+    branches: [main]
     # What the image holds.
     paths:
       - apps/dictionary-api/**
@@ -184,16 +182,10 @@ jobs:
           fi
           echo "image=$IMAGE@$digest" >>"$GITHUB_OUTPUT"
           echo "Deploying $IMAGE@$digest"
-      # TEMPORARY: the staging environment accepts deploys from main only, so a build of this branch
-      # moves :staging here, to test staging before #539 merges. Remove it before merging.
-      - name: Move the :staging tag to the image (branch test)
-        if: github.ref == 'refs/heads/feat/dictionary-api-deploy'
-        run: docker buildx imagetools create --tag "$IMAGE:staging" "${{ steps.push.outputs.image }}"
 
   staging:
     needs: image
-    # TEMPORARY: skipped for the branch test (see the image job). Remove before merging.
-    if: github.event_name != 'pull_request' && github.ref != 'refs/heads/feat/dictionary-api-deploy'
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     # The deployer checks the tag every 5 minutes, then pulls and starts the image.
     timeout-minutes: 25
