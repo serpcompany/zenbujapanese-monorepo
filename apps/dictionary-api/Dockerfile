@@ -7,7 +7,8 @@
 #   git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources"
 #   docker build -f apps/dictionary-api/Dockerfile -t zenbujapanese-dictionary-api .
 #
-# The image holds one build of the data: a new artifact is a new image.
+# The image holds one build of the data: a new artifact is a new image. The `Dictionary API deploy`
+# workflow builds it, pushes it to ghcr.io/serpcompany/zenbujapanese-dictionary-api, and deploys it.
 
 ARG NODE_IMAGE=node:22.16.0-bookworm-slim
 
@@ -33,6 +34,9 @@ COPY apps/dictionary-api/scripts/fetch-sudachi.mjs .
 RUN node fetch-sudachi.mjs resources /sudachi/system_core.dic
 
 FROM ${NODE_IMAGE}
+# Links the GitHub Container Registry package to this repository.
+LABEL org.opencontainers.image.source="https://github.com/serpcompany/zenbujapanese-monorepo" \
+  org.opencontainers.image.description="The zenbujapanese.com dictionary service (apps/dictionary-api)"
 ENV NODE_ENV=production \
   PORT=8788 \
   DICTIONARY_RESOURCES=/service/resources \

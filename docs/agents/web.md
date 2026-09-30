@@ -194,9 +194,17 @@ Each deployed environment reads its own dictionary service:
   hand, and again to rotate it: `pnpm exec wrangler secret put DICTIONARY_API_TOKEN --env
   <staging|production>`.
 
-`scripts/use-dictionary-service.sh` checks both, and that the service answers `/healthz`, before
-the deploy; the smoke test's dictionary pages then prove the token works. Deploy a new service
-before a site change that needs it: the site reads whatever service its environment names.
+`scripts/use-dictionary-service.sh` checks both before the deploy. It doesn't ask the service
+itself, since Bot Fight Mode on the zone challenges CI runners: the smoke test asks through the
+deployed site instead, at `/dictionary/service.json` (whether the site's Worker reaches its service,
+and the service's build; `Cache-Control: no-store`, `noindex`), and its dictionary pages then prove
+the token works.
+
+The site reads whatever service its environment names, so a new service deploys before a site
+change that needs it. The `Dictionary API deploy` workflow deploys the service itself
+([`dictionary-api.md`](dictionary-api.md), Ship it), and `Web deploy` waits until an
+environment's service runs a release that includes every change to the image up to the commit it
+deploys, before deploying the site there (`scripts/wait-for-dictionary-service.sh`).
 
 ### Environment configuration
 

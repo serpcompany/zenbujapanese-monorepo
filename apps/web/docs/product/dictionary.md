@@ -798,8 +798,9 @@ kanji with no meanings or readings (about 475 of 13,108, such as 㐂), a search 
 or only example sentences, an English, romaji, or deinflected search's Example Sentences page (a
 romaji or deinflected one lists the examples its primary entry's word page has), a form's page
 without examples (only the form and what it means, like a search that finds nothing),
-`/dictionary/search/` itself, and the JSON routes that load examples into a page (a word's, a
-search's, and a form's, on its page and in the conjugations sheet) are `noindex`. Only production
+`/dictionary/search/` itself, the JSON routes that load examples into a page (a word's, a
+search's, and a form's, on its page and in the conjugations sheet), and `/dictionary/service.json`
+(whether the site reaches its dictionary service, for CI) are `noindex`. Only production
 is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows crawling (see
 [`docs/agents/web.md`](../../../../docs/agents/web.md)).
 
@@ -812,7 +813,8 @@ is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows crawling 
   names its spelling's first page", and in production, no `X-Robots-Tag` on 見る's Example
   Sentences page or 見る's conjugation pages; the conformance test checks each kanji's
   `indexable` against its meanings and readings; the JSON routes' `route.test.ts` files
-  (`X-Robots-Tag: noindex`), including `src/app/dictionary/examples/forms/[file]/route.test.ts`;
+  (`X-Robots-Tag: noindex`), including `src/app/dictionary/examples/forms/[file]/route.test.ts`
+  and `src/app/dictionary/service.json/route.test.ts`;
   search pages: `src/lib/dictionary/results/links.test.ts`, "isIndexable"; Example Sentences
   pages: `src/lib/dictionary/data.test.ts`, "only a direct Japanese search’s examples page is
   indexed", and `search-examples.test.tsx`, "only a direct Japanese search’s".

@@ -77,6 +77,18 @@ eventually 'pages sitemap lists slashed page URLs' 'pages sitemap has a non-cano
 # The shipped iOS app links to /privacy.
 expect /privacy 308
 
+# The site's Worker reaches its dictionary service: /dictionary/service.json asks it. Nothing asks
+# before the deploy, since Bot Fight Mode on the zone challenges CI runners that ask the service
+# directly, so this also shows whether it challenges the Worker.
+service_seen=""
+reaches_service() {
+  service_seen="$(body /dictionary/service.json)"
+  grep -q '"status":200' <<<"$service_seen"
+}
+show_service_seen() { echo "$service_seen"; }
+eventually 'the site reaches its dictionary service' \
+  "the site can't reach its dictionary service" reaches_service show_service_seen
+
 # Dictionary pages: each environment reads its own dictionary service (DICTIONARY_API_URL), so a
 # word and a kanji without local fixtures (見る, 見) have pages.
 word=/dictionary/%E8%A6%8B%E3%82%8B-1259290/
