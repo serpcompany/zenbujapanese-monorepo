@@ -176,20 +176,18 @@ holds (the service, the core, the lockfile, or the app's files it copies), and b
    doesn't without one). It then pushes it as
    `ghcr.io/serpcompany/zenbujapanese-dictionary-api:sha-<commit>` and `:main`. A pull request
    that changes the image runs only this build and check.
-2. **`staging`** signs the image's digest with cosign, then moves the `:staging` tag to it, and
-   waits, up to 20 minutes, until the environment's service answers with the new build
-   (`deploy/await-build.sh`). It asks through the environment's website,
-   `/dictionary/service.json` at its workers.dev address (`WEB_WORKERS_DEV_URL`), since Bot Fight
-   Mode on the zone challenges CI runners that ask the service directly. A site deployed before
-   that route existed can't tell, so the wait fails there, unless a run by hand says the service
-   was checked by hand (production's first switch, below).
-3. **`production`** does the same with `:production`, once staging answers with the image. The
-   repository variable `DEPLOY_PRODUCTION` set to `false` stops at staging, as for the website; a
-   run by hand still deploys production.
+2. **`staging`** signs the image's digest with cosign, then moves the `:staging` tag to it.
+3. **`production`** moves the `:production` tag to it, once `staging` has. The repository variable
+   `DEPLOY_PRODUCTION` set to `false` stops at staging, as for the website; a run by hand still
+   deploys production.
 
 GitHub holds no access to the server: all the workflow can do is publish an image and move a tag.
-An environment without a `WEB_WORKERS_DEV_URL` yet isn't checked, and production waits for a
-checked staging.
+The workflow doesn't wait to see the server deploy it: Bot Fight Mode on the zone challenges CI
+runners, both when they ask the service and when the website's Worker asks it for them, whatever
+headers they send, so nothing in CI can see which build the service runs. The server's journal
+says what it deployed (below), and so do the service's `/healthz` and the website's
+`/dictionary/service.json` in a browser. Nothing confirms staging before production either, so
+with `DEPLOY_PRODUCTION` set to `false`, a person checks staging, then runs production by hand.
 
 **Only main's images run.** Anyone who can push to the package can push an image and move a tag,
 including a workflow run from any branch, so the tag alone decides nothing. The `staging` job signs
@@ -211,11 +209,12 @@ else, neither the server's other containers nor the internet, since the service 
 input with native code (Sudachi, SQLite). nginx, which fronts the server's other sites too
 (serpcompany's nginx repository), resolves the alias every 5 seconds and sends a request one slot
 can't answer, because it's stopped, to the other. The deployer deploys nothing while the network is
-missing, isn't internal, or doesn't have nginx on it, since a slot there couldn't serve. A deploy starts the new image in the free slot without the
-alias, so nginx sends it nothing while it starts; waits until its `/healthz` names the image's
-release (each check may take 3 seconds, and the whole wait 3 minutes); gives it the alias, by
-reconnecting it to the network; waits until nginx has seen it; then stops the old one. That's about
-20 seconds, with no request dropped and nginx never reloaded. A new image that doesn't come up is
+missing, isn't internal, or doesn't have nginx on it, since a slot there couldn't serve. A deploy
+starts the new image in the free slot without the alias, so nginx sends it nothing while it
+starts; waits until its `/healthz` names the image's release (each check may take 3 seconds, and
+the whole wait 3 minutes); gives it the alias, by reconnecting it to the network; waits until
+nginx has seen it; then stops the old one. That's about 20 seconds, with no request dropped and
+nginx never reloaded. A new image that doesn't come up is
 removed, the old one keeps serving, and that image isn't tried again until the tag moves (below).
 Every container is capped (4 GB of memory, 4 CPUs, 512 processes, 30 MB of logs) and runs as user
 1000 (the node image's `node`), whatever the image says, with no capabilities and a read-only file
@@ -235,22 +234,17 @@ deploy: it gives it the alias and restart policy, then stops the other slot.
   `/var/lib/zenbujapanese-dictionary-api/failed-<environment>`, and skipped until the tag moves.
   When it failed for a reason that wasn't the image's (the server restarting Docker mid-deploy),
   delete that file to try it again on the next run.
-- **Production's first switch.** Production's website still predates `/dictionary/service.json`,
-  so nothing in CI can confirm production's service before its site switches to it; check it by
-  hand in between. Run this workflow by hand with `site_without_status_route` checked, which moves
-  `:production` and accepts the missing route. Within about 5 minutes, the deployer starts
-  production: wait until `https://dictionary-api.zenbujapanese.com/healthz` answers 200 with the
-  new build (in a browser, if Bot Fight Mode challenges `curl`). Then run `Web deploy` by hand with
-  the same box checked. Every later deploy confirms it through the site.
+- **Production's first switch.** Run this workflow by hand, which moves `:production`. Within
+  about 5 minutes, the deployer starts production: wait until
+  `https://dictionary-api.zenbujapanese.com/healthz` answers 200 with the new build, in a browser.
+  Then run `Web deploy` by hand.
 - **The service ships before the site.** The website reads whatever its environment's service
-  answers, so before `Web deploy` deploys an environment, it waits until that environment's service
-  runs a release that includes every change to the image up to the commit it deploys
-  (`apps/web/scripts/wait-for-dictionary-service.sh`). It reads the release from the site's
-  `/dictionary/service.json` and checks, with git, that it descends from the last commit that
-  touched this workflow's push paths. A site change whose service is already current deploys at
-  once, however the service got there. While it waits, a service deploy of a commit that includes
-  the change and that ended without deploying the environment (failed, skipped, or cancelled)
-  stops the site's deploy, and so does an hour without one.
+  answers, so before `Web deploy` deploys an environment, it waits for the same commit's service
+  deploy to have signed and tagged the image for that environment
+  (`apps/web/scripts/wait-for-dictionary-service.sh`), and stops if that deploy failed, skipped
+  the environment, or was cancelled. The server swaps the image in within about 5 minutes of the
+  tag moving, so a site can go out a few minutes ahead of its service; nothing in CI can see the
+  swap. A commit that doesn't change the service deploys the site at once.
 - **Moving to the slots' network.** A slot on `web_network`, which an earlier deployer started, is
   never taken as current: the next deploy of a signed image replaces it with one on the slots'
   network. Docker's DNS answers nginx from `web_network` while the old slot is there, so nginx
@@ -322,17 +316,13 @@ a deploy starts one, and 5 GB of disk for images. A person with root sets it up 
 5. **Cloudflare**, in the `zenbujapanese.com` zone: proxied DNS records for
    `dictionary-api.zenbujapanese.com` and `dictionary-api-staging.zenbujapanese.com`, pointing at
    the server, and Authenticated Origin Pulls on (SSL/TLS → Origin Server), since the sites accept
-   only Cloudflare's client certificate. The zone's Bot Fight Mode, which can't be turned off or
-   skipped per host name, challenges CI runners, so CI asks the service through the website
-   instead; the website's Worker must not be challenged, which the smoke test checks
-   (`/dictionary/service.json`).
-6. **The GitHub environments**, which hold only URLs: each service's, and each website's
-   workers.dev address, which CI reaches past Bot Fight Mode:
+   only Cloudflare's client certificate. The zone's Bot Fight Mode, which stays on and can't be
+   skipped per host name, challenges CI runners, and the website's Worker too when a runner sets
+   it off, so CI doesn't check the service (How a deploy works, above).
+6. **The GitHub environments**, which hold only each service's URL:
    ```sh
    gh variable set DICTIONARY_API_URL --env staging --body https://dictionary-api-staging.zenbujapanese.com
    gh variable set DICTIONARY_API_URL --env production --body https://dictionary-api.zenbujapanese.com
-   gh variable set WEB_WORKERS_DEV_URL --env staging --body https://zenbujapanese-web-staging.serpcompany.workers.dev
-   gh variable set WEB_WORKERS_DEV_URL --env production --body https://zenbujapanese-web-production.serpcompany.workers.dev
    ```
 7. **The first deploy.** Run the workflow by hand (Actions → Dictionary API deploy → Run
    workflow); the deployer starts each image within 5 minutes of its tag moving. Then run
