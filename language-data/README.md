@@ -17,7 +17,7 @@ moves them.
 | [`schemas/language-data-releases.v1.schema.json`](schemas/language-data-releases.v1.schema.json) | The JSON Schema of the bucket's `releases.json`, `zenbu.language-data-releases.v1`. |
 | [`pipeline/package.py`](pipeline/package.py) | The packager. |
 | [`pipeline/publish.py`](pipeline/publish.py) | The publisher, and the check that reads a published release back. |
-| [`pipeline/tests/`](pipeline/tests/) | Tests for the packager, the publisher (against a fake bucket), and the schemas. |
+| [`pipeline/tests/`](pipeline/tests/) | Tests for the packager (on a scratch Git repository with its LFS files committed as pointers, as after `git lfs pull`), the publisher (against a fake bucket), the schemas, and the committed inputs. |
 
 ## A release
 
@@ -66,7 +66,10 @@ when:
   catalog's `languageDataSHA256`, or the ranking contract's `databaseSHA256`.
 - **The ranking contract disagrees with the database** in anything the app checks at launch
   (`LookupClient.validateDictionaryRankingMetadata`): size, policy, schema version, mapping,
-  evidence and search-index counts, tool hashes, and semantic equivalence.
+  evidence and search-index counts, tool hashes, and semantic equivalence. It compares the keys
+  the app decodes (the `CodingKeys` in
+  `apps/ios/Modules/Sources/SearchExperience/DictionaryRankingArtifactContract.swift`), since the
+  app ignores any other, and counts the tables directly, as the app does.
 - **The frequency-pack catalog disagrees:**
   - a bundled pack isn't a release file, or has another SHA-256;
   - a CDN source's committed archive differs from the catalog.
@@ -86,7 +89,14 @@ python3 language-data/pipeline/package.py validate /tmp/language-data
 python3 -m unittest discover -s language-data/pipeline/tests
 ```
 
-The build opens SQLite files read-only and immutable, and never writes beside the inputs.
+The build opens SQLite files read-only and immutable, and never writes beside the inputs. It needs
+only the standard library; `validate`, `publish.py`, and the tests need `jsonschema`. To change a
+pin in the hashed [`requirements.txt`](pipeline/requirements.txt), regenerate it from a file of
+bare pins (such as `jsonschema==4.26.0`), writing the output, which has no comments, over it:
+
+```sh
+uv pip compile <pins> --generate-hashes --python-version 3.12 --universal --no-header --no-annotate
+```
 
 The [`Language data build`](../.github/workflows/language-data-build.yml) workflow does the same
 on pull requests, and on `main`, when language data or the pipeline changes. It has no secrets.
@@ -134,7 +144,10 @@ SHA, and Python packages are installed with `--require-hashes` from the hashed
 environment, which deploys only from `main` and has no required reviewer, by the owner's decision: add one in Settings →
 Environments to review each release by hand. Its token is an R2 S3-API token for this bucket
 alone, reached at `https://<CLOUDFLARE_ACCOUNT_ID>.r2.cloudflarestorage.com` through the AWS CLI.
-It doesn't use the repository's `CLOUDFLARE_API_TOKEN`. Never upload from a workstation.
+`publish.py` takes the bucket and endpoint from `R2_BUCKET` and `R2_ENDPOINT`, and the token from
+`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, which the workflow sets from the
+`R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` secrets. It doesn't use the repository's
+`CLOUDFLARE_API_TOKEN`. Never upload from a workstation.
 
 ### Immutability
 
@@ -144,6 +157,8 @@ It doesn't use the repository's `CLOUDFLARE_API_TOKEN`. Never upload from a work
   publish fails. After each upload, the object is read back for its size and SHA-256.
   - The SHA-256 read back is R2's `ChecksumSHA256` when R2 returns one.
   - Otherwise it's the `x-amz-meta-sha256` label, which only says what was meant to be sent.
+    A multipart upload's `ChecksumSHA256` is a checksum of checksums, ending in `-<parts>`, so
+    it counts as none.
 
   The `Verify` step downloads and hashes every file, so it doesn't rely on either.
 - **A published release doesn't change.** If `releases/<release>/manifest.json` already

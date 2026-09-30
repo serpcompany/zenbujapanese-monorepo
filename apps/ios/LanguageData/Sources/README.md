@@ -25,8 +25,9 @@ under `apps/ios/Modules/Sources/SearchExperience/Resources/`.
 | Interactive Japanese parsing | `Kuromoji-0.1.2.source.json` | Bundled JavaScriptCore engine and compressed IPADIC resources |
 | App-owned word relationships | `Zenbu-Word-Relationships-v1.json` | `import_jmdict.py` |
 
-Required notices for bundled dependencies remain beside their source records and
-in the app resources. Frequency-pack manifests contain the runtime source URL,
+Required notices for bundled dependencies remain beside their source records
+([EDRDG](EDRDG-ATTRIBUTION.md), [MeCab IPADIC](MECAB-IPADIC-NOTICE.md)) and in the app
+resources. Frequency-pack manifests contain the runtime source URL,
 attribution, checksums, mapping contract, and delivery behavior. Import reports
 under `apps/ios/LanguageData/Generated/` connect pinned inputs to generated
 artifact checksums and remain versioned with those artifacts.

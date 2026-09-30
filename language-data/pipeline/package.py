@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-"""Package a language-data release from the committed files (issue 463, step 2).
-
-  package.py build --out DIR     write DIR/manifest.json and DIR/files/<sha256>/<name>
-  package.py lfs-paths           print the Git LFS paths `build` reads, comma-separated
-  package.py validate DIR        check DIR/manifest.json against the schema, and the files
-
-Release 1 packages the files exactly as committed; nothing is rebuilt. `build` refuses any file
-whose bytes differ from HEAD (a Git LFS file's oid and size, or any other file's Git blob), from
-a conformance suite's pin, or from a pin in another file it reads. What goes in the release is
-language-data/release-inputs.json; the release ID is language-data/release.json.
-
-`build` needs only the standard library. `validate` needs `jsonschema` (requirements.txt).
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -30,17 +16,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import quote
 
+DESCRIPTION = "Package a language-data release from the committed files."
 MANIFEST_SCHEMA = "zenbu.language-data-manifest.v1"
 LANGUAGE_REFERENCE_SCHEMA = re.compile(r"^zenbu\.language-reference\.v[1-9][0-9]*$")
 RANKING_CONTRACT_SCHEMA = "zenbu.dictionary-ranking-contract.v1"
 ARTIFACT_SCHEMA = re.compile(r"^zenbu\.[a-z0-9]+(-[a-z0-9]+)*\.v[1-9][0-9]*$")
-# The schema's `name` pattern: one or two segments, none of them `.` or `..`.
 NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)?$")
 RELEASE = re.compile(r"^[0-9]{4}\.(0[1-9]|1[0-2])\.[1-9][0-9]*$")
 ENT_SEQ_DIGEST = "sha256-ascending-decimal-lf"
 LFS_HEADER = b"version https://git-lfs.github.com/spec/v1\n"
 SQLITE_HEADER = b"SQLite format 3\x00"
-# The tables SQLite's FTS3/4 and FTS5 modules keep for a virtual table named <name>_<suffix>.
 FTS_SHADOW_SUFFIXES = ("content", "docsize", "segdir", "segments", "stat", "data", "idx", "config")
 CHUNK = 1 << 20
 
@@ -50,17 +35,14 @@ SCHEMA_PATH = LANGUAGE_DATA / "schemas" / "language-data-manifest.v1.schema.json
 
 
 class Refusal(Exception):
-    """A release that must not be packaged, with the reason."""
-
-
-# --- Inputs ------------------------------------------------------------------------------------
+    pass
 
 
 @dataclass(frozen=True)
 class Inputs:
-    files: list[dict]  # name, path (repository-relative), optional artifact_schema
+    files: list[dict]
     catalog: str | None
-    source_archives: dict[str, str]  # pack ID -> repository-relative path
+    source_archives: dict[str, str]
     conformance: list[str]
 
 
@@ -75,7 +57,6 @@ def check_name(name: object, what: str) -> str:
 
 
 def check_relative(path: object, what: str) -> str:
-    """A repository-relative path: not absolute, no empty, `.`, or `..` segments."""
     if (
         not isinstance(path, str)
         or not path
@@ -88,7 +69,6 @@ def check_relative(path: object, what: str) -> str:
 
 
 def resolve(roots: dict[str, str], path: str) -> str:
-    """`resources/x.json` -> the `resources` root's directory joined with `x.json`."""
     check_relative(path, "release-inputs.json path")
     root, _, rest = path.partition("/")
     if root not in roots or not rest:
@@ -122,15 +102,10 @@ def load_inputs(path: Path) -> Inputs:
 
 
 def load_release(path: Path) -> dict:
-    """The release ID. The previous release and its manifest come from the bucket's releases.json:
-    `build` leaves them null, and publish.py fills them in before it uploads anything."""
     release = json.loads(path.read_text())
     if not isinstance(release.get("release"), str) or not RELEASE.match(release["release"]):
         raise Refusal(f"release.json's release {release.get('release')!r} isn't YYYY.MM.N")
     return release
-
-
-# --- Git ---------------------------------------------------------------------------------------
 
 
 def git(repo: Path, *args: str) -> bytes:
@@ -139,8 +114,8 @@ def git(repo: Path, *args: str) -> bytes:
 
 @dataclass(frozen=True)
 class Committed:
-    blob: str  # the Git blob's object ID
-    lfs_oid: str | None  # the SHA-256 in its LFS pointer, if it is one
+    blob_id: str
+    lfs_oid: str | None
     lfs_size: int | None
 
 
@@ -155,7 +130,6 @@ def parse_lfs_pointer(content: bytes) -> tuple[str, int] | None:
 
 
 def committed(repo: Path, paths: list[str]) -> dict[str, Committed]:
-    """Each path's blob at HEAD, reading LFS pointers without downloading anything."""
     listing = git(repo, "ls-tree", "-z", "-l", "--full-tree", "HEAD", "--", *paths)
     found: dict[str, Committed] = {}
     for record in listing.split(b"\0"):
@@ -180,11 +154,8 @@ def lfs_paths(repo: Path, inputs: Inputs) -> list[str]:
     return [entry["path"] for entry in inputs.files if heads[entry["path"]].lfs_oid]
 
 
-def git_blob(data: bytes) -> str:
+def git_blob_id(data: bytes) -> str:
     return hashlib.sha1(f"blob {len(data)}\0".encode() + data).hexdigest()
-
-
-# --- Hashing and staging -----------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -192,11 +163,10 @@ class Staged:
     sha256: str
     bytes: int
     path: Path
-    git_blob: str  # its Git blob object ID, to compare with HEAD
+    blob_id: str
 
 
 def stage(source: Path, staging: Path, name: str) -> Staged:
-    """Copy `source` to staging/files/<sha256>/<name>, hashing the bytes as they're copied."""
     sha256 = hashlib.sha256()
     size = source.stat().st_size
     blob = hashlib.sha1(f"blob {size}\0".encode())
@@ -228,15 +198,13 @@ def check_committed(entry: dict, head: Committed, staged: Staged) -> None:
                 f"{name}: {path} has SHA-256 {staged.sha256} and {staged.bytes} bytes, but its "
                 f"LFS pointer at HEAD names {head.lfs_oid} and {head.lfs_size} bytes{hint}"
             )
-    elif staged.git_blob != head.blob:
-        raise Refusal(f"{name}: {path} differs from HEAD (blob {head.blob}); commit or restore it")
-
-
-# --- Reading the files -------------------------------------------------------------------------
+    elif staged.blob_id != head.blob_id:
+        raise Refusal(
+            f"{name}: {path} differs from HEAD (blob {head.blob_id}); commit or restore it"
+        )
 
 
 def open_sqlite(path: Path) -> closing[sqlite3.Connection]:
-    # immutable=1: never write a journal, WAL, or anything else beside the file.
     return closing(sqlite3.connect(f"file:{quote(str(path))}?mode=ro&immutable=1", uri=True))
 
 
@@ -254,12 +222,6 @@ def count(connection: sqlite3.Connection, table: str) -> int:
 
 
 def sqlite_facts(path: Path) -> tuple[dict[str, int], dict[str, str]]:
-    """Row counts and the `metadata` table (key -> raw value), if it has one.
-
-    Counts cover every ordinary table, and each virtual table's documents, read from its
-    `_docsize` or `_content` shadow table where it has one (so no FTS module is needed). The
-    other shadow tables (`_segdir`, `_segments`, `_stat`, ...) are storage, not rows, and are
-    left out."""
     with open_sqlite(path) as connection:
         tables = {
             name: (sql or "")
@@ -292,8 +254,6 @@ def sqlite_facts(path: Path) -> tuple[dict[str, int], dict[str, str]]:
 
 
 def json_value(metadata_value: str) -> object:
-    """A metadata value: import_jmdict.py stores them as JSON (strings quoted), the pack
-    importers as bare text."""
     try:
         return json.loads(metadata_value)
     except json.JSONDecodeError:
@@ -315,8 +275,6 @@ def ent_seq_ids(path: Path) -> tuple[int, str]:
     return len(ids), digest
 
 
-# The keys the app decodes (DictionaryRankingArtifactContract.swift's CodingKeys). Decoding
-# ignores any other key, so the comparison covers exactly these.
 EVIDENCE_KEYS = (
     "form_priority_profiles",
     "canonical_senses",
@@ -336,9 +294,6 @@ TOOL_KEYS = (
 
 
 def check_ranking_contract(name: str, contract: dict, database: Path, metadata: dict) -> None:
-    """What the app checks at launch before it opens the dictionary:
-    LookupClient.validateDictionaryRankingMetadata, mirrored check for check."""
-
     def refuse(what: str) -> None:
         raise Refusal(f"{name}: {what} disagrees with {database.name}")
 
@@ -390,7 +345,6 @@ def check_ranking_contract(name: str, contract: dict, database: Path, metadata: 
         ).fetchone()
         if (groups, rows) != (equivalence.get("duplicate_groups"), equivalence.get("source_rows")):
             refuse("semanticEquivalence")
-        # Counted directly, as the app does, including the two FTS4 tables.
         tables = [(key, evidence[key]) for key in EVIDENCE_KEYS] + [
             ("dictionary_gloss_fts", search_index["gloss_rows"]),
             ("dictionary_form_fts", search_index["form_rows"]),
@@ -398,9 +352,6 @@ def check_ranking_contract(name: str, contract: dict, database: Path, metadata: 
         for table, expected in tables:
             if count(connection, table) != expected:
                 refuse(f"the row count of {table}")
-
-
-# --- Building ----------------------------------------------------------------------------------
 
 
 def workflow_run() -> dict | None:
@@ -421,7 +372,6 @@ def workflow_run() -> dict | None:
 def conformance_pins(
     repo: Path, suites: list[str]
 ) -> tuple[list[dict], dict[str, tuple[str, str]]]:
-    """Each suite's manifest entry, and every artifact pin across them: name -> (sha256, suite)."""
     entries, pins = [], {}
     for path in suites:
         data = (repo / path).read_bytes()
@@ -451,8 +401,6 @@ def conformance_pins(
 
 
 def build(repo: Path, inputs: Inputs, release: dict, out: Path, log=print) -> dict:
-    """Package the release into `out`, which must be empty or missing. A refused build leaves
-    `out` as it found it."""
     if out.exists() and any(out.iterdir()):
         raise Refusal(f"{out} isn't empty")
     created = not out.exists()
@@ -475,16 +423,15 @@ def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log) -> dic
         repo,
         file_paths + catalog_only + list(inputs.source_archives.values()) + inputs.conformance,
     )
-    # Files read but not packaged, by the name a suite would pin them under.
-    read_only: dict[str, str] = {}
+    unpackaged_sha256_by_name: dict[str, str] = {}
     for path in catalog_only + inputs.conformance:
         data = (repo / path).read_bytes()
         if heads[path].lfs_oid:
             raise Refusal(f"{path} is a Git LFS file; the packager reads it as committed text")
-        if git_blob(data) != heads[path].blob:
+        if git_blob_id(data) != heads[path].blob_id:
             raise Refusal(f"{path} differs from HEAD; commit or restore it")
         if path in catalog_only:
-            read_only[Path(path).name] = hashlib.sha256(data).hexdigest()
+            unpackaged_sha256_by_name[Path(path).name] = hashlib.sha256(data).hexdigest()
 
     files: list[dict] = []
     by_sha: dict[str, list[str]] = {}
@@ -531,12 +478,15 @@ def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log) -> dic
 
     records = {record["name"]: record for record in files}
 
-    # Every conformance pin, against every file the packager reads.
     for name, (sha, suite) in sorted(pins.items()):
-        actual = records[name]["sha256"] if name in records else read_only.get(name)
+        actual = (
+            records[name]["sha256"] if name in records else unpackaged_sha256_by_name.get(name)
+        )
         if actual is not None and actual != sha:
             raise Refusal(f"{name}: SHA-256 {actual}, but {suite} pins {sha}")
-    unread = sorted(name for name in pins if name not in records and name not in read_only)
+    unread = sorted(
+        name for name in pins if name not in records and name not in unpackaged_sha256_by_name
+    )
 
     references = [
         r
@@ -551,7 +501,6 @@ def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log) -> dic
     reference_path = out / "files" / reference["sha256"] / reference["name"]
 
     def language_reference(owner: str, sha: object, what: str) -> str:
-        """A pin on the language reference database: it must name that file."""
         if sha != reference["sha256"]:
             raise Refusal(
                 f"{owner}: {what} pins {sha}, not {reference['name']} ({reference['sha256']})"
@@ -562,13 +511,11 @@ def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log) -> dic
         if target != record["name"] and target not in record["depends_on"]:
             record["depends_on"].append(target)
 
-    # Dependencies are the SHA-256 pins a file carries.
     for name, metadata in metadata_by_name.items():
         if "language_data_sha256" in metadata:
             sha = json_value(metadata["language_data_sha256"])
             depend(records[name], language_reference(name, sha, "language_data_sha256"))
         if "mapping_policy_sha256" in metadata:
-            # A frequency pack's mapping policy: a release file when it's one of the mapping SQLs.
             for target in by_sha.get(json_value(metadata["mapping_policy_sha256"]), []):
                 depend(records[name], target)
     for name, document in json_by_name.items():
@@ -587,7 +534,6 @@ def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log) -> dic
         "release": release["release"],
         "git_commit": git(repo, "rev-parse", "HEAD").decode().strip(),
         "workflow_run": workflow_run(),
-        # Filled in from the bucket's releases.json by publish.py, before anything is uploaded.
         "previous_release": None,
         "previous_manifest_sha256": None,
         "sources": sources,
@@ -608,7 +554,6 @@ def build_into(repo: Path, inputs: Inputs, release: dict, out: Path, log) -> dic
 
 
 def manifest_bytes(manifest: dict) -> bytes:
-    """manifest.json's bytes, as `build` writes them and publish.py uploads them."""
     return (json.dumps(manifest, indent=2, ensure_ascii=False) + "\n").encode()
 
 
@@ -617,7 +562,6 @@ def write_manifest(out: Path, manifest: dict) -> None:
 
 
 def frequency_sources(repo, inputs, heads, records, by_sha, language_reference, depend):
-    """Check the catalog's bundled packs against the release, and list its CDN-only packs."""
     if not inputs.catalog:
         return []
     catalog_name = next((f["name"] for f in inputs.files if f["path"] == inputs.catalog), None)
@@ -671,11 +615,7 @@ def frequency_sources(repo, inputs, heads, records, by_sha, language_reference, 
     return sources
 
 
-# --- Validating --------------------------------------------------------------------------------
-
-
 def validate(out: Path, schema_path: Path = SCHEMA_PATH) -> dict:
-    """The manifest against the schema, the rules the schema can't express, and the staged files."""
     manifest = json.loads((out / "manifest.json").read_text())
     validate_manifest(manifest, schema_path)
 
@@ -702,7 +642,6 @@ def validate(out: Path, schema_path: Path = SCHEMA_PATH) -> dict:
 
 
 def validate_manifest(manifest: dict, schema_path: Path = SCHEMA_PATH) -> None:
-    """The manifest against the schema, and the rules the schema can't express."""
     import jsonschema
 
     schema = json.loads(schema_path.read_text())
@@ -734,13 +673,8 @@ def validate_manifest(manifest: dict, schema_path: Path = SCHEMA_PATH) -> None:
         raise Refusal(f"ids.file {manifest['ids']['file']} isn't a file in the release")
 
 
-# --- Command line ------------------------------------------------------------------------------
-
-
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
         "--repo", type=Path, default=REPO_ROOT, help="repository root (default: this checkout)"
     )
@@ -751,12 +685,16 @@ def main(argv: list[str] | None = None) -> int:
         "--release", type=Path, help="default: language-data/release.json in --repo"
     )
     commands = parser.add_subparsers(dest="command", required=True)
-    build_parser = commands.add_parser("build")
+    build_parser = commands.add_parser(
+        "build", help="write OUT/manifest.json and OUT/files/<sha256>/<name>"
+    )
     build_parser.add_argument(
         "--out", type=Path, required=True, help="an empty or missing directory"
     )
-    commands.add_parser("lfs-paths")
-    validate_parser = commands.add_parser("validate")
+    commands.add_parser("lfs-paths", help="print the Git LFS paths build reads, comma-separated")
+    validate_parser = commands.add_parser(
+        "validate", help="check OUT/manifest.json against the schema, and the staged files"
+    )
     validate_parser.add_argument("out", type=Path)
     args = parser.parse_args(argv)
 

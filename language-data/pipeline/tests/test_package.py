@@ -1,8 +1,3 @@
-"""The packager and the manifest schema, on a small scratch repository, plus the real inputs.
-
-Run: python3 -m unittest discover -s language-data/pipeline/tests (needs requirements.txt).
-"""
-
 from __future__ import annotations
 
 import copy
@@ -22,11 +17,14 @@ from pathlib import Path
 import jsonschema
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import package  # noqa: E402
+import package
 
 REPO = package.REPO_ROOT
 SCHEMA = json.loads(package.SCHEMA_PATH.read_text())
-QUIET = lambda *_: None  # noqa: E731
+
+
+def quiet(*_: object) -> None:
+    pass
 
 
 def sha256(data: bytes) -> str:
@@ -69,14 +67,11 @@ TOOLS = {key: f"{i}" * 64 for i, key in enumerate(package.TOOL_KEYS)}
 
 
 def language_database() -> bytes:
-    """A small zenbu.language-reference database with what the ranking contract checks.
-    Metadata values are JSON, as import_jmdict.py writes them."""
     metadata = {
         "dictionary_ranking_policy": "dictionary-best-match-v1",
         "dictionary_ranking_schema_version": "zenbu.dictionary-ranking.v1",
         "dictionary_ranking_mapping_sha256": "a" * 64,
-        # A key the app doesn't decode, which it ignores.
-        "dictionary_ranking_evidence": {**EVIDENCE, "ignored": 7},
+        "dictionary_ranking_evidence": {**EVIDENCE, "undecoded_by_the_app": 7},
         "dictionary_search_index": SEARCH_INDEX,
         **TOOLS,
     }
@@ -115,7 +110,6 @@ def language_database() -> bytes:
 
 
 def pack_database(language_sha: str, mapping_sha: str) -> bytes:
-    # The pack importers write bare metadata values.
     return sqlite_bytes(
         [
             "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
@@ -129,9 +123,6 @@ def pack_database(language_sha: str, mapping_sha: str) -> bytes:
 
 
 class Scratch:
-    """A Git repository shaped like the real one: LFS files committed as pointers, with their
-    real bytes in the working tree, as after `git lfs pull`."""
-
     ENT_SEQS = [1000220, 1000000, 2830705]
 
     def __init__(self, root: Path):
@@ -167,7 +158,7 @@ class Scratch:
                     "packVersion": "2022-10-20",
                     "bundled": False,
                     "languageDataSHA256": self.language_sha,
-                    "mappingPolicySHA256": "b" * 64,  # not a release file, as JLPT's isn't
+                    "mappingPolicySHA256": "b" * 64,
                     "downloadURL": "https://cdn.example.com/wiki.tsv.xz",
                     "sourceSHA256": sha256(archive),
                     "sourceBytes": len(archive),
@@ -272,7 +263,6 @@ class Scratch:
         target.write_bytes(data)
 
     def commit(self) -> None:
-        """Commit pointers for the LFS files and the plain files, then put the LFS bytes back."""
         for path, data in self.lfs.items():
             self.write(path, pointer(data))
         for path, data in self.plain.items():
@@ -289,7 +279,7 @@ class Scratch:
 
     def build(self, out: Path) -> dict:
         inputs = package.load_inputs(self.inputs_path())
-        return package.build(self.root, inputs, self.release, out, log=QUIET)
+        return package.build(self.root, inputs, self.release, out, log=quiet)
 
 
 class PackagerTests(unittest.TestCase):
@@ -302,7 +292,6 @@ class PackagerTests(unittest.TestCase):
     def refused(self, pattern: str) -> None:
         with self.assertRaisesRegex(package.Refusal, pattern):
             self.scratch.build(self.out)
-        # A refused build leaves no output behind.
         self.assertFalse(self.out.exists())
 
     def test_builds_the_manifest_and_the_staging_directory(self):
@@ -315,7 +304,6 @@ class PackagerTests(unittest.TestCase):
             (language["artifact_schema"], language["schema_source"]),
             ("zenbu.language-reference.v2", "plan"),
         )
-        # Ordinary tables, and each virtual table's documents, but no other shadow table.
         self.assertEqual(
             language["row_counts"],
             {
@@ -385,7 +373,6 @@ class PackagerTests(unittest.TestCase):
         self.assertIsNone(manifest["previous_manifest_sha256"])
         self.assertRegex(manifest["git_commit"], r"^[0-9a-f]{40}$")
 
-        # Each file at files/<sha256>/<name>, byte for byte, and the manifest beside them.
         for record in manifest["files"]:
             staged = self.out / "files" / record["sha256"] / record["name"]
             self.assertEqual(sha256(staged.read_bytes()), record["sha256"])
@@ -401,7 +388,7 @@ class PackagerTests(unittest.TestCase):
         after = {
             p: p.read_bytes() for p in root.rglob("*") if p.is_file() and ".git" not in p.parts
         }
-        self.assertEqual(before, after)  # no changed bytes, no -wal, -shm, or -journal files
+        self.assertEqual(before, after)
 
     def test_refuses_an_lfs_file_that_differs_from_its_pointer(self):
         self.scratch.write(
@@ -446,7 +433,6 @@ class PackagerTests(unittest.TestCase):
         self.refused(r"Language\.sqlite3: SHA-256 .* but one\.json pins 3{64}")
 
     def test_refuses_a_pin_on_a_file_read_but_not_packaged(self):
-        # The catalog is read for sources even when it isn't in the release: its pin still counts.
         self.scratch.drop("Catalog.json")
         self.scratch.set_suite_two()
         suite = json.loads(self.scratch.plain["data/conf/two.json"])
@@ -466,7 +452,6 @@ class PackagerTests(unittest.TestCase):
         self.refused(r"zenbu\.pack is bundled as Pack\.sqlite3, which isn't in the release")
 
     def test_refuses_a_language_data_pin_on_another_release_file(self):
-        # Mapping.sql is in the release, but it isn't the language reference database.
         pack = pack_database(self.scratch.mapping_sha, self.scratch.mapping_sha)
         self.scratch.lfs["data/res/Pack.sqlite3"] = pack
         self.scratch.pack_sha = sha256(pack)
@@ -513,7 +498,6 @@ class PackagerTests(unittest.TestCase):
                 self.refused(rf"Contract\.json: {what} disagrees with Language\.sqlite3")
 
     def test_refuses_a_ranking_contract_whose_counts_differ_from_the_tables(self):
-        # Metadata and contract agree, but the tables hold other counts.
         language = self.scratch.lfs["data/res/Language.sqlite3"]
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "db.sqlite3"
@@ -581,8 +565,6 @@ class PackagerTests(unittest.TestCase):
 
 
 class InputValidationTests(unittest.TestCase):
-    """release-inputs.json is checked when it loads, before anything is staged."""
-
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
@@ -734,8 +716,6 @@ class SchemaTests(unittest.TestCase):
 
 
 class RealInputsTests(unittest.TestCase):
-    """release-inputs.json and release.json as committed, without downloading any LFS file."""
-
     @classmethod
     def setUpClass(cls):
         cls.inputs = package.load_inputs(REPO / "language-data" / "release-inputs.json")

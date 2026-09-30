@@ -1,8 +1,3 @@
-"""The publisher against a fake bucket: releases.json, immutability, and verification.
-
-Run: python3 -m unittest discover -s language-data/pipeline/tests (needs requirements.txt).
-"""
-
 from __future__ import annotations
 
 import base64
@@ -18,13 +13,16 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import package  # noqa: E402
-import publish  # noqa: E402
-from package import Refusal  # noqa: E402
-from publish import Head, PreconditionFailed  # noqa: E402
+import package
+import publish
+from package import Refusal
+from publish import Head, PreconditionFailed
 
-QUIET = lambda *_: None  # noqa: E731
 COMMIT_A, COMMIT_B = "a" * 40, "b" * 40
+
+
+def quiet(*_: object) -> None:
+    pass
 
 
 def sha256(data: bytes) -> str:
@@ -32,21 +30,19 @@ def sha256(data: bytes) -> str:
 
 
 class FakeStore:
-    """A bucket in memory, with R2's conditional puts. Records every put, in order."""
-
     def __init__(self):
         self.objects: dict[str, dict] = {}
         self.puts: list[str] = []
         self.version = 0
-        self.before_put = None  # a hook to simulate another writer
-        self.after_put = None  # a hook to simulate a lost response
-        self.checksums = False  # whether head returns ChecksumSHA256, as R2 may
+        self.before_put = None
+        self.after_put = None
+        self.reports_checksum_sha256 = False
 
     def head(self, key):
         obj = self.objects.get(key)
         if obj is None:
             return None
-        checksum = sha256(obj["body"]) if self.checksums else None
+        checksum = sha256(obj["body"]) if self.reports_checksum_sha256 else None
         return Head(len(obj["body"]), obj["sha256"], obj["etag"], checksum)
 
     def get(self, key):
@@ -57,7 +53,7 @@ class FakeStore:
         path.write_bytes(self.objects[key]["body"])
 
     def put(self, key, body, *, sha256, content_type, cache_control, if_none_match=False,
-            if_match=None):  # fmt: skip
+            if_match=None):
         if self.before_put:
             self.before_put(key)
         data = body if isinstance(body, bytes) else body.read_bytes()
@@ -85,7 +81,6 @@ class FakeStore:
 
 
 def stage(directory: Path, release: str, files: dict[str, bytes], commit=COMMIT_A) -> Path:
-    """What `package.py build` writes, for a release of plain files."""
     records = []
     for name, data in files.items():
         path = directory / "files" / sha256(data) / name
@@ -142,7 +137,7 @@ class PublishTests(unittest.TestCase):
         return stage(self.tmp / f"out{self.count}", release, files, commit)
 
     def publish(self, staged, when="2026-10-01T00:00:00Z"):
-        return publish.publish(self.store, staged, now=lambda: when, log=QUIET)
+        return publish.publish(self.store, staged, now=lambda: when, log=quiet)
 
     def test_a_first_release_uploads_files_then_the_manifest_then_releases_json(self):
         result = self.publish(self.staged())
@@ -273,7 +268,7 @@ class PublishTests(unittest.TestCase):
         entry = self.store.index()["releases"][0]
         manifest_body = self.store.objects["releases/2026.10.1/manifest.json"]["body"]
         self.assertEqual(entry["manifest_sha256"], sha256(manifest_body))
-        self.assertEqual(entry["git_commit"], COMMIT_A)  # the commit the manifest came from
+        self.assertEqual(entry["git_commit"], COMMIT_A)
 
     def _fail_on(self, key, target):
         if key == target:
@@ -312,14 +307,13 @@ class PublishTests(unittest.TestCase):
                 body = publish.index_bytes(publish.empty_index())
                 self.store.objects["releases.json"] = {
                     "body": body, "sha256": sha256(body), "etag": '"other"'
-                }  # fmt: skip
+                }
 
         self.store.before_put = another_writer
         with self.assertRaisesRegex(Refusal, "releases.json changed after"):
             self.publish(self.staged())
 
-    def _append_to_index(self, release):
-        """Another publish lists `release`."""
+    def _another_publish_lists(self, release):
         index = self.store.index()
         index["releases"].append(
             {
@@ -339,7 +333,7 @@ class PublishTests(unittest.TestCase):
 
         def another_publish(key):
             if key == data_file:
-                self._append_to_index("2026.10.2")
+                self._another_publish_lists("2026.10.2")
 
         self.store.before_put = another_publish
         with self.assertRaisesRegex(Refusal, "before its manifest was written.*again"):
@@ -348,7 +342,6 @@ class PublishTests(unittest.TestCase):
         self.assertIn(last_file, self.store.objects)
         self.assertNotIn("releases/2026.11.1/manifest.json", self.store.objects)
 
-        # As the message says, running it again links to the release listed meanwhile.
         self.store.before_put = None
         self.publish(self.staged("2026.11.1", FILES_2))
         manifest = json.loads(self.store.objects["releases/2026.11.1/manifest.json"]["body"])
@@ -361,7 +354,7 @@ class PublishTests(unittest.TestCase):
     def test_a_lost_response_to_the_releases_json_put_counts_as_listed(self):
         def lost_response(key):
             if key == "releases.json":
-                raise PreconditionFailed(key)  # the retry of a put that already succeeded
+                raise PreconditionFailed(key)
 
         self.store.after_put = lost_response
         result = self.publish(self.staged())
@@ -375,17 +368,16 @@ class PublishTests(unittest.TestCase):
             if key == "releases/2026.10.1/manifest.json":
                 body = publish.index_bytes(publish.empty_index())
                 self.store.objects["releases.json"] = {"body": body, "sha256": sha256(body)}
-                self._append_to_index("2026.10.1")  # with another manifest_sha256
+                self._another_publish_lists("2026.10.1")
 
         self.store.after_put = another_listing
         with self.assertRaisesRegex(Refusal, "releases.json changed after"):
             self.publish(self.staged())
 
     def test_r2s_checksum_is_trusted_over_the_metadata(self):
-        self.store.checksums = True
+        self.store.reports_checksum_sha256 = True
         data = FILES_1["Data.json"]
         key = f"files/{sha256(data)}/Data.json"
-        # Right bytes, wrong metadata: R2's checksum says it's fine.
         self.store.objects[key] = {"body": data, "sha256": "0" * 64, "etag": '"x"'}
         self.publish(self.staged())
         self.assertNotIn(key, self.store.puts)
@@ -393,13 +385,16 @@ class PublishTests(unittest.TestCase):
     def test_r2s_checksum_catches_bytes_the_metadata_vouches_for(self):
         data = FILES_1["Data.json"]
         key = f"files/{sha256(data)}/Data.json"
-        other = b'{"a": 9}\n'  # the same size
-        self.store.objects[key] = {"body": other, "sha256": sha256(data), "etag": '"x"'}
-        self.store.checksums = True
+        other_bytes_of_the_same_size = b'{"a": 9}\n'
+        self.store.objects[key] = {
+            "body": other_bytes_of_the_same_size,
+            "sha256": sha256(data),
+            "etag": '"x"',
+        }
+        self.store.reports_checksum_sha256 = True
         with self.assertRaisesRegex(Refusal, "ChecksumSHA256"):
             self.publish(self.staged())
-        # Without R2's checksum, only the metadata is there to read: the fallback.
-        self.store.checksums = False
+        self.store.reports_checksum_sha256 = False
         self.store.objects = {key: self.store.objects[key]}
         self.publish(self.staged())
 
@@ -485,15 +480,15 @@ class VerifyTests(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory()
         self.tmp = Path(self._tmp.name)
         self.store = FakeStore()
-        publish.publish(self.store, stage(self.tmp / "a", "2026.10.1", FILES_1), log=QUIET)
-        publish.publish(self.store, stage(self.tmp / "b", "2026.11.1", FILES_2), log=QUIET)
+        publish.publish(self.store, stage(self.tmp / "a", "2026.10.1", FILES_1), log=quiet)
+        publish.publish(self.store, stage(self.tmp / "b", "2026.11.1", FILES_2), log=quiet)
 
     def tearDown(self):
         self._tmp.cleanup()
 
     def verify(self, release="2026.11.1", hash_files=True):
         return publish.verify(
-            self.store, release, hash_files=hash_files, workdir=self.tmp, log=QUIET
+            self.store, release, hash_files=hash_files, workdir=self.tmp, log=quiet
         )
 
     def test_a_published_release_verifies(self):
@@ -569,7 +564,7 @@ class CommandLineTests(unittest.TestCase):
     def test_an_object_deleted_during_verify_is_refused_without_a_traceback(self):
         store = FakeStore()
         with tempfile.TemporaryDirectory() as tmp:
-            publish.publish(store, stage(Path(tmp) / "a", "2026.10.1", FILES_1), log=QUIET)
+            publish.publish(store, stage(Path(tmp) / "a", "2026.10.1", FILES_1), log=quiet)
 
         def download(key, path):
             raise FileNotFoundError("An error occurred (NoSuchKey)")
@@ -592,13 +587,12 @@ class CommandLineTests(unittest.TestCase):
 
 
 def push_paths(workflow: Path) -> list[str]:
-    """The `on.push.paths` filters of a workflow, read without a YAML parser."""
     lines = workflow.read_text().splitlines()
     start = lines.index("  push:")
     paths, in_paths = [], False
     for line in lines[start + 1 :]:
         if line and not line.startswith("    "):
-            break  # the next trigger, or the end of `on`
+            break
         stripped = line.strip()
         if stripped == "paths:":
             in_paths = True
@@ -611,9 +605,6 @@ def push_paths(workflow: Path) -> list[str]:
 
 class WorkflowTriggerTests(unittest.TestCase):
     def test_every_release_input_root_triggers_both_workflows(self):
-        """A change to any file a release packages starts the build and the publish on main, so
-        changed content never sits unpublished. A root counts as covered by `<root>/**` or by
-        `<ancestor>/**`."""
         roots = json.loads((package.LANGUAGE_DATA / "release-inputs.json").read_text())["roots"]
         workflows = package.REPO_ROOT / ".github" / "workflows"
         for name in ("language-data-build.yml", "language-data-release.yml"):
@@ -647,7 +638,7 @@ class AwsCliStoreTests(unittest.TestCase):
         self.store.put(
             "files/x/Data.json", data, sha256=sha256(data), content_type="application/json",
             cache_control=publish.IMMUTABLE, if_none_match=True,
-        )  # fmt: skip
+        )
         command = self.calls[0]
         self.assertEqual(command[:3], ["aws", "s3api", "put-object"])
         options = dict(zip(command[3::2], command[4::2]))

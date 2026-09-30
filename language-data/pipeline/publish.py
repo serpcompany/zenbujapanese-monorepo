@@ -1,30 +1,4 @@
 #!/usr/bin/env python3
-"""Publish a packaged language-data release to R2, and verify it (issue 463, step 3).
-
-  publish.py publish DIR      upload DIR (from `package.py build`) and list it in releases.json
-  publish.py verify           check a published release: its manifest and every file it lists
-
-The bucket holds, in the order they're written:
-
-  files/<sha256>/<name>              each file, content-addressed; never overwritten
-  releases/<release>/manifest.json   each release's manifest; never overwritten
-  releases.json                      every release, oldest first; only ever appended to
-
-`publish` fills the manifest's previous_release and previous_manifest_sha256 from the latest entry
-in releases.json, then uploads. It never overwrites a file or a manifest. When the release is
-already published with the same content (everything but git_commit and workflow_run), it's a
-no-op; when the content differs, it refuses: bump language-data/release.json to publish new
-content. Each upload is conditional (If-None-Match: *) and sends its SHA-256
-(x-amz-checksum-sha256), which R2 checks against the bytes it receives. Each object is then read
-back for its size and SHA-256: R2's ChecksumSHA256 when it returns one, otherwise the
-x-amz-meta-sha256 the upload recorded, which only says what the uploader meant to send. `verify
---hash all` downloads and hashes every file, which is the check that doesn't rely on either.
-
-The bucket is reached through the AWS CLI at R2's S3 endpoint, with AWS_ACCESS_KEY_ID and
-AWS_SECRET_ACCESS_KEY set from the R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY secrets. Only the
-`Language data release` workflow runs it; never upload from a workstation.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -43,11 +17,10 @@ from typing import Callable, Protocol
 import package
 from package import Refusal
 
+DESCRIPTION = "Publish a packaged language-data release to R2, and verify it."
 INDEX_KEY = "releases.json"
 INDEX_SCHEMA = "zenbu.language-data-releases.v1"
 INDEX_SCHEMA_PATH = package.LANGUAGE_DATA / "schemas" / "language-data-releases.v1.schema.json"
-# Fields that say how a manifest was produced rather than what the release contains, so a rerun
-# from another commit or workflow run still counts as the same release.
 PROVENANCE = ("git_commit", "workflow_run")
 IMMUTABLE = "public, max-age=31536000, immutable"
 MUTABLE = "no-cache"
@@ -65,37 +38,31 @@ CREDENTIALS = {
 }
 
 
-# --- The bucket --------------------------------------------------------------------------------
-
-
 @dataclass(frozen=True)
 class Head:
     size: int
-    sha256: str | None  # x-amz-meta-sha256: what the uploader said it sent; R2 doesn't check it
+    metadata_sha256: str | None
     etag: str
-    # ChecksumSHA256, in hex: the SHA-256 R2 checked on upload and stored, when it returns one.
     checksum_sha256: str | None = None
 
     def reported_sha256(self) -> tuple[str | None, str]:
-        """The SHA-256 to trust, and where it came from: R2's checksum, else the metadata."""
         if self.checksum_sha256 is not None:
             return self.checksum_sha256, "ChecksumSHA256"
-        return self.sha256, "x-amz-meta-sha256"
+        return self.metadata_sha256, "x-amz-meta-sha256"
 
 
 class PreconditionFailed(Exception):
-    """A conditional put lost: the object exists (If-None-Match) or changed (If-Match)."""
+    pass
 
 
 class StoreError(Exception):
-    """Any other failure talking to the bucket."""
+    pass
 
 
 class Store(Protocol):
     def head(self, key: str) -> Head | None: ...
 
-    def get(self, key: str) -> tuple[bytes, str] | None:
-        """The object's bytes and ETag, or None when it doesn't exist."""
+    def get(self, key: str) -> tuple[bytes, str] | None: ...
 
     def download(self, key: str, path: Path) -> None: ...
 
@@ -109,13 +76,10 @@ class Store(Protocol):
         cache_control: str,
         if_none_match: bool = False,
         if_match: str | None = None,
-    ) -> None:
-        """Raises PreconditionFailed when a condition fails."""
+    ) -> None: ...
 
 
 def checksum_hex(value: str | None) -> str | None:
-    """A full-object ChecksumSHA256 (base64) in hex. None when there's none, or when it isn't one
-    (a multipart upload's checksum of checksums ends in -<parts>)."""
     if not value:
         return None
     try:
@@ -126,8 +90,6 @@ def checksum_hex(value: str | None) -> str | None:
 
 
 class AwsCliStore:
-    """An R2 bucket through `aws s3api`, at the account's S3 endpoint."""
-
     def __init__(self, bucket: str, endpoint: str, run: Callable = subprocess.run):
         self.bucket, self.endpoint, self.run = bucket, endpoint, run
 
@@ -136,7 +98,7 @@ class AwsCliStore:
             "aws", "s3api", operation, "--bucket", self.bucket, *args,
             "--endpoint-url", self.endpoint, "--output", "json",
             *([str(outfile)] if outfile is not None else []),
-        ]  # fmt: skip
+        ]
         result = self.run(command, capture_output=True, text=True)
         if result.returncode != 0:
             error = (result.stderr or "").strip()
@@ -194,15 +156,12 @@ class AwsCliStore:
                 "--content-type", content_type, "--cache-control", cache_control,
                 "--metadata", f"sha256={sha256}",
                 "--checksum-sha256", base64.b64encode(bytes.fromhex(sha256)).decode(),
-            ]  # fmt: skip
+            ]
             if if_none_match:
                 args += ["--if-none-match", "*"]
             if if_match is not None:
                 args += ["--if-match", if_match]
             self._call("put-object", *args)
-
-
-# --- releases.json -----------------------------------------------------------------------------
 
 
 def release_key(release: str) -> tuple[int, ...]:
@@ -239,7 +198,6 @@ def index_bytes(index: dict) -> bytes:
 
 
 def read_index(store: Store) -> tuple[dict, str | None]:
-    """releases.json and its ETag, or an empty index and None when there's none yet."""
     got = store.get(INDEX_KEY)
     if got is None:
         return empty_index(), None
@@ -250,9 +208,6 @@ def read_index(store: Store) -> tuple[dict, str | None]:
         raise Refusal(f"releases.json isn't JSON: {error}") from None
     validate_index(index)
     return index, etag
-
-
-# --- Publishing --------------------------------------------------------------------------------
 
 
 def sha256_of(body: bytes | Path) -> str:
@@ -291,8 +246,6 @@ def check_object(key: str, head: Head, sha256: str, size: int, what: str) -> Non
 
 
 def put_immutable(store: Store, key: str, body: bytes | Path, sha256: str, size: int) -> bool:
-    """Upload an object that must never change, unless it's already there with these bytes.
-    True when this call uploaded it."""
     head = store.head(key)
     if head is not None:
         check_object(key, head, sha256, size, "already exists")
@@ -307,7 +260,6 @@ def put_immutable(store: Store, key: str, body: bytes | Path, sha256: str, size:
             if_none_match=True,
         )
     except PreconditionFailed:
-        # Another writer got there between the check and the put: accept it only if it's the same.
         head = store.head(key)
         if head is None:
             raise StoreError(f"{key}: the conditional put failed, but the object doesn't exist")
@@ -343,7 +295,6 @@ def check_same_release(published: dict, manifest: dict) -> None:
 
 
 def publish(store: Store, staged: Path, *, now: Callable[[], str] = utc_now, log=print) -> dict:
-    """Publish the release `package.py build` staged in `staged`. Returns what it did."""
     manifest = json.loads((staged / "manifest.json").read_text())
     release = manifest["release"]
     index, etag = read_index(store)
@@ -359,7 +310,6 @@ def publish(store: Store, staged: Path, *, now: Callable[[], str] = utc_now, log
     else:
         previous = entries[position - 1] if position > 0 else None
 
-    # The link to the previous release, then the checks `package.py validate` makes, again.
     manifest["previous_release"] = previous["release"] if previous else None
     manifest["previous_manifest_sha256"] = previous["manifest_sha256"] if previous else None
     package.write_manifest(staged, manifest)
@@ -382,7 +332,6 @@ def publish(store: Store, staged: Path, *, now: Callable[[], str] = utc_now, log
             f"{entries[position]['manifest_sha256']}, but {key} has {manifest_sha256}"
         )
 
-    # 1. The files. 2. The manifest, once every file it names is there. 3. releases.json.
     uploaded = []
     for record in manifest["files"]:
         object_key = file_key(record)
@@ -392,9 +341,6 @@ def publish(store: Store, staged: Path, *, now: Callable[[], str] = utc_now, log
         else:
             log(f"Already there: {object_key}")
     if published is None:
-        # The manifest's previous_release came from the releases.json read at the start. If another
-        # publish listed a release since, this manifest would link to the wrong one, and once
-        # written it can't be replaced, so stop while nothing but content-addressed files is up.
         if read_index(store)[1] != etag:
             raise Refusal(
                 "releases.json changed while this release was publishing, before its manifest "
@@ -427,8 +373,6 @@ def publish(store: Store, staged: Path, *, now: Callable[[], str] = utc_now, log
                 if_match=etag,
             )
         except PreconditionFailed:
-            # Either this put succeeded and its response was lost (a retry then fails its own
-            # condition), or another write got in after the check before the manifest.
             current, _ = read_index(store)
             if any(
                 e["release"] == release and e["manifest_sha256"] == manifest_sha256
@@ -461,12 +405,7 @@ def publish(store: Store, staged: Path, *, now: Callable[[], str] = utc_now, log
     }
 
 
-# --- Verifying ---------------------------------------------------------------------------------
-
-
 def verify(store: Store, release: str, *, hash_files: bool, workdir: Path, log=print) -> dict:
-    """Read releases.json and the release's manifest back, and check every file it lists exists
-    with its size and SHA-256 metadata; with hash_files, download and hash each one too."""
     index, _ = read_index(store)
     if not index["releases"]:
         raise Refusal("releases.json is missing or lists no releases")
@@ -525,25 +464,24 @@ def verify(store: Store, release: str, *, hash_files: bool, workdir: Path, log=p
     return {"release": release, "files": len(manifest["files"]), "hashed": hash_files}
 
 
-# --- Command line ------------------------------------------------------------------------------
-
-
 def missing_credentials(env=os.environ) -> list[str]:
     return [secret for variable, secret in CREDENTIALS.items() if not env.get(variable)]
 
 
 def main(argv: list[str] | None = None, env=os.environ, store: Store | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument("--bucket", default=env.get("R2_BUCKET"), help="default: $R2_BUCKET")
     parser.add_argument(
         "--endpoint", default=env.get("R2_ENDPOINT"), help="the S3 endpoint; default: $R2_ENDPOINT"
     )
     commands = parser.add_subparsers(dest="command", required=True)
-    publish_parser = commands.add_parser("publish")
+    publish_parser = commands.add_parser(
+        "publish", help="upload a release package.py build staged, and list it in releases.json"
+    )
     publish_parser.add_argument("staged", type=Path, help="the directory `package.py build` wrote")
-    verify_parser = commands.add_parser("verify")
+    verify_parser = commands.add_parser(
+        "verify", help="check a published release: its manifest and every file it lists"
+    )
     verify_parser.add_argument(
         "--release", help="default: the release in language-data/release.json"
     )
@@ -578,7 +516,6 @@ def main(argv: list[str] | None = None, env=os.environ, store: Store | None = No
             )
             with tempfile.TemporaryDirectory() as tmp:
                 verify(store, release, hash_files=args.hash == "all", workdir=Path(tmp))
-    # OSError covers FileNotFoundError: a missing staged file, or an object deleted mid-run.
     except (Refusal, StoreError, PreconditionFailed, OSError, json.JSONDecodeError) as refusal:
         print(f"Refused: {refusal}", file=sys.stderr)
         return 1
