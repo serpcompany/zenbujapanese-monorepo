@@ -34,7 +34,8 @@ off. A row without an issue says "No issue yet"; open one before starting the wo
 
 | Debt | Why it matters | Issue |
 | --- | --- | --- |
-| 11 of the 70 behaviors in `apps/web/docs/product/dictionary.md` have no automated check, and 13 more have a part without one, mostly layout, menus, and redirects. | A change that breaks them passes CI. | #511 |
+| 10 of the 70 behaviors in `apps/web/docs/product/dictionary.md` have no automated check, and 13 more have a part without one, mostly layout, sheets, and speech. | A change that breaks them passes CI. | #511 |
+| `/privacy`, which the shipped iOS app links to, takes two redirects (`/privacy`, then `/privacy/`, then `/legal/privacy/`): Next.js adds the trailing slash before it reads `next.config.ts`'s redirects. The browser test checks only that it lands on the policy (`apps/web/e2e/urls.spec.ts`). | Every open of the app's privacy link costs an extra round trip, and it's the one redirect that isn't one hop. | #549 |
 | The website lacks app behaviors that the product docs require, under Required, not built yet: Reading Aids, handwriting and radical input (#526), kanji reading rows and element detail, and more. | The website is meant to show what the app shows; each difference without a decision on file is a bug. | #511 |
 | Search result pages are in no sitemap. #463 dropped its precomputed search-sitemap query set after ADR 0009, so which queries to list is open. | Search engines find search pages only through links. | #466 |
 

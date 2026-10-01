@@ -106,6 +106,13 @@ static pages and prerendering differ by environment, so a route that reads a bin
 fails only in that environment's build. Neither build reaches the dictionary service: deployed
 pages read it only at request time.
 
+Its `e2e` job runs the browser tests ([`web.md`](web.md), Run and verify) on the site as it
+deploys: it installs Chromium, builds with OpenNext without `SITE_ENV`, so the build reads the
+dictionary fixtures, and serves it in workerd with `opennextjs-cloudflare preview`. A test that
+fails is retried once, and Playwright reports one that passed on the retry as flaky. On a failure
+it uploads the report, traces, videos, and screenshots as the `playwright-report` artifact, kept
+for a week.
+
 ## Web deploy
 
 `.github/workflows/web-deploy.yml` deploys the site on a push to `main` that changes the same files

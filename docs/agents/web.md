@@ -35,6 +35,13 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 - `pnpm check` runs Biome, typecheck, `drizzle-kit check` (migration validation), Vitest, and
   `next build`. The `Web` GitHub Actions workflow runs it on pull requests that change
   `apps/web/**` or the core.
+- `pnpm test:e2e` runs the browser tests in `apps/web/e2e/` with Playwright, at a desktop and a
+  phone width, on the dictionary fixtures. Locally it starts `next dev` on port 3100 with
+  `ZENBU_DICTIONARY_FIXTURES=1`, which makes the site read the fixtures even when `.dev.vars` names
+  a service (it's ignored on staging and production); in CI it runs on the production build in
+  workerd (`E2E_SERVER=preview`). Every test fails when a page logs a console error or throws, so a
+  hydration error anywhere a test goes fails the run. How to run one test, read a failure, and add a
+  regression test is in the `browser-tests` skill (`.claude/skills/browser-tests/SKILL.md`).
 - `scripts/smoke.sh <base-url> <staging|production>` checks a running site's key pages, the
   `/privacy` redirect, that environment's search-engine rules, and dictionary pages against the
   app-recorded suites. Each check retries for about 15 seconds, since for a few seconds after a
@@ -53,6 +60,11 @@ lists every child sitemap and each child sitemap lists the new URLs.
   `apps/web/worker.ts` although `tsconfig.json` leaves it out. Its import of
   `.open-next/worker.js` resolves only after an OpenNext build; until then
   `apps/web/open-next-worker.d.ts` types it, so a fresh checkout typechecks too.
+- `apps/web/playwright.config.ts` names the browser tests' two projects, `desktop` and `phone`,
+  and their server. Dev assertions wait 15 seconds, since `next dev` compiles each route on first
+  use; the production build keeps Playwright's 5, and runs on one worker, as one workerd process
+  renders every page. `apps/web/e2e/test.ts` holds the console check and the fixture helpers every
+  spec imports.
 - `apps/web/vitest.config.ts` has two projects: `*.interaction.test.tsx` run in happy-dom, the
   other tests in Node. Both set `__NEXT_TRAILING_SLASH`, so `next/link` draws links with their
   trailing slash, as the build does with `trailingSlash`.

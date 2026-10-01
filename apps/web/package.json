@@ -9,6 +9,7 @@
     "lint": "biome check",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "check": "pnpm lint && pnpm typecheck && pnpm db:check && pnpm test && pnpm build",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy:staging": "SITE_ENV=staging opennextjs-cloudflare build && opennextjs-cloudflare deploy --env staging",
@@ -43,6 +44,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22.20.4",
     "@types/react": "^19",

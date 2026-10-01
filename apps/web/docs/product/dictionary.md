@@ -38,13 +38,17 @@ opens that query's results page.
 
 - Source: #462 (the dictionary page is only a search box); #484 (the hero layout, the description,
   and the `Input` and `Button` form, which replaced #462's `InputGroup`).
-- Check: smoke `200 /dictionary/`. The layout: No automated check yet (#511).
+- Check: smoke `200 /dictionary/`; `apps/web/e2e/search.spec.ts`, "the dictionary home searches
+  and lands on the canonical results page" (the heading, the box, and submitting it). The layout: No
+  automated check yet (#511).
 
 **Breadcrumbs.** Every dictionary page starts with a breadcrumb trail under the site header:
 Home › Dictionary on this page, then the page's own crumb on the others. The app has none.
 
 - Source: #484.
-- Check: No automated check yet (#511).
+- Check: `apps/web/e2e/word.spec.ts`, "shows the word, its breadcrumb, and its meaning";
+  `apps/web/e2e/conjugations.spec.ts`, "a form's page names its word and table in the breadcrumb,
+  and lists its examples".
 
 ## Search results
 
@@ -55,9 +59,10 @@ the header's search. The app searches as the learner types; the website searches
 each search is its own page.
 
 - Source: #466 (search on Enter, not as you type).
-- Check: `src/lib/dictionary/urls.test.ts`, "search URLs", checks only how a query is normalized
-  and encoded into its path. Searching on Enter, the redirect from `?q=`, and the prefilled box:
-  No automated check yet (#511).
+- Check: `src/lib/dictionary/urls.test.ts`, "search URLs", checks how a query is normalized and
+  encoded into its path; `apps/web/e2e/search.spec.ts`, "the dictionary home searches and lands on
+  the canonical results page", submits `  IRU ` and checks the redirect to `/dictionary/search/iru/`
+  and the prefilled box. That typing doesn't search: No automated check yet (#511).
 
 **Which words are found.** The website runs a TypeScript port of the app's search retrieval, with
 the app's own queries and full-text indexes, on the app's own data in the dictionary service. It
@@ -331,8 +336,10 @@ it.
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `SavedItemActions.swift`;
   #462 (toolbar and menu items, get-the-app prompt, `Sonner` for Link copied); #484 (breadcrumbs
   in place of the back button).
-- Check: the share text: `packages/dictionary-core/src/detail/word.test.ts`, "要る (1546640)". The
-  toolbar, menu, and prompt: No automated check yet (#511).
+- Check: the share text: `packages/dictionary-core/src/detail/word.test.ts`, "要る (1546640)"; the
+  menu and the prompt, at a desktop and a phone width: `apps/web/e2e/word.spec.ts`, "opens the More
+  actions menu with the app's actions" and "copies the link from the More actions menu". Share
+  itself: No automated check yet (#511).
 
 **Header card.** The card shows the headword with furigana, and beside it the pitch accent in a
 capsule that pronounces the word, or a standalone speaker when the word has no pitch. Either uses
@@ -497,8 +504,9 @@ examples says "No source-matched examples".
   `src/lib/dictionary/data.test.ts`, "a word page shows its first 25 examples, and the rest load 25
   at a time"; `src/app/dictionary/examples/[file]/route.test.ts`, "returns the next 25 of a word's
   examples" and "is not found for %s" (a position past the app’s 100);
-  `packages/dictionary-core/src/detail/examples.test.ts`, "exampleCountText". The empty message: No
-  automated check yet (#511).
+  `packages/dictionary-core/src/detail/examples.test.ts`, "exampleCountText"; loading more as the
+  learner scrolls, in a browser: `apps/web/e2e/word.spec.ts`, "loads more examples when the list
+  reaches its end, then has no more". The empty message: No automated check yet (#511).
 
 **Example words.** Each sentence shows each word underlined, as the app splits it; an inflected
 verb or adjective is one word with its endings. A word that resolves to one entry has furigana and
@@ -759,7 +767,7 @@ character, or more than one, returns 404.
 - Check: KD cases 廊 (U+5ECA and U+F928); `src/lib/dictionary/sitemaps.test.ts`, "the kanji sitemap
   lists the indexable kanji exactly, never normalized"; the 404 for more than one character:
   `apps/dictionary-api/src/app.test.ts`, "404s %s, which names nothing, as for an unknown one".
-  The 404 for an unknown kanji: No automated check yet (#511).
+  The 404 for an unknown kanji: `apps/web/e2e/urls.spec.ts`, "/dictionary/kanji/犬/ is 404".
 
 **Search URLs.** A search lives at `/dictionary/search/<query>/`. The query is NFKC-normalized,
 lowercased, and has whitespace runs collapsed; any other form redirects (308) to it. Dots are
@@ -767,8 +775,9 @@ encoded, so a query never looks like a file. `.` and `..` can't be paths, so the
 `/dictionary/search/` as finding nothing.
 
 - Source: #466.
-- Check: `src/lib/dictionary/urls.test.ts`, "search URLs". The redirects: No automated check yet
-  (#511).
+- Check: `src/lib/dictionary/urls.test.ts`, "search URLs"; the redirect:
+  `apps/web/e2e/urls.spec.ts`, "/dictionary/search/IRU/ redirects to /dictionary/search/iru/ in one
+  hop".
 
 **Example Sentences URLs.** A search's Example Sentences page is
 `/dictionary/search/<query>/examples/`, with the query as its search page has it; any other form
@@ -794,7 +803,10 @@ names the Plain page, and a form spelled as an earlier one in its register, in t
   earlier one in its register names it (passive 見られる)"; `src/lib/dictionary/data.test.ts`, "a Polite
   form spelled as its Plain form names the Plain page as canonical" and "a form spelled as an
   earlier one in its register names it as canonical"; smoke "a form's page is noindex without
-  examples, and names its spelling's first page". The titles: No automated check yet (#511).
+  examples, and names its spelling's first page". The titles of a word, a results page, a
+  conjugation table, a form, and a kanji: the page tests in `apps/web/e2e/` (`word.spec.ts`,
+  `search.spec.ts`, `conjugations.spec.ts`, `kanji.spec.ts`). An Example Sentences page's title: No
+  automated check yet (#511).
 
 **Indexing.** The dictionary home, word pages, kanji pages with meanings or readings, results
 pages that list a word, or whose kanji row opens a kanji page, a direct Japanese search's

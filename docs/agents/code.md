@@ -8,8 +8,10 @@ package's `pnpm check` (`apps/web`, `apps/dictionary-api`, `packages/dictionary-
 `tools/checks`), one after another. A change to `language-data` also runs the pipeline's tests
 ([`language-data/README.md`](../../language-data/README.md)). A change is done when these pass and
 the docs say what changed: the product docs for a behavior (in the same pull request), the area's
-doc for how it works. Check a website change in a real browser with the `verify-web` skill
-(`.claude/skills/verify-web/`), and put what it showed in the pull request. The `finish-change`
+doc for how it works. A website change also passes `pnpm test:e2e` in `apps/web`, with a browser test for any
+behavior it adds and a regression test for any bug it fixes (the `browser-tests` skill). Check a
+website change in a real browser with the `verify-web` skill (`.claude/skills/verify-web/`), and
+put what it showed in the pull request. The `finish-change`
 skill (`.claude/skills/finish-change/`) walks an agent through all of this, with a fresh agent
 reviewing the diff, before it drafts the pull request.
 
